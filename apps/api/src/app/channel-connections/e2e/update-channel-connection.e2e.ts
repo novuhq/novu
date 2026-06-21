@@ -38,12 +38,19 @@ describe('Update Channel Connection - /channel-connections/:identifier (PATCH) #
       },
     };
 
-    const { result } = await novuClient.channelConnections.update(updateDto, identifier);
+    await novuClient.channelConnections.update(updateDto, identifier);
 
-    expect(result.identifier).to.equal(identifier);
-    expect(result.workspace.id).to.equal('T789012');
-    expect(result.workspace.name).to.equal('Updated Workspace');
-    expect(result.auth.accessToken).to.equal('xoxb-updated-token');
+    const { body } = await session.testAgent
+      .get(`/v1/channel-connections/${identifier}`)
+      .set('authorization', `ApiKey ${session.apiKey}`);
+
+    const response = body.data;
+
+    expect(response.identifier).to.equal(identifier);
+    expect(response.workspace.id).to.equal('T789012');
+    expect(response.workspace.name).to.equal('Updated Workspace');
+    expect(response.auth.accessToken).to.equal('');
+    expect(response.connected).to.equal(true);
   });
 
   it('should return 404 when connection does not exist', async () => {

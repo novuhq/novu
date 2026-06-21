@@ -32,15 +32,23 @@ describe('Create Channel Connection - /channel-connections (POST) #novu-v2', () 
       },
     };
 
-    const { result } = await novuClient.channelConnections.create(createDto);
+    const { result: created } = await novuClient.channelConnections.create(createDto);
 
-    expect(result.identifier).to.be.a('string');
-    expect(result.integrationIdentifier).to.equal(integration.identifier);
-    expect(result.subscriberId).to.equal(subscriber.subscriberId);
-    expect(result.workspace.id).to.equal('T123456');
-    expect(result.workspace.name).to.equal('Test Workspace');
-    expect(result.auth.accessToken).to.equal('xoxb-test-token');
-    expect(result.contextKeys).to.be.an('array').that.is.empty;
+    const { body } = await session.testAgent
+      .get(`/v1/channel-connections/${created.identifier}`)
+      .set('authorization', `ApiKey ${session.apiKey}`);
+
+    const response = body.data;
+
+    expect(response.identifier).to.be.a('string');
+    expect(response.integrationIdentifier).to.equal(integration.identifier);
+    expect(response.subscriberId).to.equal(subscriber.subscriberId);
+    expect(response.workspace.id).to.equal('T123456');
+    expect(response.workspace.name).to.equal('Test Workspace');
+    expect(response.auth.accessToken).to.equal('');
+    expect(response.connected).to.equal(true);
+    expect(response.connectionMode).to.equal('subscriber');
+    expect(response.contextKeys).to.be.an('array').that.is.empty;
   });
 
   it('should create channel connection with context', async () => {

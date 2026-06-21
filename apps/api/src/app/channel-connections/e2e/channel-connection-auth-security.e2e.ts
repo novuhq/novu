@@ -61,50 +61,85 @@ describe('Channel Connection auth — at-rest encryption #novu-v2', () => {
     expect(stored?.auth?.accessToken?.startsWith(NOVU_ENCRYPTION_PREFIX)).to.equal(true);
   });
 
-  it('decrypts on read so callers receive the plaintext token they wrote', async () => {
+  it('never exposes secrets in retrieve response', async () => {
     const integration = await createSlackIntegration(session);
-    const cleartextToken = `xoxb-round-trip-${Date.now()}`;
+    const cleartextToken = `xoxb-secret-check-${Date.now()}`;
 
     const { result: created } = await novuClient.channelConnections.create({
       integrationIdentifier: integration.identifier,
-      context: { tenant: 'at-rest-round-trip' },
-      workspace: { id: 'T_round_trip' },
+      context: { tenant: 'secret-check' },
+      workspace: { id: 'T_secret_check' },
       auth: { accessToken: cleartextToken },
     });
 
-    const { result } = await novuClient.channelConnections.retrieve(created.identifier);
-    expect(result.auth.accessToken).to.equal(cleartextToken);
+    const { body } = await session.testAgent
+      .get(`/v1/channel-connections/${created.identifier}`)
+      .set('authorization', `ApiKey ${session.apiKey}`);
+
+    const response = body.data;
+    const responseJson = JSON.stringify(response);
+
+    expect(responseJson).to.not.include(cleartextToken);
+    expect(responseJson).to.not.include('refreshToken');
+    expect(responseJson).to.not.include('signingSecret');
+    expect(responseJson).to.not.include('clientSecret');
+
+    expect(response.auth.accessToken).to.equal('');
+    expect(response.connected).to.equal(true);
+    expect(response.connectionMode).to.be.oneOf(['subscriber', 'shared']);
   });
 
-  it('legacy unencrypted records continue to round-trip (idempotent decrypt)', async () => {
+  it('never exposes secrets in list response', async () => {
     const integration = await createSlackIntegration(session);
+    const cleartextToken = `xoxb-list-secret-${Date.now()}`;
 
-    // Simulate a record written before the encryption layer existed: bypass the
-    // create usecase and write a plaintext token directly via the repository.
-    const legacyToken = 'xoxb-legacy-unprefixed-token';
-    const legacyIdentifier = `legacy_${Date.now()}`;
+    await novuClient.channelConnections.create({
+      integrationIdentifier: integration.identifier,
+      context: { tenant: 'list-secret-check' },
+      workspace: { id: 'T_list_secret' },
+      auth: { accessToken: cleartextToken },
+    });
+
+    const { body } = await session.testAgent
+      .get('/v1/channel-connections')
+      .set('authorization', `ApiKey ${session.apiKey}`);
+
+    const responseJson = JSON.stringify(body);
+
+    expect(responseJson).to.not.include(cleartextToken);
+    expect(responseJson).to.not.include('refreshToken');
+    expect(responseJson).to.not.include('signingSecret');
+    expect(responseJson).to.not.include('clientSecret');
+
+    for (const conn of body.data) {
+      expect(conn.auth.accessToken).to.equal('');
+      expect(conn.connected).to.be.a('boolean');
+      expect(conn.connectionMode).to.be.oneOf(['subscriber', 'shared']);
+    }
+  });
+
+  it('shows connected=false when no auth token is present', async () => {
+    const integration = await createSlackIntegration(session);
+    const identifier = `no_auth_${Date.now()}`;
+
     await channelConnectionRepository.create({
-      identifier: legacyIdentifier,
+      identifier,
       _environmentId: session.environment._id,
       _organizationId: session.organization._id,
       integrationIdentifier: integration.identifier,
       providerId: integration.providerId,
       channel: integration.channel,
       contextKeys: [],
-      workspace: { id: 'T_legacy' },
-      auth: { accessToken: legacyToken },
+      workspace: { id: 'T_no_auth' },
+      auth: { accessToken: '' },
     });
 
-    // Read path passes legacy unprefixed value through unchanged.
-    const { result } = await novuClient.channelConnections.retrieve(legacyIdentifier);
-    expect(result.auth.accessToken).to.equal(legacyToken);
+    const { body } = await session.testAgent
+      .get(`/v1/channel-connections/${identifier}`)
+      .set('authorization', `ApiKey ${session.apiKey}`);
 
-    // And the legacy stored value is left untouched (no forced migration).
-    const stored = await channelConnectionRepository.findOne({
-      _environmentId: session.environment._id,
-      _organizationId: session.organization._id,
-      identifier: legacyIdentifier,
-    });
-    expect(stored?.auth?.accessToken).to.equal(legacyToken);
+    const response = body.data;
+    expect(response.connected).to.equal(false);
+    expect(response.connectionMode).to.equal('shared');
   });
 });

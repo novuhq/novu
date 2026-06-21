@@ -45,4 +45,6 @@ export const QueryKeys = Object.freeze({
   fetchDomain: 'fetchDomain',
   fetchDomainRoutes: 'fetchDomainRoutes',
   fetchDomainConnectStatus: 'fetchDomainConnectStatus',
+  fetchChannelConnections: 'fetchChannelConnections',
+  fetchChannelEndpoints: 'fetchChannelEndpoints',
 });

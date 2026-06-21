@@ -35,13 +35,19 @@ describe('Get Channel Connection - /channel-connections/:identifier (GET) #novu-
     const { result: created } = await novuClient.channelConnections.create(createDto);
     const identifier = created.identifier;
 
-    const { result } = await novuClient.channelConnections.retrieve(identifier);
+    const { body } = await session.testAgent
+      .get(`/v1/channel-connections/${identifier}`)
+      .set('authorization', `ApiKey ${session.apiKey}`);
 
-    expect(result.identifier).to.equal(identifier);
-    expect(result.integrationIdentifier).to.equal(integration.identifier);
-    expect(result.subscriberId).to.equal(subscriber.subscriberId);
-    expect(result.workspace.id).to.equal('T123456');
-    expect(result.auth.accessToken).to.equal('xoxb-test-token');
+    const response = body.data;
+
+    expect(response.identifier).to.equal(identifier);
+    expect(response.integrationIdentifier).to.equal(integration.identifier);
+    expect(response.subscriberId).to.equal(subscriber.subscriberId);
+    expect(response.workspace.id).to.equal('T123456');
+    expect(response.auth.accessToken).to.equal('');
+    expect(response.connected).to.equal(true);
+    expect(response.connectionMode).to.equal('subscriber');
   });
 
   it('should return 404 when connection does not exist', async () => {

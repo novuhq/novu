@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitive
 import { Preferences } from '@/components/subscribers/preferences/preferences';
 import { PreferencesSkeleton } from '@/components/subscribers/preferences/preferences-skeleton';
 import { SubscriberActivity } from '@/components/subscribers/subscriber-activity';
+import { SubscriberChannels } from '@/components/subscribers/subscriber-channels';
 import { SubscriberOverviewForm } from '@/components/subscribers/subscriber-overview-form';
 import { SubscriberOverviewSkeleton } from '@/components/subscribers/subscriber-overview-skeleton';
 import { SubscriberSubscriptions } from '@/components/subscribers/subscriptions/subscriber-subscriptions';
@@ -109,6 +110,10 @@ export function SubscriberTabs(props: SubscriberTabsProps) {
           <span>Activity Feed</span>
           {tab === 'activity-feed' && <ActiveTabIndicator />}
         </TabsTrigger>
+        <TabsTrigger value="channels" className={tabTriggerClasses} variant="regular" size="lg">
+          <span>Channels</span>
+          {tab === 'channels' && <ActiveTabIndicator />}
+        </TabsTrigger>
       </TabsList>
       <TabsContent value="overview" className="h-full w-full overflow-y-auto">
         <SubscriberOverview
@@ -126,6 +131,9 @@ export function SubscriberTabs(props: SubscriberTabsProps) {
       </TabsContent>
       <TabsContent value="activity-feed" className="h-full w-full overflow-y-auto">
         <SubscriberActivity subscriberId={subscriberId} />
+      </TabsContent>
+      <TabsContent value="channels" className="h-full w-full overflow-y-auto">
+        <SubscriberChannels subscriberId={subscriberId} />
       </TabsContent>
       <Separator />
     </Tabs>

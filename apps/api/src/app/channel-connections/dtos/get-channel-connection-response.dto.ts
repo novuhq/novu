@@ -1,10 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ChannelTypeEnum, ProvidersIdEnum, ProvidersIdEnumConst } from '@novu/shared';
+import { ChannelTypeEnum, ConnectionMode, ProvidersIdEnum, ProvidersIdEnumConst } from '@novu/shared';
 import { AuthDto, WorkspaceDto } from './shared.dto';
 
 export class GetChannelConnectionResponseDto {
   @ApiProperty({
-    description: 'The unique identifier of the channel endpoint.',
+    description: 'The unique identifier of the channel connection.',
     type: String,
   })
   identifier: string;
@@ -48,17 +48,36 @@ export class GetChannelConnectionResponseDto {
   @ApiProperty({ type: WorkspaceDto })
   workspace: WorkspaceDto;
 
-  @ApiProperty({ type: AuthDto })
+  @ApiProperty({
+    description: 'Deprecated — always returns an empty/redacted value. Use the `connected` field instead.',
+    type: AuthDto,
+    deprecated: true,
+  })
   auth: AuthDto;
 
   @ApiProperty({
-    description: 'The timestamp indicating when the channel endpoint was created, in ISO 8601 format.',
+    description: 'Whether the connection has valid authentication credentials configured.',
+    type: Boolean,
+    example: true,
+  })
+  connected: boolean;
+
+  @ApiProperty({
+    description: 'The connection mode: "subscriber" (personal OAuth) or "shared" (workspace/tenant).',
+    type: String,
+    enum: ['subscriber', 'shared'],
+    example: 'shared',
+  })
+  connectionMode: ConnectionMode;
+
+  @ApiProperty({
+    description: 'The timestamp indicating when the channel connection was created, in ISO 8601 format.',
     type: String,
   })
   createdAt: string;
 
   @ApiProperty({
-    description: 'The timestamp indicating when the channel endpoint was last updated, in ISO 8601 format.',
+    description: 'The timestamp indicating when the channel connection was last updated, in ISO 8601 format.',
     type: String,
   })
   updatedAt: string;
