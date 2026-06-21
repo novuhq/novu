@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { CacheService, PinoLogger } from '@novu/application-generic';
-import { isConnectClaimTokenFormat, mintAutolinkSafeOpaqueToken } from '@novu/shared';
+import { isConnectClaimTokenFormat } from '@novu/shared';
+import { mintAutolinkSafeOpaqueToken } from '../../shared/helpers';
 
 export const CONNECT_CLAIM_TOKEN_TTL_SECONDS = 7 * 24 * 60 * 60;
 

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { expect } from 'chai';
 
 import { mintAutolinkSafeOpaqueToken } from './mint-autolink-safe-opaque-token';
 
@@ -9,25 +9,21 @@ describe('mintAutolinkSafeOpaqueToken', () => {
   it('returns exactly 32 alphanumeric characters', () => {
     const token = mintAutolinkSafeOpaqueToken();
 
-    expect(token).toHaveLength(32);
-    expect(token).toMatch(ALPHANUMERIC_PATTERN);
+    expect(token).to.have.length(32);
+    expect(token).to.match(ALPHANUMERIC_PATTERN);
   });
 
-  it('never contains base64url characters', () => {
+  it('never contains base64url-only characters', () => {
     for (let index = 0; index < 1000; index += 1) {
-      const token = mintAutolinkSafeOpaqueToken();
-
-      expect(token).not.toMatch(/[-_]/);
+      expect(mintAutolinkSafeOpaqueToken()).to.not.match(/[-_]/);
     }
   });
 
-  it('never ends with GFM trailing-punctuation characters', () => {
+  it('never ends with a GFM trailing-punctuation character', () => {
     for (let index = 0; index < 10_000; index += 1) {
-      const token = mintAutolinkSafeOpaqueToken();
-      const lastChar = token.at(-1);
+      const lastChar = mintAutolinkSafeOpaqueToken().slice(-1);
 
-      expect(lastChar).toBeDefined();
-      expect(GFM_TRAILING_PUNCTUATION.includes(lastChar as string)).toBe(false);
+      expect(GFM_TRAILING_PUNCTUATION.includes(lastChar)).to.equal(false);
     }
   });
 
@@ -38,6 +34,6 @@ describe('mintAutolinkSafeOpaqueToken', () => {
       tokens.add(mintAutolinkSafeOpaqueToken());
     }
 
-    expect(tokens.size).toBe(10_000);
+    expect(tokens.size).to.equal(10_000);
   });
 });
