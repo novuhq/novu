@@ -154,7 +154,7 @@ pnpm --filter @novu/agent-evals eval:watch
 # Single scenario
 pnpm --filter @novu/agent-evals exec vitest run --config vitest.evals.config.ts -t keyless-slack-secure
 
-# Enable LLM judge graders (also enabled on scheduled CI runs)
+# Enable LLM judge graders locally
 NOVU_EVAL_JUDGE=true pnpm --filter @novu/agent-evals eval
 ```
 
@@ -175,7 +175,7 @@ Scenarios are independent and dominated by live-model latency, so they run concu
 
 Each scenario uses `judgeThreshold: 0.8` — the average judge score for that scenario must be ≥ 80%. This is stricter than the old global `--fail-under 80` (which gated on the average across all scenarios): every scenario must pass individually.
 
-Judge graders run only when `NOVU_EVAL_JUDGE=true` (PR/push CI runs deterministic graders only; scheduled and workflow-dispatch CI enable judges by default).
+Judge graders run only when `NOVU_EVAL_JUDGE=true` (CI runs deterministic graders only).
 
 ## Triage failing scenarios
 
@@ -189,4 +189,4 @@ When a scenario fails, use the Cursor skill `triage-agent-eval-failures` (`.curs
 
 ## CI
 
-GitHub Actions workflow `.github/workflows/agent-evals.yml` runs `pnpm --filter @novu/agent-evals eval` on playbook or harness changes, with `NOVU_EVAL_JUDGE` enabled on schedule and workflow-dispatch.
+GitHub Actions workflow `.github/workflows/agent-evals.yml` runs `pnpm --filter @novu/agent-evals eval` on PRs to `next` that touch the playbook or harness.

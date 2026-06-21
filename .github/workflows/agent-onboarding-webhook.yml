@@ -1,11 +1,12 @@
 name: Notify Cursor Automation on Agent Onboarding Change
 
 on:
-  push:
+  pull_request:
     branches:
       - next
     paths:
-      - "packages/shared/docs/agent-onboarding.md"
+      - packages/shared/docs/agent-onboarding.md
+      - .github/workflows/agent-onboarding-webhook.yml
 
 permissions:
   contents: read
