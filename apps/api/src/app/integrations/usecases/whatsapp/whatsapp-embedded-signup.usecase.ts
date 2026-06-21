@@ -210,7 +210,17 @@ export class WhatsAppEmbeddedSignup {
         };
       }
 
-      const matchedPhone = wabaPhones.body.data?.find((entry) => entry.id === phoneNumberId);
+      if (!Array.isArray(wabaPhones.body.data)) {
+        return {
+          success: false,
+          error: {
+            code: 'meta_validation_failed',
+            message: `Meta did not return phone numbers for WhatsApp Business Account "${wabaId}". Try connecting again.`,
+          },
+        };
+      }
+
+      const matchedPhone = wabaPhones.body.data.find((entry) => entry.id === phoneNumberId);
       if (!matchedPhone) {
         return {
           success: false,

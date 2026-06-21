@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { decryptCredentials, InstrumentUsecase, PinoLogger } from '@novu/application-generic';
 import { AgentIntegrationRepository, AgentRepository, IntegrationRepository, SubscriberRepository } from '@novu/dal';
-import { ChatProviderIdEnum } from '@novu/shared';
+import { ChatProviderIdEnum, type ICredentials } from '@novu/shared';
 
 import {
   debugAccessToken,
@@ -12,10 +12,40 @@ import {
 import { normalizePhoneForMeta } from '../../../shared/util/phone-normalization';
 import { SendWhatsAppTestTemplateCommand } from './send-whatsapp-test-template.command';
 
-const TEMPLATE_NAME = 'hello_world';
+const MANUAL_TEST_TEMPLATE = 'hello_world';
+const EMBEDDED_TEST_TEMPLATE = 'sample_order_confirmation';
 const TEMPLATE_LANGUAGE = 'en_US';
 
 const META_DEV_CONSOLE_URL_BASE = 'https://developers.facebook.com/apps';
+
+type TestTemplateSend = {
+  templateName: string;
+  languageCode: string;
+  bodyParameters?: string[];
+};
+
+function resolveTestTemplateSend(
+  credentials: ICredentials,
+  subscriber: { firstName?: string | null }
+): TestTemplateSend {
+  if (credentials.isNovuManaged === true) {
+    const recipientName =
+      typeof subscriber.firstName === 'string' && subscriber.firstName.trim()
+        ? subscriber.firstName.trim()
+        : 'Novu';
+
+    return {
+      templateName: EMBEDDED_TEST_TEMPLATE,
+      languageCode: TEMPLATE_LANGUAGE,
+      bodyParameters: [recipientName, 'TEST-001'],
+    };
+  }
+
+  return {
+    templateName: MANUAL_TEST_TEMPLATE,
+    languageCode: TEMPLATE_LANGUAGE,
+  };
+}
 
 export type SendWhatsAppTestTemplateError = {
   code:
@@ -134,14 +164,17 @@ export class SendWhatsAppTestTemplate {
       };
     }
 
+    const templateSend = resolveTestTemplateSend(credentials, subscriber);
+
     let response: Awaited<ReturnType<typeof sendWhatsAppTemplate>>;
     try {
       response = await sendWhatsAppTemplate({
         accessToken,
         phoneNumberId,
         to: normalizePhoneForMeta(subscriberPhone),
-        templateName: TEMPLATE_NAME,
-        languageCode: TEMPLATE_LANGUAGE,
+        templateName: templateSend.templateName,
+        languageCode: templateSend.languageCode,
+        bodyParameters: templateSend.bodyParameters,
       });
     } catch (err) {
       this.logger.warn({ err, integrationId: integration._id }, 'WhatsApp test template send failed');
@@ -157,7 +190,7 @@ export class SendWhatsAppTestTemplate {
 
     const error = extractMetaError(response.body);
     if (error || response.statusCode >= 400) {
-      const failure = this.classifyMetaError(error, response.statusCode, subscriberPhone);
+      const failure = this.classifyMetaError(error, response.statusCode, subscriberPhone, templateSend.templateName);
 
       if (failure.code === 'recipient_not_allowed') {
         failure.helpUrl = await this.resolveDevConsoleUrl(accessToken);
@@ -198,14 +231,18 @@ export class SendWhatsAppTestTemplate {
   private classifyMetaError(
     error: MetaErrorSummary | undefined,
     statusCode: number,
-    recipient: string
+    recipient: string,
+    templateName: string
   ): SendWhatsAppTestTemplateError {
     const message = error?.message ?? `Meta returned HTTP ${statusCode}`;
 
     if (error?.code === 131058) {
       return {
         code: 'template_unavailable',
-        message: `The "${TEMPLATE_NAME}" template can only be sent from a Meta public test number. Connect via WhatsApp Embedded Signup to send from your own business number.`,
+        message:
+          templateName === MANUAL_TEST_TEMPLATE
+            ? `The "${templateName}" template can only be sent from a Meta public test number. Connect via WhatsApp Embedded Signup to send from your own business number.`
+            : `The "${templateName}" template cannot be sent from this phone number. Confirm the template is approved in Meta Business Manager.`,
       };
     }
 
@@ -227,7 +264,7 @@ export class SendWhatsAppTestTemplate {
     if (error?.code === 132001 || error?.code === 132000 || error?.code === 132005) {
       return {
         code: 'template_unavailable',
-        message: `The "${TEMPLATE_NAME}" template is not available on this WhatsApp Business account. Use WhatsApp Embedded Signup or add an approved template in Meta.`,
+        message: `The "${templateName}" template is not available on this WhatsApp Business account. Use WhatsApp Embedded Signup or add an approved template in Meta.`,
       };
     }
 
