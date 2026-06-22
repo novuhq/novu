@@ -1,4 +1,4 @@
-export type TelegramSubscriberLinkStatus = 'pending' | 'connected' | 'expired';
+export type TelegramSubscriberLinkStatus = 'loading' | 'pending' | 'connected' | 'expired';
 
 export type TelegramSubscriberLinkResponse = {
   deepLinkUrl: string;

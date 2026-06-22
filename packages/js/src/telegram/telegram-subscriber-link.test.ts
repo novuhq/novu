@@ -26,6 +26,8 @@ const BASE_OPTIONS = {
   pollIntervalMs: 10,
 };
 
+const NOT_CONNECTED = { status: 200, body: { data: [{ connectedAt: null }] } } as const;
+
 describe('TelegramSubscriberLink', () => {
   beforeEach(() => {
     jest.useFakeTimers();
@@ -38,6 +40,7 @@ describe('TelegramSubscriberLink', () => {
   it('issues a subscriber link and transitions to pending with deep-link data', async () => {
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
     const fetchFn = mockFetch([
+      NOT_CONNECTED,
       {
         status: 200,
         body: {
@@ -57,7 +60,7 @@ describe('TelegramSubscriberLink', () => {
     await link.start();
     link.stop();
 
-    expect(fetchFn).toHaveBeenCalledTimes(1);
+    expect(fetchFn).toHaveBeenCalledTimes(2);
     expect(fetchFn).toHaveBeenCalledWith(
       'https://test.novu.co/v1/agents/my-agent/integrations/integration-1/telegram/subscriber-link',
       expect.objectContaining({
@@ -76,9 +79,38 @@ describe('TelegramSubscriberLink', () => {
     });
   });
 
+  it('transitions directly to connected when already linked on start()', async () => {
+    const fetchFn = mockFetch([{ status: 200, body: { data: [{ connectedAt: '2026-06-21T12:00:00Z' }] } }]);
+
+    const link = new TelegramSubscriberLink({ ...BASE_OPTIONS, fetchFn });
+    const states: TelegramSubscriberLinkState[] = [];
+    link.onStateChange((s) => states.push({ ...s }));
+
+    await link.start();
+    link.stop();
+
+    expect(fetchFn).toHaveBeenCalledTimes(1);
+    expect(fetchFn).toHaveBeenCalledWith(
+      'https://test.novu.co/v1/agents/my-agent/integrations?integrationIdentifier=integration-1&limit=1',
+      expect.objectContaining({
+        method: 'GET',
+        headers: expect.objectContaining({ Authorization: 'ApiKey test-secret' }),
+      })
+    );
+
+    expect(states).toHaveLength(1);
+    expect(states[0]).toMatchObject({
+      status: 'connected',
+      deepLinkUrl: null,
+      botUsername: null,
+      error: null,
+    });
+  });
+
   it('polls until connectedAt is set and transitions to connected', async () => {
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
     const fetchFn = mockFetch([
+      NOT_CONNECTED,
       {
         status: 200,
         body: {
@@ -120,6 +152,7 @@ describe('TelegramSubscriberLink', () => {
     const shortExpiresAt = new Date(Date.now() + 50).toISOString();
     const longExpiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
     const fetchFn = mockFetch([
+      NOT_CONNECTED,
       {
         status: 200,
         body: {
@@ -188,6 +221,7 @@ describe('TelegramSubscriberLink', () => {
   it('refresh() re-issues a new link', async () => {
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
     const fetchFn = mockFetch([
+      NOT_CONNECTED,
       {
         status: 200,
         body: {
@@ -221,12 +255,13 @@ describe('TelegramSubscriberLink', () => {
     const urls = states.map((s) => s.deepLinkUrl);
     expect(urls).toContain('https://t.me/TestBot?start=first');
     expect(urls).toContain('https://t.me/TestBot?start=second');
-    expect(fetchFn).toHaveBeenCalledTimes(2);
+    expect(fetchFn).toHaveBeenCalledTimes(3);
   });
 
   it('stop() prevents further polling', async () => {
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
     const fetchFn = mockFetch([
+      NOT_CONNECTED,
       {
         status: 200,
         body: {
@@ -255,6 +290,7 @@ describe('TelegramSubscriberLink', () => {
   it('handles transient poll errors by continuing to poll', async () => {
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
     const fetchFn = mockFetch([
+      NOT_CONNECTED,
       {
         status: 200,
         body: {
@@ -291,6 +327,7 @@ describe('TelegramSubscriberLink', () => {
   it('removes listener via returned cleanup function', async () => {
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
     const fetchFn = mockFetch([
+      NOT_CONNECTED,
       {
         status: 200,
         body: {
@@ -318,6 +355,7 @@ describe('TelegramSubscriberLink', () => {
   it('unwraps response without data envelope', async () => {
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
     const fetchFn = mockFetch([
+      NOT_CONNECTED,
       {
         status: 200,
         body: {

@@ -13,7 +13,7 @@ export type UseTelegramSubscriberLinkResult = {
   deepLinkUrl: string | null;
   /** Telegram bot username (no `@`), or `null` before the first issue. */
   botUsername: string | null;
-  /** Lifecycle status: `pending` while waiting, `connected` once the user taps Start, `expired` briefly before auto-reissue. */
+  /** Lifecycle status: `loading` while resolving initial state, `pending` while waiting for Start, `connected` once linked, `expired` briefly before auto-reissue. */
   status: TelegramSubscriberLinkStatus;
   /** Last error, if any. */
   error: Error | null;
@@ -57,7 +57,7 @@ export type UseTelegramSubscriberLinkResult = {
  */
 export function useTelegramSubscriberLink(props: UseTelegramSubscriberLinkProps): UseTelegramSubscriberLinkResult {
   const [state, setState] = useState<TelegramSubscriberLinkState>({
-    status: 'pending',
+    status: 'loading',
     deepLinkUrl: null,
     botUsername: null,
     expiresAt: null,

@@ -47,7 +47,7 @@ export class TelegramSubscriberLink {
   > & { secretKey?: string; fetchFn: typeof fetch };
 
   #state: TelegramSubscriberLinkState = {
-    status: 'pending',
+    status: 'loading',
     deepLinkUrl: null,
     botUsername: null,
     expiresAt: null,
@@ -88,11 +88,29 @@ export class TelegramSubscriberLink {
   }
 
   /**
-   * Issue the subscriber-link deep link and begin polling for connection.
-   * Call {@link stop} to cancel polling and timers.
+   * Check whether the subscriber is already connected; if not, issue a deep
+   * link and begin polling for connection. Call {@link stop} to cancel polling
+   * and timers.
    */
   async start(): Promise<void> {
     this.#stopped = false;
+    const generation = ++this.#generation;
+
+    try {
+      const connected = await this.#checkConnection();
+      if (this.#isStale(generation)) return;
+
+      if (connected) {
+        this.#setState({ ...this.#state, status: 'connected', error: null });
+
+        return;
+      }
+    } catch {
+      // fall through to issuing a link
+    }
+
+    if (this.#isStale(generation)) return;
+
     await this.#issueAndPoll();
   }
 

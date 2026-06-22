@@ -13,10 +13,75 @@ const INTEGRATION_IDENTIFIER = process.env.NEXT_PUBLIC_NOVU_TELEGRAM_INTEGRATION
 const IS_DEMO = TELEGRAM_API_URL.includes('telegram-demo');
 
 const STATUS_META = {
+  loading: { label: 'Loading...', className: 'text-muted-foreground', Icon: Loader2, spin: true },
   pending: { label: 'Waiting for connection…', className: 'text-amber-600', Icon: Loader2, spin: true },
   connected: { label: 'Connected', className: 'text-green-600', Icon: CheckCircle2, spin: false },
   expired: { label: 'Link expired — re-issuing…', className: 'text-muted-foreground', Icon: TimerReset, spin: false },
 } as const;
+
+function TelegramConnectorContent({
+  status,
+  subscriberId,
+  deepLinkUrl,
+  botUsername,
+}: {
+  status: keyof typeof STATUS_META;
+  subscriberId: string;
+  deepLinkUrl: string | null;
+  botUsername: string | null;
+}) {
+  if (status === 'loading') {
+    return null;
+  }
+
+  if (status === 'connected') {
+    return (
+      <p className="text-sm text-muted-foreground">
+        Subscriber <code>{subscriberId}</code> is now linked to Telegram. Notifications routed through this integration
+        will reach their chat.
+      </p>
+    );
+  }
+
+  return (
+    <>
+      <p className="text-xs text-muted-foreground">
+        Tap the button (or scan the QR with your phone) to open Telegram and press <strong>Start</strong>. The hook
+        polls until the connection is confirmed and auto-reissues the link when the 10-minute code expires.
+      </p>
+
+      {deepLinkUrl ? (
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+          {/* QR is a nicety for opening on a phone; hidden gracefully if the generator is unreachable. */}
+          <img
+            src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(deepLinkUrl)}`}
+            alt="Telegram deep link QR code"
+            width={160}
+            height={160}
+            className="rounded-md border"
+            onError={(e) => {
+              e.currentTarget.style.display = 'none';
+            }}
+          />
+          <div className="flex flex-col gap-2">
+            <a
+              href={deepLinkUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex w-fit items-center gap-2 rounded-md bg-[#229ED9] px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"
+            >
+              <ExternalLink className="h-4 w-4" aria-hidden="true" />
+              Open @{botUsername} in Telegram
+            </a>
+            <code className="max-w-md break-all text-xs text-muted-foreground">{deepLinkUrl}</code>
+          </div>
+        </div>
+      ) : (
+        <p className="text-sm text-muted-foreground">Issuing deep link…</p>
+      )}
+    </>
+  );
+}
 
 function TelegramConnector({
   apiUrl,
@@ -46,64 +111,29 @@ function TelegramConnector({
         <span>{meta.label}</span>
       </div>
 
-      {status === 'connected' ? (
-        <p className="text-sm text-muted-foreground">
-          Subscriber <code>{subscriberId}</code> is now linked to Telegram. Notifications routed through this
-          integration will reach their chat.
-        </p>
-      ) : (
-        <>
-          <p className="text-xs text-muted-foreground">
-            Tap the button (or scan the QR with your phone) to open Telegram and press <strong>Start</strong>. The hook
-            polls until the connection is confirmed and auto-reissues the link when the 10-minute code expires.
-          </p>
+      <TelegramConnectorContent
+        status={status}
+        subscriberId={subscriberId}
+        deepLinkUrl={deepLinkUrl}
+        botUsername={botUsername}
+      />
 
-          {deepLinkUrl ? (
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-              {/* QR is a nicety for opening on a phone; hidden gracefully if the generator is unreachable. */}
-              <img
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(deepLinkUrl)}`}
-                alt="Telegram deep link QR code"
-                width={160}
-                height={160}
-                className="rounded-md border"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                }}
-              />
-              <div className="flex flex-col gap-2">
-                <a
-                  href={deepLinkUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex w-fit items-center gap-2 rounded-md bg-[#229ED9] px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"
-                >
-                  <ExternalLink className="h-4 w-4" aria-hidden="true" />
-                  Open @{botUsername} in Telegram
-                </a>
-                <code className="max-w-md break-all text-xs text-muted-foreground">{deepLinkUrl}</code>
-              </div>
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">Issuing deep link…</p>
-          )}
-        </>
-      )}
-
-      {error && (
+      {status !== 'loading' && error && (
         <p className="flex items-start gap-2 text-xs text-destructive">
           <XCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
           <span className="break-all">{error.message}</span>
         </p>
       )}
 
-      <button
-        onClick={() => void refresh()}
-        className="inline-flex w-fit items-center gap-2 rounded-md border px-3 py-1.5 text-sm font-medium transition-colors hover:bg-accent"
-      >
-        <RefreshCw className="h-4 w-4" aria-hidden="true" />
-        Re-issue link
-      </button>
+      {status !== 'loading' && (
+        <button
+          onClick={() => void refresh()}
+          className="inline-flex w-fit items-center gap-2 rounded-md border px-3 py-1.5 text-sm font-medium transition-colors hover:bg-accent"
+        >
+          <RefreshCw className="h-4 w-4" aria-hidden="true" />
+          Re-issue link
+        </button>
+      )}
     </div>
   );
 }
