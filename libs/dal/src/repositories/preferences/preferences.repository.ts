@@ -8,6 +8,10 @@ import { Preferences } from './preferences.schema';
 
 type PreferencesQuery = FilterQuery<PreferencesDBModel> & EnforceEnvOrOrgIds;
 
+function toPlainPreference(data: unknown): unknown {
+  return JSON.parse(JSON.stringify(data));
+}
+
 export class PreferencesRepository extends BaseRepository<PreferencesDBModel, PreferencesEntity, EnforceEnvOrOrgIds> {
   private preferences: SoftDeleteModel;
 
@@ -36,13 +40,13 @@ export class PreferencesRepository extends BaseRepository<PreferencesDBModel, Pr
   /**
    * Hot-path reads for preference computation (e.g. the v2 /preferences endpoint).
    *
-   * Behaves exactly like {@link find}/{@link findOne} for this entity but skips the
-   * `class-transformer` `plainToInstance` pass. `PreferencesEntity` declares no
-   * class-transformer decorators, so the JSON round-trip alone produces byte-identical
-   * output while removing the dominant synchronous CPU cost under high concurrency.
+   * Skips the `class-transformer` `plainToInstance` pass. `PreferencesEntity` declares no
+   * class-transformer decorators, so the JSON round-trip alone is behavior-identical for all
+   * downstream consumers while removing the dominant synchronous CPU cost under high concurrency.
    *
-   * `find` mirrors the base `.lean()` path (no virtuals); `findOne` mirrors the base
-   * `.toObject({ virtuals: true })` path, so each stays consistent with its counterpart.
+   * Both methods use `.lean()` (matching the base `find` path). The base `findOne` hydrates
+   * via `.toObject()` and exposes the `id` virtual, but preference computation only reads
+   * document fields — never `id` — so lean is sufficient and cheaper.
    */
   async findForComputation(
     query: PreferencesQuery,
@@ -53,19 +57,22 @@ export class PreferencesRepository extends BaseRepository<PreferencesDBModel, Pr
       .lean()
       .exec();
 
-    return JSON.parse(JSON.stringify(data)) as PreferencesEntity[];
+    return toPlainPreference(data) as PreferencesEntity[];
   }
 
   async findOneForComputation(
     query: PreferencesQuery,
     options: { readPreference?: 'secondaryPreferred' | 'primary' } = {}
   ): Promise<PreferencesEntity | null> {
-    const data = await this.MongooseModel.findOne(query).read(options.readPreference || 'primary');
+    const data = await this.MongooseModel.findOne(query)
+      .read(options.readPreference || 'primary')
+      .lean()
+      .exec();
 
     if (!data) {
       return null;
     }
 
-    return JSON.parse(JSON.stringify(data.toObject())) as PreferencesEntity;
+    return toPlainPreference(data) as PreferencesEntity;
   }
 }
