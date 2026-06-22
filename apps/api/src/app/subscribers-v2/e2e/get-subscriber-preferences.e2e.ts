@@ -212,7 +212,16 @@ describe('Get Subscriber Preferences - /subscribers/:subscriberId/preferences (G
     expect(global.channels.email).to.equal(false);
     expect(global.channels.in_app).to.equal(true);
 
-    for (const leaked of ['_id', 'id', '_templateId', '_environmentId', '_organizationId', '_subscriberId', 'type', 'preferences']) {
+    for (const leaked of [
+      '_id',
+      'id',
+      '_templateId',
+      '_environmentId',
+      '_organizationId',
+      '_subscriberId',
+      'type',
+      'preferences',
+    ]) {
       expect(global, `global preference must not expose "${leaked}"`).to.not.have.property(leaked);
     }
 
