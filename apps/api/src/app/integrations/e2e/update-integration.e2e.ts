@@ -1061,7 +1061,7 @@ describe('Update Integration - /integrations/:integrationId (PUT) #novu-v2', () 
         .send(payload);
 
       expect(body.statusCode).to.equal(403);
-      expect(body.message).to.contain('API key authentication is scoped to a single environment');
+      expect(body.message).to.contain('is scoped to a single environment');
 
       const untouched = await integrationRepository.findOne({
         _id: integrationOne._id,
@@ -1122,7 +1122,7 @@ describe('Update Integration - /integrations/:integrationId (PUT) #novu-v2', () 
         .send(payload);
 
       expect(body.statusCode).to.equal(403);
-      expect(body.message).to.contain('API key authentication is scoped to a single environment');
+      expect(body.message).to.contain('is scoped to a single environment');
 
       const untouched = await integrationRepository.findOne({
         _id: otherEnvironmentIntegration._id,

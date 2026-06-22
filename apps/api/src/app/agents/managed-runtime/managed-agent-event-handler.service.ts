@@ -1,11 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
-import {
-  AgentMcpServerRepository,
-  ConversationRepository,
-  McpConnectionRepository,
-  SubscriberRepository,
-} from '@novu/dal';
+import { ConversationRepository } from '@novu/dal';
 import {
   CredentialExpiredError,
   McpServerError,
@@ -14,17 +9,14 @@ import {
   type StreamCallbacks,
   type Response as ThalamusResponse,
 } from '@novu/thalamus';
+import { InboundAckService } from '../conversation-runtime/ack/inbound-ack.service';
 import { HandleAgentReplyCommand } from '../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.command';
 import { HandleAgentReply } from '../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.usecase';
 import { HandlePlanProgressCommand } from '../conversation-runtime/reply/handle-plan-progress/handle-plan-progress.command';
 import { HandlePlanProgress } from '../conversation-runtime/reply/handle-plan-progress/handle-plan-progress.usecase';
-import { EnsureProviderManagedVault } from '../mcp/connections/ensure-provider-managed-vault/ensure-provider-managed-vault.usecase';
-import { GenerateMcpOAuthUrl } from '../mcp/oauth/generate-mcp-oauth-url/generate-mcp-oauth-url.usecase';
+import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
 import { captureAgentException } from '../shared/errors/capture-agent-sentry';
 import { DemoClaudeQuotaPolicy } from './demo-claude-quota-policy.service';
-import { listOAuthMcps } from './setup/list-oauth-mcps.helper';
-import { findOAuthMcpByServerName } from './setup/oauth-mcp.types';
-import { buildSetupCardForMcps } from './setup/setup-card.builder';
 import { HandlePendingToolApprovalsCommand } from './tool-approval/handle-pending-tool-approvals.command';
 import { HandlePendingToolApprovals } from './tool-approval/handle-pending-tool-approvals.usecase';
 
@@ -41,15 +33,11 @@ interface BaseCommandFields {
 export class ManagedAgentEventHandler {
   constructor(
     private readonly conversationRepository: ConversationRepository,
-    private readonly subscriberRepository: SubscriberRepository,
-    private readonly agentMcpServerRepository: AgentMcpServerRepository,
-    private readonly mcpConnectionRepository: McpConnectionRepository,
-    private readonly generateMcpOAuthUrl: GenerateMcpOAuthUrl,
-    private readonly ensureProviderManagedVault: EnsureProviderManagedVault,
     private readonly handleAgentReply: HandleAgentReply,
     private readonly handlePlanProgress: HandlePlanProgress,
     private readonly handlePendingToolApprovals: HandlePendingToolApprovals,
     private readonly demoQuota: DemoClaudeQuotaPolicy,
+    private readonly inboundAck: InboundAckService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -149,6 +137,29 @@ export class ManagedAgentEventHandler {
         }
       },
 
+      onMessage: async (event: { text: string }) => {
+        try {
+          if (metadata.suppressReply === 'true') {
+            return;
+          }
+          const markdown = event.text?.trim();
+          if (!markdown) {
+            return;
+          }
+          await this.handleAgentReply.execute(HandleAgentReplyCommand.create({ ...baseFields, reply: { markdown } }));
+        } catch (err) {
+          this.logger.error(err, `onMessage failed: session=${sessionId}`);
+          captureAgentException(err, {
+            component: 'managed-agent-event-handler',
+            operation: 'on-message',
+            sessionId,
+          });
+          // Re-throw so the webhook returns 5xx and the observer retries delivery,
+          // otherwise a failed reply is acked as complete and silently lost.
+          throw err;
+        }
+      },
+
       onFinish: async (event: { response: ThalamusResponse }) => {
         try {
           if (event.response.finishReason === 'requires-action') {
@@ -156,21 +167,34 @@ export class ManagedAgentEventHandler {
               HandlePendingToolApprovalsCommand.create({
                 ...baseFields,
                 subscriberId: metadata.subscriberId,
-                platform: metadata.platform,
+                platform: metadata.platform as AgentPlatformEnum,
+                platformThreadId: metadata.platformThreadId,
                 sessionId,
                 response: event.response,
               })
             );
+            await this.inboundAck.onManagedTurnComplete(metadata);
 
             return;
           }
 
-          const replyMarkdown = event.response.content?.trim();
-          if (replyMarkdown) {
+          if (metadata.suppressReply === 'true') {
+            await this.inboundAck.onManagedTurnComplete(metadata);
+
+            return;
+          }
+
+          // TODO: remove after the observer is fully rolled out.
+          // Old observers still send `response.content`; new ones reply via `onMessage`
+          // and never set `content`, so this only runs against an old observer.
+          const legacyContent = (event.response as { content?: string }).content?.trim();
+          if (legacyContent) {
             await this.handleAgentReply.execute(
-              HandleAgentReplyCommand.create({ ...baseFields, reply: { markdown: replyMarkdown } })
+              HandleAgentReplyCommand.create({ ...baseFields, reply: { markdown: legacyContent } })
             );
           }
+
+          await this.inboundAck.onManagedTurnComplete(metadata);
 
           await this.demoQuota.recordUsage(
             metadata.environmentId,
@@ -227,35 +251,12 @@ export class ManagedAgentEventHandler {
     if (error instanceof SessionExpiredError) {
       this.logger.warn(`Session ${sessionId} expired, clearing for next message`);
       await this.conversationRepository.clearExternalSessionId(metadata.environmentId, metadata.conversationId);
+      await this.inboundAck.onManagedTurnComplete(metadata);
 
       return;
     }
 
-    const failedMcpServerName = parseMcpInitFailureServerName(error);
-
-    const postedReconnectSetupCard =
-      failedMcpServerName && metadata.subscriberId
-        ? await this.tryPostMcpReconnectSetupCard({
-            ...baseCommand,
-            subscriberId: metadata.subscriberId,
-            serverName: failedMcpServerName,
-          })
-        : false;
-
-    if (postedReconnectSetupCard) {
-      try {
-        await this.handlePlanProgress.execute(
-          HandlePlanProgressCommand.create({ ...baseCommand, toolProgress: { action: 'fail' } })
-        );
-      } catch (err) {
-        this.logger.error(err, `Failed to mark plan progress failed for session ${sessionId}`);
-        captureAgentException(err, {
-          component: 'managed-agent-event-handler',
-          operation: 'deliver-error-plan-progress',
-          sessionId,
-        });
-      }
-
+    if (parseMcpInitFailureServerName(error)) {
       return;
     }
 
@@ -265,6 +266,7 @@ export class ManagedAgentEventHandler {
       await this.handleAgentReply.execute(
         HandleAgentReplyCommand.create({ ...baseCommand, reply: { markdown: message } })
       );
+      await this.inboundAck.onManagedTurnComplete(metadata);
       await this.handlePlanProgress.execute(
         HandlePlanProgressCommand.create({ ...baseCommand, toolProgress: { action: 'fail' } })
       );
@@ -275,90 +277,6 @@ export class ManagedAgentEventHandler {
         operation: 'deliver-error-message',
         sessionId,
       });
-    }
-  }
-
-  private async tryPostMcpReconnectSetupCard(params: {
-    userId: string;
-    environmentId: string;
-    organizationId: string;
-    conversationId: string;
-    agentIdentifier: string;
-    integrationIdentifier: string;
-    subscriberId: string;
-    serverName: string;
-  }): Promise<boolean> {
-    const conversation = await this.conversationRepository.findOne(
-      {
-        _id: params.conversationId,
-        _environmentId: params.environmentId,
-        _organizationId: params.organizationId,
-      },
-      ['_agentId']
-    );
-
-    if (!conversation?._agentId) {
-      return false;
-    }
-
-    const mcps = await listOAuthMcps(
-      {
-        subscriberRepository: this.subscriberRepository,
-        agentMcpServerRepository: this.agentMcpServerRepository,
-        mcpConnectionRepository: this.mcpConnectionRepository,
-      },
-      {
-        environmentId: params.environmentId,
-        organizationId: params.organizationId,
-        agentId: conversation._agentId,
-        subscriberId: params.subscriberId,
-      }
-    );
-    const mcp = findOAuthMcpByServerName(mcps, params.serverName);
-
-    if (!mcp) {
-      this.logger.warn(
-        {
-          conversationId: params.conversationId,
-          serverName: params.serverName,
-        },
-        'MCP init failure did not match an OAuth MCP on the agent'
-      );
-
-      return false;
-    }
-
-    try {
-      const card = await buildSetupCardForMcps({
-        mcps,
-        forceReconnectAgentMcpServerIds: new Set([mcp.agentMcpServerId]),
-        environmentId: params.environmentId,
-        organizationId: params.organizationId,
-        agentIdentifier: params.agentIdentifier,
-        subscriberId: params.subscriberId,
-        conversationId: params.conversationId,
-        generateMcpOAuthUrl: this.generateMcpOAuthUrl,
-        ensureProviderManagedVault: this.ensureProviderManagedVault,
-        logger: this.logger,
-      });
-
-      await this.handleAgentReply.execute(
-        HandleAgentReplyCommand.create({
-          userId: params.userId,
-          organizationId: params.organizationId,
-          environmentId: params.environmentId,
-          conversationId: params.conversationId,
-          agentIdentifier: params.agentIdentifier,
-          integrationIdentifier: params.integrationIdentifier,
-          reply: { card },
-        })
-      );
-
-      return true;
-    } catch (err) {
-      this.logger.warn(err, `Failed to post MCP reconnect setup card for conversation ${params.conversationId}`);
-
-      return false;
     }
   }
 }

@@ -1,5 +1,5 @@
 import * as ApplicationGeneric from '@novu/application-generic';
-import { AnalyticsService, encryptCredentials, FeatureFlagsService } from '@novu/application-generic';
+import { AnalyticsService, encryptCredentials } from '@novu/application-generic';
 import { AgentRepository, ConversationRepository, IntegrationRepository } from '@novu/dal';
 import { AgentRuntimeProviderIdEnum, IntegrationKindEnum } from '@novu/shared';
 import { expect } from 'chai';
@@ -14,7 +14,6 @@ describe('MigrateAgentRuntime', () => {
   let integrationRepository: sinon.SinonStubbedInstance<IntegrationRepository>;
   let conversationRepository: sinon.SinonStubbedInstance<ConversationRepository>;
   let analyticsService: sinon.SinonStubbedInstance<AnalyticsService>;
-  let featureFlagsService: sinon.SinonStubbedInstance<FeatureFlagsService>;
   let sourceProvider: ReturnType<typeof buildMockProvider>;
   let targetProvider: ReturnType<typeof buildMockProvider>;
   let previousApiKey: string | undefined;
@@ -45,8 +44,6 @@ describe('MigrateAgentRuntime', () => {
     integrationRepository = sinon.createStubInstance(IntegrationRepository);
     conversationRepository = sinon.createStubInstance(ConversationRepository);
     analyticsService = sinon.createStubInstance(AnalyticsService);
-    featureFlagsService = sinon.createStubInstance(FeatureFlagsService);
-    featureFlagsService.getFlag.resolves(false);
 
     sourceProvider = buildMockProvider();
     targetProvider = buildMockProvider();
@@ -111,8 +108,7 @@ describe('MigrateAgentRuntime', () => {
       agentRepository as any,
       integrationRepository as any,
       conversationRepository as any,
-      analyticsService as any,
-      featureFlagsService as any
+      analyticsService as any
     );
   });
 

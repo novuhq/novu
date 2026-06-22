@@ -22,6 +22,7 @@ import {
 } from '@novu/shared';
 import { validateConnectionMode } from '../../../../channel-connections/usecases/channel-connection.utils';
 import { ensureConnectDashboardSubscriber } from '../../../../channel-connections/usecases/ensure-connect-dashboard-subscriber';
+import { areHexDigestsEqual } from '../../../../shared/helpers/timing-safe-equal';
 import { CHAT_OAUTH_CALLBACK_PATH } from '../chat-oauth.constants';
 import { encodeOAuthState, splitOAuthState } from '../chat-oauth-state.util';
 import { GenerateSlackOauthUrlCommand } from './generate-slack-oauth-url.command';
@@ -211,7 +212,7 @@ export class GenerateSlackOauthUrl {
       const { payload, signature } = splitOAuthState(state);
 
       const expectedSignature = createHash(environmentApiKey, payload);
-      if (signature !== expectedSignature) {
+      if (!areHexDigestsEqual(expectedSignature, signature)) {
         throw new Error('Invalid state signature');
       }
 

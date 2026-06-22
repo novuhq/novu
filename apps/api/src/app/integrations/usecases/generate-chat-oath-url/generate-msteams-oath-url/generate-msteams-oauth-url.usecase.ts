@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { createHash } from '@novu/application-generic';
 import { EnvironmentRepository, ICredentialsEntity, IntegrationEntity, SubscriberRepository } from '@novu/dal';
 import { ChatProviderIdEnum, ContextPayload } from '@novu/shared';
+import { areHexDigestsEqual } from '../../../../shared/helpers/timing-safe-equal';
 import { CHAT_OAUTH_CALLBACK_PATH } from '../chat-oauth.constants';
 import { encodeOAuthState, splitOAuthState } from '../chat-oauth-state.util';
 import { GenerateMsTeamsOauthUrlCommand } from './generate-msteams-oauth-url.command';
@@ -169,7 +170,7 @@ export class GenerateMsTeamsOauthUrl {
       const { payload, signature } = splitOAuthState(state);
 
       const expectedSignature = createHash(environmentApiKey, payload);
-      if (signature !== expectedSignature) {
+      if (!areHexDigestsEqual(expectedSignature, signature)) {
         throw new Error('Invalid state signature');
       }
 

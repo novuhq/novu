@@ -3,11 +3,15 @@ import { AWS_CLAUDE_COMMERCIAL_REGIONS } from '@novu/shared';
 import { Box, Text, useInput } from 'ink';
 // biome-ignore lint/correctness/noUnusedImports: classic-JSX linter falls back here because tsconfig.json excludes ui/.
 import React from 'react';
+import { SEND_FROM_ACCOUNT_LABEL } from '../copy/email-onboarding';
 import { channelDisplayName, isDashboardOnlyChannel } from '../dashboard-urls';
-import type { AgentRuntimeChoice, ChannelChoice } from '../types';
+import { validateSlackConfigTokenFormat } from '../pipeline/channels/slack-config-token';
+import { resolveChatSdkOutcomeMessage } from '../pipeline/chat-sdk/outcome-message';
+import type { AgentConnectMode, ChannelChoice } from '../types';
+import { ChatSdkPhaseContent, isChatSdkPhase } from './chat-sdk-phase-content';
 import { CopyableLink } from './copyable-link';
 import { PreviewGeneratedContent } from './preview-generated-content';
-import type { ConnectStore } from './store';
+import type { ConnectStore, Phase } from './store';
 import { WelcomeContent } from './welcome-content';
 
 const NEW_AGENT_VALUE = '__new__';
@@ -31,6 +35,10 @@ export function PhaseContent({
   onChannelHover: (channel: ChannelChoice | null) => void;
   previewMorphComplete: boolean;
 }): React.ReactElement {
+  if (isChatSdkPhase(phase)) {
+    return ChatSdkPhaseContent({ phase });
+  }
+
   switch (phase.kind) {
     case 'welcome':
       return <WelcomeContent onContinue={phase.resolve} />;
@@ -51,14 +59,14 @@ export function PhaseContent({
     case 'loading-integrations':
       return <Text color="cyan">Looking up agent runtime integrations…</Text>;
 
-    case 'pick-runtime':
+    case 'pick-connect-mode':
       return (
         <Box flexDirection="column" gap={1}>
           <Box flexDirection="column">
             <Text bold>Where do you want the agent to run?</Text>
             <Text dimColor>Choose the agent runtime. Novu connects it to Slack, email, and more.</Text>
           </Box>
-          <RuntimeSelect onChange={(value) => phase.resolve(value)} />
+          <ConnectModeSelect onChange={(value) => phase.resolve(value)} />
         </Box>
       );
 
@@ -202,40 +210,7 @@ export function PhaseContent({
       return <Text color="cyan">Linking Slack to your agent…</Text>;
 
     case 'paste-slack-token':
-      return (
-        <Box flexDirection="column" gap={1}>
-          <Text bold>Paste a Slack App Configuration Token</Text>
-          <Text dimColor>
-            Your Slack integration has no OAuth credentials yet. Novu can create the Slack app for you from a manifest
-            if you paste a short-lived configuration token.
-          </Text>
-          <Box flexDirection="column">
-            <Text dimColor>1. Open </Text>
-            <Text color="cyan">https://api.slack.com/apps</Text>
-            <Text dimColor>2. Scroll to the bottom of the page</Text>
-            <Text dimColor>3. Generate an App Configuration Token</Text>
-            <Text dimColor>4. Copy the access token (starts with xoxe.xoxp-)</Text>
-          </Box>
-          {phase.retry ? (
-            <Text color="yellow">Previous token was rejected by Slack. Generate a fresh one and try again.</Text>
-          ) : null}
-          <Box borderStyle="round" paddingX={1}>
-            <TextInput
-              placeholder="xoxe.xoxp-…"
-              onSubmit={(value) => {
-                const trimmed = value.trim();
-                if (!trimmed) {
-                  phase.reject(new Error('No Slack App Configuration Token provided.'));
-
-                  return;
-                }
-                phase.resolve(trimmed);
-              }}
-            />
-          </Box>
-          <Text dimColor>The token is sent to your Novu API once, used to create the Slack app, then discarded.</Text>
-        </Box>
-      );
+      return <PasteSlackConfigTokenContent phase={phase} />;
 
     case 'running-slack-quick-setup':
       return <Text color="cyan">Creating Slack app from manifest…</Text>;
@@ -266,7 +241,9 @@ export function PhaseContent({
         <EmailReadyContent
           inboundAddress={phase.inboundAddress}
           mailtoUrl={phase.mailtoUrl}
+          sendFromEmail={phase.sendFromEmail}
           onContinue={phase.resolve}
+          onBack={phase.onBack}
         />
       );
 
@@ -279,6 +256,11 @@ export function PhaseContent({
           <Box flexDirection="column" paddingY={1}>
             <Text bold>{phase.inboundAddress}</Text>
           </Box>
+          {phase.sendFromEmail ? (
+            <Text dimColor>
+              {SEND_FROM_ACCOUNT_LABEL} <Text color="white">{phase.sendFromEmail}</Text>
+            </Text>
+          ) : null}
           <Text dimColor>Waiting for your email to arrive…</Text>
         </Box>
       );
@@ -288,6 +270,21 @@ export function PhaseContent({
 
     case 'telegram-intro':
       return <TelegramIntroContent botfatherQr={phase.botfatherQr} onContinue={phase.resolve} />;
+
+    case 'pick-telegram-token-delivery': {
+      const options = [
+        { label: 'Scan QR / open setup page', value: 'setup-page' as const },
+        { label: 'Paste the bot token here', value: 'terminal' as const },
+      ];
+
+      return (
+        <Box flexDirection="column" gap={1}>
+          <Text bold>How do you want to save your bot token?</Text>
+          <Text dimColor>Scan the QR on your phone, or paste the token directly in this terminal.</Text>
+          <Select options={options} onChange={(value) => phase.resolve(value as 'setup-page' | 'terminal')} />
+        </Box>
+      );
+    }
 
     case 'telegram-link-token':
       return (
@@ -338,16 +335,32 @@ export function PhaseContent({
     case 'error':
       return <Text color="red">✗ {phase.message}</Text>;
 
-    default:
+    default: {
+      const _exhaustive: never = phase;
+
       return <Text />;
+    }
   }
 }
 
-function RuntimeSelect({ onChange }: { onChange: (value: AgentRuntimeChoice) => void }): React.ReactElement {
-  const options: Array<{ value: AgentRuntimeChoice; title: string; detail?: string }> = [
-    { value: 'demo', title: 'Demo Credentials', detail: '10 conversations per month' },
+function ConnectModeSelect({ onChange }: { onChange: (value: AgentConnectMode) => void }): React.ReactElement {
+  const options: Array<{
+    value: AgentConnectMode;
+    title: string;
+    detail?: string;
+  }> = [
+    {
+      value: 'demo',
+      title: 'Demo Credentials',
+      detail: '10 conversations per month',
+    },
     { value: 'claude', title: 'Claude Managed Agents' },
     { value: 'claude-aws', title: 'AWS Claude Managed Agents' },
+    {
+      value: 'chat-sdk',
+      title: 'Chat SDK',
+      detail: 'your own app is the brain',
+    },
   ];
   const [idx, setIdx] = React.useState(0);
 
@@ -486,6 +499,53 @@ function truncateInline(text: string, maxLength: number): string {
   return `${text.slice(0, maxLength - 1)}…`;
 }
 
+function PasteSlackConfigTokenContent({
+  phase,
+}: {
+  phase: Extract<Phase, { kind: 'paste-slack-token' }>;
+}): React.ReactElement {
+  const [inputError, setInputError] = React.useState<string | undefined>();
+  const displayError = phase.verificationError ?? inputError;
+
+  return (
+    <Box flexDirection="column" gap={1}>
+      <Text bold>Paste a Slack App Configuration Token</Text>
+      <Text dimColor>
+        Your Slack integration has no OAuth credentials yet. Novu can create the Slack app for you from a manifest if
+        you paste a short-lived configuration token — not your bot token (xoxb-).
+      </Text>
+      <Box flexDirection="column">
+        <Text dimColor>1. Open </Text>
+        <Text color="cyan">https://api.slack.com/apps</Text>
+        <Text dimColor>2. Scroll to the bottom of the page</Text>
+        <Text dimColor>3. Generate an App Configuration Token</Text>
+        <Text dimColor>4. Copy the access token (starts with xoxe.xoxp-)</Text>
+      </Box>
+      {displayError ? <Text color="yellow">{displayError}</Text> : null}
+      {phase.retry && !displayError ? (
+        <Text color="yellow">Previous token was rejected by Slack. Generate a fresh one and try again.</Text>
+      ) : null}
+      <Box borderStyle="round" paddingX={1}>
+        <TextInput
+          placeholder="xoxe.xoxp-…"
+          onSubmit={(value) => {
+            const formatError = validateSlackConfigTokenFormat(value);
+            if (formatError) {
+              setInputError(formatError);
+
+              return;
+            }
+
+            setInputError(undefined);
+            phase.resolve(value.trim());
+          }}
+        />
+      </Box>
+      <Text dimColor>The token is sent to your Novu API once, used to create the Slack app, then discarded.</Text>
+    </Box>
+  );
+}
+
 function SlackOAuthReadyContent({
   appCreated,
   authorizeUrl,
@@ -528,14 +588,22 @@ function SlackOAuthReadyContent({
 function EmailReadyContent({
   inboundAddress,
   mailtoUrl,
+  sendFromEmail,
   onContinue,
+  onBack,
 }: {
   inboundAddress: string;
   mailtoUrl: string;
+  sendFromEmail?: string;
   onContinue: () => void;
+  onBack?: () => void;
 }): React.ReactElement {
   useInput((_input, key) => {
-    if (key.return || _input === ' ') onContinue();
+    if (key.escape && onBack) {
+      onBack();
+    } else if (key.return || _input === ' ') {
+      onContinue();
+    }
   });
 
   return (
@@ -543,12 +611,25 @@ function EmailReadyContent({
       <Text bold color="cyan">
         Your agent has an inbox
       </Text>
-      <Text dimColor>Send any email to the address below — your agent will read it and reply to your inbox.</Text>
+      <Text dimColor>
+        Unlike Slack or Telegram, email starts with you sending the first message. Your agent reads it and replies to
+        the same inbox.
+      </Text>
       <Box flexDirection="column" paddingY={1}>
+        <Text dimColor>Inbound address:</Text>
         <Text bold>{inboundAddress}</Text>
       </Box>
-      <Text dimColor>{`mailto link: ${mailtoUrl.slice(0, 80)}${mailtoUrl.length > 80 ? '…' : ''}`}</Text>
+      {sendFromEmail ? (
+        <Text dimColor>
+          Email agents reply to the address you send from. Use your Novu account email:{' '}
+          <Text color="white" bold>
+            {sendFromEmail}
+          </Text>
+        </Text>
+      ) : null}
+      <CopyableLink url={mailtoUrl} hint="Pre-filled draft email:" color="white" />
       <Text color="cyan">Press Enter to open a pre-filled draft in your default mail client →</Text>
+      {onBack ? <Text dimColor>Esc · back to channel list</Text> : null}
     </Box>
   );
 }
@@ -631,7 +712,17 @@ function SuccessView({
 }: {
   phase: Extract<ReturnType<ConnectStore['phase']['get']>, { kind: 'success' }>;
 }): React.ReactElement {
-  const { agent, connectDashboardUrl, environmentSlug, connectedChannel, dashboardRedirectChannel } = phase;
+  const {
+    agent,
+    connectDashboardUrl,
+    environmentSlug,
+    connectedChannel,
+    dashboardRedirectChannel,
+    isKeyless,
+    claimUrl,
+    connectMode,
+    chatSdkOutcome,
+  } = phase;
   const agentUrl = environmentSlug
     ? `${connectDashboardUrl}/env/${environmentSlug}/connect/agents/${encodeURIComponent(agent.identifier)}`
     : `${connectDashboardUrl}/connect/agents/${encodeURIComponent(agent.identifier)}`;
@@ -644,6 +735,7 @@ function SuccessView({
     return null;
   })();
   const redirectChannelLabel = dashboardRedirectChannel ? channelDisplayName(dashboardRedirectChannel) : null;
+  const chatSdkMessage = resolveChatSdkOutcomeMessage(connectMode, chatSdkOutcome);
 
   return (
     <Box flexDirection="column" gap={1}>
@@ -653,11 +745,33 @@ function SuccessView({
           <Text bold>Agent:</Text> {agent.name} <Text dimColor>({agent.identifier})</Text>
         </Text>
         {renderSuccessChannelMessage(channelLabel, redirectChannelLabel)}
-        <Text>
-          <Text bold>Dashboard:</Text> {agentUrl}
-        </Text>
+        {chatSdkMessage ? <Text color="cyan">{chatSdkMessage}</Text> : null}
+        {renderSuccessNextStep({ isKeyless, claimUrl, agentUrl })}
       </Box>
     </Box>
+  );
+}
+
+function renderSuccessNextStep(input: {
+  isKeyless: boolean;
+  claimUrl: string | null;
+  agentUrl: string;
+}): React.ReactElement {
+  if (input.isKeyless && input.claimUrl) {
+    return (
+      <>
+        <Text>
+          <Text bold>Claim your agent:</Text> {input.claimUrl}
+        </Text>
+        <Text dimColor>Sign up to move your agent and conversation into your own account.</Text>
+      </>
+    );
+  }
+
+  return (
+    <Text>
+      <Text bold>Dashboard:</Text> {input.agentUrl}
+    </Text>
   );
 }
 

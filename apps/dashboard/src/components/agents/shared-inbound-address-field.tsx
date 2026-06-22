@@ -1,5 +1,5 @@
 import { RiInformation2Line } from 'react-icons/ri';
-import { CopyButton } from '@/components/primitives/copy-button';
+import { CopyableEmailAddress } from '@/components/agents/copyable-email-address';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 
 type SharedInboundAddressFieldProps = {
@@ -23,19 +23,7 @@ export function SharedInboundAddressField({ sharedInboundAddress }: SharedInboun
         </Tooltip>
       </div>
 
-      <div className="border-stroke-soft bg-bg-white flex h-8 items-center overflow-hidden rounded-lg border shadow-xs">
-        <span className="text-text-soft flex h-full items-center pl-2 pr-1 text-paragraph-xs font-mono leading-4">
-          @
-        </span>
-        <span className="text-text-sub text-paragraph-xs min-w-0 flex-1 truncate font-mono leading-4">
-          {sharedInboundAddress}
-        </span>
-        <CopyButton
-          size="2xs"
-          valueToCopy={sharedInboundAddress}
-          className="border-stroke-soft h-full w-8 shrink-0 justify-center border-l"
-        />
-      </div>
+      <CopyableEmailAddress email={sharedInboundAddress} />
 
       <p className="text-text-soft text-paragraph-xs flex items-start gap-1 leading-4">
         <RiInformation2Line className="mt-0.5 size-3.5 shrink-0" aria-hidden />

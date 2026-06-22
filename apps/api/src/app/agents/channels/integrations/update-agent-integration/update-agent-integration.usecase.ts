@@ -73,6 +73,17 @@ export class UpdateAgentIntegration {
       throw new ConflictException('This integration is already linked to the agent.');
     }
 
+    // The duplicate check above only sees active links; a tombstoned (disconnected)
+    // link for the target integration would still trip the unique
+    // (_agentId, _integrationId) index when the update re-points this link.
+    await this.agentIntegrationRepository.delete({
+      _agentId: agent._id,
+      _integrationId: targetIntegration._id,
+      _environmentId: command.environmentId,
+      _organizationId: command.organizationId,
+      disconnectedAt: { $ne: null },
+    });
+
     await this.agentIntegrationRepository.updateOne(
       {
         _id: command.agentIntegrationId,

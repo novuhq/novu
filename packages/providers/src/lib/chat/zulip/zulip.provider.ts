@@ -7,16 +7,14 @@ import {
   ISendMessageSuccessResponse,
   isChannelDataOfType,
 } from '@novu/stateless';
-import axios from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { safeChatWebhookJsonRequest } from '../../../utils/safe-chat-webhook-request';
 import { WithPassthrough } from '../../../utils/types';
 
 export class ZulipProvider extends BaseProvider implements IChatProvider {
   id = ChatProviderIdEnum.Zulip;
   channelType = ChannelTypeEnum.CHAT as ChannelTypeEnum.CHAT;
   protected casing: CasingEnum = CasingEnum.SNAKE_CASE;
-
-  private axiosInstance = axios.create();
 
   constructor(private config) {
     super();
@@ -32,12 +30,12 @@ export class ZulipProvider extends BaseProvider implements IChatProvider {
 
     const { channelData } = data;
 
-    await this.axiosInstance.post(
-      channelData.endpoint.url,
-      this.transform(bridgeProviderData, {
+    await safeChatWebhookJsonRequest({
+      url: channelData.endpoint.url,
+      body: this.transform(bridgeProviderData, {
         text: data.content,
-      }).body
-    );
+      }).body,
+    });
 
     return {
       date: new Date().toISOString(),

@@ -1,8 +1,7 @@
-import { RiAtLine, RiCloseLine, RiInformation2Line } from 'react-icons/ri';
+import { RiCloseLine, RiInformation2Line } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
 import { type DomainResponse } from '@/api/domains';
-import { CopyButton } from '@/components/primitives/copy-button';
-import { Input } from '@/components/primitives/input';
+import { CopyableEmailAddress } from '@/components/agents/copyable-email-address';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { useEnvironment } from '@/context/environment/hooks';
 import { buildRoute, ROUTES } from '@/utils/routes';
@@ -41,7 +40,7 @@ export function InboundAddressConfig({
     : ROUTES.INTEGRATIONS;
 
   return (
-    <div className="flex flex-col gap-3 w-full">
+    <div className="flex w-full max-w-xl flex-col gap-3">
       <div className="flex flex-col gap-1.5">
         <div className="flex items-center gap-1">
           <span className="text-text-sub text-label-xs font-medium leading-4">Agent email address</span>
@@ -57,18 +56,7 @@ export function InboundAddressConfig({
           </Tooltip>
         </div>
 
-        {sharedInboundAddress && (
-          <Input
-            size="xs"
-            readOnly
-            aria-label="Agent email address"
-            value={sharedInboundAddress}
-            leadingIcon={RiAtLine}
-            inlineTrailingNode={
-              <CopyButton size="2xs" valueToCopy={sharedInboundAddress} className="size-6 shrink-0 justify-center" />
-            }
-          />
-        )}
+        {sharedInboundAddress ? <CopyableEmailAddress email={sharedInboundAddress} /> : null}
 
         {configuredAddresses.map((addr) => {
           const full = `${addr.address}@${addr.domain}`;

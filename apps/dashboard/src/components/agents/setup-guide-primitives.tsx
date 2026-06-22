@@ -117,12 +117,12 @@ export function SetupStep({
 }) {
   return (
     <div className="relative flex flex-col gap-4 pl-6">
-      <div className={cn('absolute -left-[20px] flex w-5 justify-center', sectionLabel ? 'top-6' : 'top-0')}>
+      <div className={cn('absolute -left-[20px] flex w-5 justify-center', sectionLabel ? 'top-6' : 'top-[3px]')}>
         <StepIndicator status={status} index={index} />
       </div>
       <div
         className={cn(
-          'flex flex-col gap-4 transition-opacity duration-300 ease-out md:flex-row md:gap-20',
+          'flex flex-col gap-4 transition-opacity duration-300 ease-out md:flex-row md:gap-20 pt-[3px]',
           dimmed && 'pointer-events-none opacity-30'
         )}
       >
@@ -204,12 +204,14 @@ export function ListeningStatus({
   onConnected,
   connectedMessage,
   listeningMessage,
+  inline = false,
 }: {
   agentIdentifier: string;
   watchedIntegrationId: string | undefined;
   onConnected?: () => void;
   connectedMessage: string;
   listeningMessage: string;
+  inline?: boolean;
 }) {
   const { currentEnvironment } = useEnvironment();
   const queryClient = useQueryClient();
@@ -314,7 +316,7 @@ export function ListeningStatus({
           />,
           document.body
         )}
-      <div className="flex flex-col gap-2 py-4 pl-6">
+      <div className={cn('flex flex-col gap-2', !inline && 'py-4 pl-6')}>
         <div className="flex flex-col gap-3">
           {connectedAt ? (
             <div className="flex items-center gap-1">

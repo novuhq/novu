@@ -16,6 +16,9 @@ import type { TriggerRecipientsPayload } from '@novu/shared';
 export const INBOUND_ATTACHMENT_ONLY_PREVIEW = '[Attachment]';
 export const DEFAULT_CONVERSATION_TITLE = 'Untitled conversation';
 
+/** Default number of recent activities loaded as conversation history for every runtime. */
+export const AGENT_HISTORY_LIMIT = 50;
+
 export function getConversationTitle(firstMessageText: string): string {
   const trimmed = firstMessageText.trim();
 
@@ -57,6 +60,8 @@ export interface CreateOrGetConversationParams {
   participantType: ConversationParticipantTypeEnum;
   platformUserId: string;
   firstMessageText: string;
+  /** Whether the thread is a direct message — persisted for active-conversation window selection. */
+  isDirectMessage?: boolean;
 }
 
 export interface PersistInboundMessageParams {
@@ -175,6 +180,7 @@ export class AgentConversationService {
       status: ConversationStatusEnum.ACTIVE,
       title: getConversationTitle(params.firstMessageText),
       metadata: {},
+      isDirectMessage: params.isDirectMessage,
       _environmentId: environmentId,
       _organizationId: organizationId,
       lastActivityAt: new Date().toISOString(),
@@ -253,8 +259,25 @@ export class AgentConversationService {
     return activity;
   }
 
-  async getHistory(environmentId: string, conversationId: string, limit = 20): Promise<ConversationActivityEntity[]> {
+  async getHistory(
+    environmentId: string,
+    conversationId: string,
+    limit = AGENT_HISTORY_LIMIT
+  ): Promise<ConversationActivityEntity[]> {
     return this.activityRepository.findByConversation(environmentId, conversationId, limit);
+  }
+
+  /** Resolves the stored activity a reaction targets, matched by platform-native message id. */
+  async findSourceActivity(
+    environmentId: string,
+    conversationId: string,
+    platformMessageId: string
+  ): Promise<ConversationActivityEntity | null> {
+    return this.activityRepository.findByPlatformMessageId(environmentId, conversationId, platformMessageId);
+  }
+
+  async countAgentMessages(environmentId: string, conversationId: string): Promise<number> {
+    return this.activityRepository.countAgentMessages(environmentId, conversationId);
   }
 
   async getConversation(
@@ -281,6 +304,26 @@ export class AgentConversationService {
       agentId,
       integrationId,
       platformThreadId
+    );
+  }
+
+  async findByAgentIntegrationParticipant(params: {
+    environmentId: string;
+    organizationId: string;
+    agentId: string;
+    integrationId: string;
+    participantId: string;
+    participantType?: ConversationParticipantTypeEnum;
+    title?: string;
+  }): Promise<ConversationEntity | null> {
+    return this.conversationRepository.findByAgentIntegrationParticipant(
+      params.environmentId,
+      params.organizationId,
+      params.agentId,
+      params.integrationId,
+      params.participantId,
+      params.participantType,
+      params.title
     );
   }
 
@@ -397,6 +440,14 @@ export class AgentConversationService {
         params.organizationId,
         params.conversationId,
         ConversationStatusEnum.RESOLVED
+      ),
+      // Mark for billing so the next agent engagement is counted as a reopen
+      // activation (a closed thread ends the active conversation episode).
+      this.conversationRepository.markBillingResolved(
+        params.environmentId,
+        params.organizationId,
+        params.conversationId,
+        new Date().toISOString()
       ),
       this.conversationRepository.clearExternalSessionId(params.environmentId, params.conversationId),
       this.activityRepository.createSignalActivity({

@@ -11,6 +11,7 @@ export const QueryKeys = Object.freeze({
   fetchActivity: 'fetchActivity',
   fetchActivities: 'fetchActivities',
   fetchWorkflowRunsCount: 'fetchWorkflowRunsCount',
+  fetchConversationUsage: 'fetchConversationUsage',
   fetchSubscribers: 'fetchSubscribers',
   fetchSubscriber: 'fetchSubscriber',
   fetchSubscriberPreferences: 'fetchSubscriberPreferences',

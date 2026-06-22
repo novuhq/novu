@@ -3,6 +3,8 @@
   "jest.enable": false,
   "editor.defaultFormatter": "biomejs.biome",
   "editor.formatOnSave": true,
+  "typescript.preferences.quoteStyle": "single",
+  "javascript.preferences.quoteStyle": "single",
   "editor.tabSize": 2,
   "files.insertFinalNewline": true,
   "files.trimFinalNewlines": true,

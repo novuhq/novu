@@ -310,15 +310,28 @@ describe('API Rate Limiting #novu-v2', () => {
               });
 
               it(`should return a ${HttpResponseHeaderKeysEnum.RATELIMIT_RESET} header of ${expectedReset}`, async () => {
-                expect(lastResponse.headers[HttpResponseHeaderKeysEnum.RATELIMIT_RESET.toLowerCase()]).to.equal(
-                  `${expectedReset}`
-                );
+                const resetHeader = lastResponse.headers[HttpResponseHeaderKeysEnum.RATELIMIT_RESET.toLowerCase()];
+
+                if (expectedStatus === 429 && expectedReset === 1) {
+                  // At the window boundary, reset can be 0 or 1 depending on timing.
+                  expect(Number(resetHeader)).to.be.at.least(0).and.at.most(1);
+
+                  return;
+                }
+
+                expect(resetHeader).to.equal(`${expectedReset}`);
               });
 
               it(`should return a ${HttpResponseHeaderKeysEnum.RETRY_AFTER} header of ${expectedRetryAfter}`, async () => {
-                expect(lastResponse.headers[HttpResponseHeaderKeysEnum.RETRY_AFTER.toLowerCase()]).to.equal(
-                  expectedRetryAfter && `${expectedRetryAfter}`
-                );
+                const retryAfterHeader = lastResponse.headers[HttpResponseHeaderKeysEnum.RETRY_AFTER.toLowerCase()];
+
+                if (expectedStatus === 429 && expectedRetryAfter === 1) {
+                  expect(Number(retryAfterHeader)).to.be.at.least(0).and.at.most(1);
+
+                  return;
+                }
+
+                expect(retryAfterHeader).to.equal(expectedRetryAfter && `${expectedRetryAfter}`);
               });
 
               const expectedMinThrottled = Math.floor(

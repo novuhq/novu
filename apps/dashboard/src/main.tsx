@@ -2,7 +2,7 @@ import '@novu/maily-core/style.css';
 import { PermissionsEnum } from '@novu/shared';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { createBrowserRouter, Navigate, Outlet, RouterProvider } from 'react-router-dom';
+import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom';
 import './index.css';
 
 import { ConfigureWorkflow } from '@/components/workflow-editor/configure-workflow';
@@ -30,12 +30,6 @@ import {
   WelcomePage,
   WorkflowsPage,
 } from '@/pages';
-import {
-  ConnectApiKeysPage,
-  ConnectConversationsPage,
-  ConnectDashboardPage,
-  ConnectSettingsPage,
-} from '@/pages/connect';
 import { DuplicateWorkflowPage } from '@/pages/duplicate-workflow';
 import { EditStepTemplateV2Page } from '@/pages/edit-step-template-v2';
 import { Landing1SignUpPage } from '@/pages/landing-1-signup';
@@ -49,10 +43,12 @@ import { ChannelPreferences } from './components/workflow-editor/channel-prefere
 import { IS_ENTERPRISE, IS_SELF_HOSTED } from './config';
 import { FeatureFlagsProvider } from './context/feature-flags-provider';
 import { AgentDetailsPage } from './pages/agent-details';
+import { AgentSlackSetupPage } from './pages/agent-slack-setup-page';
 import { AgentTelegramMobileSetupPage } from './pages/agent-telegram-mobile-setup-page';
 import { AgentsPage } from './pages/agents';
 import { AgentsSetupPage } from './pages/agents-setup-page';
 import { CliAuthPage } from './pages/cli-auth';
+import { ConnectClaimPage } from './pages/connect-claim';
 import { ContextsPage } from './pages/contexts';
 import { CreateContextPage } from './pages/create-context';
 import { CreateSubscriberPage } from './pages/create-subscriber';
@@ -82,15 +78,20 @@ import { UsecaseSelectPage } from './pages/usecase-select-page';
 import { VariablesPage } from './pages/variables';
 import { VercelIntegrationPage } from './pages/vercel-integration-page';
 import { AuthRoute, CatchAllRoute, DashboardRoute, ProtectedAuthRoute, RootRoute } from './routes';
-import { ConnectProtectedRoute } from './routes/connect-protected-route';
 import { OnboardingParentRoute } from './routes/onboarding';
 import { ProtectedRoute } from './routes/protected-route';
+import { captureAgentTemplateIdFromUrl } from './utils/agent-template-identity';
+import { captureConnectClaimTokenFromUrl } from './utils/connect-claim-pending';
 import { ROUTES } from './utils/routes';
 import { initializeSentry } from './utils/sentry';
 import { overrideZodErrorMap } from './utils/validation';
 
 initializeSentry();
 overrideZodErrorMap();
+// Stash an incoming `?agentTemplateId=` before Clerk's auth redirects drop the query params.
+captureAgentTemplateIdFromUrl();
+// Stash an incoming connect claim token before Clerk's auth redirects drop the query params.
+captureConnectClaimTokenFromUrl();
 
 const router = createBrowserRouter([
   {
@@ -104,6 +105,16 @@ const router = createBrowserRouter([
       {
         path: ROUTES.CLI_AUTH,
         element: <CliAuthPage />,
+      },
+      {
+        path: ROUTES.CONNECT_CLAIM,
+        element: <ConnectClaimPage />,
+      },
+      {
+        // Public, unauthenticated setup page for Slack. Mounted outside
+        // AuthRoute so unauthenticated visitors are not redirected to sign-in.
+        path: ROUTES.AGENT_SLACK_SETUP,
+        element: <AgentSlackSetupPage />,
       },
       {
         // Public, unauthenticated mobile setup page for Telegram. Mounted outside
@@ -622,52 +633,6 @@ const router = createBrowserRouter([
                   </ProtectedRoute>
                 ),
               },
-              {
-                path: ROUTES.CONNECT_HOME,
-                element: (
-                  <ConnectProtectedRoute>
-                    <ConnectSubscriberProvider>
-                      <Outlet />
-                    </ConnectSubscriberProvider>
-                  </ConnectProtectedRoute>
-                ),
-                children: [
-                  { index: true, element: <ConnectDashboardPage /> },
-                  { path: ROUTES.CONNECT_AGENTS, element: <AgentsPage /> },
-                  {
-                    path: ROUTES.CONNECT_AGENT_DETAILS_INTEGRATIONS_DETAIL,
-                    element: (
-                      <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
-                        <AgentDetailsPage />
-                      </ProtectedRoute>
-                    ),
-                  },
-                  {
-                    path: ROUTES.CONNECT_AGENT_DETAILS_TAB,
-                    element: (
-                      <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
-                        <AgentDetailsPage />
-                      </ProtectedRoute>
-                    ),
-                  },
-                  {
-                    path: ROUTES.CONNECT_AGENT_DETAILS,
-                    element: (
-                      <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
-                        <AgentDetailsPage />
-                      </ProtectedRoute>
-                    ),
-                  },
-                  { path: ROUTES.CONNECT_CONVERSATIONS, element: <ConnectConversationsPage /> },
-                  { path: ROUTES.CONNECT_API_KEYS, element: <ConnectApiKeysPage /> },
-                  { path: ROUTES.CONNECT_SETTINGS, element: <ConnectSettingsPage /> },
-                  { path: ROUTES.CONNECT_SETTINGS_ACCOUNT, element: <ConnectSettingsPage /> },
-                  { path: ROUTES.CONNECT_SETTINGS_ORGANIZATION, element: <ConnectSettingsPage /> },
-                  { path: ROUTES.CONNECT_SETTINGS_TEAM, element: <ConnectSettingsPage /> },
-                  { path: ROUTES.CONNECT_SETTINGS_BILLING, element: <ConnectSettingsPage /> },
-                ],
-              },
-
               {
                 path: '*',
                 element: <CatchAllRoute />,

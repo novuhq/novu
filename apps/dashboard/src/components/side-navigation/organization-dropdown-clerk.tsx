@@ -1,8 +1,5 @@
 import { useAuth, useClerk, useOrganization, useOrganizationList } from '@clerk/react';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
-import { IS_NOVU_CONNECT } from '@/config';
-import { isConnectWorkspace } from '@/utils/connect';
-import { isPlatformWorkspace } from '@/utils/platform-workspace';
 
 type OrganizationMembershipLike = {
   id: string;
@@ -175,11 +172,6 @@ export function OrganizationDropdown() {
   const filterMemberships = useCallback(
     (membership: OrganizationMembershipLike) => {
       if (membership.organization.id === orgId) return false;
-
-      const metadata = membership.organization.publicMetadata;
-      const matchesProduct = IS_NOVU_CONNECT ? isConnectWorkspace(metadata) : isPlatformWorkspace(metadata);
-
-      if (!matchesProduct) return false;
 
       if (isRegionSelectorEnabled) {
         const orgAwsRegion = membership.organization.publicMetadata?.region as string | undefined;

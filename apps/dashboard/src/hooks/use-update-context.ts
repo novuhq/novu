@@ -19,7 +19,7 @@ export const useUpdateContext = (
       return updateContext({ environment, ...args });
     },
     ...options,
-    onSuccess: async (data, variables, ctx) => {
+    onSuccess: async (data, variables, onMutateResult, context) => {
       // Invalidate contexts list queries
       queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchContexts] });
 
@@ -28,7 +28,7 @@ export const useUpdateContext = (
         queryKey: [QueryKeys.fetchContext, currentEnvironment?._id, data.type, data.id],
       });
 
-      options?.onSuccess?.(data, variables, ctx);
+      options?.onSuccess?.(data, variables, onMutateResult, context);
     },
   });
 

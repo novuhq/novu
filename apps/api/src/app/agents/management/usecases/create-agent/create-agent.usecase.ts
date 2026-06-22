@@ -1,13 +1,16 @@
 import { BadRequestException, Injectable, UnprocessableEntityException } from '@nestjs/common';
 import {
+  AgentEntitlementsService,
   AnalyticsService,
   isAgentSharedInboxEnabled,
   PinoLogger,
   shortId,
   slugifyOrRandom,
+  throwPlanLimitExceeded,
 } from '@novu/application-generic';
 import { AgentRepository, CommunityOrganizationRepository, EnvironmentRepository } from '@novu/dal';
 import { ApiServiceLevelEnum, EnvironmentTypeEnum, FeatureNameEnum, getFeatureForTierAsBoolean } from '@novu/shared';
+import { KeylessAbuseGuardService } from '../../../../keyless/keyless-abuse-guard.service';
 import { NovuEmailProvisioningService } from '../../../email/novu-email/find-or-create-novu-email/find-or-create-novu-email.service';
 import { trackAgentCreated } from '../../../shared/analytics/agent-analytics';
 import type { AgentResponseDto, AgentRuntimeConfigResponseDto } from '../../../shared/dtos';
@@ -31,12 +34,16 @@ export class CreateAgent {
     private readonly getAgentRuntimeConfigUsecase: GetAgentRuntimeConfig,
     private readonly environmentRepository: EnvironmentRepository,
     private readonly organizationRepository: CommunityOrganizationRepository,
-    private readonly logger: PinoLogger
+    private readonly logger: PinoLogger,
+    private readonly keylessAbuseGuard: KeylessAbuseGuardService,
+    private readonly agentEntitlementsService: AgentEntitlementsService
   ) {
     this.logger.setContext(this.constructor.name);
   }
 
   async execute(command: CreateAgentCommand): Promise<AgentResponseDto> {
+    await this.assertCreationWithinLimit(command.organizationId, command.environmentId);
+
     const isAdoptMode = command.runtime === 'managed' && !!command.managedRuntime?.externalAgentId;
     let identifier = command.identifier;
 
@@ -68,8 +75,14 @@ export class CreateAgent {
 
     const isManaged = command.runtime === 'managed';
 
+    if (isManaged) {
+      await this.keylessAbuseGuard.assertKeylessAiEnabled(command.organizationId);
+    }
+
     const agent = isManaged
       ? await this.agentRepository.withTransaction(async (session) => {
+          await this.keylessAbuseGuard.assertManagedAgentCap(command.environmentId, command.organizationId);
+
           const managedRuntime = command.managedRuntime!;
 
           // In adopt mode we don't know the name/identifier yet — use temporary placeholders.
@@ -192,6 +205,31 @@ export class CreateAgent {
     const runtimeConfig = await this.loadRuntimeConfig(updatedAgent ?? agent, command);
 
     return toAgentResponse(updatedAgent ?? agent, undefined, runtimeConfig);
+  }
+
+  /**
+   * Hard creation cap. Unlike the runtime plan limit (which soft-blocks
+   * over-limit agents), this rejects the request outright:
+   *   - plan-limited orgs may create up to plan limit + grace buffer (402);
+   *   - the system limit (or a per-org LD override) is an absolute ceiling
+   *     that upgrading cannot lift (409 — contact the Novu team).
+   */
+  private async assertCreationWithinLimit(organizationId: string, environmentId: string): Promise<void> {
+    const allowance = await this.agentEntitlementsService.canCreateAgent(organizationId, environmentId);
+
+    if (allowance.allowed) {
+      return;
+    }
+
+    throwPlanLimitExceeded({
+      resource: 'agents',
+      limitSource: allowance.limitSource,
+      limit: allowance.creationLimit,
+      currentCount: allowance.totalCreated,
+      planMessage:
+        `You have reached the maximum number of agents that can be created on your plan (${allowance.creationLimit}). ` +
+        'Upgrade your plan to create more agents.',
+    });
   }
 
   private async loadRuntimeConfig(

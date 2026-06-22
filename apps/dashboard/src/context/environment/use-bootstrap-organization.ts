@@ -5,7 +5,7 @@ import { useFetchEnvironments } from '@/context/environment/hooks';
 
 // Non-empty cache key that enables the environments query before Novu's org id is known.
 // The org id is only a React Query cache key — `getEnvironments` authenticates via the session.
-const BOOTSTRAP_ORG_CACHE_KEY = 'org';
+export const BOOTSTRAP_ORG_CACHE_KEY = 'org';
 
 /**
  * Right after org creation, Novu's backend writes `externalOrgId` into Clerk asynchronously.

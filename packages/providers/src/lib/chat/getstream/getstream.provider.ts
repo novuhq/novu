@@ -7,15 +7,14 @@ import {
   ISendMessageSuccessResponse,
   isChannelDataOfType,
 } from '@novu/stateless';
-import axios from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { safeChatWebhookJsonRequest } from '../../../utils/safe-chat-webhook-request';
 import { WithPassthrough } from '../../../utils/types';
 
 export class GetstreamChatProvider extends BaseProvider implements IChatProvider {
   id = ChatProviderIdEnum.GetStream;
   channelType = ChannelTypeEnum.CHAT as ChannelTypeEnum.CHAT;
   protected casing = CasingEnum.SNAKE_CASE;
-  private axiosInstance = axios.create();
 
   constructor(
     private config: {
@@ -39,16 +38,20 @@ export class GetstreamChatProvider extends BaseProvider implements IChatProvider
     const transformedData = this.transform(bridgeProviderData, {
       text: data.content,
     });
-    const response = await this.axiosInstance.post(endpoint.url, {
-      ...transformedData.body,
-      headers: {
-        'X-API-KEY': this.config.apiKey,
-        ...transformedData.headers,
+    // GetStream expects auth metadata inside the JSON payload, not as HTTP headers.
+    const response = await safeChatWebhookJsonRequest({
+      url: endpoint.url,
+      body: {
+        ...transformedData.body,
+        headers: {
+          'X-API-KEY': this.config.apiKey,
+          ...transformedData.headers,
+        },
       },
     });
 
     return {
-      id: response.headers['X-WEBHOOK-ID'],
+      id: response.headers['x-webhook-id'] as string,
       date: new Date().toISOString(),
     };
   }

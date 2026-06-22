@@ -31,6 +31,7 @@ import sinon from 'sinon';
 import { AuthService } from '../../../auth/services/auth.service';
 import { GenerateUniqueApiKey } from '../../../environments-v1/usecases/generate-unique-api-key/generate-unique-api-key.usecase';
 import { CreateNovuIntegrations } from '../../../integrations/usecases/create-novu-integrations/create-novu-integrations.usecase';
+import { KeylessAbuseGuardService } from '../../../keyless/keyless-abuse-guard.service';
 import { GetOrganizationSettings } from '../../../organization/usecases/get-organization-settings/get-organization-settings.usecase';
 import { SubscriberSessionResponseDto } from '../../dtos/subscriber-session-response.dto';
 import { AnalyticsEventsEnum } from '../../utils';
@@ -87,6 +88,7 @@ describe('Session', () => {
   let messageRepository: sinon.SinonStubbedInstance<MessageRepository>;
   let getSubscriberSchedule: sinon.SinonStubbedInstance<GetSubscriberSchedule>;
   let updatePreferencesUsecase: sinon.SinonStubbedInstance<UpdatePreferences>;
+  let keylessAbuseGuard: sinon.SinonStubbedInstance<KeylessAbuseGuardService>;
 
   beforeEach(() => {
     environmentRepository = sinon.createStubInstance(EnvironmentRepository);
@@ -112,6 +114,7 @@ describe('Session', () => {
     messageRepository = sinon.createStubInstance(MessageRepository);
     getSubscriberSchedule = sinon.createStubInstance(GetSubscriberSchedule);
     updatePreferencesUsecase = sinon.createStubInstance(UpdatePreferences);
+    keylessAbuseGuard = sinon.createStubInstance(KeylessAbuseGuardService);
 
     session = new Session(
       environmentRepository as any,
@@ -136,7 +139,8 @@ describe('Session', () => {
       logger as any,
       featureFlagsService as any,
       getSubscriberSchedule as any,
-      updatePreferencesUsecase as any
+      updatePreferencesUsecase as any,
+      keylessAbuseGuard as any
     );
 
     messageRepository.getCountBySeverity.resolves(mockSeverityCounts);

@@ -10,15 +10,18 @@ import {
   AgentIntegrationRepository,
   AgentRepository,
   ChannelConnectionRepository,
+  CommunityOrganizationRepository,
   ICredentialsEntity,
   IntegrationEntity,
   IntegrationRepository,
 } from '@novu/dal';
 import { EmailProviderIdEnum } from '@novu/shared';
 import type { WellKnownEmoji } from 'chat';
+import { isKeylessOrganization } from '../../keyless/keyless-organization.helpers';
 import { trackAgentIntegrationFirstWebhook } from '../shared/analytics/agent-analytics';
 import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
 import { AgentInactiveException } from '../shared/errors/agent-inactive.exception';
+import { AgentIntegrationDisconnectedException } from '../shared/errors/agent-integration-disconnected.exception';
 import { esmImport } from '../shared/util/esm-import';
 import { resolveAgentPlatform } from '../shared/util/provider-to-platform';
 
@@ -51,12 +54,20 @@ export interface ResolvedAgentConfig {
   connectionAccessToken?: string;
   environmentId: string;
   organizationId: string;
+  isKeyless: boolean;
+  isManaged: boolean;
   agentId: string;
   agentIdentifier: string;
   /** Human-readable display name; used in email-action confirmation UI. */
   agentName: string;
   integrationIdentifier: string;
   integrationId: string;
+  /**
+   * Whether the organization removed Novu branding (Pro and above). Drives the
+   * "Powered by Novu" watermark applied by the outbound gateway on every
+   * delivery path.
+   */
+  removeNovuBranding: boolean;
   acknowledgeOnReceived: boolean;
   reactionOnResolved: WellKnownEmoji | null;
   bridgeUrl?: string;
@@ -95,6 +106,7 @@ export class AgentConfigResolver {
     private readonly agentIntegrationRepository: AgentIntegrationRepository,
     private readonly integrationRepository: IntegrationRepository,
     private readonly channelConnectionRepository: ChannelConnectionRepository,
+    private readonly organizationRepository: CommunityOrganizationRepository,
     private readonly logger: PinoLogger,
     private readonly analyticsService: AnalyticsService
   ) {
@@ -144,6 +156,29 @@ export class AgentConfigResolver {
       '*'
     );
     if (!agentIntegration) {
+      // A tombstoned link means the user deliberately disconnected this channel.
+      // Reject instead of consulting the heal, so a still-registered platform
+      // webhook cannot resurrect the link. The explicit `disconnectedAt`
+      // condition bypasses the schema-level tombstone exclusion.
+      const disconnectedLink = await this.agentIntegrationRepository.findOne(
+        {
+          _environmentId: environmentId,
+          _organizationId: organizationId,
+          _agentId: agentId,
+          _integrationId: integration._id,
+          disconnectedAt: { $ne: null },
+        },
+        ['_id']
+      );
+
+      if (disconnectedLink) {
+        this.logger.info(
+          { agentId, integrationIdentifier },
+          'Rejecting resolve for an integration that was deliberately disconnected from the agent'
+        );
+        throw new AgentIntegrationDisconnectedException(agentId, integrationIdentifier);
+      }
+
       agentIntegration = await this.tryHealMissingAgentIntegrationLink({
         agentId,
         agentIdentifier: agent.identifier,
@@ -246,11 +281,14 @@ export class AgentConfigResolver {
       connectionAccessToken,
       environmentId,
       organizationId,
+      isKeyless: isKeylessOrganization(organizationId),
+      isManaged: !!agent.managedRuntime,
       agentId: agent._id,
       agentIdentifier: agent.identifier,
       agentName: agent.name,
       integrationIdentifier,
       integrationId: integration._id,
+      removeNovuBranding: await this.resolveRemoveNovuBranding(organizationId),
       acknowledgeOnReceived: agent.behavior?.acknowledgeOnReceived !== false,
       reactionOnResolved: await resolveReaction(
         agent.behavior?.reactionOnResolved,
@@ -261,6 +299,25 @@ export class AgentConfigResolver {
       devBridgeUrl: agent.devBridgeUrl,
       devBridgeActive: agent.devBridgeActive,
     };
+  }
+
+  /**
+   * Fails open to "branded" (`false`) so a transient organization-lookup error
+   * never strips the free-plan watermark — and never breaks delivery.
+   */
+  private async resolveRemoveNovuBranding(organizationId: string): Promise<boolean> {
+    try {
+      const organization = await this.organizationRepository.findById(organizationId, '_id removeNovuBranding');
+
+      return organization?.removeNovuBranding === true;
+    } catch (err) {
+      this.logger.warn(
+        { err: err instanceof Error ? err.message : String(err), organizationId },
+        'Failed to resolve removeNovuBranding; defaulting to branded'
+      );
+
+      return false;
+    }
   }
 
   /**

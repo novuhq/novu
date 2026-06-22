@@ -1,7 +1,8 @@
 import type { Response as ThalamusResponse } from '@novu/thalamus';
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
+import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 
 export class HandlePendingToolApprovalsCommand extends EnvironmentWithUserCommand {
   @IsString()
@@ -20,9 +21,13 @@ export class HandlePendingToolApprovalsCommand extends EnvironmentWithUserComman
   @IsOptional()
   subscriberId?: string;
 
+  @IsEnum(AgentPlatformEnum)
+  @IsNotEmpty()
+  platform: AgentPlatformEnum;
+
   @IsString()
-  @IsOptional()
-  platform?: string;
+  @IsNotEmpty()
+  platformThreadId: string;
 
   @IsString()
   @IsNotEmpty()

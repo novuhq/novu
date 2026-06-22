@@ -1,8 +1,15 @@
 import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { AnalyticsService, InstrumentUsecase, PinoLogger } from '@novu/application-generic';
-import { CLAUDE_ANTHROPIC_SKILLS, CLAUDE_BUILTIN_TOOLS, CLAUDE_DEFAULT_TOOL_TYPES, MCP_SERVERS } from '@novu/shared';
+import {
+  ApiAuthSchemeEnum,
+  CLAUDE_ANTHROPIC_SKILLS,
+  CLAUDE_BUILTIN_TOOLS,
+  CLAUDE_DEFAULT_TOOL_TYPES,
+  MCP_SERVERS,
+} from '@novu/shared';
 
+import { KeylessAbuseGuardService } from '../../../../keyless/keyless-abuse-guard.service';
 import { GenerateManagedAgentCommand } from './generate-managed-agent.command';
 import { type ManagedAgentGenerationOutput, managedAgentGenerationSchema } from './managed-agent-generation.schema';
 
@@ -84,6 +91,9 @@ Pick a clear human name, derive a kebab-case identifier, and write a system prom
 ## System prompt
 The \`systemPrompt\` is sent verbatim to the agent. Address the agent in second person ("You are a…"), describe its role, scope, tone, and the workflow it should follow when invoked. Do not reference Anthropic-specific tools, MCPs or skills — the runtime is custom.
 
+## Language
+ALL output (\`name\`, \`description\`, \`identifier\`, and \`systemPrompt\`) MUST be written in English only. Use plain ASCII characters — no non-English words, no transliterations, and no non-ASCII characters (no accented letters, emoji, or other scripts). Even if the user's description is written in another language, translate everything to English.
+
 Return a JSON object matching the provided schema. Do not include any commentary outside the schema.`;
 }
 
@@ -119,6 +129,9 @@ The \`systemPrompt\` is sent verbatim to Claude. Address the agent in second per
 
 ## Identifier
 The \`identifier\` MUST be a kebab-case slug of the \`name\` (lowercase, hyphen-separated, ASCII only).
+
+## Language
+ALL output (\`name\`, \`description\`, \`identifier\`, and \`systemPrompt\`) MUST be written in English only. Use plain ASCII characters — no non-English words, no transliterations, and no non-ASCII characters (no accented letters, emoji, or other scripts). Even if the user's description is written in another language, translate everything to English.
 
 ## Catalogs
 Available built-in tool types:
@@ -173,7 +186,8 @@ export class GenerateManagedAgent {
   constructor(
     private readonly moduleRef: ModuleRef,
     private readonly analyticsService: AnalyticsService,
-    private readonly logger: PinoLogger
+    private readonly logger: PinoLogger,
+    private readonly keylessAbuseGuard: KeylessAbuseGuardService
   ) {}
 
   @InstrumentUsecase()
@@ -181,6 +195,11 @@ export class GenerateManagedAgent {
     const { user, prompt } = command;
     const runtime = command.runtime ?? 'managed';
     const { organizationId, environmentId, _id: userId } = user;
+
+    if (user.scheme === ApiAuthSchemeEnum.KEYLESS) {
+      await this.keylessAbuseGuard.assertKeylessAiEnabled(organizationId);
+      await this.keylessAbuseGuard.assertGenerateAllowed(command.clientIp);
+    }
 
     const eeAi = this.loadEeAi();
     const llmService = this.moduleRef.get(eeAi.LlmService, { strict: false });

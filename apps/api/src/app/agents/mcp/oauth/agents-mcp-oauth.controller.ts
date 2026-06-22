@@ -1,14 +1,16 @@
-import { BadRequestException, Controller, Get, HttpStatus, NotFoundException, Query, Res } from '@nestjs/common';
+import { BadRequestException, Controller, Get, HttpStatus, NotFoundException, Param, Query, Res } from '@nestjs/common';
 import { ApiExcludeController, ApiOperation } from '@nestjs/swagger';
 import { ApiRateLimitCategoryEnum } from '@novu/shared';
 import { Response } from 'express';
 
 import { ThrottlerCategory } from '../../../rate-limiting/guards';
-import { CONNECTION_RESULT_CSP, renderConnectionResultPage } from '../../../shared/html/connection-result-page';
+import { renderConnectionResultPage } from '../../../shared/html/connection-result-page';
 import { CompleteProviderManagedRedirect } from '../connections/ensure-provider-managed-vault/complete-provider-managed-redirect.usecase';
+import { McpConnectRedirectService } from '../connections/mcp-connect-redirect.service';
 import { PROVIDER_MANAGED_REDIRECT_PATH } from '../connections/ensure-provider-managed-vault/provider-managed-redirect-state';
 import { McpOAuthCallbackCommand } from './mcp-oauth-callback/mcp-oauth-callback.command';
 import { McpOAuthCallback } from './mcp-oauth-callback/mcp-oauth-callback.usecase';
+import { renderExpiredMcpSetupLinkPage, sendMcpOAuthResultPage } from './mcp-oauth-result-page.util';
 
 /**
  * Public-facing controller for the Novu-managed MCP OAuth callback.
@@ -27,7 +29,8 @@ import { McpOAuthCallback } from './mcp-oauth-callback/mcp-oauth-callback.usecas
 export class AgentsMcpOAuthController {
   constructor(
     private readonly mcpOAuthCallbackUsecase: McpOAuthCallback,
-    private readonly completeProviderManagedRedirect: CompleteProviderManagedRedirect
+    private readonly completeProviderManagedRedirect: CompleteProviderManagedRedirect,
+    private readonly mcpConnectRedirect: McpConnectRedirectService
   ) {}
 
   @Get('/oauth/callback')
@@ -75,9 +78,7 @@ export class AgentsMcpOAuthController {
           message: 'Something went wrong while connecting your MCP server. Please go back and try again.',
         });
 
-    res.setHeader('Content-Type', 'text/html');
-    res.setHeader('Content-Security-Policy', CONNECTION_RESULT_CSP);
-    res.send(page);
+    sendMcpOAuthResultPage(res, page);
   }
 
   /**
@@ -118,26 +119,49 @@ export class AgentsMcpOAuthController {
         'Something went wrong while opening the provider connection. Send a new message to your agent and try again.';
 
       if (isExpired) {
-        title = 'Link expired';
-        heading = 'This link has expired';
-        message =
-          'This setup link is no longer valid. Send a new message to your agent to get a fresh Connect from provider link.';
+        sendMcpOAuthResultPage(
+          res,
+          renderExpiredMcpSetupLinkPage(
+            'This setup link is no longer valid. Send a new message to your agent to get a fresh Connect from provider link.'
+          )
+        );
+
+        return;
       } else if (isNotFound) {
         message =
           'The connection or environment for this link no longer exists. Send a new message to your agent to restart setup.';
       }
 
-      const page = renderConnectionResultPage({
-        status: 'error',
-        title,
-        heading,
-        message,
-      });
-
-      res.status(HttpStatus.OK);
-      res.setHeader('Content-Type', 'text/html');
-      res.setHeader('Content-Security-Policy', CONNECTION_RESULT_CSP);
-      res.send(page);
+      sendMcpOAuthResultPage(
+        res,
+        renderConnectionResultPage({
+          status: 'error',
+          title,
+          heading,
+          message,
+        })
+      );
     }
+  }
+
+  /**
+   * Resolve a short MCP connect redirect token to the full OAuth authorize URL.
+   */
+  @Get('/r/:token')
+  @ApiOperation({
+    summary: 'MCP connect short redirect',
+    description:
+      '302-redirects a short-lived opaque token to the full OAuth authorize URL stored when the in-chat Connect card was issued.',
+  })
+  async getConnectRedirect(@Res() res: Response, @Param('token') token: string): Promise<void> {
+    const authorizeUrl = await this.mcpConnectRedirect.resolve(token);
+
+    if (authorizeUrl) {
+      res.redirect(HttpStatus.FOUND, authorizeUrl);
+
+      return;
+    }
+
+    sendMcpOAuthResultPage(res, renderExpiredMcpSetupLinkPage());
   }
 }

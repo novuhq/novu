@@ -1,6 +1,6 @@
 {
   "name": "@novu/framework",
-  "version": "2.11.0",
+  "version": "2.11.1",
   "description": "The Code-First Notifications Workflow SDK.",
   "main": "./dist/cjs/index.cjs",
   "types": "./dist/cjs/index.d.cts",
@@ -252,7 +252,7 @@
   "devDependencies": {
     "@apidevtools/json-schema-ref-parser": "11.6.4",
     "@arethetypeswrong/cli": "^0.17.4",
-    "@nestjs/common": "11.1.21",
+    "@nestjs/common": "11.1.24",
     "@sveltejs/kit": "^1.27.3",
     "@types/aws-lambda": "^8.10.141",
     "@types/express": "^4.17.13",
@@ -274,7 +274,7 @@
     "zod-to-json-schema": "^3.23.3"
   },
   "dependencies": {
-    "chat": "4.28.1",
+    "chat": "4.30.0",
     "ajv": "^8.20.0",
     "ajv-formats": "^2.1.1",
     "better-ajv-errors": "^1.2.0",

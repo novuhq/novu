@@ -1,10 +1,17 @@
-import { type IIntegration, IntegrationKindEnum, slugify } from '@novu/shared';
+import {
+  filterDemoConfigurableMcpIds,
+  type IIntegration,
+  IntegrationKindEnum,
+  isProviderManagedMcp,
+  slugify,
+} from '@novu/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import type { FormEvent } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { RiArrowRightSLine } from 'react-icons/ri';
 import type { AgentResponse, GeneratedManagedAgent } from '@/api/agents';
 import { NovuApiError } from '@/api/api.client';
+import { AgentPreviewSkeleton } from '@/components/agents/agent-preview-skeleton';
 import {
   getClaudeManagedAgentIntegrations,
   isDemoManagedClaudeIntegrationSelected,
@@ -12,13 +19,13 @@ import {
 import { type ConnectorIntegrationStatus } from '@/components/agents/connectors/connector-integration-dropdown';
 import { type ConnectorOption } from '@/components/agents/connectors/connector-options';
 import {
-  AGENT_TEMPLATES,
   type AgentTemplate,
   buildManagedIntegrationCredentials,
   buildVerifyCredentialsPayload,
   buildVerifyFingerprint,
   type CreateAgentForm,
   type CreateAgentFormErrors,
+  findAgentTemplateById,
   hasCompleteManagedCredentials,
   hasFormErrors,
   type ManagedAgentRuntimeOverrides,
@@ -32,6 +39,8 @@ import { ClaudeIcon } from '@/components/icons/claude';
 import { Button } from '@/components/primitives/button';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useAgentSuggestions } from '@/hooks/use-agent-suggestions';
+import { useAgentTemplates } from '@/hooks/use-agent-templates';
 import { useCreateAgentMutation } from '@/hooks/use-create-agent-mutation';
 import { useCreateIntegration } from '@/hooks/use-create-integration';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
@@ -39,6 +48,7 @@ import { GenerationCancelledError, useGenerateManagedAgent } from '@/hooks/use-g
 import { useManagedClaudeCredentialsFlow } from '@/hooks/use-managed-claude-credentials-flow';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { useVerifyManagedCredentials } from '@/hooks/use-verify-managed-credentials';
+import { clearPersistedAgentTemplateId } from '@/utils/agent-template-identity';
 import { QueryKeys } from '@/utils/query-keys';
 import { TelemetryEvent } from '@/utils/telemetry';
 import type { AgentGenerationMode } from './connect-agent-form';
@@ -106,6 +116,11 @@ type ConnectAgentStepProps = {
   onPreviewChange?: (preview: ConnectAgentPreview) => void;
   isManagedEnabled: boolean;
   /**
+   * Optional template id (Sanity `id.current`) coming from an external deep-link. When it matches a
+   * fetched template, the prompt + agent fields are prefilled once and the persisted id is cleared.
+   */
+  agentTemplateId?: string;
+  /**
    * Onboarding "demo agent" mode: renders only the simplified brain step (prompt + suggestions +
    * demo-credentials hint + full-width "Setup agent" CTA). The connector, template, and
    * credentials surfaces are hidden — the agent is provisioned on the Novu demo Claude credentials.
@@ -122,6 +137,7 @@ export function ConnectAgentStep({
   onRuntimeChange,
   onPreviewChange,
   isManagedEnabled,
+  agentTemplateId,
   simplifiedDemo,
 }: ConnectAgentStepProps) {
   const telemetry = useTelemetry();
@@ -129,6 +145,15 @@ export function ConnectAgentStep({
   const { currentEnvironment } = useEnvironment();
   const { submit, isPending } = useCreateAgentMutation();
   const { integrations } = useFetchIntegrations();
+  const {
+    templates: agentSuggestions,
+    isFetching: isFetchingAgentSuggestions,
+    refresh: refreshAgentSuggestions,
+  } = useAgentSuggestions();
+  // Sanity-backed templates are used only to resolve a deep-linked `agentTemplateId` (marketing
+  // website) into a concrete template for direct provisioning — kept separate from the AI
+  // suggestion pills above.
+  const { templates: sanityAgentTemplates, isLoading: isLoadingSanityTemplates } = useAgentTemplates();
   const verifyMutation = useVerifyManagedCredentials();
   const { mutateAsync: createIntegration, isPending: isSavingIntegration } = useCreateIntegration();
 
@@ -147,9 +172,15 @@ export function ConnectAgentStep({
   // animation flickers off in between `isGenerating` and `isPending` and reveals the
   // submit button momentarily.
   const [isPromptSubmitInFlight, setIsPromptSubmitInFlight] = useState(false);
+  // True while an agent is being provisioned directly from a deep-linked template (marketing
+  // website). Swaps the brain form for a preview skeleton until `onAgentCreated` morphs the parent
+  // into the real agent preview.
+  const [isAutoProvisioningFromTemplate, setIsAutoProvisioningFromTemplate] = useState(false);
   // Set when the user cancels generation, so the in-flight submit bails before creating the agent
   // even if the aborted request's promise resolves (or settles late) instead of rejecting.
   const generationCancelledRef = useRef(false);
+  // Guards the deep-link template prefill so it runs at most once per template id.
+  const appliedTemplateIdRef = useRef<string | undefined>(undefined);
 
   const {
     generate: generateManagedAgent,
@@ -198,6 +229,18 @@ export function ConnectAgentStep({
   // need to fill in.
   const useAiGeneration = isClaudeSelected && isManagedEnabled;
   const isDemoProviderSelected = isDemoManagedClaudeIntegrationSelected(integrations, selectedIntegrationId);
+  // The demo (Novu-managed Claude) integration exposes no provider vault, so provider-managed MCPs
+  // can never be configured on it. Drop them from the suggestion pills so onboarding only advertises
+  // tools the user can actually wire up; the API enforces the same filter at provision time.
+  const displayedAgentTemplates = useMemo(() => {
+    if (!isDemoProviderSelected) return agentSuggestions;
+
+    return agentSuggestions.map((template) => ({
+      ...template,
+      suggestedMcpServers: filterDemoConfigurableMcpIds(template.suggestedMcpServers),
+      mcpServers: template.mcpServers?.filter((server) => !isProviderManagedMcp(server.id)),
+    }));
+  }, [agentSuggestions, isDemoProviderSelected]);
   const isExistingMode =
     isClaudeSelected &&
     !isDemoProviderSelected &&
@@ -226,7 +269,139 @@ export function ConnectAgentStep({
   }, [runtime, onRuntimeChange]);
 
   const dropdownStatus = dropdownStatusFor(verifyStatus, Boolean(selectedIntegrationId));
-  const isSubmitBusy = isPending || isGenerating || isPromptSubmitInFlight;
+  const isSubmitBusy = isPending || isGenerating || isPromptSubmitInFlight || isAutoProvisioningFromTemplate;
+
+  // Provision an agent directly from a deep-linked Sanity template — no LLM prompt step. The
+  // template's name, instructions, and MCP servers are applied as managed-runtime overrides so the
+  // agent is created with exactly what the marketing-site template advertised.
+  const provisionAgentFromTemplate = useCallback(
+    async (template: AgentTemplate) => {
+      setIsAutoProvisioningFromTemplate(true);
+
+      const effectiveName = template.name;
+      const effectiveIdentifier = slugify(template.name);
+      const effectiveInstructions = template.instructions;
+      const requestedMcpServers = isDemoProviderSelected
+        ? filterDemoConfigurableMcpIds([...template.suggestedMcpServers])
+        : template.suggestedMcpServers;
+
+      const managedOverrides: ManagedAgentRuntimeOverrides = {
+        systemPrompt: template.instructions,
+        mcpServers: requestedMcpServers,
+      };
+
+      const summary: ConnectSummary = {
+        connectorId,
+        templateSelection,
+        name: effectiveName,
+        identifier: effectiveIdentifier,
+        instructions: effectiveInstructions,
+        apiKey,
+        externalAgentId,
+        externalEnvironmentId,
+        externalWorkspaceId,
+        region: region.trim() || undefined,
+        selectedIntegrationId,
+        integrationName,
+        mcpServers: requestedMcpServers,
+        tools: [],
+      };
+
+      await submit(
+        {
+          name: effectiveName.trim(),
+          identifier: effectiveIdentifier.trim(),
+          instructions: effectiveInstructions.trim(),
+          description: effectiveInstructions.trim(),
+          apiKey: apiKey.trim(),
+          runtime,
+          isExistingMode: false,
+          providerId: selectedConnector?.providerId,
+          externalAgentId: externalAgentId.trim(),
+          externalEnvironmentId: externalEnvironmentId.trim(),
+          externalWorkspaceId: externalWorkspaceId.trim() || undefined,
+          region: region.trim() || undefined,
+          integrationId: selectedIntegrationId,
+          integrationName: integrationName.trim() || undefined,
+          managedOverrides,
+        },
+        {
+          onSuccess: (agent) => {
+            telemetry(TelemetryEvent.ONBOARDING_CONNECT_AGENT_CREATED, {
+              runtime,
+              connectorId,
+              mode: 'template',
+              templateKind: 'template',
+              agentIdentifier: agent.identifier,
+              isExistingMode: false,
+            });
+            onAgentCreated(agent, summary);
+          },
+          onError: (err) => {
+            setIsAutoProvisioningFromTemplate(false);
+            const message = err instanceof NovuApiError ? err.message : 'Could not create agent.';
+            showErrorToast(message, 'Create failed');
+          },
+        }
+      );
+    },
+    [
+      connectorId,
+      templateSelection,
+      apiKey,
+      externalAgentId,
+      externalEnvironmentId,
+      externalWorkspaceId,
+      region,
+      selectedIntegrationId,
+      integrationName,
+      runtime,
+      selectedConnector?.providerId,
+      isDemoProviderSelected,
+      submit,
+      telemetry,
+      onAgentCreated,
+    ]
+  );
+
+  // Deep-link auto-provision: when an `agentTemplateId` matches a fetched Sanity template, create the
+  // agent straight from the template (name + instructions + MCPs) once the managed runtime and a
+  // credential are ready. Runs once per id, then clears the persisted id so a refresh doesn't re-run.
+  useEffect(() => {
+    if (!agentTemplateId) return;
+    if (appliedTemplateIdRef.current === agentTemplateId) return;
+    if (!currentEnvironment) return;
+    if (!isClaudeSelected || !isManagedEnabled) return;
+    if (!selectedIntegrationId) return;
+
+    const template = findAgentTemplateById(sanityAgentTemplates, agentTemplateId);
+    if (!template) return;
+
+    appliedTemplateIdRef.current = agentTemplateId;
+    clearPersistedAgentTemplateId();
+    void provisionAgentFromTemplate(template);
+  }, [
+    agentTemplateId,
+    sanityAgentTemplates,
+    currentEnvironment,
+    isClaudeSelected,
+    isManagedEnabled,
+    selectedIntegrationId,
+    provisionAgentFromTemplate,
+  ]);
+
+  // A deep-linked template (marketing website) bypasses the brain form entirely: show the agent
+  // preview skeleton from the first render — while integrations/templates load and the agent is
+  // provisioned — instead of briefly flashing the suggestion pills + prompt. Fall back to the form
+  // only once we can prove there's nothing to provision (managed runtime unavailable, or the id
+  // resolves to no known Sanity template), so the user is never stranded on the skeleton.
+  const deepLinkTemplateUnresolvable =
+    Boolean(agentTemplateId) &&
+    !isLoadingSanityTemplates &&
+    !findAgentTemplateById(sanityAgentTemplates, agentTemplateId ?? '');
+  const showTemplateProvisioningSkeleton =
+    isAutoProvisioningFromTemplate ||
+    (Boolean(agentTemplateId) && isManagedEnabled && isClaudeSelected && !deepLinkTemplateUnresolvable);
 
   // Build a preview snapshot for the right-side illustration. Pulls instructions / MCPs from
   // the active template (or the manual form fields when "Start from scratch" is picked) so the
@@ -251,7 +426,9 @@ export function ConnectAgentStep({
     } else if (templateSelection.kind === 'template') {
       previewName = templateSelection.template.name;
       previewInstructions = templateSelection.template.instructions;
-      previewMcpServers = templateSelection.template.suggestedMcpServers;
+      previewMcpServers = isDemoProviderSelected
+        ? filterDemoConfigurableMcpIds(templateSelection.template.suggestedMcpServers)
+        : templateSelection.template.suggestedMcpServers;
     } else if (templateSelection.kind === 'scratch') {
       previewName = trimmedName || undefined;
       previewInstructions = trimmedInstructions || undefined;
@@ -714,9 +891,14 @@ export function ConnectAgentStep({
     // the managed-Claude preview illustration) can show them. Prefer the LLM-generated payload
     // — when absent (static template / scratch), fall back to the template's suggested MCPs so
     // the preview keeps showing what the user picked.
-    const summaryMcpServers =
+    const requestedSummaryMcpServers =
       managedOverrides?.mcpServers ??
       (templateSelection.kind === 'template' ? templateSelection.template.suggestedMcpServers : []);
+    // Mirror the API's demo provisioning filter so the summary reflects the MCPs that were actually
+    // wired up — provider-managed servers are dropped on the demo integration.
+    const summaryMcpServers = isDemoProviderSelected
+      ? filterDemoConfigurableMcpIds([...requestedSummaryMcpServers])
+      : requestedSummaryMcpServers;
     const summaryTools = managedOverrides?.tools ?? [];
 
     const summary: ConnectSummary = {
@@ -806,6 +988,20 @@ export function ConnectAgentStep({
     </Button>
   );
 
+  if (showTemplateProvisioningSkeleton) {
+    return (
+      <div className="relative flex flex-col gap-10 py-6 pb-3 pl-8 pr-3 md:pr-6">
+        <div
+          className="absolute bottom-0 left-[22px] top-0 w-px"
+          style={{
+            background: 'linear-gradient(to bottom, transparent 0%, #E1E4EA 10%, #E1E4EA 90%, transparent 100%)',
+          }}
+        />
+        <AgentPreviewSkeleton />
+      </div>
+    );
+  }
+
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-10 py-6 pb-3 pl-8 pr-3 md:pr-6">
       <div
@@ -843,8 +1039,10 @@ export function ConnectAgentStep({
                 prompt,
                 onPromptChange: handlePromptChange,
                 promptError,
-                suggestions: AGENT_TEMPLATES,
+                suggestions: displayedAgentTemplates,
                 onSelectSuggestion: handleSelectSuggestion,
+                onRegenerateSuggestions: refreshAgentSuggestions,
+                isRegeneratingSuggestions: isFetchingAgentSuggestions,
                 textareaRef: promptTextareaRef,
                 isGenerating: isSubmitBusy,
                 generationSteps: GENERATION_STEPS,

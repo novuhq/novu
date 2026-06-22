@@ -9,15 +9,15 @@ import {
 } from '@novu/shared';
 import { Check, Minus } from 'lucide-react';
 import { useEffect } from 'react';
-import { RiCalendarEventLine, RiRouteFill, RiTeamLine } from 'react-icons/ri';
+import { RiCalendarEventLine, RiChat3Line, RiTeamLine } from 'react-icons/ri';
 import { Badge } from '@/components/primitives/badge';
 import { LinkButton } from '@/components/primitives/button-link';
 import { Card } from '@/components/primitives/card';
 import { Progress } from '@/components/primitives/progress';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
+import { useFetchConversationUsage } from '../../hooks/use-fetch-conversation-usage';
 import { useFetchSubscription } from '../../hooks/use-fetch-subscription';
-import { useFetchWorkflows } from '../../hooks/use-fetch-workflows';
 import { getPlanFeatures, type PlanFeature } from './features-config';
 import { PlanActionButton } from './plan-action-button';
 
@@ -26,14 +26,14 @@ interface ActivePlanBannerProps {
 }
 
 interface UsageMetric {
-  type: 'events' | 'workflows' | 'teammates';
+  type: 'events' | 'conversations' | 'teammates';
   icon: React.ComponentType<{ className?: string }>;
   label: string;
 }
 
 const USAGE_METRICS: UsageMetric[] = [
   { type: 'events', icon: RiCalendarEventLine, label: 'Workflow Runs' },
-  { type: 'workflows', icon: RiRouteFill, label: 'Workflows' },
+  { type: 'conversations', icon: RiChat3Line, label: 'Conversations' },
   { type: 'teammates', icon: RiTeamLine, label: 'Teammates' },
 ];
 
@@ -61,6 +61,35 @@ function getEventsTooltipContent(
     : 'Pay as you grow. No hard limit.';
 
   return `Includes ${formatLimit(usageData.included)} workflow runs — ${limitMessage}`;
+}
+
+function getConversationsTooltipContent(
+  usageData: { included: number },
+  subscription: ReturnType<typeof useFetchSubscription>['subscription']
+): string {
+  const currentPlan = subscription?.apiServiceLevel || ApiServiceLevelEnum.FREE;
+  const isFreePlan = currentPlan === ApiServiceLevelEnum.FREE;
+
+  const limitMessage = isFreePlan
+    ? "New conversations won't be allowed after the free limit is reached — existing conversations keep working."
+    : 'Counted for usage. No hard limit.';
+
+  return `Includes ${formatLimit(usageData.included)} active conversations / month — ${limitMessage}`;
+}
+
+function getUsageTooltipContent(
+  type: UsageMetric['type'],
+  usageData: { included: number },
+  subscription: ReturnType<typeof useFetchSubscription>['subscription']
+): string | null {
+  switch (type) {
+    case 'events':
+      return getEventsTooltipContent(usageData, subscription);
+    case 'conversations':
+      return getConversationsTooltipContent(usageData, subscription);
+    default:
+      return null;
+  }
 }
 
 function formatDateRange(
@@ -91,7 +120,7 @@ function getPlanBadgeText(subscription: ReturnType<typeof useFetchSubscription>[
 function getUsageData(
   type: UsageMetric['type'],
   subscription: ReturnType<typeof useFetchSubscription>['subscription'],
-  workflowsData: ReturnType<typeof useFetchWorkflows>['data'],
+  conversationUsage: ReturnType<typeof useFetchConversationUsage>['conversationUsage'],
   organization: ReturnType<typeof useOrganization>['organization']
 ) {
   const currentPlan = subscription?.apiServiceLevel || ApiServiceLevelEnum.FREE;
@@ -105,11 +134,17 @@ function getUsageData(
           getFeatureForTierAsNumber(FeatureNameEnum.PLATFORM_MONTHLY_EVENTS_INCLUDED, currentPlan, false),
         label: 'included',
       };
-    case 'workflows':
+    case 'conversations':
       return {
-        current: workflowsData?.totalCount ?? 0,
-        included: getFeatureForTierAsNumber(FeatureNameEnum.PLATFORM_MAX_WORKFLOWS, currentPlan, false),
-        label: 'workflows',
+        current: conversationUsage?.current ?? 0,
+        // `null` is the API's explicit "unlimited" contract — keep it unlimited (∞) rather than
+        // coalescing to the local tier table. Only `undefined` (not loaded yet) uses the fallback.
+        included:
+          conversationUsage?.included === null
+            ? UNLIMITED_VALUE
+            : (conversationUsage?.included ??
+              getFeatureForTierAsNumber(FeatureNameEnum.AGENT_MAX_ACTIVE_CONVERSATIONS, currentPlan, false)),
+        label: 'included',
       };
     case 'teammates':
       return {
@@ -147,13 +182,14 @@ function CardHeader({ title, children, rightContent, titleInline = false }: Card
 interface UsageMetricRowProps {
   metric: UsageMetric;
   subscription: ReturnType<typeof useFetchSubscription>['subscription'];
-  workflowsData: ReturnType<typeof useFetchWorkflows>['data'];
+  conversationUsage: ReturnType<typeof useFetchConversationUsage>['conversationUsage'];
   organization: ReturnType<typeof useOrganization>['organization'];
 }
 
-function UsageMetricRow({ metric, subscription, workflowsData, organization }: UsageMetricRowProps) {
-  const usageData = getUsageData(metric.type, subscription, workflowsData, organization);
+function UsageMetricRow({ metric, subscription, conversationUsage, organization }: UsageMetricRowProps) {
+  const usageData = getUsageData(metric.type, subscription, conversationUsage, organization);
   const Icon = metric.icon;
+  const tooltipContent = getUsageTooltipContent(metric.type, usageData, subscription);
 
   if (!subscription) {
     return (
@@ -181,13 +217,13 @@ function UsageMetricRow({ metric, subscription, workflowsData, organization }: U
           <span className="text-text-sub">{usageData.current.toLocaleString()}</span> /{' '}
           <span className="text-text-soft">
             {formatLimit(usageData.included)}{' '}
-            {metric.type === 'events' ? (
+            {tooltipContent ? (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span className="border-b border-dotted border-text-soft/40 cursor-help">{usageData.label}</span>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>{getEventsTooltipContent(usageData, subscription)}</p>
+                  <p>{tooltipContent}</p>
                 </TooltipContent>
               </Tooltip>
             ) : (
@@ -260,12 +296,12 @@ function ActionButton({ selectedBillingInterval, subscription }: ActionButtonPro
 function UsageCard({
   subscription,
   daysLeft,
-  workflowsData,
+  conversationUsage,
   organization,
 }: {
   subscription: ReturnType<typeof useFetchSubscription>['subscription'];
   daysLeft: number;
-  workflowsData: ReturnType<typeof useFetchWorkflows>['data'];
+  conversationUsage: ReturnType<typeof useFetchConversationUsage>['conversationUsage'];
   organization: ReturnType<typeof useOrganization>['organization'];
 }) {
   return (
@@ -288,7 +324,7 @@ function UsageCard({
               key={metric.type}
               metric={metric}
               subscription={subscription}
-              workflowsData={workflowsData}
+              conversationUsage={conversationUsage}
               organization={organization}
             />
           ))}
@@ -335,7 +371,7 @@ function PlanCard({
 export function ActivePlanBanner({ selectedBillingInterval }: ActivePlanBannerProps) {
   const { subscription, daysLeft } = useFetchSubscription();
   const { organization } = useOrganization();
-  const { data: workflowsData } = useFetchWorkflows({ limit: 1 });
+  const { conversationUsage } = useFetchConversationUsage();
 
   useEffect(() => {
     (async () => {
@@ -350,7 +386,7 @@ export function ActivePlanBanner({ selectedBillingInterval }: ActivePlanBannerPr
         <UsageCard
           subscription={subscription}
           daysLeft={daysLeft}
-          workflowsData={workflowsData}
+          conversationUsage={conversationUsage}
           organization={organization}
         />
         <PlanCard selectedBillingInterval={selectedBillingInterval} subscription={subscription} />

@@ -6,6 +6,7 @@ import {
 } from '@novu/shared';
 import type { ConnectApiClient } from '../api/client';
 import { NovuApiError } from '../api/client';
+import { findActiveDemoAgentIntegration } from '../api/demo-agent-integration';
 import {
   createAgentRuntimeIntegration,
   type IntegrationRecord,
@@ -35,7 +36,12 @@ export function resolveRuntimeProviderId(runtime: AgentRuntimeChoice): AgentRunt
 }
 
 export function resolveRuntimeFromOptions(options: ConnectCommandOptions): AgentRuntimeChoice | undefined {
-  return options.runtime;
+  const runtime = options.runtime;
+  if (!runtime || runtime === 'chat-sdk') {
+    return undefined;
+  }
+
+  return runtime;
 }
 
 export async function resolveAgentRuntimeIntegration(
@@ -98,12 +104,7 @@ export async function resolveAgentRuntimeIntegration(
 }
 
 function resolveDemoIntegration(integrations: IntegrationRecord[]): ResolvedRuntimeIntegration {
-  const demo = integrations.find(
-    (integration) =>
-      integration.providerId === AgentRuntimeProviderIdEnum.NovuAnthropic &&
-      integration.kind === AGENT_INTEGRATION_KIND &&
-      integration.active !== false
-  );
+  const demo = findActiveDemoAgentIntegration(integrations);
 
   if (!demo) {
     throw new Error(

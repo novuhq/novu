@@ -48,6 +48,8 @@ import {
   ApiOkResponse,
   ApiResponse,
 } from '../shared/framework/response.decorator';
+import { isEnvironmentScopedAuthScheme } from '../shared/utils/auth.utils';
+import { KeylessAccessible } from '../shared/framework/swagger/keyless.security';
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import { UserSession } from '../shared/framework/user.decorator';
 import { CONNECTION_RESULT_CSP } from '../shared/html/connection-result-page';
@@ -148,9 +150,11 @@ export class IntegrationsController {
   })
   @ApiOperation({
     summary: 'List all integrations',
-    description: 'List all the channels integrations created in the organization',
+    description:
+      'List all the channels integrations created in the organization. Only integration metadata is returned, credentials field is returned as an empty object.',
   })
   @ExternalApiAccessible()
+  @KeylessAccessible()
   @RequireAuthentication()
   @RequirePermissions(PermissionsEnum.INTEGRATION_READ)
   async listIntegrations(@UserSession() user: UserSessionData): Promise<IntegrationResponseDto[]> {
@@ -162,7 +166,7 @@ export class IntegrationsController {
         organizationId: user.organizationId,
         userId: user._id,
         returnCredentials: canAccessCredentials,
-        scopeToEnvironment: user.scheme === ApiAuthSchemeEnum.API_KEY,
+        scopeToEnvironment: isEnvironmentScopedAuthScheme(user.scheme),
       })
     );
   }
@@ -174,7 +178,8 @@ export class IntegrationsController {
   })
   @ApiOperation({
     summary: 'List active integrations',
-    description: 'List all the active integrations created in the organization',
+    description:
+      'List all the active integrations created in the organization. Only integration metadata is returned, credentials field is returned as an empty object.',
   })
   @ExternalApiAccessible()
   @SdkMethodName('listActive')
@@ -189,7 +194,7 @@ export class IntegrationsController {
         organizationId: user.organizationId,
         userId: user._id,
         returnCredentials: canAccessCredentials,
-        scopeToEnvironment: user.scheme === ApiAuthSchemeEnum.API_KEY,
+        scopeToEnvironment: isEnvironmentScopedAuthScheme(user.scheme),
       })
     );
   }
@@ -228,9 +233,10 @@ export class IntegrationsController {
   @ApiOperation({
     summary: 'Create an integration',
     description: `Create an integration for the current environment the user is based on the API key provided. 
-    Each provider supports different credentials, check the provider documentation for more details.`,
+    Each provider supports different credentials, check the provider documentation for more details. Only integration metadata is returned, credentials field is returned as an empty object.`,
   })
   @ExternalApiAccessible()
+  @KeylessAccessible()
   @RequireAuthentication()
   @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
   async createIntegration(
@@ -283,7 +289,7 @@ export class IntegrationsController {
   @ApiOperation({
     summary: 'Update an integration',
     description: `Update an integration by its unique key identifier **integrationId**. 
-    Each provider supports different credentials, check the provider documentation for more details.`,
+    Each provider supports different credentials, check the provider documentation for more details. Only integration metadata is returned, credentials field is returned as an empty object.`,
   })
   @ExternalApiAccessible()
   @RequireAuthentication()
@@ -311,7 +317,7 @@ export class IntegrationsController {
           check: body.check ?? false,
           conditions: body.conditions,
           configurations: body.configurations,
-          restrictToUserEnvironment: user.scheme === ApiAuthSchemeEnum.API_KEY,
+          restrictToUserEnvironment: isEnvironmentScopedAuthScheme(user.scheme),
         })
       );
 
@@ -339,7 +345,7 @@ export class IntegrationsController {
   @ApiOperation({
     summary: 'Auto-configure an integration for inbound webhooks',
     description: `Auto-configure an integration by its unique key identifier **integrationId** for inbound webhook support. 
-    This will automatically generate required webhook signing keys and configure webhook endpoints.`,
+    This will automatically generate required webhook signing keys and configure webhook endpoints. Only integration metadata is returned, credentials field is returned as an empty object.`,
   })
   @ExternalApiAccessible()
   @RequireAuthentication()
@@ -351,8 +357,10 @@ export class IntegrationsController {
     const result = await this.autoConfigureIntegrationUsecase.execute(
       AutoConfigureIntegrationCommand.create({
         userId: user._id,
+        environmentId: user.environmentId,
         organizationId: user.organizationId,
         integrationId,
+        restrictToUserEnvironment: isEnvironmentScopedAuthScheme(user.scheme),
       })
     );
 
@@ -368,7 +376,8 @@ export class IntegrationsController {
     summary: 'Update integration as primary',
     description: `Update an integration as **primary** by its unique key identifier **integrationId**. 
     This API will set the integration as primary for that channel in the current environment. 
-    Primary integration is used to deliver notification for sms and email channels in the workflow.`,
+    Primary integration is used to deliver notification for sms and email channels in the workflow. 
+    Only integration metadata is returned, credentials field is returned as an empty object.`,
   })
   @ExternalApiAccessible()
   @RequireAuthentication()
@@ -385,6 +394,7 @@ export class IntegrationsController {
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         integrationId,
+        restrictToUserEnvironment: isEnvironmentScopedAuthScheme(user.scheme),
       })
     );
 
@@ -402,9 +412,10 @@ export class IntegrationsController {
   @ApiOperation({
     summary: 'Delete an integration',
     description: `Delete an integration by its unique key identifier **integrationId**. 
-    This action is irreversible.`,
+    This action is irreversible. Only integration metadata is returned, credentials field is returned as empty object.`,
   })
   @ExternalApiAccessible()
+  @KeylessAccessible()
   @RequireAuthentication()
   @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
   async removeIntegration(
@@ -417,6 +428,7 @@ export class IntegrationsController {
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         integrationId,
+        restrictToUserEnvironment: isEnvironmentScopedAuthScheme(user.scheme),
       })
     );
   }
@@ -687,6 +699,7 @@ export class IntegrationsController {
   @SdkMethodName('generateConnectOAuthUrl')
   @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
   @ExternalApiAccessible()
+  @KeylessAccessible()
   @RequireAuthentication()
   async generateConnectOAuthUrl(
     @UserSession() user: UserSessionData,
@@ -843,6 +856,7 @@ export class IntegrationsController {
     description: `Creates a Slack app from a manifest using the provided App Configuration Token and saves the resulting credentials (client ID, client secret, signing secret) directly on the integration. The configuration token is used ephemerally and is never stored.`,
   })
   @ApiExcludeEndpoint()
+  @KeylessAccessible()
   @RequireAuthentication()
   @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
   async slackQuickSetup(
@@ -865,26 +879,27 @@ export class IntegrationsController {
   }
 
   private assertEnvironmentScopedForApiKey(user: UserSessionData, requestedEnvironmentId?: string): void {
-    if (user.scheme !== ApiAuthSchemeEnum.API_KEY) {
+    const isEnvironmentScopedScheme = isEnvironmentScopedAuthScheme(user.scheme);
+    if (!isEnvironmentScopedScheme) {
       return;
     }
 
     if (requestedEnvironmentId && requestedEnvironmentId !== user.environmentId) {
       throw new ForbiddenException(
-        'API key authentication is scoped to a single environment and cannot target a different `_environmentId`. ' +
-          'Use an API key from the target environment, or authenticate with a session token.'
+        'This authentication scheme is scoped to a single environment and cannot target a different `_environmentId`. ' +
+          'Use credentials from the target environment, or authenticate with a session token.'
       );
     }
   }
 
   private async canUserAccessCredentials(user: UserSessionData): Promise<boolean> {
     /*
-     * API-key auth must never receive decrypted provider credentials, regardless of RBAC state.
+     * API-key and keyless auth must never receive decrypted provider credentials, regardless of RBAC state.
      * API keys grant ALL_PERMISSIONS in `community.auth.service.ts`, which would otherwise
      * allow the RBAC path below to succeed and leak every stored provider secret to any
      * caller holding an environment API key.
      */
-    if (user.scheme === ApiAuthSchemeEnum.API_KEY) {
+    if (user.scheme === ApiAuthSchemeEnum.API_KEY || user.scheme === ApiAuthSchemeEnum.KEYLESS) {
       return false;
     }
 

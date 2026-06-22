@@ -15,6 +15,8 @@ export interface ManagedRuntimeConfig {
   _integrationId: string;
   /** The agent entity ID returned by the provider at provisioning time */
   externalAgentId: string;
+  /** Novu-owned provider config last synced for this agent. Matches `AGENT_MANAGED_DEFINITION_VERSION`; unset until the first sync. */
+  managedDefinitionVersion?: number;
 }
 
 export class AgentEntity {

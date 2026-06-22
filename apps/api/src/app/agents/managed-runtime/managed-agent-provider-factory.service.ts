@@ -85,6 +85,33 @@ export class ManagedAgentProviderFactory {
     return runtime;
   }
 
+  async tryGetProviderByAgentIdentifier(
+    agentIdentifier: string,
+    environmentId: string
+  ): Promise<WebhookProvider | null> {
+    try {
+      const agent = await this.agentRepository.findOne({ identifier: agentIdentifier, _environmentId: environmentId }, [
+        '_id',
+        'managedRuntime',
+      ]);
+
+      if (!agent?.managedRuntime) {
+        return null;
+      }
+
+      const { provider } = await this.getOrCreate(agent, environmentId);
+
+      return provider;
+    } catch (err) {
+      this.logger.warn(
+        { err: err instanceof Error ? err.message : String(err), agentIdentifier },
+        'Failed to resolve webhook provider for queue-ready event'
+      );
+
+      return null;
+    }
+  }
+
   /**
    * Best-effort resolution of the cached runtime provider for a webhook event.
    * Returns `null` when the agent can't be recovered (deleted, missing managedRuntime, etc.)

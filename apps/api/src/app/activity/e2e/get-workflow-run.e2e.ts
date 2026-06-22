@@ -74,7 +74,7 @@ describe('Workflow Run - GET /v1/activity/workflow-runs/:workflowRunId #novu-v2'
 
     const triggerStepRunTraces = data.steps[0].executionDetails;
     expect(triggerStepRunTraces.length, 'response step execution details count').to.be.greaterThan(0);
-    expect(triggerStepRunTraces[0].detail, 'response step execution details status').to.equal('Step queued');
+    expect(triggerStepRunTraces[0].detail, 'response step execution details status').to.equal('Step created');
   });
 
   it('should return 404 for non-existent workflow run', async () => {

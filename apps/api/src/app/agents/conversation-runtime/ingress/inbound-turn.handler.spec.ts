@@ -4,10 +4,8 @@ import { ManagedRuntime } from '../../managed-runtime/managed.runtime';
 import { AgentEventEnum } from '../../shared/enums/agent-event.enum';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { UNRESOLVED_SUBSCRIBER_ACCESS_REPLY } from '../../shared/util/agent-inbound-replies';
-import { OutboundGateway } from '../egress/outbound.gateway';
 import { BridgeRuntime } from '../runtime/bridge.runtime';
 import { NoBridgeUrlError } from '../runtime/bridge-executor.service';
-import { RuntimeResolver } from '../runtime/runtime-resolver.service';
 import { AgentInboundHandler } from './inbound-turn.handler';
 
 describe('AgentInboundHandler', () => {
@@ -45,7 +43,6 @@ describe('AgentInboundHandler', () => {
       startCodeConsume?: sinon.SinonStub;
       findTelegramEndpointByIdentity?: sinon.SinonStub;
       agentFindOne?: sinon.SinonStub;
-      managedAgentSetupHandleInbound?: sinon.SinonStub;
       subscriberFindById?: sinon.SinonStub;
       subscriberResolve?: sinon.SinonStub;
     } = {}
@@ -64,6 +61,13 @@ describe('AgentInboundHandler', () => {
       setFirstPlatformMessageId: sinon.stub().resolves(undefined),
       findByPlatformThread: sinon.stub().resolves(conversation),
       getHistory: sinon.stub().resolves(overrides.history ?? []),
+      findSourceActivity: sinon
+        .stub()
+        .callsFake(
+          async (_environmentId: string, _conversationId: string, platformMessageId: string) =>
+            (overrides.history ?? []).find((activity: any) => activity?.platformMessageId === platformMessageId) ?? null
+        ),
+      countAgentMessages: sinon.stub().resolves(0),
     };
     const bridgeExecutor = {
       execute: overrides.bridgeError ? sinon.stub().rejects(overrides.bridgeError) : sinon.stub().resolves(undefined),
@@ -72,10 +76,7 @@ describe('AgentInboundHandler', () => {
       findBySubscriberId: overrides.subscriberFindById ?? sinon.stub(),
     };
     const managedAgentService = {
-      dispatch: sinon.stub().resolves(undefined),
-    };
-    const handleManagedAgentSetupInbound = {
-      execute: overrides.managedAgentSetupHandleInbound ?? sinon.stub().resolves(false),
+      dispatch: sinon.stub().resolves({ status: 'active' }),
     };
     const confirmToolApproval = {
       execute: sinon.stub().resolves(undefined),
@@ -96,6 +97,10 @@ describe('AgentInboundHandler', () => {
         return { messageId: result.id, platformThreadId: result.threadId };
       }),
     };
+    const inboundAck = {
+      showWorkingSignal: sinon.stub().resolves(undefined),
+      showQueuedSignal: sinon.stub().resolves(undefined),
+    };
     const bridgeRuntime = new BridgeRuntime(
       bridgeExecutor as any,
       outboundGateway as any,
@@ -105,10 +110,10 @@ describe('AgentInboundHandler', () => {
     );
     const managedRuntime = new ManagedRuntime(
       managedAgentService as any,
-      handleManagedAgentSetupInbound as any,
       confirmToolApproval as any,
       outboundGateway as any,
       conversationService as any,
+      inboundAck as any,
       logger as any
     );
     const runtimeResolver = {
@@ -132,6 +137,24 @@ describe('AgentInboundHandler', () => {
     const channelEndpointRepository = {
       findByPlatformIdentity: overrides.findTelegramEndpointByIdentity ?? sinon.stub().resolves(null),
     };
+    const connectClaimTokenService = {
+      issue: sinon.stub().resolves({ token: 'claim-token', expiresAt: new Date().toISOString() }),
+      issueOrGetForEnvironment: sinon.stub().resolves({ token: 'claim-token', expiresAt: new Date().toISOString() }),
+      isSignupCtaPosted: sinon.stub().resolves(false),
+      tryMarkSignupCtaPosted: sinon.stub().resolves(true),
+    };
+    const keylessAbuseGuard = {
+      isKeylessAgentAiEnabled: sinon.stub().resolves(true),
+      assertKeylessAiEnabled: sinon.stub().resolves(),
+      assertManagedAgentCap: sinon.stub().resolves(),
+    };
+    const planLimitGate = {
+      maybeBlock: sinon.stub().resolves(false),
+      maybeBlockConversation: sinon.stub().resolves(false),
+    };
+    const conversationActivation = {
+      registerEngagement: sinon.stub().resolves(false),
+    };
     const handler = new AgentInboundHandler(
       logger as any,
       subscriberResolver as any,
@@ -145,7 +168,12 @@ describe('AgentInboundHandler', () => {
       attachmentStorage as any,
       startCodeService as any,
       channelEndpointRepository as any,
-      linkTelegramChatToSubscriber as any
+      linkTelegramChatToSubscriber as any,
+      connectClaimTokenService as any,
+      keylessAbuseGuard as any,
+      planLimitGate as any,
+      inboundAck as any,
+      conversationActivation as any
     );
 
     return {
@@ -157,11 +185,11 @@ describe('AgentInboundHandler', () => {
       subscriberResolver,
       startCodeService,
       channelEndpointRepository,
-      handleManagedAgentSetupInbound,
       managedAgentService,
       agentRepository,
       subscriberRepository,
       outboundGateway,
+      inboundAck,
     };
   }
 
@@ -201,6 +229,41 @@ describe('AgentInboundHandler', () => {
         ts: '1777837477.371619',
       },
       attachments: [],
+    };
+  }
+
+  function makeEmailDmThread() {
+    return {
+      id: 'email:thread1:',
+      channelId: 'email:thread1',
+      isDM: true,
+      toJSON: () => ({ id: 'email:thread1:', channelId: 'email:thread1', isDM: true }),
+      startTyping: sinon.stub().resolves(undefined),
+      post: sinon.stub().resolves({ id: 'email-reply-1', threadId: 'email:thread1:' }),
+    };
+  }
+
+  function makeEmailDmMessage(senderEmail: string) {
+    return {
+      id: 'email-msg-1',
+      threadId: 'email:thread1:',
+      text: 'hello',
+      author: {
+        userId: senderEmail,
+        fullName: 'Unknown Sender',
+        userName: senderEmail,
+        isBot: false,
+      },
+      raw: {},
+      attachments: [],
+    };
+  }
+
+  function makeManagedAgentStub() {
+    return {
+      _id: 'agent1',
+      runtime: 'managed',
+      managedRuntime: { providerId: 'anthropic', _integrationId: 'int1', externalAgentId: 'ext1' },
     };
   }
 
@@ -328,55 +391,92 @@ describe('AgentInboundHandler', () => {
       expect(bridgeExecutor.execute.firstCall.args[0].storedAttachments).to.deep.equal(storedAttachments);
     });
 
-    it('should show typing before managed-agent setup gate when acknowledgeOnReceived is enabled', async () => {
-      const setupInbound = sinon.stub().resolves(true);
-      const logger = makeLogger();
-      const subscriberResolver = { resolve: sinon.stub().resolves('sub-1') };
-      const conversationService = {
-        createOrGetConversation: sinon.stub().resolves(conversation),
-        getPrimaryChannel: sinon.stub().callsFake((conv) => conv.channels[0]),
-        persistInboundMessage: sinon.stub().resolves({ _id: 'activity1' }),
-        persistAgentMessage: sinon.stub().resolves({ _id: 'agent-activity1' }),
-        setFirstPlatformMessageId: sinon.stub().resolves(undefined),
-        findByPlatformThread: sinon.stub().resolves(conversation),
-        getHistory: sinon.stub().resolves([]),
-      };
-      const { handler, handleManagedAgentSetupInbound, managedAgentService } = makeHandler({
-        managedAgentSetupHandleInbound: setupInbound,
-        subscriberResolve: sinon.stub().resolves('sub-1'),
-        subscriberFindById: sinon.stub().resolves({ subscriberId: 'sub-1' }),
-        agentFindOne: sinon.stub().resolves({
-          _id: 'agent1',
-          runtime: 'managed',
-          managedRuntime: { providerId: 'anthropic', _integrationId: 'int1', externalAgentId: 'ext1' },
-        }),
-      });
-
-      const thread = makeSlackDmThread();
-      const message = makeSlackDmMessage();
-      const slackConfig = { ...config, acknowledgeOnReceived: true };
-
-      await handler.handle('agent1', slackConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
-
-      expect(thread.startTyping.calledOnceWith('Thinking...')).to.equal(true);
-      expect(setupInbound.calledOnce).to.equal(true);
-      expect(managedAgentService.dispatch.called).to.equal(false);
-    });
-
     it('should reply with no-access message for managed agents when subscriber is unresolved', async () => {
       const { handler, managedAgentService, outboundGateway } = makeHandler({
         subscriberResolve: sinon.stub().resolves(null),
         subscriberFindById: sinon.stub().resolves(null),
-        agentFindOne: sinon.stub().resolves({
-          _id: 'agent1',
-          runtime: 'managed',
-          managedRuntime: { providerId: 'anthropic', _integrationId: 'int1', externalAgentId: 'ext1' },
-        }),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
       });
       const thread = makeSlackDmThread();
       const message = makeSlackDmMessage();
 
       await handler.handle('agent1', config as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(managedAgentService.dispatch.called).to.equal(false);
+      expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
+      expect(outboundGateway.replyOnThread.firstCall.args[1]).to.deep.equal({
+        markdown: UNRESOLVED_SUBSCRIBER_ACCESS_REPLY,
+      });
+    });
+
+    it('should reply with email-specific no-access message when sender email is unknown', async () => {
+      const emailConfig = {
+        ...config,
+        platform: AgentPlatformEnum.EMAIL,
+        integrationIdentifier: 'email-main',
+      };
+      const senderEmail = 'unknown@example.com';
+      const { handler, managedAgentService, outboundGateway } = makeHandler({
+        subscriberResolve: sinon.stub().resolves(null),
+        subscriberFindById: sinon.stub().resolves(null),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+      });
+      const thread = makeEmailDmThread();
+      const message = makeEmailDmMessage(senderEmail);
+
+      await handler.handle('agent1', emailConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(managedAgentService.dispatch.called).to.equal(false);
+      expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
+      expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.include(senderEmail);
+      expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.include('Novu account');
+    });
+
+    it('should dispatch keyless managed agent even when subscriber is unresolved (email)', async () => {
+      const emailConfig = {
+        ...config,
+        platform: AgentPlatformEnum.EMAIL,
+        integrationIdentifier: 'email-main',
+        isKeyless: true,
+        isManaged: true,
+      };
+      const senderEmail = 'tester@example.com';
+      const { handler, managedAgentService, outboundGateway } = makeHandler({
+        subscriberResolve: sinon.stub().resolves(null),
+        subscriberFindById: sinon.stub().resolves(null),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+      });
+      const thread = makeEmailDmThread();
+      const message = makeEmailDmMessage(senderEmail);
+
+      await handler.handle('agent1', emailConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(outboundGateway.replyOnThread.called).to.equal(false);
+      expect(managedAgentService.dispatch.calledOnce).to.equal(true);
+    });
+
+    it('should still gate keyless managed agents on non-email platforms when subscriber is unresolved', async () => {
+      const keylessSlackConfig = {
+        ...config,
+        platform: AgentPlatformEnum.SLACK,
+        isKeyless: true,
+        isManaged: true,
+      };
+      const { handler, managedAgentService, outboundGateway } = makeHandler({
+        subscriberResolve: sinon.stub().resolves(null),
+        subscriberFindById: sinon.stub().resolves(null),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+      });
+      const thread = makeSlackDmThread();
+      const message = makeSlackDmMessage();
+
+      await handler.handle(
+        'agent1',
+        keylessSlackConfig as any,
+        thread as any,
+        message as any,
+        AgentEventEnum.ON_MESSAGE
+      );
 
       expect(managedAgentService.dispatch.called).to.equal(false);
       expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);

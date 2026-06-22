@@ -28,11 +28,18 @@ export function buildEdgeFadeMask(
  * changes so the edges stay accurate when content reflows.
  */
 export function useHorizontalScrollEdges<T extends HTMLElement>() {
-  const ref = useRef<T | null>(null);
+  const nodeRef = useRef<T | null>(null);
+  const cleanupRef = useRef<(() => void) | null>(null);
   const [edges, setEdges] = useState({ canScrollLeft: false, canScrollRight: false });
 
-  useEffect(() => {
-    const node = ref.current;
+  // Callback ref so the observers (re)attach whenever the node mounts — including when the
+  // container is rendered after a loading/skeleton state. A plain effect would only run once on
+  // mount, missing the later attach and leaving the edge fade permanently disabled.
+  const ref = useCallback((node: T | null) => {
+    cleanupRef.current?.();
+    cleanupRef.current = null;
+    nodeRef.current = node;
+
     if (!node) return;
 
     const update = () => {
@@ -66,15 +73,17 @@ export function useHorizontalScrollEdges<T extends HTMLElement>() {
     });
     mutationObserver.observe(node, { childList: true });
 
-    return () => {
+    cleanupRef.current = () => {
       node.removeEventListener('scroll', update);
       resizeObserver.disconnect();
       mutationObserver.disconnect();
     };
   }, []);
 
+  useEffect(() => () => cleanupRef.current?.(), []);
+
   const scrollBy = useCallback((direction: 'left' | 'right') => {
-    const node = ref.current;
+    const node = nodeRef.current;
     if (!node) return;
 
     const delta = Math.max(node.clientWidth * 0.8, 160);

@@ -1,4 +1,4 @@
-import { ApiServiceLevelEnum, OrganizationProductTypeEnum } from '@novu/shared';
+import { ApiServiceLevelEnum } from '@novu/shared';
 import mongoose, { Schema } from 'mongoose';
 
 import { schemaOptions } from '../schema-default.options';
@@ -66,6 +66,10 @@ const organizationSchema = new Schema<OrganizationDBModel>(
         type: Schema.Types.Boolean,
         default: false,
       },
+      agents: {
+        type: Schema.Types.Boolean,
+        default: false,
+      },
     },
     externalId: Schema.Types.String,
     stripeCustomerId: Schema.Types.String,
@@ -104,11 +108,6 @@ const organizationSchema = new Schema<OrganizationDBModel>(
     onboardingWorkflowsStatus: {
       type: Schema.Types.String,
       enum: ['pending', 'generating', 'completed', 'failed', 'skipped'],
-      required: false,
-    },
-    productType: {
-      type: Schema.Types.String,
-      enum: OrganizationProductTypeEnum,
       required: false,
     },
   },

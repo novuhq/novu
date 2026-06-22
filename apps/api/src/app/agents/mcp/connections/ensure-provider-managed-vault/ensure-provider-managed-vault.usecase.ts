@@ -31,9 +31,9 @@ import {
   McpConnectionStatusEnum,
 } from '@novu/shared';
 
-import { assertMcpProviderManagedFlagEnabled } from '../../assert-mcp-provider-managed-flag-enabled';
-import { EnableAgentMcpServerCommand } from '../../servers/enable-agent-mcp-server/enable-agent-mcp-server.command';
-import { EnableAgentMcpServer } from '../../servers/enable-agent-mcp-server/enable-agent-mcp-server.usecase';
+import { EnableAgentMcpServerCommand } from '../../enablement/enable-agent-mcp-server/enable-agent-mcp-server.command';
+import { EnableAgentMcpServer } from '../../enablement/enable-agent-mcp-server/enable-agent-mcp-server.usecase';
+import { assertMcpProviderManagedFlagEnabled } from '../../shared/assert-mcp-provider-managed-flag-enabled';
 import { McpConnectionVaultService } from '../mcp-connection-vault.service';
 import { EnsureProviderManagedVaultCommand } from './ensure-provider-managed-vault.command';
 import { buildProviderManagedRedirectUrl, signProviderManagedRedirectState } from './provider-managed-redirect-state';

@@ -45,6 +45,16 @@ export default defineConfig(({ mode }) => {
     },
   });
 
+  // esbuild 0.27.7+ treats Safari <14.1 / iOS <14.5 as not supporting destructuring
+  // (due to a JS engine bug) but cannot lower destructuring, so it errors instead of
+  // generating fallback code. Vite 7.3.3+ applies this automatically; backport here.
+  // https://github.com/evanw/esbuild/issues/4436
+  const esbuildDestructuringWorkaround = {
+    supported: {
+      destructuring: true,
+    },
+  };
+
   return {
     plugins: [
       excludeCloudFilesPlugin(),
@@ -114,8 +124,7 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       port: 4201,
-      // Bind to all interfaces so the same dev server answers `localhost` and `*.localhost`
-      // (e.g. `connect.localhost`) for the Novu Connect hostname split.
+      // Bind to all interfaces so the same dev server answers `localhost` and `*.localhost`.
       host: true,
       allowedHosts: ['localhost', '.localhost'],
       headers: {
@@ -127,7 +136,9 @@ export default defineConfig(({ mode }) => {
     },
     optimizeDeps: {
       include: ['@novu/api'],
+      esbuildOptions: esbuildDestructuringWorkaround,
     },
+    esbuild: esbuildDestructuringWorkaround,
     build: {
       sourcemap: true,
       chunkSizeWarningLimit: 12000,

@@ -1,10 +1,11 @@
 import { APIConnectionError, APIConnectionTimeoutError, APIError, toFile } from '@anthropic-ai/sdk';
-import type { AgentMcpServerDto, AgentRuntimeConfigDto, AgentSkillDto, AgentToolDto } from '@novu/shared';
+import type { AgentRuntimeConfigDto } from '@novu/shared';
 import {
   AGENT_RUNTIME_PROVIDERS,
   AgentRuntimeCapabilities,
   AgentRuntimeProviderIdEnum,
   isAnthropicAwsProvider,
+  NOVU_TOOLS_SCHEMA,
 } from '@novu/shared';
 import { BaseAgentRuntimeProvider } from '../base-agent-runtime.provider';
 import {
@@ -54,7 +55,6 @@ import {
   mapSkill,
   mapToolset,
   parseRetryAfter,
-  resolveManagedAgentPermissionConfig,
   sleep,
   toSkillParam,
   truncateWithEllipsis,
@@ -180,9 +180,7 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
     // Not retried: agent creation is not idempotent and a retry after a
     // dropped response would create a duplicate billable agent upstream.
     try {
-      const permissionConfig = resolveManagedAgentPermissionConfig(input.useAlwaysAllowToolPermissions);
-      const toolsPayload = buildToolsPayload(input.tools, input.mcpServers, permissionConfig);
-
+      const toolsPayload = buildToolsPayload(input.tools, input.mcpServers);
       const agent = await (client as any).beta.agents.create({
         name: input.name,
         model: input.model ?? DEFAULT_MODEL,
@@ -277,7 +275,9 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
         };
 
         if (patch.model !== undefined) updatePayload.model = patch.model;
-        if (patch.systemPrompt !== undefined) updatePayload.system = patch.systemPrompt;
+        if (patch.systemPrompt !== undefined) {
+          updatePayload.system = patch.systemPrompt;
+        }
         if (patch.mcpServers !== undefined) {
           updatePayload.mcp_servers = patch.mcpServers.map((s) => ({ name: s.name, type: 'url', url: s.url }));
         }
@@ -293,8 +293,7 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
             patch.mcpServers !== undefined
               ? patch.mcpServers.map((s) => ({ name: s.name, url: s.url }))
               : currentMcpServers.map((s) => ({ name: s.name, url: s.url }));
-          const permissionConfig = resolveManagedAgentPermissionConfig(patch.useAlwaysAllowToolPermissions);
-          const toolsPayload = buildToolsPayload(toolTypes, mcpServers, permissionConfig);
+          const toolsPayload = buildToolsPayload(toolTypes, mcpServers);
 
           if (toolsPayload.length > 0) updatePayload.tools = toolsPayload;
         }
@@ -311,6 +310,47 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
           tools: ((updated.tools as any[]) ?? []).flatMap(mapToolset),
           skills: ((updated.skills as any[]) ?? []).map(mapSkill),
         };
+      } catch (err) {
+        this.normaliseError(err);
+      }
+    });
+  }
+
+  async refreshPlatformDefinition(externalAgentId: string): Promise<void> {
+    const client = await this.getClient();
+
+    await this.withRetry(async () => {
+      try {
+        // Read the agent's current user-selected tools/MCP and re-emit them through
+        // buildToolsPayload, which always appends Novu-owned platform tools (e.g.
+        // novu_tools). Nothing the user chose changes — this only backfills the overlay.
+        const currentAgent = await (client as any).beta.agents.retrieve(externalAgentId);
+        const rawTools = (currentAgent.tools as any[]) ?? [];
+        const currentTools = rawTools.flatMap(mapToolset);
+        const currentMcpServers = ((currentAgent.mcp_servers as any[]) ?? []).map(mapMcpServer);
+
+        // Preserve any provider-side custom tools we don't own (e.g. on an adopted agent).
+        // buildToolsPayload re-emits Novu's own novu_tools, so drop it here to avoid a duplicate.
+        const foreignCustomTools = rawTools.filter(
+          (tool) => tool?.type === 'custom' && tool?.name !== NOVU_TOOLS_SCHEMA.name
+        );
+
+        const toolsPayload = [
+          ...buildToolsPayload(
+            currentTools.map((t) => t.externalId),
+            currentMcpServers.map((s) => ({ name: s.name, url: s.url }))
+          ),
+          ...foreignCustomTools,
+        ];
+
+        if (toolsPayload.length === 0) {
+          return;
+        }
+
+        await (client as any).beta.agents.update(externalAgentId, {
+          version: currentAgent.version,
+          tools: toolsPayload,
+        });
       } catch (err) {
         this.normaliseError(err);
       }
@@ -384,46 +424,73 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
     const client = await this.getClient();
 
     try {
-      const iterator = (client as any).beta.sessions.events.list(sessionId, {
-        order: 'asc',
-        types: ['agent.mcp_tool_use', 'agent.tool_use', 'user.tool_confirmation'],
-      });
+      const toolUseIds = await this.getRequiresActionToolUseIds(client, sessionId);
 
-      const pendingById = new Map<string, PendingToolApproval>();
-
-      for await (const event of iterator) {
-        if (event?.type === 'user.tool_confirmation') {
-          const confirmedToolUseId = event.tool_use_id as string | undefined;
-          if (confirmedToolUseId) {
-            pendingById.delete(confirmedToolUseId);
-          }
-
-          continue;
-        }
-
-        if (event?.evaluated_permission !== 'ask') {
-          continue;
-        }
-
-        const toolUseId = event.id as string | undefined;
-        const toolName = (event.name as string | undefined) ?? 'unknown_tool';
-
-        if (!toolUseId) {
-          continue;
-        }
-
-        pendingById.set(toolUseId, {
-          toolUseId,
-          toolName,
-          mcpServerName: event.type === 'agent.mcp_tool_use' ? (event.mcp_server_name as string) : undefined,
-          input: (event.input as Record<string, unknown> | undefined) ?? undefined,
-        });
+      if (toolUseIds.length === 0) {
+        return [];
       }
 
-      return [...pendingById.values()];
+      return this.resolvePendingToolApprovals(client, sessionId, toolUseIds);
     } catch (err) {
       this.normaliseError(err);
     }
+  }
+
+  /** Tool-use ids Anthropic is blocked on in the latest session pause. */
+  private async getRequiresActionToolUseIds(client: AnthropicCompatibleClient, sessionId: string): Promise<string[]> {
+    const iterator = (client as any).beta.sessions.events.list(sessionId, {
+      order: 'desc',
+      types: ['session.status_idle', 'session.thread_status_idle'],
+    });
+
+    for await (const event of iterator) {
+      const stopReason = event?.stop_reason as { type?: string; event_ids?: string[] } | undefined;
+
+      if (stopReason?.type === 'requires_action') {
+        return (stopReason.event_ids ?? []).filter(
+          (toolUseId): toolUseId is string => typeof toolUseId === 'string' && toolUseId.length > 0
+        );
+      }
+    }
+
+    return [];
+  }
+
+  private async resolvePendingToolApprovals(
+    client: AnthropicCompatibleClient,
+    sessionId: string,
+    toolUseIds: string[]
+  ): Promise<PendingToolApproval[]> {
+    const pendingIds = new Set(toolUseIds);
+    const tools = new Map<string, PendingToolApproval>();
+
+    const iterator = (client as any).beta.sessions.events.list(sessionId, {
+      order: 'asc',
+      types: ['agent.mcp_tool_use', 'agent.tool_use'],
+    });
+
+    for await (const event of iterator) {
+      const toolUseId = event?.id as string | undefined;
+
+      if (!toolUseId || !pendingIds.has(toolUseId)) {
+        continue;
+      }
+
+      tools.set(toolUseId, {
+        toolUseId,
+        toolName: (event.name as string | undefined) ?? 'unknown_tool',
+        mcpServerName: event.type === 'agent.mcp_tool_use' ? (event.mcp_server_name as string) : undefined,
+        input: (event.input as Record<string, unknown> | undefined) ?? undefined,
+      });
+
+      if (tools.size === pendingIds.size) {
+        break;
+      }
+    }
+
+    return toolUseIds
+      .map((toolUseId) => tools.get(toolUseId))
+      .filter((tool): tool is PendingToolApproval => tool !== undefined);
   }
 
   async createVault(input: CreateVaultInput): Promise<CreateVaultResult> {

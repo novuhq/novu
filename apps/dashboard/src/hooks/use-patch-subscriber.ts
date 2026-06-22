@@ -16,14 +16,14 @@ export const usePatchSubscriber = (
   const { mutateAsync, ...rest } = useMutation({
     mutationFn: (args: PatchSubscriberParameters) => patchSubscriber({ environment: currentEnvironment!, ...args }),
     ...options,
-    onSuccess: async (data, variables, ctx) => {
+    onSuccess: async (data, variables, onMutateResult, context) => {
       await queryClient.setQueryData([QueryKeys.fetchSubscriber, variables.subscriberId], data);
 
       await queryClient.invalidateQueries({
         queryKey: [QueryKeys.fetchSubscribers],
       });
 
-      options?.onSuccess?.(data, variables, ctx);
+      options?.onSuccess?.(data, variables, onMutateResult, context);
     },
   });
 

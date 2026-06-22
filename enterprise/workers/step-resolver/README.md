@@ -133,37 +133,111 @@ STEP_RESOLVER_HMAC_SECRET=local-dev-secret
 
 From `enterprise/workers/step-resolver`:
 
-1. Create dispatch namespaces (one-time):
+### Environments
+
+| Wrangler env | Domain | Dispatch namespace |
+|--------------|--------|--------------------|
+| `staging` | `*.workers.dev` | `novu-step-resolvers-staging` |
+| `production` (US) | `step-resolver.novu.co` | `novu-step-resolvers-production` |
+| `production-eu` | `eu.step-resolver.novu.co` | `novu-step-resolvers-production-eu` |
+
+EU follows the same multi-region pattern as `@novu/socket-worker`: separate wrangler env, custom domain, and dispatch namespace in the same Cloudflare account. US (`production`) is unchanged.
+
+EU compute residency uses two Cloudflare mechanisms:
+
+- **Regional Services** (Data Localization Suite): pins TLS termination and dispatch worker execution to EU for `eu.step-resolver.novu.co`.
+- **Placement hints**: `production-eu` wrangler env and tenant worker deploy metadata target `aws:eu-central-1`.
+
+### One-time setup
+
+1. Create dispatch namespaces:
 
 ```bash
 pnpm run namespace:create:staging
 pnpm run namespace:create:production
+pnpm run namespace:create:production-eu
 ```
 
-2. Deploy worker service:
+1. Add the `eu.step-resolver.novu.co` custom domain in the Cloudflare dashboard (same account as US).
+
+1. Enable Regional Services for the EU hostname (requires Data Localization Suite on the account):
+
+```bash
+export CLOUDFLARE_ZONE_ID="<novu.co zone id>"
+export STEP_RESOLVER_CF_API_TOKEN="<token with Zone:Edit + DLS permissions>"
+pnpm run regional-services:production-eu
+```
+
+1. Deploy dispatch workers:
 
 ```bash
 pnpm run deploy:staging
 pnpm run deploy:production
+pnpm run deploy:production-eu
 ```
 
-3. Set secrets per environment:
+1. Set HMAC secrets per environment (must match the corresponding API/worker stack):
 
 ```bash
 pnpm run secret:staging
 pnpm run secret:production
+pnpm run secret:production-eu
 ```
 
-4. Deploy updates:
+### Deploy updates
 
 ```bash
 pnpm run deploy:staging
 pnpm run deploy:production
+pnpm run deploy:production-eu
 ```
 
 If namespace names differ from your Cloudflare account, update `wrangler.jsonc`.
 
+### EU API/worker stack env vars
+
+The EU `apps/api` and `apps/worker` stacks (GitHub environment `production-eu`, Secrets Manager) must set region-specific values. No code changes are required — the same env keys are used; only values differ per region.
+
+| Variable | US (`production` wrangler / `production-us` ECS) | EU (`production-eu`) |
+|----------|--------------------------------------------------|----------------------|
+| `STEP_RESOLVER_DISPATCH_URL` | `https://step-resolver.novu.co` | `https://eu.step-resolver.novu.co` |
+| `STEP_RESOLVER_CF_DISPATCH_NAMESPACE` | `novu-step-resolvers-production` | `novu-step-resolvers-production-eu` |
+| `STEP_RESOLVER_CF_ACCOUNT_ID` | Cloudflare account ID | Same account ID |
+| `STEP_RESOLVER_CF_API_TOKEN` | CF API token | CF API token (scoped to EU namespace if possible) |
+| `STEP_RESOLVER_CF_PLACEMENT_REGION` | *(unset)* | `aws:eu-central-1` |
+| `STEP_RESOLVER_HMAC_SECRET` | US dispatch worker secret | EU dispatch worker secret (from `secret:production-eu`) |
+
+`STEP_RESOLVER_CF_PLACEMENT_REGION` is passed as tenant worker `placement.region` metadata on deploy. Use `provider:region` format (e.g. `aws:eu-central-1`). Set it only on the EU API stack so customer code steps are placed near EU infrastructure. Leave unset on US.
+
+`apps/api` uses all six deploy/runtime variables above. `apps/worker` uses `STEP_RESOLVER_DISPATCH_URL` and `STEP_RESOLVER_HMAC_SECRET` (runtime only).
+
+### LaunchDarkly feature flags
+
+Step resolver is gated by `IS_STEP_RESOLVER_ENABLED` and `IS_ACTION_STEP_RESOLVER_ENABLED`. The API already sends `region` context from `NOVU_REGION` to LaunchDarkly. Extend existing US targeting to include `region = eu` before enabling step resolver for EU customers.
+
+### Verification
+
+After EU rollout:
+
+1. From an EU org dev environment, publish a code step (`novu step publish --api-url https://eu.api.novu.co`).
+2. Confirm the tenant script is created in the `novu-step-resolvers-production-eu` namespace (Cloudflare dashboard).
+3. Trigger a workflow preview/run and confirm resolution hits `https://eu.step-resolver.novu.co` with a valid HMAC.
+
 ## Curl smoke test
+
+US production:
+
+```bash
+DISPATCH_URL="https://step-resolver.novu.co"
+```
+
+EU production:
+
+```bash
+DISPATCH_URL="https://eu.step-resolver.novu.co"
+```
+
+Staging:
 
 ```bash
 DISPATCH_URL="https://step-resolver-dispatch-staging.<subdomain>.workers.dev"
@@ -186,3 +260,5 @@ curl -i -X POST "${DISPATCH_URL}${PATHNAME}" \
   -H "X-Novu-Signature: ${SIGNATURE}" \
   -d "$BODY"
 ```
+
+Set `DISPATCH_URL` to the US, EU, or staging endpoint above before running.

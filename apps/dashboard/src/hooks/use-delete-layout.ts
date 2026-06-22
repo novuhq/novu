@@ -13,7 +13,7 @@ export const useDeleteLayout = (options?: UseMutationOptions<void, unknown, Dele
   const { mutateAsync, ...rest } = useMutation({
     mutationFn: (args: DeleteLayoutParameters) => deleteLayout({ environment: currentEnvironment!, ...args }),
     ...options,
-    onSuccess: async (data, variables, ctx) => {
+    onSuccess: async (data, variables, onMutateResult, context) => {
       await queryClient.invalidateQueries({
         queryKey: [QueryKeys.fetchLayouts, currentEnvironment?._id],
       });
@@ -23,7 +23,7 @@ export const useDeleteLayout = (options?: UseMutationOptions<void, unknown, Dele
         queryKey: [QueryKeys.diffEnvironments],
       });
 
-      options?.onSuccess?.(data, variables, ctx);
+      options?.onSuccess?.(data, variables, onMutateResult, context);
     },
   });
 

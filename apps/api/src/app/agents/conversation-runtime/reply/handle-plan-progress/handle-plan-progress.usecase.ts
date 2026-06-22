@@ -6,6 +6,7 @@ import {
   type ConversationChannel,
   ConversationRepository,
 } from '@novu/dal';
+import { NOVU_INTERNAL_TOOLS } from '@novu/shared';
 import type { PlanModel, PlanTaskStatus } from 'chat';
 import { AgentConversationService } from '../../conversation/agent-conversation.service';
 import { PLAN_THINKING_TASK_ID, type PlanPhase, planTitleForPhase } from '../../egress/plan-phase';
@@ -34,6 +35,10 @@ export class HandlePlanProgress {
   }
 
   async execute(command: HandlePlanProgressCommand): Promise<void> {
+    if (this.isInternalToolEvent(command)) {
+      return;
+    }
+
     const conversation = await this.conversationService.getConversation(
       command.conversationId,
       command.environmentId,
@@ -76,6 +81,11 @@ export class HandlePlanProgress {
     if (toolProgress.action === 'complete' || toolProgress.action === 'fail') {
       await this.handleFinalize(command, toolProgress, existingActivities, activePlanMessageId);
     }
+  }
+
+  private isInternalToolEvent(command: HandlePlanProgressCommand): boolean {
+    // dont show internal tool events in the plan card
+    return NOVU_INTERNAL_TOOLS.includes(command.toolProgress?.toolName ?? '');
   }
 
   private async handleToolUse(
@@ -124,7 +134,12 @@ export class HandlePlanProgress {
 
     const tasks = this.collectTasks(existingActivities);
 
-    await this.postOrEditPlan(command, activePlanMessageId, this.toModel('awaiting-approval', tasks, false), 'awaiting-approval');
+    await this.postOrEditPlan(
+      command,
+      activePlanMessageId,
+      this.toModel('awaiting-approval', tasks, false),
+      'awaiting-approval'
+    );
   }
 
   private async handleVerdictUpdate(
@@ -256,10 +271,12 @@ export class HandlePlanProgress {
   }
 
   private toModel(phase: PlanPhase, tasks: Map<string, ToolTask>, isFinalized: boolean): PlanModel {
+    const terminalStatus: PlanTaskStatus = phase === 'failed' ? 'error' : 'complete';
+
     const planTasks = [...tasks.values()].map((t) => ({
       id: t.toolUseId,
       title: t.mcpServerName ? `${t.mcpServerName}: ${t.toolName}` : t.toolName,
-      status: t.status,
+      status: isFinalized && t.status !== 'complete' && t.status !== 'error' ? terminalStatus : t.status,
       ...(t.details ? { details: { markdown: t.details } } : {}),
     }));
 

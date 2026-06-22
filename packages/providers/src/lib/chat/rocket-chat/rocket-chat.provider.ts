@@ -7,15 +7,14 @@ import {
   ISendMessageSuccessResponse,
   isChannelDataOfType,
 } from '@novu/stateless';
-import axios from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { resolveSafeChatWebhookUrl, safeChatWebhookJsonRequest } from '../../../utils/safe-chat-webhook-request';
 import { WithPassthrough } from '../../../utils/types';
 
 export class RocketChatProvider extends BaseProvider implements IChatProvider {
   id = ChatProviderIdEnum.RocketChat;
   protected casing: CasingEnum = CasingEnum.SNAKE_CASE;
   channelType = ChannelTypeEnum.CHAT as ChannelTypeEnum.CHAT;
-  private axiosInstance = axios.create();
 
   constructor(
     private config: {
@@ -51,14 +50,19 @@ export class RocketChatProvider extends BaseProvider implements IChatProvider {
       'Content-Type': 'application/json',
       ...transformedData.headers,
     };
-    const baseURL = `${channelData.endpoint.url.toString()}/api/v1/chat.sendMessage`;
-    const { data } = await this.axiosInstance.post(baseURL, transformedData.body, {
+    const baseUrl = resolveSafeChatWebhookUrl(channelData.endpoint.url);
+    const targetUrl = new URL('/api/v1/chat.sendMessage', baseUrl).toString();
+    const response = await safeChatWebhookJsonRequest<{
+      message: { _id: string; ts: string };
+    }>({
+      url: targetUrl,
+      body: transformedData.body,
       headers,
     });
 
     return {
-      id: data.message._id,
-      date: data.message.ts,
+      id: response.body.message._id,
+      date: response.body.message.ts,
     };
   }
 }

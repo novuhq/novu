@@ -6,6 +6,7 @@ import type {
   DirectionEnum,
   IEnvironment,
 } from '@novu/shared';
+import type { AgentPlanUsage, PlanUsage } from '@/api/agents-plan-usage';
 import { del, get, getApiBaseUrl, NovuApiError, patch, post, put } from '@/api/api.client';
 
 /** Root segment for TanStack Query keys; use with {@link getAgentsListQueryKey}. */
@@ -87,6 +88,12 @@ export type AgentResponse = {
   createdAt: string;
   updatedAt: string;
   integrations?: AgentIntegrationSummary[];
+  /**
+   * Cloud only. `true` when the agent falls outside the organization plan agent
+   * limit (by creation order) and won't respond to inbound messages. Only plan
+   * limits produce this flag — system-capped organizations are never over-limit.
+   */
+  exceedsPlanLimit?: boolean;
 };
 
 export type ListAgentsResponse = {
@@ -95,6 +102,7 @@ export type ListAgentsResponse = {
   previous: string | null;
   totalCount: number;
   totalCountCapped: boolean;
+  planUsage?: AgentPlanUsage;
 };
 
 type AgentSkillInputDto = {
@@ -230,6 +238,23 @@ export async function getAgentDemoQuota(
     `/agents/${encodeURIComponent(agentIdentifier)}/demo-quota`,
     { environment, signal }
   );
+
+  return 'data' in response ? response.data : response;
+}
+
+export type ConversationUsage = {
+  current: number;
+  /** `null` when the tier is unlimited. */
+  included: number | null;
+  periodStart: string;
+  periodEnd: string;
+};
+
+export async function getConversationUsage(environment: IEnvironment, signal?: AbortSignal): Promise<ConversationUsage> {
+  const response = await get<{ data: ConversationUsage } | ConversationUsage>('/agents/usage/conversations', {
+    environment,
+    signal,
+  });
 
   return 'data' in response ? response.data : response;
 }
@@ -374,6 +399,11 @@ export type AgentIntegrationLink = {
   connectedAt?: string | null;
   createdAt: string;
   updatedAt: string;
+  /**
+   * Cloud only. `true` when this channel falls outside the organization plan
+   * active-channel limit (by connection order) — the agent won't respond on it.
+   */
+  exceedsPlanLimit?: boolean;
 };
 
 export type ListAgentIntegrationsResponse = {
@@ -382,6 +412,7 @@ export type ListAgentIntegrationsResponse = {
   previous: string | null;
   totalCount: number;
   totalCountCapped: boolean;
+  planUsage?: PlanUsage;
 };
 
 export type ListAgentIntegrationsParams = {
@@ -911,6 +942,68 @@ export async function submitTelegramMobileCredentials(
   }
 
   return unwrapEnvelope(data) as SubmitTelegramMobileCredentialsResult;
+}
+
+export type SlackSetupLinkStatus =
+  | { valid: true; agentName: string; providerName: string }
+  | { valid: false; reason: 'expired' | 'used' | 'invalid' };
+
+export async function getSlackSetupStatus(token: string, signal?: AbortSignal): Promise<SlackSetupLinkStatus> {
+  const url = `${getApiBaseUrl()}/v1/agents/public/slack/setup/status?token=${encodeURIComponent(token)}`;
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+    signal,
+  });
+
+  const data = await safeJson(response);
+
+  if (!response.ok) {
+    throw new NovuApiError(extractErrorMessage(data) ?? 'Failed to load setup link', response.status, data);
+  }
+
+  return unwrapEnvelope(data) as SlackSetupLinkStatus;
+}
+
+export type SubmitSlackSetupCredentialsResult = {
+  success: true;
+};
+
+export type SubmitSlackSetupCredentialsError = {
+  code: 'token_invalid' | 'token_expired' | 'token_already_used' | 'unknown';
+  message: string;
+};
+
+export class SlackSetupSubmitError extends Error {
+  constructor(
+    public readonly code: SubmitSlackSetupCredentialsError['code'],
+    message: string,
+    public readonly status: number
+  ) {
+    super(message);
+  }
+}
+
+export async function submitSlackSetupCredentials(
+  token: string,
+  configToken: string
+): Promise<SubmitSlackSetupCredentialsResult> {
+  const url = `${getApiBaseUrl()}/v1/agents/public/slack/setup`;
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token, configToken }),
+  });
+
+  const data = await safeJson(response);
+
+  if (!response.ok) {
+    const code = extractErrorCode(data) as SubmitSlackSetupCredentialsError['code'];
+    const message = extractErrorMessage(data) ?? 'Failed to configure Slack';
+    throw new SlackSetupSubmitError(code, message, response.status);
+  }
+
+  return unwrapEnvelope(data) as SubmitSlackSetupCredentialsResult;
 }
 
 async function safeJson(response: Response): Promise<unknown> {

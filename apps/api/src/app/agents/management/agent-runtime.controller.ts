@@ -17,8 +17,9 @@ import {
 } from '@nestjs/common';
 import { ApiExcludeController, ApiOperation } from '@nestjs/swagger';
 import { RequirePermissions } from '@novu/application-generic';
-import { ApiRateLimitCategoryEnum, PermissionsEnum, UserSessionData } from '@novu/shared';
+import { ApiAuthSchemeEnum, ApiRateLimitCategoryEnum, PermissionsEnum, UserSessionData } from '@novu/shared';
 import type { Request } from 'express';
+import { getClientIp } from 'request-ip';
 import { RequireAuthentication } from '../../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../../auth/framework/external-api.decorator';
 import { ThrottlerCategory } from '../../rate-limiting/guards';
@@ -29,21 +30,22 @@ import {
   ApiNotFoundResponse,
   ApiResponse,
 } from '../../shared/framework/response.decorator';
+import { KeylessAccessible } from '../../shared/framework/swagger/keyless.security';
 import { UserSession } from '../../shared/framework/user.decorator';
 import { EnsureProviderManagedVaultCommand } from '../mcp/connections/ensure-provider-managed-vault/ensure-provider-managed-vault.command';
 import { EnsureProviderManagedVault } from '../mcp/connections/ensure-provider-managed-vault/ensure-provider-managed-vault.usecase';
 import { GetMcpConnectionStatusCommand } from '../mcp/connections/get-mcp-connection-status/get-mcp-connection-status.command';
 import { GetMcpConnectionStatus } from '../mcp/connections/get-mcp-connection-status/get-mcp-connection-status.usecase';
+import { DisableAgentMcpServerCommand } from '../mcp/enablement/disable-agent-mcp-server/disable-agent-mcp-server.command';
+import { DisableAgentMcpServer } from '../mcp/enablement/disable-agent-mcp-server/disable-agent-mcp-server.usecase';
+import { EnableAgentMcpServerCommand } from '../mcp/enablement/enable-agent-mcp-server/enable-agent-mcp-server.command';
+import { EnableAgentMcpServer } from '../mcp/enablement/enable-agent-mcp-server/enable-agent-mcp-server.usecase';
+import { ListAgentMcpServersCommand } from '../mcp/enablement/list-agent-mcp-servers/list-agent-mcp-servers.command';
+import { ListAgentMcpServers } from '../mcp/enablement/list-agent-mcp-servers/list-agent-mcp-servers.usecase';
+import { SetAgentMcpServersCommand } from '../mcp/enablement/set-agent-mcp-servers/set-agent-mcp-servers.command';
+import { SetAgentMcpServers } from '../mcp/enablement/set-agent-mcp-servers/set-agent-mcp-servers.usecase';
 import { GenerateMcpOAuthUrlCommand } from '../mcp/oauth/generate-mcp-oauth-url/generate-mcp-oauth-url.command';
 import { GenerateMcpOAuthUrl } from '../mcp/oauth/generate-mcp-oauth-url/generate-mcp-oauth-url.usecase';
-import { DisableAgentMcpServerCommand } from '../mcp/servers/disable-agent-mcp-server/disable-agent-mcp-server.command';
-import { DisableAgentMcpServer } from '../mcp/servers/disable-agent-mcp-server/disable-agent-mcp-server.usecase';
-import { EnableAgentMcpServerCommand } from '../mcp/servers/enable-agent-mcp-server/enable-agent-mcp-server.command';
-import { EnableAgentMcpServer } from '../mcp/servers/enable-agent-mcp-server/enable-agent-mcp-server.usecase';
-import { ListAgentMcpServersCommand } from '../mcp/servers/list-agent-mcp-servers/list-agent-mcp-servers.command';
-import { ListAgentMcpServers } from '../mcp/servers/list-agent-mcp-servers/list-agent-mcp-servers.usecase';
-import { SetAgentMcpServersCommand } from '../mcp/servers/set-agent-mcp-servers/set-agent-mcp-servers.command';
-import { SetAgentMcpServers } from '../mcp/servers/set-agent-mcp-servers/set-agent-mcp-servers.usecase';
 import { AgentRuntimeExceptionFilter } from '../shared/agent-runtime-exception.filter';
 import {
   AgentMcpServerEnablementResponseDto,
@@ -106,6 +108,7 @@ export class AgentRuntimeController {
 
   @Post('/verify-credentials')
   @ExternalApiAccessible()
+  @KeylessAccessible()
   @ApiResponse(VerifyManagedCredentialsResponseDto)
   @ApiOperation({
     summary: 'Verify managed-runtime credentials',
@@ -134,6 +137,7 @@ export class AgentRuntimeController {
 
   @Post('/generate')
   @ExternalApiAccessible()
+  @KeylessAccessible()
   @ApiResponse(GenerateManagedAgentResponseDto)
   @ApiOperation({
     summary: 'Generate an agent configuration from a free-form prompt',
@@ -163,6 +167,9 @@ export class AgentRuntimeController {
     // `class-transformer`'s `plainToInstance` triggers `new AbortSignal()`, which is
     // disallowed by the runtime (`ERR_ILLEGAL_CONSTRUCTOR`).
     command.signal = abortController.signal;
+    if (user.scheme === ApiAuthSchemeEnum.KEYLESS) {
+      command.clientIp = getClientIp(request) ?? undefined;
+    }
 
     try {
       return await this.generateManagedAgentUsecase.execute(command);

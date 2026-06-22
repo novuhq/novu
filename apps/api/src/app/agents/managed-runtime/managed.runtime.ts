@@ -1,15 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { DEMO_QUOTA_EXHAUSTED_REPLY, DemoQuotaExhaustedError, PinoLogger } from '@novu/application-generic';
+import { InboundAckService } from '../conversation-runtime/ack/inbound-ack.service';
 import { AgentConversationService } from '../conversation-runtime/conversation/agent-conversation.service';
 import { OutboundGateway } from '../conversation-runtime/egress/outbound.gateway';
 import type { AgentRuntime } from '../conversation-runtime/runtime/agent-runtime.port';
 import type { ConversationTurn } from '../conversation-runtime/runtime/conversation-turn';
 import { applyPlatformThreadIdToThread } from '../conversation-runtime/runtime/platform-thread.util';
 import { AgentEventEnum } from '../shared/enums/agent-event.enum';
-import { UNRESOLVED_SUBSCRIBER_ACCESS_REPLY } from '../shared/util/agent-inbound-replies';
+import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
+import { buildUnresolvedSubscriberAccessReply } from '../shared/util/agent-inbound-replies';
 import { ManagedAgentService } from './managed-agent.service';
-import { HandleManagedAgentSetupInbound } from './setup/handle-managed-agent-setup-inbound.usecase';
-import { ManagedAgentSetupInboundCommand } from './setup/managed-agent-setup-inbound.command';
 import { parseToolApprovalActionId } from './tool-approval/approval-card.builder';
 import { ConfirmToolApprovalCommand } from './tool-approval/confirm-tool-approval.command';
 import { ConfirmToolApproval } from './tool-approval/confirm-tool-approval.usecase';
@@ -18,10 +18,10 @@ import { ConfirmToolApproval } from './tool-approval/confirm-tool-approval.useca
 export class ManagedRuntime implements AgentRuntime {
   constructor(
     private readonly managedAgentService: ManagedAgentService,
-    private readonly handleManagedAgentSetupInbound: HandleManagedAgentSetupInbound,
     private readonly confirmToolApproval: ConfirmToolApproval,
     private readonly outboundGateway: OutboundGateway,
     private readonly conversationService: AgentConversationService,
+    private readonly inboundAck: InboundAckService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -39,42 +39,47 @@ export class ManagedRuntime implements AgentRuntime {
       return;
     }
 
-    if (!turn.subscriber) {
+    // Keyless email demo agents bypass the subscriber gate: the ephemeral env has no
+    // subscribers, and abuse is bounded by the per-conversation demo cap + claim CTA.
+    const isKeylessEmailDemo = turn.config.isKeyless && turn.config.platform === AgentPlatformEnum.EMAIL;
+
+    if (!turn.subscriber && !isKeylessEmailDemo) {
       await this.replyUnresolvedSubscriberAccess(turn);
 
       return;
     }
 
-    if (turn.message?.id) {
-      const parked = await this.handleManagedAgentSetupInbound.execute(
-        ManagedAgentSetupInboundCommand.create({
-          userId: turn.config.organizationId,
-          environmentId: turn.config.environmentId,
-          organizationId: turn.config.organizationId,
-          conversationId: turn.conversation._id,
-          agentId: turn.agent._id,
-          subscriberId: turn.subscriber.subscriberId,
-          agentIdentifier: turn.config.agentIdentifier,
-          integrationIdentifier: turn.config.integrationIdentifier,
-          platformMessageId: turn.message.id,
-        })
-      );
-
-      if (parked) {
-        return;
-      }
-    }
-
     try {
-      await this.managedAgentService.dispatch(
+      const { status } = await this.managedAgentService.dispatch(
         {
           config: turn.config,
           conversation: turn.conversation,
           subscriber: turn.subscriber,
           userMessageText: turn.message?.text ?? '',
+          platformThreadId: turn.platformThreadId,
+          platformMessageId: turn.message?.id,
         },
         turn.agent
       );
+
+      const ackParams = {
+        agentId: turn.agentId,
+        config: turn.config,
+        platformThreadId: turn.platformThreadId,
+        platformMessageId: turn.message?.id,
+      };
+
+      if (status === 'active') {
+        const channel = this.conversationService.getPrimaryChannel(turn.conversation);
+        const isFirstMessage = !!turn.message?.id && channel.firstPlatformMessageId === turn.message.id;
+
+        await this.inboundAck.showWorkingSignal({
+          ...ackParams,
+          isFirstMessage,
+        });
+      } else if (status === 'queued') {
+        await this.inboundAck.showQueuedSignal(ackParams);
+      }
     } catch (err) {
       if (err instanceof DemoQuotaExhaustedError) {
         await this.replyDemoQuotaExhausted(turn);
@@ -136,16 +141,21 @@ export class ManagedRuntime implements AgentRuntime {
   }
 
   private async replyUnresolvedSubscriberAccess(turn: ConversationTurn): Promise<void> {
+    const reply = buildUnresolvedSubscriberAccessReply({
+      platform: turn.config.platform,
+      senderEmail: turn.message?.author?.userId,
+    });
+
     applyPlatformThreadIdToThread(turn.thread, turn.platformThreadId);
     await this.outboundGateway.replyOnThread(
       turn.thread,
-      { markdown: UNRESOLVED_SUBSCRIBER_ACCESS_REPLY },
+      { markdown: reply },
       {
         persist: {
           conversationId: turn.conversation._id,
           channel: this.conversationService.getPrimaryChannel(turn.conversation),
           agentIdentifier: turn.config.agentIdentifier,
-          content: UNRESOLVED_SUBSCRIBER_ACCESS_REPLY,
+          content: reply,
           environmentId: turn.config.environmentId,
           organizationId: turn.config.organizationId,
         },
