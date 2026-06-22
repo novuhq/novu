@@ -82,9 +82,9 @@ export function ActivityFeed() {
   useEffect(() => {
     if (!isHttpLogsPageEnabled && location.pathname.includes('/activity/requests') && currentEnvironment?.slug) {
       const fallbackPath = buildRoute(ROUTES.ACTIVITY_WORKFLOW_RUNS, { environmentSlug: currentEnvironment.slug });
-      navigate(`${fallbackPath}${location.search}`, { replace: true });
+      navigate(fallbackPath, { replace: true });
     }
-  }, [isHttpLogsPageEnabled, location.pathname, location.search, currentEnvironment?.slug, navigate]);
+  }, [isHttpLogsPageEnabled, location.pathname, currentEnvironment?.slug, navigate]);
 
   useEffect(() => {
     if (currentTab === 'requests') {
