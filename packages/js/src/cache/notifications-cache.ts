@@ -211,9 +211,9 @@ export class NotificationsCache {
           Array.isArray(data) &&
           data.every((item): item is Notification => typeof item === 'object' && 'id' in item)
         ) {
-          notifications = data;
+          notifications = this.#normalizeNotifications(data);
         } else if (typeof data === 'object' && 'id' in data) {
-          notifications = [data as Notification];
+          notifications = [this.#toNotificationInstance(data as Notification)];
         }
       } else if (remove && args) {
         if ('notification' in args && args.notification) {

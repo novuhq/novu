@@ -117,10 +117,7 @@ export const CountProvider = (props: ParentProps) => {
     // 1. Cache is nearly empty
     // 2. OR inbox is closed (will be auto-loaded when opened)
     if (hasLessThenMinAmount || !isOpened()) {
-      notificationsCache.update(tabSpecificFilterForCache, {
-        ...cachedData,
-        notifications: [notification, ...cachedData.notifications],
-      });
+      notificationsCache.unshift(tabSpecificFilterForCache, notification);
 
       return;
     }

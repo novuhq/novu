@@ -1,7 +1,7 @@
 import { InboxService } from '../api';
 import { NovuEventEmitter } from '../event-emitter';
 import { ListNotificationsArgs, ListNotificationsResponse, Notification } from '../notifications';
-import { ChannelType, SeverityLevelEnum } from '../types';
+import { ChannelType, InboxNotification, SeverityLevelEnum } from '../types';
 import { NotificationsCache } from './notifications-cache';
 
 describe('NotificationsCache', () => {
@@ -536,5 +536,49 @@ describe('NotificationsCache', () => {
         notifications: [notification3],
       },
     });
+  });
+
+  it('should wrap plain objects into Notification instances via unshift', () => {
+    const args: ListNotificationsArgs = { limit: 10, offset: 0, tags: ['tag1'] };
+    const plainNotification: InboxNotification = {
+      id: 'plain-1',
+      transactionId: 'tx-plain',
+      body: 'plain notification',
+      isRead: false,
+      isArchived: false,
+      isSeen: false,
+      isSnoozed: false,
+      to: { id: '1', subscriberId: '1' },
+      createdAt: new Date().toISOString(),
+      channelType: ChannelType.IN_APP,
+      severity: SeverityLevelEnum.NONE,
+    };
+
+    notificationsCache.unshift(args, plainNotification);
+    const result = notificationsCache.getAll(args);
+
+    expect(result).toBeDefined();
+    expect(result!.notifications).toHaveLength(1);
+    expect(result!.notifications[0]).toBeInstanceOf(Notification);
+    expect(typeof result!.notifications[0].read).toBe('function');
+    expect(typeof result!.notifications[0].archive).toBe('function');
+  });
+
+  it('should wrap plain objects from handleNotificationEvent into Notification instances', () => {
+    const args: ListNotificationsArgs = { limit: 10, offset: 0, tags: ['tag1'], read: false, archived: false };
+    const data: ListNotificationsResponse = { hasMore: false, filter: {}, notifications: [notification1] };
+    notificationsCache.set(args, data);
+
+    const plainObject = JSON.parse(JSON.stringify(notification1));
+    plainObject.body = 'Updated via BroadcastChannel';
+    expect(plainObject).not.toBeInstanceOf(Notification);
+
+    (notificationsCache as any).handleNotificationEvent()({ data: plainObject });
+
+    const result = notificationsCache.getAll(args);
+    expect(result).toBeDefined();
+    expect(result!.notifications[0]).toBeInstanceOf(Notification);
+    expect(typeof result!.notifications[0].read).toBe('function');
+    expect(typeof result!.notifications[0].archive).toBe('function');
   });
 });
