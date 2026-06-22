@@ -203,6 +203,7 @@ export function TelegramSetupGuide({
     if (
       isWebhookConfigured &&
       testSubscriberId &&
+      selectedIntegration?.identifier &&
       !subscriberLink &&
       !isIssuingSubscriberLink &&
       !subscriberLinkError
@@ -212,6 +213,7 @@ export function TelegramSetupGuide({
   }, [
     isWebhookConfigured,
     testSubscriberId,
+    selectedIntegration?.identifier,
     subscriberLink,
     isIssuingSubscriberLink,
     subscriberLinkError,

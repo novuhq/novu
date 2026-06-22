@@ -169,7 +169,17 @@ export class TelegramSubscriberLink {
   }
 
   #scheduleExpiry(expiresAt: string, generation: number): void {
-    const msUntilExpiry = new Date(expiresAt).getTime() - Date.now();
+    const expiresTs = new Date(expiresAt).getTime();
+    if (!Number.isFinite(expiresTs)) {
+      this.#setState({
+        ...this.#state,
+        error: new Error(`Invalid expiresAt received: ${expiresAt}`),
+      });
+
+      return;
+    }
+
+    const msUntilExpiry = expiresTs - Date.now();
     if (msUntilExpiry <= 0) {
       this.#handleExpiry(generation);
 

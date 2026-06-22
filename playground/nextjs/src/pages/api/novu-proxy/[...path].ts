@@ -68,14 +68,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   let upstream: Response;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10_000);
   try {
-    upstream = await fetch(upstreamUrl, { method: req.method, headers, body });
+    upstream = await fetch(upstreamUrl, { method: req.method, headers, body, signal: controller.signal });
   } catch (error) {
     res.status(502).json({
       message: `Failed to reach Novu API at ${BASE_URL}: ${error instanceof Error ? error.message : String(error)}`,
     });
 
     return;
+  } finally {
+    clearTimeout(timeout);
   }
 
   const text = await upstream.text();

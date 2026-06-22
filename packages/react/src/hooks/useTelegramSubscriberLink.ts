@@ -92,14 +92,16 @@ export function useTelegramSubscriberLink(props: UseTelegramSubscriberLinkProps)
     });
 
     instanceRef.current = link;
+    setState({ ...link.state });
 
-    link.onStateChange((next) => {
+    const unsubscribe = link.onStateChange((next) => {
       setState({ ...next });
     });
 
     void link.start();
 
     return () => {
+      unsubscribe();
       link.stop();
       instanceRef.current = null;
     };
