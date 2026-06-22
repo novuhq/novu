@@ -25,7 +25,7 @@ type StateListener = (state: TelegramSubscriberLinkState) => void;
  * const link = new TelegramSubscriberLink({
  *   secretKey: process.env.NOVU_SECRET_KEY,
  *   agentIdentifier: 'my-agent',
- *   integrationId: '<telegram-integration-id>',
+ *   integrationIdentifier: '<telegram-integration-identifier>',
  *   subscriberId: 'user-42',
  * });
  *
@@ -42,7 +42,7 @@ export class TelegramSubscriberLink {
   readonly #options: Required<
     Pick<
       TelegramSubscriberLinkOptions,
-      'apiUrl' | 'agentIdentifier' | 'integrationId' | 'subscriberId' | 'pollIntervalMs'
+      'apiUrl' | 'agentIdentifier' | 'integrationIdentifier' | 'subscriberId' | 'pollIntervalMs'
     >
   > & { secretKey?: string; fetchFn: typeof fetch };
 
@@ -64,7 +64,7 @@ export class TelegramSubscriberLink {
       apiUrl: options.apiUrl ?? DEFAULT_API_URL,
       secretKey: options.secretKey,
       agentIdentifier: options.agentIdentifier,
-      integrationId: options.integrationId,
+      integrationIdentifier: options.integrationIdentifier,
       subscriberId: options.subscriberId,
       pollIntervalMs: options.pollIntervalMs ?? DEFAULT_POLL_INTERVAL_MS,
       fetchFn: options.fetchFn ?? fetch,
@@ -133,9 +133,9 @@ export class TelegramSubscriberLink {
   }
 
   async #issueSubscriberLink(): Promise<TelegramSubscriberLinkResponse> {
-    const { apiUrl, agentIdentifier, integrationId, subscriberId, secretKey, fetchFn } = this.#options;
+    const { apiUrl, agentIdentifier, integrationIdentifier, subscriberId, secretKey, fetchFn } = this.#options;
 
-    const url = `${apiUrl}/v1/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationId)}/telegram/subscriber-link`;
+    const url = `${apiUrl}/v1/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationIdentifier)}/telegram/subscriber-link`;
 
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     if (secretKey) {
@@ -209,9 +209,9 @@ export class TelegramSubscriberLink {
   }
 
   async #checkConnection(): Promise<boolean> {
-    const { apiUrl, agentIdentifier, integrationId, secretKey, fetchFn } = this.#options;
+    const { apiUrl, agentIdentifier, integrationIdentifier, secretKey, fetchFn } = this.#options;
 
-    const url = `${apiUrl}/v1/agents/${encodeURIComponent(agentIdentifier)}/integrations?integrationIdentifier=${encodeURIComponent(integrationId)}&limit=1`;
+    const url = `${apiUrl}/v1/agents/${encodeURIComponent(agentIdentifier)}/integrations?integrationIdentifier=${encodeURIComponent(integrationIdentifier)}&limit=1`;
 
     const headers: Record<string, string> = {};
     if (secretKey) {

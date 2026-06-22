@@ -23,8 +23,8 @@ export type TelegramSubscriberLinkOptions = {
   /** Agent identifier (the `identifier` field on the agent, not `_id`). */
   agentIdentifier: string;
 
-  /** Integration ID for the Telegram integration linked to the agent. */
-  integrationId: string;
+  /** Integration identifier (the `identifier` field on the Telegram integration, not `_id`). */
+  integrationIdentifier: string;
 
   /** External subscriber ID to link to the Telegram chat. */
   subscriberId: string;

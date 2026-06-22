@@ -89,7 +89,7 @@ export class ConsumeTelegramMobileLink {
               environmentId: payload.env,
               organizationId: payload.org,
               agentIdentifier: payload.aid,
-              integrationId: integration._id,
+              integrationIdentifier: integration.identifier,
               subscriberId: payload.sid,
             })
           );

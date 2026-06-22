@@ -13,8 +13,8 @@ import { InlineToast } from '@/components/primitives/inline-toast';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { useAuth } from '@/context/auth/hooks';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
-import { buildConnectSubscriberId } from '@/utils/connect-subscriber-id';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
+import { buildConnectSubscriberId } from '@/utils/connect-subscriber-id';
 import { cn } from '@/utils/ui';
 import { IntegrationCredentialsSidebar, ListeningStatus, SetupButton, SetupStep } from './setup-guide-primitives';
 import { deriveStepStatus, hasIntegrationCredentials } from './setup-guide-step-utils';
@@ -171,10 +171,14 @@ export function TelegramSetupGuide({
         throw new Error('Sign-in is required to issue a Telegram connection link.');
       }
 
+      if (!selectedIntegration?.identifier) {
+        throw new Error('Telegram integration could not be resolved.');
+      }
+
       return requestTelegramSubscriberLink(
         requireEnvironment(currentEnvironment, 'No environment selected'),
         agent.identifier,
-        integrationId,
+        selectedIntegration.identifier,
         testSubscriberId
       );
     },

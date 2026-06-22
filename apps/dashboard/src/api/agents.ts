@@ -250,7 +250,10 @@ export type ConversationUsage = {
   periodEnd: string;
 };
 
-export async function getConversationUsage(environment: IEnvironment, signal?: AbortSignal): Promise<ConversationUsage> {
+export async function getConversationUsage(
+  environment: IEnvironment,
+  signal?: AbortSignal
+): Promise<ConversationUsage> {
   const response = await get<{ data: ConversationUsage } | ConversationUsage>('/agents/usage/conversations', {
     environment,
     signal,
@@ -860,11 +863,11 @@ type TelegramSubscriberLinkEnvelope = { data: TelegramSubscriberLink };
 export async function requestTelegramSubscriberLink(
   environment: IEnvironment,
   agentIdentifier: string,
-  integrationId: string,
+  integrationIdentifier: string,
   subscriberId: string
 ): Promise<TelegramSubscriberLink> {
   const response = await post<TelegramSubscriberLinkEnvelope>(
-    `/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationId)}/telegram/subscriber-link`,
+    `/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationIdentifier)}/telegram/subscriber-link`,
     { environment, body: { subscriberId } }
   );
 

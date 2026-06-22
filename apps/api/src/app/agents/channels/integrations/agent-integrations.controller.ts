@@ -460,7 +460,7 @@ export class AgentIntegrationsController {
     );
   }
 
-  @Post('/:identifier/integrations/:integrationId/telegram/subscriber-link')
+  @Post('/:identifier/integrations/:integrationIdentifier/telegram/subscriber-link')
   @ExternalApiAccessible()
   @KeylessAccessible()
   @HttpCode(HttpStatus.OK)
@@ -479,7 +479,7 @@ export class AgentIntegrationsController {
   createTelegramSubscriberLink(
     @UserSession() user: UserSessionData,
     @Param('identifier') identifier: string,
-    @Param('integrationId') integrationId: string,
+    @Param('integrationIdentifier') integrationIdentifier: string,
     @Body() body: IssueTelegramSubscriberLinkRequestDto
   ): Promise<IssueTelegramSubscriberLinkResponseDto> {
     return this.issueTelegramSubscriberLinkUsecase.execute(
@@ -488,7 +488,7 @@ export class AgentIntegrationsController {
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         agentIdentifier: identifier,
-        integrationId,
+        integrationIdentifier,
         subscriberId: body.subscriberId,
       })
     );

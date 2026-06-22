@@ -63,7 +63,7 @@ export class IssueTelegramSubscriberLink {
 
     const integration = await this.integrationRepository.findOne(
       {
-        _id: command.integrationId,
+        identifier: command.integrationIdentifier,
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
       },
@@ -71,7 +71,7 @@ export class IssueTelegramSubscriberLink {
     );
 
     if (!integration) {
-      throw new NotFoundException(`Integration ${command.integrationId} not found`);
+      throw new NotFoundException(`Integration ${command.integrationIdentifier} not found`);
     }
 
     if (integration.providerId !== ChatProviderIdEnum.Telegram) {

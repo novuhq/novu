@@ -21,7 +21,7 @@ const BASE_OPTIONS = {
   apiUrl: 'https://test.novu.co',
   secretKey: 'test-secret',
   agentIdentifier: 'my-agent',
-  integrationId: 'integration-1',
+  integrationIdentifier: 'integration-1',
   subscriberId: 'user-42',
   pollIntervalMs: 10,
 };

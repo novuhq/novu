@@ -354,11 +354,11 @@ export async function getSlackSetupLinkStatus(client: ConnectApiClient, token: s
 export async function issueTelegramSubscriberLink(
   client: ConnectApiClient,
   agentIdentifier: string,
-  integrationId: string,
+  integrationIdentifier: string,
   subscriberId: string
 ): Promise<TelegramSubscriberLinkResult> {
   const res = await client.axios.post<{ data?: TelegramSubscriberLinkResult } | TelegramSubscriberLinkResult>(
-    `/v1/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationId)}/telegram/subscriber-link`,
+    `/v1/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationIdentifier)}/telegram/subscriber-link`,
     { subscriberId }
   );
   const body = res.data;

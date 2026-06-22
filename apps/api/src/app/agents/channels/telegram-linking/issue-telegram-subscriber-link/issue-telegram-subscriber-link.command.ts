@@ -9,7 +9,7 @@ export class IssueTelegramSubscriberLinkCommand extends EnvironmentWithUserComma
 
   @IsString()
   @IsNotEmpty()
-  integrationId: string;
+  integrationIdentifier: string;
 
   @IsString()
   @IsNotEmpty()

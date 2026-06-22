@@ -40,7 +40,7 @@ export type UseTelegramSubscriberLinkResult = {
  *   const { deepLinkUrl, botUsername, status, refresh } = useTelegramSubscriberLink({
  *     apiUrl: '/api/novu-proxy',
  *     agentIdentifier: 'my-agent',
- *     integrationId: '<telegram-integration-id>',
+ *     integrationIdentifier: '<telegram-integration-identifier>',
  *     subscriberId: 'user-42',
  *   });
  *
@@ -66,14 +66,14 @@ export function useTelegramSubscriberLink(props: UseTelegramSubscriberLinkProps)
 
   const instanceRef = useRef<TelegramSubscriberLink | null>(null);
 
-  const { apiUrl, secretKey, agentIdentifier, integrationId, subscriberId, pollIntervalMs, fetchFn } = props;
+  const { apiUrl, secretKey, agentIdentifier, integrationIdentifier, subscriberId, pollIntervalMs, fetchFn } = props;
 
   useEffect(() => {
     const link = new TelegramSubscriberLink({
       apiUrl,
       secretKey,
       agentIdentifier,
-      integrationId,
+      integrationIdentifier,
       subscriberId,
       pollIntervalMs,
       fetchFn,
@@ -91,7 +91,7 @@ export function useTelegramSubscriberLink(props: UseTelegramSubscriberLinkProps)
       link.stop();
       instanceRef.current = null;
     };
-  }, [apiUrl, secretKey, agentIdentifier, integrationId, subscriberId, pollIntervalMs, fetchFn]);
+  }, [apiUrl, secretKey, agentIdentifier, integrationIdentifier, subscriberId, pollIntervalMs, fetchFn]);
 
   const refresh = useCallback(async () => {
     if (instanceRef.current) {

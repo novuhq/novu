@@ -93,7 +93,7 @@ export async function connectTelegramForAgent(
 
   const subscriberLink =
     prefetchedSubscriberLink ??
-    (await issueSubscriberLinkWithCredentialRetry(client, agent.identifier, integration._id, subscriberId));
+    (await issueSubscriberLinkWithCredentialRetry(client, agent.identifier, integration.identifier, subscriberId));
   const deepLinkQr = await renderQR(subscriberLink.deepLinkUrl);
   ui.showTelegramTest({
     deepLinkQr,
@@ -125,14 +125,14 @@ export async function connectTelegramForAgent(
 async function issueSubscriberLinkWithCredentialRetry(
   client: ConnectApiClient,
   agentIdentifier: string,
-  integrationId: string,
+  integrationIdentifier: string,
   subscriberId: string
 ): Promise<TelegramSubscriberLinkResult> {
   const deadline = Date.now() + TELEGRAM_CREDENTIAL_PROPAGATION_TIMEOUT_MS;
 
   while (true) {
     try {
-      return await issueTelegramSubscriberLink(client, agentIdentifier, integrationId, subscriberId);
+      return await issueTelegramSubscriberLink(client, agentIdentifier, integrationIdentifier, subscriberId);
     } catch (err) {
       if (!isMissingBotTokenError(err) || Date.now() >= deadline) {
         throw err;
