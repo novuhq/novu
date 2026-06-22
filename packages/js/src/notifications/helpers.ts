@@ -4,6 +4,18 @@ import type { NovuEventEmitter } from '../event-emitter';
 import { Action, ActionTypeEnum, InboxNotification, NotificationFilter, Result } from '../types';
 import { NovuError } from '../utils/errors';
 import { Notification } from './notification';
+import type {
+  ArchivedArgs,
+  CompleteArgs,
+  DeletedArgs,
+  ReadArgs,
+  RevertArgs,
+  SeenArgs,
+  SnoozeArgs,
+  UnarchivedArgs,
+  UnreadArgs,
+  UnsnoozeArgs,
+} from './types';
 
 export function ensureNotificationInstance({
   notification,
@@ -24,18 +36,6 @@ export function ensureNotificationInstance({
 
   return new Notification(notification, emitter, inboxService);
 }
-import type {
-  ArchivedArgs,
-  CompleteArgs,
-  DeletedArgs,
-  ReadArgs,
-  RevertArgs,
-  SeenArgs,
-  SnoozeArgs,
-  UnarchivedArgs,
-  UnreadArgs,
-  UnsnoozeArgs,
-} from './types';
 
 export const read = async ({
   emitter,
