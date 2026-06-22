@@ -21,7 +21,7 @@ export const judgePrompts = {
   noInfraMcpSemantic:
     'Does the drafted agent description avoid naming internal infrastructure or backend plumbing (databases, email delivery APIs, queues, caches, dev tooling) even via synonyms?',
   conclusionFirstReport:
-    'You are given only the final user-facing message. Does its first line/sentence state the CLI result (success or failure), followed by the single next action (claim link for keyless or dashboard for authenticated), without leading with setup steps or process narration?',
+    'You are given only the final user-facing message. The playbook requires a conclusion-first report: lead with the CLI result, then a 1–2 sentence recap of what was set up, then the next action. Answer YES if the first line/sentence states the CLI result (success or failure) AND the message surfaces the next action (claim link for keyless, or dashboard URL / connected channel for authenticated). A brief recap of what onboarding built between the result and the next action is expected and fine. Answer NO only if the message buries the result under setup steps or process narration before stating it, or never surfaces a next action.',
 };
 
 export const catalog = {
