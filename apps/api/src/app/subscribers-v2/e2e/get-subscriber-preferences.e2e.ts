@@ -192,6 +192,41 @@ describe('Get Subscriber Preferences - /subscribers/:subscriberId/preferences (G
     expect(responseB.result.global.channels.email).to.equal(false); // Global preference for tenant:globex
     expect(responseB.result.workflows[0].channels.email).to.equal(false); // Inherits from global
   });
+
+  // Guards the lean (non class-transformer) preference reads: the wire payload must expose only the
+  // documented DTO shape, with no raw Mongo document fields and ISO-string dates.
+  it('should serialize preferences to the documented shape without leaking raw document fields', async () => {
+    // Explicit workflow-level preference so `updatedAt` is populated from the SUBSCRIBER_WORKFLOW doc
+    await novuClient.subscribers.preferences.update(
+      { workflowId: workflow._id, channels: { email: false } },
+      subscriber.subscriberId
+    );
+
+    const res = await session.testAgent.get(`/v2/subscribers/${subscriber.subscriberId}/preferences`);
+    expect(res.status).to.equal(200);
+
+    const { global, workflows } = res.body.data;
+
+    expect(global).to.have.property('enabled').that.is.a('boolean');
+    expect(global).to.have.property('channels').that.is.an('object');
+    expect(workflows).to.be.an('array').with.lengthOf(1);
+
+    const [wf] = workflows;
+    expect(wf).to.have.property('enabled').that.is.a('boolean');
+    expect(wf).to.have.property('channels').that.is.an('object');
+    expect(wf).to.have.property('overrides').that.is.an('array');
+    expect(wf).to.have.property('workflow').that.is.an('object');
+    expect(wf.workflow).to.have.property('identifier', workflow.triggers[0].identifier);
+
+    // updatedAt is set because we created an explicit workflow preference; must be an ISO string
+    expect(wf.updatedAt).to.be.a('string');
+    expect(new Date(wf.updatedAt).toISOString()).to.equal(wf.updatedAt);
+
+    // No raw preference-document fields should leak onto the response
+    for (const leaked of ['_id', 'id', '_templateId', '_environmentId', '_organizationId', '_subscriberId', 'type']) {
+      expect(wf, `workflow preference must not expose "${leaked}"`).to.not.have.property(leaked);
+    }
+  });
 });
 
 async function createSubscriberAndValidate(id: string = '') {
