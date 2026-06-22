@@ -7,7 +7,7 @@ const RESOLVE_ROUTE_REGEX =
   /^\/resolve\/(?<organizationId>[a-f0-9]{24})\/(?<stepResolverWorkerHash>sr-[^/]+)\/(?<workflowId>[^/]+)\/(?<stepId>[^/]+)$/;
 const REQUEST_ID_HEADER = 'x-request-id';
 const JSON_CONTENT_TYPE = 'application/json';
-const MAX_REQUEST_BODY_BYTES = 1024 * 1024; // 1MB
+const MAX_REQUEST_BODY_BYTES = 20 * 1024 * 1024; // 20MB — matches team-plan email attachment payload limit
 
 function jsonResponse(body: unknown, status: number, requestId: string, headers?: Record<string, string>): Response {
   return new Response(JSON.stringify(body), {
