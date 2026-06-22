@@ -18,6 +18,7 @@ export const scenario: EvalScenario<ConnectFlags> = {
     { questionContains: 'description', optionId: 'approve' },
   ],
   tape: connectTape({
+    requireKeyless: true,
     allowedChannels: ['email'],
     chunks: [
       { stdout: `NOVU_CONNECT_INBOUND_ADDRESS=${inboundAddress}` },
