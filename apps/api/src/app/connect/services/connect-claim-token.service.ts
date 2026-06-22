@@ -1,7 +1,7 @@
-import { randomBytes } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import { CacheService, PinoLogger } from '@novu/application-generic';
-import { CONNECT_CLAIM_TOKEN_PATTERN } from '@novu/shared';
+import { isConnectClaimTokenFormat } from '@novu/shared';
+import { mintAutolinkSafeOpaqueToken } from '../../shared/helpers';
 
 export const CONNECT_CLAIM_TOKEN_TTL_SECONDS = 7 * 24 * 60 * 60;
 
@@ -12,7 +12,6 @@ const CTA_POSTED_KEY_PREFIX = 'connect_claim_cta_posted:';
 const CLAIM_LOCK_KEY_PREFIX = 'connect_claim_link_lock:';
 
 const CLAIM_LOCK_TTL_SECONDS = 60;
-const TOKEN_BYTES = 24;
 
 /** Wrap token in `{…}` so storage + used-marker keys share a Redis Cluster hash slot. */
 function clusterSlotTag(token: string): string {
@@ -86,7 +85,7 @@ export class ConnectClaimTokenService {
   async issue(payload: ConnectClaimTokenPayload): Promise<IssuedConnectClaimToken> {
     this.assertCacheAvailable('issue');
 
-    const token = randomBytes(TOKEN_BYTES).toString('base64url');
+    const token = mintAutolinkSafeOpaqueToken();
     const mintedAt = Math.floor(Date.now() / 1000);
     const expiresAtEpoch = mintedAt + CONNECT_CLAIM_TOKEN_TTL_SECONDS;
     const entry: StoredEntry = { payload, expiresAt: expiresAtEpoch };
@@ -271,7 +270,7 @@ export class ConnectClaimTokenService {
   }
 
   private isTokenFormatValid(token: string): boolean {
-    return typeof token === 'string' && CONNECT_CLAIM_TOKEN_PATTERN.test(token);
+    return typeof token === 'string' && isConnectClaimTokenFormat(token);
   }
 
   private assertCacheAvailable(operation: string): void {
