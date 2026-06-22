@@ -109,13 +109,7 @@ export class SlackOauthCallback {
   ): Promise<ChannelConnectionEntity> {
     const isSharedMode = stateData.connectionMode === 'shared';
     const subscriberId = isSharedMode ? undefined : stateData.subscriberId;
-    const contextKeys = await this.resolveContextKeys(stateData);
-    const existingConnection = await this.findExistingConnection(
-      stateData,
-      integration,
-      subscriberId,
-      contextKeys
-    );
+    const existingConnection = await this.findExistingConnection(stateData, integration, subscriberId);
     const auth = { accessToken: authData.access_token };
     const workspace = { id: authData.team.id, name: authData.team.name };
 
@@ -163,8 +157,7 @@ export class SlackOauthCallback {
   private async findExistingConnection(
     stateData: StateData,
     integration: IntegrationEntity,
-    subscriberId: string | undefined,
-    contextKeys: string[]
+    subscriberId: string | undefined
   ): Promise<ChannelConnectionEntity | null> {
     if (stateData.identifier) {
       const connectionByIdentifier = await this.channelConnectionRepository.findOne({
@@ -178,6 +171,7 @@ export class SlackOauthCallback {
       }
     }
 
+    const contextKeys = await this.resolveContextKeys(stateData);
     const contextQuery = this.channelConnectionRepository.buildContextExactMatchQuery(contextKeys);
 
     return await this.channelConnectionRepository.findOne({

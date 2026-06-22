@@ -1,5 +1,10 @@
 import { GetNovuProviderCredentials } from '@novu/application-generic';
-import { ChannelConnectionRepository, ContextRepository, EnvironmentRepository, IntegrationRepository } from '@novu/dal';
+import {
+  ChannelConnectionRepository,
+  ContextRepository,
+  EnvironmentRepository,
+  IntegrationRepository,
+} from '@novu/dal';
 import { ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
 import axios from 'axios';
 import { expect } from 'chai';
@@ -298,12 +303,48 @@ describe('SlackOauthCallback — reconnect token refresh', () => {
 
     expect(harness.createChannelConnection.execute.called).to.be.false;
     expect(harness.updateChannelConnection.execute.calledOnce).to.be.true;
+    expect(harness.contextRepository.findOrCreateContextsFromPayload.called).to.be.false;
 
     const updateArg = harness.updateChannelConnection.execute.firstCall.args[0];
     expect(updateArg.identifier).to.equal(MOCK_CONNECTION_IDENTIFIER);
     expect(updateArg.auth.accessToken).to.equal(MOCK_REFRESHED_ACCESS_TOKEN);
     expect(updateArg.workspace.id).to.equal(MOCK_TEAM_ID);
     expect(updateArg.workspace.name).to.equal(MOCK_TEAM_NAME);
+  });
+
+  it('should update connection and create endpoint when autoLinkUser=true on reconnect', async () => {
+    harness.channelConnectionRepository.findOne.onFirstCall().resolves({
+      identifier: MOCK_CONNECTION_IDENTIFIER,
+    } as any);
+    harness.updateChannelConnection.execute.resolves({
+      identifier: MOCK_CONNECTION_IDENTIFIER,
+    } as any);
+
+    const state = buildEncodedState({
+      environmentId: MOCK_ENVIRONMENT_ID,
+      organizationId: MOCK_ORGANIZATION_ID,
+      integrationIdentifier: MOCK_INTEGRATION_IDENTIFIER,
+      providerId: ChatProviderIdEnum.Slack,
+      identifier: MOCK_CONNECTION_IDENTIFIER,
+      subscriberId: MOCK_SUBSCRIBER_ID,
+      autoLinkUser: true,
+    });
+
+    const command = SlackOauthCallbackCommand.create({
+      providerCode: 'slack-code',
+      state,
+    });
+
+    await harness.usecase.execute(command);
+
+    expect(harness.createChannelConnection.execute.called).to.be.false;
+    expect(harness.updateChannelConnection.execute.calledOnce).to.be.true;
+    expect(harness.createChannelEndpoint.execute.calledOnce).to.be.true;
+
+    const endpointArg = harness.createChannelEndpoint.execute.firstCall.args[0];
+    expect(endpointArg.connectionIdentifier).to.equal(MOCK_CONNECTION_IDENTIFIER);
+    expect(endpointArg.subscriberId).to.equal(MOCK_SUBSCRIBER_ID);
+    expect(endpointArg.endpoint.userId).to.equal(MOCK_SLACK_USER_ID);
   });
 
   it('should update the existing connection token when reconnecting with the same integration, subscriber, and context', async () => {
