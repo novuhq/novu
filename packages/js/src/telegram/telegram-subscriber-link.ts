@@ -58,6 +58,10 @@ export class TelegramSubscriberLink {
   #pollTimer: ReturnType<typeof setTimeout> | null = null;
   #expiryTimer: ReturnType<typeof setTimeout> | null = null;
   #stopped = false;
+  // Bumped on every (re)issue so timers/callbacks captured by a previous link
+  // become stale and bail out — prevents overlapping poll loops after a
+  // refresh() or expiry re-issue.
+  #generation = 0;
 
   constructor(options: TelegramSubscriberLinkOptions) {
     this.#options = {
@@ -106,10 +110,12 @@ export class TelegramSubscriberLink {
   }
 
   async #issueAndPoll(): Promise<void> {
+    const generation = ++this.#generation;
+
     try {
       const response = await this.#issueSubscriberLink();
 
-      if (this.#stopped) return;
+      if (this.#isStale(generation)) return;
 
       this.#setState({
         status: 'pending',
@@ -119,10 +125,10 @@ export class TelegramSubscriberLink {
         error: null,
       });
 
-      this.#scheduleExpiry(response.expiresAt);
-      this.#startPolling();
+      this.#scheduleExpiry(response.expiresAt, generation);
+      this.#startPolling(generation);
     } catch (err) {
-      if (this.#stopped) return;
+      if (this.#isStale(generation)) return;
 
       this.#setState({
         ...this.#state,
@@ -130,6 +136,10 @@ export class TelegramSubscriberLink {
         error: err instanceof Error ? err : new Error(String(err)),
       });
     }
+  }
+
+  #isStale(generation: number): boolean {
+    return this.#stopped || generation !== this.#generation;
   }
 
   async #issueSubscriberLink(): Promise<TelegramSubscriberLinkResponse> {
@@ -158,19 +168,19 @@ export class TelegramSubscriberLink {
     return (json.data ?? json) as TelegramSubscriberLinkResponse;
   }
 
-  #scheduleExpiry(expiresAt: string): void {
+  #scheduleExpiry(expiresAt: string, generation: number): void {
     const msUntilExpiry = new Date(expiresAt).getTime() - Date.now();
     if (msUntilExpiry <= 0) {
-      this.#handleExpiry();
+      this.#handleExpiry(generation);
 
       return;
     }
 
-    this.#expiryTimer = setTimeout(() => this.#handleExpiry(), msUntilExpiry);
+    this.#expiryTimer = setTimeout(() => this.#handleExpiry(generation), msUntilExpiry);
   }
 
-  #handleExpiry(): void {
-    if (this.#stopped) return;
+  #handleExpiry(generation: number): void {
+    if (this.#isStale(generation)) return;
 
     this.#clearTimers();
 
@@ -182,14 +192,16 @@ export class TelegramSubscriberLink {
     void this.#issueAndPoll();
   }
 
-  #startPolling(): void {
-    if (this.#stopped) return;
+  #startPolling(generation: number): void {
+    if (this.#isStale(generation)) return;
 
     const poll = async () => {
-      if (this.#stopped) return;
+      if (this.#isStale(generation)) return;
 
       try {
         const connected = await this.#checkConnection();
+        if (this.#isStale(generation)) return;
+
         if (connected) {
           this.#clearTimers();
           this.#setState({ ...this.#state, status: 'connected', error: null });
@@ -200,7 +212,7 @@ export class TelegramSubscriberLink {
         // transient — keep polling
       }
 
-      if (!this.#stopped) {
+      if (!this.#isStale(generation)) {
         this.#pollTimer = setTimeout(poll, this.#options.pollIntervalMs);
       }
     };

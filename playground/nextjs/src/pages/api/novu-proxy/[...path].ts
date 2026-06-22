@@ -21,6 +21,18 @@ const BASE_URL = (
   'https://api.novu.co'
 ).replace(/\/$/, '');
 
+// Allowlist: only the two endpoints `useTelegramSubscriberLink` actually calls.
+// Without this, the catch-all would forward ANY path with the secret key,
+// letting a browser caller reach the full Novu API.
+const ALLOWED_ROUTES: ReadonlyArray<{ method: string; pattern: RegExp }> = [
+  { method: 'POST', pattern: /^v1\/agents\/[^/]+\/integrations\/[^/]+\/telegram\/subscriber-link$/ },
+  { method: 'GET', pattern: /^v1\/agents\/[^/]+\/integrations$/ },
+];
+
+function isAllowed(method: string | undefined, path: string): boolean {
+  return ALLOWED_ROUTES.some((route) => route.method === method && route.pattern.test(path));
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const secretKey = process.env.NOVU_SECRET_KEY?.trim();
 
@@ -34,8 +46,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const pathParts = Array.isArray(segments) ? segments : [segments].filter(Boolean);
   const upstreamPath = (pathParts as string[]).map(encodeURIComponent).join('/');
 
-  const queryIndex = req.url?.indexOf('?') ?? -1;
-  const search = queryIndex >= 0 ? req.url!.slice(queryIndex) : '';
+  if (!isAllowed(req.method, upstreamPath)) {
+    res.status(403).json({ message: `novu-proxy: ${req.method} /${upstreamPath} is not an allowed route.` });
+
+    return;
+  }
+
+  const requestUrl = req.url ?? '';
+  const queryIndex = requestUrl.indexOf('?');
+  const search = queryIndex >= 0 ? requestUrl.slice(queryIndex) : '';
   const upstreamUrl = `${BASE_URL}/${upstreamPath}${search}`;
 
   const headers: Record<string, string> = {

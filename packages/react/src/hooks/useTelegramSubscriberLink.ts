@@ -68,6 +68,18 @@ export function useTelegramSubscriberLink(props: UseTelegramSubscriberLinkProps)
 
   const { apiUrl, secretKey, agentIdentifier, integrationIdentifier, subscriberId, pollIntervalMs, fetchFn } = props;
 
+  // Keep the latest `fetchFn` in a ref so a new inline-function identity on every
+  // render does not re-trigger the effect (which would tear down and re-issue the
+  // link on a loop). The stable wrapper below reads from this ref.
+  const fetchFnRef = useRef(fetchFn);
+  fetchFnRef.current = fetchFn;
+
+  const stableFetchFn = useCallback<typeof fetch>((input, init) => {
+    const fn = fetchFnRef.current ?? fetch;
+
+    return fn(input, init);
+  }, []);
+
   useEffect(() => {
     const link = new TelegramSubscriberLink({
       apiUrl,
@@ -76,7 +88,7 @@ export function useTelegramSubscriberLink(props: UseTelegramSubscriberLinkProps)
       integrationIdentifier,
       subscriberId,
       pollIntervalMs,
-      fetchFn,
+      fetchFn: stableFetchFn,
     });
 
     instanceRef.current = link;
@@ -91,7 +103,7 @@ export function useTelegramSubscriberLink(props: UseTelegramSubscriberLinkProps)
       link.stop();
       instanceRef.current = null;
     };
-  }, [apiUrl, secretKey, agentIdentifier, integrationIdentifier, subscriberId, pollIntervalMs, fetchFn]);
+  }, [apiUrl, secretKey, agentIdentifier, integrationIdentifier, subscriberId, pollIntervalMs, stableFetchFn]);
 
   const refresh = useCallback(async () => {
     if (instanceRef.current) {
