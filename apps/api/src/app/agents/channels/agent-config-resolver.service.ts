@@ -63,6 +63,12 @@ export interface ResolvedAgentConfig {
   integrationIdentifier: string;
   integrationId: string;
   /**
+   * Provider id of the resolved integration (e.g. `slack`, `msteams`). Identifies
+   * the channel type for active-channel plan-limit enforcement, where multiple
+   * integrations of the same provider count as a single channel.
+   */
+  providerId: string;
+  /**
    * Whether the organization removed Novu branding (Pro and above). Drives the
    * "Powered by Novu" watermark applied by the outbound gateway on every
    * delivery path.
@@ -288,6 +294,7 @@ export class AgentConfigResolver {
       agentName: agent.name,
       integrationIdentifier,
       integrationId: integration._id,
+      providerId: integration.providerId,
       removeNovuBranding: await this.resolveRemoveNovuBranding(organizationId),
       acknowledgeOnReceived: agent.behavior?.acknowledgeOnReceived !== false,
       reactionOnResolved: await resolveReaction(
