@@ -12,6 +12,7 @@ import {
   InMemoryLRUCacheStore,
   Instrument,
   InstrumentUsecase,
+  isClickHouseConfigured,
   IWorkflowDataDto,
   LogRepository,
   mapEventTypeToTitle,
@@ -414,12 +415,27 @@ export class ParseEventRequest {
       );
     }
 
-    const activityFeedLink = `${process.env.DASHBOARD_URL || process.env.FRONT_BASE_URL}/env/${command.environmentId}/activity/requests?selectedLogId=${requestId}`;
+    const dashboardBaseUrl = process.env.DASHBOARD_URL || process.env.FRONT_BASE_URL;
+    let activityFeedLink: string | undefined;
+    if (isClickHouseConfigured() && dashboardBaseUrl) {
+      const isHttpLogsPageEnabled = await this.featureFlagService.getFlag({
+        environment: { _id: command.environmentId },
+        organization: { _id: command.organizationId },
+        user: { _id: command.userId } as UserEntity,
+        key: FeatureFlagsKeysEnum.IS_HTTP_LOGS_PAGE_ENABLED,
+        defaultValue: false,
+      });
+
+      if (isHttpLogsPageEnabled) {
+        activityFeedLink = `${dashboardBaseUrl}/env/${command.environmentId}/activity/requests?selectedLogId=${requestId}`;
+      }
+    }
+
     return {
       acknowledged: true,
       status: TriggerEventStatusEnum.PROCESSED,
       transactionId,
-      activityFeedLink,
+      ...(activityFeedLink ? { activityFeedLink } : {}),
       jobData: command.skipQueueInsertion ? jobData : undefined,
     };
   }

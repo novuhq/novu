@@ -16,6 +16,9 @@ import type { TriggerRecipientsPayload } from '@novu/shared';
 export const INBOUND_ATTACHMENT_ONLY_PREVIEW = '[Attachment]';
 export const DEFAULT_CONVERSATION_TITLE = 'Untitled conversation';
 
+/** Default number of recent activities loaded as conversation history for every runtime. */
+export const AGENT_HISTORY_LIMIT = 50;
+
 export function getConversationTitle(firstMessageText: string): string {
   const trimmed = firstMessageText.trim();
 
@@ -256,8 +259,21 @@ export class AgentConversationService {
     return activity;
   }
 
-  async getHistory(environmentId: string, conversationId: string, limit = 20): Promise<ConversationActivityEntity[]> {
+  async getHistory(
+    environmentId: string,
+    conversationId: string,
+    limit = AGENT_HISTORY_LIMIT
+  ): Promise<ConversationActivityEntity[]> {
     return this.activityRepository.findByConversation(environmentId, conversationId, limit);
+  }
+
+  /** Resolves the stored activity a reaction targets, matched by platform-native message id. */
+  async findSourceActivity(
+    environmentId: string,
+    conversationId: string,
+    platformMessageId: string
+  ): Promise<ConversationActivityEntity | null> {
+    return this.activityRepository.findByPlatformMessageId(environmentId, conversationId, platformMessageId);
   }
 
   async countAgentMessages(environmentId: string, conversationId: string): Promise<number> {

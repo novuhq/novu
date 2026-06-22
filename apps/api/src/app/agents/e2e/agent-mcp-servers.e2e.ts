@@ -42,6 +42,7 @@ function buildMockProvider(overrides: Partial<Record<string, sinon.SinonStub>> =
       mcpServers: [],
       tools: [],
     }),
+    refreshPlatformDefinition: sinon.stub().resolves(undefined),
     updateConfig: sinon.stub().resolves({
       model: 'claude-3-5-sonnet-20241022',
       systemPrompt: '',

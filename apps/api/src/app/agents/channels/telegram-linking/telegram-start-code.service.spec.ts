@@ -66,7 +66,7 @@ describe('TelegramStartCodeService', () => {
     agentIdentifier: 'a',
   };
 
-  it('issues a 32-char base64url code and stores JSON payload with TTL', async () => {
+  it('issues a 32-char autolink-safe alphanumeric code and stores JSON payload with TTL', async () => {
     const { service, cacheService } = makeService();
 
     const { code, expiresAt } = await service.issue({
@@ -78,7 +78,8 @@ describe('TelegramStartCodeService', () => {
     });
 
     expect(code).to.have.length(32);
-    expect(code).to.match(/^[A-Za-z0-9_-]+$/);
+    expect(code).to.match(/^[A-Za-z0-9]{32}$/);
+    expect(code).to.not.match(/[-_]/);
 
     const expiresAtMs = Date.parse(expiresAt);
     const expectedExpiresAtMs = Date.now() + TELEGRAM_START_CODE_TTL_SECONDS * 1000;

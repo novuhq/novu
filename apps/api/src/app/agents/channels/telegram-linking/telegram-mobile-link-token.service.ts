@@ -1,6 +1,7 @@
-import { randomBytes } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import { CacheService, PinoLogger } from '@novu/application-generic';
+
+import { mintAutolinkSafeOpaqueToken } from '../../../shared/helpers';
 
 /** Lifetime of an issued mobile setup token (seconds). */
 export const TELEGRAM_MOBILE_LINK_TTL_SECONDS = 5 * 60;
@@ -13,9 +14,12 @@ function clusterSlotTag(token: string): string {
   return `{${token}}`;
 }
 
-/** 192 bits of entropy → 32 URL-safe base64url characters (compact QR payloads). */
-const TOKEN_BYTES = 24;
-
+/**
+ * Accepts both the new alphanumeric-only mint format and legacy base64url
+ * tokens still live within the short TTL window. New tokens are minted from an
+ * alphanumeric-only alphabet so the setup URL's trailing token survives GFM
+ * bare-URL autolinking.
+ */
 const TOKEN_FORMAT = /^[A-Za-z0-9_-]{32}$/;
 
 /**
@@ -305,7 +309,7 @@ export class TelegramMobileLinkTokenService {
   private async mint(payload: StoredPayload): Promise<IssuedTelegramMobileLink> {
     this.assertCacheAvailable('issue');
 
-    const token = randomBytes(TOKEN_BYTES).toString('base64url');
+    const token = mintAutolinkSafeOpaqueToken();
     const mintedAt = Math.floor(Date.now() / 1000);
     const expiresAtEpoch = mintedAt + TELEGRAM_MOBILE_LINK_TTL_SECONDS;
     const entry: StoredEntry = { payload, expiresAt: expiresAtEpoch };
