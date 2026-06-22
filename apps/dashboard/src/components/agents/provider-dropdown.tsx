@@ -86,6 +86,14 @@ type ProviderDropdownProps = {
   /** Controlled open state — pass together with `onOpenChange` to gate opening (e.g. behind a plan-limit dialog). */
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  /**
+   * Optional guard run after a provider is selected but before it is linked.
+   * Return `true` to defer the link and require confirmation — the dropdown
+   * then calls `onConfirmRequired` with a `proceed` callback instead of linking.
+   */
+  confirmBeforeLink?: (providerId: string, integration?: IIntegration) => boolean;
+  /** Invoked when `confirmBeforeLink` defers a selection. Call `proceed` to run the deferred link. */
+  onConfirmRequired?: (proceed: () => void) => void;
 };
 
 function buildDropdownItems(
@@ -151,6 +159,8 @@ export function ProviderDropdown({
   renderTrigger,
   open: controlledOpen,
   onOpenChange,
+  confirmBeforeLink,
+  onConfirmRequired,
 }: ProviderDropdownProps) {
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
   const open = controlledOpen ?? uncontrolledOpen;
@@ -248,15 +258,7 @@ export function ProviderDropdown({
     if (!next) setExpandedProviderId(null);
   }
 
-  async function handleSelect(item: DropdownItem, index: number) {
-    if (item.comingSoon || isBusy) {
-      return;
-    }
-
-    if (item.requiresBusinessTier && !isAgentEmailAvailable) {
-      return;
-    }
-
+  async function performLink(item: DropdownItem, index: number) {
     const itemKey = getInstanceItemKey(item, index);
     const channel = PROVIDER_ID_TO_CHANNEL_MAP[item.providerId];
     const newIntegrationName = channel === ChannelTypeEnum.CHAT ? (agentName ?? agentIdentifier) : item.displayName;
@@ -270,6 +272,28 @@ export function ProviderDropdown({
       },
       itemKey
     );
+  }
+
+  async function handleSelect(item: DropdownItem, index: number) {
+    if (item.comingSoon || isBusy) {
+      return;
+    }
+
+    if (item.requiresBusinessTier && !isAgentEmailAvailable) {
+      return;
+    }
+
+    // Defer to the caller's plan-limit confirmation when the chosen provider
+    // would exceed the limit. The link runs only if the user confirms.
+    if (confirmBeforeLink?.(item.providerId, item.integration)) {
+      onConfirmRequired?.(() => {
+        void performLink(item, index);
+      });
+
+      return;
+    }
+
+    await performLink(item, index);
   }
 
   const defaultTrigger = (
