@@ -416,10 +416,20 @@ export class ParseEventRequest {
     }
 
     const dashboardBaseUrl = process.env.DASHBOARD_URL || process.env.FRONT_BASE_URL;
-    const activityFeedLink =
-      isClickHouseConfigured() && dashboardBaseUrl
-        ? `${dashboardBaseUrl}/env/${command.environmentId}/activity/requests?selectedLogId=${requestId}`
-        : undefined;
+    let activityFeedLink: string | undefined;
+    if (isClickHouseConfigured() && dashboardBaseUrl) {
+      const isHttpLogsPageEnabled = await this.featureFlagService.getFlag({
+        environment: { _id: command.environmentId },
+        organization: { _id: command.organizationId },
+        user: { _id: command.userId } as UserEntity,
+        key: FeatureFlagsKeysEnum.IS_HTTP_LOGS_PAGE_ENABLED,
+        defaultValue: false,
+      });
+
+      if (isHttpLogsPageEnabled) {
+        activityFeedLink = `${dashboardBaseUrl}/env/${command.environmentId}/activity/requests?selectedLogId=${requestId}`;
+      }
+    }
 
     return {
       acknowledged: true,
