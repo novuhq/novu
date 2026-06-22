@@ -1,7 +1,8 @@
 import { InboxService } from '../../api';
 import { NovuEventEmitter } from '../../event-emitter';
-import { Notification } from '../../notifications/notification';
+import { ensureNotificationInstance } from '../../notifications/helpers';
 import { InboxNotification } from '../../types';
+import { Notification } from '../../notifications/notification';
 
 export function createNotification({
   emitter,
@@ -12,5 +13,9 @@ export function createNotification({
   inboxService: InboxService;
   notification: InboxNotification;
 }): Notification {
-  return new Notification(notification, emitter, inboxService);
+  return ensureNotificationInstance({
+    notification,
+    emitter,
+    inboxService,
+  });
 }

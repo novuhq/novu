@@ -190,6 +190,8 @@ type SocketEvents = {
 export type Events = SessionInitializeEvents &
   NotificationsFetchEvents & {
     'notifications.list.updated': { data: ListNotificationsResponse };
+  } & {
+    'notifications.counts.invalidate': Record<string, never>;
   } & NotificationsFetchCountEvents &
   PreferencesFetchEvents & {
     'preferences.list.updated': { data: Preference[] };

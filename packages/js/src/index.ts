@@ -71,7 +71,12 @@ export {
   areTagsEqual,
   checkNotificationDataFilter,
   checkNotificationMatchesFilter,
+  checkNotificationSeverityFilter,
   isSameFilter,
   normalizeTagGroups,
 } from './utils/notification-utils';
-export { COUNT_MUTATION_RESOLVED_EVENTS } from './notifications/count-invalidation-events';
+export {
+  COUNT_MUTATION_RESOLVED_EVENTS,
+  NOTIFICATION_COUNTS_INVALIDATE_EVENT,
+} from './notifications/count-invalidation-events';
+export { isNovuNotification, NOVU_NOTIFICATION_MARKER } from './notifications/notification';

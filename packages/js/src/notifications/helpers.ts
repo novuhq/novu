@@ -3,7 +3,8 @@ import type { NotificationsCache } from '../cache';
 import type { NovuEventEmitter } from '../event-emitter';
 import { Action, ActionTypeEnum, InboxNotification, NotificationFilter, Result } from '../types';
 import { NovuError } from '../utils/errors';
-import { Notification } from './notification';
+import { emitCountsInvalidate } from './count-invalidation-events';
+import { Notification, isNovuNotification } from './notification';
 import type {
   ArchivedArgs,
   CompleteArgs,
@@ -26,12 +27,8 @@ export function ensureNotificationInstance({
   emitter: NovuEventEmitter;
   inboxService: InboxService;
 }): Notification {
-  if (notification instanceof Notification) {
+  if (isNovuNotification(notification)) {
     return notification;
-  }
-
-  if (typeof (notification as Notification).read === 'function') {
-    return notification as Notification;
   }
 
   return new Notification(notification, emitter, inboxService);
@@ -70,6 +67,7 @@ export const read = async ({
 
     const updatedNotification = new Notification(response, emitter, apiService);
     emitter.emit('notification.read.resolved', { args, data: updatedNotification });
+    emitCountsInvalidate(emitter);
 
     return { data: updatedNotification };
   } catch (error) {
@@ -111,6 +109,7 @@ export const unread = async ({
 
     const updatedNotification = new Notification(response, emitter, apiService);
     emitter.emit('notification.unread.resolved', { args, data: updatedNotification });
+    emitCountsInvalidate(emitter);
 
     return { data: updatedNotification };
   } catch (error) {
@@ -154,6 +153,7 @@ export const seen = async ({
 
     const updatedNotification = new Notification(optimisticValue, emitter, apiService);
     emitter.emit('notification.seen.resolved', { args, data: updatedNotification });
+    emitCountsInvalidate(emitter);
 
     return { data: updatedNotification };
   } catch (error) {
@@ -196,6 +196,7 @@ export const archive = async ({
 
     const updatedNotification = new Notification(response, emitter, apiService);
     emitter.emit('notification.archive.resolved', { args, data: updatedNotification });
+    emitCountsInvalidate(emitter);
 
     return { data: updatedNotification };
   } catch (error) {
@@ -238,6 +239,7 @@ export const unarchive = async ({
 
     const updatedNotification = new Notification(response, emitter, apiService);
     emitter.emit('notification.unarchive.resolved', { args, data: updatedNotification });
+    emitCountsInvalidate(emitter);
 
     return { data: updatedNotification };
   } catch (error) {
@@ -278,6 +280,7 @@ export const snooze = async ({
 
     const updatedNotification = new Notification(response, emitter, apiService);
     emitter.emit('notification.snooze.resolved', { args, data: updatedNotification });
+    emitCountsInvalidate(emitter);
 
     return { data: updatedNotification };
   } catch (error) {
@@ -318,6 +321,7 @@ export const unsnooze = async ({
 
     const updatedNotification = new Notification(response, emitter, apiService);
     emitter.emit('notification.unsnooze.resolved', { args, data: updatedNotification });
+    emitCountsInvalidate(emitter);
 
     return { data: updatedNotification };
   } catch (error) {
@@ -484,6 +488,7 @@ export const readAll = async ({
     await inboxService.readAll({ tags, data });
 
     emitter.emit('notifications.read_all.resolved', { args: { tags, data }, data: optimisticNotifications });
+    emitCountsInvalidate(emitter);
 
     return {};
   } catch (error) {
@@ -541,6 +546,7 @@ export const seenAll = async ({
       args: { notificationIds, tags, data },
       data: optimisticNotifications,
     });
+    emitCountsInvalidate(emitter);
 
     return {};
   } catch (error) {
@@ -584,6 +590,7 @@ export const archiveAll = async ({
     await inboxService.archiveAll({ tags, data });
 
     emitter.emit('notifications.archive_all.resolved', { args: { tags, data }, data: optimisticNotifications });
+    emitCountsInvalidate(emitter);
 
     return {};
   } catch (error) {
@@ -621,6 +628,7 @@ export const archiveAllRead = async ({
     await inboxService.archiveAllRead({ tags, data });
 
     emitter.emit('notifications.archive_all_read.resolved', { args: { tags, data }, data: optimisticNotifications });
+    emitCountsInvalidate(emitter);
 
     return {};
   } catch (error) {
@@ -656,6 +664,7 @@ export const deleteNotification = async ({
     await apiService.delete(notificationId);
 
     emitter.emit('notification.delete.resolved', { args });
+    emitCountsInvalidate(emitter);
 
     return {};
   } catch (error) {
@@ -687,6 +696,7 @@ export const deleteAll = async ({
     await inboxService.deleteAll({ tags, data });
 
     emitter.emit('notifications.delete_all.resolved', { args: { tags, data } });
+    emitCountsInvalidate(emitter);
 
     return {};
   } catch (error) {

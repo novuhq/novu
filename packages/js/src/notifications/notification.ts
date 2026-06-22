@@ -14,6 +14,16 @@ import {
   unsnooze,
 } from './helpers';
 
+export const NOVU_NOTIFICATION_MARKER = Symbol.for('@novu/js.notification');
+
+export function isNovuNotification(value: unknown): value is Notification {
+  if (value instanceof Notification) {
+    return true;
+  }
+
+  return typeof value === 'object' && value !== null && NOVU_NOTIFICATION_MARKER in value;
+}
+
 export class Notification implements Pick<NovuEventEmitter, 'on'>, InboxNotification {
   #emitter: NovuEventEmitter;
   #inboxService: InboxService;
@@ -46,6 +56,8 @@ export class Notification implements Pick<NovuEventEmitter, 'on'>, InboxNotifica
   constructor(notification: InboxNotification, emitter: NovuEventEmitter, inboxService: InboxService) {
     this.#emitter = emitter;
     this.#inboxService = inboxService;
+
+    Object.defineProperty(this, NOVU_NOTIFICATION_MARKER, { value: true, enumerable: false });
 
     this.id = notification.id;
     this.transactionId = notification.transactionId;

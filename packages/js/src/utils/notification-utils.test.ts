@@ -2,10 +2,12 @@ import {
   areTagsEqual,
   checkNotificationDataFilter,
   checkNotificationTagFilter,
+  checkNotificationSeverityFilter,
   normalizeTagGroups,
   notificationMatchesCacheBucket,
 } from './notification-utils';
 import { Notification } from '../notifications/notification';
+import { SeverityLevelEnum } from '../types';
 
 describe('normalizeTagGroups', () => {
   it('wraps flat tags as one OR-group', () => {
@@ -127,6 +129,21 @@ describe('areTagsEqual', () => {
         }
       )
     ).toBe(true);
+  });
+});
+
+describe('checkNotificationSeverityFilter', () => {
+  it('returns true when filter severity is empty', () => {
+    expect(checkNotificationSeverityFilter(SeverityLevelEnum.HIGH, undefined)).toBe(true);
+    expect(checkNotificationSeverityFilter(SeverityLevelEnum.HIGH, [])).toBe(true);
+  });
+
+  it('returns true when notification severity matches a filter array', () => {
+    expect(checkNotificationSeverityFilter(SeverityLevelEnum.HIGH, [SeverityLevelEnum.HIGH])).toBe(true);
+  });
+
+  it('returns false when notification severity does not match the filter', () => {
+    expect(checkNotificationSeverityFilter(SeverityLevelEnum.LOW, SeverityLevelEnum.HIGH)).toBe(false);
   });
 });
 

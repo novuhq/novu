@@ -1,7 +1,7 @@
 import { Accessor, createContext, createEffect, createMemo, createSignal, onCleanup, ParentProps, useContext } from 'solid-js';
-import { COUNT_MUTATION_RESOLVED_EVENTS } from '../../notifications/count-invalidation-events';
+import { NOTIFICATION_COUNTS_INVALIDATE_EVENT } from '../../notifications/count-invalidation-events';
 import { Notification, NotificationFilter, SeverityLevelEnum } from '../../types';
-import { checkNotificationDataFilter, checkNotificationTagFilter } from '../../utils/notification-utils';
+import { checkNotificationMatchesFilter } from '../../utils/notification-utils';
 import { getTagsFromTab } from '../helpers';
 import { useNovuEvent } from '../helpers/useNovuEvent';
 import { useWebSocketEvent } from '../helpers/useWebSocketEvent';
@@ -129,11 +129,9 @@ export const CountProvider = (props: ParentProps) => {
 
   createEffect(() => {
     const novu = novuAccessor();
-    const cleanups = COUNT_MUTATION_RESOLVED_EVENTS.map((event) => novu.on(event, refreshCounts));
+    const cleanup = novu.on(NOTIFICATION_COUNTS_INVALIDATE_EVENT, refreshCounts);
 
-    onCleanup(() => {
-      cleanups.forEach((cleanup) => cleanup());
-    });
+    onCleanup(cleanup);
   });
 
   useNovuEvent({
@@ -207,47 +205,42 @@ export const CountProvider = (props: ParentProps) => {
       if (currentTabs.length > 0) {
         for (const tab of currentTabs) {
           const tabTags = getTagsFromTab(tab);
-          const tabDataFilterCriteria = tab.filter?.data;
-          const tabSeverityFilterCriteria = tab.filter?.severity;
+          const tabFilter: NotificationFilter = {
+            tags: tabTags,
+            read: false,
+            archived: false,
+            snoozed: false,
+            data: tab.filter?.data,
+            severity: tab.filter?.severity,
+          };
 
-          const matchesTagFilter = checkNotificationTagFilter(notification.tags, tabTags);
-          const matchesDataFilterCriteria = checkNotificationDataFilter(notification.data, tabDataFilterCriteria);
+          if (!checkNotificationMatchesFilter(notification, tabFilter)) {
+            continue;
+          }
 
-          const matchesSeverityFilterCriteria =
-            !tabSeverityFilterCriteria ||
-            (Array.isArray(tabSeverityFilterCriteria) && tabSeverityFilterCriteria.length === 0) ||
-            (Array.isArray(tabSeverityFilterCriteria) && tabSeverityFilterCriteria.includes(notification.severity)) ||
-            (!Array.isArray(tabSeverityFilterCriteria) && tabSeverityFilterCriteria === notification.severity);
+          const filterKey = createKey({
+            tags: tabTags,
+            data: tab.filter?.data,
+            severity: tab.filter?.severity,
+          });
 
-          if (matchesTagFilter && matchesDataFilterCriteria && matchesSeverityFilterCriteria) {
-            const filterKey = createKey({
-              tags: tabTags,
-              data: tabDataFilterCriteria,
-              severity: tabSeverityFilterCriteria,
-            });
-
-            if (!processedFilters.has(filterKey)) {
-              processedFilters.add(filterKey);
-              updateNewNotificationCountsOrCache(
-                tab.label,
-                notification,
-                tabTags,
-                tabDataFilterCriteria,
-                tabSeverityFilterCriteria
-              );
-            }
+          if (!processedFilters.has(filterKey)) {
+            processedFilters.add(filterKey);
+            updateNewNotificationCountsOrCache(
+              tab.label,
+              notification,
+              tabTags,
+              tab.filter?.data,
+              tab.filter?.severity
+            );
           }
         }
       } else {
-        // No tabs are defined. Apply to default (no tags, no data) filter.
         updateNewNotificationCountsOrCache('', notification, [], undefined, undefined);
       }
-    },
-  });
 
-  useWebSocketEvent({
-    event: 'notifications.notification_received',
-    eventHandler: refreshCounts,
+      await refreshCounts();
+    },
   });
 
   const resetNewNotificationCounts = (key: string) => {
