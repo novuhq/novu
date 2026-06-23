@@ -19,3 +19,13 @@ export function isAgentIntegrationConnected(link: Pick<AgentIntegrationLink, 'co
 
   return link.integration.providerId === EmailProviderIdEnum.NovuAgent;
 }
+
+/**
+ * User-configured channels only. Excludes the auto-provisioned Novu Email
+ * integration so setup/onboarding flows stay aligned with managed-agent state.
+ */
+export function isUserFacingConnectedAgentIntegration(
+  link: Pick<AgentIntegrationLink, 'connectedAt' | 'integration'>
+): boolean {
+  return Boolean(link.connectedAt) && link.integration.providerId !== EmailProviderIdEnum.NovuAgent;
+}
