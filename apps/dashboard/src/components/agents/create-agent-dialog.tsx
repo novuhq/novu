@@ -51,6 +51,7 @@ import {
   type ConnectorOption,
   getConnectorById,
   getConnectorIdForProviderId,
+  pickInitialConnector,
 } from './connectors/connector-options';
 import {
   type AgentTemplate,
@@ -84,8 +85,6 @@ type CreateAgentDialogProps = {
   /** When provided, the dialog opens in prompt mode with the textarea prefilled. */
   initialPrompt?: string;
 };
-
-const DEFAULT_CONNECTOR_ID: ConnectorId = 'claude';
 
 /**
  * Mirrors the onboarding step's `AgentGenerationMode` so the dialog reuses the same prompt /
@@ -170,7 +169,7 @@ export function CreateAgentDialog({
   const verifyMutation = useVerifyManagedCredentials();
   const { mutateAsync: createIntegration, isPending: isSavingIntegration } = useCreateIntegration();
 
-  const [connectorId, setConnectorId] = useState<ConnectorId>(DEFAULT_CONNECTOR_ID);
+  const [connectorId, setConnectorId] = useState<ConnectorId>(() => pickInitialConnector(isManagedEnabled));
   const [selectedIntegrationId, setSelectedIntegrationId] = useState<string | undefined>(undefined);
   const [credentialsPanelVisible, setCredentialsPanelVisible] = useState(false);
   const [credentialsPanelExpanded, setCredentialsPanelExpanded] = useState(true);
@@ -248,18 +247,6 @@ export function CreateAgentDialog({
   }, [agentTemplates, isDemoProviderSelected]);
   const scope: 'create' | 'existing' = generationMode === 'existing' ? 'existing' : 'create';
   const showScopeTabs = isManagedClaudeConnector && !isDemoProviderSelected;
-  const showManagedOptions = isManagedEnabled;
-
-  // Hide managed connectors when the feature flag is off — the dropdown still lists them visually,
-  // but selecting a managed connector should be impossible. We achieve this by short-circuiting to
-  // 'custom-scaffold' when managed is disabled.
-  useEffect(() => {
-    if (!open) return;
-    if (showManagedOptions) return;
-    if (selectedConnector?.runtime !== 'claude') return;
-
-    setConnectorId('custom-scaffold');
-  }, [open, showManagedOptions, selectedConnector?.runtime]);
 
   const matchingAnthropicIntegrations = useMemo(() => {
     if (!selectedConnector?.providerId) return [];
@@ -306,7 +293,7 @@ export function CreateAgentDialog({
       return;
     }
 
-    if (preferAnyManagedIntegrationRef.current) {
+    if (preferAnyManagedIntegrationRef.current && isManagedEnabled) {
       const preferred = getPreferredClaudeManagedIntegration(integrations);
       if (preferred) {
         const connectorForPreferred = getConnectorIdForProviderId(preferred.providerId);
@@ -332,6 +319,7 @@ export function CreateAgentDialog({
     selectedIntegrationId,
     credentialsPanelVisible,
     integrations,
+    isManagedEnabled,
   ]);
 
   // Default integration name = "<Provider> <next-index>"
@@ -363,7 +351,7 @@ export function CreateAgentDialog({
   }, [open, initialName, initialInstructions, initialPrompt]);
 
   const reset = useCallback(() => {
-    setConnectorId(DEFAULT_CONNECTOR_ID);
+    setConnectorId(pickInitialConnector(isManagedEnabled));
     setSelectedIntegrationId(undefined);
     setCredentialsPanelVisible(false);
     setCredentialsPanelExpanded(true);
@@ -388,7 +376,7 @@ export function CreateAgentDialog({
       clearTimeout(savedBadgeTimerRef.current);
       savedBadgeTimerRef.current = null;
     }
-  }, [resetCredentials]);
+  }, [resetCredentials, isManagedEnabled]);
 
   const prevOpenRef = useRef(open);
 

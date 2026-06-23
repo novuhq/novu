@@ -20,6 +20,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives
 import { cn } from '@/utils/ui';
 import { getClaudeManagedAgentIntegrations } from './claude-managed-integrations';
 import { CONNECTOR_OPTIONS, type ConnectorId, type ConnectorOption, getConnectorById } from './connector-options';
+import { useShowManagedConnectorOptions } from './use-show-managed-connector-options';
 
 const GROUP_HEADING_CLASSNAME =
   '**:[[cmdk-group-heading]]:text-text-soft **:[[cmdk-group-heading]]:text-label-xs **:[[cmdk-group-heading]]:font-medium **:[[cmdk-group-heading]]:leading-4 **:[[cmdk-group-heading]]:px-1 **:[[cmdk-group-heading]]:py-1';
@@ -33,6 +34,8 @@ type ConnectorIntegrationDropdownProps = {
   status?: ConnectorIntegrationStatus;
   showStatusBadge?: boolean;
   disabled?: boolean;
+  /** Test/Storybook override; production reads `IS_MANAGED_AGENT_RUNTIME_ENABLED`. */
+  showManagedOptionsOverride?: boolean;
   onSelectConnector: (id: ConnectorId) => void;
   onSelectIntegration: (integration: IIntegration) => void;
   onRequestSetupCredentials: (option: ConnectorOption) => void;
@@ -83,10 +86,12 @@ export function ConnectorIntegrationDropdown({
   status = 'idle',
   showStatusBadge = false,
   disabled,
+  showManagedOptionsOverride,
   onSelectConnector,
   onSelectIntegration,
   onRequestSetupCredentials,
 }: ConnectorIntegrationDropdownProps) {
+  const showManagedOptions = useShowManagedConnectorOptions(showManagedOptionsOverride);
   const [open, setOpen] = useState(false);
   const [view, setView] = useState<'connectors' | 'integrations'>('connectors');
 
@@ -114,7 +119,8 @@ export function ConnectorIntegrationDropdown({
     setView('connectors');
   }, [open]);
 
-  const externalOptions = CONNECTOR_OPTIONS.filter((o) => o.group === 'external');
+  // Managed-runtime connectors are gated by `IS_MANAGED_AGENT_RUNTIME_ENABLED` (see hook above).
+  const externalOptions = showManagedOptions ? CONNECTOR_OPTIONS.filter((o) => o.group === 'external') : [];
   const customOptions = CONNECTOR_OPTIONS.filter((o) => o.group === 'custom');
 
   const handlePickConnector = (option: ConnectorOption) => {
@@ -189,9 +195,11 @@ export function ConnectorIntegrationDropdown({
 
   const connectorsView = (
     <>
-      <CommandGroup heading="External connectors" className={GROUP_HEADING_CLASSNAME}>
-        {externalOptions.map(renderConnectorItem)}
-      </CommandGroup>
+      {externalOptions.length > 0 ? (
+        <CommandGroup heading="External connectors" className={GROUP_HEADING_CLASSNAME}>
+          {externalOptions.map(renderConnectorItem)}
+        </CommandGroup>
+      ) : null}
       <CommandGroup heading="Custom code" className={GROUP_HEADING_CLASSNAME}>
         {customOptions.map(renderConnectorItem)}
       </CommandGroup>

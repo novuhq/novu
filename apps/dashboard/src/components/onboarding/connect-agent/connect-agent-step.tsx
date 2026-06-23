@@ -54,7 +54,7 @@ import { TelemetryEvent } from '@/utils/telemetry';
 import type { AgentGenerationMode } from './connect-agent-form';
 import { ConnectAgentForm } from './connect-agent-form';
 import { type ConnectSummary } from './connect-summary';
-import { CONNECTOR_OPTIONS, type ConnectorId, getConnectorById } from './connector-options';
+import { type ConnectorId, getConnectorById, pickInitialConnector } from './connector-options';
 import type { GenerationStep } from './generation-status';
 import type { TemplateSelection } from './template-dropdown';
 
@@ -70,20 +70,10 @@ const GENERATION_STEPS: ReadonlyArray<GenerationStep> = [
 
 export type { ConnectSummary } from './connect-summary';
 
-const DEFAULT_CONNECTOR: ConnectorId = 'claude';
-
 function resolveRuntime(connectorId: ConnectorId): RuntimeType {
   const runtime = getConnectorById(connectorId)?.runtime;
 
   return runtime ?? 'scratch';
-}
-
-function pickInitialConnector(isManagedEnabled: boolean): ConnectorId {
-  if (isManagedEnabled) return DEFAULT_CONNECTOR;
-
-  const fallback = CONNECTOR_OPTIONS.find((o) => !o.comingSoon && o.runtime === 'scratch');
-
-  return (fallback?.id ?? 'custom-scaffold') as ConnectorId;
 }
 
 function dropdownStatusFor(verify: VerifyStatus, hasIntegration: boolean): ConnectorIntegrationStatus {
