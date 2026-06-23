@@ -1,11 +1,17 @@
 import { createHmac } from 'node:crypto';
 import { BadGatewayException, BadRequestException } from '@nestjs/common';
-import { EnvironmentRepository, IntegrationRepository } from '@novu/dal';
+import {
+  ChannelConnectionRepository,
+  ContextRepository,
+  EnvironmentRepository,
+  IntegrationRepository,
+} from '@novu/dal';
 import { ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
 import axios from 'axios';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { CreateChannelConnection } from '../../../../channel-connections/usecases/create-channel-connection/create-channel-connection.usecase';
+import { UpdateChannelConnection } from '../../../../channel-connections/usecases/update-channel-connection/update-channel-connection.usecase';
 import { CreateChannelEndpoint } from '../../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.usecase';
 import { encodeOAuthState } from '../../generate-chat-oath-url/chat-oauth-state.util';
 import { WebexOauthCallbackCommand } from './webex-oauth-callback.command';
@@ -22,6 +28,8 @@ const MOCK_PERSON_ID = 'person-id';
 const MOCK_ORG_ID = 'org-id';
 const MOCK_ACCESS_TOKEN = 'webex-access-token';
 const MOCK_REFRESH_TOKEN = 'webex-refresh-token';
+const MOCK_REFRESHED_ACCESS_TOKEN = 'webex-refreshed-access-token';
+const MOCK_CONNECTION_IDENTIFIER = 'webex-connection';
 const MOCK_API_ROOT_URL = 'https://api.novu.co';
 
 function buildMockIntegration(overrides: Record<string, unknown> = {}) {
@@ -68,7 +76,10 @@ describe('WebexOauthCallback', () => {
   let usecase: WebexOauthCallback;
   let integrationRepository: sinon.SinonStubbedInstance<IntegrationRepository>;
   let environmentRepository: sinon.SinonStubbedInstance<EnvironmentRepository>;
+  let channelConnectionRepository: sinon.SinonStubbedInstance<ChannelConnectionRepository>;
+  let contextRepository: sinon.SinonStubbedInstance<ContextRepository>;
   let createChannelConnection: sinon.SinonStubbedInstance<CreateChannelConnection>;
+  let updateChannelConnection: sinon.SinonStubbedInstance<UpdateChannelConnection>;
   let createChannelEndpoint: sinon.SinonStubbedInstance<CreateChannelEndpoint>;
   let axiosPost: sinon.SinonStub;
   let axiosGet: sinon.SinonStub;
@@ -77,13 +88,19 @@ describe('WebexOauthCallback', () => {
   beforeEach(() => {
     integrationRepository = sinon.createStubInstance(IntegrationRepository);
     environmentRepository = sinon.createStubInstance(EnvironmentRepository);
+    channelConnectionRepository = sinon.createStubInstance(ChannelConnectionRepository);
+    contextRepository = sinon.createStubInstance(ContextRepository);
     createChannelConnection = sinon.createStubInstance(CreateChannelConnection);
+    updateChannelConnection = sinon.createStubInstance(UpdateChannelConnection);
     createChannelEndpoint = sinon.createStubInstance(CreateChannelEndpoint);
 
     usecase = new WebexOauthCallback(
       integrationRepository as any,
       environmentRepository as any,
+      channelConnectionRepository as any,
+      contextRepository as any,
       createChannelConnection as any,
+      updateChannelConnection as any,
       createChannelEndpoint as any
     );
 
@@ -96,7 +113,11 @@ describe('WebexOauthCallback', () => {
     } as any);
 
     integrationRepository.findOne.resolves(buildMockIntegration());
+    channelConnectionRepository.findOne.resolves(null);
+    channelConnectionRepository.buildContextExactMatchQuery.returns({});
+    contextRepository.findOrCreateContextsFromPayload.resolves([]);
     createChannelConnection.execute.resolves({ identifier: 'conn-abc' } as any);
+    updateChannelConnection.execute.resolves({ identifier: MOCK_CONNECTION_IDENTIFIER } as any);
     createChannelEndpoint.execute.resolves({} as any);
 
     axiosPost = sinon.stub(axios, 'post').resolves({
@@ -181,6 +202,117 @@ describe('WebexOauthCallback', () => {
 
     const endpointArg = createChannelEndpoint.execute.firstCall.args[0];
     expect(endpointArg.connectionIdentifier).to.equal('existing-webex-connection');
+    expect(endpointArg.type).to.equal(ENDPOINT_TYPES.WEBEX_PERSON);
+    expect(endpointArg.endpoint.personId).to.equal(MOCK_PERSON_ID);
+  });
+
+  it('should update the existing Webex connection token when reconnecting with the same identifier', async () => {
+    channelConnectionRepository.findOne.onFirstCall().resolves({
+      identifier: MOCK_CONNECTION_IDENTIFIER,
+    } as any);
+    axiosPost.resolves({
+      data: {
+        access_token: MOCK_REFRESHED_ACCESS_TOKEN,
+        expires_in: 1209600,
+        refresh_token: MOCK_REFRESH_TOKEN,
+        refresh_token_expires_in: 7776000,
+      },
+    });
+
+    const state = buildEncodedState({
+      environmentId: MOCK_ENVIRONMENT_ID,
+      organizationId: MOCK_ORGANIZATION_ID,
+      integrationIdentifier: MOCK_INTEGRATION_IDENTIFIER,
+      providerId: ChatProviderIdEnum.WebexMessaging,
+      identifier: MOCK_CONNECTION_IDENTIFIER,
+      subscriberId: MOCK_SUBSCRIBER_ID,
+    });
+
+    await usecase.execute(
+      WebexOauthCallbackCommand.create({
+        providerCode: 'webex-code',
+        state,
+      })
+    );
+
+    expect(createChannelConnection.execute.called).to.be.false;
+    expect(updateChannelConnection.execute.calledOnce).to.be.true;
+    expect(contextRepository.findOrCreateContextsFromPayload.called).to.be.false;
+
+    const updateArg = updateChannelConnection.execute.firstCall.args[0];
+    expect(updateArg.identifier).to.equal(MOCK_CONNECTION_IDENTIFIER);
+    expect(updateArg.auth.accessToken).to.equal(MOCK_REFRESHED_ACCESS_TOKEN);
+    expect(updateArg.auth.refreshToken).to.equal(MOCK_REFRESH_TOKEN);
+    expect(updateArg.auth.expiresAt).to.be.a('string');
+    expect(updateArg.workspace.id).to.equal(MOCK_ORG_ID);
+  });
+
+  it('should update the existing Webex connection token when reconnecting with the same integration, subscriber, and context', async () => {
+    channelConnectionRepository.findOne.resolves({
+      identifier: 'existing-generated-webex-connection',
+    } as any);
+    axiosPost.resolves({
+      data: {
+        access_token: MOCK_REFRESHED_ACCESS_TOKEN,
+        expires_in: 1209600,
+        refresh_token: MOCK_REFRESH_TOKEN,
+        refresh_token_expires_in: 7776000,
+      },
+    });
+
+    const state = buildEncodedState({
+      environmentId: MOCK_ENVIRONMENT_ID,
+      organizationId: MOCK_ORGANIZATION_ID,
+      integrationIdentifier: MOCK_INTEGRATION_IDENTIFIER,
+      providerId: ChatProviderIdEnum.WebexMessaging,
+      subscriberId: MOCK_SUBSCRIBER_ID,
+    });
+
+    await usecase.execute(
+      WebexOauthCallbackCommand.create({
+        providerCode: 'webex-code',
+        state,
+      })
+    );
+
+    expect(createChannelConnection.execute.called).to.be.false;
+    expect(updateChannelConnection.execute.calledOnce).to.be.true;
+
+    const updateArg = updateChannelConnection.execute.firstCall.args[0];
+    expect(updateArg.identifier).to.equal('existing-generated-webex-connection');
+    expect(updateArg.auth.accessToken).to.equal(MOCK_REFRESHED_ACCESS_TOKEN);
+  });
+
+  it('should update connection and auto-link endpoint when reconnecting with autoLinkUser=true', async () => {
+    channelConnectionRepository.findOne.onFirstCall().resolves({
+      identifier: MOCK_CONNECTION_IDENTIFIER,
+    } as any);
+    updateChannelConnection.execute.resolves({ identifier: MOCK_CONNECTION_IDENTIFIER } as any);
+
+    const state = buildEncodedState({
+      environmentId: MOCK_ENVIRONMENT_ID,
+      organizationId: MOCK_ORGANIZATION_ID,
+      integrationIdentifier: MOCK_INTEGRATION_IDENTIFIER,
+      providerId: ChatProviderIdEnum.WebexMessaging,
+      identifier: MOCK_CONNECTION_IDENTIFIER,
+      subscriberId: MOCK_SUBSCRIBER_ID,
+      autoLinkUser: true,
+    });
+
+    await usecase.execute(
+      WebexOauthCallbackCommand.create({
+        providerCode: 'webex-code',
+        state,
+      })
+    );
+
+    expect(createChannelConnection.execute.called).to.be.false;
+    expect(updateChannelConnection.execute.calledOnce).to.be.true;
+    expect(createChannelEndpoint.execute.calledOnce).to.be.true;
+
+    const endpointArg = createChannelEndpoint.execute.firstCall.args[0];
+    expect(endpointArg.connectionIdentifier).to.equal(MOCK_CONNECTION_IDENTIFIER);
+    expect(endpointArg.subscriberId).to.equal(MOCK_SUBSCRIBER_ID);
     expect(endpointArg.type).to.equal(ENDPOINT_TYPES.WEBEX_PERSON);
     expect(endpointArg.endpoint.personId).to.equal(MOCK_PERSON_ID);
   });

@@ -1,7 +1,10 @@
 import { BadGatewayException, BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { decryptCredentials } from '@novu/application-generic';
 import {
+  ChannelConnectionEntity,
+  ChannelConnectionRepository,
   ChannelTypeEnum,
+  ContextRepository,
   EnvironmentRepository,
   ICredentialsEntity,
   IntegrationEntity,
@@ -11,6 +14,8 @@ import { ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
 import axios from 'axios';
 import { CreateChannelConnectionCommand } from '../../../../channel-connections/usecases/create-channel-connection/create-channel-connection.command';
 import { CreateChannelConnection } from '../../../../channel-connections/usecases/create-channel-connection/create-channel-connection.usecase';
+import { UpdateChannelConnectionCommand } from '../../../../channel-connections/usecases/update-channel-connection/update-channel-connection.command';
+import { UpdateChannelConnection } from '../../../../channel-connections/usecases/update-channel-connection/update-channel-connection.usecase';
 import { CreateChannelEndpointCommand } from '../../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.command';
 import { CreateChannelEndpoint } from '../../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.usecase';
 import { renderConnectionResultPage } from '../../../../shared/html/connection-result-page';
@@ -46,7 +51,10 @@ export class WebexOauthCallback {
   constructor(
     private integrationRepository: IntegrationRepository,
     private environmentRepository: EnvironmentRepository,
+    private channelConnectionRepository: ChannelConnectionRepository,
+    private contextRepository: ContextRepository,
     private createChannelConnection: CreateChannelConnection,
+    private updateChannelConnection: UpdateChannelConnection,
     private createChannelEndpoint: CreateChannelEndpoint
   ) {}
 
@@ -60,25 +68,7 @@ export class WebexOauthCallback {
     if (stateData.mode === 'link_user') {
       await this.linkUserEndpoint(stateData, integration, person);
     } else {
-      const isSharedMode = stateData.connectionMode === 'shared';
-      const connection = await this.createChannelConnection.execute(
-        CreateChannelConnectionCommand.create({
-          identifier: stateData.identifier,
-          organizationId: stateData.organizationId,
-          environmentId: stateData.environmentId,
-          integrationIdentifier: integration.identifier,
-          subscriberId: isSharedMode ? undefined : stateData.subscriberId,
-          context: stateData.context,
-          connectionMode: stateData.connectionMode,
-          auth: {
-            accessToken: tokenData.access_token,
-            refreshToken: tokenData.refresh_token,
-            expiresAt: this.buildExpiresAt(tokenData.expires_in),
-            refreshTokenExpiresAt: this.buildExpiresAt(tokenData.refresh_token_expires_in),
-          },
-          workspace: this.buildWorkspace(person),
-        })
-      );
+      const connection = await this.upsertWorkspaceConnection(stateData, integration, tokenData, person);
 
       if (stateData.autoLinkUser === true && stateData.subscriberId) {
         await this.createWebexPersonEndpoint(
@@ -347,5 +337,92 @@ export class WebexOauthCallback {
       }
       throw new BadRequestException('Invalid or expired Webex OAuth state parameter');
     }
+  }
+
+  private async upsertWorkspaceConnection(
+    stateData: StateData,
+    integration: IntegrationEntity,
+    tokenData: WebexTokenResponse,
+    person: WebexPersonResponse
+  ): Promise<ChannelConnectionEntity> {
+    const isSharedMode = stateData.connectionMode === 'shared';
+    const subscriberId = isSharedMode ? undefined : stateData.subscriberId;
+    const existingConnection = await this.findExistingConnection(stateData, integration, subscriberId);
+    const auth = {
+      accessToken: tokenData.access_token,
+      refreshToken: tokenData.refresh_token,
+      expiresAt: this.buildExpiresAt(tokenData.expires_in),
+      refreshTokenExpiresAt: this.buildExpiresAt(tokenData.refresh_token_expires_in),
+    };
+    const workspace = this.buildWorkspace(person);
+
+    if (existingConnection) {
+      return await this.updateChannelConnection.execute(
+        UpdateChannelConnectionCommand.create({
+          identifier: existingConnection.identifier,
+          organizationId: stateData.organizationId,
+          environmentId: stateData.environmentId,
+          auth,
+          workspace,
+        })
+      );
+    }
+
+    return await this.createChannelConnection.execute(
+      CreateChannelConnectionCommand.create({
+        identifier: stateData.identifier,
+        organizationId: stateData.organizationId,
+        environmentId: stateData.environmentId,
+        integrationIdentifier: integration.identifier,
+        subscriberId,
+        context: stateData.context,
+        connectionMode: stateData.connectionMode,
+        auth,
+        workspace,
+      })
+    );
+  }
+
+  private async findExistingConnection(
+    stateData: StateData,
+    integration: IntegrationEntity,
+    subscriberId: string | undefined
+  ): Promise<ChannelConnectionEntity | null> {
+    if (stateData.identifier) {
+      const connectionByIdentifier = await this.channelConnectionRepository.findOne({
+        identifier: stateData.identifier,
+        _organizationId: stateData.organizationId,
+        _environmentId: stateData.environmentId,
+      });
+
+      if (connectionByIdentifier) {
+        return connectionByIdentifier;
+      }
+    }
+
+    const contextKeys = await this.resolveContextKeys(stateData);
+    const contextQuery = this.channelConnectionRepository.buildContextExactMatchQuery(contextKeys);
+
+    return await this.channelConnectionRepository.findOne({
+      _organizationId: stateData.organizationId,
+      _environmentId: stateData.environmentId,
+      integrationIdentifier: integration.identifier,
+      subscriberId,
+      ...contextQuery,
+    });
+  }
+
+  private async resolveContextKeys(stateData: StateData): Promise<string[]> {
+    if (!stateData.context) {
+      return [];
+    }
+
+    const contexts = await this.contextRepository.findOrCreateContextsFromPayload(
+      stateData.environmentId,
+      stateData.organizationId,
+      stateData.context
+    );
+
+    return contexts.map((context) => context.key);
   }
 }
