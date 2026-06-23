@@ -22,22 +22,32 @@ import { isUserFacingConnectedAgentIntegration } from './is-agent-integration-co
 import { SetupGuideCard } from './setup-guide-card';
 import { SetupStep } from './setup-guide-primitives';
 
-const COLLAPSED_LIST_MAX_HEIGHT_PX = 150;
-const BOTTOM_FADE_HEIGHT_PX = 43;
+const FADE_HEIGHT_PX = 43;
 const COLLAPSED_VISIBLE_CHANNEL_COUNT = 4;
+// Collapsed height fits exactly 4 rows (matches the Figma "What's next" spec).
+const COLLAPSED_LIST_MAX_HEIGHT_PX = 150;
 
 type AgentWhatsNextSectionProps = {
   agent: AgentResponse;
 };
 
-function buildVerticalBottomFadeMask(showFade: boolean): string | undefined {
-  if (!showFade) {
+function buildVerticalFadeMask(
+  showTopFade: boolean,
+  showBottomFade: boolean,
+  listHeightPx: number
+): string | undefined {
+  if (!showTopFade && !showBottomFade) {
     return undefined;
   }
 
-  const fadeStart = COLLAPSED_LIST_MAX_HEIGHT_PX - BOTTOM_FADE_HEIGHT_PX;
+  const topStart = showTopFade ? 'transparent 0' : 'black 0';
+  const topStop = showTopFade ? `black ${FADE_HEIGHT_PX}px` : '';
+  const bottomStop = showBottomFade ? `black ${Math.max(0, listHeightPx - FADE_HEIGHT_PX)}px` : '';
+  const bottomEnd = showBottomFade ? 'transparent 100%' : 'black 100%';
 
-  return `linear-gradient(to bottom, black 0, black ${fadeStart}px, transparent 100%)`;
+  const stops = [topStart, topStop, bottomStop, bottomEnd].filter(Boolean).join(', ');
+
+  return `linear-gradient(to bottom, ${stops})`;
 }
 
 function ConfigureChannelButton({ link, onConfigure }: { link: AgentIntegrationLink; onConfigure: () => void }) {
@@ -49,7 +59,7 @@ function ConfigureChannelButton({ link, onConfigure }: { link: AgentIntegrationL
       type="button"
       onClick={onConfigure}
       className={cn(
-        'flex w-full max-w-[210px] items-center gap-0.5 overflow-hidden rounded-md p-1.5',
+        'flex w-full max-w-[210px] shrink-0 items-center gap-0.5 overflow-hidden rounded-md p-1.5',
         'bg-bg-white bg-[linear-gradient(180deg,rgba(0,0,0,0)_30%,rgba(0,0,0,0.02)_100%)]',
         'shadow-[0px_1px_3px_0px_rgba(14,18,27,0.12),0px_0px_0px_1px_#e1e4ea]',
         'transition-shadow hover:shadow-[0px_1px_3px_0px_rgba(14,18,27,0.16),0px_0px_0px_1px_#cdd0d8]'
@@ -80,27 +90,35 @@ function ChannelList({
   onConfigure: (link: AgentIntegrationLink) => void;
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [showTopFade, setShowTopFade] = useState(false);
   const [showBottomFade, setShowBottomFade] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
 
-  const updateBottomFade = useCallback(() => {
+  const isCollapsible = links.length > COLLAPSED_VISIBLE_CHANNEL_COUNT;
+  // Collapsed: bounded + scrollable. Expanded: unbounded so the full list is revealed.
+  const listMaxHeightPx = isExpanded ? undefined : COLLAPSED_LIST_MAX_HEIGHT_PX;
+
+  const updateFades = useCallback(() => {
     const node = listRef.current;
 
-    if (!node || isExpanded) {
+    if (!node || !isCollapsible) {
+      setShowTopFade(false);
       setShowBottomFade(false);
 
       return;
     }
 
     const hasOverflow = node.scrollHeight > node.clientHeight + 1;
+    const isScrolledToTop = node.scrollTop <= 1;
     const isScrolledToBottom = node.scrollTop + node.clientHeight >= node.scrollHeight - 1;
 
+    setShowTopFade(hasOverflow && !isScrolledToTop);
     setShowBottomFade(hasOverflow && !isScrolledToBottom);
-  }, [isExpanded]);
+  }, [isCollapsible]);
 
   useEffect(() => {
-    updateBottomFade();
-  }, [links.length, isExpanded, updateBottomFade]);
+    updateFades();
+  }, [links.length, isExpanded, updateFades]);
 
   useEffect(() => {
     const node = listRef.current;
@@ -109,50 +127,52 @@ function ChannelList({
       return;
     }
 
-    node.addEventListener('scroll', updateBottomFade, { passive: true });
+    node.addEventListener('scroll', updateFades, { passive: true });
 
-    const resizeObserver = new ResizeObserver(updateBottomFade);
+    const resizeObserver = new ResizeObserver(updateFades);
     resizeObserver.observe(node);
 
     return () => {
-      node.removeEventListener('scroll', updateBottomFade);
+      node.removeEventListener('scroll', updateFades);
       resizeObserver.disconnect();
     };
-  }, [updateBottomFade]);
+  }, [updateFades]);
 
   const handleConfigure = (link: AgentIntegrationLink) => {
     onConfigure(link);
   };
 
-  const handleShowAll = () => {
-    setIsExpanded(true);
+  const handleToggle = () => {
+    setIsExpanded((prev) => !prev);
   };
-
-  const isCollapsible = links.length > COLLAPSED_VISIBLE_CHANNEL_COUNT;
-  const isListCollapsed = isCollapsible && !isExpanded;
 
   return (
     <div className="flex w-full max-w-[210px] flex-col gap-2.5">
       <div
         ref={listRef}
-        className={cn('flex w-full flex-col gap-2.5', isListCollapsed && 'max-h-[150px] overflow-y-auto')}
+        className={cn(
+          'flex w-full flex-col gap-2.5',
+          // 1px padding keeps each row's box-shadow border ring from being clipped by the overflow container.
+          isCollapsible && 'overflow-y-auto p-px'
+        )}
         style={{
-          maskImage: buildVerticalBottomFadeMask(showBottomFade),
-          WebkitMaskImage: buildVerticalBottomFadeMask(showBottomFade),
+          maxHeight: isCollapsible ? listMaxHeightPx : undefined,
+          maskImage: buildVerticalFadeMask(showTopFade, showBottomFade, COLLAPSED_LIST_MAX_HEIGHT_PX),
+          WebkitMaskImage: buildVerticalFadeMask(showTopFade, showBottomFade, COLLAPSED_LIST_MAX_HEIGHT_PX),
         }}
       >
         {links.map((link) => (
           <ConfigureChannelButton key={link._id} link={link} onConfigure={() => handleConfigure(link)} />
         ))}
       </div>
-      {isListCollapsed ? (
+      {isCollapsible ? (
         <button
           type="button"
-          onClick={handleShowAll}
+          onClick={handleToggle}
           className="text-text-sub hover:text-text-strong flex items-center gap-0.5 self-start transition-colors"
         >
-          <span className="text-label-xs font-medium">Show all ({links.length})</span>
-          <RiArrowRightSLine className="size-4" />
+          <span className="text-label-xs font-medium">{isExpanded ? 'Show less' : `Show all (${links.length})`}</span>
+          <RiArrowRightSLine className={cn('size-4 transition-transform', isExpanded && '-rotate-90')} />
         </button>
       ) : null}
     </div>
