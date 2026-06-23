@@ -68,6 +68,28 @@ type DropdownItem = {
   integration?: IIntegration;
 };
 
+/**
+ * Confirmation gating is a paired contract: either both `confirmBeforeLink`
+ * and `onConfirmRequired` are provided, or neither. This guarantees that
+ * whenever `confirmBeforeLink` defers a selection, `onConfirmRequired` exists
+ * to run the deferred link — preventing a silent no-op.
+ */
+type ConfirmBeforeLinkProps =
+  | {
+      /**
+       * Guard run after a provider is selected but before it is linked.
+       * Return `true` to defer the link and require confirmation — the dropdown
+       * then calls `onConfirmRequired` with a `proceed` callback instead of linking.
+       */
+      confirmBeforeLink: (providerId: string) => boolean;
+      /** Invoked when `confirmBeforeLink` defers a selection. Call `proceed` to run the deferred link. */
+      onConfirmRequired: (proceed: () => void) => void;
+    }
+  | {
+      confirmBeforeLink?: undefined;
+      onConfirmRequired?: undefined;
+    };
+
 type ProviderDropdownProps = {
   /** When set, trigger and list highlight match this integration. */
   selectedIntegrationId: string | undefined;
@@ -86,15 +108,7 @@ type ProviderDropdownProps = {
   /** Controlled open state — pass together with `onOpenChange` to gate opening (e.g. behind a plan-limit dialog). */
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
-  /**
-   * Optional guard run after a provider is selected but before it is linked.
-   * Return `true` to defer the link and require confirmation — the dropdown
-   * then calls `onConfirmRequired` with a `proceed` callback instead of linking.
-   */
-  confirmBeforeLink?: (providerId: string) => boolean;
-  /** Invoked when `confirmBeforeLink` defers a selection. Call `proceed` to run the deferred link. */
-  onConfirmRequired?: (proceed: () => void) => void;
-};
+} & ConfirmBeforeLinkProps;
 
 function buildDropdownItems(
   conversationalProviders: readonly ConversationalProvider[],
