@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { CacheService, PinoLogger } from '@novu/application-generic';
 
-import { mintAutolinkSafeOpaqueToken } from '../../../shared/helpers';
+import { mintAutolinkSafeOpaqueToken } from '../shared/helpers';
 
 /** Lifetime of an issued mobile setup token (seconds). */
 export const TELEGRAM_MOBILE_LINK_TTL_SECONDS = 5 * 60;

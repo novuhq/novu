@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { CacheService, PinoLogger } from '@novu/application-generic';
 
-import { mintAutolinkSafeOpaqueToken } from '../../../shared/helpers';
+import { mintAutolinkSafeOpaqueToken } from '../shared/helpers';
 
 /**
  * Telegram `?start=` allows at most 64 base64url chars; we use 32-char opaque
