@@ -2,6 +2,7 @@
 import { standardSchemaResolver } from '@hookform/resolvers/standard-schema';
 import { AiAgentTypeEnum, AiResourceTypeEnum, DuplicateWorkflowDto } from '@novu/shared';
 import * as Sentry from '@sentry/react';
+import { useQuery } from '@tanstack/react-query';
 import { ChatOnDataCallback, generateId, UIMessage } from 'ai';
 import { motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -10,12 +11,15 @@ import {
   RiArrowRightSLine,
   RiCheckboxCircleFill,
   RiCloseLine,
+  RiInformation2Line,
   RiLoader3Line,
   RiLoader4Fill,
+  RiLoopLeftLine,
   RiRouteFill,
 } from 'react-icons/ri';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
+import { fetchWorkflowSuggestions, WorkflowSuggestionResponse } from '@/api/ai';
 import { Sparkling } from '@/components/icons/sparkling';
 import { Button } from '@/components/primitives/button';
 import { CompactButton } from '@/components/primitives/button-compact';
@@ -38,6 +42,7 @@ import { Tag } from '@/components/primitives/tag';
 import { Textarea } from '@/components/primitives/textarea';
 import { ExternalLink } from '@/components/shared/external-link';
 import { CreateWorkflowForm } from '@/components/workflow-editor/create-workflow-form';
+import { IS_AI_FEATURES_ENABLED } from '@/config';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useAiChatStream } from '@/hooks/use-ai-chat-stream';
 import { useCreateAiChat } from '@/hooks/use-create-ai-chat';
@@ -45,7 +50,9 @@ import { useCreateWorkflow } from '@/hooks/use-create-workflow';
 import { useDuplicateWorkflow } from '@/hooks/use-duplicate-workflow';
 import { useFetchWorkflow } from '@/hooks/use-fetch-workflow';
 import { useFormProtection } from '@/hooks/use-form-protection';
+import { useOnboardingWorkflowSuggestions } from '@/hooks/use-onboarding-workflow-suggestions';
 import { useTelemetry } from '@/hooks/use-telemetry';
+import { QueryKeys } from '@/utils/query-keys';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { Badge } from './primitives/badge';
@@ -61,13 +68,6 @@ export type WorkflowCreatedEvent = {
 
 type CreateWorkflowTab = 'guided' | 'manual';
 
-const WORKFLOW_SUGGESTIONS = [
-  'Welcome email workflow',
-  'Order confirmation workflow',
-  'Payment failed workflow',
-  'Password reset workflow',
-];
-
 export function CreateWorkflowModal({ mode, workflowId }: { mode: 'create' | 'duplicate'; workflowId?: string }) {
   const navigate = useNavigate();
   const { currentEnvironment } = useEnvironment();
@@ -76,7 +76,7 @@ export function CreateWorkflowModal({ mode, workflowId }: { mode: 'create' | 'du
   const createdWorkflowSlugRef = useRef<string | null>(null);
   const chatId = useMemo(() => generateId(), []);
   const persistedChatIdRef = useRef<string | null>(null);
-  const [tab, setTab] = useState<CreateWorkflowTab>('guided');
+  const [tab, setTab] = useState<CreateWorkflowTab>(IS_AI_FEATURES_ENABLED ? 'guided' : 'manual');
 
   const { workflow, isPending: isLoadingWorkflow } = useFetchWorkflow({
     workflowSlug: mode === 'duplicate' ? workflowId : undefined,
@@ -214,8 +214,8 @@ export function CreateWorkflowModal({ mode, workflowId }: { mode: 'create' | 'du
   };
 
   const isDuplicateMode = mode === 'duplicate';
-  const showTabs = !isDuplicateMode;
-  const showGuidedContent = !isDuplicateMode && tab === 'guided';
+  const showTabs = IS_AI_FEATURES_ENABLED && !isDuplicateMode;
+  const showGuidedContent = IS_AI_FEATURES_ENABLED && !isDuplicateMode && tab === 'guided';
   const showManualContent = isDuplicateMode || tab === 'manual';
 
   const title = isDuplicateMode ? 'Duplicate workflow' : 'Create workflow';
@@ -362,12 +362,43 @@ type GenerationStep = {
 
 function GuidedModeContent({ onSubmit, isGenerating, error }: GuidedModeContentProps) {
   const track = useTelemetry();
+  const { currentEnvironment } = useEnvironment();
   const form = useForm({
     resolver: standardSchemaResolver(schema),
     defaultValues: {
       prompt: '',
     },
   });
+
+  const refreshRef = useRef(false);
+  const {
+    data: suggestions,
+    isLoading: isLoadingSuggestions,
+    isFetching: isFetchingSuggestions,
+    refetch: refetchSuggestions,
+  } = useQuery({
+    queryKey: [QueryKeys.fetchWorkflowSuggestions, currentEnvironment?._id],
+    queryFn: () => {
+      if (!currentEnvironment) throw new Error('Environment not loaded');
+
+      const shouldRefresh = refreshRef.current;
+      refreshRef.current = false;
+
+      return fetchWorkflowSuggestions({ environment: currentEnvironment, refresh: shouldRefresh });
+    },
+    enabled: IS_AI_FEATURES_ENABLED && !!currentEnvironment,
+    staleTime: 24 * 60 * 60 * 1000,
+  });
+
+  const { status: onboardingStatus, isGenerating: isOnboardingGenerating } = useOnboardingWorkflowSuggestions();
+  const areOnboardingSuggestionsSkipped =
+    !isOnboardingGenerating && (onboardingStatus === 'skipped' || !onboardingStatus);
+
+  function handleRefreshSuggestions() {
+    refreshRef.current = true;
+    track(TelemetryEvent.COPILOT_SUGGESTIONS_REFRESHED);
+    refetchSuggestions();
+  }
 
   const [animatedStepIndex, setAnimatedStepIndex] = useState(-1);
 
@@ -394,9 +425,9 @@ function GuidedModeContent({ onSubmit, isGenerating, error }: GuidedModeContentP
     }
   }, [error]);
 
-  function handleSuggestionClick(suggestion: string) {
-    track(TelemetryEvent.COPILOT_SUGGESTION_CLICKED, { suggestion });
-    form.setValue('prompt', suggestion);
+  function handleSuggestionClick(suggestion: WorkflowSuggestionResponse) {
+    track(TelemetryEvent.COPILOT_SUGGESTION_CLICKED, { suggestion: suggestion.title });
+    form.setValue('prompt', suggestion.examplePrompt);
   }
 
   const header = useMemo(
@@ -486,25 +517,31 @@ function GuidedModeContent({ onSubmit, isGenerating, error }: GuidedModeContentP
       {header}
 
       <div className="flex flex-wrap items-center gap-2 mt-8">
-        {WORKFLOW_SUGGESTIONS.map((suggestion) => (
-          <button
-            key={suggestion}
-            type="button"
-            className="cursor-pointer"
-            onClick={() => handleSuggestionClick(suggestion)}
-          >
-            <Tag className="rounded-full" variant="stroke" icon={<RiRouteFill className="text-feature" />}>
-              {suggestion}
-            </Tag>
-          </button>
-        ))}
-        {/* <Button
-          className="cursor-pointer h-6 [&_svg]:size-2.5"
-          variant="secondary"
-          mode="ghost"
-          size="2xs"
-          trailingIcon={RiLoopLeftLine}
-        /> */}
+        {isLoadingSuggestions || isFetchingSuggestions
+          ? Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-6 w-36 rounded-full" />)
+          : suggestions?.map((suggestion) => (
+              <button
+                key={suggestion.id}
+                type="button"
+                className="h-6 cursor-pointer"
+                onClick={() => handleSuggestionClick(suggestion)}
+              >
+                <Tag className="rounded-full" variant="stroke" icon={<RiRouteFill className="text-feature" />}>
+                  {suggestion.title}
+                </Tag>
+              </button>
+            ))}
+        {!areOnboardingSuggestionsSkipped && (
+          <Button
+            className="cursor-pointer h-6 [&_svg]:size-2.5"
+            variant="secondary"
+            mode="ghost"
+            size="2xs"
+            trailingIcon={RiLoopLeftLine}
+            disabled={isFetchingSuggestions}
+            onClick={handleRefreshSuggestions}
+          />
+        )}
       </div>
       <Form {...form}>
         <FormRoot
@@ -512,7 +549,7 @@ function GuidedModeContent({ onSubmit, isGenerating, error }: GuidedModeContentP
           autoComplete="off"
           noValidate
           onSubmit={form.handleSubmit(onSubmit)}
-          className="flex flex-col gap-4"
+          className="flex flex-col"
         >
           <FormField
             control={form.control}
@@ -533,6 +570,17 @@ function GuidedModeContent({ onSubmit, isGenerating, error }: GuidedModeContentP
               </FormItem>
             )}
           />
+          {areOnboardingSuggestionsSkipped && (
+            <div className="text-paragraph-xs text-text-sub flex items-center justify-center gap-1.5 bg-bg-weak rounded-md mx-2 rounded-t-none px-3 py-1.5 border border-bg-soft border-t-0">
+              <RiInformation2Line className="text-icon-strong h-3 w-3 shrink-0" />
+              <p className="text-paragraph-xs">
+                <span className="text-icon-strong">Tip: </span>Generate suggestions tailored to your product. Add your{' '}
+                <Link to={ROUTES.SETTINGS_ORGANIZATION} className="inline cursor-pointer text-icon-strong">
+                  domain →
+                </Link>
+              </p>
+            </div>
+          )}
         </FormRoot>
       </Form>
     </div>

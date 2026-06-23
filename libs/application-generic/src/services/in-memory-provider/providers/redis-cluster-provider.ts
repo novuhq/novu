@@ -49,7 +49,11 @@ export const getRedisClusterProviderConfig = (): IRedisClusterProviderConfig => 
     keepAlive: convertStringValues(process.env.REDIS_CLUSTER_KEEP_ALIVE),
     family: convertStringValues(process.env.REDIS_CLUSTER_FAMILY),
     keyPrefix: convertStringValues(process.env.REDIS_CLUSTER_KEY_PREFIX),
-    tls: process.env.REDIS_CLUSTER_TLS as ConnectionOptions,
+    tls: process.env.REDIS_CLUSTER_TLS
+      ? {
+          servername: convertStringValues(process.env.REDIS_CLUSTER_SERVICE_HOST),
+        }
+      : undefined,
   };
 
   const { host } = redisClusterConfig;
@@ -75,16 +79,27 @@ export const getRedisClusterProviderConfig = (): IRedisClusterProviderConfig => 
     keepAlive,
     keyPrefix,
     ttl,
+    tls: redisClusterConfig.tls,
   };
 };
 
 export const getRedisCluster = (enableAutoPipelining?: boolean): Cluster | undefined => {
-  const { instances } = getRedisClusterProviderConfig();
+  const { instances, password, tls } = getRedisClusterProviderConfig();
+
+  const skipVersionCheck = process.env.REDIS_SKIP_VERSION_CHECK === 'true';
+
+  const redisOptions = {
+    ...(tls && { tls }),
+    ...(password && { password }),
+    skipVersionCheck,
+  };
 
   const options: ClusterOptions = {
+    dnsLookup: (address, callback) => callback(null, address),
     enableAutoPipelining: enableAutoPipelining ?? false,
     enableOfflineQueue: false,
     enableReadyCheck: true,
+    redisOptions,
     scaleReads: 'slave',
     /*
      *  Disabled in Prod as affects performance

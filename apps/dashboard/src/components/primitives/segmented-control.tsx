@@ -85,8 +85,4 @@ const SegmentedControlTrigger = React.forwardRef<
 });
 SegmentedControlTrigger.displayName = 'SegmentedControlTrigger';
 
-export {
-  SegmentedControlRoot as SegmentedControl,
-  SegmentedControlList,
-  SegmentedControlTrigger,
-};
+export { SegmentedControlRoot as SegmentedControl, SegmentedControlList, SegmentedControlTrigger };

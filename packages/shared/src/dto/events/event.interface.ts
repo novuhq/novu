@@ -27,6 +27,7 @@ export type TriggerOverrides = {
   };
   email?: Record<string, unknown> & {
     toRecipient?: string;
+    replaceToRecipient?: boolean;
     integrationIdentifier?: string;
   };
   sms?: Record<string, unknown>;

@@ -36,17 +36,25 @@ import { Landing1SignUpPage } from '@/pages/landing-1-signup';
 import { SubscribersPage } from '@/pages/subscribers';
 import { TranslationSettingsPage } from '@/pages/translation-settings-page';
 import { WebhooksPage } from '@/pages/webhooks-page';
+import { ConnectSubscriberProvider } from './components/connect/connect-subscriber-provider';
 import { CreateIntegrationSidebar } from './components/integrations/components/create-integration-sidebar';
 import { UpdateIntegrationSidebar } from './components/integrations/components/update-integration-sidebar';
 import { ChannelPreferences } from './components/workflow-editor/channel-preferences';
 import { IS_ENTERPRISE, IS_SELF_HOSTED } from './config';
 import { FeatureFlagsProvider } from './context/feature-flags-provider';
 import { AgentDetailsPage } from './pages/agent-details';
+import { AgentSlackSetupPage } from './pages/agent-slack-setup-page';
+import { AgentTelegramMobileSetupPage } from './pages/agent-telegram-mobile-setup-page';
 import { AgentsPage } from './pages/agents';
+import { AgentsSetupPage } from './pages/agents-setup-page';
+import { CliAuthPage } from './pages/cli-auth';
+import { ConnectClaimPage } from './pages/connect-claim';
 import { ContextsPage } from './pages/contexts';
 import { CreateContextPage } from './pages/create-context';
 import { CreateSubscriberPage } from './pages/create-subscriber';
 import { CreateTopicPage } from './pages/create-topic';
+import { DomainDetailPage } from './pages/domain-detail';
+import { DomainsPage } from './pages/domains';
 import { DuplicateLayoutPage } from './pages/duplicate-layout-page';
 import { EditContextPage } from './pages/edit-context';
 import { EditLayoutPage } from './pages/edit-layout';
@@ -59,23 +67,31 @@ import { ForgotPasswordPage } from './pages/forgot-password';
 import { InboxEmbedPage } from './pages/inbox-embed-page';
 import { InboxEmbedSuccessPage } from './pages/inbox-embed-success-page';
 import { InboxUsecasePage } from './pages/inbox-usecase-page';
+import { IntegrationStoreTelegramMobileSetupPage } from './pages/integration-store-telegram-mobile-setup-page';
 import { RedirectToLegacyStudioAuth } from './pages/redirect-to-legacy-studio-auth';
 import { ResetPasswordPage } from './pages/reset-password';
 import { TestWorkflowDrawerPage } from './pages/test-workflow-drawer-page';
 import { TestWorkflowRouteHandler } from './pages/test-workflow-route-handler';
 import { TopicsPage } from './pages/topics';
 import { UpsertVariablePage } from './pages/upsert-variable';
+import { UsecaseSelectPage } from './pages/usecase-select-page';
 import { VariablesPage } from './pages/variables';
 import { VercelIntegrationPage } from './pages/vercel-integration-page';
 import { AuthRoute, CatchAllRoute, DashboardRoute, ProtectedAuthRoute, RootRoute } from './routes';
 import { OnboardingParentRoute } from './routes/onboarding';
 import { ProtectedRoute } from './routes/protected-route';
+import { captureAgentTemplateIdFromUrl } from './utils/agent-template-identity';
+import { captureConnectClaimTokenFromUrl } from './utils/connect-claim-pending';
 import { ROUTES } from './utils/routes';
 import { initializeSentry } from './utils/sentry';
 import { overrideZodErrorMap } from './utils/validation';
 
 initializeSentry();
 overrideZodErrorMap();
+// Stash an incoming `?agentTemplateId=` before Clerk's auth redirects drop the query params.
+captureAgentTemplateIdFromUrl();
+// Stash an incoming connect claim token before Clerk's auth redirects drop the query params.
+captureConnectClaimTokenFromUrl();
 
 const router = createBrowserRouter([
   {
@@ -85,6 +101,32 @@ const router = createBrowserRouter([
       {
         path: `${ROUTES.LANDING_1_SIGN_UP}/*`,
         element: <Landing1SignUpPage />,
+      },
+      {
+        path: ROUTES.CLI_AUTH,
+        element: <CliAuthPage />,
+      },
+      {
+        path: ROUTES.CONNECT_CLAIM,
+        element: <ConnectClaimPage />,
+      },
+      {
+        // Public, unauthenticated setup page for Slack. Mounted outside
+        // AuthRoute so unauthenticated visitors are not redirected to sign-in.
+        path: ROUTES.AGENT_SLACK_SETUP,
+        element: <AgentSlackSetupPage />,
+      },
+      {
+        // Public, unauthenticated mobile setup page for Telegram. Mounted outside
+        // AuthRoute so unauthenticated visitors are not redirected to sign-in.
+        path: ROUTES.AGENT_TELEGRAM_MOBILE_SETUP,
+        element: <AgentTelegramMobileSetupPage />,
+      },
+      {
+        // Public, unauthenticated mobile setup page for the Telegram integration
+        // store create flow. Creates a new integration server-side on submit.
+        path: ROUTES.INTEGRATION_TELEGRAM_MOBILE_SETUP,
+        element: <IntegrationStoreTelegramMobileSetupPage />,
       },
       {
         element: <AuthRoute />,
@@ -132,6 +174,18 @@ const router = createBrowserRouter([
         path: '/onboarding',
         element: <OnboardingParentRoute />,
         children: [
+          {
+            path: ROUTES.USECASE_SELECT,
+            element: <UsecaseSelectPage />,
+          },
+          {
+            path: ROUTES.AGENTS_SETUP,
+            element: (
+              <ConnectSubscriberProvider>
+                <AgentsSetupPage />
+              </ConnectSubscriberProvider>
+            ),
+          },
           {
             path: ROUTES.INBOX_USECASE,
             element: <InboxUsecasePage />,
@@ -352,32 +406,46 @@ const router = createBrowserRouter([
                 ],
               },
               {
-                path: ROUTES.AGENTS,
-                element: <AgentsPage />,
+                element: <ConnectSubscriberProvider />,
+                children: [
+                  {
+                    path: ROUTES.AGENTS,
+                    element: <AgentsPage />,
+                  },
+                  {
+                    path: ROUTES.AGENT_DETAILS_INTEGRATIONS_DETAIL,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
+                        <AgentDetailsPage />
+                      </ProtectedRoute>
+                    ),
+                  },
+                  {
+                    path: ROUTES.AGENT_DETAILS_TAB,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
+                        <AgentDetailsPage />
+                      </ProtectedRoute>
+                    ),
+                  },
+                  {
+                    path: ROUTES.AGENT_DETAILS,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
+                        <AgentDetailsPage />
+                      </ProtectedRoute>
+                    ),
+                  },
+                ],
               },
               {
-                path: ROUTES.AGENT_DETAILS_INTEGRATIONS_DETAIL,
-                element: (
-                  <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
-                    <AgentDetailsPage />
-                  </ProtectedRoute>
-                ),
+                path: ROUTES.DOMAINS,
+                element: !IS_SELF_HOSTED || IS_ENTERPRISE ? <DomainsPage /> : <Navigate to={ROUTES.ROOT} replace />,
               },
               {
-                path: ROUTES.AGENT_DETAILS_TAB,
-                element: (
-                  <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
-                    <AgentDetailsPage />
-                  </ProtectedRoute>
-                ),
-              },
-              {
-                path: ROUTES.AGENT_DETAILS,
-                element: (
-                  <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
-                    <AgentDetailsPage />
-                  </ProtectedRoute>
-                ),
+                path: ROUTES.DOMAIN_DETAIL,
+                element:
+                  !IS_SELF_HOSTED || IS_ENTERPRISE ? <DomainDetailPage /> : <Navigate to={ROUTES.ROOT} replace />,
               },
               {
                 path: ROUTES.API_KEYS,
@@ -565,7 +633,6 @@ const router = createBrowserRouter([
                   </ProtectedRoute>
                 ),
               },
-
               {
                 path: '*',
                 element: <CatchAllRoute />,
@@ -654,7 +721,11 @@ const router = createBrowserRouter([
   },
 ]);
 
-createRoot(document.getElementById('root')!).render(
+const rootElement = document.getElementById('root');
+
+if (!rootElement) throw new Error('Root element not found');
+
+createRoot(rootElement).render(
   <StrictMode>
     <FeatureFlagsProvider>
       <RouterProvider router={router} />

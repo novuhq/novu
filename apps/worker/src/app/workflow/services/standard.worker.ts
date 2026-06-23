@@ -61,6 +61,26 @@ export class StandardWorker extends StandardWorkerService {
       await this.jobHasCompleted(job);
     });
 
+    /*
+     * Retry behaviour on SQS is driven by the queue, not by per-message
+     * code:
+     *
+     *   - `meta.receiveCount` feeds `job.attemptsMade` via
+     *     `createSqsJobAdapter`, so `jobHasFailed` evaluates
+     *     `hasReachedMaxAttempts` against the same `DEFAULT_ATTEMPTS`
+     *     ceiling used for webhook-filter jobs.
+     *   - Returning `true` re-throws and SQS keeps the message, which
+     *     becomes visible again after the consumer-wide visibility
+     *     timeout (`SQS_DEFAULT_VISIBILITY_TIMEOUT`, env-tunable).
+     *   - Returning `false` acks and SQS deletes the message.
+     *   - `RedrivePolicy.maxReceiveCount=3` on the standard SQS queue
+     *     caps total deliveries to match the `attempts: 3` ceiling for
+     *     webhook-filter jobs. Non-webhook-filter failures hit
+     *     `hasToBackoff=false` and ack on the first attempt.
+     *
+     * Cadence between retries is uniform (the SQS visibility timeout);
+     * tune via env if a longer baseline is needed.
+     */
     this.setSqsFailedHandler(async (job: Job<IStandardDataDto, void, string>, error: Error): Promise<boolean> => {
       return await this.jobHasFailed(job, error);
     });

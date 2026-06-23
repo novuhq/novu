@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { RiArrowDownSLine, RiArrowUpSLine } from 'react-icons/ri';
 import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
 import { formatDateSimple } from '@/utils/format-date';
-import { RequestLog } from '../../types/logs';
+import { RequestLog, RequestLogSource } from '../../types/logs';
 import { CopyButton } from '../primitives/copy-button';
 import { Separator } from '../primitives/separator';
 import { EditableJsonViewer } from '../workflow-editor/steps/shared/editable-json-viewer/editable-json-viewer';
@@ -175,12 +175,19 @@ export function LogsDetailContent({ log }: LogsDetailContentProps) {
               <TransactionIdDisplay transactionId={log.transactionId} />
             </div>
 
-            <div className="flex items-center justify-between">
-              <span className="text-text-soft font-mono text-xs font-medium tracking-[-0.24px]">Source</span>
-              <span className="text-text-sub font-mono text-xs font-normal tracking-[-0.24px]">
-                {log.authType === 'Bearer' ? 'Dashboard' : 'API'}
-              </span>
-            </div>
+            {log.source === RequestLogSource.INBOUND_EMAIL ? (
+              <div className="flex items-center justify-between">
+                <span className="text-text-soft font-mono text-xs font-medium tracking-[-0.24px]">Type</span>
+                <span className="text-text-sub font-mono text-xs font-normal tracking-[-0.24px]">Inbound email</span>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between">
+                <span className="text-text-soft font-mono text-xs font-medium tracking-[-0.24px]">Source</span>
+                <span className="text-text-sub font-mono text-xs font-normal tracking-[-0.24px]">
+                  {log.authType === 'Bearer' ? 'Dashboard' : 'API'}
+                </span>
+              </div>
+            )}
           </div>
         </div>
 

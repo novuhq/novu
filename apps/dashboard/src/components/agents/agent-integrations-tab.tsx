@@ -1,8 +1,8 @@
 import { ChannelTypeEnum, type IIntegration, providers as novuProviders, PermissionsEnum } from '@novu/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { type ReactNode, useEffect, useMemo } from 'react';
+import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { RiAddLine, RiArrowRightSLine, RiErrorWarningFill } from 'react-icons/ri';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   type AgentIntegrationLink,
   type AgentResponse,
@@ -13,13 +13,22 @@ import {
 } from '@/api/agents';
 import { NovuApiError } from '@/api/api.client';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
+import { InlineToast } from '@/components/primitives/inline-toast';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
+import { useAgentRoutes } from '@/hooks/use-agent-routes';
 import { useHasPermission } from '@/hooks/use-has-permission';
-import { buildRoute, ROUTES } from '@/utils/routes';
+import { useTelemetry } from '@/hooks/use-telemetry';
+import { buildRoute } from '@/utils/routes';
+import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
 import { ResolveAgentIntegrationGuide } from './agent-integration-guides/resolve-agent-integration-guide';
+import { ChannelsPlanLimitBanner } from './agents-plan-limit-banner';
+import { getExceedsPlanTooltipCopy } from './exceeds-plan-indicator';
+import { isAgentIntegrationConnected } from './is-agent-integration-connected';
+import { ChannelLimitUpgradeDialog } from './plan-limit-upgrade-dialog';
 import { ProviderDropdown } from './provider-dropdown';
 
 type AgentIntegrationsTabProps = {
@@ -117,7 +126,6 @@ type IntegrationsHubPlaceholderProps = {
 };
 
 function IntegrationsHubPlaceholder({ title, description }: IntegrationsHubPlaceholderProps) {
-
   return (
     <div className="border-stroke-soft bg-bg-weak/30 flex min-h-[320px] flex-col items-center justify-center rounded-xl border border-dashed px-6 py-16 text-center">
       <p className="text-text-strong text-label-sm font-medium">{title}</p>
@@ -159,12 +167,10 @@ function IntegrationsMainPanel({
 
   if (integrationIdentifier) {
     if (isLoading) {
-
       return guideSkeleton;
     }
 
     if (!selectedIntegration) {
-
       return (
         <IntegrationsHubPlaceholder
           title="Integration not found"
@@ -187,12 +193,10 @@ function IntegrationsMainPanel({
   }
 
   if (isLoading) {
-
     return guideSkeleton;
   }
 
   if (links.length > 0) {
-
     return (
       <IntegrationsHubPlaceholder
         title="Select a provider"
@@ -218,18 +222,17 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
-  const { currentEnvironment } = useEnvironment();
+  const { currentEnvironment, readOnly, oppositeEnvironment } = useEnvironment();
   const has = useHasPermission();
+  const track = useTelemetry();
+  const agentRoutes = useAgentRoutes();
+  const canRemoveAgentIntegration = !readOnly && has({ permission: PermissionsEnum.AGENT_WRITE });
 
-  const canRemoveAgentIntegration = has({ permission: PermissionsEnum.AGENT_WRITE });
-
-  const integrationsHubPath = `${buildRoute(ROUTES.AGENT_DETAILS_TAB, {
+  const integrationsHubPath = `${buildRoute(agentRoutes.detailsTab, {
     environmentSlug: currentEnvironment?.slug ?? '',
     agentIdentifier: encodeURIComponent(agent.identifier),
     agentTab: 'integrations',
   })}${location.search}`;
-
-  const integrationsStorePath = ROUTES.INTEGRATIONS;
 
   const navigateToGuide = (nextIntegrationIdentifier: string) => {
     if (!currentEnvironment?.slug) {
@@ -237,7 +240,7 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
     }
 
     navigate(
-      `${buildRoute(ROUTES.AGENT_DETAILS_INTEGRATIONS_DETAIL, {
+      `${buildRoute(agentRoutes.integrationDetail, {
         environmentSlug: currentEnvironment.slug,
         agentIdentifier: encodeURIComponent(agent.identifier),
         integrationIdentifier: encodeURIComponent(nextIntegrationIdentifier),
@@ -261,6 +264,28 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
   });
 
   const linkedRows = listQuery.data?.data;
+  const planUsage = listQuery.data?.planUsage;
+  const isOverChannelLimit = Boolean(planUsage && planUsage.used > planUsage.limit);
+  const isAtChannelLimit = Boolean(planUsage && planUsage.used >= planUsage.limit);
+
+  const [providerDropdownOpen, setProviderDropdownOpen] = useState(false);
+  const [channelLimitDialogOpen, setChannelLimitDialogOpen] = useState(false);
+  const [channelLimitAcknowledged, setChannelLimitAcknowledged] = useState(false);
+
+  const handleProviderDropdownOpenChange = (next: boolean) => {
+    if (next && isAtChannelLimit && !channelLimitAcknowledged) {
+      setChannelLimitDialogOpen(true);
+
+      return;
+    }
+
+    setProviderDropdownOpen(next);
+  };
+
+  const handleChannelLimitContinue = () => {
+    setChannelLimitAcknowledged(true);
+    setProviderDropdownOpen(true);
+  };
 
   useEffect(() => {
     if (integrationIdentifier != null) {
@@ -290,7 +315,7 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
     }
 
     navigate(
-      `${buildRoute(ROUTES.AGENT_DETAILS_INTEGRATIONS_DETAIL, {
+      `${buildRoute(agentRoutes.integrationDetail, {
         environmentSlug: currentEnvironment.slug,
         agentIdentifier: encodeURIComponent(agent.identifier),
         integrationIdentifier: encodeURIComponent(firstIntegrationIdentifier),
@@ -299,6 +324,7 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
     );
   }, [
     agent.identifier,
+    agentRoutes.integrationDetail,
     currentEnvironment?.slug,
     linkedRows,
     listQuery.isSuccess,
@@ -332,6 +358,11 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
       const name = removed?.integration.name ?? 'Integration';
 
       showSuccessToast('Integration removed', `${name} was unlinked from this agent.`);
+      track(TelemetryEvent.AGENT_INTEGRATION_REMOVED_FROM_DASHBOARD, {
+        agentIdentifier: agent.identifier,
+        agentIntegrationId,
+        integrationIdentifier: removed?.integration.identifier,
+      });
       await queryClient.invalidateQueries({
         queryKey: getAgentIntegrationsQueryKey(currentEnvironment?._id, agent.identifier),
       });
@@ -358,6 +389,7 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
     integrationIdentifier != null
       ? links.find((link) => link.integration.identifier === integrationIdentifier)
       : undefined;
+
   const selectedIntegrationUpdatedAtMs =
     selectedIntegration != null ? Date.parse(selectedIntegration.updatedAt) : undefined;
   const lastUpdatedParts = listQuery.isSuccess
@@ -395,10 +427,33 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
   );
 
   return (
-    <div className="flex min-w-0 w-full gap-6 px-6 pt-4">
-      <aside className="w-[300px] shrink-0">
-        <div className="flex flex-col gap-4">
-          <div className="bg-bg-weak flex flex-col gap-2 rounded-[10px] p-1">
+    <div className="flex min-w-0 w-full flex-col gap-4 px-4 pt-4 pb-6 md:flex-row md:gap-6 md:px-6 md:pb-0">
+      <aside className="w-full md:w-[300px] md:shrink-0">
+        <div className="flex flex-col gap-2.5">
+          {/* When the agent itself is over the agent limit it won't respond on any
+              channel — the agent-level banner above already says so, and stacking
+              the channel-limit banner here would just be duplicate warning noise. */}
+          {isOverChannelLimit && planUsage && !agent.exceedsPlanLimit && (
+            <ChannelsPlanLimitBanner planUsage={planUsage} />
+          )}
+          {readOnly && (
+            <InlineToast
+              variant="soft-warning"
+              description="Viewing in production"
+              ctaLabel="Switch to dev"
+              onCtaClick={() => {
+                if (!oppositeEnvironment?.slug) return;
+                navigate(
+                  buildRoute(agentRoutes.detailsTab, {
+                    environmentSlug: oppositeEnvironment.slug,
+                    agentIdentifier: encodeURIComponent(agent.identifier),
+                    agentTab: 'integrations',
+                  })
+                );
+              }}
+            />
+          )}
+          <div className="bg-bg-weak flex flex-col gap-2 rounded p-1 py-1.5">
             <p className="text-text-sub px-1 pt-1 text-label-xs font-medium leading-4">Connected providers</p>
             {isLoading ? (
               <>
@@ -424,11 +479,21 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
                       const int = link.integration;
                       const providerMeta = novuProviders.find((p) => p.id === int.providerId);
                       const isSelected = integrationIdentifier === int.identifier;
-                      const showActionNeeded = !link.connectedAt;
+                      const isConnected = isAgentIntegrationConnected(link);
+                      // Setup ("Action needed") takes precedence — the plan limit only
+                      // becomes the blocking issue once the channel is actually connected.
+                      const exceedsPlan = Boolean(link.exceedsPlanLimit) && isConnected;
+                      const showActionNeeded = !isConnected;
 
-                      const statusLabel = showActionNeeded ? 'Action needed' : 'Active';
+                      let statusLabel = 'Active';
 
-                      return (
+                      if (exceedsPlan) {
+                        statusLabel = 'Exceeds plan';
+                      } else if (showActionNeeded) {
+                        statusLabel = 'Action needed';
+                      }
+
+                      const row = (
                         <button
                           key={link._id}
                           type="button"
@@ -450,7 +515,10 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
                             </span>
                           </span>
                           <span className="flex shrink-0 items-center gap-1" aria-hidden>
-                            {showActionNeeded ? (
+                            {exceedsPlan && (
+                              <span className="text-warning-base text-[10px] font-medium leading-4">Exceeds plan</span>
+                            )}
+                            {exceedsPlan || showActionNeeded ? (
                               <RiErrorWarningFill className="text-warning-base size-3 shrink-0" />
                             ) : (
                               <div className="bg-success-base size-1.5 shrink-0 rounded-full" />
@@ -459,32 +527,50 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
                           </span>
                         </button>
                       );
+
+                      if (!exceedsPlan) {
+                        return row;
+                      }
+
+                      return (
+                        <Tooltip key={link._id}>
+                          <TooltipTrigger asChild>{row}</TooltipTrigger>
+                          <TooltipContent side="right" className="max-w-[260px]">
+                            {getExceedsPlanTooltipCopy('channel')}
+                          </TooltipContent>
+                        </Tooltip>
+                      );
                     })}
                   </div>
                 ))}
 
                 {links.length > 0 ? <div className="bg-stroke-weak h-px" role="presentation" /> : null}
 
-                <ProviderDropdown
-                  agentIdentifier={agent.identifier}
-                  selectedIntegrationId={selectedIntegration?.integration._id}
-                  linkedIntegrationIds={linkedIntegrationIdSet}
-                  excludeLinked
-                  onSelect={handleProviderDropdownSelect}
-                  renderTrigger={({ isBusy }) => (
-                    <button
-                      type="button"
-                      disabled={isBusy}
-                      className="bg-bg-white border-stroke-weak hover:border-stroke-soft text-text-sub flex h-auto w-full items-center justify-between gap-1.5 rounded-md border px-2 py-1.5 text-left font-medium transition-colors disabled:opacity-60"
-                    >
-                      <span className="flex items-center gap-1.5">
-                        <RiAddLine className="size-4 shrink-0" aria-hidden />
-                        <span className="text-label-sm leading-5">Add provider</span>
-                      </span>
-                      <RiArrowRightSLine className="text-text-soft size-4 shrink-0" aria-hidden />
-                    </button>
-                  )}
-                />
+                {!readOnly && (
+                  <ProviderDropdown
+                    agentIdentifier={agent.identifier}
+                    agentName={agent.name}
+                    selectedIntegrationId={selectedIntegration?.integration._id}
+                    linkedIntegrationIds={linkedIntegrationIdSet}
+                    excludeLinked
+                    open={providerDropdownOpen}
+                    onOpenChange={handleProviderDropdownOpenChange}
+                    onSelect={handleProviderDropdownSelect}
+                    renderTrigger={({ isBusy }) => (
+                      <button
+                        type="button"
+                        disabled={isBusy}
+                        className="bg-bg-white border-stroke-weak hover:border-stroke-soft text-text-sub flex h-auto w-full items-center justify-between gap-1.5 rounded-md border px-2 py-1.5 text-left font-medium transition-colors disabled:opacity-60"
+                      >
+                        <span className="flex items-center gap-1.5">
+                          <RiAddLine className="size-4 shrink-0" aria-hidden />
+                          <span className="text-label-sm leading-5">Add provider</span>
+                        </span>
+                        <RiArrowRightSLine className="text-text-soft size-4 shrink-0" aria-hidden />
+                      </button>
+                    )}
+                  />
+                )}
               </>
             )}
           </div>
@@ -493,22 +579,21 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
             <span className="text-text-soft">{lastUpdatedParts.prefix}</span>
             <span className="text-text-sub font-medium">{lastUpdatedParts.emphasis}</span>
           </p>
-
-          <div className="border-stroke-soft border-t pt-3">
-            <p className="text-text-soft text-label-xs font-medium leading-4">Quick actions</p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Link
-                to={integrationsStorePath}
-                className="border-stroke-soft text-text-strong hover:bg-bg-weak text-label-xs inline-flex h-7 items-center rounded-md border bg-transparent px-3 font-medium transition-colors"
-              >
-                View integration store
-              </Link>
-            </div>
-          </div>
         </div>
       </aside>
 
-      <div className="min-w-0 flex-1">{mainPanel}</div>
+      <div className="min-w-0 flex-1 mt-10 md:mt-0 border-t border-stroke-weak md:border-t-0 pt-4 md:pt-0">
+        {mainPanel}
+      </div>
+
+      {planUsage && (
+        <ChannelLimitUpgradeDialog
+          open={channelLimitDialogOpen}
+          onOpenChange={setChannelLimitDialogOpen}
+          planUsage={planUsage}
+          onContinueAnyway={handleChannelLimitContinue}
+        />
+      )}
     </div>
   );
 }

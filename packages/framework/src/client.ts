@@ -18,8 +18,8 @@ import {
   StepNotFoundError,
   WorkflowNotFoundError,
 } from './errors';
-import type { Agent } from './resources/agent';
 import { mockSchema } from './jsonSchemaFaker';
+import type { Agent } from './resources/agent';
 import { prettyPrintDiscovery } from './resources/workflow/pretty-print-discovery';
 import type {
   ActionStep,
@@ -32,6 +32,7 @@ import type {
   Event,
   ExecuteOutput,
   HealthCheck,
+  Logger,
   Schema,
   Skip,
   State,
@@ -42,7 +43,11 @@ import type {
 import { WithPassthrough } from './types/provider.types';
 import { EMOJI, log, resolveApiUrl, resolveSecretKey, sanitizeHtmlInObject } from './utils';
 import { createLiquidEngine } from './utils/liquid.utils';
-import { normalizeControlData } from './utils/normalize-controls.utils';
+import {
+  expandJsonStringControlValues,
+  normalizeControlData,
+  restoreJsonStringControlValues,
+} from './utils/normalize-controls.utils';
 import { deepMerge } from './utils/object.utils';
 import { validateData } from './validators';
 
@@ -67,12 +72,15 @@ export class Client {
 
   public verbose: boolean;
 
+  public logger: Logger;
+
   constructor(options?: ClientOptions) {
     const builtOpts = this.buildOptions(options);
     this.apiUrl = builtOpts.apiUrl;
     this.secretKey = builtOpts.secretKey;
     this.strictAuthentication = builtOpts.strictAuthentication;
     this.verbose = builtOpts.verbose;
+    this.logger = builtOpts.logger;
     this.templateEngine = createLiquidEngine();
   }
 
@@ -82,6 +90,7 @@ export class Client {
       secretKey: resolveSecretKey(providedOptions?.secretKey),
       strictAuthentication: !isRuntimeInDevelopment(),
       verbose: isRuntimeInDevelopment(),
+      logger: console,
     };
 
     if (providedOptions?.strictAuthentication !== undefined) {
@@ -94,12 +103,16 @@ export class Client {
       builtConfiguration.verbose = providedOptions.verbose;
     }
 
+    if (providedOptions?.logger !== undefined) {
+      builtConfiguration.logger = providedOptions.logger;
+    }
+
     return builtConfiguration;
   }
 
   private log(...args: any[]): void {
     if (this.verbose) {
-      console.log(...args);
+      this.logger.info(...args);
     }
   }
 
@@ -143,7 +156,7 @@ export class Client {
   private async addWorkflow(workflow: Workflow): Promise<void> {
     try {
       const definition = await workflow.discover();
-      prettyPrintDiscovery(definition, this.verbose);
+      prettyPrintDiscovery(definition, this.verbose, this.logger);
       this.discoveredWorkflows.set(workflow.id, definition);
     } finally {
       this.discoverWorkflowPromises.delete(workflow.id);
@@ -213,7 +226,7 @@ export class Client {
     } catch (error) {
       // If JSONSchemaFaker fails, return an empty object as fallback
       // This prevents the preview from crashing on complex schemas
-      console.warn('Failed to mock schema, returning empty object:', error);
+      this.logger.warn('Failed to mock schema, returning empty object:', error);
       return {};
     }
   }
@@ -568,10 +581,12 @@ export class Client {
     const message = error ? 'Failed to execute' : actionMessage;
     const executionLog = error ? log.error : log.success;
     const logMessage = `${successPrefix} ${message} workflowId: '${event.workflowId}`;
-    console.log(`\n  ${log.bold(executionLog(logMessage))}'`);
-    console.log(`  ├ ${EMOJI.STEP} stepId: '${event.stepId}'`);
-    console.log(`  ├ ${EMOJI.ACTION} action: '${event.action}'`);
-    console.log(`  └ ${EMOJI.DURATION} duration: '${duration.toFixed(2)}ms'\n`);
+    this.logger.info(
+      `\n  ${log.bold(executionLog(logMessage))}'\n` +
+        `  ├ ${EMOJI.STEP} stepId: '${event.stepId}'\n` +
+        `  ├ ${EMOJI.ACTION} action: '${event.action}'\n` +
+        `  └ ${EMOJI.DURATION} duration: '${duration.toFixed(2)}ms'\n`
+    );
   }
 
   private async executeProviders(
@@ -717,7 +732,19 @@ export class Client {
 
   private async compileControls(templateControls: Record<string, unknown>, event: Event) {
     try {
-      let templateString = this.preprocessTranslationPatterns(JSON.stringify(templateControls));
+      /**
+       * Some control values (notably the Maily email `body`) are JSON.stringified before reaching
+       * the framework. If we feed them through `JSON.stringify(templateControls)` as-is, their
+       * `"` characters get doubly escaped while Liquid only single-escapes its outputs, so any
+       * rendered variable that contains a `"` corrupts the inner JSON (NV-7638).
+       *
+       * Expanding those JSON strings into real objects flattens the escaping to a single level
+       * before Liquid renders, and `restoreJsonStringControlValues` re-stringifies them after
+       * parsing the rendered template.
+       */
+      const expandedControls = expandJsonStringControlValues(templateControls) as Record<string, unknown>;
+
+      let templateString = this.preprocessTranslationPatterns(JSON.stringify(expandedControls));
       templateString = this.preprocessFilterTranslationArgs(templateString);
       const parsedTemplate = this.templateEngine.parse(templateString);
       const discoveredWorkflow = this.getWorkflow(event.workflowId);
@@ -744,9 +771,10 @@ export class Client {
       // doesn't have escaped quotes like '"foo"' then compiled string '{"body":""foo""}' is not valid JSON and parse will fail
       const repairedString = jsonrepair(withMarkers);
       const parsedControls = JSON.parse(repairedString);
+      const restoredControls = restoreJsonStringControlValues(parsedControls) as Record<string, unknown>;
       // Normalize string values in the data field that contain invalid JSON (e.g., from Liquid template variables)
       // This handles cases where Liquid outputs JavaScript object notation instead of valid JSON
-      return normalizeControlData(parsedControls);
+      return normalizeControlData(restoredControls);
     } catch (error) {
       throw new StepControlCompilationFailedError(event.workflowId, event.stepId, error);
     }

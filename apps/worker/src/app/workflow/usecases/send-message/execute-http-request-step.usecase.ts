@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import {
+  assertSafeOutboundUrl,
   buildNovuSignatureHeader,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
@@ -12,10 +13,10 @@ import {
   ICompileContext,
   InstrumentUsecase,
   PinoLogger,
+  resolveHttpRequestBody,
+  SsrfBlockedError,
   shouldIncludeBody,
-  toBodyRecord,
   toHeadersRecord,
-  validateUrlSsrf,
 } from '@novu/application-generic';
 import { ControlValuesRepository, JobRepository, MessageRepository, NotificationTemplateRepository } from '@novu/dal';
 import { createLiquidEngine } from '@novu/framework/internal';
@@ -121,7 +122,7 @@ export class ExecuteHttpRequestStep extends SendMessageType {
     const url = compiled.url as string | undefined;
     const method = (compiled.method as string) ?? 'POST';
     const rawHeaders = (compiled.headers as Array<{ key: string; value: string }> | undefined) ?? [];
-    const rawBody = (compiled.body as Array<{ key: string; value: string }> | undefined) ?? [];
+    const rawBody = compiled.body as string | Array<{ key: string; value: string }> | undefined;
     const timeout = (compiled.timeout as number | undefined) ?? 5000;
 
     if (!url) {
@@ -146,9 +147,11 @@ export class ExecuteHttpRequestStep extends SendMessageType {
       };
     }
 
-    const ssrfValidationError = await validateUrlSsrf(url);
+    try {
+      assertSafeOutboundUrl(url);
+    } catch (error) {
+      const errorMessage = error instanceof SsrfBlockedError ? error.message : String(error);
 
-    if (ssrfValidationError) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
@@ -157,7 +160,7 @@ export class ExecuteHttpRequestStep extends SendMessageType {
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
-          raw: JSON.stringify({ error: ssrfValidationError }),
+          raw: JSON.stringify({ error: errorMessage }),
         })
       );
 
@@ -169,8 +172,36 @@ export class ExecuteHttpRequestStep extends SendMessageType {
     }
 
     const headersRecord = toHeadersRecord(rawHeaders);
-    const bodyObject = toBodyRecord(rawBody);
+
+    let bodyObject: Record<string, unknown> | unknown[] | undefined;
+    try {
+      bodyObject = resolveHttpRequestBody(rawBody);
+    } catch (parseError) {
+      const errorMessage = parseError instanceof Error ? parseError.message : 'Failed to parse raw JSON body';
+
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          detail: DetailEnum.ACTION_STEP_EXECUTION_FAILED,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify({ error: `Invalid raw JSON body: ${errorMessage}` }),
+        })
+      );
+
+      return {
+        status: SendMessageStatus.FAILED,
+        errorMessage: DetailEnum.ACTION_STEP_EXECUTION_FAILED,
+        shouldHalt: !controlValuesWithoutSkip.continueOnFailure,
+      };
+    }
+
     const hasBody = shouldIncludeBody(bodyObject, method);
+    // HMAC is attached only after the URL has passed the synchronous SSRF
+    // check. The connect-time DNS guard and redirect re-validation happen
+    // inside HttpClientService when enforceSsrfProtection is enabled.
     const signatureHeaders = {
       'novu-signature': buildNovuSignatureHeader(secretKey, hasBody ? bodyObject : {}),
     };
@@ -185,6 +216,7 @@ export class ExecuteHttpRequestStep extends SendMessageType {
         headers: mergedHeaders,
         timeout,
         responseType: 'text',
+        enforceSsrfProtection: true,
         ...(hasBody ? { body: bodyObject } : {}),
       });
 

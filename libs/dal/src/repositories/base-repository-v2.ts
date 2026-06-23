@@ -20,6 +20,21 @@ import {
   SelectInput,
 } from './projection.types';
 
+/**
+ * Merge a cursor-walking `$or` clause into `target` without dropping an existing
+ * top-level `$or` from the caller's query. When both are present, both are
+ * preserved by moving each under an entry in `$and` (which Mongo evaluates as
+ * an implicit AND with the rest of the query).
+ */
+function mergeTopLevelOr(target: Record<string, any>, incomingOr: Record<string, unknown>[]): void {
+  if (target.$or) {
+    target.$and = [...(target.$and ?? []), { $or: target.$or }, { $or: incomingOr }];
+    delete target.$or;
+  } else {
+    target.$or = incomingOr;
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Options interfaces
 // ---------------------------------------------------------------------------
@@ -393,8 +408,15 @@ export class BaseRepositoryV2<T_DBModel, T_MappedEntity, T_Enforcement> {
     return this.mapProjectedEntity(data) as T_MappedEntity;
   }
 
-  async findOneAndDelete(query: FilterQuery<T_DBModel> & T_Enforcement): Promise<T_MappedEntity | null> {
-    const data = await this.MongooseModel.findOneAndDelete(query).lean();
+  async findOneAndDelete(
+    query: FilterQuery<T_DBModel> & T_Enforcement,
+    options: { session?: ClientSession | null } = {}
+  ): Promise<T_MappedEntity | null> {
+    const { session } = options;
+    const builder = this.MongooseModel.findOneAndDelete(query);
+    if (session) builder.session(session);
+
+    const data = await builder.lean();
     if (!data) return null;
 
     return this.mapProjectedEntity(data) as T_MappedEntity;
@@ -514,17 +536,14 @@ export class BaseRepositoryV2<T_DBModel, T_MappedEntity, T_Enforcement> {
    */
   async withTransaction(fn: (session: ClientSession | null) => Promise<any>) {
     const session = await this._model.db.startSession();
-    let executed = false;
 
     try {
       return await session.withTransaction(async (txnSession) => {
-        executed = true;
-
         return fn(txnSession);
       });
     } catch (error) {
       const errorMessage = (error as Error)?.message || '';
-      if (errorMessage === 'Transaction numbers are only allowed on a replica set member or mongos' && !executed) {
+      if (errorMessage.includes('Transaction numbers are only allowed on')) {
         return fn(null);
       }
 
@@ -617,8 +636,9 @@ export class BaseRepositoryV2<T_DBModel, T_MappedEntity, T_Enforcement> {
 
     let reverseResults = false;
 
+    let cursorOr: Record<string, unknown>[] | undefined;
     if (before) {
-      paginationQuery.$or = [
+      cursorOr = [
         {
           [sortBy]: isDesc
             ? { [includeCursor ? '$gte' : '$gt']: before.sortBy }
@@ -637,7 +657,7 @@ export class BaseRepositoryV2<T_DBModel, T_MappedEntity, T_Enforcement> {
       ];
       reverseResults = true;
     } else if (after) {
-      paginationQuery.$or = [
+      cursorOr = [
         {
           [sortBy]: isDesc
             ? { [includeCursor ? '$lte' : '$lt']: after.sortBy }
@@ -654,6 +674,10 @@ export class BaseRepositoryV2<T_DBModel, T_MappedEntity, T_Enforcement> {
           ],
         },
       ];
+    }
+
+    if (cursorOr) {
+      mergeTopLevelOr(paginationQuery, cursorOr);
     }
 
     // When a select is provided, silently inject the pagination fields so cursor
@@ -718,7 +742,7 @@ export class BaseRepositoryV2<T_DBModel, T_MappedEntity, T_Enforcement> {
 
     if (before) {
       const nextQuery: any = { ...query };
-      nextQuery.$or = [
+      mergeTopLevelOr(nextQuery, [
         { [sortBy]: isDesc ? { $lt: lastItem[sortBy] } : { $gt: lastItem[sortBy] } },
         {
           $and: [
@@ -726,7 +750,7 @@ export class BaseRepositoryV2<T_DBModel, T_MappedEntity, T_Enforcement> {
             { [paginateField]: isDesc ? { $lt: lastItem[paginateField] } : { $gt: lastItem[paginateField] } },
           ],
         },
-      ];
+      ]);
 
       const maybeNext = await this.MongooseModel.findOne(nextQuery)
         .sort({ [sortBy]: sortValue, [paginateField]: sortValue })
@@ -736,7 +760,7 @@ export class BaseRepositoryV2<T_DBModel, T_MappedEntity, T_Enforcement> {
       if (maybeNext) nextCursor = lastItem[paginateField].toString();
     } else {
       const prevQuery: any = { ...query };
-      prevQuery.$or = [
+      mergeTopLevelOr(prevQuery, [
         { [sortBy]: isDesc ? { $gt: firstItem[sortBy] } : { $lt: firstItem[sortBy] } },
         {
           $and: [
@@ -744,7 +768,7 @@ export class BaseRepositoryV2<T_DBModel, T_MappedEntity, T_Enforcement> {
             { [paginateField]: isDesc ? { $gt: firstItem[paginateField] } : { $lt: firstItem[paginateField] } },
           ],
         },
-      ];
+      ]);
 
       const maybePrev = await this.MongooseModel.findOne(prevQuery)
         .sort({ [sortBy]: sortValue, [paginateField]: sortValue })

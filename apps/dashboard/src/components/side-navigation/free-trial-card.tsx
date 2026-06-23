@@ -1,4 +1,5 @@
 import { GetSubscriptionDto } from '@novu/shared';
+import { ComponentType } from 'react';
 import { RiArrowRightDoubleLine, RiInformationFill } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
 import { ROUTES } from '@/utils/routes';
@@ -13,22 +14,32 @@ const pluralizeDaysLeft = (numberOfDays: number) => {
   return `${numberOfDays} day${numberOfDays > 1 ? 's' : ''}`;
 };
 
+type BrandLogo = ComponentType<{ className?: string }>;
+
 const CardContent = ({
   pluralizedDays,
   daysTotal,
   daysLeft,
+  Logo,
+  showLogoBackground,
 }: {
   pluralizedDays: string;
   daysTotal: number;
   daysLeft: number;
+  Logo: BrandLogo;
+  showLogoBackground: boolean;
 }) => (
   <>
     <div className="flex items-center gap-1.5">
-      <div
-        className={`flex h-4 w-4 items-center justify-center rounded-full bg-neutral-700 ${transition} group-hover:bg-neutral-0`}
-      >
-        <LogoCircle className={`h-3 w-3 ${transition} group-hover:h-4 group-hover:w-4`} />
-      </div>
+      {showLogoBackground ? (
+        <div
+          className={`flex h-4 w-4 items-center justify-center rounded-full bg-neutral-700 ${transition} group-hover:bg-neutral-0`}
+        >
+          <Logo className={`h-3 w-3 ${transition} group-hover:h-4 group-hover:w-4`} />
+        </div>
+      ) : (
+        <Logo className={`h-4 w-4 ${transition}`} />
+      )}
       <span className="text-foreground-950 text-sm">{pluralizedDays} left on trial</span>
       <Tooltip>
         <TooltipTrigger className="ml-auto">
@@ -79,7 +90,13 @@ export const FreeTrialCard = ({ subscription, daysLeft }: { subscription?: GetSu
 
   return (
     <Link to={ROUTES.SETTINGS_BILLING} className={cardClassName}>
-      <CardContent pluralizedDays={pluralizedDays} daysTotal={daysTotal} daysLeft={daysLeft} />
+      <CardContent
+        pluralizedDays={pluralizedDays}
+        daysTotal={daysTotal}
+        daysLeft={daysLeft}
+        Logo={LogoCircle}
+        showLogoBackground
+      />
     </Link>
   );
 };

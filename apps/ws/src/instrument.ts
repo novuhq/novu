@@ -23,5 +23,11 @@ if (process.env.SENTRY_DSN) {
     environment: process.env.NODE_ENV,
     release: `v${version}`,
     ignoreErrors: ['Non-Error exception captured', 'timeout reached while waiting for fetchSockets response'],
+    // When startOtel() already registered the OTEL SDK (ENABLE_OTEL=true),
+    // Sentry must not register its own providers — doing so triggers
+    // "Attempted duplicate registration of API: trace/context/propagation"
+    // errors that corrupt the shared OTEL state and break New Relic's
+    // data pipeline. With this flag Sentry reuses the existing SDK.
+    skipOpenTelemetrySetup: process.env.ENABLE_OTEL === 'true',
   });
 }

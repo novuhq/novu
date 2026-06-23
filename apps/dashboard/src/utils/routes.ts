@@ -9,11 +9,14 @@ export const ROUTES = {
   SSO_SIGN_IN: '/auth/sso',
   VERIFY_EMAIL: '/auth/verify-email',
   USECASE_SELECT: '/onboarding/usecase',
+  AGENTS_SETUP: '/onboarding/agents/setup',
   INBOX_USECASE: '/onboarding/inbox',
   INBOX_EMBED: '/onboarding/inbox/embed',
   INBOX_EMBED_SUCCESS: '/onboarding/inbox/success',
   ROOT: '/',
   LOCAL_STUDIO_AUTH: '/local-studio/auth',
+  CLI_AUTH: '/cli/auth',
+  CONNECT_CLAIM: '/connect/claim',
   ENV: '/env',
   SETTINGS: '/settings',
   SETTINGS_ACCOUNT: '/settings/account',
@@ -53,6 +56,8 @@ export const ROUTES = {
   EDIT_SUBSCRIBER: '/env/:environmentSlug/subscribers/:subscriberId',
   CREATE_SUBSCRIBER: '/env/:environmentSlug/subscribers/create',
   PARTNER_INTEGRATIONS_VERCEL: '/partner-integrations/vercel',
+  DOMAINS: '/env/:environmentSlug/domains',
+  DOMAIN_DETAIL: '/env/:environmentSlug/domains/:domain',
   WEBHOOKS: '/env/:environmentSlug/webhooks',
   WEBHOOKS_ENDPOINTS: '/env/:environmentSlug/webhooks/endpoints',
   WEBHOOKS_EVENT_CATALOG: '/env/:environmentSlug/webhooks/event-catalog',
@@ -78,6 +83,9 @@ export const ROUTES = {
   AGENT_DETAILS_INTEGRATIONS_DETAIL:
     '/env/:environmentSlug/agents/:agentIdentifier/integrations/:integrationIdentifier',
   AGENT_DETAILS_TAB: '/env/:environmentSlug/agents/:agentIdentifier/:agentTab',
+  AGENT_TELEGRAM_MOBILE_SETUP: '/agents/telegram/connect/:token',
+  AGENT_SLACK_SETUP: '/agents/slack/connect/:token',
+  INTEGRATION_TELEGRAM_MOBILE_SETUP: '/integrations/telegram/connect/:token',
 } as const;
 
 export const AGENT_DETAILS_DEFAULT_TAB = 'overview';

@@ -4,6 +4,7 @@ export { NovuRequestHandler, type ServeHandlerOptions } from './handler';
 export type {
   Agent,
   AgentAction,
+  AgentActionContext,
   AgentAttachment,
   AgentBridgeRequest,
   AgentContext,
@@ -12,9 +13,12 @@ export type {
   AgentHistoryEntry,
   AgentMessage,
   AgentMessageAuthor,
+  AgentMessageContext,
   AgentPlatformContext,
   AgentReaction,
+  AgentReactionContext,
   AgentReplyPayload,
+  AgentResolveContext,
   AgentSubscriber,
   CardChild,
   CardElement,
@@ -30,8 +34,9 @@ export type {
 } from './resources';
 export {
   Actions,
-  agent,
+  AgentDeliveryError,
   AgentEventEnum,
+  agent,
   Button,
   Card,
   CardLink,

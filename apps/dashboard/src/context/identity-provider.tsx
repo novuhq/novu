@@ -1,33 +1,44 @@
 import { setUser as sentrySetUser, setTags as setSentryTags } from '@sentry/react';
 import { useLDClient } from 'launchdarkly-react-client-sdk';
 import { useEffect, useRef } from 'react';
+import { identifyTelemetry } from '@/api/telemetry';
 import { getRegionConfig, useRegion } from '@/context/region';
+import { readPersistedCliOnboardingSessionId } from '@/utils/cli-onboarding-identity';
 import { useAuth } from './auth/hooks';
 import { useCustomerIo } from './customer-io/hooks';
 import { useSegment } from './segment/hooks';
+import { useSnitcher } from './snitcher/hooks';
 
 export function IdentityProvider({ children }: { children: React.ReactNode }) {
   const ldClient = useLDClient();
   const segment = useSegment();
   const customerIo = useCustomerIo();
+  const snitcher = useSnitcher();
   const { currentUser, currentOrganization } = useAuth();
   const { selectedRegion } = useRegion();
-  const hasIdentifiedUser = useRef(false);
   const hasIdentifiedOrg = useRef(false);
+  const hasAliasedCliOnboarding = useRef(false);
 
   useEffect(() => {
-    if (!currentUser || !currentUser._id || !ldClient || hasIdentifiedUser.current) return;
+    const cliOnboardingSessionId = readPersistedCliOnboardingSessionId();
 
-    ldClient.identify({
-      kind: 'user',
-      key: currentUser._id,
-      firstName: currentUser.firstName,
-      lastName: currentUser.lastName,
-      email: currentUser.email,
-    });
+    if (!cliOnboardingSessionId) return;
 
-    hasIdentifiedUser.current = true;
-  }, [ldClient, currentUser]);
+    segment.setAnonymousId(cliOnboardingSessionId);
+  }, [segment]);
+
+  useEffect(() => {
+    if (!currentUser?._id || hasAliasedCliOnboarding.current) return;
+
+    const cliOnboardingSessionId = readPersistedCliOnboardingSessionId();
+
+    if (!cliOnboardingSessionId) return;
+
+    hasAliasedCliOnboarding.current = true;
+    segment.setAnonymousId(cliOnboardingSessionId);
+    segment.alias(cliOnboardingSessionId, currentUser._id);
+    void identifyTelemetry(cliOnboardingSessionId).catch(() => undefined);
+  }, [currentUser?._id, segment]);
 
   useEffect(() => {
     if (!currentOrganization || !currentUser) return;
@@ -40,6 +51,7 @@ export function IdentityProvider({ children }: { children: React.ReactNode }) {
       if (!hasIdentifiedOrg.current) {
         segment.identify(currentUser);
         customerIo.identify(currentUser);
+        snitcher.identify(currentUser, currentOrganization);
 
         sentrySetUser({
           email: currentUser.email ?? '',
@@ -85,7 +97,7 @@ export function IdentityProvider({ children }: { children: React.ReactNode }) {
     } else {
       sentrySetUser(null);
     }
-  }, [ldClient, currentOrganization, currentUser, segment, customerIo, selectedRegion]);
+  }, [ldClient, currentOrganization, currentUser, segment, customerIo, snitcher, selectedRegion]);
 
   return <>{children}</>;
 }

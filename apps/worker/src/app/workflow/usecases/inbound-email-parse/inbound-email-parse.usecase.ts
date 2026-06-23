@@ -1,129 +1,130 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import { CompileTemplate, CompileTemplateCommand, createHash } from '@novu/application-generic';
-import {
-  JobEntity,
-  JobRepository,
-  MessageEntity,
-  MessageRepository,
-  NotificationEntity,
-  NotificationTemplateEntity,
-} from '@novu/dal';
-import { StepTypeEnum } from '@novu/shared';
-import axios from 'axios';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { PinoLogger } from '@novu/application-generic';
 import { InboundEmailParseCommand } from './inbound-email-parse.command';
+import {
+  InboundParseDroppedError,
+  InboundParseProcessingError,
+  isRetriableInboundFailureStatus,
+} from './inbound-parse-outcome';
+import { LogInboundEmailRequest } from './log-inbound-email-request.usecase';
+import { DomainRouteStrategy } from './strategies/domain-route.strategy';
+import { ReplyToStrategy } from './strategies/reply-to.strategy';
 
-const LOG_CONTEXT = 'InboundEmailParse';
-
+/**
+ * Worker entry point for inbound email parsing.
+ *
+ * Lifecycle ownership:
+ * - The early `requests` row + `request_received` + `request_queued` traces are
+ *   written by `apps/inbound-mail` before the BullMQ job is enqueued.
+ * - This use case only writes the worker-side terminal trace
+ *   (`request_delivered` / `request_failed`) linked via `command.requestLogId`.
+ * - `LogInboundEmailRequest` no-ops when `requestLogId` is missing, so legacy
+ *   jobs queued before the early-logging rollout drain cleanly without
+ *   producing orphan rows.
+ *
+ * Terminal-trace policy:
+ * - Strategy returns an outcome → trace `request_delivered` (200) or
+ *   `request_failed` (4xx/5xx).
+ * - Strategy throws `InboundParseProcessingError` with a 4xx outcome → trace
+ *   `request_failed` once and stop (non-retriable).
+ * - Strategy throws `InboundParseProcessingError` with a 5xx outcome →
+ *   re-thrown without tracing so BullMQ can retry; the `failed` handler on
+ *   `InboundParseWorker` writes exactly one terminal trace after the final
+ *   attempt.
+ * - Strategy throws `BadRequestException` (malformed address / unknown
+ *   domain) → trace `request_failed` with `warning` severity (non-retriable).
+ * - Strategy throws `InboundParseDroppedError` (silent shared-agent drop) →
+ *   trace `request_failed` with `warning` severity (non-retriable).
+ * - Any other throw → re-thrown so BullMQ retries; the per-job final-failure
+ *   trace is written by the `failed` handler on `InboundParseWorker`.
+ */
 @Injectable()
 export class InboundEmailParse {
   constructor(
-    private jobRepository: JobRepository,
-    private messageRepository: MessageRepository,
-    private compileTemplate: CompileTemplate
-  ) {}
-
-  async execute(command: InboundEmailParseCommand) {
-    const { domain, transactionId, environmentId } = this.splitTo(command.to[0].address);
-
-    Logger.log({ domain, transactionId, environmentId }, `Received new email to parse`, LOG_CONTEXT);
-
-    const { template, notification, subscriber, environment, job, message } = await this.getEntities(
-      transactionId,
-      environmentId
-    );
-
-    if (domain !== environment?.dns?.inboundParseDomain) {
-      this.throwMiddleware('Domain is not in environment white list');
-    }
-
-    const currentParseWebhook = template?.steps?.find((step) => step?._id?.toString() === job?.step?._id)?.replyCallback
-      ?.url;
-
-    if (!currentParseWebhook) {
-      this.throwMiddleware(
-        `Missing parse webhook on template ${template._id} job ${job._id} transactionId ${transactionId}.`
-      );
-    }
-
-    const compiledDomain = await this.compileTemplate.execute({
-      template: currentParseWebhook as string,
-      data: job.payload,
-    });
-
-    const userPayload: IUserWebhookPayload = {
-      hmac: createHash(environment?.apiKeys[0]?.key, subscriber.subscriberId) || '',
-      transactionId,
-      payload: job.payload,
-      templateIdentifier: job.identifier,
-      template,
-      notification,
-      message,
-      mail: command,
-    };
-
-    await axios.post(compiledDomain, userPayload);
+    private replyToStrategy: ReplyToStrategy,
+    private domainRouteStrategy: DomainRouteStrategy,
+    private logInboundEmailRequest: LogInboundEmailRequest,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
   }
 
-  private splitTo(address: string) {
-    const userNameDelimiter = '-nv-e=';
+  async execute(command: InboundEmailParseCommand): Promise<void> {
+    const toAddress = command.to[0].address;
 
-    const [user, domain] = address.split('@');
-    const toMetaIds = user.split('+')[1];
-    if (!toMetaIds) {
-      this.throwMiddleware(`Missing metadata segment in address ${address}`);
+    this.logger.info({ toAddress }, 'Received new email to parse');
+
+    try {
+      const outcome = this.isReplyToAddress(toAddress)
+        ? await this.replyToStrategy.execute(command)
+        : await this.domainRouteStrategy.execute(command);
+
+      if (outcome) {
+        await this.logInboundEmailRequest.execute({ command, outcome });
+
+        return;
+      }
+
+      // Strategy returned `undefined` without throwing — historically used by
+      // the shared agent-inbox path for "drop silently after logging". That
+      // contract still works for callers we haven't migrated, but the parsed
+      // mail now becomes invisible in the request detail view too. Emit a
+      // warning trace so operators can still see why nothing was delivered.
+      await this.logInboundEmailRequest.logUnresolvedFailure({
+        requestLogId: command.requestLogId ?? '',
+        message: 'Inbound mail dropped — no matching route or recipient',
+        severity: 'warning',
+      });
+    } catch (error) {
+      if (error instanceof InboundParseProcessingError && error.outcome) {
+        if (isRetriableInboundFailureStatus(error.outcome.status)) {
+          throw error;
+        }
+
+        await this.logInboundEmailRequest.execute({ command, outcome: error.outcome });
+
+        return;
+      }
+
+      if (error instanceof InboundParseDroppedError) {
+        await this.logInboundEmailRequest.logUnresolvedFailure({
+          requestLogId: command.requestLogId ?? '',
+          message: error.reason,
+          organizationId: error.tenant?.organizationId,
+          environmentId: error.tenant?.environmentId,
+          transactionId: error.tenant?.transactionId,
+          severity: 'warning',
+        });
+
+        return;
+      }
+
+      if (error instanceof BadRequestException) {
+        await this.logInboundEmailRequest.logUnresolvedFailure({
+          requestLogId: command.requestLogId ?? '',
+          message: extractMessage(error),
+          severity: 'warning',
+        });
+
+        return;
+      }
+
+      // For all other throws (DB error, unhandled exception, etc.) we let
+      // BullMQ retry. The terminal trace for retries that exhaust comes from
+      // the `failed` handler on the worker process.
+      throw error;
     }
-    const [transactionId, environmentId] = toMetaIds.split(userNameDelimiter);
-
-    if (!transactionId) {
-      this.throwMiddleware(`Missing transactionId on address ${address}`);
-    }
-
-    if (!domain) {
-      this.throwMiddleware(`Missing domain  on address ${address}`);
-    }
-
-    if (!environmentId) {
-      this.throwMiddleware(`Missing environmentId on address ${address}`);
-    }
-
-    return { domain, transactionId, environmentId };
   }
 
-  private throwMiddleware(error: string) {
-    Logger.error(error, LOG_CONTEXT);
-
-    throw new BadRequestException(error);
-  }
-
-  private async getEntities(transactionId: string, environmentId: string) {
-    const partial: Partial<JobEntity> = { transactionId, _environmentId: environmentId, type: StepTypeEnum.EMAIL };
-
-    const { template, notification, subscriber, environment, ...job } = await this.jobRepository.findOnePopulate({
-      query: partial as JobEntity,
-      selectTemplate: 'steps',
-      selectSubscriber: 'subscriberId',
-      selectEnvironment: 'apiKeys dns',
-    });
-
-    const message = await this.messageRepository.findOne({
-      transactionId,
-      _environmentId: environment._id,
-      _subscriberId: subscriber._id,
-    });
-
-    return { template, notification, subscriber, environment, job, message };
+  private isReplyToAddress(address: string): boolean {
+    return address.includes('-nv-e=');
   }
 }
 
-class MailMetadata extends InboundEmailParseCommand {}
+function extractMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
 
-export interface IUserWebhookPayload {
-  transactionId: string;
-  templateIdentifier: string;
-  payload: Record<string, unknown>;
-  template: NotificationTemplateEntity;
-  notification: NotificationEntity;
-  message: MessageEntity | null;
-  mail: MailMetadata;
-  hmac: string;
+  return typeof error === 'string' ? error : 'Inbound email processing failed';
 }

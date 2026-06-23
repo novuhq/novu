@@ -26,7 +26,7 @@ export function useCommandRegistry(searchQuery = ''): CommandGroup[] {
   };
 
   const actionCommands = useActionCommands(context);
-  const navigationCommands = useNavigationCommands(context);
+  const platformNavigationCommands = useNavigationCommands(context);
   const workflowCommands = useWorkflowCommands(context);
   const workflowEditorCommands = useWorkflowEditorCommands(context);
   const subscriberCommands = useSubscriberCommands(context);
@@ -39,7 +39,7 @@ export function useCommandRegistry(searchQuery = ''): CommandGroup[] {
       ...actionCommands,
       ...workflowCommands,
       ...workflowEditorCommands,
-      ...navigationCommands,
+      ...platformNavigationCommands,
       ...subscriberCommands,
       ...environmentCommands,
       ...settingsCommands,
@@ -99,7 +99,7 @@ export function useCommandRegistry(searchQuery = ''): CommandGroup[] {
     return groups;
   }, [
     actionCommands,
-    navigationCommands,
+    platformNavigationCommands,
     workflowCommands,
     workflowEditorCommands,
     subscriberCommands,

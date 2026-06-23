@@ -173,7 +173,7 @@ function OrganizationListContent({
   };
 
   const handleCreateSuccess = () => {
-    window.location.href = afterCreateOrganizationUrl || ROUTES.INBOX_USECASE;
+    window.location.href = afterCreateOrganizationUrl || ROUTES.USECASE_SELECT;
   };
 
   if (isLoading) {
@@ -320,10 +320,7 @@ function PageContent({
   );
 }
 
-export function OrganizationCreate(props?: {
-  appearance?: any;
-  hidePersonal?: boolean;
-  skipInvitationScreen?: boolean;
+function PlatformOrganizationCreate(props?: {
   afterSelectOrganizationUrl?: string;
   afterCreateOrganizationUrl?: string;
 }) {
@@ -352,6 +349,21 @@ export function OrganizationCreate(props?: {
         afterSelectOrganizationUrl={props?.afterSelectOrganizationUrl}
       />
     </div>
+  );
+}
+
+export function OrganizationCreate(props?: {
+  appearance?: any;
+  hidePersonal?: boolean;
+  skipInvitationScreen?: boolean;
+  afterSelectOrganizationUrl?: string;
+  afterCreateOrganizationUrl?: string;
+}) {
+  return (
+    <PlatformOrganizationCreate
+      afterCreateOrganizationUrl={props?.afterCreateOrganizationUrl}
+      afterSelectOrganizationUrl={props?.afterSelectOrganizationUrl}
+    />
   );
 }
 

@@ -49,6 +49,7 @@ export class CreateSubscriberRequestDto extends BaseSubscriberFieldsDto {
   @ApiProperty({
     description:
       'The internal identifier you used to create this subscriber, usually correlates to the id the user in your systems',
+    minLength: 1,
   })
   @IsString()
   @IsDefined()

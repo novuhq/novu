@@ -46,7 +46,7 @@ async function truncateClickHouseTable(databaseName: string, tableName: string):
     const conn = await getClickHouseConnection();
     if (!conn) return;
 
-    await conn.exec({ query: `TRUNCATE TABLE IF EXISTS ${databaseName}.${tableName}` });
+    await conn.command({ query: `TRUNCATE TABLE IF EXISTS ${databaseName}.${tableName}` });
     console.log(`Successfully cleaned table ${tableName}`);
   } catch (error) {
     console.log(`Failed to clean table ${tableName}:`, error.message);

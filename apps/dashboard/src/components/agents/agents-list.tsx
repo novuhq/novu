@@ -1,34 +1,70 @@
-import { DirectionEnum, PermissionsEnum } from '@novu/shared';
+import {
+  DirectionEnum,
+  EnvironmentTypeEnum,
+  filterDemoConfigurableMcpIds,
+  type IIntegration,
+  PermissionsEnum,
+  slugify,
+} from '@novu/shared';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { RiArrowRightSLine, RiRobot2Line } from 'react-icons/ri';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   AGENTS_LIST_QUERY_KEY,
   type AgentResponse,
-  type CreateAgentBody,
-  createAgent,
   deleteAgent,
   getAgentsListQueryKey,
   listAgents,
+  updateAgent,
 } from '@/api/agents';
 import { NovuApiError } from '@/api/api.client';
+import { AgentPreviewSkeleton } from '@/components/agents/agent-preview-skeleton';
 import { AgentsEmptyTeaser } from '@/components/agents/agents-empty-teaser';
+import { AgentsPlanLimitBanner } from '@/components/agents/agents-plan-limit-banner';
+import { AgentsProductionEmptyState } from '@/components/agents/agents-production-empty-state';
 import { AgentsTable } from '@/components/agents/agents-table';
-import { CreateAgentDialog } from '@/components/agents/create-agent-dialog';
+import {
+  getPreferredClaudeManagedIntegration,
+  resolveClaudeManagedProviderId,
+} from '@/components/agents/connectors/claude-managed-integrations';
+import { CreateAgentDialog, CreateAgentForm } from '@/components/agents/create-agent-dialog';
+import { type AgentTemplate, findAgentTemplateById } from '@/components/agents/create-agent-fields';
 import { DeleteAgentDialog } from '@/components/agents/delete-agent-dialog';
+import { AgentCreationLimitDialog, AgentLimitUpgradeDialog } from '@/components/agents/plan-limit-upgrade-dialog';
+import { isDemoIntegration } from '@/components/integrations/components/utils/helpers';
 import { ListNoResults } from '@/components/list-no-results';
+import { Button } from '@/components/primitives/button';
 import { FacetedFormFilter } from '@/components/primitives/form/faceted-filter/facated-form-filter';
 import { PermissionButton } from '@/components/primitives/permission-button';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
+import { useAgentRoutes } from '@/hooks/use-agent-routes';
+import { useAgentTemplates } from '@/hooks/use-agent-templates';
+import { useCreateAgentMutation } from '@/hooks/use-create-agent-mutation';
+import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { useHasPermission } from '@/hooks/use-has-permission';
+import { useTelemetry } from '@/hooks/use-telemetry';
+import { AGENTS_DOCS_PROVIDERS_URL } from '@/utils/agent-docs';
+import {
+  AGENT_TEMPLATE_ID_PARAM,
+  clearPersistedAgentTemplateId,
+  readActiveAgentTemplateId,
+} from '@/utils/agent-template-identity';
+import { AGENT_DETAILS_DEFAULT_TAB, buildRoute, ROUTES } from '@/utils/routes';
+import { TelemetryEvent } from '@/utils/telemetry';
 
 const PAGE_SIZE_OPTIONS = [10, 12, 20, 50];
 
 export function AgentsList() {
   const queryClient = useQueryClient();
-  const { currentEnvironment } = useEnvironment();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { currentEnvironment, readOnly } = useEnvironment();
   const has = useHasPermission();
+  const track = useTelemetry();
+  const agentRoutes = useAgentRoutes();
   const canReadAgents = has({ permission: PermissionsEnum.AGENT_READ });
 
   const [search, setSearch] = useState('');
@@ -37,7 +73,36 @@ export function AgentsList() {
   const [before, setBefore] = useState<string | undefined>();
   const [limit, setLimit] = useState(12);
   const [createOpen, setCreateOpen] = useState(false);
+  const [limitDialogOpen, setLimitDialogOpen] = useState(false);
+  const [creationLimitDialogOpen, setCreationLimitDialogOpen] = useState(false);
+  const [initialCreateValues, setInitialCreateValues] = useState<{
+    name?: string;
+    description?: string;
+    prompt?: string;
+  }>({});
   const [agentToDelete, setAgentToDelete] = useState<AgentResponse | null>(null);
+  // True while an agent is being provisioned directly from a deep-linked template (marketing
+  // website). Shows a preview skeleton until we navigate to the created agent's detail page.
+  const [isAutoProvisioningFromTemplate, setIsAutoProvisioningFromTemplate] = useState(false);
+  // Guards the deep-link template handling so it runs at most once per template id.
+  const appliedTemplateIdRef = useRef<string | undefined>(undefined);
+  const pendingAfterLimitRef = useRef<'create-dialog' | 'onboarding'>('create-dialog');
+
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { templates: agentTemplates } = useAgentTemplates();
+  const { integrations } = useFetchIntegrations();
+
+  const handleCreateOpenChange = useCallback((next: boolean) => {
+    setCreateOpen(next);
+
+    if (!next) {
+      setInitialCreateValues({});
+    }
+  }, []);
+
+  const memoizedInitialName = useMemo(() => initialCreateValues.name, [initialCreateValues.name]);
+  const memoizedInitialDescription = useMemo(() => initialCreateValues.description, [initialCreateValues.description]);
+  const memoizedInitialPrompt = useMemo(() => initialCreateValues.prompt, [initialCreateValues.prompt]);
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -77,26 +142,22 @@ export function AgentsList() {
     placeholderData: keepPreviousData,
   });
 
-  const createMutation = useMutation({
-    mutationFn: (body: CreateAgentBody) =>
-      createAgent(requireEnvironment(currentEnvironment, 'No environment selected'), body),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: [AGENTS_LIST_QUERY_KEY] });
-      showSuccessToast('Agent created', 'Your agent is ready to use.');
-    },
-    onError: (err: Error) => {
-      const message = err instanceof NovuApiError ? err.message : 'Could not create agent.';
+  const planUsage = listQuery.data?.planUsage;
+  const isAtAgentLimit = Boolean(planUsage && planUsage.used >= planUsage.limit);
+  const isAtCreationLimit = Boolean(planUsage && planUsage.totalCreated >= planUsage.creationLimit);
 
-      showErrorToast(message, 'Create failed');
-    },
-  });
+  const { submit: submitCreateAgent, isPending: isCreatingAgent } = useCreateAgentMutation();
 
   const deleteMutation = useMutation({
-    mutationFn: (identifier: string) =>
-      deleteAgent(requireEnvironment(currentEnvironment, 'No environment selected'), identifier),
-    onSuccess: async () => {
+    mutationFn: ({ identifier, deleteFromProvider }: { identifier: string; deleteFromProvider?: boolean }) =>
+      deleteAgent(requireEnvironment(currentEnvironment, 'No environment selected'), identifier, {
+        deleteFromProvider,
+      }),
+    onSuccess: async (_, { identifier }) => {
       setAgentToDelete(null);
       showSuccessToast('Agent deleted', 'The agent was removed.');
+
+      track(TelemetryEvent.AGENT_DELETED_FROM_DASHBOARD, { agentIdentifier: identifier });
 
       const environment = requireEnvironment(currentEnvironment, 'No environment selected');
       const listKey = getAgentsListQueryKey(environment._id, {
@@ -134,6 +195,31 @@ export function AgentsList() {
     },
   });
 
+  const toggleActiveMutation = useMutation({
+    mutationFn: ({ identifier, active }: { identifier: string; active: boolean }) =>
+      updateAgent(requireEnvironment(currentEnvironment, 'No environment selected'), identifier, { active }),
+    onSuccess: async (updatedAgent) => {
+      showSuccessToast(
+        updatedAgent.active ? 'The agent is now active.' : 'The agent is now paused.',
+        updatedAgent.active ? 'Agent activated' : 'Agent paused'
+      );
+
+      await queryClient.invalidateQueries({ queryKey: [AGENTS_LIST_QUERY_KEY] });
+    },
+    onError: (err: Error) => {
+      const message = err instanceof NovuApiError ? err.message : 'Could not update agent.';
+
+      showErrorToast(message, 'Update failed');
+    },
+  });
+
+  const handleToggleActive = useCallback(
+    (agent: AgentResponse) => {
+      toggleActiveMutation.mutate({ identifier: agent.identifier, active: !agent.active });
+    },
+    [toggleActiveMutation]
+  );
+
   const handleNextPage = useCallback(() => {
     const next = listQuery.data?.next;
 
@@ -162,12 +248,198 @@ export function AgentsList() {
     setBefore(undefined);
   }, []);
 
+  const goToAgentsSetup = useCallback(() => {
+    void navigate(ROUTES.AGENTS_SETUP);
+  }, [navigate]);
+
+  const handleAddAgentClick = useCallback(() => {
+    // Hard cap first — the API rejects creation outright at this point.
+    if (isAtCreationLimit) {
+      setCreationLimitDialogOpen(true);
+
+      return;
+    }
+
+    if (isAtAgentLimit) {
+      pendingAfterLimitRef.current = 'create-dialog';
+      setLimitDialogOpen(true);
+
+      return;
+    }
+
+    setCreateOpen(true);
+  }, [isAtAgentLimit, isAtCreationLimit]);
+
+  const handleEmptyStateSetupClick = useCallback(() => {
+    if (isAtCreationLimit) {
+      setCreationLimitDialogOpen(true);
+
+      return;
+    }
+
+    if (isAtAgentLimit) {
+      pendingAfterLimitRef.current = 'onboarding';
+      setLimitDialogOpen(true);
+
+      return;
+    }
+
+    goToAgentsSetup();
+  }, [goToAgentsSetup, isAtAgentLimit, isAtCreationLimit]);
+
+  const handleContinuePastAgentLimit = useCallback(() => {
+    if (pendingAfterLimitRef.current === 'onboarding') {
+      goToAgentsSetup();
+
+      return;
+    }
+
+    setCreateOpen(true);
+  }, [goToAgentsSetup]);
+
   const handleCreateSubmit = useCallback(
-    async (body: CreateAgentBody) => {
-      await createMutation.mutateAsync(body);
+    async (form: CreateAgentForm) => {
+      await submitCreateAgent(form, {
+        onSuccess: (createdAgent) => {
+          showSuccessToast('Agent created', 'Your agent is ready to use.');
+
+          track(TelemetryEvent.AGENT_CREATED_FROM_DASHBOARD, {
+            agentIdentifier: createdAgent.identifier,
+            active: createdAgent.active,
+          });
+
+          const environment = requireEnvironment(currentEnvironment, 'No environment selected');
+          const agentDetailsPath = `${buildRoute(agentRoutes.detailsTab, {
+            environmentSlug: environment.slug ?? '',
+            agentIdentifier: encodeURIComponent(createdAgent.identifier),
+            agentTab: AGENT_DETAILS_DEFAULT_TAB,
+          })}${location.search}`;
+
+          setCreateOpen(false);
+          navigate(agentDetailsPath);
+        },
+        onError: (err) => {
+          const message = err instanceof NovuApiError ? err.message : 'Could not create agent.';
+          showErrorToast(message, 'Create failed');
+        },
+      });
     },
-    [createMutation]
+    [submitCreateAgent, track, currentEnvironment, agentRoutes.detailsTab, location.search, navigate]
   );
+
+  // Provision an agent directly from a deep-linked Sanity template (no dialog, no LLM): apply the
+  // template's name, instructions, and MCP servers as managed-runtime overrides on an existing
+  // managed Claude integration, then navigate to the created agent's detail page (the "preview").
+  const handleAutoProvisionFromTemplate = useCallback(
+    async (template: AgentTemplate, integration: IIntegration) => {
+      setIsAutoProvisioningFromTemplate(true);
+
+      const providerId = resolveClaudeManagedProviderId(integration);
+      const isDemo = isDemoIntegration(integration.providerId);
+      const requestedMcpServers = isDemo
+        ? filterDemoConfigurableMcpIds([...template.suggestedMcpServers])
+        : template.suggestedMcpServers;
+
+      await submitCreateAgent(
+        {
+          name: template.name,
+          identifier: slugify(template.name),
+          description: template.instructions,
+          instructions: template.instructions,
+          apiKey: '',
+          runtime: 'claude',
+          isExistingMode: false,
+          providerId,
+          integrationId: integration._id,
+          managedOverrides: {
+            systemPrompt: template.instructions,
+            mcpServers: requestedMcpServers,
+          },
+        },
+        {
+          onSuccess: (createdAgent) => {
+            track(TelemetryEvent.AGENT_CREATED_FROM_DASHBOARD, {
+              agentIdentifier: createdAgent.identifier,
+              active: createdAgent.active,
+            });
+
+            const environment = requireEnvironment(currentEnvironment, 'No environment selected');
+            const agentDetailsPath = `${buildRoute(agentRoutes.detailsTab, {
+              environmentSlug: environment.slug ?? '',
+              agentIdentifier: encodeURIComponent(createdAgent.identifier),
+              agentTab: AGENT_DETAILS_DEFAULT_TAB,
+            })}${location.search}`;
+
+            navigate(agentDetailsPath);
+          },
+          onError: (err) => {
+            setIsAutoProvisioningFromTemplate(false);
+            const message = err instanceof NovuApiError ? err.message : 'Could not create agent.';
+            showErrorToast(message, 'Create failed');
+          },
+        }
+      );
+    },
+    [submitCreateAgent, track, currentEnvironment, agentRoutes.detailsTab, location.search, navigate]
+  );
+
+  // Allow external links (e.g. connect dashboard) to open the create dialog with prefilled values
+  // via `?create=1&name=...&description=...`, or a Sanity-backed template via `?agentTemplateId=...`
+  // (also picked up from sessionStorage when it survived the auth flow). When a template matches and a
+  // managed Claude integration exists, provision the agent directly; otherwise fall back to opening
+  // the prefilled dialog. Consume once and strip the params from the URL.
+  useEffect(() => {
+    const hasCreate = searchParams.get('create') === '1';
+    const templateId = readActiveAgentTemplateId(searchParams.get(AGENT_TEMPLATE_ID_PARAM));
+
+    if (!hasCreate && !templateId) return;
+
+    const stripParams = () => {
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete('create');
+      nextParams.delete('name');
+      nextParams.delete('description');
+      nextParams.delete(AGENT_TEMPLATE_ID_PARAM);
+      setSearchParams(nextParams, { replace: true });
+    };
+
+    let nextName = searchParams.get('name') ?? undefined;
+    let nextDescription = searchParams.get('description') ?? undefined;
+    let nextPrompt: string | undefined;
+
+    if (templateId) {
+      if (appliedTemplateIdRef.current === templateId) return;
+
+      const template = findAgentTemplateById(agentTemplates, templateId);
+      // Templates may still be loading — wait for the match before consuming the id.
+      if (!template) return;
+
+      // Integrations may still be loading — wait before deciding between auto-provision and dialog.
+      if (integrations === undefined) return;
+
+      const integration = getPreferredClaudeManagedIntegration(integrations);
+      if (integration) {
+        appliedTemplateIdRef.current = templateId;
+        clearPersistedAgentTemplateId();
+        stripParams();
+        void handleAutoProvisionFromTemplate(template, integration);
+
+        return;
+      }
+
+      // No managed Claude integration available — fall back to the prefilled create dialog so the
+      // user can supply credentials.
+      appliedTemplateIdRef.current = templateId;
+      nextName = nextName ?? template.name;
+      nextDescription = nextDescription ?? template.instructions;
+      nextPrompt = template.instructions;
+      clearPersistedAgentTemplateId();
+    }
+
+    setInitialCreateValues({ name: nextName, description: nextDescription, prompt: nextPrompt });
+    setCreateOpen(true);
+    stripParams();
+  }, [searchParams, setSearchParams, agentTemplates, integrations, handleAutoProvisionFromTemplate]);
 
   if (!canReadAgents) {
     return (
@@ -184,9 +456,16 @@ export function AgentsList() {
   const showEmptyBlank = !listQuery.isError && !isLoading && !hasFilters && agents.length === 0;
   const showNoResults = !listQuery.isError && !isLoading && hasFilters && agents.length === 0;
 
-  if (showEmptyBlank) {
-    return (
-      <>
+  const isProductionEnv =
+    Boolean(currentEnvironment) && (readOnly || currentEnvironment?.type !== EnvironmentTypeEnum.DEV);
+
+  const renderContent = () => {
+    if (showEmptyBlank) {
+      if (isProductionEnv) {
+        return <AgentsProductionEmptyState />;
+      }
+
+      return (
         <AgentsEmptyTeaser
           cta={
             <PermissionButton
@@ -195,84 +474,131 @@ export function AgentsList() {
               variant="secondary"
               mode="gradient"
               trailingIcon={RiArrowRightSLine}
-              onClick={() => setCreateOpen(true)}
+              onClick={handleEmptyStateSetupClick}
             >
-              Create agent
+              Setup an agent
             </PermissionButton>
           }
         />
-        <CreateAgentDialog
-          open={createOpen}
-          onOpenChange={setCreateOpen}
-          onSubmit={handleCreateSubmit}
-          isSubmitting={createMutation.isPending}
-        />
-      </>
+      );
+    }
+
+    return (
+      <div className="flex flex-col gap-2 py-2">
+        {planUsage && planUsage.used > planUsage.limit ? <AgentsPlanLimitBanner planUsage={planUsage} /> : null}
+
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <FacetedFormFilter
+            type="text"
+            size="small"
+            title="Search"
+            value={search}
+            onChange={setSearch}
+            placeholder="Search by identifier..."
+          />
+          {isProductionEnv ? (
+            <Tooltip>
+              <TooltipTrigger className="cursor-not-allowed">
+                <Button size="xs" variant="primary" className="gap-1.5" leadingIcon={RiRobot2Line} disabled>
+                  Add Agent
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-60">
+                {'Add agents in your development environment. '}
+                <a href={AGENTS_DOCS_PROVIDERS_URL} target="_blank" rel="noreferrer noopener" className="underline">
+                  Learn More ↗
+                </a>
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            <PermissionButton
+              permission={PermissionsEnum.AGENT_WRITE}
+              size="xs"
+              variant="primary"
+              mode="gradient"
+              className="gap-1.5"
+              leadingIcon={RiRobot2Line}
+              onClick={handleAddAgentClick}
+            >
+              Add Agent
+            </PermissionButton>
+          )}
+        </div>
+
+        {listQuery.isError ? (
+          <div className="text-error-base text-label-sm">Could not load agents. Try again later.</div>
+        ) : null}
+
+        {showNoResults ? (
+          <ListNoResults
+            title="No agents found"
+            description="Try a different identifier search."
+            onClearFilters={() => setSearch('')}
+          />
+        ) : null}
+
+        {!listQuery.isError && !showNoResults ? (
+          <AgentsTable
+            agents={agents}
+            isLoading={isLoading}
+            onRequestDelete={setAgentToDelete}
+            onToggleActive={handleToggleActive}
+            togglingAgentId={toggleActiveMutation.isPending ? toggleActiveMutation.variables?.identifier : null}
+            paginationProps={{
+              pageSize: limit,
+              pageSizeOptions: PAGE_SIZE_OPTIONS,
+              currentItemsCount: agents.length,
+              onPreviousPage: handlePreviousPage,
+              onNextPage: handleNextPage,
+              onPageSizeChange: handlePageSizeChange,
+              hasPreviousPage: Boolean(data?.previous),
+              hasNextPage: Boolean(data?.next),
+              totalCount: data?.totalCount,
+              totalCountCapped: data?.totalCountCapped,
+            }}
+          />
+        ) : null}
+      </div>
+    );
+  };
+
+  if (isAutoProvisioningFromTemplate) {
+    return (
+      <div className="relative py-6 pl-6">
+        <AgentPreviewSkeleton />
+      </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-2 py-2">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <FacetedFormFilter
-          type="text"
-          size="small"
-          title="Search"
-          value={search}
-          onChange={setSearch}
-          placeholder="Search by identifier..."
-        />
-        <PermissionButton
-          permission={PermissionsEnum.AGENT_WRITE}
-          size="xs"
-          variant="primary"
-          mode="gradient"
-          className="gap-1.5"
-          leadingIcon={RiRobot2Line}
-          onClick={() => setCreateOpen(true)}
-        >
-          Add Agent
-        </PermissionButton>
-      </div>
-
-      {listQuery.isError ? (
-        <div className="text-error-base text-label-sm">Could not load agents. Try again later.</div>
-      ) : null}
-
-      {showNoResults ? (
-        <ListNoResults
-          title="No agents found"
-          description="Try a different identifier search."
-          onClearFilters={() => setSearch('')}
-        />
-      ) : null}
-
-      {!listQuery.isError && !showNoResults ? (
-        <AgentsTable
-          agents={agents}
-          isLoading={isLoading}
-          onRequestDelete={setAgentToDelete}
-          paginationProps={{
-            pageSize: limit,
-            pageSizeOptions: PAGE_SIZE_OPTIONS,
-            currentItemsCount: agents.length,
-            onPreviousPage: handlePreviousPage,
-            onNextPage: handleNextPage,
-            onPageSizeChange: handlePageSizeChange,
-            hasPreviousPage: Boolean(data?.previous),
-            hasNextPage: Boolean(data?.next),
-            totalCount: data?.totalCount,
-            totalCountCapped: data?.totalCountCapped,
-          }}
-        />
-      ) : null}
+    <>
+      {renderContent()}
 
       <CreateAgentDialog
         open={createOpen}
-        onOpenChange={setCreateOpen}
+        onOpenChange={handleCreateOpenChange}
         onSubmit={handleCreateSubmit}
-        isSubmitting={createMutation.isPending}
+        isSubmitting={isCreatingAgent}
+        initialName={memoizedInitialName}
+        initialInstructions={memoizedInitialDescription}
+        initialPrompt={memoizedInitialPrompt}
       />
+
+      {planUsage ? (
+        <>
+          <AgentLimitUpgradeDialog
+            open={limitDialogOpen}
+            onOpenChange={setLimitDialogOpen}
+            planUsage={planUsage}
+            onContinueAnyway={handleContinuePastAgentLimit}
+          />
+          <AgentCreationLimitDialog
+            open={creationLimitDialogOpen}
+            onOpenChange={setCreationLimitDialogOpen}
+            planUsage={planUsage}
+          />
+        </>
+      ) : null}
 
       <DeleteAgentDialog
         open={Boolean(agentToDelete)}
@@ -281,15 +607,16 @@ export function AgentsList() {
             setAgentToDelete(null);
           }
         }}
-        onConfirm={() => {
+        onConfirm={({ deleteFromProvider }) => {
           if (agentToDelete) {
-            deleteMutation.mutate(agentToDelete.identifier);
+            deleteMutation.mutate({ identifier: agentToDelete.identifier, deleteFromProvider });
           }
         }}
         agentName={agentToDelete?.name ?? ''}
         agentIdentifier={agentToDelete?.identifier ?? ''}
         isDeleting={deleteMutation.isPending}
+        isManagedRuntime={agentToDelete?.runtime === 'managed'}
       />
-    </div>
+    </>
   );
 }

@@ -16,6 +16,7 @@ export class GetBridgeStatus {
         workflowOrigin: ResourceOriginEnum.EXTERNAL,
         statelessBridgeUrl: command.statelessBridgeUrl,
         retriesLimit: 1,
+        enforceSsrfProtection: command.enforceSsrfProtection,
       })
     )) as ExecuteBridgeRequestDto<GetActionEnum.HEALTH_CHECK>;
   }

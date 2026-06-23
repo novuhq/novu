@@ -53,7 +53,11 @@ export const getRedisProviderConfig = (): IRedisProviderConfig => {
     keepAlive: convertStringValues(process.env.REDIS_KEEP_ALIVE),
     family: convertStringValues(process.env.REDIS_FAMILY),
     keyPrefix: convertStringValues(process.env.REDIS_PREFIX),
-    tls: process.env.REDIS_TLS as ConnectionOptions,
+    tls: process.env.REDIS_TLS
+      ? {
+          servername: convertStringValues(process.env.REDIS_HOST),
+        }
+      : undefined,
   };
 
   const db = redisConfig.db ? Number(redisConfig.db) : undefined;
@@ -84,9 +88,12 @@ export const getRedisProviderConfig = (): IRedisProviderConfig => {
 export const getRedisInstance = (): Redis | undefined => {
   const { port, host, ...configOptions } = getRedisProviderConfig();
 
+  const skipVersionCheck = process.env.REDIS_SKIP_VERSION_CHECK === 'true';
+
   const options = {
     ...configOptions,
     maxRetriesPerRequest: null,
+    skipVersionCheck,
     /*
      *  Disabled in Prod as affects performance
      */

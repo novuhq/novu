@@ -1,5 +1,11 @@
-import type { OrganizationResource, UserResource } from '@clerk/types';
-import type { IOrganizationEntity, IServicesHashes, IUserEntity, JobTitleEnum, ProductUseCases } from '@novu/shared';
+import type { OrganizationResource, UserResource } from '@clerk/shared/types';
+import {
+  type IOrganizationEntity,
+  type IServicesHashes,
+  type IUserEntity,
+  type JobTitleEnum,
+  type ProductUseCases,
+} from '@novu/shared';
 
 export const toUserEntity = (clerkUser: UserResource): IUserEntity => {
   /*

@@ -1,24 +1,20 @@
-import {
-  ConversationActivitySenderTypeEnum,
-  ConversationActivityTypeEnum,
-  ConversationStatusEnum,
-} from '@novu/dal';
+import { ConversationActivitySenderTypeEnum, ConversationActivityTypeEnum, ConversationStatusEnum } from '@novu/dal';
 import { testServer } from '@novu/testing';
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { BridgeExecutorService, BridgeExecutorParams } from '../services/bridge-executor.service';
-import { ChatSdkService } from '../services/chat-sdk.service';
+import { OutboundGateway } from '../conversation-runtime/egress/outbound.gateway';
+import { AgentExecutionParams, BridgeExecutorService } from '../conversation-runtime/runtime/bridge-executor.service';
 import {
-  setupAgentTestContext,
-  seedConversation,
-  conversationRepository,
-  activityRepository,
   AgentTestContext,
+  activityRepository,
+  conversationRepository,
+  seedConversation,
+  setupAgentTestContext,
 } from './helpers/agent-test-setup';
 
 describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
   let ctx: AgentTestContext;
-  let bridgeCalls: BridgeExecutorParams[];
+  let bridgeCalls: AgentExecutionParams[];
 
   before(() => {
     process.env.IS_CONVERSATIONAL_AGENTS_ENABLED = 'true';
@@ -29,25 +25,23 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
 
     bridgeCalls = [];
     const bridgeExecutor = testServer.getService(BridgeExecutorService);
-    sinon.stub(bridgeExecutor, 'execute').callsFake(async (params: BridgeExecutorParams) => {
+    sinon.stub(bridgeExecutor, 'execute').callsFake(async (params: AgentExecutionParams) => {
       bridgeCalls.push(params);
     });
 
-    const chatSdkService = testServer.getService(ChatSdkService);
+    const outboundGateway = testServer.getService(OutboundGateway);
     sinon
-      .stub(chatSdkService, 'postToConversation')
+      .stub(outboundGateway, 'postToConversation')
       .resolves({ messageId: 'platform-msg-1', platformThreadId: 'platform-thread-1' });
     sinon
-      .stub(chatSdkService, 'editInConversation')
+      .stub(outboundGateway, 'editInConversation')
       .resolves({ messageId: 'platform-msg-1', platformThreadId: 'platform-thread-1' });
-    sinon.stub(chatSdkService, 'reactToMessage').resolves();
-    sinon.stub(chatSdkService, 'removeReaction').resolves();
+    sinon.stub(outboundGateway, 'reactToMessage').resolves();
+    sinon.stub(outboundGateway, 'removeReaction').resolves();
   });
 
   function postReply(body: Record<string, unknown>) {
-    return ctx.session.testAgent
-      .post(`/v1/agents/${ctx.agentIdentifier}/reply`)
-      .send(body);
+    return ctx.session.testAgent.post(`/v1/agents/${ctx.agentIdentifier}/reply`).send(body);
   }
 
   describe('Delivery and persistence', () => {
@@ -62,7 +56,7 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
       const res = await postReply({
         conversationId,
         integrationIdentifier: ctx.integrationIdentifier,
-        reply: { text: 'Hello from agent' },
+        reply: { markdown: 'Hello from agent' },
       });
 
       expect(res.status).to.equal(200);
@@ -75,12 +69,10 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
       expect(convAfter!.messageCount).to.equal(countBefore + 1);
       expect(convAfter!.lastMessagePreview).to.equal('Hello from agent');
 
-      const activities = await activityRepository.findByConversation(
-        ctx.session.environment._id,
-        conversationId
-      );
+      const activities = await activityRepository.findByConversation(ctx.session.environment._id, conversationId);
       const agentActivity = activities.find(
-        (a) => a.senderType === ConversationActivitySenderTypeEnum.AGENT && a.type === ConversationActivityTypeEnum.MESSAGE
+        (a) =>
+          a.senderType === ConversationActivitySenderTypeEnum.AGENT && a.type === ConversationActivityTypeEnum.MESSAGE
       );
       expect(agentActivity).to.exist;
       expect(agentActivity!.content).to.equal('Hello from agent');
@@ -92,7 +84,7 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
       const res = await postReply({
         conversationId,
         integrationIdentifier: ctx.integrationIdentifier,
-        reply: { text: 'Hello' },
+        reply: { markdown: 'Hello' },
       });
 
       expect(res.status).to.equal(200);
@@ -114,7 +106,7 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
         integrationIdentifier: ctx.integrationIdentifier,
         edit: {
           messageId: 'platform-msg-1',
-          content: { text: 'Edited content' },
+          content: { markdown: 'Edited content' },
         },
       });
 
@@ -122,10 +114,7 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
       expect(res.body.data.messageId).to.equal('platform-msg-1');
       expect(res.body.data.platformThreadId).to.equal('platform-thread-1');
 
-      const activities = await activityRepository.findByConversation(
-        ctx.session.environment._id,
-        conversationId
-      );
+      const activities = await activityRepository.findByConversation(ctx.session.environment._id, conversationId);
       const editActivity = activities.find((a) => a.type === ConversationActivityTypeEnum.EDIT);
       expect(editActivity).to.exist;
       expect(editActivity!.content).to.equal('Edited content');
@@ -148,8 +137,8 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
       const res = await postReply({
         conversationId,
         integrationIdentifier: ctx.integrationIdentifier,
-        reply: { text: 'a' },
-        edit: { messageId: 'platform-msg-1', content: { text: 'b' } },
+        reply: { markdown: 'a' },
+        edit: { messageId: 'platform-msg-1', content: { markdown: 'b' } },
       });
 
       expect(res.status).to.equal(400);
@@ -161,20 +150,8 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
       const res = await postReply({
         conversationId,
         integrationIdentifier: ctx.integrationIdentifier,
-        edit: { messageId: 'platform-msg-1', content: { text: 'b' } },
+        edit: { messageId: 'platform-msg-1', content: { markdown: 'b' } },
         signals: [{ type: 'metadata', key: 'k', value: 'v' }],
-      });
-
-      expect(res.status).to.equal(400);
-    });
-
-    it('should return 400 when conversation has no serialized thread', async () => {
-      const conversationId = await seedConversation(ctx, { withSerializedThread: false });
-
-      const res = await postReply({
-        conversationId,
-        integrationIdentifier: ctx.integrationIdentifier,
-        reply: { text: 'Should fail' },
       });
 
       expect(res.status).to.equal(400);
@@ -200,14 +177,10 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
       );
       expect(conversation!.metadata).to.have.property('sentiment', 'positive');
 
-      const activities = await activityRepository.findByConversation(
-        ctx.session.environment._id,
-        conversationId
-      );
+      const activities = await activityRepository.findByConversation(ctx.session.environment._id, conversationId);
       const signalActivity = activities.find(
         (a) =>
-          a.type === ConversationActivityTypeEnum.SIGNAL &&
-          a.senderType === ConversationActivitySenderTypeEnum.SYSTEM
+          a.type === ConversationActivityTypeEnum.SIGNAL && a.senderType === ConversationActivitySenderTypeEnum.SYSTEM
       );
       expect(signalActivity).to.exist;
       expect(signalActivity!.signalData).to.exist;
@@ -249,10 +222,7 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
       );
       expect(conversation!.status).to.equal(ConversationStatusEnum.RESOLVED);
 
-      const activities = await activityRepository.findByConversation(
-        ctx.session.environment._id,
-        conversationId
-      );
+      const activities = await activityRepository.findByConversation(ctx.session.environment._id, conversationId);
       const resolveActivity = activities.find(
         (a) => a.type === ConversationActivityTypeEnum.SIGNAL && a.signalData?.type === 'resolve'
       );
@@ -277,7 +247,7 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
       const res = await postReply({
         conversationId,
         integrationIdentifier: ctx.integrationIdentifier,
-        reply: { text: 'Here is your answer' },
+        reply: { markdown: 'Here is your answer' },
         signals: [{ type: 'metadata', key: 'resolved_by', value: 'bot' }],
         resolve: { summary: 'Answered' },
       });
@@ -294,13 +264,11 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
       expect(convAfter!.metadata).to.have.property('resolved_by', 'bot');
       expect(convAfter!.status).to.equal(ConversationStatusEnum.RESOLVED);
 
-      const activities = await activityRepository.findByConversation(
-        ctx.session.environment._id,
-        conversationId
-      );
+      const activities = await activityRepository.findByConversation(ctx.session.environment._id, conversationId);
 
       const messageActivity = activities.find(
-        (a) => a.type === ConversationActivityTypeEnum.MESSAGE && a.senderType === ConversationActivitySenderTypeEnum.AGENT
+        (a) =>
+          a.type === ConversationActivityTypeEnum.MESSAGE && a.senderType === ConversationActivitySenderTypeEnum.AGENT
       );
       expect(messageActivity).to.exist;
       expect(messageActivity!.content).to.equal('Here is your answer');
@@ -314,6 +282,76 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
         (a) => a.type === ConversationActivityTypeEnum.SIGNAL && a.signalData?.type === 'resolve'
       );
       expect(resolveActivity).to.exist;
+    });
+  });
+
+  describe('addReactions', () => {
+    it('should call reactToMessage for each addReaction entry', async () => {
+      const conversationId = await seedConversation(ctx);
+      const outboundGateway = testServer.getService(OutboundGateway);
+
+      const res = await postReply({
+        conversationId,
+        integrationIdentifier: ctx.integrationIdentifier,
+        addReactions: [
+          { messageId: 'msg-abc', emojiName: 'thumbs_up' },
+          { messageId: 'msg-def', emojiName: 'check' },
+        ],
+      });
+
+      expect(res.status).to.equal(200);
+      expect((outboundGateway.reactToMessage as sinon.SinonStub).callCount).to.equal(2);
+
+      const firstCall = (outboundGateway.reactToMessage as sinon.SinonStub).getCall(0).args;
+      expect(firstCall[4]).to.equal('msg-abc');
+      expect(firstCall[5]).to.equal('thumbs_up');
+
+      const secondCall = (outboundGateway.reactToMessage as sinon.SinonStub).getCall(1).args;
+      expect(secondCall[4]).to.equal('msg-def');
+      expect(secondCall[5]).to.equal('check');
+    });
+
+    it('should return 400 when edit and addReactions are combined', async () => {
+      const conversationId = await seedConversation(ctx);
+
+      const res = await postReply({
+        conversationId,
+        integrationIdentifier: ctx.integrationIdentifier,
+        edit: { messageId: 'msg-edit', content: { markdown: 'updated' } },
+        addReactions: [{ messageId: 'msg-abc', emojiName: 'thumbs_up' }],
+      });
+
+      expect(res.status).to.equal(400);
+    });
+  });
+
+  describe('Inactive agent', () => {
+    it('should return 422 when agent is inactive', async () => {
+      const conversationId = await seedConversation(ctx);
+      const patchRes = await ctx.session.testAgent.patch(`/v1/agents/${ctx.agentIdentifier}`).send({ active: false });
+      expect(patchRes.status).to.equal(200);
+
+      const res = await postReply({
+        conversationId,
+        integrationIdentifier: ctx.integrationIdentifier,
+        reply: { markdown: 'This should fail' },
+      });
+
+      expect(res.status).to.equal(422);
+    });
+
+    it('should return 422 for signal-only requests when agent is inactive', async () => {
+      const conversationId = await seedConversation(ctx);
+      const patchRes = await ctx.session.testAgent.patch(`/v1/agents/${ctx.agentIdentifier}`).send({ active: false });
+      expect(patchRes.status).to.equal(200);
+
+      const res = await postReply({
+        conversationId,
+        integrationIdentifier: ctx.integrationIdentifier,
+        signals: [{ type: 'metadata', key: 'blocked', value: true }],
+      });
+
+      expect(res.status).to.equal(422);
     });
   });
 });

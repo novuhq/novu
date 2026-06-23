@@ -110,7 +110,9 @@ export function WorkflowRunsContent({ log }: WorkflowRunsContentProps) {
         .filter(Boolean);
 
       if (transactionIds.length > 1) {
-        transactionIds.forEach((id) => params.append('transactionId', id));
+        for (const id of transactionIds) {
+          params.append('transactionId', id);
+        }
       } else {
         params.set('transactionId', log.transactionId);
       }

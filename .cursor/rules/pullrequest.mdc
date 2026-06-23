@@ -7,11 +7,12 @@ alwaysApply: false
 
 **Title format**: `type(scope): Description fixes NOV-<ticket-id>`
 
+- When creating a pull requests from any run, verify that there is a linear ticket associated with the pr (From branch name or other), if not, create the linear ticket before creating the PR and attach the linear ticket id in title (fixes NV-XXX)
 - Examples: `feat(dashboard): add workflow trigger button fixes NOV-123`, `fix(api-service): handle null subscriber case fixes NOV-456`
-- Omit the `fixes NOV-XXX` suffix when no Linear ticket is in context
+
 
 **Scopes**: `dashboard`, `api-service`, `worker`, `shared`, `js`, `react`, `react-native`, `nextjs`, `providers`, `root`
 
 **Description**: Summarize what changed and why. List breaking changes. Add screenshots for UI changes. For non-trivial logic or architecture changes, include a concise Mermaid diagram (flow, sequence, or component) so reviewers can grasp the change at a glance.
 
-**Enterprise packages**: When changes touch `enterprise/`, also open a matching PR in `novuhq/packages-enterprise` on a branch from `next`.
+**Enterprise packages**: When changes touch `enterprise/`, also open a matching PR in `novuhq/packages-enterprise` on a branch from `next`, the Validate Submodule Sync test will fail an this is expected when pointing to the .source submodule in the novuhq/novu repository. Do not fix it.

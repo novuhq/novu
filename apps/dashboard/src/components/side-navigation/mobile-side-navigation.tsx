@@ -3,14 +3,16 @@ import { useEffect, useState } from 'react';
 import { RiMenuLine } from 'react-icons/ri';
 import { useLocation } from 'react-router-dom';
 import { Sheet, SheetContent, SheetTitle } from '@/components/primitives/sheet';
-import { SideNavigation } from './side-navigation';
+import { LegacySideNavigation } from './side-navigation';
 
 export function MobileSideNavigation() {
   const [isOpen, setIsOpen] = useState(false);
   const { pathname } = useLocation();
 
   useEffect(() => {
-    setIsOpen(false);
+    if (pathname) {
+      setIsOpen(false);
+    }
   }, [pathname]);
 
   return (
@@ -28,7 +30,7 @@ export function MobileSideNavigation() {
           <VisuallyHidden>
             <SheetTitle>Navigation</SheetTitle>
           </VisuallyHidden>
-          <SideNavigation />
+          <LegacySideNavigation />
         </SheetContent>
       </Sheet>
     </>

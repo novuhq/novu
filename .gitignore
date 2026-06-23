@@ -1,3 +1,4 @@
+.novu-dev.local.json
 .worktrees/
 .nyc_output
 build
@@ -6,6 +7,8 @@ src/**.js
 coverage
 *.log
 package-lock.json
+
+terminalOutput
 
 node_modules
 build
@@ -124,3 +127,11 @@ demos/agent-chat-demo/.next
 demos/agent-chat-demo/.env.local
 demos/agent-chat-demo/tsconfig.tsbuildinfo
 demos/agent-chat-demo/next-env.d.ts
+
+.claude/worktrees
+
+# CF Worker
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+**/.wrangler/tmp/**

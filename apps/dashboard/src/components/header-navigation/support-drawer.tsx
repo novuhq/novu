@@ -4,6 +4,7 @@ import { cloneElement, isValidElement, useRef, useState } from 'react';
 import { RiBook2Line, RiCalendarEventLine, RiMessage3Line, RiNewspaperLine, RiRouteFill } from 'react-icons/ri';
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/primitives/sheet';
 import { VisuallyHidden } from '@/components/primitives/visually-hidden';
+import { IS_AI_FEATURES_ENABLED } from '@/config';
 import { usePlainChat } from '@/hooks/use-plain-chat';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
@@ -35,10 +36,10 @@ function SupportDrawerContent({
   const telemetry = useTelemetry();
   const { showPlainLiveChat, isLiveChatVisible } = usePlainChat();
   const suggestions = useContextualSuggestions();
-  const searchFunctionsRef = useRef<any>(null);
+  const searchFunctionsRef = useRef(null);
   const [hasSearchQuery, setHasSearchQuery] = useState(false);
 
-  const hasInkeep = !!import.meta.env.VITE_INKEEP_API_KEY;
+  const hasInkeep = IS_AI_FEATURES_ENABLED && !!import.meta.env.VITE_INKEEP_API_KEY;
   const isViewingDocs = currentDocsUrl !== null;
 
   const inkeepConfig: InkeepEmbeddedSearchProps = {

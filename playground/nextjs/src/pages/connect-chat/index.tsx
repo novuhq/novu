@@ -107,11 +107,12 @@ export default function ConnectChatPage() {
               }}
               // connectionIdentifier={CONNECTION_IDENTIFIER}
               // connectionStrategy: 'subscriber' | 'shared' DEFAULT 'subscriber'
-              connectionMode="shared"
+              // connectionMode="shared"
               // in NovuProvider
               // subscriberId: string // redundant
               // ...(context && { context: context }),
               onConnectError={(error) => console.error(error)}
+              autoLinkUser={false}
             />
           </NovuProvider>
 

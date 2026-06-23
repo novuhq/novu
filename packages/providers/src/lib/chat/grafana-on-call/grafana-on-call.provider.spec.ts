@@ -1,13 +1,13 @@
 import { ENDPOINT_TYPES } from '@novu/stateless';
 import { expect, test } from 'vitest';
-import { axiosSpy } from '../../../utils/test/spy-axios';
+import { safeOutboundJsonSpy } from '../../../utils/test/spy-safe-outbound';
 import { GrafanaOnCallChatProvider } from './grafana-on-call.provider';
 
 test('should trigger grafana-on-call library correctly', async () => {
   const date = new Date();
 
-  const { mockPost } = axiosSpy({
-    headers: { Date: date },
+  const { mockSafeOutboundJsonRequest } = safeOutboundJsonSpy({
+    headers: { date: date.toUTCString() },
   });
 
   const provider = new GrafanaOnCallChatProvider({
@@ -31,10 +31,12 @@ test('should trigger grafana-on-call library correctly', async () => {
     content: testContent,
   });
 
-  expect(mockPost).toHaveBeenCalled();
-  expect(mockPost).toHaveBeenCalledWith(
-    testWebhookUrl,
-    {
+  expect(mockSafeOutboundJsonRequest).toHaveBeenCalled();
+  expect(mockSafeOutboundJsonRequest).toHaveBeenCalledWith({
+    url: testWebhookUrl,
+    method: 'POST',
+    headers: undefined,
+    body: {
       alert_uid: '123',
       link_to_upstream_details: 'link',
       image_url: 'url',
@@ -42,16 +44,16 @@ test('should trigger grafana-on-call library correctly', async () => {
       title: 'title',
       message: testContent,
     },
-    undefined
-  );
-  expect(res).toEqual({ id: expect.any(String), date: date.toISOString() });
+  });
+  expect(res.id).toEqual(expect.any(String));
+  expect(res.date).toBe(new Date(date.toUTCString()).toISOString());
 });
 
 test('should trigger grafana-on-call library correctly with _passthrough', async () => {
   const date = new Date();
 
-  const { mockPost } = axiosSpy({
-    headers: { Date: date },
+  const { mockSafeOutboundJsonRequest } = safeOutboundJsonSpy({
+    headers: { date: date.toUTCString() },
   });
 
   const provider = new GrafanaOnCallChatProvider({
@@ -87,10 +89,14 @@ test('should trigger grafana-on-call library correctly with _passthrough', async
     }
   );
 
-  expect(mockPost).toHaveBeenCalled();
-  expect(mockPost).toHaveBeenCalledWith(
-    testWebhookUrl,
-    {
+  expect(mockSafeOutboundJsonRequest).toHaveBeenCalled();
+  expect(mockSafeOutboundJsonRequest).toHaveBeenCalledWith({
+    url: testWebhookUrl,
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: {
       alert_uid: '123',
       link_to_upstream_details: 'link',
       image_url: 'url',
@@ -98,11 +104,7 @@ test('should trigger grafana-on-call library correctly with _passthrough', async
       title: 'title',
       message: 'passthrough',
     },
-    {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    }
-  );
-  expect(res).toEqual({ id: expect.any(String), date: date.toISOString() });
+  });
+  expect(res.id).toEqual(expect.any(String));
+  expect(res.date).toBe(new Date(date.toUTCString()).toISOString());
 });

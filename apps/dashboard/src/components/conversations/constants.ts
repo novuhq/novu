@@ -9,6 +9,7 @@ export const PROVIDER_OPTIONS = CONVERSATIONAL_PROVIDERS.filter((p) => !p.coming
 export const defaultConversationFilters: ConversationFiltersData = {
   dateRange: '24h',
   subscriberId: '',
+  agentId: '',
   provider: [],
   conversationId: '',
 } as const;

@@ -26,6 +26,7 @@ import { TemplateCategory } from './types';
 interface WorkflowSidebarProps {
   selectedCategory: string;
   onCategorySelect: (category: string) => void;
+  extraCategories?: TemplateCategory[];
 }
 
 interface SidebarButtonProps {
@@ -181,22 +182,23 @@ function getTagCategoryConfig(tag: string): TemplateCategory {
   );
 }
 
-export function WorkflowSidebar({ selectedCategory, onCategorySelect }: WorkflowSidebarProps) {
+export function WorkflowSidebar({ selectedCategory, onCategorySelect, extraCategories }: WorkflowSidebarProps) {
   const navigate = useNavigate();
   const { environmentSlug } = useParams();
   const track = useTelemetry();
   const { availableTags } = useTemplateStore();
 
-  // Generate dynamic categories from available tags
   const dynamicCategories = useMemo(() => {
-    const categories = availableTags.map(getTagCategoryConfig);
+    const extras = extraCategories ?? [];
+    const extraTags = new Set(extras.map((cat) => cat.tag));
+    const categories = availableTags.filter((tag) => !extraTags.has(tag)).map(getTagCategoryConfig);
 
-    // Always include popular category first if it exists
     const popularCategory = categories.find((cat) => cat.tag === 'popular');
     const otherCategories = categories.filter((cat) => cat.tag !== 'popular');
+    const baseCategories = popularCategory ? [popularCategory, ...otherCategories] : otherCategories;
 
-    return popularCategory ? [popularCategory, ...otherCategories] : otherCategories;
-  }, [availableTags]);
+    return [...extras, ...baseCategories];
+  }, [availableTags, extraCategories]);
 
   const handleCreateWorkflow = () => {
     track(TelemetryEvent.CREATE_WORKFLOW_CLICK);

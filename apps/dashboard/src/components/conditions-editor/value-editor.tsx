@@ -38,6 +38,7 @@ type BaseEditorProps = {
   hasError: boolean;
   helpText: HelpTextInfo | null;
   errorMessage?: string;
+  disabled?: boolean;
 };
 
 export const ValueEditor = (props: ValueEditorProps) => {
@@ -45,7 +46,7 @@ export const ValueEditor = (props: ValueEditorProps) => {
   const queryPath = 'query.rules.' + props.path.join('.rules.') + '.value';
   const { error } = form.getFieldState(queryPath, form.formState);
   const { variables = [], isAllowedVariable, getPlaceholder, getHelpText } = (props.context as ExtendedContext) ?? {};
-  const { value, handleOnChange, operator, field } = props;
+  const { value, handleOnChange, operator, field, disabled } = props;
   const { valueAsArray, multiValueHandler } = useValueEditor(props);
   const stringValue = typeof value === 'string' ? value : `${value}`;
   const stringValueAsArray = valueAsArray.map((v) => (typeof v === 'string' ? v : `${v}`));
@@ -57,6 +58,7 @@ export const ValueEditor = (props: ValueEditorProps) => {
   const placeholder = getPlaceholder ? getPlaceholder(field, operator) : 'value';
   const helpText = getHelpText ? getHelpText(field, operator) : null;
   const hasError = !!error;
+  const isDisabled = !!disabled;
 
   if (shouldUseRelativeDateEditor(operator)) {
     return (
@@ -68,6 +70,7 @@ export const ValueEditor = (props: ValueEditorProps) => {
         hasError={hasError}
         helpText={helpText}
         errorMessage={error?.message}
+        disabled={isDisabled}
       />
     );
   }
@@ -83,6 +86,7 @@ export const ValueEditor = (props: ValueEditorProps) => {
         hasError={hasError}
         helpText={helpText}
         errorMessage={error?.message}
+        disabled={isDisabled}
       />
     );
   }
@@ -97,6 +101,7 @@ export const ValueEditor = (props: ValueEditorProps) => {
       hasError={hasError}
       helpText={helpText}
       errorMessage={error?.message}
+      disabled={isDisabled}
     />
   );
 };
@@ -110,6 +115,7 @@ function SingleValueEditor({
   hasError,
   helpText,
   errorMessage,
+  disabled,
 }: BaseEditorProps) {
   return (
     <InputRoot className="bg-bg-white w-48" hasError={hasError}>
@@ -123,6 +129,7 @@ function SingleValueEditor({
           variables={variables}
           isAllowedVariable={isAllowedVariable}
           size="3xs"
+          disabled={disabled}
         />
         <HelpIcon hasError={hasError} errorMessage={errorMessage} helpText={helpText} />
       </InputWrapper>
@@ -139,6 +146,7 @@ function BetweenValueEditor({
   hasError,
   helpText,
   errorMessage,
+  disabled,
 }: {
   valueAsArray: string[];
   multiValueHandler: (value: string, index: number) => void;
@@ -148,6 +156,7 @@ function BetweenValueEditor({
   hasError: boolean;
   helpText: HelpTextInfo | null;
   errorMessage?: string;
+  disabled?: boolean;
 }) {
   const [fromPlaceholder, toPlaceholder] = placeholder.split(',').map((p) => p.trim());
 
@@ -167,6 +176,7 @@ function BetweenValueEditor({
             variables={variables}
             isAllowedVariable={isAllowedVariable}
             size="3xs"
+            disabled={disabled}
           />
           {isLastInput && <HelpIcon hasError={hasError} errorMessage={errorMessage} helpText={helpText} />}
         </InputWrapper>
@@ -191,6 +201,7 @@ function RelativeDateEditor({
   hasError,
   helpText,
   errorMessage,
+  disabled,
 }: {
   value: string;
   onChange: (newValue: string) => void;
@@ -199,6 +210,7 @@ function RelativeDateEditor({
   hasError: boolean;
   helpText: HelpTextInfo | null;
   errorMessage?: string;
+  disabled?: boolean;
 }) {
   const parseRelativeDateValue = (val: string): RelativeDateValue => {
     let parsedValue: RelativeDateValue = { amount: '', unit: 'days' };
@@ -273,12 +285,13 @@ function RelativeDateEditor({
             variables={variables}
             isAllowedVariable={isAllowedVariable || (() => true)}
             size="3xs"
+            disabled={disabled}
           />
           <HelpIcon hasError={hasError} errorMessage={errorMessage} helpText={helpText} contentWidth="w-[280px]" />
         </InputWrapper>
       </InputRoot>
 
-      <Select value={parsedValue.unit} onValueChange={handleUnitChange}>
+      <Select value={parsedValue.unit} onValueChange={handleUnitChange} disabled={disabled}>
         <SelectTrigger className="bg-bg-white text-paragraph-xs border-border-strong h-7 w-20 px-2">
           <SelectValue />
         </SelectTrigger>

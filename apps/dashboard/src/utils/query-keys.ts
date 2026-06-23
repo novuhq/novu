@@ -11,6 +11,7 @@ export const QueryKeys = Object.freeze({
   fetchActivity: 'fetchActivity',
   fetchActivities: 'fetchActivities',
   fetchWorkflowRunsCount: 'fetchWorkflowRunsCount',
+  fetchConversationUsage: 'fetchConversationUsage',
   fetchSubscribers: 'fetchSubscribers',
   fetchSubscriber: 'fetchSubscriber',
   fetchSubscriberPreferences: 'fetchSubscriberPreferences',
@@ -39,4 +40,9 @@ export const QueryKeys = Object.freeze({
   fetchEnvironmentVariable: 'fetchEnvironmentVariable',
   fetchEnvironmentVariableUsage: 'fetchEnvironmentVariableUsage',
   stepResolversCount: 'stepResolversCount',
+  fetchWorkflowSuggestions: 'fetchWorkflowSuggestions',
+  fetchDomains: 'fetchDomains',
+  fetchDomain: 'fetchDomain',
+  fetchDomainRoutes: 'fetchDomainRoutes',
+  fetchDomainConnectStatus: 'fetchDomainConnectStatus',
 });

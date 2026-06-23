@@ -248,7 +248,7 @@ describe('Trigger bulk events - /v1/events/trigger/bulk (POST) #novu-v2', () => 
             name: '',
           },
           workflowId: '',
-          to: [],
+          to: [subscriber.subscriberId],
         },
       ],
     });

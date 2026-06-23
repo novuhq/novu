@@ -1,7 +1,7 @@
 import { EnvironmentEnum, EnvironmentTypeEnum, PermissionsEnum, ResourceOriginEnum } from '@novu/shared';
 import { Background, BackgroundVariant, ReactFlow, ReactFlowProvider, useReactFlow } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { useUser } from '@clerk/clerk-react';
+import { useUser } from '@clerk/react';
 import { useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { InlineToast } from '@/components/primitives/inline-toast';
@@ -21,10 +21,12 @@ const WorkflowCanvasChild = ({
   steps,
   showStepPreview,
   isReadOnly,
+  areConditionsClickable = true,
 }: {
   steps: Step[];
   showStepPreview?: boolean;
   isReadOnly?: boolean;
+  areConditionsClickable?: boolean;
 }) => {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const reactFlowInstance = useReactFlow();
@@ -84,6 +86,7 @@ const WorkflowCanvasChild = ({
   const dragContextValue = useMemo(() => {
     return {
       isReadOnly,
+      areConditionsClickable,
       showStepPreview,
       isCodeFirstWorkflow,
       onNodeDragStart,
@@ -102,6 +105,7 @@ const WorkflowCanvasChild = ({
     };
   }, [
     isReadOnly,
+    areConditionsClickable,
     showStepPreview,
     isCodeFirstWorkflow,
     onNodeDragStart,
@@ -175,10 +179,12 @@ export const WorkflowCanvas = ({
   steps,
   showStepPreview,
   isReadOnly,
+  areConditionsClickable = true,
 }: {
   steps: Step[];
   showStepPreview?: boolean;
   isReadOnly?: boolean;
+  areConditionsClickable?: boolean;
 }) => {
   const has = useHasPermission();
   const { currentEnvironment, switchEnvironment, oppositeEnvironment } = useEnvironment();
@@ -209,6 +215,7 @@ export const WorkflowCanvas = ({
           steps={currentWorkflow?.steps || steps || []}
           showStepPreview={showStepPreview}
           isReadOnly={isReadOnly}
+          areConditionsClickable={areConditionsClickable}
         />
 
         {showReadOnlyOverlay && (

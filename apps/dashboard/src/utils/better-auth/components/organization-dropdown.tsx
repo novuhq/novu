@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { RiAddCircleLine, RiArrowDownSLine, RiArrowRightSLine, RiLoader4Line } from 'react-icons/ri';
+import { useNavigate } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/primitives/avatar';
 import {
   DropdownMenu,
@@ -91,6 +92,7 @@ export function OrganizationDropdown() {
   const { organization: currentOrganization, isLoaded: isOrgLoaded } = useOrganization();
   const { orgId } = useAuth();
   const clerk = useClerk();
+  const navigate = useNavigate();
 
   const [isOpen, setIsOpen] = useState(false);
   const [isSwitching, setIsSwitching] = useState(false);
@@ -149,9 +151,7 @@ export function OrganizationDropdown() {
 
   const filterMemberships = useCallback(
     (membership: any) => {
-      if (membership.organization.id === orgId) return false;
-
-      return true;
+      return membership.organization.id !== orgId;
     },
     [orgId]
   );
@@ -226,7 +226,7 @@ export function OrganizationDropdown() {
             isScrolled && 'shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]'
           )}
           onSelect={() => {
-            window.location.href = ROUTES.SIGNUP_ORGANIZATION_LIST;
+            navigate(ROUTES.SIGNUP_ORGANIZATION_LIST);
           }}
         >
           <RiAddCircleLine className="size-4 text-text-sub" />

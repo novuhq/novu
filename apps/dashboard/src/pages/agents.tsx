@@ -2,7 +2,7 @@ import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { CaretSortIcon } from '@radix-ui/react-icons';
 import { useMutation } from '@tanstack/react-query';
 import type { FormEvent, ReactElement } from 'react';
-import { useCallback, useId, useMemo, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useState } from 'react';
 import { RiArrowRightSLine, RiCheckLine, RiCloseLine, RiMailLine, RiMessage3Line, RiMoreLine } from 'react-icons/ri';
 import {
   SiGithub,
@@ -14,11 +14,14 @@ import {
   SiWhatsapp,
   SiZoom,
 } from 'react-icons/si';
+import { Navigate } from 'react-router-dom';
 import { NovuApiError, post } from '@/api/api.client';
 import { AgentsEmptyTeaser } from '@/components/agents/agents-empty-teaser';
 import { AgentsList } from '@/components/agents/agents-list';
 import { DashboardLayout } from '@/components/dashboard-layout';
 import { PageMeta } from '@/components/page-meta';
+import { IS_EU } from '@/config';
+import { Badge } from '@/components/primitives/badge';
 import { Button } from '@/components/primitives/button';
 import { CompactButton } from '@/components/primitives/button-compact';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from '@/components/primitives/dialog';
@@ -29,6 +32,9 @@ import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner
 import { DismissButton, Icon as TagIcon, Root as TagRoot } from '@/components/primitives/tag';
 import { Textarea } from '@/components/primitives/textarea';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { useTelemetry } from '@/hooks/use-telemetry';
+import { ROUTES } from '@/utils/routes';
+import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
 
 const slackIcon = '/images/providers/light/square/slack.svg';
@@ -401,6 +407,16 @@ function AgentsEarlyAccessDialog({ open, onOpenChange }: AgentsEarlyAccessDialog
 export function AgentsPage() {
   const [earlyAccessOpen, setEarlyAccessOpen] = useState(false);
   const isConversationalAgentsEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONVERSATIONAL_AGENTS_ENABLED, false);
+  const track = useTelemetry();
+
+  useEffect(() => {
+    track(TelemetryEvent.AGENTS_PAGE_VISITED);
+  }, [track]);
+
+  // Agents are hard-disabled in the EU region.
+  if (IS_EU) {
+    return <Navigate to={ROUTES.ROOT} replace />;
+  }
 
   return (
     <>
@@ -408,7 +424,16 @@ export function AgentsPage() {
       {!isConversationalAgentsEnabled ? (
         <AgentsEarlyAccessDialog open={earlyAccessOpen} onOpenChange={setEarlyAccessOpen} />
       ) : null}
-      <DashboardLayout headerStartItems={<h1 className="text-foreground-950">Agents</h1>}>
+      <DashboardLayout
+        headerStartItems={
+          <h1 className="text-foreground-950 flex items-center gap-1">
+            Agents{' '}
+            <Badge color="gray" size="sm" variant="lighter">
+              BETA
+            </Badge>
+          </h1>
+        }
+      >
         {isConversationalAgentsEnabled ? (
           <AgentsList />
         ) : (

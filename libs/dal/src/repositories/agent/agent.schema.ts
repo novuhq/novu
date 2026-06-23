@@ -19,17 +19,33 @@ const agentSchema = new Schema<AgentDBModel>(
       default: true,
     },
     behavior: {
-      thinkingIndicatorEnabled: Schema.Types.Boolean,
-      reactions: {
-        onMessageReceived: Schema.Types.Mixed,
-        onResolved: Schema.Types.Mixed,
-      },
+      acknowledgeOnReceived: Schema.Types.Boolean,
+      reactionOnResolved: Schema.Types.String,
     },
     bridgeUrl: Schema.Types.String,
     devBridgeUrl: Schema.Types.String,
     devBridgeActive: {
       type: Schema.Types.Boolean,
       default: false,
+    },
+    runtime: {
+      type: Schema.Types.String,
+      enum: ['self-hosted', 'managed'],
+      default: 'self-hosted',
+    },
+    visibility: {
+      type: Schema.Types.String,
+      enum: ['public', 'private'],
+      default: 'public',
+    },
+    managedRuntime: {
+      providerId: Schema.Types.String,
+      _integrationId: {
+        type: Schema.Types.ObjectId,
+        ref: 'Integration',
+      },
+      externalAgentId: Schema.Types.String,
+      managedDefinitionVersion: Schema.Types.Number,
     },
     _organizationId: {
       type: Schema.Types.ObjectId,
@@ -39,12 +55,17 @@ const agentSchema = new Schema<AgentDBModel>(
       type: Schema.Types.ObjectId,
       ref: 'Environment',
     },
+    createdBy: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+    },
   },
   schemaOptions
 );
 
 agentSchema.index({ _environmentId: 1 });
 agentSchema.index({ identifier: 1, _environmentId: 1 }, { unique: true });
+agentSchema.index({ 'managedRuntime._integrationId': 1 }, { sparse: true });
 
 export const Agent =
   (mongoose.models.Agent as mongoose.Model<AgentDBModel>) || mongoose.model<AgentDBModel>('Agent', agentSchema);

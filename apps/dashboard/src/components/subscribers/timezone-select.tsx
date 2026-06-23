@@ -40,7 +40,7 @@ export function TimezoneSelect(props: TimezoneSelectProps) {
             </div>
             {value ? (
               <TruncatedText className="text-foreground w-full min-w-0 flex-1 text-xs font-normal text-neutral-950">
-                {parseTimezone(value).label}
+                {parseTimezone(value)?.label ?? value}
               </TruncatedText>
             ) : (
               <TruncatedText className="w-full min-w-0 flex-1 text-xs font-normal text-neutral-400">

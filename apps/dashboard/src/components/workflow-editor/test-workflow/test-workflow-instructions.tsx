@@ -10,6 +10,7 @@ import {
   SheetTitle,
 } from '@/components/primitives/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
+import { IS_AI_FEATURES_ENABLED } from '@/config';
 import { useFetchApiKeys } from '@/hooks/use-fetch-api-keys';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { useTelemetry } from '@/hooks/use-telemetry';
@@ -277,7 +278,7 @@ export function TestWorkflowInstructions({ isOpen, onClose, workflow, to, payloa
 
             <div className="min-h-0 flex-1 overflow-y-auto px-6 py-8">
               <TabsContent value="typescript" className="mt-0 min-w-0">
-                <AIPromptTip onCopy={handleCopyAIPrompt} isCopied={isAIPromptCopied} />
+                {IS_AI_FEATURES_ENABLED && <AIPromptTip onCopy={handleCopyAIPrompt} isCopied={isAIPromptCopied} />}
                 <TimelineContainer>
                   <InstructionStep
                     index={0}
@@ -311,7 +312,7 @@ export function TestWorkflowInstructions({ isOpen, onClose, workflow, to, payloa
               </TabsContent>
 
               <TabsContent value="shell" className="mt-0 min-w-0">
-                <AIPromptTip onCopy={handleCopyAIPrompt} isCopied={isAIPromptCopied} />
+                {IS_AI_FEATURES_ENABLED && <AIPromptTip onCopy={handleCopyAIPrompt} isCopied={isAIPromptCopied} />}
                 <TimelineContainer>
                   <InstructionStep
                     index={0}
@@ -346,7 +347,7 @@ export function TestWorkflowInstructions({ isOpen, onClose, workflow, to, payloa
               </TabsContent>
 
               <TabsContent value="php" className="mt-0 min-w-0">
-                <AIPromptTip onCopy={handleCopyAIPrompt} isCopied={isAIPromptCopied} />
+                {IS_AI_FEATURES_ENABLED && <AIPromptTip onCopy={handleCopyAIPrompt} isCopied={isAIPromptCopied} />}
                 <TimelineContainer>
                   <InstructionStep
                     index={0}
@@ -380,7 +381,7 @@ export function TestWorkflowInstructions({ isOpen, onClose, workflow, to, payloa
               </TabsContent>
 
               <TabsContent value="python" className="mt-0 min-w-0">
-                <AIPromptTip onCopy={handleCopyAIPrompt} isCopied={isAIPromptCopied} />
+                {IS_AI_FEATURES_ENABLED && <AIPromptTip onCopy={handleCopyAIPrompt} isCopied={isAIPromptCopied} />}
                 <TimelineContainer>
                   <InstructionStep
                     index={0}
@@ -414,7 +415,7 @@ export function TestWorkflowInstructions({ isOpen, onClose, workflow, to, payloa
               </TabsContent>
 
               <TabsContent value="go" className="mt-0 min-w-0">
-                <AIPromptTip onCopy={handleCopyAIPrompt} isCopied={isAIPromptCopied} />
+                {IS_AI_FEATURES_ENABLED && <AIPromptTip onCopy={handleCopyAIPrompt} isCopied={isAIPromptCopied} />}
                 <TimelineContainer>
                   <InstructionStep
                     index={0}

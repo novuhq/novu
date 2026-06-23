@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import {
+  CreateOrUpdateSubscriberUseCase,
   createHash,
   GetNovuProviderCredentials,
   GetNovuProviderCredentialsCommand,
@@ -12,9 +13,18 @@ import {
   IntegrationEntity,
   SubscriberRepository,
 } from '@novu/dal';
-import { ChatProviderIdEnum, ConnectionMode, ContextPayload, SLACK_AGENT_OAUTH_SCOPES } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  ChatProviderIdEnum,
+  ConnectionMode,
+  ContextPayload,
+  SLACK_AGENT_OAUTH_SCOPES,
+} from '@novu/shared';
 import { validateConnectionMode } from '../../../../channel-connections/usecases/channel-connection.utils';
+import { ensureConnectDashboardSubscriber } from '../../../../channel-connections/usecases/ensure-connect-dashboard-subscriber';
+import { areHexDigestsEqual } from '../../../../shared/helpers/timing-safe-equal';
 import { CHAT_OAUTH_CALLBACK_PATH } from '../chat-oauth.constants';
+import { encodeOAuthState, splitOAuthState } from '../chat-oauth-state.util';
 import { GenerateSlackOauthUrlCommand } from './generate-slack-oauth-url.command';
 
 export type OAuthMode = 'connect' | 'link_user';
@@ -30,6 +40,7 @@ export type StateData = {
   timestamp: number;
   mode?: OAuthMode;
   connectionMode?: ConnectionMode;
+  autoLinkUser?: boolean;
 };
 
 export const SLACK_DEFAULT_OAUTH_SCOPES = [
@@ -52,6 +63,7 @@ export class GenerateSlackOauthUrl {
     private getNovuProviderCredentials: GetNovuProviderCredentials,
     private subscriberRepository: SubscriberRepository,
     private agentIntegrationRepository: AgentIntegrationRepository,
+    private createOrUpdateSubscriber: CreateOrUpdateSubscriberUseCase,
     private logger: PinoLogger
   ) {
     this.logger.setContext(GenerateSlackOauthUrl.name);
@@ -62,18 +74,17 @@ export class GenerateSlackOauthUrl {
     await this.assertResourceExists(command);
 
     const { clientId } = await this.getIntegrationCredentials(command.integration);
-    const subscriberId = command.connectionMode === 'shared' ? undefined : command.subscriberId;
     const secureState = await this.createSecureState(
       command.integration,
-      subscriberId,
+      command.subscriberId,
       command.context,
       command.connectionIdentifier,
       command.mode,
-      command.connectionMode
+      command.connectionMode,
+      command.autoLinkUser
     );
 
-    const resolvedScope =
-      command.mode === 'link_user' ? undefined : await this.resolveBotScopes(command);
+    const resolvedScope = command.mode === 'link_user' ? undefined : await this.resolveBotScopes(command);
 
     return this.getOAuthUrl(clientId!, secureState, resolvedScope, command.userScope, command.mode);
   }
@@ -124,15 +135,13 @@ export class GenerateSlackOauthUrl {
       return;
     }
 
-    const found = await this.subscriberRepository.findOne({
+    await ensureConnectDashboardSubscriber({
       subscriberId,
-      _organizationId: organizationId,
-      _environmentId: environmentId,
+      environmentId,
+      organizationId,
+      subscriberRepository: this.subscriberRepository,
+      createOrUpdateSubscriber: this.createOrUpdateSubscriber,
     });
-
-    if (!found) throw new NotFoundException(`Subscriber not found: ${subscriberId}`);
-
-    return;
   }
 
   private async getOAuthUrl(
@@ -164,7 +173,8 @@ export class GenerateSlackOauthUrl {
     context?: ContextPayload,
     connectionIdentifier?: string,
     mode?: OAuthMode,
-    connectionMode?: ConnectionMode
+    connectionMode?: ConnectionMode,
+    autoLinkUser?: boolean
   ): Promise<string> {
     const { _environmentId, _organizationId, identifier, providerId } = integration;
 
@@ -179,6 +189,7 @@ export class GenerateSlackOauthUrl {
       timestamp: Date.now(),
       mode,
       connectionMode,
+      autoLinkUser,
     };
 
     const payload = JSON.stringify(stateData);
@@ -189,7 +200,7 @@ export class GenerateSlackOauthUrl {
       throw new BadRequestException('Failed to create OAuth state signature');
     }
 
-    const base64EncodedState = Buffer.from(`${payload}.${signature}`).toString('base64url');
+    const base64EncodedState = encodeOAuthState(payload, signature);
 
     this.logger.info({ stateData, base64EncodedState }, 'Slack OAuth secure state generated');
 
@@ -198,11 +209,10 @@ export class GenerateSlackOauthUrl {
 
   static async validateAndDecodeState(state: string, environmentApiKey: string): Promise<StateData> {
     try {
-      const decoded = Buffer.from(state, 'base64url').toString();
-      const [payload, signature] = decoded.split('.');
+      const { payload, signature } = splitOAuthState(state);
 
       const expectedSignature = createHash(environmentApiKey, payload);
-      if (signature !== expectedSignature) {
+      if (!areHexDigestsEqual(expectedSignature, signature)) {
         throw new Error('Invalid state signature');
       }
 
@@ -221,11 +231,17 @@ export class GenerateSlackOauthUrl {
   }
 
   static buildRedirectUri(): string {
-    if (!process.env.API_ROOT_URL) {
-      throw new Error('API_ROOT_URL environment variable is required');
+    // Must match exactly the redirect URL baked into the Slack app manifest
+    // (see slack-quick-setup.usecase.ts). When AGENT_API_HOSTNAME is set
+    // (typically a tunnel URL for local dev), both sides resolve to the
+    // tunnel; otherwise both fall back to API_ROOT_URL.
+    const rootUrl = process.env.AGENT_API_HOSTNAME ?? process.env.API_ROOT_URL;
+    if (!rootUrl) {
+      throw new Error('AGENT_API_HOSTNAME or API_ROOT_URL environment variable is required');
     }
 
-    const baseUrl = process.env.API_ROOT_URL.replace(/\/$/, ''); // Remove trailing slash
+    const baseUrl = rootUrl.replace(/\/$/, ''); // Remove trailing slash
+
     return `${baseUrl}${CHAT_OAUTH_CALLBACK_PATH}`;
   }
 
@@ -248,7 +264,7 @@ export class GenerateSlackOauthUrl {
   private async getDemoNovuSlackCredentials(integration: IntegrationEntity): Promise<ICredentialsEntity> {
     return await this.getNovuProviderCredentials.execute(
       GetNovuProviderCredentialsCommand.create({
-        channelType: integration.channel,
+        channelType: integration.channel ?? ChannelTypeEnum.CHAT,
         providerId: integration.providerId,
         environmentId: integration._environmentId,
         organizationId: integration._organizationId,

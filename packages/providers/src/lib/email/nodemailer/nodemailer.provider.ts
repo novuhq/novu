@@ -133,10 +133,11 @@ export class NodemailerProvider extends BaseProvider implements IEmailProvider {
         address: options.from || this.config.from,
         name: options.senderName || this.config.senderName || '',
       },
-      to: options.to,
+      to: resolveNodemailerTo(options),
       subject: options.subject,
       html: options.html,
       text: options.text,
+      ...(options.alternatives?.length ? { alternatives: options.alternatives } : {}),
       cc: options.cc,
       attachments: options.attachments?.map((attachment) => ({
         filename: attachment?.name,
@@ -153,6 +154,26 @@ export class NodemailerProvider extends BaseProvider implements IEmailProvider {
       sendMailOptions.replyTo = options.replyTo;
     }
 
+    if (options.headers && Object.keys(options.headers).length > 0) {
+      sendMailOptions.headers = options.headers;
+    }
+
     return sendMailOptions;
   }
+}
+
+const UNDISCLOSED_RECIPIENTS = 'undisclosed-recipients:;';
+
+function resolveNodemailerTo(options: Pick<IEmailOptions, 'to' | 'cc' | 'bcc'>): string | string[] {
+  if (options.to.length > 0) {
+    return options.to;
+  }
+
+  const hasCcOrBcc = Boolean(options.cc?.length) || Boolean(options.bcc?.length);
+
+  if (!hasCcOrBcc) {
+    return options.to;
+  }
+
+  return UNDISCLOSED_RECIPIENTS;
 }
