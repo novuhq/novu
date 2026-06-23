@@ -11,7 +11,7 @@ import { GenerateWebexOauthUrlCommand } from './generate-webex-oauth-url.command
 
 export type OAuthMode = 'connect' | 'link_user';
 
-export type StateData = {
+export interface StateData {
   identifier?: string;
   subscriberId?: string;
   context?: ContextPayload;
@@ -23,7 +23,7 @@ export type StateData = {
   mode?: OAuthMode;
   connectionMode?: ConnectionMode;
   autoLinkUser?: boolean;
-};
+}
 
 export const WEBEX_DEFAULT_OAUTH_SCOPES = [
   'spark:messages_write',
@@ -172,7 +172,12 @@ export class GenerateWebexOauthUrl {
       const data = JSON.parse(payload);
 
       const FIVE_MINUTES = 5 * 60 * 1000;
-      if (Date.now() - data.timestamp > FIVE_MINUTES) {
+      const now = Date.now();
+      if (typeof data.timestamp !== 'number' || !Number.isFinite(data.timestamp) || data.timestamp > now) {
+        throw new Error('Invalid OAuth state timestamp');
+      }
+
+      if (now - data.timestamp > FIVE_MINUTES) {
         throw new Error('OAuth state expired');
       }
 

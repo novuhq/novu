@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadGatewayException, BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { decryptCredentials } from '@novu/application-generic';
 import {
   ChannelTypeEnum,
@@ -22,19 +22,21 @@ import {
 import { ChatOauthCallbackResult, ResponseTypeEnum } from '../chat-oauth-callback.response';
 import { WebexOauthCallbackCommand } from './webex-oauth-callback.command';
 
-type WebexTokenResponse = {
+interface WebexTokenResponse {
   access_token: string;
   expires_in?: number;
   refresh_token?: string;
   refresh_token_expires_in?: number;
-};
+}
 
-type WebexPersonResponse = {
+interface WebexPersonResponse {
   id?: string;
   orgId?: string;
   displayName?: string;
   emails?: string[];
-};
+}
+
+const WEBEX_OAUTH_REQUEST_TIMEOUT_MS = 10000;
 
 @Injectable()
 export class WebexOauthCallback {
@@ -209,11 +211,17 @@ export class WebexOauthCallback {
       redirect_uri: GenerateWebexOauthUrl.buildRedirectUri(),
     });
 
-    const response = await axios.post<WebexTokenResponse>(this.WEBEX_ACCESS_TOKEN_URL, body.toString(), {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-    });
+    let response: { data: WebexTokenResponse };
+    try {
+      response = await axios.post<WebexTokenResponse>(this.WEBEX_ACCESS_TOKEN_URL, body.toString(), {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        timeout: WEBEX_OAUTH_REQUEST_TIMEOUT_MS,
+      });
+    } catch (error) {
+      this.handleWebexRequestError(error, 'OAuth token exchange');
+    }
 
     if (!response.data.access_token) {
       throw new BadRequestException('Webex OAuth response did not include an access token');
@@ -227,14 +235,65 @@ export class WebexOauthCallback {
     integrationCredentials: ICredentialsEntity
   ): Promise<WebexPersonResponse> {
     const credentials = decryptCredentials(integrationCredentials);
-    const baseUrl = (credentials.baseUrl || this.WEBEX_DEFAULT_BASE_URL).replace(/\/+$/, '');
-    const response = await axios.get<WebexPersonResponse>(`${baseUrl}/people/me`, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
+    const baseUrl = this.normalizeWebexBaseUrl(credentials.baseUrl);
+    let response: { data: WebexPersonResponse };
+    try {
+      response = await axios.get<WebexPersonResponse>(`${baseUrl}/people/me`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        timeout: WEBEX_OAUTH_REQUEST_TIMEOUT_MS,
+      });
+    } catch (error) {
+      this.handleWebexRequestError(error, 'people/me request');
+    }
 
     return response.data;
+  }
+
+  private normalizeWebexBaseUrl(baseUrl?: string): string {
+    const candidateBaseUrl = baseUrl || this.WEBEX_DEFAULT_BASE_URL;
+    let parsedUrl: URL;
+
+    try {
+      parsedUrl = new URL(candidateBaseUrl);
+    } catch {
+      throw new BadRequestException('Webex Messaging base URL must be an HTTPS URL on webexapis.com');
+    }
+
+    if (parsedUrl.protocol !== 'https:' || !this.isTrustedWebexHost(parsedUrl.hostname)) {
+      throw new BadRequestException('Webex Messaging base URL must be an HTTPS URL on webexapis.com');
+    }
+
+    return candidateBaseUrl.replace(/\/+$/, '');
+  }
+
+  private isTrustedWebexHost(hostname: string): boolean {
+    return hostname === 'webexapis.com' || hostname.endsWith('.webexapis.com');
+  }
+
+  private handleWebexRequestError(error: unknown, action: string): never {
+    if (!axios.isAxiosError(error)) {
+      throw error;
+    }
+
+    const status = error.response?.status;
+    const message = this.getWebexErrorMessage(error.response?.data) || error.message;
+    const statusText = status ? ` (HTTP ${status})` : '';
+
+    throw new BadGatewayException(`Webex ${action} failed${statusText}: ${message}`);
+  }
+
+  private getWebexErrorMessage(data: unknown): string {
+    if (typeof data === 'string') {
+      return data;
+    }
+
+    if (typeof data === 'object' && data !== null && 'message' in data) {
+      return String(data.message);
+    }
+
+    return data === undefined ? '' : JSON.stringify(data);
   }
 
   private buildWorkspace(person: WebexPersonResponse): { id: string; name?: string } {

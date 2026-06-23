@@ -28,6 +28,8 @@ type WebexMessagePayload = {
   text: string;
 };
 
+const WEBEX_MESSAGE_REQUEST_TIMEOUT_MS = 30000;
+
 export class WebexMessagingProvider extends BaseProvider implements IChatProvider {
   id = ChatProviderIdEnum.WebexMessaging;
   channelType = ChannelTypeEnum.CHAT as ChannelTypeEnum.CHAT;
@@ -46,6 +48,7 @@ export class WebexMessagingProvider extends BaseProvider implements IChatProvide
       headers: {
         'Content-Type': 'application/json',
       },
+      timeout: WEBEX_MESSAGE_REQUEST_TIMEOUT_MS,
     });
   }
 
@@ -88,7 +91,24 @@ export class WebexMessagingProvider extends BaseProvider implements IChatProvide
   }
 
   private normalizeBaseUrl(baseUrl?: string): string {
-    return (baseUrl || WebexMessagingProvider.DEFAULT_BASE_URL).replace(/\/+$/, '');
+    const candidateBaseUrl = baseUrl || WebexMessagingProvider.DEFAULT_BASE_URL;
+    let parsedUrl: URL;
+
+    try {
+      parsedUrl = new URL(candidateBaseUrl);
+    } catch {
+      throw new Error('Webex Messaging baseUrl must be an HTTPS URL on webexapis.com');
+    }
+
+    if (parsedUrl.protocol !== 'https:' || !this.isTrustedWebexHost(parsedUrl.hostname)) {
+      throw new Error('Webex Messaging baseUrl must be an HTTPS URL on webexapis.com');
+    }
+
+    return candidateBaseUrl.replace(/\/+$/, '');
+  }
+
+  private isTrustedWebexHost(hostname: string): boolean {
+    return hostname === 'webexapis.com' || hostname.endsWith('.webexapis.com');
   }
 
   private getAccessToken(channelData: IChatOptions['channelData']): string {

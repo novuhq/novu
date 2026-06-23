@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import {
+  type ChannelConnectionAuth,
   decryptChannelConnectionAuth,
   decryptCredentials,
   encryptChannelConnectionAuth,
@@ -50,6 +51,8 @@ export type IntegrationEndpoints = {
  */
 @Injectable()
 export class ResolveChannelEndpoints {
+  private readonly webexRefreshPromises = new Map<string, Promise<Record<string, unknown>>>();
+
   constructor(
     private readonly channelEndpointRepository: ChannelEndpointRepository,
     private readonly channelConnectionRepository: ChannelConnectionRepository,
@@ -288,6 +291,32 @@ export class ResolveChannelEndpoints {
       throw new Error(`Webex channel connection ${connection.identifier} is missing a refresh token`);
     }
 
+    const refreshKey = this.buildWebexRefreshKey(connection);
+    const existingRefresh = this.webexRefreshPromises.get(refreshKey);
+
+    if (existingRefresh) {
+      return await existingRefresh;
+    }
+
+    const refreshPromise = this.refreshWebexConnectionToken(endpoint, connection, decryptedAuth);
+    this.webexRefreshPromises.set(refreshKey, refreshPromise);
+
+    try {
+      return await refreshPromise;
+    } finally {
+      this.webexRefreshPromises.delete(refreshKey);
+    }
+  }
+
+  private async refreshWebexConnectionToken(
+    endpoint: ChannelEndpointEntity,
+    connection: ChannelConnectionEntity,
+    decryptedAuth: ChannelConnectionAuth
+  ): Promise<Record<string, unknown>> {
+    if (!decryptedAuth.refreshToken) {
+      throw new Error(`Webex channel connection ${connection.identifier} is missing a refresh token`);
+    }
+
     const integration = await this.integrationRepository.findOne({
       identifier: endpoint.integrationIdentifier,
       _environmentId: endpoint._environmentId,
@@ -334,6 +363,10 @@ export class ResolveChannelEndpoints {
     );
 
     return { token: refreshedAuth.accessToken };
+  }
+
+  private buildWebexRefreshKey(connection: ChannelConnectionEntity): string {
+    return `${connection._organizationId}:${connection._environmentId}:${connection.identifier}`;
   }
 
   private shouldRefreshToken(expiresAt?: string): boolean {

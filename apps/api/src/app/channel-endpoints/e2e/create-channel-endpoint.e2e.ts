@@ -249,19 +249,19 @@ describe('Create Channel Endpoint - /channel-endpoints (POST) #novu-v2', () => {
     const subscribersService = createSubscribersService(session);
     const subscriber = await subscribersService.createSubscriber();
 
-    const createDto: CreateWebexRoomEndpointDto = {
+    const createDto = {
       integrationIdentifier: integration.identifier,
       subscriberId: subscriber.subscriberId,
       type: ENDPOINT_TYPES.WEBEX_ROOM,
       endpoint: {
         roomId: 'Y2lzY29zcGFyazovL3VzL1JPT00vMTIz',
       },
-    };
+    } as any;
 
-    const { error } = await expectSdkExceptionGeneric(() => novuClient.channelEndpoints.create(createDto));
+    const { error } = await expectSdkZodError(() => novuClient.channelEndpoints.create(createDto));
 
     expect(error).to.exist;
-    expect(error?.name).to.equal('ErrorDto');
+    expect(error?.name).to.equal('SDKValidationError');
   });
 
   it('should create a telegram_chat endpoint with the supplied chatId', async () => {

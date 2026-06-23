@@ -32,6 +32,7 @@ describe('WebexMessagingProvider', () => {
       headers: {
         'Content-Type': 'application/json',
       },
+      timeout: 30000,
     });
   });
 
@@ -45,8 +46,19 @@ describe('WebexMessagingProvider', () => {
       headers: {
         'Content-Type': 'application/json',
       },
+      timeout: 30000,
     });
   });
+
+  it.each(['http://webexapis.com/v1', 'https://example.com/v1', 'not-a-url'])(
+    'rejects unsafe Webex API base URL: %s',
+    (baseUrl) => {
+      expect(() => new WebexMessagingProvider({ baseUrl })).toThrow(
+        'Webex Messaging baseUrl must be an HTTPS URL on webexapis.com'
+      );
+      expect(axios.create).not.toHaveBeenCalled();
+    }
+  );
 
   it('sends a room message', async () => {
     vi.mocked(axios.create).mockReturnValue({ post } as never);

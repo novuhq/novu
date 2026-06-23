@@ -201,6 +201,15 @@ export class CreateTelegramChatEndpointDto extends CreateChannelEndpointBaseDto 
 
 export class CreateWebexRoomEndpointDto extends CreateChannelEndpointBaseDto {
   @ApiProperty({
+    description: 'The identifier of the channel connection to use for this Webex endpoint.',
+    type: String,
+    example: 'webex-connection-abc123',
+  })
+  @IsDefined()
+  @IsString()
+  connectionIdentifier: string;
+
+  @ApiProperty({
     description: 'Type of channel endpoint',
     enum: [ENDPOINT_TYPES.WEBEX_ROOM],
     example: ENDPOINT_TYPES.WEBEX_ROOM,
@@ -220,6 +229,15 @@ export class CreateWebexRoomEndpointDto extends CreateChannelEndpointBaseDto {
 }
 
 export class CreateWebexPersonEndpointDto extends CreateChannelEndpointBaseDto {
+  @ApiProperty({
+    description: 'The identifier of the channel connection to use for this Webex endpoint.',
+    type: String,
+    example: 'webex-connection-abc123',
+  })
+  @IsDefined()
+  @IsString()
+  connectionIdentifier: string;
+
   @ApiProperty({
     description: 'Type of channel endpoint',
     enum: [ENDPOINT_TYPES.WEBEX_PERSON],

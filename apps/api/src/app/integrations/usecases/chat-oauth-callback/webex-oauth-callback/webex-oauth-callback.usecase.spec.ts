@@ -1,4 +1,5 @@
 import { createHmac } from 'node:crypto';
+import { BadGatewayException, BadRequestException } from '@nestjs/common';
 import { EnvironmentRepository, IntegrationRepository } from '@novu/dal';
 import { ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
 import axios from 'axios';
@@ -39,11 +40,28 @@ function buildMockIntegration(overrides: Record<string, unknown> = {}) {
   } as any;
 }
 
-function buildEncodedState(payload: Record<string, unknown>): string {
-  const payloadStr = JSON.stringify({ ...payload, timestamp: Date.now() });
-  const signature = createHmac('sha256', MOCK_API_KEY).update(payloadStr).digest('hex');
+function buildEncodedState(payload: Record<string, unknown>, apiKey = MOCK_API_KEY): string {
+  const payloadStr = JSON.stringify({ timestamp: Date.now(), ...payload });
+  const signature = createHmac('sha256', apiKey).update(payloadStr).digest('hex');
 
   return encodeOAuthState(payloadStr, signature);
+}
+
+async function expectInvalidState(usecase: WebexOauthCallback, state: string) {
+  let error: unknown;
+
+  try {
+    await usecase.execute(
+      WebexOauthCallbackCommand.create({
+        providerCode: 'webex-code',
+        state,
+      })
+    );
+  } catch (err) {
+    error = err;
+  }
+
+  expect(error).to.be.instanceOf(BadRequestException);
 }
 
 describe('WebexOauthCallback', () => {
@@ -165,5 +183,160 @@ describe('WebexOauthCallback', () => {
     expect(endpointArg.connectionIdentifier).to.equal('existing-webex-connection');
     expect(endpointArg.type).to.equal(ENDPOINT_TYPES.WEBEX_PERSON);
     expect(endpointArg.endpoint.personId).to.equal(MOCK_PERSON_ID);
+  });
+
+  it('should reject an invalid OAuth state without creating connections or endpoints', async () => {
+    await expectInvalidState(usecase, 'not-valid-state');
+
+    expect(createChannelConnection.execute.called).to.be.false;
+    expect(createChannelEndpoint.execute.called).to.be.false;
+    expect(axiosPost.called).to.be.false;
+    expect(axiosGet.called).to.be.false;
+  });
+
+  it('should reject a tampered OAuth state signature without creating connections or endpoints', async () => {
+    const state = buildEncodedState(
+      {
+        environmentId: MOCK_ENVIRONMENT_ID,
+        organizationId: MOCK_ORGANIZATION_ID,
+        integrationIdentifier: MOCK_INTEGRATION_IDENTIFIER,
+        providerId: ChatProviderIdEnum.WebexMessaging,
+        subscriberId: MOCK_SUBSCRIBER_ID,
+      },
+      'wrong-api-key'
+    );
+
+    await expectInvalidState(usecase, state);
+
+    expect(createChannelConnection.execute.called).to.be.false;
+    expect(createChannelEndpoint.execute.called).to.be.false;
+    expect(axiosPost.called).to.be.false;
+    expect(axiosGet.called).to.be.false;
+  });
+
+  it('should reject an OAuth state missing environmentId without creating connections or endpoints', async () => {
+    const state = buildEncodedState({
+      organizationId: MOCK_ORGANIZATION_ID,
+      integrationIdentifier: MOCK_INTEGRATION_IDENTIFIER,
+      providerId: ChatProviderIdEnum.WebexMessaging,
+      subscriberId: MOCK_SUBSCRIBER_ID,
+    });
+
+    await expectInvalidState(usecase, state);
+
+    expect(createChannelConnection.execute.called).to.be.false;
+    expect(createChannelEndpoint.execute.called).to.be.false;
+    expect(axiosPost.called).to.be.false;
+    expect(axiosGet.called).to.be.false;
+  });
+
+  it('should reject a stale OAuth state without creating connections or endpoints', async () => {
+    const state = buildEncodedState({
+      environmentId: MOCK_ENVIRONMENT_ID,
+      organizationId: MOCK_ORGANIZATION_ID,
+      integrationIdentifier: MOCK_INTEGRATION_IDENTIFIER,
+      providerId: ChatProviderIdEnum.WebexMessaging,
+      subscriberId: MOCK_SUBSCRIBER_ID,
+      timestamp: Date.now() - 6 * 60 * 1000,
+    });
+
+    await expectInvalidState(usecase, state);
+
+    expect(createChannelConnection.execute.called).to.be.false;
+    expect(createChannelEndpoint.execute.called).to.be.false;
+    expect(axiosPost.called).to.be.false;
+    expect(axiosGet.called).to.be.false;
+  });
+
+  it('should reject a future OAuth state timestamp without creating connections or endpoints', async () => {
+    const state = buildEncodedState({
+      environmentId: MOCK_ENVIRONMENT_ID,
+      organizationId: MOCK_ORGANIZATION_ID,
+      integrationIdentifier: MOCK_INTEGRATION_IDENTIFIER,
+      providerId: ChatProviderIdEnum.WebexMessaging,
+      subscriberId: MOCK_SUBSCRIBER_ID,
+      timestamp: Date.now() + 60 * 1000,
+    });
+
+    await expectInvalidState(usecase, state);
+
+    expect(createChannelConnection.execute.called).to.be.false;
+    expect(createChannelEndpoint.execute.called).to.be.false;
+    expect(axiosPost.called).to.be.false;
+    expect(axiosGet.called).to.be.false;
+  });
+
+  it('should reject untrusted Webex base URLs before sending the access token to people/me', async () => {
+    integrationRepository.findOne.resolves(
+      buildMockIntegration({
+        credentials: {
+          clientId: MOCK_CLIENT_ID,
+          secretKey: MOCK_SECRET_KEY,
+          baseUrl: 'https://example.com/v1',
+        },
+      })
+    );
+
+    const state = buildEncodedState({
+      environmentId: MOCK_ENVIRONMENT_ID,
+      organizationId: MOCK_ORGANIZATION_ID,
+      integrationIdentifier: MOCK_INTEGRATION_IDENTIFIER,
+      providerId: ChatProviderIdEnum.WebexMessaging,
+      subscriberId: MOCK_SUBSCRIBER_ID,
+    });
+
+    let error: unknown;
+    try {
+      await usecase.execute(
+        WebexOauthCallbackCommand.create({
+          providerCode: 'webex-code',
+          state,
+        })
+      );
+    } catch (err) {
+      error = err;
+    }
+
+    expect(error).to.be.instanceOf(BadRequestException);
+    expect(axiosPost.calledOnce).to.be.true;
+    expect(axiosGet.called).to.be.false;
+    expect(createChannelConnection.execute.called).to.be.false;
+    expect(createChannelEndpoint.execute.called).to.be.false;
+  });
+
+  it('should wrap Webex token exchange failures in a gateway exception', async () => {
+    axiosPost.rejects({
+      isAxiosError: true,
+      message: 'timeout of 10000ms exceeded',
+      response: {
+        status: 400,
+        data: { message: 'invalid authorization code' },
+      },
+    });
+
+    const state = buildEncodedState({
+      environmentId: MOCK_ENVIRONMENT_ID,
+      organizationId: MOCK_ORGANIZATION_ID,
+      integrationIdentifier: MOCK_INTEGRATION_IDENTIFIER,
+      providerId: ChatProviderIdEnum.WebexMessaging,
+      subscriberId: MOCK_SUBSCRIBER_ID,
+    });
+
+    let error: unknown;
+    try {
+      await usecase.execute(
+        WebexOauthCallbackCommand.create({
+          providerCode: 'webex-code',
+          state,
+        })
+      );
+    } catch (err) {
+      error = err;
+    }
+
+    expect(error).to.be.instanceOf(BadGatewayException);
+    expect((error as Error).message).to.contain('Webex OAuth token exchange failed (HTTP 400)');
+    expect(createChannelConnection.execute.called).to.be.false;
+    expect(createChannelEndpoint.execute.called).to.be.false;
   });
 });
