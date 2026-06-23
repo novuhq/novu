@@ -1,7 +1,10 @@
+import type { ResourceLimitSource } from '@novu/shared';
 import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
+import { NovuApiError } from '@/api/api.client';
 import { ApexDomainMxWarning } from '@/components/domains/apex-domain-mx-warning';
+import { DomainLimitDialog } from '@/components/domains/domain-limit-dialog';
 import { Button } from '@/components/primitives/button';
 import {
   Dialog,
@@ -31,12 +34,46 @@ type AddDomainDialogProps = {
 
 const DEFAULT_PLACEHOLDER = 'inbound.acme.com';
 
+type DomainLimitError = {
+  limit: number;
+  limitSource: ResourceLimitSource;
+};
+
+/**
+ * Maps a create-domain API rejection to the limit dialog:
+ *   - 402 → plan limit (upgrade lifts it);
+ *   - 409 with a `limit` payload → system cap (contact the Novu team).
+ * Other errors (e.g. 409 "domain already exists") fall through to a toast.
+ */
+function parseDomainLimitError(err: unknown): DomainLimitError | null {
+  if (!(err instanceof NovuApiError)) {
+    return null;
+  }
+
+  const rawLimit = (err.rawError as { limit?: number } | undefined)?.limit;
+
+  if (typeof rawLimit !== 'number') {
+    return null;
+  }
+
+  if (err.status === 402) {
+    return { limit: rawLimit, limitSource: 'plan' };
+  }
+
+  if (err.status === 409) {
+    return { limit: rawLimit, limitSource: 'system' };
+  }
+
+  return null;
+}
+
 export function AddDomainDialog({ open, onOpenChange }: AddDomainDialogProps) {
   const { currentUser } = useAuth();
   const { currentEnvironment } = useEnvironment();
   const navigate = useNavigate();
   const createDomain = useCreateDomain();
   const [isPending, setIsPending] = useState(false);
+  const [limitError, setLimitError] = useState<DomainLimitError | null>(null);
 
   const domainPlaceholder = useMemo(() => {
     const emailDomain = currentUser?.email?.split('@')[1];
@@ -70,12 +107,34 @@ export function AddDomainDialog({ open, onOpenChange }: AddDomainDialogProps) {
         );
       }
     } catch (err: unknown) {
+      const domainLimitError = parseDomainLimitError(err);
+
+      if (domainLimitError) {
+        onOpenChange(false);
+        setLimitError(domainLimitError);
+
+        return;
+      }
+
       const message = err instanceof Error ? err.message : 'Failed to create domain';
       showErrorToast(message);
     } finally {
       setIsPending(false);
     }
   };
+
+  if (limitError) {
+    return (
+      <DomainLimitDialog
+        open
+        onOpenChange={(dialogOpen) => {
+          if (!dialogOpen) setLimitError(null);
+        }}
+        limit={limitError.limit}
+        limitSource={limitError.limitSource}
+      />
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

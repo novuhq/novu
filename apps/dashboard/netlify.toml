@@ -18,8 +18,8 @@
   to = "/index.html"
   status = 200
 
-# Clerk satellite handshakes redirect through /auth/* — prevent Netlify CDN from caching
-# stale 200/index.html responses during cross-domain session sync (known Clerk + Netlify issue).
+# Auth pages must never be cached by the Netlify CDN. Clerk's React SDK uses hash routing for
+# multi-step flows, and stale 200/index.html responses can leak prior auth state across users.
 [[headers]]
   for = "/auth/*"
   [headers.values]

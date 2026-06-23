@@ -169,6 +169,10 @@ export class RunJob {
         job.payload?.__source
       );
 
+      nr.addCustomAttributes({
+        workflow: workflow.name,
+      });
+
       const schedule = await this.getSubscriberSchedule.execute(
         GetSubscriberScheduleCommand.create({
           environmentId: job._environmentId,

@@ -1,3 +1,4 @@
+import { MCP_SERVERS } from '@novu/shared';
 import { FilterQuery } from 'mongoose';
 
 import type { EnforceEnvOrOrgIds } from '../../types';
@@ -41,6 +42,28 @@ export class AgentMcpServerRepository extends BaseRepositoryV2<
     }
 
     return this.find(query, '*');
+  }
+
+  /**
+   * Enabled MCP rows on an agent whose catalog entry requires OAuth.
+   */
+  async findOAuthEnablementsForAgent({
+    organizationId,
+    environmentId,
+    agentId,
+  }: {
+    organizationId: string;
+    environmentId: string;
+    agentId: string;
+  }) {
+    const enablements = await this.findByAgent({
+      organizationId,
+      environmentId,
+      agentId,
+      enabledOnly: true,
+    });
+
+    return enablements.filter((row) => MCP_SERVERS.some((entry) => entry.id === row.mcpId && entry.oauth));
   }
 
   async findByAgentAndMcpId({

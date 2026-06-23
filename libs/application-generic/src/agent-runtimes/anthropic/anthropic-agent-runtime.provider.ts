@@ -1,10 +1,11 @@
 import { APIConnectionError, APIConnectionTimeoutError, APIError, toFile } from '@anthropic-ai/sdk';
-import type { AgentMcpServerDto, AgentRuntimeConfigDto, AgentSkillDto, AgentToolDto } from '@novu/shared';
+import type { AgentRuntimeConfigDto } from '@novu/shared';
 import {
   AGENT_RUNTIME_PROVIDERS,
   AgentRuntimeCapabilities,
   AgentRuntimeProviderIdEnum,
   isAnthropicAwsProvider,
+  NOVU_TOOLS_SCHEMA,
 } from '@novu/shared';
 import { BaseAgentRuntimeProvider } from '../base-agent-runtime.provider';
 import {
@@ -27,7 +28,6 @@ import type {
   DeleteVaultCredentialInput,
   GetAgentResult,
   GetEnvironmentResult,
-  ParsedMcpInitFailure,
   PendingToolApproval,
   ProvisionIntegrationInput,
   ProvisionIntegrationResult,
@@ -40,13 +40,14 @@ import type {
   ValidateCredentialsInput,
   VaultCredentialAuth,
 } from '../i-agent-runtime-provider';
-import { AnthropicClientResolver } from './anthropic-client-resolver';
 import { type ResolvedAwsAnthropicCredentials } from './anthropic-aws-credentials';
+import { AnthropicClientResolver } from './anthropic-client-resolver';
 import { type AnthropicCompatibleClient } from './anthropic-cloud-client';
 import {
   buildMcpOAuthCreateAuth,
   buildMcpOAuthUpdateAuth,
   buildToolsPayload,
+  extractApiErrorMessage,
   extractSkillNameFromBundle,
   isDuplicateDisplayTitleError,
   isTransient,
@@ -70,17 +71,6 @@ const DEFAULT_MODEL = 'claude-sonnet-4-6';
 const RETRY_JITTER_MS = 500;
 /** Anthropic enforces a 64-char cap on `display_title` for `beta.skills.create`. */
 const MAX_DISPLAY_TITLE_LENGTH = 64;
-
-/**
- * Anthropic surfaces missing MCP credentials, URL mismatches, and "not yet
- * registered" cases as stream errors with the message shape
- * `MCP server '<displayName>' initialize failed: ...`. Thalamus's
- * `mapSessionError` wraps these in a generic retryable `ThalamusError`, so
- * the worker needs a stable parser to lift the server name out — we keep
- * the regex here (the only Anthropic-specific knowledge required) so the
- * worker stays runtime-agnostic.
- */
-const MCP_INIT_ERROR_PATTERN = /^MCP server '([^']+)' initialize failed/;
 
 export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
   readonly providerId: AgentRuntimeProviderIdEnum;
@@ -130,29 +120,30 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
 
     if (err instanceof APIError) {
       const requestId = err.requestID ?? err.headers?.get?.('request-id') ?? undefined;
+      const message = extractApiErrorMessage(err);
 
       if (err.status === 401) {
-        throw new AgentRuntimeUnauthorizedError(err.message, providerId, requestId);
+        throw new AgentRuntimeUnauthorizedError(message, providerId, requestId);
       }
       if (err.status === 403) {
-        throw new AgentRuntimeForbiddenError(err.message, providerId, requestId);
+        throw new AgentRuntimeForbiddenError(message, providerId, requestId);
       }
       if (err.status === 404) {
-        throw new AgentRuntimeNotFoundError(err.message, providerId, requestId);
+        throw new AgentRuntimeNotFoundError(message, providerId, requestId);
       }
       if (err.status === 429) {
         const retryAfterMs = parseRetryAfter(err.headers?.get?.('retry-after') ?? undefined);
 
-        throw new AgentRuntimeRateLimitedError(err.message, providerId, retryAfterMs, requestId);
+        throw new AgentRuntimeRateLimitedError(message, providerId, retryAfterMs, requestId);
       }
       if (err.status === 529) {
-        throw new AgentRuntimeOverloadedError(err.message, providerId, requestId);
+        throw new AgentRuntimeOverloadedError(message, providerId, requestId);
       }
       if (err.status >= 500) {
-        throw new AgentRuntimeServiceUnavailableError(err.message, providerId, requestId);
+        throw new AgentRuntimeServiceUnavailableError(message, providerId, requestId);
       }
       if (err.status === 400 || err.status === 422) {
-        throw new AgentRuntimeBadRequestError(err.message, providerId, requestId);
+        throw new AgentRuntimeBadRequestError(message, providerId, requestId);
       }
     }
 
@@ -190,7 +181,6 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
     // dropped response would create a duplicate billable agent upstream.
     try {
       const toolsPayload = buildToolsPayload(input.tools, input.mcpServers);
-
       const agent = await (client as any).beta.agents.create({
         name: input.name,
         model: input.model ?? DEFAULT_MODEL,
@@ -285,7 +275,9 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
         };
 
         if (patch.model !== undefined) updatePayload.model = patch.model;
-        if (patch.systemPrompt !== undefined) updatePayload.system = patch.systemPrompt;
+        if (patch.systemPrompt !== undefined) {
+          updatePayload.system = patch.systemPrompt;
+        }
         if (patch.mcpServers !== undefined) {
           updatePayload.mcp_servers = patch.mcpServers.map((s) => ({ name: s.name, type: 'url', url: s.url }));
         }
@@ -318,6 +310,47 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
           tools: ((updated.tools as any[]) ?? []).flatMap(mapToolset),
           skills: ((updated.skills as any[]) ?? []).map(mapSkill),
         };
+      } catch (err) {
+        this.normaliseError(err);
+      }
+    });
+  }
+
+  async refreshPlatformDefinition(externalAgentId: string): Promise<void> {
+    const client = await this.getClient();
+
+    await this.withRetry(async () => {
+      try {
+        // Read the agent's current user-selected tools/MCP and re-emit them through
+        // buildToolsPayload, which always appends Novu-owned platform tools (e.g.
+        // novu_tools). Nothing the user chose changes — this only backfills the overlay.
+        const currentAgent = await (client as any).beta.agents.retrieve(externalAgentId);
+        const rawTools = (currentAgent.tools as any[]) ?? [];
+        const currentTools = rawTools.flatMap(mapToolset);
+        const currentMcpServers = ((currentAgent.mcp_servers as any[]) ?? []).map(mapMcpServer);
+
+        // Preserve any provider-side custom tools we don't own (e.g. on an adopted agent).
+        // buildToolsPayload re-emits Novu's own novu_tools, so drop it here to avoid a duplicate.
+        const foreignCustomTools = rawTools.filter(
+          (tool) => tool?.type === 'custom' && tool?.name !== NOVU_TOOLS_SCHEMA.name
+        );
+
+        const toolsPayload = [
+          ...buildToolsPayload(
+            currentTools.map((t) => t.externalId),
+            currentMcpServers.map((s) => ({ name: s.name, url: s.url }))
+          ),
+          ...foreignCustomTools,
+        ];
+
+        if (toolsPayload.length === 0) {
+          return;
+        }
+
+        await (client as any).beta.agents.update(externalAgentId, {
+          version: currentAgent.version,
+          tools: toolsPayload,
+        });
       } catch (err) {
         this.normaliseError(err);
       }
@@ -387,73 +420,77 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
     }
   }
 
-  async getPendingToolApproval(sessionId: string): Promise<PendingToolApproval | null> {
+  async getAllPendingToolApprovals(sessionId: string): Promise<PendingToolApproval[]> {
     const client = await this.getClient();
 
     try {
-      // Walk the session event log oldest-first looking for the still-open
-      // tool-use ask that parks the session in `requires_action`. Anthropic
-      // emits one ask at a time and a subsequent `user.tool_confirmation`
-      // resolves the prior one, so we track the most-recent ask and clear
-      // it on each confirmation. The survivor at the end of the walk is
-      // the single unresolved ask (or `null` if the model emitted no ask
-      // or every ask has already been confirmed).
-      const iterator = (client as any).beta.sessions.events.list(sessionId, {
-        order: 'asc',
-        types: ['agent.mcp_tool_use', 'agent.tool_use', 'user.tool_confirmation'],
-      });
+      const toolUseIds = await this.getRequiresActionToolUseIds(client, sessionId);
 
-      let pending: PendingToolApproval | null = null;
-
-      for await (const event of iterator) {
-        if (event?.type === 'user.tool_confirmation') {
-          pending = null;
-          continue;
-        }
-
-        if (event?.evaluated_permission !== 'ask') {
-          continue;
-        }
-
-        const toolUseId = event.id as string | undefined;
-        const toolName = (event.name as string | undefined) ?? 'unknown_tool';
-
-        if (!toolUseId) {
-          continue;
-        }
-
-        pending = {
-          toolUseId,
-          toolName,
-          mcpServerName: event.type === 'agent.mcp_tool_use' ? (event.mcp_server_name as string) : undefined,
-          input: (event.input as Record<string, unknown> | undefined) ?? undefined,
-        };
+      if (toolUseIds.length === 0) {
+        return [];
       }
 
-      return pending;
+      return this.resolvePendingToolApprovals(client, sessionId, toolUseIds);
     } catch (err) {
       this.normaliseError(err);
     }
   }
 
-  parseMcpInitFailure(err: unknown): ParsedMcpInitFailure | null {
-    // Inspect the error message only — we deliberately avoid coupling this
-    // module to `@novu/thalamus`'s ThalamusError class so the abstraction
-    // stays light. Anything in the codebase that surfaces this exact wire
-    // text was originally produced by Anthropic's streaming MCP-init path.
-    const message = (err as { message?: unknown } | null)?.message;
+  /** Tool-use ids Anthropic is blocked on in the latest session pause. */
+  private async getRequiresActionToolUseIds(client: AnthropicCompatibleClient, sessionId: string): Promise<string[]> {
+    const iterator = (client as any).beta.sessions.events.list(sessionId, {
+      order: 'desc',
+      types: ['session.status_idle', 'session.thread_status_idle'],
+    });
 
-    if (typeof message !== 'string') {
-      return null;
+    for await (const event of iterator) {
+      const stopReason = event?.stop_reason as { type?: string; event_ids?: string[] } | undefined;
+
+      if (stopReason?.type === 'requires_action') {
+        return (stopReason.event_ids ?? []).filter(
+          (toolUseId): toolUseId is string => typeof toolUseId === 'string' && toolUseId.length > 0
+        );
+      }
     }
 
-    const match = message.match(MCP_INIT_ERROR_PATTERN);
+    return [];
+  }
 
-    if (!match) {
-      return null;
+  private async resolvePendingToolApprovals(
+    client: AnthropicCompatibleClient,
+    sessionId: string,
+    toolUseIds: string[]
+  ): Promise<PendingToolApproval[]> {
+    const pendingIds = new Set(toolUseIds);
+    const tools = new Map<string, PendingToolApproval>();
+
+    const iterator = (client as any).beta.sessions.events.list(sessionId, {
+      order: 'asc',
+      types: ['agent.mcp_tool_use', 'agent.tool_use'],
+    });
+
+    for await (const event of iterator) {
+      const toolUseId = event?.id as string | undefined;
+
+      if (!toolUseId || !pendingIds.has(toolUseId)) {
+        continue;
+      }
+
+      tools.set(toolUseId, {
+        toolUseId,
+        toolName: (event.name as string | undefined) ?? 'unknown_tool',
+        mcpServerName: event.type === 'agent.mcp_tool_use' ? (event.mcp_server_name as string) : undefined,
+        input: (event.input as Record<string, unknown> | undefined) ?? undefined,
+      });
+
+      if (tools.size === pendingIds.size) {
+        break;
+      }
     }
 
-    return { mcpServerName: match[1] };
+    return toolUseIds
+      .map((toolUseId) => tools.get(toolUseId))
+      .filter((tool): tool is PendingToolApproval => tool !== undefined);
   }
 
   async createVault(input: CreateVaultInput): Promise<CreateVaultResult> {
@@ -721,7 +758,10 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
    * apply `source === 'custom'` client-side so we never accidentally try to
    * version-append an Anthropic built-in (`pdf`, `xlsx`, `pptx`, `docx`).
    */
-  private async findExistingSkillIdByDisplayTitle(client: AnthropicCompatibleClient, displayTitle: string): Promise<string | null> {
+  private async findExistingSkillIdByDisplayTitle(
+    client: AnthropicCompatibleClient,
+    displayTitle: string
+  ): Promise<string | null> {
     try {
       const iterator = (client as any).beta.skills.list({ limit: 100 }) as AsyncIterable<{
         id: string;
@@ -796,8 +836,7 @@ export function createAnthropicProvider(
       throw new Error('Use awsCredentials from resolveAgentRuntime() for anthropic-aws');
     }
 
-    const legacyApiKey =
-      typeof options.credentials.apiKey === 'string' ? options.credentials.apiKey.trim() : undefined;
+    const legacyApiKey = typeof options.credentials.apiKey === 'string' ? options.credentials.apiKey.trim() : undefined;
 
     if (legacyApiKey) {
       init.apiKey = legacyApiKey;

@@ -1,6 +1,6 @@
 import { AGENT_RUNTIME_PROVIDERS, AgentRuntimeProviderIdEnum } from '@novu/shared';
-import { createAnthropicProvider } from './anthropic/anthropic-agent-runtime.provider';
 import { getAgentRuntimeProvider, listRegisteredAgentRuntimeProviders } from './agent-runtime.factory';
+import { createAnthropicProvider } from './anthropic/anthropic-agent-runtime.provider';
 import { UnsupportedCapabilityError } from './errors';
 import type { IAgentRuntimeProvider } from './i-agent-runtime-provider';
 
@@ -77,19 +77,6 @@ describe('Agent runtime capabilities parity', () => {
 
       it('capabilities.tokenVault matches the catalog', () => {
         expect(instance.capabilities.tokenVault).toBe(catalogEntry.capabilities.tokenVault);
-      });
-
-      describe('parseMcpInitFailure', () => {
-        it('returns null for an unrelated Error', () => {
-          expect(instance.parseMcpInitFailure(new Error('completely unrelated'))).toBeNull();
-        });
-
-        it('returns null for non-Error values', () => {
-          expect(instance.parseMcpInitFailure(undefined)).toBeNull();
-          expect(instance.parseMcpInitFailure(null)).toBeNull();
-          expect(instance.parseMcpInitFailure('string error')).toBeNull();
-          expect(instance.parseMcpInitFailure(42)).toBeNull();
-        });
       });
 
       describe('vault credential methods', () => {

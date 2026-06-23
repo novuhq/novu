@@ -3,6 +3,7 @@ import { GetDecryptedIntegrations } from '@novu/application-generic';
 import { EnvironmentRepository, IntegrationRepository } from '@novu/dal';
 import { ChatProviderIdEnum } from '@novu/shared';
 import { createHmac } from 'crypto';
+import { areHexDigestsEqual } from '../../../shared/helpers/timing-safe-equal';
 import { GenerateMsTeamsArmTemplateCommand } from './generate-msteams-arm-template.command';
 
 const ARM_TEMPLATE_EXPIRY_MS = 15 * 60 * 1000; // 15 minutes
@@ -74,7 +75,7 @@ export class GenerateMsTeamsArmTemplate {
     const payload = `${integrationId}:${expMs}`;
     const expected = createHmac('sha256', signingKey).update(payload).digest('hex');
 
-    if (sig !== expected) {
+    if (!areHexDigestsEqual(expected, sig)) {
       throw new UnauthorizedException('Invalid ARM template signature');
     }
   }

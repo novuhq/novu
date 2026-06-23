@@ -13,12 +13,12 @@ import {
   type HealthCheckStatus,
   type MsTeamsHealthCheckResult,
 } from '@/api/integrations';
+import { useConnectSubscriber } from '@/components/connect/connect-subscriber-provider';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import { CodeBlock } from '@/components/primitives/code-block';
 import { CopyButton } from '@/components/primitives/copy-button';
 import { InlineToast } from '@/components/primitives/inline-toast';
-import { useConnectSubscriber } from '@/components/connect/connect-subscriber-provider';
-import { API_HOSTNAME } from '@/config';
+import { getAgentApiBaseUrl, getAgentApiHostname } from '@/config';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
@@ -57,26 +57,14 @@ type IntegrationProvisioningState = {
 // Helpers
 // ---------------------------------------------------------------------------
 
-function getApiBaseUrl(): string {
-  return (API_HOSTNAME ?? 'https://api.novu.co').replace(/\/$/, '');
-}
-
-function getApiHostname(): string {
-  try {
-    return new URL(getApiBaseUrl()).hostname;
-  } catch {
-    return 'api.novu.co';
-  }
-}
-
 function buildOAuthCallbackUrl(): string {
-  return `${getApiBaseUrl()}/v1/integrations/chat/oauth/callback`;
+  return `${getAgentApiBaseUrl()}/v1/integrations/chat/oauth/callback`;
 }
 
 function buildManifest(appId: string, agentName: string): Record<string, unknown> {
   const id = appId || 'YOUR_APP_ID';
   const name = agentName || 'Novu Agent';
-  const hostname = getApiHostname();
+  const hostname = getAgentApiHostname();
 
   return {
     $schema: 'https://developer.microsoft.com/json-schemas/teams/v1.16/MicrosoftTeams.schema.json',
@@ -535,7 +523,7 @@ function ConnectAndLinkSection({
   }, [onFullyConnected]);
 
   return (
-    <div className="flex min-w-0 flex-col gap-3">
+    <div className="flex min-w-0 flex-col gap-3 w-full">
       {/* container={undefined} satisfies the Pick<NovuUIOptions, 'container' | 'appearance'> requirement */}
       <MsTeamsConnectButton
         integrationIdentifier={integrationIdentifier}
@@ -563,7 +551,7 @@ function ConnectAndLinkSection({
             transition={{ duration: 0.2, ease: 'easeInOut' }}
             className="overflow-hidden"
           >
-            <div className="flex min-w-0 flex-col gap-3">
+            <div className="flex min-w-0 flex-col gap-3 w-full">
               <InlineToast
                 className="w-full"
                 variant="warning"
@@ -824,7 +812,7 @@ export function TeamsSetupGuide({
   const manualHealth = useManualHealthPoll(integrationId, hasCredentials && activeSetupMode === 'manual');
 
   // Build the webhook URL used in the manual Bot deployment instructions.
-  const webhookUrl = `${getApiBaseUrl()}/v1/agents/${agent._id}/webhook/${integrationIdentifier}`;
+  const webhookUrl = `${getAgentApiBaseUrl()}/v1/agents/${agent._id}/webhook/${integrationIdentifier}`;
 
   // Steps: App Reg + Redirect URI (base+0), Graph perms (base+1),
   //        Credentials (base+2), Deploy to Azure (base+3), Download pkg (base+4), Upload (base+5), Connect (base+6)
@@ -922,7 +910,7 @@ export function TeamsSetupGuide({
           )
         }
         rightContent={
-          <div className="flex min-w-0 flex-col gap-3">
+          <div className="flex min-w-0 flex-col gap-3 w-full">
             <SetupButton
               leadingIcon={
                 isConnectingAzure ? null : (
@@ -968,6 +956,7 @@ export function TeamsSetupGuide({
       <SetupStep
         index={base + 1}
         status={deriveStepStatus(base + 1, quickFirstIncomplete)}
+        dimmed={!hasCredentials}
         title={quickReadinessTitle}
         description={quickReadinessDescription}
         rightContent={
@@ -997,6 +986,7 @@ export function TeamsSetupGuide({
       <SetupStep
         index={base + 2}
         status={deriveStepStatus(base + 2, quickFirstIncomplete)}
+        dimmed={!hasCredentials}
         title="Add the bot to Microsoft Teams"
         description={
           <ol className="flex flex-col gap-1.5 pl-4 [list-style:decimal]">
@@ -1032,7 +1022,7 @@ export function TeamsSetupGuide({
           </ol>
         }
         rightContent={
-          <div className="flex min-w-0 flex-col gap-3">
+          <div className="flex min-w-0 flex-col gap-3 w-full">
             <div className="self-start">
               <SetupButton
                 leadingIcon={<Download className="size-3.5" />}
@@ -1074,10 +1064,11 @@ export function TeamsSetupGuide({
       <SetupStep
         index={base + 3}
         status={deriveStepStatus(base + 3, quickFirstIncomplete)}
+        dimmed={!hasCredentials}
         title="Connect Novu to MS Teams"
         description="Grant admin consent and verify the connection by signing in with a Microsoft account that has Teams admin permissions."
         rightContent={
-          <div className="flex min-w-0 flex-col gap-3">
+          <div className="flex min-w-0 flex-col gap-3 w-full">
             {/* teamsAppCatalogId is available here for future use (e.g. an "Open in Teams" deep link once catalog propagation is confirmed) */}
             {hasCredentials && isConnectSubscriberReady && connectionIdentifier ? (
               <ConnectAndLinkSection
@@ -1152,7 +1143,7 @@ export function TeamsSetupGuide({
           </ol>
         }
         rightContent={
-          <div className="flex min-w-0 flex-col gap-3">
+          <div className="flex min-w-0 flex-col gap-3 w-full">
             <SetupButton
               href="https://portal.azure.com/#view/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/~/RegisteredApps"
               leadingIcon={
@@ -1286,6 +1277,7 @@ export function TeamsSetupGuide({
       <SetupStep
         index={base + 3}
         status={deriveStepStatus(base + 3, firstIncomplete)}
+        dimmed={!hasCredentials}
         title="Deploy the Azure Bot to your subscription"
         description={
           <div className="flex flex-col gap-3">
@@ -1310,7 +1302,7 @@ export function TeamsSetupGuide({
           </div>
         }
         rightContent={
-          <div className="flex min-w-0 flex-col gap-3">
+          <div className="flex min-w-0 flex-col gap-3 w-full">
             <SetupButton
               leadingIcon={
                 isDeploying ? null : (
@@ -1346,6 +1338,7 @@ export function TeamsSetupGuide({
       <SetupStep
         index={base + 4}
         status={deriveStepStatus(base + 4, firstIncomplete)}
+        dimmed={!hasCredentials}
         title="Download the Teams app package"
         description={
           <ol className="flex flex-col gap-1.5 pl-4 [list-style:decimal]">
@@ -1365,7 +1358,7 @@ export function TeamsSetupGuide({
           </ol>
         }
         rightContent={
-          <div className="flex min-w-0 flex-col gap-3 self-stretch">
+          <div className="flex min-w-0 flex-col gap-3 self-stretch w-full">
             <div className="self-start">
               <SetupButton
                 leadingIcon={<Download className="size-3.5" />}
@@ -1392,6 +1385,7 @@ export function TeamsSetupGuide({
       <SetupStep
         index={base + 5}
         status={deriveStepStatus(base + 5, firstIncomplete)}
+        dimmed={!hasCredentials}
         title="Upload to Teams and verify"
         description={
           <div className="flex flex-col gap-4">
@@ -1473,10 +1467,11 @@ export function TeamsSetupGuide({
       <SetupStep
         index={base + 6}
         status={deriveStepStatus(base + 6, firstIncomplete)}
+        dimmed={!hasCredentials}
         title="Connect Novu to MS Teams"
         description="Grant admin consent and verify the connection by signing in with a Microsoft account that has Teams admin permissions."
         rightContent={
-          <div className="flex min-w-0 flex-col gap-3">
+          <div className="flex min-w-0 flex-col gap-3 w-full">
             {hasCredentials && isConnectSubscriberReady && connectionIdentifier ? (
               <ConnectAndLinkSection
                 integrationIdentifier={integrationIdentifier}

@@ -17,6 +17,7 @@ function buildMockProvider(overrides: Partial<Record<string, sinon.SinonStub>> =
     getAgent: sinon.stub().resolves({ externalAgentId: 'ext-agent', name: 'Agent' }),
     getEnvironment: sinon.stub().resolves({ id: 'env-id', name: 'Default' }),
     getConfig: sinon.stub().resolves({ model: 'claude', systemPrompt: '', mcpServers: [], tools: [] }),
+    refreshPlatformDefinition: sinon.stub().resolves(undefined),
     updateConfig: sinon.stub().resolves({ model: 'claude', systemPrompt: '', mcpServers: [], tools: [] }),
     provisionIntegration: sinon
       .stub()
@@ -74,6 +75,19 @@ describe('Verify Managed Credentials API #novu-v2', () => {
       expect(res.body.data?.valid ?? res.body.valid).to.equal(true);
       expect(mockProvider.validateCredentials.calledOnce, 'validateCredentials should be called once').to.be.true;
       expect(mockProvider.validateCredentials.firstCall.args[0]).to.deep.equal({ apiKey: FAKE_API_KEY });
+    });
+
+    it('accepts API key authentication for CLI connect flows', async () => {
+      const res = await session.testAgent
+        .post('/v1/agents/verify-credentials')
+        .set('authorization', `ApiKey ${session.apiKey}`)
+        .send({
+          providerId: AgentRuntimeProviderIdEnum.Anthropic,
+          apiKey: FAKE_API_KEY,
+        });
+
+      expect(res.status).to.equal(201);
+      expect(res.body.data?.valid ?? res.body.valid).to.equal(true);
     });
 
     it('returns 401 when the provider rejects the API key', async () => {

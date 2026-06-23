@@ -39,7 +39,7 @@ type TelegramMobileSetupCardShellProps = {
  * `IntegrationStoreTelegramMobileSetupCard`) drive the data via their own
  * `useQuery` and pass results in.
  */
-export function TelegramMobileSetupCardShell({
+function TelegramMobileSetupCardShell({
   link,
   isRefreshing,
   isError,
@@ -170,8 +170,6 @@ export function AgentTelegramMobileSetupCard({
   );
 }
 
-/** @deprecated Prefer `AgentTelegramMobileSetupCard`. Re-exported for backwards compat. */
-export const TelegramMobileSetupCard = AgentTelegramMobileSetupCard;
 
 type IntegrationStoreTelegramMobileSetupCardProps = {
   disabled?: boolean;

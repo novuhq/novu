@@ -15,6 +15,7 @@ import { useEnvironment } from '@/context/environment/hooks';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { formatDateSimple } from '@/utils/format-date';
 import { ClaudeIcon } from '../icons/claude';
+import { ExceedsPlanIndicator } from './exceeds-plan-indicator';
 
 type AgentDetailsHeaderProps = {
   agent: AgentResponse | undefined;
@@ -55,6 +56,7 @@ export function AgentDetailsHeader({ agent, isLoading, onRequestDelete }: AgentD
                 LOCAL
               </Badge>
             ) : null}
+            {agent.exceedsPlanLimit ? <ExceedsPlanIndicator resource="agent" /> : null}
           </div>
           <div className="flex min-w-0 items-center gap-1">
             <span className="text-text-soft font-mono text-label-xs leading-4 tracking-tight">Created</span>

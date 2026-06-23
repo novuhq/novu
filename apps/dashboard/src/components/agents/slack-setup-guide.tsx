@@ -15,7 +15,7 @@ import { CodeBlock } from '@/components/primitives/code-block';
 import { InlineToast } from '@/components/primitives/inline-toast';
 import { Input } from '@/components/primitives/input';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
-import { API_HOSTNAME } from '@/config';
+import { getAgentApiBaseUrl } from '@/config';
 import { useAuth } from '@/context/auth/hooks';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
@@ -43,23 +43,20 @@ export type SlackSetupGuideProps = {
   onStepsCompleted?: () => void;
   /** Integrations tab: same content without Overview chrome */
   embedded?: boolean;
+  onWelcomeSent?: () => void;
 };
 
 function escapeYamlDoubleQuoted(value: string): string {
   return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 }
 
-function getApiBaseUrl(): string {
-  return (API_HOSTNAME ?? 'https://api.novu.co').replace(/\/$/, '');
-}
-
 function buildAgentSlackWebhookUrl(agentId: string, integrationIdentifier: string): string {
-  return `${getApiBaseUrl()}/v1/agents/${agentId}/webhook/${integrationIdentifier}`;
+  return `${getAgentApiBaseUrl()}/v1/agents/${agentId}/webhook/${integrationIdentifier}`;
 }
 
 /** Same as API `CHAT_OAUTH_CALLBACK_PATH`: Slack OAuth redirect after connect. */
 function buildChatOAuthCallbackUrl(): string {
-  return `${getApiBaseUrl()}/v1/integrations/chat/oauth/callback`;
+  return `${getAgentApiBaseUrl()}/v1/integrations/chat/oauth/callback`;
 }
 
 /**
@@ -254,6 +251,7 @@ export function SlackSetupGuide({
   stepOffset = 1,
   onStepsCompleted,
   embedded = false,
+  onWelcomeSent,
 }: SlackSetupGuideProps) {
   const { currentUser, isUserLoaded } = useAuth();
   const { subscriberId: connectSubscriberId, isReady: isConnectSubscriberReady } = useConnectSubscriber();
@@ -297,6 +295,7 @@ export function SlackSetupGuide({
     if (currentEnvironment && selectedIntegrationIdentifier) {
       sendAgentWelcomeMessage(currentEnvironment, agent.identifier, selectedIntegrationIdentifier)
         .then((res) => {
+          onWelcomeSent?.();
           if (res.conversationId) {
             setSearchParams((prev) => {
               prev.set('onboardingConversationId', res.conversationId as string);
@@ -315,6 +314,7 @@ export function SlackSetupGuide({
     agent.identifier,
     selectedIntegrationIdentifier,
     setSearchParams,
+    onWelcomeSent,
   ]);
   const hasCredentials = hasIntegrationCredentials(selectedIntegration?.credentials);
   const isCredentialsSaved = hasCredentials || credentialsSavedLocally;
@@ -373,7 +373,7 @@ export function SlackSetupGuide({
     ) : null;
 
   const renderSlackInstallStepRightContent = (completePrerequisiteStepIndex: number) => (
-    <div className="flex min-w-0 flex-col gap-3">
+    <div className="flex min-w-0 flex-col gap-3 w-full">
       {isCredentialsSaved && slackInstallConnectControl ? (
         slackInstallConnectControl
       ) : (
@@ -403,7 +403,7 @@ export function SlackSetupGuide({
           </span>
         }
         rightContent={
-          <div className="flex min-w-0 flex-col gap-3">
+          <div className="flex min-w-0 flex-col gap-3 w-full">
             <SetupButton href="https://api.slack.com/apps">Slack App Configuration Token</SetupButton>
             {!isCredentialsSaved ? (
               isConnectSubscriberReady && connectionIdentifier ? (
@@ -430,6 +430,7 @@ export function SlackSetupGuide({
       <SetupStep
         index={base + 1}
         status={deriveStepStatus(base + 1, firstIncompleteStep)}
+        dimmed={!isCredentialsSaved}
         title="Verify by installing the app to your workspace"
         description="This is what your users need to do to install the slack app to their workspace to start interacting with it."
         rightContent={renderSlackInstallStepRightContent(base)}
@@ -438,6 +439,7 @@ export function SlackSetupGuide({
       <SetupStep
         index={base + 2}
         status={deriveStepStatus(base + 2, firstIncompleteStep)}
+        dimmed={!isCredentialsSaved}
         title="Send your first message"
         description={
           <span>

@@ -4,8 +4,6 @@ import { RiArrowRightSLine, RiLoader4Line } from 'react-icons/ri';
 import { Avatar, AvatarFallback } from '@/components/primitives/avatar';
 import { Button } from '@/components/primitives/button';
 import { Input } from '@/components/primitives/input';
-import { AutoCreateConnectOrganization } from '@/components/auth/auto-create-connect-organization';
-import { isManualOrgCreationAllowed } from '@/utils/connect';
 import { ROUTES } from '@/utils/routes';
 import { useTelemetry } from '../../../hooks/use-telemetry';
 import { TelemetryEvent } from '../../../utils/telemetry';
@@ -175,7 +173,7 @@ function OrganizationListContent({
   };
 
   const handleCreateSuccess = () => {
-    window.location.href = afterCreateOrganizationUrl || ROUTES.INBOX_USECASE;
+    window.location.href = afterCreateOrganizationUrl || ROUTES.USECASE_SELECT;
   };
 
   if (isLoading) {
@@ -361,10 +359,6 @@ export function OrganizationCreate(props?: {
   afterSelectOrganizationUrl?: string;
   afterCreateOrganizationUrl?: string;
 }) {
-  if (!isManualOrgCreationAllowed()) {
-    return <AutoCreateConnectOrganization />;
-  }
-
   return (
     <PlatformOrganizationCreate
       afterCreateOrganizationUrl={props?.afterCreateOrganizationUrl}

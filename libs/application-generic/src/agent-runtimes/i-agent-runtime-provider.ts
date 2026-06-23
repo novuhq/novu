@@ -5,6 +5,7 @@ import type {
   AgentRuntimeProviderIdEnum,
   AgentSkillDto,
   AgentToolDto,
+  McpTokenEndpointAuthMethod,
 } from '@novu/shared';
 
 export type CreateAgentInput = {
@@ -70,6 +71,14 @@ export interface VaultCredentialAuthOAuthClient {
   tokenEndpoint: string;
   /** RFC 8707 resource indicator replayed verbatim on refresh. */
   resource?: string;
+  /**
+   * `token_endpoint_auth_method` negotiated at DCR time (RFC 8414 §2). Drives
+   * how the runtime provider's vault authenticates refresh requests to the
+   * upstream token endpoint. Absent on legacy credentials registered before
+   * negotiation existed — callers default to `'client_secret_basic'` per
+   * RFC 8414.
+   */
+  tokenEndpointAuthMethod?: McpTokenEndpointAuthMethod;
 }
 
 /**
@@ -128,11 +137,6 @@ export interface DeleteVaultCredentialInput {
   /** Scoped Anthropic vault container (`vlt_…`) that owns this credential. */
   externalVaultId: string;
   vaultCredentialId: string;
-}
-
-export interface ParsedMcpInitFailure {
-  /** Catalog-side display name surfaced by the runtime (e.g. "Sentry"). */
-  mcpServerName: string;
 }
 
 /**
@@ -230,6 +234,14 @@ export interface IAgentRuntimeProvider {
   updateConfig(externalAgentId: string, patch: UpdateAgentRuntimeConfigInput): Promise<AgentRuntimeConfigDto>;
 
   /**
+   * Re-assert Novu-owned platform config (e.g. the `novu_tools` custom tool) on
+   * an existing agent without changing user-selected tools, MCP servers, model,
+   * system prompt, or skills. Idempotent — used to backfill agents created
+   * before a platform-definition change so they pick up the latest overlay.
+   */
+  refreshPlatformDefinition(externalAgentId: string): Promise<void>;
+
+  /**
    * Provision any provider-side resources needed for an AGENT_RUNTIME integration
    * (e.g. a Claude environment). Called by CreateIntegration after the integration
    * record is saved. Returns a credentialsUpdate that is merged into the integration.
@@ -244,27 +256,14 @@ export interface IAgentRuntimeProvider {
   deprovisionIntegration(credentialsUpdate: Record<string, unknown>): Promise<void>;
 
   /**
-   * Inspect an error surfaced by a streaming turn (or any provider-side call
-   * that goes through MCP server initialisation) and decide whether it is
-   * the "MCP X failed to initialize" shape that means the upstream credential
-   * vault is missing/expired and the caller should prompt the user to
-   * (re-)authorise the MCP.
-   *
-   * Returns `null` for anything else so the caller can fall through to its
-   * generic retry/fallback path. Each provider owns its own error shape;
-   * the abstraction never assumes a specific error class.
-   */
-  parseMcpInitFailure(err: unknown): ParsedMcpInitFailure | null;
-
-  /**
    * Inspect a session that ended in `requires-action` (or was rejected for
-   * "waiting on responses to events") and return the single oldest pending
-   * tool-confirmation request, or `null` if none can be located.
+   * "waiting on responses to events") and return every pending
+   * tool-confirmation request, oldest first.
    *
-   * Providers without a session-scoped event log return `null`; callers fall
+   * Providers without a session-scoped event log return `[]`; callers fall
    * back to a generic error reply.
    */
-  getPendingToolApproval(sessionId: string): Promise<PendingToolApproval | null>;
+  getAllPendingToolApprovals(sessionId: string): Promise<PendingToolApproval[]>;
 
   /**
    * Create an empty credential vault on the provider (Anthropic: `vlt_…`).

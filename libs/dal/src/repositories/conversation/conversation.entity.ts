@@ -38,6 +38,35 @@ export interface ConversationTokenUsage {
   totalTokens: number;
 }
 
+export interface PendingManagedAgentSetup {
+  /** Platform message id for the user turn not yet dispatched to the managed agent */
+  pendingPlatformMessageId: string;
+  /** Platform message id of the in-thread setup card (for edit-in-place) */
+  setupMessageId?: string;
+}
+
+/**
+ * Active-conversations billing state. An "active conversation" is counted once
+ * per activation episode: the first time an agent engages on a (re)opened
+ * thread, again after a rolling inactivity window lapses, and again whenever a
+ * new billing period begins. These fields let `ConversationActivationService`
+ * decide idempotently whether an engagement starts a new activation without
+ * scanning the activity log.
+ */
+export interface ConversationBillingState {
+  /** Period key (YYYY-MM, UTC) the conversation was last counted in. */
+  lastCountedPeriodKey?: string;
+  /** ISO timestamp of the most recent counted agent engagement — anchors the rolling window. */
+  lastEngagementAt?: string;
+  /** ISO timestamp the current activation episode began. */
+  activationStartedAt?: string;
+  /**
+   * ISO timestamp set when the conversation is resolved. While present, the next
+   * agent engagement is counted as a reopen activation. Cleared when counted.
+   */
+  resolvedAt?: string;
+}
+
 export class ConversationEntity {
   _id: string;
 
@@ -78,7 +107,30 @@ export class ConversationEntity {
    */
   managedSessionVaultId?: string;
 
+  /**
+   * Slack message ID of the currently active plan card.
+   * Set on first tool, cleared on finalize.
+   * Only one card is always active per conversation.
+   */
+  activePlanMessageId?: string;
+
+  /**
+   * Set while managed-agent setup blocks dispatch for this thread. Cleared after
+   * the parked inbound is replayed or the setup card is resolved without replay.
+   */
+  pendingManagedAgentSetup?: PendingManagedAgentSetup;
+
   tokenUsage?: ConversationTokenUsage;
+
+  /** Active-conversations billing/metering state — see `ConversationBillingState`. */
+  billing?: ConversationBillingState;
+
+  /**
+   * Whether the primary channel thread is a direct message (vs a group/channel),
+   * captured from the platform at creation. Drives the rolling-window selection
+   * for active-conversation counting on paths without a live thread (outbound).
+   */
+  isDirectMessage?: boolean;
 
   _environmentId: EnvironmentId;
 

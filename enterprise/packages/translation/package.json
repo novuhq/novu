@@ -1,6 +1,6 @@
 {
   "name": "@novu/ee-translation",
-  "version": "2.0.14",
+  "version": "2.0.15",
   "private": true,
   "main": "dist/index.js",
   "scripts": {
@@ -43,8 +43,8 @@
     "liquidjs": "^10.25.7"
   },
   "peerDependencies": {
-    "@nestjs/common": "11.1.21",
-    "@nestjs/platform-express": "11.1.21",
+    "@nestjs/common": "11.1.24",
+    "@nestjs/platform-express": "11.1.24",
     "@nestjs/swagger": "7.4.0",
     "@novu/dal": "workspace:*"
   }

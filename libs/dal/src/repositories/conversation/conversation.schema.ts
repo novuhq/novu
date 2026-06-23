@@ -84,6 +84,18 @@ const conversationSchema = new Schema<ConversationDBModel>(
     managedSessionVaultId: {
       type: Schema.Types.String,
     },
+    activePlanMessageId: {
+      type: Schema.Types.String,
+    },
+    pendingManagedAgentSetup: {
+      type: new Schema(
+        {
+          pendingPlatformMessageId: { type: Schema.Types.String, required: true },
+          setupMessageId: { type: Schema.Types.String },
+        },
+        { _id: false }
+      ),
+    },
     tokenUsage: {
       type: new Schema(
         {
@@ -95,6 +107,20 @@ const conversationSchema = new Schema<ConversationDBModel>(
         },
         { _id: false }
       ),
+    },
+    billing: {
+      type: new Schema(
+        {
+          lastCountedPeriodKey: { type: Schema.Types.String },
+          lastEngagementAt: { type: Schema.Types.String },
+          activationStartedAt: { type: Schema.Types.String },
+          resolvedAt: { type: Schema.Types.String },
+        },
+        { _id: false }
+      ),
+    },
+    isDirectMessage: {
+      type: Schema.Types.Boolean,
     },
     lastActivityAt: {
       type: Schema.Types.String,

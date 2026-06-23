@@ -3,6 +3,7 @@ import { AnalyticsService, PinoLogger } from '@novu/application-generic';
 import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { CHANNELS_WITH_PRIMARY } from '@novu/shared';
 
+import { assertIntegrationEnvironmentScope } from '../../utils/assert-integration-environment-scope';
 import { SetIntegrationAsPrimaryCommand } from './set-integration-as-primary.command';
 
 @Injectable()
@@ -57,6 +58,13 @@ export class SetIntegrationAsPrimary {
     if (!existingIntegration) {
       throw new NotFoundException(`Integration with id ${command.integrationId} not found`);
     }
+
+    assertIntegrationEnvironmentScope({
+      restrictToUserEnvironment: command.restrictToUserEnvironment,
+      userEnvironmentId: command.environmentId,
+      integrationEnvironmentId: existingIntegration._environmentId,
+      action: 'set as primary',
+    });
 
     if (!existingIntegration.channel || !CHANNELS_WITH_PRIMARY.includes(existingIntegration.channel)) {
       throw new BadRequestException(`Channel ${existingIntegration.channel ?? 'unknown'} does not support primary`);

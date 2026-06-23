@@ -14,12 +14,12 @@ export const useCreateTopic = (options?: UseMutationOptions<Topic, unknown, Crea
   const { mutateAsync, ...rest } = useMutation({
     mutationFn: (args: CreateTopicParameters) => createTopic({ environment: currentEnvironment!, ...args }),
     ...options,
-    onSuccess: async (data, variables, ctx) => {
+    onSuccess: async (data, variables, onMutateResult, context) => {
       queryClient.invalidateQueries({
         queryKey: [QueryKeys.fetchTopics],
       });
 
-      options?.onSuccess?.(data, variables, ctx);
+      options?.onSuccess?.(data, variables, onMutateResult, context);
     },
   });
 

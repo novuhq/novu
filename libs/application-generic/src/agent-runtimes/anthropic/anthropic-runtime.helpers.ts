@@ -1,6 +1,6 @@
 import { APIError } from '@anthropic-ai/sdk';
-import type { AgentMcpServerDto, AgentSkillDto, AgentToolDto } from '@novu/shared';
-import { CLAUDE_BUILTIN_TOOLS } from '@novu/shared';
+import type { AgentMcpServerDto, AgentSkillDto, AgentToolDto, McpTokenEndpointAuthMethod } from '@novu/shared';
+import { CLAUDE_BUILTIN_TOOLS, NOVU_TOOLS_SCHEMA, resolvePersistedMcpTokenEndpointAuthMethod } from '@novu/shared';
 import {
   AgentRuntimeNetworkError,
   AgentRuntimeOverloadedError,
@@ -36,6 +36,24 @@ export function truncateWithEllipsis(value: string, max: number): string {
   }
 
   return `${value.slice(0, max - 1)}…`;
+}
+
+/**
+ * Anthropic's SDK formats `APIError.message` as `"<status> <raw-json-body>"`
+ * (e.g. `400 {"type":"error","error":{"message":"…"}}`), which is unreadable
+ * when surfaced to end users. The SDK also exposes the parsed response body on
+ * `error.error`, so we prefer the upstream `error.message` field and fall back
+ * to the raw message only when the structured body is missing.
+ */
+export function extractApiErrorMessage(err: APIError): string {
+  const body = err.error as { error?: { message?: unknown } } | undefined;
+  const providerMessage = body?.error?.message;
+
+  if (typeof providerMessage === 'string' && providerMessage.trim().length > 0) {
+    return providerMessage.trim();
+  }
+
+  return err.message;
 }
 
 /**
@@ -194,14 +212,13 @@ export function mapMcpServer(raw: Record<string, unknown>): AgentMcpServerDto {
 
 /**
  * Default permission policy for managed-agent toolsets we provision.
- * Builtin tools default to `always_allow` when omitted, but MCP toolsets
- * default to `always_ask` — we set this explicitly on both so Novu-created
- * agents do not pause for approval on every tool invocation.
+ * Both builtin and MCP toolsets are set to `always_ask` so that every tool
+ * invocation requires explicit user approval before execution.
  *
  * @see https://platform.claude.com/docs/en/managed-agents/permission-policies
  */
-export const MANAGED_AGENT_ALWAYS_ALLOW_DEFAULT_CONFIG = {
-  permission_policy: { type: 'always_allow' },
+export const MANAGED_AGENT_DEFAULT_PERMISSION_CONFIG = {
+  permission_policy: { type: 'always_ask' },
 } as const;
 
 /**
@@ -227,33 +244,23 @@ export function mapToolset(raw: Record<string, unknown>): AgentToolDto[] {
 }
 
 /**
- * Build the Anthropic `tools` payload array from builtin tool type strings
- * and optional MCP server entries.
- *
- * We always emit the full toolset with every known tool explicitly set to
- * enabled or disabled. Sending only the enabled subset causes the Anthropic
- * API to default all omitted tools to enabled, which means the agent ends up
- * with every tool regardless of what the user selected.
+ * Novu-owned tools always attached to managed agents (independent of user tool/MCP selections).
  */
-export function buildToolsPayload(
+export function buildPlatformToolsPayload(): Record<string, unknown>[] {
+  return [{ type: 'custom', ...NOVU_TOOLS_SCHEMA }];
+}
+
+function buildUserToolsetPayload(
   toolTypes?: string[],
   mcpServers?: Array<{ name: string; url: string }>
 ): Record<string, unknown>[] {
-  const hasTools = Array.isArray(toolTypes) && toolTypes.length > 0;
-  const hasMcpServers = Array.isArray(mcpServers) && mcpServers.length > 0;
-
-  if (!hasTools && !hasMcpServers) {
-    return [];
-  }
-
   const payload: Record<string, unknown>[] = [];
-
   const enabledSet = new Set(toolTypes ?? []);
   const allToolNames = CLAUDE_BUILTIN_TOOLS.map((t) => t.type);
 
   payload.push({
     type: 'agent_toolset_20260401',
-    default_config: MANAGED_AGENT_ALWAYS_ALLOW_DEFAULT_CONFIG,
+    default_config: MANAGED_AGENT_DEFAULT_PERMISSION_CONFIG,
     configs: allToolNames.map((name) => ({ name, enabled: enabledSet.has(name) })),
   });
 
@@ -262,12 +269,31 @@ export function buildToolsPayload(
       payload.push({
         type: 'mcp_toolset',
         mcp_server_name: server.name,
-        default_config: MANAGED_AGENT_ALWAYS_ALLOW_DEFAULT_CONFIG,
+        default_config: MANAGED_AGENT_DEFAULT_PERMISSION_CONFIG,
       });
     }
   }
 
   return payload;
+}
+
+/**
+ * Build the Anthropic `tools` payload array from builtin tool type strings
+ * and optional MCP server entries.
+ *
+ * We always emit the full toolset with every known tool explicitly set to
+ * enabled or disabled. Sending only the enabled subset causes the Anthropic
+ * API to default all omitted tools to enabled, which means the agent ends up
+ * with every tool regardless of what the user selected.
+ *
+ * Platform tools (e.g. `novu_tools`) are always included, even when the user
+ * has no builtin tools or MCP servers enabled.
+ */
+export function buildToolsPayload(
+  toolTypes?: string[],
+  mcpServers?: Array<{ name: string; url: string }>
+): Record<string, unknown>[] {
+  return [...buildUserToolsetPayload(toolTypes, mcpServers), ...buildPlatformToolsPayload()];
 }
 
 /**
@@ -317,6 +343,41 @@ export function buildMcpOAuthUpdateAuth(auth: VaultCredentialAuth): Record<strin
   return payload;
 }
 
+/**
+ * Build Anthropic's `token_endpoint_auth` block from the negotiated DCR
+ * method. Mirrors `selectTokenEndpointAuthMethod` in the API service — the
+ * default for legacy credentials (no method persisted) is
+ * `client_secret_basic` per RFC 8414 §2. The exhaustive switch makes any
+ * future addition to `McpTokenEndpointAuthMethod` a typecheck failure here
+ * before it can silently downgrade a confidential client at refresh time.
+ */
+function buildAnthropicTokenEndpointAuth(
+  oauthClient: NonNullable<VaultCredentialAuth['oauthClient']>
+): Record<string, unknown> {
+  const method: McpTokenEndpointAuthMethod = resolvePersistedMcpTokenEndpointAuthMethod(
+    oauthClient.tokenEndpointAuthMethod
+  );
+
+  switch (method) {
+    case 'none':
+      return { type: 'none' };
+    case 'client_secret_basic':
+    case 'client_secret_post':
+      if (!oauthClient.clientSecret) {
+        throw new Error(
+          `MCP OAuth client registered with \`${method}\` is missing a client secret — refusing to downgrade to public-client semantics.`
+        );
+      }
+
+      return { type: method, client_secret: oauthClient.clientSecret };
+    default: {
+      const _exhaustive: never = method;
+
+      throw new Error(`Unknown token_endpoint_auth_method: ${_exhaustive as string}`);
+    }
+  }
+}
+
 export function buildMcpOAuthRefreshParams(auth: VaultCredentialAuth): Record<string, unknown> {
   // Caller guarantees both before invoking, but narrow defensively so we
   // never emit a half-built refresh block.
@@ -325,9 +386,7 @@ export function buildMcpOAuthRefreshParams(auth: VaultCredentialAuth): Record<st
   }
 
   const { oauthClient } = auth;
-  const tokenEndpointAuth = oauthClient.clientSecret
-    ? { type: 'client_secret_post', client_secret: oauthClient.clientSecret }
-    : { type: 'none' };
+  const tokenEndpointAuth = buildAnthropicTokenEndpointAuth(oauthClient);
 
   return {
     client_id: oauthClient.clientId,
@@ -345,6 +404,10 @@ export function buildMcpOAuthRefreshParams(auth: VaultCredentialAuth): Record<st
  * update endpoint only accepts `refresh_token`, `scope`, and a partial
  * `token_endpoint_auth` (basic / post update params). Emitting any of the
  * immutable fields trips a 400 "Extra inputs are not permitted".
+ *
+ * The `token_endpoint_auth` is only emitted when a client secret exists —
+ * the update schema rejects `{ type: 'none' }` on a credential that was
+ * created with one of the secret-bearing methods.
  */
 export function buildMcpOAuthRefreshUpdateParams(auth: VaultCredentialAuth): Record<string, unknown> {
   if (!auth.refreshToken || !auth.oauthClient) {
@@ -352,16 +415,18 @@ export function buildMcpOAuthRefreshUpdateParams(auth: VaultCredentialAuth): Rec
   }
 
   const { oauthClient } = auth;
-  const tokenEndpointAuth = oauthClient.clientSecret
-    ? { type: 'client_secret_post', client_secret: oauthClient.clientSecret }
-    : undefined;
+  // The update schema rejects `{ type: 'none' }` on a credential that was
+  // created with one of the secret-bearing methods, so we only emit
+  // `token_endpoint_auth` when we have a secret-bearing block to send.
+  const tokenEndpointAuth = oauthClient.clientSecret ? buildAnthropicTokenEndpointAuth(oauthClient) : undefined;
+  const hasSecretBearingAuth = tokenEndpointAuth && tokenEndpointAuth.type !== 'none';
 
   const payload: Record<string, unknown> = {
     refresh_token: auth.refreshToken,
     scope: auth.scopes && auth.scopes.length > 0 ? auth.scopes.join(' ') : null,
   };
 
-  if (tokenEndpointAuth) {
+  if (hasSecretBearingAuth) {
     payload.token_endpoint_auth = tokenEndpointAuth;
   }
 

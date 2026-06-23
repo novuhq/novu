@@ -1,6 +1,6 @@
 {
   "name": "@novu/shared",
-  "version": "2.6.6",
+  "version": "2.7.0",
   "description": "",
   "scripts": {
     "start": "npm run start:dev",
@@ -26,6 +26,7 @@
   "types": "dist/cjs/index.d.ts",
   "files": [
     "dist/",
+    "docs/agent-onboarding.md",
     "!**/*.spec.*",
     "!**/*.json",
     "CHANGELOG.md",
@@ -43,6 +44,11 @@
       "import": "./dist/esm/utils/index.js",
       "types": "./dist/esm/utils/index.d.js"
     },
+    "./utils/private-ip-classification": {
+      "require": "./dist/cjs/utils/private-ip-classification.js",
+      "import": "./dist/esm/utils/private-ip-classification.js",
+      "types": "./dist/esm/utils/private-ip-classification.d.ts"
+    },
     "./utils/ssrf-url-validation": {
       "require": "./dist/cjs/utils/ssrf-url-validation.js",
       "import": "./dist/esm/utils/ssrf-url-validation.js",
@@ -52,10 +58,11 @@
       "require": "./dist/cjs/utils/safe-outbound-http.js",
       "import": "./dist/esm/utils/safe-outbound-http.js",
       "types": "./dist/esm/utils/safe-outbound-http.d.ts"
-    }
+    },
+    "./docs/agent-onboarding.md": "./docs/agent-onboarding.md"
   },
   "dependencies": {
-    "lru-cache": "^11.3.6"
+    "lru-cache": "^11.5.1"
   },
   "devDependencies": {
     "madge": "^8.0.0",

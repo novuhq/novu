@@ -43,8 +43,34 @@ type GotRequestParams = {
   httpsOptions: { rejectUnauthorized: boolean };
 };
 
+interface SafeRequestParams {
+  url: string;
+  method: Method;
+  headers: Record<string, string> | undefined;
+  body: unknown;
+  timeout: number;
+  responseType: 'json' | 'text';
+  rejectUnauthorized: boolean;
+}
+
+interface RetryConfig {
+  retriesLimit: number;
+  retryStatusCodes: number[];
+  retryErrorCodes: string[];
+  onRetry?: HttpRequestOptions['onRetry'];
+}
+
+/** A retry signal describes which condition (status or transport code) makes the failure retryable. */
+type RetrySignal = { statusCode: number } | { errorCode: string };
+
 function normalizeHeaders(headers: Record<string, string | string[] | undefined>): Record<string, string> {
   return Object.fromEntries(Object.entries(headers).map(([k, v]) => [k, Array.isArray(v) ? v.join(', ') : (v ?? '')]));
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
 }
 
 @Injectable()
@@ -102,18 +128,16 @@ export class HttpClientService {
 
     try {
       if (options.enforceSsrfProtection) {
-        // The safe outbound pipeline does not run through `got`, so the `retry`
-        // / `onRetry` plumbing above is bypassed. Surface that explicitly so a
-        // caller does not silently lose retry semantics — the JSDoc on
-        // `enforceSsrfProtection` documents the same constraint.
-        if ((retriesLimit ?? 0) > 0 || onRetry) {
-          this.logger.warn(
-            { url, method },
-            'enforceSsrfProtection is enabled; retry / onRetry options are not honoured on the safe outbound path'
-          );
-        }
-
-        return await this.requestSafe<T>({ url, method, headers, body, timeout, responseType, rejectUnauthorized });
+        // The safe outbound pipeline does not run through `got`, so `got`'s own
+        // retry machinery is bypassed. We re-implement the same retry contract
+        // (limit, retryable status/error codes, exponential backoff, `onRetry`)
+        // directly around the SSRF-safe runner so callers keep their retry
+        // semantics. SSRF policy rejections (`SsrfBlockedError`) are never
+        // retried — they are deterministic and retrying cannot change them.
+        return await this.requestSafeWithRetry<T>(
+          { url, method, headers, body, timeout, responseType, rejectUnauthorized },
+          { retriesLimit, retryStatusCodes, retryErrorCodes, onRetry }
+        );
       }
 
       if (responseType === 'text') {
@@ -126,15 +150,56 @@ export class HttpClientService {
     }
   }
 
-  private async requestSafe<T>(params: {
-    url: string;
-    method: Method;
-    headers: Record<string, string> | undefined;
-    body: unknown;
-    timeout: number;
-    responseType: 'json' | 'text';
-    rejectUnauthorized: boolean;
-  }): Promise<HttpResponse<T>> {
+  private async requestSafeWithRetry<T>(params: SafeRequestParams, retryConfig: RetryConfig): Promise<HttpResponse<T>> {
+    const { retriesLimit, retryStatusCodes, retryErrorCodes, onRetry } = retryConfig;
+
+    // `attempt` is a 1-based iteration counter: it is 1 when the initial
+    // request fails (the decision point for the first retry), 2 when the first
+    // retry fails, etc. This mirrors `got`'s `attemptCount` so the backoff curve
+    // and `onRetry` semantics are identical to the non-SSRF path.
+    for (let attempt = 1; ; attempt += 1) {
+      try {
+        return await this.requestSafe<T>(params);
+      } catch (error) {
+        const signal =
+          attempt <= retriesLimit ? this.getSafeRetrySignal(error, retryStatusCodes, retryErrorCodes) : null;
+
+        if (!signal) {
+          throw error;
+        }
+
+        const delay = 2 ** attempt * RETRY_BASE_INTERVAL_IN_MS;
+        onRetry?.({ attemptCount: attempt, delay, ...signal });
+
+        await sleep(delay);
+      }
+    }
+  }
+
+  /**
+   * Decide whether a failed safe-outbound attempt is retryable. Returns the
+   * matching retry signal (status or transport error code) or `null` when the
+   * error must propagate. `SsrfBlockedError` carries neither a retryable status
+   * code nor a transport `code`, so it always propagates.
+   */
+  private getSafeRetrySignal(
+    error: unknown,
+    retryStatusCodes: number[],
+    retryErrorCodes: string[]
+  ): RetrySignal | null {
+    if (error instanceof HttpClientError && error.statusCode && retryStatusCodes.includes(error.statusCode)) {
+      return { statusCode: error.statusCode };
+    }
+
+    const code = (error as { code?: unknown } | null)?.code;
+    if (typeof code === 'string' && retryErrorCodes.includes(code)) {
+      return { errorCode: code };
+    }
+
+    return null;
+  }
+
+  private async requestSafe<T>(params: SafeRequestParams): Promise<HttpResponse<T>> {
     const safeOptions: SafeOutboundRequestOptions = {
       url: params.url,
       method: params.method as SafeOutboundRequestOptions['method'],
@@ -253,6 +318,21 @@ export class HttpClientService {
     }
 
     if (!(error instanceof RequestError)) {
+      // The SSRF-safe runner does not use `got`, so its transport failures
+      // surface as plain Node errors carrying an errno `code` (e.g. ETIMEDOUT,
+      // ECONNRESET). Preserve that code as `networkCode` and classify timeouts
+      // as TIMEOUT so callers branching on `error.type` / `error.networkCode`
+      // behave identically to the `got` path.
+      const networkCode = (error as NodeJS.ErrnoException | null)?.code;
+      if (typeof networkCode === 'string') {
+        return new HttpClientError({
+          type: networkCode === 'ETIMEDOUT' ? HttpClientErrorType.TIMEOUT : HttpClientErrorType.NETWORK_ERROR,
+          message: error instanceof Error ? error.message : String(error),
+          networkCode,
+          cause: error,
+        });
+      }
+
       return new HttpClientError({
         type: HttpClientErrorType.UNKNOWN,
         message: error instanceof Error ? error.message : String(error),

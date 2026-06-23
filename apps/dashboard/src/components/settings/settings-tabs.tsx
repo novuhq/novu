@@ -22,6 +22,11 @@ import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { TeamMembers } from '@/utils/better-auth/components/team-members';
 import { UserProfile as BetterAuthUserProfile } from '@/utils/better-auth/index';
+import { ROUTES } from '@/utils/routes';
+
+// Pin Clerk's post-leave/delete redirect to the local `/auth/organization-list` so `AuthProvider`
+// can clear any org Clerk auto-activates and let the picker render the empty state.
+const AFTER_LEAVE_ORG_URL = ROUTES.SIGNUP_ORGANIZATION_LIST;
 
 const FADE_ANIMATION = {
   initial: { opacity: 0 },
@@ -43,8 +48,6 @@ type SettingsTabsProps = {
    * this URL we default to the account tab.
    */
   rootRoute: string;
-  // Hides the Billing tab and its inline upgrade prompts. Used by Connect.
-  hideBilling?: boolean;
 };
 
 const getClerkComponentAppearance = (isRbacEnabled: boolean): ClerkAppearanceTheme => ({
@@ -114,7 +117,7 @@ function resolveCurrentTab(pathname: string, routes: SettingsTabRoutes, rootRout
   return entry?.[0] ?? 'account';
 }
 
-export function SettingsTabs({ routes, rootRoute, hideBilling = false }: SettingsTabsProps) {
+export function SettingsTabs({ routes, rootRoute }: SettingsTabsProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { subscription } = useFetchSubscription();
@@ -126,7 +129,7 @@ export function SettingsTabs({ routes, rootRoute, hideBilling = false }: Setting
   const clerkAppearance = useMemo(() => getClerkComponentAppearance(isRbacEnabled), [isRbacEnabled]);
   const UserProfile = EE_AUTH_PROVIDER === 'clerk' ? ClerkUserProfile : BetterAuthUserProfile;
 
-  const canShowBilling = !IS_SELF_HOSTED && hasBillingPermission && !hideBilling;
+  const canShowBilling = !IS_SELF_HOSTED && hasBillingPermission;
 
   const currentTab = resolveCurrentTab(location.pathname, routes, rootRoute);
 
@@ -233,7 +236,7 @@ export function SettingsTabs({ routes, rootRoute, hideBilling = false }: Setting
                   />
                 )}
                 {EE_AUTH_PROVIDER === 'clerk' ? (
-                  <OrganizationProfile appearance={clerkAppearance}>
+                  <OrganizationProfile appearance={clerkAppearance} afterLeaveOrganizationUrl={AFTER_LEAVE_ORG_URL}>
                     <OrganizationProfile.Page label="general" />
                   </OrganizationProfile>
                 ) : (

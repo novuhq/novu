@@ -1,5 +1,5 @@
 import { Novu } from '@novu/api';
-import { LogRepository, RequestLog, RequestLogRepository } from '@novu/application-generic';
+import { LogRepository, RequestLog, RequestLogRepository, RequestLogSourceEnum } from '@novu/application-generic';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { format, isAfter, subHours } from 'date-fns';
@@ -38,6 +38,7 @@ describe('Activity - /activity/requests (GET) #novu-v2', () => {
       response_body: '{}',
       auth_type: 'ApiKey',
       duration_ms: 42,
+      source: RequestLogSourceEnum.HTTP,
     };
 
     await requestLogRepository.createMany([requestLog, requestLog], {
@@ -71,6 +72,7 @@ describe('Activity - /activity/requests (GET) #novu-v2', () => {
       organizationId: requestLog.organization_id,
       environmentId: requestLog.environment_id,
       statusCode: requestLog.status_code,
+      source: requestLog.source,
     });
     const responseLog = normalizeRequestLogForTesting(body.data[0]);
     expect(responseLog).to.deep.equal(expectedLog);
@@ -93,6 +95,7 @@ describe('Activity - /activity/requests (GET) #novu-v2', () => {
       response_body: '{}',
       auth_type: 'ApiKey',
       duration_ms: 42,
+      source: RequestLogSourceEnum.HTTP,
     };
 
     // Create logs with different status codes, URLs, transaction IDs, and timestamps
@@ -208,6 +211,68 @@ describe('Activity - /activity/requests (GET) #novu-v2', () => {
     const twoHoursAgo = subHours(currentTime, 2);
     expect(isAfter(recentCreatedAt[0], twoHoursAgo)).to.be.true;
     expect(isAfter(recentCreatedAt[1], twoHoursAgo)).to.be.true;
+  });
+
+  it('should filter requests by source', async () => {
+    const baseRequestLog: Omit<RequestLog, 'id' | 'expires_at' | 'source' | 'transaction_id'> = {
+      user_id: session.user._id,
+      environment_id: session.environment._id,
+      organization_id: session.organization._id,
+      status_code: 200,
+      created_at: format(new Date(), 'yyyy-MM-dd HH:mm:ss') as any,
+      path: '/test-path',
+      url: '/test-url',
+      url_pattern: '/test-url-pattern/:id',
+      hostname: 'localhost',
+      method: 'GET',
+      ip: '127.0.0.1',
+      user_agent: 'test-agent',
+      request_body: '{}',
+      response_body: '{}',
+      auth_type: 'ApiKey',
+      duration_ms: 42,
+    };
+
+    const httpLog = { ...baseRequestLog, transaction_id: generateTransactionId(), source: RequestLogSourceEnum.HTTP };
+    const inboundLog = {
+      ...baseRequestLog,
+      transaction_id: generateTransactionId(),
+      method: 'INBOUND',
+      source: RequestLogSourceEnum.INBOUND_EMAIL,
+    };
+
+    await requestLogRepository.createMany([httpLog, inboundLog], {
+      organizationId: session.organization._id,
+      environmentId: session.environment._id,
+      userId: session.user._id,
+    });
+
+    const inboundResponse = await session.testAgent
+      .get('/v1/activity/requests')
+      .query({ source: RequestLogSourceEnum.INBOUND_EMAIL })
+      .expect(200);
+
+    expect(inboundResponse.body.data.length).to.be.at.least(1);
+    expect(inboundResponse.body.data.every((row) => row.source === RequestLogSourceEnum.INBOUND_EMAIL)).to.be.true;
+    const inboundRow = inboundResponse.body.data.find((row) => row.transactionId === inboundLog.transaction_id);
+    expect(inboundRow).to.exist;
+    expect(inboundRow.method).to.be.equal('INBOUND');
+
+    const httpResponse = await session.testAgent
+      .get('/v1/activity/requests')
+      .query({ source: RequestLogSourceEnum.HTTP })
+      .expect(200);
+
+    expect(httpResponse.body.data.length).to.be.at.least(1);
+    expect(httpResponse.body.data.every((row) => row.source === RequestLogSourceEnum.HTTP)).to.be.true;
+    const httpRow = httpResponse.body.data.find((row) => row.transactionId === httpLog.transaction_id);
+    expect(httpRow).to.exist;
+
+    const rejectedResponse = await session.testAgent
+      .get('/v1/activity/requests')
+      .query({ source: 'not-a-valid-source' });
+
+    expect(rejectedResponse.status).to.be.equal(422);
   });
 });
 

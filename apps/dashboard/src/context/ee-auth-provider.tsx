@@ -1,28 +1,11 @@
-import { buttonVariants } from '@/components/primitives/button';
-import {
-  CLERK_PUBLISHABLE_KEY,
-  CLERK_PROXY_URL,
-  EE_AUTH_PROVIDER,
-  IS_ENTERPRISE,
-  IS_HOSTNAME_SPLIT_ENABLED,
-  IS_NOVU_CONNECT,
-  IS_SELF_HOSTED,
-  normalizeAppHost,
-  NOVU_CONNECT_HOSTNAME,
-  NOVU_PLATFORM_HOSTNAME,
-} from '@/config';
-import { isAbsoluteUrl } from '@/utils/apps';
-import { buildAfterSignOutUrl } from '@/utils/cross-product-sign-out';
-import {
-  buildPrimarySignInUrl,
-  buildPrimarySignUpUrl,
-  CONNECT_PRODUCT_VALUE,
-  PRODUCT_QUERY_PARAM,
-} from '@/utils/product-auth-urls';
-import { ROUTES } from '@/utils/routes';
 import { ClerkProvider as _ClerkProvider } from '@clerk/react';
 import { PropsWithChildren } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { buttonVariants } from '@/components/primitives/button';
+import { CLERK_PUBLISHABLE_KEY, EE_AUTH_PROVIDER, IS_ENTERPRISE, IS_SELF_HOSTED } from '@/config';
+import { isAbsoluteUrl } from '@/utils/apps';
+import { buildClerkAllowedRedirectOrigins } from '@/utils/product-auth-urls';
+import { ROUTES } from '@/utils/routes';
 
 type EEAuthProviderProps = PropsWithChildren;
 
@@ -40,8 +23,7 @@ export const EEAuthProvider = (props: EEAuthProviderProps) => {
     return <_ClerkProvider>{children}</_ClerkProvider>;
   }
 
-  // Escape React Router for absolute URLs (cross-origin handoff) and re-attach `?product=` so
-  // Clerk's internal sub-route pushes don't strip the Connect-branding flag mid-flow.
+  // Escape React Router for absolute URLs; otherwise navigate in-app.
   const navigateClerk = (to: string, replace = false) => {
     if (isAbsoluteUrl(to)) {
       if (replace) {
@@ -53,66 +35,26 @@ export const EEAuthProvider = (props: EEAuthProviderProps) => {
       return;
     }
 
-    let target = to;
-
-    if (typeof window !== 'undefined' && target.startsWith('/auth/')) {
-      const currentProduct = new URLSearchParams(window.location.search).get(PRODUCT_QUERY_PARAM);
-
-      if (currentProduct) {
-        const url = new URL(target, window.location.origin);
-
-        if (!url.searchParams.has(PRODUCT_QUERY_PARAM)) {
-          url.searchParams.set(PRODUCT_QUERY_PARAM, currentProduct);
-          target = `${url.pathname}${url.search}${url.hash}`;
-        }
-      }
-    }
-
     if (replace) {
-      navigate(target, { replace: true });
+      navigate(to, { replace: true });
     } else {
-      navigate(target);
+      navigate(to);
     }
   };
 
-  // Sign-in flows are only allowed on the primary; satellite must point `signInUrl`/`signUpUrl`
-  // back to it. Primary lists the Connect origin in `allowedRedirectOrigins` for post-auth bounce.
-  const isSatellite = IS_HOSTNAME_SPLIT_ENABLED && IS_NOVU_CONNECT;
+  const signInUrl = ROUTES.SIGN_IN;
+  const signUpUrl = ROUTES.SIGN_UP;
 
-  const satelliteSignInUrl = buildPrimarySignInUrl({ product: CONNECT_PRODUCT_VALUE });
-  const satelliteSignUpUrl = buildPrimarySignUpUrl({ product: CONNECT_PRODUCT_VALUE });
-
-  const signInUrl = isSatellite ? satelliteSignInUrl : ROUTES.SIGN_IN;
-  const signUpUrl = isSatellite ? satelliteSignUpUrl : ROUTES.SIGN_UP;
-
-  const satelliteProps = isSatellite
-    ? {
-        isSatellite: true as const,
-        domain: normalizeAppHost(NOVU_CONNECT_HOSTNAME).split(':')[0],
-        ...(CLERK_PROXY_URL ? { proxyUrl: CLERK_PROXY_URL } : {}),
-      }
-    : {};
-
-  const allowedRedirectOrigins: Array<string | RegExp> = [
-    'http://localhost:*',
-    ...(typeof window !== 'undefined' ? [window.location.origin] : []),
-    ...(IS_HOSTNAME_SPLIT_ENABLED && NOVU_PLATFORM_HOSTNAME
-      ? [`https://${normalizeAppHost(NOVU_PLATFORM_HOSTNAME).split(':')[0]}`]
-      : []),
-    ...(IS_HOSTNAME_SPLIT_ENABLED && NOVU_CONNECT_HOSTNAME
-      ? [`https://${normalizeAppHost(NOVU_CONNECT_HOSTNAME).split(':')[0]}`]
-      : []),
-  ];
+  const allowedRedirectOrigins = buildClerkAllowedRedirectOrigins();
 
   return (
     <_ClerkProvider
-      {...satelliteProps}
       routerPush={(to) => navigateClerk(to)}
       routerReplace={(to) => navigateClerk(to, true)}
       publishableKey={CLERK_PUBLISHABLE_KEY}
       signInUrl={signInUrl}
       signUpUrl={signUpUrl}
-      afterSignOutUrl={buildAfterSignOutUrl()}
+      afterSignOutUrl={ROUTES.SIGN_IN}
       appearance={{
         userButton: {
           elements: {

@@ -1,6 +1,6 @@
 import { RiLoader4Line } from 'react-icons/ri';
 import { Navigate, useLocation } from 'react-router-dom';
-import { buildAppHomeRoute, getCurrentAppId } from '@/utils/apps';
+import { AGENT_TEMPLATE_ID_PARAM, readActiveAgentTemplateId } from '@/utils/agent-template-identity';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { useEnvironment } from '../context/environment/hooks';
 
@@ -42,7 +42,18 @@ export const CatchAllRoute = () => {
     }
   }
 
-  const homePath = buildAppHomeRoute(getCurrentAppId(location.pathname), currentEnvironment.slug);
+  // A signed-in user arriving with an `agentTemplateId` (deep-link from an external app, possibly
+  // persisted across the auth flow) is sent straight to the agents list, which opens the create
+  // dialog prefilled from the matching template.
+  const agentTemplateId = readActiveAgentTemplateId(new URLSearchParams(location.search).get(AGENT_TEMPLATE_ID_PARAM));
+
+  if (agentTemplateId) {
+    const agentsPath = buildRoute(ROUTES.AGENTS, { environmentSlug: currentEnvironment.slug });
+
+    return <Navigate to={`${agentsPath}?${AGENT_TEMPLATE_ID_PARAM}=${encodeURIComponent(agentTemplateId)}`} />;
+  }
+
+  const homePath = buildRoute(ROUTES.WORKFLOWS, { environmentSlug: currentEnvironment.slug });
 
   return <Navigate to={homePath ?? ROUTES.ENV} />;
 };
