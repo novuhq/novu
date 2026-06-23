@@ -1,8 +1,3 @@
-import { ChannelTypeEnum, type IIntegration, providers as novuProviders, PermissionsEnum } from '@novu/shared';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
-import { RiAddLine, RiArrowRightSLine, RiErrorWarningFill } from 'react-icons/ri';
-import { useLocation, useNavigate } from 'react-router-dom';
 import {
   type AgentIntegrationLink,
   type AgentResponse,
@@ -24,6 +19,11 @@ import { useTelemetry } from '@/hooks/use-telemetry';
 import { buildRoute } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
+import { ChannelTypeEnum, type IIntegration, providers as novuProviders, PermissionsEnum } from '@novu/shared';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
+import { RiAddLine, RiArrowRightSLine, RiErrorWarningFill } from 'react-icons/ri';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { ResolveAgentIntegrationGuide } from './agent-integration-guides/resolve-agent-integration-guide';
 import { ChannelsPlanLimitBanner } from './agents-plan-limit-banner';
 import { getExceedsPlanTooltipCopy } from './exceeds-plan-indicator';
@@ -311,10 +311,6 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
   };
 
   const handleChannelLimitDialogOpenChange = (open: boolean) => {
-    if (!open) {
-      pendingChannelLinkRef.current = null;
-    }
-
     setChannelLimitDialogOpen(open);
   };
 
