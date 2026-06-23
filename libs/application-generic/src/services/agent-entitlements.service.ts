@@ -68,19 +68,23 @@ export interface RuntimeLimitChecks {
 }
 
 export interface ChannelPlanUsage {
-  /** Number of connected channels (distinct integrations) in the environment. */
+  /**
+   * Number of connected channels (distinct channel types / providers) in the
+   * environment. Several integrations of the same provider (e.g. multiple Slack
+   * workspaces) count as a single active channel.
+   */
   used: number;
   limit: number;
   /**
-   * Ids of the connected integrations that fall within the plan limit
-   * (connection order). `null` when the environment is not over its limit (or
-   * the limit is unlimited), meaning every connected channel is within limit.
+   * Provider ids of the connected channel types, ordered by connection order
+   * (oldest first). A channel type is within the plan limit when its index in
+   * this list is below `limit`.
    */
-  withinLimitIntegrationIds: string[] | null;
+  connectedProviderIds: string[];
   /**
-   * Whether a channel that has not connected yet would be soft-blocked at
-   * runtime. Mirrors the `isChannelWithinLimit` rule: at/over the limit an
-   * unconnected channel has no reserved slot. Exposed here so consumers never
+   * Whether a channel type that has not connected yet would be soft-blocked at
+   * runtime. Mirrors the `isChannelWithinLimit` rule: at/over the limit a brand
+   * new channel type has no reserved slot. Exposed here so consumers never
    * re-derive runtime semantics.
    */
   blocksUnconnectedChannels: boolean;
@@ -100,19 +104,40 @@ export function isAgentOverPlanLimit(usage: AgentPlanUsage, agent: { _id: string
 }
 
 /**
- * Whether a channel is over the organization's active-channel plan limit (and
- * therefore soft-blocked at runtime). Unconnected channels have no reserved
- * slot and are blocked whenever the environment is at/over its limit.
+ * Single source of truth for the active-channel rank rule, shared by the
+ * over-limit derivation (`isChannelOverPlanLimit`) and the runtime check
+ * (`isChannelWithinLimit`) so the two can never drift. Counting is per channel
+ * type (provider): a channel type is within the limit when the plan is
+ * unlimited; when it is already connected at a rank below the limit; or when it
+ * is not yet connected but there is remaining headroom. Several integrations of
+ * the same provider (e.g. multiple Slack workspaces) collapse to a single
+ * ranked entry and therefore share one slot.
  */
-export function isChannelOverPlanLimit(
-  usage: ChannelPlanUsage,
-  channel: { integrationId: string; connected: boolean }
-): boolean {
-  if (!channel.connected) {
-    return usage.blocksUnconnectedChannels;
+function isProviderWithinChannelLimit(connectedProviderIds: string[], providerId: string, limit: number): boolean {
+  if (limit >= UNLIMITED_VALUE) {
+    return true;
   }
 
-  return usage.withinLimitIntegrationIds !== null && !usage.withinLimitIntegrationIds.includes(channel.integrationId);
+  const rank = connectedProviderIds.indexOf(providerId);
+
+  if (rank === -1) {
+    return connectedProviderIds.length < limit;
+  }
+
+  return rank < limit;
+}
+
+/**
+ * Whether a channel is over the organization's active-channel plan limit (and
+ * therefore soft-blocked at runtime). Counting is per channel type (provider):
+ * once any integration of a provider has connected, that provider occupies a
+ * single slot, so additional integrations of an already within-limit provider
+ * (e.g. a second Slack workspace) are never over-limit. A provider that has not
+ * connected yet has no reserved slot and is blocked whenever the environment is
+ * at/over its limit.
+ */
+export function isChannelOverPlanLimit(usage: ChannelPlanUsage, channel: { providerId: string }): boolean {
+  return !isProviderWithinChannelLimit(usage.connectedProviderIds, channel.providerId, usage.limit);
 }
 
 /**
@@ -279,27 +304,21 @@ export class AgentEntitlementsService {
    * channels that are soft-blocked at runtime.
    */
   async getChannelPlanUsage(organizationId: string, environmentId: string): Promise<ChannelPlanUsage> {
-    const [limit, connectedIntegrationIds] = await Promise.all([
+    const [limit, connectedProviderIds] = await Promise.all([
       this.getActiveChannelLimit(organizationId),
-      this.agentIntegrationRepository.listConnectedIntegrationIdsForEnvironment(organizationId, environmentId),
+      this.agentIntegrationRepository.listConnectedChannelTypesForEnvironment(organizationId, environmentId),
     ]);
-    const used = connectedIntegrationIds.length;
+    const used = connectedProviderIds.length;
 
     if (limit >= UNLIMITED_VALUE) {
-      return { used, limit, withinLimitIntegrationIds: null, blocksUnconnectedChannels: false };
-    }
-
-    const blocksUnconnectedChannels = used >= limit;
-
-    if (used <= limit) {
-      return { used, limit, withinLimitIntegrationIds: null, blocksUnconnectedChannels };
+      return { used, limit, connectedProviderIds, blocksUnconnectedChannels: false };
     }
 
     return {
       used,
       limit,
-      withinLimitIntegrationIds: connectedIntegrationIds.slice(0, limit),
-      blocksUnconnectedChannels,
+      connectedProviderIds,
+      blocksUnconnectedChannels: used >= limit,
     };
   }
 
@@ -347,13 +366,13 @@ export class AgentEntitlementsService {
     organizationId: string,
     environmentId: string,
     agentId: string,
-    integrationId: string
+    providerId: string
   ): Promise<RuntimeLimitChecks> {
     if (this.isSelfHosted) {
       return { agentWithinLimit: true, channelWithinLimit: true };
     }
 
-    const cacheKey = `${organizationId}:${environmentId}:${agentId}:${integrationId}`;
+    const cacheKey = `${organizationId}:${environmentId}:${agentId}:${providerId}`;
     const cached = this.runtimeLimitCache.get(cacheKey);
     if (cached && cached.expiresAt > Date.now()) {
       return cached.value;
@@ -363,7 +382,7 @@ export class AgentEntitlementsService {
       const apiServiceLevel = await this.getApiServiceLevel(organizationId);
       const [agentWithinLimit, channelWithinLimit] = await Promise.all([
         this.isAgentWithinLimit(organizationId, environmentId, agentId, apiServiceLevel),
-        this.isChannelWithinLimit(organizationId, environmentId, integrationId, apiServiceLevel),
+        this.isChannelWithinLimit(organizationId, environmentId, providerId, apiServiceLevel),
       ]);
       const value = { agentWithinLimit, channelWithinLimit };
 
@@ -372,7 +391,7 @@ export class AgentEntitlementsService {
       return value;
     } catch (err) {
       this.logger.warn(
-        { err: err instanceof Error ? err.message : String(err), organizationId, agentId, integrationId },
+        { err: err instanceof Error ? err.message : String(err), organizationId, agentId, providerId },
         'Failed to evaluate runtime plan limits; failing open (all within limit)'
       );
 
@@ -382,33 +401,31 @@ export class AgentEntitlementsService {
   }
 
   /**
-   * Whether the given channel integration is within the organization's active
-   * channel limit, by connection order within its environment. Channels
-   * connected beyond the limit are soft-blocked at runtime.
+   * Whether the given channel type (provider) is within the organization's
+   * active channel limit, by connection order within its environment. Channel
+   * types connected beyond the limit are soft-blocked at runtime. Several
+   * integrations of the same provider (e.g. multiple Slack workspaces) share a
+   * single slot, so a second Slack integration is never blocked while Slack is
+   * within the limit.
    */
   async isChannelWithinLimit(
     organizationId: string,
     environmentId: string,
-    integrationId: string,
+    providerId: string,
     knownApiServiceLevel?: ApiServiceLevelEnum
   ): Promise<boolean> {
     const limit = await this.getActiveChannelLimit(organizationId, knownApiServiceLevel);
+    // Skip the DB read on unlimited plans — every channel type is within limit.
     if (limit >= UNLIMITED_VALUE) {
       return true;
     }
 
-    const connectedIntegrationIds = await this.agentIntegrationRepository.listConnectedIntegrationIdsForEnvironment(
+    const connectedProviderIds = await this.agentIntegrationRepository.listConnectedChannelTypesForEnvironment(
       organizationId,
       environmentId
     );
-    const rank = connectedIntegrationIds.indexOf(integrationId);
 
-    if (rank === -1) {
-      // Not yet recorded as connected — allow only if there is remaining headroom.
-      return connectedIntegrationIds.length < limit;
-    }
-
-    return rank < limit;
+    return isProviderWithinChannelLimit(connectedProviderIds, providerId, limit);
   }
 
   private setRuntimeLimitCacheEntry(cacheKey: string, value: RuntimeLimitChecks): void {
