@@ -517,10 +517,13 @@ describe('AnthropicAgentRuntimeProvider.updateConfig', () => {
     await provider.updateConfig('ext-agent-id', { tools: [] });
 
     const [, updatePayload] = update.mock.calls[0];
-    // With no enabled tools and no mcpServers, buildToolsPayload returns []
-    // and we deliberately omit `tools` from the update payload entirely so
-    // we don't clear the side the caller didn't touch.
-    expect((updatePayload as { tools?: unknown }).tools).to.equal(undefined);
+    const toolset = getToolsetPayload(updatePayload as { tools?: AgentToolsetPayloadEntry[] });
+    const platformTool = (updatePayload as { tools?: AgentToolsetPayloadEntry[] }).tools?.find(
+      (t) => t.type === 'custom'
+    );
+
+    expect(toolset?.configs?.every((c) => c.enabled === false)).to.equal(true);
+    expect(platformTool).to.deep.include({ type: 'custom', name: 'novu_tools' });
   });
 
   it('preserves currently-enabled tools (by externalId) when only mcpServers is patched', async () => {
@@ -575,44 +578,5 @@ describe('AnthropicAgentRuntimeProvider.updateConfig', () => {
     );
     expect(mcpToolset?.mcp_server_name).to.equal('Slack');
     expect(mcpToolset?.default_config?.permission_policy).to.deep.equal({ type: 'always_ask' });
-  });
-
-  it('uses always_allow permission policies when useAlwaysAllowToolPermissions is true', async () => {
-    const provider = createAnthropicProvider(AgentRuntimeProviderIdEnum.Anthropic, { apiKey: 'test-key' });
-
-    const retrieve = jest.fn().mockResolvedValue({
-      version: 1,
-      tools: [
-        {
-          type: 'agent_toolset_20260401',
-          configs: [{ name: 'bash', enabled: true }],
-        },
-      ],
-      mcp_servers: [],
-    });
-
-    const update = jest.fn().mockResolvedValue({
-      model: 'claude-sonnet-4-5',
-      system: '',
-      tools: [],
-      mcp_servers: [{ name: 'Slack', url: 'https://mcp.slack.com/mcp' }],
-      skills: [],
-    });
-
-    installUpdateConfigMockClient(provider, { retrieve, update });
-
-    await provider.updateConfig('ext-agent-id', {
-      mcpServers: [{ externalId: 'Slack', name: 'Slack', url: 'https://mcp.slack.com/mcp' }],
-      useAlwaysAllowToolPermissions: true,
-    });
-
-    const [, updatePayload] = update.mock.calls[0];
-    const toolset = getToolsetPayload(updatePayload as { tools?: AgentToolsetPayloadEntry[] });
-    const mcpToolset = (updatePayload as { tools?: AgentToolsetPayloadEntry[] }).tools?.find(
-      (t) => t.type === 'mcp_toolset'
-    );
-
-    expect(toolset?.default_config?.permission_policy).to.deep.equal({ type: 'always_allow' });
-    expect(mcpToolset?.default_config?.permission_policy).to.deep.equal({ type: 'always_allow' });
   });
 });

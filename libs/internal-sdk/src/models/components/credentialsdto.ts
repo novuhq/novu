@@ -70,6 +70,10 @@ export type CredentialsDto = {
    */
   externalEnvironmentId?: string | undefined;
   /**
+   * Claude Managed Agents: ID of the Anthropic vault (`vlt_…`) tied to this integration. Hydrated by the API at integration provisioning time and used to push OAuth-completed MCP credentials to the per-vault credentials API.
+   */
+  externalVaultId?: string | undefined;
+  /**
    * Claude Managed Agents: id of the Anthropic workspace used in console deep links. Defaults to `'default'` (the Default Workspace). Set this when the API key is scoped to a custom workspace (e.g. `wrkspc_…`).
    */
   externalWorkspaceId?: string | undefined;
@@ -162,6 +166,7 @@ export const CredentialsDto$inboundSchema: z.ZodType<
   fromAddressOverride: z.string().optional(),
   emailSlugPrefix: z.string().optional(),
   externalEnvironmentId: z.string().optional(),
+  externalVaultId: z.string().optional(),
   externalWorkspaceId: z.string().optional(),
 }).transform((v) => {
   return remap$(v, {
@@ -222,6 +227,7 @@ export type CredentialsDto$Outbound = {
   fromAddressOverride?: string | undefined;
   emailSlugPrefix?: string | undefined;
   externalEnvironmentId?: string | undefined;
+  externalVaultId?: string | undefined;
   externalWorkspaceId?: string | undefined;
 };
 
@@ -283,6 +289,7 @@ export const CredentialsDto$outboundSchema: z.ZodType<
   fromAddressOverride: z.string().optional(),
   emailSlugPrefix: z.string().optional(),
   externalEnvironmentId: z.string().optional(),
+  externalVaultId: z.string().optional(),
   externalWorkspaceId: z.string().optional(),
 }).transform((v) => {
   return remap$(v, {

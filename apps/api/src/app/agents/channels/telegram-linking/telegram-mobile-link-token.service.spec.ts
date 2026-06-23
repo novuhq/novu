@@ -118,7 +118,7 @@ describe('TelegramMobileLinkTokenService', () => {
     return { service, cacheService, cacheStore, keyTtls };
   }
 
-  it('issues a 32-char opaque token and stores the payload in Redis', async () => {
+  it('issues a 32-char autolink-safe alphanumeric token and stores the payload in Redis', async () => {
     const { service, cacheService } = makeService();
 
     const { token, expiresAt } = await service.issue({
@@ -130,7 +130,8 @@ describe('TelegramMobileLinkTokenService', () => {
     });
 
     expect(token).to.have.length(32);
-    expect(token).to.match(/^[A-Za-z0-9_-]+$/);
+    expect(token).to.match(/^[A-Za-z0-9]{32}$/);
+    expect(token).to.not.match(/[-_]/);
 
     const expiresAtMs = Date.parse(expiresAt);
     const expectedExpiresAtMs = Date.now() + TELEGRAM_MOBILE_LINK_TTL_SECONDS * 1000;

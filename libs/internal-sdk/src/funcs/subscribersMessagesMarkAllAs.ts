@@ -31,10 +31,12 @@ import { Result } from "../types/fp.js";
  * Update notifications state
  *
  * @remarks
- * Update subscriber's multiple in-app (inbox) notifications state such as seen, read, unseen or unread by **subscriberId**.
- *       **messageId** is of type mongodbId of notifications
+ * This API is deprecated, use v2 API instead. Update subscriber's multiple in-app notifications state such as seen, read, unseen or unread by **subscriberId**.
+ *       **messageId** is of type mongodbId of notifications.
  *
  * This operation requires either {@link Security.bearerAuth} or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.
+ *
+ * @deprecated method: This will be removed in a future release, please migrate away from it as soon as possible.
  */
 export function subscribersMessagesMarkAllAs(
   client: NovuCore,

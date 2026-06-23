@@ -16,8 +16,10 @@ import { createWebhookHandler, type WebhookHandler } from '@novu/thalamus/webhoo
 import type { Request, Response } from 'express';
 import type { ResolvedAgentConfig } from '../channels/agent-config-resolver.service';
 import { InboundAckService } from '../conversation-runtime/ack/inbound-ack.service';
+import { AgentConversationService } from '../conversation-runtime/conversation/agent-conversation.service';
 import { AgentMcpSessionService } from '../mcp/runtime/agent-mcp-session.service';
 import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
+import { AgentRuntimeDefinitionService } from './agent-runtime-definition.service';
 import { DemoClaudeQuotaPolicy } from './demo-claude-quota-policy.service';
 import { ManagedAgentEventHandler } from './managed-agent-event-handler.service';
 import { ManagedAgentProviderFactory } from './managed-agent-provider-factory.service';
@@ -63,10 +65,12 @@ export class ManagedAgentService implements OnModuleInit {
     private readonly eventHandler: ManagedAgentEventHandler,
     private readonly conversationRepository: ConversationRepository,
     private readonly conversationActivityRepository: ConversationActivityRepository,
+    private readonly conversationService: AgentConversationService,
     private readonly subscriberRepository: SubscriberRepository,
     private readonly agentMcpSessionService: AgentMcpSessionService,
     private readonly demoQuota: DemoClaudeQuotaPolicy,
     private readonly inboundAck: InboundAckService,
+    private readonly agentRuntimeDefinition: AgentRuntimeDefinitionService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -81,6 +85,14 @@ export class ManagedAgentService implements OnModuleInit {
     agent: Pick<AgentEntity, '_id' | 'managedRuntime'>
   ): Promise<ManagedAgentDispatchResult> {
     await this.demoQuota.assertAllowed(context, agent);
+
+    // Backfill Novu-owned platform config (e.g. novu_tools) on agents created before the
+    // current definition version. Fail-open: never blocks the message.
+    await this.agentRuntimeDefinition.reconcileIfStale({
+      agentId: agent._id,
+      environmentId: context.config.environmentId,
+      organizationId: context.config.organizationId,
+    });
 
     const { provider, runtimeProvider } = await this.providerFactory.getOrCreate(agent, context.config.environmentId);
     const vaultIds = await this.resolveVaultIdsForTurn(
@@ -391,10 +403,9 @@ export class ManagedAgentService implements OnModuleInit {
   }
 
   private async buildMessagesWithHistory(context: ManagedAgentContext): Promise<Message[]> {
-    const history = await this.conversationActivityRepository.findByConversation(
+    const history = await this.conversationService.getHistory(
       context.config.environmentId,
-      String(context.conversation._id),
-      50
+      String(context.conversation._id)
     );
 
     const messages: Message[] = history

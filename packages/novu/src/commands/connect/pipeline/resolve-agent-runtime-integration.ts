@@ -36,7 +36,12 @@ export function resolveRuntimeProviderId(runtime: AgentRuntimeChoice): AgentRunt
 }
 
 export function resolveRuntimeFromOptions(options: ConnectCommandOptions): AgentRuntimeChoice | undefined {
-  return options.runtime;
+  const runtime = options.runtime;
+  if (!runtime || runtime === 'chat-sdk') {
+    return undefined;
+  }
+
+  return runtime;
 }
 
 export async function resolveAgentRuntimeIntegration(

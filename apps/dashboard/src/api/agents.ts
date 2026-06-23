@@ -250,7 +250,10 @@ export type ConversationUsage = {
   periodEnd: string;
 };
 
-export async function getConversationUsage(environment: IEnvironment, signal?: AbortSignal): Promise<ConversationUsage> {
+export async function getConversationUsage(
+  environment: IEnvironment,
+  signal?: AbortSignal
+): Promise<ConversationUsage> {
   const response = await get<{ data: ConversationUsage } | ConversationUsage>('/agents/usage/conversations', {
     environment,
     signal,

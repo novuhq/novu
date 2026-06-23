@@ -30,9 +30,11 @@ import { Result } from "../types/fp.js";
  * Retrieve unseen notifications count
  *
  * @remarks
- * Retrieve unseen in-app (inbox) notifications count for a subscriber by its unique key identifier **subscriberId**.
+ * This API is deprecated, use v2 API instead. Retrieve unseen in-app notifications count for a subscriber by its unique key identifier **subscriberId**.
  *
  * This operation requires either {@link Security.bearerAuth} or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.
+ *
+ * @deprecated method: This will be removed in a future release, please migrate away from it as soon as possible.
  */
 export function subscribersNotificationsUnseenCount(
   client: NovuCore,

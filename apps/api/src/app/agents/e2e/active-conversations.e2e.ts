@@ -1,9 +1,5 @@
 import { AgentEntitlementsService } from '@novu/application-generic';
-import {
-  CommunityOrganizationRepository,
-  ConversationActivationRepository,
-  ConversationStatusEnum,
-} from '@novu/dal';
+import { CommunityOrganizationRepository, ConversationActivationRepository, ConversationStatusEnum } from '@novu/dal';
 import { ApiServiceLevelEnum } from '@novu/shared';
 import { testServer } from '@novu/testing';
 import { expect } from 'chai';
@@ -92,10 +88,7 @@ describe('Active Conversations metering - inbound flow #novu-v2', () => {
   }
 
   async function setServiceLevel(apiServiceLevel: ApiServiceLevelEnum, isTrial = false): Promise<void> {
-    await organizationRepository.update(
-      { _id: ctx.session.organization._id },
-      { $set: { apiServiceLevel, isTrial } }
-    );
+    await organizationRepository.update({ _id: ctx.session.organization._id }, { $set: { apiServiceLevel, isTrial } });
   }
 
   async function invokeSlack(threadId: string, text: string, opts: { isDM?: boolean; userId?: string } = {}) {
@@ -181,7 +174,11 @@ describe('Active Conversations metering - inbound flow #novu-v2', () => {
       // Rewind the last engagement past the 24h WhatsApp window.
       const stale = new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString();
       await conversationRepository.update(
-        { _id: conversation!._id, _environmentId: ctx.session.environment._id, _organizationId: ctx.session.organization._id },
+        {
+          _id: conversation!._id,
+          _environmentId: ctx.session.environment._id,
+          _organizationId: ctx.session.organization._id,
+        },
         { $set: { 'billing.lastEngagementAt': stale } }
       );
 
@@ -196,7 +193,11 @@ describe('Active Conversations metering - inbound flow #novu-v2', () => {
       // Only 2h elapsed — inside the 24h WhatsApp window.
       const recent = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
       await conversationRepository.update(
-        { _id: conversation!._id, _environmentId: ctx.session.environment._id, _organizationId: ctx.session.organization._id },
+        {
+          _id: conversation!._id,
+          _environmentId: ctx.session.environment._id,
+          _organizationId: ctx.session.organization._id,
+        },
         { $set: { 'billing.lastEngagementAt': recent } }
       );
 
@@ -214,7 +215,11 @@ describe('Active Conversations metering - inbound flow #novu-v2', () => {
       const conversation = await findConversation(threadId);
       // Pretend it was last counted in a previous period.
       await conversationRepository.update(
-        { _id: conversation!._id, _environmentId: ctx.session.environment._id, _organizationId: ctx.session.organization._id },
+        {
+          _id: conversation!._id,
+          _environmentId: ctx.session.environment._id,
+          _organizationId: ctx.session.organization._id,
+        },
         { $set: { 'billing.lastCountedPeriodKey': '2000-01' } }
       );
 
@@ -333,7 +338,9 @@ describe('Active Conversations metering - inbound flow #novu-v2', () => {
       await invokeSlack(`T_STRIPE_${Date.now()}`, 'billed');
 
       // Activation was recorded against the Stripe period key, not the calendar month.
-      expect(await activationRepository.countForOrganizationPeriod(ctx.session.organization._id, periodKey)).to.equal(1);
+      expect(await activationRepository.countForOrganizationPeriod(ctx.session.organization._id, periodKey)).to.equal(
+        1
+      );
 
       const res = await ctx.session.testAgent.get('/v1/agents/usage/conversations');
       expect(res.status).to.equal(200);

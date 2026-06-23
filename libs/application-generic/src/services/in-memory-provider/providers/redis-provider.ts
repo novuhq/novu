@@ -88,9 +88,12 @@ export const getRedisProviderConfig = (): IRedisProviderConfig => {
 export const getRedisInstance = (): Redis | undefined => {
   const { port, host, ...configOptions } = getRedisProviderConfig();
 
+  const skipVersionCheck = process.env.REDIS_SKIP_VERSION_CHECK === 'true';
+
   const options = {
     ...configOptions,
     maxRetriesPerRequest: null,
+    skipVersionCheck,
     /*
      *  Disabled in Prod as affects performance
      */

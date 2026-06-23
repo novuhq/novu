@@ -1,4 +1,4 @@
-import type { AgentEntity, ConversationActivityEntity, ConversationEntity, SubscriberEntity } from '@novu/dal';
+import type { AgentEntity, ConversationEntity, SubscriberEntity } from '@novu/dal';
 import type { AgentAction } from '@novu/framework';
 import type { Message, Thread } from 'chat';
 import type { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
@@ -12,7 +12,6 @@ export interface ConversationTurn {
   config: ResolvedAgentConfig;
   conversation: ConversationEntity;
   subscriber: SubscriberEntity | null;
-  history: ConversationActivityEntity[];
   message: Message | null;
   event: AgentEventEnum;
   thread: Thread;

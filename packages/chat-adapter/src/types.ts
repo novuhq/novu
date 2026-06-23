@@ -28,9 +28,9 @@ export interface NovuAdapterConfig {
    */
   apiBaseUrl?: string;
   /**
-   * When set, the adapter registers this URL as the agent's bridge endpoint at
-   * boot via `PUT <apiBaseUrl>/v1/agents/:id/bridge`. Omit to skip registration
-   * (e.g. when the bridge URL is configured in the Novu dashboard).
+   * Reserved for the agent's bridge endpoint URL. The adapter does NOT register
+   * it automatically — register the bridge via `npx novu dev`, the Novu Connect
+   * tunnel, or the Novu dashboard. Accepted for forward compatibility.
    */
   bridgeUrl?: string;
   /**

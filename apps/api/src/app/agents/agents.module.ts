@@ -9,6 +9,7 @@ import {
 } from '@novu/application-generic';
 import {
   AgentMcpServerRepository,
+  AgentToolTrustRepository,
   ChannelConnectionRepository,
   ChannelEndpointRepository,
   CommunityOrganizationRepository,
@@ -55,17 +56,19 @@ import { AgentEmailActionsController } from './email/agent-email-actions.control
 import { AgentEmailSender } from './email/agent-email-sender.service';
 import { NovuEmailCleanupService } from './email/novu-email/cleanup-novu-email/cleanup-novu-email.service';
 import { NovuEmailProvisioningService } from './email/novu-email/find-or-create-novu-email/find-or-create-novu-email.service';
+import { AgentRuntimeDefinitionService } from './managed-runtime/agent-runtime-definition.service';
 import { DemoClaudeQuotaPolicy } from './managed-runtime/demo-claude-quota-policy.service';
 import { ManagedRuntime } from './managed-runtime/managed.runtime';
 import { ManagedAgentService } from './managed-runtime/managed-agent.service';
 import { ManagedAgentEventHandler } from './managed-runtime/managed-agent-event-handler.service';
 import { ManagedAgentProviderFactory } from './managed-runtime/managed-agent-provider-factory.service';
 import { ManagedRuntimeController } from './managed-runtime/managed-runtime.controller';
+import { ToolTrustService } from './managed-runtime/tool-approval/tool-trust.service';
 import { AgentRuntimeController } from './management/agent-runtime.controller';
 import { AgentsController } from './management/agents.controller';
 import { McpNovuAppCredentialsService } from './mcp/connections/get-mcp-novu-app-credentials/get-mcp-novu-app-credentials.service';
-import { McpConnectionVaultService } from './mcp/connections/mcp-connection-vault.service';
 import { McpConnectRedirectService } from './mcp/connections/mcp-connect-redirect.service';
+import { McpConnectionVaultService } from './mcp/connections/mcp-connection-vault.service';
 import { AgentsMcpOAuthController } from './mcp/oauth/agents-mcp-oauth.controller';
 import { McpOAuthDiscoveryService } from './mcp/oauth/mcp-oauth-discovery.service';
 import { AgentMcpDefinitionService } from './mcp/runtime/agent-mcp-definition.service';
@@ -98,6 +101,7 @@ import { USE_CASES } from './usecases';
     ...USE_CASES,
     AgentRuntimeExceptionFilter,
     AgentMcpServerRepository,
+    AgentToolTrustRepository,
     ChannelConnectionRepository,
     ChannelEndpointRepository,
     CommunityOrganizationRepository,
@@ -124,9 +128,11 @@ import { USE_CASES } from './usecases';
     ManagedAgentProviderFactory,
     ManagedAgentEventHandler,
     ManagedAgentService,
+    ToolTrustService,
     McpConnectionVaultService,
     McpConnectRedirectService,
     AgentMcpDefinitionService,
+    AgentRuntimeDefinitionService,
     AgentMcpSessionService,
     NovuEmailCleanupService,
     NovuEmailProvisioningService,

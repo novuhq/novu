@@ -17,6 +17,7 @@ function buildMockProvider(overrides: Partial<Record<string, sinon.SinonStub>> =
     getAgent: sinon.stub().resolves({ externalAgentId: 'ext-agent', name: 'Agent' }),
     getEnvironment: sinon.stub().resolves({ id: 'env-id', name: 'Default' }),
     getConfig: sinon.stub().resolves({ model: 'claude', systemPrompt: '', mcpServers: [], tools: [] }),
+    refreshPlatformDefinition: sinon.stub().resolves(undefined),
     updateConfig: sinon.stub().resolves({ model: 'claude', systemPrompt: '', mcpServers: [], tools: [] }),
     provisionIntegration: sinon
       .stub()

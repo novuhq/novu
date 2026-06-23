@@ -1,13 +1,7 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import type { IAgentRuntimeProvider, PendingToolApproval } from '@novu/application-generic';
 import { PinoLogger } from '@novu/application-generic';
-import {
-  AgentMcpServerRepository,
-  ConversationParticipant,
-  ConversationRepository,
-  McpConnectionRepository,
-  SubscriberRepository,
-} from '@novu/dal';
+import { ConversationParticipant, ConversationRepository } from '@novu/dal';
 import { NOVU_INTERNAL_TOOLS } from '@novu/shared';
 import { AgentSubscriberResolver } from '../../conversation-runtime/conversation/agent-subscriber-resolver.service';
 import { HandleAgentReplyCommand } from '../../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.command';
@@ -23,16 +17,14 @@ import { HandleNovuTools } from '../tool-connect/handle-novu-tools.usecase';
 import { extractPendingToolApprovals, getToolApprovalCard } from './approval-card.builder';
 import { HandlePendingToolApprovalsCommand } from './handle-pending-tool-approvals.command';
 import { recoverEmailFromParticipants, recoverSubscriberParticipantId } from './handle-pending-tool-approvals.helpers';
-import { resolveTrustForPendingTool } from './tool-trust.helper';
+import { ToolTrustService } from './tool-trust.service';
 
 @Injectable()
 export class HandlePendingToolApprovals {
   constructor(
     private readonly providerFactory: ManagedAgentProviderFactory,
     private readonly conversationRepository: ConversationRepository,
-    private readonly subscriberRepository: SubscriberRepository,
-    private readonly agentMcpServerRepository: AgentMcpServerRepository,
-    private readonly mcpConnectionRepository: McpConnectionRepository,
+    private readonly toolTrustService: ToolTrustService,
     @Inject(forwardRef(() => ManagedAgentService))
     private readonly managedAgentService: ManagedAgentService,
     private readonly subscriberResolver: AgentSubscriberResolver,
@@ -71,11 +63,17 @@ export class HandlePendingToolApprovals {
 
     if (externalTools.length === 0) return;
 
-    const { trustedTools, needsPromptTools } = await this.partitionByTrust(command, externalTools);
+    const { autoApprovedTools, pendingApprovalTools } = await this.toolTrustService.partitionByTrust({
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+      agentIdentifier: command.agentIdentifier,
+      subscriberExternalId: command.subscriberId,
+      tools: externalTools,
+    });
 
-    if (trustedTools.length > 0) {
+    if (autoApprovedTools.length > 0) {
       try {
-        await this.autoConfirmTrustedTools(command, trustedTools);
+        await this.autoConfirmTrustedTools(command, autoApprovedTools);
       } catch {
         await this.deliverAutoConfirmFailure(command);
 
@@ -86,14 +84,14 @@ export class HandlePendingToolApprovals {
       return;
     }
 
-    const nextTool = needsPromptTools[0];
+    const nextTool = pendingApprovalTools[0];
 
     if (!nextTool) {
       return;
     }
 
-    // No trusted tools in this batch — prompt for the first one only (sequential approval).
-    await this.deliverApprovalCard(command, nextTool, needsPromptTools.length);
+    // No auto-approved tools in this batch — prompt for the first one only (sequential approval).
+    await this.deliverApprovalCard(command, nextTool);
   }
 
   private async fetchPendingTools(
@@ -148,7 +146,7 @@ export class HandlePendingToolApprovals {
             sessionId: command.sessionId,
             toolUseId: tool.toolUseId,
           },
-          'Auto-confirm for trusted MCP tool failed'
+          'Auto-confirm for trusted tool failed'
         );
         captureAgentWarning(err, {
           component: 'handle-pending-tool-approvals',
@@ -195,55 +193,6 @@ export class HandlePendingToolApprovals {
         sessionId: command.sessionId,
       });
     }
-  }
-
-  private async partitionByTrust(
-    command: HandlePendingToolApprovalsCommand,
-    pendingTools: PendingToolApproval[]
-  ): Promise<{ trustedTools: PendingToolApproval[]; needsPromptTools: PendingToolApproval[] }> {
-    const conversation = await this.conversationRepository.findOne(
-      {
-        _id: command.conversationId,
-        _environmentId: command.environmentId,
-        _organizationId: command.organizationId,
-      },
-      ['_agentId']
-    );
-
-    if (!conversation) {
-      return { trustedTools: [], needsPromptTools: pendingTools };
-    }
-
-    const subscriberMongoId = command.subscriberId
-      ? (await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId))?._id
-      : undefined;
-
-    const trustedTools: PendingToolApproval[] = [];
-    const needsPromptTools: PendingToolApproval[] = [];
-
-    for (const tool of pendingTools) {
-      const resolution = await resolveTrustForPendingTool({
-        findOAuthEnablementsForAgent: (params) => this.agentMcpServerRepository.findOAuthEnablementsForAgent(params),
-        findSubscriberConnection: (params) => this.mcpConnectionRepository.findSubscriberConnection(params),
-        params: {
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          agentId: conversation._agentId,
-          subscriberMongoId,
-          mcpServerName: tool.mcpServerName,
-          toolName: tool.toolName,
-        },
-      });
-
-      if (resolution?.trusted) {
-        trustedTools.push(tool);
-        continue;
-      }
-
-      needsPromptTools.push(tool);
-    }
-
-    return { trustedTools, needsPromptTools };
   }
 
   private partitionInternalTools(tools: PendingToolApproval[]): {
@@ -406,13 +355,11 @@ export class HandlePendingToolApprovals {
 
   private async deliverApprovalCard(
     command: HandlePendingToolApprovalsCommand,
-    tool: PendingToolApproval,
-    pendingQueueTotal?: number
+    tool: PendingToolApproval
   ): Promise<void> {
     const delivery = getToolApprovalCard({
       platform: command.platform,
       tool,
-      pendingQueueTotal,
     });
 
     try {
