@@ -20,13 +20,12 @@ function mockFetch(responses: Array<{ status: number; body: unknown }>): jest.Mo
 const BASE_OPTIONS = {
   apiUrl: 'https://test.novu.co',
   secretKey: 'test-secret',
-  agentIdentifier: 'my-agent',
   integrationIdentifier: 'integration-1',
   subscriberId: 'user-42',
   pollIntervalMs: 10,
 };
 
-const NOT_CONNECTED = { status: 200, body: { data: [{ connectedAt: null }] } } as const;
+const NOT_CONNECTED = { status: 200, body: { data: [] } } as const;
 
 describe('TelegramSubscriberLink', () => {
   beforeEach(() => {
@@ -45,9 +44,11 @@ describe('TelegramSubscriberLink', () => {
         status: 200,
         body: {
           data: {
-            deepLinkUrl: 'https://t.me/TestBot?start=abc123',
-            botUsername: 'TestBot',
-            expiresAt,
+            url: 'https://t.me/TestBot?start=abc123',
+            providerMetadata: {
+              botUsername: 'TestBot',
+              expiresAt,
+            },
           },
         },
       },
@@ -62,11 +63,11 @@ describe('TelegramSubscriberLink', () => {
 
     expect(fetchFn).toHaveBeenCalledTimes(2);
     expect(fetchFn).toHaveBeenCalledWith(
-      'https://test.novu.co/v1/agents/my-agent/integrations/integration-1/telegram/subscriber-link',
+      'https://test.novu.co/v1/integrations/channel-endpoints/link',
       expect.objectContaining({
         method: 'POST',
         headers: expect.objectContaining({ Authorization: 'ApiKey test-secret' }),
-        body: JSON.stringify({ subscriberId: 'user-42' }),
+        body: JSON.stringify({ integrationIdentifier: 'integration-1', subscriberId: 'user-42' }),
       })
     );
 
@@ -80,7 +81,7 @@ describe('TelegramSubscriberLink', () => {
   });
 
   it('transitions directly to connected when already linked on start()', async () => {
-    const fetchFn = mockFetch([{ status: 200, body: { data: [{ connectedAt: '2026-06-21T12:00:00Z' }] } }]);
+    const fetchFn = mockFetch([{ status: 200, body: { data: [{ identifier: 'endpoint-1' }] } }]);
 
     const link = new TelegramSubscriberLink({ ...BASE_OPTIONS, fetchFn });
     const states: TelegramSubscriberLinkState[] = [];
@@ -91,7 +92,7 @@ describe('TelegramSubscriberLink', () => {
 
     expect(fetchFn).toHaveBeenCalledTimes(1);
     expect(fetchFn).toHaveBeenCalledWith(
-      'https://test.novu.co/v1/agents/my-agent/integrations?integrationIdentifier=integration-1&limit=1',
+      'https://test.novu.co/v1/channel-endpoints?subscriberId=user-42&integrationIdentifier=integration-1&providerId=telegram&limit=1',
       expect.objectContaining({
         method: 'GET',
         headers: expect.objectContaining({ Authorization: 'ApiKey test-secret' }),
@@ -115,15 +116,17 @@ describe('TelegramSubscriberLink', () => {
         status: 200,
         body: {
           data: {
-            deepLinkUrl: 'https://t.me/TestBot?start=abc123',
-            botUsername: 'TestBot',
-            expiresAt,
+            url: 'https://t.me/TestBot?start=abc123',
+            providerMetadata: {
+              botUsername: 'TestBot',
+              expiresAt,
+            },
           },
         },
       },
-      { status: 200, body: { data: [{ connectedAt: null }] } },
-      { status: 200, body: { data: [{ connectedAt: null }] } },
-      { status: 200, body: { data: [{ connectedAt: '2026-06-21T12:00:00Z' }] } },
+      { status: 200, body: { data: [] } },
+      { status: 200, body: { data: [] } },
+      { status: 200, body: { data: [{ identifier: 'endpoint-1' }] } },
     ]);
 
     const link = new TelegramSubscriberLink({ ...BASE_OPTIONS, fetchFn });
@@ -157,9 +160,11 @@ describe('TelegramSubscriberLink', () => {
         status: 200,
         body: {
           data: {
-            deepLinkUrl: 'https://t.me/TestBot?start=expired-code',
-            botUsername: 'TestBot',
-            expiresAt: shortExpiresAt,
+            url: 'https://t.me/TestBot?start=expired-code',
+            providerMetadata: {
+              botUsername: 'TestBot',
+              expiresAt: shortExpiresAt,
+            },
           },
         },
       },
@@ -167,9 +172,11 @@ describe('TelegramSubscriberLink', () => {
         status: 200,
         body: {
           data: {
-            deepLinkUrl: 'https://t.me/TestBot?start=new-code',
-            botUsername: 'TestBot',
-            expiresAt: longExpiresAt,
+            url: 'https://t.me/TestBot?start=new-code',
+            providerMetadata: {
+              botUsername: 'TestBot',
+              expiresAt: longExpiresAt,
+            },
           },
         },
       },
@@ -226,9 +233,11 @@ describe('TelegramSubscriberLink', () => {
         status: 200,
         body: {
           data: {
-            deepLinkUrl: 'https://t.me/TestBot?start=first',
-            botUsername: 'TestBot',
-            expiresAt,
+            url: 'https://t.me/TestBot?start=first',
+            providerMetadata: {
+              botUsername: 'TestBot',
+              expiresAt,
+            },
           },
         },
       },
@@ -236,9 +245,11 @@ describe('TelegramSubscriberLink', () => {
         status: 200,
         body: {
           data: {
-            deepLinkUrl: 'https://t.me/TestBot?start=second',
-            botUsername: 'TestBot',
-            expiresAt,
+            url: 'https://t.me/TestBot?start=second',
+            providerMetadata: {
+              botUsername: 'TestBot',
+              expiresAt,
+            },
           },
         },
       },
@@ -266,13 +277,15 @@ describe('TelegramSubscriberLink', () => {
         status: 200,
         body: {
           data: {
-            deepLinkUrl: 'https://t.me/TestBot?start=abc',
-            botUsername: 'TestBot',
-            expiresAt,
+            url: 'https://t.me/TestBot?start=abc',
+            providerMetadata: {
+              botUsername: 'TestBot',
+              expiresAt,
+            },
           },
         },
       },
-      { status: 200, body: { data: [{ connectedAt: null }] } },
+      { status: 200, body: { data: [] } },
     ]);
 
     const link = new TelegramSubscriberLink({ ...BASE_OPTIONS, fetchFn });
@@ -295,14 +308,16 @@ describe('TelegramSubscriberLink', () => {
         status: 200,
         body: {
           data: {
-            deepLinkUrl: 'https://t.me/TestBot?start=abc',
-            botUsername: 'TestBot',
-            expiresAt,
+            url: 'https://t.me/TestBot?start=abc',
+            providerMetadata: {
+              botUsername: 'TestBot',
+              expiresAt,
+            },
           },
         },
       },
       { status: 500, body: { message: 'transient' } },
-      { status: 200, body: { data: [{ connectedAt: '2026-06-21T12:00:00Z' }] } },
+      { status: 200, body: { data: [{ identifier: 'endpoint-1' }] } },
     ]);
 
     const link = new TelegramSubscriberLink({ ...BASE_OPTIONS, fetchFn });
@@ -332,9 +347,11 @@ describe('TelegramSubscriberLink', () => {
         status: 200,
         body: {
           data: {
-            deepLinkUrl: 'https://t.me/TestBot?start=abc',
-            botUsername: 'TestBot',
-            expiresAt,
+            url: 'https://t.me/TestBot?start=abc',
+            providerMetadata: {
+              botUsername: 'TestBot',
+              expiresAt,
+            },
           },
         },
       },
@@ -359,9 +376,11 @@ describe('TelegramSubscriberLink', () => {
       {
         status: 200,
         body: {
-          deepLinkUrl: 'https://t.me/TestBot?start=plain',
-          botUsername: 'TestBot',
-          expiresAt,
+          url: 'https://t.me/TestBot?start=plain',
+          providerMetadata: {
+            botUsername: 'TestBot',
+            expiresAt,
+          },
         },
       },
     ]);

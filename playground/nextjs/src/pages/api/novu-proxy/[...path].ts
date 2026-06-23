@@ -3,7 +3,7 @@
  * the server-side `Authorization: ApiKey <NOVU_SECRET_KEY>` header.
  *
  * WHY THIS EXISTS
- * The Telegram subscriber-link endpoint requires `AGENT_WRITE` permission, so it
+ * The Telegram subscriber-link endpoint requires `INTEGRATION_WRITE` permission, so it
  * must be called with a secret key — which must never reach the browser. The
  * `useTelegramSubscriberLink` hook is pointed at this proxy (`apiUrl: '/api/novu-proxy'`)
  * so the headless logic runs in the browser while the secret stays server-side.
@@ -25,8 +25,8 @@ const BASE_URL = (
 // Without this, the catch-all would forward ANY path with the secret key,
 // letting a browser caller reach the full Novu API.
 const ALLOWED_ROUTES: ReadonlyArray<{ method: string; pattern: RegExp }> = [
-  { method: 'POST', pattern: /^v1\/agents\/[^/]+\/integrations\/[^/]+\/telegram\/subscriber-link$/ },
-  { method: 'GET', pattern: /^v1\/agents\/[^/]+\/integrations$/ },
+  { method: 'POST', pattern: /^v1\/integrations\/channel-endpoints\/link$/ },
+  { method: 'GET', pattern: /^v1\/channel-endpoints$/ },
 ];
 
 function isAllowed(method: string | undefined, path: string): boolean {

@@ -1,15 +1,11 @@
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
-import { EnvironmentWithUserCommand } from '../../../../shared/commands/project.command';
+import { EnvironmentWithUserCommand } from '../../shared/commands/project.command';
 
 export class IssueTelegramMobileLinkCommand extends EnvironmentWithUserCommand {
   @IsString()
   @IsNotEmpty()
-  agentIdentifier: string;
-
-  @IsString()
-  @IsNotEmpty()
-  integrationId: string;
+  integrationIdentifier: string;
 
   @IsOptional()
   @IsString()

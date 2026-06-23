@@ -28,7 +28,7 @@ export type UseTelegramSubscriberLinkResult = {
  * re-issues automatically on code expiry. Returns reactive state that
  * updates as the lifecycle progresses.
  *
- * **Important:** The underlying API endpoint requires `AGENT_WRITE` permission.
+ * **Important:** The underlying API endpoint requires `INTEGRATION_WRITE` permission.
  * Either pass `secretKey` for direct server-side usage, or provide a custom
  * `fetchFn` / `apiUrl` that routes through your backend proxy.
  *
@@ -39,7 +39,6 @@ export type UseTelegramSubscriberLinkResult = {
  * function TelegramConnect() {
  *   const { deepLinkUrl, botUsername, status, refresh } = useTelegramSubscriberLink({
  *     apiUrl: '/api/novu-proxy',
- *     agentIdentifier: 'my-agent',
  *     integrationIdentifier: '<telegram-integration-identifier>',
  *     subscriberId: 'user-42',
  *   });
@@ -66,7 +65,7 @@ export function useTelegramSubscriberLink(props: UseTelegramSubscriberLinkProps)
 
   const instanceRef = useRef<TelegramSubscriberLink | null>(null);
 
-  const { apiUrl, secretKey, agentIdentifier, integrationIdentifier, subscriberId, pollIntervalMs, fetchFn } = props;
+  const { apiUrl, secretKey, integrationIdentifier, subscriberId, pollIntervalMs, fetchFn } = props;
 
   // Keep the latest `fetchFn` in a ref so a new inline-function identity on every
   // render does not re-trigger the effect (which would tear down and re-issue the
@@ -84,7 +83,6 @@ export function useTelegramSubscriberLink(props: UseTelegramSubscriberLinkProps)
     const link = new TelegramSubscriberLink({
       apiUrl,
       secretKey,
-      agentIdentifier,
       integrationIdentifier,
       subscriberId,
       pollIntervalMs,
@@ -105,7 +103,7 @@ export function useTelegramSubscriberLink(props: UseTelegramSubscriberLinkProps)
       link.stop();
       instanceRef.current = null;
     };
-  }, [apiUrl, secretKey, agentIdentifier, integrationIdentifier, subscriberId, pollIntervalMs, stableFetchFn]);
+  }, [apiUrl, secretKey, integrationIdentifier, subscriberId, pollIntervalMs, stableFetchFn]);
 
   const refresh = useCallback(async () => {
     if (instanceRef.current) {

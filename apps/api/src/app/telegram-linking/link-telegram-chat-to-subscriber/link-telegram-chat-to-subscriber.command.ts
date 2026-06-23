@@ -1,6 +1,6 @@
 import { IsNotEmpty, IsString } from 'class-validator';
 
-import { EnvironmentCommand } from '../../../../shared/commands/project.command';
+import { EnvironmentCommand } from '../../shared/commands/project.command';
 
 export class LinkTelegramChatToSubscriberCommand extends EnvironmentCommand {
   @IsString()

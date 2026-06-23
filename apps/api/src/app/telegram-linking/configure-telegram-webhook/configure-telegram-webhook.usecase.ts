@@ -7,11 +7,12 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { decryptCredentials, encryptSecret } from '@novu/application-generic';
-import { AgentIntegrationRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
+import { IntegrationRepository } from '@novu/dal';
 import { ChatProviderIdEnum } from '@novu/shared';
 import Axios from 'axios';
 
-import { ConfigureTelegramAgentWebhookCommand } from './configure-telegram-agent-webhook.command';
+import { TelegramAgentLinkResolver } from '../telegram-agent-link.resolver';
+import { ConfigureTelegramWebhookCommand } from './configure-telegram-webhook.command';
 
 const TELEGRAM_API_TIMEOUT_MS = 10_000;
 const TELEGRAM_MAX_RETRIES = 3;
@@ -63,30 +64,16 @@ interface TelegramGetMeResponse {
 }
 
 @Injectable()
-export class ConfigureTelegramAgentWebhook {
+export class ConfigureTelegramWebhook {
   constructor(
-    private readonly agentRepository: AgentRepository,
     private readonly integrationRepository: IntegrationRepository,
-    private readonly agentIntegrationRepository: AgentIntegrationRepository
+    private readonly agentLinkResolver: TelegramAgentLinkResolver
   ) {}
 
-  async execute(command: ConfigureTelegramAgentWebhookCommand): Promise<TelegramSetWebhookResult> {
-    const agent = await this.agentRepository.findOne(
-      {
-        identifier: command.agentIdentifier,
-        _environmentId: command.environmentId,
-        _organizationId: command.organizationId,
-      },
-      ['_id']
-    );
-
-    if (!agent) {
-      throw new NotFoundException(`Agent with identifier "${command.agentIdentifier}" was not found.`);
-    }
-
+  async execute(command: ConfigureTelegramWebhookCommand): Promise<TelegramSetWebhookResult> {
     const integration = await this.integrationRepository.findOne(
       {
-        _id: command.integrationId,
+        identifier: command.integrationIdentifier,
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
       },
@@ -94,25 +81,11 @@ export class ConfigureTelegramAgentWebhook {
     );
 
     if (!integration) {
-      throw new NotFoundException(`Integration ${command.integrationId} not found`);
+      throw new NotFoundException(`Integration ${command.integrationIdentifier} not found`);
     }
 
     if (integration.providerId !== ChatProviderIdEnum.Telegram) {
       throw new BadRequestException('Integration is not a Telegram provider');
-    }
-
-    const link = await this.agentIntegrationRepository.findOne(
-      {
-        _agentId: agent._id,
-        _integrationId: integration._id,
-        _environmentId: command.environmentId,
-        _organizationId: command.organizationId,
-      },
-      ['_id']
-    );
-
-    if (!link) {
-      throw new NotFoundException('Integration is not linked to this agent');
     }
 
     const decrypted = decryptCredentials(integration.credentials as Record<string, string>);
@@ -124,7 +97,14 @@ export class ConfigureTelegramAgentWebhook {
       );
     }
 
-    const webhookUrl = this.buildWebhookUrl(agent._id, integration.identifier);
+    const agent = await this.agentLinkResolver.resolve({
+      integrationId: integration._id,
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+      botToken,
+    });
+
+    const webhookUrl = this.buildWebhookUrl(agent.agentId, integration.identifier);
     this.assertHttps(webhookUrl);
 
     const secretToken = randomBytes(32).toString('hex');

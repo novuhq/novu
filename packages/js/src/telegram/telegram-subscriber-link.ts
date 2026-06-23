@@ -6,17 +6,26 @@ import type {
 
 const DEFAULT_API_URL = 'https://api.novu.co';
 const DEFAULT_POLL_INTERVAL_MS = 2_000;
+const TELEGRAM_PROVIDER_ID = 'telegram';
 
 type StateListener = (state: TelegramSubscriberLinkState) => void;
+
+type LinkChannelEndpointApiResponse = {
+  url: string;
+  providerMetadata?: {
+    botUsername?: string;
+    expiresAt?: string;
+  };
+};
 
 /**
  * Framework-agnostic helper that manages the full Telegram subscriber-link
  * lifecycle: issue a deep link, poll for the subscriber's `/start` tap, and
  * re-issue automatically when the 10-minute code expires.
  *
- * **Important:** The subscriber-link endpoint requires `AGENT_WRITE` permission
- * and must be called from a trusted server or via a backend proxy — never
- * directly from an untrusted browser with end-user credentials.
+ * **Important:** The subscriber-link endpoint requires `INTEGRATION_WRITE`
+ * permission and must be called from a trusted server or via a backend proxy —
+ * never directly from an untrusted browser with end-user credentials.
  *
  * @example
  * ```ts
@@ -24,7 +33,6 @@ type StateListener = (state: TelegramSubscriberLinkState) => void;
  *
  * const link = new TelegramSubscriberLink({
  *   secretKey: process.env.NOVU_SECRET_KEY,
- *   agentIdentifier: 'my-agent',
  *   integrationIdentifier: '<telegram-integration-identifier>',
  *   subscriberId: 'user-42',
  * });
@@ -40,10 +48,7 @@ type StateListener = (state: TelegramSubscriberLinkState) => void;
  */
 export class TelegramSubscriberLink {
   readonly #options: Required<
-    Pick<
-      TelegramSubscriberLinkOptions,
-      'apiUrl' | 'agentIdentifier' | 'integrationIdentifier' | 'subscriberId' | 'pollIntervalMs'
-    >
+    Pick<TelegramSubscriberLinkOptions, 'apiUrl' | 'integrationIdentifier' | 'subscriberId' | 'pollIntervalMs'>
   > & { secretKey?: string; fetchFn: typeof fetch };
 
   #state: TelegramSubscriberLinkState = {
@@ -67,7 +72,6 @@ export class TelegramSubscriberLink {
     this.#options = {
       apiUrl: options.apiUrl ?? DEFAULT_API_URL,
       secretKey: options.secretKey,
-      agentIdentifier: options.agentIdentifier,
       integrationIdentifier: options.integrationIdentifier,
       subscriberId: options.subscriberId,
       pollIntervalMs: options.pollIntervalMs ?? DEFAULT_POLL_INTERVAL_MS,
@@ -161,9 +165,9 @@ export class TelegramSubscriberLink {
   }
 
   async #issueSubscriberLink(): Promise<TelegramSubscriberLinkResponse> {
-    const { apiUrl, agentIdentifier, integrationIdentifier, subscriberId, secretKey, fetchFn } = this.#options;
+    const { apiUrl, integrationIdentifier, subscriberId, secretKey, fetchFn } = this.#options;
 
-    const url = `${apiUrl}/v1/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationIdentifier)}/telegram/subscriber-link`;
+    const url = `${apiUrl}/v1/integrations/channel-endpoints/link`;
 
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     if (secretKey) {
@@ -173,7 +177,7 @@ export class TelegramSubscriberLink {
     const res = await fetchFn(url, {
       method: 'POST',
       headers,
-      body: JSON.stringify({ subscriberId }),
+      body: JSON.stringify({ integrationIdentifier, subscriberId }),
     });
 
     if (!res.ok) {
@@ -182,8 +186,13 @@ export class TelegramSubscriberLink {
     }
 
     const json = await res.json();
+    const payload = (json.data ?? json) as LinkChannelEndpointApiResponse;
 
-    return (json.data ?? json) as TelegramSubscriberLinkResponse;
+    return {
+      deepLinkUrl: payload.url,
+      botUsername: payload.providerMetadata?.botUsername ?? '',
+      expiresAt: payload.providerMetadata?.expiresAt ?? '',
+    };
   }
 
   #scheduleExpiry(expiresAt: string, generation: number): void {
@@ -249,9 +258,15 @@ export class TelegramSubscriberLink {
   }
 
   async #checkConnection(): Promise<boolean> {
-    const { apiUrl, agentIdentifier, integrationIdentifier, secretKey, fetchFn } = this.#options;
+    const { apiUrl, integrationIdentifier, subscriberId, secretKey, fetchFn } = this.#options;
 
-    const url = `${apiUrl}/v1/agents/${encodeURIComponent(agentIdentifier)}/integrations?integrationIdentifier=${encodeURIComponent(integrationIdentifier)}&limit=1`;
+    const params = new URLSearchParams({
+      subscriberId,
+      integrationIdentifier,
+      providerId: TELEGRAM_PROVIDER_ID,
+      limit: '1',
+    });
+    const url = `${apiUrl}/v1/channel-endpoints?${params.toString()}`;
 
     const headers: Record<string, string> = {};
     if (secretKey) {
@@ -263,9 +278,9 @@ export class TelegramSubscriberLink {
     if (!res.ok) return false;
 
     const json = await res.json();
-    const links: Array<{ connectedAt?: string | null }> = json.data ?? json;
+    const endpoints: unknown[] = json.data ?? json;
 
-    return Boolean(links[0]?.connectedAt);
+    return Array.isArray(endpoints) && endpoints.length > 0;
   }
 
   #setState(next: TelegramSubscriberLinkState): void {

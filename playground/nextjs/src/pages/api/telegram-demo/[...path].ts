@@ -7,8 +7,8 @@
  *   NEXT_PUBLIC_NOVU_TELEGRAM_API_URL=/api/telegram-demo
  *
  * It mimics the two endpoints the hook calls:
- *   POST .../telegram/subscriber-link  -> issues a fake deep link + expiry
- *   GET  .../integrations              -> reports `connectedAt` after CONNECT_DELAY_MS
+ *   POST .../integrations/channel-endpoints/link  -> issues a fake deep link + expiry
+ *   GET  .../channel-endpoints                    -> reports connection after CONNECT_DELAY_MS
  *
  * The "connection" auto-confirms a few seconds after the link is issued so you
  * can watch the status transition pending -> connected.
@@ -30,26 +30,28 @@ function randomCode(): string {
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   const url = req.url ?? '';
 
-  if (req.method === 'POST' && url.includes('/telegram/subscriber-link')) {
+  if (req.method === 'POST' && url.includes('/integrations/channel-endpoints/link')) {
     issuedAt = Date.now();
     const code = randomCode();
 
     res.status(200).json({
       data: {
-        deepLinkUrl: `https://t.me/${BOT_USERNAME}?start=${code}`,
-        botUsername: BOT_USERNAME,
-        expiresAt: new Date(Date.now() + EXPIRY_MS).toISOString(),
+        url: `https://t.me/${BOT_USERNAME}?start=${code}`,
+        providerMetadata: {
+          botUsername: BOT_USERNAME,
+          expiresAt: new Date(Date.now() + EXPIRY_MS).toISOString(),
+        },
       },
     });
 
     return;
   }
 
-  if (req.method === 'GET' && url.includes('/integrations')) {
+  if (req.method === 'GET' && url.includes('/channel-endpoints')) {
     const connected = issuedAt !== null && Date.now() - issuedAt >= CONNECT_DELAY_MS;
 
     res.status(200).json({
-      data: [{ connectedAt: connected ? new Date().toISOString() : null }],
+      data: connected ? [{ identifier: 'demo-endpoint' }] : [],
     });
 
     return;

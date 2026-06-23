@@ -29,11 +29,10 @@ import { EventsModule } from '../events/events.module';
 import { IntegrationModule } from '../integrations/integrations.module';
 import { KeylessModule } from '../keyless/keyless.module';
 import { SharedModule } from '../shared/shared.module';
+import { TelegramLinkingModule } from '../telegram-linking/telegram-linking.module';
 import { AgentConfigResolver } from './channels/agent-config-resolver.service';
 import { AgentIntegrationsController } from './channels/integrations/agent-integrations.controller';
-import { AgentsPublicController } from './channels/telegram-linking/agents-public.controller';
-import { TelegramMobileLinkTokenService } from './channels/telegram-linking/telegram-mobile-link-token.service';
-import { TelegramStartCodeService } from './channels/telegram-linking/telegram-start-code.service';
+import { AgentsPublicController } from './channels/slack-linking/agents-public.controller';
 import { InboundAckService } from './conversation-runtime/ack/inbound-ack.service';
 import { AgentActionTokenService } from './conversation-runtime/action-token/agent-action-token.service';
 import { AgentAttachmentStorage } from './conversation-runtime/conversation/agent-attachment-storage.service';
@@ -84,6 +83,7 @@ import { USE_CASES } from './usecases';
     ChannelEndpointsModule,
     ConnectModule,
     KeylessModule,
+    TelegramLinkingModule,
     forwardRef(() => IntegrationModule),
   ],
   controllers: [
@@ -144,8 +144,6 @@ import { USE_CASES } from './usecases';
     AgentEmailSender,
     OutboundGateway,
     McpOAuthDiscoveryService,
-    TelegramMobileLinkTokenService,
-    TelegramStartCodeService,
     CalculateLimitNovuIntegration,
     CalculateDemoClaudeQuota,
     CreateOrUpdateSubscriberUseCase,

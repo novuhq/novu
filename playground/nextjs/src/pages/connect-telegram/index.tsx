@@ -7,7 +7,6 @@ import { novuConfig } from '@/utils/config';
 //   - `/api/novu-proxy`    -> forwards to the real Novu API (production-style, secure)
 //   - `/api/telegram-demo` -> offline simulator (no bot/agent/secret required)
 const TELEGRAM_API_URL = process.env.NEXT_PUBLIC_NOVU_TELEGRAM_API_URL ?? '/api/novu-proxy';
-const AGENT_IDENTIFIER = process.env.NEXT_PUBLIC_NOVU_AGENT_IDENTIFIER ?? '';
 const INTEGRATION_IDENTIFIER = process.env.NEXT_PUBLIC_NOVU_TELEGRAM_INTEGRATION_IDENTIFIER ?? '';
 
 const IS_DEMO = TELEGRAM_API_URL.includes('telegram-demo');
@@ -85,18 +84,15 @@ function TelegramConnectorContent({
 
 function TelegramConnector({
   apiUrl,
-  agentIdentifier,
   integrationIdentifier,
   subscriberId,
 }: {
   apiUrl: string;
-  agentIdentifier: string;
   integrationIdentifier: string;
   subscriberId: string;
 }) {
   const { deepLinkUrl, botUsername, status, error, refresh } = useTelegramSubscriberLink({
     apiUrl,
-    agentIdentifier,
     integrationIdentifier,
     subscriberId,
     pollIntervalMs: 2000,
@@ -140,7 +136,7 @@ function TelegramConnector({
 
 export default function ConnectTelegramPage() {
   const subscriberId = novuConfig.subscriberId || 'playground-subscriber';
-  const ready = IS_DEMO || (AGENT_IDENTIFIER && INTEGRATION_IDENTIFIER);
+  const ready = IS_DEMO || INTEGRATION_IDENTIFIER;
 
   return (
     <>
@@ -161,10 +157,6 @@ export default function ConnectTelegramPage() {
               Mode: <code>{IS_DEMO ? 'demo simulator' : 'live proxy'}</code>
             </span>
             <span>
-              Agent:{' '}
-              <code>{AGENT_IDENTIFIER || (IS_DEMO ? 'demo-agent' : '— set NEXT_PUBLIC_NOVU_AGENT_IDENTIFIER')}</code>
-            </span>
-            <span>
               Integration:{' '}
               <code>
                 {INTEGRATION_IDENTIFIER ||
@@ -180,14 +172,12 @@ export default function ConnectTelegramPage() {
         {ready ? (
           <TelegramConnector
             apiUrl={TELEGRAM_API_URL}
-            agentIdentifier={AGENT_IDENTIFIER || 'demo-agent'}
             integrationIdentifier={INTEGRATION_IDENTIFIER || 'demo-integration'}
             subscriberId={subscriberId}
           />
         ) : (
           <div className="rounded-lg border border-dashed p-5 text-sm text-muted-foreground">
-            Set <code>NEXT_PUBLIC_NOVU_AGENT_IDENTIFIER</code> and{' '}
-            <code>NEXT_PUBLIC_NOVU_TELEGRAM_INTEGRATION_IDENTIFIER</code> (plus <code>NOVU_SECRET_KEY</code> on the
+            Set <code>NEXT_PUBLIC_NOVU_TELEGRAM_INTEGRATION_IDENTIFIER</code> (plus <code>NOVU_SECRET_KEY</code> on the
             server) to use the live proxy — or set <code>NEXT_PUBLIC_NOVU_TELEGRAM_API_URL=/api/telegram-demo</code> to
             try the offline simulator with no bot required.
           </div>

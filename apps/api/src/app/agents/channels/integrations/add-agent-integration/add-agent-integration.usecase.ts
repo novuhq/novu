@@ -20,6 +20,7 @@ import {
 } from '@novu/dal';
 import {
   ApiServiceLevelEnum,
+  ChatProviderIdEnum,
   EmailProviderIdEnum,
   EnvironmentTypeEnum,
   FeatureNameEnum,
@@ -142,6 +143,21 @@ export class AddAgentIntegration {
 
     if (existingLink) {
       throw new ConflictException('This integration is already linked to the agent.');
+    }
+
+    if (integration.providerId === ChatProviderIdEnum.Telegram) {
+      const linkedElsewhere = await this.agentIntegrationRepository.findOne(
+        {
+          _integrationId: integration._id,
+          _environmentId: command.environmentId,
+          _organizationId: command.organizationId,
+        },
+        ['_agentId']
+      );
+
+      if (linkedElsewhere && linkedElsewhere._agentId !== agent._id) {
+        throw new ConflictException('Integration is already linked to a different agent');
+      }
     }
 
     // Revives a tombstoned (disconnected) link when one exists for this pair —

@@ -11,10 +11,11 @@ import {
   CreateOrUpdateSubscriberUseCase,
   decryptCredentials,
 } from '@novu/application-generic';
-import { AgentIntegrationRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
+import { IntegrationRepository } from '@novu/dal';
 import { ChatProviderIdEnum } from '@novu/shared';
 import Axios from 'axios';
 
+import { TelegramAgentLinkResolver } from '../telegram-agent-link.resolver';
 import { TelegramStartCodeService } from '../telegram-start-code.service';
 import { IssueTelegramSubscriberLinkCommand } from './issue-telegram-subscriber-link.command';
 
@@ -40,27 +41,13 @@ interface TelegramGetMeResponse {
 @Injectable()
 export class IssueTelegramSubscriberLink {
   constructor(
-    private readonly agentRepository: AgentRepository,
     private readonly integrationRepository: IntegrationRepository,
-    private readonly agentIntegrationRepository: AgentIntegrationRepository,
     private readonly createOrUpdateSubscriber: CreateOrUpdateSubscriberUseCase,
-    private readonly startCodeService: TelegramStartCodeService
+    private readonly startCodeService: TelegramStartCodeService,
+    private readonly agentLinkResolver: TelegramAgentLinkResolver
   ) {}
 
   async execute(command: IssueTelegramSubscriberLinkCommand): Promise<IssueTelegramSubscriberLinkResult> {
-    const agent = await this.agentRepository.findOne(
-      {
-        identifier: command.agentIdentifier,
-        _environmentId: command.environmentId,
-        _organizationId: command.organizationId,
-      },
-      ['_id', 'identifier']
-    );
-
-    if (!agent) {
-      throw new NotFoundException(`Agent with identifier "${command.agentIdentifier}" was not found.`);
-    }
-
     const integration = await this.integrationRepository.findOne(
       {
         identifier: command.integrationIdentifier,
@@ -80,28 +67,6 @@ export class IssueTelegramSubscriberLink {
 
     const integrationId = String(integration._id);
 
-    const link = await this.agentIntegrationRepository.findOne(
-      {
-        _agentId: agent._id,
-        _integrationId: integration._id,
-        _environmentId: command.environmentId,
-        _organizationId: command.organizationId,
-      },
-      ['_id']
-    );
-
-    if (!link) {
-      throw new NotFoundException('Integration is not linked to this agent');
-    }
-
-    await this.createOrUpdateSubscriber.execute(
-      CreateOrUpdateSubscriberCommand.create({
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        subscriberId: command.subscriberId,
-      })
-    );
-
     const decrypted = decryptCredentials(integration.credentials as Record<string, string>);
     const botToken = decrypted.apiToken as string | undefined;
 
@@ -110,6 +75,21 @@ export class IssueTelegramSubscriberLink {
         'Bot Token is missing from integration credentials. Save the Bot Token and re-run the webhook configuration first.'
       );
     }
+
+    const agent = await this.agentLinkResolver.resolve({
+      integrationId,
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+      botToken,
+    });
+
+    await this.createOrUpdateSubscriber.execute(
+      CreateOrUpdateSubscriberCommand.create({
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        subscriberId: command.subscriberId,
+      })
+    );
 
     const botUsername = await this.callGetMe(botToken);
 
@@ -120,7 +100,7 @@ export class IssueTelegramSubscriberLink {
       const issued = await this.startCodeService.issue({
         environmentId: command.environmentId,
         organizationId: command.organizationId,
-        agentIdentifier: agent.identifier,
+        agentIdentifier: agent.agentIdentifier,
         integrationId,
         subscriberId: command.subscriberId,
       });

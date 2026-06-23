@@ -8,8 +8,8 @@ import {
 import { encryptSecret, PinoLogger } from '@novu/application-generic';
 import { IntegrationRepository } from '@novu/dal';
 import { ChatProviderIdEnum } from '@novu/shared';
-import { ConfigureTelegramAgentWebhookCommand } from '../../telegram/configure-telegram-agent-webhook/configure-telegram-agent-webhook.command';
-import { ConfigureTelegramAgentWebhook } from '../../telegram/configure-telegram-agent-webhook/configure-telegram-agent-webhook.usecase';
+import { ConfigureTelegramWebhookCommand } from '../configure-telegram-webhook/configure-telegram-webhook.command';
+import { ConfigureTelegramWebhook } from '../configure-telegram-webhook/configure-telegram-webhook.usecase';
 import { IssueTelegramSubscriberLinkCommand } from '../issue-telegram-subscriber-link/issue-telegram-subscriber-link.command';
 import { IssueTelegramSubscriberLink } from '../issue-telegram-subscriber-link/issue-telegram-subscriber-link.usecase';
 import {
@@ -31,7 +31,7 @@ export class ConsumeTelegramMobileLink {
   constructor(
     private readonly tokenService: TelegramMobileLinkTokenService,
     private readonly integrationRepository: IntegrationRepository,
-    private readonly configureTelegramWebhookUsecase: ConfigureTelegramAgentWebhook,
+    private readonly configureTelegramWebhookUsecase: ConfigureTelegramWebhook,
     private readonly issueTelegramSubscriberLink: IssueTelegramSubscriberLink,
     private readonly logger: PinoLogger
   ) {
@@ -70,12 +70,11 @@ export class ConsumeTelegramMobileLink {
       );
 
       const result = await this.configureTelegramWebhookUsecase.execute(
-        ConfigureTelegramAgentWebhookCommand.create({
+        ConfigureTelegramWebhookCommand.create({
           userId: 'telegram-mobile-link',
           environmentId: payload.env,
           organizationId: payload.org,
-          agentIdentifier: payload.aid,
-          integrationId: integration._id,
+          integrationIdentifier: integration.identifier,
         })
       );
 
@@ -88,7 +87,6 @@ export class ConsumeTelegramMobileLink {
               userId: 'telegram-mobile-link',
               environmentId: payload.env,
               organizationId: payload.org,
-              agentIdentifier: payload.aid,
               integrationIdentifier: integration.identifier,
               subscriberId: payload.sid,
             })

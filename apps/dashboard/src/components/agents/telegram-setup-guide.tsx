@@ -137,12 +137,16 @@ export function TelegramSetupGuide({
   }, [hasCredentials, isCredentialsSidebarOpen]);
 
   const { mutate: configureTelegram, error: configureError } = useMutation({
-    mutationFn: () =>
-      configureTelegramAgentWebhook(
+    mutationFn: () => {
+      if (!selectedIntegration?.identifier) {
+        throw new Error('Telegram integration could not be resolved.');
+      }
+
+      return configureTelegramAgentWebhook(
         requireEnvironment(currentEnvironment, 'No environment selected'),
-        agent.identifier,
-        integrationId
-      ),
+        selectedIntegration.identifier
+      );
+    },
     onSuccess: (result) => {
       setConfiguredWebhookUrl(result.webhookUrl);
       setBotUsername(result.botUsername);
@@ -177,7 +181,6 @@ export function TelegramSetupGuide({
 
       return requestTelegramSubscriberLink(
         requireEnvironment(currentEnvironment, 'No environment selected'),
-        agent.identifier,
         selectedIntegration.identifier,
         testSubscriberId
       );

@@ -20,9 +20,6 @@ export type TelegramSubscriberLinkOptions = {
    */
   secretKey?: string;
 
-  /** Agent identifier (the `identifier` field on the agent, not `_id`). */
-  agentIdentifier: string;
-
   /** Integration identifier (the `identifier` field on the Telegram integration, not `_id`). */
   integrationIdentifier: string;
 
