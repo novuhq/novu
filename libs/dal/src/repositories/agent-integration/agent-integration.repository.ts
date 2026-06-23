@@ -18,14 +18,16 @@ export class AgentIntegrationRepository extends BaseRepositoryV2<
   }
 
   /**
-   * Distinct integration ids (channels) that are connected in the environment,
-   * ordered by the earliest time each channel became connected (stable, ascending).
+   * Distinct connected channel types (provider ids) in the environment, ordered
+   * by the earliest time each channel type became connected (stable, ascending).
    *
-   * A "channel" is a distinct `_integrationId` — the same integration linked to
-   * multiple agents counts once. Used for active-channel plan-limit enforcement,
-   * where the first N channels (by connection order) are within the plan limit.
-   * Counting is per environment so a channel promoted (synced) to production
-   * does not consume a second plan slot for the same logical channel.
+   * A "channel" is a distinct provider (e.g. Slack, Microsoft Teams) — NOT a
+   * distinct integration. An organization may connect several Slack workspaces
+   * (multiple Slack integrations); they all share the same provider and count
+   * as a single active channel. Used for active-channel plan-limit enforcement,
+   * where the first N channel types (by connection order) are within the plan
+   * limit. Counting is per environment so a channel promoted (synced) to
+   * production does not consume a second plan slot for the same logical channel.
    *
    * Links whose integration was (soft-)deleted from the integration store are
    * excluded — a removed channel must not consume a plan slot, and stale links
@@ -33,7 +35,7 @@ export class AgentIntegrationRepository extends BaseRepositoryV2<
    * Tombstoned (disconnected) links are excluded explicitly: the schema-level
    * exclusion hook does not apply to aggregation pipelines.
    */
-  async listConnectedIntegrationIdsForEnvironment(organizationId: string, environmentId: string): Promise<string[]> {
+  async listConnectedChannelTypesForEnvironment(organizationId: string, environmentId: string): Promise<string[]> {
     const result = await this.aggregate([
       {
         $match: {
@@ -51,14 +53,15 @@ export class AgentIntegrationRepository extends BaseRepositoryV2<
           as: 'integration',
         },
       },
+      { $unwind: '$integration' },
       {
         $match: {
-          integration: { $elemMatch: { deleted: { $ne: true } } },
+          'integration.deleted': { $ne: true },
         },
       },
       {
         $group: {
-          _id: '$_integrationId',
+          _id: '$integration.providerId',
           firstConnectedAt: { $min: '$connectedAt' },
         },
       },
