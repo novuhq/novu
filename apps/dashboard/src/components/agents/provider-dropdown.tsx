@@ -91,7 +91,7 @@ type ProviderDropdownProps = {
    * Return `true` to defer the link and require confirmation — the dropdown
    * then calls `onConfirmRequired` with a `proceed` callback instead of linking.
    */
-  confirmBeforeLink?: (providerId: string, integration?: IIntegration) => boolean;
+  confirmBeforeLink?: (providerId: string) => boolean;
   /** Invoked when `confirmBeforeLink` defers a selection. Call `proceed` to run the deferred link. */
   onConfirmRequired?: (proceed: () => void) => void;
 };
@@ -285,7 +285,7 @@ export function ProviderDropdown({
 
     // Defer to the caller's plan-limit confirmation when the chosen provider
     // would exceed the limit. The link runs only if the user confirms.
-    if (confirmBeforeLink?.(item.providerId, item.integration)) {
+    if (confirmBeforeLink?.(item.providerId)) {
       onConfirmRequired?.(() => {
         void performLink(item, index);
       });

@@ -104,6 +104,30 @@ export function isAgentOverPlanLimit(usage: AgentPlanUsage, agent: { _id: string
 }
 
 /**
+ * Single source of truth for the active-channel rank rule, shared by the
+ * over-limit derivation (`isChannelOverPlanLimit`) and the runtime check
+ * (`isChannelWithinLimit`) so the two can never drift. Counting is per channel
+ * type (provider): a channel type is within the limit when the plan is
+ * unlimited; when it is already connected at a rank below the limit; or when it
+ * is not yet connected but there is remaining headroom. Several integrations of
+ * the same provider (e.g. multiple Slack workspaces) collapse to a single
+ * ranked entry and therefore share one slot.
+ */
+function isProviderWithinChannelLimit(connectedProviderIds: string[], providerId: string, limit: number): boolean {
+  if (limit >= UNLIMITED_VALUE) {
+    return true;
+  }
+
+  const rank = connectedProviderIds.indexOf(providerId);
+
+  if (rank === -1) {
+    return connectedProviderIds.length < limit;
+  }
+
+  return rank < limit;
+}
+
+/**
  * Whether a channel is over the organization's active-channel plan limit (and
  * therefore soft-blocked at runtime). Counting is per channel type (provider):
  * once any integration of a provider has connected, that provider occupies a
@@ -113,17 +137,7 @@ export function isAgentOverPlanLimit(usage: AgentPlanUsage, agent: { _id: string
  * at/over its limit.
  */
 export function isChannelOverPlanLimit(usage: ChannelPlanUsage, channel: { providerId: string }): boolean {
-  const rank = usage.connectedProviderIds.indexOf(channel.providerId);
-
-  if (rank === -1) {
-    return usage.blocksUnconnectedChannels;
-  }
-
-  if (usage.limit >= UNLIMITED_VALUE) {
-    return false;
-  }
-
-  return rank >= usage.limit;
+  return !isProviderWithinChannelLimit(usage.connectedProviderIds, channel.providerId, usage.limit);
 }
 
 /**
@@ -401,6 +415,7 @@ export class AgentEntitlementsService {
     knownApiServiceLevel?: ApiServiceLevelEnum
   ): Promise<boolean> {
     const limit = await this.getActiveChannelLimit(organizationId, knownApiServiceLevel);
+    // Skip the DB read on unlimited plans — every channel type is within limit.
     if (limit >= UNLIMITED_VALUE) {
       return true;
     }
@@ -409,14 +424,8 @@ export class AgentEntitlementsService {
       organizationId,
       environmentId
     );
-    const rank = connectedProviderIds.indexOf(providerId);
 
-    if (rank === -1) {
-      // Channel type not yet recorded as connected — allow only if there is remaining headroom.
-      return connectedProviderIds.length < limit;
-    }
-
-    return rank < limit;
+    return isProviderWithinChannelLimit(connectedProviderIds, providerId, limit);
   }
 
   private setRuntimeLimitCacheEntry(cacheKey: string, value: RuntimeLimitChecks): void {

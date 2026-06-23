@@ -270,7 +270,12 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
 
   const [providerDropdownOpen, setProviderDropdownOpen] = useState(false);
   const [channelLimitDialogOpen, setChannelLimitDialogOpen] = useState(false);
-  // Deferred link to run if the user accepts the channel-limit warning ("Add anyway").
+  // Deferred link to run when the user accepts the channel-limit warning ("Add
+  // anyway"). Intentionally not cleared on dialog dismissal: the dialog fires
+  // onOpenChange(false) before onContinueAnyway, so clearing on close would
+  // race-null this ref before handleChannelLimitContinue can read it. It's
+  // always re-set in handleChannelLimitConfirmRequired before the dialog
+  // reopens, so a dismissed dialog never leaves a stale link that could fire.
   const pendingChannelLinkRef = useRef<(() => void) | null>(null);
 
   // Providers that already occupy a within-limit active-channel slot. Adding
@@ -308,10 +313,6 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
     pendingChannelLinkRef.current = null;
     setChannelLimitDialogOpen(false);
     proceed?.();
-  };
-
-  const handleChannelLimitDialogOpenChange = (open: boolean) => {
-    setChannelLimitDialogOpen(open);
   };
 
   useEffect(() => {
@@ -618,7 +619,7 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
       {planUsage && (
         <ChannelLimitUpgradeDialog
           open={channelLimitDialogOpen}
-          onOpenChange={handleChannelLimitDialogOpenChange}
+          onOpenChange={setChannelLimitDialogOpen}
           planUsage={planUsage}
           onContinueAnyway={handleChannelLimitContinue}
         />
