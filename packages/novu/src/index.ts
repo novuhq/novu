@@ -9,8 +9,8 @@ import { CONNECT_HELP_TEXT } from './commands/connect/help-text';
 import type { ConnectCommandInput } from './commands/connect/resolve-options';
 import { resolveConnectCommandOptions } from './commands/connect/resolve-options';
 import {
-  AGENT_RUNTIME_CHOICES,
-  type AgentRuntimeChoice,
+  AGENT_CONNECT_MODES,
+  type AgentConnectMode,
   CHANNEL_CHOICES,
   type ChannelChoice,
 } from './commands/connect/types';
@@ -140,7 +140,7 @@ program
 program
   .command('connect')
   .description(
-    `Create a managed agent and connect it to a channel (keyless by default; use --ci for non-interactive agent/CI runs)`
+    `Create a managed agent and connect it to a channel (dashboard OAuth by default; use --ci for non-interactive agent/CI runs)`
   )
   .usage('[prompt] [--ci] [--channel <name>] [options]')
   .argument(
@@ -149,11 +149,11 @@ program
   )
   .option(
     '-s, --secret-key <secret-key>',
-    'Use an existing Novu account instead of keyless mode (omit for keyless — the default)'
+    'Use an existing Novu account via secret key instead of dashboard OAuth (the default)'
   )
   .option(
-    '--login',
-    'Authenticate via the Novu dashboard instead of keyless mode (opens /cli/auth for approval)',
+    '--keyless',
+    'Use a temporary keyless workspace instead of dashboard OAuth (creates a demo agent the user can claim later)',
     false
   )
   .option('-a, --api-url <url>', 'Override the Novu API URL (default follows --region)')
@@ -169,8 +169,12 @@ program
   )
   .option(
     '--runtime <runtime>',
-    `Agent runtime for new agents (${AGENT_RUNTIME_CHOICES.join(' | ')}). Defaults to demo — omit in --ci keyless runs`
+    `Agent connect mode (${AGENT_CONNECT_MODES.join(' | ')}). Defaults to demo — omit in --ci authenticated runs`
   )
+  .option('--chat-sdk', 'Shorthand for --runtime chat-sdk', false)
+  .option('--project-dir <path>', 'Project directory to inspect for an existing Chat SDK app (defaults to cwd)')
+  .option('--scaffold-dir <name>', 'Subdirectory name when scaffolding a Chat SDK project into a non-empty parent')
+  .option('--no-scaffold', 'Skip scaffolding even when the target directory is empty')
   .option(
     '--agent-integration-id <id>',
     'Use an existing agent-runtime integration (skips credential setup for BYOK runtimes)'
@@ -181,7 +185,7 @@ program
   .option('--aws-claude-workspace-id <id>', 'AWS Claude workspace ID for --runtime claude-aws')
   .option(
     '--channel <name>',
-    `Channel to connect (required in --ci mode). One of: ${CHANNEL_CHOICES.join(', ')}. whatsapp/teams require --login in --ci mode`
+    `Channel to connect (required in --ci mode). One of: ${CHANNEL_CHOICES.join(', ')}. whatsapp/teams require dashboard OAuth (omit --keyless)`
   )
   .option('--skip-slack', 'Create the agent and exit; do not connect any channel (equivalent to --channel skip)', false)
   .option(
@@ -212,32 +216,33 @@ program
     if (options.ci) {
       const prompt = (positionalPrompt ?? options.prompt)?.trim();
       const channel = options.skipSlack ? 'skip' : options.channel;
+      const connectMode = options.chatSdk ? 'chat-sdk' : options.brain === 'chat-sdk' ? 'chat-sdk' : options.runtime;
 
-      if (!prompt) {
+      if (!prompt && connectMode !== 'chat-sdk') {
         console.error(
-          'Non-interactive mode requires a prompt (positional <prompt> or --prompt).\n(run `novu connect --help` for the non-interactive contract and examples)'
+          'Non-interactive mode requires a prompt (positional <prompt> or --prompt), unless --runtime chat-sdk.\n(run `novu connect --help` for the non-interactive contract and examples)'
         );
         process.exit(1);
       }
 
       if (!channel) {
         console.error(
-          'Non-interactive mode requires --channel <slack|email|telegram|skip> (or <whatsapp|teams> with --login).\n(run `novu connect --help` for the non-interactive contract and examples)'
+          'Non-interactive mode requires --channel <slack|email|telegram|skip> (or <whatsapp|teams> without --keyless).\n(run `novu connect --help` for the non-interactive contract and examples)'
         );
         process.exit(1);
       }
 
-      if (options.channel && isDashboardOnlyChannel(options.channel as ChannelChoice) && !options.login) {
+      if (options.channel && isDashboardOnlyChannel(options.channel as ChannelChoice) && options.keyless) {
         console.error(
-          'Non-interactive mode does not support --channel whatsapp or --channel teams without --login. Pass --login to authenticate via the dashboard, or use the Novu dashboard instead.\n(run `novu connect --help` for the non-interactive contract and examples)'
+          'Non-interactive mode does not support --channel whatsapp or --channel teams with --keyless. Omit --keyless to authenticate via the dashboard, or use the Novu dashboard instead.\n(run `novu connect --help` for the non-interactive contract and examples)'
         );
         process.exit(1);
       }
     }
 
-    if (options.login && options.secretKey) {
+    if (options.keyless && options.secretKey) {
       console.error(
-        'Cannot use --login together with --secret-key. Omit --secret-key to authenticate via the dashboard.'
+        'Cannot use --keyless together with --secret-key. Omit --secret-key for keyless mode, or omit --keyless to authenticate with your account.'
       );
       process.exit(1);
     }
@@ -245,9 +250,9 @@ program
       console.error(`Invalid --channel value: "${options.channel}". Expected one of: ${CHANNEL_CHOICES.join(', ')}.`);
       process.exit(1);
     }
-    if (options.runtime && !(AGENT_RUNTIME_CHOICES as readonly string[]).includes(options.runtime)) {
+    if (options.runtime && !(AGENT_CONNECT_MODES as readonly string[]).includes(options.runtime)) {
       console.error(
-        `Invalid --runtime value: "${options.runtime}". Expected one of: ${AGENT_RUNTIME_CHOICES.join(', ')}.`
+        `Invalid --runtime value: "${options.runtime}". Expected one of: ${AGENT_CONNECT_MODES.join(', ')}.`
       );
       process.exit(1);
     }
@@ -258,7 +263,8 @@ program
         region: options.region as CloudRegionEnum,
         prompt: positionalPrompt ?? options.prompt,
         channel: options.channel as ChannelChoice | undefined,
-        runtime: options.runtime as AgentRuntimeChoice | undefined,
+        runtime: options.runtime as AgentConnectMode | undefined,
+        chatSdk: options.chatSdk,
         apiUrl: options.apiUrl ?? NOVU_API_URL,
       });
     } catch (error) {
@@ -277,7 +283,7 @@ program
     `The Novu development environment Secret Key. Note that your Novu app won't work outside of local mode without it.`
   )
   .option('-a, --api-url <url>', 'The Novu Cloud API URL', 'https://api.novu.co')
-  .option('-t, --template <name>', 'The template to use (notifications or agent)')
+  .option('-t, --template <name>', 'The template to use (notifications, agent, or chat-sdk)')
   .option('--agent-identifier <id>', 'Agent identifier to use in the scaffolded template')
   .action(async (options: IInitCommandOptions) => {
     return await init(options, anonymousId);

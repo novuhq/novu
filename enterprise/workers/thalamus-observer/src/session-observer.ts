@@ -241,10 +241,12 @@ export class SessionObserver extends Agent<Env, State> {
     sequence: number,
     acc: import('./parsers').EdgeAccumulator
   ): number {
-    const content = this.reconstructContent(sessionId);
+    // Override acc.messages with the DB-reconstructed list: it includes messages
+    // from before a fiber recovery, where the in-memory accumulator is recreated empty.
+    const messages = this.reconstructMessages(sessionId);
     const finish: StreamPart = {
       type: 'finish',
-      response: { ...acc.toResponse(sessionId), content },
+      response: { ...acc.toResponse(sessionId), messages },
     };
     this.persistEvent(sessionId, sequence, finish);
     this.triggerDelivery(params);
@@ -332,6 +334,10 @@ export class SessionObserver extends Agent<Env, State> {
       return [];
     }
 
+    if (isMcpInitFailure(parsed)) {
+      return [];
+    }
+
     const parts: StreamPart[] = [];
     try {
       for (const part of parser.mapEvent(parsed, acc)) {
@@ -374,18 +380,18 @@ export class SessionObserver extends Agent<Env, State> {
     return (row?.max_seq ?? 0) + 1;
   }
 
-  private reconstructContent(sessionId: string): string {
+  private reconstructMessages(sessionId: string): string[] {
     const cursor = this.ctx.storage.sql.exec<{ text: string }>(
-      "SELECT json_extract(event_json, '$.text') as text FROM events WHERE session_id = ? AND json_extract(event_json, '$.type') = 'text-delta' ORDER BY sequence",
+      "SELECT json_extract(event_json, '$.text') as text FROM events WHERE session_id = ? AND json_extract(event_json, '$.type') = 'message' ORDER BY sequence",
       sessionId
     );
 
-    let content = '';
+    const messages: string[] = [];
     for (const row of cursor) {
-      content += row.text;
+      if (row.text) messages.push(row.text);
     }
 
-    return content;
+    return messages;
   }
 
   private getPendingEvents(sessionId: string): EventRow[] {
@@ -588,4 +594,15 @@ export class SessionObserver extends Agent<Env, State> {
   private updateObservation(obs: (ObservationParams & { status: ObservationStatus }) | null): void {
     this.setState({ ...this.state, observation: obs });
   }
+}
+
+function isMcpInitFailure(parsed: unknown): boolean {
+  if (typeof parsed !== 'object' || parsed === null) return false;
+  const obj = parsed as { type?: string; error?: { type?: string; message?: string } };
+
+  return (
+    obj.type === 'session.error' &&
+    (obj.error?.type === 'mcp_authentication_failed_error' ||
+      /MCP server .+ initialize failed/i.test(obj.error?.message ?? ''))
+  );
 }

@@ -16,8 +16,10 @@ import { createWebhookHandler, type WebhookHandler } from '@novu/thalamus/webhoo
 import type { Request, Response } from 'express';
 import type { ResolvedAgentConfig } from '../channels/agent-config-resolver.service';
 import { InboundAckService } from '../conversation-runtime/ack/inbound-ack.service';
-import { McpConnectionVaultService } from '../mcp/connections/mcp-connection-vault.service';
+import { AgentConversationService } from '../conversation-runtime/conversation/agent-conversation.service';
+import { AgentMcpSessionService } from '../mcp/runtime/agent-mcp-session.service';
 import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
+import { AgentRuntimeDefinitionService } from './agent-runtime-definition.service';
 import { DemoClaudeQuotaPolicy } from './demo-claude-quota-policy.service';
 import { ManagedAgentEventHandler } from './managed-agent-event-handler.service';
 import { ManagedAgentProviderFactory } from './managed-agent-provider-factory.service';
@@ -37,13 +39,14 @@ interface WebhookSessionMetadata {
   organizationId: string;
   agentIdentifier: string;
   integrationIdentifier: string;
-  agentId?: string;
+  agentId: string;
+  subscriberId: string;
+  platform: AgentPlatformEnum;
+  platformThreadId: string;
   platformMessageId?: string;
-  subscriberId?: string;
-  platform?: AgentPlatformEnum;
-  platformThreadId?: string;
   firstPlatformMessageId?: string;
   acknowledgeOnReceived?: boolean;
+  suppressReply?: boolean;
 }
 
 export type ManagedAgentDispatchStatus = 'active' | 'queued';
@@ -62,10 +65,12 @@ export class ManagedAgentService implements OnModuleInit {
     private readonly eventHandler: ManagedAgentEventHandler,
     private readonly conversationRepository: ConversationRepository,
     private readonly conversationActivityRepository: ConversationActivityRepository,
+    private readonly conversationService: AgentConversationService,
     private readonly subscriberRepository: SubscriberRepository,
-    private readonly mcpConnectionVaultService: McpConnectionVaultService,
+    private readonly agentMcpSessionService: AgentMcpSessionService,
     private readonly demoQuota: DemoClaudeQuotaPolicy,
     private readonly inboundAck: InboundAckService,
+    private readonly agentRuntimeDefinition: AgentRuntimeDefinitionService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -81,6 +86,14 @@ export class ManagedAgentService implements OnModuleInit {
   ): Promise<ManagedAgentDispatchResult> {
     await this.demoQuota.assertAllowed(context, agent);
 
+    // Backfill Novu-owned platform config (e.g. novu_tools) on agents created before the
+    // current definition version. Fail-open: never blocks the message.
+    await this.agentRuntimeDefinition.reconcileIfStale({
+      agentId: agent._id,
+      environmentId: context.config.environmentId,
+      organizationId: context.config.organizationId,
+    });
+
     const { provider, runtimeProvider } = await this.providerFactory.getOrCreate(agent, context.config.environmentId);
     const vaultIds = await this.resolveVaultIdsForTurn(
       agent,
@@ -92,6 +105,13 @@ export class ManagedAgentService implements OnModuleInit {
     const existingSessionId = context.conversation.externalSessionId ?? undefined;
     const sessionId = await this.reconcileSessionIdForVaultBinding(context, vaultIds, existingSessionId);
 
+    const connectedMcpServers = await this.agentMcpSessionService.resolveConnectedMcps({
+      agentId: agent._id,
+      environmentId: context.config.environmentId,
+      organizationId: context.config.organizationId,
+      subscriberMongoId: context.subscriber?._id,
+    });
+
     const messages = sessionId
       ? [{ role: MessageRole.USER, content: context.userMessageText }]
       : await this.buildMessagesWithHistory(context);
@@ -100,6 +120,7 @@ export class ManagedAgentService implements OnModuleInit {
       messages,
       sessionId,
       vaultIds,
+      ...(connectedMcpServers ? { agent: { mcpServers: connectedMcpServers } } : {}),
       webhookMetadata: this.buildWebhookMetadata({
         conversationId: String(context.conversation._id),
         environmentId: context.config.environmentId,
@@ -107,10 +128,10 @@ export class ManagedAgentService implements OnModuleInit {
         agentIdentifier: context.config.agentIdentifier,
         integrationIdentifier: context.config.integrationIdentifier,
         agentId: agent._id,
-        platformMessageId: context.platformMessageId,
-        subscriberId: context.subscriber?.subscriberId,
+        subscriberId: context.subscriber?.subscriberId ?? '',
         platform: context.config.platform,
-        platformThreadId: context.platformThreadId ?? context.conversation.channels?.[0]?.platformThreadId,
+        platformThreadId: context.platformThreadId ?? context.conversation.channels?.[0]?.platformThreadId ?? '',
+        platformMessageId: context.platformMessageId,
         firstPlatformMessageId: context.conversation.channels?.[0]?.firstPlatformMessageId,
         acknowledgeOnReceived: context.config.acknowledgeOnReceived,
       }),
@@ -173,16 +194,20 @@ export class ManagedAgentService implements OnModuleInit {
    * user's verdict back through the provider as `toolResults` entries.
    * Accepts one or more tool IDs (per-tool approval or batch Approve All).
    */
-  async resumeWithToolResults(params: {
+  async sendToolResult(params: {
     conversationId: string;
     environmentId: string;
     organizationId: string;
     agentIdentifier: string;
     integrationIdentifier: string;
     subscriberId?: string;
-    platform?: AgentPlatformEnum;
-    toolUseIds: string[];
-    approved: boolean;
+    toolUseId: string;
+    approved?: boolean;
+    content?: string;
+    followUpMessage?: string;
+    platform: AgentPlatformEnum;
+    platformThreadId: string;
+    suppressReply?: boolean;
   }): Promise<void> {
     const conversation = await this.conversationRepository.findOne(
       { _id: params.conversationId, _environmentId: params.environmentId, _organizationId: params.organizationId },
@@ -191,7 +216,7 @@ export class ManagedAgentService implements OnModuleInit {
 
     if (!conversation?.externalSessionId) {
       this.logger.warn(
-        { conversationId: params.conversationId, toolUseIds: params.toolUseIds },
+        { conversationId: params.conversationId, toolUseId: params.toolUseId },
         'Ignoring tool-approval click — conversation has no externalSessionId (stale card or already resolved)'
       );
 
@@ -205,7 +230,7 @@ export class ManagedAgentService implements OnModuleInit {
 
     if (!agent?.managedRuntime) {
       this.logger.warn(
-        { conversationId: params.conversationId, toolUseIds: params.toolUseIds },
+        { conversationId: params.conversationId, toolUseId: params.toolUseId },
         'Ignoring tool-approval click — agent has no managedRuntime'
       );
 
@@ -224,6 +249,17 @@ export class ManagedAgentService implements OnModuleInit {
       runtimeProvider
     );
     const sessionId = conversation.externalSessionId;
+    const channel = conversation.channels?.[0];
+
+    const isToolApproval = params.approved !== undefined;
+    const connectedMcpServers = isToolApproval
+      ? undefined
+      : await this.agentMcpSessionService.resolveConnectedMcps({
+          agentId: agent._id,
+          environmentId: params.environmentId,
+          organizationId: params.organizationId,
+          subscriberMongoId,
+        });
 
     const webhookMetadata = this.buildWebhookMetadata({
       conversationId: params.conversationId,
@@ -231,17 +267,39 @@ export class ManagedAgentService implements OnModuleInit {
       organizationId: params.organizationId,
       agentIdentifier: params.agentIdentifier,
       integrationIdentifier: params.integrationIdentifier,
-      subscriberId: params.subscriberId,
+      agentId: agent._id,
+      subscriberId: params.subscriberId ?? '',
       platform: params.platform,
+      platformThreadId: params.platformThreadId,
+      firstPlatformMessageId: channel?.firstPlatformMessageId,
+      suppressReply: params.suppressReply,
     });
 
     await provider.send({
       messages: [],
       sessionId,
       vaultIds,
-      toolResults: params.toolUseIds.map((toolUseId) => ({ toolUseId, approved: params.approved, content: [] })),
+      ...(connectedMcpServers ? { agent: { mcpServers: connectedMcpServers } } : {}),
+      toolResults: [
+        {
+          toolUseId: params.toolUseId,
+          ...(params.approved !== undefined ? { approved: params.approved } : {}),
+          content: params.content ? [{ type: 'text' as const, text: params.content }] : [],
+        },
+      ],
       webhookMetadata,
     });
+
+    if (params.followUpMessage) {
+      const { suppressReply: _, ...followUpMetadata } = webhookMetadata;
+      await provider.send({
+        messages: [{ role: MessageRole.USER, content: params.followUpMessage }],
+        sessionId,
+        vaultIds,
+        ...(connectedMcpServers ? { agent: { mcpServers: connectedMcpServers } } : {}),
+        webhookMetadata: followUpMetadata,
+      });
+    }
   }
 
   async handleWebhook(req: Request, res: Response): Promise<void> {
@@ -345,10 +403,9 @@ export class ManagedAgentService implements OnModuleInit {
   }
 
   private async buildMessagesWithHistory(context: ManagedAgentContext): Promise<Message[]> {
-    const history = await this.conversationActivityRepository.findByConversation(
+    const history = await this.conversationService.getHistory(
       context.config.environmentId,
-      String(context.conversation._id),
-      50
+      String(context.conversation._id)
     );
 
     const messages: Message[] = history
@@ -373,7 +430,7 @@ export class ManagedAgentService implements OnModuleInit {
       return [];
     }
 
-    return this.mcpConnectionVaultService.resolveVaultIds({
+    return this.agentMcpSessionService.resolveVaultIds({
       agentId: agent._id,
       environmentId,
       organizationId,
@@ -389,34 +446,26 @@ export class ManagedAgentService implements OnModuleInit {
       organizationId: input.organizationId,
       agentIdentifier: input.agentIdentifier,
       integrationIdentifier: input.integrationIdentifier,
+      agentId: input.agentId,
+      subscriberId: input.subscriberId,
+      platform: input.platform,
+      platformThreadId: input.platformThreadId,
     };
 
     if (input.acknowledgeOnReceived !== undefined) {
       metadata.acknowledgeOnReceived = String(input.acknowledgeOnReceived);
     }
 
-    if (input.subscriberId) {
-      metadata.subscriberId = input.subscriberId;
-    }
-
-    if (input.platform) {
-      metadata.platform = input.platform;
-    }
-
-    if (input.agentId) {
-      metadata.agentId = input.agentId;
-    }
-
     if (input.platformMessageId) {
       metadata.platformMessageId = input.platformMessageId;
     }
 
-    if (input.platformThreadId) {
-      metadata.platformThreadId = input.platformThreadId;
-    }
-
     if (input.firstPlatformMessageId) {
       metadata.firstPlatformMessageId = input.firstPlatformMessageId;
+    }
+
+    if (input.suppressReply) {
+      metadata.suppressReply = 'true';
     }
 
     return metadata;

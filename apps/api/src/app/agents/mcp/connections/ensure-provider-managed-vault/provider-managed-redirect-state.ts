@@ -1,6 +1,8 @@
 import { BadRequestException } from '@nestjs/common';
 import { createHash, encodeOAuthState, splitOAuthState } from '@novu/application-generic';
 
+import { buildAgentApiRootUrl } from '../../../shared/util/agent-api-root-url';
+
 /**
  * Public path mounted under `AgentsMcpOAuthController`. Receives the click on
  * the in-channel "Connect from provider" link, marks the connection row as
@@ -37,11 +39,13 @@ export interface ProviderManagedRedirectState {
   externalVaultId: string;
   /** Optional Anthropic workspace id; falls back to the default workspace. */
   externalWorkspaceId?: string;
-  /**
-   * Conversation that originated the setup card. Round-tripped so the redirect
-   * handler can drive `CompleteManagedAgentSetup` and replay the parked turn.
-   */
   conversationId?: string;
+  /** custom_tool_use ID — set when the redirect originated from novu_tools. */
+  toolUseId?: string;
+  agentIdentifier?: string;
+  integrationIdentifier?: string;
+  platform?: string;
+  platformThreadId?: string;
   /** Issuance timestamp; verified against `PROVIDER_MANAGED_REDIRECT_TTL_MS`. */
   timestamp: number;
 }
@@ -97,12 +101,5 @@ export function decodeProviderManagedRedirectState(state: string): {
 }
 
 export function buildProviderManagedRedirectUrl(signedState: string): string {
-  const rootUrl = process.env.AGENT_API_HOSTNAME?.trim() || process.env.API_ROOT_URL?.trim();
-  if (!rootUrl) {
-    throw new Error('AGENT_API_HOSTNAME or API_ROOT_URL environment variable is required');
-  }
-
-  const baseUrl = rootUrl.replace(/\/$/, '');
-
-  return `${baseUrl}${PROVIDER_MANAGED_REDIRECT_PATH}?state=${encodeURIComponent(signedState)}`;
+  return `${buildAgentApiRootUrl()}${PROVIDER_MANAGED_REDIRECT_PATH}?state=${encodeURIComponent(signedState)}`;
 }

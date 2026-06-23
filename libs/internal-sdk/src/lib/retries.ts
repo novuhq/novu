@@ -194,6 +194,14 @@ async function retryBackoff(
 }
 
 function retryIntervalFromResponse(res: Response): number {
+  const retryAfterMsVal = res.headers.get("retry-after-ms");
+  if (retryAfterMsVal) {
+    const parsedMs = Number(retryAfterMsVal);
+    if (Number.isFinite(parsedMs) && parsedMs >= 0) {
+      return parsedMs;
+    }
+  }
+
   const retryVal = res.headers.get("retry-after") || "";
   if (!retryVal) {
     return 0;

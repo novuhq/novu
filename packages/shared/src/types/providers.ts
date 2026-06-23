@@ -191,3 +191,7 @@ export const ProvidersIdEnumConst = {
   ChatProviderIdEnum,
   AgentRuntimeProviderIdEnum,
 };
+
+export const providerIdValues = [
+  ...new Set(Object.values(ProvidersIdEnumConst).flatMap((enumObj) => Object.values(enumObj))),
+];

@@ -201,6 +201,77 @@ export class AgentSubscriberResolver {
     return this.provisionSubscriberAndEndpoint(params);
   }
 
+  /**
+   * Lazily provision a Subscriber for a keyless email demo sender at the moment
+   * an MCP connection is first needed. Email identity lives on `Subscriber.email`
+   * (matched by `findByEmail` on subsequent turns) rather than a ChannelEndpoint,
+   * so — unlike Slack/Teams — this creates only the Subscriber row, with the same
+   * auto-provision provenance markers. Idempotent via the deterministic
+   * subscriberId. Returns `null` when the address is unusable.
+   */
+  async provisionEmailSubscriber(params: {
+    environmentId: string;
+    organizationId: string;
+    integrationIdentifier: string;
+    agentIdentifier: string;
+    email: string;
+  }): Promise<string | null> {
+    const email = normalizeEmailForLookup(params.email);
+
+    if (!isValidEmailForLookup(email)) {
+      this.logger.debug(`Skipping email subscriber provision for invalid address "${params.email}"`);
+
+      return null;
+    }
+
+    const existing = await this.resolveAgentProvisionedEmailSubscriber({
+      environmentId: params.environmentId,
+      organizationId: params.organizationId,
+      email,
+    });
+
+    if (existing) {
+      return existing;
+    }
+
+    const subscriberId = buildPlatformSubscriberId({
+      organizationId: params.organizationId,
+      integrationIdentifier: params.integrationIdentifier,
+      platform: AgentPlatformEnum.EMAIL,
+      platformUserId: email,
+    });
+
+    await this.createOrUpdateSubscriber.execute(
+      CreateOrUpdateSubscriberCommand.create({
+        environmentId: params.environmentId,
+        organizationId: params.organizationId,
+        subscriberId,
+        email,
+        data: {
+          [AGENT_PROVISION_DATA_KEYS.source]: AGENT_PLATFORM_PROVISION_SOURCE,
+          [AGENT_PROVISION_DATA_KEYS.platform]: AgentPlatformEnum.EMAIL,
+          [AGENT_PROVISION_DATA_KEYS.platformUserId]: email,
+          [AGENT_PROVISION_DATA_KEYS.agentIdentifier]: params.agentIdentifier,
+          [AGENT_PROVISION_DATA_KEYS.firstSeenAt]: new Date().toISOString(),
+        },
+      })
+    );
+
+    this.analyticsService.track('[Agent Platform] - Subscriber auto-provisioned', params.organizationId, {
+      _organization: params.organizationId,
+      environmentId: params.environmentId,
+      platform: AgentPlatformEnum.EMAIL,
+      agentIdentifier: params.agentIdentifier,
+      subscriberId,
+    });
+
+    this.logger.debug(
+      `Lazily provisioned email subscriber ${subscriberId} for ${email} in org ${params.organizationId}`
+    );
+
+    return subscriberId;
+  }
+
   private async resolveWhatsAppSubscriber(params: {
     environmentId: string;
     organizationId: string;
@@ -225,6 +296,43 @@ export class AgentSubscriberResolver {
     }
 
     this.logger.debug(`No subscriber found for WhatsApp phone ${platformUserId}`);
+
+    return null;
+  }
+
+  private async resolveAgentProvisionedEmailSubscriber(params: {
+    environmentId: string;
+    organizationId: string;
+    email: string;
+  }): Promise<string | null> {
+    const { environmentId, organizationId, email } = params;
+
+    const matches = await this.subscriberRepository.find(
+      {
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+        email: { $regex: new RegExp(`^${escapeRegExp(email)}$`, 'i') },
+        [`data.${AGENT_PROVISION_DATA_KEYS.source}`]: AGENT_PLATFORM_PROVISION_SOURCE,
+      },
+      'subscriberId',
+      { limit: 2 }
+    );
+
+    if (matches.length > 1) {
+      this.logger.warn(
+        `Multiple agent-provisioned subscribers (${matches.length}) share email ${email} in environment ${environmentId} — using first match`
+      );
+    }
+
+    const subscriber = matches[0];
+
+    if (subscriber) {
+      this.logger.debug(`Resolved agent-provisioned email ${email} → subscriber ${subscriber.subscriberId}`);
+
+      return subscriber.subscriberId;
+    }
+
+    this.logger.debug(`No agent-provisioned subscriber found for email ${email}`);
 
     return null;
   }
@@ -397,6 +505,10 @@ export class AgentSubscriberResolver {
  * logs and dashboard URLs. Deterministic so retries against the same tuple
  * resolve to the same `Subscriber` row.
  */
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 function buildPlatformSubscriberId(params: {
   organizationId: string;
   integrationIdentifier: string;

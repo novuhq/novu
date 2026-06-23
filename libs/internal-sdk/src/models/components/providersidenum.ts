@@ -92,6 +92,8 @@ export const ProvidersIdEnum = {
   Telegram: "telegram",
   WebexMessaging: "webex-messaging",
   Anthropic: "anthropic",
+  NovuAnthropic: "novu-anthropic",
+  AnthropicAws: "anthropic-aws",
 } as const;
 /**
  * Provider ID of the job

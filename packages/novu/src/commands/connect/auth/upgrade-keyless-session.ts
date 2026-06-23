@@ -22,7 +22,7 @@ export async function upgradeKeylessSessionToDashboardAuth(
   ui.authStarted();
 
   const auth = await resolveConnectAuth(
-    { ...options, login: true },
+    { ...options, keyless: false },
     {
       onStatus: (message) => ui.authStatus(message),
       onDashboardUrl: (url) => ui.authDashboardUrl(url),

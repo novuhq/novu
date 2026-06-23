@@ -112,6 +112,8 @@ export const ProviderId = {
   Telegram: "telegram",
   WebexMessaging: "webex-messaging",
   Anthropic: "anthropic",
+  NovuAnthropic: "novu-anthropic",
+  AnthropicAws: "anthropic-aws",
 } as const;
 /**
  * The provider identifier (e.g., sendgrid, twilio, slack, etc.).

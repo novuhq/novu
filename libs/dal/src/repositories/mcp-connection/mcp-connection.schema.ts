@@ -84,6 +84,18 @@ const oauthStateSchema = new Schema({
     type: Schema.Types.String,
     required: false,
   },
+  connectCardMessageId: {
+    type: Schema.Types.String,
+    required: false,
+  },
+  connectCardPlatform: {
+    type: Schema.Types.String,
+    required: false,
+  },
+  connectCardThreadId: {
+    type: Schema.Types.String,
+    required: false,
+  },
 });
 
 const oauthClientSchema = new Schema(
