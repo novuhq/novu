@@ -294,14 +294,13 @@ export class GetSubscriberPreference {
     const subscriberGlobalPreferenceQuery: Promise<PreferencesEntity[]> =
       preFetchedSubscriberGlobalPreference !== undefined
         ? Promise.resolve(preFetchedSubscriberGlobalPreference ? [preFetchedSubscriberGlobalPreference] : [])
-        : this.preferencesRepository.find(
+        : this.preferencesRepository.findForComputation(
             {
               ...baseQuery,
               _subscriberId: subscriberId,
               type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
               ...contextQuery,
             },
-            undefined,
             readOptions
           );
 
@@ -311,25 +310,23 @@ export class GetSubscriberPreference {
       subscriberWorkflowPreferences,
       subscriberGlobalPreferences,
     ] = await Promise.all([
-      this.preferencesRepository.find(
+      this.preferencesRepository.findForComputation(
         {
           ...baseQuery,
           _templateId: { $in: workflowIds },
           type: PreferencesTypeEnum.WORKFLOW_RESOURCE,
         },
-        undefined,
         readOptions
       ),
-      this.preferencesRepository.find(
+      this.preferencesRepository.findForComputation(
         {
           ...baseQuery,
           _templateId: { $in: workflowIds },
           type: PreferencesTypeEnum.USER_WORKFLOW,
         },
-        undefined,
         readOptions
       ),
-      this.preferencesRepository.find(
+      this.preferencesRepository.findForComputation(
         {
           ...baseQuery,
           _subscriberId: subscriberId,
@@ -337,7 +334,6 @@ export class GetSubscriberPreference {
           type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
           ...contextQuery,
         },
-        undefined,
         readOptions
       ),
       subscriberGlobalPreferenceQuery,
