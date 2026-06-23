@@ -1,4 +1,5 @@
 import { BaseRepository } from '@novu/dal';
+import { ShortIsPrefixEnum } from '@novu/shared';
 import { decodeBase62 } from '../utils/base62';
 
 export type InternalId = string;
@@ -6,8 +7,10 @@ const INTERNAL_ID_LENGTH = 24;
 const ENCODED_ID_LENGTH = 16;
 
 /**
- * Strict slug shape produced by `buildSlug` in `utils/build-slug.ts`:
- *   `<slugified-name>_<short-prefix>_<16-char base62 ID>`
+ * Full slug shape produced by `buildSlug` in `utils/build-slug.ts`:
+ *   `<slugified-name>_<ShortIsPrefixEnum><16-char base62 ID>`
+ *
+ * Example: `welcome-email_wf_AbC1Xyz9KlmNOpQr`
  *
  * We only attempt to base62-decode the trailing segment when the input matches
  * this exact shape. Without this guard, any string ≥ 16 characters whose last
@@ -19,12 +22,15 @@ const ENCODED_ID_LENGTH = 16;
  * `UP018A_CompanyConnectionRejectedWithoutReaso` were being mis-parsed into
  * non-existent ObjectIds).
  *
- * The `_<letters>_` separator before the 16-char trailer is what differentiates
- * a real slug from a user-supplied identifier. Slugified names never contain
- * underscores (`slugifyOrRandom` lowercases and uses `-` as separator), so the
- * underscore right before the prefix is a reliable signal.
+ * Slugified names are lowercase alphanumeric with hyphens only (`slugify` never
+ * emits underscores). Prefixes are the closed set from `ShortIsPrefixEnum`
+ * (`wf_`, `st_`, `env_`, `lt_`), which together differentiate real slugs from
+ * user-supplied identifiers such as `MyWorkflow_wf_1111111111111111`.
  */
-const SLUG_PATTERN = /_[A-Za-z]+_[0-9A-Za-z]{16}$/;
+const ESCAPED_SLUG_PREFIXES = Object.values(ShortIsPrefixEnum)
+  .map((prefix) => prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+  .join('|');
+const SLUG_PATTERN = new RegExp(`^[a-z0-9-]+_(${ESCAPED_SLUG_PREFIXES})[0-9A-Za-z]{16}$`);
 
 /**
  * Checks if the value is a short resource identifier (less than encoded ID length)
