@@ -1,9 +1,7 @@
 import { CursorBasedPaginatedCommand } from '@novu/application-generic';
 import { ChannelEndpointEntity } from '@novu/dal';
-import { ChannelTypeEnum, ProvidersIdEnum, ProvidersIdEnumConst } from '@novu/shared';
+import { ChannelTypeEnum, providerIdValues, ProvidersIdEnum } from '@novu/shared';
 import { IsArray, IsEnum, IsIn, IsOptional, IsString } from 'class-validator';
-
-const providerIdValues = [...new Set(Object.values(ProvidersIdEnumConst).flatMap((enumObj) => Object.values(enumObj)))];
 
 export class ListChannelEndpointsCommand extends CursorBasedPaginatedCommand<
   ChannelEndpointEntity,

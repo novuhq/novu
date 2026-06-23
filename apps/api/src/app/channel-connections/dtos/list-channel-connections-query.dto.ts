@@ -1,11 +1,9 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { ChannelTypeEnum, ProvidersIdEnum, ProvidersIdEnumConst } from '@novu/shared';
+import { ChannelTypeEnum, providerIdValues, ProvidersIdEnum } from '@novu/shared';
 import { Transform } from 'class-transformer';
 import { IsArray, IsEnum, IsIn, IsOptional, IsString } from 'class-validator';
 import { CursorPaginationQueryDto } from './cursor-pagination-query.dto';
 import { GetChannelConnectionResponseDto } from './get-channel-connection-response.dto';
-
-const providerIdValues = [...new Set(Object.values(ProvidersIdEnumConst).flatMap((enumObj) => Object.values(enumObj)))];
 
 export class ListChannelConnectionsQueryDto extends CursorPaginationQueryDto<
   GetChannelConnectionResponseDto,
