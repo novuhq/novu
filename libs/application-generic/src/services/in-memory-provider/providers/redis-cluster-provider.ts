@@ -86,15 +86,20 @@ export const getRedisClusterProviderConfig = (): IRedisClusterProviderConfig => 
 export const getRedisCluster = (enableAutoPipelining?: boolean): Cluster | undefined => {
   const { instances, password, tls } = getRedisClusterProviderConfig();
 
+  const skipVersionCheck = process.env.REDIS_SKIP_VERSION_CHECK === 'true';
+
+  const redisOptions = {
+    ...(tls && { tls }),
+    ...(password && { password }),
+    skipVersionCheck,
+  };
+
   const options: ClusterOptions = {
     dnsLookup: (address, callback) => callback(null, address),
     enableAutoPipelining: enableAutoPipelining ?? false,
     enableOfflineQueue: false,
     enableReadyCheck: true,
-    redisOptions: {
-      ...(tls && { tls }),
-      ...(password && { password }),
-    },
+    redisOptions,
     scaleReads: 'slave',
     /*
      *  Disabled in Prod as affects performance

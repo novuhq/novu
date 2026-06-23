@@ -191,7 +191,6 @@ export const ProvidersIdEnumConst = {
   AgentRuntimeProviderIdEnum,
 };
 
-/** Flat list of provider ID strings for validation and OpenAPI enums. */
-export const ALL_PROVIDER_IDS = [
-  ...new Set([...Object.values(ProvidersIdEnumConst).flatMap((enumObj) => Object.values(enumObj))]),
-] as ProvidersIdEnum[];
+export const providerIdValues = [
+  ...new Set(Object.values(ProvidersIdEnumConst).flatMap((enumObj) => Object.values(enumObj))),
+];

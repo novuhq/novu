@@ -6,8 +6,8 @@ import { Response } from 'express';
 import { ThrottlerCategory } from '../../../rate-limiting/guards';
 import { renderConnectionResultPage } from '../../../shared/html/connection-result-page';
 import { CompleteProviderManagedRedirect } from '../connections/ensure-provider-managed-vault/complete-provider-managed-redirect.usecase';
-import { McpConnectRedirectService } from '../connections/mcp-connect-redirect.service';
 import { PROVIDER_MANAGED_REDIRECT_PATH } from '../connections/ensure-provider-managed-vault/provider-managed-redirect-state';
+import { McpConnectRedirectService } from '../connections/mcp-connect-redirect.service';
 import { McpOAuthCallbackCommand } from './mcp-oauth-callback/mcp-oauth-callback.command';
 import { McpOAuthCallback } from './mcp-oauth-callback/mcp-oauth-callback.usecase';
 import { renderExpiredMcpSetupLinkPage, sendMcpOAuthResultPage } from './mcp-oauth-result-page.util';
@@ -113,8 +113,8 @@ export class AgentsMcpOAuthController {
         err.message.includes('redirect state expired');
       const isNotFound = err instanceof NotFoundException;
 
-      let title = 'Connection failed';
-      let heading = "We couldn't connect";
+      const title = 'Connection failed';
+      const heading = "We couldn't connect";
       let message =
         'Something went wrong while opening the provider connection. Send a new message to your agent and try again.';
 

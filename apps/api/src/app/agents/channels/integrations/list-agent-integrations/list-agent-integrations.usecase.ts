@@ -136,8 +136,7 @@ export class ListAgentIntegrations {
       }
 
       const exceedsPlanLimit = isChannelOverPlanLimit(channelUsage, {
-        integrationId: link._integrationId,
-        connected: Boolean(link.connectedAt),
+        providerId: integration.providerId,
       });
 
       acc.push({

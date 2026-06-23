@@ -121,8 +121,6 @@ describe('McpConnectRedirectService', () => {
   it('buildMcpConnectRedirectUrl encodes the token in the public path', () => {
     process.env.API_ROOT_URL = 'https://api.example.com/';
 
-    expect(buildMcpConnectRedirectUrl('abc123')).to.equal(
-      `https://api.example.com${MCP_CONNECT_REDIRECT_PATH}/abc123`
-    );
+    expect(buildMcpConnectRedirectUrl('abc123')).to.equal(`https://api.example.com${MCP_CONNECT_REDIRECT_PATH}/abc123`);
   });
 });

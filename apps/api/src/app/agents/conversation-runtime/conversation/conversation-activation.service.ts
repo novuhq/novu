@@ -1,14 +1,19 @@
 import { Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import { AgentEntitlementsService, AnalyticsService, PinoLogger, throwPlanLimitExceeded } from '@novu/application-generic';
 import {
-  classifyActivationReason,
+  AgentEntitlementsService,
+  AnalyticsService,
+  PinoLogger,
+  throwPlanLimitExceeded,
+} from '@novu/application-generic';
+import {
   CommunityOrganizationRepository,
   ConversationActivationReasonEnum,
   ConversationActivationRepository,
   ConversationEntity,
   ConversationRepository,
   ConversationThreadKindEnum,
+  classifyActivationReason,
 } from '@novu/dal';
 import { ApiServiceLevelEnum, UNLIMITED_VALUE } from '@novu/shared';
 import {
@@ -417,7 +422,10 @@ export class ConversationActivationService {
         return;
       }
 
-      const currentCount = await this.activationRepository.countForOrganizationPeriod(context.organizationId, periodKey);
+      const currentCount = await this.activationRepository.countForOrganizationPeriod(
+        context.organizationId,
+        periodKey
+      );
       if (currentCount >= limit) {
         trackAgentActiveConversationLimitReached(this.analyticsService, {
           organizationId: context.organizationId,

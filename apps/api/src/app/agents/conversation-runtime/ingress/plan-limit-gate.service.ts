@@ -110,7 +110,7 @@ export class PlanLimitGateService {
       config.organizationId,
       config.environmentId,
       agentId,
-      config.integrationId
+      config.providerId
     );
 
     let reason: PlanLimitBlockReason | null = null;

@@ -312,9 +312,11 @@ export class NotificationsCache {
 
     const notificationInstance = this.#toNotificationInstance({ ...notification });
 
+    const dedupedNotifications = cachedData.notifications.filter((n) => n.id !== notification.id);
+
     this.update(args, {
       ...cachedData,
-      notifications: [notificationInstance, ...cachedData.notifications],
+      notifications: [notificationInstance, ...dedupedNotifications],
     });
   }
 

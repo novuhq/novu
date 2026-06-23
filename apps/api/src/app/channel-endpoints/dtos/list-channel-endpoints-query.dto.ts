@@ -1,7 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { ALL_PROVIDER_IDS, ChannelTypeEnum, ProvidersIdEnum } from '@novu/shared';
+import { ChannelTypeEnum, providerIdValues, ProvidersIdEnum } from '@novu/shared';
 import { Transform } from 'class-transformer';
-import { IsArray, IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsEnum, IsIn, IsOptional, IsString } from 'class-validator';
 import { CursorPaginationQueryDto } from './cursor-pagination-query.dto';
 import { GetChannelEndpointResponseDto } from './get-channel-endpoint-response.dto';
 
@@ -50,14 +50,14 @@ export class ListChannelEndpointsQueryDto extends CursorPaginationQueryDto<
 
   @ApiPropertyOptional({
     description: 'Filter by provider identifier (e.g., sendgrid, twilio, slack, etc.).',
-    enum: ALL_PROVIDER_IDS,
+    enum: providerIdValues,
     enumName: 'ProvidersIdEnum',
     type: String,
     example: 'slack',
   })
   @IsString()
   @IsOptional()
-  @IsEnum(ALL_PROVIDER_IDS)
+  @IsIn(providerIdValues)
   providerId?: ProvidersIdEnum;
 
   @ApiPropertyOptional({

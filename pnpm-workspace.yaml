@@ -83,7 +83,7 @@ overrides:
   jws@>=4.0.0 <4.0.1: ^4.0.1
   validator@<13.15.22: ^13.15.22
   msgpackr: ^1.10.1
-  multer@<2.1.1: ^2.1.1
+  multer@<2.2.0: ^2.2.0
   jws@<3.2.3: ^3.2.3
   svgo@>=3.0.0 <3.3.3: ^3.3.3
   flatted@<3.4.2: ^3.4.2
@@ -185,6 +185,7 @@ overrides:
   better-auth: 1.5.6
   nodemailer@<9.0.1: ^9.0.1
   shell-quote@<1.8.4: ^1.8.4
+  piscina@<4.9.3: ^4.9.3
   vitest@<4.1.0: ^4.1.0
   js-cookie@<3.0.7: ^3.0.7
   liquidjs@<10.26.0: ^10.27.0

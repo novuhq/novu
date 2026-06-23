@@ -537,4 +537,64 @@ describe('NotificationsCache', () => {
       },
     });
   });
+
+  it('should dedupe notifications by id in unshift', () => {
+    const args = { tags: ['tag1'], limit: 10, offset: 0 };
+
+    notificationsCache.set(args, {
+      hasMore: false,
+      filter: {},
+      notifications: [notification1],
+    });
+
+    notificationsCache.unshift(args, {
+      id: notification1.id,
+      transactionId: notification1.transactionId,
+      createdAt: new Date().toISOString(),
+      isRead: false,
+      isSeen: false,
+      isArchived: false,
+      isSnoozed: false,
+      channelType: ChannelType.IN_APP,
+      to: { subscriberId: '1' },
+      body: 'updated body',
+      subject: 'subject',
+      tags: [],
+      data: {},
+    });
+
+    const result = notificationsCache.getAll(args);
+    expect(result?.notifications.length).toBe(1);
+    expect(result?.notifications[0].body).toBe('updated body');
+  });
+
+  it('should prepend new notification in unshift without duplicates', () => {
+    const args = { tags: ['tag1'], limit: 10, offset: 0 };
+
+    notificationsCache.set(args, {
+      hasMore: false,
+      filter: {},
+      notifications: [notification1],
+    });
+
+    notificationsCache.unshift(args, {
+      id: 'new-id',
+      transactionId: 'tx-new',
+      createdAt: new Date().toISOString(),
+      isRead: false,
+      isSeen: false,
+      isArchived: false,
+      isSnoozed: false,
+      channelType: ChannelType.IN_APP,
+      to: { subscriberId: '1' },
+      body: 'new body',
+      subject: 'subject',
+      tags: [],
+      data: {},
+    });
+
+    const result = notificationsCache.getAll(args);
+    expect(result?.notifications.length).toBe(2);
+    expect(result?.notifications[0].id).toBe('new-id');
+  });
 });

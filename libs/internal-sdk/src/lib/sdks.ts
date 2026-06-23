@@ -23,6 +23,7 @@ import {
   matchContentType,
 } from "./http.js";
 import { Logger } from "./logger.js";
+import { combineSignals } from "./primitives.js";
 import { retry, RetryConfig } from "./retries.js";
 import { SecurityState } from "./security.js";
 
@@ -127,27 +128,55 @@ export class ClientSDK {
     if (path) {
       baseURL.pathname = baseURL.pathname.replace(/\/+$/, "") + "/";
       reqURL = new URL(path, baseURL);
+      if (!reqURL.search && baseURL.search) {
+        reqURL.search = baseURL.search;
+      }
     } else {
       reqURL = baseURL;
     }
     reqURL.hash = "";
 
-    let finalQuery = query || "";
-
-    const secQuery: string[] = [];
-    for (const [k, v] of Object.entries(security?.queryParams || {})) {
-      const q = encodeForm(k, v, { charEncoding: "percent" });
-      if (typeof q !== "undefined") {
-        secQuery.push(q);
+    // Appends already-encoded query pairs to a query string, replacing any
+    // existing pairs with the same key so later sources take precedence.
+    const mergeQuery = (current: string, additions: string): string => {
+      if (!additions) {
+        return current;
       }
-    }
-    if (secQuery.length) {
-      finalQuery += `&${secQuery.join("&")}`;
-    }
+      const additionKeys = new Set(
+        additions
+          .split("&")
+          .filter((pair) => pair !== "")
+          .map((pair) => pair.split("=")[0] ?? ""),
+      );
+      const kept = current.split("&").filter((pair) => {
+        return pair !== "" && !additionKeys.has(pair.split("=")[0] ?? "");
+      });
+      return [...kept, additions].join("&");
+    };
+
+    const encodeQueryRecord = (record: Record<string, unknown>): string => {
+      return Object.entries(record)
+        .map(([k, v]) => {
+          if (v == null) {
+            return undefined;
+          }
+          const value = v;
+          return encodeForm(k, value, {
+            explode: Array.isArray(value),
+            charEncoding: "percent",
+          });
+        })
+        .filter((pair): pair is string => typeof pair !== "undefined")
+        .join("&");
+    };
+
+    const finalQuery = [
+      query || "",
+      encodeQueryRecord(security?.queryParams || {}),
+    ].reduce(mergeQuery, reqURL.search.slice(1));
 
     if (finalQuery) {
-      const q = finalQuery.startsWith("&") ? finalQuery.slice(1) : finalQuery;
-      reqURL.search = `?${q}`;
+      reqURL.search = `?${finalQuery}`;
     }
 
     const headers = new Headers(opHeaders);
@@ -193,9 +222,8 @@ export class ClientSDK {
       ...options?.fetchOptions,
       ...options,
     };
-    if (!fetchOptions?.signal && conf.timeoutMs && conf.timeoutMs > 0) {
-      const timeoutSignal = AbortSignal.timeout(conf.timeoutMs);
-      fetchOptions.signal = timeoutSignal;
+    if (!fetchOptions?.signal && conf.timeoutMs != null && conf.timeoutMs > 0) {
+      context.timeoutMs = conf.timeoutMs;
     }
 
     if (conf.body instanceof ReadableStream) {
@@ -242,10 +270,19 @@ export class ClientSDK {
     >
   > {
     const { context, isErrorStatusCode } = options;
+    const timeoutMs = context.timeoutMs;
 
     return retry(
       async () => {
-        const req = await this.#hooks.beforeRequest(context, request.clone());
+        const cloned = request.clone();
+        let attempt = cloned;
+        if (timeoutMs != null && timeoutMs > 0) {
+          const timeoutSignal = AbortSignal.timeout(timeoutMs);
+          const combined = combineSignals(cloned.signal, timeoutSignal)
+            ?? timeoutSignal;
+          attempt = new Request(cloned, { signal: combined });
+        }
+        const req = await this.#hooks.beforeRequest(context, attempt);
         await logRequest(this.#logger, req).catch((e) =>
           this.#logger?.log("Failed to log request:", e)
         );

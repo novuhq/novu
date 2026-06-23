@@ -1,7 +1,7 @@
 import { CursorBasedPaginatedCommand } from '@novu/application-generic';
 import { ChannelEndpointEntity } from '@novu/dal';
-import { ALL_PROVIDER_IDS, ChannelTypeEnum, ProvidersIdEnum } from '@novu/shared';
-import { IsArray, IsEnum, IsOptional, IsString } from 'class-validator';
+import { ChannelTypeEnum, providerIdValues, ProvidersIdEnum } from '@novu/shared';
+import { IsArray, IsEnum, IsIn, IsOptional, IsString } from 'class-validator';
 
 export class ListChannelEndpointsCommand extends CursorBasedPaginatedCommand<
   ChannelEndpointEntity,
@@ -20,7 +20,7 @@ export class ListChannelEndpointsCommand extends CursorBasedPaginatedCommand<
   @IsOptional()
   channel?: ChannelTypeEnum;
 
-  @IsEnum(ALL_PROVIDER_IDS)
+  @IsIn(providerIdValues)
   @IsOptional()
   providerId?: ProvidersIdEnum;
 
