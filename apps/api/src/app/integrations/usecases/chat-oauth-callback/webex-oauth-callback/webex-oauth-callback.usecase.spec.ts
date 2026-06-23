@@ -185,6 +185,42 @@ describe('WebexOauthCallback', () => {
     expect(endpointArg.endpoint.personId).to.equal(MOCK_PERSON_ID);
   });
 
+  it('should reject Webex integrations with incomplete OAuth credentials as bad requests', async () => {
+    integrationRepository.findOne.resolves(
+      buildMockIntegration({
+        credentials: {
+          clientId: MOCK_CLIENT_ID,
+        },
+      })
+    );
+
+    const state = buildEncodedState({
+      environmentId: MOCK_ENVIRONMENT_ID,
+      organizationId: MOCK_ORGANIZATION_ID,
+      integrationIdentifier: MOCK_INTEGRATION_IDENTIFIER,
+      providerId: ChatProviderIdEnum.WebexMessaging,
+      subscriberId: MOCK_SUBSCRIBER_ID,
+    });
+
+    let error: unknown;
+    try {
+      await usecase.execute(
+        WebexOauthCallbackCommand.create({
+          providerCode: 'webex-code',
+          state,
+        })
+      );
+    } catch (err) {
+      error = err;
+    }
+
+    expect(error).to.be.instanceOf(BadRequestException);
+    expect(axiosPost.called).to.be.false;
+    expect(axiosGet.called).to.be.false;
+    expect(createChannelConnection.execute.called).to.be.false;
+    expect(createChannelEndpoint.execute.called).to.be.false;
+  });
+
   it('should reject an invalid OAuth state without creating connections or endpoints', async () => {
     await expectInvalidState(usecase, 'not-valid-state');
 

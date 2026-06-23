@@ -30,7 +30,6 @@ export const WEBEX_DEFAULT_OAUTH_SCOPES = [
   'spark:rooms_read',
   'spark:people_read',
   'spark:memberships_read',
-  'spark:kms',
 ] as const;
 
 export const WEBEX_LINK_USER_OAUTH_SCOPES = ['spark:people_read'] as const;

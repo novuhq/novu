@@ -178,11 +178,11 @@ export class WebexOauthCallback {
 
   private async getIntegrationCredentials(integration: IntegrationEntity): Promise<ICredentialsEntity> {
     if (!integration.credentials) {
-      throw new NotFoundException('Webex Messaging integration missing credentials');
+      throw new BadRequestException('Webex Messaging integration missing credentials');
     }
 
     if (!integration.credentials.clientId || !integration.credentials.secretKey) {
-      throw new NotFoundException(
+      throw new BadRequestException(
         'Webex Messaging integration missing required OAuth credentials (clientId/clientSecret)'
       );
     }
@@ -198,7 +198,7 @@ export class WebexOauthCallback {
     const { clientId, secretKey } = credentials;
 
     if (!clientId || !secretKey) {
-      throw new NotFoundException(
+      throw new BadRequestException(
         'Webex Messaging integration missing required OAuth credentials (clientId/clientSecret)'
       );
     }
