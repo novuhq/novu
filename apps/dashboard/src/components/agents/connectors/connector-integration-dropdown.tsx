@@ -17,10 +17,10 @@ import { isDemoIntegration } from '@/components/integrations/components/utils/he
 import { Badge } from '@/components/primitives/badge';
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from '@/components/primitives/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
+import { useManagedAgentRuntimeEnabled } from '@/hooks/use-managed-agent-runtime-enabled';
 import { cn } from '@/utils/ui';
 import { getClaudeManagedAgentIntegrations } from './claude-managed-integrations';
 import { CONNECTOR_OPTIONS, type ConnectorId, type ConnectorOption, getConnectorById } from './connector-options';
-import { useShowManagedConnectorOptions } from './use-show-managed-connector-options';
 
 const GROUP_HEADING_CLASSNAME =
   '**:[[cmdk-group-heading]]:text-text-soft **:[[cmdk-group-heading]]:text-label-xs **:[[cmdk-group-heading]]:font-medium **:[[cmdk-group-heading]]:leading-4 **:[[cmdk-group-heading]]:px-1 **:[[cmdk-group-heading]]:py-1';
@@ -91,7 +91,7 @@ export function ConnectorIntegrationDropdown({
   onSelectIntegration,
   onRequestSetupCredentials,
 }: ConnectorIntegrationDropdownProps) {
-  const showManagedOptions = useShowManagedConnectorOptions(showManagedOptionsOverride);
+  const isManagedRuntimeEnabled = useManagedAgentRuntimeEnabled(showManagedOptionsOverride);
   const [open, setOpen] = useState(false);
   const [view, setView] = useState<'connectors' | 'integrations'>('connectors');
 
@@ -120,7 +120,7 @@ export function ConnectorIntegrationDropdown({
   }, [open]);
 
   // Managed-runtime connectors are gated by `IS_MANAGED_AGENT_RUNTIME_ENABLED` (see hook above).
-  const externalOptions = showManagedOptions ? CONNECTOR_OPTIONS.filter((o) => o.group === 'external') : [];
+  const externalOptions = isManagedRuntimeEnabled ? CONNECTOR_OPTIONS.filter((o) => o.group === 'external') : [];
   const customOptions = CONNECTOR_OPTIONS.filter((o) => o.group === 'custom');
 
   const handlePickConnector = (option: ConnectorOption) => {

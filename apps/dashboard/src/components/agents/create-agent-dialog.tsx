@@ -1,6 +1,5 @@
 import {
   AgentRuntimeProviderIdEnum,
-  FeatureFlagsKeysEnum,
   filterDemoConfigurableMcpIds,
   type IIntegration,
   IntegrationKindEnum,
@@ -26,7 +25,6 @@ import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner
 import { useEnvironment } from '@/context/environment/hooks';
 import { useAgentSuggestions } from '@/hooks/use-agent-suggestions';
 import { useCreateIntegration } from '@/hooks/use-create-integration';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { GenerationCancelledError, useGenerateManagedAgent } from '@/hooks/use-generate-managed-agent';
 import { useManagedClaudeCredentialsFlow } from '@/hooks/use-managed-claude-credentials-flow';
@@ -46,6 +44,7 @@ import {
   ConnectorIntegrationDropdown,
   type ConnectorIntegrationStatus,
 } from './connectors/connector-integration-dropdown';
+import { useManagedAgentRuntimeEnabled } from '@/hooks/use-managed-agent-runtime-enabled';
 import {
   type ConnectorId,
   type ConnectorOption,
@@ -157,7 +156,7 @@ export function CreateAgentDialog({
   initialInstructions,
   initialPrompt,
 }: CreateAgentDialogProps) {
-  const isManagedEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_MANAGED_AGENT_RUNTIME_ENABLED, false);
+  const isManagedEnabled = useManagedAgentRuntimeEnabled();
   const { currentEnvironment } = useEnvironment();
   const queryClient = useQueryClient();
   const { integrations } = useFetchIntegrations();

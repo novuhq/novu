@@ -119,7 +119,7 @@ export function pickInitialConnector(isManagedEnabled: boolean): ConnectorId {
 
   const fallback = CONNECTOR_OPTIONS.find((o) => !o.comingSoon && o.runtime === 'scratch');
 
-  return (fallback?.id ?? 'custom-scaffold') as ConnectorId;
+  return fallback?.id ?? 'custom-scaffold';
 }
 
 export function getConnectorById(id: ConnectorId | undefined): ConnectorOption | undefined {

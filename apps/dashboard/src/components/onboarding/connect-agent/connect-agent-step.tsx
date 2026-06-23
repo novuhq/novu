@@ -18,6 +18,7 @@ import {
 } from '@/components/agents/connectors/claude-managed-integrations';
 import { type ConnectorIntegrationStatus } from '@/components/agents/connectors/connector-integration-dropdown';
 import { type ConnectorOption } from '@/components/agents/connectors/connector-options';
+import { useManagedAgentRuntimeEnabled } from '@/hooks/use-managed-agent-runtime-enabled';
 import {
   type AgentTemplate,
   buildManagedIntegrationCredentials,
@@ -104,7 +105,6 @@ type ConnectAgentStepProps = {
   onAgentCreated: (agent: AgentResponse, summary: ConnectSummary) => void;
   onRuntimeChange?: (runtime: RuntimeType) => void;
   onPreviewChange?: (preview: ConnectAgentPreview) => void;
-  isManagedEnabled: boolean;
   /**
    * Optional template id (Sanity `id.current`) coming from an external deep-link. When it matches a
    * fetched template, the prompt + agent fields are prefilled once and the persisted id is cleared.
@@ -126,10 +126,10 @@ export function ConnectAgentStep({
   onAgentCreated,
   onRuntimeChange,
   onPreviewChange,
-  isManagedEnabled,
   agentTemplateId,
   simplifiedDemo,
 }: ConnectAgentStepProps) {
+  const isManagedEnabled = useManagedAgentRuntimeEnabled();
   const telemetry = useTelemetry();
   const queryClient = useQueryClient();
   const { currentEnvironment } = useEnvironment();
