@@ -210,7 +210,7 @@ export function AgentWhatsNextSection({ agent }: AgentWhatsNextSectionProps) {
         agentIdentifier: agent.identifier,
         limit: 100,
       }),
-    enabled: Boolean(currentEnvironment && agent.identifier),
+    enabled: Boolean(isWhatsNextEnabled && currentEnvironment && agent.identifier),
   });
 
   const links = integrationsQuery.data?.data ?? [];
@@ -247,7 +247,7 @@ export function AgentWhatsNextSection({ agent }: AgentWhatsNextSectionProps) {
     return null;
   }
 
-  const persistKey = `agent-whats-next:${agent.identifier}`;
+  const persistKey = `agent-whats-next:${currentEnvironment?.slug ?? ''}:${agent.identifier}`;
 
   return (
     <SetupGuideCard label="What's next" persistKey={persistKey} className="min-w-0 flex-1">
