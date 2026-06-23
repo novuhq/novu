@@ -42,7 +42,7 @@
     "class-transformer": "0.5.1",
     "class-validator": "0.14.1",
     "dotenv": "^16.4.5",
-    "envalid": "^8.0.0",
+    "envalid": "^8.2.0",
     "jsonwebtoken": "9.0.3",
     "lodash": "^4.17.23",
     "nest-raven": "10.1.0",
@@ -53,7 +53,7 @@
     "yargs": "^17.7.2"
   },
   "devDependencies": {
-    "@nestjs/cli": "11.0.21",
+    "@nestjs/cli": "11.0.23",
     "@nestjs/schematics": "11.1.0",
     "@nestjs/testing": "11.1.21",
     "@types/chai": "^4.3.4",
