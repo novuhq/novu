@@ -1,9 +1,9 @@
 import {
   type ActivationRuleParams,
   buildActivationOrConditions,
-  classifyActivationReason,
   ConversationActivationReasonEnum,
   type ConversationBillingState,
+  classifyActivationReason,
 } from '@novu/dal';
 import { expect } from 'chai';
 
@@ -46,10 +46,26 @@ describe('billing-activation-rules #novu-v2', () => {
   const cases: Array<{ name: string; billing: ConversationBillingState | undefined }> = [
     { name: 'no billing (brand new)', billing: undefined },
     { name: 'empty billing', billing: {} },
-    { name: 'counted this period, recent engagement', billing: { lastCountedPeriodKey: PERIOD, lastEngagementAt: '2026-06-20T00:00:00.000Z' } },
-    { name: 'counted this period, stale engagement', billing: { lastCountedPeriodKey: PERIOD, lastEngagementAt: '2026-06-01T00:00:00.000Z' } },
-    { name: 'counted a previous period', billing: { lastCountedPeriodKey: '2026-05', lastEngagementAt: '2026-06-20T00:00:00.000Z' } },
-    { name: 'resolved since last count', billing: { lastCountedPeriodKey: PERIOD, lastEngagementAt: '2026-06-20T00:00:00.000Z', resolvedAt: '2026-06-21T00:00:00.000Z' } },
+    {
+      name: 'counted this period, recent engagement',
+      billing: { lastCountedPeriodKey: PERIOD, lastEngagementAt: '2026-06-20T00:00:00.000Z' },
+    },
+    {
+      name: 'counted this period, stale engagement',
+      billing: { lastCountedPeriodKey: PERIOD, lastEngagementAt: '2026-06-01T00:00:00.000Z' },
+    },
+    {
+      name: 'counted a previous period',
+      billing: { lastCountedPeriodKey: '2026-05', lastEngagementAt: '2026-06-20T00:00:00.000Z' },
+    },
+    {
+      name: 'resolved since last count',
+      billing: {
+        lastCountedPeriodKey: PERIOD,
+        lastEngagementAt: '2026-06-20T00:00:00.000Z',
+        resolvedAt: '2026-06-21T00:00:00.000Z',
+      },
+    },
     { name: 'counted, no engagement timestamp', billing: { lastCountedPeriodKey: PERIOD } },
   ];
 
@@ -68,13 +84,20 @@ describe('billing-activation-rules #novu-v2', () => {
     // resolved wins over an otherwise-quiet, same-period conversation
     expect(
       classifyActivationReason(
-        { lastCountedPeriodKey: PERIOD, lastEngagementAt: '2026-06-20T00:00:00.000Z', resolvedAt: '2026-06-21T00:00:00.000Z' },
+        {
+          lastCountedPeriodKey: PERIOD,
+          lastEngagementAt: '2026-06-20T00:00:00.000Z',
+          resolvedAt: '2026-06-21T00:00:00.000Z',
+        },
         params
       )
     ).to.equal(ConversationActivationReasonEnum.REOPEN);
 
     expect(
-      classifyActivationReason({ lastCountedPeriodKey: '2026-05', lastEngagementAt: '2026-06-20T00:00:00.000Z' }, params)
+      classifyActivationReason(
+        { lastCountedPeriodKey: '2026-05', lastEngagementAt: '2026-06-20T00:00:00.000Z' },
+        params
+      )
     ).to.equal(ConversationActivationReasonEnum.NEW_CYCLE);
 
     expect(

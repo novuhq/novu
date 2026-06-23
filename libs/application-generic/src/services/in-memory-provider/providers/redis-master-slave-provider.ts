@@ -116,15 +116,20 @@ export const getRedisMasterSlaveProviderConfig = (): IRedisMasterSlaveProviderCo
 export const getRedisMasterSlaveCluster = (enableAutoPipelining?: boolean): Cluster | undefined => {
   const { instances, password, tls } = getRedisMasterSlaveProviderConfig();
 
+  const skipVersionCheck = process.env.REDIS_SKIP_VERSION_CHECK === 'true';
+
+  const redisOptions = {
+    tls,
+    ...(password && { password }),
+    connectTimeout: 10000,
+    skipVersionCheck,
+  };
+
   const options: ClusterOptions = {
     enableAutoPipelining: enableAutoPipelining ?? false,
     enableOfflineQueue: false,
     enableReadyCheck: true,
-    redisOptions: {
-      tls,
-      ...(password && { password }),
-      connectTimeout: 10000,
-    },
+    redisOptions,
     // Scale reads to slave nodes for better performance
     scaleReads: 'slave',
     /*
