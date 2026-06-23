@@ -1,6 +1,6 @@
 {
   "name": "@novu/chat-sdk-adapter",
-  "version": "0.0.4",
+  "version": "0.1.0",
   "type": "module",
   "description": "Novu adapter for the Chat SDK — expose all of Novu's normalized chat channels (Slack, WhatsApp, Teams, Telegram, Email) as a single Chat SDK platform adapter",
   "license": "MIT",

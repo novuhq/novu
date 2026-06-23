@@ -16,7 +16,7 @@ import type {
   UnsnoozeArgs,
 } from '../notifications';
 import type { InboxNotification, NotificationFilter, TagsFilter } from '../types';
-import { createNotification } from '../ui/internal/createNotification';
+import { ensureNotificationInstance } from '../notifications/helpers';
 import { areDataEqual, areTagsEqual, isSameFilter } from '../utils/notification-utils';
 import { InMemoryCache } from './in-memory-cache';
 import type { Cache } from './types';
@@ -146,7 +146,19 @@ export class NotificationsCache {
     this.#cache = new InMemoryCache();
   }
 
-  private updateNotification = (key: string, data: Notification): boolean => {
+  #toNotificationInstance = (notification: Notification | InboxNotification): Notification => {
+    return ensureNotificationInstance({
+      notification,
+      emitter: this.#emitter,
+      inboxService: this.#inboxService,
+    });
+  };
+
+  #normalizeNotifications = (notifications: Array<Notification | InboxNotification>): Notification[] => {
+    return notifications.map((notification) => this.#toNotificationInstance(notification));
+  };
+
+  private updateNotification = (key: string, data: Notification | InboxNotification): boolean => {
     const notificationsResponse = this.#cache.get(key);
     if (!notificationsResponse) {
       return false;
@@ -158,7 +170,7 @@ export class NotificationsCache {
     }
 
     const updatedNotifications = [...notificationsResponse.notifications];
-    updatedNotifications[index] = data;
+    updatedNotifications[index] = this.#toNotificationInstance(data);
 
     this.#cache.set(key, { ...notificationsResponse, notifications: updatedNotifications });
 
@@ -284,7 +296,10 @@ export class NotificationsCache {
   }
 
   set(args: ListNotificationsArgs, data: ListNotificationsResponse): void {
-    this.#cache.set(getCacheKey(args), data);
+    this.#cache.set(getCacheKey(args), {
+      ...data,
+      notifications: this.#normalizeNotifications(data.notifications),
+    });
   }
 
   unshift(args: ListNotificationsArgs, notification: InboxNotification): void {
@@ -295,11 +310,7 @@ export class NotificationsCache {
       notifications: [],
     };
 
-    const notificationInstance = createNotification({
-      notification: { ...notification },
-      emitter: this.#emitter,
-      inboxService: this.#inboxService,
-    });
+    const notificationInstance = this.#toNotificationInstance({ ...notification });
 
     this.update(args, {
       ...cachedData,

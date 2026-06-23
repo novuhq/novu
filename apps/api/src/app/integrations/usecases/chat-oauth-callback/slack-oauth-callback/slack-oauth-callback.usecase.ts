@@ -5,7 +5,10 @@ import {
   GetNovuProviderCredentialsCommand,
 } from '@novu/application-generic';
 import {
+  ChannelConnectionEntity,
+  ChannelConnectionRepository,
   ChannelTypeEnum,
+  ContextRepository,
   EnvironmentRepository,
   ICredentialsEntity,
   IntegrationEntity,
@@ -15,6 +18,8 @@ import { ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
 import axios from 'axios';
 import { CreateChannelConnectionCommand } from '../../../../channel-connections/usecases/create-channel-connection/create-channel-connection.command';
 import { CreateChannelConnection } from '../../../../channel-connections/usecases/create-channel-connection/create-channel-connection.usecase';
+import { UpdateChannelConnectionCommand } from '../../../../channel-connections/usecases/update-channel-connection/update-channel-connection.command';
+import { UpdateChannelConnection } from '../../../../channel-connections/usecases/update-channel-connection/update-channel-connection.usecase';
 import { CreateChannelEndpointCommand } from '../../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.command';
 import { CreateChannelEndpoint } from '../../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.usecase';
 import { renderConnectionResultPage } from '../../../../shared/html/connection-result-page';
@@ -34,7 +39,10 @@ export class SlackOauthCallback {
     private integrationRepository: IntegrationRepository,
     private environmentRepository: EnvironmentRepository,
     private getNovuProviderCredentials: GetNovuProviderCredentials,
+    private channelConnectionRepository: ChannelConnectionRepository,
+    private contextRepository: ContextRepository,
     private createChannelConnection: CreateChannelConnection,
+    private updateChannelConnection: UpdateChannelConnection,
     private createChannelEndpoint: CreateChannelEndpoint
   ) {}
 
@@ -62,25 +70,7 @@ export class SlackOauthCallback {
        */
       await this.createIncomingWebhookEndpoint(stateData, integration, authData);
     } else {
-      const isSharedMode = stateData.connectionMode === 'shared';
-      const connection = await this.createChannelConnection.execute(
-        CreateChannelConnectionCommand.create({
-          identifier: stateData.identifier,
-          organizationId: stateData.organizationId,
-          environmentId: stateData.environmentId,
-          integrationIdentifier: integration.identifier,
-          subscriberId: isSharedMode ? undefined : stateData.subscriberId,
-          context: stateData.context,
-          connectionMode: stateData.connectionMode,
-          auth: {
-            accessToken: authData.access_token,
-          },
-          workspace: {
-            id: authData.team.id,
-            name: authData.team.name,
-          },
-        })
-      );
+      const connection = await this.upsertWorkspaceConnection(stateData, integration, authData);
       if (stateData.autoLinkUser === true && stateData.subscriberId && authData.authed_user?.id) {
         await this.createChannelEndpoint.execute(
           CreateChannelEndpointCommand.create({
@@ -110,6 +100,87 @@ export class SlackOauthCallback {
         message: 'Your Slack workspace is connected and ready to use.',
       }),
     };
+  }
+
+  private async upsertWorkspaceConnection(
+    stateData: StateData,
+    integration: IntegrationEntity,
+    authData: { access_token: string; team: { id: string; name: string } }
+  ): Promise<ChannelConnectionEntity> {
+    const isSharedMode = stateData.connectionMode === 'shared';
+    const subscriberId = isSharedMode ? undefined : stateData.subscriberId;
+    const existingConnection = await this.findExistingConnection(stateData, integration, subscriberId);
+    const auth = { accessToken: authData.access_token };
+    const workspace = { id: authData.team.id, name: authData.team.name };
+
+    if (existingConnection) {
+      return await this.updateChannelConnection.execute(
+        UpdateChannelConnectionCommand.create({
+          identifier: existingConnection.identifier,
+          organizationId: stateData.organizationId,
+          environmentId: stateData.environmentId,
+          auth,
+          workspace,
+        })
+      );
+    }
+
+    return await this.createChannelConnection.execute(
+      CreateChannelConnectionCommand.create({
+        identifier: stateData.identifier,
+        organizationId: stateData.organizationId,
+        environmentId: stateData.environmentId,
+        integrationIdentifier: integration.identifier,
+        subscriberId,
+        context: stateData.context,
+        connectionMode: stateData.connectionMode,
+        auth,
+        workspace,
+      })
+    );
+  }
+
+  private async resolveContextKeys(stateData: StateData): Promise<string[]> {
+    if (!stateData.context) {
+      return [];
+    }
+
+    const contexts = await this.contextRepository.findOrCreateContextsFromPayload(
+      stateData.environmentId,
+      stateData.organizationId,
+      stateData.context
+    );
+
+    return contexts.map((context) => context.key);
+  }
+
+  private async findExistingConnection(
+    stateData: StateData,
+    integration: IntegrationEntity,
+    subscriberId: string | undefined
+  ): Promise<ChannelConnectionEntity | null> {
+    if (stateData.identifier) {
+      const connectionByIdentifier = await this.channelConnectionRepository.findOne({
+        identifier: stateData.identifier,
+        _organizationId: stateData.organizationId,
+        _environmentId: stateData.environmentId,
+      });
+
+      if (connectionByIdentifier) {
+        return connectionByIdentifier;
+      }
+    }
+
+    const contextKeys = await this.resolveContextKeys(stateData);
+    const contextQuery = this.channelConnectionRepository.buildContextExactMatchQuery(contextKeys);
+
+    return await this.channelConnectionRepository.findOne({
+      _organizationId: stateData.organizationId,
+      _environmentId: stateData.environmentId,
+      integrationIdentifier: integration.identifier,
+      subscriberId,
+      ...contextQuery,
+    });
   }
 
   private async linkUserEndpoint(stateData: StateData, integration: IntegrationEntity, authData: any): Promise<void> {

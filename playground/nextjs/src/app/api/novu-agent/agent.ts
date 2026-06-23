@@ -29,10 +29,7 @@ function buildDemoCard(platform: string): CardElement {
     children: [
       CardText('This card was posted with `thread.post(Card(...))` and normalized into an agent reply payload.'),
       Divider(),
-      Fields([
-        Field({ label: 'Platform', value: platform }),
-        Field({ label: 'Source', value: 'chat-sdk' }),
-      ]),
+      Fields([Field({ label: 'Platform', value: platform }), Field({ label: 'Source', value: 'chat-sdk' })]),
       Section([CardText('Buttons below emit `onAction` callbacks back through the bridge.')]),
       Actions([
         Button({ id: 'card-approve', label: 'Approve', style: 'primary', value: 'approved' }),

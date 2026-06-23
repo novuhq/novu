@@ -1,8 +1,8 @@
-import { NovuAdapterImpl } from "./adapter.js";
-import type { NovuAdapter, NovuAdapterConfig } from "./types.js";
+import { NovuAdapterImpl } from './adapter.js';
+import type { NovuAdapter, NovuAdapterConfig } from './types.js';
 
-export { getNovuContext } from "./novu-context.js";
-export { verifyNovuSignature } from "./signature.js";
+export { getNovuContext } from './novu-context.js';
+export { verifyNovuSignature } from './signature.js';
 
 export type {
   AddReactionPayload,
@@ -30,8 +30,8 @@ export type {
   ReplyFileRef,
   Signal,
   TriggerRecipientsPayload,
-} from "./types.js";
-export { AgentEvent } from "./types.js";
+} from './types.js';
+export { AgentEvent } from './types.js';
 
 /**
  * Create a Chat SDK adapter that exposes Novu's normalized chat channels
@@ -61,10 +61,8 @@ export { AgentEvent } from "./types.js";
  *     await thread.post(`echo: ${message.text}`);
  *   });
  */
-export function createNovuAdapter(
-  config: Partial<NovuAdapterConfig> = {},
-): NovuAdapter {
-  const env = typeof process !== "undefined" ? process.env : undefined;
+export function createNovuAdapter(config: Partial<NovuAdapterConfig> = {}): NovuAdapter {
+  const env = typeof process !== 'undefined' ? process.env : undefined;
   const apiKey = config.apiKey ?? env?.NOVU_SECRET_KEY;
   const bridgeSecret = config.bridgeSecret ?? env?.NOVU_SECRET_KEY;
   const agentIdentifier = config.agentIdentifier ?? env?.NOVU_AGENT_IDENTIFIER;
@@ -72,19 +70,13 @@ export function createNovuAdapter(
   const bridgeUrl = config.bridgeUrl ?? env?.NOVU_BRIDGE_URL;
 
   if (!apiKey) {
-    throw new Error(
-      "createNovuAdapter: `apiKey` is required (pass it or set NOVU_SECRET_KEY).",
-    );
+    throw new Error('createNovuAdapter: `apiKey` is required (pass it or set NOVU_SECRET_KEY).');
   }
   if (!agentIdentifier) {
-    throw new Error(
-      "createNovuAdapter: `agentIdentifier` is required (pass it or set NOVU_AGENT_IDENTIFIER).",
-    );
+    throw new Error('createNovuAdapter: `agentIdentifier` is required (pass it or set NOVU_AGENT_IDENTIFIER).');
   }
   if (!bridgeSecret) {
-    throw new Error(
-      "createNovuAdapter: `bridgeSecret` is required (pass it or set NOVU_SECRET_KEY).",
-    );
+    throw new Error('createNovuAdapter: `bridgeSecret` is required (pass it or set NOVU_SECRET_KEY).');
   }
 
   return new NovuAdapterImpl({

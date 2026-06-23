@@ -184,7 +184,7 @@
     "dotenv": "^16.6.1",
     "express": "^4.21.0",
     "globals": "^15.9.0",
-    "http-proxy-middleware": "^3.0.5",
+    "http-proxy-middleware": "^3.0.7",
     "http-server": "^0.13.0",
     "postcss": "^8.5.10",
     "rimraf": "^3.0.2",

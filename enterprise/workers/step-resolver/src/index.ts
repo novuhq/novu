@@ -7,7 +7,7 @@ const RESOLVE_ROUTE_REGEX =
   /^\/resolve\/(?<organizationId>[a-f0-9]{24})\/(?<stepResolverWorkerHash>sr-[^/]+)\/(?<workflowId>[^/]+)\/(?<stepId>[^/]+)$/;
 const REQUEST_ID_HEADER = 'x-request-id';
 const JSON_CONTENT_TYPE = 'application/json';
-const MAX_REQUEST_BODY_BYTES = 1024 * 1024; // 1MB
+const MAX_REQUEST_BODY_BYTES = 26 * 1024 * 1024; // 26MB — room for ~20MB attachments after base64 + JSON envelope (matches api-service body limit)
 
 function jsonResponse(body: unknown, status: number, requestId: string, headers?: Record<string, string>): Response {
   return new Response(JSON.stringify(body), {
