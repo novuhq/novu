@@ -50,14 +50,20 @@ function buildVerticalFadeMask(
   return `linear-gradient(to bottom, ${stops})`;
 }
 
-function ConfigureChannelButton({ link, onConfigure }: { link: AgentIntegrationLink; onConfigure: () => void }) {
+function ConfigureChannelButton({
+  link,
+  onConfigure,
+}: {
+  link: AgentIntegrationLink;
+  onConfigure: (link: AgentIntegrationLink) => void;
+}) {
   const providerMeta = novuProviders.find((p) => p.id === link.integration.providerId);
   const displayName = providerMeta?.displayName ?? link.integration.name;
 
   return (
     <button
       type="button"
-      onClick={onConfigure}
+      onClick={() => onConfigure(link)}
       className={cn(
         'flex w-full max-w-[210px] shrink-0 items-center gap-0.5 overflow-hidden rounded-md p-1.5',
         'bg-bg-white bg-[linear-gradient(180deg,rgba(0,0,0,0)_30%,rgba(0,0,0,0.02)_100%)]',
@@ -138,10 +144,6 @@ function ChannelList({
     };
   }, [updateFades]);
 
-  const handleConfigure = (link: AgentIntegrationLink) => {
-    onConfigure(link);
-  };
-
   const handleToggle = () => {
     setIsExpanded((prev) => !prev);
   };
@@ -162,7 +164,7 @@ function ChannelList({
         }}
       >
         {links.map((link) => (
-          <ConfigureChannelButton key={link._id} link={link} onConfigure={() => handleConfigure(link)} />
+          <ConfigureChannelButton key={link._id} link={link} onConfigure={onConfigure} />
         ))}
       </div>
       {isCollapsible ? (
