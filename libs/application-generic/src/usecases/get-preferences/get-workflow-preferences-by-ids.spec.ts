@@ -21,13 +21,13 @@ function buildPreference(templateId: string, type: PreferencesTypeEnum): Prefere
 describe('GetPreferences.getWorkflowPreferencesByIds', () => {
   let getPreferences: GetPreferences;
   let cacheService: InMemoryLRUCacheService;
-  let find: jest.Mock;
+  let findForComputation: jest.Mock;
 
   beforeEach(() => {
     const featureFlagsService = { getFlag: jest.fn().mockResolvedValue(true) } as unknown as FeatureFlagsService;
     cacheService = new InMemoryLRUCacheService(featureFlagsService);
-    find = jest.fn();
-    const preferencesRepository = { find } as any;
+    findForComputation = jest.fn();
+    const preferencesRepository = { findForComputation } as any;
     getPreferences = new GetPreferences(preferencesRepository, featureFlagsService, cacheService);
   });
 
@@ -36,7 +36,7 @@ describe('GetPreferences.getWorkflowPreferencesByIds', () => {
   });
 
   it('queries missing workflows with a single $in and splits results into [resource, user] tuples', async () => {
-    find.mockResolvedValue([
+    findForComputation.mockResolvedValue([
       buildPreference('wf_1', PreferencesTypeEnum.WORKFLOW_RESOURCE),
       buildPreference('wf_1', PreferencesTypeEnum.USER_WORKFLOW),
       buildPreference('wf_2', PreferencesTypeEnum.WORKFLOW_RESOURCE),
@@ -48,8 +48,8 @@ describe('GetPreferences.getWorkflowPreferencesByIds', () => {
       workflowIds: ['wf_1', 'wf_2'],
     });
 
-    expect(find).toHaveBeenCalledTimes(1);
-    const query = find.mock.calls[0][0];
+    expect(findForComputation).toHaveBeenCalledTimes(1);
+    const query = findForComputation.mock.calls[0][0];
     expect(query._templateId.$in).toEqual(['wf_1', 'wf_2']);
     expect(query.type.$in).toEqual([PreferencesTypeEnum.WORKFLOW_RESOURCE, PreferencesTypeEnum.USER_WORKFLOW]);
 
@@ -61,7 +61,7 @@ describe('GetPreferences.getWorkflowPreferencesByIds', () => {
   });
 
   it('returns a [null, null] tuple for workflows without preferences and caches it', async () => {
-    find.mockResolvedValue([]);
+    findForComputation.mockResolvedValue([]);
 
     const result = await getPreferences.getWorkflowPreferencesByIds({
       environmentId: ENVIRONMENT_ID,
@@ -77,7 +77,7 @@ describe('GetPreferences.getWorkflowPreferencesByIds', () => {
   });
 
   it('serves cached workflows without re-querying and shares the single-workflow key scheme', async () => {
-    find.mockResolvedValue([buildPreference('wf_1', PreferencesTypeEnum.WORKFLOW_RESOURCE)]);
+    findForComputation.mockResolvedValue([buildPreference('wf_1', PreferencesTypeEnum.WORKFLOW_RESOURCE)]);
 
     await getPreferences.getWorkflowPreferencesByIds({
       environmentId: ENVIRONMENT_ID,
@@ -90,7 +90,7 @@ describe('GetPreferences.getWorkflowPreferencesByIds', () => {
       workflowIds: ['wf_1'],
     });
 
-    expect(find).toHaveBeenCalledTimes(1);
+    expect(findForComputation).toHaveBeenCalledTimes(1);
     expect(result.get('wf_1')).toEqual([buildPreference('wf_1', PreferencesTypeEnum.WORKFLOW_RESOURCE), null]);
     expect(cacheService.getIfCached(InMemoryLRUCacheStore.WORKFLOW_PREFERENCES, `${ENVIRONMENT_ID}:wf_1`)).toEqual([
       buildPreference('wf_1', PreferencesTypeEnum.WORKFLOW_RESOURCE),
