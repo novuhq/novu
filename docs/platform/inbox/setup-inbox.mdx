@@ -1,0 +1,138 @@
+---
+title: 'Set up the Inbox'
+description: "Learn how to integrate the Novu Inbox component into your application to display real-time notifications for your subscribers."
+icon: "bell"
+---
+
+
+The Inbox component displays a notification bell by default, which opens a menu containing the subscriber's notifications and preferences.
+
+## Installation
+
+To get started, install the Inbox UI:
+
+<Tabs>
+  <Tab title="Next.js">
+    ```package-install
+    npm install @novu/nextjs
+    ```
+  </Tab>
+  <Tab title="React">
+    ```package-install
+    npm install @novu/react
+    ```
+  </Tab>
+</Tabs>
+
+## Try Inbox in keyless mode
+
+Keyless mode lets you test the look and features of the Inbox component instantly in your application, no setup required.
+
+![Inbox keyless](/images/inbox/keyless-inbox.png)
+
+<Tabs>
+  <Tab title="Next.js">
+    ```tsx
+
+    export function Novu() {
+      return (
+        <Inbox />
+      );
+    }
+    ```
+  </Tab>
+  <Tab title="React">
+    ```tsx
+
+    export function Novu() {
+      return (
+        <Inbox />
+      );
+    }
+    ```
+  </Tab>
+</Tabs>
+
+<Note>
+  This is only for testing, the data is temporary (expires in 24h) and not tied to real subscribers.
+</Note>
+
+## Use Inbox with real subscribers
+
+To display real-time notifications for your subscribers, connect the Inbox component to your Novu environment using your `applicationIdentifier` and a `subscriberId`. You can create or manage subscribers from the [Novu Dashboard](https://dashboard.novu.co/subscribers).
+
+### US region (default)
+
+<Tabs>
+  <Tab title="Next.js">
+    ```tsx
+
+    export function Novu() {
+      return (
+        <Inbox
+          applicationIdentifier="APPLICATION_IDENTIFIER"
+          subscriber="SUBSCRIBER_ID"
+        />
+      );
+    }
+    ```
+  </Tab>
+  <Tab title="React">
+    ```tsx
+
+    export function Novu() {
+      return (
+        <Inbox
+          applicationIdentifier="APPLICATION_IDENTIFIER"
+          subscriber="SUBSCRIBER_ID"
+        />
+      );
+    }
+    ```
+  </Tab>
+</Tabs>
+
+<div className="text-sm text-gray-500 text-center mt-2">
+  [Sign in](https://dashboard.novu.co/auth/sign-up) to get your own API keys
+</div>
+
+### EU region
+
+If your Novu account is in the EU region, then include the `backendUrl` and `socketUrl` props to connect to EU-specific API endpoints:
+
+<Tabs>
+  <Tab title="Next.js">
+    ```tsx
+
+    export function Novu() {
+      return (
+        <Inbox
+          applicationIdentifier="APPLICATION_IDENTIFIER"
+          subscriber="SUBSCRIBER_ID"
+          backendUrl="https://eu.api.novu.co"
+          socketUrl="wss://eu.socket.novu.co"
+        />
+      );
+    }
+    ```
+  </Tab>
+  <Tab title="React">
+    ```tsx
+
+    export function Novu() {
+      return (
+        <Inbox
+          applicationIdentifier="APPLICATION_IDENTIFIER"
+          subscriber="SUBSCRIBER_ID"
+          backendUrl="https://eu.api.novu.co"
+          socketUrl="wss://eu.socket.novu.co"
+        />
+      );
+    }
+    ```
+  </Tab>
+</Tabs>
+
+<div className="text-sm text-gray-500 text-center mt-2">
+  [Sign in](https://dashboard.novu.co/auth/sign-up) to get your own API keys
+</div>

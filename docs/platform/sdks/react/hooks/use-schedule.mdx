@@ -1,0 +1,128 @@
+---
+title: "useSchedule"
+description: "Learn how to use the useSchedule hook to manage subscriber notification schedules in your React application"
+---
+
+
+Schedules define when notifications should be delivered by setting availability hours across days of the week. The `useSchedule` hook provides a way to fetch, display, and update the notification schedule for the current subscriber.
+
+## Hook parameters
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `onSuccess` | `(data: Schedule) => void` | Callback function called when the schedule is successfully fetched |
+| `onError` | `(error: NovuError) => void` | Callback function called when an error occurs |
+
+## Return value
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `schedule` | `Schedule | undefined` | The subscriber |
+| `error` | `NovuError | undefined` | Error object if the request failed |
+| `isLoading` | `boolean` | True during the initial load, false otherwise (default: `true`) |
+| `isFetching` | `boolean` | True while any request is in flight (initial load or refetch), false otherwise (default: `true`) |
+| `refetch` | `() => Promise<void>` | Function to manually trigger a refetch of the schedule |
+
+## Schedule type
+
+The `Schedule` type from `@novu/react` includes these properties:
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `isEnabled` | `boolean` | Global flag to enable or disable the entire schedule. |
+| `weeklySchedule` | `object` | An object containing the schedule for each day of the week (for example, monday, tuesday). Each key holds a DaySchedule object. |
+
+### Schedule object structure.
+
+Each `DaySchedule` object within `weeklySchedule` has the following structure:
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `isEnabled` | `boolean` | Flag to enable or disable the schedule for this specific day. |
+| `hours` |  |  |
+
+## Updating the schedule
+
+The hook also allows updating the subscriber’s schedule via `schedule.update`:
+
+```tsx
+const handleClick = async () => {
+  await schedule?.update({
+    isEnabled: true,
+    weeklySchedule: {
+      monday: {
+        isEnabled: true,
+        hours: [{ start: '08:00 AM', end: '18:00 PM' }],
+      },
+    }
+  })
+};
+```
+
+## Example usage
+
+Here's how to use the `useSchedule` hook to display and update a subscriber's notification schedule. The `schedule.update()` method creates a schedule if one doesn't exist or updates the existing one.
+
+```tsx
+import { useSchedule } from "@novu/react";
+
+function ScheduleManager() {
+  const { schedule, isLoading, error, refetch } = useSchedule();
+
+  if (isLoading) return <div>Loading schedule...</div>;
+  if (error) return <div>Error: {error.message}</div>;
+
+  const handleUpdateSchedule = async () => {
+    await schedule?.update({
+      isEnabled: true,
+      weeklySchedule: {
+        monday: {
+          isEnabled: true,
+          hours: [
+            { start: '09:00 AM', end: '12:00 PM' },
+            { start: '02:00 PM', end: '05:00 PM' },
+          ],
+        },
+        tuesday: {
+          isEnabled: true,
+          hours: [{ start: '09:00 AM', end: '05:00 PM' }],
+        },
+        // Other days can be left undefined or explicitly disabled
+        wednesday: {
+          isEnabled: false,
+          hours: [],
+        },
+      },
+    });    
+  };
+
+  return (
+    <div className="p-4 border rounded-lg">
+      <h3 className="font-medium">My Notification Schedule</h3>
+      <p>
+        Schedule Enabled: <strong>{schedule?.isEnabled ? 'Yes' : 'No'}</strong>
+      </p>
+      
+      <div className="mt-2">
+        <h4 className="font-medium">Monday Hours:</h4>
+        {schedule?.weeklySchedule?.monday?.isEnabled ? (
+          <ul className="list-disc pl-5">
+            {schedule.weeklySchedule.monday.hours.map((range, index) => (
+              <li key={index}>{`${range.start} - ${range.end}`}</li>
+            ))}
+          </ul>
+        ) : (
+          <p>Not scheduled</p>
+        )}
+      </div>
+
+      <button
+        onClick={handleUpdateSchedule}
+        className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+      >
+        Set Default Work Hours
+      </button>
+    </div>
+  );
+}
+```

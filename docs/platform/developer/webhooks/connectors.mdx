@@ -1,0 +1,276 @@
+---
+title: 'Webhook connectors'
+description: 'Send Novu webhook events directly to data warehouses, analytics databases, and AWS messaging services.'
+icon: "plug"
+---
+
+In addition to standard HTTP webhook endpoints, Novu supports webhook connectors that deliver events directly to third-party services. Use them to route Novu events to data warehouses, analytics databases, and AWS messaging services without building a custom receiver.
+
+Novu webhook delivery is powered by [Svix](https://docs.svix.com/introduction). Connector endpoints use Svix [transformations](https://docs.svix.com/transformations) to shape each event before it is written to your destination.
+
+<Note>
+  Outbound webhooks feature is only available in the [Team and Enterprise plans](https://novu.co/pricing).
+</Note>
+
+## How to add a connector endpoint
+
+1. Go to the **[Webhooks](https://dashboard.novu.co/webhooks)** page in the Novu dashboard.
+2. Select the **Endpoints** tab.
+3. Click **Add Endpoint**.
+4. Search for or select the connector you want to use from the integrations list.
+  ![Webhook integrations list](/images/developer-tools/webhook-integrations.png)
+5. Enter a **Description** to identify this endpoint.
+6. Configure the connector-specific connection settings described in the sections below.
+7. For **data warehouse connectors** (ClickHouse, Snowflake, Redshift): define the **table schema** and write a **transformation** that maps Novu webhook payloads to rows matching that schema. See [Data warehouse connectors](#data-warehouse-connectors).
+8. For **message connectors** (Amazon SQS, Amazon SNS): review and customize the **transformation** that shapes the message body sent to the queue or topic. See [Message connectors](#message-connectors).
+9. Select the [event types](/platform/developer/webhooks/event-types) you want this endpoint to subscribe to.
+10. Click **Create**.
+11. Open the endpoint, go to the **Testing** tab, and **Send Example** for each subscribed event type. Confirm delivery succeeds in **Logs**, then verify the row or message appears in your destination.
+
+After the endpoint is created, Novu delivers matching events to your configured destination. You can monitor delivery attempts, retry failed messages, and test the endpoint from the dashboard.
+
+## Available connectors
+
+Novu supports the following webhook connectors:
+
+| Connector | Type | Description |
+| --- | --- | --- |
+| [ClickHouse](#clickhouse) | Data warehouse | Store events in a ClickHouse table. |
+| [Snowflake](#snowflake) | Data warehouse | Store events in a Snowflake table. |
+| [Amazon Redshift](#amazon-redshift) | Data warehouse | Store events in an Amazon Redshift table. |
+| [Amazon SQS](#amazon-sqs) | Message | Send events to an Amazon SQS queue. |
+| [Amazon SNS](#amazon-sns) | Message | Send events to an Amazon SNS topic. |
+
+Additional warehouse connectors (such as BigQuery) may appear in the dashboard. They follow the same **table schema + transformation** pattern described below.
+
+## Transformations
+
+Every connector endpoint runs a JavaScript **transformation** before delivery. The transformation converts the raw Novu webhook into the format your destination expects.
+
+In the Novu dashboard, configure the transformation when creating or editing a connector endpoint. Each connector type ships with a default template—use it as your starting point.
+
+### How to write a transformation
+
+Svix expects a function named `handler`. For connector endpoints, the handler receives a `webhook` object with:
+
+| Property | Description |
+| --- | --- |
+| `webhook.eventType` | The Novu event type (for example, `message.sent`). |
+| `webhook.payload` | The webhook JSON body. Shape depends on the event type—see [event types](/platform/developer/webhooks/event-types). |
+| `webhook.method` | HTTP method. Usually `"POST"`. |
+| `webhook.url` | Destination URL. Generally leave unchanged for connectors. |
+| `webhook.cancel` | Set to `true` to skip delivery for a given event. Defaults to `false`. |
+
+The handler must return the `webhook` object after modifying `webhook.payload` (and optionally other allowed properties). Test your code in the dashboard against a sample payload before going live.
+
+<Note>
+  Handle every [event type](/platform/developer/webhooks/event-types) your endpoint subscribes to. Use `switch (webhook.eventType)` or equivalent logic so each event maps to a valid destination record.
+</Note>
+
+## Data warehouse connectors
+
+Data warehouse connectors (ClickHouse, Snowflake, Redshift, and similar) insert one row per delivered webhook. Credentials and table location alone are not enough—you must also configure:
+
+1. **Table schema** — Column names and types that match your destination table.
+2. **Transformation** — JavaScript that maps each webhook `eventType` and `payload` into a row compatible with that schema.
+
+### Recommended setup flow
+
+1. **Create the destination table** in your warehouse with columns for the fields you want to store (for example, `event_type`, `message_id`, `subscriber_id`, `payload`, `created_at`).
+2. **Grant insert permissions** to the user or role Novu connects with.
+3. **Add the connector endpoint** in Novu and fill in connection settings (URL, credentials, database, table name, and so on).
+4. **Define the table schema** in the connector configuration so it matches your destination table.
+5. **Write the transformation** to map Novu payloads into that schema. Start from the dashboard template and adjust field names and types for your table.
+6. **Subscribe** to the event types you want to store.
+7. **Test** with **Send Example**, confirm success in **Logs**, then query the table to verify rows were inserted.
+
+### Example transformation
+
+This example maps a `message.sent` event into a flat row. Adjust field names to match your table schema and add cases for every event type you subscribe to.
+
+```js
+function handler(webhook) {
+  switch (webhook.eventType) {
+    case "message.sent":
+      webhook.payload = {
+        event_type: webhook.eventType,
+        message_id: webhook.payload.id,
+        subscriber_id: webhook.payload.subscriberId,
+        channel: webhook.payload.channel,
+        created_at: webhook.payload.createdAt,
+        raw_payload: JSON.stringify(webhook.payload),
+      };
+      break;
+    // Add a case for each subscribed event type
+  }
+  return webhook;
+}
+```
+
+If deliveries succeed in Novu but no rows appear in your warehouse, the transformation output likely does not match your table schema. Compare the transformed payload in the **Logs** tab with your table definition.
+
+## Message connectors
+
+Message connectors (Amazon SQS and Amazon SNS) publish each webhook as a queue message or topic notification. Use the transformation to shape the JSON body your consumers receive.
+
+The default template typically forwards the webhook payload. Customize it if downstream workers expect a specific structure (for example, flattening nested fields or adding metadata).
+
+```js
+function handler(webhook) {
+  webhook.payload = {
+    eventType: webhook.eventType,
+    data: webhook.payload,
+    receivedAt: new Date().toISOString(),
+  };
+  return webhook;
+}
+```
+
+After creating the endpoint, send a test event and confirm the message appears in your SQS queue or SNS topic subscription.
+
+## ClickHouse
+
+The ClickHouse connector stores Novu webhook events directly in a ClickHouse table. Use it when you want to analyze notification events in ClickHouse without building a custom ingestion pipeline.
+
+### Configuration
+
+| Field | Required | Description |
+| --- | --- | --- |
+| URL | Yes | The ClickHouse server URL (for example, `https://clickhouse.example.com:8443`). |
+| Username | Yes | The username used to authenticate with ClickHouse. |
+| Password | Yes | The password for the ClickHouse user. |
+| Table name | Yes | The name of the table where events are stored. |
+| Database | No | The ClickHouse database name. If omitted, the default database is used. |
+| Table schema | Yes | Column definitions that match your ClickHouse table. |
+| Transformation | Yes | JavaScript that maps webhook payloads to rows matching the table schema. |
+
+### Setup
+
+1. Create a ClickHouse table to receive webhook events.
+2. Ensure the configured user has permission to insert rows into the target table.
+3. In the Novu dashboard, select **ClickHouse** when adding a webhook endpoint.
+4. Fill in connection settings, **table schema**, and **transformation**.
+5. Select event types, create the endpoint, and verify rows with **Send Example**.
+
+## Snowflake
+
+The Snowflake connector stores Novu webhook events directly in a Snowflake table. Use it when you want notification data available in your Snowflake data warehouse for reporting, analytics, or downstream pipelines.
+
+### Configuration
+
+| Field | Required | Description |
+| --- | --- | --- |
+| Account identifier | Yes | Your Snowflake account identifier. |
+| User ID | Yes | The Snowflake user used to authenticate. |
+| Private key | Yes | The private key for key-pair authentication. |
+| Database name | No | The Snowflake database where events are stored. |
+| Schema name | No | The schema containing the target table. |
+| Table name | No | The table where events are stored. |
+| Table schema | Yes | Column definitions that match your Snowflake table. |
+| Transformation | Yes | JavaScript that maps webhook payloads to rows matching the table schema. |
+
+### Setup
+
+1. Create a Snowflake table to receive webhook events.
+2. Configure a Snowflake user with key-pair authentication and insert permissions on the target table.
+3. In the Novu dashboard, select **Snowflake** when adding a webhook endpoint.
+4. Fill in connection settings, **table schema**, and **transformation**.
+5. Select event types, create the endpoint, and verify rows with **Send Example**.
+
+## Amazon Redshift
+
+The Amazon Redshift connector stores Novu webhook events directly in a Redshift table. Use it when you want notification events available in your Redshift data warehouse for analytics and reporting.
+
+### Configuration
+
+| Field | Required | Description |
+| --- | --- | --- |
+| Region | Yes | The AWS region where your Redshift cluster or workgroup is located. |
+| Access key ID | Yes | The AWS access key ID with permission to write to Redshift. |
+| Secret access key | Yes | The AWS secret access key for the IAM user. |
+| Cluster identifier | No | The Redshift cluster identifier. Required for provisioned clusters. |
+| Workgroup name | No | The Redshift Serverless workgroup name. Required for serverless deployments. |
+| Database user | No | The database user for provisioned clusters. |
+| Database name | No | The Redshift database where events are stored. |
+| Schema name | No | The schema containing the target table. |
+| Table name | No | The table where events are stored. |
+| Table schema | Yes | Column definitions that match your Redshift table. |
+| Transformation | Yes | JavaScript that maps webhook payloads to rows matching the table schema. |
+
+<Note>
+  For provisioned Redshift clusters, set **Cluster identifier** and **Database user**. For Redshift Serverless, set **Workgroup name** instead.
+</Note>
+
+### Setup
+
+1. Create a Redshift table to receive webhook events.
+2. Create an IAM user with the permissions required to write data to Redshift.
+3. In the Novu dashboard, select **Redshift** when adding a webhook endpoint.
+4. Fill in connection settings, **table schema**, and **transformation**.
+5. Select event types, create the endpoint, and verify rows with **Send Example**.
+
+## Amazon SQS
+
+The Amazon SQS connector sends Novu webhook events to an Amazon SQS queue. Use it when you want to process notification events asynchronously through your existing AWS messaging infrastructure.
+
+### Configuration
+
+| Field | Required | Description |
+| --- | --- | --- |
+| Queue URL | Yes | The URL of the target SQS queue. |
+| Region | Yes | The AWS region where the queue is located. |
+| Access key ID | Yes | The AWS access key ID with permission to send messages to the queue. |
+| Secret access key | Yes | The AWS secret access key for the IAM user. |
+| Endpoint URL | No | A custom endpoint URL. Use this when connecting to LocalStack or other SQS-compatible services. |
+| Transformation | Yes | JavaScript that shapes the message body sent to the queue. |
+
+### Setup
+
+1. Create an SQS queue in your AWS account.
+2. Create an IAM user with `sqs:SendMessage` permission on the target queue.
+3. In the Novu dashboard, select **SQS** when adding a webhook endpoint.
+4. Fill in connection settings and review the **transformation**.
+5. Select event types, create the endpoint, and verify messages with **Send Example**.
+
+## Amazon SNS
+
+The Amazon SNS connector publishes Novu webhook events to an Amazon SNS topic. Use it when you want to fan out notification events to multiple subscribers through SNS.
+
+### Configuration
+
+| Field | Required | Description |
+| --- | --- | --- |
+| Topic ARN | Yes | The ARN of the target SNS topic. |
+| Region | Yes | The AWS region where the topic is located. |
+| Access key ID | Yes | The AWS access key ID with permission to publish to the topic. |
+| Secret access key | Yes | The AWS secret access key for the IAM user. |
+| Endpoint URL | No | A custom endpoint URL. Use this when connecting to LocalStack or other SNS-compatible services. |
+| Transformation | Yes | JavaScript that shapes the notification body published to the topic. |
+
+### Setup
+
+1. Create an SNS topic in your AWS account.
+2. Create an IAM user with `sns:Publish` permission on the target topic.
+3. In the Novu dashboard, select **SNS** when adding a webhook endpoint.
+4. Fill in connection settings and review the **transformation**.
+5. Select event types, create the endpoint, and verify messages with **Send Example**.
+
+## Monitoring and troubleshooting
+
+Connector endpoints support the same delivery monitoring, retry, and recovery features as standard webhook endpoints. From the endpoint details page in the Novu dashboard, you can:
+
+- View delivery attempts and failure reasons in the **Logs** tab.
+- Inspect the transformed payload sent to your destination.
+- Resend individual failed events.
+- Recover or replay failed messages from a selected time window.
+
+If deliveries fail consistently, check the following:
+
+| Symptom | What to check |
+| --- | --- |
+| Authentication errors | Connector credentials, IAM permissions, or database user grants. |
+| Schema or type errors | Table schema matches your destination table; transformation output uses the correct column names and types. |
+| Missing rows or messages | Delivery shows success in **Logs** but destination is empty—transformation may not match the expected insert or message format. |
+| Unhandled event types | Transformation includes a branch for every subscribed [event type](/platform/developer/webhooks/event-types). |
+
+If the destination service is unreachable from Novu's webhook infrastructure, deliveries will continue to retry according to the [retry schedule](/platform/developer/webhooks#recovery-and-resending-failed-messages) before the endpoint is disabled.

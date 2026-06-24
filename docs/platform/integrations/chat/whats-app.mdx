@@ -1,0 +1,127 @@
+---
+title: 'WhatsApp Business'
+description: 'Learn about how to use WhatsApp for chat notifications'
+---
+
+<Note>
+  Check out the [agents](/agents) documentation for more information on how to build agents using WhatsApp.
+</Note>
+
+## Getting Started
+
+To integrate WhatsApp Business with Novu, You will have to create a facebook developer app and obtain the necessary credentials.
+
+<Steps>
+<Step title="Create a Facebook developer app">
+Visit the [Facebook Developer Portal](https://developers.facebook.com/apps/) and create a new app.
+
+Select "Other" for "What do you want your app to do?" and select "Business" for "Select an app type".
+
+</Step>
+
+<Step title="Setup WhatsApp product">
+  On the App Setup page, click on "Set Up" under the "WhatsApp" product. You will need to create or
+  add a Facebook Business Account to your app.
+</Step>
+
+<Step title="Send a sandbox message">
+Copy the following pieces and paste them in the Novu WhatsApp Business integration settings:
+
+- Temporary access token - Access API token field
+- Phone Number ID - Phone number identification field
+
+<Warning>
+  It's important to note that the test credentials for whatsapp cannot be used
+  in production and will expire in 24 hours. You will need to submit your app
+  for review to obtain production credentials.
+</Warning>
+</Step>
+
+<Step title="Add a test phone number">
+  You can add a test phone number to the sandbox by clicking on the **"Add Phone Number"** button.
+  This number can be used to test your integration with Novu before submitting for a review.
+</Step>
+
+<Step title="Send a test notification from Novu">
+You can now create a new workflow with a "chat" node, and add your content. Save your workflow, and click on **"Trigger Notification"** button.
+
+In the to field, specify the phone number you added in the sandbox, and click on "Send Notification".
+
+```json
+{
+  "subscriberId": "TEST_SUBSCRIBER_ID",
+  "phone": "+11111111111"
+}
+```
+
+and in the `overrides` field, add the following:
+
+```json
+{
+  "chat": {
+    "template": {
+      "name": "hello_world",
+      "language": {
+        "code": "en_US"
+      }
+    }
+  }
+}
+```
+
+<Note>
+  For test credentials you can only used the built in Whats App Template.
+</Note>
+</Step>
+</Steps>
+
+## Going to production
+
+<Steps>
+<Step title="Register a business phone number">
+To go live you will need to add a real business phone number and submit your app for review.
+Follow the [Facebook Instructions](https://developers.facebook.com/docs/whatsapp/cloud-api/get-started/add-a-phone-number) on how to proceed.
+</Step>
+
+<Step title="Generate a permanent access token">
+  Follow the [Facebook
+  Instructions](https://developers.facebook.com/docs/whatsapp/business-management-api/get-started/)
+  on how to generate a permanent access token. Depending on your use case.
+</Step>
+
+<Step title="Create a WhatsApp template">
+You will need to create a WhatsApp Template to send notifications to your customers. Create a template in the [Business Manager](https://business.facebook.com/wa/manage/message-templates) and submit it for review.
+After your template is approved, you can use the `template_name` to send notifications to your customers.
+
+To send a notification with a template, you will need to add the following to the `overrides` field:
+
+```typescript
+import { Novu } from '@novu/api';
+
+const novu = new Novu({
+  secretKey: "<NOVU_SECRET_KEY>",
+  // Required if using EU region
+  // serverURL: "https://eu.api.novu.co",
+});
+
+await novu.trigger({
+  workflowId: "workflowId",
+  to: {
+    subscriberId: "subscriberId",
+    phone: '+11111111111',
+  },
+  payload: {},
+  overrides: {
+    chat: {
+      template: {
+        name: 'template_name',
+        language: {
+          code: 'en_US',
+        },
+      },
+    },
+  },
+});
+```
+</Step>
+</Steps>

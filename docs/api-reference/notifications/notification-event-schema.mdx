@@ -1,0 +1,74 @@
+---
+title: Notification event schema
+description: "Reference the Novu notification event schema used in API requests and responses. Review fields, data types, and object structure for this resource."
+---
+
+### Notification event
+
+Notification event is the event that is generated when a workflow is triggered to subscribers. It contains workflow details, subscriber details payload sent during trigger, execution details of each step in the workflow and the result of the execution of each step.
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `id` |  |  |
+| `environmentId` |  |  |
+| `organizationId` |  |  |
+| `subscriberId` |  |  |
+| `transactionId` |  |  |
+| `templateId` |  |  |
+| `digestedNotificationId` |  |  |
+| `createdAt` |  |  |
+| `updatedAt` |  |  |
+| `channels` |  |  |
+| `subscriber` |  |  |
+| `template` |  |  |
+| `jobs` |  |  |
+| `payload` |  |  |
+| `tags` |  |  |
+| `controls` |  |  |
+| `to` |  |  |
+| `topics` |  |  |
+| `severity` |  |  |
+| `critical` |  |  |
+| `contextKeys` |  |  |
+
+### Workflow
+
+Workflow contains the details of the workflow that was triggered.
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `id` |  |  |
+| `name` |  |  |
+| `description` |  |  |
+| `active` |  |  |
+| `draft` |  |  |
+| `preferenceSettings` |  |  |
+| `critical` |  |  |
+| `tags` |  |  |
+| `steps` |  |  |
+| `organizationId` |  |  |
+| `creatorId` |  |  |
+| `environmentId` |  |  |
+| `triggers` |  |  |
+| `notificationGroupId` |  |  |
+| `parentId` |  |  |
+| `deleted` |  |  |
+| `deletedAt` |  |  |
+| `deletedBy` |  |  |
+| `notificationGroup` |  |  |
+| `data` |  |  |
+| `workflowIntegrationStatus` |  |  |
+
+### ChannelTypeEnum
+
+ChannelTypeEnum is the type of the channel that the notification was sent to.
+
+```typescript
+ChannelTypeEnum {
+  IN_APP = "in_app",
+  EMAIL = "email",
+  SMS = "sms",
+  CHAT = "chat",
+  PUSH = "push"
+}
+```

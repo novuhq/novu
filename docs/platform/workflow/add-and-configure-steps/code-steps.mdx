@@ -1,0 +1,256 @@
+---
+title: 'Code Steps'
+description: 'Learn how to add code steps to a workflow, publish them with the Novu CLI, and use code-managed steps with UI-managed steps in a workflow.'
+icon: "code"
+---
+
+Novu allows you to write step handlers as TypeScript code in your project and publish them to Novu as serverless functions. Instead of configuring notification content in a visual editor, you define a handler file that returns the output for your step. Novu calls it at send time with the subscriber data, trigger payload, and any dashboard-defined controls.
+
+You can create both UI-managed steps and code-managed steps within the same workflow.
+
+<Note>
+  Code steps are only supported in the US region. We are working on supporting this in EU region.
+</Note>
+
+## Supported channels
+
+| Channel | Required Output |
+| --- | --- |
+| Email | `subject`, `body` (HTML string) |
+| SMS | `body` |
+| Push | `subject`, `body` |
+| Chat | `body` |
+| In-App | `subject`, `body` (plus optional `avatar`, `primaryAction`, `secondaryAction`, `data`, `redirect`) |
+
+## Quick Start
+
+### 1. Create workflow and step in the UI
+
+Create a workflow and add any channel step in the workflow from UI. Once the step is added. Go to the step editor and Toggle the switch to **Custom Code** from **Editor** option to enable custom code for this step.
+
+<video autoPlay loop muted playsInline src="/images/workflows/add-and-configure-steps/code/create-step.mp4" />
+
+### 2. Get the CLI command from the dashboard
+
+The Novu dashboard shows a prefilled publish command in the step editor screen, click on the **Copy** button to copy the command. It includes your secret key, workflow ID, step ID, and API URL.
+
+### 3. Run the CLI command in your project
+
+```bash
+npx novu step publish \
+  --workflow your-workflow-id \
+  --step your-step-id \
+  --secret-key nv-sk-...
+```
+
+The CLI supports the following flags and options:
+
+| Flag | Type | Default | Description |
+| --- | --- | --- | --- |
+| `-s, --secret-key <key>` | string | `$NOVU_SECRET_KEY` | Novu API secret key |
+| `-a, --api-url <url>` | string | config or `https://api.novu.co` | Novu API URL |
+| `--config <path>` | string | `novu.config.ts` | Path to config file |
+| `--out <path>` | string | from config or `./novu` | Directory containing handlers |
+| `--workflow <id>` | string (repeatable) | all | Deploy only steps for specific workflow(s) |
+| `--step <id>` | string (repeatable) | all | Deploy only a specific step within a workflow |
+| `--template <path>` | string | — | Path to a React Email template; scaffolds a React Email email handler if the step file doesn't exist. Requires `--workflow` and `--step` (single values each). |
+| `--bundle-out-dir [path]` | string or boolean | — | Write bundle artifacts to disk (debug mode, skips minification) |
+| `--dry-run` | boolean | `false` | Bundle without deploying |
+
+The CLI will perform the following:
+1. Look up the step type from the Novu API.
+2. Auto-scaffold a placeholder handler at `novu/<workflowId>/<stepId>.step.tsx`.
+3. Bundle all handlers in the `novu/` directory.
+4. Deploy to Novu.
+
+For email steps, you can optionally link a React Email template directly:
+
+```bash
+npx novu step publish \
+  --workflow your-workflow-id \
+  --step your-step-id \
+  --template ./emails/welcome.tsx \
+  --secret-key nv-sk-...
+```
+
+If you dont want to pass secret key to CLI, it will try to read NOVU_SECRET_KEY variable from `.env` file if present.
+
+Also similarly for `apiUrl`, by default it uses US, but you can specify EU or other regions either in novu.config.ts or directly in CLI command.
+
+### 4. Edit the handler
+
+The generated file will be located at `novu/<workflowId>/<stepId>.step.tsx`. The folder name is the `workflowId`. The CLI reads it from the path at publish time. You should commit this file to your repository.
+
+Open the generated file and replace the placeholder content with your real logic. Each handler receives the full context:
+
+```typescript title="novu/workflow-id/step-id.step.tsx"
+export default step.inApp(
+  "in-app-step",
+  async (controls, { payload, subscriber }) => ({
+    subject: controls.subject,
+    body: `Hi ${subscriber.firstName}, ${controls.body} `,
+  }),
+  {
+    controlSchema: {
+      type: "object",
+      properties: {
+        subject: { type: "string", default: "New activity" },
+        body: { type: "string", default: "You have a new notification." },
+      },
+      additionalProperties: false,
+    } as const,
+  }
+);
+```
+
+### 5. Republish when you make changes
+
+```bash
+npx novu step publish
+```
+
+If the bundle content changed, Novu deploys a new version. This `publish` command by default will publish all step handler in novu folder, if you want to publish just one workflow or one step you can specify `--workflow` and `--step` flags
+
+## Defining Controls (Optional)
+
+Controls allow dashboard users to override specific values without changing code. You can define a `controlSchema` using Zod or plain JSON Schema:
+
+```typescript
+import { step } from '@novu/framework/step-resolver';
+import { z } from 'zod';
+
+export default step.sms(
+  'send-sms',
+  async (controls, { subscriber }) => ({
+    body: `${controls.greeting} ${subscriber.firstName ?? 'there'}, ${controls.message}`,
+  }),
+  {
+    controlSchema: z.object({
+      greeting: z.string().default('Hello'),
+      message: z.string().default('You have a new notification.'),
+    }),
+  }
+);
+```
+
+After publishing, the dashboard renders form fields for each control property.
+
+### Controls vs Payload
+
+| Property | Controls | Payload |
+| --- | --- | --- |
+| Set by | Dashboard users (with code-defined defaults) | Your application at trigger time |
+| Purpose | Content overrides (subject lines, toggles, copy) | Dynamic data (username, order ID, etc.) |
+| Defined via | `controlSchema` in the step handler | `payloadSchema` (types only) |
+
+## Skipping a Step Conditionally
+
+Use `skip` to prevent a step from executing at runtime based on your logic. The function receives `(controls, ctx)` where `ctx` contains `payload`, `subscriber`, `context`, and `steps`.
+
+```typescript
+export default step.sms(
+  'send-sms',
+  async (controls, { payload }) => ({
+    body: `You have a new message: ${payload.text}`,
+  }),
+  {
+    skip: (controls, { payload }) => payload.optedOutOfSms === true,
+  }
+);
+```
+
+<Note>
+  `skip` is not called during preview. You will always see the step output in the dashboard preview regardless of the skip condition.
+</Note>
+
+## Provider Overrides
+
+Provider overrides let you customize the raw request sent to the underlying notification provider for a step. This is useful for setting provider-specific options not exposed by Novu standard output schema.
+
+```typescript
+import { step } from '@novu/framework/step-resolver';
+
+export default step.email(
+  'welcome-email',
+  async (controls, { payload }) => ({
+    subject: 'Welcome!',
+    body: `<p>Hello ${payload.name}</p>`,
+  }),
+  {
+    providers: {
+      sendgrid: ({ outputs }, ctx) => ({
+        _passthrough: {
+          body: {
+            categories: ['onboarding'],
+            asm: { group_id: 12345 },
+          },
+        },
+      }),
+    },
+  }
+);
+```
+
+The `_passthrough` field merges directly into the API body sent to the provider. You can also set `headers` and `query` for header and query string overrides.
+
+## Disabling Output Sanitization
+
+Novu sanitizes HTML in `email` and `in_app` outputs by default to prevent XSS vulnerabilities. To opt out, you can set `disableOutputSanitization`:
+
+```typescript
+export default step.email(
+  'raw-html-email',
+  async (controls, { payload }) => ({
+    subject: 'Your report',
+    body: payload.htmlContent,
+  }),
+  {
+    disableOutputSanitization: true,
+  }
+);
+```
+
+## Configuration File (Optional)
+
+You can create a `novu.config.ts` file for advanced use cases:
+
+```typescript
+// novu.config.ts
+const config = {
+  outDir: './novu',
+  apiUrl: 'https://api.novu.co',
+  aliases: {
+    '@emails': './src/emails',
+  },
+};
+
+export default config;
+```
+
+## TypeScript Support
+
+You can install `@novu/framework` as a dev dependency to get full TypeScript types for `controls`, `payload`, `subscriber`, `context`, and `steps`:
+
+```bash
+npm install --save-dev @novu/framework
+```
+
+<Note>
+  The CLI publishes to non production environments only. Publishing directly to Production is blocked. To promote changes to Production, use the **Publish changes** button in the Novu dashboard.
+</Note>
+
+## Troubleshooting
+
+| Problem | Solution |
+| --- | --- |
+| "Publishing to Production is not allowed" | Use your Development environment's secret key. Promote to Production via the dashboard. |
+| "Template file not found" | Check the `--template` path is correct relative to your current directory. |
+| "Workflow not found" / "Step not found" | Create the workflow and step in the Novu dashboard before publishing. |
+| Authentication failed (401) | Verify your secret key is correct. |
+| Bundle too large (>10 MB) | Reduce dependencies or publish specific workflows with `--workflow`. |
+| No step files found | Run with `--workflow=<id> --step=<id>` to scaffold, or create the file manually. |
+| Preview not updating in dashboard | Republish your handler. The dashboard polls every 3 seconds. |
+| Controls not appearing in dashboard | Export a `controlSchema` in your step handler and republish. |
+| `--step requires --workflow` | The `--step` flag must always be paired with `--workflow`. |
+| Provider output rejected (`INVALID_PROVIDER_OUTPUT`) | Check that your `providers` function returns values matching the provider schema. |
+| `skip` not working in preview | By design, `skip` is only evaluated at send time, not during dashboard preview. |

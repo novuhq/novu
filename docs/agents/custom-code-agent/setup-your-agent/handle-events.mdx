@@ -1,0 +1,166 @@
+---
+title: "Handlers and context"
+description: 'Event handlers and the context object your agent code receives on every turn.'
+icon: "mouse-pointer-click"
+---
+
+
+Novu gives your handler the same building blocks whether the message came from Slack, email, or another provider, and whether you call an LLM or plain TypeScript.
+
+## Event handlers
+
+Event handlers are functions that respond to events in a conversation. Your agent can respond to four event types:
+
+| Handler | When it runs | Common use case |
+| --- | --- | --- |
+| `onMessage` | A user sends a message in the conversation | Process the message and reply |
+| `onAction` | A user clicks a button or selects a value in an interactive card | Handle form submissions, button clicks, dropdown selections |
+| `onReaction` | A user adds or removes a reaction | Capture feedback or trigger a follow-up |
+| `onResolve` | The conversation is marked as resolved | Clean up state, log analytics, or send a summary |
+
+Handlers are where the communication layer connects to your application logic. For example, an `onMessage` handler receives the user's message, passes conversation context to an LLM or custom function, and sends the response back through Novu.
+
+## Context object
+
+Each event handler receives a context object with the information needed to understand the current event and respond. Depending on the event type, it can include:
+
+- The incoming message
+- The current conversation state and metadata
+- The resolved subscriber (when available)
+- Recent conversation history
+- Provider information
+- Platform-specific details, such as thread or channel identifiers
+- Methods for replying, updating metadata, triggering workflows, or resolving the conversation
+
+The context object is how your code talks to Novu. You do not call Slack, Teams, or email APIs directly in the handler.
+
+## Event handling flow
+
+When a user messages your agent:
+
+1. A user sends a message from a connected provider (for example, Slack).
+2. Novu receives the event through the provider connection.
+3. Novu maps the provider thread to a conversation and resolves the platform user to a subscriber, when possible.
+4. Novu calls the agent's `onMessage` handler with the context object.
+5. Your handler passes the message and conversation context to your agent logic.
+6. Your agent logic decides what should happen next.
+7. Your handler sends a reply, emits signals, or both.
+8. Novu delivers the reply back to the provider thread.
+9. Novu records messages, participants, metadata, signals, and conversation status.
+
+The same agent logic works across all connected providers because Novu handles the provider-specific communication layer. Connecting a new provider does not require changing your agent code.
+
+### onMessage
+
+`onMessage` fires every time a user sends a message in a conversation with your agent.
+
+```typescript
+/** @jsxImportSource @novu/framework */
+import { agent } from '@novu/framework';
+
+export const myAgent = agent('my-agent', {
+  onMessage: async ({ message, ctx }) => {
+    const userMessage = message.text ?? '';
+    const conversationHistory = ctx.history;
+    const subscriber = ctx.subscriber;
+
+    const response = await yourLLM.chat(userMessage, conversationHistory);
+
+    ctx.metadata.set('lastIntent', response.intent);
+    await ctx.reply(response.text);
+  },
+});
+```
+
+#### Handling attachments
+
+Inbound messages can include file attachments when the platform supports them. Novu normalizes files into `message.attachments` with short-lived signed URLs. Keep in mind:
+
+- Download attachment URLs promptly inside your handler.
+- Signed links are valid for 15 minutes.
+- Inbound attachments are limited to 25 MB per file.
+
+```typescript
+import { agent } from '@novu/framework';
+
+export const myAgent = agent('my-agent', {
+  onMessage: async ({ message, ctx }) => {
+    const attachments = message.attachments ?? [];
+
+    for (const file of attachments) {
+      // file.type: 'image', 'document', 'audio', 'video'
+      // file.url: short-lived download URL
+      // file.name: original filename
+      // file.mimeType: e.g. 'image/jpeg'
+      // file.size: size in bytes
+    }
+  },
+});
+```
+
+### onAction
+
+`onAction` fires when a user clicks a button or selects a value in an interactive card. See [Interactive cards](/agents/custom-code-agent/setup-your-agent/reply#interactive-cards).
+
+```typescript
+import { agent } from '@novu/framework';
+
+export const myAgent = agent('my-agent', {
+  onAction: async ({ actionId, value, ctx }) => {
+    if (actionId === 'approve' && value === 'true') {
+      await ctx.reply('Request approved!');
+      ctx.trigger('approval-workflow', {
+        to: ctx.subscriber?.subscriberId,
+        payload: { approved: true },
+      });
+    }
+  },
+});
+```
+
+### onReaction
+
+`onReaction` fires when a user adds or removes an emoji reaction on a message.
+
+```typescript
+import { agent } from '@novu/framework';
+
+export const myAgent = agent('my-agent', {
+  onReaction: async ({ emoji, added, message, ctx }) => {
+    if (emoji.name === 'thumbs_up' && added) {
+      ctx.metadata.set('userSatisfied', true);
+    } else if (emoji.name === 'thumbs_down' && added) {
+      ctx.metadata.set('userUnsatisfied', true);
+    }
+    await ctx.reply('Thank you for your feedback!');
+  },
+});
+```
+
+### onResolve
+
+`onResolve` fires when the conversation is marked as resolved via `ctx.resolve()` or the resolve signal.
+
+```typescript
+import { agent } from '@novu/framework';
+
+export const myAgent = agent('my-agent', {
+  onResolve: async (ctx) => {
+    ctx.metadata.set('resolvedAt', new Date().toISOString());
+  },
+});
+```
+
+## Related
+
+<Columns cols={2}>
+  <Card icon="reply" href="/agents/custom-code-agent/setup-your-agent/reply" title="Reply">
+    Send plain text, markdown, attachments, and interactive cards.
+  </Card>
+  <Card icon="pencil" href="/agents/custom-code-agent/setup-your-agent/edit-sent-messages" title="Edit sent messages">
+    Update a message in place after sending it with `ReplyHandle`.
+  </Card>
+  <Card icon="brain" href="/agents/custom-code-agent/connect-your-first-agent" title="Connect your first agent">
+    Walk through a full support-bot handler file.
+  </Card>
+</Columns>

@@ -1,0 +1,177 @@
+---
+title: "Subscription"
+description: "Learn how to use the useSubscriptions, useCreateSubscription, and other hooks to manage subscriptions in Novu."
+---
+
+
+The `@novu/react` package provides a set of Subscription hooks for managing topic subscriptions without using the prebuilt Subscription components. 
+
+These hooks let you build fully custom experiences by working directly with the subscription data model.
+
+<Note>
+  If you prefer to use the default Subscription components, refer to the [Subscription components documentation](/platform/subscription/quickstart).
+</Note>
+
+## `useSubscriptions`
+
+Fetches all subscriptions associated with a specific topic for the current subscriber.
+
+### Hook parameters
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `topicKey` | `string` | The unique key of the topic to fetch subscriptions for. |
+| `onSuccess` | `(data: TopicSubscription[]) => void` | Callback function called when subscriptions are successfully fetched |
+| `onError` | `(error: NovuError) => void` | Callback function called when an error occurs |
+
+### Return value
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `subscriptions` | `TopicSubscription[]` | Array of subscription objects for the topic (default: `[]`) |
+| `error` | `NovuError | undefined` | Error object if the request failed |
+| `isLoading` | `boolean` | True during the initial load |
+| `isFetching` | `boolean` | True while any request is in flight (initial load or refetch) |
+| `refetch` | `() => Promise<void>` | Function to manually trigger a refetch of the list |
+
+### Example usage
+
+This example fetches all subscriptions for a given topic and exposes them for rendering once loading completes.
+
+```tsx
+import { useSubscriptions } from "@novu/react";
+
+const { subscriptions, isLoading } = useSubscriptions({
+  topicKey: "project-123",
+});
+```
+
+## `useSubscription`
+
+Fetches a specific subscription instance.
+
+### Hook parameters
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `topicKey` | `string` | The unique key of the topic. |
+| `identifier` | `string` | The unique identifier of the specific subscription instance. |
+| `onSuccess` | `(data: TopicSubscription | null) => void` | Callback function called when the subscription is fetched |
+| `onError` | `(error: NovuError) => void` | Callback function called when an error occurs |
+
+### Return value
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `subscription` | `TopicSubscription | null` | The specific subscription object |
+| `error` | `NovuError | undefined` | Error object if the request failed |
+| `isLoading` | `boolean` | True during the initial load |
+| `refetch` | `() => Promise<void>` | Function to manually trigger a refetch |
+
+### Example usage
+
+This example shows how to retrieve a specific subscription by its identifier to access its preferences.
+
+```tsx
+import { useSubscription } from "@novu/react";
+
+const { subscription, isLoading } = useSubscription({
+  topicKey: "project-123",
+  identifier: "user-preference-1",
+});
+```
+
+## `useCreateSubscription`
+
+Creates a new subscription to a topic for the current subscriber.
+
+### Return value
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `create` |  |  |
+| `isCreating` | `boolean` | True while the create request is in progress |
+| `error` | `NovuError | undefined` | Error object if the last create request failed |
+
+### Example usage
+
+This example demonstrates how to trigger the creation of a new subscription for a topic.
+
+```tsx
+import { useCreateSubscription } from "@novu/react";
+
+const { create, isCreating } = useCreateSubscription();
+
+await create({
+  topicKey: "project-123",
+  identifier: "project-updates",
+});
+```
+
+## `useUpdateSubscription`
+
+Updates an existing subscription's properties or preferences list.
+
+### Return value
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `update` |  |  |
+| `isUpdating` | `boolean` | True while the update request is in progress |
+| `error` | `NovuError | undefined` | Error object if the last update request failed |
+
+### Example usage
+
+This example shows how to update the preferences of an existing subscription, such as toggling a specific workflow.
+
+```tsx
+import { useUpdateSubscription } from "@novu/react";
+
+const { update, isUpdating } = useUpdateSubscription();
+
+const handleToggle = async () => {
+  await update({
+    topicKey: "project-123",
+    subscriptionId: "sub-id-123",
+    preferences: [{ workflowId: "workflow-one", enabled: false }]
+  });
+};
+```
+
+## `useRemoveSubscription`
+
+Unsubscribes the current user from a topic by removing the subscription instance.
+
+### Return value
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `remove` |  |  |
+| `isRemoving` | `boolean` | True while the delete request is in progress |
+| `error` | `NovuError | undefined` | Error object if the last remove request failed |
+
+### Example usage
+
+This example renders an unsubscribe button that removes the subscription when clicked.
+
+```tsx
+import { useRemoveSubscription } from "@novu/react";
+
+function UnsubscribeButton({ subscriptionId }) {
+  const { remove, isRemoving } = useRemoveSubscription();
+
+  return (
+    <button
+      onClick={() =>
+        remove({
+          subscriptionId,
+          topicKey: "project-123",
+        })
+      }
+      disabled={isRemoving}
+    >
+      {isRemoving ? "Removing..." : "Unsubscribe"}
+    </button>
+  );
+}
+```

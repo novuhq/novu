@@ -1,0 +1,230 @@
+---
+title: "Migrate from Courier to Novu"
+description: "Learn how to migrate your notification infrastructure from Courier to Novu"
+---
+
+
+This guide helps you plan and execute a migration from Courier to Novu. It covers how the two platforms compare, what changes when moving to Novu, and a step-by-step approach for migrating your notification workflows, templates, providers, and user data.
+
+## Why Novu?
+
+- **Unified Workflows:** Courier separates "Templates" (content) and "Automations" (logic). Novu unifies routing, timing (delays/digests), and content into a single **Workflow**, making it much easier to manage the entire lifecycle of a message.
+- **Choose How You Build:**
+  - **Visual Builder:** A powerful drag-and-drop dashboard for teams that want a no-code UI to design content and orchestration.
+  - **Novu Framework:** An optional code-first approach that lets developers write workflows in TypeScript, version-control them, and test them locally.
+- **Unrivaled React Ecosystem:** Novu's in-app Inbox comes with pre-built React components for a drop-in experience, plus powerful headless hooks if you want to build a completely bespoke UI.
+- **Data Sovereignty:** Because Novu is open-source, you can use our fully managed Cloud platform or self-host it on your own infrastructure to meet strict compliance requirements.
+- **Translations:** Novu supports translations for your notifications, making it easier to localize your notifications for your users. Use translation keys in channel step editor to localize your notifications and Novu will send the notifications in the subscriber's locale. Read more on how to [use translations](/platform/workflow/advanced-features/translations) in the Novu Dashboard.
+- **Multi-tenancy:** Send notifications to different tenants or organizations within the same Novu project and let users manage their notification preferences for each tenant. Read more on how to [use multitenancy](/platform/workflow/advanced-features/contexts) in the Novu Dashboard.
+
+## Mapping Courier concepts to Novu concepts
+
+Before you dive into the migration steps, here is a quick cheat sheet for translating your Courier setup into Novu's terminology.
+
+| Courier Concept | Novu Equivalent | How they compare |
+| --- | --- | --- |
+| **Automations + Templates** | **Workflows** | Novu combines your message content and delivery logic (like delays or digests) into a single, easy-to-manage Workflow. |
+| **Profiles / Users** | **Subscribers** | The core entity receiving the notification. Just like Courier, Novu allows you to pass user data inline, meaning you don't have to sync users beforehand. |
+| **Lists / Audiences** | **Topics** | Used for broadcasting. In Novu, you trigger a workflow to a Topic, and Novu automatically fans it out to all subscribed users. |
+| **Preferences** | **Preferences** | Novu categorizes user opt-in/opt-out states natively by Workflow or via global channel settings. End user can manage their preference for each workflow or globally. |
+| **Integrations** | **Integrations** | Both platforms connect to external providers (Twilio, SendGrid, etc.). Novu lets you define multiple active integrations for each channel provider and set a primary integration per environment. |
+| **Inbox** | **Inbox** | Novu's in-app Inbox comes with pre-built React components for a drop-in experience, plus powerful headless hooks, javascript and react native support if you want to build custom Inbox UI. |
+| **Tenants** | **Context** | Novu supports multitenancy out of the box, the most simple way to implement tenant separation sending context information while triggering a workflow. Novu will automatically filter the notifications for the tenant and the end user will see only the notifications relevant to their tenant. |
+
+## Migration steps
+
+We recommend a phased approach to migrate safely without dropping any messages.
+
+<Steps>
+  <Step title="Phase 1: Set up your workspace and providers">
+    1. **Create your workspace:** Sign up for [Novu Cloud](https://dashboard.novu.co/auth/signup). You'll automatically get isolated **Development** and **Production** environments.
+    2. **Connect your providers:** In the Novu Dashboard, navigate to the **Integrations Store**. Reconnect the ESPs (SendGrid, Postmark), SMS gateways (Twilio), and Push providers (FCM, APNS) you were using in Courier.
+  </Step>
+
+  <Step title="Phase 2: Migrate audience data">
+    You need to sync your Courier `Profiles` to Novu `Subscribers`. The easiest way to handle this is a **Lazy Migration**:
+
+    Instead of exporting and importing thousands of users manually, simply update your backend to pass the user's details (email, phone, name) inline when you trigger a notification. Novu will automatically create or update the Subscriber on the fly.
+
+    *If you prefer to sync ahead of time, you can easily script it:*
+
+    ```typescript
+
+    const novu = new Novu({ secretKey: 'YOUR_NOVU_API_KEY' });
+
+    // Translating a Courier profile to a Novu subscriber
+    await novu.subscribers.create({
+      subscriberId: 'usr_123', // Your internal user ID
+      email: 'alex@example.com',
+      phone: '+15551234567',
+      data: {
+        subscriptionTier: 'premium' // Custom data
+      }
+    });
+    ```
+
+    You can also use the [Bulk Import API](/api-reference/subscribers/bulk-create-subscribers) to import your subscribers in bulk.
+  </Step>
+
+  <Step title="Phase 3: Translate automations to workflows">
+    In Courier, you link Automations to Templates. In Novu, you recreate these as **Workflows**. You have two great options for building them:
+
+    **Option A: The Dashboard Visual Builder**
+    If your product or marketing team loves managing notifications visually, they will feel right at home in the Novu Dashboard. You can drag and drop Email, SMS, and In-App steps, add Delays and Digests, and edit message content directly in the browser. Read more on how to [manage workflows](/platform/workflow/overview) in the Novu Dashboard.
+
+    **Option B: Code-First with Novu Framework**
+    If your engineering team wants more control, you can use `@novu/framework` to define the same workflows directly in your codebase using TypeScript. 
+
+    *A simple code-first example:*
+
+    ```typescript
+
+    export const weeklyDigestWorkflow = workflow('weekly-digest', async ({ step }) => {
+      // Replaces Courier's digest node
+      const digestResult = await step.digest('batch-events', () => ({ amount: 7, unit: 'days' }));
+
+      // Replaces Courier's send node + template
+      await step.email('send-summary', async (controls) => {
+        return {
+          subject: `Your Weekly Activity Summary`,
+          body: `You have ${digestResult.events.length} new updates this week.`,
+        };
+      });
+    });
+   
+    ```
+  </Step>
+
+  <Step title="Phase 4: Swap out the in-app Inbox">
+    If your app uses Courier's Inbox component, swapping it for Novu's is incredibly simple. Novu's Inbox provides out-of-the-box real-time updates and unread counts.
+
+    ```bash
+    npm install @novu/react
+    ```
+
+    ```tsx
+
+    export default function NotificationCenter() {
+      return (
+        <Inbox
+          applicationIdentifier="YOUR_NOVU_APP_ID"
+          subscriberId="usr_123"
+          // We recommend using HMAC encryption in production for security
+          subscriberHash="HMAC_HASH_GENERATED_ON_BACKEND" 
+        />
+      );
+    }
+    ```
+  </Step>
+
+  <Step title="Phase 5: Update API calls">
+    With your workflows ready and integrations connected, it's time to replace your `courier.send()` API calls with Novu `trigger` calls.
+
+    <Tabs>
+      <Tab title="Node.js">
+      ```javascript
+
+      const novu = new Novu({ secretKey: 'YOUR_SECRET_KEY' });
+
+      // Replaces courier.send()
+      await novu.trigger({
+        workflowId: 'weekly-digest',
+        to: { 
+          subscriberId: 'usr_123',
+          // Pass details inline for easy lazy migration
+          email: 'alex@example.com' 
+        },
+        payload: {
+          activityType: 'login'
+        }
+      });
+      ```
+      </Tab>
+      <Tab title="Python">
+      ```python
+      import novu_py
+      from novu_py import Novu
+      import os
+       
+      with Novu(
+      secret_key=os.getenv("NOVU_SECRET_KEY", ""),
+      ) as novu:
+       
+          res = novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+              workflow_id="workflow_identifier",
+              to={
+                  "subscriber_id": "subscriber_unique_identifier",
+                  "first_name": "Albert",
+                  "last_name": "Einstein",
+                  "email": "albert@einstein.com",
+              },
+              payload={
+                  "comment_id": "string",
+                  "post": {
+                      "text": "string",
+                  },
+              },
+              overrides={
+                "email": {
+                  "bcc": "no-reply@novu.co"
+                }
+              },
+          ))
+       
+          # Handle response
+          print(res)
+      ```
+      </Tab>
+      <Tab title="cURL">
+      ```bash
+      curl -X POST https://api.novu.co/v1/events/trigger \
+        -H "Authorization: ApiKey YOUR_API_KEY" \
+        -H "Content-Type: application/json" \
+        -d '{
+          "name": "weekly-digest",
+          "to": { "subscriberId": "usr_123" },
+          "payload": {
+            "activityType": "login"
+          }
+        }'
+      ```
+      </Tab>
+    </Tabs>
+
+    **Final Validation:** Send test events using your Novu Development API key. Monitor the **Execution Logs** in the Dashboard to verify everything works flawlessly. Once you're confident, switch to your Production API key and you're fully migrated!
+  </Step>
+</Steps>
+
+## API endpoint quick reference
+
+Need to update your backend API requests? Use this mapping to find the Novu equivalent of your Courier endpoints.
+
+| Action | Courier Endpoint | Novu Equivalent |
+| --- | --- | --- |
+| **Trigger a Message** | `POST /send` | [`POST /v1/events/trigger`](/api-reference/events/trigger-event) |
+| **Send to Many** | `POST /bulk` | [`POST /v1/events/trigger/bulk`](/api-reference/events/bulk-trigger-event) |
+| **Update User** | `PUT /profiles/:id` | [`PUT /v2/subscribers/:subscriberId`](/api-reference/subscribers/update-a-subscriber) |
+| **Fetch User Data** | `GET /profiles/:id` | [`GET /v2/subscribers/:subscriberId`](/api-reference/subscribers/retrieve-a-subscriber) |
+| **Modify Opt-Ins** | `PUT /users/:id/preferences/:topic` | [`PATCH /v2/subscribers/:subscriberId/preferences`](/api-reference/subscribers/update-subscriber-preferences) |
+| **Manage Lists/Groups** | `PUT /lists/:id` | [`POST /v2/topics`](/api-reference/topics/create-a-topic) |
+| **View Logs** | `GET /messages` | [`GET /v1/notifications`](/api-reference/notifications/list-all-events) |
+
+## Next steps
+
+<Columns cols={2}>
+  <Card title="Quickstart Guide"  href="/platform/quickstart/react">
+    Get up and running with Novu in under 5 minutes.
+  </Card> 
+
+  <Card title="Inbox Integration"  href="/platform/inbox">
+    Add a real-time notification center to your application.
+  </Card>
+
+  <Card title="Explore Novu Framework" href="/framework">
+    Learn more about the code-first approach to building workflows.
+  </Card>
+
+  <Card title="API Reference" href="/api-reference">
+    Explore Novu's REST endpoints and SDKs.
+  </Card>
+</Columns>

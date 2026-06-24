@@ -1,0 +1,65 @@
+---
+title: 'Trigger'
+description: 'Managing Trigger Events from Request to Processing'
+icon: "play"
+---
+
+## Trigger Request
+
+A trigger request is the initial step in handling a trigger event. It contains crucial details such as the template identifier, a list of subscribers who will receive the notification, the payload of the notification, and any overrides that need to be applied.
+
+## Trigger Endpoint
+
+Upon sending the request to the [event/trigger](/api-reference/events/trigger-event) endpoint, a series of essential steps are initiated:
+
+1. **Subscriber Mapping and Validation:** The first step involves mapping and validating the subscribers for the specified event. This ensures that notifications are sent to the correct recipients.
+
+2. **Workflow Validation:** Following subscriber validation, the workflow associated with the event is validated. This validation process considers factors such as the active status to determine if it meets the necessary criteria for processing.
+
+3. **Attachment Upload:** Once the validation process is successfully completed, any attachments associated with the event are uploaded to the designated storage service.
+
+4. **Event Queuing:** The trigger event, now enriched with mapped subscribers and attachment links, is appended to the **trigger event queue**. This queuing mechanism optimizes response times, ensuring efficient event processing.
+
+## Trigger Event Processing
+
+When an event is picked up by the **trigger queue worker**, the processing phase begins. Here's what happens:
+
+- **Subscriber Upsert:** The worker validates the subscribers associated with the event and either creates or updates the subscriber with the information passed in the `to` object.
+- **Notification Entity Creation:** For each subscriber listed in the trigger event, a corresponding notification entity is created. This entity contains essential data related to the organization, template, subscriber, and event payload.
+- **Job Creation:** Based on the notification template's defined steps, jobs are generated. These jobs are responsible for carrying out specific tasks related to the event notification. Additionally, the notification entity is updated with a "channels" field generated from these steps, indicating the communication channels through which notifications will be sent.
+
+## Jobs
+
+Jobs play a crucial role in the trigger event lifecycle. They are created based on the steps outlined in the workflow.
+
+### Job Statuses
+
+| Status        | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **PENDING**   | This status is assigned to a job before it is added to the worker queue. It indicates that the job is waiting to be processed.                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| **QUEUED**    | After the initial validation and just before adding a job to the worker queue, it is set to `QUEUED`. This status signifies that the job is ready for processing but is awaiting its turn in the queue.                                                                                                                                                                                                                                                                                                                                              |
+| **RUNNING**   | When a job is picked up by a worker from the queue, its status is changed to `RUNNING`. This indicates that the job is currently being processed by a worker.                                                                                                                                                                                                                                                                                                                                                                                        |
+| **COMPLETED** | Once a job has been successfully executed and processed, its status is changed to `COMPLETED`. This signifies that the job has been successfully completed.                                                                                                                                                                                                                                                                                                                                                                                          |
+| **FAILED**    | If a job encounters an issue during processing or execution, its status is changed to `FAILED`. This indicates that the job has not been successfully completed, and there may have been errors or problems during processing.                                                                                                                                                                                                                                                                                                                       |
+| **DELAYED**   | The `DELAYED` status is applied to specific types of jobs, such as `digest` or `delay` jobs, to indicate that they are delayed and not immediately processed. For `digest` jobs, it means that the digesting process is running or scheduled for a later time. For `delay` jobs, it signifies that the job is set to be executed at a specified delay time.                                                                                                                                                                                          |
+| **CANCELED**  | When a job is canceled for any reason, its status is set to `CANCELED`. This indicates that the job will not be processed further and is effectively removed from the processing queue.                                                                                                                                                                                                                                                                                                                                                              |
+| **MERGED**    | The `MERGED` status is assigned to events that are part of a `digest`. It indicates that an event will be merged into the digesting event. In a digesting process, there is typically a primary or initial event that serves as the digesting event, and subsequent events are merged into it. Instead of having a separate `COMPLETED` status for these merged events, they are marked as `MERGED` to indicate their specific role in the digesting process.                                                                                        |
+| **SKIPPED**   | The `SKIPPED` status is used in the context of backoff versions of digesting. In this scenario, the first event's digesting is skipped, and the second event takes on the digesting role. The `SKIPPED` status is applied to the first event's digesting, indicating that it was intentionally skipped in the digesting process. Subsequent events may be merged into the second event's digesting process, as explained with the `MERGED` status. The `SKIPPED` status helps differentiate the skipped event from others in the digesting sequence. |
+
+## Frequently asked questions
+
+### What is an event?
+
+An event is a request (for instance, an API call to [/v1/events/trigger](/api-reference/events/trigger-event)) that starts off an action in the Novu Workflow Engine. Events can make many different types of actions, including digests, delays, and sending notifications to various channels, as well as filters and user preference checks.
+
+### How events are billed?
+
+If a workflow is triggered to a [subscriber](/platform/concepts/subscribers), then it is billed as 1 event. So if workflow is triggered to group of 15 subscribers, then it is billed as 15 events. Similary, if a workflow is triggered to a [topic](/platform/concepts/topics), Novu creates one event per topic subscriber, this means that a workflow trigger to a topic with 100 subscribers creates 100 events.
+
+### If notifications were filtered out, are they still billed?
+
+Yes, they are still billed. The number of billed events is the number of subscribers or topic subscribers the workflow was triggered to, regardless of whether notifications were filtered out as per subscriber's [workflow channel preferences](/platform/concepts/preferences#workflow-channel-preferences), [global channel preferences](/platform/concepts/preferences#subscriber-global-preferences) or [step conditions](/platform/workflow/add-and-configure-steps/step-conditions).
+
+### How events are billed for digested events?
+
+As a workflow triggered to one subscriber is billed as 1 event. if events are digested 15 times and a single digested notification is sent, then 15 events will be billed.

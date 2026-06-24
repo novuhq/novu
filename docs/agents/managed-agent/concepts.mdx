@@ -1,0 +1,183 @@
+---
+title: "Concepts"
+description: 'Connectors, MCP servers, skills, system prompts, and conversation flow for managed agents.'
+icon: "brain"
+---
+
+
+This page covers the building blocks of a managed agent and how they fit together.
+
+## Connector
+
+A connector links your Novu agent to an AI platform. The platform receives each user message, reasons about it, uses built-in tools and any enabled MCP servers if needed, and returns a response that Novu delivers to the chat provider.
+
+### Supported connectors
+
+| Connector | Status |
+| --- | --- |
+| Claude (Anthropic) | Available |
+| OpenAI | Coming soon |
+| AWS Bedrock | Coming soon |
+
+### Credentials
+
+Each connector needs platform credentials. For Claude, you provide:
+
+- **API Key**: from the [Anthropic console](https://console.anthropic.com/settings/keys).
+- **Workspace ID**: from the [Anthropic console](https://console.anthropic.com/settings/workspaces).
+
+If you want to try things out first, you can use the Novu demo credentials. They give you a limited number of free conversations without an Anthropic account.
+
+## System prompt
+
+The system prompt is a set of instructions that define the agent's behavior. It runs at the start of every conversation turn and shapes how the model responds.
+
+A useful system prompt typically includes:
+
+- **Role**: who the agent is ("You are a support agent for Acme Corp").
+- **Tone**: how it should sound ("Keep responses short and friendly").
+- **Scope**: what topics it handles and what it should avoid.
+- **Fallback behavior**: what to do when the agent does not know the answer ("Offer to connect the user with a human").
+
+You set the system prompt in the dashboard when creating the agent, and you can update it at any time from the agent settings page.
+
+### Creating an agent
+
+You can create a managed agent in two ways:
+
+- **Create from prompt**: describe what you want the agent to do in plain text, and Novu generates a system prompt for you. You can also pick from preset templates (Customer Support, Marketing, Sales, etc.) as a starting point.
+- **Create manually**: write the system prompt yourself from scratch.
+
+### Prompt templates
+
+Novu provides starter templates for common use cases like customer support, internal ops, and onboarding. Templates give you a working prompt you can customize.
+
+## Built-in tools
+
+Every managed agent has access to system tools provided by the AI platform. These are always available without any setup:
+
+| Tool | What it does |
+| --- | --- |
+| **Bash** | Execute shell commands in a sandboxed environment |
+| **Read** | Read files from the filesystem, including text, images, PDFs, and notebooks |
+| **Write** | Create or overwrite files on the filesystem |
+| **Edit** | Perform find-and-replace edits inside a file |
+| **Glob** | Find files by name using pattern matching |
+| **Grep** | Search file contents using regex patterns |
+| **Web search** | Search the internet for current information |
+| **Web fetch** | Fetch and read content from a URL |
+
+The platform decides when to call these tools based on the user's message and the system prompt. For example, if a user asks "What is the latest pricing for AWS Lambda?", the agent will use web search to find the answer. If the user asks "Find all config files in the project", the agent will use glob and grep.
+
+All built-in tools are enabled by default when you create a managed agent. MCP servers and custom skills are not enabled by default and need to be added separately.
+
+## MCP servers
+
+On top of the built-in tools, MCP (Model Context Protocol) servers give the agent access to external services and data sources you choose. When you enable an MCP server, the AI platform gains access to its capabilities.
+
+### How it works
+
+1. You enable an MCP server from the agent settings page in the dashboard.
+2. Novu syncs the configuration to the connector (Claude, AWS Bedrock, etc.).
+3. During a conversation, the connector platform decides when to call a tool based on the user's message and the system prompt.
+4. The tool result is included in the agent's reasoning before it responds.
+
+The connector platform decides when and whether to use a tool. You do not need to write code to trigger tool calls.
+
+### Available MCP servers
+
+Common MCP servers include:
+
+- **Linear**: look up issues, create tickets, search projects.
+- **GitHub**: search repositories, read files, list pull requests.
+- **Slack**: search workspace messages and channels.
+- **Notion**: look up pages and database entries.
+
+The list of available servers is shown on the agent settings page in the dashboard.
+
+### Authentication
+
+Some MCP servers require OAuth authorization from the end user. When a subscriber first interacts with the agent through a tool that needs authorization, they receive a prompt to connect their account.
+
+Novu manages the OAuth flow:
+
+1. The agent sends an authorization link to the user in the chat thread.
+2. The user clicks the link and authorizes access on the external service.
+3. Novu stores the tokens securely and passes them to the platform on each subsequent turn.
+
+Authorization is per subscriber, per MCP server. Once a user authorizes, the connection persists across conversations until they revoke it.
+
+### Limits
+
+You can enable up to **64 MCP servers** per agent.
+
+## Custom skills
+
+Skills are instruction files that teach the agent how to handle specific tasks. They are useful when the system prompt alone is not detailed enough for a multi-step workflow.
+
+A skill is a SKILL.md file with structured instructions. It might describe how to triage a support ticket, how to generate a report from a data source, or how to walk a user through an onboarding flow.
+
+### Adding skills
+
+You can add skills from the agent settings page in two ways:
+
+- **GitHub URL**: paste a public repository URL. Novu downloads the files and uploads them to the AI platform.
+- **Inline content**: paste the SKILL.md text directly in the dashboard.
+
+The platform assigns each skill a stable ID. If you upload a skill with the same title again, it creates a new version automatically.
+
+## Conversation flow
+
+Managed agents follow this conversation lifecycle:
+
+| State | What it means |
+| --- | --- |
+| **Active** | The conversation is open. New messages are processed by the agent. |
+| **Resolved** | The conversation has been closed. The underlying platform session is archived. |
+| **Reopened** | A new user message after resolution starts a fresh platform session and reopens the conversation automatically. |
+
+### What happens on each turn
+
+1. The user sends a message on a connected provider.
+2. Novu normalizes the event, resolves the subscriber, and loads conversation history.
+3. The message and history are forwarded to the AI platform.
+4. The platform runs the model, uses built-in tools (bash, grep, web search, etc.) or MCP servers as needed, and returns a response.
+5. Novu delivers the response to the provider thread and records everything in the activity feed.
+
+### Plan cards and tool use
+
+When the agent calls a tool during a conversation, Novu shows a **plan card** in the chat thread. The plan card displays which tool the agent is about to use and its current status (thinking, running, complete). This gives users visibility into what the agent is doing before the final response appears.
+
+For MCP tools that need user authorization, the plan card pauses and shows an authorization prompt. After the user authorizes, the agent continues from where it left off.
+
+### Streaming
+
+Responses stream progressively rather than arriving all at once. The platform handles streaming automatically.
+
+## Providers
+
+Managed agents support these chat providers:
+
+| Provider | Status |
+| --- | --- |
+| Slack | Available |
+| Microsoft Teams | Available |
+| WhatsApp | Available |
+| Email | Available |
+| Telegram | Available |
+
+Provider setup is done from the agent settings page in the dashboard. Each provider has its own connection flow (app creation, OAuth, etc.).
+
+## Next steps
+
+<Columns cols={2}>
+  <Card icon="zap" href="/agents/managed-agent/quickstart" title="Quickstart">
+    Create a managed agent with Claude and connect it to Slack.
+  </Card>
+  <Card icon="link" href="/agents/managed-agent/configure-mcp-servers" title="Configure MCP servers">
+    Enable external tools for your managed agent.
+  </Card>
+  <Card icon="wrench" href="/agents/managed-agent/add-skills" title="Add skills">
+    Upload custom skills to teach the agent new workflows.
+  </Card>
+</Columns>

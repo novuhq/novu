@@ -1,0 +1,479 @@
+---
+title: 'Inngest'
+description: 'This guide walks you through integrating Inngest with Novu notifications'
+---
+
+
+## Why Use Novu with Inngest?
+
+By combining these tools, you can:
+- **Trigger Smart Notifications**: Send notifications across multiple channels (email, SMS, push, in-app) based on complex event triggers
+- **Build Reliable Workflows**: Create robust notification pipelines with Inngest's state management and retry capabilities
+- **Scale Effortlessly**: Handle high-volume notification workloads with Inngest's queue management
+- **Maintain Observability**: Monitor your notification workflows in real-time through Inngest's dashboard
+
+## What You'll Learn
+
+This guide teaches you how to:
+- Configure Novu and Inngest in your project
+- Manage notification subscribers via Novu's API
+- Create event-driven notification workflows with Inngest
+- Use dynamic data to personalize your notifications
+
+<Note>
+  New to Inngest? We recommend starting with their [quickstart guide](https://www.inngest.com/docs/getting-started) before continuing.
+</Note>
+
+1. Install Novu's SDK in our project
+    
+    ```json
+    npm i @novu/api
+    ```
+
+2. Create a new task
+    <Note>
+      You can also add this trigger to an existing one or multiple tasks
+    </Note>
+
+    
+    Import Novu's SDK and provide the credentials to initialize the Novu instance.
+    
+    ```typescript
+
+    
+    const novu = new Novu({ 
+      secretKey: 'ApiKey ' + process.env['NOVU_SECRET_KEY']
+    });
+    ```
+    
+    For the sake of this guide, we will create a new dedicated functions for 2 common Novu actions:
+    
+    - Trigger Notification Workflow
+    - Add New Subscriber
+
+## Trigger Notification Workflow from an Inngest function
+
+You can trigger Novu notification workflows directly from your Ingest function. This allows you to send notifications based on events or completions within your background jobs.
+
+To trigger a Novu workflow, you'll use the Novu Node.js SDK within your Inngest's `createFunction` method.
+
+### Core Requirements
+
+When calling Novu's `trigger` method, you must provide the following information:
+
+1. `workflowId` **(string):** This identifies the specific notification workflow you want to execute.
+    - **Note:** Ensure this workflow ID corresponds to an existing, active workflow in your Novu dashboard.
+2. `to` **(object):** This object specifies the recipient of the notification. At a minimum, it requires:
+    - `subscriberId` **(string):** A unique identifier for the notification recipient within your system (e.g., a user ID).
+    
+    **Note:** If a subscriber with this `subscriberId` doesn't already exist in Novu, Novu will automatically create one when the workflow is triggered. You can also pass other identifiers like `email`, `phone`, etc., within the `to` object, depending on your workflow steps.
+    
+
+### Basic Trigger Example
+
+Here's a simple Inngest function that triggers a Novu workflow when the function is being invoked. It assumes the function invoke receives a `userId` and `email` in its payload.
+
+```tsx
+import { inngest } from "./client";
+import { Novu } from "@novu/api";
+
+const novu = new Novu({ 
+    secretKey: 'ApiKey ' + process.env['NOVU_SECRET_KEY']
+  });
+
+export const sendNotification = inngest.createFunction(
+  { id: "send-notification" },
+  { event: "test/hello.world" },
+  async ({ event, step }) => {
+    await step.run("send-welcome-email", async () => {
+        await novu.trigger({
+            workflowId: "welcome-email",
+            to: {
+                subscriberId: event.data.userId,
+                email: event.data.email,
+            },
+            payload: {},
+        });
+    });
+
+    return { message: `Welcome email sent to ${event.data.email}!` };
+  },
+);
+```
+
+### Adding Dynamic Content with `payload`
+
+Often, you'll want your notifications to include dynamic data related to the event that triggered them (e.g., a user's name, an order number, job details). 
+
+This is done using the `payload` property in the `novu.trigger` call.
+
+The `payload` is an object containing key-value pairs that you can reference within your Novu notification templates using Handlebars syntax (e.g., `{{ name }}`, `{{ order.id }}`).
+
+**Use Case Example:**
+
+Imagine you want to send an email confirming a background job's completion:
+
+- **Subject:** `Function {{ functionName }} Completed Successfully!`
+- **Body:** `Hi {{ userName }}, your function '{{ functionName }}' finished processing.`
+
+To achieve this, you would pass the `userName` and `functionName` in the `payload` object when triggering the workflow.
+
+### Trigger Example with Payload
+
+Let's modify the previous function to accept more data (like a user's `name`) in its own payload and pass relevant parts to the Novu `trigger` payload.
+
+```typescript
+import { inngest } from "./client";
+import { Novu } from "@novu/api";
+
+const novu = new Novu({ 
+  secretKey: 'ApiKey ' + process.env['NOVU_SECRET_KEY']
+});
+
+export const sendNotification = inngest.createFunction(  
+  { id: "send-notification" },
+  { event: "test/hello.world" },
+  async ({ event, step }) => {
+    await step.run("send-welcome-email", async () => {
+      try {
+        // Construct the payload specifically for Novu
+        const novuPayload = {
+          userName: event.data.userName,   // Map 'name' from task payload to 'userName' for the template
+          functionName: `Data Processing Function #${event.id}`, // Can include static text or transform data
+        };
+
+        await novu.trigger({
+          workflowId: "inbox-test", // Use the appropriate workflow ID
+          to: {
+            subscriberId: event.data.userId,
+            email: event.data.email,
+          },
+          payload: {
+            ...novuPayload,
+          },
+        });
+
+        console.log("Novu workflow triggered successfully with payload:", novuPayload);
+        return novuPayload;
+
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error triggering Novu';
+        console.error("Failed to trigger Novu workflow with payload:", errorMessage, error);
+        throw new Error(`Novu trigger failed: ${errorMessage}`);
+      }
+    });
+  },
+);
+```
+
+## Add a New Subscriber to Novu
+
+Before sending notifications, Novu needs to know *who* to notify. That's where subscribers come in. A **subscriber** in Novu represents a user (or entity) that can receive notifications through one or more channels (in-app, email, SMS, etc.).
+
+You can create a new subscriber programmatically from a Inngest's task using Novu's SDK.
+
+---
+
+### When Should You Create Subscribers?
+
+Create or update a subscriber in Novu when:
+
+- A new user signs up or is added to your system
+- A user becomes eligible to receive notifications
+- You want to ensure subscriber metadata (name, phone, etc.) is up-to-date
+
+<Note>
+  If you trigger a workflow with a `subscriberId` that doesn't exist, Novu will auto-create the subscriber. However, doing it explicitly ensures full control over subscriber data.
+</Note>
+
+### Create a Subscriber in a Task
+
+Below is a task that creates a Novu subscriber using a Inngest task. It also supports optional fields like `phone` and `avatar`.
+
+```typescript
+import { inngest } from "./client";
+import { Novu } from "@novu/api";
+
+const novu = new Novu({ 
+  secretKey: 'ApiKey ' + process.env['NOVU_SECRET_KEY']
+});
+
+export const createSubscriber = inngest.createFunction(  
+  { id: "create-subscriber" },
+  { event: "app/account.created" },
+  async ({ event, step }) => {
+    await step.run("create-subscriber", async () => {
+      try {
+        // Construct the payload specifically for Novu
+        const subscriberPayload = Object.fromEntries(
+          Object.entries({
+            subscriberId: event.data.userId,
+            email: event.data.email,
+            firstName: event.data.firstName,
+            lastName: event.data.lastName,
+            phone: event.data.phone,
+            avatar: event.data.avatar,
+            locale: event.data.locale,
+            data: event.data.userName ? { userName: event.data.userName } : undefined
+          }).filter(([, value]) => value !== undefined)
+        ) as {
+          subscriberId: string;
+          email?: string;
+          firstName?: string;
+          lastName?: string;
+          phone?: string;
+          avatar?: string;
+          locale?: string;
+          data?: { userName: string };
+        };
+
+        await novu.subscribers.create(subscriberPayload);
+
+        console.log("Novu subscriber created successfully with payload:", subscriberPayload);
+        return subscriberPayload;
+
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error creating Novu subscriber';
+        console.error("Failed to create Novu subscriber with payload:", errorMessage, error);
+        throw new Error(`Novu subscriber creation failed: ${errorMessage}`);
+      }
+    });
+  },
+);
+```
+
+---
+
+## Implementation Example
+
+This example assumes:
+
+1. You have an event named `video/uploaded` that is being sent to Inngest when a user uploads a video.
+2. This event's `data` payload includes at least `videoUrl`, `videoId`, `userId`, `email`, and `userName`.
+3. You have external services/functions mocked or implemented: `deepgram.transcribe`, `llm.createCompletion`, `createSummaryPrompt`, and `db.videoSummaries.upsert`.
+4. You have a Novu account, API Key (`NOVU_SECRET_KEY` environment variable), and a Novu workflow created with the ID `video-processed-notification`. 
+This workflow should expect variables like `userName`, `videoId`, and potentially `summarySnippet` in its payload.
+
+```typescript
+import { Inngest } from "inngest";
+import { Novu } from "@novu/api";
+
+// --- Mock/Placeholder External Services ---
+// Replace these with your actual implementations
+const deepgram = {
+  transcribe: async (url: string): Promise<string> => {
+    console.log(`Mock Transcribing: ${url}`);
+    await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate network delay
+    return `This is a mock transcript for the video at ${url}. It contains several sentences explaining the content.`;
+  }
+};
+
+const llm = {
+  createCompletion: async (params: { model: string; prompt: string }): Promise<string> => {
+    console.log(`Mock Summarizing with ${params.model}`);
+    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate LLM processing time
+    const transcriptSnippet = params.prompt.substring(params.prompt.indexOf(":") + 1, 70);
+    return `Mock summary of the transcript starting with: ${transcriptSnippet}...`;
+  }
+};
+
+const createSummaryPrompt = (transcript: string): string => {
+  return `Please summarize the following transcript:\n\n${transcript}`;
+};
+
+const db = {
+  videoSummaries: {
+    upsert: async (data: { videoId: string; transcript: string; summary: string }): Promise<void> => {
+      console.log(`Mock DB Upsert for videoId: ${data.videoId}`);
+      // In a real scenario, save data.transcript and data.summary linked to data.videoId
+      await new Promise(resolve => setTimeout(resolve, 500)); // Simulate DB write delay
+    }
+  }
+};
+// --- End Mock Services ---
+
+// --- Inngest Client Setup ---
+// Assumes you have your Inngest client initialized elsewhere (e.g., './inngest/client')
+// For this example, we'll initialize it here. Replace with your actual client setup.
+export const inngest = new Inngest({ id: "video-processing-app" });
+// --- End Inngest Client Setup ---
+
+// --- Novu Client Setup ---
+const novu = new Novu({ 
+  secretKey: 'ApiKey ' + process.env['NOVU_SECRET_KEY']
+});
+// --- End Novu Client Setup ---
+
+// --- Combined Inngest Function ---
+export const processVideoAndNotify = inngest.createFunction(
+  {
+    id: "process-video-and-notify",
+    name: "Process Uploaded Video and Notify User",
+    // Apply concurrency limits per user to avoid overwhelming resources
+    concurrency: {
+      limit: 3, // Allow up to 3 concurrent processing jobs per user
+      key: "event.data.userId"
+    }
+  },
+  { event: "video/uploaded" }, // Triggered when a video upload event occurs
+  async ({ event, step }) => {
+    const { videoUrl, videoId, userId, email, userName } = event.data;
+
+    // Validate required data from the event
+    if (!videoUrl || !videoId || !userId || !email || !userName) {
+        throw new Error(`Missing required data in 'video/uploaded' event payload for event ID: ${event.id}`);
+    }
+
+    // --- Step 1: Transcribe Video ---
+    // step.run ensures this block retries on failure and runs exactly once on success.
+    const transcript = await step.run('transcribe-video', async () => {
+      console.log(`Starting transcription for videoId: ${videoId}, url: ${videoUrl}`);
+      try {
+        const result = await deepgram.transcribe(videoUrl);
+        console.log(`Transcription successful for videoId: ${videoId}`);
+        return result;
+      } catch (error) {
+        console.error(`Transcription failed for videoId: ${videoId}`, error);
+        throw error; // Re-throw to enable Inngest retries
+      }
+    });
+
+    // --- Step 2: Summarize Transcript ---
+    // The 'transcript' result from the previous step is automatically available here.
+    const summary = await step.run('summarize-transcript', async () => {
+      console.log(`Starting summarization for videoId: ${videoId}`);
+      try {
+        const result = await llm.createCompletion({
+          model: "gpt-4o", // Or your preferred model
+          prompt: createSummaryPrompt(transcript),
+        });
+        console.log(`Summarization successful for videoId: ${videoId}`);
+        return result;
+      } catch (error) {
+        console.error(`Summarization failed for videoId: ${videoId}`, error);
+        throw error; // Re-throw for retries
+      }
+    });
+
+    // --- Step 3: Write Results to Database ---
+    await step.run('write-summary-to-db', async () => {
+      console.log(`Writing transcript and summary to DB for videoId: ${videoId}`);
+      try {
+        await db.videoSummaries.upsert({
+          videoId: videoId,
+          transcript,
+          summary,
+        });
+        console.log(`DB write successful for videoId: ${videoId}`);
+      } catch (error) {
+        console.error(`DB write failed for videoId: ${videoId}`, error);
+        throw error; // Re-throw for retries
+      }
+    });
+
+    // --- Step 4: Send Completion Notification via Novu ---
+    // This step runs only after the previous steps have succeeded.
+    await step.run("send-completion-notification", async () => {
+      if (!novuApiKey) {
+        console.warn(`Skipping notification for videoId ${videoId} as NOVU_SECRET_KEY is not set.`);
+        return { skipped: true, reason: "NOVU_SECRET_KEY not set" };
+      }
+
+      console.log(`Attempting to send Novu notification for videoId: ${videoId} to user: ${userId}`);
+
+      // Construct a relevant payload for your Novu template
+      const novuPayload = {
+        userName: userName,
+        videoId: videoId,
+        summarySnippet: summary.substring(0, 100) + (summary.length > 100 ? "..." : ""), // Send a preview
+        // Add any other data your Novu template needs, e.g., a link to view the full video/summary
+        // videoUrl: `https://yourapp.com/videos/${videoId}`
+      };
+
+      try {
+        const triggerResult = await novu.trigger({
+          // Ensure this workflow ID exists in your Novu dashboard
+          workflowId: "video-processed-notification",
+          to: {
+            subscriberId: userId, // Crucial for identifying the user in Novu
+            email: email, // Can be used by Novu email channel
+            // Add other channels like phone if needed and available
+          },
+          payload: novuPayload,
+        });
+
+        console.log(`Novu workflow 'video-processed-notification' triggered successfully for videoId: ${videoId}`, triggerResult);
+        return { success: true, novuPayload: novuPayload, triggerResult };
+
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error triggering Novu';
+        console.error(`Failed to trigger Novu workflow for videoId: ${videoId}: ${errorMessage}`, error);
+        // Decide if notification failure should cause the step to fail and retry
+        // For notifications, often you might want to log the error but not fail the whole function
+        // throw new Error(`Novu trigger failed: ${errorMessage}`); // Uncomment to make it retry
+         return { success: false, error: errorMessage }; // Log and continue
+      }
+    });
+
+    // --- Function Completion ---
+    // Optional: return a final status or summary
+    return {
+      message: `Video processing and notification steps completed for videoId: ${videoId}`,
+      videoId: videoId,
+      userId: userId,
+      summaryLength: summary.length,
+    };
+  }
+);
+
+// --- How to Trigger (Example) ---
+/*
+Somewhere else in your application (e.g., after a file upload completes):
+
+import { inngest } from "./path/to/inngest/client"; // Your initialized Inngest client
+
+async function handleVideoUpload(uploadResult: { url: string, id: string, user: { id: string, email: string, name: string } }) {
+  await inngest.send({
+    name: "video/uploaded", // The event name our function listens to
+    data: {
+      videoUrl: uploadResult.url,
+      videoId: uploadResult.id,
+      userId: uploadResult.user.id,
+      email: uploadResult.user.email,
+      userName: uploadResult.user.name,
+    },
+    user: { // Optionally pass user context if needed for event metadata/tracking
+        id: uploadResult.user.id,
+        email: uploadResult.user.email,
+    }
+  });
+  console.log(`Sent 'video/uploaded' event for videoId: ${uploadResult.id}`);
+}
+
+// Example usage:
+handleVideoUpload({
+    url: "https://example.com/videos/123.mp4",
+    id: "vid_12345abc",
+    user: { id: "user_67890def", email: "test@example.com", name: "Alice" }
+});
+*/
+```
+
+---
+
+### Template Usage Example
+
+Once you've added custom fields (like `firstName`, `userName`, or `phone`) to a subscriber, you can use them in Novu templates using Handlebars:
+
+- Hi `{{subsciber.firstName}}`, welcome!
+- We'll reach you at `{{subsciber.phone}}` if needed.
+- Your account is set up under `{{subscriber.data.userName}}`.
+
+---
+
+### Best Practices
+
+- Store your Novu `subscriberId` as part of your user model — so you always have a reference.
+- Create/update subscribers proactively when user data changes (e.g., phone number updates).
+- Use `data` to store additional info like roles, tags for more personalized notifications.
+

@@ -1,0 +1,47 @@
+---
+title: 'Rate Limiting'
+description: "In this page you can learn about how rate limiting works with Novu's API"
+---
+
+Rate limiting is an essential functionality for establishing a robust and resilient system. It safeguards system resources from being misused by malicious actors or being monopolized by one client.
+
+A variable-cost token bucket rate limited algorithm has been added to provide the capability for different API controllers and methods to have a varying cost. It also lays a foundation for dynamic costing of resource consumption.
+
+## Limits
+
+The following limits apply to each category of the Novu system. Each category has an independent bucket of request tokens to consume from.
+
+Each category has a different limit of requests per second (RPS), with the endpoints in each category shown below.
+
+| Category      | Free   | Pro     | Team     | Enterprise | Endpoints                                                      |
+|---------------|--------|---------|----------|------------|----------------------------------------------------------------|
+| Events        | 60 RPS | 240 RPS | 600 RPS  | 6K RPS     | Trigger                                                        |
+| Configuration | 20 RPS | 80 RPS  | 200 RPS  | 2k RPS     | Subscribers, Topics, Channel Connections, Channel Endpoints, Workflows                                  |
+| Global        | 30 RPS | 120 RPS | 300 RPS  | 3K RPS     | All other endpoints including context endpoints consume request tokens from this category |
+
+<Note>
+  - Standard requests (example: `POST /v1/events/trigger`, `POST /v2/subscribers/`) cost **1 request token**. 
+
+  Example: A single event trigger request costs 1 request token. In team plan, 600 RPS for trigger category means 600 request tokens per second are available. Hence, in team plan, you can hit `POST /v1/events/trigger` API **600 times per second**. If you exceed this limit, you will receive a 429 error response.
+
+  - Bulk requests (example: `POST /v1/events/trigger/bulk`, `POST /v1/subscribers/bulk`) cost **100 request tokens**.
+
+  Example: A bulk subscriber create request (whether 50 subscribers or maximum 500 subscribers) costs 100 request tokens. In team plan, 200 RPS for configuration category means 200 request tokens per second are available. Hence, in team plan, you can hit `POST /v1/subscribers/bulk` API **2 times per second**. If you exceed this limit, you will receive a 429 error response.
+</Note>
+
+### HTTP response headers
+
+When integrating with Novu API, it’s important to consider the rate limiting HTTP headers included in the response. These headers help you manage your API usage and avoid hitting rate limits.
+
+```
+RateLimit-Remaining: 219
+RateLimit-Limit: 300
+RateLimit-Reset: 2
+RateLimit-Policy: 300;w=5;burst=330;comment="token bucket";category="trigger";cost="bulk";serviceLevel="free"
+```
+
+- `RateLimit-Remaining` - Indicates the remaining number of request tokens in the current window.
+- `RateLimit-Limit` - Indicates the total number of request tokens available in the current window.
+- `RateLimit-Reset` - Indicates the number of seconds until the current window resets and the request token limit is fully replenished.
+- `RateLimit-Policy` - Defines the details of the applied rate limiting policy.
+- `Retry-After` - Specifies the number of seconds to wait before making another request.

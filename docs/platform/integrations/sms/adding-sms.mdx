@@ -1,0 +1,61 @@
+---
+title: 'Adding SMS Channel'
+sidebarTitle: 'Adding SMS Channel'
+description: 'Learn how to add the SMS channel to your application'
+icon: "circle-plus"
+---
+
+
+<Steps>
+<Step title="Enable SMS channel in Novu Dashboard">
+
+<Note>
+  The SMS channel is not enabled by default. To use it, configure a provider like Twilio, Nexmo, or
+  others, and ensure compliance with country-specific restrictions for sender IDs (`from`).
+</Note>
+
+1. Go to the Novu Dashboard and click **"Integrations"** on the left sidebar
+2. Click **"Add a provider"**
+3. Locate the **SMS** channel and select the provider you want to use and click **"Next"**
+4. Select for which environment you want to add the Provider
+5. (Optional) Add Conditions to activate the provider only under certain conditions, **useful for tenant-based providers**
+6. Click **"Create"**
+7. Add your SMS provider credentials:
+   - **From**: Displayed as the sender of the SMS (ensure compliance with local regulations)
+   - Provider-specific credentials such as API key / Auth token, Account SID, username, or password
+8. Save the configuration by clicking **"Update"**
+
+</Step>
+
+<Step title="Setup workflow with SMS channel in Novu Dashboard">
+    
+1. Go to the Novu Dashboard and click **"Workflows"** on the left sidebar.
+2. Click the **"Add a Workflow"** button.
+3. Add a step and select **"SMS"** as the channel.
+4. Configure the SMS content:
+    - Message body (e.g., `{{userName}}, your order {{orderId}} has shipped.`).
+    - Dynamic placeholders for personalized content.
+5. Optionally, set fallback channels to ensure reliable delivery if SMS fails.
+
+</Step>
+
+<Step title="Add a workflow trigger to your backend">
+Novu's server-side SDKs make integrating Novu's REST APIs straightforward, letting you focus on implementing workflows without dealing with repetitive code.
+
+<Card title="Server-side SDKs" icon="code" href="/platform/sdks/server" />
+</Step>
+
+<Step title="Test and verify SMS channel">
+Ensure your SMS configuration is working correctly by testing the setup.
+
+1. Go to the Novu Dashboard, navigate to the **"Workflows"** section, and locate your configured workflow.
+2. Click **"Test Workflow"** and provide sample data, such as a phone number or dynamic variables.
+3. Verify delivery in the Novu Logs or your SMS provider's dashboard.
+
+</Step>
+</Steps>
+
+<Note>
+  Some countries have strict restriction of using verified `from` sender id (name). Kindly check
+  country and provider specific requirements first.
+</Note>

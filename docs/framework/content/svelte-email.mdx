@@ -1,0 +1,81 @@
+---
+title: 'Svelte Email'
+description: 'Learn how to use Svelte Email to build beautiful email templates'
+---
+
+Integrating Novu Framework with [Svelte email](https://react.email/) for your Svelte application can be done in three steps. If you don't have an app, you can [clone our Svelte example](https://github.com/novuhq/novu-svelte-email).
+
+<Steps>
+  <Step title="Install Svelte email components">
+    Install the required Svelte email components.
+
+    ```bash
+      npm install svelte-email
+    ```
+
+  </Step>
+  <Step title="Create email templates folder">
+    Create a new folder called `emails` in your `src` folder.
+  </Step>
+  <Step title="Write your email">
+    Create a new file called `test-email.svelte` in your `emails` folder.
+
+    ```svelte
+    <script lang="ts">
+
+        export let name: string;
+    </script>
+
+    <Html>
+        <Head />
+        <Preview>Welcome to Svelte Email</Preview>
+        <Body>
+            <Container>
+                <h1>Welcome, {name}!</h1>
+                <p>Thanks for trying Svelte Email. We're thrilled to have you on board.</p>
+            </Container>
+        </Body>
+    </Html>
+    ```
+
+    Create a new file called `test-email.ts` in your `emails` folder.
+
+    ```typescript
+
+    export function renderEmail(name: string) {
+        return render({
+            template: TestEmail,
+            props: {
+                name,
+            },
+        });
+    }
+    ```
+
+  </Step>
+  <Step title="Write your workflow">
+    Define your workflow using the above template
+
+    ```typescript
+
+    export const testWorkflow = workflow('test-workflow', async ({ step, payload }) => {
+        await step.email('send-email', async (controls) => {
+            return {
+                subject: controls.subject,
+                body: renderEmail(payload.userName),
+            };
+        },
+        {
+            controlSchema: z.object({
+                subject: z.string().default('A Successful Test on Novu from {{userName}}'),
+            }),
+        });
+    }, {
+        payloadSchema: z.object({
+            userName: z.string().default('John Doe'),
+        }),
+    });
+    ```
+
+  </Step>
+</Steps>

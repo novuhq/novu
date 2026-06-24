@@ -1,0 +1,134 @@
+---
+title: 'HTTP Step'
+description: 'Learn how to use HTTP step to make external HTTP requests.'
+icon: "webhook"
+---
+
+The HTTP step is an Action step that allows workflows to call external APIs during execution. This provides a native way to interact with systems outside Novu directly from your workflows. It is useful for tasks such as enriching data, enabling conditional branching based on external responses, or communicating with internal delivery systems.
+
+This guide explains how to add and configure an HTTP step for your specific needs.
+
+<Note>
+  This feature is currently in public beta, please contact us at support@novu.co to enable it for your organization.
+</Note>
+
+## Adding an HTTP step
+
+You can add an HTTP step anywhere within a workflow. When workflow execution reaches this step, the workflow will perform the configured request and the response can be used by steps that follow.
+
+<video autoPlay loop muted playsInline src="/images/workflows/add-and-configure-steps/action-steps/http-step/add-http-step.mp4" />
+
+## Configuring the request
+
+You can configure the HTTP request using the following properties:
+
+- **Method**: Select the standard HTTP method such as `GET`, `POST`, `PUT`, `PATCH`, or `DELETE`.
+- **URL**: Provide the destination endpoint for the request. A placeholder URL is included by default to help you test the behavior quickly.
+- **Headers**: Define any required HTTP headers. These can be input as key-value pairs.
+- **Body**: Provide the request payload. As with headers, you can use key-value pairs.
+- **Response Schema**: Define the response schema for the API response. It is similar to defining the payload schema for the workflow. Response schema validation can also be enforced at the HTTP step level.
+
+### Injecting workflow context
+
+The HTTP step supports LiquidJS across all configuration fields, including the `URL`, `Headers`, and `Body`. This allows you to dynamically inject variables from the workflow context into your API request. You can use data from the subscriber, the event payload, or results from previous steps.
+
+<video autoPlay loop muted playsInline src="/images/workflows/add-and-configure-steps/action-steps/http-step/configuring-the-request.mp4" />
+
+## Testing the HTTP request
+
+You can test your configured HTTP request directly from the step editor without running a full workflow. This helps you verify the configuration and observe the API behavior. 
+
+Test executions performed in the step editor do not create workflow activity logs. Any validation or preview errors are surfaced directly on the step preview pane so you can resolve them before finalizing the configuration.
+
+<video autoPlay loop muted playsInline src="/images/workflows/add-and-configure-steps/action-steps/http-step/testing-endpoint.mp4" />
+
+## Consuming the API response
+
+When the HTTP request succeeds, the API response is stored in the step results. You can access these results in subsequent steps or condition rules using the `{{steps.step_id.responseFieldName}}` variable.
+
+When consuming these response values in the channel step editors or in step conditions, you will see available response fields in variable autocomplete.
+
+The example below determines whether to send an email using the `shouldSendEmail` field from the HTTP response in the email step condition. It uses the `{{steps.http-request-step.shouldSendEmail}}` variable, where `http-request-step` is the step id and `shouldSendEmail` is the response field name.
+
+<video autoPlay loop muted playsInline src="/images/workflows/add-and-configure-steps/action-steps/http-step/using-response-in-step-conditions.mp4" />
+
+Similarly, you can use the response fields in the email step content to personalize the email content.
+
+## Error handling and failure behavior
+
+The HTTP step treats the following scenarios as failures:
+- Non-2xx HTTP response status codes.
+- Network timeouts.
+- Network errors.
+
+You can control what happens when a step fails. The workflow can be configured to either **continue** or **stop** execution if the HTTP request encounters an error.
+
+![Continuing or stopping workflow execution](/images/workflows/add-and-configure-steps/action-steps/http-step/continue-on-failure.png)
+
+## Securing HTTP requests
+
+With each API request, novu send `novu-signature` header. This header is a HMAC signature of the request body and the timestamp. You can verify the authenticity of the request by verifying the HMAC signature. Below example shows how to verify the HMAC signature in a Next.js API route. Here, Novu secret key is used to generate the HMAC signature. You can copy the secret key from the [Novu API Keys](https://dashboard.novu.co/api-keys) page.
+
+```typescript title="api/novu-http-step-request/route.ts"
+import { NextRequest, NextResponse } from "next/server";
+import { createHmac, timingSafeEqual } from "node:crypto";
+
+const novuSecretKey = process.env.NOVU_SECRET_KEY as string;
+
+export async function POST(req: NextRequest) {
+  const headers = Object.fromEntries(req.headers.entries());
+  let body = {};
+  try {
+    body = await req.json();
+  } catch {
+    // GET requests usually don't have a body
+  }
+
+  const parts = headers["novu-signature"].split(",");
+  const timestampPart = parts.find((p) => p.startsWith("t="));
+  const signaturePart = parts.find((p) => p.startsWith("v1="));
+
+  const timestamp = Number(timestampPart?.split("=")[1]);
+  const providedSignature = signaturePart?.split("=")[1];
+
+  // Verify the timestamp is not stale
+  const currentTimestampTime = Date.now();
+  const fiveMinutes = 5 * 60 * 1000;
+  const providedTimestamp = timestamp;
+  // If the timestamp is stale, return a 401 error
+  if (currentTimestampTime - providedTimestamp > fiveMinutes) {
+    return NextResponse.json({ error: "stale request" }, { status: 401 });
+  }
+
+  const generatedSignature = createHmac("sha256", novuSecretKey)
+    .update(`${timestamp}.${JSON.stringify(body)}`)
+    .digest("hex");
+
+  // Verify the signature
+  const providedBuf = Buffer.from(providedSignature, "hex");
+  const generatedBuf = Buffer.from(generatedSignature, "hex");
+  const valid =
+    providedBuf.length === generatedBuf.length &&
+    timingSafeEqual(generatedBuf, providedBuf);
+
+  // If the signature is not valid, return a 401 error
+  if (!valid) {
+    return NextResponse.json({ error: "Not authorized" }, { status: 401 });
+  }
+
+  return NextResponse.json({ message: "Authorized" }, { status: 200 });
+}
+```
+
+## Use cases
+
+The HTTP step can be utilized in several ways within your workflows:
+
+### Data enrichment during workflow runs
+You might need additional subscriber or event data before sending a notification. An HTTP step can call your internal CRM or user database to fetch extra context, which can then be injected into the notification content using the step results namespace.
+
+### Conditional branching based on external systems
+You can use the HTTP step to check a condition in an external service. For example, you can query an API to determine if a user has an active premium subscription, and then use the response in a subsequent condition step to send a different type of notification based on their status.
+
+### Internal delivery systems
+If you have an internal system that requires a payload when certain events happen, you can trigger an HTTP step to ping that system with the relevant workflow context without needing to expose it to end users.

@@ -1,0 +1,812 @@
+---
+title: '@novu/js'
+description: 'Complete API reference for the Novu JavaScript package'
+icon: "braces"
+---
+
+
+## Novu
+
+The Novu client provides methods to interact with notifications, preferences, and real-time events.
+
+### Constructor Options
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `backendUrl` |  |  |
+| `applicationIdentifier` |  |  |
+| `subscriberHash` |  |  |
+| `contextHash` |  |  |
+| `apiUrl` |  |  |
+| `socketUrl` |  |  |
+| `socketOptions` |  |  |
+| `useCache` |  |  |
+| `defaultSchedule` |  |  |
+| `context` |  |  |
+| `subscriberId` |  |  |
+| `subscriber` |  |  |
+
+### Usage
+
+<Tabs>
+  <Tab title="US">
+    ```typescript
+
+    const novu = new Novu({
+      subscriberId: "SUBSCRIBER_ID",
+      applicationIdentifier: "APPLICATION_IDENTIFIER",
+    });
+    ```
+  </Tab>
+  <Tab title="EU">
+    ```typescript
+
+    const novu = new Novu({
+      subscriberId: "SUBSCRIBER_ID",
+      applicationIdentifier: "APPLICATION_IDENTIFIER",
+      apiUrl: "https://eu.api.novu.co",
+      socketUrl: "wss://eu.socket.novu.co",
+    });
+    ```
+  </Tab>
+  <Tab title="Using Context">
+  <Note>
+    Learn how Context is used to filter Inbox notifications in the [Inbox with Context](/platform/inbox/configuration/inbox-with-context) guide. 
+  </Note>
+  ```tsx
+
+  const novu = new Novu({
+    applicationIdentifier: 'YOUR_APP_ID',
+    subscriberId: 'user-123',
+    context: {
+      tenant: { id: 'org-123', data: { name: 'Acme Corp' } },
+      team: 'team-456',
+    },
+  });
+
+  // Access the current context
+  console.log(novu.context);
+  // → { tenant: { id: 'org-123', data: { name: 'Acme Corp' } }, team: 'team-456' }
+
+  // Get a stable string key (used internally for caching/filtering)
+  console.log(novu.contextKey);
+  // → "team:team-456,tenant:org-123"
+
+  ```
+  </Tab>
+  <Tab title="HMAC Encryption">
+    ```typescript
+
+    const novu = new Novu({
+      subscriberId: "SUBSCRIBER_ID",
+      applicationIdentifier: "APPLICATION_IDENTIFIER",
+      subscriberHash: "SUBSCRIBER_HASH_HMAC_ENCRYPTION",
+    });
+    ```
+  </Tab>
+</Tabs>
+
+## Notifications
+
+### Methods
+
+#### list
+
+Fetches a list of notifications based on provided filters.
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `tags` |  |  |
+| `read` |  |  |
+| `archived` |  |  |
+| `snoozed` |  |  |
+| `seen` |  |  |
+| `data` |  |  |
+| `severity` |  |  |
+| `createdGte` |  |  |
+| `createdLte` |  |  |
+
+```typescript
+import { SeverityLevelEnum } from '@novu/js';
+import dayjs from "dayjs";
+
+const now = dayjs();
+// convert to milliseconds
+const startDate = now.subtract(60, "days").valueOf();
+const endDate = now.valueOf();  
+
+const notifications = await novu.notifications.list({
+  limit: 30,
+  read: false,
+  seen: false,
+  archived: false,
+  tags: ['tag1', 'tag2'],
+  severity: SeverityLevelEnum.HIGH,
+  // data attributes
+  data: {
+    type: 'login',
+  },
+  offset: 0,
+  // fetch last 60 days notifications
+  createdGte: startDate,
+  createdLte: endDate,
+});
+```
+
+The response will be of type:
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `notifications` |  |  |
+| `hasMore` |  |  |
+| `filter` |  |  |
+
+#### count
+
+Fetches the count of notifications based on filters.
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `tags` |  |  |
+| `read` |  |  |
+| `archived` |  |  |
+| `snoozed` |  |  |
+| `seen` |  |  |
+| `data` |  |  |
+| `severity` |  |  |
+| `createdGte` |  |  |
+| `createdLte` |  |  |
+
+<Tabs>
+  <Tab title="Single Filter">
+    ```typescript
+    // Single filter
+    const count = await novu.notifications.count({
+      read: false,
+      seen: false,
+      archived: false,
+      severity: SeverityLevelEnum.HIGH,
+       // data attributes
+      data: {
+        type: 'login',
+      },
+    });
+    ```
+  </Tab>
+  <Tab title="Multiple Filters">
+    ```typescript
+    // Multiple filters
+    const counts = await novu.notifications.count({
+      filters: [
+        { read: false }, 
+        { seen: false }, 
+        { severity: SeverityLevelEnum.HIGH }
+        { archived: true }, 
+        { tags: ['tag1'] }, 
+        { data: { type: 'login' } }
+      ],
+    });
+    ```
+  </Tab>
+</Tabs>
+
+#### read
+
+Marks a notification as read.
+
+```typescript
+await novu.notifications.read({ notificationId: 'NOTIFICATION_ID' });
+```
+
+#### unread
+
+Marks a notification as unread.
+
+```typescript
+await novu.notifications.unread({ notificationId: 'NOTIFICATION_ID' });
+```
+
+#### seen
+
+Marks a notification as seen.
+
+```typescript
+await novu.notifications.seen({ notificationId: 'NOTIFICATION_ID' });
+```
+
+<Note>
+  **Seen vs Read**: Notifications can be "seen" (automatically tracked when visible) or "read" (explicitly marked by user interaction). The Inbox component automatically marks notifications as seen when they're visible for 1+ seconds using the browser's IntersectionObserver API. This automatic tracking batches requests for performance and works seamlessly with infinite scroll and pagination, while read status requires explicit user action.
+
+  **Why no `unseen` method?** Unlike `read`/`unread` which can be toggled, `seen` is designed as a one-way operation. Once a notification has been seen by a user, it remains seen. This reflects the natural user experience where visibility cannot be "undone". Use filtering with `seen: false` to get unseen notifications instead.
+</Note>
+
+#### seenAll
+
+Marks notifications as seen. You can filter them by notification IDs, tags, or data attributes.
+
+```typescript
+// Mark specific notifications as seen
+await novu.notifications.seenAll({
+  notificationIds: ['NOTIFICATION_ID_1', 'NOTIFICATION_ID_2']
+});
+
+// Mark notifications by tags as seen
+await novu.notifications.seenAll({
+  tags: ['tag1', 'tag2']
+});
+
+// Mark notifications by data as seen
+await novu.notifications.seenAll({
+  data: { type: 'login' }
+});
+
+// Mark all notifications as seen (no filters)
+await novu.notifications.seenAll();
+```
+
+#### archive
+
+Archives a notification.
+
+```typescript
+await novu.notifications.archive({ notificationId: 'NOTIFICATION_ID' });
+```
+
+#### unarchive
+
+Unarchives a notification.
+
+```typescript
+await novu.notifications.unarchive({ notificationId: 'NOTIFICATION_ID' });
+```
+
+#### readAll
+
+Marks all notifications as read. You can filter them by tags.
+
+```typescript
+await novu.notifications.readAll({
+  tags: ['tag1', 'tag2'],
+  // data attributes
+  data: {
+    type: 'login',
+  },
+});
+```
+
+#### archiveAll
+
+Archives all notifications. You can filter them by tags.
+
+```typescript
+await novu.notifications.archiveAll({
+  tags: ['tag1', 'tag2'],
+  // data attributes
+  data: {
+    type: 'login',
+  },
+});
+```
+
+#### archiveAllRead
+
+Archives all read notifications. You can filter them by tags.
+
+```typescript
+await novu.notifications.archiveAllRead({
+  tags: ['tag1', 'tag2'],
+  // data attributes
+  data: {
+    type: 'login',
+  },
+});
+```
+
+#### delete
+
+Deletes a single notification permanently.
+
+```typescript
+await novu.notifications.delete({ notificationId: 'NOTIFICATION_ID' });
+```
+
+#### deleteAll
+
+Deletes multiple notifications permanently. You can filter them by tags or data attributes.
+
+```typescript
+// Delete specific notifications by tags
+await novu.notifications.deleteAll({
+  tags: ['tag1', 'tag2'],
+});
+
+// Delete notifications by data attributes
+await novu.notifications.deleteAll({
+  data: { type: 'login' },
+});
+
+// Delete all notifications (no filters)
+await novu.notifications.deleteAll();
+```
+
+#### snooze
+
+Snoozes a notification for a specified duration. Here `snoozeUntil` is **ISO 8601** formatted string timestamp, representing the date and time the notification is un-snoozed, it should be a future date and time.
+
+```typescript
+await novu.notifications.snooze({ notificationId: 'NOTIFICATION_ID', snoozeUntil: '2025-01-01T00:00:00.000Z' });
+```
+
+#### unsnooze
+
+Unsnoozes a notification.
+
+```typescript
+await novu.notifications.unsnooze({ notificationId: 'NOTIFICATION_ID' });
+```
+
+#### completePrimary
+
+Marks primary action of a notification as completed.
+
+```typescript
+await novu.notifications.completePrimary({ notificationId: 'NOTIFICATION_ID' });
+```
+
+#### completeSecondary
+
+Marks secondary action of a notification as completed.
+
+```typescript
+await novu.notifications.completeSecondary({ notificationId: 'NOTIFICATION_ID' });
+```
+
+#### revertPrimary
+
+Reverts primary action of a notification to pending.
+
+```typescript
+await novu.notifications.revertPrimary({ notificationId: 'NOTIFICATION_ID' });
+```
+
+#### revertSecondary
+
+Reverts secondary action of a notification to pending.
+
+```typescript
+await novu.notifications.revertSecondary({ notificationId: 'NOTIFICATION_ID' });
+```
+
+## Notification
+
+Individual notification instances have their own methods for marking as seen, read, archived, etc. These methods are available directly on each notification object.
+
+### Methods
+
+- `seen()` - Marks the notification as seen
+- `read()` - Marks the notification as read  
+- `unread()` - Marks the notification as unread
+- `archive()` - Archives the notification
+- `unarchive()` - Unarchives the notification
+- `delete()` - Deletes the notification
+- `snooze()` - Snoozes the notification
+- `unsnooze()` - Unsnoozes the notification
+- `completePrimary()` - Marks primary action as completed
+- `completeSecondary()` - Marks secondary action as completed
+- `revertPrimary()` - Reverts primary action to pending
+- `revertSecondary()` - Reverts secondary action to pending
+
+<Note>
+  The `seen()` method is only available on individual notification instances, not on the `novu.notifications` object. Use `novu.notifications.seenAll()` for bulk operations.
+</Note>
+
+### Usage
+
+```typescript
+// Get notifications
+const { data: notifications } = await novu.notifications.list();
+
+// Mark a specific notification as seen using the instance method
+await notifications[0].seen();
+
+// Mark as read using the instance method
+await notifications[0].read();
+
+// Archive using the instance method
+await notifications[0].archive();
+
+// Snooze using the instance method
+await notifications[0].snooze('2025-01-01T00:00:00.000Z');
+
+// Unsnooze using the instance method
+await notifications[0].unsnooze();
+
+// Delete using the instance method
+await notifications[0].delete();
+```
+
+## Preferences
+
+### Methods
+
+#### list
+
+Fetches the subscriber's notification preferences.
+
+```typescript
+const { data: preferences } = await novu.preferences.list();
+```
+
+#### update
+
+`update` method is available with each preference object.
+
+```typescript
+const { data: preferences } = await novu.preferences.list();
+
+// Update a single preference
+
+await preferences[0].update({ channels: { email: false, sms: true } });
+```
+
+The response will be of type:
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `level` |  |  |
+| `enabled` |  |  |
+| `condition` |  |  |
+| `subscriptionId` |  |  |
+| `channels` |  |  |
+| `overrides` |  |  |
+| `workflow` |  |  |
+| `schedule` |  |  |
+
+#### bulkUpdate
+
+Updates multiple workflow's channel preferences at once.
+
+```typescript
+await novu.preferences.bulkUpdate([
+  { workflowId: 'workflow_id', channels: { email: false, sms: true } },
+  { workflowId: 'workflow_id_2', channels: { email: true, sms: false, in_app: true } },
+]);
+```
+
+### Schedule
+
+The `preferences.schedule` submodule lets you fetch and update a subscriber’s delivery schedule.
+
+#### get
+
+Fetches the subscriber’s schedule.
+
+```tsx
+const novu = new Novu(...);
+
+const { data: { schedule } } = await novu.preferences.schedule.get();
+```
+
+#### update
+
+Updates the subscriber’s schedule. You can update the entire weekly schedule or only specific days.
+
+```tsx
+const novu = new Novu(...);
+
+// Update schedule via preferences
+const { data: { schedule } } = await novu.preferences.schedule.update({
+  weeklySchedule: {
+    monday: {
+      isEnabled: true,
+      hours: [{ start: '09:00 AM', end: '05:00 PM' }],
+    },
+  },
+});
+
+// Or update directly from a Schedule instance
+const { data: { schedule: updatedSchedule } } =
+  await schedule.update({ isEnabled: false });
+```
+
+### Schedule Class
+
+A `Schedule` instance is returned when fetching or updating a schedule.
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `isEnabled` |  |  |
+| `weeklySchedule` |  |  |
+| `update` |  |  |
+
+## Events
+
+The Novu client provides real-time event handling through WebSocket connections.
+
+### Available Events
+
+- `notifications.notification_received`: Triggered when a new notification is received.
+- `notifications.unread_count_changed`: Triggered when the unread count changes.
+- `notifications.unseen_count_changed`: Triggered when the unseen count changes.
+- `preferences.schedule.get.pending`: Triggered when fetching a schedule starts.
+- `preferences.schedule.get.resolved`: Triggered when fetching a schedule succeeds.
+- `preferences.schedule.update.pending`: Triggered when updating a schedule starts.
+- `preferences.schedule.update.resolved`: Triggered when updating a schedule succeeds.
+- `subscriptions.list.pending`: Triggered when loading subscriptions starts.
+- `subscriptions.list.resolved`: Triggered when subscriptions are loaded.
+- `subscriptions.get.pending`: Triggered when fetching a subscription starts.
+- `subscriptions.get.resolved`: Triggered when a specific subscription is fetched.
+- `subscriptions.create.pending`: Triggered when creating a subscription starts.
+- `subscriptions.create.resolved`: Triggered when a subscription is created.
+- `subscriptions.update.pending`: Triggered when updating a subscription starts.
+- `subscriptions.update.resolved`: Triggered when a subscription is updated.
+- `subscriptions.delete.pending`: Triggered when deleting a subscription start.
+- `subscriptions.delete.resolved`: Triggered when a subscription is deleted.
+
+### Usage
+
+```typescript
+
+novu.on('session.initialize.resolved', ({ data }: { data: Session }) => {
+  console.log(data.unreadCount.total);
+  console.log(data.unreadCount.severity[SeverityLevelEnum.HIGH]);
+});
+
+novu.on('notifications.notification_received', (data) => {
+  console.log('New notification:', data);
+});
+
+novu.on('notifications.unread_count_changed', (data) => {
+  console.log('Unread count:', data);
+});
+
+novu.on('notifications.unseen_count_changed', (data) => {
+  console.log('Unseen count:', data);
+});
+
+novu.on('preferences.schedule.update.resolved', ({ data }) => {
+  console.log('Schedule updated:', data.schedule);
+});
+
+novu.on('subscriptions.create.resolved', ({ data: subscription }) => {
+  console.log('New subscription created:', subscription.identifier);
+});
+
+novu.on('subscriptions.list.resolved', ({ data: subscriptions }) => {
+  console.log('Loaded subscriptions:', subscriptions.length);
+});
+
+```
+
+## Subscriptions
+
+The Subscriptions module lets you manage a subscriber’s subscriptions to topics. A subscription represents a subscriber’s opt-in to a topic and defines which workflows within that topic they receive notifications from.
+
+It supports creating conditional subscriptions where users only receive notifications if specific criteria (payload filters) are met.
+
+Manage subscriptions at two levels:
+- Module-level methods on `novu.subscriptions`
+- Instance-level methods on a `TopicSubscription` object
+
+### Methods
+
+#### List
+
+Fetches all subscriptions for a specific topic.
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `topicKey` |  |  |
+
+```tsx
+const { data: subscriptions } = await novu.subscriptions.list({
+  topicKey: 'product-updates'
+});
+```
+
+The response items are `TopicSubscription` instances.
+
+#### get
+
+Fetch a single subscription by topic and identifier.
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `topicKey` |  |  |
+| `identifier` |  |  |
+| `workflowIds` |  |  |
+| `tags` |  |  |
+
+```tsx
+const { data: subscription } = await novu.subscriptions.get({
+  topicKey: 'product-updates',
+  identifier: 'user-product-alert'
+});
+```
+
+#### create
+
+Create a new subscription to a topic. You can pass a list of preferences to filter specific workflows or tags.
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `topicKey` |  |  |
+| `topicName` |  |  |
+| `identifier` |  |  |
+| `name` |  |  |
+| `preferences` |  |  |
+
+```tsx
+const { data: subscription } = await novu.subscriptions.create({
+  topicKey: 'product-updates',
+  identifier: 'user-product-alert',
+  preferences: [
+    {
+      // Simple workflow toggle
+      workflowId: 'issue-created',
+      enabled: true
+    },
+    {
+      // Conditional filter
+      workflowId: 'price-alert',
+      condition: {
+        field: 'price',
+        operation: 'below',
+        value: 100
+      }
+    }
+  ]
+});
+```
+
+#### update
+
+Updates an existing subscription.
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `name` |  |  |
+| `preferences` |  |  |
+
+```tsx
+const { data: subscription } = await novu.subscriptions.update({
+  topicKey: 'product-updates',
+  subscriptionId: 'subscription-id-123',
+  preferences: [...]
+});
+```
+
+#### delete
+
+Delete a subscription by topic and subscription ID.
+
+```tsx
+await novu.subscriptions.delete({
+  topicKey: 'product-updates',
+  subscriptionId: 'product-updates-subscription',
+});
+```
+
+### TopicSubscription
+
+A `TopicSubscription` instance represents a single subscription and provides methods for updating or deleting it, as well as managing its preferences.
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `id` |  |  |
+| `identifier` |  |  |
+| `topicKey` |  |  |
+| `preferences` |  |  |
+| `update` |  |  |
+| `updatePreference` |  |  |
+| `bulkUpdatePreferences` |  |  |
+| `delete` |  |  |
+
+#### Update a subscription
+
+Update subscription metadata or replace its preferences list. Use this method when updating the subscription as a whole.
+For granular preference updates, use preference-level methods instead.
+
+```tsx
+const { data: subscription } =
+  await novu.subscriptions.get({
+    topicKey: 'product-updates',
+    identifier: 'product-updates-subscription',
+  });
+
+await subscription.update({
+  preferences: [
+    {
+      workflowId: 'workflow-identifier',
+      enabled: true,
+    },
+  ],
+});
+```
+#### Update SubscriptionPreference
+
+Each subscription contains a list of `SubscriptionPreference` objects that you can update individually.
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `subscriptionId` |  |  |
+| `workflow` |  |  |
+| `enabled` |  |  |
+| `condition` |  |  |
+| `update` |  |  |
+
+```tsx
+subscription.preferences.map((preference) => {
+  const onChange = (value: boolean) => {
+    preference.update({ value });
+  };
+
+  return <Checkbox onChange={onChange} />;
+});
+```
+
+#### Delete a subscription (instance method)
+
+```
+await subscription.delete();
+```
+
+## Types
+
+### Notification
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `id` |  |  |
+| `transactionId` |  |  |
+| `subject` |  |  |
+| `body` |  |  |
+| `to` |  |  |
+| `isRead` |  |  |
+| `isSeen` |  |  |
+| `isArchived` |  |  |
+| `isSnoozed` |  |  |
+| `snoozedUntil` |  |  |
+| `deliveredAt` |  |  |
+| `createdAt` |  |  |
+| `readAt` |  |  |
+| `firstSeenAt` |  |  |
+| `archivedAt` |  |  |
+| `avatar` |  |  |
+| `primaryAction` |  |  |
+| `secondaryAction` |  |  |
+| `channelType` |  |  |
+| `tags` |  |  |
+| `redirect` |  |  |
+| `data` |  |  |
+| `workflow` |  |  |
+| `severity` |  |  |
+| `read` |  |  |
+| `unread` |  |  |
+| `seen` |  |  |
+| `archive` |  |  |
+| `unarchive` |  |  |
+| `delete` |  |  |
+| `snooze` |  |  |
+| `unsnooze` |  |  |
+| `completePrimary` |  |  |
+| `completeSecondary` |  |  |
+| `revertPrimary` |  |  |
+| `revertSecondary` |  |  |
+| `on` |  |  |
+| `off` |  |  |
+
+### Subscriber
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `id` |  |  |
+| `subscriberId` |  |  |
+| `firstName` |  |  |
+| `lastName` |  |  |
+| `email` |  |  |
+| `phone` |  |  |
+| `avatar` |  |  |
+| `locale` |  |  |
+| `data` |  |  |
+| `timezone` |  |  |

@@ -1,0 +1,337 @@
+---
+title: Agent Skills
+description: Learn how to use Novu Agent Skills to help AI agents build multi-channel notification systems.
+icon: "unplug"
+---
+
+
+## What are Agent Skills?
+
+Agent Skills are an open standard that gives AI agents (Claude Code, Cursor, Copilot, etc.) the context they need to work with specific tools and platforms. Novu's skills provide AI agents with everything required to build multi-channel notification systems — triggering workflows, managing subscribers, integrating the in-app inbox, and configuring preferences.
+
+## Prerequisites
+
+- A Novu account
+- Secret key from [dashboard.novu.co/settings/api-keys](https://dashboard.novu.co/settings/api-keys)
+
+## Setup
+
+Install the Novu skills into your project using the `skills` CLI:
+
+```bash
+npx skills add novuhq/skills
+```
+
+This pulls the skills from the [novuhq/skills](https://github.com/novuhq/skills) GitHub repository and makes them available to your AI agent (Claude Code, Cursor, Copilot, etc.).
+
+---
+
+## Available Skills
+
+| Skill | Description |
+| --- | --- |
+| [trigger-notification](https://github.com/novuhq/skills/tree/main/trigger-notification) | Send single, bulk, broadcast, and topic-based notifications |
+| [manage-subscribers](https://github.com/novuhq/skills/tree/main/manage-subscribers) | CRUD operations on subscribers and topics |
+| [inbox-integration](https://github.com/novuhq/skills/tree/main/inbox-integration) | Integrate the in-app notification inbox into React, Next.js, or vanilla JS |
+| [manage-preferences](https://github.com/novuhq/skills/tree/main/manage-preferences) | Configure workflow and subscriber notification preferences |
+
+## Quick Routing
+
+Use this guide to pick the right skill for your task:
+
+- **"Send a welcome notification"** → `trigger-notification`
+- **"Create subscriber"** → `manage-subscribers`
+- **"Add a bell icon to my app"** → `inbox-integration`
+- **"Let users opt out of emails"** → `manage-preferences`
+
+## Common Combinations
+
+- **Full notification system**: `trigger-notification` + `manage-subscribers`
+- **In-app notifications**: `trigger-notification` + `inbox-integration`
+- **Complete stack**: all four skills together
+
+## SDK Overview
+
+| Package | Side | Purpose |
+| --- | --- | --- |
+| `@novu/api` | Server | Trigger notifications, manage subscribers/topics/workflows via REST |
+| `@novu/react` | Client | React Inbox component, Notifications, Preferences, Bell |
+| `@novu/nextjs` | Client | Next.js-optimized Inbox integration |
+| `@novu/react-native` | Client | React Native hooks-based Inbox integration |
+| `@novu/js` | Client | Vanilla JavaScript client for non-React apps |
+
+## Skill Reference
+
+### Trigger Notification
+
+Send notifications by triggering Novu workflows. Supports single, bulk, broadcast, and topic-based delivery.
+
+<Tabs>
+<Tab title="Single">
+
+```typescript
+import { Novu } from "@novu/api";
+
+const novu = new Novu({ secretKey: process.env.NOVU_SECRET_KEY });
+
+await novu.trigger({
+  workflowId: "welcome-email",
+  to: "subscriber-123",
+  payload: {
+    userName: "Jane",
+    activationLink: "https://app.example.com/activate",
+  },
+});
+```
+
+</Tab>
+<Tab title="Bulk">
+
+Send up to **100 events** in a single request:
+
+```typescript
+await novu.triggerBulk({
+  events: [
+    { workflowId: "welcome-email", to: "subscriber-1", payload: { userName: "Alice" } },
+    { workflowId: "welcome-email", to: "subscriber-2", payload: { userName: "Bob" } },
+  ],
+});
+```
+
+</Tab>
+<Tab title="Broadcast">
+
+Send to **all subscribers** in the environment:
+
+```typescript
+await novu.triggerBroadcast({
+  name: "system-announcement",
+  payload: { message: "Scheduled maintenance at 2am UTC" },
+});
+```
+
+</Tab>
+<Tab title="Topic">
+
+Send to all subscribers in a topic:
+
+```typescript
+await novu.trigger({
+  workflowId: "project-update",
+  to: [{ type: "Topic", topicKey: "project-alpha-watchers" }],
+  payload: { update: "New release deployed" },
+});
+```
+
+</Tab>
+</Tabs>
+
+**Key trigger parameters:**
+
+| Parameter | Required | Description |
+| --- | --- | --- |
+| `workflowId` | Yes | The workflow identifier (not the display name) |
+| `to` | Yes | Subscriber ID string, subscriber object, or topic target |
+| `payload` | No | Data passed to the workflow, validated against `payloadSchema` |
+| `overrides` | No | Provider-specific overrides per channel |
+| `transactionId` | No | Unique ID for idempotency and cancellation |
+| `actor` | No | Subscriber representing who triggered the action |
+| `context` | No | Key-value pairs for multi-tenancy / organizational context |
+
+---
+
+### Manage Subscribers
+
+Subscribers are the recipients of your notifications. Each subscriber has a unique `subscriberId` — typically your application's user ID.
+
+<Tabs>
+<Tab title="Create">
+
+```typescript
+await novu.subscribers.create({
+  subscriberId: "user-123",         // required
+  email: "jane@example.com",
+  firstName: "Jane",
+  lastName: "Doe",
+  phone: "+15551234567",
+  data: { plan: "pro" },            // custom key-value data
+});
+```
+
+</Tab>
+<Tab title="Retrieve">
+
+```typescript
+const subscriber = await novu.subscribers.retrieve("user-123");
+```
+
+</Tab>
+<Tab title="Update">
+
+```typescript
+await novu.subscribers.patch(
+  { firstName: "Jane", data: { plan: "enterprise" } },
+  "user-123"
+);
+```
+
+</Tab>
+<Tab title="Delete">
+
+```typescript
+await novu.subscribers.delete("user-123");
+```
+
+</Tab>
+<Tab title="Bulk Create">
+
+Create up to **500 subscribers** in one request:
+
+```typescript
+await novu.subscribers.createBulk({
+  subscribers: [
+    { subscriberId: "user-1", email: "alice@example.com", firstName: "Alice" },
+    { subscriberId: "user-2", email: "bob@example.com", firstName: "Bob" },
+  ],
+});
+```
+
+</Tab>
+</Tabs>
+
+**Topics** are named groups of subscribers for group-based notification targeting:
+
+```typescript
+// Create a topic
+await novu.topics.create({ key: "engineering-team", name: "Engineering Team" });
+
+// Add subscribers
+await novu.topics.subscriptions.create(
+  { subscriptions: ["user-1", "user-2", "user-3"] },
+  "engineering-team"
+);
+```
+
+---
+
+### Inbox Integration
+
+Add an in-app notification center to your web application. The Inbox provides a bell icon, notification feed, read/archive management, and real-time WebSocket updates.
+
+<Tabs>
+<Tab title="React">
+
+```bash
+npm install @novu/react
+```
+
+```tsx
+import { Inbox } from "@novu/react";
+
+function App() {
+  return (
+    <Inbox
+      applicationIdentifier="YOUR_NOVU_APP_ID"
+      subscriberId="subscriber-123"
+      subscriberHash="HMAC_HASH"  // Required if HMAC encryption is enabled
+    />
+  );
+}
+```
+
+</Tab>
+<Tab title="Next.js">
+
+```bash
+npm install @novu/nextjs
+```
+
+```tsx
+// components/NotificationInbox.tsx
+"use client"; // Required for App Router
+
+import { Inbox } from "@novu/nextjs";
+
+export function NotificationInbox() {
+  return (
+    <Inbox
+      applicationIdentifier={process.env.NEXT_PUBLIC_NOVU_APP_ID!}
+      subscriberId="subscriber-123"
+      subscriberHash="HMAC_HASH"
+    />
+  );
+}
+```
+
+</Tab>
+<Tab title="Vanilla JS">
+
+```bash
+npm install @novu/js
+```
+
+```typescript
+import { Novu } from "@novu/js";
+
+const novu = new Novu({
+  applicationIdentifier: "YOUR_NOVU_APP_ID",
+  subscriberId: "subscriber-123",
+});
+```
+
+</Tab>
+</Tabs>
+
+**HMAC Authentication** is required in production to prevent subscriber impersonation. Generate the hash server-side:
+
+```typescript
+import { createHmac } from "crypto";
+
+const subscriberHash = createHmac("sha256", process.env.NOVU_SECRET_KEY!)
+  .update(subscriberId)
+  .digest("hex");
+```
+
+---
+
+### Manage Preferences
+
+Novu uses a two-level preference system: **workflow defaults** and **subscriber overrides** (set by end users).
+
+**Workflow-level defaults**: Workflow level defaults can be configured in the Novu Dashboard. To do so, click on the workflow you want to configure and then click on the `Manage Preferences` option.
+
+**Subscriber-level overrides**:
+
+<Tabs>
+<Tab title="Workflow level">
+```typescript
+await novu.subscribers.preferences.update(
+  {
+    workflowId: "weekly-newsletter",
+    channels: { email: false, inApp: true },
+  },
+  "subscriber-123"
+);
+```
+</Tab>
+<Tab title="Global level">
+```typescript
+await novu.subscribers.preferences.update(
+  {
+    channels: { email: false, inApp: true },
+  },
+  "subscriber-123"
+);
+```
+</Tab>
+</Tabs>
+
+**Preference resolution order** (most specific wins):
+1. Subscriber workflow preference
+2. Subscriber global preference
+3. Workflow default
+4. System default (all channels enabled)
+
+The `Inbox` component includes a built-in Preferences panel accessible via the settings icon, or use `<Preferences />` as a standalone component.
+
+For additional help, check the [Novu documentation](https://docs.novu.co) or contact us at [support@novu.co](mailto:support@novu.co).

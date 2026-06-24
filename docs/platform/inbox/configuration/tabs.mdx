@@ -1,0 +1,158 @@
+---
+title: 'Tabs'
+description: 'Learn what tabs are and how to filter multiple tabs in the Novu Inbox component.'
+icon: "folders"
+---
+
+In the Inbox components, you can use Tabs to organize **Inbox** notifications into separate sections, creating a cleaner, more organized experience for your subscribers. Each tab displays a subset of in-app notifications based on defined rules, making it easier to surface important notifications.
+
+<video autoPlay loop muted playsInline src="/images/inbox/tabs.mp4" />
+
+## Group notifications into tabs
+
+Each tab is defined using the `tabs` prop of the Inbox component. Every tab object includes the following properties:
+- **`label`**: A string that defines the tab’s title, displayed as the visible label in the UI
+- **`filter`**: An object that defines which notifications are included in a particular tab.
+
+### Using tags
+
+[Tags](/platform/workflow/configure-workflow#tags) can be assigned to any workflow in the Novu workflow editor. These tags can then be used in the filter object to group notifications from one or more workflows under the same tab.
+
+For example, assign a **promotions** tag to marketing workflows or **security** and **alert** tags to security workflows to group their notifications under dedicated tabs. To show all the notifications in a tab, pass an empty array to the tags property. If multiple tags are provided, Novu evaluates them using `OR` logic, meaning a notification is included if it contains at least one of the specified tags.
+
+```tsx
+import { Inbox } from '@novu/react';
+
+function InboxTabs() {
+
+  const tabs = [
+    {
+      label: 'All Notifications',
+      filter: { tags: [] },
+    },
+    {
+      label: 'Promotions',
+      filter: { tags: ['promotions'] },
+    },
+    {
+      label: 'Security Alerts',
+      filter: { tags: ['security', 'alert'] }
+    },
+  ];
+  
+  return (
+    <Inbox
+      applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+      subscriber="YOUR_SUBSCRIBER_ID"
+      tabs={tabs}
+    />
+  );
+}
+
+export default InboxTabs;
+```
+
+### Using the data object
+
+The [data object](/platform/inbox/configuration/data-object) can be included in every in-app notification in the in-app editor editor. This object holds custom key-value pairs, which you can use to filter notifications into specific tabs.
+
+For example, use `{ priority: "high" }` to group all high-priority notifications under a dedicated "High Priority" tab.
+
+```tsx
+import { Inbox } from '@novu/react';
+
+function InboxTabs() {
+
+  const tabs = [
+    {
+      label: 'High Priority',
+      filter: {
+        data: { priority: 'high' },
+      },
+    },
+  ];
+  
+  return (
+    <Inbox
+      applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+      subscriber="YOUR_SUBSCRIBER_ID"
+      tabs={tabs}
+    />
+  );
+}
+
+export default InboxTabs;
+```
+
+### Using tags and data object
+
+You can combine tags and the data object in the same filter to create more specific tabs tailored to your use case.
+
+```tsx
+import { Inbox } from '@novu/react';
+
+function InboxTabs() {
+
+  const tabs = [
+    {
+      label: 'High Priority',
+      filter: { 
+        tags: ['alert'],
+        data: { priority: 'high' }
+      },
+    },
+  ];
+  
+  return (
+    <Inbox
+      applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+      subscriber="YOUR_SUBSCRIBER_ID"
+      tabs={tabs}
+    />
+  );
+}
+
+export default InboxTabs;
+```
+
+### Using notification severity
+
+After setting [workflow notification severity in the dashboard](/platform/workflow/configure-workflow#notification-severity), you can use that severity level to create dedicated tabs in your notification inbox. This lets you filter notifications based on their importance.
+
+To achieve this, add the severity key to the filter object for any tab in your Inbox component. The severity property can accept a single severity level or an array of levels.
+
+```tsx
+import { Inbox, SeverityLevelEnum } from '@novu/react';
+
+export default function InboxWithFilters() {
+
+  const tabs = [
+    {
+      label: 'All Notifications',
+      filter: { tags: [] },
+    },
+    {
+      label: 'Security',
+      filter: {
+        severity: SeverityLevelEnum.HIGH,
+      },
+    },
+  ];
+  
+  return (
+    <Inbox
+      applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+      subscriber="YOUR_SUBSCRIBER_ID"
+      tabs={tabs}
+    />
+  );
+}
+```
+
+## Show notification count for each tab
+
+The `useCounts` hook provides a way to fetch notification counts for each tab, this include the unread, unseen, and total counts. You can use these to display notification count for each tab in the Inbox component.
+
+<Note>
+  Refer to the [React](/platform/sdks/react/hooks/use-counts) and [React Native SDKs](/platform/sdks/react-native/hooks/use-counts) documentation to learn more about the `useCounts` hook.
+</Note>

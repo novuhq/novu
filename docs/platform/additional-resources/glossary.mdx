@@ -1,0 +1,92 @@
+---
+title: 'Glossary'
+description: 'Definitions'
+icon: "book-open"
+---
+
+## Introduction
+
+In this section, you'll find a list of key terms, their definitions and various concepts associated with Novu. Familiarising yourself with these will help you understand and use Novu better. They will help you navigate our docs more effectively and utilise Novu to its maximum potential.
+
+If you have any questions or need further clarification on any of the terms listed above, please feel free to reach out to our support team or join our community!
+
+## List of key terms and definitions
+
+### Actor
+
+An `actor` refers to a user or subscriber who initiates actions that trigger events within the system. Each actor is uniquely identified by an "actorId," also known as "subscriberId". Actors hold user-related variables and can enhance notifications by allowing their avatars to be displayed.
+
+### Agent brain
+
+The agent brain is the system that decides how an agent responds. It can be powered by an LLM, custom code, a rules engine, a human-in-the-loop workflow, a managed agent platform, or a combination of systems. The agent brain is separate from the communication infrastructure that delivers messages across channels, which is handled by [ACI](/agents/get-started/what-is-aci).
+
+### Channels
+
+Novu lets you send notifications across different communication mediums, including emails, in-app messages, push notifications, SMS, and chat. Each of these five communication mediums is referred to as a notification 'channel'.
+
+### Delay Actions
+
+Delay actions introduce time intervals between workflow steps, optimizing message delivery timing.
+
+### Digest Engine
+
+The digest engine aggregates multiple trigger events into a single message, ensuring efficient communication.
+
+### Environments
+
+Novu runs all your requests in the context of an environment. By default, Novu creates two environments:
+
+1. Development environment: For testing purposes and validating notification changes
+2. Production environment: Your live environment (read-only, changes must be promoted from development)
+
+Data associated with an environment includes:
+
+- Subscribers (can't be promoted to production)
+- Workflows (can be promoted to production)
+- Messages
+- Execution logs
+- Connected integrations (can't be promoted to production)
+- Notification feeds (can be promoted to production)
+- Brand-related assets and settings
+
+### Layouts
+
+Layouts are HTML designs or structures to wrap the content of email notifications. Layouts can be manipulated and assigned to new or existing workflows within the Novu platform.
+
+### Notification
+
+A brief message or alert that informs users about events, updates, or some other information.
+
+### Organizations
+
+Organizations allow separation of notifications across multiple products, managed through the Novu web dashboard.
+
+### Providers
+
+Providers are responsible for handling message delivery across various channels. Novu currently supports multiple notification channels, each with its own set of providers.
+
+- Chat: Discord, MS Teams, Slack, Zulip
+- Email: Sendgrid, Amazon SES, Brevo, Resend, SparkPost, Postmark, Mailjet, Mailtrap, Plunk, Braze, Mailersend, Outlook 365, Mailgun, Mandrill, Netcore, Infobip, Custom SMTP
+- SMS: Twilio SMS, SMS77, Africa's Talking, Infobip, Nexmo, Plivo, Sendchamp, AWS SNS, Telnyx, Termii, Firetext, Gupshup, Clickatell, Azure SMS, BulkSMS, SimpleTexting, MessageBird
+- Push Notification: Firebase Cloud Messaging (FCM), Expo Push, Apple Push Notification Service (APNS), One Signal, Pushpad, Pusher Beams, Push Webhook
+- Inbox: React component, Angular component, Vue component, Web component, iFrame embed, Custom styling, Headless Inbox
+
+### Step Filter
+
+Step filters customize workflow by specifying notification criteria, enhancing communication efficiency.
+
+### Subscribers
+
+Subscribers are entities designated to receive the notifications you send. Each subscriber in Novu is uniquely identified by their `subscriberId`.
+
+### Team members
+
+Members of a team have access to the Novu web dashboard. This allows you to have individuals work on and manage templates and notifications.
+
+### Topics
+
+Topics facilitate bulk notifications to multiple subscribers simultaneously, streamlining communication.
+
+### Workflow
+
+Workflow templates define the flow of messages sent to subscribers.

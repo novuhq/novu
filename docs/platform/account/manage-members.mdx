@@ -1,0 +1,103 @@
+---
+title: 'Team members'
+description: 'How to invite, manage, update permissions for, and remove members from your Novu organization'
+icon: "users"
+---
+
+You can manage the members of your organization from the **Settings** page in your Novu dashboard. From there, you can assign responsibilities, manage permissions, and control access to workflows and other features.
+
+Only members with the **Owner** role can invite or manage members.
+
+![Managing organization members](/images/account/managing-members-overview.png)
+
+## Invite a new member to your organization
+
+1. In the dashboard, go to **Settings** > **Team**
+2. Click **Invite**. You can do this from the **Members**, **Invitations**, or **Requests** tab.
+3. Enter the member’s email address into the email field provided.
+4. (Optional) Assign a role to the new member. If no role is selected, then the member is assigned the **Viewer** role by default.
+5. Click **Send invitation**.
+
+The invited user appears under the **Invitations** tab until they accept. Once accepted, they automatically move to the **Members** tab.
+
+![Managing organization members](/images/account/managing-members-invites.png)
+
+## Add a verified domain for automatic or request-based onboarding
+
+You can simplify member onboarding by allowing users with your organization's email domain to join automatically or request to join your Novu organization.
+
+1. In the dashboard, go to **Settings** > **Organization**
+2. Scroll to the **Verified Domains** section.
+3. Click **Add Domain**.
+4. Enter the email domain you want to verify (for example, `novu.co`) into the email field provided.
+5. Click **Save**.
+6. Confirm the verification process, if prompted.
+
+![Add a verified domain for automatic or request-based onboarding](/images/account/add-a-verified-domain.png)
+
+Once added:
+- Anyone who signs up using a verified domain can either join automatically or send a request to join, depending on your organization’s configuration.
+- These users are assigned the Viewer role by default.
+
+<Note>
+  Only users with non-public domains (for example, not `gmail.com`) can be auto-joined. You must have at least one Owner from the domain before it can be verified.
+</Note>
+
+## Revoke a pending invitation
+
+You can revoke an invitation if a user hasn't accepted it yet. Revoking an invite immediately makes the link invalid.
+
+1. In the dashboard, go to **Settings** > **Team**.
+2. Click the **Invitations** tab to view all pending invites.
+3. In the **Actions** column, click the (⋯) menu next to the user whose invite you want to revoke.
+4. Click **Revoke invitation**
+
+![How to revoke a pending invitation](/images/account/revoke-invitation.png)
+
+<Note>
+  You can still send a new invitation after revoking the previous one.
+</Note>
+
+## Manage join requests
+
+Users with a verified email domain can request to join your Novu organization. Only owners can approve or decline these requests.
+
+1. In the dashboard, go to **Settings** > **Team**.
+2. Open the **Requests** tab.
+3. Review the list of users who have requested to join your organization.
+4. In the **Actions** column, click the (⋯) menu next to their name.
+5. Accept or decline their request.
+
+Users who are approved will be added to your organization and assigned the Viewer role by default.
+
+## Update a member's role
+
+You can update a member's role to control what they can access and manage within your organization. Only Owners can change roles.
+
+1. In the dashboard, go to **Settings** > **Team**.
+2. Click the **Members** tab.
+3. Find the user whose role you want to change.
+4. In the **Role** column, click the list next to their current role.
+5. Select a new role from the list of [available account roles](/platform/account/roles-and-permissions).
+
+![Updating a member's role](/images/account/managing-members-update-roles.png)
+
+<Note>
+  The last owner of an organization cannot have their role changed. Every organization must have an owner.
+</Note>
+
+## Remove a member from your organization
+
+You can remove members who no longer need access to your Novu organization. This action immediately revokes their access to your organization dashboard and signs them out. Only owners can perform this action.
+
+1. In the dashboard, go to **Settings** > **Team**.
+2. Click the **Members** tab.
+3. Find the member you want to remove.
+4. Click the action menu (⋯) next to their name.
+5. Click **Remove member**.
+
+![Removing members from your organization](/images/account/managing-members-remove.png)
+
+<Note>
+  The owner who created the organization cannot be removed. Members can also leave your organization.
+</Note>

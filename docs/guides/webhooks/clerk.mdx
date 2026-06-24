@@ -1,0 +1,791 @@
+---
+title: 'Clerk'
+description: 'This guide walks you through integrating Clerk webhooks with Novu notifications in a Next.js application.'
+---
+
+
+You'll learn how to automatically trigger notification workflows when **any Clerk event** occurs, such as **user creation, email events, or password changes**.
+
+## Overview
+
+When specific events happen in Clerk (e.g., user signup, password changes, email verification), this integration will:
+
+1. Receive the webhook event from Clerk.
+2. Verify the webhook signature.
+3. Process the event data.
+4. Trigger the corresponding **Novu notification workflow**.
+
+<Note>
+  You can also clone this repository: https://github.com/novuhq/clerk-to-novu-webhooks
+</Note>
+
+## Prerequisites
+
+Before proceeding, ensure you have:
+
+- A **Clerk + Next.js app** ([Set up Clerk](https://clerk.com/docs/quickstarts/nextjs)).
+- A **Novu account** ([Sign up here](https://novu.com/signup)).
+
+<Steps>
+<Step>
+
+## Install Dependencies
+
+Run the following command to install the required packages:
+
+```
+npm install svix @novu/api @clerk/nextjs
+```
+
+</Step>
+
+<Step>
+
+## Configure Environment Variables
+
+Add the following variables to your `.env.local` file:
+
+```
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
+CLERK_SECRET_KEY=sk_test_...
+CLERK_SIGNING_SECRET=whsec_...
+NOVU_SECRET_KEY=novu_secret_...
+```
+
+</Step>
+
+<Step>
+
+## Expose Your Local Server
+
+To test webhooks locally, you need to expose your **local server** to the internet.
+
+There are two common options:
+
+<Tabs>
+<Tab title="localtunnel">
+
+### localtunnel
+
+**localtunnel** is a simple and free way to expose your local server without requiring an account.
+
+1. Start a localtunnel listener
+
+   ```bash
+   npx localtunnel 3000
+   ```
+
+2. Copy and save the generated **public URL** (e.g., `https://your-localtunnel-url.loca.lt`).
+
+Learn more about **localtunnel** [here](https://www.npmjs.com/package/localtunnel).
+
+<Note>
+  **localtunnel** links may expire quickly and sometimes face reliability issues.
+</Note>
+
+</Tab>
+<Tab title="ngrok">
+
+### ngrok
+
+For a more stable and configurable tunnel, use **ngrok**:
+
+1. Create an account at [ngrok dashboard](https://dashboard.ngrok.com/).
+2. Follow the [setup guide](https://dashboard.ngrok.com/get-started/setup).
+3. Run the command:
+
+   ```bash
+   ngrok http 3000
+   ```
+
+4. Copy and save the **Forwarding URL** (e.g., `https://your-ngrok-url.ngrok.io`).
+
+Learn more about **ngrok** [here](https://dashboard.ngrok.com/get-started/setup).
+
+</Tab>
+</Tabs>
+
+</Step>
+
+<Step>
+
+## Set Up Clerk Webhook Endpoint
+
+1. Go to the **Clerk Webhooks** page ([link](https://dashboard.clerk.com/last-active?path=webhooks)).
+2. Click **Add Endpoint**.
+3. Set the **Endpoint URL** as:
+
+   ```
+      https://your-forwarding-URL/api/webhooks/clerk
+   ```
+
+4. Subscribe to the **relevant Clerk events** (e.g., `user.created`, `email.created` etc.).
+
+<Note>
+  You can find the list of all supported Clerk events [here](https://clerk.com/docs/reference/webhooks/events), or proceed to the section which going over [Identify the Triggering Event(s).](#identify-the-triggering-events)
+</Note>
+
+5. Click **Create** and keep the settings page open.
+
+</Step>
+
+<Step>
+
+## Add Signing Secret to Environment Variables
+
+1. Copy the **Signing Secret** from Clerk's **Webhook Endpoint Settings**.
+2. Add it to your `.env.local` file:
+
+```
+CLERK_SIGNING_SECRET=your_signing_secret_here
+```
+
+</Step>
+
+<Step>
+
+## Make Webhook Route Public
+
+Ensure the webhook route is public by updating `middleware.ts` :
+
+```jsx
+import { clerkMiddleware } from '@clerk/nextjs/server';
+
+export default clerkMiddleware({
+  publicRoutes: ['/api/webhooks'],
+});
+```
+
+</Step>
+
+<Step>
+
+## Create Webhook Endpoint for Clerk in Next.js
+
+Create `app/api/webhooks/clerk/route.ts`:
+
+```
+app/
+  api/
+    webhooks/
+      clerk/
+        route.ts
+```
+
+The following snippet is the complete code of how to create a webhook endpoint for Clerk in Next.js:
+
+```jsx
+import { Webhook } from 'svix'
+import { headers } from 'next/headers'
+import { WebhookEvent, UserJSON } from '@clerk/nextjs/server'
+import { triggerWorkflow } from '@/app/utils/novu'
+
+// Single source of truth for all supported Clerk events and their corresponding Novu workflows
+const EVENT_TO_WORKFLOW_MAPPINGS = {
+    // Session events
+    'session.created': 'recent-login-v2',
+    
+    // User events
+    'user.created': 'user-created',
+    
+    // Email events
+    'email.created': {
+        'magic_link_sign_in': 'auth-magic-link-login',
+        'magic_link_sign_up': 'auth-magic-link-registration',
+        'magic_link_user_profile': 'profile-magic-link-update',
+        'organization_invitation': 'organization-invitation-v2',
+        'organization_invitation_accepted': 'org-member-joined',
+        'passkey_added': 'security-passkey-created',
+        'passkey_removed': 'security-passkey-deleted',
+        'password_changed': 'security-password-updated',
+        'password_removed': 'security-password-deleted',
+        'primary_email_address_changed': 'profile-email-updated',
+        'reset_password_code': 'reset-password-code-v2',
+        'verification_code': 'verification-code-v2',
+        'waitlist_confirmation': 'waitlist-signup-confirmed',
+        'waitlist_invitation': 'waitlist-access-granted',
+        'invitation': 'user-invitation'
+    }
+} as const;
+
+export async function POST(request: Request) {
+    try {
+        const SIGNING_SECRET = process.env.SIGNING_SECRET
+        if (!SIGNING_SECRET) {
+            throw new Error('Please add SIGNING_SECRET from Clerk Dashboard to .env')
+        }
+
+        const webhook = new Webhook(SIGNING_SECRET)
+        const headerPayload = await headers()
+        const validatedHeaders = validateHeaders(headerPayload)
+
+        const payload = await request.json()
+        const body = JSON.stringify(payload)
+
+        const event = await verifyWebhook(webhook, body, {
+            'svix-id': validatedHeaders.svix_id,
+            'svix-timestamp': validatedHeaders.svix_timestamp,
+            'svix-signature': validatedHeaders.svix_signature,
+        })
+
+        await handleWebhookEvent(event)
+
+        return new Response('Webhook received', { status: 200 })
+    } catch (error) {
+        console.error('Webhook processing error:', error)
+        return new Response(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`, { status: 400 })
+    }
+}
+
+const handleWebhookEvent = async (event: WebhookEvent) => {
+    const workflow = await workflowBuilder(event)
+    if (!workflow) {
+        console.log(`Unsupported event type: ${event.type}`)
+        return
+    }
+
+    const subscriber = await subscriberBuilder(event)
+    const payload = await payloadBuilder(event)
+
+    await triggerWorkflow(workflow, subscriber, payload)
+}
+
+async function workflowBuilder(event: WebhookEvent): Promise<string | undefined> {
+    if (!EVENT_TO_WORKFLOW_MAPPINGS[event.type as keyof typeof EVENT_TO_WORKFLOW_MAPPINGS]) {
+        return undefined;
+    }
+
+    if (event.type === 'email.created' && event.data.slug) {
+        const emailMappings = EVENT_TO_WORKFLOW_MAPPINGS['email.created'];
+        const emailSlug = event.data.slug as keyof typeof emailMappings;
+        return emailMappings[emailSlug] || `email-${String(emailSlug).replace(/_/g, '-')}`;
+    }
+
+    return EVENT_TO_WORKFLOW_MAPPINGS[event.type as keyof typeof EVENT_TO_WORKFLOW_MAPPINGS] as string;
+}
+
+async function subscriberBuilder(response: WebhookEvent) {
+    const userData = response.data as UserJSON;
+    
+    if (!userData.id) {
+        throw new Error('Missing subscriber ID from webhook data');
+    }
+
+    return {
+        subscriberId: (userData as any).user_id ?? userData.id,
+        firstName: userData.first_name ?? undefined,
+        lastName: userData.last_name ?? undefined,
+        email: (userData.email_addresses?.[0]?.email_address ?? (userData as any).to_email_address) ?? undefined,
+        phone: userData.phone_numbers?.[0]?.phone_number ?? undefined,
+        locale: 'en_US',
+        avatar: userData.image_url ?? undefined,
+        data: {
+            clerkUserId: (userData as any).user_id ?? userData.id,
+            username: userData.username ?? '',
+        },
+    }
+}
+
+async function payloadBuilder(response: WebhookEvent) {
+    return response.data;
+}
+
+const validateHeaders = (headerPayload: Headers) => {
+    const svix_id = headerPayload.get('svix-id')
+    const svix_timestamp = headerPayload.get('svix-timestamp')
+    const svix_signature = headerPayload.get('svix-signature')
+
+    if (!svix_id || !svix_timestamp || !svix_signature) {
+        throw new Error('Missing Svix headers')
+    }
+
+    return { svix_id, svix_timestamp, svix_signature }
+}
+
+const verifyWebhook = async (webhook: Webhook, body: string, headers: any): Promise<WebhookEvent> => {
+    try {
+        return webhook.verify(body, headers) as WebhookEvent
+    } catch (err) {
+        console.error('Error: Could not verify webhook:', err)
+        throw new Error('Verification error')
+    }
+}
+```
+
+<AccordionGroup>
+<Accordion title="Breakdown of the code">
+
+---
+
+**Imports and Dependencies**
+
+```jsx
+import { Webhook } from 'svix'
+import { headers } from 'next/headers'
+import { WebhookEvent, UserJSON } from '@clerk/nextjs/server'
+import { triggerWorkflow } from '@/app/utils/novu'
+```
+
+- `Webhook` from `svix`: This is a library used to verify the authenticity of incoming webhooks by checking their signatures. Webhooks often use signatures to ensure the payload hasn’t been tampered with.
+
+- `headers` from `next/headers`: A Next.js utility to access HTTP headers from the incoming request in the App Router.
+
+- `WebhookEvent` from `@clerk/nextjs/server`: A type definition for webhook events, likely provided by Clerk (a user authentication and management service). This ensures type safety when handling events.
+
+- `triggerWorkflow`: A custom function (imported from another file) that triggers a workflow. This is likely where notifications or other business logic is executed.
+
+---
+
+**Event Mapping**
+
+```jsx
+const EVENT_TO_WORKFLOW_MAPPINGS = {
+   
+    // Clerk webhook event type -> Novu workflowId
+
+    // Session events
+    'session.created': 'session-created',
+    
+    // User events
+    'user.created': 'user-created',
+    
+    // Email events
+    'email.created': {
+        'magic_link_sign_in': 'auth-magic-link-login',
+        'magic_link_sign_up': 'auth-magic-link-registration',
+        'magic_link_user_profile': 'profile-magic-link-update',
+        'organization_invitation': 'organization-invitation',
+        'organization_invitation_accepted': 'org-member-joined',
+        'passkey_added': 'security-passkey-created',
+        'passkey_removed': 'security-passkey-deleted',
+        'password_changed': 'security-password-updated',
+        'password_removed': 'security-password-deleted',
+        'primary_email_address_changed': 'profile-email-updated',
+        'reset_password_code': 'reset-password-code',
+        'verification_code': 'verification-code',
+        'waitlist_confirmation': 'waitlist-signup-confirmed',
+        'waitlist_invitation': 'waitlist-access-granted',
+        'invitation': 'user-invitation'
+    }
+} as const;
+```
+
+This mapping defines how Clerk webhook events are associated with Novu workflows.
+
+---
+
+**Main Entry Point: `POST` Handler**
+
+```jsx
+export async function POST(request: Request) {
+    try {
+        const SIGNING_SECRET = process.env.SIGNING_SECRET
+        if (!SIGNING_SECRET) {
+            throw new Error('Please add SIGNING_SECRET from Clerk Dashboard to .env')
+        }
+
+        const webhook = new Webhook(SIGNING_SECRET)
+        const headerPayload = await headers()
+        const validatedHeaders = validateHeaders(headerPayload)
+
+        const payload = await request.json()
+        const body = JSON.stringify(payload)
+
+        const event = await verifyWebhook(webhook, body, {
+            'svix-id': validatedHeaders.svix_id,
+            'svix-timestamp': validatedHeaders.svix_timestamp,
+            'svix-signature': validatedHeaders.svix_signature,
+        })
+
+        await handleWebhookEvent(event)
+
+        return new Response('Webhook received', { status: 200 })
+    } catch (error) {
+        console.error('Webhook processing error:', error)
+        return new Response(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`, { status: 400 })
+    }
+}
+```
+
+This is the main function that handles incoming HTTP POST requests (webhook events).
+
+---
+
+**Handling the Webhook Event: `handleWebhookEvent`**
+
+```jsx
+const handleWebhookEvent = async (event: WebhookEvent) => {
+    const workflow = await workflowBuilder(event)
+    if (!workflow) {
+        console.log(`Unsupported event type: ${event.type}`)
+        return
+    }
+
+    const subscriber = await subscriberBuilder(event)
+    const payload = await payloadBuilder(event)
+
+    await triggerWorkflow(workflow, subscriber, payload)
+}
+```
+
+This function processes the verified webhook event.
+
+---
+
+**Identify the WorkflowID based on the event type: `workflowBuilder`**
+
+```jsx
+async function workflowBuilder(event: WebhookEvent): Promise<string | undefined> {
+    if (!EVENT_TO_WORKFLOW_MAPPINGS[event.type as keyof typeof EVENT_TO_WORKFLOW_MAPPINGS]) {
+        return undefined;
+    }
+
+    if (event.type === 'email.created' && event.data.slug) {
+        const emailMappings = EVENT_TO_WORKFLOW_MAPPINGS['email.created'];
+        const emailSlug = event.data.slug as keyof typeof emailMappings;
+        return emailMappings[emailSlug] || `email-${String(emailSlug).replace(/_/g, '-')}`;
+    }
+
+    return EVENT_TO_WORKFLOW_MAPPINGS[event.type as keyof typeof EVENT_TO_WORKFLOW_MAPPINGS] as string;
+}
+```
+
+This function determines the workflow ID by mapping the Clerk webhook event type to the Novu workflow ID.
+
+---
+
+**Building the Subscriber: `subscriberBuilder`**
+
+```jsx
+async function subscriberBuilder(response: WebhookEvent) {
+    const userData = response.data as UserJSON;
+    
+    if (!userData.id) {
+        throw new Error('Missing subscriber ID from webhook data');
+    }
+
+    return {
+        subscriberId: (userData as any).user_id ?? userData.id,
+        firstName: userData.first_name ?? undefined,
+        lastName: userData.last_name ?? undefined,
+        email: (userData.email_addresses?.[0]?.email_address ?? (userData as any).to_email_address) ?? undefined,
+        phone: userData.phone_numbers?.[0]?.phone_number ?? undefined,
+        locale: 'en_US',
+        avatar: userData.image_url ?? undefined,
+        data: {
+            clerkUserId: (userData as any).user_id ?? userData.id,
+            username: userData.username ?? '',
+        },
+    }
+}
+```
+
+This function builds the subscriber data based on the webhook event data.
+
+---
+
+**Building the Payload: `payloadBuilder`**
+
+```jsx
+async function payloadBuilder(response: WebhookEvent) {
+    return response.data;
+}
+```
+
+This function constructs (extracts from the webhook event) the payload object data that will be used within workflow trigger call.
+
+---
+
+**Validating the Headers: `validateHeaders`**
+
+```jsx
+const validateHeaders = (headerPayload: Headers) => {
+    const svix_id = headerPayload.get('svix-id')
+    const svix_timestamp = headerPayload.get('svix-timestamp')
+    const svix_signature = headerPayload.get('svix-signature')
+
+    if (!svix_id || !svix_timestamp || !svix_signature) {
+        throw new Error('Missing Svix headers')
+    }
+
+    return { svix_id, svix_timestamp, svix_signature }
+}
+```
+
+This function extracts and validates the Svix headers from the request.
+
+---
+
+**Verifying the Webhook: `verifyWebhook`**
+
+```jsx
+
+const verifyWebhook = async (webhook: Webhook, body: string, headers: any): Promise<WebhookEvent> => {
+    try {
+        return webhook.verify(body, headers) as WebhookEvent
+    } catch (err) {
+        console.error('Error: Could not verify webhook:', err)
+        throw new Error('Verification error')
+    }
+}
+```
+
+This function verifies the authenticity of the webhook using the `svix` library.
+
+---
+
+**How It All Fits Together**
+
+Here’s a high-level flow of how the code works:
+
+1. **Receive a Webhook:**
+   The `POST` handler receives an `HTTP POST` request with a webhook payload.
+
+2. **Validate and Verify:**
+   The `validateHeaders` function ensures the required Svix headers are present. The `verifyWebhook` function uses the `svix` library to verify the webhook’s authenticity.
+
+3. **Process the Event:**
+   The `handleWebhookEvent` function filters events and processes only `user.created` or `email.created` events.
+
+   It calls helper functions (`workflowBuilder`, `subscriberBuilder`, `payloadBuilder`) to construct the necessary data.
+
+4. **Trigger a Workflow:**
+   The `triggerWorkflow` function is called with the constructed data, executing the desired business logic (e.g., sending notifications).
+
+---
+
+</Accordion>
+</AccordionGroup>
+
+</Step>
+
+<Step>
+
+## Add Novu Workflow Notification Trigger Function
+
+Create `app/utils/novu.ts` :
+
+```
+app/
+  utils/
+    novu.ts
+  api/
+    webhooks/
+      clerk/
+        route.ts
+```
+
+```jsx
+import { Novu } from '@novu/api';
+import { SubscriberPayloadDto } from '@novu/api/models/components/subscriberpayloaddto';
+
+const novu = new Novu({
+    secretKey: process.env['NOVU_SECRET_KEY']
+});
+
+export async function triggerWorkflow(workflowId: string, subscriber: SubscriberPayloadDto, payload: object) {
+    try {
+        console.log("Payload:", payload ,"Triggering workflow:", workflowId, "Subscriber:", subscriber)
+        await novu.trigger({
+            workflowId,
+            to: subscriber,
+            payload
+        });
+        return new Response('Notification triggered', { status: 200 });
+    } catch (error) {
+        return new Response('Error triggering notification', { status: 500 });
+    }
+}
+```
+
+</Step>
+
+<Step>
+
+## Add or create Novu workflows in your Novu dashboard
+
+In Novu, a webhook event—such as a user being created or updated—can trigger one or more workflows, depending on how you want to handle these events in your application. 
+
+A workflow defines a sequence of actions (e.g., sending notifications, updating records) that execute when triggered by a webhook. 
+
+The Novu dashboard allows you to either create a custom workflow from scratch or choose from pre-built templates to streamline the process.
+
+**Steps to Create a Workflow**
+
+Follow these steps to set up your workflow(s) in the Novu dashboard:
+
+### Identify the Triggering Event(s)
+
+   Determine which webhook events will activate your workflow (e.g., "user created," "user updated").
+   
+   Check your webhook configuration to understand the event data being sent.
+
+<AccordionGroup>
+  <Accordion title="Supported webhook events">
+
+  To find a list of all the events Clerk supports:
+  1. In the Clerk Dashboard, navigate to the Webhooks page.
+  2. Select the Event Catalog tab.
+
+  </Accordion>
+
+  <Accordion title="Payload structure">
+
+  The payload of a webhook is a JSON object that contains the following properties:
+  
+  - `data`: contains the actual payload sent by Clerk. 
+    The payload can be a different object depending on the event type. 
+    
+    For example, for `user.*` events, the payload will always be the [User object](https://clerk.com/docs/references/javascript/user).
+  
+  - `object`: always set to `event`.
+  
+  - `type`: the type of event that triggered the webhook.
+  
+  - `timestamp`: timestamp in milliseconds of when the event occurred.
+  
+  - `instance_id`: the identifier of your Clerk instance.
+
+  The following example shows the payload of a `user.created` event:
+
+  ```json
+  {
+  "data": {
+    "birthday": "",
+    "created_at": 1654012591514,
+    "email_addresses": [
+      {
+        "email_address": "exaple@example.org",
+        "id": "idn_29w83yL7CwVlJXylYLxcslromF1",
+        "linked_to": [],
+        "object": "email_address",
+        "verification": {
+          "status": "verified",
+          "strategy": "ticket"
+        }
+      }
+    ],
+    "external_accounts": [],
+    "external_id": "567772",
+    "first_name": "Example",
+    "gender": "",
+    "id": "user_29w83sxmDNGwOuEthce5gg56FcC",
+    "image_url": "https://img.clerk.com/xxxxxx",
+    "last_name": "Example",
+    "last_sign_in_at": 1654012591514,
+    "object": "user",
+    "password_enabled": true,
+    "phone_numbers": [],
+    "primary_email_address_id": "idn_29w83yL7CwVlJXylYLxcslromF1",
+    "primary_phone_number_id": null,
+    "primary_web3_wallet_id": null,
+    "private_metadata": {},
+    "profile_image_url": "https://www.gravatar.com/avatar?d=mp",
+    "public_metadata": {},
+    "two_factor_enabled": false,
+    "unsafe_metadata": {},
+    "updated_at": 1654012591835,
+    "username": null,
+    "web3_wallets": []
+  },
+  "instance_id": "ins_123",
+  "object": "event",
+  "timestamp": 1654012591835,
+  "type": "user.created"
+}
+```
+
+  </Accordion>
+
+</AccordionGroup>
+
+### Choose Your Starting Point
+
+<Tabs>
+<Tab title="Use a Workflow Template">
+   
+   Browse the workflow template store in the Novu dashboard. If a template matches your use case (e.g., "User Onboarding"), select it and proceed to customize it.
+
+   <video autoPlay loop muted playsInline src="./media-assets/clerk/workflow-fromTemplate.mp4" />
+ 
+
+</Tab>
+<Tab title="Create a Blank Workflow">
+
+   If no template fits or you need full control, start with a blank workflow and define every step yourself.
+
+   <video autoPlay loop muted playsInline src="./media-assets/clerk/blankWorkflow.mp4" />
+</Tab>
+<Tab title="Code-First Workflow (Novu Framework)">
+
+   If you prefer a more code-based approach, you can create a workflow using the Novu Framework.
+   
+   <Card title="Novu Framework" icon="square-code" href="/framework">
+   <p>
+      The Novu framework allows you to build and manage advanced notification workflows with code, and expose no-code controls for non-technical users to modify.
+   </p>
+   </Card>
+
+</Tab>
+</Tabs>
+   
+
+### Configure the Workflow  
+
+   - For a template, tweak the existing steps to align with your requirements.  
+
+   - For a blank workflow, add actions like sending emails, sending in-app notifications, Push notifications, or other actions.
+
+   - For a code-first workflow, you can use the Novu Framework to build your workflow right within your code base.
+
+### Set Trigger Conditions
+
+   - Link the workflow to the correct webhook event(s). 
+
+   - Ensure the trigger matches the event data (e.g., event type or payload) sent by your application.
+
+<Note>
+  **Tips for Success**
+
+  - **Start Simple:** Use templates for common tasks and switch to blank workflows for unique needs.  
+
+  - **Test Thoroughly:** Simulate webhook events to ensure your workflows behave as expected.  
+
+  - **Plan for Growth:** Organize workflows logically (separate or combined) to make future updates easier.
+</Note>
+
+</Step>
+
+<Step>
+
+## Disable Email **Delivered by Clerk**
+
+By default, Clerk sends email notifications whenever necessary, such as Magic Links for email verification, Invitations, Password Resets, and more.
+
+To prevent users from receiving duplicate emails, we need to disable email delivery by Clerk for the notifications handled by Novu.
+
+1. Navigate to the **Emails** section in the Clerk Dashboard.
+
+   ![Clerk's Dashboard 1](/images/guides/clerk/clerk-email-dashboard.png)
+
+2. Select any **email.created** event that you want Novu to handle.
+3. Toggle **off** email delivery for the selected event.
+
+   ![Clerk's Dashboard 2](/images/guides/clerk/clerk-email-dashboard2.png)
+
+This ensures that Clerk does not send duplicate emails, allowing Novu to manage the notifications seamlessly.
+
+</Step>
+
+<Step>
+
+## Test the Webhook
+
+1. Start your Next.js server.
+2. Go to **Clerk Webhooks → Testing**.
+3. Select an event (e.g., `user.created`, `email.created`).
+4. Click **Send Example**.
+5. Verify logs in **your terminal**.
+
+</Step>
+</Steps>

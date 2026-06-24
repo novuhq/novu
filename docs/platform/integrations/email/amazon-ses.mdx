@@ -1,0 +1,70 @@
+---
+title: 'Amazon SES'
+description: 'Learn how to use the Amazon SES provider to send email notifications using Novu'
+---
+
+
+You can use the [Amazon SES](https://aws.amazon.com/ses/) provider to send transactional emails to your customers using the Novu Platform with a single API to create multi-channel experiences.
+
+## Getting Started
+
+To use the Amazon SES provider in the email channel, you will need to create an SES account and add your credentials to the Amazon SES integration on the Novu platform.
+
+## Setting up SES in AWS?
+
+- Create a new IAM account with appropriate permission policies.
+  <Note>
+    Example policy rule `arn:aws:ses:<REGION>:<ACCOUNT>:identity/*`
+  </Note>
+- Create a new access key and save generated `ACCESS_KEY_ID` and `ACCESS_SECRET_KEY` carefully
+- Choose Amazon Simple Email Service.
+- Create a new identity.
+- Either choose domain or email.
+- Verify your domain (by adding a few DNS records as mentioned in SES instructions) or email (AWS sends a verification email to your email).
+- Verify the recipient email also by creating a new email identity type [only in sandbox mode].
+- Test if your SES is set up correctly using the test email feature.
+
+## Creating an SES integration with Novu
+
+- Visit the [Integrations](https://dashboard.novu.co/integrations?utm_campaign=docs-integrations-ses) page on Novu.
+- Click on Add a Provider.
+- Select Amazon SES service.
+- Enter previously saved `ACCESS_KEY_ID` and `ACCESS_SECRET_KEY`.
+- Fill in the `From email address` field using the authenticated sender email id in the previous step.
+- Enter `region` and `Sender name` also.
+
+<Note>
+  Example region format:- `us-east-1`. By default Novu uses `us-east-1` region.
+</Note>
+
+- Click on the `Disabled` button and mark it as `Active`.
+- Click on the **Update** button.
+- You should now be able to send notifications using Amazon SES in Novu.
+
+## FAQs
+
+### Trigger from novu is successful but the subscriber is not receiving email
+Possible reasons: 
+- Subscriber's email address is not verified in SES if SES account is in sandbox environment. 
+- SES account daily sending limit has been reached if SES account is in sandbox environment.
+- Incorrect credentials have been used while creating SES integration.
+
+### SignatureDoesNotMatch error with SES
+
+- Ensure that the `ACCESS_KEY_ID` and `ACCESS_SECRET_KEY` values are correct and have the necessary permissions. If using SMTP credentials, change it with IAM role credentials.
+- If the issue persists, regenerate the credentials and update the integration with new credentials.
+
+## Next Steps
+
+<Columns cols={2}>
+  <Card title="Configure bcc, cc, and reply-to" href="/platform/integrations/email#sending-email-overrides">
+    Learn how to configure bcc, cc, and reply-to for your email notifications using email overrides
+  </Card>
+  <Card title="Sending email attachments" href="/platform/integrations/email#sending-email-attachments">
+    Learn how to send attachments with email notifications
+  </Card>
+  <Card title="Use different email integration" href="/platform/integrations/email#sending-email-overrides">
+    Learn how to use different email provider integrations to be used to send emails
+  </Card>
+</Columns>
+

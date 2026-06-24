@@ -1,0 +1,83 @@
+---
+title: 'Overview'
+description: 'Learn how to create, configure, and work with notification workflows in Novu.'
+icon: "workflow"
+---
+
+Novu Workflows orchestrate how notifications move from application events to messages delivered across one or more channels. A workflow combines delivery logic, message content, and execution rules into a single notification pipeline.
+
+Use workflows to control when notifications are sent, who receives them, what content is delivered, and how delivery behaves across channels.
+
+<Note>
+  If you’re new to workflows, see the [Workflow core concept](/platform/concepts/workflows) for an in-depth overview of what workflows are and how they fit into Novu’s notification system.
+</Note>
+
+Novu Workflows help you:
+
+- Ship notifications faster without hardcoding logic in your application.  
+- Centralize notification logic instead of scattering it across services and codebases.  
+- Control delivery behavior with conditions, delays, batching, and throttling.  
+- Personalize notifications at scale using event data, context, and templates.  
+- Observe and debug notification execution with built-in monitoring and logs.
+
+## Features
+
+- **Multi-channel**: Email, in-app, SMS, push, and chat channels.
+- **Action steps**: Delays, digests, throttle notifications, and HTTP requests.
+- **Step conditions**: Define conditional logic for each workflow step.
+- **Template editors**: Channel-specific editors with variables and LiquidJS logic.
+- **Reusable layouts and components**: Email layouts and shared templates.
+- **Context and shared data**: Attach metadata and reusable objects across workflows.
+- **Translations**: Localize notification content across languages.
+- **Observability**: Activity feed and request logs for debugging and auditing.
+
+## Workflow lifecycle
+
+A workflow typically follows this lifecycle:
+
+1. Create a workflow for an application event.  
+2. Add and configure steps to define channels and execution logic.  
+3. Author content for each channel.  
+4. Trigger the workflow from your application using events and payloads.  
+5. Monitor and iterate using activity logs and delivery metrics.  
+
+This section walks through each stage in detail.
+
+## Getting started
+
+Follow these guides to start building your first workflow:
+
+<Columns cols={2}>
+  <Card
+    title="Create a workflow"
+    href="/platform/workflow/create-a-workflow"
+  >
+  Create a workflow and define its identifier and metadata.
+  </Card>
+  <Card
+    title="Configure workflows"
+    href="/platform/workflow/configure-workflow"
+  >
+  Manage workflow metadata, channel preferences, payload schema, and activation state.
+  </Card>
+  <Card
+    title="Add and configure steps"
+    href="/platform/workflow/add-and-configure-steps"
+  >
+  Add channel and action steps and define execution logic.
+  </Card>
+  <Card
+    title="Trigger workflows"
+    href="/platform/workflow/trigger-workflow"
+  >
+  Trigger workflows from your application and send event data.
+  </Card>
+</Columns>
+
+## Use cases
+
+- **User lifecycle notifications**: Signup, onboarding, account changes, password resets.
+- **Transactional alerts**: Payments, security events, system updates.
+- **Product messaging**: Feature announcements, marketing notifications, in-app prompts.
+- **Operational workflows**: Internal alerts, DevOps notifications, system monitoring.
+- **Multi-tenant messaging**: Tenant-aware notifications using context and topics.

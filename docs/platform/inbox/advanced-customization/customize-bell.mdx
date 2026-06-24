@@ -1,0 +1,113 @@
+---
+title: 'Customize Bell Icon'
+description: "Learn how to fully customize the inbox component bell icon using your own components or third-party libraries."
+icon: "bell-ring"
+---
+
+The Novu Inbox includes a default bell icon that triggers the notification popover when clicked. You can use this bell as a standalone component or customize it to match your application's design system.
+
+## Bell component
+
+The Bell component displays Novu's default Inbox bell icon. It's designed to be used as a standalone trigger when you want to build your own custom notification center UI, such as a custom popover or a full-page view.
+
+By using Bell component, you separate the trigger (the icon) from the content (the notification list), giving you full control over the layout and behavior of your application's notification center.
+
+```tsx
+import { Inbox, Bell } from '@novu/react';
+ 
+function BellComponent() {
+  return (
+      <Inbox
+        applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+        subscriber="YOUR_SUBSCRIBER_ID"
+      >
+        <Bell/>
+      </Inbox>
+  );
+}
+export default BellComponent;
+```
+
+<Note>
+  See the [Custom Popover documentation](/platform/inbox/advanced-customization/customize-popover) for how to use the Bell component with third party library like Radix UI to trigger a custom popover that contains the notification list.
+</Note>
+
+## Replace the default Bell Icon
+
+Replace the default bell icon that comes with the Inbox component with your own custom React component or a third-party UI library component to match your application's design. You can do this using the `renderBell` prop.
+
+<video autoPlay loop muted playsInline src="/images/inbox/custom-bell.mp4" />
+
+<Tabs>
+  <Tab>
+
+```tsx
+import { Inbox } from '@novu/react';
+
+function CustomBell() {
+  return (
+      <Inbox
+        applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+        subscriber="YOUR_SUBSCRIBER_ID"
+        renderBell={() => {
+          return (
+            <div className="bg-blue-300 p-4 inline-flex">
+              New notifications
+            </div>
+          );
+        }}
+      />
+  );
+}
+export default CustomBell;
+```
+
+  </Tab>
+  <Tab>
+
+```tsx
+import { Inbox } from '@novu/react';
+
+function CustomBell() {
+  return (
+    <Inbox 
+      applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+      subscriber="YOUR_SUBSCRIBER_ID"
+      renderBell={(unreadCount) => {
+          return (
+            <div className="bg-blue-300 p-4 inline-flex">
+            New {unreadCount.total} notifications
+            </div>
+          );
+        }}
+    />
+  );
+}
+export default CustomBell;
+```
+  </Tab>
+  <Tab>
+
+  ```tsx
+
+  function CustomBell() {
+    return (
+      <Inbox 
+        applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+        subscriber="YOUR_SUBSCRIBER_ID"
+        renderBell={(unreadCount) => {
+            return (
+              <div className="bg-blue-300 p-4 inline-flex">
+                High severity $
+                {unreadCount.severity[SeverityLevelEnum.HIGH]}{' '}
+                notifications
+              </div>
+            );
+          }}
+      />
+    );
+  }
+  export default CustomBell;
+  ```
+  </Tab>
+</Tabs>

@@ -1,0 +1,104 @@
+---
+title: Message schema
+description: "Reference the Novu message schema used in API requests and responses. Review fields, data types, and object structure for this resource."
+---
+
+### Message
+
+Message is a single notification that is sent to a subscriber. Each channel step in the workflow generates a message.
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `id` |  |  |
+| `templateId` |  |  |
+| `environmentId` |  |  |
+| `messageTemplateId` |  |  |
+| `organizationId` |  |  |
+| `notificationId` |  |  |
+| `subscriberId` |  |  |
+| `subscriber` |  |  |
+| `template` |  |  |
+| `templateIdentifier` |  |  |
+| `createdAt` |  |  |
+| `deliveredAt` |  |  |
+| `lastSeenDate` |  |  |
+| `lastReadDate` |  |  |
+| `content` |  |  |
+| `transactionId` |  |  |
+| `subject` |  |  |
+| `channel` |  |  |
+| `read` |  |  |
+| `seen` |  |  |
+| `snoozedUntil` |  |  |
+| `email` |  |  |
+| `phone` |  |  |
+| `directWebhookUrl` |  |  |
+| `providerId` |  |  |
+| `deviceTokens` |  |  |
+| `title` |  |  |
+| `cta` |  |  |
+| `feedId` |  |  |
+| `status` |  |  |
+| `errorId` |  |  |
+| `errorText` |  |  |
+| `payload` |  |  |
+| `overrides` |  |  |
+| `contextKeys` |  |  |
+
+### ChannelTypeEnum
+```typescript
+ChannelTypeEnum {
+  IN_APP = "in_app",
+  EMAIL = "email",
+  SMS = "sms",
+  CHAT = "chat",
+  PUSH = "push"
+}
+```
+
+### Workflow
+
+Workflow is a collection of steps that are executed in order to send a notification.
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `id` |  |  |
+| `name` |  |  |
+| `description` |  |  |
+| `active` |  |  |
+| `draft` |  |  |
+| `preferenceSettings` |  |  |
+| `critical` |  |  |
+| `tags` |  |  |
+| `steps` |  |  |
+| `organizationId` |  |  |
+| `creatorId` |  |  |
+| `environmentId` |  |  |
+| `triggers` |  |  |
+| `notificationGroupId` |  |  |
+| `parentId` |  |  |
+| `deleted` |  |  |
+| `deletedAt` |  |  |
+| `deletedBy` |  |  |
+| `notificationGroup` |  |  |
+| `data` |  |  |
+| `workflowIntegrationStatus` |  |  |
+
+### Actor
+
+Actor is the user who is skipped from sending the notification when workflow is triggered to a [topic](/platform/concepts/topics).
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `toString` |  |  |
+| `valueOf` |  |  |
+
+### MessageCTA
+
+MessageCTA is a call to action that is displayed in the [Inbox](/platform/inbox) message. It can be used to redirect the user to a specific URL when the message is clicked.
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `type` |  |  |
+| `data` |  |  |
+| `action` |  |  |

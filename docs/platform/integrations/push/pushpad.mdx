@@ -1,0 +1,121 @@
+---
+title: 'Pushpad'
+description: 'Learn how to use the Pushpad provider to send web push notifications using Novu'
+---
+
+This guide walks you through the entire process of configuring and using [Pushpad](https://pushpad.xyz) with Novu, from getting your credentials to sending your first notification.
+
+[Pushpad](https://pushpad.xyz) is a web push service that supports sending notifications to all major browsers via FCM, Mozilla autopush, Windows Push Notification Services, and APNS, with just one simple API.
+
+## Configure Pushpad with Novu
+
+Before you can send notifications, you need to connect your Pushpad project to Novu by getting your credentials and adding them to your integration settings.
+
+### Step 1: Get your Pushpad credentials
+
+To configure the Pushpad integration, you need:
+- An active Pushpad account
+- A Pushpad auth token (found in the [account settings](https://pushpad.xyz/access_tokens))
+- Your Pushpad project ID (found in the project settings)
+
+1. Log in to your Pushpad dashboard.
+2. Click **New project** to create a project.
+![New project](/images/channels-and-providers/push/pushpad/new-project.png)
+3. Click **Settings** on the project page and record the **Project ID**. You need it to connect to Novu.
+![Project ID](/images/channels-and-providers/push/pushpad/project-id.png)
+4. Navigate to the [access token](https://pushpad.xyz/access_tokens) page.
+5. Click **Add access token**.
+6. Fill in the required fields to create a new access token, or use your existing token if you already have one.
+![Add access token](/images/channels-and-providers/push/pushpad/add-token.png)
+7. Copy the generated token. You need it to connect to Novu.
+![Generate access token](/images/channels-and-providers/push/pushpad/access-token.png)
+
+### Step 2: Connect Pushpad to Novu
+
+Add these credentials to your Pushpad integration in the Novu dashboard.
+
+1. Log in to the Novu dashboard.
+2. On the Novu dashboard, navigate to the **Integration Store**.
+3. Click **Connect provider**.
+4. Click the **Push** tab.
+5. Select **Pushpad**.
+6. In the Pushpad integration form, paste your access token and project ID from [Step 1](/platform/integrations/push/pushpad#step-1-get-your-pushpad-credentials) into the corresponding fields.
+  ![Pushpad Integration in Novu](/images/channels-and-providers/push/pushpad/pushpad-integration.png)
+7. Click **Create Integration**.
+
+## Using Pushpad with Novu
+
+Once your integration is configured, in other to send push notification using the PushPad provider, you must do the following:
+
+### Step 1: Add subscriber device token
+
+After [setting up the Pushpad SDK](https://pushpad.xyz/docs/pushpad_pro_getting_started) on your website, you must [assign a user ID (uid)](https://pushpad.xyz/docs/identifying_users) to your users' push subscriptions.
+
+This `uid` is the identifier Novu uses to target a specific browser. For example, if you use `pushpad('uid', 'user123')`, then `user123` is the ID you must register in Novu.
+
+You can do this by making an API call to [update the subscriber's credentials](/api-reference/subscribers/update-provider-credentials).
+
+<Tabs>
+<Tab title="Node.js">
+```typescript
+import { Novu } from '@novu/api';
+import { ChatOrPushProviderEnum } from "@novu/api/models/components";
+
+const novu = new Novu({
+  secretKey: "<NOVU_SECRET_KEY>",
+  // Required if using EU region
+  // serverURL: "https://eu.api.novu.co",
+});
+
+await novu.subscribers.credentials.update(
+  {
+    providerId: ChatOrPushProviderEnum.PushPad,
+    // Use integrationIdentifier to store device tokens for a specific integration
+    integrationIdentifier: "pushpad-MnGLxp8uy",
+    credentials: {
+      deviceTokens: ["token1", "token2", "token3"],
+    },
+  },
+  "subscriberId"
+);
+```
+</Tab>
+<Tab title="cURL">
+```bash
+curl -L -X PUT 'https://api.novu.co/v1/subscribers/<SUBSCRIBER_ID>/credentials' \
+-H 'Content-Type: application/json' \
+-H 'Accept: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+  "providerId": "pushpad",
+  "deviceTokens": ['user123'],
+  "integrationIdentifier": "pushpad-MnGLxp8uy"
+}'
+```
+
+</Tab>
+</Tabs>
+
+### Step 2: Send a notification
+
+Now you're ready to send a push notification. [Create a workflow with a Push step](/platform/workflow/create-a-workflow) and then trigger it. Novu sends the notification to the `uid`s associated with the subscriber.
+
+The example below demonstrates a simple trigger using Novu’s SDK.
+
+```typescript
+import { Novu } from '@novu/api';
+
+const novu = new Novu({
+  secretKey: "<NOVU_SECRET_KEY>",
+  // Required if using EU region
+  // serverURL: "https://eu.api.novu.co",
+});
+
+await novu.trigger({
+  workflowId: "workflowId",
+  to: {
+    subscriberId: "subscriberId",
+  },
+  payload: {},
+});
+```

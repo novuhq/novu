@@ -1,0 +1,163 @@
+---
+title: 'Next.js'
+description: 'Get started with Novu Framework in a Next.js application'
+---
+
+
+In this guide, we will add a Novu [Bridge Endpoint](/framework/endpoint) to a Next.js application and send our first test workflow.
+
+<Steps>
+    <Step title="Create a Next.js application">
+        This link can be copied right from the onboarding guide on the Novu Studio or can always be copied from the [API Keys](https://dashboard.novu.co/api-keys) page on the Novu Dashboard.
+
+        ```bash
+        npx novu init --secret-key=<YOUR_NOVU_SECRET_KEY>
+        ```
+
+        The sample application will create an `.env` file containing the `NOVU_SECRET_KEY` environment variable required
+        for securing your endpoint. And a sample workflow demonstrating the flexibility of Novu using Step Controls.
+
+        <AccordionGroup>
+            <Accordion title="Manually add to an existing application (5 minutes)">
+                **Install required packages**
+
+                ```bash
+                npm install @novu/framework @react-email/components react-email zod zod-to-json-schema
+                ```
+
+                This will install
+
+                - **`@novu/framework`** SDK Package
+                - **React Email** (Recommended) - For writing your email templates with React
+                - **Zod** (Recommended) - For end-to-end type safety for your Payload and Step Controls
+
+                **Add a Novu API Endpointt**
+
+                ```typescript App Router (app/api/novu/route.ts)
+
+                export const { GET, POST, OPTIONS } = serve({ workflows: [myWorkflow] });
+                ```
+
+                ```typescript Pages Router (pages/api/novu.ts)
+
+                export default serve({ workflows: [testWorkflow] });
+                ```
+
+                **Add a Novu Secret Key Environment Variable**
+
+                Add `NOVU_SECRET_KEY` environment variable to your `.env`
+
+                ```bash
+                NOVU_SECRET_KEY=<NOVU_SECRET_KEY>
+                ```
+
+                **Create your workflow definition**
+
+                Add a `novu` folder that will contain your workflow definitions
+
+                ```tsx app/novu/workflows.ts
+
+                export const testWorkflow = workflow('test-workflow', async ({ step, payload }) => {
+                    await step.email('send-email', async (controls) => {
+                        return {
+                            subject: controls.subject,
+                            body: renderEmail(payload.userName),
+                        };
+                    },
+                    {
+                        controlSchema: z.object({
+                            subject: z.string().default('A Successful Test on Novu from {{userName}}'),
+                        }),
+                    });
+                }, {
+                    payloadSchema: z.object({
+                        userName: z.string().default('John Doe'),
+                    }),
+                });
+                ```
+
+                **Create your React Email Template (Optional)**
+
+                Add a new email template
+
+                ```typescript app/novu/emails/test-email.tsx
+
+                interface TestEmailProps {
+                    name: string
+                }
+
+                export const TestEmailTemplate = ({ name }: TestEmailProps) => {
+                    return (
+                        <Html>
+                            <Head />
+                            <Body>
+                                <Container>
+                                    Hello {name} welcome to your first React E-mail template!
+                                </Container>
+                            </Body>
+                        </Html>
+                    );
+                };
+
+                export default TestEmailTemplate;
+
+                export function renderEmail(name: string) {
+                    return render(<TestEmailTemplate name={name} />);
+                }
+                ```
+            </Accordion>
+        </AccordionGroup>
+    </Step>
+    <Step>
+        ## Start your application
+        To start your boilerplate Next.js server with the Novu Endpoint configured, run the following command:
+
+        ```tsx
+        cd my-novu-app && npm run dev
+        ```
+
+        The sample application will start on [`https://localhost:4000`](https://localhost:4000) and your novu endpoint will be exposed at `/api/novu` served by the Next.js API.
+
+        If your Next.js application is running on other than `4000` port, restart the `novu dev` command with the port:
+
+        ```tsx
+        npx novu@latest dev --port <YOUR_NEXTJS_APPLICATION_PORT>
+        ```
+    </Step>
+    <Step>
+        ## Test your endpoint
+
+Test your workflow by triggering it from the Local Studio or using the Novu API:
+
+```bash
+curl -X POST https://api.novu.co/v1/events/trigger \
+  -H 'Authorization: ApiKey YOUR_API_KEY' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "name": "my-workflow",
+    "to": "subscriber-id",
+    "payload": {}
+  }'
+```
+
+You should see the notification being processed in your Local Studio.
+
+    </Step>
+    <Step>
+        ## Deploy your application
+
+Deploy your application to your preferred hosting provider. Make sure the `/api/novu` endpoint is accessible from the internet.
+
+For local development and testing, you can use tools like ngrok to expose your local server to the internet.
+
+    </Step>
+
+</Steps>
+
+Now that you have your first workflow running, you can:
+
+- Learn about [Workflow Controls](/framework/controls) to expose no-code editing capabilities
+- Explore different [Channel Steps](/framework/email-channel) like Email, SMS, Push, and more
+- Set up [Action Steps](/framework/digest) like Delay and Digest
+- Check out our [React Email integration](/framework/content/react-email) for building beautiful email templates
+

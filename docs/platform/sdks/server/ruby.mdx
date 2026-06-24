@@ -1,0 +1,41 @@
+---
+title: 'Ruby'
+description: 'Connect a Ruby application to Novu'
+icon: "gem"
+---
+
+<Warning>
+  This SDK is community maintained. Feel free to contribute on our [GitHub
+  repository](https://github.com/novuhq/novu-ruby).
+</Warning>
+
+Novu's Ruby SDK provides simple, yet comprehensive notification management, and delivery capabilities through multiple channels that you can implement using code that integrates seamlessly with your Ruby application.
+
+[Explore the source code on GitHub](https://github.com/novuhq/novu-ruby)
+
+## Installation
+
+```bash
+gem install novu
+```
+
+## Usage
+
+```ruby
+require 'novu'
+
+client = Novu::Client.new(access_token: 'YOUR_NOVU_API_TOKEN')
+
+payload = {
+    'name' => 'Trigger1',
+    'payload' => { # optional
+        'first-name' => 'Adam' # optional
+    },
+    'to' => {
+        'subscriberId' => '7789'
+    },
+    'transactionId' => '89kjfke9893' #optional
+}
+
+client.trigger_event(payload)
+```

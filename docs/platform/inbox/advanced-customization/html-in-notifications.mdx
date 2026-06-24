@@ -1,0 +1,112 @@
+---
+title: 'HTML in Notifications'
+description: 'Learn how to enable and display raw HTML in the notification subject and body for rich formatting.'
+icon: "code"
+---
+
+By default, Novu sanitizes the `subject` and `body` of all in-app step notifications to ensure that they are safe to display. This process prevents security risks by removing suspicious HTML tags (like `<script>`) and escaping HTML entities (like `&`, `<`, `>`).
+
+However, you can disable this feature to display richly formatted content with links, bold text, and more. The Inbox component supports this by letting you inject HTML using `dangerouslySetInnerHTML` into your notification content, providing control over layout, formatting, and design.
+
+<Warning>
+  Disabling content sanitization can expose your application to Cross-Site Scripting (XSS) attacks. You should only enable this feature if you completely trust the source of your notification data and have full control over the trigger payload.
+</Warning>
+
+Enabling HTML formatting is a two-step process: you must first disable sanitization in your Novu workflow and then use the appropriate render prop in your application to display the HTML.
+
+## Step 1: Disable content sanitization in your workflow
+
+In your Novu workflow:
+1. navigate to the **In-App editor**.
+2. In the editor, find and turn on the **Disable content sanitization** toggle.
+
+![Disable content sanitization in the Novu in-app step editor](/images/inbox/disable-content-sanitization.png)
+
+This setting instructs the Novu API to send the raw, unescaped HTML content for both the subject and body to your application.
+
+## Step 2: Display the HTML in your app
+
+Once sanitization is disabled, you must use a `render` prop in your application to correctly interpret and display the raw HTML. Use React's `dangerouslySetInnerHTML` property for this purpose.
+
+### For the notification body
+
+To display HTML in the notification's body, use the `renderBody` prop.
+
+```tsx
+import { Inbox } from '@novu/react';
+
+function CustomInbox() {
+  return (
+    <Inbox
+      applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+      subscriberId="YOUR_SUBSCRIBER_ID"
+      renderBody={(notification) => (
+        <div dangerouslySetInnerHTML={{ __html: notification.body }} />
+      )}
+    />
+  );
+}
+
+export default CustomInbox;
+```
+
+#### Example usage
+
+If your workflow's in-app message body contains the following content with HTML tags and variables:
+
+```html html tags with dynamic values
+{{subscriber.firstName}}, A <b>Good news!</b> We've just launched the <i>advanced
+analytics dashboard</i> you asked for. Check it out <a href="[https://example.com](https://example.com)"
+target="_blank">here</a>.
+```
+
+When you trigger this notification, the code will render this content with the HTML formatting applied, displaying bold and italic text, and a functional link.
+
+![Display HTML in notification body](/images/inbox/display-html-in-body.png)
+
+### For the notification subject
+
+Similarly, to display HTML in the notification's subject, use the `renderSubject` prop.
+
+```tsx
+import { Inbox } from '@novu/react';
+
+function CustomInbox() {
+  return (
+    <Inbox
+      applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+      subscriberId="YOUR_SUBSCRIBER_ID"
+      renderSubject={(notification) => (
+        <span dangerouslySetInnerHTML={{ __html: notification.subject }} />
+      )}
+    />
+  );
+}
+
+export default CustomInbox;
+```
+
+### For the notification subject and body
+
+If you need to display HTML in both the subject and body, use the `renderNotification` prop.
+
+```tsx
+import { Inbox } from '@novu/react';
+
+function CustomInbox() {
+  return (
+    <Inbox
+      applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+      subscriberId="YOUR_SUBSCRIBER_ID"
+      renderNotification={(notification) => (
+        <div style={{ borderBottom: '1px solid #eee', padding: '16px' }}>
+          <h3 dangerouslySetInnerHTML={{ __html: notification.subject }} />
+          <div dangerouslySetInnerHTML={{ __html: notification.body }} />
+        </div>
+      )}
+    />
+  );
+}
+
+export default CustomInbox;
+```

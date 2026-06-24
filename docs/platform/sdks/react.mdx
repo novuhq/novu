@@ -1,0 +1,568 @@
+---
+title: "@novu/react"
+description: "API reference for @novu/react components including Inbox, Bell, Notifications, and Subscription."
+---
+
+## Components
+
+The @novu/react package provides React components for building notification UIs.
+
+## Inbox
+
+The main component for displaying notifications.
+
+### Props
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `appearance` |  |  |
+| `subscriberHash` |  |  |
+| `contextHash` |  |  |
+| `backendUrl` |  |  |
+| `socketUrl` |  |  |
+| `socketOptions` |  |  |
+| `localization` |  |  |
+| `tabs` |  |  |
+| `preferencesFilter` |  |  |
+| `preferenceGroups` |  |  |
+| `preferencesSort` |  |  |
+| `defaultSchedule` |  |  |
+| `routerPush` |  |  |
+| `context` |  |  |
+| `subscriberId` |  |  |
+| `subscriber` |  |  |
+| `applicationIdentifier` |  |  |
+
+### Usage
+
+```tsx
+import { Inbox } from "@novu/react";
+
+function NovuInbox() {
+  return (
+    <Inbox
+      applicationIdentifier="APPLICATION_IDENTIFIER"
+      subscriber={{
+        subscriberId: "SUBSCRIBER_ID",
+      }}
+      apiUrl="https://api.novu.co"
+      socketUrl="https://socket.novu.co"
+      placement="right"
+      placementOffset={10}
+      onNotificationClick={(notification) => {
+        // Handle notification click
+        console.log(notification);
+      }}
+    />
+  );
+}
+```
+
+### Appearance Configuration
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `variables` |  |  |
+| `animations` |  |  |
+| `icons` |  |  |
+| `baseTheme` |  |  |
+
+#### Variables
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `colorBackground` |  |  |
+| `colorForeground` |  |  |
+| `colorPrimary` |  |  |
+| `colorPrimaryForeground` |  |  |
+| `colorSecondary` |  |  |
+| `colorSecondaryForeground` |  |  |
+| `colorCounter` |  |  |
+| `colorCounterForeground` |  |  |
+| `colorNeutral` |  |  |
+| `colorShadow` |  |  |
+| `colorRing` |  |  |
+| `fontSize` |  |  |
+| `borderRadius` |  |  |
+| `colorStripes` |  |  |
+| `colorSeverityHigh` |  |  |
+| `colorSeverityMedium` |  |  |
+| `colorSeverityLow` |  |  |
+
+#### Elements
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `root` |  |  |
+| `button` |  |  |
+| `input` |  |  |
+| `icon` |  |  |
+| `badge` |  |  |
+| `popoverContent` |  |  |
+| `popoverTrigger` |  |  |
+| `popoverClose` |  |  |
+| `collapsible` |  |  |
+| `tooltipContent` |  |  |
+| `tooltipTrigger` |  |  |
+| `lockIcon` |  |  |
+| `preferences__button` |  |  |
+| `inboxHeader` |  |  |
+| `loading` |  |  |
+| `dropdownContent` |  |  |
+| `dropdownTrigger` |  |  |
+| `dropdownItem` |  |  |
+| `dropdownItemLabel` |  |  |
+| `dropdownItemLabelContainer` |  |  |
+| `dropdownItemLeft__icon` |  |  |
+| `dropdownItemRight__icon` |  |  |
+| `dropdownItem__icon` |  |  |
+| `datePicker` |  |  |
+| `datePickerGrid` |  |  |
+| `datePickerGridRow` |  |  |
+| `datePickerGridCell` |  |  |
+| `datePickerGridCellTrigger` |  |  |
+| `datePickerTrigger` |  |  |
+| `datePickerGridHeader` |  |  |
+| `datePickerControl` |  |  |
+| `datePickerControlPrevTrigger` |  |  |
+| `datePickerControlNextTrigger` |  |  |
+| `datePickerControlPrevTrigger__icon` |  |  |
+| `datePickerControlNextTrigger__icon` |  |  |
+| `datePickerCalendar` |  |  |
+| `datePickerHeaderMonth` |  |  |
+| `datePickerCalendarDay__button` |  |  |
+| `timePicker` |  |  |
+| `timePicker__hourSelect` |  |  |
+| `timePicker__minuteSelect` |  |  |
+| `timePicker__periodSelect` |  |  |
+| `timePicker__separator` |  |  |
+| `timePickerHour__input` |  |  |
+| `timePickerMinute__input` |  |  |
+| `snoozeDatePicker` |  |  |
+| `snoozeDatePicker__actions` |  |  |
+| `snoozeDatePickerCancel__button` |  |  |
+| `snoozeDatePickerApply__button` |  |  |
+| `snoozeDatePicker__timePickerContainer` |  |  |
+| `snoozeDatePicker__timePickerLabel` |  |  |
+| `back__button` |  |  |
+| `skeletonText` |  |  |
+| `skeletonAvatar` |  |  |
+| `skeletonSwitch` |  |  |
+| `skeletonSwitchThumb` |  |  |
+| `tabsRoot` |  |  |
+| `tabsList` |  |  |
+| `tabsContent` |  |  |
+| `tabsTrigger` |  |  |
+| `dots` |  |  |
+| `inboxContent` |  |  |
+| `inbox__popoverTrigger` |  |  |
+| `inbox__popoverContent` |  |  |
+| `notificationListEmptyNoticeContainer` |  |  |
+| `notificationListEmptyNoticeOverlay` |  |  |
+| `notificationListEmptyNoticeIcon` |  |  |
+| `notificationListEmptyNotice` |  |  |
+| `notificationList__skeleton` |  |  |
+| `notificationList__skeletonContent` |  |  |
+| `notificationList__skeletonItem` |  |  |
+| `notificationList__skeletonAvatar` |  |  |
+| `notificationList__skeletonText` |  |  |
+| `notificationListNewNotificationsNotice__button` |  |  |
+| `notificationSubject__strong` |  |  |
+| `notificationSubject__em` |  |  |
+| `notificationBody__strong` |  |  |
+| `notificationBody__em` |  |  |
+| `notificationBodyContainer` |  |  |
+| `notificationDateActionsContainer` |  |  |
+| `notificationRead__button` |  |  |
+| `notificationUnread__button` |  |  |
+| `notificationArchive__button` |  |  |
+| `notificationUnarchive__button` |  |  |
+| `notificationSnooze__button` |  |  |
+| `notificationUnsnooze__button` |  |  |
+| `notificationRead__icon` |  |  |
+| `notificationUnread__icon` |  |  |
+| `notificationArchive__icon` |  |  |
+| `notificationUnarchive__icon` |  |  |
+| `notificationSnooze__icon` |  |  |
+| `notificationUnsnooze__icon` |  |  |
+| `notificationsTabs__tabsRoot` |  |  |
+| `notificationsTabs__tabsList` |  |  |
+| `notificationsTabs__tabsContent` |  |  |
+| `notificationsTabs__tabsTrigger` |  |  |
+| `notificationsTabsTriggerLabel` |  |  |
+| `notificationsTabsTriggerCount` |  |  |
+| `inboxStatus__title` |  |  |
+| `inboxStatus__dropdownTrigger` |  |  |
+| `inboxStatus__dropdownContent` |  |  |
+| `inboxStatus__dropdownItem` |  |  |
+| `inboxStatus__dropdownItemLabel` |  |  |
+| `inboxStatus__dropdownItemLabelContainer` |  |  |
+| `inboxStatus__dropdownItemLeft__icon` |  |  |
+| `inboxStatus__dropdownItemRight__icon` |  |  |
+| `inboxStatus__dropdownItem__icon` |  |  |
+| `inboxStatus__dropdownItemCheck__icon` |  |  |
+| `moreActionsContainer` |  |  |
+| `moreActions__dropdownTrigger` |  |  |
+| `moreActions__dropdownContent` |  |  |
+| `moreActions__dropdownItem` |  |  |
+| `moreActions__dropdownItemLabel` |  |  |
+| `moreActions__dropdownItemLeft__icon` |  |  |
+| `moreActions__dots` |  |  |
+| `moreTabs__button` |  |  |
+| `moreTabs__icon` |  |  |
+| `moreTabs__dropdownTrigger` |  |  |
+| `moreTabs__dropdownContent` |  |  |
+| `moreTabs__dropdownItem` |  |  |
+| `moreTabs__dropdownItemLabel` |  |  |
+| `moreTabs__dropdownItemRight__icon` |  |  |
+| `workflowContainerDisabledNotice` |  |  |
+| `workflowLabelDisabled__icon` |  |  |
+| `workflowDescription` |  |  |
+| `channelsContainerCollapsible` |  |  |
+| `channelSwitch` |  |  |
+| `channelSwitchThumb` |  |  |
+| `preferencesHeader` |  |  |
+| `preferencesHeader__back__button` |  |  |
+| `preferencesHeader__back__button__icon` |  |  |
+| `preferencesHeader__title` |  |  |
+| `preferencesHeader__icon` |  |  |
+| `preferencesListEmptyNoticeContainer` |  |  |
+| `preferencesListEmptyNotice` |  |  |
+| `preferencesList__skeleton` |  |  |
+| `preferencesList__skeletonContent` |  |  |
+| `preferencesList__skeletonItem` |  |  |
+| `preferencesList__skeletonIcon` |  |  |
+| `preferencesList__skeletonSwitch` |  |  |
+| `preferencesList__skeletonSwitchThumb` |  |  |
+| `preferencesList__skeletonText` |  |  |
+| `dayScheduleCopy__dropdownTrigger` |  |  |
+| `dayScheduleCopy__dropdownContent` |  |  |
+| `timeSelect__dropdownTrigger` |  |  |
+| `timeSelect__time` |  |  |
+| `timeSelect__dropdownContent` |  |  |
+| `timeSelect__dropdownItem` |  |  |
+| `timeSelect__dropdownItemLabel` |  |  |
+| `timeSelect__dropdownItemLabelContainer` |  |  |
+| `timeSelect__dropdownItemCheck__icon` |  |  |
+| `notificationSnooze__dropdownContent` |  |  |
+| `notificationSnooze__dropdownItem` |  |  |
+| `notificationSnooze__dropdownItem__icon` |  |  |
+| `notificationSnoozeCustomTime_popoverContent` |  |  |
+| `strong` |  |  |
+| `em` |  |  |
+| `connectChatContainer` |  |  |
+| `connectChatButton` |  |  |
+| `connectChatButtonContainer` |  |  |
+| `connectChatButtonLabel` |  |  |
+| `connectChatMisconfiguredTooltip` |  |  |
+| `channelConnectButtonMisconfiguredTooltip` |  |  |
+| `bellIcon` |  |  |
+| `bellContainer` |  |  |
+| `severityHigh__bellContainer` |  |  |
+| `severityMedium__bellContainer` |  |  |
+| `severityLow__bellContainer` |  |  |
+| `bellSeverityGlow` |  |  |
+| `severityGlowHigh__bellSeverityGlow` |  |  |
+| `severityGlowMedium__bellSeverityGlow` |  |  |
+| `severityGlowLow__bellSeverityGlow` |  |  |
+| `bellDot` |  |  |
+| `preferencesContainer` |  |  |
+| `notificationListContainer` |  |  |
+| `notificationList` |  |  |
+| `notification` |  |  |
+| `severityHigh__notification` |  |  |
+| `severityMedium__notification` |  |  |
+| `severityLow__notification` |  |  |
+| `notificationBar` |  |  |
+| `severityHigh__notificationBar` |  |  |
+| `severityMedium__notificationBar` |  |  |
+| `severityLow__notificationBar` |  |  |
+| `notificationContent` |  |  |
+| `notificationTextContainer` |  |  |
+| `notificationDot` |  |  |
+| `notificationSubject` |  |  |
+| `notificationBody` |  |  |
+| `notificationImage` |  |  |
+| `notificationImageLoadingFallback` |  |  |
+| `notificationDate` |  |  |
+| `notificationDefaultActions` |  |  |
+| `notificationCustomActions` |  |  |
+| `notificationPrimaryAction__button` |  |  |
+| `notificationSecondaryAction__button` |  |  |
+| `workflowContainer` |  |  |
+| `workflowLabel` |  |  |
+| `workflowLabelHeader` |  |  |
+| `workflowLabelHeaderContainer` |  |  |
+| `workflowLabelIcon` |  |  |
+| `workflowLabelContainer` |  |  |
+| `workflowContainerRight__icon` |  |  |
+| `workflowArrow__icon` |  |  |
+| `preferencesGroupContainer` |  |  |
+| `preferencesGroupHeader` |  |  |
+| `preferencesGroupLabelContainer` |  |  |
+| `preferencesGroupLabelIcon` |  |  |
+| `preferencesGroupLabel` |  |  |
+| `preferencesGroupActionsContainer` |  |  |
+| `preferencesGroupActionsContainerRight__icon` |  |  |
+| `preferencesGroupBody` |  |  |
+| `preferencesGroupChannels` |  |  |
+| `preferencesGroupInfo` |  |  |
+| `preferencesGroupInfoIcon` |  |  |
+| `preferencesGroupWorkflows` |  |  |
+| `channelContainer` |  |  |
+| `channelIconContainer` |  |  |
+| `channel__icon` |  |  |
+| `channelsContainer` |  |  |
+| `channelLabel` |  |  |
+| `channelLabelContainer` |  |  |
+| `channelName` |  |  |
+| `channelSwitchContainer` |  |  |
+| `scheduleContainer` |  |  |
+| `scheduleHeader` |  |  |
+| `scheduleLabelContainer` |  |  |
+| `scheduleLabelScheduleIcon` |  |  |
+| `scheduleLabelInfoIcon` |  |  |
+| `scheduleLabel` |  |  |
+| `scheduleActionsContainer` |  |  |
+| `scheduleActionsContainerRight` |  |  |
+| `scheduleBody` |  |  |
+| `scheduleDescription` |  |  |
+| `scheduleTable` |  |  |
+| `scheduleTableHeader` |  |  |
+| `scheduleHeaderColumn` |  |  |
+| `scheduleTableBody` |  |  |
+| `scheduleBodyRow` |  |  |
+| `scheduleBodyColumn` |  |  |
+| `scheduleInfoContainer` |  |  |
+| `scheduleInfoIcon` |  |  |
+| `scheduleInfo` |  |  |
+| `dayScheduleCopyTitle` |  |  |
+| `dayScheduleCopyIcon` |  |  |
+| `dayScheduleCopySelectAll` |  |  |
+| `dayScheduleCopyDay` |  |  |
+| `dayScheduleCopyFooterContainer` |  |  |
+| `notificationDeliveredAt__badge` |  |  |
+| `notificationDeliveredAt__icon` |  |  |
+| `notificationSnoozedUntil__icon` |  |  |
+| `subscriptionContainer` |  |  |
+| `subscriptionButton__button` |  |  |
+| `subscriptionButtonContainer` |  |  |
+| `subscriptionButtonIcon` |  |  |
+| `subscriptionButtonLabel` |  |  |
+| `subscription__popoverTriggerContainer` |  |  |
+| `subscription__popoverTrigger` |  |  |
+| `subscriptionTriggerIcon` |  |  |
+| `subscription__popoverContent` |  |  |
+| `subscriptionPreferencesContainer` |  |  |
+| `subscriptionPreferencesHeaderContainer` |  |  |
+| `subscriptionPreferencesHeader` |  |  |
+| `subscriptionPreferencesInfoIcon` |  |  |
+| `subscriptionPreferencesContent` |  |  |
+| `subscriptionPreferencesGroupsContainer` |  |  |
+| `subscriptionPreferencesFallback` |  |  |
+| `subscriptionPreferencesFallbackTexts` |  |  |
+| `subscriptionPreferencesFallbackHeader` |  |  |
+| `subscriptionPreferencesFallbackDescription` |  |  |
+| `subscriptionPreferenceRow` |  |  |
+| `subscriptionPreferenceLabel` |  |  |
+| `subscriptionPreferenceGroupContainer` |  |  |
+| `subscriptionPreferenceGroupHeader` |  |  |
+| `subscriptionPreferenceGroupLabelContainer` |  |  |
+| `subscriptionPreferenceGroupLabelIcon` |  |  |
+| `subscriptionPreferenceGroupLabel` |  |  |
+| `subscriptionPreferenceGroupActionsContainer` |  |  |
+| `subscriptionPreferenceGroupActionsContainerRight__icon` |  |  |
+| `subscriptionPreferenceGroupBody` |  |  |
+| `subscriptionPreferenceGroupWorkflowRow` |  |  |
+| `subscriptionPreferenceGroupWorkflowLabel` |  |  |
+| `linkSlackUserContainer` |  |  |
+| `linkSlackUserButton` |  |  |
+| `linkSlackUserButtonContainer` |  |  |
+| `linkSlackUserButtonIcon` |  |  |
+| `linkSlackUserButtonLabel` |  |  |
+| `channelConnectButtonContainer` |  |  |
+| `channelConnectButton` |  |  |
+| `channelConnectButtonInner` |  |  |
+| `channelConnectButtonIcon` |  |  |
+| `channelConnectButtonLabel` |  |  |
+
+## Bell
+
+A customizable notification bell component.
+
+### Props
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `renderBell` |  |  |
+
+### Usage
+
+```tsx
+import { Bell } from "@novu/react";
+import { BellIcon } from "lucide-react";
+
+function NotificationBell() {
+  return (
+    <Bell
+      renderBell={(unreadCount) => (
+        <div className="relative">
+          <BellIcon className="h-6 w-6" />
+          {unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center">
+              {unreadCount}
+            </span>
+          )}
+        </div>
+      )}
+    />
+  );
+}
+```
+
+## Notifications
+
+A component for rendering a list of notifications.
+
+### Props
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `onNotificationClick` |  |  |
+| `onPrimaryActionClick` |  |  |
+| `onSecondaryActionClick` |  |  |
+| `renderNotification` |  |  |
+| `renderAvatar` |  |  |
+| `renderSubject` |  |  |
+| `renderBody` |  |  |
+| `renderDefaultActions` |  |  |
+| `renderCustomActions` |  |  |
+
+### Usage
+
+```tsx
+import { Notifications } from "@novu/react";
+
+function NotificationList() {
+  return (
+    <Notifications
+      onNotificationClick={(notification) => {
+        // Handle notification click
+        console.log(notification);
+      }}
+      renderNotification={({ body, createdAt }) => (
+        <div className="flex gap-2 p-2">
+          <div className="flex-1">
+            <p>{body}</p>
+            <time className="text-sm text-gray-500">
+              {new Date(createdAt).toLocaleDateString()}
+            </time>
+          </div>
+        </div>
+      )}
+    />
+  );
+}
+```
+
+## InboxContent
+
+A component for building custom notification inboxes.
+
+### Props
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `onNotificationClick` |  |  |
+| `onPrimaryActionClick` |  |  |
+| `onSecondaryActionClick` |  |  |
+| `initialPage` |  |  |
+| `hideNav` |  |  |
+| `renderNotification` |  |  |
+| `renderAvatar` |  |  |
+| `renderSubject` |  |  |
+| `renderBody` |  |  |
+| `renderDefaultActions` |  |  |
+| `renderCustomActions` |  |  |
+
+### Usage
+
+```tsx
+import { InboxContent } from "@novu/react";
+
+function CustomInbox() {
+  return (
+    <div className="custom-inbox-wrapper">
+      <InboxContent
+        onNotificationClick={(notification) => {
+          // Handle notification click
+          console.log(notification);
+        }}
+        onPrimaryActionClick={(notification) => {
+          // Handle primary action click
+          console.log(notification);
+        }}
+        hideNav={false}
+        renderNotification={({ body, createdAt }) => (
+          <div className="notification-item">
+            <p>{body}</p>
+            <time>{new Date(createdAt).toLocaleDateString()}</time>
+          </div>
+        )}
+      />
+    </div>
+  );
+}
+```
+
+## Subscription
+
+### Props
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `children` |  |  |
+| `renderPreferences` |  |  |
+| `open` |  |  |
+| `placement` |  |  |
+| `placementOffset` |  |  |
+| `topicKey` |  |  |
+| `identifier` |  |  |
+| `preferences` |  |  |
+| `localization` |  |  |
+| `appearance` |  |  |
+| `container` |  |  |
+
+### Appearance configuration
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `variables` |  |  |
+| `elements` |  |  |
+| `animations` |  |  |
+| `icons` |  |  |
+| `baseTheme` |  |  |
+
+### Usage
+
+```tsx
+import { NovuProvider, Subscription } from "@novu/react";
+
+function SubscriptionManager() {
+  return (
+    <NovuProvider
+      subscriber="SUBSCRIBER_ID"
+      applicationIdentifier="APPLICATION_IDENTIFIER"
+    >
+      <Subscription
+      topic="product-updates"
+      identifier="user-preference-1"
+      preferences={["workflow-one", "workflow-two"]}
+      appearance={{
+        baseTheme: isDark ? subscriptionDarkTheme : undefined,
+      }}
+    />
+    </NovuProvider>
+  );
+}
+```

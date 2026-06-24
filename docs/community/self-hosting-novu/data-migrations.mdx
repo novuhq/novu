@@ -1,0 +1,421 @@
+---
+title: 'Data Migrations'
+description: 'Learn how to update your database data through migrations.'
+icon: "database"
+---
+
+On occasion, Novu may introduce features that require changes to the database schema or data. This usually happens when
+a feature has a hard dependency on some data being available on a database entity. You can use migrations to make these
+changes to your database.
+
+## How to Run Novu Migrations (Manual Process)
+
+Novu does **not automatically run database migrations** when deploying new versions. If you're self-hosting or managing
+deployments outside a CI/CD pipeline, follow these steps to safely run migrations against your MongoDB database.
+
+For Novu Cloud, the Novu team have a custom deployment service that runs migrations on AWS and is triggered by our team.
+By policy any changes are backward compatible and non schema migrations is needed for any deployment. So any migration
+can be run after the service was already deployed unless specified otherwise. Those migrations are usually for cleanup
+purposes, and schema alignment.
+
+For Novu Self-Hosting, each migration can be run locally against your Mongodb using known connection strings that have
+credentials. Your connection may require further access via a tunnel. A script has been added at the bottom that help
+manages the complexity of versions across connections strings. Manually add and run `run-migrations.sh` script from
+`apps/api` folder.
+
+## Overview
+
+- **Migrations are manual.**
+- They must be run from an environment that has **access to the migration scripts**.
+- There is no practical way to run those from within the docker container at the moment becuase the migrations scripts
+are not shipped with the images
+- Requires **valid MongoDB credentials** and **network access**.
+- Typically run **during deployment** of new application versions.
+- **Novu does not use a versioning or idempotent migration strategy.**
+See [Versioning Note](#migration-versioning-and-idempotency) below.
+- Migrations once added to source code do not change (by policy)
+- Refer to the table of releases to know which to run when
+- There is a shell script at the end that you can use to ease the burden (
+see [run-migrations.sh](#run-migrations-script))
+- Success of this process requires cloning the git repository and setting up the projects from source before starting
+migrations
+- Success may also require the Redis instance to be running during execution for some migrations (here's the kicker,
+these are running locally otherwise you would need (potentially) another tunnel through to the remote
+version [TODO: confirm side effects (April, 2025)])
+- **Warning:** some migrations do not exit fully when run in the bash script ( eg < 0.19.0 ) and require Ctrl-C to finish and continue
+- **Warning:** not all migrations are fully documented in the release notes for each release
+- **Warning:** migrations are dependent on the underlying code (eg repositories) and matches the version of the code against the migration at the right point in time is crucial and each version also requires the correct version of `node` and `pnpm`
+
+## Migration Release Map
+
+This table maps each migration script to the likely Novu release version, based on the date the script was added and the
+closest following release tag.
+
+| **Release Version**                                              | **Release Date** | **Migrations Introduced**                                                                                                                                                                                                                                                                                                                                                        |
+|------------------------------------------------------------------|------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [`v0.17.2`](https://github.com/novuhq/novu/releases/tag/v0.17.2) | 2023-08-13       | `novu-integrations` *(Integration Store)*                                                                                                                                                                                                                                                                                                                                        |
+| [`v0.18.0`](https://github.com/novuhq/novu/releases/tag/v0.18.0) | 2023-08-14       | `changes-migration` *(Change Promotion)* <br/> `encrypt-credentials` *(Secure Credentials)* <br/> `expire-at` *(Database TTL)* <br/> `fcm-credentials` *(Secure Credentials)* <br/> `in-app-integration` *(In-App Integration)* <br/> `normalize-users-email` *(Organization Invite Fix)* <br/> `secure-to-boolean` *(Secure Flag Fix)* <br/> `seen-read-support` *(Seen/Read Support)* |
+| [`v0.21.0`](https://github.com/novuhq/novu/releases/tag/v0.19.0) | 2023-09-01       | `integration-scheme-update` *(Multi-Provider)* <br/> `layout-identifier-update` *(Add layout identifier)*                                                                                                                                                                                                                                                                         |
+| [`v0.23.0`](https://github.com/novuhq/novu/releases/tag/v0.23.0) | 2024-02-02       | `encrypt-api-keys` *(API keys encryption)*                                                                                                                                                                                                                                                                                                                                       |
+| [`v0.24.0`](https://github.com/novuhq/novu/releases/tag/v0.24.0) | 2024-03-06       | `normalize-message-template-cta-action` *(Normalize CTA action)* <br/> `topic-subscriber-normalize` *(Normalize topic-subscriber links)*                                                                                                                                                                                                                                          |
+| [`v2.0.0`](https://github.com/novuhq/novu/releases/tag/v2.0.0)   | 2024-10-07       | `subscribers` *(Subscriber record adjustments)*                                                                                                                                                                                                                                                                                                                                  |
+| [`v2.0.1`](https://github.com/novuhq/novu/releases/tag/v2.0.1)   | 2024-11-11       | `preference-centralization` *(Preference model centralization)* — **ensure this is done before v2.1 as repository access has been removed**                                                                                                                                                                                                                                            |
+| *(future release)*                                               | *sometime 2025*  | `deleteLogs` *(Cleanup deleted logs)*                                                                                                                                                                                                                                                                                                                                            |
+
+### Historical releases
+
+| Version                                                      | Feature                 | Migration Path(s)                                                                                                                         |
+|--------------------------------------------------------------|-------------------------|-------------------------------------------------------------------------------------------------------------------------------------------|
+| [v0.23](https://github.com/novuhq/novu/releases/tag/v0.23.0) | API keys encryption     | `./encrypt-api-keys/encrypt-api-keys-migration.ts`                                                                                        |
+| [v0.18](https://github.com/novuhq/novu/releases/tag/v0.18.0) | Multi-Provider          | `./integration-scheme-update/add-primary-priority-migration.ts`<br/>`./integration-scheme-update/add-integration-identifier-migration.ts` |
+|                                                              | Integration Store       | `./novu-integrations/novu-integrations.migration.ts`                                                                                      |
+| [v0.16](https://github.com/novuhq/novu/releases/tag/v0.16.0) | In-App Integration      | `./in-app-integration/in-app-integration.migration.ts`                                                                                    |
+|                                                              | Secure Flag Fix         | `./secure-to-boolean/secure-to-boolean-migration.ts`                                                                                      |
+| [v0.15](https://github.com/novuhq/novu/releases/tag/v0.15.0) | Database TTL            | `./expire-at/expire-at.migration.ts`                                                                                                      |
+| [v0.12](https://github.com/novuhq/novu/releases/tag/v0.12.0) | Organization Invite Fix | `./normalize-users-email/normalize-users-email.migration.ts`                                                                              |
+| [v0.9](https://github.com/novuhq/novu/releases/tag/v0.9.0)   | Seen/Read Support       | `./seen-read-support/seen-read-support.migration.ts`                                                                                      |
+| [v0.8](https://github.com/novuhq/novu/releases/tag/v0.8.0)   | Secure Credentials      | `./fcm-credentials/fcm-credentials-migration.ts`<br/>`./encrypt-credentials/encrypt-credentials-migration.ts`                             |
+| [v0.4](https://github.com/novuhq/novu/releases/tag/v0.4.0)   | Change Promotion        | `./changes-migration.ts`                                                                                                                  |
+
+## Step-by-Step Instructions
+
+### Runtime prerequisites
+
+* `node`
+* `npm`
+* `pnpm`
+* `npx`
+* MacOS (or linux)
+* tunnel (optional `ssh`)
+
+Some migration scripts (like `in-app-integration`) require access to Redis during execution. If Redis is not running,
+you will encounter `ECONNREFUSED 127.0.0.1:6379`. The problem here is that remote environments have their own Redis and
+currently the assumption is that migrations should only affect the MongoDB collection. To fix this start Redis locally (
+or launch a Docker container: `docker run -p 6379:6379 redis`)
+
+### 1. Clone the Novu Repository
+
+Ensure you’re using the same version as the one you’re deploying:
+
+```bash
+git clone https://github.com/novuhq/novu.git
+cd novu
+
+git checkout <your-version-tag>  # e.g. v0.24.0
+npm run clean
+npm run setup:project # really important to run if you change tag
+cd apps/api
+```
+
+**Warning:** migrations are dependent on the underlying code (eg repositories)
+    * match the version of the code against the migration at the right point in time
+    * each version often requires the correct version of `node` and `pnpm` as per the `package.json`
+
+**Notes:**
+- Getting the code the run at a checked out version can be tricky
+- If you want to know which tags are available: `git tag`
+- Some migrations may fail because they rely on the underlying code rather than direct mongo queries
+- Migrations are located in: `apps/api/migrations/`
+- Checkout by tag stops accidentally running too many migrations that would normally be managed by migrations runner (
+see [migration versioning](#migration-versioning-and-idempotency) )
+
+### 2. Connect to Your MongoDB Database
+
+If your database is not directly accessible, you may need to tunnel:
+
+```bash
+# Example: Tunnel MongoDB via SSH
+ssh -L 27017:localhost:27017 your-user@your-db-host
+```
+
+Have your:
+
+- MongoDB **connection string**
+- **Username and password** (if required)
+
+### 3. Run the Migration Script
+
+> use the [script `run-migrations.sh` below](#run-migrations-script) for all the following steps
+
+Configure access to the correct database:
+
+```bash
+npx cross-env \
+MONGO_URL="mongodb://127.0.0.1:27017/novu-db" \
+NEW_RELIC_ENABLED=false \
+npm run migration -- ./migrations/normalize-users-email/normalize-users-email.migration.ts
+```
+
+Some notes:
+
+- under the hood of the migration script ```npx ts-node --transpile-only ./apps/api/migrations/<script-name>.ts```
+- some migrations require REDIS (ensure already running)
+- some migrations require NEW_RELIC (so turn off)
+- Run each script only once. Monitor logs or database changes for success.
+
+### 5. Repeat for Each Relevant Migration
+
+Use a [migration release map](#migration-release-map) to determine which scripts are required for your upgrade.
+
+## Post-Migration Validation
+
+After completing migrations:
+
+- Verify new fields/collections are present
+- Check logs for errors
+- Confirm application starts and behaves as expected
+
+## Migration Versioning and Idempotency
+
+Novu **does not implement a versioning system** or record migration history in the database. This means:
+
+- Migrations **must be manually tracked**.
+- There is **no built-in idempotency** for running the migration, so running a script twice may cause duplicate data or
+errors (but by policy the underlying code does its best)
+- It is your responsibility to **ensure each script runs only once** and in the correct order.
+
+### What Is an Idempotent Migration?
+
+An *idempotent* migration can be safely run multiple times without changing the outcome after the first execution. This
+is typically achieved through:
+
+- Tracking applied migrations in a collection (e.g., `migrations`).
+- Guard clauses in code to check if a change has already been made.
+
+Note:
+
+- there are libraries that support idempotent Mongo migrations in TypeScript
+- if you want to introduce versioned/idempotent migrations in your own deployment process, consider [
+`migrate-mongo`](https://github.com/seppevs/migrate-mongo) or [
+`mongodb-migrations`](https://github.com/emirotin/mongodb-migrations)
+
+## Tips
+
+- Always **back up your database** before running migrations.
+- Consider scripting or CI/CD automation for repeatability.
+- **Dockerized deployments do not auto-run migrations**—there is no explicit configuration to turn this on either.
+- You could implement your own migrations versioning on top
+
+#### Run Migrations Script
+
+Use this shell to ease the burden, ensure that it is executable. Instructions are in the script comments.
+
+```bash
+chmod +x run-migrations.sh
+```
+
+```bash run-migrations.sh
+#!/bin/sh
+
+###############################################################################
+# 📦 NOVU MIGRATION RUNNER - POSIX SH EDITION (macOS Compatible)
+#
+# This script runs one or more database migration scripts for the Novu project.
+# It supports:
+#   - Selecting a version interactively or via argument
+#   - Providing a custom MongoDB connection string
+#   - Executing version-specific migration files in order
+#   - Compatible with macOS default /bin/sh
+#
+# ⚠️ WARNING: some migrations do not exit properly ( eg < 0.19.0 ) and require Ctrl-C to finish and continue
+#
+# 🛠 REQUIREMENTS:
+#   - Node.js (with npm and npx)
+#   - ts-node and dependencies installed via your project
+#
+# ▶️ USAGE:
+#   ./run-migrations.sh                       # Interactive version selection
+#   ./run-migrations.sh v0.24.0               # Run migrations for version
+#   ./run-migrations.sh mongodb://...         # Use custom Mongo URL (interactive version)
+#   ./run-migrations.sh v0.18.0 mongodb://... # Version + custom Mongo URL
+#   ./run-migrations.sh v0.24.0 --dry-run     # Dry run file check only
+#
+#  Atlas connection strings
+#   - remove all & from query params
+#      eg mongodb+srv://<USER>:<PASSWORD>@<INSTANCE>.mongodb.net/novu-db
+#
+# ⚠️ REDIS WARNING:
+#   Some migrations require Redis (on 127.0.0.1:6379) to be running.
+#   If Redis is not available, you may see ECONNREFUSED errors during execution.
+#
+#   To fix this:
+#     • Start Redis
+###############################################################################
+
+set -e
+
+DEFAULT_MONGO_URL="mongodb://127.0.0.1:27017/novu-db"
+NEW_RELIC_ENABLED=false
+
+VERSION=""
+MONGO_URL=""
+DRY_RUN=false
+
+# Argument parsing
+for arg in "$@"; do
+  case "$arg" in
+    v*) VERSION="$arg" ;;
+    mongo*) MONGO_URL="$arg" ;;
+    --dry-run) DRY_RUN=true ;;
+  esac
+done
+
+[ -z "$MONGO_URL" ] && MONGO_URL="$DEFAULT_MONGO_URL"
+
+# Define versions and associated keys
+# versions must match suffix
+VERSIONS="v0.17.2 v0.18.0 v0.21.0 v0.23.0 v0.24.0 v2.0.0 v2.0.1 Future"
+MIGRATION_MAP_v0_17_2="novu-integrations"
+MIGRATION_MAP_v0_18_0="changes-migration encrypt-credentials expire-at fcm-credentials in-app-integration normalize-users-email secure-to-boolean seen-read-support"
+MIGRATION_MAP_v0_21_0="integration-scheme-update layout-identifier-update"
+MIGRATION_MAP_v0_23_0="encrypt-api-keys"
+MIGRATION_MAP_v0_24_0="normalize-message-template-cta-action topic-subscriber-normalize"
+MIGRATION_MAP_v2_0_0="subscribers"
+MIGRATION_MAP_v2_0_1="preference-centralization"
+MIGRATION_MAP_Future="deleteLogs"
+
+# Migration file paths
+get_migration_path() {
+  case "$1" in
+    fcm-credentials) echo "fcm-credentials/fcm-credentials-migration.ts" ;;
+    layout-identifier-update) echo "layout-identifier-update/add-layout-identifier-migration.ts" ;;
+    normalize-message-template-cta-action) echo "normalize-message-template-cta-action/normalize-message-cta-action-migration.ts" ;;
+    changes-migration) echo "changes-migration.ts" ;;
+    seen-read-support) echo "seen-read-support/seen-read-support.migration.ts" ;;
+    in-app-integration) echo "in-app-integration/in-app-integration.migration.ts" ;;
+    novu-integrations) echo "novu-integrations/novu-integrations.migration.ts" ;;
+    expire-at) echo "expire-at/expire-at.migration.ts" ;;
+    secure-to-boolean) echo "secure-to-boolean/secure-to-boolean-migration.ts" ;;
+    encrypt-api-keys) echo "encrypt-api-keys/encrypt-api-keys-migration.ts" ;;
+    encrypt-credentials) echo "encrypt-credentials/encrypt-credentials-migration.ts" ;;
+    topic-subscriber-normalize) echo "topic-subscriber-normalize/topic-subscriber-normalize.migration.ts" ;;
+    subscriber-preferences-level) echo "subscriber-preferences-level/subscriber-preferences-level.migration.ts" ;;
+    integration-scheme-update) echo "integration-scheme-update/add-primary-priority-migration.ts integration-scheme-update/update-primary-for-disabled-novu-integrations.ts integration-scheme-update/add-integration-identifier-migration.ts" ;;
+    normalize-users-email) echo "normalize-users-email/normalize-users-email.migration.ts" ;;
+    subscribers) echo "subscribers/remove-duplicated-subscribers/remove-duplicated-subscribers.migration.ts" ;;
+    preference-centralization) echo "preference-centralization/preference-centralization-migration.ts" ;;
+    deleteLogs) echo "deleteLogs/deleteLogsCollection.ts" ;;
+    *) echo "" ;;
+  esac
+}
+
+# Interactive version selector
+if [ -z "$VERSION" ]; then
+  echo "📦 No version provided. Please choose one:"
+  i=1
+  for v in $VERSIONS; do
+    echo "  $i) $v"
+    eval "VERSION_INDEX_$i=$v"
+    i=$((i + 1))
+  done
+
+  echo
+  printf "Enter the number of the version to run migrations for: "
+  read choice
+
+  eval "VERSION=\$VERSION_INDEX_$choice"
+
+  if [ -z "$VERSION" ]; then
+    echo "❌ Invalid selection."
+    exit 1
+  fi
+
+  echo "✅ Selected version: $VERSION"
+fi
+
+# Normalize version string to match variable names
+VERSION_VAR=$(echo "$VERSION" | tr '.' '_' | tr '-' '_')
+
+eval "MIGRATION_KEYS=\$MIGRATION_MAP_$VERSION_VAR"
+
+echo
+echo "🌐 Using MongoDB: $MONGO_URL"
+echo "🚀 Running migrations for version: $VERSION"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+for key in $MIGRATION_KEYS; do
+  paths=$(get_migration_path "$key")
+  for path in $paths; do
+    fullPath="./migrations/$path"
+    if [ "$DRY_RUN" = true ]; then
+      if [ -f "$fullPath" ]; then
+        echo "✅ File exists: $fullPath"
+      else
+        echo "❌ File missing: $fullPath"
+      fi
+    else
+      echo "🔁 Running migration: $fullPath"
+      npx cross-env MONGO_URL="$MONGO_URL" NEW_RELIC_ENABLED="$NEW_RELIC_ENABLED" npm run migration -- "$fullPath"
+    fi
+  done
+done
+
+if [ "$DRY_RUN" = true ]; then
+  echo "✅ Dry-run completed."
+else
+  echo "✅ All applicable migrations completed."
+fi
+```
+
+### Reference for Generating Table
+
+The migration-to-release mapping is done by comparing the migration creation date to the next release tag
+chronologically.
+
+If multiple migrations appear before a release, they’re grouped under that version.
+
+#### Generating Migrations List
+
+```bash
+for file in *; do
+  echo "$(git log --diff-filter=A --follow --format=%ad --date=short -- $file | head -1) $file"
+done | sort
+
+2023-07-31 novu-integrations
+2023-08-01 changes-migration.ts
+2023-08-01 encrypt-credentials
+...
+2024-03-24 subscribers
+2024-11-19 preference-centralization
+2024-11-29 deleteLogs
+```
+
+#### Generating Releases List
+
+```bash
+git for-each-ref --sort=creatordate --format '%(creatordate:short) %(refname:short)' refs/tags
+
+2023-08-13 v0.17.2
+2023-08-14 v0.18.0
+...
+2024-02-07 v0.23.1
+2024-03-06 v0.24.0
+2024-04-05 v0.24.1
+2024-10-07 v2.0.0
+2024-11-11 v2.0.1
+```
+
+#### Listing all migrations
+
+```bash
+find . -type f -name "*.ts" ! -name "*.spec.ts"
+
+./fcm-credentials/fcm-credentials-migration.ts
+./layout-identifier-update/add-layout-identifier-migration.ts
+./normalize-message-template-cta-action/normalize-message-cta-action-migration.ts
+./normalize-message-template-cta-action/normalize-message-template-cta-action-migration.ts
+./changes-migration.ts
+./seen-read-support/seen-read-support.migration.ts
+./in-app-integration/in-app-integration.migration.ts
+./novu-integrations/novu-integrations.migration.ts
+./expire-at/expire-at.migration.ts
+./secure-to-boolean/secure-to-boolean-migration.ts
+./encrypt-api-keys/encrypt-api-keys-migration.ts
+./encrypt-credentials/encrypt-credentials-migration.ts
+./topic-subscriber-normalize/topic-subscriber-normalize.migration.ts
+./subscriber-preferences-level/subscriber-preferences-level.migration.ts
+./integration-scheme-update/add-primary-priority-migration.ts
+./integration-scheme-update/update-primary-for-disabled-novu-integrations.ts
+./integration-scheme-update/add-integration-identifier-migration.ts
+./normalize-users-email/normalize-users-email.migration.ts
+```

@@ -1,0 +1,66 @@
+---
+title: 'Icons'
+description: 'Learn how to override the default icons in the Inbox UI using the appearance prop.'
+icon: "sparkles"
+---
+
+You can customize or replace all the default icons in the Inbox UI with custom icons from your preferred library, such as [react-icons](https://react-icons.github.io/react-icons/) or [Material Icons](https://mui.com/material-ui/material-icons/), to match your visual style using the icons' key in the `appearance` prop.
+
+For each icon that you want to customize, provide a function that returns your custom icon as a React component.
+
+```tsx
+import { Inbox } from '@novu/react';
+import { RiSettings3Fill, RiArrowDownLine, RiNotification3Fill} from 'react-icons/ri';
+
+const appearance = {
+    icons: {
+      cogs: () => <RiSettings3Fill />,
+      arrowDown: () => <RiArrowDownLine />,
+      bell: () => <RiNotification3Fill />,
+    },
+  };
+
+export function Novu() {
+  return (
+    <Inbox
+      applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+      subscriber="YOUR_SUBSCRIBER_ID"
+      appearance={appearance}
+    />
+  );
+}
+```
+
+## List of customizable icons
+
+Use these keys in the `appearance.icons` property to customize specific icons in the Inbox component:
+
+| Icon key             | Description                                          |
+| -------------------- | ---------------------------------------------------- |
+| `arrowDown`          | Down arrow used in drop-downs and expandable sections |
+| `arrowDropDown`      | Drop-down arrow in menus and selectors                |
+| `arrowLeft`          | Left arrow used in pagination and navigation         |
+| `arrowRight`         | Right arrow used in pagination and navigation        |
+| `bell`               | Notification bell icon in the header                 |
+| `chat`               | Chat channel icon in notification preferences        |
+| `check`              | Checkmark icon used for selected items               |
+| `clock`              | Date/time display for notifications                  |
+| `cogs`               | Settings/preferences icon in the header              |
+| `dots`               | More options menu (three dots) in notification items |
+| `email`              | Email channel icon in notification preferences       |
+| `inApp`              | In-app channel icon in notification preferences      |
+| `markAsArchived`     | Icon for archiving notifications                     |
+| `markAsArchivedRead` | Icon for marking notifications as archived and read  |
+| `markAsRead`         | Icon for marking notifications as read               |
+| `markAsUnread`       | Icon for marking notifications as unread             |
+| `markAsUnarchived`   | Icon for unarchiving notifications                   |
+| `push`               | Push notification channel icon in preferences        |
+| `sms`                | SMS channel icon in notification preferences         |
+| `trash`              | Delete/remove icon for notifications                 |
+| `unread`             | Indicator for unread notifications                   |
+| `unsnooze`           | Icon for unsnoozed notifications                     |
+
+<Note>
+  You can inspect the Inbox component using your browser’s developer tools to discover icon keys. Icon elements have class names that start with `nv-` and include a 🖼️ emoji for easier identification. The part following `nv-` is the icon key. For example, an element with the class `nv-cogs` has the icon key `cogs`.
+</Note>
+

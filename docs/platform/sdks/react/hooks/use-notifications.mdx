@@ -1,0 +1,312 @@
+---
+title: "useNotifications"
+description: "API reference for the useNotifications hook return types and data models in the React SDK"
+---
+
+
+The `useNotifications` hook provides a way to fetch and manage notifications in your application. It includes support for pagination, filtering, and real-time updates.
+
+## Hook Parameters
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `tags` |  |  |
+| `data` |  |  |
+| `read` |  |  |
+| `archived` |  |  |
+| `snoozed` |  |  |
+| `seen` |  |  |
+| `severity` |  |  |
+| `createdGte` |  |  |
+| `createdLte` |  |  |
+| `limit` |  |  |
+| `realtime` |  |  |
+| `onSuccess` |  |  |
+| `onError` |  |  |
+
+## Return Value
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `notifications` |  |  |
+| `error` |  |  |
+| `isLoading` |  |  |
+| `isFetching` |  |  |
+| `hasMore` |  |  |
+| `readAll` |  |  |
+| `seenAll` |  |  |
+| `archiveAll` |  |  |
+| `archiveAllRead` |  |  |
+| `refetch` |  |  |
+| `fetchMore` |  |  |
+
+## Notification Type
+
+The Notification type from @novu/react includes many properties. Here are the most commonly used ones:
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `id` |  |  |
+| `transactionId` |  |  |
+| `subject` |  |  |
+| `body` |  |  |
+| `to` |  |  |
+| `isRead` |  |  |
+| `isSeen` |  |  |
+| `isArchived` |  |  |
+| `isSnoozed` |  |  |
+| `snoozedUntil` |  |  |
+| `deliveredAt` |  |  |
+| `createdAt` |  |  |
+| `readAt` |  |  |
+| `firstSeenAt` |  |  |
+| `archivedAt` |  |  |
+| `avatar` |  |  |
+| `primaryAction` |  |  |
+| `secondaryAction` |  |  |
+| `channelType` |  |  |
+| `tags` |  |  |
+| `redirect` |  |  |
+| `data` |  |  |
+| `workflow` |  |  |
+| `severity` |  |  |
+| `read` |  |  |
+| `unread` |  |  |
+| `seen` |  |  |
+| `archive` |  |  |
+| `unarchive` |  |  |
+| `delete` |  |  |
+| `snooze` |  |  |
+| `unsnooze` |  |  |
+| `completePrimary` |  |  |
+| `completeSecondary` |  |  |
+| `revertPrimary` |  |  |
+| `revertSecondary` |  |  |
+| `on` |  |  |
+| `off` |  |  |
+
+## Example Usage
+
+Here's how to use the `useNotifications` hook to fetch and display notifications:
+
+```tsx
+import { useNotifications } from "@novu/react";
+
+function NotificationsList() {
+  const { notifications, hasMore, isLoading, error, fetchMore } =
+    useNotifications();
+
+  if (isLoading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error.message}</div>;
+
+  return (
+    <div className="space-y-4">
+      {notifications?.map((notification) => (
+        <div key={notification.id} className="p-4 border rounded-lg">
+          <h3 className="font-medium">{notification.subject}</h3>
+          <p>{notification.body}</p>
+          <div className="flex justify-between text-sm text-gray-500 mt-2">
+            <span>{new Date(notification.createdAt).toLocaleString()}</span>
+            <span>{notification.isRead ? "Read" : "Unread"}</span>
+          </div>
+        </div>
+      ))}
+      {hasMore && (
+        <button
+          onClick={fetchMore}
+          className="w-full p-2 bg-blue-50 text-blue-600 rounded-md"
+        >
+          Load More
+        </button>
+      )}
+    </div>
+  );
+}
+```
+
+### With Filtering
+
+You can filter notifications by various properties:
+
+- `read` - Filter notifications by read status
+- `seen` - Filter notifications by seen status
+- `tags` - Filter notifications by tags. If multiple tags are provided, Novu evaluates them using `OR` logic, meaning a notification is included if it contains at least one of the specified tags.
+- `data` - Filter notifications by data attributes (key-value pairs).
+- `severity` - Filter notifications by severity
+- `limit` - Fetch notifications per page
+- `createdGte` - Fetch notifications created after the given date (in milliseconds)
+- `createdLte` - Fetch notifications created before the given date (in milliseconds)
+
+```tsx
+import { useNotifications } from "@novu/react";
+import dayjs from "dayjs";
+
+const now = dayjs();
+// convert to milliseconds
+const startDate = now.subtract(60, "days").valueOf();
+const endDate = now.valueOf();  
+
+function FilteredNotifications() {
+  const { notifications, isLoading } = useNotifications({
+    read: false, // Only unread notifications
+    seen: false, // Only unseen notifications
+    tags: ["important", "urgent"], // Only notifications with these tags (OR logic applied)
+    // data attributes
+    data: {
+      type: "login",
+      userName: "John Doe",
+    },
+    severity: SeverityLevelEnum.HIGH, // Only high severity notifications
+    limit: 20, // Fetch 20 notifications per page
+    createdGte: startDate, // Fetch notifications created in the last 60 days
+    createdLte: endDate,
+  });
+
+  if (isLoading) return <div>Loading...</div>;
+
+  return (
+    <div className="space-y-4">
+      {notifications?.map((notification) => (
+        <div key={notification.id} className="p-4 border rounded-lg">
+          <h3 className="font-medium">{notification.subject}</h3>
+          <p>{notification.body}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+
+### With Infinite Scroll
+
+You can implement infinite scroll using the `fetchMore` function:
+
+```tsx
+import { useEffect, useRef } from "react";
+import { useNotifications } from "@novu/react";
+
+function InfiniteNotificationsList() {
+  const { notifications, hasMore, isLoading, fetchMore } = useNotifications();
+  const observerTarget = useRef(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !isLoading) {
+          fetchMore();
+        }
+      },
+      { threshold: 0.5 },
+    );
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
+
+    return () => observer.disconnect();
+  }, [hasMore, isLoading, fetchMore]);
+
+  if (!notifications) return <div>Loading...</div>;
+
+  return (
+    <div className="space-y-4">
+      {notifications.map((notification) => (
+        <div key={notification.id} className="p-4 border rounded-lg">
+          <h3 className="font-medium">{notification.subject}</h3>
+          <p>{notification.body}</p>
+        </div>
+      ))}
+      {hasMore && <div ref={observerTarget} className="h-10" />}
+    </div>
+  );
+}
+```
+
+### Using Notification Actions
+
+The hook provides several actions to manage notifications:
+
+```tsx
+import { useNotifications } from "@novu/react";
+
+function NotificationManager() {
+  const { notifications, readAll, seenAll, archiveAll, archiveAllRead, isLoading } =
+    useNotifications();
+
+  const handleReadAll = async () => {
+    const { error } = await readAll();
+    if (error) {
+      console.error("Failed to mark all as read:", error);
+    }
+  };
+
+  const handleArchiveAll = async () => {
+    const { error } = await archiveAll();
+    if (error) {
+      console.error("Failed to archive all:", error);
+    }
+  };
+
+  const handleSeenAll = async () => {
+    const { error } = await seenAll();
+    if (error) {
+      console.error("Failed to mark all as seen:", error);
+    }
+  };
+
+  const handleArchiveAllRead = async () => {
+    const { error } = await archiveAllRead();
+    if (error) {
+      console.error("Failed to archive read notifications:", error);
+    }
+  };
+
+  return (
+    <div>
+      <div className="flex gap-2 mb-4">
+        <button
+          onClick={handleReadAll}
+          className="px-3 py-1 bg-blue-500 text-white rounded-md"
+          disabled={isLoading}
+        >
+          Mark All as Read
+        </button>
+        <button
+          onClick={handleSeenAll}
+          className="px-3 py-1 bg-green-500 text-white rounded-md"
+          disabled={isLoading}
+        >
+          Mark All as Seen
+        </button>
+        <button
+          onClick={handleArchiveAll}
+          className="px-3 py-1 bg-gray-500 text-white rounded-md"
+          disabled={isLoading}
+        >
+          Archive All
+        </button>
+        <button
+          onClick={handleArchiveAllRead}
+          className="px-3 py-1 bg-gray-500 text-white rounded-md"
+          disabled={isLoading}
+        >
+          Archive Read
+        </button>
+      </div>
+
+      <div className="space-y-4">
+        {notifications?.map((notification) => (
+          <div key={notification.id} className="p-4 border rounded-lg">
+            <h3 className="font-medium">{notification.subject}</h3>
+            <p>{notification.body}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+```
+
+## Real-time notifications updates
+
+The notifications list is automatically updated in real-time when new notifications arrive or when notifications state (read, seen, archived, snoozed) changes.

@@ -1,0 +1,93 @@
+---
+title: Integration schema
+description: "Reference the Novu integration schema used in API requests and responses. Review fields, data types, and object structure for this resource."
+---
+
+### Integration
+
+Integration is third party service used by Novu to send notification for a specific channel. For example, [sengrid](/platform/integrations/email/sendgrid) is a email integration and [twilio](/platform/integrations/sms/twilio) is a sms integration. Read more about integrations on [integrations concept page](/platform/concepts/integrations). Integration APIs don't return credentials with secret key based authorization method, only integration metadata details are returned in response.
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `id` |  |  |
+| `environmentId` |  |  |
+| `organizationId` |  |  |
+| `name` |  |  |
+| `identifier` |  |  |
+| `providerId` |  |  |
+| `channel` |  |  |
+| `credentials` |  |  |
+| `configurations` |  |  |
+| `active` |  |  |
+| `deleted` |  |  |
+| `deletedAt` |  |  |
+| `deletedBy` |  |  |
+| `primary` |  |  |
+| `conditions` |  |  |
+
+### Credentials
+
+Each integration has a set of credentials that are used to authenticate with the third party service. Checkout the provider documentation for more details on what credentials are required for each integration.
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `apiKey` |  |  |
+| `user` |  |  |
+| `secretKey` |  |  |
+| `domain` |  |  |
+| `password` |  |  |
+| `host` |  |  |
+| `port` |  |  |
+| `secure` |  |  |
+| `region` |  |  |
+| `accountSid` |  |  |
+| `messageProfileId` |  |  |
+| `token` |  |  |
+| `from` |  |  |
+| `senderName` |  |  |
+| `projectName` |  |  |
+| `applicationId` |  |  |
+| `clientId` |  |  |
+| `requireTls` |  |  |
+| `ignoreTls` |  |  |
+| `tlsOptions` |  |  |
+| `baseUrl` |  |  |
+| `webhookUrl` |  |  |
+| `redirectUrl` |  |  |
+| `hmac` |  |  |
+| `serviceAccount` |  |  |
+| `ipPoolName` |  |  |
+| `apiKeyRequestHeader` |  |  |
+| `secretKeyRequestHeader` |  |  |
+| `idPath` |  |  |
+| `datePath` |  |  |
+| `apiToken` |  |  |
+| `authenticateByToken` |  |  |
+| `authenticationTokenKey` |  |  |
+| `instanceId` |  |  |
+| `alertUid` |  |  |
+| `title` |  |  |
+| `imageUrl` |  |  |
+| `state` |  |  |
+| `externalLink` |  |  |
+| `channelId` |  |  |
+| `phoneNumberIdentification` |  |  |
+| `accessKey` |  |  |
+| `appSid` |  |  |
+| `senderId` |  |  |
+| `tenantId` |  |  |
+| `appIOBaseUrl` |  |  |
+
+### ChannelTypeEnum
+
+ChannelTypeEnum is used to specify the type of channel that the integration is used for. For example, if the integration is used for email, the channel type will be `email`.
+
+```typescript
+ChannelTypeEnum {
+  IN_APP = "in_app",
+  EMAIL = "email",
+  SMS = "sms",
+  CHAT = "chat",
+  PUSH = "push"
+}
+```

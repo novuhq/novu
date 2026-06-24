@@ -1,0 +1,292 @@
+---
+title: 'Add a New Provider'
+description: 'Steps to add a new provider to Novu'
+---
+
+Interested in expanding Novu's capabilities? By contributing to our growing ecosystem, you can enhance Novu's reach and impact.
+
+## How to add a new provider?
+
+Novu currently supports five channels `in_app`, `push`, `email`, `chat` and `sms`.
+
+For `in_app` we support only our own provider, so new providers cannot be added to this channel. For the other four channels, we support the integration of external providers. This guide will help in adding new providers for any of these 4 channels.
+
+In this guide, we are adding a new provider for the email channel, but all of the mentioned steps are similar for other channels as well.
+
+## Description
+
+Providers allow us to handle message delivery over multiple channels.
+
+We have multiple providers for each channel (SMS, Email, Push and Chat). To get started with adding a new provider let's look at setting up our repository.
+
+## Requirements
+
+- Node.js version v20.8.1
+- MongoDB
+- Redis
+- **(Optional)** pnpm - Needed if you want to install new packages
+- **(Optional)** localstack (required only in S3 related modules)
+
+Need help installing the requirements? [Read more here](/community/run-in-local-machine)
+
+<Note>
+  We have used pnpm package manager in this guide. You can use npm as well.
+</Note>
+
+## Initialization
+
+Fork the novu repository and clone it in your local machine.
+
+```shell
+git clone https://github.com/<'YOUR_GITHUB_USER_NAME'>/novu.git
+```
+
+To set up the repository, run the initial setup command:
+
+```shell
+pnpm run setup:project
+```
+
+## Generate provider
+
+After the project is initialized, a new provider can be generated using the below command.
+
+```shell
+pnpm run generate:provider
+```
+
+<Note>
+  Use the above command at the root of the project.
+</Note>
+
+Choose the provider type.
+
+```shell
+? What type
+❯ EMAIL
+  SMS
+  PUSH
+  CHAT
+```
+
+Use `up` and `down` arrow to switch `channel` type and press `enter` to select.
+
+For this example, we will be selecting `EMAIL` as our provider type. The name for our provider will be `example-provider`.
+
+```
+? Write the provider name`kebab-cased` (e.g. proton-mail, outlook365, yahoo-mail): example-provider
+```
+
+Make sure your selected name is not conflicting with our existing provider's name. Boilerplate files for this new `example-provider` is generated in your local machine project.
+
+> In above example, we have given our provider name as example-provider for simplicity. If provider you want to add have name as twilio, don't use twilio-provider as name, instead use twilio only. If one provider supports multiple channels like infobip supports both sms and email channels, use infobip-email or infobip-sms to differentiate these providers.
+
+Once our `example-provider` is generated we will need to begin working from `packages/providers/src/lib/email/example-provider` directory. Make sure to write the test for this new provider.
+
+```typescript
+import {
+  ChannelTypeEnum,
+  ISendMessageSuccessResponse,
+  IEmailOptions,
+  IEmailProvider,
+} from '@novu/stateless';
+
+export class ExampleProviderEmailProvider implements IEmailProvider {
+  id = 'example-provider';
+  channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
+
+  constructor(
+    private config: {
+      apiKey: string;
+    }
+  ) {}
+
+  async sendMessage(options: IEmailOptions): Promise<ISendMessageSuccessResponse> {
+    return {
+      id: 'id_returned_by_provider',
+      date: 'current_time',
+    };
+  }
+}
+```
+
+### Template test case for `example-provider`.
+
+```ts packages/providers/src/lib/example-provider/example-provider.provider.sepc.ts
+import { ExampleProviderEmailProvider } from './example-provider.provider';
+
+test('should trigger example-provider library correctly', async () => {});
+```
+
+## Add provider logos
+
+In order to present this new provider in the `integration store` we need logo in light mode. Add light color svg logo in `apps/dashboard/public/images/providers/light/square` directory.
+
+Use the provider name as the file name. The sample name for our above-added provider is `example-provider.svg`.
+
+## Add config items to the list
+
+In order to build the UI integration store, we need to provide it list of all provider integrations. This part is made up of two parts:
+
+- Create credentials config
+- Add ProviderId Enum
+- Add provider config to framework
+- Add provider configuration to the providers list
+
+### 1. Create credentials config
+
+Every provider requires some credentials to create an instance. Novu will add these credentials fields in the integration store provider's form so that users can use their credentials to connect to their preferred provider to use for that channel notification. For example, in the above added `example-provider`, we have only one credential `ApiKey`. We will need to add a config object for `example-provider` with all existing provider's configs like below.
+
+```ts title="packages/shared/src/consts/providers/credentials/provider-credentials.ts"
+export const exampleProviderConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    description: 'This is API key for example provider',
+    type: 'text',
+    required: true,
+  },
+  ...mailConfigBase,
+];
+```
+
+1. Here the `key` is of type `CredentialsKeyEnum`.
+
+> If a new key is added, add this key at these 3 places:-
+>
+> - In `CredentialsKeyEnum` at file `packages/shared/src/types/providers.ts`
+> - In `ICredentials` at file `packages/shared/src/entities/integration/credential.interface.ts`
+> - In `CredentialsDto` at file `apps/api/src/app/integrations/dtos/credentials.dto.ts`
+> - In `credentials` field of `integrationSchema` at file `libs/dal/src/repositories/integration/integration.schema.ts`
+
+2. `displayName` is a human-friendly easy to understand name which will be shown in the provider integration form for this credential.
+3. `description` is a field that can be used to share more information about the credential.
+4. `type` here means text field type. this can be a string for text, text for text-area, or a switch for the toggle.
+5. `required` is of boolean type.
+6. `mailConfigBase` is an object having default credentials required by any `email` provider. Make sure not to add duplicate providers which are already there in `mailConfigBase`. In the case of another channel provider, we will use that channel config base in place of `mailConfigBase`.
+
+> A credential can be made secret by adding in `./secure-credentials.ts` file.
+
+### 2. Add ProviderId Enum
+
+Add this new provider id in the respective channel provider id enum in file `packages/shared/src/types/providers.ts`. As our `example-provider` is of email type, add this in `EmailProviderIdEnum` with all existing providers like below
+
+```ts title="packages/shared/src/types/providers.ts"
+export enum EmailProviderIdEnum {
+  ExampleProvider = 'example-provider',
+}
+```
+
+### 3. Add provider config to framework
+
+- Add provider in `EmailProviderIdEnum` at file `packages/framework/src/shared.ts`
+
+```ts title="packages/framework/src/shared.ts"
+export enum EmailProviderIdEnum {
+  ExampleProvider = 'example-provider',
+}
+```
+
+- Add provider schema at `packages/framework/src/schemas/providers/email/index.ts`
+
+```ts title="packages/framework/src/schemas/providers/email/index.ts"
+
+export const emailProviderSchema = {
+  'example-provider': genericProviderSchemas,
+}
+```
+
+### 4. Add provider to providers list
+
+Now we need to add the provider data to the list located at `packages/shared/src/consts/providers/channels/email.ts`. Note that the `id` is the provider's name, `displayName` is the provider's name in Pascal's case, `credentials` are the ones we created in the previous step, `logoFileName` should be as it was on the adding logo step (with the format type included).
+
+```ts title="packages/shared/src/consts/providers/channels/email.ts"
+import { exampleProviderConfig } from '../credentials';
+
+export const emailProviders: IProvider[] = [
+  {
+    id: 'example-provider',
+    displayName: 'Example Provider',
+    channel: ChannelTypeEnum.EMAIL,
+    credentials: exampleProviderConfig,
+    // Use valid documentation link
+    docReference: 'https://docs.example-provider.com/',
+    logoFileName: { light: 'example-provider.svg', dark: 'example-provider.svg' },
+  },
+];
+```
+
+## Add provider handler in the API
+
+### 1. Create a provider handler
+
+In order to map internally the different providers' credentials, we need to add a provider handler at the respective channel handlers located. For Email, it can be found at `libs/application-generic/src/factories/mail/handlers`. Other channel handlers can also be found here.
+
+Create a new file `example-provider.handler.ts` here with the following code
+
+```tsx libs/application-generic/src/factories/mail/handlers/example-provider.handler.ts
+import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
+import { ExampleProviderEmailProvider } from '@novu/providers';
+import { BaseHandler } from './base.handler';
+
+export class ExampleProviderHandler extends BaseHandler {
+  constructor() {
+    super(EmailProviderIdEnum.ExampleProvider, ChannelTypeEnum.EMAIL);
+  }
+
+  buildProvider(credentials, from: string) {
+    const config: { apiKey: string } = { apiKey: credentials.apiKey };
+
+    this.provider = new ExampleProviderEmailProvider(config);
+  }
+}
+```
+
+Add this line given below to export this handler
+
+```tsx libs/application-generic/src/factories/mail/handlers/index.ts
+export * from './example-provider.handler';
+```
+
+### 2. Add handler to factory
+
+The last step is to initialize the handler in the factory located in `libs/application-generic/src/factories/mail/mail.factory.ts`
+
+```tsx libs/application-generic/src/factories/mail/mail.factory.ts
+import { ExampleProviderHandler } from './handlers';
+
+export class MailFactory {
+  handlers: IMailHandler[] = [new ExampleProviderHandler()];
+}
+```
+
+### Final Steps
+
+Now, build the project again using this command
+
+```shell
+pnpm run setup:project
+```
+
+Run novu in your local machine. Read [here](/community/run-in-local-machine) to learn on how to run novu on a local machine and test this new provider.
+
+Run the below command in the root of the project to run the providers test
+
+```shell
+pnpm run test:providers
+```
+
+If everything is working fine without any error, commit your local branch changes, push this branch and create a new pull request to our main repo.
+
+Hurray 🎉! You have successfully added a new provider in Novu!
+
+<Note>
+  In this guide, we have used only one credential `apiKey` for our `example-provider`. This is for reference purposes only. A provider can have more than one credential as per its `SDK` requirements. At each step, you will need to add all credentials carefully. Check providers references below for more information.
+</Note>
+
+### Reference for Adding New Providers
+
+- [SendGrid Email Provider](https://github.com/novuhq/novu/blob/next/packages/providers/src/lib/email/sendgrid/sendgrid.provider.ts)
+- [Twilio SMS Provider](https://github.com/novuhq/novu/blob/next/packages/providers/src/lib/sms/twilio/twilio.provider.ts)
+- [FCM Push Provider](https://github.com/novuhq/novu/blob/next/packages/providers/src/lib/push/fcm/fcm.provider.ts)
+- [Slack Chat Provider](https://github.com/novuhq/novu/blob/next/packages/providers/src/lib/chat/slack/slack.provider.ts)

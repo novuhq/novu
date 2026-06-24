@@ -1,0 +1,67 @@
+---
+title: "Scaffold your project"
+description: 'Generate a Novu agent bridge application with the CLI and connect it to your dashboard agent.'
+icon: "terminal"
+---
+
+
+After you create an agent in the dashboard, scaffold the bridge application that receives events and runs your handler code.
+
+## Scaffold with the CLI
+
+Open a terminal in the directory where you want the project, then run:
+
+```bash
+npx novu@latest init -t agent \
+ --agent-identifier <AGENT_IDENTIFIER> \
+ -s <NOVU_SECRET_KEY> \
+ -a <NOVU_API_URL>
+```
+
+The CLI prompts for a project name and creates a starter app. The dashboard also provides a pre-filled copy of this command on the agent setup page with your secret key and API URL already filled in.
+
+### What gets created
+
+A typical scaffold produces a Next.js app with:
+
+```text
+app/
+  api/novu/route.ts    # exposes your agents over HTTP
+  novu/
+    agents/
+      index.ts         # re-exports each agent
+      support-agent.tsx # starter handler (name may vary)
+```
+
+The `/api/novu` route is the bridge endpoint. Register it in the dashboard under your agent's bridge URL settings.
+
+## Run locally
+
+You have scaffolded a project with a `dev` script that runs the bridge application. To run the scaffolded project in local machine:
+
+1. On the agent detail page, set bridge to **Local**.
+2. In the project directory terminal, run:
+
+```bash
+npx novu@latest dev --port <bridge_application_port> --no-studio
+```
+
+`--port` is where your app listens (often `3000` or `4000`). The CLI tunnels to `/api/novu` and registers the URL in Novu.
+
+<Warning>
+  Tunnel URLs cannot be used for production (Novu returns 403). Deploy a public bridge URL instead.
+</Warning>
+
+## Related
+
+<Columns cols={2}>
+  <Card icon="mouse-pointer-click" href="/agents/custom-code-agent/setup-your-agent/handle-events" title="Handle events">
+    Event handlers and the context object your agent receives on every turn.
+  </Card>
+  <Card icon="brain" href="/agents/custom-code-agent/connect-your-first-agent" title="Connect your first agent">
+    Walk through a full support-bot handler file.
+  </Card>
+  <Card icon="rocket" href="/agents/custom-code-agent/going-to-production" title="Going to production">
+    Run locally, deploy to development, and publish to production.
+  </Card>
+</Columns>

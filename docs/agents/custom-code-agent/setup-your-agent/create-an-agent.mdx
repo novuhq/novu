@@ -1,0 +1,46 @@
+---
+title: "Create an agent"
+description: 'Create a new agent in the Novu dashboard and connect your first provider.'
+icon: "plus"
+---
+
+
+Create an agent in the Novu dashboard before you scaffold a bridge app or write handler code. This page walks through creating the agent record and connecting your first provider.
+
+## Create an agent in the dashboard
+
+In the Novu dashboard, create a new agent and enter its basic details.
+
+1. In the Novu dashboard, go to the [Agents page](https://dashboard.novu.co/agents).
+2. In the sidebar, click **Agents**.
+3. Click **Create agent**.
+4. Enter the following information:
+   - **Agent name**: Display name for your agent. Slack and Microsoft Teams show this name when users mention the agent.
+   - **Identifier**: Unique slug used in code. Auto-generated from the name; cannot be changed after creation.
+   - **Description**: Summary of the agent's purpose.
+5. Click **Set up agent**. Novu opens the guided setup page, where you connect providers and copy the scaffold command for your bridge app.
+
+<video autoPlay loop muted playsInline src="/images/agents/custom-code-agent/setup-your-agent/create-a-new-agent.mp4" />
+
+## Connect a provider
+
+On the guided setup page in the Novu dashboard, link your agent to a messaging provider.
+
+1. In the **Select provider** list, choose a provider (for example, **Slack**).
+2. Follow the provider-specific steps shown in the dashboard.
+
+For a full Slack walkthrough including app creation and install, see [Quickstart](/agents/custom-code-agent/quickstart).
+
+## Related
+
+<Columns cols={2}>
+  <Card icon="terminal" href="/agents/custom-code-agent/setup-your-agent/scaffold-your-project" title="Scaffold your project">
+    Generate a bridge application with the Novu CLI.
+  </Card>
+  <Card icon="layout-dashboard" href="/agents/custom-code-agent/setup-your-agent/overview" title="Set up overview">
+    View dashboard settings, bridge URL, providers, and handler code.
+  </Card>
+  <Card icon="zap" href="/agents/custom-code-agent/quickstart" title="Quickstart">
+    Create an agent, connect Slack, and get a reply in-thread.
+  </Card>
+</Columns>

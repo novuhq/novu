@@ -1,0 +1,88 @@
+---
+title: 'Delay Action'
+description: 'Learn how to use Delay steps in your notification workflows'
+---
+
+
+The delay action awaits a specified amount of time before moving on to trigger the following steps of the workflow.
+
+Learn more about the [Delay](/platform/workflow/add-and-configure-steps#delay).
+
+## Common usecases
+
+- Waiting for X amount of time before sending the message
+- Wait for a short period of time before sending a push message in case the user seen the notification in the Inbox Component
+- Allow the user some time to cancel an action that generated a notification
+
+## Adding a delay step
+
+Delay steps can be inserted at any stage of your workflow execution, they can happen after or before any action. The workflow execution will be halted for the given amount of time and then resumed to the next step in the flow.
+
+The action can also be skipped using the skip parameter conditionally to allow more complex usecases of when to wait and when to send an email immediately.
+
+<Tabs>
+  <Tab title="Delay with skip condition">
+Here, we are delaying the execution of the next step by 1 day and skipping the delay step if the isCriticalMessage function returns true.
+
+```tsx
+await step.delay(
+  'delay',
+  () => {
+    return {
+      type: 'regular',
+      unit: 'days',
+      amount: 1,
+    };
+  },
+  {
+    skip: () => isCriticalMessage(),
+  }
+);
+```
+
+  </Tab>
+  <Tab title="Delay and Inbox step">
+Here, we are delaying the execution of the in-app step by 30 minutes and sending the in-app notification only if the subscriber has `goalReminderInAppAllowed` set to `true` for subscriber. If during 30 minutes delay window, subscriber sets `goalReminderInAppAllowed` to `false`, the in-app step will be skipped.
+
+```tsx
+export const goalReminderInAppAfterDelay = workflow(
+  'goal-reminder-in-app-after-delay',
+  async ({ step, subscriber }) => {
+    await step.delay('delay-step', async () => {
+      return {
+        type: 'regular',
+        amount: 30,
+        unit: 'minutes',
+      };
+    });
+
+    await step.inApp(
+      'in-app-step',
+      async () => {
+        return {
+          subject: `Don't Forget Your Fitness Goals Today!`,
+          body: `Hey ${subscriber.firstName}, it's been a while since you logged your
+                last activity. Keep up the momentum and complete your workout to stay on
+                track with your goals!`,
+        };
+      },
+      {
+        skip: () => subscriber.data?.goalReminderInAppAllowed === false,
+      }
+    );
+  }
+);
+```
+
+  </Tab>
+</Tabs>
+
+<Note>
+  Changing the step content after triggering the workflow with delay step will not affect the
+  existing pending delayed notification content.
+</Note>
+
+## Frequently Asked Questions
+
+### If delay step fails, will the workflow continue to the next step?
+No, workflow execution will stop immediately if the delay step fails due to an error.

@@ -1,0 +1,92 @@
+---
+title: Subscriber schema
+description: "Reference the Novu subscriber schema used in API requests and responses. Review fields, data types, and object structure for this resource."
+---
+
+### Subscriber
+Subscriber is the end user that receives notifications. Subscriber has subscriber attributes like firstName, lastName, email, phone, etc, `data` field to store any custom attributes in key value pairs and channel credentials for push and chat channel provider's integrations. Read more about subscribers on [subscribers concept page](/platform/concepts/subscribers).
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `id` |  |  |
+| `firstName` |  |  |
+| `lastName` |  |  |
+| `email` |  |  |
+| `phone` |  |  |
+| `avatar` |  |  |
+| `locale` |  |  |
+| `channels` |  |  |
+| `topics` |  |  |
+| `isOnline` |  |  |
+| `lastOnlineAt` |  |  |
+| `v` |  |  |
+| `data` |  |  |
+| `timezone` |  |  |
+| `subscriberId` |  |  |
+| `organizationId` |  |  |
+| `environmentId` |  |  |
+| `deleted` |  |  |
+| `createdAt` |  |  |
+| `updatedAt` |  |  |
+
+### ChannelSettingsDto
+ChannelSettings are credentials for push and chat channel provider's integrations. One subscriber can have credentials for multiple integrations of same provider of one channel type
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `providerId` |  |  |
+| `integrationIdentifier` |  |  |
+| `credentials` |  |  |
+| `integrationId` |  |  |
+
+### Credentials
+Credentials like deviceTokens, webhookUrl, etc for a specific integration. `providerId` could be chat channel providerId or push channel providerId.
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `apiKey` |  |  |
+| `user` |  |  |
+| `secretKey` |  |  |
+| `domain` |  |  |
+| `password` |  |  |
+| `host` |  |  |
+| `port` |  |  |
+| `secure` |  |  |
+| `region` |  |  |
+| `accountSid` |  |  |
+| `messageProfileId` |  |  |
+| `token` |  |  |
+| `from` |  |  |
+| `senderName` |  |  |
+| `projectName` |  |  |
+| `applicationId` |  |  |
+| `clientId` |  |  |
+| `requireTls` |  |  |
+| `ignoreTls` |  |  |
+| `tlsOptions` |  |  |
+| `baseUrl` |  |  |
+| `webhookUrl` |  |  |
+| `redirectUrl` |  |  |
+| `hmac` |  |  |
+| `serviceAccount` |  |  |
+| `ipPoolName` |  |  |
+| `apiKeyRequestHeader` |  |  |
+| `secretKeyRequestHeader` |  |  |
+| `idPath` |  |  |
+| `datePath` |  |  |
+| `apiToken` |  |  |
+| `authenticateByToken` |  |  |
+| `authenticationTokenKey` |  |  |
+| `instanceId` |  |  |
+| `alertUid` |  |  |
+| `title` |  |  |
+| `imageUrl` |  |  |
+| `state` |  |  |
+| `externalLink` |  |  |
+| `channelId` |  |  |
+| `phoneNumberIdentification` |  |  |
+| `accessKey` |  |  |
+| `appSid` |  |  |
+| `senderId` |  |  |
+| `tenantId` |  |  |
+| `appIOBaseUrl` |  |  |

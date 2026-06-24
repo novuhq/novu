@@ -1,0 +1,108 @@
+---
+title: "Quickstart"
+description: 'Use the Novu CLI to create a managed agent, connect it to Slack, and get a reply in minutes.'
+icon: "zap"
+---
+
+
+This guide walks you through creating a managed agent using the Novu CLI, connecting it to Slack, and sending your first message.
+
+<video autoPlay loop muted playsInline src="/images/agents/quickstart/novu-connect-demo.mp4" />
+
+## Prerequisites
+
+* Node.js installed on your machine.
+* A [Novu account](https://connect.novu.co/) (you can create one during the setup flow).
+* A Slack workspace where you can install apps.
+
+<Steps>
+
+<Step>
+
+## Run the CLI
+
+In your terminal, run:
+
+```bash
+npx novu connect
+```
+
+</Step>
+
+<Step>
+
+## Create an agent
+
+1. Choose where your agent runs. The CLI asks **Where do you want the agent to run?**, select an option, and then press **Enter**:
+    * Demo credentials
+    * Claude Managed Agents
+    * AWS Claude Managed Agents
+
+    For this quickstart, select **Demo credentials**.
+2. Describe your agent. Type a description of what you want the agent to do and press **Enter**. For example:
+    ```text
+    Create an engineering assistant agent that checks Linear and GitHub for open issues, pending PR reviews, and review requests. It summarizes what needs attention, flags blockers and stale tickets, and posts a short daily standup digest. It keeps responses concise and links back to the relevant Linear issue or GitHub pull request.
+    ```
+    Novu generates the agent for you, including its system prompt, tools, MCP servers, and skills based on your description.
+3. Review and create the agent. The CLI shows the generated agent for you to review. You can adjust any of the following fields before confirming:
+      * Name
+      * Identifier
+      * System prompt
+      * Tools
+      * MCP servers
+      * Skills
+      
+  If everything looks good, then select **Create this agent** and press **Enter**.
+ 
+  If you want to change the description and regenerate, then select **Regenerate from description** and repeat the previous step.
+
+</Step>
+
+<Step>
+
+## Connect Slack
+
+The CLI prompts you: **pick a channel to connect this agent to.** Select **Slack** and press **Enter**.
+ 
+Novu asks you to paste a Slack App Configuration Token. To get one:
+1. Open [https://api.slack.com/apps](https://api.slack.com/apps).
+2. Scroll to the bottom of the page.
+3. Under **App Configuration Tokens**, click **Generate Token**.
+4. Copy the access token, it starts with `xoxe.xoxp-`.
+5. Paste the token into the terminal and press **Enter**.
+    <Note>
+      The CLI sends the token to your Novu account once to create the Slack app, then discards it; the token isn't stored.
+    </Note>
+6. Add the app to your workspace. After pasting the token, the CLI prompts you to add the app to your Slack workspace. Press **Enter** and follow the link to install the bot.
+
+Once installed, your agent is live and listening for messages in Slack.
+
+</Step>
+
+<Step>
+
+## Send a message
+
+Open Slack, where you see a message from your agent. Send it a direct message to get started. The agent then prompts you to connect your Linear and GitHub MCP servers; once you do, your agent is ready.
+ 
+You can also add and interact with the agent in any channel in the workspace.
+ 
+To manage your agent, add more channels, or view conversations from the Connect dashboard, create a Novu account at [connect.novu.co](https://connect.novu.co/).
+ 
+</Step>
+
+</Steps>
+
+## Next steps
+
+<Columns cols={2}>
+  <Card icon="brain" href="/agents/managed-agent/concepts" title="Concepts">
+    Learn about connectors, MCP servers, skills, and how conversations work.
+  </Card>
+  <Card icon="link" href="/agents/managed-agent/configure-mcp-servers" title="Configure MCP servers">
+    Give your agent access to external tools like Linear, GitHub, or Notion.
+  </Card>
+  <Card icon="messages-square" href="/agents/conversations" title="Conversation observability">
+    View and manage agent conversations from the Novu Connect dashboard.
+  </Card>
+</Columns>

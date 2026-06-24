@@ -1,0 +1,18 @@
+---
+title: 'Email'
+description: 'Learn how to configure the Email channel'
+---
+
+The Email Channel is a critical component for delivering notifications reliably. Whether it's a password reset, an onboarding email, or an alert about account activity, email remains a trusted medium for reaching users.
+Novu simplifies this process, allowing you to focus on implementation rather than infrastructure.
+
+Learn more about the [Email Channel](/platform/integrations/email).
+
+```tsx
+await step.email('email', async () => {
+  return {
+    subject: 'You received a message',
+    body: 'A new post has been created',
+  };
+});
+```

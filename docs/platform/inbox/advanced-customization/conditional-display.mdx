@@ -1,0 +1,159 @@
+---
+title: 'Conditional Display'
+description: "Learn how to apply conditional display logic to notifications."
+icon: "list-filter-plus"
+---
+
+The Inbox component supports conditional display of notifications using the `renderNotification` prop. This function receives the full `notification` object and returns a custom React element.
+
+You can use worklow data such as tags, identifiers, data object or notfication severity to control how notifications are desplayed in the notification UI. This lets you create create dynamic, personalized notification UI for your subscribers.
+
+## Display notifications based on workflow tags
+
+You can conditionally display customized notification based on [workflow tags](/platform/concepts/workflows#workflow-tags). These tags are defined in your workflow and are accessible via `notification.tags` property.
+
+```tsx
+import { Inbox } from '@novu/react';
+
+export default function CustomInbox() {
+  
+  return (
+    <Inbox
+      applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+      subscriber="YOUR_SUBSCRIBER_ID"
+      renderNotification={(notification) => {
+        // filter based on tags
+        if (notification.tags?.includes('custom')) {
+          return (
+            <div>
+              <h3>Custom Notification Subject</h3>
+              <p>Custom Notification Body</p>
+            </div>
+          );
+        }
+        // default
+        return (
+          <div>
+            <h3>{notification.subject}</h3>
+            <p>{notification.body}</p>
+          </div>
+        );
+      }}
+    />
+  );
+}
+```
+
+## Display notifications based on workflow identifier or name
+
+Each workflow has a [name and a unique identifier](/platform/concepts/workflows#workflow-identifier), accessible through `notification.workflow.name` and `notification.workflow.identifier`, respectively. Either property can be used to conditionally render notifications.
+
+```tsx
+import { Inbox } from '@novu/react';
+export default function CutomInbox() {
+  
+  return (
+    <Inbox
+      applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+      subscriber="YOUR_SUBSCRIBER_ID"
+      renderNotification={(notification) => {
+        // filter based on workflow identifier
+        if (notification.workflow?.identifier === 'demo') {
+          return (
+            <div style={{ backgroundColor: 'blue' }}>
+              <h3>{notification.subject}</h3>
+              <p>{notification.body}</p>
+            </div>
+          );
+        }
+        // filter based on workflow name
+        if (notification.workflow?.name === 'Custom') {
+          return (
+            <div style={{ backgroundColor: 'blue' }}>
+              <h3>{notification.subject}</h3>
+              <p>{notification.body}</p>
+            </div>
+          );
+        }
+        // default
+        return (
+          <div>
+            <h3>{notification.subject}</h3>
+            <p>{notification.body}</p>
+          </div>
+        );
+      }}
+    />
+  );
+}
+```
+
+## Display notifications based on data object
+
+You can also use values from the notification [data object](/platform/inbox/configuration/data-object) to render notifications conditionally. These values are accessible via `notification.data` and typically contain custom payload fields.
+
+```tsx
+import { Inbox } from '@novu/react';
+export default function CutomInbox() {
+  
+  return (
+    <Inbox
+      applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+      subscriber="YOUR_SUBSCRIBER_ID"
+      renderNotification={(notification) => {
+       // filter based on data object key
+       if (notification.data?.priority) {
+        return (
+          <div style={{ backgroundColor: 'red' }}>
+            <h3>{notification.subject}</h3>
+            <p>{notification.body}</p>
+          </div>
+        );
+      }
+        // default
+        return (
+          <div>
+            <h3>{notification.subject}</h3>
+            <p>{notification.body}</p>
+          </div>
+        );
+      }}
+    />
+  );
+}
+```
+
+## Display notifications based on notfication severity
+
+You can access the severity field on each notification object. This enables conditional rendering in custom UIs.
+
+```tsx
+import { Inbox, SeverityLevelEnum } from '@novu/react';
+export default function CutomInbox() {
+ 
+  return (
+    <Inbox
+      applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+      subscriber="YOUR_SUBSCRIBER_ID"
+      renderNotification={(notification) => {
+        // render based on severity value
+        if (notification.severity === SeverityLevelEnum.HIGH) {
+          return (
+            <div style={{ backgroundColor: 'red' }}>
+              <h3>{notification.subject}</h3>
+              <p>{notification.body}</p>
+            </div>
+          );
+        }
+        
+        return (
+           <div>
+             <h3>{notification.subject}</h3>
+             <p>{notification.body}</p>
+           </div>
+        );
+      }}
+    />
+  );
+}
+```
