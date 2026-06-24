@@ -1,13 +1,11 @@
 import {
   areTagsEqual,
+  checkBasicFilters,
   checkNotificationDataFilter,
   checkNotificationTagFilter,
-  checkNotificationSeverityFilter,
   normalizeTagGroups,
-  notificationMatchesCacheBucket,
 } from './notification-utils';
 import { Notification } from '../notifications/notification';
-import { SeverityLevelEnum } from '../types';
 
 describe('normalizeTagGroups', () => {
   it('wraps flat tags as one OR-group', () => {
@@ -132,22 +130,7 @@ describe('areTagsEqual', () => {
   });
 });
 
-describe('checkNotificationSeverityFilter', () => {
-  it('returns true when filter severity is empty', () => {
-    expect(checkNotificationSeverityFilter(SeverityLevelEnum.HIGH, undefined)).toBe(true);
-    expect(checkNotificationSeverityFilter(SeverityLevelEnum.HIGH, [])).toBe(true);
-  });
-
-  it('returns true when notification severity matches a filter array', () => {
-    expect(checkNotificationSeverityFilter(SeverityLevelEnum.HIGH, [SeverityLevelEnum.HIGH])).toBe(true);
-  });
-
-  it('returns false when notification severity does not match the filter', () => {
-    expect(checkNotificationSeverityFilter(SeverityLevelEnum.LOW, SeverityLevelEnum.HIGH)).toBe(false);
-  });
-});
-
-describe('notificationMatchesCacheBucket', () => {
+describe('cache bucket membership', () => {
   const baseNotification = {
     isRead: false,
     isSeen: false,
@@ -157,17 +140,21 @@ describe('notificationMatchesCacheBucket', () => {
     createdAt: new Date().toISOString(),
   } as Notification;
 
+  function matchesCacheBucket(notification: Notification, filter: { read?: boolean; tags?: string[] }) {
+    return checkBasicFilters(notification, filter) && checkNotificationTagFilter(notification.tags, filter.tags);
+  }
+
   it('returns false when read status no longer matches the bucket filter', () => {
     const readNotification = { ...baseNotification, isRead: true } as Notification;
 
-    expect(notificationMatchesCacheBucket(readNotification, { read: false })).toBe(false);
+    expect(matchesCacheBucket(readNotification, { read: false })).toBe(false);
   });
 
   it('returns false when tags no longer match the bucket filter', () => {
-    expect(notificationMatchesCacheBucket(baseNotification, { tags: ['tag2'] })).toBe(false);
+    expect(matchesCacheBucket(baseNotification, { tags: ['tag2'] })).toBe(false);
   });
 
   it('returns true when status and tags still match the bucket filter', () => {
-    expect(notificationMatchesCacheBucket(baseNotification, { read: false, tags: ['tag1'] })).toBe(true);
+    expect(matchesCacheBucket(baseNotification, { read: false, tags: ['tag1'] })).toBe(true);
   });
 });

@@ -20,8 +20,9 @@ import type { InboxNotification, NotificationFilter, TagsFilter } from '../types
 import {
   areDataEqual,
   areTagsEqual,
+  checkBasicFilters,
+  checkNotificationTagFilter,
   isSameFilter,
-  notificationMatchesCacheBucket,
 } from '../utils/notification-utils';
 import { InMemoryCache } from './in-memory-cache';
 import type { Cache } from './types';
@@ -175,7 +176,9 @@ export class NotificationsCache {
     }
 
     const bucketFilter = getFilter(key);
-    const matchesFilter = notificationMatchesCacheBucket(notification, bucketFilter);
+    const matchesFilter =
+      checkBasicFilters(notification, bucketFilter) &&
+      checkNotificationTagFilter(notification.tags, bucketFilter.tags);
     const index = notificationsResponse.notifications.findIndex((el) => el.id === notification.id);
     const existsInBucket = index !== -1;
 
@@ -296,7 +299,7 @@ export class NotificationsCache {
         continue;
       }
 
-      hasMore = hasMore || cachedResponse.hasMore;
+      hasMore = cachedResponse.hasMore;
 
       for (const notification of cachedResponse.notifications) {
         uniqueNotifications.set(notification.id, notification);

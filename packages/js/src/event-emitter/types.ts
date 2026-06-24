@@ -187,11 +187,9 @@ type SocketEvents = {
  * - pending: the args that are passed to the action and the optional optimistic value
  * - resolved: the args that are passed to the action and the result of the action or the error that is thrown
  */
-export type Events = SessionInitializeEvents &
+export type   Events = SessionInitializeEvents &
   NotificationsFetchEvents & {
     'notifications.list.updated': { data: ListNotificationsResponse };
-  } & {
-    'notifications.counts.invalidate': Record<string, never>;
   } & NotificationsFetchCountEvents &
   PreferencesFetchEvents & {
     'preferences.list.updated': { data: Preference[] };

@@ -1,4 +1,4 @@
-import { NOTIFICATION_COUNTS_INVALIDATE_EVENT, checkNotificationMatchesFilter, isSameFilter, Notification, NotificationFilter, NovuError } from '@novu/js';
+import { NOTIFICATION_COUNT_SYNC_EVENTS, checkNotificationMatchesFilter, isSameFilter, Notification, NotificationFilter, NovuError } from '@novu/js';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useDataRef } from './internal/useDataRef';
 import { useWebSocketEvent } from './internal/useWebsocketEvent';
@@ -153,9 +153,17 @@ export const useCounts = (props: UseCountsProps): UseCountsResult => {
   });
 
   useEffect(() => {
-    const cleanup = novu.on(NOTIFICATION_COUNTS_INVALIDATE_EVENT, () => sync());
+    const cleanups = NOTIFICATION_COUNT_SYNC_EVENTS.map((event) =>
+      novu.on(event, (payload) => {
+        if ('error' in payload && payload.error) {
+          return;
+        }
 
-    return cleanup;
+        sync();
+      })
+    );
+
+    return () => cleanups.forEach((cleanup) => cleanup());
   }, [novu, sync]);
 
   useEffect(() => {

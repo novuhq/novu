@@ -1,5 +1,5 @@
 import { Accessor, createContext, createEffect, createMemo, createSignal, onCleanup, ParentProps, useContext } from 'solid-js';
-import { NOTIFICATION_COUNTS_INVALIDATE_EVENT } from '../../notifications/count-invalidation-events';
+import { NOTIFICATION_COUNT_SYNC_EVENTS } from '../../notifications/count-sync-events';
 import { Notification, NotificationFilter, SeverityLevelEnum } from '../../types';
 import { checkNotificationMatchesFilter } from '../../utils/notification-utils';
 import { getTagsFromTab } from '../helpers';
@@ -129,9 +129,17 @@ export const CountProvider = (props: ParentProps) => {
 
   createEffect(() => {
     const novu = novuAccessor();
-    const cleanup = novu.on(NOTIFICATION_COUNTS_INVALIDATE_EVENT, refreshCounts);
+    const cleanups = NOTIFICATION_COUNT_SYNC_EVENTS.map((event) =>
+      novu.on(event, (payload) => {
+        if ('error' in payload && payload.error) {
+          return;
+        }
 
-    onCleanup(cleanup);
+        refreshCounts();
+      })
+    );
+
+    onCleanup(() => cleanups.forEach((cleanup) => cleanup()));
   });
 
   useNovuEvent({

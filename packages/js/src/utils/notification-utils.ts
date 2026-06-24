@@ -424,61 +424,6 @@ export function checkNotificationTagFilter(
 }
 
 /**
- * Check if notification severity matches the filter severity criteria.
- */
-export function checkNotificationSeverityFilter(
-  notificationSeverity: Notification['severity'],
-  filterSeverity?: NotificationFilter['severity']
-): boolean {
-  if (!filterSeverity || (Array.isArray(filterSeverity) && filterSeverity.length === 0)) {
-    return true;
-  }
-
-  if (Array.isArray(filterSeverity)) {
-    return filterSeverity.includes(notificationSeverity);
-  }
-
-  return filterSeverity === notificationSeverity;
-}
-
-type NotificationFilterDimensions = {
-  includeData: boolean;
-  includeTimeframe: boolean;
-  includeSeverity: boolean;
-};
-
-function notificationMatchesFilterDimensions(
-  notification: Notification,
-  filter: NotificationFilter,
-  { includeData, includeTimeframe, includeSeverity }: NotificationFilterDimensions
-): boolean {
-  if (!checkBasicFilters(notification, filter)) {
-    return false;
-  }
-
-  if (!checkNotificationTagFilter(notification.tags, filter.tags)) {
-    return false;
-  }
-
-  if (includeData && !checkNotificationDataFilter(notification.data, filter.data)) {
-    return false;
-  }
-
-  if (
-    includeTimeframe &&
-    !checkNotificationTimeframeFilter(notification.createdAt, filter.createdGte, filter.createdLte)
-  ) {
-    return false;
-  }
-
-  if (includeSeverity && !checkNotificationSeverityFilter(notification.severity, filter.severity)) {
-    return false;
-  }
-
-  return true;
-}
-
-/**
  * Check if notification matches basic filter criteria (read, seen, archived, snoozed).
  */
 export function checkBasicFilters(
@@ -542,25 +487,10 @@ export function checkNotificationTimeframeFilter(
  * This is the main function that should be used by both React and SolidJS implementations.
  */
 export function checkNotificationMatchesFilter(notification: Notification, filter: NotificationFilter): boolean {
-  return notificationMatchesFilterDimensions(notification, filter, {
-    includeData: true,
-    includeTimeframe: true,
-    includeSeverity: true,
-  });
-}
-
-/**
- * Whether a notification still belongs in a notifications-cache bucket after a local mutation.
- * Status fields (read/seen/archived/snoozed) and tags can change membership; data, severity, and timeframe
- * are stable for in-flight mutations and are validated when the bucket is populated from the API.
- */
-export function notificationMatchesCacheBucket(
-  notification: Notification,
-  filter: NotificationFilter
-): boolean {
-  return notificationMatchesFilterDimensions(notification, filter, {
-    includeData: false,
-    includeTimeframe: false,
-    includeSeverity: false,
-  });
+  return (
+    checkBasicFilters(notification, filter) &&
+    checkNotificationTagFilter(notification.tags, filter.tags) &&
+    checkNotificationDataFilter(notification.data, filter.data) &&
+    checkNotificationTimeframeFilter(notification.createdAt, filter.createdGte, filter.createdLte)
+  );
 }
