@@ -10,16 +10,22 @@ function buildManageSlackAppUrl(applicationId: string | undefined): string {
   return applicationId ? `${SLACK_APPS_BASE_URL}/${applicationId}/distribute` : SLACK_APPS_BASE_URL;
 }
 
-function buildSlackConnectSnippet(integrationIdentifier: string, agentIdentifier: string, agentName: string): string {
-  return `import { SlackConnectButton } from '${SLACK_REACT_PACKAGE}';
+function buildSlackConnectSnippet(integrationIdentifier: string, agentName: string): string {
+  return `import { NovuProvider, SlackConnectButton } from '${SLACK_REACT_PACKAGE}';
 
-<SlackConnectButton
-  integrationIdentifier="${integrationIdentifier}"
-  connectionIdentifier="subscriberId:${integrationIdentifier}:${agentIdentifier}"
-  connectionMode="subscriber"
-  connectLabel="Install ${agentName} \u2197"
-  connectedLabel="Connected to Slack"
-/>;`;
+// Wrap the button in a NovuProvider configured for the signed-in end user.
+// Replace the placeholders with your Novu application identifier and the
+// current user's subscriberId (the connection is created per subscriber).
+<NovuProvider
+  applicationIdentifier="<YOUR_NOVU_APPLICATION_IDENTIFIER>"
+  subscriberId="<SUBSCRIBER_ID>"
+>
+  <SlackConnectButton
+    integrationIdentifier="${integrationIdentifier}"
+    connectLabel="Install ${agentName} \u2197"
+    connectedLabel="Connected to Slack"
+  />
+</NovuProvider>;`;
 }
 
 function buildSlackPrompt(integrationIdentifier: string, agentName: string): string {
@@ -34,7 +40,7 @@ export function buildSlackWhatsNextConfig({
   const applicationId = (credentials?.applicationId as string | undefined) ?? '';
   const integrationIdentifier = integrationLink.integration.identifier;
   const manageSlackAppUrl = buildManageSlackAppUrl(applicationId);
-  const connectSnippet = buildSlackConnectSnippet(integrationIdentifier, agent.identifier, agent.name);
+  const connectSnippet = buildSlackConnectSnippet(integrationIdentifier, agent.name);
   const prompt = buildSlackPrompt(integrationIdentifier, agent.name);
 
   return {
