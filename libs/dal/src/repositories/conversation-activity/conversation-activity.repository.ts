@@ -45,6 +45,22 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
     });
   }
 
+  /** Resolves the activity for a specific platform-native message id (e.g. the message a reaction targets). */
+  async findByPlatformMessageId(
+    environmentId: string,
+    conversationId: string,
+    platformMessageId: string
+  ): Promise<ConversationActivityEntity | null> {
+    return this.findOne(
+      {
+        _environmentId: environmentId,
+        _conversationId: conversationId,
+        platformMessageId,
+      },
+      '*'
+    );
+  }
+
   async countAgentMessages(environmentId: string, conversationId: string): Promise<number> {
     return this.count({
       _environmentId: environmentId,

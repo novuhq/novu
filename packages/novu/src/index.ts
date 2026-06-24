@@ -9,8 +9,8 @@ import { CONNECT_HELP_TEXT } from './commands/connect/help-text';
 import type { ConnectCommandInput } from './commands/connect/resolve-options';
 import { resolveConnectCommandOptions } from './commands/connect/resolve-options';
 import {
-  AGENT_RUNTIME_CHOICES,
-  type AgentRuntimeChoice,
+  AGENT_CONNECT_MODES,
+  type AgentConnectMode,
   CHANNEL_CHOICES,
   type ChannelChoice,
 } from './commands/connect/types';
@@ -170,12 +170,16 @@ program
   )
   .option(
     '--runtime <runtime>',
-    `Agent runtime (${AGENT_RUNTIME_CHOICES.join(' | ')}). Defaults to demo for new managed agents; custom-code reuses a self-hosted agent`
+    `Agent connect mode (${AGENT_CONNECT_MODES.join(' | ')}). Defaults to demo for managed agents; custom-code reuses a self-hosted agent; chat-sdk provisions a bridge agent`
   )
   .option(
     '--agent-identifier <id>',
     'Existing self-hosted agent identifier to connect channels to (required with --runtime custom-code in --ci mode)'
   )
+  .option('--chat-sdk', 'Shorthand for --runtime chat-sdk', false)
+  .option('--project-dir <path>', 'Project directory to inspect for an existing Chat SDK app (defaults to cwd)')
+  .option('--scaffold-dir <name>', 'Subdirectory name when scaffolding a Chat SDK project into a non-empty parent')
+  .option('--no-scaffold', 'Skip scaffolding even when the target directory is empty')
   .option(
     '--agent-integration-id <id>',
     'Use an existing agent-runtime integration (skips credential setup for BYOK runtimes)'
@@ -247,9 +251,9 @@ program
       console.error(`Invalid --channel value: "${options.channel}". Expected one of: ${CHANNEL_CHOICES.join(', ')}.`);
       process.exit(1);
     }
-    if (options.runtime && !(AGENT_RUNTIME_CHOICES as readonly string[]).includes(options.runtime)) {
+    if (options.runtime && !(AGENT_CONNECT_MODES as readonly string[]).includes(options.runtime)) {
       console.error(
-        `Invalid --runtime value: "${options.runtime}". Expected one of: ${AGENT_RUNTIME_CHOICES.join(', ')}.`
+        `Invalid --runtime value: "${options.runtime}". Expected one of: ${AGENT_CONNECT_MODES.join(', ')}.`
       );
       process.exit(1);
     }
@@ -260,8 +264,9 @@ program
         region: options.region as CloudRegionEnum,
         prompt: positionalPrompt ?? options.prompt,
         channel: options.channel as ChannelChoice | undefined,
-        runtime: options.runtime as AgentRuntimeChoice | undefined,
+        runtime: options.runtime as AgentConnectMode | undefined,
         agentIdentifier: options.agentIdentifier,
+        chatSdk: options.chatSdk,
         apiUrl: options.apiUrl ?? NOVU_API_URL,
       });
     } catch (error) {
@@ -280,7 +285,7 @@ program
     `The Novu development environment Secret Key. Note that your Novu app won't work outside of local mode without it.`
   )
   .option('-a, --api-url <url>', 'The Novu Cloud API URL', 'https://api.novu.co')
-  .option('-t, --template <name>', 'The template to use (notifications or agent)')
+  .option('-t, --template <name>', 'The template to use (notifications, agent, or chat-sdk)')
   .option('--agent-identifier <id>', 'Agent identifier to use in the scaffolded template')
   .action(async (options: IInitCommandOptions) => {
     return await init(options, anonymousId);

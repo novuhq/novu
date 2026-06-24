@@ -80,6 +80,13 @@ export function ActivityFeed() {
   }, [isConversationalAgentsEnabled, location.pathname, location.search, currentEnvironment?.slug, navigate]);
 
   useEffect(() => {
+    if (!isHttpLogsPageEnabled && location.pathname.includes('/activity/requests') && currentEnvironment?.slug) {
+      const fallbackPath = buildRoute(ROUTES.ACTIVITY_WORKFLOW_RUNS, { environmentSlug: currentEnvironment.slug });
+      navigate(fallbackPath, { replace: true });
+    }
+  }, [isHttpLogsPageEnabled, location.pathname, currentEnvironment?.slug, navigate]);
+
+  useEffect(() => {
     if (currentTab === 'requests') {
       track(TelemetryEvent.REQUEST_LOGS_PAGE_VISIT);
     }

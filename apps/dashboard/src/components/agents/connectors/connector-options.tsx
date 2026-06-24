@@ -112,6 +112,16 @@ export const CONNECTOR_OPTIONS: ConnectorOption[] = [
   },
 ];
 
+export const DEFAULT_MANAGED_CONNECTOR_ID: ConnectorId = 'claude';
+
+export function pickInitialConnector(isManagedEnabled: boolean): ConnectorId {
+  if (isManagedEnabled) return DEFAULT_MANAGED_CONNECTOR_ID;
+
+  const fallback = CONNECTOR_OPTIONS.find((o) => !o.comingSoon && o.runtime === 'scratch');
+
+  return fallback?.id ?? 'custom-scaffold';
+}
+
 export function getConnectorById(id: ConnectorId | undefined): ConnectorOption | undefined {
   if (!id) return undefined;
 

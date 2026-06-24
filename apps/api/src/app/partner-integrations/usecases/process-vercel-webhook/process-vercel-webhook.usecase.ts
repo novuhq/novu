@@ -31,11 +31,11 @@ export class ProcessVercelWebhook {
     this.verifySignature(command.signatureHeader, command.body);
 
     const payload = command.body.payload;
-    if (!payload?.team?.id || !payload?.project?.id || !payload?.deployment?.url) {
+    if (!payload?.project?.id || !payload?.deployment?.url) {
       throw new BadRequestException('Invalid webhook payload: missing required fields');
     }
 
-    const teamId = payload.team.id;
+    const teamId = payload.team?.id ?? null;
     const projectId = payload.project.id;
     const deploymentUrl = payload.deployment.url;
     const vercelEnvironment = payload.target || 'preview';

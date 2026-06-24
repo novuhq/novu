@@ -10,7 +10,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@novu/framework": "latest",
+    "@novu/framework": "^2.11.1",
     "next": "16.2.1",
     "react": "^19",
     "react-dom": "^19",

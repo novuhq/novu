@@ -8,13 +8,17 @@ import type {
   FormattedContent,
   RawMessage,
   StateAdapter,
+  StreamChunk,
+  StreamOptions,
   ThreadInfo,
   UserInfo,
   WebhookOptions,
 } from 'chat';
+import { handleBridgeProbe } from './bridge-probe.js';
 import { type ChatModuleParts, MessageMapper } from './message-mapper.js';
 import { ReplyClient } from './reply-client.js';
 import { patchSnapshotFromSignals, patchSnapshotResolved } from './snapshot-store.js';
+import { deliverBufferedStream, deliverStreamingWithEdits, shouldBufferStream } from './stream-delivery.js';
 import { channelIdFromThreadId, decodeThreadId, encodeThreadId, isDMThreadId } from './thread-id.js';
 import {
   type AgentBridgeRequest,
@@ -118,16 +122,6 @@ export class NovuAdapterImpl implements NovuTypedAdapter {
       toCardElement: chatModule.toCardElement as unknown as ChatModuleParts['toCardElement'],
       isCardElement: chatModule.isCardElement,
     });
-
-    if (this.config.bridgeUrl) {
-      // Boot-time bridge registration is best-effort — a failure here must not
-      // prevent the bridge from serving inbound requests.
-      try {
-        await this.replyClient.registerBridge(this.config.bridgeUrl);
-      } catch (err) {
-        this.chat?.getLogger('novu-adapter').warn('Failed to register bridge URL with Novu', { err });
-      }
-    }
   }
 
   private state(): StateAdapter {
@@ -159,6 +153,11 @@ export class NovuAdapterImpl implements NovuTypedAdapter {
   // -- Inbound --
 
   async handleWebhook(request: Request, options?: WebhookOptions): Promise<Response> {
+    const probeResponse = handleBridgeProbe(request, this.config.agentIdentifier);
+    if (probeResponse) {
+      return probeResponse;
+    }
+
     if (!this.chat) {
       throw new Error('Adapter not initialized. Call initialize() first.');
     }
@@ -366,6 +365,25 @@ export class NovuAdapterImpl implements NovuTypedAdapter {
       raw: this.outboundRaw(decoded, messageId),
       threadId,
     };
+  }
+
+  async stream(
+    threadId: string,
+    textStream: AsyncIterable<string | StreamChunk>,
+    options?: StreamOptions
+  ): Promise<RawMessage<NovuRawMessage>> {
+    const decoded = decodeThreadId(threadId);
+    const deps = {
+      postMessage: (id: string, message: AdapterPostableMessage) => this.postMessage(id, message),
+      editMessage: (id: string, messageId: string, message: AdapterPostableMessage) =>
+        this.editMessage(id, messageId, message),
+    };
+
+    if (shouldBufferStream(decoded.platform)) {
+      return deliverBufferedStream(threadId, textStream, deps);
+    }
+
+    return deliverStreamingWithEdits(threadId, textStream, deps, options);
   }
 
   async editMessage(

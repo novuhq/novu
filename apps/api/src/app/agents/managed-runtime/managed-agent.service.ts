@@ -16,6 +16,7 @@ import { createWebhookHandler, type WebhookHandler } from '@novu/thalamus/webhoo
 import type { Request, Response } from 'express';
 import type { ResolvedAgentConfig } from '../channels/agent-config-resolver.service';
 import { InboundAckService } from '../conversation-runtime/ack/inbound-ack.service';
+import { AgentConversationService } from '../conversation-runtime/conversation/agent-conversation.service';
 import { AgentMcpSessionService } from '../mcp/runtime/agent-mcp-session.service';
 import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
 import { AgentRuntimeDefinitionService } from './agent-runtime-definition.service';
@@ -64,6 +65,7 @@ export class ManagedAgentService implements OnModuleInit {
     private readonly eventHandler: ManagedAgentEventHandler,
     private readonly conversationRepository: ConversationRepository,
     private readonly conversationActivityRepository: ConversationActivityRepository,
+    private readonly conversationService: AgentConversationService,
     private readonly subscriberRepository: SubscriberRepository,
     private readonly agentMcpSessionService: AgentMcpSessionService,
     private readonly demoQuota: DemoClaudeQuotaPolicy,
@@ -401,10 +403,9 @@ export class ManagedAgentService implements OnModuleInit {
   }
 
   private async buildMessagesWithHistory(context: ManagedAgentContext): Promise<Message[]> {
-    const history = await this.conversationActivityRepository.findByConversation(
+    const history = await this.conversationService.getHistory(
       context.config.environmentId,
-      String(context.conversation._id),
-      50
+      String(context.conversation._id)
     );
 
     const messages: Message[] = history

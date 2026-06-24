@@ -57,12 +57,12 @@ export default function NovuAgentPlayground() {
     <main style={{ maxWidth: 760, margin: '40px auto', padding: '0 20px', fontFamily: 'system-ui, sans-serif' }}>
       <h1 style={{ fontSize: 24, fontWeight: 700 }}>Novu Chat-adapter playground</h1>
       <p style={{ color: '#555', marginTop: 8 }}>
-        Craft a signed <code>AgentBridgeRequest</code> and run it through the real <code>@novu/chat-sdk-adapter</code> adapter
-        locally. Reply POSTs are captured instead of sent to Novu — no credentials needed.
+        Craft a signed <code>AgentBridgeRequest</code> and run it through the real <code>@novu/chat-sdk-adapter</code>{' '}
+        adapter locally. Reply POSTs are captured instead of sent to Novu — no credentials needed.
       </p>
       <p style={{ color: '#555', marginTop: 4 }}>
-        Tip: send the message <code>card</code> (or click <em>Send a card reply</em>) to have the agent post a
-        chat-sdk <code>Card</code>; <code>whoami</code> echoes the resolved subscriber.
+        Tip: send the message <code>card</code> (or click <em>Send a card reply</em>) to have the agent post a chat-sdk{' '}
+        <code>Card</code>; <code>whoami</code> echoes the resolved subscriber.
       </p>
 
       <div style={{ display: 'grid', gap: 12, marginTop: 24 }}>
@@ -178,7 +178,13 @@ const secondaryButtonStyle: React.CSSProperties = {
   cursor: 'pointer',
   width: 'fit-content',
 };
-const labelStyle: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: 4, fontSize: 14, fontWeight: 600 };
+const labelStyle: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 4,
+  fontSize: 14,
+  fontWeight: 600,
+};
 const inputStyle: React.CSSProperties = {
   padding: '8px 10px',
   border: '1px solid #ccc',

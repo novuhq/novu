@@ -26,6 +26,7 @@
   "types": "dist/cjs/index.d.ts",
   "files": [
     "dist/",
+    "docs/agent-onboarding.md",
     "!**/*.spec.*",
     "!**/*.json",
     "CHANGELOG.md",
@@ -57,7 +58,8 @@
       "require": "./dist/cjs/utils/safe-outbound-http.js",
       "import": "./dist/esm/utils/safe-outbound-http.js",
       "types": "./dist/esm/utils/safe-outbound-http.d.ts"
-    }
+    },
+    "./docs/agent-onboarding.md": "./docs/agent-onboarding.md"
   },
   "dependencies": {
     "lru-cache": "^11.5.1"

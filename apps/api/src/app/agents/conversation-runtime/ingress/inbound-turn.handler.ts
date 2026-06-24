@@ -32,12 +32,12 @@ import { type AutoProvisionPlatform, isAutoProvisionPlatform } from '../../share
 import { InboundAckService } from '../ack/inbound-ack.service';
 import { AgentAttachmentStorage, type StoredAttachment } from '../conversation/agent-attachment-storage.service';
 import { AgentConversationService, getInboundActivityPreview } from '../conversation/agent-conversation.service';
-import { ConversationActivationService } from '../conversation/conversation-activation.service';
 import {
   AgentSubscriberResolver,
   BotAuthorSkippedError,
   ConnectOrgSubscriberCapExceededError,
 } from '../conversation/agent-subscriber-resolver.service';
+import { ConversationActivationService } from '../conversation/conversation-activation.service';
 import { OutboundGateway } from '../egress/outbound.gateway';
 import type { BridgeReaction } from '../runtime/bridge-executor.service';
 import type { ConversationTurn } from '../runtime/conversation-turn';
@@ -196,15 +196,7 @@ function mapStoredAttachmentsFromRichContent(richContent?: Record<string, unknow
   });
 }
 
-function findSourceMessageStoredAttachments(
-  history: ConversationActivityEntity[],
-  messageIds: string[]
-): StoredAttachment[] | undefined {
-  const messageIdSet = new Set(messageIds);
-  const sourceActivity = history.find(
-    (activity) => activity.platformMessageId && messageIdSet.has(activity.platformMessageId)
-  );
-
+function extractStoredAttachments(sourceActivity: ConversationActivityEntity | null): StoredAttachment[] | undefined {
   if (!sourceActivity) {
     return undefined;
   }
@@ -389,11 +381,10 @@ export class AgentInboundHandler implements OnModuleInit {
       isFirstMessage,
     });
 
-    const [subscriber, history, agent] = await Promise.all([
+    const [subscriber, agent] = await Promise.all([
       subscriberId
         ? this.subscriberRepository.findBySubscriberId(config.environmentId, subscriberId)
         : Promise.resolve(null),
-      this.conversationService.getHistory(config.environmentId, conversation._id),
       this.agentRepository.findOne({ _id: agentId, _environmentId: config.environmentId }, [
         '_id',
         'runtime',
@@ -418,7 +409,6 @@ export class AgentInboundHandler implements OnModuleInit {
       config,
       conversation,
       subscriber,
-      history,
       message,
       event,
       thread,
@@ -843,15 +833,14 @@ export class AgentInboundHandler implements OnModuleInit {
       ? await this.resolveSubscriberId(agentId, config, platformUserId, 'resolve-subscriber-reaction')
       : null;
 
-    const [subscriber, history] = await Promise.all([
+    const [subscriber, sourceActivity] = await Promise.all([
       subscriberId
         ? this.subscriberRepository.findBySubscriberId(config.environmentId, subscriberId)
         : Promise.resolve(null),
-      this.conversationService.getHistory(config.environmentId, conversation._id),
+      this.conversationService.findSourceActivity(config.environmentId, conversation._id, event.messageId),
     ]);
 
-    const sourceMessageIds = [event.messageId, event.message?.id].filter((id): id is string => Boolean(id));
-    let sourceMessageStoredAttachments = findSourceMessageStoredAttachments(history, sourceMessageIds);
+    let sourceMessageStoredAttachments = extractStoredAttachments(sourceActivity);
 
     if (!sourceMessageStoredAttachments && event.message?.attachments?.length) {
       sourceMessageStoredAttachments = await this.attachmentStorage.storeInbound(event.message.attachments, {
@@ -880,7 +869,6 @@ export class AgentInboundHandler implements OnModuleInit {
       config,
       conversation,
       subscriber,
-      history,
       message: null,
       event: AgentEventEnum.ON_REACTION,
       thread: event.thread ?? ({ id: threadId, channelId: '', isDM: false } as Thread),
@@ -944,11 +932,10 @@ export class AgentInboundHandler implements OnModuleInit {
 
     // Everything else (incl. mcp-approval:* for managed) routes through the runtime,
     // which owns its own action semantics.
-    const [subscriber, history, agent] = await Promise.all([
+    const [subscriber, agent] = await Promise.all([
       subscriberId
         ? this.subscriberRepository.findBySubscriberId(config.environmentId, subscriberId)
         : Promise.resolve(null),
-      this.conversationService.getHistory(config.environmentId, conversation._id),
       this.agentRepository.findOne({ _id: agentId, _environmentId: config.environmentId }, [
         '_id',
         'runtime',
@@ -963,7 +950,6 @@ export class AgentInboundHandler implements OnModuleInit {
       config,
       conversation,
       subscriber,
-      history,
       message: null,
       event: AgentEventEnum.ON_ACTION,
       thread,

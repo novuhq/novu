@@ -28,6 +28,7 @@ import {
 } from '../../shared/framework/response.decorator';
 import { KeylessAccessible } from '../../shared/framework/swagger/keyless.security';
 import { UserSession } from '../../shared/framework/user.decorator';
+import { ConversationActivationService } from '../conversation-runtime/conversation/conversation-activation.service';
 import { AgentRuntimeExceptionFilter } from '../shared/agent-runtime-exception.filter';
 import {
   AgentResponseDto,
@@ -38,7 +39,6 @@ import {
   UpdateAgentBridgeRequestDto,
   UpdateAgentRequestDto,
 } from '../shared/dtos';
-import { ConversationActivationService } from '../conversation-runtime/conversation/conversation-activation.service';
 import { type AgentEmojiEntry, ListAgentEmoji } from '../shared/emoji/list-agent-emoji/list-agent-emoji.usecase';
 import { CreateAgentCommand } from './usecases/create-agent/create-agent.command';
 import { CreateAgent } from './usecases/create-agent/create-agent.usecase';

@@ -22,10 +22,12 @@ interface IRemoveEnvironment {
   teamId: string | null;
   userId: string;
   configurationId: string;
+  vercelTargets: Array<'production' | 'development'>;
 }
 
 type ProjectDetails = {
   projectId: string;
+  vercelTarget: 'production' | 'development';
   clientAppIdEnv?: string;
   secretKeyEnv?: string;
   nextClientAppIdEnv?: string;
@@ -55,11 +57,20 @@ export class UpdateVercelIntegration {
         configurationId,
       });
 
+      const organizationIds = Object.keys(orgIdsToProjectIds);
+      const environments = await this.getEnvironments(organizationIds);
+      const vercelTargets = [
+        ...new Set(
+          environments.map((env) => (env.name.toLowerCase() === 'production' ? 'production' : 'development'))
+        ),
+      ];
+
       await this.removeEnvVariablesFromProjects({
         teamId: configuration.teamId,
         token: configuration.accessToken,
         userId,
         configurationId,
+        vercelTargets,
       });
 
       await this.organizationRepository.bulkUpdatePartnerConfiguration({
@@ -67,9 +78,6 @@ export class UpdateVercelIntegration {
         data: orgIdsToProjectIds,
         configuration,
       });
-
-      const organizationIds = Object.keys(orgIdsToProjectIds);
-      const environments = await this.getEnvironments(organizationIds);
 
       for (const env of environments) {
         const projectIds = orgIdsToProjectIds[env._organizationId];
@@ -111,7 +119,7 @@ export class UpdateVercelIntegration {
     environmentName: string,
     projectId: string,
     accessToken: string,
-    teamId: string,
+    teamId: string | null,
     organizationId: string
   ) {
     const isProduction = environmentName.toLowerCase() === 'production';
@@ -286,6 +294,7 @@ export class UpdateVercelIntegration {
 
         return {
           projectId: id,
+          vercelTarget: vercelEnvironment as 'production' | 'development',
           clientAppIdEnv: clientAppIdEnv?.id,
           secretKeyEnv: secretKeyEnv?.id,
           nextClientAppIdEnv: nextClientAppIdEnv?.id,
@@ -300,6 +309,7 @@ export class UpdateVercelIntegration {
     token,
     userId,
     configurationId,
+    vercelTargets,
   }: IRemoveEnvironment): Promise<void> {
     const orgsWithIntegration = await this.organizationRepository.findByPartnerConfigurationId({
       userId,
@@ -319,11 +329,13 @@ export class UpdateVercelIntegration {
     }
 
     const vercelLinkedProjects = await this.getVercelLinkedProjects(token, teamId, allOldProjectIds);
+    const targetsToRemove = new Set(vercelTargets);
+    const filteredProjects = vercelLinkedProjects.filter((detail) => targetsToRemove.has(detail.vercelTarget));
 
     const projectApiUrl = `${process.env.VERCEL_BASE_URL}/v9/projects`;
 
     await Promise.all(
-      vercelLinkedProjects.map((detail) => {
+      filteredProjects.map((detail) => {
         const urls: string[] = [];
         if (detail.nextApplicationIdentifierEnv) {
           urls.push(
@@ -349,7 +361,8 @@ export class UpdateVercelIntegration {
           );
         }
 
-        const requests = urls.map((url) =>
+        const uniqueUrls = [...new Set(urls)];
+        const requests = uniqueUrls.map((url) =>
           lastValueFrom(
             this.httpService.delete(url, {
               headers: {

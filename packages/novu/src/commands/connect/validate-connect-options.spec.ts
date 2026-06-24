@@ -54,7 +54,13 @@ describe('isCustomCodeReuseMode', () => {
 describe('validateCustomCodeConnectFlags', () => {
   it('rejects keyless custom-code', () => {
     expect(validateCustomCodeConnectFlags(createInput({ runtime: 'custom-code', keyless: true }))).toMatch(
-      /Cannot use --runtime custom-code with --keyless/
+      /Cannot use self-hosted reuse mode/
+    );
+  });
+
+  it('rejects keyless agent identifier reuse', () => {
+    expect(validateCustomCodeConnectFlags(createInput({ agentIdentifier: 'support-agent', keyless: true }))).toMatch(
+      /Cannot use self-hosted reuse mode/
     );
   });
 

@@ -6,6 +6,7 @@ import type { GetVercelConfigurationDetails } from '@/api/partner-integrations';
 import { Button } from '@/components/primitives/button';
 import { Form, FormRoot } from '@/components/primitives/form/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
+import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { useUpdateVercelIntegration } from '@/hooks/use-update-vercel-integration';
 import { Delete } from './icons/delete';
 import { MultiSelect } from './primitives/multi-select';
@@ -55,6 +56,14 @@ export const VercelIntegrationForm = ({
   });
 
   const onSubmit = (data: ProjectLinkFormValues) => {
+    const hasEmptyProjectSelection = data.projectLinkState.some((row) => row.projectIds.length === 0);
+
+    if (hasEmptyProjectSelection) {
+      showErrorToast('Select at least one Vercel project for each organization row before linking.');
+
+      return;
+    }
+
     const payload = data.projectLinkState.reduce<Record<string, string[]>>((prev, curr) => {
       const { organizationId, projectIds } = curr;
       prev[organizationId] = projectIds;

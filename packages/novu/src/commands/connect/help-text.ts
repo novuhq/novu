@@ -54,14 +54,32 @@ Examples (non-interactive / agent / CI):
       --ci \\
       --channel slack
 
+  Chat SDK bridge agent (no AI prompt required):
+    npx novu connect \\
+      --runtime chat-sdk \\
+      --secret-key "$NOVU_SECRET_KEY" \\
+      --channel telegram
+
+  Chat SDK in CI:
+    npx novu connect \\
+      --ci \\
+      --runtime chat-sdk \\
+      --secret-key "$NOVU_SECRET_KEY" \\
+      --channel slack
+
 Non-interactive (agent / CI) contract:
 
   Required for --ci mode (managed agents):
     - Pass the agent description as the positional <prompt> argument or --prompt.
     - Pass --channel <slack|email|telegram|skip> (or whatsapp/teams without --keyless).
 
-  Required for --ci mode (--runtime custom-code):
-    - Pass --runtime custom-code and --agent-identifier <id> (no prompt).
+  Required for --ci mode (self-hosted reuse):
+    - Pass --agent-identifier <id> (no prompt). Optionally add --runtime custom-code for explicit mode selection.
+    - Pass --secret-key (or set NOVU_SECRET_KEY in non-interactive shells).
+    - Pass --channel <slack|email|telegram|skip> (or whatsapp/teams without --keyless).
+
+  Required for --ci mode (--runtime chat-sdk):
+    - No prompt required.
     - Pass --secret-key (or set NOVU_SECRET_KEY in non-interactive shells).
     - Pass --channel <slack|email|telegram|skip> (or whatsapp/teams without --keyless).
 
@@ -116,6 +134,9 @@ Machine-readable stdout (plain text, no ANSI — watch these in --ci mode):
     NOVU_CONNECT_TELEGRAM_DEEPLINK_URL=<url>
     NOVU_CONNECT_TELEGRAM_BOT_USERNAME=<name>
     NOVU_CONNECT_TELEGRAM_DEEPLINK_QR_PNG=<absolute png path>   (only when present)
+
+  Chat SDK (requirements summary):
+    NOVU_CONNECT_CHAT_SDK_REQUIREMENTS_FILE=<absolute path to requirements summary file>
 
   Success:
     ✓ Your agent is live.

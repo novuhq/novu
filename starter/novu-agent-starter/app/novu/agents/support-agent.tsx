@@ -57,6 +57,7 @@ export const supportAgent = agent(
       return `Topic set to **${action.value}**. Describe your issue and I'll help.`;
     }
   },
+  },
   {
     name: 'Support Agent',
     description: 'Self-hosted Novu agent deployed on Vercel',

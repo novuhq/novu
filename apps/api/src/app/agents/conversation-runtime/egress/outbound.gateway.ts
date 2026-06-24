@@ -7,10 +7,7 @@ import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-c
 import type { ReplyContentDto } from '../../shared/dtos/agent-reply-payload.dto';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { esmImport } from '../../shared/util/esm-import';
-import {
-  buildPoweredByWatermark,
-  contentHasPoweredByWatermark,
-} from '../../shared/util/novu-powered-by-watermark';
+import { buildPoweredByWatermark, contentHasPoweredByWatermark } from '../../shared/util/novu-powered-by-watermark';
 import { type AgentActionTokenBinding, AgentActionTokenService } from '../action-token/agent-action-token.service';
 import { AgentConversationService } from '../conversation/agent-conversation.service';
 import { ChatInstanceRegistry } from '../ingress/chat-instance.registry';

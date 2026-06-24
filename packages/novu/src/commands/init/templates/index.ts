@@ -69,13 +69,15 @@ export const installTemplate = async ({
   applicationId,
   userId,
   agentIdentifier,
+  silent,
+  skipInstall,
 }: InstallTemplateArgs) => {
-  console.log(bold(`Using ${packageManager}.`));
+  if (!silent) console.log(bold(`Using ${packageManager}.`));
 
   /**
    * Copy the template files to the target directory.
    */
-  console.log('\nInitializing project with template:', template, '\n');
+  if (!silent) console.log('\nInitializing project with template:', template, '\n');
   const templatePath = path.join(__dirname, template, mode);
   const copySource = ['**'];
   if (!eslint) copySource.push('!eslintrc.json');
@@ -118,7 +120,11 @@ export const installTemplate = async ({
 
   if (renameAgent) {
     const camelName = agentIdentifier.replace(/[-_]([a-z0-9])/g, (_, c) => c.toUpperCase());
-    const files = await glob('**/*.{tsx,ts,md}', { cwd: root, absolute: true, followSymbolicLinks: false });
+    const files = await glob('**/*.{tsx,ts,md}', {
+      cwd: root,
+      absolute: true,
+      followSymbolicLinks: false,
+    });
     await Promise.all(
       files.map(async (file) => {
         const before = await fs.readFile(file, 'utf8');
@@ -208,12 +214,21 @@ export const installTemplate = async ({
   /* write .env file */
   const envVars =
     template === TemplateTypeEnum.APP_AGENT
-      ? { NOVU_SECRET_KEY: secretKey, NOVU_API_URL: apiUrl ?? 'https://api.novu.co' }
-      : {
+      ? {
           NOVU_SECRET_KEY: secretKey,
-          NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER: applicationId ?? '',
-          NEXT_PUBLIC_NOVU_SUBSCRIBER_ID: userId ?? '',
-        };
+          NOVU_API_URL: apiUrl ?? 'https://api.novu.co',
+        }
+      : template === TemplateTypeEnum.APP_CHAT_SDK
+        ? {
+            NOVU_SECRET_KEY: secretKey,
+            NOVU_AGENT_IDENTIFIER: agentIdentifier ?? 'my-chat-sdk-agent',
+            ...(apiUrl && apiUrl !== 'https://api.novu.co' ? { NOVU_API_BASE_URL: apiUrl } : {}),
+          }
+        : {
+            NOVU_SECRET_KEY: secretKey,
+            NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER: applicationId ?? '',
+            NEXT_PUBLIC_NOVU_SUBSCRIBER_ID: userId ?? '',
+          };
 
   const val = Object.entries(envVars).reduce((acc, [key, value]) => {
     return `${acc}${key}=${value}${os.EOL}`;
@@ -222,7 +237,7 @@ export const installTemplate = async ({
   await fs.writeFile(path.join(root, '.env.local'), val);
 
   /* write github action (skip for agent template) */
-  if (template !== TemplateTypeEnum.APP_AGENT) {
+  if (template !== TemplateTypeEnum.APP_AGENT && template !== TemplateTypeEnum.APP_CHAT_SDK) {
     await copy(copySource, `${root}/.github`, {
       parents: true,
       cwd: path.join(__dirname, `./github`),
@@ -234,20 +249,31 @@ export const installTemplate = async ({
 
   /** Create a package.json for the new project and write it to disk. */
   const isAgentTemplate = template === TemplateTypeEnum.APP_AGENT;
+  const isChatSdkTemplate = template === TemplateTypeEnum.APP_CHAT_SDK;
 
   const baseDependencies: Record<string, string> = {
     react: '^19',
     'react-dom': '^19',
     next: version,
-    '@novu/framework': resolveFrameworkVersion(),
   };
 
-  if (!isAgentTemplate) {
+  if (isAgentTemplate) {
+    baseDependencies['@novu/framework'] = resolveFrameworkVersion();
+  }
+
+  if (isChatSdkTemplate) {
+    baseDependencies.chat = '4.30.0';
+    baseDependencies['@novu/chat-sdk-adapter'] = 'latest';
+    baseDependencies['@chat-adapter/state-memory'] = '4.30.0';
+  }
+
+  if (!isAgentTemplate && !isChatSdkTemplate) {
+    baseDependencies['@novu/framework'] = resolveFrameworkVersion();
     baseDependencies['@novu/nextjs'] = '^2.5.0';
   }
 
   const scripts: Record<string, string> = {
-    dev: 'next dev --port=4000',
+    dev: 'next dev --port=3000',
     build: 'next build',
     start: 'next start',
     lint: 'next lint',
@@ -255,8 +281,15 @@ export const installTemplate = async ({
 
   if (isAgentTemplate) {
     const cliTag = resolveCliTag();
-    scripts['dev'] = `node warn-no-tunnel.mjs ${packageManager} && next dev --port=4000`;
-    scripts['dev:novu'] = `npx novu@${cliTag} dev -p 4000 --no-studio --run "next dev --port=4000"`;
+    scripts['dev'] = `node warn-no-tunnel.mjs ${packageManager} && next dev --port=4005`;
+    scripts['dev:novu'] = `PORT=4005 npx novu@${cliTag} dev -p 4005 --no-studio --run "next dev --port=4005"`;
+  }
+
+  if (isChatSdkTemplate) {
+    const cliTag = resolveCliTag();
+    scripts['dev'] = `node warn-no-tunnel.mjs ${packageManager} && next dev --port=4005`;
+    scripts['dev:novu'] =
+      `PORT=4005 npx novu@${cliTag} dev -p 4005 --no-studio --route /api/webhooks/novu --run "next dev --port=4005"`;
   }
 
   const packageJson: any = {
@@ -314,17 +347,21 @@ export const installTemplate = async ({
 
   await fs.writeFile(path.join(root, 'package.json'), JSON.stringify(packageJson, null, 2) + os.EOL);
 
-  console.log('\nInstalling dependencies:');
-  for (const dependency in packageJson.dependencies) console.log(`- ${cyan(dependency)}`);
+  if (!silent) {
+    console.log('\nInstalling dependencies:');
+    for (const dependency in packageJson.dependencies) console.log(`- ${cyan(dependency)}`);
 
-  if (devDeps) {
-    console.log('\nInstalling devDependencies:');
-    for (const dependency in packageJson.devDependencies) console.log(`- ${cyan(dependency)}`);
+    if (devDeps) {
+      console.log('\nInstalling devDependencies:');
+      for (const dependency in packageJson.devDependencies) console.log(`- ${cyan(dependency)}`);
+    }
+
+    console.log();
   }
 
-  console.log();
-
-  await install(packageManager, isOnline);
+  if (!skipInstall) {
+    await install(packageManager, isOnline, silent, root);
+  }
 };
 
 export * from './types';

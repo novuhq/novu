@@ -9,7 +9,7 @@ type ResolveBridgeUrlInput = {
   isProduction: boolean;
   environmentName: string;
   projectId: string;
-  teamId: string;
+  teamId: string | null;
   deploymentUrl?: string;
   accessToken?: string;
   requireStableAlias?: boolean;
@@ -64,8 +64,12 @@ export class VercelBridgeSyncService {
     }
 
     try {
+      const projectUrl = input.teamId
+        ? `${process.env.VERCEL_BASE_URL}/v9/projects/${input.projectId}?teamId=${input.teamId}`
+        : `${process.env.VERCEL_BASE_URL}/v9/projects/${input.projectId}`;
+
       const getDomainsResponse = await lastValueFrom(
-        this.httpService.get(`${process.env.VERCEL_BASE_URL}/v9/projects/${input.projectId}?teamId=${input.teamId}`, {
+        this.httpService.get(projectUrl, {
           headers: {
             Authorization: `Bearer ${input.accessToken}`,
             'Content-Type': 'application/json',

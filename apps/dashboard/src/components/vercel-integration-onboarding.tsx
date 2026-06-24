@@ -3,6 +3,8 @@ import { useQuery } from '@tanstack/react-query';
 import { CheckCircle2, Circle } from 'lucide-react';
 import { useEffect, useMemo, useRef } from 'react';
 import { getAgentIntegrationsQueryKey, getAgentsListQueryKey, listAgentIntegrations, listAgents } from '@/api/agents';
+import type { AgentResponse } from '@/api/agents';
+import type { IEnvironment } from '@novu/shared';
 import { getApiKeys } from '@/api/environments';
 import type { GetVercelConfigurationDetails } from '@/api/partner-integrations';
 import { Button } from '@/components/primitives/button';
@@ -18,6 +20,44 @@ import { cn } from '@/utils/ui';
 const PRODUCTION_ENVIRONMENT_NAME = 'Production';
 const DEVELOPMENT_ENVIRONMENT_NAME = 'Development';
 const BRIDGE_STATUS_POLL_INTERVAL_MS = 5000;
+const AGENTS_PAGE_LIMIT = 50;
+
+function isAllowedVercelReturnUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+
+    return parsed.protocol === 'https:' && (parsed.hostname === 'vercel.com' || parsed.hostname.endsWith('.vercel.com'));
+  } catch {
+    return false;
+  }
+}
+
+async function findAgentWithBridge(
+  environment: IEnvironment,
+  predicate: (agent: AgentResponse) => boolean
+): Promise<AgentResponse | undefined> {
+  let after: string | undefined;
+
+  while (true) {
+    const response = await listAgents({
+      environment,
+      limit: AGENTS_PAGE_LIMIT,
+      identifier: '',
+      after,
+    });
+    const match = response.data.find(predicate);
+
+    if (match) {
+      return match;
+    }
+
+    if (!response.next) {
+      return undefined;
+    }
+
+    after = response.next;
+  }
+}
 
 function getBridgePollInterval(hasLinkedProject: boolean, agents: Array<{ bridgeUrl?: string }> | undefined) {
   if (!hasLinkedProject) {
@@ -152,32 +192,33 @@ export function VercelIntegrationOnboarding({
     [environments]
   );
 
+  const safeVercelReturnUrl =
+    vercelReturnUrl && isAllowedVercelReturnUrl(vercelReturnUrl) ? vercelReturnUrl : undefined;
+
   const { data: productionAgentsResponse, isLoading: isProductionAgentsLoading } = useQuery({
-    queryKey: getAgentsListQueryKey(productionEnvironment?._id, { limit: 10, identifier: '' }),
+    queryKey: getAgentsListQueryKey(productionEnvironment?._id, { limit: AGENTS_PAGE_LIMIT, identifier: '' }),
     queryFn: () =>
-      listAgents({
-        environment: requireEnvironment(productionEnvironment, 'Production environment not found'),
-        limit: 10,
-      }),
+      findAgentWithBridge(
+        requireEnvironment(productionEnvironment, 'Production environment not found'),
+        (agent) => Boolean(agent.bridgeUrl)
+      ),
     enabled: !!productionEnvironment && isAgentsEnabled,
-    refetchInterval: (query) => getBridgePollInterval(hasLinkedProject, query.state.data?.data),
+    refetchInterval: (query) => getBridgePollInterval(hasLinkedProject, query.state.data ? [query.state.data] : undefined),
   });
 
   const { data: previewAgentsResponse } = useQuery({
-    queryKey: getAgentsListQueryKey(developmentEnvironment?._id, { limit: 10, identifier: '' }),
+    queryKey: getAgentsListQueryKey(developmentEnvironment?._id, { limit: AGENTS_PAGE_LIMIT, identifier: '' }),
     queryFn: () =>
-      listAgents({
-        environment: requireEnvironment(developmentEnvironment, 'Development environment not found'),
-        limit: 10,
-      }),
+      findAgentWithBridge(
+        requireEnvironment(developmentEnvironment, 'Development environment not found'),
+        (agent) => Boolean(agent.devBridgeActive && agent.devBridgeUrl)
+      ),
     enabled: !!developmentEnvironment && isAgentsEnabled && hasLinkedProject,
     refetchInterval: hasLinkedProject ? BRIDGE_STATUS_POLL_INTERVAL_MS : false,
   });
 
-  const productionAgents = productionAgentsResponse?.data ?? [];
-  const previewAgents = previewAgentsResponse?.data ?? [];
-  const productionAgent = productionAgents.find((agent) => agent.bridgeUrl);
-  const previewAgent = previewAgents.find((agent) => agent.devBridgeActive && agent.devBridgeUrl);
+  const productionAgent = productionAgentsResponse;
+  const previewAgent = previewAgentsResponse;
 
   const { data: integrationsResponse } = useQuery({
     queryKey: getAgentIntegrationsQueryKey(productionEnvironment?._id, productionAgent?.identifier),
@@ -228,24 +269,24 @@ export function VercelIntegrationOnboarding({
   const vercelDeploymentsUrl = resolveVercelDeploymentsUrl(linkedProjectId, vercelProjects);
 
   useEffect(() => {
-    if (!isAgentsEnabled || !hasConnectedChannel || !vercelReturnUrl || hasRedirectedToVercelRef.current) {
+    if (!isAgentsEnabled || !hasConnectedChannel || !safeVercelReturnUrl || hasRedirectedToVercelRef.current) {
       return;
     }
 
     hasRedirectedToVercelRef.current = true;
-    window.location.replace(vercelReturnUrl);
-  }, [isAgentsEnabled, hasConnectedChannel, vercelReturnUrl]);
+    window.location.replace(safeVercelReturnUrl);
+  }, [isAgentsEnabled, hasConnectedChannel, safeVercelReturnUrl]);
 
   if (!isAgentsEnabled) {
     return null;
   }
 
   function handleReturnToVercel() {
-    if (!vercelReturnUrl) {
+    if (!safeVercelReturnUrl) {
       return;
     }
 
-    window.location.replace(vercelReturnUrl);
+    window.location.replace(safeVercelReturnUrl);
   }
 
   let bridgeStepDescription = 'Select a Vercel project above and click Create Links to inject your Novu credentials.';
@@ -265,14 +306,14 @@ export function VercelIntegrationOnboarding({
 
   return (
     <div className="mt-6 flex flex-col gap-3 border-t border-neutral-100 pt-6">
-      {hasConnectedChannel && vercelReturnUrl ? (
+      {hasConnectedChannel && safeVercelReturnUrl ? (
         <div className="border-stroke-soft flex flex-col gap-2 rounded-lg border bg-neutral-50 p-4">
           <p className="text-foreground-950 text-sm font-medium">Channel connected — completing Vercel installation</p>
           <p className="text-foreground-500 text-xs">Returning you to Vercel to finish setup…</p>
         </div>
       ) : null}
 
-      {hasLinkedProject && vercelReturnUrl && !hasConnectedChannel ? (
+      {hasLinkedProject && safeVercelReturnUrl && !hasConnectedChannel ? (
         <div className="border-stroke-soft flex flex-col gap-3 rounded-lg border bg-neutral-50 p-4">
           <div>
             <p className="text-foreground-950 text-sm font-medium">Project linked — finish setup before closing</p>

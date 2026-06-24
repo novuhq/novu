@@ -37,7 +37,7 @@ Route validation (strict):
 - `stepResolverHash`: format `sr-xxxxx-xxxxx` (e.g., `sr-abc12-def34`)
 - `stepId`: one URL path segment (`[^/]+`)
 - `Content-Type`: must be `application/json`
-- Body size: max `1MB`
+- Body size: max `26MB` (supports ~20MB raw attachments after base64 and JSON envelope overhead)
 
 Auth headers:
 

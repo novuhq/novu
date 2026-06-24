@@ -56,7 +56,7 @@
     "@opentelemetry/api": "1.9.0",
     "@opentelemetry/auto-instrumentations-node": "0.75.0",
     "@opentelemetry/context-async-hooks": "2.7.1",
-    "@opentelemetry/core": "2.7.1",
+    "@opentelemetry/core": "2.8.0",
     "@opentelemetry/exporter-logs-otlp-http": "0.217.0",
     "@opentelemetry/exporter-prometheus": "0.217.0",
     "@opentelemetry/exporter-trace-otlp-http": "0.217.0",

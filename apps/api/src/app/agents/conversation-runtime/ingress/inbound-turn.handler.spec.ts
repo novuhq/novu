@@ -61,6 +61,12 @@ describe('AgentInboundHandler', () => {
       setFirstPlatformMessageId: sinon.stub().resolves(undefined),
       findByPlatformThread: sinon.stub().resolves(conversation),
       getHistory: sinon.stub().resolves(overrides.history ?? []),
+      findSourceActivity: sinon
+        .stub()
+        .callsFake(
+          async (_environmentId: string, _conversationId: string, platformMessageId: string) =>
+            (overrides.history ?? []).find((activity: any) => activity?.platformMessageId === platformMessageId) ?? null
+        ),
       countAgentMessages: sinon.stub().resolves(0),
     };
     const bridgeExecutor = {
