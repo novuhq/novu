@@ -1,4 +1,4 @@
-import { ChatProviderIdEnum, type ICredentials } from '@novu/shared';
+import { ChatProviderIdEnum, FeatureFlagsKeysEnum, type ICredentials } from '@novu/shared';
 import { type ReactNode, useId, useMemo } from 'react';
 import { RiArrowRightSLine, RiArrowRightUpLine, RiCheckLine, RiInformationLine } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
@@ -11,10 +11,12 @@ import { Skeleton } from '@/components/primitives/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { API_HOSTNAME } from '@/config';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { AgentIntegrationGuideHeader } from './agent-integration-guide-layout';
+import { AgentChannelWhatsNextGuide } from './whats-next/agent-channel-whats-next-guide';
 
 type SlackAgentConnectedDetailsProps = {
   agent: AgentResponse;
@@ -170,6 +172,7 @@ export function SlackAgentConnectedDetails({
 }: SlackAgentConnectedDetailsProps) {
   const navigate = useNavigate();
   const { currentEnvironment } = useEnvironment();
+  const isWhatsNextEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_AGENT_WHATS_NEXT_ENABLED);
   const { integrations, isLoading } = useFetchIntegrations();
 
   const integration = useMemo(
@@ -251,6 +254,10 @@ export function SlackAgentConnectedDetails({
           </SectionLinkButton>
         ) : null}
       </div>
+
+      {isWhatsNextEnabled ? (
+        <AgentChannelWhatsNextGuide agent={agent} integrationLink={integrationLink} credentials={credentials} />
+      ) : null}
 
       <DetailSection
         title="Slack app metadata"
