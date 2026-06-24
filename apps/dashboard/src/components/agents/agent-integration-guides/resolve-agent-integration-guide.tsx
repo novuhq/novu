@@ -1,12 +1,16 @@
 import { ChatProviderIdEnum, EmailProviderIdEnum } from '@novu/shared';
-import { useEffect, useState } from 'react';
+import { motion } from 'motion/react';
+import { type ReactNode, useRef, useState } from 'react';
+import { RiArrowRightLine } from 'react-icons/ri';
 import type { AgentIntegrationLink, AgentResponse } from '@/api/agents';
 import { isAgentIntegrationConnected } from '@/components/agents/is-agent-integration-connected';
 import { SetupGuideCard } from '@/components/agents/setup-guide-card';
+import { CompletedStepIndicator } from '@/components/agents/setup-guide-primitives';
 import { SlackSetupGuide } from '@/components/agents/slack-setup-guide';
 import { TeamsSetupGuide } from '@/components/agents/teams-setup-guide';
 import { TelegramSetupGuide } from '@/components/agents/telegram-setup-guide';
 import { WhatsAppSetupGuide } from '@/components/agents/whatsapp-setup-guide';
+import { Button } from '@/components/primitives/button';
 import { AgentIntegrationGuideHeader } from './agent-integration-guide-layout';
 import { EmailAgentIntegrationGuide } from './email-agent-integration-guide';
 import { GenericAgentIntegrationGuide } from './generic-agent-integration-guide';
@@ -33,6 +37,8 @@ type SetupGuideWrapperProps = {
   onRequestRemoveIntegration?: () => void;
   isRemovingIntegration?: boolean;
   children: React.ReactNode;
+  /** Rendered at the end of the setup card body, in the same flow (e.g. the "Continue" step). */
+  footer?: React.ReactNode;
 };
 
 function SetupGuideWithHeader({
@@ -43,6 +49,7 @@ function SetupGuideWithHeader({
   onRequestRemoveIntegration,
   isRemovingIntegration,
   children,
+  footer,
 }: SetupGuideWrapperProps) {
   const isConnected = isAgentIntegrationConnected(integrationLink);
 
@@ -74,9 +81,105 @@ function SetupGuideWithHeader({
       />
       <SetupGuideCard label={`Setup ${providerDisplayName} integration`} rightContent={statusBadge}>
         {children}
+        {footer}
       </SetupGuideCard>
     </div>
   );
+}
+
+/**
+ * The "Continue" step, rendered inline at the end of the setup card (not as a separate card) so it
+ * reads as the natural conclusion of the setup flow and can't be missed/overlooked below the fold.
+ */
+function ConnectionSuccessFooter({
+  providerDisplayName,
+  onContinue,
+}: {
+  providerDisplayName: string;
+  onContinue: () => void;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+      className="border-stroke-soft mt-2 flex flex-col gap-3 border-t pl-8 pt-4 md:flex-row md:items-center md:justify-between md:gap-6"
+    >
+      <div className="flex items-start gap-2.5">
+        <span className="mt-px shrink-0">
+          <CompletedStepIndicator />
+        </span>
+        <div className="flex flex-col gap-0.5">
+          <p className="text-text-strong text-label-sm font-medium leading-5">
+            Make your agent available to your users
+          </p>
+          <p className="text-text-soft text-label-xs leading-4">
+            You've connected it for yourself. Continue to roll it out so your own users can reach it from their{' '}
+            {providerDisplayName}.
+          </p>
+        </div>
+      </div>
+      <Button
+        variant="primary"
+        size="xs"
+        type="button"
+        onClick={onContinue}
+        trailingIcon={RiArrowRightLine}
+        className="shrink-0 self-start md:self-center"
+      >
+        Continue
+      </Button>
+    </motion.div>
+  );
+}
+
+type AgentIntegrationGuideTransitionProps = {
+  isConnected: boolean;
+  providerDisplayName: string;
+  /** Builds the setup card; `footer` is rendered inline at the end of the card body. */
+  renderSetupView: (footer: ReactNode) => ReactNode;
+  /** `justConnected` is true only for an in-session connect (used to carry the celebration over). */
+  renderConnectedView: (justConnected: boolean) => ReactNode;
+};
+
+/**
+ * Drives the setup → connected transition for an integration:
+ *
+ * - Already connected on mount (page refresh / revisit): render the connected view immediately —
+ *   no flash of the setup guide, and no celebration replay.
+ * - Connected during the session while on the setup guide: keep the setup guide on screen and
+ *   surface an explicit "Continue" step *inline at the end of the setup card*. We deliberately avoid
+ *   an automatic / timed transition — the connection can land while the user is still in the Slack
+ *   app (sending the first message), so the user must always return to a stable success screen and
+ *   move forward themselves. Continuing carries the celebration over via `justConnected`.
+ *
+ * This component is mounted with a `key` of the integration id, so switching integrations resets
+ * the transition cleanly.
+ */
+function AgentIntegrationGuideTransition({
+  isConnected,
+  providerDisplayName,
+  renderSetupView,
+  renderConnectedView,
+}: AgentIntegrationGuideTransitionProps) {
+  const connectedOnMountRef = useRef(isConnected);
+  const [hasContinued, setHasContinued] = useState(false);
+
+  // Only celebrate / gate a connection that happened while the user was watching the setup guide;
+  // an integration that was already connected on mount goes straight to its connected view.
+  const justConnected = !connectedOnMountRef.current;
+  const showConnected = connectedOnMountRef.current || hasContinued;
+  const showContinueStep = justConnected && isConnected && !hasContinued;
+
+  if (showConnected) {
+    return <>{renderConnectedView(justConnected)}</>;
+  }
+
+  const footer = showContinueStep ? (
+    <ConnectionSuccessFooter providerDisplayName={providerDisplayName} onContinue={() => setHasContinued(true)} />
+  ) : null;
+
+  return <>{renderSetupView(footer)}</>;
 }
 
 export function ResolveAgentIntegrationGuide({
@@ -89,141 +192,10 @@ export function ResolveAgentIntegrationGuide({
   isRemovingIntegration,
 }: ResolveAgentIntegrationGuideProps) {
   const providerId = integrationLink.integration.providerId;
+  const isConnected = Boolean(integrationLink.connectedAt);
 
-  // Once the user opens an unconnected integration, keep showing the setup guide so the
-  // "Connected" success state (confetti + listening status) stays visible after the
-  // backend reports `connectedAt`. Stickiness is scoped to a single integration at a
-  // time — switching to a different provider clears it, and a fresh mount (page
-  // refresh / leaving the tab) reverts to the management view for already-connected
-  // integrations.
-  const [stickySetupId, setStickySetupId] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!integrationLink.connectedAt) {
-      setStickySetupId(integrationLink._id);
-
-      return;
-    }
-
-    setStickySetupId((prev) => (prev === integrationLink._id ? prev : null));
-  }, [integrationLink._id, integrationLink.connectedAt]);
-
-  const showSetupGuide = !integrationLink.connectedAt || stickySetupId === integrationLink._id;
-
-  if (providerId === ChatProviderIdEnum.Slack && showSetupGuide) {
-    return (
-      <SetupGuideWithHeader
-        providerId={providerId}
-        providerDisplayName="Slack"
-        integrationLink={integrationLink}
-        canRemoveIntegration={canRemoveIntegration}
-        onRequestRemoveIntegration={onRequestRemoveIntegration}
-        isRemovingIntegration={isRemovingIntegration}
-      >
-        <SlackSetupGuide agent={agent} integrationId={integrationLink.integration._id} embedded />
-      </SetupGuideWithHeader>
-    );
-  }
-
-  if (providerId === ChatProviderIdEnum.Slack) {
-    return (
-      <SlackAgentConnectedDetails
-        agent={agent}
-        integrationLink={integrationLink}
-        canRemoveIntegration={canRemoveIntegration}
-        onRequestRemoveIntegration={onRequestRemoveIntegration}
-        isRemovingIntegration={isRemovingIntegration}
-      />
-    );
-  }
-
-  if (providerId === ChatProviderIdEnum.MsTeams && showSetupGuide) {
-    return (
-      <SetupGuideWithHeader
-        providerId={providerId}
-        providerDisplayName="MS Teams"
-        integrationLink={integrationLink}
-        canRemoveIntegration={canRemoveIntegration}
-        onRequestRemoveIntegration={onRequestRemoveIntegration}
-        isRemovingIntegration={isRemovingIntegration}
-      >
-        <TeamsSetupGuide agent={agent} integrationId={integrationLink.integration._id} embedded />
-      </SetupGuideWithHeader>
-    );
-  }
-
-  if (providerId === ChatProviderIdEnum.MsTeams) {
-    return (
-      <TeamsAgentIntegrationGuide
-        embedded={embedded}
-        onBack={onBack}
-        agent={agent}
-        integrationLink={integrationLink}
-        canRemoveIntegration={canRemoveIntegration}
-        onRequestRemoveIntegration={onRequestRemoveIntegration}
-        isRemovingIntegration={isRemovingIntegration}
-      />
-    );
-  }
-
-  if (providerId === ChatProviderIdEnum.Telegram && showSetupGuide) {
-    return (
-      <SetupGuideWithHeader
-        providerId={providerId}
-        providerDisplayName="Telegram"
-        integrationLink={integrationLink}
-        canRemoveIntegration={canRemoveIntegration}
-        onRequestRemoveIntegration={onRequestRemoveIntegration}
-        isRemovingIntegration={isRemovingIntegration}
-      >
-        <TelegramSetupGuide agent={agent} integrationId={integrationLink.integration._id} embedded />
-      </SetupGuideWithHeader>
-    );
-  }
-
-  if (providerId === ChatProviderIdEnum.Telegram) {
-    return (
-      <TelegramAgentIntegrationGuide
-        embedded={embedded}
-        onBack={onBack}
-        agent={agent}
-        integrationLink={integrationLink}
-        canRemoveIntegration={canRemoveIntegration}
-        onRequestRemoveIntegration={onRequestRemoveIntegration}
-        isRemovingIntegration={isRemovingIntegration}
-      />
-    );
-  }
-
-  if (providerId === ChatProviderIdEnum.WhatsAppBusiness && showSetupGuide) {
-    return (
-      <SetupGuideWithHeader
-        providerId={providerId}
-        providerDisplayName="WhatsApp Business"
-        integrationLink={integrationLink}
-        canRemoveIntegration={canRemoveIntegration}
-        onRequestRemoveIntegration={onRequestRemoveIntegration}
-        isRemovingIntegration={isRemovingIntegration}
-      >
-        <WhatsAppSetupGuide agent={agent} integrationId={integrationLink.integration._id} embedded />
-      </SetupGuideWithHeader>
-    );
-  }
-
-  if (providerId === ChatProviderIdEnum.WhatsAppBusiness) {
-    return (
-      <WhatsAppAgentIntegrationGuide
-        embedded={embedded}
-        onBack={onBack}
-        agent={agent}
-        integrationLink={integrationLink}
-        canRemoveIntegration={canRemoveIntegration}
-        onRequestRemoveIntegration={onRequestRemoveIntegration}
-        isRemovingIntegration={isRemovingIntegration}
-      />
-    );
-  }
-
+  // The auto-provisioned Novu email integration has no distinct setup phase — render its single
+  // guide regardless of connection state.
   if (providerId === EmailProviderIdEnum.NovuAgent) {
     return (
       <EmailAgentIntegrationGuide
@@ -238,16 +210,121 @@ export function ResolveAgentIntegrationGuide({
     );
   }
 
-  return (
-    <GenericAgentIntegrationGuide
-      embedded={embedded}
+  let setupGuide: ReactNode = null;
+  let setupDisplayName = '';
+
+  switch (providerId) {
+    case ChatProviderIdEnum.Slack:
+      setupGuide = <SlackSetupGuide agent={agent} integrationId={integrationLink.integration._id} embedded />;
+      setupDisplayName = 'Slack';
+      break;
+    case ChatProviderIdEnum.MsTeams:
+      setupGuide = <TeamsSetupGuide agent={agent} integrationId={integrationLink.integration._id} embedded />;
+      setupDisplayName = 'MS Teams';
+      break;
+    case ChatProviderIdEnum.Telegram:
+      setupGuide = <TelegramSetupGuide agent={agent} integrationId={integrationLink.integration._id} embedded />;
+      setupDisplayName = 'Telegram';
+      break;
+    case ChatProviderIdEnum.WhatsAppBusiness:
+      setupGuide = <WhatsAppSetupGuide agent={agent} integrationId={integrationLink.integration._id} embedded />;
+      setupDisplayName = 'WhatsApp Business';
+      break;
+    default:
+      setupGuide = null;
+  }
+
+  // Chat providers without a dedicated setup guide fall back to the single generic guide.
+  if (!setupGuide) {
+    return (
+      <GenericAgentIntegrationGuide
+        embedded={embedded}
+        providerId={providerId}
+        onBack={onBack}
+        agent={agent}
+        integrationLink={integrationLink}
+        canRemoveIntegration={canRemoveIntegration}
+        onRequestRemoveIntegration={onRequestRemoveIntegration}
+        isRemovingIntegration={isRemovingIntegration}
+      />
+    );
+  }
+
+  const renderSetupView = (footer: ReactNode): ReactNode => (
+    <SetupGuideWithHeader
       providerId={providerId}
-      onBack={onBack}
-      agent={agent}
+      providerDisplayName={setupDisplayName}
       integrationLink={integrationLink}
       canRemoveIntegration={canRemoveIntegration}
       onRequestRemoveIntegration={onRequestRemoveIntegration}
       isRemovingIntegration={isRemovingIntegration}
+      footer={footer}
+    >
+      {setupGuide}
+    </SetupGuideWithHeader>
+  );
+
+  const renderConnectedView = (justConnected: boolean): ReactNode => {
+    switch (providerId) {
+      case ChatProviderIdEnum.Slack:
+        return (
+          <SlackAgentConnectedDetails
+            agent={agent}
+            integrationLink={integrationLink}
+            canRemoveIntegration={canRemoveIntegration}
+            onRequestRemoveIntegration={onRequestRemoveIntegration}
+            isRemovingIntegration={isRemovingIntegration}
+            justConnected={justConnected}
+          />
+        );
+      case ChatProviderIdEnum.MsTeams:
+        return (
+          <TeamsAgentIntegrationGuide
+            embedded={embedded}
+            onBack={onBack}
+            agent={agent}
+            integrationLink={integrationLink}
+            canRemoveIntegration={canRemoveIntegration}
+            onRequestRemoveIntegration={onRequestRemoveIntegration}
+            isRemovingIntegration={isRemovingIntegration}
+          />
+        );
+      case ChatProviderIdEnum.Telegram:
+        return (
+          <TelegramAgentIntegrationGuide
+            embedded={embedded}
+            onBack={onBack}
+            agent={agent}
+            integrationLink={integrationLink}
+            canRemoveIntegration={canRemoveIntegration}
+            onRequestRemoveIntegration={onRequestRemoveIntegration}
+            isRemovingIntegration={isRemovingIntegration}
+          />
+        );
+      case ChatProviderIdEnum.WhatsAppBusiness:
+        return (
+          <WhatsAppAgentIntegrationGuide
+            embedded={embedded}
+            onBack={onBack}
+            agent={agent}
+            integrationLink={integrationLink}
+            canRemoveIntegration={canRemoveIntegration}
+            onRequestRemoveIntegration={onRequestRemoveIntegration}
+            isRemovingIntegration={isRemovingIntegration}
+          />
+        );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <AgentIntegrationGuideTransition
+      key={integrationLink._id}
+      isConnected={isConnected}
+      providerDisplayName={setupDisplayName}
+      renderSetupView={renderSetupView}
+      renderConnectedView={renderConnectedView}
     />
   );
 }

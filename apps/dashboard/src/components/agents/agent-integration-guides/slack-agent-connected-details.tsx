@@ -3,6 +3,7 @@ import { type ReactNode, useId, useMemo } from 'react';
 import { RiArrowRightSLine, RiArrowRightUpLine, RiCheckLine, RiInformationLine } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
 import type { AgentIntegrationLink, AgentResponse } from '@/api/agents';
+import { ConnectionConfetti } from '@/components/agents/connection-confetti';
 import { isAgentIntegrationConnected } from '@/components/agents/is-agent-integration-connected';
 import { CopyButton } from '@/components/primitives/copy-button';
 import { Input } from '@/components/primitives/input';
@@ -24,6 +25,12 @@ type SlackAgentConnectedDetailsProps = {
   canRemoveIntegration: boolean;
   onRequestRemoveIntegration?: () => void;
   isRemovingIntegration?: boolean;
+  /**
+   * True when the integration connected during this session and we just transitioned in from the
+   * setup guide — drives the one-shot celebration so the "success" moment carries over instead of
+   * being dropped when the setup card animates away.
+   */
+  justConnected?: boolean;
 };
 
 const MANAGE_SLACK_APP_BASE_URL = 'https://api.slack.com/apps';
@@ -169,6 +176,7 @@ export function SlackAgentConnectedDetails({
   canRemoveIntegration,
   onRequestRemoveIntegration,
   isRemovingIntegration,
+  justConnected = false,
 }: SlackAgentConnectedDetailsProps) {
   const navigate = useNavigate();
   const { currentEnvironment } = useEnvironment();
@@ -229,6 +237,7 @@ export function SlackAgentConnectedDetails({
 
   return (
     <div className="flex w-full max-w-[1100px] flex-col gap-4">
+      <ConnectionConfetti active={justConnected} />
       <AgentIntegrationGuideHeader
         providerId={ChatProviderIdEnum.Slack}
         providerDisplayName="Slack"
