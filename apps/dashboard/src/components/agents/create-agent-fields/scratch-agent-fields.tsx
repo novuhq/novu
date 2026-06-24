@@ -65,7 +65,7 @@ export function ScratchAgentFields({
                 onIdentifierChange(slugify(nextName));
               }
             }}
-            placeholder="e.g. Wine Sommelier Agent"
+            placeholder="e.g. Customer Support Agent"
             hasError={Boolean(errors.name)}
             disabled={disabled}
             aria-invalid={errors.name ? true : undefined}
@@ -101,7 +101,7 @@ export function ScratchAgentFields({
               onIdentifierChange(e.target.value);
               onIdentifierTouched();
             }}
-            placeholder="e.g. wine-sommelier-agent"
+            placeholder="e.g. customer-support-agent"
             hasError={Boolean(errors.identifier)}
             disabled={disabled}
             aria-invalid={errors.identifier ? true : undefined}

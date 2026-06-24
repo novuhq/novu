@@ -126,7 +126,6 @@ function StepHeader({ current, onBack }: StepHeaderProps) {
 
 export function AgentsSetupPage() {
   const isAgentsEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONVERSATIONAL_AGENTS_ENABLED, false);
-  const isManagedEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_MANAGED_AGENT_RUNTIME_ENABLED, false);
   const navigate = useNavigate();
   const telemetry = useTelemetry();
   const { currentOrganization } = useAuth();
@@ -463,7 +462,6 @@ export function AgentsSetupPage() {
                 <div className="relative pb-12">
                   <ConnectAgentStep
                     onAgentCreated={handleAgentCreated}
-                    isManagedEnabled={isManagedEnabled}
                     agentTemplateId={agentTemplateId}
                     simplifiedDemo
                   />
