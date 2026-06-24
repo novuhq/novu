@@ -17,6 +17,7 @@ import { GenericAgentIntegrationGuide } from './generic-agent-integration-guide'
 import { SlackAgentConnectedDetails } from './slack-agent-connected-details';
 import { TeamsAgentIntegrationGuide } from './teams-agent-integration-guide';
 import { TelegramAgentIntegrationGuide } from './telegram-agent-integration-guide';
+import { providerHasWhatsNextPhase } from './whats-next/whats-next-config';
 import { WhatsAppAgentIntegrationGuide } from './whatsapp-agent-integration-guide';
 
 type ResolveAgentIntegrationGuideProps = {
@@ -90,14 +91,25 @@ function SetupGuideWithHeader({
 /**
  * The "Continue" step, rendered inline at the end of the setup card (not as a separate card) so it
  * reads as the natural conclusion of the setup flow and can't be missed/overlooked below the fold.
+ *
+ * `hasUserRolloutPhase` is true only for providers whose connected view implements the "what's next"
+ * user-rollout flow (see `providerHasWhatsNextPhase`). For those we promise the rollout step; every
+ * other provider gets a generic continue note so we don't advertise a phase that doesn't exist yet.
  */
 function ConnectionSuccessFooter({
   providerDisplayName,
+  hasUserRolloutPhase,
   onContinue,
 }: {
   providerDisplayName: string;
+  hasUserRolloutPhase: boolean;
   onContinue: () => void;
 }) {
+  const title = hasUserRolloutPhase ? 'Make your agent available to your users' : 'Your agent is connected';
+  const description = hasUserRolloutPhase
+    ? `You've connected it for yourself. Continue to roll it out so your own users can reach it from their ${providerDisplayName}.`
+    : `You've connected ${providerDisplayName} for yourself. Continue to view and manage your connection details.`;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
@@ -110,13 +122,8 @@ function ConnectionSuccessFooter({
           <CompletedStepIndicator />
         </span>
         <div className="flex flex-col gap-0.5">
-          <p className="text-text-strong text-label-sm font-medium leading-5">
-            Make your agent available to your users
-          </p>
-          <p className="text-text-soft text-label-xs leading-4">
-            You've connected it for yourself. Continue to roll it out so your own users can reach it from their{' '}
-            {providerDisplayName}.
-          </p>
+          <p className="text-text-strong text-label-sm font-medium leading-5">{title}</p>
+          <p className="text-text-soft text-label-xs leading-4">{description}</p>
         </div>
       </div>
       <Button
@@ -136,6 +143,8 @@ function ConnectionSuccessFooter({
 type AgentIntegrationGuideTransitionProps = {
   isConnected: boolean;
   providerDisplayName: string;
+  /** Whether this provider's connected view implements the user-rollout "what's next" phase. */
+  hasUserRolloutPhase: boolean;
   /** Builds the setup card; `footer` is rendered inline at the end of the card body. */
   renderSetupView: (footer: ReactNode) => ReactNode;
   /** `justConnected` is true only for an in-session connect (used to carry the celebration over). */
@@ -159,6 +168,7 @@ type AgentIntegrationGuideTransitionProps = {
 function AgentIntegrationGuideTransition({
   isConnected,
   providerDisplayName,
+  hasUserRolloutPhase,
   renderSetupView,
   renderConnectedView,
 }: AgentIntegrationGuideTransitionProps) {
@@ -176,7 +186,11 @@ function AgentIntegrationGuideTransition({
   }
 
   const footer = showContinueStep ? (
-    <ConnectionSuccessFooter providerDisplayName={providerDisplayName} onContinue={() => setHasContinued(true)} />
+    <ConnectionSuccessFooter
+      providerDisplayName={providerDisplayName}
+      hasUserRolloutPhase={hasUserRolloutPhase}
+      onContinue={() => setHasContinued(true)}
+    />
   ) : null;
 
   return <>{renderSetupView(footer)}</>;
@@ -323,6 +337,7 @@ export function ResolveAgentIntegrationGuide({
       key={integrationLink._id}
       isConnected={isConnected}
       providerDisplayName={setupDisplayName}
+      hasUserRolloutPhase={providerHasWhatsNextPhase(providerId)}
       renderSetupView={renderSetupView}
       renderConnectedView={renderConnectedView}
     />

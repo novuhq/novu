@@ -260,6 +260,12 @@ export function SlackSetupGuide({
   const isQuickSetupEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_SLACK_QUICK_SETUP_ENABLED, false);
   const [isCredentialsSidebarOpen, setIsCredentialsSidebarOpen] = useState(false);
   const [credentialsSavedLocally, setCredentialsSavedLocally] = useState(false);
+  // Installing the app (OAuth) completes the install step but is NOT the same as
+  // being connected — connection happens only when the user sends their first
+  // real message (which the backend records as `connectedAt`). Keeping these
+  // separate stops the install step from silently completing "Send your first
+  // message" and finishing onboarding prematurely.
+  const [isSlackAppInstalled, setIsSlackAppInstalled] = useState(false);
   const [isSlackWorkspaceConnected, setIsSlackWorkspaceConnected] = useState(false);
   const [showManifest, setShowManifest] = useState(false);
   const [setupMode, setSetupMode] = useState<SetupMode>('quick');
@@ -267,6 +273,7 @@ export function SlackSetupGuide({
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: reset when the watched Slack integration changes
   useEffect(() => {
+    setIsSlackAppInstalled(false);
     setIsSlackWorkspaceConnected(false);
     setCredentialsSavedLocally(false);
   }, [integrationId]);
@@ -290,7 +297,11 @@ export function SlackSetupGuide({
   const selectedIntegrationIdentifier = selectedIntegration?.identifier ?? '';
 
   const handleSlackOAuthSuccess = useCallback(() => {
-    handleSlackWorkspaceConnected();
+    // OAuth success means the app is installed — it does NOT mean a user has
+    // messaged the agent yet. Only advance the install step; the workspace is
+    // marked connected (and onboarding completes) once the first real inbound
+    // message arrives, detected via `ListeningStatus` below.
+    setIsSlackAppInstalled(true);
 
     if (currentEnvironment && selectedIntegrationIdentifier) {
       sendAgentWelcomeMessage(currentEnvironment, agent.identifier, selectedIntegrationIdentifier)
@@ -308,14 +319,7 @@ export function SlackSetupGuide({
           console.warn('Failed to send agent welcome message after Slack OAuth:', err);
         });
     }
-  }, [
-    handleSlackWorkspaceConnected,
-    currentEnvironment,
-    agent.identifier,
-    selectedIntegrationIdentifier,
-    setSearchParams,
-    onWelcomeSent,
-  ]);
+  }, [currentEnvironment, agent.identifier, selectedIntegrationIdentifier, setSearchParams, onWelcomeSent]);
   const hasCredentials = hasIntegrationCredentials(selectedIntegration?.credentials);
   const isCredentialsSaved = hasCredentials || credentialsSavedLocally;
 
@@ -338,8 +342,18 @@ export function SlackSetupGuide({
       return base;
     }
 
-    return activeSetupMode === 'quick' ? base + 1 : base + 2;
-  }, [base, isCredentialsSaved, isSlackWorkspaceConnected, activeSetupMode]);
+    if (activeSetupMode === 'quick') {
+      // quick: base = create app, base + 1 = install, base + 2 = send first message.
+      // Installing completes the install step but leaves "Send your first message"
+      // as the current step until a real message lands.
+      return isSlackAppInstalled ? base + 2 : base + 1;
+    }
+
+    // manual: base = create app, base + 1 = paste credentials, base + 2 = install.
+    // There is no separate "send your first message" step, so installing completes
+    // the column.
+    return isSlackAppInstalled ? base + 3 : base + 2;
+  }, [base, isCredentialsSaved, isSlackWorkspaceConnected, isSlackAppInstalled, activeSetupMode]);
 
   const modeSwitcher = isQuickSetupEnabled ? (
     <div className="pl-6">
@@ -513,7 +527,11 @@ export function SlackSetupGuide({
       watchedIntegrationId={integrationId}
       onConnected={handleSlackWorkspaceConnected}
       connectedMessage="Your Slack workspace is connected — check your DMs for a welcome message from the bot!"
-      listeningMessage="Install the app to your Slack workspace to continue."
+      listeningMessage={
+        isSlackAppInstalled
+          ? `Send a message to ${agent.name} in your Slack workspace to finish connecting.`
+          : 'Install the app to your Slack workspace to continue.'
+      }
     />
   );
 

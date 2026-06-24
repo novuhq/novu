@@ -15,3 +15,13 @@ export function resolveChannelWhatsNextConfig(ctx: WhatsNextConfigContext): Chan
 
   return builder ? builder(ctx) : null;
 }
+
+/**
+ * Whether a provider has implemented the "what's next" user-rollout phase (the guided flow that
+ * helps a developer make the connected agent reachable by their own users). Only these providers
+ * should surface the rollout-specific "Continue" step after an in-session connect; everyone else
+ * falls back to a generic continue note.
+ */
+export function providerHasWhatsNextPhase(providerId: string): boolean {
+  return Boolean(WHATS_NEXT_CONFIG_BUILDERS[providerId]);
+}
