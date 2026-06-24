@@ -63,10 +63,7 @@
               {
                 "group": "Features",
                 "icon": "blocks",
-                "pages": [
-                  "platform/inbox/features/snooze",
-                  "platform/inbox/features/schedule"
-                ]
+                "pages": ["platform/inbox/features/snooze", "platform/inbox/features/schedule"]
               },
               {
                 "group": "Customize and Configure",
@@ -336,10 +333,7 @@
               {
                 "group": "Webhooks",
                 "icon": "webhook",
-                "pages": [
-                  "platform/developer/webhooks/event-types",
-                  "platform/developer/webhooks/connectors"
-                ]
+                "pages": ["platform/developer/webhooks/event-types", "platform/developer/webhooks/connectors"]
               }
             ]
           },
@@ -419,9 +413,7 @@
           },
           {
             "group": "Observability",
-            "pages": [
-              "agents/conversations"
-            ]
+            "pages": ["agents/conversations"]
           }
         ]
       },
@@ -430,37 +422,23 @@
         "groups": [
           {
             "group": "Guides",
-            "pages": [
-              "guides",
-              "guides/inngest",
-              "guides/triggerdotdev"
-            ]
+            "pages": ["guides", "guides/inngest", "guides/triggerdotdev"]
           },
           {
             "group": "Inbound Webhooks",
-            "pages": [
-              "guides/webhooks/clerk",
-              "guides/webhooks/stripe",
-              "guides/webhooks/segment"
-            ]
+            "pages": ["guides/webhooks/clerk", "guides/webhooks/stripe", "guides/webhooks/segment"]
           },
           {
             "group": "Recipes",
-            "pages": [
-              "guides/recipes/managing-workflows"
-            ]
+            "pages": ["guides/recipes/managing-workflows"]
           },
           {
             "group": "Framework",
-            "pages": [
-              "guides/framework/using-translations"
-            ]
+            "pages": ["guides/framework/using-translations"]
           },
           {
             "group": "Migrate to Novu",
-            "pages": [
-              "guides/migrate-from-courier-to-novu"
-            ]
+            "pages": ["guides/migrate-from-courier-to-novu"]
           }
         ]
       },
@@ -518,12 +496,7 @@
           },
           {
             "group": "Advanced Features",
-            "pages": [
-              "framework/digest",
-              "framework/delay",
-              "framework/custom",
-              "framework/skip"
-            ]
+            "pages": ["framework/digest", "framework/delay", "framework/custom", "framework/skip"]
           },
           {
             "group": "API Reference",
@@ -788,9 +761,7 @@
           },
           {
             "group": "Activity",
-            "pages": [
-              "api-reference/activity/track-activity-and-engagement-events"
-            ]
+            "pages": ["api-reference/activity/track-activity-and-engagement-events"]
           },
           {
             "group": "Layouts",
@@ -813,31 +784,22 @@
   "navbar": {
     "links": [
       {
-        "label": "GitHub",
+        "type": "github",
         "href": "https://github.com/novuhq/novu"
       },
       {
-        "label": "Sign In",
-        "href": "https://dashboard.novu.co/auth/sign-in"
+        "label": "Contact Us",
+        "href": "https://novu.co/contact-us"
       }
     ],
     "primary": {
       "type": "button",
-      "label": "Sign Up",
+      "label": "Get Started",
       "href": "https://dashboard.novu.co/auth/sign-up"
     }
   },
   "contextual": {
-    "options": [
-      "copy",
-      "view",
-      "chatgpt",
-      "claude",
-      "perplexity",
-      "mcp",
-      "cursor",
-      "vscode"
-    ]
+    "options": ["copy", "view", "chatgpt", "claude", "perplexity", "mcp", "cursor", "vscode"]
   },
   "footer": {
     "socials": {
