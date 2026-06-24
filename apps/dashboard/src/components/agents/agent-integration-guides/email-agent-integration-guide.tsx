@@ -5,6 +5,7 @@ import { EmailConfigurationCardBody } from '@/components/agents/email-configurat
 import { EmailInboxCardBody } from '@/components/agents/email-inbox-card';
 import { EmailSetupGuide } from '@/components/agents/email-setup-guide';
 import { isAgentIntegrationConnected } from '@/components/agents/is-agent-integration-connected';
+import { IS_SELF_HOSTED_EE } from '@/config';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { AgentIntegrationGuideLayout } from './agent-integration-guide-layout';
 
@@ -41,7 +42,7 @@ export function EmailAgentIntegrationGuide({
     [integrationId, integrations]
   );
 
-  const showInboxSection = isSharedInboxEnabled && emailIntegration && integrationLink;
+  const showInboxSection = (isSharedInboxEnabled || IS_SELF_HOSTED_EE) && emailIntegration && integrationLink;
 
   return (
     <AgentIntegrationGuideLayout

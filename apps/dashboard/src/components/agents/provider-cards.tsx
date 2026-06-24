@@ -18,7 +18,7 @@ import { useNavigate } from 'react-router-dom';
 import type { AgentIntegrationLink } from '@/api/agents';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
-import { IS_SELF_HOSTED, SELF_HOSTED_UPGRADE_REDIRECT_URL } from '@/config';
+import { IS_SELF_HOSTED, IS_SELF_HOSTED_CE, SELF_HOSTED_UPGRADE_REDIRECT_URL } from '@/config';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { buildEdgeFadeMask, useHorizontalScrollEdges } from '@/hooks/use-horizontal-scroll-edges';
 import { useIsAgentEmailAvailable } from '@/hooks/use-is-agent-email-available';
@@ -358,7 +358,10 @@ export function ProviderCards({
   // Email (NovuAgent) is shown as a provider card too — it is auto-provisioned for every agent, so
   // it renders in the connected/selected state by default and leads the list.
   const items = useMemo(() => {
-    const built = buildCardItems(CONVERSATIONAL_PROVIDERS, integrations);
+    const built = buildCardItems(CONVERSATIONAL_PROVIDERS, integrations).filter(
+      // Agent email is Enterprise/Cloud-only — never surface the card on Community.
+      (item) => !(IS_SELF_HOSTED_CE && item.providerId === EmailProviderIdEnum.NovuAgent)
+    );
 
     return [...built].sort((left, right) => {
       if (left.providerId === EmailProviderIdEnum.NovuAgent) return -1;

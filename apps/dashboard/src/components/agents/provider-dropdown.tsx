@@ -30,7 +30,7 @@ import {
 } from '@/components/primitives/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
-import { IS_SELF_HOSTED, SELF_HOSTED_UPGRADE_REDIRECT_URL } from '@/config';
+import { IS_SELF_HOSTED, IS_SELF_HOSTED_CE, SELF_HOSTED_UPGRADE_REDIRECT_URL } from '@/config';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { useIsAgentEmailAvailable } from '@/hooks/use-is-agent-email-available';
 import { useLinkAgentIntegration } from '@/hooks/use-link-agent-integration';
@@ -208,6 +208,11 @@ export function ProviderDropdown({
 
   const supported = useMemo(() => {
     let items = allSupported;
+
+    // Agent email is Enterprise/Cloud-only — never list the row on Community.
+    if (IS_SELF_HOSTED_CE) {
+      items = items.filter((item) => item.providerId !== EmailProviderIdEnum.NovuAgent);
+    }
 
     // NovuAgent is 1:1 per agent and the backend enforces it — hiding the row
     // once an instance is linked is an invariant the picker must always honor,

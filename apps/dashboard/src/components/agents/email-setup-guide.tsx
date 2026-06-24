@@ -5,7 +5,7 @@ import { RiInformation2Line, RiKey2Line, RiLoader4Line, RiMailSendLine } from 'r
 import { type AgentIntegrationLink, type AgentResponse, sendAgentTestEmail } from '@/api/agents';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
-import { IS_SELF_HOSTED } from '@/config';
+import { IS_SELF_HOSTED_EE } from '@/config';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { cn } from '@/utils/ui';
@@ -128,11 +128,12 @@ export function EmailSetupGuide({
   // provider is an explicit upgrade rather than a prerequisite. For demo,
   // `needsCredentialsStep` stays false so the credentials step is skipped
   // naturally and the wizard advances straight to the inbound-address step.
-  // Self-hosted has no bundled Novu demo sender, so a freshly provisioned agent
-  // has no outbound provider selected. Treat picking one as a hard prerequisite
-  // there. On cloud the demo is selected by default, so this branch never fires
-  // and the step stays pre-completed exactly as before (zero behavioral delta).
-  const needsOutboundSelection = IS_SELF_HOSTED && !outboundId;
+  // Self-hosted Enterprise has no bundled Novu demo sender, so a freshly
+  // provisioned agent has no outbound provider selected. Treat picking one as a
+  // hard prerequisite there. On cloud the demo is selected by default, so this
+  // branch never fires and the step stays pre-completed exactly as before (zero
+  // behavioral delta).
+  const needsOutboundSelection = IS_SELF_HOSTED_EE && !outboundId;
 
   const firstIncompleteStep = useMemo(() => {
     if (needsOutboundSelection) return base;
@@ -163,7 +164,7 @@ export function EmailSetupGuide({
         sectionLabel="SETUP SENDING EMAILS"
         title="Setup providers to send emails."
         description={
-          IS_SELF_HOSTED
+          IS_SELF_HOSTED_EE
             ? 'Select an email provider (e.g. SendGrid, SES, Resend) so your agent can send replies.'
             : 'The Novu Email demo sender is used by default so your agent can reply out of the box. Switch to your own provider for higher volume later.'
         }
