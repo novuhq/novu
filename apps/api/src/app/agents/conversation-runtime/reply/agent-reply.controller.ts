@@ -12,7 +12,7 @@ import { HandleAgentReply } from './handle-agent-reply/handle-agent-reply.usecas
 @Controller('/agents')
 @ApiExcludeController()
 export class AgentReplyController {
-  constructor(private handleAgentReplyUsecase: HandleAgentReply) {}
+  constructor(private handleAgentReply: HandleAgentReply) {}
 
   @Post('/:agentId/reply')
   @HttpCode(HttpStatus.OK)
@@ -23,7 +23,7 @@ export class AgentReplyController {
     @Param('agentId') agentId: string,
     @Body() body: AgentReplyPayloadDto
   ) {
-    return this.handleAgentReplyUsecase.execute(
+    return this.handleAgentReply.execute(
       HandleAgentReplyCommand.create({
         userId: user._id,
         environmentId: user.environmentId,
