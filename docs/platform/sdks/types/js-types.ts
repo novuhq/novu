@@ -1,19 +1,19 @@
 import type {
   ChannelPreference,
+  CreateSubscriptionArgs,
+  DeleteSubscriptionArgs,
+  GetSubscriptionArgs,
   ListNotificationsResponse,
+  ListSubscriptionsArgs,
   Notification,
   NotificationFilter,
   NovuOptions,
   PreferencesResponse,
-  Subscriber,
   Schedule,
+  Subscriber,
   SubscriptionPreference,
-  ListSubscriptionsArgs,
-  GetSubscriptionArgs,
-  CreateSubscriptionArgs,
-  UpdateSubscriptionArgs,
-  DeleteSubscriptionArgs,
   TopicSubscription,
+  UpdateSubscriptionArgs,
 } from '@novu/js';
 
 export type {

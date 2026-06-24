@@ -1,17 +1,16 @@
+import type { AllAppearance, AllElements, Variables } from '@novu/js/ui';
 import type {
   BellProps,
   InboxContentProps,
   InboxProps as InboxPropsInternal,
   NotificationProps,
-  SubscriptionProps,
-  SubscriptionAppearance,
-  UseNotificationsProps,
-  UseNotificationsResult,
   Notification as NotificationType,
   SlackConnectButtonProps,
+  SubscriptionAppearance,
+  SubscriptionProps,
+  UseNotificationsProps,
+  UseNotificationsResult,
 } from '@novu/react';
-
-import type { AllAppearance, AllElements, Variables } from '@novu/js/ui';
 
 export type InboxProps = Omit<InboxPropsInternal, 'children'>;
 export type { BellProps, InboxContentProps, NotificationProps };
