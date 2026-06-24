@@ -15,7 +15,7 @@ import { AgentIntegrationGuideHeader } from './agent-integration-guide-layout';
 import { EmailAgentIntegrationGuide } from './email-agent-integration-guide';
 import { GenericAgentIntegrationGuide } from './generic-agent-integration-guide';
 import { SlackAgentConnectedDetails } from './slack-agent-connected-details';
-import { TeamsAgentIntegrationGuide } from './teams-agent-integration-guide';
+import { TeamsAgentConnectedDetails } from './teams-agent-connected-details';
 import { TelegramAgentIntegrationGuide } from './telegram-agent-integration-guide';
 import { providerHasWhatsNextPhase } from './whats-next/whats-next-config';
 import { WhatsAppAgentIntegrationGuide } from './whatsapp-agent-integration-guide';
@@ -293,14 +293,13 @@ export function ResolveAgentIntegrationGuide({
         );
       case ChatProviderIdEnum.MsTeams:
         return (
-          <TeamsAgentIntegrationGuide
-            embedded={embedded}
-            onBack={onBack}
+          <TeamsAgentConnectedDetails
             agent={agent}
             integrationLink={integrationLink}
             canRemoveIntegration={canRemoveIntegration}
             onRequestRemoveIntegration={onRequestRemoveIntegration}
             isRemovingIntegration={isRemovingIntegration}
+            justConnected={justConnected}
           />
         );
       case ChatProviderIdEnum.Telegram:

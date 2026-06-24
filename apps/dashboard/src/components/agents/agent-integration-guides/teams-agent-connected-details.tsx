@@ -2,7 +2,7 @@ import { ChatProviderIdEnum, type ICredentials } from '@novu/shared';
 import { useMemo } from 'react';
 import { RiArrowRightUpLine } from 'react-icons/ri';
 import type { AgentIntegrationLink, AgentResponse } from '@/api/agents';
-import { API_HOSTNAME } from '@/config';
+import { getAgentApiBaseUrl } from '@/config';
 import {
   AgentConnectedDetailsShell,
   DetailSection,
@@ -11,7 +11,7 @@ import {
   SectionLinkButton,
 } from './agent-connected-details-shell';
 
-type SlackAgentConnectedDetailsProps = {
+type TeamsAgentConnectedDetailsProps = {
   agent: AgentResponse;
   integrationLink: AgentIntegrationLink;
   canRemoveIntegration: boolean;
@@ -25,79 +25,71 @@ type SlackAgentConnectedDetailsProps = {
   justConnected?: boolean;
 };
 
-const MANAGE_SLACK_APP_BASE_URL = 'https://api.slack.com/apps';
+const MANAGE_AZURE_APP_URL =
+  'https://portal.azure.com/#view/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/~/RegisteredApps';
 
 function buildWebhookUrl(agentId: string, integrationIdentifier: string): string {
-  const baseUrl = (API_HOSTNAME ?? 'https://api.novu.co').replace(/\/$/, '');
-
-  return `${baseUrl}/v1/agents/${agentId}/webhook/${integrationIdentifier}`;
+  return `${getAgentApiBaseUrl()}/v1/agents/${agentId}/webhook/${integrationIdentifier}`;
 }
 
-export function SlackAgentConnectedDetails({
+export function TeamsAgentConnectedDetails({
   agent,
   integrationLink,
   canRemoveIntegration,
   onRequestRemoveIntegration,
   isRemovingIntegration,
   justConnected = false,
-}: SlackAgentConnectedDetailsProps) {
+}: TeamsAgentConnectedDetailsProps) {
   const webhookUrl = buildWebhookUrl(agent._id, integrationLink.integration.identifier);
 
   return (
     <AgentConnectedDetailsShell
       agent={agent}
       integrationLink={integrationLink}
-      providerId={ChatProviderIdEnum.Slack}
-      providerDisplayName="Slack"
+      providerId={ChatProviderIdEnum.MsTeams}
+      providerDisplayName="MS Teams"
       canRemoveIntegration={canRemoveIntegration}
       onRequestRemoveIntegration={onRequestRemoveIntegration}
       isRemovingIntegration={isRemovingIntegration}
       justConnected={justConnected}
     >
-      {({ credentials, integrationName, isLoading }) => {
-        const applicationId = (credentials?.applicationId as string | undefined) ?? '';
-        const slackAppName = integrationName ?? integrationLink.integration.name;
-        const manageSlackAppUrl = applicationId
-          ? `${MANAGE_SLACK_APP_BASE_URL}/${applicationId}`
-          : MANAGE_SLACK_APP_BASE_URL;
-
-        return (
-          <SlackDetailSections
-            credentials={credentials}
-            isLoading={isLoading}
-            applicationId={applicationId}
-            slackAppName={slackAppName}
-            manageSlackAppUrl={manageSlackAppUrl}
-            webhookUrl={webhookUrl}
-          />
-        );
-      }}
+      {({ credentials, integrationName, isLoading }) => (
+        <TeamsDetailSections
+          credentials={credentials}
+          isLoading={isLoading}
+          teamsAppName={integrationName ?? integrationLink.integration.name}
+          webhookUrl={webhookUrl}
+        />
+      )}
     </AgentConnectedDetailsShell>
   );
 }
 
-function SlackDetailSections({
+function TeamsDetailSections({
   credentials,
   isLoading,
-  applicationId,
-  slackAppName,
-  manageSlackAppUrl,
+  teamsAppName,
   webhookUrl,
 }: {
   credentials?: ICredentials;
   isLoading: boolean;
-  applicationId: string;
-  slackAppName: string;
-  manageSlackAppUrl: string;
+  teamsAppName: string;
   webhookUrl: string;
 }) {
+  const appId = (credentials?.clientId as string | undefined) ?? '';
+
   const credentialFields = useMemo(
     () => [
-      { key: 'applicationId' as keyof ICredentials, label: 'App ID', value: applicationId, secret: false },
       {
         key: 'clientId' as keyof ICredentials,
-        label: 'Client ID',
-        value: (credentials?.clientId as string | undefined) ?? '',
+        label: 'Microsoft App ID',
+        value: appId,
+        secret: false,
+      },
+      {
+        key: 'tenantId' as keyof ICredentials,
+        label: 'Directory (tenant) ID',
+        value: (credentials?.tenantId as string | undefined) ?? '',
         secret: false,
       },
       {
@@ -106,51 +98,48 @@ function SlackDetailSections({
         value: (credentials?.secretKey as string | undefined) ?? '',
         secret: true,
       },
-      {
-        key: 'signingSecret' as keyof ICredentials,
-        label: 'Signing Secret',
-        value: (credentials?.signingSecret as string | undefined) ?? '',
-        secret: true,
-      },
     ],
-    [applicationId, credentials?.clientId, credentials?.secretKey, credentials?.signingSecret]
+    [appId, credentials?.tenantId, credentials?.secretKey]
   );
 
   return (
     <>
       <DetailSection
-        title="Slack app metadata"
+        title="Teams app metadata"
         action={
-          <SectionLinkButton icon={RiArrowRightUpLine} href={manageSlackAppUrl}>
-            Manage Slack App
+          <SectionLinkButton icon={RiArrowRightUpLine} href={MANAGE_AZURE_APP_URL}>
+            Manage in Azure
           </SectionLinkButton>
         }
       >
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <ReadOnlyField
-            label="Slack app name"
-            value={slackAppName}
+            label="Teams app name"
+            value={teamsAppName}
             mono={false}
-            info="The display name of your connected Slack app."
+            info="The display name of your connected MS Teams app."
           />
           {isLoading ? (
             <FieldSkeleton />
           ) : (
-            <ReadOnlyField label="Slack app ID" value={applicationId} info="The unique identifier of your Slack app." />
+            <ReadOnlyField
+              label="Microsoft App ID"
+              value={appId}
+              info="The Application (client) ID of your Azure app."
+            />
           )}
         </div>
         <ReadOnlyField
-          label="Webhook URL"
+          label="Messaging endpoint (webhook URL)"
           value={webhookUrl}
           copyable
-          info="Point your Slack app's Event Subscriptions and Interactivity request URLs at this endpoint. It receives Slack events for this agent."
+          info="Set this as the messaging endpoint on your Azure Bot. It receives Teams messages for this agent."
         />
       </DetailSection>
 
-      <DetailSection title="Slack credentials">
+      <DetailSection title="Teams credentials">
         {isLoading ? (
           <>
-            <FieldSkeleton />
             <FieldSkeleton />
             <FieldSkeleton />
             <FieldSkeleton />
