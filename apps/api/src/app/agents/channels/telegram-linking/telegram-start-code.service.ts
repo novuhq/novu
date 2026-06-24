@@ -1,8 +1,13 @@
-import { randomBytes } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import { CacheService, PinoLogger } from '@novu/application-generic';
 
-/** Telegram `?start=` allows at most 64 base64url chars; we use 32-char opaque codes. */
+import { mintAutolinkSafeOpaqueToken } from '../../../shared/helpers';
+
+/**
+ * Telegram `?start=` allows at most 64 base64url chars; we use 32-char opaque
+ * codes. Minted from an alphanumeric-only alphabet so the `t.me/<bot>?start=…`
+ * deep link autolinks fully when shared as a bare URL in chat clients.
+ */
 export const TELEGRAM_START_CODE_TTL_SECONDS = 10 * 60;
 
 const CACHE_KEY_PREFIX = 'telegram-start-code:';
@@ -67,7 +72,7 @@ export class TelegramStartCodeService {
     integrationId: string;
     subscriberId: string;
   }): Promise<{ code: string; expiresAt: string }> {
-    const code = randomBytes(24).toString('base64url');
+    const code = mintAutolinkSafeOpaqueToken();
     const payload: TelegramStartCodePayload = {
       _environmentId: params.environmentId,
       _organizationId: params.organizationId,

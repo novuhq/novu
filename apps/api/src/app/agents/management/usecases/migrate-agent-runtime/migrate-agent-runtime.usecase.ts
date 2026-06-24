@@ -2,14 +2,12 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import {
   AnalyticsService,
   decryptCredentials,
-  FeatureFlagsService,
   getAgentRuntimeProvider,
   getNovuManagedClaudeApiKey,
   resolveAgentRuntime,
 } from '@novu/application-generic';
 import { AgentRepository, ConversationRepository, IntegrationRepository } from '@novu/dal';
-import { AgentRuntimeProviderIdEnum, IntegrationKindEnum } from '@novu/shared';
-import { resolveManagedAgentAlwaysAllowToolPermissions } from '../../../mcp/shared/resolve-managed-agent-always-allow-tool-permissions';
+import { AGENT_MANAGED_DEFINITION_VERSION, AgentRuntimeProviderIdEnum, IntegrationKindEnum } from '@novu/shared';
 import { MigrateAgentRuntimeCommand } from './migrate-agent-runtime.command';
 
 @Injectable()
@@ -18,8 +16,7 @@ export class MigrateAgentRuntime {
     private readonly agentRepository: AgentRepository,
     private readonly integrationRepository: IntegrationRepository,
     private readonly conversationRepository: ConversationRepository,
-    private readonly analyticsService: AnalyticsService,
-    private readonly featureFlagsService: FeatureFlagsService
+    private readonly analyticsService: AnalyticsService
   ) {}
 
   async execute(command: MigrateAgentRuntimeCommand): Promise<{ integrationId: string; externalAgentId: string }> {
@@ -94,11 +91,6 @@ export class MigrateAgentRuntime {
     const targetProvider = targetResolved.provider;
 
     const config = await sourceProvider.getConfig(agent.managedRuntime.externalAgentId);
-    const useAlwaysAllowToolPermissions = await resolveManagedAgentAlwaysAllowToolPermissions({
-      featureFlagsService: this.featureFlagsService,
-      environmentId: command.environmentId,
-      organizationId: command.organizationId,
-    });
     const created = await targetProvider.createAgent({
       name: agent.name,
       model: config.model,
@@ -106,7 +98,6 @@ export class MigrateAgentRuntime {
       tools: config.tools.map((tool) => tool.externalId),
       mcpServers: config.mcpServers.map((server) => ({ name: server.name, url: server.url })),
       skills: config.skills,
-      useAlwaysAllowToolPermissions,
     });
 
     try {
@@ -123,6 +114,7 @@ export class MigrateAgentRuntime {
                 providerId: AgentRuntimeProviderIdEnum.Anthropic,
                 _integrationId: targetIntegration._id,
                 externalAgentId: created.externalAgentId,
+                managedDefinitionVersion: AGENT_MANAGED_DEFINITION_VERSION,
               },
             },
           },

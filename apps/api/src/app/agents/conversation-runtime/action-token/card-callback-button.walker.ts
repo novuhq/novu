@@ -2,23 +2,34 @@ import type { ButtonElement, CardChild, CardElement } from 'chat';
 
 export const TELEGRAM_CALLBACK_DATA_PREFIX = 'chat:';
 export const TELEGRAM_CALLBACK_DATA_LIMIT_BYTES = 64;
+export const WHATSAPP_CALLBACK_DATA_LIMIT = 256;
 
 type ActionBlockChild = ButtonElement | { type: string; id?: string; value?: string; label?: string };
 
-export function encodedTelegramCallbackDataByteLength(actionId: string, value?: string): number {
+function encodeChatCallbackPayload(actionId: string, value?: string): string {
   const payload: { a: string; v?: string } = { a: actionId };
 
   if (typeof value === 'string') {
     payload.v = value;
   }
 
-  const callbackData = `${TELEGRAM_CALLBACK_DATA_PREFIX}${JSON.stringify(payload)}`;
+  return `${TELEGRAM_CALLBACK_DATA_PREFIX}${JSON.stringify(payload)}`;
+}
 
-  return Buffer.byteLength(callbackData, 'utf8');
+export function encodedTelegramCallbackDataByteLength(actionId: string, value?: string): number {
+  return Buffer.byteLength(encodeChatCallbackPayload(actionId, value), 'utf8');
+}
+
+export function encodedWhatsAppCallbackDataLength(actionId: string, value?: string): number {
+  return encodeChatCallbackPayload(actionId, value).length;
 }
 
 export function callbackPayloadNeedsTokenization(actionId: string, value?: string): boolean {
-  return encodedTelegramCallbackDataByteLength(actionId, value) > TELEGRAM_CALLBACK_DATA_LIMIT_BYTES;
+  if (encodedTelegramCallbackDataByteLength(actionId, value) > TELEGRAM_CALLBACK_DATA_LIMIT_BYTES) {
+    return true;
+  }
+
+  return encodedWhatsAppCallbackDataLength(actionId, value) > WHATSAPP_CALLBACK_DATA_LIMIT;
 }
 
 function isActionsBlock(child: CardChild): child is CardChild & { type: 'actions'; children: ActionBlockChild[] } {

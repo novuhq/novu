@@ -37,6 +37,7 @@ import {
   BotAuthorSkippedError,
   ConnectOrgSubscriberCapExceededError,
 } from '../conversation/agent-subscriber-resolver.service';
+import { ConversationActivationService } from '../conversation/conversation-activation.service';
 import { OutboundGateway } from '../egress/outbound.gateway';
 import type { BridgeReaction } from '../runtime/bridge-executor.service';
 import type { ConversationTurn } from '../runtime/conversation-turn';
@@ -195,15 +196,7 @@ function mapStoredAttachmentsFromRichContent(richContent?: Record<string, unknow
   });
 }
 
-function findSourceMessageStoredAttachments(
-  history: ConversationActivityEntity[],
-  messageIds: string[]
-): StoredAttachment[] | undefined {
-  const messageIdSet = new Set(messageIds);
-  const sourceActivity = history.find(
-    (activity) => activity.platformMessageId && messageIdSet.has(activity.platformMessageId)
-  );
-
+function extractStoredAttachments(sourceActivity: ConversationActivityEntity | null): StoredAttachment[] | undefined {
   if (!sourceActivity) {
     return undefined;
   }
@@ -245,7 +238,8 @@ export class AgentInboundHandler implements OnModuleInit {
     private readonly connectClaimTokenService: ConnectClaimTokenService,
     private readonly keylessAbuseGuard: KeylessAbuseGuardService,
     private readonly planLimitGate: PlanLimitGateService,
-    private readonly inboundAck: InboundAckService
+    private readonly inboundAck: InboundAckService,
+    private readonly conversationActivation: ConversationActivationService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -323,7 +317,38 @@ export class AgentInboundHandler implements OnModuleInit {
     }
 
     const platformThreadId = getInboundPlatformThreadId(config.platform, thread, message);
-    const conversation = await this.openConversation(agentId, config, message, subscriberId, platformThreadId);
+
+    // Resolve whether this thread already has a conversation *before* creating
+    // one. The free-tier active-conversations gate must run before persistence
+    // so a blocked brand-new thread never leaves an orphaned Conversation and
+    // participants. Existing threads pass their entity so reopen / new-cycle
+    // activations are still gated (and they carry no orphan risk).
+    const existingConversation = await this.conversationService.findByPlatformThread(
+      config.environmentId,
+      config.organizationId,
+      agentId,
+      config.integrationId,
+      platformThreadId
+    );
+
+    // Free-tier active-conversations short-circuit: block engagements that would
+    // start a *new* active conversation once the included limit is reached.
+    // Existing (already-counted) conversations keep working.
+    if (await this.planLimitGate.maybeBlockConversation(agentId, config, thread, existingConversation ?? undefined)) {
+      return;
+    }
+
+    // Persist only after the gate. For an existing thread this reconciles
+    // participants and reopens a RESOLVED conversation; for a brand-new one it
+    // creates the Conversation that the gate just cleared.
+    const conversation = await this.openConversation(
+      agentId,
+      config,
+      message,
+      subscriberId,
+      platformThreadId,
+      thread.isDM
+    );
 
     if (config.isKeyless) {
       const aiEnabled = await this.keylessAbuseGuard.isKeylessAgentAiEnabled(config.organizationId);
@@ -356,11 +381,10 @@ export class AgentInboundHandler implements OnModuleInit {
       isFirstMessage,
     });
 
-    const [subscriber, history, agent] = await Promise.all([
+    const [subscriber, agent] = await Promise.all([
       subscriberId
         ? this.subscriberRepository.findBySubscriberId(config.environmentId, subscriberId)
         : Promise.resolve(null),
-      this.conversationService.getHistory(config.environmentId, conversation._id),
       this.agentRepository.findOne({ _id: agentId, _environmentId: config.environmentId }, [
         '_id',
         'runtime',
@@ -385,7 +409,6 @@ export class AgentInboundHandler implements OnModuleInit {
       config,
       conversation,
       subscriber,
-      history,
       message,
       event,
       thread,
@@ -394,6 +417,39 @@ export class AgentInboundHandler implements OnModuleInit {
     };
 
     await runtime.dispatch(turn);
+
+    await this.registerConversationEngagement(agentId, config, conversation, thread.isDM);
+  }
+
+  /**
+   * Counts the active conversation once the agent has actually engaged
+   * (dispatch succeeded). Idempotent per activation — repeated engagements
+   * inside the same window/period only slide the rolling window. Fail-soft:
+   * billing accounting must never crash the inbound webhook.
+   */
+  private async registerConversationEngagement(
+    agentId: string,
+    config: ResolvedAgentConfig,
+    conversation: ConversationEntity,
+    isDirectMessage: boolean
+  ): Promise<void> {
+    try {
+      await this.conversationActivation.registerEngagement({
+        conversation,
+        platform: config.platform,
+        organizationId: config.organizationId,
+        environmentId: config.environmentId,
+        agentId,
+        isDirectMessage,
+      });
+    } catch (err) {
+      this.logger.warn(err, `[agent:${agentId}] Failed to register active-conversation engagement`);
+      captureAgentWarning(err, {
+        component: 'agent-inbound-handler',
+        operation: 'register-conversation-engagement',
+        agentId,
+      });
+    }
   }
 
   /** Telegram `/start <code>` is control input; when present it is always consumed here. */
@@ -420,7 +476,8 @@ export class AgentInboundHandler implements OnModuleInit {
     config: ResolvedAgentConfig,
     message: Message,
     subscriberId: string | null,
-    platformThreadId: string
+    platformThreadId: string,
+    isDirectMessage: boolean
   ): Promise<ConversationEntity> {
     const participantId = subscriberId ?? `${config.platform}:${message.author.userId}`;
     const participantType = subscriberId
@@ -438,6 +495,7 @@ export class AgentInboundHandler implements OnModuleInit {
       participantType,
       platformUserId: message.author.userId,
       firstMessageText: resolveInboundFirstMessageText(config.platform, message),
+      isDirectMessage,
     });
   }
 
@@ -775,15 +833,14 @@ export class AgentInboundHandler implements OnModuleInit {
       ? await this.resolveSubscriberId(agentId, config, platformUserId, 'resolve-subscriber-reaction')
       : null;
 
-    const [subscriber, history] = await Promise.all([
+    const [subscriber, sourceActivity] = await Promise.all([
       subscriberId
         ? this.subscriberRepository.findBySubscriberId(config.environmentId, subscriberId)
         : Promise.resolve(null),
-      this.conversationService.getHistory(config.environmentId, conversation._id),
+      this.conversationService.findSourceActivity(config.environmentId, conversation._id, event.messageId),
     ]);
 
-    const sourceMessageIds = [event.messageId, event.message?.id].filter((id): id is string => Boolean(id));
-    let sourceMessageStoredAttachments = findSourceMessageStoredAttachments(history, sourceMessageIds);
+    let sourceMessageStoredAttachments = extractStoredAttachments(sourceActivity);
 
     if (!sourceMessageStoredAttachments && event.message?.attachments?.length) {
       sourceMessageStoredAttachments = await this.attachmentStorage.storeInbound(event.message.attachments, {
@@ -812,7 +869,6 @@ export class AgentInboundHandler implements OnModuleInit {
       config,
       conversation,
       subscriber,
-      history,
       message: null,
       event: AgentEventEnum.ON_REACTION,
       thread: event.thread ?? ({ id: threadId, channelId: '', isDM: false } as Thread),
@@ -854,6 +910,7 @@ export class AgentInboundHandler implements OnModuleInit {
       participantType,
       platformUserId: userId,
       firstMessageText: `[action:${action.id}]`,
+      isDirectMessage: thread.isDM,
     });
 
     trackAgentInboundAction(this.analyticsService, {
@@ -875,11 +932,10 @@ export class AgentInboundHandler implements OnModuleInit {
 
     // Everything else (incl. mcp-approval:* for managed) routes through the runtime,
     // which owns its own action semantics.
-    const [subscriber, history, agent] = await Promise.all([
+    const [subscriber, agent] = await Promise.all([
       subscriberId
         ? this.subscriberRepository.findBySubscriberId(config.environmentId, subscriberId)
         : Promise.resolve(null),
-      this.conversationService.getHistory(config.environmentId, conversation._id),
       this.agentRepository.findOne({ _id: agentId, _environmentId: config.environmentId }, [
         '_id',
         'runtime',
@@ -894,7 +950,6 @@ export class AgentInboundHandler implements OnModuleInit {
       config,
       conversation,
       subscriber,
-      history,
       message: null,
       event: AgentEventEnum.ON_ACTION,
       thread,

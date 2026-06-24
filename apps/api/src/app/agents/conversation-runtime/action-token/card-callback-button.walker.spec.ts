@@ -2,7 +2,9 @@ import { expect } from 'chai';
 import {
   callbackPayloadNeedsTokenization,
   encodedTelegramCallbackDataByteLength,
+  encodedWhatsAppCallbackDataLength,
   TELEGRAM_CALLBACK_DATA_LIMIT_BYTES,
+  WHATSAPP_CALLBACK_DATA_LIMIT,
 } from './card-callback-button.walker';
 
 describe('card-callback-button.walker', () => {
@@ -38,5 +40,13 @@ describe('card-callback-button.walker', () => {
 
     expect(encodedTelegramCallbackDataByteLength(actionId, value)).to.be.at.most(TELEGRAM_CALLBACK_DATA_LIMIT_BYTES);
     expect(callbackPayloadNeedsTokenization(actionId, value)).to.equal(false);
+  });
+
+  it('requires tokenization when the WhatsApp callback payload exceeds 256 characters', () => {
+    const actionId = `mcp-approval:approve-tool:toolu_01ABC:${'list_issues'.repeat(20)}:Linear`;
+    const value = 'Linear -> list_issues: {"me":true,"filter":"very long filter value that pushes payload over limit"}';
+
+    expect(encodedWhatsAppCallbackDataLength(actionId, value)).to.be.greaterThan(WHATSAPP_CALLBACK_DATA_LIMIT);
+    expect(callbackPayloadNeedsTokenization(actionId, value)).to.equal(true);
   });
 });

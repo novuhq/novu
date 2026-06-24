@@ -1,18 +1,22 @@
 import { expect } from 'chai';
 
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
-import {
-  buildToolApprovalCard,
-  buildToolApprovalWhatsAppCard,
-  getToolApprovalCard,
-  TOOL_APPROVAL_ACTION_PREFIX,
-} from './approval-card.builder';
+import { getToolApprovalCard } from './approval-card.builder';
 
-const sampleTool = {
+const MCP_TOOL_APPROVAL_ACTION_PREFIX = 'mcp-approval';
+const DIRECT_TOOL_APPROVAL_ACTION_PREFIX = 'direct-approval';
+
+const mcpTool = {
   toolUseId: 'toolu_01ABC',
   toolName: 'list_issues',
   mcpServerName: 'Linear',
   input: { me: true },
+};
+
+const directTool = {
+  toolUseId: 'toolu_02DEF',
+  toolName: 'send_email',
+  input: { to: 'user@example.com' },
 };
 
 function getActionBlocks(card: Record<string, unknown>) {
@@ -28,9 +32,13 @@ function getButtons(card: Record<string, unknown>) {
 }
 
 describe('approval-card.builder', () => {
-  describe('buildToolApprovalCard', () => {
+  describe('getToolApprovalCard — MCP tools', () => {
     it('builds two action blocks with four buttons for non-WhatsApp platforms', () => {
-      const card = buildToolApprovalCard(sampleTool);
+      const delivery = getToolApprovalCard({
+        platform: AgentPlatformEnum.SLACK,
+        tool: mcpTool,
+      });
+      const card = delivery.content.card as Record<string, unknown>;
       const actionBlocks = getActionBlocks(card);
       const buttons = getButtons(card);
 
@@ -42,12 +50,15 @@ describe('approval-card.builder', () => {
         'Always allow this tool',
         'Always allow Linear',
       ]);
+      expect(delivery.slackNative).to.not.equal(undefined);
     });
-  });
 
-  describe('buildToolApprovalWhatsAppCard', () => {
     it('builds a single action block with three WhatsApp-safe buttons', () => {
-      const card = buildToolApprovalWhatsAppCard(sampleTool);
+      const delivery = getToolApprovalCard({
+        platform: AgentPlatformEnum.WHATSAPP,
+        tool: mcpTool,
+      });
+      const card = delivery.content.card as Record<string, unknown>;
       const actionBlocks = getActionBlocks(card);
       const buttons = getButtons(card);
 
@@ -55,43 +66,38 @@ describe('approval-card.builder', () => {
       expect(buttons).to.have.length(3);
       expect(buttons.map((button) => button.label)).to.deep.equal(['Deny', 'Approve once', 'Always allow tool']);
       expect(buttons.every((button) => (button.label?.length ?? 0) <= 20)).to.equal(true);
-    });
-
-    it('uses the tool-level persist action for the third button', () => {
-      const card = buildToolApprovalWhatsAppCard(sampleTool);
-      const buttons = getButtons(card);
-      const persistButton = buttons[2];
-
-      expect(persistButton.id).to.equal(
-        `${TOOL_APPROVAL_ACTION_PREFIX}:approve-tool:toolu_01ABC:list_issues:Linear`
+      expect(buttons[2]?.id).to.equal(
+        `${MCP_TOOL_APPROVAL_ACTION_PREFIX}:approve-tool:toolu_01ABC:list_issues:Linear`
       );
+      expect(delivery.slackNative).to.equal(undefined);
     });
   });
 
-  describe('getToolApprovalCard', () => {
-    it('returns the WhatsApp card when platform is whatsapp', () => {
+  describe('getToolApprovalCard — direct tools', () => {
+    it('builds two action blocks for non-WhatsApp platforms', () => {
       const delivery = getToolApprovalCard({
-        platform: AgentPlatformEnum.WHATSAPP,
-        tool: sampleTool,
+        platform: AgentPlatformEnum.TELEGRAM,
+        tool: directTool,
       });
+      const card = delivery.content.card as Record<string, unknown>;
 
-      const actionBlocks = getActionBlocks(delivery.content.card as Record<string, unknown>);
-
-      expect(actionBlocks).to.have.length(1);
-      expect(getButtons(delivery.content.card as Record<string, unknown>)).to.have.length(3);
-      expect(delivery.slackNative).to.equal(undefined);
+      expect(getActionBlocks(card)).to.have.length(2);
+      expect(getButtons(card)).to.have.length(3);
     });
 
-    it('returns the default card for Slack while attaching slackNative blocks', () => {
+    it('builds a single action block with three WhatsApp-safe buttons', () => {
       const delivery = getToolApprovalCard({
-        platform: AgentPlatformEnum.SLACK,
-        tool: sampleTool,
+        platform: AgentPlatformEnum.WHATSAPP,
+        tool: directTool,
       });
+      const card = delivery.content.card as Record<string, unknown>;
+      const buttons = getButtons(card);
 
-      const actionBlocks = getActionBlocks(delivery.content.card as Record<string, unknown>);
-
-      expect(actionBlocks).to.have.length(2);
-      expect(delivery.slackNative).to.not.equal(undefined);
+      expect(getActionBlocks(card)).to.have.length(1);
+      expect(buttons).to.have.length(3);
+      expect(buttons[2]?.id).to.equal(
+        `${DIRECT_TOOL_APPROVAL_ACTION_PREFIX}:approve-tool:toolu_02DEF:send_email`
+      );
     });
   });
 });

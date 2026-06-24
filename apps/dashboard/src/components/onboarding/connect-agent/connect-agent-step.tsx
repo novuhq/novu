@@ -18,6 +18,7 @@ import {
 } from '@/components/agents/connectors/claude-managed-integrations';
 import { type ConnectorIntegrationStatus } from '@/components/agents/connectors/connector-integration-dropdown';
 import { type ConnectorOption } from '@/components/agents/connectors/connector-options';
+import { useManagedAgentRuntimeEnabled } from '@/hooks/use-managed-agent-runtime-enabled';
 import {
   type AgentTemplate,
   buildManagedIntegrationCredentials,
@@ -54,7 +55,7 @@ import { TelemetryEvent } from '@/utils/telemetry';
 import type { AgentGenerationMode } from './connect-agent-form';
 import { ConnectAgentForm } from './connect-agent-form';
 import { type ConnectSummary } from './connect-summary';
-import { CONNECTOR_OPTIONS, type ConnectorId, getConnectorById } from './connector-options';
+import { type ConnectorId, getConnectorById, pickInitialConnector } from './connector-options';
 import type { GenerationStep } from './generation-status';
 import type { TemplateSelection } from './template-dropdown';
 
@@ -70,20 +71,10 @@ const GENERATION_STEPS: ReadonlyArray<GenerationStep> = [
 
 export type { ConnectSummary } from './connect-summary';
 
-const DEFAULT_CONNECTOR: ConnectorId = 'claude';
-
 function resolveRuntime(connectorId: ConnectorId): RuntimeType {
   const runtime = getConnectorById(connectorId)?.runtime;
 
   return runtime ?? 'scratch';
-}
-
-function pickInitialConnector(isManagedEnabled: boolean): ConnectorId {
-  if (isManagedEnabled) return DEFAULT_CONNECTOR;
-
-  const fallback = CONNECTOR_OPTIONS.find((o) => !o.comingSoon && o.runtime === 'scratch');
-
-  return (fallback?.id ?? 'custom-scaffold') as ConnectorId;
 }
 
 function dropdownStatusFor(verify: VerifyStatus, hasIntegration: boolean): ConnectorIntegrationStatus {
@@ -114,7 +105,6 @@ type ConnectAgentStepProps = {
   onAgentCreated: (agent: AgentResponse, summary: ConnectSummary) => void;
   onRuntimeChange?: (runtime: RuntimeType) => void;
   onPreviewChange?: (preview: ConnectAgentPreview) => void;
-  isManagedEnabled: boolean;
   /**
    * Optional template id (Sanity `id.current`) coming from an external deep-link. When it matches a
    * fetched template, the prompt + agent fields are prefilled once and the persisted id is cleared.
@@ -136,10 +126,10 @@ export function ConnectAgentStep({
   onAgentCreated,
   onRuntimeChange,
   onPreviewChange,
-  isManagedEnabled,
   agentTemplateId,
   simplifiedDemo,
 }: ConnectAgentStepProps) {
+  const isManagedEnabled = useManagedAgentRuntimeEnabled();
   const telemetry = useTelemetry();
   const queryClient = useQueryClient();
   const { currentEnvironment } = useEnvironment();

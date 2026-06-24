@@ -1,11 +1,10 @@
-import { CLAUDE_BUILTIN_TOOLS } from '@novu/shared';
+import { CLAUDE_BUILTIN_TOOLS, NOVU_TOOLS_SCHEMA } from '@novu/shared';
 import { expect } from 'chai';
 import {
+  buildPlatformToolsPayload,
   buildToolsPayload,
-  MANAGED_AGENT_ALWAYS_ALLOW_PERMISSION_CONFIG,
   MANAGED_AGENT_DEFAULT_PERMISSION_CONFIG,
   mapToolset,
-  resolveManagedAgentPermissionConfig,
 } from './anthropic-runtime.helpers';
 
 describe('mapToolset', () => {
@@ -63,27 +62,18 @@ describe('buildToolsPayload', () => {
     });
   });
 
-  it('sets always_allow when the permission config override is provided', () => {
-    const payload = buildToolsPayload(
-      ['bash'],
-      [{ name: 'GitHub', url: 'https://mcp.example.com/github' }],
-      MANAGED_AGENT_ALWAYS_ALLOW_PERMISSION_CONFIG
-    );
-    const toolset = payload.find((entry) => entry.type === 'agent_toolset_20260401');
-    const mcpToolset = payload.find((entry) => entry.type === 'mcp_toolset');
+  it('includes platform tools when the user has no tools or MCP servers', () => {
+    const payload = buildToolsPayload(undefined, undefined);
+    const toolset = payload.find((entry) => entry.type === 'agent_toolset_20260401') as {
+      configs: Array<{ name: string; enabled: boolean }>;
+    };
+    const platformTool = payload.find((entry) => entry.type === 'custom');
 
-    expect(toolset?.default_config).to.deep.equal(MANAGED_AGENT_ALWAYS_ALLOW_PERMISSION_CONFIG);
-    expect(mcpToolset?.default_config).to.deep.equal(MANAGED_AGENT_ALWAYS_ALLOW_PERMISSION_CONFIG);
-  });
-});
-
-describe('resolveManagedAgentPermissionConfig', () => {
-  it('returns always_ask when the flag is false or undefined', () => {
-    expect(resolveManagedAgentPermissionConfig(false)).to.deep.equal(MANAGED_AGENT_DEFAULT_PERMISSION_CONFIG);
-    expect(resolveManagedAgentPermissionConfig(undefined)).to.deep.equal(MANAGED_AGENT_DEFAULT_PERMISSION_CONFIG);
+    expect(toolset.configs.every((c) => c.enabled === false)).to.equal(true);
+    expect(platformTool).to.deep.equal({ type: 'custom', ...NOVU_TOOLS_SCHEMA });
   });
 
-  it('returns always_allow when the flag is true', () => {
-    expect(resolveManagedAgentPermissionConfig(true)).to.deep.equal(MANAGED_AGENT_ALWAYS_ALLOW_PERMISSION_CONFIG);
+  it('buildPlatformToolsPayload returns novu_tools only', () => {
+    expect(buildPlatformToolsPayload()).to.deep.equal([{ type: 'custom', ...NOVU_TOOLS_SCHEMA }]);
   });
 });
