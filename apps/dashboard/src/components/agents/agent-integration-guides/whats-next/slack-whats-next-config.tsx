@@ -86,7 +86,7 @@ export function buildSlackWhatsNextConfig({
         title: 'Enable Slack Public Distribution',
         description:
           'Your app only works in your own workspace by default. External users are blocked until you enable this.',
-        extraContent: <SetupButton href={manageSlackAppUrl}>Enable Slack App</SetupButton>,
+        rightContent: <SetupButton href={manageSlackAppUrl}>Enable Slack App</SetupButton>,
       },
       {
         title: (

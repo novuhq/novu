@@ -49,6 +49,7 @@ function StepRow({
       index={index}
       status={step.status ?? defaultStatus}
       sectionLabel={step.sectionLabel}
+      inlineSectionLabel
       title={step.title}
       description={step.description}
       headerSlot={step.headerSlot}

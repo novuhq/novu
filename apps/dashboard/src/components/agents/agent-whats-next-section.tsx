@@ -264,6 +264,7 @@ export function AgentWhatsNextSection({ agent }: AgentWhatsNextSectionProps) {
           index={1}
           status="current"
           sectionLabel="FOR YOUR USERS"
+          inlineSectionLabel
           title="Setup channels for your users"
           description="Setup the channels to let your users easily connect to this agent on wherever they are."
           rightContent={<ChannelList links={connectedLinks} onConfigure={handleConfigureChannel} />}

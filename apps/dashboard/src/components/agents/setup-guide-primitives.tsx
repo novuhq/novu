@@ -103,6 +103,12 @@ export function SetupStep({
    * lowering opacity and disabling pointer interaction on its content.
    */
   dimmed,
+  /**
+   * Aligns the step indicator with the `sectionLabel` line instead of the title, so the number sits
+   * inline with a short eyebrow (e.g. "FOR YOUR USERS"). Defaults to false to preserve the title
+   * alignment used by numbered eyebrows like "1/5 SETUP AGENT HANDLER".
+   */
+  inlineSectionLabel,
 }: {
   index: number;
   status: StepStatus;
@@ -114,10 +120,19 @@ export function SetupStep({
   fullWidthContent?: ReactNode;
   headerSlot?: ReactNode;
   dimmed?: boolean;
+  inlineSectionLabel?: boolean;
 }) {
+  let indicatorTopClass = 'top-[3px]';
+
+  if (inlineSectionLabel) {
+    indicatorTopClass = 'top-px';
+  } else if (sectionLabel) {
+    indicatorTopClass = 'top-6';
+  }
+
   return (
     <div className="relative flex flex-col gap-4 pl-6">
-      <div className={cn('absolute -left-[20px] flex w-5 justify-center', sectionLabel ? 'top-6' : 'top-[3px]')}>
+      <div className={cn('absolute -left-[20px] flex w-5 justify-center', indicatorTopClass)}>
         <StepIndicator status={status} index={index} />
       </div>
       <div
