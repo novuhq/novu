@@ -256,7 +256,12 @@ export function SlackAgentConnectedDetails({
       </div>
 
       {isWhatsNextEnabled ? (
-        <AgentChannelWhatsNextGuide agent={agent} integrationLink={integrationLink} credentials={credentials} />
+        <AgentChannelWhatsNextGuide
+          agent={agent}
+          integrationLink={integrationLink}
+          credentials={credentials}
+          applicationIdentifier={currentEnvironment?.identifier}
+        />
       ) : null}
 
       <DetailSection

@@ -10,14 +10,17 @@ function buildManageSlackAppUrl(applicationId: string | undefined): string {
   return applicationId ? `${SLACK_APPS_BASE_URL}/${applicationId}/distribute` : SLACK_APPS_BASE_URL;
 }
 
-function buildSlackConnectSnippet(integrationIdentifier: string, agentName: string): string {
+function buildSlackConnectSnippet(
+  integrationIdentifier: string,
+  agentName: string,
+  applicationIdentifier: string
+): string {
   return `import { NovuProvider, SlackConnectButton } from '${SLACK_REACT_PACKAGE}';
 
 // Wrap the button in a NovuProvider configured for the signed-in end user.
-// Replace the placeholders with your Novu application identifier and the
-// current user's subscriberId (the connection is created per subscriber).
+// Replace subscriberId with the current user's id (the connection is created per subscriber).
 <NovuProvider
-  applicationIdentifier="<YOUR_NOVU_APPLICATION_IDENTIFIER>"
+  applicationIdentifier="${applicationIdentifier}"
   subscriberId="<SUBSCRIBER_ID>"
 >
   <SlackConnectButton
@@ -28,20 +31,35 @@ function buildSlackConnectSnippet(integrationIdentifier: string, agentName: stri
 </NovuProvider>;`;
 }
 
-function buildSlackPrompt(integrationIdentifier: string, agentName: string): string {
-  return `I'm signed in to the Novu dashboard. Help me add the @novu/react SlackConnectButton to my app so my users can connect "${agentName}" to their Slack workspace. Use integration identifier "${integrationIdentifier}" and connectionMode="subscriber". Follow instructions from https://novu.co/agents.md`;
+function buildSlackPrompt(integrationIdentifier: string, agentName: string, applicationIdentifier: string): string {
+  return `Add the Novu SlackConnectButton from @novu/react to my app so each of my end users can connect "${agentName}" to their own Slack workspace.
+
+Context: I'm already signed in to the Novu dashboard and the "${agentName}" Slack integration already exists. This is purely a frontend code integration — do NOT run the Novu CLI, the agent-onboarding flow, or keyless mode.
+
+Requirements:
+- Install @novu/react with my project's package manager.
+- Render <SlackConnectButton /> inside a <NovuProvider> configured for the currently signed-in end user.
+- Use applicationIdentifier="${applicationIdentifier}" and integrationIdentifier="${integrationIdentifier}" with connectionMode="subscriber". Store applicationIdentifier in an environment variable rather than hardcoding it.
+- In subscriber mode each user gets their own connection, so pass the authenticated user's id as subscriberId — source it from my app's existing auth, don't hardcode it.
+- Follow my app's existing framework, routing, styling, and TypeScript conventions, place the button in a sensible spot in the UI, and add no unnecessary wrappers.
+
+Optional reference: https://docs.novu.co/platform/integrations/chat/slack`;
 }
+
+const APPLICATION_IDENTIFIER_PLACEHOLDER = '<YOUR_NOVU_APPLICATION_IDENTIFIER>';
 
 export function buildSlackWhatsNextConfig({
   agent,
   integrationLink,
   credentials,
+  applicationIdentifier,
 }: WhatsNextConfigContext): ChannelWhatsNextConfig {
   const applicationId = (credentials?.applicationId as string | undefined) ?? '';
   const integrationIdentifier = integrationLink.integration.identifier;
+  const novuApplicationIdentifier = applicationIdentifier || APPLICATION_IDENTIFIER_PLACEHOLDER;
   const manageSlackAppUrl = buildManageSlackAppUrl(applicationId);
-  const connectSnippet = buildSlackConnectSnippet(integrationIdentifier, agent.name);
-  const prompt = buildSlackPrompt(integrationIdentifier, agent.name);
+  const connectSnippet = buildSlackConnectSnippet(integrationIdentifier, agent.name, novuApplicationIdentifier);
+  const prompt = buildSlackPrompt(integrationIdentifier, agent.name, novuApplicationIdentifier);
 
   return {
     recapSteps: [

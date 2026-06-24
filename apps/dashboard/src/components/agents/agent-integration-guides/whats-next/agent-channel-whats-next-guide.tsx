@@ -18,6 +18,8 @@ type AgentChannelWhatsNextGuideProps = {
   integrationLink: AgentIntegrationLink;
   /** Integration credentials (used by provider configs, e.g. Slack's distribution link). */
   credentials?: ICredentials;
+  /** Current environment's identifier — used as the Novu `applicationIdentifier` in code samples and prompts. */
+  applicationIdentifier?: string;
 };
 
 const CONVERSATIONS_AVAILABLE = !IS_SELF_HOSTED || IS_ENTERPRISE;
@@ -124,10 +126,15 @@ function ChannelListeningFooter({
   );
 }
 
-export function AgentChannelWhatsNextGuide({ agent, integrationLink, credentials }: AgentChannelWhatsNextGuideProps) {
+export function AgentChannelWhatsNextGuide({
+  agent,
+  integrationLink,
+  credentials,
+  applicationIdentifier,
+}: AgentChannelWhatsNextGuideProps) {
   const [isRecapExpanded, setIsRecapExpanded] = useState(false);
 
-  const config = resolveChannelWhatsNextConfig({ agent, integrationLink, credentials });
+  const config = resolveChannelWhatsNextConfig({ agent, integrationLink, credentials, applicationIdentifier });
 
   if (!config) {
     return null;

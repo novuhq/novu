@@ -26,6 +26,8 @@ export type WhatsNextConfigContext = {
   agent: AgentResponse;
   integrationLink: AgentIntegrationLink;
   credentials?: ICredentials;
+  /** Current environment's identifier — used as the Novu `applicationIdentifier` in code samples and prompts. */
+  applicationIdentifier?: string;
 };
 
 export type ChannelWhatsNextConfigBuilder = (ctx: WhatsNextConfigContext) => ChannelWhatsNextConfig;
