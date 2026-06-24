@@ -444,7 +444,7 @@ export class GetPreferences {
     const tuplesByWorkflowId = new Map<string, WorkflowPreferencesCacheData>();
     for (const workflowId of workflowIds) {
       const tuple = tuplesByCacheKey.get(cacheKey(workflowId));
-      if (tuple) {
+      if (tuple !== undefined) {
         tuplesByWorkflowId.set(workflowId, tuple);
       }
     }
