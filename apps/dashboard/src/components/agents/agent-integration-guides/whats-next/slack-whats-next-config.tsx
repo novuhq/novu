@@ -7,7 +7,7 @@ const SLACK_APPS_BASE_URL = 'https://api.slack.com/apps';
 const SLACK_REACT_PACKAGE = '@novu/react';
 
 function escapeJsxAttributeValue(value: string): string {
-  return value.replace(/"/g, '&quot;');
+  return value.replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
 function buildManageSlackAppUrl(applicationId: string | undefined): string {
@@ -29,7 +29,7 @@ function buildSlackConnectSnippet(
 // Replace subscriberId with the current user's id (the connection is created per subscriber).
 <NovuProvider
   applicationIdentifier="${safeApplicationIdentifier}"
-  subscriberId="<SUBSCRIBER_ID>"
+  subscriberId="${escapeJsxAttributeValue('<SUBSCRIBER_ID>')}"
 >
   <SlackConnectButton
     integrationIdentifier="${safeIntegrationIdentifier}"
