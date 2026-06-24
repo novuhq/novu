@@ -217,6 +217,8 @@ services:
         max-size: "50m"
         max-file: "5"
     environment:
+      REACT_APP_API_URL: http://localhost:${API_PORT}
+      API_ROOT_URL: http://api:${API_PORT}
       VITE_API_HOSTNAME: ${VITE_API_HOSTNAME}
       VITE_WEBSOCKET_HOSTNAME: ${VITE_WEBSOCKET_HOSTNAME}
     ports:

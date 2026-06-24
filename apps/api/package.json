@@ -13,7 +13,7 @@
     "build": "pnpm build:metadata && nest build",
     "build:generate": "pnpm build:metadata && nest build && pnpm generate:swagger && pnpm generate:sdk",
     "build:watch": "pnpm build:metadata && nest build --watch",
-    "docker:build": "pnpm --silent --workspace-root pnpm-context -- apps/api/Dockerfile | BULL_MQ_PRO_NPM_TOKEN=${BULL_MQ_PRO_NPM_TOKEN} docker buildx build --load -t novu-api --secret id=BULL_MQ_PRO_NPM_TOKEN --build-arg PACKAGE_PATH=apps/api - $DOCKER_BUILD_ARGUMENTS",
+    "docker:build": "pnpm --silent --workspace-root pnpm-context --patterns=scripts/dotenvcreate.mjs apps/api/Dockerfile | BULL_MQ_PRO_NPM_TOKEN=${BULL_MQ_PRO_NPM_TOKEN} docker buildx build --load -t novu-api --secret id=BULL_MQ_PRO_NPM_TOKEN --build-arg PACKAGE_PATH=apps/api - $DOCKER_BUILD_ARGUMENTS",
     "docker:build:depot": "pnpm --silent --workspace-root pnpm-context -- apps/api/Dockerfile | depot build --build-arg PACKAGE_PATH=apps/api - -t novu-api --load",
     "start": "pnpm start:dev",
     "start:dev": "nest start --watch",
