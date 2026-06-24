@@ -474,14 +474,13 @@ export class GetPreferences {
       return tuplesByWorkflowId;
     }
 
-    const preferences = await this.preferencesRepository.find(
+    const preferences = await this.preferencesRepository.findForComputation(
       {
         _environmentId: environmentId,
         _organizationId: organizationId,
         _templateId: { $in: workflowIds },
         type: { $in: [PreferencesTypeEnum.WORKFLOW_RESOURCE, PreferencesTypeEnum.USER_WORKFLOW] },
       },
-      undefined,
       queryOptions
     );
 
