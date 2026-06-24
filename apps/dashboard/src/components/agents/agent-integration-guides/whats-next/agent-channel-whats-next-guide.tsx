@@ -1,15 +1,12 @@
 import type { ICredentials } from '@novu/shared';
-import { CheckCircle2, Loader } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { RiExpandUpDownLine } from 'react-icons/ri';
 import type { AgentIntegrationLink, AgentResponse } from '@/api/agents';
-import { ExternalLink } from '@/components/shared/external-link';
 import { IS_ENTERPRISE, IS_SELF_HOSTED } from '@/config';
 import { useChannelFirstConnectedEndpoint } from '@/hooks/use-channel-first-connected-endpoint';
-import { AGENTS_DOCS_PROVIDERS_URL } from '@/utils/agent-docs';
 import { isAgentIntegrationConnected } from '../../is-agent-integration-connected';
 import { SetupGuideCard } from '../../setup-guide-card';
-import { CompletedStepIndicator, SetupStep } from '../../setup-guide-primitives';
+import { CompletedStepIndicator, ListeningStatusView, SetupStep } from '../../setup-guide-primitives';
 import { resolveChannelWhatsNextConfig } from './whats-next-config';
 import type { WhatsNextStep } from './whats-next-types';
 
@@ -86,34 +83,17 @@ function ChannelListeningFooter({ integrationIdentifier }: { integrationIdentifi
     enabled: CONVERSATIONS_AVAILABLE,
   });
 
-  const showListening = CONVERSATIONS_AVAILABLE && !connected;
+  const showListeningIndicator = CONVERSATIONS_AVAILABLE && !connected;
 
   return (
-    <div className="flex flex-col gap-2 py-4 pl-8">
-      <div className="flex flex-col gap-3">
-        {connected ? (
-          <div className="flex items-center gap-1">
-            <CheckCircle2 className="text-success-base size-3.5 shrink-0" />
-            <span className="text-text-strong text-label-sm font-medium">Your users are connecting</span>
-          </div>
-        ) : showListening ? (
-          <div className="flex items-center gap-1">
-            <Loader className="size-3.5 text-[#dd2476] animate-[spin_5s_linear_infinite]" />
-            <span className="animate-gradient bg-linear-to-r from-[#dd2476] via-[#ff512f] to-[#dd2476] bg-size-[400%_400%] bg-clip-text text-label-sm font-medium text-transparent">
-              Listening...
-            </span>
-          </div>
-        ) : null}
-        <p className="text-text-soft text-label-xs font-medium leading-4">
-          {connected
-            ? 'A user connected to this agent through your app. Nice work!'
-            : 'Once a user connects through your app, their conversation will show up here.'}
-        </p>
-      </div>
-      <ExternalLink href={AGENTS_DOCS_PROVIDERS_URL} variant="documentation">
-        Learn more in docs
-      </ExternalLink>
-    </div>
+    <ListeningStatusView
+      connected={connected}
+      connectedTitle="Your users are connecting"
+      connectedMessage="A user connected to this agent through your app. Nice work!"
+      listeningMessage="Once a user connects through your app, their conversation will show up here."
+      showStatusIndicator={connected || showListeningIndicator}
+      className="py-4 pl-8"
+    />
   );
 }
 
@@ -125,7 +105,10 @@ export function AgentChannelWhatsNextGuide({
 }: AgentChannelWhatsNextGuideProps) {
   const [isRecapExpanded, setIsRecapExpanded] = useState(false);
 
-  const config = resolveChannelWhatsNextConfig({ agent, integrationLink, credentials, applicationIdentifier });
+  const config = useMemo(
+    () => resolveChannelWhatsNextConfig({ agent, integrationLink, credentials, applicationIdentifier }),
+    [agent, integrationLink, credentials, applicationIdentifier]
+  );
 
   if (!config) {
     return null;
@@ -155,9 +138,11 @@ export function AgentChannelWhatsNextGuide({
               <StepRow key={`recap-${i}`} step={step} index={i + 1} defaultStatus="completed" />
             ))
           : null}
-        {config.devSteps.map((step, i) => (
-          <StepRow key={`dev-${i}`} step={step} index={recapCount + 1 + i} defaultStatus="current" />
-        ))}
+        {config.devSteps.map((step, i) => {
+          const devStepIndex = isRecapExpanded ? recapCount + 1 + i : i + 1;
+
+          return <StepRow key={`dev-${i}`} step={step} index={devStepIndex} defaultStatus="current" />;
+        })}
       </div>
       <ChannelListeningFooter integrationIdentifier={integrationLink.integration.identifier} />
     </SetupGuideCard>
