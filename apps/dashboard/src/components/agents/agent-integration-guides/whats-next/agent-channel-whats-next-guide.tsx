@@ -5,7 +5,7 @@ import { RiExpandUpDownLine } from 'react-icons/ri';
 import type { AgentIntegrationLink, AgentResponse } from '@/api/agents';
 import { ExternalLink } from '@/components/shared/external-link';
 import { IS_ENTERPRISE, IS_SELF_HOSTED } from '@/config';
-import { useChannelFirstConversation } from '@/hooks/use-channel-first-conversation';
+import { useChannelFirstConnectedEndpoint } from '@/hooks/use-channel-first-connected-endpoint';
 import { AGENTS_DOCS_PROVIDERS_URL } from '@/utils/agent-docs';
 import { isAgentIntegrationConnected } from '../../is-agent-integration-connected';
 import { SetupGuideCard } from '../../setup-guide-card';
@@ -80,19 +80,9 @@ function RecapToggleRow({ count, isExpanded, onToggle }: { count: number; isExpa
   );
 }
 
-function ChannelListeningFooter({
-  agentIdentifier,
-  integrationId,
-  provider,
-}: {
-  agentIdentifier: string;
-  integrationId: string;
-  provider: string;
-}) {
-  const { connected } = useChannelFirstConversation({
-    agentIdentifier,
-    integrationId,
-    provider,
+function ChannelListeningFooter({ integrationIdentifier }: { integrationIdentifier: string }) {
+  const { connected } = useChannelFirstConnectedEndpoint({
+    integrationIdentifier,
     enabled: CONVERSATIONS_AVAILABLE,
   });
 
@@ -169,11 +159,7 @@ export function AgentChannelWhatsNextGuide({
           <StepRow key={`dev-${i}`} step={step} index={recapCount + 1 + i} defaultStatus="current" />
         ))}
       </div>
-      <ChannelListeningFooter
-        agentIdentifier={agent.identifier}
-        integrationId={integrationLink.integration._id}
-        provider={integrationLink.integration.providerId}
-      />
+      <ChannelListeningFooter integrationIdentifier={integrationLink.integration.identifier} />
     </SetupGuideCard>
   );
 }
