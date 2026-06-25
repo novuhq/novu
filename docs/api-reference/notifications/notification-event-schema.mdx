@@ -9,27 +9,27 @@ Notification event is the event that is generated when a workflow is triggered t
 
 | Property | Type | Description |
 | --- | --- | --- |
-| `id` |  |  |
-| `environmentId` |  |  |
-| `organizationId` |  |  |
-| `subscriberId` |  |  |
-| `transactionId` |  |  |
-| `templateId` |  |  |
-| `digestedNotificationId` |  |  |
-| `createdAt` |  |  |
-| `updatedAt` |  |  |
-| `channels` |  |  |
-| `subscriber` |  |  |
-| `template` |  |  |
-| `jobs` |  |  |
-| `payload` |  |  |
-| `tags` |  |  |
-| `controls` |  |  |
-| `to` |  |  |
-| `topics` |  |  |
-| `severity` |  |  |
-| `critical` |  |  |
-| `contextKeys` |  |  |
+| `id` | `string` | Unique identifier of the notification |
+| `environmentId` | `string` | Environment ID of the notification |
+| `organizationId` | `string` | Organization ID of the notification |
+| `subscriberId` | `string` | Subscriber ID of the notification |
+| `transactionId` | `string` | Transaction ID of the notification |
+| `templateId` | `string` | Template ID of the notification |
+| `digestedNotificationId` | `string` | Digested Notification ID |
+| `createdAt` | `string` | Creation time of the notification |
+| `updatedAt` | `string` | Last updated time of the notification |
+| `channels` | `string[]` |  |
+| `subscriber` | `ActivityNotificationSubscriberResponseDto` | Subscriber of the notification |
+| `template` | `ActivityNotificationTemplateResponseDto` | Template of the notification |
+| `jobs` | `ActivityNotificationJobResponseDto[]` | Jobs of the notification |
+| `payload` | `{ [k: string]: any; }` | Payload of the notification |
+| `tags` | `string[]` | Tags associated with the notification |
+| `controls` | `{ [k: string]: any; }` | Controls associated with the notification |
+| `to` | `{ [k: string]: any; }` | To field for subscriber definition |
+| `topics` | `ActivityTopicDto[]` | Topics of the notification |
+| `severity` | `SeverityLevelEnum` | Severity of the workflow |
+| `critical` | `boolean` | Criticality of the notification |
+| `contextKeys` | `string[]` | Context (single or multi) in which the notification was sent |
 
 ### Workflow
 
@@ -37,27 +37,27 @@ Workflow contains the details of the workflow that was triggered.
 
 | Property | Type | Description |
 | --- | --- | --- |
-| `id` |  |  |
-| `name` |  |  |
-| `description` |  |  |
-| `active` |  |  |
-| `draft` |  |  |
-| `preferenceSettings` |  |  |
-| `critical` |  |  |
-| `tags` |  |  |
-| `steps` |  |  |
-| `organizationId` |  |  |
-| `creatorId` |  |  |
-| `environmentId` |  |  |
-| `triggers` |  |  |
-| `notificationGroupId` |  |  |
-| `parentId` |  |  |
-| `deleted` |  |  |
-| `deletedAt` |  |  |
-| `deletedBy` |  |  |
-| `notificationGroup` |  |  |
-| `data` |  |  |
-| `workflowIntegrationStatus` |  |  |
+| `id` | `string` |  |
+| `name` | `string` |  |
+| `description` | `string` |  |
+| `active` | `boolean` |  |
+| `draft` | `boolean` |  |
+| `preferenceSettings` | `SubscriberPreferenceChannels` |  |
+| `critical` | `boolean` |  |
+| `tags` | `string[]` |  |
+| `steps` | `NotificationStepDto[]` |  |
+| `organizationId` | `string` |  |
+| `creatorId` | `string` |  |
+| `environmentId` | `string` |  |
+| `triggers` | `NotificationTrigger[]` |  |
+| `notificationGroupId` | `string` |  |
+| `parentId` | `string` |  |
+| `deleted` | `boolean` |  |
+| `deletedAt` | `string` |  |
+| `deletedBy` | `string` |  |
+| `notificationGroup` | `NotificationGroup` |  |
+| `data` | `WorkflowResponseData` |  |
+| `workflowIntegrationStatus` | `WorkflowIntegrationStatus` |  |
 
 ### ChannelTypeEnum
 

@@ -9,41 +9,41 @@ Message is a single notification that is sent to a subscriber. Each channel step
 
 | Property | Type | Description |
 | --- | --- | --- |
-| `id` |  |  |
-| `templateId` |  |  |
-| `environmentId` |  |  |
-| `messageTemplateId` |  |  |
-| `organizationId` |  |  |
-| `notificationId` |  |  |
-| `subscriberId` |  |  |
-| `subscriber` |  |  |
-| `template` |  |  |
-| `templateIdentifier` |  |  |
-| `createdAt` |  |  |
-| `deliveredAt` |  |  |
-| `lastSeenDate` |  |  |
-| `lastReadDate` |  |  |
-| `content` |  |  |
-| `transactionId` |  |  |
-| `subject` |  |  |
-| `channel` |  |  |
-| `read` |  |  |
-| `seen` |  |  |
-| `snoozedUntil` |  |  |
-| `email` |  |  |
-| `phone` |  |  |
-| `directWebhookUrl` |  |  |
-| `providerId` |  |  |
-| `deviceTokens` |  |  |
-| `title` |  |  |
-| `cta` |  |  |
-| `feedId` |  |  |
-| `status` |  |  |
-| `errorId` |  |  |
-| `errorText` |  |  |
-| `payload` |  |  |
-| `overrides` |  |  |
-| `contextKeys` |  |  |
+| `id` | `string` | Unique identifier for the message |
+| `templateId` | `string` | Template ID associated with the message |
+| `environmentId` | `string` | Environment ID where the message is sent |
+| `messageTemplateId` | `string` | Message template ID |
+| `organizationId` | `string` | Organization ID associated with the message |
+| `notificationId` | `string` | Notification ID associated with the message |
+| `subscriberId` | `string` | Subscriber ID associated with the message |
+| `subscriber` | `SubscriberResponseDto` | Subscriber details, if available |
+| `template` | `WorkflowResponse` | Workflow template associated with the message |
+| `templateIdentifier` | `string` | Identifier for the message template |
+| `createdAt` | `string` | Creation date of the message |
+| `deliveredAt` | `string[]` | Array of delivery dates for the message, if the message has multiple delivery dates, for example after being snoozed |
+| `lastSeenDate` | `string` | Last seen date of the message, if available |
+| `lastReadDate` | `string` | Last read date of the message, if available |
+| `content` | `string \| EmailBlock[]` | Content of the message, can be an email block or a string |
+| `transactionId` | `string` | Transaction ID associated with the message |
+| `subject` | `string` | Subject of the message, if applicable |
+| `channel` | `ChannelTypeEnum` | Channel type through which the message is sent |
+| `read` | `boolean` | Indicates if the message has been read |
+| `seen` | `boolean` | Indicates if the message has been seen |
+| `snoozedUntil` | `string` | Date when the message will be unsnoozed |
+| `email` | `string` | Email address associated with the message, if applicable |
+| `phone` | `string` | Phone number associated with the message, if applicable |
+| `directWebhookUrl` | `string` | Direct webhook URL for the message, if applicable |
+| `providerId` | `string` | Provider ID associated with the message, if applicable |
+| `deviceTokens` | `string[]` | Device tokens associated with the message, if applicable |
+| `title` | `string` | Title of the message, if applicable |
+| `cta` | `MessageCTAType` | Call to action associated with the message |
+| `feedId` | `string` | Feed ID associated with the message, if applicable |
+| `status` | `MessageStatusEnum` | Status of the message |
+| `errorId` | `string` | Error ID if the message has an error |
+| `errorText` | `string` | Error text if the message has an error |
+| `payload` | `{ [k: string]: any; }` | The payload that was used to send the notification trigger |
+| `overrides` | `{ [k: string]: any; }` | Provider specific overrides used when triggering the notification |
+| `contextKeys` | `string[]` | Context (single or multi) in which the message was sent |
 
 ### ChannelTypeEnum
 ```typescript
@@ -62,27 +62,27 @@ Workflow is a collection of steps that are executed in order to send a notificat
 
 | Property | Type | Description |
 | --- | --- | --- |
-| `id` |  |  |
-| `name` |  |  |
-| `description` |  |  |
-| `active` |  |  |
-| `draft` |  |  |
-| `preferenceSettings` |  |  |
-| `critical` |  |  |
-| `tags` |  |  |
-| `steps` |  |  |
-| `organizationId` |  |  |
-| `creatorId` |  |  |
-| `environmentId` |  |  |
-| `triggers` |  |  |
-| `notificationGroupId` |  |  |
-| `parentId` |  |  |
-| `deleted` |  |  |
-| `deletedAt` |  |  |
-| `deletedBy` |  |  |
-| `notificationGroup` |  |  |
-| `data` |  |  |
-| `workflowIntegrationStatus` |  |  |
+| `id` | `string` |  |
+| `name` | `string` |  |
+| `description` | `string` |  |
+| `active` | `boolean` |  |
+| `draft` | `boolean` |  |
+| `preferenceSettings` | `SubscriberPreferenceChannels` |  |
+| `critical` | `boolean` |  |
+| `tags` | `string[]` |  |
+| `steps` | `NotificationStepDto[]` |  |
+| `organizationId` | `string` |  |
+| `creatorId` | `string` |  |
+| `environmentId` | `string` |  |
+| `triggers` | `NotificationTrigger[]` |  |
+| `notificationGroupId` | `string` |  |
+| `parentId` | `string` |  |
+| `deleted` | `boolean` |  |
+| `deletedAt` | `string` |  |
+| `deletedBy` | `string` |  |
+| `notificationGroup` | `NotificationGroup` |  |
+| `data` | `WorkflowResponseData` |  |
+| `workflowIntegrationStatus` | `WorkflowIntegrationStatus` |  |
 
 ### Actor
 
@@ -90,8 +90,8 @@ Actor is the user who is skipped from sending the notification when workflow is 
 
 | Property | Type | Description |
 | --- | --- | --- |
-| `toString` |  |  |
-| `valueOf` |  |  |
+| `toString` | `(() => string) \| (() => string)` |  |
+| `valueOf` | `(() => string) \| (() => Object)` |  |
 
 ### MessageCTA
 
@@ -99,6 +99,6 @@ MessageCTA is a call to action that is displayed in the [Inbox](/platform/inbox)
 
 | Property | Type | Description |
 | --- | --- | --- |
-| `type` |  |  |
-| `data` |  |  |
-| `action` |  |  |
+| `type` | `"redirect"` | Type of call to action |
+| `data` | `MessageCTAData` | Data associated with the call to action |
+| `action` | `MessageAction` | Action associated with the call to action |

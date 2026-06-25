@@ -3,42 +3,41 @@ title: "useNotifications"
 description: "API reference for the useNotifications hook return types and data models in the React SDK"
 ---
 
-
 The `useNotifications` hook provides a way to fetch and manage notifications in your application. It includes support for pagination, filtering, and real-time updates.
 
 ## Hook Parameters
 
 | Property | Type | Description |
 | --- | --- | --- |
-| `tags` |  |  |
-| `data` |  |  |
-| `read` |  |  |
-| `archived` |  |  |
-| `snoozed` |  |  |
-| `seen` |  |  |
-| `severity` |  |  |
-| `createdGte` |  |  |
-| `createdLte` |  |  |
-| `limit` |  |  |
-| `realtime` |  |  |
-| `onSuccess` |  |  |
-| `onError` |  |  |
+| `tags` | `TagsFilter` |  |
+| `data` | `Record<string, unknown>` |  |
+| `read` | `boolean` |  |
+| `archived` | `boolean` |  |
+| `snoozed` | `boolean` |  |
+| `seen` | `boolean` |  |
+| `severity` | `SeverityLevelEnum \| SeverityLevelEnum[]` |  |
+| `createdGte` | `number` |  |
+| `createdLte` | `number` |  |
+| `limit` | `number` |  |
+| `realtime` | `boolean` | When `false`, disables the WebSocket subscription that auto-injects newly received notifications into the list. Built-in mutations like `readAll`, `seenAll`, `archiveAll`, and `archiveAllRead` continue to update local state. Use this when you want to drive new-notification updates yourself (e.g. via your own `novu.on('notifications.notification_received', ...)` handler combined with `refetch()`). When set, this prop takes precedence over the `realtime` config on `<NovuProvider />`. When omitted, the provider value (default `true`) is used. |
+| `onSuccess` | `(data: Notification[]) => void` |  |
+| `onError` | `(error: NovuError) => void` |  |
 
 ## Return Value
 
 | Property | Type | Description |
 | --- | --- | --- |
-| `notifications` |  |  |
-| `error` |  |  |
-| `isLoading` |  |  |
-| `isFetching` |  |  |
-| `hasMore` |  |  |
-| `readAll` |  |  |
-| `seenAll` |  |  |
-| `archiveAll` |  |  |
-| `archiveAllRead` |  |  |
-| `refetch` |  |  |
-| `fetchMore` |  |  |
+| `notifications` | `Notification[]` |  |
+| `error` | `NovuError` |  |
+| `isLoading` | `boolean` |  |
+| `isFetching` | `boolean` |  |
+| `hasMore` | `boolean` |  |
+| `readAll` | `() => Promise<{ data?: void \| undefined; error?: NovuError \| undefined; }>` |  |
+| `seenAll` | `() => Promise<{ data?: void \| undefined; error?: NovuError \| undefined; }>` |  |
+| `archiveAll` | `() => Promise<{ data?: void \| undefined; error?: NovuError \| undefined; }>` |  |
+| `archiveAllRead` | `() => Promise<{ data?: void \| undefined; error?: NovuError \| undefined; }>` |  |
+| `refetch` | `() => Promise<void>` |  |
+| `fetchMore` | `() => Promise<void>` |  |
 
 ## Notification Type
 
@@ -46,44 +45,44 @@ The Notification type from @novu/react includes many properties. Here are the mo
 
 | Property | Type | Description |
 | --- | --- | --- |
-| `id` |  |  |
-| `transactionId` |  |  |
-| `subject` |  |  |
-| `body` |  |  |
-| `to` |  |  |
-| `isRead` |  |  |
-| `isSeen` |  |  |
-| `isArchived` |  |  |
-| `isSnoozed` |  |  |
-| `snoozedUntil` |  |  |
-| `deliveredAt` |  |  |
-| `createdAt` |  |  |
-| `readAt` |  |  |
-| `firstSeenAt` |  |  |
-| `archivedAt` |  |  |
-| `avatar` |  |  |
-| `primaryAction` |  |  |
-| `secondaryAction` |  |  |
-| `channelType` |  |  |
-| `tags` |  |  |
-| `redirect` |  |  |
-| `data` |  |  |
-| `workflow` |  |  |
-| `severity` |  |  |
-| `read` |  |  |
-| `unread` |  |  |
-| `seen` |  |  |
-| `archive` |  |  |
-| `unarchive` |  |  |
-| `delete` |  |  |
-| `snooze` |  |  |
-| `unsnooze` |  |  |
-| `completePrimary` |  |  |
-| `completeSecondary` |  |  |
-| `revertPrimary` |  |  |
-| `revertSecondary` |  |  |
-| `on` |  |  |
-| `off` |  |  |
+| `id` | `string` |  |
+| `transactionId` | `string` |  |
+| `subject` | `string` |  |
+| `body` | `string` |  |
+| `to` | `Subscriber` |  |
+| `isRead` | `boolean` |  |
+| `isSeen` | `boolean` |  |
+| `isArchived` | `boolean` |  |
+| `isSnoozed` | `boolean` |  |
+| `snoozedUntil` | `string` |  |
+| `deliveredAt` | `string[]` |  |
+| `createdAt` | `string` |  |
+| `readAt` | `string` |  |
+| `firstSeenAt` | `string` |  |
+| `archivedAt` | `string` |  |
+| `avatar` | `string` |  |
+| `primaryAction` | `Action` |  |
+| `secondaryAction` | `Action` |  |
+| `channelType` | `ChannelType` |  |
+| `tags` | `string[]` |  |
+| `redirect` | `Redirect` |  |
+| `data` | `NotificationData` |  |
+| `workflow` | `Workflow` |  |
+| `severity` | `SeverityLevelEnum` |  |
+| `read` | `() => Result<Notification>` |  |
+| `unread` | `() => Result<Notification>` |  |
+| `seen` | `() => Result<Notification>` |  |
+| `archive` | `() => Result<Notification>` |  |
+| `unarchive` | `() => Result<Notification>` |  |
+| `delete` | `() => Result<void>` |  |
+| `snooze` | `(snoozeUntil: string) => Result<Notification>` |  |
+| `unsnooze` | `() => Result<Notification>` |  |
+| `completePrimary` | `() => Result<Notification>` |  |
+| `completeSecondary` | `() => Result<Notification>` |  |
+| `revertPrimary` | `() => Result<Notification>` |  |
+| `revertSecondary` | `() => Result<Notification>` |  |
+| `on` | `<Key extends EventNames>(eventName: Key, listener: EventHandler<Events[Key]>) => () => void` |  |
+| `off` | `<Key extends EventNames>(eventName: Key, listener: EventHandler<Events[Key]>) => void` |  |
 
 ## Example Usage
 

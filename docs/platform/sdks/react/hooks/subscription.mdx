@@ -89,7 +89,7 @@ Creates a new subscription to a topic for the current subscriber.
 
 | Property | Type | Description |
 | --- | --- | --- |
-| `create` |  |  |
+| `create` | `(args: CreateSubscriptionArgs) => Promise<{ data?: TopicSubscription; error?: NovuError }>` | Function to create a new subscription. |
 | `isCreating` | `boolean` | True while the create request is in progress |
 | `error` | `NovuError | undefined` | Error object if the last create request failed |
 
@@ -116,7 +116,7 @@ Updates an existing subscription's properties or preferences list.
 
 | Property | Type | Description |
 | --- | --- | --- |
-| `update` |  |  |
+| `update` | `(args: UpdateSubscriptionArgs) => Promise<{ data?: TopicSubscription; error?: NovuError }>` | Function to update an existing subscription. |
 | `isUpdating` | `boolean` | True while the update request is in progress |
 | `error` | `NovuError | undefined` | Error object if the last update request failed |
 
@@ -146,7 +146,7 @@ Unsubscribes the current user from a topic by removing the subscription instance
 
 | Property | Type | Description |
 | --- | --- | --- |
-| `remove` |  |  |
+| `remove` | `(args: DeleteSubscriptionArgs) => Promise<{ data?: void; error?: NovuError }>` | Function to remove a subscription. |
 | `isRemoving` | `boolean` | True while the delete request is in progress |
 | `error` | `NovuError | undefined` | Error object if the last remove request failed |
 

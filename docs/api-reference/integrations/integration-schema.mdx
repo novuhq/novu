@@ -9,21 +9,21 @@ Integration is third party service used by Novu to send notification for a speci
 
 | Property | Type | Description |
 | --- | --- | --- |
-| `id` |  |  |
-| `environmentId` |  |  |
-| `organizationId` |  |  |
-| `name` |  |  |
-| `identifier` |  |  |
-| `providerId` |  |  |
-| `channel` |  |  |
-| `credentials` |  |  |
-| `configurations` |  |  |
-| `active` |  |  |
-| `deleted` |  |  |
-| `deletedAt` |  |  |
-| `deletedBy` |  |  |
-| `primary` |  |  |
-| `conditions` |  |  |
+| `id` | `string` | The unique identifier of the integration record in the database. This is automatically generated. |
+| `environmentId` | `string` | The unique identifier for the environment associated with this integration. This links to the Environment collection. |
+| `organizationId` | `string` | The unique identifier for the organization that owns this integration. This links to the Organization collection. |
+| `name` | `string` | The name of the integration, which is used to identify it in the user interface. |
+| `identifier` | `string` | A unique string identifier for the integration, often used for API calls or internal references. |
+| `providerId` | `string` | The identifier for the provider of the integration (e.g., "mailgun", "twilio"). |
+| `channel` | `IntegrationResponseDtoChannel` | The channel type for the integration, which defines how it communicates (e.g., email, SMS). |
+| `credentials` | `CredentialsDto` | The credentials required for the integration to function, including API keys and other sensitive information. |
+| `configurations` | `ConfigurationsDto` | The configurations required for enabling the additional configurations of the integration. |
+| `active` | `boolean` | Indicates whether the integration is currently active. An active integration will process events and messages. |
+| `deleted` | `boolean` | Indicates whether the integration has been marked as deleted (soft delete). |
+| `deletedAt` | `string` | The timestamp indicating when the integration was deleted. This is set when the integration is soft deleted. |
+| `deletedBy` | `string` | The identifier of the user who performed the deletion of this integration. Useful for audit trails. |
+| `primary` | `boolean` | Indicates whether this integration is marked as primary. A primary integration is often the default choice for processing. |
+| `conditions` | `StepFilterDto[]` | An array of conditions associated with the integration that may influence its behavior or processing logic. |
 
 ### Credentials
 
@@ -31,52 +31,52 @@ Each integration has a set of credentials that are used to authenticate with the
 
 | Property | Type | Description |
 | --- | --- | --- |
-| `apiKey` |  |  |
-| `user` |  |  |
-| `secretKey` |  |  |
-| `domain` |  |  |
-| `password` |  |  |
-| `host` |  |  |
-| `port` |  |  |
-| `secure` |  |  |
-| `region` |  |  |
-| `accountSid` |  |  |
-| `messageProfileId` |  |  |
-| `token` |  |  |
-| `from` |  |  |
-| `senderName` |  |  |
-| `projectName` |  |  |
-| `applicationId` |  |  |
-| `clientId` |  |  |
-| `requireTls` |  |  |
-| `ignoreTls` |  |  |
-| `tlsOptions` |  |  |
-| `baseUrl` |  |  |
-| `webhookUrl` |  |  |
-| `redirectUrl` |  |  |
-| `hmac` |  |  |
-| `serviceAccount` |  |  |
-| `ipPoolName` |  |  |
-| `apiKeyRequestHeader` |  |  |
-| `secretKeyRequestHeader` |  |  |
-| `idPath` |  |  |
-| `datePath` |  |  |
-| `apiToken` |  |  |
-| `authenticateByToken` |  |  |
-| `authenticationTokenKey` |  |  |
-| `instanceId` |  |  |
-| `alertUid` |  |  |
-| `title` |  |  |
-| `imageUrl` |  |  |
-| `state` |  |  |
-| `externalLink` |  |  |
-| `channelId` |  |  |
-| `phoneNumberIdentification` |  |  |
-| `accessKey` |  |  |
-| `appSid` |  |  |
-| `senderId` |  |  |
-| `tenantId` |  |  |
-| `appIOBaseUrl` |  |  |
+| `apiKey` | `string` |  |
+| `user` | `string` |  |
+| `secretKey` | `string` |  |
+| `domain` | `string` |  |
+| `password` | `string` |  |
+| `host` | `string` |  |
+| `port` | `string` |  |
+| `secure` | `boolean` |  |
+| `region` | `string` |  |
+| `accountSid` | `string` |  |
+| `messageProfileId` | `string` |  |
+| `token` | `string` |  |
+| `from` | `string` |  |
+| `senderName` | `string` |  |
+| `projectName` | `string` |  |
+| `applicationId` | `string` |  |
+| `clientId` | `string` |  |
+| `requireTls` | `boolean` |  |
+| `ignoreTls` | `boolean` |  |
+| `tlsOptions` | `TlsOptions` |  |
+| `baseUrl` | `string` |  |
+| `webhookUrl` | `string` |  |
+| `redirectUrl` | `string` |  |
+| `hmac` | `boolean` |  |
+| `serviceAccount` | `string` |  |
+| `ipPoolName` | `string` |  |
+| `apiKeyRequestHeader` | `string` |  |
+| `secretKeyRequestHeader` | `string` |  |
+| `idPath` | `string` |  |
+| `datePath` | `string` |  |
+| `apiToken` | `string` |  |
+| `authenticateByToken` | `boolean` |  |
+| `authenticationTokenKey` | `string` |  |
+| `instanceId` | `string` |  |
+| `alertUid` | `string` |  |
+| `title` | `string` |  |
+| `imageUrl` | `string` |  |
+| `state` | `string` |  |
+| `externalLink` | `string` |  |
+| `channelId` | `string` |  |
+| `phoneNumberIdentification` | `string` |  |
+| `accessKey` | `string` |  |
+| `appSid` | `string` |  |
+| `senderId` | `string` |  |
+| `tenantId` | `string` |  |
+| `appIOBaseUrl` | `string` |  |
 
 ### ChannelTypeEnum
 

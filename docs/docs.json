@@ -56,7 +56,7 @@
             ]
           },
           {
-            "group": "Integrate",
+            "group": "Integrate <Inbox />",
             "pages": [
               "platform/inbox",
               "platform/inbox/setup-inbox",
@@ -103,7 +103,7 @@
             ]
           },
           {
-            "group": "Integrate",
+            "group": "Integrate <Subscription />",
             "pages": [
               "platform/subscription",
               "platform/subscription/quickstart",
@@ -119,6 +119,7 @@
               "platform/workflow/configure-workflow",
               {
                 "group": "Add And Configure Steps",
+                "root": "platform/workflow/add-and-configure-steps",
                 "pages": [
                   {
                     "group": "Configure Action Steps",
@@ -132,7 +133,8 @@
                   },
                   "platform/workflow/add-and-configure-steps/step-conditions",
                   "platform/workflow/add-and-configure-steps/code-steps"
-                ]
+                ],
+                "icon": "copy-plus"
               },
               {
                 "group": "Add Notification Content",
@@ -168,6 +170,7 @@
               "platform/integrations/demo-integration",
               {
                 "group": "Chat",
+                "root": "platform/integrations/chat",
                 "icon": "message-square",
                 "pages": [
                   "platform/integrations/chat/discord",
@@ -181,6 +184,7 @@
               {
                 "group": "Email",
                 "icon": "mail",
+                "root": "platform/integrations/email",
                 "pages": [
                   "platform/integrations/email/sendgrid",
                   "platform/integrations/email/amazon-ses",
@@ -220,6 +224,7 @@
               {
                 "group": "Push",
                 "icon": "smartphone",
+                "root": "platform/integrations/push",
                 "pages": [
                   "platform/integrations/push/fcm",
                   "platform/integrations/push/expo-push",
@@ -234,6 +239,7 @@
               {
                 "group": "Sms",
                 "icon": "message-circle",
+                "root": "platform/integrations/sms",
                 "pages": [
                   "platform/integrations/sms/twilio",
                   "platform/integrations/sms/infobip",
@@ -291,6 +297,7 @@
               {
                 "group": "@novu/react-native",
                 "icon": "smartphone",
+                "root": "platform/sdks/react-native",
                 "pages": [
                   "platform/sdks/react-native",
                   {
@@ -309,6 +316,7 @@
               {
                 "group": "Server-Side",
                 "icon": "server",
+                "root": "platform/sdks/server",
                 "pages": [
                   "platform/sdks/server/typescript",
                   "platform/sdks/server/python",

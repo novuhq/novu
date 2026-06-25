@@ -15,23 +15,23 @@ The main component for displaying notifications.
 
 | Property | Type | Description |
 | --- | --- | --- |
-| `appearance` |  |  |
-| `subscriberHash` |  |  |
-| `contextHash` |  |  |
-| `backendUrl` |  |  |
-| `socketUrl` |  |  |
-| `socketOptions` |  |  |
-| `localization` |  |  |
-| `tabs` |  |  |
-| `preferencesFilter` |  |  |
-| `preferenceGroups` |  |  |
-| `preferencesSort` |  |  |
-| `defaultSchedule` |  |  |
-| `routerPush` |  |  |
-| `context` |  |  |
-| `subscriberId` |  |  |
-| `subscriber` |  |  |
-| `applicationIdentifier` |  |  |
+| `appearance` | `ReactInboxAppearance` |  |
+| `subscriberHash` | `string` |  |
+| `contextHash` | `string` |  |
+| `backendUrl` | `string` |  |
+| `socketUrl` | `string` |  |
+| `socketOptions` | `NovuSocketOptions` |  |
+| `localization` | `InboxLocalization` |  |
+| `tabs` | `Tab[]` |  |
+| `preferencesFilter` | `PreferencesFilter` |  |
+| `preferenceGroups` | `PreferenceGroups` |  |
+| `preferencesSort` | `PreferencesSort` |  |
+| `defaultSchedule` | `DefaultSchedule` |  |
+| `routerPush` | `RouterPush` |  |
+| `context` | `Partial<Record<string, ContextValue>>` |  |
+| `subscriberId` | `string` |  |
+| `subscriber` | `string \| Subscriber` |  |
+| `applicationIdentifier` | `string` |  |
 
 ### Usage
 
@@ -62,329 +62,329 @@ function NovuInbox() {
 
 | Property | Type | Description |
 | --- | --- | --- |
-| `variables` |  |  |
-| `animations` |  |  |
-| `icons` |  |  |
-| `baseTheme` |  |  |
+| `variables` | `Variables` |  |
+| `animations` | `boolean` |  |
+| `icons` | `AllIconOverrides` |  |
+| `baseTheme` | `AllTheme \| AllTheme[]` |  |
 
 #### Variables
 
 | Property | Type | Description |
 | --- | --- | --- |
-| `colorBackground` |  |  |
-| `colorForeground` |  |  |
-| `colorPrimary` |  |  |
-| `colorPrimaryForeground` |  |  |
-| `colorSecondary` |  |  |
-| `colorSecondaryForeground` |  |  |
-| `colorCounter` |  |  |
-| `colorCounterForeground` |  |  |
-| `colorNeutral` |  |  |
-| `colorShadow` |  |  |
-| `colorRing` |  |  |
-| `fontSize` |  |  |
-| `borderRadius` |  |  |
-| `colorStripes` |  |  |
-| `colorSeverityHigh` |  |  |
-| `colorSeverityMedium` |  |  |
-| `colorSeverityLow` |  |  |
+| `colorBackground` | `string` |  |
+| `colorForeground` | `string` |  |
+| `colorPrimary` | `string` |  |
+| `colorPrimaryForeground` | `string` |  |
+| `colorSecondary` | `string` |  |
+| `colorSecondaryForeground` | `string` |  |
+| `colorCounter` | `string` |  |
+| `colorCounterForeground` | `string` |  |
+| `colorNeutral` | `string` |  |
+| `colorShadow` | `string` |  |
+| `colorRing` | `string` |  |
+| `fontSize` | `string` |  |
+| `borderRadius` | `string` |  |
+| `colorStripes` | `string` |  |
+| `colorSeverityHigh` | `string` |  |
+| `colorSeverityMedium` | `string` |  |
+| `colorSeverityLow` | `string` |  |
 
 #### Elements
 
 | Property | Type | Description |
 | --- | --- | --- |
-| `root` |  |  |
-| `button` |  |  |
-| `input` |  |  |
-| `icon` |  |  |
-| `badge` |  |  |
-| `popoverContent` |  |  |
-| `popoverTrigger` |  |  |
-| `popoverClose` |  |  |
-| `collapsible` |  |  |
-| `tooltipContent` |  |  |
-| `tooltipTrigger` |  |  |
-| `lockIcon` |  |  |
-| `preferences__button` |  |  |
-| `inboxHeader` |  |  |
-| `loading` |  |  |
-| `dropdownContent` |  |  |
-| `dropdownTrigger` |  |  |
-| `dropdownItem` |  |  |
-| `dropdownItemLabel` |  |  |
-| `dropdownItemLabelContainer` |  |  |
-| `dropdownItemLeft__icon` |  |  |
-| `dropdownItemRight__icon` |  |  |
-| `dropdownItem__icon` |  |  |
-| `datePicker` |  |  |
-| `datePickerGrid` |  |  |
-| `datePickerGridRow` |  |  |
-| `datePickerGridCell` |  |  |
-| `datePickerGridCellTrigger` |  |  |
-| `datePickerTrigger` |  |  |
-| `datePickerGridHeader` |  |  |
-| `datePickerControl` |  |  |
-| `datePickerControlPrevTrigger` |  |  |
-| `datePickerControlNextTrigger` |  |  |
-| `datePickerControlPrevTrigger__icon` |  |  |
-| `datePickerControlNextTrigger__icon` |  |  |
-| `datePickerCalendar` |  |  |
-| `datePickerHeaderMonth` |  |  |
-| `datePickerCalendarDay__button` |  |  |
-| `timePicker` |  |  |
-| `timePicker__hourSelect` |  |  |
-| `timePicker__minuteSelect` |  |  |
-| `timePicker__periodSelect` |  |  |
-| `timePicker__separator` |  |  |
-| `timePickerHour__input` |  |  |
-| `timePickerMinute__input` |  |  |
-| `snoozeDatePicker` |  |  |
-| `snoozeDatePicker__actions` |  |  |
-| `snoozeDatePickerCancel__button` |  |  |
-| `snoozeDatePickerApply__button` |  |  |
-| `snoozeDatePicker__timePickerContainer` |  |  |
-| `snoozeDatePicker__timePickerLabel` |  |  |
-| `back__button` |  |  |
-| `skeletonText` |  |  |
-| `skeletonAvatar` |  |  |
-| `skeletonSwitch` |  |  |
-| `skeletonSwitchThumb` |  |  |
-| `tabsRoot` |  |  |
-| `tabsList` |  |  |
-| `tabsContent` |  |  |
-| `tabsTrigger` |  |  |
-| `dots` |  |  |
-| `inboxContent` |  |  |
-| `inbox__popoverTrigger` |  |  |
-| `inbox__popoverContent` |  |  |
-| `notificationListEmptyNoticeContainer` |  |  |
-| `notificationListEmptyNoticeOverlay` |  |  |
-| `notificationListEmptyNoticeIcon` |  |  |
-| `notificationListEmptyNotice` |  |  |
-| `notificationList__skeleton` |  |  |
-| `notificationList__skeletonContent` |  |  |
-| `notificationList__skeletonItem` |  |  |
-| `notificationList__skeletonAvatar` |  |  |
-| `notificationList__skeletonText` |  |  |
-| `notificationListNewNotificationsNotice__button` |  |  |
-| `notificationSubject__strong` |  |  |
-| `notificationSubject__em` |  |  |
-| `notificationBody__strong` |  |  |
-| `notificationBody__em` |  |  |
-| `notificationBodyContainer` |  |  |
-| `notificationDateActionsContainer` |  |  |
-| `notificationRead__button` |  |  |
-| `notificationUnread__button` |  |  |
-| `notificationArchive__button` |  |  |
-| `notificationUnarchive__button` |  |  |
-| `notificationSnooze__button` |  |  |
-| `notificationUnsnooze__button` |  |  |
-| `notificationRead__icon` |  |  |
-| `notificationUnread__icon` |  |  |
-| `notificationArchive__icon` |  |  |
-| `notificationUnarchive__icon` |  |  |
-| `notificationSnooze__icon` |  |  |
-| `notificationUnsnooze__icon` |  |  |
-| `notificationsTabs__tabsRoot` |  |  |
-| `notificationsTabs__tabsList` |  |  |
-| `notificationsTabs__tabsContent` |  |  |
-| `notificationsTabs__tabsTrigger` |  |  |
-| `notificationsTabsTriggerLabel` |  |  |
-| `notificationsTabsTriggerCount` |  |  |
-| `inboxStatus__title` |  |  |
-| `inboxStatus__dropdownTrigger` |  |  |
-| `inboxStatus__dropdownContent` |  |  |
-| `inboxStatus__dropdownItem` |  |  |
-| `inboxStatus__dropdownItemLabel` |  |  |
-| `inboxStatus__dropdownItemLabelContainer` |  |  |
-| `inboxStatus__dropdownItemLeft__icon` |  |  |
-| `inboxStatus__dropdownItemRight__icon` |  |  |
-| `inboxStatus__dropdownItem__icon` |  |  |
-| `inboxStatus__dropdownItemCheck__icon` |  |  |
-| `moreActionsContainer` |  |  |
-| `moreActions__dropdownTrigger` |  |  |
-| `moreActions__dropdownContent` |  |  |
-| `moreActions__dropdownItem` |  |  |
-| `moreActions__dropdownItemLabel` |  |  |
-| `moreActions__dropdownItemLeft__icon` |  |  |
-| `moreActions__dots` |  |  |
-| `moreTabs__button` |  |  |
-| `moreTabs__icon` |  |  |
-| `moreTabs__dropdownTrigger` |  |  |
-| `moreTabs__dropdownContent` |  |  |
-| `moreTabs__dropdownItem` |  |  |
-| `moreTabs__dropdownItemLabel` |  |  |
-| `moreTabs__dropdownItemRight__icon` |  |  |
-| `workflowContainerDisabledNotice` |  |  |
-| `workflowLabelDisabled__icon` |  |  |
-| `workflowDescription` |  |  |
-| `channelsContainerCollapsible` |  |  |
-| `channelSwitch` |  |  |
-| `channelSwitchThumb` |  |  |
-| `preferencesHeader` |  |  |
-| `preferencesHeader__back__button` |  |  |
-| `preferencesHeader__back__button__icon` |  |  |
-| `preferencesHeader__title` |  |  |
-| `preferencesHeader__icon` |  |  |
-| `preferencesListEmptyNoticeContainer` |  |  |
-| `preferencesListEmptyNotice` |  |  |
-| `preferencesList__skeleton` |  |  |
-| `preferencesList__skeletonContent` |  |  |
-| `preferencesList__skeletonItem` |  |  |
-| `preferencesList__skeletonIcon` |  |  |
-| `preferencesList__skeletonSwitch` |  |  |
-| `preferencesList__skeletonSwitchThumb` |  |  |
-| `preferencesList__skeletonText` |  |  |
-| `dayScheduleCopy__dropdownTrigger` |  |  |
-| `dayScheduleCopy__dropdownContent` |  |  |
-| `timeSelect__dropdownTrigger` |  |  |
-| `timeSelect__time` |  |  |
-| `timeSelect__dropdownContent` |  |  |
-| `timeSelect__dropdownItem` |  |  |
-| `timeSelect__dropdownItemLabel` |  |  |
-| `timeSelect__dropdownItemLabelContainer` |  |  |
-| `timeSelect__dropdownItemCheck__icon` |  |  |
-| `notificationSnooze__dropdownContent` |  |  |
-| `notificationSnooze__dropdownItem` |  |  |
-| `notificationSnooze__dropdownItem__icon` |  |  |
-| `notificationSnoozeCustomTime_popoverContent` |  |  |
-| `strong` |  |  |
-| `em` |  |  |
-| `connectChatContainer` |  |  |
-| `connectChatButton` |  |  |
-| `connectChatButtonContainer` |  |  |
-| `connectChatButtonLabel` |  |  |
-| `connectChatMisconfiguredTooltip` |  |  |
-| `channelConnectButtonMisconfiguredTooltip` |  |  |
-| `bellIcon` |  |  |
-| `bellContainer` |  |  |
-| `severityHigh__bellContainer` |  |  |
-| `severityMedium__bellContainer` |  |  |
-| `severityLow__bellContainer` |  |  |
-| `bellSeverityGlow` |  |  |
-| `severityGlowHigh__bellSeverityGlow` |  |  |
-| `severityGlowMedium__bellSeverityGlow` |  |  |
-| `severityGlowLow__bellSeverityGlow` |  |  |
-| `bellDot` |  |  |
-| `preferencesContainer` |  |  |
-| `notificationListContainer` |  |  |
-| `notificationList` |  |  |
-| `notification` |  |  |
-| `severityHigh__notification` |  |  |
-| `severityMedium__notification` |  |  |
-| `severityLow__notification` |  |  |
-| `notificationBar` |  |  |
-| `severityHigh__notificationBar` |  |  |
-| `severityMedium__notificationBar` |  |  |
-| `severityLow__notificationBar` |  |  |
-| `notificationContent` |  |  |
-| `notificationTextContainer` |  |  |
-| `notificationDot` |  |  |
-| `notificationSubject` |  |  |
-| `notificationBody` |  |  |
-| `notificationImage` |  |  |
-| `notificationImageLoadingFallback` |  |  |
-| `notificationDate` |  |  |
-| `notificationDefaultActions` |  |  |
-| `notificationCustomActions` |  |  |
-| `notificationPrimaryAction__button` |  |  |
-| `notificationSecondaryAction__button` |  |  |
-| `workflowContainer` |  |  |
-| `workflowLabel` |  |  |
-| `workflowLabelHeader` |  |  |
-| `workflowLabelHeaderContainer` |  |  |
-| `workflowLabelIcon` |  |  |
-| `workflowLabelContainer` |  |  |
-| `workflowContainerRight__icon` |  |  |
-| `workflowArrow__icon` |  |  |
-| `preferencesGroupContainer` |  |  |
-| `preferencesGroupHeader` |  |  |
-| `preferencesGroupLabelContainer` |  |  |
-| `preferencesGroupLabelIcon` |  |  |
-| `preferencesGroupLabel` |  |  |
-| `preferencesGroupActionsContainer` |  |  |
-| `preferencesGroupActionsContainerRight__icon` |  |  |
-| `preferencesGroupBody` |  |  |
-| `preferencesGroupChannels` |  |  |
-| `preferencesGroupInfo` |  |  |
-| `preferencesGroupInfoIcon` |  |  |
-| `preferencesGroupWorkflows` |  |  |
-| `channelContainer` |  |  |
-| `channelIconContainer` |  |  |
-| `channel__icon` |  |  |
-| `channelsContainer` |  |  |
-| `channelLabel` |  |  |
-| `channelLabelContainer` |  |  |
-| `channelName` |  |  |
-| `channelSwitchContainer` |  |  |
-| `scheduleContainer` |  |  |
-| `scheduleHeader` |  |  |
-| `scheduleLabelContainer` |  |  |
-| `scheduleLabelScheduleIcon` |  |  |
-| `scheduleLabelInfoIcon` |  |  |
-| `scheduleLabel` |  |  |
-| `scheduleActionsContainer` |  |  |
-| `scheduleActionsContainerRight` |  |  |
-| `scheduleBody` |  |  |
-| `scheduleDescription` |  |  |
-| `scheduleTable` |  |  |
-| `scheduleTableHeader` |  |  |
-| `scheduleHeaderColumn` |  |  |
-| `scheduleTableBody` |  |  |
-| `scheduleBodyRow` |  |  |
-| `scheduleBodyColumn` |  |  |
-| `scheduleInfoContainer` |  |  |
-| `scheduleInfoIcon` |  |  |
-| `scheduleInfo` |  |  |
-| `dayScheduleCopyTitle` |  |  |
-| `dayScheduleCopyIcon` |  |  |
-| `dayScheduleCopySelectAll` |  |  |
-| `dayScheduleCopyDay` |  |  |
-| `dayScheduleCopyFooterContainer` |  |  |
-| `notificationDeliveredAt__badge` |  |  |
-| `notificationDeliveredAt__icon` |  |  |
-| `notificationSnoozedUntil__icon` |  |  |
-| `subscriptionContainer` |  |  |
-| `subscriptionButton__button` |  |  |
-| `subscriptionButtonContainer` |  |  |
-| `subscriptionButtonIcon` |  |  |
-| `subscriptionButtonLabel` |  |  |
-| `subscription__popoverTriggerContainer` |  |  |
-| `subscription__popoverTrigger` |  |  |
-| `subscriptionTriggerIcon` |  |  |
-| `subscription__popoverContent` |  |  |
-| `subscriptionPreferencesContainer` |  |  |
-| `subscriptionPreferencesHeaderContainer` |  |  |
-| `subscriptionPreferencesHeader` |  |  |
-| `subscriptionPreferencesInfoIcon` |  |  |
-| `subscriptionPreferencesContent` |  |  |
-| `subscriptionPreferencesGroupsContainer` |  |  |
-| `subscriptionPreferencesFallback` |  |  |
-| `subscriptionPreferencesFallbackTexts` |  |  |
-| `subscriptionPreferencesFallbackHeader` |  |  |
-| `subscriptionPreferencesFallbackDescription` |  |  |
-| `subscriptionPreferenceRow` |  |  |
-| `subscriptionPreferenceLabel` |  |  |
-| `subscriptionPreferenceGroupContainer` |  |  |
-| `subscriptionPreferenceGroupHeader` |  |  |
-| `subscriptionPreferenceGroupLabelContainer` |  |  |
-| `subscriptionPreferenceGroupLabelIcon` |  |  |
-| `subscriptionPreferenceGroupLabel` |  |  |
-| `subscriptionPreferenceGroupActionsContainer` |  |  |
-| `subscriptionPreferenceGroupActionsContainerRight__icon` |  |  |
-| `subscriptionPreferenceGroupBody` |  |  |
-| `subscriptionPreferenceGroupWorkflowRow` |  |  |
-| `subscriptionPreferenceGroupWorkflowLabel` |  |  |
-| `linkSlackUserContainer` |  |  |
-| `linkSlackUserButton` |  |  |
-| `linkSlackUserButtonContainer` |  |  |
-| `linkSlackUserButtonIcon` |  |  |
-| `linkSlackUserButtonLabel` |  |  |
-| `channelConnectButtonContainer` |  |  |
-| `channelConnectButton` |  |  |
-| `channelConnectButtonInner` |  |  |
-| `channelConnectButtonIcon` |  |  |
-| `channelConnectButtonLabel` |  |  |
+| `root` | `ElementStyles` |  |
+| `button` | `ElementStyles` |  |
+| `input` | `ElementStyles` |  |
+| `icon` | `ElementStyles` |  |
+| `badge` | `ElementStyles` |  |
+| `popoverContent` | `ElementStyles` |  |
+| `popoverTrigger` | `ElementStyles` |  |
+| `popoverClose` | `ElementStyles` |  |
+| `collapsible` | `ElementStyles` |  |
+| `tooltipContent` | `ElementStyles` |  |
+| `tooltipTrigger` | `ElementStyles` |  |
+| `lockIcon` | `ElementStyles` |  |
+| `preferences__button` | `ElementStyles` |  |
+| `inboxHeader` | `ElementStyles` |  |
+| `loading` | `ElementStyles` |  |
+| `dropdownContent` | `ElementStyles` |  |
+| `dropdownTrigger` | `ElementStyles` |  |
+| `dropdownItem` | `ElementStyles` |  |
+| `dropdownItemLabel` | `ElementStyles` |  |
+| `dropdownItemLabelContainer` | `ElementStyles` |  |
+| `dropdownItemLeft__icon` | `ElementStyles` |  |
+| `dropdownItemRight__icon` | `ElementStyles` |  |
+| `dropdownItem__icon` | `ElementStyles` |  |
+| `datePicker` | `ElementStyles` |  |
+| `datePickerGrid` | `ElementStyles` |  |
+| `datePickerGridRow` | `ElementStyles` |  |
+| `datePickerGridCell` | `ElementStyles` |  |
+| `datePickerGridCellTrigger` | `ElementStyles` |  |
+| `datePickerTrigger` | `ElementStyles` |  |
+| `datePickerGridHeader` | `ElementStyles` |  |
+| `datePickerControl` | `ElementStyles` |  |
+| `datePickerControlPrevTrigger` | `ElementStyles` |  |
+| `datePickerControlNextTrigger` | `ElementStyles` |  |
+| `datePickerControlPrevTrigger__icon` | `ElementStyles` |  |
+| `datePickerControlNextTrigger__icon` | `ElementStyles` |  |
+| `datePickerCalendar` | `ElementStyles` |  |
+| `datePickerHeaderMonth` | `ElementStyles` |  |
+| `datePickerCalendarDay__button` | `ElementStyles` |  |
+| `timePicker` | `ElementStyles` |  |
+| `timePicker__hourSelect` | `ElementStyles` |  |
+| `timePicker__minuteSelect` | `ElementStyles` |  |
+| `timePicker__periodSelect` | `ElementStyles` |  |
+| `timePicker__separator` | `ElementStyles` |  |
+| `timePickerHour__input` | `ElementStyles` |  |
+| `timePickerMinute__input` | `ElementStyles` |  |
+| `snoozeDatePicker` | `ElementStyles` |  |
+| `snoozeDatePicker__actions` | `ElementStyles` |  |
+| `snoozeDatePickerCancel__button` | `ElementStyles` |  |
+| `snoozeDatePickerApply__button` | `ElementStyles` |  |
+| `snoozeDatePicker__timePickerContainer` | `ElementStyles` |  |
+| `snoozeDatePicker__timePickerLabel` | `ElementStyles` |  |
+| `back__button` | `ElementStyles` |  |
+| `skeletonText` | `ElementStyles` |  |
+| `skeletonAvatar` | `ElementStyles` |  |
+| `skeletonSwitch` | `ElementStyles` |  |
+| `skeletonSwitchThumb` | `ElementStyles` |  |
+| `tabsRoot` | `ElementStyles` |  |
+| `tabsList` | `ElementStyles` |  |
+| `tabsContent` | `ElementStyles` |  |
+| `tabsTrigger` | `ElementStyles` |  |
+| `dots` | `ElementStyles` |  |
+| `inboxContent` | `ElementStyles` |  |
+| `inbox__popoverTrigger` | `ElementStyles` |  |
+| `inbox__popoverContent` | `ElementStyles` |  |
+| `notificationListEmptyNoticeContainer` | `ElementStyles` |  |
+| `notificationListEmptyNoticeOverlay` | `ElementStyles` |  |
+| `notificationListEmptyNoticeIcon` | `ElementStyles` |  |
+| `notificationListEmptyNotice` | `ElementStyles` |  |
+| `notificationList__skeleton` | `ElementStyles` |  |
+| `notificationList__skeletonContent` | `ElementStyles` |  |
+| `notificationList__skeletonItem` | `ElementStyles` |  |
+| `notificationList__skeletonAvatar` | `ElementStyles` |  |
+| `notificationList__skeletonText` | `ElementStyles` |  |
+| `notificationListNewNotificationsNotice__button` | `ElementStyles` |  |
+| `notificationSubject__strong` | `ElementStyles` |  |
+| `notificationSubject__em` | `ElementStyles` |  |
+| `notificationBody__strong` | `ElementStyles` |  |
+| `notificationBody__em` | `ElementStyles` |  |
+| `notificationBodyContainer` | `ElementStyles` |  |
+| `notificationDateActionsContainer` | `ElementStyles` |  |
+| `notificationRead__button` | `ElementStyles` |  |
+| `notificationUnread__button` | `ElementStyles` |  |
+| `notificationArchive__button` | `ElementStyles` |  |
+| `notificationUnarchive__button` | `ElementStyles` |  |
+| `notificationSnooze__button` | `ElementStyles` |  |
+| `notificationUnsnooze__button` | `ElementStyles` |  |
+| `notificationRead__icon` | `ElementStyles` |  |
+| `notificationUnread__icon` | `ElementStyles` |  |
+| `notificationArchive__icon` | `ElementStyles` |  |
+| `notificationUnarchive__icon` | `ElementStyles` |  |
+| `notificationSnooze__icon` | `ElementStyles` |  |
+| `notificationUnsnooze__icon` | `ElementStyles` |  |
+| `notificationsTabs__tabsRoot` | `ElementStyles` |  |
+| `notificationsTabs__tabsList` | `ElementStyles` |  |
+| `notificationsTabs__tabsContent` | `ElementStyles` |  |
+| `notificationsTabs__tabsTrigger` | `ElementStyles` |  |
+| `notificationsTabsTriggerLabel` | `ElementStyles` |  |
+| `notificationsTabsTriggerCount` | `ElementStyles` |  |
+| `inboxStatus__title` | `ElementStyles` |  |
+| `inboxStatus__dropdownTrigger` | `ElementStyles` |  |
+| `inboxStatus__dropdownContent` | `ElementStyles` |  |
+| `inboxStatus__dropdownItem` | `ElementStyles` |  |
+| `inboxStatus__dropdownItemLabel` | `ElementStyles` |  |
+| `inboxStatus__dropdownItemLabelContainer` | `ElementStyles` |  |
+| `inboxStatus__dropdownItemLeft__icon` | `ElementStyles` |  |
+| `inboxStatus__dropdownItemRight__icon` | `ElementStyles` |  |
+| `inboxStatus__dropdownItem__icon` | `ElementStyles` |  |
+| `inboxStatus__dropdownItemCheck__icon` | `ElementStyles` |  |
+| `moreActionsContainer` | `ElementStyles` |  |
+| `moreActions__dropdownTrigger` | `ElementStyles` |  |
+| `moreActions__dropdownContent` | `ElementStyles` |  |
+| `moreActions__dropdownItem` | `ElementStyles` |  |
+| `moreActions__dropdownItemLabel` | `ElementStyles` |  |
+| `moreActions__dropdownItemLeft__icon` | `ElementStyles` |  |
+| `moreActions__dots` | `ElementStyles` |  |
+| `moreTabs__button` | `ElementStyles` |  |
+| `moreTabs__icon` | `ElementStyles` |  |
+| `moreTabs__dropdownTrigger` | `ElementStyles` |  |
+| `moreTabs__dropdownContent` | `ElementStyles` |  |
+| `moreTabs__dropdownItem` | `ElementStyles` |  |
+| `moreTabs__dropdownItemLabel` | `ElementStyles` |  |
+| `moreTabs__dropdownItemRight__icon` | `ElementStyles` |  |
+| `workflowContainerDisabledNotice` | `ElementStyles` |  |
+| `workflowLabelDisabled__icon` | `ElementStyles` |  |
+| `workflowDescription` | `ElementStyles` |  |
+| `channelsContainerCollapsible` | `ElementStyles` |  |
+| `channelSwitch` | `ElementStyles` |  |
+| `channelSwitchThumb` | `ElementStyles` |  |
+| `preferencesHeader` | `ElementStyles` |  |
+| `preferencesHeader__back__button` | `ElementStyles` |  |
+| `preferencesHeader__back__button__icon` | `ElementStyles` |  |
+| `preferencesHeader__title` | `ElementStyles` |  |
+| `preferencesHeader__icon` | `ElementStyles` |  |
+| `preferencesListEmptyNoticeContainer` | `ElementStyles` |  |
+| `preferencesListEmptyNotice` | `ElementStyles` |  |
+| `preferencesList__skeleton` | `ElementStyles` |  |
+| `preferencesList__skeletonContent` | `ElementStyles` |  |
+| `preferencesList__skeletonItem` | `ElementStyles` |  |
+| `preferencesList__skeletonIcon` | `ElementStyles` |  |
+| `preferencesList__skeletonSwitch` | `ElementStyles` |  |
+| `preferencesList__skeletonSwitchThumb` | `ElementStyles` |  |
+| `preferencesList__skeletonText` | `ElementStyles` |  |
+| `dayScheduleCopy__dropdownTrigger` | `ElementStyles` |  |
+| `dayScheduleCopy__dropdownContent` | `ElementStyles` |  |
+| `timeSelect__dropdownTrigger` | `ElementStyles` |  |
+| `timeSelect__time` | `ElementStyles` |  |
+| `timeSelect__dropdownContent` | `ElementStyles` |  |
+| `timeSelect__dropdownItem` | `ElementStyles` |  |
+| `timeSelect__dropdownItemLabel` | `ElementStyles` |  |
+| `timeSelect__dropdownItemLabelContainer` | `ElementStyles` |  |
+| `timeSelect__dropdownItemCheck__icon` | `ElementStyles` |  |
+| `notificationSnooze__dropdownContent` | `ElementStyles` |  |
+| `notificationSnooze__dropdownItem` | `ElementStyles` |  |
+| `notificationSnooze__dropdownItem__icon` | `ElementStyles` |  |
+| `notificationSnoozeCustomTime_popoverContent` | `ElementStyles` |  |
+| `strong` | `ElementStyles` |  |
+| `em` | `ElementStyles` |  |
+| `connectChatContainer` | `ElementStyles` |  |
+| `connectChatButton` | `ElementStyles` |  |
+| `connectChatButtonContainer` | `ElementStyles` |  |
+| `connectChatButtonLabel` | `ElementStyles` |  |
+| `connectChatMisconfiguredTooltip` | `ElementStyles` |  |
+| `channelConnectButtonMisconfiguredTooltip` | `ElementStyles` |  |
+| `bellIcon` | `ElementStyles \| ((context: { unreadCount: { total: number; severity: Record<string, number>; }; }) => string)` |  |
+| `bellContainer` | `ElementStyles \| ((context: { unreadCount: { total: number; severity: Record<string, number>; }; }) => string)` |  |
+| `severityHigh__bellContainer` | `ElementStyles \| ((context: { unreadCount: { total: number; severity: Record<string, number>; }; }) => string)` |  |
+| `severityMedium__bellContainer` | `ElementStyles \| ((context: { unreadCount: { total: number; severity: Record<string, number>; }; }) => string)` |  |
+| `severityLow__bellContainer` | `ElementStyles \| ((context: { unreadCount: { total: number; severity: Record<string, number>; }; }) => string)` |  |
+| `bellSeverityGlow` | `ElementStyles \| ((context: { unreadCount: { total: number; severity: Record<string, number>; }; }) => string)` |  |
+| `severityGlowHigh__bellSeverityGlow` | `ElementStyles \| ((context: { unreadCount: { total: number; severity: Record<string, number>; }; }) => string)` |  |
+| `severityGlowMedium__bellSeverityGlow` | `ElementStyles \| ((context: { unreadCount: { total: number; severity: Record<string, number>; }; }) => string)` |  |
+| `severityGlowLow__bellSeverityGlow` | `ElementStyles \| ((context: { unreadCount: { total: number; severity: Record<string, number>; }; }) => string)` |  |
+| `bellDot` | `ElementStyles \| ((context: { unreadCount: { total: number; severity: Record<string, number>; }; }) => string)` |  |
+| `preferencesContainer` | `ElementStyles \| ((context: { preferences?: Preference[]; groups: Array<{ name: string; preferences: Preference[]; }>; }) => string)` |  |
+| `notificationListContainer` | `ElementStyles \| ((context: { notifications: NotificationType[]; }) => string)` |  |
+| `notificationList` | `ElementStyles \| ((context: { notifications: NotificationType[]; }) => string)` |  |
+| `notification` | `ElementStyles \| ((context: { notification: NotificationType; }) => string)` |  |
+| `severityHigh__notification` | `ElementStyles \| ((context: { notification: NotificationType; }) => string)` |  |
+| `severityMedium__notification` | `ElementStyles \| ((context: { notification: NotificationType; }) => string)` |  |
+| `severityLow__notification` | `ElementStyles \| ((context: { notification: NotificationType; }) => string)` |  |
+| `notificationBar` | `ElementStyles \| ((context: { notification: NotificationType; }) => string)` |  |
+| `severityHigh__notificationBar` | `ElementStyles \| ((context: { notification: NotificationType; }) => string)` |  |
+| `severityMedium__notificationBar` | `ElementStyles \| ((context: { notification: NotificationType; }) => string)` |  |
+| `severityLow__notificationBar` | `ElementStyles \| ((context: { notification: NotificationType; }) => string)` |  |
+| `notificationContent` | `ElementStyles \| ((context: { notification: NotificationType; }) => string)` |  |
+| `notificationTextContainer` | `ElementStyles \| ((context: { notification: NotificationType; }) => string)` |  |
+| `notificationDot` | `ElementStyles \| ((context: { notification: NotificationType; }) => string)` |  |
+| `notificationSubject` | `ElementStyles \| ((context: { notification: NotificationType; }) => string)` |  |
+| `notificationBody` | `ElementStyles \| ((context: { notification: NotificationType; }) => string)` |  |
+| `notificationImage` | `ElementStyles \| ((context: { notification: NotificationType; }) => string)` |  |
+| `notificationImageLoadingFallback` | `ElementStyles \| ((context: { notification: NotificationType; }) => string)` |  |
+| `notificationDate` | `ElementStyles \| ((context: { notification: NotificationType; }) => string)` |  |
+| `notificationDefaultActions` | `ElementStyles \| ((context: { notification: NotificationType; }) => string)` |  |
+| `notificationCustomActions` | `ElementStyles \| ((context: { notification: NotificationType; }) => string)` |  |
+| `notificationPrimaryAction__button` | `ElementStyles \| ((context: { notification: NotificationType; }) => string)` |  |
+| `notificationSecondaryAction__button` | `ElementStyles \| ((context: { notification: NotificationType; }) => string)` |  |
+| `workflowContainer` | `ElementStyles \| ((context: { preference: Preference; }) => string)` |  |
+| `workflowLabel` | `ElementStyles \| ((context: { preference: Preference; }) => string)` |  |
+| `workflowLabelHeader` | `ElementStyles \| ((context: { preference: Preference; }) => string)` |  |
+| `workflowLabelHeaderContainer` | `ElementStyles \| ((context: { preference: Preference; }) => string)` |  |
+| `workflowLabelIcon` | `ElementStyles \| ((context: { preference: Preference; }) => string)` |  |
+| `workflowLabelContainer` | `ElementStyles \| ((context: { preference: Preference; }) => string)` |  |
+| `workflowContainerRight__icon` | `ElementStyles \| ((context: { preference: Preference; }) => string)` |  |
+| `workflowArrow__icon` | `ElementStyles \| ((context: { preference: Preference; }) => string)` |  |
+| `preferencesGroupContainer` | `ElementStyles \| ((context: { preferenceGroup: { name: string; preferences: Preference[]; }; }) => string)` |  |
+| `preferencesGroupHeader` | `ElementStyles \| ((context: { preferenceGroup: { name: string; preferences: Preference[]; }; }) => string)` |  |
+| `preferencesGroupLabelContainer` | `ElementStyles \| ((context: { preferenceGroup: { name: string; preferences: Preference[]; }; }) => string)` |  |
+| `preferencesGroupLabelIcon` | `ElementStyles \| ((context: { preferenceGroup: { name: string; preferences: Preference[]; }; }) => string)` |  |
+| `preferencesGroupLabel` | `ElementStyles \| ((context: { preferenceGroup: { name: string; preferences: Preference[]; }; }) => string)` |  |
+| `preferencesGroupActionsContainer` | `ElementStyles \| ((context: { preferenceGroup: { name: string; preferences: Preference[]; }; }) => string)` |  |
+| `preferencesGroupActionsContainerRight__icon` | `ElementStyles \| ((context: { preferenceGroup: { name: string; preferences: Preference[]; }; }) => string)` |  |
+| `preferencesGroupBody` | `ElementStyles \| ((context: { preferenceGroup: { name: string; preferences: Preference[]; }; }) => string)` |  |
+| `preferencesGroupChannels` | `ElementStyles \| ((context: { preferenceGroup: { name: string; preferences: Preference[]; }; }) => string)` |  |
+| `preferencesGroupInfo` | `ElementStyles \| ((context: { preferenceGroup: { name: string; preferences: Preference[]; }; }) => string)` |  |
+| `preferencesGroupInfoIcon` | `ElementStyles \| ((context: { preferenceGroup: { name: string; preferences: Preference[]; }; }) => string)` |  |
+| `preferencesGroupWorkflows` | `ElementStyles \| ((context: { preferenceGroup: { name: string; preferences: Preference[]; }; }) => string)` |  |
+| `channelContainer` | `ElementStyles \| ((context: { preference?: Preference; preferenceGroup?: { name: string; preferences: Preference[]; }; }) => string)` |  |
+| `channelIconContainer` | `ElementStyles \| ((context: { preference?: Preference; preferenceGroup?: { name: string; preferences: Preference[]; }; }) => string)` |  |
+| `channel__icon` | `ElementStyles \| ((context: { preference?: Preference; preferenceGroup?: { name: string; preferences: Preference[]; }; }) => string)` |  |
+| `channelsContainer` | `ElementStyles \| ((context: { preference: Preference; }) => string)` |  |
+| `channelLabel` | `ElementStyles \| ((context: { preference?: Preference; preferenceGroup?: { name: string; preferences: Preference[]; }; }) => string)` |  |
+| `channelLabelContainer` | `ElementStyles \| ((context: { preference?: Preference; preferenceGroup?: { name: string; preferences: Preference[]; }; }) => string)` |  |
+| `channelName` | `ElementStyles \| ((context: { preference: Preference; }) => string)` |  |
+| `channelSwitchContainer` | `ElementStyles \| ((context: { preference?: Preference; preferenceGroup?: { name: string; preferences: Preference[]; }; }) => string)` |  |
+| `scheduleContainer` | `ElementStyles \| ((context: { schedule?: Schedule; }) => string)` |  |
+| `scheduleHeader` | `ElementStyles \| ((context: { schedule?: Schedule; }) => string)` |  |
+| `scheduleLabelContainer` | `ElementStyles \| ((context: { schedule?: Schedule; }) => string)` |  |
+| `scheduleLabelScheduleIcon` | `ElementStyles \| ((context: { schedule?: Schedule; }) => string)` |  |
+| `scheduleLabelInfoIcon` | `ElementStyles \| ((context: { schedule?: Schedule; }) => string)` |  |
+| `scheduleLabel` | `ElementStyles \| ((context: { schedule?: Schedule; }) => string)` |  |
+| `scheduleActionsContainer` | `ElementStyles \| ((context: { schedule?: Schedule; }) => string)` |  |
+| `scheduleActionsContainerRight` | `ElementStyles \| ((context: { schedule?: Schedule; }) => string)` |  |
+| `scheduleBody` | `ElementStyles \| ((context: { schedule?: Schedule; }) => string)` |  |
+| `scheduleDescription` | `ElementStyles \| ((context: { schedule?: Schedule; }) => string)` |  |
+| `scheduleTable` | `ElementStyles \| ((context: { schedule?: Schedule; }) => string)` |  |
+| `scheduleTableHeader` | `ElementStyles \| ((context: { schedule?: Schedule; }) => string)` |  |
+| `scheduleHeaderColumn` | `ElementStyles \| ((context: { schedule?: Schedule; }) => string)` |  |
+| `scheduleTableBody` | `ElementStyles \| ((context: { schedule?: Schedule; }) => string)` |  |
+| `scheduleBodyRow` | `ElementStyles \| ((context: { schedule?: Schedule; }) => string)` |  |
+| `scheduleBodyColumn` | `ElementStyles \| ((context: { schedule?: Schedule; }) => string)` |  |
+| `scheduleInfoContainer` | `ElementStyles \| ((context: { schedule?: Schedule; }) => string)` |  |
+| `scheduleInfoIcon` | `ElementStyles \| ((context: { schedule?: Schedule; }) => string)` |  |
+| `scheduleInfo` | `ElementStyles \| ((context: { schedule?: Schedule; }) => string)` |  |
+| `dayScheduleCopyTitle` | `ElementStyles \| ((context: { schedule?: Schedule; }) => string)` |  |
+| `dayScheduleCopyIcon` | `ElementStyles \| ((context: { schedule?: Schedule; }) => string)` |  |
+| `dayScheduleCopySelectAll` | `ElementStyles \| ((context: { schedule?: Schedule; }) => string)` |  |
+| `dayScheduleCopyDay` | `ElementStyles \| ((context: { schedule?: Schedule; }) => string)` |  |
+| `dayScheduleCopyFooterContainer` | `ElementStyles \| ((context: { schedule?: Schedule; }) => string)` |  |
+| `notificationDeliveredAt__badge` | `ElementStyles \| ((context: { notification: NotificationType; }) => string)` |  |
+| `notificationDeliveredAt__icon` | `ElementStyles \| ((context: { notification: NotificationType; }) => string)` |  |
+| `notificationSnoozedUntil__icon` | `ElementStyles \| ((context: { notification: NotificationType; }) => string)` |  |
+| `subscriptionContainer` | `ElementStyles \| ((context: { subscription?: TopicSubscription; }) => string)` |  |
+| `subscriptionButton__button` | `ElementStyles \| ((context: { subscription?: TopicSubscription; }) => string)` |  |
+| `subscriptionButtonContainer` | `ElementStyles \| ((context: { subscription?: TopicSubscription; }) => string)` |  |
+| `subscriptionButtonIcon` | `ElementStyles \| ((context: { subscription?: TopicSubscription; }) => string)` |  |
+| `subscriptionButtonLabel` | `ElementStyles \| ((context: { subscription?: TopicSubscription; }) => string)` |  |
+| `subscription__popoverTriggerContainer` | `ElementStyles \| ((context: { subscription?: TopicSubscription; }) => string)` |  |
+| `subscription__popoverTrigger` | `ElementStyles \| ((context: { subscription?: TopicSubscription; }) => string)` |  |
+| `subscriptionTriggerIcon` | `ElementStyles \| ((context: { subscription?: TopicSubscription; }) => string)` |  |
+| `subscription__popoverContent` | `ElementStyles \| ((context: { subscription?: TopicSubscription; }) => string)` |  |
+| `subscriptionPreferencesContainer` | `ElementStyles \| ((context: { subscription?: TopicSubscription; }) => string)` |  |
+| `subscriptionPreferencesHeaderContainer` | `ElementStyles \| ((context: { subscription?: TopicSubscription; }) => string)` |  |
+| `subscriptionPreferencesHeader` | `ElementStyles \| ((context: { subscription?: TopicSubscription; }) => string)` |  |
+| `subscriptionPreferencesInfoIcon` | `ElementStyles \| ((context: { subscription?: TopicSubscription; }) => string)` |  |
+| `subscriptionPreferencesContent` | `ElementStyles \| ((context: { subscription?: TopicSubscription; }) => string)` |  |
+| `subscriptionPreferencesGroupsContainer` | `ElementStyles \| ((context: { subscription?: TopicSubscription; }) => string)` |  |
+| `subscriptionPreferencesFallback` | `ElementStyles \| ((context: { subscription?: TopicSubscription; }) => string)` |  |
+| `subscriptionPreferencesFallbackTexts` | `ElementStyles \| ((context: { subscription?: TopicSubscription; }) => string)` |  |
+| `subscriptionPreferencesFallbackHeader` | `ElementStyles \| ((context: { subscription?: TopicSubscription; }) => string)` |  |
+| `subscriptionPreferencesFallbackDescription` | `ElementStyles \| ((context: { subscription?: TopicSubscription; }) => string)` |  |
+| `subscriptionPreferenceRow` | `ElementStyles \| ((context: { preference: { label: string; preference: SubscriptionPreference; }; }) => string)` |  |
+| `subscriptionPreferenceLabel` | `ElementStyles \| ((context: { preference: { label: string; preference: SubscriptionPreference; }; }) => string)` |  |
+| `subscriptionPreferenceGroupContainer` | `ElementStyles \| ((context: { group: { label: string; group: Array<{ label: string; preference: SubscriptionPreference; }>; }; }) => string)` |  |
+| `subscriptionPreferenceGroupHeader` | `ElementStyles \| ((context: { group: { label: string; group: Array<{ label: string; preference: SubscriptionPreference; }>; }; }) => string)` |  |
+| `subscriptionPreferenceGroupLabelContainer` | `ElementStyles \| ((context: { group: { label: string; group: Array<{ label: string; preference: SubscriptionPreference; }>; }; }) => string)` |  |
+| `subscriptionPreferenceGroupLabelIcon` | `ElementStyles \| ((context: { group: { label: string; group: Array<{ label: string; preference: SubscriptionPreference; }>; }; }) => string)` |  |
+| `subscriptionPreferenceGroupLabel` | `ElementStyles \| ((context: { group: { label: string; group: Array<{ label: string; preference: SubscriptionPreference; }>; }; }) => string)` |  |
+| `subscriptionPreferenceGroupActionsContainer` | `ElementStyles \| ((context: { group: { label: string; group: Array<{ label: string; preference: SubscriptionPreference; }>; }; }) => string)` |  |
+| `subscriptionPreferenceGroupActionsContainerRight__icon` | `ElementStyles \| ((context: { group: { label: string; group: Array<{ label: string; preference: SubscriptionPreference; }>; }; }) => string)` |  |
+| `subscriptionPreferenceGroupBody` | `ElementStyles \| ((context: { group: { label: string; group: Array<{ label: string; preference: SubscriptionPreference; }>; }; }) => string)` |  |
+| `subscriptionPreferenceGroupWorkflowRow` | `ElementStyles \| ((context: { preference: { label: string; preference: SubscriptionPreference; }; }) => string)` |  |
+| `subscriptionPreferenceGroupWorkflowLabel` | `ElementStyles \| ((context: { preference: { label: string; preference: SubscriptionPreference; }; }) => string)` |  |
+| `linkSlackUserContainer` | `ElementStyles \| ((context: { linked: boolean; }) => string)` |  |
+| `linkSlackUserButton` | `ElementStyles \| ((context: { linked: boolean; }) => string)` |  |
+| `linkSlackUserButtonContainer` | `ElementStyles \| ((context: { linked: boolean; }) => string)` |  |
+| `linkSlackUserButtonIcon` | `ElementStyles \| ((context: { linked: boolean; }) => string)` |  |
+| `linkSlackUserButtonLabel` | `ElementStyles \| ((context: { linked: boolean; }) => string)` |  |
+| `channelConnectButtonContainer` | `ElementStyles \| ((context: { connected: boolean; }) => string)` |  |
+| `channelConnectButton` | `ElementStyles \| ((context: { connected: boolean; }) => string)` |  |
+| `channelConnectButtonInner` | `ElementStyles \| ((context: { connected: boolean; }) => string)` |  |
+| `channelConnectButtonIcon` | `ElementStyles \| ((context: { connected: boolean; }) => string)` |  |
+| `channelConnectButtonLabel` | `ElementStyles \| ((context: { connected: boolean; }) => string)` |  |
 
 ## Bell
 
@@ -394,7 +394,7 @@ A customizable notification bell component.
 
 | Property | Type | Description |
 | --- | --- | --- |
-| `renderBell` |  |  |
+| `renderBell` | `BellRenderer` |  |
 
 ### Usage
 
@@ -428,15 +428,15 @@ A component for rendering a list of notifications.
 
 | Property | Type | Description |
 | --- | --- | --- |
-| `onNotificationClick` |  |  |
-| `onPrimaryActionClick` |  |  |
-| `onSecondaryActionClick` |  |  |
-| `renderNotification` |  |  |
-| `renderAvatar` |  |  |
-| `renderSubject` |  |  |
-| `renderBody` |  |  |
-| `renderDefaultActions` |  |  |
-| `renderCustomActions` |  |  |
+| `onNotificationClick` | `NotificationClickHandler` |  |
+| `onPrimaryActionClick` | `NotificationActionClickHandler` |  |
+| `onSecondaryActionClick` | `NotificationActionClickHandler` |  |
+| `renderNotification` | `NotificationsRenderer` |  |
+| `renderAvatar` | `AvatarRenderer` |  |
+| `renderSubject` | `SubjectRenderer` |  |
+| `renderBody` | `BodyRenderer` |  |
+| `renderDefaultActions` | `DefaultActionsRenderer` |  |
+| `renderCustomActions` | `CustomActionsRenderer` |  |
 
 ### Usage
 
@@ -473,17 +473,17 @@ A component for building custom notification inboxes.
 
 | Property | Type | Description |
 | --- | --- | --- |
-| `onNotificationClick` |  |  |
-| `onPrimaryActionClick` |  |  |
-| `onSecondaryActionClick` |  |  |
-| `initialPage` |  |  |
-| `hideNav` |  |  |
-| `renderNotification` |  |  |
-| `renderAvatar` |  |  |
-| `renderSubject` |  |  |
-| `renderBody` |  |  |
-| `renderDefaultActions` |  |  |
-| `renderCustomActions` |  |  |
+| `onNotificationClick` | `NotificationClickHandler` |  |
+| `onPrimaryActionClick` | `NotificationActionClickHandler` |  |
+| `onSecondaryActionClick` | `NotificationActionClickHandler` |  |
+| `initialPage` | `InboxPage` |  |
+| `hideNav` | `boolean` |  |
+| `renderNotification` | `NotificationsRenderer` |  |
+| `renderAvatar` | `AvatarRenderer` |  |
+| `renderSubject` | `SubjectRenderer` |  |
+| `renderBody` | `BodyRenderer` |  |
+| `renderDefaultActions` | `DefaultActionsRenderer` |  |
+| `renderCustomActions` | `CustomActionsRenderer` |  |
 
 ### Usage
 
@@ -521,27 +521,27 @@ function CustomInbox() {
 
 | Property | Type | Description |
 | --- | --- | --- |
-| `children` |  |  |
-| `renderPreferences` |  |  |
-| `open` |  |  |
-| `placement` |  |  |
-| `placementOffset` |  |  |
-| `topicKey` |  |  |
-| `identifier` |  |  |
-| `preferences` |  |  |
-| `localization` |  |  |
-| `appearance` |  |  |
-| `container` |  |  |
+| `children` | `any` |  |
+| `renderPreferences` | `PreferencesRenderer` |  |
+| `open` | `boolean` |  |
+| `placement` | `Placement` |  |
+| `placementOffset` | `OffsetOptions` |  |
+| `topicKey` | `string` |  |
+| `identifier` | `string` |  |
+| `preferences` | `UIPreference[]` |  |
+| `localization` | `SubscriptionLocalization` |  |
+| `appearance` | `ReactSubscriptionAppearance` |  |
+| `container` | `any` |  |
 
 ### Appearance configuration
 
 | Property | Type | Description |
 | --- | --- | --- |
-| `variables` |  |  |
-| `elements` |  |  |
-| `animations` |  |  |
-| `icons` |  |  |
-| `baseTheme` |  |  |
+| `variables` | `Variables` |  |
+| `elements` | `Partial<{ root: ElementStyles; button: ElementStyles; input: ElementStyles; icon: ElementStyles; badge: ElementStyles; popoverContent: ElementStyles; popoverTrigger: ElementStyles; popoverClose: ElementStyles; collapsible: ElementStyles; tooltipContent: ElementStyles; tooltipTrigger: ElementStyles; } & {} & { subscriptionContainer: ElementStyles \| ((context: { subscription?: TopicSubscription; }) => string); subscriptionButton__button: ElementStyles \| ((context: { subscription?: TopicSubscription; }) => string); subscriptionButtonContainer: ElementStyles \| ((context: { subscription?: TopicSubscription; }) => string); subscriptionButtonIcon: ElementStyles \| ((context: { subscription?: TopicSubscription; }) => string); subscriptionButtonLabel: ElementStyles \| ((context: { subscription?: TopicSubscription; }) => string); subscription__popoverTriggerContainer: ElementStyles \| ((context: { subscription?: TopicSubscription; }) => string); subscription__popoverTrigger: ElementStyles \| ((context: { subscription?: TopicSubscription; }) => string); subscriptionTriggerIcon: ElementStyles \| ((context: { subscription?: TopicSubscription; }) => string); subscription__popoverContent: ElementStyles \| ((context: { subscription?: TopicSubscription; }) => string); subscriptionPreferencesContainer: ElementStyles \| ((context: { subscription?: TopicSubscription; }) => string); subscriptionPreferencesHeaderContainer: ElementStyles \| ((context: { subscription?: TopicSubscription; }) => string); subscriptionPreferencesHeader: ElementStyles \| ((context: { subscription?: TopicSubscription; }) => string); subscriptionPreferencesInfoIcon: ElementStyles \| ((context: { subscription?: TopicSubscription; }) => string); subscriptionPreferencesContent: ElementStyles \| ((context: { subscription?: TopicSubscription; }) => string); subscriptionPreferencesGroupsContainer: ElementStyles \| ((context: { subscription?: TopicSubscription; }) => string); subscriptionPreferencesFallback: ElementStyles \| ((context: { subscription?: TopicSubscription; }) => string); subscriptionPreferencesFallbackTexts: ElementStyles \| ((context: { subscription?: TopicSubscription; }) => string); subscriptionPreferencesFallbackHeader: ElementStyles \| ((context: { subscription?: TopicSubscription; }) => string); subscriptionPreferencesFallbackDescription: ElementStyles \| ((context: { subscription?: TopicSubscription; }) => string); subscriptionPreferenceRow: ElementStyles \| ((context: { preference: { label: string; preference: SubscriptionPreference; }; }) => string); subscriptionPreferenceLabel: ElementStyles \| ((context: { preference: { label: string; preference: SubscriptionPreference; }; }) => string); subscriptionPreferenceGroupContainer: ElementStyles \| ((context: { group: { label: string; group: Array<{ label: string; preference: SubscriptionPreference; }>; }; }) => string); subscriptionPreferenceGroupHeader: ElementStyles \| ((context: { group: { label: string; group: Array<{ label: string; preference: SubscriptionPreference; }>; }; }) => string); subscriptionPreferenceGroupLabelContainer: ElementStyles \| ((context: { group: { label: string; group: Array<{ label: string; preference: SubscriptionPreference; }>; }; }) => string); subscriptionPreferenceGroupLabelIcon: ElementStyles \| ((context: { group: { label: string; group: Array<{ label: string; preference: SubscriptionPreference; }>; }; }) => string); subscriptionPreferenceGroupLabel: ElementStyles \| ((context: { group: { label: string; group: Array<{ label: string; preference: SubscriptionPreference; }>; }; }) => string); subscriptionPreferenceGroupActionsContainer: ElementStyles \| ((context: { group: { label: string; group: Array<{ label: string; preference: SubscriptionPreference; }>; }; }) => string); subscriptionPreferenceGroupActionsContainerRight__icon: ElementStyles \| ((context: { group: { label: string; group: Array<{ label: string; preference: SubscriptionPreference; }>; }; }) => string); subscriptionPreferenceGroupBody: ElementStyles \| ((context: { group: { label: string; group: Array<{ label: string; preference: SubscriptionPreference; }>; }; }) => string); subscriptionPreferenceGroupWorkflowRow: ElementStyles \| ((context: { preference: { label: string; preference: SubscriptionPreference; }; }) => string); subscriptionPreferenceGroupWorkflowLabel: ElementStyles \| ((context: { preference: { label: string; preference: SubscriptionPreference; }; }) => string); }>` |  |
+| `animations` | `boolean` |  |
+| `icons` | `SubscriptionIconOverrides` |  |
+| `baseTheme` | `SubscriptionTheme \| SubscriptionTheme[]` |  |
 
 ### Usage
 

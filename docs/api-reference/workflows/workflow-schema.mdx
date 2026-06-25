@@ -9,24 +9,24 @@ In Novu, a workflow defines the logic for delivering notifications based on spec
 
 | Property | Type | Description |
 | --- | --- | --- |
-| `id` |  |  |
-| `name` |  |  |
-| `description` |  |  |
-| `active` |  |  |
-| `draft` |  |  |
-| `preferenceSettings` |  |  |
-| `critical` |  |  |
-| `tags` |  |  |
-| `steps` |  |  |
-| `organizationId` |  |  |
-| `creatorId` |  |  |
-| `environmentId` |  |  |
-| `triggers` |  |  |
-| `notificationGroupId` |  |  |
-| `parentId` |  |  |
-| `deleted` |  |  |
-| `deletedAt` |  |  |
-| `deletedBy` |  |  |
-| `notificationGroup` |  |  |
-| `data` |  |  |
-| `workflowIntegrationStatus` |  |  |
+| `id` | `string` |  |
+| `name` | `string` |  |
+| `description` | `string` |  |
+| `active` | `boolean` |  |
+| `draft` | `boolean` |  |
+| `preferenceSettings` | `SubscriberPreferenceChannels` |  |
+| `critical` | `boolean` |  |
+| `tags` | `string[]` |  |
+| `steps` | `NotificationStepDto[]` |  |
+| `organizationId` | `string` |  |
+| `creatorId` | `string` |  |
+| `environmentId` | `string` |  |
+| `triggers` | `NotificationTrigger[]` |  |
+| `notificationGroupId` | `string` |  |
+| `parentId` | `string` |  |
+| `deleted` | `boolean` |  |
+| `deletedAt` | `string` |  |
+| `deletedBy` | `string` |  |
+| `notificationGroup` | `NotificationGroup` |  |
+| `data` | `WorkflowResponseData` |  |
+| `workflowIntegrationStatus` | `WorkflowIntegrationStatus` |  |

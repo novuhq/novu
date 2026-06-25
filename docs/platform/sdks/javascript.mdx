@@ -13,24 +13,25 @@ The Novu client provides methods to interact with notifications, preferences, an
 
 | Property | Type | Description |
 | --- | --- | --- |
-| `backendUrl` |  |  |
-| `applicationIdentifier` |  |  |
-| `subscriberHash` |  |  |
-| `contextHash` |  |  |
-| `apiUrl` |  |  |
-| `socketUrl` |  |  |
-| `socketOptions` |  |  |
-| `useCache` |  |  |
-| `defaultSchedule` |  |  |
-| `context` |  |  |
-| `subscriberId` |  |  |
-| `subscriber` |  |  |
+| `backendUrl` | `string` |  |
+| `applicationIdentifier` | `string` |  |
+| `subscriberHash` | `string` |  |
+| `contextHash` | `string` |  |
+| `apiUrl` | `string` |  |
+| `socketUrl` | `string` |  |
+| `socketOptions` | `NovuSocketOptions` | Custom socket configuration options. These options will be merged with the default socket configuration. Use `socketType` to explicitly select the socket implementation: `'cloud'` for PartySocket or `'self-hosted'` for socket.io. For socket.io-client connections, supports all socket.io-client options (e.g., `path`, `reconnectionDelay`, `timeout`, etc.). For PartySocket connections, options are applied to the WebSocket instance. |
+| `useCache` | `boolean` |  |
+| `defaultSchedule` | `DefaultSchedule` |  |
+| `context` | `Partial<Record<string, ContextValue>>` |  |
+| `subscriberId` | `string` |  |
+| `subscriber` | `string \| Subscriber` |  |
 
 ### Usage
 
 <Tabs>
   <Tab title="US">
     ```typescript
+    import { Novu } from "@novu/js";
 
     const novu = new Novu({
       subscriberId: "SUBSCRIBER_ID",
@@ -40,6 +41,7 @@ The Novu client provides methods to interact with notifications, preferences, an
   </Tab>
   <Tab title="EU">
     ```typescript
+    import { Novu } from "@novu/js";
 
     const novu = new Novu({
       subscriberId: "SUBSCRIBER_ID",
@@ -50,10 +52,9 @@ The Novu client provides methods to interact with notifications, preferences, an
     ```
   </Tab>
   <Tab title="Using Context">
-  <Note>
-    Learn how Context is used to filter Inbox notifications in the [Inbox with Context](/platform/inbox/configuration/inbox-with-context) guide. 
-  </Note>
+  <Note> Learn how Context is used to filter Inbox notifications in the [Inbox with Context](/platform/inbox/configuration/inbox-with-context) guide. </Note>
   ```tsx
+  import { Novu } from '@novu/js';
 
   const novu = new Novu({
     applicationIdentifier: 'YOUR_APP_ID',
@@ -76,6 +77,7 @@ The Novu client provides methods to interact with notifications, preferences, an
   </Tab>
   <Tab title="HMAC Encryption">
     ```typescript
+    import { Novu } from "@novu/js";
 
     const novu = new Novu({
       subscriberId: "SUBSCRIBER_ID",
@@ -96,15 +98,16 @@ Fetches a list of notifications based on provided filters.
 
 | Property | Type | Description |
 | --- | --- | --- |
-| `tags` |  |  |
-| `read` |  |  |
-| `archived` |  |  |
-| `snoozed` |  |  |
-| `seen` |  |  |
-| `data` |  |  |
-| `severity` |  |  |
-| `createdGte` |  |  |
-| `createdLte` |  |  |
+| `tags` | `TagsFilter` |  |
+| `read` | `boolean` |  |
+| `archived` | `boolean` |  |
+| `snoozed` | `boolean` |  |
+| `seen` | `boolean` |  |
+| `data` | `Record<string, unknown>` |  |
+| `severity` | `SeverityLevelEnum \| SeverityLevelEnum[]` |  |
+| `createdGte` | `number` |  |
+| `createdLte` | `number` |  |
+
 
 ```typescript
 import { SeverityLevelEnum } from '@novu/js';
@@ -137,9 +140,9 @@ The response will be of type:
 
 | Property | Type | Description |
 | --- | --- | --- |
-| `notifications` |  |  |
-| `hasMore` |  |  |
-| `filter` |  |  |
+| `notifications` | `Notification[]` |  |
+| `hasMore` | `boolean` |  |
+| `filter` | `NotificationFilter` |  |
 
 #### count
 
@@ -147,15 +150,15 @@ Fetches the count of notifications based on filters.
 
 | Property | Type | Description |
 | --- | --- | --- |
-| `tags` |  |  |
-| `read` |  |  |
-| `archived` |  |  |
-| `snoozed` |  |  |
-| `seen` |  |  |
-| `data` |  |  |
-| `severity` |  |  |
-| `createdGte` |  |  |
-| `createdLte` |  |  |
+| `tags` | `TagsFilter` |  |
+| `read` | `boolean` |  |
+| `archived` | `boolean` |  |
+| `snoozed` | `boolean` |  |
+| `seen` | `boolean` |  |
+| `data` | `Record<string, unknown>` |  |
+| `severity` | `SeverityLevelEnum \| SeverityLevelEnum[]` |  |
+| `createdGte` | `number` |  |
+| `createdLte` | `number` |  |
 
 <Tabs>
   <Tab title="Single Filter">
@@ -215,9 +218,9 @@ await novu.notifications.seen({ notificationId: 'NOTIFICATION_ID' });
 ```
 
 <Note>
-  **Seen vs Read**: Notifications can be "seen" (automatically tracked when visible) or "read" (explicitly marked by user interaction). The Inbox component automatically marks notifications as seen when they're visible for 1+ seconds using the browser's IntersectionObserver API. This automatic tracking batches requests for performance and works seamlessly with infinite scroll and pagination, while read status requires explicit user action.
+**Seen vs Read**: Notifications can be "seen" (automatically tracked when visible) or "read" (explicitly marked by user interaction). The Inbox component automatically marks notifications as seen when they're visible for 1+ seconds using the browser's IntersectionObserver API. This automatic tracking batches requests for performance and works seamlessly with infinite scroll and pagination, while read status requires explicit user action.
 
-  **Why no `unseen` method?** Unlike `read`/`unread` which can be toggled, `seen` is designed as a one-way operation. Once a notification has been seen by a user, it remains seen. This reflects the natural user experience where visibility cannot be "undone". Use filtering with `seen: false` to get unseen notifications instead.
+**Why no `unseen` method?** Unlike `read`/`unread` which can be toggled, `seen` is designed as a one-way operation. Once a notification has been seen by a user, it remains seen. This reflects the natural user experience where visibility cannot be "undone". Use filtering with `seen: false` to get unseen notifications instead.
 </Note>
 
 #### seenAll
@@ -396,9 +399,7 @@ Individual notification instances have their own methods for marking as seen, re
 - `revertPrimary()` - Reverts primary action to pending
 - `revertSecondary()` - Reverts secondary action to pending
 
-<Note>
-  The `seen()` method is only available on individual notification instances, not on the `novu.notifications` object. Use `novu.notifications.seenAll()` for bulk operations.
-</Note>
+<Note>The `seen()` method is only available on individual notification instances, not on the `novu.notifications` object. Use `novu.notifications.seenAll()` for bulk operations.</Note>
 
 ### Usage
 
@@ -453,14 +454,14 @@ The response will be of type:
 
 | Property | Type | Description |
 | --- | --- | --- |
-| `level` |  |  |
-| `enabled` |  |  |
-| `condition` |  |  |
-| `subscriptionId` |  |  |
-| `channels` |  |  |
-| `overrides` |  |  |
-| `workflow` |  |  |
-| `schedule` |  |  |
+| `level` | `PreferenceLevel` |  |
+| `enabled` | `boolean` |  |
+| `condition` | `RulesLogic` |  |
+| `subscriptionId` | `string` |  |
+| `channels` | `ChannelPreference` |  |
+| `overrides` | `IPreferenceOverride[]` |  |
+| `workflow` | `Workflow` |  |
+| `schedule` | `{ isEnabled: boolean; weeklySchedule?: WeeklySchedule; }` |  |
 
 #### bulkUpdate
 
@@ -472,6 +473,7 @@ await novu.preferences.bulkUpdate([
   { workflowId: 'workflow_id_2', channels: { email: true, sms: false, in_app: true } },
 ]);
 ```
+
 
 ### Schedule
 
@@ -515,9 +517,9 @@ A `Schedule` instance is returned when fetching or updating a schedule.
 
 | Property | Type | Description |
 | --- | --- | --- |
-| `isEnabled` |  |  |
-| `weeklySchedule` |  |  |
-| `update` |  |  |
+| `isEnabled` | `boolean` |  |
+| `weeklySchedule` | `WeeklySchedule` |  |
+| `update` | `(args: UpdateScheduleArgs) => Result<Schedule>` |  |
 
 ## Events
 
@@ -596,7 +598,7 @@ Fetches all subscriptions for a specific topic.
 
 | Property | Type | Description |
 | --- | --- | --- |
-| `topicKey` |  |  |
+| `topicKey` | `string` |  |
 
 ```tsx
 const { data: subscriptions } = await novu.subscriptions.list({
@@ -612,10 +614,10 @@ Fetch a single subscription by topic and identifier.
 
 | Property | Type | Description |
 | --- | --- | --- |
-| `topicKey` |  |  |
-| `identifier` |  |  |
-| `workflowIds` |  |  |
-| `tags` |  |  |
+| `topicKey` | `string` |  |
+| `identifier` | `string` |  |
+| `workflowIds` | `string[]` |  |
+| `tags` | `string[]` |  |
 
 ```tsx
 const { data: subscription } = await novu.subscriptions.get({
@@ -630,11 +632,11 @@ Create a new subscription to a topic. You can pass a list of preferences to filt
 
 | Property | Type | Description |
 | --- | --- | --- |
-| `topicKey` |  |  |
-| `topicName` |  |  |
-| `identifier` |  |  |
-| `name` |  |  |
-| `preferences` |  |  |
+| `topicKey` | `string` |  |
+| `topicName` | `string` |  |
+| `identifier` | `string` |  |
+| `name` | `string` |  |
+| `preferences` | `PreferenceFilter[]` |  |
 
 ```tsx
 const { data: subscription } = await novu.subscriptions.create({
@@ -665,8 +667,8 @@ Updates an existing subscription.
 
 | Property | Type | Description |
 | --- | --- | --- |
-| `name` |  |  |
-| `preferences` |  |  |
+| `name` | `string` |  |
+| `preferences` | `PreferenceFilter[]` |  |
 
 ```tsx
 const { data: subscription } = await novu.subscriptions.update({
@@ -693,14 +695,14 @@ A `TopicSubscription` instance represents a single subscription and provides met
 
 | Property | Type | Description |
 | --- | --- | --- |
-| `id` |  |  |
-| `identifier` |  |  |
-| `topicKey` |  |  |
-| `preferences` |  |  |
-| `update` |  |  |
-| `updatePreference` |  |  |
-| `bulkUpdatePreferences` |  |  |
-| `delete` |  |  |
+| `id` | `string` |  |
+| `identifier` | `string` |  |
+| `topicKey` | `string` |  |
+| `preferences` | `SubscriptionPreference[]` |  |
+| `update` | `{ (args: BaseUpdateSubscriptionArgs): Result<TopicSubscription>; (args: InstanceUpdateSubscriptionArgs): Result<TopicSubscription>; }` |  |
+| `updatePreference` | `{ (args: BaseSubscriptionPreferenceArgs): Result<SubscriptionPreference>; (args: InstanceSubscriptionPreferenceArgs): Result<SubscriptionPreference>; }` |  |
+| `bulkUpdatePreferences` | `{ (args: Array<BaseSubscriptionPreferenceArgs>): Result<SubscriptionPreference[]>; (args: Array<InstanceSubscriptionPreferenceArgs>): Result<SubscriptionPreference[]>; }` |  |
+| `delete` | `() => Result<void>` |  |
 
 #### Update a subscription
 
@@ -729,11 +731,11 @@ Each subscription contains a list of `SubscriptionPreference` objects that you c
 
 | Property | Type | Description |
 | --- | --- | --- |
-| `subscriptionId` |  |  |
-| `workflow` |  |  |
-| `enabled` |  |  |
-| `condition` |  |  |
-| `update` |  |  |
+| `subscriptionId` | `string` |  |
+| `workflow` | `Workflow` |  |
+| `enabled` | `boolean` |  |
+| `condition` | `RulesLogic` |  |
+| `update` | `(args: { value: boolean \| RulesLogic; }) => Result<SubscriptionPreference>` |  |
 
 ```tsx
 subscription.preferences.map((preference) => {
@@ -757,56 +759,56 @@ await subscription.delete();
 
 | Property | Type | Description |
 | --- | --- | --- |
-| `id` |  |  |
-| `transactionId` |  |  |
-| `subject` |  |  |
-| `body` |  |  |
-| `to` |  |  |
-| `isRead` |  |  |
-| `isSeen` |  |  |
-| `isArchived` |  |  |
-| `isSnoozed` |  |  |
-| `snoozedUntil` |  |  |
-| `deliveredAt` |  |  |
-| `createdAt` |  |  |
-| `readAt` |  |  |
-| `firstSeenAt` |  |  |
-| `archivedAt` |  |  |
-| `avatar` |  |  |
-| `primaryAction` |  |  |
-| `secondaryAction` |  |  |
-| `channelType` |  |  |
-| `tags` |  |  |
-| `redirect` |  |  |
-| `data` |  |  |
-| `workflow` |  |  |
-| `severity` |  |  |
-| `read` |  |  |
-| `unread` |  |  |
-| `seen` |  |  |
-| `archive` |  |  |
-| `unarchive` |  |  |
-| `delete` |  |  |
-| `snooze` |  |  |
-| `unsnooze` |  |  |
-| `completePrimary` |  |  |
-| `completeSecondary` |  |  |
-| `revertPrimary` |  |  |
-| `revertSecondary` |  |  |
-| `on` |  |  |
-| `off` |  |  |
+| `id` | `string` |  |
+| `transactionId` | `string` |  |
+| `subject` | `string` |  |
+| `body` | `string` |  |
+| `to` | `Subscriber` |  |
+| `isRead` | `boolean` |  |
+| `isSeen` | `boolean` |  |
+| `isArchived` | `boolean` |  |
+| `isSnoozed` | `boolean` |  |
+| `snoozedUntil` | `string` |  |
+| `deliveredAt` | `string[]` |  |
+| `createdAt` | `string` |  |
+| `readAt` | `string` |  |
+| `firstSeenAt` | `string` |  |
+| `archivedAt` | `string` |  |
+| `avatar` | `string` |  |
+| `primaryAction` | `Action` |  |
+| `secondaryAction` | `Action` |  |
+| `channelType` | `ChannelType` |  |
+| `tags` | `string[]` |  |
+| `redirect` | `Redirect` |  |
+| `data` | `NotificationData` |  |
+| `workflow` | `Workflow` |  |
+| `severity` | `SeverityLevelEnum` |  |
+| `read` | `() => Result<Notification>` |  |
+| `unread` | `() => Result<Notification>` |  |
+| `seen` | `() => Result<Notification>` |  |
+| `archive` | `() => Result<Notification>` |  |
+| `unarchive` | `() => Result<Notification>` |  |
+| `delete` | `() => Result<void>` |  |
+| `snooze` | `(snoozeUntil: string) => Result<Notification>` |  |
+| `unsnooze` | `() => Result<Notification>` |  |
+| `completePrimary` | `() => Result<Notification>` |  |
+| `completeSecondary` | `() => Result<Notification>` |  |
+| `revertPrimary` | `() => Result<Notification>` |  |
+| `revertSecondary` | `() => Result<Notification>` |  |
+| `on` | `<Key extends EventNames>(eventName: Key, listener: EventHandler<Events[Key]>) => () => void` |  |
+| `off` | `<Key extends EventNames>(eventName: Key, listener: EventHandler<Events[Key]>) => void` |  |
 
 ### Subscriber
 
 | Property | Type | Description |
 | --- | --- | --- |
-| `id` |  |  |
-| `subscriberId` |  |  |
-| `firstName` |  |  |
-| `lastName` |  |  |
-| `email` |  |  |
-| `phone` |  |  |
-| `avatar` |  |  |
-| `locale` |  |  |
-| `data` |  |  |
-| `timezone` |  |  |
+| `id` | `string` |  |
+| `subscriberId` | `string` |  |
+| `firstName` | `string` |  |
+| `lastName` | `string` |  |
+| `email` | `string` |  |
+| `phone` | `string` |  |
+| `avatar` | `string` |  |
+| `locale` | `string` |  |
+| `data` | `Record<string, unknown>` |  |
+| `timezone` | `string` |  |

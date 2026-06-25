@@ -9,11 +9,11 @@ Environment is a collection of resources that are used to send notifications. Fo
 
 | Property | Type | Description |
 | --- | --- | --- |
-| `id` |  |  |
-| `name` |  |  |
-| `organizationId` |  |  |
-| `identifier` |  |  |
-| `type` |  |  |
-| `apiKeys` |  |  |
-| `parentId` |  |  |
-| `slug` |  |  |
+| `id` | `string` | Unique identifier of the environment |
+| `name` | `string` | Name of the environment |
+| `organizationId` | `string` | Organization ID associated with the environment |
+| `identifier` | `string` | Unique identifier for the environment |
+| `type` | `EnvironmentResponseDtoType` | Type of the environment |
+| `apiKeys` | `ApiKeyDto[]` | List of API keys associated with the environment |
+| `parentId` | `string` | Parent environment ID |
+| `slug` | `string` | URL-friendly slug for the environment |
