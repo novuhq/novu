@@ -11,7 +11,7 @@ export function isAiSdkResult(value: unknown): value is AiSdkResult {
   }
 
   if ('textStream' in value) {
-    return true;
+    return 'text' in value;
   }
 
   return 'text' in value && 'steps' in value;

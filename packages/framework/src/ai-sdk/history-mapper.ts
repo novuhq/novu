@@ -35,7 +35,7 @@ export function toModelMessages(history: AgentHistoryEntry[], system?: string): 
   const multiSender = distinctHumanSenders(history) > 1;
 
   for (const entry of history) {
-    if (entry.signalData || entry.role === 'system') {
+    if (entry.signalData || entry.role === 'system' || entry.type === 'signal' || !entry.content.trim()) {
       continue;
     }
 

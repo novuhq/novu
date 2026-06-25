@@ -32,6 +32,14 @@ describe('isAiSdkResult', () => {
   it('rejects objects with text but no textStream or steps', () => {
     expect(isAiSdkResult({ text: 'hello' })).toBe(false);
   });
+
+  it('rejects streamText-shaped objects missing text', () => {
+    expect(
+      isAiSdkResult({
+        textStream: (async function* () {})(),
+      })
+    ).toBe(false);
+  });
 });
 
 describe('deliverResult', () => {

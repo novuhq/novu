@@ -9,7 +9,6 @@
   "publishConfig": {
     "access": "public"
   },
-  "sideEffects": false,
   "private": false,
   "repository": {
     "type": "git",
@@ -277,7 +276,6 @@
     }
   },
   "devDependencies": {
-    "@ai-sdk/openai": "3.0.46",
     "@apidevtools/json-schema-ref-parser": "11.6.4",
     "@arethetypeswrong/cli": "^0.17.4",
     "@nestjs/common": "11.1.24",
