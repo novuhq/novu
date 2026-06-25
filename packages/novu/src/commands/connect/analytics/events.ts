@@ -1,7 +1,20 @@
 import { AnalyticService } from '../../../services/analytics.service';
 
+/**
+ * Recommended Mixpanel funnel (use `onboardingSessionId` or distinct_id with identity merge):
+ *
+ * 1. Connect Pipeline Started — user passed welcome / non-interactive entry (engaged)
+ * 2. Connect Auth Completed
+ * 3. Connect Agent Created OR Connect Agent Reused
+ * 4. Connect Completed
+ *
+ * Avoid using Connect Started as step 1: it fires on every CLI invocation, including
+ * interactive runs abandoned at the welcome screen and agent sessions killed before auth.
+ * Segment engaged runs with `ci: true` and/or `hasPrompt: true` when comparing to Started.
+ */
 export const CONNECT_EVENTS = {
   STARTED: 'Connect Started',
+  PIPELINE_STARTED: 'Connect Pipeline Started',
   AUTH_STARTED: 'Connect Auth Started',
   AUTH_COMPLETED: 'Connect Auth Completed',
   AUTH_FAILED: 'Connect Auth Failed',

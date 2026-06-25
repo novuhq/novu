@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import ReactConfetti from 'react-confetti';
 import { createPortal } from 'react-dom';
 import type { AgentIntegrationLink, AgentResponse } from '@/api/agents';
+import { getAgentChannelDisplayName } from '@/utils/agent-email-provider-display';
 import { CompletedStepIndicator } from '@/components/agents/setup-guide-primitives';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import { AgentCard, type AgentCardConnectorKind } from '@/components/onboarding/claude-agent-preview-illustration';
@@ -117,7 +118,10 @@ export function AgentCliSuccessView({ agent, connectedLink }: AgentCliSuccessVie
 
   const providerId = connectedLink.integration.providerId;
   const providerMeta = novuProviders.find((provider) => provider.id === providerId);
-  const channelName = providerMeta?.displayName ?? connectedLink.integration.name;
+  const channelName = getAgentChannelDisplayName(
+    providerId,
+    providerMeta?.displayName ?? connectedLink.integration.name
+  );
 
   return (
     <div className="relative flex flex-col gap-10 py-6 pl-8 pr-3 md:pr-6">
