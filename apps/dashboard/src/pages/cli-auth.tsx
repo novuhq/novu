@@ -39,9 +39,13 @@ export const CliAuthPage = () => {
 
   useEffect(() => {
     if (isValidDeviceCode(deviceCode)) {
-      storePendingCliAuth(deviceCode, callerName);
+      storePendingCliAuth({
+        deviceCode,
+        name: callerName,
+        onboardingSessionId: onboardingSessionId ?? null,
+      });
     }
-  }, [deviceCode, callerName]);
+  }, [deviceCode, callerName, onboardingSessionId]);
 
   useEffect(() => {
     if (!onboardingSessionId) return;
@@ -224,7 +228,13 @@ function CliAuthContent() {
               <RiLockLine className="mt-0.5 size-4 shrink-0" />
               <span>{reason}</span>
             </div>
-          ) : null}
+          ) : (
+            <div className="text-text-sub w-full rounded-lg border border-stroke-soft bg-neutral-alpha-50 p-3 text-label-xs">
+              {isConnect
+                ? 'New here? Finish sign-up and create your organization first — you will return here to authorize the CLI. Keep your terminal open while you complete this step.'
+                : 'Keep your terminal open while you authorize. If you just signed up, create or select an organization first — you will return here afterward.'}
+            </div>
+          )}
 
           <AnimatePresence mode="wait" initial={false}>
             {didAuthorize ? (

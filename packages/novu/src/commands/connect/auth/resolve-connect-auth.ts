@@ -4,10 +4,32 @@ import type { ResolvedAuth, WizardCommandOptions } from '../../wizard/types';
 import { bootstrapKeylessSession } from '../api/keyless-session';
 import type { ConnectCommandOptions } from '../types';
 
+export type ConnectAuthMethod = 'keyless' | 'secret-key-flag' | 'secret-key-env' | 'dashboard-oauth';
+
 export interface ResolvedConnectAuth extends Omit<ResolvedAuth, 'source'> {
   source: ResolvedAuth['source'] | 'keyless';
   isKeyless: boolean;
   keylessApplicationIdentifier?: string;
+}
+
+export function resolveConnectAuthMethod(options: ConnectCommandOptions): ConnectAuthMethod {
+  const cliFlagSecret = options.secretKey?.trim();
+  const envSecret = process.env.NOVU_SECRET_KEY?.trim();
+  const isInteractive = Boolean(process.stdin.isTTY && process.stdout.isTTY) && process.env.CI !== 'true';
+
+  if (options.keyless) {
+    return 'keyless';
+  }
+
+  if (cliFlagSecret) {
+    return 'secret-key-flag';
+  }
+
+  if (envSecret && !isInteractive) {
+    return 'secret-key-env';
+  }
+
+  return 'dashboard-oauth';
 }
 
 export async function resolveConnectAuth(
@@ -26,6 +48,7 @@ export async function resolveConnectAuth(
   }
 
   if (cliFlagSecret || (envSecret && !isInteractive && !wantsKeyless)) {
+    resolveOptions.onAuthStarted?.();
     const auth = await resolveAuth(toWizardAuthOptions(options), resolveOptions);
 
     return { ...auth, isKeyless: false };
@@ -33,23 +56,30 @@ export async function resolveConnectAuth(
 
   if (wantsKeyless) {
     resolveOptions.onStatus?.('Setting up a temporary keyless workspace…');
+    resolveOptions.onAuthStarted?.();
 
-    const session = await bootstrapKeylessSession(options.apiUrl);
+    try {
+      const session = await bootstrapKeylessSession(options.apiUrl);
 
-    return {
-      secretKey: '',
-      environmentId: '',
-      environmentSlug: null,
-      environmentName: 'Keyless',
-      organizationId: null,
-      user: null,
-      apiUrl: options.apiUrl,
-      dashboardUrl: options.dashboardUrl,
-      region: options.region,
-      source: 'keyless',
-      isKeyless: true,
-      keylessApplicationIdentifier: session.applicationIdentifier,
-    };
+      return {
+        secretKey: '',
+        environmentId: '',
+        environmentSlug: null,
+        environmentName: 'Keyless',
+        organizationId: null,
+        user: null,
+        apiUrl: options.apiUrl,
+        dashboardUrl: options.dashboardUrl,
+        region: options.region,
+        source: 'keyless',
+        isKeyless: true,
+        keylessApplicationIdentifier: session.applicationIdentifier,
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      resolveOptions.onAuthFailed?.(message);
+      throw error;
+    }
   }
 
   resolveOptions.onStatus?.('Authorizing via the Novu Dashboard…');

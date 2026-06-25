@@ -10,7 +10,7 @@ import {
 import { type ConnectApiClient, createConnectApiClient, NovuApiError } from '../api/client';
 import { deleteIntegration, type IntegrationRecord } from '../api/integrations';
 import { upsertSubscriber } from '../api/subscribers';
-import { type ResolvedConnectAuth, resolveConnectAuth } from '../auth/resolve-connect-auth';
+import { type ResolvedConnectAuth, resolveConnectAuth, resolveConnectAuthMethod } from '../auth/resolve-connect-auth';
 import { type ConnectSession, upgradeKeylessSessionToDashboardAuth } from '../auth/upgrade-keyless-session';
 import { buildConnectAgentDetailsUrl, buildConnectClaimUrl, channelDisplayName } from '../dashboard-urls';
 import { ConnectChannelBackError } from '../errors';
@@ -44,10 +44,20 @@ export interface ConnectPipelineResult {
 export async function runConnectPipeline(input: ConnectPipelineInput): Promise<ConnectPipelineResult> {
   const { options, ui, onTrack, onboardingSessionId } = input;
   const track = onTrack ?? (() => undefined);
-  const sessionProps = onboardingSessionId ? { onboardingSessionId } : {};
+  const authMethod = resolveConnectAuthMethod(options);
+  const sessionProps = {
+    ...(onboardingSessionId ? { onboardingSessionId } : {}),
+    authMethod,
+    ci: !!options.ci,
+    keyless: !!options.keyless,
+    hasPrompt: !!options.prompt,
+    channel: options.channel ?? (options.skipSlack ? 'skip' : undefined),
+  };
 
   try {
     await ui.showWelcome();
+
+    track(CONNECT_EVENTS.PIPELINE_STARTED, sessionProps);
 
     ui.authStarted();
     const auth = await resolveConnectAuth(options, {
