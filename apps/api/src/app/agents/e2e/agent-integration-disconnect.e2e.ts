@@ -204,8 +204,19 @@ describe('Agent integration disconnect tombstone #novu-v2', () => {
     const webhookRes = await postSlackWebhook(ctx.integrationIdentifier, ctx.signingSecret);
     expect(webhookRes.status).to.equal(200);
 
-    const reconnected = await agentIntegrationRepository.findOne(activeLinkQuery(), '*');
-    if (!reconnected) throw new Error('Expected the revived link to still exist after the webhook');
-    expect(reconnected.connectedAt, 'first webhook after revive should re-mark the link connected').to.exist;
+    // Slack acks the webhook immediately and processes the event fire-and-forget.
+    // `connectedAt` is now written when the genuine user message is handled (after
+    // the bot-author filter) rather than synchronously on the raw POST, so poll for
+    // the link to flip to connected.
+    let connectedAtValue: string | null | undefined;
+    for (let attempt = 0; attempt < 50; attempt += 1) {
+      const link = await agentIntegrationRepository.findOne(activeLinkQuery(), '*');
+      if (link?.connectedAt) {
+        connectedAtValue = link.connectedAt;
+        break;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+    expect(connectedAtValue, 'first user message after revive should re-mark the link connected').to.exist;
   });
 });

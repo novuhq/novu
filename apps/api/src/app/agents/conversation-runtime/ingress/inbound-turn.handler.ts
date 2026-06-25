@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, type OnModuleInit } from '@nestjs/common';
 import { AnalyticsService, PinoLogger } from '@novu/application-generic';
 import {
+  AgentIntegrationRepository,
   AgentRepository,
   ChannelEndpointRepository,
   ConversationActivityEntity,
@@ -24,6 +25,7 @@ import {
   trackAgentInboundAction,
   trackAgentInboundMessage,
   trackAgentInboundReaction,
+  trackAgentIntegrationFirstWebhook,
 } from '../../shared/analytics/agent-analytics';
 import { AgentEventEnum } from '../../shared/enums/agent-event.enum';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
@@ -229,6 +231,7 @@ export class AgentInboundHandler implements OnModuleInit {
     private readonly inboundDispatcher: InboundDispatcher,
     private readonly outboundGateway: OutboundGateway,
     private readonly agentRepository: AgentRepository,
+    private readonly agentIntegrationRepository: AgentIntegrationRepository,
     private readonly subscriberRepository: SubscriberRepository,
     private readonly analyticsService: AnalyticsService,
     private readonly attachmentStorage: AgentAttachmentStorage,
@@ -315,6 +318,11 @@ export class AgentInboundHandler implements OnModuleInit {
 
       throw err;
     }
+
+    // A genuine, non-bot user has messaged the agent (bot-authored echoes threw
+    // `BotAuthorSkippedError` above). This — not the raw webhook POST — is what
+    // marks the agent–integration link connected and completes onboarding.
+    await this.markIntegrationConnectedOnFirstMessage(agentId, config);
 
     const platformThreadId = getInboundPlatformThreadId(config.platform, thread, message);
 
@@ -419,6 +427,51 @@ export class AgentInboundHandler implements OnModuleInit {
     await runtime.dispatch(turn);
 
     await this.registerConversationEngagement(agentId, config, conversation, thread.isDM);
+  }
+
+  /**
+   * Record `connectedAt` the first time a real user messages the agent on this
+   * integration. Gated on a genuine inbound message (the caller has already
+   * filtered bot-authored events via `BotAuthorSkippedError`) so the agent's own
+   * proactive messages — e.g. the post-install welcome DM, which Slack echoes
+   * back to our webhook — never mark the integration connected. The conditional
+   * `connectedAt: null` filter makes the write idempotent and fires the
+   * analytics event exactly once. Fail-soft: connection bookkeeping must never
+   * crash the inbound webhook.
+   */
+  private async markIntegrationConnectedOnFirstMessage(agentId: string, config: ResolvedAgentConfig): Promise<void> {
+    try {
+      const { modified } = await this.agentIntegrationRepository.updateOne(
+        {
+          _environmentId: config.environmentId,
+          _organizationId: config.organizationId,
+          _agentId: agentId,
+          _integrationId: config.integrationId,
+          connectedAt: null,
+        },
+        { $set: { connectedAt: new Date() } }
+      );
+
+      if (modified === 0) {
+        return;
+      }
+
+      trackAgentIntegrationFirstWebhook(this.analyticsService, {
+        organizationId: config.organizationId,
+        environmentId: config.environmentId,
+        agentId,
+        agentIdentifier: config.agentIdentifier,
+        integrationIdentifier: config.integrationIdentifier,
+        platform: config.platform,
+      });
+    } catch (err) {
+      this.logger.warn(err, `[agent:${agentId}] Failed to mark integration connected on first user message`);
+      captureAgentWarning(err, {
+        component: 'agent-inbound-handler',
+        operation: 'mark-integration-connected',
+        agentId,
+      });
+    }
   }
 
   /**
