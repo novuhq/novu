@@ -30,10 +30,10 @@ import { MsTeamsConnectButton } from './msteams-connect-button/MsTeamsConnectBut
 import { MsTeamsLinkUser } from './msteams-link-user/MsTeamsLinkUser';
 import { SlackConnectButton } from './slack-connect-button/SlackConnectButton';
 import { SlackLinkUser } from './slack-link-user/SlackLinkUser';
-import { TelegramConnectButton } from './telegram-connect-button/TelegramConnectButton';
 import { Subscription } from './subscription/Subscription';
 import { SubscriptionButtonWrapper as SubscriptionButton } from './subscription/SubscriptionButtonWrapper';
 import { SubscriptionPreferencesWrapper as SubscriptionPreferences } from './subscription/SubscriptionPreferencesWrapper';
+import { TelegramConnectButton } from './telegram-connect-button/TelegramConnectButton';
 
 export const novuComponents = {
   Inbox,

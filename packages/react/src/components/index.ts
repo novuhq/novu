@@ -8,7 +8,7 @@ export * from './Notifications';
 export * from './Preferences';
 export * from './slack-connect-button/SlackConnectButton';
 export * from './slack-link-user/SlackLinkUser';
-export * from './telegram-connect-button/TelegramConnectButton';
 export * from './subscription/Subscription';
 export * from './subscription/SubscriptionButton';
 export * from './subscription/SubscriptionPreferences';
+export * from './telegram-connect-button/TelegramConnectButton';

@@ -199,7 +199,9 @@ export const TelegramConnectButton = (props: TelegramConnectButtonProps) => {
             >[0],
           })}
         >
-          {isConnected() ? (props.connectedLabel ?? 'Connected to Telegram') : (props.connectLabel ?? 'Connect Telegram')}
+          {isConnected()
+            ? (props.connectedLabel ?? 'Connected to Telegram')
+            : (props.connectLabel ?? 'Connect Telegram')}
         </span>
       </Motion.span>
       <Motion.span
