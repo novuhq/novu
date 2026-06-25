@@ -4,6 +4,7 @@
 
 import * as z from "zod/v3";
 import { safeParse } from "../../lib/schemas.js";
+import { ClosedEnum } from "../../types/enums.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 
@@ -11,6 +12,18 @@ import { SDKValidationError } from "../errors/sdkvalidationerror.js";
  * Transaction identifier
  */
 export type TransactionId = {};
+
+/**
+ * Origin of the request: 'http' for API triggers or 'inbound_email' for inbound mail
+ */
+export const Source = {
+  Http: "http",
+  InboundEmail: "inbound_email",
+} as const;
+/**
+ * Origin of the request: 'http' for API triggers or 'inbound_email' for inbound mail
+ */
+export type Source = ClosedEnum<typeof Source>;
 
 export type RequestLogResponseDto = {
   /**
@@ -85,6 +98,10 @@ export type RequestLogResponseDto = {
    * Request duration in milliseconds
    */
   durationMs: number;
+  /**
+   * Origin of the request: 'http' for API triggers or 'inbound_email' for inbound mail
+   */
+  source: Source;
 };
 
 /** @internal */
@@ -103,6 +120,10 @@ export function transactionIdFromJSON(
     `Failed to parse 'TransactionId' from JSON`,
   );
 }
+
+/** @internal */
+export const Source$inboundSchema: z.ZodNativeEnum<typeof Source> = z
+  .nativeEnum(Source);
 
 /** @internal */
 export const RequestLogResponseDto$inboundSchema: z.ZodType<
@@ -129,6 +150,7 @@ export const RequestLogResponseDto$inboundSchema: z.ZodType<
   environmentId: z.string(),
   authType: z.string(),
   durationMs: z.number(),
+  source: Source$inboundSchema,
 });
 
 export function requestLogResponseDtoFromJSON(

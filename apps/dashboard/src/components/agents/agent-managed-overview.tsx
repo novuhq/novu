@@ -1,4 +1,4 @@
-import { EmailProviderIdEnum, FeatureFlagsKeysEnum } from '@novu/shared';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { type AgentResponse, getAgentIntegrationsQueryKey, listAgentIntegrations } from '@/api/agents';
@@ -7,9 +7,11 @@ import { useAgentDemoQuota } from '@/hooks/use-agent-demo-quota';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { RecentConversationsSection } from '../agents/recent-conversations-section';
 import { AgentSetupGuide } from './agent-setup-guide';
+import { AgentWhatsNextSection } from './agent-whats-next-section';
 import { ConnectedProvidersSection } from './connected-providers-section';
 import { DemoClaudeUpgradePanel } from './demo-claude-upgrade-panel';
 import { DemoQuotaBanner } from './demo-quota-banner';
+import { isUserFacingConnectedAgentIntegration } from './is-agent-integration-connected';
 import { McpsSection } from './mcps-section';
 import { SystemPromptSection } from './system-prompt-section';
 import { ToolsSection } from './tools-section';
@@ -40,11 +42,12 @@ export function AgentManagedOverview({ agent }: AgentManagedOverviewProps) {
   // guide would never surface for a freshly created managed agent.
   const hasConnectedChannel = useMemo(() => {
     const links = integrationsQuery.data?.data;
-    if (!links?.length) return false;
 
-    return links.some(
-      (link) => Boolean(link.connectedAt) && link.integration.providerId !== EmailProviderIdEnum.NovuAgent
-    );
+    if (!links?.length) {
+      return false;
+    }
+
+    return links.some(isUserFacingConnectedAgentIntegration);
   }, [integrationsQuery.data?.data]);
 
   const showSetupGuide = integrationsQuery.isSuccess && !hasConnectedChannel;
@@ -54,6 +57,7 @@ export function AgentManagedOverview({ agent }: AgentManagedOverviewProps) {
       {isDemoManagedClaudeEnabled && demoQuotaQuery.data ? (
         <DemoQuotaBanner quota={demoQuotaQuery.data} onUpgrade={() => setUpgradeOpen(true)} />
       ) : null}
+      <AgentWhatsNextSection agent={agent} />
       {showSetupGuide ? <AgentSetupGuide agent={agent} /> : <ConnectedProvidersSection agent={agent} />}
       <McpsSection agent={agent} />
       <SystemPromptSection agent={agent} />

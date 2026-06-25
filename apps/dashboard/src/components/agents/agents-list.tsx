@@ -252,40 +252,33 @@ export function AgentsList() {
     void navigate(ROUTES.AGENTS_SETUP);
   }, [navigate]);
 
-  const handleAddAgentClick = useCallback(() => {
-    // Hard cap first — the API rejects creation outright at this point.
-    if (isAtCreationLimit) {
-      setCreationLimitDialogOpen(true);
+  const runIfWithinAgentLimits = useCallback(
+    (pending: 'create-dialog' | 'onboarding', action: () => void) => {
+      if (isAtCreationLimit) {
+        setCreationLimitDialogOpen(true);
 
-      return;
-    }
+        return;
+      }
 
-    if (isAtAgentLimit) {
-      pendingAfterLimitRef.current = 'create-dialog';
-      setLimitDialogOpen(true);
+      if (isAtAgentLimit) {
+        pendingAfterLimitRef.current = pending;
+        setLimitDialogOpen(true);
 
-      return;
-    }
+        return;
+      }
 
-    setCreateOpen(true);
-  }, [isAtAgentLimit, isAtCreationLimit]);
+      action();
+    },
+    [isAtAgentLimit, isAtCreationLimit]
+  );
 
   const handleEmptyStateSetupClick = useCallback(() => {
-    if (isAtCreationLimit) {
-      setCreationLimitDialogOpen(true);
+    runIfWithinAgentLimits('onboarding', goToAgentsSetup);
+  }, [runIfWithinAgentLimits, goToAgentsSetup]);
 
-      return;
-    }
-
-    if (isAtAgentLimit) {
-      pendingAfterLimitRef.current = 'onboarding';
-      setLimitDialogOpen(true);
-
-      return;
-    }
-
-    goToAgentsSetup();
-  }, [goToAgentsSetup, isAtAgentLimit, isAtCreationLimit]);
+  const handleAddAgentClick = useCallback(() => {
+    runIfWithinAgentLimits('create-dialog', () => setCreateOpen(true));
+  }, [runIfWithinAgentLimits]);
 
   const handleContinuePastAgentLimit = useCallback(() => {
     if (pendingAfterLimitRef.current === 'onboarding') {

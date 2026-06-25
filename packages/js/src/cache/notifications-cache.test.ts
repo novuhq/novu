@@ -81,6 +81,61 @@ describe('NotificationsCache', () => {
     jest.clearAllMocks();
   });
 
+  it('should normalize plain notification objects when storing in cache', () => {
+    const args = { tags: ['tag1'], limit: 10, offset: 0 };
+    const plainNotification = {
+      id: '1',
+      transactionId: 'tx-1',
+      body: 'test1',
+      isRead: false,
+      isArchived: false,
+      isSeen: false,
+      isSnoozed: false,
+      to: { id: '1', subscriberId: '1' },
+      createdAt: new Date().toISOString(),
+      channelType: ChannelType.IN_APP,
+      workflow: {
+        id: 'test-workflow-1',
+        critical: true,
+        identifier: 'test-workflow-1',
+        name: 'Test Workflow 1',
+        tags: ['tag1'],
+        severity: SeverityLevelEnum.NONE,
+      },
+      severity: SeverityLevelEnum.NONE,
+    };
+    const data = {
+      hasMore: false,
+      filter: {},
+      notifications: [plainNotification],
+    };
+
+    notificationsCache.set(args, data as unknown as ListNotificationsResponse);
+    const result = notificationsCache.getAll(args);
+
+    expect(result?.notifications[0]).toBeInstanceOf(Notification);
+    expect(typeof result?.notifications[0].read).toBe('function');
+  });
+
+  it('should normalize plain notification objects when updating cache', () => {
+    const args: ListNotificationsArgs = { limit: 10, offset: 0, tags: ['tag1'], read: false, archived: false };
+    const plainNotification = {
+      ...notification1,
+      isRead: true,
+      readAt: new Date().toISOString(),
+    };
+    const data: ListNotificationsResponse = { hasMore: false, filter: {}, notifications: [notification1] };
+
+    notificationsCache.set(args, data);
+    (notificationsCache as any).handleNotificationEvent()({ data: plainNotification });
+
+    const result = notificationsCache.getAll(args);
+
+    expect(result?.notifications[0]).toBeInstanceOf(Notification);
+    expect(typeof result?.notifications[0].read).toBe('function');
+    expect(result?.notifications[0].isRead).toBe(true);
+  });
+
   it('should set and get notifications from the cache', () => {
     const args = { tags: ['tag1'], limit: 10, offset: 0 };
     const data = {
@@ -481,5 +536,65 @@ describe('NotificationsCache', () => {
         notifications: [notification3],
       },
     });
+  });
+
+  it('should dedupe notifications by id in unshift', () => {
+    const args = { tags: ['tag1'], limit: 10, offset: 0 };
+
+    notificationsCache.set(args, {
+      hasMore: false,
+      filter: {},
+      notifications: [notification1],
+    });
+
+    notificationsCache.unshift(args, {
+      id: notification1.id,
+      transactionId: notification1.transactionId,
+      createdAt: new Date().toISOString(),
+      isRead: false,
+      isSeen: false,
+      isArchived: false,
+      isSnoozed: false,
+      channelType: ChannelType.IN_APP,
+      to: { subscriberId: '1' },
+      body: 'updated body',
+      subject: 'subject',
+      tags: [],
+      data: {},
+    });
+
+    const result = notificationsCache.getAll(args);
+    expect(result?.notifications.length).toBe(1);
+    expect(result?.notifications[0].body).toBe('updated body');
+  });
+
+  it('should prepend new notification in unshift without duplicates', () => {
+    const args = { tags: ['tag1'], limit: 10, offset: 0 };
+
+    notificationsCache.set(args, {
+      hasMore: false,
+      filter: {},
+      notifications: [notification1],
+    });
+
+    notificationsCache.unshift(args, {
+      id: 'new-id',
+      transactionId: 'tx-new',
+      createdAt: new Date().toISOString(),
+      isRead: false,
+      isSeen: false,
+      isArchived: false,
+      isSnoozed: false,
+      channelType: ChannelType.IN_APP,
+      to: { subscriberId: '1' },
+      body: 'new body',
+      subject: 'subject',
+      tags: [],
+      data: {},
+    });
+
+    const result = notificationsCache.getAll(args);
+    expect(result?.notifications.length).toBe(2);
+    expect(result?.notifications[0].id).toBe('new-id');
   });
 });

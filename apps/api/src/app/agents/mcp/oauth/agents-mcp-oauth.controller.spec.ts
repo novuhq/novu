@@ -34,8 +34,9 @@ describe('AgentsMcpOAuthController connect redirect', () => {
     await controller.getConnectRedirect(res as any, 'short-token');
 
     expect(mcpConnectRedirect.resolve.calledOnceWithExactly('short-token')).to.equal(true);
-    expect(res.redirect.calledOnceWithExactly(HttpStatus.FOUND, 'https://provider.example/oauth/authorize?state=abc'))
-      .to.equal(true);
+    expect(
+      res.redirect.calledOnceWithExactly(HttpStatus.FOUND, 'https://provider.example/oauth/authorize?state=abc')
+    ).to.equal(true);
     expect(res.send.called).to.equal(false);
   });
 

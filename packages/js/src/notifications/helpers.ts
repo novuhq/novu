@@ -1,9 +1,29 @@
 import type { InboxService } from '../api';
 import type { NotificationsCache } from '../cache';
 import type { NovuEventEmitter } from '../event-emitter';
-import { Action, ActionTypeEnum, NotificationFilter, Result } from '../types';
+import { Action, ActionTypeEnum, InboxNotification, NotificationFilter, Result } from '../types';
 import { NovuError } from '../utils/errors';
 import { Notification } from './notification';
+
+export function ensureNotificationInstance({
+  notification,
+  emitter,
+  inboxService,
+}: {
+  notification: Notification | InboxNotification;
+  emitter: NovuEventEmitter;
+  inboxService: InboxService;
+}): Notification {
+  if (notification instanceof Notification) {
+    return notification;
+  }
+
+  if (typeof (notification as Notification).read === 'function') {
+    return notification as Notification;
+  }
+
+  return new Notification(notification, emitter, inboxService);
+}
 import type {
   ArchivedArgs,
   CompleteArgs,

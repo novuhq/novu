@@ -137,6 +137,29 @@ export class ManagedAgentEventHandler {
         }
       },
 
+      onMessage: async (event: { text: string }) => {
+        try {
+          if (metadata.suppressReply === 'true') {
+            return;
+          }
+          const markdown = event.text?.trim();
+          if (!markdown) {
+            return;
+          }
+          await this.handleAgentReply.execute(HandleAgentReplyCommand.create({ ...baseFields, reply: { markdown } }));
+        } catch (err) {
+          this.logger.error(err, `onMessage failed: session=${sessionId}`);
+          captureAgentException(err, {
+            component: 'managed-agent-event-handler',
+            operation: 'on-message',
+            sessionId,
+          });
+          // Re-throw so the webhook returns 5xx and the observer retries delivery,
+          // otherwise a failed reply is acked as complete and silently lost.
+          throw err;
+        }
+      },
+
       onFinish: async (event: { response: ThalamusResponse }) => {
         try {
           if (event.response.finishReason === 'requires-action') {
@@ -161,10 +184,13 @@ export class ManagedAgentEventHandler {
             return;
           }
 
-          const replyMarkdown = event.response.content?.trim();
-          if (replyMarkdown) {
+          // TODO: remove after the observer is fully rolled out.
+          // Old observers still send `response.content`; new ones reply via `onMessage`
+          // and never set `content`, so this only runs against an old observer.
+          const legacyContent = (event.response as { content?: string }).content?.trim();
+          if (legacyContent) {
             await this.handleAgentReply.execute(
-              HandleAgentReplyCommand.create({ ...baseFields, reply: { markdown: replyMarkdown } })
+              HandleAgentReplyCommand.create({ ...baseFields, reply: { markdown: legacyContent } })
             );
           }
 

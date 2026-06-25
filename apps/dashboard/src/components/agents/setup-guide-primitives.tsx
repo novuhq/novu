@@ -103,6 +103,12 @@ export function SetupStep({
    * lowering opacity and disabling pointer interaction on its content.
    */
   dimmed,
+  /**
+   * Aligns the step indicator with the `sectionLabel` line instead of the title, so the number sits
+   * inline with a short eyebrow (e.g. "FOR YOUR USERS"). Defaults to false to preserve the title
+   * alignment used by numbered eyebrows like "1/5 SETUP AGENT HANDLER".
+   */
+  inlineSectionLabel,
 }: {
   index: number;
   status: StepStatus;
@@ -114,10 +120,19 @@ export function SetupStep({
   fullWidthContent?: ReactNode;
   headerSlot?: ReactNode;
   dimmed?: boolean;
+  inlineSectionLabel?: boolean;
 }) {
+  let indicatorTopClass = 'top-[3px]';
+
+  if (inlineSectionLabel) {
+    indicatorTopClass = 'top-px';
+  } else if (sectionLabel) {
+    indicatorTopClass = 'top-6';
+  }
+
   return (
     <div className="relative flex flex-col gap-4 pl-6">
-      <div className={cn('absolute -left-[20px] flex w-5 justify-center', sectionLabel ? 'top-6' : 'top-[3px]')}>
+      <div className={cn('absolute -left-[20px] flex w-5 justify-center', indicatorTopClass)}>
         <StepIndicator status={status} index={index} />
       </div>
       <div
@@ -195,6 +210,54 @@ export function SetupButton({
       {leadingIcon}
       <span className="text-label-xs inline-flex min-w-0 items-center font-medium">{children}</span>
     </Button>
+  );
+}
+
+export function ListeningStatusView({
+  connected,
+  connectedTitle = 'Connected',
+  listeningTitle = 'Listening...',
+  connectedMessage,
+  listeningMessage,
+  inline = false,
+  className,
+  showStatusIndicator = true,
+}: {
+  connected: boolean;
+  connectedTitle?: string;
+  listeningTitle?: string;
+  connectedMessage: string;
+  listeningMessage: string;
+  inline?: boolean;
+  className?: string;
+  showStatusIndicator?: boolean;
+}) {
+  return (
+    <div className={cn('flex flex-col gap-2', !inline && (className ?? 'py-4 pl-6'))}>
+      <div className="flex flex-col gap-3">
+        {showStatusIndicator ? (
+          connected ? (
+            <div className="flex items-center gap-1">
+              <CheckCircle2 className="text-success-base size-3.5 shrink-0" />
+              <span className="text-text-strong text-label-sm font-medium">{connectedTitle}</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1">
+              <Loader className="size-3.5 text-[#dd2476] animate-[spin_5s_linear_infinite]" />
+              <span className="animate-gradient bg-linear-to-r from-[#dd2476] via-[#ff512f] to-[#dd2476] bg-size-[400%_400%] bg-clip-text text-label-sm font-medium text-transparent">
+                {listeningTitle}
+              </span>
+            </div>
+          )
+        ) : null}
+        <p className="text-text-soft text-label-xs font-medium leading-4">
+          {connected ? connectedMessage : listeningMessage}
+        </p>
+      </div>
+      <ExternalLink href={AGENTS_DOCS_PROVIDERS_URL} variant="documentation">
+        Learn more in docs
+      </ExternalLink>
+    </div>
   );
 }
 
@@ -316,29 +379,12 @@ export function ListeningStatus({
           />,
           document.body
         )}
-      <div className={cn('flex flex-col gap-2', !inline && 'py-4 pl-6')}>
-        <div className="flex flex-col gap-3">
-          {connectedAt ? (
-            <div className="flex items-center gap-1">
-              <CheckCircle2 className="text-success-base size-3.5 shrink-0" />
-              <span className="text-text-strong text-label-sm font-medium">Connected</span>
-            </div>
-          ) : (
-            <div className="flex items-center gap-1">
-              <Loader className="size-3.5 text-[#dd2476] animate-[spin_5s_linear_infinite]" />
-              <span className="animate-gradient bg-linear-to-r from-[#dd2476] via-[#ff512f] to-[#dd2476] bg-size-[400%_400%] bg-clip-text text-label-sm font-medium text-transparent">
-                Listening...
-              </span>
-            </div>
-          )}
-          <p className="text-text-soft text-label-xs font-medium leading-4">
-            {connectedAt ? connectedMessage : listeningMessage}
-          </p>
-        </div>
-        <ExternalLink href={AGENTS_DOCS_PROVIDERS_URL} variant="documentation">
-          Learn more in docs
-        </ExternalLink>
-      </div>
+      <ListeningStatusView
+        connected={Boolean(connectedAt)}
+        connectedMessage={connectedMessage}
+        listeningMessage={listeningMessage}
+        inline={inline}
+      />
     </>
   );
 }
