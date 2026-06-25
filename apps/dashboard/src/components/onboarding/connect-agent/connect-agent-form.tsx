@@ -23,7 +23,8 @@ import { cn } from '@/utils/ui';
 import { AgentSuggestionPills } from './agent-suggestion-pills';
 import { ConnectAgentDemoForm } from './connect-agent-demo-form';
 import type { ConnectorId } from './connector-options';
-import type { GenerationStep, GenerationStep, GenerationStep } from './gent';
+import type { GenerationStep } from './generation-status';
+import { PromptInput } from './prompt-input';
 import { TemplateDropdown, type TemplateSelection } from './template-dropdown';
 
 export type AgentGenerationMode = 'prompt' | 'manual' | 'existing';
@@ -261,8 +262,8 @@ export function ConnectAgentForm({
   onSaveIntegration,
   aiGeneration,
   submitSlot,
-}: ConnectAgentFormProps) {
   simplifiedDemo,
+}: ConnectAgentFormProps) {
   if (simplifiedDemo) {
     return (
       <ConnectAgentDemoForm
@@ -317,7 +318,6 @@ export function ConnectAgentForm({
   const showScopeTabs = usePromptUi && showExistingOption;
   const { stepTitle, stepDescription } = resolveStepCopy({ isScratchRuntime, usePromptUi, scope });
 
-  return (
   return (
     <>
       <SetupStep
