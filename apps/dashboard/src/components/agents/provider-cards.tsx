@@ -23,6 +23,7 @@ import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { buildEdgeFadeMask, useHorizontalScrollEdges } from '@/hooks/use-horizontal-scroll-edges';
 import { useIsAgentEmailAvailable } from '@/hooks/use-is-agent-email-available';
 import { useLinkAgentIntegration } from '@/hooks/use-link-agent-integration';
+import { getAgentChannelDisplayName } from '@/utils/agent-email-provider-display';
 import { ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { openInNewTab } from '@/utils/url';
@@ -46,25 +47,13 @@ const PROVIDER_SETUP_TIME: Record<string, string> = {
   imessages: '~ 2 minutes',
 };
 
-const EMAIL_PROVIDER_CARD_LABEL = 'Email';
-
 function getProviderCardDisplayName(providerId: string, displayName: string): string {
-  if (providerId === EmailProviderIdEnum.NovuAgent) {
-    return EMAIL_PROVIDER_CARD_LABEL;
-  }
-
-  return displayName;
+  return getAgentChannelDisplayName(providerId, displayName);
 }
 
 const CARD_PROVIDER_ICON_CLASS = 'size-6 shrink-0 object-contain';
 
 function CardProviderIcon({ providerId, displayName }: { providerId: string; displayName: string }) {
-  if (providerId === EmailProviderIdEnum.NovuAgent) {
-    return (
-      <img src="/images/providers/light/square/email.svg" alt={displayName} className={CARD_PROVIDER_ICON_CLASS} />
-    );
-  }
-
   return (
     <ProviderIcon providerId={providerId} providerDisplayName={displayName} className={CARD_PROVIDER_ICON_CLASS} />
   );

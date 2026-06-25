@@ -14,6 +14,7 @@ import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { QueryKeys } from '@/utils/query-keys';
+import { AGENT_EMAIL_PROVIDER_LABEL, getAgentChannelDisplayName } from '@/utils/agent-email-provider-display';
 import { TelemetryEvent } from '@/utils/telemetry';
 
 type LinkProviderItem = {
@@ -198,7 +199,10 @@ export function useLinkAgentIntegration({
           const integration = link.integration as unknown as IIntegration;
 
           createdIntegrationIdsRef.current.add(integration._id);
-          showSuccessToast('Integration linked', `${link.integration.name ?? 'Novu Email'} was added to this agent.`);
+          showSuccessToast(
+            'Integration linked',
+            `${getAgentChannelDisplayName(item.providerId, link.integration.name ?? AGENT_EMAIL_PROVIDER_LABEL)} was added to this agent.`
+          );
           trackLink(item.providerId, link.integration.identifier, 'novu_email');
           await removePreviousLinks(integration._id);
           onLinked?.(item.providerId, integration);

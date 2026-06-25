@@ -6,6 +6,7 @@ import { EmailInboxCardBody } from '@/components/agents/email-inbox-card';
 import { EmailSetupGuide } from '@/components/agents/email-setup-guide';
 import { isAgentIntegrationConnected } from '@/components/agents/is-agent-integration-connected';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
+import { AGENT_EMAIL_PROVIDER_LABEL } from '@/utils/agent-email-provider-display';
 import { AgentIntegrationGuideLayout } from './agent-integration-guide-layout';
 
 type EmailAgentIntegrationGuideProps = {
@@ -46,7 +47,7 @@ export function EmailAgentIntegrationGuide({
   return (
     <AgentIntegrationGuideLayout
       providerId={EmailProviderIdEnum.NovuAgent}
-      providerDisplayName="Novu Email"
+      providerDisplayName={AGENT_EMAIL_PROVIDER_LABEL}
       onBack={onBack}
       embedded={embedded}
       agent={agent}
