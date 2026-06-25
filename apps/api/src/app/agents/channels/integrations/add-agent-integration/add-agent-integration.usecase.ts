@@ -8,7 +8,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { AnalyticsService, encryptSecret, isAgentSharedInboxEnabled } from '@novu/application-generic';
+import { AnalyticsService, encryptSecret, isAgentEmailEnabled } from '@novu/application-generic';
 import {
   type AgentEntity,
   AgentIntegrationRepository,
@@ -188,7 +188,7 @@ export class AddAgentIntegration {
   }
 
   private async enforceEmailTier(organizationId: string): Promise<void> {
-    if (!isAgentSharedInboxEnabled()) {
+    if (!isAgentEmailEnabled()) {
       throw new ForbiddenException('Agent Novu Email is not available in this deployment.');
     }
 

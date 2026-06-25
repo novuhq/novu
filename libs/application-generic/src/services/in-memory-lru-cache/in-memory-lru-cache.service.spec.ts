@@ -249,6 +249,144 @@ describe('InMemoryLRUCacheService', () => {
     });
   });
 
+  describe('getMany', () => {
+    afterEach(() => {
+      service.invalidateAll(InMemoryLRUCacheStore.WORKFLOW_PREFERENCES);
+    });
+
+    const buildFetchMissing = () =>
+      jest.fn(async (missingKeys: string[]) => {
+        const fetched = new Map<string, any>();
+        for (const key of missingKeys) {
+          fetched.set(key, [{ id: `resource-${key}` }, { id: `user-${key}` }]);
+        }
+
+        return fetched;
+      });
+
+    it('returns an empty map without fetching when given no keys', async () => {
+      const fetchMissing = buildFetchMissing();
+
+      const result = await service.getMany(InMemoryLRUCacheStore.WORKFLOW_PREFERENCES, [], fetchMissing, {
+        environmentId: 'env1',
+      });
+
+      expect(result.size).toBe(0);
+      expect(fetchMissing).not.toHaveBeenCalled();
+    });
+
+    it('fetches all missing keys in a single batch call and caches them', async () => {
+      featureFlagsService.getFlag.mockResolvedValue(true);
+      const fetchMissing = buildFetchMissing();
+
+      const result = await service.getMany(
+        InMemoryLRUCacheStore.WORKFLOW_PREFERENCES,
+        ['env1:wf_1', 'env1:wf_2'],
+        fetchMissing,
+        { environmentId: 'env1', organizationId: 'org1' }
+      );
+
+      expect(fetchMissing).toHaveBeenCalledTimes(1);
+      expect(fetchMissing).toHaveBeenCalledWith(['env1:wf_1', 'env1:wf_2']);
+      expect(featureFlagsService.getFlag).toHaveBeenCalledWith(
+        expect.objectContaining({ key: FeatureFlagsKeysEnum.IS_LRU_CACHE_ENABLED })
+      );
+      expect(result.get('env1:wf_1')).toEqual([{ id: 'resource-env1:wf_1' }, { id: 'user-env1:wf_1' }]);
+      expect(result.get('env1:wf_2')).toEqual([{ id: 'resource-env1:wf_2' }, { id: 'user-env1:wf_2' }]);
+    });
+
+    it('serves cache hits without calling fetchMissing again', async () => {
+      featureFlagsService.getFlag.mockResolvedValue(true);
+      const fetchMissing = buildFetchMissing();
+
+      await service.getMany(InMemoryLRUCacheStore.WORKFLOW_PREFERENCES, ['env1:wf_1'], fetchMissing, {
+        environmentId: 'env1',
+      });
+      const result = await service.getMany(InMemoryLRUCacheStore.WORKFLOW_PREFERENCES, ['env1:wf_1'], fetchMissing, {
+        environmentId: 'env1',
+      });
+
+      expect(fetchMissing).toHaveBeenCalledTimes(1);
+      expect(result.get('env1:wf_1')).toEqual([{ id: 'resource-env1:wf_1' }, { id: 'user-env1:wf_1' }]);
+    });
+
+    it('only fetches the missing keys when the cache is partially warm', async () => {
+      featureFlagsService.getFlag.mockResolvedValue(true);
+      const fetchMissing = buildFetchMissing();
+
+      await service.getMany(InMemoryLRUCacheStore.WORKFLOW_PREFERENCES, ['env1:wf_1'], fetchMissing, {
+        environmentId: 'env1',
+      });
+      const result = await service.getMany(
+        InMemoryLRUCacheStore.WORKFLOW_PREFERENCES,
+        ['env1:wf_1', 'env1:wf_2'],
+        fetchMissing,
+        { environmentId: 'env1' }
+      );
+
+      expect(fetchMissing).toHaveBeenCalledTimes(2);
+      expect(fetchMissing).toHaveBeenNthCalledWith(2, ['env1:wf_2']);
+      expect(result.size).toBe(2);
+    });
+
+    it('coalesces concurrent callers for the same key into a single fetch', async () => {
+      featureFlagsService.getFlag.mockResolvedValue(true);
+      let fetchCount = 0;
+      const fetchMissing = jest.fn(
+        (missingKeys: string[]) =>
+          new Promise<Map<string, any>>((resolve) => {
+            setTimeout(() => {
+              fetchCount++;
+              const fetched = new Map<string, any>();
+              for (const key of missingKeys) {
+                fetched.set(key, [{ id: `resource-${fetchCount}` }, null]);
+              }
+              resolve(fetched);
+            }, 10);
+          })
+      );
+
+      const [result1, result2, result3] = await Promise.all([
+        service.getMany(InMemoryLRUCacheStore.WORKFLOW_PREFERENCES, ['env1:wf_1'], fetchMissing, {
+          environmentId: 'env1',
+        }),
+        service.getMany(InMemoryLRUCacheStore.WORKFLOW_PREFERENCES, ['env1:wf_1'], fetchMissing, {
+          environmentId: 'env1',
+        }),
+        service.getMany(InMemoryLRUCacheStore.WORKFLOW_PREFERENCES, ['env1:wf_1'], fetchMissing, {
+          environmentId: 'env1',
+        }),
+      ]);
+
+      expect(fetchMissing).toHaveBeenCalledTimes(1);
+      expect(result1.get('env1:wf_1')).toEqual([{ id: 'resource-1' }, null]);
+      expect(result2.get('env1:wf_1')).toEqual([{ id: 'resource-1' }, null]);
+      expect(result3.get('env1:wf_1')).toEqual([{ id: 'resource-1' }, null]);
+    });
+
+    it('bypasses the cache and fetches every key when the feature flag is disabled', async () => {
+      featureFlagsService.getFlag.mockResolvedValue(false);
+      const fetchMissing = buildFetchMissing();
+
+      const result = await service.getMany(
+        InMemoryLRUCacheStore.WORKFLOW_PREFERENCES,
+        ['env1:wf_1', 'env1:wf_2'],
+        fetchMissing,
+        { environmentId: 'env1' }
+      );
+
+      expect(fetchMissing).toHaveBeenCalledTimes(1);
+      expect(fetchMissing).toHaveBeenCalledWith(['env1:wf_1', 'env1:wf_2']);
+      expect(result.size).toBe(2);
+
+      await service.getMany(InMemoryLRUCacheStore.WORKFLOW_PREFERENCES, ['env1:wf_1', 'env1:wf_2'], fetchMissing, {
+        environmentId: 'env1',
+      });
+
+      expect(fetchMissing).toHaveBeenCalledTimes(2);
+    });
+  });
+
   describe('getIfCached', () => {
     it('should return undefined for non-existent key', () => {
       const result = service.getIfCached(InMemoryLRUCacheStore.WORKFLOW, 'nonexistent');
