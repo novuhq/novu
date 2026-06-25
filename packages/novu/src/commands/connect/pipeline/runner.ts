@@ -1,3 +1,4 @@
+import { CLI_DEVICE_SESSION_NAME_NOVU_CONNECT } from '@novu/shared';
 import open from 'open';
 import { CONNECT_EVENTS } from '../analytics/events';
 import {
@@ -63,7 +64,7 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
     const auth = await resolveConnectAuth(options, {
       onStatus: (m) => ui.authStatus(m),
       onDashboardUrl: (u) => ui.authDashboardUrl(u),
-      name: 'novu-connect',
+      name: CLI_DEVICE_SESSION_NAME_NOVU_CONNECT,
       authDashboardUrl: options.connectDashboardUrl,
       onboardingSessionId,
       onAuthStarted: () => track(CONNECT_EVENTS.AUTH_STARTED, sessionProps),

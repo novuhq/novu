@@ -1,3 +1,4 @@
+import { CLI_DEVICE_SESSION_NAME_NOVU_CONNECT } from '@novu/shared';
 import { browserDeviceAuth } from '../../wizard/auth/device-auth';
 import { type ResolveAuthOptions, resolveAuth } from '../../wizard/auth/resolve-auth';
 import type { ResolvedAuth, WizardCommandOptions } from '../../wizard/types';
@@ -36,10 +37,9 @@ export async function resolveConnectAuth(
   options: ConnectCommandOptions,
   resolveOptions: ResolveAuthOptions = {}
 ): Promise<ResolvedConnectAuth> {
-  const cliFlagSecret = options.secretKey?.trim();
-  const envSecret = process.env.NOVU_SECRET_KEY?.trim();
-  const isInteractive = Boolean(process.stdin.isTTY && process.stdout.isTTY) && process.env.CI !== 'true';
   const wantsKeyless = Boolean(options.keyless);
+  const cliFlagSecret = options.secretKey?.trim();
+  const method = resolveConnectAuthMethod(options);
 
   if (cliFlagSecret && wantsKeyless) {
     throw new Error(
@@ -47,56 +47,64 @@ export async function resolveConnectAuth(
     );
   }
 
-  if (cliFlagSecret || (envSecret && !isInteractive && !wantsKeyless)) {
-    resolveOptions.onAuthStarted?.();
-    const auth = await resolveAuth(toWizardAuthOptions(options), resolveOptions);
+  switch (method) {
+    case 'secret-key-flag':
+    case 'secret-key-env': {
+      resolveOptions.onAuthStarted?.();
+      const auth = await resolveAuth(toWizardAuthOptions(options), resolveOptions);
 
-    return { ...auth, isKeyless: false };
-  }
+      return { ...auth, isKeyless: false };
+    }
+    case 'keyless': {
+      resolveOptions.onStatus?.('Setting up a temporary keyless workspace…');
+      resolveOptions.onAuthStarted?.();
 
-  if (wantsKeyless) {
-    resolveOptions.onStatus?.('Setting up a temporary keyless workspace…');
-    resolveOptions.onAuthStarted?.();
+      try {
+        const session = await bootstrapKeylessSession(options.apiUrl);
 
-    try {
-      const session = await bootstrapKeylessSession(options.apiUrl);
+        return {
+          secretKey: '',
+          environmentId: '',
+          environmentSlug: null,
+          environmentName: 'Keyless',
+          organizationId: null,
+          user: null,
+          apiUrl: options.apiUrl,
+          dashboardUrl: options.dashboardUrl,
+          region: options.region,
+          source: 'keyless',
+          isKeyless: true,
+          keylessApplicationIdentifier: session.applicationIdentifier,
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        resolveOptions.onAuthFailed?.(message);
+        throw error;
+      }
+    }
+    case 'dashboard-oauth': {
+      resolveOptions.onStatus?.('Authorizing via the Novu Dashboard…');
 
-      return {
-        secretKey: '',
-        environmentId: '',
-        environmentSlug: null,
-        environmentName: 'Keyless',
-        organizationId: null,
-        user: null,
+      const auth = await browserDeviceAuth({
         apiUrl: options.apiUrl,
-        dashboardUrl: options.dashboardUrl,
+        dashboardUrl: resolveOptions.authDashboardUrl ?? options.connectDashboardUrl,
         region: options.region,
-        source: 'keyless',
-        isKeyless: true,
-        keylessApplicationIdentifier: session.applicationIdentifier,
-      };
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      resolveOptions.onAuthFailed?.(message);
-      throw error;
+        onStatus: resolveOptions.onStatus,
+        onDashboardUrl: resolveOptions.onDashboardUrl,
+        name: resolveOptions.name ?? CLI_DEVICE_SESSION_NAME_NOVU_CONNECT,
+        onboardingSessionId: resolveOptions.onboardingSessionId,
+        onAuthStarted: resolveOptions.onAuthStarted,
+        onAuthFailed: resolveOptions.onAuthFailed,
+      });
+
+      return { ...auth, isKeyless: false };
+    }
+    default: {
+      const _exhaustive: never = method;
+
+      return _exhaustive;
     }
   }
-
-  resolveOptions.onStatus?.('Authorizing via the Novu Dashboard…');
-
-  const auth = await browserDeviceAuth({
-    apiUrl: options.apiUrl,
-    dashboardUrl: resolveOptions.authDashboardUrl ?? options.connectDashboardUrl,
-    region: options.region,
-    onStatus: resolveOptions.onStatus,
-    onDashboardUrl: resolveOptions.onDashboardUrl,
-    name: resolveOptions.name ?? 'novu-connect',
-    onboardingSessionId: resolveOptions.onboardingSessionId,
-    onAuthStarted: resolveOptions.onAuthStarted,
-    onAuthFailed: resolveOptions.onAuthFailed,
-  });
-
-  return { ...auth, isKeyless: false };
 }
 
 function toWizardAuthOptions(options: ConnectCommandOptions): WizardCommandOptions {

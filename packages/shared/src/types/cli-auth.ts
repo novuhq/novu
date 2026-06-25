@@ -7,6 +7,31 @@ export const CLI_DEVICE_SESSION_CONNECT_TTL_SECONDS = 30 * 60;
 /** Hard cap on how long the CLI will poll for connect auth (sliding polls included). */
 export const CLI_DEVICE_SESSION_CONNECT_MAX_POLL_SECONDS = 60 * 60;
 
+/** CLI surface identifier for `novu connect` device-auth sessions. */
+export const CLI_DEVICE_SESSION_NAME_NOVU_CONNECT = 'novu-connect';
+
+export type CliDeviceSessionConfig = {
+  ttlSeconds: number;
+  slideTtlOnPoll: boolean;
+  maxPollSeconds: number;
+};
+
+export function resolveCliDeviceSessionConfig(name?: string): CliDeviceSessionConfig {
+  if (name === CLI_DEVICE_SESSION_NAME_NOVU_CONNECT) {
+    return {
+      ttlSeconds: CLI_DEVICE_SESSION_CONNECT_TTL_SECONDS,
+      slideTtlOnPoll: true,
+      maxPollSeconds: CLI_DEVICE_SESSION_CONNECT_MAX_POLL_SECONDS,
+    };
+  }
+
+  return {
+    ttlSeconds: CLI_DEVICE_SESSION_DEFAULT_TTL_SECONDS,
+    slideTtlOnPoll: false,
+    maxPollSeconds: 0,
+  };
+}
+
 export type CliDeviceSessionUser = {
   id: string;
   email?: string | null;

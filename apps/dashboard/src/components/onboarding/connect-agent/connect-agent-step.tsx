@@ -771,6 +771,12 @@ export function ConnectAgentStep({
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
+    if (!connectorId || !runtime) {
+      showErrorToast('Select where your agent runs before continuing.', 'Connect agent');
+
+      return;
+    }
+
     const isPromptGenerationMode = useAiGeneration && generationMode === 'prompt';
 
     let generated: GeneratedManagedAgent | null = null;

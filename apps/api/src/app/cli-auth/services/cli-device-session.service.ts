@@ -1,14 +1,14 @@
 import { randomBytes } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
+import { CacheService, PinoLogger } from '@novu/application-generic';
 import {
   CLI_DEVICE_SESSION_CONNECT_MAX_POLL_SECONDS,
-  CLI_DEVICE_SESSION_CONNECT_TTL_SECONDS,
   CLI_DEVICE_SESSION_DEFAULT_TTL_SECONDS,
   type CliDeviceSessionPollResponse,
   type CliDeviceSessionUser,
   type CreateCliDeviceSessionResponse,
+  resolveCliDeviceSessionConfig,
 } from '@novu/shared';
-import { CacheService, PinoLogger } from '@novu/application-generic';
 
 const CLI_DEVICE_SESSION_POLL_INTERVAL_SECONDS = 2;
 
@@ -57,21 +57,22 @@ if not ok then
   redis.call('del', KEYS[1])
   return 'CORRUPT'
 end
+local defaultTtl = tonumber(ARGV[1])
+local maxLifetime = tonumber(ARGV[2])
+local now = tonumber(ARGV[3])
 if payload.status == 'pending' then
+  local sessionTtl = tonumber(payload.sessionTtlSeconds) or defaultTtl
   if payload.slideTtlOnPoll then
-    local ttl = tonumber(ARGV[1])
-    local maxLifetime = tonumber(ARGV[2])
-    local now = tonumber(ARGV[3])
     local createdAt = tonumber(payload.createdAtEpoch) or 0
     if maxLifetime > 0 and createdAt > 0 and (now - createdAt) >= maxLifetime then
       redis.call('del', KEYS[1])
       return 'EXPIRED'
     end
-    if ttl and ttl > 0 then
-      redis.call('expire', KEYS[1], ttl)
+    if sessionTtl and sessionTtl > 0 then
+      redis.call('expire', KEYS[1], sessionTtl)
     end
   end
-  return 'PENDING'
+  return 'PENDING:' .. tostring(sessionTtl)
 end
 if payload.status == 'approved' and payload.apiKey and payload.environmentId then
   redis.call('del', KEYS[1])
@@ -92,7 +93,7 @@ export class CliDeviceSessionService {
 
   async create(params: { name?: string }): Promise<CreateCliDeviceSessionResponse> {
     const deviceCode = randomBytes(24).toString('base64url');
-    const sessionConfig = resolveSessionConfig(params.name);
+    const sessionConfig = resolveCliDeviceSessionConfig(params.name);
     const record: CliDeviceSessionRecord = {
       status: 'pending',
       name: params.name,
@@ -125,27 +126,27 @@ export class CliDeviceSessionService {
     }
 
     const key = this.cacheKey(deviceCode);
-    const existingRaw = await this.cacheService.get(key);
-    const existing = existingRaw ? this.parseRecord(existingRaw) : null;
 
-    if (!existing) {
-      return { status: 'expired' };
-    }
-
-    const pollResult = await this.cacheService.eval<string>(POLL_DEVICE_SESSION_SCRIPT, [key], [
-      String(existing.sessionTtlSeconds),
-      String(existing.slideTtlOnPoll ? CLI_DEVICE_SESSION_CONNECT_MAX_POLL_SECONDS : 0),
-      String(Math.floor(Date.now() / 1000)),
-    ]);
+    const pollResult = await this.cacheService.eval<string>(
+      POLL_DEVICE_SESSION_SCRIPT,
+      [key],
+      [
+        String(CLI_DEVICE_SESSION_DEFAULT_TTL_SECONDS),
+        String(CLI_DEVICE_SESSION_CONNECT_MAX_POLL_SECONDS),
+        String(Math.floor(Date.now() / 1000)),
+      ]
+    );
 
     if (!pollResult) {
       return { status: 'expired' };
     }
 
-    if (pollResult === 'PENDING') {
+    if (pollResult.startsWith('PENDING:')) {
+      const expiresIn = Number(pollResult.slice('PENDING:'.length)) || CLI_DEVICE_SESSION_DEFAULT_TTL_SECONDS;
+
       return {
         status: 'pending',
-        expiresIn: existing.sessionTtlSeconds,
+        expiresIn,
         interval: CLI_DEVICE_SESSION_POLL_INTERVAL_SECONDS,
       };
     }
@@ -218,13 +219,31 @@ export class CliDeviceSessionService {
 
   private parseRecord(raw: string): CliDeviceSessionRecord | null {
     try {
-      const parsed = JSON.parse(raw) as CliDeviceSessionRecord;
+      const parsed = JSON.parse(raw) as Partial<CliDeviceSessionRecord>;
 
       if (!parsed?.status || !parsed?.createdAt) {
         return null;
       }
 
-      return parsed;
+      const sessionConfig = resolveCliDeviceSessionConfig(parsed.name);
+      const createdAtEpoch = parsed.createdAtEpoch ?? Math.floor(new Date(parsed.createdAt).getTime() / 1000);
+
+      return {
+        status: parsed.status,
+        name: parsed.name,
+        createdAt: parsed.createdAt,
+        createdAtEpoch,
+        sessionTtlSeconds: parsed.sessionTtlSeconds ?? sessionConfig.ttlSeconds,
+        slideTtlOnPoll: parsed.slideTtlOnPoll ?? sessionConfig.slideTtlOnPoll,
+        approvedAt: parsed.approvedAt,
+        apiKey: parsed.apiKey,
+        environmentId: parsed.environmentId,
+        environmentSlug: parsed.environmentSlug,
+        environmentName: parsed.environmentName,
+        organizationId: parsed.organizationId,
+        user: parsed.user,
+        approvedByUserId: parsed.approvedByUserId,
+      };
     } catch {
       return null;
     }
@@ -233,21 +252,4 @@ export class CliDeviceSessionService {
   private cacheKey(deviceCode: string): string {
     return `${CACHE_KEY_PREFIX}${deviceCode}`;
   }
-}
-
-function resolveSessionConfig(name?: string): {
-  ttlSeconds: number;
-  slideTtlOnPoll: boolean;
-} {
-  if (name === 'novu-connect') {
-    return {
-      ttlSeconds: CLI_DEVICE_SESSION_CONNECT_TTL_SECONDS,
-      slideTtlOnPoll: true,
-    };
-  }
-
-  return {
-    ttlSeconds: CLI_DEVICE_SESSION_DEFAULT_TTL_SECONDS,
-    slideTtlOnPoll: false,
-  };
 }

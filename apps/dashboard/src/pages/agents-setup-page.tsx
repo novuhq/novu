@@ -363,27 +363,6 @@ export function AgentsSetupPage() {
         </div>
       ) : (
         <>
-          {/* Pre-built prompt tip: only relevant while the user is authoring the agent brain. It
-           * collapses away once the agent is created and the page morphs into the agent preview.
-           * Temporarily hidden — resurface later.
-          <AnimatePresence initial={false}>
-            {!createdAgent ? (
-              <motion.div
-                key="prebuilt-prompt-banner"
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-                style={{ overflow: 'hidden' }}
-              >
-                <div className="mt-6">
-                  <PrebuiltPromptBanner />
-                </div>
-              </motion.div>
-            ) : null}
-          </AnimatePresence>
-           */}
-
           {/*
            * The user stays on one screen. Step 1 crossfades the brain form into the created-agent
            * preview card; step 2 (channels) crossfades from the dimmed/disabled preview into the live,

@@ -192,17 +192,10 @@ export function CopySlackMessageButton({ agentName }: { agentName: string }) {
 }
 
 function EmailTestActions({ agentName, inboundAddress }: { agentName: string; inboundAddress: string }) {
-  const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mailtoUrl = buildTestEmailMailto(agentName, inboundAddress);
 
-  useEffect(() => {
-    return () => {
-      if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current);
-    };
-  }, []);
-
   return (
-    <div className="flex flex-wrap items-center gap-3 mb-5">
+    <div className="flex flex-wrap items-center gap-3">
       <a
         href={mailtoUrl}
         className="text-text-sub hover:text-text-strong inline-flex items-center gap-1 transition-colors"
@@ -210,6 +203,35 @@ function EmailTestActions({ agentName, inboundAddress }: { agentName: string; in
         <RiMailSendLine className="size-4" />
         <span className="text-label-xs font-medium">Open in email client</span>
       </a>
+    </div>
+  );
+}
+
+function AgentSendStepExtraContent({
+  providerId,
+  agentName,
+  sharedInboundAddress,
+  bridgeConnected,
+  onAddProvider,
+}: {
+  providerId?: string;
+  agentName: string;
+  sharedInboundAddress?: string;
+  bridgeConnected: boolean;
+  onAddProvider?: () => void;
+}) {
+  const isEmailSendStep = providerId === EmailProviderIdEnum.NovuAgent && Boolean(sharedInboundAddress);
+  const sendActions = renderProviderSendActions(providerId, agentName, sharedInboundAddress);
+
+  return (
+    <div className="flex w-full flex-col gap-4">
+      {isEmailSendStep && sharedInboundAddress ? (
+        <>
+          <SharedInboundAddressField sharedInboundAddress={sharedInboundAddress} />
+          {sendActions}
+        </>
+      ) : null}
+      <BridgeConnectionStatus connected={bridgeConnected} onAddProvider={onAddProvider} inline />
     </div>
   );
 }
@@ -373,7 +395,6 @@ export function AgentCodeSetupSection({
   );
 
   const isEmailSendStep = providerId === EmailProviderIdEnum.NovuAgent && Boolean(sharedInboundAddress);
-  const sendActions = renderProviderSendActions(providerId, agent.name, sharedInboundAddress);
 
   return (
     <>
@@ -433,18 +454,19 @@ export function AgentCodeSetupSection({
         title={getProviderSendTitle(providerId)}
         description={getProviderSendDescription(providerId, agent.name)}
         extraContent={
-          <div className="flex w-full flex-col gap-4">
-            {isEmailSendStep && sharedInboundAddress ? (
-              <>
-                {sendActions}
-
-                <SharedInboundAddressField sharedInboundAddress={sharedInboundAddress} />
-              </>
-            ) : null}
-            <BridgeConnectionStatus connected={bridgeConnected} onAddProvider={onAddProvider} inline />
-          </div>
+          <AgentSendStepExtraContent
+            providerId={providerId}
+            agentName={agent.name}
+            sharedInboundAddress={sharedInboundAddress}
+            bridgeConnected={bridgeConnected}
+            onAddProvider={onAddProvider}
+          />
         }
-        rightContent={isEmailSendStep ? undefined : sendActions}
+        rightContent={
+          isEmailSendStep
+            ? undefined
+            : renderProviderSendActions(providerId, agent.name, sharedInboundAddress)
+        }
       />
     </>
   );
