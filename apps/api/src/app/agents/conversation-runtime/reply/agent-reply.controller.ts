@@ -18,7 +18,7 @@ export class AgentReplyController {
   @HttpCode(HttpStatus.OK)
   @RequireAuthentication()
   @ExternalApiAccessible()
-  async handleAgentReply(
+  async handleAgentReplyHandler(
     @UserSession() user: UserSessionData,
     @Param('agentId') agentId: string,
     @Body() body: AgentReplyPayloadDto
