@@ -1,5 +1,4 @@
 import type { Emoji } from 'chat';
-import { isJSX, toCardElement } from 'chat/jsx-runtime';
 import { AgentDeliveryError } from './agent.errors';
 import type {
   AddReactionPayload,
@@ -189,6 +188,8 @@ async function serializeContent(content: MessageContent, files?: FileRef[]): Pro
   if (typeof content === 'string') {
     return validFiles ? { markdown: content, files: validFiles } : { markdown: content };
   }
+
+  const { isJSX, toCardElement } = await import('chat/jsx-runtime');
 
   if (isJSX(content)) {
     const card = toCardElement(content);
