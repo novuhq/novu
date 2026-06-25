@@ -1,4 +1,4 @@
-import { agent } from '../resources/agent/agent.resource';
+import { agent as frameworkAgent } from '../resources/agent/agent.resource';
 import type { Agent } from '../resources/agent/agent.types';
 import { deliverResult, isAiSdkResult } from './reply-mapper';
 import type { AiSdkAgentHandlers } from './types';
@@ -8,16 +8,16 @@ type AiSdkMessageHandler = AiSdkAgentHandlers['onMessage'];
 function normalize(id: string, handlers: AiSdkMessageHandler | AiSdkAgentHandlers): AiSdkAgentHandlers {
   const normalized = typeof handlers === 'function' ? { onMessage: handlers } : handlers;
   if (typeof normalized.onMessage !== 'function') {
-    throw new Error(`aiSdkAgent('${id}') requires an onMessage handler`);
+    throw new Error(`agent('${id}') requires an onMessage handler`);
   }
 
   return normalized;
 }
 
-export function aiSdkAgent(id: string, handlers: AiSdkMessageHandler | AiSdkAgentHandlers): Agent {
+export function agent(id: string, handlers: AiSdkMessageHandler | AiSdkAgentHandlers): Agent {
   const h = normalize(id, handlers);
 
-  return agent(id, {
+  return frameworkAgent(id, {
     onMessage: async (message, ctx) => {
       const result = await h.onMessage(message, ctx);
 
