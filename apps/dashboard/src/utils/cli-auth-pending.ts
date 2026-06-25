@@ -117,8 +117,7 @@ export function readPendingCliAuth(): PendingCliAuth | null {
     return {
       deviceCode: parsed.deviceCode,
       name: typeof parsed.name === 'string' ? parsed.name : null,
-      onboardingSessionId:
-        typeof parsed.onboardingSessionId === 'string' ? parsed.onboardingSessionId : null,
+      onboardingSessionId: typeof parsed.onboardingSessionId === 'string' ? parsed.onboardingSessionId : null,
     };
   } catch {
     return null;
