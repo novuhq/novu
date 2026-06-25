@@ -1,0 +1,50 @@
+---
+title: 'Laravel'
+description: 'Connect a Laravel application to Novu'
+icon: "code"
+---
+
+<Warning>
+  This SDK is community maintained. Feel free to contribute on our [GitHub
+  repository](https://github.com/novuhq/novu-laravel).
+</Warning>
+
+Novu's Laravel SDK provides simple, yet comprehensive notification management, and delivery capabilities through multiple channels that you can implement using code that integrates seamlessly with your Laravel application.
+
+[Explore the source code on GitHub](https://github.com/novuhq/novu-laravel)
+
+## Installation
+
+```php
+composer require novu/novu-laravel
+```
+
+<Note>
+   If you're ready to start integrating in your Laravel app, jump straight to our [Laravel
+  quickstart.]()
+</Note>
+
+## Usage
+
+```php
+use Novu\Laravel\Facades\Novu;
+
+$response = Novu::triggerEvent([
+    'name' => '<WORKFLOW_TRIGGER_IDENTIFIER_FROM_DASHBOARD>',
+    'payload' => ['customVariables' => 'Hello'],
+    'to' => [
+        'subscriberId' => '<SUBSCRIBER_ID_FROM_DASHBOARD>',
+        'phone' => '07983887777'
+    ]
+])->toArray();
+
+// or you can use the novu() helper function like so:
+novu()->triggerEvent([
+    'name' => '<WORKFLOW_TRIGGER_IDENTIFIER_FROM_DASHBOARD>',
+    'payload' => ['customVariables' => 'Hello'],
+    'to' => [
+        'subscriberId' => '<SUBSCRIBER_ID_FROM_DASHBOARD>',
+        'phone' => '07983887777'
+    ]
+])->toArray();
+```

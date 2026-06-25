@@ -1,0 +1,275 @@
+---
+title: 'Run Novu in local machine'
+description: 'Prerequisites and steps to run Novu in local machine. Learn how to set up Novu on your local environment for testing and development.'
+---
+
+
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/novuhq/novu)
+
+## Requirements
+
+- Node.js version v20.8.1
+- MongoDB
+- Redis
+- **(Optional)** pnpm - Needed if you want to install new packages
+- **(Optional)** localstack (required only in S3 related modules)
+
+<Note>
+  We recommend having at least 8GB of RAM to run Novu on a local machine as Novu has multiple
+  services running together with external services like redis, mongodb etc.
+</Note>
+
+## Setup the project
+
+After installing the required services on your machine, you can clone and set up your forked version of the project:
+
+1.  Clone the repository
+
+<Tabs>
+  <Tab title="Novu Org">
+```shell
+git clone https://github.com/novuhq/novu.git
+```
+  </Tab>
+  <Tab title="Forked Repo">
+```shell
+git clone https://github.com/{YOUR_GITHUB_USER_NAME}/novu.git
+```
+  </Tab>
+</Tabs>
+
+2.  Install all dependencies
+
+```shell
+cd novu && npm run setup:project
+```
+
+3. Run the project
+
+```shell
+npm run start
+```
+
+The `npm run start` will start the Jarvis CLI tool which allows you to run the whole project with ease. If you only want to run parts of the platform, you can use the following run commands from the root project:
+
+- **start:dev** - Synonym to `npm run start`
+- **start:dashboard** - Only starts the dashboard management platform
+- **start:ws** - Only starts the WebSocket service for notification center updates
+- **start:widget** - Starts the widget wrapper project that hosts the notification center inside an iframe
+- **start:api** - Runs the API in watch mode
+- **start:worker** - Runs the worker application in watch mode
+- **start:dal** - Runs the Data Access Layer package in watch mode
+- **start:shared** - Starts the watch mode for the shared client and API library
+- **start:notification-center** - Runs and builds the React package for the Novu notification center
+
+## Set up your environment variables
+
+If you have used Jarvis CLI tool from the previous step you don't need to setup the env variables as Jarvis will do that on the first run if setup wasn't done before.
+
+The command `npm run setup:project` creates default environment variables that are required to run Novu in a development environment. However, if you want to test certain parts of Novu or run it in production mode, you need to change some of them. These are all the available environment variables:
+
+<AccordionGroup>
+  <Accordion title="API Backend">
+    - `NODE_ENV` (default: local)The environment of the app. Possible values are: dev, test, production, ci, local
+    - `S3_LOCAL_STACK`The AWS endpoint for the S3 Bucket required for storing various media
+    - `S3_BUCKET_NAME`The name of the S3 Bucket
+    - `S3_REGION`The AWS region of the S3 Bucket
+    - `PORT`The port on which the API backend should listen on
+    - `FRONT_BASE_URL`The base url on which your frontend is accessible for the user. (e.g. dashboard.novu.co)
+    - `DISABLE_USER_REGISTRATION` (default: false)If users should not be able to create new accounts. Possible values are: true, false
+    - `REDIS_HOST`The domain / IP of your redis instance
+    - `REDIS_PORT`The port of your redis instance
+    - `REDIS_PASSWORD`Optional password of your redis instance
+    - `REDIS_DB_INDEX`The Redis database index
+    - `REDIS_CACHE_SERVICE_HOST`The domain / IP of your redis instance for caching
+    - `REDIS_CACHE_SERVICE_PORT`The port of your redis instance for caching
+    - `REDIS_CACHE_DB_INDEX`The Redis cache database index
+    - `REDIS_CACHE_TTL`The Redis cache ttl
+    - `REDIS_CACHE_PASSWORD`The Redis cache password
+    - `REDIS_CACHE_CONNECTION_TIMEOUT`The Redis cache connection timeout
+    - `REDIS_CACHE_KEEP_ALIVE`The Redis cache TCP keep alive on the socket timeout
+    - `REDIS_CACHE_FAMILY`The Redis cache IP stack version
+    - `REDIS_CACHE_KEY_PREFIX`The Redis cache prefix prepend to all keys
+    - `REDIS_CACHE_SERVICE_TLS`The Redis cache TLS connection support
+    - `IN_MEMORY_CLUSTER_MODE_ENABLED`The flag that enables the cluster mode. It might be Redis or ElastiCache cluster, depending on the env variables set for either service.
+    - `ELASTICACHE_CLUSTER_SERVICE_HOST`ElastiCache cluster host
+    - `ELASTICACHE_CLUSTER_SERVICE_PORT`ElastiCache cluster port
+    - `REDIS_CLUSTER_SERVICE_HOST`Redis cluster host
+    - `REDIS_CLUSTER_SERVICE_PORTS`Redis cluster ports
+    - `REDIS_CLUSTER_DB_INDEX`Redis cluster database index
+    - `REDIS_CLUSTER_TTL`Redis cluster ttl
+    - `REDIS_CLUSTER_PASSWORD`Redis cluster password
+    - `REDIS_CLUSTER_CONNECTION_TIMEOUT`Redis cluster connection timeout
+    - `REDIS_CLUSTER_KEEP_ALIVE`Redis cluster TCP keep alive on the socket timeout
+    - `REDIS_CLUSTER_FAMILY`Redis cluster IP stack version
+    - `REDIS_CLUSTER_KEY_PREFIX`Redis cluster prefix prepend to all keys
+    - `JWT_SECRET`The secret keybase which is used to encrypt / verify the tokens issued for authentication
+    - `SENDGRID_API_KEY`The api key of the Sendgrid account used to send various emails
+    - `MONGO_URL`The URL of your MongoDB instance
+    - `MONGO_MAX_POOL_SIZE`The max pool size of the MongoDB connection
+    - `NOVU_SECRET_KEY`The api key of dashboard.novu.co used to send various emails
+    - `SENTRY_DSN`The DSN of sentry.io used to report errors happening in production
+  </Accordion>
+
+<Accordion title="Worker">
+    - `NODE_ENV` (default: local) - The environment of the app. Possible values are: dev, test, production, ci, local
+    - `PORT` - The port on which the Worker app should listen on
+    - `STORE_ENCRYPTION_KEY` - The encryption key used to encrypt/decrypt provider credentials
+    - `MAX_NOVU_INTEGRATION_MAIL_REQUESTS` - The number of free emails that can be sent with the Novu email provider
+    - `NOVU_EMAIL_INTEGRATION_API_KEY` - The Novu email provider Sentry API key
+    - `STORAGE_SERVICE` - The storage service name: AWS, GCS, or AZURE
+    - `S3_LOCAL_STACK` - The LocalStack service URL
+    - `S3_BUCKET_NAME` - The name of the S3 Bucket
+    - `S3_REGION` - The AWS region of the S3 Bucket
+    - `GCS_BUCKET_NAME` - The name of the GCS Bucket
+    - `AZURE_ACCOUNT_NAME` - The name of the Azure account
+    - `AZURE_ACCOUNT_KEY` - The Azure account key
+    - `AZURE_HOST_NAME` - The Azure host name
+    - `AZURE_CONTAINER_NAME` - The Azure container name
+    - `AWS_ACCESS_KEY_ID` - The AWS access key
+    - `AWS_SECRET_ACCESS_KEY` - The AWS secret access key
+    - `REDIS_HOST` - The domain / IP of your redis instance
+    - `REDIS_PORT` - The port of your redis instance
+    - `REDIS_PASSWORD` - Optional password of your redis instance
+    - `REDIS_DB_INDEX` - The Redis database index
+    - `REDIS_CACHE_SERVICE_HOST` - The domain / IP of your redis instance for caching
+    - `REDIS_CACHE_SERVICE_PORT` - The port of your redis instance for caching
+    - `REDIS_CACHE_DB_INDEX` - The Redis cache database index
+    - `REDIS_CACHE_TTL` - The Redis cache ttl
+    - `REDIS_CACHE_PASSWORD` - The Redis cache password
+    - `REDIS_CACHE_CONNECTION_TIMEOUT` - The Redis cache connection timeout
+    - `REDIS_CACHE_KEEP_ALIVE` - The Redis cache TCP keep alive on the socket timeout
+    - `REDIS_CACHE_FAMILY` - The Redis cache IP stack version
+    - `REDIS_CACHE_KEY_PREFIX` - The Redis cache prefix prepend to all keys
+    - `REDIS_CACHE_SERVICE_TLS` - The Redis cache TLS connection support
+    - `IN_MEMORY_CLUSTER_MODE_ENABLED` - The flag that enables the cluster mode. It might be Redis or ElastiCache cluster, depending on the env variables set for either service.
+    - `ELASTICACHE_CLUSTER_SERVICE_HOST` - ElastiCache cluster host
+    - `ELASTICACHE_CLUSTER_SERVICE_PORT` - ElastiCache cluster port
+    - `REDIS_CLUSTER_SERVICE_HOST` - Redis cluster host
+    - `REDIS_CLUSTER_SERVICE_PORTS` - Redis cluster ports
+    - `REDIS_CLUSTER_DB_INDEX` - Redis cluster database index
+    - `REDIS_CLUSTER_TTL` - Redis cluster ttl
+    - `REDIS_CLUSTER_PASSWORD` - Redis cluster password
+    - `REDIS_CLUSTER_CONNECTION_TIMEOUT` - Redis cluster connection timeout
+    - `REDIS_CLUSTER_KEEP_ALIVE` - Redis cluster TCP keep alive on the socket timeout
+    - `REDIS_CLUSTER_FAMILY` - Redis cluster IP stack version
+    - `REDIS_CLUSTER_KEY_PREFIX` - Redis cluster prefix prepend to all keys
+    - `MONGO_URL` - The URL of your MongoDB instance
+    - `MONGO_MAX_POOL_SIZE` - The max pool size of the MongoDB connection
+    - `NEW_RELIC_APP_NAME` - The New Relic app name
+    - `NEW_RELIC_LICENSE_KEY` - The New Relic license key
+    - `SEGMENT_TOKEN` - The Segment Analytics token
+  </Accordion>
+
+  <Accordion title="Web Client">
+    - `REACT_APP_ENVIRONMENT` The environment of the app. Possible values are: dev, test, production, ci, local
+    - `REACT_APP_API_URL` The base url on which your API backend would be accessible
+    - `REACT_APP_WS_URL` The base url on which your WebSocket service would be accessible
+    - `SKIP_PREFLIGHT_CHECK` (default: true)Solves a problem with React App dependency tree.
+
+    <Warning>
+      When configuring different than default values for the API and WebSocket URLs, in order for the Web app to apply the changes done to the `./env` file, it is needed to run the script `pnpm envsetup`. This will generate a file called `env-config.js` that will be copied inside of the `public` folder of the application. Its purpose is to inject in the `window._env_`object the chosen environment variables that manage the URLs the Web client will call to access to the API backend and the WebSocket service.
+    </Warning>
+
+  </Accordion>
+
+  <Accordion title="Web Socket">
+    - `NODE_ENV` (default: local)The environment of the app. Possible values are: dev, test, production, ci, local
+    - `SENTRY_DSN`The DSN of sentry.io used to report errors happening in production
+    - `REDIS_HOST`The domain / IP of your redis instance
+    - `REDIS_PORT`The port of your redis instance
+    - `REDIS_DB_INDEX`The database index of your redis instance
+    - `REDIS_PASSWORD`Optional password of your redis instance
+    - `JWT_SECRET`The secret keybase which is used to encrypt / verify the tokens issued for authentication
+    - `MONGO_URL`The URL of your MongoDB instance
+    - `MONGO_MAX_POOL_SIZE`The max pool size of the MongoDB connection
+    - `PORT`The port on which the WebSocket service should listen on
+  </Accordion>
+</AccordionGroup>
+
+## Running tests
+
+After making changes, you can run the tests for the respective package using the appropriate CLI commands:
+
+## API
+
+To run the API tests, run the following command:
+
+```shell
+npm run start:worker:test
+npm run start:e2e:api
+```
+
+The tests create a new instance of Novu and a test db and run the tests against it. The test db is removed after all tests have finished running.
+
+## Dashboard
+
+To run the front end tests for the dashboard project using cypress you need to install localstack. The cypress tests perform E2E tests. To be able to perform E2E tests, you need to run the API service in the appropriate test environment.
+
+Run the services in test env with the following commands:
+
+```shell
+npm run start:dashboard
+npm run start:api:test
+npm run start:worker:test
+npm run start:ws:test
+```
+
+Run the cypress test suite with the following command:
+
+```shell
+cd apps/dashboard && npm run cypress:run
+```
+
+To open the cypress management window to debug tests, run the following commands:
+
+```shell
+cd apps/dashboard && npm run cypress:open
+```
+
+## Different ports used by the services
+
+- **3000** - API
+- **3002** - WebSocket Service
+- **3003** - Webhook Service
+- **3004** - Worker Service
+- **4200** - Dashboard Management UI
+- **4701** - Iframe embed for notification center
+- **4500** - Widget Service
+
+## Testing providers
+
+To run tests against the providers' folder, you can use the `npm run test:providers` command.
+
+## Local environment setup script (beta)
+
+As an option in our script runner `Jarvis` we have made available an option to run [this script](https://github.com/novuhq/novu/blob/2f2abdcaaad8a7735e0a2d488607c3276c8975fd/scripts/dev-environment-setup.sh) that will automatically try to install all the dependencies needed to be able to run Novu locally, as the previous step of installing the project dependencies through `pnpm install`. When executing it inside `Jarvis`, you will need to have previously installed by yourself `git` and `node`, as we mentioned earlier on this page.
+
+The script can be run on its own without any previous dependency installed, as it is prepared to execute the following tasks:
+
+- Check the running OS in the local machine (currently only MacOSx and [GNU Linux](https://en.wikipedia.org/wiki/GNU/Linux_naming_controversy)supported)
+- Install of OS dependencies (currently only MacOSx supported) -- MacOSx: It will execute the following tasks --- Will try to install or update [XCode](https://developer.apple.com/xcode/) (skippable step; though XCode installs `[git](https://git-scm.com/)` that is a required dependency for later) --- Will install [Rosetta](https://support.apple.com/en-gb/HT211861) for Apple CPUs --- Will set up some opinionated OS settings
+- Will check if `[git](https://git-scm.com/)` is installed and if not will abort the operation
+- Will make [ZSH](https://en.wikipedia.org/wiki/Z_shell) the default shell to be able to execute the next task
+- Will (opinionatedly) install [Oh My Zsh!](https://ohmyz.sh/) (skippable task)
+- Will (opinionatedly) install the [Homebrew](https://brew.sh/) package manager and will set up your local environment to execute it besides adding some casks
+- Will (opinionatedly) install [NVM](https://github.com/nvm-sh/nvm) as a Node.js version manager
+- Will install the required [Node.js](https://nodejs.org/en/) version to be able to [run Novu](https://github.com/novuhq/novu/blob/2f2abdcaaad8a7735e0a2d488607c3276c8975fd/package.json#L180)
+- Will install [PNPM](https://pnpm.io/) as a package manager, required dependency for some of the tasks inside Novu's scripts
+- Will install [Docker](https://www.docker.com/) as containerized application development tool
+- Will install required databases [MongoDB](https://www.mongodb.com/) (Community version) and [Redis](https://redis.io/) through Homebrew
+- Will install the [AWS CLI](https://aws.amazon.com/cli/) tool (not required to run Novu; it is a core maintainer used tool)
+- Will create a local development domain `local.novu.co` in your local machine
+- Will clone the Novu repository in your local machine (skippable step) to a selected folder `$HOME/Dev`
+
+<Warning>
+  This script has only been thoroughly tested in MacOSx. Little testing has been run in GNU Linux.
+</Warning>
+
+<Note>
+  This script is not bullet-proof and some of the tasks have intertwined dependencies with each
+  other. We have tried to make it as idempotent as possible but some loose knots will probably show
+  because of conflicts between versions of the different dependencies. Please report to us any
+  problem found and we will try to fix or assist though we do not have the resources to make it
+  idempotent in every potential system and potential combinations
+</Note>

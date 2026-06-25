@@ -1,0 +1,142 @@
+---
+title: "Reply"
+description: 'Send plain text, markdown, attachments, and interactive cards from agent handlers.'
+icon: "reply"
+---
+
+
+A reply sends a message back into the conversation. Agents can reply with plain text, markdown with files, or interactive cards, depending on provider capabilities.
+
+Interactive cards include buttons, dropdowns, links, and text inputs. When a user interacts with a card, the onAction handler fires with the action ID and selected value.
+
+Use replies when the agent needs to communicate something to the participant in the conversation.
+
+Replies are user-facing messages your agent sends back into the conversation. Use [signals](/agents/custom-code-agent/setup-your-agent/signals) when you need to update conversation state, trigger workflows, or resolve the thread without messaging the user.
+
+The public API is `ctx.reply(content, options?)`. You can also return a string or JSX card from a handler instead of calling `ctx.reply()` directly.
+
+## Reply types at a glance
+
+The following table summarizes the reply types your agent can send:
+
+| Type | Content | Attachments | User interaction |
+| --- | --- | --- | --- |
+| Plain text | String | Via `options.files` | None |
+| Markdown | String with markdown | Via `options.files` | None |
+| Interactive cards | `Card` and child components | Not on cards | Buttons, dropdowns, links, inputs trigger `onAction` |
+
+To change a message after you send it, see [Edit sent messages](/agents/custom-code-agent/setup-your-agent/edit-sent-messages).
+
+## Plain text
+
+Send a simple string reply with `ctx.reply()`:
+
+```typescript
+await ctx.reply('Hello! How can I help?');
+```
+
+## Markdown
+
+Send formatted text by passing a markdown string to `ctx.reply()`:
+
+```typescript
+await ctx.reply('**Report generated.** See the attached PDF.');
+```
+
+## Sending attachments
+
+Include files with string or markdown replies via the optional second argument.
+
+When sending attachments, keep these limits in mind:
+
+- Attachments are limited to 25 MB per file.
+- Files are only supported with string or markdown replies, not card replies.
+- Provide each file with exactly one of `url` or `data`.
+
+### File reference type
+
+Each file uses a `FileRef` object with the following shape:
+
+```tsx
+type FileRef = {
+  filename: string;
+  mimeType?: string;
+  data?: string | Uint8Array | ArrayBuffer | Blob;
+  url?: string;
+};
+```
+
+Use `url` for larger files. Novu fetches public HTTP(S) URLs server-side. Use `data` for small generated files in memory.
+
+The following examples show both approaches:
+
+```tsx
+await ctx.reply('Here is your report.', {
+  files: [{ filename: 'report.pdf', mimeType: 'application/pdf', url: reportUrl }],
+});
+
+const csv = new TextEncoder().encode('name,total\nNovu,42');
+await ctx.reply('CSV generated.', {
+  files: [{ filename: 'report.csv', mimeType: 'text/csv', data: csv }],
+});
+```
+
+## Interactive cards
+
+Cards are structured messages with buttons, dropdowns, links, and more. Build them with function calls or JSX.
+
+### Function call API
+
+The following example builds a card with the function call API:
+
+```tsx
+import {
+  Card, Button, CardText, Actions,
+  Select, SelectOption, Divider, CardLink,
+} from '@novu/framework';
+
+await ctx.reply(Card({ title: 'Order #1234', children: [
+  CardText('Your order is ready for pickup.'),
+  Divider(),
+  Actions([
+    Button({ id: 'ack', label: 'Acknowledge' }),
+    Button({ id: 'escalate', label: 'Escalate', style: 'danger' }),
+  ]),
+  CardLink({ url: 'https://example.com/order/1234', children: 'View details' }),
+] }));
+```
+
+### JSX API
+
+Configure `tsconfig.json` with `"jsxImportSource": "@novu/framework"`, then return JSX from a handler or pass it to `ctx.reply()`. For a full JSX card example with `Card`, `CardText`, `Actions`, and `Button`, see [Connect your first agent](/agents/custom-code-agent/connect-your-first-agent).
+
+When a user clicks a button or selects a dropdown value, `onAction` fires with `actionId` and `value`. See [Handle events](/agents/custom-code-agent/setup-your-agent/handle-events#onaction).
+
+### Available card components
+
+The following table lists the card components you can use in replies:
+
+| Component | Description |
+| --- | --- |
+| `Card` | Container with an optional `title` |
+| `CardText` | Text block inside a card |
+| `Button` | Interactive button; `id` maps to `actionId` in `onAction` |
+| `Actions` | Required wrapper around `Button` elements |
+| `Select` / `SelectOption` | Dropdown; triggers `onAction` with selected value |
+| `Divider` | Visual separator |
+| `CardLink` | Clickable link |
+| `TextInput` | Text input field |
+
+## Related
+
+<Columns cols={2}>
+  <Card icon="pencil" href="/agents/custom-code-agent/setup-your-agent/edit-sent-messages" title="Edit sent messages">
+    Update a message in place after sending it with `ReplyHandle`.
+  </Card>
+  <Card icon="signal" href="/agents/custom-code-agent/setup-your-agent/signals" title="Signals">
+    Metadata, workflow triggers, and conversation resolution.
+  </Card>
+  <Card icon="brain" href="/agents/custom-code-agent/connect-your-first-agent" title="Connect your first agent">
+    Walk through a full support-bot handler file.
+  </Card>
+</Columns>

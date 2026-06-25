@@ -1,0 +1,16 @@
+---
+title: 'Chat'
+description: 'Learn the process of configuring and using chat providers with Novu'
+---
+
+Novu brings chat notifications into your development workflow, giving you a unified way to manage messaging across platforms and apps. Whether you're working with tools like Slack or Microsoft Teams or apps like WhatsApp, Telegram, and Discord, Novu lets you integrate, manage, and scale chat notifications without unnecessary complexity.
+
+Learn more about the [Chat Channel](/platform/integrations/chat).
+
+```tsx
+await step.chat('chat', async () => {
+  return {
+    body: 'A new post has been created',
+  };
+});
+```

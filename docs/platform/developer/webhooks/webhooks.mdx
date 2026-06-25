@@ -1,0 +1,206 @@
+---
+title: 'Webhooks'
+description: "Learn how Novu webhooks work, including event types, payload schemas, signature verification, and endpoint configuration."
+---
+
+## The Intro
+
+Webhooks are how services notify each other of events.
+
+At their core they are just a POST request to a pre-determined endpoint.
+The endpoint can be whatever you want, and you can just add them from the UI.
+You normally use one endpoint per service, and that endpoint listens to all of the event types.
+
+For example, if you receive webhooks from Novu, you can structure your URL like: `https://www.example.com/novu/webhook/`.
+
+The way to indicate that a webhook has been processed is by returning a 2xx (status code 200-299) response to the webhook message within a reasonable time-frame (15s).
+
+It's also important to disable CSRF protection for this endpoint if the framework you use enables them by default.
+
+Another important aspect of handling webhooks is to verify the signature and timestamp when processing them.
+
+You can learn more about it in the signature verification section.
+
+## Events and event types
+
+The core value of webhooks is to notify users when events happen, so it's extremely important to understand what events are available and their payload schemas.
+
+Novu webhooks allow you to receive notifications when specific events occur in your Novu account. These events include workflow updates, subscriber changes, and message delivery status updates.
+
+### Supported event types
+
+Novu supports the following webhook event types:
+
+- **Workflow Events**: Events about workflow creation, updates, and deletions,
+- **Message Events**: Events about message delivery status changes
+- **Preference Events**: Events about subscriber preference changes
+
+Each event includes detailed information about the affected resource and the changes that occurred.
+
+#### Workflow Events
+
+- **workflow.created**: Triggered when a workflow is created
+- **workflow.updated**: Triggered when a workflow is updated
+- **workflow.deleted**: Triggered when a workflow is deleted
+- **workflow.published**: Triggered when a workflow is synced from dev to prod environment
+
+#### Message Events
+
+- **messages.archived**: Triggered when a message is archived.
+- **messages.unarchived**: Triggered when a message is unarchived.
+- **messages.read**: Triggered when a message is read.
+- **messages.unread**: Triggered when a message is unread.
+- **messages.seen**: Triggered when a message is seen.
+- **messages.snoozed**: Triggered when a message is snoozed.
+- **messages.unsnoozed**: Triggered when a message is unsnoozed.
+- **messages.sent**: Triggered when Novu sends the message to the delivery provider.
+- **messages.delivered**: Triggered when a message delivery provider acknowledged the message delivery to the end receiving client.
+- **messages.failed**: Triggered when Novu tried to send the message to the delivery provider and it got failed.
+
+#### Preference Events
+
+- **preference.updated**: Triggered when subscriber preference is updated.
+
+## How to add an endpoint
+
+To start listening to messages, you will need to configure your endpoints.
+
+1. Go to the [Webhooks](https://dashboard.novu.co/webhooks) page in the Novu dashboard.
+2. Click **Add Endpoint**.
+3. Enter the URL of your endpoint.
+4. Add description for this webhook endpoint.
+5. Select the event types you want to listen to.
+6. Optional: add advanced configuration for your endpoint.
+7. Click **Create**.
+
+If your endpoint isn't quite ready to start receiving events, you can use a service like [Webhook.site](https://webhook.site/) or [RequestBin](https://requestbin.com/) to have a unique URL generated for you.
+
+## How to test endpoints
+
+Once you've added an endpoint, you'll want to make sure it's working.
+
+The "Testing" tab lets you send test events to your endpoint.
+
+After sending an example event, you can view the message payload, all of the message attempts, and whether it succeeded or failed.
+
+## Verifying signatures
+
+Webhook signatures let you verify that webhook messages are actually sent by Novu and not a malicious actor.
+
+Verifying webhook signatures helps ensure payloads were sent by Novu and have not been tampered with. Here is an example using JavaScript:
+
+```javascript
+import { Webhook } from "svix";
+
+const secret = "YOUR_WEBHOOK_SECRET_KEY";
+
+// These were all sent from the server
+const headers = {
+  "webhook-id": "msg_p5jXN8AQM9LWM0D4loKWxJek",
+  "webhook-timestamp": "1614265330",
+  "webhook-signature": "v1,g0hM9SsE+OTPJTGt/tmIKtSyZlE3uFJELVlNIOLJ1OE=",
+};
+const payload = '{"test": 2432232314}';
+
+const wh = new Webhook(secret);
+// Throws on error, returns the verified content on success
+const verifiedPayload = wh.verify(payload, headers);
+```
+
+See the library documentation for more instructions and examples of how to verify signatures in other languages.
+
+## Retry schedule
+
+### Retries 
+
+We attempt to deliver each webhook message based on a retry schedule with exponential backoff.
+
+#### The schedule
+
+Each message is attempted based on the following schedule, where each period is started following the failure of the preceding attempt:
+
+- Immediately
+- 5 seconds
+- 5 minutes
+- 30 minutes
+- 2 hours
+- 5 hours
+- 10 hours
+- 10 hours (in addition to the previous)
+
+If an endpoint is removed or disabled, delivery attempts to the endpoint will be disabled as well.
+
+For example, an attempt that fails three times before eventually succeeding will be delivered roughly 35 minutes and 5 seconds following the first attempt.
+
+### Manual retries
+
+You can also use the application portal to manually retry each message at any time, or automatically retry ("Recover") all failed messages starting from a given date.
+
+## Troubleshooting & Failure Recovery
+
+### Common reasons why your webhook endpoint is failing
+
+There are some common reasons why your webhook endpoint is failing:
+
+- **Not using the raw payload body**
+
+This is the most common issue. When generating the signed content, we use the raw string body of the message payload.
+
+If you convert JSON payloads into strings using methods like stringify, different implementations may produce different string representations of the JSON object, which can lead to discrepancies when verifying the signature. It's crucial to verify the payload exactly as it was sent, byte-for-byte or string-for-string, to ensure accurate verification.
+
+- **Missing the secret key**
+
+From time to time we see people simply using the wrong secret key. Remember that keys are unique to endpoints.
+
+- **Sending the wrong response codes**
+
+When we receive a response with a 2xx status code, we interpret that as a successful delivery even if you indicate a failure in the response payload. Make sure to use the right response status codes so we know when messages are supposed to succeed vs fail.
+
+- **Responses timing out**
+
+We will consider any message that fails to send a response within 15 seconds a failed message. If your endpoint is also processing complicated workflows, it may timeout and result in failed messages.
+
+We suggest having your endpoint simply receive the message and add it to a queue to be processed asynchronously so you can respond promptly and avoid getting timed out.
+
+### Re-enable a disabled endpoint
+
+If all attempts to a specific endpoint fail for a period of 5 days, the endpoint will be disabled. To re-enable a disabled endpoint, go to the webhook dashboard, find the endpoint from the list and select "Enable Endpoint".
+
+### Recovering/Resending failed messages
+
+If your service has downtime or if your endpoint was misconfigured, you probably want to recover any messages that failed during the downtime.
+
+If you want to replay a single event, you can find the message from the UI and click the options menu next to any of the attempts.
+
+From there, click "resend" to have the same message send to your endpoint again.
+
+If you need to recover from a service outage and want to replay all the events since a given time, you can do so from the Endpoint page. On an endpoint's details page, click "Options > Recover Failed Messages".
+
+From there, you can choose a time window to recover from.
+
+For a more granular recovery - for example, if you know the exact timestamp that you want to recover from - you can click the options menu on any message from the endpoint page.
+
+From there, you can click "Replay..." and choose to "Replay all failed messages since this time."
+
+## FAQs
+
+### How do I secure my webhook endpoint?
+
+To secure your webhook endpoint, you should:
+
+1. Verify the webhook signature using the official verification library
+2. Use HTTPS for your endpoint URL
+3. Implement rate limiting to prevent abuse
+4. Keep your webhook secret secure and rotate it periodically
+
+### What happens if my endpoint is unavailable?
+
+If your endpoint is unavailable, Novu will retry sending the webhook according to the retry schedule. If all attempts fail for 5 days, the endpoint will be disabled and you'll need to manually re-enable it.
+
+### Can I filter webhooks by event type?
+
+Yes, when configuring your webhook endpoint, you can select specific event types to receive. This allows you to filter out events that aren't relevant to your use case.
+
+### How can I test webhooks locally?
+
+To test webhooks locally, you can use a service like ngrok or localtunnel to expose your local server to the internet. Alternatively, you can use webhook testing services like Webhook.site or RequestBin to inspect webhook payloads.

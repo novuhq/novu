@@ -1,0 +1,43 @@
+---
+title: "Edit sent messages"
+description: 'Update a message in place after sending it with ctx.reply() and ReplyHandle.'
+icon: "pencil"
+---
+
+
+`ctx.reply()` returns a `ReplyHandle` so that you can edit the message you just sent on the provider. This is useful when you post "Processing..." and replace it with the final text.
+
+That is not a [reply type](/agents/custom-code-agent/setup-your-agent/reply); it updates a message you already sent.
+
+## Basic edit
+
+The following example sends a placeholder message, does work, then updates the same message in place:
+
+```tsx
+const sentMessage = await ctx.reply('Processing...');
+// ... do some work ...
+await sentMessage.edit('Done! Here are your results.');
+```
+
+## Edit with attachments
+
+You can attach files when editing plain text or markdown content. The next example attaches a file when updating the message text:
+
+```tsx
+await sentMessage.edit('Updated report attached.', {
+ files: [{ filename: 'report.pdf', url: 'https://example.com/report.pdf' }],
+});
+```
+
+Edits update the existing platform message rather than posting a new one. Not every provider supports message editing. For which capabilities each provider supports, see [Agents and providers](/agents/get-started/agents-and-providers#provider-connections).
+
+## Related
+
+<Columns cols={2}>
+  <Card icon="layout-grid" href="/agents/custom-code-agent/setup-your-agent/reply" title="Reply">
+    Send plain text, markdown, attachments, and interactive cards.
+  </Card>
+  <Card icon="mouse-pointer-click" href="/agents/custom-code-agent/setup-your-agent/handle-events" title="Handle events">
+    Event handlers and the context object your agent receives on every turn.
+  </Card>
+</Columns>

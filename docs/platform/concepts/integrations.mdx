@@ -1,0 +1,81 @@
+---
+title: 'Integrations'
+description: 'Learn how Novu integrations connect you to third-party providers'
+icon: "blocks"
+---
+
+In Novu, integrations are configured connections to third-party services that deliver notifications across supported channels, which are email, SMS, push, and chat.
+
+The In-App channel is handled internally by Novu and does not require a third-party integration.
+
+Each integration connects Novu to a specific provider, which workflows use to deliver notifications over the related channel.
+
+## How integrations fit into the notification flow
+
+Workflows in Novu handle the logic of what message to send and when. Integrations handle how that message is delivered by routing the message through a specific provider.
+
+When a workflow step executes a channel-based action (such as sending an email), Novu:
+- Resolves the correct integration for the channel.
+- Applies any configuration, such as sender name or title overrides.
+- Hands off the message to the provider through the integration.
+
+If no active integration exists for the required channel, the workflow step fails, and no message will be delivered.
+
+## Providers vs integrations
+
+It’s helpful to distinguish between providers and integrations:
+- A provider is the third-party service responsible for sending messages (for example, Twilio, SendGrid, Slack).
+- An integration is your instance of that provider, configured with the necessary credentials and settings.
+
+You can have multiple integrations for the same provider, for example, using two different SendGrid accounts for staging and production environments. Novu allows you to manage these as separate, named integrations.
+
+Refer to this resource to see the full list of [providerIds used in Novu](https://github.com/novuhq/novu/blob/next/packages/framework/src/shared.ts#L103).
+
+<Note>
+  Novu also lets you use [Trigger Overrides](/platform/integrations/trigger-overrides) to modify the default behavior of a message during workflow trigger, such as overriding the notification title or content, or using a different integration than the primary integration. This works alongside integrations to fine-tune delivery behavior. 
+</Note>
+
+## Environment-scoped behavior
+
+Each integration is scoped to a specific environment—such as development, staging, or production. This means you must configure separate integrations for each environment, even if they point to the same provider.
+
+This separation ensures that test messages don’t accidentally go to production users, and different credentials or delivery settings can be safely isolated across environments.
+
+## Primary and active integrations
+
+Each environment can support multiple active integrations per channel, but only one can be marked as the primary integration for email and SMS channels. However, for push and chat channels, all active integrations are used in parallel to deliver messages. 
+
+The primary integration serves as the default route when a message is sent over that channel unless explicitly overridden. You can update which integration is marked as primary or deactivate an integration entirely.
+
+## Integration credentials
+
+Integrations require credentials to authenticate with third-party providers. These credentials are encrypted at rest and managed securely within Novu. 
+
+Alongside credentials, integrations may also define metadata, such as sender addresses or credentials, including API keys or tokens, as well as optional configuration settings depending on the provider.
+
+## Available integrations
+
+Novu supports a wide range of providers across different channels:
+
+<Columns cols={2}>
+  <Card
+    title="Email"
+    description="Configure email providers and settings"
+    href="/platform/integrations/email"
+  />
+  <Card
+    title="SMS"
+    description="Set up SMS messaging capabilities"
+    href="/platform/integrations/sms"
+  />
+  <Card
+    title="Push"
+    description="Enable push notification delivery"
+    href="/platform/integrations/push"
+  />
+  <Card
+    title="Chat"
+    description="Integrate with chat platforms"
+    href="/platform/integrations/chat"
+  />
+</Columns>

@@ -1,0 +1,67 @@
+---
+title: 'Client'
+description: 'Learn how to configure and use the Novu Framework Client for managing global settings'
+---
+
+The `Client` is an optional Class you can pass to the `serve` function to override some global settings.
+By default, we will inject a new instance of the `Client` class in your `serve` method with the following defaults:
+
+## Client Interface
+
+### secretKey
+
+- **Type**: `string`
+- **Default**: `process.env.NOVU_SECRET_KEY`
+- **Description**: Your Novu Secret Key, used to sign the HMAC header to guarantee the authenticity of our requests.
+
+### strictAuthentication
+
+- **Type**: `boolean`
+- **Default**: `process.env.NODE_ENV !== 'development'`
+- **Description**: This bypasses the HMAC signature verification, required for local development and testing against [Local Studio](/framework/studio).
+
+### verbose
+
+- **Type**: `boolean`
+- **Default**: `true` in development, `false` in production
+- **Description**: Enable verbose logging for workflow discovery and execution. When set to `false`, discovery and execution logs are suppressed.
+
+### logger
+
+- **Type**: `Logger`
+- **Default**: The global `console`
+- **Description**: A custom logger for all framework internal logging — workflow discovery, execution, and bridge error reporting. The interface uses `info`, `warn`, and `error` methods, so the global `console` and common structured loggers (pino, winston, and similar) work without an adapter. The `verbose` option controls whether discovery and execution logs are emitted; `logger` controls where all logs are written. Bridge errors (HTTP status >= 500) are always logged via this logger, regardless of `verbose`.
+
+## Environment Variables
+
+Unless specified in the `Client` constructor the `Client` class will look for the following environment variables:
+
+- `NOVU_SECRET_KEY` - Your Novu Secret Key
+- `NOVU_API_URL` - Defaults to `https://api.novu.co`. For EU customers, this should be set to `https://eu.api.novu.co`.
+
+## Development Environment
+
+When your service is running in development mode `process.env.NODE_ENV=development`, the following rules will auto apply:
+
+- `strictAuthentication` will be set to `false`.
+
+## Code Example
+
+```tsx
+import { Client as NovuFrameworkClient } from '@novu/framework';
+import { serve } from '@novu/framework/next';
+import { passwordResetWorkflow } from './workflows';
+
+export const { GET, POST, OPTIONS } = serve({
+  client: new NovuFrameworkClient({
+    secretKey: process.env.NOVU_SECRET_KEY,
+    strictAuthentication: false,
+    verbose: process.env.NODE_ENV === 'development',
+    logger: console,
+  }),
+  workflows: [
+    /* all workflows */
+    passwordResetWorkflow,
+  ],
+});
+```

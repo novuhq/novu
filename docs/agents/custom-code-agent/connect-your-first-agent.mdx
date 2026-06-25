@@ -1,0 +1,344 @@
+---
+title: "Connect your first agent"
+description: 'Build a Pipeliner support agent with handlers, cards, metadata, an LLM, and conversation resolution.'
+icon: "sparkles"
+---
+
+
+This is the fastest path from nothing to a working agent. You create the agent in Novu, scaffold a bridge app, and write the handler code that powers a small support bot, all in one sitting.
+
+The bot is for a fake product called Pipeliner. You add one piece at a time in `support-agent.tsx` until the bot greets users, routes by topic, answers with an LLM, and resolves the thread when the user is done.
+
+This page keeps each setup step to the minimum you need to get going. For the full reference on any step, follow the linked pages under [Set up your agent](/agents/custom-code-agent/setup-your-agent/overview).
+
+## What you're building
+
+In this tutorial, you build a Pipeliner support bot that:
+
+- Greets the user and asks whether their issue is a **Billing** question, a **Technical** issue, or **Something else**
+- Stores the user's choice and answers follow-up questions with an LLM
+- Closes the conversation when the user confirms the issue is resolved
+
+That flow covers `onMessage`, `onAction`, metadata, LLM replies, and `ctx.resolve()`.
+
+## Before you start
+
+You need:
+
+- A [Novu account](https://dashboard.novu.co).
+- Node.js 18+ installed.
+- A chat provider you can connect. This tutorial uses Slack.
+
+## Set up the project
+
+These three steps get you from an empty folder to a running agent. Each one links to a more detailed page if you want the full walkthrough.
+
+<Steps>
+
+<Step>
+### Create the agent and connect a provider
+
+In the Novu dashboard, open **Agents** and click **Create agent**. Set the **Identifier** to `support-agent`, since that value must match the agent id you use in code.
+
+On the guided setup page, open **Select provider**, choose **Slack**, and follow the prompts to create and install the Slack app. When it finishes, you get a welcome message from the agent in Slack.
+
+For the full provider flow (Slack tokens, install, permissions), see the [Quickstart](/agents/custom-code-agent/quickstart) and [Create an agent](/agents/custom-code-agent/setup-your-agent/create-an-agent).
+
+</Step>
+
+<Step>
+### Scaffold the bridge app
+
+The bridge app is the project that receives events from Novu and runs your handler code. Copy the pre-filled command from the agent setup page, or run:
+
+```bash
+npx novu@latest init -t agent \
+ --agent-identifier support-agent \
+ --secret-key <NOVU_SECRET_KEY> \
+ --api-url <NOVU_API_URL>
+```
+
+Run it in the directory where you want the project. The CLI generates a Next.js app with a starter agent. For details, see [Scaffold your project](/agents/custom-code-agent/setup-your-agent/scaffold-your-project).
+
+</Step>
+
+<Step>
+### Run it locally
+
+On the agent detail page, set the bridge to **Local**. Then, from the project directory, start the app:
+
+```bash
+npm run dev:novu
+```
+
+This starts your app, opens a dev tunnel, and registers the bridge URL with Novu. When it connects, you get another message from your agent in Slack. Leave this running, it hot-reloads as you edit the handler in the next section.
+
+</Step>
+
+</Steps>
+
+## Where the code goes
+
+The scaffold creates a Next.js bridge app. All tutorial code goes in `app/novu/agents/support-agent.tsx`:
+
+```text
+app/
+  api/novu/route.ts       # HTTP entry point (created by the scaffold; no edits in this tutorial)
+  novu/agents/
+    index.ts              # re-exports each agent
+    support-agent.tsx     # agent handlers you edit in this tutorial
+```
+
+The scaffold also adds `app/api/novu/route.ts`, which exposes your agents over HTTP. You do not need to change that file for this tutorial. Make sure `index.ts` re-exports your agent so the route picks it up; the scaffold wires this up for the starter agent already.
+
+Everything below happens inside `support-agent.tsx`.
+
+## Build the agent
+
+Follow the steps below to add handlers, cards, metadata, an LLM, and conversation resolution to `support-agent.tsx`. For the API reference behind each step, see [Handle events](/agents/custom-code-agent/setup-your-agent/handle-events), [Reply](/agents/custom-code-agent/setup-your-agent/reply), and [Signals](/agents/custom-code-agent/setup-your-agent/signals).
+
+<Steps>
+
+<Step>
+### Define the agent shell
+
+Start with the bare minimum: an `agent()` call with an id and an `onMessage` handler. The agent id (`support-agent`) must match the identifier you set in the Novu dashboard.
+
+Replace the contents of `support-agent.tsx` with the following echo handler:
+
+```tsx title="app/novu/agents/support-agent.tsx"
+/** @jsxImportSource @novu/framework */
+import { agent } from '@novu/framework';
+
+export const supportAgent = agent('support-agent', {
+  onMessage: async ({ message, ctx }) => {
+    return `You said: ${message.text}`;
+  },
+});
+```
+
+Add the `/** @jsxImportSource @novu/framework */` pragma at the top of the file so you can return JSX cards in later steps. If you only return strings, you can omit it.
+
+At this point the agent echoes messages back. In the next step, replace that behavior with a welcome card.
+
+</Step>
+
+<Step>
+### Handle the first message
+
+Replace the echo handler with a welcome card. On the first message, the bot introduces itself and asks the user to pick a topic.
+
+Use `ctx.conversation.messageCount` to detect the first turn. When the count is `1`, return a welcome card with three topic buttons:
+
+```tsx
+import { Actions, agent, Button, Card, CardText } from '@novu/framework';
+
+export const supportAgent = agent('support-agent', {
+  onMessage: async ({ message, ctx }) => {
+    const firstName = ctx.subscriber?.firstName;
+    const isFirstMessage = ctx.conversation.messageCount <= 1;
+
+    if (isFirstMessage) {
+      return (
+        <Card title={`Hi${firstName ? `, ${firstName}` : ''}! I'm the Pipeliner bot`}>
+          <CardText>What can I help you with today?</CardText>
+          <Actions>
+            <Button id="topic-billing" label="Billing question" value="billing" />
+            <Button id="topic-technical" label="Technical issue" value="technical" />
+            <Button id="topic-other" label="Something else" value="other" />
+          </Actions>
+        </Card>
+      );
+    }
+
+    return `You said: ${message.text}`;
+  },
+});
+```
+
+- `ctx.subscriber` carries user profile data for personalized greetings.
+- Returning JSX is shorthand for `await ctx.reply(...)`.
+- Each `Button` has an `id` and `value` used in `onAction`.
+
+For all card components, see [Interactive cards](/agents/custom-code-agent/setup-your-agent/reply#interactive-cards).
+
+</Step>
+
+<Step>
+### Use metadata for context
+
+When the user clicks a button, `onAction` fires instead of `onMessage`. Add an `onAction` handler that stores the user's topic choice in `ctx.metadata` so the next turn can read it.
+
+```tsx
+export const supportAgent = agent('support-agent', {
+  // ...onMessage from step 2...
+
+  onAction: async ({ actionId, value, ctx }) => {
+    if (actionId.startsWith('topic-') && value) {
+      ctx.metadata.set('topic', value);
+      return `Got it, a **${value}** issue. Tell me what's going on and I'll take a look.`;
+    }
+  },
+});
+```
+
+Read it back with `ctx.metadata.get('topic')` on the next message. To alert on-call for technical issues, use `ctx.trigger`. For details, see [Trigger a workflow](/agents/custom-code-agent/setup-your-agent/signals#trigger-a-workflow).
+
+</Step>
+
+<Step>
+### Answer follow-ups with an LLM
+
+After the welcome card, plug in a model. This example uses the [Vercel AI SDK](https://sdk.vercel.ai/) with OpenAI.
+
+Install the SDK and set your API key:
+
+```bash
+npm install ai @ai-sdk/openai
+```
+
+```bash
+OPENAI_API_KEY=sk-...
+```
+
+Inside `onMessage`, after the welcome-card branch, add LLM generation:
+
+```tsx
+import { openai } from '@ai-sdk/openai';
+import { generateText } from 'ai';
+
+const topic = ctx.metadata.get('topic') ?? 'unknown';
+
+const { text } = await generateText({
+  model: openai('gpt-4o-mini'),
+  system: `You are a Pipeliner support agent. The user's topic is: ${topic}. Keep answers short and link to docs when relevant.`,
+  messages: ctx.history.map((h) => ({
+    role: h.role,
+    content: h.content,
+  })),
+});
+
+return text;
+```
+
+- `ctx.history` maps directly to SDK message format.
+- For files in replies, use `ctx.reply` with the `files` option. For details, see [Sending attachments](/agents/custom-code-agent/setup-your-agent/reply#sending-attachments).
+
+</Step>
+
+<Step>
+### Resolve the conversation
+
+When the user confirms the issue is fixed, call `ctx.resolve()`. Add this check inside `onMessage` before the LLM branch:
+
+```tsx
+const text = (message.text ?? '').toLowerCase();
+
+if (text.includes('thanks') || text.includes('resolve')) {
+  ctx.resolve('User confirmed the issue is fixed.');
+  return 'Glad I could help. Closing this out, ping me anytime.';
+}
+```
+
+The optional summary appears in the dashboard. If the user messages again, the conversation reopens automatically.
+
+</Step>
+
+</Steps>
+
+## Try it out
+
+With `npm run dev:novu` still running, message your agent in Slack to walk the full flow:
+
+1. Send any message. The bot replies with the welcome card and three topic buttons.
+2. Click **Billing question**. The bot confirms the topic and asks for details.
+3. Ask a follow-up question. The LLM answers using the stored topic and conversation history.
+4. Reply with **thanks**. The bot resolves the conversation and closes the thread.
+
+Open the [conversation in the dashboard](/agents/conversations) to see the messages, metadata, and the resolution summary recorded for the thread.
+
+## Complete agent
+
+The following file combines all five steps:
+
+```tsx title="app/novu/agents/support-agent.tsx"
+/** @jsxImportSource @novu/framework */
+import { Actions, agent, Button, Card, CardText } from '@novu/framework';
+import { openai } from '@ai-sdk/openai';
+import { generateText } from 'ai';
+
+export const supportAgent = agent('support-agent', {
+  onMessage: async ({ message, ctx }) => {
+    const firstName = ctx.subscriber?.firstName;
+    const userText = (message.text ?? '').toLowerCase();
+    const isFirstMessage = ctx.conversation.messageCount <= 1;
+
+    if (isFirstMessage) {
+      return (
+        <Card title={`Hi${firstName ? `, ${firstName}` : ''}! I'm the Pipeliner bot`}>
+          <CardText>What can I help you with today?</CardText>
+          <Actions>
+            <Button id="topic-billing" label="Billing question" value="billing" />
+            <Button id="topic-technical" label="Technical issue" value="technical" />
+            <Button id="topic-other" label="Something else" value="other" />
+          </Actions>
+        </Card>
+      );
+    }
+
+    if (userText.includes('thanks') || userText.includes('resolve')) {
+      ctx.resolve('User confirmed the issue is fixed.');
+      return 'Glad I could help. Closing this out, ping me anytime.';
+    }
+
+    const topic = ctx.metadata.get('topic') ?? 'unknown';
+    const { text } = await generateText({
+      model: openai('gpt-4o-mini'),
+      system: `You are a Pipeliner support agent. The user's topic is: ${topic}. Keep answers short and link to docs when relevant.`,
+      messages: ctx.history.map((h) => ({
+        role: h.role,
+        content: h.content,
+      })),
+    });
+
+    return text;
+  },
+
+  onAction: async ({ actionId, value, ctx }) => {
+    if (actionId.startsWith('topic-') && value) {
+      ctx.metadata.set('topic', value);
+      return `Got it, a **${value}** issue. Tell me what's going on and I'll take a look.`;
+    }
+  },
+});
+```
+
+## How the pieces fit together
+
+- **`onMessage`**: every user text message; branch on turn and content.
+- **`onAction`**: button clicks and dropdown selections from cards.
+- **`ctx.metadata`**: conversation scratchpad across turns.
+- **`ctx.history`**: transcript for LLM context.
+- **`ctx.reply`** (or return value) - strings, markdown, cards, or files.
+- **`ctx.trigger`**: fire Novu workflows (email, escalation, CSAT).
+- **`ctx.resolve`**: end the conversation.
+
+## Next steps
+
+<Columns cols={2}>
+  <Card icon="brain" href="https://sdk.vercel.ai/docs/foundations/tools" title="Give the model real context">
+    Add RAG or tool calls so the model can query your API or docs.
+  </Card>
+  <Card icon="thumbs-up" href="/agents/custom-code-agent/setup-your-agent/handle-events#onreaction" title="Capture reactions">
+    Add `onReaction` for thumbs-up/down feedback.
+  </Card>
+  <Card icon="mail" href="/agents/custom-code-agent/setup-your-agent/signals#trigger-a-workflow" title="Send a CSAT email">
+    Use `ctx.trigger` after resolution for a follow-up survey workflow.
+  </Card>
+  <Card icon="layout-grid" href="/agents/custom-code-agent/setup-your-agent/reply#interactive-cards" title="Build richer cards">
+    Dropdowns, links, text inputs, and multi-action cards.
+  </Card>
+  <Card icon="rocket" href="/agents/custom-code-agent/going-to-production" title="Going to production">
+    Run locally, deploy to development, and publish to production.
+  </Card>
+</Columns>

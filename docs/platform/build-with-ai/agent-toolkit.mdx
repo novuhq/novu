@@ -1,0 +1,298 @@
+---
+title: Agent Toolkit
+description: Expose Novu notification workflows as tools for LLM agents with the @novu/agent-toolkit package. Works with OpenAI, LangChain, and Vercel AI SDK.
+icon: "bot"
+---
+
+## What is the Agent Toolkit?
+
+The `@novu/agent-toolkit` package lets you expose [Novu](https://novu.co) notification workflows as tools for LLM agents. It works with **OpenAI**, **LangChain**, and **Vercel AI SDK**.
+
+The toolkit automatically discovers your Novu workflows and converts them into strongly-typed tools that an LLM can invoke, letting your AI agent send notifications, manage subscriber preferences, and trigger any workflow you've built in Novu.
+
+<Note>
+  The Agent Toolkit is a code-level SDK for embedding Novu tools inside your own AI agents. For giving AI coding assistants (Claude Code, Cursor, Copilot) context about Novu, see [Agent Skills](/platform/build-with-ai/skills). For connecting AI tools to Novu via the Model Context Protocol, see [MCP](/platform/build-with-ai/mcp).
+</Note>
+
+## Installation
+
+```bash
+npm install @novu/agent-toolkit
+```
+
+Then install the peer dependency for the AI framework you use:
+
+| Framework | Peer Dependency | Import Path |
+| --- | --- | --- |
+| OpenAI | `openai >= 4.0.0` | `@novu/agent-toolkit/openai` |
+| LangChain | `@langchain/core >= 0.2.0` | `@novu/agent-toolkit/langchain` |
+| Vercel AI SDK | `ai >= 6.0.0` | `@novu/agent-toolkit/ai-sdk` |
+
+## Quick Start
+
+```typescript
+import { createNovuAgentToolkit } from '@novu/agent-toolkit/openai';
+import OpenAI from 'openai';
+
+const openai = new OpenAI();
+
+const toolkit = await createNovuAgentToolkit({
+  secretKey: process.env.NOVU_SECRET_KEY,
+  subscriberId: 'user-123',
+});
+
+const response = await openai.chat.completions.create({
+  model: 'gpt-4o',
+  messages: [{ role: 'user', content: 'Send a welcome email to user-123' }],
+  tools: toolkit.tools,
+});
+
+for (const toolCall of response.choices[0].message.tool_calls ?? []) {
+  const result = await toolkit.handleToolCall(toolCall);
+  console.log(result);
+}
+```
+
+## Configuration
+
+Every adapter's `createNovuAgentToolkit` accepts a `NovuToolkitConfig` object:
+
+```typescript
+type NovuToolkitConfig = {
+  secretKey: string;
+  subscriberId: string;
+  backendUrl?: string;
+  workflows?: {
+    tags?: string[];
+    workflowIds?: string[];
+  };
+};
+```
+
+| Option | Required | Description |
+| --- | --- | --- |
+| `secretKey` | Yes | Your Novu API secret key from [dashboard.novu.co/settings/api-keys](https://dashboard.novu.co/settings/api-keys). |
+| `subscriberId` | Yes | Default subscriber ID used when triggering workflows. |
+| `backendUrl` | No | Custom Novu API URL (defaults to Novu Cloud). |
+| `workflows.tags` | No | Filter discovered workflows by tags. |
+| `workflows.workflowIds` | No | Restrict discovered workflows to specific IDs. |
+
+## Framework Adapters
+
+Each adapter exposes a `createNovuAgentToolkit` function that returns tools in the native format for that framework.
+
+### OpenAI
+
+```typescript
+import { createNovuAgentToolkit } from '@novu/agent-toolkit/openai';
+
+const toolkit = await createNovuAgentToolkit({
+  secretKey: process.env.NOVU_SECRET_KEY,
+  subscriberId: 'user-123',
+});
+
+// toolkit.tools          — OpenAI function tool definitions
+// toolkit.handleToolCall — execute a tool call and return a tool message
+```
+
+The returned `toolkit` provides:
+
+- **`tools`** — Array of OpenAI-compatible function tool definitions.
+- **`handleToolCall(toolCall)`** — Executes a tool call and returns a `{ role: 'tool', tool_call_id, content }` message ready to append to the conversation.
+
+**Full example with tool-call loop:**
+
+```typescript
+import { createNovuAgentToolkit } from '@novu/agent-toolkit/openai';
+import OpenAI from 'openai';
+
+const openai = new OpenAI();
+const toolkit = await createNovuAgentToolkit({
+  secretKey: process.env.NOVU_SECRET_KEY,
+  subscriberId: 'user-123',
+});
+
+const messages = [
+  { role: 'user', content: 'Send a welcome email to user-123' },
+];
+
+const response = await openai.chat.completions.create({
+  model: 'gpt-4o',
+  messages,
+  tools: toolkit.tools,
+});
+
+const assistantMessage = response.choices[0].message;
+messages.push(assistantMessage);
+
+for (const toolCall of response.choices[0].message.tool_calls ?? []) {
+  const result = await toolkit.handleToolCall(toolCall);
+  messages.push(result);
+}
+```
+
+### LangChain
+
+```typescript
+import { createNovuAgentToolkit } from '@novu/agent-toolkit/langchain';
+
+const toolkit = await createNovuAgentToolkit({
+  secretKey: process.env.NOVU_SECRET_KEY,
+  subscriberId: 'user-123',
+});
+
+// toolkit.tools — DynamicStructuredTool[] ready for LangChain agents
+```
+
+The returned `toolkit` provides:
+
+- **`tools`** — Array of `DynamicStructuredTool` instances that can be passed directly to LangChain agents or executors.
+
+**Example with a LangChain agent:**
+
+```typescript
+import { createNovuAgentToolkit } from '@novu/agent-toolkit/langchain';
+import { ChatOpenAI } from '@langchain/openai';
+import { AgentExecutor, createOpenAIFunctionsAgent } from 'langchain/agents';
+
+const toolkit = await createNovuAgentToolkit({
+  secretKey: process.env.NOVU_SECRET_KEY,
+  subscriberId: 'user-123',
+});
+
+const llm = new ChatOpenAI({ model: 'gpt-4o' });
+
+// Pass toolkit.tools directly to agent creation
+const agent = await createOpenAIFunctionsAgent({
+  llm,
+  tools: toolkit.tools,
+  prompt: yourPrompt,
+});
+
+const executor = new AgentExecutor({ agent, tools: toolkit.tools });
+const result = await executor.invoke({ input: 'Notify user-123 about their order' });
+```
+
+### Vercel AI SDK
+
+```typescript
+import { createNovuAgentToolkit } from '@novu/agent-toolkit/ai-sdk';
+
+const toolkit = await createNovuAgentToolkit({
+  secretKey: process.env.NOVU_SECRET_KEY,
+  subscriberId: 'user-123',
+});
+
+// toolkit.tools — ToolSet compatible with generateText / streamText
+```
+
+The returned `toolkit` provides:
+
+- **`tools`** — A `ToolSet` object that can be passed to `generateText`, `streamText`, or other Vercel AI SDK functions.
+
+**Example with `generateText`:**
+
+```typescript
+import { createNovuAgentToolkit } from '@novu/agent-toolkit/ai-sdk';
+import { generateText } from 'ai';
+import { openai } from '@ai-sdk/openai';
+
+const toolkit = await createNovuAgentToolkit({
+  secretKey: process.env.NOVU_SECRET_KEY,
+  subscriberId: 'user-123',
+});
+
+const { text } = await generateText({
+  model: openai('gpt-4o'),
+  tools: toolkit.tools,
+  prompt: 'Send a welcome email to user-123',
+});
+```
+
+## Built-in Tools
+
+The toolkit ships with two built-in tools that are always available regardless of which workflows you have configured.
+
+### `trigger_workflow`
+
+Triggers any Novu workflow by its identifier. Use this as a generic entry point to send notifications.
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `workflowId` | `string` | Yes | The workflow identifier to trigger. |
+| `payload` | `Record<string, unknown>` | No | Data passed to the workflow for rendering notification content. |
+| `overrides` | `Record<string, unknown>` | No | Provider-specific configuration overrides. |
+| `subscriberId` | `string` | No | Target subscriber (defaults to configured `subscriberId`). |
+| `transactionId` | `string` | No | Unique key for deduplication. |
+
+### `update_preferences`
+
+Updates notification channel preferences for a subscriber, either globally or for a specific workflow.
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `workflowId` | `string` | No | Scope to a specific workflow. Omit for global preferences. |
+| `channels` | `object` | No | Channel toggles: `email`, `sms`, `push`, `inApp`, `chat`. |
+| `subscriberId` | `string` | No | Target subscriber (defaults to configured `subscriberId`). |
+
+## Dynamic Workflow Tools
+
+On initialization the toolkit fetches your Novu workflows and creates a dedicated tool for each one. These tools are named `trigger_<workflow_id>` (with hyphens replaced by underscores) and include the workflow's payload schema so the LLM knows exactly what data to provide.
+
+Filter which workflows are exposed using the `workflows` config option:
+
+```typescript
+const toolkit = await createNovuAgentToolkit({
+  secretKey: process.env.NOVU_SECRET_KEY,
+  subscriberId: 'user-123',
+  workflows: {
+    tags: ['ai-agent'],
+    workflowIds: ['welcome-email', 'order-confirmation'],
+  },
+});
+```
+
+For example, if you have a workflow with ID `welcome-email`, the toolkit generates a `trigger_welcome_email` tool whose parameter schema matches the workflow's `payloadSchema`. The LLM sees a purpose-built tool instead of a generic trigger, which improves accuracy and reduces prompt engineering.
+
+## Use Cases
+
+- **Customer support agents** — Let an AI agent send order confirmations, shipping updates, or support ticket notifications through Novu workflows.
+- **Internal tooling** — Build Slack bots or internal agents that trigger team notifications, incident alerts, or onboarding workflows.
+- **Preference management** — Allow users to manage their notification preferences through a conversational AI interface.
+- **Multi-channel broadcasting** — Enable agents to send coordinated notifications across email, SMS, push, in-app, and chat from a single tool call.
+
+## Source Code
+
+The `@novu/agent-toolkit` package is part of the [Novu monorepo](https://github.com/novuhq/novu/tree/next/packages/agent-toolkit) on the `next` branch.
+
+### Package Structure
+
+```
+packages/agent-toolkit/
+├── src/
+│   ├── index.ts              # Main entry point
+│   ├── core/                  # Core toolkit classes and types
+│   │   ├── novu-toolkit.ts    # NovuToolkit class (initialization, workflow discovery)
+│   │   ├── novu-tool.ts       # NovuTool factory function
+│   │   └── types.ts           # NovuToolkitConfig, NovuToolDefinition types
+│   ├── tools/                 # Built-in tool definitions
+│   │   ├── trigger-workflow.ts
+│   │   ├── preferences.ts
+│   │   └── workflows-as-tools.ts  # Dynamic workflow-to-tool conversion
+│   ├── openai/                # OpenAI adapter
+│   ├── langchain/             # LangChain adapter
+│   └── ai-sdk/                # Vercel AI SDK adapter
+├── package.json
+├── tsconfig.json
+└── tsup.config.ts
+```
+
+### Available Exports
+
+| Import Path | Description |
+| --- | --- |
+| `@novu/agent-toolkit` | Core `NovuToolkit` class, `NovuTool` factory, and types. |
+| `@novu/agent-toolkit/openai` | OpenAI adapter with `createNovuAgentToolkit`. |
+| `@novu/agent-toolkit/langchain` | LangChain adapter with `createNovuAgentToolkit`. |
+| `@novu/agent-toolkit/ai-sdk` | Vercel AI SDK adapter with `createNovuAgentToolkit`. |
+| `@novu/agent-toolkit/core` | Core classes and types (for building custom adapters). |

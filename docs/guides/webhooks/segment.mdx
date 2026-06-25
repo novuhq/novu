@@ -1,0 +1,228 @@
+---
+title: 'Segment'
+description: 'Learn how to set up Segment as a data source for Novu using Destination Functions. Send user events from Segment to trigger notifications in Novu.'
+---
+
+
+This guide demonstrates how to use Segment's Destination Functions to send user events and traits to Novu. You'll learn how to:
+- Create a custom Segment destination for Novu
+- Map Segment identify calls to Novu subscribers
+- Trigger notification workflows from Segment track events
+- Handle errors and retry logic for reliable delivery
+
+By the end, you'll have a working integration that creates subscribers and triggers notification workflows in Novu based on Segment events.
+
+<Note>
+  **Prerequisites**
+
+  Before you start, ensure you have:
+  - A **Segment account** with access to **Functions** (check your workspace permissions)
+  - A **Novu account** with an **API key** (find this in your Novu dashboard under Settings > API Keys)
+</Note>
+
+<Steps>
+  <Step>
+    ## Create a Destination Function in Segment
+
+    1. Log in to your Segment account
+    2. Navigate to **Connections** > **Functions** in the left sidebar
+    3. Click **New Function** and select **Destination**
+    4. Name your function (e.g., Novu Destination) and click **Create Function**
+  </Step>
+
+  <Step>
+    ## Configure the Destination Function
+
+    The Destination Function will handle two key Segment event types:
+    - **identify**: Creates or updates a subscriber in Novu
+    - **track**: Triggers a notification workflow in Novu
+
+    Paste the following complete code into the Segment Function editor:
+
+    ```jsx
+    /**
+     * Handles identify events: Creates or updates a subscriber in Novu
+     * @param {SegmentIdentifyEvent} event - The Segment identify event
+     * @param {FunctionSettings} settings - Function settings including API key
+     */
+    async function onIdentify(event, settings) {
+      const endpoint = 'https://api.novu.co/v2/subscribers';
+      const apiKey = settings.apiKey;
+
+      if (!apiKey) throw new Error('Novu API key is missing in settings');
+      if (!event.userId) throw new Error('userId is required in identify event');
+
+      const subscriberData = {
+        subscriberId: event.userId,
+        firstName: event.traits?.firstName || null,
+        lastName: event.traits?.lastName || null,
+        email: event.traits?.email || null,
+        phone: event.traits?.phone || null,
+        avatar: event.traits?.avatar || null,
+      };
+
+      try {
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Authorization': `ApiKey ${apiKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(subscriberData)
+        });
+
+        const responseBody = await response.json();
+        if (!response.ok) {
+          if (response.status >= 500 || response.status === 429) {
+            throw new RetryError(`Server error: ${response.status}`);
+          }
+          throw new Error(`API error: ${response.status} - ${responseBody.message || 'Unknown error'}`);
+        }
+      } catch (error) {
+        throw error instanceof RetryError ? error : new RetryError(error.message);
+      }
+    }
+
+    // Mapping of Segment track events to Novu workflows
+    const EVENT_TO_WORKFLOW_MAPPINGS = {
+      'User Registered': 'welcome'
+      // Add more mappings: 'Event Name': 'novu-workflow-name'
+    };
+
+    /**
+     * Handles track events: Triggers a notification workflow in Novu
+     * @param {SegmentTrackEvent} event - The Segment track event
+     * @param {FunctionSettings} settings - Function settings including API key
+     */
+    async function onTrack(event, settings) {
+      const endpoint = 'https://api.novu.co/v1/events/trigger';
+      const apiKey = settings.apiKey;
+
+      if (!apiKey) throw new Error('Novu API key is missing in settings');
+      if (!event.userId) throw new Error('userId is required in track event');
+
+      const workflow = EVENT_TO_WORKFLOW_MAPPINGS[event.event];
+      if (!workflow) throw new Error(`No workflow mapped for event: ${event.event}`);
+
+      const triggerEvent = {
+        name: workflow,
+        to: { subscriberId: event.userId },
+        payload: event.properties || {}
+      };
+
+      try {
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Authorization': `ApiKey ${apiKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(triggerEvent)
+        });
+
+        const responseBody = await response.json();
+        if (!response.ok) {
+          if (response.status >= 500 || response.status === 429) {
+            throw new RetryError(`Server error: ${response.status}`);
+          }
+          throw new Error(`API error: ${response.status} - ${responseBody.message || 'Unknown error'}`);
+        }
+      } catch (error) {
+        throw error instanceof RetryError ? error : new RetryError(error.message);
+      }
+    }
+    ```
+
+    <AccordionGroup>
+      <Accordion title="Code Explanation">
+        - **`onIdentify`**:
+            - Maps Segment traits (e.g., firstName, lastName, email) to Novu subscriber fields
+            - Uses Novu's `/v2/subscribers` endpoint
+            - Creates or updates subscribers (Novu's API is idempotent for existing `subscriberIds`)
+        - **`onTrack`**:
+            - Maps Segment `track` events to Novu workflows using `EVENT_TO_WORKFLOW_MAPPINGS`
+            - Sends the event properties as the payload to trigger a workflow via `/v1/events/trigger`
+        - **Error Handling**: Retries on server errors (5xx) or rate limits (429), fails fast on other errors
+      </Accordion>
+    </AccordionGroup>
+
+    <Note>
+      **Customize the Mapping**: Update `EVENT_TO_WORKFLOW_MAPPINGS` with your Segment event names and corresponding Novu workflow names.
+    </Note>
+  </Step>
+
+  <Step>
+    ## Deploy the Function
+
+    1. Click **Save** in the Function editor
+    2. Enable the function by toggling it to **Active**
+  </Step>
+
+  <Step>
+    ## Connect the Function to a Source
+
+    1. Go to **Connections** > Select your **Source** (e.g., website, app)
+    2. In the **Destinations** tab, click **Add Destination**
+    3. Choose your **Novu Destination Function** from the list
+    4. Click **Connect**. When prompted, enter your **Novu API key** in the apiKey field
+    5. Save the configuration
+  </Step>
+
+  <Step>
+    ## Testing the Integration
+
+    Verify everything works:
+
+    <AccordionGroup>
+      <Accordion title="1. Send an identify event">
+        Example:
+        ```json
+        {
+          "type": "identify",
+          "traits": {
+            "name": "Peter Gibbons",
+            "email": "peter@example.com",
+            "plan": "premium",
+            "logins": 5
+          },
+          "userId": "97980cfea0067"
+        }
+        ```
+        Check Novu's **Subscribers** list to confirm the subscriber appears.
+      </Accordion>
+
+      <Accordion title="2. Send a track event">
+        Example:
+        ```json
+        {
+          "type": "track",
+          "event": "User Registered",
+          "properties": {
+            "plan": "Pro Annual",
+            "accountType" : "Facebook"
+          }
+        }
+        ```
+        Verify the `welcome` workflow triggers in Novu's activity feed.
+      </Accordion>
+    </AccordionGroup>
+
+    Use Segment's **Debugger** to monitor function calls and catch any errors.
+  </Step>
+</Steps>
+
+<AccordionGroup>
+  <Accordion title="Troubleshooting">
+    - **401 Unauthorized**: Double-check your Novu API key in the function settings
+    - **Subscriber Not Created**: Ensure userId is included in the identify event
+    - **Workflow Not Triggering**: Confirm the event name matches a key in EVENT_TO_WORKFLOW_MAPPINGS and the workflow exists in Novu
+    - **API Errors**: Check Segment's logs for detailed error messages
+  </Accordion>
+
+  <Accordion title="Additional Notes">
+    - **Subscriber Updates**: Novu's /v1/subscribers endpoint updates existing subscribers if the subscriberId matches, keeping data current with each identify event
+    - **Expanding Functionality**: Add more event types (e.g., group, page) by defining additional handlers like onGroup in the code
+  </Accordion>
+</AccordionGroup>
+
+With this setup, your Segment events will seamlessly flow into Novu, enabling powerful notification workflows tailored to your users' actions.

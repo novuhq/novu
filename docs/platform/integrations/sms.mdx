@@ -1,0 +1,164 @@
+---
+title: 'SMS'
+description: "Integrate SMS providers with Novu to deliver text message notifications. Configure providers, set up workflows, and manage delivery."
+---
+
+The SMS channel delivers messages to your subscribers’ mobile devices through your configured SMS provider integrations.
+
+## How SMS delivery works in Novu
+
+Here’s the typical flow for sending an email notification through Novu:
+
+<Steps> 
+<Step> 
+
+### Add an email provider
+
+Start by adding an SMS provider in the **Integration Store** on your Novu dashboard. You can connect one or more integrations for the different or the same providers.
+
+To learn [how to add an SMS provider](/platform/integrations/sms#supported-providers), refer to the guide for that provider.
+
+</Step>
+<Step> 
+### Add the email channel to your workflow
+
+Next, include an [SMS step in your workflow](/platform/workflow/create-a-workflow). This step defines when and how an SMS should be sent as part of your notification workflow.
+</Step>
+<Step> 
+### Define the SMS content
+
+Within the Email step editor, write the message body. The editor supports dynamic data for personalized content.
+
+</Step>
+<Step> 
+### Store subscriber phone number
+
+Novu automatically sends the notification to the phone number stored on the subscriber's profile . You must ensure that this field is set for any subscriber who needs to receive emails. You can store subscribers phone number using the Novu API, or SDK.
+</Step>
+<Step>
+### Trigger the workflow
+
+[Trigger the workflow](/api-reference/events/trigger-event) from your application code by sending an event to Novu.
+Novu automatically:
+- Resolves the subscriber.
+- Selects the correct provider.
+- Renders the email template.
+- Delivers the message through the configured email integration.
+</Step>
+</Steps>
+
+<Note>
+  Some countries restrict using verified `from` sender IDs (name). Kindly check the country- and provider-specific requirements first.
+</Note>
+
+## Configuring SMS providers
+
+To add an SMS provider from the **Integration Store**, you must configure settings and credentials that are specific to that email providers.
+
+### Default sender settings
+
+The **From** field, which is displayed as the sender of the SMS, is a required default setting for any email provider that you connect. You can override this field during trigger if necessary.
+
+### Provider authentication
+
+You must provide credentials specific to your email provider, such as:
+- API key
+- Auth token
+- Account SID
+- Username
+- Password.
+
+Each provider has different requirements.
+
+<Note>
+  Refer to the [supported SMS providers](/platform/integrations/sms#supported-providers) list for detailed setup guides for each provider integration.
+</Note>
+
+## Override SMS settings
+
+You can override the SMS settings when triggerring a notification by passing the `overrides` object. The overrides object field supports an `sms` property and `from`, `to`, and `content` field overrides. This lets you send a message to a different recipient, from a different sender, or with a different content.
+
+```javascript
+import { Novu } from '@novu/api';  
+
+const novu = new Novu({
+  secretKey: "<NOVU_SECRET_KEY>",
+  // Required if using EU region
+  // serverURL: "https://eu.api.novu.co",
+});
+
+await novu.trigger({ 
+  workflowId: "workflowId",
+  to: {
+    subscriberId: "subscriberId",
+  },
+  overrides: {
+    sms: {
+      to: '+123012345678',
+      from: 'Novu Team',
+      content: 'This SMS message is from overrides',
+    },
+  },
+});
+```
+
+## Target a specific provider
+
+By default, Novu uses your primary SMS provider. If you want to bypass this and force a specific, active integration for a trigger, then use the `integrationIdentifier`.
+
+This is useful if you have multiple active integrations for different purposes. For example, you might have one integration for transactional SMS and one for security SMS. You can find the `integrationIdentifier` in the **Integration Store** of the Novu dashboard.
+
+<Tabs>
+<Tab title="Node.js">
+```javascript
+import { Novu } from '@novu/api';  
+
+const novu = new Novu({
+  secretKey: "<NOVU_SECRET_KEY>",
+  // Required if using EU region
+  // serverURL: "https://eu.api.novu.co",
+});
+
+await novu.trigger({
+  workflowId: "workflowId",
+  to: {
+    subscriberId: "subscriberId",
+  },
+  overrides: {
+    sms: { integrationIdentifier: 'infobip-abcdef', },
+  },
+});
+
+```
+</Tab>
+</Tabs>
+
+## Supported providers
+
+Here are the SMS providers that are currently supported by Novu. Select any provider to see its detailed setup guide.
+
+<Columns cols={2}>
+<Card title="46elks" href="/platform/integrations/sms/46elks"> Learn how to use the 46elks provider to send SMS notifications using Novu.</Card>
+<Card title="Africa's Talking" href="/platform/integrations/sms/africas-talking"> Learn how to use the Africa's Talking provider to send SMS notifications using Novu.</Card>
+<Card title="AWS SNS" href="/platform/integrations/sms/aws-sns"> Learn how to use the AWS SNS provider to send SMS notifications using Novu.</Card>
+<Card title="Azure SMS" href="/platform/integrations/sms/azure"> Learn how to use the Azure SMS provider to send SMS notifications using Novu.</Card>
+<Card title="BulkSMS" href="/platform/integrations/sms/bulk-sms"> Learn how to use the BulkSMS provider to send SMS notifications using Novu.</Card>
+<Card title="Clickatell" href="/platform/integrations/sms/clickatell"> Learn how to use the Clickatell provider to send SMS notifications using Novu.</Card>
+<Card title="Clicksend" href="/platform/integrations/sms/clicksend"> Learn how to use the Clicksend provider to send SMS notifications using Novu.</Card>
+<Card title="Firetext" href="/platform/integrations/sms/firetext"> Learn how to use the Firetext provider to send SMS notifications using Novu.</Card>
+<Card title="Gupshup" href="/platform/integrations/sms/gupshup"> Learn how to use the Gupshup provider to send SMS notifications using Novu.</Card>
+<Card title="Infobip - SMS" href="/platform/integrations/sms/infobip"> Learn how to use the Infobip - SMS provider to send SMS notifications using Novu.</Card>
+<Card title="Kannel" href="/platform/integrations/sms/kannel"> Learn how to use the Kannel provider to send SMS notifications using Novu.</Card>
+<Card title="Kudosity" href="/platform/integrations/sms/kudosity"> Learn how to use the Kudosity provider to send SMS notifications using Novu.</Card>
+<Card title="MessageBird" href="/platform/integrations/sms/messagebird"> Learn how to use the MessageBird provider to send SMS notifications using Novu.</Card>
+<Card title="Nexmo" href="/platform/integrations/sms/nexmo"> Learn how to use the Nexmo provider to send SMS notifications using Novu.</Card>
+<Card title="Plivo" href="/platform/integrations/sms/plivo"> Learn how to use the Plivo provider to send SMS notifications using Novu.</Card>
+<Card title="Sendchamp" href="/platform/integrations/sms/sendchamp"> Learn how to use the Sendchamp provider to send SMS notifications using Novu.</Card>
+<Card title="SimpleTexting" href="/platform/integrations/sms/simpletexting"> Learn how to use the SimpleTexting provider to send SMS notifications using Novu.</Card>
+<Card title="SMS Central" href="/platform/integrations/sms/sms-central"> Learn how to use the SMS Central provider to send SMS notifications using Novu.</Card>
+<Card title="SMS77" href="/platform/integrations/sms/sms77"> Learn how to use the SMS77 provider to send SMS notifications using Novu.</Card>
+<Card title="SNS" href="/platform/integrations/sms/sns"> Learn how to use the SNS provider to send SMS notifications using Novu.</Card>
+<Card title="Telnyx" href="/platform/integrations/sms/telnyx"> Learn how to use the Telnyx provider to send SMS notifications using Novu.</Card>
+<Card title="Termii" href="/platform/integrations/sms/termii"> Learn how to use the Termii provider to send SMS notifications using Novu.</Card>
+<Card title="Twilio" href="/platform/integrations/sms/twilio"> Learn how to use the Twilio provider to send SMS notifications using Novu.</Card>
+</Columns>

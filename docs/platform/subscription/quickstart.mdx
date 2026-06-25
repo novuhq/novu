@@ -1,0 +1,103 @@
+---
+title: 'Setup the Subscription'
+description: "Learn how to integrate and render the Subscription component in your React app to manage user preferences."
+icon: "zap"
+---
+
+
+<Note>
+  Subscription is avialable from v3.12.0 for the `@novu/nextjs`, `@novu/react` and `@novu/js` packages.
+</Note>
+
+This quickstart shows how to render the subscription UI in your app. The subscription UI lets users subscribe to topics, define conditions, and manage how they receive notifications.
+
+<Note>
+  To learn how to render custom UI for the Subscription preferences, refer to the [Headless hooks documentation](/platform/subscription/headless-hooks).
+</Note>
+
+The [`<Subscription />`](/platform/subscription/quickstart) component is designed to work within an existing Novu environment and uses the same provider and session context as the Inbox component.
+
+<Steps>
+  <Step>
+    ### Create a topic
+
+    Subscriptions are managed at the topic level. You can create a topic manually in the Novu Dashboard or via the API.
+    
+    However, you don't have to create it beforehand. If the topic key you provide to the component does not exist, Novu will automatically create it for you.
+
+    Topics can represent any category of notifications. To learn more, see the [Topics documentation](/platform/concepts/topics).
+  </Step>
+
+  <Step>
+    ### Install `@novu/nextjs`
+
+    Ensure you have the latest version of the `@novu/nextjs` package installed in your project.
+
+    ```bash
+    npm install @novu/nextjs
+    ```
+
+  </Step>
+
+  <Step>
+    ### Initialize the Novu client
+
+    Wrap your app or the specific section where the subscription component would live with the `<NovuProvider>`. Configure the provider with your `applicationIdentifier` and the current user's `subscriberId`.
+
+    ```tsx
+
+    const NOVU_CONFIG = {
+      subscriber="SUBSCRIBER_ID"
+      applicationIdentifier="APPLICATION_IDENTIFIER"
+    };
+
+    function App() {
+      return (
+        <NovuProvider {...NOVU_CONFIG}>
+          {/* Application content */}
+        </NovuProvider>
+      );
+    }
+    ```
+  </Step>
+
+  <Step>
+    ### Add the component
+
+    Place the [`<Subscription />`](/platform/subscription/quickstart) component inside the provider. You must pass the `topicKey`. 
+    
+    The `identifier` prop is optional, you only need to provide it if you intend to manage multiple distinct subscriptions for the same topic.
+    
+    ```tsx
+
+    const NOVU_CONFIG = {
+      subscriber="SUBSCRIBER_ID"
+      applicationIdentifier="APPLICATION_IDENTIFIER"
+    };
+
+    function App() {
+      return (
+        <NovuProvider {...NOVU_CONFIG}>
+          <Subscription
+            topicKey="project-123"
+            identifier="project-updates"
+          />
+        </NovuProvider>
+      );
+    }
+    ```
+  </Step>
+
+</Steps>
+
+## Next steps
+
+<Columns cols={2}>
+  <Card title="Customize the UI" icon="blocks" href="/platform/subscription/customize-and-configure">
+    Customize and configure the Subscription component appearance and behavior.
+  </Card>
+  <Card
+    title="Overview" icon="code" href="/platform/subscription/overview">
+    Learn how Subscriptions work and explore the available components.
+  </Card>
+</Columns>

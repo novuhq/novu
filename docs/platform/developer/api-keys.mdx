@@ -1,0 +1,47 @@
+---
+title: 'API keys'
+description: 'Manage authentication credentials and connection endpoints for your Novu integration.'
+icon: "key-round"
+---
+
+Novu provides a set of keys and hostnames that your application uses to authenticate requests, send events to the Novu API, and to interact with the [`<Inbox />`](/platform/inbox).
+
+Your API keys are environment specific and allow Novu to tie all request to a particular Novu environment.
+
+## Finding your API keys
+
+Follow these steps to find your environment-specific API keys:
+1. Login to the Novu dashboard.
+2. On the developer section, click **API Keys** to find all your environment keys, whiich are:
+      - Application Identifier
+      - Secret Keys
+      - API URLs
+![API Keys](/images/developer-tools/api-keys.png)
+
+## Application identifier
+
+The Application Identifier is a unique identifier for your application within Novu. It is considered a public key and is safe to expose in client-side code.
+
+The application identifier is used to initialize the [`<Inbox />`](/platform/inbox) component.
+
+## Secret key
+
+The Secret Key is a private token used to authenticate and authorize requests sent to the API service. It proves that your application is allowed to access resources.
+
+This key grants full administrative access to your account. It should never be used in publicly accessible code, such as frontend applications or public repositories (GitHub, GitLab).
+
+<Warning>
+  Keep your secret key private.
+</Warning>
+
+You can regenerate the secret key from the API Keys dashboard. This will invalidate the old key and require you to update your environment variables.
+
+## API URLs
+
+The following hostnames are used to connect to the Novu cloud platform.
+
+| **Endpoint**           | **URL**               | **Description**                                                                                                                          |
+| ---------------------- | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| **API Hostname**       | `https://api.novu.co` | The domain that your application sends API requests to. It identifies the Novu API server.                                               |
+| **WebSocket Hostname** | `https://ws.novu.co`  | The domain used to establish a WebSocket connection. Similar to the API Hostname, but specifically for real-time, two-way communication. |
+

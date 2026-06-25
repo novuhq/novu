@@ -1,0 +1,184 @@
+---
+title: 'Customize and configure'
+description: "Learn how to filter visible preferences, customize styling, and use custom render functions."
+icon: "blocks"
+---
+
+The Subscription UI works within the existing Novu environment and uses the same provider and styling architecture as the [`<Inbox />`](/platform/inbox) component.
+
+You can configure which options are visible to your users, apply your brand's theme, or take full control of the rendering.
+
+## Filter using preferences
+
+The `preferences` prop on the [`<Subscription />`](/platform/subscription/overview) component controls which workflows the component displays to the user.
+
+### Default preferences
+
+If you want to simply filter which workflows are visible without changing their labels, then you can pass an array of workflow identifier strings. The component uses the workflow names defined in the Dashboard as the labels.
+
+```tsx
+import { NovuProvider, Subscription } from '@novu/react';
+
+export function Novu() {
+  return (
+    <NovuProvider 
+      subscriber="SUBSCRIBER_ID"
+      applicationIdentifier="APPLICATION_IDENTIFIER"
+    >
+      <Subscription
+        topicKey="product-updates"
+        identifier="user-123"
+        // Only shows these two workflows
+        preferences={["workflow-identifier-1", "workflow-identifier-2"]}
+      />
+    </NovuProvider>
+  )
+}
+```
+
+### Custom preferences
+
+You can filter using tags, workflow IDs, or both. You can also customize the labels, descriptions, or default states by passing an array of objects.
+
+```tsx
+import { NovuProvider, Subscription,  } from '@novu/react';
+
+export function Novu() {
+  return (
+    <NovuProvider 
+      subscriber="SUBSCRIBER_ID"
+      applicationIdentifier="APPLICATION_IDENTIFIER"
+    >
+      <Subscription 
+        topicKey="product-updates"
+        identifier="user-123"
+        preferences={[
+          {
+            workflowId: "comment-on-task",
+            label: "New Comments",
+            enabled: true, // Force enabled by default
+          },
+          {
+            // Group multiple workflows under one label and filter using tags
+            filter: { tags: ['security', 'admin'] },
+            label: 'Security Alerts',
+            enabled: false,
+          },
+          {
+            // Group multiple workflows under one label and filter using workflow id
+            filter: { workflowIds: ['test-workflow1', 'test-workflow2'] },
+            label: 'Test Group',
+            enabled: false,
+          },
+        ]}
+      />
+    </NovuProvider>
+  );
+}
+```
+
+You can also update the labels for the workflows with the `dynamic` prop of the localization. For full localization options, see the [Inbox localization documentation](/platform/inbox/advanced-features/localization).
+
+## Styling
+
+The [`<Subscription />`](/platform/subscription/quickstart) component shares the same styling architecture as the Inbox component. You can use the `appearance` prop to customize elements, variables, icons and themes.
+
+For full styling and theming options, see the [Inbox styling documentation](/platform/inbox/configuration/styling).
+
+### Dark mode
+
+Novu provides `subscriptionDarkTheme` in the `@novu/react/themes` package to apply the built-in dark theme to the [`<Subscription />`](/platform/subscription/quickstart) component. You can apply this conditionally based on your app's state.
+
+```tsx
+import { NovuProvider, Subscription } from '@novu/react';
+import { subscriptionDarkTheme } from '@novu/react/themes';
+
+export function Novu() {
+  const isDarkMode = true;
+  
+  return (
+    <NovuProvider 
+      subscriber="SUBSCRIBER_ID"
+      applicationIdentifier="APPLICATION_IDENTIFIER"
+    >
+      <Subscription
+        topicKey="product-updates"
+        identifier="user-123"
+        appearance={{
+          baseTheme: isDarkMode ? subscriptionDarkTheme : undefined,
+        }}
+      />
+    </NovuProvider>
+  );
+}
+```
+
+### Localization
+
+You can customize the text labels used in the component to support different languages or to match your app's voice. This works identically to Inbox localization.
+```tsx
+import { NovuProvider, Subscription } from '@novu/react';
+ 
+export function Novu() {
+  return (
+    <NovuProvider 
+      subscriber="SUBSCRIBER_ID"
+      applicationIdentifier="APPLICATION_IDENTIFIER"
+    >
+      <Subscription
+        topicKey="product-updates"
+        identifier="user-123"
+        localization={{
+          "subscription.subscribe": "Join",
+          locale: "en-US",
+        }}
+      />
+    </NovuProvider>
+  );
+}
+```
+
+For full localization options, see the [Inbox localization documentation](/platform/inbox/advanced-features/localization).
+
+## Custom rendering
+
+The `renderPreferences` prop on the [`<Subscription />`](/platform/subscription/quickstart) component lets you override how the component displays the list of workflows while still relying on the component to handle data fetching and state management.
+
+The function receives the current `subscription` object and a `loading` boolean. You can map over the `preferences` array and render your own HTML elements.
+
+```tsx
+import { NovuProvider, Subscription, TopicSubscription } from '@novu/react';
+
+export function Novu() {
+  return (
+    <NovuProvider 
+      subscriber="SUBSCRIBER_ID"
+      applicationIdentifier="APPLICATION_IDENTIFIER"
+    >
+      <Subscription
+        topicKey="product-updates"
+        identifier="user-123"
+        preferences={["workflow-1", "workflow-2"]}
+        renderPreferences={(subscription?: TopicSubscription, loading?: boolean) => (
+          <div>
+            {subscription?.preferences.map((preference, idx) => (
+              <div key={`${subscription.identifier}-${idx}`}>
+                <label htmlFor={`pref-${idx}`}>{preference.label}</label>
+                <span>{preference.description}</span>
+                <input
+                  id={`pref-${idx}`}
+                  type="checkbox"
+                  checked={preference.enabled}
+                  onChange={(e) =>
+                    preference.update({ value: e.target.checked })
+                  }
+                />
+              </div>
+            ))}
+          </div>
+        )}
+      />
+    </NovuProvider>
+  )
+}
+```

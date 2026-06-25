@@ -1,0 +1,49 @@
+---
+title: "Agent Conversations"
+description: 'View agent conversations, their history, lifecycle, and observability in the Novu dashboard.'
+icon: "messages-square"
+---
+
+Novu provides full observability for agent conversations across both managed agents and custom code agents. You can view and manage conversations in the Novu dashboard. Go to the Activity Feed page and switch to the **Agent Conversations** tab.
+
+## Conversation lifecycle
+
+Every agent conversation follows the same state machine, regardless of agent type:
+
+![Agent conversation lifecycle](/images/agents/conversations/lifecycle.png)
+
+| State | What it means |
+| --- | --- |
+| **Active** | The conversation is ongoing. Messages increment the count, metadata can be updated, and the last activity timestamp is refreshed. |
+| **Resolved** | The conversation has been closed. For custom code agents, this happens when the handler calls `ctx.resolve()` and the `onResolve` handler fires. For managed agents, the platform can resolve the conversation based on its reasoning. An optional summary is stored. |
+| **Reopened** | If a user sends a new message after the conversation was resolved, it automatically reopens and becomes active again. |
+
+## What the dashboard shows
+
+Navigate to your agent's detail page to see all conversations, their status, and a complete timeline of activity.
+
+<video autoPlay loop muted playsInline src="/images/agents/conversations/manage-agent-conversations.mp4" />
+
+- **Conversation list**: all conversations for the agent, with status (active / resolved), last message preview, message count, and last activity timestamp.
+- **Full message history**: every message exchanged between the user and the agent, including rich content (cards, markdown, files).
+- **Metadata**: key-value pairs stored on the conversation. In custom code agents, these are set via `ctx.metadata.set()`. In managed agents, the platform may store internal state.
+- **Signal activity**: a log of signals fired during the conversation (metadata changes, workflow triggers, resolve events). This applies to custom code agents that use signals.
+- **Tool use activity**: for managed agents, the dashboard shows which tools the agent called during each turn, including built-in tools and MCP servers.
+- **Participant details**: which subscribers and platform users are part of each conversation, with identity resolution status.
+- **Platform context**: which provider and thread the conversation is happening on.
+
+## Supported platforms
+
+Both managed agents and custom code agents support the same set of chat providers:
+
+| Platform | Status | Notes |
+| --- | --- | --- |
+| Slack | Available | Text, markdown, files, interactive cards, reactions, typing indicators. File uploads require the `files:write` bot scope. |
+| Microsoft Teams | Available | Text, markdown, files, and cards via Bot Framework. Dashboard includes a guided onboarding flow with one-click app package download. |
+| WhatsApp | Available | Text, markdown, interactive buttons. Inbound media is surfaced via attachments; outbound file attachments are not supported yet. |
+| Email | Available | Text, markdown, files, interactive cards, emoji reactions (Gmail only). |
+| Telegram | Available | Text, markdown, files, reactions, typing indicators. |
+
+<Note>
+  Platform capabilities might vary. For example, typing indicators are only shown on platforms that support them, and message editing depends on platform adapter support.
+</Note>

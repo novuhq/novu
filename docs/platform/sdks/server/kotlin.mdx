@@ -1,0 +1,54 @@
+---
+title: 'Kotlin'
+description: 'Connect a Kotlin application to Novu'
+icon: "smartphone"
+---
+
+<Warning>
+  This SDK is community maintained. Feel free to contribute on our [GitHub
+  repository](https://github.com/novuhq/novu-kotlin).
+</Warning>
+
+Novu's Kotlin SDK provides simple, yet comprehensive notification management, and delivery capabilities through multiple channels that you can implement using code that integrates seamlessly with your Kotlin application.
+
+[Explore the source code on GitHub](https://github.com/novuhq/novu-kotlin)
+
+## Installation
+
+Maven users:
+
+```xml
+<dependency>
+  <groupId>co.novu</groupId>
+  <artifactId>novu-kotlin</artifactId>
+  <version>{use-latest-version}</version>
+</dependency>
+```
+
+The latest version can be found [on GitHub.](https://github.com/novuhq/novu-kotlin#installation)
+
+Gradle users:
+
+```groovy
+implementation 'co.novu:novu-kotlin:{use-latest-version}' //Groovy
+
+implementation ("co.novu:novu-kotlin:{use-latest-version}") //Kotlin
+```
+
+Sync your project, and you should have the artifacts downloaded.
+
+## Usage
+
+```kotlin
+
+// without changing the backend URL
+import co.novu.Novu
+import co.novu.extentions.environments
+
+fun main() {
+    val novu = Novu(apiKey = "NOVU_SECRET_KEY")
+    val environment = novu.environments()
+    println(environment)
+}
+
+```

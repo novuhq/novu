@@ -1,0 +1,37 @@
+---
+title: 'Event types'
+description: 'Learn more about the types of events that Novu sends webhook events for.'
+icon: "tags"
+---
+
+Novu supports the following webhook event types:
+
+- **Message events**: Events about message delivery status changes.
+- **Preference event**: Event about subscriber preference changes.
+- **Workflow events**: Events about workflow creation, updates, and deletions.
+
+Each event includes detailed information about the affected resource and the changes that occurred.
+
+## Message events
+
+- `message.archived`: This webhook is triggered when a subscriber archives a message. The payload contains the details of the event.
+- `message.delivered`: This webhook is triggered when a message delivery provider acknowledged the message delivery to the end receiving client. The payload contains the details of the event.
+- `message.failed`: This webhook is triggered when Novu tries to send the message to the delivery provider and it got failed. The payload contains the details of the event.
+- `message.read`: This webhook is triggered when a message has been read by the subscriber. The payload contains the details of the event.
+- `message.seen`: This webhook is triggered when a subscriber opens a message. The payload contains the details of the event.
+- `message.sent`: This webhook is triggered when Novu sends the message to the delivery provider. The payload contains the details of the event.
+- `message.snoozed`: This webhook is triggered when a message is snoozed by the subscriber. The payload contains the details of the event.
+- `message.unarchived`: This webhook is triggered when an archived message is unarchived. The payload contains the details of the event.
+- `message.unread`: This webhook is triggered when a message is unread or marked as unread by the subscriber. The payload contains the details of the event. 
+- `message.unsnoozed`: This webhook is triggered when a message is unsnoozed by a subscriber. The payload contains the details of the event.
+
+## Preference event
+
+- `preference.updated`: This webhook is triggered when a subscriber preference is updated. The payload contains the details of the event.
+
+## Workflow events
+
+- `workflow.created`: This webhook is triggered when a workflow is created. The payload contains the details of the event.
+- `workflow.deleted`: This webhook is triggered when a workflow is deleted. The payload contains the details of the event.
+- `workflow.published`: This webhook is triggered when a `workflow` event occurs, that is when a workflow is synced from dev to prod environment. The payload contains the details of the event. 
+- `workflow.updated`: This webhook is triggered when a workflow is updated. The payload contains the details of the event.

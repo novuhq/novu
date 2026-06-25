@@ -1,0 +1,88 @@
+---
+title: 'Environments'
+description: 'Understanding and managing environments in Novu'
+icon: "git-fork"
+---
+
+Novu uses environments to separate your workflows and its data. This lets you safely test changes, like a new workflow, in one environment before moving it to a live production environment.
+
+## Types of environments
+
+When you create a Novu account, you are provided with a development and production environment by default. On certain plans, you can also create custom environments to match your team’s workflow.
+
+- **Development environment**: Use the development environment to build and test new workflows, layouts, translations, and experiment with different configurations before publishing to other environments.
+- **Production environment**: The production environment is used to send notifications to your subscribers. To ensure stability and prevent unintended changes, this environment is view-only for workflows, layouts, and translations. Changes are not made here directly, they are made from other environment and then published to this production environment.
+- **Custom environment**: Custom environments are only available on [Team and Enterprise plans](https://novu.co/pricing). You can use them to reflect your release process, for example, staging or QA.
+
+## Create a custom environment
+
+To create a custom environment:
+
+1. Log in to the Novu dashboard.
+2. Go to the [Environments page](https://dashboard.novu.co/environments) in the Novu dashboard.
+3. Click **Create environment**. A menu appears. 
+4. Enter your preferred environment name in the **Name** field.
+5. Assign unique colors to easily distinguish between environments.
+   ![Publish changes](/images/developer-tools/create-environment.png)
+6. Click **Create environment**.
+    The new environment is created and is available in the environments list.
+
+## What's unique to each environment?
+
+Each environment in Novu has it's own isolated resources, while the development environment has assets that can be published to other environments.
+
+Each environment maintains some isolated set of resources, while you can share or promote other assets through publishing.
+
+### Environment-specific resources
+
+These resources are completely separate and unique to each environment. Data in one environment has no connection to data in another. They are:
+
+- Activity feed
+- API keys (application identifier and secret key)
+- Integrations (Provider credentials)
+- Subscribers
+- Topics
+- Webhooks
+
+### Publishable assets
+
+These assets are managed centrally in the development environment and then published to other environments.
+- Layouts
+- Translations
+- Workflows
+
+### Environment credentials
+
+Each environment has two unique identifiers:
+
+- **Application Identifier**
+   - Public ID for client-side apps
+   - Used with [`<Inbox />`](/platform/inbox)
+   - Different for each environment
+   - Safe to expose in frontend code
+
+- **API Secret Key**
+   - Used for backend API authentication
+   - Keep this secure and never expose publicly
+   - Different for each environment
+
+<Note>
+  Configure these credentials in your application based on the active environment, similar to how you manage other service credentials.
+</Note>
+
+## Publish changes to other environments
+
+Novu provides a publish mechanism that allows you to promote changes from your development environment to production or other custom environments. This process ensures that all changes are deliberate, reviewed, and deployed in a controlled manner.
+
+The publishing process bundles all modifications made to workflows, layouts, and translations since the last publish event.
+
+You can promote changes to other environments by following these steps:
+
+1. Ensure you are in the **Development** environment. All changes must originate from here.
+2. Click **Publish changes**. A list of available environments appears.
+   ![Publish changes](/images/developer-tools/publish-changes.png)
+3. Select the environment that you want to publish to.
+   ![Publish changes](/images/developer-tools/list-of-environment.png)
+4. Select the checkboxes next to the workflows that you want to publish. A menu appears, showing all the available workflows.
+   ![Publish changes](/images/developer-tools/publish-changes-modal.png)
+5. Click the publish button to publish the selected workflows to the selected environment.

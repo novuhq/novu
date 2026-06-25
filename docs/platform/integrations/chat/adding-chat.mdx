@@ -1,0 +1,101 @@
+---
+title: 'Adding Chat Channel'
+sidebarTitle: 'Adding Chat Channel'
+description: 'Learn how to add the Chat channel to your application'
+icon: "circle-plus"
+---
+
+
+Chat channels allow you to deliver instant, contextual messages to your subscribers via their preferred chat platform and apps.
+
+<Steps>
+<Step title="Enable Chat Channel in Novu Dashboard">
+
+<Note>
+  The Chat channel is not enabled by default. To use it, configure a provider like Slack, Discord,
+  or others.
+</Note>
+
+- Go to the Novu Dashboard and click **"Integrations"** on the left sidebar
+- Click **"Add a provider"**
+- Locate the **Chat** channel and select the provider you want to use and click **"Next"**
+- Select for which environment you want to add the Provider
+- (Optional) Add Conditions to activate the provider only under certain conditions, **useful for tenant-based providers**
+- Click **"Create"**
+- Add your Chat provider credentials:
+
+<Note>
+  Each chat provider requires different type of credentials. There are few providers which does
+  not require any credentials example: `Discord`
+</Note>
+
+- Provider-specific credentials such as API key / Auth token, Client ID, Client Secret, or password
+- Save the configuration by clicking **"Update"**
+
+</Step>
+
+<Step title="Setup workflow with chat channel in Novu Dashboard">
+
+- Go to the Novu Dashboard and click **"Workflows"** on the left sidebar
+- Click the **"Add a Workflow"** button
+- Add a step and select **"Chat"** as the channel
+- Configure the Chat content:
+  - Message body (e.g., `{{subscriber.firstName}}, your order {{orderId}} has shipped.`)
+  - Dynamic placeholders for personalized content
+- Optionally, set fallback channels to ensure reliable delivery if Chat fails
+
+</Step>
+
+<Step title="Add a workflow Trigger to your backend">
+
+Novu's server-side SDKs make integrating Novu's REST APIs straightforward, letting you focus on implementing workflows without dealing with repetitive code.
+
+<Card title="Server-side SDKs" icon="code" href="/platform/sdks/server" />
+
+</Step>
+
+<Step title="Test and Verify Chat Channel">
+
+Ensure your Chat configuration is working correctly by testing the setup.
+
+- Go to the Novu Dashboard, navigate to the **"Workflows"** section, and locate your configured workflow
+- Click **"Test Workflow"** and provide sample data, such as a phone number or dynamic variables
+- Verify delivery in the Novu Logs or your Chat provider's dashboard
+
+</Step>
+</Steps>
+
+## Sending chat message
+
+<Steps>
+<Step title="Add Chat Provider Integration">
+Add a chat provider integration to your Novu account from the integration store. Enter credentials if required and save the integration. Follow corresponding provider documentation to get the required credentials.
+</Step>
+
+<Step title="Create Subscriber">
+Create a new subscriber.
+
+<Note>
+  This step can be skipped if you already have a subscriber. You can use the `subscriberId` of an existing subscriber.
+</Note>
+</Step>
+
+<Step title="Update Subscriber Credentials">
+  [Update](/api-reference/subscribers/update-provider-credentials) the
+  subscriber credential `webhookUrl` for this provider and integration.
+</Step>
+
+<Step title="Configure Workflow">
+  Create a new worklow or use an existing workflow. Add chat channel and write content for the
+  message.
+</Step>
+
+<Step title="Trigger Workflow">
+  Trigger this workflow to above `subscriberId` using trigger identifier.
+</Step>
+
+<Step title="Verify Message">
+Check the chat provider if message is received.
+</Step>
+</Steps>
+

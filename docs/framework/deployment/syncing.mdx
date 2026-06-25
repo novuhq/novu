@@ -1,0 +1,43 @@
+---
+title: 'Syncing'
+description: 'Learn how to sync your local workflow changes to the Novu Cloud Dashboard across development and production environments.'
+---
+
+Novu operates in a multi environment setup, with the currently available environments:
+
+- **Local Studio** - Running against your local machine, this is where you can create, edit, and preview workflows.
+- **Development** - Acts as a Staging environment, where your non-technical peers can view and modify controls.
+- **Production** - For triggering workflows to your customers.
+
+## Sync changes to Novu Cloud
+
+Novu Framework operates in a GitOps model. This means that the source of truth for your workflows and configurations are located in your Git as Code.
+
+The general workflow for pushing changes to Novu Cloud is as follows:
+
+- Create a feature branch
+- Develop workflows locally in your bridge application
+- Sync changes to the Development environment to test e2e
+- Merge the feature branch to your `dev` branch
+  - This will trigger a CI/CD pipeline that will deploy the changes to the Development environment
+- Test the changes in the Development environment
+- Merge the `dev` branch to the `main` branch
+  - This will trigger a CI/CD pipeline that will deploy the changes to the Production environment
+
+## CI/CD Integrations
+
+Novu currently supports the following CI integrations:
+
+- **GitHub Actions** - [Direct Integration](/framework/deployment/actions)
+- **GitLab CI** - Using our [CLI command](/framework/deployment/cli)
+- **Jenkins** - Using our [CLI command](/framework/deployment/cli)
+- **CircleCI** - Using our [CLI command](/framework/deployment/cli)
+- **Bitbucket Pipelines** - Using our [CLI command](/framework/deployment/cli)
+- **Azure DevOps** - Using our [CLI command](/framework/deployment/cli)
+- **Travis CI** - Using our [CLI command](/framework/deployment/cli)
+- **Other** - For any other CI/CD tool, you can use our [CLI command](/framework/deployment/cli)
+
+<Note>
+  Direct integration with other CI/CD tools is on our roadmap. If you would like to see a specific
+  CI/CD tool integrated, please reach out to us.
+</Note>

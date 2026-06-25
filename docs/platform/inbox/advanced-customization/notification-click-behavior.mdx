@@ -1,0 +1,129 @@
+---
+title: 'Notification Click Behavior'
+description: "Learn how to configure routing and interaction behavior for notifications using routerPush and click handlers."
+icon: "mouse-pointer-click"
+---
+
+The Inbox component provides props that can be used to manage navigation and event handling, giving you full control over how notifications behave when users interact with them.
+
+## Enable navigation from notifications
+
+The Inbox component uses the `routerPush` prop to make your notifications navigable. When you define a `redirect.url` in your workflow definitions, Novu automatically passes this URL to the `routerPush` function you provide.
+
+<Tabs>
+  <Tab>
+    ```tsx
+
+    export function NovuInbox() {
+      const router = useRouter();
+
+      return (
+        <Inbox
+          applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+          subscriberId="YOUR_SUBSCRIBER_ID"
+          routerPush={(path: string) => router.push(path)}
+        />
+      );
+    }
+    ```
+
+  </Tab>
+    <Tab>
+    ```tsx
+
+    export function NovuInbox() {
+      const navigate = useNavigate();
+
+      return (
+        <Inbox
+          applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+          subscriberId="YOUR_SUBSCRIBER_ID"
+          routerPush={(path: string) => navigate(path)}
+        />
+      );
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```tsx
+
+    export function NovuInbox() {
+      const navigate = useNavigate();
+
+      return (
+        <Inbox
+          applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+          subscriberId="YOUR_SUBSCRIBER_ID"
+          routerPush={(path: string) => navigate(path)}
+        />
+      );
+    }
+    ```
+
+  </Tab>
+  <Tab>
+    ```tsx
+
+    export function NovuInbox() {
+      return (
+        <Inbox
+          applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+          subscriberId="YOUR_SUBSCRIBER_ID"
+          routerPush={(path: string) => navigate(path)}
+        />
+      );
+    }
+    ```
+
+  </Tab>
+</Tabs>
+
+To make navigation work, you need to specify the `routerPush` behavior based on your routing library
+
+## Event Handling
+
+Beyond navigation, you can handle various notification events to create custom behaviors like opening modals, triggering actions, or updating application state.
+
+### Handle notification click events
+
+You can intercept a notification click event and define a custom behavior using the `onNotificationClick` prop. This is particularly useful when you want to open modals, drawers, or perform custom actions instead of navigating to a page.
+
+```tsx
+import { Inbox } from '@novu/react';
+
+function Novu() {
+  return (
+    <Inbox
+      applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+      subscriber="YOUR_SUBSCRIBER_ID"
+      onNotificationClick={(notification) => {
+        // your logic to handle notification click
+      }}
+    />
+  );
+}
+```
+
+### Handle action button clicks
+
+Some notifications include primary and secondary action buttons. You can handle these clicks using the `onPrimaryActionClick` and `onSecondaryActionClick` props. These handlers give you access to the notification object and allow you to implement custom logic for each action type.
+
+```tsx
+import { Inbox } from '@novu/react';
+
+function Novu() {
+  return (
+    <Inbox
+      applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+      subscriber="YOUR_SUBSCRIBER_ID"
+      onPrimaryActionClick={(notification) => {
+        // your logic to handle primary action click
+      }}
+      onSecondaryActionClick={(notification) => {
+        // your logic to handle secondary action click
+      }}
+    />
+  );
+}
+```

@@ -1,0 +1,121 @@
+---
+title: 'PHP SDK'
+description: 'Connect a PHP application to Novu'
+icon: "code"
+---
+
+
+Novu's PHP SDK provides simple, yet comprehensive notification management, and delivery capabilities through multiple channels that you can implement using code that integrates seamlessly with your PHP application.
+
+[Explore the source code on GitHub](https://github.com/novuhq/php-novu)
+
+## Installation
+
+The SDK relies on [Composer](https://getcomposer.org/) to manage its dependencies.
+
+To install the SDK and add it as a dependency to an existing composer.json file:
+
+```bash
+composer require "novuhq/novu"
+```
+
+## Usage
+
+<Tabs>
+<Tab title="US Region">
+```php
+declare(strict_types=1);
+ 
+require 'vendor/autoload.php';
+ 
+use novu;
+use novu\Models\Components;
+ 
+$sdk = novu\Novu::builder()
+    ->setSecurity(
+        '<YOUR_SECRET_KEY_HERE>'
+    )
+    ->build();
+ 
+$triggerEventRequestDto = new Components\TriggerEventRequestDto(
+    workflowId: 'workflow_identifier',
+    to: new Components\SubscriberPayloadDto(
+        subscriberId: 'subscriber_unique_identifier',
+        firstName: 'Albert',
+        lastName: 'Einstein',
+        email: 'albert@einstein.com',
+    ),
+    payload: [
+        'comment_id' => 'string',
+        'post' => [
+            'text' => 'string',
+        ],
+    ],
+    overrides: [
+        'email' => [
+            'bcc' => 'no-reply@novu.co',
+        ],
+    ],
+);
+ 
+$response = $sdk->trigger(
+    triggerEventRequestDto: $triggerEventRequestDto,
+    idempotencyKey: '<value>'
+ 
+);
+ 
+if ($response->triggerEventResponseDto !== null) {
+    // handle response
+}
+```
+</Tab>
+<Tab title="EU Region">
+```php
+declare(strict_types=1);
+
+require 'vendor/autoload.php';
+
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()
+    ->setServerURL('https://eu.api.novu.co')
+    ->setSecurity(
+        '<YOUR_SECRET_KEY_HERE>'
+    )
+    ->build();
+
+$triggerEventRequestDto = new Components\TriggerEventRequestDto(
+    workflowId: 'workflow_identifier',
+    to: new Components\SubscriberPayloadDto(
+        subscriberId: 'subscriber_unique_identifier',
+        firstName: 'Albert',
+        lastName: 'Einstein',
+        email: 'albert@einstein.com',
+    ),
+    payload: [
+        'comment_id' => 'string',
+        'post' => [
+            'text' => 'string',
+        ],
+    ],
+    overrides: [
+        'email' => [
+            'bcc' => 'no-reply@novu.co',
+        ],
+    ],
+);
+
+$response = $sdk->trigger(
+    triggerEventRequestDto: $triggerEventRequestDto,
+    idempotencyKey: '<value>'
+
+);
+
+if ($response->triggerEventResponseDto !== null) {
+    // handle response
+}
+````
+
+</Tab>
+</Tabs>

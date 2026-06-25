@@ -1,0 +1,259 @@
+---
+title: 'Personalize Content'
+description: 'Learn how to personalize notification content in Novu using template variables, context data, and LiquidJS filters across all channel template editors.'
+icon: "user-round-cog"
+---
+
+
+Novu allows you to personalize notification content in all channel template editors using variables, conditional logic, and runtime data. This enables you to generate notifications that adapt to each subscriber and reflect the data available at the time a workflow is executed.
+
+## Template variables
+
+Template variables are placeholders that are resolved at workflow execution time and replaced with actual values when a notification is rendered. They allow templates to reference data from the workflow trigger payload, subscriber profile, workflow metadata, and outputs from previous steps.
+
+To insert a variable into a notification template, use double curly braces:
+
+```liquid
+{{variable_name}}
+```
+
+Variables also support nested objects and arrays. Use dot notation to access nested values:
+
+```liquid
+{{ variable_name.customer.name }}
+{{ variable_name.customer.email }}
+
+```
+
+Template variables can be used anywhere content is supported. They can be rendered directly, formatted using LiquidJS filters, or used within conditional logic and loops to control how content is displayed.
+
+<Note>
+  You can [configure all template variables](/platform/workflow/add-notification-content/personalize-content#configure-variables) from the template editor to fit your use case.
+</Note>
+
+### Payload variables
+
+Payload variables represent the structured data available to a workflow through its payload schema. This payload data can originate from the event trigger or be defined and managed directly in the workflow’s payload schema.
+
+Payload variables are accessed using the `payload` namespace:
+```liquid
+{{ payload.propertyName }}
+```
+
+For example, if your payload schema defines the following fields:
+```json
+{
+  "orderId": "string",
+  "amount": "number",
+  "currency": "string"
+}
+```
+
+You can reference them in your notification templates as:
+```liquid
+Order {{ payload.orderId }} totaling {{ payload.amount }} {{ payload.currency }} has been confirmed.
+```
+
+Payload variables provide a stable, predictable interface for dynamic data in your templates. By defining them in the payload schema, you ensure that all templates, step conditions, and action configurations reference a consistent set of fields.
+
+<Note>
+  To learn how payload data is defined and validated, see the [Payload schema](/platform/workflow/configure-workflow#payload-schema) documentation. 
+</Note>
+
+### Subscriber variables
+
+Subscriber variables expose data associated with the recipient of a notification. They allow you to personalize message content based on who the notification is for, making each delivery feel contextual and relevant.
+
+Subscriber variables are accessed using the `subscriber` namespace:
+```liquid
+{{ subscriber.propertyName }}
+```
+
+You can reference both standard subscriber fields and custom subscriber attributes stored on the subscriber profile.
+
+Standard fields include commonly used properties such as `subscriber.firstName`, `subscriber.lastName`, and `subscriber.email`. Custom attributes are stored under the `data` object and can be accessed using `subscriber.data.*`.
+
+```liquid
+Hi {{ subscriber.firstName }},
+ 
+You've been upgraded to the {{ subscriber.data.plan }} plan.
+ 
+Thanks,
+The Novu Team
+```
+
+<Note>
+  To learn more about subscriber metadata and profile structure, refer to the [Subscriber documentation](/platform/concepts/subscribers#subscriber-metadata-and-profile-structure). 
+</Note>
+
+### Workflow variables
+
+Workflow variables provide access to metadata defined on the workflow that is being executed such as the workflow:
+- Severity level
+- Tags
+- Name
+- Description
+- Workflow identifier
+
+This workflow data can be used in the templates editor to personalize message content. Workflow variables are accessed using the `workflow` namespace:
+
+```html
+<p>This is a <strong>{{workflow.severity}}</strong> priority message regarding your account.</p>
+```
+
+### Environment variables
+
+Values stored in the environment variables are available to all workflows in that environment. They are accessed using the `env` namespace:
+
+```liquid
+{{ env.MY_API_BASE_URL }}
+```
+
+<Note>
+  To learn how to create and manage environment variables, refer to [Environment variables](/platform/developer/environment-variables).
+</Note>
+
+### Digest variables
+
+Digest variables expose the data produced by a Digest step and are available to all channel steps that run after that digest step. They allow you to summarize, list, or otherwise represent multiple events that were grouped during the digest window.
+
+Digest variables are accessed under the `steps` namespace and are scoped to the specific digest step.
+
+<Note>
+  Digest variables are only available in steps that follow a Digest step. They are not available before the digest runs.
+</Note>
+
+Digest support is split into two categories:
+
+- Digest step variables: Raw values produced by the digest step
+- Digest template helpers: Preformatted helpers built on top of those raw values
+
+The step variables expose data, while template helpers optimize for common notification use cases.
+
+#### Digest step variables
+
+Digest step variables expose the underlying data collected during the digest window. These variables hold values only.
+
+- **steps.digest-step.events**: The `steps.digest-step.events` variable is an array that contains all the events collected by the digest step. Each item in the array represents a digested event, including the payload with which the workflow was triggered.
+      ```liquid
+      {{steps.digest-step.events}}
+      ```
+
+  You can loop through it to build dynamic message lists, such as comment summaries or blog post digests, or use [LiquidJS filters](https://liquidjs.com/filters/overview.html).
+
+- **steps.digest-step.eventCount**: The `steps.digest-step.eventCount` variable holds the total number of events collected during the digest step window. 
+        ```liquid
+      {{steps.digest-step.eventCount}}
+      ```
+      It is an integer value and can be used directly in the template editor or passed into [LiquidJS filters](https://liquidjs.com/filters/overview.html) like pluralize to generate grammatically correct summaries.
+
+#### Digest template helpers
+
+Digest template helpers are preconfigured template variables designed to simplify common digest use cases. Internally, they are built by combining digest step variables with LiquidJS filters.
+
+They exist to reduce template complexity and eliminate repetitive logic.
+
+- **steps.digest-step.countSummary**: The `countSummary` variable returns a human-readable summary of the total number of digested events with correct pluralization applied.
+
+    This helper is built using `steps.digest-step.eventCount` and the LiquidJS `pluralize` filter. When used, it inserts logic equivalent to:
+
+    ```liquid
+    {{ steps.digest-step.eventCount | pluralize: 'notification' }}
+    ```
+
+    For example, if the digest collected five events, then the output would be:
+
+    ```text
+    5 notifications
+    ```
+
+    You can use this helper when you want a concise count without manually managing plural rules.
+
+- **steps.digest-step.sentenceSummary**: The `sentenceSummary` variable returns a sentence-style string listing key items from the digested events array, such as a list of names, and gracefully handles formatting depending on the number of items present.
+
+    This helper is built using `steps.digest-step.events` and the LiquidJS `toSentence` filter. When the `sentenceSummary` variable is used in the template editor, it inserts logic equivalent to:
+    ```liquid
+    {{ steps.digest-step.events | toSentence: 'payload.name', 3, 'others' }}
+    ```
+    If the events contain names "Radek", "Dima", and five more users, then the result would be:
+
+    ```text
+    Radek, Dima, and 5 others
+    ```
+
+    You can configure the `toSentence` filter from the template editor by passing:
+    - A key path to extract from each item, for example, `payload.name`. This is a required argument.
+    - The number of items to display before collapsing.
+    - The suffix to use for remaining items, for example, "others".
+
+### Context variables
+
+Context variables come from context data. Once a context is created either through the Novu dashboard or API, its data becomes available in all channel template editors and can be referenced using the context namespace.
+
+```liquid
+{{ context.* }}
+```
+
+Context variables are typically used for tenant details, branding and configuration that should not live in the workflow payload or data shared amongst different entities in Novu.
+
+<Note>
+  To learn how to create and manage context data, and how to use the context data in the template editor, refer to [Context](/platform/workflow/advanced-features/contexts).
+</Note>
+
+## Apply logic with LiquidJS
+
+All Novu template editors support [LiquidJS](https://liquidjs.com/index.html). This allows you to add logic and control flow to your notification content, including conditional rendering, iteration, and value transformation directly inside channel template editors.
+
+<Note>
+  Autocomplete suggestions are not available inside control statements like `{% if %}` or `{% for %}`.
+</Note>
+
+### Conditional rendering
+
+You can use the conditional statements in LiquidJS `if-else` statements to control whether content is shown based on a condition.
+
+```liquid
+{% if subscriber.data.plan == 'enterprise' %}
+  You have access to priority support.
+{% endif %}
+```
+
+<Note>
+  When comparing string values in Liquid conditional statements, always use single quotes (`'value'`). Double quotes (`"value"`) are not supported.
+</Note>
+
+### Iteration and loops
+
+You can loop over arrays using `{% for %}` loop. This is useful when rendering lists of items, events, or grouped data. 
+
+```liquid
+{% for item in payload.order.items %}
+  - {{ item.name }} ({{ item.price }})
+{% endfor %}
+```
+
+### Filters and transformations
+
+You can use filters to transform values before rendering them. Filters are applied using the pipe (`|`) symbol and can be chained.
+
+```liquid
+Your workspace {{ payload.workspaceName | upcase }} has been successfully created.
+```
+
+## Configure variables
+
+Novu provides a built-in variable configuration UI in the template editor that allows you to apply LiquidJS filters to variable output.
+
+![Configure variable](/images/workflows/add-notification-content/personalize-content/configure-variable.png)
+
+When you insert a variable into the template editor, click the variable to open the configuration menu.
+
+<video autoPlay loop muted playsInline src="/images/workflows/add-notification-content/personalize-content/configure-variable.mp4" />
+
+From this menu, you can:
+- Apply Liquid filters
+- Reorder applied filters
+
+The filter input also provides filter suggestions, making it easier to discover and apply available filters. You can apply one or more filters to control how the variable value is rendered in your notification content.
+
+Filters are applied top to bottom, meaning the output of one filter becomes the input for the next. You can reorder filters using drag and drop to change the execution order.

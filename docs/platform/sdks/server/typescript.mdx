@@ -1,0 +1,163 @@
+---
+title: 'Typescript'
+description: 'Connect a TS/JS application to Novu'
+icon: "server"
+---
+
+
+Novu's Typescript SDK provides simple, yet comprehensive notification management, and delivery capabilities through multiple channels that you can implement using code. It integrates seamlessly with your Node.js, Bun, Deno, and Cloudflare Workers applications.
+
+[Explore the source code on GitHub](https://github.com/novuhq/novu-ts)
+
+## Installation
+
+<Tabs>
+<Tab title="NPM">
+
+```bash
+npm add @novu/api
+```
+
+</Tab>
+<Tab title="PNPM">
+
+```bash
+pnpm add @novu/api
+```
+
+</Tab>
+<Tab title="Yarn">
+
+```bash
+yarn add @novu/api zod@^3
+
+## Note that Yarn does not install peer dependencies automatically. You will need
+
+## to install zod as shown above.
+
+```
+
+</Tab>
+<Tab title="Bun">
+
+```bash
+bun add @novu/api
+```
+
+</Tab>
+</Tabs>
+
+## Usage
+
+<Tabs>
+<Tab title="US Region">
+
+```typescript
+import { Novu } from "@novu/api";
+
+const novu = new Novu({ secretKey: "<YOUR_SECRET_KEY_HERE>", });
+
+async function run() {
+  const result = await novu.trigger({
+    to: {
+      subscriberId: "subscriber_unique_identifier",
+      firstName: "Albert",
+      lastName: "Einstein",
+      email: "albert@einstein.com",
+      phone: "+1234567890",
+    },
+    workflowId: "workflow_identifier",
+    payload: {
+      comment_id: "string",
+      post: {
+        text: "string",
+      },
+    },
+    overrides: {
+      email: {
+        bcc: "no-reply@novu.co",
+      },
+    },
+  });
+}
+
+run();
+```
+
+</Tab>
+<Tab title="EU Region">
+
+```javascript
+import { Novu } from "@novu/api";
+
+const novu = new Novu({
+  secretKey: "<YOUR_SECRET_KEY_HERE>",
+  serverUrl: "https://eu.api.novu.co",
+});
+
+async function run() {
+  const result = await novu.trigger({
+    to: {
+      "subscriberId": "subscriber_unique_identifier",
+      "firstName": "Albert",
+      "lastName": "Einstein",
+      "email": "albert@einstein.com",
+      "phone": "+1234567890",
+    },
+    workflowId: "workflow_identifier",
+    payload: {
+      "comment_id": "string",
+      "post": {
+        "text": "string",
+      },
+    },
+    overrides: {
+      "email": {
+        "bcc": "no-reply@novu.co"
+      },
+    },
+  });
+
+  // Handle the result
+  console.log(result);
+}
+
+run();
+```
+
+</Tab>
+</Tabs>
+
+## Sending custom header
+
+To send custom headers, you can use the `HTTPClient` class. Read more on how to configure custom [http client](https://github.com/novuhq/novu-ts?tab=readme-ov-file#custom-http-client).
+
+```typescript
+import { Novu } from "@novu/api";
+import { HTTPClient } from "@novu/api/lib/http";
+
+const httpClient = new HTTPClient();
+
+httpClient.addHook("beforeRequest", (request) => {
+  const nextRequest = new Request(request);
+  nextRequest.headers.set("x-custom-header", "custom-header-value");
+
+  return nextRequest;
+});
+
+const novu = new Novu({
+  httpClient,
+  secretKey: "SECRET_KEY_VALUE",
+  serverURL: "https://eu.api.novu.co",
+});
+
+novu.trigger({
+  workflowId: "WORKFLOW_ID_VALUE",
+  to: {
+    subscriberId: "subscriberId",
+  },
+  payload: {
+    message: "Hello, world!",
+  },
+});
+```

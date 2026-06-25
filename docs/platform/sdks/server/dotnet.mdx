@@ -1,0 +1,70 @@
+---
+title: '.NET'
+description: 'Connect a .NET application to Novu'
+icon: "code"
+---
+
+Novu's .NET SDK provides simple, yet comprehensive notification management, and delivery capabilities through multiple channels that you can implement using code that integrates seamlessly with your C#/.NET application.
+
+[Explore the source code on GitHub](https://github.com/novuhq/novu-csharp)
+
+## Installation
+
+```csharp
+dotnet add package Novu
+```
+
+## Usage
+
+<Tabs>
+  <Tab title="US Region">
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+
+var sdk = new NovuSDK(secretKey: "YOUR_SECRET_KEY_HERE");
+
+var res = await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "workflow_identifier",
+    Payload = new Dictionary<string, object>() {
+        { "comment_id", "string" },
+        { "post", new Dictionary<string, object>() {
+            { "text", "string" },
+        } },
+    },
+    Overrides = new Overrides() {},
+    To = To.CreateStr(
+        "SUBSCRIBER_ID"
+    ),
+});
+```
+  </Tab>
+  <Tab title="EU Region">
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+
+var sdk = new NovuSDK(
+    serverUrl: "https://eu.api.novu.co",
+    secretKey: "YOUR_SECRET_KEY_HERE"
+);
+
+var res = await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "workflow_identifier",
+    Payload = new Dictionary<string, object>() {
+        { "comment_id", "string" },
+        { "post", new Dictionary<string, object>() {
+            { "text", "string" },
+        } },
+    },
+    Overrides = new Overrides() {},
+    To = To.CreateStr(
+        "SUBSCRIBER_ID"
+    ),
+});
+```
+  </Tab>
+</Tabs>
+

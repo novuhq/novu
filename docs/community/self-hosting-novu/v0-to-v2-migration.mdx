@@ -1,0 +1,112 @@
+---
+title: "Migrate from v0 to v2 Dashboard"
+description: "A guide to help you migrate from Novu self-hosted v0 to v2"
+---
+
+## Migrating from Novu Self-Hosted v0 to v2
+
+This guide will help you migrate your existing Novu self-hosted v0 instance to v2. Due to significant architectural changes between versions, some manual steps are required, particularly for workflow migration.
+
+## Terminology
+- Web UI: The old Novu UI, that you are currently using.
+- Dashboard: The new Novu UI, that is powered by the v2 APIs and architecture.
+
+## Prerequisites
+
+- Access to your existing v0 instance
+- New v2 instance ready for deployment
+- Temporary ability to run both instances simultaneously for migration purposes
+
+## Main Changes in v2 Dashboard
+
+The new Dashboard brings a cleaner, and more intuitive UI. We have reconsidered some core principles, let's review the most important ones:
+
+### Subscribers
+The Subscribers page has been redesigned to provide a more comprehensive view of your subscribers, including preferences management and credentials.
+
+### Topics
+Brand new topics page, to view and manage your topics in Novu.
+
+### Workflows
+This area of the product was completely redesigned, and old v0 workflows will not be visible in the new UI. 
+The new Editor includes a block based editor for E-mail, with the ability to provide custom HTML blocks if needed.
+
+### Layouts
+
+Layout management is available on the new Dashboard. Checkout the [layouts](/platform/workflow/add-notification-content/channels-template-editors#email-layouts) documentation for more details.
+
+### Variants (Deprecated)
+
+Workflow Variants will not be available in the v2 UI, if you rely on them, you can continue to use the old UI for those workflows.
+
+### Changes (Deprecated)
+
+The changes mechanism was removed, in favor of a more simple "Sync" mechanism, that enables you to sync workflow state between environments, Production environment can also be modified directly from the UI, however we still recommend using the Dev environment and syncing the changes to Production.
+
+### User management (Not available)
+
+You can still login to your old Novu Users and their passwords with the new Dashboard, 
+However we are not allowing team management flows with the new version.
+
+In v2 we have moved our internal cloud implementation to use Clerk as our authentication and authorization provider, and we are not able to maintain 2 separate user management systems. 
+We recommend creating a reusable user credentials and share them between your team.
+
+## API Changes in v2
+
+The v2 API introduces several new endpoints and improvements. Here are the key changes:
+
+### New v2 Routes
+
+1. **Subscribers** (`/v2/subscribers`)
+   - Enhanced subscriber management with new endpoints:
+     - `GET /` - Search subscribers with advanced filtering
+     - `GET /:subscriberId` - Retrieve specific subscriber
+     - `POST /` - Create new subscriber
+     - `PATCH /:subscriberId` - Update subscriber details
+     - `DELETE /:subscriberId` - Remove subscriber
+   - New preferences management:
+     - `GET /:subscriberId/preferences` - Get subscriber preferences
+     - `PATCH /:subscriberId/preferences` - Update preferences
+2. **Topics** (`/v2/topics`)
+3. **Workflows** (`/v2/workflows`)
+
+## Migrating Workflows
+
+Unfortunately, we do not have an automated way to migrate v0 workflows created in the v0 UI. 
+To migrate workflows, you will need to manually recreate them in the new Dashboard UI.
+
+The old Web UI dashboard is compatible with the new v2 API, so you don't have to worry about updating your API instance, as it will continue to work as expected.
+
+While running the old "Web UI", deploy the new "Dashboard" docker image under another host (we use dashboard.novu.co and dashboard-v0.novu.co for this example).
+During the transition period, you will have the two dashboards running in the same time, so you can copy the workflows from the old UI to the new one.
+
+Workflows created in the new UI will not be visible under the old Web UI, but old workflows create will appear in the new UI however, will not be editable from there.
+
+1. **Access both dashboards**: Open the admin dashboards for both versions
+2. **Copy workflow configurations**: For each workflow in v0:
+   - Note all steps, templates, and trigger configurations
+   - Manually recreate them in v2 with the same structure
+   - Verify variables, conditions, and integrations are properly configured
+
+## FAQs
+
+### If I currently use the v2 docker images, what should I do?
+
+If you already have the v2 docker images running, you will just need to run the new dashboard image in parallel to the existing "web" image, and migrate your workflows.
+
+### What breaking changes are in the new v2 images (API)
+
+The new v2 images are backward compatible with the old v0 API, so you don't have to worry about updating your instances. 
+However, to enjoy the new Workflow editor experience, you will need to migrate your workflows to the new v2 engine.
+
+### What is the difference between Novu Cloud, Enterprise and Self-hosted?
+
+You can learn more about the differences between the different editions [here](https://docs.novu.co/community/self-hosted-and-novu-cloud).
+
+## Need Help?
+
+If you encounter challenges during migration, our community is here to help:
+
+- Join our [Discord community](https://discord.gg/novu)
+- Open issues on [GitHub](https://github.com/novuhq/novu)
+- Check the [documentation](https://docs.novu.co) for the latest updates

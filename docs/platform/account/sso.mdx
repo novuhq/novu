@@ -1,0 +1,31 @@
+---
+title: 'SAML SSO & SCIM'
+description: 'Enable SAML SSO and SCIM directory sync for your organization'
+icon: "scan-face"
+---
+
+<Note>
+  This feature is only available to Enterprise customers on our Cloud platform. For more information, please visit our [Enterprise Plan](https://novu.co/pricing) page.
+</Note>
+
+## SAML SSO
+
+Novu supports SAML SSO so your team can sign in with your existing SAML 2.0 identity provider. Common setups include:
+
+- Okta
+- Microsoft Entra ID (formerly Azure AD)
+- Google Workspace
+- Any other SAML 2.0 compliant IdP
+
+To turn on SAML SSO for your Novu organization, reach out via Slack Connect channel or email us at [support@novu.co](mailto:support@novu.co).
+
+## SCIM (directory sync)
+
+Novu supports **SCIM 2.0** directory sync so user changes in your identity provider (create, update, deactivate) can flow into Novu automatically. That matters when you want **timely offboarding** or a directory that stays in step with Okta, Entra ID, or similar, instead of only creating accounts when someone signs in for the first time (JIT provisioning).
+
+A few things to know:
+
+- SCIM sits **on top of** enterprise SSO. So first **SAML or OIDC SSO**, will be enabled, then SCIM will be enabled using the SCIM base URL and bearer token we issue for your organization.
+- IdPs differ in how they map attributes and push groups. So during SCIM setup we'll walk you through what Novu expects (including email on every user) and how that lines up with your provider.
+
+If you’re on Enterprise plan and interested in SCIM, reach out via Slack Connect channel or email us at [support@novu.co](mailto:support@novu.co).

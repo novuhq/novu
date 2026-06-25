@@ -1,0 +1,134 @@
+---
+title: 'Introduction'
+description: 'Learn what a Subscription is in Novu, how they fit into the notification system.'
+icon: "toggle-right"
+---
+
+Subscriptions introduce topic-level settings that allow subscribers to decide exactly which notifications they want to receive or mute.
+
+While standard preferences allow subscribers to toggle specific channels on or off, Subscriptions provide more precise control through conditional rules. With Subscriptions, subscribers can mute topics, subscribe or unsubscribe to them, and also define conditions that determine when Novu should deliver a notification.
+
+## How subscription fits into the notification flow
+
+The Subscription introduces a filtering layer between the trigger and the subscriber. When you trigger a notification to a topic key, the system doesn't automatically send it to everyone. Instead, it follows this evaluation flow:
+
+1. **Trigger**: You trigger a workflow to a `topicKey` and include a data payload.
+2. **Match**: Novu retrieves all subscribers associated with that topic.
+3. **Evaluate**: The system checks the conditions and preferences of each subscription against the payload.
+4. **Deliver**: Only subscribers whose conditions match the payload receive the notification.
+
+This filtering happens for every event on a topic, which allows you to support many use cases, including advanced preferences, segmentation, and multi-tenant experiences.
+
+<Note>
+  Workflow and global settings control delivery and take precedence. If a subscriber has disabled email notifications globally, then they won't receive email notifications for a subscription, even if the subscription condition is met.
+</Note>
+
+## Core concepts
+
+To implement Subscriptions effectively, you should understand these components:
+
+- **Topic**: A topic groups notifications of a similar type. Refer to the [Topics documentation](/platform/concepts/topics) for details on how to create and manage them.
+- **Subscribers**: A subscriber represents the user or entity that receives notifications. Subscribers can join or leave topics and define preferences that control delivery. Refer to the [Subscribers documentation](/platform/concepts/subscribers) for details on how to create and manage subscribers.
+
+### Subscription rules
+
+Each subscription can include one or more conditions. Conditions determine whether an event should trigger a notification for that subscriber. You can define available conditions in your UI, and subscribers choose which ones apply to them.
+
+### Multiple subscriptions per topic
+
+Novu supports a 1-to-N relationship for subscriptions. This means, one subscriber can have multiple subscriptions to the same topic with different conditions. Novu evaluates each subscription independently.
+
+For example, in a trading app, a subscriber can have three separate alerts set up for the same `price-alerts` topic:
+- Notify me when BTC is above $80k.
+- Notify me when BTC is below $40k.
+- Notify me when ETH is above $4k.
+
+Novu stores these configurations per subscriber, per topic, and per workflow.
+
+## Subscription components
+
+Novu provides a set of pre-built React components that you can use together or independently to build subscription experiences.
+
+![Subscription components](/images/subscription-preferences/subscription.png)
+
+### `<Subscription />`
+
+The [`<Subscription />`](/platform/subscription/quickstart) component serves as the root provider and the default UI.
+
+It requires the `topicKey` prop and optionally an `identifier` prop, and you must wrap it with the Novu provider as the source of session context.
+
+```tsx
+import { NovuProvider, Subscription } from '@novu/react';
+
+export function Novu() {
+  return (
+    <NovuProvider 
+      subscriber="SUBSCRIBER_ID"
+      applicationIdentifier="APPLICATION_IDENTIFIER"
+    >
+      <Subscription
+        topicKey="product-updates"
+        identifier="user-123"
+      />
+    </NovuProvider>
+  )
+}
+```
+
+### `<SubscriptionButton />`
+
+The `<SubscriptionButton />` component renders only the subscribe or unsubscribe action. This is useful when you want to place a subscription control inline. 
+
+Use this component within the [`<Subscription />`](/platform/subscription/quickstart) component.
+
+```tsx
+import { NovuProvider, Subscription, SubscriptionButton } from '@novu/react';
+
+export function Novu() {
+  return (
+    <NovuProvider 
+      subscriber="SUBSCRIBER_ID"
+      applicationIdentifier="APPLICATION_IDENTIFIER"
+      >
+        <Subscription
+          topicKey="product-updates"
+          identifier="user-123"
+        >
+          <SubscriptionButton />
+        </Subscription>
+    </NovuProvider>
+  )
+}
+```
+
+### `<SubscriptionPreferences />`
+
+The `<SubscriptionPreferences />` component renders the list of preferences associated with a subscription. Preferences typically map to workflows or workflow groups within a topic.
+
+Use this component when you want to control where and how preferences appear in your UI. Use it within a [`<Subscription />`](/platform/subscription/quickstart) context.
+
+```tsx
+import {NovuProvider, Subscription, SubscriptionPreferences } from '@novu/react';
+
+export function Novu() {
+    return (
+      <NovuProvider 
+        subscriber="SUBSCRIBER_ID"
+        applicationIdentifier="APPLICATION_IDENTIFIER"
+        >
+        <Subscription
+          topicKey="product-updates"
+          identifier="user-123"
+        >
+          <SubscriptionPreferences />
+        </Subscription>
+      </NovuProvider>
+    )
+}
+```
+
+## How Subscriptions relate to the Inbox
+
+If you use the [`<Inbox />`](/platform/inbox), then subscriptions determine which notifications appear in a subscriber's feed. When a subscriber joins a topic, the [`<Inbox />`](/platform/inbox) shows notifications from that topic according to the subscriber's selected conditions. If the subscriber mutes the topic or sets rules that don't match an event, then the Inbox doesn't show those messages to that subscriber.
+
+Subscriptions work with or without the [`<Inbox />`](/platform/inbox), and have a standalone [`<Subscription />`](/platform/subscription/quickstart) component.

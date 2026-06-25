@@ -178,8 +178,8 @@ const WorkflowListEmptyDev = () => {
   const { environmentSlug } = useParams();
 
   return (
-    <div className="flex h-full w-full flex-col items-start justify-center">
-      <div className="flex flex-col gap-12 translate-x-1/4">
+    <div className="flex h-full w-full flex-col items-center justify-center">
+      <div className="flex flex-col gap-12">
         <WorkflowsIllustration className="w-34" />
 
         <div className="flex flex-col gap-3">

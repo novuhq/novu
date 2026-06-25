@@ -1,0 +1,93 @@
+---
+title: Integration schema
+description: "Reference the Novu integration schema used in API requests and responses. Review fields, data types, and object structure for this resource."
+---
+
+### Integration
+
+Integration is third party service used by Novu to send notification for a specific channel. For example, [sengrid](/platform/integrations/email/sendgrid) is a email integration and [twilio](/platform/integrations/sms/twilio) is a sms integration. Read more about integrations on [integrations concept page](/platform/concepts/integrations). Integration APIs don't return credentials with secret key based authorization method, only integration metadata details are returned in response.
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `id` | `string` | The unique identifier of the integration record in the database. This is automatically generated. |
+| `environmentId` | `string` | The unique identifier for the environment associated with this integration. This links to the Environment collection. |
+| `organizationId` | `string` | The unique identifier for the organization that owns this integration. This links to the Organization collection. |
+| `name` | `string` | The name of the integration, which is used to identify it in the user interface. |
+| `identifier` | `string` | A unique string identifier for the integration, often used for API calls or internal references. |
+| `providerId` | `string` | The identifier for the provider of the integration (e.g., "mailgun", "twilio"). |
+| `channel` | `IntegrationResponseDtoChannel` | The channel type for the integration, which defines how it communicates (e.g., email, SMS). |
+| `credentials` | `CredentialsDto` | The credentials required for the integration to function, including API keys and other sensitive information. |
+| `configurations` | `ConfigurationsDto` | The configurations required for enabling the additional configurations of the integration. |
+| `active` | `boolean` | Indicates whether the integration is currently active. An active integration will process events and messages. |
+| `deleted` | `boolean` | Indicates whether the integration has been marked as deleted (soft delete). |
+| `deletedAt` | `string` | The timestamp indicating when the integration was deleted. This is set when the integration is soft deleted. |
+| `deletedBy` | `string` | The identifier of the user who performed the deletion of this integration. Useful for audit trails. |
+| `primary` | `boolean` | Indicates whether this integration is marked as primary. A primary integration is often the default choice for processing. |
+| `conditions` | `StepFilterDto[]` | An array of conditions associated with the integration that may influence its behavior or processing logic. |
+
+### Credentials
+
+Each integration has a set of credentials that are used to authenticate with the third party service. Checkout the provider documentation for more details on what credentials are required for each integration.
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `apiKey` | `string` |  |
+| `user` | `string` |  |
+| `secretKey` | `string` |  |
+| `domain` | `string` |  |
+| `password` | `string` |  |
+| `host` | `string` |  |
+| `port` | `string` |  |
+| `secure` | `boolean` |  |
+| `region` | `string` |  |
+| `accountSid` | `string` |  |
+| `messageProfileId` | `string` |  |
+| `token` | `string` |  |
+| `from` | `string` |  |
+| `senderName` | `string` |  |
+| `projectName` | `string` |  |
+| `applicationId` | `string` |  |
+| `clientId` | `string` |  |
+| `requireTls` | `boolean` |  |
+| `ignoreTls` | `boolean` |  |
+| `tlsOptions` | `TlsOptions` |  |
+| `baseUrl` | `string` |  |
+| `webhookUrl` | `string` |  |
+| `redirectUrl` | `string` |  |
+| `hmac` | `boolean` |  |
+| `serviceAccount` | `string` |  |
+| `ipPoolName` | `string` |  |
+| `apiKeyRequestHeader` | `string` |  |
+| `secretKeyRequestHeader` | `string` |  |
+| `idPath` | `string` |  |
+| `datePath` | `string` |  |
+| `apiToken` | `string` |  |
+| `authenticateByToken` | `boolean` |  |
+| `authenticationTokenKey` | `string` |  |
+| `instanceId` | `string` |  |
+| `alertUid` | `string` |  |
+| `title` | `string` |  |
+| `imageUrl` | `string` |  |
+| `state` | `string` |  |
+| `externalLink` | `string` |  |
+| `channelId` | `string` |  |
+| `phoneNumberIdentification` | `string` |  |
+| `accessKey` | `string` |  |
+| `appSid` | `string` |  |
+| `senderId` | `string` |  |
+| `tenantId` | `string` |  |
+| `appIOBaseUrl` | `string` |  |
+
+### ChannelTypeEnum
+
+ChannelTypeEnum is used to specify the type of channel that the integration is used for. For example, if the integration is used for email, the channel type will be `email`.
+
+```typescript
+ChannelTypeEnum {
+  IN_APP = "in_app",
+  EMAIL = "email",
+  SMS = "sms",
+  CHAT = "chat",
+  PUSH = "push"
+}
+```

@@ -1,0 +1,74 @@
+---
+title: Notification event schema
+description: "Reference the Novu notification event schema used in API requests and responses. Review fields, data types, and object structure for this resource."
+---
+
+### Notification event
+
+Notification event is the event that is generated when a workflow is triggered to subscribers. It contains workflow details, subscriber details payload sent during trigger, execution details of each step in the workflow and the result of the execution of each step.
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `id` | `string` | Unique identifier of the notification |
+| `environmentId` | `string` | Environment ID of the notification |
+| `organizationId` | `string` | Organization ID of the notification |
+| `subscriberId` | `string` | Subscriber ID of the notification |
+| `transactionId` | `string` | Transaction ID of the notification |
+| `templateId` | `string` | Template ID of the notification |
+| `digestedNotificationId` | `string` | Digested Notification ID |
+| `createdAt` | `string` | Creation time of the notification |
+| `updatedAt` | `string` | Last updated time of the notification |
+| `channels` | `string[]` |  |
+| `subscriber` | `ActivityNotificationSubscriberResponseDto` | Subscriber of the notification |
+| `template` | `ActivityNotificationTemplateResponseDto` | Template of the notification |
+| `jobs` | `ActivityNotificationJobResponseDto[]` | Jobs of the notification |
+| `payload` | `{ [k: string]: any; }` | Payload of the notification |
+| `tags` | `string[]` | Tags associated with the notification |
+| `controls` | `{ [k: string]: any; }` | Controls associated with the notification |
+| `to` | `{ [k: string]: any; }` | To field for subscriber definition |
+| `topics` | `ActivityTopicDto[]` | Topics of the notification |
+| `severity` | `SeverityLevelEnum` | Severity of the workflow |
+| `critical` | `boolean` | Criticality of the notification |
+| `contextKeys` | `string[]` | Context (single or multi) in which the notification was sent |
+
+### Workflow
+
+Workflow contains the details of the workflow that was triggered.
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `id` | `string` |  |
+| `name` | `string` |  |
+| `description` | `string` |  |
+| `active` | `boolean` |  |
+| `draft` | `boolean` |  |
+| `preferenceSettings` | `SubscriberPreferenceChannels` |  |
+| `critical` | `boolean` |  |
+| `tags` | `string[]` |  |
+| `steps` | `NotificationStepDto[]` |  |
+| `organizationId` | `string` |  |
+| `creatorId` | `string` |  |
+| `environmentId` | `string` |  |
+| `triggers` | `NotificationTrigger[]` |  |
+| `notificationGroupId` | `string` |  |
+| `parentId` | `string` |  |
+| `deleted` | `boolean` |  |
+| `deletedAt` | `string` |  |
+| `deletedBy` | `string` |  |
+| `notificationGroup` | `NotificationGroup` |  |
+| `data` | `WorkflowResponseData` |  |
+| `workflowIntegrationStatus` | `WorkflowIntegrationStatus` |  |
+
+### ChannelTypeEnum
+
+ChannelTypeEnum is the type of the channel that the notification was sent to.
+
+```typescript
+ChannelTypeEnum {
+  IN_APP = "in_app",
+  EMAIL = "email",
+  SMS = "sms",
+  CHAT = "chat",
+  PUSH = "push"
+}
+```

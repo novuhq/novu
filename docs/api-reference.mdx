@@ -1,0 +1,47 @@
+---
+title: 'Overview'
+description: "Complete Novu API reference covering authentication, endpoints, rate limits, and server-side integration for notifications."
+---
+
+<Note>
+  It's important to note that our API and backend SDK are intended for use exclusively in
+  server-side applications. **Attempting to use them in a client-side application will result in
+  Cross-Origin Resource Sharing (CORS) errors.** This restriction ensures the security and integrity
+  of our services.
+</Note>
+
+## Authentication
+
+Authentication for the Novu API involves the use of an API Key, which is a secure credential that is tied to your Novu account. This key should be included in the header of the request in the Authorization field as a string prefixed with 'ApiKey '.
+
+```bash
+--header 'Authorization: ApiKey <NOVU_SECRET_KEY>'
+```
+
+For example, when using Novu in a Node.js application, the Novu package should be imported and initialized with the API key, as shown in this snippet:
+
+```javascript
+import { Novu } from '@novu/api';
+const novu = new Novu({
+  secretKey: "NOVU_SECRET_KEY",
+});
+```
+
+Replace `<NOVU_SECRET_KEY>` with your actual API Key, available in the API Key section of the Novu Dashboard.
+
+<Warning>
+  It is advised not to hardcode your credentials in a file in production environments. Use
+  environment variables instead.
+</Warning>
+
+## API Endpoints
+
+Novu provides a multitude of API endpoints that enable a variety of functionalities. the base URL for the Novu API is `https://api.novu.co/v1`.
+
+<Note>
+  We offer two API options: the US API and the EU API. By default, our API documentation refers to the US API, which can be accessed at: https://api.novu.co/v1.
+
+  If you require the EU version, you can access it here: https://eu.api.novu.co/v1.
+</Note>
+
+For instance, to get tenant information, the endpoint to use would include the tenant's identifier and look like this `https://api.novu.co/v1/tenants/{identifier}`.

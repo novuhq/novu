@@ -1,0 +1,160 @@
+---
+title: 'React'
+description: 'Learn how to integrate the Novu Inbox component into a React application and add routing with React Router.'
+---
+
+
+This guide walks you through integrating Novu’s Inbox into your React application for in-app notifications in real-time, from setup to triggering your first notification. By the end, you'll have a working notification inbox.
+
+<Steps>
+  <Step>
+  ## Create a Novu account
+    [Create a Novu account](https://dashboard.novu.co/auth/sign-up) or [sign in](https://dashboard.novu.co/auth/sign-in) to access the Novu dashboard.
+  </Step>
+
+  <Step>
+  ## Create a React app using Vite
+    Run the following command to create a new React app using [Vite](https://vite.dev/guide/#scaffolding-your-first-vite-project):
+
+    ```package-install
+    npm create vite@latest novu-inbox-react -- --template react-ts
+    cd novu-inbox-react
+    npm install
+    npm run dev
+    ```
+
+  </Step>
+
+  <Step>
+  ## Install `@novu/react`
+  The [Novu React SDK](/platform/sdks/react) gives you access to the Inbox component.
+
+  Run the following command to install the SDK:
+
+    ```package-install
+    npm install @novu/react
+    ```
+
+  </Step>
+
+  <Step>
+  ## Create the Inbox component
+  In the `src` directory, create a `components/novu-inbox.tsx` file and use the [`<Inbox />`](/platform/inbox) component, passing <Tooltip tip="The application identifier is a unique identifier for your application. You can find it in the Novu Dashboard under the API keys page.">applicationIdentifier</Tooltip> and <Tooltip tip="The subscriber ID is the unique identifier for the user in your application, typically the user's id in your database.">subscriberId</Tooltip>:
+
+  <Note>
+  Explore the full `react-inbox` example in the [Novu examples repository](https://github.com/novuhq/novu).
+</Note>
+
+  If you’re signed in to your Novu account, then the <Tooltip tip="The application identifier is a unique identifier for your application. You can find it in the Novu Dashboard under the API keys page.">applicationIdentifier</Tooltip> and <Tooltip tip="The subscriber ID is the unique identifier for the user in your application, typically the user's id in your database.">subscriberId</Tooltip> are automatically entered in the code sample above. Otherwise, you can manually retrieve them:
+    * `applicationIdentifier` – In the Novu dashboard, click API Keys, and then locate your unique Application Identifier.
+    * `subscriberId` – This represents a user in your system (typically the user's ID in your database). For quick start purposes, an auto-generated subscriberId is provided for your Dashboard user.
+
+    <Note>
+      **Note:** If you pass a `subscriberId` that does not exist yet, Novu will automatically create a new subscriber with that ID.
+    </Note>
+
+  </Step>
+
+  <Step>
+  ## Set up React Router and import the Inbox component
+    Now you can set up React Router and add the `NovuInbox` component to your app layout:
+    
+    ```tsx title="src/App.tsx"
+
+    function Layout({ children }: { children: React.ReactNode }) {
+      return (
+        <div>
+          <nav>
+            <NovuInbox />
+          </nav>
+          {children}
+        </div>
+      );
+    }
+
+    function Home() {
+      return <div>Welcome to the Home page!</div>;
+    }
+
+    function App() {
+      return (
+        <Router>
+          <Layout>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              {/* Add your routes here */}
+            </Routes>
+          </Layout>
+        </Router>
+      );
+    }
+
+    export default App;
+    ```
+
+  </Step>
+
+  <Step>
+  ## Run Your Application
+    Start your development server:
+
+    ```package-install
+    npm run dev
+    ```
+    Once the application is running, a bell icon will appear in the navbar. Clicking it opens the notification inbox UI.
+
+    Currently, there are no notifications. Let’s trigger one!
+
+  </Step>
+
+  <Step>
+  ## Trigger your first notification
+
+In this step, you'll create a simple workflow to send your first notification via the Inbox component. Follow these steps to set up and trigger a workflow from your Novu dashboard.
+
+1. Go to your [Novu dashboard](https://dashboard.novu.co/auth/sign-in).
+2. In the sidebar, click **Workflows**.
+3. Click **Create Workflow**. Enter a name for your workflow (e.g., "Welcome Notification").
+4. Click **Create Workflow** to save it.
+5. Click the **Add Step** icon in the workflow editor and then select **In-App** as the step type.
+6. In the In-App template editor, enter the following:
+
+   - **Subject**: "Welcome to Novu"
+   - **Body**: "Hello, world! "
+
+7. Once you’ve added the subject and body, close the editor.
+8. Click **Trigger**.
+9. Click **Test Workflow**.
+
+  </Step>
+
+<Step>
+## View the notification in your app
+Go back to your React app, then click the bell icon.
+
+You should see the notification you just sent from Novu! 🎉
+
+</Step>
+
+</Steps>
+
+## Next steps
+
+<Columns cols={2}>
+  <Card title="Styling" icon="palette" href="/inbox/react/styling">
+    Customize the look and feel of your Inbox to match your application's design.
+  </Card>
+  <Card
+    title="Inbox and preferences UI components"
+    icon="library"
+    href="/platform/inbox"
+  >
+    Explore our full-stack UI components libraries for building in-app notifications.
+  </Card>
+  <Card title="Build Workflow" icon="workflow" href="/platform/workflow">
+     Design and manage advanced notification workflows.
+  </Card>
+  <Card title="Multi Tenancy" icon="square-code" href="/platform/concepts/tenants">
+    Manage multiple tenants within an organization.
+  </Card>
+</Columns>
