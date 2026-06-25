@@ -22,8 +22,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives
 import { cn } from '@/utils/ui';
 import { AgentSuggestionPills } from './agent-suggestion-pills';
 import { ConnectAgentDemoForm } from './connect-agent-demo-form';
-import type { ConnectorId, ConnectorId, ConnectorId } from './connecStep } from './generation-status';
-import { PromptInput } from './prompt-input';
+import type { ConnectorId } from './connector-options';
+import type { GenerationStep, GenerationStep, GenerationStep } from './gent';
 import { TemplateDropdown, type TemplateSelection } from './template-dropdown';
 
 export type AgentGenerationMode = 'prompt' | 'manual' | 'existing';
@@ -261,6 +261,7 @@ export function ConnectAgentForm({
   onSaveIntegration,
   aiGeneration,
   submitSlot,
+}: ConnectAgentFormProps) {
   simplifiedDemo,
   if (simplifiedDemo) {
     return (
@@ -306,19 +307,18 @@ export function ConnectAgentForm({
       />
     );
   }
+  const selectedConnector = getConnectorById(connectorId);
+  const showCredentialsSection = isClaudeSelected && credentialsPanelVisible && Boolean(selectedConnector?.providerId);
+  const usePromptUi = Boolean(aiGeneration);
+  const aiMode = aiGeneration?.mode ?? 'prompt';
+  const scope: AgentScope = aiMode === 'existing' ? 'existing' : 'create';
+  const totalOnboardingSteps = isClaudeSelected ? 7 : 10;
+  const header = aiMode === 'existing' ? null : RIGHT_HEADER_BY_MODE[aiMode];
+  const showScopeTabs = usePromptUi && showExistingOption;
+  const { stepTitle, stepDescription } = resolveStepCopy({ isScratchRuntime, usePromptUi, scope });
 
-const selectedConnector = getConnectorById(connectorId);
-const showCredentialsSection = isClaudeSelected && credentialsPanelVisible && Boolean(selectedConnector?.providerId);
-const usePromptUi = Boolean(aiGeneration);
-const aiMode = aiGeneration?.mode ?? 'prompt';
-const scope: AgentScope = aiMode === 'existing' ? 'existing' : 'create';
-const totalOnboardingSteps = isClaudeSelected ? 7 : 10;
-const header = aiMode === 'existing' ? null : RIGHT_HEADER_BY_MODE[aiMode];
-const showScopeTabs = usePromptUi && showExistingOption;
-const { stepTitle, stepDescription } = resolveStepCopy({ isScratchRuntime, usePromptUi, scope });
-
-return (
-return (
+  return (
+  return (
     <>
       <SetupStep
         index={1}

@@ -256,6 +256,10 @@ export function ConnectAgentStep({
   }, [integrations, selectedConnector?.providerId]);
 
   useEffect(() => {
+    if (!runtime) {
+      return;
+    }
+
     onRuntimeChange?.(runtime);
   }, [runtime, onRuntimeChange]);
 
@@ -267,6 +271,10 @@ export function ConnectAgentStep({
   // agent is created with exactly what the marketing-site template advertised.
   const provisionAgentFromTemplate = useCallback(
     async (template: AgentTemplate) => {
+  if (!connectorId || !runtime) {
+    return;
+  }
+
       setIsAutoProvisioningFromTemplate(true);
 
       const effectiveName = template.name;
