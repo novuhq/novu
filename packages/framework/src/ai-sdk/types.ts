@@ -1,5 +1,5 @@
 import type { generateText, streamText } from 'ai';
-import type { AgentHandlers, AgentMessage, AgentMessageContext, MessageContent } from '../resources/agent';
+import type { AgentHandlers, AgentMessage, AgentMessageContext, MessageContent } from '../resources/agent/agent.types';
 import type { Awaitable } from '../types/util.types';
 
 /** Result from `streamText()` or `generateText()`. Return from `onMessage` to reply with the model output. */
