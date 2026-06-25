@@ -9,6 +9,8 @@ export type {
   GenerateChatOAuthUrlArgs,
   GetChannelConnectionArgs,
   GetChannelEndpointArgs,
+  LinkChannelEndpointArgs,
+  LinkChannelEndpointResponse,
   ListChannelConnectionsArgs,
   ListChannelEndpointsArgs,
 } from './channel-connections';

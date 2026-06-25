@@ -30,6 +30,7 @@ import { MsTeamsConnectButton } from './msteams-connect-button/MsTeamsConnectBut
 import { MsTeamsLinkUser } from './msteams-link-user/MsTeamsLinkUser';
 import { SlackConnectButton } from './slack-connect-button/SlackConnectButton';
 import { SlackLinkUser } from './slack-link-user/SlackLinkUser';
+import { TelegramConnectButton } from './telegram-connect-button/TelegramConnectButton';
 import { Subscription } from './subscription/Subscription';
 import { SubscriptionButtonWrapper as SubscriptionButton } from './subscription/SubscriptionButtonWrapper';
 import { SubscriptionPreferencesWrapper as SubscriptionPreferences } from './subscription/SubscriptionPreferencesWrapper';
@@ -70,6 +71,7 @@ export const novuComponents = {
   SlackConnectButton,
   MsTeamsLinkUser,
   MsTeamsConnectButton,
+  TelegramConnectButton,
 };
 
 const SUBSCRIPTION_COMPONENTS = ['Subscription', 'SubscriptionButton', 'SubscriptionPreferences'];
@@ -79,6 +81,7 @@ const CHANNEL_COMPONENTS = [
   'SlackConnectButton',
   'MsTeamsLinkUser',
   'MsTeamsConnectButton',
+  'TelegramConnectButton',
 ];
 
 export type NovuComponent = { name: NovuComponentName; props?: any };

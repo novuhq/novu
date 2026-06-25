@@ -46,6 +46,7 @@ export type {
   SubscriptionButtonProps,
   SubscriptionPreferencesProps,
   SubscriptionProps,
+  TelegramConnectButtonProps,
 } from './components';
 export {
   Bell,
@@ -61,6 +62,7 @@ export {
   Subscription,
   SubscriptionButton,
   SubscriptionPreferences,
+  TelegramConnectButton,
 } from './components';
 export type {
   UseChannelConnectionProps,

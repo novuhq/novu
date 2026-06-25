@@ -8,6 +8,8 @@ import type {
   GenerateLinkUserOAuthUrlArgs,
   GetChannelConnectionArgs,
   GetChannelEndpointArgs,
+  LinkChannelEndpointArgs,
+  LinkChannelEndpointResponse,
   ListChannelConnectionsArgs,
   ListChannelEndpointsArgs,
 } from '../channel-connections/types';
@@ -162,6 +164,11 @@ type ChannelEndpointCreateEvents = BaseEvents<
   ChannelEndpointResponse
 >;
 type ChannelEndpointDeleteEvents = BaseEvents<'channel-endpoint.delete', DeleteChannelEndpointArgs, void>;
+type ChannelEndpointLinkEvents = BaseEvents<
+  'channel-endpoint.link',
+  LinkChannelEndpointArgs,
+  LinkChannelEndpointResponse
+>;
 
 type SocketConnectEvents = BaseEvents<'socket.connect', { socketUrl: string }, undefined>;
 export type NotificationReceivedEvent = `notifications.${WebSocketEvent.RECEIVED}`;
@@ -215,6 +222,7 @@ export type Events = SessionInitializeEvents &
   ChannelEndpointGetEvents &
   ChannelEndpointCreateEvents &
   ChannelEndpointDeleteEvents &
+  ChannelEndpointLinkEvents &
   SocketConnectEvents &
   SocketEvents &
   NotificationReadEvents &

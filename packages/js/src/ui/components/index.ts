@@ -6,6 +6,7 @@ export * from './msteams-link-user/MsTeamsLinkUser';
 export * from './primitives';
 export * from './slack-connect-button/SlackConnectButton';
 export * from './slack-link-user/SlackLinkUser';
+export * from './telegram-connect-button/TelegramConnectButton';
 export * from './subscription/Subscription';
 export * from './subscription/SubscriptionButtonWrapper';
 export * from './subscription/SubscriptionPreferencesWrapper';

@@ -1,3 +1,4 @@
+import { NovuProvider, TelegramConnectButton } from '@novu/nextjs';
 import { useTelegramSubscriberLink } from '@novu/nextjs/hooks';
 import { CheckCircle2, ExternalLink, Loader2, RefreshCw, TimerReset, XCircle } from 'lucide-react';
 import Title from '@/components/Title';
@@ -140,11 +141,40 @@ export default function ConnectTelegramPage() {
 
   return (
     <>
-      <Title title="Connect Telegram (headless)" />
+      <Title title="Connect Telegram" />
       <div className="flex max-w-xl flex-col gap-6 p-4">
         <section className="flex flex-col gap-2">
           <h4 className="text-sm font-semibold">
-            <code>useTelegramSubscriberLink</code> — subscriber-link deep link
+            <code>TelegramConnectButton</code> — SDK button (subscriber JWT)
+          </h4>
+          <p className="text-xs text-muted-foreground">
+            Pre-built button from <code>@novu/react</code> (re-exported by <code>@novu/nextjs</code>). It runs under{' '}
+            <code>NovuProvider</code> using the subscriber JWT — no secret key in the browser. Clicking issues a{' '}
+            <code>t.me</code> deep link, opens Telegram, and polls until you press <strong>Start</strong>. Click again to
+            disconnect.
+          </p>
+          {INTEGRATION_IDENTIFIER ? (
+            <NovuProvider {...novuConfig}>
+              <TelegramConnectButton
+                integrationIdentifier={INTEGRATION_IDENTIFIER}
+                subscriberId={subscriberId}
+                onConnectSuccess={(endpointIdentifier) => console.log('Telegram connected', endpointIdentifier)}
+                onConnectError={(error) => console.error(error)}
+                onDisconnectSuccess={() => console.log('Telegram disconnected')}
+              />
+            </NovuProvider>
+          ) : (
+            <div className="rounded-lg border border-dashed p-4 text-xs text-muted-foreground">
+              Set <code>NEXT_PUBLIC_NOVU_TELEGRAM_INTEGRATION_IDENTIFIER</code> (and{' '}
+              <code>NEXT_PUBLIC_NOVU_APP_ID</code> / <code>NEXT_PUBLIC_NOVU_SUBSCRIBER_ID</code>) to render the SDK
+              button against a live Telegram integration.
+            </div>
+          )}
+        </section>
+
+        <section className="flex flex-col gap-2">
+          <h4 className="text-sm font-semibold">
+            <code>useTelegramSubscriberLink</code> — subscriber-link deep link (headless)
           </h4>
           <p className="text-xs text-muted-foreground">
             Headless Telegram linking from <code>@novu/react</code> (re-exported by <code>@novu/nextjs/hooks</code>).
