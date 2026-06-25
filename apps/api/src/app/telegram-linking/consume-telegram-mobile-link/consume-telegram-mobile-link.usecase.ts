@@ -84,7 +84,6 @@ export class ConsumeTelegramMobileLink {
         try {
           const subscriberLink = await this.issueTelegramSubscriberLink.execute(
             IssueTelegramSubscriberLinkCommand.create({
-              userId: 'telegram-mobile-link',
               environmentId: payload.env,
               organizationId: payload.org,
               integrationIdentifier: integration.identifier,
