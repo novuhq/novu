@@ -19,7 +19,7 @@ type TeamsAgentConnectedDetailsProps = {
   isRemovingIntegration?: boolean;
   /**
    * True when the integration connected during this session and we just transitioned in from the
-   * setup guide — drives the one-shot celebration so the "success" moment carries over instead of
+   * setup guide - drives the one-shot celebration so the "success" moment carries over instead of
    * being dropped when the setup card animates away.
    */
   justConnected?: boolean;

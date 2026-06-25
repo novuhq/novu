@@ -1,8 +1,7 @@
 import { PrebuiltPromptBanner } from '@/components/onboarding/connect-agent/prebuilt-prompt-banner';
 import { CodeBlock } from '@/components/primitives/code-block';
 import { SetupButton } from '../../setup-guide-primitives';
-import { MsTeamsDistributeToCustomers } from './msteams-distribute-to-customers';
-import { MsTeamsDistributionSteps } from './msteams-distribution-steps';
+import { MsTeamsDistribution } from './msteams-distribution';
 import type { ChannelWhatsNextConfig, WhatsNextConfigContext } from './whats-next-types';
 
 const TEAMS_ADMIN_CENTER_URL = 'https://admin.teams.microsoft.com/';
@@ -40,13 +39,13 @@ function buildMsTeamsConnectSnippet(
 function buildMsTeamsPrompt(integrationIdentifier: string, agentName: string, applicationIdentifier: string): string {
   return `Add the Novu MsTeamsConnectButton from @novu/react to my app so each of my end users can connect "${agentName}" to their own Microsoft Teams.
 
-Context: I'm already signed in to the Novu dashboard and the "${agentName}" MS Teams integration already exists. This is purely a frontend code integration — do NOT run the Novu CLI, the agent-onboarding flow, or keyless mode.
+Context: I'm already signed in to the Novu dashboard and the "${agentName}" MS Teams integration already exists. This is purely a frontend code integration - do NOT run the Novu CLI, the agent-onboarding flow, or keyless mode.
 
 Requirements:
 - Install @novu/react with my project's package manager.
 - Render <MsTeamsConnectButton /> inside a <NovuProvider> configured for the currently signed-in end user.
 - Use applicationIdentifier="${applicationIdentifier}" and integrationIdentifier="${integrationIdentifier}" with connectionMode="subscriber". Store applicationIdentifier in an environment variable rather than hardcoding it.
-- In subscriber mode each user gets their own connection, so pass the authenticated user's id as subscriberId — source it from my app's existing auth, don't hardcode it. autoLinkUser defaults to true in subscriber mode, so the per-user link is created automatically after admin consent.
+- In subscriber mode each user gets their own connection, so pass the authenticated user's id as subscriberId; source it from my app's existing auth, don't hardcode it. autoLinkUser defaults to true in subscriber mode, so the per-user link is created automatically after admin consent.
 - Follow my app's existing framework, routing, styling, and TypeScript conventions, place the button in a sensible spot in the UI, and add no unnecessary wrappers.
 
 Optional reference: https://docs.novu.co/platform/integrations/chat/ms-teams`;
@@ -88,19 +87,12 @@ export function buildMsTeamsWhatsNextConfig({
     ],
     devSteps: [
       {
-        sectionLabel: 'FOR YOUR USERS',
-        title: 'Make the app available across your organization',
+        sectionLabel: 'DISTRIBUTE YOUR BOT',
+        title: 'Make the bot available to your users',
         description:
-          'Uploading the package only makes the bot available where you installed it. Complete these steps in the Teams Admin Center so everyone in your organization can find and install it.',
+          "Your bot is connected in your own Microsoft 365 org. To reach more people across your org or your customers' orgs, make the same app available in each tenant. It's the same package and the same steps everywhere.",
         rightContent: <SetupButton href={TEAMS_ADMIN_CENTER_URL}>Open Teams Admin Center</SetupButton>,
-        fullWidthContent: <MsTeamsDistributionSteps />,
-      },
-      {
-        sectionLabel: 'FOR YOUR CUSTOMERS',
-        title: 'Distribute the bot to other organizations',
-        description:
-          'If your customers run in their own Microsoft 365 tenants, share the app package so each customer admin can install and consent to it in their own Teams. The bot is multi-tenant, so one app serves every customer.',
-        fullWidthContent: <MsTeamsDistributeToCustomers appId={azureAppId} agentName={agent.name} />,
+        fullWidthContent: <MsTeamsDistribution appId={azureAppId} agentName={agent.name} />,
       },
       {
         title: (
