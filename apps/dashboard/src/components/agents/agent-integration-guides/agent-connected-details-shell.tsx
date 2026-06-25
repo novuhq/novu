@@ -1,4 +1,4 @@
-import { FeatureFlagsKeysEnum, type ICredentials } from '@novu/shared';
+import { ChatProviderIdEnum, FeatureFlagsKeysEnum, type ICredentials } from '@novu/shared';
 import { type ReactNode, useId, useMemo } from 'react';
 import { RiArrowRightSLine, RiArrowRightUpLine, RiCheckLine, RiInformationLine } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
@@ -185,7 +185,12 @@ export function AgentConnectedDetailsShell({
   const navigate = useNavigate();
   const { currentEnvironment } = useEnvironment();
   const isWhatsNextEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_AGENT_WHATS_NEXT_ENABLED);
+  const isMsTeamsWhatsNextEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_AGENT_MSTEAMS_WHATS_NEXT_ENABLED);
   const { integrations, isLoading } = useFetchIntegrations();
+
+  // MS Teams' "what's next" rollout guide is gated behind its own flag so it can ship independently
+  // of the broader agent "what's next" rollout; every other provider keeps the umbrella flag.
+  const showWhatsNext = providerId === ChatProviderIdEnum.MsTeams ? isMsTeamsWhatsNextEnabled : isWhatsNextEnabled;
 
   const integration = useMemo(
     () => integrations?.find((item) => item._id === integrationLink.integration._id),
@@ -238,7 +243,7 @@ export function AgentConnectedDetailsShell({
         ) : null}
       </div>
 
-      {isWhatsNextEnabled ? (
+      {showWhatsNext ? (
         <AgentChannelWhatsNextGuide
           agent={agent}
           integrationLink={integrationLink}
