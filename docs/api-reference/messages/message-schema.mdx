@@ -88,10 +88,19 @@ Workflow is a collection of steps that are executed in order to send a notificat
 
 Actor is the user who is skipped from sending the notification when workflow is triggered to a [topic](/platform/concepts/topics).
 
+Actor can be a **string** (subscriber ID) or a **SubscriberPayloadDto** object with the following fields:
+
 | Property | Type | Description |
 | --- | --- | --- |
-| `toString` | `(() => string) \| (() => string)` |  |
-| `valueOf` | `(() => string) \| (() => Object)` |  |
+| `subscriberId` | `string` | Unique identifier of the subscriber |
+| `firstName` | `string \| null` | First name of the subscriber |
+| `lastName` | `string \| null` | Last name of the subscriber |
+| `email` | `string \| null` | Email address of the subscriber |
+| `phone` | `string \| null` | Phone number of the subscriber |
+| `avatar` | `string \| null` | Avatar URL or identifier |
+| `locale` | `string \| null` | Locale of the subscriber |
+| `timezone` | `string \| null` | Timezone of the subscriber |
+| `data` | `{ [k: string]: any; } \| null` | Additional custom data associated with the subscriber |
 
 ### MessageCTA
 
