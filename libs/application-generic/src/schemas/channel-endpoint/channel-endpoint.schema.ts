@@ -48,10 +48,14 @@ export const CHANNEL_ENDPOINT_SCHEMAS = {
   },
   [ENDPOINT_TYPES.MS_TEAMS_USER]: {
     description: 'MS Teams User Endpoint',
-    properties: { userId: { type: 'string' as const } },
+    properties: { userId: { type: 'string' as const }, tenantId: { type: 'string' as const } },
     required: ['userId'],
+    // tenantId is optional (the user's Azure AD tenant); allow it as a second key for multi-tenant delivery.
     validate: (endpoint: Record<string, unknown>) =>
-      typeof endpoint.userId === 'string' && Object.keys(endpoint).length === 1,
+      typeof endpoint.userId === 'string' &&
+      Object.keys(endpoint).length >= 1 &&
+      Object.keys(endpoint).length <= 2 &&
+      (endpoint.tenantId === undefined || typeof endpoint.tenantId === 'string'),
   },
   [ENDPOINT_TYPES.TELEGRAM_CHAT]: {
     description: 'Telegram Chat Endpoint',

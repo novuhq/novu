@@ -29,7 +29,7 @@ function buildSlackConnectSnippet(
 // Replace subscriberId with the current user's id (the connection is created per subscriber).
 <NovuProvider
   applicationIdentifier="${safeApplicationIdentifier}"
-  subscriberId="${escapeJsxAttributeValue('<SUBSCRIBER_ID>')}"
+  subscriberId="YOUR_SUBSCRIBER_ID"
 >
   <SlackConnectButton
     integrationIdentifier="${safeIntegrationIdentifier}"

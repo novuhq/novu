@@ -18,7 +18,7 @@ import { ProviderIcon } from '@/components/integrations/components/provider-icon
 import { CodeBlock } from '@/components/primitives/code-block';
 import { CopyButton } from '@/components/primitives/copy-button';
 import { InlineToast } from '@/components/primitives/inline-toast';
-import { getAgentApiBaseUrl, getAgentApiHostname } from '@/config';
+import { getAgentApiBaseUrl } from '@/config';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
@@ -35,6 +35,7 @@ import {
   SetupStep,
 } from './setup-guide-primitives';
 import { deriveStepStatus } from './setup-guide-step-utils';
+import { buildTeamsManifest } from './teams-app-manifest';
 import { downloadTeamsAppPackage } from './teams-app-package';
 
 export type TeamsSetupGuideProps = {
@@ -59,45 +60,6 @@ type IntegrationProvisioningState = {
 
 function buildOAuthCallbackUrl(): string {
   return `${getAgentApiBaseUrl()}/v1/integrations/chat/oauth/callback`;
-}
-
-function buildManifest(appId: string, agentName: string): Record<string, unknown> {
-  const id = appId || 'YOUR_APP_ID';
-  const name = agentName || 'Novu Agent';
-  const hostname = getAgentApiHostname();
-
-  return {
-    $schema: 'https://developer.microsoft.com/json-schemas/teams/v1.16/MicrosoftTeams.schema.json',
-    manifestVersion: '1.16',
-    version: '1.0.0',
-    id,
-    developer: {
-      name: 'Your Company',
-      websiteUrl: 'https://your-domain.com',
-      privacyUrl: 'https://your-domain.com/privacy',
-      termsOfUseUrl: 'https://your-domain.com/terms',
-    },
-    name: { short: name, full: `${name}, powered by Novu` },
-    description: { short: `${name} bot`, full: 'A conversational agent powered by Novu.' },
-    icons: { outline: 'outline.png', color: 'color.png' },
-    accentColor: '#FFFFFF',
-    bots: [
-      {
-        botId: id,
-        scopes: ['personal', 'team', 'groupchat'],
-        supportsFiles: false,
-        isNotificationOnly: false,
-      },
-    ],
-    permissions: ['identity', 'messageTeamMembers'],
-    validDomains: [hostname],
-    webApplicationInfo: { id, resource: `api://${hostname}/${id}` },
-    authorization: {
-      permissions: {
-        resourceSpecific: [{ name: 'ChannelMessage.Read.Group', type: 'Application' }],
-      },
-    },
-  };
 }
 
 // ---------------------------------------------------------------------------
@@ -746,7 +708,7 @@ export function TeamsSetupGuide({
     onStepsCompleted?.();
   }, [onStepsCompleted]);
 
-  const manifestJson = JSON.stringify(buildManifest(appId, agent.name), null, 2);
+  const manifestJson = JSON.stringify(buildTeamsManifest(appId, agent.name), null, 2);
 
   const canDownload = Boolean(appId);
 

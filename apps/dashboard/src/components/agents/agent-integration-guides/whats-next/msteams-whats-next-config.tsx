@@ -1,6 +1,8 @@
 import { PrebuiltPromptBanner } from '@/components/onboarding/connect-agent/prebuilt-prompt-banner';
 import { CodeBlock } from '@/components/primitives/code-block';
 import { SetupButton } from '../../setup-guide-primitives';
+import { MsTeamsDistributeToCustomers } from './msteams-distribute-to-customers';
+import { MsTeamsDistributionSteps } from './msteams-distribution-steps';
 import type { ChannelWhatsNextConfig, WhatsNextConfigContext } from './whats-next-types';
 
 const TEAMS_ADMIN_CENTER_URL = 'https://admin.teams.microsoft.com/';
@@ -25,7 +27,7 @@ function buildMsTeamsConnectSnippet(
 // Replace subscriberId with the current user's id (the connection is created per subscriber).
 <NovuProvider
   applicationIdentifier="${safeApplicationIdentifier}"
-  subscriberId="${escapeJsxAttributeValue('<SUBSCRIBER_ID>')}"
+  subscriberId="YOUR_SUBSCRIBER_ID"
 >
   <MsTeamsConnectButton
     integrationIdentifier="${safeIntegrationIdentifier}"
@@ -55,12 +57,14 @@ const APPLICATION_IDENTIFIER_PLACEHOLDER = '<YOUR_NOVU_APPLICATION_IDENTIFIER>';
 export function buildMsTeamsWhatsNextConfig({
   agent,
   integrationLink,
+  credentials,
   applicationIdentifier,
 }: WhatsNextConfigContext): ChannelWhatsNextConfig {
   const integrationIdentifier = integrationLink.integration.identifier;
   const novuApplicationIdentifier = applicationIdentifier || APPLICATION_IDENTIFIER_PLACEHOLDER;
   const connectSnippet = buildMsTeamsConnectSnippet(integrationIdentifier, agent.name, novuApplicationIdentifier);
   const prompt = buildMsTeamsPrompt(integrationIdentifier, agent.name, novuApplicationIdentifier);
+  const azureAppId = typeof credentials?.clientId === 'string' ? credentials.clientId : undefined;
 
   return {
     recapSteps: [
@@ -85,10 +89,18 @@ export function buildMsTeamsWhatsNextConfig({
     devSteps: [
       {
         sectionLabel: 'FOR YOUR USERS',
-        title: 'Distribute your Teams app org-wide',
+        title: 'Make the app available across your organization',
         description:
-          'By default the bot is only installed where you uploaded it. Publish the app in the Teams Admin Center so every user in your organization can find and install it.',
+          'Uploading the package only makes the bot available where you installed it. Complete these steps in the Teams Admin Center so everyone in your organization can find and install it.',
         rightContent: <SetupButton href={TEAMS_ADMIN_CENTER_URL}>Open Teams Admin Center</SetupButton>,
+        fullWidthContent: <MsTeamsDistributionSteps />,
+      },
+      {
+        sectionLabel: 'FOR YOUR CUSTOMERS',
+        title: 'Distribute the bot to other organizations',
+        description:
+          'If your customers run in their own Microsoft 365 tenants, share the app package so each customer admin can install and consent to it in their own Teams. The bot is multi-tenant, so one app serves every customer.',
+        fullWidthContent: <MsTeamsDistributeToCustomers appId={azureAppId} agentName={agent.name} />,
       },
       {
         title: (

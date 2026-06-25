@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/co
 import { createHash } from '@novu/application-generic';
 import { EnvironmentRepository, IntegrationRepository } from '@novu/dal';
 import { ChatProviderIdEnum } from '@novu/shared';
+import { buildAgentApiRootUrl } from '../../../agents/shared/util/agent-api-root-url';
 import { encodeOAuthState } from '../generate-chat-oath-url/chat-oauth-state.util';
 import { GenerateAzureSetupOauthUrlCommand } from './generate-azure-setup-oauth-url.command';
 
@@ -87,14 +88,10 @@ export class GenerateAzureSetupOauthUrl {
     return `${this.AZURE_AUTHORIZE_URL}?${params.toString()}`;
   }
 
+  // DEV TESTING ONLY — resolves OAuth redirect via AGENT_API_HOSTNAME (ngrok) when set so
+  // portless + local tunnel works. Revert to API_ROOT_URL before merge; do not ship as-is.
   static buildRedirectUri(): string {
-    if (!process.env.API_ROOT_URL) {
-      throw new Error('API_ROOT_URL environment variable is required');
-    }
-
-    const base = process.env.API_ROOT_URL.replace(/\/$/, '');
-
-    return `${base}/v1/integrations/chat/oauth/azure-setup/callback`;
+    return `${buildAgentApiRootUrl()}/v1/integrations/chat/oauth/azure-setup/callback`;
   }
 
   private getNovuAzureClientId(): string {
