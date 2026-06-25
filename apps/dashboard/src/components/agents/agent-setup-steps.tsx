@@ -702,11 +702,9 @@ export function AgentSetupSteps({
             index={channelStepIndex}
             totalSteps={totalSteps}
             firstIncompleteStep={firstIncompleteStep}
-            sharedInboundAddress={sharedInboundAddress}
             agentIdentifier={agent.identifier}
             agentName={agent.name}
             selectedIntegrationId={effectiveIntegrationId}
-            selectedProviderId={selectedProviderId}
             existingLinks={agentIntegrationLinks}
             onSelect={handleProviderSelect}
           />

@@ -84,7 +84,7 @@ export function ConnectorDropdown({ selectedId, onSelect, disabled }: ConnectorD
             <CommandGroup heading="Custom code" className={GROUP_HEADING_CLASSNAME}>
               {customOptions.map(renderItem)}
             </CommandGroup>
-            <CommandGroup heading="External connectors" className={GROUP_HEADING_CLASSNAME}>
+            <CommandGroup heading="Managed agent runtimes" className={GROUP_HEADING_CLASSNAME}>
               {externalOptions.map(renderItem)}
             </CommandGroup>
           </CommandList>

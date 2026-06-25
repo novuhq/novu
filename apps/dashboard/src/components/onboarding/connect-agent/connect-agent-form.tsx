@@ -21,8 +21,8 @@ import { Button } from '@/components/primitives/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { cn } from '@/utils/ui';
 import { AgentSuggestionPills } from './agent-suggestion-pills';
-import { ConnectAgentDemoForm, ConnectAgentDemoForm, ConnectAgentDemoForm } from './conor-options';
-import { GenerationStatus, type GenerationStep } from './generation-status';
+import { ConnectAgentDemoForm } from './connect-agent-demo-form';
+import type { ConnectorId, ConnectorId, ConnectorId } from './connecStep } from './generation-status';
 import { PromptInput } from './prompt-input';
 import { TemplateDropdown, type TemplateSelection } from './template-dropdown';
 
@@ -262,8 +262,8 @@ export function ConnectAgentForm({
   aiGeneration,
   submitSlot,
   simplifiedDemo,
-}: ConnectAgentFormProps) {
-  return (
+  if (simplifiedDemo) {
+    return (
       <ConnectAgentDemoForm
         connectorId={connectorId}
         isClaudeSelected={isClaudeSelected}
@@ -304,29 +304,20 @@ export function ConnectAgentForm({
         aiGeneration={aiGeneration}
         submitSlot={submitSlot}
       />
-  </>
-    )
-}
+    );
+  }
 
 const selectedConnector = getConnectorById(connectorId);
 const showCredentialsSection = isClaudeSelected && credentialsPanelVisible && Boolean(selectedConnector?.providerId);
 const usePromptUi = Boolean(aiGeneration);
 const aiMode = aiGeneration?.mode ?? 'prompt';
 const scope: AgentScope = aiMode === 'existing' ? 'existing' : 'create';
-// Total steps across the full onboarding flow:
-//   brain (2) + email-address (1) + channel (1) + provider guide (3 reserved) + handler (0 for managed, 3 for self-hosted)
-// Managed-runtime connectors don't render the agent-handler section, so the total is 7 there.
-// The email-address step is always counted here because the brain section runs before the agent
-// is created — we can't yet inspect whether the cloud shared-inbound address will be provisioned.
-// Self-hosted deployments without `NOVU_AGENT_SHARED_INBOUND_DOMAIN` skip that step downstream
-// and the channel step will re-anchor its own numbering in `agent-setup-steps`.
 const totalOnboardingSteps = isClaudeSelected ? 7 : 10;
-// The prompt/manual sub-toggle in the right-column header only exists in `'create'` scope.
-// In `'existing'` scope the segmented tabs above replace it, so we omit it entirely.
 const header = aiMode === 'existing' ? null : RIGHT_HEADER_BY_MODE[aiMode];
 const showScopeTabs = usePromptUi && showExistingOption;
 const { stepTitle, stepDescription } = resolveStepCopy({ isScratchRuntime, usePromptUi, scope });
 
+return (
 return (
     <>
       <SetupStep

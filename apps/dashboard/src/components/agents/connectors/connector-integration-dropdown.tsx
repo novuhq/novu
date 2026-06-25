@@ -272,7 +272,7 @@ export function ConnectorIntegrationDropdown({
         {customOptions.map(renderConnectorItem)}
       </CommandGroup>
       {externalOptions.length > 0 ? (
-        <CommandGroup heading="External connectors" className={GROUP_HEADING_CLASSNAME}>
+        <CommandGroup heading="Managed agent runtimes" className={GROUP_HEADING_CLASSNAME}>
           {externalOptions.map(renderConnectorItem)}
         </CommandGroup>
       ) : null}
