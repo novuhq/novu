@@ -96,8 +96,6 @@ export class GetMsTeamsArmTemplate {
     return sanitized;
   }
 
-  // DEV TESTING ONLY — bot messaging endpoint via AGENT_API_HOSTNAME (ngrok) for local testing.
-  // Revert to API_ROOT_URL before merge; do not ship as-is.
   private buildWebhookUrl(agentId: string | null, integrationIdentifier: string): string {
     const base = buildAgentApiRootUrl();
 

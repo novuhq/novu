@@ -88,8 +88,6 @@ export class GenerateAzureSetupOauthUrl {
     return `${this.AZURE_AUTHORIZE_URL}?${params.toString()}`;
   }
 
-  // DEV TESTING ONLY — resolves OAuth redirect via AGENT_API_HOSTNAME (ngrok) when set so
-  // portless + local tunnel works. Revert to API_ROOT_URL before merge; do not ship as-is.
   static buildRedirectUri(): string {
     return `${buildAgentApiRootUrl()}/v1/integrations/chat/oauth/azure-setup/callback`;
   }

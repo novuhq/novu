@@ -648,8 +648,6 @@ export class AzureSetupOauthCallback {
     return sanitized.length < 2 ? 'novubot' : sanitized;
   }
 
-  // DEV TESTING ONLY — webhook base via AGENT_API_HOSTNAME (ngrok) for local MS Teams quick
-  // setup. Revert to API_ROOT_URL before merge; do not ship as-is.
   private async resolveWebhookEndpoint(stateData: AzureSetupStateData): Promise<string> {
     const base = buildAgentApiRootUrl();
 
@@ -759,8 +757,6 @@ export class AzureSetupOauthCallback {
     ]);
   }
 
-  // DEV TESTING ONLY — manifest hostname via AGENT_API_HOSTNAME (ngrok) for local testing.
-  // Revert to API_ROOT_URL before merge; do not ship as-is.
   private buildManifest(appId: string, agentName: string): Record<string, unknown> {
     const apiBaseUrl = buildAgentApiRootUrl();
     let hostname = 'api.novu.co';

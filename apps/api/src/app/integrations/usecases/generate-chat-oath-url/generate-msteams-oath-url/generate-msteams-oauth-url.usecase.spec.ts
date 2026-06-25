@@ -181,7 +181,6 @@ describe('GenerateMsTeamsOauthUrl', () => {
     });
   });
 
-  // DEV TESTING ONLY — do not merge; covers local ngrok redirect URI preference.
   describe('buildRedirectUri', () => {
     let originalAgentApiHostname: string | undefined;
 

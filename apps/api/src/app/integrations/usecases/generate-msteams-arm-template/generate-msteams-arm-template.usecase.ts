@@ -81,8 +81,6 @@ export class GenerateMsTeamsArmTemplate {
     }
   }
 
-  // DEV TESTING ONLY — ARM template fetch URL via AGENT_API_HOSTNAME (ngrok) for local testing.
-  // Revert to API_ROOT_URL before merge; do not ship as-is.
   private buildTemplateApiUrl(integrationId: string, sig: string, exp: number): string {
     return `${buildAgentApiRootUrl()}/v1/integrations/${integrationId}/msteams-arm-template?sig=${sig}&exp=${exp}`;
   }

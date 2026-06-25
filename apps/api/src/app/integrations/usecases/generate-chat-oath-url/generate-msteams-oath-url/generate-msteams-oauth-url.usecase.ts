@@ -189,8 +189,6 @@ export class GenerateMsTeamsOauthUrl {
     }
   }
 
-  // DEV TESTING ONLY — resolves OAuth redirect via AGENT_API_HOSTNAME (ngrok) when set so
-  // portless + local tunnel works. Revert to API_ROOT_URL before merge; do not ship as-is.
   static buildRedirectUri(): string {
     return `${buildAgentApiRootUrl()}${CHAT_OAUTH_CALLBACK_PATH}`;
   }
