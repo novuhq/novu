@@ -81,13 +81,11 @@ export function ConnectorDropdown({ selectedId, onSelect, disabled }: ConnectorD
         <Command>
           <CommandList className="max-h-[320px] p-1">
             <CommandEmpty className="text-text-soft text-label-xs py-4">No connectors found.</CommandEmpty>
-
-            <CommandGroup heading="External connectors" className={GROUP_HEADING_CLASSNAME}>
-              {externalOptions.map(renderItem)}
-            </CommandGroup>
-
             <CommandGroup heading="Custom code" className={GROUP_HEADING_CLASSNAME}>
               {customOptions.map(renderItem)}
+            </CommandGroup>
+            <CommandGroup heading="Managed agent runtimes" className={GROUP_HEADING_CLASSNAME}>
+              {externalOptions.map(renderItem)}
             </CommandGroup>
           </CommandList>
         </Command>

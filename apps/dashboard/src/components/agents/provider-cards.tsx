@@ -23,10 +23,12 @@ import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { buildEdgeFadeMask, useHorizontalScrollEdges } from '@/hooks/use-horizontal-scroll-edges';
 import { useIsAgentEmailAvailable } from '@/hooks/use-is-agent-email-available';
 import { useLinkAgentIntegration } from '@/hooks/use-link-agent-integration';
+import { getAgentChannelDisplayName } from '@/utils/agent-email-provider-display';
 import { ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { openInNewTab } from '@/utils/url';
 import { isAgentIntegrationConnected } from './is-agent-integration-connected';
+import { getProviderCardInteraction, resolveProviderCardVisualState } from './provider-card-interaction';
 
 /**
  * Estimated time to complete the setup for each provider, displayed as a hint
@@ -34,7 +36,7 @@ import { isAgentIntegrationConnected } from './is-agent-integration-connected';
  */
 const PROVIDER_SETUP_TIME: Record<string, string> = {
   [EmailProviderIdEnum.NovuAgent]: '~ 30 seconds',
-  [ChatProviderIdEnum.Slack]: '~ 30 seconds',
+  [ChatProviderIdEnum.Slack]: '~ 1 minute',
   [ChatProviderIdEnum.MsTeams]: '~ 1 hour',
   [ChatProviderIdEnum.WhatsAppBusiness]: '~ 1 hour',
   [ChatProviderIdEnum.Telegram]: '~ 2 min',
@@ -44,6 +46,18 @@ const PROVIDER_SETUP_TIME: Record<string, string> = {
   zoom: '~ 2 minutes',
   imessages: '~ 2 minutes',
 };
+
+function getProviderCardDisplayName(providerId: string, displayName: string): string {
+  return getAgentChannelDisplayName(providerId, displayName);
+}
+
+const CARD_PROVIDER_ICON_CLASS = 'size-6 shrink-0 object-contain';
+
+function CardProviderIcon({ providerId, displayName }: { providerId: string; displayName: string }) {
+  return (
+    <ProviderIcon providerId={providerId} providerDisplayName={displayName} className={CARD_PROVIDER_ICON_CLASS} />
+  );
+}
 
 function getSetupTimeLabel(providerId: string): string {
   return PROVIDER_SETUP_TIME[providerId] ?? '~ 5 minutes';
@@ -76,7 +90,7 @@ function buildCardItems(
 
     return {
       providerId: cp.providerId,
-      displayName,
+      displayName: getProviderCardDisplayName(cp.providerId, displayName),
       comingSoon: Boolean(cp.comingSoon),
       requiresBusinessTier: Boolean(cp.requiresBusinessTier),
       // NovuAgent is 1:1 per agent — never surface existing integrations from other agents.
@@ -252,10 +266,14 @@ function ProviderCard({
   disabled?: boolean;
   onClick: () => void;
 }) {
-  // A connected provider (e.g. the auto-provisioned Novu email) always reads as connected — never
-  // locked behind an upgrade and never showing the plain "Connect" affordance.
-  const isLocked = item.requiresBusinessTier && !isAgentEmailAvailable && !isConnected;
-  const isActive = isSelected || isConnected;
+  const interaction = getProviderCardInteraction(item.providerId);
+  const visualState = resolveProviderCardVisualState(interaction, {
+    isConnected,
+    isSelected,
+    isLoading,
+  });
+  const { effectiveConnected, showSelectedIndicator, showConnecting } = visualState;
+  const isLocked = item.requiresBusinessTier && !isAgentEmailAvailable && !effectiveConnected;
   const setupTime = getSetupTimeLabel(item.providerId);
   const isInteractionDisabled = item.comingSoon || disabled;
 
@@ -265,7 +283,7 @@ function ProviderCard({
       onClick={onClick}
       disabled={isInteractionDisabled}
       aria-disabled={isInteractionDisabled || undefined}
-      aria-pressed={isActive || undefined}
+      aria-pressed={visualState.isActive || undefined}
       className={cn(
         'group relative flex min-w-[175px] flex-1 shrink-0 items-start overflow-hidden rounded-[8px] border bg-bg-white p-2 text-left shadow-xs',
         'transition-colors border-stroke-weak hover:border-stroke-soft',
@@ -276,16 +294,12 @@ function ProviderCard({
     >
       <div className="flex min-w-px flex-1 flex-col gap-2">
         <div className="flex w-full items-start justify-between">
-          <div className="flex shrink-0 items-center rounded p-0.5">
-            <ProviderIcon
-              providerId={item.providerId}
-              providerDisplayName={item.displayName}
-              className="size-6 shrink-0"
-            />
+          <div className="flex size-6 shrink-0 items-center justify-center">
+            <CardProviderIcon providerId={item.providerId} displayName={item.displayName} />
           </div>
           <TopRightIndicator
             isLocked={isLocked}
-            isSelected={isActive}
+            isSelected={showSelectedIndicator}
             comingSoon={item.comingSoon}
             setupTime={setupTime}
           />
@@ -299,8 +313,8 @@ function ProviderCard({
           loading={isLoading}
           comingSoon={item.comingSoon}
           locked={isLocked}
-          connected={isConnected}
-          connecting={isActive && !isConnected}
+          connected={effectiveConnected}
+          connecting={showConnecting}
         />
       </div>
     </button>
@@ -355,8 +369,8 @@ export function ProviderCards({
   const isAgentEmailAvailable = useIsAgentEmailAvailable();
   const navigate = useNavigate();
 
-  // Email (NovuAgent) is shown as a provider card too — it is auto-provisioned for every agent, so
-  // it renders in the connected/selected state by default and leads the list.
+  // Email (NovuAgent) is auto-provisioned for every agent but still renders like a connectable
+  // channel card so the user explicitly opens the email setup guide.
   const items = useMemo(() => {
     const built = buildCardItems(CONVERSATIONAL_PROVIDERS, integrations).filter(
       // Agent email is Enterprise/Cloud-only — never surface the card on Community.
@@ -467,9 +481,9 @@ export function ProviderCards({
         {items.map((item) => {
           const isSelected = item.providerId === selectedProviderId;
           const isConnected = connectedProviderIds.has(item.providerId);
+          const interaction = getProviderCardInteraction(item.providerId);
+          const isConnectedForCard = interaction === 'auto-provisioned-connectable' ? false : isConnected;
           const isLocked = item.requiresBusinessTier && !isAgentEmailAvailable;
-          const isNovuAgent = item.providerId === EmailProviderIdEnum.NovuAgent;
-
           const itemKeyPrefix = `${item.providerId}-`;
           const isLoadingThis = pendingItemKey?.startsWith(itemKeyPrefix) ?? false;
 
@@ -494,7 +508,7 @@ export function ProviderCards({
                 key={item.providerId}
                 item={item}
                 isSelected={isSelected}
-                isConnected={isConnected}
+                isConnected={isConnectedForCard}
                 isLoading={isLoadingThis}
                 isAgentEmailAvailable={isAgentEmailAvailable}
                 disabled={disabled}
@@ -508,18 +522,23 @@ export function ProviderCards({
               key={item.providerId}
               item={item}
               isSelected={isSelected}
-              isConnected={isConnected}
+              isConnected={isConnectedForCard}
               isLoading={isLoadingThis}
               isAgentEmailAvailable={isAgentEmailAvailable}
               disabled={disabled}
               onClick={() => {
                 if (disabled) return;
                 if (isBusy) return;
+
+                if (interaction === 'auto-provisioned-connectable') {
+                  handleNovuAgentLink(item);
+
+                  return;
+                }
+
                 if (isSelected) return;
 
-                // Connected providers (incl. the auto-provisioned email) are already linked — clicking
-                // just selects them to reveal their setup guide, never re-links.
-                if (isConnected) {
+                if (isConnectedForCard) {
                   const linkedIntegration = existingLinks?.find(
                     (link) => link.integration.providerId === item.providerId && isAgentIntegrationConnected(link)
                   )?.integration as unknown as IIntegration | undefined;
@@ -527,12 +546,6 @@ export function ProviderCards({
                   if (linkedIntegration) {
                     onSelect(item.providerId, linkedIntegration);
                   }
-
-                  return;
-                }
-
-                if (isNovuAgent) {
-                  handleNovuAgentLink(item);
 
                   return;
                 }
