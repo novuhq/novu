@@ -15,10 +15,10 @@ import { AgentPreviewSkeleton } from '@/components/agents/agent-preview-skeleton
 import {
   getClaudeManagedAgentIntegrations,
   isDemoManagedClaudeIntegrationSelected,
+  partitionClaudeManagedIntegrations,
 } from '@/components/agents/connectors/claude-managed-integrations';
 import { type ConnectorIntegrationStatus } from '@/components/agents/connectors/connector-integration-dropdown';
 import { type ConnectorOption } from '@/components/agents/connectors/connector-options';
-import { useManagedAgentRuntimeEnabled } from '@/hooks/use-managed-agent-runtime-enabled';
 import {
   type AgentTemplate,
   buildManagedIntegrationCredentials,
@@ -46,6 +46,7 @@ import { useCreateAgentMutation } from '@/hooks/use-create-agent-mutation';
 import { useCreateIntegration } from '@/hooks/use-create-integration';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { GenerationCancelledError, useGenerateManagedAgent } from '@/hooks/use-generate-managed-agent';
+import { useManagedAgentRuntimeEnabled } from '@/hooks/use-managed-agent-runtime-enabled';
 import { useManagedClaudeCredentialsFlow } from '@/hooks/use-managed-claude-credentials-flow';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { useVerifyManagedCredentials } from '@/hooks/use-verify-managed-credentials';
@@ -71,10 +72,8 @@ const GENERATION_STEPS: ReadonlyArray<GenerationStep> = [
 
 export type { ConnectSummary } from './connect-summary';
 
-function resolveRuntime(connectorId: ConnectorId): RuntimeType {
-  const runtime = getConnectorById(connectorId)?.runtime;
-
-  return runtime ?? 'scratch';
+function resolveRuntime(connectorId: ConnectorId | undefined): RuntimeType | undefined {
+  return getConnectorById(connectorId)?.runtime;
 }
 
 function dropdownStatusFor(verify: VerifyStatus, hasIntegration: boolean): ConnectorIntegrationStatus {
@@ -90,7 +89,7 @@ function dropdownStatusFor(verify: VerifyStatus, hasIntegration: boolean): Conne
  * agent card without having to introspect any of the form's internal state.
  */
 export type ConnectAgentPreview = {
-  connectorId: ConnectorId;
+  connectorId?: ConnectorId;
   isClaudeSelected: boolean;
   isDemoCredential: boolean;
   isPending: boolean;
@@ -147,7 +146,9 @@ export function ConnectAgentStep({
   const verifyMutation = useVerifyManagedCredentials();
   const { mutateAsync: createIntegration, isPending: isSavingIntegration } = useCreateIntegration();
 
-  const [connectorId, setConnectorId] = useState<ConnectorId>(() => pickInitialConnector(isManagedEnabled));
+  const [connectorId, setConnectorId] = useState<ConnectorId | undefined>(() =>
+    simplifiedDemo ? undefined : pickInitialConnector(isManagedEnabled)
+  );
   const [templateSelection, setTemplateSelection] = useState<TemplateSelection>(() => ({
     kind: 'template',
     template: DEFAULT_TEMPLATE,
@@ -501,8 +502,20 @@ export function ConnectAgentStep({
     }
 
     if (matchingAnthropicIntegrations.length > 0) {
-      setSelectedIntegrationId(matchingAnthropicIntegrations[0]._id);
-      setCredentialsPanelVisible(false);
+      if (simplifiedDemo) {
+        const { userIntegrations } = partitionClaudeManagedIntegrations(matchingAnthropicIntegrations);
+
+        if (userIntegrations.length > 0) {
+          setSelectedIntegrationId(userIntegrations[0]._id);
+          setCredentialsPanelVisible(false);
+        } else {
+          setSelectedIntegrationId(undefined);
+          setCredentialsPanelVisible(false);
+        }
+      } else {
+        setSelectedIntegrationId(matchingAnthropicIntegrations[0]._id);
+        setCredentialsPanelVisible(false);
+      }
     } else {
       setSelectedIntegrationId(undefined);
       setCredentialsPanelVisible(true);
@@ -515,6 +528,7 @@ export function ConnectAgentStep({
     matchingAnthropicIntegrations,
     selectedIntegrationId,
     credentialsPanelVisible,
+    simplifiedDemo,
   ]);
 
   // Default integration name = "<Provider> <next-index>"
@@ -962,7 +976,7 @@ export function ConnectAgentStep({
       isLoading={isSubmitBusy}
       trailingIcon={RiArrowRightSLine}
     >
-      Setup agent
+      Connect your agent
     </Button>
   ) : (
     <Button
@@ -1090,7 +1104,9 @@ export function ConnectAgentStep({
         simplifiedDemo={simplifiedDemo}
       />
 
-      {!useAiGeneration && !isScratchRuntime && <div className="flex flex-col gap-2 pl-6">{submitButton}</div>}
+      {!simplifiedDemo && !useAiGeneration && !isScratchRuntime && (
+        <div className="flex flex-col gap-2 pl-6">{submitButton}</div>
+      )}
     </form>
   );
 }

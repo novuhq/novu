@@ -509,7 +509,12 @@ export function AgentSetupSteps({
 
         // Activate the collapse in the same render as the selection so the preview,
         // channel cards, and provider guide animate together rather than in two stages.
-        if (isOnboarding && resolveProviderSetupGuide(providerId)) {
+        // Custom-code email skips the provider guide and goes straight to bridge setup — don't
+        // collapse the listen step or the inbound address disappears before step 5.
+        const skipsEmailProviderGuide =
+          providerId === EmailProviderIdEnum.NovuAgent && useCloudMergedListenStep;
+
+        if (isOnboarding && resolveProviderSetupGuide(providerId) && !skipsEmailProviderGuide) {
           onChannelGuideActiveChangeRef.current?.(true);
         }
       }
@@ -518,7 +523,7 @@ export function AgentSetupSteps({
         requestEmailWelcome(integration.identifier);
       }
     },
-    [agent.identifier, isOnboarding, requestEmailWelcome, telemetry]
+    [agent.identifier, isOnboarding, requestEmailWelcome, telemetry, useCloudMergedListenStep]
   );
 
   useEffect(() => {

@@ -137,7 +137,7 @@ export function SetupStep({
       </div>
       <div
         className={cn(
-          'flex flex-col gap-4 transition-opacity duration-300 ease-out md:flex-row md:gap-20 pt-[3px]',
+          'flex flex-col gap-4 pt-[3px] transition-opacity duration-300 ease-out md:flex-row md:items-start md:gap-12 lg:gap-16 xl:gap-20',
           dimmed && 'pointer-events-none opacity-30'
         )}
       >
@@ -152,7 +152,11 @@ export function SetupStep({
           </div>
           {extraContent}
         </div>
-        {rightContent && <div className="flex min-h-0 min-w-0 flex-1 flex-col items-start">{rightContent}</div>}
+        {rightContent && (
+          <div className="flex min-h-0 w-full shrink-0 flex-col items-start md:max-w-[50%] lg:w-[420px] lg:max-w-none xl:w-[460px]">
+            {rightContent}
+          </div>
+        )}
       </div>
       {fullWidthContent}
     </div>

@@ -11,7 +11,7 @@ import { CompletedStepIndicator } from '@/components/agents/setup-guide-primitiv
 import { AgentCliSuccessView } from '@/components/onboarding/connect-agent/agent-cli-success-view';
 import { ConnectAgentStep, type ConnectSummary } from '@/components/onboarding/connect-agent/connect-agent-step';
 import { getConnectorById } from '@/components/onboarding/connect-agent/connector-options';
-import { PrebuiltPromptBanner } from '@/components/onboarding/connect-agent/prebuilt-prompt-banner';
+// import { PrebuiltPromptBanner } from '@/components/onboarding/connect-agent/prebuilt-prompt-banner';
 import { OnboardingLoader } from '@/components/onboarding/onboarding-loader';
 import { OnboardingShell } from '@/components/onboarding/onboarding-shell';
 import { PageMeta } from '@/components/page-meta';
@@ -139,7 +139,7 @@ export function AgentsSetupPage() {
     () => readActiveAgentTemplateId(searchParams.get(AGENT_TEMPLATE_ID_PARAM)),
     [searchParams]
   );
-  const pageTitle = 'Connect your agent to where your users are';
+  const pageTitle = "Let's connect your agent";
 
   // Org bootstrap (poll Novu envs + reload Clerk after org creation) lives in EnvironmentProvider.
   // Here we only gate on Novu's org id + the resolved environment, like the inbox onboarding page.
@@ -335,8 +335,7 @@ export function AgentsSetupPage() {
 
       <h1 className="text-foreground text-lg font-medium tracking-[-0.27px]">{pageTitle}</h1>
       <p className="text-text-soft mt-1 text-xs font-normal leading-4 w-1/2">
-        Choose a starting point to see how your agent handles your users’ conversations. You can replace it with your
-        own agent and credentials later.
+        Novu connects your customer facing agent to multiple communication channels.
       </p>
 
       {cliConnected ? (
@@ -365,7 +364,8 @@ export function AgentsSetupPage() {
       ) : (
         <>
           {/* Pre-built prompt tip: only relevant while the user is authoring the agent brain. It
-           * collapses away once the agent is created and the page morphs into the agent preview. */}
+           * collapses away once the agent is created and the page morphs into the agent preview.
+           * Temporarily hidden — resurface later.
           <AnimatePresence initial={false}>
             {!createdAgent ? (
               <motion.div
@@ -382,6 +382,7 @@ export function AgentsSetupPage() {
               </motion.div>
             ) : null}
           </AnimatePresence>
+           */}
 
           {/*
            * The user stays on one screen. Step 1 crossfades the brain form into the created-agent
@@ -515,5 +516,11 @@ export function AgentsSetupPage() {
     </>
   );
 
-  return <OnboardingShell left={leftContent} maxLeftWidth="864px" alignLeft="top" />;
+  return (
+    <OnboardingShell
+      left={leftContent}
+      contentClassName="max-w-[864px] lg:max-w-[960px] xl:max-w-[1024px]"
+      alignLeft="top"
+    />
+  );
 }

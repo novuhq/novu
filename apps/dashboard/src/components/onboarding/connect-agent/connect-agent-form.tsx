@@ -57,7 +57,7 @@ export type AgentGenerationBindings = {
 };
 
 type ConnectAgentFormProps = {
-  connectorId: ConnectorId;
+  connectorId?: ConnectorId;
   isClaudeSelected: boolean;
   /**
    * When true, the connector runs on the Custom Scaffold (self-hosted) runtime. We collapse the
@@ -264,7 +264,7 @@ export function ConnectAgentForm({
   submitSlot,
   simplifiedDemo,
 }: ConnectAgentFormProps) {
-  if (simplifiedDemo && (aiGeneration || isScratchRuntime)) {
+  if (simplifiedDemo) {
     const demoSelectedConnector = getConnectorById(connectorId);
     const showDemoCredentialsSection =
       isClaudeSelected && credentialsPanelVisible && Boolean(demoSelectedConnector?.providerId);
@@ -276,9 +276,9 @@ export function ConnectAgentForm({
       <SetupStep
         index={1}
         status={isConnectorStepCompleted ? 'completed' : 'current'}
-        sectionLabel="2/7 SETUP AGENT BRAIN"
-        title="Choose your connector"
-        description="Your Connector is the LLM runtime where the agent is hosted and executed. Novu connects to your Connector to bring your agents to where you work"
+        sectionLabel="2/7 CONNECT AGENT"
+        title="Where your agent runs?"
+        description="The platform or framework that hosts and runs your agent today. Novu supports both custom-code and managed-runtime agents."
         fullWidthContent={
           <div className="mt-1 flex w-full max-w-[500px] flex-col gap-2">
             <ConnectorIntegrationDropdown
@@ -293,7 +293,8 @@ export function ConnectAgentForm({
               onRequestSetupCredentials={onRequestSetupCredentials}
             />
             <p className="text-text-soft text-label-xs flex items-center gap-1 font-normal leading-4">
-              <RiInformation2Line className="size-3.5" aria-hidden /> The platform that hosts and runs your agent.
+              <RiInformation2Line className="size-3.5" aria-hidden />
+              Don't have an agent yet? You can use Demo credentials to connect a demo agent.
             </p>
             {showDemoCredentialsSection && demoSelectedConnector?.providerId ? (
               <ConfigureCredentialsSection
@@ -326,6 +327,10 @@ export function ConnectAgentForm({
     // Custom-code (scratch) connectors keep the same stepped layout: the connector step stays in
     // place and the prompt step swaps for the manual agent form. The created agent then follows
     // the regular custom-code flow (channel selection + bridge setup).
+    if (!isConnectorStepCompleted) {
+      return demoConnectorStep;
+    }
+
     if (isScratchRuntime || !aiGeneration) {
       return (
         <>
@@ -334,7 +339,7 @@ export function ConnectAgentForm({
             index={2}
             status="current"
             title="Configure your agent"
-            description="Give your agent a name, identifier, and description. Wire up your own tools, MCPs, and integrations in code."
+            description="Tell us more about your agent, and next we'll connect it to the first channel."
             fullWidthContent={
               <div className="mt-5 flex max-w-[500px] flex-col gap-3">
                 <ScratchAgentFields
@@ -506,7 +511,7 @@ export function ConnectAgentForm({
       <SetupStep
         index={1}
         status="completed"
-        sectionLabel={`1/${totalOnboardingSteps} SETUP AGENT BRAIN`}
+        sectionLabel={`1/${totalOnboardingSteps} CONNECT AGENT`}
         title="Where do you want your agent?"
         description="The agent is hosted in the selected connector and Novu manages the communication across channels."
         rightContent={
