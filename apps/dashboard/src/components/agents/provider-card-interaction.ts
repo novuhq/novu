@@ -39,7 +39,7 @@ export function resolveProviderCardVisualState(
   return {
     effectiveConnected,
     showSelectedIndicator: params.isSelected || effectiveConnected,
-    showConnecting: (params.isSelected || effectiveConnected) && !effectiveConnected,
+    showConnecting: params.isSelected && !effectiveConnected,
     isActive: params.isSelected || effectiveConnected,
   };
 }

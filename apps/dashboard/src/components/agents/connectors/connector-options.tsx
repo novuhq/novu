@@ -4,16 +4,12 @@ import { RiFileCodeLine } from 'react-icons/ri';
 import { AiSdkIcon } from '@/components/icons/ai-sdk';
 import { AwsIcon } from '@/components/icons/aws';
 import { LangChainIcon } from '@/components/icons/langchain';
-import { MistralIcon } from '@/components/icons/mistral';
 import { ClaudeIcon } from '../../icons/claude';
-import { GoogleIcon } from '../../icons/google';
 
 export type ConnectorId =
   | 'claude'
   | 'claude-aws'
-  | 'vertex'
   | 'bedrock'
-  | 'mistral'
   | 'ai-sdk'
   | 'langchain'
   | 'custom-code';
@@ -46,12 +42,6 @@ const CLAUDE_AVATAR = (
   </div>
 );
 
-const GOOGLE_AVATAR = (
-  <div className="bg-primary-base/10 flex size-4 items-center justify-center rounded-full">
-    <GoogleIcon className="size-3" />
-  </div>
-);
-
 const CUSTOM_CODE_AVATAR = (
   <div className="bg-bg-weak text-text-sub flex size-4 items-center justify-center rounded-full">
     <RiFileCodeLine className="size-3" />
@@ -73,12 +63,6 @@ const LANGCHAIN_AVATAR = (
 const AWS_AVATAR = (
   <div className="bg-bg-weak text-text-sub flex size-4 items-center justify-center rounded-full text-[10px] font-semibold">
     <AwsIcon className="size-3" />
-  </div>
-);
-
-const MISTRAL_AVATAR = (
-  <div className="bg-bg-weak text-text-sub flex size-4 items-center justify-center rounded-full text-[10px] font-semibold">
-    <MistralIcon className="size-3" />
   </div>
 );
 
