@@ -1,0 +1,218 @@
+---
+title: "Notification infrastructure for products and AI agents"
+sidebarTitle: "Welcome"
+description: "Novu powers the notifications your product sends and the conversations your AI agents have — on one open-source platform."
+mode: "custom"
+---
+
+<div className="docs-landing">
+
+<section className="docs-landing-hero">
+  <div className="docs-landing-container docs-landing-hero-inner">
+    <p className="docs-landing-eyebrow">Open-source notification infrastructure</p>
+    <h1 className="docs-landing-title">
+      Notifications for products.<br />
+      Conversations for AI agents.
+    </h1>
+    <p className="docs-landing-lead">
+      Novu handles product-to-user notifications and agent-to-user conversations on one unified platform — same subscribers, same channels, same delivery layer.
+    </p>
+    <div className="docs-landing-hero-actions">
+      <a className="docs-landing-cta docs-landing-cta-primary" href="/platform/quickstart/react">
+        Send a notification
+      </a>
+      <a className="docs-landing-cta docs-landing-cta-secondary" href="/agents/managed-agent/quickstart">
+        Build an agent
+      </a>
+    </div>
+    <div className="docs-landing-hero-visual">
+      <img
+        src="/images/hero-light.svg"
+        alt="Novu platform overview with notification workflows and channels."
+        className="docs-landing-hero-image docs-landing-hero-image-light"
+      />
+      <img
+        src="/images/hero-dark.svg"
+        alt="Novu platform overview with notification workflows and channels."
+        className="docs-landing-hero-image docs-landing-hero-image-dark"
+      />
+    </div>
+  </div>
+</section>
+
+<section className="docs-landing-section">
+  <div className="docs-landing-container">
+    <div className="docs-landing-section-header">
+      <p className="docs-landing-section-label">Two products, one platform</p>
+      <h2 className="docs-landing-section-title">Choose where to start</h2>
+      <p className="docs-landing-section-description">
+        Platform and Agents share subscribers, channels, and delivery infrastructure. What you learn in one carries directly into the other.
+      </p>
+    </div>
+
+    <Columns cols={2}>
+      <Card title="Platform" icon="layout-dashboard" href="/platform">
+        Notifications your product sends to users — workflows, preferences, and a drop-in Inbox across in-app, email, push, SMS, and chat.
+      </Card>
+      <Card title="Agents" icon="bot" href="/agents">
+        Conversations your AI agents run with users — ACI handles ingestion, identity, and delivery across Slack, Teams, WhatsApp, and more.
+      </Card>
+    </Columns>
+  </div>
+</section>
+
+<section className="docs-landing-section docs-landing-section-muted">
+  <div className="docs-landing-container">
+    <div className="docs-landing-split-header">
+      <div>
+        <p className="docs-landing-section-label">Platform</p>
+        <h2 className="docs-landing-section-title">Notifications your product sends</h2>
+        <p className="docs-landing-section-description">
+          Trigger one workflow and deliver everywhere. Novu routes notifications across channels, respects subscriber preferences, and gives you an embeddable Inbox so you ship notification UX in minutes.
+        </p>
+      </div>
+      <a className="docs-landing-text-link" href="/platform">
+        Explore Platform docs
+      </a>
+    </div>
+
+    <Columns cols={3}>
+      <Card title="React quickstart" icon="atom" href="/platform/quickstart/react">
+        Drop the Inbox component into a React app.
+      </Card>
+      <Card title="Next.js quickstart" icon="square-code" href="/platform/quickstart/nextjs">
+        Add real-time notifications to a Next.js project.
+      </Card>
+      <Card title="What is Novu?" icon="circle-question-mark" href="/platform/what-is-novu">
+        Workflows, subscribers, channels, and core concepts.
+      </Card>
+    </Columns>
+
+    <div className="docs-landing-feature-grid">
+      <div className="docs-landing-feature">
+        <span className="docs-landing-feature-icon" aria-hidden="true" />
+        <span>Send transactional and product notifications across every channel</span>
+      </div>
+      <div className="docs-landing-feature">
+        <span className="docs-landing-feature-icon" aria-hidden="true" />
+        <span>Let subscribers manage preferences per channel</span>
+      </div>
+      <div className="docs-landing-feature">
+        <span className="docs-landing-feature-icon" aria-hidden="true" />
+        <span>Embed an Inbox without building a notification center</span>
+      </div>
+      <div className="docs-landing-feature">
+        <span className="docs-landing-feature-icon" aria-hidden="true" />
+        <span>Stay vendor-neutral across SendGrid, Twilio, FCM, and more</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section className="docs-landing-section">
+  <div className="docs-landing-container">
+    <div className="docs-landing-split-header">
+      <div>
+        <p className="docs-landing-section-label">Agents</p>
+        <h2 className="docs-landing-section-title">Conversations your AI runs</h2>
+        <p className="docs-landing-section-description">
+          Novu Connect is built on <a href="/agents/get-started/what-is-aci">Agent Communication Infrastructure (ACI)</a>. Novu owns communication infrastructure — webhooks, identity, delivery, and conversation state. You own agent intelligence.
+        </p>
+      </div>
+      <a className="docs-landing-text-link" href="/agents">
+        Explore Agents docs
+      </a>
+    </div>
+
+    <Columns cols={2}>
+      <Card title="Managed agent" icon="sparkles" href="/agents/managed-agent/overview">
+        Spin up a fully managed agent powered by Claude. No custom server code required.
+      </Card>
+      <Card title="Custom code agent" icon="code" href="/agents/custom-code-agent/quickstart">
+        Bring your own logic with AI SDK, LangChain, OpenAI, or any runtime.
+      </Card>
+    </Columns>
+
+    <div className="docs-landing-feature-grid">
+      <div className="docs-landing-feature">
+        <span className="docs-landing-feature-icon" aria-hidden="true" />
+        <span>Talk to users on Slack, Teams, WhatsApp, and the channels they already use</span>
+      </div>
+      <div className="docs-landing-feature">
+        <span className="docs-landing-feature-icon" aria-hidden="true" />
+        <span>Hold stateful, context-aware conversations across sessions</span>
+      </div>
+      <div className="docs-landing-feature">
+        <span className="docs-landing-feature-icon" aria-hidden="true" />
+        <span>Resolve identity across platforms without rebuilding auth</span>
+      </div>
+      <div className="docs-landing-feature">
+        <span className="docs-landing-feature-icon" aria-hidden="true" />
+        <span>Observe and debug live agent conversations in one place</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section className="docs-landing-section docs-landing-section-muted">
+  <div className="docs-landing-container">
+    <div className="docs-landing-section-header">
+      <p className="docs-landing-section-label">Shared foundations</p>
+      <h2 className="docs-landing-section-title">One infrastructure layer underneath</h2>
+    </div>
+
+    <Columns cols={3}>
+      <Card title="Subscribers" icon="users" href="/platform/concepts/subscribers">
+        One identity model for end users — whether you notify them or chat with them.
+      </Card>
+      <Card title="Channels" icon="radio" href="/platform/concepts/integrations">
+        Email, push, SMS, in-app, Slack, Teams, and WhatsApp — configured once, used everywhere.
+      </Card>
+      <Card title="Open source" icon="github" href="https://github.com/novuhq/novu">
+        Self-host or use Novu Cloud. The infrastructure is open and inspectable.
+      </Card>
+    </Columns>
+  </div>
+</section>
+
+<section className="docs-landing-section docs-landing-section-cta">
+  <div className="docs-landing-container">
+    <div className="docs-landing-section-header">
+      <h2 className="docs-landing-section-title">Start building in minutes</h2>
+      <p className="docs-landing-section-description">
+        Pick a path and follow a quickstart — most teams ship their first notification or agent message in under five minutes.
+      </p>
+    </div>
+
+    <Columns cols={2}>
+      <Card title="Send your first notification" icon="bell" href="/platform/quickstart/react">
+        Five-minute walkthrough from signup to a notification in your app.
+      </Card>
+      <Card title="Send your first agent message" icon="message-square" href="/agents/managed-agent/quickstart">
+        Connect a Slack provider and ship a working agent in under five minutes.
+      </Card>
+    </Columns>
+  </div>
+</section>
+
+<section className="docs-landing-section docs-landing-section-footer">
+  <div className="docs-landing-container">
+    <div className="docs-landing-section-header">
+      <h2 className="docs-landing-section-title">Join the community</h2>
+    </div>
+
+    <Columns cols={3}>
+      <Card title="Discord" icon="discord" href="https://discord.gg/novu">
+        Join hundreds of developers building with Novu.
+      </Card>
+      <Card title="X" icon="twitter" href="https://x.com/novuhq">
+        Follow along for product updates.
+      </Card>
+      <Card title="GitHub" icon="github" href="https://github.com/novuhq/novu">
+        Star the repo and contribute.
+      </Card>
+    </Columns>
+  </div>
+</section>
+
+</div>

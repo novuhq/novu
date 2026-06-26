@@ -899,11 +899,6 @@
   },
   "redirects": [
     {
-      "source": "/",
-      "destination": "/platform",
-      "permanent": true
-    },
-    {
       "source": "/content-creation-design/handlebars-helpers",
       "destination": "/platform/templates/handlebars-helpers",
       "permanent": true
