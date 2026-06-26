@@ -1,0 +1,114 @@
+---
+title: "Novu Docs"
+description: "The open-source notification infrastructure for products and AI agents. Send notifications across channels and let agents hold real conversations with users."
+mode: "custom"
+---
+
+<div className="max-w-6xl mx-auto px-6 py-16">
+
+# Notification infrastructure for products and agents
+
+Novu powers two things from one platform: **notifications your product sends to users**, and **conversations your AI agents have with users**. Both run on the same open-source infrastructure, the same identity model, and the same delivery layer across channels.
+
+<Columns cols={2}>
+  <Card title="Platform" icon="layout-dashboard" href="/platform">
+    Send in-app, email, push, SMS, and chat notifications from your product. Workflows, subscribers, preferences, and a drop-in Inbox component.
+  </Card>
+  <Card title="Agents" icon="bot" href="/agents">
+    Connect your AI agents to Slack, Teams, WhatsApp, and more. ACI handles ingestion, identity, and delivery so your agent only handles intelligence.
+  </Card>
+</Columns>
+
+---
+
+## Platform: notifications your product sends
+
+Trigger one workflow, deliver everywhere. Novu routes notifications across channels, respects user preferences, and gives you an embeddable Inbox so you ship notification UX in minutes.
+
+<Columns cols={3}>
+  <Card title="React quickstart" icon="react" href="/platform/quickstart/react">
+    Drop the Inbox component into a React app.
+  </Card>
+  <Card title="Next.js quickstart" icon="node-js" href="/platform/quickstart/nextjs">
+    Add real-time notifications to a Next.js project.
+  </Card>
+  <Card title="What is Novu?" icon="circle-question-mark" href="/platform/what-is-novu">
+    The concepts behind workflows, subscribers, and channels.
+  </Card>
+</Columns>
+
+**Built for product teams who need to:**
+
+- Send transactional and product notifications across in-app, email, push, SMS, and chat
+- Let users manage their own preferences across channels
+- Embed a notification center without building one from scratch
+- Stay vendor-neutral across providers like SendGrid, Twilio, FCM, and more
+
+---
+
+## Agents: conversations your AI runs
+
+Novu Connect is built on the [Agent Communication Infrastructure (ACI)](/agents/get-started/what-is-aci). It draws a hard line between **communication infrastructure** (which Novu owns) and **agent intelligence** (which you own).
+
+Create an agent once. Make it available across every connected channel. ACI routes messages in, sends replies out, and preserves conversation context so you never rebuild the plumbing.
+
+<Columns cols={2}>
+  <Card title="Managed agent" icon="sparkles" href="/agents/managed-agent/overview">
+    Spin up a fully managed agent powered by Claude. No custom server code required.
+  </Card>
+  <Card title="Custom code agent" icon="square-code" href="/agents/custom-code-agent/quickstart">
+    Bring your own logic with AI SDK, LangChain, OpenAI, or any runtime.
+  </Card>
+</Columns>
+
+**Built for teams shipping AI agents that need to:**
+
+- Talk to users on Slack, Teams, WhatsApp, and other channels they already use
+- Hold stateful, context-aware conversations across sessions
+- Resolve identity across platforms without rebuilding auth
+- Observe and debug live agent conversations in one place
+
+---
+
+## One platform, shared foundations
+
+Both Platform and Agents share the same core primitives, so what you learn in one carries over to the other.
+
+<Columns cols={3}>
+  <Card title="Subscribers" icon="users" href="/platform/concepts/subscribers">
+    One identity model for end users, whether you're notifying them or chatting with them.
+  </Card>
+  <Card title="Channels" icon="radio" href="/platform/concepts/integrations">
+    Email, push, SMS, in-app, Slack, Teams, WhatsApp — configured once, used everywhere.
+  </Card>
+  <Card title="Open source" icon="github" href="https://github.com/novuhq/novu">
+    Self-host or use Novu Cloud. The infrastructure is open and inspectable.
+  </Card>
+</Columns>
+
+---
+
+## Start building
+
+<Columns cols={2}>
+  <Card title="Send your first notification" icon="bell" href="/platform/quickstart/react">
+    Five-minute walkthrough from signup to a notification in your app.
+  </Card>
+  <Card title="Send your first agent message" icon="messages-square" href="/agents/managed-agent/quickstart">
+    Connect a Slack provider and ship a working agent in under five minutes.
+  </Card>
+</Columns>
+
+<Columns cols={3}>
+  <Card title="Discord" icon="messages-square" href="https://discord.gg/novu">
+    Join hundreds of developers building with Novu.
+  </Card>
+  <Card title="X" icon="twitter" href="https://x.com/novuhq">
+    Follow along for product updates.
+  </Card>
+  <Card title="GitHub" icon="github" href="https://github.com/novuhq/novu">
+    Star the repo and contribute.
+  </Card>
+</Columns>
+
+</div>
