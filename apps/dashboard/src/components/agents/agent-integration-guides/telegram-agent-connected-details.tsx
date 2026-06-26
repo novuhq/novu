@@ -1,6 +1,6 @@
-import { ChatProviderIdEnum, FeatureFlagsKeysEnum, type ICredentials } from '@novu/shared';
+import { ChatProviderIdEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { useMemo } from 'react';
-import { RiArrowRightSLine, RiArrowRightUpLine, RiCheckLine } from 'react-icons/ri';
+import { RiArrowRightSLine, RiCheckLine } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
 import type { AgentIntegrationLink, AgentResponse } from '@/api/agents';
 import { ConnectionConfetti } from '@/components/agents/connection-confetti';
@@ -15,7 +15,7 @@ import { AgentIntegrationGuideHeader } from './agent-integration-guide-layout';
 import { DetailSection, FieldSkeleton, ReadOnlyField, SectionLinkButton } from './connected-details-primitives';
 import { AgentChannelWhatsNextGuide } from './whats-next/agent-channel-whats-next-guide';
 
-type SlackAgentConnectedDetailsProps = {
+type TelegramAgentConnectedDetailsProps = {
   agent: AgentResponse;
   integrationLink: AgentIntegrationLink;
   canRemoveIntegration: boolean;
@@ -29,22 +29,20 @@ type SlackAgentConnectedDetailsProps = {
   justConnected?: boolean;
 };
 
-const MANAGE_SLACK_APP_BASE_URL = 'https://api.slack.com/apps';
-
 function buildWebhookUrl(agentId: string, integrationIdentifier: string): string {
   const baseUrl = (API_HOSTNAME ?? 'https://api.novu.co').replace(/\/$/, '');
 
   return `${baseUrl}/v1/agents/${agentId}/webhook/${integrationIdentifier}`;
 }
 
-export function SlackAgentConnectedDetails({
+export function TelegramAgentConnectedDetails({
   agent,
   integrationLink,
   canRemoveIntegration,
   onRequestRemoveIntegration,
   isRemovingIntegration,
   justConnected = false,
-}: SlackAgentConnectedDetailsProps) {
+}: TelegramAgentConnectedDetailsProps) {
   const navigate = useNavigate();
   const { currentEnvironment } = useEnvironment();
   const isWhatsNextEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_AGENT_WHATS_NEXT_ENABLED);
@@ -57,11 +55,11 @@ export function SlackAgentConnectedDetails({
 
   const isConnected = isAgentIntegrationConnected(integrationLink);
   const credentials = integration?.credentials;
-  const applicationId = (credentials?.applicationId as string | undefined) ?? '';
-  const slackAppName = integration?.name ?? integrationLink.integration.name;
+  // Telegram stores the BotFather HTTP API token under `apiToken`; `token` holds the internal
+  // webhook secret and is intentionally not surfaced here.
+  const botToken = (credentials?.apiToken as string | undefined) ?? '';
+  const botName = integration?.name ?? integrationLink.integration.name;
   const webhookUrl = buildWebhookUrl(agent._id, integrationLink.integration.identifier);
-
-  const manageSlackAppUrl = applicationId ? `${MANAGE_SLACK_APP_BASE_URL}/${applicationId}` : MANAGE_SLACK_APP_BASE_URL;
 
   const viewActivityHref = useMemo(() => {
     if (!currentEnvironment?.slug) return undefined;
@@ -77,37 +75,12 @@ export function SlackAgentConnectedDetails({
     }
   };
 
-  const credentialFields = useMemo(
-    () => [
-      { key: 'applicationId' as keyof ICredentials, label: 'App ID', value: applicationId, secret: false },
-      {
-        key: 'clientId' as keyof ICredentials,
-        label: 'Client ID',
-        value: (credentials?.clientId as string | undefined) ?? '',
-        secret: false,
-      },
-      {
-        key: 'secretKey' as keyof ICredentials,
-        label: 'Client Secret',
-        value: (credentials?.secretKey as string | undefined) ?? '',
-        secret: true,
-      },
-      {
-        key: 'signingSecret' as keyof ICredentials,
-        label: 'Signing Secret',
-        value: (credentials?.signingSecret as string | undefined) ?? '',
-        secret: true,
-      },
-    ],
-    [applicationId, credentials?.clientId, credentials?.secretKey, credentials?.signingSecret]
-  );
-
   return (
     <div className="flex w-full max-w-[1100px] flex-col gap-4">
       <ConnectionConfetti active={justConnected} />
       <AgentIntegrationGuideHeader
-        providerId={ChatProviderIdEnum.Slack}
-        providerDisplayName="Slack"
+        providerId={ChatProviderIdEnum.Telegram}
+        providerDisplayName="Telegram"
         integrationLink={integrationLink}
         canRemoveIntegration={canRemoveIntegration}
         onRequestRemoveIntegration={onRequestRemoveIntegration}
@@ -140,48 +113,23 @@ export function SlackAgentConnectedDetails({
         />
       ) : null}
 
-      <DetailSection
-        title="Slack app metadata"
-        action={
-          <SectionLinkButton icon={RiArrowRightUpLine} href={manageSlackAppUrl}>
-            Manage Slack App
-          </SectionLinkButton>
-        }
-      >
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <ReadOnlyField
-            label="Slack app name"
-            value={slackAppName}
-            mono={false}
-            info="The display name of your connected Slack app."
-          />
-          {isLoading ? (
-            <FieldSkeleton />
-          ) : (
-            <ReadOnlyField label="Slack app ID" value={applicationId} info="The unique identifier of your Slack app." />
-          )}
-        </div>
+      <DetailSection title="Telegram bot">
+        <ReadOnlyField
+          label="Bot name"
+          value={botName}
+          mono={false}
+          info="The display name of your connected Telegram bot integration."
+        />
         <ReadOnlyField
           label="Webhook URL"
           value={webhookUrl}
           copyable
-          info="Point your Slack app's Event Subscriptions and Interactivity request URLs at this endpoint. It receives Slack events for this agent."
+          info="Novu registers this URL with Telegram (setWebhook) so your bot delivers updates to this agent."
         />
       </DetailSection>
 
-      <DetailSection title="Slack credentials">
-        {isLoading ? (
-          <>
-            <FieldSkeleton />
-            <FieldSkeleton />
-            <FieldSkeleton />
-            <FieldSkeleton />
-          </>
-        ) : (
-          credentialFields.map((field) => (
-            <ReadOnlyField key={field.key} label={field.label} value={field.value} required secret={field.secret} />
-          ))
-        )}
+      <DetailSection title="Telegram credentials">
+        {isLoading ? <FieldSkeleton /> : <ReadOnlyField label="Bot Token" value={botToken} required secret />}
       </DetailSection>
     </div>
   );
