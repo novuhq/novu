@@ -6,8 +6,8 @@ import type { ChannelWhatsNextConfig, WhatsNextConfigContext } from './whats-nex
 const SLACK_APPS_BASE_URL = 'https://api.slack.com/apps';
 const SLACK_REACT_PACKAGE = '@novu/react';
 
-function escapeJsxAttributeValue(value: string): string {
-  return value.replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+function escapeJsxStringAttributeValue(value: string): string {
+  return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 }
 
 function buildManageSlackAppUrl(applicationId: string | undefined): string {
@@ -19,9 +19,9 @@ function buildSlackConnectSnippet(
   agentName: string,
   applicationIdentifier: string
 ): string {
-  const safeApplicationIdentifier = escapeJsxAttributeValue(applicationIdentifier);
-  const safeIntegrationIdentifier = escapeJsxAttributeValue(integrationIdentifier);
-  const safeAgentName = escapeJsxAttributeValue(agentName);
+  const safeApplicationIdentifier = escapeJsxStringAttributeValue(applicationIdentifier);
+  const safeIntegrationIdentifier = escapeJsxStringAttributeValue(integrationIdentifier);
+  const safeAgentName = escapeJsxStringAttributeValue(agentName);
 
   return `import { NovuProvider, SlackConnectButton } from '${SLACK_REACT_PACKAGE}';
 
@@ -29,7 +29,7 @@ function buildSlackConnectSnippet(
 // Replace subscriberId with the current user's id (the connection is created per subscriber).
 <NovuProvider
   applicationIdentifier="${safeApplicationIdentifier}"
-  subscriberId="${escapeJsxAttributeValue('<SUBSCRIBER_ID>')}"
+  subscriberId="<SUBSCRIBER_ID>"
 >
   <SlackConnectButton
     integrationIdentifier="${safeIntegrationIdentifier}"

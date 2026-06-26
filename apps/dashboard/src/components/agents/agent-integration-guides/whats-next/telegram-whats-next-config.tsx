@@ -6,13 +6,13 @@ const TELEGRAM_REACT_PACKAGE = '@novu/react';
 const TELEGRAM_DOCS_URL = 'https://docs.novu.co/platform/integrations/chat/telegram';
 const APPLICATION_IDENTIFIER_PLACEHOLDER = '<YOUR_NOVU_APPLICATION_IDENTIFIER>';
 
-function escapeJsxAttributeValue(value: string): string {
-  return value.replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+function escapeJsxStringAttributeValue(value: string): string {
+  return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 }
 
 function buildTelegramConnectSnippet(integrationIdentifier: string, applicationIdentifier: string): string {
-  const safeApplicationIdentifier = escapeJsxAttributeValue(applicationIdentifier);
-  const safeIntegrationIdentifier = escapeJsxAttributeValue(integrationIdentifier);
+  const safeApplicationIdentifier = escapeJsxStringAttributeValue(applicationIdentifier);
+  const safeIntegrationIdentifier = escapeJsxStringAttributeValue(integrationIdentifier);
 
   return `import { NovuProvider, TelegramConnectButton } from '${TELEGRAM_REACT_PACKAGE}';
 
@@ -20,7 +20,7 @@ function buildTelegramConnectSnippet(integrationIdentifier: string, applicationI
 // Replace subscriberId with the current user's id (the connection is created per subscriber).
 <NovuProvider
   applicationIdentifier="${safeApplicationIdentifier}"
-  subscriberId="${escapeJsxAttributeValue('<SUBSCRIBER_ID>')}"
+  subscriberId="<SUBSCRIBER_ID>"
 >
   <TelegramConnectButton
     integrationIdentifier="${safeIntegrationIdentifier}"
