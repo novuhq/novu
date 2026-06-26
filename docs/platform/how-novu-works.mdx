@@ -25,28 +25,6 @@ At a high level, Novu’s architecture is built around modular but connected con
   ![How Novu works](/images/how-novu-works.png)
 </Frame>
 
-```mermaid
-flowchart TB
-    org[Organization] --> devEnv[Development Environment]
-    org --> prodEnv[Production Environment]
-
-    devEnv --> devWorkflows[Workflows]
-    devEnv --> devSubscribers[Subscribers]
-    devEnv --> devIntegrations[Integrations]
-    devWorkflows --> devTrigger[API Trigger]
-    devTrigger --> devSteps[Workflow Steps]
-    devSteps --> devChannels[Email / SMS / Push / In-App / Chat]
-    devIntegrations -.-> devChannels
-
-    prodEnv --> prodWorkflows[Workflows]
-    prodEnv --> prodSubscribers[Subscribers]
-    prodEnv --> prodIntegrations[Integrations]
-    prodWorkflows --> prodTrigger[API Trigger]
-    prodTrigger --> prodSteps[Workflow Steps]
-    prodSteps --> prodChannels[Email / SMS / Push / In-App / Chat]
-    prodIntegrations -.-> prodChannels
-```
-
 ### Organization and environments
 
 Everything starts with your organization, the top-level entity in Novu. Each organization can have multiple environments, such as:
