@@ -1,47 +1,91 @@
 ---
 title: 'Overview'
-description: "Complete Novu API reference covering authentication, endpoints, rate limits, and server-side integration for notifications."
+description: 'High-level overview of the Novu REST API, available resources, and links to OpenAPI, Postman, SDKs, and getting started guides.'
 ---
 
-<Note>
-  It's important to note that our API and backend SDK are intended for use exclusively in
-  server-side applications. **Attempting to use them in a client-side application will result in
-  Cross-Origin Resource Sharing (CORS) errors.** This restriction ensures the security and integrity
-  of our services.
-</Note>
-
-## Authentication
-
-Authentication for the Novu API involves the use of an API Key, which is a secure credential that is tied to your Novu account. This key should be included in the header of the request in the Authorization field as a string prefixed with 'ApiKey '.
-
-```bash
---header 'Authorization: ApiKey <NOVU_SECRET_KEY>'
-```
-
-For example, when using Novu in a Node.js application, the Novu package should be imported and initialized with the API key, as shown in this snippet:
-
-```javascript
-import { Novu } from '@novu/api';
-const novu = new Novu({
-  secretKey: "NOVU_SECRET_KEY",
-});
-```
-
-Replace `<NOVU_SECRET_KEY>` with your actual API Key, available in the API Key section of the Novu Dashboard.
-
-<Warning>
-  It is advised not to hardcode your credentials in a file in production environments. Use
-  environment variables instead.
-</Warning>
-
-## API Endpoints
-
-Novu provides a multitude of API endpoints that enable a variety of functionalities. the base URL for the Novu API is `https://api.novu.co/v1`.
+The Novu REST API lets you manage subscribers, trigger workflows, configure integrations, and operate your notification infrastructure from your backend. Use it directly with HTTP requests, or through one of our [server-side SDKs](/platform/sdks#server-side-sdks).
 
 <Note>
-  We offer two API options: the US API and the EU API. By default, our API documentation refers to the US API, which can be accessed at: https://api.novu.co/v1.
-
-  If you require the EU version, you can access it here: https://eu.api.novu.co/v1.
+  The REST API and server-side SDKs are intended for server-side applications only. Using them in client-side code causes Cross-Origin Resource Sharing (CORS) errors and exposes your secret key.
 </Note>
 
-For instance, to get tenant information, the endpoint to use would include the tenant's identifier and look like this `https://api.novu.co/v1/tenants/{identifier}`.
+## Base URL
+
+| Region | Base URL |
+| --- | --- |
+| **US (default)** | `https://api.novu.co/v1` |
+| **EU** | `https://eu.api.novu.co/v1` |
+
+All endpoints in this reference use the US base URL unless noted otherwise. See [Authentication](/api-reference/authentication) for regional WebSocket hostnames and credential setup.
+
+## API capabilities
+
+The REST API is organized around the core resources you use to build and operate notifications:
+
+<Columns cols={2}>
+  <Card title="Events" icon="zap" href="/api-reference/events/trigger-event">
+    Trigger, bulk trigger, broadcast, and cancel workflow executions.
+  </Card>
+  <Card title="Subscribers" icon="users" href="/api-reference/subscribers/create-a-subscriber">
+    Create, update, and manage notification recipients and their preferences.
+  </Card>
+  <Card title="Inbox" icon="inbox" href="/api-reference/subscribers/retrieve-subscriber-notifications">
+    Read, mark, archive, snooze, and manage in-app notifications.
+  </Card>
+  <Card title="Topics" icon="hash" href="/api-reference/topics/create-a-topic">
+    Group subscribers and send notifications to topic audiences.
+  </Card>
+  <Card title="Workflows" icon="git-branch" href="/api-reference/workflows/create-a-workflow">
+    Create, sync, and manage notification workflow definitions.
+  </Card>
+  <Card title="Integrations" icon="plug" href="/api-reference/integrations/create-an-integration">
+    Configure channel providers for email, SMS, push, and chat delivery.
+  </Card>
+  <Card title="Environments" icon="server" href="/api-reference/environments/list-all-environments">
+    Manage environments and publish resources between them.
+  </Card>
+  <Card title="Messages" icon="message-square" href="/api-reference/messages/list-all-messages">
+    List and delete sent messages across channels.
+  </Card>
+</Columns>
+
+Browse the sidebar for the full endpoint reference, including translations, contexts, layouts, channel connections, and activity tracking.
+
+## Developer resources
+
+Use these resources to explore, test, and integrate with the API:
+
+<Columns cols={2}>
+  <Card title="OpenAPI specification" icon="file-json" href="https://api.novu.co/openapi.json">
+    Machine-readable API schema for code generation, validation, and tooling.
+  </Card>
+  <Card title="Postman collection" icon="send" href="https://github.com/novuhq/novu-postman/blob/main/postman/novu_api_postman_collection.json">
+    Pre-built requests to test endpoints in Postman or compatible tools.
+  </Card>
+  <Card title="Server-side SDKs" icon="code" href="/platform/sdks#server-side-sdks">
+    Official SDKs for TypeScript, Python, Go, PHP, .NET, and Java.
+  </Card>
+  <Card title="Authentication" icon="key" href="/api-reference/authentication">
+    Set up API keys, environment credentials, and security best practices.
+  </Card>
+</Columns>
+
+### Import the Postman collection
+
+1. Clone or download the [novu-postman](https://github.com/novuhq/novu-postman) repository.
+2. Import `postman/novu_api_postman_collection.json` into Postman.
+3. Set the `secretKey` collection variable to your environment's secret key from the [API Keys](https://dashboard.novu.co/api-keys) page.
+
+## Getting started
+
+<Steps>
+  <Step title="Get your API key">
+    Copy your environment's secret key from the [Novu Dashboard](https://dashboard.novu.co/api-keys). See [Authentication](/api-reference/authentication) for details on credential types and security.
+  </Step>
+  <Step title="Make your first request">
+    Trigger a workflow or create a subscriber using the REST API or an SDK. Start with [Trigger event](/api-reference/events/trigger-event) or [Create a subscriber](/api-reference/subscribers/create-a-subscriber).
+  </Step>
+  <Step title="Review API policies">
+    Understand [Rate limiting](/api-reference/rate-limiting), [Idempotency](/api-reference/idempotency), and [Payload limits](/api-reference/payload-limits) before building production integrations.
+  </Step>
+</Steps>

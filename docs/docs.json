@@ -436,9 +436,10 @@
         "tab": "API Reference",
         "groups": [
           {
-            "group": "Getting Started",
+            "group": "Overview",
             "pages": [
               "api-reference",
+              "api-reference/authentication",
               "api-reference/rate-limiting",
               "api-reference/idempotency",
               "api-reference/payload-limits"
@@ -1167,6 +1168,11 @@
     {
       "source": "/api-reference/overview",
       "destination": "/api-reference",
+      "permanent": true
+    },
+    {
+      "source": "/api-reference/auth",
+      "destination": "/api-reference/authentication",
       "permanent": true
     },
     {
