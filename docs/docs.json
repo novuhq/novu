@@ -874,13 +874,11 @@
     "options": [
       "copy",
       "view",
-      "chatgpt",
-      "claude",
-      "perplexity",
-      "mcp",
-      "add-mcp",
       "cursor",
-      "vscode"
+      "claude",
+      "chatgpt",
+      "mcp",
+      "add-mcp"
     ]
   },
   "footer": {
