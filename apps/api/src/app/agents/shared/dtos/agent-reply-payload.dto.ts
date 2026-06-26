@@ -149,6 +149,26 @@ export class IsValidReplyContent implements ValidatorConstraintInterface {
   }
 }
 
+@ValidatorConstraint({ name: 'isValidTypingOp', async: false })
+export class IsValidTypingOp implements ValidatorConstraintInterface {
+  validate(value: unknown): boolean {
+    if (value === undefined) return true;
+    if (value === 'stop') return true;
+
+    if (typeof value === 'object' && value !== null) {
+      const status = (value as { status?: unknown }).status;
+
+      return status === undefined || typeof status === 'string';
+    }
+
+    return false;
+  }
+
+  defaultMessage(): string {
+    return "typing must be 'stop' or an object with an optional string status.";
+  }
+}
+
 export class ReplyContentDto {
   @ApiPropertyOptional()
   @IsOptional()
@@ -283,4 +303,13 @@ export class AgentReplyPayloadDto {
   @ValidateNested({ each: true })
   @Type(() => AddReactionPayloadDto)
   addReactions?: AddReactionPayloadDto[];
+
+  @ApiPropertyOptional({
+    description:
+      'Per-turn typing/status control. `{ status?: string }` sets the status text ' +
+      '(omit for the default "Thinking…"); `"stop"` clears it. Best-effort per platform.',
+  })
+  @IsOptional()
+  @Validate(IsValidTypingOp)
+  typing?: { status?: string } | 'stop';
 }

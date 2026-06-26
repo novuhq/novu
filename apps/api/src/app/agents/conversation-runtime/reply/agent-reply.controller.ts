@@ -36,6 +36,7 @@ export class AgentReplyController {
         resolve: body.resolve,
         signals: body.signals as Signal[],
         addReactions: body.addReactions,
+        typing: body.typing,
       })
     );
   }
