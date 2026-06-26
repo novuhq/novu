@@ -316,6 +316,13 @@ export interface AgentContextBase {
    * (e.g. email). A normal turn that ends with `ctx.reply()` clears the status automatically.
    */
   typing: TypingControl;
+  /**
+   * Live plan-card control for the current turn. Call `ctx.plan('Custom title…')` to name the card;
+   * `plan.task(id, {...})` upserts a task. The plan auto-finalizes when the handler completes —
+   * call `finish()`/`fail()` only for manual control. For AI SDK tool auto-tracking, use
+   * `trackPlanTools` from `@novu/framework/ai-sdk`.
+   */
+  plan: PlanControl;
 }
 
 /** Context passed to the `onMessage` handler. */
@@ -462,6 +469,29 @@ export type TypingControl = ((status?: string) => Promise<void>) & {
   stop: () => Promise<void>;
 };
 
+export type PlanTaskStatus = 'pending' | 'in_progress' | 'complete' | 'error';
+
+export interface PlanTaskInput {
+  id: string;
+  title?: string;
+  status: PlanTaskStatus;
+  details?: string;
+  group?: string;
+}
+
+export type PlanProgressPhase = 'awaiting-approval' | 'approved' | 'denied' | 'finished' | 'failed';
+
+export type PlanProgressEvent =
+  | { kind: 'task'; task: PlanTaskInput; cardTitle?: string }
+  | { kind: 'phase'; phase: PlanProgressPhase; title?: string }
+  | { kind: 'title'; title: string };
+
+export type PlanControl = ((title?: string) => Promise<void>) & {
+  task(id: string, task: Omit<PlanTaskInput, 'id'>): Promise<void>;
+  finish(title?: string): Promise<void>;
+  fail(title?: string): Promise<void>;
+};
+
 export interface AgentReplyPayload {
   conversationId: string;
   integrationIdentifier: string;
@@ -471,6 +501,7 @@ export interface AgentReplyPayload {
   signals?: Signal[];
   addReactions?: AddReactionPayload[];
   typing?: TypingOp;
+  planProgress?: PlanProgressEvent;
 }
 
 /** Shape returned by /agents/:id/reply when a reply or edit was delivered. */

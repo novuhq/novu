@@ -26,7 +26,13 @@ export async function dispatchAgentEvent(options: DispatchAgentEventOptions): Pr
   try {
     await runAgentHandler(options.agent, options.event, ctx);
     await ctx.flush();
+    await ctx.finalizePlan('finished');
   } catch (err) {
+    try {
+      await ctx.finalizePlan('failed');
+    } catch (finalizeErr) {
+      options.logger?.error(`[agent:${options.agent.id}] plan finalize failed:`, finalizeErr);
+    }
     if (err instanceof AgentDeliveryError) {
       options.logger?.error(`[agent:${options.agent.id}] ${err.message}`);
     } else {

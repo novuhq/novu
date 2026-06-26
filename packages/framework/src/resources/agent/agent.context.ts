@@ -13,6 +13,8 @@ import type {
   AgentSubscriber,
   FileRef,
   MessageContent,
+  PlanControl,
+  PlanProgressEvent,
   ReplyContent,
   ReplyHandle,
   SentMessageInfo,
@@ -261,6 +263,7 @@ export class AgentContextImpl {
   readonly platform: string;
   readonly platformContext: AgentPlatformContext;
   readonly typing: TypingControl;
+  readonly plan: PlanControl;
 
   readonly metadata: {
     get(key: string): unknown;
@@ -274,6 +277,9 @@ export class AgentContextImpl {
   private _pendingReactions: AddReactionPayload[] = [];
   private _resolveSignal: { summary?: string } | null = null;
   private _metadataState: Record<string, unknown>;
+  private _planActive = false;
+  private _planFinalized = false;
+  private _planTitle: string | undefined;
   private readonly _replyUrl: string;
   private readonly _conversationId: string;
   private readonly _integrationIdentifier: string;
@@ -331,6 +337,41 @@ export class AgentContextImpl {
     const typing = ((status?: string) => postTyping(status === undefined ? {} : { status })) as TypingControl;
     typing.stop = () => postTyping('stop');
     this.typing = typing;
+
+    const postPlan = (event: PlanProgressEvent): Promise<void> =>
+      this._post({
+        conversationId: this._conversationId,
+        integrationIdentifier: this._integrationIdentifier,
+        planProgress: event,
+      }).then(() => undefined);
+
+    const plan = (async (title?: string) => {
+      this._planActive = true;
+      if (title !== undefined) {
+        this._planTitle = title;
+        await postPlan({ kind: 'title', title });
+      }
+    }) as PlanControl;
+
+    plan.task = async (id, task) => {
+      this._planActive = true;
+      await postPlan({
+        kind: 'task',
+        task: { id, ...task },
+        ...(this._planTitle ? { cardTitle: this._planTitle } : {}),
+      });
+    };
+    plan.finish = async (title?: string) => {
+      this._planFinalized = true;
+      const resolvedTitle = title ?? this._planTitle;
+      await postPlan({ kind: 'phase', phase: 'finished', ...(resolvedTitle ? { title: resolvedTitle } : {}) });
+    };
+    plan.fail = async (title?: string) => {
+      this._planFinalized = true;
+      const resolvedTitle = title ?? this._planTitle;
+      await postPlan({ kind: 'phase', phase: 'failed', ...(resolvedTitle ? { title: resolvedTitle } : {}) });
+    };
+    this.plan = plan;
   }
 
   async reply(content: MessageContent, options?: { files?: FileRef[] }): Promise<ReplyHandle> {
@@ -411,6 +452,16 @@ export class AgentContextImpl {
     }
 
     await this._post(body);
+  }
+
+  async finalizePlan(phase: 'finished' | 'failed'): Promise<void> {
+    if (!this._planActive || this._planFinalized) return;
+    this._planFinalized = true;
+    await this._post({
+      conversationId: this._conversationId,
+      integrationIdentifier: this._integrationIdentifier,
+      planProgress: { kind: 'phase', phase },
+    });
   }
 
   private async _post(body: AgentReplyPayload): Promise<SentMessageInfo | null> {
