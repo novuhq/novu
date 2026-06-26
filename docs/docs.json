@@ -878,6 +878,7 @@
       "claude",
       "perplexity",
       "mcp",
+      "add-mcp",
       "cursor",
       "vscode"
     ]
