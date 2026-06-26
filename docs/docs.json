@@ -1150,6 +1150,11 @@
       "permanent": true
     },
     {
+      "source": "/api",
+      "destination": "/api-reference",
+      "permanent": true
+    },
+    {
       "source": "/api-reference/overview",
       "destination": "/api-reference",
       "permanent": true
