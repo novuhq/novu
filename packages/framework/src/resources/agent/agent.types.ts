@@ -302,6 +302,20 @@ export interface AgentContextBase {
    *   await ctx.reply('Done!');
    */
   addReaction(messageId: string, emojiName: Emoji): void;
+  /**
+   * Control the typing / "Thinking…" status for the current turn.
+   * Posts immediately (like `reply()`), updating the indicator Novu already shows on inbound.
+   *
+   * @example
+   *   await ctx.typing('Searching the docs…'); // set / replace the status text
+   *   await ctx.typing();                       // reset to the default "Thinking…"
+   *   await ctx.typing.stop();                  // clear it for this turn
+   *
+   * Behaviour is best-effort per platform: custom text shows on Slack-like platforms,
+   * a generic typing bubble on others, and is a no-op where there is no typing channel
+   * (e.g. email). A normal turn that ends with `ctx.reply()` clears the status automatically.
+   */
+  typing: TypingControl;
 }
 
 /** Context passed to the `onMessage` handler. */
@@ -434,6 +448,20 @@ export interface AddReactionPayload {
   emojiName: Emoji;
 }
 
+/**
+ * Per-turn typing/status control op sent on the reply contract.
+ * - `{ status?: string }` — set/replace the status; omit `status` for the default "Thinking…".
+ * - `'stop'` — clear the status for this turn.
+ */
+export type TypingOp = { status?: string } | 'stop';
+
+/**
+ * `ctx.typing` surface: a callable that sets/updates the status, plus `.stop()` to clear it.
+ */
+export type TypingControl = ((status?: string) => Promise<void>) & {
+  stop: () => Promise<void>;
+};
+
 export interface AgentReplyPayload {
   conversationId: string;
   integrationIdentifier: string;
@@ -442,6 +470,7 @@ export interface AgentReplyPayload {
   resolve?: { summary?: string };
   signals?: Signal[];
   addReactions?: AddReactionPayload[];
+  typing?: TypingOp;
 }
 
 /** Shape returned by /agents/:id/reply when a reply or edit was delivered. */

@@ -43,5 +43,7 @@ export type {
   SentMessageInfo,
   Signal,
   TriggerSignal,
+  TypingControl,
+  TypingOp,
 } from './agent.types';
 export { AgentEventEnum } from './agent.types';
