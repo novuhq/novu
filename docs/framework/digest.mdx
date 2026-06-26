@@ -161,15 +161,18 @@ const firstDigestWorkflow = workflow(
 );
 ```
 
-<Note>
+<Warning>
   Changing the step content after triggering the workflow with digest step will not affect the
   existing digested events.
-</Note>
+</Warning>
 
 ## Next Steps
 
 - [Learn more about the Digest Engine](/framework/typescript/steps/digest)
 ## Frequently Asked Questions
 
-### If digest step fails, will the workflow continue to the next step?
-No, workflow execution will stop immediately if the digest step fails due to an error.
+<AccordionGroup>
+  <Accordion title="If digest step fails, will the workflow continue to the next step?">
+    No, workflow execution will stop immediately if the digest step fails due to an error.
+  </Accordion>
+</AccordionGroup>

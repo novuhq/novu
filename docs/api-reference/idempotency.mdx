@@ -25,13 +25,18 @@ This mechanism protects against network issues, timeouts, and other scenarios wh
 
 To make an idempotent request, include the `Idempotency-Key` header with a unique identifier:
 
-```bash
+<CodeGroup>
+```bash title="Trigger event"
 curl -X POST https://api.novu.co/v1/events/trigger \
   --header 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
   --header 'Idempotency-Key: unique-request-id-12345' \
   --header 'Content-Type: application/json' \
   --data '{"name": "workflow-id", "to": {"subscriberId": "subscriber-123"}}'
 ```
+```bash title="Authorization header"
+--header 'Authorization: ApiKey <NOVU_SECRET_KEY>'
+```
+</CodeGroup>
 
 ### Key Requirements
 
@@ -55,17 +60,13 @@ Idempotency is supported for the following HTTP methods:
 | PUT    | ❌ No     |
 | DELETE | ❌ No     |
 
-<Note>
+<Info>
   GET, PUT, and DELETE methods are inherently idempotent by design and don't require idempotency keys.
-</Note>
+</Info>
 
 ## Authentication Requirements
 
-Idempotency is only available when authenticating with an API Key:
-
-```bash
---header 'Authorization: ApiKey <NOVU_SECRET_KEY>'
-```
+Idempotency is only available when authenticating with an API Key. Include the `Authorization: ApiKey` header shown in the **Authorization header** tab above.
 
 Requests using other authentication methods will be processed normally without idempotency support.
 

@@ -90,18 +90,20 @@ Workflows created in the new UI will not be visible under the old Web UI, but ol
 
 ## FAQs
 
-### If I currently use the v2 docker images, what should I do?
+<AccordionGroup>
+  <Accordion title="If I currently use the v2 docker images, what should I do?">
+    If you already have the v2 docker images running, you will just need to run the new dashboard image in parallel to the existing "web" image, and migrate your workflows.
+  </Accordion>
 
-If you already have the v2 docker images running, you will just need to run the new dashboard image in parallel to the existing "web" image, and migrate your workflows.
+  <Accordion title="What breaking changes are in the new v2 images (API)">
+    The new v2 images are backward compatible with the old v0 API, so you don't have to worry about updating your instances.
+    However, to enjoy the new Workflow editor experience, you will need to migrate your workflows to the new v2 engine.
+  </Accordion>
 
-### What breaking changes are in the new v2 images (API)
-
-The new v2 images are backward compatible with the old v0 API, so you don't have to worry about updating your instances. 
-However, to enjoy the new Workflow editor experience, you will need to migrate your workflows to the new v2 engine.
-
-### What is the difference between Novu Cloud, Enterprise and Self-hosted?
-
-You can learn more about the differences between the different editions [here](https://docs.novu.co/community/self-hosted-and-novu-cloud).
+  <Accordion title="What is the difference between Novu Cloud, Enterprise and Self-hosted?">
+    You can learn more about the differences between the different editions [here](https://docs.novu.co/community/self-hosted-and-novu-cloud).
+  </Accordion>
+</AccordionGroup>
 
 ## Need Help?
 

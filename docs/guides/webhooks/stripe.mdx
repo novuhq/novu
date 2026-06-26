@@ -64,8 +64,6 @@ There are two common options:
 <Tabs>
 <Tab title="localtunnel">
 
-### localtunnel
-
 **localtunnel** is a simple and free way to expose your local server without requiring an account.
 
 1. Start a localtunnel listener
@@ -84,8 +82,6 @@ Learn more about **localtunnel** [here](https://www.npmjs.com/package/localtunne
 
 </Tab>
 <Tab title="ngrok">
-
-### ngrok
 
 For a more stable and configurable tunnel, use **ngrok**:
 
@@ -113,9 +109,7 @@ Learn more about **ngrok** [here](https://dashboard.ngrok.com/get-started/setup)
 Stripe supports two endpoint types: Account and Connect. Create an endpoint for Account unless you’ve created a Connect application. You can register up to 16 webhook endpoints on each Stripe account.
 
 <Note>
-  **Note**
-
-  When you create an endpoint in the Dashboard, you can choose between your Account’s API version or the latest API version. You can test other API versions in Workbench using stripe webhook_endpoints create, but you must create a webhook endpoint using the API to use other API versions in production.
+  When you create an endpoint in the Dashboard, you can choose between your Account's API version or the latest API version. You can test other API versions in Workbench using stripe webhook_endpoints create, but you must create a webhook endpoint using the API to use other API versions in production.
 </Note>
 
 Use the following steps to register a webhook endpoint in the Developers Dashboard.
@@ -169,13 +163,17 @@ export default clerkMiddleware({
 
 Create `app/api/webhooks/stripe/route.ts`:
 
-```
-app/
-  api/
-    webhooks/
-      stripe/
-        route.ts
-```
+<Tree>
+  <Tree.Folder name="app" defaultOpen>
+    <Tree.Folder name="api">
+      <Tree.Folder name="webhooks">
+        <Tree.Folder name="stripe">
+          <Tree.File name="route.ts" />
+        </Tree.Folder>
+      </Tree.Folder>
+    </Tree.Folder>
+  </Tree.Folder>
+</Tree>
 
 The following snippet is the complete code of how to create a webhook endpoint for Clerk in Next.js:
 
@@ -261,15 +259,20 @@ async function payloadBuilder(response: any) {
 
 Create `app/utils/novu.ts` :
 
-```
-app/
-  utils/
-    novu.ts
-  api/
-    webhooks/
-      stripe/
-        route.ts
-```
+<Tree>
+  <Tree.Folder name="app" defaultOpen>
+    <Tree.Folder name="utils">
+      <Tree.File name="novu.ts" />
+    </Tree.Folder>
+    <Tree.Folder name="api">
+      <Tree.Folder name="webhooks">
+        <Tree.Folder name="stripe">
+          <Tree.File name="route.ts" />
+        </Tree.Folder>
+      </Tree.Folder>
+    </Tree.Folder>
+  </Tree.Folder>
+</Tree>
 
 ```jsx
 import { Novu } from '@novu/api';
@@ -542,15 +545,13 @@ Follow these steps to set up your workflow(s) in the Novu dashboard:
 
    - Ensure the trigger matches the event data (e.g., event type or payload) sent by your application.
 
-<Note>
-  **Tips for Success**
-
+<Tip>
   - **Start Simple:** Use templates for common tasks and switch to blank workflows for unique needs.  
 
   - **Test Thoroughly:** Simulate webhook events to ensure your workflows behave as expected.  
 
   - **Plan for Growth:** Organize workflows logically (separate or combined) to make future updates easier.
-</Note>
+</Tip>
 
 </Step>
 

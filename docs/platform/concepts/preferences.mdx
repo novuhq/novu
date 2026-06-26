@@ -18,12 +18,31 @@ Each workflow has its own channel preferences. By default, all channel preferenc
 
 Steps to manage workflow channel preferences:
 
-1. Go to the [Workflows page](https://dashboard.novu.co/workflows) in Novu dashboard
-2. Click the workflow you want to manage channel preferences for
-3. A node-based editor will appear. On the right side of the editor, click the `Configure channel preferences` option
-4. Click on the All Channels checkbox to enable or disable all channels for the workflow
-5. You will be able to change the preferences for only those steps which are present in the workflow. Non existing channel steps will be disabled.
-6. The `Mark as critical` toggle will make this workflow critical. Read more about [critical workflows](#critical-workflows)
+<Steps>
+  <Step title="Go to the Workflows page">
+    Go to the [Workflows page](https://dashboard.novu.co/workflows) in Novu dashboard
+  </Step>
+
+  <Step title="Select a workflow">
+    Click the workflow you want to manage channel preferences for
+  </Step>
+
+  <Step title="Open channel preferences">
+    A node-based editor will appear. On the right side of the editor, click the `Configure channel preferences` option
+  </Step>
+
+  <Step title="Enable or disable all channels">
+    Click on the All Channels checkbox to enable or disable all channels for the workflow
+  </Step>
+
+  <Step title="Configure step preferences">
+    You will be able to change the preferences for only those steps which are present in the workflow. Non existing channel steps will be disabled.
+  </Step>
+
+  <Step title="Mark as critical (optional)">
+    The `Mark as critical` toggle will make this workflow critical. Read more about [critical workflows](#critical-workflows)
+  </Step>
+</Steps>
 
 <Note>
   If a workflow has only `in-app` and `email` steps, then it will have only `in-app` and `email` preferences.
@@ -58,6 +77,19 @@ For each workflow, each subscriber has their own channel preferences. Subscriber
 Since there are three types of preferences, the priority order is as follows:
 
 Workflow channel preferences > Subscriber global preferences > Subscriber channel preferences per workflow
+
+```mermaid
+flowchart TD
+    startNode([Should notification send?]) --> workflowDisabled{Channel disabled in workflow preferences?}
+    workflowDisabled -->|Yes| blockWorkflow[Do not send]
+    workflowDisabled -->|No| isCritical{Workflow marked as critical?}
+    isCritical -->|Yes| sendCritical[Send notification]
+    isCritical -->|No| globalDisabled{Channel disabled in subscriber global preferences?}
+    globalDisabled -->|Yes| blockGlobal[Do not send]
+    globalDisabled -->|No| subscriberDisabled{Subscriber disabled channel for this workflow?}
+    subscriberDisabled -->|Yes| blockSubscriber[Do not send]
+    subscriberDisabled -->|No| sendAllowed[Send notification]
+```
 
 Examples:
 

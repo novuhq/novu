@@ -28,6 +28,7 @@
         "groups": [
           {
             "group": "Getting Started",
+            "boost": 3,
             "pages": [
               "platform",
               "platform/what-is-novu",
@@ -384,6 +385,7 @@
         "groups": [
           {
             "group": "Get Started",
+            "boost": 3,
             "pages": [
               "agents",
               "agents/get-started/what-is-aci",
@@ -681,6 +683,7 @@
             "groups": [
               {
                 "group": "Getting Started",
+                "boost": 0.1,
                 "pages": [
                   "framework",
                   "framework/introduction",
@@ -701,6 +704,7 @@
               },
               {
                 "group": "Core Concepts",
+                "boost": 0.1,
                 "pages": [
                   "framework/studio",
                   "framework/endpoint",
@@ -711,6 +715,7 @@
               },
               {
                 "group": "Channels",
+                "boost": 0.1,
                 "pages": [
                   "framework/email-channel",
                   "framework/in-app-channel",
@@ -721,6 +726,7 @@
               },
               {
                 "group": "Content",
+                "boost": 0.1,
                 "pages": [
                   "framework/content/react-email",
                   "framework/content/remix-react-email",
@@ -730,10 +736,12 @@
               },
               {
                 "group": "Advanced Features",
+                "boost": 0.1,
                 "pages": ["framework/digest", "framework/delay", "framework/custom", "framework/skip"]
               },
               {
                 "group": "API Reference",
+                "boost": 0.1,
                 "pages": [
                   "framework/typescript/overview",
                   "framework/typescript/client",
@@ -759,6 +767,7 @@
               },
               {
                 "group": "Deployment",
+                "boost": 0.1,
                 "pages": [
                   "framework/deployment/production",
                   "framework/deployment/syncing",
@@ -773,6 +782,7 @@
             "groups": [
               {
                 "group": "Getting Started",
+                "boost": 0.1,
                 "pages": [
                   "community",
                   {

@@ -77,6 +77,21 @@ On top of the built-in tools, MCP (Model Context Protocol) servers give the agen
 
 ### How it works
 
+```mermaid
+sequenceDiagram
+    participant Admin
+    participant Dashboard as Novu Dashboard
+    participant Connector as AI Connector
+    participant McpServer as MCP Server
+
+    Admin->>Dashboard: Enable MCP server
+    Dashboard->>Connector: Sync configuration
+    Note over Connector,McpServer: During conversation
+    Connector->>McpServer: Call tool when needed
+    McpServer-->>Connector: Tool result
+    Connector->>Connector: Include in reasoning
+```
+
 1. You enable an MCP server from the agent settings page in the dashboard.
 2. Novu syncs the configuration to the connector (Claude, AWS Bedrock, etc.).
 3. During a conversation, the connector platform decides when to call a tool based on the user's message and the system prompt.
@@ -100,6 +115,21 @@ The list of available servers is shown on the agent settings page in the dashboa
 Some MCP servers require OAuth authorization from the end user. When a subscriber first interacts with the agent through a tool that needs authorization, they receive a prompt to connect their account.
 
 Novu manages the OAuth flow:
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Agent as Managed Agent
+    participant Novu
+    participant ExtService as External Service
+
+    Agent->>User: Send authorization link
+    User->>ExtService: Click link and authorize
+    ExtService->>Novu: OAuth callback with tokens
+    Novu->>Novu: Store tokens securely
+    Note over Agent,ExtService: Subsequent turns
+    Novu->>ExtService: Pass tokens on tool calls
+```
 
 1. The agent sends an authorization link to the user in the chat thread.
 2. The user clicks the link and authorizes access on the external service.

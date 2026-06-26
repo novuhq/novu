@@ -137,7 +137,8 @@ Here's a list of some available elements that can be styled using the elements o
   Any selector that appears before the 🔔 emoji in the Devtools, can be targeted via the elements property in the appearance prop (stripping the `nv-` prefix). You can also use TS autocomplete to find the available elements.
 </Note>
 
-### Using style object
+<Tabs>
+  <Tab title="Style object">
 
 You can pass inline styles to individual elements using the `elements` object in the `appearance` prop. Each element accepts a style object.
 
@@ -165,7 +166,8 @@ function Novu() {
 export default Novu;
 ```
 
-### Using Tailwind CSS
+  </Tab>
+  <Tab title="Tailwind CSS">
 
 You can pass [Tailwind CSS](https://tailwindcss.com/docs/installation/tailwind-cli) classes to specific elements using the elements object within the appearance prop.
 
@@ -192,7 +194,8 @@ function Novu() {
 export default Novu;
 ```
 
-### Using CSS modules
+  </Tab>
+  <Tab title="CSS modules">
 
 You can style the Inbox components using [CSS Modules](https://github.com/css-modules/css-modules). First, define the styles in a `.module.css` file:
 
@@ -243,6 +246,9 @@ function Novu() {
 
 export default Novu;
 ```
+
+  </Tab>
+</Tabs>
 
 ## Apply styles dynamically using contextual callbacks
 

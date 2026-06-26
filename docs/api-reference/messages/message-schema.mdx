@@ -7,43 +7,145 @@ description: "Reference the Novu message schema used in API requests and respons
 
 Message is a single notification that is sent to a subscriber. Each channel step in the workflow generates a message.
 
-| Property | Type | Description |
-| --- | --- | --- |
-| `id` | `string` | Unique identifier for the message |
-| `templateId` | `string` | Template ID associated with the message |
-| `environmentId` | `string` | Environment ID where the message is sent |
-| `messageTemplateId` | `string` | Message template ID |
-| `organizationId` | `string` | Organization ID associated with the message |
-| `notificationId` | `string` | Notification ID associated with the message |
-| `subscriberId` | `string` | Subscriber ID associated with the message |
-| `subscriber` | `SubscriberResponseDto` | Subscriber details, if available |
-| `template` | `WorkflowResponse` | Workflow template associated with the message |
-| `templateIdentifier` | `string` | Identifier for the message template |
-| `createdAt` | `string` | Creation date of the message |
-| `deliveredAt` | `string[]` | Array of delivery dates for the message, if the message has multiple delivery dates, for example after being snoozed |
-| `lastSeenDate` | `string` | Last seen date of the message, if available |
-| `lastReadDate` | `string` | Last read date of the message, if available |
-| `content` | `string \| EmailBlock[]` | Content of the message, can be an email block or a string |
-| `transactionId` | `string` | Transaction ID associated with the message |
-| `subject` | `string` | Subject of the message, if applicable |
-| `channel` | `ChannelTypeEnum` | Channel type through which the message is sent |
-| `read` | `boolean` | Indicates if the message has been read |
-| `seen` | `boolean` | Indicates if the message has been seen |
-| `snoozedUntil` | `string` | Date when the message will be unsnoozed |
-| `email` | `string` | Email address associated with the message, if applicable |
-| `phone` | `string` | Phone number associated with the message, if applicable |
-| `directWebhookUrl` | `string` | Direct webhook URL for the message, if applicable |
-| `providerId` | `string` | Provider ID associated with the message, if applicable |
-| `deviceTokens` | `string[]` | Device tokens associated with the message, if applicable |
-| `title` | `string` | Title of the message, if applicable |
-| `cta` | `MessageCTAType` | Call to action associated with the message |
-| `feedId` | `string` | Feed ID associated with the message, if applicable |
-| `status` | `MessageStatusEnum` | Status of the message |
-| `errorId` | `string` | Error ID if the message has an error |
-| `errorText` | `string` | Error text if the message has an error |
-| `payload` | `{ [k: string]: any; }` | The payload that was used to send the notification trigger |
-| `overrides` | `{ [k: string]: any; }` | Provider specific overrides used when triggering the notification |
-| `contextKeys` | `string[]` | Context (single or multi) in which the message was sent |
+<ResponseField name="id" type="string">
+  Unique identifier for the message
+</ResponseField>
+
+<ResponseField name="templateId" type="string">
+  Template ID associated with the message
+</ResponseField>
+
+<ResponseField name="environmentId" type="string">
+  Environment ID where the message is sent
+</ResponseField>
+
+<ResponseField name="messageTemplateId" type="string">
+  Message template ID
+</ResponseField>
+
+<ResponseField name="organizationId" type="string">
+  Organization ID associated with the message
+</ResponseField>
+
+<ResponseField name="notificationId" type="string">
+  Notification ID associated with the message
+</ResponseField>
+
+<ResponseField name="subscriberId" type="string">
+  Subscriber ID associated with the message
+</ResponseField>
+
+<ResponseField name="subscriber" type="SubscriberResponseDto">
+  Subscriber details, if available
+</ResponseField>
+
+<ResponseField name="template" type="WorkflowResponse">
+  Workflow template associated with the message
+</ResponseField>
+
+<ResponseField name="templateIdentifier" type="string">
+  Identifier for the message template
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  Creation date of the message
+</ResponseField>
+
+<ResponseField name="deliveredAt" type="string[]">
+  Array of delivery dates for the message, if the message has multiple delivery dates, for example after being snoozed
+</ResponseField>
+
+<ResponseField name="lastSeenDate" type="string">
+  Last seen date of the message, if available
+</ResponseField>
+
+<ResponseField name="lastReadDate" type="string">
+  Last read date of the message, if available
+</ResponseField>
+
+<ResponseField name="content" type="string | EmailBlock[]">
+  Content of the message, can be an email block or a string
+</ResponseField>
+
+<ResponseField name="transactionId" type="string">
+  Transaction ID associated with the message
+</ResponseField>
+
+<ResponseField name="subject" type="string">
+  Subject of the message, if applicable
+</ResponseField>
+
+<ResponseField name="channel" type="ChannelTypeEnum">
+  Channel type through which the message is sent
+</ResponseField>
+
+<ResponseField name="read" type="boolean">
+  Indicates if the message has been read
+</ResponseField>
+
+<ResponseField name="seen" type="boolean">
+  Indicates if the message has been seen
+</ResponseField>
+
+<ResponseField name="snoozedUntil" type="string">
+  Date when the message will be unsnoozed
+</ResponseField>
+
+<ResponseField name="email" type="string">
+  Email address associated with the message, if applicable
+</ResponseField>
+
+<ResponseField name="phone" type="string">
+  Phone number associated with the message, if applicable
+</ResponseField>
+
+<ResponseField name="directWebhookUrl" type="string">
+  Direct webhook URL for the message, if applicable
+</ResponseField>
+
+<ResponseField name="providerId" type="string">
+  Provider ID associated with the message, if applicable
+</ResponseField>
+
+<ResponseField name="deviceTokens" type="string[]">
+  Device tokens associated with the message, if applicable
+</ResponseField>
+
+<ResponseField name="title" type="string">
+  Title of the message, if applicable
+</ResponseField>
+
+<ResponseField name="cta" type="MessageCTAType">
+  Call to action associated with the message
+</ResponseField>
+
+<ResponseField name="feedId" type="string">
+  Feed ID associated with the message, if applicable
+</ResponseField>
+
+<ResponseField name="status" type="MessageStatusEnum">
+  Status of the message
+</ResponseField>
+
+<ResponseField name="errorId" type="string">
+  Error ID if the message has an error
+</ResponseField>
+
+<ResponseField name="errorText" type="string">
+  Error text if the message has an error
+</ResponseField>
+
+<ResponseField name="payload" type="{ [k: string]: any; }">
+  The payload that was used to send the notification trigger
+</ResponseField>
+
+<ResponseField name="overrides" type="{ [k: string]: any; }">
+  Provider specific overrides used when triggering the notification
+</ResponseField>
+
+<ResponseField name="contextKeys" type="string[]">
+  Context (single or multi) in which the message was sent
+</ResponseField>
 
 ### ChannelTypeEnum
 ```typescript
@@ -60,29 +162,47 @@ ChannelTypeEnum {
 
 Workflow is a collection of steps that are executed in order to send a notification.
 
-| Property | Type | Description |
-| --- | --- | --- |
-| `id` | `string` |  |
-| `name` | `string` |  |
-| `description` | `string` |  |
-| `active` | `boolean` |  |
-| `draft` | `boolean` |  |
-| `preferenceSettings` | `SubscriberPreferenceChannels` |  |
-| `critical` | `boolean` |  |
-| `tags` | `string[]` |  |
-| `steps` | `NotificationStepDto[]` |  |
-| `organizationId` | `string` |  |
-| `creatorId` | `string` |  |
-| `environmentId` | `string` |  |
-| `triggers` | `NotificationTrigger[]` |  |
-| `notificationGroupId` | `string` |  |
-| `parentId` | `string` |  |
-| `deleted` | `boolean` |  |
-| `deletedAt` | `string` |  |
-| `deletedBy` | `string` |  |
-| `notificationGroup` | `NotificationGroup` |  |
-| `data` | `WorkflowResponseData` |  |
-| `workflowIntegrationStatus` | `WorkflowIntegrationStatus` |  |
+<ResponseField name="id" type="string" />
+
+<ResponseField name="name" type="string" />
+
+<ResponseField name="description" type="string" />
+
+<ResponseField name="active" type="boolean" />
+
+<ResponseField name="draft" type="boolean" />
+
+<ResponseField name="preferenceSettings" type="SubscriberPreferenceChannels" />
+
+<ResponseField name="critical" type="boolean" />
+
+<ResponseField name="tags" type="string[]" />
+
+<ResponseField name="steps" type="NotificationStepDto[]" />
+
+<ResponseField name="organizationId" type="string" />
+
+<ResponseField name="creatorId" type="string" />
+
+<ResponseField name="environmentId" type="string" />
+
+<ResponseField name="triggers" type="NotificationTrigger[]" />
+
+<ResponseField name="notificationGroupId" type="string" />
+
+<ResponseField name="parentId" type="string" />
+
+<ResponseField name="deleted" type="boolean" />
+
+<ResponseField name="deletedAt" type="string" />
+
+<ResponseField name="deletedBy" type="string" />
+
+<ResponseField name="notificationGroup" type="NotificationGroup" />
+
+<ResponseField name="data" type="WorkflowResponseData" />
+
+<ResponseField name="workflowIntegrationStatus" type="WorkflowIntegrationStatus" />
 
 ### Actor
 
@@ -90,24 +210,54 @@ Actor is the user who is skipped from sending the notification when workflow is 
 
 Actor can be a **string** (subscriber ID) or a **SubscriberPayloadDto** object with the following fields:
 
-| Property | Type | Description |
-| --- | --- | --- |
-| `subscriberId` | `string` | Unique identifier of the subscriber |
-| `firstName` | `string \| null` | First name of the subscriber |
-| `lastName` | `string \| null` | Last name of the subscriber |
-| `email` | `string \| null` | Email address of the subscriber |
-| `phone` | `string \| null` | Phone number of the subscriber |
-| `avatar` | `string \| null` | Avatar URL or identifier |
-| `locale` | `string \| null` | Locale of the subscriber |
-| `timezone` | `string \| null` | Timezone of the subscriber |
-| `data` | `{ [k: string]: any; } \| null` | Additional custom data associated with the subscriber |
+<ResponseField name="subscriberId" type="string">
+  Unique identifier of the subscriber
+</ResponseField>
+
+<ResponseField name="firstName" type="string | null">
+  First name of the subscriber
+</ResponseField>
+
+<ResponseField name="lastName" type="string | null">
+  Last name of the subscriber
+</ResponseField>
+
+<ResponseField name="email" type="string | null">
+  Email address of the subscriber
+</ResponseField>
+
+<ResponseField name="phone" type="string | null">
+  Phone number of the subscriber
+</ResponseField>
+
+<ResponseField name="avatar" type="string | null">
+  Avatar URL or identifier
+</ResponseField>
+
+<ResponseField name="locale" type="string | null">
+  Locale of the subscriber
+</ResponseField>
+
+<ResponseField name="timezone" type="string | null">
+  Timezone of the subscriber
+</ResponseField>
+
+<ResponseField name="data" type="{ [k: string]: any; } | null">
+  Additional custom data associated with the subscriber
+</ResponseField>
 
 ### MessageCTA
 
 MessageCTA is a call to action that is displayed in the [Inbox](/platform/inbox) message. It can be used to redirect the user to a specific URL when the message is clicked.
 
-| Property | Type | Description |
-| --- | --- | --- |
-| `type` | `"redirect"` | Type of call to action |
-| `data` | `MessageCTAData` | Data associated with the call to action |
-| `action` | `MessageAction` | Action associated with the call to action |
+<ResponseField name="type" type="redirect">
+  Type of call to action
+</ResponseField>
+
+<ResponseField name="data" type="MessageCTAData">
+  Data associated with the call to action
+</ResponseField>
+
+<ResponseField name="action" type="MessageAction">
+  Action associated with the call to action
+</ResponseField>

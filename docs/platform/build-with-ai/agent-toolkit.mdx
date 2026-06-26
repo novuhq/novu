@@ -81,9 +81,11 @@ type NovuToolkitConfig = {
 
 Each adapter exposes a `createNovuAgentToolkit` function that returns tools in the native format for that framework.
 
-### OpenAI
+<Tabs>
+  <Tab title="OpenAI">
 
-```typescript
+<CodeGroup>
+```typescript title="Basic setup"
 import { createNovuAgentToolkit } from '@novu/agent-toolkit/openai';
 
 const toolkit = await createNovuAgentToolkit({
@@ -94,15 +96,7 @@ const toolkit = await createNovuAgentToolkit({
 // toolkit.tools          — OpenAI function tool definitions
 // toolkit.handleToolCall — execute a tool call and return a tool message
 ```
-
-The returned `toolkit` provides:
-
-- **`tools`** — Array of OpenAI-compatible function tool definitions.
-- **`handleToolCall(toolCall)`** — Executes a tool call and returns a `{ role: 'tool', tool_call_id, content }` message ready to append to the conversation.
-
-**Full example with tool-call loop:**
-
-```typescript
+```typescript title="Full example"
 import { createNovuAgentToolkit } from '@novu/agent-toolkit/openai';
 import OpenAI from 'openai';
 
@@ -130,10 +124,18 @@ for (const toolCall of response.choices[0].message.tool_calls ?? []) {
   messages.push(result);
 }
 ```
+</CodeGroup>
 
-### LangChain
+The returned `toolkit` provides:
 
-```typescript
+- **`tools`** — Array of OpenAI-compatible function tool definitions.
+- **`handleToolCall(toolCall)`** — Executes a tool call and returns a `\{ role: 'tool', tool_call_id, content \}` message ready to append to the conversation.
+
+</Tab>
+  <Tab title="LangChain">
+
+<CodeGroup>
+```typescript title="Basic setup"
 import { createNovuAgentToolkit } from '@novu/agent-toolkit/langchain';
 
 const toolkit = await createNovuAgentToolkit({
@@ -143,14 +145,7 @@ const toolkit = await createNovuAgentToolkit({
 
 // toolkit.tools — DynamicStructuredTool[] ready for LangChain agents
 ```
-
-The returned `toolkit` provides:
-
-- **`tools`** — Array of `DynamicStructuredTool` instances that can be passed directly to LangChain agents or executors.
-
-**Example with a LangChain agent:**
-
-```typescript
+```typescript title="Full example"
 import { createNovuAgentToolkit } from '@novu/agent-toolkit/langchain';
 import { ChatOpenAI } from '@langchain/openai';
 import { AgentExecutor, createOpenAIFunctionsAgent } from 'langchain/agents';
@@ -172,10 +167,17 @@ const agent = await createOpenAIFunctionsAgent({
 const executor = new AgentExecutor({ agent, tools: toolkit.tools });
 const result = await executor.invoke({ input: 'Notify user-123 about their order' });
 ```
+</CodeGroup>
 
-### Vercel AI SDK
+The returned `toolkit` provides:
 
-```typescript
+- **`tools`** — Array of `DynamicStructuredTool` instances that can be passed directly to LangChain agents or executors.
+
+</Tab>
+  <Tab title="Vercel AI SDK">
+
+<CodeGroup>
+```typescript title="Basic setup"
 import { createNovuAgentToolkit } from '@novu/agent-toolkit/ai-sdk';
 
 const toolkit = await createNovuAgentToolkit({
@@ -185,14 +187,7 @@ const toolkit = await createNovuAgentToolkit({
 
 // toolkit.tools — ToolSet compatible with generateText / streamText
 ```
-
-The returned `toolkit` provides:
-
-- **`tools`** — A `ToolSet` object that can be passed to `generateText`, `streamText`, or other Vercel AI SDK functions.
-
-**Example with `generateText`:**
-
-```typescript
+```typescript title="Full example"
 import { createNovuAgentToolkit } from '@novu/agent-toolkit/ai-sdk';
 import { generateText } from 'ai';
 import { openai } from '@ai-sdk/openai';
@@ -208,6 +203,14 @@ const { text } = await generateText({
   prompt: 'Send a welcome email to user-123',
 });
 ```
+</CodeGroup>
+
+The returned `toolkit` provides:
+
+- **`tools`** — A `ToolSet` object that can be passed to `generateText`, `streamText`, or other Vercel AI SDK functions.
+
+</Tab>
+</Tabs>
 
 ## Built-in Tools
 

@@ -15,6 +15,19 @@ Novu Framework operates in a GitOps model. This means that the source of truth f
 
 The general workflow for pushing changes to Novu Cloud is as follows:
 
+```mermaid
+flowchart TB
+    localStudio[Local Studio] --> featureBranch[Feature Branch]
+    featureBranch --> syncDev[Sync to Development]
+    syncDev --> testDev[Test in Development]
+    testDev --> mergeDev[Merge to dev branch]
+    mergeDev --> cicdDev[CI/CD deploy to Development]
+    cicdDev --> verifyDev[Verify changes]
+    verifyDev --> mergeMain[Merge to main branch]
+    mergeMain --> cicdProd[CI/CD deploy to Production]
+    cicdProd --> prodEnv[Production Environment]
+```
+
 - Create a feature branch
 - Develop workflows locally in your bridge application
 - Sync changes to the Development environment to test e2e

@@ -39,11 +39,9 @@ Novu matches the incoming event to a predefined workflow. This workflow is your 
 
 The workflow is where message personalization, conditional logic, and multi-channel orchestration happens.
 
-<Note>
-  **Want to learn more?**
-
-  Refer to the [Workflows documentation](/platform/concepts/workflows).
-</Note>
+<Tip>
+  Refer to the [Workflows documentation](/platform/concepts/workflows) to learn more.
+</Tip>
 
 ### Notification
 
@@ -100,9 +98,12 @@ These fields are accessible via the [Notifications API](/api-reference/notificat
 ## Frequently asked questions
 These are some of the most frequently asked questions about notifications in Novu.
 
-### What is the difference between a notification and an event?
+<AccordionGroup>
+  <Accordion title="What is the difference between a notification and an event?">
+    A notification is the result of an event. An event is the trigger of a workflow to a subscriber that causes a notification to be created.
+  </Accordion>
 
-A notification is the result of an event. An event is the trigger of a workflow to a subscriber that causes a notification to be created.
-
-### What is the difference between a notification and a message?
-One notification event can have multiple messages as per the workflow configuration. Messages are the actual "notification message" to the end user.
+  <Accordion title="What is the difference between a notification and a message?">
+    One notification event can have multiple messages as per the workflow configuration. Messages are the actual "notification message" to the end user.
+  </Accordion>
+</AccordionGroup>

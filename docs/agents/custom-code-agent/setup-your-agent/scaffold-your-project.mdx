@@ -24,14 +24,21 @@ The CLI prompts for a project name and creates a starter app. The dashboard also
 
 A typical scaffold produces a Next.js app with:
 
-```text
-app/
-  api/novu/route.ts    # exposes your agents over HTTP
-  novu/
-    agents/
-      index.ts         # re-exports each agent
-      support-agent.tsx # starter handler (name may vary)
-```
+<Tree>
+  <Tree.Folder name="app" defaultOpen>
+    <Tree.File name="api/novu/route.ts" />
+    <Tree.Folder name="novu">
+      <Tree.Folder name="agents">
+        <Tree.File name="index.ts" />
+        <Tree.File name="support-agent.tsx" />
+      </Tree.Folder>
+    </Tree.Folder>
+  </Tree.Folder>
+</Tree>
+
+- `api/novu/route.ts` exposes your agents over HTTP
+- `novu/agents/index.ts` re-exports each agent
+- `novu/agents/support-agent.tsx` is the starter handler (name may vary)
 
 The `/api/novu` route is the bridge endpoint. Register it in the dashboard under your agent's bridge URL settings.
 

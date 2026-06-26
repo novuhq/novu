@@ -197,7 +197,8 @@ Nextjs based bridge application having one test workflow written using `@novu/fr
 
 [Novu Local Studio](/framework/studio) is a development environment that allows you to test and manage your workflows. The setup varies based on your deployment:
 
-1. Running in local machine
+<Tabs>
+  <Tab title="Local">
 
 if novu is run using above docker compose command in local machine, use below commmand
 
@@ -222,19 +223,20 @@ npx novu@latest dev -d http://localhost:4000 -p <bridge_application_port> -t htt
 npx novu@latest dev -d http://localhost:4000 -p 4000 -t http://host.docker.internal:4000
 ```
 
-<Note>
-    In Windows OS, there are some additional steps:
-    - stop the running docker compose process using `ctrl + c`
-    - update the `docker-compose.yml` file and add below config with each service (api, dashboard, worker and ws)
-  ```bash
-  extra_hosts:
-      - "host.docker.internal:host-gateway"
-  ```
-    - start the docker compose process again using `docker compose up`
-    - now you can use `host.docker.internal` as bridge url hostname inplace of `localhost`
-</Note>
+<Warning>
+In Windows OS, there are some additional steps:
+- stop the running docker compose process using `ctrl + c`
+- update the `docker-compose.yml` file and add below config with each service (api, dashboard, worker and ws)
+```bash
+extra_hosts:
+    - "host.docker.internal:host-gateway"
+```
+- start the docker compose process again using `docker compose up`
+- now you can use `host.docker.internal` as bridge url hostname inplace of `localhost`
+</Warning>
 
-2. Running in VPS
+  </Tab>
+  <Tab title="VPS">
 
 ```bash
 # update the bridge .env file with below variables
@@ -246,9 +248,13 @@ npx novu@latest dev -d http://<vps-ip-address>:4000
 
 Check all [available flags](/framework/studio#novu-cli-flags) with `npx novu dev` command
 
+  </Tab>
+</Tabs>
+
 ### Synchronizing Workflows
 
-1. For local deployment:
+<Tabs>
+  <Tab title="Local">
 
 ```bash
 npx novu@latest sync \
@@ -257,7 +263,8 @@ npx novu@latest sync \
   --secret-key <secret_key>
 ```
 
-2. For VPS deployment:
+  </Tab>
+  <Tab title="VPS">
 
 ```bash
 npx novu@latest sync \
@@ -265,6 +272,9 @@ npx novu@latest sync \
   --api-url http://<vps-ip-address>:3000 \
   --secret-key <secret_key>
 ```
+
+  </Tab>
+</Tabs>
 
 ### VPS Security Considerations
 
@@ -328,20 +338,22 @@ For example, if I wanted to expose the api as novu-api, I would set the API_CONT
 
 ## FAQs
 
-### Local Tunnel and Self-Hosted Deployments
+<AccordionGroup>
+  <Accordion title="Local Tunnel and Self-Hosted Deployments">
+    Novu uses a local tunnel as bridge url. It can be used as bridge url with local studio and for testing purpose in development environment. It should not be used in production environment. It is recommended to use deployed application url as bridge url
+  </Accordion>
 
-Novu uses a local tunnel as bridge url. It can be used as bridge url with local studio and for testing purpose in development environment. It should not be used in production environment. It is recommended to use deployed application url as bridge url
+  <Accordion title="When is Local Tunnel Not Required?">
+    If the customer's application and the self-hosted Novu deployment are within the same network, there is no need for a local tunnel. In this case, the application can communicate directly with Novu through the internal network. Checkout `Using bridge application url as bridge url` section to learn more.
+  </Accordion>
 
-#### When is Local Tunnel Not Required?
+  <Accordion title="When is Local Tunnel Required?">
+    If the application and Novu deployment reside on different networks, you can still interact with your self-hosted Novu instance using the Novu CLI. The CLI allows you to specify the Dashboard URL and Bridge Endpoint Origin to enable communication across networks via the Novu Cloud Local Tunnel.
 
-If the customer's application and the self-hosted Novu deployment are within the same network, there is no need for a local tunnel. In this case, the application can communicate directly with Novu through the internal network. Checkout `Using bridge application url as bridge url` section to learn more.
+    For example, you can use the following command:
 
-#### When is Local Tunnel Required?
-
-If the application and Novu deployment reside on different networks, you can still interact with your self-hosted Novu instance using the Novu CLI. The CLI allows you to specify the Dashboard URL and Bridge Endpoint Origin to enable communication across networks via the Novu Cloud Local Tunnel.
-
-For example, you can use the following command:
-
-```bash
-npx novu@latest dev -d http://my-self-hosted-novu-domain.com:my-port
-```
+    ```bash
+    npx novu@latest dev -d http://my-self-hosted-novu-domain.com:my-port
+    ```
+  </Accordion>
+</AccordionGroup>

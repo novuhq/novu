@@ -133,132 +133,136 @@ In order to build the UI integration store, we need to provide it list of all pr
 - Add provider config to framework
 - Add provider configuration to the providers list
 
-### 1. Create credentials config
+<Steps>
+  <Step title="Create credentials config">
+    Every provider requires some credentials to create an instance. Novu will add these credentials fields in the integration store provider's form so that users can use their credentials to connect to their preferred provider to use for that channel notification. For example, in the above added `example-provider`, we have only one credential `ApiKey`. We will need to add a config object for `example-provider` with all existing provider's configs like below.
 
-Every provider requires some credentials to create an instance. Novu will add these credentials fields in the integration store provider's form so that users can use their credentials to connect to their preferred provider to use for that channel notification. For example, in the above added `example-provider`, we have only one credential `ApiKey`. We will need to add a config object for `example-provider` with all existing provider's configs like below.
+    ```ts title="packages/shared/src/consts/providers/credentials/provider-credentials.ts"
+    export const exampleProviderConfig: IConfigCredentials[] = [
+      {
+        key: CredentialsKeyEnum.ApiKey,
+        displayName: 'API Key',
+        description: 'This is API key for example provider',
+        type: 'text',
+        required: true,
+      },
+      ...mailConfigBase,
+    ];
+    ```
 
-```ts title="packages/shared/src/consts/providers/credentials/provider-credentials.ts"
-export const exampleProviderConfig: IConfigCredentials[] = [
-  {
-    key: CredentialsKeyEnum.ApiKey,
-    displayName: 'API Key',
-    description: 'This is API key for example provider',
-    type: 'text',
-    required: true,
-  },
-  ...mailConfigBase,
-];
-```
+    1. Here the `key` is of type `CredentialsKeyEnum`.
 
-1. Here the `key` is of type `CredentialsKeyEnum`.
+    > If a new key is added, add this key at these 3 places:-
+    >
+    > - In `CredentialsKeyEnum` at file `packages/shared/src/types/providers.ts`
+    > - In `ICredentials` at file `packages/shared/src/entities/integration/credential.interface.ts`
+    > - In `CredentialsDto` at file `apps/api/src/app/integrations/dtos/credentials.dto.ts`
+    > - In `credentials` field of `integrationSchema` at file `libs/dal/src/repositories/integration/integration.schema.ts`
 
-> If a new key is added, add this key at these 3 places:-
->
-> - In `CredentialsKeyEnum` at file `packages/shared/src/types/providers.ts`
-> - In `ICredentials` at file `packages/shared/src/entities/integration/credential.interface.ts`
-> - In `CredentialsDto` at file `apps/api/src/app/integrations/dtos/credentials.dto.ts`
-> - In `credentials` field of `integrationSchema` at file `libs/dal/src/repositories/integration/integration.schema.ts`
+    2. `displayName` is a human-friendly easy to understand name which will be shown in the provider integration form for this credential.
+    3. `description` is a field that can be used to share more information about the credential.
+    4. `type` here means text field type. this can be a string for text, text for text-area, or a switch for the toggle.
+    5. `required` is of boolean type.
+    6. `mailConfigBase` is an object having default credentials required by any `email` provider. Make sure not to add duplicate providers which are already there in `mailConfigBase`. In the case of another channel provider, we will use that channel config base in place of `mailConfigBase`.
 
-2. `displayName` is a human-friendly easy to understand name which will be shown in the provider integration form for this credential.
-3. `description` is a field that can be used to share more information about the credential.
-4. `type` here means text field type. this can be a string for text, text for text-area, or a switch for the toggle.
-5. `required` is of boolean type.
-6. `mailConfigBase` is an object having default credentials required by any `email` provider. Make sure not to add duplicate providers which are already there in `mailConfigBase`. In the case of another channel provider, we will use that channel config base in place of `mailConfigBase`.
+    > A credential can be made secret by adding in `./secure-credentials.ts` file.
+  </Step>
 
-> A credential can be made secret by adding in `./secure-credentials.ts` file.
+  <Step title="Add ProviderId Enum">
+    Add this new provider id in the respective channel provider id enum in file `packages/shared/src/types/providers.ts`. As our `example-provider` is of email type, add this in `EmailProviderIdEnum` with all existing providers like below
 
-### 2. Add ProviderId Enum
+    ```ts title="packages/shared/src/types/providers.ts"
+    export enum EmailProviderIdEnum {
+      ExampleProvider = 'example-provider',
+    }
+    ```
+  </Step>
 
-Add this new provider id in the respective channel provider id enum in file `packages/shared/src/types/providers.ts`. As our `example-provider` is of email type, add this in `EmailProviderIdEnum` with all existing providers like below
+  <Step title="Add provider config to framework">
+    - Add provider in `EmailProviderIdEnum` at file `packages/framework/src/shared.ts`
 
-```ts title="packages/shared/src/types/providers.ts"
-export enum EmailProviderIdEnum {
-  ExampleProvider = 'example-provider',
-}
-```
+    ```ts title="packages/framework/src/shared.ts"
+    export enum EmailProviderIdEnum {
+      ExampleProvider = 'example-provider',
+    }
+    ```
 
-### 3. Add provider config to framework
+    - Add provider schema at `packages/framework/src/schemas/providers/email/index.ts`
 
-- Add provider in `EmailProviderIdEnum` at file `packages/framework/src/shared.ts`
+    ```ts title="packages/framework/src/schemas/providers/email/index.ts"
 
-```ts title="packages/framework/src/shared.ts"
-export enum EmailProviderIdEnum {
-  ExampleProvider = 'example-provider',
-}
-```
+    export const emailProviderSchema = {
+      'example-provider': genericProviderSchemas,
+    }
+    ```
+  </Step>
 
-- Add provider schema at `packages/framework/src/schemas/providers/email/index.ts`
+  <Step title="Add provider to providers list">
+    Now we need to add the provider data to the list located at `packages/shared/src/consts/providers/channels/email.ts`. Note that the `id` is the provider's name, `displayName` is the provider's name in Pascal's case, `credentials` are the ones we created in the previous step, `logoFileName` should be as it was on the adding logo step (with the format type included).
 
-```ts title="packages/framework/src/schemas/providers/email/index.ts"
+    ```ts title="packages/shared/src/consts/providers/channels/email.ts"
+    import { exampleProviderConfig } from '../credentials';
 
-export const emailProviderSchema = {
-  'example-provider': genericProviderSchemas,
-}
-```
-
-### 4. Add provider to providers list
-
-Now we need to add the provider data to the list located at `packages/shared/src/consts/providers/channels/email.ts`. Note that the `id` is the provider's name, `displayName` is the provider's name in Pascal's case, `credentials` are the ones we created in the previous step, `logoFileName` should be as it was on the adding logo step (with the format type included).
-
-```ts title="packages/shared/src/consts/providers/channels/email.ts"
-import { exampleProviderConfig } from '../credentials';
-
-export const emailProviders: IProvider[] = [
-  {
-    id: 'example-provider',
-    displayName: 'Example Provider',
-    channel: ChannelTypeEnum.EMAIL,
-    credentials: exampleProviderConfig,
-    // Use valid documentation link
-    docReference: 'https://docs.example-provider.com/',
-    logoFileName: { light: 'example-provider.svg', dark: 'example-provider.svg' },
-  },
-];
-```
+    export const emailProviders: IProvider[] = [
+      {
+        id: 'example-provider',
+        displayName: 'Example Provider',
+        channel: ChannelTypeEnum.EMAIL,
+        credentials: exampleProviderConfig,
+        // Use valid documentation link
+        docReference: 'https://docs.example-provider.com/',
+        logoFileName: { light: 'example-provider.svg', dark: 'example-provider.svg' },
+      },
+    ];
+    ```
+  </Step>
+</Steps>
 
 ## Add provider handler in the API
 
-### 1. Create a provider handler
+<Steps>
+  <Step title="Create a provider handler">
+    In order to map internally the different providers' credentials, we need to add a provider handler at the respective channel handlers located. For Email, it can be found at `libs/application-generic/src/factories/mail/handlers`. Other channel handlers can also be found here.
 
-In order to map internally the different providers' credentials, we need to add a provider handler at the respective channel handlers located. For Email, it can be found at `libs/application-generic/src/factories/mail/handlers`. Other channel handlers can also be found here.
+    Create a new file `example-provider.handler.ts` here with the following code
 
-Create a new file `example-provider.handler.ts` here with the following code
+    ```tsx libs/application-generic/src/factories/mail/handlers/example-provider.handler.ts
+    import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
+    import { ExampleProviderEmailProvider } from '@novu/providers';
+    import { BaseHandler } from './base.handler';
 
-```tsx libs/application-generic/src/factories/mail/handlers/example-provider.handler.ts
-import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
-import { ExampleProviderEmailProvider } from '@novu/providers';
-import { BaseHandler } from './base.handler';
+    export class ExampleProviderHandler extends BaseHandler {
+      constructor() {
+        super(EmailProviderIdEnum.ExampleProvider, ChannelTypeEnum.EMAIL);
+      }
 
-export class ExampleProviderHandler extends BaseHandler {
-  constructor() {
-    super(EmailProviderIdEnum.ExampleProvider, ChannelTypeEnum.EMAIL);
-  }
+      buildProvider(credentials, from: string) {
+        const config: { apiKey: string } = { apiKey: credentials.apiKey };
 
-  buildProvider(credentials, from: string) {
-    const config: { apiKey: string } = { apiKey: credentials.apiKey };
+        this.provider = new ExampleProviderEmailProvider(config);
+      }
+    }
+    ```
 
-    this.provider = new ExampleProviderEmailProvider(config);
-  }
-}
-```
+    Add this line given below to export this handler
 
-Add this line given below to export this handler
+    ```tsx libs/application-generic/src/factories/mail/handlers/index.ts
+    export * from './example-provider.handler';
+    ```
+  </Step>
 
-```tsx libs/application-generic/src/factories/mail/handlers/index.ts
-export * from './example-provider.handler';
-```
+  <Step title="Add handler to factory">
+    The last step is to initialize the handler in the factory located in `libs/application-generic/src/factories/mail/mail.factory.ts`
 
-### 2. Add handler to factory
+    ```tsx libs/application-generic/src/factories/mail/mail.factory.ts
+    import { ExampleProviderHandler } from './handlers';
 
-The last step is to initialize the handler in the factory located in `libs/application-generic/src/factories/mail/mail.factory.ts`
-
-```tsx libs/application-generic/src/factories/mail/mail.factory.ts
-import { ExampleProviderHandler } from './handlers';
-
-export class MailFactory {
-  handlers: IMailHandler[] = [new ExampleProviderHandler()];
-}
-```
+    export class MailFactory {
+      handlers: IMailHandler[] = [new ExampleProviderHandler()];
+    }
+    ```
+  </Step>
+</Steps>
 
 ### Final Steps
 

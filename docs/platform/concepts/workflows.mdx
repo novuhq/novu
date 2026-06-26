@@ -44,13 +44,11 @@ Supported channel types include:
 - Push (FCM, OneSignal)
 - Chat (Slack, Microsoft Teams)
 
-<Warning>
-  **Note**
-
+<Note>
   A channel step only runs if:
   - The subscriber has `email` field for `email` step, `phone` field for `sms` step and required credentials for `push` and `chat` channel steps.
   - A valid integration is configured for that channel in the environment.
-</Warning>
+</Note>
 
 #### Action steps
 
@@ -182,14 +180,16 @@ To learn more about all supported condition types, operators, and usage example,
 ## Frequently asked questions
 These are some of the most frequently asked questions about workflows in Novu.
 
-### Do I have to create a workflow to send notifications?
+<AccordionGroup>
+  <Accordion title="Do I have to create a workflow to send notifications?">
+    Yes, creating a workflow is mandatory to send notifications.
+  </Accordion>
 
-Yes, creating a workflow is mandatory to send notifications.
+  <Accordion title="Can workflows be created and managed via code?">
+    Yes, workflows can be managed via code, if you are using Node.js, you can use the [Novu Framework](/framework/introduction)
+  </Accordion>
 
-### Can workflows be created and managed via code?
-
-Yes, workflows can be managed via code, if you are using Node.js, you can use the [Novu Framework](/framework/introduction)
-
-### Can all workflows be synced at once to another environment?
-
-Currently, only a single workflow can be synced at a time.
+  <Accordion title="Can all workflows be synced at once to another environment?">
+    Currently, only a single workflow can be synced at a time.
+  </Accordion>
+</AccordionGroup>

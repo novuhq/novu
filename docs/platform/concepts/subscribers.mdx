@@ -138,7 +138,8 @@ await novu.subscribers.createBulk({
 
 Subscriber data in Novu can be managed from the Novu dashboard or using the [Subscribers API](/api-reference/subscribers/subscriber-schema). Both offer full access to view, update, and organize subscriber profiles, but they serve different use cases depending on your requirements.
 
-### Dashboard
+<Tabs>
+  <Tab title="Dashboard">
 
 The Novu dashboard provides a visual interface for exploring and editing subscriber data. It’s useful for:
 
@@ -148,7 +149,8 @@ The Novu dashboard provides a visual interface for exploring and editing subscri
 
 This is ideal for non technical team members responsible for managing subscribers or teams that want to audit or manage subscriber data without relying on code.
 
-### API
+  </Tab>
+  <Tab title="API">
 
 For programmatic control, the Novu API offers endpoints to create, update, delete, and retrieve subscriber records at scale. It supports:
 
@@ -157,6 +159,9 @@ For programmatic control, the Novu API offers endpoints to create, update, delet
 - Integration with external systems like CRMs or identity platforms
 
 Use the API when managing subscribers is part of your backend workflows or when changes need to happen dynamically based on user actions.
+
+  </Tab>
+</Tabs>
 
 ## Subscriber preferences and personalization
 
@@ -224,21 +229,25 @@ Subscriber preferences and metadata personalization ensure that each subscriber 
 
 ## Frequently asked questions
 These are some of the most frequently asked questions about subscribers in Novu.
-### Can two subscribers have the same email address?
 
-Yes, two subscribers can have the same email address, phone number, or any other attributes. However, each subscriber must have a unique subscriberId.
+<AccordionGroup>
+  <Accordion title="Can two subscribers have the same email address?">
+    Yes, two subscribers can have the same email address, phone number, or any other attributes. However, each subscriber must have a unique subscriberId.
+  </Accordion>
 
-### Do I have to use subscriberId as same as the system userId?
+  <Accordion title="Do I have to use subscriberId as same as the system userId?">
+    No, you don't need to use the same subscriberId as the system userId. You can use any unique ID as subscriberId. Novu recommends using userId as subscriberId to avoid any confusion. Some of our customers use a pattern like `auth0|userId` as a value for `subscriberId`.
+  </Accordion>
 
-No, you don't need to use the same subscriberId as the system userId. You can use any unique ID as subscriberId. Novu recommends using userId as subscriberId to avoid any confusion. Some of our customers use a pattern like `auth0|userId` as a value for `subscriberId`. 
+  <Accordion title="Can a notification be sent without adding a subscriber?">
+    No, a notification cannot be sent without adding a subscriber. A subscriber is an entity to which notification messages are sent. You must add a subscriber to Novu before triggering the workflow.
+  </Accordion>
 
-### Can a notification be sent without adding a subscriber?
+  <Accordion title="How do I migrate millions of users to Novu?">
+    To migrate millions of users to Novu, use the [Bulk Create Subscribers](/api-reference/subscribers/bulk-create-subscribers) API endpoint. This endpoint allows you to create multiple subscribers in bulk.
+  </Accordion>
 
-No, a notification cannot be sent without adding a subscriber. A subscriber is an entity to which notification messages are sent. You must add a subscriber to Novu before triggering the workflow.
-
-### How do I migrate millions of users to Novu?
-
-To migrate millions of users to Novu, use the [Bulk Create Subscribers](/api-reference/subscribers/bulk-create-subscribers) API endpoint. This endpoint allows you to create multiple subscribers in bulk.
-
-### Can subscriber credentials for chat and push channels be added when creating a new subscriber?
-Subscriber credentials for Push and Chat channel providers can be added while creating a new subscriber using the `channels` field in the [create subscriber](/api-reference/subscribers/create-a-subscriber) request payload.
+  <Accordion title="Can subscriber credentials for chat and push channels be added when creating a new subscriber?">
+    Subscriber credentials for Push and Chat channel providers can be added while creating a new subscriber using the `channels` field in the [create subscriber](/api-reference/subscribers/create-a-subscriber) request payload.
+  </Accordion>
+</AccordionGroup>

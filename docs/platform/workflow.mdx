@@ -41,6 +41,15 @@ A workflow typically follows this lifecycle:
 4. Trigger the workflow from your application using events and payloads.  
 5. Monitor and iterate using activity logs and delivery metrics.  
 
+```mermaid
+flowchart LR
+    createStep[Create workflow] --> configureStep[Configure steps]
+    configureStep --> authorStep[Author content]
+    authorStep --> triggerStep[Trigger from app]
+    triggerStep --> monitorStep[Monitor and iterate]
+    monitorStep --> configureStep
+```
+
 This section walks through each stage in detail.
 
 ## Getting started

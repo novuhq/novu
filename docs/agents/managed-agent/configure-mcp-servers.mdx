@@ -9,11 +9,27 @@ MCP (Model Context Protocol) servers give your managed agent access to external 
 
 ## Enable an MCP server
 
-1. Open the [Novu dashboard](https://dashboard.novu.co) and go to your managed agent's detail page.
-2. Open the **MCP Servers** section in the agent settings.
-3. Browse the list of available servers.
-4. Click **Enable** on the server you want to add.
-5. Novu syncs the configuration to the AI platform.
+<Steps>
+  <Step title="Open the agent detail page">
+    Open the [Novu dashboard](https://dashboard.novu.co) and go to your managed agent's detail page.
+  </Step>
+
+  <Step title="Open MCP Servers">
+    Open the **MCP Servers** section in the agent settings.
+  </Step>
+
+  <Step title="Browse available servers">
+    Browse the list of available servers.
+  </Step>
+
+  <Step title="Enable the server">
+    Click **Enable** on the server you want to add.
+  </Step>
+
+  <Step title="Wait for sync">
+    Novu syncs the configuration to the AI platform.
+  </Step>
+</Steps>
 
 The server appears on the agent's settings page with a status indicator showing whether the sync was successful.
 
@@ -31,18 +47,41 @@ MCP servers have different authentication requirements:
 
 For servers that require OAuth (like Linear, GitHub, or Slack):
 
-1. The agent encounters a tool call that needs authorization.
-2. The agent sends an authorization link to the user in the chat thread.
-3. The user clicks the link and completes the OAuth flow on the external service.
-4. Novu stores the tokens securely and uses them on every subsequent turn.
+<Steps>
+  <Step title="Agent encounters a tool call">
+    The agent encounters a tool call that needs authorization.
+  </Step>
+
+  <Step title="Agent sends authorization link">
+    The agent sends an authorization link to the user in the chat thread.
+  </Step>
+
+  <Step title="User completes OAuth">
+    The user clicks the link and completes the OAuth flow on the external service.
+  </Step>
+
+  <Step title="Novu stores tokens">
+    Novu stores the tokens securely and uses them on every subsequent turn.
+  </Step>
+</Steps>
 
 Authorization is scoped to a single subscriber and a single MCP server. Each user authorizes independently. Once authorized, the connection persists across conversations.
 
 ## Disable an MCP server
 
-1. Go to the agent's **MCP Servers** settings.
-2. Click **Disable** on the server you want to remove.
-3. Novu removes the server from the AI platform and deletes any associated connections.
+<Steps>
+  <Step title="Open MCP Servers settings">
+    Go to the agent's **MCP Servers** settings.
+  </Step>
+
+  <Step title="Disable the server">
+    Click **Disable** on the server you want to remove.
+  </Step>
+
+  <Step title="Wait for removal">
+    Novu removes the server from the AI platform and deletes any associated connections.
+  </Step>
+</Steps>
 
 <Warning>
   Disabling an MCP server also removes all subscriber OAuth connections for that server. Users will need to re-authorize if you enable it again.

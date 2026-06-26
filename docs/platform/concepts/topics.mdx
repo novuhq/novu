@@ -216,22 +216,24 @@ These are commonly used topics APIs. Explore all topics APIs on topics [api refe
 
 Below are some of the most frequently asked questions about topics:
 
-### Do topics override subscriber preferences?
+<AccordionGroup>
+  <Accordion title="Do topics override subscriber preferences?">
+    No. Topics only define delivery groups. Each subscriber's individual notification preferences remain intact.
+  </Accordion>
 
-No. Topics only define delivery groups. Each subscriber’s individual notification preferences remain intact.
+  <Accordion title="Is a topic like a mailing list?">
+    Conceptually, yes. Topics group users to receive shared messages. However, topics are more dynamic and integrated into your application logic.
+  </Accordion>
 
-### Is a topic like a mailing list?
+  <Accordion title="Can a subscriber belong to multiple topics?">
+    Yes. Subscribers can be members of any number of topics. This allows overlapping targeting strategies (for example, `task-updates`, `project-X`, and `admin-notifications`).
+  </Accordion>
 
-Conceptually, yes. Topics group users to receive shared messages. However, topics are more dynamic and integrated into your application logic.
+  <Accordion title="Can I reuse the same topic key across environments?">
+    Topic keys must be unique within each [environment](/platform/developer/environments). You can reuse the same key (for example, `feature-release`) in different environments like staging and production.
+  </Accordion>
 
-### Can a subscriber belong to multiple topics?
-
-Yes. Subscribers can be members of any number of topics. This allows overlapping targeting strategies (for example, `task-updates`, `project-X`, and `admin-notifications`).
-
-### Can I reuse the same topic key across environments?
-
-Topic keys must be unique within each [environment](/platform/developer/environments). You can reuse the same key (for example, `feature-release`) in different environments like staging and production.
-
-### What happens if I trigger a workflow to a topic with no subscribers?
-
-The workflow is processed, but no notifications are delivered and, hence, this trigger is not counted for billing.
+  <Accordion title="What happens if I trigger a workflow to a topic with no subscribers?">
+    The workflow is processed, but no notifications are delivered and, hence, this trigger is not counted for billing.
+  </Accordion>
+</AccordionGroup>

@@ -48,22 +48,22 @@ export default SlackConnectButtonComponent;
 
 `SlackConnectButton` accepts the following props to customize the UI and behavior:
 
-| Property | Type | Description |
-| --- | --- | --- |
-| `integrationIdentifier` | `string` |  |
-| `connectionIdentifier` | `string` |  |
-| `subscriberId` | `string` |  |
-| `context` | `Partial<Record<string, ContextValue>>` |  |
-| `scope` | `string[]` |  |
-| `connectionMode` | `ConnectionMode` |  |
-| `onConnectSuccess` | `(connectionIdentifier: string) => void` |  |
-| `onConnectError` | `(error: unknown) => void` |  |
-| `onDisconnectSuccess` | `() => void` |  |
-| `onDisconnectError` | `(error: unknown) => void` |  |
-| `connectLabel` | `string` |  |
-| `connectedLabel` | `string` |  |
-| `appearance` | `ReactInboxAppearance \| ReactSubscriptionAppearance \| ReactAllAppearance` |  |
-| `container` | `any` |  |
+<Fields>
+  <Field name="integrationIdentifier" type="string" />
+  <Field name="connectionIdentifier" type="string" />
+  <Field name="subscriberId" type="string" />
+  <Field name="context" type="Partial<Record<string, ContextValue>>" />
+  <Field name="scope" type="string[]" />
+  <Field name="connectionMode" type="ConnectionMode" />
+  <Field name="onConnectSuccess" type="(connectionIdentifier: string) => void" />
+  <Field name="onConnectError" type="(error: unknown) => void" />
+  <Field name="onDisconnectSuccess" type="() => void" />
+  <Field name="onDisconnectError" type="(error: unknown) => void" />
+  <Field name="connectLabel" type="string" />
+  <Field name="connectedLabel" type="string" />
+  <Field name="appearance" type="ReactInboxAppearance | ReactSubscriptionAppearance | ReactAllAppearance" />
+  <Field name="container" type="any" />
+</Fields>
 
 ## Microsoft Teams connect button
 

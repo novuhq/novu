@@ -28,7 +28,8 @@ The payload size limit includes:
 
 When your payload exceeds the 512KB limit, you'll receive an error response indicating the exact size and the limit exceeded.
 
-### Single event trigger
+<Tabs>
+  <Tab title="Single event trigger">
 
 For single event triggers (`/events/trigger`), the error response will be:
 
@@ -39,7 +40,8 @@ For single event triggers (`/events/trigger`), the error response will be:
 }
 ```
 
-### Bulk trigger event
+  </Tab>
+  <Tab title="Bulk trigger event">
 
 For bulk event triggers (`/events/trigger/bulk`), the error response includes the index of the event that exceeded the limit:
 
@@ -54,7 +56,8 @@ For bulk event triggers (`/events/trigger/bulk`), the error response includes th
   When using bulk trigger, each event in the array is validated individually against the 512KB limit. Ensure that every event payload stays within the limit.
 </Note>
 
-### Broadcast event
+  </Tab>
+  <Tab title="Broadcast event">
 
 For broadcast events (`/events/trigger/broadcast`), the error response will be:
 
@@ -65,15 +68,18 @@ For broadcast events (`/events/trigger/broadcast`), the error response will be:
 }
 ```
 
+  </Tab>
+</Tabs>
+
 ## Attachment size limit
 
 Email attachments have a separate size limit:
 - **Total attachment size**: 20MB for all attachments included in an email.
 Attachments do not count towards the 512KB payload limit
 
-<Note>
+<Tip>
   For more information about sending email attachments, refer to the [Sending Attachments](/platform/integrations/email#sending-attachments) documentation.
-</Note>
+</Tip>
 
 ## Related documentation
 

@@ -19,7 +19,7 @@ Each category has a different limit of requests per second (RPS), with the endpo
 | Configuration | 20 RPS | 80 RPS  | 200 RPS  | 2k RPS     | Subscribers, Topics, Channel Connections, Channel Endpoints, Workflows                                  |
 | Global        | 30 RPS | 120 RPS | 300 RPS  | 3K RPS     | All other endpoints including context endpoints consume request tokens from this category |
 
-<Note>
+<Info>
   - Standard requests (example: `POST /v1/events/trigger`, `POST /v2/subscribers/`) cost **1 request token**. 
 
   Example: A single event trigger request costs 1 request token. In team plan, 600 RPS for trigger category means 600 request tokens per second are available. Hence, in team plan, you can hit `POST /v1/events/trigger` API **600 times per second**. If you exceed this limit, you will receive a 429 error response.
@@ -27,7 +27,7 @@ Each category has a different limit of requests per second (RPS), with the endpo
   - Bulk requests (example: `POST /v1/events/trigger/bulk`, `POST /v1/subscribers/bulk`) cost **100 request tokens**.
 
   Example: A bulk subscriber create request (whether 50 subscribers or maximum 500 subscribers) costs 100 request tokens. In team plan, 200 RPS for configuration category means 200 request tokens per second are available. Hence, in team plan, you can hit `POST /v1/subscribers/bulk` API **2 times per second**. If you exceed this limit, you will receive a 429 error response.
-</Note>
+</Info>
 
 ### HTTP response headers
 

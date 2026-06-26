@@ -48,18 +48,20 @@ Jobs play a crucial role in the trigger event lifecycle. They are created based 
 
 ## Frequently asked questions
 
-### What is an event?
+<AccordionGroup>
+  <Accordion title="What is an event?">
+    An event is a request (for instance, an API call to [/v1/events/trigger](/api-reference/events/trigger-event)) that starts off an action in the Novu Workflow Engine. Events can make many different types of actions, including digests, delays, and sending notifications to various channels, as well as filters and user preference checks.
+  </Accordion>
 
-An event is a request (for instance, an API call to [/v1/events/trigger](/api-reference/events/trigger-event)) that starts off an action in the Novu Workflow Engine. Events can make many different types of actions, including digests, delays, and sending notifications to various channels, as well as filters and user preference checks.
+  <Accordion title="How events are billed?">
+    If a workflow is triggered to a [subscriber](/platform/concepts/subscribers), then it is billed as 1 event. So if workflow is triggered to group of 15 subscribers, then it is billed as 15 events. Similary, if a workflow is triggered to a [topic](/platform/concepts/topics), Novu creates one event per topic subscriber, this means that a workflow trigger to a topic with 100 subscribers creates 100 events.
+  </Accordion>
 
-### How events are billed?
+  <Accordion title="If notifications were filtered out, are they still billed?">
+    Yes, they are still billed. The number of billed events is the number of subscribers or topic subscribers the workflow was triggered to, regardless of whether notifications were filtered out as per subscriber's [workflow channel preferences](/platform/concepts/preferences#workflow-channel-preferences), [global channel preferences](/platform/concepts/preferences#subscriber-global-preferences) or [step conditions](/platform/workflow/add-and-configure-steps/step-conditions).
+  </Accordion>
 
-If a workflow is triggered to a [subscriber](/platform/concepts/subscribers), then it is billed as 1 event. So if workflow is triggered to group of 15 subscribers, then it is billed as 15 events. Similary, if a workflow is triggered to a [topic](/platform/concepts/topics), Novu creates one event per topic subscriber, this means that a workflow trigger to a topic with 100 subscribers creates 100 events.
-
-### If notifications were filtered out, are they still billed?
-
-Yes, they are still billed. The number of billed events is the number of subscribers or topic subscribers the workflow was triggered to, regardless of whether notifications were filtered out as per subscriber's [workflow channel preferences](/platform/concepts/preferences#workflow-channel-preferences), [global channel preferences](/platform/concepts/preferences#subscriber-global-preferences) or [step conditions](/platform/workflow/add-and-configure-steps/step-conditions).
-
-### How events are billed for digested events?
-
-As a workflow triggered to one subscriber is billed as 1 event. if events are digested 15 times and a single digested notification is sent, then 15 events will be billed.
+  <Accordion title="How events are billed for digested events?">
+    As a workflow triggered to one subscriber is billed as 1 event. if events are digested 15 times and a single digested notification is sent, then 15 events will be billed.
+  </Accordion>
+</AccordionGroup>

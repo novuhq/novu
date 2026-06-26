@@ -34,38 +34,90 @@ Before you can configure Novu, you must create the infrastructure that hosts you
 
 First, create a multi-tenant identity for your bot.
 
-1. Log in to the [Azure Portal](https://portal.azure.com/).
-2. In the menu, click **Microsoft Entra ID** (formerly Azure Active Directory).
-3. In the Manage section, click **App registrations**.
-4. To create an app, click **New registration**.
-  ![New app](/images/channels-and-providers/chat/msteams/app-registrations.png)
-5. Fill in the form:
+<Steps>
+  <Step title="Log in to Azure Portal">
+    Log in to the [Azure Portal](https://portal.azure.com/).
+  </Step>
+
+  <Step title="Open Microsoft Entra ID">
+    In the menu, click **Microsoft Entra ID** (formerly Azure Active Directory).
+  </Step>
+
+  <Step title="Open App registrations">
+    In the Manage section, click **App registrations**.
+  </Step>
+
+  <Step title="Create a new registration">
+    To create an app, click **New registration**.
+    ![New app](/images/channels-and-providers/chat/msteams/app-registrations.png)
+  </Step>
+
+  <Step title="Fill in the form">
+    Fill in the form:
     - **Name**: Enter any name of your choice.
     - **Supported account types**: Select **Accounts in any organizational directory (Any Microsoft Entra ID directory - Multitenant)**.
-  ![Register app](/images/channels-and-providers/chat/msteams/register-application.png)
-6. Click **Register**.
-  ![Create app](/images/channels-and-providers/chat/msteams/create-app.png)
-7. After creating the app, note the Application (client) ID and  Directory (tenant) ID. You need these values to configure Microsoft Teams in Novu.
+    ![Register app](/images/channels-and-providers/chat/msteams/register-application.png)
+  </Step>
+
+  <Step title="Register the app">
+    Click **Register**.
+    ![Create app](/images/channels-and-providers/chat/msteams/create-app.png)
+  </Step>
+
+  <Step title="Note the IDs">
+    After creating the app, note the Application (client) ID and  Directory (tenant) ID. You need these values to configure Microsoft Teams in Novu.
+  </Step>
+</Steps>
 
 ### Configure client secret
 
-1. On your new app's overview page, click **Certificates & secrets**.
-2. Click **New client secret**.
-![Client secret](/images/channels-and-providers/chat/msteams/client-secret.png)
-3. Add a description.
-4. Set an expiry date.
-5. Click **Add**.
-![Client secret](/images/channels-and-providers/chat/msteams/certificates-and-secret.png)
-6. Copy the value. This value becomes your `BOT_APP_SECRET`, and you’ll paste it into Novu. You can view the secret only once right after you create it, so save it before you leave the page.
+<Steps>
+  <Step title="Open Certificates & secrets">
+    On your new app's overview page, click **Certificates & secrets**.
+  </Step>
+
+  <Step title="Create a client secret">
+    Click **New client secret**.
+    ![Client secret](/images/channels-and-providers/chat/msteams/client-secret.png)
+  </Step>
+
+  <Step title="Add a description">
+    Add a description.
+  </Step>
+
+  <Step title="Set expiry date">
+    Set an expiry date.
+  </Step>
+
+  <Step title="Add the secret">
+    Click **Add**.
+    ![Client secret](/images/channels-and-providers/chat/msteams/certificates-and-secret.png)
+  </Step>
+
+  <Step title="Copy the secret value">
+    Copy the value. This value becomes your `BOT_APP_SECRET`, and you’ll paste it into Novu. You can view the secret only once right after you create it, so save it before you leave the page.
+  </Step>
+</Steps>
 
 ### Add Novu’s redirect URI
 
 After your customers go through the administrator consent page, Microsoft needs to know where to send them back after they accept.
 
-1. Click **Authentication (Preview)**.
-2. Click **Add Redirect URI**.
-3. In the menu that appears, click **Web**.
-4. In the **Redirect URI** field, set the redirect URI to the Novu OAuth callback URL:
+<Steps>
+  <Step title="Open Authentication">
+    Click **Authentication (Preview)**.
+  </Step>
+
+  <Step title="Add redirect URI">
+    Click **Add Redirect URI**.
+  </Step>
+
+  <Step title="Select Web platform">
+    In the menu that appears, click **Web**.
+  </Step>
+
+  <Step title="Set the redirect URI">
+    In the **Redirect URI** field, set the redirect URI to the Novu OAuth callback URL:
       - US region
       ```bash
       https://api.novu.co/v1/integrations/chat/oauth/callback
@@ -75,82 +127,183 @@ After your customers go through the administrator consent page, Microsoft needs 
       https://eu.api.novu.co/v1/integrations/chat/oauth/callback
       ```
     ![Add redirect uri](/images/channels-and-providers/chat/msteams/add-redirect-uri.png)
-5. Click **Configure**.
+  </Step>
+
+  <Step title="Configure">
+    Click **Configure**.
+  </Step>
+</Steps>
 
 ### Add Microsoft Graph app permissions
 
 These permissions let your app list teams and channels and decide where to send messages.
 
-1. Click **API permissions**.
-2. Click **Add a permission**.
-3. Click **Microsoft Graph**.
-  ![Add permissions](/images/channels-and-providers/chat/msteams/add-permissions.png)
-4. Click **Application permissions**.
-5. Search for and select the following permissions:
+<Steps>
+  <Step title="Open API permissions">
+    Click **API permissions**.
+  </Step>
+
+  <Step title="Add a permission">
+    Click **Add a permission**.
+  </Step>
+
+  <Step title="Select Microsoft Graph">
+    Click **Microsoft Graph**.
+    ![Add permissions](/images/channels-and-providers/chat/msteams/add-permissions.png)
+  </Step>
+
+  <Step title="Select Application permissions">
+    Click **Application permissions**.
+  </Step>
+
+  <Step title="Add required permissions">
+    Search for and select the following permissions:
     - `Team.ReadBasic.All`
     - `Channel.ReadBasic.All`
     - `AppCatalog.Read.All`
     - `TeamsAppInstallation.ReadWriteSelfForTeam.All` (optional, for automation)
     - `TeamsAppInstallation.ReadWriteSelfForUser.All` (optional, for automation)
-5. Click **Add permissions**.
+  </Step>
+
+  <Step title="Confirm permissions">
+    Click **Add permissions**.
+  </Step>
+</Steps>
 
 ### Create an Azure Bot resource
 
 Now you register your bot with the Azure AI Bot Service and link it to the app registration that you just created.
 
-1. In the Azure portal menu, click **Create a resource**.
-2. Search for “Azure Bot”, and then click the Azure Bot resource.
-  ![Azure bot](/images/channels-and-providers/chat/msteams/azure-bot.png)
-3. Click **Create**.
-4. Fill in the basics:
+<Steps>
+  <Step title="Create a resource">
+    In the Azure portal menu, click **Create a resource**.
+  </Step>
+
+  <Step title="Search for Azure Bot">
+    Search for “Azure Bot”, and then click the Azure Bot resource.
+    ![Azure bot](/images/channels-and-providers/chat/msteams/azure-bot.png)
+  </Step>
+
+  <Step title="Start creation">
+    Click **Create**.
+  </Step>
+
+  <Step title="Fill in the basics">
+    Fill in the basics:
     - **Bot handle**: The unique display name in Azure.
     - **Subscription**: Select the Azure subscription.
     - **Resource group**: A collection of resources that share the same lifecycle, permissions, and policies, you can either select or create one.
     - **Data residency**: Specify an option for data residency, either global or regional.
-5. Under **Microsoft App ID**:
+  </Step>
+
+  <Step title="Configure Microsoft App ID">
+    Under **Microsoft App ID**:
     - **Type of app**: Select Single-tenant app registration.
     - **Creation type**: Choose “Use existing app registration” and use app IDs [you created earlier](/platform/integrations/chat/ms-teams#create-the-app-identity-azure-ad):
         - **App ID**: Replace with the Application (client) ID.
         - **App tenant ID**: Replace with the Directory (tenant) ID.
-  ![Create azure bot](/images/channels-and-providers/chat/msteams/create-azure-bot.png)
-6. Click **Review + create**.
-7. Click **Create**.
+    ![Create azure bot](/images/channels-and-providers/chat/msteams/create-azure-bot.png)
+  </Step>
+
+  <Step title="Review and create">
+    Click **Review + create**.
+  </Step>
+
+  <Step title="Create the bot">
+    Click **Create**.
+  </Step>
+</Steps>
 
 ### Enable the Microsoft Teams channel
 
 This connects your bot resource to Teams and lets your Teams app install cleanly.
 
-1. Once the deployment finishes, click **Go to resource**.
-  ![Go to resource](/images/channels-and-providers/chat/msteams/go-to-resource.png)
-2. Click **Settings**.
-3. Click **Channels**.
-4. In the available channels section, click **Microsoft Teams**.
-5. In the menu that appears, accept the terms of services.
-6. In the **Messaging** section, choose the appropriate environment, typically **Microsoft Teams Commercial**.
-7. Click **Apply**.
+<Steps>
+  <Step title="Go to resource">
+    Once the deployment finishes, click **Go to resource**.
+    ![Go to resource](/images/channels-and-providers/chat/msteams/go-to-resource.png)
+  </Step>
+
+  <Step title="Open Settings">
+    Click **Settings**.
+  </Step>
+
+  <Step title="Open Channels">
+    Click **Channels**.
+  </Step>
+
+  <Step title="Select Microsoft Teams">
+    In the available channels section, click **Microsoft Teams**.
+  </Step>
+
+  <Step title="Accept terms of service">
+    In the menu that appears, accept the terms of services.
+  </Step>
+
+  <Step title="Choose environment">
+    In the **Messaging** section, choose the appropriate environment, typically **Microsoft Teams Commercial**.
+  </Step>
+
+  <Step title="Apply changes">
+    Click **Apply**.
+  </Step>
+</Steps>
 
 ### Create a Teams app
 
 Now you create the Teams “wrapper” around your app registration and bot.
-1. Open the [Teams client](https://teams.microsoft.com/v2/) (desktop or web).
-2. In the left sidebar, click **Apps**.
-3. Search for **Developer Portal** and click **Add**, then open it.
-  ![Developer portal](/images/channels-and-providers/chat/msteams/developer-portal.png)
-4. In the Developer Portal dashboard, click **Create a new app**.
-![Create new app](/images/channels-and-providers/chat/msteams/create-new-app.png)
-5. Enter a name of your choice and click **Create**.
-6. In the left sidebar, click **Basic information**.
-7. Fill in the required fields (names, descriptions, developer info, URLs) and then click **Save**.
-8. In the sidebar, click **App features**.
-9. Select **Bot**.
-![Bot](/images/channels-and-providers/chat/msteams/bot.png)
-10. Under **Identify your bot**, select **Enter a bot ID** and then paste your Application (client) ID from Microsoft Azure.
-11. In the **What can your bot do?** section, select "Only send notification" (at minimum).
-12. Under **Select the scopes where people can use your bot**, enable the scopes based on your use case:
+
+<Steps>
+  <Step title="Open Teams client">
+    Open the [Teams client](https://teams.microsoft.com/v2/) (desktop or web).
+  </Step>
+
+  <Step title="Open Developer Portal">
+    In the left sidebar, click **Apps**.
+    Search for **Developer Portal** and click **Add**, then open it.
+    ![Developer portal](/images/channels-and-providers/chat/msteams/developer-portal.png)
+  </Step>
+
+  <Step title="Create a new app">
+    In the Developer Portal dashboard, click **Create a new app**.
+    ![Create new app](/images/channels-and-providers/chat/msteams/create-new-app.png)
+  </Step>
+
+  <Step title="Enter app name">
+    Enter a name of your choice and click **Create**.
+  </Step>
+
+  <Step title="Fill in Basic information">
+    In the left sidebar, click **Basic information**.
+    Fill in the required fields (names, descriptions, developer info, URLs) and then click **Save**.
+  </Step>
+
+  <Step title="Open App features">
+    In the sidebar, click **App features**.
+  </Step>
+
+  <Step title="Select Bot">
+    Select **Bot**.
+    ![Bot](/images/channels-and-providers/chat/msteams/bot.png)
+  </Step>
+
+  <Step title="Enter bot ID">
+    Under **Identify your bot**, select **Enter a bot ID** and then paste your Application (client) ID from Microsoft Azure.
+  </Step>
+
+  <Step title="Configure bot capabilities">
+    In the **What can your bot do?** section, select "Only send notification" (at minimum).
+  </Step>
+
+  <Step title="Enable scopes">
+    Under **Select the scopes where people can use your bot**, enable the scopes based on your use case:
       - **Team**
       - **Personal**
       - **Group chat**
-13. If you enabled the **Team** scope, add the `supportsChannelFeatures` property to your app manifest. Without it, uploading or installing the app fails with:
+  </Step>
+
+  <Step title="Add supportsChannelFeatures (Team scope)">
+    If you enabled the **Team** scope, add the `supportsChannelFeatures` property to your app manifest. Without it, uploading or installing the app fails with:
 
     > Applications with manifest version 1.25 or higher that support the 'team' scope must include the 'supportsChannelFeatures' property.
 
@@ -173,9 +326,17 @@ Now you create the Teams “wrapper” around your app registration and bot.
       "supportsChannelFeatures": "tier1"
     }
     ```
-14. Click **Save**.
-15. In the top right, click **Distribute** and then click **Download the app package**. This will save a copy of the app package to your computer in ZIP format.
-![Distribute your app](/images/channels-and-providers/chat/msteams/distribute-your-app.png)
+  </Step>
+
+  <Step title="Save the app">
+    Click **Save**.
+  </Step>
+
+  <Step title="Download the app package">
+    In the top right, click **Distribute** and then click **Download the app package**. This will save a copy of the app package to your computer in ZIP format.
+    ![Distribute your app](/images/channels-and-providers/chat/msteams/distribute-your-app.png)
+  </Step>
+</Steps>
 
 ### Upload your app
 
@@ -187,17 +348,36 @@ Follow the steps in the [Microsoft Teams documentation](https://learn.microsoft.
 
 Now that you’ve configured your Azure Bot, provide Novu with the credentials to integrate it.
 
-1. Log in to the Novu dashboard.
-2. In the sidebar, click Integrations Store.
-3. Click **Connect Provider**.
-4. Select **Chat** and click **MSTeams**.
-5. Enter the credentials you saved from the Azure Portal:
+<Steps>
+  <Step title="Log in to the Novu dashboard">
+    Log in to the Novu dashboard.
+  </Step>
+
+  <Step title="Open Integrations Store">
+    In the sidebar, click Integrations Store.
+  </Step>
+
+  <Step title="Connect a provider">
+    Click **Connect Provider**.
+  </Step>
+
+  <Step title="Select MSTeams">
+    Select **Chat** and click **MSTeams**.
+  </Step>
+
+  <Step title="Enter credentials">
+    Enter the credentials you saved from the Azure Portal:
     - **Client ID**: Enter your `BOT_APP_ID`.
     - **Client Secret**: Enter your `BOT_APP_SECRET`.
     - **App Tenant ID**: Enter your `APP_TENANT_ID`. This value identifies the tenant where you registered the app.
     - **Redirect URL** (Optional): If you want to control where your users land after they grant administrator consent, then enter that URL here. If you leave it empty, then the consent window closes automatically.
-  ![Novu integration](/images/channels-and-providers/chat/msteams/novu-msteams-integration.png)
-6. Click **Create Integration**.
+    ![Novu integration](/images/channels-and-providers/chat/msteams/novu-msteams-integration.png)
+  </Step>
+
+  <Step title="Create the integration">
+    Click **Create Integration**.
+  </Step>
+</Steps>
 
 From now on, Novu can send messages as your bot, once a customer tenant is connected and the app is installed.
 
@@ -242,10 +422,23 @@ window.open(url, '_blank');
 
 Steps the customer administrator would take:
 
-1. A Teams/Microsoft 365 Admin from your customer's organization logs into your product.
-2. They click your **Connect Microsoft Teams** button.
-3. They see a Microsoft consent page listing the permissions.
-4. They click **Accept**.
+<Steps>
+  <Step title="Admin logs in">
+    A Teams/Microsoft 365 Admin from your customer's organization logs into your product.
+  </Step>
+
+  <Step title="Click Connect Microsoft Teams">
+    They click your **Connect Microsoft Teams** button.
+  </Step>
+
+  <Step title="Review consent page">
+    They see a Microsoft consent page listing the permissions.
+  </Step>
+
+  <Step title="Accept consent">
+    They click **Accept**.
+  </Step>
+</Steps>
 
 Once the user completes this step, Microsoft redirects the user back to Novu. Novu captures the customer's tenant ID and automatically creates a Teams connection for that specific tenant context. You don't need to handle the callback yourself.
 
@@ -276,50 +469,58 @@ To send a notification to a specific channel, you must discover the Team ID and 
 
 You can discover these IDs using the Microsoft Graph API. This requires an App-Only Token (Client credentials) scoped to the customer's tenant.
 
-1. Get a Graph access token:
+<Steps>
+  <Step title="Get a Graph access token">
+    Get a Graph access token:
 
-```bash
-POST https://login.microsoftonline.com/{SUBSCRIBER_TENANT_ID}/oauth2/v2.0/token
-Content-Type: application/x-www-form-urlencoded
+    ```bash
+    POST https://login.microsoftonline.com/{SUBSCRIBER_TENANT_ID}/oauth2/v2.0/token
+    Content-Type: application/x-www-form-urlencoded
 
-client_id={BOT_APP_ID}
-&client_secret={BOT_APP_SECRET}
-&scope=https%3A%2F%2Fgraph.microsoft.com%2F.default
-&grant_type=client_credentials
-```
+    client_id={BOT_APP_ID}
+    &client_secret={BOT_APP_SECRET}
+    &scope=https%3A%2F%2Fgraph.microsoft.com%2F.default
+    &grant_type=client_credentials
+    ```
 
-The `SUBSCRIBER_TENANT_ID` represents the customer's tenant ID, which Novu stored on the `ChannelConnection` object after completing the Admin Consent flow.
+    The `SUBSCRIBER_TENANT_ID` represents the customer's tenant ID, which Novu stored on the `ChannelConnection` object after completing the Admin Consent flow.
 
-```bash
-GET /v1/channel-connections
-{
-  "identifier": "chconn-eeybt4",
-  "integrationIdentifier": "msteams",
-  "providerId": "msteams",
-  "channel": "chat",
-  "subscriberId": "689c4a87c5bdaa96aaef0cfd",
-  "workspace": {
-    "id": "e6633b86-ef94-4416-863f-f0f409700ca0" // the customer's tenant workspace ID
-  },
-  "auth": {
-    "accessToken": "app-only"
-  },
-}
-```
+    ```bash
+    GET /v1/channel-connections
+    {
+      "identifier": "chconn-eeybt4",
+      "integrationIdentifier": "msteams",
+      "providerId": "msteams",
+      "channel": "chat",
+      "subscriberId": "689c4a87c5bdaa96aaef0cfd",
+      "workspace": {
+        "id": "e6633b86-ef94-4416-863f-f0f409700ca0" // the customer's tenant workspace ID
+      },
+      "auth": {
+        "accessToken": "app-only"
+      },
+    }
+    ```
+  </Step>
 
-2. List Teams:
+  <Step title="List Teams">
+    List Teams:
 
-```bash
-GET https://graph.microsoft.com/v1.0/teams
-Authorization: Bearer {ACCESS_TOKEN}
-```
+    ```bash
+    GET https://graph.microsoft.com/v1.0/teams
+    Authorization: Bearer {ACCESS_TOKEN}
+    ```
+  </Step>
 
-3. List channels in a Team:
+  <Step title="List channels in a Team">
+    List channels in a Team:
 
-```bash
-GET https://graph.microsoft.com/v1.0/teams/{TEAM_ID}/channels
-Authorization: Bearer {ACCESS_TOKEN}
-```
+    ```bash
+    GET https://graph.microsoft.com/v1.0/teams/{TEAM_ID}/channels
+    Authorization: Bearer {ACCESS_TOKEN}
+    ```
+  </Step>
+</Steps>
 
 #### Register the channel endpoint (Novu)
 
@@ -357,8 +558,13 @@ To send a direct message (DM), you need the user's Teams User ID before register
 
 Use the [Bot framework API](https://learn.microsoft.com/en-us/azure/bot-service/rest-api/bot-framework-rest-overview?view=azure-bot-service-4.0) to inspect the roster of the Team where you installed the bot.
 
-1. Install the bot in at least one Team that includes the target user.
-2. Get a Bot Framework token:
+<Steps>
+  <Step title="Install the bot in a Team">
+    Install the bot in at least one Team that includes the target user.
+  </Step>
+
+  <Step title="Get a Bot Framework token">
+    Get a Bot Framework token:
     ```bash
     POST https://login.microsoftonline.com/botframework.com/oauth2/v2.0/token
     Content-Type: application/x-www-form-urlencoded
@@ -368,11 +574,16 @@ Use the [Bot framework API](https://learn.microsoft.com/en-us/azure/bot-service/
     client_secret={BOT_APP_SECRET}&
     scope=https%3A%2F%2Fapi.botframework.com%2F.default
     ```
-3. Call the roster API for that Team, using the Team’s `19:...@thread.tacv2` id as `{TEAM_CONVERSATION_ID}`:
+  </Step>
+
+  <Step title="Call the roster API">
+    Call the roster API for that Team, using the Team’s `19:...@thread.tacv2` id as `{TEAM_CONVERSATION_ID}`:
     ```bash
     GET https://smba.trafficmanager.net/teams/v3/conversations/{TEAM_CONVERSATION_ID}/members
     Authorization: Bearer {BOT_ACCESS_TOKEN}
     ```
+  </Step>
+</Steps>
 
 From the returned members, take the member’s `id`; this value represents the Teams user ID (`29:...`) you’ll use as `userId`.
 
@@ -415,13 +626,32 @@ This approach relies on a unique Webhook URL generated by the Teams client. It r
 
 The setup begins inside the Microsoft Teams app. Instruct your users to follow these steps:
 
-1. In Microsoft Teams, go to **Apps** in the sidebar.
-2. Search for and open **Workflows**.
-3. Click **Create new flow**, either from blank or template.
-4. Choose a trigger, such as “When a Teams webhook request is received”.
-5. Add an action to post a message into a specific channel.
-6. Save the workflow.
-7. Once created, the workflow generates a unique URL. The user must copy this URL.
+<Steps>
+  <Step title="Open Workflows">
+    In Microsoft Teams, go to **Apps** in the sidebar.
+    Search for and open **Workflows**.
+  </Step>
+
+  <Step title="Create a new flow">
+    Click **Create new flow**, either from blank or template.
+  </Step>
+
+  <Step title="Choose a trigger">
+    Choose a trigger, such as “When a Teams webhook request is received”.
+  </Step>
+
+  <Step title="Add a post message action">
+    Add an action to post a message into a specific channel.
+  </Step>
+
+  <Step title="Save the workflow">
+    Save the workflow.
+  </Step>
+
+  <Step title="Copy the webhook URL">
+    Once created, the workflow generates a unique URL. The user must copy this URL.
+  </Step>
+</Steps>
 
 ### Register the webhook endpoint (Novu)
 
@@ -444,6 +674,16 @@ await novu.channelEndpoints.create({
 
 When you trigger a workflow that targets this subscriber:
 
-1. Novu sends a standard HTTP POST payload to the Teams Workflow URL.
-2. Workflows for Teams receives the payload.
-3. The Workflow runs and posts the message content into the configured channel.
+<Steps>
+  <Step title="Novu sends HTTP POST">
+    Novu sends a standard HTTP POST payload to the Teams Workflow URL.
+  </Step>
+
+  <Step title="Workflows receives payload">
+    Workflows for Teams receives the payload.
+  </Step>
+
+  <Step title="Workflow posts message">
+    The Workflow runs and posts the message content into the configured channel.
+  </Step>
+</Steps>

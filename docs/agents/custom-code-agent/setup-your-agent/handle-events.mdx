@@ -38,15 +38,63 @@ The context object is how your code talks to Novu. You do not call Slack, Teams,
 
 When a user messages your agent:
 
-1. A user sends a message from a connected provider (for example, Slack).
-2. Novu receives the event through the provider connection.
-3. Novu maps the provider thread to a conversation and resolves the platform user to a subscriber, when possible.
-4. Novu calls the agent's `onMessage` handler with the context object.
-5. Your handler passes the message and conversation context to your agent logic.
-6. Your agent logic decides what should happen next.
-7. Your handler sends a reply, emits signals, or both.
-8. Novu delivers the reply back to the provider thread.
-9. Novu records messages, participants, metadata, signals, and conversation status.
+```mermaid
+sequenceDiagram
+    participant User
+    participant Provider as Chat Provider
+    participant Novu
+    participant Bridge as Agent Bridge
+    participant Agent as Agent Logic
+
+    User->>Provider: Send message
+    Provider->>Novu: Platform webhook
+    Novu->>Novu: Map thread to conversation
+    Novu->>Bridge: Call onMessage with context
+    Bridge->>Agent: Pass message and history
+    Agent->>Bridge: Return reply and signals
+    Bridge->>Novu: ctx.reply and signals
+    Novu->>Provider: Deliver reply to thread
+    Novu->>Novu: Persist conversation state
+    Provider->>User: Show reply
+```
+
+<Steps>
+  <Step title="User sends a message">
+    A user sends a message from a connected provider (for example, Slack).
+  </Step>
+
+  <Step title="Novu receives the event">
+    Novu receives the event through the provider connection.
+  </Step>
+
+  <Step title="Novu maps the thread">
+    Novu maps the provider thread to a conversation and resolves the platform user to a subscriber, when possible.
+  </Step>
+
+  <Step title="Novu calls onMessage">
+    Novu calls the agent's `onMessage` handler with the context object.
+  </Step>
+
+  <Step title="Handler passes context to agent logic">
+    Your handler passes the message and conversation context to your agent logic.
+  </Step>
+
+  <Step title="Agent logic decides next action">
+    Your agent logic decides what should happen next.
+  </Step>
+
+  <Step title="Handler sends reply or signals">
+    Your handler sends a reply, emits signals, or both.
+  </Step>
+
+  <Step title="Novu delivers the reply">
+    Novu delivers the reply back to the provider thread.
+  </Step>
+
+  <Step title="Novu records conversation state">
+    Novu records messages, participants, metadata, signals, and conversation status.
+  </Step>
+</Steps>
 
 The same agent logic works across all connected providers because Novu handles the provider-specific communication layer. Connecting a new provider does not require changing your agent code.
 

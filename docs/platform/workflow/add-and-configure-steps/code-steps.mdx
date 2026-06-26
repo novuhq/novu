@@ -24,92 +24,94 @@ You can create both UI-managed steps and code-managed steps within the same work
 
 ## Quick Start
 
-### 1. Create workflow and step in the UI
+<Steps>
+  <Step title="Create workflow and step in the UI">
+    Create a workflow and add any channel step in the workflow from UI. Once the step is added. Go to the step editor and Toggle the switch to **Custom Code** from **Editor** option to enable custom code for this step.
 
-Create a workflow and add any channel step in the workflow from UI. Once the step is added. Go to the step editor and Toggle the switch to **Custom Code** from **Editor** option to enable custom code for this step.
+    <video autoPlay loop muted playsInline src="/images/workflows/add-and-configure-steps/code/create-step.mp4" />
+  </Step>
 
-<video autoPlay loop muted playsInline src="/images/workflows/add-and-configure-steps/code/create-step.mp4" />
+  <Step title="Get the CLI command from the dashboard">
+    The Novu dashboard shows a prefilled publish command in the step editor screen, click on the **Copy** button to copy the command. It includes your secret key, workflow ID, step ID, and API URL.
+  </Step>
 
-### 2. Get the CLI command from the dashboard
+  <Step title="Run the CLI command in your project">
+    ```bash
+    npx novu step publish \
+      --workflow your-workflow-id \
+      --step your-step-id \
+      --secret-key nv-sk-...
+    ```
 
-The Novu dashboard shows a prefilled publish command in the step editor screen, click on the **Copy** button to copy the command. It includes your secret key, workflow ID, step ID, and API URL.
+    The CLI supports the following flags and options:
 
-### 3. Run the CLI command in your project
+    | Flag | Type | Default | Description |
+    | --- | --- | --- | --- |
+    | `-s, --secret-key <key>` | string | `$NOVU_SECRET_KEY` | Novu API secret key |
+    | `-a, --api-url <url>` | string | config or `https://api.novu.co` | Novu API URL |
+    | `--config <path>` | string | `novu.config.ts` | Path to config file |
+    | `--out <path>` | string | from config or `./novu` | Directory containing handlers |
+    | `--workflow <id>` | string (repeatable) | all | Deploy only steps for specific workflow(s) |
+    | `--step <id>` | string (repeatable) | all | Deploy only a specific step within a workflow |
+    | `--template <path>` | string | — | Path to a React Email template; scaffolds a React Email email handler if the step file doesn't exist. Requires `--workflow` and `--step` (single values each). |
+    | `--bundle-out-dir [path]` | string or boolean | — | Write bundle artifacts to disk (debug mode, skips minification) |
+    | `--dry-run` | boolean | `false` | Bundle without deploying |
 
-```bash
-npx novu step publish \
-  --workflow your-workflow-id \
-  --step your-step-id \
-  --secret-key nv-sk-...
-```
+    The CLI will perform the following:
+    1. Look up the step type from the Novu API.
+    2. Auto-scaffold a placeholder handler at `novu/<workflowId>/<stepId>.step.tsx`.
+    3. Bundle all handlers in the `novu/` directory.
+    4. Deploy to Novu.
 
-The CLI supports the following flags and options:
+    For email steps, you can optionally link a React Email template directly:
 
-| Flag | Type | Default | Description |
-| --- | --- | --- | --- |
-| `-s, --secret-key <key>` | string | `$NOVU_SECRET_KEY` | Novu API secret key |
-| `-a, --api-url <url>` | string | config or `https://api.novu.co` | Novu API URL |
-| `--config <path>` | string | `novu.config.ts` | Path to config file |
-| `--out <path>` | string | from config or `./novu` | Directory containing handlers |
-| `--workflow <id>` | string (repeatable) | all | Deploy only steps for specific workflow(s) |
-| `--step <id>` | string (repeatable) | all | Deploy only a specific step within a workflow |
-| `--template <path>` | string | — | Path to a React Email template; scaffolds a React Email email handler if the step file doesn't exist. Requires `--workflow` and `--step` (single values each). |
-| `--bundle-out-dir [path]` | string or boolean | — | Write bundle artifacts to disk (debug mode, skips minification) |
-| `--dry-run` | boolean | `false` | Bundle without deploying |
+    ```bash
+    npx novu step publish \
+      --workflow your-workflow-id \
+      --step your-step-id \
+      --template ./emails/welcome.tsx \
+      --secret-key nv-sk-...
+    ```
 
-The CLI will perform the following:
-1. Look up the step type from the Novu API.
-2. Auto-scaffold a placeholder handler at `novu/<workflowId>/<stepId>.step.tsx`.
-3. Bundle all handlers in the `novu/` directory.
-4. Deploy to Novu.
+    If you dont want to pass secret key to CLI, it will try to read NOVU_SECRET_KEY variable from `.env` file if present.
 
-For email steps, you can optionally link a React Email template directly:
+    Also similarly for `apiUrl`, by default it uses US, but you can specify EU or other regions either in novu.config.ts or directly in CLI command.
+  </Step>
 
-```bash
-npx novu step publish \
-  --workflow your-workflow-id \
-  --step your-step-id \
-  --template ./emails/welcome.tsx \
-  --secret-key nv-sk-...
-```
+  <Step title="Edit the handler">
+    The generated file will be located at `novu/<workflowId>/<stepId>.step.tsx`. The folder name is the `workflowId`. The CLI reads it from the path at publish time. You should commit this file to your repository.
 
-If you dont want to pass secret key to CLI, it will try to read NOVU_SECRET_KEY variable from `.env` file if present.
+    Open the generated file and replace the placeholder content with your real logic. Each handler receives the full context:
 
-Also similarly for `apiUrl`, by default it uses US, but you can specify EU or other regions either in novu.config.ts or directly in CLI command.
+    ```typescript title="novu/workflow-id/step-id.step.tsx"
+    export default step.inApp(
+      "in-app-step",
+      async (controls, { payload, subscriber }) => ({
+        subject: controls.subject,
+        body: `Hi ${subscriber.firstName}, ${controls.body} `,
+      }),
+      {
+        controlSchema: {
+          type: "object",
+          properties: {
+            subject: { type: "string", default: "New activity" },
+            body: { type: "string", default: "You have a new notification." },
+          },
+          additionalProperties: false,
+        } as const,
+      }
+    );
+    ```
+  </Step>
 
-### 4. Edit the handler
+  <Step title="Republish when you make changes">
+    ```bash
+    npx novu step publish
+    ```
 
-The generated file will be located at `novu/<workflowId>/<stepId>.step.tsx`. The folder name is the `workflowId`. The CLI reads it from the path at publish time. You should commit this file to your repository.
-
-Open the generated file and replace the placeholder content with your real logic. Each handler receives the full context:
-
-```typescript title="novu/workflow-id/step-id.step.tsx"
-export default step.inApp(
-  "in-app-step",
-  async (controls, { payload, subscriber }) => ({
-    subject: controls.subject,
-    body: `Hi ${subscriber.firstName}, ${controls.body} `,
-  }),
-  {
-    controlSchema: {
-      type: "object",
-      properties: {
-        subject: { type: "string", default: "New activity" },
-        body: { type: "string", default: "You have a new notification." },
-      },
-      additionalProperties: false,
-    } as const,
-  }
-);
-```
-
-### 5. Republish when you make changes
-
-```bash
-npx novu step publish
-```
-
-If the bundle content changed, Novu deploys a new version. This `publish` command by default will publish all step handler in novu folder, if you want to publish just one workflow or one step you can specify `--workflow` and `--step` flags
+    If the bundle content changed, Novu deploys a new version. This `publish` command by default will publish all step handler in novu folder, if you want to publish just one workflow or one step you can specify `--workflow` and `--step` flags
+  </Step>
+</Steps>
 
 ## Defining Controls (Optional)
 

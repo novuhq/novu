@@ -7,13 +7,34 @@ description: "Reference the Novu environment schema used in API requests and res
 
 Environment is a collection of resources that are used to send notifications. For example, an environment can have a set of integrations, workflows, and subscribers. Read more about environments on [environments concept page](/platform/developer/environments). 
 
-| Property | Type | Description |
-| --- | --- | --- |
-| `id` | `string` | Unique identifier of the environment |
-| `name` | `string` | Name of the environment |
-| `organizationId` | `string` | Organization ID associated with the environment |
-| `identifier` | `string` | Unique identifier for the environment |
-| `type` | `EnvironmentResponseDtoType` | Type of the environment |
-| `apiKeys` | `ApiKeyDto[]` | List of API keys associated with the environment |
-| `parentId` | `string` | Parent environment ID |
-| `slug` | `string` | URL-friendly slug for the environment |
+<ResponseField name="id" type="string">
+  Unique identifier of the environment
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  Name of the environment
+</ResponseField>
+
+<ResponseField name="organizationId" type="string">
+  Organization ID associated with the environment
+</ResponseField>
+
+<ResponseField name="identifier" type="string">
+  Unique identifier for the environment
+</ResponseField>
+
+<ResponseField name="type" type="EnvironmentResponseDtoType">
+  Type of the environment
+</ResponseField>
+
+<ResponseField name="apiKeys" type="ApiKeyDto[]">
+  List of API keys associated with the environment
+</ResponseField>
+
+<ResponseField name="parentId" type="string">
+  Parent environment ID
+</ResponseField>
+
+<ResponseField name="slug" type="string">
+  URL-friendly slug for the environment
+</ResponseField>

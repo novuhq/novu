@@ -90,6 +90,18 @@ When your service experiences downtime or your endpoint is misconfigured, you ca
 
 ### Delivery attempts
 
+```mermaid
+stateDiagram-v2
+    [*] --> pending: Event occurs
+    pending --> delivered: "2xx response"
+    pending --> retrying: Delivery fails
+    retrying --> delivered: "2xx response"
+    retrying --> retrying: Exponential backoff
+    retrying --> disabled: "Fails for 5 consecutive days"
+    disabled --> pending: Manual re-enable
+    delivered --> [*]
+```
+
 When an event cannot be delivered, Novu retries using exponential backoff. Each message is attempted based on the following schedule, where each period is started following the failure of the preceding attempt:
 
 - Immediately
@@ -181,15 +193,17 @@ For cases where your endpoint is processing complicated workflows, you can have 
  
 ## Frequently asked questions
 
-### How do I secure my webhook endpoint?
+<AccordionGroup>
+  <Accordion title="How do I secure my webhook endpoint?">
+    To secure your webhook endpoint, you should:
 
-To secure your webhook endpoint, you should:
+    1. Verify the webhook signature using the official verification library
+    2. Use HTTPS for your endpoint URL
+    3. Implement rate limiting to prevent abuse
+    4. Keep your webhook secret secure and rotate it periodically
+  </Accordion>
 
-1. Verify the webhook signature using the official verification library
-2. Use HTTPS for your endpoint URL
-3. Implement rate limiting to prevent abuse
-4. Keep your webhook secret secure and rotate it periodically
-
-### How can I test webhooks locally?
-
-To test webhooks locally, you can use a service like ngrok or localtunnel to expose your local server to the internet. Alternatively, you can use webhook testing services like Webhook.site or RequestBin to inspect webhook payloads.
+  <Accordion title="How can I test webhooks locally?">
+    To test webhooks locally, you can use a service like ngrok or localtunnel to expose your local server to the internet. Alternatively, you can use webhook testing services like Webhook.site or RequestBin to inspect webhook payloads.
+  </Accordion>
+</AccordionGroup>

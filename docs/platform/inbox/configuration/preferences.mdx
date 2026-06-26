@@ -404,7 +404,8 @@ export default function Novu() {
 
 You don’t have to display the Preferences UI inside the default Inbox component. Novu provides two main ways to build a custom preference experience for your subscribers.
 
-### Using the `<Preferences />` component
+<Tabs>
+  <Tab title="Component">
 
 Use the Preferences component to display the preferences UI anywhere in your application, such as in a dedicated settings page without showing the full Inbox component. This gives you more control over the layout and placement of the preferences experience in your application.
 
@@ -426,10 +427,14 @@ function InboxPreferences() {
 export default InboxPreferences
 ```
 
-### Using the `usePreferences` hook
+  </Tab>
+  <Tab title="Hook">
 
 The `usePreferences` hook gives you access to all preferences data for the current subscriber. It returns the full preferences list, loading and error states, filtering options, and a refetch function. This provides the data you need to build a completely custom preferences UI.
 
 <Note>
   Refer to the [React](/platform/sdks/react/hooks/use-preferences) and [React Native SDKs](/platform/sdks/react-native/hooks/use-preferences) documentation for full usage details and code examples.
 </Note>
+
+  </Tab>
+</Tabs>

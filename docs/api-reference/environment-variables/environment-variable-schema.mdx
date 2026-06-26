@@ -7,13 +7,20 @@ description: "Reference the Novu environment variable schema used in API request
 
 Environment variable is a named value you define once in the dashboard and reuse across workflows. Each [Novu environment](/platform/developer/environments) can hold its own value for the same variable, so Development and Production (and any custom environments) stay isolated without duplicating workflow logic. Read more about environment variables on [environment variables documentation page](/platform/developer/environment-variables). 
 
-| Property | Type | Description |
-| --- | --- | --- |
-| `id` | `string` |  |
-| `organizationId` | `string` |  |
-| `key` | `string` |  |
-| `type` | `string` | The type of the environment variable (currently only `"string"` is supported) |
-| `isSecret` | `boolean` |  |
-| `values` | `EnvironmentVariableValueResponseDto[]` |  |
-| `createdAt` | `string` |  |
-| `updatedAt` | `string` |  |
+<ResponseField name="id" type="string" />
+
+<ResponseField name="organizationId" type="string" />
+
+<ResponseField name="key" type="string" />
+
+<ResponseField name="type" type="string">
+  The type of the environment variable (currently only `"string"` is supported)
+</ResponseField>
+
+<ResponseField name="isSecret" type="boolean" />
+
+<ResponseField name="values" type="EnvironmentVariableValueResponseDto[]" />
+
+<ResponseField name="createdAt" type="string" />
+
+<ResponseField name="updatedAt" type="string" />

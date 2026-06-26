@@ -18,7 +18,10 @@ For example, if you have a single subscriber entity, `john@acme.com`, who uses t
 
 Without context, you might have to create two different subscribers or use workarounds with subscriber ID prefixes to differentiate the notifications.
 
-```javascript
+However, with context, you can provide this metadata directly in the trigger. This allows you to use a single workflow and subscriber entity, while dynamically changing content or logic based on the context.
+
+<CodeGroup>
+```javascript title="Without context"
 // Problem: How does Novu know which app is sending the notification?
 
 // Notion Email notification
@@ -35,10 +38,7 @@ await novu.trigger({
   payload: { title: 'You have a new meeting invite' }
 });
 ```
-
-However, with context, you can provide this metadata directly in the trigger. This allows you to use a single workflow and subscriber entity, while dynamically changing content or logic based on the context.
-
-```javascript
+```javascript title="With context"
 // Solution: Pass an 'app' context to differentiate triggers.
 
 // Notion Email notification
@@ -67,6 +67,7 @@ await novu.trigger({
   }
 });
 ```
+</CodeGroup>
 
 Here are some ways that you can use contexts:
 

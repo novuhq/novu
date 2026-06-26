@@ -20,21 +20,30 @@ Novu supports two types of agents:
 - Custom code agent
 - Managed agent
 
-### Custom code agent
+<Tabs>
+  <Tab title="Custom code agent">
 
 A custom code agent is one where you build the agent brain with your own code. Use the Agent SDK, LangChain, and similar tools to implement it. Your agent brain receives the context object and processes it however you decide. Call an LLM, run business logic, route to a human, or combine all three.
 
-![Custom code agent](/images/agents/custom-code-agent/flow.png)
+<Frame caption="Custom code agent message flow from a connected platform through Novu to your agent brain and back.">
+  ![Custom code agent](/images/agents/custom-code-agent/flow.png)
+</Frame>
 
 Read more on how to build a [custom code agent](/agents/custom-code-agent/setup-your-agent/overview).
 
-### Managed agent
+  </Tab>
+  <Tab title="Managed agent">
 
 A managed agent is one where a platform (for example, Claude) manages the agent's intelligence and provides system tools such as grep, web search, and connections to external tools like Linear and Notion via MCP.
 
-![Managed agent](/images/agents/managed-agent/flow.png)
+<Frame caption="Managed agent message flow where the platform manages intelligence and system tools.">
+  ![Managed agent](/images/agents/managed-agent/flow.png)
+</Frame>
 
 Read more on how to build a [managed agent](/agents/managed-agent/overview).
+
+  </Tab>
+</Tabs>
 
 ## Conversations
 

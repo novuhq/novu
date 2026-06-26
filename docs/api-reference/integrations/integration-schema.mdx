@@ -7,76 +7,161 @@ description: "Reference the Novu integration schema used in API requests and res
 
 Integration is third party service used by Novu to send notification for a specific channel. For example, [sengrid](/platform/integrations/email/sendgrid) is a email integration and [twilio](/platform/integrations/sms/twilio) is a sms integration. Read more about integrations on [integrations concept page](/platform/concepts/integrations). Integration APIs don't return credentials with secret key based authorization method, only integration metadata details are returned in response.
 
-| Property | Type | Description |
-| --- | --- | --- |
-| `id` | `string` | The unique identifier of the integration record in the database. This is automatically generated. |
-| `environmentId` | `string` | The unique identifier for the environment associated with this integration. This links to the Environment collection. |
-| `organizationId` | `string` | The unique identifier for the organization that owns this integration. This links to the Organization collection. |
-| `name` | `string` | The name of the integration, which is used to identify it in the user interface. |
-| `identifier` | `string` | A unique string identifier for the integration, often used for API calls or internal references. |
-| `providerId` | `string` | The identifier for the provider of the integration (e.g., "mailgun", "twilio"). |
-| `channel` | `IntegrationResponseDtoChannel` | The channel type for the integration, which defines how it communicates (e.g., email, SMS). |
-| `credentials` | `CredentialsDto` | The credentials required for the integration to function, including API keys and other sensitive information. |
-| `configurations` | `ConfigurationsDto` | The configurations required for enabling the additional configurations of the integration. |
-| `active` | `boolean` | Indicates whether the integration is currently active. An active integration will process events and messages. |
-| `deleted` | `boolean` | Indicates whether the integration has been marked as deleted (soft delete). |
-| `deletedAt` | `string` | The timestamp indicating when the integration was deleted. This is set when the integration is soft deleted. |
-| `deletedBy` | `string` | The identifier of the user who performed the deletion of this integration. Useful for audit trails. |
-| `primary` | `boolean` | Indicates whether this integration is marked as primary. A primary integration is often the default choice for processing. |
-| `conditions` | `StepFilterDto[]` | An array of conditions associated with the integration that may influence its behavior or processing logic. |
+<ResponseField name="id" type="string">
+  The unique identifier of the integration record in the database. This is automatically generated.
+</ResponseField>
+
+<ResponseField name="environmentId" type="string">
+  The unique identifier for the environment associated with this integration. This links to the Environment collection.
+</ResponseField>
+
+<ResponseField name="organizationId" type="string">
+  The unique identifier for the organization that owns this integration. This links to the Organization collection.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  The name of the integration, which is used to identify it in the user interface.
+</ResponseField>
+
+<ResponseField name="identifier" type="string">
+  A unique string identifier for the integration, often used for API calls or internal references.
+</ResponseField>
+
+<ResponseField name="providerId" type="string">
+  The identifier for the provider of the integration (e.g., "mailgun", "twilio").
+</ResponseField>
+
+<ResponseField name="channel" type="IntegrationResponseDtoChannel">
+  The channel type for the integration, which defines how it communicates (e.g., email, SMS).
+</ResponseField>
+
+<ResponseField name="credentials" type="CredentialsDto">
+  The credentials required for the integration to function, including API keys and other sensitive information.
+</ResponseField>
+
+<ResponseField name="configurations" type="ConfigurationsDto">
+  The configurations required for enabling the additional configurations of the integration.
+</ResponseField>
+
+<ResponseField name="active" type="boolean">
+  Indicates whether the integration is currently active. An active integration will process events and messages.
+</ResponseField>
+
+<ResponseField name="deleted" type="boolean">
+  Indicates whether the integration has been marked as deleted (soft delete).
+</ResponseField>
+
+<ResponseField name="deletedAt" type="string">
+  The timestamp indicating when the integration was deleted. This is set when the integration is soft deleted.
+</ResponseField>
+
+<ResponseField name="deletedBy" type="string">
+  The identifier of the user who performed the deletion of this integration. Useful for audit trails.
+</ResponseField>
+
+<ResponseField name="primary" type="boolean">
+  Indicates whether this integration is marked as primary. A primary integration is often the default choice for processing.
+</ResponseField>
+
+<ResponseField name="conditions" type="StepFilterDto[]">
+  An array of conditions associated with the integration that may influence its behavior or processing logic.
+</ResponseField>
 
 ### Credentials
 
 Each integration has a set of credentials that are used to authenticate with the third party service. Checkout the provider documentation for more details on what credentials are required for each integration.
 
-| Property | Type | Description |
-| --- | --- | --- |
-| `apiKey` | `string` |  |
-| `user` | `string` |  |
-| `secretKey` | `string` |  |
-| `domain` | `string` |  |
-| `password` | `string` |  |
-| `host` | `string` |  |
-| `port` | `string` |  |
-| `secure` | `boolean` |  |
-| `region` | `string` |  |
-| `accountSid` | `string` |  |
-| `messageProfileId` | `string` |  |
-| `token` | `string` |  |
-| `from` | `string` |  |
-| `senderName` | `string` |  |
-| `projectName` | `string` |  |
-| `applicationId` | `string` |  |
-| `clientId` | `string` |  |
-| `requireTls` | `boolean` |  |
-| `ignoreTls` | `boolean` |  |
-| `tlsOptions` | `TlsOptions` |  |
-| `baseUrl` | `string` |  |
-| `webhookUrl` | `string` |  |
-| `redirectUrl` | `string` |  |
-| `hmac` | `boolean` |  |
-| `serviceAccount` | `string` |  |
-| `ipPoolName` | `string` |  |
-| `apiKeyRequestHeader` | `string` |  |
-| `secretKeyRequestHeader` | `string` |  |
-| `idPath` | `string` |  |
-| `datePath` | `string` |  |
-| `apiToken` | `string` |  |
-| `authenticateByToken` | `boolean` |  |
-| `authenticationTokenKey` | `string` |  |
-| `instanceId` | `string` |  |
-| `alertUid` | `string` |  |
-| `title` | `string` |  |
-| `imageUrl` | `string` |  |
-| `state` | `string` |  |
-| `externalLink` | `string` |  |
-| `channelId` | `string` |  |
-| `phoneNumberIdentification` | `string` |  |
-| `accessKey` | `string` |  |
-| `appSid` | `string` |  |
-| `senderId` | `string` |  |
-| `tenantId` | `string` |  |
-| `appIOBaseUrl` | `string` |  |
+<ResponseField name="apiKey" type="string" />
+
+<ResponseField name="user" type="string" />
+
+<ResponseField name="secretKey" type="string" />
+
+<ResponseField name="domain" type="string" />
+
+<ResponseField name="password" type="string" />
+
+<ResponseField name="host" type="string" />
+
+<ResponseField name="port" type="string" />
+
+<ResponseField name="secure" type="boolean" />
+
+<ResponseField name="region" type="string" />
+
+<ResponseField name="accountSid" type="string" />
+
+<ResponseField name="messageProfileId" type="string" />
+
+<ResponseField name="token" type="string" />
+
+<ResponseField name="from" type="string" />
+
+<ResponseField name="senderName" type="string" />
+
+<ResponseField name="projectName" type="string" />
+
+<ResponseField name="applicationId" type="string" />
+
+<ResponseField name="clientId" type="string" />
+
+<ResponseField name="requireTls" type="boolean" />
+
+<ResponseField name="ignoreTls" type="boolean" />
+
+<ResponseField name="tlsOptions" type="TlsOptions" />
+
+<ResponseField name="baseUrl" type="string" />
+
+<ResponseField name="webhookUrl" type="string" />
+
+<ResponseField name="redirectUrl" type="string" />
+
+<ResponseField name="hmac" type="boolean" />
+
+<ResponseField name="serviceAccount" type="string" />
+
+<ResponseField name="ipPoolName" type="string" />
+
+<ResponseField name="apiKeyRequestHeader" type="string" />
+
+<ResponseField name="secretKeyRequestHeader" type="string" />
+
+<ResponseField name="idPath" type="string" />
+
+<ResponseField name="datePath" type="string" />
+
+<ResponseField name="apiToken" type="string" />
+
+<ResponseField name="authenticateByToken" type="boolean" />
+
+<ResponseField name="authenticationTokenKey" type="string" />
+
+<ResponseField name="instanceId" type="string" />
+
+<ResponseField name="alertUid" type="string" />
+
+<ResponseField name="title" type="string" />
+
+<ResponseField name="imageUrl" type="string" />
+
+<ResponseField name="state" type="string" />
+
+<ResponseField name="externalLink" type="string" />
+
+<ResponseField name="channelId" type="string" />
+
+<ResponseField name="phoneNumberIdentification" type="string" />
+
+<ResponseField name="accessKey" type="string" />
+
+<ResponseField name="appSid" type="string" />
+
+<ResponseField name="senderId" type="string" />
+
+<ResponseField name="tenantId" type="string" />
+
+<ResponseField name="appIOBaseUrl" type="string" />
 
 ### ChannelTypeEnum
 

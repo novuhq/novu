@@ -7,57 +7,133 @@ description: "Reference the Novu notification event schema used in API requests 
 
 Notification event is the event that is generated when a workflow is triggered to subscribers. It contains workflow details, subscriber details payload sent during trigger, execution details of each step in the workflow and the result of the execution of each step.
 
-| Property | Type | Description |
-| --- | --- | --- |
-| `id` | `string` | Unique identifier of the notification |
-| `environmentId` | `string` | Environment ID of the notification |
-| `organizationId` | `string` | Organization ID of the notification |
-| `subscriberId` | `string` | Subscriber ID of the notification |
-| `transactionId` | `string` | Transaction ID of the notification |
-| `templateId` | `string` | Template ID of the notification |
-| `digestedNotificationId` | `string` | Digested Notification ID |
-| `createdAt` | `string` | Creation time of the notification |
-| `updatedAt` | `string` | Last updated time of the notification |
-| `channels` | `string[]` |  |
-| `subscriber` | `ActivityNotificationSubscriberResponseDto` | Subscriber of the notification |
-| `template` | `ActivityNotificationTemplateResponseDto` | Template of the notification |
-| `jobs` | `ActivityNotificationJobResponseDto[]` | Jobs of the notification |
-| `payload` | `{ [k: string]: any; }` | Payload of the notification |
-| `tags` | `string[]` | Tags associated with the notification |
-| `controls` | `{ [k: string]: any; }` | Controls associated with the notification |
-| `to` | `{ [k: string]: any; }` | To field for subscriber definition |
-| `topics` | `ActivityTopicDto[]` | Topics of the notification |
-| `severity` | `SeverityLevelEnum` | Severity of the workflow |
-| `critical` | `boolean` | Criticality of the notification |
-| `contextKeys` | `string[]` | Context (single or multi) in which the notification was sent |
+<ResponseField name="id" type="string">
+  Unique identifier of the notification
+</ResponseField>
+
+<ResponseField name="environmentId" type="string">
+  Environment ID of the notification
+</ResponseField>
+
+<ResponseField name="organizationId" type="string">
+  Organization ID of the notification
+</ResponseField>
+
+<ResponseField name="subscriberId" type="string">
+  Subscriber ID of the notification
+</ResponseField>
+
+<ResponseField name="transactionId" type="string">
+  Transaction ID of the notification
+</ResponseField>
+
+<ResponseField name="templateId" type="string">
+  Template ID of the notification
+</ResponseField>
+
+<ResponseField name="digestedNotificationId" type="string">
+  Digested Notification ID
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  Creation time of the notification
+</ResponseField>
+
+<ResponseField name="updatedAt" type="string">
+  Last updated time of the notification
+</ResponseField>
+
+<ResponseField name="channels" type="string[]" />
+
+<ResponseField name="subscriber" type="ActivityNotificationSubscriberResponseDto">
+  Subscriber of the notification
+</ResponseField>
+
+<ResponseField name="template" type="ActivityNotificationTemplateResponseDto">
+  Template of the notification
+</ResponseField>
+
+<ResponseField name="jobs" type="ActivityNotificationJobResponseDto[]">
+  Jobs of the notification
+</ResponseField>
+
+<ResponseField name="payload" type="{ [k: string]: any; }">
+  Payload of the notification
+</ResponseField>
+
+<ResponseField name="tags" type="string[]">
+  Tags associated with the notification
+</ResponseField>
+
+<ResponseField name="controls" type="{ [k: string]: any; }">
+  Controls associated with the notification
+</ResponseField>
+
+<ResponseField name="to" type="{ [k: string]: any; }">
+  To field for subscriber definition
+</ResponseField>
+
+<ResponseField name="topics" type="ActivityTopicDto[]">
+  Topics of the notification
+</ResponseField>
+
+<ResponseField name="severity" type="SeverityLevelEnum">
+  Severity of the workflow
+</ResponseField>
+
+<ResponseField name="critical" type="boolean">
+  Criticality of the notification
+</ResponseField>
+
+<ResponseField name="contextKeys" type="string[]">
+  Context (single or multi) in which the notification was sent
+</ResponseField>
 
 ### Workflow
 
 Workflow contains the details of the workflow that was triggered.
 
-| Property | Type | Description |
-| --- | --- | --- |
-| `id` | `string` |  |
-| `name` | `string` |  |
-| `description` | `string` |  |
-| `active` | `boolean` |  |
-| `draft` | `boolean` |  |
-| `preferenceSettings` | `SubscriberPreferenceChannels` |  |
-| `critical` | `boolean` |  |
-| `tags` | `string[]` |  |
-| `steps` | `NotificationStepDto[]` |  |
-| `organizationId` | `string` |  |
-| `creatorId` | `string` |  |
-| `environmentId` | `string` |  |
-| `triggers` | `NotificationTrigger[]` |  |
-| `notificationGroupId` | `string` |  |
-| `parentId` | `string` |  |
-| `deleted` | `boolean` |  |
-| `deletedAt` | `string` |  |
-| `deletedBy` | `string` |  |
-| `notificationGroup` | `NotificationGroup` |  |
-| `data` | `WorkflowResponseData` |  |
-| `workflowIntegrationStatus` | `WorkflowIntegrationStatus` |  |
+<ResponseField name="id" type="string" />
+
+<ResponseField name="name" type="string" />
+
+<ResponseField name="description" type="string" />
+
+<ResponseField name="active" type="boolean" />
+
+<ResponseField name="draft" type="boolean" />
+
+<ResponseField name="preferenceSettings" type="SubscriberPreferenceChannels" />
+
+<ResponseField name="critical" type="boolean" />
+
+<ResponseField name="tags" type="string[]" />
+
+<ResponseField name="steps" type="NotificationStepDto[]" />
+
+<ResponseField name="organizationId" type="string" />
+
+<ResponseField name="creatorId" type="string" />
+
+<ResponseField name="environmentId" type="string" />
+
+<ResponseField name="triggers" type="NotificationTrigger[]" />
+
+<ResponseField name="notificationGroupId" type="string" />
+
+<ResponseField name="parentId" type="string" />
+
+<ResponseField name="deleted" type="boolean" />
+
+<ResponseField name="deletedAt" type="string" />
+
+<ResponseField name="deletedBy" type="string" />
+
+<ResponseField name="notificationGroup" type="NotificationGroup" />
+
+<ResponseField name="data" type="WorkflowResponseData" />
+
+<ResponseField name="workflowIntegrationStatus" type="WorkflowIntegrationStatus" />
 
 ### ChannelTypeEnum
 

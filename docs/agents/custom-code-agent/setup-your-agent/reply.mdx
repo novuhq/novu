@@ -70,22 +70,26 @@ Use `url` for larger files. Novu fetches public HTTP(S) URLs server-side. Use `d
 
 The following examples show both approaches:
 
-```tsx
+<CodeGroup>
+```tsx title="URL attachment"
 await ctx.reply('Here is your report.', {
   files: [{ filename: 'report.pdf', mimeType: 'application/pdf', url: reportUrl }],
 });
-
+```
+```tsx title="In-memory attachment"
 const csv = new TextEncoder().encode('name,total\nNovu,42');
 await ctx.reply('CSV generated.', {
   files: [{ filename: 'report.csv', mimeType: 'text/csv', data: csv }],
 });
 ```
+</CodeGroup>
 
 ## Interactive cards
 
 Cards are structured messages with buttons, dropdowns, links, and more. Build them with function calls or JSX.
 
-### Function call API
+<Tabs>
+  <Tab title="Function call API">
 
 The following example builds a card with the function call API:
 
@@ -106,11 +110,15 @@ await ctx.reply(Card({ title: 'Order #1234', children: [
 ] }));
 ```
 
-### JSX API
+  </Tab>
+  <Tab title="JSX API">
 
 Configure `tsconfig.json` with `"jsxImportSource": "@novu/framework"`, then return JSX from a handler or pass it to `ctx.reply()`. For a full JSX card example with `Card`, `CardText`, `Actions`, and `Button`, see [Connect your first agent](/agents/custom-code-agent/connect-your-first-agent).
 
 When a user clicks a button or selects a dropdown value, `onAction` fires with `actionId` and `value`. See [Handle events](/agents/custom-code-agent/setup-your-agent/handle-events#onaction).
+
+  </Tab>
+</Tabs>
 
 ### Available card components
 

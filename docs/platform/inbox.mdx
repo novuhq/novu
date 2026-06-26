@@ -38,11 +38,9 @@ The Novu Inbox is built with a composable architecture. It is composed of other 
 
 By composing these individual components, you can create multiple popular inbox layouts that fit perfectly within your application's design.
 
-<Note>
-  **Design files**
-
+<Tip>
   To aid your design process, we provide a [free Figma file](https://www.figma.com/community/file/1425407348374863860) that contains all of the design assets. Make a copy of the file into your own account to get started with customizing your graphical Inbox elements.
-</Note>
+</Tip>
 
 ## Key feature
 - Full stack integration: The Inbox handles UI, unread states, routing, and preferences all in one place.
@@ -63,13 +61,17 @@ At a high level, the Inbox abstracts away the complexity of building a notificat
 
 There are two integration approaches, depending on your needs for speed versus customization.
 
-### The "Plug-and-Play" approach
+<Tabs>
+  <Tab title="Plug-and-play">
 
 This is the fastest way to integrate the Novu Inbox. The Inbox component, encapsulate all the UI and logic. You simply drop the component into your application, configure it with the necessary properties, and you're done.
 
-### "Build-Your-Own" Approach
+  </Tab>
+  <Tab title="Build your own">
 
 For maximum flexibility and complete control over the look and feel, use the [@novu/react SDK](/platform/sdks/react) for react hooks or [@novu/js SDK](/platform/sdks/javascript) for framework agnostic javascript methods. 
 
 You get the power of Novu's notification engine while building a user interface that perfectly matches your application's design system.
 
+  </Tab>
+</Tabs>

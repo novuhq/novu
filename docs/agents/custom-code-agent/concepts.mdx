@@ -13,6 +13,24 @@ Users can message your agent, and your agent can message back. When someone inte
 
 ![Inbound message flow](/images/agents/custom-code-agent/concept-inbound-flow.png)
 
+```mermaid
+sequenceDiagram
+    participant User
+    participant Provider as Chat Provider
+    participant Novu
+    participant Handler as Your Handler
+
+    User->>Provider: Send message
+    Provider->>Novu: Normalized webhook
+    Novu->>Novu: Identify user and load conversation
+    Novu->>Handler: Context object onMessage
+    Handler->>Handler: LLM or business logic
+    Handler->>Novu: ctx.reply and signals
+    Novu->>Provider: Deliver to thread
+    Novu->>Novu: Persist history and activity
+    Provider->>User: Show reply
+```
+
 | Step | What Novu does |
 | --- | --- |
 | **Receive and identify** | Normalizes the platform webhook. Maps the platform user (for example a Slack user ID) to a Novu subscriber when possible. Known users get full profiles; unknown users stay anonymous until resolved. |
@@ -108,15 +126,43 @@ ACI extends Novu's workflow system; it does not replace it. Transactional workfl
 
 ## Full flow (example: Slack)
 
-1. User messages the agent in Slack.
-2. Novu receives the event via the provider connection.
-3. Novu maps the thread to a conversation and resolves the subscriber when possible.
-4. Novu calls `onMessage` with the context object.
-5. Your handler passes message and history to your agent logic.
-6. Your logic decides the next action.
-7. Handler sends a reply, signals, or both.
-8. Novu posts the reply to the Slack thread.
-9. Novu records messages, participants, metadata, signals, and status.
+<Steps>
+  <Step title="User messages the agent">
+    User messages the agent in Slack.
+  </Step>
+
+  <Step title="Novu receives the event">
+    Novu receives the event via the provider connection.
+  </Step>
+
+  <Step title="Novu maps the thread">
+    Novu maps the thread to a conversation and resolves the subscriber when possible.
+  </Step>
+
+  <Step title="Novu calls onMessage">
+    Novu calls `onMessage` with the context object.
+  </Step>
+
+  <Step title="Handler passes context to agent logic">
+    Your handler passes message and history to your agent logic.
+  </Step>
+
+  <Step title="Agent logic decides next action">
+    Your logic decides the next action.
+  </Step>
+
+  <Step title="Handler sends reply or signals">
+    Handler sends a reply, signals, or both.
+  </Step>
+
+  <Step title="Novu posts the reply">
+    Novu posts the reply to the Slack thread.
+  </Step>
+
+  <Step title="Novu records conversation state">
+    Novu records messages, participants, metadata, signals, and status.
+  </Step>
+</Steps>
 
 The same handler code works on every connected provider; adding a provider does not require changing agent logic.
 
