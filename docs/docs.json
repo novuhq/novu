@@ -35,7 +35,6 @@
               "platform/how-novu-works",
               {
                 "group": "Core Concepts",
-                "icon": "blocks",
                 "pages": [
                   "platform/concepts/notification-event",
                   "platform/concepts/workflows",
@@ -49,7 +48,6 @@
               },
               {
                 "group": "Quickstart",
-                "icon": "zap",
                 "pages": [
                   "platform/quickstart/react",
                   "platform/quickstart/nextjs",
@@ -59,7 +57,8 @@
                   "platform/quickstart/vanilla-js"
                 ]
               }
-            ]
+            ],
+            "icon": "rocket"
           },
           {
             "group": "Integrate <Inbox />",
@@ -68,12 +67,13 @@
               "platform/inbox/setup-inbox",
               {
                 "group": "Features",
-                "icon": "blocks",
-                "pages": ["platform/inbox/features/snooze", "platform/inbox/features/schedule"]
+                "pages": [
+                  "platform/inbox/features/snooze",
+                  "platform/inbox/features/schedule"
+                ]
               },
               {
                 "group": "Customize and Configure",
-                "icon": "sliders-horizontal",
                 "pages": [
                   "platform/inbox/configuration/styling",
                   "platform/inbox/configuration/tabs",
@@ -85,7 +85,6 @@
               },
               {
                 "group": "Advanced Customization",
-                "icon": "wand",
                 "pages": [
                   "platform/inbox/advanced-customization/customize-bell",
                   "platform/inbox/advanced-customization/customize-popover",
@@ -97,7 +96,6 @@
               },
               {
                 "group": "Advanced Features",
-                "icon": "network",
                 "pages": [
                   "platform/inbox/advanced-features/localization",
                   "platform/inbox/advanced-features/multi-tenancy"
@@ -106,7 +104,8 @@
               "platform/inbox/headless-mode",
               "platform/inbox/prepare-for-production",
               "platform/inbox/migration-guide"
-            ]
+            ],
+            "icon": "inbox"
           },
           {
             "group": "Integrate <Subscription />",
@@ -115,7 +114,8 @@
               "platform/subscription/quickstart",
               "platform/subscription/customize-and-configure",
               "platform/subscription/headless-hooks"
-            ]
+            ],
+            "icon": "bell-ring"
           },
           {
             "group": "Build a Workflow",
@@ -129,7 +129,6 @@
                 "pages": [
                   {
                     "group": "Configure Action Steps",
-                    "icon": "package",
                     "pages": [
                       "platform/workflow/add-and-configure-steps/configure-action-steps/delay",
                       "platform/workflow/add-and-configure-steps/configure-action-steps/digest",
@@ -139,12 +138,10 @@
                   },
                   "platform/workflow/add-and-configure-steps/step-conditions",
                   "platform/workflow/add-and-configure-steps/code-steps"
-                ],
-                "icon": "copy-plus"
+                ]
               },
               {
                 "group": "Add Notification Content",
-                "icon": "package",
                 "pages": [
                   "platform/workflow/add-notification-content/channels-template-editors",
                   "platform/workflow/add-notification-content/personalize-content"
@@ -154,12 +151,10 @@
               "platform/workflow/monitor-and-debug-workflow",
               {
                 "group": "Advanced Features",
-                "icon": "sparkles",
                 "pages": [
                   "platform/workflow/advanced-features/translations",
                   {
                     "group": "Contexts",
-                    "icon": "package",
                     "pages": [
                       "platform/workflow/advanced-features/contexts/manage-contexts",
                       "platform/workflow/advanced-features/contexts/contexts-in-workflows"
@@ -167,7 +162,8 @@
                   }
                 ]
               }
-            ]
+            ],
+            "icon": "git-branch"
           },
           {
             "group": "Integrate Channels Providers",
@@ -177,7 +173,6 @@
               {
                 "group": "Chat",
                 "root": "platform/integrations/chat",
-                "icon": "message-square",
                 "pages": [
                   "platform/integrations/chat/discord",
                   "platform/integrations/chat/mattermost",
@@ -189,7 +184,6 @@
               },
               {
                 "group": "Email",
-                "icon": "mail",
                 "root": "platform/integrations/email",
                 "pages": [
                   "platform/integrations/email/sendgrid",
@@ -229,7 +223,6 @@
               },
               {
                 "group": "Push",
-                "icon": "smartphone",
                 "root": "platform/integrations/push",
                 "pages": [
                   "platform/integrations/push/fcm",
@@ -244,7 +237,6 @@
               },
               {
                 "group": "Sms",
-                "icon": "message-circle",
                 "root": "platform/integrations/sms",
                 "pages": [
                   "platform/integrations/sms/twilio",
@@ -273,7 +265,8 @@
                 ]
               },
               "platform/integrations/trigger-overrides"
-            ]
+            ],
+            "icon": "plug-zap"
           },
           {
             "group": "SDKs",
@@ -281,7 +274,6 @@
               "platform/sdks",
               {
                 "group": "@novu/react",
-                "icon": "library",
                 "pages": [
                   "platform/sdks/react",
                   {
@@ -302,7 +294,6 @@
               "platform/sdks/javascript",
               {
                 "group": "@novu/react-native",
-                "icon": "smartphone",
                 "root": "platform/sdks/react-native",
                 "pages": [
                   "platform/sdks/react-native",
@@ -321,7 +312,6 @@
               },
               {
                 "group": "Server-Side",
-                "icon": "server",
                 "root": "platform/sdks/server",
                 "pages": [
                   "platform/sdks/server/typescript",
@@ -335,7 +325,8 @@
                   "platform/sdks/server/ruby"
                 ]
               }
-            ]
+            ],
+            "icon": "code"
           },
           {
             "group": "Developer",
@@ -346,10 +337,13 @@
               "platform/developer/limits",
               {
                 "group": "Webhooks",
-                "icon": "webhook",
-                "pages": ["platform/developer/webhooks/event-types", "platform/developer/webhooks/connectors"]
+                "pages": [
+                  "platform/developer/webhooks/event-types",
+                  "platform/developer/webhooks/connectors"
+                ]
               }
-            ]
+            ],
+            "icon": "terminal"
           },
           {
             "group": "Account",
@@ -359,7 +353,8 @@
               "platform/account/manage-members",
               "platform/account/billing",
               "platform/account/sso"
-            ]
+            ],
+            "icon": "building-2"
           },
           {
             "group": "Build with AI",
@@ -367,7 +362,8 @@
               "platform/build-with-ai/mcp",
               "platform/build-with-ai/skills",
               "platform/build-with-ai/agent-toolkit"
-            ]
+            ],
+            "icon": "sparkles"
           },
           {
             "group": "Additional Resources",
@@ -376,7 +372,8 @@
               "platform/additional-resources/errors",
               "platform/additional-resources/security",
               "platform/additional-resources/legacy-documentation"
-            ]
+            ],
+            "icon": "book-open"
           }
         ]
       },
@@ -391,7 +388,8 @@
               "agents/get-started/what-is-aci",
               "agents/get-started/mental-model",
               "agents/get-started/agents-and-providers"
-            ]
+            ],
+            "icon": "rocket"
           },
           {
             "group": "Managed Agent",
@@ -401,7 +399,8 @@
               "agents/managed-agent/concepts",
               "agents/managed-agent/configure-mcp-servers",
               "agents/managed-agent/add-skills"
-            ]
+            ],
+            "icon": "bot"
           },
           {
             "group": "Custom Code Agent",
@@ -411,7 +410,6 @@
               "agents/custom-code-agent/connect-your-first-agent",
               {
                 "group": "Set up your Agent",
-                "icon": "blocks",
                 "pages": [
                   "agents/custom-code-agent/setup-your-agent/overview",
                   "agents/custom-code-agent/setup-your-agent/create-an-agent",
@@ -424,11 +422,15 @@
                 ]
               },
               "agents/custom-code-agent/going-to-production"
-            ]
+            ],
+            "icon": "code"
           },
           {
             "group": "Observability",
-            "pages": ["agents/conversations"]
+            "pages": [
+              "agents/conversations"
+            ],
+            "icon": "eye"
           }
         ]
       },
@@ -442,7 +444,8 @@
               "api-reference/rate-limiting",
               "api-reference/idempotency",
               "api-reference/payload-limits"
-            ]
+            ],
+            "icon": "rocket"
           },
           {
             "group": "Events",
@@ -451,7 +454,8 @@
               "api-reference/events/bulk-trigger-event",
               "api-reference/events/broadcast-event-to-all",
               "api-reference/events/cancel-triggered-event"
-            ]
+            ],
+            "icon": "zap"
           },
           {
             "group": "Subscribers",
@@ -476,7 +480,8 @@
               "api-reference/subscribers/update-subscriber-online-status",
               "api-reference/subscribers/retrieve-unseen-notifications-count",
               "api-reference/subscribers/update-notification-action-status"
-            ]
+            ],
+            "icon": "users"
           },
           {
             "group": "Inbox",
@@ -496,7 +501,8 @@
               "api-reference/subscribers/delete-all-notifications",
               "api-reference/subscribers/complete-a-notification-action",
               "api-reference/subscribers/revert-a-notification-action"
-            ]
+            ],
+            "icon": "inbox"
           },
           {
             "group": "Topics",
@@ -513,7 +519,8 @@
               "api-reference/topics/list-topic-subscriptions",
               "api-reference/topics/check-topic-subscriber",
               "api-reference/topics/retrieve-a-topic-subscription"
-            ]
+            ],
+            "icon": "hash"
           },
           {
             "group": "Notifications",
@@ -521,7 +528,8 @@
               "api-reference/notifications/notification-event-schema",
               "api-reference/notifications/list-all-events",
               "api-reference/notifications/retrieve-an-event"
-            ]
+            ],
+            "icon": "bell"
           },
           {
             "group": "Workflows",
@@ -535,7 +543,8 @@
               "api-reference/workflows/sync-a-workflow",
               "api-reference/workflows/retrieve-workflow-step",
               "api-reference/workflows/generate-a-step-preview"
-            ]
+            ],
+            "icon": "git-branch"
           },
           {
             "group": "Translations",
@@ -549,7 +558,8 @@
               "api-reference/translations/retrieve-master-translations-json",
               "api-reference/translations/upload-master-translations-json-file",
               "api-reference/translations/upload-translation-files"
-            ]
+            ],
+            "icon": "languages"
           },
           {
             "group": "Contexts",
@@ -560,7 +570,8 @@
               "api-reference/contexts/update-a-context",
               "api-reference/contexts/delete-a-context",
               "api-reference/contexts/list-all-contexts"
-            ]
+            ],
+            "icon": "layers"
           },
           {
             "group": "Environments",
@@ -573,7 +584,8 @@
               "api-reference/environments/list-environment-tags",
               "api-reference/environments/compare-resources-between-environments",
               "api-reference/environments/publish-resources-to-target-environment"
-            ]
+            ],
+            "icon": "server"
           },
           {
             "group": "Environment Variables",
@@ -585,7 +597,8 @@
               "api-reference/environment-variables/delete-a-variable",
               "api-reference/environment-variables/list-all-variables",
               "api-reference/environment-variables/retrieve-a-variable-usage"
-            ]
+            ],
+            "icon": "variable"
           },
           {
             "group": "Messages",
@@ -594,7 +607,8 @@
               "api-reference/messages/list-all-messages",
               "api-reference/messages/delete-a-message",
               "api-reference/messages/delete-messages-by-transactionid"
-            ]
+            ],
+            "icon": "message-square"
           },
           {
             "group": "Integrations",
@@ -608,7 +622,8 @@
               "api-reference/integrations/update-integration-as-primary",
               "api-reference/integrations/generate-chat-oauth-url",
               "api-reference/integrations/auto-configure-an-integration-for-inbound-webhooks"
-            ]
+            ],
+            "icon": "plug"
           },
           {
             "group": "Channel Connections",
@@ -618,7 +633,8 @@
               "api-reference/channel-connections/update-a-channel-connection",
               "api-reference/channel-connections/delete-a-channel-connection",
               "api-reference/channel-connections/list-all-channel-connections"
-            ]
+            ],
+            "icon": "link"
           },
           {
             "group": "Channel Endpoints",
@@ -628,11 +644,15 @@
               "api-reference/channel-endpoints/update-a-channel-endpoint",
               "api-reference/channel-endpoints/delete-a-channel-endpoint",
               "api-reference/channel-endpoints/list-all-channel-endpoints"
-            ]
+            ],
+            "icon": "radio"
           },
           {
             "group": "Activity",
-            "pages": ["api-reference/activity/track-activity-and-engagement-events"]
+            "pages": [
+              "api-reference/activity/track-activity-and-engagement-events"
+            ],
+            "icon": "activity"
           },
           {
             "group": "Layouts",
@@ -645,7 +665,8 @@
               "api-reference/layouts/list-all-layouts",
               "api-reference/layouts/retrieve-a-layout",
               "api-reference/layouts/update-a-layout"
-            ]
+            ],
+            "icon": "layout-template"
           }
         ],
         "openapi": "https://spec.speakeasy.com/novu/novu/json-development-with-code-samples"
@@ -658,23 +679,42 @@
             "groups": [
               {
                 "group": "Guides",
-                "pages": ["guides", "guides/inngest", "guides/triggerdotdev"]
+                "pages": [
+                  "guides",
+                  "guides/inngest",
+                  "guides/triggerdotdev"
+                ],
+                "icon": "book-open"
               },
               {
                 "group": "Inbound Webhooks",
-                "pages": ["guides/webhooks/clerk", "guides/webhooks/stripe", "guides/webhooks/segment"]
+                "pages": [
+                  "guides/webhooks/clerk",
+                  "guides/webhooks/stripe",
+                  "guides/webhooks/segment"
+                ],
+                "icon": "webhook"
               },
               {
                 "group": "Recipes",
-                "pages": ["guides/recipes/managing-workflows"]
+                "pages": [
+                  "guides/recipes/managing-workflows"
+                ],
+                "icon": "chef-hat"
               },
               {
                 "group": "Framework",
-                "pages": ["guides/framework/using-translations"]
+                "pages": [
+                  "guides/framework/using-translations"
+                ],
+                "icon": "blocks"
               },
               {
                 "group": "Migrate to Novu",
-                "pages": ["guides/migrate-from-courier-to-novu"]
+                "pages": [
+                  "guides/migrate-from-courier-to-novu"
+                ],
+                "icon": "arrow-right-left"
               }
             ]
           },
@@ -700,7 +740,8 @@
                       "framework/quickstart/lambda"
                     ]
                   }
-                ]
+                ],
+                "icon": "rocket"
               },
               {
                 "group": "Core Concepts",
@@ -711,7 +752,8 @@
                   "framework/tags",
                   "framework/payload",
                   "framework/controls"
-                ]
+                ],
+                "icon": "blocks"
               },
               {
                 "group": "Channels",
@@ -722,7 +764,8 @@
                   "framework/push-channel",
                   "framework/sms-channel",
                   "framework/chat-channel"
-                ]
+                ],
+                "icon": "radio"
               },
               {
                 "group": "Content",
@@ -732,12 +775,19 @@
                   "framework/content/remix-react-email",
                   "framework/content/svelte-email",
                   "framework/content/vue-email"
-                ]
+                ],
+                "icon": "file-text"
               },
               {
                 "group": "Advanced Features",
                 "boost": 0.1,
-                "pages": ["framework/digest", "framework/delay", "framework/custom", "framework/skip"]
+                "pages": [
+                  "framework/digest",
+                  "framework/delay",
+                  "framework/custom",
+                  "framework/skip"
+                ],
+                "icon": "sparkles"
               },
               {
                 "group": "API Reference",
@@ -763,7 +813,8 @@
                   "framework/schema/zod",
                   "framework/schema/json-schema",
                   "framework/schema/class-validator"
-                ]
+                ],
+                "icon": "code"
               },
               {
                 "group": "Deployment",
@@ -773,7 +824,8 @@
                   "framework/deployment/syncing",
                   "framework/deployment/cli",
                   "framework/deployment/actions"
-                ]
+                ],
+                "icon": "cloud-upload"
               }
             ]
           },
@@ -801,7 +853,8 @@
                   "community/self-hosted-and-novu-cloud",
                   "community/run-in-local-machine",
                   "community/add-a-new-provider"
-                ]
+                ],
+                "icon": "rocket"
               }
             ]
           }
@@ -823,7 +876,16 @@
     }
   },
   "contextual": {
-    "options": ["copy", "view", "chatgpt", "claude", "perplexity", "mcp", "cursor", "vscode"]
+    "options": [
+      "copy",
+      "view",
+      "chatgpt",
+      "claude",
+      "perplexity",
+      "mcp",
+      "cursor",
+      "vscode"
+    ]
   },
   "footer": {
     "socials": {
