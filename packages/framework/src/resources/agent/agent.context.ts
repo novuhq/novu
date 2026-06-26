@@ -18,6 +18,8 @@ import type {
   SentMessageInfo,
   Signal,
   TriggerRecipientsPayload,
+  TypingControl,
+  TypingOp,
 } from './agent.types';
 import { AgentEventEnum } from './agent.types';
 
@@ -258,6 +260,7 @@ export class AgentContextImpl {
   readonly history: AgentHistoryEntry[];
   readonly platform: string;
   readonly platformContext: AgentPlatformContext;
+  readonly typing: TypingControl;
 
   readonly metadata: {
     get(key: string): unknown;
@@ -317,6 +320,17 @@ export class AgentContextImpl {
         return { ...self._metadataState } as Readonly<Record<string, unknown>>;
       },
     };
+
+    const postTyping = (op: TypingOp): Promise<void> =>
+      this._post({
+        conversationId: this._conversationId,
+        integrationIdentifier: this._integrationIdentifier,
+        typing: op,
+      }).then(() => undefined);
+
+    const typing = ((status?: string) => postTyping(status === undefined ? {} : { status })) as TypingControl;
+    typing.stop = () => postTyping('stop');
+    this.typing = typing;
   }
 
   async reply(content: MessageContent, options?: { files?: FileRef[] }): Promise<ReplyHandle> {
