@@ -51,6 +51,26 @@ export function SubscriptionButton() {}
 
 export function SubscriptionPreferences() {}
 
+export function SlackConnectButton() {
+  return <ShadowRootDetector />;
+}
+
+export function SlackLinkUser() {
+  return <ShadowRootDetector />;
+}
+
+export function MsTeamsConnectButton() {
+  return <ShadowRootDetector />;
+}
+
+export function MsTeamsLinkUser() {
+  return <ShadowRootDetector />;
+}
+
+export function TelegramConnectButton() {
+  return <ShadowRootDetector />;
+}
+
 export function useNovu() {
   return null;
 }
