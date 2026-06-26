@@ -29,24 +29,22 @@ At a high level, Novu’s architecture is built around modular but connected con
 flowchart TB
     org[Organization] --> devEnv[Development Environment]
     org --> prodEnv[Production Environment]
+
     devEnv --> devWorkflows[Workflows]
     devEnv --> devSubscribers[Subscribers]
     devEnv --> devIntegrations[Integrations]
+    devWorkflows --> devTrigger[API Trigger]
+    devTrigger --> devSteps[Workflow Steps]
+    devSteps --> devChannels[Email / SMS / Push / In-App / Chat]
+    devIntegrations -.-> devChannels
+
     prodEnv --> prodWorkflows[Workflows]
     prodEnv --> prodSubscribers[Subscribers]
     prodEnv --> prodIntegrations[Integrations]
-    devWorkflows --> trigger[API Trigger]
-    prodWorkflows --> trigger
-    trigger --> steps[Workflow Steps]
-    steps --> email[Email]
-    steps --> sms[SMS]
-    steps --> push[Push]
-    steps --> inApp[In-App / Inbox]
-    steps --> chat[Chat]
-    devIntegrations -.-> email
-    devIntegrations -.-> sms
-    prodIntegrations -.-> push
-    prodIntegrations -.-> chat
+    prodWorkflows --> prodTrigger[API Trigger]
+    prodTrigger --> prodSteps[Workflow Steps]
+    prodSteps --> prodChannels[Email / SMS / Push / In-App / Chat]
+    prodIntegrations -.-> prodChannels
 ```
 
 ### Organization and environments
