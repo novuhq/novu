@@ -29,24 +29,6 @@ A conversation starts when a user sends a message to your agent on a connected p
 
 ![Agent conversation flow](/images/agents/custom-code-agent/setup-your-agent/overview.png)
 
-```mermaid
-sequenceDiagram
-    participant User
-    participant Provider as Connected Provider
-    participant Novu
-    participant Bridge as Bridge App
-
-    User->>Provider: Send message
-    Provider->>Novu: Inbound event
-    Novu->>Novu: Normalize and resolve subscriber
-    Novu->>Bridge: Invoke handler at bridge URL
-    Bridge->>Bridge: Process reply and signals
-    Bridge->>Novu: Return response
-    Novu->>Provider: Deliver to thread
-    Novu->>Novu: Record in dashboard
-    Provider->>User: Show reply
-```
-
 1. User sends a message on the provider (for example, Slack).
 2. Novu normalizes the event and resolves the subscriber when possible.
 3. Novu invokes the appropriate handler (`onMessage`, `onAction`, and so on) on your bridge URL.

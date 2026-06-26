@@ -90,18 +90,6 @@ When your service experiences downtime or your endpoint is misconfigured, you ca
 
 ### Delivery attempts
 
-```mermaid
-stateDiagram-v2
-    [*] --> pending: Event occurs
-    pending --> delivered: "2xx response"
-    pending --> retrying: Delivery fails
-    retrying --> delivered: "2xx response"
-    retrying --> retrying: Exponential backoff
-    retrying --> disabled: "Fails for 5 consecutive days"
-    disabled --> pending: Manual re-enable
-    delivered --> [*]
-```
-
 When an event cannot be delivered, Novu retries using exponential backoff. Each message is attempted based on the following schedule, where each period is started following the failure of the preceding attempt:
 
 - Immediately

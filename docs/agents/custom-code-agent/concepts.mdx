@@ -13,24 +13,6 @@ Users can message your agent, and your agent can message back. When someone inte
 
 ![Inbound message flow](/images/agents/custom-code-agent/concept-inbound-flow.png)
 
-```mermaid
-sequenceDiagram
-    participant User
-    participant Provider as Chat Provider
-    participant Novu
-    participant Handler as Your Handler
-
-    User->>Provider: Send message
-    Provider->>Novu: Normalized webhook
-    Novu->>Novu: Identify user and load conversation
-    Novu->>Handler: Context object onMessage
-    Handler->>Handler: LLM or business logic
-    Handler->>Novu: ctx.reply and signals
-    Novu->>Provider: Deliver to thread
-    Novu->>Novu: Persist history and activity
-    Provider->>User: Show reply
-```
-
 | Step | What Novu does |
 | --- | --- |
 | **Receive and identify** | Normalizes the platform webhook. Maps the platform user (for example a Slack user ID) to a Novu subscriber when possible. Known users get full profiles; unknown users stay anonymous until resolved. |

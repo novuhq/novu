@@ -14,16 +14,6 @@ Every agent conversation follows the same state machine, regardless of agent typ
   ![Agent conversation lifecycle](/images/agents/conversations/lifecycle.png)
 </Frame>
 
-```mermaid
-stateDiagram-v2
-    [*] --> active: First message
-    active --> active: New messages
-    active --> resolved: "ctx.resolve() or platform closes"
-    resolved --> reopened: User sends new message
-    reopened --> active: Conversation resumes
-    reopened --> resolved: Resolved again
-```
-
 | State | What it means |
 | --- | --- |
 | **Active** | The conversation is ongoing. Messages increment the count, metadata can be updated, and the last activity timestamp is refreshed. |
