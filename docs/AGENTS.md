@@ -34,7 +34,8 @@ Use Novu-specific terms consistently. For full definitions, see the [glossary](/
 - Bold for UI elements: Click **Settings**
 - Code formatting for file names, commands, paths, and code references
 - Capitalize **Novu** and product names: Inbox, Framework, Dashboard
-- Include frontmatter `title`, `description`, and `icon` on MDX pages, matching existing docs
+- Include frontmatter `title` and `description` on MDX pages
+- Use icons on navigation groups only (set `"icon"` in `docs.json`), not on individual pages
 - For icons we use the [Lucide](https://lucide.dev/) library.
 - Prefer Mintlify components (`<Card>`, `<Columns>`, `<Steps>`, `<CodeGroup>`) over raw HTML
 
