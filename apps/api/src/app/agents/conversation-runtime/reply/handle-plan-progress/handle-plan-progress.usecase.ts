@@ -1,9 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PinoLogger, shortId } from '@novu/application-generic';
 import {
+  AgentRepository,
   ConversationActivityEntity,
   ConversationActivityRepository,
   type ConversationChannel,
+  ConversationEntity,
   ConversationRepository,
 } from '@novu/dal';
 import type { PlanProgressPhase, PlanTaskInput, PlanTaskStatus } from '@novu/framework';
@@ -26,6 +28,7 @@ interface ToolTask {
 export class HandlePlanProgress {
   constructor(
     private readonly activityRepository: ConversationActivityRepository,
+    private readonly agentRepository: AgentRepository,
     private readonly conversationRepository: ConversationRepository,
     private readonly conversationService: AgentConversationService,
     private readonly handleAgentReply: HandleAgentReply,
@@ -43,6 +46,8 @@ export class HandlePlanProgress {
     if (!conversation) {
       throw new NotFoundException('Conversation not found');
     }
+
+    await this.assertAgentOwnsConversation(command, conversation);
 
     const channel = this.conversationService.getPrimaryChannel(conversation);
     const activePlanMessageId = conversation.activePlanMessageId;
@@ -272,6 +277,28 @@ export class HandlePlanProgress {
     }
 
     return { title: titleOverride ?? planTitleForPhase(phase), tasks: planTasks };
+  }
+
+  private async assertAgentOwnsConversation(
+    command: HandlePlanProgressCommand,
+    conversation: ConversationEntity
+  ): Promise<void> {
+    const agent = await this.agentRepository.findOne(
+      {
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+        identifier: command.agentIdentifier,
+      },
+      { _id: 1 }
+    );
+
+    if (!agent) {
+      throw new NotFoundException('Agent not found');
+    }
+
+    if (String(agent._id) !== conversation._agentId) {
+      throw new ForbiddenException('Agent identifier does not match this conversation');
+    }
   }
 }
 

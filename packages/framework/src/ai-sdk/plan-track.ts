@@ -5,6 +5,9 @@ type ToolInputAvailableOptions = {
   input: unknown;
 } & ToolExecutionOptions;
 
+const SUMMARY_KEY_PRIORITY = ['query', 'command', 'path', 'action'];
+const MAX_DETAIL_LENGTH = 200;
+
 /**
  * Wrap an AI SDK `tools` map so each tool call reports progress via the plan handle.
  * Pass the result to `streamText` / `generateText` as `tools`.
@@ -14,9 +17,11 @@ export function trackPlanTools<T extends ToolSet>(plan: PlanHandle, tools: T): T
 
   for (const [name, tool] of Object.entries(tools) as [keyof T & string, T[keyof T]][]) {
     const runExecute = tool.execute;
+    const reportedInProgress = new Set<string>();
     const wrappedTool = {
       ...tool,
       onInputAvailable: async (options: ToolInputAvailableOptions) => {
+        reportedInProgress.add(options.toolCallId);
         plan.upsertTask(options.toolCallId, {
           title: name,
           status: 'in_progress',
@@ -28,11 +33,13 @@ export function trackPlanTools<T extends ToolSet>(plan: PlanHandle, tools: T): T
 
     if (typeof runExecute === 'function') {
       wrappedTool.execute = async (input: unknown, options: ToolExecutionOptions) => {
-        plan.upsertTask(options.toolCallId, {
-          title: name,
-          status: 'in_progress',
-          details: summarizePlanInput(input),
-        });
+        if (!reportedInProgress.has(options.toolCallId)) {
+          plan.upsertTask(options.toolCallId, {
+            title: name,
+            status: 'in_progress',
+            details: summarizePlanInput(input),
+          });
+        }
         try {
           const out = await runExecute(input, options);
           plan.upsertTask(options.toolCallId, { status: 'complete' });
@@ -59,8 +66,27 @@ function summarizePlanInput(input: unknown): string | undefined {
   const obj = input as Record<string, unknown>;
   const keys = Object.keys(obj);
   if (keys.length === 0) return undefined;
-  const pairs = keys.slice(0, 3).map((k) => `${k}: ${typeof obj[k] === 'string' ? obj[k] : JSON.stringify(obj[k])}`);
-  const text = pairs.join(', ');
 
-  return text.length > 200 ? `${text.slice(0, 199)}…` : text;
+  if (keys.length === 1) {
+    return truncate(String(obj[keys[0]]), MAX_DETAIL_LENGTH);
+  }
+
+  const primaryKey = keys.find((k) => SUMMARY_KEY_PRIORITY.includes(k));
+  if (primaryKey) {
+    return truncate(String(obj[primaryKey]), MAX_DETAIL_LENGTH);
+  }
+
+  const pairs = keys.slice(0, 3).map((k) => {
+    const val = typeof obj[k] === 'string' ? obj[k] : JSON.stringify(obj[k]);
+
+    return `${k}: ${val}`;
+  });
+
+  return truncate(pairs.join(', '), MAX_DETAIL_LENGTH);
+}
+
+function truncate(str: string, max: number): string {
+  if (str.length <= max) return str;
+
+  return `${str.slice(0, max - 1)}…`;
 }
