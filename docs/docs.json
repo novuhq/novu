@@ -57,8 +57,7 @@
                   "platform/quickstart/vanilla-js"
                 ]
               }
-            ],
-            "icon": "rocket"
+            ]
           },
           {
             "group": "Integrate <Inbox />",
@@ -388,8 +387,7 @@
               "agents/get-started/what-is-aci",
               "agents/get-started/mental-model",
               "agents/get-started/agents-and-providers"
-            ],
-            "icon": "rocket"
+            ]
           },
           {
             "group": "Managed Agent",
@@ -444,8 +442,7 @@
               "api-reference/rate-limiting",
               "api-reference/idempotency",
               "api-reference/payload-limits"
-            ],
-            "icon": "rocket"
+            ]
           },
           {
             "group": "Events",
@@ -740,8 +737,7 @@
                       "framework/quickstart/lambda"
                     ]
                   }
-                ],
-                "icon": "rocket"
+                ]
               },
               {
                 "group": "Core Concepts",
@@ -853,8 +849,7 @@
                   "community/self-hosted-and-novu-cloud",
                   "community/run-in-local-machine",
                   "community/add-a-new-provider"
-                ],
-                "icon": "rocket"
+                ]
               }
             ]
           }
