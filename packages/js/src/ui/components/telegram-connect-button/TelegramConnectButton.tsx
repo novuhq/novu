@@ -30,7 +30,7 @@ export const TelegramConnectButton = (props: TelegramConnectButtonProps) => {
   const integrationIdentifier = () => props.integrationIdentifier;
   const resolvedSubscriberId = () => props.subscriberId ?? novuAccessor().subscriberId;
 
-  const { endpoint, loading, disconnect, mutate } = useTelegramConnection({
+  const { endpoint, loading, disconnect, mutate, link } = useTelegramConnection({
     integrationIdentifier: integrationIdentifier(),
     subscriberId: props.subscriberId,
   });
@@ -100,7 +100,7 @@ export const TelegramConnectButton = (props: TelegramConnectButtonProps) => {
     } else {
       setActionLoading(true);
 
-      const result = await novuAccessor().channelEndpoints.link({
+      const result = await link({
         integrationIdentifier: integrationIdentifier(),
       });
 
