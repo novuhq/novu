@@ -24,6 +24,7 @@ import type {
   TypingOp,
 } from './agent.types';
 import { AgentEventEnum } from './agent.types';
+import { createPlanHandle } from './plan-handle';
 
 const MAX_INLINE_FILE_BYTES = 5 * 1024 * 1024;
 const MAX_INLINE_AGGREGATE_FILE_BYTES = 5 * 1024 * 1024;
@@ -345,33 +346,28 @@ export class AgentContextImpl {
         planProgress: event,
       }).then(() => undefined);
 
-    const plan = (async (title?: string) => {
+    const finalizePlanHandle = async (phase: 'finished' | 'failed', title?: string): Promise<void> => {
+      this._planFinalized = true;
+      await postPlan({ kind: 'phase', phase, ...(title ? { title } : {}) });
+    };
+
+    this.plan = ((title?: string) => {
       this._planActive = true;
       if (title !== undefined) {
         this._planTitle = title;
-        await postPlan({ kind: 'title', title });
       }
-    }) as PlanControl;
 
-    plan.task = async (id, task) => {
-      this._planActive = true;
-      await postPlan({
-        kind: 'task',
-        task: { id, ...task },
-        ...(this._planTitle ? { cardTitle: this._planTitle } : {}),
-      });
-    };
-    plan.finish = async (title?: string) => {
-      this._planFinalized = true;
-      const resolvedTitle = title ?? this._planTitle;
-      await postPlan({ kind: 'phase', phase: 'finished', ...(resolvedTitle ? { title: resolvedTitle } : {}) });
-    };
-    plan.fail = async (title?: string) => {
-      this._planFinalized = true;
-      const resolvedTitle = title ?? this._planTitle;
-      await postPlan({ kind: 'phase', phase: 'failed', ...(resolvedTitle ? { title: resolvedTitle } : {}) });
-    };
-    this.plan = plan;
+      return createPlanHandle(
+        {
+          post: postPlan,
+          onTitleChange: (text) => {
+            this._planTitle = text;
+          },
+          finalize: finalizePlanHandle,
+        },
+        title
+      );
+    }) as PlanControl;
   }
 
   async reply(content: MessageContent, options?: { files?: FileRef[] }): Promise<ReplyHandle> {
@@ -460,7 +456,11 @@ export class AgentContextImpl {
     await this._post({
       conversationId: this._conversationId,
       integrationIdentifier: this._integrationIdentifier,
-      planProgress: { kind: 'phase', phase },
+      planProgress: {
+        kind: 'phase',
+        phase,
+        ...(this._planTitle ? { title: this._planTitle } : {}),
+      },
     });
   }
 

@@ -205,7 +205,7 @@ export class IsValidPlanProgressEvent implements ValidatorConstraintInterface {
     if (event.kind === 'title') {
       const titleEvent = event as { title?: unknown };
 
-      return typeof titleEvent.title === 'string' && titleEvent.title.length > 0;
+      return titleEvent.title === undefined || (typeof titleEvent.title === 'string' && titleEvent.title.length > 0);
     }
 
     return false;
@@ -215,7 +215,7 @@ export class IsValidPlanProgressEvent implements ValidatorConstraintInterface {
     return (
       "planProgress must be { kind: 'task', task: { id, status } } with status in " +
       `${PLAN_TASK_STATUSES.join('|')}, { kind: 'phase', phase } with optional title, ` +
-      `or { kind: 'title', title } with a non-empty title string.`
+      `or { kind: 'title' } with an optional non-empty title string.`
     );
   }
 }

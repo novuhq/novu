@@ -1,17 +1,15 @@
 import type { ToolExecutionOptions, ToolSet } from 'ai';
-import type { PlanControl } from '../resources/agent/agent.types';
-
-type PlanTaskReporter = Pick<PlanControl, 'task'>;
+import type { PlanHandle } from '../resources/agent/agent.types';
 
 type ToolInputAvailableOptions = {
   input: unknown;
 } & ToolExecutionOptions;
 
 /**
- * Wrap an AI SDK `tools` map so each tool call reports progress via `plan.task()`.
+ * Wrap an AI SDK `tools` map so each tool call reports progress via the plan handle.
  * Pass the result to `streamText` / `generateText` as `tools`.
  */
-export function trackPlanTools<T extends ToolSet>(plan: PlanTaskReporter, tools: T): T {
+export function trackPlanTools<T extends ToolSet>(plan: PlanHandle, tools: T): T {
   const wrapped = {} as T;
 
   for (const [name, tool] of Object.entries(tools) as [keyof T & string, T[keyof T]][]) {
@@ -19,7 +17,7 @@ export function trackPlanTools<T extends ToolSet>(plan: PlanTaskReporter, tools:
     const wrappedTool = {
       ...tool,
       onInputAvailable: async (options: ToolInputAvailableOptions) => {
-        await plan.task(options.toolCallId, {
+        plan.upsertTask(options.toolCallId, {
           title: name,
           status: 'in_progress',
           details: summarizePlanInput(options.input),
@@ -30,18 +28,18 @@ export function trackPlanTools<T extends ToolSet>(plan: PlanTaskReporter, tools:
 
     if (typeof runExecute === 'function') {
       wrappedTool.execute = async (input: unknown, options: ToolExecutionOptions) => {
-        await plan.task(options.toolCallId, {
+        plan.upsertTask(options.toolCallId, {
           title: name,
           status: 'in_progress',
           details: summarizePlanInput(input),
         });
         try {
           const out = await runExecute(input, options);
-          await plan.task(options.toolCallId, { status: 'complete' });
+          plan.upsertTask(options.toolCallId, { status: 'complete' });
 
           return out;
         } catch (err) {
-          await plan.task(options.toolCallId, {
+          plan.upsertTask(options.toolCallId, {
             status: 'error',
             details: err instanceof Error ? err.message : String(err),
           });

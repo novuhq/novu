@@ -317,10 +317,24 @@ export interface AgentContextBase {
    */
   typing: TypingControl;
   /**
-   * Live plan-card control for the current turn. Call `ctx.plan('Custom title…')` to name the card;
-   * `plan.task(id, {...})` upserts a task. The plan auto-finalizes when the handler completes —
-   * call `finish()`/`fail()` only for manual control. For AI SDK tool auto-tracking, use
-   * `trackPlanTools` from `@novu/framework/ai-sdk`.
+   * Live plan-card control for the current turn. Returns a handle that renders the card immediately.
+   * Use `plan.step(title, fn)` for scoped steps or `plan.step(title)` for manual control.
+   * The plan auto-finalizes when the handler completes — call `finish()`/`fail()` only for early control.
+   *
+   * The plan card and the handler return value are separate: the card updates live while the handler
+   * runs; `return` (or `ctx.reply()`) posts the final reply message.
+   *
+   * @example
+   *   const plan = ctx.plan('Processing your refund…'); // card renders immediately
+   *   const order = await plan.step('Fetch order', () => fetchOrder(msg.text));
+   *   await plan.step('Issue refund', () => refund(order));
+   *   return 'Refund complete.'; // plan auto-finalizes; this is the reply message
+   *
+   * @example
+   *   const plan = ctx.plan('Processing…');
+   *   const step = plan.step('Reverse charge', { group: 'Stripe' });
+   *   await reverseCharge(order);
+   *   step.done();
    */
   plan: PlanControl;
 }
@@ -484,13 +498,30 @@ export type PlanProgressPhase = 'awaiting-approval' | 'approved' | 'denied' | 'f
 export type PlanProgressEvent =
   | { kind: 'task'; task: PlanTaskInput; cardTitle?: string }
   | { kind: 'phase'; phase: PlanProgressPhase; title?: string }
-  | { kind: 'title'; title: string };
+  | { kind: 'title'; title?: string };
 
-export type PlanControl = ((title?: string) => Promise<void>) & {
-  task(id: string, task: Omit<PlanTaskInput, 'id'>): Promise<void>;
+export type PlanStepOpts = {
+  group?: string;
+  details?: string;
+};
+
+export interface PlanStep {
+  update(details: string): this;
+  done(details?: string): this;
+  fail(details?: string): this;
+}
+
+export interface PlanHandle {
+  /** @internal Used by trackPlanTools — do not call directly. */
+  upsertTask(id: string, task: Omit<PlanTaskInput, 'id'>): void;
+  step<T>(title: string, fn: () => Promise<T>, opts?: PlanStepOpts): Promise<T>;
+  step(title: string, opts?: PlanStepOpts): PlanStep;
+  title(text: string): this;
   finish(title?: string): Promise<void>;
   fail(title?: string): Promise<void>;
-};
+}
+
+export type PlanControl = (title?: string) => PlanHandle;
 
 export interface AgentReplyPayload {
   conversationId: string;

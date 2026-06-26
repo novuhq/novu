@@ -111,7 +111,7 @@ export class HandlePlanProgress {
     existingActivities: ConversationActivityEntity[],
     activePlanMessageId: string | undefined
   ): Promise<void> {
-    if (!activePlanMessageId || !existingActivities.length) {
+    if (!activePlanMessageId) {
       return;
     }
 
@@ -131,17 +131,29 @@ export class HandlePlanProgress {
 
   private async handleTitle(
     command: HandlePlanProgressCommand,
-    title: string,
+    title: string | undefined,
     existingActivities: ConversationActivityEntity[],
     activePlanMessageId: string | undefined
   ): Promise<void> {
-    if (!activePlanMessageId || !existingActivities.length) {
+    const tasks = this.collectTasks(existingActivities);
+    const model = this.toModel('thinking', tasks, false, title);
+
+    if (activePlanMessageId) {
+      await this.postOrEditPlan(command, activePlanMessageId, model, 'thinking');
+
       return;
     }
 
-    const tasks = this.collectTasks(existingActivities);
+    const planMessageId = await this.postOrEditPlan(command, undefined, model, 'thinking');
 
-    await this.postOrEditPlan(command, activePlanMessageId, this.toModel('thinking', tasks, false, title), 'thinking');
+    if (planMessageId) {
+      await this.conversationRepository.setActivePlanMessageId(
+        command.environmentId,
+        command.organizationId,
+        command.conversationId,
+        planMessageId
+      );
+    }
   }
 
   private async persistTaskActivity(
