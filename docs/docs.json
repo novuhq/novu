@@ -1130,6 +1130,11 @@
       "permanent": true
     },
     {
+      "source": "/quickstart",
+      "destination": "/platform/quickstart/nextjs",
+      "permanent": true
+    },
+    {
       "source": "/quickstart/nextjs",
       "destination": "/platform/quickstart/nextjs",
       "permanent": true
