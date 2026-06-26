@@ -1125,6 +1125,11 @@
       "permanent": true
     },
     {
+      "source": "/get-started",
+      "destination": "/platform/quickstart/nextjs",
+      "permanent": true
+    },
+    {
       "source": "/quickstart/nextjs",
       "destination": "/platform/quickstart/nextjs",
       "permanent": true
