@@ -11,8 +11,10 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchApiKeys } from '@/hooks/use-fetch-api-keys';
 import { apiHostnameManager } from '@/utils/api-hostname-manager';
+import { cn } from '@/utils/ui';
 import { SetupStep } from './setup-guide-primitives';
 import { deriveStepStatus } from './setup-guide-step-utils';
+import { SharedInboundAddressField } from './shared-inbound-address-field';
 
 const CLI_DEFAULT_API_URL = 'https://api.novu.co';
 const BRIDGE_POLL_INTERVAL_MS = 2000;
@@ -190,25 +192,7 @@ export function CopySlackMessageButton({ agentName }: { agentName: string }) {
 }
 
 function EmailTestActions({ agentName, inboundAddress }: { agentName: string; inboundAddress: string }) {
-  const [copied, setCopied] = useState(false);
-  const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mailtoUrl = buildTestEmailMailto(agentName, inboundAddress);
-
-  useEffect(() => {
-    return () => {
-      if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current);
-    };
-  }, []);
-
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(inboundAddress);
-      setCopied(true);
-      copyTimeoutRef.current = setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // clipboard write failed silently
-    }
-  };
 
   return (
     <div className="flex flex-wrap items-center gap-3">
@@ -219,14 +203,35 @@ function EmailTestActions({ agentName, inboundAddress }: { agentName: string; in
         <RiMailSendLine className="size-4" />
         <span className="text-label-xs font-medium">Open in email client</span>
       </a>
-      <button
-        type="button"
-        onClick={handleCopy}
-        className="text-text-sub hover:text-text-strong flex cursor-pointer items-center gap-1 transition-colors"
-      >
-        {copied ? <RiCheckLine className="size-4" /> : <RiFileCopyLine className="size-4" />}
-        <span className="text-label-xs font-medium">{copied ? 'Copied!' : 'Copy email address'}</span>
-      </button>
+    </div>
+  );
+}
+
+function AgentSendStepExtraContent({
+  providerId,
+  agentName,
+  sharedInboundAddress,
+  bridgeConnected,
+  onAddProvider,
+}: {
+  providerId?: string;
+  agentName: string;
+  sharedInboundAddress?: string;
+  bridgeConnected: boolean;
+  onAddProvider?: () => void;
+}) {
+  const isEmailSendStep = providerId === EmailProviderIdEnum.NovuAgent && Boolean(sharedInboundAddress);
+  const sendActions = renderProviderSendActions(providerId, agentName, sharedInboundAddress);
+
+  return (
+    <div className="flex w-full flex-col gap-4">
+      {isEmailSendStep && sharedInboundAddress ? (
+        <>
+          <SharedInboundAddressField sharedInboundAddress={sharedInboundAddress} />
+          {sendActions}
+        </>
+      ) : null}
+      <BridgeConnectionStatus connected={bridgeConnected} onAddProvider={onAddProvider} inline />
     </div>
   );
 }
@@ -301,10 +306,20 @@ function useBridgeConnectionPolling(agent: AgentResponse, onBridgeConnected?: ()
   return connected;
 }
 
-function BridgeConnectionStatus({ connected, onAddProvider }: { connected: boolean; onAddProvider?: () => void }) {
+function BridgeConnectionStatus({
+  connected,
+  onAddProvider,
+  inline = false,
+}: {
+  connected: boolean;
+  onAddProvider?: () => void;
+  inline?: boolean;
+}) {
+  const wrapperClass = inline ? 'flex flex-col gap-2' : 'flex flex-col gap-2 py-4 pl-6';
+
   if (connected) {
     return (
-      <div className="flex items-center gap-2 py-4 pl-6">
+      <div className={cn(inline ? 'flex items-center gap-2' : 'flex items-center gap-2 py-4 pl-6')}>
         <RiCheckLine className="size-3.5 shrink-0 text-[#dd2476]" />
         <span className="animate-gradient bg-linear-to-r from-[#dd2476] via-[#ff512f] to-[#dd2476] bg-size-[400%_400%] bg-clip-text text-label-sm font-medium text-transparent">
           Setup complete
@@ -327,7 +342,7 @@ function BridgeConnectionStatus({ connected, onAddProvider }: { connected: boole
   }
 
   return (
-    <div className="flex flex-col gap-2 py-4 pl-6">
+    <div className={wrapperClass}>
       <div className="flex items-center gap-1">
         <Loader className="size-3.5 text-[#dd2476] animate-[spin_5s_linear_infinite]" />
         <span className="animate-gradient bg-linear-to-r from-[#dd2476] via-[#ff512f] to-[#dd2476] bg-size-[400%_400%] bg-clip-text text-label-sm font-medium text-transparent">
@@ -378,6 +393,8 @@ export function AgentCodeSetupSection({
     () => (bridgeConnected ? stepOffset + 3 : stepOffset),
     [bridgeConnected, stepOffset]
   );
+
+  const isEmailSendStep = providerId === EmailProviderIdEnum.NovuAgent && Boolean(sharedInboundAddress);
 
   return (
     <>
@@ -436,10 +453,21 @@ export function AgentCodeSetupSection({
         status={deriveStepStatus(stepOffset + 2, firstIncompleteStep)}
         title={getProviderSendTitle(providerId)}
         description={getProviderSendDescription(providerId, agent.name)}
-        rightContent={renderProviderSendActions(providerId, agent.name, sharedInboundAddress)}
+        extraContent={
+          <AgentSendStepExtraContent
+            providerId={providerId}
+            agentName={agent.name}
+            sharedInboundAddress={sharedInboundAddress}
+            bridgeConnected={bridgeConnected}
+            onAddProvider={onAddProvider}
+          />
+        }
+        rightContent={
+          isEmailSendStep
+            ? undefined
+            : renderProviderSendActions(providerId, agent.name, sharedInboundAddress)
+        }
       />
-
-      <BridgeConnectionStatus connected={bridgeConnected} onAddProvider={onAddProvider} />
     </>
   );
 }

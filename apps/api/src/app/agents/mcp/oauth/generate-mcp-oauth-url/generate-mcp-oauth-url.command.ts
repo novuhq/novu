@@ -23,11 +23,31 @@ export class GenerateMcpOAuthUrlCommand extends EnvironmentWithUserCommand {
 
   /** Where the OAuth URL was generated — round-trips through signed OAuth state. */
   @IsOptional()
-  @IsIn(['api', 'setup_card'])
-  source?: 'api' | 'setup_card';
+  @IsIn(['api', 'user_chat'])
+  source?: 'api' | 'user_chat';
 
   /** Setup card: auto-approve all tools from this MCP after OAuth succeeds. */
   @IsOptional()
   @IsBoolean()
   trustToolsOnConnect?: boolean;
+
+  // ── Session resume fields (source: 'user_chat') ──────────────────────
+  // Forwarded into McpOAuthState so the callback can resume the session
+  // without additional DB lookups.
+
+  @IsOptional()
+  @IsString()
+  toolUseId?: string;
+
+  @IsOptional()
+  @IsString()
+  integrationIdentifier?: string;
+
+  @IsOptional()
+  @IsString()
+  platform?: string;
+
+  @IsOptional()
+  @IsString()
+  platformThreadId?: string;
 }

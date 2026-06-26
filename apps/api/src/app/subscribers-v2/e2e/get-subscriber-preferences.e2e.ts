@@ -192,6 +192,57 @@ describe('Get Subscriber Preferences - /subscribers/:subscriberId/preferences (G
     expect(responseB.result.global.channels.email).to.equal(false); // Global preference for tenant:globex
     expect(responseB.result.workflows[0].channels.email).to.equal(false); // Inherits from global
   });
+
+  // Guards the lean preference reads used in computation: global preferences flow through
+  // findOneForComputation and must serialize to the documented DTO without leaking raw Mongo fields.
+  it('should serialize global preferences without leaking raw document fields', async () => {
+    await novuClient.subscribers.preferences.update(
+      {
+        channels: { email: false, inApp: true },
+      },
+      subscriber.subscriberId
+    );
+
+    const res = await session.testAgent.get(`/v2/subscribers/${subscriber.subscriberId}/preferences`);
+    expect(res.status).to.equal(200);
+
+    const { global, workflows } = res.body.data;
+
+    expect(global).to.have.property('enabled', true);
+    expect(global.channels.email).to.equal(false);
+    expect(global.channels.in_app).to.equal(true);
+
+    for (const leaked of [
+      '_id',
+      'id',
+      '_templateId',
+      '_environmentId',
+      '_organizationId',
+      '_subscriberId',
+      'type',
+      'preferences',
+    ]) {
+      expect(global, `global preference must not expose "${leaked}"`).to.not.have.property(leaked);
+    }
+
+    expect(workflows).to.be.an('array').with.lengthOf(1);
+    expect(workflows[0].channels.email).to.equal(false);
+  });
+
+  it('should return 503 when get preferences kill switch is enabled', async function () {
+    if (process.env.LAUNCH_DARKLY_SDK_KEY) {
+      this.skip();
+    }
+
+    (process.env as any).IS_GET_PREFERENCES_DISABLED = 'true';
+
+    const response = await session.testAgent.get(`/v2/subscribers/${subscriber.subscriberId}/preferences`);
+
+    expect(response.status).to.equal(503);
+    expect(response.body.message).to.include('Get preferences service is currently unavailable');
+
+    delete (process.env as any).IS_GET_PREFERENCES_DISABLED;
+  });
 });
 
 async function createSubscriberAndValidate(id: string = '') {

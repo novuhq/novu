@@ -66,6 +66,36 @@ export async function generateAgent(client: ConnectApiClient, prompt: string): P
   return 'data' in body && body.data ? body.data : (body as GeneratedAgentSpec);
 }
 
+export interface CreateBridgeAgentInput {
+  name: string;
+  identifier: string;
+}
+
+export async function createBridgeAgent(client: ConnectApiClient, input: CreateBridgeAgentInput): Promise<AgentRecord> {
+  const res = await client.axios.post<{ data?: AgentRecord } | AgentRecord>('/v1/agents', {
+    name: input.name,
+    identifier: input.identifier,
+    runtime: 'self-hosted',
+  });
+  const body = res.data;
+
+  return 'data' in body && body.data ? body.data : (body as AgentRecord);
+}
+
+export async function updateAgentBridge(
+  client: ConnectApiClient,
+  agentIdentifier: string,
+  input: { bridgeUrl?: string; devBridgeUrl?: string; devBridgeActive?: boolean }
+): Promise<AgentRecord> {
+  const res = await client.axios.put<{ data?: AgentRecord } | AgentRecord>(
+    `/v1/agents/${encodeURIComponent(agentIdentifier)}/bridge`,
+    input
+  );
+  const body = res.data;
+
+  return 'data' in body && body.data ? body.data : (body as AgentRecord);
+}
+
 export async function createManagedAgent(
   client: ConnectApiClient,
   input: CreateManagedAgentInput
@@ -193,11 +223,10 @@ export interface TelegramSubscriberLinkResult {
 
 export async function configureTelegramAgentWebhook(
   client: ConnectApiClient,
-  agentIdentifier: string,
-  integrationId: string
+  integrationIdentifier: string
 ): Promise<TelegramConfigureResult> {
   const res = await client.axios.post<{ data?: TelegramConfigureResult } | TelegramConfigureResult>(
-    `/v1/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationId)}/telegram/configure`,
+    `/v1/integrations/${encodeURIComponent(integrationIdentifier)}/webhook/configure`,
     {}
   );
   const body = res.data;
@@ -207,12 +236,11 @@ export async function configureTelegramAgentWebhook(
 
 export async function issueTelegramMobileLink(
   client: ConnectApiClient,
-  agentIdentifier: string,
-  integrationId: string,
+  integrationIdentifier: string,
   subscriberId?: string
 ): Promise<TelegramMobileLinkResult> {
   const res = await client.axios.post<{ data?: TelegramMobileLinkResult } | TelegramMobileLinkResult>(
-    `/v1/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationId)}/telegram/mobile-link`,
+    `/v1/integrations/${encodeURIComponent(integrationIdentifier)}/mobile-link`,
     subscriberId ? { subscriberId } : {}
   );
   const body = res.data;
@@ -245,7 +273,7 @@ export async function getTelegramMobileLinkStatus(
   token: string
 ): Promise<TelegramMobileLinkStatus> {
   const res = await client.axios.get<{ data?: TelegramMobileLinkStatus } | TelegramMobileLinkStatus>(
-    '/v1/agents/public/telegram/mobile-configure/status',
+    '/v1/integrations/mobile-configure/status',
     { params: { token } }
   );
   const body = res.data;
@@ -271,7 +299,7 @@ export async function consumeTelegramMobileLink(
   input: { token: string; botToken: string }
 ): Promise<ConsumeTelegramMobileLinkResult> {
   const res = await client.axios.post<{ data?: ConsumeTelegramMobileLinkResult } | ConsumeTelegramMobileLinkResult>(
-    '/v1/agents/public/telegram/mobile-configure',
+    '/v1/integrations/mobile-configure',
     { token: input.token, botToken: input.botToken }
   );
   const body = res.data;
@@ -323,15 +351,24 @@ export async function getSlackSetupLinkStatus(client: ConnectApiClient, token: s
 
 export async function issueTelegramSubscriberLink(
   client: ConnectApiClient,
-  agentIdentifier: string,
-  integrationId: string,
+  integrationIdentifier: string,
   subscriberId: string
 ): Promise<TelegramSubscriberLinkResult> {
-  const res = await client.axios.post<{ data?: TelegramSubscriberLinkResult } | TelegramSubscriberLinkResult>(
-    `/v1/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationId)}/telegram/subscriber-link`,
-    { subscriberId }
+  type LinkChannelEndpointResponse = {
+    url: string;
+    providerMetadata?: { botUsername?: string; expiresAt?: string };
+  };
+
+  const res = await client.axios.post<{ data?: LinkChannelEndpointResponse } | LinkChannelEndpointResponse>(
+    '/v1/integrations/channel-endpoints/link',
+    { integrationIdentifier, subscriberId }
   );
   const body = res.data;
+  const payload = 'data' in body && body.data ? body.data : (body as LinkChannelEndpointResponse);
 
-  return 'data' in body && body.data ? body.data : (body as TelegramSubscriberLinkResult);
+  return {
+    deepLinkUrl: payload.url,
+    botUsername: payload.providerMetadata?.botUsername ?? '',
+    expiresAt: payload.providerMetadata?.expiresAt ?? '',
+  };
 }

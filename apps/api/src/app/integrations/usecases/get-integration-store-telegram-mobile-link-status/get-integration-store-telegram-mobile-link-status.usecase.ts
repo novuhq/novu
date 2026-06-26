@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import {
   InvalidTelegramMobileTokenError,
   TelegramMobileLinkTokenService,
-} from '../../../agents/channels/telegram-linking/telegram-mobile-link-token.service';
+} from '../../../telegram-linking/telegram-mobile-link-token.service';
 import { GetIntegrationStoreTelegramMobileLinkStatusCommand } from './get-integration-store-telegram-mobile-link-status.command';
 
 export interface GetIntegrationStoreTelegramMobileLinkStatusResultValid {

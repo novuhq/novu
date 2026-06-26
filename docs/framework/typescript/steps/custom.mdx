@@ -1,0 +1,58 @@
+---
+title: 'Custom'
+description: 'Learn how to use the custom step to execute arbitrary code in your workflow'
+---
+
+The `custom` step allows you to execute arbitrary code within your workflow and persist the results for use in subsequent steps. This is useful for integrating with external services, performing complex calculations, or implementing custom business logic.
+
+## Example Usage
+
+```tsx
+const result = await step.custom(
+  'fetch-user-data',
+  async () => {
+    const response = await fetch('https://api.example.com/users/123');
+    const userData = await response.json();
+
+    return {
+      name: userData.name,
+      email: userData.email,
+      preferences: userData.preferences,
+    };
+  },
+  {
+    outputSchema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string' },
+        email: { type: 'string' },
+        preferences: { type: 'object' },
+      },
+      required: ['name', 'email'],
+    },
+  }
+);
+
+// Use the result in a subsequent step
+await step.email('welcome-email', async () => {
+  return {
+    subject: `Welcome ${result.name}!`,
+    body: `We'll send updates to ${result.email}`,
+  };
+});
+```
+
+## Custom Step Options
+
+| Property     | Type       | Required | Description                                             |
+| ------------ | ---------- | -------- | ------------------------------------------------------- |
+| outputSchema | JSONSchema | No       | JSON Schema definition for validating the step's output |
+
+<Note>
+  The output schema is used to validate the step's return value and provide TypeScript type
+  inference. If not provided, the return type will be `unknown`.
+</Note>
+
+## Custom Step Result
+
+The custom step returns whatever value your code returns, validated against the outputSchema if provided. This result can be used in subsequent steps within the same workflow.

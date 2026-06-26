@@ -79,6 +79,8 @@ export type {
   UseNotificationsResult,
   UsePreferencesResult,
   UseScheduleProps as UsePreferencesProps,
+  UseTelegramSubscriberLinkProps,
+  UseTelegramSubscriberLinkResult,
 } from './hooks';
 export {
   useChannelConnection,
@@ -95,6 +97,7 @@ export {
   useSchedule,
   useSubscription,
   useSubscriptions,
+  useTelegramSubscriberLink,
   useUpdateSubscription,
 } from './hooks';
 

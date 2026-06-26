@@ -4,7 +4,7 @@ import { Box, Text, useInput, useStdout } from 'ink';
 // biome-ignore lint/correctness/noUnusedImports: classic-JSX linter falls back here because tsconfig.json excludes ui/.
 import React from 'react';
 import type { GeneratedAgentSpec } from '../api/agents';
-import { wrapPreviewLines } from './agent-spec-labels';
+import { type CatalogSelectOption, wrapPreviewLines } from './agent-spec-labels';
 import {
   applyPreviewMultiEdit,
   applyPreviewTextEdit,
@@ -320,6 +320,22 @@ function PreviewTextEditor({
   );
 }
 
+function sortSelectedFirst(options: CatalogSelectOption[], selectedValues: string[]): CatalogSelectOption[] {
+  const selectedSet = new Set(selectedValues);
+  const selected: CatalogSelectOption[] = [];
+  const unselected: CatalogSelectOption[] = [];
+
+  for (const option of options) {
+    if (selectedSet.has(option.value)) {
+      selected.push(option);
+    } else {
+      unselected.push(option);
+    }
+  }
+
+  return [...selected, ...unselected];
+}
+
 function PreviewMultiEditor({
   fieldId,
   draft,
@@ -336,8 +352,8 @@ function PreviewMultiEditor({
   validationError: string | null;
 }): React.ReactElement {
   const title = getPreviewFieldLabel(fieldId);
-  const options = readPreviewMultiOptions(fieldId);
   const defaultValue = readPreviewMultiDefaultValue(fieldId, draft);
+  const options = sortSelectedFirst(readPreviewMultiOptions(fieldId), defaultValue);
   const limitHint = (() => {
     if (fieldId === 'mcpServers') return `Select up to ${MAX_GENERATED_MCP_SERVERS}.`;
     if (fieldId === 'skills') return `Select up to ${MAX_GENERATED_SKILLS}.`;

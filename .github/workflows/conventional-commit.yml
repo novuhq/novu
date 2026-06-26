@@ -33,6 +33,8 @@ jobs:
         id: generate_scopes
         run: |
           scopes=$(pnpm m ls --json --depth=-1 | grep "name" | sed -e 's/.*\: \(.*\)/\1/' -e 's/@novu\///g' -e 's/[",]//g')
+          # Mintlify docs site (docs/) is not a pnpm workspace package.
+          scopes="$scopes"$'\n'"docs"
           echo 'SCOPES<<EOF' >> $GITHUB_ENV
           echo "$scopes" >> $GITHUB_ENV
           echo 'EOF' >> $GITHUB_ENV

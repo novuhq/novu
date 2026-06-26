@@ -21,6 +21,7 @@ export type {
   AgentAttachment,
   AgentBridgeRequest,
   AgentContext,
+  AgentContextBase,
   AgentConversation,
   AgentHandlers,
   AgentHistoryEntry,

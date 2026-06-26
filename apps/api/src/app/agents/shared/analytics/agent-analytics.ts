@@ -263,7 +263,7 @@ export function trackAgentMcpOAuthCreated(
     authMode: string;
     scope: string;
     subscriberId: string;
-    source: 'api' | 'setup_card';
+    source: 'api' | 'user_chat';
     conversationId?: string;
     reusedPendingSession?: boolean;
   }
@@ -294,7 +294,7 @@ export function trackAgentMcpOAuthCompleted(
     authMode: string;
     scope: string;
     connectionId: string;
-    source: 'api' | 'setup_card';
+    source?: string;
     conversationId?: string;
   }
 ): void {
@@ -322,7 +322,7 @@ export function trackAgentMcpOAuthFailed(
     authMode?: string;
     scope: string;
     errorCode: string;
-    source: 'api' | 'setup_card';
+    source?: string;
     conversationId?: string;
   }
 ): void {
@@ -336,6 +336,74 @@ export function trackAgentMcpOAuthFailed(
     errorCode: params.errorCode,
     source: params.source,
     conversationId: params.conversationId,
+  });
+}
+
+/**
+ * Fired each time an active conversation is counted (one activation episode):
+ * a new/reopened thread, a rolling-window lapse, or a new billing cycle. Gives
+ * per-tier / per-channel conversation volume for pricing analysis. Org-scoped.
+ */
+export function trackAgentActiveConversationCounted(
+  analytics: AnalyticsService,
+  params: {
+    organizationId: string;
+    environmentId: string;
+    agentId: string;
+    conversationId: string;
+    platform: string;
+    threadKind: string;
+    reason: string;
+    periodKey: string;
+    apiServiceLevel: string;
+  }
+): void {
+  analytics.track(`Agent Active Conversation Counted - ${AGENT_SEGMENT_CATEGORY}`, params.organizationId, {
+    _organization: params.organizationId,
+    environmentId: params.environmentId,
+    agentId: params.agentId,
+    conversationId: params.conversationId,
+    platform: params.platform,
+    threadKind: params.threadKind,
+    reason: params.reason,
+    periodKey: params.periodKey,
+    apiServiceLevel: params.apiServiceLevel,
+  });
+}
+
+/**
+ * Fired when an organization reaches/exceeds its included active-conversations
+ * limit. Fires on every finite tier (not just Free): for Free `blocked` is true
+ * (the engagement was short-circuited); for paid tiers `blocked` is false and
+ * `overage` measures the extra conversations beyond the included amount — the
+ * signal for deciding overage pricing. Org-scoped.
+ */
+export function trackAgentActiveConversationLimitReached(
+  analytics: AnalyticsService,
+  params: {
+    organizationId: string;
+    environmentId: string;
+    agentId: string;
+    conversationId: string;
+    platform: string;
+    apiServiceLevel: string;
+    limit: number;
+    currentCount: number;
+    overage: number;
+    blocked: boolean;
+  }
+): void {
+  analytics.track(`Agent Active Conversation Limit Reached - ${AGENT_SEGMENT_CATEGORY}`, params.organizationId, {
+    _organization: params.organizationId,
+    environmentId: params.environmentId,
+    agentId: params.agentId,
+    conversationId: params.conversationId,
+    platform: params.platform,
+    apiServiceLevel: params.apiServiceLevel,
+    limit: params.limit,
+    currentCount: params.currentCount,
+    overage: params.overage,
+    blocked: params.blocked,
   });
 }
 

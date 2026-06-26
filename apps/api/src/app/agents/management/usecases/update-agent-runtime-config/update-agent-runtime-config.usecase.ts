@@ -1,9 +1,8 @@
 import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
-import { FeatureFlagsService, PinoLogger, resolveAgentRuntime } from '@novu/application-generic';
+import { PinoLogger, resolveAgentRuntime } from '@novu/application-generic';
 import { AgentMcpServerRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
 import { AGENT_RUNTIME_PROVIDERS } from '@novu/shared';
-import { projectMcpRowsToCatalog } from '../../../mcp/project-mcp-servers';
-import { resolveManagedAgentAlwaysAllowToolPermissions } from '../../../mcp/resolve-managed-agent-always-allow-tool-permissions';
+import { AgentMcpDefinitionService } from '../../../mcp/runtime/agent-mcp-definition.service';
 import type {
   AgentRuntimeCapabilitiesDto,
   AgentRuntimeConfigResponseDto,
@@ -16,7 +15,7 @@ export class UpdateAgentRuntimeConfig {
     private readonly agentRepository: AgentRepository,
     private readonly integrationRepository: IntegrationRepository,
     private readonly agentMcpServerRepository: AgentMcpServerRepository,
-    private readonly featureFlagsService: FeatureFlagsService,
+    private readonly agentMcpDefinitionService: AgentMcpDefinitionService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -64,20 +63,14 @@ export class UpdateAgentRuntimeConfig {
     }
 
     const runtimeProvider = resolved.provider;
-    const useAlwaysAllowToolPermissions = await resolveManagedAgentAlwaysAllowToolPermissions({
-      featureFlagsService: this.featureFlagsService,
-      environmentId: command.environmentId,
-      organizationId: command.organizationId,
-    });
-
     const updated = await runtimeProvider.updateConfig(externalAgentId, {
       model: command.model,
       systemPrompt: command.systemPrompt,
       tools: command.tools,
       skills: command.skills,
-      useAlwaysAllowToolPermissions,
     });
 
+    // Same as get runtime config: shared agent MCPs only.
     const mcpRows = await this.agentMcpServerRepository.findByAgent({
       organizationId: command.organizationId,
       environmentId: command.environmentId,
@@ -85,9 +78,9 @@ export class UpdateAgentRuntimeConfig {
       enabledOnly: true,
     });
 
-    const mcpServers = projectMcpRowsToCatalog(mcpRows, this.logger, {
+    const mcpServers = this.agentMcpDefinitionService.project(mcpRows, {
       agentId: agent._id,
-      useCase: UpdateAgentRuntimeConfig.name,
+      caller: UpdateAgentRuntimeConfig.name,
     });
 
     const providerEntry = AGENT_RUNTIME_PROVIDERS.find((p) => p.providerId === providerId);

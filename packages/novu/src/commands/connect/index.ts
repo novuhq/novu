@@ -3,6 +3,7 @@ import { pathToFileURL } from 'node:url';
 import chalk from 'chalk';
 import { AnalyticService } from '../../services/analytics.service';
 import { aliasConnectSession, CONNECT_EVENTS, trackConnect } from './analytics/events';
+import { resolveConnectAuthMethod } from './auth/resolve-connect-auth';
 import { runConnectPipeline } from './pipeline/runner';
 import type { ConnectCommandOptions } from './types';
 import { createLoggingUI } from './ui/logging-ui';
@@ -59,6 +60,9 @@ export async function connectCommand(options: ConnectCommandOptions, anonymousId
     ci: !!options.ci,
     hasPrompt: !!options.prompt,
     skipSlack: !!options.skipSlack,
+    keyless: !!options.keyless,
+    authMethod: resolveConnectAuthMethod(options),
+    channel: options.channel ?? (options.skipSlack ? 'skip' : undefined),
   });
 
   try {

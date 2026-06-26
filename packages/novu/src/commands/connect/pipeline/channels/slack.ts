@@ -15,6 +15,12 @@ import { logSlackConfigTokenSavedHandoffEvent } from '../../ui/handoff-events';
 import type { ConnectUI } from '../../ui/ui';
 import { ensureAgentIntegrationLinked, resolveIntegrationForAgent } from '../integration-helpers';
 import { CHANNEL_POLL_INTERVAL_MS, CHANNEL_POLL_TIMEOUT_MS, pollUntil, sleep } from '../poll-until';
+import {
+  describeSlackConfigTokenError,
+  isRepromptableSlackConfigTokenError,
+  MAX_SLACK_CONFIG_TOKEN_ATTEMPTS,
+  validateSlackConfigTokenFormat,
+} from './slack-config-token';
 
 const SLACK_PROVIDER_ID = 'slack';
 
@@ -49,7 +55,10 @@ export async function connectSlackForAgent(
   const baselineConnections = await countChannelConnectionsForIntegration(client, slackIntegration.identifier);
   if (baselineConnections > 0) {
     ui.slackConnected();
-    track(CONNECT_EVENTS.SLACK_CONNECTED, { agent: agent.identifier, alreadyConnected: true });
+    track(CONNECT_EVENTS.SLACK_CONNECTED, {
+      agent: agent.identifier,
+      alreadyConnected: true,
+    });
 
     return { connected: true, integration: slackIntegration };
   }
@@ -64,7 +73,10 @@ export async function connectSlackForAgent(
   );
 
   await ui.awaitSlackOAuthOpen({ authorizeUrl, appCreated });
-  track(CONNECT_EVENTS.SLACK_OAUTH_OPENED, { agent: agent.identifier, appCreated });
+  track(CONNECT_EVENTS.SLACK_OAUTH_OPENED, {
+    agent: agent.identifier,
+    appCreated,
+  });
   void open(authorizeUrl).catch(() => undefined);
   ui.showSlackWaiting({ authorizeUrl });
   const connected = await pollUntil(
@@ -73,7 +85,10 @@ export async function connectSlackForAgent(
 
       return count > baselineConnections ? 'done' : 'pending';
     },
-    { intervalMs: CHANNEL_POLL_INTERVAL_MS, timeoutMs: CHANNEL_POLL_TIMEOUT_MS }
+    {
+      intervalMs: CHANNEL_POLL_INTERVAL_MS,
+      timeoutMs: CHANNEL_POLL_TIMEOUT_MS,
+    }
   );
   if (!connected) {
     throw new Error(
@@ -83,7 +98,10 @@ export async function connectSlackForAgent(
   }
 
   ui.slackConnected();
-  track(CONNECT_EVENTS.SLACK_CONNECTED, { agent: agent.identifier, alreadyConnected: false });
+  track(CONNECT_EVENTS.SLACK_CONNECTED, {
+    agent: agent.identifier,
+    alreadyConnected: false,
+  });
 
   return { connected: true, integration: slackIntegration };
 }
@@ -110,7 +128,9 @@ async function getAuthorizeUrlWithQuickSetupFallback(
   } catch (err) {
     if (!isMissingSlackCredentialsError(err)) throw err;
 
-    await runSlackQuickSetup(client, agent, slackIntegration, ui, options, { retry: false });
+    await runSlackQuickSetup(client, agent, slackIntegration, ui, options, {
+      retry: false,
+    });
 
     // The token was saved and the Slack app created, so the credentials exist —
     // retry the URL build until they become readable rather than re-issuing a
@@ -126,7 +146,9 @@ async function getAuthorizeUrlWithQuickSetupFallback(
       // Credentials never became readable within the window — the saved token was
       // likely invalid, so re-run quick setup (re-prompting where interactive)
       // before one final attempt.
-      await runSlackQuickSetup(client, agent, slackIntegration, ui, options, { retry: true });
+      await runSlackQuickSetup(client, agent, slackIntegration, ui, options, {
+        retry: true,
+      });
 
       const authorizeUrl = await buildAuthorizeUrlWithCredentialRetry(buildUrl);
 
@@ -159,12 +181,17 @@ async function runSlackQuickSetup(
   options: ConnectCommandOptions,
   flags: { retry: boolean }
 ): Promise<void> {
-  const configToken = options.slackConfigToken?.trim();
+  const configTokenFromOptions = options.slackConfigToken?.trim();
 
-  if (configToken) {
+  if (configTokenFromOptions) {
+    const formatError = validateSlackConfigTokenFormat(configTokenFromOptions);
+    if (formatError) {
+      throw new Error(formatError);
+    }
+
     ui.runningSlackQuickSetup();
     await slackQuickSetup(client, slackIntegration._id, {
-      configToken,
+      configToken: configTokenFromOptions,
       agentId: agent.id,
     });
 
@@ -172,12 +199,7 @@ async function runSlackQuickSetup(
   }
 
   if (ui.interactive) {
-    const token = await ui.promptForSlackConfigToken({ retry: flags.retry });
-    ui.runningSlackQuickSetup();
-    await slackQuickSetup(client, slackIntegration._id, {
-      configToken: token,
-      agentId: agent.id,
-    });
+    await promptAndRunSlackQuickSetup(client, agent, slackIntegration, ui, flags);
 
     return;
   }
@@ -204,7 +226,10 @@ async function runSlackQuickSetup(
 
       return 'pending';
     },
-    { intervalMs: CHANNEL_POLL_INTERVAL_MS, timeoutMs: CHANNEL_POLL_TIMEOUT_MS }
+    {
+      intervalMs: CHANNEL_POLL_INTERVAL_MS,
+      timeoutMs: CHANNEL_POLL_TIMEOUT_MS,
+    }
   );
   if (tokenSaved) {
     logSlackConfigTokenSavedHandoffEvent();
@@ -224,6 +249,53 @@ async function runSlackQuickSetup(
         'Re-run `npx novu connect` to get a fresh setup link.'
     );
   }
+}
+
+async function promptAndRunSlackQuickSetup(
+  client: ConnectApiClient,
+  agent: AgentSummary,
+  slackIntegration: IntegrationRecord,
+  ui: ConnectUI,
+  flags: { retry: boolean }
+): Promise<void> {
+  let verificationError: string | undefined;
+  let showRetryHint = flags.retry;
+
+  for (let attempt = 1; attempt <= MAX_SLACK_CONFIG_TOKEN_ATTEMPTS; attempt++) {
+    const token = await ui.promptForSlackConfigToken({
+      retry: showRetryHint || attempt > 1,
+      verificationError,
+    });
+
+    const formatError = validateSlackConfigTokenFormat(token);
+    if (formatError) {
+      verificationError = formatError;
+      showRetryHint = true;
+      continue;
+    }
+
+    try {
+      ui.runningSlackQuickSetup();
+      await slackQuickSetup(client, slackIntegration._id, {
+        configToken: token,
+        agentId: agent.id,
+      });
+
+      return;
+    } catch (err) {
+      if (!isRepromptableSlackConfigTokenError(err)) {
+        throw err;
+      }
+
+      verificationError = describeSlackConfigTokenError(err);
+      showRetryHint = true;
+    }
+  }
+
+  throw new Error(
+    `Slack didn't accept the App Configuration Token after ${MAX_SLACK_CONFIG_TOKEN_ATTEMPTS} attempts. ` +
+      'Generate a fresh token at api.slack.com/apps and re-run `npx novu connect`.'
+  );
 }
 
 function isMissingSlackCredentialsError(err: unknown): boolean {

@@ -214,7 +214,7 @@ export interface ReplyHandle {
   edit(content: MessageContent, options?: { files?: FileRef[] }): Promise<ReplyHandle>;
 }
 
-interface AgentContextBase {
+export interface AgentContextBase {
   /** Live state of the current conversation, including persisted metadata. */
   readonly conversation: AgentConversation;
   /**

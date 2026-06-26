@@ -1,0 +1,1363 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "luma",
+  "name": "Novu",
+  "description": "The open-source notification infrastructure for agents and products. Send, receive, and track notifications across channels.",
+  "colors": {
+    "primary": "#0e121b",
+    "light": "#FFFFFF",
+    "dark": "#FFFFFF"
+  },
+  "background": {},
+  "favicon": "/favicon.svg",
+  "icons": {
+    "library": "lucide"
+  },
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg",
+    "href": "https://novu.co"
+  },
+  "navigation": {
+    "global": {
+      "anchors": []
+    },
+    "tabs": [
+      {
+        "tab": "Platform",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "boost": 3,
+            "pages": [
+              "platform",
+              "platform/what-is-novu",
+              "platform/how-novu-works",
+              {
+                "group": "Core Concepts",
+                "pages": [
+                  "platform/concepts/notification-event",
+                  "platform/concepts/workflows",
+                  "platform/concepts/subscribers",
+                  "platform/concepts/topics",
+                  "platform/concepts/integrations",
+                  "platform/concepts/trigger",
+                  "platform/concepts/preferences",
+                  "platform/concepts/tenants"
+                ]
+              },
+              {
+                "group": "Quickstart",
+                "pages": [
+                  "platform/quickstart/react",
+                  "platform/quickstart/nextjs",
+                  "platform/quickstart/remix",
+                  "platform/quickstart/angular",
+                  "platform/quickstart/vue",
+                  "platform/quickstart/vanilla-js"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Integrate <Inbox />",
+            "pages": [
+              "platform/inbox",
+              "platform/inbox/setup-inbox",
+              {
+                "group": "Features",
+                "pages": [
+                  "platform/inbox/features/snooze",
+                  "platform/inbox/features/schedule"
+                ]
+              },
+              {
+                "group": "Customize and Configure",
+                "pages": [
+                  "platform/inbox/configuration/styling",
+                  "platform/inbox/configuration/tabs",
+                  "platform/inbox/configuration/preferences",
+                  "platform/inbox/configuration/data-object",
+                  "platform/inbox/configuration/inbox-with-context",
+                  "platform/inbox/configuration/icons"
+                ]
+              },
+              {
+                "group": "Advanced Customization",
+                "pages": [
+                  "platform/inbox/advanced-customization/customize-bell",
+                  "platform/inbox/advanced-customization/customize-popover",
+                  "platform/inbox/advanced-customization/customize-notification-items",
+                  "platform/inbox/advanced-customization/conditional-display",
+                  "platform/inbox/advanced-customization/html-in-notifications",
+                  "platform/inbox/advanced-customization/notification-click-behavior"
+                ]
+              },
+              {
+                "group": "Advanced Features",
+                "pages": [
+                  "platform/inbox/advanced-features/localization",
+                  "platform/inbox/advanced-features/multi-tenancy"
+                ]
+              },
+              "platform/inbox/headless-mode",
+              "platform/inbox/prepare-for-production",
+              "platform/inbox/migration-guide"
+            ],
+            "icon": "inbox"
+          },
+          {
+            "group": "Integrate <Subscription />",
+            "pages": [
+              "platform/subscription",
+              "platform/subscription/quickstart",
+              "platform/subscription/customize-and-configure",
+              "platform/subscription/headless-hooks"
+            ],
+            "icon": "bell-ring"
+          },
+          {
+            "group": "Build a Workflow",
+            "pages": [
+              "platform/workflow",
+              "platform/workflow/create-a-workflow",
+              "platform/workflow/configure-workflow",
+              {
+                "group": "Add And Configure Steps",
+                "root": "platform/workflow/add-and-configure-steps",
+                "pages": [
+                  {
+                    "group": "Configure Action Steps",
+                    "pages": [
+                      "platform/workflow/add-and-configure-steps/configure-action-steps/delay",
+                      "platform/workflow/add-and-configure-steps/configure-action-steps/digest",
+                      "platform/workflow/add-and-configure-steps/configure-action-steps/throttle",
+                      "platform/workflow/add-and-configure-steps/configure-action-steps/http-step"
+                    ]
+                  },
+                  "platform/workflow/add-and-configure-steps/step-conditions",
+                  "platform/workflow/add-and-configure-steps/code-steps"
+                ]
+              },
+              {
+                "group": "Add Notification Content",
+                "pages": [
+                  "platform/workflow/add-notification-content/channels-template-editors",
+                  "platform/workflow/add-notification-content/personalize-content"
+                ]
+              },
+              "platform/workflow/trigger-workflow",
+              "platform/workflow/monitor-and-debug-workflow",
+              {
+                "group": "Advanced Features",
+                "pages": [
+                  "platform/workflow/advanced-features/translations",
+                  {
+                    "group": "Contexts",
+                    "pages": [
+                      "platform/workflow/advanced-features/contexts/manage-contexts",
+                      "platform/workflow/advanced-features/contexts/contexts-in-workflows"
+                    ]
+                  }
+                ]
+              }
+            ],
+            "icon": "git-branch"
+          },
+          {
+            "group": "Integrate Channels Providers",
+            "pages": [
+              "platform/integrations",
+              "platform/integrations/demo-integration",
+              {
+                "group": "Chat",
+                "root": "platform/integrations/chat",
+                "pages": [
+                  "platform/integrations/chat/discord",
+                  "platform/integrations/chat/mattermost",
+                  "platform/integrations/chat/ms-teams",
+                  "platform/integrations/chat/slack",
+                  "platform/integrations/chat/whats-app",
+                  "platform/integrations/chat/zulip"
+                ]
+              },
+              {
+                "group": "Email",
+                "root": "platform/integrations/email",
+                "pages": [
+                  "platform/integrations/email/sendgrid",
+                  "platform/integrations/email/amazon-ses",
+                  "platform/integrations/email/postmark",
+                  "platform/integrations/email/resend",
+                  "platform/integrations/email/brevo",
+                  "platform/integrations/email/mailgun",
+                  "platform/integrations/email/mailjet",
+                  "platform/integrations/email/braze",
+                  "platform/integrations/email/infobip",
+                  "platform/integrations/email/mailersend",
+                  "platform/integrations/email/mailtrap",
+                  "platform/integrations/email/mandrill",
+                  "platform/integrations/email/maqsam",
+                  "platform/integrations/email/netcore",
+                  "platform/integrations/email/outlook365",
+                  "platform/integrations/email/plunk",
+                  "platform/integrations/email/sparkpost",
+                  "platform/integrations/email/webhook",
+                  "platform/integrations/email/custom-smtp",
+                  {
+                    "group": "Activity Tracking",
+                    "pages": [
+                      {
+                        "group": "Manual Configuration",
+                        "pages": [
+                          "platform/integrations/email/activity-tracking/manual-configuration/ses",
+                          "platform/integrations/email/activity-tracking/manual-configuration/mailgun",
+                          "platform/integrations/email/activity-tracking/manual-configuration/resend",
+                          "platform/integrations/email/activity-tracking/manual-configuration/sendgrid"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "Push",
+                "root": "platform/integrations/push",
+                "pages": [
+                  "platform/integrations/push/fcm",
+                  "platform/integrations/push/expo-push",
+                  "platform/integrations/push/apns",
+                  "platform/integrations/push/onesignal",
+                  "platform/integrations/push/push-webhook",
+                  "platform/integrations/push/pusher-beams",
+                  "platform/integrations/push/pushpad",
+                  "platform/integrations/push/push-activity-tracking"
+                ]
+              },
+              {
+                "group": "Sms",
+                "root": "platform/integrations/sms",
+                "pages": [
+                  "platform/integrations/sms/twilio",
+                  "platform/integrations/sms/infobip",
+                  "platform/integrations/sms/46elks",
+                  "platform/integrations/sms/africas-talking",
+                  "platform/integrations/sms/aws-sns",
+                  "platform/integrations/sms/azure",
+                  "platform/integrations/sms/bulk-sms",
+                  "platform/integrations/sms/clickatell",
+                  "platform/integrations/sms/clicksend",
+                  "platform/integrations/sms/firetext",
+                  "platform/integrations/sms/gupshup",
+                  "platform/integrations/sms/kannel",
+                  "platform/integrations/sms/kudosity",
+                  "platform/integrations/sms/messagebird",
+                  "platform/integrations/sms/nexmo",
+                  "platform/integrations/sms/plivo",
+                  "platform/integrations/sms/sendchamp",
+                  "platform/integrations/sms/simpletexting",
+                  "platform/integrations/sms/sms-central",
+                  "platform/integrations/sms/sms77",
+                  "platform/integrations/sms/sns",
+                  "platform/integrations/sms/telnyx",
+                  "platform/integrations/sms/termii"
+                ]
+              },
+              "platform/integrations/trigger-overrides"
+            ],
+            "icon": "plug-zap"
+          },
+          {
+            "group": "SDKs",
+            "pages": [
+              "platform/sdks",
+              {
+                "group": "@novu/react",
+                "pages": [
+                  "platform/sdks/react",
+                  {
+                    "group": "Hooks",
+                    "pages": [
+                      "platform/sdks/react/hooks/novu-provider",
+                      "platform/sdks/react/hooks/subscription",
+                      "platform/sdks/react/hooks/use-counts",
+                      "platform/sdks/react/hooks/use-notifications",
+                      "platform/sdks/react/hooks/use-novu",
+                      "platform/sdks/react/hooks/use-preferences",
+                      "platform/sdks/react/hooks/use-schedule"
+                    ]
+                  },
+                  "platform/sdks/react/changelog"
+                ]
+              },
+              "platform/sdks/javascript",
+              {
+                "group": "@novu/react-native",
+                "root": "platform/sdks/react-native",
+                "pages": [
+                  "platform/sdks/react-native",
+                  {
+                    "group": "Hooks",
+                    "pages": [
+                      "platform/sdks/react-native/hooks/novu-provider",
+                      "platform/sdks/react-native/hooks/use-novu",
+                      "platform/sdks/react-native/hooks/use-notifications",
+                      "platform/sdks/react-native/hooks/use-counts",
+                      "platform/sdks/react-native/hooks/use-preferences",
+                      "platform/sdks/react-native/hooks/use-schedule"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "Server-Side",
+                "root": "platform/sdks/server",
+                "pages": [
+                  "platform/sdks/server/typescript",
+                  "platform/sdks/server/python",
+                  "platform/sdks/server/go",
+                  "platform/sdks/server/php",
+                  "platform/sdks/server/dotnet",
+                  "platform/sdks/server/java",
+                  "platform/sdks/server/kotlin",
+                  "platform/sdks/server/laravel",
+                  "platform/sdks/server/ruby"
+                ]
+              }
+            ],
+            "icon": "code"
+          },
+          {
+            "group": "Developer",
+            "pages": [
+              "platform/developer/api-keys",
+              "platform/developer/environments",
+              "platform/developer/environment-variables",
+              "platform/developer/limits",
+              {
+                "group": "Webhooks",
+                "pages": [
+                  "platform/developer/webhooks/event-types",
+                  "platform/developer/webhooks/connectors"
+                ]
+              }
+            ],
+            "icon": "terminal"
+          },
+          {
+            "group": "Account",
+            "pages": [
+              "platform/account/authentication",
+              "platform/account/roles-and-permissions",
+              "platform/account/manage-members",
+              "platform/account/billing",
+              "platform/account/sso"
+            ],
+            "icon": "building-2"
+          },
+          {
+            "group": "Build with AI",
+            "pages": [
+              "platform/build-with-ai/mcp",
+              "platform/build-with-ai/skills",
+              "platform/build-with-ai/agent-toolkit"
+            ],
+            "icon": "sparkles"
+          },
+          {
+            "group": "Additional Resources",
+            "pages": [
+              "platform/additional-resources/glossary",
+              "platform/additional-resources/errors",
+              "platform/additional-resources/security",
+              "platform/additional-resources/legacy-documentation"
+            ],
+            "icon": "book-open"
+          }
+        ]
+      },
+      {
+        "tab": "Agents",
+        "groups": [
+          {
+            "group": "Get Started",
+            "boost": 3,
+            "pages": [
+              "agents",
+              "agents/get-started/what-is-aci",
+              "agents/get-started/mental-model",
+              "agents/get-started/agents-and-providers"
+            ]
+          },
+          {
+            "group": "Managed Agent",
+            "pages": [
+              "agents/managed-agent/overview",
+              "agents/managed-agent/quickstart",
+              "agents/managed-agent/concepts",
+              "agents/managed-agent/configure-mcp-servers",
+              "agents/managed-agent/add-skills"
+            ],
+            "icon": "bot"
+          },
+          {
+            "group": "Custom Code Agent",
+            "pages": [
+              "agents/custom-code-agent/quickstart",
+              "agents/custom-code-agent/concepts",
+              "agents/custom-code-agent/connect-your-first-agent",
+              {
+                "group": "Set up your Agent",
+                "pages": [
+                  "agents/custom-code-agent/setup-your-agent/overview",
+                  "agents/custom-code-agent/setup-your-agent/create-an-agent",
+                  "agents/custom-code-agent/setup-your-agent/scaffold-your-project",
+                  "agents/custom-code-agent/setup-your-agent/handle-events",
+                  "agents/custom-code-agent/setup-your-agent/reply",
+                  "agents/custom-code-agent/setup-your-agent/edit-sent-messages",
+                  "agents/custom-code-agent/setup-your-agent/signals",
+                  "agents/custom-code-agent/setup-your-agent/connect-components"
+                ]
+              },
+              "agents/custom-code-agent/going-to-production"
+            ],
+            "icon": "code"
+          },
+          {
+            "group": "Observability",
+            "pages": [
+              "agents/conversations"
+            ],
+            "icon": "eye"
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "api-reference",
+              "api-reference/rate-limiting",
+              "api-reference/idempotency",
+              "api-reference/payload-limits"
+            ]
+          },
+          {
+            "group": "Events",
+            "pages": [
+              "api-reference/events/trigger-event",
+              "api-reference/events/bulk-trigger-event",
+              "api-reference/events/broadcast-event-to-all",
+              "api-reference/events/cancel-triggered-event"
+            ],
+            "icon": "zap"
+          },
+          {
+            "group": "Subscribers",
+            "pages": [
+              "api-reference/subscribers/subscriber-schema",
+              "api-reference/subscribers/create-a-subscriber",
+              "api-reference/subscribers/retrieve-a-subscriber",
+              "api-reference/subscribers/update-a-subscriber",
+              "api-reference/subscribers/delete-a-subscriber",
+              "api-reference/subscribers/search-subscribers",
+              "api-reference/subscribers/retrieve-subscriber-subscriptions",
+              "api-reference/subscribers/bulk-create-subscribers",
+              "api-reference/subscribers/retrieve-subscriber-preferences",
+              "api-reference/subscribers/update-subscriber-preferences",
+              "api-reference/subscribers/bulk-update-subscriber-preferences",
+              "api-reference/subscribers/update-provider-credentials",
+              "api-reference/subscribers/upsert-provider-credentials",
+              "api-reference/subscribers/delete-provider-credentials",
+              "api-reference/subscribers/retrieve-subscriber-notifications",
+              "api-reference/subscribers/update-notifications-state",
+              "api-reference/subscribers/update-all-notifications-state",
+              "api-reference/subscribers/update-subscriber-online-status",
+              "api-reference/subscribers/retrieve-unseen-notifications-count",
+              "api-reference/subscribers/update-notification-action-status"
+            ],
+            "icon": "users"
+          },
+          {
+            "group": "Inbox",
+            "pages": [
+              "api-reference/subscribers/retrieve-subscriber-notifications-count",
+              "api-reference/subscribers/mark-a-notification-as-read",
+              "api-reference/subscribers/mark-a-notification-as-unread",
+              "api-reference/subscribers/mark-all-notifications-as-read",
+              "api-reference/subscribers/mark-notifications-as-seen",
+              "api-reference/subscribers/snooze-a-notification",
+              "api-reference/subscribers/unsnooze-a-notification",
+              "api-reference/subscribers/archive-a-notification",
+              "api-reference/subscribers/unarchive-a-notification",
+              "api-reference/subscribers/archive-all-notifications",
+              "api-reference/subscribers/archive-all-read-notifications",
+              "api-reference/subscribers/delete-a-notification",
+              "api-reference/subscribers/delete-all-notifications",
+              "api-reference/subscribers/complete-a-notification-action",
+              "api-reference/subscribers/revert-a-notification-action"
+            ],
+            "icon": "inbox"
+          },
+          {
+            "group": "Topics",
+            "pages": [
+              "api-reference/topics/topic-schema",
+              "api-reference/topics/create-a-topic",
+              "api-reference/topics/retrieve-a-topic",
+              "api-reference/topics/update-a-topic",
+              "api-reference/topics/delete-a-topic",
+              "api-reference/topics/list-all-topics",
+              "api-reference/topics/create-topic-subscriptions",
+              "api-reference/topics/delete-topic-subscriptions",
+              "api-reference/topics/update-a-topic-subscription",
+              "api-reference/topics/list-topic-subscriptions",
+              "api-reference/topics/check-topic-subscriber",
+              "api-reference/topics/retrieve-a-topic-subscription"
+            ],
+            "icon": "hash"
+          },
+          {
+            "group": "Notifications",
+            "pages": [
+              "api-reference/notifications/notification-event-schema",
+              "api-reference/notifications/list-all-events",
+              "api-reference/notifications/retrieve-an-event"
+            ],
+            "icon": "bell"
+          },
+          {
+            "group": "Workflows",
+            "pages": [
+              "api-reference/workflows/workflow-schema",
+              "api-reference/workflows/create-a-workflow",
+              "api-reference/workflows/retrieve-a-workflow",
+              "api-reference/workflows/update-a-workflow",
+              "api-reference/workflows/delete-a-workflow",
+              "api-reference/workflows/list-all-workflows",
+              "api-reference/workflows/sync-a-workflow",
+              "api-reference/workflows/retrieve-workflow-step",
+              "api-reference/workflows/generate-a-step-preview"
+            ],
+            "icon": "git-branch"
+          },
+          {
+            "group": "Translations",
+            "pages": [
+              "api-reference/translations/create-a-translation",
+              "api-reference/translations/retrieve-a-translation",
+              "api-reference/translations/delete-a-translation",
+              "api-reference/translations/retrieve-a-translation-group",
+              "api-reference/translations/delete-a-translation-group",
+              "api-reference/translations/import-master-translations-json",
+              "api-reference/translations/retrieve-master-translations-json",
+              "api-reference/translations/upload-master-translations-json-file",
+              "api-reference/translations/upload-translation-files"
+            ],
+            "icon": "languages"
+          },
+          {
+            "group": "Contexts",
+            "pages": [
+              "api-reference/contexts/context-schema",
+              "api-reference/contexts/create-a-context",
+              "api-reference/contexts/retrieve-a-context",
+              "api-reference/contexts/update-a-context",
+              "api-reference/contexts/delete-a-context",
+              "api-reference/contexts/list-all-contexts"
+            ],
+            "icon": "layers"
+          },
+          {
+            "group": "Environments",
+            "pages": [
+              "api-reference/environments/environment-schema",
+              "api-reference/environments/create-an-environment",
+              "api-reference/environments/update-an-environment",
+              "api-reference/environments/delete-an-environment",
+              "api-reference/environments/list-all-environments",
+              "api-reference/environments/list-environment-tags",
+              "api-reference/environments/compare-resources-between-environments",
+              "api-reference/environments/publish-resources-to-target-environment"
+            ],
+            "icon": "server"
+          },
+          {
+            "group": "Environment Variables",
+            "pages": [
+              "api-reference/environment-variables/environment-variable-schema",
+              "api-reference/environment-variables/create-a-variable",
+              "api-reference/environment-variables/retrieve-a-variable",
+              "api-reference/environment-variables/update-a-variable",
+              "api-reference/environment-variables/delete-a-variable",
+              "api-reference/environment-variables/list-all-variables",
+              "api-reference/environment-variables/retrieve-a-variable-usage"
+            ],
+            "icon": "variable"
+          },
+          {
+            "group": "Messages",
+            "pages": [
+              "api-reference/messages/message-schema",
+              "api-reference/messages/list-all-messages",
+              "api-reference/messages/delete-a-message",
+              "api-reference/messages/delete-messages-by-transactionid"
+            ],
+            "icon": "message-square"
+          },
+          {
+            "group": "Integrations",
+            "pages": [
+              "api-reference/integrations/integration-schema",
+              "api-reference/integrations/create-an-integration",
+              "api-reference/integrations/update-an-integration",
+              "api-reference/integrations/delete-an-integration",
+              "api-reference/integrations/list-all-integrations",
+              "api-reference/integrations/list-active-integrations",
+              "api-reference/integrations/update-integration-as-primary",
+              "api-reference/integrations/generate-chat-oauth-url",
+              "api-reference/integrations/auto-configure-an-integration-for-inbound-webhooks"
+            ],
+            "icon": "plug"
+          },
+          {
+            "group": "Channel Connections",
+            "pages": [
+              "api-reference/channel-connections/create-a-channel-connection",
+              "api-reference/channel-connections/retrieve-a-channel-connection",
+              "api-reference/channel-connections/update-a-channel-connection",
+              "api-reference/channel-connections/delete-a-channel-connection",
+              "api-reference/channel-connections/list-all-channel-connections"
+            ],
+            "icon": "link"
+          },
+          {
+            "group": "Channel Endpoints",
+            "pages": [
+              "api-reference/channel-endpoints/create-a-channel-endpoint",
+              "api-reference/channel-endpoints/retrieve-a-channel-endpoint",
+              "api-reference/channel-endpoints/update-a-channel-endpoint",
+              "api-reference/channel-endpoints/delete-a-channel-endpoint",
+              "api-reference/channel-endpoints/list-all-channel-endpoints"
+            ],
+            "icon": "radio"
+          },
+          {
+            "group": "Activity",
+            "pages": [
+              "api-reference/activity/track-activity-and-engagement-events"
+            ],
+            "icon": "activity"
+          },
+          {
+            "group": "Layouts",
+            "pages": [
+              "api-reference/layouts/create-a-layout",
+              "api-reference/layouts/delete-a-layout",
+              "api-reference/layouts/duplicate-a-layout",
+              "api-reference/layouts/generate-layout-preview",
+              "api-reference/layouts/get-layout-usage",
+              "api-reference/layouts/list-all-layouts",
+              "api-reference/layouts/retrieve-a-layout",
+              "api-reference/layouts/update-a-layout"
+            ],
+            "icon": "layout-template"
+          }
+        ],
+        "openapi": "https://spec.speakeasy.com/novu/novu/json-development-with-code-samples"
+      },
+      {
+        "tab": "Resources",
+        "menu": [
+          {
+            "item": "Guides",
+            "groups": [
+              {
+                "group": "Guides",
+                "pages": [
+                  "guides",
+                  "guides/inngest",
+                  "guides/triggerdotdev"
+                ],
+                "icon": "book-open"
+              },
+              {
+                "group": "Inbound Webhooks",
+                "pages": [
+                  "guides/webhooks/clerk",
+                  "guides/webhooks/stripe",
+                  "guides/webhooks/segment"
+                ],
+                "icon": "webhook"
+              },
+              {
+                "group": "Recipes",
+                "pages": [
+                  "guides/recipes/managing-workflows"
+                ],
+                "icon": "chef-hat"
+              },
+              {
+                "group": "Framework",
+                "pages": [
+                  "guides/framework/using-translations"
+                ],
+                "icon": "blocks"
+              },
+              {
+                "group": "Migrate to Novu",
+                "pages": [
+                  "guides/migrate-from-courier-to-novu"
+                ],
+                "icon": "arrow-right-left"
+              }
+            ]
+          },
+          {
+            "item": "Framework",
+            "groups": [
+              {
+                "group": "Getting Started",
+                "boost": 0.1,
+                "pages": [
+                  "framework",
+                  "framework/introduction",
+                  {
+                    "group": "Quickstart",
+                    "pages": [
+                      "framework/quickstart/nextjs",
+                      "framework/quickstart/express",
+                      "framework/quickstart/remix",
+                      "framework/quickstart/nestjs",
+                      "framework/quickstart/svelte",
+                      "framework/quickstart/nuxt",
+                      "framework/quickstart/h3",
+                      "framework/quickstart/lambda"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "Core Concepts",
+                "boost": 0.1,
+                "pages": [
+                  "framework/studio",
+                  "framework/endpoint",
+                  "framework/tags",
+                  "framework/payload",
+                  "framework/controls"
+                ],
+                "icon": "blocks"
+              },
+              {
+                "group": "Channels",
+                "boost": 0.1,
+                "pages": [
+                  "framework/email-channel",
+                  "framework/in-app-channel",
+                  "framework/push-channel",
+                  "framework/sms-channel",
+                  "framework/chat-channel"
+                ],
+                "icon": "radio"
+              },
+              {
+                "group": "Content",
+                "boost": 0.1,
+                "pages": [
+                  "framework/content/react-email",
+                  "framework/content/remix-react-email",
+                  "framework/content/svelte-email",
+                  "framework/content/vue-email"
+                ],
+                "icon": "file-text"
+              },
+              {
+                "group": "Advanced Features",
+                "boost": 0.1,
+                "pages": [
+                  "framework/digest",
+                  "framework/delay",
+                  "framework/custom",
+                  "framework/skip"
+                ],
+                "icon": "sparkles"
+              },
+              {
+                "group": "API Reference",
+                "boost": 0.1,
+                "pages": [
+                  "framework/typescript/overview",
+                  "framework/typescript/client",
+                  "framework/typescript/workflow",
+                  {
+                    "group": "Steps",
+                    "pages": [
+                      "framework/typescript/steps/chat",
+                      "framework/typescript/steps/custom",
+                      "framework/typescript/steps/delay",
+                      "framework/typescript/steps/digest",
+                      "framework/typescript/steps/email",
+                      "framework/typescript/steps/inApp",
+                      "framework/typescript/steps",
+                      "framework/typescript/steps/push",
+                      "framework/typescript/steps/sms"
+                    ]
+                  },
+                  "framework/schema/zod",
+                  "framework/schema/json-schema",
+                  "framework/schema/class-validator"
+                ],
+                "icon": "code"
+              },
+              {
+                "group": "Deployment",
+                "boost": 0.1,
+                "pages": [
+                  "framework/deployment/production",
+                  "framework/deployment/syncing",
+                  "framework/deployment/cli",
+                  "framework/deployment/actions"
+                ],
+                "icon": "cloud-upload"
+              }
+            ]
+          },
+          {
+            "item": "Community",
+            "groups": [
+              {
+                "group": "Getting Started",
+                "boost": 0.1,
+                "pages": [
+                  "community",
+                  {
+                    "group": "Self Hosting Novu",
+                    "pages": [
+                      "community/self-hosting-novu/overview",
+                      "community/self-hosting-novu/deploy-with-docker",
+                      "community/self-hosting-novu/telemetry",
+                      "community/self-hosting-novu/data-migrations",
+                      "community/self-hosting-novu/v0-to-v2-migration"
+                    ]
+                  },
+                  "community/get-involved",
+                  "community/code-of-conduct",
+                  "community/roadmap",
+                  "community/self-hosted-and-novu-cloud",
+                  "community/run-in-local-machine",
+                  "community/add-a-new-provider"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "Contact Us",
+        "href": "https://novu.co/contact-us"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "Get Started",
+      "href": "https://dashboard.novu.co/auth/sign-up"
+    }
+  },
+  "contextual": {
+    "options": [
+      "copy",
+      "view",
+      "cursor",
+      "claude",
+      "chatgpt",
+      "mcp",
+      "add-mcp"
+    ]
+  },
+  "footer": {
+    "socials": {
+      "x": "https://x.com/novuhq",
+      "github": "https://github.com/novuhq/novu",
+      "linkedin": "https://linkedin.com/company/novuhq"
+    },
+    "links": [
+      {
+        "header": "Comparison",
+        "items": [
+          {
+            "label": "Novu vs Courier",
+            "href": "https://novu.co/comparison/courier/"
+          },
+          {
+            "label": "Novu vs Knock",
+            "href": "https://novu.co/comparison/knock/"
+          },
+          {
+            "label": "Novu vs MagicBell",
+            "href": "https://novu.co/comparison/magicbell/"
+          },
+          {
+            "label": "Novu vs SuprSend",
+            "href": "https://novu.co/comparison/suprsend/"
+          },
+          {
+            "label": "Novu vs In-house",
+            "href": "https://novu.co/comparison/building-in-house/"
+          }
+        ]
+      },
+      {
+        "header": "Resources",
+        "items": [
+          {
+            "label": "Contact Support",
+            "href": "mailto:support@novu.co"
+          },
+          {
+            "label": "Changelog",
+            "href": "https://go.novu.co/changelog?utm_source=docs_footer"
+          },
+          {
+            "label": "Roadmap",
+            "href": "https://roadmap.novu.co/roadmap"
+          },
+          {
+            "label": "Contact Sales",
+            "href": "https://novu.co/contact-us/"
+          },
+          {
+            "label": "Read llms.txt",
+            "href": "/llms.txt"
+          }
+        ]
+      }
+    ]
+  },
+  "api": {
+    "examples": {
+      "prefill": true
+    }
+  },
+  "integrations": {
+    "gtm": {
+      "tagId": "GTM-KXMC4XP2"
+    },
+    "plausible": {
+      "domain": "docs.novu.co"
+    }
+  },
+  "redirects": [
+    {
+      "source": "/",
+      "destination": "/platform",
+      "permanent": true
+    },
+    {
+      "source": "/content-creation-design/handlebars-helpers",
+      "destination": "/platform/templates/handlebars-helpers",
+      "permanent": true
+    },
+    {
+      "source": "/content-creation-design/layouts",
+      "destination": "/platform/templates/layouts",
+      "permanent": true
+    },
+    {
+      "source": "/integrations/content/react-email",
+      "destination": "/framework/content/react-email",
+      "permanent": true
+    },
+    {
+      "source": "/integrations/overview",
+      "destination": "/platform/integrations",
+      "permanent": true
+    },
+    {
+      "source": "/guides/integrations/segment",
+      "destination": "/platform/integrations/segment",
+      "permanent": true
+    },
+    {
+      "source": "/platform/integrations/sms/burst-sms",
+      "destination": "/platform/integrations/sms/kudosity",
+      "permanent": true
+    },
+    {
+      "source": "/guides/add-digest-to-inapp-notifications",
+      "destination": "/platform/workflow/add-and-configure-steps#digest",
+      "permanent": true
+    },
+    {
+      "source": "/additional-resources/data-migrations",
+      "destination": "/community/data-migrations",
+      "permanent": true
+    },
+    {
+      "source": "/platform/additional-resources/mcp",
+      "destination": "/platform/build-with-ai/mcp",
+      "permanent": true
+    },
+    {
+      "source": "/platform/additional-resources/skills",
+      "destination": "/platform/build-with-ai/skills",
+      "permanent": true
+    },
+    {
+      "source": "/platform/additional-resources/agent-toolkit",
+      "destination": "/platform/build-with-ai/agent-toolkit",
+      "permanent": true
+    },
+    {
+      "source": "/community/machine-setup",
+      "destination": "/community/run-in-local-machine",
+      "permanent": true
+    },
+    {
+      "source": "/community/monorepo-structure",
+      "destination": "/community/code-structure",
+      "permanent": true
+    },
+    {
+      "source": "/platform/inbox/react/get-started",
+      "destination": "/platform/inbox/setup-inbox",
+      "permanent": true
+    },
+    {
+      "source": "/platform/inbox/prepare-for-production#secure-your-inbox-with-hmac-encryption",
+      "destination": "/platform/inbox/prepare-for-production",
+      "permanent": true
+    },
+    {
+      "source": "/platform/inbox/react/migration-guide",
+      "destination": "/platform/inbox/migration-guide",
+      "permanent": true
+    },
+    {
+      "source": "/platform/inbox/react/hooks",
+      "destination": "/platform/sdks/react/hooks/novu-provider",
+      "permanent": true
+    },
+    {
+      "source": "/platform/inbox/react/components",
+      "destination": "/platform/inbox#composable-architecture",
+      "permanent": true
+    },
+    {
+      "source": "/platform/inbox/react/components/overview",
+      "destination": "/platform/inbox#composable-architecture",
+      "permanent": true
+    },
+    {
+      "source": "/platform/inbox/react/components/inbox",
+      "destination": "/platform/inbox",
+      "permanent": true
+    },
+    {
+      "source": "/platform/inbox/react/components/inbox#data-object",
+      "destination": "/platform/inbox/configuration/data-object",
+      "permanent": true
+    },
+    {
+      "source": "/platform/inbox/react/components/inbox-content",
+      "destination": "/platform/inbox/advanced-customization/customize-popover#inboxcontent-component",
+      "permanent": true
+    },
+    {
+      "source": "/platform/inbox/react/components/bell",
+      "destination": "/platform/inbox/advanced-customization/customize-bell",
+      "permanent": true
+    },
+    {
+      "source": "/platform/inbox/react/components/preferences",
+      "destination": "/platform/inbox/configuration/preferences",
+      "permanent": true
+    },
+    {
+      "source": "/platform/inbox/react/styling",
+      "destination": "/platform/inbox/configuration/styling",
+      "permanent": true
+    },
+    {
+      "source": "/platform/inbox/react/styling#appearance-prop",
+      "destination": "/platform/inbox/configuration/styling",
+      "permanent": true
+    },
+    {
+      "source": "/platform/inbox/react/headless",
+      "destination": "/platform/inbox/headless-mode",
+      "permanent": true
+    },
+    {
+      "source": "/platform/inbox/react/localization",
+      "destination": "/platform/inbox/advanced-features/localization",
+      "permanent": true
+    },
+    {
+      "source": "/platform/inbox/advanced-concepts/localization",
+      "destination": "/platform/inbox/advanced-features/localization",
+      "permanent": true
+    },
+    {
+      "source": "/platform/inbox/advanced-concepts/multi-tenancy",
+      "destination": "/platform/inbox/advanced-features/multi-tenancy",
+      "permanent": true
+    },
+    {
+      "source": "/inbox/overview",
+      "destination": "/platform/inbox",
+      "permanent": true
+    },
+    {
+      "source": "/inbox/react/styling",
+      "destination": "/platform/inbox/configuration/styling",
+      "permanent": true
+    },
+    {
+      "source": "/sdks/overview",
+      "destination": "/platform/sdks",
+      "permanent": true
+    },
+    {
+      "source": "/quickstart/nextjs",
+      "destination": "/platform/quickstart/nextjs",
+      "permanent": true
+    },
+    {
+      "source": "/platform/overview",
+      "destination": "/platform",
+      "permanent": true
+    },
+    {
+      "source": "/guides/overview",
+      "destination": "/guides",
+      "permanent": true
+    },
+    {
+      "source": "/framework/overview",
+      "destination": "/framework",
+      "permanent": true
+    },
+    {
+      "source": "/community/overview",
+      "destination": "/community",
+      "permanent": true
+    },
+    {
+      "source": "/api-reference/overview",
+      "destination": "/api-reference",
+      "permanent": true
+    },
+    {
+      "source": "/platform/workflow/overview",
+      "destination": "/platform/workflow",
+      "permanent": true
+    },
+    {
+      "source": "/platform/workflows/notification-workflows",
+      "destination": "/platform/workflow",
+      "permanent": true
+    },
+    {
+      "source": "/platform/sdks/overview",
+      "destination": "/platform/sdks",
+      "permanent": true
+    },
+    {
+      "source": "/platform/inbox/overview",
+      "destination": "/platform/inbox",
+      "permanent": true
+    },
+    {
+      "source": "/platform/integrations/overview",
+      "destination": "/platform/integrations",
+      "permanent": true
+    },
+    {
+      "source": "/platform/subscription/overview",
+      "destination": "/platform/subscription",
+      "permanent": true
+    },
+    {
+      "source": "/platform/sdks/react/overview",
+      "destination": "/platform/sdks/react",
+      "permanent": true
+    },
+    {
+      "source": "/platform/workflow/layouts",
+      "destination": "/platform/workflow/add-notification-content/channels-template-editors#email-layouts",
+      "permanent": true
+    },
+    {
+      "source": "/platform/workflow/template-editor",
+      "destination": "/platform/workflow/add-notification-content/channels-template-editors",
+      "permanent": true
+    },
+    {
+      "source": "/platform/workflow/build-a-workflow",
+      "destination": "/platform/workflow/create-a-workflow",
+      "permanent": true
+    },
+    {
+      "source": "/platform/workflow/build-a-workflow#manage-payload-schema",
+      "destination": "/platform/workflow/configure-workflow#payload-schema",
+      "permanent": true
+    },
+    {
+      "source": "/platform/workflow/delay",
+      "destination": "/platform/workflow/add-and-configure-steps#delay",
+      "permanent": true
+    },
+    {
+      "source": "/platform/workflow/digest",
+      "destination": "/platform/workflow/add-and-configure-steps#digest",
+      "permanent": true
+    },
+    {
+      "source": "/platform/workflow/throttle-step",
+      "destination": "/platform/workflow/add-and-configure-steps#throttle",
+      "permanent": true
+    },
+    {
+      "source": "/platform/workflow/step-conditions",
+      "destination": "/platform/workflow/add-and-configure-steps/step-conditions",
+      "permanent": true
+    },
+    {
+      "source": "/platform/workflow/channel-steps",
+      "destination": "/platform/workflow/add-and-configure-steps#channel-steps",
+      "permanent": true
+    },
+    {
+      "source": "/platform/workflow/tags",
+      "destination": "/platform/workflow/configure-workflow#tags",
+      "permanent": true
+    },
+    {
+      "source": "/community/project-differences",
+      "destination": "/community/self-hosted-and-novu-cloud",
+      "permanent": true
+    },
+    {
+      "source": "/platform/concepts/endpoint",
+      "destination": "/framework/endpoint",
+      "permanent": true
+    },
+    {
+      "source": "/platform/concepts/environments",
+      "destination": "/platform/developer/environments",
+      "permanent": true
+    },
+    {
+      "source": "/platform/concepts/notifications",
+      "destination": "/platform/concepts/notification-event",
+      "permanent": true
+    },
+    {
+      "source": "/platform/additional-resources/roles-and-permissions",
+      "destination": "/platform/account/roles-and-permissions",
+      "permanent": true
+    },
+    {
+      "source": "/platform/inbox/headless/api-reference",
+      "destination": "/platform/inbox/headless-mode",
+      "permanent": true
+    },
+    {
+      "source": "/platform/inbox/headless/get-started",
+      "destination": "/platform/inbox/headless-mode",
+      "permanent": true
+    },
+    {
+      "source": "/platform/inbox/react/tabs",
+      "destination": "/platform/inbox/configuration/tabs",
+      "permanent": true
+    },
+    {
+      "source": "/platform/integrations/demo-providers",
+      "destination": "/platform/integrations/demo-integration",
+      "permanent": true
+    },
+    {
+      "source": "/platform/integrations/email/outlook-365",
+      "destination": "/platform/integrations/email/outlook365",
+      "permanent": true
+    },
+    {
+      "source": "/platform/integrations/email/email-webhook",
+      "destination": "/platform/integrations/email/webhook",
+      "permanent": true
+    },
+    {
+      "source": "/platform/integrations/sms/azure-sms",
+      "destination": "/platform/integrations/sms/azure",
+      "permanent": true
+    },
+    {
+      "source": "/platform/integrations/sms/bulksms",
+      "destination": "/platform/integrations/sms/bulk-sms",
+      "permanent": true
+    },
+    {
+      "source": "/platform/subscription/Headless-hooks",
+      "destination": "/platform/subscription/headless-hooks",
+      "permanent": true
+    },
+    {
+      "source": "/platform/workflow/add-notification-content",
+      "destination": "/platform/workflow/add-notification-content/channels-template-editors",
+      "permanent": true
+    },
+    {
+      "source": "/platform/workflow/translations",
+      "destination": "/platform/workflow/advanced-features/translations",
+      "permanent": true
+    },
+    {
+      "source": "/platform/workflow/add-and-configure-steps/action-steps/delay",
+      "destination": "/platform/workflow/add-and-configure-steps/configure-action-steps/delay",
+      "permanent": true
+    },
+    {
+      "source": "/platform/workflow/add-and-configure-steps/action-steps/throttle",
+      "destination": "/platform/workflow/add-and-configure-steps/configure-action-steps/throttle",
+      "permanent": true
+    },
+    {
+      "source": "/platform/framework/typescript/steps",
+      "destination": "/framework/typescript/steps",
+      "permanent": true
+    },
+    {
+      "source": "/framework/steps",
+      "destination": "/framework/typescript/steps",
+      "permanent": true
+    },
+    {
+      "source": "/platform/run-in-local-machine",
+      "destination": "/community/run-in-local-machine",
+      "permanent": true
+    },
+    {
+      "source": "/platform/workflow/workflows.mdx",
+      "destination": "/platform/workflow",
+      "permanent": true
+    },
+    {
+      "source": "/docs/platform/workflow/layouts",
+      "destination": "/platform/workflow/add-notification-content/channels-template-editors#email-layouts",
+      "permanent": true
+    },
+    {
+      "source": "/agents/custom-code-agent/build-your-first-agent",
+      "destination": "/agents/custom-code-agent/connect-your-first-agent",
+      "permanent": true
+    }
+  ]
+}

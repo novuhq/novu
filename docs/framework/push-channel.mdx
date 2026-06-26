@@ -1,0 +1,18 @@
+---
+title: 'Push'
+description: 'Learn how to configure the Push channel'
+---
+
+Push notifications are a powerful way to deliver real-time updates, reminders, and personalized messages to your users across mobile and web platforms.
+Whether it's a promotional alert, a system notification, or a critical update, push notifications are key to enhancing engagement and retention.
+
+Learn more about the [Push Channel](/platform/integrations/push)
+
+```tsx
+await step.push('push', async () => {
+  return {
+    subject: 'You received a message',
+    body: 'A new post has been created',
+  };
+});
+```

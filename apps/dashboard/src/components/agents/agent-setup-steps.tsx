@@ -1,4 +1,4 @@
-import { AgentRuntimeProviderIdEnum, ChatProviderIdEnum, EmailProviderIdEnum, type IIntegration } from '@novu/shared';
+import { AgentRuntimeProviderIdEnum, EmailProviderIdEnum, type IIntegration } from '@novu/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -24,34 +24,13 @@ import { buildRoute } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { AgentCodeSetupSection } from './agent-code-setup-section';
 import { AgentListenStep } from './agent-listen-step';
-import { EmailSetupGuide } from './email-setup-guide';
 import { isChannelReadyForBridge } from './is-channel-ready-for-bridge';
 import { ProviderCards } from './provider-cards';
+import { resolveProviderSetupGuide, shouldShowProviderSetupGuide } from './provider-setup-guide';
 import { CompletedStepIndicator, SetupStep } from './setup-guide-primitives';
 import { deriveStepStatus } from './setup-guide-step-utils';
-import { SlackSetupGuide } from './slack-setup-guide';
-import { TeamsSetupGuide } from './teams-setup-guide';
-import { TelegramSetupGuide } from './telegram-setup-guide';
-import { WhatsAppSetupGuide } from './whatsapp-setup-guide';
 
 const noop = () => {};
-
-function resolveProviderSetupGuide(providerId: string) {
-  switch (providerId) {
-    case ChatProviderIdEnum.Slack:
-      return SlackSetupGuide;
-    case ChatProviderIdEnum.MsTeams:
-      return TeamsSetupGuide;
-    case ChatProviderIdEnum.WhatsAppBusiness:
-      return WhatsAppSetupGuide;
-    case ChatProviderIdEnum.Telegram:
-      return TelegramSetupGuide;
-    case EmailProviderIdEnum.NovuAgent:
-      return EmailSetupGuide;
-    default:
-      return null;
-  }
-}
 
 const SESSION_KEY = (agentIdentifier: string) => `agent-setup-integration:${agentIdentifier}`;
 const EMAIL_WELCOME_SESSION_KEY = (agentIdentifier: string) => `agent-email-welcome:${agentIdentifier}`;
@@ -507,9 +486,7 @@ export function AgentSetupSteps({
         setSelectedIntegrationId(integration._id);
         sessionStorage.setItem(SESSION_KEY(agent.identifier), integration._id);
 
-        // Activate the collapse in the same render as the selection so the preview,
-        // channel cards, and provider guide animate together rather than in two stages.
-        if (isOnboarding && resolveProviderSetupGuide(providerId)) {
+        if (isOnboarding && shouldShowProviderSetupGuide({ providerId, isOnboarding, useCloudMergedListenStep })) {
           onChannelGuideActiveChangeRef.current?.(true);
         }
       }
@@ -518,7 +495,7 @@ export function AgentSetupSteps({
         requestEmailWelcome(integration.identifier);
       }
     },
-    [agent.identifier, isOnboarding, requestEmailWelcome, telemetry]
+    [agent.identifier, isOnboarding, requestEmailWelcome, telemetry, useCloudMergedListenStep]
   );
 
   useEffect(() => {
@@ -725,11 +702,9 @@ export function AgentSetupSteps({
             index={channelStepIndex}
             totalSteps={totalSteps}
             firstIncompleteStep={firstIncompleteStep}
-            sharedInboundAddress={sharedInboundAddress}
             agentIdentifier={agent.identifier}
             agentName={agent.name}
             selectedIntegrationId={effectiveIntegrationId}
-            selectedProviderId={selectedProviderId}
             existingLinks={agentIntegrationLinks}
             onSelect={handleProviderSelect}
           />

@@ -45,7 +45,7 @@ describe('BridgeExecutorService', () => {
       const attachmentStorage = {
         signRead: sinon.stub().rejects(new Error('storage unavailable')),
       };
-      const service = new BridgeExecutorService({} as any, logger as any, attachmentStorage as any);
+      const service = new BridgeExecutorService({} as any, logger as any, attachmentStorage as any, {} as any);
 
       const result = await (service as any).mapRichContentForBridge(
         {
@@ -71,7 +71,7 @@ describe('BridgeExecutorService', () => {
       const attachmentStorage = {
         signRead: sinon.stub().resolves('https://signed/read'),
       };
-      const service = new BridgeExecutorService({} as any, logger as any, attachmentStorage as any);
+      const service = new BridgeExecutorService({} as any, logger as any, attachmentStorage as any, {} as any);
 
       const result = await (service as any).mapRichContentForBridge(
         {
@@ -98,7 +98,7 @@ describe('BridgeExecutorService', () => {
       const attachmentStorage = {
         signRead: sinon.stub().resolves('https://signed/read'),
       };
-      const service = new BridgeExecutorService({} as any, logger as any, attachmentStorage as any);
+      const service = new BridgeExecutorService({} as any, logger as any, attachmentStorage as any, {} as any);
 
       const result = await (service as any).mapRichContentForBridge(
         {
@@ -126,7 +126,7 @@ describe('BridgeExecutorService', () => {
           return 'https://signed/read';
         }),
       };
-      const service = new BridgeExecutorService({} as any, logger as any, attachmentStorage as any);
+      const service = new BridgeExecutorService({} as any, logger as any, attachmentStorage as any, {} as any);
 
       await (service as any).mapRichContentForBridge(
         {
@@ -156,7 +156,7 @@ describe('BridgeExecutorService', () => {
           return 'https://signed/read';
         }),
       };
-      const service = new BridgeExecutorService({} as any, logger as any, attachmentStorage as any);
+      const service = new BridgeExecutorService({} as any, logger as any, attachmentStorage as any, {} as any);
 
       await (service as any).mapHistory([
         makeActivity({
@@ -190,7 +190,7 @@ describe('BridgeExecutorService', () => {
       const attachmentStorage = {
         signRead: sinon.stub().resolves('https://fresh-signed/read'),
       };
-      const service = new BridgeExecutorService({} as any, logger as any, attachmentStorage as any);
+      const service = new BridgeExecutorService({} as any, logger as any, attachmentStorage as any, {} as any);
 
       const result = await (service as any).mapMessage(
         makeMessage(),
@@ -230,7 +230,7 @@ describe('BridgeExecutorService', () => {
       const attachmentStorage = {
         signRead: sinon.stub().rejects(new Error('sign failed')),
       };
-      const service = new BridgeExecutorService({} as any, logger as any, attachmentStorage as any);
+      const service = new BridgeExecutorService({} as any, logger as any, attachmentStorage as any, {} as any);
 
       const result = await (service as any).mapMessage(
         makeMessage(),
@@ -266,7 +266,7 @@ describe('BridgeExecutorService', () => {
           return 'https://fresh-signed/read';
         }),
       };
-      const service = new BridgeExecutorService({} as any, logger as any, attachmentStorage as any);
+      const service = new BridgeExecutorService({} as any, logger as any, attachmentStorage as any, {} as any);
 
       const result = await (service as any).mapMessage(
         makeMessage(),

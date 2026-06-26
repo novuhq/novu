@@ -26,6 +26,7 @@ import type { Message } from 'chat';
 import { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import { captureAgentException, captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
 import { AgentAttachmentStorage, type StoredAttachment } from '../conversation/agent-attachment-storage.service';
+import { AgentConversationService } from '../conversation/agent-conversation.service';
 
 const MAX_RETRIES = 2;
 
@@ -85,7 +86,6 @@ export interface AgentExecutionParams {
   config: ResolvedAgentConfig;
   conversation: ConversationEntity;
   subscriber: SubscriberEntity | null;
-  history: ConversationActivityEntity[];
   message: Message | null;
   platformContext: AgentPlatformContext;
   action?: AgentAction;
@@ -107,7 +107,8 @@ export class BridgeExecutorService {
   constructor(
     private readonly getDecryptedSecretKey: GetDecryptedSecretKey,
     private readonly logger: PinoLogger,
-    private readonly attachmentStorage: AgentAttachmentStorage
+    private readonly attachmentStorage: AgentAttachmentStorage,
+    private readonly conversationService: AgentConversationService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -260,8 +261,10 @@ export class BridgeExecutorService {
   }
 
   private async buildPayload(params: AgentExecutionParams): Promise<AgentBridgeRequest> {
-    const { event, config, conversation, subscriber, history, message, platformContext, action, reaction } = params;
+    const { event, config, conversation, subscriber, message, platformContext, action, reaction } = params;
     const agentIdentifier = config.agentIdentifier;
+
+    const history = await this.loadHistory(config.environmentId, conversation._id, agentIdentifier);
 
     const replyUrl = `${resolveAgentReplyApiOrigin()}/v1/agents/${agentIdentifier}/reply`;
 
@@ -302,6 +305,26 @@ export class BridgeExecutorService {
       action: action ?? null,
       reaction: reaction ? await this.mapReaction(reaction, config, conversation) : null,
     };
+  }
+
+  /** Fail-soft: a history read error must not drop the bridge delivery — send the event with empty history. */
+  private async loadHistory(
+    environmentId: string,
+    conversationId: string,
+    agentIdentifier: string
+  ): Promise<ConversationActivityEntity[]> {
+    try {
+      return await this.conversationService.getHistory(environmentId, conversationId);
+    } catch (err) {
+      this.logger.warn(err, `[agent:${agentIdentifier}] Failed to load conversation history; continuing without it`);
+      captureAgentWarning(err, {
+        component: 'bridge-executor',
+        operation: 'load-history',
+        agentIdentifier,
+      });
+
+      return [];
+    }
   }
 
   private async mapMessage(

@@ -22,7 +22,7 @@ interface Stubs {
   countTotalInEnvironment: sinon.SinonStub;
   countOlderAgentsInEnvironment: sinon.SinonStub;
   findOldestAgentIds: sinon.SinonStub;
-  listConnectedIntegrationIdsForEnvironment: sinon.SinonStub;
+  listConnectedChannelTypesForEnvironment: sinon.SinonStub;
 }
 
 function buildService(apiServiceLevel: ApiServiceLevelEnum): { service: AgentEntitlementsService; stubs: Stubs } {
@@ -32,7 +32,7 @@ function buildService(apiServiceLevel: ApiServiceLevelEnum): { service: AgentEnt
   const countTotalInEnvironment = sinon.stub().resolves(0);
   const countOlderAgentsInEnvironment = sinon.stub().resolves(0);
   const findOldestAgentIds = sinon.stub().resolves([]);
-  const listConnectedIntegrationIdsForEnvironment = sinon.stub().resolves([]);
+  const listConnectedChannelTypesForEnvironment = sinon.stub().resolves([]);
 
   const featureFlagsService = { getFlag } as unknown as FeatureFlagsService;
   const organizationRepository = { findById } as unknown as CommunityOrganizationRepository;
@@ -43,7 +43,7 @@ function buildService(apiServiceLevel: ApiServiceLevelEnum): { service: AgentEnt
     findOldestAgentIds,
   } as unknown as AgentRepository;
   const agentIntegrationRepository = {
-    listConnectedIntegrationIdsForEnvironment,
+    listConnectedChannelTypesForEnvironment,
   } as unknown as AgentIntegrationRepository;
   const logger = { setContext: sinon.stub(), warn: sinon.stub() } as unknown as PinoLogger;
 
@@ -64,7 +64,7 @@ function buildService(apiServiceLevel: ApiServiceLevelEnum): { service: AgentEnt
       countTotalInEnvironment,
       countOlderAgentsInEnvironment,
       findOldestAgentIds,
-      listConnectedIntegrationIdsForEnvironment,
+      listConnectedChannelTypesForEnvironment,
     },
   };
 }
@@ -285,9 +285,9 @@ describe('AgentEntitlementsService', () => {
       process.env.IS_SELF_HOSTED = 'false';
       const { service, stubs } = buildService(ApiServiceLevelEnum.FREE);
       stubs.countOlderAgentsInEnvironment.resolves(0);
-      stubs.listConnectedIntegrationIdsForEnvironment.resolves(['int-1']);
+      stubs.listConnectedChannelTypesForEnvironment.resolves(['slack']);
 
-      const checks = await service.checkRuntimeLimits(ORGANIZATION_ID, ENVIRONMENT_ID, 'agent-1', 'int-1');
+      const checks = await service.checkRuntimeLimits(ORGANIZATION_ID, ENVIRONMENT_ID, 'agent-1', 'slack');
 
       expect(checks).to.deep.equal({ agentWithinLimit: true, channelWithinLimit: true });
       expect(stubs.findById.callCount).to.equal(1);
@@ -297,7 +297,7 @@ describe('AgentEntitlementsService', () => {
       process.env.IS_SELF_HOSTED = 'true';
       const { service, stubs } = buildService(ApiServiceLevelEnum.FREE);
 
-      const checks = await service.checkRuntimeLimits(ORGANIZATION_ID, ENVIRONMENT_ID, 'agent-1', 'int-1');
+      const checks = await service.checkRuntimeLimits(ORGANIZATION_ID, ENVIRONMENT_ID, 'agent-1', 'slack');
 
       expect(checks).to.deep.equal({ agentWithinLimit: true, channelWithinLimit: true });
       expect(stubs.findById.called).to.equal(false);
@@ -308,7 +308,7 @@ describe('AgentEntitlementsService', () => {
       const { service, stubs } = buildService(ApiServiceLevelEnum.FREE);
       stubs.findById.rejects(new Error('boom'));
 
-      const checks = await service.checkRuntimeLimits(ORGANIZATION_ID, ENVIRONMENT_ID, 'agent-1', 'int-1');
+      const checks = await service.checkRuntimeLimits(ORGANIZATION_ID, ENVIRONMENT_ID, 'agent-1', 'slack');
 
       expect(checks).to.deep.equal({ agentWithinLimit: true, channelWithinLimit: true });
     });
@@ -316,14 +316,14 @@ describe('AgentEntitlementsService', () => {
     it('serves repeated checks from the short-TTL cache without new lookups', async () => {
       process.env.IS_SELF_HOSTED = 'false';
       const { service, stubs } = buildService(ApiServiceLevelEnum.FREE);
-      stubs.listConnectedIntegrationIdsForEnvironment.resolves(['int-1']);
+      stubs.listConnectedChannelTypesForEnvironment.resolves(['slack']);
 
-      const first = await service.checkRuntimeLimits(ORGANIZATION_ID, ENVIRONMENT_ID, 'agent-1', 'int-1');
-      const second = await service.checkRuntimeLimits(ORGANIZATION_ID, ENVIRONMENT_ID, 'agent-1', 'int-1');
+      const first = await service.checkRuntimeLimits(ORGANIZATION_ID, ENVIRONMENT_ID, 'agent-1', 'slack');
+      const second = await service.checkRuntimeLimits(ORGANIZATION_ID, ENVIRONMENT_ID, 'agent-1', 'slack');
 
       expect(second).to.deep.equal(first);
       expect(stubs.findById.callCount).to.equal(1);
-      expect(stubs.listConnectedIntegrationIdsForEnvironment.callCount).to.equal(1);
+      expect(stubs.listConnectedChannelTypesForEnvironment.callCount).to.equal(1);
     });
 
     it('does not cache fail-open results', async () => {
@@ -331,8 +331,8 @@ describe('AgentEntitlementsService', () => {
       const { service, stubs } = buildService(ApiServiceLevelEnum.FREE);
       stubs.findById.onFirstCall().rejects(new Error('boom'));
 
-      await service.checkRuntimeLimits(ORGANIZATION_ID, ENVIRONMENT_ID, 'agent-1', 'int-1');
-      await service.checkRuntimeLimits(ORGANIZATION_ID, ENVIRONMENT_ID, 'agent-1', 'int-1');
+      await service.checkRuntimeLimits(ORGANIZATION_ID, ENVIRONMENT_ID, 'agent-1', 'slack');
+      await service.checkRuntimeLimits(ORGANIZATION_ID, ENVIRONMENT_ID, 'agent-1', 'slack');
 
       expect(stubs.findById.callCount).to.equal(2);
     });
@@ -342,33 +342,48 @@ describe('AgentEntitlementsService', () => {
     it('reports headroom for unconnected channels while under the limit', async () => {
       process.env.IS_SELF_HOSTED = 'false';
       const { service, stubs } = buildService(ApiServiceLevelEnum.FREE);
-      stubs.listConnectedIntegrationIdsForEnvironment.resolves(['int-1']);
+      stubs.listConnectedChannelTypesForEnvironment.resolves(['slack']);
 
       const usage = await service.getChannelPlanUsage(ORGANIZATION_ID, ENVIRONMENT_ID);
 
-      expect(usage.withinLimitIntegrationIds).to.equal(null);
+      expect(usage.used).to.equal(1);
+      expect(usage.connectedProviderIds).to.deep.equal(['slack']);
+      expect(usage.blocksUnconnectedChannels).to.equal(false);
+    });
+
+    it('counts multiple integrations of the same provider as a single channel', async () => {
+      process.env.IS_SELF_HOSTED = 'false';
+      const { service, stubs } = buildService(ApiServiceLevelEnum.FREE);
+      // The repository already dedupes by provider, so two Slack workspaces
+      // surface as a single `slack` channel type here.
+      stubs.listConnectedChannelTypesForEnvironment.resolves(['slack']);
+
+      const usage = await service.getChannelPlanUsage(ORGANIZATION_ID, ENVIRONMENT_ID);
+
+      expect(usage.used).to.equal(1);
       expect(usage.blocksUnconnectedChannels).to.equal(false);
     });
 
     it('blocks unconnected channels once the environment is at its limit', async () => {
       process.env.IS_SELF_HOSTED = 'false';
       const { service, stubs } = buildService(ApiServiceLevelEnum.FREE);
-      stubs.listConnectedIntegrationIdsForEnvironment.resolves(['int-1', 'int-2']);
+      stubs.listConnectedChannelTypesForEnvironment.resolves(['slack', 'msteams']);
 
       const usage = await service.getChannelPlanUsage(ORGANIZATION_ID, ENVIRONMENT_ID);
 
-      expect(usage.withinLimitIntegrationIds).to.equal(null);
+      expect(usage.used).to.equal(2);
       expect(usage.blocksUnconnectedChannels).to.equal(true);
     });
 
-    it('lists within-limit integrations when over the limit', async () => {
+    it('reports the over-limit channel types when over the limit', async () => {
       process.env.IS_SELF_HOSTED = 'false';
       const { service, stubs } = buildService(ApiServiceLevelEnum.FREE);
-      stubs.listConnectedIntegrationIdsForEnvironment.resolves(['int-1', 'int-2', 'int-3']);
+      stubs.listConnectedChannelTypesForEnvironment.resolves(['slack', 'msteams', 'telegram']);
 
       const usage = await service.getChannelPlanUsage(ORGANIZATION_ID, ENVIRONMENT_ID);
 
-      expect(usage.withinLimitIntegrationIds).to.deep.equal(['int-1', 'int-2']);
+      expect(usage.used).to.equal(3);
+      expect(usage.connectedProviderIds).to.deep.equal(['slack', 'msteams', 'telegram']);
       expect(usage.blocksUnconnectedChannels).to.equal(true);
     });
   });
@@ -396,42 +411,69 @@ describe('AgentEntitlementsService', () => {
       expect(isAgentOverPlanLimit(usage, { _id: 'agent-3', active: true })).to.equal(false);
     });
 
-    it('flags connected channels outside the within-limit list and unconnected channels without headroom', () => {
+    it('flags channel types ranked beyond the limit and brand-new channel types without headroom', () => {
       const usage = {
         used: 3,
         limit: 2,
-        withinLimitIntegrationIds: ['int-1', 'int-2'],
+        connectedProviderIds: ['slack', 'msteams', 'telegram'],
         blocksUnconnectedChannels: true,
       };
 
-      expect(isChannelOverPlanLimit(usage, { integrationId: 'int-3', connected: true })).to.equal(true);
-      expect(isChannelOverPlanLimit(usage, { integrationId: 'int-1', connected: true })).to.equal(false);
-      expect(isChannelOverPlanLimit(usage, { integrationId: 'int-new', connected: false })).to.equal(true);
+      // Third connected channel type is over the limit.
+      expect(isChannelOverPlanLimit(usage, { providerId: 'telegram' })).to.equal(true);
+      // Channel types within the first `limit` are fine.
+      expect(isChannelOverPlanLimit(usage, { providerId: 'slack' })).to.equal(false);
+      expect(isChannelOverPlanLimit(usage, { providerId: 'msteams' })).to.equal(false);
+      // A brand-new provider has no slot once the environment is at/over its limit.
+      expect(isChannelOverPlanLimit(usage, { providerId: 'whatsapp-business' })).to.equal(true);
+    });
+
+    it('never flags additional integrations of an already within-limit provider', () => {
+      // Two Slack workspaces collapse to a single `slack` channel type, so the
+      // org sits at 1/2 used and Slack is comfortably within the limit.
+      const usage = {
+        used: 1,
+        limit: 2,
+        connectedProviderIds: ['slack'],
+        blocksUnconnectedChannels: false,
+      };
+
+      expect(isChannelOverPlanLimit(usage, { providerId: 'slack' })).to.equal(false);
     });
   });
 
   describe('isChannelWithinLimit', () => {
-    it('allows channels connected within the limit by connection order', async () => {
+    it('allows channel types connected within the limit by connection order', async () => {
       process.env.IS_SELF_HOSTED = 'false';
       const { service, stubs } = buildService(ApiServiceLevelEnum.FREE);
-      stubs.listConnectedIntegrationIdsForEnvironment.resolves(['int-1', 'int-2']);
+      stubs.listConnectedChannelTypesForEnvironment.resolves(['slack', 'msteams']);
 
-      const withinLimit = await service.isChannelWithinLimit(ORGANIZATION_ID, ENVIRONMENT_ID, 'int-2');
+      const withinLimit = await service.isChannelWithinLimit(ORGANIZATION_ID, ENVIRONMENT_ID, 'msteams');
 
       expect(withinLimit).to.equal(true);
-      expect(stubs.listConnectedIntegrationIdsForEnvironment.calledWith(ORGANIZATION_ID, ENVIRONMENT_ID)).to.equal(
-        true
-      );
+      expect(stubs.listConnectedChannelTypesForEnvironment.calledWith(ORGANIZATION_ID, ENVIRONMENT_ID)).to.equal(true);
     });
 
-    it('blocks channels connected beyond the limit by connection order', async () => {
+    it('blocks channel types connected beyond the limit by connection order', async () => {
       process.env.IS_SELF_HOSTED = 'false';
       const { service, stubs } = buildService(ApiServiceLevelEnum.FREE);
-      stubs.listConnectedIntegrationIdsForEnvironment.resolves(['int-1', 'int-2', 'int-3']);
+      stubs.listConnectedChannelTypesForEnvironment.resolves(['slack', 'msteams', 'telegram']);
 
-      const withinLimit = await service.isChannelWithinLimit(ORGANIZATION_ID, ENVIRONMENT_ID, 'int-3');
+      const withinLimit = await service.isChannelWithinLimit(ORGANIZATION_ID, ENVIRONMENT_ID, 'telegram');
 
       expect(withinLimit).to.equal(false);
+    });
+
+    it('allows another integration of an already within-limit provider even at the limit', async () => {
+      process.env.IS_SELF_HOSTED = 'false';
+      const { service, stubs } = buildService(ApiServiceLevelEnum.FREE);
+      // Slack and Teams fill both Free-tier slots; a second Slack workspace
+      // resolves to the already-connected `slack` channel type and is allowed.
+      stubs.listConnectedChannelTypesForEnvironment.resolves(['slack', 'msteams']);
+
+      const withinLimit = await service.isChannelWithinLimit(ORGANIZATION_ID, ENVIRONMENT_ID, 'slack');
+
+      expect(withinLimit).to.equal(true);
     });
   });
 });
