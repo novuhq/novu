@@ -32,6 +32,7 @@ export type {
   PlanProgressPhase,
   PlanStep,
   PlanStepOpts,
+  PlanStepUpdate,
   PlanTaskInput,
   PlanTaskStatus,
   ReplyContent,

@@ -332,8 +332,8 @@ export interface AgentContextBase {
    *
    * @example
    *   const plan = ctx.plan('Processing…');
-   *   const step = plan.step('Reverse charge', { group: 'Stripe' });
-   *   await reverseCharge(order);
+   *   const step = plan.step('Reverse charge');
+   *   step.update({ title: 'Stripe: Reverse charge', details: 'customer cus_abc' });
    *   step.done();
    */
   plan: PlanControl;
@@ -501,12 +501,16 @@ export type PlanProgressEvent =
   | { kind: 'title'; title?: string };
 
 export type PlanStepOpts = {
-  group?: string;
+  details?: string;
+};
+
+export type PlanStepUpdate = {
+  title?: string;
   details?: string;
 };
 
 export interface PlanStep {
-  update(details: string): this;
+  update(opts: PlanStepUpdate): this;
   done(details?: string): this;
   fail(details?: string): this;
 }

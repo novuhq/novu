@@ -1,4 +1,11 @@
-import type { PlanHandle, PlanProgressEvent, PlanStep, PlanStepOpts, PlanTaskInput } from './agent.types';
+import type {
+  PlanHandle,
+  PlanProgressEvent,
+  PlanStep,
+  PlanStepOpts,
+  PlanStepUpdate,
+  PlanTaskInput,
+} from './agent.types';
 
 type PlanPostFn = (event: PlanProgressEvent) => Promise<void>;
 
@@ -6,6 +13,7 @@ type PlanHandleDeps = {
   post: PlanPostFn;
   onTitleChange: (title: string) => void;
   finalize: (phase: 'finished' | 'failed', title?: string) => Promise<void>;
+  registerDrain: (drain: () => Promise<void>) => void;
 };
 
 class PlanStepImpl implements PlanStep {
@@ -14,8 +22,8 @@ class PlanStepImpl implements PlanStep {
     private readonly id: string
   ) {}
 
-  update(details: string): this {
-    this.handle.upsertTask(this.id, { status: 'in_progress', details });
+  update(opts: PlanStepUpdate): this {
+    this.handle.upsertTask(this.id, { status: 'in_progress', ...opts });
 
     return this;
   }
@@ -43,6 +51,7 @@ class PlanHandleImpl implements PlanHandle {
   ) {
     this.queue = { tail: Promise.resolve() };
     this.cardTitle = initialTitle;
+    deps.registerDrain(() => this.queue.tail);
     this.enqueue({ kind: 'title', ...(initialTitle !== undefined ? { title: initialTitle } : {}) });
   }
 
@@ -104,17 +113,24 @@ class PlanHandleImpl implements PlanHandle {
   finish(title?: string): Promise<void> {
     const resolvedTitle = title ?? this.cardTitle;
 
-    return this.deps.finalize('finished', resolvedTitle);
+    return this.enqueueAwait(() => this.deps.finalize('finished', resolvedTitle));
   }
 
   fail(title?: string): Promise<void> {
     const resolvedTitle = title ?? this.cardTitle;
 
-    return this.deps.finalize('failed', resolvedTitle);
+    return this.enqueueAwait(() => this.deps.finalize('failed', resolvedTitle));
   }
 
   private enqueue(event: PlanProgressEvent): void {
     this.queue.tail = this.queue.tail.then(() => this.deps.post(event)).catch(() => undefined);
+  }
+
+  private enqueueAwait(fn: () => Promise<void>): Promise<void> {
+    const job = this.queue.tail.then(fn);
+    this.queue.tail = job.catch(() => undefined);
+
+    return job;
   }
 }
 

@@ -281,6 +281,7 @@ export class AgentContextImpl {
   private _planActive = false;
   private _planFinalized = false;
   private _planTitle: string | undefined;
+  private _drainPlanQueue: (() => Promise<void>) | null = null;
   private readonly _replyUrl: string;
   private readonly _conversationId: string;
   private readonly _integrationIdentifier: string;
@@ -347,8 +348,8 @@ export class AgentContextImpl {
       }).then(() => undefined);
 
     const finalizePlanHandle = async (phase: 'finished' | 'failed', title?: string): Promise<void> => {
-      this._planFinalized = true;
       await postPlan({ kind: 'phase', phase, ...(title ? { title } : {}) });
+      this._planFinalized = true;
     };
 
     this.plan = ((title?: string) => {
@@ -357,16 +358,21 @@ export class AgentContextImpl {
         this._planTitle = title;
       }
 
-      return createPlanHandle(
+      const handle = createPlanHandle(
         {
           post: postPlan,
           onTitleChange: (text) => {
             this._planTitle = text;
           },
           finalize: finalizePlanHandle,
+          registerDrain: (drain) => {
+            this._drainPlanQueue = drain;
+          },
         },
         title
       );
+
+      return handle;
     }) as PlanControl;
   }
 
@@ -452,7 +458,11 @@ export class AgentContextImpl {
 
   async finalizePlan(phase: 'finished' | 'failed'): Promise<void> {
     if (!this._planActive || this._planFinalized) return;
-    this._planFinalized = true;
+
+    await this._drainPlanQueue?.();
+
+    if (this._planFinalized) return;
+
     await this._post({
       conversationId: this._conversationId,
       integrationIdentifier: this._integrationIdentifier,
@@ -462,6 +472,7 @@ export class AgentContextImpl {
         ...(this._planTitle ? { title: this._planTitle } : {}),
       },
     });
+    this._planFinalized = true;
   }
 
   private async _post(body: AgentReplyPayload): Promise<SentMessageInfo | null> {
