@@ -39,7 +39,7 @@ import { ConnectionConfetti } from './connection-confetti';
 import { EmailSetupGuide } from './email-setup-guide';
 import { isChannelReadyForBridge } from './is-channel-ready-for-bridge';
 import { ProviderCards } from './provider-cards';
-import { CompletedStepIndicator, SetupStep } from './setup-guide-primitives';
+import { CompletedStepIndicator, SetupStep, SetupStepperRail } from './setup-guide-primitives';
 import { deriveStepStatus } from './setup-guide-step-utils';
 import { SlackSetupGuide } from './slack-setup-guide';
 import { TeamsSetupGuide } from './teams-setup-guide';
@@ -729,86 +729,81 @@ export function AgentSetupSteps({
   }, [agent.identifier, agentRoutes.detailsTab, currentEnvironment?.slug, location.search, navigate]);
 
   return (
-    <div className="relative flex flex-col gap-10 py-6 pb-3 pl-8 pr-3 md:pr-6">
-      <div
-        className="absolute bottom-0 left-[22px] top-0 w-px"
-        style={{
-          background: 'linear-gradient(to bottom, transparent 0%, #E1E4EA 10%, #E1E4EA 90%, transparent 100%)',
-        }}
-      />
-
-      {connectSummary &&
-        !hideRecap &&
-        (isManagedRuntime ? (
-          <ManagedAgentRecap agent={agent} summary={connectSummary} />
-        ) : (
-          <div className="flex flex-col gap-10">
-            <ViewAllInstructionsToggle
-              expanded={isInstructionsExpanded}
-              onToggle={() => setIsInstructionsExpanded((prev) => !prev)}
-            />
-
-            <motion.div
-              initial={false}
-              animate={{
-                height: isInstructionsExpanded ? 'auto' : 0,
-                opacity: isInstructionsExpanded ? 1 : 0,
-                marginTop: isInstructionsExpanded ? 0 : '-40px',
-              }}
-              transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-              style={{ clipPath: 'inset(0 -100% -100% -100%)' }}
-            >
-              <ConnectPhaseRecap summary={connectSummary} integrations={integrations} />
-            </motion.div>
-          </div>
-        ))}
-
-      {/*
-       * Keep the channel-selection step mounted and collapse it via height/opacity so it animates
-       * away in sync with the agent preview (page) and the expanding provider guide. The negative
-       * margin absorbs the parent's `gap-10` while collapsed so the rail doesn't keep a 40px gap.
-       */}
-      <motion.div
-        initial={false}
-        animate={{
-          height: collapseChannelSelection ? 0 : 'auto',
-          opacity: collapseChannelSelection ? 0 : 1,
-          marginBottom: collapseChannelSelection ? '-40px' : 0,
-        }}
-        transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-        style={{ clipPath: 'inset(0 -100% -100% -100%)' }}
-      >
-        {useCloudMergedListenStep && sharedInboundAddress ? (
-          <AgentListenStep
-            index={channelStepIndex}
-            totalSteps={totalSteps}
-            firstIncompleteStep={firstIncompleteStep}
-            sharedInboundAddress={sharedInboundAddress}
-            agentIdentifier={agent.identifier}
-            agentName={agent.name}
-            selectedIntegrationId={effectiveIntegrationId}
-            selectedProviderId={selectedProviderId}
-            existingLinks={agentIntegrationLinks}
-            onSelect={handleProviderSelect}
-          />
-        ) : (
-          <SetupStep
-            index={channelStepIndex}
-            status={deriveStepStatus(channelStepIndex, firstIncompleteStep)}
-            title="Choose where your agent can talk"
-            description="Connect a channel so users can message the agent and receive replies."
-            fullWidthContent={
-              <ProviderCards
-                agentIdentifier={agent.identifier}
-                agentName={agent.name}
-                selectedIntegrationId={effectiveIntegrationId}
-                existingLinks={agentIntegrationLinks}
-                onSelect={handleProviderSelect}
+    <div className="flex flex-col gap-10 py-6 pb-3 pr-3 md:pr-6">
+      <SetupStepperRail>
+        {connectSummary &&
+          !hideRecap &&
+          (isManagedRuntime ? (
+            <ManagedAgentRecap agent={agent} summary={connectSummary} />
+          ) : (
+            <div className="flex flex-col gap-10">
+              <ViewAllInstructionsToggle
+                expanded={isInstructionsExpanded}
+                onToggle={() => setIsInstructionsExpanded((prev) => !prev)}
               />
-            }
-          />
-        )}
-      </motion.div>
+
+              <motion.div
+                initial={false}
+                animate={{
+                  height: isInstructionsExpanded ? 'auto' : 0,
+                  opacity: isInstructionsExpanded ? 1 : 0,
+                  marginTop: isInstructionsExpanded ? 0 : '-40px',
+                }}
+                transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+                style={{ clipPath: 'inset(0 -100% -100% -100%)' }}
+              >
+                <ConnectPhaseRecap summary={connectSummary} integrations={integrations} />
+              </motion.div>
+            </div>
+          ))}
+
+        {/*
+         * Keep the channel-selection step mounted and collapse it via height/opacity so it animates
+         * away in sync with the agent preview (page) and the expanding provider guide. The negative
+         * margin absorbs the parent's `gap-10` while collapsed so the rail doesn't keep a 40px gap.
+         */}
+        <motion.div
+          initial={false}
+          animate={{
+            height: collapseChannelSelection ? 0 : 'auto',
+            opacity: collapseChannelSelection ? 0 : 1,
+            marginBottom: collapseChannelSelection ? '-40px' : 0,
+          }}
+          transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+          style={{ clipPath: 'inset(0 -100% -100% -100%)' }}
+        >
+          {useCloudMergedListenStep && sharedInboundAddress ? (
+            <AgentListenStep
+              index={channelStepIndex}
+              totalSteps={totalSteps}
+              firstIncompleteStep={firstIncompleteStep}
+              sharedInboundAddress={sharedInboundAddress}
+              agentIdentifier={agent.identifier}
+              agentName={agent.name}
+              selectedIntegrationId={effectiveIntegrationId}
+              selectedProviderId={selectedProviderId}
+              existingLinks={agentIntegrationLinks}
+              onSelect={handleProviderSelect}
+            />
+          ) : (
+            <SetupStep
+              index={channelStepIndex}
+              status={deriveStepStatus(channelStepIndex, firstIncompleteStep)}
+              title="Choose where your agent can talk"
+              description="Connect a channel so users can message the agent and receive replies."
+              fullWidthContent={
+                <ProviderCards
+                  agentIdentifier={agent.identifier}
+                  agentName={agent.name}
+                  selectedIntegrationId={effectiveIntegrationId}
+                  existingLinks={agentIntegrationLinks}
+                  onSelect={handleProviderSelect}
+                />
+              }
+            />
+          )}
+        </motion.div>
+      </SetupStepperRail>
 
       <AnimatePresence mode="wait" initial={false}>
         {ProviderGuide && guideIntegrationId && !skipProviderGuide ? (
@@ -881,15 +876,17 @@ export function AgentSetupSteps({
       </AnimatePresence>
 
       {channelReadyForBridge && !isManagedRuntime && (
-        <AgentCodeSetupSection
-          agent={agent}
-          stepOffset={bridgeStepOffset}
-          totalSteps={totalSteps}
-          providerId={selectedProviderId}
-          sharedInboundAddress={isEmailChannelSelected ? sharedInboundAddress : undefined}
-          onBridgeConnected={handleBridgeConnected}
-          onAddProvider={hideAddProvider ? undefined : handleAddProvider}
-        />
+        <div className="pl-8">
+          <AgentCodeSetupSection
+            agent={agent}
+            stepOffset={bridgeStepOffset}
+            totalSteps={totalSteps}
+            providerId={selectedProviderId}
+            sharedInboundAddress={isEmailChannelSelected ? sharedInboundAddress : undefined}
+            onBridgeConnected={handleBridgeConnected}
+            onAddProvider={hideAddProvider ? undefined : handleAddProvider}
+          />
+        </div>
       )}
     </div>
   );

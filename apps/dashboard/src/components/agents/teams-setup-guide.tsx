@@ -33,6 +33,7 @@ import {
   type SetupMode,
   SetupModeToggle,
   SetupStep,
+  SetupStepperRail,
 } from './setup-guide-primitives';
 import { deriveStepStatus } from './setup-guide-step-utils';
 import { downloadTeamsAppPackage } from './teams-app-package';
@@ -1522,21 +1523,18 @@ export function TeamsSetupGuide({
   );
 
   const activeSteps = activeSetupMode === 'quick' ? quickSteps : steps;
+  const stepsContent = (
+    <>
+      {isQuickSetupEnabled && modeToggle}
+      {activeSteps}
+    </>
+  );
 
   if (embedded) {
     return (
       <div className="flex flex-col gap-0">
-        {isQuickSetupEnabled && <div className="pt-4 pb-2">{modeToggle}</div>}
-        <div className={cn('relative flex flex-col gap-10 py-6 pb-3 pl-8 pr-3 md:pr-6')}>
-          <div
-            className="absolute bottom-0 left-[22px] top-0 w-px"
-            style={{
-              background: 'linear-gradient(to bottom, transparent 0%, #E1E4EA 10%, #E1E4EA 90%, transparent 100%)',
-            }}
-          />
-          {activeSteps}
-        </div>
-        {listening}
+        <SetupStepperRail className="py-6 pb-3 pr-3 md:pr-6">{stepsContent}</SetupStepperRail>
+        <div className="pl-8">{listening}</div>
         {credentialsSidebar}
       </div>
     );
@@ -1544,9 +1542,8 @@ export function TeamsSetupGuide({
 
   return (
     <>
-      {isQuickSetupEnabled && modeToggle}
-      {activeSteps}
-      {listening}
+      <SetupStepperRail>{stepsContent}</SetupStepperRail>
+      <div className="pl-8">{listening}</div>
       {credentialsSidebar}
     </>
   );

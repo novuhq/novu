@@ -24,6 +24,26 @@ import type { StepStatus } from './setup-guide-step-utils';
 
 export type SetupMode = 'quick' | 'manual';
 
+/** Shared vertical rail gradient — fades at the bottom of the numbered-steps column only. */
+export const SETUP_STEPPER_RAIL_GRADIENT =
+  'linear-gradient(to bottom, transparent 0%, #E1E4EA 10%, #E1E4EA 90%, transparent 100%)';
+
+/**
+ * Vertical stepper rail aligned with `SetupStep` indicators (`left-[22px]` on this
+ * `pl-8` container matches each step's `-left-[20px]` indicator offset).
+ */
+export function SetupStepperRail({ children, className }: { children: ReactNode; className?: string }) {
+  return (
+    <div className={cn('relative flex flex-col gap-10 pl-8', className)}>
+      <div
+        className="pointer-events-none absolute bottom-0 left-[22px] top-0 w-px"
+        style={{ background: SETUP_STEPPER_RAIL_GRADIENT }}
+      />
+      {children}
+    </div>
+  );
+}
+
 export function SetupModeToggle({ mode, onChange }: { mode: SetupMode; onChange: (m: SetupMode) => void }) {
   return (
     <div className="inline-flex w-fit items-start gap-px rounded-[5px] bg-bg-weak p-px">
