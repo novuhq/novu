@@ -16,7 +16,7 @@
  * REQUIRED ENV VARS
  *   NOVU_SECRET_KEY                    Novu API secret key (sk_...)
  *   NOVU_API_BASE_URL                  Novu API base URL (optional; falls back to NEXT_PUBLIC_NOVU_BACKEND_URL, then https://api.novu.co)
- *   NOVU_SLACK_INTEGRATION_IDENTIFIER  Novu integration identifier for the Slack integration
+ *   NOVU_CONNECT_CHAT_INTEGRATION_IDENTIFIER  Novu integration identifier for the Slack integration
  *   SLACK_BOT_USER_OAUTH_TOKEN         Slack workspace Bot User OAuth Token (xoxb-...)
  */
 

@@ -50,15 +50,23 @@ export function AgentManagedOverview({ agent }: AgentManagedOverviewProps) {
     return links.some(isUserFacingConnectedAgentIntegration);
   }, [integrationsQuery.data?.data]);
 
-  const showSetupGuide = integrationsQuery.isSuccess && !hasConnectedChannel;
+  // Keep the setup guide mounted through the in-session connect → Continue gate for rollout
+  // providers (Telegram/Slack). `onSetupComplete` fires on Continue for those providers, or
+  // immediately on connect for everything else — same timing as onboarding `AgentSetupSteps`.
+  const [channelSetupComplete, setChannelSetupComplete] = useState(false);
+  const showSetupGuide = integrationsQuery.isSuccess && (!hasConnectedChannel || !channelSetupComplete);
 
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-4 w-full">
       {isDemoManagedClaudeEnabled && demoQuotaQuery.data ? (
         <DemoQuotaBanner quota={demoQuotaQuery.data} onUpgrade={() => setUpgradeOpen(true)} />
       ) : null}
-      <AgentWhatsNextSection agent={agent} />
-      {showSetupGuide ? <AgentSetupGuide agent={agent} /> : <ConnectedProvidersSection agent={agent} />}
+      {!showSetupGuide ? <AgentWhatsNextSection agent={agent} /> : null}
+      {showSetupGuide ? (
+        <AgentSetupGuide agent={agent} onSetupComplete={() => setChannelSetupComplete(true)} />
+      ) : (
+        <ConnectedProvidersSection agent={agent} />
+      )}
       <McpsSection agent={agent} />
       <SystemPromptSection agent={agent} />
       <ToolsSection agent={agent} />

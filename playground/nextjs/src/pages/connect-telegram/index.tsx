@@ -7,8 +7,8 @@ import { novuConfig } from '@/utils/config';
 // Point the headless hook at a backend that injects the secret key:
 //   - `/api/novu-proxy`    -> forwards to the real Novu API (production-style, secure)
 //   - `/api/telegram-demo` -> offline simulator (no bot/agent/secret required)
-const TELEGRAM_API_URL = process.env.NEXT_PUBLIC_NOVU_TELEGRAM_API_URL ?? '/api/novu-proxy';
-const INTEGRATION_IDENTIFIER = process.env.NEXT_PUBLIC_NOVU_TELEGRAM_INTEGRATION_IDENTIFIER ?? '';
+const TELEGRAM_API_URL = process.env.NEXT_PUBLIC_CONNECT_TELEGRAM_API_URL ?? '/api/novu-proxy';
+const INTEGRATION_IDENTIFIER = process.env.NEXT_PUBLIC_CONNECT_TELEGRAM_INTEGRATION_IDENTIFIER ?? '';
 
 const IS_DEMO = TELEGRAM_API_URL.includes('telegram-demo');
 
@@ -150,8 +150,8 @@ export default function ConnectTelegramPage() {
           <p className="text-xs text-muted-foreground">
             Pre-built button from <code>@novu/react</code> (re-exported by <code>@novu/nextjs</code>). It runs under{' '}
             <code>NovuProvider</code> using the subscriber JWT — no secret key in the browser. Clicking issues a{' '}
-            <code>t.me</code> deep link, opens Telegram, and polls until you press <strong>Start</strong>. Click again to
-            disconnect.
+            <code>t.me</code> deep link, opens Telegram, and polls until you press <strong>Start</strong>. Click again
+            to disconnect.
           </p>
           {INTEGRATION_IDENTIFIER ? (
             <NovuProvider {...novuConfig}>
@@ -165,7 +165,7 @@ export default function ConnectTelegramPage() {
             </NovuProvider>
           ) : (
             <div className="rounded-lg border border-dashed p-4 text-xs text-muted-foreground">
-              Set <code>NEXT_PUBLIC_NOVU_TELEGRAM_INTEGRATION_IDENTIFIER</code> (and{' '}
+              Set <code>NEXT_PUBLIC_CONNECT_TELEGRAM_INTEGRATION_IDENTIFIER</code> (and{' '}
               <code>NEXT_PUBLIC_NOVU_APP_ID</code> / <code>NEXT_PUBLIC_NOVU_SUBSCRIBER_ID</code>) to render the SDK
               button against a live Telegram integration.
             </div>
@@ -190,7 +190,7 @@ export default function ConnectTelegramPage() {
               Integration:{' '}
               <code>
                 {INTEGRATION_IDENTIFIER ||
-                  (IS_DEMO ? 'demo-integration' : '— set NEXT_PUBLIC_NOVU_TELEGRAM_INTEGRATION_IDENTIFIER')}
+                  (IS_DEMO ? 'demo-integration' : '— set NEXT_PUBLIC_CONNECT_TELEGRAM_INTEGRATION_IDENTIFIER')}
               </code>
             </span>
             <span>
@@ -207,9 +207,10 @@ export default function ConnectTelegramPage() {
           />
         ) : (
           <div className="rounded-lg border border-dashed p-5 text-sm text-muted-foreground">
-            Set <code>NEXT_PUBLIC_NOVU_TELEGRAM_INTEGRATION_IDENTIFIER</code> (plus <code>NOVU_SECRET_KEY</code> on the
-            server) to use the live proxy — or set <code>NEXT_PUBLIC_NOVU_TELEGRAM_API_URL=/api/telegram-demo</code> to
-            try the offline simulator with no bot required.
+            Set <code>NEXT_PUBLIC_CONNECT_TELEGRAM_INTEGRATION_IDENTIFIER</code> (plus <code>NOVU_SECRET_KEY</code> on
+            the server) to use the live proxy — or set{' '}
+            <code>NEXT_PUBLIC_CONNECT_TELEGRAM_API_URL=/api/telegram-demo</code> to try the offline simulator with no
+            bot required.
           </div>
         )}
       </div>
