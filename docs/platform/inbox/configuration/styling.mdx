@@ -11,9 +11,10 @@ The appearance prop supports the following keys:
 - `variables`: Define global styling properties (for example, colors, fonts).
 - `elements`: Style individual UI components.
 - `icons`: Replace default icons with custom ones.
+- `animations`: Enable or disable UI animations.
 
 <Note>
-  Check out the [Inbox Playground](https://inbox.novu.co) to see how the Inbox looks with common design presets. It showcases pre-styled variants like Notion and Reddit. helpful for seeing what’s possible before you start customizing.
+  Check out the [Inbox Playground](https://inbox.novu.co) to see how the Inbox looks with common design presets. It showcases pre-styled variants like Notion and Reddit, which is helpful for seeing what’s possible before you start customizing.
 </Note>
 
 ### Understand style injection
@@ -96,8 +97,10 @@ export default Novu;
 | `colorCounterForeground` | `string` | The text color used in notification counters. |
 | `colorNeutral` | `string` | A neutral color used for borders or backgrounds. |
 | `colorShadow` | `string` | The color of shadows applied to elements. |
+| `colorRing` | `string` | The color used for focus rings on interactive elements. |
 | `fontSize` | `string` | The base font size for text in the inbox. |
 | `borderRadius` | `string` | The border radius applied to various elements. |
+| `colorStripes` | `string` | The accent color used for striped loading indicators. |
 
 ## Style the Inbox UI elements
 
@@ -129,11 +132,12 @@ Here's a list of some available elements that can be styled using the elements o
 | Day schedule copy menu       | `dayScheduleCopy__dropdownContent`      |
 | Time select drop-down list         | `timeSelect__dropdownTrigger`           |
 | Time select list             | `timeSelect__dropdownContent`           |
+| Inbox popover content        | `inbox__popoverContent`                 |
 
 <Note>
   **How to find other elements?**
 
-  Any selector that appears before the 🔔 emoji in the Devtools, can be targeted via the elements property in the appearance prop (stripping the `nv-` prefix). You can also use TS autocomplete to find the available elements.
+  Any selector that appears before the 🔔 emoji in the Devtools can be targeted via the `elements` property in the appearance prop (stripping the `nv-` prefix). You can also use TypeScript autocomplete to find the available elements. For the complete list of Inbox element keys, see the [React SDK appearance reference](/platform/sdks/react#appearance-configuration).
 </Note>
 
 <Tabs>
@@ -254,7 +258,7 @@ export default Novu;
 You can customize specific parts of the Inbox UI by providing callback functions for certain keys. This function receives contextual information such as unread counts, notification data, or preference details and let you apply styles dynamically based on runtime values from your application.
 
 <AccordionGroup>
-  <Accordion title="List of elemets that can be customize using the callback function">
+  <Accordion title="List of elements that can be customized using a callback function">
   | Key       | Context signature|
 |-----------|------------------|
 | **Bell**  |                  |
@@ -333,7 +337,8 @@ You can customize specific parts of the Inbox UI by providing callback functions
 | `scheduleContainer`                       | `(context: { schedule?: Schedule }) => string`                  |
 | `scheduleHeader`                          | `(context: { schedule?: Schedule }) => string`                  |
 | `scheduleLabelContainer`                  | `(context: { schedule?: Schedule }) => string`                  |
-| `scheduleLabelIcon`                       | `(context: { schedule?: Schedule }) => string`                  |
+| `scheduleLabelScheduleIcon`               | `(context: { schedule?: Schedule }) => string`                  |
+| `scheduleLabelInfoIcon`                   | `(context: { schedule?: Schedule }) => string`                  |
 | `scheduleLabel`                           | `(context: { schedule?: Schedule }) => string`                  |
 | `scheduleActionsContainer`                | `(context: { schedule?: Schedule }) => string`                  |
 | `scheduleActionsContainerRight`           | `(context: { schedule?: Schedule }) => string`                  |
@@ -489,7 +494,7 @@ This table lists severity element keys:
 
 ## Responsive Inbox using CSS media queries
 
-In mobile and smaller device, use `popoverContent` element and apply custom CSS class on it. Specify CSS media queries on this class and add this class in global CSS file so that it takes effect. In below example, we have applied media queries on the `novu-popover-content` class and added it in global CSS file.
+On mobile and smaller devices, use the `inbox__popoverContent` element and apply a custom CSS class to it. Specify CSS media queries on this class and add the class in a global CSS file so that it takes effect. In the example below, media queries are applied to the `novu-inbox-popover-content` class in a global CSS file.
 
 ```tsx title="ResponsiveInbox.tsx"
 import { Inbox } from '@novu/react';
@@ -501,7 +506,7 @@ const ResponsiveInbox = () => {
       subscriber="YOUR_SUBSCRIBER_ID"
       appearance={{
         elements: {
-          popoverContent: "novu-popover-content",
+          inbox__popoverContent: "novu-inbox-popover-content",
         },
       }}
     />
@@ -512,24 +517,24 @@ export default ResponsiveInbox;
 ```
 
 ```css title="global.css"
-.novu-popover-content {
+.novu-inbox-popover-content {
   max-width: 500px;
 }
 
 @media (max-width: 768px) {
-  .novu-popover-content {
+  .novu-inbox-popover-content {
     max-width: 350px;
   }
 }
 
 @media (max-width: 480px) {
-  .novu-popover-content {
+  .novu-inbox-popover-content {
     max-width: 250px;
   }
 }
 
 @media (max-width: 320px) {
-  .novu-popover-content {
+  .novu-inbox-popover-content {
     max-width: 200px;
   }
 }
