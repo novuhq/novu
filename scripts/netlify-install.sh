@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-TRUST_FLAG="$(bash "$(dirname "$0")/configure-pnpm-private-registry.sh")"
+cd "$(git rev-parse --show-toplevel)"
+
+TRUST_FLAG="$(bash scripts/configure-pnpm-private-registry.sh)"
 pnpm install --frozen-lockfile ${TRUST_FLAG}

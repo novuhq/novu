@@ -4,6 +4,7 @@
 
 [build.environment]
   NODE_OPTIONS="--max_old_space_size=4096"
+  PNPM_FLAGS="--config.trustLockfile=true"
 
 [context.deploy-preview]
   command = "pnpm run build:dashboard --skip-nx-cache"
