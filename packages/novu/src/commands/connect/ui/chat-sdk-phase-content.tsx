@@ -11,7 +11,6 @@ const CHAT_SDK_PHASE_KINDS = [
   'confirm-scaffold',
   'prompt-agent-name',
   'scaffolding-bridge',
-  'bridge-scaffolded',
   'chat-sdk-install-deps-confirm',
   'chat-sdk-install-deps',
   'chat-sdk-reconcile-plan',
@@ -58,29 +57,6 @@ export function ChatSdkPhaseContent({ phase }: { phase: ChatSdkPhase }): React.R
             {phase.variant === 'custom-code' ? 'Scaffolding your agent app…' : 'Scaffolding your Chat SDK app…'}
           </Text>
           <Text dimColor>Installing dependencies — this may take a minute.</Text>
-        </Box>
-      );
-
-    case 'bridge-scaffolded':
-      return (
-        <Box flexDirection="column" gap={1}>
-          <Text color="green">
-            {phase.variant === 'custom-code' ? '✓ Agent project scaffolded.' : '✓ Chat SDK project scaffolded.'}
-          </Text>
-          <Text>
-            <Text bold>Project:</Text> {phase.projectDir}
-          </Text>
-          {phase.envPaths?.map((envPath) => (
-            <Text key={envPath} dimColor>{`Wrote ${envPath}`}</Text>
-          )) ?? null}
-          {phase.agentFilePath ? <Text dimColor>{`Agent handler: ${phase.agentFilePath}`}</Text> : null}
-          {phase.skippedInstall ? (
-            <Box flexDirection="column">
-              <Text color="yellow">⚠ Detected a parent workspace — npm install was skipped.</Text>
-              <Text dimColor>Run this to install dependencies before starting the app:</Text>
-              <Text color="cyan">{`  cd ${phase.projectDir} && npm install`}</Text>
-            </Box>
-          ) : null}
         </Box>
       );
 

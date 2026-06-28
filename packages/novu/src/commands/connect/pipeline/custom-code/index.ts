@@ -7,7 +7,6 @@ import {
   resolveAgentHandlerPathIfExists,
 } from '../bridge/agent-paths';
 import { confirmEmptyDirScaffold } from '../bridge/confirm-empty-dir-scaffold';
-import { printBridgeScaffolded } from '../bridge/print-bridge-scaffolded';
 import { requireConnectSecretKey } from '../bridge/require-secret-key';
 import { runScaffoldWithConsole } from '../bridge/run-scaffold-with-console';
 import { scaffoldBridgeProject } from '../bridge/scaffold-project';
@@ -61,21 +60,12 @@ export async function runCustomCodeProjectSetup(input: CustomCodeSetupInput): Pr
       }),
   });
 
-  if (input.ui.interactive) {
-    printBridgeScaffolded({
-      variant: 'custom-code',
-      projectDir: scaffolded.root,
-      agentFilePath: scaffolded.agentFilePath,
-      skippedInstall: scaffolded.skippedInstall,
-    });
-  } else {
-    input.ui.bridgeScaffolded({
-      variant: 'custom-code',
-      projectDir: scaffolded.root,
-      agentFilePath: scaffolded.agentFilePath,
-      skippedInstall: scaffolded.skippedInstall,
-    });
-  }
+  input.ui.bridgeScaffolded({
+    variant: 'custom-code',
+    projectDir: scaffolded.root,
+    agentFilePath: scaffolded.agentFilePath,
+    skippedInstall: scaffolded.skippedInstall,
+  });
 
   return {
     projectDir: scaffolded.root,

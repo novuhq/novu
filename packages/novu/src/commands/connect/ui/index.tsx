@@ -4,6 +4,7 @@ import chalk from 'chalk';
 import React from 'react';
 import type { GeneratedAgentSpec } from '../api/agents';
 import { ConnectChannelBackError } from '../errors';
+import { printBridgeScaffolded } from '../pipeline/bridge/print-bridge-scaffolded';
 import type { AgentSummary, ConnectCommandOptions } from '../types';
 import { App } from './app';
 import { printConnectSuccess, shouldSkipConnectSuccessSummary } from './print-connect-success';
@@ -244,15 +245,8 @@ function createUiController(
     scaffoldingBridge({ variant }) {
       store.phase.set({ kind: 'scaffolding-bridge', variant });
     },
-    bridgeScaffolded({ variant, projectDir, envPaths, agentFilePath, skippedInstall }) {
-      store.phase.set({
-        kind: 'bridge-scaffolded',
-        variant,
-        projectDir,
-        envPaths,
-        agentFilePath,
-        skippedInstall,
-      });
+    bridgeScaffolded(opts) {
+      printBridgeScaffolded(opts);
     },
     confirmInstallChatSdkDeps({ projectDir, installCommand, packages }) {
       return new Promise<boolean>((resolve) => {

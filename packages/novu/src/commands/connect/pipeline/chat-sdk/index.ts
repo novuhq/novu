@@ -12,7 +12,6 @@ import type {
 import type { ConnectUI } from '../../ui/ui';
 import { confirmEmptyDirScaffold } from '../bridge/confirm-empty-dir-scaffold';
 import { defaultChatSdkScaffoldDirName } from '../bridge/detect-project';
-import { printBridgeScaffolded } from '../bridge/print-bridge-scaffolded';
 import { requireConnectSecretKey } from '../bridge/require-secret-key';
 import { runScaffoldWithConsole } from '../bridge/run-scaffold-with-console';
 import { defaultAgentNameFromDir, deriveAgentIdentifier } from './derive-identifier';
@@ -95,21 +94,12 @@ async function scaffoldThenReconcile(
 
   const envPaths = resolveProjectEnvPaths(scaffolded.root);
 
-  if (input.ui.interactive) {
-    printBridgeScaffolded({
-      variant: 'chat-sdk',
-      projectDir: scaffolded.root,
-      envPaths,
-      skippedInstall: scaffolded.skippedInstall,
-    });
-  } else {
-    input.ui.bridgeScaffolded({
-      variant: 'chat-sdk',
-      projectDir: scaffolded.root,
-      envPaths,
-      skippedInstall: scaffolded.skippedInstall,
-    });
-  }
+  input.ui.bridgeScaffolded({
+    variant: 'chat-sdk',
+    projectDir: scaffolded.root,
+    envPaths,
+    skippedInstall: scaffolded.skippedInstall,
+  });
 
   return reconcileChatSdkProject(input, scaffolded.root, 'empty', {
     scaffolded: true,

@@ -4,7 +4,7 @@ import ora, { type Ora } from 'ora';
 import type { GeneratedAgentSpec } from '../api/agents';
 import { SEND_FROM_ACCOUNT_LABEL } from '../copy/email-onboarding';
 import { channelDisplayName } from '../dashboard-urls';
-import { printBridgeDevNextSteps } from '../pipeline/bridge/print-bridge-dev-next-steps';
+import { printBridgeScaffolded } from '../pipeline/bridge/print-bridge-scaffolded';
 import { CHAT_SDK_REQUIREMENTS_FILE_ENV } from '../pipeline/chat-sdk/requirements';
 import type { AgentSummary } from '../types';
 import { resolveGeneratedAgentSpecLabels } from './agent-spec-labels';
@@ -215,24 +215,9 @@ export function createLoggingUI(): ConnectUI {
     scaffoldingBridge({ variant }) {
       start(variant === 'custom-code' ? 'Scaffolding agent project…' : 'Scaffolding Chat SDK project…');
     },
-    bridgeScaffolded({ variant, projectDir, envPaths, agentFilePath, skippedInstall }) {
-      if (variant === 'chat-sdk') {
-        succeed(`Scaffolded Chat SDK project at ${projectDir}`);
-        for (const envPath of envPaths ?? []) {
-          console.log(chalk.gray(`  Wrote ${envPath}`));
-        }
-      } else {
-        succeed(`Scaffolded agent project at ${projectDir}`);
-        if (agentFilePath) {
-          console.log(chalk.gray(`  Agent handler: ${agentFilePath}`));
-        }
-      }
-
-      if (skippedInstall) {
-        console.log(chalk.yellow('  ⚠ Inside a monorepo — npm install was skipped.'));
-      }
-
-      printBridgeDevNextSteps({ projectDir, skippedInstall });
+    bridgeScaffolded(opts) {
+      stop();
+      printBridgeScaffolded(opts);
     },
     confirmInstallChatSdkDeps({ projectDir, installCommand, packages }) {
       console.log('');

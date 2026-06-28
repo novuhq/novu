@@ -53,15 +53,3 @@ export function resolveBridgeSetupFollowUpMessage(
 
   return null;
 }
-
-/** @deprecated Use `resolveBridgeSetupFollowUpMessage`. */
-export function resolveChatSdkOutcomeMessage(
-  connectMode: AgentConnectMode | undefined,
-  outcome: ChatSdkConnectOutcome | undefined
-): string | null {
-  if (connectMode !== 'chat-sdk' || !outcome) {
-    return null;
-  }
-
-  return resolveChatSdkFollowUp(outcome);
-}

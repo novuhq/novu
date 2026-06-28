@@ -44,10 +44,8 @@ describe('resolveBridgeSetupFollowUpMessage', () => {
 
     expect(message).toContain('Wire your agent code');
   });
-});
 
-describe('resolveChatSdkOutcomeMessage compatibility', () => {
-  it('keeps chat-sdk follow-up behavior via bridge resolver', () => {
+  it('describes ready chat-sdk projects without tunnel', () => {
     const message = resolveBridgeSetupFollowUpMessage('chat-sdk' satisfies AgentConnectMode, {
       chatSdk: {
         projectKind: 'project',

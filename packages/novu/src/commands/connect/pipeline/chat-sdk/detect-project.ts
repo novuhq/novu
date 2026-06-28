@@ -1,9 +1,5 @@
 export {
   defaultChatSdkScaffoldDirName,
-  defaultScaffoldDirName,
-  detectBridgeProject,
-  detectChatSdkProject,
-  type DetectedBridgeProject,
+  detectBridgeProject as detectChatSdkProject,
+  type DetectedBridgeProject as DetectedChatSdkProject,
 } from '../bridge/detect-project';
-
-export type DetectedChatSdkProject = import('../bridge/detect-project').DetectedBridgeProject;

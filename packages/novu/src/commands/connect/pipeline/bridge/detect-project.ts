@@ -32,12 +32,6 @@ export function detectBridgeProject(projectDir: string): DetectedBridgeProject {
   };
 }
 
-/** @deprecated Use `detectBridgeProject`. */
-export const detectChatSdkProject = detectBridgeProject;
-
 export function defaultChatSdkScaffoldDirName(agentIdentifier: string): string {
   return `${agentIdentifier}-chat-sdk`;
 }
-
-/** @deprecated Use `defaultChatSdkScaffoldDirName`. */
-export const defaultScaffoldDirName = defaultChatSdkScaffoldDirName;

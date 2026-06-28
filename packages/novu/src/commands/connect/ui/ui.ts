@@ -22,10 +22,7 @@ export type ChatSdkTunnelOfferResult = 'accept' | 'skip';
 export interface ConnectUI {
   /** True when running the Ink TUI; false for CI / non-TTY logging mode. */
   readonly interactive: boolean;
-  /**
-   * Tear down Ink and return the terminal to normal stdio before a long-running
-   * subprocess (npm install, etc.). No-op in logging / CI mode.
-   */
+  /** Unmount Ink before long subprocesses. No-op in logging mode. */
   releaseTerminal(): Promise<void>;
   // Welcome screen
   /**

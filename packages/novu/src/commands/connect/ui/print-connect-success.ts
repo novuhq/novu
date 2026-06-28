@@ -48,16 +48,6 @@ export function printConnectSuccess(result: ConnectSuccessResult): void {
     chatSdk: result.chatSdkOutcome,
     customCode: result.customCodeOutcome,
   });
-  if (result.connectMode === 'chat-sdk' && result.chatSdkOutcome?.scaffolded) {
-    console.log(`  ${chalk.bold('Project:')} ${result.chatSdkOutcome.projectDir}`);
-  }
-
-  if (result.customCodeOutcome?.scaffolded) {
-    console.log(`  ${chalk.bold('Project:')} ${result.customCodeOutcome.projectDir}`);
-    if (result.customCodeOutcome.agentFilePath) {
-      console.log(`  ${chalk.bold('Agent handler:')} ${result.customCodeOutcome.agentFilePath}`);
-    }
-  }
 
   if (followUp) {
     console.log(`  ${chalk.cyan('→')} ${followUp}`);

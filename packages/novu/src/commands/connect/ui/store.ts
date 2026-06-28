@@ -81,14 +81,6 @@ export type Phase =
     }
   | { kind: 'scaffolding-bridge'; variant: BridgeScaffoldVariant }
   | {
-      kind: 'bridge-scaffolded';
-      variant: BridgeScaffoldVariant;
-      projectDir: string;
-      skippedInstall?: boolean;
-      envPaths?: string[];
-      agentFilePath?: string;
-    }
-  | {
       kind: 'chat-sdk-reconcile-plan';
       projectDir: string;
       requirements: ChatSdkRequirement[];
