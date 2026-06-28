@@ -26,7 +26,7 @@ The Novu API is organized around REST. It has predictable, resource-oriented URL
 - **JSON everywhere** — Send `Content-Type: application/json` on requests with a body. Responses are JSON-encoded.
 - **Response envelope** — Successful responses wrap the result in a `data` field, for example `{ "data": { ... } }`. List endpoints return `{ "data": [ ... ] }` alongside [pagination](/api-reference/pagination) metadata.
 - **Consistent errors** — Failures return a standard error body with a `statusCode` and `message`. See [Errors](/api-reference/errors).
-- **Versioned paths** — The API version is part of the URL (`/v1`, `/v2`). See [Versioning](/api-reference/versioning).
+- **Versioned paths** — The API version is part of the URL (`/v1`, `/v2`).
 
 ## API capabilities
 
@@ -84,9 +84,6 @@ Use these resources to explore, test, and integrate with the API:
   <Card title="Pagination" icon="list" href="/api-reference/pagination">
     Page through large list responses with cursor-based pagination.
   </Card>
-  <Card title="Versioning" icon="git-compare" href="/api-reference/versioning">
-    How v1 and v2 endpoints work and how deprecations are communicated.
-  </Card>
 </Columns>
 
 ### Import the Postman collection
@@ -105,6 +102,6 @@ Use these resources to explore, test, and integrate with the API:
     Trigger a workflow or create a subscriber using the REST API or an SDK. Start with [Trigger event](/api-reference/events/trigger-event) or [Create a subscriber](/api-reference/subscribers/create-a-subscriber).
   </Step>
   <Step title="Review API policies">
-    Understand [Errors](/api-reference/errors), [Pagination](/api-reference/pagination), [Rate limiting](/api-reference/rate-limiting), [Idempotency](/api-reference/idempotency), [Versioning](/api-reference/versioning), and [Payload limits](/api-reference/payload-limits) before building production integrations.
+    Understand [Errors](/api-reference/errors), [Pagination](/api-reference/pagination), [Rate limiting](/api-reference/rate-limiting), [Idempotency](/api-reference/idempotency), and [Payload limits](/api-reference/payload-limits) before building production integrations.
   </Step>
 </Steps>
