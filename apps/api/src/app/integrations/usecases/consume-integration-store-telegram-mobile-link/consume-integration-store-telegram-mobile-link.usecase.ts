@@ -8,7 +8,7 @@ import {
   IntegrationStoreTelegramMobileLinkPayload,
   InvalidTelegramMobileTokenError,
   TelegramMobileLinkTokenService,
-} from '../../../agents/channels/telegram-linking/telegram-mobile-link-token.service';
+} from '../../../telegram-linking/telegram-mobile-link-token.service';
 import { CreateIntegrationCommand } from '../create-integration/create-integration.command';
 import { CreateIntegration } from '../create-integration/create-integration.usecase';
 import { ConsumeIntegrationStoreTelegramMobileLinkCommand } from './consume-integration-store-telegram-mobile-link.command';

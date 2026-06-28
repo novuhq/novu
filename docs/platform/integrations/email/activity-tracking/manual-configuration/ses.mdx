@@ -1,0 +1,118 @@
+---
+title: 'Amazon SES'
+description: 'A step-by-step guide to manually configure Amazon SES with Novu for email activity tracking.'
+---
+
+Amazon SES requires a manual configuration flow to enable Email Activity Tracking in Novu. This process involves creating an IAM user, setting up an SNS topic, subscribing Novu’s webhook, and linking SES configuration sets with the SNS topic.
+
+Setting up Amazon SES for activity tracking is a multi-step process because it requires configuring several AWS services (IAM, SNS, and SES) to work together. This guide provides a complete, step-by-step walkthrough.
+
+## Step 1: Create an IAM User
+
+First, you need to create a dedicated IAM user in AWS that Novu will use to interact with SES.
+
+1. Log in to your AWS Console and navigate to the **IAM** service.
+2. In the sidebar under **Access Management**, click **Users**.
+  ![Create user](/images/channels-and-providers/email/activity-tracking/ses/create-user.png)
+3. Click **Create user**, enter a name for the user, then click **Next**.
+  ![Add user details](/images/channels-and-providers/email/activity-tracking/ses/user-details.png)
+4. On the permissions page, select **Attach policies directly**.
+5. In the search box, find and select the **`AmazonSESFullAccess`** policy. Click **Next**.
+  ![Permissions](/images/channels-and-providers/email/activity-tracking/ses/permissions.png)
+6. Click **Next**, review the details, then click **Create user**. You will be redirected to the user list, where the new user will appear.
+  <video autoPlay loop muted playsInline src="/images/channels-and-providers/email/activity-tracking/ses/create-user.mp4" />
+
+## Step 2: Generate access keys
+
+1. Click on the user you just created.
+2. On the user’s page, click **Create access key**.
+  ![Create access key](/images/channels-and-providers/email/activity-tracking/ses/create-access-key.png)
+3. Under **Access key best practices & alternatives**, select **Application running on an AWS compute service** or the right use case for you.
+4. Check the confirmation box and click **Next**.
+5. Add a description tag, then click **Create access key**.
+6. (Optional) On the **Retrieve access keys** page, you will see the **Access key** and **Secret access key** click **Download .csv file**. This file contains these access keys, you'll need in the next step.
+7. Click **Done**.
+  ![Access keys](/images/channels-and-providers/email/activity-tracking/ses/access-keys.png)
+
+## Step 3: Set up the SES integration in Novu
+
+Now, use the keys you just downloaded to connect your SES account to Novu.
+
+1. In the Novu dashboard, go to the Integration Store.
+2. Click **Connect provider** and select **SES**.
+3. Under **Delivery Provider Credentials**, open the .csv file you downloaded in [Step 2](/platform/integrations/email/activity-tracking/manual-configuration/ses#step-2-generate-access-keys).
+4. Copy the **Access key** into the **Access key ID** field.
+5. Copy the **Secret access key** into the **Secret access key** field.
+  ![Access keys field](/images/channels-and-providers/email/activity-tracking/ses/ses-integration.png)
+6. Fill in the remaining required fields, then click **Create integration**.
+
+## Step 4: Create an SNS Topic
+
+Next, you'll set up an SNS (Simple Notification Service) topic to receive events from SES.
+
+1. In the AWS console, search for SNS (Simple Notification Service), this will open the SNS dashboard.
+  ![search for SNS](/images/channels-and-providers/email/activity-tracking/ses/sns.png)
+2. In the sidebar, click **Topics**.
+  ![Topics](/images/channels-and-providers/email/activity-tracking/ses/create-topic.png)
+3. Click **Create topic**
+4. Select the **Standard** option.
+  ![Create topic](/images/channels-and-providers/email/activity-tracking/ses/sns-standard.png)
+5. Enter a topic name, then scroll down and click **Create topic**.
+
+## Step 5: Subscribe Novu’s webhook to the SNS topic
+
+1. On the topic's page, click **Create subscription**.
+  ![Create subscription](/images/channels-and-providers/email/activity-tracking/ses/subscription.png)
+2. In another browser tab, return to your **SES integration settings in Novu**. Enable the **Email Activity Tracking** toggle.
+3. Copy the **Inbound Webhook URL** it provides.
+  ![Inbound Webhook URL](/images/channels-and-providers/email/activity-tracking/ses/ses-inbound-webhook.png)
+4. Go back to your AWS SNS subscription page.
+    - For **Protocol**, select **HTTPS**.
+    - For **Endpoint**, paste the **Inbound Webhook URL** you copied from Novu.
+    ![AWS SNS subscription page](/images/channels-and-providers/email/activity-tracking/ses/create-subscription.png)
+5. Click **Create subscription**
+6. In the sidebar, click **Subscriptions** to confirm that the subscription status is “Confirmed.”
+  ![Subscription confirmed](/images/channels-and-providers/email/activity-tracking/ses/subscription-confirmed.png)
+
+## Step 6: Create SES Configuration set
+
+Create a Configuration set in SES to tie everything together.
+
+1. In the AWS console, search for SES (Simple Email Service). This opens the Amazon SES dashboard.
+2. In the sidebar, under Configuration section, click **Configuration sets** 
+3. Click **Create set**.
+  ![Create set](/images/channels-and-providers/email/activity-tracking/ses/create-set.png)
+4.  Enter a configuration set name, then click **Create set**.
+  ![Set name](/images/channels-and-providers/email/activity-tracking/ses/set-name.png)
+5.  Copy the **Configuration set name**.
+6.  Go back to your SES integration settings in Novu. 
+7. Paste the name into the **Configuration Set Name** field under the **Email Activity Tracking** section.
+  ![Set name Novu](/images/channels-and-providers/email/activity-tracking/ses/set-name-novu.png)
+8. Click **Save changes**.
+
+## Step 7: Add event destination
+
+1. Return to the Configuration set page in your **AWS SES dashboard** and click on the set you just created.
+2.  Click the **Event destinations** tab and then **Add event destination**.
+  ![Add destination](/images/channels-and-providers/email/activity-tracking/ses/add-destination.png)
+3.  Select all available **Event types** and click **Next**.
+  ![Event types](/images/channels-and-providers/email/activity-tracking/ses/event-types.png)
+4. For the destination, select **Amazon SNS topic** and then enter a destination name.
+5. Under SNS topic, select the topic you created in [Step 4](/platform/integrations/email/activity-tracking/manual-configuration/ses#step-4-create-an-sns-topic).
+  ![SNS topic](/images/channels-and-providers/email/activity-tracking/ses/sns-topic.png)
+6. Click **Next**, review the details, and then click **Add destination**.
+  ![SNS topic](/images/channels-and-providers/email/activity-tracking/ses/review-destination-details.png)
+
+Your Amazon SES integration is now fully configured for activity tracking. Events will begin appearing in your Novu **Activity Feed** as you send notifications.
+
+## Troubleshooting
+
+### Email address is not verified
+
+If you get "MessageRejected: Email address is not verified" error when you trigger a workflow in Novu. This error means that the sender email address you are trying to use has not been verified in SES.
+
+To fix this:
+1. Go to the SES console.
+2. In the sidebar, click **Account dashboard**.
+  ![Account destination](/images/channels-and-providers/email/activity-tracking/ses/account-dashboard.png)
+3. Click **View Get set up page** and follow the steps in the **Get set up page** to verify your email address and sending domain.

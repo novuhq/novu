@@ -74,3 +74,10 @@ export {
   isSameFilter,
   normalizeTagGroups,
 } from './utils/notification-utils';
+export { TelegramSubscriberLink } from './telegram';
+export type {
+  TelegramSubscriberLinkOptions,
+  TelegramSubscriberLinkResponse,
+  TelegramSubscriberLinkState,
+  TelegramSubscriberLinkStatus,
+} from './telegram';

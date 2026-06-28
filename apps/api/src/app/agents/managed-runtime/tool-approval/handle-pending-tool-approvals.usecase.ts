@@ -182,7 +182,7 @@ export class HandlePendingToolApprovals {
           conversationId: command.conversationId,
           agentIdentifier: command.agentIdentifier,
           integrationIdentifier: command.integrationIdentifier,
-          toolProgress: { action: 'fail' },
+          event: { kind: 'phase', phase: 'failed' },
         })
       );
     } catch (deliveryErr) {
@@ -394,7 +394,7 @@ export class HandlePendingToolApprovals {
         conversationId: command.conversationId,
         agentIdentifier: command.agentIdentifier,
         integrationIdentifier: command.integrationIdentifier,
-        toolProgress: { action: 'awaiting-approval' },
+        event: { kind: 'phase', phase: 'awaiting-approval' },
       })
     );
   }

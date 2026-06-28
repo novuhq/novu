@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import type { FileRef } from '@novu/framework';
+import type { FileRef, PlanProgressEvent } from '@novu/framework';
 import type { TriggerRecipientsPayload } from '@novu/shared';
 import { Type } from 'class-transformer';
 import {
@@ -149,6 +149,77 @@ export class IsValidReplyContent implements ValidatorConstraintInterface {
   }
 }
 
+@ValidatorConstraint({ name: 'isValidTypingOp', async: false })
+export class IsValidTypingOp implements ValidatorConstraintInterface {
+  validate(value: unknown): boolean {
+    if (value === undefined) return true;
+    if (value === 'stop') return true;
+
+    if (typeof value === 'object' && value !== null) {
+      const status = (value as { status?: unknown }).status;
+
+      return status === undefined || typeof status === 'string';
+    }
+
+    return false;
+  }
+
+  defaultMessage(): string {
+    return "typing must be 'stop' or an object with an optional string status.";
+  }
+}
+
+const PLAN_TASK_STATUSES = ['pending', 'in_progress', 'complete', 'error'] as const;
+const PLAN_PROGRESS_PHASES = ['awaiting-approval', 'approved', 'denied', 'finished', 'failed'] as const;
+
+@ValidatorConstraint({ name: 'isValidPlanProgressEvent', async: false })
+export class IsValidPlanProgressEvent implements ValidatorConstraintInterface {
+  validate(value: unknown): boolean {
+    if (typeof value !== 'object' || value === null) return false;
+    const event = value as { kind?: unknown; task?: unknown; phase?: unknown };
+
+    if (event.kind === 'task') {
+      const taskEvent = event as { task?: unknown; cardTitle?: unknown };
+      const task = taskEvent.task as {
+        id?: unknown;
+        status?: unknown;
+        title?: unknown;
+        details?: unknown;
+        group?: unknown;
+      };
+      if (typeof task !== 'object' || task === null) return false;
+      if (typeof task.id !== 'string' || task.id.length === 0) return false;
+      if (!PLAN_TASK_STATUSES.includes(task.status as never)) return false;
+      if (taskEvent.cardTitle !== undefined && typeof taskEvent.cardTitle !== 'string') return false;
+
+      return [task.title, task.details, task.group].every((f) => f === undefined || typeof f === 'string');
+    }
+
+    if (event.kind === 'phase') {
+      const phaseEvent = event as { phase?: unknown; title?: unknown };
+      if (!PLAN_PROGRESS_PHASES.includes(phaseEvent.phase as never)) return false;
+
+      return phaseEvent.title === undefined || typeof phaseEvent.title === 'string';
+    }
+
+    if (event.kind === 'title') {
+      const titleEvent = event as { title?: unknown };
+
+      return titleEvent.title === undefined || (typeof titleEvent.title === 'string' && titleEvent.title.length > 0);
+    }
+
+    return false;
+  }
+
+  defaultMessage(): string {
+    return (
+      "planProgress must be { kind: 'task', task: { id, status } } with status in " +
+      `${PLAN_TASK_STATUSES.join('|')}, { kind: 'phase', phase } with optional title, ` +
+      `or { kind: 'title' } with an optional non-empty title string.`
+    );
+  }
+}
+
 export class ReplyContentDto {
   @ApiPropertyOptional()
   @IsOptional()
@@ -283,4 +354,21 @@ export class AgentReplyPayloadDto {
   @ValidateNested({ each: true })
   @Type(() => AddReactionPayloadDto)
   addReactions?: AddReactionPayloadDto[];
+
+  @ApiPropertyOptional({
+    description:
+      'Per-turn typing/status control. `{ status?: string }` sets the status text ' +
+      '(omit for the default "Thinking…"); `"stop"` clears it. Best-effort per platform.',
+  })
+  @IsOptional()
+  @Validate(IsValidTypingOp)
+  typing?: { status?: string } | 'stop';
+
+  @ApiPropertyOptional({
+    description:
+      'Per-event plan/task progress. { kind: "task", task }, { kind: "phase", phase, title? }, or { kind: "title", title }.',
+  })
+  @IsOptional()
+  @Validate(IsValidPlanProgressEvent)
+  planProgress?: PlanProgressEvent;
 }

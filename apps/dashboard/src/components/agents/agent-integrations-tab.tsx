@@ -16,6 +16,7 @@ import { requireEnvironment, useEnvironment } from '@/context/environment/hooks'
 import { useAgentRoutes } from '@/hooks/use-agent-routes';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { useTelemetry } from '@/hooks/use-telemetry';
+import { getAgentChannelDisplayName } from '@/utils/agent-email-provider-display';
 import { buildRoute } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
@@ -506,6 +507,10 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
                     {items.map((link) => {
                       const int = link.integration;
                       const providerMeta = novuProviders.find((p) => p.id === int.providerId);
+                      const channelDisplayName = getAgentChannelDisplayName(
+                        int.providerId,
+                        providerMeta?.displayName ?? int.name
+                      );
                       const isSelected = integrationIdentifier === int.identifier;
                       const isConnected = isAgentIntegrationConnected(link);
                       // Setup ("Action needed") takes precedence — the plan limit only
@@ -526,7 +531,7 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
                           key={link._id}
                           type="button"
                           onClick={() => handleLinkedRowClick(link)}
-                          aria-label={`${int.name} — ${statusLabel}`}
+                          aria-label={`${channelDisplayName} — ${statusLabel}`}
                           className={cn(
                             'bg-bg-white border-stroke-weak hover:border-stroke-soft flex w-full items-center justify-between gap-1.5 rounded-md border px-2 py-1.5 text-left transition-colors',
                             isSelected && 'border-stroke-soft'
@@ -535,11 +540,11 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
                           <span className="flex min-w-0 items-center gap-1.5">
                             <ProviderIcon
                               providerId={int.providerId}
-                              providerDisplayName={providerMeta?.displayName ?? int.name}
+                              providerDisplayName={channelDisplayName}
                               className="size-4 shrink-0"
                             />
                             <span className="text-text-sub text-label-sm min-w-0 truncate font-medium leading-5">
-                              {int.name}
+                              {channelDisplayName}
                             </span>
                           </span>
                           <span className="flex shrink-0 items-center gap-1" aria-hidden>
