@@ -18,7 +18,7 @@ export const CONNECT_MODE_GROUPS: readonly ConnectModeGroup[] = [
       { value: 'ai-sdk', title: 'AI SDK' },
       { value: 'langchain', title: 'LangChain' },
       { value: 'custom-code', title: 'Custom code' },
-      { value: 'chat-sdk', title: 'Chat SDK', detail: 'your own app is the brain' },
+      { value: 'chat-sdk', title: 'Chat SDK' },
     ],
   },
   {
