@@ -29,7 +29,15 @@ jobs:
           cache: pnpm
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        env:
+          BULL_MQ_PRO_NPM_TOKEN: ${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}
+        run: |
+          if [ -n "${BULL_MQ_PRO_NPM_TOKEN:-}" ]; then
+            cp .npmrc-cloud .npmrc
+            pnpm install --frozen-lockfile
+          else
+            pnpm install --frozen-lockfile --config.trustLockfile=true
+          fi
 
       - name: Run agent evals
         env:
