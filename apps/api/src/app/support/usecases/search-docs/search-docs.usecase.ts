@@ -46,7 +46,7 @@ export class SearchDocsUsecase {
   }
 }
 
-async function safeReadJson(response: Response): Promise<unknown> {
+async function safeReadJson(response: globalThis.Response): Promise<unknown> {
   try {
     return await response.json();
   } catch {

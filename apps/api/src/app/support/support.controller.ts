@@ -1,17 +1,22 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Post, Res, UseGuards } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { Novu } from '@novu/api';
-import { PinoLogger, UserSession } from '@novu/application-generic';
+import { PinoLogger, SkipPermissionsCheck, UserSession } from '@novu/application-generic';
 import { OrganizationRepository } from '@novu/dal';
 import { UserSessionData } from '@novu/shared';
+import type { Response } from 'express';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { AgentsEarlyAccessDto } from './dtos/agents-early-access.dto';
 import { CreateSupportThreadDto } from './dtos/create-thread.dto';
+import { DocsAssistantMessageRequestDto } from './dtos/docs-assistant-message-request.dto';
+import { DocsAssistantSearchRequestDto } from './dtos/docs-assistant-search-request.dto';
 import { PlainCardRequestDto } from './dtos/plain-card.dto';
 import { PlainCardsGuard } from './guards/plain-cards.guard';
 import { CreateSupportThreadUsecase, PlainCardsUsecase } from './usecases';
 import { CreateSupportThreadCommand } from './usecases/create-thread.command';
 import { PlainCardsCommand } from './usecases/plain-cards.command';
+import { SearchDocsCommand, SearchDocsUsecase } from './usecases/search-docs';
+import { SendDocsMessageCommand, SendDocsMessageUsecase } from './usecases/send-docs-message';
 
 @Controller('/support')
 @ApiExcludeController()
@@ -20,7 +25,9 @@ export class SupportController {
     private createSupportThreadUsecase: CreateSupportThreadUsecase,
     private organizationRepository: OrganizationRepository,
     private logger: PinoLogger,
-    private plainCardsUsecase: PlainCardsUsecase
+    private plainCardsUsecase: PlainCardsUsecase,
+    private searchDocsUsecase: SearchDocsUsecase,
+    private sendDocsMessageUsecase: SendDocsMessageUsecase
   ) {
     this.logger.setContext(SupportController.name);
   }
@@ -109,5 +116,46 @@ export class SupportController {
       },
       payload: {},
     });
+  }
+
+  @RequireAuthentication()
+  @SkipPermissionsCheck()
+  @Post('docs-assistant/search')
+  async searchDocs(@Body() body: DocsAssistantSearchRequestDto, @UserSession() user: UserSessionData) {
+    return this.searchDocsUsecase.execute(
+      SearchDocsCommand.create({
+        query: body.query,
+        pageSize: body.pageSize,
+        userId: user._id as string,
+      })
+    );
+  }
+
+  @RequireAuthentication()
+  @SkipPermissionsCheck()
+  @Post('docs-assistant/message')
+  async docsAssistantMessage(
+    @Body() body: DocsAssistantMessageRequestDto,
+    @UserSession() user: UserSessionData,
+    @Res() res: Response
+  ): Promise<void> {
+    const result = await this.sendDocsMessageUsecase.execute(
+      SendDocsMessageCommand.create({
+        fp: user._id as string,
+        threadId: body.threadId,
+        threadKey: body.threadKey,
+        messages: body.messages,
+        retrievalPageSize: body.retrievalPageSize,
+        currentPath: body.currentPath,
+        userId: user._id as string,
+      }),
+      res
+    );
+
+    if (result.handled) {
+      return;
+    }
+
+    res.json(result.body);
   }
 }

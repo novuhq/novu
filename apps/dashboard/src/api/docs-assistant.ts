@@ -10,11 +10,11 @@ export type MintlifySearchResult = {
 };
 
 export function getDocsAssistantMessageUrl(): string {
-  return `${getApiBaseUrl()}/v1/docs-assistant/message`;
+  return `${getApiBaseUrl()}/v1/support/docs-assistant/message`;
 }
 
 export async function searchDocs(query: string, pageSize = 8): Promise<MintlifySearchResult[]> {
-  const response = await post<{ data: MintlifySearchResult[] }>('/docs-assistant/search', {
+  const response = await post<{ data: MintlifySearchResult[] }>('/support/docs-assistant/search', {
     body: { query, pageSize },
   });
 
