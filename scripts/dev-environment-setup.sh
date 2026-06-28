@@ -419,7 +419,7 @@ install_nvm () {
 }
 
 install_pnpm () {
-    PNPM_VERSION="11.0.9"
+    PNPM_VERSION="11.9.0"
     load_nvm
     TEST_PNPM_CMD=$(execute_command_without_error_print "pnpm --version")
     if [[ -z "$TEST_PNPM_CMD" ]] || [[ "$TEST_PNPM_CMD" == *"command not found"* ]] || [[ "$TEST_PNPM_CMD" != "$PNPM_VERSION" ]]; then

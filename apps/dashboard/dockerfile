@@ -4,7 +4,7 @@ ENV NX_DAEMON=false
 
 WORKDIR /usr/src/app
 
-RUN npm --no-update-notifier --no-fund --global install pnpm@11.0.9
+RUN npm --no-update-notifier --no-fund --global install pnpm@11.9.0
 
 COPY package.json .
 

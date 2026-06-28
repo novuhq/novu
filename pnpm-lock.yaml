@@ -310,8 +310,8 @@ importers:
         specifier: ^0.0.24
         version: 0.0.24
       pnpm:
-        specifier: 11.0.9
-        version: 11.0.9
+        specifier: 11.9.0
+        version: 11.9.0
       portless:
         specifier: ^0.14.0
         version: 0.14.0
@@ -23865,8 +23865,8 @@ packages:
     resolution: {integrity: sha512-40QW5YalBNfQo5yRYmiw7Yz6TKKVr3h6970B2YE+3fQpsWcrbj1PzJgxeJ19DRQjhMbKPIuMY8rFaXc8moolVw==}
     engines: {node: '>=10.13.0'}
 
-  pnpm@11.0.9:
-    resolution: {integrity: sha512-NM6C5ngCM8+crYaFApqPgdLgYZbFqbrZiHn3QklAxoF8TkUk+304uFU87tSLl1i4668avTYAwjLEyM9zZghvOA==}
+  pnpm@11.9.0:
+    resolution: {integrity: sha512-vWgtXQP+Ul73yf1ngMaITR51asTJyf4AxTh4KCQxDc+Q493E9Tg18G3669UIXkGFXgvLs7YN4qxburieUDbwOw==}
     engines: {node: '>=22.13'}
     hasBin: true
 
@@ -55262,7 +55262,7 @@ snapshots:
 
   pngjs@5.0.0: {}
 
-  pnpm@11.0.9: {}
+  pnpm@11.9.0: {}
 
   points-on-curve@0.2.0: {}
 
