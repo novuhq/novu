@@ -32,10 +32,8 @@ import { TelemetryEvent } from '@/utils/telemetry';
 import { AgentCodeSetupSection } from './agent-code-setup-section';
 import { AgentIntegrationGuideTransition } from './agent-integration-guides/agent-integration-guide-transition';
 import { resolveAgentProviderDisplayName } from './agent-integration-guides/agent-provider-display-name';
-import { AgentChannelWhatsNextGuide } from './agent-integration-guides/whats-next/agent-channel-whats-next-guide';
 import { providerHasWhatsNextPhase } from './agent-integration-guides/whats-next/whats-next-config';
 import { AgentListenStep } from './agent-listen-step';
-import { ConnectionConfetti } from './connection-confetti';
 import { EmailSetupGuide } from './email-setup-guide';
 import { isChannelReadyForBridge } from './is-channel-ready-for-bridge';
 import { ProviderCards } from './provider-cards';
@@ -439,10 +437,6 @@ export function AgentSetupSteps({
     () => agentIntegrationLinks.find((link) => link.integration._id === guideIntegrationId),
     [agentIntegrationLinks, guideIntegrationId]
   );
-  const guideIntegrationCredentials = useMemo(
-    () => integrations?.find((i) => i._id === guideIntegrationId)?.credentials,
-    [integrations, guideIntegrationId]
-  );
 
   // Providers with a user-rollout "what's next" phase (Slack/Telegram) split setup into two layers —
   // connect the channel for yourself (layer 1), then roll it out to your users (layer 2). Managed
@@ -651,6 +645,30 @@ export function AgentSetupSteps({
     onSetupCompleteRef.current?.();
   }, [isManagedRuntime, hasConnectedIntegration, useOnboardingRolloutGate, hasContinuedSetup]);
 
+  const handleRolloutContinue = useCallback(() => {
+    setHasContinuedSetup(true);
+
+    const integrationIdentifier = guideIntegrationLink?.integration.identifier;
+    if (!currentEnvironment?.slug || !integrationIdentifier) {
+      return;
+    }
+
+    void navigate(
+      `${buildRoute(agentRoutes.integrationDetail, {
+        environmentSlug: currentEnvironment.slug,
+        agentIdentifier: encodeURIComponent(agent.identifier),
+        integrationIdentifier: encodeURIComponent(integrationIdentifier),
+      })}${location.search}`
+    );
+  }, [
+    agent.identifier,
+    agentRoutes.integrationDetail,
+    currentEnvironment?.slug,
+    guideIntegrationLink?.integration.identifier,
+    location.search,
+    navigate,
+  ]);
+
   const connectedProviderIds = useMemo<ReadonlyArray<string>>(() => {
     return agentIntegrationLinks
       .filter((link) => Boolean(link.connectedAt) && link.integration.providerId !== EmailProviderIdEnum.NovuAgent)
@@ -821,7 +839,7 @@ export function AgentSetupSteps({
                 isConnected={Boolean(guideIntegrationLink?.connectedAt)}
                 providerDisplayName={resolveAgentProviderDisplayName(guideProviderId)}
                 hasUserRolloutPhase
-                onContinued={() => setHasContinuedSetup(true)}
+                onContinued={handleRolloutContinue}
                 renderSetupView={(footer) => (
                   <>
                     <ProviderGuide
@@ -841,19 +859,7 @@ export function AgentSetupSteps({
                     {footer}
                   </>
                 )}
-                renderConnectedView={(justConnected) =>
-                  guideIntegrationLink ? (
-                    <>
-                      <ConnectionConfetti active={justConnected} />
-                      <AgentChannelWhatsNextGuide
-                        agent={agent}
-                        integrationLink={guideIntegrationLink}
-                        credentials={guideIntegrationCredentials}
-                        applicationIdentifier={currentEnvironment?.identifier}
-                      />
-                    </>
-                  ) : null
-                }
+                renderConnectedView={() => null}
               />
             ) : (
               <ProviderGuide
