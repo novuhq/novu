@@ -55,8 +55,16 @@ export const TelegramConnectButton = (props: TelegramConnectButtonProps) => {
     stopPolling();
 
     const startedAt = Date.now();
+    // `setInterval` does not serialize async callbacks: if a `list()` call outlives POLL_INTERVAL_MS,
+    // a second tick fires while the first is still awaiting. This one-shot guard ensures only the
+    // first callback to find the endpoint (or hit the timeout) runs the success/error side-effects.
+    let committed = false;
 
     intervalIdRef.current = setInterval(async () => {
+      if (committed) {
+        return;
+      }
+
       try {
         const response = await novuAccessor().channelEndpoints.list({
           integrationIdentifier: integrationIdentifier(),
@@ -65,8 +73,13 @@ export const TelegramConnectButton = (props: TelegramConnectButtonProps) => {
           limit: 1,
         });
 
+        if (committed) {
+          return;
+        }
+
         const found = response.data?.[0];
         if (found) {
+          committed = true;
           stopPolling();
           setActionLoading(false);
           mutate(found);
@@ -78,7 +91,12 @@ export const TelegramConnectButton = (props: TelegramConnectButtonProps) => {
         // ignore transient errors during polling
       }
 
+      if (committed) {
+        return;
+      }
+
       if (Date.now() - startedAt >= POLL_TIMEOUT_MS) {
+        committed = true;
         stopPolling();
         setActionLoading(false);
         props.onConnectError?.(new Error('Telegram connection timed out. Please try again.'));
