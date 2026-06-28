@@ -7,6 +7,7 @@ import { ConnectChannelBackError } from '../errors';
 import { printBridgeScaffolded } from '../pipeline/bridge/print-bridge-scaffolded';
 import type { AgentSummary, ConnectCommandOptions } from '../types';
 import { App } from './app';
+import { promptChatSdkReconcilePlanInConsole, promptChatSdkTunnelInConsole } from './console-chat-sdk-prompts';
 import { printConnectSuccess, shouldSkipConnectSuccessSummary } from './print-connect-success';
 import { type ConnectStore, createConnectStore } from './store';
 import type {
@@ -263,6 +264,16 @@ function createUiController(
       store.phase.set({ kind: 'chat-sdk-install-deps' });
     },
     showChatSdkReconcilePlan({ projectDir, requirements, envPaths, wiringInstructions, requirementsFile }) {
+      if (ctx.isTerminalReleased()) {
+        return promptChatSdkReconcilePlanInConsole({
+          projectDir,
+          requirements,
+          envPaths,
+          wiringInstructions,
+          requirementsFile,
+        });
+      }
+
       return new Promise<void>((resolve) => {
         store.phase.set({
           kind: 'chat-sdk-reconcile-plan',
@@ -276,6 +287,10 @@ function createUiController(
       });
     },
     offerChatSdkTunnel({ projectDir, devCommand }) {
+      if (ctx.isTerminalReleased()) {
+        return promptChatSdkTunnelInConsole({ projectDir, devCommand });
+      }
+
       return new Promise<ChatSdkTunnelOfferResult>((resolve) => {
         store.phase.set({
           kind: 'chat-sdk-tunnel-offer',

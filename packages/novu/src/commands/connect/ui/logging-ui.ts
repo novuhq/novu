@@ -5,7 +5,7 @@ import type { GeneratedAgentSpec } from '../api/agents';
 import { SEND_FROM_ACCOUNT_LABEL } from '../copy/email-onboarding';
 import { channelDisplayName } from '../dashboard-urls';
 import { printBridgeScaffolded } from '../pipeline/bridge/print-bridge-scaffolded';
-import { CHAT_SDK_REQUIREMENTS_FILE_ENV } from '../pipeline/chat-sdk/requirements';
+import { printChatSdkReconcilePlan } from './print-chat-sdk-reconcile-plan';
 import type { AgentSummary } from '../types';
 import { resolveGeneratedAgentSpecLabels } from './agent-spec-labels';
 import {
@@ -233,23 +233,7 @@ export function createLoggingUI(): ConnectUI {
     },
     showChatSdkReconcilePlan({ projectDir, requirements, envPaths, wiringInstructions, requirementsFile }) {
       succeed('Chat SDK project reconciled');
-      console.log(chalk.gray(`  Project: ${projectDir}`));
-      for (const req of requirements) {
-        const marker =
-          req.status === 'ok' ? chalk.green('✓') : req.status === 'manual' ? chalk.yellow('☐') : chalk.cyan('…');
-        console.log(`  ${marker} ${req.id}: ${req.detail}`);
-      }
-      for (const envPath of envPaths) {
-        console.log(chalk.gray(`  Env: ${envPath}`));
-      }
-      if (requirementsFile) {
-        console.log(`${CHAT_SDK_REQUIREMENTS_FILE_ENV}=${requirementsFile}`);
-      }
-      if (wiringInstructions) {
-        console.log('');
-        console.log(chalk.bold('Code wiring (manual):'));
-        console.log(chalk.cyan(wiringInstructions));
-      }
+      printChatSdkReconcilePlan({ projectDir, requirements, envPaths, wiringInstructions, requirementsFile });
       console.log(chalk.gray('Non-interactive mode: continuing automatically.'));
 
       return Promise.resolve();
