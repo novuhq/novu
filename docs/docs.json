@@ -49,8 +49,8 @@
               {
                 "group": "Quickstart",
                 "pages": [
-                  "platform/quickstart/react",
                   "platform/quickstart/nextjs",
+                  "platform/quickstart/react",
                   "platform/quickstart/remix",
                   "platform/quickstart/angular",
                   "platform/quickstart/vue",
