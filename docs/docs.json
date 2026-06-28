@@ -440,8 +440,11 @@
             "pages": [
               "api-reference",
               "api-reference/authentication",
+              "api-reference/errors",
+              "api-reference/pagination",
               "api-reference/rate-limiting",
               "api-reference/idempotency",
+              "api-reference/versioning",
               "api-reference/payload-limits"
             ]
           },
