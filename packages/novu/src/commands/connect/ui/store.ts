@@ -6,6 +6,7 @@ import type {
   ChannelChoice,
   ChatSdkConnectOutcome,
   ChatSdkRequirement,
+  CustomCodeConnectOutcome,
 } from '../types';
 import type {
   ChatSdkTunnelOfferResult,
@@ -74,13 +75,21 @@ export type Phase =
       kind: 'confirm-scaffold';
       projectDir: string;
       appName: string;
+      variant?: 'chat-sdk' | 'custom-code';
       resolve: (confirmed: boolean) => void;
     }
   | { kind: 'scaffolding-chat-sdk' }
+  | { kind: 'scaffolding-custom-code' }
   | {
       kind: 'chat-sdk-scaffolded';
       projectDir: string;
       envPaths: string[];
+      skippedInstall?: boolean;
+    }
+  | {
+      kind: 'custom-code-scaffolded';
+      projectDir: string;
+      agentFilePath: string;
       skippedInstall?: boolean;
     }
   | {
@@ -194,6 +203,7 @@ export type Phase =
       claimUrl: string | null;
       connectMode?: AgentConnectMode;
       chatSdkOutcome?: ChatSdkConnectOutcome;
+      customCodeOutcome?: CustomCodeConnectOutcome;
     }
   | { kind: 'error'; message: string };
 

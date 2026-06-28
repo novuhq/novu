@@ -5,6 +5,7 @@ import type { GeneratedAgentSpec } from '../api/agents';
 import { SEND_FROM_ACCOUNT_LABEL } from '../copy/email-onboarding';
 import { channelDisplayName } from '../dashboard-urls';
 import { resolveChatSdkOutcomeMessage } from '../pipeline/chat-sdk/outcome-message';
+import { resolveCustomCodeOutcomeMessage } from '../pipeline/custom-code/outcome-message';
 import { CHAT_SDK_REQUIREMENTS_FILE_ENV } from '../pipeline/chat-sdk/requirements';
 import type { AgentSummary } from '../types';
 import { resolveGeneratedAgentSpecLabels } from './agent-spec-labels';
@@ -202,8 +203,9 @@ export function createLoggingUI(): ConnectUI {
     confirmEnvSecretOverwrite() {
       return Promise.resolve(false);
     },
-    confirmScaffold({ projectDir, appName }) {
-      console.log(chalk.cyan(`→ Scaffolding Chat SDK app "${appName}" in ${projectDir}`));
+    confirmScaffold({ projectDir, appName, variant = 'chat-sdk' }) {
+      const label = variant === 'custom-code' ? 'agent app' : 'Chat SDK app';
+      console.log(chalk.cyan(`→ Scaffolding ${label} "${appName}" in ${projectDir}`));
 
       return Promise.resolve(true);
     },
@@ -214,6 +216,16 @@ export function createLoggingUI(): ConnectUI {
       succeed(`Scaffolded Chat SDK project at ${projectDir}`);
       for (const envPath of envPaths) {
         console.log(chalk.gray(`  Wrote ${envPath}`));
+      }
+    },
+    scaffoldingCustomCode() {
+      start('Scaffolding agent project…');
+    },
+    customCodeScaffolded({ projectDir, agentFilePath, skippedInstall }) {
+      succeed(`Scaffolded agent project at ${projectDir}`);
+      console.log(chalk.gray(`  Agent handler: ${agentFilePath}`));
+      if (skippedInstall) {
+        console.log(chalk.yellow('  ⚠ Inside a monorepo — npm install was skipped.'));
       }
     },
     confirmInstallChatSdkDeps({ projectDir, installCommand, packages }) {
@@ -425,6 +437,21 @@ export function createLoggingUI(): ConnectUI {
         } else if (!result.chatSdkOutcome.scaffolded && !result.chatSdkOutcome.coreReady) {
           console.log(`  ${chalk.gray('Finish the remaining setup steps above.')}`);
         }
+      }
+
+      const customCodeFollowUp = resolveCustomCodeOutcomeMessage(result.connectMode, result.customCodeOutcome);
+      if (customCodeFollowUp) {
+        if (result.customCodeOutcome?.scaffolded) {
+          console.log(`  ${chalk.bold('Project:')} ${result.customCodeOutcome.projectDir}`);
+          if (result.customCodeOutcome.agentFilePath) {
+            console.log(`  ${chalk.bold('Agent handler:')} ${result.customCodeOutcome.agentFilePath}`);
+          }
+          if (result.customCodeOutcome.skippedInstall) {
+            console.log(`  ${chalk.yellow('⚠')} Inside a monorepo — npm install was skipped.`);
+            console.log(`  ${chalk.cyan('→')} cd ${result.customCodeOutcome.projectDir} && npm install && npm run dev`);
+          }
+        }
+        console.log(`  ${chalk.cyan('→')} ${customCodeFollowUp}`);
       }
     },
     failure(message) {

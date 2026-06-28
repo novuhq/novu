@@ -201,12 +201,13 @@ function createUiController(store: ConnectStore, shutdown: () => Promise<number>
         });
       });
     },
-    confirmScaffold({ projectDir, appName }) {
+    confirmScaffold({ projectDir, appName, variant }) {
       return new Promise<boolean>((resolve) => {
         store.phase.set({
           kind: 'confirm-scaffold',
           projectDir,
           appName,
+          variant,
           resolve,
         });
       });
@@ -219,6 +220,17 @@ function createUiController(store: ConnectStore, shutdown: () => Promise<number>
         kind: 'chat-sdk-scaffolded',
         projectDir,
         envPaths,
+        skippedInstall,
+      });
+    },
+    scaffoldingCustomCode() {
+      store.phase.set({ kind: 'scaffolding-custom-code' });
+    },
+    customCodeScaffolded({ projectDir, agentFilePath, skippedInstall }) {
+      store.phase.set({
+        kind: 'custom-code-scaffolded',
+        projectDir,
+        agentFilePath,
         skippedInstall,
       });
     },
@@ -377,6 +389,7 @@ function createUiController(store: ConnectStore, shutdown: () => Promise<number>
         claimUrl: result.claimUrl,
         connectMode: result.connectMode,
         chatSdkOutcome: result.chatSdkOutcome,
+        customCodeOutcome: result.customCodeOutcome,
       });
     },
     failure(message) {

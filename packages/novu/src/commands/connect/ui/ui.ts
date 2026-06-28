@@ -5,6 +5,7 @@ import type {
   ChannelChoice,
   ChatSdkConnectOutcome,
   ChatSdkRequirement,
+  CustomCodeConnectOutcome,
 } from '../types';
 
 export type PickResult = { action: 'new' } | { action: 'use'; agent: AgentSummary };
@@ -78,9 +79,11 @@ export interface ConnectUI {
   // Chat SDK project wiring
   promptForAgentName(defaultName: string): Promise<string>;
   confirmEnvSecretOverwrite(opts: { envPath: string; existingMasked: string; nextMasked: string }): Promise<boolean>;
-  confirmScaffold(opts: { projectDir: string; appName: string }): Promise<boolean>;
+  confirmScaffold(opts: { projectDir: string; appName: string; variant?: 'chat-sdk' | 'custom-code' }): Promise<boolean>;
   scaffoldingChatSdk(): void;
   chatSdkScaffolded(opts: { projectDir: string; envPaths: string[]; skippedInstall?: boolean }): void;
+  scaffoldingCustomCode(): void;
+  customCodeScaffolded(opts: { projectDir: string; agentFilePath: string; skippedInstall?: boolean }): void;
   confirmInstallChatSdkDeps(opts: { projectDir: string; installCommand: string; packages: string[] }): Promise<boolean>;
   installingChatSdkDeps(): void;
   showChatSdkReconcilePlan(opts: {
@@ -195,6 +198,7 @@ export interface ConnectUI {
     claimUrl: string | null;
     connectMode?: AgentConnectMode;
     chatSdkOutcome?: ChatSdkConnectOutcome;
+    customCodeOutcome?: CustomCodeConnectOutcome;
   }): void;
   failure(message: string): void;
 

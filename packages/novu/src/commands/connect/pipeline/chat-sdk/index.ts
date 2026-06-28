@@ -60,6 +60,7 @@ export async function runChatSdkProjectSetup(input: ChatSdkSetupInput): Promise<
     const confirmed = await input.ui.confirmScaffold({
       projectDir: detected.projectDir,
       appName,
+      variant: 'chat-sdk',
     });
 
     if (!confirmed) {

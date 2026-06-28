@@ -16,10 +16,10 @@ const WELCOME_REVEAL_TOTAL_MS = WELCOME_REVEAL_START_MS + WELCOME_REVEAL_DURATIO
 const WELCOME_FRAME_MS = 55;
 
 const WELCOME_AGENT_ROTATIONS: ReadonlyArray<string> = [
+  'an AI SDK agent',
+  'a LangChain agent',
+  'your custom code',
   'a Claude Managed Agent',
-  'a Google Vertex AI Agent',
-  'an AI SDK Agent',
-  'a Claude Managed Agent on AWS',
 ];
 
 const WELCOME_CHANNELS_LABEL = 'Slack, Telegram, MS Teams';

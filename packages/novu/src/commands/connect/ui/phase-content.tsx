@@ -4,11 +4,19 @@ import { Box, Text, useInput } from 'ink';
 // biome-ignore lint/correctness/noUnusedImports: classic-JSX linter falls back here because tsconfig.json excludes ui/.
 import React from 'react';
 import { SEND_FROM_ACCOUNT_LABEL } from '../copy/email-onboarding';
+import {
+  CONNECT_MODE_GROUPS,
+  CONNECT_MODE_PICKER_SUBTITLE,
+  CONNECT_MODE_PICKER_TITLE,
+  flattenConnectModeOptions,
+} from '../connect-mode-options';
 import { channelDisplayName, isDashboardOnlyChannel } from '../dashboard-urls';
 import { validateSlackConfigTokenFormat } from '../pipeline/channels/slack-config-token';
 import { resolveChatSdkOutcomeMessage } from '../pipeline/chat-sdk/outcome-message';
+import { resolveCustomCodeOutcomeMessage } from '../pipeline/custom-code/outcome-message';
 import type { AgentConnectMode, ChannelChoice } from '../types';
 import { ChatSdkPhaseContent, isChatSdkPhase } from './chat-sdk-phase-content';
+import { CustomCodePhaseContent, isCustomCodePhase } from './custom-code-phase-content';
 import { CopyableLink } from './copyable-link';
 import { PreviewGeneratedContent } from './preview-generated-content';
 import type { ConnectStore, Phase } from './store';
@@ -39,6 +47,10 @@ export function PhaseContent({
     return ChatSdkPhaseContent({ phase });
   }
 
+  if (isCustomCodePhase(phase)) {
+    return CustomCodePhaseContent({ phase });
+  }
+
   switch (phase.kind) {
     case 'welcome':
       return <WelcomeContent onContinue={phase.resolve} />;
@@ -63,10 +75,10 @@ export function PhaseContent({
       return (
         <Box flexDirection="column" gap={1}>
           <Box flexDirection="column">
-            <Text bold>Where do you want the agent to run?</Text>
-            <Text dimColor>Choose the agent runtime. Novu connects it to Slack, email, and more.</Text>
+            <Text bold>{CONNECT_MODE_PICKER_TITLE}</Text>
+            <Text dimColor>{CONNECT_MODE_PICKER_SUBTITLE}</Text>
           </Box>
-          <ConnectModeSelect onChange={(value) => phase.resolve(value)} />
+          <GroupedConnectModeSelect onChange={(value) => phase.resolve(value)} />
         </Box>
       );
 
@@ -343,52 +355,62 @@ export function PhaseContent({
   }
 }
 
-function ConnectModeSelect({ onChange }: { onChange: (value: AgentConnectMode) => void }): React.ReactElement {
-  const options: Array<{
-    value: AgentConnectMode;
-    title: string;
-    detail?: string;
-  }> = [
-    {
-      value: 'demo',
-      title: 'Demo Credentials',
-      detail: '10 conversations per month',
-    },
-    { value: 'claude', title: 'Claude Managed Agents' },
-    { value: 'claude-aws', title: 'AWS Claude Managed Agents' },
-    {
-      value: 'chat-sdk',
-      title: 'Chat SDK',
-      detail: 'your own app is the brain',
-    },
-  ];
-  const [idx, setIdx] = React.useState(0);
+function GroupedConnectModeSelect({
+  onChange,
+}: {
+  onChange: (value: AgentConnectMode) => void;
+}): React.ReactElement {
+  const flatOptions = flattenConnectModeOptions();
+  const [idx, setIdx] = React.useState(-1);
 
   useInput((_input, key) => {
     if (key.upArrow) {
-      setIdx((current) => (current - 1 + options.length) % options.length);
+      setIdx((current) => {
+        if (current <= 0) {
+          return flatOptions.length - 1;
+        }
+
+        return current - 1;
+      });
     } else if (key.downArrow) {
-      setIdx((current) => (current + 1) % options.length);
-    } else if (key.return) {
-      onChange(options[idx].value);
+      setIdx((current) => {
+        if (current < 0) {
+          return 0;
+        }
+
+        return (current + 1) % flatOptions.length;
+      });
+    } else if (key.return && idx >= 0) {
+      onChange(flatOptions[idx].value);
     }
   });
 
+  let optionIndex = 0;
+
   return (
     <Box flexDirection="column">
-      {options.map((opt, i) => {
-        const isSelected = i === idx;
+      {CONNECT_MODE_GROUPS.map((group, groupIndex) => (
+        <Box key={group.heading} flexDirection="column">
+          {groupIndex > 0 ? <Text dimColor>{'─'.repeat(32)}</Text> : null}
+          <Text dimColor>{group.heading}</Text>
+          {group.options.map((opt) => {
+            const rowIndex = optionIndex;
+            optionIndex += 1;
+            const isSelected = rowIndex === idx;
 
-        return (
-          <Text key={opt.value}>
-            <Text color={isSelected ? 'cyan' : undefined}>
-              {isSelected ? '› ' : '  '}
-              {opt.title}
-            </Text>
-            {opt.detail ? <Text dimColor>{` · ${opt.detail}`}</Text> : null}
-          </Text>
-        );
-      })}
+            return (
+              <Text key={opt.value}>
+                <Text color={isSelected ? 'cyan' : undefined}>
+                  {isSelected ? '› ' : '  '}
+                  {opt.title}
+                </Text>
+                {opt.detail ? <Text dimColor>{` · ${opt.detail}`}</Text> : null}
+              </Text>
+            );
+          })}
+        </Box>
+      ))}
+      {idx < 0 ? <Text dimColor>Use ↑↓ to select an option, then press Enter.</Text> : null}
     </Box>
   );
 }
@@ -736,6 +758,8 @@ function SuccessView({
   })();
   const redirectChannelLabel = dashboardRedirectChannel ? channelDisplayName(dashboardRedirectChannel) : null;
   const chatSdkMessage = resolveChatSdkOutcomeMessage(connectMode, chatSdkOutcome);
+  const customCodeMessage = resolveCustomCodeOutcomeMessage(connectMode, phase.customCodeOutcome);
+  const scaffoldMessage = chatSdkMessage ?? customCodeMessage;
 
   return (
     <Box flexDirection="column" gap={1}>
@@ -745,7 +769,7 @@ function SuccessView({
           <Text bold>Agent:</Text> {agent.name} <Text dimColor>({agent.identifier})</Text>
         </Text>
         {renderSuccessChannelMessage(channelLabel, redirectChannelLabel)}
-        {chatSdkMessage ? <Text color="cyan">{chatSdkMessage}</Text> : null}
+        {scaffoldMessage ? <Text color="cyan">{scaffoldMessage}</Text> : null}
         {renderSuccessNextStep({ isKeyless, claimUrl, agentUrl })}
       </Box>
     </Box>
