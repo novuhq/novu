@@ -87,6 +87,9 @@ describe('AgentInboundHandler', () => {
     const agentRepository = {
       findOne: overrides.agentFindOne ?? sinon.stub().resolves(null),
     };
+    const agentIntegrationRepository = {
+      updateOne: sinon.stub().resolves({ matched: 1, modified: 0 }),
+    };
     const environmentRepository = {
       findOne: sinon.stub().resolves(null),
     };
@@ -163,6 +166,7 @@ describe('AgentInboundHandler', () => {
       inboundDispatcher as any,
       outboundGateway as any,
       agentRepository as any,
+      agentIntegrationRepository as any,
       subscriberRepository as any,
       analyticsService as any,
       attachmentStorage as any,
@@ -187,6 +191,7 @@ describe('AgentInboundHandler', () => {
       channelEndpointRepository,
       managedAgentService,
       agentRepository,
+      agentIntegrationRepository,
       subscriberRepository,
       outboundGateway,
       inboundAck,

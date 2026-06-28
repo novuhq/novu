@@ -4,12 +4,17 @@ import { Box, Text, useInput } from 'ink';
 // biome-ignore lint/correctness/noUnusedImports: classic-JSX linter falls back here because tsconfig.json excludes ui/.
 import React from 'react';
 import { SEND_FROM_ACCOUNT_LABEL } from '../copy/email-onboarding';
+import {
+  CONNECT_MODE_PICKER_SUBTITLE,
+  CONNECT_MODE_PICKER_TITLE,
+} from '../connect-mode-options';
 import { channelDisplayName, isDashboardOnlyChannel } from '../dashboard-urls';
 import { validateSlackConfigTokenFormat } from '../pipeline/channels/slack-config-token';
-import { resolveChatSdkOutcomeMessage } from '../pipeline/chat-sdk/outcome-message';
-import type { AgentConnectMode, ChannelChoice } from '../types';
+import { resolveBridgeSetupFollowUpMessage } from '../pipeline/bridge/setup-outcome-message';
+import type { ChannelChoice } from '../types';
 import { ChatSdkPhaseContent, isChatSdkPhase } from './chat-sdk-phase-content';
 import { CopyableLink } from './copyable-link';
+import { GroupedConnectModeSelect } from './grouped-connect-mode-select';
 import { PreviewGeneratedContent } from './preview-generated-content';
 import type { ConnectStore, Phase } from './store';
 import { WelcomeContent } from './welcome-content';
@@ -63,10 +68,10 @@ export function PhaseContent({
       return (
         <Box flexDirection="column" gap={1}>
           <Box flexDirection="column">
-            <Text bold>Where do you want the agent to run?</Text>
-            <Text dimColor>Choose the agent runtime. Novu connects it to Slack, email, and more.</Text>
+            <Text bold>{CONNECT_MODE_PICKER_TITLE}</Text>
+            <Text dimColor>{CONNECT_MODE_PICKER_SUBTITLE}</Text>
           </Box>
-          <ConnectModeSelect onChange={(value) => phase.resolve(value)} />
+          <GroupedConnectModeSelect onChange={(value) => phase.resolve(value)} />
         </Box>
       );
 
@@ -341,56 +346,6 @@ export function PhaseContent({
       return <Text />;
     }
   }
-}
-
-function ConnectModeSelect({ onChange }: { onChange: (value: AgentConnectMode) => void }): React.ReactElement {
-  const options: Array<{
-    value: AgentConnectMode;
-    title: string;
-    detail?: string;
-  }> = [
-    {
-      value: 'demo',
-      title: 'Demo Credentials',
-      detail: '10 conversations per month',
-    },
-    { value: 'claude', title: 'Claude Managed Agents' },
-    { value: 'claude-aws', title: 'AWS Claude Managed Agents' },
-    {
-      value: 'chat-sdk',
-      title: 'Chat SDK',
-      detail: 'your own app is the brain',
-    },
-  ];
-  const [idx, setIdx] = React.useState(0);
-
-  useInput((_input, key) => {
-    if (key.upArrow) {
-      setIdx((current) => (current - 1 + options.length) % options.length);
-    } else if (key.downArrow) {
-      setIdx((current) => (current + 1) % options.length);
-    } else if (key.return) {
-      onChange(options[idx].value);
-    }
-  });
-
-  return (
-    <Box flexDirection="column">
-      {options.map((opt, i) => {
-        const isSelected = i === idx;
-
-        return (
-          <Text key={opt.value}>
-            <Text color={isSelected ? 'cyan' : undefined}>
-              {isSelected ? '› ' : '  '}
-              {opt.title}
-            </Text>
-            {opt.detail ? <Text dimColor>{` · ${opt.detail}`}</Text> : null}
-          </Text>
-        );
-      })}
-    </Box>
-  );
 }
 
 const DASHBOARD_CHANNEL_HINT = 'Onboarding for this channel is currently only available in the Novu Connect UI.';
@@ -735,7 +690,10 @@ function SuccessView({
     return null;
   })();
   const redirectChannelLabel = dashboardRedirectChannel ? channelDisplayName(dashboardRedirectChannel) : null;
-  const chatSdkMessage = resolveChatSdkOutcomeMessage(connectMode, chatSdkOutcome);
+  const scaffoldMessage = resolveBridgeSetupFollowUpMessage(connectMode, {
+    chatSdk: chatSdkOutcome,
+    customCode: phase.customCodeOutcome,
+  });
 
   return (
     <Box flexDirection="column" gap={1}>
@@ -745,7 +703,7 @@ function SuccessView({
           <Text bold>Agent:</Text> {agent.name} <Text dimColor>({agent.identifier})</Text>
         </Text>
         {renderSuccessChannelMessage(channelLabel, redirectChannelLabel)}
-        {chatSdkMessage ? <Text color="cyan">{chatSdkMessage}</Text> : null}
+        {scaffoldMessage ? <Text color="cyan">{scaffoldMessage}</Text> : null}
         {renderSuccessNextStep({ isKeyless, claimUrl, agentUrl })}
       </Box>
     </Box>

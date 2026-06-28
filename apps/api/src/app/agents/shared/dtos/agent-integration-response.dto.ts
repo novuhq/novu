@@ -44,7 +44,8 @@ export class AgentIntegrationResponseIntegrationDto {
   @ApiPropertyOptional({
     description:
       'When true, the worker drops inbound mail addressed to this agent on the shared `agentconnect.sh` domain. ' +
-      'Custom-domain routes still deliver. Only meaningful on cloud-enabled NovuAgent integrations.',
+      'Custom-domain routes still deliver. Meaningful on cloud-enabled NovuAgent integrations; on self-hosted it ' +
+      'is set defensively at provisioning time and is effectively redundant.',
   })
   sharedInboxDisabled?: boolean;
 }
@@ -78,9 +79,11 @@ export class AgentIntegrationResponseDto {
 
   @ApiPropertyOptional({
     description:
-      'Cloud only. `true` when this channel falls outside the organization plan active-channel limit ' +
-      '(by connection order). Over-limit channels keep their configuration but the agent will not respond ' +
-      'on them until the plan is upgraded or older channels are disconnected.',
+      'Cloud only. `true` when this channel type (provider) falls outside the organization plan active-channel ' +
+      'limit (by connection order). Active channels are counted per channel type, so multiple integrations of the ' +
+      'same provider (e.g. several Slack workspaces) count as a single active channel. Over-limit channels keep ' +
+      'their configuration but the agent will not respond on them until the plan is upgraded or older channel ' +
+      'types are disconnected.',
   })
   exceedsPlanLimit?: boolean;
 }

@@ -1,0 +1,44 @@
+---
+title: 'Product'
+description: "Change notification messaging, verbiage, and cadence without requiring engineering's help by using the Novu Dashboard UI."
+---
+
+Novu Framework was designed to bridge the gap between developers and non-developers in the team.
+
+- **Developers** - Define and abstract away complex logic, data manipulation, hydration, html, and etc...
+- **Non-Developers** - Use the Novu Dashboard UI to control the content and behavior of the notifications using [controls](/framework/controls).
+
+## How to modify controls?
+
+Controls are modified directly in the [Novu Dashboard UI](https://dashboard.novu.co), under the 'Step controls' tab of the **Workflow Editor** page.
+Upon saving the changes, the new Control values will be used in the notification sent to your subscribers.
+
+## Dynamic payload data
+
+Dynamic data passed as part of the trigger payload can be easily used inside of the Controls. For example, you can pass a `user_name` as part of the payload and use it in the controls as `{{payload.user_name}}` to personalize the notification.
+
+## Common usecases
+
+### Change notification content
+
+A control can be as broad as `content` or as specific as `2fa_code_title_color`. This allows you to change the content of the notification without needing to touch the code.
+
+### Create new email designs
+
+Novu's built-in email editor enables rich content creation without ever touching the code.
+
+### Change digest or delay frequency
+
+Controls can be used for controlling any aspect of the step configuration, for example:
+
+- Delay amount
+- Digest length
+- Digest type (daily, weekly, monthly)
+- etc...
+
+Read more about [digest strategies and how to prevent notification fatigue.](https://novu.co/blog/digest-notifications-best-practices-example/)
+
+### Control structure and layout
+
+Controls can be used to show/hide or rearrange the layout of the notification.
+For example, you can have an input to show/hide a button, or change the position of a specific email section.

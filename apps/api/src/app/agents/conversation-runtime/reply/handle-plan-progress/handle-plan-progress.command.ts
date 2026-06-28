@@ -1,15 +1,6 @@
+import type { PlanProgressEvent } from '@novu/framework';
 import { IsNotEmpty, IsObject, IsString } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../../shared/commands/project.command';
-
-export interface ToolProgressPayload {
-  action: 'tool-use' | 'complete' | 'fail' | 'awaiting-approval' | 'approved' | 'denied';
-  toolUseId?: string;
-  toolName?: string;
-  mcpServerName?: string;
-  status?: 'running' | 'complete' | 'error';
-  details?: string;
-  toolInput?: Record<string, unknown>;
-}
 
 export class HandlePlanProgressCommand extends EnvironmentWithUserCommand {
   @IsString()
@@ -25,5 +16,5 @@ export class HandlePlanProgressCommand extends EnvironmentWithUserCommand {
   integrationIdentifier: string;
 
   @IsObject()
-  toolProgress: ToolProgressPayload;
+  event: PlanProgressEvent;
 }

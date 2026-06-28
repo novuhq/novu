@@ -14,6 +14,7 @@ import {
   verifyManagedCredentials,
 } from '../api/integrations';
 import type { AgentRuntimeChoice, ConnectCommandOptions } from '../types';
+import { isBridgeConnectMode } from '../types';
 import type { ConnectUI } from '../ui/ui';
 
 const AGENT_INTEGRATION_KIND = 'agent' as const;
@@ -37,7 +38,7 @@ export function resolveRuntimeProviderId(runtime: AgentRuntimeChoice): AgentRunt
 
 export function resolveRuntimeFromOptions(options: ConnectCommandOptions): AgentRuntimeChoice | undefined {
   const runtime = options.runtime;
-  if (!runtime || runtime === 'chat-sdk') {
+  if (!runtime || isBridgeConnectMode(runtime)) {
     return undefined;
   }
 

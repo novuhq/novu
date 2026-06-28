@@ -8,6 +8,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  NotFoundException,
   Param,
   Post,
   Put,
@@ -28,11 +29,12 @@ import {
   PinoLogger,
   RequirePermissions,
 } from '@novu/application-generic';
-import { CommunityOrganizationRepository } from '@novu/dal';
+import { CommunityOrganizationRepository, IntegrationRepository } from '@novu/dal';
 import {
   ApiAuthSchemeEnum,
   ApiServiceLevelEnum,
   ChannelTypeEnum,
+  ChatProviderIdEnum,
   FeatureFlagsKeysEnum,
   FeatureNameEnum,
   getFeatureForTierAsBoolean,
@@ -40,6 +42,8 @@ import {
   UserSessionData,
 } from '@novu/shared';
 import { Response } from 'express';
+import { ConfigureTelegramWebhookResponseDto } from '../agents/shared/dtos/configure-telegram-webhook-response.dto';
+import { IssueTelegramMobileLinkResponseDto } from '../agents/shared/dtos/issue-telegram-mobile-link-response.dto';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import {
@@ -48,11 +52,17 @@ import {
   ApiOkResponse,
   ApiResponse,
 } from '../shared/framework/response.decorator';
-import { isEnvironmentScopedAuthScheme } from '../shared/utils/auth.utils';
 import { KeylessAccessible } from '../shared/framework/swagger/keyless.security';
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import { UserSession } from '../shared/framework/user.decorator';
 import { CONNECTION_RESULT_CSP } from '../shared/html/connection-result-page';
+import { isEnvironmentScopedAuthScheme } from '../shared/utils/auth.utils';
+import { ConfigureTelegramWebhookCommand } from '../telegram-linking/configure-telegram-webhook/configure-telegram-webhook.command';
+import { ConfigureTelegramWebhook } from '../telegram-linking/configure-telegram-webhook/configure-telegram-webhook.usecase';
+import { IssueTelegramMobileLinkCommand } from '../telegram-linking/issue-telegram-mobile-link/issue-telegram-mobile-link.command';
+import { IssueTelegramMobileLink } from '../telegram-linking/issue-telegram-mobile-link/issue-telegram-mobile-link.usecase';
+import { IssueTelegramSubscriberLinkCommand } from '../telegram-linking/issue-telegram-subscriber-link/issue-telegram-subscriber-link.command';
+import { IssueTelegramSubscriberLink } from '../telegram-linking/issue-telegram-subscriber-link/issue-telegram-subscriber-link.usecase';
 import { AutoConfigureIntegrationResponseDto } from './dtos/auto-configure-integration-response.dto';
 import { CreateIntegrationRequestDto } from './dtos/create-integration-request.dto';
 import { GenerateChatOauthUrlRequestDto } from './dtos/generate-chat-oauth-url.dto';
@@ -60,7 +70,10 @@ import { GenerateChatOAuthUrlResponseDto } from './dtos/generate-chat-oauth-url-
 import { GenerateConnectOauthUrlRequestDto } from './dtos/generate-connect-oauth-url-request.dto';
 import { GenerateLinkUserOauthUrlRequestDto } from './dtos/generate-link-user-oauth-url-request.dto';
 import { ChannelTypeLimitDto } from './dtos/get-channel-type-limit.sto';
+import { IssueIntegrationMobileLinkRequestDto } from './dtos/issue-integration-mobile-link-request.dto';
 import { IssueIntegrationStoreTelegramMobileLinkResponseDto } from './dtos/issue-integration-store-telegram-mobile-link-response.dto';
+import { LinkChannelEndpointRequestDto } from './dtos/link-channel-endpoint-request.dto';
+import { LinkChannelEndpointResponseDto } from './dtos/link-channel-endpoint-response.dto';
 import { SlackQuickSetupRequestDto, SlackQuickSetupResponseDto } from './dtos/slack-quick-setup.dto';
 import { UpdateIntegrationRequestDto } from './dtos/update-integration.dto';
 import { WhatsAppValidateTokenRequestDto, WhatsAppValidateTokenResponseDto } from './dtos/whatsapp-validate-token.dto';
@@ -138,6 +151,10 @@ export class IntegrationsController {
     private msTeamsHealthCheckUsecase: MsTeamsHealthCheck,
     private whatsAppValidateTokenUsecase: WhatsAppValidateToken,
     private issueIntegrationStoreTelegramMobileLinkUsecase: IssueIntegrationStoreTelegramMobileLink,
+    private issueTelegramSubscriberLinkUsecase: IssueTelegramSubscriberLink,
+    private issueTelegramMobileLinkUsecase: IssueTelegramMobileLink,
+    private configureTelegramWebhookUsecase: ConfigureTelegramWebhook,
+    private integrationRepository: IntegrationRepository,
     private logger: PinoLogger
   ) {
     this.logger.setContext(IntegrationsController.name);
@@ -823,6 +840,167 @@ export class IntegrationsController {
         businessAccountId: body.businessAccountId,
       })
     );
+  }
+
+  @Post('/channel-endpoints/link')
+  @ExternalApiAccessible()
+  @KeylessAccessible()
+  @HttpCode(HttpStatus.OK)
+  @ApiResponse(LinkChannelEndpointResponseDto, 200)
+  @ApiOperation({
+    summary: 'Issue a URL to link a subscriber chat identity',
+    description:
+      'Returns a provider-specific URL the subscriber opens to link their chat identity. ' +
+      'The integration provider is resolved from integrationIdentifier; Telegram returns a deep link.',
+  })
+  @SdkGroupName('Integrations')
+  @SdkMethodName('linkChannelEndpoint')
+  @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
+  @RequireAuthentication()
+  async linkChannelEndpoint(
+    @UserSession() user: UserSessionData,
+    @Body() body: LinkChannelEndpointRequestDto
+  ): Promise<LinkChannelEndpointResponseDto> {
+    const integration = await this.integrationRepository.findOne(
+      {
+        identifier: body.integrationIdentifier,
+        _environmentId: user.environmentId,
+        _organizationId: user.organizationId,
+      },
+      '_id providerId'
+    );
+
+    if (!integration) {
+      throw new NotFoundException(`Integration ${body.integrationIdentifier} not found`);
+    }
+
+    const providerId = integration.providerId as ChatProviderIdEnum;
+
+    switch (providerId) {
+      case ChatProviderIdEnum.Telegram: {
+        const result = await this.issueTelegramSubscriberLinkUsecase.execute(
+          IssueTelegramSubscriberLinkCommand.create({
+            userId: user._id,
+            environmentId: user.environmentId,
+            organizationId: user.organizationId,
+            integrationIdentifier: body.integrationIdentifier,
+            subscriberId: body.subscriberId,
+          })
+        );
+
+        return {
+          url: result.deepLinkUrl,
+          providerMetadata: {
+            botUsername: result.botUsername,
+            expiresAt: result.expiresAt,
+          },
+        };
+      }
+      default:
+        throw new BadRequestException(
+          `Provider "${providerId}" does not support subscriber chat linking via this endpoint.`
+        );
+    }
+  }
+
+  @Post('/:integrationIdentifier/webhook/configure')
+  @ExternalApiAccessible()
+  @KeylessAccessible()
+  @HttpCode(HttpStatus.OK)
+  @ApiResponse(ConfigureTelegramWebhookResponseDto, 200)
+  @ApiOperation({
+    summary: 'Configure a chat integration webhook',
+    description:
+      'Registers the Novu webhook URL with the chat provider for the specified integration. ' +
+      'Telegram is the only supported provider initially.',
+  })
+  @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
+  @RequireAuthentication()
+  async configureIntegrationWebhook(
+    @UserSession() user: UserSessionData,
+    @Param('integrationIdentifier') integrationIdentifier: string
+  ): Promise<ConfigureTelegramWebhookResponseDto> {
+    const integration = await this.integrationRepository.findOne(
+      {
+        identifier: integrationIdentifier,
+        _environmentId: user.environmentId,
+        _organizationId: user.organizationId,
+      },
+      '_id providerId'
+    );
+
+    if (!integration) {
+      throw new NotFoundException(`Integration ${integrationIdentifier} not found`);
+    }
+
+    const providerId = integration.providerId as ChatProviderIdEnum;
+
+    switch (providerId) {
+      case ChatProviderIdEnum.Telegram:
+        return this.configureTelegramWebhookUsecase.execute(
+          ConfigureTelegramWebhookCommand.create({
+            userId: user._id,
+            environmentId: user.environmentId,
+            organizationId: user.organizationId,
+            integrationIdentifier,
+          })
+        );
+      default:
+        throw new BadRequestException(
+          `Provider "${providerId}" does not support webhook configuration via this endpoint.`
+        );
+    }
+  }
+
+  @Post('/:integrationIdentifier/mobile-link')
+  @ExternalApiAccessible()
+  @KeylessAccessible()
+  @HttpCode(HttpStatus.OK)
+  @ApiResponse(IssueTelegramMobileLinkResponseDto, 200)
+  @ApiOperation({
+    summary: 'Issue a short-lived mobile setup link for an existing integration',
+    description:
+      'Returns an opaque, single-use setup token plus a mobile URL for configuring an existing chat integration. ' +
+      'Telegram is the only supported provider initially.',
+  })
+  @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
+  @RequireAuthentication()
+  async createIntegrationMobileLink(
+    @UserSession() user: UserSessionData,
+    @Param('integrationIdentifier') integrationIdentifier: string,
+    @Body() body?: IssueIntegrationMobileLinkRequestDto
+  ): Promise<IssueTelegramMobileLinkResponseDto> {
+    const integration = await this.integrationRepository.findOne(
+      {
+        identifier: integrationIdentifier,
+        _environmentId: user.environmentId,
+        _organizationId: user.organizationId,
+      },
+      '_id providerId'
+    );
+
+    if (!integration) {
+      throw new NotFoundException(`Integration ${integrationIdentifier} not found`);
+    }
+
+    const providerId = integration.providerId as ChatProviderIdEnum;
+
+    switch (providerId) {
+      case ChatProviderIdEnum.Telegram:
+        return this.issueTelegramMobileLinkUsecase.execute(
+          IssueTelegramMobileLinkCommand.create({
+            userId: user._id,
+            environmentId: user.environmentId,
+            organizationId: user.organizationId,
+            integrationIdentifier,
+            subscriberId: body?.subscriberId,
+          })
+        );
+      default:
+        throw new BadRequestException(
+          `Provider "${providerId}" does not support mobile setup links via this endpoint.`
+        );
+    }
   }
 
   @Post('/telegram/mobile-link')

@@ -38,6 +38,7 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
       .resolves({ messageId: 'platform-msg-1', platformThreadId: 'platform-thread-1' });
     sinon.stub(outboundGateway, 'reactToMessage').resolves();
     sinon.stub(outboundGateway, 'removeReaction').resolves();
+    sinon.stub(outboundGateway, 'startTypingInConversation').resolves();
   });
 
   function postReply(body: Record<string, unknown>) {
@@ -322,6 +323,84 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
       });
 
       expect(res.status).to.equal(400);
+    });
+  });
+
+  describe('Typing', () => {
+    it('should set a typing status from a typing-only request', async () => {
+      const conversationId = await seedConversation(ctx);
+      const outboundGateway = testServer.getService(OutboundGateway);
+
+      const res = await postReply({
+        conversationId,
+        integrationIdentifier: ctx.integrationIdentifier,
+        typing: { status: 'Searching the docs…' },
+      });
+
+      expect(res.status).to.equal(200);
+      expect(res.body.data).to.be.null;
+
+      const stub = outboundGateway.startTypingInConversation as sinon.SinonStub;
+      expect(stub.callCount).to.equal(1);
+      expect(stub.getCall(0).args[3]).to.equal('Searching the docs…');
+    });
+
+    it('should default the status text when typing has no status', async () => {
+      const conversationId = await seedConversation(ctx);
+      const outboundGateway = testServer.getService(OutboundGateway);
+
+      const res = await postReply({
+        conversationId,
+        integrationIdentifier: ctx.integrationIdentifier,
+        typing: {},
+      });
+
+      expect(res.status).to.equal(200);
+
+      const stub = outboundGateway.startTypingInConversation as sinon.SinonStub;
+      expect(stub.getCall(0).args[3]).to.equal('Thinking...');
+    });
+
+    it('should clear the status with an empty string for typing "stop"', async () => {
+      const conversationId = await seedConversation(ctx);
+      const outboundGateway = testServer.getService(OutboundGateway);
+
+      const res = await postReply({
+        conversationId,
+        integrationIdentifier: ctx.integrationIdentifier,
+        typing: 'stop',
+      });
+
+      expect(res.status).to.equal(200);
+
+      const stub = outboundGateway.startTypingInConversation as sinon.SinonStub;
+      expect(stub.getCall(0).args[3]).to.equal('');
+    });
+
+    it('should not fail the turn when the typing call throws', async () => {
+      const conversationId = await seedConversation(ctx);
+      const outboundGateway = testServer.getService(OutboundGateway);
+      (outboundGateway.startTypingInConversation as sinon.SinonStub).rejects(new Error('platform down'));
+
+      const res = await postReply({
+        conversationId,
+        integrationIdentifier: ctx.integrationIdentifier,
+        typing: { status: 'Working…' },
+      });
+
+      expect(res.status).to.equal(200);
+    });
+
+    it('should reject an invalid typing op', async () => {
+      const conversationId = await seedConversation(ctx);
+
+      const res = await postReply({
+        conversationId,
+        integrationIdentifier: ctx.integrationIdentifier,
+        typing: 'go',
+      });
+
+      expect(res.status).to.equal(422);
     });
   });
 

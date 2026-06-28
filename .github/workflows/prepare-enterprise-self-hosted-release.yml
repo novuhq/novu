@@ -48,6 +48,11 @@ on:
         required: true
         type: boolean
         default: true
+      complete_linear_release:
+        description: "Complete Linear release"
+        required: true
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -60,6 +65,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
+      deploy_matrix: ${{ steps.set-deploy-matrix.outputs.deploy_matrix }}
     steps:
       - name: Validate Selected Services
         env:
@@ -111,11 +117,45 @@ jobs:
           echo "matrix=$matrix" >> $GITHUB_OUTPUT
           echo "Building services: $matrix"
 
+      - name: Generate Deploy Matrix
+        id: set-deploy-matrix
+        env:
+          INPUT_VERSION: ${{ github.event.inputs.version }}
+          INPUT_BUILD_API: ${{ github.event.inputs.build_api }}
+          INPUT_BUILD_WORKER: ${{ github.event.inputs.build_worker }}
+          INPUT_BUILD_DASHBOARD: ${{ github.event.inputs.build_dashboard }}
+          INPUT_BUILD_WS: ${{ github.event.inputs.build_ws }}
+          INPUT_BUILD_INBOUND_MAIL: ${{ github.event.inputs.build_inbound_mail }}
+        run: |
+          deploy=()
+
+          if [ "$INPUT_BUILD_API" == "true" ]; then
+            deploy+=("{\"task_name\": \"novu-ee-api\", \"container_name\": \"novu-ee-api-container\", \"service_name\": \"novu-ee-api-service\", \"repo\": \"api-ee\", \"image_tag\": \"$INPUT_VERSION\"}")
+          fi
+          if [ "$INPUT_BUILD_WORKER" == "true" ]; then
+            deploy+=("{\"task_name\": \"novu-ee-worker\", \"container_name\": \"novu-ee-worker-container\", \"service_name\": \"novu-ee-worker-service\", \"repo\": \"worker-ee\", \"image_tag\": \"$INPUT_VERSION\"}")
+          fi
+          if [ "$INPUT_BUILD_WS" == "true" ]; then
+            deploy+=("{\"task_name\": \"novu-ee-ws\", \"container_name\": \"novu-ee-ws-container\", \"service_name\": \"novu-ee-ws-service\", \"repo\": \"ws-ee\", \"image_tag\": \"$INPUT_VERSION\"}")
+          fi
+          if [ "$INPUT_BUILD_DASHBOARD" == "true" ]; then
+            # Dashboard cluster runs the better-auth build of the dashboard image
+            deploy+=("{\"task_name\": \"novu-ee-dashboard\", \"container_name\": \"novu-ee-dashboard-container\", \"service_name\": \"novu-ee-dashboard-service\", \"repo\": \"dashboard-ee\", \"image_tag\": \"${INPUT_VERSION}-betterauth\"}")
+          fi
+          if [ "$INPUT_BUILD_INBOUND_MAIL" == "true" ]; then
+            deploy+=("{\"task_name\": \"novu-ee-inbound-mail\", \"container_name\": \"novu-ee-inbound-mail-container\", \"service_name\": \"novu-ee-inbound-mail-service\", \"repo\": \"inbound-mail-ee\", \"image_tag\": \"$INPUT_VERSION\"}")
+          fi
+
+          deploy_matrix="[$(IFS=','; echo "${deploy[*]}")]"
+
+          echo "deploy_matrix=$deploy_matrix" >> $GITHUB_OUTPUT
+          echo "Deploying services: $deploy_matrix"
+
   build_docker:
     needs: setup_matrix
     runs-on: ubuntu-latest
     timeout-minutes: 90
-    environment: Production
+    environment: novu-ee
     strategy:
       fail-fast: false
       matrix:
@@ -271,9 +311,57 @@ jobs:
           echo "Platform: linux/amd64 (x86)"
           echo "Type: Enterprise Self-hosted"
 
+  deploy:
+    name: Deploy to ECS (novu-ee-cluster)
+    needs: [setup_matrix, build_docker]
+    runs-on: ubuntu-latest
+    environment: novu-ee
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      fail-fast: false
+      matrix:
+        service: ${{ fromJson(needs.setup_matrix.outputs.deploy_matrix) }}
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: us-east-1
+          role-session-name: gha-ee-deploy-${{ github.run_id }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@fa648b43de3d4d023bcb3f89ed6940096949c419 # v2
+
+      - name: Download task definition
+        env:
+          TASK_NAME: ${{ matrix.service.task_name }}
+        run: |
+          aws ecs describe-task-definition --task-definition "$TASK_NAME" \
+            --query taskDefinition > task-definition.json
+
+      - name: Render Amazon ECS task definition
+        id: render-task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@39c13cf530718ffeb524ec8ee0c15882bcb13842
+        with:
+          task-definition: task-definition.json
+          container-name: ${{ matrix.service.container_name }}
+          image: ${{ steps.login-ecr.outputs.registry }}/novu/${{ matrix.service.repo }}:${{ matrix.service.image_tag }}
+
+      - name: Deploy to Amazon ECS service
+        uses: aws-actions/amazon-ecs-deploy-task-definition@3e7310352de91b71a906e60c22af629577546002
+        with:
+          task-definition: ${{ steps.render-task-def.outputs.task-definition }}
+          service: ${{ matrix.service.service_name }}
+          cluster: novu-ee-cluster
+          wait-for-service-stability: true
+
   linear_release_complete:
     name: Complete Linear Release (Enterprise)
     needs: build_docker
+    if: github.event.inputs.complete_linear_release == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read

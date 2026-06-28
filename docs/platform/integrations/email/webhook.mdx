@@ -1,0 +1,38 @@
+---
+title: 'Email Webhook'
+description: 'Learn how to use the Email Webhook provider to send email notifications using Novu'
+---
+
+
+[Email Webhooks](https://www.socketlabs.com/blog/what-is-a-webhook/#:~:text=Email%20webhooks%20are%20an%20extremely,%2C%20successful%20messages%2C%20and%20bounces.) are an extremely flexible way for developers to monitor the health of their mail stream in real time
+
+## Getting Started
+
+First go to [Email Settings](https://dashboard.novu.co/settings/email?utm_campaign=docs-webhook) in Settings menu to configure Email Webhook.
+
+## Creating the Email Webhook integration with Novu
+
+- Visit the [Integrations](https://dashboard.novu.co/integrations?utm_campaign=docs-webhook) page on Novu.
+- Click the "Add a provider" button.
+- Select Email Webhook service
+- Click `Next`
+- Choose your preferred deployment environment: `Development` or `Production`. Then Click the `Create` button.
+- Add `Webhook URL` & `Secret Hmac Key` to sign off the email
+- Finally add `From email address` & `Sender name` to identify email sender
+- Click on the `Disabled` button and mark it as `Active`.
+- Click on the **Update** button.
+- You should now be able to send notifications using Email Webhook in Novu.
+
+## Next Steps
+
+<Columns cols={2}>
+  <Card title="Configure bcc, cc, and reply-to" href="/platform/integrations/email#sending-email-overrides">
+    Learn how to configure bcc, cc, and reply-to for your email notifications using email overrides
+  </Card>
+  <Card title="Sending email attachments" href="/platform/integrations/email#sending-email-attachments">
+    Learn how to send attachments with email notifications
+  </Card>
+  <Card title="Use different email integration" href="/platform/integrations/email#sending-email-overrides">
+    Learn how to use different email provider integrations to be used to send emails
+  </Card>
+</Columns>

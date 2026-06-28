@@ -1,0 +1,26 @@
+---
+title: 'SMS'
+description: 'Learn how to use the SMS step to send text messages to users'
+---
+
+The `sms` step allows you to send text messages to your users' mobile devices through various SMS providers.
+
+## Example Usage
+
+```tsx
+await step.sms('verification', async () => {
+  return {
+    body: 'Your verification code is: 123456',
+  };
+});
+```
+
+## SMS Step Output
+
+| Property | Type   | Required | Description                         |
+| -------- | ------ | -------- | ----------------------------------- |
+| body     | string | Yes      | The text message content to be sent |
+
+## SMS Step Result
+
+The `sms` step does not return any result object.

@@ -1,3 +1,4 @@
+import { CLI_DEVICE_SESSION_NAME_NOVU_CONNECT } from '@novu/shared';
 import { type ConnectApiClient, createConnectApiClient } from '../api/client';
 import type { ConnectCommandOptions } from '../types';
 import type { ConnectUI } from '../ui/ui';
@@ -26,7 +27,7 @@ export async function upgradeKeylessSessionToDashboardAuth(
     {
       onStatus: (message) => ui.authStatus(message),
       onDashboardUrl: (url) => ui.authDashboardUrl(url),
-      name: 'novu-connect',
+      name: CLI_DEVICE_SESSION_NAME_NOVU_CONNECT,
       authDashboardUrl: options.connectDashboardUrl,
       onboardingSessionId: resolveOptions.onboardingSessionId,
       onAuthStarted: resolveOptions.onAuthStarted,

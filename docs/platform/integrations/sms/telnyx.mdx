@@ -1,0 +1,50 @@
+---
+title: 'Telnyx'
+description: 'Learn how to use the Telnyx provider to send sms notifications using Novu'
+---
+
+You can use the [Telnyx](https://telnyx.com/) provider to send transactional emails to your customers using the Novu Platform with a single API to create multi-channel experiences.
+
+## Setting up Telnyx
+
+<Steps>
+<Step title="Get your API Key">
+1. Log into your Telnyx account
+2. Navigate to Account Setting
+3. Go to [Keys & Credentials](https://portal.telnyx.com/#/app/api-keys)
+4. Copy your existing API key or create a new one by clicking "Create API Key"
+
+<Note>
+  Make sure the API key's status is showing as active before using it.
+</Note>
+</Step>
+
+<Step title="Get your Message Profile ID">
+  1. Navigate to [Messaging](https://portal.telnyx.com/#/app/messaging) to find the profiles 2.
+  Create a Telnyx Messaging Profile if you haven't already ([learn
+  more](https://developers.telnyx.com/docs/v2/messaging/quickstarts/portal-setup)) 3. Go to the
+  active Messaging Profile 4. Copy the profile ID
+</Step>
+
+<Step title="Prepare your From Address">
+  <Note>
+    A valid from address must be one of: - A valid phone number in +E.164 format - A short code - An
+    alphanumeric sender ID that: - Is 1-11 characters long - Contains only ASCII letters, numbers,
+    and spaces - Has at least one letter
+  </Note>
+</Step>
+
+<Step title="Connect Telnyx to Novu">
+1. Visit the [Integrations](https://dashboard.novu.co/integrations) page on Novu
+2. Click the "Add a provider" button
+3. Locate Telnyx and click on the **Connect** button
+4. Enter your:
+   - Telnyx API Key
+   - Message profile ID
+   - Valid From address
+5. Click on the `Disabled` button and mark it as `Active`
+6. Click on the **Save** button
+</Step>
+</Steps>
+
+Now you can send notifications using Telnyx in Novu.

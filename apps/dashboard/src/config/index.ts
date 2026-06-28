@@ -57,9 +57,13 @@ export const PLAIN_SUPPORT_CHAT_APP_ID = import.meta.env.VITE_PLAIN_SUPPORT_CHAT
 
 export const ONBOARDING_DEMO_WORKFLOW_ID = 'onboarding-demo-workflow';
 
-export const IS_SELF_HOSTED = (window._env_?.VITE_SELF_HOSTED || import.meta.env.VITE_SELF_HOSTED) === 'true';
+export const IS_SELF_HOSTED = import.meta.env.VITE_SELF_HOSTED === 'true';
 
-export const IS_ENTERPRISE = (window._env_?.VITE_NOVU_ENTERPRISE || import.meta.env.VITE_NOVU_ENTERPRISE) === 'true';
+export const IS_ENTERPRISE = import.meta.env.VITE_NOVU_ENTERPRISE === 'true';
+
+export const IS_SELF_HOSTED_EE = IS_SELF_HOSTED && IS_ENTERPRISE;
+
+export const IS_SELF_HOSTED_CE = IS_SELF_HOSTED && !IS_ENTERPRISE;
 
 export const IS_AI_FEATURES_ENABLED = !(IS_SELF_HOSTED && IS_ENTERPRISE);
 

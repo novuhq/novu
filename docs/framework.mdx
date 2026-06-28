@@ -1,0 +1,40 @@
+---
+title: "Overview"
+description: "Learn how to extend Novu's capabilities by building custom notification workflows with code using the Novu Framework."
+---
+
+
+Novu Framework enables you to run a part of the core Novu workflow engine from within your network boundary. This also opens up a powerful new capability: **you can create Novu workflows entirely in code**. This is important because:
+
+- You can inject custom code that does nearly anything you can imagine as part of a Novu workflow
+- Your code-based workflow lives alongside your application code in source control
+- You can hydrate notification content using local data-sources, reducing what you need to sync outside of your IT boundary
+
+### What it is and how it works
+
+Novu Framework is an application and SDK that you run locally, and communicates natively with the Novu Cloud Worker Engine via the Novu API.
+
+Novu Framework requires a single HTTP webhook-like endpoint (/api/novu or similar) to be exposed by your application. This endpoint is called a **Bridge Endpoint** and is used to receive events from our Worker Engine through an encrypted client-initiated tunnel.
+
+When enabled, Novu Cloud will call the Bridge Endpoint when it needs to retrieve contextual information for a given subscriber and notification.
+
+Use the `npx novu init` command to create a sample Bridge application with a built-in Bridge Endpoint.
+
+<Note>
+  Novu Framework is used as a code layer to power both workflows and [agents](/agents).
+</Note>
+
+## Quickstart
+
+To get started with Novu Framework, pick your preferred technology from the list below:
+
+<Columns cols={2}>
+  <Card title="Next.js" icon="square-code" href="/framework/quickstart/nextjs" />
+  <Card title="Express.js" icon="server" href="/framework/quickstart/express" />
+  <Card title="Remix" icon="atom" href="/framework/quickstart/remix" />
+  <Card title="NestJS" icon="server" href="/framework/quickstart/nestjs" />
+  <Card title="Svelte" icon="braces" href="/framework/quickstart/svelte" />
+  <Card title="Nuxt" icon="braces" href="/framework/quickstart/nuxt" />
+  <Card title="H3" icon="server" href="/framework/quickstart/h3" />
+  <Card title="Lambda" icon="cloud" href="/framework/quickstart/lambda" />
+</Columns>

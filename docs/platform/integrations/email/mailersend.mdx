@@ -1,0 +1,153 @@
+---
+title: 'MailerSend'
+description: 'Learn how to use the MailerSend provider to send email notifications using Novu'
+---
+
+
+[MailerSend](https://www.mailersend.com/) is an email delivery service that allows you to send emails from your application.
+
+## Getting Started
+
+To use the MailerSend provider in the email channel, you will need to create a MailerSend account and add your API key to the MailerSend integration on the Novu platform. To generate the API token go visit the [MailerSend API Tokens](https://www.mailersend.com/help/managing-api-tokens) page.
+
+## Creating the MailerSend integration with Novu
+
+- Visit the [Integrations](https://dashboard.novu.co/integrations?utm_campaign=docs-mailersend) page on Novu.
+- Click on Add a Provider.
+- Select MailerSend service.
+- Enter the API key.
+- Click on the `Disabled` button and mark it as `Active`.
+- Click on the **Update** button.
+- You should now be able to send notifications using MailerSend in Novu.
+
+## Using MailerSend template
+
+Novu has its own email editor for writing email template. If you want to use pre made template from MailerSend, you can use `customData` filed of email overrides to send template details. Make sure your `Api Key` has enough permission to read and process the template.
+
+<Note>
+  sending `customData` field in overrides to send mailersend template will work only in following cases:
+  - if workflow is triggered to only one subscriber 
+  - if workflow is triggered to multiple subscribers or topic but mailersend template does not have any dynamic variables related to subscriber attributes like `firstName`, `lastName`, `email`, etc as same overrides will be applied to all subscribers or topic
+</Note>
+
+<Tabs>
+<Tab title="Node.js">
+```typescript
+import { Novu } from '@novu/api';
+
+const novu = new Novu({
+  secretKey: "<NOVU_SECRET_KEY>",
+  // Required if using EU region
+  // serverURL: "https://eu.api.novu.co",
+});
+
+await novu.trigger({
+  workflowId: "workflowId",
+  to: "subscriberId",
+  payload: {},
+  overrides: {
+    email: {
+      customData: {
+        // mailersend template templateId 
+        templateId: "mailersend-template-id",
+        // mailersend template variables 
+        personalization: [{
+          email: 'recipient@email.com',
+          data: {
+            items: {
+              price: '',
+              product: '',
+              quantity: '',
+            },
+            order: {
+              date: '',
+              order_number: '',
+              billing_address: '',
+              customer_message: '',
+            },
+            store: {
+              name: '',
+            },
+            invoice: {
+              total: '',
+              subtotal: '',
+              pay_method: '',
+            },
+            customer: {
+              name: '',
+              email: '',
+              phone: '',
+            },
+          },
+        }, ],
+      },
+    }
+  },
+});
+```
+</Tab>
+<Tab title="cURL">
+```bash
+curl --location 'https://api.novu.co/v1/events/trigger' \
+--header 'Content-Type: application/json' \
+--header 'Accept: application/json' \
+--header 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+--data '{
+    "name": "workflowIdentifier",
+    "to":  ["subscriberId"],
+    "payload": {},
+    "overrides": {
+        "email": {
+            "customData": {
+                "templateId": "mailersend-template-id",
+                "personalization": [{
+                    "email": "recipient@email.com",
+                    "data": {
+                        "items": {
+                            "price": "",
+                            "product": "",
+                            "quantity": ""
+                        },
+                        "order": {
+                            "date": "",
+                            "order_number": "",
+                            "billing_address": "",
+                            "customer_message": ""
+                        },
+                        "store": {
+                            "name": ""
+                        },
+                        "invoice": {
+                            "total": "",
+                            "subtotal": "",
+                            "pay_method": ""
+                        },
+                        "customer": {
+                            "name": "",
+                            "email": "",
+                            "phone": ""
+                        }
+                    }
+                }]
+            }
+        }
+    }
+}'
+```
+</Tab>
+</Tabs>
+
+## Next Steps
+
+<Columns cols={2}>
+  <Card title="Configure bcc, cc, and reply-to" href="/platform/integrations/email#sending-email-overrides">
+    Learn how to configure bcc, cc, and reply-to for your email notifications using email overrides
+  </Card>
+  <Card title="Sending email attachments" href="/platform/integrations/email#sending-email-attachments">
+    Learn how to send attachments with email notifications
+  </Card>
+  <Card title="Use different email integration" href="/platform/integrations/email#sending-email-overrides">
+    Learn how to use different email provider integrations to be used to send emails
+  </Card>
+</Columns>
+

@@ -49,5 +49,8 @@ export class HandleAgentReplyCommand extends EnvironmentWithUserCommand {
   plan?: { model: PlanModel; phase: PlanPhase; messageId?: string };
 
   @IsOptional()
+  typing?: { status?: string } | 'stop';
+
+  @IsOptional()
   slackNative?: SlackNativeDelivery;
 }

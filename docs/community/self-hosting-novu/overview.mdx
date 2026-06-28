@@ -1,0 +1,63 @@
+---
+title: 'Overview'
+description: 'Self-host Novu for full control over your notification infrastructure. Covers system requirements, VMs, Redis, MongoDB, and storage.'
+---
+
+When self-hosting Novu, you take full control over your communication infrastructure by deploying it on your own servers. While this setup allows for customization and greater flexibility, it is important to note that some features exclusive to Novu's cloud-managed solution will not be available in a self-hosted environment.
+
+<Warning>
+  Self-hosting Novu does not support social login (GitHub, Google, etc.). To access your account,
+  please use the email and password associated with your Novu account.
+</Warning>
+
+## System requirements overview
+
+### Multi-VM deployment (recommended)
+
+For optimal performance, host Novu's core services across multiple virtual machines.
+
+| Component | Instances | Specs |
+| --- | --- | --- |
+| Novu services (API, Worker, WS) | 3 VMs per service | 2 vCPUs, 4 GB RAM each |
+| Dashboard | 1 VM | 2 vCPUs, 4 GB RAM |
+| Redis | 2 clusters (one for queues with AOF enabled) | 8 GB RAM per cluster |
+| MongoDB | 1 cluster | M20 or higher (MongoDB Atlas) |
+| S3 storage | — | 10 GB minimum |
+
+### Single-VM deployment
+
+If resources are limited or simplicity is a priority, all services can run on a single VM.
+
+| Component | Specs |
+| --- | --- |
+| All Novu services (API, Worker, WS, Dashboard) | 4 vCPUs, 8 GB RAM |
+| MongoDB | 2 GB RAM, 20 GB disk |
+| Redis | 2 GB RAM, AOF enabled |
+| S3 storage | 10 GB minimum |
+
+### Infrastructure details
+
+#### Redis
+
+| Setting | Value |
+| --- | --- |
+| Clusters | 2 (one dedicated to queues) |
+| Memory | 8 GB RAM per cluster |
+| Persistence | Append Only File (AOF) enabled on the queue cluster to prevent job loss during outages |
+
+#### MongoDB
+
+| Setting | Value |
+| --- | --- |
+| Cluster tier | M20 or higher on MongoDB Atlas |
+
+#### Storage
+
+| Setting | Value |
+| --- | --- |
+| S3 storage | 10 GB minimum |
+
+<Note>
+  The above specifications are general recommendations. Adjust them based on your system load, usage
+  patterns, and scale of operations.
+</Note>

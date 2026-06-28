@@ -1,10 +1,11 @@
 import { EmailProviderIdEnum } from '@novu/shared';
 import { useMutation } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
-import { RiInformation2Fill, RiInformation2Line, RiKey2Line, RiLoader4Line, RiMailSendLine } from 'react-icons/ri';
+import { RiInformation2Line, RiKey2Line, RiLoader4Line, RiMailSendLine } from 'react-icons/ri';
 import { type AgentIntegrationLink, type AgentResponse, sendAgentTestEmail } from '@/api/agents';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
+import { IS_SELF_HOSTED_EE } from '@/config';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { cn } from '@/utils/ui';
@@ -77,7 +78,6 @@ export function EmailSetupGuide({
     outboundId,
     configuredAddresses,
     domains,
-    isOutboundDemo,
     needsCredentialsStep,
     hasOutboundCredentials,
     outboundProviderConfig,
@@ -128,13 +128,23 @@ export function EmailSetupGuide({
   // provider is an explicit upgrade rather than a prerequisite. For demo,
   // `needsCredentialsStep` stays false so the credentials step is skipped
   // naturally and the wizard advances straight to the inbound-address step.
+  // Self-hosted Enterprise has no bundled Novu demo sender, so a freshly
+  // provisioned agent has no outbound provider selected. Treat picking one as a
+  // hard prerequisite there. On cloud the demo is selected by default, so this
+  // branch never fires and the step stays pre-completed exactly as before (zero
+  // behavioral delta).
+  const needsOutboundSelection = IS_SELF_HOSTED_EE && !outboundId;
+
   const firstIncompleteStep = useMemo(() => {
+    if (needsOutboundSelection) return base;
     if (needsCredentialsStep && !hasOutboundCredentials) return credentialsStepIndex;
     if (!hasAddresses) return inboundStepIndex;
     if (!testConnected) return testStepIndex;
 
     return testStepIndex + 1;
   }, [
+    needsOutboundSelection,
+    base,
     needsCredentialsStep,
     hasOutboundCredentials,
     credentialsStepIndex,
@@ -153,7 +163,11 @@ export function EmailSetupGuide({
         status={deriveStepStatus(base, firstIncompleteStep)}
         sectionLabel="SETUP SENDING EMAILS"
         title="Setup providers to send emails."
-        description="The Novu Email demo sender is used by default so your agent can reply out of the box. Switch to your own provider for higher volume later."
+        description={
+          IS_SELF_HOSTED_EE
+            ? 'Select an email provider (e.g. SendGrid, SES, Resend) so your agent can send replies.'
+            : 'The Novu Email demo sender is used by default so your agent can reply out of the box. Switch to your own provider for higher volume later.'
+        }
         rightContent={
           <div className="flex w-full flex-col gap-1.5">
             <div className="text-text-strong text-label-xs flex items-center gap-1 font-medium leading-4">
@@ -319,17 +333,5 @@ export function EmailSetupGuide({
       {stepsColumn}
       {credentialsSidebar}
     </>
-  );
-}
-
-function DemoProviderHint() {
-  return (
-    <div className="bg-bg-weak border-stroke-weak text-text-sub flex items-start gap-2 rounded-md border px-2 py-1.5">
-      <RiInformation2Fill className="text-away-base mt-px size-3.5 shrink-0" aria-hidden />
-      <p className="text-paragraph-xs leading-4">
-        The demo sender is rate-limited and intended for testing only. Connect SendGrid, Resend, or another provider to
-        send at scale.
-      </p>
-    </div>
   );
 }
