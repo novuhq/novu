@@ -19,6 +19,7 @@ const LINKS: LinkType[] = [
   { href: '/connect-chat', label: 'Connect Slack', category: 'Components' },
   { href: '/connect-msteams', label: 'Connect MS Teams', category: 'Components' },
   { href: '/connect-telegram', label: 'Connect Telegram', category: 'Components' },
+  { href: '/connect-telegram-end-user', label: 'Connect Telegram (End User)', category: 'Components' },
   { href: '/subscription', label: 'Subscription', category: 'Components' },
   { href: '/subscription-components', label: 'Subscription Components', category: 'Components' },
   { href: '/subscription-hooks', label: 'Subscription Hooks', category: 'Components' },
