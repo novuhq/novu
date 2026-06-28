@@ -11,7 +11,7 @@ import {
   SubscriberRepository,
 } from '@novu/dal';
 import type { AgentAction } from '@novu/framework';
-import { CONNECT_SUBSCRIBER_PREFIX, ENDPOINT_TYPES } from '@novu/shared';
+import { ENDPOINT_TYPES } from '@novu/shared';
 import type { CardElement, EmojiValue, Message, Thread } from 'chat';
 import { ConnectClaimTokenService } from '../../../connect/services/connect-claim-token.service';
 import { parsePositiveIntEnv } from '../../../keyless/keyless-abuse.constants';
@@ -69,16 +69,6 @@ function extractTelegramChatId(thread: Thread): string | null {
   // `telegram:` prefix before persistence so the value we store matches what
   // `TelegramChatProvider.sendMessage` will POST to the bot API.
   return raw.startsWith('telegram:') ? raw.slice('telegram:'.length) : raw;
-}
-
-/**
- * A `connect:<userId>` subscriber id is the Novu dashboard's own test identity
- * (minted by `buildConnectSubscriberId`), used by the agent setup guide's
- * "Connect & test" step. It distinguishes the Layer-1 developer-onboarding
- * verification from a genuine Layer-2 end-user connection.
- */
-function isConnectDashboardSubscriber(subscriberId: string | null | undefined): boolean {
-  return Boolean(subscriberId?.startsWith(`${CONNECT_SUBSCRIBER_PREFIX}:`));
 }
 
 const SUBSCRIBER_LINK_SUCCESS_REPLY = "You're connected. Notifications from this agent will now reach you here.";
@@ -485,24 +475,6 @@ export class AgentInboundHandler implements OnModuleInit {
   }
 
   /**
-   * Layer-1 (Novu developer) onboarding completes when the dashboard's own test identity
-   * (`connect:<userId>`) links via `/start`. Genuine end-user links (Layer 2) are tracked by
-   * their channel endpoint and must not flip the agent–integration `connectedAt`, so an end
-   * user connecting can never complete (or collapse) the developer's dashboard onboarding.
-   */
-  private async markIntegrationConnectedIfDashboardTest(
-    agentId: string,
-    config: ResolvedAgentConfig,
-    subscriberId: string
-  ): Promise<void> {
-    if (!isConnectDashboardSubscriber(subscriberId)) {
-      return;
-    }
-
-    await this.markIntegrationConnectedOnFirstMessage(agentId, config);
-  }
-
-  /**
    * Counts the active conversation once the agent has actually engaged
    * (dispatch succeeded). Idempotent per activation — repeated engagements
    * inside the same window/period only slide the rolling window. Fail-soft:
@@ -756,12 +728,9 @@ export class AgentInboundHandler implements OnModuleInit {
           })
         );
 
-        // A successful `/start` link from the dashboard test identity (`connect:<userId>`)
-        // is the Layer-1 onboarding verification, so complete the dashboard setup guide.
-        // Genuine end-user links (Layer 2) are tracked via their own channel endpoint and
-        // must not flip `connectedAt`, so an end user connecting can never complete (or
-        // collapse) the developer's dashboard onboarding.
-        await this.markIntegrationConnectedIfDashboardTest(agentId, config, payload.subscriberId);
+        // `/start` only links the chat to the subscriber; Layer-1 onboarding completes on
+        // the next genuine inbound message (handled in `handle()`), matching Slack's
+        // "install ≠ connected" split and the dashboard "Send a test message" step.
 
         const reply = linkResult.created ? SUBSCRIBER_LINK_SUCCESS_REPLY : SUBSCRIBER_LINK_DUPLICATE_REPLY;
         await this.safePostInboundReply(thread, reply, agentId, message);
@@ -790,13 +759,6 @@ export class AgentInboundHandler implements OnModuleInit {
       endpointField: 'chatId',
       endpointValue: chatId,
     });
-
-    if (existing) {
-      // Self-heal: a stale/already-consumed code re-tapped by the dashboard test identity
-      // still proves the bot is wired up, so complete Layer-1 onboarding for links that
-      // predate this stamp (or whose original `/start` raced ahead of the dashboard poll).
-      await this.markIntegrationConnectedIfDashboardTest(agentId, config, existing.subscriberId);
-    }
 
     const reply = existing ? SUBSCRIBER_LINK_DUPLICATE_REPLY : SUBSCRIBER_LINK_EXPIRED_REPLY;
     await this.safePostInboundReply(thread, reply, agentId, message);

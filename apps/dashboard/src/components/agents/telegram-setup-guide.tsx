@@ -343,7 +343,7 @@ export function TelegramSetupGuide({
       watchedIntegrationId={integrationId}
       onConnected={handleConnected}
       connectedMessage="Telegram is connected — your agent is ready to receive messages."
-      listeningMessage="Waiting for a message to your bot to confirm the webhook is working…"
+      listeningMessage="Open the link in Telegram, then reply to the bot's confirmation message to verify delivery."
     />
   );
 
