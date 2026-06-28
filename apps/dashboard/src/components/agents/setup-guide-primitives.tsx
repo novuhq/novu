@@ -153,9 +153,7 @@ export function SetupStep({
           {extraContent}
         </div>
         {rightContent && (
-          <div className="flex min-h-0 w-full shrink-0 flex-col items-start md:max-w-[50%] lg:w-[420px] lg:max-w-none xl:w-[460px]">
-            {rightContent}
-          </div>
+          <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col items-start md:max-w-[460px]">{rightContent}</div>
         )}
       </div>
       {fullWidthContent}
