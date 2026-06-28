@@ -1,83 +1,13 @@
 ---
 title: 'Pagination'
-description: 'Page through large Novu API list responses using page-based, offset-based, and cursor-based pagination.'
+description: 'Page through large Novu API list responses using cursor-based pagination.'
 ---
 
-List endpoints return results in pages so you can retrieve large collections efficiently. Novu uses three pagination styles depending on the endpoint and API version. Each style accepts query parameters to control the page size and position, and returns a response envelope with the page of results plus metadata.
+List endpoints return results in pages so you can retrieve large collections efficiently. Novu uses **cursor-based pagination** as the standard for list endpoints. Pass an opaque cursor to walk forward or backward through results without skipping or duplicating items as your data changes.
 
-## Pagination styles
+A small number of legacy endpoints still use page-based pagination with `page` and `limit`. For new integrations, use the cursor-based endpoints listed below.
 
-| Style | Query parameters | Used by |
-| --- | --- | --- |
-| **Page-based** | `page`, `limit` | v1 lists such as subscribers, messages, topics, and activity |
-| **Offset-based** | `limit`, `offset` | v2 lists such as workflows and layouts |
-| **Cursor-based** | `after`, `before`, `limit` | v2 lists such as subscribers, topics, contexts, and channel endpoints |
-
-<Tip>
-  Prefer cursor-based pagination for large or frequently changing datasets. Cursors stay stable as items are added or removed, so you avoid skipped or duplicated results that can occur with page or offset pagination.
-</Tip>
-
-## Page-based pagination
-
-Page-based endpoints accept a zero-based `page` and a `limit` (the number of items per page).
-
-| Parameter | Type | Default | Notes |
-| --- | --- | --- | --- |
-| `page` | number | `0` | Zero-based page index. |
-| `limit` | number | `10` | Items per page. Maximum `100`. |
-
-The response wraps the page in an envelope:
-
-```json
-{
-  "data": [ /* array of items */ ],
-  "page": 0,
-  "pageSize": 10,
-  "hasMore": true,
-  "totalCount": 248
-}
-```
-
-| Field | Description |
-| --- | --- |
-| `data` | The array of items for the current page. |
-| `page` | The zero-based index of the returned page. |
-| `pageSize` | The number of items requested per page. |
-| `hasMore` | Whether more pages are available after this one. |
-| `totalCount` | Total number of matching items. Returned by some endpoints. |
-
-To fetch the next page, increment `page` until `hasMore` is `false`:
-
-```bash
-curl -G https://api.novu.co/v1/subscribers \
-  --header 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
-  --data-urlencode 'page=1' \
-  --data-urlencode 'limit=20'
-```
-
-## Offset-based pagination
-
-Offset-based endpoints accept a `limit` and an `offset` (the number of items to skip). They also support sorting through `orderBy` and `orderDirection`.
-
-| Parameter | Type | Default | Notes |
-| --- | --- | --- | --- |
-| `limit` | number | endpoint default | Items to return. |
-| `offset` | number | `0` | Items to skip before returning results. |
-| `orderBy` | string | — | Field to sort by (endpoint-specific). |
-| `orderDirection` | string | — | `ASC` or `DESC`. |
-
-Advance through results by increasing `offset` in increments of `limit`:
-
-```bash
-curl -G https://api.novu.co/v2/workflows \
-  --header 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
-  --data-urlencode 'limit=20' \
-  --data-urlencode 'offset=40'
-```
-
-## Cursor-based pagination
-
-Cursor-based endpoints return opaque cursors that point to the position after the last item (`next`) and before the first item (`previous`) of the current page.
+## Query parameters
 
 | Parameter | Type | Notes |
 | --- | --- | --- |
@@ -88,7 +18,9 @@ Cursor-based endpoints return opaque cursors that point to the position after th
 | `orderDirection` | string | `ASC` or `DESC`. |
 | `includeCursor` | boolean | Include the cursor item itself in the results. |
 
-The response envelope returns the cursors and total count:
+## Response envelope
+
+Cursor-based list endpoints return a consistent envelope:
 
 ```json
 {
@@ -117,6 +49,18 @@ curl -G https://api.novu.co/v2/subscribers \
   --data-urlencode 'after=eyJpZCI6IjY1...'
 ```
 
+## Cursor-based endpoints
+
+These endpoints use cursor pagination:
+
+- [Search subscribers](/api-reference/subscribers/search-subscribers)
+- [List all topics](/api-reference/topics/list-all-topics)
+- [List topic subscriptions](/api-reference/topics/list-topic-subscriptions)
+- [Retrieve subscriber subscriptions](/api-reference/subscribers/retrieve-subscriber-subscriptions)
+- [List all contexts](/api-reference/contexts/list-all-contexts)
+- [List all channel connections](/api-reference/channel-connections/list-all-channel-connections)
+- [List all channel endpoints](/api-reference/channel-endpoints/list-all-channel-endpoints)
+
 ## Fetch all pages
 
 This example walks every page of a cursor-based list with the TypeScript SDK until there are no more results:
@@ -139,6 +83,16 @@ async function listAllSubscribers() {
   return all;
 }
 ```
+
+## Legacy page-based pagination
+
+A few older endpoints still accept `page` and `limit` instead of cursors. They return `page`, `pageSize`, and `hasMore` in the response. Prefer the cursor-based alternatives above when both exist.
+
+| Endpoint | Notes |
+| --- | --- |
+| [List all messages](/api-reference/messages/list-all-messages) | Uses `page` and `limit`. |
+| [List all events](/api-reference/notifications/list-all-events) | Uses `page` and `limit`. |
+| [Retrieve subscriber notifications](/api-reference/subscribers/retrieve-subscriber-notifications) | v1 feed endpoint. Uses `page` and `limit`. |
 
 ## Related documentation
 
