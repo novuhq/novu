@@ -169,9 +169,17 @@ export class MsTeamsOauthCallback {
     }
 
     const decrypted = decryptCredentials(credentials);
-    const oid = await this.exchangeCodeForAadObjectId(command.providerCode, decrypted);
+    const { oid, tid } = await this.exchangeCodeForUserIdentity(command.providerCode, decrypted);
 
-    await this.installBotForUser(oid, decrypted);
+    /*
+     * Multi-tenant: the user may belong to a customer tenant different from the bot's home tenant.
+     * Use the tenant from the id_token (`tid`) for the Graph install and persist it on the endpoint
+     * so delivery can target the correct tenant. Fall back to the integration's home tenant when the
+     * claim is missing (single-tenant / legacy behavior).
+     */
+    const userTenantId = tid || (decrypted.tenantId as string);
+
+    await this.installBotForUser(oid, userTenantId, decrypted);
 
     await this.createChannelEndpoint.execute(
       CreateChannelEndpointCommand.create({
@@ -182,20 +190,24 @@ export class MsTeamsOauthCallback {
         subscriberId: stateData.subscriberId,
         context: stateData.context,
         type: ENDPOINT_TYPES.MS_TEAMS_USER,
-        endpoint: { userId: oid },
+        endpoint: { userId: oid, tenantId: userTenantId },
       })
     );
   }
 
-  private async installBotForUser(oid: string, credentials: ICredentialsEntity): Promise<void> {
-    const { clientId, secretKey, tenantId } = credentials;
+  private async installBotForUser(oid: string, userTenantId: string, credentials: ICredentialsEntity): Promise<void> {
+    const { clientId, secretKey } = credentials;
 
-    this.logger.info(`MS Teams bot install: acquiring graph token for clientId=${clientId} tenantId=${tenantId}`);
+    this.logger.info(`MS Teams bot install: acquiring graph token for clientId=${clientId} tenantId=${userTenantId}`);
 
+    /*
+     * App-only Graph token in the USER's tenant. For a multi-tenant Entra app this works once that
+     * tenant's admin has granted consent; the app + its org catalog entry then exist in that tenant.
+     */
     const graphToken = await this.msTeamsTokenService.getGraphToken(
       clientId as string,
       secretKey as string,
-      tenantId as string
+      userTenantId
     );
 
     this.logger.info(`MS Teams bot install: resolving Teams app catalog ID for clientId=${clientId}`);
@@ -326,13 +338,21 @@ export class MsTeamsOauthCallback {
     });
   }
 
-  private async exchangeCodeForAadObjectId(code: string, credentials: ICredentialsEntity): Promise<string> {
-    const { clientId, secretKey, tenantId } = credentials;
+  /**
+   * Exchanges the OAuth authorization code for the user's identity.
+   *
+   * Uses the `/organizations` authority (not the bot's home tenant) so the flow works for users in
+   * any tenant that has consented to the multi-tenant app. Returns the user's AAD object id (`oid`)
+   * and home tenant id (`tid`).
+   */
+  private async exchangeCodeForUserIdentity(
+    code: string,
+    credentials: ICredentialsEntity
+  ): Promise<{ oid: string; tid?: string }> {
+    const { clientId, secretKey } = credentials;
 
-    if (!clientId || !secretKey || !tenantId) {
-      throw new BadRequestException(
-        'MS Teams integration missing required credentials (clientId, secretKey, tenantId)'
-      );
+    if (!clientId || !secretKey) {
+      throw new BadRequestException('MS Teams integration missing required credentials (clientId, secretKey)');
     }
 
     const tokenParams = new URLSearchParams({
@@ -345,7 +365,7 @@ export class MsTeamsOauthCallback {
     });
 
     const response = await axios.post(
-      `${this.MS_TEAMS_TOKEN_URL}/${tenantId}/oauth2/v2.0/token`,
+      `${this.MS_TEAMS_TOKEN_URL}/organizations/oauth2/v2.0/token`,
       tokenParams.toString(),
       { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
     );
@@ -356,21 +376,21 @@ export class MsTeamsOauthCallback {
       throw new BadRequestException('MS Teams OAuth response missing id_token');
     }
 
-    const oid = this.extractOidFromIdToken(idToken);
+    const { oid, tid } = this.extractClaimsFromIdToken(idToken);
 
     if (!oid) {
-      throw new BadRequestException('MS Teams id_token missing oid claim — ensure the Azure app is single-tenant');
+      throw new BadRequestException('MS Teams id_token missing oid claim');
     }
 
-    return oid;
+    return { oid, tid };
   }
 
-  private extractOidFromIdToken(idToken: string): string | undefined {
+  private extractClaimsFromIdToken(idToken: string): { oid?: string; tid?: string } {
     try {
       const payload = idToken.split('.')[1];
       const decoded = JSON.parse(Buffer.from(payload, 'base64url').toString('utf-8'));
 
-      return decoded.oid as string | undefined;
+      return { oid: decoded.oid as string | undefined, tid: decoded.tid as string | undefined };
     } catch {
       throw new BadRequestException('Failed to decode MS Teams id_token');
     }

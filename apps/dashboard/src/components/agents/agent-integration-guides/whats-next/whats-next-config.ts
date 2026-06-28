@@ -1,4 +1,5 @@
 import { ChatProviderIdEnum } from '@novu/shared';
+import { buildMsTeamsWhatsNextConfig } from './msteams-whats-next-config';
 import { buildSlackWhatsNextConfig } from './slack-whats-next-config';
 import { buildTelegramWhatsNextConfig } from './telegram-whats-next-config';
 import type { ChannelWhatsNextConfig, ChannelWhatsNextConfigBuilder, WhatsNextConfigContext } from './whats-next-types';
@@ -9,6 +10,7 @@ import type { ChannelWhatsNextConfig, ChannelWhatsNextConfigBuilder, WhatsNextCo
  */
 const WHATS_NEXT_CONFIG_BUILDERS: Partial<Record<string, ChannelWhatsNextConfigBuilder>> = {
   [ChatProviderIdEnum.Slack]: buildSlackWhatsNextConfig,
+  [ChatProviderIdEnum.MsTeams]: buildMsTeamsWhatsNextConfig,
   [ChatProviderIdEnum.Telegram]: buildTelegramWhatsNextConfig,
 };
 

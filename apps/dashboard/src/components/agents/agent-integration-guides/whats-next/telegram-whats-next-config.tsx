@@ -20,7 +20,7 @@ function buildTelegramConnectSnippet(integrationIdentifier: string, applicationI
 // Replace subscriberId with the current user's id (the connection is created per subscriber).
 <NovuProvider
   applicationIdentifier="${safeApplicationIdentifier}"
-  subscriberId="<SUBSCRIBER_ID>"
+  subscriberId="YOUR_SUBSCRIBER_ID"
 >
   <TelegramConnectButton
     integrationIdentifier="${safeIntegrationIdentifier}"

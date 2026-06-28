@@ -1,7 +1,6 @@
 ---
 title: "Connect your first agent"
 description: 'Build a Pipeliner support agent with handlers, cards, metadata, an LLM, and conversation resolution.'
-icon: "sparkles"
 ---
 
 
@@ -193,13 +192,14 @@ After the welcome card, plug in a model. This example uses the [Vercel AI SDK](h
 
 Install the SDK and set your API key:
 
-```bash
+<CodeGroup>
+```bash title="Install dependencies"
 npm install ai @ai-sdk/openai
 ```
-
-```bash
+```bash title="Environment variable"
 OPENAI_API_KEY=sk-...
 ```
+</CodeGroup>
 
 Inside `onMessage`, after the welcome-card branch, add LLM generation:
 

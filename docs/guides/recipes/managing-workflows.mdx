@@ -26,6 +26,17 @@ When definitions in Development are correct, publish them with [Sync a workflow]
 
 ### End-to-end sequence
 
+```mermaid
+flowchart TB
+    repoStore[Store definitions in repo] --> phaseOne[Phase 1: Update in Development]
+    phaseOne --> updateEach[Update each workflowId]
+    updateEach --> createOn404[Create on 404]
+    createOn404 --> verifyDev[Verify in Development]
+    verifyDev --> phaseTwo[Phase 2: Publish via CI/CD]
+    phaseTwo --> syncStaging[Sync to Staging]
+    syncStaging --> syncProd[Sync to Production]
+```
+
 1. Update workflow definitions in Development for each `workflowId` you manage as code.
 2. Publish each workflow from Development to the target environment (Staging first, then Production, if you use both).
 

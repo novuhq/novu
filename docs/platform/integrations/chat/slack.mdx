@@ -24,26 +24,54 @@ Before integrating Slack chat with Novu, you must create and configure a Slack a
 
 ### Create a Slack app
 First, you need to create a Slack app. This provides you with the credential you need to create a Slack integration in Novu.
-1. Go to the [Slack API dashboard](https://api.slack.com/apps).
-2. Click **Create an App**.
-3. Select **From scratch**.
-4. Enter an app name of your choice in the **App Name** field.
-5. Pick a Slack workspace to develop your app in.
-  ![Create app](/images/channels-and-providers/chat/slack/create-app.png)
-6. Click **Create App**. You'll be directed to the **Basic Application** for the Slack app which contains the credentials you need for configuring Slack chat inside Novu:
+
+<Steps>
+  <Step title="Open the Slack API dashboard">
+    Go to the [Slack API dashboard](https://api.slack.com/apps).
+  </Step>
+
+  <Step title="Create an app">
+    Click **Create an App**.
+  </Step>
+
+  <Step title="Select From scratch">
+    Select **From scratch**.
+  </Step>
+
+  <Step title="Enter app name and workspace">
+    Enter an app name of your choice in the **App Name** field.
+    Pick a Slack workspace to develop your app in.
+    ![Create app](/images/channels-and-providers/chat/slack/create-app.png)
+  </Step>
+
+  <Step title="Create the app">
+    Click **Create App**. You'll be directed to the **Basic Application** for the Slack app which contains the credentials you need for configuring Slack chat inside Novu:
         - App ID
         - Client ID
         - Client Secret
-  ![Basic application](/images/channels-and-providers/chat/slack/basic-information.png)
+    ![Basic application](/images/channels-and-providers/chat/slack/basic-information.png)
+  </Step>
+</Steps>
 
 ### Configure scopes (Permissions)
 Your app needs permission to perform actions like sending messages or reading channel lists.
 
-1. In the sidebar, select **OAuth & Permissions**.
-2. Scroll down to the **Scopes** section.
-3. Under Bot Token Scopes, click **Add an OAuth Scope**.
-  ![Add an OAuth Scope](/images/channels-and-providers/chat/slack/scopes.png)
-4. Add the following recommended scopes:
+<Steps>
+  <Step title="Open OAuth & Permissions">
+    In the sidebar, select **OAuth & Permissions**.
+  </Step>
+
+  <Step title="Open Scopes">
+    Scroll down to the **Scopes** section.
+  </Step>
+
+  <Step title="Add an OAuth Scope">
+    Under Bot Token Scopes, click **Add an OAuth Scope**.
+    ![Add an OAuth Scope](/images/channels-and-providers/chat/slack/scopes.png)
+  </Step>
+
+  <Step title="Add recommended scopes">
+    Add the following recommended scopes:
     - `chat:write`
     - `chat:write.public`
     - `channels:read`
@@ -51,45 +79,84 @@ Your app needs permission to perform actions like sending messages or reading ch
     - `users:read`
     - `users:read.email`
     - (optional) `incoming-webhook` if you want Slack's built-in channel picker.
+  </Step>
+</Steps>
 
 These scopes are required for Novu to send messages, read channels and read users (for DMs and pickers). If you remove some of them, then certain features like channel or user selection might not work.
 
 ### Set the redirect URL
 
 This tells Slack where to send the user after they successfully authorize your app.
-1. In the sidebar, select **OAuth & Permissions**.
-2. Scroll down to the **Redirect URLs** section.
-4. Click **Add New Redirect URL**.
-  ![Add New Redirect URL](/images/channels-and-providers/chat/slack/redirect-urls.png)
-5. Paste the Novu OAuth callback URL. Add the redirect URL that matches your Novu region:
-    - US region:
-      ```
-      https://api.novu.co/v1/integrations/chat/oauth/callback
-      ```
-    - EU region:
-      ```
-      https://api.eu.novu.co/v1/integrations/chat/oauth/callback
-      ```
-6. Click **Add** to save the URLs. If you use a self-hosted Novu instance, then add your instance's callback URL instead.
+
+<Steps>
+  <Step title="Open OAuth & Permissions">
+    In the sidebar, select **OAuth & Permissions**.
+  </Step>
+
+  <Step title="Open Redirect URLs">
+    Scroll down to the **Redirect URLs** section.
+  </Step>
+
+  <Step title="Add a redirect URL">
+    Click **Add New Redirect URL**.
+    ![Add New Redirect URL](/images/channels-and-providers/chat/slack/redirect-urls.png)
+  </Step>
+
+  <Step title="Paste the Novu callback URL">
+    Paste the Novu OAuth callback URL. Add the redirect URL that matches your Novu region:
+
+    <CodeGroup>
+    ```bash title="US region"
+    https://api.novu.co/v1/integrations/chat/oauth/callback
+    ```
+    ```bash title="EU region"
+    https://api.eu.novu.co/v1/integrations/chat/oauth/callback
+    ```
+    </CodeGroup>
+  </Step>
+
+  <Step title="Save the URLs">
+    Click **Add** to save the URLs. If you use a self-hosted Novu instance, then add your instance's callback URL instead.
+  </Step>
+</Steps>
 
 ## Configure Slack integration in Novu
 
 Once your Slack app is set up, the next step is to configure the Slack Chat integration inside Novu.
 
-1. Log in to the Novu dashboard.
-2. In the sidebar, click **Integrations Store**.
-3. Click **Connect Provider**
-4. Select **Chat** and click **Slack**.
-5. Fill in the required fields using the credentials from your Slack app:
+<Steps>
+  <Step title="Log in to the Novu dashboard">
+    Log in to the Novu dashboard.
+  </Step>
+
+  <Step title="Open Integrations Store">
+    In the sidebar, click **Integrations Store**.
+  </Step>
+
+  <Step title="Connect a provider">
+    Click **Connect Provider**
+  </Step>
+
+  <Step title="Select Slack">
+    Select **Chat** and click **Slack**.
+  </Step>
+
+  <Step title="Fill in credentials">
+    Fill in the required fields using the credentials from your Slack app:
     - **Application Id**: Paste your Slack app App ID.
     - **Client ID**: Paste your Slack App Client ID.
     - **Client Secret**: Paste your Slack App Client Secret.
     - **Redirect URL (Optional)**: Enter the URL where you want users to be redirected to after they successfully connect their workspace. If there is no redirect URL, then Novu closes the tab immediately after the OAuth flow completes.
-  ![Connect slack integration in Novu](/images/channels-and-providers/chat/slack/slack-integration.png)
-6. Click **Create Integration** to create the Slack integration. Once saved, Novu is able to:
+    ![Connect slack integration in Novu](/images/channels-and-providers/chat/slack/slack-integration.png)
+  </Step>
+
+  <Step title="Create the integration">
+    Click **Create Integration** to create the Slack integration. Once saved, Novu is able to:
     - Generate OAuth (Connect Slack) URLs for your users
     - Receive Slack's OAuth callback.
     - Store workspace tokens as connections.
+  </Step>
+</Steps>
 
 You are now ready to implement the frontend flow to let users connect their workspaces.
 
@@ -138,23 +205,44 @@ window.open(oauthUrl, '_blank');
 
 Slack then guides the user through:
 
-1. Reviewing your app's requested permissions
-2. Approving the authorization
-3. Redirecting back to Novu's callback URL
+<Steps>
+  <Step title="Review permissions">
+    Reviewing your app's requested permissions
+  </Step>
+
+  <Step title="Approve authorization">
+    Approving the authorization
+  </Step>
+
+  <Step title="Redirect to Novu">
+    Redirecting back to Novu's callback URL
+  </Step>
+</Steps>
 
 After the user approves access, Novu handles the rest of the OAuth flow automatically.
-1. Novu exchanges the code for a Slack token.
-2. Novu creates a Slack connection for that workspace, it is referenced by `connectionIdentifier` when creating endpoints.You can also provider a custom `connectionIdentifier` to the `generateChatOAuthUrl()` and then connection with such identifier will be created instead of randomly generated one.
+
+<Steps>
+  <Step title="Novu exchanges the code">
+    Novu exchanges the code for a Slack token.
+  </Step>
+
+  <Step title="Novu creates a connection">
+    Novu creates a Slack connection for that workspace, it is referenced by `connectionIdentifier` when creating endpoints.You can also provider a custom `connectionIdentifier` to the `generateChatOAuthUrl()` and then connection with such identifier will be created instead of randomly generated one.
+  </Step>
+</Steps>
 
 ## Choose delivery destinations
 
 After a workspace is connected, you or users decide where in Slack to send the messages. This can either be a Slack channel, to a user or an incoming webhook URLs. After the delivery location has been selected, a Slack endpoint is then created for that location.
 
-### Send to a Slack channel
+<Tabs>
+  <Tab title="Slack channel">
 
 This is the typical flow for sending notifications to public or private channels.
 
-1. **Get the channel ID**: First, the channel where the message will be sent to must be selected, one way to do this is by using your Slack app token to list channels in your own UI.
+<Steps>
+  <Step title="Get the channel ID">
+    **Get the channel ID**: First, the channel where the message will be sent to must be selected, one way to do this is by using your Slack app token to list channels in your own UI.
 
     ```bash
     curl -X GET "https://slack.com/api/conversations.list" \
@@ -162,8 +250,10 @@ This is the typical flow for sending notifications to public or private channels
     ```
 
     To learn more about using [Slack conversations API](https://docs.slack.dev/apis/web-api/using-the-conversations-api) to either get public or private channels, refer Slack documentation.
+  </Step>
 
-2. **Create the endpoint**: Once the user selects a channel, save it as an endpoint in Novu.
+  <Step title="Create the endpoint">
+    **Create the endpoint**: Once the user selects a channel, save it as an endpoint in Novu.
 
     ```tsx
     await novu.channelEndpoints.create({
@@ -177,11 +267,17 @@ This is the typical flow for sending notifications to public or private channels
       }
     });
     ```
-### Send to a Slack user (Direct messages)
+  </Step>
+</Steps>
+
+  </Tab>
+  <Tab title="Slack user">
 
 Use this to send personal messages and notifications directly to a specific user.
 
-1. **Get the Slack user ID**: You can use Slack’s users API to get user IDs.
+<Steps>
+  <Step title="Get the Slack user ID">
+    **Get the Slack user ID**: You can use Slack’s users API to get user IDs.
 
     ```bash
     curl -X GET "https://slack.com/api/users.list" \
@@ -190,9 +286,11 @@ Use this to send personal messages and notifications directly to a specific user
 
     For example, you can look up a Slack user ID by their email address, if you requested the `users:read.email` scope.
 
-To learn more about using [Slack `users.list` method](https://docs.slack.dev/reference/methods/users.list), refer Slack documentation.
+    To learn more about using [Slack `users.list` method](https://docs.slack.dev/reference/methods/users.list), refer Slack documentation.
+  </Step>
 
-2. Create the endpoint: Save the returned User ID as the endpoint.
+  <Step title="Create the endpoint">
+    Create the endpoint: Save the returned User ID as the endpoint.
 
     ```tsx
     await novu.channelEndpoints.create({
@@ -206,16 +304,32 @@ To learn more about using [Slack `users.list` method](https://docs.slack.dev/ref
       },
     });
     ```
+  </Step>
+</Steps>
 
-### Incoming webhook URLs
+  </Tab>
+  <Tab title="Incoming webhook">
 
 If `incoming-webhook` scope was included when configuring the OAuth and permissions scopes in [Step 1.1](/platform/integrations/chat/slack#configure-scopes-permissions). Slack would show its own channel picker during the OAuth flow:
 
-1. The user selects a channel directly in Slack.
-2. Slack returns an `incoming_webhook.url`.
-3. Novu automatically creates a webhook endpoint for that subscriber using that URL.
+<Steps>
+  <Step title="User selects a channel">
+    The user selects a channel directly in Slack.
+  </Step>
+
+  <Step title="Slack returns webhook URL">
+    Slack returns an `incoming_webhook.url`.
+  </Step>
+
+  <Step title="Novu creates webhook endpoint">
+    Novu automatically creates a webhook endpoint for that subscriber using that URL.
+  </Step>
+</Steps>
 
 You don’t need to collect `channelId` yourself in this mode, Slack’s native channel picker handles it.
+
+  </Tab>
+</Tabs>
 
 ## Send notifications
 
@@ -240,6 +354,17 @@ await novu.trigger({
 ```
 
 When the workflow is triggered, Novu will:
-1. Find Slack endpoints matching `subscriberId` and `context`.
-2. Use the right Slack workspace connection.
-3. Deliver messages to the configured destinations.
+
+<Steps>
+  <Step title="Find Slack endpoints">
+    Find Slack endpoints matching `subscriberId` and `context`.
+  </Step>
+
+  <Step title="Use the workspace connection">
+    Use the right Slack workspace connection.
+  </Step>
+
+  <Step title="Deliver messages">
+    Deliver messages to the configured destinations.
+  </Step>
+</Steps>

@@ -1,7 +1,6 @@
 ---
 title: "Connect Components"
 description: 'Use prebuilt React components so your users can install and connect Slack, Microsoft Teams, Telegram and other communication platforms to your agent.'
-icon: "link"
 ---
 
 
@@ -48,22 +47,22 @@ export default SlackConnectButtonComponent;
 
 `SlackConnectButton` accepts the following props to customize the UI and behavior:
 
-| Property | Type | Description |
-| --- | --- | --- |
-| `integrationIdentifier` |  |  |
-| `connectionIdentifier` |  |  |
-| `subscriberId` |  |  |
-| `context` |  |  |
-| `scope` |  |  |
-| `connectionMode` |  |  |
-| `onConnectSuccess` |  |  |
-| `onConnectError` |  |  |
-| `onDisconnectSuccess` |  |  |
-| `onDisconnectError` |  |  |
-| `connectLabel` |  |  |
-| `connectedLabel` |  |  |
-| `appearance` |  |  |
-| `container` |  |  |
+<Fields>
+  <Field name="integrationIdentifier" type="string" />
+  <Field name="connectionIdentifier" type="string" />
+  <Field name="subscriberId" type="string" />
+  <Field name="context" type="Partial<Record<string, ContextValue>>" />
+  <Field name="scope" type="string[]" />
+  <Field name="connectionMode" type="ConnectionMode" />
+  <Field name="onConnectSuccess" type="(connectionIdentifier: string) => void" />
+  <Field name="onConnectError" type="(error: unknown) => void" />
+  <Field name="onDisconnectSuccess" type="() => void" />
+  <Field name="onDisconnectError" type="(error: unknown) => void" />
+  <Field name="connectLabel" type="string" />
+  <Field name="connectedLabel" type="string" />
+  <Field name="appearance" type="ReactInboxAppearance | ReactSubscriptionAppearance | ReactAllAppearance" />
+  <Field name="container" type="any" />
+</Fields>
 
 ## Microsoft Teams connect button
 

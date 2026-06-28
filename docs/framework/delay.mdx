@@ -77,12 +77,15 @@ export const goalReminderInAppAfterDelay = workflow(
   </Tab>
 </Tabs>
 
-<Note>
+<Warning>
   Changing the step content after triggering the workflow with delay step will not affect the
   existing pending delayed notification content.
-</Note>
+</Warning>
 
 ## Frequently Asked Questions
 
-### If delay step fails, will the workflow continue to the next step?
-No, workflow execution will stop immediately if the delay step fails due to an error.
+<AccordionGroup>
+  <Accordion title="If delay step fails, will the workflow continue to the next step?">
+    No, workflow execution will stop immediately if the delay step fails due to an error.
+  </Accordion>
+</AccordionGroup>

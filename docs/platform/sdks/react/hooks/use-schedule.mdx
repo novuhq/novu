@@ -39,7 +39,7 @@ Each `DaySchedule` object within `weeklySchedule` has the following structure:
 | Property | Type | Description |
 | --- | --- | --- |
 | `isEnabled` | `boolean` | Flag to enable or disable the schedule for this specific day. |
-| `hours` |  |  |
+| `hours` | `Array<{ start: string; end: string; }>` | An array of time ranges for when notifications are allowed. Multiple ranges per day are supported (for example, 9-12 AM and 2-5 PM). |
 
 ## Updating the schedule
 

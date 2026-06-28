@@ -1,0 +1,101 @@
+---
+title: 'Pagination'
+description: 'Page through large Novu API list responses using cursor-based pagination.'
+---
+
+List endpoints return results in pages so you can retrieve large collections efficiently. Novu uses **cursor-based pagination** as the standard for list endpoints. Pass an opaque cursor to walk forward or backward through results without skipping or duplicating items as your data changes.
+
+A small number of legacy endpoints still use page-based pagination with `page` and `limit`. For new integrations, use the cursor-based endpoints listed below.
+
+## Query parameters
+
+| Parameter | Type | Notes |
+| --- | --- | --- |
+| `limit` | number | Items per page. |
+| `after` | string | Cursor to fetch the page after a position. Use the `next` cursor from a previous response. |
+| `before` | string | Cursor to fetch the page before a position. Use the `previous` cursor from a previous response. |
+| `orderBy` | string | Field to sort by (endpoint-specific). |
+| `orderDirection` | string | `ASC` or `DESC`. |
+| `includeCursor` | boolean | Include the cursor item itself in the results. |
+
+## Response envelope
+
+Cursor-based list endpoints return a consistent envelope:
+
+```json
+{
+  "data": [ /* array of items */ ],
+  "next": "eyJpZCI6IjY1...",
+  "previous": null,
+  "totalCount": 1240,
+  "totalCountCapped": false
+}
+```
+
+| Field | Description |
+| --- | --- |
+| `data` | The array of items for the current page. |
+| `next` | Cursor for the next page, or `null` if this is the last page. |
+| `previous` | Cursor for the previous page, or `null` if this is the first page. |
+| `totalCount` | Total matching items, counted up to a maximum of 50,000. |
+| `totalCountCapped` | `true` when more than 50,000 results match and `totalCount` is capped. |
+
+To page forward, pass the `next` cursor as `after` on the following request. Stop when `next` is `null`:
+
+```bash
+curl -G https://api.novu.co/v2/subscribers \
+  --header 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+  --data-urlencode 'limit=50' \
+  --data-urlencode 'after=eyJpZCI6IjY1...'
+```
+
+## Cursor-based endpoints
+
+These endpoints use cursor pagination:
+
+- [Search subscribers](/api-reference/subscribers/search-subscribers)
+- [List all topics](/api-reference/topics/list-all-topics)
+- [List topic subscriptions](/api-reference/topics/list-topic-subscriptions)
+- [Retrieve subscriber subscriptions](/api-reference/subscribers/retrieve-subscriber-subscriptions)
+- [List all contexts](/api-reference/contexts/list-all-contexts)
+- [List all channel connections](/api-reference/channel-connections/list-all-channel-connections)
+- [List all channel endpoints](/api-reference/channel-endpoints/list-all-channel-endpoints)
+
+## Fetch all pages
+
+This example walks every page of a cursor-based list with the TypeScript SDK until there are no more results:
+
+```javascript
+import { Novu } from '@novu/api';
+
+const novu = new Novu({ secretKey: process.env.NOVU_SECRET_KEY });
+
+async function listAllSubscribers() {
+  const all = [];
+  let after;
+
+  do {
+    const { result } = await novu.subscribers.list({ limit: 100, after });
+    all.push(...result.data);
+    after = result.next ?? undefined;
+  } while (after);
+
+  return all;
+}
+```
+
+## Legacy page-based pagination
+
+A few older endpoints still accept `page` and `limit` instead of cursors. They return `page`, `pageSize`, and `hasMore` in the response. Prefer the cursor-based alternatives above when both exist.
+
+| Endpoint | Notes |
+| --- | --- |
+| [List all messages](/api-reference/messages/list-all-messages) | Uses `page` and `limit`. |
+| [List all events](/api-reference/notifications/list-all-events) | Uses `page` and `limit`. |
+| [Retrieve subscriber notifications](/api-reference/subscribers/retrieve-subscriber-notifications) | v1 feed endpoint. Uses `page` and `limit`. |
+
+## Related documentation
+
+- [Overview](/api-reference) — REST API capabilities and conventions
+- [Rate Limiting](/api-reference/rate-limiting) — Stay within request limits while paging
+- [Search subscribers](/api-reference/subscribers/search-subscribers) — Filter and paginate subscriber results

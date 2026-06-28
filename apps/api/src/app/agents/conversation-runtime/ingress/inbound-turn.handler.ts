@@ -30,6 +30,7 @@ import {
 import { AgentEventEnum } from '../../shared/enums/agent-event.enum';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { captureAgentException, captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
+import { extractMsTeamsTenantId } from '../../shared/util/msteams-activity';
 import { type AutoProvisionPlatform, isAutoProvisionPlatform } from '../../shared/util/platform-endpoint-config';
 import { InboundAckService } from '../ack/inbound-ack.service';
 import { AgentAttachmentStorage, type StoredAttachment } from '../conversation/agent-attachment-storage.service';
@@ -285,6 +286,10 @@ export class AgentInboundHandler implements OnModuleInit {
             authorUserName: message.author.userName,
             // chat-sdk types isBot as `boolean | "unknown"`; treat anything except `true` as a non-bot author.
             authorIsBot: message.author.isBot === true,
+            // Teams multi-tenant: capture the user's tenant from the inbound activity so the endpoint
+            // records which (possibly external customer) tenant the user belongs to.
+            platformTenantId:
+              config.platform === AgentPlatformEnum.TEAMS ? extractMsTeamsTenantId(message.raw) : undefined,
           })
         : await this.resolveSubscriberId(agentId, config, message.author.userId, 'resolve-subscriber');
     } catch (err) {

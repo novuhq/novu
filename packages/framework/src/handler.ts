@@ -21,18 +21,11 @@ import {
   SigningKeyNotFoundError,
 } from './errors';
 import { isPlatformError } from './errors/guard.errors';
-import type {
-  Agent,
-  AgentActionContext,
-  AgentBridgeRequest,
-  AgentMessageContext,
-  AgentReactionContext,
-  AgentResolveContext,
-  MessageContent,
-} from './resources/agent';
-import { AgentContextImpl, AgentDeliveryError, AgentEventEnum } from './resources/agent';
+import type { Agent, AgentBridgeRequest } from './resources/agent';
+import { dispatchAgentEvent } from './resources/agent/agent-dispatch';
 import type { Awaitable, EventTriggerParams, Workflow } from './types';
 import { createHmacSubtle, initApiClient, timingSafeEqual } from './utils';
+import { parseSignatureHeader } from './utils/bridge-signature';
 
 export interface ServeHandlerOptions {
   client?: Client;
@@ -231,14 +224,12 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
           return this.createResponse(HttpStatusEnum.NOT_FOUND, { error: `Agent '${agentId}' not registered` });
         }
 
-        const ctx = new AgentContextImpl(body as AgentBridgeRequest, this.client.secretKey);
-
-        const handlerPromise = this.runAgentHandler(registeredAgent, agentEvent, ctx).catch((err) => {
-          if (err instanceof AgentDeliveryError) {
-            this.client.logger.error(`[agent:${agentId}] ${err.message}`);
-          } else {
-            this.client.logger.error(`[agent:${agentId}] Handler error:`, err);
-          }
+        const handlerPromise = dispatchAgentEvent({
+          agent: registeredAgent,
+          event: agentEvent,
+          bridge: body as AgentBridgeRequest,
+          secretKey: this.client.secretKey,
+          logger: this.client.logger,
         });
 
         if (waitUntil) {
@@ -316,37 +307,6 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
     }
   }
 
-  private async runAgentHandler(registeredAgent: Agent, event: string, ctx: AgentContextImpl): Promise<void> {
-    const replyIfPresent = async (result: MessageContent | void) => {
-      if (result != null) await ctx.reply(result);
-    };
-
-    switch (event) {
-      case AgentEventEnum.ON_MESSAGE:
-        await replyIfPresent(await registeredAgent.handlers.onMessage(ctx.message!, ctx as AgentMessageContext));
-        break;
-      case AgentEventEnum.ON_ACTION:
-        if (registeredAgent.handlers.onAction) {
-          await replyIfPresent(await registeredAgent.handlers.onAction(ctx.action!, ctx as AgentActionContext));
-        }
-        break;
-      case AgentEventEnum.ON_REACTION:
-        if (registeredAgent.handlers.onReaction) {
-          await replyIfPresent(await registeredAgent.handlers.onReaction(ctx.reaction!, ctx as AgentReactionContext));
-        }
-        break;
-      case AgentEventEnum.ON_RESOLVE:
-        if (registeredAgent.handlers.onResolve) {
-          await replyIfPresent(await registeredAgent.handlers.onResolve(ctx as AgentResolveContext));
-        }
-        break;
-      default:
-        throw new InvalidActionError(event, AgentEventEnum);
-    }
-
-    await ctx.flush();
-  }
-
   private handleError(error: unknown): IActionResponse {
     if (isFrameworkError(error)) {
       if (error.statusCode >= 500) {
@@ -394,46 +354,4 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
       throw new SignatureMismatchError();
     }
   }
-}
-
-interface ParsedSignatureHeader {
-  t?: number;
-  v1?: string;
-}
-
-/**
- * Parse a `Novu-Signature` header into its named fields.
- *
- * Header format: `t=<unix-ms>,v1=<hex-hmac>` (order/whitespace tolerant).
- *
- * Splitting only on `=` was previously used here, which broke the timestamp
- * extraction (`timestamp` ended up as the literal string "t") and silently
- * disabled replay protection. We now split each comma-separated part on the
- * first `=` only and look up fields by name so additional or reordered fields
- * cannot bypass validation.
- */
-function parseSignatureHeader(header: string): ParsedSignatureHeader {
-  const fields: Record<string, string> = {};
-
-  for (const rawPart of header.split(',')) {
-    const part = rawPart.trim();
-    if (!part) continue;
-
-    const eqIdx = part.indexOf('=');
-    if (eqIdx <= 0) continue;
-
-    const key = part.slice(0, eqIdx);
-    const value = part.slice(eqIdx + 1);
-    if (key && value && !(key in fields)) {
-      fields[key] = value;
-    }
-  }
-
-  const tRaw = fields.t;
-  const t = tRaw !== undefined ? Number(tRaw) : NaN;
-
-  return {
-    t: Number.isFinite(t) ? t : undefined,
-    v1: fields.v1,
-  };
 }

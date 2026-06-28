@@ -1,7 +1,6 @@
 ---
 title: 'Overview'
 description: 'Learn how to create, configure, and work with notification workflows in Novu.'
-icon: "workflow"
 ---
 
 Novu Workflows orchestrate how notifications move from application events to messages delivered across one or more channels. A workflow combines delivery logic, message content, and execution rules into a single notification pipeline.
@@ -40,6 +39,15 @@ A workflow typically follows this lifecycle:
 3. Author content for each channel.  
 4. Trigger the workflow from your application using events and payloads.  
 5. Monitor and iterate using activity logs and delivery metrics.  
+
+```mermaid
+flowchart LR
+    createStep[Create workflow] --> configureStep[Configure steps]
+    configureStep --> authorStep[Author content]
+    authorStep --> triggerStep[Trigger from app]
+    triggerStep --> monitorStep[Monitor and iterate]
+    monitorStep --> configureStep
+```
 
 This section walks through each stage in detail.
 

@@ -12,6 +12,7 @@ import { ProviderIcon } from '@/components/integrations/components/provider-icon
 import { Skeleton } from '@/components/primitives/skeleton';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useAgentRoutes } from '@/hooks/use-agent-routes';
+import { getAgentChannelDisplayName } from '@/utils/agent-email-provider-display';
 import { buildRoute } from '@/utils/routes';
 import { ExceedsPlanIndicator } from './exceeds-plan-indicator';
 import { isAgentIntegrationConnected } from './is-agent-integration-connected';
@@ -22,7 +23,10 @@ type ConnectedProvidersSectionProps = {
 
 function ProviderCard({ link, to }: { link: AgentIntegrationLink; to: string }) {
   const providerMeta = novuProviders.find((p) => p.id === link.integration.providerId);
-  const displayName = providerMeta?.displayName ?? link.integration.name;
+  const displayName = getAgentChannelDisplayName(
+    link.integration.providerId,
+    providerMeta?.displayName ?? link.integration.name
+  );
   // Only flag connected channels — unconnected ones surface as "Action needed" in the channels tab.
   const exceedsPlan = Boolean(link.exceedsPlanLimit) && isAgentIntegrationConnected(link);
 

@@ -43,16 +43,19 @@ To use the Amazon SES provider in the email channel, you will need to create an 
 
 ## FAQs
 
-### Trigger from novu is successful but the subscriber is not receiving email
-Possible reasons: 
-- Subscriber's email address is not verified in SES if SES account is in sandbox environment. 
-- SES account daily sending limit has been reached if SES account is in sandbox environment.
-- Incorrect credentials have been used while creating SES integration.
+<AccordionGroup>
+  <Accordion title="Trigger from novu is successful but the subscriber is not receiving email">
+    Possible reasons:
+    - Subscriber's email address is not verified in SES if SES account is in sandbox environment.
+    - SES account daily sending limit has been reached if SES account is in sandbox environment.
+    - Incorrect credentials have been used while creating SES integration.
+  </Accordion>
 
-### SignatureDoesNotMatch error with SES
-
-- Ensure that the `ACCESS_KEY_ID` and `ACCESS_SECRET_KEY` values are correct and have the necessary permissions. If using SMTP credentials, change it with IAM role credentials.
-- If the issue persists, regenerate the credentials and update the integration with new credentials.
+  <Accordion title="SignatureDoesNotMatch error with SES">
+    - Ensure that the `ACCESS_KEY_ID` and `ACCESS_SECRET_KEY` values are correct and have the necessary permissions. If using SMTP credentials, change it with IAM role credentials.
+    - If the issue persists, regenerate the credentials and update the integration with new credentials.
+  </Accordion>
+</AccordionGroup>
 
 ## Next Steps
 
@@ -67,4 +70,3 @@ Possible reasons:
     Learn how to use different email provider integrations to be used to send emails
   </Card>
 </Columns>
-

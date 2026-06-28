@@ -10,7 +10,7 @@ The `usePreferences` hook provides a way to fetch and manage notification prefer
 
 | Property | Type | Description |
 | --- | --- | --- |
-| `filter` |  |  |
+| `filter` | `{ tags?: string[]; severity?: SeverityLevelEnum[] }` | Filter preferences by tags and severity |
 | `onSuccess` | `(data: Preference[]) => void` | Callback function called when preferences are successfully fetched |
 | `onError` | `(error: NovuError) => void` | Callback function called when an error occurs |
 
@@ -32,8 +32,8 @@ The Preference type from `@novu/react` includes these properties:
 | --- | --- | --- |
 | `level` | `PreferenceLevel` | Level of the preference (global or template) |
 | `enabled` | `boolean` | Whether notifications are enabled for this preference |
-| `channels` |  |  |
-| `workflow` |  |  |
+| `channels` | `{ email?: boolean; sms?: boolean; in_app?: boolean; chat?: boolean; push?: boolean; }` | Channel-specific preferences |
+| `workflow` | `{ id: string; name: string; enabled: boolean; }` | Workflow-specific preference details |
 
 ## Example usage
 

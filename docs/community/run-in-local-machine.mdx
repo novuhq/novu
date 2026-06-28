@@ -23,32 +23,34 @@ description: 'Prerequisites and steps to run Novu in local machine. Learn how to
 
 After installing the required services on your machine, you can clone and set up your forked version of the project:
 
-1.  Clone the repository
+<Steps>
+  <Step title="Clone the repository">
+    <Tabs>
+      <Tab title="Novu Org">
+    ```shell
+    git clone https://github.com/novuhq/novu.git
+    ```
+      </Tab>
+      <Tab title="Forked Repo">
+    ```shell
+    git clone https://github.com/{YOUR_GITHUB_USER_NAME}/novu.git
+    ```
+      </Tab>
+    </Tabs>
+  </Step>
 
-<Tabs>
-  <Tab title="Novu Org">
-```shell
-git clone https://github.com/novuhq/novu.git
-```
-  </Tab>
-  <Tab title="Forked Repo">
-```shell
-git clone https://github.com/{YOUR_GITHUB_USER_NAME}/novu.git
-```
-  </Tab>
-</Tabs>
+  <Step title="Install all dependencies">
+    ```shell
+    cd novu && npm run setup:project
+    ```
+  </Step>
 
-2.  Install all dependencies
-
-```shell
-cd novu && npm run setup:project
-```
-
-3. Run the project
-
-```shell
-npm run start
-```
+  <Step title="Run the project">
+    ```shell
+    npm run start
+    ```
+  </Step>
+</Steps>
 
 The `npm run start` will start the Jarvis CLI tool which allows you to run the whole project with ease. If you only want to run parts of the platform, you can use the following run commands from the root project:
 

@@ -1,4 +1,4 @@
-import { ChatProviderIdEnum, EmailProviderIdEnum } from '@novu/shared';
+import { ChatProviderIdEnum, EmailProviderIdEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { type ReactNode } from 'react';
 import type { AgentIntegrationLink, AgentResponse } from '@/api/agents';
 import { isAgentIntegrationConnected } from '@/components/agents/is-agent-integration-connected';
@@ -7,12 +7,13 @@ import { SlackSetupGuide } from '@/components/agents/slack-setup-guide';
 import { TeamsSetupGuide } from '@/components/agents/teams-setup-guide';
 import { TelegramSetupGuide } from '@/components/agents/telegram-setup-guide';
 import { WhatsAppSetupGuide } from '@/components/agents/whatsapp-setup-guide';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { AgentIntegrationGuideHeader } from './agent-integration-guide-layout';
 import { AgentIntegrationGuideTransition } from './agent-integration-guide-transition';
 import { EmailAgentIntegrationGuide } from './email-agent-integration-guide';
 import { GenericAgentIntegrationGuide } from './generic-agent-integration-guide';
 import { SlackAgentConnectedDetails } from './slack-agent-connected-details';
-import { TeamsAgentIntegrationGuide } from './teams-agent-integration-guide';
+import { TeamsAgentConnectedDetails } from './teams-agent-connected-details';
 import { TelegramAgentConnectedDetails } from './telegram-agent-connected-details';
 import { providerHasWhatsNextPhase } from './whats-next/whats-next-config';
 import { WhatsAppAgentIntegrationGuide } from './whatsapp-agent-integration-guide';
@@ -96,6 +97,12 @@ export function ResolveAgentIntegrationGuide({
 }: ResolveAgentIntegrationGuideProps) {
   const providerId = integrationLink.integration.providerId;
   const isConnected = Boolean(integrationLink.connectedAt);
+  const isMsTeamsWhatsNextEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_AGENT_MSTEAMS_WHATS_NEXT_ENABLED);
+
+  // MS Teams' user-rollout "what's next" phase is gated behind its own flag; until it's enabled the
+  // connected view falls back to the generic "Continue" note (and hides the rollout guide).
+  const hasUserRolloutPhase =
+    providerHasWhatsNextPhase(providerId) && (providerId !== ChatProviderIdEnum.MsTeams || isMsTeamsWhatsNextEnabled);
 
   // The auto-provisioned Novu email integration has no distinct setup phase — render its single
   // guide regardless of connection state.
@@ -182,14 +189,13 @@ export function ResolveAgentIntegrationGuide({
         );
       case ChatProviderIdEnum.MsTeams:
         return (
-          <TeamsAgentIntegrationGuide
-            embedded={embedded}
-            onBack={onBack}
+          <TeamsAgentConnectedDetails
             agent={agent}
             integrationLink={integrationLink}
             canRemoveIntegration={canRemoveIntegration}
             onRequestRemoveIntegration={onRequestRemoveIntegration}
             isRemovingIntegration={isRemovingIntegration}
+            justConnected={justConnected}
           />
         );
       case ChatProviderIdEnum.Telegram:
@@ -225,7 +231,7 @@ export function ResolveAgentIntegrationGuide({
       key={integrationLink._id}
       isConnected={isConnected}
       providerDisplayName={setupDisplayName}
-      hasUserRolloutPhase={providerHasWhatsNextPhase(providerId)}
+      hasUserRolloutPhase={hasUserRolloutPhase}
       renderSetupView={renderSetupView}
       renderConnectedView={renderConnectedView}
     />

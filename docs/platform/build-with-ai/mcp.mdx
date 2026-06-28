@@ -1,272 +1,402 @@
 ---
-title: MCP Server
-description: Connect your AI tools to Novu using MCP and manage notifications using natural language.
-icon: "network"
+title: Novu MCP Server
+description: Connect AI tools to Novu at mcp.novu.co and manage notifications, workflows, and subscribers using natural language.
 ---
 
+The Novu MCP Server exposes Novu's notification infrastructure as tools that AI assistants can discover and use in real time. Connect your AI tool to `https://mcp.novu.co/` to manage subscribers, workflows, integrations, and delivery activity from natural-language prompts.
 
-The Novu MCP Server exposes Novu's notification infrastructure as tools that AI assistants can discover and use in real time. 
+<Note>
+  Novu also hosts a separate **documentation MCP server** at [docs.novu.co/mcp](https://docs.novu.co/mcp) that lets AI tools search and read this documentation site. The server on this page (`mcp.novu.co`) manages your Novu account — triggers, workflows, subscribers, and more.
+</Note>
 
-Once connected, you can use natural language to manage notifications in Novu directly from your AI tool.
-For example, you can prompt your AI assistant to:
+## About the Novu MCP server
 
-* Trigger workflows for specific subscribers  
-* Search and inspect subscriber data  
-* Update subscriber notification preferences  
-* Debug failed notifications and delivery issues  
-* Analyze notification activity and logs  
-* Create and manage workflows
+The [Model Context Protocol (MCP)](https://modelcontextprotocol.io) is an open standard for connecting AI applications to external services. The Novu MCP Server prepares your notification infrastructure for the broader AI ecosystem — any MCP-compatible client like Cursor, Claude Code, Codex, or VS Code can connect and act on your Novu environment.
 
-## How Novu MCP works
+Once connected, you can prompt your AI assistant to:
+
+- Trigger workflows for specific subscribers
+- Search and inspect subscriber data
+- Update subscriber notification preferences
+- Debug failed notifications and delivery issues
+- Analyze notification activity and logs
+- Create and manage workflows
+
+Some AI tools support both MCP and [Agent Skills](/platform/build-with-ai/skills). MCP gives your assistant live access to your Novu account, while skills instruct agents how to use Novu APIs and SDKs effectively. They are complementary — connect the MCP server for account operations and install skills for implementation guidance.
+
+## How the Novu MCP works
 
 The Novu MCP Server exposes your notification system as a set of tools.
 
 When your AI assistant connects:
+
 1. It authenticates using your API key.
 2. It discovers available tools.
 3. It executes actions based on your prompts.
 
 Instead of calling APIs directly, the AI translates your request into tool calls and executes them against your Novu environment.
 
-## Prerequisite
-To use the Novu MCP Server, you'll need:
+## Prerequisites
 
-* A [Novu API key](https://dashboard.novu.co/settings/api-keys)
-* An MCP-compatible AI tool (Cursor, Codex, Claude Code, Claude Desktop)
+To use the Novu MCP Server, you need:
+
+- A [Novu API key](https://dashboard.novu.co/settings/api-keys)
+- An MCP-compatible AI tool (Cursor, Codex, Claude Code, Claude Desktop, VS Code)
 
 <Note>
-  Some tools like Claude Desktop require Node.js to run MCP servers locally.
+  Some tools like Claude Desktop require Node.js to run MCP servers locally through the `mcp-remote` proxy.
 </Note>
+
+## Access the Novu MCP server
+
+The Novu MCP Server is hosted at `https://mcp.novu.co/` and uses **Streamable HTTP** transport. Authenticate every request by sending your secret key in the `Authorization` header as `Bearer your-novu-api-key`.
+
+| Setting | Value |
+| --- | --- |
+| **Transport** | Streamable HTTP |
+| **Authentication** | Bearer token (Novu secret key) |
+| **US endpoint** | `https://mcp.novu.co/` |
+| **EU endpoint** | `https://mcp.novu.co/?region=eu` |
+
+Your region is determined by your dashboard URL:
+
+| Dashboard URL | Region | MCP URL |
+| --- | --- | --- |
+| `dashboard.novu.co` | US | `https://mcp.novu.co/` |
+| `eu.dashboard.novu.co` | EU | `https://mcp.novu.co/?region=eu` |
+
+Use the MCP URL that matches your dashboard region in every configuration example below.
 
 ## Setup
 
-Follow these steps to setup the Novu MCP server:
+<Steps>
+  <Step title="Get your secret key">
+    Your secret key authenticates your AI tool with Novu.
 
-### 1. Get your secret key
+    1. Go to the [Novu Dashboard](https://dashboard.novu.co).
+    2. Navigate to **API Keys**.
+    3. Under **Secret Keys**, copy your secret key.
+  </Step>
 
-Your secret key authenticates your AI tool with Novu. To retrieve it:
-1. Go to the [Novu Dashboard](https://dashboard.novu.co)
-2. Navigate to **API Keys**
-3. Under **Secret Keys**, copy your secret key
+  <Step title="Identify your region">
+    Check your dashboard URL to choose the correct MCP endpoint. US accounts use `https://mcp.novu.co/`; EU accounts use `https://mcp.novu.co/?region=eu`.
+  </Step>
 
-### 2. Identify your region
+  <Step title="Configure your AI tool">
+    Follow the client-specific instructions in the next section. Replace `your-novu-api-key` with the secret key you copied, and use the MCP URL for your region.
+  </Step>
 
-Your region determines which URL your AI tool connects to. To identify it, check your dashboard URL:
+  <Step title="Test the connection">
+    Ask your assistant to run a simple prompt such as "Check my Novu API key status" or "Show me all my notification workflows." If you get results back, the server is connected.
+  </Step>
+</Steps>
 
-| Dashboard URL | Region | MCP URL |
-|---|---|---|
-| `dashboard.novu.co` | US | `https://mcp.novu.co/` |
-| `eu.dashboard.novu.co` | EU | `https://mcp.novu.co/?region=eu` |
- 
-The MCP URL above is what you'll use in the next step when configuring your tool.
+## Connect your AI tool
 
-### 3. Configure your tool
- 
-The following sections cover setup for the most common MCP-compatible AI tools. Before you start, keep two things in mind as you work through the examples:
- 
-- **Replace the API key.** Each example uses `your-novu-api-key` as a placeholder. Replace it with the API key you copied earlier.
-- **Use the correct URL for your region.** The examples use the US endpoint (`https://mcp.novu.co/`). If you're on the EU region, replace it with `https://mcp.novu.co/?region=eu`.
-#### Cursor
- 
-Cursor supports remote MCP servers through its built-in settings UI, which writes to an `mcp.json` file. To add the Novu MCP Server:
- 
-1. Open **Cursor Settings**, and select **Tools & Integrations**.
-2. Under **MCP Tools**, select **New MCP Server**. This opens your `mcp.json` file.
-3. Add the following to the `mcpServers` object:
-   ```json
-   {
-     "mcpServers": {
-       "novu": {
-         "url": "https://mcp.novu.co/",
-         "headers": {
-           "Authorization": "Bearer your-novu-api-key"
-         }
-       }
-     }
-   }
-   ```
- 
-4. Save the file. Cursor detects the new server automatically.
-#### Codex
- 
-Codex reads MCP configuration from `~/.codex/config.toml`. The CLI and IDE extension share this file, so you only need to configure the server once. To add the Novu MCP Server:
- 
-1. Export your API key as an environment variable in your shell:
-   ```bash
-   export NOVU_API_KEY="your-novu-api-key"
-   ```
- 
-2. Open `~/.codex/config.toml` in your preferred text editor and add the following:
-   ```toml
-   [mcp_servers.novu]
-   url = "https://mcp.novu.co/"
-   bearer_token_env_var = "NOVU_API_KEY"
-   ```
- 
-3. Save the file and restart Codex.
-To verify the connection, run `/mcp` inside the Codex TUI. You should see `novu` listed as a connected server.
- 
-#### Claude Code
- 
-Claude Code manages MCP servers through its `claude mcp` command. To add the Novu MCP Server:
- 
-1. In your terminal, run:
-   ```bash
-   claude mcp add --transport http novu https://mcp.novu.co/ \
-     --header "Authorization: Bearer your-novu-api-key"
-   ```
- 
-2. To make Novu available across all your projects instead of just the current one, add the `--scope user` flag:
-   ```bash
-   claude mcp add --scope user --transport http novu https://mcp.novu.co/ \
-     --header "Authorization: Bearer your-novu-api-key"
-   ```
- 
-3. Verify the connection by running `claude mcp list`. You can also run `/mcp` inside Claude Code to check server status.
-#### Claude Desktop
- 
-Claude Desktop connects to remote MCP servers through a local proxy (`mcp-remote`), which requires Node.js 18 or higher. To add the Novu MCP Server:
- 
-1. Open Claude Desktop, go to **Settings**, and find the **Developer** section.
-2. Select **Edit Config**. This opens your `claude_desktop_config.json` file.
-3. Add the following to the `mcpServers` object (or create the object if it doesn't exist):
-   ```json
-   {
-     "mcpServers": {
-       "novu": {
-         "command": "npx",
-         "args": [
-           "mcp-remote",
-           "https://mcp.novu.co/",
-           "--header",
-           "Authorization: Bearer ${NOVU_API_KEY}"
-         ],
-         "env": {
-           "NOVU_API_KEY": "your-novu-api-key"
-         }
-       }
-     }
-   }
-   ```
- 
-4. Save the file and restart Claude Desktop.
+<Tabs>
+  <Tab title="Cursor">
 
-#### Other tools
- 
-Any MCP-compatible tool can connect to the Novu MCP Server. Use the following connection details:
- 
-* **URL**:
-  * US: `https://mcp.novu.co/`
-  * EU: `https://mcp.novu.co/?region=eu`
-* **Transport**: Streamable HTTP (recommended).
-* **Authentication**: Send your API key in the `Authorization` header as `Bearer your-novu-api-key`.
+Cursor supports remote MCP servers through its built-in settings UI, which writes to an `mcp.json` file.
 
-## Test your setup
- 
-To verify that the connection works, try any of the prompts below in your AI assistant:
- 
-```
-"Check my Novu API key status"
-"Show me all my notification workflows"
-"Find subscriber with email user@example.com"
-```
- 
-If you get results back, the Novu MCP Server is connected and working.
+<Steps>
+  <Step title="Open MCP settings">
+    Open **Cursor Settings**, select **Tools & Integrations**, then under **MCP Tools** select **New MCP Server**. This opens your `mcp.json` file.
+  </Step>
 
-## Available tools
+  <Step title="Add the Novu MCP server">
+    Add the following to the `mcpServers` object:
 
-The Novu MCP server currently provides 23 tools for interacting with your Novu environment:
- 
+    ```json
+    {
+      "mcpServers": {
+        "novu": {
+          "url": "https://mcp.novu.co/",
+          "headers": {
+            "Authorization": "Bearer your-novu-api-key"
+          }
+        }
+      }
+    }
+    ```
+  </Step>
+
+  <Step title="Save and verify">
+    Save the file. Cursor detects the new server automatically. In Cursor's chat, ask "What MCP tools do you have available?" — you should see the Novu server listed.
+  </Step>
+</Steps>
+
+  </Tab>
+
+  <Tab title="VS Code">
+
+VS Code reads MCP configuration from `.vscode/mcp.json` in your workspace, or from user-level MCP settings.
+
+<Steps>
+  <Step title="Create mcp.json">
+    Create a `.vscode/mcp.json` file in your project (or open your user MCP settings).
+  </Step>
+
+  <Step title="Add the Novu MCP server">
+    Add the following configuration:
+
+    ```json
+    {
+      "servers": {
+        "novu": {
+          "type": "http",
+          "url": "https://mcp.novu.co/",
+          "headers": {
+            "Authorization": "Bearer your-novu-api-key"
+          }
+        }
+      }
+    }
+    ```
+  </Step>
+
+  <Step title="Reload and verify">
+    Reload VS Code and open the MCP panel. The `novu` server should appear as a connected server.
+  </Step>
+</Steps>
+
+  </Tab>
+
+  <Tab title="Codex">
+
+Codex reads MCP configuration from `~/.codex/config.toml`. The CLI and IDE extension share this file.
+
+<Steps>
+  <Step title="Export your API key">
+    Export your API key as an environment variable:
+
+    ```bash
+    export NOVU_API_KEY="your-novu-api-key"
+    ```
+  </Step>
+
+  <Step title="Add the Novu MCP server">
+    Open `~/.codex/config.toml` and add:
+
+    ```toml
+    [mcp_servers.novu]
+    url = "https://mcp.novu.co/"
+    bearer_token_env_var = "NOVU_API_KEY"
+    ```
+  </Step>
+
+  <Step title="Restart and verify">
+    Save the file and restart Codex. Run `/mcp` inside the Codex TUI — you should see `novu` listed as a connected server.
+  </Step>
+</Steps>
+
+  </Tab>
+
+  <Tab title="Claude Code">
+
+Claude Code manages MCP servers through its `claude mcp` command.
+
+<Steps>
+  <Step title="Add the Novu MCP server">
+    In your terminal, run:
+
+    ```bash
+    claude mcp add --transport http novu https://mcp.novu.co/ \
+      --header "Authorization: Bearer your-novu-api-key"
+    ```
+  </Step>
+
+  <Step title="Optional: make it global">
+    To make Novu available across all projects, add the `--scope user` flag:
+
+    ```bash
+    claude mcp add --scope user --transport http novu https://mcp.novu.co/ \
+      --header "Authorization: Bearer your-novu-api-key"
+    ```
+  </Step>
+
+  <Step title="Verify the connection">
+    Run `claude mcp list`, or run `/mcp` inside Claude Code to check server status.
+  </Step>
+</Steps>
+
+  </Tab>
+
+  <Tab title="Claude Desktop">
+
+Claude Desktop connects to remote MCP servers through a local proxy (`mcp-remote`), which requires Node.js 18 or higher.
+
+<Steps>
+  <Step title="Open Claude Desktop config">
+    Open Claude Desktop, go to **Settings**, find the **Developer** section, and select **Edit Config**. This opens your `claude_desktop_config.json` file.
+  </Step>
+
+  <Step title="Add the Novu MCP server">
+    Add the following to the `mcpServers` object (or create the object if it does not exist):
+
+    ```json
+    {
+      "mcpServers": {
+        "novu": {
+          "command": "npx",
+          "args": [
+            "mcp-remote",
+            "https://mcp.novu.co/",
+            "--header",
+            "Authorization: Bearer ${NOVU_API_KEY}"
+          ],
+          "env": {
+            "NOVU_API_KEY": "your-novu-api-key"
+          }
+        }
+      }
+    }
+    ```
+  </Step>
+
+  <Step title="Restart Claude Desktop">
+    Save the file and restart Claude Desktop.
+  </Step>
+</Steps>
+
+  </Tab>
+
+  <Tab title="Other tools">
+
+Any MCP-compatible tool can connect to the Novu MCP Server using these connection details:
+
+| Setting | Value |
+| --- | --- |
+| **URL** | `https://mcp.novu.co/` (US) or `https://mcp.novu.co/?region=eu` (EU) |
+| **Transport** | Streamable HTTP |
+| **Authentication** | `Authorization: Bearer your-novu-api-key` |
+
+  </Tab>
+</Tabs>
+
+## MCP tools
+
+The Novu MCP server provides tools for interacting with your Novu environment. Your AI assistant discovers tools at connection time through the MCP `tools/list` handshake.
+
+Agents determine when to call each tool based on your prompt. For example, a request to "find subscriber user@example.com" may call `find_subscribers`, while "send a welcome email" may call `trigger_workflow`.
+
 ### Core operations
- 
+
 These tools let you inspect your account configuration:
- 
+
 | Tool | Description |
-|---|---|
+| --- | --- |
 | `get_api_key_status` | Check API key status and region configuration |
 | `get_environments` | List development and production environments |
- 
+
 ### Subscriber management
- 
+
 These tools let you create, inspect, and manage your subscribers:
- 
+
 | Tool | Description |
-|---|---|
+| --- | --- |
 | `create_subscriber` | Create a new subscriber with attributes like name, email, phone, and custom data |
 | `get_subscriber` | Retrieve a single subscriber by their `subscriberId` |
 | `update_subscriber` | Update an existing subscriber's attributes |
 | `delete_subscriber` | Delete a subscriber by their `subscriberId` |
 | `find_subscribers` | Search for subscribers using various query parameters |
- 
+
 ### Preferences
- 
+
 These tools let you view and update how subscribers receive notifications:
- 
+
 | Tool | Description |
-|---|---|
+| --- | --- |
 | `get_subscriber_preferences` | Get subscriber notification preferences for all channels |
 | `update_subscriber_preferences` | Update subscriber notification preferences for specific channels |
- 
+
 ### Workflow management
- 
+
 These tools let you create, inspect, and manage notification workflows:
- 
+
 | Tool | Description |
-|---|---|
+| --- | --- |
 | `create_workflow` | Create a new workflow with comprehensive configuration including steps |
 | `get_workflow` | Get detailed information about a specific workflow |
 | `get_workflows` | Get all available workflows |
 | `update_workflow` | Update an existing workflow |
 | `delete_workflow` | Delete an existing workflow by its unique identifier |
- 
+
 ### Triggering and events
- 
+
 These tools let you execute workflows and manage pending notifications:
- 
+
 | Tool | Description |
-|---|---|
+| --- | --- |
 | `trigger_workflow` | Trigger a workflow to send notifications to a subscriber |
 | `bulk_trigger_workflow` | Trigger multiple workflows in a single API call |
 | `cancel_triggered_event` | Cancel a pending triggered event |
- 
+
 ### Notifications
- 
+
 These tools let you inspect delivery and execution data:
- 
+
 | Tool | Description |
-|---|---|
+| --- | --- |
 | `get_notification` | Get a specific notification by ID with detailed execution logs |
 | `get_notifications` | Get notifications and events with advanced filtering options |
- 
+
 ### Integrations
- 
+
 These tools let you manage the channel providers connected to your Novu account:
- 
+
 | Tool | Description |
-|---|---|
+| --- | --- |
 | `get_integrations` | List all channel integrations (email, SMS, push, chat, in-app) |
 | `get_active_integrations` | List only the active integrations |
 | `delete_integration` | Delete an integration by its `integrationId` |
 | `set_primary_integration` | Mark an integration as the primary for its channel |
 
+## Use multiple MCP servers
+
+You can connect both the Novu MCP server and the [Novu documentation MCP server](https://docs.novu.co/mcp) at the same time. Each server serves a different purpose:
+
+| Server | URL | Purpose |
+| --- | --- | --- |
+| Novu MCP | `https://mcp.novu.co/` | Manage your Novu account — workflows, subscribers, triggers |
+| Novu Docs MCP | `https://docs.novu.co/mcp` | Search and read Novu documentation |
+
+Connected MCP servers do not consume context until the AI calls a tool. Be specific in your prompts so the assistant uses the most relevant server — for example, "trigger my welcome workflow" uses the Novu MCP, while "how do I configure digest steps?" uses the Docs MCP.
+
 ## Troubleshooting
 
-If your setup isn't working, the following sections cover the most common issues.
+If your setup is not working, the following sections cover the most common issues.
 
 <AccordionGroup>
   <Accordion title="Authentication errors">
-  * Verify your API key is valid and has no extra spaces or line breaks
-  * Check that you're using the correct header format: `Authorization: Bearer your-api-key`
+    - Verify your API key is valid and has no extra spaces or line breaks.
+    - Check that you are using the correct header format: `Authorization: Bearer your-api-key`.
   </Accordion>
 
   <Accordion title="Empty results">
-  Confirm you're using the correct region. If your dashboard is at `eu.dashboard.novu.co`, you need the EU endpoint
+    Confirm you are using the correct region. If your dashboard is at `eu.dashboard.novu.co`, you need the EU endpoint (`https://mcp.novu.co/?region=eu`).
   </Accordion>
 
   <Accordion title="Connection issues">
-  * Restart your AI assistant after making configuration changes
-  * For Claude Desktop, ensure Node.js is installed and accessible from your terminal
-  * For Claude Code, run `claude mcp list` to confirm the server is registered
-  * For Codex, run `/mcp` in the TUI to check server status
+    - Restart your AI assistant after making configuration changes.
+    - For Claude Desktop, ensure Node.js is installed and accessible from your terminal.
+    - For Claude Code, run `claude mcp list` to confirm the server is registered.
+    - For Codex, run `/mcp` in the TUI to check server status.
   </Accordion>
 </AccordionGroup>
+
+## Related topics
+
+<Columns cols={2}>
+  <Card title="Agent Skills" href="/platform/build-with-ai/skills">
+    Give AI coding assistants implementation guidance for Novu SDKs and workflows.
+  </Card>
+  <Card title="Agent Toolkit" href="/platform/build-with-ai/agent-toolkit">
+    Embed Novu tools inside your own AI agents with the `@novu/agent-toolkit` package.
+  </Card>
+  <Card title="Novu Docs MCP" href="https://docs.novu.co/mcp">
+    Connect AI tools to search and read this documentation site.
+  </Card>
+  <Card title="API keys" href="/platform/developer/api-keys">
+    Learn how to create and manage the secret keys used to authenticate the MCP server.
+  </Card>
+</Columns>

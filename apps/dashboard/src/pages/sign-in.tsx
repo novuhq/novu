@@ -45,7 +45,7 @@ export const SignInPage = () => {
     const pending = parseCliAuthReturnFromSearchParams(searchParams);
 
     if (pending) {
-      storePendingCliAuth(pending.deviceCode, pending.name);
+      storePendingCliAuth(pending);
     }
 
     storePendingConnectClaimFromRedirectUrl(readClerkRedirectUrlParam(searchParams));

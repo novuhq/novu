@@ -184,23 +184,25 @@ From there, you can click "Replay..." and choose to "Replay all failed messages 
 
 ## FAQs
 
-### How do I secure my webhook endpoint?
+<AccordionGroup>
+  <Accordion title="How do I secure my webhook endpoint?">
+    To secure your webhook endpoint, you should:
 
-To secure your webhook endpoint, you should:
+    1. Verify the webhook signature using the official verification library
+    2. Use HTTPS for your endpoint URL
+    3. Implement rate limiting to prevent abuse
+    4. Keep your webhook secret secure and rotate it periodically
+  </Accordion>
 
-1. Verify the webhook signature using the official verification library
-2. Use HTTPS for your endpoint URL
-3. Implement rate limiting to prevent abuse
-4. Keep your webhook secret secure and rotate it periodically
+  <Accordion title="What happens if my endpoint is unavailable?">
+    If your endpoint is unavailable, Novu will retry sending the webhook according to the retry schedule. If all attempts fail for 5 days, the endpoint will be disabled and you'll need to manually re-enable it.
+  </Accordion>
 
-### What happens if my endpoint is unavailable?
+  <Accordion title="Can I filter webhooks by event type?">
+    Yes, when configuring your webhook endpoint, you can select specific event types to receive. This allows you to filter out events that aren't relevant to your use case.
+  </Accordion>
 
-If your endpoint is unavailable, Novu will retry sending the webhook according to the retry schedule. If all attempts fail for 5 days, the endpoint will be disabled and you'll need to manually re-enable it.
-
-### Can I filter webhooks by event type?
-
-Yes, when configuring your webhook endpoint, you can select specific event types to receive. This allows you to filter out events that aren't relevant to your use case.
-
-### How can I test webhooks locally?
-
-To test webhooks locally, you can use a service like ngrok or localtunnel to expose your local server to the internet. Alternatively, you can use webhook testing services like Webhook.site or RequestBin to inspect webhook payloads.
+  <Accordion title="How can I test webhooks locally?">
+    To test webhooks locally, you can use a service like ngrok or localtunnel to expose your local server to the internet. Alternatively, you can use webhook testing services like Webhook.site or RequestBin to inspect webhook payloads.
+  </Accordion>
+</AccordionGroup>

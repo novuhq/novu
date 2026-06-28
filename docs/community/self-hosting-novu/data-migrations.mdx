@@ -1,7 +1,6 @@
 ---
 title: 'Data Migrations'
 description: 'Learn how to update your database data through migrations.'
-icon: "database"
 ---
 
 On occasion, Novu may introduce features that require changes to the database schema or data. This usually happens when
@@ -42,9 +41,18 @@ migrations
 - Success may also require the Redis instance to be running during execution for some migrations (here's the kicker,
 these are running locally otherwise you would need (potentially) another tunnel through to the remote
 version [TODO: confirm side effects (April, 2025)])
-- **Warning:** some migrations do not exit fully when run in the bash script ( eg < 0.19.0 ) and require Ctrl-C to finish and continue
-- **Warning:** not all migrations are fully documented in the release notes for each release
-- **Warning:** migrations are dependent on the underlying code (eg repositories) and matches the version of the code against the migration at the right point in time is crucial and each version also requires the correct version of `node` and `pnpm`
+
+<Warning>
+Some migrations do not exit fully when run in the bash script (eg &lt; 0.19.0) and require Ctrl-C to finish and continue.
+</Warning>
+
+<Warning>
+Not all migrations are fully documented in the release notes for each release.
+</Warning>
+
+<Warning>
+Migrations are dependent on the underlying code (eg repositories) and matches the version of the code against the migration at the right point in time is crucial and each version also requires the correct version of `node` and `pnpm`.
+</Warning>
 
 ## Migration Release Map
 
@@ -93,69 +101,73 @@ you will encounter `ECONNREFUSED 127.0.0.1:6379`. The problem here is that remot
 currently the assumption is that migrations should only affect the MongoDB collection. To fix this start Redis locally (
 or launch a Docker container: `docker run -p 6379:6379 redis`)
 
-### 1. Clone the Novu Repository
+<Steps>
+  <Step title="Clone the Novu Repository">
+    Ensure you’re using the same version as the one you’re deploying:
 
-Ensure you’re using the same version as the one you’re deploying:
+    ```bash
+    git clone https://github.com/novuhq/novu.git
+    cd novu
 
-```bash
-git clone https://github.com/novuhq/novu.git
-cd novu
+    git checkout <your-version-tag>  # e.g. v0.24.0
+    npm run clean
+    npm run setup:project # really important to run if you change tag
+    cd apps/api
+    ```
 
-git checkout <your-version-tag>  # e.g. v0.24.0
-npm run clean
-npm run setup:project # really important to run if you change tag
-cd apps/api
-```
+    <Warning>
+    Migrations are dependent on the underlying code (eg repositories):
+    - match the version of the code against the migration at the right point in time
+    - each version often requires the correct version of `node` and `pnpm` as per the `package.json`
+    </Warning>
 
-**Warning:** migrations are dependent on the underlying code (eg repositories)
-    * match the version of the code against the migration at the right point in time
-    * each version often requires the correct version of `node` and `pnpm` as per the `package.json`
+    <Note>
+    - Getting the code the run at a checked out version can be tricky
+    - If you want to know which tags are available: `git tag`
+    - Some migrations may fail because they rely on the underlying code rather than direct mongo queries
+    - Migrations are located in: `apps/api/migrations/`
+    - Checkout by tag stops accidentally running too many migrations that would normally be managed by migrations runner (see [migration versioning](#migration-versioning-and-idempotency))
+    </Note>
+  </Step>
 
-**Notes:**
-- Getting the code the run at a checked out version can be tricky
-- If you want to know which tags are available: `git tag`
-- Some migrations may fail because they rely on the underlying code rather than direct mongo queries
-- Migrations are located in: `apps/api/migrations/`
-- Checkout by tag stops accidentally running too many migrations that would normally be managed by migrations runner (
-see [migration versioning](#migration-versioning-and-idempotency) )
+  <Step title="Connect to Your MongoDB Database">
+    If your database is not directly accessible, you may need to tunnel:
 
-### 2. Connect to Your MongoDB Database
+    ```bash
+    # Example: Tunnel MongoDB via SSH
+    ssh -L 27017:localhost:27017 your-user@your-db-host
+    ```
 
-If your database is not directly accessible, you may need to tunnel:
+    Have your:
 
-```bash
-# Example: Tunnel MongoDB via SSH
-ssh -L 27017:localhost:27017 your-user@your-db-host
-```
+    - MongoDB **connection string**
+    - **Username and password** (if required)
+  </Step>
 
-Have your:
+  <Step title="Run the Migration Script">
+    > use the [script `run-migrations.sh` below](#run-migrations-script) for all the following steps
 
-- MongoDB **connection string**
-- **Username and password** (if required)
+    Configure access to the correct database:
 
-### 3. Run the Migration Script
+    ```bash
+    npx cross-env \
+    MONGO_URL="mongodb://127.0.0.1:27017/novu-db" \
+    NEW_RELIC_ENABLED=false \
+    npm run migration -- ./migrations/normalize-users-email/normalize-users-email.migration.ts
+    ```
 
-> use the [script `run-migrations.sh` below](#run-migrations-script) for all the following steps
+    Some notes:
 
-Configure access to the correct database:
+    - under the hood of the migration script ```npx ts-node --transpile-only ./apps/api/migrations/<script-name>.ts```
+    - some migrations require REDIS (ensure already running)
+    - some migrations require NEW_RELIC (so turn off)
+    - Run each script only once. Monitor logs or database changes for success.
+  </Step>
 
-```bash
-npx cross-env \
-MONGO_URL="mongodb://127.0.0.1:27017/novu-db" \
-NEW_RELIC_ENABLED=false \
-npm run migration -- ./migrations/normalize-users-email/normalize-users-email.migration.ts
-```
-
-Some notes:
-
-- under the hood of the migration script ```npx ts-node --transpile-only ./apps/api/migrations/<script-name>.ts```
-- some migrations require REDIS (ensure already running)
-- some migrations require NEW_RELIC (so turn off)
-- Run each script only once. Monitor logs or database changes for success.
-
-### 5. Repeat for Each Relevant Migration
-
-Use a [migration release map](#migration-release-map) to determine which scripts are required for your upgrade.
+  <Step title="Repeat for Each Relevant Migration">
+    Use a [migration release map](#migration-release-map) to determine which scripts are required for your upgrade.
+  </Step>
+</Steps>
 
 ## Post-Migration Validation
 
@@ -174,20 +186,22 @@ Novu **does not implement a versioning system** or record migration history in t
 errors (but by policy the underlying code does its best)
 - It is your responsibility to **ensure each script runs only once** and in the correct order.
 
-### What Is an Idempotent Migration?
+<AccordionGroup>
+  <Accordion title="What Is an Idempotent Migration?">
+    An *idempotent* migration can be safely run multiple times without changing the outcome after the first execution. This
+    is typically achieved through:
 
-An *idempotent* migration can be safely run multiple times without changing the outcome after the first execution. This
-is typically achieved through:
+    - Tracking applied migrations in a collection (e.g., `migrations`).
+    - Guard clauses in code to check if a change has already been made.
 
-- Tracking applied migrations in a collection (e.g., `migrations`).
-- Guard clauses in code to check if a change has already been made.
+    Note:
 
-Note:
-
-- there are libraries that support idempotent Mongo migrations in TypeScript
-- if you want to introduce versioned/idempotent migrations in your own deployment process, consider [
-`migrate-mongo`](https://github.com/seppevs/migrate-mongo) or [
-`mongodb-migrations`](https://github.com/emirotin/mongodb-migrations)
+    - there are libraries that support idempotent Mongo migrations in TypeScript
+    - if you want to introduce versioned/idempotent migrations in your own deployment process, consider [
+    `migrate-mongo`](https://github.com/seppevs/migrate-mongo) or [
+    `mongodb-migrations`](https://github.com/emirotin/mongodb-migrations)
+  </Accordion>
+</AccordionGroup>
 
 ## Tips
 

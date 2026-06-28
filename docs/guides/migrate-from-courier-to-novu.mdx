@@ -69,8 +69,14 @@ We recommend a phased approach to migrate safely without dropping any messages.
   <Step title="Phase 3: Translate automations to workflows">
     In Courier, you link Automations to Templates. In Novu, you recreate these as **Workflows**. You have two great options for building them:
 
+    <Tabs>
+      <Tab title="Dashboard">
+
     **Option A: The Dashboard Visual Builder**
     If your product or marketing team loves managing notifications visually, they will feel right at home in the Novu Dashboard. You can drag and drop Email, SMS, and In-App steps, add Delays and Digests, and edit message content directly in the browser. Read more on how to [manage workflows](/platform/workflow/overview) in the Novu Dashboard.
+
+      </Tab>
+      <Tab title="Code-first">
 
     **Option B: Code-First with Novu Framework**
     If your engineering team wants more control, you can use `@novu/framework` to define the same workflows directly in your codebase using TypeScript. 
@@ -93,6 +99,9 @@ We recommend a phased approach to migrate safely without dropping any messages.
     });
    
     ```
+
+      </Tab>
+    </Tabs>
   </Step>
 
   <Step title="Phase 4: Swap out the in-app Inbox">

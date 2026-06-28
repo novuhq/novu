@@ -15,6 +15,18 @@ Each Novu workflow is composed of 3 main components:
 - **Channel steps** - The delivery method of the notification with the content.
 - **Action steps** - Actions that will happen before and after a given channel step is executed.
 
+```mermaid
+flowchart TB
+    triggerNode[Trigger Event] --> actionBefore[Action Steps]
+    actionBefore --> channelNode[Channel Steps]
+    channelNode --> emailOut[Email]
+    channelNode --> smsOut[SMS]
+    channelNode --> pushOut[Push]
+    channelNode --> inAppOut[In-App]
+    channelNode --> chatOut[Chat]
+    channelNode --> actionAfter[Action Steps]
+```
+
 Let's take a look at a simple example of a workflow that sends an email after one day:
 
 ```tsx
