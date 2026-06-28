@@ -1,4 +1,5 @@
 import type { GeneratedAgentSpec } from '../api/agents';
+import type { BridgeScaffoldVariant } from '../pipeline/bridge/types';
 import type {
   AgentConnectMode,
   AgentSummary,
@@ -21,6 +22,11 @@ export type ChatSdkTunnelOfferResult = 'accept' | 'skip';
 export interface ConnectUI {
   /** True when running the Ink TUI; false for CI / non-TTY logging mode. */
   readonly interactive: boolean;
+  /**
+   * Tear down Ink and return the terminal to normal stdio before a long-running
+   * subprocess (npm install, etc.). No-op in logging / CI mode.
+   */
+  releaseTerminal(): Promise<void>;
   // Welcome screen
   /**
    * First screen the user sees. Renders a welcome message and waits for the
@@ -79,11 +85,15 @@ export interface ConnectUI {
   // Chat SDK project wiring
   promptForAgentName(defaultName: string): Promise<string>;
   confirmEnvSecretOverwrite(opts: { envPath: string; existingMasked: string; nextMasked: string }): Promise<boolean>;
-  confirmScaffold(opts: { projectDir: string; appName: string; variant?: 'chat-sdk' | 'custom-code' }): Promise<boolean>;
-  scaffoldingChatSdk(): void;
-  chatSdkScaffolded(opts: { projectDir: string; envPaths: string[]; skippedInstall?: boolean }): void;
-  scaffoldingCustomCode(): void;
-  customCodeScaffolded(opts: { projectDir: string; agentFilePath: string; skippedInstall?: boolean }): void;
+  confirmScaffold(opts: { projectDir: string; appName: string; variant?: BridgeScaffoldVariant }): Promise<boolean>;
+  scaffoldingBridge(opts: { variant: BridgeScaffoldVariant }): void;
+  bridgeScaffolded(opts: {
+    variant: BridgeScaffoldVariant;
+    projectDir: string;
+    skippedInstall?: boolean;
+    envPaths?: string[];
+    agentFilePath?: string;
+  }): void;
   confirmInstallChatSdkDeps(opts: { projectDir: string; installCommand: string; packages: string[] }): Promise<boolean>;
   installingChatSdkDeps(): void;
   showChatSdkReconcilePlan(opts: {

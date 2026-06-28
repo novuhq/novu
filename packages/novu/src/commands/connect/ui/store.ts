@@ -8,6 +8,7 @@ import type {
   ChatSdkRequirement,
   CustomCodeConnectOutcome,
 } from '../types';
+import type { BridgeScaffoldVariant } from '../pipeline/bridge/types';
 import type {
   ChatSdkTunnelOfferResult,
   GeneratedAgentPreviewResult,
@@ -75,22 +76,17 @@ export type Phase =
       kind: 'confirm-scaffold';
       projectDir: string;
       appName: string;
-      variant?: 'chat-sdk' | 'custom-code';
+      variant?: BridgeScaffoldVariant;
       resolve: (confirmed: boolean) => void;
     }
-  | { kind: 'scaffolding-chat-sdk' }
-  | { kind: 'scaffolding-custom-code' }
+  | { kind: 'scaffolding-bridge'; variant: BridgeScaffoldVariant }
   | {
-      kind: 'chat-sdk-scaffolded';
+      kind: 'bridge-scaffolded';
+      variant: BridgeScaffoldVariant;
       projectDir: string;
-      envPaths: string[];
       skippedInstall?: boolean;
-    }
-  | {
-      kind: 'custom-code-scaffolded';
-      projectDir: string;
-      agentFilePath: string;
-      skippedInstall?: boolean;
+      envPaths?: string[];
+      agentFilePath?: string;
     }
   | {
       kind: 'chat-sdk-reconcile-plan';

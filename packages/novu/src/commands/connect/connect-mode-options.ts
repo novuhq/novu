@@ -30,7 +30,7 @@ export const CONNECT_MODE_GROUPS: readonly ConnectModeGroup[] = [
   },
   {
     heading: "Don't have an agent yet?",
-    options: [{ value: 'demo', title: 'Demo credentials', detail: '10 conversations per month' }],
+    options: [{ value: 'demo', title: 'Try a demo agent', detail: '10 conversations per month' }],
   },
 ];
 

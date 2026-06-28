@@ -5,19 +5,16 @@ import { Box, Text, useInput } from 'ink';
 import React from 'react';
 import { SEND_FROM_ACCOUNT_LABEL } from '../copy/email-onboarding';
 import {
-  CONNECT_MODE_GROUPS,
   CONNECT_MODE_PICKER_SUBTITLE,
   CONNECT_MODE_PICKER_TITLE,
-  flattenConnectModeOptions,
 } from '../connect-mode-options';
 import { channelDisplayName, isDashboardOnlyChannel } from '../dashboard-urls';
 import { validateSlackConfigTokenFormat } from '../pipeline/channels/slack-config-token';
-import { resolveChatSdkOutcomeMessage } from '../pipeline/chat-sdk/outcome-message';
-import { resolveCustomCodeOutcomeMessage } from '../pipeline/custom-code/outcome-message';
-import type { AgentConnectMode, ChannelChoice } from '../types';
+import { resolveBridgeSetupFollowUpMessage } from '../pipeline/bridge/setup-outcome-message';
+import type { ChannelChoice } from '../types';
 import { ChatSdkPhaseContent, isChatSdkPhase } from './chat-sdk-phase-content';
-import { CustomCodePhaseContent, isCustomCodePhase } from './custom-code-phase-content';
 import { CopyableLink } from './copyable-link';
+import { GroupedConnectModeSelect } from './grouped-connect-mode-select';
 import { PreviewGeneratedContent } from './preview-generated-content';
 import type { ConnectStore, Phase } from './store';
 import { WelcomeContent } from './welcome-content';
@@ -45,10 +42,6 @@ export function PhaseContent({
 }): React.ReactElement {
   if (isChatSdkPhase(phase)) {
     return ChatSdkPhaseContent({ phase });
-  }
-
-  if (isCustomCodePhase(phase)) {
-    return CustomCodePhaseContent({ phase });
   }
 
   switch (phase.kind) {
@@ -353,66 +346,6 @@ export function PhaseContent({
       return <Text />;
     }
   }
-}
-
-function GroupedConnectModeSelect({
-  onChange,
-}: {
-  onChange: (value: AgentConnectMode) => void;
-}): React.ReactElement {
-  const flatOptions = flattenConnectModeOptions();
-  const [idx, setIdx] = React.useState(-1);
-
-  useInput((_input, key) => {
-    if (key.upArrow) {
-      setIdx((current) => {
-        if (current <= 0) {
-          return flatOptions.length - 1;
-        }
-
-        return current - 1;
-      });
-    } else if (key.downArrow) {
-      setIdx((current) => {
-        if (current < 0) {
-          return 0;
-        }
-
-        return (current + 1) % flatOptions.length;
-      });
-    } else if (key.return && idx >= 0) {
-      onChange(flatOptions[idx].value);
-    }
-  });
-
-  let optionIndex = 0;
-
-  return (
-    <Box flexDirection="column">
-      {CONNECT_MODE_GROUPS.map((group, groupIndex) => (
-        <Box key={group.heading} flexDirection="column">
-          {groupIndex > 0 ? <Text dimColor>{'─'.repeat(32)}</Text> : null}
-          <Text dimColor>{group.heading}</Text>
-          {group.options.map((opt) => {
-            const rowIndex = optionIndex;
-            optionIndex += 1;
-            const isSelected = rowIndex === idx;
-
-            return (
-              <Text key={opt.value}>
-                <Text color={isSelected ? 'cyan' : undefined}>
-                  {isSelected ? '› ' : '  '}
-                  {opt.title}
-                </Text>
-                {opt.detail ? <Text dimColor>{` · ${opt.detail}`}</Text> : null}
-              </Text>
-            );
-          })}
-        </Box>
-      ))}
-      {idx < 0 ? <Text dimColor>Use ↑↓ to select an option, then press Enter.</Text> : null}
-    </Box>
-  );
 }
 
 const DASHBOARD_CHANNEL_HINT = 'Onboarding for this channel is currently only available in the Novu Connect UI.';
@@ -757,9 +690,10 @@ function SuccessView({
     return null;
   })();
   const redirectChannelLabel = dashboardRedirectChannel ? channelDisplayName(dashboardRedirectChannel) : null;
-  const chatSdkMessage = resolveChatSdkOutcomeMessage(connectMode, chatSdkOutcome);
-  const customCodeMessage = resolveCustomCodeOutcomeMessage(connectMode, phase.customCodeOutcome);
-  const scaffoldMessage = chatSdkMessage ?? customCodeMessage;
+  const scaffoldMessage = resolveBridgeSetupFollowUpMessage(connectMode, {
+    chatSdk: chatSdkOutcome,
+    customCode: phase.customCodeOutcome,
+  });
 
   return (
     <Box flexDirection="column" gap={1}>

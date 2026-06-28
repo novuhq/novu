@@ -13,7 +13,7 @@ describe('resolveChatSdkOutcomeMessage', () => {
     ).toBeNull();
   });
 
-  it('describes scaffolded projects that need install', () => {
+  it('returns null for scaffolded projects after next steps are printed', () => {
     const message = resolveChatSdkOutcomeMessage('chat-sdk', {
       projectKind: 'empty',
       projectDir: '/tmp/app',
@@ -21,7 +21,7 @@ describe('resolveChatSdkOutcomeMessage', () => {
       skippedInstall: true,
     });
 
-    expect(message).toContain('npm install');
+    expect(message).toBeNull();
   });
 
   it('describes remaining setup when core is not ready', () => {

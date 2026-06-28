@@ -4,8 +4,7 @@ import ora, { type Ora } from 'ora';
 import type { GeneratedAgentSpec } from '../api/agents';
 import { SEND_FROM_ACCOUNT_LABEL } from '../copy/email-onboarding';
 import { channelDisplayName } from '../dashboard-urls';
-import { resolveChatSdkOutcomeMessage } from '../pipeline/chat-sdk/outcome-message';
-import { resolveCustomCodeOutcomeMessage } from '../pipeline/custom-code/outcome-message';
+import { printBridgeDevNextSteps } from '../pipeline/bridge/print-bridge-dev-next-steps';
 import { CHAT_SDK_REQUIREMENTS_FILE_ENV } from '../pipeline/chat-sdk/requirements';
 import type { AgentSummary } from '../types';
 import { resolveGeneratedAgentSpecLabels } from './agent-spec-labels';
@@ -22,6 +21,7 @@ import {
   writeAuthUrlHandoffFile,
 } from './handoff-events';
 import { renderQRPngFile } from './qr';
+import { printConnectSuccess, shouldSkipConnectSuccessSummary } from './print-connect-success';
 import type { ConnectUI, GeneratedAgentPreviewResult, PickResult } from './ui';
 
 export function createLoggingUI(): ConnectUI {
@@ -47,6 +47,9 @@ export function createLoggingUI(): ConnectUI {
 
   return {
     interactive: false,
+    releaseTerminal() {
+      return Promise.resolve();
+    },
     showWelcome() {
       // Non-interactive: skip the welcome prompt; the run is unattended by
       // definition (--ci or piped stdin) so there's nobody to press Enter.
@@ -209,24 +212,27 @@ export function createLoggingUI(): ConnectUI {
 
       return Promise.resolve(true);
     },
-    scaffoldingChatSdk() {
-      start('Scaffolding Chat SDK project…');
+    scaffoldingBridge({ variant }) {
+      start(variant === 'custom-code' ? 'Scaffolding agent project…' : 'Scaffolding Chat SDK project…');
     },
-    chatSdkScaffolded({ projectDir, envPaths }) {
-      succeed(`Scaffolded Chat SDK project at ${projectDir}`);
-      for (const envPath of envPaths) {
-        console.log(chalk.gray(`  Wrote ${envPath}`));
+    bridgeScaffolded({ variant, projectDir, envPaths, agentFilePath, skippedInstall }) {
+      if (variant === 'chat-sdk') {
+        succeed(`Scaffolded Chat SDK project at ${projectDir}`);
+        for (const envPath of envPaths ?? []) {
+          console.log(chalk.gray(`  Wrote ${envPath}`));
+        }
+      } else {
+        succeed(`Scaffolded agent project at ${projectDir}`);
+        if (agentFilePath) {
+          console.log(chalk.gray(`  Agent handler: ${agentFilePath}`));
+        }
       }
-    },
-    scaffoldingCustomCode() {
-      start('Scaffolding agent project…');
-    },
-    customCodeScaffolded({ projectDir, agentFilePath, skippedInstall }) {
-      succeed(`Scaffolded agent project at ${projectDir}`);
-      console.log(chalk.gray(`  Agent handler: ${agentFilePath}`));
+
       if (skippedInstall) {
         console.log(chalk.yellow('  ⚠ Inside a monorepo — npm install was skipped.'));
       }
+
+      printBridgeDevNextSteps({ projectDir, skippedInstall });
     },
     confirmInstallChatSdkDeps({ projectDir, installCommand, packages }) {
       console.log('');
@@ -389,70 +395,11 @@ export function createLoggingUI(): ConnectUI {
     },
     success(result) {
       stop();
-      const agentUrl = result.environmentSlug
-        ? `${result.connectDashboardUrl}/env/${result.environmentSlug}/connect/agents/${encodeURIComponent(result.agent.identifier)}`
-        : `${result.connectDashboardUrl}/connect/agents/${encodeURIComponent(result.agent.identifier)}`;
-      const channelLabel = (() => {
-        if (result.connectedChannel === 'slack') return 'Slack';
-        if (result.connectedChannel === 'telegram') return 'Telegram';
-        if (result.connectedChannel === 'email') return 'Email';
-
-        return null;
-      })();
-      const redirectChannelLabel = result.dashboardRedirectChannel
-        ? channelDisplayName(result.dashboardRedirectChannel)
-        : null;
-      console.log('');
-      console.log(`${chalk.green('✓')} Your agent is live.`);
-      console.log(`  ${chalk.bold('Agent:')} ${result.agent.name} ${chalk.gray(`(${result.agent.identifier})`)}`);
-      if (channelLabel) {
-        console.log(`  ${chalk.cyan('→')} Check ${channelLabel} — your agent just messaged you.`);
-      } else if (redirectChannelLabel) {
-        console.log(
-          `  ${chalk.cyan('→')} Finish ${redirectChannelLabel} setup in Novu Connect — we opened it for you.`
-        );
-      } else {
-        console.log(`  ${chalk.gray('No channel connected.')}`);
-      }
-      if (result.isKeyless && result.claimUrl) {
-        console.log(`  ${chalk.bold('Claim your agent:')} ${result.claimUrl}`);
-        console.log(`  ${chalk.gray('Sign up to move your agent and conversation into your own account.')}`);
-      } else {
-        console.log(`  ${chalk.bold('Dashboard:')} ${agentUrl}`);
-      }
-      if (result.connectMode === 'chat-sdk' && result.chatSdkOutcome) {
-        if (result.chatSdkOutcome.scaffolded) {
-          console.log(`  ${chalk.bold('Project:')} ${result.chatSdkOutcome.projectDir}`);
-          if (result.chatSdkOutcome.skippedInstall) {
-            console.log(`  ${chalk.yellow('⚠')} Inside a monorepo — npm install was skipped.`);
-            console.log(
-              `  ${chalk.cyan('→')} cd ${result.chatSdkOutcome.projectDir} && npm install && npm run dev:novu`
-            );
-          }
-        }
-
-        const followUp = resolveChatSdkOutcomeMessage(result.connectMode, result.chatSdkOutcome);
-        if (followUp) {
-          console.log(`  ${chalk.cyan('→')} ${followUp}`);
-        } else if (!result.chatSdkOutcome.scaffolded && !result.chatSdkOutcome.coreReady) {
-          console.log(`  ${chalk.gray('Finish the remaining setup steps above.')}`);
-        }
+      if (shouldSkipConnectSuccessSummary(result)) {
+        return;
       }
 
-      const customCodeFollowUp = resolveCustomCodeOutcomeMessage(result.connectMode, result.customCodeOutcome);
-      if (customCodeFollowUp) {
-        if (result.customCodeOutcome?.scaffolded) {
-          console.log(`  ${chalk.bold('Project:')} ${result.customCodeOutcome.projectDir}`);
-          if (result.customCodeOutcome.agentFilePath) {
-            console.log(`  ${chalk.bold('Agent handler:')} ${result.customCodeOutcome.agentFilePath}`);
-          }
-          if (result.customCodeOutcome.skippedInstall) {
-            console.log(`  ${chalk.yellow('⚠')} Inside a monorepo — npm install was skipped.`);
-            console.log(`  ${chalk.cyan('→')} cd ${result.customCodeOutcome.projectDir} && npm install && npm run dev`);
-          }
-        }
-        console.log(`  ${chalk.cyan('→')} ${customCodeFollowUp}`);
-      }
+      printConnectSuccess(result);
     },
     failure(message) {
       stop();

@@ -1,12 +1,16 @@
+import { TemplateTypeEnum } from '../../../init/templates';
 import type { ResolvedConnectAuth } from '../../auth/resolve-connect-auth';
 import type { AgentSummary, ConnectCommandOptions, CustomCodeConnectOutcome } from '../../types';
 import type { ConnectUI } from '../../ui/ui';
 import {
   defaultCustomCodeScaffoldDirName,
-  detectCustomCodeProject,
-  resolveCustomCodeAgentFilePath,
-} from './detect-project';
-import { scaffoldCustomCodeProject } from './scaffold';
+  resolveAgentHandlerPathIfExists,
+} from '../bridge/agent-paths';
+import { confirmEmptyDirScaffold } from '../bridge/confirm-empty-dir-scaffold';
+import { printBridgeScaffolded } from '../bridge/print-bridge-scaffolded';
+import { requireConnectSecretKey } from '../bridge/require-secret-key';
+import { runScaffoldWithConsole } from '../bridge/run-scaffold-with-console';
+import { scaffoldBridgeProject } from '../bridge/scaffold-project';
 
 export type CustomCodeSetupInput = {
   options: ConnectCommandOptions;
@@ -15,64 +19,63 @@ export type CustomCodeSetupInput = {
   agent: AgentSummary;
 };
 
-function requireSecretKey(auth: ResolvedConnectAuth): string {
-  const secretKey = auth.secretKey?.trim();
-  if (!secretKey) {
-    throw new Error('Missing Novu secret key — authenticate with dashboard OAuth or pass --secret-key.');
-  }
-
-  return secretKey;
-}
-
 export async function runCustomCodeProjectSetup(input: CustomCodeSetupInput): Promise<CustomCodeConnectOutcome> {
   const projectDir = input.options.projectDir?.trim() || process.cwd();
-  const detected = detectCustomCodeProject(projectDir);
-
-  if (detected.kind === 'project') {
-    return {
-      projectDir: detected.projectDir,
-      scaffolded: false,
-      agentFilePath: resolveCustomCodeAgentFilePath(detected.projectDir, input.agent.identifier),
-    };
-  }
-
-  if (input.options.noScaffold) {
-    return {
-      projectDir: detected.projectDir,
-      scaffolded: false,
-    };
-  }
-
-  const appName = input.options.scaffoldDir?.trim() || defaultCustomCodeScaffoldDirName(input.agent.identifier);
-  const confirmed = await input.ui.confirmScaffold({
-    projectDir: detected.projectDir,
-    appName,
+  const decision = await confirmEmptyDirScaffold({
+    projectDir,
+    options: input.options,
+    ui: input.ui,
     variant: 'custom-code',
+    defaultAppName: defaultCustomCodeScaffoldDirName,
+    agentIdentifier: input.agent.identifier,
   });
 
-  if (!confirmed) {
+  if (decision.action === 'existing-project') {
     return {
-      projectDir: detected.projectDir,
+      projectDir: decision.projectDir,
+      scaffolded: false,
+      agentFilePath: resolveAgentHandlerPathIfExists(decision.projectDir, input.agent.identifier),
+    };
+  }
+
+  if (decision.action === 'skipped') {
+    return {
+      projectDir: decision.projectDir,
       scaffolded: false,
     };
   }
 
-  input.ui.scaffoldingCustomCode();
-
-  const scaffolded = await scaffoldCustomCodeProject({
-    parentDir: detected.projectDir,
-    appName,
-    secretKey: requireSecretKey(input.auth),
-    apiUrl: input.options.apiUrl,
-    agentIdentifier: input.agent.identifier,
-    silent: input.ui.interactive,
+  const scaffolded = await runScaffoldWithConsole({
+    ui: input.ui,
+    variant: 'custom-code',
+    scaffold: () =>
+      scaffoldBridgeProject({
+        parentDir: decision.projectDir,
+        appName: decision.appName,
+        template: TemplateTypeEnum.APP_AGENT,
+        defaultAppName: defaultCustomCodeScaffoldDirName,
+        secretKey: requireConnectSecretKey(input.auth),
+        apiUrl: input.options.apiUrl,
+        agentIdentifier: input.agent.identifier,
+        silent: false,
+      }),
   });
 
-  input.ui.customCodeScaffolded({
-    projectDir: scaffolded.root,
-    agentFilePath: scaffolded.agentFilePath,
-    skippedInstall: scaffolded.skippedInstall,
-  });
+  if (input.ui.interactive) {
+    printBridgeScaffolded({
+      variant: 'custom-code',
+      projectDir: scaffolded.root,
+      agentFilePath: scaffolded.agentFilePath,
+      skippedInstall: scaffolded.skippedInstall,
+    });
+  } else {
+    input.ui.bridgeScaffolded({
+      variant: 'custom-code',
+      projectDir: scaffolded.root,
+      agentFilePath: scaffolded.agentFilePath,
+      skippedInstall: scaffolded.skippedInstall,
+    });
+  }
 
   return {
     projectDir: scaffolded.root,

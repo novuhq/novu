@@ -5,20 +5,22 @@ import { isFolderEmpty } from '../../../init/helpers/is-folder-empty';
 import { getOnline } from '../../../init/helpers/is-online';
 import { installTemplate, TemplateTypeEnum } from '../../../init/templates';
 
-export type ScaffoldCustomCodeProjectInput = {
+export type ScaffoldBridgeProjectInput = {
   parentDir: string;
   appName?: string;
+  template: typeof TemplateTypeEnum.APP_AGENT | typeof TemplateTypeEnum.APP_CHAT_SDK;
+  defaultAppName: (agentIdentifier: string) => string;
   secretKey: string;
   apiUrl: string;
   agentIdentifier: string;
   silent?: boolean;
 };
 
-export type ScaffoldCustomCodeProjectResult = {
+export type ScaffoldBridgeProjectResult = {
   root: string;
   appName: string;
   skippedInstall: boolean;
-  agentFilePath: string;
+  agentFilePath?: string;
 };
 
 function findWorkspaceRoot(dir: string): string | null {
@@ -43,11 +45,9 @@ function findWorkspaceRoot(dir: string): string | null {
   return null;
 }
 
-export async function scaffoldCustomCodeProject(
-  input: ScaffoldCustomCodeProjectInput
-): Promise<ScaffoldCustomCodeProjectResult> {
+export async function scaffoldBridgeProject(input: ScaffoldBridgeProjectInput): Promise<ScaffoldBridgeProjectResult> {
   const parentDir = path.resolve(input.parentDir);
-  const appName = input.appName?.trim() || `${input.agentIdentifier}-agent`;
+  const appName = input.appName?.trim() || input.defaultAppName(input.agentIdentifier);
   if (path.isAbsolute(appName) || path.basename(appName) !== appName || appName === '.' || appName === '..') {
     throw new Error(`Invalid scaffold directory name "${appName}". Use a single relative directory name.`);
   }
@@ -66,7 +66,7 @@ export async function scaffoldCustomCodeProject(
   await installTemplate({
     appName,
     root,
-    template: TemplateTypeEnum.APP_AGENT,
+    template: input.template,
     mode: 'ts',
     packageManager: 'npm',
     isOnline,
@@ -84,10 +84,10 @@ export async function scaffoldCustomCodeProject(
 
   tryGitInit(root);
 
-  return {
-    root,
-    appName,
-    skippedInstall,
-    agentFilePath: path.join(root, 'app', 'novu', 'agents', `${input.agentIdentifier}.tsx`),
-  };
+  const agentFilePath =
+    input.template === TemplateTypeEnum.APP_AGENT
+      ? path.join(root, 'app', 'novu', 'agents', `${input.agentIdentifier}.tsx`)
+      : undefined;
+
+  return { root, appName, skippedInstall, agentFilePath };
 }
