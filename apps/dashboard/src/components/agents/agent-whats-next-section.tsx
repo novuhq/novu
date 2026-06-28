@@ -230,17 +230,28 @@ export function AgentWhatsNextSection({ agent }: AgentWhatsNextSectionProps) {
     agentTab: 'integrations',
   })}${location.search}`;
 
-  const handleConfigureChannel = useCallback(
-    (link: AgentIntegrationLink) => {
-      const integrationDetailPath = `${buildRoute(agentRoutes.integrationDetail, {
-        environmentSlug: currentEnvironment?.slug ?? '',
-        agentIdentifier: encodeURIComponent(agent.identifier),
-        integrationIdentifier: encodeURIComponent(link.integration.identifier),
-      })}${location.search}`;
+  const navigateToIntegrationDetail = useCallback(
+    (integrationIdentifier: string) => {
+      if (!currentEnvironment?.slug) {
+        return;
+      }
 
-      navigate(integrationDetailPath);
+      navigate(
+        `${buildRoute(agentRoutes.integrationDetail, {
+          environmentSlug: currentEnvironment.slug,
+          agentIdentifier: encodeURIComponent(agent.identifier),
+          integrationIdentifier: encodeURIComponent(integrationIdentifier),
+        })}${location.search}`
+      );
     },
     [agent.identifier, agentRoutes.integrationDetail, currentEnvironment?.slug, location.search, navigate]
+  );
+
+  const handleConfigureChannel = useCallback(
+    (link: AgentIntegrationLink) => {
+      navigateToIntegrationDetail(link.integration.identifier);
+    },
+    [navigateToIntegrationDetail]
   );
 
   const handleAddChannel = useCallback(() => {
@@ -249,19 +260,13 @@ export function AgentWhatsNextSection({ agent }: AgentWhatsNextSectionProps) {
 
   const handleChannelAdded = useCallback(
     (_providerId: string, integration?: IIntegration) => {
-      if (!integration?.identifier || !currentEnvironment?.slug) {
+      if (!integration?.identifier) {
         return;
       }
 
-      navigate(
-        `${buildRoute(agentRoutes.integrationDetail, {
-          environmentSlug: currentEnvironment.slug,
-          agentIdentifier: encodeURIComponent(agent.identifier),
-          integrationIdentifier: encodeURIComponent(integration.identifier),
-        })}${location.search}`
-      );
+      navigateToIntegrationDetail(integration.identifier);
     },
-    [agent.identifier, agentRoutes.integrationDetail, currentEnvironment?.slug, location.search, navigate]
+    [navigateToIntegrationDetail]
   );
 
   if (!isWhatsNextEnabled) {

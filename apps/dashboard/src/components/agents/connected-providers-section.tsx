@@ -14,6 +14,7 @@ import { requireEnvironment, useEnvironment } from '@/context/environment/hooks'
 import { useAgentRoutes } from '@/hooks/use-agent-routes';
 import { getAgentChannelDisplayName } from '@/utils/agent-email-provider-display';
 import { buildRoute } from '@/utils/routes';
+import { cn } from '@/utils/ui';
 import { AddChannelPicker } from './add-channel-picker';
 import { ExceedsPlanIndicator } from './exceeds-plan-indicator';
 import { isAgentIntegrationConnected } from './is-agent-integration-connected';
@@ -44,11 +45,8 @@ function ProviderCard({ link, to }: { link: AgentIntegrationLink; to: string }) 
       className="flex min-w-[150px] max-w-[160px] flex-1 flex-col gap-1.5 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
       <div
-        className="border-stroke-soft/50 flex min-h-[80px] items-center justify-center rounded-lg border-[0.5px] px-6 py-4 transition-colors hover:border-stroke-soft"
-        style={{
-          backgroundImage:
-            'linear-gradient(22deg, rgba(200,200,200,0) 51%, rgba(200,200,200,0.1) 88%), linear-gradient(90deg, rgba(251,251,251,0.1) 0%, rgba(251,251,251,0.1) 100%), linear-gradient(90deg, #fff 0%, #fff 100%)',
-        }}
+        className={cn(addChannelCardSurfaceClassName, 'transition-colors hover:border-stroke-soft')}
+        style={addChannelCardSurfaceStyle}
       >
         <div className="flex size-10 items-center justify-center overflow-hidden rounded-full bg-white p-2 shadow-[0px_0.75px_1px_0.5px_rgba(41,41,41,0.04),0px_1.5px_1.5px_-0.75px_rgba(41,41,41,0.02),0px_3px_3px_-1.5px_rgba(41,41,41,0.04),0px_6px_6px_-3px_rgba(41,41,41,0.04),0px_12px_12px_-6px_rgba(41,41,41,0.04),0px_24px_24px_-12px_rgba(41,41,41,0.04),0px_0px_0px_8px_rgba(41,41,41,0.04)]">
           <ProviderIcon providerId={link.integration.providerId} providerDisplayName={displayName} className="size-5" />
