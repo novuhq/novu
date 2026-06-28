@@ -390,17 +390,6 @@
             ]
           },
           {
-            "group": "Managed Agent",
-            "pages": [
-              "agents/managed-agent/overview",
-              "agents/managed-agent/quickstart",
-              "agents/managed-agent/concepts",
-              "agents/managed-agent/configure-mcp-servers",
-              "agents/managed-agent/add-skills"
-            ],
-            "icon": "bot"
-          },
-          {
             "group": "Custom Code Agent",
             "pages": [
               "agents/custom-code-agent/quickstart",
@@ -422,6 +411,17 @@
               "agents/custom-code-agent/going-to-production"
             ],
             "icon": "code"
+          },
+          {
+            "group": "Managed Agent",
+            "pages": [
+              "agents/managed-agent/overview",
+              "agents/managed-agent/quickstart",
+              "agents/managed-agent/concepts",
+              "agents/managed-agent/configure-mcp-servers",
+              "agents/managed-agent/add-skills"
+            ],
+            "icon": "bot"
           },
           {
             "group": "Observability",
