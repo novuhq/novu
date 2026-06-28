@@ -1,6 +1,6 @@
 import { RiBookOpenLine, RiChat1Line, RiSparklingLine } from 'react-icons/ri';
 import { useAiDrawer } from '@/components/ai-drawer';
-import { IS_AI_FEATURES_ENABLED } from '@/config';
+import { IS_DOCS_ASSISTANT_ENABLED } from '@/config';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { Command, CommandExecutionContext } from '../command-types';
@@ -41,7 +41,7 @@ export function useHelpCommands(_context: CommandExecutionContext): Command[] {
     },
   ];
 
-  if (IS_AI_FEATURES_ENABLED && import.meta.env.VITE_INKEEP_API_KEY) {
+  if (IS_DOCS_ASSISTANT_ENABLED) {
     commands.push({
       id: 'help-ai-search',
       label: 'Ask Novu AI',
@@ -49,7 +49,7 @@ export function useHelpCommands(_context: CommandExecutionContext): Command[] {
       category: 'help',
       icon: <RiSparklingLine />,
       priority: 'high',
-      keywords: ['ai', 'ask', 'search', 'help', 'question', 'assistant', 'inkeep'],
+      keywords: ['ai', 'ask', 'search', 'help', 'question', 'assistant', 'docs', 'mintlify'],
       execute: () => {
         openAiDrawer();
       },

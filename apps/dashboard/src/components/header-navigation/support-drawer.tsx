@@ -1,10 +1,10 @@
-import { InkeepEmbeddedSearch, InkeepEmbeddedSearchProps } from '@inkeep/cxkit-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { cloneElement, isValidElement, useRef, useState } from 'react';
+import { cloneElement, isValidElement, useState } from 'react';
 import { RiBook2Line, RiCalendarEventLine, RiMessage3Line, RiNewspaperLine, RiRouteFill } from 'react-icons/ri';
+import { DocsSearch } from '@/components/docs-assistant/docs-search';
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/primitives/sheet';
 import { VisuallyHidden } from '@/components/primitives/visually-hidden';
-import { IS_AI_FEATURES_ENABLED } from '@/config';
+import { IS_DOCS_ASSISTANT_ENABLED } from '@/config';
 import { usePlainChat } from '@/hooks/use-plain-chat';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
@@ -36,64 +36,10 @@ function SupportDrawerContent({
   const telemetry = useTelemetry();
   const { showPlainLiveChat, isLiveChatVisible } = usePlainChat();
   const suggestions = useContextualSuggestions();
-  const searchFunctionsRef = useRef(null);
   const [hasSearchQuery, setHasSearchQuery] = useState(false);
 
-  const hasInkeep = IS_AI_FEATURES_ENABLED && !!import.meta.env.VITE_INKEEP_API_KEY;
+  const hasDocsAssistant = IS_DOCS_ASSISTANT_ENABLED;
   const isViewingDocs = currentDocsUrl !== null;
-
-  const inkeepConfig: InkeepEmbeddedSearchProps = {
-    baseSettings: {
-      apiKey: import.meta.env.VITE_INKEEP_API_KEY,
-      organizationDisplayName: 'Novu',
-      primaryBrandColor: '#DD2476',
-      theme: {
-        styles: [
-          {
-            key: 'support-drawer-search',
-            type: 'style',
-            value: `
-              .ikp-ai-search-input-group {
-                display: flex;
-                align-items: center;
-                height: 36px;
-                gap: 8px;
-                padding: 8px;
-                border: 1px solid #E1E4EA;
-                border-radius: 8px;
-                background: #FFFFFF;
-                box-shadow: 0px 1px 2px 0px rgba(10, 13, 20, 0.03);
-              }
-              .ikp-ai-search-input-group input {
-                font-size: 14px;
-                font-weight: 500;
-                line-height: 20px;
-                letter-spacing: -0.084px;
-              }
-              .ikp-ai-search-input-group input::placeholder {
-                color: #99A0AE;
-              }
-              .ikp-ai-search-input-group svg {
-                min-width: 14px !important;
-                min-height: 14px !important;
-                max-width: 14px !important;
-                max-height: 14px !important;
-              }
-              .ikp-ai-search-results__tab-list {
-                margin-top: 8px;
-              }
-            `,
-          },
-        ],
-      },
-    },
-    searchSettings: {
-      placeholder: "Type away… we're all ears.",
-      searchFunctionsRef,
-      onQueryChange: (query) => setHasSearchQuery(query.length > 0),
-    },
-    shouldAutoFocusInput: false,
-  };
 
   function handleTrackSuggestion(title: string) {
     telemetry(TelemetryEvent.SUPPORT_DRAWER_SUGGESTION_CLICKED, { suggestionTitle: title });
@@ -143,7 +89,9 @@ function SupportDrawerContent({
         <span className="text-foreground-600 text-sm font-medium leading-5 tracking-[-0.084px]">Need a hand?</span>
       </div>
 
-      <div className="px-3 pb-2">{hasInkeep ? <InkeepEmbeddedSearch {...inkeepConfig} /> : null}</div>
+      <div className="px-3 pb-2">
+        {hasDocsAssistant ? <DocsSearch onOpenDocs={onOpenDocs} onQueryChange={setHasSearchQuery} /> : null}
+      </div>
 
       <div className="flex-1 overflow-auto px-3 py-3">
         <AnimatePresence mode="wait">

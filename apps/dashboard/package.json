@@ -40,7 +40,6 @@
     "@codemirror/language": "^6.11.1",
     "@customerio/cdp-analytics-browser": "^0.3.18",
     "@hookform/resolvers": "^5.2.2",
-    "@inkeep/cxkit-react": "^0.5.107",
     "@langchain/langgraph-sdk": "^1.5.5",
     "@lezer/highlight": "^1.2.1",
     "@novu/api": "workspace:*",

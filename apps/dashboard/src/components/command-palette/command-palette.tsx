@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   RiArrowDownLine,
   RiArrowUpLine,
+  RiBookOpenLine,
   RiCloseLine,
   RiCornerDownLeftLine,
   RiFileLine,
@@ -17,7 +18,9 @@ import {
   RiUserLine,
 } from 'react-icons/ri';
 import { useAiDrawer } from '@/components/ai-drawer';
-import { IS_AI_FEATURES_ENABLED } from '@/config';
+import { docsUrl } from '@/components/header-navigation/support-drawer-constants';
+import { IS_DOCS_ASSISTANT_ENABLED } from '@/config';
+import { useMintlifyDocsSearch } from '@/hooks/use-mintlify-docs-search';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
@@ -112,7 +115,7 @@ export function CommandPalette() {
 
   // Create a flat list of all commands for easy lookup
   const allCommands = commandGroups.flatMap((group) => group.commands);
-  const hasInkeep = IS_AI_FEATURES_ENABLED && !!import.meta.env.VITE_INKEEP_API_KEY;
+  const { results: docResults } = useMintlifyDocsSearch(search, IS_DOCS_ASSISTANT_ENABLED && isOpen);
 
   // Reset search when dialog closes
   useEffect(() => {
@@ -162,7 +165,9 @@ export function CommandPalette() {
           value={search}
           onValueChange={setSearch}
           placeholder={
-            IS_AI_FEATURES_ENABLED ? 'Type a command, search or ask Novu AI...' : 'Type a command or search...'
+            IS_DOCS_ASSISTANT_ENABLED
+              ? 'Type a command, search docs, or ask Novu AI...'
+              : 'Type a command or search...'
           }
           autoFocus
           className="text-label-md text-text-sub placeholder:text-text-soft"
@@ -207,7 +212,44 @@ export function CommandPalette() {
           </CommandMenu.Group>
         ))}
 
-        {hasInkeep && search.trim() && (
+        {IS_DOCS_ASSISTANT_ENABLED && search.trim() && docResults.length > 0 && (
+          <CommandMenu.Group heading="Documentation" className="px-2.5">
+            {docResults.slice(0, 5).map((result) => {
+              const title = result.metadata?.title ?? result.path;
+
+              return (
+                <CommandMenu.Item
+                  key={result.path}
+                  value={`${title} ${result.path} documentation docs`}
+                  onSelect={() => {
+                    track(TelemetryEvent.COMMAND_PALETTE_COMMAND_SELECTED, {
+                      commandId: 'docs-search-result',
+                      commandLabel: title,
+                      commandCategory: 'help',
+                    });
+                    window.open(docsUrl(result.path), '_blank', 'noopener,noreferrer');
+                    closeCommandPalette();
+                  }}
+                  className="px-1.5 rounded-8"
+                >
+                  <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                    <CategoryIconWrapper>
+                      <RiBookOpenLine />
+                    </CategoryIconWrapper>
+                    <div className="flex min-w-0 flex-1 flex-col">
+                      <span className="text-text-sub text-label-sm truncate">{title}</span>
+                      <span className="text-text-soft text-paragraph-xs truncate">
+                        {result.metadata?.description ?? result.content}
+                      </span>
+                    </div>
+                  </div>
+                </CommandMenu.Item>
+              );
+            })}
+          </CommandMenu.Group>
+        )}
+
+        {IS_DOCS_ASSISTANT_ENABLED && search.trim() && (
           <CommandMenu.Group heading="AI Assistant" className="px-2.5">
             <CommandMenu.Item
               value={`Ask AI ${search} ai assistant help question`}

@@ -102,6 +102,8 @@ export const envValidators = {
   NOVU_MANAGED_CLAUDE_API_KEY: str({ default: undefined }),
   MAX_NOVU_MANAGED_CLAUDE_CONVERSATIONS: num({ default: 10 }),
   MAX_NOVU_MANAGED_CLAUDE_TOKENS_PER_CONVERSATION: num({ default: 100_000 }),
+  MINTLIFY_ASSISTANT_KEY: str({ default: undefined }),
+  MINTLIFY_DOMAIN: str({ default: undefined }),
   // Novu Cloud third party services
   ...(processEnv.IS_SELF_HOSTED !== 'true' &&
     processEnv.NOVU_ENTERPRISE === 'true' && {

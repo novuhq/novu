@@ -1,9 +1,8 @@
-import { InkeepEmbeddedSearchAndChat, InkeepEmbeddedSearchAndChatProps } from '@inkeep/cxkit-react';
-import { forwardRef, useEffect, useRef } from 'react';
-import { RiCloseLine } from 'react-icons/ri';
-import { CompactButton } from '@/components/primitives/button-compact';
+import { forwardRef } from 'react';
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/primitives/sheet';
 import { VisuallyHidden } from '@/components/primitives/visually-hidden';
+import { IS_DOCS_ASSISTANT_ENABLED } from '@/config';
+import { DocsAssistantChat } from '@/components/docs-assistant/docs-assistant-chat';
 
 type AiDrawerProps = {
   isOpen: boolean;
@@ -12,55 +11,9 @@ type AiDrawerProps = {
 };
 
 export const AiDrawer = forwardRef<HTMLDivElement, AiDrawerProps>(({ isOpen, onOpenChange, initialQuery }, ref) => {
-  const searchFunctionsRef = useRef<any>(null);
-  const chatFunctionsRef = useRef<any>(null);
-
-  const hasInkeep = !!import.meta.env.VITE_INKEEP_API_KEY;
-
-  useEffect(() => {
-    if (isOpen && hasInkeep) {
-      setTimeout(() => {
-        if (initialQuery?.trim()) {
-          chatFunctionsRef.current?.updateInputMessage(initialQuery);
-        }
-        chatFunctionsRef.current?.focusInput();
-      }, 100);
-    }
-  }, [isOpen, initialQuery]);
-
-  if (!hasInkeep) {
+  if (!IS_DOCS_ASSISTANT_ENABLED) {
     return null;
   }
-
-  const inkeepConfig: InkeepEmbeddedSearchAndChatProps = {
-    defaultView: 'chat',
-    baseSettings: {
-      apiKey: import.meta.env.VITE_INKEEP_API_KEY,
-      organizationDisplayName: 'Novu',
-      primaryBrandColor: '#DD2476',
-      theme: {
-        styles: [
-          {
-            key: 'custom-theme',
-            type: 'style',
-            value: `
-                .ikp-ai-chat-wrapper {
-                  height: 100%;
-                }
-              `,
-          },
-        ],
-      },
-    },
-    searchSettings: {
-      searchFunctionsRef,
-    },
-    aiChatSettings: {
-      aiAssistantName: 'Novu AI',
-      chatFunctionsRef,
-    },
-    shouldAutoFocusInput: true,
-  };
 
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
@@ -75,7 +28,7 @@ export const AiDrawer = forwardRef<HTMLDivElement, AiDrawerProps>(({ isOpen, onO
         </VisuallyHidden>
 
         <div className="h-[calc(100vh)]">
-          <InkeepEmbeddedSearchAndChat {...inkeepConfig} />
+          <DocsAssistantChat initialQuery={initialQuery} onClose={() => onOpenChange(false)} />
         </div>
       </SheetContent>
     </Sheet>

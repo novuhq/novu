@@ -67,6 +67,9 @@ export const IS_SELF_HOSTED_CE = IS_SELF_HOSTED && !IS_ENTERPRISE;
 
 export const IS_AI_FEATURES_ENABLED = !(IS_SELF_HOSTED && IS_ENTERPRISE);
 
+export const IS_DOCS_ASSISTANT_ENABLED =
+  IS_AI_FEATURES_ENABLED && import.meta.env.VITE_MINTLIFY_ASSISTANT_ENABLED === 'true';
+
 if (!IS_SELF_HOSTED && EE_AUTH_PROVIDER === 'clerk' && !CLERK_PUBLISHABLE_KEY) {
   throw new Error('Missing Clerk Publishable Key');
 }
