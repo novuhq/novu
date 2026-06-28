@@ -1,5 +1,5 @@
 [build]
-  install = "TRUST_FLAG=\"$(bash scripts/configure-pnpm-private-registry.sh)\" && pnpm install --frozen-lockfile ${TRUST_FLAG}"
+  install = "bash scripts/netlify-install.sh"
   command = "pnpm run build:dashboard --skip-nx-cache"
 
 [build.environment]
