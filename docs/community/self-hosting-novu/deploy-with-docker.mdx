@@ -69,6 +69,7 @@ If you used the setup script, secure random secrets were generated automatically
   - To run in local machine: `http://localhost`
   - To run in VPS: Your server's IP address (e.g., `http://<vps-ip-address>`) or domain name
 - `REDIS_CACHE_SERVICE_HOST` and `REDIS_HOST` can have same value for small deployments. For larger deployments, it is recommended to use separate Redis instances for caching and queue management.
+- `REDIS_SKIP_VERSION_CHECK` (default: `false`): Set to `true` when Redis is behind a proxy that omits `redis_version` in `INFO` responses. This bypasses the BullMQ version check so API and worker services can start.
 
 ## Configuration
 

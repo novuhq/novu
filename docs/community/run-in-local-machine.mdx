@@ -83,6 +83,7 @@ The command `npm run setup:project` creates default environment variables that a
     - `REDIS_PORT`The port of your redis instance
     - `REDIS_PASSWORD`Optional password of your redis instance
     - `REDIS_DB_INDEX`The Redis database index
+    - `REDIS_SKIP_VERSION_CHECK` (default: `false`) Set to `true` when `REDIS_HOST` points at a Redis proxy (for example Predixy in front of Sentinel) that omits `redis_version` in `INFO` responses. Bypasses the BullMQ Redis version check so API and worker services can start.
     - `REDIS_CACHE_SERVICE_HOST`The domain / IP of your redis instance for caching
     - `REDIS_CACHE_SERVICE_PORT`The port of your redis instance for caching
     - `REDIS_CACHE_DB_INDEX`The Redis cache database index
@@ -134,6 +135,7 @@ The command `npm run setup:project` creates default environment variables that a
     - `REDIS_PORT` - The port of your redis instance
     - `REDIS_PASSWORD` - Optional password of your redis instance
     - `REDIS_DB_INDEX` - The Redis database index
+    - `REDIS_SKIP_VERSION_CHECK` (default: `false`) - Set to `true` when `REDIS_HOST` points at a Redis proxy (for example Predixy in front of Sentinel) that omits `redis_version` in `INFO` responses. Bypasses the BullMQ Redis version check so API and worker services can start.
     - `REDIS_CACHE_SERVICE_HOST` - The domain / IP of your redis instance for caching
     - `REDIS_CACHE_SERVICE_PORT` - The port of your redis instance for caching
     - `REDIS_CACHE_DB_INDEX` - The Redis cache database index
@@ -181,6 +183,7 @@ The command `npm run setup:project` creates default environment variables that a
     - `REDIS_HOST`The domain / IP of your redis instance
     - `REDIS_PORT`The port of your redis instance
     - `REDIS_DB_INDEX`The database index of your redis instance
+    - `REDIS_SKIP_VERSION_CHECK` (default: `false`) Set to `true` when `REDIS_HOST` points at a Redis proxy (for example Predixy in front of Sentinel) that omits `redis_version` in `INFO` responses. Bypasses the BullMQ Redis version check so API and worker services can start.
     - `REDIS_PASSWORD`Optional password of your redis instance
     - `JWT_SECRET`The secret keybase which is used to encrypt / verify the tokens issued for authentication
     - `MONGO_URL`The URL of your MongoDB instance
