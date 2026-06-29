@@ -276,6 +276,21 @@ export class AgentConversationService {
     return this.activityRepository.findByPlatformMessageId(environmentId, conversationId, platformMessageId);
   }
 
+  /** Fallback lookup when reaction thread ids do not match the stored conversation thread. */
+  async findSourceActivityForIntegration(
+    environmentId: string,
+    organizationId: string,
+    integrationId: string,
+    platformMessageId: string
+  ): Promise<ConversationActivityEntity | null> {
+    return this.activityRepository.findByPlatformMessageIdForIntegration(
+      environmentId,
+      organizationId,
+      integrationId,
+      platformMessageId
+    );
+  }
+
   async countAgentMessages(environmentId: string, conversationId: string): Promise<number> {
     return this.activityRepository.countAgentMessages(environmentId, conversationId);
   }

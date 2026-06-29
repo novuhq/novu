@@ -44,6 +44,7 @@ import { ConversationActivationService } from '../conversation/conversation-acti
 import { OutboundGateway } from '../egress/outbound.gateway';
 import type { BridgeReaction } from '../runtime/bridge-executor.service';
 import type { ConversationTurn } from '../runtime/conversation-turn';
+import { applyPlatformThreadIdToThread } from '../runtime/platform-thread.util';
 import { RuntimeResolver } from '../runtime/runtime-resolver.service';
 import { InboundDispatcher } from './inbound.dispatcher';
 import { isLinkButtonActionId, PlanLimitGateService } from './plan-limit-gate.service';
@@ -165,6 +166,45 @@ function getInboundPlatformThreadId(platform: AgentPlatformEnum, thread: Thread,
   }
 
   return `${thread.id}${threadRoot}`;
+}
+
+function resolveReactionPlatformThreadId(
+  platform: AgentPlatformEnum,
+  thread: Thread,
+  message: Message | undefined,
+  messageId: string
+): string {
+  if (message) {
+    return getInboundPlatformThreadId(platform, thread, message);
+  }
+
+  // Slack DM reactions may arrive with an empty-root SDK thread id (`slack:D123:`).
+  // Inbound messages patch that using the message ts; mirror that for reactions
+  // when the reacted-to message is the thread root.
+  if (platform === AgentPlatformEnum.SLACK && thread.isDM && thread.id.endsWith(':') && messageId) {
+    return `${thread.id}${messageId}`;
+  }
+
+  return thread.id;
+}
+
+function buildSourceMessageFromActivity(activity: ConversationActivityEntity): Message {
+  const isBot = activity.senderType === ConversationActivitySenderTypeEnum.AGENT;
+
+  return {
+    id: activity.platformMessageId ?? '',
+    text: activity.content,
+    author: {
+      userId: activity.senderId,
+      fullName: activity.senderName ?? activity.senderId,
+      userName: activity.senderName ?? activity.senderId,
+      isBot,
+    },
+    attachments: [],
+    metadata: {
+      dateSent: activity.createdAt ? new Date(activity.createdAt) : new Date(),
+    },
+  } as Message;
 }
 
 function mapStoredAttachmentsFromRichContent(richContent?: Record<string, unknown>): StoredAttachment[] {
@@ -860,20 +900,49 @@ export class AgentInboundHandler implements OnModuleInit {
   }
 
   async handleReaction(agentId: string, config: ResolvedAgentConfig, event: InboundReactionEvent): Promise<void> {
-    const threadId = event.thread?.id;
-    if (!threadId) {
+    if (!event.thread?.id) {
       this.logger.warn(`[agent:${agentId}] Reaction received without thread context, skipping`);
 
       return;
     }
 
-    const conversation = await this.conversationService.findByPlatformThread(
+    let platformThreadId = resolveReactionPlatformThreadId(
+      config.platform,
+      event.thread,
+      event.message,
+      event.messageId
+    );
+
+    let conversation = await this.conversationService.findByPlatformThread(
       config.environmentId,
       config.organizationId,
       config.agentId,
       config.integrationId,
-      threadId
+      platformThreadId
     );
+
+    let sourceActivity: ConversationActivityEntity | null = null;
+
+    if (!conversation) {
+      sourceActivity = await this.conversationService.findSourceActivityForIntegration(
+        config.environmentId,
+        config.organizationId,
+        config.integrationId,
+        event.messageId
+      );
+
+      if (sourceActivity) {
+        conversation = await this.conversationService.getConversation(
+          sourceActivity._conversationId,
+          config.environmentId,
+          config.organizationId
+        );
+
+        if (conversation) {
+          platformThreadId = this.conversationService.getPrimaryChannel(conversation).platformThreadId;
+        }
+      }
+    }
 
     if (!conversation) {
       return;
@@ -895,21 +964,28 @@ export class AgentInboundHandler implements OnModuleInit {
       ? await this.resolveSubscriberId(agentId, config, platformUserId, 'resolve-subscriber-reaction')
       : null;
 
-    const [subscriber, sourceActivity] = await Promise.all([
-      subscriberId
-        ? this.subscriberRepository.findBySubscriberId(config.environmentId, subscriberId)
-        : Promise.resolve(null),
-      this.conversationService.findSourceActivity(config.environmentId, conversation._id, event.messageId),
-    ]);
+    if (!sourceActivity) {
+      sourceActivity = await this.conversationService.findSourceActivity(
+        config.environmentId,
+        conversation._id,
+        event.messageId
+      );
+    }
+
+    const subscriber = subscriberId
+      ? await this.subscriberRepository.findBySubscriberId(config.environmentId, subscriberId)
+      : null;
+
+    const sourceMessage = event.message ?? (sourceActivity ? buildSourceMessageFromActivity(sourceActivity) : undefined);
 
     let sourceMessageStoredAttachments = extractStoredAttachments(sourceActivity);
 
-    if (!sourceMessageStoredAttachments && event.message?.attachments?.length) {
-      sourceMessageStoredAttachments = await this.attachmentStorage.storeInbound(event.message.attachments, {
+    if (!sourceMessageStoredAttachments && sourceMessage?.attachments?.length) {
+      sourceMessageStoredAttachments = await this.attachmentStorage.storeInbound(sourceMessage.attachments, {
         organizationId: config.organizationId,
         environmentId: config.environmentId,
         conversationId: String(conversation._id),
-        platformMessageId: event.message.id ?? event.messageId ?? `unknown-${Date.now()}`,
+        platformMessageId: sourceMessage.id ?? event.messageId ?? `unknown-${Date.now()}`,
         platform: config.platform,
       });
     }
@@ -918,11 +994,14 @@ export class AgentInboundHandler implements OnModuleInit {
       emoji: event.emoji.name,
       added: event.added,
       messageId: event.messageId,
-      sourceMessage: event.message,
+      sourceMessage,
       sourceMessageStoredAttachments: sourceMessageStoredAttachments?.length
         ? sourceMessageStoredAttachments
         : undefined,
     };
+
+    const thread = event.thread ?? ({ id: platformThreadId, channelId: '', isDM: false } as Thread);
+    applyPlatformThreadIdToThread(thread, platformThreadId);
 
     const runtime = this.runtimeResolver.resolve(null);
     const turn: ConversationTurn = {
@@ -933,8 +1012,8 @@ export class AgentInboundHandler implements OnModuleInit {
       subscriber,
       message: null,
       event: AgentEventEnum.ON_REACTION,
-      thread: event.thread ?? ({ id: threadId, channelId: '', isDM: false } as Thread),
-      platformThreadId: threadId,
+      thread,
+      platformThreadId,
       reaction: reactionPayload,
     };
 

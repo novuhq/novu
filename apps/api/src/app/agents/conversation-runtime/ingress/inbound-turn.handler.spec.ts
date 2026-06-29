@@ -1,5 +1,6 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
+import { ConversationActivitySenderTypeEnum } from '@novu/dal';
 import { ManagedRuntime } from '../../managed-runtime/managed.runtime';
 import { AgentEventEnum } from '../../shared/enums/agent-event.enum';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
@@ -59,7 +60,7 @@ describe('AgentInboundHandler', () => {
       persistInboundMessage: sinon.stub().resolves({ _id: 'activity1' }),
       persistAgentMessage: sinon.stub().resolves({ _id: 'agent-activity1' }),
       setFirstPlatformMessageId: sinon.stub().resolves(undefined),
-      findByPlatformThread: sinon.stub().resolves(conversation),
+      findByPlatformThread: overrides.findByPlatformThread ?? sinon.stub().resolves(conversation),
       getHistory: sinon.stub().resolves(overrides.history ?? []),
       findSourceActivity: sinon
         .stub()
@@ -67,6 +68,9 @@ describe('AgentInboundHandler', () => {
           async (_environmentId: string, _conversationId: string, platformMessageId: string) =>
             (overrides.history ?? []).find((activity: any) => activity?.platformMessageId === platformMessageId) ?? null
         ),
+      findSourceActivityForIntegration:
+        overrides.findSourceActivityForIntegration ?? sinon.stub().resolves(null),
+      getConversation: overrides.getConversation ?? sinon.stub().resolves(conversation),
       countAgentMessages: sinon.stub().resolves(0),
     };
     const bridgeExecutor = {
@@ -834,6 +838,51 @@ describe('AgentInboundHandler', () => {
       expect(attachmentStorage.storeInbound.firstCall.args[1].platformMessageId).to.equal('source-msg');
       const params = bridgeExecutor.execute.firstCall.args[0];
       expect(params.reaction.sourceMessageStoredAttachments).to.deep.equal(storedAttachments);
+    });
+
+    it('should resolve conversation via reacted agent message when thread id does not match', async () => {
+      const storedConversation = {
+        _id: 'conversation1',
+        channels: [{ platformThreadId: 'slack:D123:user-root-ts', platform: 'slack', _integrationId: 'integration1' }],
+      };
+      const agentActivity = {
+        _conversationId: 'conversation1',
+        platformMessageId: 'agent-reply-ts',
+        platformThreadId: 'slack:D123:user-root-ts',
+        senderType: ConversationActivitySenderTypeEnum.AGENT,
+        senderId: 'agent1',
+        senderName: 'Support Bot',
+        content: 'Here is my answer',
+        createdAt: new Date().toISOString(),
+      };
+      const findByPlatformThread = sinon.stub().callsFake(async (_env, _org, _agent, _integration, threadId) =>
+        threadId === 'slack:D123:user-root-ts' ? storedConversation : null
+      );
+      const findSourceActivityForIntegration = sinon.stub().resolves(agentActivity);
+      const { handler, bridgeExecutor, conversationService } = makeHandler({
+        findByPlatformThread,
+        findSourceActivityForIntegration,
+        getConversation: sinon.stub().resolves(storedConversation),
+      });
+
+      await handler.handleReaction('agent1', config as any, {
+        emoji: { name: 'thumbs_up', toJSON: () => 'thumbs_up', toString: () => 'thumbs_up' },
+        added: true,
+        messageId: 'agent-reply-ts',
+        thread: {
+          id: 'slack:D123:agent-reply-ts',
+          channelId: 'slack:D123',
+          isDM: true,
+        },
+      } as any);
+
+      expect(conversationService.findSourceActivityForIntegration.calledOnce).to.equal(true);
+      expect(bridgeExecutor.execute.calledOnce).to.equal(true);
+      const params = bridgeExecutor.execute.firstCall.args[0];
+      expect(params.event).to.equal(AgentEventEnum.ON_REACTION);
+      expect(params.platformContext.threadId).to.equal('slack:D123:user-root-ts');
+      expect(params.reaction.sourceMessage.text).to.equal('Here is my answer');
+      expect(params.reaction.sourceMessage.author.isBot).to.equal(true);
     });
   });
 });

@@ -61,6 +61,27 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
     );
   }
 
+  /**
+   * Resolves a reacted-to message when the inbound thread id does not match the
+   * conversation's stored platform thread (common for reactions on agent replies).
+   */
+  async findByPlatformMessageIdForIntegration(
+    environmentId: string,
+    organizationId: string,
+    integrationId: string,
+    platformMessageId: string
+  ): Promise<ConversationActivityEntity | null> {
+    return this.findOne(
+      {
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+        _integrationId: integrationId,
+        platformMessageId,
+      },
+      '*'
+    );
+  }
+
   async countAgentMessages(environmentId: string, conversationId: string): Promise<number> {
     return this.count({
       _environmentId: environmentId,
