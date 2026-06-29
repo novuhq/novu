@@ -5,6 +5,8 @@ import type {
   DeleteChannelEndpointArgs,
   GenerateLinkUserOAuthUrlArgs,
   GetChannelEndpointArgs,
+  LinkChannelEndpointArgs,
+  LinkChannelEndpointResponse,
   ListChannelEndpointsArgs,
 } from '../channel-connections/types';
 import type { NovuEventEmitter } from '../event-emitter';
@@ -119,5 +121,27 @@ export const deleteChannelEndpoint = async ({
     emitter.emit('channel-endpoint.delete.resolved', { args, error });
 
     return { error: new NovuError('Failed to delete channel endpoint', error) };
+  }
+};
+
+export const linkChannelEndpoint = async ({
+  emitter,
+  apiService,
+  args,
+}: {
+  emitter: NovuEventEmitter;
+  apiService: InboxService;
+  args: LinkChannelEndpointArgs;
+}): Result<LinkChannelEndpointResponse> => {
+  try {
+    emitter.emit('channel-endpoint.link.pending', { args });
+    const data = await apiService.linkChannelEndpoint(args);
+    emitter.emit('channel-endpoint.link.resolved', { args, data });
+
+    return { data };
+  } catch (error) {
+    emitter.emit('channel-endpoint.link.resolved', { args, error });
+
+    return { error: new NovuError('Failed to link channel endpoint', error) };
   }
 };

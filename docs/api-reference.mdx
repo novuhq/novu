@@ -18,6 +18,16 @@ The Novu REST API lets you manage subscribers, trigger workflows, configure inte
 
 All endpoints in this reference use the US base URL unless noted otherwise. See [Authentication](/api-reference/authentication) for regional WebSocket hostnames and credential setup.
 
+## API conventions
+
+The Novu API is organized around REST. It has predictable, resource-oriented URLs, accepts and returns JSON request and response bodies, and uses standard HTTP verbs and status codes.
+
+- **Resource-oriented** — Each resource (subscribers, topics, workflows, and more) has its own set of endpoints. Use `POST` to create, `GET` to read, `PATCH`/`PUT` to update, and `DELETE` to remove.
+- **JSON everywhere** — Send `Content-Type: application/json` on requests with a body. Responses are JSON-encoded.
+- **Response envelope** — Successful responses wrap the result in a `data` field, for example `{ "data": { ... } }`. List endpoints return `{ "data": [ ... ] }` alongside [pagination](/api-reference/pagination) metadata.
+- **Consistent errors** — Failures return a standard error body with a `statusCode` and `message`. See [Errors](/api-reference/errors).
+- **Versioned paths** — The API version is part of the URL (`/v1`, `/v2`).
+
 ## API capabilities
 
 The REST API is organized around the core resources you use to build and operate notifications:
@@ -68,6 +78,12 @@ Use these resources to explore, test, and integrate with the API:
   <Card title="Authentication" icon="key" href="/api-reference/authentication">
     Set up API keys, environment credentials, and security best practices.
   </Card>
+  <Card title="Errors" icon="circle-alert" href="/api-reference/errors">
+    HTTP status codes, error response shapes, and how to debug failed requests.
+  </Card>
+  <Card title="Pagination" icon="list" href="/api-reference/pagination">
+    Page through large list responses with cursor-based pagination.
+  </Card>
 </Columns>
 
 ### Import the Postman collection
@@ -86,6 +102,6 @@ Use these resources to explore, test, and integrate with the API:
     Trigger a workflow or create a subscriber using the REST API or an SDK. Start with [Trigger event](/api-reference/events/trigger-event) or [Create a subscriber](/api-reference/subscribers/create-a-subscriber).
   </Step>
   <Step title="Review API policies">
-    Understand [Rate limiting](/api-reference/rate-limiting), [Idempotency](/api-reference/idempotency), and [Payload limits](/api-reference/payload-limits) before building production integrations.
+    Understand [Errors](/api-reference/errors), [Pagination](/api-reference/pagination), [Rate limiting](/api-reference/rate-limiting), [Idempotency](/api-reference/idempotency), and [Payload limits](/api-reference/payload-limits) before building production integrations.
   </Step>
 </Steps>

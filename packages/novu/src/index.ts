@@ -13,6 +13,7 @@ import {
   type AgentConnectMode,
   CHANNEL_CHOICES,
   type ChannelChoice,
+  isBridgeConnectMode,
 } from './commands/connect/types';
 import { CloudRegionEnum } from './commands/dev/enums';
 import { IInitCommandOptions, init } from './commands/init';
@@ -218,9 +219,9 @@ program
       const channel = options.skipSlack ? 'skip' : options.channel;
       const connectMode = options.chatSdk ? 'chat-sdk' : options.brain === 'chat-sdk' ? 'chat-sdk' : options.runtime;
 
-      if (!prompt && connectMode !== 'chat-sdk') {
+      if (!prompt && (!connectMode || !isBridgeConnectMode(connectMode))) {
         console.error(
-          'Non-interactive mode requires a prompt (positional <prompt> or --prompt), unless --runtime chat-sdk.\n(run `novu connect --help` for the non-interactive contract and examples)'
+          'Non-interactive mode requires a prompt (positional <prompt> or --prompt), unless --runtime is a bridge mode (ai-sdk, langchain, custom-code, chat-sdk).\n(run `novu connect --help` for the non-interactive contract and examples)'
         );
         process.exit(1);
       }

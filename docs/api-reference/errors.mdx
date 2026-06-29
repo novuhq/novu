@@ -1,0 +1,172 @@
+---
+title: 'Errors'
+description: 'Understand Novu API error responses, HTTP status codes, validation error formats, and how to debug failed requests.'
+---
+
+The Novu API uses conventional HTTP status codes to indicate the success or failure of a request. Codes in the `2xx` range indicate success. Codes in the `4xx` range indicate a request that failed given the information provided (for example, a required parameter was missing or validation failed). Codes in the `5xx` range indicate an error on Novu's servers and are rare.
+
+Every error response shares a consistent JSON shape, so you can handle errors the same way across all endpoints.
+
+## HTTP status codes
+
+| Status | Meaning | When you see it |
+| --- | --- | --- |
+| `200` `201` `204` | Success | The request succeeded. `204` returns no body. |
+| `400` Bad Request | Invalid request | Malformed input, or schema/payload validation failed. |
+| `401` Unauthorized | Authentication failed | Missing, malformed, or invalid secret key. See [Authentication](/api-reference/authentication). |
+| `402` Payment Required | Plan limit reached | The operation exceeds your current plan's limit. |
+| `403` Forbidden | Insufficient permissions | The credential cannot perform this action. |
+| `404` Not Found | Resource missing | The requested resource does not exist in this environment. |
+| `409` Conflict | Request conflict | A duplicate resource, or an idempotency key still being processed. See [Idempotency](/api-reference/idempotency). |
+| `413` Payload Too Large | Body too large | The request body exceeds the limit. See [Payload Limits](/api-reference/payload-limits). |
+| `422` Unprocessable Entity | Validation error | The request body failed field-level validation. |
+| `429` Too Many Requests | Rate limited | You exceeded the rate limit. See [Rate Limiting](/api-reference/rate-limiting). |
+| `500` Server Error | Internal error | Something went wrong on Novu's end. Retry, then contact support with the `errorId`. |
+
+## Error response shape
+
+All errors return a JSON body with a consistent set of fields:
+
+```json
+{
+  "statusCode": 404,
+  "timestamp": "2024-12-12T13:00:00Z",
+  "path": "/v1/subscribers/does-not-exist",
+  "message": "Subscriber not found"
+}
+```
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `statusCode` | number | The HTTP status code of the response. |
+| `timestamp` | string | ISO-8601 timestamp of when the error occurred. |
+| `path` | string | The request path that produced the error. |
+| `message` | string \| string[] | A human-readable description of the error. |
+| `errors` | object \| array | Present on validation errors. Details which fields failed and why. |
+| `errorId` | string | Present on `500` responses only. A unique identifier to share with support. |
+
+<Note>
+  Some errors include additional context fields (for example, `currentCount` and `limit` on a `402` plan-limit error). For backward compatibility, these context fields are flattened to the top level of the response body alongside the standard fields.
+</Note>
+
+## Validation errors
+
+Validation errors describe exactly which fields were rejected. The format depends on where validation happens.
+
+<Tabs>
+  <Tab title="Field validation (422)">
+
+Most request body validation returns `422 Unprocessable Entity` with an `errors` object keyed by field name. Each entry lists the failing `messages` and the rejected `value`:
+
+```json
+{
+  "statusCode": 422,
+  "timestamp": "2024-12-12T13:00:00Z",
+  "path": "/v1/subscribers",
+  "message": "Validation Error",
+  "errors": {
+    "email": {
+      "messages": ["email must be a valid email address"],
+      "value": "not-an-email"
+    },
+    "subscriberId": {
+      "messages": ["subscriberId should not be empty"],
+      "value": ""
+    }
+  }
+}
+```
+
+Use the `errors` keys to map each message back to the form field or parameter that caused it.
+
+  </Tab>
+  <Tab title="Payload validation (400)">
+
+When an event payload does not match a workflow's payload schema, the API returns `400 Bad Request` with `type: "PAYLOAD_VALIDATION_ERROR"` and an `errors` array. Each entry pinpoints the failing `field`, the `message`, the `value`, and the JSON `schemaPath`:
+
+```json
+{
+  "statusCode": 400,
+  "timestamp": "2024-12-12T13:00:00Z",
+  "path": "/v1/events/trigger",
+  "message": "Payload validation failed",
+  "type": "PAYLOAD_VALIDATION_ERROR",
+  "errors": [
+    {
+      "field": "user.name",
+      "message": "must have required property 'name'",
+      "value": { "age": 25 },
+      "schemaPath": "#/required"
+    }
+  ]
+}
+```
+
+  </Tab>
+</Tabs>
+
+## Server errors
+
+`500` responses include an `errorId` that uniquely identifies the failure in Novu's monitoring systems:
+
+```json
+{
+  "statusCode": 500,
+  "timestamp": "2024-12-12T13:00:00Z",
+  "path": "/v1/events/trigger",
+  "message": "Internal server error, contact support and provide them with the errorId",
+  "errorId": "f1d2c3b4-a5e6-7890-1234-567890abcdef"
+}
+```
+
+When contacting [support](mailto:support@novu.co), include the `errorId` so the team can locate the exact request.
+
+## Debugging requests
+
+Beyond the error body, Novu gives you several ways to trace a request:
+
+- **`errorId`** — Returned on `500` responses. Share it with support to pinpoint the failed request.
+- **`transactionId`** — Returned by [Trigger event](/api-reference/events/trigger-event), [Bulk trigger event](/api-reference/events/bulk-trigger-event), and [Broadcast event](/api-reference/events/broadcast-event-to-all). Use it to [cancel a triggered event](/api-reference/events/cancel-triggered-event) or to look up the resulting notification.
+- **Activity Feed** — The [Activity Feed](https://dashboard.novu.co/activities) in the Novu Dashboard shows every triggered workflow with per-step logs, including whether a delivery failed and why. See [Common errors](/platform/additional-resources/errors) for workflow delivery errors.
+
+## Handling errors
+
+The server-side SDKs throw a typed error you can inspect. Check the `statusCode` to branch your logic, and read `message` or `errors` for details:
+
+```javascript
+import { Novu } from '@novu/api';
+
+const novu = new Novu({ secretKey: process.env.NOVU_SECRET_KEY });
+
+try {
+  await novu.trigger({
+    workflowId: 'welcome',
+    to: { subscriberId: 'subscriber-123' },
+    payload: {},
+  });
+} catch (error) {
+  switch (error.statusCode) {
+    case 422:
+      // Inspect error.errors to find which fields failed validation.
+      console.error('Validation failed', error.errors);
+      break;
+    case 429:
+      // Back off and retry. See the Rate Limiting guide.
+      console.error('Rate limited, retry later');
+      break;
+    case 500:
+      // Share error.errorId with support.
+      console.error('Server error', error.errorId);
+      break;
+    default:
+      console.error(error.message);
+  }
+}
+```
+
+## Related documentation
+
+- [Authentication](/api-reference/authentication) — Resolve `401` errors and credential setup
+- [Rate Limiting](/api-reference/rate-limiting) — Handle `429` responses with backoff
+- [Idempotency](/api-reference/idempotency) — Avoid `409` conflicts when retrying requests
+- [Payload Limits](/api-reference/payload-limits) — Avoid `413` errors on event triggers

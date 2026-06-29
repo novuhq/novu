@@ -15,9 +15,15 @@ import type {
   UnreadArgs,
   UnsnoozeArgs,
 } from '../notifications';
-import type { InboxNotification, NotificationFilter, TagsFilter } from '../types';
 import { ensureNotificationInstance } from '../notifications/helpers';
-import { areDataEqual, areTagsEqual, isSameFilter } from '../utils/notification-utils';
+import type { InboxNotification, NotificationFilter, TagsFilter } from '../types';
+import {
+  areDataEqual,
+  areTagsEqual,
+  checkBasicFilters,
+  checkNotificationTagFilter,
+  isSameFilter,
+} from '../utils/notification-utils';
 import { InMemoryCache } from './in-memory-cache';
 import type { Cache } from './types';
 
@@ -90,12 +96,16 @@ const updateEvents: NotificationEvents[] = [
   'notification.read.resolved',
   'notification.unread.pending',
   'notification.unread.resolved',
+  'notification.seen.pending',
+  'notification.seen.resolved',
   'notification.complete_action.pending',
   'notification.complete_action.resolved',
   'notification.revert_action.pending',
   'notification.revert_action.resolved',
   'notifications.read_all.pending',
   'notifications.read_all.resolved',
+  'notifications.seen_all.pending',
+  'notifications.seen_all.resolved',
 ];
 
 // these events should remove the notification from the cache
@@ -158,23 +168,34 @@ export class NotificationsCache {
     return notifications.map((notification) => this.#toNotificationInstance(notification));
   };
 
-  private updateNotification = (key: string, data: Notification | InboxNotification): boolean => {
+  private syncNotificationInBucket = (key: string, data: Notification | InboxNotification): boolean => {
+    const notification = this.#toNotificationInstance(data);
     const notificationsResponse = this.#cache.get(key);
     if (!notificationsResponse) {
       return false;
     }
 
-    const index = notificationsResponse.notifications.findIndex((el) => el.id === data.id);
-    if (index === -1) {
-      return false;
+    const bucketFilter = getFilter(key);
+    const matchesFilter =
+      checkBasicFilters(notification, bucketFilter) &&
+      checkNotificationTagFilter(notification.tags, bucketFilter.tags);
+    const index = notificationsResponse.notifications.findIndex((el) => el.id === notification.id);
+    const existsInBucket = index !== -1;
+
+    if (matchesFilter && existsInBucket) {
+      const updatedNotifications = [...notificationsResponse.notifications];
+      updatedNotifications[index] = notification;
+
+      this.#cache.set(key, { ...notificationsResponse, notifications: updatedNotifications });
+
+      return true;
     }
 
-    const updatedNotifications = [...notificationsResponse.notifications];
-    updatedNotifications[index] = this.#toNotificationInstance(data);
+    if (!matchesFilter && existsInBucket) {
+      return this.removeNotification(key, notification);
+    }
 
-    this.#cache.set(key, { ...notificationsResponse, notifications: updatedNotifications });
-
-    return true;
+    return false;
   };
 
   private removeNotification = (key: string, data: Notification): boolean => {
@@ -209,15 +230,15 @@ export class NotificationsCache {
       if (data !== undefined && data !== null) {
         if (
           Array.isArray(data) &&
-          data.every((item): item is Notification => typeof item === 'object' && 'id' in item)
+          data.every((item): item is Notification | InboxNotification => typeof item === 'object' && 'id' in item)
         ) {
-          notifications = data;
+          notifications = this.#normalizeNotifications(data);
         } else if (typeof data === 'object' && 'id' in data) {
-          notifications = [data as Notification];
+          notifications = [this.#toNotificationInstance(data as Notification | InboxNotification)];
         }
       } else if (remove && args) {
         if ('notification' in args && args.notification) {
-          notifications = [args.notification];
+          notifications = [this.#toNotificationInstance(args.notification)];
         } else if ('notificationId' in args && args.notificationId) {
           const foundNotifications: Notification[] = [];
           this.#cache.keys().forEach((key) => {
@@ -244,7 +265,7 @@ export class NotificationsCache {
           if (remove) {
             isNotificationFound = this.removeNotification(key, notification);
           } else {
-            isNotificationFound = this.updateNotification(key, notification);
+            isNotificationFound = this.syncNotificationInBucket(key, notification);
           }
 
           if (isNotificationFound) {
@@ -269,22 +290,27 @@ export class NotificationsCache {
       return isSameFilter(parsedFilter, filter);
     });
 
-    return cacheKeys
-      .map((key) => this.#cache.get(key))
-      .reduce<ListNotificationsResponse>(
-        (acc, el) => {
-          if (!el) {
-            return acc;
-          }
+    const uniqueNotifications = new Map<string, Notification>();
+    let hasMore = false;
 
-          return {
-            hasMore: el.hasMore,
-            filter: el.filter,
-            notifications: [...acc.notifications, ...el.notifications],
-          };
-        },
-        { hasMore: false, filter: {}, notifications: [] }
-      );
+    for (const key of cacheKeys) {
+      const cachedResponse = this.#cache.get(key);
+      if (!cachedResponse) {
+        continue;
+      }
+
+      hasMore = cachedResponse.hasMore;
+
+      for (const notification of cachedResponse.notifications) {
+        uniqueNotifications.set(notification.id, notification);
+      }
+    }
+
+    return {
+      hasMore,
+      filter,
+      notifications: Array.from(uniqueNotifications.values()),
+    };
   }
 
   get(args: ListNotificationsArgs): ListNotificationsResponse | undefined {

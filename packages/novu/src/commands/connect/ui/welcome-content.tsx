@@ -16,10 +16,10 @@ const WELCOME_REVEAL_TOTAL_MS = WELCOME_REVEAL_START_MS + WELCOME_REVEAL_DURATIO
 const WELCOME_FRAME_MS = 55;
 
 const WELCOME_AGENT_ROTATIONS: ReadonlyArray<string> = [
-  'a Claude Managed Agent',
-  'a Google Vertex AI Agent',
-  'an AI SDK Agent',
-  'a Claude Managed Agent on AWS',
+  'AI SDK agent',
+  'LangChain agent',
+  'custom code',
+  'Claude Managed Agent',
 ];
 
 const WELCOME_CHANNELS_LABEL = 'Slack, Telegram, MS Teams';
@@ -102,13 +102,13 @@ function WelcomeAnimatedTagline(): React.ReactElement {
   return (
     <Box flexDirection="column" alignItems="flex-start">
       <Box flexDirection="row">
-        <Text dimColor>Spin up </Text>
+        <Text dimColor>Connect your </Text>
         <Box width={agentSlotWidth}>
           <DitherSwapText items={WELCOME_AGENT_ROTATIONS} seed={11} holdMs={WELCOME_SWAP_HOLD_MS} />
         </Box>
       </Box>
       <Box flexDirection="row" flexWrap="wrap">
-        <Text dimColor>and connect it to </Text>
+        <Text dimColor>to </Text>
         <Text bold color="white">
           {WELCOME_CHANNELS_LABEL}
         </Text>

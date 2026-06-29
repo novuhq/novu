@@ -2,7 +2,9 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { buildZip, createHash, encryptCredentials, PinoLogger } from '@novu/application-generic';
 import { AgentIntegrationRepository, EnvironmentRepository, IntegrationRepository } from '@novu/dal';
 import axios, { AxiosError } from 'axios';
+import { buildAgentApiRootUrl } from '../../../agents/shared/util/agent-api-root-url';
 import { areHexDigestsEqual } from '../../../shared/helpers/timing-safe-equal';
+import { buildMsTeamsManifest } from '../../utils/msteams-manifest';
 import {
   AZURE_SETUP_OAUTH_SCOPES,
   AzureSetupStateData,
@@ -238,7 +240,14 @@ export class AzureSetupOauthCallback {
 
     const appBody = {
       displayName: appName,
-      signInAudience: 'AzureADMyOrg',
+      /*
+       * Multi-tenant Entra app: required so external customer tenants can grant admin consent
+       * and authenticate their users against this app. The Azure Bot resource itself stays
+       * SingleTenant (multi-tenant Azure Bot creation was deprecated by Microsoft after
+       * 2025-07-31); cross-tenant messaging works once the Teams app is installed and consented
+       * in the customer tenant.
+       */
+      signInAudience: 'AzureADMultipleOrgs',
       requiredResourceAccess: [
         {
           resourceAppId: GRAPH_RESOURCE_APP_ID,
@@ -640,7 +649,7 @@ export class AzureSetupOauthCallback {
   }
 
   private async resolveWebhookEndpoint(stateData: AzureSetupStateData): Promise<string> {
-    const base = (process.env.API_ROOT_URL ?? 'https://api.novu.co').replace(/\/$/, '');
+    const base = buildAgentApiRootUrl();
 
     const link = await this.agentIntegrationRepository.findOne(
       {
@@ -749,7 +758,7 @@ export class AzureSetupOauthCallback {
   }
 
   private buildManifest(appId: string, agentName: string): Record<string, unknown> {
-    const apiBaseUrl = (process.env.API_ROOT_URL ?? 'https://api.novu.co').replace(/\/$/, '');
+    const apiBaseUrl = buildAgentApiRootUrl();
     let hostname = 'api.novu.co';
 
     try {
@@ -758,38 +767,7 @@ export class AzureSetupOauthCallback {
       // keep default
     }
 
-    return {
-      $schema: 'https://developer.microsoft.com/json-schemas/teams/v1.16/MicrosoftTeams.schema.json',
-      manifestVersion: '1.16',
-      version: '1.0.0',
-      id: appId,
-      developer: {
-        name: 'Your Company',
-        websiteUrl: 'https://your-domain.com',
-        privacyUrl: 'https://your-domain.com/privacy',
-        termsOfUseUrl: 'https://your-domain.com/terms',
-      },
-      name: { short: agentName, full: `${agentName} — powered by Novu` },
-      description: { short: `${agentName} bot`, full: 'A conversational agent powered by Novu.' },
-      icons: { outline: 'outline.png', color: 'color.png' },
-      accentColor: '#FFFFFF',
-      bots: [
-        {
-          botId: appId,
-          scopes: ['personal', 'team', 'groupchat'],
-          supportsFiles: false,
-          isNotificationOnly: false,
-        },
-      ],
-      permissions: ['identity', 'messageTeamMembers'],
-      validDomains: [hostname],
-      webApplicationInfo: { id: appId, resource: `api://${hostname}/${appId}` },
-      authorization: {
-        permissions: {
-          resourceSpecific: [{ name: 'ChannelMessage.Read.Group', type: 'Application' }],
-        },
-      },
-    };
+    return buildMsTeamsManifest({ appId, agentName, hostname });
   }
 
   private graphHeaders(accessToken: string): Record<string, string> {

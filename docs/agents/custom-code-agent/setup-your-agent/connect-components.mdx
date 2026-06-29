@@ -72,9 +72,56 @@ export default SlackConnectButtonComponent;
 
 ## Telegram connect button
 
-<Note>
-  Novu is working on adding a Telegram connect button to the `@novu/react` SDK. Reach out to support at support@novu.co to get access to a pre-release version.
-</Note>
+`TelegramConnectButton` is a pre-built UI component in the `@novu/react` SDK that links a subscriber's Telegram chat to your agent. It authenticates with the subscriber JWT from `NovuProvider`, so no secret key is exposed in the browser.
+
+When clicked, the button issues a `t.me/<bot>?start=<code>` deep link, opens it in a new tab, and polls until the subscriber presses **Start** in Telegram. Clicking again while connected disconnects the chat.
+
+```tsx
+import { NovuProvider, TelegramConnectButton } from '@novu/react';
+
+const TelegramConnectButtonComponent = () => {
+  const subscriberId = 'subscriber-id';
+  const integrationIdentifier = 'telegram-integration-identifier';
+
+  return (
+    <NovuProvider subscriberId={subscriberId} applicationIdentifier="application-identifier">
+      <TelegramConnectButton
+        integrationIdentifier={integrationIdentifier}
+        connectLabel="Connect Telegram"
+        connectedLabel="Connected to Telegram"
+        onConnectSuccess={(endpointIdentifier) => {
+          console.log('Connected', endpointIdentifier);
+        }}
+        onConnectError={(error: unknown) => {
+          console.error(error);
+        }}
+        onDisconnectSuccess={() => {
+          // Handle disconnect
+        }}
+      />
+    </NovuProvider>
+  );
+};
+
+export default TelegramConnectButtonComponent;
+```
+
+### API reference
+
+`TelegramConnectButton` accepts the following props to customize the UI and behavior:
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `integrationIdentifier` | `string` | Required. Identifier of the Telegram integration to link against. |
+| `subscriberId` | `string` | Optional. Subscriber to link. Defaults to the `NovuProvider` subscriber. |
+| `onConnectSuccess` | `(endpointIdentifier: string) => void` | Called once the Telegram chat endpoint is detected. |
+| `onConnectError` | `(error: unknown) => void` | Called when issuing the link fails or polling times out. |
+| `onDisconnectSuccess` | `() => void` | Called after the chat endpoint is removed. |
+| `onDisconnectError` | `(error: unknown) => void` | Called when disconnecting fails. |
+| `connectLabel` | `string` | Label shown when disconnected. Defaults to `Connect Telegram`. |
+| `connectedLabel` | `string` | Label shown when connected. Defaults to `Connected to Telegram`. |
+| `appearance` | `Appearance` | Style overrides reusing the shared `channelConnectButton*` keys. |
+| `container` | `HTMLElement` | Optional element to render the component into. |
 
 ## Related
 

@@ -1,4 +1,4 @@
-import { FeatureFlagsKeysEnum, providers as novuProviders } from '@novu/shared';
+import { FeatureFlagsKeysEnum, type IIntegration, providers as novuProviders } from '@novu/shared';
 import { useQuery } from '@tanstack/react-query';
 import { CircleDashed } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -19,6 +19,7 @@ import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { getAgentChannelDisplayName } from '@/utils/agent-email-provider-display';
 import { buildRoute } from '@/utils/routes';
 import { cn } from '@/utils/ui';
+import { AddChannelPicker } from './add-channel-picker';
 import { isUserFacingConnectedAgentIntegration } from './is-agent-integration-connected';
 import { SetupGuideCard } from './setup-guide-card';
 import { SetupStep } from './setup-guide-primitives';
@@ -203,7 +204,7 @@ function AddChannelButton({ onAddChannel }: { onAddChannel: () => void }) {
 
 export function AgentWhatsNextSection({ agent }: AgentWhatsNextSectionProps) {
   const isWhatsNextEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_AGENT_WHATS_NEXT_ENABLED);
-  const { currentEnvironment } = useEnvironment();
+  const { currentEnvironment, readOnly } = useEnvironment();
   const location = useLocation();
   const navigate = useNavigate();
   const agentRoutes = useAgentRoutes();
@@ -220,6 +221,7 @@ export function AgentWhatsNextSection({ agent }: AgentWhatsNextSectionProps) {
   });
 
   const links = integrationsQuery.data?.data ?? [];
+  const planUsage = integrationsQuery.data?.planUsage;
   const connectedLinks = useMemo(() => links.filter(isUserFacingConnectedAgentIntegration), [links]);
 
   const integrationsTabPath = `${buildRoute(agentRoutes.detailsTab, {
@@ -228,22 +230,44 @@ export function AgentWhatsNextSection({ agent }: AgentWhatsNextSectionProps) {
     agentTab: 'integrations',
   })}${location.search}`;
 
-  const handleConfigureChannel = useCallback(
-    (link: AgentIntegrationLink) => {
-      const integrationDetailPath = `${buildRoute(agentRoutes.integrationDetail, {
-        environmentSlug: currentEnvironment?.slug ?? '',
-        agentIdentifier: encodeURIComponent(agent.identifier),
-        integrationIdentifier: encodeURIComponent(link.integration.identifier),
-      })}${location.search}`;
+  const navigateToIntegrationDetail = useCallback(
+    (integrationIdentifier: string) => {
+      if (!currentEnvironment?.slug) {
+        return;
+      }
 
-      navigate(integrationDetailPath);
+      navigate(
+        `${buildRoute(agentRoutes.integrationDetail, {
+          environmentSlug: currentEnvironment.slug,
+          agentIdentifier: encodeURIComponent(agent.identifier),
+          integrationIdentifier: encodeURIComponent(integrationIdentifier),
+        })}${location.search}`
+      );
     },
     [agent.identifier, agentRoutes.integrationDetail, currentEnvironment?.slug, location.search, navigate]
+  );
+
+  const handleConfigureChannel = useCallback(
+    (link: AgentIntegrationLink) => {
+      navigateToIntegrationDetail(link.integration.identifier);
+    },
+    [navigateToIntegrationDetail]
   );
 
   const handleAddChannel = useCallback(() => {
     navigate(integrationsTabPath);
   }, [integrationsTabPath, navigate]);
+
+  const handleChannelAdded = useCallback(
+    (_providerId: string, integration?: IIntegration) => {
+      if (!integration?.identifier) {
+        return;
+      }
+
+      navigateToIntegrationDetail(integration.identifier);
+    },
+    [navigateToIntegrationDetail]
+  );
 
   if (!isWhatsNextEnabled) {
     return null;
@@ -277,8 +301,33 @@ export function AgentWhatsNextSection({ agent }: AgentWhatsNextSectionProps) {
           index={2}
           status="current"
           title="Add another channel"
-          description="Add another channel provider for your users to message and interact with your agent."
-          rightContent={<AddChannelButton onAddChannel={handleAddChannel} />}
+          description="Add another channel for your users to message and interact with your agent."
+          rightContent={
+            readOnly ? (
+              <AddChannelButton onAddChannel={handleAddChannel} />
+            ) : (
+              <AddChannelPicker
+                agentIdentifier={agent.identifier}
+                agentName={agent.name}
+                links={links}
+                planUsage={planUsage}
+                onSelected={handleChannelAdded}
+                renderTrigger={({ isBusy }) => (
+                  <Button
+                    variant="secondary"
+                    mode="outline"
+                    size="xs"
+                    type="button"
+                    disabled={isBusy}
+                    className="text-text-sub max-w-[210px] gap-1 px-1.5 py-1.5"
+                    trailingIcon={RiArrowRightSLine}
+                  >
+                    Add channel
+                  </Button>
+                )}
+              />
+            )
+          }
         />
       </div>
     </SetupGuideCard>

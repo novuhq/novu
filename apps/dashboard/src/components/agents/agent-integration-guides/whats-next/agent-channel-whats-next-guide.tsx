@@ -77,12 +77,7 @@ function RecapToggleRow({ count, isExpanded, onToggle }: { count: number; isExpa
   );
 }
 
-function ChannelListeningFooter({ integrationIdentifier }: { integrationIdentifier: string }) {
-  const { connected } = useChannelFirstConnectedEndpoint({
-    integrationIdentifier,
-    enabled: CONVERSATIONS_AVAILABLE,
-  });
-
+function ChannelListeningFooter({ connected }: { connected: boolean }) {
   const showListeningIndicator = CONVERSATIONS_AVAILABLE && !connected;
 
   return (
@@ -104,6 +99,10 @@ export function AgentChannelWhatsNextGuide({
   applicationIdentifier,
 }: AgentChannelWhatsNextGuideProps) {
   const [isRecapExpanded, setIsRecapExpanded] = useState(false);
+  const { connected: hasUserConnection } = useChannelFirstConnectedEndpoint({
+    integrationIdentifier: integrationLink.integration.identifier,
+    enabled: CONVERSATIONS_AVAILABLE,
+  });
 
   const config = useMemo(
     () => resolveChannelWhatsNextConfig({ agent, integrationLink, credentials, applicationIdentifier }),
@@ -140,11 +139,12 @@ export function AgentChannelWhatsNextGuide({
           : null}
         {config.devSteps.map((step, i) => {
           const devStepIndex = isRecapExpanded ? recapCount + 1 + i : i + 1;
+          const devStepStatus = hasUserConnection ? 'completed' : 'current';
 
-          return <StepRow key={`dev-${i}`} step={step} index={devStepIndex} defaultStatus="current" />;
+          return <StepRow key={`dev-${i}`} step={step} index={devStepIndex} defaultStatus={devStepStatus} />;
         })}
       </div>
-      <ChannelListeningFooter integrationIdentifier={integrationLink.integration.identifier} />
+      <ChannelListeningFooter connected={hasUserConnection} />
     </SetupGuideCard>
   );
 }

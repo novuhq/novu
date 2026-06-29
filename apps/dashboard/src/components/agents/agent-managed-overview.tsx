@@ -1,6 +1,6 @@
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useQuery } from '@tanstack/react-query';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { type AgentResponse, getAgentIntegrationsQueryKey, listAgentIntegrations } from '@/api/agents';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useAgentDemoQuota } from '@/hooks/use-agent-demo-quota';
@@ -50,15 +50,32 @@ export function AgentManagedOverview({ agent }: AgentManagedOverviewProps) {
     return links.some(isUserFacingConnectedAgentIntegration);
   }, [integrationsQuery.data?.data]);
 
-  const showSetupGuide = integrationsQuery.isSuccess && !hasConnectedChannel;
+  // Keep the setup guide mounted through the in-session connect → Continue gate for rollout
+  // providers (Telegram/Slack). `onSetupComplete` fires on Continue for those providers, or
+  // immediately on connect for everything else — same timing as onboarding `AgentSetupSteps`.
+  const [channelSetupComplete, setChannelSetupComplete] = useState(false);
+
+  // Snapshot whether a user-facing channel was connected on the first successful load.
+  // Refresh/revisit of an already-connected agent must skip the setup guide entirely.
+  const connectedOnLoadRef = useRef<boolean | null>(null);
+  if (integrationsQuery.isSuccess && connectedOnLoadRef.current === null) {
+    connectedOnLoadRef.current = hasConnectedChannel;
+  }
+
+  const setupComplete = channelSetupComplete || connectedOnLoadRef.current === true;
+  const showSetupGuide = integrationsQuery.isSuccess && (!hasConnectedChannel || !setupComplete);
 
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-4 w-full">
       {isDemoManagedClaudeEnabled && demoQuotaQuery.data ? (
         <DemoQuotaBanner quota={demoQuotaQuery.data} onUpgrade={() => setUpgradeOpen(true)} />
       ) : null}
-      <AgentWhatsNextSection agent={agent} />
-      {showSetupGuide ? <AgentSetupGuide agent={agent} /> : <ConnectedProvidersSection agent={agent} />}
+      {!showSetupGuide ? <AgentWhatsNextSection agent={agent} /> : null}
+      {showSetupGuide ? (
+        <AgentSetupGuide agent={agent} onSetupComplete={() => setChannelSetupComplete(true)} />
+      ) : (
+        <ConnectedProvidersSection agent={agent} />
+      )}
       <McpsSection agent={agent} />
       <SystemPromptSection agent={agent} />
       <ToolsSection agent={agent} />

@@ -1,7 +1,12 @@
 {
   "name": "@novu/js",
   "version": "3.17.0",
-  "repository": "https://github.com/novuhq/novu",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/novuhq/novu",
+    "directory": "packages/js"
+  },
+  "homepage": "https://novu.co",
   "description": "Novu JavaScript SDK for <Inbox />",
   "author": "",
   "license": "ISC",

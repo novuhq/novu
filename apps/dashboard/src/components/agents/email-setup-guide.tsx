@@ -8,10 +8,15 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives
 import { IS_SELF_HOSTED_EE } from '@/config';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
-import { cn } from '@/utils/ui';
 import { InboundAddressConfig } from './inbound-address-config';
 import { OutboundProviderSelect } from './outbound-provider-select';
-import { IntegrationCredentialsSidebar, ListeningStatus, SetupButton, SetupStep } from './setup-guide-primitives';
+import {
+  IntegrationCredentialsSidebar,
+  ListeningStatus,
+  SetupButton,
+  SetupStep,
+  SetupStepperRail,
+} from './setup-guide-primitives';
 import { deriveStepStatus } from './setup-guide-step-utils';
 import { SharedInboundAddressField } from './shared-inbound-address-field';
 import { type ConfiguredAddress, useEmailSetupCredentials } from './use-email-setup-credentials';
@@ -314,15 +319,7 @@ export function EmailSetupGuide({
   if (embedded) {
     return (
       <div className="flex flex-col gap-0">
-        <div className={cn('relative flex flex-col gap-10 py-6 pb-3 pl-8 pr-3 md:pr-6')}>
-          <div
-            className="absolute bottom-0 left-[22px] top-0 w-px"
-            style={{
-              background: 'linear-gradient(to bottom, transparent 0%, #E1E4EA 10%, #E1E4EA 90%, transparent 100%)',
-            }}
-          />
-          {stepsColumn}
-        </div>
+        <SetupStepperRail className="py-6 pb-3 pr-3 md:pr-6">{stepsColumn}</SetupStepperRail>
         {credentialsSidebar}
       </div>
     );
@@ -330,7 +327,7 @@ export function EmailSetupGuide({
 
   return (
     <>
-      {stepsColumn}
+      <SetupStepperRail>{stepsColumn}</SetupStepperRail>
       {credentialsSidebar}
     </>
   );

@@ -17,8 +17,8 @@
  * REQUIRED ENV VARS
  *   NOVU_SECRET_KEY                        Novu API secret key (sk_...)
  *   NOVU_API_BASE_URL                      Novu API base URL (optional; falls back to NEXT_PUBLIC_NOVU_BACKEND_URL, then https://api.novu.co)
- *   NOVU_MSTEAMS_INTEGRATION_IDENTIFIER    Novu integration identifier for the MS Teams integration
- *   NEXT_PUBLIC_MS_TEAMS_AAD_OBJECT_ID     Fallback AAD Object ID for testing (public, optional)
+ *   NOVU_CONNECT_MSTEAMS_INTEGRATION_IDENTIFIER    Novu integration identifier for the MS Teams integration
+ *   NEXT_PUBLIC_CONNECT_MSTEAMS_AAD_OBJECT_ID     Fallback AAD Object ID for testing (public, optional)
  */
 
 import { Novu } from '@novu/api';
@@ -55,7 +55,7 @@ function getNovuClient(): Novu {
  *
  * @param subscriberId          The Novu subscriber ID
  * @param integrationIdentifier The Novu MS Teams integration identifier
- * @param aadObjectIdOverride   The subscriber's AAD Object ID (falls back to NEXT_PUBLIC_MS_TEAMS_AAD_OBJECT_ID)
+ * @param aadObjectIdOverride   The subscriber's AAD Object ID (falls back to NEXT_PUBLIC_CONNECT_MSTEAMS_AAD_OBJECT_ID)
  */
 export async function ensureMsTeamsUserDmEndpoint(args: {
   subscriberId: string;
@@ -65,13 +65,14 @@ export async function ensureMsTeamsUserDmEndpoint(args: {
   const novu = getNovuClient();
   const { subscriberId, integrationIdentifier } = args;
 
-  const aadObjectId = args.aadObjectIdOverride?.trim() || process.env.NEXT_PUBLIC_MS_TEAMS_AAD_OBJECT_ID?.trim() || '';
+  const aadObjectId =
+    args.aadObjectIdOverride?.trim() || process.env.NEXT_PUBLIC_CONNECT_MSTEAMS_AAD_OBJECT_ID?.trim() || '';
 
   if (!aadObjectId) {
     return {
       ok: false,
       error:
-        'AAD Object ID is required. Pass aadObjectIdOverride or set NEXT_PUBLIC_MS_TEAMS_AAD_OBJECT_ID.' +
+        'AAD Object ID is required. Pass aadObjectIdOverride or set NEXT_PUBLIC_CONNECT_MSTEAMS_AAD_OBJECT_ID.' +
         ' You can find the AAD Object ID in Microsoft Entra admin center or via <MsTeamsLinkUser /> OAuth.',
     };
   }
