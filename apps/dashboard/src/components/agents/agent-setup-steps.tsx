@@ -16,6 +16,7 @@ import {
   type ConnectSummary,
   deriveConnectSummaryDisplay,
 } from '@/components/onboarding/connect-agent/connect-summary';
+import { IS_SELF_HOSTED_EE } from '@/config';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useAgentRoutes } from '@/hooks/use-agent-routes';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
@@ -28,6 +29,7 @@ import { AgentIntegrationGuideTransition } from './agent-integration-guides/agen
 import { resolveAgentProviderDisplayName } from './agent-integration-guides/agent-provider-display-name';
 import { providerHasWhatsNextPhase } from './agent-integration-guides/whats-next/whats-next-config';
 import { AgentListenStep } from './agent-listen-step';
+import { hasAgentInboundConnection } from './is-agent-integration-connected';
 import { isChannelReadyForBridge } from './is-channel-ready-for-bridge';
 import { ProviderCards } from './provider-cards';
 import { resolveProviderSetupGuide, shouldShowProviderSetupGuide } from './provider-setup-guide';
@@ -271,6 +273,7 @@ export function AgentSetupSteps({
   const [searchParams, setSearchParams] = useSearchParams();
   const telemetry = useTelemetry();
   const isWhatsNextEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_AGENT_WHATS_NEXT_ENABLED);
+  const isEmailWhatsNextEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_AGENT_EMAIL_WHATS_NEXT_ENABLED);
   // Tracks the last conversationId for which a bridge-connected message was sent,
   // scoping dedup per conversation rather than globally for the component lifetime.
   const lastSentConversationIdRef = useRef<string | null>(null);
@@ -418,6 +421,26 @@ export function AgentSetupSteps({
   // moment that message lands — the user may still be in Telegram/Slack when the webhook fires.
   const guideHasWhatsNextPhase = Boolean(guideProviderId && providerHasWhatsNextPhase(guideProviderId));
   const useOnboardingRolloutGate = isManagedRuntime && guideHasWhatsNextPhase && isWhatsNextEnabled;
+
+  const emailLink = useMemo(
+    () => agentIntegrationLinks.find((link) => link.integration.providerId === EmailProviderIdEnum.NovuAgent),
+    [agentIntegrationLinks]
+  );
+  const emailSharedInboxReady = Boolean(
+    emailLink?.integration.sharedInboundAddress && !emailLink.integration.sharedInboxDisabled
+  );
+  const useEmailWhatsNextRolloutGate =
+    isManagedRuntime &&
+    isEmailChannelSelected &&
+    isEmailWhatsNextEnabled &&
+    emailSharedInboxReady &&
+    !IS_SELF_HOSTED_EE;
+  const useRolloutGate = useOnboardingRolloutGate || useEmailWhatsNextRolloutGate;
+
+  const guideLayer1Complete = guideIntegrationLink
+    ? hasAgentInboundConnection(guideIntegrationLink.connectedAt)
+    : false;
+
   const [hasContinuedSetup, setHasContinuedSetup] = useState(false);
 
   // Reset when the user switches channel so a fresh guide gets a fresh Continue gate.
@@ -608,7 +631,7 @@ export function AgentSetupSteps({
     if (!isManagedRuntime) return;
     if (setupCompleteFiredRef.current) return;
 
-    if (useOnboardingRolloutGate) {
+    if (useRolloutGate) {
       if (!hasContinuedSetup) return;
     } else if (!hasConnectedIntegration) {
       return;
@@ -616,7 +639,7 @@ export function AgentSetupSteps({
 
     setupCompleteFiredRef.current = true;
     onSetupCompleteRef.current?.();
-  }, [isManagedRuntime, hasConnectedIntegration, useOnboardingRolloutGate, hasContinuedSetup]);
+  }, [isManagedRuntime, hasConnectedIntegration, useRolloutGate, hasContinuedSetup]);
 
   const handleRolloutContinue = useCallback(() => {
     setHasContinuedSetup(true);
@@ -805,9 +828,9 @@ export function AgentSetupSteps({
             className="flex flex-col gap-10"
             style={{ clipPath: 'inset(0 -100% -100% -100%)' }}
           >
-            {useOnboardingRolloutGate && guideIntegrationId && guideProviderId ? (
+            {useRolloutGate && guideIntegrationId && guideProviderId ? (
               <AgentIntegrationGuideTransition
-                isConnected={Boolean(guideIntegrationLink?.connectedAt)}
+                isConnected={guideLayer1Complete}
                 providerDisplayName={resolveAgentProviderDisplayName(guideProviderId)}
                 hasUserRolloutPhase
                 onContinued={handleRolloutContinue}

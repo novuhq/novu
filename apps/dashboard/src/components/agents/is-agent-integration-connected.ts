@@ -1,7 +1,8 @@
 import { EmailProviderIdEnum } from '@novu/shared';
 import type { AgentIntegrationLink } from '@/api/agents';
 
-function hasMeaningfulConnectedAt(connectedAt: string | null | undefined): boolean {
+/** Whether a real inbound message has landed (API stamped `connectedAt`). */
+export function hasAgentInboundConnection(connectedAt: string | null | undefined): boolean {
   if (!connectedAt) {
     return false;
   }
@@ -25,7 +26,7 @@ function hasMeaningfulConnectedAt(connectedAt: string | null | undefined): boole
  * agent that already has a working shared inbox.
  */
 export function isAgentIntegrationConnected(link: Pick<AgentIntegrationLink, 'connectedAt' | 'integration'>): boolean {
-  if (hasMeaningfulConnectedAt(link.connectedAt)) return true;
+  if (hasAgentInboundConnection(link.connectedAt)) return true;
 
   return link.integration.providerId === EmailProviderIdEnum.NovuAgent;
 }
@@ -37,5 +38,5 @@ export function isAgentIntegrationConnected(link: Pick<AgentIntegrationLink, 'co
 export function isUserFacingConnectedAgentIntegration(
   link: Pick<AgentIntegrationLink, 'connectedAt' | 'integration'>
 ): boolean {
-  return hasMeaningfulConnectedAt(link.connectedAt) && link.integration.providerId !== EmailProviderIdEnum.NovuAgent;
+  return hasAgentInboundConnection(link.connectedAt) && link.integration.providerId !== EmailProviderIdEnum.NovuAgent;
 }

@@ -28,6 +28,12 @@ export type EmailInboxCardProps = {
    */
   integrationEmbedded: AgentIntegrationEmbedded;
   agent: AgentResponse;
+  /**
+   * Hide the "Connect custom domain" add-form + tip. Used when the parent surface (the layer-2
+   * "What's next" guide) owns the branded-address add flow, so this card stays a pure manager
+   * (enable + shared-inbox toggles + the existing address list with remove).
+   */
+  hideCustomAddressForm?: boolean;
 };
 
 /**
@@ -38,7 +44,12 @@ export type EmailInboxCardProps = {
  * custom domain" affordance reveals the add-form on demand instead of always
  * occupying screen real estate.
  */
-export function EmailInboxCardBody({ emailIntegration, integrationEmbedded, agent }: EmailInboxCardProps) {
+export function EmailInboxCardBody({
+  emailIntegration,
+  integrationEmbedded,
+  agent,
+  hideCustomAddressForm = false,
+}: EmailInboxCardProps) {
   const { currentEnvironment } = useEnvironment();
   const { mutateAsync: updateIntegration } = useUpdateIntegration();
   const { integrations } = useFetchIntegrations();
@@ -197,7 +208,7 @@ export function EmailInboxCardBody({ emailIntegration, integrationEmbedded, agen
             })}
           </div>
 
-          {isAddingCustom && hasUsableDomains ? (
+          {!hideCustomAddressForm && isAddingCustom && hasUsableDomains ? (
             <div className="flex flex-col gap-1.5">
               <InboundAddressForm
                 domains={domains}
@@ -217,7 +228,7 @@ export function EmailInboxCardBody({ emailIntegration, integrationEmbedded, agen
             </div>
           ) : null}
 
-          {!isAddingCustom && hasUsableDomains ? (
+          {!hideCustomAddressForm && !isAddingCustom && hasUsableDomains ? (
             <button
               type="button"
               disabled={inboxSectionDisabled}
@@ -229,7 +240,7 @@ export function EmailInboxCardBody({ emailIntegration, integrationEmbedded, agen
             </button>
           ) : null}
 
-          {hasCustomAddresses ? null : (
+          {!hideCustomAddressForm && !hasCustomAddresses ? (
             <p className="text-text-soft text-paragraph-xs leading-4">
               <span aria-hidden>💡</span> Tip:{' '}
               <Link to={domainsPath} className="text-text-sub underline underline-offset-2">
@@ -237,7 +248,7 @@ export function EmailInboxCardBody({ emailIntegration, integrationEmbedded, agen
               </Link>{' '}
               in Novu to make them available here.
             </p>
-          )}
+          ) : null}
         </div>
       </CardRow>
     </>
