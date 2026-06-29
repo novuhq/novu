@@ -29,6 +29,8 @@
     "jsx-runtime",
     "jsx-dev-runtime",
     "validators",
+    "ai-sdk",
+    "cards",
     "README.md"
   ],
   "scripts": {
@@ -204,12 +206,33 @@
         "types": "./dist/esm/validators.d.ts",
         "default": "./dist/esm/validators.js"
       }
+    },
+    "./ai-sdk": {
+      "require": {
+        "types": "./dist/cjs/ai-sdk/index.d.cts",
+        "default": "./dist/cjs/ai-sdk/index.cjs"
+      },
+      "import": {
+        "types": "./dist/esm/ai-sdk/index.d.ts",
+        "default": "./dist/esm/ai-sdk/index.js"
+      }
+    },
+    "./cards": {
+      "require": {
+        "types": "./dist/cjs/cards.d.cts",
+        "default": "./dist/cjs/cards.cjs"
+      },
+      "import": {
+        "types": "./dist/esm/cards.d.ts",
+        "default": "./dist/esm/cards.js"
+      }
     }
   },
   "peerDependencies": {
     "@nestjs/common": ">=10.0.0",
     "@sveltejs/kit": ">=1.27.3",
     "@vercel/node": ">=2.15.9",
+    "ai": "^6.0.0",
     "aws-lambda": ">=1.0.7",
     "express": ">=4.19.2",
     "h3": ">=1.8.1",
@@ -242,6 +265,9 @@
     "next": {
       "optional": true
     },
+    "ai": {
+      "optional": true
+    },
     "zod": {
       "optional": true
     },
@@ -260,6 +286,7 @@
     "@types/pluralize": "^0.0.33",
     "@types/sanitize-html": "2.11.0",
     "@vercel/node": "^2.15.9",
+    "ai": "^6.0.208",
     "aws-lambda": "^1.0.7",
     "express": "^4.19.2",
     "h3": "^1.11.1",
@@ -274,11 +301,11 @@
     "zod-to-json-schema": "^3.23.3"
   },
   "dependencies": {
-    "chat": "4.30.0",
     "ajv": "^8.20.0",
     "ajv-formats": "^2.1.1",
     "better-ajv-errors": "^1.2.0",
     "chalk": "^4.1.2",
+    "chat": "4.30.0",
     "cross-fetch": "^4.0.0",
     "json-schema-to-ts": "^3.0.0",
     "jsonrepair": "^3.13.1",

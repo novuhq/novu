@@ -24,6 +24,26 @@ import type { StepStatus } from './setup-guide-step-utils';
 
 export type SetupMode = 'quick' | 'manual';
 
+/** Shared vertical rail gradient — fades at the bottom of the numbered-steps column only. */
+export const SETUP_STEPPER_RAIL_GRADIENT =
+  'linear-gradient(to bottom, transparent 0%, #E1E4EA 10%, #E1E4EA 90%, transparent 100%)';
+
+/**
+ * Vertical stepper rail aligned with `SetupStep` indicators (`left-[22px]` on this
+ * `pl-8` container matches each step's `-left-[20px]` indicator offset).
+ */
+export function SetupStepperRail({ children, className }: { children: ReactNode; className?: string }) {
+  return (
+    <div className={cn('relative flex flex-col gap-10 pl-8', className)}>
+      <div
+        className="pointer-events-none absolute bottom-0 left-[22px] top-0 w-px"
+        style={{ background: SETUP_STEPPER_RAIL_GRADIENT }}
+      />
+      {children}
+    </div>
+  );
+}
+
 export function SetupModeToggle({ mode, onChange }: { mode: SetupMode; onChange: (m: SetupMode) => void }) {
   return (
     <div className="inline-flex w-fit items-start gap-px rounded-[5px] bg-bg-weak p-px">
@@ -137,7 +157,7 @@ export function SetupStep({
       </div>
       <div
         className={cn(
-          'flex flex-col gap-4 transition-opacity duration-300 ease-out md:flex-row md:gap-20 pt-[3px]',
+          'flex flex-col gap-4 pt-[3px] transition-opacity duration-300 ease-out md:flex-row md:items-start md:gap-12 lg:gap-16 xl:gap-20',
           dimmed && 'pointer-events-none opacity-30'
         )}
       >
@@ -152,7 +172,9 @@ export function SetupStep({
           </div>
           {extraContent}
         </div>
-        {rightContent && <div className="flex min-h-0 min-w-0 flex-1 flex-col items-start">{rightContent}</div>}
+        {rightContent && (
+          <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col items-start md:max-w-[460px]">{rightContent}</div>
+        )}
       </div>
       {fullWidthContent}
     </div>

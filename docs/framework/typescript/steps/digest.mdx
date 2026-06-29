@@ -1,0 +1,129 @@
+---
+title: 'Digest'
+description: 'Learn how to use the digest step to aggregate multiple events into a single notification'
+---
+
+The `digest` step allows you to collect multiple events over a specified time period and combine them into a single notification. This is useful for reducing notification fatigue and providing better context to your users.
+
+## Example Usage
+
+```tsx
+const { events } = await step.digest('daily-summary', async () => {
+  return {
+    amount: 1,
+    unit: 'days',
+  };
+});
+
+await step.email('digest-email', async () => {
+  return {
+    subject: `Daily Summary (${events.length} updates)`,
+    body: `You have ${events.length} new updates today`,
+  };
+});
+```
+
+## Digest Step Output
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| amount | number | Yes | The number of time units to collect events for |
+| unit | 'seconds' \| 'minutes' \| 'hours' \| 'days' \| 'weeks' \| 'months' | Yes | The time unit for the digest period |
+| cron | string | No | The cron expression to use for the digest |
+| digestKey | string | No | The key to use for digesting events |
+
+<Note>
+  Use either cron or amount-unit. Using both will result in an error.
+</Note>
+
+## Digest Step Result
+
+| Property | Type          | Description                                        |
+| -------- | ------------- | -------------------------------------------------- |
+| events   | DigestEvent[] | Array of events collected during the digest period |
+
+## DigestEvent Type
+
+| Property | Type   | Description                                 |
+| -------- | ------ | ------------------------------------------- |
+| id       | string | The unique identifier of the digested event |
+| time     | Date   | The timestamp when the event was triggered  |
+| payload  | object | The original payload passed to the event    |
+
+<Note>
+  The digest step result can only be used in subsequent steps within the same workflow. You cannot
+  access digest information in step controls.
+</Note>
+
+## Using Digest Events
+
+You can use the digested events to create rich, aggregated notifications. Here's an example:
+
+```tsx
+import { ActivityDigestEmail } from './ActivityDigestEmail';
+
+const { events } = await step.digest('activity-digest', async () => {
+  return {
+    amount: 1,
+    unit: 'hours',
+  };
+});
+
+await step.email('digest-notification', async () => {
+  const activities = events.map((event) => ({
+    type: event.payload.type,
+    user: event.payload.userName,
+    action: event.payload.action,
+  }));
+
+  return {
+    subject: `Activity Summary (${events.length} updates)`,
+    body: render(<ActivityDigestEmail activities={activities} />),
+  };
+});
+```
+
+## Cron based digest
+
+You can use cron based digest to digest events based on a cron expression.
+
+```tsx
+const digestedEvents = await step.digest('cron-digest', async () => {
+  return {
+    cron: '0 0 * * *', // every day at midnight
+  };
+});
+```
+
+## Custom Digest Key
+
+You can use a custom digest key to digest events based on a custom key. By default, events are digested based on the `subscriberId`. With a custom digest key, events are digested based on the combination of the `subscriberId` and the `digestKey` value.
+
+```tsx
+export const customDigestKey = workflow(
+  "custom-digest-key",
+  async ({ step, payload }) => {
+    const { events } = await step.digest("digest-step", async () => {
+      return {
+        unit: "hours",
+        amount: 1,
+        digestKey: payload.ticket_id,
+      };
+    });
+
+    console.log("events ==>", events);
+
+    // use above events to send email / in-app notification
+  },
+  {
+    payloadSchema: z.object({
+      ticket_id: z.string(),
+    }),
+  }
+);
+```
+
+<Warning>
+  Changes to the workflow content after triggering will not affect existing digested events. The
+  content is determined at the time of event digestion.
+</Warning>

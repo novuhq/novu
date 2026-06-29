@@ -1,0 +1,87 @@
+---
+title: 'Vue Email'
+description: 'Learn how to use Vue Email to build beautiful email templates'
+---
+
+You can integrate Novu Framework with [Vue Email](https://vuemail.net/) in a few simple steps. This guide will walk you through the process of creating a new email template using Vue Email and Nuxt.
+
+For a Quickstart Boilerplate project using Nuxt.js, and Vue Email, check out the [Vue Email Starter repository](https://github.com/novuhq/novu-framework-nuxt-example/)
+
+## Quickstart
+
+<Steps>
+    <Step title="Install Vue.Email components">
+        ```bash
+        npm install @vue-email/components
+        ```
+    </Step>
+    <Step title="Create templates folder">
+        Create a new folder called `emails` in your `src` folder.
+    </Step>
+    <Step title="Update nuxt.config.ts File">
+        ```typescript
+        export default defineNuxtConfig({
+            build: {
+                transpile: ['@vue/email'],
+            },
+            nitro: {
+                esbuild: {
+                    options: {
+                        target: 'esnext',
+                    },
+                },
+            },
+        });
+        ```
+    </Step>
+    <Step title="Write your email">
+        ```vue
+        <script setup lang="ts">
+
+        defineProps<{
+            name: string;
+        }>();
+        </script>
+
+        <template>
+            <VueEmail>
+                <Html>
+                    <Head />
+                    <Preview>Welcome to Vue Email</Preview>
+                    <Container>
+                        <h1>Welcome, {{ name }}!</h1>
+                        <p>Thanks for trying Vue Email. We're thrilled to have you on board.</p>
+                    </Container>
+                </Html>
+            </VueEmail>
+        </template>
+        ```
+    </Step>
+    <Step title="Write your workflow">
+        ```typescript
+
+        export const testWorkflow = workflow('test-workflow', async ({ step, payload }) => {
+            await step.email('send-email', async (controls) => {
+                return {
+                    subject: controls.subject,
+                    body: renderEmail(payload.userName),
+                };
+            },
+            {
+                controlSchema: z.object({
+                    subject: z.string().default('A Successful Test on Novu from {{userName}}'),
+                }),
+            });
+        }, {
+            payloadSchema: z.object({
+                userName: z.string().default('John Doe'),
+            }),
+        });
+        ```
+    </Step>
+
+</Steps>
+
+## Learn More
+
+To learn more, refer to [Vue Email documentation](https://vuemail.net/).

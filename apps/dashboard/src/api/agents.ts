@@ -812,11 +812,10 @@ type ConfigureTelegramWebhookEnvelope = { data: ConfigureTelegramWebhookResult }
 
 export async function configureTelegramAgentWebhook(
   environment: IEnvironment,
-  agentIdentifier: string,
-  integrationId: string
+  integrationIdentifier: string
 ): Promise<ConfigureTelegramWebhookResult> {
   const response = await post<ConfigureTelegramWebhookEnvelope>(
-    `/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationId)}/telegram/configure`,
+    `/integrations/${encodeURIComponent(integrationIdentifier)}/webhook/configure`,
     { environment }
   );
 
@@ -834,12 +833,11 @@ type TelegramMobileLinkEnvelope = { data: TelegramMobileLink };
 
 export async function requestTelegramMobileLink(
   environment: IEnvironment,
-  agentIdentifier: string,
-  integrationId: string,
+  integrationIdentifier: string,
   subscriberId?: string
 ): Promise<TelegramMobileLink> {
   const response = await post<TelegramMobileLinkEnvelope>(
-    `/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationId)}/telegram/mobile-link`,
+    `/integrations/${encodeURIComponent(integrationIdentifier)}/mobile-link`,
     { environment, body: subscriberId ? { subscriberId } : undefined }
   );
 
@@ -853,7 +851,12 @@ export type TelegramSubscriberLink = {
   expiresAt: string;
 };
 
-type TelegramSubscriberLinkEnvelope = { data: TelegramSubscriberLink };
+type LinkChannelEndpointEnvelope = {
+  data: {
+    url: string;
+    providerMetadata?: { botUsername?: string; expiresAt?: string };
+  };
+};
 
 /**
  * Issues a `t.me/<bot>?start=<code>` deep-link that, when opened by a subscriber,
@@ -862,16 +865,21 @@ type TelegramSubscriberLinkEnvelope = { data: TelegramSubscriberLink };
  */
 export async function requestTelegramSubscriberLink(
   environment: IEnvironment,
-  agentIdentifier: string,
-  integrationId: string,
+  integrationIdentifier: string,
   subscriberId: string
 ): Promise<TelegramSubscriberLink> {
-  const response = await post<TelegramSubscriberLinkEnvelope>(
-    `/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationId)}/telegram/subscriber-link`,
-    { environment, body: { subscriberId } }
-  );
+  const response = await post<LinkChannelEndpointEnvelope>('/integrations/channel-endpoints/link', {
+    environment,
+    body: { integrationIdentifier, subscriberId },
+  });
 
-  return response.data;
+  const payload = response.data;
+
+  return {
+    deepLinkUrl: payload.url,
+    botUsername: payload.providerMetadata?.botUsername ?? '',
+    expiresAt: payload.providerMetadata?.expiresAt ?? '',
+  };
 }
 
 export type TelegramMobileLinkStatus =
@@ -886,7 +894,7 @@ export async function getTelegramMobileSetupStatus(
   token: string,
   signal?: AbortSignal
 ): Promise<TelegramMobileLinkStatus> {
-  const url = `${getApiBaseUrl()}/v1/agents/public/telegram/mobile-configure/status?token=${encodeURIComponent(token)}`;
+  const url = `${getApiBaseUrl()}/v1/integrations/mobile-configure/status?token=${encodeURIComponent(token)}`;
   const response = await fetch(url, {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
@@ -929,7 +937,7 @@ export async function submitTelegramMobileCredentials(
   token: string,
   botToken: string
 ): Promise<SubmitTelegramMobileCredentialsResult> {
-  const url = `${getApiBaseUrl()}/v1/agents/public/telegram/mobile-configure`;
+  const url = `${getApiBaseUrl()}/v1/integrations/mobile-configure`;
   const response = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

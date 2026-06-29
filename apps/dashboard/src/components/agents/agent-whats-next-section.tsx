@@ -16,6 +16,7 @@ import TruncatedText from '@/components/truncated-text';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useAgentRoutes } from '@/hooks/use-agent-routes';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { getAgentChannelDisplayName } from '@/utils/agent-email-provider-display';
 import { buildRoute } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { isUserFacingConnectedAgentIntegration } from './is-agent-integration-connected';
@@ -58,7 +59,10 @@ function ConfigureChannelButton({
   onConfigure: (link: AgentIntegrationLink) => void;
 }) {
   const providerMeta = novuProviders.find((p) => p.id === link.integration.providerId);
-  const displayName = providerMeta?.displayName ?? link.integration.name;
+  const displayName = getAgentChannelDisplayName(
+    link.integration.providerId,
+    providerMeta?.displayName ?? link.integration.name
+  );
 
   return (
     <button

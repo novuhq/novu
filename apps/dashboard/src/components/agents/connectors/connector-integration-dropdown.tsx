@@ -15,12 +15,25 @@ import {
 } from '@/components/integrations/components/demo-credential-badge';
 import { isDemoIntegration } from '@/components/integrations/components/utils/helpers';
 import { Badge } from '@/components/primitives/badge';
-import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from '@/components/primitives/command';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+} from '@/components/primitives/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
 import { useManagedAgentRuntimeEnabled } from '@/hooks/use-managed-agent-runtime-enabled';
 import { cn } from '@/utils/ui';
-import { getClaudeManagedAgentIntegrations } from './claude-managed-integrations';
-import { CONNECTOR_OPTIONS, type ConnectorId, type ConnectorOption, getConnectorById } from './connector-options';
+import { getClaudeManagedAgentIntegrations, partitionClaudeManagedIntegrations } from './claude-managed-integrations';
+import {
+  CONNECTOR_OPTIONS,
+  type ConnectorId,
+  type ConnectorOption,
+  getConnectorById,
+  getConnectorIdForProviderId,
+} from './connector-options';
 
 const GROUP_HEADING_CLASSNAME =
   '**:[[cmdk-group-heading]]:text-text-soft **:[[cmdk-group-heading]]:text-label-xs **:[[cmdk-group-heading]]:font-medium **:[[cmdk-group-heading]]:leading-4 **:[[cmdk-group-heading]]:px-1 **:[[cmdk-group-heading]]:py-1';
@@ -28,7 +41,7 @@ const GROUP_HEADING_CLASSNAME =
 export type ConnectorIntegrationStatus = 'idle' | 'valid' | 'missing';
 
 type ConnectorIntegrationDropdownProps = {
-  selectedConnectorId: ConnectorId;
+  selectedConnectorId?: ConnectorId;
   selectedIntegrationId?: string;
   integrations: IIntegration[] | undefined;
   status?: ConnectorIntegrationStatus;
@@ -103,6 +116,15 @@ export function ConnectorIntegrationDropdown({
     return getClaudeManagedAgentIntegrations(integrations, selectedConnector.providerId);
   }, [integrations, selectedConnector?.providerId]);
 
+  const userIntegrations = useMemo(
+    () => partitionClaudeManagedIntegrations(matchingIntegrations).userIntegrations,
+    [matchingIntegrations]
+  );
+
+  const rootDemoIntegrations = useMemo(() => {
+    return partitionClaudeManagedIntegrations(getClaudeManagedAgentIntegrations(integrations)).demoIntegrations;
+  }, [integrations]);
+
   const selectedIntegration = useMemo(
     () => matchingIntegrations.find((i) => i._id === selectedIntegrationId),
     [matchingIntegrations, selectedIntegrationId]
@@ -116,6 +138,7 @@ export function ConnectorIntegrationDropdown({
     prevOpenRef.current = open;
 
     if (!open || wasOpen) return;
+
     setView('connectors');
   }, [open]);
 
@@ -193,16 +216,75 @@ export function ConnectorIntegrationDropdown({
     );
   };
 
+  const renderUserIntegrationItem = (integration: IIntegration) => {
+    const isCurrent = integration._id === selectedIntegrationId;
+
+    return (
+      <CommandItem
+        key={integration._id}
+        value={`integration-${integration._id}`}
+        onSelect={() => {
+          onSelectIntegration(integration);
+          setOpen(false);
+        }}
+        className="flex min-w-0 cursor-pointer p-0"
+      >
+        <div className={cn('flex w-full min-w-0 items-center gap-1.5 break-normal p-1', isCurrent && 'bg-bg-muted')}>
+          {selectedConnector?.icon}
+          <span className="text-text-sub text-label-xs min-w-0 flex-1 truncate font-medium leading-4">
+            {integration.name}
+          </span>
+          <span className="text-text-soft text-label-xs shrink-0 truncate font-mono">{integration.identifier}</span>
+        </div>
+      </CommandItem>
+    );
+  };
+
+  const renderRootDemoIntegrationItem = (integration: IIntegration) => {
+    const isCurrent = integration._id === selectedIntegrationId;
+    const connectorId = getConnectorIdForProviderId(integration.providerId);
+
+    return (
+      <CommandItem
+        key={integration._id}
+        value={`demo-integration-${integration._id}`}
+        onSelect={() => {
+          if (connectorId) {
+            onSelectConnector(connectorId);
+          }
+          onSelectIntegration(integration);
+          setOpen(false);
+        }}
+        className="flex min-w-0 cursor-pointer p-0"
+      >
+        <DemoCredentialDropdownItem
+          providerId={integration.providerId}
+          providerDisplayName={integration.name}
+          isSelected={isCurrent}
+        />
+      </CommandItem>
+    );
+  };
+
   const connectorsView = (
     <>
-      {externalOptions.length > 0 ? (
-        <CommandGroup heading="External connectors" className={GROUP_HEADING_CLASSNAME}>
-          {externalOptions.map(renderConnectorItem)}
-        </CommandGroup>
-      ) : null}
       <CommandGroup heading="Custom code" className={GROUP_HEADING_CLASSNAME}>
         {customOptions.map(renderConnectorItem)}
       </CommandGroup>
+      {externalOptions.length > 0 ? (
+        <CommandGroup heading="Managed agent runtimes" className={GROUP_HEADING_CLASSNAME}>
+          {externalOptions.map(renderConnectorItem)}
+        </CommandGroup>
+      ) : null}
+
+      {rootDemoIntegrations.length > 0 ? (
+        <>
+          <CommandSeparator className="bg-stroke-soft my-1" />
+          <CommandGroup heading="Don't have an agent yet?" className={GROUP_HEADING_CLASSNAME}>
+            {rootDemoIntegrations.map(renderRootDemoIntegrationItem)}
+          </CommandGroup>
+        </>
+      ) : null}
     </>
   );
 
@@ -235,47 +317,9 @@ export function ConnectorIntegrationDropdown({
         </CommandItem>
       </CommandGroup>
 
-      {matchingIntegrations.length > 0 ? (
+      {userIntegrations.length > 0 ? (
         <CommandGroup heading="Existing" className={GROUP_HEADING_CLASSNAME}>
-          {matchingIntegrations.map((integration) => {
-            const isCurrent = integration._id === selectedIntegrationId;
-            const isDemo = isDemoIntegration(integration.providerId);
-
-            return (
-              <CommandItem
-                key={integration._id}
-                value={`integration-${integration._id}`}
-                onSelect={() => {
-                  onSelectIntegration(integration);
-                  setOpen(false);
-                }}
-                className="flex min-w-0 cursor-pointer p-0"
-              >
-                {isDemo ? (
-                  <DemoCredentialDropdownItem
-                    providerId={integration.providerId}
-                    providerDisplayName={integration.name}
-                    isSelected={isCurrent}
-                  />
-                ) : (
-                  <div
-                    className={cn(
-                      'flex w-full min-w-0 items-center gap-1.5 break-normal p-1',
-                      isCurrent && 'bg-bg-muted'
-                    )}
-                  >
-                    {selectedConnector.icon}
-                    <span className="text-text-sub text-label-xs min-w-0 flex-1 truncate font-medium leading-4">
-                      {integration.name}
-                    </span>
-                    <span className="text-text-soft text-label-xs shrink-0 truncate font-mono">
-                      {integration.identifier}
-                    </span>
-                  </div>
-                )}
-              </CommandItem>
-            );
-          })}
+          {userIntegrations.map(renderUserIntegrationItem)}
         </CommandGroup>
       ) : null}
     </>
@@ -298,7 +342,7 @@ export function ConnectorIntegrationDropdown({
               {renderTriggerSecondary()}
             </div>
           ) : (
-            <span className="text-text-soft text-label-xs font-medium leading-4">Select connector…</span>
+            <span className="text-text-soft text-label-xs font-medium leading-4">Select your agent runtime</span>
           )}
           <TriggerGlyph status={status} showBadge={showStatusBadge} />
         </button>

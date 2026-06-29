@@ -2,6 +2,7 @@ import {
   buildAgentSharedInbox,
   generateAgentInboxRoutingKey,
   getSharedAgentDomain,
+  isAgentEmailEnabled,
   isAgentSharedInboxEnabled,
   isValidAgentEmailSlugPrefix,
   isValidAgentInboxRoutingKey,
@@ -78,6 +79,80 @@ describe('agent-shared-inbox helpers', () => {
           expect(isAgentSharedInboxEnabled()).toBe(false);
         });
       }
+    });
+  });
+
+  describe('isAgentEmailEnabled', () => {
+    // CI_EE_TEST also flips the enterprise flag, so it is pinned off here to keep
+    // each case controlled solely by NOVU_ENTERPRISE.
+    const CI_EE_TEST_KEY = 'CI_EE_TEST';
+
+    it('is enabled on cloud when enterprise and the shared domain is set (matches shared inbox gate)', () => {
+      withEnv(
+        {
+          [NOVU_ENTERPRISE_KEY]: 'true',
+          [CI_EE_TEST_KEY]: undefined,
+          [IS_SELF_HOSTED_KEY]: 'false',
+          [ENV_KEY]: 'agentconnect.sh',
+        },
+        () => {
+          expect(isAgentEmailEnabled()).toBe(true);
+        }
+      );
+    });
+
+    it('is disabled on degraded cloud when enterprise but the shared domain is missing (zero delta vs shared inbox gate)', () => {
+      withEnv(
+        {
+          [NOVU_ENTERPRISE_KEY]: 'true',
+          [CI_EE_TEST_KEY]: undefined,
+          [IS_SELF_HOSTED_KEY]: 'false',
+          [ENV_KEY]: undefined,
+        },
+        () => {
+          expect(isAgentEmailEnabled()).toBe(false);
+          expect(isAgentEmailEnabled()).toBe(isAgentSharedInboxEnabled());
+        }
+      );
+    });
+
+    it('is enabled on self-hosted enterprise regardless of the shared domain', () => {
+      withEnv(
+        {
+          [NOVU_ENTERPRISE_KEY]: 'true',
+          [CI_EE_TEST_KEY]: undefined,
+          [IS_SELF_HOSTED_KEY]: 'true',
+          [ENV_KEY]: undefined,
+        },
+        () => {
+          expect(isAgentEmailEnabled()).toBe(true);
+        }
+      );
+    });
+
+    it('is disabled for community (not enterprise), self-hosted or not', () => {
+      withEnv(
+        {
+          [NOVU_ENTERPRISE_KEY]: 'false',
+          [CI_EE_TEST_KEY]: undefined,
+          [IS_SELF_HOSTED_KEY]: 'true',
+          [ENV_KEY]: 'agentconnect.sh',
+        },
+        () => {
+          expect(isAgentEmailEnabled()).toBe(false);
+        }
+      );
+      withEnv(
+        {
+          [NOVU_ENTERPRISE_KEY]: 'false',
+          [CI_EE_TEST_KEY]: undefined,
+          [IS_SELF_HOSTED_KEY]: 'false',
+          [ENV_KEY]: 'agentconnect.sh',
+        },
+        () => {
+          expect(isAgentEmailEnabled()).toBe(false);
+        }
+      );
     });
   });
 

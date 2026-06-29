@@ -1,0 +1,135 @@
+---
+title: "Connect Components"
+description: 'Use prebuilt React components so your users can install and connect Slack, Microsoft Teams, Telegram and other communication platforms to your agent.'
+---
+
+
+Novu provides pre-built UI components for chat platforms like Slack, Microsoft Teams, Telegram and other communication platforms. Add these components so users can install the communication platform app in their workspace and connect it to your agent.
+
+## Slack connect button
+
+`SlackConnectButton` is a pre-built UI component in the `@novu/react` SDK that connects an agent to a Slack workspace. Check out the example below.
+
+```tsx
+import { SlackConnectButton } from '@novu/react';
+
+const SlackConnectButtonComponent = () => {
+  const subscriberId = 'subscriber-id';
+  const integrationIdentifier = 'integration-identifier';
+  const agent = {
+    identifier: 'agent-identifier',
+    name: 'agent-name',
+  };
+
+  const handleSlackOAuthSuccess = () => {
+    // Handle success
+  };
+
+  return (
+    <SlackConnectButton
+      integrationIdentifier={integrationIdentifier}
+      connectionIdentifier={`${subscriberId}:${integrationIdentifier}:${agent.identifier}`}
+      connectionMode="subscriber"
+      connectLabel={`Install ${agent.name} ↗`}
+      connectedLabel="Connected to Slack"
+      onConnectSuccess={handleSlackOAuthSuccess}
+      onConnectError={(error: unknown) => {
+        console.error(error);
+      }}
+    />
+  );
+};
+
+export default SlackConnectButtonComponent;
+```
+
+### API reference
+
+`SlackConnectButton` accepts the following props to customize the UI and behavior:
+
+<Fields>
+  <Field name="integrationIdentifier" type="string" />
+  <Field name="connectionIdentifier" type="string" />
+  <Field name="subscriberId" type="string" />
+  <Field name="context" type="Partial<Record<string, ContextValue>>" />
+  <Field name="scope" type="string[]" />
+  <Field name="connectionMode" type="ConnectionMode" />
+  <Field name="onConnectSuccess" type="(connectionIdentifier: string) => void" />
+  <Field name="onConnectError" type="(error: unknown) => void" />
+  <Field name="onDisconnectSuccess" type="() => void" />
+  <Field name="onDisconnectError" type="(error: unknown) => void" />
+  <Field name="connectLabel" type="string" />
+  <Field name="connectedLabel" type="string" />
+  <Field name="appearance" type="ReactInboxAppearance | ReactSubscriptionAppearance | ReactAllAppearance" />
+  <Field name="container" type="any" />
+</Fields>
+
+## Microsoft Teams connect button
+
+<Note>
+  Novu is working on adding a Microsoft Teams connect button to the `@novu/react` SDK. Reach out to support at support@novu.co to get access to a pre-release version.
+</Note>
+
+## Telegram connect button
+
+`TelegramConnectButton` is a pre-built UI component in the `@novu/react` SDK that links a subscriber's Telegram chat to your agent. It authenticates with the subscriber JWT from `NovuProvider`, so no secret key is exposed in the browser.
+
+When clicked, the button issues a `t.me/<bot>?start=<code>` deep link, opens it in a new tab, and polls until the subscriber presses **Start** in Telegram. Clicking again while connected disconnects the chat.
+
+```tsx
+import { NovuProvider, TelegramConnectButton } from '@novu/react';
+
+const TelegramConnectButtonComponent = () => {
+  const subscriberId = 'subscriber-id';
+  const integrationIdentifier = 'telegram-integration-identifier';
+
+  return (
+    <NovuProvider subscriberId={subscriberId} applicationIdentifier="application-identifier">
+      <TelegramConnectButton
+        integrationIdentifier={integrationIdentifier}
+        connectLabel="Connect Telegram"
+        connectedLabel="Connected to Telegram"
+        onConnectSuccess={(endpointIdentifier) => {
+          console.log('Connected', endpointIdentifier);
+        }}
+        onConnectError={(error: unknown) => {
+          console.error(error);
+        }}
+        onDisconnectSuccess={() => {
+          // Handle disconnect
+        }}
+      />
+    </NovuProvider>
+  );
+};
+
+export default TelegramConnectButtonComponent;
+```
+
+### API reference
+
+`TelegramConnectButton` accepts the following props to customize the UI and behavior:
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `integrationIdentifier` | `string` | Required. Identifier of the Telegram integration to link against. |
+| `subscriberId` | `string` | Optional. Subscriber to link. Defaults to the `NovuProvider` subscriber. |
+| `onConnectSuccess` | `(endpointIdentifier: string) => void` | Called once the Telegram chat endpoint is detected. |
+| `onConnectError` | `(error: unknown) => void` | Called when issuing the link fails or polling times out. |
+| `onDisconnectSuccess` | `() => void` | Called after the chat endpoint is removed. |
+| `onDisconnectError` | `(error: unknown) => void` | Called when disconnecting fails. |
+| `connectLabel` | `string` | Label shown when disconnected. Defaults to `Connect Telegram`. |
+| `connectedLabel` | `string` | Label shown when connected. Defaults to `Connected to Telegram`. |
+| `appearance` | `Appearance` | Style overrides reusing the shared `channelConnectButton*` keys. |
+| `container` | `HTMLElement` | Optional element to render the component into. |
+
+## Related
+
+<Columns cols={2}>
+  <Card icon="plus" href="/agents/custom-code-agent/setup-your-agent/create-an-agent" title="Create an agent">
+    Create an agent in the Novu dashboard and connect a provider.
+  </Card>
+  <Card icon="zap" href="/agents/custom-code-agent/quickstart" title="Quickstart">
+    Create an agent, connect Slack, and get a reply in-thread.
+  </Card>
+</Columns>

@@ -9,3 +9,4 @@ export * from './slack-link-user/SlackLinkUser';
 export * from './subscription/Subscription';
 export * from './subscription/SubscriptionButtonWrapper';
 export * from './subscription/SubscriptionPreferencesWrapper';
+export * from './telegram-connect-button/TelegramConnectButton';

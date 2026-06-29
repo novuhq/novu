@@ -6,6 +6,8 @@ import type {
   DeleteChannelEndpointArgs,
   GenerateLinkUserOAuthUrlArgs,
   GetChannelEndpointArgs,
+  LinkChannelEndpointArgs,
+  LinkChannelEndpointResponse,
   ListChannelEndpointsArgs,
 } from '../channel-connections/types';
 import { NovuEventEmitter } from '../event-emitter';
@@ -15,6 +17,7 @@ import {
   deleteChannelEndpoint,
   generateLinkUserOAuthUrl,
   getChannelEndpoint,
+  linkChannelEndpoint,
   listChannelEndpoints,
 } from './helpers';
 
@@ -72,6 +75,16 @@ export class ChannelEndpoints extends BaseModule {
   async delete(args: DeleteChannelEndpointArgs): Result<void> {
     return this.callWithSession(() =>
       deleteChannelEndpoint({
+        emitter: this._emitter,
+        apiService: this._inboxService,
+        args,
+      })
+    );
+  }
+
+  async link(args: LinkChannelEndpointArgs): Result<LinkChannelEndpointResponse> {
+    return this.callWithSession(() =>
+      linkChannelEndpoint({
         emitter: this._emitter,
         apiService: this._inboxService,
         args,

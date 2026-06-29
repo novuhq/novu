@@ -1,7 +1,5 @@
 ### What changed? Why was the change needed?
 
-@coderabbitai summary
-
 <!-- Also include any relevant links, such as Linear tickets, Slack discussions, or design documents. -->
 
 ### Screenshots

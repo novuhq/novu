@@ -18,7 +18,7 @@ import { ProviderIcon } from '@/components/integrations/components/provider-icon
 import { CodeBlock } from '@/components/primitives/code-block';
 import { CopyButton } from '@/components/primitives/copy-button';
 import { InlineToast } from '@/components/primitives/inline-toast';
-import { getAgentApiBaseUrl, getAgentApiHostname } from '@/config';
+import { getAgentApiBaseUrl } from '@/config';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
@@ -33,8 +33,10 @@ import {
   type SetupMode,
   SetupModeToggle,
   SetupStep,
+  SetupStepperRail,
 } from './setup-guide-primitives';
 import { deriveStepStatus } from './setup-guide-step-utils';
+import { buildTeamsManifest } from './teams-app-manifest';
 import { downloadTeamsAppPackage } from './teams-app-package';
 
 export type TeamsSetupGuideProps = {
@@ -59,45 +61,6 @@ type IntegrationProvisioningState = {
 
 function buildOAuthCallbackUrl(): string {
   return `${getAgentApiBaseUrl()}/v1/integrations/chat/oauth/callback`;
-}
-
-function buildManifest(appId: string, agentName: string): Record<string, unknown> {
-  const id = appId || 'YOUR_APP_ID';
-  const name = agentName || 'Novu Agent';
-  const hostname = getAgentApiHostname();
-
-  return {
-    $schema: 'https://developer.microsoft.com/json-schemas/teams/v1.16/MicrosoftTeams.schema.json',
-    manifestVersion: '1.16',
-    version: '1.0.0',
-    id,
-    developer: {
-      name: 'Your Company',
-      websiteUrl: 'https://your-domain.com',
-      privacyUrl: 'https://your-domain.com/privacy',
-      termsOfUseUrl: 'https://your-domain.com/terms',
-    },
-    name: { short: name, full: `${name}, powered by Novu` },
-    description: { short: `${name} bot`, full: 'A conversational agent powered by Novu.' },
-    icons: { outline: 'outline.png', color: 'color.png' },
-    accentColor: '#FFFFFF',
-    bots: [
-      {
-        botId: id,
-        scopes: ['personal', 'team', 'groupchat'],
-        supportsFiles: false,
-        isNotificationOnly: false,
-      },
-    ],
-    permissions: ['identity', 'messageTeamMembers'],
-    validDomains: [hostname],
-    webApplicationInfo: { id, resource: `api://${hostname}/${id}` },
-    authorization: {
-      permissions: {
-        resourceSpecific: [{ name: 'ChannelMessage.Read.Group', type: 'Application' }],
-      },
-    },
-  };
 }
 
 // ---------------------------------------------------------------------------
@@ -746,7 +709,7 @@ export function TeamsSetupGuide({
     onStepsCompleted?.();
   }, [onStepsCompleted]);
 
-  const manifestJson = JSON.stringify(buildManifest(appId, agent.name), null, 2);
+  const manifestJson = JSON.stringify(buildTeamsManifest(appId, agent.name), null, 2);
 
   const canDownload = Boolean(appId);
 
@@ -1522,21 +1485,18 @@ export function TeamsSetupGuide({
   );
 
   const activeSteps = activeSetupMode === 'quick' ? quickSteps : steps;
+  const stepsContent = (
+    <>
+      {isQuickSetupEnabled && modeToggle}
+      {activeSteps}
+    </>
+  );
 
   if (embedded) {
     return (
       <div className="flex flex-col gap-0">
-        {isQuickSetupEnabled && <div className="pt-4 pb-2">{modeToggle}</div>}
-        <div className={cn('relative flex flex-col gap-10 py-6 pb-3 pl-8 pr-3 md:pr-6')}>
-          <div
-            className="absolute bottom-0 left-[22px] top-0 w-px"
-            style={{
-              background: 'linear-gradient(to bottom, transparent 0%, #E1E4EA 10%, #E1E4EA 90%, transparent 100%)',
-            }}
-          />
-          {activeSteps}
-        </div>
-        {listening}
+        <SetupStepperRail className="py-6 pb-3 pr-3 md:pr-6">{stepsContent}</SetupStepperRail>
+        <div className="pl-8">{listening}</div>
         {credentialsSidebar}
       </div>
     );
@@ -1544,9 +1504,8 @@ export function TeamsSetupGuide({
 
   return (
     <>
-      {isQuickSetupEnabled && modeToggle}
-      {activeSteps}
-      {listening}
+      <SetupStepperRail>{stepsContent}</SetupStepperRail>
+      <div className="pl-8">{listening}</div>
       {credentialsSidebar}
     </>
   );

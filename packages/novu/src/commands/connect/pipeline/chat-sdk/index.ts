@@ -1,3 +1,4 @@
+import chalk from 'chalk';
 import { createBridgeAgent, listAgents } from '../../api/agents';
 import type { ConnectApiClient } from '../../api/client';
 import type { ResolvedConnectAuth } from '../../auth/resolve-connect-auth';
@@ -9,8 +10,11 @@ import type {
   ConnectCommandOptions,
 } from '../../types';
 import type { ConnectUI } from '../../ui/ui';
+import { confirmEmptyDirScaffold } from '../bridge/confirm-empty-dir-scaffold';
+import { defaultChatSdkScaffoldDirName } from '../bridge/detect-project';
+import { requireConnectSecretKey } from '../bridge/require-secret-key';
+import { runScaffoldWithConsole } from '../bridge/run-scaffold-with-console';
 import { defaultAgentNameFromDir, deriveAgentIdentifier } from './derive-identifier';
-import { defaultScaffoldDirName, detectChatSdkProject } from './detect-project';
 import { detectChatSdkWiring } from './detect-wiring';
 import { applyDevNovuScript, buildDevNovuScript } from './dev-script';
 import {
@@ -44,37 +48,29 @@ type ReconcileOptions = {
 
 export async function runChatSdkProjectSetup(input: ChatSdkSetupInput): Promise<ChatSdkConnectOutcome> {
   const projectDir = input.options.projectDir?.trim() || process.cwd();
-  const detected = detectChatSdkProject(projectDir);
+  const decision = await confirmEmptyDirScaffold({
+    projectDir,
+    options: input.options,
+    ui: input.ui,
+    variant: 'chat-sdk',
+    defaultAppName: defaultChatSdkScaffoldDirName,
+    agentIdentifier: input.agent.identifier,
+  });
 
-  if (detected.kind === 'empty') {
-    if (input.options.noScaffold) {
-      return {
-        projectKind: 'empty',
-        projectDir: detected.projectDir,
-        scaffolded: false,
-        coreReady: false,
-      };
-    }
-
-    const appName = input.options.scaffoldDir?.trim() || defaultScaffoldDirName(input.agent.identifier);
-    const confirmed = await input.ui.confirmScaffold({
-      projectDir: detected.projectDir,
-      appName,
-    });
-
-    if (!confirmed) {
-      return {
-        projectKind: 'empty',
-        projectDir: detected.projectDir,
-        scaffolded: false,
-        coreReady: false,
-      };
-    }
-
-    return scaffoldThenReconcile(input, detected.projectDir, appName);
+  if (decision.action === 'existing-project') {
+    return reconcileChatSdkProject(input, decision.projectDir, 'project');
   }
 
-  return reconcileChatSdkProject(input, detected.projectDir, detected.kind);
+  if (decision.action === 'skipped') {
+    return {
+      projectKind: 'empty',
+      projectDir: decision.projectDir,
+      scaffolded: false,
+      coreReady: false,
+    };
+  }
+
+  return scaffoldThenReconcile(input, decision.projectDir, decision.appName);
 }
 
 async function scaffoldThenReconcile(
@@ -82,20 +78,26 @@ async function scaffoldThenReconcile(
   parentDir: string,
   appName: string
 ): Promise<ChatSdkConnectOutcome> {
-  input.ui.scaffoldingChatSdk();
-
-  const scaffolded = await scaffoldChatSdkProject({
-    parentDir,
-    appName,
-    secretKey: requireSecretKey(input.auth),
-    apiUrl: input.options.apiUrl,
-    agentIdentifier: input.agent.identifier,
-    silent: input.ui.interactive,
+  const scaffolded = await runScaffoldWithConsole({
+    ui: input.ui,
+    variant: 'chat-sdk',
+    scaffold: () =>
+      scaffoldChatSdkProject({
+        parentDir,
+        appName,
+        secretKey: requireConnectSecretKey(input.auth),
+        apiUrl: input.options.apiUrl,
+        agentIdentifier: input.agent.identifier,
+        silent: false,
+      }),
   });
 
-  input.ui.chatSdkScaffolded({
+  const envPaths = resolveProjectEnvPaths(scaffolded.root);
+
+  input.ui.bridgeScaffolded({
+    variant: 'chat-sdk',
     projectDir: scaffolded.root,
-    envPaths: resolveProjectEnvPaths(scaffolded.root),
+    envPaths,
     skippedInstall: scaffolded.skippedInstall,
   });
 
@@ -111,7 +113,7 @@ async function reconcileChatSdkProject(
   projectKind: ChatSdkConnectOutcome['projectKind'],
   reconcileOptions: ReconcileOptions = {}
 ): Promise<ChatSdkConnectOutcome> {
-  const secretKey = requireSecretKey(input.auth);
+  const secretKey = requireConnectSecretKey(input.auth);
   const envPaths: string[] = [];
   let snapshot = computeChatSdkRequirements({
     projectDir,
@@ -235,10 +237,16 @@ async function applyPackageRequirement(opts: ApplyAutofixInput): Promise<ChatSdk
   });
 
   if (shouldInstall) {
-    opts.input.ui.installingChatSdkDeps();
+    if (opts.input.ui.interactive) {
+      await opts.input.ui.releaseTerminal();
+      console.log(`${chalk.cyan('Installing Chat SDK packages…')}\n`);
+    } else {
+      opts.input.ui.installingChatSdkDeps();
+    }
+
     await runChatSdkPackageInstall({
       projectDir: opts.projectDir,
-      silent: opts.input.ui.interactive,
+      silent: false,
     });
 
     return computeChatSdkRequirements({
@@ -437,15 +445,6 @@ export async function shutdownConnectUiAndMaybeRunChatSdkTunnel(input: {
   }
 
   return exitCode;
-}
-
-function requireSecretKey(auth: ResolvedConnectAuth): string {
-  const secretKey = auth.secretKey?.trim();
-  if (!secretKey) {
-    throw new Error('Chat SDK connect requires an authenticated Novu session with a secret key.');
-  }
-
-  return secretKey;
 }
 
 function pathBasename(dir: string): string {

@@ -1,4 +1,4 @@
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { BadRequestException } from '@nestjs/common';
 import { EnvironmentRepository, SubscriberRepository } from '@novu/dal';
 import { ChatProviderIdEnum } from '@novu/shared';
 import { expect } from 'chai';
@@ -98,7 +98,8 @@ describe('GenerateMsTeamsOauthUrl', () => {
 
       const url = await usecase.execute(command);
 
-      expect(url).to.include(`login.microsoftonline.com/${MOCK_TENANT_ID}/oauth2/v2.0/authorize`);
+      // Multi-tenant: authorize against the /organizations authority, not the bot's home tenant.
+      expect(url).to.include('login.microsoftonline.com/organizations/oauth2/v2.0/authorize');
       expect(url).to.include(`client_id=${MOCK_CLIENT_ID}`);
       expect(url).to.include('response_type=code');
       expect(url).to.include('response_mode=query');
@@ -139,7 +140,7 @@ describe('GenerateMsTeamsOauthUrl', () => {
       }
     });
 
-    it('should throw NotFoundException when tenantId is missing for link_user mode', async () => {
+    it('should not require a stored tenantId for link_user mode (multi-tenant)', async () => {
       const command = GenerateMsTeamsOauthUrlCommand.create({
         environmentId: MOCK_ENVIRONMENT_ID,
         organizationId: MOCK_ORGANIZATION_ID,
@@ -148,13 +149,11 @@ describe('GenerateMsTeamsOauthUrl', () => {
         mode: 'link_user',
       });
 
-      try {
-        await usecase.execute(command);
-        expect.fail('Expected NotFoundException but none was thrown');
-      } catch (err) {
-        expect(err).to.be.instanceOf(NotFoundException);
-        expect((err as NotFoundException).message).to.equal('MS Teams integration missing tenantId');
-      }
+      const url = await usecase.execute(command);
+
+      // The user's tenant is resolved later from the id_token, so no home tenantId is needed here.
+      expect(url).to.include('login.microsoftonline.com/organizations/oauth2/v2.0/authorize');
+      expect(url).to.include(`client_id=${MOCK_CLIENT_ID}`);
     });
 
     it('should encode mode in the OAuth state so the callback can branch correctly', async () => {
@@ -179,6 +178,27 @@ describe('GenerateMsTeamsOauthUrl', () => {
       const payload = JSON.parse(payloadStr);
 
       expect(payload.mode).to.equal('link_user');
+    });
+  });
+
+  describe('buildRedirectUri', () => {
+    let originalAgentApiHostname: string | undefined;
+
+    beforeEach(() => {
+      originalAgentApiHostname = process.env.AGENT_API_HOSTNAME;
+    });
+
+    afterEach(() => {
+      process.env.AGENT_API_HOSTNAME = originalAgentApiHostname;
+    });
+
+    it('should prefer AGENT_API_HOSTNAME over API_ROOT_URL for the OAuth callback', () => {
+      process.env.API_ROOT_URL = 'https://api.novu.localhost';
+      process.env.AGENT_API_HOSTNAME = 'https://gosha.ngrok.app';
+
+      expect(GenerateMsTeamsOauthUrl.buildRedirectUri()).to.equal(
+        'https://gosha.ngrok.app/v1/integrations/chat/oauth/callback'
+      );
     });
   });
 });

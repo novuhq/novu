@@ -228,6 +228,21 @@ describe('Get Subscriber Preferences - /subscribers/:subscriberId/preferences (G
     expect(workflows).to.be.an('array').with.lengthOf(1);
     expect(workflows[0].channels.email).to.equal(false);
   });
+
+  it('should return 503 when get preferences kill switch is enabled', async function () {
+    if (process.env.LAUNCH_DARKLY_SDK_KEY) {
+      this.skip();
+    }
+
+    (process.env as any).IS_GET_PREFERENCES_DISABLED = 'true';
+
+    const response = await session.testAgent.get(`/v2/subscribers/${subscriber.subscriberId}/preferences`);
+
+    expect(response.status).to.equal(503);
+    expect(response.body.message).to.include('Get preferences service is currently unavailable');
+
+    delete (process.env as any).IS_GET_PREFERENCES_DISABLED;
+  });
 });
 
 async function createSubscriberAndValidate(id: string = '') {
