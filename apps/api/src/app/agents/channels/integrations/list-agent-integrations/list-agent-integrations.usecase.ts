@@ -10,7 +10,6 @@ import { DirectionEnum, EmailProviderIdEnum } from '@novu/shared';
 
 import { ListAgentIntegrationsResponseDto } from '../../../shared/dtos/list-agent-integrations-response.dto';
 import { toAgentIntegrationResponse } from '../../../shared/mappers/agent-response.mapper';
-import { isPlaceholderAgentLinkConnectedAt } from '../../../shared/util/agent-inbound-connection';
 import { ListAgentIntegrationsCommand } from './list-agent-integrations.command';
 
 @Injectable()
@@ -124,28 +123,7 @@ export class ListAgentIntegrations {
       command.environmentId
     );
 
-    const links = await Promise.all(
-      pagination.links.map(async (link) => {
-        if (!isPlaceholderAgentLinkConnectedAt(link.connectedAt)) {
-          return link;
-        }
-
-        const healedAt = new Date();
-
-        await this.agentIntegrationRepository.updateOne(
-          {
-            _id: link._id,
-            _environmentId: command.environmentId,
-            _organizationId: command.organizationId,
-          },
-          { $set: { connectedAt: healedAt } }
-        );
-
-        return { ...link, connectedAt: healedAt.toISOString() };
-      })
-    );
-
-    const data = links.reduce<ListAgentIntegrationsResponseDto['data']>((acc, link) => {
+    const data = pagination.links.reduce<ListAgentIntegrationsResponseDto['data']>((acc, link) => {
       const integration = idToIntegration.get(link._integrationId);
 
       if (!integration) {

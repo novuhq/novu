@@ -9,15 +9,9 @@ export function hasAgentInboundConnection(connectedAt: Date | string | null | un
   return !Number.isNaN(timestampMs) && timestampMs > 0;
 }
 
-/** Serialize `connectedAt` for API responses without dropping placeholder values. */
+/** Serialize `connectedAt` for API responses; placeholder epochs are exposed as null. */
 export function formatAgentLinkConnectedAt(connectedAt: Date | string | null | undefined): string | null {
-  if (connectedAt == null) {
-    return null;
-  }
-
-  const timestampMs = new Date(connectedAt).getTime();
-
-  if (Number.isNaN(timestampMs)) {
+  if (!hasAgentInboundConnection(connectedAt)) {
     return null;
   }
 
