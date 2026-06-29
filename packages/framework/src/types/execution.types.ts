@@ -12,6 +12,7 @@ export type Event = {
   state: State[];
   action: Exclude<PostActionEnum, PostActionEnum.TRIGGER>;
   subscriber: Subscriber;
+  actor?: Subscriber;
   context: ContextResolved;
   /** User-defined env vars merged with environment system variables (name, type). */
   env: EnvironmentSystemVariables & Record<string, string>;

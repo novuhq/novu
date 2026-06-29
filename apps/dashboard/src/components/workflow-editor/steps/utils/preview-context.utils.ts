@@ -9,6 +9,7 @@ export function parseJsonValue(value: string): ParsedData {
     return {
       payload: parsed.payload || {},
       subscriber: parsed.subscriber || {},
+      actor: parsed.actor || {},
       steps: parsed.steps || {},
       context: parsed.context || {},
       env: parsed.env || {},
@@ -17,6 +18,7 @@ export function parseJsonValue(value: string): ParsedData {
     return {
       payload: {},
       subscriber: {},
+      actor: {},
       steps: {},
       context: {},
       env: {},
