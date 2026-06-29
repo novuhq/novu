@@ -49,6 +49,11 @@
       "import": "./dist/esm/utils/private-ip-classification.js",
       "types": "./dist/esm/utils/private-ip-classification.d.ts"
     },
+    "./utils/outbound-ssrf-allow-list": {
+      "require": "./dist/cjs/utils/outbound-ssrf-allow-list.js",
+      "import": "./dist/esm/utils/outbound-ssrf-allow-list.js",
+      "types": "./dist/esm/utils/outbound-ssrf-allow-list.d.ts"
+    },
     "./utils/ssrf-url-validation": {
       "require": "./dist/cjs/utils/ssrf-url-validation.js",
       "import": "./dist/esm/utils/ssrf-url-validation.js",

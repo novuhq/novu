@@ -34,6 +34,7 @@ import {
 import { DiscoverWorkflowOutput, GetActionEnum } from '@novu/framework/internal';
 import {
   FeatureFlagsKeysEnum,
+  isOutboundSsrfProtectionEnabled,
   ResourceOriginEnum,
   TriggerEventStatusEnum,
   TriggerRecipientsPayload,
@@ -310,7 +311,7 @@ export class ParseEventRequest {
         // 127.0.0.1 / 169.254.169.254 / fc00::/7 cannot reach internal hosts.
         // The downstream EXECUTE call from the worker enforces the same guard
         // — see `apps/worker/src/app/workflow/usecases/execute-bridge-job`.
-        enforceSsrfProtection: true,
+        enforceSsrfProtection: isOutboundSsrfProtectionEnabled(),
       })
     )) as ExecuteBridgeRequestDto<GetActionEnum.DISCOVER>;
 
