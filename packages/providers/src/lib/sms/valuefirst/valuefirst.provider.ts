@@ -232,7 +232,11 @@ export class ValueFirstSmsProvider extends BaseProvider implements ISmsProvider 
     if (!body) {
       return undefined;
     }
-    const status = this.getStatus(body.status_error || body.msg_status || body.message_status || body.status);
+    const event = body.status_error || body.msg_status || body.message_status || body.status;
+    if (event === undefined || event === null || event === '') {
+      return undefined;
+    }
+    const status = this.getStatus(event);
     if (status === undefined) {
       return undefined;
     }
