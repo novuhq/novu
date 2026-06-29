@@ -1445,6 +1445,17 @@ export const ISendProProviderConfig: IConfigCredential[] = [
   },
 ];
 
+export const valueFirstConfig: IConfigCredential[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    description: 'ValueFirst API key generated from the MIS panel',
+    type: 'string',
+    required: true,
+  },
+  ...smsConfigBase,
+];
+
 export const cmTelecomConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApiToken,

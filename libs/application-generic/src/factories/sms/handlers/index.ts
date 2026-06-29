@@ -35,3 +35,4 @@ export * from './telnyx.handler';
 export * from './termii.handler';
 export * from './twilio.handler';
 export * from './unifonic.handler';
+export * from './valuefirst.handler';
