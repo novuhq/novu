@@ -66,10 +66,7 @@
               "platform/inbox/setup-inbox",
               {
                 "group": "Features",
-                "pages": [
-                  "platform/inbox/features/snooze",
-                  "platform/inbox/features/schedule"
-                ]
+                "pages": ["platform/inbox/features/snooze", "platform/inbox/features/schedule"]
               },
               {
                 "group": "Customize and Configure",
@@ -174,6 +171,7 @@
                 "root": "platform/integrations/chat",
                 "pages": [
                   "platform/integrations/chat/discord",
+                  "platform/integrations/chat/line",
                   "platform/integrations/chat/mattermost",
                   "platform/integrations/chat/ms-teams",
                   "platform/integrations/chat/slack",
@@ -336,10 +334,7 @@
               "platform/developer/limits",
               {
                 "group": "Webhooks",
-                "pages": [
-                  "platform/developer/webhooks/event-types",
-                  "platform/developer/webhooks/connectors"
-                ]
+                "pages": ["platform/developer/webhooks/event-types", "platform/developer/webhooks/connectors"]
               }
             ],
             "icon": "terminal"
@@ -425,9 +420,7 @@
           },
           {
             "group": "Observability",
-            "pages": [
-              "agents/conversations"
-            ],
+            "pages": ["agents/conversations"],
             "icon": "eye"
           }
         ]
@@ -649,9 +642,7 @@
           },
           {
             "group": "Activity",
-            "pages": [
-              "api-reference/activity/track-activity-and-engagement-events"
-            ],
+            "pages": ["api-reference/activity/track-activity-and-engagement-events"],
             "icon": "activity"
           },
           {
@@ -679,41 +670,27 @@
             "groups": [
               {
                 "group": "Guides",
-                "pages": [
-                  "guides",
-                  "guides/inngest",
-                  "guides/triggerdotdev"
-                ],
+                "pages": ["guides", "guides/inngest", "guides/triggerdotdev"],
                 "icon": "book-open"
               },
               {
                 "group": "Inbound Webhooks",
-                "pages": [
-                  "guides/webhooks/clerk",
-                  "guides/webhooks/stripe",
-                  "guides/webhooks/segment"
-                ],
+                "pages": ["guides/webhooks/clerk", "guides/webhooks/stripe", "guides/webhooks/segment"],
                 "icon": "webhook"
               },
               {
                 "group": "Recipes",
-                "pages": [
-                  "guides/recipes/managing-workflows"
-                ],
+                "pages": ["guides/recipes/managing-workflows"],
                 "icon": "chef-hat"
               },
               {
                 "group": "Framework",
-                "pages": [
-                  "guides/framework/using-translations"
-                ],
+                "pages": ["guides/framework/using-translations"],
                 "icon": "blocks"
               },
               {
                 "group": "Migrate to Novu",
-                "pages": [
-                  "guides/migrate-from-courier-to-novu"
-                ],
+                "pages": ["guides/migrate-from-courier-to-novu"],
                 "icon": "arrow-right-left"
               }
             ]
@@ -780,12 +757,7 @@
               {
                 "group": "Advanced Features",
                 "boost": 0.1,
-                "pages": [
-                  "framework/digest",
-                  "framework/delay",
-                  "framework/custom",
-                  "framework/skip"
-                ],
+                "pages": ["framework/digest", "framework/delay", "framework/custom", "framework/skip"],
                 "icon": "sparkles"
               },
               {
@@ -874,15 +846,7 @@
     }
   },
   "contextual": {
-    "options": [
-      "copy",
-      "view",
-      "cursor",
-      "claude",
-      "chatgpt",
-      "mcp",
-      "add-mcp"
-    ]
+    "options": ["copy", "view", "cursor", "claude", "chatgpt", "mcp", "add-mcp"]
   },
   "footer": {
     "socials": {

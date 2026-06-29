@@ -1,0 +1,205 @@
+---
+title: 'LINE'
+description: 'Learn how to use the LINE Messaging API provider for chat notifications'
+---
+
+The LINE chat integration lets you send messages to subscribers who have added your LINE Official Account as a friend. Novu uses the [LINE Messaging API](https://developers.line.biz/en/docs/messaging-api/) push endpoint with a Channel Access Token configured on the integration, and a LINE user ID stored on each subscriber.
+
+Supported message types:
+
+- **Text** — default workflow chat step content
+- **Flex Message** — rich layouts via trigger overrides
+- **Image** — image messages via trigger overrides
+- **Sticker** — sticker messages via trigger overrides
+
+## Configure a LINE Messaging API channel
+
+Before connecting LINE in Novu, create a Messaging API channel in the LINE Developers Console and issue a Channel Access Token.
+
+<Steps>
+  <Step title="Open the LINE Developers Console">
+    Go to the [LINE Developers Console](https://developers.line.biz/console/) and sign in.
+  </Step>
+
+  <Step title="Create a provider and channel">
+    Create a provider (if you do not have one), then create a **Messaging API** channel for your LINE Official Account.
+  </Step>
+
+  <Step title="Issue a Channel Access Token">
+    Open your channel, go to the **Messaging API** tab, and issue a **Channel access token** (long-lived). Copy the token — you will paste it into Novu.
+  </Step>
+
+  <Step title="Enable webhooks (recommended)">
+    On the same tab, enable **Use webhook** if you plan to capture subscriber LINE user IDs from follow or message events. Set the webhook URL to your backend endpoint that stores user IDs in Novu subscriber credentials.
+
+    See LINE's docs on [getting user IDs](https://developers.line.biz/en/docs/messaging-api/getting-user-ids/) for details.
+  </Step>
+</Steps>
+
+<Note>
+  Push messages can only be delivered to users who have added your LINE Official Account as a friend.
+</Note>
+
+## Configure LINE integration in Novu
+
+<Steps>
+  <Step title="Open Integrations Store">
+    In the Novu Dashboard, click **Integrations Store** in the sidebar.
+  </Step>
+
+  <Step title="Connect LINE">
+    Click **Connect Provider**, select **Chat**, then choose **LINE**.
+  </Step>
+
+  <Step title="Add credentials">
+    Paste your **Channel Access Token** from the LINE Developers Console and click **Create Integration**.
+  </Step>
+</Steps>
+
+## Connect subscribers
+
+Each subscriber needs a LINE user ID (for example, `U1234567890abcdef`) so Novu knows where to deliver messages. Store it on the subscriber using the `webhookUrl` credential field — the same field used by other webhook-style chat providers.
+
+<Tabs>
+  <Tab title="Node.js">
+```typescript
+import { Novu } from '@novu/api';
+
+const novu = new Novu({
+  secretKey: '<NOVU_SECRET_KEY>',
+  // Required if using EU region
+  // serverURL: 'https://eu.api.novu.co',
+});
+
+await novu.subscribers.credentials.update(
+  {
+    providerId: 'line',
+    credentials: {
+      webhookUrl: '<LINE_USER_ID>',
+    },
+    integrationIdentifier: 'line-<integration-id>',
+  },
+  'subscriberId'
+);
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -L -X PUT 'https://api.novu.co/v1/subscribers/<SUBSCRIBER_ID>/credentials' \
+-H 'Content-Type: application/json' \
+-H 'Accept: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+  "providerId": "line",
+  "credentials": {
+    "webhookUrl": "<LINE_USER_ID>"
+  },
+  "integrationIdentifier": "line-<integration-id>"
+}'
+```
+  </Tab>
+</Tabs>
+
+See the [Update Subscriber Credentials API reference](/api-reference/subscribers/update-provider-credentials) for full request details.
+
+<Warning>
+  For LINE, `webhookUrl` holds the subscriber's **LINE user ID**, not an HTTP webhook URL.
+</Warning>
+
+## Send notifications
+
+Create a workflow with a **Chat** step, add your message content, and trigger the workflow for a subscriber that has LINE credentials configured.
+
+```typescript
+import { Novu } from '@novu/api';
+
+const novu = new Novu({
+  secretKey: '<NOVU_SECRET_KEY>',
+});
+
+await novu.trigger({
+  workflowId: 'order-shipped',
+  to: {
+    subscriberId: 'subscriberId',
+  },
+  payload: {
+    orderId: 'ORD-12345',
+  },
+});
+```
+
+The chat step content is sent as a plain text LINE message unless you override the message type at trigger time.
+
+## Rich message types
+
+Pass `flex`, `image`, or `sticker` under `overrides.chat` when triggering a workflow. When present, Novu sends that message type instead of plain text.
+
+<Tabs>
+  <Tab title="Sticker">
+```typescript
+await novu.trigger({
+  workflowId: 'order-shipped',
+  to: { subscriberId: 'subscriberId' },
+  payload: {},
+  overrides: {
+    chat: {
+      sticker: {
+        packageId: '1',
+        stickerId: '1',
+      },
+    },
+  },
+});
+```
+  </Tab>
+  <Tab title="Image">
+```typescript
+await novu.trigger({
+  workflowId: 'order-shipped',
+  to: { subscriberId: 'subscriberId' },
+  payload: {},
+  overrides: {
+    chat: {
+      image: {
+        originalContentUrl: 'https://example.com/image.jpg',
+        previewImageUrl: 'https://example.com/preview.jpg',
+      },
+    },
+  },
+});
+```
+  </Tab>
+  <Tab title="Flex Message">
+```typescript
+await novu.trigger({
+  workflowId: 'order-shipped',
+  to: { subscriberId: 'subscriberId' },
+  payload: {},
+  overrides: {
+    chat: {
+      flex: {
+        altText: 'Order shipped',
+        contents: {
+          type: 'bubble',
+          body: {
+            type: 'box',
+            layout: 'vertical',
+            contents: [
+              {
+                type: 'text',
+                text: 'Your order has shipped!',
+              },
+            ],
+          },
+        },
+      },
+    },
+  },
+});
+```
+  </Tab>
+</Tabs>
+
+<Note>
+  Image URLs must be direct HTTPS links to JPEG or PNG files. Redirects and unsupported formats may cause delivery failures. See LINE's [message types documentation](https://developers.line.biz/en/docs/messaging-api/message-types/) for payload requirements.
+</Note>

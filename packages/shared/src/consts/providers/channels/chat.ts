@@ -107,7 +107,7 @@ export const chatProviders: IProviderConfig[] = [
     displayName: 'LINE',
     channel: ChannelTypeEnum.CHAT,
     credentials: lineConfig,
-    docReference: 'https://developers.line.biz/en/docs/messaging-api/sending-messages/',
+    docReference: 'https://docs.novu.co/platform/integrations/chat/line',
     logoFileName: { light: 'line.svg', dark: 'line.svg' },
   },
   {

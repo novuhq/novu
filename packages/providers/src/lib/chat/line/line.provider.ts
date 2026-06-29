@@ -15,7 +15,7 @@ type LineMessageType = 'text' | 'flex' | 'image' | 'sticker';
 
 export class LineChatProvider extends BaseProvider implements IChatProvider {
   id = ChatProviderIdEnum.Line;
-  protected casing: CasingEnum = CasingEnum.SNAKE_CASE;
+  protected casing: CasingEnum = CasingEnum.CAMEL_CASE;
   channelType = ChannelTypeEnum.CHAT as ChannelTypeEnum.CHAT;
 
   private readonly axiosClient: AxiosInstance;
@@ -60,7 +60,13 @@ export class LineChatProvider extends BaseProvider implements IChatProvider {
 
     for (const type of richTypes) {
       if (type in customData) {
-        return { type, ...customData[type] };
+        const payload = customData[type];
+
+        if (typeof payload !== 'object' || payload === null) {
+          throw new Error(`Invalid LINE ${type} message payload: expected an object`);
+        }
+
+        return { type, ...(payload as Record<string, unknown>) };
       }
     }
 
