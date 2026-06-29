@@ -465,14 +465,42 @@ export class ParseEventRequest {
 
   @Instrument()
   private modifyAttachments(command: ParseEventRequestCommand): void {
+    const invalidAttachmentIndices = command.payload.attachments
+      .map((attachment, index) => {
+        const file = attachment?.file;
+
+        if (file === null || file === undefined) {
+          return index;
+        }
+
+        if (typeof file === 'string' || Buffer.isBuffer(file)) {
+          return -1;
+        }
+
+        return index;
+      })
+      .filter((index) => index >= 0);
+
+    if (invalidAttachmentIndices.length > 0) {
+      throw new PayloadValidationException(
+        invalidAttachmentIndices.map((index) => ({
+          field: `attachments.${index}.file`,
+          message: 'Each attachment must include file content as a base64-encoded string or Buffer',
+        }))
+      );
+    }
+
     // eslint-disable-next-line no-param-reassign
     command.payload.attachments = command.payload.attachments.map((attachment) => {
       const randomId = randomBytes(16).toString('hex');
+      const fileBuffer = Buffer.isBuffer(attachment.file)
+        ? attachment.file
+        : Buffer.from(attachment.file, 'base64');
 
       return {
         ...attachment,
         name: attachment.name,
-        file: Buffer.from(attachment.file, 'base64'),
+        file: fileBuffer,
         storagePath: `${command.organizationId}/${command.environmentId}/${randomId}/${attachment.name}`,
       };
     });
