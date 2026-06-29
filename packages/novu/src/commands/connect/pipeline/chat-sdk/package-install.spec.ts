@@ -29,8 +29,8 @@ describe('resolveChatSdkPackagesToInstall', () => {
       path.join(dir, 'package.json'),
       JSON.stringify({
         dependencies: {
-          chat: '4.30.0',
-          '@chat-adapter/state-redis': '4.30.0',
+          chat: '4.31.0',
+          '@chat-adapter/state-redis': '4.31.0',
         },
       })
     );
@@ -45,14 +45,14 @@ describe('resolveChatSdkPackagesToInstall', () => {
       path.join(dir, 'package.json'),
       JSON.stringify({
         dependencies: {
-          chat: '4.30.0',
+          chat: '4.31.0',
         },
       })
     );
 
     expect(resolveChatSdkPackagesToInstall(dir)).toEqual([
       '@novu/chat-sdk-adapter',
-      '@chat-adapter/state-memory@4.30.0',
+      '@chat-adapter/state-memory@4.31.0',
     ]);
   });
 });

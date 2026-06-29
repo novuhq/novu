@@ -305,7 +305,7 @@
     "ajv-formats": "^2.1.1",
     "better-ajv-errors": "^1.2.0",
     "chalk": "^4.1.2",
-    "chat": "4.30.0",
+    "chat": "4.31.0",
     "cross-fetch": "^4.0.0",
     "json-schema-to-ts": "^3.0.0",
     "jsonrepair": "^3.13.1",

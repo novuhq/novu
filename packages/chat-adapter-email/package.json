@@ -25,7 +25,7 @@
     "mdast-util-to-hast": "13.2.1"
   },
   "peerDependencies": {
-    "chat": ">=4.30.0",
+    "chat": ">=4.31.0",
     "react": ">=18.0.0 || >=19.0.0"
   },
   "devDependencies": {
