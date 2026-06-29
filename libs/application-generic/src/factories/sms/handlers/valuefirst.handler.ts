@@ -9,7 +9,8 @@ export class ValueFirstSmsHandler extends BaseSmsHandler {
 
   buildProvider(credentials: ICredentials) {
     this.provider = new ValueFirstSmsProvider({
-      apiKey: credentials.apiKey,
+      user: credentials.user,
+      password: credentials.password,
       from: credentials.from,
     });
   }

@@ -1,5 +1,5 @@
-import { AWS_CLAUDE_COMMERCIAL_REGIONS } from '../../aws-claude-regions';
 import { CredentialsKeyEnum } from '../../../types';
+import { AWS_CLAUDE_COMMERCIAL_REGIONS } from '../../aws-claude-regions';
 import { IConfigCredential } from '../provider.interface';
 
 const mailConfigBase: IConfigCredential[] = [
@@ -1447,9 +1447,16 @@ export const ISendProProviderConfig: IConfigCredential[] = [
 
 export const valueFirstConfig: IConfigCredential[] = [
   {
-    key: CredentialsKeyEnum.ApiKey,
-    displayName: 'API Key',
-    description: 'ValueFirst API key generated from the MIS panel',
+    key: CredentialsKeyEnum.User,
+    displayName: 'Username',
+    description: 'Your ValueFirst account username',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.Password,
+    displayName: 'Password',
+    description: 'Your ValueFirst account password',
     type: 'string',
     required: true,
   },

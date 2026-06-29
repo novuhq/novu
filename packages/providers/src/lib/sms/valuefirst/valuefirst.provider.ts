@@ -10,6 +10,14 @@ import {
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
+interface DLT {
+  entityId?: string;
+  dltTemplateId?: string;
+  dltContentType?: string;
+  templateInfo?: string;
+  headerId?: string;
+}
+
 export class ValueFirstSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.ValueFirst;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
@@ -17,13 +25,13 @@ export class ValueFirstSmsProvider extends BaseProvider implements ISmsProvider 
 
   private readonly TOKEN_URL = 'https://api.myvfirst.com/psms/api/messages/token?action=generate';
   private readonly BASE_URL = 'https://api.myvfirst.com/psms/servlet/psms.Eservice2';
-
   private token: string | null = null;
   private tokenExpiry = 0;
 
   constructor(
     private config: {
-      apiKey: string;
+      user: string;
+      password: string;
       from: string;
     }
   ) {
@@ -31,17 +39,19 @@ export class ValueFirstSmsProvider extends BaseProvider implements ISmsProvider 
   }
 
   private async getAccessToken(): Promise<string> {
-    if (this.token && Date.now() < this.tokenExpiry) {
+    const now = Date.now();
+    const refreshBuffer = 15 * 60 * 1000;
+    if (this.token && now < this.tokenExpiry - refreshBuffer) {
       return this.token;
     }
 
+    const credentials = Buffer.from(`${this.config.user}:${this.config.password}`).toString('base64');
     const response = await fetch(this.TOKEN_URL, {
       method: 'POST',
       headers: {
-        Authorization: `API Key ${this.config.apiKey}`,
-        'Content-Type': 'application/json',
+        Authorization: `Basic ${credentials}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: JSON.stringify({}),
       agent: undefined,
       cache: undefined,
       credentials: undefined,
@@ -53,7 +63,7 @@ export class ValueFirstSmsProvider extends BaseProvider implements ISmsProvider 
 
     const data = await response.json();
     this.token = data.token;
-    this.tokenExpiry = Date.now() + 7 * 24 * 60 * 60 * 1000;
+    this.tokenExpiry = now + 7 * 24 * 60 * 60 * 1000;
 
     return this.token;
   }
@@ -65,8 +75,8 @@ export class ValueFirstSmsProvider extends BaseProvider implements ISmsProvider 
     const token = await this.getAccessToken();
 
     const merged = this.transform(bridgeProviderData, {
-      user: this.config.apiKey,
-      password: this.config.apiKey,
+      user: this.config.user,
+      password: this.config.password,
       from: options.from || this.config.from,
       to: options.to,
       text: options.content,
@@ -78,7 +88,18 @@ export class ValueFirstSmsProvider extends BaseProvider implements ISmsProvider 
       templateInfo: undefined,
     });
 
-    const xml = this.buildXml(merged.body as Record<string, unknown>);
+    const customData = options.customData || {};
+    const passthroughBody = bridgeProviderData._passthrough?.body || {};
+
+    const dlt: DLT = {
+      entityId: customData.ENTITYID ?? passthroughBody.entityId ?? undefined,
+      dltTemplateId: customData.DLTTEMPLATEID ?? passthroughBody.dltTemplateId ?? undefined,
+      dltContentType: customData.DLTCONTENTTYPE ?? passthroughBody.dltContentType ?? undefined,
+      templateInfo: customData.TEMPLATEINFO ?? passthroughBody.templateInfo ?? undefined,
+      headerId: customData.HEADERID ?? passthroughBody.headerId ?? undefined,
+    };
+
+    const xml = this.buildXml(merged.body as Record<string, unknown>, dlt);
 
     const response = await fetch(this.BASE_URL, {
       method: 'POST',
@@ -98,10 +119,14 @@ export class ValueFirstSmsProvider extends BaseProvider implements ISmsProvider 
 
     const responseText = await response.text();
     const messageId = this.extractMessageId(responseText);
+    const errors = this.extractErrors(responseText);
+
+    if (errors.length > 0) {
+      throw new Error(`ValueFirst error codes: ${errors.join(', ')}`);
+    }
 
     if (!messageId) {
-      const errorDesc = this.extractError(responseText);
-      throw new Error(errorDesc || 'Failed to send message via ValueFirst');
+      throw new Error('Failed to send message via ValueFirst: no GUID in response');
     }
 
     return {
@@ -110,78 +135,27 @@ export class ValueFirstSmsProvider extends BaseProvider implements ISmsProvider 
     };
   }
 
-  private buildXml(body: Record<string, unknown>): string {
-    const user = this.escapeXml(String(body.user || this.config.apiKey));
-    const password = this.escapeXml(String(body.password || this.config.apiKey));
+  private buildXml(body: Record<string, unknown>, dlt: DLT = {}): string {
     const from = this.escapeXml(String(body.from || this.config.from));
-    const to = this.escapeXml(String(body.to));
-    const text = this.escapeXml(String(body.text));
+    const to = this.escapeXml(this.removeNonNumeric(String(body.to)));
 
-    const smsChildren: string[] = [
-      '    <UDH>0</UDH>',
-      '    <CODING>1</CODING>',
-      '    <PROPERTY>0</PROPERTY>',
-      `    <TEXT>${text}</TEXT>`,
-    ];
+    const seq = body.seq ? ` SEQ="${this.escapeXml(String(body.seq))}"` : '';
+    const tagAttr = body.tag ? ` TAG="${this.escapeXml(String(body.tag))}"` : '';
+    const headerIdAttr = dlt.headerId ? ` HEADERID="${this.escapeXml(String(dlt.headerId))}"` : '';
 
-    const entityId = body.entityId ? this.escapeXml(String(body.entityId)) : null;
-    const dltTemplateId = body.dltTemplateId ? this.escapeXml(String(body.dltTemplateId)) : null;
-    const dltContentType = body.dltContentType ? this.escapeXml(String(body.dltContentType)) : null;
-    const headerId = body.headerId ? this.escapeXml(String(body.headerId)) : null;
-    const seq = body.seq ? this.escapeXml(String(body.seq)) : '1';
-    const templateInfo = body.templateInfo ? this.escapeXml(String(body.templateInfo)) : null;
-
-    if (dltTemplateId) {
-      smsChildren.push(`    <DLTTEMPLATEID>${dltTemplateId}</DLTTEMPLATEID>`);
-    }
-    if (dltContentType) {
-      smsChildren.push(`    <DLTCONTENTTYPE>${dltContentType}</DLTCONTENTTYPE>`);
-    }
-    if (templateInfo) {
-      smsChildren.push(`    <TEMPLATEINFO>${templateInfo}</TEMPLATEINFO>`);
-    }
-
-    smsChildren.push(
-      '    <ADDRESS>',
-      `      <FROM>${from}</FROM>`,
-      `      <TO>${to}</TO>`,
-      `      <SEQ>${seq}</SEQ>`
-    );
-    if (headerId) {
-      smsChildren.push(`      <HEADERID>${headerId}</HEADERID>`);
-    }
-    smsChildren.push('    </ADDRESS>');
-
-    const processedKeys = new Set([
-      'user', 'password', 'from', 'to', 'text',
-      'entityId', 'dltTemplateId', 'dltContentType', 'headerId', 'seq', 'templateInfo',
-    ]);
-    const passthroughLines = Object.entries(body)
-      .filter(([key]) => !processedKeys.has(key))
-      .map(([key, value]) => `    <${key.replace(/([A-Z])/g, '_$1').toUpperCase()}>${this.escapeXml(String(value))}</${key.replace(/([A-Z])/g, '_$1').toUpperCase()}>`);
-
-    if (passthroughLines.length > 0) {
-      smsChildren.push(...passthroughLines);
-    }
+    const smsAttrs = this.getSmsAttrs(body, dlt, to);
 
     const parts: string[] = [
-      '<?xml version="1.0"?>',
+      '<?xml version="1.0" encoding="ISO-8859-1"?>',
       '<!DOCTYPE MESSAGE SYSTEM "https://api.myvfirst.com/psms/dtd/messagev12.dtd">',
       '<MESSAGE>',
-      `  <USERNAME>${user}</USERNAME>`,
-      `  <PASSWORD>${password}</PASSWORD>`,
+      '  <USER />',
       '  <DLR>YES</DLR>',
-      `  <SENDER>${from}</SENDER>`,
+      `  <SMS ${smsAttrs}>`,
+      `    <ADDRESS FROM="${from}" TO="${to}"${seq}${tagAttr}${headerIdAttr} />`,
+      '  </SMS>',
+      '</MESSAGE>',
     ];
-
-    if (entityId) {
-      parts.push(`  <ENTITYID>${entityId}</ENTITYID>`);
-    }
-
-    parts.push('  <SMS>');
-    parts.push(...smsChildren);
-    parts.push('  </SMS>', '</MESSAGE>');
-
     return parts.join('\n');
   }
 
@@ -194,14 +168,54 @@ export class ValueFirstSmsProvider extends BaseProvider implements ISmsProvider 
       .replace(/'/g, '&apos;');
   }
 
-  private extractMessageId(responseText: string): string | null {
-    const match = responseText.match(/<MESSAGEID[^>]*>(\s*[\w-]+\s*)<\/MESSAGEID>/i);
-    return match ? match[1].trim() : null;
+  private getSmsAttrs(body: Record<string, unknown>, dlt: DLT, to: string): string {
+    const text = this.escapeXml(String(body.text));
+
+    // SMS Configuration Attributes with defaults
+    const udh = body.udh ? this.escapeXml(String(body.udh)) : '0';
+    const coding = body.coding ? this.escapeXml(String(body.coding)) : '1';
+    const property = body.property ? this.escapeXml(String(body.property)) : '0';
+
+    const attrs = [`UDH="${udh}" TEXT="${text}" CODING="${coding}" PROPERTY="${property}" ID="${to}"`];
+
+    // Scheduling Support (Optional SEND_ON attribute)
+    if (body.sendOn) {
+      attrs.push(`SEND_ON="${this.escapeXml(String(body.sendOn))}"`);
+    }
+    // DLT Attributes
+    if (dlt.entityId) {
+      attrs.push(`ENTITYID="${this.escapeXml(String(dlt.entityId))}"`);
+    }
+    if (dlt.dltTemplateId) {
+      attrs.push(`DLTTEMPLATEID="${this.escapeXml(String(dlt.dltTemplateId))}"`);
+    }
+    if (dlt.dltContentType) {
+      attrs.push(`DLTCONTENTTYPE="${this.escapeXml(String(dlt.dltContentType))}"`);
+    }
+    if (dlt.templateInfo) {
+      attrs.push(`TEMPLATEINFO="${this.escapeXml(dlt.templateInfo)}"`);
+    }
+    return attrs.join(' ');
   }
 
-  private extractError(responseText: string): string | null {
-    const match = responseText.match(/<ERRORDESC[^>]*>(.*?)<\/ERRORDESC>/i);
-    return match ? match[1].trim() : null;
+  // ${to} should be country code + number without any non digit chars.
+  private removeNonNumeric(to: string): string {
+    return to.replace(/\D/g, '');
+  }
+
+  private extractMessageId(responseText: string): string | null {
+    const match = responseText.match(/<GUID\s+GUID="([^"]+)"/i);
+    return match ? match[1] : null;
+  }
+
+  private extractErrors(responseText: string): string[] {
+    const errors: string[] = [];
+    const regex = /<ERROR[^>]*CODE="([^"]+)"/gi;
+    let match;
+    while ((match = regex.exec(responseText)) !== null) {
+      errors.push(match[1]);
+    }
+    return errors;
   }
 
   getMessageId(body: any | any[]): string[] {
@@ -224,9 +238,10 @@ export class ValueFirstSmsProvider extends BaseProvider implements ISmsProvider 
     }
     return {
       status,
-      date: body.delivered_date || body.done_date || body.time
-        ? new Date(body.delivered_date || body.done_date || body.time).toISOString()
-        : new Date().toISOString(),
+      date:
+        body.delivered_date || body.done_date || body.time
+          ? new Date(body.delivered_date || body.done_date || body.time).toISOString()
+          : new Date().toISOString(),
       externalId: body.id || body.message_id,
       attempts: body.attempt ? parseInt(body.attempt, 10) : 1,
       response: body.status_error || body.reason_code || body.response || '',
@@ -237,7 +252,7 @@ export class ValueFirstSmsProvider extends BaseProvider implements ISmsProvider 
   private getStatus(event: string | number): SmsEventStatusEnum | undefined {
     if (typeof event === 'number' || /^\d+$/.test(String(event))) {
       const code = Number(event);
-      if (code === 8448 || code === 1) return SmsEventStatusEnum.DELIVERED;
+      if (code === 8448 || code === 0 || code === 1) return SmsEventStatusEnum.DELIVERED;
       if (code === 8449 || code === 8450) return SmsEventStatusEnum.FAILED;
       return undefined;
     }

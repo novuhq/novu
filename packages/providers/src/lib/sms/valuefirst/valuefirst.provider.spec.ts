@@ -5,7 +5,8 @@ let provider: ValueFirstSmsProvider;
 
 beforeEach(() => {
   provider = new ValueFirstSmsProvider({
-    apiKey: 'test-api-key',
+    user: 'test-user',
+    password: 'test-password',
     from: 'TestSender',
   });
 });
@@ -16,15 +17,12 @@ afterEach(() => {
 
 describe('ValueFirstSmsProvider', () => {
   test('should trigger token generation and send SMS correctly', async () => {
-    const tokenResponse = { token: 'test-bearer-token', expiryDate: '2024-12-31 23:59:59' };
-    const smsResponse = `<?xml version="1.0"?>
-<MESSAGE>
-  <SUCCESS>
-    <MOBILENUMBER>+919876543210</MOBILENUMBER>
-    <MESSAGEID>h5ng551155313946013uw3</MESSAGEID>
-    <TEXT>Test message</TEXT>
-  </SUCCESS>
-</MESSAGE>`;
+    const tokenResponse = { token: 'test-bearer-token' };
+    const smsResponse = `<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE MESSAGE SYSTEM "https://api.myvfirst.com/psms/dtd/messagev12.dtd">
+<MESSAGEACK>
+<GUID GUID="h5ng551155313946013uw3" SUBMITDATE="2017-05-10 09:59:49" ID="1"/>
+</MESSAGEACK>`;
 
     const fetchMock = vi
       .fn()
@@ -49,41 +47,34 @@ describe('ValueFirstSmsProvider', () => {
       expect.objectContaining({
         method: 'POST',
         headers: expect.objectContaining({
-          Authorization: 'API Key test-api-key',
+          Authorization: 'Basic dGVzdC11c2VyOnRlc3QtcGFzc3dvcmQ=',
         }),
       })
     );
 
     const smsCallArgs = fetchMock.mock.calls[1][1] as { body: string };
-    expect(smsCallArgs.body).toContain('<USERNAME>test-api-key</USERNAME>');
-    expect(smsCallArgs.body).toContain('<PASSWORD>test-api-key</PASSWORD>');
-    expect(smsCallArgs.body).toContain('<TEXT>Test message</TEXT>');
-    expect(smsCallArgs.body).toContain('<FROM>TestSender</FROM>');
-    expect(smsCallArgs.body).toContain('<TO>+919876543210</TO>');
-    expect(smsCallArgs.body).toContain('<ADDRESS>');
+    expect(smsCallArgs.body).toContain('<USER />');
+    expect(smsCallArgs.body).toContain('<SMS UDH="0" TEXT="Test message" CODING="1" PROPERTY="0" ID="919876543210"');
+    expect(smsCallArgs.body).toContain('<ADDRESS FROM="TestSender" TO="919876543210" ');
+    expect(smsCallArgs.body).toContain('/>');
     expect(smsCallArgs.body).toContain('<DLR>YES</DLR>');
-    expect(smsCallArgs.body).toContain('<SENDER>TestSender</SENDER>');
 
     expect(result.id).toBe('h5ng551155313946013uw3');
     expect(result.date).toBeDefined();
   });
 
   test('should reuse cached token before expiry', async () => {
-    const tokenResponse = { token: 'cached-token', expiryDate: '2024-12-31 23:59:59' };
-    const smsResponse = `<?xml version="1.0"?>
-<MESSAGE><SUCCESS><MESSAGEID>msg-999</MESSAGEID></SUCCESS></MESSAGE>`;
+    const tokenResponse = { token: 'cached-token' };
+    const smsResponse = `<?xml version="1.0" encoding="ISO-8859-1"?>
+<MESSAGEACK>
+<GUID GUID="msg-999" SUBMITDATE="2017-05-10 09:59:49" ID="1"/>
+</MESSAGEACK>`;
 
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce({
-        json: () => Promise.resolve(tokenResponse),
-      })
-      .mockResolvedValueOnce({
-        text: () => Promise.resolve(smsResponse),
-      })
-      .mockResolvedValue({
-        text: () => Promise.resolve(smsResponse),
-      });
+      .mockResolvedValueOnce({ json: () => Promise.resolve(tokenResponse) })
+      .mockResolvedValueOnce({ text: () => Promise.resolve(smsResponse) })
+      .mockResolvedValue({ text: () => Promise.resolve(smsResponse) });
     global.fetch = fetchMock;
 
     await provider.sendMessage({ content: 'First', to: '+919876543210' });
@@ -97,38 +88,37 @@ describe('ValueFirstSmsProvider', () => {
   });
 
   test('should throw on API error', async () => {
-    const tokenResponse = { token: 'test-token', expiryDate: '2024-12-31 23:59:59' };
-    const errorResponse = `<?xml version="1.0"?>
-<MESSAGE><FAILURE><ERRORCODE>101</ERRORCODE><ERRORDESC>Invalid sender ID</ERRORDESC></FAILURE></MESSAGE>`;
+    const tokenResponse = { token: 'test-token' };
+    const errorResponse = `<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE MESSAGE SYSTEM "https://api.myvfirst.com/psms/dtd/messagev12.dtd">
+<MESSAGEACK>
+<GUID GUID="err-msg" SUBMITDATE="2017-05-10 09:59:49" ID="1">
+<ERROR SEQ="2" CODE="28682"/>
+</GUID>
+</MESSAGEACK>`;
 
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce({
-        json: () => Promise.resolve(tokenResponse),
-      })
-      .mockResolvedValue({
-        text: () => Promise.resolve(errorResponse),
-      });
+      .mockResolvedValueOnce({ json: () => Promise.resolve(tokenResponse) })
+      .mockResolvedValue({ text: () => Promise.resolve(errorResponse) });
     global.fetch = fetchMock;
 
-    await expect(
-      provider.sendMessage({ content: 'Test', to: '+919876543210' })
-    ).rejects.toThrow('Invalid sender ID');
+    await expect(provider.sendMessage({ content: 'Test', to: '+919876543210' })).rejects.toThrow(
+      'ValueFirst error codes: 28682'
+    );
   });
 
   test('should send SMS with _passthrough DLT fields', async () => {
-    const tokenResponse = { token: 'passthrough-token', expiryDate: '2024-12-31 23:59:59' };
-    const smsResponse = `<?xml version="1.0"?>
-<MESSAGE><SUCCESS><MESSAGEID>777</MESSAGEID></SUCCESS></MESSAGE>`;
+    const tokenResponse = { token: 'passthrough-token' };
+    const smsResponse = `<?xml version="1.0" encoding="ISO-8859-1"?>
+<MESSAGEACK>
+<GUID GUID="777" SUBMITDATE="2017-05-10 09:59:49" ID="1"/>
+</MESSAGEACK>`;
 
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce({
-        json: () => Promise.resolve(tokenResponse),
-      })
-      .mockResolvedValueOnce({
-        text: () => Promise.resolve(smsResponse),
-      });
+      .mockResolvedValueOnce({ json: () => Promise.resolve(tokenResponse) })
+      .mockResolvedValue({ text: () => Promise.resolve(smsResponse) });
     global.fetch = fetchMock;
 
     await provider.sendMessage(
@@ -146,10 +136,10 @@ describe('ValueFirstSmsProvider', () => {
     );
 
     const smsCallArgs = fetchMock.mock.calls[1][1] as { body: string };
-    expect(smsCallArgs.body).toContain('<DLTTEMPLATEID>1234567890123456789</DLTTEMPLATEID>');
-    expect(smsCallArgs.body).toContain('<ENTITYID>9876543210987654321</ENTITYID>');
-    expect(smsCallArgs.body).toContain('<DLTCONTENTTYPE>3</DLTCONTENTTYPE>');
-    expect(smsCallArgs.body).toContain('<HEADERID>HEADER123</HEADERID>');
+    expect(smsCallArgs.body).toContain('DLTTEMPLATEID="1234567890123456789"');
+    expect(smsCallArgs.body).toContain('ENTITYID="9876543210987654321"');
+    expect(smsCallArgs.body).toContain('DLTCONTENTTYPE="3"');
+    expect(smsCallArgs.body).toContain('HEADERID="HEADER123"');
   });
 
   describe('parseEventBody', () => {
@@ -163,10 +153,7 @@ describe('ValueFirstSmsProvider', () => {
     });
 
     test('should prioritize status_error over msg_status', () => {
-      const result = provider.parseEventBody(
-        { id: 'msg-1', status_error: '8449', msg_status: 'Delivered' },
-        'msg-1'
-      );
+      const result = provider.parseEventBody({ id: 'msg-1', status_error: '8449', msg_status: 'Delivered' }, 'msg-1');
       expect(result?.status).toBe('failed');
     });
 
@@ -226,10 +213,7 @@ describe('ValueFirstSmsProvider', () => {
     });
 
     test('should match by message_id when id is absent', () => {
-      const result = provider.parseEventBody(
-        { message_id: 'ext-123', msg_status: 'Delivered' },
-        'ext-123'
-      );
+      const result = provider.parseEventBody({ message_id: 'ext-123', msg_status: 'Delivered' }, 'ext-123');
       expect(result?.status).toBe('delivered');
     });
   });
@@ -252,18 +236,16 @@ describe('ValueFirstSmsProvider', () => {
   });
 
   test('should escape XML special characters in message', async () => {
-    const tokenResponse = { token: 'xml-test-token', expiryDate: '2024-12-31 23:59:59' };
-    const smsResponse = `<?xml version="1.0"?>
-<MESSAGE><SUCCESS><MESSAGEID>888</MESSAGEID></SUCCESS></MESSAGE>`;
+    const tokenResponse = { token: 'xml-test-token' };
+    const smsResponse = `<?xml version="1.0" encoding="ISO-8859-1"?>
+<MESSAGEACK>
+<GUID GUID="888" SUBMITDATE="2017-05-10 09:59:49" ID="1"/>
+</MESSAGEACK>`;
 
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce({
-        json: () => Promise.resolve(tokenResponse),
-      })
-      .mockResolvedValueOnce({
-        text: () => Promise.resolve(smsResponse),
-      });
+      .mockResolvedValueOnce({ json: () => Promise.resolve(tokenResponse) })
+      .mockResolvedValueOnce({ text: () => Promise.resolve(smsResponse) });
     global.fetch = fetchMock;
 
     await provider.sendMessage({
