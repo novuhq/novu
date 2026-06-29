@@ -29,7 +29,7 @@ Each event handler receives a context object with the information needed to unde
 - Recent conversation history
 - Provider information
 - Platform-specific details, such as thread or channel identifiers
-- Methods for replying, updating metadata, triggering workflows, or resolving the conversation
+- Methods for replying, updating metadata, triggering workflows, resolving the conversation, typing indicators, and plan progress
 
 The context object is how your code talks to Novu. You do not call Slack, Teams, or email APIs directly in the handler.
 
@@ -183,6 +183,46 @@ export const myAgent = agent('my-agent', {
   },
 });
 ```
+
+### Typing indicator
+
+Control the typing status Novu shows while your handler runs. Call `ctx.typing()` to set or replace the status text, `ctx.typing()` with no argument to reset to the default **Thinking…**, or `ctx.typing.stop()` to clear it for the current turn.
+
+```typescript
+import { agent } from '@novu/framework';
+
+export const myAgent = agent('my-agent', {
+  onMessage: async ({ message, ctx }) => {
+    await ctx.typing('Searching the docs…');
+
+    const answer = await searchDocs(message.text ?? '');
+
+    await ctx.reply(answer);
+  },
+});
+```
+
+Typing updates post immediately, like `ctx.reply()`. Platforms that do not support typing indicators ignore the call. A normal turn that ends with `ctx.reply()` clears the status automatically.
+
+### Plan progress
+
+Show a live plan card while your handler runs multi-step work. Call `ctx.plan(title)` to render the card, then use `plan.step()` for scoped steps or manual updates.
+
+```typescript
+import { agent } from '@novu/framework';
+
+export const myAgent = agent('my-agent', {
+  onMessage: async ({ message, ctx }) => {
+    const plan = ctx.plan('Processing your refund…');
+    const order = await plan.step('Fetch order', () => fetchOrder(message.text));
+    await plan.step('Issue refund', () => refund(order));
+
+    return 'Refund complete.';
+  },
+});
+```
+
+The plan card updates live while the handler runs. The handler return value (or `ctx.reply()`) posts the final reply message. The plan auto-finalizes when the handler completes.
 
 ### onResolve
 
