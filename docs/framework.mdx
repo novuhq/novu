@@ -24,6 +24,57 @@ Use the `npx novu init` command to create a sample Bridge application with a bui
   Novu Framework is used as a code layer to power both workflows and [agents](/agents).
 </Note>
 
+## AI SDK agent plugin
+
+When you build [custom code agents](/agents/custom-code-agent) with the [Vercel AI SDK](https://sdk.vercel.ai/), import `agent` from `@novu/framework/ai-sdk` instead of `@novu/framework`. The plugin accepts the same handler shape, and you can return a `streamText()` or `generateText()` result directly from `onMessage` — Novu delivers the model output for you.
+
+```tsx
+import { agent } from '@novu/framework/ai-sdk';
+import { openai } from '@ai-sdk/openai';
+import { generateText } from 'ai';
+
+export const supportAgent = agent('support-agent', {
+  onMessage: async (message, ctx) => {
+    return generateText({
+      model: openai('gpt-4o-mini'),
+      system: 'You are a helpful support agent.',
+      messages: ctx.history.map((entry) => ({
+        role: entry.role,
+        content: entry.content,
+      })),
+    });
+  },
+});
+```
+
+Use `trackPlanTools(plan, tools)` from `@novu/framework/ai-sdk` to mirror AI SDK tool calls into a live plan card created with `ctx.plan()`.
+
+```tsx
+import { agent, trackPlanTools } from '@novu/framework/ai-sdk';
+import { openai } from '@ai-sdk/openai';
+import { generateText, tool } from 'ai';
+import { z } from 'zod';
+
+export const supportAgent = agent('support-agent', {
+  onMessage: async (message, ctx) => {
+    const plan = ctx.plan('Looking up your order…');
+    const tools = trackPlanTools(plan, {
+      lookupOrder: tool({
+        description: 'Fetch an order by ID',
+        inputSchema: z.object({ orderId: z.string() }),
+        execute: async ({ orderId }) => fetchOrder(orderId),
+      }),
+    });
+
+    return generateText({
+      model: openai('gpt-4o-mini'),
+      tools,
+      prompt: message.text ?? '',
+    });
+  },
+});
+```
+
 ## Quickstart
 
 To get started with Novu Framework, pick your preferred technology from the list below:
