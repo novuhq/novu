@@ -193,6 +193,7 @@ function buildSourceMessageFromActivity(activity: ConversationActivityEntity): M
 
   return {
     id: activity.platformMessageId ?? '',
+    threadId: activity.platformThreadId,
     text: activity.content,
     author: {
       userId: activity.senderId,
@@ -204,7 +205,7 @@ function buildSourceMessageFromActivity(activity: ConversationActivityEntity): M
     metadata: {
       dateSent: activity.createdAt ? new Date(activity.createdAt) : new Date(),
     },
-  } as Message;
+  } as unknown as Message;
 }
 
 function mapStoredAttachmentsFromRichContent(richContent?: Record<string, unknown>): StoredAttachment[] {
@@ -938,8 +939,16 @@ export class AgentInboundHandler implements OnModuleInit {
           config.organizationId
         );
 
-        if (conversation) {
-          platformThreadId = this.conversationService.getPrimaryChannel(conversation).platformThreadId;
+        if (!conversation || String(conversation._agentId) !== String(config.agentId)) {
+          conversation = null;
+          sourceActivity = null;
+        } else {
+          const primaryChannel = conversation.channels?.[0];
+          if (!primaryChannel) {
+            return;
+          }
+
+          platformThreadId = primaryChannel.platformThreadId;
         }
       }
     }
@@ -964,17 +973,16 @@ export class AgentInboundHandler implements OnModuleInit {
       ? await this.resolveSubscriberId(agentId, config, platformUserId, 'resolve-subscriber-reaction')
       : null;
 
-    if (!sourceActivity) {
-      sourceActivity = await this.conversationService.findSourceActivity(
-        config.environmentId,
-        conversation._id,
-        event.messageId
-      );
-    }
+    const [subscriber, resolvedSourceActivity] = await Promise.all([
+      subscriberId
+        ? this.subscriberRepository.findBySubscriberId(config.environmentId, subscriberId)
+        : Promise.resolve(null),
+      sourceActivity
+        ? Promise.resolve(sourceActivity)
+        : this.conversationService.findSourceActivity(config.environmentId, conversation._id, event.messageId),
+    ]);
 
-    const subscriber = subscriberId
-      ? await this.subscriberRepository.findBySubscriberId(config.environmentId, subscriberId)
-      : null;
+    sourceActivity = resolvedSourceActivity;
 
     const sourceMessage = event.message ?? (sourceActivity ? buildSourceMessageFromActivity(sourceActivity) : undefined);
 
