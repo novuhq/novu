@@ -1,9 +1,12 @@
 import { SignUp as SignUpForm } from '@clerk/react';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Helmet } from 'react-helmet-async';
+import { useSearchParams } from 'react-router-dom';
 import { RegionPicker } from '@/components/auth/region-picker';
 import { PageMeta } from '@/components/page-meta';
+import { appendRedirectUrlParam } from '@/utils/cli-auth-pending';
 import { clerkLandingSignupAppearance } from '@/utils/clerk-appearance';
+import { readClerkRedirectUrlParam } from '@/utils/product-auth-urls';
 import { ROUTES } from '@/utils/routes';
 import { IS_SELF_HOSTED } from '../config';
 import { useSegment } from '../context/segment';
@@ -178,6 +181,17 @@ function Testimonial() {
 }
 
 function RightPanel() {
+  const [searchParams] = useSearchParams();
+  const signInUrl = useMemo(() => {
+    const redirectUrl = readClerkRedirectUrlParam(searchParams);
+
+    if (redirectUrl) {
+      return appendRedirectUrlParam(ROUTES.SIGN_IN, redirectUrl);
+    }
+
+    return ROUTES.SIGN_IN;
+  }, [searchParams]);
+
   return (
     <div className="relative flex min-h-[600px] flex-1 flex-col overflow-hidden bg-[#08080c] lg:min-h-0 lg:w-1/2">
       <RightPanelBackground />
@@ -190,7 +204,7 @@ function RightPanel() {
         <div className="flex w-full max-w-[512px] flex-col items-center gap-5">
           <SignUpForm
             path={ROUTES.LANDING_1_SIGN_UP}
-            signInUrl={ROUTES.SIGN_IN}
+            signInUrl={signInUrl}
             appearance={clerkLandingSignupAppearance}
             forceRedirectUrl={ROUTES.SIGNUP_ORGANIZATION_LIST}
           />
