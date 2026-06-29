@@ -3,6 +3,7 @@ import { Button } from '@/components/primitives/button';
 import { Input } from '@/components/primitives/input';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { Switch } from '@/components/primitives/switch';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 
 export type SenderAddressOverrideProps = {
   serverEnabled: boolean;
@@ -99,18 +100,26 @@ export function SenderAddressOverride({
     ? 'text-text-soft text-label-xs font-medium leading-4'
     : 'text-text-sub text-label-xs cursor-pointer font-medium leading-4';
 
+  const switchControl = (
+    <Switch id={switchId} checked={enabled && !disabled} onCheckedChange={setEnabled} disabled={isSaving || disabled} />
+  );
+
   return (
     <div className="flex w-full flex-col gap-2">
       <div className="flex w-full items-center justify-between gap-2">
         <label htmlFor={switchId} className={labelClassName}>
           Use a custom From address
         </label>
-        <Switch
-          id={switchId}
-          checked={enabled && !disabled}
-          onCheckedChange={setEnabled}
-          disabled={isSaving || disabled}
-        />
+        {disabled && disabledReason ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="inline-flex">{switchControl}</span>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-xs">{disabledReason}</TooltipContent>
+          </Tooltip>
+        ) : (
+          switchControl
+        )}
       </div>
 
       {enabled && !disabled && (
