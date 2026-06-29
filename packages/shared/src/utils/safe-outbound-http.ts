@@ -1,27 +1,7 @@
 import * as http from 'node:http';
 import * as https from 'node:https';
 import { Readable } from 'node:stream';
-import { assertSafeOutboundUrl, isPrivateIp, resolvePublicAddresses, SsrfBlockedError } from './ssrf-url-validation';
-
-/**
- * Test-only escape hatch: when this env var is set, the SSRF policy treats
- * the listed IPs as public. This exists so test suites can run a real HTTP
- * server bound to 127.0.0.1 and exercise the connect/redirect path. Setting
- * this in production is unsupported and dangerous.
- *
- * Read lazily so tests can opt in after importing the module.
- */
-function getTestAllowList(): Set<string> {
-  const raw = process.env.NOVU_SAFE_OUTBOUND_TEST_ALLOW_IPS;
-  if (!raw) return new Set<string>();
-
-  return new Set(
-    raw
-      .split(',')
-      .map((s) => s.trim())
-      .filter(Boolean)
-  );
-}
+import { assertSafeOutboundUrl, resolvePublicAddresses, SsrfBlockedError } from './ssrf-url-validation';
 
 const DEFAULT_TIMEOUT_MS = 30_000;
 const DEFAULT_MAX_REDIRECTS = 3;
@@ -108,7 +88,7 @@ export async function safeOutboundRequest(options: SafeOutboundRequestOptions): 
       currentBody = undefined;
     }
 
-    const addresses = await resolveWithTestAllowList(parsed.hostname);
+    const addresses = await resolvePublicAddresses(parsed.hostname);
     const chosen = addresses[0];
     if (!chosen) {
       throw new SsrfBlockedError('DNS_LOOKUP_FAILED', `Unable to resolve hostname "${parsed.hostname}".`, {
@@ -396,39 +376,3 @@ function headerString(value: string | string[] | undefined): string | undefined 
   return Array.isArray(value) ? value[0] : value;
 }
 
-/**
- * Wrapper around {@link resolvePublicAddresses} that applies the test-only
- * IP allow list. Production has no allow list, so this collapses to the same
- * call. Tests can opt specific loopback IPs in to exercise the real network
- * path without disabling the policy globally.
- */
-async function resolveWithTestAllowList(hostname: string) {
-  const allowList = getTestAllowList();
-  if (allowList.size === 0) {
-    return resolvePublicAddresses(hostname);
-  }
-
-  // Mirror resolvePublicAddresses, but treat allow-listed addresses as public.
-  const dns = await import('node:dns');
-  let addresses: { address: string; family: number }[];
-  try {
-    addresses = await dns.promises.lookup(hostname.toLowerCase(), { all: true });
-  } catch {
-    throw new SsrfBlockedError('DNS_LOOKUP_FAILED', `Unable to resolve hostname "${hostname}".`, {
-      hostname,
-    });
-  }
-
-  for (const { address } of addresses) {
-    if (allowList.has(address)) continue;
-    if (isPrivateIp(address)) {
-      throw new SsrfBlockedError(
-        'PRIVATE_IP',
-        `Requests to private or reserved IP addresses are not allowed (resolved: ${address}).`,
-        { hostname, resolvedAddress: address }
-      );
-    }
-  }
-
-  return addresses;
-}

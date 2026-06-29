@@ -38,6 +38,7 @@ import {
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
   ITriggerPayload,
+  isOutboundSsrfProtectionEnabled,
   JobStatusEnum,
   ResourceOriginEnum,
   ResourceTypeEnum,
@@ -246,7 +247,9 @@ export class ExecuteBridgeJob {
       // (stateless bridgeUrl on the job, or the environment's stored bridge
       // URL). This blocks internal hosts even if a malicious URL was persisted
       // before validation landed or queued by an older API release.
-      enforceSsrfProtection: !!statelessBridgeUrl || workflowOrigin === ResourceOriginEnum.EXTERNAL,
+      enforceSsrfProtection:
+        isOutboundSsrfProtectionEnabled() &&
+        (!!statelessBridgeUrl || workflowOrigin === ResourceOriginEnum.EXTERNAL),
       processError: async (response) => {
         await this.createExecutionDetails.execute({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(job),

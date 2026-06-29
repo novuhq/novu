@@ -1,6 +1,7 @@
 import * as dns from 'node:dns';
 import { isIP } from 'node:net';
 import { LRUCache } from 'lru-cache';
+import { isAddressAllowedByOutboundAllowList, isHostnameAllowedByOutboundAllowList } from './outbound-ssrf-allow-list';
 import { isPrivateIp, normalizeHostnameForLookup } from './private-ip-classification';
 
 export { isPrivateIp, normalizeHostnameForLookup };
@@ -171,7 +172,15 @@ export async function resolvePublicAddresses(
     }
   }
 
+  if (isHostnameAllowedByOutboundAllowList(normalized)) {
+    return addresses;
+  }
+
   for (const { address } of addresses) {
+    if (isAddressAllowedByOutboundAllowList(address)) {
+      continue;
+    }
+
     if (isPrivateIp(address)) {
       throw new SsrfBlockedError(
         'PRIVATE_IP',

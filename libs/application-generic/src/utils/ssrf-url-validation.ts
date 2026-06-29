@@ -26,10 +26,15 @@ import { Readable } from 'node:stream';
 import { LRUCache } from 'lru-cache';
 
 type PrivateIpClassificationModule = typeof import('@novu/shared/dist/cjs/utils/private-ip-classification');
+type OutboundSsrfAllowListModule = typeof import('@novu/shared/dist/cjs/utils/outbound-ssrf-allow-list');
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { isPrivateIp, normalizeHostnameForLookup } =
   require('@novu/shared/utils/private-ip-classification') as PrivateIpClassificationModule;
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { isAddressAllowedByOutboundAllowList, isHostnameAllowedByOutboundAllowList } =
+  require('@novu/shared/utils/outbound-ssrf-allow-list') as OutboundSsrfAllowListModule;
 
 export { isPrivateIp, normalizeHostnameForLookup };
 
@@ -157,7 +162,15 @@ export async function resolvePublicAddresses(
     }
   }
 
+  if (isHostnameAllowedByOutboundAllowList(normalized)) {
+    return addresses;
+  }
+
   for (const { address } of addresses) {
+    if (isAddressAllowedByOutboundAllowList(address)) {
+      continue;
+    }
+
     if (isPrivateIp(address)) {
       throw new SsrfBlockedError(
         'PRIVATE_IP',
@@ -237,47 +250,6 @@ export interface SafeOutboundJsonResponse<T = unknown> {
   statusMessage: string;
   headers: http.IncomingHttpHeaders;
   body: T;
-}
-
-function getTestAllowList(): Set<string> {
-  const raw = process.env.NOVU_SAFE_OUTBOUND_TEST_ALLOW_IPS;
-  if (!raw) return new Set<string>();
-
-  return new Set(
-    raw
-      .split(',')
-      .map((s) => s.trim())
-      .filter(Boolean)
-  );
-}
-
-async function resolveWithTestAllowList(hostname: string): Promise<dns.LookupAddress[]> {
-  const allowList = getTestAllowList();
-  if (allowList.size === 0) {
-    return resolvePublicAddresses(hostname);
-  }
-
-  let addresses: dns.LookupAddress[];
-  try {
-    addresses = await dns.promises.lookup(hostname.toLowerCase(), { all: true });
-  } catch {
-    throw new SsrfBlockedError('DNS_LOOKUP_FAILED', `Unable to resolve hostname "${hostname}".`, {
-      hostname,
-    });
-  }
-
-  for (const { address } of addresses) {
-    if (allowList.has(address)) continue;
-    if (isPrivateIp(address)) {
-      throw new SsrfBlockedError(
-        'PRIVATE_IP',
-        `Requests to private or reserved IP addresses are not allowed (resolved: ${address}).`,
-        { hostname, resolvedAddress: address }
-      );
-    }
-  }
-
-  return addresses;
 }
 
 const SENSITIVE_HEADER_PATTERNS = [
@@ -475,7 +447,7 @@ export async function safeOutboundRequest(options: SafeOutboundRequestOptions): 
       currentBody = undefined;
     }
 
-    const addresses = await resolveWithTestAllowList(parsed.hostname);
+    const addresses = await resolvePublicAddresses(parsed.hostname);
     const chosen = addresses[0];
     if (!chosen) {
       throw new SsrfBlockedError('DNS_LOOKUP_FAILED', `Unable to resolve hostname "${parsed.hostname}".`, {

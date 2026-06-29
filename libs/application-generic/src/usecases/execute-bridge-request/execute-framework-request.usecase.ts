@@ -7,7 +7,7 @@ import {
   isFrameworkError,
   PostActionEnum,
 } from '@novu/framework/internal';
-import { ResourceOriginEnum } from '@novu/shared';
+import { isOutboundSsrfProtectionEnabled, ResourceOriginEnum } from '@novu/shared';
 import { HttpRequestHeaderKeysEnum } from '../../http';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { PinoLogger } from '../../logging';
@@ -107,9 +107,10 @@ export class ExecuteFrameworkRequest {
     this.logger.debug(`Making bridge request to \`${url}\``);
 
     const enforceSsrfProtection =
-      command.enforceSsrfProtection === true ||
-      !!command.statelessBridgeUrl ||
-      command.workflowOrigin === ResourceOriginEnum.EXTERNAL;
+      isOutboundSsrfProtectionEnabled() &&
+      (command.enforceSsrfProtection === true ||
+        !!command.statelessBridgeUrl ||
+        command.workflowOrigin === ResourceOriginEnum.EXTERNAL);
 
     try {
       const response = await this.httpClient.request<ExecuteBridgeRequestDto<T>>({

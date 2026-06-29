@@ -1,9 +1,11 @@
 import * as dns from 'node:dns';
 import * as http from 'node:http';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { resetOutboundSsrfAllowListCacheForTests } from './outbound-ssrf-allow-list';
 import { safeOutboundJsonRequest, safeOutboundRequest } from './safe-outbound-http';
 
 const ORIGINAL_ALLOW = process.env.NOVU_SAFE_OUTBOUND_TEST_ALLOW_IPS;
+const ORIGINAL_PRODUCTION_ALLOW = process.env.NOVU_SAFE_OUTBOUND_ALLOW;
 beforeAll(() => {
   process.env.NOVU_SAFE_OUTBOUND_TEST_ALLOW_IPS = '127.0.0.1';
 });
@@ -13,6 +15,14 @@ afterAll(() => {
   } else {
     process.env.NOVU_SAFE_OUTBOUND_TEST_ALLOW_IPS = ORIGINAL_ALLOW;
   }
+
+  if (ORIGINAL_PRODUCTION_ALLOW === undefined) {
+    delete process.env.NOVU_SAFE_OUTBOUND_ALLOW;
+  } else {
+    process.env.NOVU_SAFE_OUTBOUND_ALLOW = ORIGINAL_PRODUCTION_ALLOW;
+  }
+
+  resetOutboundSsrfAllowListCacheForTests();
 });
 
 describe('safe-outbound-http', () => {
@@ -174,6 +184,21 @@ describe('safe-outbound-http', () => {
       await expect(safeOutboundRequest({ url: 'https://mapped.invalid/' })).rejects.toMatchObject({
         reason: 'PRIVATE_IP',
       });
+    });
+
+    it('allows private ClusterIP targets when the hostname suffix is allow-listed', async () => {
+      process.env.NOVU_SAFE_OUTBOUND_ALLOW = '.svc.cluster.local';
+      resetOutboundSsrfAllowListCacheForTests();
+
+      vi.spyOn(dns.promises, 'lookup').mockResolvedValue([{ address: '127.0.0.1', family: 4 }] as never);
+
+      const response = await safeOutboundJsonRequest<{ ok: boolean; path: string }>({
+        url: `http://my-bridge.my-namespace.svc.cluster.local:${new URL(upstreamUrl).port}/ping`,
+        method: 'GET',
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.body).toEqual({ ok: true, path: '/ping' });
     });
   });
 

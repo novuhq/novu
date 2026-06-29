@@ -29,6 +29,7 @@ import { ControlValuesRepository, EnvironmentRepository, NotificationTemplateRep
 import { HttpHeaderKeysEnum } from '@novu/framework/internal';
 import {
   ControlValuesLevelEnum,
+  isOutboundSsrfProtectionEnabled,
   PermissionsEnum,
   ResourceOriginEnum,
   ResourceTypeEnum,
@@ -242,7 +243,7 @@ export class BridgeController {
           statelessBridgeUrl: body.bridgeUrl,
           // User-supplied bridgeUrl: enforce DNS-pinned SSRF guard at connect
           // time so IP-literal private addresses cannot reach internal hosts.
-          enforceSsrfProtection: true,
+          enforceSsrfProtection: isOutboundSsrfProtectionEnabled(),
         })
       );
 
