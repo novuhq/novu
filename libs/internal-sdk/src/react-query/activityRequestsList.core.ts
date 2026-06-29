@@ -49,6 +49,7 @@ export function buildActivityRequestsListQuery(
       urlPattern: request.urlPattern,
       transactionId: request.transactionId,
       createdGte: request.createdGte,
+      source: request.source,
       idempotencyKey: request.idempotencyKey,
     }),
     queryFn: async function activityRequestsListQueryFn(
@@ -82,6 +83,7 @@ export function queryKeyActivityRequestsList(
     urlPattern?: string | undefined;
     transactionId?: string | undefined;
     createdGte?: number | undefined;
+    source?: operations.Source | undefined;
     idempotencyKey?: string | undefined;
   },
 ): QueryKey {

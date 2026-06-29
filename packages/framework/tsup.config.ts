@@ -13,6 +13,8 @@ const baseConfig: Options = {
     'src/step-resolver.ts',
     'src/validators.ts',
     ...frameworks.map((framework) => `src/servers/${framework}.ts`),
+    'src/ai-sdk/index.ts',
+    'src/cards.ts',
   ],
   sourcemap: false,
   clean: true,

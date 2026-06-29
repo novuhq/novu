@@ -1,0 +1,62 @@
+---
+title: 'Delay'
+description: 'Learn how to use the delay step to pause workflow execution for a specified duration'
+---
+
+The `delay` step allows you to pause the execution of your workflow for a specified duration. This is useful for implementing features like follow-up notifications, reminder sequences, or cooldown periods.
+
+## Example Usage
+
+```tsx
+// Wait for 24 hours
+await step.delay('reminder-delay', async () => {
+  return {
+    amount: 24,
+    unit: 'hours',
+  };
+});
+
+// Send a follow-up email
+await step.email('follow-up', async () => {
+  return {
+    subject: 'How are you liking our product?',
+    body: 'We noticed you signed up yesterday. How has your experience been so far?',
+  };
+});
+```
+
+## Delay Step Output
+
+| Property | Type                                                               | Required | Description                          |
+| -------- | ------------------------------------------------------------------ | -------- | ------------------------------------ |
+| amount   | number                                                             | Yes      | The number of time units to delay    |
+| unit     | 'seconds' \| 'minutes' \| 'hours' \| 'days' \| 'weeks' \| 'months' | Yes      | The time unit for the delay duration |
+
+## Delay Step Result
+
+| Property | Type   | Description                              |
+| -------- | ------ | ---------------------------------------- |
+| duration | number | The total delay duration in milliseconds |
+
+<Note>
+  The delay step can be skipped conditionally using the `skip` option, allowing you to implement
+  dynamic delay logic based on your workflow's needs.
+</Note>
+
+## Conditional Delay Example
+
+```tsx
+await step.delay(
+  'premium-user-delay',
+  async () => {
+    return {
+      amount: 24,
+      unit: 'hours',
+    };
+  },
+  {
+    // Skip the delay for premium users
+    skip: async () => user.isPremium,
+  }
+);
+```

@@ -13,6 +13,7 @@ import { DevCommandOptions, LocalTunnelResponse } from './types';
 import { parseOptions, wait } from './utils';
 
 let appProcess: ChildProcess | null = null;
+let shuttingDown = false;
 
 function killProcessTree(child: ChildProcess) {
   if (!child.pid) return;
@@ -29,9 +30,20 @@ function killProcessTree(child: ChildProcess) {
 }
 
 function cleanup() {
+  shuttingDown = true;
+
   if (appProcess && !appProcess.killed) {
     killProcessTree(appProcess);
   }
+
+  if (tunnelClient?.socket) {
+    try {
+      tunnelClient.socket.close();
+    } catch {
+      // best-effort
+    }
+  }
+
   setTimeout(() => process.exit(), 200).unref();
 }
 
@@ -110,7 +122,7 @@ async function monitorEndpointHealth(parsedOptions: DevCommandOptions, endpointR
   const endpointSpinner = ora(endpointText).start();
 
   let counter = 0;
-  while (!healthy) {
+  while (!healthy && !shuttingDown) {
     try {
       healthy = await tunnelHealthCheck(fullEndpoint);
 
@@ -135,9 +147,18 @@ async function monitorEndpointHealth(parsedOptions: DevCommandOptions, endpointR
       }
     }
   }
+
+  if (shuttingDown) {
+    endpointSpinner.stop();
+
+    return;
+  }
 }
 
 async function tunnelHealthCheck(configTunnelUrl: string): Promise<boolean> {
+  if (shuttingDown) {
+    return false;
+  }
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 5_000);
 
@@ -168,6 +189,10 @@ function createWatchdogTick(getSocket: () => WatchdogSocket | undefined): () => 
   let lastTickMs = Date.now();
 
   return () => {
+    if (shuttingDown) {
+      return;
+    }
+
     const now = Date.now();
     const drift = now - lastTickMs;
     lastTickMs = now;
@@ -191,7 +216,7 @@ function startTunnelWatchdog(): void {
 }
 
 async function startTunnelProbe(tunnelOrigin: string, endpointRoute: string, localOrigin: string): Promise<void> {
-  while (true) {
+  while (!shuttingDown) {
     await wait(TUNNEL_PROBE_INTERVAL_MS);
 
     try {

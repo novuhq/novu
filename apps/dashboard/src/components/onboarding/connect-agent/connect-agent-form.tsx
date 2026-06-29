@@ -1,6 +1,7 @@
 import { AgentRuntimeProviderIdEnum, type IIntegration } from '@novu/shared';
+import { AnimatePresence, motion } from 'motion/react';
 import type { ReactNode } from 'react';
-import { RiArrowRightSLine, RiInformation2Line } from 'react-icons/ri';
+import { RiArrowRightSLine, RiInformation2Line, RiLoopLeftLine } from 'react-icons/ri';
 import {
   ConnectorIntegrationDropdown,
   type ConnectorIntegrationStatus,
@@ -16,9 +17,11 @@ import {
 } from '@/components/agents/create-agent-fields';
 import { SetupStep } from '@/components/agents/setup-guide-primitives';
 import { BroomSparkle } from '@/components/icons/broom-sparkle';
+import { Button } from '@/components/primitives/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { cn } from '@/utils/ui';
 import { AgentSuggestionPills } from './agent-suggestion-pills';
+import { ConnectAgentDemoForm } from './connect-agent-demo-form';
 import type { ConnectorId } from './connector-options';
 import type { GenerationStep } from './generation-status';
 import { PromptInput } from './prompt-input';
@@ -34,6 +37,10 @@ export type AgentGenerationBindings = {
   promptError?: string;
   suggestions: AgentTemplate[];
   onSelectSuggestion: (suggestion: AgentTemplate) => void;
+  /** Regenerates the suggestion pills on the server. When omitted, the regenerate button is hidden. */
+  onRegenerateSuggestions?: () => void;
+  /** When true, the pills show a loading skeleton and the regenerate button is disabled. */
+  isRegeneratingSuggestions?: boolean;
   textareaRef?: React.Ref<HTMLTextAreaElement>;
   /**
    * When true, the prompt textarea becomes read-only and the rotating status animation +
@@ -50,7 +57,7 @@ export type AgentGenerationBindings = {
 };
 
 type ConnectAgentFormProps = {
-  connectorId: ConnectorId;
+  connectorId?: ConnectorId;
   isClaudeSelected: boolean;
   /**
    * When true, the connector runs on the Custom Scaffold (self-hosted) runtime. We collapse the
@@ -128,6 +135,13 @@ type ConnectAgentFormProps = {
    * button next to the inputs instead of at the bottom of the page.
    */
   submitSlot?: ReactNode;
+  /**
+   * Onboarding "demo agent" mode: collapses the form to a single brain step rendered as a
+   * stacked single column — suggestion pills + prompt + a "Using Demo credentials…" hint. The
+   * connector dropdown, template step, scope tabs, and credentials panel are all omitted because
+   * onboarding always uses the Novu-provided demo Claude credentials. Requires `aiGeneration`.
+   */
+  simplifiedDemo?: boolean;
 };
 
 const RIGHT_HEADER_BY_MODE: Record<
@@ -248,22 +262,58 @@ export function ConnectAgentForm({
   onSaveIntegration,
   aiGeneration,
   submitSlot,
+  simplifiedDemo,
 }: ConnectAgentFormProps) {
+  if (simplifiedDemo) {
+    return (
+      <ConnectAgentDemoForm
+        connectorId={connectorId}
+        isClaudeSelected={isClaudeSelected}
+        isScratchRuntime={isScratchRuntime}
+        apiKey={apiKey}
+        externalWorkspaceId={externalWorkspaceId}
+        region={region}
+        name={name}
+        identifier={identifier}
+        instructions={instructions}
+        isIdentifierTouched={isIdentifierTouched}
+        errors={errors}
+        disabled={disabled}
+        integrations={integrations}
+        selectedIntegrationId={selectedIntegrationId}
+        dropdownStatus={dropdownStatus}
+        showSavedBadge={showSavedBadge}
+        credentialsPanelVisible={credentialsPanelVisible}
+        credentialsPanelExpanded={credentialsPanelExpanded}
+        integrationName={integrationName}
+        verifyStatus={verifyStatus}
+        verifyMessage={verifyMessage}
+        isSavingIntegration={isSavingIntegration}
+        onConnectorChange={onConnectorChange}
+        onApiKeyChange={onApiKeyChange}
+        onExternalWorkspaceIdChange={onExternalWorkspaceIdChange}
+        onRegionChange={onRegionChange}
+        onNameChange={onNameChange}
+        onIdentifierChange={onIdentifierChange}
+        onIdentifierTouched={onIdentifierTouched}
+        onInstructionsChange={onInstructionsChange}
+        onSelectIntegration={onSelectIntegration}
+        onRequestSetupCredentials={onRequestSetupCredentials}
+        onCredentialsExpandedChange={onCredentialsExpandedChange}
+        onIntegrationNameChange={onIntegrationNameChange}
+        onVerify={onVerify}
+        onSaveIntegration={onSaveIntegration}
+        aiGeneration={aiGeneration}
+        submitSlot={submitSlot}
+      />
+    );
+  }
   const selectedConnector = getConnectorById(connectorId);
   const showCredentialsSection = isClaudeSelected && credentialsPanelVisible && Boolean(selectedConnector?.providerId);
   const usePromptUi = Boolean(aiGeneration);
   const aiMode = aiGeneration?.mode ?? 'prompt';
   const scope: AgentScope = aiMode === 'existing' ? 'existing' : 'create';
-  // Total steps across the full onboarding flow:
-  //   brain (2) + email-address (1) + channel (1) + provider guide (3 reserved) + handler (0 for managed, 3 for self-hosted)
-  // Managed-runtime connectors don't render the agent-handler section, so the total is 7 there.
-  // The email-address step is always counted here because the brain section runs before the agent
-  // is created — we can't yet inspect whether the cloud shared-inbound address will be provisioned.
-  // Self-hosted deployments without `NOVU_AGENT_SHARED_INBOUND_DOMAIN` skip that step downstream
-  // and the channel step will re-anchor its own numbering in `agent-setup-steps`.
   const totalOnboardingSteps = isClaudeSelected ? 7 : 10;
-  // The prompt/manual sub-toggle in the right-column header only exists in `'create'` scope.
-  // In `'existing'` scope the segmented tabs above replace it, so we omit it entirely.
   const header = aiMode === 'existing' ? null : RIGHT_HEADER_BY_MODE[aiMode];
   const showScopeTabs = usePromptUi && showExistingOption;
   const { stepTitle, stepDescription } = resolveStepCopy({ isScratchRuntime, usePromptUi, scope });
@@ -273,7 +323,7 @@ export function ConnectAgentForm({
       <SetupStep
         index={1}
         status="completed"
-        sectionLabel={`1/${totalOnboardingSteps} SETUP AGENT BRAIN`}
+        sectionLabel={`1/${totalOnboardingSteps} CONNECT AGENT`}
         title="Where do you want your agent?"
         description="The agent is hosted in the selected connector and Novu manages the communication across channels."
         rightContent={
@@ -617,11 +667,41 @@ function renderExtraContent({
 }: ExtraContentArgs) {
   if (usePromptUi && aiGeneration && aiMode === 'prompt') {
     return (
-      <AgentSuggestionPills
-        suggestions={aiGeneration.suggestions}
-        onSelect={aiGeneration.onSelectSuggestion}
-        disabled={disabled}
-      />
+      <div className="flex min-w-0 items-center">
+        <AgentSuggestionPills
+          className="min-w-0 flex-1"
+          suggestions={aiGeneration.suggestions}
+          onSelect={aiGeneration.onSelectSuggestion}
+          disabled={disabled}
+          isLoading={aiGeneration.isRegeneratingSuggestions ?? false}
+        />
+        {aiGeneration.onRegenerateSuggestions && (
+          <AnimatePresence initial={false}>
+            {!aiGeneration.isRegeneratingSuggestions && (
+              <motion.div
+                key="regenerate-suggestions"
+                initial={{ opacity: 0, maxWidth: 0, marginLeft: 0 }}
+                animate={{ opacity: 1, maxWidth: 24, marginLeft: 8 }}
+                exit={{ opacity: 0, maxWidth: 0, marginLeft: 0 }}
+                transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
+                className="shrink-0 overflow-hidden"
+              >
+                <Button
+                  aria-label="Regenerate suggestions"
+                  title="Regenerate suggestions"
+                  className="h-6 shrink-0 [&_svg]:size-2.5"
+                  variant="secondary"
+                  mode="ghost"
+                  size="2xs"
+                  trailingIcon={RiLoopLeftLine}
+                  disabled={disabled}
+                  onClick={aiGeneration.onRegenerateSuggestions}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        )}
+      </div>
     );
   }
 

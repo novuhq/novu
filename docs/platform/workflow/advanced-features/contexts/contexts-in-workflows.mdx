@@ -1,0 +1,81 @@
+---
+title: 'Applying context'
+description: 'Use contexts in Novu to personalize notification templates, control workflow logic, and customize the Inbox component.'
+---
+
+Contexts let you personalize how notifications are rendered and delivered by making contextual data available inside template editors, step conditions, and the [`<Inbox />`](/platform/inbox/configuration/inbox-with-context) component.
+
+## How to use context
+
+Once a context is created either through the Novu dashboard or API, its data becomes available for use in your templates editors, step conditions, and for customizing the [`<Inbox />`](/platform/inbox/configuration/inbox-with-context) component.
+
+### Using context data in the template editor
+
+Use the `{{context}}` Handlebars helper to access context data in any template editor. The context key you provide while creating the context (for example, tenant, region) becomes the accessor.
+
+For example, if a context with this data is created:
+
+```json
+{
+  "context": {
+    "tenant": {
+      "id": "acme-corp",
+      "data": {
+        "name": "Acme Corporation",
+        "plan": "enterprise"
+      } 
+    }
+  }
+}
+```
+
+You can access the `name` and `plan` in your in-app, email, SMS, or push template like this:
+
+```html
+<p>Welcome, new user from {{context.tenant.data.name}}!</p>
+<p>Your account is on the {{context.tenant.data.plan}} plan.</p>
+```
+Or
+
+```text
+Welcome, new user from {{context.tenant.data.name}}!
+Your account is on the {{context.tenant.data.plan}} plan.
+```
+
+<video autoPlay loop muted playsInline src="/images/workflows/contexts/context.mp4" />
+
+<Note>
+  Refer to the Inbox documentation, to learn how to use context in the [`<Inbox />`](/platform/inbox/configuration/inbox-with-context) component. 
+</Note>
+
+### Using context in step conditions
+
+You can use context variables in the **Step conditions** tab of a workflow step to add conditional logic to your notifications. For example, only send a "Feature X is now enabled" email if `context.tenant.data.plan` is `enterprise`.
+![Context step conditions](/images/workflows/context-step-conditions.png)
+
+To learn how contexts are structured or how to define them, refer to the [Managing Contexts](/platform/workflow/advanced-features/contexts/manage-contexts) documentation.
+
+## Viewing and debugging contexts
+
+Once you start using contexts in your workflows, Novu provides full observability so you can monitor and debug your context usage after a workflow has been triggered.
+
+### Searching for workflow runs
+
+You can filter your workflow runs to find all executions associated with a specific context.
+
+1. Navigate to the **Activity Feed** in your Novu dashboard.
+2. Select the **Workflow Runs** tab.
+3. In the search bar, click **Context** and enter the context `type` and `id` using the format `type:id`.
+
+![Searching for workflow runs](/images/workflows/search-context-activityfeed.png)
+
+### Verifying the resolved context
+
+To confirm that Novu received and processed your context data correctly, you can inspect the API traces for a specific run.
+
+1. From the **Activity Feed**, select the relevant workflow run from the list in the **Requests** tab.
+2. In the workflow run details, go to the **API Traces** tab.
+
+Here, you will see the full context object that was resolved and attached to that specific workflow execution.
+
+![Verifying the resolved context](/images/workflows/resolved-context.png)

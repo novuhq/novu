@@ -3,22 +3,27 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { RiArrowRightUpLine, RiCheckLine, RiErrorWarningLine, RiKey2Line, RiSendPlaneFill } from 'react-icons/ri';
 import type { AgentResponse } from '@/api/agents';
+import { patchSubscriber } from '@/api/subscribers';
+import { useConnectSubscriber } from '@/components/connect/connect-subscriber-provider';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import { Button } from '@/components/primitives/button';
 import { CopyButton } from '@/components/primitives/copy-button';
 import { InlineToast } from '@/components/primitives/inline-toast';
 import { InputPure, InputRoot, InputWrapper } from '@/components/primitives/input';
-import { patchSubscriber } from '@/api/subscribers';
-import { useConnectSubscriber } from '@/components/connect/connect-subscriber-provider';
-import { API_HOSTNAME } from '@/config';
+import { getAgentApiBaseUrl } from '@/config';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useConfigureWhatsAppWebhook } from '@/hooks/use-configure-whatsapp-webhook';
-import { useFetchSubscriber } from '@/hooks/use-fetch-subscriber';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
+import { useFetchSubscriber } from '@/hooks/use-fetch-subscriber';
 import { useSendWhatsAppTestTemplate } from '@/hooks/use-send-whatsapp-test-template';
 import { QueryKeys } from '@/utils/query-keys';
-import { cn } from '@/utils/ui';
-import { IntegrationCredentialsSidebar, ListeningStatus, SetupButton, SetupStep } from './setup-guide-primitives';
+import {
+  IntegrationCredentialsSidebar,
+  ListeningStatus,
+  SetupButton,
+  SetupStep,
+  SetupStepperRail,
+} from './setup-guide-primitives';
 import { deriveStepStatus, hasWhatsAppUserCredentials } from './setup-guide-step-utils';
 
 export type WhatsAppSetupGuideProps = {
@@ -31,12 +36,8 @@ export type WhatsAppSetupGuideProps = {
 
 const PHONE_PATTERN = /^\+[1-9]\d{6,14}$/;
 
-function getApiBaseUrl(): string {
-  return (API_HOSTNAME ?? 'https://api.novu.co').replace(/\/$/, '');
-}
-
 function buildAgentWebhookUrl(agentId: string, integrationIdentifier: string): string {
-  return `${getApiBaseUrl()}/v1/agents/${agentId}/webhook/${integrationIdentifier}`;
+  return `${getAgentApiBaseUrl()}/v1/agents/${agentId}/webhook/${integrationIdentifier}`;
 }
 
 function ReadOnlyValueRow({ label, value }: { label: string; value: string }) {
@@ -593,16 +594,8 @@ export function WhatsAppSetupGuide({
   if (embedded) {
     return (
       <div className="flex flex-col gap-0">
-        <div className={cn('relative flex flex-col gap-10 py-6 pb-3 pl-8 pr-3 md:pr-6')}>
-          <div
-            className="absolute bottom-0 left-[22px] top-0 w-px"
-            style={{
-              background: 'linear-gradient(to bottom, transparent 0%, #E1E4EA 10%, #E1E4EA 90%, transparent 100%)',
-            }}
-          />
-          {stepsColumn}
-        </div>
-        {listening}
+        <SetupStepperRail className="py-6 pb-3 pr-3 md:pr-6">{stepsColumn}</SetupStepperRail>
+        <div className="pl-8">{listening}</div>
         <IntegrationCredentialsSidebar
           integrationId={integrationId}
           isOpen={isCredentialsSidebarOpen}
@@ -616,8 +609,8 @@ export function WhatsAppSetupGuide({
 
   return (
     <>
-      {stepsColumn}
-      {listening}
+      <SetupStepperRail>{stepsColumn}</SetupStepperRail>
+      <div className="pl-8">{listening}</div>
       <IntegrationCredentialsSidebar
         integrationId={integrationId}
         isOpen={isCredentialsSidebarOpen}

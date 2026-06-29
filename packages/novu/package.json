@@ -1,6 +1,6 @@
 {
   "name": "novu",
-  "version": "2.8.1-rc.13",
+  "version": "2.18.1",
   "description": "Novu CLI. Run Novu Studio and sync workflows with Novu Cloud",
   "main": "src/index.js",
   "publishConfig": {
@@ -77,7 +77,7 @@
     "@novu/shared": "workspace:*",
     "@segment/analytics-node": "^1.1.4",
     "async-sema": "3.0.1",
-    "axios": "^1.16.1",
+    "axios": "^1.17.0",
     "chalk": "4.1.2",
     "cli-highlight": "2.1.11",
     "cli-table3": "0.6.5",
@@ -87,7 +87,7 @@
     "cross-spawn": "7.0.5",
     "diff": "9.0.0",
     "dotenv": "^16.6.1",
-    "esbuild": "^0.25.0",
+    "esbuild": "^0.28.1",
     "fast-glob": "3.3.1",
     "figures": "6.1.0",
     "form-data": "^4.0.5",

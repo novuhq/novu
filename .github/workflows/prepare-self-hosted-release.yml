@@ -138,6 +138,16 @@ jobs:
           echo "REGISTRY_OWNER=novuhq" >> $GITHUB_ENV
           echo "This is the service name: $SERVICE_NAME and release version: $LATEST_VERSION"
 
+          # Build multi-arch (amd64 + arm64) for any release that publishes :latest,
+          # i.e. every non-nightly build (tag pushes and non-nightly manual dispatches).
+          # Building amd64 only here would clobber the multi-arch :latest manifest.
+          # Nightly builds publish :nightly only, so they stay amd64 to save CI time.
+          if [ "$IS_NIGHTLY" == "true" ]; then
+            echo "DOCKER_PLATFORMS=linux/amd64" >> $GITHUB_ENV
+          else
+            echo "DOCKER_PLATFORMS=linux/amd64,linux/arm64" >> $GITHUB_ENV
+          fi
+
       - name: Install pnpm
         uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
 
@@ -164,14 +174,14 @@ jobs:
       - name: Setup QEMU
         uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3
         with:
-          platforms: linux/amd64,linux/arm64
+          platforms: ${{ env.DOCKER_PLATFORMS }}
           image: tonistiigi/binfmt:qemu-v8.0.4
 
       - name: Set Up Docker Buildx
         uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
         with:
           driver-opts: "image=moby/buildkit:v0.15.0"
-          platforms: linux/amd64,linux/arm64
+          platforms: ${{ env.DOCKER_PLATFORMS }}
 
       - uses: ./.github/actions/free-space
         name: Extend space in Action Container
@@ -189,7 +199,7 @@ jobs:
           DOCKER_BUILD_ARGUMENTS: >
             --cache-from type=registry,ref=ghcr.io/${{ env.REGISTRY_OWNER }}/cache:build-cache-${{ env.SERVICE_NAME }}-community
             --cache-to type=registry,ref=ghcr.io/${{ env.REGISTRY_OWNER }}/cache:build-cache-${{ env.SERVICE_NAME }}-community,mode=max
-            --platform=linux/amd64,linux/arm64 --provenance=false
+            --platform=${{ env.DOCKER_PLATFORMS }} --provenance=false
             --output=type=image,name=ghcr.io/${{ env.REGISTRY_OWNER }}/${{ env.SERVICE_NAME }},push-by-digest=true,name-canonical=true
         run: |
           cp scripts/dotenvcreate.mjs apps/$SERVICE_COMMON_NAME/src/dotenvcreate.mjs
@@ -256,14 +266,14 @@ jobs:
         run: echo "RELEASE_VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
 
       - name: Sync release to Linear
-        uses: linear/linear-release-action@0353b5fa8c00326913966f00557d68f8f30b8b6b  # pinned v0 ref
+        uses: linear/linear-release-action@0353b5fa8c00326913966f00557d68f8f30b8b6b # pinned v0 ref
         with:
           access_key: ${{ secrets.LINEAR_ACCESS_KEY_COMMUNITY }}
           name: v${{ env.RELEASE_VERSION }}
           version: ${{ env.RELEASE_VERSION }}
 
       - name: Complete release in Linear
-        uses: linear/linear-release-action@0353b5fa8c00326913966f00557d68f8f30b8b6b  # pinned v0 ref
+        uses: linear/linear-release-action@0353b5fa8c00326913966f00557d68f8f30b8b6b # pinned v0 ref
         with:
           access_key: ${{ secrets.LINEAR_ACCESS_KEY_COMMUNITY }}
           command: complete

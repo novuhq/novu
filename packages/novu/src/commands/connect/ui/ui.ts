@@ -1,22 +1,34 @@
 import type { GeneratedAgentSpec } from '../api/agents';
-import type { AgentRuntimeChoice, AgentSummary, ChannelChoice } from '../types';
+import type { BridgeScaffoldVariant } from '../pipeline/bridge/types';
+import type {
+  AgentConnectMode,
+  AgentSummary,
+  ChannelChoice,
+  ChatSdkConnectOutcome,
+  ChatSdkRequirement,
+  CustomCodeConnectOutcome,
+} from '../types';
 
 export type PickResult = { action: 'new' } | { action: 'use'; agent: AgentSummary };
 
-export type GeneratedAgentPreviewResult =
-  | { action: 'confirm'; spec: GeneratedAgentSpec }
-  | { action: 'refine' };
+export type GeneratedAgentPreviewResult = { action: 'confirm'; spec: GeneratedAgentSpec } | { action: 'refine' };
 
-export type PickAgentIntegrationResult =
-  | { kind: 'existing'; integrationId: string }
-  | { kind: 'new' };
+export type PickAgentIntegrationResult = { kind: 'existing'; integrationId: string } | { kind: 'new' };
+
+export type TelegramTokenDelivery = 'setup-page' | 'terminal';
+
+export type ChatSdkTunnelOfferResult = 'accept' | 'skip';
 
 export interface ConnectUI {
+  /** True when running the Ink TUI; false for CI / non-TTY logging mode. */
+  readonly interactive: boolean;
+  /** Unmount Ink before long subprocesses. No-op in logging mode. */
+  releaseTerminal(): Promise<void>;
   // Welcome screen
   /**
    * First screen the user sees. Renders a welcome message and waits for the
    * user to hit Enter before resolving — this is the explicit consent gate
-   * for opening the browser to authorize the CLI. The Ink implementation
+   * before the connect pipeline starts. The Ink implementation
    * delays the visible text until after the orb's entry animation finishes
    * so the welcome lands on a fully-formed orb instead of mid-grow.
    */
@@ -33,8 +45,8 @@ export interface ConnectUI {
   loadingIntegrations(): void;
   pickExistingOrCreate(agents: AgentSummary[]): Promise<PickResult>;
 
-  // Agent runtime / credentials (new-agent path)
-  pickAgentRuntime(opts: { preselected?: AgentRuntimeChoice }): Promise<AgentRuntimeChoice>;
+  // Agent connect mode (managed runtime or Chat SDK)
+  pickAgentConnectMode(opts: { preselected?: AgentConnectMode }): Promise<AgentConnectMode>;
   pickAgentIntegration(opts: {
     providerLabel: string;
     integrations: Array<{ _id: string; name: string; identifier: string }>;
@@ -44,6 +56,8 @@ export interface ConnectUI {
     placeholder: string;
     hint?: string;
     secret?: boolean;
+    /** Shown when re-prompting after credential verification failed. */
+    verificationError?: string;
   }): Promise<string>;
   pickAwsClaudeRegion(): Promise<string>;
   verifyingCredentials(): void;
@@ -65,6 +79,29 @@ export interface ConnectUI {
   creatingAgent(name: string): void;
   agentCreated(agent: AgentSummary): void;
 
+  // Chat SDK project wiring
+  promptForAgentName(defaultName: string): Promise<string>;
+  confirmEnvSecretOverwrite(opts: { envPath: string; existingMasked: string; nextMasked: string }): Promise<boolean>;
+  confirmScaffold(opts: { projectDir: string; appName: string; variant?: BridgeScaffoldVariant }): Promise<boolean>;
+  scaffoldingBridge(opts: { variant: BridgeScaffoldVariant }): void;
+  bridgeScaffolded(opts: {
+    variant: BridgeScaffoldVariant;
+    projectDir: string;
+    skippedInstall?: boolean;
+    envPaths?: string[];
+    agentFilePath?: string;
+  }): void;
+  confirmInstallChatSdkDeps(opts: { projectDir: string; installCommand: string; packages: string[] }): Promise<boolean>;
+  installingChatSdkDeps(): void;
+  showChatSdkReconcilePlan(opts: {
+    projectDir: string;
+    requirements: ChatSdkRequirement[];
+    envPaths: string[];
+    wiringInstructions?: string;
+    requirementsFile?: string;
+  }): Promise<void>;
+  offerChatSdkTunnel(opts: { projectDir: string; devCommand: string }): Promise<ChatSdkTunnelOfferResult>;
+
   // Channel selection
   pickChannel(): Promise<ChannelChoice>;
   /**
@@ -82,12 +119,17 @@ export interface ConnectUI {
    * client never pops up without explicit user consent (some terminals /
    * sandboxes block silent `open()` anyway).
    */
-  awaitEmailOpen(opts: { inboundAddress: string; mailtoUrl: string }): Promise<void>;
+  awaitEmailOpen(opts: {
+    inboundAddress: string;
+    mailtoUrl: string;
+    sendFromEmail?: string;
+    canGoBack?: boolean;
+  }): Promise<void>;
   /**
    * Transitions to the "we're polling for your email to arrive" view. Fired
    * by the pipeline right after `open()` returns.
    */
-  showEmailWaiting(opts: { inboundAddress: string }): void;
+  showEmailWaiting(opts: { inboundAddress: string; sendFromEmail?: string }): void;
   emailConnected(): void;
 
   // Telegram path
@@ -97,13 +139,21 @@ export interface ConnectUI {
    * scannable QR pointing at `t.me/botfather`. Resolves when the user hits
    * Enter to advance.
    */
-  showTelegramIntro(opts: { botfatherQr: string }): Promise<void>;
+  showTelegramIntro(opts: { botfatherQr: string; botfatherUrl: string }): Promise<void>;
+  /** Interactive only: choose between the QR/setup page or pasting the token in the terminal. */
+  pickTelegramTokenDelivery(): Promise<TelegramTokenDelivery>;
   /**
-   * Step 2: render the mobile-link QR. Fire-and-forget — the pipeline owns
+   * Render the signed mobile-link QR. Fire-and-forget — the pipeline owns
    * the polling loop and transitions away from this phase when the bot token
    * lands on the integration.
    */
   showTelegramLinkToken(opts: { mobileQr: string; mobileUrl: string }): void;
+  /**
+   * Alternative to steps 1–2: the bot token was supplied up front via
+   * `--telegram-bot-token`, so the CLI saves it directly instead of waiting
+   * for the mobile-link page. Renders a short progress state.
+   */
+  savingTelegramBotToken(): void;
   /**
    * Step 3: render the `t.me/<bot>?start=<code>` deep-link QR. Pipeline polls
    * the agent's Telegram integration link for `connectedAt`.
@@ -119,7 +169,12 @@ export interface ConnectUI {
    * configured yet. `retry` is true when this prompt is following an earlier
    * failed quick-setup (so the UI can hint at the cause).
    */
-  promptForSlackConfigToken(opts: { retry: boolean }): Promise<string>;
+  promptForSlackConfigToken(opts: { retry: boolean; verificationError?: string }): Promise<string>;
+  /**
+   * Show the signed Slack setup-link URL. Fire-and-forget — the pipeline
+   * polls until the user pastes their config token on the secure page.
+   */
+  showSlackSetupLink(opts: { setupUrl: string }): void;
   runningSlackQuickSetup(): void;
   /**
    * Consent gate before opening Slack OAuth. When `appCreated` is true, confirms
@@ -146,6 +201,11 @@ export interface ConnectUI {
     environmentSlug: string | null;
     connectedChannel: ChannelChoice | null;
     dashboardRedirectChannel: ChannelChoice | null;
+    isKeyless: boolean;
+    claimUrl: string | null;
+    connectMode?: AgentConnectMode;
+    chatSdkOutcome?: ChatSdkConnectOutcome;
+    customCodeOutcome?: CustomCodeConnectOutcome;
   }): void;
   failure(message: string): void;
 

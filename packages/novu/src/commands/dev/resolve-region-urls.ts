@@ -1,11 +1,4 @@
-import {
-  ApiUrlEnum,
-  CloudRegionEnum,
-  ConnectDashboardUrlEnum,
-  DashboardUrlEnum,
-  LOCAL_API_URL,
-  LOCAL_DASHBOARD_URL,
-} from './enums';
+import { ApiUrlEnum, CloudRegionEnum, DashboardUrlEnum, LOCAL_API_URL, LOCAL_DASHBOARD_URL } from './enums';
 
 export interface RegionUrlSet {
   apiUrl: string;
@@ -22,17 +15,9 @@ export interface RegionUrlOverrides {
 export function getRegionUrls(region: CloudRegionEnum): RegionUrlSet {
   switch (region) {
     case CloudRegionEnum.EU:
-      return {
-        apiUrl: ApiUrlEnum.EU,
-        dashboardUrl: DashboardUrlEnum.EU,
-        connectDashboardUrl: ConnectDashboardUrlEnum.PROD,
-      };
+      return buildRegionUrlSet(ApiUrlEnum.EU, DashboardUrlEnum.EU);
     case CloudRegionEnum.STAGING:
-      return {
-        apiUrl: ApiUrlEnum.STAGING,
-        dashboardUrl: DashboardUrlEnum.STAGING,
-        connectDashboardUrl: ConnectDashboardUrlEnum.STAGING,
-      };
+      return buildRegionUrlSet(ApiUrlEnum.STAGING, DashboardUrlEnum.STAGING);
     case CloudRegionEnum.LOCAL:
       return {
         apiUrl: LOCAL_API_URL,
@@ -41,12 +26,16 @@ export function getRegionUrls(region: CloudRegionEnum): RegionUrlSet {
       };
     case CloudRegionEnum.US:
     default:
-      return {
-        apiUrl: ApiUrlEnum.US,
-        dashboardUrl: DashboardUrlEnum.US,
-        connectDashboardUrl: ConnectDashboardUrlEnum.PROD,
-      };
+      return buildRegionUrlSet(ApiUrlEnum.US, DashboardUrlEnum.US);
   }
+}
+
+function buildRegionUrlSet(apiUrl: string, dashboardUrl: string): RegionUrlSet {
+  return {
+    apiUrl,
+    dashboardUrl,
+    connectDashboardUrl: dashboardUrl,
+  };
 }
 
 /** Apply explicit CLI overrides on top of region defaults. */

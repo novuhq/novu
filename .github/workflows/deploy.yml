@@ -603,6 +603,7 @@ jobs:
     name: TesterArmy Staging Regression
     needs: [deploy, prepare-matrix]
     runs-on: ubuntu-latest
+    environment: ${{ fromJson(needs.prepare-matrix.outputs.env_matrix).environment[0] }}
     if: |
       always() &&
       needs.deploy.result == 'success' &&
@@ -646,6 +647,7 @@ jobs:
     name: TesterArmy Production Regression
     needs: [deploy, prepare-matrix]
     runs-on: ubuntu-latest
+    environment: ${{ fromJson(needs.prepare-matrix.outputs.env_matrix).environment[0] }}
     if: |
       always() &&
       needs.deploy.result == 'success' &&

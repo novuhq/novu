@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'motion/react';
 import { RiCloseLine } from 'react-icons/ri';
 import { useTelemetry } from '@/hooks/use-telemetry';
+import { fetchSanity, SANITY_CDN_URL } from '@/utils/sanity';
 import { TelemetryEvent } from '@/utils/telemetry';
 
 type SanityAsset = {
@@ -38,8 +39,6 @@ type Changelog = {
 };
 
 const CONSTANTS = {
-  SANITY_API_URL: 'https://w2rl2099.api.sanity.io/v2025-02-19/data/query/production',
-  SANITY_CDN_URL: 'https://cdn.sanity.io/images/w2rl2099/production',
   NUMBER_OF_CARDS: 3,
   CARD_OFFSET: 10,
   SCALE_FACTOR: 0.06,
@@ -95,7 +94,7 @@ export function ChangelogStack() {
     const [, assetId, dimensions, format] = match;
 
     // Use Sanity's CDN URL format with the constant
-    return `${CONSTANTS.SANITY_CDN_URL}/${assetId}-${dimensions}.${format}?w=400&h=300&fit=crop&auto=format`;
+    return `${SANITY_CDN_URL}/${assetId}-${dimensions}.${format}?w=400&h=300&fit=crop&auto=format`;
   };
 
   // Transform Sanity data to our internal format
@@ -113,8 +112,8 @@ export function ChangelogStack() {
   };
 
   const fetchChangelogs = async (): Promise<Changelog[]> => {
-    // Build Sanity query to get published changelog posts with covers, sorted by publishedAt
-    const query = encodeURIComponent(`
+    // Get published changelog posts with covers, sorted by publishedAt.
+    const query = `
       *[_type == "changelogPost" && defined(cover.asset)] | order(publishedAt desc, _createdAt desc) [0...10] {
         _id,
         _createdAt,
@@ -131,19 +130,11 @@ export function ChangelogStack() {
           }
         }
       }
-    `);
+    `;
 
-    const url = `${CONSTANTS.SANITY_API_URL}?query=${query}&perspective=published`;
-    const response = await fetch(url);
+    const sanityPosts = await fetchSanity<SanityChangelogPost[]>(query);
 
-    if (!response.ok) {
-      throw new Error('Failed to fetch changelogs from Sanity');
-    }
-
-    const data = await response.json();
-    const sanityPosts: SanityChangelogPost[] = data.result || [];
-
-    const transformedData = transformSanityData(sanityPosts);
+    const transformedData = transformSanityData(sanityPosts ?? []);
     return filterChangelogs(transformedData, getDismissedChangelogs());
   };
 

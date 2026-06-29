@@ -1,11 +1,14 @@
+import {
+  CLI_DEVICE_SESSION_CONNECT_MAX_POLL_SECONDS,
+  CLI_DEVICE_SESSION_NAME_NOVU_CONNECT,
+  type CliDeviceSessionPollResponse,
+  type CreateCliDeviceSessionResponse,
+} from '@novu/shared';
 import open from 'open';
 import ora from 'ora';
-import type { CliDeviceSessionPollResponse, CreateCliDeviceSessionResponse } from '@novu/shared';
-import { requestApiJson } from '../../shared/novu-http';
 import type { CloudRegionEnum } from '../../dev/enums';
+import { requestApiJson } from '../../shared/novu-http';
 import { ResolvedAuth } from '../types';
-
-const DEFAULT_TIMEOUT_MS = 5 * 60 * 1000;
 
 export interface BrowserAuthInput {
   apiUrl: string;
@@ -34,6 +37,19 @@ export interface BrowserAuthInput {
    * `novu-wizard`.
    */
   name?: string;
+  /**
+   * Correlates CLI onboarding events with dashboard CLI auth telemetry.
+   * Forwarded as `onboarding_session_id` on the `/cli/auth` URL.
+   */
+  onboardingSessionId?: string;
+  /**
+   * Called when browser auth begins (URL opened / poll started).
+   */
+  onAuthStarted?: () => void;
+  /**
+   * Called when browser auth fails before credentials are returned.
+   */
+  onAuthFailed?: (message: string) => void;
 }
 
 export async function browserDeviceAuth(input: BrowserAuthInput): Promise<ResolvedAuth> {
@@ -51,7 +67,12 @@ export async function browserDeviceAuth(input: BrowserAuthInput): Promise<Resolv
     const target = new URL('/cli/auth', input.dashboardUrl);
     target.searchParams.set('device_code', session.deviceCode);
     target.searchParams.set('name', input.name ?? 'novu-wizard');
+    if (input.onboardingSessionId) {
+      target.searchParams.set('onboarding_session_id', input.onboardingSessionId);
+    }
     const targetUrl = target.toString();
+
+    input.onAuthStarted?.();
 
     if (useExternalStatus) {
       input.onStatus?.('Waiting for browser authorization…');
@@ -73,12 +94,24 @@ export async function browserDeviceAuth(input: BrowserAuthInput): Promise<Resolv
     });
 
     const pollIntervalMs = resolvePollIntervalMs(session.interval);
-    const approved = await pollUntilApproved({
-      apiUrl: input.apiUrl,
-      deviceCode: session.deviceCode,
-      pollIntervalMs,
-      timeoutMs: input.timeoutMs ?? DEFAULT_TIMEOUT_MS,
-    });
+    const maxPollMs =
+      input.name === CLI_DEVICE_SESSION_NAME_NOVU_CONNECT
+        ? CLI_DEVICE_SESSION_CONNECT_MAX_POLL_SECONDS * 1000
+        : session.expiresIn * 1000;
+    let approved: Extract<CliDeviceSessionPollResponse, { status: 'approved' }>;
+    try {
+      approved = await pollUntilApproved({
+        apiUrl: input.apiUrl,
+        deviceCode: session.deviceCode,
+        pollIntervalMs,
+        timeoutMs: input.timeoutMs ?? session.expiresIn * 1000,
+        maxPollMs,
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      input.onAuthFailed?.(message);
+      throw err;
+    }
 
     return {
       secretKey: approved.apiKey,
@@ -124,8 +157,11 @@ async function pollUntilApproved(params: {
   deviceCode: string;
   pollIntervalMs: number;
   timeoutMs: number;
+  maxPollMs: number;
 }): Promise<Extract<CliDeviceSessionPollResponse, { status: 'approved' }>> {
-  const deadline = Date.now() + params.timeoutMs;
+  const startedAt = Date.now();
+  const absoluteDeadline = startedAt + params.maxPollMs;
+  let deadline = Math.min(startedAt + params.timeoutMs, absoluteDeadline);
 
   while (Date.now() < deadline) {
     const payload = await requestApiJson<CliDeviceSessionPollResponse>(
@@ -144,6 +180,10 @@ async function pollUntilApproved(params: {
 
     if (payload.status === 'expired') {
       throw new Error('Authorization session expired. Please try again.');
+    }
+
+    if (payload.status === 'pending' && payload.expiresIn > 0) {
+      deadline = Math.min(Date.now() + payload.expiresIn * 1000, absoluteDeadline);
     }
 
     await sleep(params.pollIntervalMs);

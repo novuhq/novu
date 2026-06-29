@@ -1,24 +1,27 @@
-import { useAuth as useClerkAuth, useClerk, useUser } from '@clerk/react';
-import { FeatureFlagsKeysEnum, PermissionsEnum } from '@novu/shared';
+import { useClerk, useAuth as useClerkAuth, useUser } from '@clerk/react';
+import { CLI_DEVICE_SESSION_NAME_NOVU_CONNECT, FeatureFlagsKeysEnum, PermissionsEnum } from '@novu/shared';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { RiCheckLine, RiCommandLine, RiLockLine, RiArrowRightSLine } from 'react-icons/ri';
+import { RiArrowRightSLine, RiCheckLine, RiCommandLine, RiLockLine } from 'react-icons/ri';
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { approveCliDeviceSession } from '@/api/cli-auth';
 import { AuthLayout } from '@/components/auth-layout';
-import { ConnectBrandLogo } from '@/components/auth/connect-brand-logo';
 import { PageMeta } from '@/components/page-meta';
 import { Button } from '@/components/primitives/button';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { EnvironmentProvider } from '@/context/environment/environment-provider';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useSegment } from '@/context/segment';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchApiKeys } from '@/hooks/use-fetch-api-keys';
 import { useHasPermission } from '@/hooks/use-has-permission';
+import { useTelemetry } from '@/hooks/use-telemetry';
 import { clearPendingCliAuth, storePendingCliAuth } from '@/utils/cli-auth-pending';
+import { persistCliOnboardingSessionId, readActiveCliOnboardingSessionId } from '@/utils/cli-onboarding-identity';
 import { clearConnectProvisioning } from '@/utils/connect';
-import { buildAfterSignOutUrl } from '@/utils/cross-product-sign-out';
+import { readOnboardingSessionId } from '@/utils/onboarding-session-id';
 import { buildRoute, ROUTES } from '@/utils/routes';
+import { TelemetryEvent } from '@/utils/telemetry';
 
 function isValidDeviceCode(deviceCode: string | null): deviceCode is string {
   if (!deviceCode) return false;
@@ -29,14 +32,27 @@ function isValidDeviceCode(deviceCode: string | null): deviceCode is string {
 export const CliAuthPage = () => {
   const { isLoaded, isSignedIn } = useClerkAuth();
   const [searchParams] = useSearchParams();
+  const segment = useSegment();
   const deviceCode = searchParams.get('device_code');
   const callerName = searchParams.get('name');
+  const onboardingSessionId = readOnboardingSessionId(searchParams);
 
   useEffect(() => {
     if (isValidDeviceCode(deviceCode)) {
-      storePendingCliAuth(deviceCode, callerName);
+      storePendingCliAuth({
+        deviceCode,
+        name: callerName,
+        onboardingSessionId: onboardingSessionId ?? null,
+      });
     }
-  }, [deviceCode, callerName]);
+  }, [deviceCode, callerName, onboardingSessionId]);
+
+  useEffect(() => {
+    if (!onboardingSessionId) return;
+
+    persistCliOnboardingSessionId(onboardingSessionId);
+    segment.setAnonymousId(onboardingSessionId);
+  }, [onboardingSessionId, segment]);
 
   useEffect(() => {
     clearConnectProvisioning();
@@ -67,9 +83,10 @@ export const CliAuthPage = () => {
 function CliAuthContent() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const telemetry = useTelemetry();
   const clerk = useClerk();
   const { user } = useUser();
-  const { currentEnvironment, environments, switchEnvironment } = useEnvironment();
+  const { currentEnvironment, environments, switchEnvironment, areEnvironmentsInitialLoading } = useEnvironment();
   const apiKeysQuery = useFetchApiKeys();
   const has = useHasPermission();
   const isLlmGatewayEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_LLM_GATEWAY_ENABLED);
@@ -78,16 +95,25 @@ function CliAuthContent() {
 
   const deviceCode = searchParams.get('device_code');
   const callerName = searchParams.get('name');
+  const onboardingSessionId = readActiveCliOnboardingSessionId(readOnboardingSessionId(searchParams));
   const deviceCodeOk = isValidDeviceCode(deviceCode);
   const canReadApiKeys = has({ permission: PermissionsEnum.API_KEY_READ });
 
-  const isConnect = callerName === 'novu-connect';
+  const isConnect = callerName === CLI_DEVICE_SESSION_NAME_NOVU_CONNECT;
   const callerDisplayName = isConnect ? 'Novu Connect' : 'Novu Wizard';
   const signedInEmail = user?.primaryEmailAddress?.emailAddress;
 
   const apiKey = apiKeysQuery.data?.data?.[0]?.key;
 
   const developmentEnvironment = useMemo(() => environments?.find((env) => env.name === 'Development'), [environments]);
+
+  useEffect(() => {
+    telemetry(TelemetryEvent.CLI_AUTH_PAGE_VIEWED, {
+      callerName: callerName ?? 'unknown',
+      isConnect,
+      onboardingSessionId,
+    });
+  }, [callerName, isConnect, onboardingSessionId, telemetry]);
 
   useEffect(() => {
     if (developmentEnvironment && currentEnvironment?._id !== developmentEnvironment._id) {
@@ -109,6 +135,11 @@ function CliAuthContent() {
 
       clearPendingCliAuth();
       setDidAuthorize(true);
+      telemetry(TelemetryEvent.CLI_AUTH_APPROVED, {
+        callerName: callerName ?? 'unknown',
+        isConnect,
+        onboardingSessionId,
+      });
       showSuccessToast('Novu CLI authorized. You can return to your terminal.');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unable to approve CLI authorization';
@@ -116,14 +147,20 @@ function CliAuthContent() {
     } finally {
       setIsAuthorizing(false);
     }
-  }, [deviceCodeOk, deviceCode, apiKey, currentEnvironment]);
+  }, [deviceCodeOk, deviceCode, apiKey, currentEnvironment, callerName, isConnect, onboardingSessionId, telemetry]);
 
   function handleCancel() {
+    telemetry(TelemetryEvent.CLI_AUTH_DENIED, {
+      callerName: callerName ?? 'unknown',
+      isConnect,
+      onboardingSessionId,
+      reason: 'cancelled',
+    });
     navigate(buildRoute(ROUTES.WORKFLOWS, { environmentSlug: currentEnvironment?.slug ?? 'default' }));
   }
 
   const handleSignOut = useCallback(async () => {
-    const fallbackUrl = buildAfterSignOutUrl();
+    const fallbackUrl = ROUTES.SIGN_IN;
 
     try {
       await clerk.signOut({ redirectUrl: fallbackUrl });
@@ -134,21 +171,21 @@ function CliAuthContent() {
     }
   }, [clerk]);
 
-  const isLoading = apiKeysQuery.isLoading || !currentEnvironment;
+  const isAuthorizeDataLoading = areEnvironmentsInitialLoading || apiKeysQuery.isLoading || !currentEnvironment;
 
   const reason = (() => {
     if (!deviceCodeOk) return 'This page must be opened from the Novu CLI.';
     if (!isConnect && !isLlmGatewayEnabled) {
       return `${callerDisplayName} is not enabled for your account yet.`;
     }
+    if (isAuthorizeDataLoading) return null;
     if (!canReadApiKeys) return 'You need the api_key:read permission to authorize the CLI.';
-    if (isLoading) return null;
     if (!apiKey) return 'No API key is available in this environment.';
 
     return null;
   })();
 
-  const canAuthorize = !reason && !isLoading && !!apiKey && !isAuthorizing && !didAuthorize;
+  const canAuthorize = !reason && !isAuthorizeDataLoading && !!apiKey && !isAuthorizing && !didAuthorize;
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -175,7 +212,7 @@ function CliAuthContent() {
     <div className="flex min-h-screen w-full items-center justify-center px-4 py-8">
       <div className="w-full max-w-[400px] rounded-lg border-[1.5px] border-black/[0.04] bg-gradient-to-b from-white/50 to-white/[0.15] px-6 py-8 shadow-sm backdrop-blur-sm">
         <div className="mx-auto flex w-full max-w-[350px] flex-col items-center gap-6">
-          <CliAuthHeader isConnect={isConnect} callerDisplayName={callerDisplayName} />
+          <CliAuthHeader callerDisplayName={callerDisplayName} />
 
           <div className="flex w-full flex-col items-center gap-3">
             <h1 className="text-label-sm text-text-strong text-center font-medium tracking-[-0.084px]">
@@ -191,7 +228,13 @@ function CliAuthContent() {
               <RiLockLine className="mt-0.5 size-4 shrink-0" />
               <span>{reason}</span>
             </div>
-          ) : null}
+          ) : (
+            <div className="text-text-sub w-full rounded-lg border border-stroke-soft bg-neutral-alpha-50 p-3 text-label-xs">
+              {isConnect
+                ? 'New here? Finish sign-up and create your organization first — you will return here to authorize the CLI. Keep your terminal open while you complete this step.'
+                : 'Keep your terminal open while you authorize. If you just signed up, create or select an organization first — you will return here afterward.'}
+            </div>
+          )}
 
           <AnimatePresence mode="wait" initial={false}>
             {didAuthorize ? (
@@ -242,8 +285,8 @@ function CliAuthContent() {
                     className="flex-1"
                     trailingIcon={RiArrowRightSLine}
                     onClick={handleAuthorize}
-                    disabled={!!reason || isLoading || !apiKey || isAuthorizing}
-                    isLoading={isAuthorizing || isLoading}
+                    disabled={!!reason || isAuthorizeDataLoading || !apiKey || isAuthorizing}
+                    isLoading={isAuthorizing || isAuthorizeDataLoading}
                   >
                     Authorize
                   </Button>
@@ -272,17 +315,7 @@ function CliAuthContent() {
   );
 }
 
-function CliAuthHeader({
-  isConnect,
-  callerDisplayName,
-}: {
-  isConnect: boolean;
-  callerDisplayName: string;
-}) {
-  if (isConnect) {
-    return <ConnectBrandLogo />;
-  }
-
+function CliAuthHeader({ callerDisplayName }: { callerDisplayName: string }) {
   return (
     <div className="flex items-center gap-2">
       <RiCommandLine className="text-text-sub size-8" />

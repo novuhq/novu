@@ -1,5 +1,5 @@
 import { HttpStatus } from '@nestjs/common';
-import { IntegrationRepository } from '@novu/dal';
+import { EnvironmentRepository, IntegrationRepository } from '@novu/dal';
 import { ChannelTypeEnum, ChatProviderIdEnum, EmailProviderIdEnum, PushProviderIdEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
@@ -7,6 +7,7 @@ import { expect } from 'chai';
 describe('Delete Integration - /integration/:integrationId (DELETE) #novu-v2', () => {
   let session: UserSession;
   const integrationRepository = new IntegrationRepository();
+  const envRepository = new EnvironmentRepository();
 
   beforeEach(async () => {
     session = new UserSession();
@@ -269,5 +270,61 @@ describe('Delete Integration - /integration/:integrationId (DELETE) #novu-v2', (
     )[0];
 
     expect(deletedIntegration.deleted).to.equal(true);
+  });
+
+  describe('API key authentication is scoped to the key environment', () => {
+    it('should forbid deleting an integration that lives in a different environment when authenticated via API key', async () => {
+      const prodEnv = await envRepository.findOne({ name: 'Production', _organizationId: session.organization._id });
+      expect(prodEnv?._id, 'Expected Production environment fixture').to.exist;
+
+      const otherEnvironmentIntegration = await integrationRepository.create({
+        name: 'OtherEnvDelete',
+        identifier: 'other-env-delete-api-key',
+        providerId: EmailProviderIdEnum.SendGrid,
+        channel: ChannelTypeEnum.EMAIL,
+        active: false,
+        _organizationId: session.organization._id,
+        _environmentId: prodEnv!._id,
+      });
+
+      const { body } = await session.testAgent
+        .delete(`/v1/integrations/${otherEnvironmentIntegration._id}`)
+        .set('authorization', `ApiKey ${session.apiKey}`)
+        .send();
+
+      expect(body.statusCode).to.equal(403);
+      expect(body.message).to.contain('is scoped to a single environment');
+
+      const untouched = await integrationRepository.findOne({
+        _id: otherEnvironmentIntegration._id,
+        _environmentId: prodEnv!._id,
+      });
+      expect(untouched?._id).to.equal(otherEnvironmentIntegration._id);
+    });
+
+    it('should still allow JWT-authenticated requests to delete integrations in another environment', async () => {
+      const prodEnv = await envRepository.findOne({ name: 'Production', _organizationId: session.organization._id });
+      expect(prodEnv?._id, 'Expected Production environment fixture').to.exist;
+
+      const otherEnvironmentIntegration = await integrationRepository.create({
+        name: 'OtherEnvDeleteJwt',
+        identifier: 'other-env-delete-jwt',
+        providerId: EmailProviderIdEnum.SendGrid,
+        channel: ChannelTypeEnum.EMAIL,
+        active: false,
+        _organizationId: session.organization._id,
+        _environmentId: prodEnv!._id,
+      });
+
+      const res = await session.testAgent.delete(`/v1/integrations/${otherEnvironmentIntegration._id}`).send();
+
+      expect(res.status).to.equal(HttpStatus.OK);
+
+      const isDeleted = !(await integrationRepository.findOne({
+        _id: otherEnvironmentIntegration._id,
+        _environmentId: prodEnv!._id,
+      }));
+      expect(isDeleted).to.equal(true);
+    });
   });
 });

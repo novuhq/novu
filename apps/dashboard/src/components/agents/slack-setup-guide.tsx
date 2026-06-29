@@ -15,7 +15,7 @@ import { CodeBlock } from '@/components/primitives/code-block';
 import { InlineToast } from '@/components/primitives/inline-toast';
 import { Input } from '@/components/primitives/input';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
-import { API_HOSTNAME } from '@/config';
+import { getAgentApiBaseUrl } from '@/config';
 import { useAuth } from '@/context/auth/hooks';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
@@ -31,6 +31,7 @@ import {
   SetupButton,
   SetupModeToggle,
   SetupStep,
+  SetupStepperRail,
 } from './setup-guide-primitives';
 import { deriveStepStatus, hasIntegrationCredentials } from './setup-guide-step-utils';
 
@@ -43,23 +44,20 @@ export type SlackSetupGuideProps = {
   onStepsCompleted?: () => void;
   /** Integrations tab: same content without Overview chrome */
   embedded?: boolean;
+  onWelcomeSent?: () => void;
 };
 
 function escapeYamlDoubleQuoted(value: string): string {
   return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 }
 
-function getApiBaseUrl(): string {
-  return (API_HOSTNAME ?? 'https://api.novu.co').replace(/\/$/, '');
-}
-
 function buildAgentSlackWebhookUrl(agentId: string, integrationIdentifier: string): string {
-  return `${getApiBaseUrl()}/v1/agents/${agentId}/webhook/${integrationIdentifier}`;
+  return `${getAgentApiBaseUrl()}/v1/agents/${agentId}/webhook/${integrationIdentifier}`;
 }
 
 /** Same as API `CHAT_OAUTH_CALLBACK_PATH`: Slack OAuth redirect after connect. */
 function buildChatOAuthCallbackUrl(): string {
-  return `${getApiBaseUrl()}/v1/integrations/chat/oauth/callback`;
+  return `${getAgentApiBaseUrl()}/v1/integrations/chat/oauth/callback`;
 }
 
 /**
@@ -254,6 +252,7 @@ export function SlackSetupGuide({
   stepOffset = 1,
   onStepsCompleted,
   embedded = false,
+  onWelcomeSent,
 }: SlackSetupGuideProps) {
   const { currentUser, isUserLoaded } = useAuth();
   const { subscriberId: connectSubscriberId, isReady: isConnectSubscriberReady } = useConnectSubscriber();
@@ -262,6 +261,12 @@ export function SlackSetupGuide({
   const isQuickSetupEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_SLACK_QUICK_SETUP_ENABLED, false);
   const [isCredentialsSidebarOpen, setIsCredentialsSidebarOpen] = useState(false);
   const [credentialsSavedLocally, setCredentialsSavedLocally] = useState(false);
+  // Installing the app (OAuth) completes the install step but is NOT the same as
+  // being connected — connection happens only when the user sends their first
+  // real message (which the backend records as `connectedAt`). Keeping these
+  // separate stops the install step from silently completing "Send your first
+  // message" and finishing onboarding prematurely.
+  const [isSlackAppInstalled, setIsSlackAppInstalled] = useState(false);
   const [isSlackWorkspaceConnected, setIsSlackWorkspaceConnected] = useState(false);
   const [showManifest, setShowManifest] = useState(false);
   const [setupMode, setSetupMode] = useState<SetupMode>('quick');
@@ -269,6 +274,7 @@ export function SlackSetupGuide({
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: reset when the watched Slack integration changes
   useEffect(() => {
+    setIsSlackAppInstalled(false);
     setIsSlackWorkspaceConnected(false);
     setCredentialsSavedLocally(false);
   }, [integrationId]);
@@ -292,11 +298,16 @@ export function SlackSetupGuide({
   const selectedIntegrationIdentifier = selectedIntegration?.identifier ?? '';
 
   const handleSlackOAuthSuccess = useCallback(() => {
-    handleSlackWorkspaceConnected();
+    // OAuth success means the app is installed — it does NOT mean a user has
+    // messaged the agent yet. Only advance the install step; the workspace is
+    // marked connected (and onboarding completes) once the first real inbound
+    // message arrives, detected via `ListeningStatus` below.
+    setIsSlackAppInstalled(true);
 
     if (currentEnvironment && selectedIntegrationIdentifier) {
       sendAgentWelcomeMessage(currentEnvironment, agent.identifier, selectedIntegrationIdentifier)
         .then((res) => {
+          onWelcomeSent?.();
           if (res.conversationId) {
             setSearchParams((prev) => {
               prev.set('onboardingConversationId', res.conversationId as string);
@@ -309,13 +320,7 @@ export function SlackSetupGuide({
           console.warn('Failed to send agent welcome message after Slack OAuth:', err);
         });
     }
-  }, [
-    handleSlackWorkspaceConnected,
-    currentEnvironment,
-    agent.identifier,
-    selectedIntegrationIdentifier,
-    setSearchParams,
-  ]);
+  }, [currentEnvironment, agent.identifier, selectedIntegrationIdentifier, setSearchParams, onWelcomeSent]);
   const hasCredentials = hasIntegrationCredentials(selectedIntegration?.credentials);
   const isCredentialsSaved = hasCredentials || credentialsSavedLocally;
 
@@ -338,8 +343,18 @@ export function SlackSetupGuide({
       return base;
     }
 
-    return activeSetupMode === 'quick' ? base + 1 : base + 2;
-  }, [base, isCredentialsSaved, isSlackWorkspaceConnected, activeSetupMode]);
+    if (activeSetupMode === 'quick') {
+      // quick: base = create app, base + 1 = install, base + 2 = send first message.
+      // Installing completes the install step but leaves "Send your first message"
+      // as the current step until a real message lands.
+      return isSlackAppInstalled ? base + 2 : base + 1;
+    }
+
+    // manual: base = create app, base + 1 = paste credentials, base + 2 = install.
+    // There is no separate "send your first message" step, so installing completes
+    // the column.
+    return isSlackAppInstalled ? base + 3 : base + 2;
+  }, [base, isCredentialsSaved, isSlackWorkspaceConnected, isSlackAppInstalled, activeSetupMode]);
 
   const modeSwitcher = isQuickSetupEnabled ? (
     <div className="pl-6">
@@ -373,7 +388,7 @@ export function SlackSetupGuide({
     ) : null;
 
   const renderSlackInstallStepRightContent = (completePrerequisiteStepIndex: number) => (
-    <div className="flex min-w-0 flex-col gap-3">
+    <div className="flex min-w-0 flex-col gap-3 w-full">
       {isCredentialsSaved && slackInstallConnectControl ? (
         slackInstallConnectControl
       ) : (
@@ -403,7 +418,7 @@ export function SlackSetupGuide({
           </span>
         }
         rightContent={
-          <div className="flex min-w-0 flex-col gap-3">
+          <div className="flex min-w-0 flex-col gap-3 w-full">
             <SetupButton href="https://api.slack.com/apps">Slack App Configuration Token</SetupButton>
             {!isCredentialsSaved ? (
               isConnectSubscriberReady && connectionIdentifier ? (
@@ -430,6 +445,7 @@ export function SlackSetupGuide({
       <SetupStep
         index={base + 1}
         status={deriveStepStatus(base + 1, firstIncompleteStep)}
+        dimmed={!isCredentialsSaved}
         title="Verify by installing the app to your workspace"
         description="This is what your users need to do to install the slack app to their workspace to start interacting with it."
         rightContent={renderSlackInstallStepRightContent(base)}
@@ -438,6 +454,7 @@ export function SlackSetupGuide({
       <SetupStep
         index={base + 2}
         status={deriveStepStatus(base + 2, firstIncompleteStep)}
+        dimmed={!isCredentialsSaved}
         title="Send your first message"
         description={
           <span>
@@ -511,22 +528,18 @@ export function SlackSetupGuide({
       watchedIntegrationId={integrationId}
       onConnected={handleSlackWorkspaceConnected}
       connectedMessage="Your Slack workspace is connected — check your DMs for a welcome message from the bot!"
-      listeningMessage="Install the app to your Slack workspace to continue."
+      listeningMessage={
+        isSlackAppInstalled
+          ? `Send a message to ${agent.name} in your Slack workspace to finish connecting.`
+          : 'Install the app to your Slack workspace to continue.'
+      }
     />
   );
 
   if (embedded) {
     return (
       <div className="flex flex-col gap-0">
-        <div className={cn('relative flex flex-col gap-10 py-6 pb-3 pl-8 pr-3 md:pr-6')}>
-          <div
-            className="absolute bottom-0 left-[22px] top-0 w-px"
-            style={{
-              background: 'linear-gradient(to bottom, transparent 0%, #E1E4EA 10%, #E1E4EA 90%, transparent 100%)',
-            }}
-          />
-          {stepsColumn}
-        </div>
+        <SetupStepperRail className="py-6 pb-3 pr-3 md:pr-6">{stepsColumn}</SetupStepperRail>
         <div className="pl-8">{listening}</div>
         <IntegrationCredentialsSidebar
           integrationId={integrationId}
@@ -541,8 +554,8 @@ export function SlackSetupGuide({
 
   return (
     <>
-      {stepsColumn}
-      {listening}
+      <SetupStepperRail>{stepsColumn}</SetupStepperRail>
+      <div className="pl-8">{listening}</div>
       <IntegrationCredentialsSidebar
         integrationId={integrationId}
         isOpen={isCredentialsSidebarOpen}

@@ -6,8 +6,7 @@ import { GenerationStatus, type GenerationStep } from './generation-status';
 
 const PROMPT_MAX_LENGTH = 2000;
 
-const DEFAULT_PLACEHOLDER =
-  'Review every new pull request for security issues, then post a concise risk summary as a PR comment';
+const DEFAULT_PLACEHOLDER = 'Describe your product or the agent you want to connect';
 
 type PromptInputProps = {
   value: string;

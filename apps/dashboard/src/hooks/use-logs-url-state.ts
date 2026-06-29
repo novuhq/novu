@@ -1,5 +1,5 @@
 import { useOrganization } from '@clerk/react';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { getPersistedPageSize, usePersistedPageSize } from '@/hooks/use-persisted-page-size';
@@ -12,6 +12,7 @@ export interface LogsFilters {
   transactionId: string;
   urlPattern: string;
   createdGte: string; // Timestamp string for creation time filter, defaults to calculated timestamp based on max available range
+  source: string; // Request origin filter ('http' | 'inbound_email'); empty means all sources
 }
 
 export interface LogsUrlState {
@@ -29,7 +30,11 @@ export interface LogsUrlState {
   hasActiveFilters: boolean;
 }
 
-export function useLogsUrlState(): LogsUrlState {
+type UseLogsUrlStateOptions = {
+  isSourceFilterEnabled?: boolean;
+};
+
+export function useLogsUrlState({ isSourceFilterEnabled = true }: UseLogsUrlStateOptions = {}): LogsUrlState {
   const [searchParams, setSearchParams] = useSearchParams();
   const { organization } = useOrganization();
   const { subscription } = useFetchSubscription();
@@ -110,6 +115,7 @@ export function useLogsUrlState(): LogsUrlState {
       transactionId: searchParams.get('transactionId') || '',
       urlPattern: searchParams.get('urlPattern') || '',
       createdGte: searchParams.get('createdGte') || maxAvailableLogsDateRange, // Default to max available for user's tier
+      source: searchParams.get('source') || '',
     }),
     [searchParams, maxAvailableLogsDateRange]
   );
@@ -122,6 +128,7 @@ export function useLogsUrlState(): LogsUrlState {
         prev.delete('transactionId');
         prev.delete('urlPattern');
         prev.delete('createdGte');
+        prev.delete('source');
 
         // Set new filter params
         if (newFilters.status.length > 0) {
@@ -142,6 +149,10 @@ export function useLogsUrlState(): LogsUrlState {
           prev.set('urlPattern', newFilters.urlPattern);
         }
 
+        if (newFilters.source?.trim()) {
+          prev.set('source', newFilters.source);
+        }
+
         // Reset to first page when filters change
         prev.delete('page');
 
@@ -157,19 +168,33 @@ export function useLogsUrlState(): LogsUrlState {
       prev.delete('transactionId');
       prev.delete('urlPattern');
       prev.delete('createdGte'); // Remove from URL so it uses default date range
+      prev.delete('source');
       prev.delete('page');
       return prev;
     });
   }, [setSearchParams]);
+
+  useEffect(() => {
+    if (isSourceFilterEnabled || filters.source.trim() === '') {
+      return;
+    }
+
+    setSearchParams((prev) => {
+      prev.delete('source');
+
+      return prev;
+    });
+  }, [isSourceFilterEnabled, filters.source, setSearchParams]);
 
   const hasActiveFilters = useMemo(() => {
     return (
       filters.status.length > 0 ||
       filters.transactionId.trim() !== '' ||
       filters.createdGte !== maxAvailableLogsDateRange ||
-      filters.urlPattern.trim() !== ''
+      filters.urlPattern.trim() !== '' ||
+      (isSourceFilterEnabled && filters.source.trim() !== '')
     );
-  }, [filters, maxAvailableLogsDateRange]);
+  }, [filters, maxAvailableLogsDateRange, isSourceFilterEnabled]);
 
   return useMemo(
     () => ({

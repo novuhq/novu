@@ -1,6 +1,7 @@
-import { Injectable, ServiceUnavailableException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { FeatureFlagsService } from '@novu/application-generic';
-import { FeatureFlagsKeysEnum, PreferenceLevelEnum, WorkflowCriticalityEnum } from '@novu/shared';
+import { PreferenceLevelEnum, WorkflowCriticalityEnum } from '@novu/shared';
+import { assertGetPreferencesEnabled } from '../../utils/assert-get-preferences-enabled';
 import {
   GetSubscriberGlobalPreference,
   GetSubscriberGlobalPreferenceCommand,
@@ -17,16 +18,7 @@ export class GetPreferencesByLevel {
   ) {}
 
   async execute(command: GetPreferencesByLevelCommand) {
-    const isGetPreferencesDisabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_GET_PREFERENCES_DISABLED,
-      defaultValue: false,
-      organization: { _id: command.organizationId },
-      environment: { _id: command.environmentId },
-    });
-
-    if (isGetPreferencesDisabled) {
-      throw new ServiceUnavailableException('Get preferences service is currently unavailable');
-    }
+    await assertGetPreferencesEnabled(this.featureFlagsService, command.organizationId, command.environmentId);
 
     if (command.level === PreferenceLevelEnum.GLOBAL) {
       const globalPreferenceCommand = GetSubscriberGlobalPreferenceCommand.create({

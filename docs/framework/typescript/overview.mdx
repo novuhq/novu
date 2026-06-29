@@ -1,0 +1,57 @@
+---
+title: 'Overview'
+description: "Learn how to use Novu's TypeScript SDK to build type-safe notification workflows with advanced features like payload validation and step controls."
+---
+
+Although you can trigger Novu workflows from any programming language using our Rest API SDKs.
+
+We believe that the best way to build your notification strategy is to treat your templates and workflows as your Notification Design System.
+Building reusable components to be consumed and embedded by your non-technical peers in any combination.
+
+Typescript SDKs enable the creation of stunning channel content like E-mails using modern technologies like React/Vue/etc...
+Treating your emails as a front-end concern opens up a world of possibilities to reuse design tokens, components, and even entire templates across your applications for consistent branding and a cohesive user experience.
+
+Novu Framework was built and optimized with extreme focus on Developer Experience.
+Our `@novu/framework` SDK is written in Typescript, and we recommend using Typescript for your own projects as well.
+
+## Type-safe workflow payloads
+
+When defining a [workflow payload](/framework/payload) schema, our SDK will automatically infer it to a Typescript interface.
+
+```tsx
+import { workflow } from '@novu/framework';
+
+const myWorkflow = workflow(
+  'new-signup',
+  async ({ step, payload }) => {
+    await step.email('send-email', () => {
+      return {
+        subject: 'Hello World',
+        // The payload object here is type-safe
+        body: `Hi ${payload.name}, welcome to our platform!`,
+      };
+    });
+  },
+  {
+    payloadSchema: { properties: { name: { type: 'string' } } },
+  }
+);
+```
+
+## Type safe steps
+
+Similarly, when defining a [step](/framework/typescript/steps) schema, our SDK will automatically infer it to a Typescript interface.
+
+## Step controls
+
+Build and define type safe controls to expose no-code editing capabilities to your teammates.
+
+## Explore the SDK
+
+- [Client](/framework/typescript/client)
+- [Workflow](/framework/typescript/workflow)
+- [Steps](/framework/typescript/steps)
+
+<Note>
+  The `@novu/framework` SDK is compatible with Node.js version 20.0.0 and above.
+</Note>

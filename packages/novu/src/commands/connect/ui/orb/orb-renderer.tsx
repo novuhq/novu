@@ -9,33 +9,36 @@ export function PersistentOrb({
   tintColor,
   label,
   previewMorphProgress,
+  paused = false,
 }: {
   tintColor: string;
   label: string | undefined;
   previewMorphProgress: number | null;
+  /** When true, freeze the orb so URL lines beneath it are not redrawn every frame. */
+  paused?: boolean;
 }): React.ReactElement {
   const [frame, setFrame] = React.useState(0);
   const [elapsedMs, setElapsedMs] = React.useState(0);
   const bornAtRef = React.useRef(Date.now());
 
   React.useEffect(() => {
+    if (paused) return;
+
     const t = setInterval(() => {
       setFrame((f) => f + 1);
       setElapsedMs(Date.now() - bornAtRef.current);
     }, ORB_FRAME_MS);
 
     return () => clearInterval(t);
-  }, []);
+  }, [paused]);
 
   const entryProgress = Math.min(1, elapsedMs / ENTRY_MS);
   // Ease-out cubic — fast start, gentle landing. Plays nicer than linear
   // and avoids the "snap to full size" feel of ease-in.
-  const scale = 1 - Math.pow(1 - entryProgress, 3);
+  const scale = 1 - (1 - entryProgress) ** 3;
   const morphProgress = previewMorphProgress ?? 1;
 
-  return (
-    <Orb phase={frame} scale={scale} tintColor={tintColor} label={label} morphProgress={morphProgress} />
-  );
+  return <Orb phase={frame} scale={scale} tintColor={tintColor} label={label} morphProgress={morphProgress} />;
 }
 
 // ---------------------------------------------------------------------------
@@ -226,7 +229,7 @@ function samplePixel(
 
     // Tight specular — small bright cluster of dots tracking the light
     // direction, sells the "smooth glass sphere" feel.
-    const spec = Math.pow(lambert, 12) * (0.35 + morphRipple * 0.3);
+    const spec = lambert ** 12 * (0.35 + morphRipple * 0.3);
 
     // A hair of ambient so the unlit side still occasionally lights up a
     // pixel through the dither — keeps the terminator alive.

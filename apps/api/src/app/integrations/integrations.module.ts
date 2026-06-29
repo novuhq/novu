@@ -1,19 +1,23 @@
 import { forwardRef, Module } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
 import {
+  analyticsService,
   CalculateLimitNovuIntegration,
   ChannelFactory,
   CompileTemplate,
+  CreateOrUpdateSubscriberUseCase,
   GetNovuProviderCredentials,
   MsTeamsTokenService,
+  UpdateSubscriber,
+  UpdateSubscriberChannel,
 } from '@novu/application-generic';
-import { CommunityOrganizationRepository, CommunityUserRepository } from '@novu/dal';
-import { TelegramMobileLinkTokenService } from '../agents/services/telegram-mobile-link-token.service';
+import { CommunityOrganizationRepository, CommunityUserRepository, IntegrationRepository } from '@novu/dal';
 import { AuthModule } from '../auth/auth.module';
 import { ChannelConnectionsModule } from '../channel-connections/channel-connections.module';
 import { ChannelEndpointsModule } from '../channel-endpoints/channel-endpoints.module';
 import { SharedModule } from '../shared/shared.module';
+import { TelegramLinkingModule } from '../telegram-linking/telegram-linking.module';
 import { IntegrationsController } from './integrations.controller';
+import { IntegrationsMobileConfigurePublicController } from './integrations-mobile-configure-public.controller';
 import { IntegrationsPublicController } from './integrations-public.controller';
 import { USE_CASES } from './usecases';
 
@@ -31,20 +35,19 @@ const PROVIDERS = [
     forwardRef(() => AuthModule),
     ChannelConnectionsModule,
     ChannelEndpointsModule,
-    // Local JwtModule mirroring AgentsModule's registration. Importing AgentsModule
-    // here would form a cycle (IntegrationModule → AgentsModule → EventsModule →
-    // IntegrationModule) that needs forwardRef on every edge; registering the
-    // token service locally is simpler and safe since it is stateless and the
-    // JTI cache is shared via Redis.
-    JwtModule.register({ secret: process.env.JWT_SECRET }),
+    TelegramLinkingModule,
   ],
-  controllers: [IntegrationsController, IntegrationsPublicController],
+  controllers: [IntegrationsController, IntegrationsPublicController, IntegrationsMobileConfigurePublicController],
   providers: [
     ...USE_CASES,
     CommunityOrganizationRepository,
     CommunityUserRepository,
-    TelegramMobileLinkTokenService,
+    IntegrationRepository,
     ...PROVIDERS,
+    analyticsService,
+    CreateOrUpdateSubscriberUseCase,
+    UpdateSubscriber,
+    UpdateSubscriberChannel,
   ],
   exports: [...USE_CASES],
 })

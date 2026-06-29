@@ -1,14 +1,16 @@
 import {
   AgentRuntimeProviderIdEnum,
-  FeatureFlagsKeysEnum,
+  filterDemoConfigurableMcpIds,
   type IIntegration,
   IntegrationKindEnum,
+  isProviderManagedMcp,
   slugify,
 } from '@novu/shared';
 import { useQueryClient } from '@tanstack/react-query';
+import { AnimatePresence, motion } from 'motion/react';
 import type { FormEvent } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { RiArrowRightSLine, RiArrowRightUpLine, RiCloseLine } from 'react-icons/ri';
+import { RiArrowRightSLine, RiArrowRightUpLine, RiCloseLine, RiLoopLeftLine } from 'react-icons/ri';
 import type { GeneratedManagedAgent } from '@/api/agents';
 import { BroomSparkle } from '@/components/icons/broom-sparkle';
 import { Button } from '@/components/primitives/button';
@@ -21,8 +23,8 @@ import {
 } from '@/components/primitives/segmented-control';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useAgentSuggestions } from '@/hooks/use-agent-suggestions';
 import { useCreateIntegration } from '@/hooks/use-create-integration';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { GenerationCancelledError, useGenerateManagedAgent } from '@/hooks/use-generate-managed-agent';
 import { useManagedClaudeCredentialsFlow } from '@/hooks/use-managed-claude-credentials-flow';
@@ -42,14 +44,15 @@ import {
   ConnectorIntegrationDropdown,
   type ConnectorIntegrationStatus,
 } from './connectors/connector-integration-dropdown';
+import { useManagedAgentRuntimeEnabled } from '@/hooks/use-managed-agent-runtime-enabled';
 import {
   type ConnectorId,
   type ConnectorOption,
   getConnectorById,
   getConnectorIdForProviderId,
+  pickInitialConnector,
 } from './connectors/connector-options';
 import {
-  AGENT_TEMPLATES,
   type AgentTemplate,
   buildManagedIntegrationCredentials,
   buildVerifyCredentialsPayload,
@@ -78,9 +81,9 @@ type CreateAgentDialogProps = {
   isSubmitting: boolean;
   initialName?: string;
   initialInstructions?: string;
+  /** When provided, the dialog opens in prompt mode with the textarea prefilled. */
+  initialPrompt?: string;
 };
-
-const DEFAULT_CONNECTOR_ID: ConnectorId = 'claude';
 
 /**
  * Mirrors the onboarding step's `AgentGenerationMode` so the dialog reuses the same prompt /
@@ -129,6 +132,21 @@ function dropdownStatusFor(verify: VerifyStatus, hasIntegration: boolean): Conne
   return 'idle';
 }
 
+function resolveInitialGenerationMode({
+  initialName,
+  initialInstructions,
+  initialPrompt,
+}: {
+  initialName?: string;
+  initialInstructions?: string;
+  initialPrompt?: string;
+}): AgentGenerationMode {
+  if (initialPrompt) return 'prompt';
+  if (initialName || initialInstructions) return 'manual';
+
+  return 'prompt';
+}
+
 export function CreateAgentDialog({
   open,
   onOpenChange,
@@ -136,24 +154,30 @@ export function CreateAgentDialog({
   isSubmitting,
   initialName,
   initialInstructions,
+  initialPrompt,
 }: CreateAgentDialogProps) {
-  const isManagedEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_MANAGED_AGENT_RUNTIME_ENABLED, false);
+  const isManagedEnabled = useManagedAgentRuntimeEnabled();
   const { currentEnvironment } = useEnvironment();
   const queryClient = useQueryClient();
   const { integrations } = useFetchIntegrations();
+  const {
+    templates: agentTemplates,
+    isFetching: isFetchingAgentTemplates,
+    refresh: refreshAgentTemplates,
+  } = useAgentSuggestions();
   const verifyMutation = useVerifyManagedCredentials();
   const { mutateAsync: createIntegration, isPending: isSavingIntegration } = useCreateIntegration();
 
-  const [connectorId, setConnectorId] = useState<ConnectorId>(DEFAULT_CONNECTOR_ID);
+  const [connectorId, setConnectorId] = useState<ConnectorId>(() => pickInitialConnector(isManagedEnabled));
   const [selectedIntegrationId, setSelectedIntegrationId] = useState<string | undefined>(undefined);
   const [credentialsPanelVisible, setCredentialsPanelVisible] = useState(false);
   const [credentialsPanelExpanded, setCredentialsPanelExpanded] = useState(true);
-  // If the caller pre-populated a name or instructions, default to manual mode so the form is
-  // already filled out. Otherwise show the prompt textarea by default.
+  // A caller-provided prompt opens in prompt mode; a pre-populated name/instructions defaults to
+  // manual mode so the form is already filled out. Otherwise show the prompt textarea by default.
   const [generationMode, setGenerationMode] = useState<AgentGenerationMode>(() =>
-    initialName || initialInstructions ? 'manual' : 'prompt'
+    resolveInitialGenerationMode({ initialName, initialInstructions, initialPrompt })
   );
-  const [prompt, setPrompt] = useState('');
+  const [prompt, setPrompt] = useState(initialPrompt ?? '');
   const [promptError, setPromptError] = useState<string | undefined>(undefined);
   const promptTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   // Keeps the dialog in a busy state for the whole submit lifecycle — across the LLM call (prompt
@@ -183,6 +207,7 @@ export function CreateAgentDialog({
   const [externalEnvironmentId, setExternalEnvironmentId] = useState('');
   const [errors, setErrors] = useState<CreateAgentFormErrors>({});
   const [isIdentifierTouched, setIsIdentifierTouched] = useState(false);
+  const [isIntegrationNameTouched, setIsIntegrationNameTouched] = useState(false);
   // Brief confirmation badge that flashes in the dropdown trigger right after a successful save.
   const [showSavedBadge, setShowSavedBadge] = useState(false);
   const savedBadgeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -207,20 +232,20 @@ export function CreateAgentDialog({
   // teams writing their own runtime see exactly the inputs they need to fill in.
   const useAiGeneration = isManagedClaudeConnector && isManagedEnabled;
   const isDemoProviderSelected = isDemoManagedClaudeIntegrationSelected(integrations, selectedIntegrationId);
+  // The demo (Novu-managed Claude) integration exposes no provider vault, so provider-managed MCPs
+  // can never be configured on it. Drop them from the suggestion pills so the demo only advertises
+  // tools the user can actually wire up; the API enforces the same filter at provision time.
+  const displayedAgentTemplates = useMemo(() => {
+    if (!isDemoProviderSelected) return agentTemplates;
+
+    return agentTemplates.map((template) => ({
+      ...template,
+      suggestedMcpServers: filterDemoConfigurableMcpIds(template.suggestedMcpServers),
+      mcpServers: template.mcpServers?.filter((server) => !isProviderManagedMcp(server.id)),
+    }));
+  }, [agentTemplates, isDemoProviderSelected]);
   const scope: 'create' | 'existing' = generationMode === 'existing' ? 'existing' : 'create';
   const showScopeTabs = isManagedClaudeConnector && !isDemoProviderSelected;
-  const showManagedOptions = isManagedEnabled;
-
-  // Hide managed connectors when the feature flag is off — the dropdown still lists them visually,
-  // but selecting a managed connector should be impossible. We achieve this by short-circuiting to
-  // 'custom-scaffold' when managed is disabled.
-  useEffect(() => {
-    if (!open) return;
-    if (showManagedOptions) return;
-    if (selectedConnector?.runtime !== 'claude') return;
-
-    setConnectorId('custom-scaffold');
-  }, [open, showManagedOptions, selectedConnector?.runtime]);
 
   const matchingAnthropicIntegrations = useMemo(() => {
     if (!selectedConnector?.providerId) return [];
@@ -267,7 +292,7 @@ export function CreateAgentDialog({
       return;
     }
 
-    if (preferAnyManagedIntegrationRef.current) {
+    if (preferAnyManagedIntegrationRef.current && isManagedEnabled) {
       const preferred = getPreferredClaudeManagedIntegration(integrations);
       if (preferred) {
         const connectorForPreferred = getConnectorIdForProviderId(preferred.providerId);
@@ -293,12 +318,13 @@ export function CreateAgentDialog({
     selectedIntegrationId,
     credentialsPanelVisible,
     integrations,
+    isManagedEnabled,
   ]);
 
   // Default integration name = "<Provider> <next-index>"
   useEffect(() => {
     if (!credentialsPanelVisible || !selectedConnector?.providerLabel) return;
-    if (integrationName.trim()) return;
+    if (isIntegrationNameTouched || integrationName.trim()) return;
 
     const nextIndex = matchingAnthropicIntegrations.length + 1;
     setIntegrationName(`${selectedConnector.providerLabel} ${nextIndex}`);
@@ -307,6 +333,7 @@ export function CreateAgentDialog({
     selectedConnector?.providerLabel,
     matchingAnthropicIntegrations.length,
     integrationName,
+    isIntegrationNameTouched,
   ]);
 
   useEffect(() => {
@@ -317,13 +344,13 @@ export function CreateAgentDialog({
     setInstructions(initialInstructions ?? '');
     setIsIdentifierTouched(false);
     setErrors({});
-    setGenerationMode(initialName || initialInstructions ? 'manual' : 'prompt');
-    setPrompt('');
+    setGenerationMode(resolveInitialGenerationMode({ initialName, initialInstructions, initialPrompt }));
+    setPrompt(initialPrompt ?? '');
     setPromptError(undefined);
-  }, [open, initialName, initialInstructions]);
+  }, [open, initialName, initialInstructions, initialPrompt]);
 
   const reset = useCallback(() => {
-    setConnectorId(DEFAULT_CONNECTOR_ID);
+    setConnectorId(pickInitialConnector(isManagedEnabled));
     setSelectedIntegrationId(undefined);
     setCredentialsPanelVisible(false);
     setCredentialsPanelExpanded(true);
@@ -336,6 +363,7 @@ export function CreateAgentDialog({
     setInstructions('');
     resetCredentials();
     setIntegrationName('');
+    setIsIntegrationNameTouched(false);
     setExternalAgentId('');
     setExternalEnvironmentId('');
     setErrors({});
@@ -347,7 +375,7 @@ export function CreateAgentDialog({
       clearTimeout(savedBadgeTimerRef.current);
       savedBadgeTimerRef.current = null;
     }
-  }, [resetCredentials]);
+  }, [resetCredentials, isManagedEnabled]);
 
   const prevOpenRef = useRef(open);
 
@@ -455,7 +483,7 @@ export function CreateAgentDialog({
     setCredentialsPanelVisible(true);
     setCredentialsPanelExpanded(true);
 
-    if (option.providerLabel && !integrationName.trim()) {
+    if (option.providerLabel && !isIntegrationNameTouched && !integrationName.trim()) {
       const nextIndex = getClaudeManagedAgentIntegrations(integrations, option.providerId).length + 1;
       setIntegrationName(`${option.providerLabel} ${nextIndex}`);
     }
@@ -483,8 +511,10 @@ export function CreateAgentDialog({
       },
       onError: (err) => {
         if (lastVerifiedKeyRef.current !== verifyKey) return;
+        const message = err instanceof Error ? err.message : 'Invalid';
         setVerifyStatus('invalid');
-        setVerifyMessage(err instanceof Error ? err.message : 'Invalid');
+        setVerifyMessage(message);
+        showErrorToast(`Verification failed: ${message}`, 'Verification failed');
       },
     });
   };
@@ -526,7 +556,6 @@ export function CreateAgentDialog({
       setCredentialsPanelVisible(true);
       setCredentialsPanelExpanded(false);
       setSelectedIntegrationId(integration._id);
-      resetCredentials();
       setShowSavedBadge(true);
       if (savedBadgeTimerRef.current) clearTimeout(savedBadgeTimerRef.current);
       savedBadgeTimerRef.current = setTimeout(() => setShowSavedBadge(false), 2500);
@@ -547,6 +576,10 @@ export function CreateAgentDialog({
     let effectiveName = name;
     let effectiveIdentifier = identifier;
     let effectiveInstructions = instructions;
+    // In scratch mode the single textarea IS the description, so it maps to `description`. In
+    // managed manual mode that same textarea is the Claude system prompt and must NOT leak into the
+    // description. The prompt-generation path overrides this with `generated.description` below.
+    let effectiveDescription = runtime === 'scratch' ? instructions : '';
     let managedOverrides: ManagedAgentRuntimeOverrides | undefined;
 
     if (isPromptGenerationMode) {
@@ -594,6 +627,7 @@ export function CreateAgentDialog({
       effectiveName = generated.name;
       effectiveIdentifier = generated.identifier;
       effectiveInstructions = generated.systemPrompt;
+      effectiveDescription = generated.description;
       managedOverrides = {
         systemPrompt: generated.systemPrompt,
         tools: generated.tools,
@@ -604,6 +638,7 @@ export function CreateAgentDialog({
 
     const nextErrors = validateCreateAgentForm({
       name: effectiveName,
+      description: effectiveDescription,
       identifier: effectiveIdentifier,
       instructions: effectiveInstructions,
       apiKey,
@@ -637,6 +672,7 @@ export function CreateAgentDialog({
         name: effectiveName.trim(),
         identifier: effectiveIdentifier.trim(),
         instructions: effectiveInstructions.trim(),
+        description: effectiveDescription.trim(),
         apiKey: apiKey.trim(),
         runtime,
         isExistingMode,
@@ -697,8 +733,8 @@ export function CreateAgentDialog({
 
         <div className="border-stroke-soft border-y" />
 
-        <form onSubmit={handleSubmit}>
-          <div className="bg-background flex max-h-[70vh] flex-col gap-5 overflow-y-auto p-4">
+        <form onSubmit={handleSubmit} className="min-w-0">
+          <div className="bg-background flex min-w-0 max-h-[70vh] flex-col gap-5 overflow-y-auto p-4">
             <div className="flex flex-col gap-2">
               <span className="text-text-strong text-label-xs font-medium">Where do you want your agent?</span>
               <ConnectorIntegrationDropdown
@@ -725,9 +761,11 @@ export function CreateAgentDialog({
                   status={verifyStatus}
                   statusMessage={verifyMessage}
                   isSaving={isSavingIntegration}
+                  showSaveButton={!selectedIntegrationId}
                   expanded={credentialsPanelExpanded}
                   onExpandedChange={setCredentialsPanelExpanded}
                   onIntegrationNameChange={(next) => {
+                    setIsIntegrationNameTouched(true);
                     setIntegrationName(next);
                     setErrors((prev) => ({ ...prev, integrationName: undefined }));
                   }}
@@ -751,7 +789,7 @@ export function CreateAgentDialog({
                 value={scope}
                 onValueChange={(v) => handleGenerationModeChange(v === 'existing' ? 'existing' : 'prompt')}
               >
-                <SegmentedControlList className="rounded-[5px] bg-bg-muted p-px">
+                <SegmentedControlList className="rounded-[5px] bg-bg-muted p-1" floatingBgClassName="rounded-[1px]">
                   <SegmentedControlTrigger value="create" className="text-label-xs" disabled={isSubmitBusy}>
                     Create new agent
                   </SegmentedControlTrigger>
@@ -839,11 +877,39 @@ export function CreateAgentDialog({
                 </div>
 
                 {generationMode === 'prompt' && (
-                  <AgentSuggestionPills
-                    suggestions={AGENT_TEMPLATES}
-                    onSelect={handleSelectAiSuggestion}
-                    disabled={isSubmitBusy}
-                  />
+                  <div className="flex min-w-0 items-center">
+                    <AgentSuggestionPills
+                      className="min-w-0 flex-1"
+                      suggestions={displayedAgentTemplates}
+                      onSelect={handleSelectAiSuggestion}
+                      disabled={isSubmitBusy}
+                      isLoading={isFetchingAgentTemplates}
+                    />
+                    <AnimatePresence initial={false}>
+                      {!isFetchingAgentTemplates && (
+                        <motion.div
+                          key="regenerate-suggestions"
+                          initial={{ opacity: 0, maxWidth: 0, marginLeft: 0 }}
+                          animate={{ opacity: 1, maxWidth: 24, marginLeft: 8 }}
+                          exit={{ opacity: 0, maxWidth: 0, marginLeft: 0 }}
+                          transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
+                          className="shrink-0 overflow-hidden"
+                        >
+                          <Button
+                            aria-label="Regenerate suggestions"
+                            title="Regenerate suggestions"
+                            className="h-6 shrink-0 [&_svg]:size-2.5"
+                            variant="secondary"
+                            mode="ghost"
+                            size="2xs"
+                            trailingIcon={RiLoopLeftLine}
+                            disabled={isSubmitBusy}
+                            onClick={refreshAgentTemplates}
+                          />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
                 )}
               </div>
             ) : (

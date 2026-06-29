@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import {
   AnalyticsService,
+  areNovuManagedClaudeCredentialsSet,
   CreateOrUpdateSubscriberCommand,
   CreateOrUpdateSubscriberUseCase,
   encryptApiKey,
@@ -41,6 +42,7 @@ import {
   ContextPayload,
   ControlValuesLevelEnum,
   CustomDataType,
+  EnvironmentEnum,
   EnvironmentTypeEnum,
   FeatureFlagsKeysEnum,
   FeatureNameEnum,
@@ -54,12 +56,12 @@ import {
   StepTypeEnum,
 } from '@novu/shared';
 import { createHash } from 'crypto';
-import { differenceInHours } from 'date-fns';
 import { AuthService } from '../../../auth/services/auth.service';
 import { EnvironmentResponseDto } from '../../../environments-v1/dtos/environment-response.dto';
 import { GenerateUniqueApiKey } from '../../../environments-v1/usecases/generate-unique-api-key/generate-unique-api-key.usecase';
 import { CreateNovuIntegrationsCommand } from '../../../integrations/usecases/create-novu-integrations/create-novu-integrations.command';
 import { CreateNovuIntegrations } from '../../../integrations/usecases/create-novu-integrations/create-novu-integrations.usecase';
+import { KeylessAbuseGuardService } from '../../../keyless/keyless-abuse-guard.service';
 import { GetOrganizationSettingsCommand } from '../../../organization/usecases/get-organization-settings/get-organization-settings.command';
 import { GetOrganizationSettings } from '../../../organization/usecases/get-organization-settings/get-organization-settings.usecase';
 import { ScheduleDto } from '../../../shared/dtos/schedule';
@@ -73,6 +75,7 @@ import {
   KEYLESS_WORKFLOW_IDENTIFIER,
 } from '../../utils';
 import { validateContextHmacEncryption, validateHmacEncryption } from '../../utils/encryption';
+import { isKeylessEnvironmentExpired } from '../../utils/keyless-expiry';
 import { NotificationsCountCommand } from '../notifications-count/notifications-count.command';
 import { NotificationsCount } from '../notifications-count/notifications-count.usecase';
 import { UpdatePreferencesCommand } from '../update-preferences/update-preferences.command';
@@ -80,7 +83,6 @@ import { UpdatePreferences } from '../update-preferences/update-preferences.usec
 import { SessionCommand } from './session.command';
 
 const ALLOWED_ORIGINS_REGEX = new RegExp(process.env.FRONT_BASE_URL || '');
-const KEYLESS_RETENTION_TIME_IN_HOURS = parseInt(process.env.KEYLESS_RETENTION_TIME_IN_HOURS || '', 10) || 24;
 const MAX_NOTIFICATIONS_COUNT = 100;
 
 @Injectable()
@@ -110,7 +112,8 @@ export class Session {
     private logger: PinoLogger,
     private featureFlagsService: FeatureFlagsService,
     private getSubscriberSchedule: GetSubscriberSchedule,
-    private updatePreferencesUsecase: UpdatePreferences
+    private updatePreferencesUsecase: UpdatePreferences,
+    private keylessAbuseGuard: KeylessAbuseGuardService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -120,7 +123,7 @@ export class Session {
     this.validateRequestData(command.requestData);
 
     const subscriber = this.buildPlatformSubscriber(command.requestData);
-    const applicationIdentifier = await this.getApplicationIdentifier(command.requestData);
+    const applicationIdentifier = await this.getApplicationIdentifier(command.requestData, command.clientIp);
 
     const environment = await this.environmentRepository.findEnvironmentByIdentifier(applicationIdentifier);
     if (!environment) {
@@ -408,17 +411,19 @@ export class Session {
     return subscriber;
   }
 
-  private async getApplicationIdentifier(requestData: SubscriberSessionRequestDto): Promise<string> {
+  private async getApplicationIdentifier(requestData: SubscriberSessionRequestDto, clientIp?: string): Promise<string> {
     const isKeylessInitialize = !requestData.applicationIdentifier;
     const isKeyless = requestData.applicationIdentifier?.includes(this.KEYLESS_ENVIRONMENT_PREFIX);
-    const isKeylessExpired = isKeyless ? await this.isKeylessExpired(requestData.applicationIdentifier) : false;
+    const isKeylessExpired = isKeyless ? isKeylessEnvironmentExpired(requestData.applicationIdentifier) : false;
 
-    const applicationIdentifier =
-      isKeylessInitialize || isKeylessExpired
-        ? (await this.processKeyless()).identifier
-        : requestData.applicationIdentifier;
+    if (isKeylessInitialize || isKeylessExpired) {
+      await this.keylessAbuseGuard.assertEnvCreationAllowed(clientIp);
+      const environment = await this.processKeyless();
 
-    return applicationIdentifier;
+      return environment.identifier;
+    }
+
+    return requestData.applicationIdentifier!;
   }
 
   private async resolveContexts(
@@ -453,41 +458,6 @@ export class Session {
     return tierLimitMs / 1000 / 60 / 60;
   }
 
-  async isKeylessExpired(applicationIdentifier: string | undefined) {
-    if (!applicationIdentifier) {
-      return true; // If no identifier is provided, consider it expired
-    }
-
-    const parts = applicationIdentifier.replace(this.KEYLESS_ENVIRONMENT_PREFIX, '').split('_');
-    if (parts.length < 1) {
-      return true; // Invalid format, consider expired
-    }
-
-    const createdDate = parts[0];
-
-    if (!createdDate || createdDate.length < 8) {
-      // Ensure we have at least 4 bytes (8 hex chars)
-      return true; // Invalid timestamp format, consider expired
-    }
-
-    try {
-      const createdDateTimestamp = timestampHexToDate(createdDate);
-      const now = new Date();
-      const diffTimeInHours = differenceInHours(now, createdDateTimestamp);
-
-      if (diffTimeInHours > KEYLESS_RETENTION_TIME_IN_HOURS) {
-        return true;
-      }
-    } catch (error) {
-      this.logger.error({ err: error }, 'Error parsing timestamp');
-
-      // If there's any error parsing the timestamp, consider it expired
-      return true;
-    }
-
-    return false;
-  }
-
   async processKeyless(): Promise<EnvironmentResponseDto> {
     if (process.env.NOVU_ENTERPRISE !== 'true') {
       throw new BadRequestException('Keyless is not supported in community edition');
@@ -508,6 +478,24 @@ export class Session {
 
     if (!isKeylessEnabled) {
       throw new BadRequestException('Keyless environment creation is currently disabled.');
+    }
+
+    if (!areNovuManagedClaudeCredentialsSet()) {
+      throw new BadRequestException(
+        'Keyless Connect requires NOVU_MANAGED_CLAUDE_API_KEY to be configured on the API server.'
+      );
+    }
+
+    const isDemoManagedClaudeEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_DEMO_MANAGED_CLAUDE_ENABLED,
+      defaultValue: false,
+      organization,
+    });
+
+    if (!isDemoManagedClaudeEnabled) {
+      throw new BadRequestException(
+        'Keyless Connect requires the IS_DEMO_MANAGED_CLAUDE_ENABLED feature flag to be enabled on the API server.'
+      );
     }
 
     const user = await this.communityUserRepository.findByEmail(process.env.KEYLESS_USER_EMAIL!);
@@ -541,8 +529,10 @@ export class Session {
         environmentId: environment._id,
         organizationId: environment._organizationId,
         userId: user._id,
-        name: 'Keyless Integration',
-        channels: [ChannelTypeEnum.IN_APP],
+        name: EnvironmentEnum.DEVELOPMENT,
+        channels: [ChannelTypeEnum.IN_APP, ChannelTypeEnum.EMAIL],
+        includeManagedClaude: true,
+        environmentType: EnvironmentTypeEnum.DEV,
       })
     );
 
@@ -871,19 +861,4 @@ export class Session {
 
     return dto;
   }
-}
-
-function timestampHexToDate(timestampHex) {
-  if (!timestampHex || typeof timestampHex !== 'string' || timestampHex.length < 8) {
-    throw new Error('Invalid timestamp hex format');
-  }
-
-  const buffer = Buffer.from(timestampHex, 'hex');
-  if (buffer.length < 4) {
-    throw new Error('Buffer too small to read 32-bit integer');
-  }
-
-  const timestamp = buffer.readUInt32BE(0);
-
-  return new Date(timestamp * 1000);
 }

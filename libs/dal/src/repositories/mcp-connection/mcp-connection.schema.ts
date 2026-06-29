@@ -1,3 +1,4 @@
+import { MCP_TOKEN_ENDPOINT_AUTH_METHODS } from '@novu/shared';
 import mongoose, { Schema } from 'mongoose';
 
 import { schemaOptions } from '../schema-default.options';
@@ -83,6 +84,18 @@ const oauthStateSchema = new Schema({
     type: Schema.Types.String,
     required: false,
   },
+  connectCardMessageId: {
+    type: Schema.Types.String,
+    required: false,
+  },
+  connectCardPlatform: {
+    type: Schema.Types.String,
+    required: false,
+  },
+  connectCardThreadId: {
+    type: Schema.Types.String,
+    required: false,
+  },
 });
 
 const oauthClientSchema = new Schema(
@@ -125,6 +138,15 @@ const oauthClientSchema = new Schema(
     },
     scopesGranted: {
       type: [Schema.Types.String],
+      required: false,
+    },
+    tokenEndpointAuthMethod: {
+      type: Schema.Types.String,
+      required: false,
+      enum: MCP_TOKEN_ENDPOINT_AUTH_METHODS,
+    },
+    redirectUri: {
+      type: Schema.Types.String,
       required: false,
     },
     registeredAt: {
@@ -231,7 +253,7 @@ const mcpConnectionSchema = new Schema<McpConnectionDBModel>(
     authMode: {
       type: Schema.Types.String,
       required: true,
-      enum: ['dcr', 'novu-app', 'user-app'],
+      enum: ['dcr', 'novu-app', 'user-app', 'provider-managed'],
     },
     status: {
       type: Schema.Types.String,

@@ -1,6 +1,5 @@
+import { CLI_DEVICE_SESSION_NAME_NOVU_CONNECT } from '@novu/shared';
 import open from 'open';
-import { resolveAuth } from '../../wizard/auth/resolve-auth';
-import type { ResolvedAuth, WizardCommandOptions } from '../../wizard/types';
 import { CONNECT_EVENTS } from '../analytics/events';
 import {
   type AgentRecord,
@@ -10,23 +9,36 @@ import {
   sendAgentWelcomeMessage,
 } from '../api/agents';
 import { type ConnectApiClient, createConnectApiClient, NovuApiError } from '../api/client';
-import { type IntegrationRecord, deleteIntegration } from '../api/integrations';
+import { deleteIntegration, type IntegrationRecord } from '../api/integrations';
 import { upsertSubscriber } from '../api/subscribers';
-import { buildConnectAgentDetailsUrl, channelDisplayName } from '../dashboard-urls';
-import type { AgentSummary, ChannelChoice, ConnectCommandOptions } from '../types';
+import { type ResolvedConnectAuth, resolveConnectAuth, resolveConnectAuthMethod } from '../auth/resolve-connect-auth';
+import { type ConnectSession, upgradeKeylessSessionToDashboardAuth } from '../auth/upgrade-keyless-session';
+import { buildConnectAgentDetailsUrl, buildConnectClaimUrl, channelDisplayName } from '../dashboard-urls';
+import { ConnectChannelBackError } from '../errors';
+import { shouldUpgradeFromKeylessGenerateLimit } from '../keyless-limit-errors';
+import type {
+  AgentConnectMode,
+  AgentSummary,
+  ChannelChoice,
+  ChatSdkConnectOutcome,
+  ConnectCommandOptions,
+  CustomCodeConnectOutcome,
+} from '../types';
+import { isBridgeConnectMode, isCustomCodeScaffoldMode } from '../types';
 import type { ConnectUI } from '../ui/ui';
 import { connectEmailForAgent } from './channels/email';
 import { connectSlackForAgent } from './channels/slack';
 import { connectTelegramForAgent } from './channels/telegram';
-import {
-  resolveAgentRuntimeIntegration,
-  resolveRuntimeFromOptions,
-} from './resolve-agent-runtime-integration';
+import { createBridgeAgentFlow, runChatSdkProjectSetup, shutdownConnectUiAndMaybeRunChatSdkTunnel } from './chat-sdk';
+import { runCustomCodeProjectSetup } from './custom-code';
+import { resolveAgentRuntimeIntegration, resolveRuntimeFromOptions } from './resolve-agent-runtime-integration';
 
 export interface ConnectPipelineInput {
   options: ConnectCommandOptions;
   ui: ConnectUI;
+  onboardingSessionId?: string;
   onTrack?: (event: string, data?: Record<string, unknown>) => void;
+  onIdentityResolved?: (user: NonNullable<ResolvedConnectAuth['user']>) => void;
 }
 
 export interface ConnectPipelineResult {
@@ -34,46 +46,155 @@ export interface ConnectPipelineResult {
 }
 
 export async function runConnectPipeline(input: ConnectPipelineInput): Promise<ConnectPipelineResult> {
-  const { options, ui, onTrack } = input;
+  const { options, ui, onTrack, onboardingSessionId } = input;
   const track = onTrack ?? (() => undefined);
+  const authMethod = resolveConnectAuthMethod(options);
+  const sessionProps = {
+    ...(onboardingSessionId ? { onboardingSessionId } : {}),
+    authMethod,
+    ci: !!options.ci,
+    keyless: !!options.keyless,
+    hasPrompt: !!options.prompt,
+    channel: options.channel ?? (options.skipSlack ? 'skip' : undefined),
+  };
 
   try {
     await ui.showWelcome();
 
+    track(CONNECT_EVENTS.PIPELINE_STARTED, sessionProps);
+
     ui.authStarted();
-    const auth = await resolveAuth(toWizardAuthOptions(options), {
+    const auth = await resolveConnectAuth(options, {
       onStatus: (m) => ui.authStatus(m),
       onDashboardUrl: (u) => ui.authDashboardUrl(u),
-      name: 'novu-connect',
+      name: CLI_DEVICE_SESSION_NAME_NOVU_CONNECT,
       authDashboardUrl: options.connectDashboardUrl,
+      onboardingSessionId,
+      onAuthStarted: () => track(CONNECT_EVENTS.AUTH_STARTED, sessionProps),
+      onAuthFailed: (message) => track(CONNECT_EVENTS.AUTH_FAILED, { ...sessionProps, message }),
     });
-    track(CONNECT_EVENTS.AUTH_COMPLETED, { source: auth.source, region: options.region });
+    track(CONNECT_EVENTS.AUTH_COMPLETED, {
+      source: auth.source,
+      region: options.region,
+      keyless: auth.isKeyless,
+      ...sessionProps,
+    });
     ui.authCompleted(auth.environmentName ?? null);
 
-    const client = createConnectApiClient({ apiUrl: auth.apiUrl, secretKey: auth.secretKey });
+    if (auth.user?.id) {
+      input.onIdentityResolved?.(auth.user);
+    }
+
+    const session: ConnectSession = {
+      auth,
+      client: auth.isKeyless
+        ? createConnectApiClient({
+            apiUrl: auth.apiUrl,
+            keylessApplicationIdentifier: auth.keylessApplicationIdentifier,
+          })
+        : createConnectApiClient({
+            apiUrl: auth.apiUrl,
+            secretKey: auth.secretKey,
+          }),
+    };
 
     ui.listingAgents();
-    const existingAgents = await listAgents(client);
-    track(CONNECT_EVENTS.AGENT_LISTED, { count: existingAgents.length });
+    const existingAgents = await listAgents(session.client);
+    track(CONNECT_EVENTS.AGENT_LISTED, {
+      count: existingAgents.length,
+      ...sessionProps,
+    });
+
+    const connectMode = await resolveAgentConnectMode(options, ui, track, sessionProps);
+
+    if (isBridgeConnectMode(connectMode) && session.auth.isKeyless) {
+      track(CONNECT_EVENTS.KEYLESS_LIMIT_AUTH_UPGRADE_STARTED, sessionProps);
+      await upgradeKeylessSessionToDashboardAuth(session, options, ui, {
+        onboardingSessionId,
+        onAuthStarted: () =>
+          track(CONNECT_EVENTS.AUTH_STARTED, {
+            ...sessionProps,
+            source: 'bridge_agent_upgrade',
+          }),
+        onAuthFailed: (message) =>
+          track(CONNECT_EVENTS.AUTH_FAILED, {
+            ...sessionProps,
+            source: 'bridge_agent_upgrade',
+            message,
+          }),
+      });
+      track(CONNECT_EVENTS.AUTH_COMPLETED, {
+        source: 'bridge_agent_upgrade',
+        region: options.region,
+        keyless: false,
+        ...sessionProps,
+      });
+      if (session.auth.user?.id) {
+        input.onIdentityResolved?.(session.auth.user);
+      }
+    }
 
     let agent: AgentSummary;
     let flow: 'created' | 'reused';
+    let chatSdkOutcome: ChatSdkConnectOutcome | undefined;
+    let customCodeOutcome: CustomCodeConnectOutcome | undefined;
 
-    if (existingAgents.length > 0 && !options.prompt) {
+    if (isBridgeConnectMode(connectMode)) {
+      const bridgeResult = await createBridgeAgentFlow(session.client, ui, options);
+      agent = bridgeResult.agent;
+      flow = bridgeResult.flow;
+      track(CONNECT_EVENTS.AGENT_CREATED, {
+        identifier: agent.identifier,
+        connectMode,
+        flow,
+        ...sessionProps,
+      });
+    } else if (existingAgents.length > 0 && !options.prompt) {
       const pick = await ui.pickExistingOrCreate(existingAgents.map(toSummary));
       if (pick.action === 'use') {
         agent = pick.agent;
         flow = 'reused';
-        track(CONNECT_EVENTS.AGENT_REUSED, { identifier: agent.identifier });
+        track(CONNECT_EVENTS.AGENT_REUSED, {
+          identifier: agent.identifier,
+          ...sessionProps,
+        });
       } else {
-        agent = await createAgentFlow(client, ui, options, auth.environmentId);
+        agent = await createAgentFlow(
+          session,
+          ui,
+          options,
+          track,
+          sessionProps,
+          onboardingSessionId,
+          {
+            onIdentityResolved: input.onIdentityResolved,
+          },
+          connectMode
+        );
         flow = 'created';
-        track(CONNECT_EVENTS.AGENT_CREATED, { identifier: agent.identifier });
+        track(CONNECT_EVENTS.AGENT_CREATED, {
+          identifier: agent.identifier,
+          ...sessionProps,
+        });
       }
     } else {
-      agent = await createAgentFlow(client, ui, options, auth.environmentId);
+      agent = await createAgentFlow(
+        session,
+        ui,
+        options,
+        track,
+        sessionProps,
+        onboardingSessionId,
+        {
+          onIdentityResolved: input.onIdentityResolved,
+        },
+        connectMode
+      );
       flow = 'created';
-      track(CONNECT_EVENTS.AGENT_CREATED, { identifier: agent.identifier });
+      track(CONNECT_EVENTS.AGENT_CREATED, {
+        identifier: agent.identifier,
+        ...sessionProps,
+      });
     }
 
     ui.agentCreated(agent);
@@ -83,122 +204,260 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
     let dashboardRedirectChannel: ChannelChoice | null = null;
     let connectedIntegration: IntegrationRecord | null = null;
 
-    const channel: ChannelChoice = options.skipSlack ? 'skip' : (options.channel ?? (await ui.pickChannel()));
+    const isChannelPreset = Boolean(options.skipSlack || options.channel);
+    const allowChannelPickerBack = !isChannelPreset;
+    const presetChannel: ChannelChoice | undefined = options.skipSlack ? 'skip' : options.channel;
+    let channel: ChannelChoice = presetChannel ?? 'skip';
 
-    switch (channel) {
-      case 'skip':
-        ui.slackSkipped();
-        break;
-      case 'slack': {
-        const subscriberId = await ensureSubscriberForUser(client, auth);
-        const result = await connectSlackForAgent(
-          client,
-          agent,
-          ui,
-          options,
-          auth.environmentId,
-          subscriberId,
-          track
-        );
-        connectedIntegration = result.integration;
-        channelConnected = result.connected;
-        if (channelConnected) connectedChannel = 'slack';
-        break;
+    while (true) {
+      if (!isChannelPreset) {
+        channel = await ui.pickChannel();
       }
-      case 'telegram': {
-        const subscriberId = await ensureSubscriberForUser(client, auth);
-        const result = await connectTelegramForAgent(
-          client,
-          agent,
-          ui,
-          auth.environmentId,
-          subscriberId,
-          track
-        );
-        connectedIntegration = result.integration;
-        channelConnected = result.connected;
-        if (channelConnected) connectedChannel = 'telegram';
-        break;
-      }
-      case 'email': {
-        const result = await connectEmailForAgent(client, agent, ui, track);
-        connectedIntegration = result.integration;
-        channelConnected = result.connected;
-        if (channelConnected) connectedChannel = 'email';
-        break;
-      }
-      case 'whatsapp':
-      case 'teams': {
-        const agentDetailsUrl = buildConnectAgentDetailsUrl({
-          connectDashboardUrl: options.connectDashboardUrl,
-          environmentSlug: auth.environmentSlug,
-          agentIdentifier: agent.identifier,
-          tab: 'integrations',
-        });
 
-        await ui.awaitDashboardChannelOpen({ channel, agentDetailsUrl });
-        void open(agentDetailsUrl).catch(() => undefined);
-        dashboardRedirectChannel = channel;
-        break;
+      if (channel === 'skip') {
+        track(CONNECT_EVENTS.CHANNEL_SKIPPED, sessionProps);
+      } else {
+        track(CONNECT_EVENTS.CHANNEL_SELECTED, { channel, ...sessionProps });
       }
-      default:
-        throw new Error(`${channelDisplayName(channel)} is not supported in the connect CLI yet.`);
+
+      try {
+        switch (channel) {
+          case 'skip':
+            ui.slackSkipped();
+            break;
+          case 'slack': {
+            const subscriberId = await ensureSubscriberForUser(session.client, session.auth);
+            const result = await connectSlackForAgent(
+              session.client,
+              agent,
+              ui,
+              options,
+              session.auth.environmentId,
+              subscriberId,
+              track
+            );
+            connectedIntegration = result.integration;
+            channelConnected = result.connected;
+            if (channelConnected) connectedChannel = 'slack';
+            break;
+          }
+          case 'telegram': {
+            const subscriberId = await ensureSubscriberForUser(session.client, session.auth);
+            const result = await connectTelegramForAgent(
+              session.client,
+              agent,
+              ui,
+              options,
+              session.auth.environmentId,
+              subscriberId,
+              track
+            );
+            connectedIntegration = result.integration;
+            channelConnected = result.connected;
+            if (channelConnected) connectedChannel = 'telegram';
+            break;
+          }
+          case 'email': {
+            await ensureSubscriberForUser(session.client, session.auth);
+            const sendFromEmail = session.auth.user?.email?.trim() || undefined;
+            const result = await connectEmailForAgent(session.client, agent, ui, track, {
+              sendFromEmail,
+              canGoBack: allowChannelPickerBack,
+            });
+            connectedIntegration = result.integration;
+            channelConnected = result.connected;
+            if (channelConnected) connectedChannel = 'email';
+            break;
+          }
+          case 'whatsapp':
+          case 'teams': {
+            const agentDetailsUrl = buildConnectAgentDetailsUrl({
+              connectDashboardUrl: options.connectDashboardUrl,
+              environmentSlug: session.auth.environmentSlug,
+              agentIdentifier: agent.identifier,
+              tab: 'integrations',
+            });
+
+            track(CONNECT_EVENTS.DASHBOARD_REDIRECT_OPENED, {
+              channel,
+              agent: agent.identifier,
+              ...sessionProps,
+            });
+
+            await ui.awaitDashboardChannelOpen({ channel, agentDetailsUrl });
+            void open(agentDetailsUrl).catch(() => undefined);
+            dashboardRedirectChannel = channel;
+            break;
+          }
+          default:
+            throw new Error(`${channelDisplayName(channel)} is not supported in the connect CLI yet.`);
+        }
+
+        break;
+      } catch (err) {
+        if (err instanceof ConnectChannelBackError && allowChannelPickerBack) {
+          continue;
+        }
+
+        throw err;
+      }
     }
+
+    let claimToken: string | null = null;
 
     if (channelConnected && connectedIntegration) {
       ui.sendingWelcome();
       try {
-        await sendAgentWelcomeMessage(client, agent.identifier, connectedIntegration.identifier);
-        track(CONNECT_EVENTS.WELCOME_SENT, { agent: agent.identifier });
+        const welcome = await sendAgentWelcomeMessage(
+          session.client,
+          agent.identifier,
+          connectedIntegration.identifier
+        );
+        claimToken = welcome.claimToken ?? null;
+        track(CONNECT_EVENTS.WELCOME_SENT, {
+          agent: agent.identifier,
+          ...sessionProps,
+        });
       } catch (err) {
         ui.failure(`Could not send the welcome message: ${describeError(err)}`);
       }
     }
 
+    const claimUrl =
+      session.auth.isKeyless && claimToken
+        ? buildConnectClaimUrl({
+            connectDashboardUrl: options.connectDashboardUrl.replace(/\/$/, ''),
+            token: claimToken,
+          })
+        : null;
+
+    if (connectMode === 'chat-sdk') {
+      chatSdkOutcome = await runChatSdkProjectSetup({
+        options,
+        ui,
+        auth: session.auth,
+        agent,
+      });
+    } else if (isCustomCodeScaffoldMode(connectMode)) {
+      customCodeOutcome = await runCustomCodeProjectSetup({
+        options,
+        ui,
+        auth: session.auth,
+        agent,
+      });
+    }
+
     ui.success({
       agent,
-      dashboardUrl: auth.dashboardUrl.replace(/\/$/, ''),
+      dashboardUrl: session.auth.dashboardUrl.replace(/\/$/, ''),
       connectDashboardUrl: options.connectDashboardUrl.replace(/\/$/, ''),
-      environmentSlug: auth.environmentSlug ?? null,
+      environmentSlug: session.auth.environmentSlug ?? null,
       connectedChannel,
       dashboardRedirectChannel,
+      isKeyless: session.auth.isKeyless,
+      claimUrl,
+      connectMode,
+      chatSdkOutcome,
+      customCodeOutcome,
     });
 
-    track(CONNECT_EVENTS.COMPLETED, { flow, channel: connectedChannel ?? channel });
+    track(CONNECT_EVENTS.COMPLETED, {
+      flow,
+      channel: connectedChannel ?? channel,
+      dashboardRedirectChannel,
+      setupComplete: channelConnected,
+      source: 'cli',
+      connectMode,
+      ...sessionProps,
+    });
 
-    const exitCode = await ui.shutdown();
-
-    return { exitCode };
+    // Tear down Ink before starting the bridge server so its stdout/console
+    // output does not trigger a second orb render while the TUI is still mounted.
+    return {
+      exitCode: await shutdownConnectUiAndMaybeRunChatSdkTunnel({
+        ui,
+        outcome: chatSdkOutcome,
+        ci: options.ci,
+      }),
+    };
   } catch (err) {
     const message = describeError(err);
     ui.failure(message);
-    track(CONNECT_EVENTS.ERROR, { message });
-    const exitCode = await ui.shutdown();
+    track(CONNECT_EVENTS.ERROR, { message, ...sessionProps });
 
-    return { exitCode: exitCode || 1 };
+    return { exitCode: (await ui.shutdown()) || 1 };
   }
 }
 
+async function resolveAgentConnectMode(
+  options: ConnectCommandOptions,
+  ui: ConnectUI,
+  track: (event: string, data?: Record<string, unknown>) => void,
+  sessionProps: Record<string, unknown>
+): Promise<AgentConnectMode> {
+  if (options.runtime) {
+    track(CONNECT_EVENTS.RUNTIME_SELECTED, {
+      connectMode: options.runtime,
+      ...sessionProps,
+    });
+
+    return options.runtime;
+  }
+
+  const picked = await ui.pickAgentConnectMode({
+    preselected: options.runtime,
+  });
+  track(CONNECT_EVENTS.RUNTIME_SELECTED, {
+    connectMode: picked,
+    ...sessionProps,
+  });
+
+  return picked;
+}
+
 async function createAgentFlow(
-  client: ConnectApiClient,
+  session: ConnectSession,
   ui: ConnectUI,
   options: ConnectCommandOptions,
-  environmentId: string
+  track: (event: string, data?: Record<string, unknown>) => void,
+  sessionProps: Record<string, unknown>,
+  onboardingSessionId?: string,
+  callbacks?: {
+    onIdentityResolved?: (user: NonNullable<ResolvedConnectAuth['user']>) => void;
+  },
+  connectMode?: AgentConnectMode
 ): Promise<AgentSummary> {
   const runtime =
+    (connectMode && !isBridgeConnectMode(connectMode) ? connectMode : undefined) ??
     resolveRuntimeFromOptions(options) ??
-    (await ui.pickAgentRuntime({ preselected: options.runtime ?? 'demo' }));
+    'demo';
+
+  if (resolveRuntimeFromOptions(options) || connectMode) {
+    track(CONNECT_EVENTS.RUNTIME_SELECTED, { runtime, ...sessionProps });
+  }
 
   ui.loadingIntegrations();
-  const resolved = await resolveAgentRuntimeIntegration(client, ui, options, runtime, environmentId);
+  let resolved = await resolveAgentRuntimeIntegration(session.client, ui, options, runtime, session.auth.environmentId);
 
   const prompt = await ui.promptForDescription(options.prompt);
-  let generated = await generateAndPreviewAgent(client, ui, prompt.trim());
+  const generated = await generateAndPreviewAgent(
+    session,
+    ui,
+    options,
+    prompt.trim(),
+    track,
+    sessionProps,
+    onboardingSessionId,
+    callbacks,
+    async () => {
+      resolved = await resolveAgentRuntimeIntegration(session.client, ui, options, runtime, session.auth.environmentId);
+    }
+  );
 
   ui.creatingAgent(generated.name);
 
   try {
-    const created = await createManagedAgent(client, {
+    const created = await createManagedAgent(session.client, {
       name: generated.name,
       identifier: generated.identifier,
       integrationId: resolved.integrationId,
@@ -213,7 +472,7 @@ async function createAgentFlow(
   } catch (err) {
     if (resolved.createdInThisFlow) {
       try {
-        await deleteIntegration(client, resolved.integrationId);
+        await deleteIntegration(session.client, resolved.integrationId);
       } catch {
         // Best-effort cleanup.
       }
@@ -223,10 +482,74 @@ async function createAgentFlow(
   }
 }
 
-async function generateAndPreviewAgent(
-  client: ConnectApiClient,
+async function withKeylessGenerateLimitFallback<T>(
+  session: ConnectSession,
+  options: ConnectCommandOptions,
   ui: ConnectUI,
-  initialPrompt: string
+  onboardingSessionId: string | undefined,
+  track: (event: string, data?: Record<string, unknown>) => void,
+  sessionProps: Record<string, unknown>,
+  callbacks:
+    | {
+        onIdentityResolved?: (user: NonNullable<ResolvedConnectAuth['user']>) => void;
+      }
+    | undefined,
+  onUpgraded: () => Promise<void>,
+  run: () => Promise<T>
+): Promise<T> {
+  try {
+    return await run();
+  } catch (err) {
+    if (!shouldUpgradeFromKeylessGenerateLimit(err, session.client, options)) {
+      throw err;
+    }
+
+    track(CONNECT_EVENTS.KEYLESS_LIMIT_AUTH_UPGRADE_STARTED, sessionProps);
+
+    await upgradeKeylessSessionToDashboardAuth(session, options, ui, {
+      onboardingSessionId,
+      onAuthStarted: () =>
+        track(CONNECT_EVENTS.AUTH_STARTED, {
+          ...sessionProps,
+          source: 'keyless_limit_upgrade',
+        }),
+      onAuthFailed: (message) =>
+        track(CONNECT_EVENTS.AUTH_FAILED, {
+          ...sessionProps,
+          source: 'keyless_limit_upgrade',
+          message,
+        }),
+    });
+
+    track(CONNECT_EVENTS.AUTH_COMPLETED, {
+      source: 'keyless_limit_upgrade',
+      region: options.region,
+      keyless: false,
+      ...sessionProps,
+    });
+
+    if (session.auth.user?.id) {
+      callbacks?.onIdentityResolved?.(session.auth.user);
+    }
+
+    await onUpgraded();
+
+    return run();
+  }
+}
+
+async function generateAndPreviewAgent(
+  session: ConnectSession,
+  ui: ConnectUI,
+  options: ConnectCommandOptions,
+  initialPrompt: string,
+  track: (event: string, data?: Record<string, unknown>) => void,
+  sessionProps: Record<string, unknown>,
+  onboardingSessionId?: string,
+  callbacks?: {
+    onIdentityResolved?: (user: NonNullable<ResolvedConnectAuth['user']>) => void;
+  },
+  onSessionUpgraded?: () => Promise<void>
 ): Promise<Awaited<ReturnType<typeof generateAgent>>> {
   let prompt = initialPrompt;
 
@@ -236,7 +559,25 @@ async function generateAndPreviewAgent(
     }
 
     ui.generatingAgent();
-    const generated = await generateAgent(client, prompt.trim());
+
+    const generated = await withKeylessGenerateLimitFallback(
+      session,
+      options,
+      ui,
+      onboardingSessionId,
+      track,
+      sessionProps,
+      callbacks,
+      onSessionUpgraded ?? (async () => undefined),
+      () => generateAgent(session.client, prompt.trim())
+    );
+    track(CONNECT_EVENTS.AGENT_PROMPT_GENERATED, {
+      promptLength: prompt.trim().length,
+      toolsCount: generated.tools.length,
+      mcpsCount: generated.mcpServers.length,
+      skillsCount: generated.skills.length,
+      ...sessionProps,
+    });
     const result = await ui.previewGeneratedAgent(generated);
 
     if (result.action === 'confirm') {
@@ -247,7 +588,7 @@ async function generateAndPreviewAgent(
   }
 }
 
-async function ensureSubscriberForUser(client: ConnectApiClient, auth: ResolvedAuth): Promise<string> {
+async function ensureSubscriberForUser(client: ConnectApiClient, auth: ResolvedConnectAuth): Promise<string> {
   if (auth.user?.id) {
     const subscriberId = `connect:${auth.user.id}`;
     await upsertSubscriber(client, {
@@ -256,6 +597,13 @@ async function ensureSubscriberForUser(client: ConnectApiClient, auth: ResolvedA
       lastName: auth.user.lastName ?? undefined,
       email: auth.user.email ?? undefined,
     });
+
+    return subscriberId;
+  }
+
+  if (auth.isKeyless && auth.keylessApplicationIdentifier) {
+    const subscriberId = `connect-keyless:${auth.keylessApplicationIdentifier}`;
+    await upsertSubscriber(client, { subscriberId });
 
     return subscriberId;
   }
@@ -279,15 +627,4 @@ function describeError(err: unknown): string {
   if (err instanceof Error) return err.message;
 
   return String(err);
-}
-
-function toWizardAuthOptions(options: ConnectCommandOptions): WizardCommandOptions {
-  return {
-    secretKey: options.secretKey,
-    apiUrl: options.apiUrl,
-    dashboardUrl: options.dashboardUrl,
-    region: options.region,
-    yes: false,
-    ci: !!options.ci,
-  };
 }

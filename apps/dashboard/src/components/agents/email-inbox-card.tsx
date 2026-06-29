@@ -3,8 +3,8 @@ import { type ReactNode, useMemo, useRef, useState } from 'react';
 import { RiAddLine, RiCloseLine, RiInformation2Line } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
 import type { AgentIntegrationEmbedded, AgentResponse } from '@/api/agents';
+import { CopyableEmailAddress } from '@/components/agents/copyable-email-address';
 import { CompactButton } from '@/components/primitives/button-compact';
-import { CopyButton } from '@/components/primitives/copy-button';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { Switch } from '@/components/primitives/switch';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
@@ -254,17 +254,29 @@ type InboxRowProps = {
  * Minimal row: lighter visual weight than the previous bordered/shadowed
  * pill — relies on background tint + subtle stroke for separation.
  */
-function InboxRow({ address, badge, trailing }: InboxRowProps) {
+function buildInboxRowTrailing(badge?: string, trailing?: ReactNode) {
+  if (!trailing && !badge) {
+    return undefined;
+  }
+
+  const badgeNode = badge ? (
+    <span className="text-text-soft text-[10px] font-medium uppercase leading-3 tracking-wide">{badge}</span>
+  ) : null;
+
+  if (!trailing) {
+    return badgeNode ?? undefined;
+  }
+
   return (
-    <div className="bg-bg-weak/40 hover:bg-bg-weak flex items-center gap-2 rounded-md px-2 py-1.5 transition-colors">
-      <span className="text-text-sub text-label-xs min-w-0 flex-1 truncate font-mono leading-4">{address}</span>
-      {badge ? (
-        <span className="text-text-soft text-[10px] font-medium uppercase leading-3 tracking-wide">{badge}</span>
-      ) : null}
-      <CopyButton size="2xs" valueToCopy={address} className="size-6 shrink-0 justify-center" />
+    <div className="flex items-center gap-1">
+      {badgeNode}
       {trailing}
     </div>
   );
+}
+
+function InboxRow({ address, badge, trailing }: InboxRowProps) {
+  return <CopyableEmailAddress email={address} trailing={buildInboxRowTrailing(badge, trailing)} />;
 }
 
 type SharedInboxRowProps = {
@@ -285,24 +297,23 @@ type SharedInboxRowProps = {
  * gives.
  */
 function SharedInboxRow({ address, disabled, toggleDisabled, toggleTooltip, onToggle }: SharedInboxRowProps) {
-  const rowContent = (
-    <div className="bg-bg-weak/40 hover:bg-bg-weak flex items-center gap-2 rounded-md px-2 py-1.5 transition-colors">
-      <span className="text-text-sub text-label-xs min-w-0 flex-1 truncate font-mono leading-4">{address}</span>
-      <CopyButton size="2xs" valueToCopy={address} className="size-6 shrink-0 justify-center" />
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span className="inline-flex">
-            <Switch
-              aria-label={disabled ? 'Enable the shared inbox' : 'Disable the shared inbox'}
-              checked={!disabled}
-              onCheckedChange={onToggle}
-            />
-          </span>
-        </TooltipTrigger>
-        <TooltipContent className="max-w-xs">{toggleTooltip}</TooltipContent>
-      </Tooltip>
-    </div>
+  const switchControl = (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="inline-flex">
+          <Switch
+            aria-label={disabled ? 'Enable the shared inbox' : 'Disable the shared inbox'}
+            checked={!disabled}
+            onCheckedChange={onToggle}
+            disabled={toggleDisabled}
+          />
+        </span>
+      </TooltipTrigger>
+      <TooltipContent className="max-w-xs">{toggleTooltip}</TooltipContent>
+    </Tooltip>
   );
+
+  const rowContent = <CopyableEmailAddress email={address} trailing={switchControl} />;
 
   if (!disabled) {
     return rowContent;

@@ -1,7 +1,7 @@
+import { PinoLogger } from '@novu/application-generic';
 import { EnvironmentRepository } from '@novu/dal';
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { PinoLogger } from '@novu/application-generic';
 
 import { GetMyEnvironmentsCommand } from './get-my-environments.command';
 import { GetMyEnvironments } from './get-my-environments.usecase';
@@ -30,12 +30,14 @@ describe('GetMyEnvironments', () => {
       },
     ]);
 
-    sinon.stub(getMyEnvironments as unknown as { decryptApiKeys: () => unknown }, 'decryptApiKeys').callsFake((apiKeys) =>
-      apiKeys.map((apiKey: { key: string }) => ({
-        ...apiKey,
-        key: `decrypted-${apiKey.key}`,
-      }))
-    );
+    sinon
+      .stub(getMyEnvironments as unknown as { decryptApiKeys: () => unknown }, 'decryptApiKeys')
+      .callsFake((apiKeys) =>
+        apiKeys.map((apiKey: { key: string }) => ({
+          ...apiKey,
+          key: `decrypted-${apiKey.key}`,
+        }))
+      );
   });
 
   afterEach(() => {

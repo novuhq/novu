@@ -9,7 +9,6 @@ export const ROUTES = {
   SSO_SIGN_IN: '/auth/sso',
   VERIFY_EMAIL: '/auth/verify-email',
   USECASE_SELECT: '/onboarding/usecase',
-  AGENTS_USECASE: '/onboarding/agents',
   AGENTS_SETUP: '/onboarding/agents/setup',
   INBOX_USECASE: '/onboarding/inbox',
   INBOX_EMBED: '/onboarding/inbox/embed',
@@ -17,6 +16,7 @@ export const ROUTES = {
   ROOT: '/',
   LOCAL_STUDIO_AUTH: '/local-studio/auth',
   CLI_AUTH: '/cli/auth',
+  CONNECT_CLAIM: '/connect/claim',
   ENV: '/env',
   SETTINGS: '/settings',
   SETTINGS_ACCOUNT: '/settings/account',
@@ -84,21 +84,8 @@ export const ROUTES = {
     '/env/:environmentSlug/agents/:agentIdentifier/integrations/:integrationIdentifier',
   AGENT_DETAILS_TAB: '/env/:environmentSlug/agents/:agentIdentifier/:agentTab',
   AGENT_TELEGRAM_MOBILE_SETUP: '/agents/telegram/connect/:token',
+  AGENT_SLACK_SETUP: '/agents/slack/connect/:token',
   INTEGRATION_TELEGRAM_MOBILE_SETUP: '/integrations/telegram/connect/:token',
-  CONNECT_HOME: '/env/:environmentSlug/connect',
-  CONNECT_AGENTS: '/env/:environmentSlug/connect/agents',
-  CONNECT_AGENT_DETAILS: '/env/:environmentSlug/connect/agents/:agentIdentifier',
-  /** Must be registered before CONNECT_AGENT_DETAILS_TAB so `.../integrations/:integrationIdentifier` is not parsed as a tab name. */
-  CONNECT_AGENT_DETAILS_INTEGRATIONS_DETAIL:
-    '/env/:environmentSlug/connect/agents/:agentIdentifier/integrations/:integrationIdentifier',
-  CONNECT_AGENT_DETAILS_TAB: '/env/:environmentSlug/connect/agents/:agentIdentifier/:agentTab',
-  CONNECT_CONVERSATIONS: '/env/:environmentSlug/connect/conversations',
-  CONNECT_API_KEYS: '/env/:environmentSlug/connect/api-keys',
-  CONNECT_SETTINGS: '/env/:environmentSlug/connect/settings',
-  CONNECT_SETTINGS_ACCOUNT: '/env/:environmentSlug/connect/settings/account',
-  CONNECT_SETTINGS_ORGANIZATION: '/env/:environmentSlug/connect/settings/organization',
-  CONNECT_SETTINGS_TEAM: '/env/:environmentSlug/connect/settings/team',
-  CONNECT_SETTINGS_BILLING: '/env/:environmentSlug/connect/settings/billing',
 } as const;
 
 export const AGENT_DETAILS_DEFAULT_TAB = 'overview';

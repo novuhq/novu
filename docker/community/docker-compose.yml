@@ -48,7 +48,7 @@ services:
       start_period: 20s
 
   api:
-    image: "ghcr.io/novuhq/novu/api:3.15.0"
+    image: "ghcr.io/novuhq/novu/api:3.17.0"
     depends_on:
       mongodb:
         condition: service_healthy
@@ -109,7 +109,7 @@ services:
       start_period: 40s
 
   worker:
-    image: "ghcr.io/novuhq/novu/worker:3.15.0"
+    image: "ghcr.io/novuhq/novu/worker:3.17.0"
     depends_on:
       mongodb:
         condition: service_healthy
@@ -162,7 +162,7 @@ services:
       start_period: 20s
 
   ws:
-    image: "ghcr.io/novuhq/novu/ws:3.15.0"
+    image: "ghcr.io/novuhq/novu/ws:3.17.0"
     depends_on:
       mongodb:
         condition: service_healthy
@@ -203,7 +203,7 @@ services:
       start_period: 40s
 
   dashboard:
-    image: "ghcr.io/novuhq/novu/dashboard:3.15.0"
+    image: "ghcr.io/novuhq/novu/dashboard:3.17.0"
     depends_on:
       api:
         condition: service_healthy

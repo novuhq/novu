@@ -1,5 +1,5 @@
-import { isIP } from 'node:net';
 import https from 'node:https';
+import { isIP } from 'node:net';
 import axios, { AxiosError, AxiosInstance } from 'axios';
 
 export function isLoopbackHost(url: string): boolean {
@@ -63,12 +63,13 @@ export function createNovuAxios(input: {
 export interface ApiRequestOptions {
   method?: 'GET' | 'POST';
   body?: unknown;
+  headers?: Record<string, string>;
 }
 
 export async function requestApiJson<T>(apiUrl: string, path: string, options: ApiRequestOptions = {}): Promise<T> {
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
   const url = `/v1${normalizedPath}`;
-  const client = createNovuAxios({ apiUrl });
+  const client = createNovuAxios({ apiUrl, headers: options.headers });
   const fullUrl = `${client.defaults.baseURL}${url}`;
 
   let response;
@@ -103,7 +104,9 @@ function formatApiError(status: number, body: unknown, url: string): string {
     return `Novu API endpoint not found (${url}). If you are running locally, restart the API after pulling latest changes. If you are on Novu Cloud, this CLI version may require a newer API deployment.`;
   }
 
-  return message ? `Failed to reach Novu API (${status}): ${message}` : `Failed to reach Novu API (${status}) at ${url}`;
+  return message
+    ? `Failed to reach Novu API (${status}): ${message}`
+    : `Failed to reach Novu API (${status}) at ${url}`;
 }
 
 function formatTransportError(error: unknown, url: string): string {

@@ -1,0 +1,178 @@
+---
+title: 'Steps'
+description: 'Learn about the Novu Framework step interface and its configuration options'
+---
+
+
+## Examples
+
+<Tabs>
+  <Tab title="Control Schema">
+```tsx
+await step.email('stepId', resolver, {
+  controlSchema: z.object({
+    subject: z.string(),
+    components: z.array(z.object({
+      type: z.enum(['text', 'button']),
+      content: z.string(),
+    })),
+  }),
+});
+```
+  </Tab>
+  <Tab title="Skip">
+```tsx
+await step.email('skipped-step', async () => ({
+  subject: 'Hello, world!',
+  body: 'My email message',
+}), {
+  skip: async (controls) => true,
+});
+```
+  </Tab>
+  <Tab title="Disable Output Sanitization">
+```tsx
+await step.inApp(
+  'without-sanitization',
+  async () => ({
+    body: 'My in-app message',
+    data: {
+      link: '/pipeline/123?active=true&env=prod',
+    },
+  }),
+  {
+    // Prevent the `&` character in `data.link` from
+    // being converted to `&amp;`
+    disableOutputSanitization: true,
+  }
+);
+```
+  </Tab>
+  <Tab title="Provider Overrides">
+```tsx
+await step.email('provider-override', resolver, {
+  providers: {
+    slack: ({ controls, outputs }) => {
+      return {
+        text: 'A new post has been created',
+        blocks: [{
+          type: 'section',
+          text: {
+            type: 'mrkdwn',
+            text: 'A new post has been created',
+          },
+        }],
+      };
+    }
+  }
+});
+```
+  </Tab>
+  <Tab title="Provider Passthrough">
+```tsx
+await step.email('provider-passthrough', resolver, {
+  providers: {
+    sendgrid: ({ controls, outputs }) => {
+      return {
+        _passthrough: {
+          body: {
+            ip_pool_name: 'my-ip-pool',
+          },
+          headers: {
+            'Authorization': 'Bearer my-api-key',
+          },
+          query: {
+            'queryParam': 'queryValue',
+          },
+        }
+      };
+    }
+  }
+});
+```
+  </Tab>
+</Tabs>
+
+## Channel Steps Interface
+
+All channels follow the same shared interface:
+
+### stepId
+
+- **Type**: `string`
+- **Required**: Yes
+- **Description**: This is the unique identifier for the step in the workflow context. It is used to reference and display the step in the dashboard interface.
+
+### resolver
+
+- **Type**: `Promise`
+- **Required**: Yes
+- **Description**: This is an async function that returns the content of the step which called `Outputs`. Each channel has its own output schema.
+
+### options
+
+- **Type**: `StepOptions`
+- **Description**: Additional step configuration.
+
+## Options Object
+
+This is an optional configuration object that defines: [Controls Schema](/framework/controls), [Provider Overrides](#provider-overrides), skip and other configurations.
+
+### skip
+
+- **Type**: `(controls: InferProperties<controlSchema>) => boolean | Promise<boolean>`
+- **Description**: A function that returns a boolean value to skip the step. This is helpful when you want to use previous step results or other custom logic to skip the step from executing.
+
+### controlSchema
+
+- **Type**: `JsonSchema | ZodSchema`
+- **Description**: This defined the UI Controls exposed in the dashboard for the step. They can be nested and of any JSON Schema supported structure.
+
+### providers
+
+- **Type**: `ProvidersOverride`
+- **Description**: This object used to access and override the underlying deliver providers SDKs. This is useful when you want to customize the content of the notification with properties that are unique to the provider.
+
+### disableOutputSanitization
+
+- **Type**: `boolean`
+- **Default**: `false`
+- **Description**: A flag to disable output sanitization for the step. This is useful when you want to return unescaped HTML content to the provider or the `<Inbox/>` component.
+
+## Providers Overrides Object
+
+This object used to access and override the underlying deliver providers SDKs. This is useful when you want to customize the content of the notification with properties that are unique to the provider.
+
+An example of this is the `slack` provider, which allows you to customize the content of the notification with Slack `blocks` to create a rich notification experience.
+
+```typescript
+type ProvidersOverride = {
+  [key: ProviderEnum]: ProviderCallback;
+};
+
+type ProviderCallback = (
+  params: ProviderOverridesParams
+) => ProviderOverrideOutput | Promise<ProviderOverrideOutput>;
+
+type ProviderOverridesParams = {
+  controls: StepControls;
+  output: StepOutput;
+};
+
+interface ProviderOverrideOutput {
+  // A map of the properties used by the Provider.
+  // These properties are strongly typed and validated
+  // against the underlying provider SDK.
+  [key in KnownProviderKey]: KnownProviderValue;
+  // The passthrough object is used to pass through
+  // the original request to the provider.
+  // These properties are not validated.
+  _passthrough?: {
+    body: Record<string, unknown>;
+    headers: Record<string, unknown>;
+    query: Record<string, unknown>;
+  };
+}
+```
+
+The `_passthrough` object and the known provider values are deeply merged prior to sending the request to the provider, with the `_passthrough` object taking precedence.

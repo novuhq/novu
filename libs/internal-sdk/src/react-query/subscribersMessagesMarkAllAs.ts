@@ -54,8 +54,10 @@ export type SubscribersMessagesMarkAllAsMutationError =
  * Update notifications state
  *
  * @remarks
- * Update subscriber's multiple in-app (inbox) notifications state such as seen, read, unseen or unread by **subscriberId**.
- *       **messageId** is of type mongodbId of notifications
+ * This API is deprecated, use v2 API instead. Update subscriber's multiple in-app notifications state such as seen, read, unseen or unread by **subscriberId**.
+ *       **messageId** is of type mongodbId of notifications.
+ *
+ * @deprecated method: This will be removed in a future release, please migrate away from it as soon as possible.
  */
 export function useSubscribersMessagesMarkAllAsMutation(
   options?: MutationHookOptions<

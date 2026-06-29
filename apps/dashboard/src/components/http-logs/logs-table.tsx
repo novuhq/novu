@@ -1,4 +1,5 @@
 /** biome-ignore-all lint/correctness/useUniqueElementIds: expected */
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { motion } from 'motion/react';
 import { useEffect, useMemo, useState } from 'react';
 import { ResizablePanel, ResizablePanelGroup } from '@/components/primitives/resizable';
@@ -13,6 +14,7 @@ import {
 } from '@/components/primitives/table';
 import { TablePaginationFooter } from '@/components/primitives/table-pagination-footer';
 import { UpdatedAgo } from '@/components/updated-ago';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchRequestLogs } from '@/hooks/use-fetch-request-logs';
 import { useLogsUrlState } from '@/hooks/use-logs-url-state';
 import { useTelemetry } from '@/hooks/use-telemetry';
@@ -29,6 +31,9 @@ type RequestsTableProps = {
 };
 
 export function RequestsTable({ onLogClick }: RequestsTableProps) {
+  const track = useTelemetry();
+  const isInboundLogsEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_INBOUND_LOGS_ENABLED, false);
+
   const {
     selectedLogId,
     handleLogSelect,
@@ -41,9 +46,7 @@ export function RequestsTable({ onLogClick }: RequestsTableProps) {
     currentPage,
     limit,
     filters,
-  } = useLogsUrlState();
-
-  const track = useTelemetry();
+  } = useLogsUrlState({ isSourceFilterEnabled: isInboundLogsEnabled });
 
   const {
     data: logsResponse,
@@ -56,6 +59,10 @@ export function RequestsTable({ onLogClick }: RequestsTableProps) {
     transactionId: filters.transactionId || undefined,
     urlPattern: filters.urlPattern || undefined,
     createdGte: filters.createdGte ? Number(filters.createdGte) : undefined,
+    // When inbound logs are disabled, only HTTP rows are requested so the
+    // existing experience is unchanged. When enabled, an empty source means
+    // "all sources" and a chosen value narrows the list.
+    source: isInboundLogsEnabled ? filters.source || undefined : 'http',
   });
 
   const logsData = logsResponse?.data || [];
@@ -108,6 +115,7 @@ export function RequestsTable({ onLogClick }: RequestsTableProps) {
           onFiltersChange={handleFiltersChange}
           onClearFilters={clearFilters}
           hasActiveFilters={hasActiveFilters}
+          showSourceFilter={isInboundLogsEnabled}
         />
         <UpdatedAgo lastUpdated={lastUpdated} onRefresh={handleRefresh} />
       </div>

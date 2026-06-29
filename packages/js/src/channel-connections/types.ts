@@ -108,3 +108,19 @@ export type CreateChannelEndpointArgs = {
 export type DeleteChannelEndpointArgs = {
   identifier: string;
 };
+
+/**
+ * Args for issuing a provider-specific URL the subscriber opens to link their
+ * chat identity (e.g. a Telegram `t.me` deep link). The subscriber is derived
+ * from the session token, so only the integration identifier is required.
+ */
+export type LinkChannelEndpointArgs = {
+  integrationIdentifier: string;
+};
+
+export type LinkChannelEndpointResponse = {
+  /** URL the subscriber opens to link their chat identity (deep link or OAuth URL). */
+  url: string;
+  /** Provider-specific metadata returned alongside the link URL (e.g. Telegram `botUsername`, `expiresAt`). */
+  providerMetadata?: Record<string, unknown>;
+};

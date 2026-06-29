@@ -1,0 +1,71 @@
+---
+title: "useCounts"
+description: "Learn how to use the useCounts hook to fetch notification counts in your React application"
+---
+
+
+The `useCounts` hook provides a way to fetch various notification counts, including unread, unseen, total counts, or filtered by severity. This hook is useful for displaying notification badges and indicators in your application.
+
+## Hook parameters
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `filters` | `NotificationFilter[]` | Array of filters to apply when fetching counts |
+| `onSuccess` | `(data: Count[]) => void` | Callback function called when counts are successfully fetched |
+| `onError` | `(error: NovuError) => void` | Callback function called when an error occurs |
+
+## Return value
+
+```typescript
+type Count = {
+  count: number;
+  filter: NotificationFilter;
+};
+
+type UseCountsResult = {
+  counts?: Count[];
+  error?: NovuError;
+  isLoading: boolean;
+  isFetching: boolean;
+  refetch: () => Promise<void>;
+};
+```
+
+## Example usage
+
+Here's how to use the `useCounts` hook to fetch and display various notification counts, including unread, unseen, and counts based on severity.
+
+```tsx
+import { useCounts } from "@novu/react";
+
+function BellButton() {
+  const { counts } = useCounts({ 
+    filters: [
+      { read: false }, // Unread notifications
+      { seen: false }  // Unseen notifications
+      { severity: SeverityLevelEnum.HIGH } // High severity notifications
+    ] 
+  });
+  
+  const unreadCount = counts?.[0]?.count ?? 0;
+  const unseenCount = counts?.[1]?.count ?? 0;
+  const highSeverityCount = counts?.[2]?.count ?? 0;
+
+  return (
+    <button>
+      <BellIcon />
+      {/* Example: Show a badge for high severity, otherwise show the unread count */}
+      {highSeverityCount > 0 ? (
+        <span className="badge-high-severity">{highSeverityCount}</span>
+      ) : unreadCount > 0 ? (
+        <span className="badge">{unreadCount}</span>
+      ) : null}
+    </button>
+  );
+}
+```
+
+## Real-time counts updates
+
+The counts are automatically updated in real-time when notifications state (read, seen, archived, snoozed) changes or when new notifications arrive.
+

@@ -57,7 +57,11 @@ export function slugifyAgentIdentifier(name: string): string {
   return slug.slice(0, MANAGED_AGENT_IDENTIFIER_MAX_LENGTH) || 'agent';
 }
 
-export function wrapPreviewLines(text: string, maxWidth: number, maxLines: number): { lines: string[]; truncated: boolean } {
+export function wrapPreviewLines(
+  text: string,
+  maxWidth: number,
+  maxLines: number
+): { lines: string[]; truncated: boolean } {
   const normalized = text.replace(/\s+/g, ' ').trim();
   if (!normalized) {
     return { lines: ['—'], truncated: false };

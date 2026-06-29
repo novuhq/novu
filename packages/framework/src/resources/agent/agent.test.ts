@@ -411,6 +411,66 @@ describe('agent dispatch via NovuRequestHandler', () => {
     expect(capturedCtx.history).toEqual([]);
   });
 
+  it('should expose platformContext.message and platformContext.email for email agents', async () => {
+    let capturedCtx: any;
+
+    const testBot = agent('test-bot', {
+      onMessage: async (_message, ctx) => {
+        capturedCtx = ctx;
+        await ctx.reply('ok');
+      },
+    });
+
+    const emailRaw = {
+      messageId: 'msg-1@example.com',
+      subject: 'Hello',
+      domain: { id: 'domain-1', name: 'inbox.example.com', data: { tier: 'pro' } },
+      route: { address: 'support', data: { queue: 'tier-1' } },
+    };
+
+    const handler = new NovuRequestHandler({
+      frameworkName: 'test',
+      agents: [testBot],
+      client,
+      handler: () => {
+        const body = createMockBridgeRequest({
+          platform: 'email',
+          platformContext: {
+            threadId: 'email:user@example.com:abc',
+            channelId: 'email:user@example.com',
+            isDM: false,
+            message: emailRaw,
+            email: {
+              domain: emailRaw.domain,
+              route: emailRaw.route,
+              rootMessageId: 'root@example.com',
+            },
+          },
+        });
+        const url = new URL(`http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onMessage`);
+
+        return {
+          body: () => body,
+          headers: () => null,
+          method: () => 'POST',
+          url: () => url,
+          transformResponse: (res: any) => res,
+        };
+      },
+    });
+
+    await handler.createHandler()();
+    await vi.waitFor(() => expect(capturedCtx).toBeDefined());
+
+    expect(capturedCtx.platform).toBe('email');
+    expect(capturedCtx.platformContext.message).toEqual(emailRaw);
+    expect(capturedCtx.platformContext.email).toEqual({
+      domain: emailRaw.domain,
+      route: emailRaw.route,
+      rootMessageId: 'root@example.com',
+    });
+  });
+
   it('should serialize markdown content on reply', async () => {
     const testBot = agent('test-bot', {
       onMessage: async (_message, ctx) => {
@@ -1807,5 +1867,102 @@ describe('agent dispatch via NovuRequestHandler', () => {
     expect(replyCalls).toHaveLength(2);
     expect(JSON.parse(replyCalls[0][1].body).reply.markdown).toBe('Thinking…');
     expect(JSON.parse(replyCalls[1][1].body).reply.markdown).toBe('Final answer');
+  });
+
+  it('should post a typing status op for ctx.typing(text)', async () => {
+    const testBot = agent('test-bot', {
+      onMessage: async (_message, ctx) => {
+        await ctx.typing('Searching the docs…');
+      },
+    });
+
+    const handler = new NovuRequestHandler({
+      frameworkName: 'test',
+      agents: [testBot],
+      client,
+      handler: () => ({
+        body: () => createMockBridgeRequest(),
+        headers: () => null,
+        method: () => 'POST',
+        url: () => new URL(`http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onMessage`),
+        transformResponse: (res: any) => res,
+      }),
+    });
+
+    await handler.createHandler()();
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
+
+    const replyCall = fetchMock.mock.calls.find(
+      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
+    );
+    const body = JSON.parse(replyCall![1].body);
+
+    expect(body.typing).toEqual({ status: 'Searching the docs…' });
+    expect(body.reply).toBeUndefined();
+    expect(body.conversationId).toBe('conv-456');
+    expect(body.integrationIdentifier).toBe('slack-main');
+  });
+
+  it('should post an empty status op for ctx.typing() with no text', async () => {
+    const testBot = agent('test-bot', {
+      onMessage: async (_message, ctx) => {
+        await ctx.typing();
+      },
+    });
+
+    const handler = new NovuRequestHandler({
+      frameworkName: 'test',
+      agents: [testBot],
+      client,
+      handler: () => ({
+        body: () => createMockBridgeRequest(),
+        headers: () => null,
+        method: () => 'POST',
+        url: () => new URL(`http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onMessage`),
+        transformResponse: (res: any) => res,
+      }),
+    });
+
+    await handler.createHandler()();
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
+
+    const replyCall = fetchMock.mock.calls.find(
+      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
+    );
+    const body = JSON.parse(replyCall![1].body);
+
+    expect(body.typing).toEqual({});
+  });
+
+  it('should post a stop op for ctx.typing.stop()', async () => {
+    const testBot = agent('test-bot', {
+      onMessage: async (_message, ctx) => {
+        await ctx.typing.stop();
+      },
+    });
+
+    const handler = new NovuRequestHandler({
+      frameworkName: 'test',
+      agents: [testBot],
+      client,
+      handler: () => ({
+        body: () => createMockBridgeRequest(),
+        headers: () => null,
+        method: () => 'POST',
+        url: () => new URL(`http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onMessage`),
+        transformResponse: (res: any) => res,
+      }),
+    });
+
+    await handler.createHandler()();
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
+
+    const replyCall = fetchMock.mock.calls.find(
+      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
+    );
+    const body = JSON.parse(replyCall![1].body);
+
+    expect(body.typing).toBe('stop');
+    expect(body.reply).toBeUndefined();
   });
 });

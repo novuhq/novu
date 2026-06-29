@@ -1,0 +1,52 @@
+---
+title: 'Skip Function'
+description: 'Skip any step of the workflow based on a condition'
+---
+
+The `skip` action is used to skip the next step in the workflow. `skip` function is available for all the steps in the workflow.
+
+## Common usecases
+
+- Skip the step if the user has already seen the notification
+- Skip the step if the user has not completed the previous step
+
+## Example
+
+In this example, we will send an in-app notification for task reminder to the user and then send an email reminder 6 hours later if the user has not read the in-app notification.
+
+```tsx
+workflow('skip-email-if-in-app-notification-seen', async ({ payload }) => {
+  const inAppNotification = await step.inApp(
+    'send-in-app-notification',
+    async () => {
+      return {
+        subject: 'Task reminder!',
+        body: 'Task is not yet complete. Please complete the task.',
+      };
+    },
+  );
+
+  // delay for 6 hrs
+  await step.delay("delay-step-before-email", async () => {
+    return {
+      unit: 'hours',
+      amount: 6,
+    };
+  });
+
+  // send email notification after 6 hrs if the in-app notification has not been read
+  await step.email(
+    'send-email',
+    () => {
+      return {
+        subject: `Task reminder!`,
+        body: 'Task is not yet complete. Please complete the task.',
+      };
+    },
+    {
+      // skip the email step if the in-app notification has been read
+      skip: () => inAppNotification.read === true,
+    }
+  );
+});
+```

@@ -45,6 +45,31 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
     });
   }
 
+  /** Resolves the activity for a specific platform-native message id (e.g. the message a reaction targets). */
+  async findByPlatformMessageId(
+    environmentId: string,
+    conversationId: string,
+    platformMessageId: string
+  ): Promise<ConversationActivityEntity | null> {
+    return this.findOne(
+      {
+        _environmentId: environmentId,
+        _conversationId: conversationId,
+        platformMessageId,
+      },
+      '*'
+    );
+  }
+
+  async countAgentMessages(environmentId: string, conversationId: string): Promise<number> {
+    return this.count({
+      _environmentId: environmentId,
+      _conversationId: conversationId,
+      senderType: ConversationActivitySenderTypeEnum.AGENT,
+      type: ConversationActivityTypeEnum.MESSAGE,
+    });
+  }
+
   async createUserActivity(params: {
     identifier: string;
     conversationId: string;
@@ -141,10 +166,10 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
     });
   }
 
-  async findToolActivitiesByTurnId(
+  async findToolActivitiesByPlanMessageId(
     environmentId: string,
     conversationId: string,
-    turnId: string
+    planMessageId: string
   ): Promise<ConversationActivityEntity[]> {
     return this.find(
       {
@@ -152,7 +177,7 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
         _conversationId: conversationId,
         type: ConversationActivityTypeEnum.SIGNAL,
         'signalData.type': 'tool-use',
-        'signalData.payload.turnId': turnId,
+        'signalData.payload.planMessageId': planMessageId,
       } as FilterQuery<ConversationActivityDBModel> & EnforceEnvOrOrgIds,
       '*',
       { sort: { createdAt: 1 } }

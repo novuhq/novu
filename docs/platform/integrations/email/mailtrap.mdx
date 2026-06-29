@@ -1,0 +1,49 @@
+---
+title: 'Mailtrap'
+description: 'Learn how to use the Mailtrap provider to send email notifications using Novu'
+---
+
+
+You can use the [Mailtrap](https://mailtrap.io/email-sending/) provider to send transactional emails to your customers using the Novu Platform with a single API to create multi-channel experiences.
+
+## Getting Started
+
+To use the Mailtrap provider in the email channel, you will need to create a Mailtrap account and add your API key to the Mailtrap integration on the Novu platform.
+
+## Generating an API Key
+
+To generate a new API key in Mailtrap, you can follow these steps:
+
+- [Sign Up](https://mailtrap.io/register/signup) or [Log in](https://mailtrap.io/signin) to your Mailtrap account.
+- Click on the **Email Sending** link on the sidebar, and then click the "Sending Domains" link that pops up from the available options.
+- On the [Sending Domains](https://mailtrap.io/sending/domains) page, type your domain name and confirm with the `Add Your Domain` button. Then, proceed to copy DNS records Mailtrap provides to your domain’s DNS.
+- Go to [API Keys](https://mailtrap.io/api-tokens) page and copy token with `Domain Admin` access level for your registered domain.
+
+## Authenticating your Sender Identity
+
+Before you can send emails, you will need to [verify your sending domain ownership](https://help.mailtrap.io/article/69-sending-domain-setup). Mailtrap rejects sending emails from unverified domains to prevent spam and email fraud.
+
+## Creating a Mailtrap integration with Novu
+
+- Visit the [Integrations store](https://dashboard.novu.co/integrations?utm_campaign=docs-mailtrap) on the Novu web dashboard.
+- Click on Add a Provider.
+- Select Mailtrap service.
+- Enter your Mailtrap API Key.
+- Fill in the `From email address` field using the authenticated email from the previous step.
+- Click on the `Disabled` button and mark it as `Active`.
+- Click on the **Update** button.
+- You should now be able to send notifications through Mailtrap using Novu.
+
+## Next Steps
+
+<Columns cols={2}>
+  <Card title="Configure bcc, cc, and reply-to" href="/platform/integrations/email#sending-email-overrides">
+    Learn how to configure bcc, cc, and reply-to for your email notifications using email overrides
+  </Card>
+  <Card title="Sending email attachments" href="/platform/integrations/email#sending-email-attachments">
+    Learn how to send attachments with email notifications
+  </Card>
+  <Card title="Use different email integration" href="/platform/integrations/email#sending-email-overrides">
+    Learn how to use different email provider integrations to be used to send emails
+  </Card>
+</Columns>

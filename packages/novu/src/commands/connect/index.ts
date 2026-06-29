@@ -2,7 +2,8 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import chalk from 'chalk';
 import { AnalyticService } from '../../services/analytics.service';
-import { CONNECT_EVENTS, trackConnect } from './analytics/events';
+import { aliasConnectSession, CONNECT_EVENTS, trackConnect } from './analytics/events';
+import { resolveConnectAuthMethod } from './auth/resolve-connect-auth';
 import { runConnectPipeline } from './pipeline/runner';
 import type { ConnectCommandOptions } from './types';
 import { createLoggingUI } from './ui/logging-ui';
@@ -19,9 +20,7 @@ interface UiBundle {
 
 // Hide the import from TypeScript's CJS transform so we can dynamically pull
 // in the ESM Ink bundle at runtime without ts-node trying to require() it.
-const dynamicImport = new Function('specifier', 'return import(specifier)') as (
-  specifier: string
-) => Promise<unknown>;
+const dynamicImport = new Function('specifier', 'return import(specifier)') as (specifier: string) => Promise<unknown>;
 
 async function loadInkUi(): Promise<UiBundle> {
   const bundlePath = path.join(__dirname, 'ui', 'index.mjs');
@@ -36,13 +35,34 @@ async function loadInkUi(): Promise<UiBundle> {
 }
 
 export async function connectCommand(options: ConnectCommandOptions, anonymousId?: string): Promise<void> {
-  trackConnect(analytics, anonymousId, CONNECT_EVENTS.STARTED, {
+  let resolvedUserId: string | undefined;
+
+  const trackEvent = (event: string, data?: Record<string, unknown>) => {
+    trackConnect(analytics, anonymousId, event, { ...(data ?? {}), onboardingSessionId: anonymousId }, resolvedUserId);
+  };
+
+  const onIdentityResolved = (user: {
+    id: string;
+    email?: string | null;
+    firstName?: string | null;
+    lastName?: string | null;
+  }) => {
+    if (!anonymousId || resolvedUserId) return;
+
+    aliasConnectSession(analytics, anonymousId, user);
+    resolvedUserId = user.id;
+  };
+
+  trackEvent(CONNECT_EVENTS.STARTED, {
     region: options.region,
     apiUrl: options.apiUrl,
     connectDashboardUrl: options.connectDashboardUrl,
     ci: !!options.ci,
     hasPrompt: !!options.prompt,
     skipSlack: !!options.skipSlack,
+    keyless: !!options.keyless,
+    authMethod: resolveConnectAuthMethod(options),
+    channel: options.channel ?? (options.skipSlack ? 'skip' : undefined),
   });
 
   try {
@@ -51,7 +71,9 @@ export async function connectCommand(options: ConnectCommandOptions, anonymousId
       const result = await runConnectPipeline({
         options,
         ui,
-        onTrack: (event, data) => trackConnect(analytics, anonymousId, event, data ?? {}),
+        onboardingSessionId: anonymousId,
+        onTrack: trackEvent,
+        onIdentityResolved,
       });
       if (result.exitCode !== 0) process.exitCode = result.exitCode;
     } else {
@@ -60,14 +82,16 @@ export async function connectCommand(options: ConnectCommandOptions, anonymousId
       const result = await runConnectPipeline({
         options,
         ui: mounted.ui,
-        onTrack: (event, data) => trackConnect(analytics, anonymousId, event, data ?? {}),
+        onboardingSessionId: anonymousId,
+        onTrack: trackEvent,
+        onIdentityResolved,
       });
       const exitCode = (await mounted.done) || result.exitCode;
       if (exitCode !== 0) process.exitCode = exitCode;
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    trackConnect(analytics, anonymousId, CONNECT_EVENTS.ERROR, { message });
+    trackEvent(CONNECT_EVENTS.ERROR, { message });
     console.error(chalk.red(`Connect failed: ${message}`));
     process.exitCode = 1;
   } finally {

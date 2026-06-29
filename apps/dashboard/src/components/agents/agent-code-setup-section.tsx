@@ -2,7 +2,7 @@ import { ChatProviderIdEnum, EmailProviderIdEnum } from '@novu/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { Loader } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { RiArrowRightSLine, RiCheckLine, RiFileCopyLine, RiInformation2Line } from 'react-icons/ri';
+import { RiArrowRightSLine, RiCheckLine, RiFileCopyLine, RiInformation2Line, RiMailSendLine } from 'react-icons/ri';
 import type { AgentResponse } from '@/api/agents';
 import { getAgent, getAgentDetailQueryKey } from '@/api/agents';
 import { Button } from '@/components/primitives/button';
@@ -11,14 +11,15 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchApiKeys } from '@/hooks/use-fetch-api-keys';
 import { apiHostnameManager } from '@/utils/api-hostname-manager';
+import { cn } from '@/utils/ui';
 import { SetupStep } from './setup-guide-primitives';
 import { deriveStepStatus } from './setup-guide-step-utils';
+import { SharedInboundAddressField } from './shared-inbound-address-field';
 
 const CLI_DEFAULT_API_URL = 'https://api.novu.co';
 const BRIDGE_POLL_INTERVAL_MS = 2000;
 
-// TODO: change to 'latest' when agents are GA and IS_CONVERSATIONAL_AGENTS_ENABLED flag is removed
-const CLI_PACKAGE_TAG = 'rc';
+const CLI_PACKAGE_TAG = 'latest';
 
 function maskSecretKey(key: string): string {
   return `nv-${'•'.repeat(16)}${key.slice(-4)}`;
@@ -117,6 +118,13 @@ function getProviderSlackMessage(agentName: string): string {
   return `Hey @${agentName}, can you help me?`;
 }
 
+function buildTestEmailMailto(agentName: string, inboundAddress: string): string {
+  const subject = `Hi ${agentName}!`;
+  const body = `Hey ${agentName},\n\nThis is my first email — say hi back and tell me what you can do?\n\nThanks!`;
+
+  return `mailto:${inboundAddress}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+
 function getProviderSendTitle(providerId: string | undefined): string {
   switch (providerId) {
     case ChatProviderIdEnum.Slack:
@@ -145,7 +153,7 @@ function getProviderSendDescription(providerId: string | undefined, agentName: s
     case ChatProviderIdEnum.WhatsAppBusiness:
       return `Send a message to your WhatsApp number to test the connection.`;
     case EmailProviderIdEnum.NovuAgent:
-      return `Send an email to your agent's configured address to test the connection.`;
+      return `Email starts with you sending the first message — your agent reads it and replies to the same inbox. Send from the email address registered in your Novu account.`;
     default:
       return `Send a message to your bot from the connected provider to test the connection.`;
   }
@@ -181,6 +189,67 @@ export function CopySlackMessageButton({ agentName }: { agentName: string }) {
       <span className="text-label-xs font-medium">{copied ? 'Copied!' : 'Copy Slack message'}</span>
     </button>
   );
+}
+
+function EmailTestActions({ agentName, inboundAddress }: { agentName: string; inboundAddress: string }) {
+  const mailtoUrl = buildTestEmailMailto(agentName, inboundAddress);
+
+  return (
+    <div className="flex flex-wrap items-center gap-3">
+      <a
+        href={mailtoUrl}
+        className="text-text-sub hover:text-text-strong inline-flex items-center gap-1 transition-colors"
+      >
+        <RiMailSendLine className="size-4" />
+        <span className="text-label-xs font-medium">Open in email client</span>
+      </a>
+    </div>
+  );
+}
+
+function AgentSendStepExtraContent({
+  providerId,
+  agentName,
+  sharedInboundAddress,
+  bridgeConnected,
+  onAddProvider,
+}: {
+  providerId?: string;
+  agentName: string;
+  sharedInboundAddress?: string;
+  bridgeConnected: boolean;
+  onAddProvider?: () => void;
+}) {
+  const isEmailSendStep = providerId === EmailProviderIdEnum.NovuAgent && Boolean(sharedInboundAddress);
+  const sendActions = renderProviderSendActions(providerId, agentName, sharedInboundAddress);
+
+  return (
+    <div className="flex w-full flex-col gap-4">
+      {isEmailSendStep && sharedInboundAddress ? (
+        <>
+          <SharedInboundAddressField sharedInboundAddress={sharedInboundAddress} />
+          {sendActions}
+        </>
+      ) : null}
+      <BridgeConnectionStatus connected={bridgeConnected} onAddProvider={onAddProvider} inline />
+    </div>
+  );
+}
+
+function renderProviderSendActions(
+  providerId: string | undefined,
+  agentName: string,
+  sharedInboundAddress: string | undefined
+) {
+  if (providerId === ChatProviderIdEnum.Slack) {
+    return <CopySlackMessageButton agentName={agentName} />;
+  }
+
+  if (providerId === EmailProviderIdEnum.NovuAgent && sharedInboundAddress) {
+    return <EmailTestActions agentName={agentName} inboundAddress={sharedInboundAddress} />;
+  }
+
+  return undefined;
 }
 
 function useBridgeConnectionPolling(agent: AgentResponse, onBridgeConnected?: () => void) {
@@ -237,10 +306,20 @@ function useBridgeConnectionPolling(agent: AgentResponse, onBridgeConnected?: ()
   return connected;
 }
 
-function BridgeConnectionStatus({ connected, onAddProvider }: { connected: boolean; onAddProvider?: () => void }) {
+function BridgeConnectionStatus({
+  connected,
+  onAddProvider,
+  inline = false,
+}: {
+  connected: boolean;
+  onAddProvider?: () => void;
+  inline?: boolean;
+}) {
+  const wrapperClass = inline ? 'flex flex-col gap-2' : 'flex flex-col gap-2 py-4 pl-6';
+
   if (connected) {
     return (
-      <div className="flex items-center gap-2 py-4 pl-6">
+      <div className={cn(inline ? 'flex items-center gap-2' : 'flex items-center gap-2 py-4 pl-6')}>
         <RiCheckLine className="size-3.5 shrink-0 text-[#dd2476]" />
         <span className="animate-gradient bg-linear-to-r from-[#dd2476] via-[#ff512f] to-[#dd2476] bg-size-[400%_400%] bg-clip-text text-label-sm font-medium text-transparent">
           Setup complete
@@ -263,7 +342,7 @@ function BridgeConnectionStatus({ connected, onAddProvider }: { connected: boole
   }
 
   return (
-    <div className="flex flex-col gap-2 py-4 pl-6">
+    <div className={wrapperClass}>
       <div className="flex items-center gap-1">
         <Loader className="size-3.5 text-[#dd2476] animate-[spin_5s_linear_infinite]" />
         <span className="animate-gradient bg-linear-to-r from-[#dd2476] via-[#ff512f] to-[#dd2476] bg-size-[400%_400%] bg-clip-text text-label-sm font-medium text-transparent">
@@ -288,6 +367,7 @@ type AgentCodeSetupSectionProps = {
    */
   totalSteps: number;
   providerId?: string;
+  sharedInboundAddress?: string;
   onBridgeConnected?: () => void;
   onAddProvider?: () => void;
 };
@@ -297,6 +377,7 @@ export function AgentCodeSetupSection({
   stepOffset,
   totalSteps,
   providerId,
+  sharedInboundAddress,
   onBridgeConnected,
   onAddProvider,
 }: AgentCodeSetupSectionProps) {
@@ -312,6 +393,8 @@ export function AgentCodeSetupSection({
     () => (bridgeConnected ? stepOffset + 3 : stepOffset),
     [bridgeConnected, stepOffset]
   );
+
+  const isEmailSendStep = providerId === EmailProviderIdEnum.NovuAgent && Boolean(sharedInboundAddress);
 
   return (
     <>
@@ -370,12 +453,21 @@ export function AgentCodeSetupSection({
         status={deriveStepStatus(stepOffset + 2, firstIncompleteStep)}
         title={getProviderSendTitle(providerId)}
         description={getProviderSendDescription(providerId, agent.name)}
+        extraContent={
+          <AgentSendStepExtraContent
+            providerId={providerId}
+            agentName={agent.name}
+            sharedInboundAddress={sharedInboundAddress}
+            bridgeConnected={bridgeConnected}
+            onAddProvider={onAddProvider}
+          />
+        }
         rightContent={
-          providerId === ChatProviderIdEnum.Slack ? <CopySlackMessageButton agentName={agent.name} /> : undefined
+          isEmailSendStep
+            ? undefined
+            : renderProviderSendActions(providerId, agent.name, sharedInboundAddress)
         }
       />
-
-      <BridgeConnectionStatus connected={bridgeConnected} onAddProvider={onAddProvider} />
     </>
   );
 }

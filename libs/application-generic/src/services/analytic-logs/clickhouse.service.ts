@@ -3,6 +3,10 @@ import { BeforeApplicationShutdown, Injectable } from '@nestjs/common';
 
 export { ClickHouseClient };
 
+export function isClickHouseConfigured(): boolean {
+  return Boolean(process.env.CLICK_HOUSE_URL && process.env.CLICK_HOUSE_DATABASE);
+}
+
 export type InsertOptions = {
   asyncInsert?: boolean;
   waitForAsyncInsert?: boolean;
@@ -13,7 +17,7 @@ export class ClickHouseService implements BeforeApplicationShutdown {
   private _client: ClickHouseClient | undefined;
 
   async init() {
-    if (!process.env.CLICK_HOUSE_URL || !process.env.CLICK_HOUSE_DATABASE) {
+    if (!isClickHouseConfigured()) {
       /*
        * this.logger.warn(
        *   'ClickHouse client is not initialized due to missing environment configuration. ' +
@@ -34,7 +38,7 @@ export class ClickHouseService implements BeforeApplicationShutdown {
       });
 
       try {
-        await defaultClient.query({
+        await defaultClient.command({
           query: `CREATE DATABASE IF NOT EXISTS \`${process.env.CLICK_HOUSE_DATABASE}\``,
         });
         if (!process.env.CI) {
@@ -138,7 +142,7 @@ export class ClickHouseService implements BeforeApplicationShutdown {
       return;
     }
 
-    await this._client.exec({
+    await this._client.command({
       query,
       query_params: params,
     });

@@ -1,0 +1,41 @@
+---
+title: 'Resend'
+description: 'A step-by-step guide to manually configure Resend event webhooks for Novu activity tracking.'
+---
+
+Resend does not currently support auto-configuration of webhooks through their API. To track events in Novu, you’ll need to set up the webhook manually in your Resend dashboard.
+
+## Step 1: Get your webhook URL from Novu
+
+First, you need the unique webhook URL from your Novu dashboard that will receive events from Resend.
+
+1. Navigate to the **Integration Store** page in Novu and select your **Resend** integration.
+2. Enable the **Email Activity Tracking** toggle.
+3. A unique Inbound Webhook URL will be displayed. Click the **copy** icon to copy it.
+  ![Copy Webhook URL from Novu](/images/channels-and-providers/email/activity-tracking/inbound-webhook-resend.png)
+
+## Step 2: Create the webhook in Resend
+
+Next, log in to your Resend dashboard to create the webhook.
+
+1. From the sidebar menu of your Resend dashboard, click on **Webhooks**.
+2. On the webhooks page, click **Add webhook**.
+  ![Add webhook](/images/channels-and-providers/email/activity-tracking/resend-webhook.png)
+3. In the menu that appears, configure the following:
+    - **Endpoint URL:** Paste the **Inbound Webhook URL** you copied from Novu.
+    - **Events to send:** Select **Email** to subscribe to all email events.
+    ![Add webhook](/images/channels-and-providers/email/activity-tracking/add-webhook-resend.png)
+4.  Click **Add** to create the webhook.
+
+Your Resend account will now forward email events to Novu, where they will appear in the Activity Feed and the execution details in the event logs.
+
+## Step 3: Add the signing secret (Recommended)
+
+For a more secure and authenticated connection, you should add the webhook's signing secret back into Novu. This step is optional but highly recommended.
+
+1. After creating the webhook in Resend, you will get **Signing Secret**. Copy this secret.
+  ![Signing secret](/images/channels-and-providers/email/activity-tracking/signing-secret-resend.png)
+2. Return to your Resend integration settings in Novu.
+3. Under the **Email Activity Tracking** section, paste the secret into the **Inbound Webhook Signing Key** field.
+  ![Inbound Signing Key](/images/channels-and-providers/email/activity-tracking/inbound-signing-key-resend.png)
+4.  Click **Save Changes**.

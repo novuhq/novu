@@ -22,7 +22,7 @@ type ApplyOutcome = { token: string | null; botUsername: string | null; recogniz
  *   a new Telegram integration via the integration-store public endpoint.
  */
 export type TelegramCredentialsPasteMobileSetup =
-  | { kind: 'agent'; agentIdentifier: string; integrationId: string; testSubscriberId?: string | null }
+  | { kind: 'agent'; integrationIdentifier: string; testSubscriberId?: string | null }
   | { kind: 'integration-store' };
 
 type TelegramCredentialsPasteProps = {
@@ -34,7 +34,7 @@ type TelegramCredentialsPasteProps = {
    * field so the user can finish configuration from their phone. The QR card
    * is hidden the moment the form has an `apiToken` value (typed, pasted, or
    * pre-filled from an existing integration), which also unmounts the link
-   * `useQuery` and stops generating JWTs.
+   * `useQuery` and stops issuing setup links.
    */
   mobileSetup?: TelegramCredentialsPasteMobileSetup;
 };
@@ -135,8 +135,7 @@ export function TelegramCredentialsPaste({
           <OrDivider />
           {mobileSetup.kind === 'agent' ? (
             <AgentTelegramMobileSetupCard
-              agentIdentifier={mobileSetup.agentIdentifier}
-              integrationId={mobileSetup.integrationId}
+              integrationIdentifier={mobileSetup.integrationIdentifier}
               testSubscriberId={mobileSetup.testSubscriberId}
               layout="inline"
             />

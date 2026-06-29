@@ -1,5 +1,6 @@
 import { createContextHash, createHash, decryptApiKey } from '@novu/application-generic';
 import { ContextPayload } from '@novu/shared';
+import { areHexDigestsEqual } from './timing-safe-equal';
 
 export function isHmacValid(secretKey: string, subscriberId: string, hmacHash: string | undefined) {
   if (!hmacHash) {
@@ -9,7 +10,11 @@ export function isHmacValid(secretKey: string, subscriberId: string, hmacHash: s
   const key = decryptApiKey(secretKey);
   const computedHmacHash = createHash(key, subscriberId);
 
-  return computedHmacHash === hmacHash;
+  if (!computedHmacHash) {
+    return false;
+  }
+
+  return areHexDigestsEqual(computedHmacHash, hmacHash);
 }
 
 export function isContextHmacValid(
@@ -24,5 +29,9 @@ export function isContextHmacValid(
   const key = decryptApiKey(secretKey);
   const computedContextHash = createContextHash(key, context);
 
-  return computedContextHash === contextHash;
+  if (!computedContextHash) {
+    return false;
+  }
+
+  return areHexDigestsEqual(computedContextHash, contextHash);
 }

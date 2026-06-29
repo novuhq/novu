@@ -12,10 +12,9 @@ import { NovuApiError } from '@/api/api.client';
 import { createIntegration, deleteIntegration } from '@/api/integrations';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
-import { useCurrentApp } from '@/hooks/use-current-app';
 import { useTelemetry } from '@/hooks/use-telemetry';
-import { APP_IDS } from '@/utils/apps';
 import { QueryKeys } from '@/utils/query-keys';
+import { AGENT_EMAIL_PROVIDER_LABEL, getAgentChannelDisplayName } from '@/utils/agent-email-provider-display';
 import { TelemetryEvent } from '@/utils/telemetry';
 
 type LinkProviderItem = {
@@ -74,8 +73,6 @@ export function useLinkAgentIntegration({
   const { currentEnvironment } = useEnvironment();
   const queryClient = useQueryClient();
   const track = useTelemetry();
-  const currentApp = useCurrentApp();
-  const isConnectApp = currentApp === APP_IDS.CONNECT;
 
   const [pendingItemKey, setPendingItemKey] = useState<string | null>(null);
   /** Integrations created by this hook instance — safe to delete when switching providers. */
@@ -144,9 +141,7 @@ export function useLinkAgentIntegration({
         mode: 'novu_email' | 'existing_integration' | 'new_integration_then_link'
       ) => {
         track(
-          isConnectApp
-            ? TelemetryEvent.CONNECT_AGENT_INTEGRATION_LINKED_FROM_DASHBOARD
-            : TelemetryEvent.AGENT_INTEGRATION_LINKED_FROM_DASHBOARD,
+          TelemetryEvent.AGENT_INTEGRATION_LINKED_FROM_DASHBOARD,
           {
             agentIdentifier,
             providerId,
@@ -204,7 +199,10 @@ export function useLinkAgentIntegration({
           const integration = link.integration as unknown as IIntegration;
 
           createdIntegrationIdsRef.current.add(integration._id);
-          showSuccessToast('Integration linked', `${link.integration.name ?? 'Novu Email'} was added to this agent.`);
+          showSuccessToast(
+            'Integration linked',
+            `${getAgentChannelDisplayName(item.providerId, link.integration.name ?? AGENT_EMAIL_PROVIDER_LABEL)} was added to this agent.`
+          );
           trackLink(item.providerId, link.integration.identifier, 'novu_email');
           await removePreviousLinks(integration._id);
           onLinked?.(item.providerId, integration);
@@ -289,7 +287,6 @@ export function useLinkAgentIntegration({
       createIntegrationMutation,
       currentEnvironment,
       existingLinks,
-      isConnectApp,
       linkedIntegrationIds,
       onLinked,
       queryClient,

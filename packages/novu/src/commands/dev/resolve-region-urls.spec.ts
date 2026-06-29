@@ -8,7 +8,15 @@ describe('resolveRegionUrls', () => {
 
     expect(urls.apiUrl).toBe('https://api.novu.co');
     expect(urls.dashboardUrl).toBe('https://dashboard.novu.co');
-    expect(urls.connectDashboardUrl).toBe('https://connect.novu.co');
+    expect(urls.connectDashboardUrl).toBe('https://dashboard.novu.co');
+  });
+
+  it('maps eu region to eu production URLs', () => {
+    const urls = getRegionUrls(CloudRegionEnum.EU);
+
+    expect(urls.apiUrl).toBe('https://eu.api.novu.co');
+    expect(urls.dashboardUrl).toBe('https://eu.dashboard.novu.co');
+    expect(urls.connectDashboardUrl).toBe('https://eu.dashboard.novu.co');
   });
 
   it('maps staging region to staging stack URLs', () => {
@@ -16,7 +24,7 @@ describe('resolveRegionUrls', () => {
 
     expect(urls.apiUrl).toBe('https://api.novu-staging.co');
     expect(urls.dashboardUrl).toBe('https://dashboard.novu-staging.co');
-    expect(urls.connectDashboardUrl).toBe('https://connect.novu-staging.co');
+    expect(urls.connectDashboardUrl).toBe('https://dashboard.novu-staging.co');
   });
 
   it('maps local region to local dev URLs with connect dashboard matching dashboard', () => {

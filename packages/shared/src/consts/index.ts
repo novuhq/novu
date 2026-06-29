@@ -1,3 +1,4 @@
+export * from './connect-claim';
 export * from './data-retention';
 export * from './aws-claude-regions';
 export * from './feature-tiers-constants';

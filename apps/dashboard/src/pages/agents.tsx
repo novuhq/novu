@@ -14,11 +14,13 @@ import {
   SiWhatsapp,
   SiZoom,
 } from 'react-icons/si';
+import { Navigate } from 'react-router-dom';
 import { NovuApiError, post } from '@/api/api.client';
 import { AgentsEmptyTeaser } from '@/components/agents/agents-empty-teaser';
 import { AgentsList } from '@/components/agents/agents-list';
 import { DashboardLayout } from '@/components/dashboard-layout';
 import { PageMeta } from '@/components/page-meta';
+import { IS_EU } from '@/config';
 import { Badge } from '@/components/primitives/badge';
 import { Button } from '@/components/primitives/button';
 import { CompactButton } from '@/components/primitives/button-compact';
@@ -29,10 +31,9 @@ import { Separator } from '@/components/primitives/separator';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { DismissButton, Icon as TagIcon, Root as TagRoot } from '@/components/primitives/tag';
 import { Textarea } from '@/components/primitives/textarea';
-import { useCurrentApp } from '@/hooks/use-current-app';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useTelemetry } from '@/hooks/use-telemetry';
-import { APP_IDS } from '@/utils/apps';
+import { ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
 
@@ -406,13 +407,16 @@ function AgentsEarlyAccessDialog({ open, onOpenChange }: AgentsEarlyAccessDialog
 export function AgentsPage() {
   const [earlyAccessOpen, setEarlyAccessOpen] = useState(false);
   const isConversationalAgentsEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONVERSATIONAL_AGENTS_ENABLED, false);
-  const currentApp = useCurrentApp();
-  const isConnectApp = currentApp === APP_IDS.CONNECT;
   const track = useTelemetry();
 
   useEffect(() => {
-    track(isConnectApp ? TelemetryEvent.CONNECT_AGENTS_PAGE_VISITED : TelemetryEvent.AGENTS_PAGE_VISITED);
-  }, [isConnectApp, track]);
+    track(TelemetryEvent.AGENTS_PAGE_VISITED);
+  }, [track]);
+
+  // Agents are hard-disabled in the EU region.
+  if (IS_EU) {
+    return <Navigate to={ROUTES.ROOT} replace />;
+  }
 
   return (
     <>

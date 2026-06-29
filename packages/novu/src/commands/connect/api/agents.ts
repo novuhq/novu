@@ -32,13 +32,20 @@ export interface CreateManagedAgentInput {
   skills: Array<{ skillId: string }>;
 }
 
-export interface AgentIntegrationLink {
+export interface AgentIntegrationEmbedded {
   _id: string;
-  integrationId: string;
-  integrationIdentifier: string;
+  identifier: string;
+  name: string;
   providerId: string;
   channel?: string;
-  active?: boolean;
+  active: boolean;
+  sharedInboundAddress?: string;
+  defaultSenderName?: string;
+}
+
+export interface AgentIntegrationLink {
+  _id: string;
+  integration: AgentIntegrationEmbedded;
   connectedAt?: string | null;
 }
 
@@ -59,7 +66,40 @@ export async function generateAgent(client: ConnectApiClient, prompt: string): P
   return 'data' in body && body.data ? body.data : (body as GeneratedAgentSpec);
 }
 
-export async function createManagedAgent(client: ConnectApiClient, input: CreateManagedAgentInput): Promise<AgentRecord> {
+export interface CreateBridgeAgentInput {
+  name: string;
+  identifier: string;
+}
+
+export async function createBridgeAgent(client: ConnectApiClient, input: CreateBridgeAgentInput): Promise<AgentRecord> {
+  const res = await client.axios.post<{ data?: AgentRecord } | AgentRecord>('/v1/agents', {
+    name: input.name,
+    identifier: input.identifier,
+    runtime: 'self-hosted',
+  });
+  const body = res.data;
+
+  return 'data' in body && body.data ? body.data : (body as AgentRecord);
+}
+
+export async function updateAgentBridge(
+  client: ConnectApiClient,
+  agentIdentifier: string,
+  input: { bridgeUrl?: string; devBridgeUrl?: string; devBridgeActive?: boolean }
+): Promise<AgentRecord> {
+  const res = await client.axios.put<{ data?: AgentRecord } | AgentRecord>(
+    `/v1/agents/${encodeURIComponent(agentIdentifier)}/bridge`,
+    input
+  );
+  const body = res.data;
+
+  return 'data' in body && body.data ? body.data : (body as AgentRecord);
+}
+
+export async function createManagedAgent(
+  client: ConnectApiClient,
+  input: CreateManagedAgentInput
+): Promise<AgentRecord> {
   const res = await client.axios.post<{ data?: AgentRecord } | AgentRecord>('/v1/agents', {
     name: input.name,
     identifier: input.identifier,
@@ -95,19 +135,6 @@ export async function addAgentIntegration(
   return 'data' in body && body.data ? body.data : (body as AgentIntegrationLink);
 }
 
-export interface AgentEmailIntegrationDetail extends AgentIntegrationLink {
-  /** Embedded integration record returned by `POST /v1/agents/:id/integrations`. */
-  integration?: {
-    _id?: string;
-    identifier?: string;
-    name?: string;
-    providerId?: string;
-    channel?: string;
-    active?: boolean;
-    sharedInboundAddress?: string;
-  };
-}
-
 /**
  * `POST /v1/agents/:id/integrations` with `providerId: 'novu-email-agent'`
  * triggers the server's special-case branch (see add-agent-integration
@@ -119,36 +146,54 @@ export interface AgentEmailIntegrationDetail extends AgentIntegrationLink {
 export async function addAgentEmailIntegration(
   client: ConnectApiClient,
   agentIdentifier: string
-): Promise<AgentEmailIntegrationDetail> {
-  const res = await client.axios.post<{ data?: AgentEmailIntegrationDetail } | AgentEmailIntegrationDetail>(
+): Promise<AgentIntegrationLink> {
+  const res = await client.axios.post<{ data?: AgentIntegrationLink } | AgentIntegrationLink>(
     `/v1/agents/${encodeURIComponent(agentIdentifier)}/integrations`,
     { providerId: 'novu-email-agent' }
   );
   const body = res.data;
 
-  return 'data' in body && body.data ? body.data : (body as AgentEmailIntegrationDetail);
+  return 'data' in body && body.data ? body.data : (body as AgentIntegrationLink);
 }
 
 export async function listAgentIntegrations(
   client: ConnectApiClient,
-  agentIdentifier: string
+  agentIdentifier: string,
+  options?: { integrationIdentifier?: string; limit?: number }
 ): Promise<AgentIntegrationLink[]> {
   const res = await client.axios.get<{ data?: AgentIntegrationLink[] } | AgentIntegrationLink[]>(
-    `/v1/agents/${encodeURIComponent(agentIdentifier)}/integrations`
+    `/v1/agents/${encodeURIComponent(agentIdentifier)}/integrations`,
+    {
+      params: {
+        limit: options?.limit ?? (options?.integrationIdentifier ? 1 : 100),
+        ...(options?.integrationIdentifier ? { integrationIdentifier: options.integrationIdentifier } : {}),
+      },
+    }
   );
   const body = res.data;
 
   return Array.isArray(body) ? body : (body.data ?? []);
 }
 
+export interface SendAgentWelcomeMessageResult {
+  sent: boolean;
+  conversationId?: string;
+  /** Present only for keyless sessions — opaque token for building the claim/sign-up link. */
+  claimToken?: string;
+}
+
 export async function sendAgentWelcomeMessage(
   client: ConnectApiClient,
   agentIdentifier: string,
   integrationIdentifier: string
-): Promise<void> {
-  await client.axios.post(`/v1/agents/${encodeURIComponent(agentIdentifier)}/welcome-message`, {
-    integrationIdentifier,
-  });
+): Promise<SendAgentWelcomeMessageResult> {
+  const res = await client.axios.post<{ data?: SendAgentWelcomeMessageResult } | SendAgentWelcomeMessageResult>(
+    `/v1/agents/${encodeURIComponent(agentIdentifier)}/welcome-message`,
+    { integrationIdentifier }
+  );
+  const body = res.data;
+
+  return 'data' in body && body.data ? body.data : (body as SendAgentWelcomeMessageResult);
 }
 
 // ---- Telegram --------------------------------------------------------------
@@ -160,7 +205,7 @@ export interface TelegramConfigureResult {
 }
 
 export interface TelegramMobileLinkResult {
-  /** Signed JWT identifying this mobile-setup session. */
+  /** Opaque setup token identifying this mobile-setup session. */
   token: string;
   /** Absolute URL the user opens on their phone to paste the BotFather token. */
   url: string;
@@ -178,11 +223,10 @@ export interface TelegramSubscriberLinkResult {
 
 export async function configureTelegramAgentWebhook(
   client: ConnectApiClient,
-  agentIdentifier: string,
-  integrationId: string
+  integrationIdentifier: string
 ): Promise<TelegramConfigureResult> {
   const res = await client.axios.post<{ data?: TelegramConfigureResult } | TelegramConfigureResult>(
-    `/v1/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationId)}/telegram/configure`,
+    `/v1/integrations/${encodeURIComponent(integrationIdentifier)}/webhook/configure`,
     {}
   );
   const body = res.data;
@@ -192,12 +236,11 @@ export async function configureTelegramAgentWebhook(
 
 export async function issueTelegramMobileLink(
   client: ConnectApiClient,
-  agentIdentifier: string,
-  integrationId: string,
+  integrationIdentifier: string,
   subscriberId?: string
 ): Promise<TelegramMobileLinkResult> {
   const res = await client.axios.post<{ data?: TelegramMobileLinkResult } | TelegramMobileLinkResult>(
-    `/v1/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationId)}/telegram/mobile-link`,
+    `/v1/integrations/${encodeURIComponent(integrationIdentifier)}/mobile-link`,
     subscriberId ? { subscriberId } : {}
   );
   const body = res.data;
@@ -213,11 +256,12 @@ export interface TelegramMobileLinkStatus {
 }
 
 /**
- * Public endpoint — needs no auth header (the signed JWT in the query string
+ * Public endpoint — needs no auth header (the opaque setup token in the query string
  * authenticates the request). We're polling this to detect when the user
- * has finished pasting their BotFather token on the mobile setup page; the
- * server marks the token's jti as consumed and subsequent status checks
- * return `{ valid: false, reason: 'used' }`.
+ * has finished pasting their BotFather token on the mobile setup page. This
+ * endpoint does not consume the token; it only checks status. Once the mobile
+ * setup page consumes the token, subsequent status checks return
+ * `{ valid: false, reason: 'used' }`.
  *
  * Why this and not `GET /v1/integrations`: ApiKey-authed callers never get
  * decrypted credentials back from the integration list endpoint (intentional
@@ -229,7 +273,7 @@ export async function getTelegramMobileLinkStatus(
   token: string
 ): Promise<TelegramMobileLinkStatus> {
   const res = await client.axios.get<{ data?: TelegramMobileLinkStatus } | TelegramMobileLinkStatus>(
-    '/v1/agents/public/telegram/mobile-configure/status',
+    '/v1/integrations/mobile-configure/status',
     { params: { token } }
   );
   const body = res.data;
@@ -237,17 +281,94 @@ export async function getTelegramMobileLinkStatus(
   return 'data' in body && body.data ? body.data : (body as TelegramMobileLinkStatus);
 }
 
-export async function issueTelegramSubscriberLink(
+export interface ConsumeTelegramMobileLinkResult {
+  success: true;
+  botUsername: string;
+  webhookUrl: string;
+  deepLinkUrl?: string;
+}
+
+/**
+ * Public endpoint — the opaque setup token authenticates the request. Persists
+ * the BotFather token onto the linked Telegram integration and registers the
+ * webhook. The dashboard setup page and the CLI (via `--telegram-bot-token`
+ * for headless CI) both call this endpoint.
+ */
+export async function consumeTelegramMobileLink(
   client: ConnectApiClient,
-  agentIdentifier: string,
-  integrationId: string,
-  subscriberId: string
-): Promise<TelegramSubscriberLinkResult> {
-  const res = await client.axios.post<{ data?: TelegramSubscriberLinkResult } | TelegramSubscriberLinkResult>(
-    `/v1/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationId)}/telegram/subscriber-link`,
-    { subscriberId }
+  input: { token: string; botToken: string }
+): Promise<ConsumeTelegramMobileLinkResult> {
+  const res = await client.axios.post<{ data?: ConsumeTelegramMobileLinkResult } | ConsumeTelegramMobileLinkResult>(
+    '/v1/integrations/mobile-configure',
+    { token: input.token, botToken: input.botToken }
   );
   const body = res.data;
 
-  return 'data' in body && body.data ? body.data : (body as TelegramSubscriberLinkResult);
+  return 'data' in body && body.data ? body.data : (body as ConsumeTelegramMobileLinkResult);
+}
+
+export interface SlackSetupLinkResult {
+  token: string;
+  url: string;
+  expiresAt: string;
+}
+
+export interface SlackSetupLinkStatus {
+  valid: boolean;
+  reason?: 'expired' | 'used' | 'invalid';
+  agentName?: string;
+  providerName?: string;
+}
+
+export async function issueSlackSetupLink(
+  client: ConnectApiClient,
+  agentIdentifier: string,
+  integrationId: string
+): Promise<SlackSetupLinkResult> {
+  const res = await client.axios.post<{ data?: SlackSetupLinkResult } | SlackSetupLinkResult>(
+    `/v1/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationId)}/slack/setup-link`,
+    {}
+  );
+  const body = res.data;
+
+  return 'data' in body && body.data ? body.data : (body as SlackSetupLinkResult);
+}
+
+/**
+ * Public endpoint — needs no auth header (the opaque setup token in the query string
+ * authenticates the request). Poll this to detect when the user has pasted their
+ * Slack App Configuration Token on the secure setup page.
+ */
+export async function getSlackSetupLinkStatus(client: ConnectApiClient, token: string): Promise<SlackSetupLinkStatus> {
+  const res = await client.axios.get<{ data?: SlackSetupLinkStatus } | SlackSetupLinkStatus>(
+    '/v1/agents/public/slack/setup/status',
+    { params: { token } }
+  );
+  const body = res.data;
+
+  return 'data' in body && body.data ? body.data : (body as SlackSetupLinkStatus);
+}
+
+export async function issueTelegramSubscriberLink(
+  client: ConnectApiClient,
+  integrationIdentifier: string,
+  subscriberId: string
+): Promise<TelegramSubscriberLinkResult> {
+  type LinkChannelEndpointResponse = {
+    url: string;
+    providerMetadata?: { botUsername?: string; expiresAt?: string };
+  };
+
+  const res = await client.axios.post<{ data?: LinkChannelEndpointResponse } | LinkChannelEndpointResponse>(
+    '/v1/integrations/channel-endpoints/link',
+    { integrationIdentifier, subscriberId }
+  );
+  const body = res.data;
+  const payload = 'data' in body && body.data ? body.data : (body as LinkChannelEndpointResponse);
+
+  return {
+    deepLinkUrl: payload.url,
+    botUsername: payload.providerMetadata?.botUsername ?? '',
+    expiresAt: payload.providerMetadata?.expiresAt ?? '',
+  };
 }

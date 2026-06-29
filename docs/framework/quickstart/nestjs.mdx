@@ -1,0 +1,209 @@
+---
+title: 'NestJS'
+description: 'Get started with Novu Framework in a NestJS application'
+---
+
+
+In this guide, we will add a Novu [Bridge Endpoint](/framework/endpoint) to a NestJS application and send our first test workflow.
+
+<Steps>
+    <Step>
+         ### Set up your local environment
+
+Start the Local Studio by running:
+
+```bash
+npx novu dev
+```
+
+The Local Studio will be available at [http://localhost:2022](http://localhost:2022). This is where you can preview and test your workflows.
+
+    </Step>
+   <Step>
+         ### Install packages
+
+Install the Novu Framework package:
+
+```bash
+npm install @novu/framework
+```
+
+This package provides all the necessary tools to build and manage your notification workflows.
+
+    </Step>
+    <Step title="Add the NovuModule to your application">
+        The `NovuModule` is a NestJS module that registers the Novu Endpoint in your application.
+
+        The following example does not support NestJS dependency injection. If you need to `@Injectable` dependencies in your workflow definition, see [Advanced Usage](#advanced-usage-dependency-injection).
+
+        ```typescript src/app.module.ts
+
+        @Module({
+            imports: [
+                NovuModule.register({
+                    apiPath: '/api/novu',
+                    workflows: [testWorkflow],
+                }),
+            ],
+        })
+        export class AppModule {}
+        ```
+    </Step>
+    <Step>
+        ### Configure your secret key
+
+Add your Novu secret key to your environment variables:
+
+```bash .env
+NOVU_SECRET_KEY=your_secret_key
+```
+
+    </Step>
+    <Step>
+        ### Create your workflow definition
+        Add a `novu` folder in your `src` folder as such ```src/novu/workflows.ts``` that will contain your workflow definitions.
+
+```ts app/novu/workflows.ts
+import { workflow } from '@novu/framework';
+
+export const testWorkflow = workflow('test-workflow', async ({ step }) => {
+  await step.email('test-email', async () => {
+    return {
+      subject: 'Test Email',
+      body: 'This is a test email from Novu Framework!',
+    };
+  });
+});
+```
+
+    </Step>
+    <Step>
+        ### Start your application
+        Start your NestJS application with the Novu Endpoint configured.
+
+        If your NestJS application is running on other than `4000` port, restart the `npx novu dev` command with the port:
+
+        ```tsx
+        npx novu@latest dev --port <YOUR_NESTJS_APPLICATION_PORT>
+        ```
+    </Step>
+    <Step>
+        ### Test your endpoint
+
+Test your workflow by triggering it from the Local Studio or using the Novu API:
+
+```bash
+curl -X POST https://api.novu.co/v1/events/trigger \
+  -H 'Authorization: ApiKey YOUR_API_KEY' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "name": "my-workflow",
+    "to": "subscriber-id",
+    "payload": {}
+  }'
+```
+
+You should see the notification being processed in your Local Studio.
+
+    </Step>
+    <Step>
+        ### Deploy your application
+
+Deploy your application to your preferred hosting provider. Make sure the `/api/novu` endpoint is accessible from the internet.
+
+For local development and testing, you can use tools like ngrok to expose your local server to the internet.
+
+    </Step>
+
+</Steps>
+
+Now that you have your first workflow running, you can:
+
+- Learn about [Workflow Controls](/framework/controls) to expose no-code editing capabilities
+- Explore different [Channel Steps](/framework/email-channel) like Email, SMS, Push, and more
+- Set up [Action Steps](/framework/digest) like Delay and Digest
+- Check out our [React Email integration](/framework/content/react-email) for building beautiful email templates
+
+## Advanced Usage (Dependency Injection)
+
+If you need to inject dependencies into your workflow definition, you can use the `registerAsync` method.
+
+Add the `NovuModule` using the `registerAsync` method to your `AppModule`.
+
+```typescript src/app.module.ts
+import { Module } from '@nestjs/common';
+import { NovuModule } from '@novu/framework/nest';
+import { NotificationService } from './notification.service';
+import { UserService } from './user.service';
+
+@Module({
+  imports: [
+    NovuModule.registerAsync({
+      imports: [AppModule],
+      useFactory: (notificationService: NotificationService) => ({
+        apiPath: '/api/novu',
+        workflows: [notificationService.welcomeWorkflow()],
+      }),
+      inject: [NotificationService],
+    }),
+  ],
+  providers: [NotificationService, UserService],
+  exports: [NotificationService],
+})
+export class AppModule {}
+```
+
+For example, you might need to inject a service that fetches the user's name from a database. This is useful when you need to fetch data in realtime during the execution of your workflow.
+
+An example `UserService` is available below with hardcoded values, but in a real-world application you might use a database or an external API to fetch the user's name.
+
+```typescript src/user.service.ts
+import { Injectable } from '@nestjs/common';
+
+@Injectable()
+export class UserService {
+  getUser(id: string) {
+    return {
+      name: 'John Doe',
+      email: `john.doe.${id}@example.com`,
+    };
+  }
+}
+```
+
+Finally, configure your `NotificationService` to use the injected `UserService`.
+
+```typescript src/notification.service.ts
+import { Injectable } from '@nestjs/common';
+import { workflow } from '@novu/framework';
+import { z } from 'zod';
+import { UserService } from './user.service';
+
+@Injectable()
+export class NotificationService {
+  constructor(private readonly userService: UserService) {}
+
+  public welcomeWorkflow() {
+    return workflow(
+      'welcome-email',
+      async ({ step, payload }) => {
+        await step.email('send-email', async () => {
+          const user = this.userService.getUser(payload.userId);
+
+          return {
+            subject: `Hello, ${user.name}`,
+            body: `We are glad you are here!`,
+          };
+        });
+      },
+      {
+        payloadSchema: z.object({
+          userId: z.string(),
+        }),
+      }
+    );
+  }
+}
+```
+
+A full example NestJS application demonstrating dependency injection is available [here](https://github.com/novuhq/novu/tree/next/playground/nestjs).

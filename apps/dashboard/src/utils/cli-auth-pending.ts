@@ -1,10 +1,5 @@
-import { IS_NOVU_CONNECT } from '@/config';
-import {
-  buildAbsoluteConnectUrl,
-  buildAbsolutePlatformUrl,
-  isConnectHostnameUrl,
-  readClerkRedirectUrlParam,
-} from '@/utils/product-auth-urls';
+import { ONBOARDING_SESSION_ID_PARAM } from '@/utils/onboarding-session-id';
+import { readClerkRedirectUrlParam } from '@/utils/product-auth-urls';
 import { ROUTES } from '@/utils/routes';
 
 const STORAGE_KEY = 'pendingCliAuth';
@@ -14,12 +9,8 @@ const DEVICE_CODE_PATTERN = /^[A-Za-z0-9_-]{16,128}$/;
 export type PendingCliAuth = {
   deviceCode: string;
   name: string | null;
-  returnHost: 'connect' | 'platform';
+  onboardingSessionId?: string | null;
 };
-
-function detectReturnHost(): PendingCliAuth['returnHost'] {
-  return IS_NOVU_CONNECT ? 'connect' : 'platform';
-}
 
 function isValidDeviceCode(deviceCode: string | null | undefined): deviceCode is string {
   if (!deviceCode) {
@@ -43,7 +34,7 @@ export function isCliAuthReturnUrl(url: string): boolean {
   }
 }
 
-export function parseCliAuthFromUrl(url: string): Pick<PendingCliAuth, 'deviceCode' | 'name'> | null {
+export function parseCliAuthFromUrl(url: string): PendingCliAuth | null {
   try {
     const parsed = new URL(url, typeof window !== 'undefined' ? window.location.origin : 'http://local');
 
@@ -57,9 +48,12 @@ export function parseCliAuthFromUrl(url: string): Pick<PendingCliAuth, 'deviceCo
       return null;
     }
 
+    const onboardingSessionId = parsed.searchParams.get(ONBOARDING_SESSION_ID_PARAM)?.trim();
+
     return {
       deviceCode,
       name: parsed.searchParams.get('name'),
+      onboardingSessionId: onboardingSessionId || null,
     };
   } catch {
     return null;
@@ -77,27 +71,29 @@ export function storePendingCliAuthFromPath(pathname: string, search = ''): bool
     return false;
   }
 
-  storePendingCliAuth(parsed.deviceCode, parsed.name);
+  storePendingCliAuth(parsed);
 
   return true;
 }
 
-export function storePendingCliAuth(
-  deviceCode: string,
-  name: string | null,
-  returnHost: PendingCliAuth['returnHost'] = detectReturnHost()
-): void {
-  if (typeof window === 'undefined' || !isValidDeviceCode(deviceCode)) {
+export function storePendingCliAuth(pending: PendingCliAuth | string, name?: string | null): void {
+  if (typeof window === 'undefined') {
     return;
   }
 
-  const pending: PendingCliAuth = {
-    deviceCode,
-    name,
-    returnHost,
-  };
+  const resolved: PendingCliAuth =
+    typeof pending === 'string'
+      ? {
+          deviceCode: pending,
+          name: name ?? null,
+        }
+      : pending;
 
-  sessionStorage.setItem(STORAGE_KEY, JSON.stringify(pending));
+  if (!isValidDeviceCode(resolved.deviceCode)) {
+    return;
+  }
+
+  sessionStorage.setItem(STORAGE_KEY, JSON.stringify(resolved));
 }
 
 export function readPendingCliAuth(): PendingCliAuth | null {
@@ -121,7 +117,7 @@ export function readPendingCliAuth(): PendingCliAuth | null {
     return {
       deviceCode: parsed.deviceCode,
       name: typeof parsed.name === 'string' ? parsed.name : null,
-      returnHost: parsed.returnHost === 'connect' ? 'connect' : 'platform',
+      onboardingSessionId: typeof parsed.onboardingSessionId === 'string' ? parsed.onboardingSessionId : null,
     };
   } catch {
     return null;
@@ -144,13 +140,11 @@ export function buildCliAuthUrl(pending: PendingCliAuth): string {
     params.set('name', pending.name);
   }
 
-  const path = `${ROUTES.CLI_AUTH}?${params.toString()}`;
-
-  if (pending.returnHost === 'connect') {
-    return buildAbsoluteConnectUrl(path);
+  if (pending.onboardingSessionId) {
+    params.set(ONBOARDING_SESSION_ID_PARAM, pending.onboardingSessionId);
   }
 
-  return buildAbsolutePlatformUrl(path);
+  return `${ROUTES.CLI_AUTH}?${params.toString()}`;
 }
 
 export function resolvePendingCliAuthReturnUrl(): string | null {
@@ -163,41 +157,18 @@ export function resolvePendingCliAuthReturnUrl(): string | null {
   return buildCliAuthUrl(pending);
 }
 
-type ReadCliAuthReturnUrlOptions = {
-  preferConnectHost?: boolean;
-};
-
-export function parseCliAuthReturnFromSearchParams(
-  searchParams?: URLSearchParams,
-  options?: ReadCliAuthReturnUrlOptions
-): PendingCliAuth | null {
+export function parseCliAuthReturnFromSearchParams(searchParams?: URLSearchParams): PendingCliAuth | null {
   const redirectUrl = readClerkRedirectUrlParam(searchParams);
 
   if (!redirectUrl || !isCliAuthReturnUrl(redirectUrl)) {
     return null;
   }
 
-  const parsed = parseCliAuthFromUrl(redirectUrl);
-
-  if (!parsed) {
-    return null;
-  }
-
-  const returnHost =
-    options?.preferConnectHost || isConnectHostnameUrl(redirectUrl) ? 'connect' : detectReturnHost();
-
-  return {
-    deviceCode: parsed.deviceCode,
-    name: parsed.name,
-    returnHost,
-  };
+  return parseCliAuthFromUrl(redirectUrl);
 }
 
-export function buildCliAuthReturnUrlFromSearchParams(
-  searchParams?: URLSearchParams,
-  options?: ReadCliAuthReturnUrlOptions
-): string | null {
-  const pending = parseCliAuthReturnFromSearchParams(searchParams, options);
+export function buildCliAuthReturnUrlFromSearchParams(searchParams?: URLSearchParams): string | null {
+  const pending = parseCliAuthReturnFromSearchParams(searchParams);
 
   if (!pending) {
     return null;
@@ -206,17 +177,14 @@ export function buildCliAuthReturnUrlFromSearchParams(
   return buildCliAuthUrl(pending);
 }
 
-export function readCliAuthReturnUrl(
-  searchParams?: URLSearchParams,
-  options?: ReadCliAuthReturnUrlOptions
-): string | null {
-  const pending = parseCliAuthReturnFromSearchParams(searchParams, options);
+export function readCliAuthReturnUrl(searchParams?: URLSearchParams): string | null {
+  const pending = parseCliAuthReturnFromSearchParams(searchParams);
 
   if (!pending) {
     return null;
   }
 
-  storePendingCliAuth(pending.deviceCode, pending.name, pending.returnHost);
+  storePendingCliAuth(pending);
 
   return buildCliAuthUrl(pending);
 }
@@ -226,4 +194,8 @@ export function appendRedirectUrlParam(url: string, redirectUrl: string): string
   parsed.searchParams.set('redirect_url', redirectUrl);
 
   return parsed.toString();
+}
+
+export function hasPendingCliAuth(): boolean {
+  return readPendingCliAuth() !== null;
 }

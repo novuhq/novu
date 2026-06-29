@@ -1,15 +1,13 @@
 import { AGENT_RUNTIME_PROVIDERS, isClaudePlatformConsoleProvider } from '@novu/shared';
 import { useMutation } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
-import { RiEditLine, RiInformationFill, RiLoopRightLine } from 'react-icons/ri';
-import { Link } from 'react-router-dom';
+import { RiInformationFill, RiLoopRightLine } from 'react-icons/ri';
 import { type AgentResponse, getAgentRuntimeConfig } from '@/api/agents';
 import { NovuApiError } from '@/api/api.client';
 import { AnimatedBadgeDot, Badge } from '@/components/primitives/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
-import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { ClaudeIcon } from '../icons/claude';
 
@@ -77,12 +75,6 @@ export function ConnectorSection({ agent }: ConnectorSectionProps) {
     return integrations?.find((item) => item._id === managed.integrationId);
   }, [integrations, managed?.integrationId]);
 
-  const integrationUpdateRoute = useMemo(() => {
-    if (!managed?.integrationId) return undefined;
-
-    return buildRoute(ROUTES.INTEGRATIONS_UPDATE, { integrationId: managed.integrationId });
-  }, [managed?.integrationId]);
-
   const testConnectionMutation = useMutation({
     mutationFn: () =>
       getAgentRuntimeConfig(requireEnvironment(currentEnvironment, 'No environment selected'), agent.identifier),
@@ -114,15 +106,6 @@ export function ConnectorSection({ agent }: ConnectorSectionProps) {
         <span className="text-text-sub min-w-0 truncate text-label-xs font-medium">
           {integration?.name ?? 'Loading…'}
         </span>
-        {integrationUpdateRoute ? (
-          <Link
-            to={integrationUpdateRoute}
-            aria-label="Edit integration"
-            className="text-text-soft hover:text-text-sub inline-flex shrink-0 items-center rounded-sm transition-colors"
-          >
-            <RiEditLine className="size-3.5" />
-          </Link>
-        ) : null}
       </Row>
 
       <Row label="Workspace ID">

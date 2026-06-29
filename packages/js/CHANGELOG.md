@@ -1,3 +1,21 @@
+## v3.17.0 (2026-06-01)
+
+### 🚀 Features
+
+- **nextjs:** fix keyless mode dev env fixes NV-7779 ([#11248](https://github.com/novuhq/novu/pull/11248))
+- **shared:** OR/AND filtering for `data` in inbox useNotifications fixes NV-7666 ([#11135](https://github.com/novuhq/novu/pull/11135))
+- **js:** add PartySocket hibernation heartbeat fixes NV-7445 ([#10925](https://github.com/novuhq/novu/pull/10925))
+- **js,react,api-service:** implement MS Teams connect and link-user components ([#10870](https://github.com/novuhq/novu/pull/10870))
+
+### 🩹 Fixes
+
+- **js:** scope default connectionIdentifier to subscriberId to prevent 409 conflicts ([#10896](https://github.com/novuhq/novu/pull/10896))
+
+### ❤️ Thank You
+
+- Dima Grossman @scopsy
+- George Djabarov @djabarovgeorge
+
 ## v3.16.0 (2026-04-27)
 
 ### 🚀 Features
