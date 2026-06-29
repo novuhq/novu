@@ -127,10 +127,7 @@ function buildDropdownItems(
 
   for (const cp of conversationalProviders) {
     const providerConfig = novuProviders.find((p) => p.id === cp.providerId);
-    const displayName = getAgentChannelDisplayName(
-      cp.providerId,
-      providerConfig?.displayName || cp.displayName
-    );
+    const displayName = getAgentChannelDisplayName(cp.providerId, providerConfig?.displayName || cp.displayName);
 
     if (cp.comingSoon) {
       comingSoon.push({
@@ -341,7 +338,7 @@ export function ProviderDropdown({
           <span className="text-text-strong text-label-xs font-medium leading-4">{selected.displayName}</span>
         </div>
       ) : (
-        <span className="text-text-soft text-label-xs font-medium leading-4">Select provider...</span>
+        <span className="text-text-soft text-label-xs font-medium leading-4">Select channel...</span>
       )}
       {isBusy ? (
         <RiLoader4Line className="text-text-soft size-3 shrink-0 animate-spin" aria-hidden />
@@ -359,7 +356,7 @@ export function ProviderDropdown({
     <Command>
       <div className="bg-bg-weak border-stroke-weak flex items-center gap-2 border-b py-1.5 pl-3 pr-3">
         <CommandInput
-          placeholder="Search provider"
+          placeholder="Search channel"
           size="xs"
           disabled={isBusy}
           inputRootClassName="min-w-0 flex-1 rounded-none border-none bg-transparent shadow-none divide-none before:ring-0 has-[input:focus]:shadow-none has-[input:focus]:ring-0 focus-within:shadow-none focus-within:ring-0"
@@ -370,10 +367,10 @@ export function ProviderDropdown({
       </div>
 
       <CommandList className="max-h-[260px] p-1">
-        <CommandEmpty className="text-text-soft text-label-xs py-4">No providers found.</CommandEmpty>
+        <CommandEmpty className="text-text-soft text-label-xs py-4">No channels found.</CommandEmpty>
 
         {supported.length > 0 && (
-          <CommandGroup heading="Providers" className={groupHeadingClassName}>
+          <CommandGroup heading="Channels" className={groupHeadingClassName}>
             {supported.map((providerType) => {
               const isLocked = providerType.requiresBusinessTier && !isAgentEmailAvailable;
               const hasInstances = providerType.integrations.length > 0;
@@ -701,7 +698,7 @@ export function ProviderDropdown({
     <div className="flex w-full flex-col gap-1 min-w-[300px]">
       <div className="flex items-center gap-px">
         <span className="text-text-sub text-label-xs font-medium leading-4">
-          What provider would you like to start with
+          What channel would you like to start with
         </span>
         <span className="text-text-soft ml-0.5 text-[10px]">&#9432;</span>
       </div>
