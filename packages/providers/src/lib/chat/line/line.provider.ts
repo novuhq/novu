@@ -66,7 +66,7 @@ export class LineChatProvider extends BaseProvider implements IChatProvider {
           throw new Error(`Invalid LINE ${type} message payload: expected an object`);
         }
 
-        return { type, ...(payload as Record<string, unknown>) };
+        return { ...(payload as Record<string, unknown>), type };
       }
     }
 
