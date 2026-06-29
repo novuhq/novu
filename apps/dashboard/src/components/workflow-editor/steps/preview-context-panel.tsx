@@ -1,4 +1,4 @@
-import { ISubscriberResponseDto } from '@novu/shared';
+import { DEFAULT_LOCALE, ISubscriberResponseDto } from '@novu/shared';
 import { JSONSchema7 } from 'json-schema';
 
 import { useCallback, useEffect, useMemo, useRef } from 'react';
@@ -30,7 +30,7 @@ import {
   PreviewSubscriberData,
   ValidationErrors,
 } from './types/preview-context.types';
-import { createSubscriberData, parseJsonValue } from './utils/preview-context.utils';
+import { createDefaultActorData, createSubscriberData, parseJsonValue } from './utils/preview-context.utils';
 
 function usePrevious<T>(value: T): T | undefined {
   const ref = useRef<T | undefined>(undefined);
@@ -124,6 +124,12 @@ export function PreviewContextPanel({
     selectedLocale,
     organizationSettings?.data?.defaultLocale
   );
+
+  const createDefaultActorDataWithLocale = useCallback(() => {
+    const defaultLocale = selectedLocale || organizationSettings?.data?.defaultLocale || DEFAULT_LOCALE;
+
+    return createDefaultActorData(defaultLocale);
+  }, [selectedLocale, organizationSettings?.data?.defaultLocale]);
 
   const {
     loadPersistedPayload,
@@ -262,8 +268,8 @@ export function PreviewContextPanel({
 
   const handleClearPersistedActor = useCallback(() => {
     clearPersistedActor();
-    updatePreviewSection('actor', {});
-  }, [clearPersistedActor, updatePreviewSection]);
+    updatePreviewSection('actor', createDefaultActorDataWithLocale());
+  }, [clearPersistedActor, updatePreviewSection, createDefaultActorDataWithLocale]);
 
   const handleClearPersistedContext = useCallback(() => {
     clearPersistedContext();

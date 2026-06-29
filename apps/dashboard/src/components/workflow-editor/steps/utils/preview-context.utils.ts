@@ -26,6 +26,20 @@ export function parseJsonValue(value: string): ParsedData {
   }
 }
 
+export function createDefaultActorData(locale: string = DEFAULT_LOCALE): PreviewSubscriberData {
+  return {
+    subscriberId: 'actor-123',
+    firstName: 'Jane',
+    lastName: 'Actor',
+    email: 'actor@example.com',
+    phone: '+1234567890',
+    avatar: 'https://example.com/avatar.png',
+    locale,
+    timezone: 'America/New_York',
+    data: {},
+  };
+}
+
 export function createSubscriberData(subscriber: ISubscriberResponseDto): PreviewSubscriberData {
   return {
     subscriberId: subscriber.subscriberId,

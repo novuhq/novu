@@ -122,11 +122,15 @@ export class MockDataGeneratorService {
 
   createFullActorObject(): Record<string, unknown> {
     return {
-      ...this.createFullSubscriberObject(),
       subscriberId: 'actor-123',
       firstName: 'Jane',
       lastName: 'Actor',
       email: 'actor@example.com',
+      phone: '+1234567890',
+      avatar: 'https://example.com/avatar.png',
+      locale: DEFAULT_LOCALE,
+      timezone: 'America/New_York',
+      data: {},
     };
   }
 
