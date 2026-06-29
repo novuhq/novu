@@ -150,14 +150,15 @@ export const LayoutEmailBody = () => {
       render={({ field }) => {
         // when switching to html/block editor, we still might have locally maily json or html content
         // so we need will show the empty string until we receive the updated value from the server
-        const isMaily = isMailyJson(field.value);
+        const bodyValue = typeof field.value === 'string' ? field.value : '';
+        const isMaily = isMailyJson(bodyValue);
 
         if (editorType === 'html') {
           return (
             <HtmlEditor
               viewRef={viewRef}
               lastCompletionRef={lastCompletionRef}
-              value={isMaily ? '' : field.value}
+              value={isMaily ? '' : bodyValue}
               variables={parsedVariables.variables}
               isAllowedVariable={parsedVariables.isAllowedVariable}
               onChange={field.onChange}
@@ -188,7 +189,7 @@ export const LayoutEmailBody = () => {
         return (
           <Maily
             key={editorKey}
-            value={isMaily ? field.value : ''}
+            value={isMaily ? bodyValue : ''}
             onChange={field.onChange}
             variables={parsedVariables}
             blocks={blocks}
