@@ -41,13 +41,19 @@ Use Novu-specific terms consistently. For full definitions, see the [glossary](/
 
 ## AI prompt blocks
 
-Use the Mintlify `<Prompt>` component for pre-built AI prompts users can copy or open in Cursor. Store reusable prompt bodies in `docs/snippets/prompts/` and reference them with `<Snippet>`.
+Use the Mintlify `<Prompt>` component for pre-built AI prompts users can copy or open in Cursor. Store reusable prompt bodies in `docs/snippets/prompts/`, then inline them into `<Prompt>` children with `node scripts/inline-prompt-snippets.mjs`.
+
+Do **not** nest `<Snippet />` inside `<Prompt>` — Mintlify copies prompt children verbatim, so Snippet tags are copied as JSX instead of the prompt text.
 
 ```mdx
 <Prompt description="Add Novu Inbox to my Next.js app" icon="sparkles" actions={["copy", "cursor"]}>
-  <Snippet file="snippets/prompts/inbox/nextjs.mdx" />
+# Add Novu Inbox to Next.js App
+
+Install `@novu/nextjs`...
 </Prompt>
 ```
+
+**Workflow:** edit `docs/snippets/prompts/**/*.mdx`, run `node scripts/inline-prompt-snippets.mjs`, commit both snippet files and updated pages.
 
 **When to use `<Prompt>`**
 

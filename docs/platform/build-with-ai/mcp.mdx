@@ -284,31 +284,31 @@ After connecting the Novu MCP server, copy or open these prompts in Cursor to ve
 ### Verify connection
 
 <Prompt description="Test your Novu MCP connection" icon="bot" actions={["copy", "cursor"]}>
-  <Snippet file="snippets/prompts/mcp/test-connection.mdx" />
+Check my Novu API key status and confirm my region configuration.
 </Prompt>
 
 <Prompt description="List your notification workflows" icon="bot" actions={["copy", "cursor"]}>
-  <Snippet file="snippets/prompts/mcp/list-workflows.mdx" />
+Show me all my notification workflows in Novu.
 </Prompt>
 
 ### Subscriber management
 
 <Prompt description="Find a subscriber by email" icon="bot" actions={["copy", "cursor"]}>
-  <Snippet file="snippets/prompts/mcp/find-subscriber.mdx" />
+Find subscriber user@example.com in my Novu account and show their profile details.
 </Prompt>
 
 <Prompt description="Create a new subscriber" icon="bot" actions={["copy", "cursor"]}>
-  <Snippet file="snippets/prompts/mcp/create-subscriber.mdx" />
+Create a new subscriber with subscriberId user-456, email jane@example.com, and firstName Jane in my Novu account.
 </Prompt>
 
 ### Trigger and debug
 
 <Prompt description="Trigger a workflow for a subscriber" icon="bot" actions={["copy", "cursor"]}>
-  <Snippet file="snippets/prompts/mcp/trigger-workflow.mdx" />
+Trigger my welcome-email workflow for subscriber test-user-123 with payload containing userName "Jane" and activationLink "https://app.example.com/activate".
 </Prompt>
 
 <Prompt description="Debug failed notifications" icon="bot" actions={["copy", "cursor"]}>
-  <Snippet file="snippets/prompts/mcp/debug-notifications.mdx" />
+Show recent failed notifications in the last 24 hours and help me debug delivery issues.
 </Prompt>
 
 ## MCP tools
