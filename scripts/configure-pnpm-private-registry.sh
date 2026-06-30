@@ -9,7 +9,8 @@ if [ -n "${BULL_MQ_PRO_NPM_TOKEN:-}" ]; then
   printf '@taskforcesh:registry=https://npm.taskforce.sh/\n//npm.taskforce.sh/:_authToken=%s\nalways-auth=true\n' \
     "${BULL_MQ_PRO_NPM_TOKEN}" > "$npmrc"
   chmod 600 "$npmrc"
-  printf '%s' ""
-else
-  printf '%s' "--config.trustLockfile=true"
 fi
+
+# pnpm 11.9 verifies every lockfile entry on install. Trust the committed lockfile
+# in CI so installs are not blocked by minimumReleaseAge on unrelated packages.
+printf '%s' "--config.trustLockfile=true"
