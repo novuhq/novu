@@ -1,0 +1,38 @@
+---
+title: 'ValueFirst'
+description: 'Learn how to use the ValueFirst provider to send sms notifications using Novu'
+---
+
+You can use the [ValueFirst](https://www.myvfirst.com/) provider to send SMS messages to your customers using the Novu Platform with a single API to create multi-channel experiences.
+
+## Getting Started
+
+To use the ValueFirst provider in the SMS channel, you need a ValueFirst account with your username, password, and a sender ID configured.
+
+## Setting up ValueFirst
+
+<Steps>
+<Step title="Get your API Credentials">
+1. [Sign in](https://www.myvfirst.com/) to your ValueFirst account
+2. Navigate to your account settings to find your **Username** and **Password**
+3. Configure a **Sender ID** (also known as Sender Name) for your SMS messages
+</Step>
+
+<Step title="Enter the Credentials in Novu">
+1. Visit the [Integrations Store](https://dashboard.novu.co/integrations) on Novu
+2. Click the **Add a provider** button
+3. Locate **ValueFirst** and click on **Disabled** to mark it as **Active**
+4. Click on the **Connect** button
+5. Enter your:
+   - **Username**
+   - **Password**
+   - **Sender ID**
+6. Click **Save**
+</Step>
+</Steps>
+
+<Note>
+  ValueFirst uses token-based authentication. The SDK automatically obtains and caches a bearer token
+  using your credentials. An entity ID and DLT template ID can be passed as custom data for
+  TRAI-compliant messaging in India.
+</Note>
