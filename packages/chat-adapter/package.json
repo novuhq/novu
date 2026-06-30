@@ -46,10 +46,10 @@
     "check:fix": "biome check --write ."
   },
   "dependencies": {
-    "@chat-adapter/shared": "4.30.0"
+    "@chat-adapter/shared": "4.31.0"
   },
   "peerDependencies": {
-    "chat": "^4.30.0",
+    "chat": "^4.31.0",
     "react": ">=18.0.0 || >=19.0.0"
   },
   "peerDependenciesMeta": {
@@ -58,7 +58,7 @@
     }
   },
   "devDependencies": {
-    "@chat-adapter/state-memory": "4.30.0",
+    "@chat-adapter/state-memory": "4.31.0",
     "@types/react": "^19.0.0",
     "rimraf": "~3.0.2",
     "typescript": "5.6.2",
