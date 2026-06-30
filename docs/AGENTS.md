@@ -49,26 +49,23 @@ Use Novu-specific terms consistently. For full definitions, see the [glossary](/
 Use the Mintlify `<Prompt>` component for pre-built AI prompts users can copy or open in Cursor. Write prompt text directly inside `<Prompt>` children — do not use `<Snippet />`, which copies as JSX instead of the prompt text.
 
 ```mdx
-<Prompt description="Add Novu Inbox to my Next.js app" icon="sparkles" actions={["copy", "cursor"]}>
-# Add Novu Inbox to Next.js App
-
-Install `@novu/nextjs`...
+<Prompt description="Test your Novu MCP connection" icon="bot" actions={["copy", "cursor"]}>
+Check my Novu API key status and confirm my region configuration.
 </Prompt>
 ```
 
 **When to use `<Prompt>`**
 
-- Integration setup where an AI assistant can implement code in the user's repo (Inbox, workflow triggers, webhooks, agent connect buttons)
 - MCP or skills pages where users paste operational prompts into connected AI tools
+- Do not use on integration setup pages (Inbox, workflow triggers, webhooks, quickstarts, agent connect buttons)
 - Do not use for in-product Copilot-style chat or one-line examples better suited to prose
 
 **Conventions**
 
 - Always set `actions={["copy", "cursor"]}` to match the Novu dashboard
-- Use Lucide icons: `sparkles` (integration), `bot` (MCP/skills), `zap` (workflows), `plug` (agents)
-- Use `YOUR_*` placeholders for dashboard-specific values (application identifier, subscriber ID, workflow ID)
-- Add a `<Note>` near the first prompt on a page telling users to substitute values from **API Keys**, **Subscribers**, or **Workflows** in the dashboard
-- Place prompts after prerequisites and adjacent to the code or setup steps they help implement
+- Use Lucide icons: `bot` (MCP/skills)
+- Use `YOUR_*` placeholders for dashboard-specific values when prompts reference them
+- Group prompts under an "Example prompts" section on MCP and skills pages
 
 ## Server-side SDK code examples
 
