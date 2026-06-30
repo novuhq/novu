@@ -1,4 +1,10 @@
-import { DomainStatusEnum, type IIntegration } from '@novu/shared';
+import {
+  ApiServiceLevelEnum,
+  DomainStatusEnum,
+  FeatureNameEnum,
+  getFeatureForTierAsBoolean,
+  type IIntegration,
+} from '@novu/shared';
 import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { RiAddLine, RiCloseLine, RiInformation2Line } from 'react-icons/ri';
 import { useSearchParams } from 'react-router-dom';
@@ -8,7 +14,9 @@ import { CompactButton } from '@/components/primitives/button-compact';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { Switch } from '@/components/primitives/switch';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
+import { UpgradeCTATooltip } from '@/components/upgrade-cta-tooltip';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
+import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { useUpdateIntegration } from '@/hooks/use-update-integration';
 import { cn } from '@/utils/ui';
 import { AgentCustomDomainSheet } from './agent-custom-domain-sheet';
@@ -53,6 +61,11 @@ export function EmailInboxCardBody({
 }: EmailInboxCardProps) {
   const { mutateAsync: updateIntegration } = useUpdateIntegration();
   const { integrations } = useFetchIntegrations();
+  const { subscription } = useFetchSubscription();
+  const domainsEnabled = getFeatureForTierAsBoolean(
+    FeatureNameEnum.DOMAINS_BOOLEAN,
+    subscription?.apiServiceLevel || ApiServiceLevelEnum.FREE
+  );
 
   const { configuredAddresses, domains, addAddress, removeAddress, setSharedInboxDisabled, isSharedToggleUpdating } =
     useEmailSetupCredentials({ emailIntegration, integrations, agent });
@@ -85,7 +98,7 @@ export function EmailInboxCardBody({
   // sheet on that domain so verification resumes inline, then strip the marker from the URL.
   const customDomainReturn = searchParams.get('customDomain');
   useEffect(() => {
-    if (!customDomainReturn || hasHandledDomainReturnRef.current) {
+    if (!customDomainReturn || hasHandledDomainReturnRef.current || !domainsEnabled) {
       return;
     }
 
@@ -99,7 +112,7 @@ export function EmailInboxCardBody({
     nextParams.delete('error');
     nextParams.delete('error_description');
     setSearchParams(nextParams, { replace: true });
-  }, [customDomainReturn, searchParams, setSearchParams]);
+  }, [customDomainReturn, domainsEnabled, searchParams, setSearchParams]);
 
   async function persistActive(nextActive: boolean): Promise<void> {
     const previousActive = activeRef.current;
@@ -165,6 +178,10 @@ export function EmailInboxCardBody({
   }
 
   function handleConnectDomain() {
+    if (!domainsEnabled) {
+      return;
+    }
+
     // With a verified domain available, reveal the inline address picker; otherwise open the sheet
     // to add and verify a new domain (no redirect).
     if (hasUsableDomains) {
@@ -183,6 +200,9 @@ export function EmailInboxCardBody({
       setReturnDomainName(undefined);
     }
   }
+
+  const connectDomainButtonClassName =
+    'text-text-sub hover:text-text-strong inline-flex items-center gap-0.5 self-start py-1 text-label-xs font-medium leading-4 transition-colors disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:text-text-sub';
 
   return (
     <>
@@ -271,15 +291,28 @@ export function EmailInboxCardBody({
           ) : null}
 
           {!hideCustomAddressForm && !isAddingCustom ? (
-            <button
-              type="button"
-              disabled={inboxSectionDisabled}
-              onClick={handleConnectDomain}
-              className="text-text-sub hover:text-text-strong inline-flex items-center gap-0.5 self-start py-1 text-label-xs font-medium leading-4 transition-colors disabled:opacity-50"
-            >
-              <RiAddLine className="size-3.5" aria-hidden />
-              <span>Connect custom domain</span>
-            </button>
+            domainsEnabled ? (
+              <button
+                type="button"
+                disabled={inboxSectionDisabled}
+                onClick={handleConnectDomain}
+                className={connectDomainButtonClassName}
+              >
+                <RiAddLine className="size-3.5" aria-hidden />
+                <span>Connect custom domain</span>
+              </button>
+            ) : (
+              <UpgradeCTATooltip
+                description="To create domains, upgrade your plan."
+                utmCampaign="domains"
+                utmSource="agent-email-inbox"
+              >
+                <button type="button" disabled className={connectDomainButtonClassName}>
+                  <RiAddLine className="size-3.5" aria-hidden />
+                  <span>Connect custom domain</span>
+                </button>
+              </UpgradeCTATooltip>
+            )
           ) : null}
 
           {!hideCustomAddressForm ? (
