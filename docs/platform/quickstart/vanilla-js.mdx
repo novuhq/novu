@@ -6,6 +6,78 @@ description: 'Learn how to integrate the Novu Inbox component into a Vanilla JS 
 
 This guide walks you through integrating Novu’s Inbox into your Vanilla JS and HTML project for in-app notifications in real-time, from setup to triggering your first notification. By the end, you'll have a working notification inbox.
 
+## Use AI to set up faster
+
+<Note>
+  Replace `YOUR_APPLICATION_IDENTIFIER` and `YOUR_SUBSCRIBER_ID` with values from **API Keys** and **Subscribers** in the Novu dashboard.
+</Note>
+
+<Prompt description="Add Novu Inbox to my JavaScript app" icon="sparkles" actions={["copy", "cursor"]}>
+# Add Novu Inbox to JavaScript App
+
+Install `@novu/js`. Mount the Inbox in your header, navbar, or sidebar.
+
+Latest docs: https://docs.novu.co/platform/quickstart/vanilla-js
+
+Replace `YOUR_APPLICATION_IDENTIFIER` and `YOUR_SUBSCRIBER_ID` with values from the Novu dashboard (**API Keys** and **Subscribers**).
+
+## Install
+
+```bash
+npm install @novu/js
+```
+
+## Component
+
+```ts
+import { NovuUI } from '@novu/js/ui';
+
+const novu = new NovuUI({
+  options: {
+    applicationIdentifier: 'YOUR_APPLICATION_IDENTIFIER',
+    subscriber: 'YOUR_SUBSCRIBER_ID',
+  },
+});
+
+novu.mountComponent({
+  name: 'Inbox',
+  props: {},
+  element: document.getElementById('notification-inbox'),
+});
+```
+
+## Subscriber ID
+
+Use the app's existing auth system to get a unique user identifier for subscriberId. If no auth system exists, use `YOUR_SUBSCRIBER_ID`.
+
+## Appearance
+
+Extract design tokens from the host app and apply via the appearance configuration. Only set values extracted from the host app's design system.
+
+## Rules
+
+ALWAYS:
+
+- Detect the project's package manager and use it for installation
+- Initialize Novu after DOM content is loaded
+- Mount the Inbox inline in existing UI — no new pages or wrappers
+- Use the existing auth system to source subscriberId when available
+
+NEVER:
+
+- Create wrapper components or new pages just for the inbox
+- Pollute the global scope
+- Introduce styles not in the host app
+
+## Verify Before Responding
+
+1. Is `@novu/js` installed with the project's package manager?
+2. Is the Inbox mounted inline in existing UI?
+3. Is subscriberId sourced from the auth system when available?
+
+If any fails, revise.
+</Prompt>
+
 <Steps>
   <Step>
   ### Add Novu ESM script 

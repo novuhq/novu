@@ -43,6 +43,71 @@ Use this guide to pick the right skill for your task:
 - **"Add a bell icon to my app"** → `inbox-integration`
 - **"Let users opt out of emails"** → `manage-preferences`
 
+## Example prompts
+
+Copy or open these prompts in Cursor after installing Novu skills with `npx skills add novuhq/skills`. Replace `YOUR_*` placeholders with values from your Novu dashboard.
+
+### Core skills
+
+<Prompt description="Send a welcome notification" icon="bot" actions={["copy", "cursor"]}>
+Send a welcome notification to subscriber-123 using the welcome-email workflow. Use @novu/api with NOVU_SECRET_KEY from environment variables.
+
+Example payload:
+
+```json
+{
+  "userName": "Jane",
+  "activationLink": "https://app.example.com/activate"
+}
+```
+
+Follow the novu-trigger-notification skill. Do not create documentation files — implement the trigger in my existing codebase.
+</Prompt>
+
+<Prompt description="Create a subscriber" icon="bot" actions={["copy", "cursor"]}>
+Create a subscriber with subscriberId user-456, email jane@example.com, and firstName Jane in my Novu account using @novu/api.
+
+Follow the novu-manage-subscribers skill. Store NOVU_SECRET_KEY in environment variables.
+</Prompt>
+
+<Prompt description="Add a bell icon to my app" icon="bot" actions={["copy", "cursor"]}>
+Add a notification bell (Novu Inbox) to my Next.js app navbar. Install @novu/nextjs, use applicationIdentifier YOUR_APPLICATION_IDENTIFIER and subscriberId from my auth system.
+
+Follow the novu-inbox-integration skill. Place the Inbox inline in existing UI — no new pages or wrappers.
+
+Latest docs: https://docs.novu.co/platform/quickstart/nextjs
+</Prompt>
+
+<Prompt description="Configure subscriber preferences" icon="bot" actions={["copy", "cursor"]}>
+Let subscriber-123 opt out of marketing email notifications while keeping transactional emails enabled.
+
+Follow the novu-manage-preferences skill using @novu/api with NOVU_SECRET_KEY from environment variables.
+</Prompt>
+
+### Additional skills
+
+These skills are available in the [Novu documentation MCP](/platform/build-with-ai/mcp) and Mintlify-hosted skill packages:
+
+<Prompt description="Set up a code-first workflow" icon="bot" actions={["copy", "cursor"]}>
+Set up a code-first Novu workflow using @novu/framework in my Next.js app. Create a welcome-email workflow with an email step and show me how to trigger it.
+
+Follow the novu-framework-integration skill. Use NOVU_SECRET_KEY from environment variables.
+
+Latest docs: https://docs.novu.co/framework/quickstart/nextjs
+</Prompt>
+
+<Prompt description="Design a multi-channel workflow" icon="bot" actions={["copy", "cursor"]}>
+Help me design a multi-channel notification workflow for order-shipped events. Include in-app, email, and optional SMS steps with appropriate conditions.
+
+Follow the novu-design-workflow skill. Ask clarifying questions about my channels and subscriber preferences before proposing the workflow structure.
+</Prompt>
+
+<Prompt description="Configure workflow step content" icon="bot" actions={["copy", "cursor"]}>
+Configure the email step in my welcome-email workflow: set the subject to "Welcome, [payload userName]!" and add a body with the activation link from the payload activationLink field.
+
+Follow the novu-dashboard-workflows skill. Use Liquid variables for personalization.
+</Prompt>
+
 ## Common Combinations
 
 - **Full notification system**: `trigger-notification` + `manage-subscribers`

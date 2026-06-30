@@ -6,6 +6,77 @@ description: "Integrate Novu in-app notifications into your Remix application. F
 
 This guide walks you through integrating Novu’s Inbox into your Remix application for in-app notifications in real-time, from setup to triggering your first notification. By the end, you'll have a working notification inbox.
 
+## Use AI to set up faster
+
+<Note>
+  Replace `YOUR_APPLICATION_IDENTIFIER` and `YOUR_SUBSCRIBER_ID` with values from **API Keys** and **Subscribers** in the Novu dashboard.
+</Note>
+
+<Prompt description="Add Novu Inbox to my Remix app" icon="sparkles" actions={["copy", "cursor"]}>
+# Add Novu Inbox to Remix App
+
+Install `@novu/react`. Add the `<Inbox />` component to your header, navbar, or sidebar.
+
+Latest docs: https://docs.novu.co/platform/quickstart/remix
+
+Replace `YOUR_APPLICATION_IDENTIFIER` and `YOUR_SUBSCRIBER_ID` with values from the Novu dashboard (**API Keys** and **Subscribers**).
+
+## Install
+
+```bash
+npm install @novu/react
+```
+
+## Component
+
+```tsx
+import { Inbox } from '@novu/react';
+
+export default function NotificationInbox() {
+  return (
+    <Inbox
+      applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+      subscriberId="YOUR_SUBSCRIBER_ID"
+    />
+  );
+}
+```
+
+## Subscriber ID
+
+Use the app's existing auth system to get a unique user identifier for subscriberId. Check for Clerk, NextAuth, Firebase, Supabase, or custom auth. If no auth system exists, use `YOUR_SUBSCRIBER_ID`.
+
+## Appearance
+
+Extract design tokens from the host app (Tailwind config, CSS variables, theme objects) and apply them via the appearance prop. Only include values you extracted from the host design system — omit empty or placeholder appearance values.
+
+## Rules
+
+ALWAYS:
+
+- Detect the project's package manager and use it for installation
+- Extract design tokens and apply via the appearance prop
+- Place `<Inbox />` inline in existing UI — no new pages or wrappers
+- Follow Remix conventions for loaders and routing
+- Use the existing auth system to source subscriberId when available
+
+NEVER:
+
+- Add empty appearance values or placeholder props
+- Create wrapper components or new pages just for the inbox
+- Add code comments
+- Introduce styles not in the host app
+
+## Verify Before Responding
+
+1. Is `@novu/react` installed with the project's package manager?
+2. Is `<Inbox />` placed inline in existing UI?
+3. Are design tokens extracted and applied?
+4. Is subscriberId sourced from the auth system when available?
+
+If any fails, revise.
+</Prompt>
+
 <Steps>
   <Step>
   ### Create a Novu account

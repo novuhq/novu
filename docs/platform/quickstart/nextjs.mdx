@@ -6,6 +6,81 @@ description: "Set up Novu in-app notifications in your Next.js app. Install the 
 
 Learn how to integrate Novu’s Inbox for real-time in-app notifications in your Next.js application. By the end of this guide, you’ll have a working notification inbox that displays messages triggered from the Novu dashboard.
 
+## Use AI to set up faster
+
+<Note>
+  Replace `YOUR_APPLICATION_IDENTIFIER` and `YOUR_SUBSCRIBER_ID` with values from **API Keys** and **Subscribers** in the Novu dashboard.
+</Note>
+
+<Prompt description="Add Novu Inbox to my Next.js app" icon="sparkles" actions={["copy", "cursor"]}>
+# Add Novu Inbox to Next.js App
+
+Install `@novu/nextjs`. Add the `<Inbox />` component to your header, navbar, or sidebar.
+
+Latest docs: https://docs.novu.co/platform/quickstart/nextjs
+
+Replace `YOUR_APPLICATION_IDENTIFIER` and `YOUR_SUBSCRIBER_ID` with values from the Novu dashboard (**API Keys** and **Subscribers**).
+
+## Install
+
+```bash
+npm install @novu/nextjs
+```
+
+## Component
+
+```tsx
+'use client';
+import { Inbox } from '@novu/nextjs';
+
+export default function NotificationInbox() {
+  return (
+    <Inbox
+      applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+      subscriberId="YOUR_SUBSCRIBER_ID"
+    />
+  );
+}
+```
+
+## Subscriber ID
+
+Use the app's existing auth system to get a unique user identifier for subscriberId. Check for Clerk, NextAuth, Firebase, Supabase, or custom auth. If no auth system exists, use `YOUR_SUBSCRIBER_ID`.
+
+## Appearance
+
+Extract design tokens from the host app (Tailwind config, CSS variables, theme objects) and apply them via the appearance prop. Only include values you extracted from the host design system — omit empty or placeholder appearance values.
+
+## Rules
+
+ALWAYS:
+
+- Detect the project's package manager and use it for installation
+- Extract design tokens and apply via the appearance prop
+- Place `<Inbox />` inline in existing UI — no new pages or wrappers
+- Use TypeScript, no comments, no empty props
+- Follow Next.js conventions
+- Use the existing auth system to source subscriberId when available
+
+NEVER:
+
+- Add empty appearance values or placeholder props
+- Create wrapper components or new pages just for the inbox
+- Add code comments
+- Introduce styles not in the host app
+- Add unused props or imports
+
+## Verify Before Responding
+
+1. Is `@novu/nextjs` installed with the project's package manager?
+2. Is `<Inbox />` placed inline in existing UI?
+3. Are design tokens extracted and applied?
+4. Are all props non-empty and properly typed?
+5. Is subscriberId sourced from the auth system when available?
+
+If any fails, revise.
+</Prompt>
+
 <Steps>
   <Step>
   ### Create a Novu account
