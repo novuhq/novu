@@ -54,10 +54,11 @@ export function EmailAgentIntegrationGuide({
 
   const showInboxSection = Boolean((isSharedInboxEnabled || IS_SELF_HOSTED_EE) && emailIntegration && integrationLink);
 
-  // Layer 2: once connected, production-hardening controls (own provider, custom domain,
-  // branded address) live in the guided "What's next" card; custom From lives in the EMAIL
-  // card below. The full provider/sender config card is hidden when the flag is on, and the
-  // inbox card's custom-domain add-form is owned by the guide.
+  // Layer 2: once connected, the "What's next" card holds the provider upgrade. On cloud the
+  // custom-domain / branded-address flow moves into the EMAIL card below (the inbox card owns the
+  // add-form); on self-hosted EE that flow stays inline in the guide, so the inbox card's add-form
+  // is hidden there. Custom From always lives in the EMAIL card. The full provider/sender config
+  // card is only shown when the flag is off.
   const showConfigCard = !isEmailWhatsNextEnabled;
   const showSenderAddressRow = isEmailWhatsNextEnabled;
   const showEmailCard = Boolean(
@@ -78,7 +79,7 @@ export function EmailAgentIntegrationGuide({
               emailIntegration={emailIntegration}
               integrationEmbedded={integrationLink.integration}
               agent={agent}
-              hideCustomAddressForm={isEmailWhatsNextEnabled}
+              hideCustomAddressForm={isEmailWhatsNextEnabled && IS_SELF_HOSTED_EE}
             />
           ) : null}
           {showConfigCard ? (

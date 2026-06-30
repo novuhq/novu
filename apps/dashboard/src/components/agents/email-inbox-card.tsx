@@ -16,6 +16,8 @@ import { cn } from '@/utils/ui';
 import { InboundAddressForm } from './inbound-address-form';
 import { useEmailSetupCredentials } from './use-email-setup-credentials';
 
+const DELIVERABILITY_DOCS_URL = 'https://docs.novu.co/platform/domains';
+
 export type EmailInboxCardProps = {
   emailIntegration: IIntegration;
   /**
@@ -165,7 +167,7 @@ export function EmailInboxCardBody({
             </Tooltip>
           </span>
         }
-        description="Users can reach this agent at any of the addresses below. Mail delivered to any of them is forwarded to the agent."
+        description="Users can reach this agent at any of the addresses below — share one in your product's contact or reply flows, support footer, or docs. Mail delivered to any of them is forwarded to the agent."
         divider
         disabled={inboxSectionDisabled}
       >
@@ -247,6 +249,20 @@ export function EmailInboxCardBody({
                 Configure custom domains
               </Link>{' '}
               in Novu to make them available here.
+            </p>
+          ) : null}
+
+          {!hideCustomAddressForm ? (
+            <p className="text-text-soft text-paragraph-xs leading-4">
+              {'Custom domains route inbound mail to your agent (MX) and let your replies pass SPF, DKIM, and DMARC. '}
+              <a
+                href={DELIVERABILITY_DOCS_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-text-sub underline underline-offset-2"
+              >
+                Learn about deliverability
+              </a>
             </p>
           ) : null}
         </div>

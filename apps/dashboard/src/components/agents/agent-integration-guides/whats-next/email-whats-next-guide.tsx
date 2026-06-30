@@ -3,6 +3,7 @@ import { type ReactNode, useMemo, useState } from 'react';
 import { RiArrowRightSLine, RiCloseLine, RiExpandUpDownLine, RiKey2Line } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
 import type { AgentIntegrationLink, AgentResponse } from '@/api/agents';
+import { IS_SELF_HOSTED_EE } from '@/config';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { buildRoute, ROUTES } from '@/utils/routes';
@@ -143,7 +144,11 @@ export function EmailWhatsNextGuide({ agent, integrationLink }: EmailWhatsNextGu
   // A branded address can only be added on a verified domain (the picker only lists verified
   // domains with MX configured), so a configured address implies a verified, deliverable domain.
   const addressBranded = configuredAddresses.length > 0;
-  const productionReady = providerDone && addressBranded;
+  // Cloud surfaces only the provider upgrade in "What's next" (custom domain + sharing move to the
+  // EMAIL card below), so production-readiness keys off the provider alone. Self-hosted EE keeps the
+  // full inline checklist and still requires a branded address.
+  const isSelfHosted = IS_SELF_HOSTED_EE;
+  const productionReady = isSelfHosted ? providerDone && addressBranded : providerDone;
   const primaryUserAddress = inboundAddresses[0] ?? sharedInboundAddress ?? undefined;
 
   const recapSteps: Array<{ title: string; description: string }> = [
@@ -161,28 +166,32 @@ export function EmailWhatsNextGuide({ agent, integrationLink }: EmailWhatsNextGu
     },
   ];
 
-  const devSteps: GuideStep[] = [
-    {
-      key: 'provider',
-      status: providerDone ? 'completed' : 'current',
-      sectionLabel: 'GO PRODUCTION',
-      title: 'Send from your own email provider',
-      description:
-        'The demo sender is rate-limited and for testing only. Connect SendGrid, Resend, SES, or another provider for full volume and deliverability control.',
-      rightContent: (
-        <div className="flex w-full flex-col gap-1.5">
-          <OutboundProviderSelect selectedId={outboundId || undefined} onSelect={onOutboundSelect} hideLabel />
-          {needsCredentialsStep && !hasOutboundCredentials ? (
-            <SetupButton
-              leadingIcon={<RiKey2Line className="size-3.5" />}
-              onClick={() => setIsCredentialsSidebarOpen(true)}
-            >
-              {`Configure ${outboundProviderConfig?.displayName ?? 'provider'} credentials`}
-            </SetupButton>
-          ) : null}
-        </div>
-      ),
-    },
+  const providerStep: GuideStep = {
+    key: 'provider',
+    status: providerDone ? 'completed' : 'current',
+    sectionLabel: 'GO PRODUCTION',
+    title: 'Send from your own email provider',
+    description:
+      'The demo sender is rate-limited and for testing only. Connect SendGrid, Resend, SES, or another provider for full volume and deliverability control.',
+    rightContent: (
+      <div className="flex w-full flex-col gap-1.5">
+        <OutboundProviderSelect selectedId={outboundId || undefined} onSelect={onOutboundSelect} hideLabel />
+        {needsCredentialsStep && !hasOutboundCredentials ? (
+          <SetupButton
+            leadingIcon={<RiKey2Line className="size-3.5" />}
+            onClick={() => setIsCredentialsSidebarOpen(true)}
+          >
+            {`Configure ${outboundProviderConfig?.displayName ?? 'provider'} credentials`}
+          </SetupButton>
+        ) : null}
+      </div>
+    ),
+  };
+
+  // Self-hosted EE has no demo sender / shared inbox, so "What's next" stays the full production
+  // checklist (custom domain + share address) inline. On cloud those move into the EMAIL card below,
+  // so only the provider upgrade is shown here.
+  const productionHardeningSteps: GuideStep[] = [
     {
       key: 'domain',
       status: addressBranded ? 'completed' : 'current',
@@ -260,6 +269,8 @@ export function EmailWhatsNextGuide({ agent, integrationLink }: EmailWhatsNextGu
       extraContent: primaryUserAddress ? <CopyableEmailAddress email={primaryUserAddress} /> : undefined,
     },
   ];
+
+  const devSteps: GuideStep[] = isSelfHosted ? [providerStep, ...productionHardeningSteps] : [providerStep];
 
   const recapCount = recapSteps.length;
 
