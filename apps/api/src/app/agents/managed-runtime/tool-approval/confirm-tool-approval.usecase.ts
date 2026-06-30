@@ -103,11 +103,9 @@ export class ConfirmToolApproval {
             conversationId: command.conversationId,
             agentIdentifier: command.agentIdentifier,
             integrationIdentifier: command.integrationIdentifier,
-            toolProgress: {
-              action: 'tool-use',
-              toolUseId: parsed.toolUseId,
-              status: 'error',
-              details: 'Denied',
+            event: {
+              kind: 'task',
+              task: { id: parsed.toolUseId, status: 'error', details: 'Denied' },
             },
           })
         )
@@ -127,9 +125,7 @@ export class ConfirmToolApproval {
           conversationId: command.conversationId,
           agentIdentifier: command.agentIdentifier,
           integrationIdentifier: command.integrationIdentifier,
-          toolProgress: {
-            action: 'approved',
-          },
+          event: { kind: 'phase', phase: 'approved' },
         })
       )
       .catch((err) => {

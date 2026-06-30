@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
 
@@ -13,21 +13,34 @@ function safeCursorEncode(text: string): string {
   return encodeURIComponent(text).replace(/[!'()*~]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`);
 }
 
-const CURSOR_DEEP_LINK = `https://cursor.com/link/prompt?text=${safeCursorEncode(PREBUILT_AGENT_PROMPT)}`;
+type PrebuiltPromptBannerProps = {
+  /** Prompt copied to the clipboard / opened in Cursor. Defaults to the onboarding agent prompt. */
+  prompt?: string;
+  /** Telemetry source tag for the copy / Cursor deep-link events. */
+  source?: string;
+  /** Inline tip headline. */
+  message?: string;
+};
 
 /**
  * Inline tip rendered above the agent-brain steps during onboarding: a pre-built agent prompt the
  * user can copy to their clipboard or open directly in Cursor via the prompt deep link.
  */
-export function PrebuiltPromptBanner() {
+export function PrebuiltPromptBanner({
+  prompt = PREBUILT_AGENT_PROMPT,
+  source = 'agents-onboarding',
+  message = 'Use this pre-built prompt to get started faster.',
+}: PrebuiltPromptBannerProps = {}) {
   const telemetry = useTelemetry();
   const [copied, setCopied] = useState(false);
 
+  const cursorDeepLink = useMemo(() => `https://cursor.com/link/prompt?text=${safeCursorEncode(prompt)}`, [prompt]);
+
   const handleCopyPrompt = async () => {
     try {
-      await navigator.clipboard.writeText(PREBUILT_AGENT_PROMPT);
+      await navigator.clipboard.writeText(prompt);
       setCopied(true);
-      telemetry(TelemetryEvent.AI_PROMPT_COPIED, { source: 'agents-onboarding' });
+      telemetry(TelemetryEvent.AI_PROMPT_COPIED, { source });
       setTimeout(() => setCopied(false), 2000);
     } catch {
       // Clipboard access denied — nothing actionable for the user beyond retrying.
@@ -38,17 +51,13 @@ export function PrebuiltPromptBanner() {
     <div className="border-stroke-weak bg-bg-weak rounded-lg border p-1">
       <div className="bg-bg-white flex items-center gap-2 rounded-md border border-[rgba(255,132,71,0.1)] py-1.5 pl-2 pr-1.5">
         <div className="bg-text-soft h-7 w-1 shrink-0 self-stretch rounded-full" />
-        <p className="text-text-strong text-label-sm min-w-0 flex-1 font-normal">
-          Use this pre-built prompt to get started faster.
-        </p>
+        <p className="text-text-strong text-label-sm min-w-0 flex-1 font-normal">{message}</p>
         <div className="flex shrink-0 items-center gap-2.5">
           <a
-            href={CURSOR_DEEP_LINK}
+            href={cursorDeepLink}
             target="_blank"
             rel="noopener noreferrer"
-            onClick={() =>
-              telemetry(TelemetryEvent.AI_PROMPT_COPIED, { source: 'agents-onboarding', method: 'cursor-deeplink' })
-            }
+            onClick={() => telemetry(TelemetryEvent.AI_PROMPT_COPIED, { source, method: 'cursor-deeplink' })}
             className="text-text-sub inline-flex h-7 cursor-pointer items-center gap-1 rounded-md p-1.5 text-xs font-medium shadow-[0px_1px_3px_0px_rgba(14,18,27,0.12),0px_0px_0px_1px_#e1e4ea] transition-colors hover:bg-neutral-50"
             style={{
               backgroundImage:

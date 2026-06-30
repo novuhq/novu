@@ -49,13 +49,43 @@ function spawnInstall(packageManager: PackageManager, args: string[], options: S
       child.stderr.on('data', (chunk: Buffer) => chunks.push(chunk));
     }
 
+    let settled = false;
+    const settle = (fn: () => void) => {
+      if (settled) return;
+      settled = true;
+      process.off('SIGINT', onSigInt);
+      process.off('SIGTERM', onSigTerm);
+      fn();
+    };
+
+    const onSigInt = () => {
+      child.kill('SIGINT');
+      process.exitCode = 130;
+      settle(() => reject(new Error('Installation cancelled.')));
+    };
+
+    const onSigTerm = () => {
+      child.kill('SIGTERM');
+      process.exitCode = 143;
+      settle(() => reject(new Error('Installation terminated.')));
+    };
+
+    process.on('SIGINT', onSigInt);
+    process.on('SIGTERM', onSigTerm);
+
+    child.on('error', (error) => {
+      settle(() => reject(error));
+    });
+
     child.on('close', (code) => {
       if (code !== 0) {
         const detail = chunks.length > 0 ? `\n${Buffer.concat(chunks).toString().trim()}` : '';
-        reject(new Error(`\`${packageManager} ${args.join(' ')}\` exited with code ${code ?? 1}${detail}`));
+        settle(() =>
+          reject(new Error(`\`${packageManager} ${args.join(' ')}\` exited with code ${code ?? 1}${detail}`))
+        );
         return;
       }
-      resolve();
+      settle(resolve);
     });
   });
 }

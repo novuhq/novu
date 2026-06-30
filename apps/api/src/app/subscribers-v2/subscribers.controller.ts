@@ -17,6 +17,7 @@ import {
   CreateOrUpdateSubscriberCommand,
   CreateOrUpdateSubscriberUseCase,
   ExternalApiAccessible,
+  FeatureFlagsService,
   RequirePermissions,
   SubscriberResponseDto,
   UserSession,
@@ -62,6 +63,7 @@ import {
   GetSubscriberGlobalPreference,
   GetSubscriberGlobalPreferenceCommand,
 } from '../subscribers/usecases/get-subscriber-global-preference';
+import { assertGetPreferencesEnabled } from '../subscribers/utils/assert-get-preferences-enabled';
 import { ListSubscriberSubscriptionsQueryDto } from '../topics-v2/dtos/list-subscriber-subscriptions-query.dto';
 import { ListTopicSubscriptionsResponseDto } from '../topics-v2/dtos/list-topic-subscriptions-response.dto';
 import { ListSubscriberSubscriptionsCommand } from '../topics-v2/usecases/list-subscriber-subscriptions/list-subscriber-subscriptions.command';
@@ -127,7 +129,8 @@ export class SubscribersController {
     private updateNotificationActionUsecase: UpdateNotificationAction,
     private markNotificationsAsSeenUsecase: MarkNotificationsAsSeen,
     private updateAllNotificationsUsecase: UpdateAllNotifications,
-    private deleteAllNotificationsUsecase: DeleteAllNotifications
+    private deleteAllNotificationsUsecase: DeleteAllNotifications,
+    private featureFlagsService: FeatureFlagsService
   ) {}
 
   @Get('')
@@ -330,6 +333,8 @@ export class SubscribersController {
     @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string
   ): Promise<SubscriberGlobalPreferenceDto> {
+    await assertGetPreferencesEnabled(this.featureFlagsService, user.organizationId, user.environmentId);
+
     const globalPreference = await this.getSubscriberGlobalPreference.execute(
       GetSubscriberGlobalPreferenceCommand.create({
         organizationId: user.organizationId,

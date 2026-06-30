@@ -6,7 +6,7 @@ import {
   InvalidTelegramMobileTokenError,
   SlackAgentSetupLinkPayload,
   TelegramMobileLinkTokenService,
-} from '../../telegram-linking/telegram-mobile-link-token.service';
+} from '../../../../telegram-linking/telegram-mobile-link-token.service';
 import { GetSlackSetupLinkStatusCommand } from './get-slack-setup-link-status.command';
 
 export type GetSlackSetupLinkStatusResult =

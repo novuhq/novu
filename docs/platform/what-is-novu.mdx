@@ -1,0 +1,182 @@
+---
+title: What is Novu?
+description: The open-source communication infrastructure for transactional notifications (in-app, email, chat, push, SMS) and agent conversations (Slack, Teams, WhatsApp, email, Telegram).
+---
+
+Novu is open-source communication infrastructure for products that need to reach users reliably and hold conversations with them. It gives you two complementary capabilities on one platform:
+
+- **Transactional notifications**: Orchestrate multi-channel workflows for in-app, email, chat, push, and SMS with a unified API, drag-and-drop workflow builder, and customizable [`<Inbox />`](/platform/inbox) component.
+- **Agent conversations**: Connect AI agents to Slack, Microsoft Teams, WhatsApp, email, Telegram, and other channels through [Agent Communication Infrastructure (ACI)](/agents/get-started/what-is-aci), without rebuilding webhooks, identity, and delivery for every platform.
+
+Use either capability on its own, or connect them. Agents can trigger existing workflows from a conversation thread, workflows can send messages on behalf of an agent, and a user who replies to a workflow message can start an agent conversation.
+
+<Columns cols={2}>
+  <Card icon="bell" href="/platform" title="Notification platform">
+    Workflows, subscribers, channels, and the Inbox component for transactional and lifecycle messaging.
+  </Card>
+  <Card icon="bot" href="/agents" title="Agents overview">
+    Connect custom code or managed agents to messaging platforms with ACI for conversational use cases.
+  </Card>
+</Columns>
+
+Novu is designed to fit and scale with your existing system. Trusted by startups and enterprises for its developer-first design and cost-effective scalability, it delivers notifications and agent replies reliably without unnecessary complexity.
+
+<Columns cols={2}>
+  <Card icon="rocket" href="/platform/quickstart/nextjs" title="Notification quickstart">
+    Get started with workflows and the Inbox component in minutes.
+  </Card>
+  <Card icon="zap" href="/agents/managed-agent/quickstart" title="Agents quickstart">
+    Connect your first agent to Slack and send a message in under five minutes.
+  </Card>
+</Columns>
+
+## Why Novu?
+
+Novu is designed to provide a powerful, flexible, and easy-to-use communication solution that helps teams save time, reduce complexity, and improve user engagement across multiple platforms. Here's what sets it apart from other notification and agent infrastructure solutions:
+
+### The only fully open-source notification infrastructure
+
+- **Backed by a growing open-source community**. Novu is 100% open-source, with a rich community of creative minds constantly contributing to improve its capabilities.
+- **Built with an API-first approach**. Developers can deeply customize workflows and automate notifications through Novu APIs.
+- **Easily integrates with existing tools**. Novu works with modern development stacks, enabling smooth adoption without disrupting workflows.
+
+### Agent communication infrastructure for conversational products
+
+- **One agent, many channels**. Connect the same agent brain to Slack, Microsoft Teams, WhatsApp, email, Telegram, and other supported platforms through ACI.
+- **Infrastructure separate from intelligence**. ACI handles webhooks, identity, conversation state, and delivery so you can focus on your LLM, tools, and business logic.
+- **Custom code or managed agents**. Run your own agent with the agent SDK, or configure a [managed agent](/agents/managed-agent/overview) without custom server code.
+
+### Best-in-class in-app notification inbox
+
+- **Simplifies in-app notifications**. Developers can integrate real-time notifications in any web or mobile app with six lines of code.
+- **Offers full customization**. Developers can use hooks and headless libraries to modify the look and feel of the inbox UI.
+- **Empowers users with preferences**. The [`<Inbox />`](/platform/inbox) built-in preference management lets your users control how they receive notifications.
+
+### True omnichannel notification management
+
+- **Unifies all notification channels**. Developers can manage email, in-app, push, SMS, and chat notifications from a single API.
+- **Optimizes delivery strategies**. Novu enables multi-step workflows, ensuring users receive messages in the most effective channel.
+- **Reduces notification overload**. The digest feature consolidates updates (for example, "10 new likes on your post"), improving user experience.
+
+### Flexible workflow automation: no-code or code-first
+
+- **No-code workflow automation**. The drag-and-drop workflow builder makes notification automation accessible to your non-technical teams via the Novu's dashboard.
+- **Provides ultimate control with code-first workflows**. [The Novu Framework SDK](/platform/sdks) lets developers define workflows in code, integrate with CI/CD, and add custom automation logic.
+- **Consistent notification experience across teams**. Standardizes notification patterns, preventing each team from implementing separate, inconsistent solutions.
+
+### Advanced features for power users
+
+- **Extends functionality with the Novu Framework SDK**. Developers can integrate custom workflows beyond Novu's default capabilities.
+- **Enhances real-time engagement**. Subscriber presence tracking detects if a user is online before sending notifications.
+- **Supports multi-tenancy**. Ideal for SaaS businesses managing multiple customer accounts.
+
+### Cost-effective with clear, transparent pricing
+
+- **Eliminates unpredictable costs**. Fixed pricing ensures startups and enterprises can scale without hidden fees.
+- **Offers a free tier for easy adoption**. Independent developers and small businesses can get started at no cost.
+
+## Notifications and agents, together
+
+Transactional workflows and agent conversations share the same Novu account, subscribers, and channels. ACI extends the workflow system; it does not replace it.
+
+<Columns cols={2}>
+  <Card icon="network" href="/agents/get-started/what-is-aci" title="What is ACI?">
+    Learn how Agent Communication Infrastructure connects agents to messaging platforms.
+  </Card>
+  <Card icon="brain-circuit" href="/agents/get-started/mental-model" title="Mental model">
+    See how inbound messages flow from a channel through Novu to your agent and back.
+  </Card>
+</Columns>
+
+### Conversation to workflow
+
+From an agent thread, your handler can call `ctx.trigger()` to start any existing workflow. For example, a user asks in Slack for a report by email, and the agent triggers a workflow that delivers it.
+
+### Workflow to conversation
+
+Workflows can send messages on behalf of an agent across email, chat, and other channels. When a user replies to that message, Novu can open a new agent conversation and continue the thread in context.
+
+### One platform for both patterns
+
+- Escalation emails, CSAT surveys, and on-call alerts from inside a conversation.
+- Digest or notification replies that hand off to an agent for follow-up.
+- Shared subscriber identity across notifications and agent threads.
+
+Learn more in [Conversations and workflows](/agents/custom-code-agent/concepts#conversations-and-workflows) and [Signals](/agents/custom-code-agent/setup-your-agent/signals).
+
+## Common Use Cases
+
+Here is how developers, startups, and enterprises are currently using Novu in real-world projects:
+
+### Transactional notifications
+
+- Order confirmations and shipping updates for e-commerce.
+- Password reset emails and authentication alerts for SaaS platforms.
+- Payment failure or subscription renewal reminders.
+
+### Agent and conversational experiences
+
+- Support agents that answer questions in Slack, Microsoft Teams, WhatsApp, or email.
+- Internal operations agents that triage requests, collect information, and route work.
+- Workflow agents that trigger notifications, approvals, or escalations from within a conversation.
+- Multi-channel agents that need one communication interface across several providers.
+
+### In-app notification feeds
+
+- Show unread notifications directly in the app using Novu's Inbox component.
+- Customize the notification UI with hooks and headless components.
+- Deliver updates, such as mentions, comments, or system alerts.
+
+### Digest and summary notifications
+
+- "10 people liked your post" (similar to Facebook).
+- A weekly report summarizing account activity.
+- A daily task reminder for productivity apps.
+
+### Multi-step notification workflows
+
+- Step 1: Send an in-app notification → Step 2: If unread in 24 hours, send an email → Step 3: If still unread, send an SMS reminder.
+- Delay and schedule notifications using Novu's workflow automation.
+
+### Multi-channel notification delivery
+
+- Notify VIP customers via SMS while sending regular users an email.
+- Route system alerts to Slack or Microsoft Teams for internal teams.
+- Let users opt-in to specific channels (for example, receive marketing updates via email but urgent alerts via push notifications).
+
+### Customizable notification management
+
+- Let users enable/disable notification channels (email, SMS, push).
+- Offer per-event notification settings (for example, only notify me when tagged in a comment).
+- Manage user preferences with Novu's built-in preference center.
+
+## Next steps
+
+Choose where you want to start:
+
+<Columns cols={2}>
+  <Card
+    icon="/images/icons/nextjs.svg"
+    title="Next.js"
+    href="/platform/quickstart/nextjs"
+    description="Get started with our pre-built UI component in Next.js"
+  />
+  <Card
+    icon="/images/icons/react.svg"
+    title="React"
+    href="/platform/quickstart/react"
+    description="Get started with our pre-built UI component in React"
+  />
+  <Card
+    icon="/images/icons/remix.svg"
+    title="Remix"
+    href="/platform/quickstart/remix"
+    description="Get started with our pre-built UI component in Remix"
+  />
+  <Card
+    icon="bot"
+    title="Agents quickstart"
+    href="/agents/managed-agent/quickstart"
+    description="Connect your first agent to Slack and send a message"
+  />
+</Columns>

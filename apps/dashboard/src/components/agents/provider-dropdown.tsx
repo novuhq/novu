@@ -30,10 +30,11 @@ import {
 } from '@/components/primitives/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
-import { IS_SELF_HOSTED, SELF_HOSTED_UPGRADE_REDIRECT_URL } from '@/config';
+import { IS_SELF_HOSTED, IS_SELF_HOSTED_CE, SELF_HOSTED_UPGRADE_REDIRECT_URL } from '@/config';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { useIsAgentEmailAvailable } from '@/hooks/use-is-agent-email-available';
 import { useLinkAgentIntegration } from '@/hooks/use-link-agent-integration';
+import { getAgentChannelDisplayName } from '@/utils/agent-email-provider-display';
 import { ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { openInNewTab } from '@/utils/url';
@@ -126,7 +127,7 @@ function buildDropdownItems(
 
   for (const cp of conversationalProviders) {
     const providerConfig = novuProviders.find((p) => p.id === cp.providerId);
-    const displayName = providerConfig?.displayName || cp.displayName;
+    const displayName = getAgentChannelDisplayName(cp.providerId, providerConfig?.displayName || cp.displayName);
 
     if (cp.comingSoon) {
       comingSoon.push({
@@ -209,6 +210,11 @@ export function ProviderDropdown({
   const supported = useMemo(() => {
     let items = allSupported;
 
+    // Agent email is Enterprise/Cloud-only — never list the row on Community.
+    if (IS_SELF_HOSTED_CE) {
+      items = items.filter((item) => item.providerId !== EmailProviderIdEnum.NovuAgent);
+    }
+
     // NovuAgent is 1:1 per agent and the backend enforces it — hiding the row
     // once an instance is linked is an invariant the picker must always honor,
     // independent of the caller's `excludeLinked` preference (which only
@@ -235,7 +241,10 @@ export function ProviderDropdown({
       for (const item of supported) {
         const match = item.integrations.find((i) => i._id === selectedIntegrationId);
         if (match) {
-          return { providerId: item.providerId, displayName: match.name || item.displayName };
+          return {
+            providerId: item.providerId,
+            displayName: getAgentChannelDisplayName(item.providerId, match.name || item.displayName),
+          };
         }
       }
 
@@ -245,7 +254,10 @@ export function ProviderDropdown({
 
         return {
           providerId: fromAll.providerId,
-          displayName: fromAll.name || cfg?.displayName || fromAll.providerId,
+          displayName: getAgentChannelDisplayName(
+            fromAll.providerId,
+            fromAll.name || cfg?.displayName || fromAll.providerId
+          ),
         };
       }
     }
@@ -254,7 +266,7 @@ export function ProviderDropdown({
       const cfg = novuProviders.find((p) => p.id === fallbackProviderId);
 
       if (cfg) {
-        return { providerId: cfg.id, displayName: cfg.displayName };
+        return { providerId: cfg.id, displayName: getAgentChannelDisplayName(cfg.id, cfg.displayName) };
       }
     }
 
@@ -326,7 +338,7 @@ export function ProviderDropdown({
           <span className="text-text-strong text-label-xs font-medium leading-4">{selected.displayName}</span>
         </div>
       ) : (
-        <span className="text-text-soft text-label-xs font-medium leading-4">Select provider...</span>
+        <span className="text-text-soft text-label-xs font-medium leading-4">Select channel...</span>
       )}
       {isBusy ? (
         <RiLoader4Line className="text-text-soft size-3 shrink-0 animate-spin" aria-hidden />
@@ -344,7 +356,7 @@ export function ProviderDropdown({
     <Command>
       <div className="bg-bg-weak border-stroke-weak flex items-center gap-2 border-b py-1.5 pl-3 pr-3">
         <CommandInput
-          placeholder="Search provider"
+          placeholder="Search channel"
           size="xs"
           disabled={isBusy}
           inputRootClassName="min-w-0 flex-1 rounded-none border-none bg-transparent shadow-none divide-none before:ring-0 has-[input:focus]:shadow-none has-[input:focus]:ring-0 focus-within:shadow-none focus-within:ring-0"
@@ -355,10 +367,10 @@ export function ProviderDropdown({
       </div>
 
       <CommandList className="max-h-[260px] p-1">
-        <CommandEmpty className="text-text-soft text-label-xs py-4">No providers found.</CommandEmpty>
+        <CommandEmpty className="text-text-soft text-label-xs py-4">No channels found.</CommandEmpty>
 
         {supported.length > 0 && (
-          <CommandGroup heading="Providers" className={groupHeadingClassName}>
+          <CommandGroup heading="Channels" className={groupHeadingClassName}>
             {supported.map((providerType) => {
               const isLocked = providerType.requiresBusinessTier && !isAgentEmailAvailable;
               const hasInstances = providerType.integrations.length > 0;
@@ -587,9 +599,13 @@ export function ProviderDropdown({
 
         <CommandGroup heading="Existing" className={groupHeadingClassName}>
           {expandedProvider.integrations.map((integration, index) => {
+            const integrationDisplayName = getAgentChannelDisplayName(
+              expandedProvider.providerId,
+              integration.name || expandedProvider.displayName
+            );
             const item: DropdownItem = {
               providerId: expandedProvider.providerId,
-              displayName: integration.name || expandedProvider.displayName,
+              displayName: integrationDisplayName,
               comingSoon: false,
               requiresBusinessTier: expandedProvider.requiresBusinessTier,
               integration,
@@ -600,7 +616,7 @@ export function ProviderDropdown({
             return (
               <CommandItem
                 key={itemKey}
-                value={`${integration.name ?? expandedProvider.displayName} ${integration.identifier}`}
+                value={`${integrationDisplayName} ${integration.identifier}`}
                 disabled={isBusy}
                 onSelect={() => void handleSelect(item, index)}
                 className={cn(
@@ -610,7 +626,7 @@ export function ProviderDropdown({
               >
                 <div className="flex w-full min-w-0 items-center gap-1">
                   <span className="text-text-sub text-label-xs min-w-0 flex-1 truncate font-medium leading-4">
-                    {integration.name || expandedProvider.displayName}
+                    {integrationDisplayName}
                   </span>
                   {isRowPending ? (
                     <RiLoader4Line className="text-text-soft size-3 shrink-0 animate-spin" aria-hidden />
@@ -682,7 +698,7 @@ export function ProviderDropdown({
     <div className="flex w-full flex-col gap-1 min-w-[300px]">
       <div className="flex items-center gap-px">
         <span className="text-text-sub text-label-xs font-medium leading-4">
-          What provider would you like to start with
+          What channel would you like to start with
         </span>
         <span className="text-text-soft ml-0.5 text-[10px]">&#9432;</span>
       </div>

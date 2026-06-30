@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="none" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="7" fill="#EBEEF1" />
+  <path
+    fill="#687083"
+    fill-rule="evenodd"
+    d="M8 10.5A2.5 2.5 0 0 1 10.5 8h11A2.5 2.5 0 0 1 24 10.5v11A2.5 2.5 0 0 1 21.5 24h-11A2.5 2.5 0 0 1 8 21.5v-11Zm2.05-.5 5.95 4.46L21.95 10H10.05ZM10 12.08v9.42c0 .28.22.5.5.5h11c.28 0 .5-.22.5-.5V12.08l-5.73 4.3a1.5 1.5 0 0 1-1.54 0L10 12.08Z"
+    clip-rule="evenodd"
+  />
+</svg>

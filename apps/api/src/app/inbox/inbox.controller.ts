@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -18,7 +19,8 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiExcludeController } from '@nestjs/swagger';
-import { MessageActionStatusEnum, PreferenceLevelEnum, UserSessionData } from '@novu/shared';
+import { IntegrationRepository } from '@novu/dal';
+import { ChatProviderIdEnum, MessageActionStatusEnum, PreferenceLevelEnum, UserSessionData } from '@novu/shared';
 import type { Request } from 'express';
 import { getClientIp } from 'request-ip';
 import { ListChannelConnectionsQueryDto } from '../channel-connections/dtos/list-channel-connections-query.dto';
@@ -43,6 +45,9 @@ import { GenerateConnectOauthUrlCommand } from '../integrations/usecases/generat
 import { GenerateConnectOauthUrl } from '../integrations/usecases/generate-chat-oath-url/generate-connect-oauth-url.usecase';
 import { GenerateLinkUserOauthUrlCommand } from '../integrations/usecases/generate-chat-oath-url/generate-link-user-oauth-url.command';
 import { GenerateLinkUserOauthUrl } from '../integrations/usecases/generate-chat-oath-url/generate-link-user-oauth-url.usecase';
+import { LinkChannelEndpointResponseDto } from '../integrations/dtos/link-channel-endpoint-response.dto';
+import { IssueTelegramSubscriberLinkCommand } from '../telegram-linking/issue-telegram-subscriber-link/issue-telegram-subscriber-link.command';
+import { IssueTelegramSubscriberLink } from '../telegram-linking/issue-telegram-subscriber-link/issue-telegram-subscriber-link.usecase';
 import { ExcludeFromIdempotency } from '../shared/framework/exclude-from-idempotency';
 import { ApiCommonResponses } from '../shared/framework/response.decorator';
 import { KeylessAccessible } from '../shared/framework/swagger/keyless.security';
@@ -66,6 +71,7 @@ import {
 } from './dtos/inbox-channel-connection-response.dto';
 import { InboxListChannelEndpointsResponseDto } from './dtos/inbox-channel-endpoint-response.dto';
 import { mapChannelConnectionToInboxDto, mapChannelEndpointToInboxDto } from './dtos/inbox-dto.mapper';
+import { InboxLinkChannelEndpointRequestDto } from './dtos/link-channel-endpoint-request.dto';
 import { InboxNotificationDto } from './dtos/inbox-notification.dto';
 import { InboxTriggerEventRequestDto } from './dtos/inbox-trigger-event-request.dto';
 import { MarkNotificationsAsSeenRequestDto } from './dtos/mark-notifications-as-seen-request.dto';
@@ -136,7 +142,9 @@ export class InboxController {
     private getChannelEndpointUsecase: GetChannelEndpoint,
     private deleteChannelEndpointUsecase: DeleteChannelEndpoint,
     private generateConnectOauthUrlUsecase: GenerateConnectOauthUrl,
-    private generateLinkUserOauthUrlUsecase: GenerateLinkUserOauthUrl
+    private generateLinkUserOauthUrlUsecase: GenerateLinkUserOauthUrl,
+    private issueTelegramSubscriberLinkUsecase: IssueTelegramSubscriberLink,
+    private integrationRepository: IntegrationRepository
   ) {}
 
   @KeylessAccessible()
@@ -858,5 +866,59 @@ export class InboxController {
     );
 
     return { url };
+  }
+
+  /**
+   * Subscriber-JWT twin of `POST /v1/integrations/channel-endpoints/link`.
+   * Returns a provider-specific URL the subscriber opens to link their chat
+   * identity. The subscriber is resolved from the session token, so the body
+   * only carries `integrationIdentifier`. Telegram returns a `t.me` deep link.
+   */
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Post('/channel-endpoints/link')
+  @HttpCode(HttpStatus.OK)
+  async linkChannelEndpoint(
+    @SubscriberSession() subscriberSession: SubscriberSession,
+    @Body() body: InboxLinkChannelEndpointRequestDto
+  ): Promise<LinkChannelEndpointResponseDto> {
+    const integration = await this.integrationRepository.findOne(
+      {
+        identifier: body.integrationIdentifier,
+        _environmentId: subscriberSession._environmentId,
+        _organizationId: subscriberSession._organizationId,
+      },
+      '_id providerId'
+    );
+
+    if (!integration) {
+      throw new NotFoundException(`Integration ${body.integrationIdentifier} not found`);
+    }
+
+    const providerId = integration.providerId as ChatProviderIdEnum;
+
+    switch (providerId) {
+      case ChatProviderIdEnum.Telegram: {
+        const result = await this.issueTelegramSubscriberLinkUsecase.execute(
+          IssueTelegramSubscriberLinkCommand.create({
+            environmentId: subscriberSession._environmentId,
+            organizationId: subscriberSession._organizationId,
+            integrationIdentifier: body.integrationIdentifier,
+            subscriberId: subscriberSession.subscriberId,
+          })
+        );
+
+        return {
+          url: result.deepLinkUrl,
+          providerMetadata: {
+            botUsername: result.botUsername,
+            expiresAt: result.expiresAt,
+          },
+        };
+      }
+      default:
+        throw new BadRequestException(
+          `Provider "${providerId}" does not support subscriber chat linking via this endpoint.`
+        );
+    }
   }
 }

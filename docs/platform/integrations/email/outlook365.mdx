@@ -1,0 +1,43 @@
+---
+title: 'Outlook 365'
+description: 'Learn how to use the Outlook 365 provider to send email notifications using Novu'
+---
+
+
+You can use the [Outlook 365](https://office.com/) provider to send transactional emails through your instance of Office 365 to your customers using the Novu Platform with a single API.
+
+## Getting Started
+
+To use the Outlook 365 provider in the email channel, you will need to have the sender's email (user) and the password for the account. This account cannot be a shared mailbox or distribution list. It will need to be properly licensed to send email via Office 365.
+
+## Creating the Outlook 365 integration with Novu
+
+- Visit the [Integrations](https://dashboard.novu.co/integrations?utm_campaign=docs-office365) page on Novu.
+- Click on Add a Provider.
+- Select Outlook service.
+- Enter your SMTP credentials
+  - `from`: The Complete email address of the sending user. (e.g. [jdoe@mycompany.com](mailto:jdoe@mycompany.com))
+  - `senderName`: Sender Name should be the same email address of the sending user. (e.g. [jdoe@mycompany.com](mailto:jdoe@mycompany.com))
+  - `password`: Password used to sign in with the email account.
+- Click on the `Disabled` button and mark it as `Active`.
+- Click on the **Update** button.
+- You should now be able to send notifications using Outlook 365 in Novu.
+
+<Note>
+  In order to create outlook integration, turn off multi factor authentication from account security
+  settings.
+</Note>
+
+## Next Steps
+
+<Columns cols={2}>
+  <Card title="Configure bcc, cc, and reply-to" href="/platform/integrations/email#sending-email-overrides">
+    Learn how to configure bcc, cc, and reply-to for your email notifications using email overrides
+  </Card>
+  <Card title="Sending email attachments" href="/platform/integrations/email#sending-email-attachments">
+    Learn how to send attachments with email notifications
+  </Card>
+  <Card title="Use different email integration" href="/platform/integrations/email#sending-email-overrides">
+    Learn how to use different email provider integrations to be used to send emails
+  </Card>
+</Columns>

@@ -14,4 +14,5 @@ export * from './useRemoveSubscription';
 export * from './useSchedule';
 export * from './useSubscription';
 export * from './useSubscriptions';
+export * from './useTelegramSubscriberLink';
 export * from './useUpdateSubscription';

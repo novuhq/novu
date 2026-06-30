@@ -63,12 +63,13 @@ export function createNovuAxios(input: {
 export interface ApiRequestOptions {
   method?: 'GET' | 'POST';
   body?: unknown;
+  headers?: Record<string, string>;
 }
 
 export async function requestApiJson<T>(apiUrl: string, path: string, options: ApiRequestOptions = {}): Promise<T> {
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
   const url = `/v1${normalizedPath}`;
-  const client = createNovuAxios({ apiUrl });
+  const client = createNovuAxios({ apiUrl, headers: options.headers });
   const fullUrl = `${client.defaults.baseURL}${url}`;
 
   let response;

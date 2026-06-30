@@ -11,7 +11,7 @@ alwaysApply: false
 - Examples: `feat(dashboard): add workflow trigger button fixes NOV-123`, `fix(api-service): handle null subscriber case fixes NOV-456`
 
 
-**Scopes**: `dashboard`, `api-service`, `worker`, `shared`, `js`, `react`, `react-native`, `nextjs`, `providers`, `root`
+**Scopes**: `dashboard`, `api-service`, `worker`, `shared`, `js`, `react`, `react-native`, `nextjs`, `providers`, `root`, `docs`
 
 **Description**: Summarize what changed and why. List breaking changes. Add screenshots for UI changes. For non-trivial logic or architecture changes, include a concise Mermaid diagram (flow, sequence, or component) so reviewers can grasp the change at a glance.
 

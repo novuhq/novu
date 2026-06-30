@@ -11,6 +11,7 @@ export class PreviewStepCommand extends EnvironmentWithUserCommand {
   payload: Record<string, unknown>;
   context?: ContextResolved;
   subscriber?: SubscriberResponseDtoOptional;
+  actor?: SubscriberResponseDtoOptional;
   workflowOrigin: ResourceOriginEnum;
   state?: FrameworkPreviousStepsOutputState[];
   skipLayoutRendering?: boolean;

@@ -1,0 +1,55 @@
+---
+title: 'Custom SMTP'
+description: 'Learn how to use the Custom SMTP provider to send email notifications using Novu'
+---
+
+
+You can use a Custom SMTP provider like [Nodemailer](https://nodemailer.com/about/) to send transactional emails through your custom SMTP server to your customers using the Novu Platform with a single API.
+
+## Getting Started
+
+To use the Custom SMTP provider in the email channel, you will need to have your personal SMTP server configured and add `host`, `port`, `user`, and `password` to the Custom SMTP integration on the Novu platform.
+
+You can also provide value **`true`** for the `secure` field if you want the connection to be secure, and if not, leave it empty.
+
+### DKIM (DomainKeys Identified Mail)
+
+DKIM options can be used in order to sign messages sent using Custom SMTP with DKIM keys.
+
+Those options are:
+
+- `DKIM Domain`
+- `DKIM Private Key`
+- `DKIM Key Selector`
+
+## Creating a Custom SMTP integration with Novu
+
+- Visit the [Integrations](https://dashboard.novu.co/integrations?utm_campaign=docs-customsmtp) page on Novu.
+- Click on Add a Provider.
+- Select Custom SMTP service.
+- Enter your SMTP credentials
+  - `host`
+  - `port`
+  - `username`
+  - `password`
+  - `secure` (on demand)
+  - And `DKIM` options if you want to sign messages with *DKIM*
+- Fill in the `From email address` field using the authenticated email from the previous step.
+- Click on the `Disabled` button and mark it as `Active`.
+- Click on the **Update** button.
+- You should now be able to send notifications using Custom SMTP in Novu.
+
+## Next Steps
+
+<Columns cols={2}>
+  <Card title="Configure bcc, cc, and reply-to" href="/platform/integrations/email#sending-email-overrides">
+    Learn how to configure bcc, cc, and reply-to for your email notifications using email overrides
+  </Card>
+  <Card title="Sending email attachments" href="/platform/integrations/email#sending-email-attachments">
+    Learn how to send attachments with email notifications
+  </Card>
+  <Card title="Use different email integration" href="/platform/integrations/email#sending-email-overrides">
+    Learn how to use different email provider integrations to be used to send emails
+  </Card>
+</Columns>
+

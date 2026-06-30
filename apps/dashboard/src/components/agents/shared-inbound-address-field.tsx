@@ -8,7 +8,7 @@ type SharedInboundAddressFieldProps = {
 
 export function SharedInboundAddressField({ sharedInboundAddress }: SharedInboundAddressFieldProps) {
   return (
-    <div className="flex w-full flex-col gap-1.5">
+    <div className="flex w-fit max-w-full flex-col gap-1.5">
       <div className="text-text-strong text-label-xs flex items-center gap-1 font-medium leading-4">
         <span>Agent email address</span>
         <Tooltip>

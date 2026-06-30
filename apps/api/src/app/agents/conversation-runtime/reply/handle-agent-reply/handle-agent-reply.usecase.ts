@@ -57,10 +57,11 @@ export class HandleAgentReply {
       !command.resolve &&
       !command.signals?.length &&
       !command.addReactions?.length &&
-      !command.plan
+      !command.plan &&
+      !command.typing
     ) {
       throw new BadRequestException(
-        'At least one of reply, edit, resolve, signals, addReactions, or plan must be provided'
+        'At least one of reply, edit, resolve, signals, addReactions, plan, or typing must be provided'
       );
     }
 
@@ -75,6 +76,10 @@ export class HandleAgentReply {
 
     const channel = this.conversationService.getPrimaryChannel(conversation);
     const agentName = await this.resolveValidatedAgentNameForDelivery(command, conversation);
+
+    if (command.typing) {
+      await this.deliverTyping(command, conversation, channel, command.typing);
+    }
 
     if (command.edit) {
       return this.deliverEdit(command, conversation, channel, command.edit, agentName);
@@ -149,6 +154,7 @@ export class HandleAgentReply {
     if (triggerSignalCount > 0) actions.push('trigger_signals');
     if (metadataSignalCount > 0) actions.push('metadata_signals');
     if (reactionCount > 0) actions.push('add_reactions');
+    if (command.typing) actions.push('typing');
 
     trackAgentReplyProcessed(this.analyticsService, {
       userId: command.userId,
@@ -300,6 +306,26 @@ export class HandleAgentReply {
       plan.model,
       plan.phase
     );
+  }
+
+  private async deliverTyping(
+    command: HandleAgentReplyCommand,
+    conversation: ConversationEntity,
+    channel: ConversationChannel,
+    typing: NonNullable<HandleAgentReplyCommand['typing']>
+  ): Promise<void> {
+    const status = typing === 'stop' ? '' : (typing.status ?? 'Thinking...');
+
+    try {
+      await this.outboundGateway.startTypingInConversation(
+        conversation._agentId,
+        command.integrationIdentifier,
+        channel.platformThreadId,
+        status
+      );
+    } catch (err) {
+      this.logger.warn(err, `[agent:${command.agentIdentifier}] Failed to set typing status`);
+    }
   }
 
   private async executeSignals(

@@ -8,7 +8,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { AnalyticsService, encryptSecret, isAgentSharedInboxEnabled } from '@novu/application-generic';
+import { AnalyticsService, encryptSecret, isAgentEmailEnabled } from '@novu/application-generic';
 import {
   type AgentEntity,
   AgentIntegrationRepository,
@@ -20,6 +20,7 @@ import {
 } from '@novu/dal';
 import {
   ApiServiceLevelEnum,
+  ChatProviderIdEnum,
   EmailProviderIdEnum,
   EnvironmentTypeEnum,
   FeatureNameEnum,
@@ -144,6 +145,21 @@ export class AddAgentIntegration {
       throw new ConflictException('This integration is already linked to the agent.');
     }
 
+    if (integration.providerId === ChatProviderIdEnum.Telegram) {
+      const linkedElsewhere = await this.agentIntegrationRepository.findOne(
+        {
+          _integrationId: integration._id,
+          _environmentId: command.environmentId,
+          _organizationId: command.organizationId,
+        },
+        ['_agentId']
+      );
+
+      if (linkedElsewhere && linkedElsewhere._agentId !== agent._id) {
+        throw new ConflictException('Integration is already linked to a different agent');
+      }
+    }
+
     // Revives a tombstoned (disconnected) link when one exists for this pair —
     // a plain create would violate the unique (_agentId, _integrationId) index.
     const link = await this.agentIntegrationRepository.createOrReviveLink({
@@ -172,7 +188,7 @@ export class AddAgentIntegration {
   }
 
   private async enforceEmailTier(organizationId: string): Promise<void> {
-    if (!isAgentSharedInboxEnabled()) {
+    if (!isAgentEmailEnabled()) {
       throw new ForbiddenException('Agent Novu Email is not available in this deployment.');
     }
 

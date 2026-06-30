@@ -1,0 +1,114 @@
+---
+title: 'Novu SDKs for server, web, and mobile apps'
+sidebarTitle: 'Overview'
+description: "Browse Novu's official and community SDKs for Node, Python, Go, PHP, .NET, Java, React, React Native, and the Headless client for custom UIs."
+---
+
+## Server-side SDKs
+
+### API SDKs
+
+Novu's server-side SDKs simplify the integration with Novu's REST API.
+
+#### Offical SDKs maintained by Novu:
+
+<Columns cols={2}>
+  <Card
+    title="Typescript (Official)"
+    icon="/images/icons/typescript.svg"
+    color="#ea5a0c"
+    href="/platform/sdks/server/typescript">
+    Connect your Node app to Novu via the Node.js SDK.
+  </Card>
+  <Card
+    title="Python (Official)"
+    icon="/images/icons/python.svg"
+    color="#dc2626"
+    href="/platform/sdks/server/python">
+    Connect your Python app to Novu via the Python SDK.
+  </Card>
+  <Card title="Go (Official)" icon="/images/icons/go.svg" color="#0285c7" href="/platform/sdks/server/go">
+    Connect your Golang app to Novu via the Go SDK.
+  </Card>
+  <Card title="PHP (Official)" icon="/images/icons/php.svg" color="#16a34a" href="/platform/sdks/server/php">
+    Connect your PHP app to Novu via the PHP SDK.
+  </Card>
+  <Card
+    title=".NET (Official)"
+    icon="/images/icons/dotnet.svg"
+    color="#dc2626"
+    href="/platform/sdks/server/dotnet">
+    Connect your C#/.NET app to Novu via the .NET SDK.
+  </Card>
+  <Card
+    title="Java (Official)"
+    icon="/images/icons/java.svg"
+    color="#dc2626"
+    href="/platform/sdks/server/java">
+    Connect your Java app to Novu via the Java SDK.
+  </Card>
+</Columns>
+
+#### SDKs maintained by the community:
+
+<Columns cols={2}>
+  <Card
+    title="Laravel (Community)"
+    icon="/images/icons/laravel.svg"
+    color="#dc2626"
+    href="/platform/sdks/server/laravel">
+    Connect your Laravel app to Novu via the Laravel SDK.
+  </Card>
+  <Card
+    title="Kotlin (Community)"
+    icon="/images/icons/kotlin.svg"
+    color="#dc2626"
+    href="/platform/sdks/server/kotlin">
+    Connect your Kotlin app to Novu via the Kotlin SDK.
+  </Card>
+  <Card
+    title="Ruby (Community)"
+    icon="/images/icons/ruby.svg"
+    color="#dc2626"
+    href="/platform/sdks/server/ruby">
+    Connect your Ruby app to Novu via the Ruby SDK.
+  </Card>
+</Columns>
+
+### Framework SDK
+
+The Framework SDK is a TypeScript library that allows you to build notification workflows and execute them in your own runtime environment.
+
+<Note>
+  While triggering notifications is supported in all SDKs, creating and managing notification
+  workflows is only supported in the Framework Typescript SDK.
+</Note>
+
+<Columns cols={2}>
+  <Card title="Typescript" icon="/images/icons/typescript.svg" href="/framework/typescript/overview">
+    Build and execute notification workflows in TypeScript
+  </Card>
+</Columns>
+
+## Web and Mobile SDKs
+
+Novu provides the following web client SDKs to enable integrations with Novu's prebuilt UI components, allowing you to easily add notification functionality to your applications without handling complex notification logic manually.
+
+<Columns cols={2}>
+  <Card title="React" icon="/images/icons/react.svg" href="/platform/inbox/setup-inbox">
+    Official React SDK for Novu's notification center
+  </Card>
+  <Card title="Headless" icon="/images/icons/javascript.svg" href="/platform/inbox/headless-mode">
+    Framework-agnostic SDK for custom implementations
+  </Card>
+  <Card title="React-Native" icon="/images/icons/react.svg" href="/platform/sdks/react-native">
+    Official React Native SDK for mobile applications
+  </Card>
+</Columns>
+
+### Platforms without a native client SDK
+
+Novu does not currently provide native client SDKs for Flutter, native iOS (Swift), native Android (Kotlin/Java), or other non-JavaScript mobile frameworks. You can still use Novu from these platforms:
+
+- **Push, email, SMS, and chat channels** work identically regardless of client platform, because they are delivered by Novu's backend. Trigger workflows from your server using any [server-side SDK](#server-side-sdks) or the [REST API](/api-reference/events/trigger-event), and register device tokens (FCM/APNs) on the subscriber. See [Push notifications (FCM)](/platform/integrations/push/fcm) for setup.
+- **In-app Inbox** has no native component outside React, React Native, and the Headless SDK. To show an in-app inbox in Flutter or another non-JS framework, call the [Inbox REST API](/api-reference/subscribers/retrieve-subscriber-notifications) directly to list, mark as read, and update notifications, and implement your own UI. The [Headless SDK](/platform/inbox/headless-mode) source can be used as a reference for the expected data and socket layer.

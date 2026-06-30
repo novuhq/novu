@@ -75,7 +75,7 @@ export const VariableListUpgradeCta = () => {
         >
           {IS_SELF_HOSTED ? 'Contact Sales' : 'Upgrade now'}
         </Button>
-        <Link to="https://docs.novu.co/platform/variables" target="_blank">
+        <Link to="https://docs.novu.co/platform/developer/environment-variables" target="_blank">
           <LinkButton size="sm" leadingIcon={RiBookMarkedLine}>
             How does this help?
           </LinkButton>

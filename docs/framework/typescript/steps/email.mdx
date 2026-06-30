@@ -1,0 +1,31 @@
+---
+title: 'Email'
+description: 'Learn how to use the email step to send email notifications'
+---
+
+The `email` step allows you to send email notifications to your users. This step supports HTML content and can be used with React Email for building beautiful email templates.
+
+## Example Usage
+
+```tsx
+await step.email('welcome-email', async () => {
+  return {
+    subject: 'Welcome to Our Platform',
+    body: "Hello and welcome! We're excited to have you on board.",
+  };
+});
+```
+
+## Email Step Output
+
+| Property    | Type         | Required | Description                                         |
+| ----------- | ------------ | -------- | --------------------------------------------------- |
+| subject     | string       | Yes      | The subject line of the email                       |
+| body        | string       | Yes      | The content of the email. Can be plain text or HTML |
+| attachments | Attachment[] | No       | Array of files to attach to the email               |
+| from        | string       | No       | Override the default from address                   |
+| replyTo     | string       | No       | Set a reply-to address for the email                |
+
+## Email Step Result
+
+The `email` step does not return any result object.

@@ -1,0 +1,35 @@
+---
+title: 'Feature Flags'
+description: 'Learn how to enable/disable specific features in Novu'
+---
+
+Feature flags allow to turn certain functionality on and off based on configuration. In this way, users can preview beta features in their deployments.
+
+To enable the specific feature, you need to pass an environment variable to all services:
+
+<Note>
+  Feature flag environment variable accepts boolean values: `true` or `false`.
+</Note>
+
+- `IS_MULTI_PROVIDER_CONFIGURATION_ENABLED` adds ability to connect multiple providers per channel and make them active. It also shows redesigned integrations store page.
+
+  <figure>
+    <img
+      src="/images/community/feature-flags/multi-provider-feature.png"
+      alt="Redesigned Integrations store page"
+    />
+    <figcaption>Redesigned Integrations store page.</figcaption>
+  </figure>
+
+- `IS_MULTI_TENANCY_ENABLED` adds ability to manage tenants from dashboard.
+
+  <figure>
+    <img src="/images/community/feature-flags/tenants-feature.png" alt="Tenants page" />
+    <figcaption>Once multi-tenancy is enabled, the Tenants page will appear.</figcaption>
+  </figure>
+
+- `IS_TEMPLATE_STORE_ENABLED` enables template store which contains pre-made workflows for common use cases (like **Password Reset** workflow etc).
+  <figure>
+    <img src="/images/community/feature-flags/template-store-feature.png" alt="Template store" />
+    <figcaption>With template store enabled, you can choose from pre-made workflows.</figcaption>
+  </figure>

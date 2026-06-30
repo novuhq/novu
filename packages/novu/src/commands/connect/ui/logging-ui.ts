@@ -4,8 +4,8 @@ import ora, { type Ora } from 'ora';
 import type { GeneratedAgentSpec } from '../api/agents';
 import { SEND_FROM_ACCOUNT_LABEL } from '../copy/email-onboarding';
 import { channelDisplayName } from '../dashboard-urls';
-import { resolveChatSdkOutcomeMessage } from '../pipeline/chat-sdk/outcome-message';
-import { CHAT_SDK_REQUIREMENTS_FILE_ENV } from '../pipeline/chat-sdk/requirements';
+import { printBridgeScaffolded } from '../pipeline/bridge/print-bridge-scaffolded';
+import { printChatSdkReconcilePlan } from './print-chat-sdk-reconcile-plan';
 import type { AgentSummary } from '../types';
 import { resolveGeneratedAgentSpecLabels } from './agent-spec-labels';
 import {
@@ -21,6 +21,7 @@ import {
   writeAuthUrlHandoffFile,
 } from './handoff-events';
 import { renderQRPngFile } from './qr';
+import { printConnectSuccess, shouldSkipConnectSuccessSummary } from './print-connect-success';
 import type { ConnectUI, GeneratedAgentPreviewResult, PickResult } from './ui';
 
 export function createLoggingUI(): ConnectUI {
@@ -46,6 +47,9 @@ export function createLoggingUI(): ConnectUI {
 
   return {
     interactive: false,
+    releaseTerminal() {
+      return Promise.resolve();
+    },
     showWelcome() {
       // Non-interactive: skip the welcome prompt; the run is unattended by
       // definition (--ci or piped stdin) so there's nobody to press Enter.
@@ -202,19 +206,18 @@ export function createLoggingUI(): ConnectUI {
     confirmEnvSecretOverwrite() {
       return Promise.resolve(false);
     },
-    confirmScaffold({ projectDir, appName }) {
-      console.log(chalk.cyan(`→ Scaffolding Chat SDK app "${appName}" in ${projectDir}`));
+    confirmScaffold({ projectDir, appName, variant = 'chat-sdk' }) {
+      const label = variant === 'custom-code' ? 'agent app' : 'Chat SDK app';
+      console.log(chalk.cyan(`→ Scaffolding ${label} "${appName}" in ${projectDir}`));
 
       return Promise.resolve(true);
     },
-    scaffoldingChatSdk() {
-      start('Scaffolding Chat SDK project…');
+    scaffoldingBridge({ variant }) {
+      start(variant === 'custom-code' ? 'Scaffolding agent project…' : 'Scaffolding Chat SDK project…');
     },
-    chatSdkScaffolded({ projectDir, envPaths }) {
-      succeed(`Scaffolded Chat SDK project at ${projectDir}`);
-      for (const envPath of envPaths) {
-        console.log(chalk.gray(`  Wrote ${envPath}`));
-      }
+    bridgeScaffolded(opts) {
+      stop();
+      printBridgeScaffolded(opts);
     },
     confirmInstallChatSdkDeps({ projectDir, installCommand, packages }) {
       console.log('');
@@ -230,23 +233,7 @@ export function createLoggingUI(): ConnectUI {
     },
     showChatSdkReconcilePlan({ projectDir, requirements, envPaths, wiringInstructions, requirementsFile }) {
       succeed('Chat SDK project reconciled');
-      console.log(chalk.gray(`  Project: ${projectDir}`));
-      for (const req of requirements) {
-        const marker =
-          req.status === 'ok' ? chalk.green('✓') : req.status === 'manual' ? chalk.yellow('☐') : chalk.cyan('…');
-        console.log(`  ${marker} ${req.id}: ${req.detail}`);
-      }
-      for (const envPath of envPaths) {
-        console.log(chalk.gray(`  Env: ${envPath}`));
-      }
-      if (requirementsFile) {
-        console.log(`${CHAT_SDK_REQUIREMENTS_FILE_ENV}=${requirementsFile}`);
-      }
-      if (wiringInstructions) {
-        console.log('');
-        console.log(chalk.bold('Code wiring (manual):'));
-        console.log(chalk.cyan(wiringInstructions));
-      }
+      printChatSdkReconcilePlan({ projectDir, requirements, envPaths, wiringInstructions, requirementsFile });
       console.log(chalk.gray('Non-interactive mode: continuing automatically.'));
 
       return Promise.resolve();
@@ -377,55 +364,11 @@ export function createLoggingUI(): ConnectUI {
     },
     success(result) {
       stop();
-      const agentUrl = result.environmentSlug
-        ? `${result.connectDashboardUrl}/env/${result.environmentSlug}/connect/agents/${encodeURIComponent(result.agent.identifier)}`
-        : `${result.connectDashboardUrl}/connect/agents/${encodeURIComponent(result.agent.identifier)}`;
-      const channelLabel = (() => {
-        if (result.connectedChannel === 'slack') return 'Slack';
-        if (result.connectedChannel === 'telegram') return 'Telegram';
-        if (result.connectedChannel === 'email') return 'Email';
+      if (shouldSkipConnectSuccessSummary(result)) {
+        return;
+      }
 
-        return null;
-      })();
-      const redirectChannelLabel = result.dashboardRedirectChannel
-        ? channelDisplayName(result.dashboardRedirectChannel)
-        : null;
-      console.log('');
-      console.log(`${chalk.green('✓')} Your agent is live.`);
-      console.log(`  ${chalk.bold('Agent:')} ${result.agent.name} ${chalk.gray(`(${result.agent.identifier})`)}`);
-      if (channelLabel) {
-        console.log(`  ${chalk.cyan('→')} Check ${channelLabel} — your agent just messaged you.`);
-      } else if (redirectChannelLabel) {
-        console.log(
-          `  ${chalk.cyan('→')} Finish ${redirectChannelLabel} setup in Novu Connect — we opened it for you.`
-        );
-      } else {
-        console.log(`  ${chalk.gray('No channel connected.')}`);
-      }
-      if (result.isKeyless && result.claimUrl) {
-        console.log(`  ${chalk.bold('Claim your agent:')} ${result.claimUrl}`);
-        console.log(`  ${chalk.gray('Sign up to move your agent and conversation into your own account.')}`);
-      } else {
-        console.log(`  ${chalk.bold('Dashboard:')} ${agentUrl}`);
-      }
-      if (result.connectMode === 'chat-sdk' && result.chatSdkOutcome) {
-        if (result.chatSdkOutcome.scaffolded) {
-          console.log(`  ${chalk.bold('Project:')} ${result.chatSdkOutcome.projectDir}`);
-          if (result.chatSdkOutcome.skippedInstall) {
-            console.log(`  ${chalk.yellow('⚠')} Inside a monorepo — npm install was skipped.`);
-            console.log(
-              `  ${chalk.cyan('→')} cd ${result.chatSdkOutcome.projectDir} && npm install && npm run dev:novu`
-            );
-          }
-        }
-
-        const followUp = resolveChatSdkOutcomeMessage(result.connectMode, result.chatSdkOutcome);
-        if (followUp) {
-          console.log(`  ${chalk.cyan('→')} ${followUp}`);
-        } else if (!result.chatSdkOutcome.scaffolded && !result.chatSdkOutcome.coreReady) {
-          console.log(`  ${chalk.gray('Finish the remaining setup steps above.')}`);
-        }
-      }
+      printConnectSuccess(result);
     },
     failure(message) {
       stop();

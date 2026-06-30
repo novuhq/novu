@@ -3,14 +3,14 @@ import { Box, Text, useInput } from 'ink';
 // biome-ignore lint/correctness/noUnusedImports: classic-JSX linter falls back here because tsconfig.json excludes ui/.
 import React from 'react';
 import type { ChatSdkRequirement } from '../types';
+import { ConfirmScaffoldContent } from './confirm-scaffold-content';
 import type { Phase } from './store';
 
 const CHAT_SDK_PHASE_KINDS = [
   'confirm-env-secret-overwrite',
   'confirm-scaffold',
   'prompt-agent-name',
-  'scaffolding-chat-sdk',
-  'chat-sdk-scaffolded',
+  'scaffolding-bridge',
   'chat-sdk-install-deps-confirm',
   'chat-sdk-install-deps',
   'chat-sdk-reconcile-plan',
@@ -38,36 +38,25 @@ export function ChatSdkPhaseContent({ phase }: { phase: ChatSdkPhase }): React.R
       );
 
     case 'confirm-scaffold':
-      return <ConfirmScaffoldContent projectDir={phase.projectDir} appName={phase.appName} onResolve={phase.resolve} />;
+      return (
+        <ConfirmScaffoldContent
+          projectDir={phase.projectDir}
+          appName={phase.appName}
+          variant={phase.variant ?? 'chat-sdk'}
+          onResolve={phase.resolve}
+        />
+      );
 
     case 'prompt-agent-name':
       return <PromptAgentNameContent defaultName={phase.defaultName} onResolve={phase.resolve} />;
 
-    case 'scaffolding-chat-sdk':
+    case 'scaffolding-bridge':
       return (
         <Box flexDirection="column" gap={1}>
-          <Text color="cyan">Scaffolding your Chat SDK app…</Text>
-          <Text dimColor>Installing dependencies — this may take a minute.</Text>
-        </Box>
-      );
-
-    case 'chat-sdk-scaffolded':
-      return (
-        <Box flexDirection="column" gap={1}>
-          <Text color="green">✓ Chat SDK project scaffolded.</Text>
-          <Text>
-            <Text bold>Project:</Text> {phase.projectDir}
+          <Text color="cyan">
+            {phase.variant === 'custom-code' ? 'Scaffolding your agent app…' : 'Scaffolding your Chat SDK app…'}
           </Text>
-          {phase.envPaths.map((envPath) => (
-            <Text key={envPath} dimColor>{`Wrote ${envPath}`}</Text>
-          ))}
-          {phase.skippedInstall ? (
-            <Box flexDirection="column">
-              <Text color="yellow">⚠ Detected a parent workspace — npm install was skipped.</Text>
-              <Text dimColor>Run this to install dependencies before starting the app:</Text>
-              <Text color="cyan">{`  cd ${phase.projectDir} && npm install`}</Text>
-            </Box>
-          ) : null}
+          <Text dimColor>Installing dependencies — this may take a minute.</Text>
         </Box>
       );
 
@@ -210,37 +199,6 @@ function PromptAgentNameContent({
         />
       </Box>
       <Text dimColor>Press Enter to continue.</Text>
-    </Box>
-  );
-}
-
-function ConfirmScaffoldContent({
-  projectDir,
-  appName,
-  onResolve,
-}: {
-  projectDir: string;
-  appName: string;
-  onResolve: (confirmed: boolean) => void;
-}): React.ReactElement {
-  useInput((_input, key) => {
-    if (key.return) onResolve(true);
-    if (key.escape) onResolve(false);
-  });
-
-  return (
-    <Box flexDirection="column" gap={1}>
-      <Text bold>Scaffold a Chat SDK app?</Text>
-      <Text dimColor>No Chat SDK project was found here. We'll create one at:</Text>
-      <Text>
-        <Text bold>{projectDir}/</Text>
-        <Text color="cyan">{appName}</Text>
-      </Text>
-      <Text dimColor>
-        This installs <Text color="white">chat</Text>, <Text color="white">@novu/chat-sdk-adapter</Text>, and wires your
-        Novu credentials into <Text color="white">.env.local</Text>.
-      </Text>
-      <Text color="cyan">Enter · scaffold · Esc · cancel</Text>
     </Box>
   );
 }

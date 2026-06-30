@@ -1,0 +1,40 @@
+---
+title: 'In-App'
+description: 'Learn how to configure the In-App channel'
+---
+
+Novu extends beyond traditional notification channels like email, SMS, and push by providing a robust framework for in-app notifications. With Novu, you can build reliable, stateful systems that integrate seamlessly into your applications.
+
+Learn more about the [In-App Channel](/platform/inbox).
+
+```tsx
+await step.inApp('inbox', async () => {
+  return {
+    subject: 'Welcome to Acme!',
+    body: 'We are excited to have you on board.',
+    avatar: 'https://acme.com/avatar.png',
+    redirect: {
+      url: 'https://acme.com/welcome',
+      target: '_blank',
+    },
+    primaryAction: {
+      label: 'Get Started',
+      redirect: {
+        url: 'https://acme.com/get-started',
+        target: '_self',
+      },
+    },
+    secondaryAction: {
+      label: 'Learn More',
+      redirect: {
+        url: 'https://acme.com/learn-more',
+        target: '_self',
+      },
+    },
+    data: {
+      customData: 'customValue',
+      text: payload.text,
+    },
+  };
+});
+```

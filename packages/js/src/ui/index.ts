@@ -10,6 +10,7 @@ export type {
   SubscriptionButtonWrapperProps,
   SubscriptionPreferencesWrapperProps,
   SubscriptionProps,
+  TelegramConnectButtonProps,
 } from './components';
 export type { BaseNovuUIOptions, NovuUIOptions } from './novuUI';
 export { NovuUI } from './novuUI';

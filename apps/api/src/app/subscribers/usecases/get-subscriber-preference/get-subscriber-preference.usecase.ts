@@ -40,7 +40,8 @@ export class GetSubscriberPreference {
     private notificationTemplateRepository: NotificationTemplateRepository,
     private preferencesRepository: PreferencesRepository,
     private featureFlagsService: FeatureFlagsService,
-    private inMemoryLRUCacheService: InMemoryLRUCacheService
+    private inMemoryLRUCacheService: InMemoryLRUCacheService,
+    private getPreferences: GetPreferences
   ) {}
 
   @InstrumentUsecase()
@@ -296,27 +297,16 @@ export class GetSubscriberPreference {
           );
 
     const [
-      workflowResourcePreferences,
-      workflowUserPreferences,
+      { workflowResourcePreferences, workflowUserPreferences },
       subscriberWorkflowPreferences,
       subscriberGlobalPreferences,
     ] = await Promise.all([
-      this.preferencesRepository.findForComputation(
-        {
-          ...baseQuery,
-          _templateId: { $in: workflowIds },
-          type: PreferencesTypeEnum.WORKFLOW_RESOURCE,
-        },
-        readOptions
-      ),
-      this.preferencesRepository.findForComputation(
-        {
-          ...baseQuery,
-          _templateId: { $in: workflowIds },
-          type: PreferencesTypeEnum.USER_WORKFLOW,
-        },
-        readOptions
-      ),
+      this.getWorkflowLevelPreferences({
+        environmentId,
+        organizationId,
+        workflowIds,
+        readOptions,
+      }),
       this.preferencesRepository.findForComputation(
         {
           ...baseQuery,
@@ -336,6 +326,52 @@ export class GetSubscriberPreference {
       subscriberWorkflowPreferences,
       subscriberGlobalPreference: subscriberGlobalPreferences[0] ?? null,
     };
+  }
+
+  /**
+   * Resolves the subscriber-independent workflow-level preferences (WORKFLOW_RESOURCE and
+   * USER_WORKFLOW) for a set of workflows by delegating to the canonical, in-flight-coalesced
+   * `GetPreferences.getWorkflowPreferencesByIds` reader (shared with the single-workflow path),
+   * then flattens the per-workflow tuples into the two arrays the merge step consumes.
+   *
+   * The returned entries are shared cache references and must be treated as immutable; the merge
+   * pipeline (`MergePreferences`) only reads them and produces fresh objects.
+   */
+  @Instrument()
+  private async getWorkflowLevelPreferences({
+    environmentId,
+    organizationId,
+    workflowIds,
+    readOptions,
+  }: {
+    environmentId: string;
+    organizationId: string;
+    workflowIds: string[];
+    readOptions: { readPreference: 'secondaryPreferred' | 'primary' };
+  }): Promise<{
+    workflowResourcePreferences: PreferencesEntity[];
+    workflowUserPreferences: PreferencesEntity[];
+  }> {
+    const tuplesByWorkflowId = await this.getPreferences.getWorkflowPreferencesByIds({
+      environmentId,
+      organizationId,
+      workflowIds,
+      readOptions,
+    });
+
+    const workflowResourcePreferences: PreferencesEntity[] = [];
+    const workflowUserPreferences: PreferencesEntity[] = [];
+
+    for (const [workflowResourcePreference, workflowUserPreference] of tuplesByWorkflowId.values()) {
+      if (workflowResourcePreference) {
+        workflowResourcePreferences.push(workflowResourcePreference);
+      }
+      if (workflowUserPreference) {
+        workflowUserPreferences.push(workflowUserPreference);
+      }
+    }
+
+    return { workflowResourcePreferences, workflowUserPreferences };
   }
 
   @Instrument()

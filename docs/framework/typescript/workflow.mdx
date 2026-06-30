@@ -1,0 +1,211 @@
+---
+title: 'Workflow'
+description: 'Learn about the Novu Framework workflow interface and its configuration options'
+---
+
+
+## Example Usage
+
+```tsx
+import { workflow } from '@novu/framework';
+
+workflow(
+  'my-workflow',
+  async ({ step, payload, subscriber }) => {
+    await step.inApp('send-in-app', async () => {
+      return {
+        body: 'Hello there',
+      };
+    });
+  },
+  {
+    payloadSchema: z.object({
+      body: z.string(),
+    }),
+    name: 'My Workflow',
+    description: 'This is a workflow',
+    tags: ['business', 'critical'],
+    preferences: {
+      channels: {
+        inApp: { enabled: true },
+      },
+    },
+  }
+);
+```
+
+## Interface
+
+```typescript
+import { workflow } from '@novu/framework';
+
+workflow(workflowId, handler, options);
+```
+
+### Parameters
+
+#### workflowId
+
+- **Type**: `string`
+- **Required**: Yes
+- **Description**: This id should be unique within your organization.
+
+#### handler
+
+- **Type**: `(context: WorkflowContext) => Promise<void>`
+- **Required**: Yes
+- **Description**: The definition function of the workflow.
+
+#### options
+
+- **Type**: `WorkflowOptions`
+- **Required**: No
+- **Description**: An optional options object for workflow level configurations
+
+##### options.payloadSchema
+
+- **Type**: `JsonSchema | ZodSchema`
+- **Description**: The schema to validate the event payload against, can be used to provide default values.
+
+##### options.name
+
+- **Type**: `string`
+- **Description**: The name of the workflow. This is used to display a human-friendly name for the workflow in the Dashboard and `<Inbox />` component. If no value is specified, the `workflowId` will be used as the name.
+
+##### options.description
+
+- **Type**: `string`
+- **Description**: The description of the workflow. This is used to provide a brief overview of the workflow in the Dashboard.
+
+##### options.tags
+
+- **Type**: `string[]`
+- **Description**: The tags assigned to the workflow. Tags can be used to filter workflows in the dashboard, and can be used by channels such as Inbox to sort Notifications into different categories for a better user experience.
+
+##### options.preferences
+
+- **Type**: `WorkflowPreferences`
+- **Description**: The preferences for the workflow. Read more about [Workflow Channel Preferences](/platform/concepts/preferences#workflow-channel-preferences).
+
+###### preferences.all
+
+- **Type**: `WorkflowPreference`
+- **Properties**:
+  - `enabled`: `boolean` (default: `true`) - A flag specifying if notification delivery is enabled for the workflow.
+  - `readOnly`: `boolean` (default: `false`) - A flag specifying if the preferences are read-only.
+
+###### preferences.channels
+
+- **Type**: `ChannelPreferences`
+- **Description**: The preferences for each channel. Read more about [Workflow Channel Preferences](/platform/concepts/preferences).
+- **Properties**:
+  - `inApp`: `{ enabled: boolean }` - In-app channel preferences
+  - `email`: `{ enabled: boolean }` - Email channel preferences
+  - `sms`: `{ enabled: boolean }` - SMS channel preferences
+  - `chat`: `{ enabled: boolean }` - Chat channel preferences
+  - `push`: `{ enabled: boolean }` - Push channel preferences
+
+## Workflow Context
+
+This context is passed by the workflow engine to provide contextual information about current workflow execution.
+
+### subscriber
+
+- **Type**: `Subscriber`
+- **Properties**:
+  - `subscriberId`: `string` (required) - The id of the subscriber, as passed during `/events/trigger` request.
+  - `firstName`: `string` (nullable) - The first name of the subscriber.
+  - `lastName`: `string` (nullable) - The last name of the subscriber.
+
+### payload
+
+- **Type**: `InferProperties<payloadSchema>`
+- **Description**: The payload of the event that triggered the workflow, will be validated against the `payloadSchema` if provided.
+
+### step
+
+- **Type**: `object`
+- **Description**: The object that contains all the step functions, read more at [Step Functions](/framework/typescript/steps).
+
+## Workflow Channel Preferences
+
+With Workflow channel preferences, you can control the default delivery preference for a channel and whether a subscriber can change it. Novu will show the subscriber preferences in `<Inbox/>` component. Subscribers can enable and disable any active channel in the workflow.
+
+In the `all` object, you can specify default preferences for all channels. The `enabled` field on the `all` object is used as fallback value if a channel is not specified explicitly in `channels`.
+
+The `readOnly` field controls whether subscribers can change the delivery preference for a channel. Critical workflows are defined with `{ readOnly: true }`.
+
+In the `channels` object, you can specify In-App, SMS, Email, Chat, and Push channel preferences. Each channel takes an object with an optional `enabled` flag that controls whether a notification delivery channel is enabled or disabled by default for subscribers.
+
+### Default values
+
+By default, `enabled` is `true` for all channels. The `readOnly` flag is `false`.
+
+<Note>
+  These preferences can also be controlled from the Novu Dashboard per workflow. To do so, click on
+  the cog icon at the top right of your screen, and then select the "Preferences" tab.
+</Note>
+
+<Tabs>
+  <Tab title="Default">
+```tsx
+const newWorkflow = workflow(
+  'default-preferences',
+  async ({ step }) => {
+    await step.inApp('send-in-app', () => ({
+      body: 'Hello there',
+    }));
+  },
+  {
+    preferences: {
+      all: { enabled: true, readOnly: false },
+      channels: {
+        inApp: { enabled: true },
+        email: { enabled: true },
+        sms: { enabled: true },
+        chat: { enabled: true },
+        push: { enabled: true },
+      },
+    },
+  }
+);
+```
+  </Tab>
+  <Tab title="In-App Only - Editable">
+```tsx
+const newWorkflow = workflow(
+  'only-in-app-channel',
+  async ({ step }) => {
+    await step.inApp('send-in-app', () => ({
+      body: 'Hello there',
+    }));
+  },
+  {
+    preferences: {
+      all: { enabled: false },
+      channels: {
+        inApp: { enabled: true },
+      },
+    },
+  }
+);
+```
+  </Tab>
+  <Tab title="All Enabled - Editable">
+```tsx
+const newWorkflow = workflow(
+  'all-enabled-editable',
+  async ({ step }) => {
+    await step.inApp('send-in-app', () => ({
+      body: 'Hello there',
+    }));
+  },
+  {
+    preferences: {
+      all: { enabled: true },
+    },
+  }
+);
+```
+  </Tab>
+</Tabs>

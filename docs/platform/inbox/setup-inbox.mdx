@@ -1,0 +1,289 @@
+---
+title: 'Set up the Inbox'
+description: "Learn how to integrate the Novu Inbox component into your application to display real-time notifications for your subscribers."
+---
+
+
+The Inbox component displays a notification bell by default, which opens a menu containing the subscriber's notifications and preferences.
+
+## Installation
+
+To get started, install the Inbox UI:
+
+<Tabs>
+  <Tab title="Next.js">
+    ```package-install
+    npm install @novu/nextjs
+    ```
+  </Tab>
+  <Tab title="React">
+    ```package-install
+    npm install @novu/react
+    ```
+  </Tab>
+</Tabs>
+
+## Use AI to set up faster
+
+<Note>
+  Replace `YOUR_APPLICATION_IDENTIFIER` and `YOUR_SUBSCRIBER_ID` with values from **API Keys** and **Subscribers** in the Novu dashboard. For other frameworks, see the [Quickstart](/platform/quickstart/nextjs) guides.
+</Note>
+
+<Tabs>
+  <Tab title="Next.js">
+<Prompt description="Add Novu Inbox to my Next.js app" icon="sparkles" actions={["copy", "cursor"]}>
+# Add Novu Inbox to Next.js App
+
+Install `@novu/nextjs`. Add the `<Inbox />` component to your header, navbar, or sidebar.
+
+Latest docs: https://docs.novu.co/platform/quickstart/nextjs
+
+Replace `YOUR_APPLICATION_IDENTIFIER` and `YOUR_SUBSCRIBER_ID` with values from the Novu dashboard (**API Keys** and **Subscribers**).
+
+## Install
+
+```bash
+npm install @novu/nextjs
+```
+
+## Component
+
+```tsx
+'use client';
+import { Inbox } from '@novu/nextjs';
+
+export default function NotificationInbox() {
+  return (
+    <Inbox
+      applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+      subscriberId="YOUR_SUBSCRIBER_ID"
+    />
+  );
+}
+```
+
+## Subscriber ID
+
+Use the app's existing auth system to get a unique user identifier for subscriberId. Check for Clerk, NextAuth, Firebase, Supabase, or custom auth. If no auth system exists, use `YOUR_SUBSCRIBER_ID`.
+
+## Appearance
+
+Extract design tokens from the host app (Tailwind config, CSS variables, theme objects) and apply them via the appearance prop. Only include values you extracted from the host design system — omit empty or placeholder appearance values.
+
+## Rules
+
+ALWAYS:
+
+- Detect the project's package manager and use it for installation
+- Extract design tokens and apply via the appearance prop
+- Place `<Inbox />` inline in existing UI — no new pages or wrappers
+- Use TypeScript, no comments, no empty props
+- Follow Next.js conventions
+- Use the existing auth system to source subscriberId when available
+
+NEVER:
+
+- Add empty appearance values or placeholder props
+- Create wrapper components or new pages just for the inbox
+- Add code comments
+- Introduce styles not in the host app
+- Add unused props or imports
+
+## Verify Before Responding
+
+1. Is `@novu/nextjs` installed with the project's package manager?
+2. Is `<Inbox />` placed inline in existing UI?
+3. Are design tokens extracted and applied?
+4. Are all props non-empty and properly typed?
+5. Is subscriberId sourced from the auth system when available?
+
+If any fails, revise.
+</Prompt>
+  </Tab>
+  <Tab title="React">
+<Prompt description="Add Novu Inbox to my React app" icon="sparkles" actions={["copy", "cursor"]}>
+# Add Novu Inbox to React App
+
+Install `@novu/react`. Add the `<Inbox />` component to your header, navbar, or sidebar.
+
+Latest docs: https://docs.novu.co/platform/quickstart/react
+
+Replace `YOUR_APPLICATION_IDENTIFIER` and `YOUR_SUBSCRIBER_ID` with values from the Novu dashboard (**API Keys** and **Subscribers**).
+
+## Install
+
+```bash
+npm install @novu/react
+```
+
+## Component
+
+```tsx
+import { Inbox } from '@novu/react';
+import { useNavigate } from 'react-router-dom';
+
+export default function NotificationInbox() {
+  const navigate = useNavigate();
+
+  return (
+    <Inbox
+      applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+      subscriberId="YOUR_SUBSCRIBER_ID"
+      routerPush={(path) => navigate(path)}
+    />
+  );
+}
+```
+
+## Subscriber ID
+
+Use the app's existing auth system to get a unique user identifier for subscriberId. Check for Clerk, NextAuth, Firebase, Supabase, or custom auth. If no auth system exists, use `YOUR_SUBSCRIBER_ID`.
+
+## Appearance
+
+Extract design tokens from the host app (Tailwind config, CSS variables, theme objects) and apply them via the appearance prop. Only include values you extracted from the host design system — omit empty or placeholder appearance values.
+
+## Rules
+
+ALWAYS:
+
+- Detect the project's package manager and use it for installation
+- Extract design tokens and apply via the appearance prop
+- Place `<Inbox />` inline in existing UI — no new pages or wrappers
+- Use TypeScript, no comments, no empty props
+- Follow React conventions
+- Use the existing auth system to source subscriberId when available
+
+NEVER:
+
+- Add empty appearance values or placeholder props
+- Create wrapper components or new pages just for the inbox
+- Add code comments
+- Introduce styles not in the host app
+- Add unused props or imports
+
+## Verify Before Responding
+
+1. Is `@novu/react` installed with the project's package manager?
+2. Is `<Inbox />` placed inline in existing UI?
+3. Are design tokens extracted and applied?
+4. Are all props non-empty and properly typed?
+5. Is subscriberId sourced from the auth system when available?
+
+If any fails, revise.
+</Prompt>
+  </Tab>
+</Tabs>
+
+## Try Inbox in keyless mode
+
+Keyless mode lets you test the look and features of the Inbox component instantly in your application, no setup required.
+
+![Inbox keyless](/images/inbox/keyless-inbox.png)
+
+<Tabs>
+  <Tab title="Next.js">
+    ```tsx
+
+    export function Novu() {
+      return (
+        <Inbox />
+      );
+    }
+    ```
+  </Tab>
+  <Tab title="React">
+    ```tsx
+
+    export function Novu() {
+      return (
+        <Inbox />
+      );
+    }
+    ```
+  </Tab>
+</Tabs>
+
+<Note>
+  This is only for testing, the data is temporary (expires in 24h) and not tied to real subscribers.
+</Note>
+
+## Use Inbox with real subscribers
+
+To display real-time notifications for your subscribers, connect the Inbox component to your Novu environment using your `applicationIdentifier` and a `subscriberId`. You can create or manage subscribers from the [Novu Dashboard](https://dashboard.novu.co/subscribers).
+
+### US region (default)
+
+<Tabs>
+  <Tab title="Next.js">
+    ```tsx
+
+    export function Novu() {
+      return (
+        <Inbox
+          applicationIdentifier="APPLICATION_IDENTIFIER"
+          subscriber="SUBSCRIBER_ID"
+        />
+      );
+    }
+    ```
+  </Tab>
+  <Tab title="React">
+    ```tsx
+
+    export function Novu() {
+      return (
+        <Inbox
+          applicationIdentifier="APPLICATION_IDENTIFIER"
+          subscriber="SUBSCRIBER_ID"
+        />
+      );
+    }
+    ```
+  </Tab>
+</Tabs>
+
+<div className="text-sm text-gray-500 text-center mt-2">
+  [Sign in](https://dashboard.novu.co/auth/sign-up) to get your own API keys
+</div>
+
+### EU region
+
+If your Novu account is in the EU region, then include the `backendUrl` and `socketUrl` props to connect to EU-specific API endpoints:
+
+<Tabs>
+  <Tab title="Next.js">
+    ```tsx
+
+    export function Novu() {
+      return (
+        <Inbox
+          applicationIdentifier="APPLICATION_IDENTIFIER"
+          subscriber="SUBSCRIBER_ID"
+          backendUrl="https://eu.api.novu.co"
+          socketUrl="wss://eu.socket.novu.co"
+        />
+      );
+    }
+    ```
+  </Tab>
+  <Tab title="React">
+    ```tsx
+
+    export function Novu() {
+      return (
+        <Inbox
+          applicationIdentifier="APPLICATION_IDENTIFIER"
+          subscriber="SUBSCRIBER_ID"
+          backendUrl="https://eu.api.novu.co"
+          socketUrl="wss://eu.socket.novu.co"
+        />
+      );
+    }
+    ```
+  </Tab>
+</Tabs>
+
+<div className="text-sm text-gray-500 text-center mt-2">
+  [Sign in](https://dashboard.novu.co/auth/sign-up) to get your own API keys
+</div>
