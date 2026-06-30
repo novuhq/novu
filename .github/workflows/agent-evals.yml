@@ -32,8 +32,10 @@ jobs:
         env:
           BULL_MQ_PRO_NPM_TOKEN: ${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}
         run: |
-          TRUST_FLAG="$(bash scripts/configure-pnpm-private-registry.sh)"
-          pnpm install --frozen-lockfile ${TRUST_FLAG} --filter=@novu/agent-evals...
+          bash scripts/configure-pnpm-private-registry.sh > /dev/null
+          # pnpm 11.9 verifies the full lockfile even with --filter; trustLockfile
+          # avoids minimumReleaseAge failures on unrelated dashboard deps.
+          pnpm install --frozen-lockfile --config.trustLockfile=true --filter=@novu/agent-evals...
 
       - name: Run agent evals
         env:
