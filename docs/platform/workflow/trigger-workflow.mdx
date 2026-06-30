@@ -11,6 +11,16 @@ When a workflow is triggered, Novu resolves the target subscribers, evaluates wo
   You can test a workflow directly from the workflow editor in the Novu dashboard before triggering it from your application. This allows you to validate step configuration and notification content for a specific subscriber.
 </Note>
 
+## Use AI to integrate faster
+
+<Note>
+  Replace `YOUR_WORKFLOW_ID`, `YOUR_SUBSCRIBER_ID`, and payload fields with values from **Workflows** and **Subscribers** in the Novu dashboard.
+</Note>
+
+<Prompt description="Integrate a workflow trigger in my app" icon="zap" actions={["copy", "cursor"]}>
+  <Snippet file="snippets/prompts/workflows/trigger-integration.mdx" />
+</Prompt>
+
 ## Trigger Event API
 
 Workflows in Novu are triggered by sending events to the Event API. An event represents an action in your system, for example, an order created or a comment added and is mapped to a workflow using the workflow’s trigger identifier.

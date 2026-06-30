@@ -43,6 +43,44 @@ Use this guide to pick the right skill for your task:
 - **"Add a bell icon to my app"** → `inbox-integration`
 - **"Let users opt out of emails"** → `manage-preferences`
 
+## Example prompts
+
+Copy or open these prompts in Cursor after installing Novu skills with `npx skills add novuhq/skills`. Replace `YOUR_*` placeholders with values from your Novu dashboard.
+
+### Core skills
+
+<Prompt description="Send a welcome notification" icon="bot" actions={["copy", "cursor"]}>
+  <Snippet file="snippets/prompts/skills/trigger-notification.mdx" />
+</Prompt>
+
+<Prompt description="Create a subscriber" icon="bot" actions={["copy", "cursor"]}>
+  <Snippet file="snippets/prompts/skills/manage-subscribers.mdx" />
+</Prompt>
+
+<Prompt description="Add a bell icon to my app" icon="bot" actions={["copy", "cursor"]}>
+  <Snippet file="snippets/prompts/skills/inbox-integration.mdx" />
+</Prompt>
+
+<Prompt description="Configure subscriber preferences" icon="bot" actions={["copy", "cursor"]}>
+  <Snippet file="snippets/prompts/skills/manage-preferences.mdx" />
+</Prompt>
+
+### Additional skills
+
+These skills are available in the [Novu documentation MCP](/platform/build-with-ai/mcp) and Mintlify-hosted skill packages:
+
+<Prompt description="Set up a code-first workflow" icon="bot" actions={["copy", "cursor"]}>
+  <Snippet file="snippets/prompts/skills/framework-integration.mdx" />
+</Prompt>
+
+<Prompt description="Design a multi-channel workflow" icon="bot" actions={["copy", "cursor"]}>
+  <Snippet file="snippets/prompts/skills/design-workflow.mdx" />
+</Prompt>
+
+<Prompt description="Configure workflow step content" icon="bot" actions={["copy", "cursor"]}>
+  <Snippet file="snippets/prompts/skills/dashboard-workflows.mdx" />
+</Prompt>
+
 ## Common Combinations
 
 - **Full notification system**: `trigger-notification` + `manage-subscribers`

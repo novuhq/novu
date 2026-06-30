@@ -38,6 +38,19 @@ This guide walks you through integrating Novu’s Inbox into your React applicat
   </Step>
 
   <Step>
+  ## Use AI to set up faster
+
+  <Note>
+    Replace `YOUR_APPLICATION_IDENTIFIER` and `YOUR_SUBSCRIBER_ID` with values from **API Keys** and **Subscribers** in the Novu dashboard.
+  </Note>
+
+  <Prompt description="Add Novu Inbox to my React app" icon="sparkles" actions={["copy", "cursor"]}>
+    <Snippet file="snippets/prompts/inbox/react.mdx" />
+  </Prompt>
+
+  </Step>
+
+  <Step>
   ## Create the Inbox component
   In the `src` directory, create a `components/novu-inbox.tsx` file and use the [`<Inbox />`](/platform/inbox) component, passing <Tooltip tip="The application identifier is a unique identifier for your application. You can find it in the Novu Dashboard under the API keys page.">applicationIdentifier</Tooltip> and <Tooltip tip="The subscriber ID is the unique identifier for the user in your application, typically the user's id in your database.">subscriberId</Tooltip>:
 

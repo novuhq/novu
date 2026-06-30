@@ -273,6 +273,44 @@ Any MCP-compatible tool can connect to the Novu MCP Server using these connectio
   </Tab>
 </Tabs>
 
+## Example prompts
+
+After connecting the Novu MCP server, copy or open these prompts in Cursor to verify the connection and perform common tasks.
+
+<Note>
+  Replace placeholder values (for example, subscriber IDs and workflow identifiers) with values from your Novu dashboard.
+</Note>
+
+### Verify connection
+
+<Prompt description="Test your Novu MCP connection" icon="bot" actions={["copy", "cursor"]}>
+  <Snippet file="snippets/prompts/mcp/test-connection.mdx" />
+</Prompt>
+
+<Prompt description="List your notification workflows" icon="bot" actions={["copy", "cursor"]}>
+  <Snippet file="snippets/prompts/mcp/list-workflows.mdx" />
+</Prompt>
+
+### Subscriber management
+
+<Prompt description="Find a subscriber by email" icon="bot" actions={["copy", "cursor"]}>
+  <Snippet file="snippets/prompts/mcp/find-subscriber.mdx" />
+</Prompt>
+
+<Prompt description="Create a new subscriber" icon="bot" actions={["copy", "cursor"]}>
+  <Snippet file="snippets/prompts/mcp/create-subscriber.mdx" />
+</Prompt>
+
+### Trigger and debug
+
+<Prompt description="Trigger a workflow for a subscriber" icon="bot" actions={["copy", "cursor"]}>
+  <Snippet file="snippets/prompts/mcp/trigger-workflow.mdx" />
+</Prompt>
+
+<Prompt description="Debug failed notifications" icon="bot" actions={["copy", "cursor"]}>
+  <Snippet file="snippets/prompts/mcp/debug-notifications.mdx" />
+</Prompt>
+
 ## MCP tools
 
 The Novu MCP server provides tools for interacting with your Novu environment. Your AI assistant discovers tools at connection time through the MCP `tools/list` handshake.

@@ -38,6 +38,19 @@ This guide walks you through integrating Novu’s Inbox into your Angular applic
   </Step>
 
   <Step>
+  ## Use AI to set up faster
+
+  <Note>
+    Replace `YOUR_APPLICATION_IDENTIFIER` and `YOUR_SUBSCRIBER_ID` with values from **API Keys** and **Subscribers** in the Novu dashboard.
+  </Note>
+
+  <Prompt description="Add Novu Inbox to my Angular app" icon="sparkles" actions={["copy", "cursor"]}>
+    <Snippet file="snippets/prompts/inbox/angular.mdx" />
+  </Prompt>
+
+  </Step>
+
+  <Step>
   ## Add the Inbox component
   Update the `src/app/app.ts` file to add the Inbox component. You'll need to provide your <Tooltip tip="The application identifier is a unique identifier for your application. You can find it in the Novu Dashboard under the API keys page.">applicationIdentifier</Tooltip> and <Tooltip tip="The subscriber ID is the unique identifier for the user in your application, typically the user's id in your database.">subscriberId</Tooltip>:
 
