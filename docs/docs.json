@@ -386,7 +386,19 @@
               "agents",
               "agents/get-started/what-is-aci",
               "agents/get-started/mental-model",
-              "agents/get-started/agents-and-providers"
+              "agents/get-started/agents-and-providers",
+              {
+                "group": "Quickstart",
+                "pages": [
+                  "agents/quickstart/claude-managed",
+                  "agents/quickstart/aws-claude-managed",
+                  "agents/quickstart/ai-sdk",
+                  "agents/quickstart/langchain",
+                  "agents/quickstart/openai-sdk",
+                  "agents/quickstart/custom-code",
+                  "agents/quickstart/chat-sdk"
+                ]
+              }
             ]
           },
           {

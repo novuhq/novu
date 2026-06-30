@@ -51,9 +51,34 @@ ACI turns channel-specific messages into a standard communication flow between t
 
 ## Start building
 
-<Card href="/agents/managed-agent/quickstart" title="Quickstart" icon="zap">
-  Follow the quickstart to create your first agent, connect a Slack provider, and send your first message in under 5 minutes.
-</Card>
+Pick a quickstart for the runtime or framework you want to use. Each guide focuses on wiring your agent brain — create an agent and connect a channel first using the linked setup guides.
+
+<Columns cols={2}>
+  <Card href="/agents/quickstart/claude-managed" title="Claude managed agent" icon="sparkles">
+    Run a fully managed agent on Anthropic Claude with no bridge code.
+  </Card>
+  <Card href="/agents/quickstart/aws-claude-managed" title="AWS Claude managed agent" icon="cloud">
+    Run a managed agent on AWS Claude Platform.
+  </Card>
+  <Card href="/agents/quickstart/ai-sdk" title="AI SDK" icon="zap">
+    Wire your handler to the Vercel AI SDK with `@novu/framework/ai-sdk`.
+  </Card>
+  <Card href="/agents/quickstart/langchain" title="LangChain" icon="link">
+    Invoke a LangChain chat model from your agent handler.
+  </Card>
+  <Card href="/agents/quickstart/openai-sdk" title="OpenAI SDK" icon="bot">
+    Call the OpenAI Node SDK directly from your handler.
+  </Card>
+  <Card href="/agents/quickstart/custom-code" title="Custom code" icon="square-code">
+    Build handler logic with `@novu/framework` — no LLM required.
+  </Card>
+  <Card href="/agents/quickstart/chat-sdk" title="Chat SDK" icon="messages-square">
+    Use Vercel Chat SDK with `@novu/chat-sdk-adapter`.
+  </Card>
+  <Card href="/agents/custom-code-agent/quickstart" title="Custom code setup" icon="plug">
+    Create an agent, connect Slack, and scaffold a bridge app.
+  </Card>
+</Columns>
 
 ## Learn more
 

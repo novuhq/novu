@@ -1,0 +1,109 @@
+---
+title: 'Chat SDK'
+description: 'Build a multi-channel agent with Vercel Chat SDK and @novu/chat-sdk-adapter instead of @novu/framework handlers.'
+---
+
+
+Use the [Chat SDK](https://github.com/vercel-labs/chat) with [`@novu/chat-sdk-adapter`](https://www.npmjs.com/package/@novu/chat-sdk-adapter) when you prefer the Chat SDK event model over `@novu/framework` handlers. Novu acts as a Chat SDK adapter that routes messages to and from connected channels.
+
+<Note>
+  This guide covers the Chat SDK wiring pattern. To create an agent and connect a channel first, follow the [Custom code quickstart](/agents/custom-code-agent/quickstart) or run `npx novu connect --runtime chat-sdk` to scaffold and connect in one flow.
+</Note>
+
+<Steps>
+
+<Step>
+
+## Scaffold with the CLI
+
+The fastest path is the Novu CLI, which scaffolds a Chat SDK project and connects your agent:
+
+```bash
+npx novu connect --runtime chat-sdk
+```
+
+Or scaffold manually:
+
+```bash
+npx novu@latest init -t chat-sdk \
+  --secret-key=<NOVU_SECRET_KEY> \
+  --api-url=<NOVU_API_URL>
+```
+
+</Step>
+
+<Step>
+
+## Wire the Novu adapter
+
+Create the adapter and register message handlers in `lib/novu/agent.ts`:
+
+```tsx title="lib/novu/agent.ts"
+import { createMemoryState } from '@chat-adapter/state-memory';
+import { createNovuAdapter, getNovuContext } from '@novu/chat-sdk-adapter';
+import { Chat, type Adapter, type StateAdapter } from 'chat';
+
+export function registerHandlers(chat: Chat): void {
+  chat.onSubscribedMessage(async (thread, message) => {
+    const novu = getNovuContext(thread);
+    const history = await novu.getHistory();
+
+    await thread.post(`Got it (${novu.platform}): ${message.text}`);
+  });
+}
+
+export function getNovuAgent(): Promise<{ chat: Chat; novu: Adapter }> {
+  const novu = createNovuAdapter({
+    apiKey: process.env.NOVU_SECRET_KEY!,
+    agentIdentifier: process.env.NOVU_AGENT_IDENTIFIER!,
+    bridgeSecret: process.env.NOVU_SECRET_KEY!,
+  });
+
+  const chat = new Chat({
+    userName: process.env.NOVU_AGENT_IDENTIFIER!,
+    adapters: { novu: novu as unknown as Adapter },
+    state: createMemoryState() as unknown as StateAdapter,
+  });
+
+  registerHandlers(chat);
+
+  return chat.initialize().then(() => ({ chat, novu: novu as unknown as Adapter }));
+}
+```
+
+Use `getNovuContext(thread)` to access subscriber info, conversation history, `resolve()`, and `trigger()` from inside Chat SDK handlers.
+
+</Step>
+
+<Step>
+
+## Run locally
+
+Set `NOVU_SECRET_KEY` and `NOVU_AGENT_IDENTIFIER` in `.env.local`, then start the dev server:
+
+```bash
+npm run dev:novu
+```
+
+Send a message on your connected channel to test the Chat SDK agent.
+
+</Step>
+
+</Steps>
+
+## Next steps
+
+<Columns cols={2}>
+  <Card icon="github" href="https://github.com/novuhq/novu-chat-sdk-example" title="Example repo">
+    Full Chat SDK + Novu adapter example project.
+  </Card>
+  <Card icon="zap" href="/agents/quickstart/ai-sdk" title="AI SDK">
+    Prefer `@novu/framework` handlers? Start with the AI SDK quickstart.
+  </Card>
+  <Card icon="code" href="/agents/custom-code-agent/setup-your-agent/handle-events" title="Handle events">
+    Compare Chat SDK events with framework handler APIs.
+  </Card>
+  <Card icon="rocket" href="/agents/custom-code-agent/going-to-production" title="Going to production">
+    Deploy your Chat SDK bridge app.
+  </Card>
+</Columns>

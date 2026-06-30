@@ -1,0 +1,105 @@
+---
+title: 'LangChain'
+description: 'Invoke a LangChain chat model from a Novu agent handler using ctx.history as message context.'
+---
+
+
+Run a [LangChain](https://js.langchain.com/) chat model inside your Novu agent handler. Map `ctx.history` to LangChain messages and return the model output as a string reply.
+
+<Note>
+  This guide covers agent runtime wiring only. To create an agent, connect a channel like Slack, and scaffold a bridge app first, follow the [Custom code quickstart](/agents/custom-code-agent/quickstart).
+</Note>
+
+<Steps>
+
+<Step>
+
+## Install dependencies
+
+In your bridge project:
+
+```package-install
+npm install @langchain/core @langchain/openai
+```
+
+Add your API key to `.env.local`:
+
+```bash
+OPENAI_API_KEY=sk-...
+```
+
+</Step>
+
+<Step>
+
+## Wire the agent handler
+
+Update `app/novu/agents/support-agent.tsx` to invoke a LangChain chat model:
+
+```tsx title="app/novu/agents/support-agent.tsx"
+import { agent } from '@novu/framework';
+import { AIMessage, HumanMessage, SystemMessage } from '@langchain/core/messages';
+import { ChatOpenAI } from '@langchain/openai';
+
+const model = new ChatOpenAI({ model: 'gpt-4o-mini' });
+
+function toLangChainMessage(entry: { role: string; content: string }) {
+  if (entry.role === 'system') {
+    return new SystemMessage(entry.content);
+  }
+
+  if (entry.role === 'agent' || entry.role === 'assistant') {
+    return new AIMessage(entry.content);
+  }
+
+  return new HumanMessage(entry.content);
+}
+
+export const supportAgent = agent('support-agent', {
+  onMessage: async (message, ctx) => {
+    const response = await model.invoke([
+      new SystemMessage('You are a helpful support agent. Keep replies concise.'),
+      ...ctx.history.map(toLangChainMessage),
+    ]);
+
+    return typeof response.content === 'string' ? response.content : String(response.content);
+  },
+});
+```
+
+The agent id must match the **Identifier** in the Novu dashboard.
+
+</Step>
+
+<Step>
+
+## Run locally
+
+Start the bridge app with the dev tunnel:
+
+```bash
+npm run dev:novu
+```
+
+Send a message on your connected channel to test the LangChain-powered reply.
+
+</Step>
+
+</Steps>
+
+## Next steps
+
+<Columns cols={2}>
+  <Card icon="zap" href="/agents/quickstart/ai-sdk" title="AI SDK">
+    Use the Vercel AI SDK wrapper with built-in history mapping.
+  </Card>
+  <Card icon="book-open" href="/agents/custom-code-agent/connect-your-first-agent" title="Connect your first agent">
+    Full tutorial with cards, metadata, and conversation resolution.
+  </Card>
+  <Card icon="code" href="/agents/custom-code-agent/setup-your-agent/handle-events" title="Handle events">
+    Context API reference for handlers and conversation state.
+  </Card>
+  <Card icon="rocket" href="/agents/custom-code-agent/going-to-production" title="Going to production">
+    Deploy your bridge app to production.
+  </Card>
+</Columns>

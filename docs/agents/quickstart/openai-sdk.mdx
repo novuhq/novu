@@ -1,0 +1,106 @@
+---
+title: 'OpenAI SDK'
+description: 'Call the OpenAI Node SDK from a Novu agent handler and reply with ctx.history as conversation context.'
+---
+
+
+Use the [OpenAI Node SDK](https://github.com/openai/openai-node) directly inside a Novu agent handler. Map `ctx.history` to OpenAI message format and return the model response as a string.
+
+<Note>
+  This guide covers agent runtime wiring only. To create an agent, connect a channel like Slack, and scaffold a bridge app first, follow the [Custom code quickstart](/agents/custom-code-agent/quickstart).
+</Note>
+
+<Steps>
+
+<Step>
+
+## Install dependencies
+
+In your bridge project:
+
+```package-install
+npm install openai
+```
+
+Add your API key to `.env.local`:
+
+```bash
+OPENAI_API_KEY=sk-...
+```
+
+</Step>
+
+<Step>
+
+## Wire the agent handler
+
+Update `app/novu/agents/support-agent.tsx` to call the OpenAI chat completions API:
+
+```tsx title="app/novu/agents/support-agent.tsx"
+import { agent } from '@novu/framework';
+import OpenAI from 'openai';
+
+const openai = new OpenAI();
+
+function toOpenAiRole(role: string): 'assistant' | 'user' {
+  if (role === 'agent' || role === 'assistant') {
+    return 'assistant';
+  }
+
+  return 'user';
+}
+
+export const supportAgent = agent('support-agent', {
+  onMessage: async (message, ctx) => {
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: 'system', content: 'You are a helpful support agent. Keep replies concise.' },
+        ...ctx.history.map((entry) => ({
+          role: toOpenAiRole(entry.role),
+          content: entry.content,
+        })),
+      ],
+    });
+
+    return response.choices[0]?.message?.content ?? 'Sorry, I could not generate a reply.';
+  },
+});
+```
+
+The agent id must match the **Identifier** in the Novu dashboard. Novu already includes the current inbound message in `ctx.history` — do not append `message.text` again.
+
+</Step>
+
+<Step>
+
+## Run locally
+
+Start the bridge app with the dev tunnel:
+
+```bash
+npm run dev:novu
+```
+
+Send a message on your connected channel to test the OpenAI-powered reply.
+
+</Step>
+
+</Steps>
+
+## Next steps
+
+<Columns cols={2}>
+  <Card icon="zap" href="/agents/quickstart/ai-sdk" title="AI SDK">
+    Use the Vercel AI SDK wrapper for automatic reply delivery and streaming.
+  </Card>
+  <Card icon="book-open" href="/agents/custom-code-agent/connect-your-first-agent" title="Connect your first agent">
+    Full tutorial with cards, metadata, and conversation resolution.
+  </Card>
+  <Card icon="code" href="/agents/custom-code-agent/setup-your-agent/handle-events" title="Handle events">
+    Context API reference for `ctx.history`, metadata, and triggers.
+  </Card>
+  <Card icon="rocket" href="/agents/custom-code-agent/going-to-production" title="Going to production">
+    Deploy your bridge app to production.
+  </Card>
+</Columns>

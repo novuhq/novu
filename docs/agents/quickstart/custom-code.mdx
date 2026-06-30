@@ -1,0 +1,103 @@
+---
+title: 'Custom code'
+description: 'Build a Novu agent handler with @novu/framework — no LLM required to get your first reply working.'
+---
+
+
+Use `@novu/framework` directly when you want full control over agent logic. Return strings, Markdown, or JSX cards from `onMessage` and `onAction` without wrapping a specific LLM SDK.
+
+<Note>
+  This guide covers the agent handler pattern. To create an agent, connect a channel like Slack, and scaffold a bridge app first, follow the [Custom code quickstart](/agents/custom-code-agent/quickstart).
+</Note>
+
+<Steps>
+
+<Step>
+
+## Scaffold the bridge app
+
+If you have not scaffolded yet, run the command from your agent setup page in the Novu dashboard:
+
+```bash
+npx novu@latest init -t agent \
+  --agent-identifier support-agent \
+  --secret-key=<NOVU_SECRET_KEY> \
+  --api-url=<NOVU_API_URL>
+```
+
+This creates a Next.js bridge app with `app/novu/agents/support-agent.tsx` and `app/api/novu/route.ts`.
+
+</Step>
+
+<Step>
+
+## Define the agent handler
+
+Edit `app/novu/agents/support-agent.tsx`. The scaffold includes a demo handler with cards and metadata — here is the minimal starting point:
+
+```tsx title="app/novu/agents/support-agent.tsx"
+/** @jsxImportSource @novu/framework */
+import { agent } from '@novu/framework';
+
+export const supportAgent = agent('support-agent', {
+  onMessage: async (message, ctx) => {
+    return `You said: ${message.text}`;
+  },
+});
+```
+
+Add the JSX pragma at the top if you plan to return interactive cards later. For string-only replies, you can omit it.
+
+The agent id must match the **Identifier** in the Novu dashboard.
+
+</Step>
+
+<Step>
+
+## Serve the bridge endpoint
+
+The scaffold creates `app/api/novu/route.ts`:
+
+```tsx title="app/api/novu/route.ts"
+import { serve } from '@novu/framework/next';
+import { supportAgent } from '../../novu/agents';
+
+export const { GET, POST, OPTIONS } = serve({ agents: [supportAgent] });
+```
+
+Make sure `app/novu/agents/index.ts` re-exports your agent so the route picks it up.
+
+</Step>
+
+<Step>
+
+## Run locally
+
+On the agent detail page in the Novu dashboard, set the bridge to **Local**. Then start the dev tunnel:
+
+```bash
+npm run dev:novu
+```
+
+Send a message on your connected channel. Your handler code runs and the reply is delivered back to the thread.
+
+</Step>
+
+</Steps>
+
+## Next steps
+
+<Columns cols={2}>
+  <Card icon="zap" href="/agents/quickstart/ai-sdk" title="AI SDK">
+    Add an LLM with the Vercel AI SDK wrapper.
+  </Card>
+  <Card icon="book-open" href="/agents/custom-code-agent/connect-your-first-agent" title="Connect your first agent">
+    Full tutorial with cards, metadata, and conversation resolution.
+  </Card>
+  <Card icon="messages-square" href="/agents/custom-code-agent/setup-your-agent/reply" title="Reply">
+    Send Markdown, cards, attachments, and typing indicators.
+  </Card>
+  <Card icon="rocket" href="/agents/custom-code-agent/going-to-production" title="Going to production">
+    Deploy your bridge app to production.
+  </Card>
+</Columns>

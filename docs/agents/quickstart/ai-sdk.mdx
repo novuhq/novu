@@ -1,0 +1,92 @@
+---
+title: 'AI SDK'
+description: 'Wire a custom code agent to the Vercel AI SDK using @novu/framework/ai-sdk and generateText().'
+---
+
+
+Connect your agent handler to the [Vercel AI SDK](https://sdk.vercel.ai/) with the Novu AI SDK wrapper. Return a `generateText()` or `streamText()` result from `onMessage` and Novu delivers the model output to the connected channel automatically.
+
+<Note>
+  This guide covers agent runtime wiring only. To create an agent, connect a channel like Slack, and scaffold a bridge app first, follow the [Custom code quickstart](/agents/custom-code-agent/quickstart).
+</Note>
+
+<Steps>
+
+<Step>
+
+## Install dependencies
+
+In your bridge project, install the AI SDK and a model provider:
+
+```package-install
+npm install ai @ai-sdk/openai
+```
+
+Add your model API key to `.env.local`:
+
+```bash
+OPENAI_API_KEY=sk-...
+```
+
+</Step>
+
+<Step>
+
+## Wire the agent handler
+
+Replace the demo handler in `app/novu/agents/support-agent.tsx` with an AI SDK call. Import `agent` and `toModelMessages` from `@novu/framework/ai-sdk` — not `@novu/framework` directly:
+
+```tsx title="app/novu/agents/support-agent.tsx"
+import { agent, toModelMessages } from '@novu/framework/ai-sdk';
+import { openai } from '@ai-sdk/openai';
+import { generateText } from 'ai';
+
+export const supportAgent = agent('support-agent', {
+  onMessage: async (message, ctx) => {
+    return generateText({
+      model: openai('gpt-4o-mini'),
+      system: 'You are a helpful support agent. Keep replies concise.',
+      messages: toModelMessages(ctx.history),
+    });
+  },
+});
+```
+
+The agent id (`support-agent`) must match the **Identifier** you set in the Novu dashboard.
+
+When you return a `generateText()` result, Novu calls `ctx.reply()` with the model text for you. You can still return a plain string or JSX card instead.
+
+</Step>
+
+<Step>
+
+## Run locally
+
+Start the bridge app with the dev tunnel:
+
+```bash
+npm run dev:novu
+```
+
+Send a message on your connected channel. The agent replies using the AI SDK.
+
+</Step>
+
+</Steps>
+
+## Next steps
+
+<Columns cols={2}>
+  <Card icon="book-open" href="/agents/custom-code-agent/connect-your-first-agent" title="Connect your first agent">
+    Full tutorial with cards, metadata, and conversation resolution.
+  </Card>
+  <Card icon="code" href="/agents/custom-code-agent/setup-your-agent/handle-events" title="Handle events">
+    `onMessage`, `onAction`, and the full context API reference.
+  </Card>
+  <Card icon="zap" href="/agents/quickstart/openai-sdk" title="OpenAI SDK">
+    Use the OpenAI Node SDK directly instead of the AI SDK wrapper.
+  </Card>
+  <Card icon="rocket" href="/agents/custom-code-agent/going-to-production" title="Going to production">
+    Deploy your bridge app and switch from local to production.
+  </Card>
+</Columns>

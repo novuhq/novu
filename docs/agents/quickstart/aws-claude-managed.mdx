@@ -1,0 +1,81 @@
+---
+title: 'AWS Claude managed agent'
+description: 'Create a managed agent on AWS Claude Platform with npx novu connect --runtime claude-aws.'
+---
+
+
+Run a fully managed agent on [AWS Claude Platform](https://aws.amazon.com/bedrock/claude/). Novu forwards conversation context to your AWS-hosted Claude runtime. You configure credentials and the agent from the dashboard — no bridge application required.
+
+<Note>
+  Agents are currently in private beta. Contact [support@novu.co](mailto:support@novu.co) for access.
+</Note>
+
+<Steps>
+
+<Step>
+
+## Run the CLI
+
+In your terminal:
+
+```bash
+npx novu connect --runtime claude-aws
+```
+
+When prompted for **Where your agent runs?**, select **AWS Claude Managed Agent**.
+
+</Step>
+
+<Step>
+
+## Add AWS Claude credentials
+
+The CLI prompts for your AWS Claude Platform credentials. You can also pass them non-interactively:
+
+```bash
+npx novu connect --runtime claude-aws \
+  --aws-claude-api-key <YOUR_AWS_CLAUDE_API_KEY> \
+  --aws-claude-region <YOUR_REGION> \
+  --aws-claude-workspace-id <YOUR_WORKSPACE_ID>
+```
+
+Novu stores the credentials as an agent-runtime integration backed by the `AnthropicAws` provider.
+
+</Step>
+
+<Step>
+
+## Describe your agent
+
+Type a description of what the agent should do. Novu generates a system prompt, tools, MCP servers, and skills from your description. Review the generated config and confirm creation.
+
+</Step>
+
+<Step>
+
+## Connect a channel
+
+When prompted to pick a channel, select **Slack** (or another supported provider) and follow the setup flow. For Slack, paste a [Slack App Configuration Token](https://api.slack.com/apps) when asked, then install the app in your workspace.
+
+Once connected, send a message to your agent. Claude on AWS processes it and Novu delivers the reply.
+
+</Step>
+
+</Steps>
+
+## Next steps
+
+<Columns cols={2}>
+  <Card icon="zap" href="/agents/managed-agent/quickstart" title="Managed agent quickstart">
+    Full walkthrough with demo credentials and Slack setup.
+  </Card>
+  <Card icon="sparkles" href="/agents/quickstart/claude-managed" title="Claude managed agent">
+    Use Anthropic directly instead of AWS Claude Platform.
+  </Card>
+  <Card icon="brain" href="/agents/managed-agent/concepts" title="Concepts">
+    Connectors, MCP servers, skills, and conversation flow.
+  </Card>
+  <Card icon="link" href="/agents/managed-agent/configure-mcp-servers" title="Configure MCP servers">
+    Connect Linear, GitHub, Notion, and other external tools.
+  </Card>
+</Columns>
