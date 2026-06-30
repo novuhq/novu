@@ -185,6 +185,13 @@ export interface AgentAction {
   sourceMessageId?: string;
 }
 
+/** Provider-agnostic tool call passed to the approval primitives. */
+export interface AgentToolCall {
+  id: string;
+  name: string;
+  input?: Record<string, unknown>;
+}
+
 // ---------------------------------------------------------------------------
 // Context + handlers
 // ---------------------------------------------------------------------------
