@@ -56,7 +56,6 @@ Log inaccurate citations and update the corresponding documentation page.
 - `sitemap.xml`: `https://docs.novu.co/sitemap.xml`
 - `robots.txt`: `https://docs.novu.co/robots.txt`
 - Mintlify SEO config: `docs.json` → `seo` block
-- Bulk metadata scripts: `docs/scripts/seo-update-api-providers.py`, `docs/scripts/seo-fix-api-providers.py`
 
 ## Target keyword ownership
 
