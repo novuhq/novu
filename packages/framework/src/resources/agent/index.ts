@@ -34,6 +34,7 @@ export type {
   AgentReplyPayload,
   AgentResolveContext,
   AgentSubscriber,
+  AgentToolCall,
   EditPayload,
   FileRef,
   MessageContent,

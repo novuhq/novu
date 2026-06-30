@@ -3,11 +3,6 @@ import { Actions, Button, Card, CardText } from '../../../cards';
 import type { AgentToolCall } from '../agent.types';
 import { type ApprovalPayload, parseApprovalActionId } from './action-id';
 
-export interface ApprovalActionIds {
-  approve: string;
-  deny: string;
-}
-
 function summarise(toolCall: AgentToolCall): string {
   const first = toolCall.input ? Object.values(toolCall.input)[0] : undefined;
   if (first === undefined) return toolCall.name;
@@ -16,7 +11,7 @@ function summarise(toolCall: AgentToolCall): string {
   return `${toolCall.name}: ${text.length > 80 ? `${text.slice(0, 77)}...` : text}`;
 }
 
-export function defaultApprovalCard(params: { toolCall: AgentToolCall; actionIds: ApprovalActionIds }) {
+export function defaultApprovalCard(params: { toolCall: AgentToolCall; actionIds: { approve: string; deny: string } }) {
   return Card({
     title: 'Tool approval required',
     subtitle: summarise(params.toolCall),

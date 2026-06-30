@@ -20,6 +20,7 @@ export type {
   AgentReplyPayload,
   AgentResolveContext,
   AgentSubscriber,
+  AgentToolCall,
   CardChild,
   CardElement,
   EditPayload,
