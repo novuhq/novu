@@ -10,6 +10,7 @@ import type { AgentBridgeRequest } from './agent.types';
 import { PendingApproval } from './agent.types';
 import { dispatchAgentEvent } from './agent-dispatch';
 import { Button, Card, CardText } from './index';
+import { buildApprovalActionId } from './tool-approval/action-id';
 import { findApprovalPayloadInCard } from './tool-approval/approval-card';
 
 function createMockBridgeRequest(overrides?: Partial<AgentBridgeRequest>): AgentBridgeRequest {
@@ -2031,5 +2032,48 @@ describe('tool approval', () => {
       input: { x: 1 },
     });
     expect(posts.some((p) => p.reply instanceof PendingApproval)).toBe(false);
+  });
+
+  it('routes an approval click to onToolApproval and resolves the card by default', async () => {
+    const posts: any[] = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (_url, init: any) => {
+        posts.push(JSON.parse(init.body));
+
+        return new Response(JSON.stringify({ messageId: 'm', platformThreadId: 't' }), { status: 200 });
+      })
+    );
+
+    const seen: { decision?: { approved: boolean; toolCall: unknown } } = {};
+    const payload = { approvalId: 'tc', toolCallId: 'tc', name: 'doIt', input: { x: 1 } };
+    const testAgent = {
+      id: 'a',
+      handlers: {
+        onMessage: () => undefined,
+        onToolApproval: (decision: { approved: boolean; toolCall: unknown }) => {
+          seen.decision = decision;
+
+          return undefined;
+        },
+      },
+    };
+
+    await dispatchAgentEvent({
+      agent: testAgent as never,
+      event: 'onAction',
+      bridge: approvalBridge({
+        event: 'onAction',
+        message: null,
+        action: { id: buildApprovalActionId('approve', payload), sourceMessageId: 'm_prev' },
+      }),
+      secretKey: 's',
+    });
+
+    expect(seen.decision?.approved).toBe(true);
+    expect(seen.decision?.toolCall).toMatchObject({ id: 'tc', name: 'doIt', input: { x: 1 } });
+    const editPost = posts.find((p) => p.edit?.messageId === 'm_prev');
+    expect(editPost).toBeTruthy();
+    expect(findApprovalPayloadInCard(editPost.edit.content.card)).toBeNull();
   });
 });

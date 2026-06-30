@@ -8,9 +8,13 @@ import type {
   AgentMessageContext,
   AgentReactionContext,
   AgentResolveContext,
+  AgentToolCall,
   MessageContent,
+  ToolApprovalDecision,
 } from './agent.types';
 import { AgentEventEnum, PendingApproval } from './agent.types';
+import { parseApprovalActionId } from './tool-approval/action-id';
+import { resolvedApprovalCard } from './tool-approval/approval-card';
 
 export interface DispatchAgentEventOptions {
   agent: Agent;
@@ -57,11 +61,29 @@ async function runAgentHandler(registeredAgent: Agent, event: string, ctx: Agent
       }
       break;
     }
-    case AgentEventEnum.ON_ACTION:
+    case AgentEventEnum.ON_ACTION: {
+      const parsed = parseApprovalActionId(ctx.action?.id);
+
+      if (parsed && registeredAgent.handlers.onToolApproval) {
+        const { payload, approved } = parsed;
+        const toolCall: AgentToolCall = { id: payload.toolCallId, name: payload.name, input: payload.input };
+        const approvalMessage = ctx.createReplyHandle(ctx.action!.sourceMessageId ?? '');
+
+        const decision: ToolApprovalDecision = { toolCall, approved, approvalMessage };
+        const result = await registeredAgent.handlers.onToolApproval(decision, ctx as AgentActionContext);
+        await replyIfPresent(result);
+
+        if (!approvalMessage.editedByHandler && ctx.action!.sourceMessageId) {
+          await approvalMessage.edit(resolvedApprovalCard({ name: toolCall.name, approved }));
+        }
+        break;
+      }
+
       if (registeredAgent.handlers.onAction) {
         await replyIfPresent(await registeredAgent.handlers.onAction(ctx.action!, ctx as AgentActionContext));
       }
       break;
+    }
     case AgentEventEnum.ON_REACTION:
       if (registeredAgent.handlers.onReaction) {
         await replyIfPresent(await registeredAgent.handlers.onReaction(ctx.reaction!, ctx as AgentReactionContext));
