@@ -50,7 +50,9 @@ runs:
 
     - name: 🛟 Install dependencies
       shell: bash
-      run: pnpm ci
+      run: |
+        TRUST_FLAG="$(bash scripts/configure-pnpm-private-registry.sh)"
+        pnpm ci ${TRUST_FLAG}
 
     - name: Install wait-on plugin
       shell: bash

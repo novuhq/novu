@@ -19,12 +19,12 @@ COPY --chown=1000:1000 ./meta .
 COPY --chown=1000:1000 ./deps .
 COPY --chown=1000:1000 ./pkg .
 
-RUN --mount=type=secret,id=BULL_MQ_PRO_NPM_TOKEN,uid=1000 export BULL_MQ_PRO_NPM_TOKEN=$(cat /run/secrets/BULL_MQ_PRO_NPM_TOKEN) && \
-    if [ -n "${BULL_MQ_PRO_NPM_TOKEN}" ] ; then echo 'Building with Enterprise Edition of Novu'; rm -f .npmrc ; cp .npmrc-cloud .npmrc ; fi
-
 RUN --mount=type=cache,id=pnpm-store-worker,target=/root/.pnpm-store\
     --mount=type=secret,id=BULL_MQ_PRO_NPM_TOKEN,uid=1000 export BULL_MQ_PRO_NPM_TOKEN=$(cat /run/secrets/BULL_MQ_PRO_NPM_TOKEN) && \
-    export "pnpm_config_//npm.taskforce.sh/:_authToken=${BULL_MQ_PRO_NPM_TOKEN}" && \
+    if [ -n "${BULL_MQ_PRO_NPM_TOKEN}" ]; then \
+      echo 'Building with Enterprise Edition of Novu'; \
+      printf '@taskforcesh:registry=https://npm.taskforce.sh/\n//npm.taskforce.sh/:_authToken=%s\nalways-auth=true\n' "${BULL_MQ_PRO_NPM_TOKEN}" > .npmrc; \
+    fi && \
  pnpm install --filter "novuhq" --filter "{${PACKAGE_PATH}}..."\
  --frozen-lockfile\
  --unsafe-perm\
