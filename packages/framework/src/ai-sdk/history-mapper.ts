@@ -66,13 +66,54 @@ function inFlightApprovalId(history: AgentHistoryEntry[]): string | undefined {
   return lastRelevant ? approvalDecisionOf(lastRelevant)?.approvalId : undefined;
 }
 
+function inFlightApprovalCard(
+  history: AgentHistoryEntry[],
+  inFlightId: string | undefined
+): ApprovalPayload | undefined {
+  if (!inFlightId) {
+    return undefined;
+  }
+
+  for (const entry of history) {
+    const card = approvalCardOf(entry);
+    if (card?.approvalId === inFlightId) {
+      return card;
+    }
+  }
+
+  return undefined;
+}
+
 function mapToolApprovalResponse(
   entry: AgentHistoryEntry,
-  inFlightId: string | undefined
+  inFlightId: string | undefined,
+  inFlightCard: ApprovalPayload | undefined
 ): ToolModelMessage | undefined {
   const decision = approvalDecisionOf(entry);
   if (!decision || decision.approvalId !== inFlightId) {
     return undefined;
+  }
+
+  // A denied tool call is never executed, so the resume turn produces no
+  // `tool-result`. Providers (e.g. Anthropic) drop bare `tool-approval-response`
+  // parts and then reject the `tool_use` that has no matching `tool_result`.
+  // `streamText` only auto-synthesizes the denial result when the tool message
+  // is the final message, which breaks the moment a handler appends its own
+  // context. Emitting the `execution-denied` result here keeps the reconstructed
+  // cycle self-consistent regardless of what follows. Approvals keep the response
+  // part so `streamText` executes the tool during auto-resume.
+  if (!decision.approved && inFlightCard) {
+    return {
+      role: 'tool',
+      content: [
+        {
+          type: 'tool-result',
+          toolCallId: inFlightCard.toolCallId,
+          toolName: inFlightCard.name,
+          output: { type: 'execution-denied' },
+        },
+      ],
+    };
   }
 
   return {
@@ -115,10 +156,11 @@ function mapTextMessage(entry: AgentHistoryEntry, multiSender: boolean): ModelMe
 function mapHistoryEntry(
   entry: AgentHistoryEntry,
   multiSender: boolean,
-  inFlightId: string | undefined
+  inFlightId: string | undefined,
+  inFlightCard: ApprovalPayload | undefined
 ): ModelMessage | undefined {
   return (
-    mapToolApprovalResponse(entry, inFlightId) ??
+    mapToolApprovalResponse(entry, inFlightId, inFlightCard) ??
     mapApprovalCard(entry, inFlightId) ??
     mapTextMessage(entry, multiSender)
   );
@@ -129,8 +171,9 @@ function mapHistoryEntry(
 export function toModelMessages(history: AgentHistoryEntry[], system?: string): ModelMessage[] {
   const multiSender = distinctHumanSenders(history) > 1;
   const inFlightId = inFlightApprovalId(history);
+  const inFlightCard = inFlightApprovalCard(history, inFlightId);
   const fromHistory = history
-    .map((entry) => mapHistoryEntry(entry, multiSender, inFlightId))
+    .map((entry) => mapHistoryEntry(entry, multiSender, inFlightId, inFlightCard))
     .filter((message): message is ModelMessage => message !== undefined);
 
   if (!system) {
