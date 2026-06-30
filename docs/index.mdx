@@ -1,0 +1,111 @@
+---
+title: "Documentation"
+description: "Build the communication infrastructure for agents and products"
+---
+
+<Columns cols={2}>
+  <Card title="Start with Platform" img="/images/docs-home-card-platform.svg" href="/platform">
+    Build notification workflows for Inbox, email, SMS, push, and chat.
+  </Card>
+  <Card title="Start with Agents" img="/images/docs-home-card-agents.svg" href="/agents">
+    Connect agent brains to messaging providers with Agent Communication Infrastructure.
+  </Card>
+</Columns>
+
+## Choose your path
+
+<Tabs>
+  <Tab title="Platform">
+
+The Novu Platform helps you send the right message to the right subscriber on the right channel. Define workflows, trigger events, render content, respect preferences, and inspect delivery.
+
+<Columns cols={2}>
+  <Card title="React quickstart" icon="rocket" href="/platform/quickstart/react">
+    Add the Novu Inbox to a React application and send your first notification.
+  </Card>
+  <Card title="Workflows" icon="git-branch" href="/platform/concepts/workflows">
+    Learn how workflows model notification logic across channels and steps.
+  </Card>
+  <Card title="Inbox" icon="inbox" href="/platform/inbox">
+    Embed a real-time notification feed that subscribers can read, archive, snooze, and configure.
+  </Card>
+  <Card title="Integrations" icon="plug" href="/platform/integrations">
+    Connect providers for email, SMS, chat, push, and in-app delivery.
+  </Card>
+</Columns>
+
+  </Tab>
+  <Tab title="Agents">
+
+Novu Agents gives your AI agent a communication layer. Agent Communication Infrastructure receives provider webhooks, normalizes messages, resolves identity, preserves conversation state, and delivers replies back to the original thread.
+
+<Note>
+  Agents are currently in private beta. Contact support@novu.co to get access.
+</Note>
+
+<Columns cols={2}>
+  <Card title="What is ACI?" icon="circle-question-mark" href="/agents/get-started/what-is-aci">
+    Understand the infrastructure layer between messaging providers and agent intelligence.
+  </Card>
+  <Card title="Managed agent quickstart" icon="sparkles" href="/agents/managed-agent/quickstart">
+    Create an agent, connect a provider, and send your first message.
+  </Card>
+  <Card title="Custom code agent" icon="square-code" href="/agents/custom-code-agent/quickstart">
+    Bring your own LLM, tools, runtime, and business logic.
+  </Card>
+  <Card title="Conversation observability" icon="messages-square" href="/agents/conversations">
+    Inspect agent conversations, message history, participants, and provider context.
+  </Card>
+</Columns>
+
+  </Tab>
+</Tabs>
+
+## How Novu fits together
+
+<Columns cols={3}>
+  <Card title="Trigger outbound notifications" icon="send" href="/platform/workflow/trigger-workflow">
+    Call Novu from your application when something important happens.
+  </Card>
+  <Card title="Connect inbound conversations" icon="messages-square" href="/agents/get-started/mental-model">
+    Let subscribers message your agent from the channels they already use.
+  </Card>
+  <Card title="Operate the whole system" icon="activity" href="/agents/conversations">
+    Monitor notifications, conversations, providers, and delivery behavior from Novu.
+  </Card>
+</Columns>
+
+<Frame caption="Novu provides the communication infrastructure between applications, subscribers, providers, and agents.">
+  ![Novu communication infrastructure](/images/hero-light.svg)
+</Frame>
+
+## Build with your stack
+
+<Columns cols={2}>
+  <Card title="Client SDKs" icon="monitor-smartphone" href="/platform/sdks#web-and-mobile-sdks">
+    Add Inbox and notification UI to React, JavaScript, and React Native apps.
+  </Card>
+  <Card title="Server SDKs" icon="server" href="/platform/sdks#server-side-sdks">
+    Trigger notifications and call the API from TypeScript, Python, Go, PHP, .NET, Java, Kotlin, Laravel, and Ruby.
+  </Card>
+  <Card title="API reference" icon="braces" href="/api-reference">
+    Explore Novu REST APIs for events, subscribers, workflows, integrations, messages, and more.
+  </Card>
+  <Card title="Framework" icon="blocks" href="/framework">
+    Build notification workflows as code with the Novu Framework.
+  </Card>
+</Columns>
+
+## Community
+
+<Columns cols={3}>
+  <Card title="GitHub" icon="github" href="https://github.com/novuhq/novu">
+    Star Novu, inspect the source, and contribute to the project.
+  </Card>
+  <Card title="Discord" icon="messages-square" href="https://discord.gg/novu">
+    Ask questions and build with the Novu community.
+  </Card>
+  <Card title="Changelog" icon="newspaper" href="https://go.novu.co/changelog?utm_source=docs_home">
+    Follow product updates, SDK releases, and platform improvements.
+  </Card>
+</Columns>

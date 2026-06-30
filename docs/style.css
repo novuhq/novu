@@ -5,3 +5,83 @@
     max-width: 16rem;
   }
 }
+
+#navbar nav a[aria-current="location"],
+#navbar nav button[data-state="open"],
+[role="tab"][data-state="active"] {
+  color: rgb(var(--primary));
+}
+
+#navbar nav a[aria-current="location"] {
+  background-color: rgb(var(--primary) / 0.08);
+}
+
+@media (min-width: 1280px) {
+  #navbar nav[aria-label="Main"] {
+    position: absolute;
+    left: max(15rem, calc(50vw - 340px));
+  }
+}
+
+html[data-current-path="/"] #content-area {
+  max-width: 984px;
+  padding-top: 0;
+}
+
+html[data-current-path="/"] #content-side-layout,
+html[data-current-path="/"] #page-context-menu {
+  display: none !important;
+}
+
+html[data-current-path="/"] #header {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  min-height: 300px;
+  margin: 0 0 2.5rem;
+  padding: 4.5rem 1.5rem 3rem;
+  overflow: hidden;
+  place-items: center;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+html[data-current-path="/"] #header::before {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  content: "";
+  pointer-events: none;
+  opacity: 0.45;
+  background: url("/images/docs-home-hero-placeholder.svg") center center / cover no-repeat;
+}
+
+.dark[data-current-path="/"] #header::before {
+  opacity: 0.3;
+}
+
+html[data-current-path="/"] #header > div {
+  max-width: 760px;
+  text-align: center;
+}
+
+html[data-current-path="/"] #page-title,
+html[data-current-path="/"] #header h1 {
+  margin-bottom: 0 !important;
+  font-size: clamp(1.625rem, 2.5vw, 2.25rem) !important;
+  line-height: 1.05 !important;
+  letter-spacing: -0.02em !important;
+}
+
+html[data-current-path="/"] #header .prose {
+  max-width: 820px;
+  margin: 0.4rem auto 0 !important;
+  font-size: clamp(1rem, 1.35vw, 1.25rem) !important;
+  line-height: 1.35 !important;
+  color: rgb(87 79 83);
+}
+
+.dark[data-current-path="/"] #header .prose {
+  color: rgb(213 206 209);
+}

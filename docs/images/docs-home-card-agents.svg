@@ -1,0 +1,39 @@
+<svg width="480" height="200" viewBox="0 0 480 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <clipPath id="agents-clip">
+      <rect width="480" height="200" rx="0"/>
+    </clipPath>
+    <pattern id="agents-dots" width="22" height="22" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1.4" fill="#FBC9DE"/>
+    </pattern>
+    <radialGradient id="agents-glow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(240 100) rotate(90) scale(95)">
+      <stop stop-color="#E300BD" stop-opacity="0.14"/>
+      <stop offset="1" stop-color="#E300BD" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <g clip-path="url(#agents-clip)">
+    <rect width="480" height="200" fill="#FFF6FA"/>
+    <rect width="480" height="200" fill="url(#agents-dots)"/>
+    <circle cx="240" cy="100" r="95" fill="url(#agents-glow)"/>
+  </g>
+
+  <!-- reply bubble (back) -->
+  <path d="M298 54h36c7.2 0 13 5.8 13 13v20c0 7.2-5.8 13-13 13h-7l-6.5 11-5-11h-17.5c-7.2 0-13-5.8-13-13V67c0-7.2 5.8-13 13-13Z" fill="#FFBA33" opacity="0.85"/>
+
+  <!-- main conversation bubble -->
+  <path d="M186 60h100c9 0 16.5 7.5 16.5 16.5v42c0 9-7.5 16.5-16.5 16.5h-46l-11.5 18-5-18H186c-9 0-16.5-7.5-16.5-16.5v-42C169.5 67.5 177 60 186 60Z" fill="white" stroke="#FF006A" stroke-width="3"/>
+
+  <!-- bot face -->
+  <rect x="206" y="72" width="11" height="11" rx="2.5" fill="#FBD2E3"/>
+  <circle cx="236" cy="74" r="3.2" fill="#FF006A"/>
+  <line x1="236" y1="74" x2="236" y2="82" stroke="#FF006A" stroke-width="2.5" stroke-linecap="round"/>
+  <rect x="212" y="82" width="48" height="30" rx="11" fill="#FF006A"/>
+  <circle cx="227" cy="97" r="4" fill="white"/>
+  <circle cx="247" cy="97" r="4" fill="white"/>
+
+  <!-- typing dots -->
+  <circle cx="200" cy="126" r="3.2" fill="#FBC9DE"/>
+  <circle cx="211" cy="126" r="3.2" fill="#FBC9DE"/>
+  <circle cx="222" cy="126" r="3.2" fill="#FBC9DE"/>
+</svg>
