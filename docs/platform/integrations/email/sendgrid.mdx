@@ -64,62 +64,212 @@ Novu has its own email editor for writing email template. To send pre-made templ
 </Note>
 
 <Tabs>
-<Tab title="Node.js">
+  <Tab title="Node.js">
 ```typescript
-import {
-  Novu
-} from "@novu/api";
+import { Novu } from '@novu/api';
 
-const novu = new Novu({
-  secretKey: "<NOVU_SECRET_KEY>",
-  // Required if using EU region
-  // serverURL: "https://eu.api.novu.co",
-});
+const novu = new Novu({ secretKey: "<NOVU_SECRET_KEY>" });
 
 await novu.trigger({
   workflowId: "workflowId",
-  to: {
-    subscriberId: "subscriberId",
-  },
+  to: { subscriberId: "subscriberId", },
   payload: {},
   overrides: {
-    providers: {
-      sendgrid: {
-        templateId: "d-d965b02b1b5d4856bf332a5e98c7470c",
-        dynamicTemplateData: {
-          total: "$ 239.85",
-          items: [{
-            text: "New Line Sneakers",
-            image: "https://marketing-image-production.s3.amazonaws.com/uploads/8dda1131320a6d978b515cc04ed479df259a458d5d45d58b6b381cae0bf9588113e80ef912f69e8c4cc1ef1a0297e8eefdb7b270064cc046b79a44e21b811802.png",
-            price: "$ 79.95",
-          }, {
-            text: "Old Line Sneakers rlfjrjrh4hr4rh4",
-            image: "https://marketing-image-production.s3.amazonaws.com/uploads/3629f54390ead663d4eb7c53702e492de63299d7c5f7239efdc693b09b9b28c82c924225dcd8dcb65732d5ca7b7b753c5f17e056405bbd4596e4e63a96ae5018.png",
-            price: "$ 79.95",
-          }, ],
-          receipt: true,
-          name: "Sample Name",
-          address01: "1234 Fake St.",
-          address02: "Apt. 123",
-          city: "Place",
-          state: "CO",
-          zip: "80202",
-        },
-      },
-    },
-  },
+    "providers": {
+        "sendgrid": {
+            "templateId": "d-d965b02b1b5d4856bf332a5e98c7470c",
+            "dynamicTemplateData": {
+                "total": "$ 239.85",
+                "receipt": true,
+                "name": "Sample Name",
+                "address01": "1234 Fake St.",
+                "address02": "Apt. 123",
+                "city": "Place",
+                "state": "CO",
+                "zip": "80202"
+            }
+        }
+    }
+},
 });
 ```
-</Tab>
-<Tab title="cURL">
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="workflowId",
+        to={"subscriber_id": "subscriberId"},
+        payload={},
+        overrides={
+        "providers": {
+                "sendgrid": {
+                        "templateId": "d-d965b02b1b5d4856bf332a5e98c7470c",
+                        "dynamicTemplateData": {
+                                "total": "$ 239.85",
+                                "receipt": true,
+                                "name": "Sample Name",
+                                "address01": "1234 Fake St.",
+                                "address02": "Apt. 123",
+                                "city": "Place",
+                                "state": "CO",
+                                "zip": "80202"
+                        }
+                }
+        }
+},
+    ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "workflowId",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: "subscriberId",
+    }),
+    Payload: map[string]any{},
+    Overrides: map[string]any{
+    "providers": {
+        "sendgrid": {
+            "templateId": "d-d965b02b1b5d4856bf332a5e98c7470c",
+            "dynamicTemplateData": {
+                "total": "$ 239.85",
+                "receipt": true,
+                "name": "Sample Name",
+                "address01": "1234 Fake St.",
+                "address02": "Apt. 123",
+                "city": "Place",
+                "state": "CO",
+                "zip": "80202"
+            }
+        }
+    }
+},
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()->setSecurity('<NOVU_SECRET_KEY>')->build();
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'workflowId',
+        to: new Components\SubscriberPayloadDto(subscriberId: 'subscriberId'),
+        payload: {},
+        overrides: {
+        "providers": {
+                "sendgrid": {
+                        "templateId": "d-d965b02b1b5d4856bf332a5e98c7470c",
+                        "dynamicTemplateData": {
+                                "total": "$ 239.85",
+                                "receipt": true,
+                                "name": "Sample Name",
+                                "address01": "1234 Fake St.",
+                                "address02": "Apt. 123",
+                                "city": "Place",
+                                "state": "CO",
+                                "zip": "80202"
+                        }
+                }
+        }
+},
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "workflowId",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() { SubscriberId = "subscriberId" }),
+    Payload = {},
+    Overrides = {
+    "providers": {
+        "sendgrid": {
+            "templateId": "d-d965b02b1b5d4856bf332a5e98c7470c",
+            "dynamicTemplateData": {
+                "total": "$ 239.85",
+                "receipt": true,
+                "name": "Sample Name",
+                "address01": "1234 Fake St.",
+                "address02": "Apt. 123",
+                "city": "Place",
+                "state": "CO",
+                "zip": "80202"
+            }
+        }
+    }
+},
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+
+Novu novu = Novu.builder().secretKey("<NOVU_SECRET_KEY>").build();
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("workflowId")
+        .to(To2.of(SubscriberPayloadDto.builder().subscriberId("subscriberId").build()))
+        .payload({})
+        .overrides({
+        "providers": {
+                "sendgrid": {
+                        "templateId": "d-d965b02b1b5d4856bf332a5e98c7470c",
+                        "dynamicTemplateData": {
+                                "total": "$ 239.85",
+                                "receipt": true,
+                                "name": "Sample Name",
+                                "address01": "1234 Fake St.",
+                                "address02": "Apt. 123",
+                                "city": "Place",
+                                "state": "CO",
+                                "zip": "80202"
+                        }
+                }
+        }
+})
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
 ```bash
 curl --location 'https://api.novu.co/v1/events/trigger' \
 --header 'Content-Type: application/json' \
---header 'Accept: application/json' \
 --header 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
---data '{
-    "name": "workflowIdentifier",
-    "to":  ["subscriberId"],
+-d '{
+    "name": "workflowId",
+    "to": [
+        "subscriberId"
+    ],
     "payload": {},
     "overrides": {
         "providers": {
@@ -127,18 +277,6 @@ curl --location 'https://api.novu.co/v1/events/trigger' \
                 "templateId": "d-d965b02b1b5d4856bf332a5e98c7470c",
                 "dynamicTemplateData": {
                     "total": "$ 239.85",
-                    "items": [
-                        {
-                            "text": "New Line Sneakers",
-                            "image": "https://marketing-image-production.s3.amazonaws.com/uploads/8dda1131320a6d978b515cc04ed479df259a458d5d45d58b6b381cae0bf9588113e80ef912f69e8c4cc1ef1a0297e8eefdb7b270064cc046b79a44e21b811802.png",
-                            "price": "$ 79.95"
-                        },
-                        {
-                            "text": "Old Line Sneakers rlfjrjrh4hr4rh4",
-                            "image": "https://marketing-image-production.s3.amazonaws.com/uploads/3629f54390ead663d4eb7c53702e492de63299d7c5f7239efdc693b09b9b28c82c924225dcd8dcb65732d5ca7b7b753c5f17e056405bbd4596e4e63a96ae5018.png",
-                            "price": "$ 79.95"
-                        }
-                    ],
                     "receipt": true,
                     "name": "Sample Name",
                     "address01": "1234 Fake St.",
@@ -152,8 +290,8 @@ curl --location 'https://api.novu.co/v1/events/trigger' \
     }
 }'
 ```
-</Tab>
-<Tab title="Novu Framework">
+  </Tab>
+  <Tab title="Novu Framework">
 ```typescript
 import { workflow } from "@novu/framework";
 import { z } from "zod";
@@ -217,7 +355,7 @@ export const sendgridOverridesEmailExample = workflow(
   }
 );
 ```
-</Tab>
+  </Tab>
 </Tabs>
 
 ## Next Steps

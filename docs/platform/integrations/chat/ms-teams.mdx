@@ -418,19 +418,123 @@ Call this from **your backend** when someone starts the connect flow in your pro
   The generated OAuth URL is valid for only <strong>5 minutes</strong>. Do not cache it — generate a new URL each time someone starts connect.
 </Warning>
 
-```tsx
+<Tabs>
+  <Tab title="Node.js">
+```typescript
 import { Novu } from '@novu/api';
 
-const novu = new Novu({ secretKey: "<YOUR_SECRET_KEY_HERE>", });
+const novu = new Novu({ secretKey: "<NOVU_SECRET_KEY>" });
 
 const response = await novu.integrations.generateConnectOAuthUrl({
   integrationIdentifier: 'ms-teams-bot',
-  context: { tenant: 'acme-corp' }, // or subscriberId — at least one is required
-  autoLinkUser: false, // required for tenant-only admin consent (see note below)
+  context: {
+    "tenant": "acme-corp"
+},
+  autoLinkUser: false,
 });
-
-// response.url is the Microsoft admin consent URL
 ```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    response = novu.integrations.generate_connect_o_auth_url(generate_connect_oauth_url_request_dto={
+        "integration_identifier": "ms-teams-bot",
+        "context": {
+        "tenant": "acme-corp"
+},
+        "auto_link_user": False,
+    })
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Integrations.GenerateConnectOAuthURL(context.Background(), components.GenerateConnectOauthURLRequestDto{
+    IntegrationIdentifier: "ms-teams-bot",
+    Context: map[string]components.GenerateConnectOauthURLRequestDtoContext{
+        "tenant": components.CreateGenerateConnectOauthURLRequestDtoContextStr("acme-corp"),
+    },
+    AutoLinkUser: novugo.Bool(false),
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()->setSecurity('<NOVU_SECRET_KEY>')->build();
+$response = $sdk->integrations->generateConnectOAuthUrl(
+    generateConnectOauthUrlRequestDto: new Components\GenerateConnectOauthUrlRequestDto(
+        integrationIdentifier: 'ms-teams-bot',
+        context: {
+        "tenant": "acme-corp"
+},
+        autoLinkUser: false,
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+var response = await sdk.Integrations.GenerateConnectOAuthUrlAsync(
+    generateConnectOauthUrlRequestDto: new GenerateConnectOauthUrlRequestDto() {
+        IntegrationIdentifier = "ms-teams-bot",
+        Context = {
+    "tenant": "acme-corp"
+},
+        AutoLinkUser = false,
+    });
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+
+Novu novu = Novu.builder().secretKey("<NOVU_SECRET_KEY>").build();
+var response = novu.integrations().generateConnectOAuthUrl()
+    .body(GenerateConnectOauthUrlRequestDto.builder()
+        .integrationIdentifier("ms-teams-bot")
+        .context({
+        "tenant": "acme-corp"
+})
+        .autoLinkUser(false)
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -L -X POST 'https://api.novu.co/v1/integrations/channel-connections/oauth' \
+-H 'Content-Type: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+  "integrationIdentifier": "ms-teams-bot",
+  "context": {
+    "tenant": "acme-corp"
+  },
+  "autoLinkUser": false
+}'
+```
+  </Tab>
+</Tabs>
 
 Call `POST /v1/integrations/channel-connections/oauth` with the same body if you are not using the TypeScript SDK. Authenticate with your Novu **secret key**.
 
@@ -600,13 +704,109 @@ Prerequisites:
 
 Run a **separate** OAuth flow — do not set `autoLinkUser: true` on `generateConnectOAuthUrl`. Use `generateLinkUserOAuthUrl` instead:
 
-```tsx
+<Tabs>
+  <Tab title="Node.js">
+```typescript
+import { Novu } from '@novu/api';
+
+const novu = new Novu({ secretKey: "<NOVU_SECRET_KEY>" });
+
 const response = await novu.integrations.generateLinkUserOAuthUrl({
   integrationIdentifier: 'ms-teams-bot',
-  subscriberId: 'user_123', // must already exist in Novu
-  connectionIdentifier: 'msteams-tenant-acme', // recommended — the connection created by admin consent
+  subscriberId: 'user_123',
+  connectionIdentifier: 'msteams-tenant-acme',
 });
 ```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    response = novu.integrations.generate_link_user_o_auth_url(generate_link_user_oauth_url_request_dto={
+        "integration_identifier": "ms-teams-bot",
+        "subscriber_id": "user_123",
+        "connection_identifier": "msteams-tenant-acme",
+    })
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Integrations.GenerateLinkUserOAuthURL(context.Background(), components.GenerateLinkUserOauthURLRequestDto{
+    IntegrationIdentifier: "ms-teams-bot",
+    SubscriberID: "user_123",
+    ConnectionIdentifier: novugo.String("msteams-tenant-acme"),
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()->setSecurity('<NOVU_SECRET_KEY>')->build();
+$response = $sdk->integrations->generateLinkUserOAuthUrl(
+    generateLinkUserOauthUrlRequestDto: new Components\GenerateLinkUserOauthUrlRequestDto(
+        integrationIdentifier: 'ms-teams-bot',
+        subscriberId: 'user_123',
+        connectionIdentifier: 'msteams-tenant-acme',
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+var response = await sdk.Integrations.GenerateLinkUserOAuthUrlAsync(
+    generateLinkUserOauthUrlRequestDto: new GenerateLinkUserOauthUrlRequestDto() {
+        IntegrationIdentifier = "ms-teams-bot",
+        SubscriberId = "user_123",
+        ConnectionIdentifier = "msteams-tenant-acme",
+    });
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+
+Novu novu = Novu.builder().secretKey("<NOVU_SECRET_KEY>").build();
+var response = novu.integrations().generateLinkUserOAuthUrl()
+    .body(GenerateLinkUserOauthUrlRequestDto.builder()
+        .integrationIdentifier("ms-teams-bot")
+        .subscriberId("user_123")
+        .connectionIdentifier("msteams-tenant-acme")
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -L -X POST 'https://api.novu.co/v1/integrations/channel-endpoints/oauth' \
+-H 'Content-Type: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+  "integrationIdentifier": "ms-teams-bot",
+  "subscriberId": "user_123",
+  "connectionIdentifier": "msteams-tenant-acme"
+}'
+```
+  </Tab>
+</Tabs>
 
 Call `POST /v1/integrations/channel-endpoints/oauth` with the same body when using the REST API.
 
@@ -721,18 +921,134 @@ The setup begins inside the Microsoft Teams app. Instruct your users to follow t
 
 Unlike the Bot integration, you don't use `ms_teams_channel` here. Instead, you treat this as a generic webhook endpoint. Your app should provide a form where the user can paste the URL they generated in the previous step.
 
-```bash
+<Tabs>
+  <Tab title="Node.js">
+```typescript
+import { Novu } from '@novu/api';
+
+const novu = new Novu({ secretKey: "<NOVU_SECRET_KEY>" });
+
 await novu.channelEndpoints.create({
   type: 'webhook',
   identifier: 'teams-workflow-alerts',
   integrationIdentifier: 'ms-teams-workflow',
   subscriberId: 'customer-account-id',
   context: { tenant: 'acme' },
-  endpoint: {
-    url: 'https://prod-00.westeurope.logic.azure.com:443/workflows/...' // workflow URL
-  },
+  endpoint: { url: 'https://prod-00.westeurope.logic.azure.com:443/workflows/...' },
 });
 ```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.channel_endpoints.create(request_body={
+        "type": "webhook",
+        "identifier": "teams-workflow-alerts",
+        "integration_identifier": "ms-teams-workflow",
+        "subscriber_id": "customer-account-id",
+        "context": {"tenant": "acme"},
+        "endpoint": {"url": "https://prod-00.westeurope.logic.azure.com:443/workflows/..."},
+    })
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+    "github.com/novuhq/novu-go/models/operations"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.ChannelEndpoints.Create(context.Background(), operations.CreateChannelEndpointsControllerCreateChannelEndpointRequestBodyWebhook(
+    components.CreateWebhookEndpointDto{
+        Identifier: novugo.String("teams-workflow-alerts"),
+        IntegrationIdentifier: "ms-teams-workflow",
+        SubscriberID: "customer-account-id",
+        Type: components.CreateWebhookEndpointDtoTypeWebhook,
+        Endpoint: components.WebhookEndpointDto{URL: "https://prod-00.westeurope.logic.azure.com:443/workflows/..."},
+    },
+), nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()->setSecurity('<NOVU_SECRET_KEY>')->build();
+$sdk->channelEndpoints->create(
+    requestBody: new Components\CreateWebhookEndpointDto(
+        identifier: 'teams-workflow-alerts',
+        integrationIdentifier: 'ms-teams-workflow',
+        subscriberId: 'customer-account-id',
+        type: Components\CreateWebhookEndpointDtoType::Webhook,
+        endpoint: new Components\WebhookEndpointDto(url: 'https://prod-00.westeurope.logic.azure.com:443/workflows/...'),
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+await sdk.ChannelEndpoints.CreateAsync(
+    requestBody: CreateWebhookEndpointDto.CreateWebhook(
+        new CreateWebhookEndpointDto() {
+            Identifier = "teams-workflow-alerts",
+            IntegrationIdentifier = "ms-teams-workflow",
+            SubscriberId = "customer-account-id",
+            Type = CreateWebhookEndpointDtoType.Webhook,
+            Endpoint = new WebhookEndpointDto() { Url = "https://prod-00.westeurope.logic.azure.com:443/workflows/..." },
+        }));
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+
+Novu novu = Novu.builder().secretKey("<NOVU_SECRET_KEY>").build();
+novu.channelEndpoints().create()
+    .requestBody(CreateWebhookEndpointDto.builder()
+        .identifier("teams-workflow-alerts")
+        .integrationIdentifier("ms-teams-workflow")
+        .subscriberId("customer-account-id")
+        .type(CreateWebhookEndpointDtoType.WEBHOOK)
+        .endpoint(WebhookEndpointDto.builder().url("https://prod-00.westeurope.logic.azure.com:443/workflows/...").build())
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -L -X POST 'https://api.novu.co/v1/channel-endpoints' \
+-H 'Content-Type: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+  "type": "webhook",
+  "identifier": "teams-workflow-alerts",
+  "integrationIdentifier": "ms-teams-workflow",
+  "subscriberId": "customer-account-id",
+  "context": {
+    "tenant": "acme"
+  },
+  "endpoint": {
+    "url": "https://prod-00.westeurope.logic.azure.com:443/workflows/..."
+  }
+}'
+```
+  </Tab>
+</Tabs>
 
 ### Sending the notification
 

@@ -84,7 +84,90 @@ Novu gives you a link that opens your bot in Telegram. When the subscriber taps 
 Request a connection URL from your server when the subscriber chooses to connect Telegram:
 
 <Tabs>
-<Tab title="cURL">
+  <Tab title="Node.js">
+```typescript
+import { Novu } from '@novu/api';
+
+const novu = new Novu({ secretKey: '<NOVU_SECRET_KEY>' });
+
+const response = await novu.integrations.linkChannelEndpoint({
+  integrationIdentifier: 'telegram',
+  subscriberId: '<SUBSCRIBER_ID>',
+});
+```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    response = novu.integrations.link_channel_endpoint(link_channel_endpoint_request_dto={
+        "integration_identifier": "telegram",
+        "subscriber_id": "<SUBSCRIBER_ID>",
+    })
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Integrations.LinkChannelEndpoint(context.Background(), components.LinkChannelEndpointRequestDto{
+    IntegrationIdentifier: "telegram",
+    SubscriberID: "<SUBSCRIBER_ID>",
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()->setSecurity('<NOVU_SECRET_KEY>')->build();
+$response = $sdk->integrations->linkChannelEndpoint(
+    linkChannelEndpointRequestDto: new Components\LinkChannelEndpointRequestDto(
+        integrationIdentifier: 'telegram',
+        subscriberId: '<SUBSCRIBER_ID>',
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+var response = await sdk.Integrations.LinkChannelEndpointAsync(
+    linkChannelEndpointRequestDto: new LinkChannelEndpointRequestDto() {
+        IntegrationIdentifier = "telegram",
+        SubscriberId = "<SUBSCRIBER_ID>",
+    });
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+
+Novu novu = Novu.builder().secretKey("<NOVU_SECRET_KEY>").build();
+var response = novu.integrations().linkChannelEndpoint()
+    .body(LinkChannelEndpointRequestDto.builder()
+        .integrationIdentifier("telegram")
+        .subscriberId("<SUBSCRIBER_ID>")
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
 ```bash
 curl -L -X POST 'https://api.novu.co/v1/integrations/channel-endpoints/link' \
 -H 'Content-Type: application/json' \
@@ -94,7 +177,7 @@ curl -L -X POST 'https://api.novu.co/v1/integrations/channel-endpoints/link' \
   "subscriberId": "<SUBSCRIBER_ID>"
 }'
 ```
-</Tab>
+  </Tab>
 </Tabs>
 
 Open the returned `url` in a new tab or show it as a button in your UI. Generate a fresh link each time the subscriber starts the flow — links expire after a short time.
@@ -142,20 +225,137 @@ Once subscribers have connected Telegram, add a **Chat** step to a workflow and 
   </Step>
 </Steps>
 
-```tsx
+<Tabs>
+  <Tab title="Node.js">
+```typescript
 import { Novu } from '@novu/api';
 
-const novu = new Novu({ secretKey: '<YOUR_SECRET_KEY_HERE>' });
+const novu = new Novu({ secretKey: "<NOVU_SECRET_KEY>" });
 
 await novu.trigger({
-  workflowId: 'order-shipped',
-  to: { subscriberId: 'user-123' },
+  workflowId: "order-shipped",
+  to: { subscriberId: "user-123", },
   payload: {
-    orderNumber: 'ORD-12345',
-    trackingUrl: 'https://acme.com/track/123',
-  },
+    "orderNumber": "ORD-12345",
+    "trackingUrl": "https://acme.com/track/123"
+},
 });
 ```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="order-shipped",
+        to={"subscriber_id": "user-123"},
+        payload={
+        "orderNumber": "ORD-12345",
+        "trackingUrl": "https://acme.com/track/123"
+},
+    ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "order-shipped",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: "user-123",
+    }),
+    Payload: map[string]any{
+    "orderNumber": "ORD-12345",
+    "trackingUrl": "https://acme.com/track/123"
+},
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()->setSecurity('<NOVU_SECRET_KEY>')->build();
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'order-shipped',
+        to: new Components\SubscriberPayloadDto(subscriberId: 'user-123'),
+        payload: {
+        "orderNumber": "ORD-12345",
+        "trackingUrl": "https://acme.com/track/123"
+},
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "order-shipped",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() { SubscriberId = "user-123" }),
+    Payload = {
+    "orderNumber": "ORD-12345",
+    "trackingUrl": "https://acme.com/track/123"
+},
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+
+Novu novu = Novu.builder().secretKey("<NOVU_SECRET_KEY>").build();
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("order-shipped")
+        .to(To2.of(SubscriberPayloadDto.builder().subscriberId("user-123").build()))
+        .payload({
+        "orderNumber": "ORD-12345",
+        "trackingUrl": "https://acme.com/track/123"
+})
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl --location 'https://api.novu.co/v1/events/trigger' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+    "name": "order-shipped",
+    "to": [
+        "user-123"
+    ],
+    "payload": {
+        "orderNumber": "ORD-12345",
+        "trackingUrl": "https://acme.com/track/123"
+    }
+}'
+```
+  </Tab>
+</Tabs>
 
 Novu finds the subscriber's linked Telegram chat, renders the message, and sends it through your bot. Verify delivery in **Activity** or in Telegram.
 

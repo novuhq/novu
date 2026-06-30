@@ -80,7 +80,7 @@ To target a Pusher Beams user from Novu, you must register this `userId` as the 
 You can do this by making an API call to [update the subscriber's credentials](/api-reference/subscribers/update-provider-credentials).
 
 <Tabs>
-<Tab title="Node.js">
+  <Tab title="Node.js">
 ```typescript
 import { Novu } from '@novu/api';
 import { ChatOrPushProviderEnum } from "@novu/api/models/components";
@@ -94,17 +94,110 @@ const novu = new Novu({
 await novu.subscribers.credentials.update(
   {
     providerId: ChatOrPushProviderEnum.PusherBeams,
-    // Use integrationIdentifier to store device tokens for a specific integration
     integrationIdentifier: "pusher-beams-MnGLxp8uy",
-    credentials: {
-      deviceTokens: ["token1", "token2", "token3"],
-    },
+    credentials: { deviceTokens: ["token1", "token2", "token3"] },
   },
   "subscriberId"
 );
 ```
-</Tab>
-<Tab title="cURL">
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.subscribers.credentials.update(
+        subscriber_id="subscriberId",
+        update_subscriber_channel_request_dto={
+            "provider_id": novu_py.ChatOrPushProviderEnum.PUSHERBEAMS,
+            "credentials": {"deviceTokens": ["token1", "token2", "token3"]},
+            "integration_identifier": "pusher-beams-MnGLxp8uy",
+        },
+    )
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Subscribers.Credentials.Update(context.Background(), "subscriberId", components.UpdateSubscriberChannelRequestDto{
+    ProviderID: components.ChatOrPushProviderEnumPusherBeams,
+    IntegrationIdentifier: novugo.String("pusher-beams-MnGLxp8uy"),
+    Credentials: components.ChannelCredentials{
+        DeviceTokens: []string{"token1", "token2", "token3"},
+    },
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()->setSecurity('<NOVU_SECRET_KEY>')->build();
+
+$sdk->subscribersCredentials->update(
+    subscriberId: 'subscriberId',
+    updateSubscriberChannelRequestDto: new Components\UpdateSubscriberChannelRequestDto(
+        providerId: Components\ChatOrPushProviderEnum::PusherBeams,
+        integrationIdentifier: 'pusher-beams-MnGLxp8uy',
+        credentials: new Components\ChannelCredentials(
+            deviceTokens: ['token1', 'token2', 'token3'],
+        ),
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+
+await sdk.Subscribers.Credentials.UpdateAsync(
+    subscriberId: "subscriberId",
+    updateSubscriberChannelRequestDto: new UpdateSubscriberChannelRequestDto() {
+        ProviderId = ChatOrPushProviderEnum.PusherBeams,
+        IntegrationIdentifier = "pusher-beams-MnGLxp8uy",
+        Credentials = new ChannelCredentials() {
+            DeviceTokens = new List<string> { "token1", "token2", "token3" },
+        },
+    });
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+import java.util.List;
+
+Novu novu = Novu.builder().secretKey("<NOVU_SECRET_KEY>").build();
+
+novu.subscribers().credentials().update()
+    .subscriberId("subscriberId")
+    .body(UpdateSubscriberChannelRequestDto.builder()
+        .providerId(ChatOrPushProviderEnum.PUSHERBEAMS)
+        .integrationIdentifier("pusher-beams-MnGLxp8uy")
+        .credentials(ChannelCredentials.builder()
+            .deviceTokens(List.of("token1", "token2", "token3"))
+            .build())
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
 ```bash
 curl -L -X PUT 'https://api.novu.co/v1/subscribers/<SUBSCRIBER_ID>/credentials' \
 -H 'Content-Type: application/json' \
@@ -112,12 +205,17 @@ curl -L -X PUT 'https://api.novu.co/v1/subscribers/<SUBSCRIBER_ID>/credentials' 
 -H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
 -d '{
   "providerId": "pusher-beams",
-  "deviceTokens": ['userId-from-pusher-beams'],
+  "credentials": {
+    "deviceTokens": [
+      "token1",
+      "token2",
+      "token3"
+    ]
+  },
   "integrationIdentifier": "pusher-beams-MnGLxp8uy"
 }'
 ```
-
-</Tab>
+  </Tab>
 </Tabs>
 
 ### Step 2: Send a notification
@@ -126,6 +224,8 @@ Now you're ready to send a push notification. [Create a workflow with a Push ste
 
 The example below demonstrates a simple trigger using Novu’s SDK.
 
+<Tabs>
+  <Tab title="Node.js">
 ```typescript
 import { Novu } from '@novu/api';
 
@@ -141,7 +241,108 @@ await novu.trigger({
     subscriberId: "subscriberId",
   },
   payload: {
-    custom_data: 'custom_data', // the payload will be sent as notification data object. Cannot contain the key "pusher"
-  },
+    "custom_data": "custom_data"
+},
 });
 ```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="workflowId",
+        to={"subscriber_id": "subscriberId"},
+        payload={
+        "custom_data": "custom_data"
+},
+    ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "workflowId",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: "subscriberId",
+    }),
+    Payload: map[string]any{
+        "custom_data": "custom_data",
+    },
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()->setSecurity('<NOVU_SECRET_KEY>')->build();
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'workflowId',
+        to: new Components\SubscriberPayloadDto(subscriberId: 'subscriberId'),
+        payload: [],
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "workflowId",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() { SubscriberId = "subscriberId" }),
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+
+Novu novu = Novu.builder().secretKey("<NOVU_SECRET_KEY>").build();
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("workflowId")
+        .to(To2.of(SubscriberPayloadDto.builder().subscriberId("subscriberId").build()))
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl --location 'https://api.novu.co/v1/events/trigger' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+    "name": "workflowId",
+    "to": [
+        "subscriberId"
+    ],
+    "payload": {
+        "custom_data": "custom_data"
+    }
+}'
+```
+  </Tab>
+</Tabs>
