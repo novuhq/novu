@@ -18,11 +18,11 @@ function distinctHumanSenders(history: AgentHistoryEntry[]): number {
 }
 
 function mapToolApprovalResponse(entry: AgentHistoryEntry): ModelMessage | undefined {
-  if (entry.type !== 'tool-approval-response' || !entry.richContent) {
+  if (entry.signalData?.type !== 'tool-approval-response') {
     return undefined;
   }
 
-  const { approvalId, approved } = entry.richContent as { approvalId?: string; approved?: boolean };
+  const { approvalId, approved } = (entry.signalData.payload ?? {}) as { approvalId?: string; approved?: boolean };
   if (typeof approvalId !== 'string' || typeof approved !== 'boolean') {
     return undefined;
   }
@@ -71,8 +71,9 @@ function mapHistoryEntry(entry: AgentHistoryEntry, multiSender: boolean): ModelM
 
 /**
  * Map Novu conversation history into AI SDK `ModelMessage[]`.
- * Reconstructs tool-approval parts from persisted approval cards and synthetic
- * decision entries. System/metadata entries (carrying `signalData`) are skipped.
+ * Reconstructs tool-approval parts from the persisted approval card (request) and
+ * the persisted decision signal (`signalData.type === 'tool-approval-response'`).
+ * Other system/metadata signal entries are skipped.
  *
  * The current inbound message is already appended to `history` by Novu before the
  * bridge fires — do not append the handler's `message` arg again.

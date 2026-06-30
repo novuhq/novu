@@ -11,6 +11,7 @@ import {
   SubscriberRepository,
 } from '@novu/dal';
 import type { AgentAction } from '@novu/framework';
+import { parseApprovalActionId } from '@novu/framework/internal';
 import { ENDPOINT_TYPES } from '@novu/shared';
 import type { CardElement, EmojiValue, Message, Thread } from 'chat';
 import { ConnectClaimTokenService } from '../../../connect/services/connect-claim-token.service';
@@ -21,6 +22,7 @@ import { LinkTelegramChatToSubscriberCommand } from '../../../telegram-linking/l
 import { LinkTelegramChatToSubscriber } from '../../../telegram-linking/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.usecase';
 import { TelegramStartCodeService } from '../../../telegram-linking/telegram-start-code.service';
 import { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
+import { parseToolApprovalActionId } from '../../managed-runtime/tool-approval/approval-card.builder';
 import {
   trackAgentInboundAction,
   trackAgentInboundMessage,
@@ -992,6 +994,8 @@ export class AgentInboundHandler implements OnModuleInit {
       return;
     }
 
+    await this.recordApprovalVerdict(conversation, config, action);
+
     // Everything else (incl. mcp-approval:* for managed) routes through the runtime,
     // which owns its own action semantics.
     const [subscriber, agent] = await Promise.all([
@@ -1020,5 +1024,66 @@ export class AgentInboundHandler implements OnModuleInit {
     };
 
     await runtime.dispatch(turn);
+  }
+
+  /**
+   * Normalise an approval-card click into a verdict. Self-hosted and managed
+   * cards use distinct action-id grammars (`tool-approval:*` vs
+   * `mcp-approval:*` / `direct-approval:*`), so they never collide; non-approval
+   * actions return `null` and are skipped.
+   */
+  private parseApprovalVerdict(
+    actionId: string | undefined
+  ): { approvalId: string; approved: boolean; toolName?: string } | null {
+    const selfHosted = parseApprovalActionId(actionId);
+    if (selfHosted) {
+      return {
+        approvalId: selfHosted.payload.approvalId,
+        approved: selfHosted.approved,
+        toolName: selfHosted.payload.name,
+      };
+    }
+
+    const managed = parseToolApprovalActionId(actionId);
+    if (managed) {
+      const toolName = managed.trust?.scope === 'tool' ? managed.trust.toolName : undefined;
+
+      return { approvalId: managed.toolUseId, approved: managed.approved, toolName };
+    }
+
+    return null;
+  }
+
+  private async recordApprovalVerdict(
+    conversation: ConversationEntity,
+    config: ResolvedAgentConfig,
+    action: AgentAction
+  ): Promise<void> {
+    const verdict = this.parseApprovalVerdict(action.id);
+    if (!verdict) {
+      return;
+    }
+
+    try {
+      await this.conversationService.persistToolApprovalDecision({
+        conversationId: conversation._id,
+        channel: this.conversationService.getPrimaryChannel(conversation),
+        agentIdentifier: config.agentIdentifier,
+        approvalId: verdict.approvalId,
+        approved: verdict.approved,
+        toolName: verdict.toolName,
+        environmentId: config.environmentId,
+        organizationId: config.organizationId,
+      });
+    } catch (err) {
+      // A failed transcript write must never drop the click — the runtime still
+      // receives onAction and can resolve the card.
+      this.logger.warn(err, `[agent:${config.agentIdentifier}] Failed to persist tool-approval decision`);
+      captureAgentWarning(err, {
+        component: 'inbound-turn-handler',
+        operation: 'persist-tool-approval-decision',
+        agentIdentifier: config.agentIdentifier,
+      });
+    }
   }
 }

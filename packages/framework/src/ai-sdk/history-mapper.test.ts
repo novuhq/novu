@@ -84,10 +84,10 @@ describe('toModelMessages', () => {
       { role: 'user', type: 'message', content: 'refund my order', createdAt: '1' },
       { role: 'agent', type: 'card', content: '', richContent: { card }, createdAt: '2' },
       {
-        role: 'agent',
-        type: 'tool-approval-response',
-        content: '',
-        richContent: { approvalId: 'tc_1', approved: true },
+        role: 'system',
+        type: 'signal',
+        content: 'Approved issueRefund',
+        signalData: { type: 'tool-approval-response', payload: { approvalId: 'tc_1', approved: true } },
         createdAt: '3',
       },
     ]);

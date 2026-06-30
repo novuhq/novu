@@ -1,5 +1,5 @@
 import { agent as frameworkAgent } from '../resources/agent/agent.resource';
-import type { Agent, AgentMessage, ToolApprovalDecision } from '../resources/agent/agent.types';
+import type { Agent, AgentMessage, AgentMessageContext } from '../resources/agent/agent.types';
 import { handleResult, isAiSdkResult } from './reply-mapper';
 import type { AiSdkAgentHandlers } from './types';
 
@@ -18,19 +18,13 @@ export function agent(id: string, handlers: AiSdkMessageHandler | AiSdkAgentHand
   const h = normalize(id, handlers);
   const config = h.toolApproval;
 
-  const autoResume = async (decision: ToolApprovalDecision, ctx: never): Promise<void> => {
-    const context = ctx as unknown as { history: unknown[] };
-    context.history.push({
-      role: 'agent',
-      type: 'tool-approval-response',
-      content: '',
-      richContent: { approvalId: decision.toolCall.id, approved: decision.approved },
-      createdAt: new Date().toISOString(),
-    });
-
-    const result = await h.onMessage({ text: '' } as AgentMessage, ctx as never);
+  // The decision is persisted to `ctx.history` by Novu before this turn fires, so
+  // resuming is just re-running `onMessage`: `toModelMessages(ctx.history)` now
+  // yields the tool-approval-response and `streamText` continues the tool loop.
+  const resume = async (ctx: AgentMessageContext): Promise<void> => {
+    const result = await h.onMessage({ text: '' } as AgentMessage, ctx);
     if (isAiSdkResult(result)) {
-      await handleResult(result, ctx as never, config);
+      await handleResult(result, ctx, config);
     }
   };
 
@@ -55,7 +49,7 @@ export function agent(id: string, handlers: AiSdkMessageHandler | AiSdkAgentHand
         }
       }
 
-      await autoResume(decision, ctx as never);
+      await resume(ctx as unknown as AgentMessageContext);
     },
     ...(config && { toolApproval: config }),
     ...(h.onAction && { onAction: h.onAction }),

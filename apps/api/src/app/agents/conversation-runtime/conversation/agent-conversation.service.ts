@@ -117,6 +117,12 @@ export interface PersistTriggerSignalParams extends ConversationActivityContext 
   transactionId: string;
 }
 
+export interface PersistToolApprovalDecisionParams extends ConversationActivityContext {
+  approvalId: string;
+  approved: boolean;
+  toolName?: string;
+}
+
 @Injectable()
 export class AgentConversationService {
   constructor(
@@ -463,6 +469,32 @@ export class AgentConversationService {
         organizationId: params.organizationId,
       }),
     ]);
+  }
+
+  /**
+   * Persist a tool-approval decision as a signal activity so it becomes part of
+   * the durable transcript. Self-hosted (stateless) agents reconstruct the resume
+   * message list from history via `toModelMessages`, so the decision must live in
+   * the transcript — not only in the ephemeral approval card.
+   */
+  async persistToolApprovalDecision(params: PersistToolApprovalDecisionParams): Promise<void> {
+    const toolName = params.toolName ?? 'tool call';
+
+    await this.activityRepository.createSignalActivity({
+      identifier: `act_${shortId(12)}`,
+      conversationId: params.conversationId,
+      platform: params.channel.platform,
+      integrationId: params.channel._integrationId,
+      platformThreadId: params.channel.platformThreadId,
+      agentId: params.agentIdentifier,
+      content: params.approved ? `Approved ${toolName}` : `Denied ${toolName}`,
+      signalData: {
+        type: 'tool-approval-response',
+        payload: { approvalId: params.approvalId, approved: params.approved },
+      },
+      environmentId: params.environmentId,
+      organizationId: params.organizationId,
+    });
   }
 
   async persistTriggerSignal(params: PersistTriggerSignalParams): Promise<void> {
