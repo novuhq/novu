@@ -39,7 +39,6 @@
             "pages": [
               "platform",
               "platform/what-is-novu",
-              "platform/handling-replies",
               "platform/how-novu-works",
               {
                 "group": "Novu for your team",
