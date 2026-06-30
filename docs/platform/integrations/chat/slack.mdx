@@ -231,6 +231,27 @@ After the user approves access, Novu handles the rest of the OAuth flow automati
   </Step>
 </Steps>
 
+<Note>
+  **Alternative: handle OAuth yourself.** Instead of `generateChatOAuthUrl()`, you can run the Slack OAuth flow with your own app, use the access token with Slack's APIs directly, then register the workspace with Novu via [`channelConnections.create`](/api-reference/channel-connections/create-a-channel-connection) (or `POST /v1/channel-connections`):
+
+```tsx
+await novu.channelConnections.create({
+  integrationIdentifier: 'slack',
+  subscriberId: 'user-123',        // optional — scope to a subscriber
+  context: { tenant: 'acme' },     // optional — scope to a tenant
+  workspace: {
+    id: authData.team.id,          // Slack workspace ID from OAuth
+    name: authData.team.name,
+  },
+  auth: {
+    accessToken: authData.access_token,
+  },
+});
+```
+
+Provide `subscriberId` or `context` the same way as the Novu-managed OAuth flow.
+</Note>
+
 ## Choose delivery destinations
 
 After a workspace is connected, you or users decide where in Slack to send the messages. This can either be a Slack channel, to a user or an incoming webhook URLs. After the delivery location has been selected, a Slack endpoint is then created for that location.
