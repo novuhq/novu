@@ -5,7 +5,6 @@ concurrency:
 
 env:
   NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
-  BULL_MQ_PRO_NPM_TOKEN: ${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}
 
 on:
   pull_request:
@@ -87,6 +86,8 @@ jobs:
         run: |
           git fetch origin ${{ github.event.pull_request.base.ref }} --depth=50
       - uses: ./.github/actions/setup-project-minimal
+        with:
+          bull_mq_pro_npm_token: ${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}
       # Configure Nx to be able to detect changes between branches when we are in a PR
       - name: Derive appropriate SHAs for base and head for `nx affected` commands
         uses: nrwl/nx-set-shas@59075b03c42ae79986d96d761eeb15094df7a76e # v2
@@ -129,6 +130,7 @@ jobs:
       - uses: ./.github/actions/setup-project
         with:
           slim: 'true'
+          bull_mq_pro_npm_token: ${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}
       - uses: mansagroup/nrwl-nx-action@a531870269e0c1eeb7af6247c4a206c31cae82cc # v3
         env:
           NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
@@ -157,6 +159,7 @@ jobs:
       - uses: ./.github/actions/setup-project
         with:
           slim: 'true'
+          bull_mq_pro_npm_token: ${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}
 
       - name: Build
         uses: mansagroup/nrwl-nx-action@a531870269e0c1eeb7af6247c4a206c31cae82cc # v3
@@ -188,6 +191,8 @@ jobs:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
 
       - uses: ./.github/actions/setup-project
+        with:
+          bull_mq_pro_npm_token: ${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}
 
       - name: Run Lint, Build, Test
         uses: mansagroup/nrwl-nx-action@a531870269e0c1eeb7af6247c4a206c31cae82cc # v3
@@ -224,6 +229,7 @@ jobs:
         with:
           # Don't run redis and etc... for other unit tests
           slim: ${{ !contains(matrix.projectName, '@novu/api-service') && !contains(matrix.projectName, '@novu/worker') && !contains(matrix.projectName, '@novu/ws') && !contains(matrix.projectName, '@novu/inbound-mail')}}
+          bull_mq_pro_npm_token: ${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}
 
       - uses: ./.github/actions/setup-redis-cluster
       - uses: mansagroup/nrwl-nx-action@a531870269e0c1eeb7af6247c4a206c31cae82cc # v3
@@ -258,6 +264,8 @@ jobs:
     steps:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
       - uses: ./.github/actions/setup-project
+        with:
+          bull_mq_pro_npm_token: ${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}
       - uses: ./.github/actions/setup-redis-cluster
       - uses: ./.github/actions/run-api
         with:

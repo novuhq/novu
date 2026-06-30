@@ -2,6 +2,12 @@ name: Setup Novu Monorepo (Minimal)
 
 description: Minimal setup for Nx operations with separate cache from main CI
 
+inputs:
+  bull_mq_pro_npm_token:
+    description: 'Auth token for the private @taskforcesh registry'
+    required: false
+    default: ''
+
 runs:
   using: composite
   steps:
@@ -20,6 +26,8 @@ runs:
 
     - name: 🚀 Install root dependencies
       shell: bash
+      env:
+        BULL_MQ_PRO_NPM_TOKEN: ${{ inputs.bull_mq_pro_npm_token }}
       run: |
         TRUST_FLAG="$(bash scripts/configure-pnpm-private-registry.sh)"
         # Install all root dependencies (includes Nx and other tools)

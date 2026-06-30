@@ -11,6 +11,10 @@ inputs:
     description: 'Should link submodules'
     required: false
     default: 'false'
+  bull_mq_pro_npm_token:
+    description: 'Auth token for the private @taskforcesh registry'
+    required: false
+    default: ''
 outputs:
   cypress_cache_hit:
     description: 'Did cypress use binary cache'
@@ -50,6 +54,8 @@ runs:
 
     - name: 🛟 Install dependencies
       shell: bash
+      env:
+        BULL_MQ_PRO_NPM_TOKEN: ${{ inputs.bull_mq_pro_npm_token }}
       run: |
         TRUST_FLAG="$(bash scripts/configure-pnpm-private-registry.sh)"
         pnpm ci ${TRUST_FLAG}

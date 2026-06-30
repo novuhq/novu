@@ -6,7 +6,6 @@ on:
 
 env:
   NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
-  BULL_MQ_PRO_NPM_TOKEN: ${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -21,6 +20,8 @@ jobs:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
 
       - uses: ./.github/actions/setup-project
+        with:
+          bull_mq_pro_npm_token: ${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}
 
       - uses: ./.github/actions/start-localstack
 

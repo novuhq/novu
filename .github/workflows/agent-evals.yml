@@ -20,7 +20,7 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
         with:
-          version: 11.9.0
+          version: 11.0.9
 
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
@@ -29,18 +29,9 @@ jobs:
           cache: pnpm
 
       - name: Install dependencies
-        env:
-          BULL_MQ_PRO_NPM_TOKEN: ${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}
-        run: |
-          TRUST_FLAG="$(bash scripts/configure-pnpm-private-registry.sh)"
-          pnpm install --frozen-lockfile ${TRUST_FLAG} --filter=@novu/agent-evals...
+        run: pnpm install --frozen-lockfile
 
       - name: Run agent evals
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: |
-          for attempt in 1 2 3; do
-            pnpm --filter @novu/agent-evals eval src/suites/agent-onboarding && exit 0
-            echo "Attempt ${attempt} failed, retrying..."
-          done
-          exit 1
+        run: pnpm --filter @novu/agent-evals eval src/suites/agent-onboarding
