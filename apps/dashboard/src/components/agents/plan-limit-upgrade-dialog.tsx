@@ -108,7 +108,7 @@ export function ChannelLimitUpgradeDialog({
           <span className="font-medium">
             {planUsage.limit} active {planUsage.limit === 1 ? 'channel' : 'channels'}
           </span>{' '}
-          and you have {planUsage.used} connected. You can still add this provider, but the agent won&apos;t respond on
+          and you have {planUsage.used} connected. You can still add this channel, but the agent won&apos;t respond on
           it until you upgrade your plan or disconnect other channels.
         </>
       }

@@ -28,6 +28,7 @@ import { DiscoverOutput, DiscoverStepOutput, DiscoverWorkflowOutput, GetActionEn
 import {
   buildWorkflowPreferences,
   ControlValuesLevelEnum,
+  isOutboundSsrfProtectionEnabled,
   ResourceOriginEnum,
   ResourceTypeEnum,
   SeverityLevelEnum,
@@ -121,7 +122,7 @@ export class Sync {
         // User-supplied bridgeUrl: pin the connection to a validated public
         // IP and re-validate on every redirect, so IP literals like
         // 127.0.0.1 / 169.254.169.254 / fc00::/7 cannot reach internal hosts.
-        enforceSsrfProtection: true,
+        enforceSsrfProtection: isOutboundSsrfProtectionEnabled(),
       })) as DiscoverOutput;
     } catch (error) {
       if (error instanceof HttpException) {

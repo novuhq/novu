@@ -5,6 +5,10 @@ description: 'A step-by-step guide to manually configure Amazon SES with Novu fo
 
 Amazon SES requires a manual configuration flow to enable Email Activity Tracking in Novu. This process involves creating an IAM user, setting up an SNS topic, subscribing Novu’s webhook, and linking SES configuration sets with the SNS topic.
 
+<Note>
+  Email Activity Tracking is available on **Novu Cloud** and **Enterprise self-hosted** only. It is not included in the **Community self-hosted** edition. Contact us at sales@novu.co to learn more about Enterprise self-hosted licensing.
+</Note>
+
 Setting up Amazon SES for activity tracking is a multi-step process because it requires configuring several AWS services (IAM, SNS, and SES) to work together. This guide provides a complete, step-by-step walkthrough.
 
 ## Step 1: Create an IAM User
