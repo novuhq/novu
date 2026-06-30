@@ -473,7 +473,7 @@ export class ParseEventRequest {
           return index;
         }
 
-        if (typeof file === 'string' || Buffer.isBuffer(file)) {
+        if (isAttachmentFileContent(file)) {
           return -1;
         }
 
@@ -493,14 +493,11 @@ export class ParseEventRequest {
     // eslint-disable-next-line no-param-reassign
     command.payload.attachments = command.payload.attachments.map((attachment) => {
       const randomId = randomBytes(16).toString('hex');
-      const fileBuffer = Buffer.isBuffer(attachment.file)
-        ? attachment.file
-        : Buffer.from(attachment.file, 'base64');
 
       return {
         ...attachment,
         name: attachment.name,
-        file: fileBuffer,
+        file: toAttachmentFileBuffer(attachment.file),
         storagePath: `${command.organizationId}/${command.environmentId}/${randomId}/${attachment.name}`,
       };
     });
@@ -586,4 +583,32 @@ export class ParseEventRequest {
 
     return validate;
   }
+}
+
+type SerializedBuffer = { type: 'Buffer'; data: number[] };
+
+function isSerializedBuffer(value: unknown): value is SerializedBuffer {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const candidate = value as Partial<SerializedBuffer>;
+
+  return candidate.type === 'Buffer' && Array.isArray(candidate.data);
+}
+
+function isAttachmentFileContent(file: unknown): file is string | Buffer | SerializedBuffer {
+  return typeof file === 'string' || Buffer.isBuffer(file) || isSerializedBuffer(file);
+}
+
+function toAttachmentFileBuffer(file: string | Buffer | SerializedBuffer): Buffer {
+  if (Buffer.isBuffer(file)) {
+    return file;
+  }
+
+  if (isSerializedBuffer(file)) {
+    return Buffer.from(file.data);
+  }
+
+  return Buffer.from(file, 'base64');
 }

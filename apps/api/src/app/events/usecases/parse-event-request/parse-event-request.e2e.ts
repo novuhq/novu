@@ -321,6 +321,33 @@ describe('ParseEventRequest Usecase - #novu-v2', () => {
       expect((error as PayloadValidationException).validationErrors).to.have.length(2);
     }
   });
+
+  it('should accept JSON-serialized Buffer attachment file', async () => {
+    const transactionId = uuid();
+    const subscriber = await subscribersService.createSubscriber();
+
+    const command = buildCommand(
+      session,
+      transactionId,
+      [{ subscriberId: subscriber.subscriberId }],
+      template.triggers[0].identifier
+    );
+
+    command.payload = {
+      attachments: [
+        { name: 'text1.txt', file: 'hello world!', mime: 'text/plain' },
+        {
+          name: 'text2.txt',
+          file: { type: 'Buffer', data: Array.from(Buffer.from('hello world!', 'utf-8')) },
+          mime: 'text/plain',
+        },
+      ],
+    };
+
+    const result = await parseEventRequestUsecase.execute(command);
+
+    expect(result.acknowledged).to.be.true;
+  });
 });
 
 const buildCommand = (
