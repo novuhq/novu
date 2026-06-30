@@ -3,7 +3,7 @@ name: novu-trigger-notification
 description: Trigger Novu notification workflows to send messages across email, SMS, push, chat, and in-app channels. Supports single triggers, bulk triggers, broadcast to all subscribers, topic-based targeting, and cancellation. Use when sending transactional notifications, alerts, or any event-driven messages.
 inputs:
   - name: NOVU_SECRET_KEY
-    description: "Server-side API key from https://dashboard.novu.co/api-keys. Used by @novu/api."
+    description: "Server-side API key from https://dashboard.novu.co/api-keys. Used by all official server-side SDKs."
     required: true
     type: secret
 ---
@@ -11,6 +11,8 @@ inputs:
 # Trigger Notification
 
 Send notifications by triggering Novu workflows. Supports single, bulk, broadcast, and topic-based delivery.
+
+Novu provides official server-side SDKs for TypeScript/Node.js (`@novu/api`), Python (`novu-py`), Go (`novu-go`), PHP (`novuhq/novu`), .NET (`Novu`), and Java (`co.novu:novu-java`). Use the SDK that matches the user's stack. See https://docs.novu.co/platform/sdks#server-side-sdks
 
 ## SDK Setup
 
