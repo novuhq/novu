@@ -268,9 +268,6 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
           slack: createSlackAdapter({
             botToken: connectionAccessToken,
             signingSecret: credentials.signingSecret,
-            ...(process.env.SLACK_API_URL
-              ? { webClientOptions: { slackApiUrl: process.env.SLACK_API_URL, retryConfig: { retries: 0 } } }
-              : {}),
           }),
         };
       }
