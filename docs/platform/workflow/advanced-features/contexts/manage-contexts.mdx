@@ -20,30 +20,222 @@ Each context consists of:
 
 Supported data formats include:
 
-```typescript
+<Tabs>
+  <Tab title="Node.js">
+```ts
+import { Novu } from "@novu/api"
+
+const novu = new Novu({ secretKey: "<YOUR_SECRET_KEY_HERE>" });
+
 await novu.trigger({
   workflowId: "workflowId",
-  to: { subscriberId: 'user123' },
-  payload: { userName: 'John' },
+  to: { subscriberId: "user123" },
+  payload: { userName: "John" },
   context: {
     // Simple string format
-    tenant: 'acme-corp', 
-    
+    tenant: "acme-corp",
     // Rich object format (ID only)
-    app: { id: 'jira' },                    
-    
+    app: { id: "jira" },
     // Rich object format (ID + data)
-    region: {                               
-      id: 'us-east',
+    region: {
+      id: "us-east",
       data: {
-        name: 'US East',
-        timezone: 'America/New_York',
-        currency: 'USD'
-      }
-    }
-  }
+        name: "US East",
+        timezone: "America/New_York",
+        currency: "USD",
+      },
+    },
+  },
 });
 ```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="workflowId",
+        to={"subscriber_id": "user123"},
+        payload={"userName": "John"},
+        context={
+            "tenant": "acme-corp",
+            "app": {"id": "jira"},
+            "region": {
+                "id": "us-east",
+                "data": {
+                    "name": "US East",
+                    "timezone": "America/New_York",
+                    "currency": "USD",
+                },
+            },
+        },
+    ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "workflowId",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: "user123",
+    }),
+    Payload: map[string]any{
+        "userName": "John",
+    },
+    Context: map[string]any{
+        "tenant": "acme-corp",
+        "app": map[string]any{
+            "id": "jira",
+        },
+        "region": map[string]any{
+            "id": "us-east",
+            "data": map[string]any{
+                "name":     "US East",
+                "timezone": "America/New_York",
+                "currency": "USD",
+            },
+        },
+    },
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()
+    ->setSecurity('<YOUR_SECRET_KEY_HERE>')
+    ->build();
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'workflowId',
+        to: new Components\SubscriberPayloadDto(subscriberId: 'user123'),
+        payload: [
+            'userName' => 'John',
+        ],
+        context: [
+            'tenant' => 'acme-corp',
+            'app' => ['id' => 'jira'],
+            'region' => [
+                'id' => 'us-east',
+                'data' => [
+                    'name' => 'US East',
+                    'timezone' => 'America/New_York',
+                    'currency' => 'USD',
+                ],
+            ],
+        ],
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+
+var sdk = new NovuSDK(secretKey: "<YOUR_SECRET_KEY_HERE>");
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "workflowId",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() {
+        SubscriberId = "user123",
+    }),
+    Payload = new Dictionary<string, object>() {
+        { "userName", "John" },
+    },
+    Context = new Dictionary<string, object>() {
+        { "tenant", "acme-corp" },
+        { "app", new Dictionary<string, object>() { { "id", "jira" } } },
+        { "region", new Dictionary<string, object>() {
+            { "id", "us-east" },
+            { "data", new Dictionary<string, object>() {
+                { "name", "US East" },
+                { "timezone", "America/New_York" },
+                { "currency", "USD" },
+            } },
+        } },
+    },
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+import java.util.Map;
+
+Novu novu = Novu.builder()
+    .secretKey("<YOUR_SECRET_KEY_HERE>")
+    .build();
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("workflowId")
+        .to(To2.of(SubscriberPayloadDto.builder()
+            .subscriberId("user123")
+            .build()))
+        .payload(Map.of("userName", "John"))
+        .context(Map.ofEntries(
+            Map.entry("tenant", TriggerEventRequestDtoContextUnion.of("acme-corp")),
+            Map.entry("app", TriggerEventRequestDtoContextUnion.of(
+                TriggerEventRequestDtoContext2.builder()
+                    .id("jira")
+                    .build())),
+            Map.entry("region", TriggerEventRequestDtoContextUnion.of(
+                TriggerEventRequestDtoContext2.builder()
+                    .id("us-east")
+                    .data(Map.ofEntries(
+                        Map.entry("name", "US East"),
+                        Map.entry("timezone", "America/New_York"),
+                        Map.entry("currency", "USD")))
+                    .build()))))
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -L -g -X POST 'https://api.novu.co/v1/events/trigger' \
+-H 'Content-Type: application/json' \
+-H 'Accept: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+    "name": "workflowId",
+    "to": { "subscriberId": "user123" },
+    "payload": { "userName": "John" },
+    "context": {
+        "tenant": "acme-corp",
+        "app": { "id": "jira" },
+        "region": {
+            "id": "us-east",
+            "data": {
+                "name": "US East",
+                "timezone": "America/New_York",
+                "currency": "USD"
+            }
+        }
+    }
+}'
+```
+  </Tab>
+</Tabs>
 
 ## Create a Context
 
@@ -84,39 +276,299 @@ Use the dashboard to manually define contexts that represent key business entiti
 
 Novu provides an API to create a context. If a context with the same `type:id` combination already exists, then the request will fail.
 
-```bash
-POST /v2/contexts
-{
-  "type": "tenant",
-  "id": "acme-corp",
-  "data": {
-    "name": "Acme Corporation",
-    "plan": "enterprise"
-  }
-}
+<Tabs>
+  <Tab title="Node.js">
+```ts
+import { Novu } from "@novu/api"
+
+const novu = new Novu({ secretKey: "<YOUR_SECRET_KEY_HERE>" });
+
+await novu.contexts.create({
+  type: "tenant",
+  id: "acme-corp",
+  data: {
+    name: "Acme Corporation",
+    plan: "enterprise",
+  },
+});
 ```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.contexts.create(create_context_request_dto={
+        "type": "tenant",
+        "id": "acme-corp",
+        "data": {
+            "name": "Acme Corporation",
+            "plan": "enterprise",
+        },
+    })
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Contexts.Create(context.Background(), components.CreateContextRequestDto{
+    Type: "tenant",
+    ID:   "acme-corp",
+    Data: map[string]any{
+        "name": "Acme Corporation",
+        "plan": "enterprise",
+    },
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()
+    ->setSecurity('<YOUR_SECRET_KEY_HERE>')
+    ->build();
+
+$sdk->contexts->create(
+    createContextRequestDto: new Components\CreateContextRequestDto(
+        type: 'tenant',
+        id: 'acme-corp',
+        data: [
+            'name' => 'Acme Corporation',
+            'plan' => 'enterprise',
+        ],
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+
+var sdk = new NovuSDK(secretKey: "<YOUR_SECRET_KEY_HERE>");
+
+await sdk.Contexts.CreateAsync(createContextRequestDto: new CreateContextRequestDto() {
+    Type = "tenant",
+    Id = "acme-corp",
+    Data = new Dictionary<string, object>() {
+        { "name", "Acme Corporation" },
+        { "plan", "enterprise" },
+    },
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.CreateContextRequestDto;
+import java.util.Map;
+
+Novu novu = Novu.builder()
+    .secretKey("<YOUR_SECRET_KEY_HERE>")
+    .build();
+
+novu.contexts().create()
+    .body(CreateContextRequestDto.builder()
+        .type("tenant")
+        .id("acme-corp")
+        .data(Map.ofEntries(
+            Map.entry("name", "Acme Corporation"),
+            Map.entry("plan", "enterprise")))
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -L -g -X POST 'https://api.novu.co/v2/contexts' \
+-H 'Content-Type: application/json' \
+-H 'Accept: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+    "type": "tenant",
+    "id": "acme-corp",
+    "data": {
+        "name": "Acme Corporation",
+        "plan": "enterprise"
+    }
+}'
+```
+  </Tab>
+</Tabs>
 
 ### Create a context via API (Just-in-time)
 
-Contexts can also be created automatically when you trigger a workflow that includes a new context object. If the specified `type:id` doesn’t exist, then Novu automatically creates it before running the workflow.
+Contexts can also be created automatically when you trigger a workflow that includes a new context object. If the specified `type:id` doesn't exist, then Novu automatically creates it before running the workflow.
 
-```jsx
+<Tabs>
+  <Tab title="Node.js">
+```ts
+import { Novu } from "@novu/api"
+
+const novu = new Novu({ secretKey: "<YOUR_SECRET_KEY_HERE>" });
+
 await novu.trigger({
   workflowId: "workflowId",
-  to: { subscriberId: 'user@example.com' },
-  payload: { userName: 'John' },
+  to: { subscriberId: "user@example.com" },
+  payload: { userName: "John" },
   context: {
-    tenant: 'acme-corp',   // Created automatically if it doesn’t exist
-    app: 'jira'
-  }
+    tenant: "acme-corp", // Created automatically if it doesn't exist
+    app: "jira",
+  },
 });
 ```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="workflowId",
+        to={"subscriber_id": "user@example.com"},
+        payload={"userName": "John"},
+        context={
+            "tenant": "acme-corp",
+            "app": "jira",
+        },
+    ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "workflowId",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: "user@example.com",
+    }),
+    Payload: map[string]any{
+        "userName": "John",
+    },
+    Context: map[string]any{
+        "tenant": "acme-corp",
+        "app":    "jira",
+    },
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()
+    ->setSecurity('<YOUR_SECRET_KEY_HERE>')
+    ->build();
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'workflowId',
+        to: new Components\SubscriberPayloadDto(subscriberId: 'user@example.com'),
+        payload: ['userName' => 'John'],
+        context: [
+            'tenant' => 'acme-corp',
+            'app' => 'jira',
+        ],
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+
+var sdk = new NovuSDK(secretKey: "<YOUR_SECRET_KEY_HERE>");
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "workflowId",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() {
+        SubscriberId = "user@example.com",
+    }),
+    Payload = new Dictionary<string, object>() {
+        { "userName", "John" },
+    },
+    Context = new Dictionary<string, object>() {
+        { "tenant", "acme-corp" },
+        { "app", "jira" },
+    },
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+import java.util.Map;
+
+Novu novu = Novu.builder()
+    .secretKey("<YOUR_SECRET_KEY_HERE>")
+    .build();
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("workflowId")
+        .to(To2.of(SubscriberPayloadDto.builder()
+            .subscriberId("user@example.com")
+            .build()))
+        .payload(Map.of("userName", "John"))
+        .context(Map.ofEntries(
+            Map.entry("tenant", TriggerEventRequestDtoContextUnion.of("acme-corp")),
+            Map.entry("app", TriggerEventRequestDtoContextUnion.of("jira"))))
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -L -g -X POST 'https://api.novu.co/v1/events/trigger' \
+-H 'Content-Type: application/json' \
+-H 'Accept: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+    "name": "workflowId",
+    "to": { "subscriberId": "user@example.com" },
+    "payload": { "userName": "John" },
+    "context": {
+        "tenant": "acme-corp",
+        "app": "jira"
+    }
+}'
+```
+  </Tab>
+</Tabs>
 
 If a matching context already exists, Novu reuses it as-is without modifying any stored data. This behavior ensures consistency and avoids accidental changes to shared metadata.
 
 ## Update a context
 
-You can update a context’s data payload at any time. The context `type` and `id` remain immutable. However, to change an existing context’s data, you must explicitly update it through the dashboard or API.
+You can update a context's data payload at any time. The context `type` and `id` remain immutable. However, to change an existing context's data, you must explicitly update it through the dashboard or API.
 
 #### Update a context via dashboard
 
@@ -146,15 +598,140 @@ You can update a context’s data payload at any time. The context `type` and `i
 
 Novu provides an API to update an existing context. The `data` object is replaced entirely during updates (not merged). Include all fields you want to retain.
 
-```bash
-PATCH /v2/contexts/tenant/acme-corp
-{
-  "data": {
-    "plan": "premium",
-    "region": "us-east"
-  }
-}
+<Tabs>
+  <Tab title="Node.js">
+```ts
+import { Novu } from "@novu/api"
+
+const novu = new Novu({ secretKey: "<YOUR_SECRET_KEY_HERE>" });
+
+await novu.contexts.update({
+  type: "tenant",
+  id: "acme-corp",
+  updateContextRequestDto: {
+    data: {
+      plan: "premium",
+      region: "us-east",
+    },
+  },
+});
 ```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.contexts.update(
+        type_="tenant",
+        id="acme-corp",
+        update_context_request_dto={
+            "data": {
+                "plan": "premium",
+                "region": "us-east",
+            },
+        },
+    )
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Contexts.Update(context.Background(), "acme-corp", "tenant", components.UpdateContextRequestDto{
+    Data: map[string]any{
+        "plan":   "premium",
+        "region": "us-east",
+    },
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()
+    ->setSecurity('<YOUR_SECRET_KEY_HERE>')
+    ->build();
+
+$sdk->contexts->update(
+    id: 'acme-corp',
+    type: 'tenant',
+    updateContextRequestDto: new Components\UpdateContextRequestDto(
+        data: [
+            'plan' => 'premium',
+            'region' => 'us-east',
+        ],
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+
+var sdk = new NovuSDK(secretKey: "<YOUR_SECRET_KEY_HERE>");
+
+await sdk.Contexts.UpdateAsync(
+    id: "acme-corp",
+    type: "tenant",
+    updateContextRequestDto: new UpdateContextRequestDto() {
+        Data = new Dictionary<string, object>() {
+            { "plan", "premium" },
+            { "region", "us-east" },
+        },
+    }
+);
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.UpdateContextRequestDto;
+import java.util.Map;
+
+Novu novu = Novu.builder()
+    .secretKey("<YOUR_SECRET_KEY_HERE>")
+    .build();
+
+novu.contexts().update()
+    .id("acme-corp")
+    .type("tenant")
+    .body(UpdateContextRequestDto.builder()
+        .data(Map.ofEntries(
+            Map.entry("plan", "premium"),
+            Map.entry("region", "us-east")))
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -L -g -X PATCH 'https://api.novu.co/v2/contexts/tenant/acme-corp' \
+-H 'Content-Type: application/json' \
+-H 'Accept: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+    "data": {
+        "plan": "premium",
+        "region": "us-east"
+    }
+}'
+```
+  </Tab>
+</Tabs>
 
 ## Retrieve a single context
 
@@ -180,14 +757,87 @@ You can retrieve a context to verify its data, confirm its creation, or inspect 
 
 Novu provides an API to retrieve a single, specific context by providing its `type` and `id` in the URL.
 
-```bash
-GET /v2/contexts/:type/:id
-```
+<Tabs>
+  <Tab title="Node.js">
+```ts
+import { Novu } from "@novu/api"
 
-Here is an example:
-```bash
-GET /v2/contexts/tenant/acme-corp
+const novu = new Novu({ secretKey: "<YOUR_SECRET_KEY_HERE>" });
+
+await novu.contexts.retrieve("tenant", "acme-corp");
 ```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.contexts.retrieve(type_="tenant", id="acme-corp")
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Contexts.Retrieve(context.Background(), "acme-corp", "tenant", nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+
+$sdk = novu\Novu::builder()
+    ->setSecurity('<YOUR_SECRET_KEY_HERE>')
+    ->build();
+
+$sdk->contexts->retrieve(
+    id: 'acme-corp',
+    type: 'tenant',
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+
+var sdk = new NovuSDK(secretKey: "<YOUR_SECRET_KEY_HERE>");
+
+await sdk.Contexts.RetrieveAsync(
+    id: "acme-corp",
+    type: "tenant"
+);
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+
+Novu novu = Novu.builder()
+    .secretKey("<YOUR_SECRET_KEY_HERE>")
+    .build();
+
+novu.contexts().get()
+    .id("acme-corp")
+    .type("tenant")
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -L -g -X GET 'https://api.novu.co/v2/contexts/tenant/acme-corp' \
+-H 'Accept: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>'
+```
+  </Tab>
+</Tabs>
 
 ## List or search for contexts
 
@@ -213,14 +863,99 @@ You can list all contexts in your environment or search for specific ones by con
 
 Novu provides an API that lists or searches available contexts. Use pagination and search parameters to retrieve subsets efficiently.
 
-```bash
-GET /v2/contexts
-GET /v2/contexts?search=acme
+<Tabs>
+  <Tab title="Node.js">
+```ts
+import { Novu } from "@novu/api"
+
+const novu = new Novu({ secretKey: "<YOUR_SECRET_KEY_HERE>" });
+
+await novu.contexts.list({ search: "acme" });
 ```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.contexts.list(request={"search": "acme"})
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/operations"
+)
+
+search := "acme"
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Contexts.List(context.Background(), operations.ContextsControllerListContextsRequest{
+    Search: &search,
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Operations;
+
+$sdk = novu\Novu::builder()
+    ->setSecurity('<YOUR_SECRET_KEY_HERE>')
+    ->build();
+
+$sdk->contexts->list(
+    request: new Operations\ContextsControllerListContextsRequest(
+        search: 'acme',
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Requests;
+
+var sdk = new NovuSDK(secretKey: "<YOUR_SECRET_KEY_HERE>");
+
+await sdk.Contexts.ListAsync(new ContextsControllerListContextsRequest() {
+    Search = "acme",
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.operations.ContextsControllerListContextsRequest;
+
+Novu novu = Novu.builder()
+    .secretKey("<YOUR_SECRET_KEY_HERE>")
+    .build();
+
+novu.contexts().list()
+    .request(ContextsControllerListContextsRequest.builder()
+        .search("acme")
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -L -g -X GET 'https://api.novu.co/v2/contexts?search=acme' \
+-H 'Accept: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>'
+```
+  </Tab>
+</Tabs>
 
 ## Delete a context
 
-Delete a context if it’s no longer needed. This action permanently removes the context from your Novu environment. 
+Delete a context if it's no longer needed. This action permanently removes the context from your Novu environment. 
 
 <Warning>
   Deleting a context cannot be undone. Ensure the context is no longer required by any active or historical workflows you might need to analyze. 
@@ -256,12 +991,84 @@ Delete a context if it’s no longer needed. This action permanently removes the
 
 Novu provides an API that you can use to delete a context. Once deleted, the context will no longer be available for use in new workflow executions.
 
-```bash
-DELETE /v2/contexts/:type/:id
-```
+<Tabs>
+  <Tab title="Node.js">
+```ts
+import { Novu } from "@novu/api"
 
-Here is an example:
+const novu = new Novu({ secretKey: "<YOUR_SECRET_KEY_HERE>" });
 
-```bash
-DELETE /v2/contexts/tenant/acme-corp
+await novu.contexts.delete("tenant", "acme-corp");
 ```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.contexts.delete(type_="tenant", id="acme-corp")
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Contexts.Delete(context.Background(), "acme-corp", "tenant", nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+
+$sdk = novu\Novu::builder()
+    ->setSecurity('<YOUR_SECRET_KEY_HERE>')
+    ->build();
+
+$sdk->contexts->delete(
+    id: 'acme-corp',
+    type: 'tenant',
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+
+var sdk = new NovuSDK(secretKey: "<YOUR_SECRET_KEY_HERE>");
+
+await sdk.Contexts.DeleteAsync(
+    id: "acme-corp",
+    type: "tenant"
+);
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+
+Novu novu = Novu.builder()
+    .secretKey("<YOUR_SECRET_KEY_HERE>")
+    .build();
+
+novu.contexts().delete()
+    .id("acme-corp")
+    .type("tenant")
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -L -g -X DELETE 'https://api.novu.co/v2/contexts/tenant/acme-corp' \
+-H 'Accept: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>'
+```
+  </Tab>
+</Tabs>
