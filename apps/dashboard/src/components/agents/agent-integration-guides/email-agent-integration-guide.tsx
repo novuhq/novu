@@ -54,12 +54,15 @@ export function EmailAgentIntegrationGuide({
 
   const showInboxSection = Boolean((isSharedInboxEnabled || IS_SELF_HOSTED_EE) && emailIntegration && integrationLink);
 
-  // Layer 2: once connected, the production-hardening controls (own provider, custom domain,
-  // branded address, custom From) live in the guided "What's next" card. The provider/sender
-  // config card is then redundant, and the inbox card's custom-domain add-form is owned by the
-  // guide — so we hide both here to keep a single source of truth.
+  // Layer 2: once connected, production-hardening controls (own provider, custom domain,
+  // branded address) live in the guided "What's next" card; custom From lives in the EMAIL
+  // card below. The full provider/sender config card is hidden when the flag is on, and the
+  // inbox card's custom-domain add-form is owned by the guide.
   const showConfigCard = !isEmailWhatsNextEnabled;
-  const showEmailCard = Boolean(emailIntegration && integrationId && (showInboxSection || showConfigCard));
+  const showSenderAddressRow = isEmailWhatsNextEnabled;
+  const showEmailCard = Boolean(
+    emailIntegration && integrationId && (showInboxSection || showConfigCard || showSenderAddressRow)
+  );
 
   const emailCard =
     showEmailCard && emailIntegration && integrationId ? (
@@ -84,6 +87,18 @@ export function EmailAgentIntegrationGuide({
               integrationId={integrationId}
               defaultSenderName={integrationLink?.integration?.defaultSenderName}
               sharedInboundAddress={integrationLink?.integration?.sharedInboundAddress}
+            />
+          ) : null}
+          {showSenderAddressRow ? (
+            <EmailConfigurationCardBody
+              agent={agent}
+              integrationId={integrationId}
+              defaultSenderName={integrationLink?.integration?.defaultSenderName}
+              sharedInboundAddress={integrationLink?.integration?.sharedInboundAddress}
+              showOutboundProvider={false}
+              senderTitle="Set a custom From address"
+              senderDescription="By default replies come from the agent inbox address. Send from your own address instead — Reply-To always routes back to the agent so subscriber replies stay in the thread."
+              senderDisabledReason="Custom From addresses are only supported with your own email provider. Connect one above to enable this."
             />
           ) : null}
         </div>

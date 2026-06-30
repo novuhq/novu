@@ -10,7 +10,6 @@ import { CopyableEmailAddress } from '../../copyable-email-address';
 import { InboundAddressForm } from '../../inbound-address-form';
 import { isAgentIntegrationConnected } from '../../is-agent-integration-connected';
 import { OutboundProviderSelect } from '../../outbound-provider-select';
-import { SenderAddressOverride } from '../../sender-address-override';
 import { SetupGuideCard } from '../../setup-guide-card';
 import {
   CompletedStepIndicator,
@@ -120,17 +119,12 @@ export function EmailWhatsNextGuide({ agent, integrationLink }: EmailWhatsNextGu
     onOutboundSelect,
     addAddress,
     removeAddress,
-    serverUseFromAddressOverride,
-    serverFromAddressOverride,
-    outboundFromAddress,
-    saveSenderOverride,
   } = useEmailSetupCredentials({ emailIntegration, integrations, agent });
 
   const [isCredentialsSidebarOpen, setIsCredentialsSidebarOpen] = useState(false);
   const [isRecapExpanded, setIsRecapExpanded] = useState(false);
 
   const sharedInboundAddress = integrationLink.integration.sharedInboundAddress;
-  const defaultSenderName = integrationLink.integration.defaultSenderName;
 
   const inboundAddresses = useMemo(
     () => configuredAddresses.map(({ address, domain }) => (address === '*' ? `*@${domain}` : `${address}@${domain}`)),
@@ -149,7 +143,6 @@ export function EmailWhatsNextGuide({ agent, integrationLink }: EmailWhatsNextGu
   // A branded address can only be added on a verified domain (the picker only lists verified
   // domains with MX configured), so a configured address implies a verified, deliverable domain.
   const addressBranded = configuredAddresses.length > 0;
-  const fromCustom = serverUseFromAddressOverride;
   const productionReady = providerDone && addressBranded;
   const primaryUserAddress = inboundAddresses[0] ?? sharedInboundAddress ?? undefined;
 
@@ -255,26 +248,6 @@ export function EmailWhatsNextGuide({ agent, integrationLink }: EmailWhatsNextGu
             <RiArrowRightSLine className="size-4" />
           </button>
         </div>
-      ),
-    },
-    {
-      key: 'from',
-      status: fromCustom ? 'completed' : 'current',
-      title: 'Set a custom From address',
-      description:
-        'By default replies come from the agent inbox address. Send from your own address instead — Reply-To always routes back to the agent so subscriber replies stay in the thread.',
-      rightContent: (
-        <SenderAddressOverride
-          serverEnabled={serverUseFromAddressOverride}
-          serverValue={serverFromAddressOverride}
-          defaultSenderName={defaultSenderName || agent.name}
-          sharedInboundAddress={sharedInboundAddress}
-          outboundFromAddress={outboundFromAddress}
-          inboundAddresses={inboundAddresses}
-          onSave={saveSenderOverride}
-          disabled={isOutboundDemo}
-          disabledReason="Custom From addresses are only supported with your own email provider. Connect one above to enable this."
-        />
       ),
     },
     {

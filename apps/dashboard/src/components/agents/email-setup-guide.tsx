@@ -106,8 +106,8 @@ export function EmailSetupGuide({
 
   // Layer-1 simplification: on cloud (a shared inbox is provisioned), the agent works out of the
   // box on the Novu demo sender + shared inbox, so setup collapses to "see your address + test".
-  // Production hardening (own provider, custom domain, branded address, custom From) moves to the
-  // layer-2 "What's next" guide. Self-hosted EE has no demo/shared inbox, so it keeps the full
+  // Production hardening (own provider, custom domain, branded address) moves to the layer-2
+  // "What's next" guide; custom From lives in the EMAIL card below. Self-hosted EE has no demo/shared inbox, so it keeps the full
   // provider + domain flow as a hard prerequisite. Flag off = unchanged behavior.
   const simplifiedSetup = isEmailWhatsNextEnabled && hasSharedInbox && !IS_SELF_HOSTED_EE;
 
