@@ -1,10 +1,75 @@
 ---
 title: 'Billing'
-description: 'Manage your billing and payment information, view invoices, and upgrade your subscription plan.'
+description: 'Understand how Novu Cloud billing works: workflow runs, billing cycles, plans, and managing your subscription.'
 ---
 
+Novu Cloud subscriptions are billed at the **organization** level. Each organization has its own plan, usage limits, and billing settings. If you belong to multiple organizations, billing is managed separately for each one. See [Organizations](/platform/account/organizations) for how organizations relate to environments and team access.
 
-## Frequently Asked Questions
+<Card title="View plans and pricing" icon="credit-card" href="https://novu.co/pricing">
+  Compare Free, Pro, Team, and Enterprise plans, including included workflow runs, feature limits, and add-on options.
+</Card>
+
+<Note>
+  Billing applies to **Novu Cloud** only. The open-source Novu Project can be [self-hosted](/community/self-hosting-novu/deploy-with-docker) at no cost from Novu. Novu Cloud adds managed infrastructure, SLAs, and business features on top of the open-source core.
+</Note>
+
+## How Novu bills
+
+Novu Cloud pricing is based on **workflow runs** — not subscribers, messages, or channels.
+
+| What we bill | What we do not bill |
+| ------------ | ------------------- |
+| Workflow runs executed across all environments in your organization | Number of subscribers |
+| Usage above your plan limit (on-demand or contract rates on paid plans) | Individual messages or steps inside a workflow |
+| | Provider costs (email, SMS, push, and so on) |
+
+Workflow runs from **Development**, **Production**, and any custom environments all count toward the same monthly total for the organization.
+
+## What is a workflow run?
+
+A **workflow run** is one execution of a workflow for one subscriber.
+
+- Triggering a workflow to a **single subscriber** counts as **1 workflow run**.
+- Triggering a workflow to a **topic** with 100 subscribers counts as **100 workflow runs** after fan-out — one run per subscriber.
+
+Each run represents a single execution instance for that subscriber, regardless of how many steps the workflow contains or how many channels deliver a message. You can inspect individual runs in the [Activity Feed](/platform/workflow/monitor-and-debug-workflow).
+
+## Billing cycles and usage
+
+Novu Cloud measures usage on a **monthly billing cycle** tied to your organization's subscription.
+
+- **Included workflow runs** reset at the start of each billing cycle.
+- **Usage is aggregated** across every environment in the organization during that cycle.
+- **Paid plans** are billed monthly by default. Annual billing and volume discounts are available — see the [pricing page](https://novu.co/pricing) or contact sales for Enterprise.
+
+If you exceed the workflow runs included in your plan, Novu does **not** stop or throttle your notifications. Additional usage rolls into on-demand pricing on paid plans, or is billed at your contract rate on Enterprise. See [What happens when I exceed my limit?](#what-happens-when-i-exceed-my-monthly-workflow-run-limit) below.
+
+Only **organization Owners** can view billing details, change plans, and manage payment methods.
+
+## Plans at a glance
+
+For full feature comparisons, visit the [Novu pricing page](https://novu.co/pricing).
+
+| Plan | Monthly price | Included workflow runs / month |
+| ---- | ------------- | ------------------------------ |
+| **Free** | $0 | 10,000 |
+| **Pro** | $30 | 30,000+ |
+| **Team** | $250 | 250,000+ |
+| **Enterprise** | Custom | 10M+ (custom volume tiers) |
+
+Higher tiers add capabilities such as custom environments, longer activity feed retention, RBAC, SSO, and advanced compliance. Plan-specific feature gates are noted throughout the docs — for example, [custom environments](/platform/developer/environments), [webhooks](/platform/developer/webhooks), and [SAML SSO](/platform/account/sso).
+
+## Manage billing in the dashboard
+
+Organization Owners can manage subscriptions from **Settings** > **Billing** in the Novu dashboard, or go directly to [dashboard.novu.co/settings/billing](https://dashboard.novu.co/settings/billing).
+
+From billing settings you can:
+
+- View your current plan and usage for the billing period
+- Upgrade or change subscription tiers
+- Open the billing portal to update payment methods and view invoices
+
+## Frequently asked questions
 
 <AccordionGroup>
   <Accordion title="How to purchase a paid plan?">
@@ -19,5 +84,33 @@ description: 'Manage your billing and payment information, view invoices, and up
 
     <video autoPlay loop muted playsInline src="/images/account/billing/manage-invoices.mp4" />
 
+  </Accordion>
+
+  <Accordion title="What is a workflow run?">
+    A workflow run is one execution of a workflow for one subscriber. Triggering a workflow to a single subscriber counts as 1 run. Triggering to a topic with 100 subscribers counts as 100 runs after fan-out. See [What is a workflow run?](#what-is-a-workflow-run) above and [Monitor and debug workflow](/platform/workflow/monitor-and-debug-workflow) for how to inspect runs in the dashboard.
+  </Accordion>
+
+  <Accordion title="How is pricing calculated?">
+    Pricing is based on the total number of workflow runs executed across all environments in your organization each month. Novu does not charge per subscriber, per message, or per channel.
+  </Accordion>
+
+  <Accordion title="What happens when I exceed my monthly workflow run limit?">
+    Novu does not stop or throttle your notifications when you go over your included workflow runs. Usage above your plan rolls into on-demand pricing on paid plans, or is billed at your contract rate on Enterprise. For volume or annual pricing, see the [pricing page](https://novu.co/pricing) or contact the Novu team.
+  </Accordion>
+
+  <Accordion title="Do you charge per notification or per user?">
+    No. Billing is per workflow run, not per user or message. Subscribers are unlimited on paid plans.
+  </Accordion>
+
+  <Accordion title="Can I use Novu free of charge?">
+    Yes. Novu Cloud includes a Free plan with 10,000 workflow runs per month — no credit card required. You can also self-host the open-source Novu Project. See [Novu Cloud vs self-hosted](/community/self-hosted-and-novu-cloud).
+  </Accordion>
+
+  <Accordion title="Do you offer annual or volume discounts?">
+    Yes. Novu offers reduced annual pricing and volume-based tiers. Enterprise customers receive custom bundle pricing. Details are on the [pricing page](https://novu.co/pricing).
+  </Accordion>
+
+  <Accordion title="Which Novu deployment options affect billing?">
+    **Novu Cloud** is the managed service with subscription billing described on this page. The **Novu Project** is the open-source core you can run yourself at no license cost from Novu. **Enterprise self-hosted** adds SSO, RBAC, audit controls, and priority support with custom pricing. See [Novu Cloud vs self-hosted](/community/self-hosted-and-novu-cloud) and [pricing](https://novu.co/pricing).
   </Accordion>
 </AccordionGroup>
