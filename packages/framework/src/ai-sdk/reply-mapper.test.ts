@@ -5,8 +5,14 @@ import type { AiSdkResult } from './types';
 
 function fakeCtx() {
   const reply = vi.fn().mockResolvedValue({ messageId: 'm', platformThreadId: 'p' });
+  const typing = Object.assign(vi.fn().mockResolvedValue(undefined), {
+    stop: vi.fn().mockResolvedValue(undefined),
+  });
 
-  return { reply } as unknown as AgentContextBase & { reply: ReturnType<typeof vi.fn> };
+  return { reply, typing } as unknown as AgentContextBase & {
+    reply: ReturnType<typeof vi.fn>;
+    typing: ReturnType<typeof vi.fn> & { stop: ReturnType<typeof vi.fn> };
+  };
 }
 
 describe('isAiSdkResult', () => {
@@ -86,7 +92,7 @@ describe('deliverResult', () => {
     expect(ctx.reply).toHaveBeenCalledWith('answer');
   });
 
-  it('posts nothing when result.text is empty or whitespace', async () => {
+  it('clears typing when result.text is empty or whitespace', async () => {
     const ctx = fakeCtx();
     const result = {
       text: Promise.resolve('   '),
@@ -96,5 +102,6 @@ describe('deliverResult', () => {
     await deliverResult(result, ctx);
 
     expect(ctx.reply).not.toHaveBeenCalled();
+    expect(ctx.typing.stop).toHaveBeenCalledOnce();
   });
 });

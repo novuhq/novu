@@ -99,4 +99,86 @@ describe('toModelMessages', () => {
       },
     ]);
   });
+
+  it('collapses a resolved approval cycle to plain history once the conversation moves past it', () => {
+    const toolApproval = { approvalId: 'aitxt-1', toolCallId: 'toolu_1', name: 'issueRefund', input: { amount: 50 } };
+
+    const result = toModelMessages([
+      { role: 'user', type: 'message', content: 'refund $50 for order A1', createdAt: '1' },
+      {
+        role: 'agent',
+        type: 'card',
+        content: '',
+        richContent: { card: { type: 'card' }, toolApproval },
+        createdAt: '2',
+      },
+      {
+        role: 'system',
+        type: 'signal',
+        content: 'Denied issueRefund',
+        signalData: { type: 'tool-approval-response', payload: { approvalId: 'aitxt-1', approved: false } },
+        createdAt: '3',
+      },
+      { role: 'agent', type: 'message', content: 'The refund request was denied.', createdAt: '4' },
+      { role: 'user', type: 'message', content: 'ok now refund 30', createdAt: '5' },
+    ]);
+
+    expect(result).toEqual([
+      { role: 'user', content: 'refund $50 for order A1' },
+      { role: 'assistant', content: 'The refund request was denied.' },
+      { role: 'user', content: 'ok now refund 30' },
+    ]);
+  });
+
+  it('only reconstructs the cycle being resumed when approvals are chained', () => {
+    const first = { approvalId: 'a_1', toolCallId: 'toolu_1', name: 'lookupOrder', input: { id: 'A1' } };
+    const second = { approvalId: 'a_2', toolCallId: 'toolu_2', name: 'issueRefund', input: { amount: 200 } };
+
+    const result = toModelMessages([
+      { role: 'user', type: 'message', content: 'refund order A1', createdAt: '1' },
+      {
+        role: 'agent',
+        type: 'card',
+        content: '',
+        richContent: { card: { type: 'card' }, toolApproval: first },
+        createdAt: '2',
+      },
+      {
+        role: 'system',
+        type: 'signal',
+        content: 'Approved lookupOrder',
+        signalData: { type: 'tool-approval-response', payload: { approvalId: 'a_1', approved: true } },
+        createdAt: '3',
+      },
+      {
+        role: 'agent',
+        type: 'card',
+        content: '',
+        richContent: { card: { type: 'card' }, toolApproval: second },
+        createdAt: '4',
+      },
+      {
+        role: 'system',
+        type: 'signal',
+        content: 'Approved issueRefund',
+        signalData: { type: 'tool-approval-response', payload: { approvalId: 'a_2', approved: true } },
+        createdAt: '5',
+      },
+    ]);
+
+    expect(result).toEqual([
+      { role: 'user', content: 'refund order A1' },
+      {
+        role: 'assistant',
+        content: [
+          { type: 'tool-call', toolCallId: 'toolu_2', toolName: 'issueRefund', input: { amount: 200 } },
+          { type: 'tool-approval-request', approvalId: 'a_2', toolCallId: 'toolu_2' },
+        ],
+      },
+      {
+        role: 'tool',
+        content: [{ type: 'tool-approval-response', approvalId: 'a_2', approved: true }],
+      },
+    ]);
+  });
 });

@@ -78,6 +78,8 @@ export async function deliverResult(result: AiSdkResult, ctx: AgentContextBase):
   const text = (await result.text).trim();
 
   if (!text) {
+    await ctx.typing.stop();
+
     return;
   }
 

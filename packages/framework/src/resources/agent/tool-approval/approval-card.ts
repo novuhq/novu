@@ -14,12 +14,10 @@ export function defaultApprovalCard(params: { toolCall: AgentToolCall; actionIds
     title: 'Tool approval required',
     subtitle: summarise(params.toolCall),
     children: [
-      Actions({
-        children: [
-          Button({ id: params.actionIds.deny, label: 'Deny' }),
-          Button({ id: params.actionIds.approve, label: 'Approve', style: 'primary' }),
-        ],
-      }),
+      Actions([
+        Button({ id: params.actionIds.deny, label: 'Deny' }),
+        Button({ id: params.actionIds.approve, label: 'Approve', style: 'primary' }),
+      ]),
     ],
   });
 }
