@@ -87,6 +87,9 @@ describe('AgentInboundHandler', () => {
     const agentRepository = {
       findOne: overrides.agentFindOne ?? sinon.stub().resolves(null),
     };
+    const agentIntegrationRepository = {
+      updateOne: sinon.stub().resolves({ matched: 1, modified: 0 }),
+    };
     const environmentRepository = {
       findOne: sinon.stub().resolves(null),
     };
@@ -163,6 +166,7 @@ describe('AgentInboundHandler', () => {
       inboundDispatcher as any,
       outboundGateway as any,
       agentRepository as any,
+      agentIntegrationRepository as any,
       subscriberRepository as any,
       analyticsService as any,
       attachmentStorage as any,
@@ -187,6 +191,7 @@ describe('AgentInboundHandler', () => {
       channelEndpointRepository,
       managedAgentService,
       agentRepository,
+      agentIntegrationRepository,
       subscriberRepository,
       outboundGateway,
       inboundAck,
@@ -580,6 +585,56 @@ describe('AgentInboundHandler', () => {
       expect(bridgeExecutor.execute.called).to.equal(false);
     });
 
+    it('does not mark the integration connected on /start alone for the dashboard test identity (connect:)', async () => {
+      const connectPayload = { ...matchingStartPayload, subscriberId: 'connect:user-123' };
+      const { handler, agentIntegrationRepository } = makeHandler({
+        linkTelegramExecute: sinon
+          .stub()
+          .resolves({ created: true, subscriberId: 'connect:user-123', agentIdentifier: 'support-agent' }),
+        startCodeConsume: sinon.stub().resolves({ status: 'consumed', payload: connectPayload }),
+      });
+      const thread = makeTelegramThread();
+      const message = makeStartMessage('/start dashcode');
+
+      await handler.handle('agent1', telegramConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(agentIntegrationRepository.updateOne.called).to.equal(false);
+    });
+
+    it('marks the integration connected when the dashboard test identity sends a follow-up message after linking', async () => {
+      const { handler, agentIntegrationRepository } = makeHandler();
+      const thread = makeTelegramThread();
+      const message = makeStartMessage('hello from onboarding test');
+
+      await handler.handle('agent1', telegramConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(agentIntegrationRepository.updateOne.calledOnce).to.equal(true);
+      const [filter, update] = agentIntegrationRepository.updateOne.firstCall.args;
+      expect(filter).to.deep.equal({
+        _environmentId: 'env1',
+        _organizationId: 'org1',
+        _agentId: 'agent1',
+        _integrationId: 'integration1',
+        connectedAt: null,
+      });
+      expect(update.$set.connectedAt).to.be.instanceOf(Date);
+    });
+
+    it('does not mark the integration connected (Layer 2) when a genuine end user links via /start', async () => {
+      const { handler, agentIntegrationRepository } = makeHandler({
+        linkTelegramExecute: sinon
+          .stub()
+          .resolves({ created: true, subscriberId: 'ext-sub-1', agentIdentifier: 'support-agent' }),
+        startCodeConsume: sinon.stub().resolves({ status: 'consumed', payload: matchingStartPayload }),
+      });
+      const thread = makeTelegramThread();
+      const message = makeStartMessage('/start enduser');
+
+      await handler.handle('agent1', telegramConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(agentIntegrationRepository.updateOne.called).to.equal(false);
+    });
+
     it('replies with wrong-bot message when start code targets a different integration', async () => {
       const { handler, bridgeExecutor, linkTelegramChatToSubscriber } = makeHandler({
         startCodeConsume: sinon.stub().resolves({
@@ -622,6 +677,32 @@ describe('AgentInboundHandler', () => {
 
       expect(thread.post.firstCall.args[0]).to.match(/already connected/i);
       expect(bridgeExecutor.execute.called).to.equal(false);
+    });
+
+    it('does not mark connectedAt when a stale code re-tap finds an existing dashboard (connect:) endpoint', async () => {
+      const { handler, agentIntegrationRepository } = makeHandler({
+        startCodeConsume: sinon.stub().resolves({ status: 'missing' }),
+        findTelegramEndpointByIdentity: sinon.stub().resolves({ subscriberId: 'connect:user-123' }),
+      });
+      const thread = makeTelegramThread();
+      const message = makeStartMessage('/start reused');
+
+      await handler.handle('agent1', telegramConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(agentIntegrationRepository.updateOne.called).to.equal(false);
+    });
+
+    it('does not self-heal connectedAt when the existing endpoint belongs to a genuine end user', async () => {
+      const { handler, agentIntegrationRepository } = makeHandler({
+        startCodeConsume: sinon.stub().resolves({ status: 'missing' }),
+        findTelegramEndpointByIdentity: sinon.stub().resolves({ subscriberId: 'ext-sub-1' }),
+      });
+      const thread = makeTelegramThread();
+      const message = makeStartMessage('/start reused');
+
+      await handler.handle('agent1', telegramConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(agentIntegrationRepository.updateOne.called).to.equal(false);
     });
 
     it('falls through to normal inbound processing for plain Telegram messages (no /start)', async () => {

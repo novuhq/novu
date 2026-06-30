@@ -1,0 +1,50 @@
+---
+title: 'Postmark'
+description: 'Learn how to use the Postmark provider to send email notifications using Novu'
+---
+
+
+It is possible to use [Postmark](https://postmarkapp.com/) as a provider to send transactional emails to your customers using the Novu Platform with a single API.
+
+## Getting Started
+
+The first step to use the Postmark provider in the email channel is to create a Postmark account and add the personal API key to the Postmark integration on the Novu platform.
+
+## Getting the API Key
+
+- To find the Postmark API key, log into the personal Postmark account and navigate to the servers page.
+- After selecting the server to use, the API key (referred to as "Server API tokens") will be in the "API Tokens" section of the server chosen.
+
+## Authenticating the sender's identity
+
+Due to the latest regulatory changes regarding SPAM rules and email fraud, it is needed to authenticate the sender's identity before sending emails on a large scale. Most of the providers, including Postmark, require authentication to unlock the possibility of sending emails.
+
+Postmark allows the authentication of the sender's identity using one of the following methods:
+
+- [Single Sender Verification](https://account.postmarkapp.com/signatures/new) - This is the easiest way to authenticate the sender's identity.
+- [Entire Domain Authentication](https://postmarkapp.com/support/article/1046-how-do-i-verify-a-domain#:~:text=be%20verified%20automatically.-,Navigate%20to%20Sender%20Signatures.,to%20your%20DNS%2C%20choose%20Verify.) - This is recommended for sending emails from multiple accounts under the same domain.
+
+## Create a Postmark integration with Novu
+
+- Visit the [Integrations](https://dashboard.novu.co/integrations?utm_campaign=docs-postmark) page on Novu.
+- Click on Add a Provider.
+- Select Postmark service.
+- Enter the Postmark API key.
+- Fill in the `From email address` field using the authenticated email from the previous step.
+- Click on the `Disabled` button and mark it as `Active`.
+- Click on the **Update** button.
+- Now is possible to send notifications using Postmark in Novu.
+
+## Next Steps
+
+<Columns cols={2}>
+  <Card title="Configure bcc, cc, and reply-to" href="/platform/integrations/email#sending-email-overrides">
+    Learn how to configure bcc, cc, and reply-to for your email notifications using email overrides
+  </Card>
+  <Card title="Sending email attachments" href="/platform/integrations/email#sending-email-attachments">
+    Learn how to send attachments with email notifications
+  </Card>
+  <Card title="Use different email integration" href="/platform/integrations/email#sending-email-overrides">
+    Learn how to use different email provider integrations to be used to send emails
+  </Card>
+</Columns>

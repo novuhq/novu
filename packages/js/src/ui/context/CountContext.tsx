@@ -1,6 +1,7 @@
-import { Accessor, createContext, createEffect, createMemo, createSignal, ParentProps, useContext } from 'solid-js';
+import { Accessor, createContext, createEffect, createMemo, createSignal, onCleanup, ParentProps, useContext } from 'solid-js';
+import { NOTIFICATION_COUNT_SYNC_EVENTS } from '../../notifications/count-sync-events';
 import { Notification, NotificationFilter, SeverityLevelEnum } from '../../types';
-import { checkNotificationDataFilter, checkNotificationTagFilter } from '../../utils/notification-utils';
+import { checkNotificationMatchesFilter } from '../../utils/notification-utils';
 import { getTagsFromTab } from '../helpers';
 import { useNovuEvent } from '../helpers/useNovuEvent';
 import { useWebSocketEvent } from '../helpers/useWebSocketEvent';
@@ -32,50 +33,113 @@ export const CountProvider = (props: ParentProps) => {
   });
   const [unreadCounts, setUnreadCounts] = createSignal(new Map<string, number>());
   const [newNotificationCounts, setNewNotificationCounts] = createSignal(new Map<string, number>());
+  let refreshGeneration = 0;
 
-  const updateTabCounts = async () => {
-    if (tabs().length === 0) {
-      return;
-    }
-    const filters = tabs().map((tab) => ({
-      tags: getTagsFromTab(tab),
+  const emptySeverityCounts = (): Record<string, number> => ({
+    [SeverityLevelEnum.HIGH]: 0,
+    [SeverityLevelEnum.MEDIUM]: 0,
+    [SeverityLevelEnum.LOW]: 0,
+    [SeverityLevelEnum.NONE]: 0,
+  });
+
+  const refreshCounts = async () => {
+    const generation = ++refreshGeneration;
+    const novu = novuAccessor();
+    const bellFilters = [
+      SeverityLevelEnum.HIGH,
+      SeverityLevelEnum.MEDIUM,
+      SeverityLevelEnum.LOW,
+      SeverityLevelEnum.NONE,
+    ].map((severity) => ({
       read: false,
       archived: false,
       snoozed: false,
-      data: tab.filter?.data,
-      severity: tab.filter?.severity,
+      severity,
     }));
-    const { data } = await novuAccessor().notifications.count({ filters });
-    if (!data) {
+
+    const currentTabs = tabs();
+    const tabFilters =
+      currentTabs.length > 0
+        ? currentTabs.map((tab) => ({
+            tags: getTagsFromTab(tab),
+            read: false,
+            archived: false,
+            snoozed: false,
+            data: tab.filter?.data,
+            severity: tab.filter?.severity,
+          }))
+        : null;
+
+    const [bellResult, tabResult] = await Promise.all([
+      novu.notifications.count({ filters: bellFilters }),
+      tabFilters ? novu.notifications.count({ filters: tabFilters }) : Promise.resolve(null),
+    ]);
+
+    if (generation !== refreshGeneration) {
       return;
     }
 
-    const newMap = new Map();
-    const { counts } = data;
-    for (let i = 0; i < counts.length; i += 1) {
-      const tagsKey = createKey({
-        tags: counts[i].filter.tags,
-        data: counts[i].filter.data,
-        severity: counts[i].filter.severity,
-      });
-      newMap.set(tagsKey, data?.counts[i].count);
+    if (bellResult.data) {
+      const severity = emptySeverityCounts();
+      let total = 0;
+
+      for (const item of bellResult.data.counts) {
+        const filterSeverity = item.filter.severity;
+        const severityKey = Array.isArray(filterSeverity) ? filterSeverity[0] : filterSeverity;
+
+        if (severityKey && severityKey in severity) {
+          severity[severityKey] = item.count;
+          total += item.count;
+        }
+      }
+
+      setUnreadCount({ total, severity });
     }
 
-    setUnreadCounts(newMap);
+    if (tabResult?.data) {
+      const newMap = new Map<string, number>();
+
+      for (let i = 0; i < tabResult.data.counts.length; i += 1) {
+        const countItem = tabResult.data.counts[i];
+        const tagsKey = createKey({
+          tags: countItem.filter.tags,
+          data: countItem.filter.data,
+          severity: countItem.filter.severity,
+        });
+        newMap.set(tagsKey, countItem.count);
+      }
+
+      setUnreadCounts(newMap);
+    }
   };
 
   createEffect(() => {
     // read the novu instance to trigger the effect
     novuAccessor();
-    updateTabCounts();
+    refreshCounts();
   });
 
   useWebSocketEvent({
     event: 'notifications.unread_count_changed',
     eventHandler: (data) => {
       setUnreadCount(data.result);
-      updateTabCounts();
+      refreshCounts();
     },
+  });
+
+  createEffect(() => {
+    const novu = novuAccessor();
+    const cleanups = NOTIFICATION_COUNT_SYNC_EVENTS.map((event) =>
+      novu.on(event, (payload) => {
+        if ('error' in payload && payload.error) {
+          return;
+        }
+
+        refreshCounts();
+      })
+    );
+
+    onCleanup(() => cleanups.forEach((cleanup) => cleanup()));
   });
 
   useNovuEvent({
@@ -149,47 +213,42 @@ export const CountProvider = (props: ParentProps) => {
       if (currentTabs.length > 0) {
         for (const tab of currentTabs) {
           const tabTags = getTagsFromTab(tab);
-          const tabDataFilterCriteria = tab.filter?.data;
-          const tabSeverityFilterCriteria = tab.filter?.severity;
+          const tabFilter: NotificationFilter = {
+            tags: tabTags,
+            read: false,
+            archived: false,
+            snoozed: false,
+            data: tab.filter?.data,
+            severity: tab.filter?.severity,
+          };
 
-          const matchesTagFilter = checkNotificationTagFilter(notification.tags, tabTags);
-          const matchesDataFilterCriteria = checkNotificationDataFilter(notification.data, tabDataFilterCriteria);
+          if (!checkNotificationMatchesFilter(notification, tabFilter)) {
+            continue;
+          }
 
-          const matchesSeverityFilterCriteria =
-            !tabSeverityFilterCriteria ||
-            (Array.isArray(tabSeverityFilterCriteria) && tabSeverityFilterCriteria.length === 0) ||
-            (Array.isArray(tabSeverityFilterCriteria) && tabSeverityFilterCriteria.includes(notification.severity)) ||
-            (!Array.isArray(tabSeverityFilterCriteria) && tabSeverityFilterCriteria === notification.severity);
+          const filterKey = createKey({
+            tags: tabTags,
+            data: tab.filter?.data,
+            severity: tab.filter?.severity,
+          });
 
-          if (matchesTagFilter && matchesDataFilterCriteria && matchesSeverityFilterCriteria) {
-            const filterKey = createKey({
-              tags: tabTags,
-              data: tabDataFilterCriteria,
-              severity: tabSeverityFilterCriteria,
-            });
-
-            if (!processedFilters.has(filterKey)) {
-              processedFilters.add(filterKey);
-              updateNewNotificationCountsOrCache(
-                tab.label,
-                notification,
-                tabTags,
-                tabDataFilterCriteria,
-                tabSeverityFilterCriteria
-              );
-            }
+          if (!processedFilters.has(filterKey)) {
+            processedFilters.add(filterKey);
+            updateNewNotificationCountsOrCache(
+              tab.label,
+              notification,
+              tabTags,
+              tab.filter?.data,
+              tab.filter?.severity
+            );
           }
         }
       } else {
-        // No tabs are defined. Apply to default (no tags, no data) filter.
         updateNewNotificationCountsOrCache('', notification, [], undefined, undefined);
       }
-    },
-  });
 
-  useWebSocketEvent({
-    event: 'notifications.notification_received',
-    eventHandler: updateTabCounts,
+      await refreshCounts();
+    },
   });
 
   const resetNewNotificationCounts = (key: string) => {

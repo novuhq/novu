@@ -72,6 +72,24 @@ export function getPreferredClaudeManagedIntegration(
   return getClaudeManagedAgentIntegrations(integrations, providerId)[0];
 }
 
+export function partitionClaudeManagedIntegrations(integrations: IIntegration[]): {
+  userIntegrations: IIntegration[];
+  demoIntegrations: IIntegration[];
+} {
+  const userIntegrations: IIntegration[] = [];
+  const demoIntegrations: IIntegration[] = [];
+
+  for (const integration of integrations) {
+    if (isDemoIntegration(integration.providerId)) {
+      demoIntegrations.push(integration);
+    } else {
+      userIntegrations.push(integration);
+    }
+  }
+
+  return { userIntegrations, demoIntegrations };
+}
+
 export function isDemoManagedClaudeIntegrationSelected(
   integrations: IIntegration[] | undefined,
   selectedIntegrationId: string | undefined

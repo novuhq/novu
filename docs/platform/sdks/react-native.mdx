@@ -1,0 +1,162 @@
+---
+title: 'Quickstart'
+description: 'Learn how to add Novu powered Inbox to your React Native app'
+---
+
+
+You can build your own Inbox UI with Novu's React Native hooks SDK. Novu will take care of data fetching will help you build a fully custom notification-center UI.
+
+<Note>
+  View our [React Native Expo Template](https://github.com/novuhq/novu-expo) for a live example of
+  the inbox in action.
+</Note>
+
+<Steps>
+  <Step title="Install the React Native hooks SDK">
+  ```bash
+  npm install @novu/react-native
+  ```
+  </Step>
+
+  <Step title="Add the Novu provider to your react-native file">
+    The `NovuProvider` component is used to provide the Novu context to the inbox hooks. Make sure that the provider is wrapping your Inbox hook usages at the component tree.
+
+<Tabs>
+  <Tab title="US Region">
+```tsx
+import { NovuProvider } from "@novu/react-native";
+
+function Layout() {
+  return (
+    <NovuProvider
+      subscriber="YOUR_SUBSCRIBER_ID"
+      applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+    >
+      {/* Your app components where you want to use the hooks */}
+    </NovuProvider>
+  );
+}
+```
+  </Tab>
+
+  <Tab title="EU Region">
+```tsx
+import { NovuProvider } from "@novu/react-native";
+
+function Layout() {
+  return (
+    <NovuProvider
+      subscriber="YOUR_SUBSCRIBER_ID"
+      applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+      apiUrl="https://eu.api.novu.co"
+      socketUrl="wss://eu.socket.novu.co"
+    >
+      {/* Your app components where you want to use the hooks */}
+      <YourCustomInbox />
+    </NovuProvider>
+  );
+}
+```
+  </Tab>
+  <Tab title="HMAC Encryption">
+    <Note>
+      Read more about [HMAC Encryption](/platform/inbox/prepare-for-production#secure-your-inbox-with-hmac-encryption).
+    </Note>
+
+    ```tsx
+
+    function App() {
+      return (
+        <NovuProvider
+          subscriber="SUBSCRIBER_ID"
+          applicationIdentifier="APPLICATION_IDENTIFIER"
+          subscriberHash="SUBSCRIBER_HASH_HMAC_ENCRYPTION"
+        >
+          {/* Your app components */}
+        </NovuProvider>
+      );
+    }
+    ```
+
+  </Tab>
+</Tabs>
+    <Note>
+      You can find the `applicationIdentifier` in the Novu Dashboard under the [API keys page](https://dashboard.novu.co/api-keys).
+      The `subscriberId` is the unique identifier of the user in your application, learn more about subscribers [here](/platform/concepts/subscribers).
+    </Note>
+  </Step>
+
+   <Step title="Build your own inbox UI">
+```tsx
+import {
+  FlatList,
+  View,
+  Text,
+  ActivityIndicator,
+  RefreshControl,
+} from "react-native";
+
+import { useNotifications, Notification } from "@novu/react-native";
+
+function YourCustomInbox() {
+  const { notifications, isLoading, fetchMore, hasMore, refetch } =
+    useNotifications();
+
+  const renderItem = ({ item }) => (
+    <View>
+      <Text>{item.body}</Text>
+    </View>
+  );
+
+  const renderFooter = () => {
+    if (!hasMore) return null;
+
+    return (
+      <View>
+        <ActivityIndicator size="small" color="#2196F3" />
+      </View>
+    );
+  };
+
+  const renderEmpty = () => (
+    <View>
+      <Text>No updates available</Text>
+    </View>
+  );
+
+  if (isLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#2196F3" />
+      </View>
+    );
+  }
+
+  return (
+    <FlatList
+      data={notifications}
+      renderItem={renderItem}
+      keyExtractor={(item) => item.id}
+      contentContainerStyle={styles.listContainer}
+      onEndReached={fetchMore}
+      onEndReachedThreshold={0.5}
+      ListFooterComponent={renderFooter}
+      ListEmptyComponent={renderEmpty}
+      refreshControl={
+        <RefreshControl
+          refreshing={isLoading}
+          onRefresh={refetch}
+          colors={["#2196F3"]}
+        />
+      }
+    />
+  );
+}
+```
+
+  </Step>
+
+  <Step title="Trigger a notification">
+    Now that you have the inbox component added to your application, you can trigger an Inbox notification to see it in action.
+  </Step>
+</Steps>

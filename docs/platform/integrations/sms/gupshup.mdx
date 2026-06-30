@@ -1,0 +1,91 @@
+---
+title: 'Gupshup'
+description: 'Learn how to use the Gupshup SMS provider to send SMS notifications using Novu'
+---
+
+You can use the [Gupshup](https://www.gupshup.io/) provider to send SMS messages to your customers using the Novu Platform with a single API to create multi-channel experiences.
+
+## Getting Started
+
+To use the Gupshup provider in the SMS channel, the first step is to create a Gupshup account and add the Account User Id and Password to the Gupshup integration on the Novu platform.
+
+## What is User id and Password?
+
+- `User Id` : The account number provided by the Enterprise SMS GupShup.
+- `Password` : Password is provided by Gupshup for authentication of user id. The password must be the same as used to log on to the Enterprise SMS GupShup website.
+
+## Creating a gupshup integration with Novu
+
+- Visit the [Integrations](https://dashboard.novu.co/integrations?utm_campaign=docs-sms-gupshup) page on Novu.
+- Click the **Connect** button on the top right corner of the page.
+- Select SMS and locate **Gupshup** and click on the **Connect** button.
+- Choose environment from top right corner in which you want to create the integration.
+- Enter the `User id`.
+- Enter the `Password`.
+- Make sure **Active Integration** toggle is on to use this integration.
+- If you want to use this integration, then mark this integration as `primary` using **Primary Integration** toggle.
+- Click on the **Create Integration** button.
+
+Now it is possible to send SMS notifications using Gupshup in Novu.
+
+## Using Gupshup templateId
+
+Novu has its own SMS editor for writing SMS template. To use premade Gupshup templates, providers overrides can be used.
+
+<Note>
+  Sending `customData` field in overrides to send Gupshup template will work
+  only in following cases: 
+
+  - if workflow is triggered to only one subscriber
+  - if workflow is triggered to multiple subscribers or topic but Gupshup
+  template does not have any dynamic variables related to subscriber attributes
+  like `firstName`, `lastName`, `phone`, etc as same overrides will be applied
+  to all subscribers.
+</Note>
+
+<Tabs>
+  <Tab title="Node.Js">
+```typescript 
+import { Novu } from '@novu/api';
+
+const novu = new Novu({ secretKey: "NOVU_SECRET_KEY" });
+
+await novu.trigger({
+  workflowId: "WORKFLOW_ID",
+  to: "SUBSCRIBER_ID",
+  payload: {
+    key: "value",
+  },
+  overrides: {
+    providers: {
+      gupshup: {
+        principalEntityId: "principal-entity-id",
+        dltTemplateId: "dlt-template-id",
+      },
+    },
+  },
+});
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl --location 'https://api.novu.co/v1/events/trigger' \
+--header 'Content-Type: application/json' \
+--header 'Accept: application/json' \
+--header 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+--data '{
+    "name": "workflowIdentifier",
+    "to":  ["subscriberId"],
+    "payload": {},
+    "overrides": {
+        "providers": {
+            "gupshup": {
+              "principalEntityId": "principal-entity-id",
+              "dltTemplateId": "dlt-template-id"
+            }
+        }
+    }
+}'
+```
+  </Tab>
+</Tabs>

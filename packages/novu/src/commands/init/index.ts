@@ -4,6 +4,7 @@ import { bold, cyan, green, red } from 'picocolors';
 import type { InitialReturnValue } from 'prompts';
 import prompts from 'prompts';
 import { AnalyticService } from '../../services/analytics.service';
+import { isLoopbackHost, requestApiJson } from '../shared/novu-http';
 import { createApp } from './create-app';
 import { isFolderEmpty } from './helpers/is-folder-empty';
 import { validateNpmName } from './helpers/validate-pkg';
@@ -103,37 +104,28 @@ export async function init(program: IInitCommandOptions, anonymousId?: string): 
     program.secretKey = '';
   } else {
     try {
-      const response = await fetch(`${program.apiUrl}/v1/users/me`, {
-        headers: {
-          Authorization: `ApiKey ${program.secretKey}`,
-        },
+      const authHeaders = { Authorization: `ApiKey ${program.secretKey}` };
+      const user = await requestApiJson<{ _id: string }>(program.apiUrl, '/users/me', { headers: authHeaders });
+
+      userId = user._id;
+
+      const environment = await requestApiJson<{ identifier: string }>(program.apiUrl, '/environments/me', {
+        headers: authHeaders,
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch api key details');
-      }
-
-      const user = await response.json();
-
-      userId = user.data?._id;
-
-      const integrationsResponse = await fetch(`${program.apiUrl}/v1/environments/me`, {
-        headers: {
-          Authorization: `ApiKey ${program.secretKey}`,
-        },
-      });
-
-      const environment = await integrationsResponse.json();
-      applicationId = environment.data.identifier;
+      applicationId = environment.identifier;
 
       analytics.alias({
         previousId: anonymousId,
         userId,
       });
     } catch (error) {
-      console.error(
-        `Failed to verify your secret key against ${program.apiUrl}. For EU instances use --api-url https://eu.api.novu.co or provide the correct secret key`
-      );
+      const message = error instanceof Error ? error.message : String(error);
+
+      console.error(`Failed to verify your secret key against ${program.apiUrl}: ${message}`);
+
+      if (!isLoopbackHost(program.apiUrl)) {
+        console.error('For EU instances use --api-url https://eu.api.novu.co.');
+      }
 
       process.exit(1);
     }

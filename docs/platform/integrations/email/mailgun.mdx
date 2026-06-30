@@ -1,0 +1,59 @@
+---
+title: 'Mailgun'
+description: 'Learn how to use the Mailgun provider to send email notifications using Novu'
+---
+
+
+You can use the [Mailgun](https://mailgun.com/) provider to send transactional emails to your customers using the Novu Platform with a single API to create multi-channel experiences.
+
+## Getting Started
+
+To use the Mailgun provider in the email channel, you will need to create a Mailgun account and add your API key and domain name to the Mailgun integration on the Novu platform.
+
+## Generating an API Key
+
+To generate a new API key in Mailgun, you can follow these steps:
+
+- [Sign up](https://signup.mailgun.com/new/signup) or [Log in](https://login.mailgun.com/login/) to your Mailgun account.
+- Click on the **Profile** section in the top right corner of the screen, and then click "API Keys" from the drop-down menu.
+- On the [API Keys](https://app.mailgun.com/app/account/security/api_keys) page, copy the generated **Private API Key**
+
+## Adding a new domain name
+
+Mailgun recommends that you add a subdomain as a domain name. To do so:
+
+- Visit the page to add a [domain name](https://app.mailgun.com/app/sending/domains/new).
+  - During this process, you will need to choose a region for the domain name which is between `US` and `EU`. The default is `US`.
+- Follow the [instructions](https://documentation.mailgun.com/en/latest/user_manual.html#verifying-your-domain-1) to verify the domain name.
+
+## Creating a Mailgun integration with Novu
+
+- Visit the [Integrations](https://dashboard.novu.co/integrations?utm_campaign=docs-mailgun) page on Novu.
+- Click on Add a Provider.
+- Select Mailgun service.
+- Enter your Mailgun API Key.
+- Enter your Base URL.
+  - For domains created in the EU region, the base URL is: `https://api.eu.mailgun.net/`
+  - Otherwise, leave the base URL blank.
+- Fill in the `Username`.
+- Fill in the `Domain name` registered on Mailgun.
+- Fill in the `From email address` field using the authenticated email from the previous step.
+- Fill in the `Sender's name`.
+- Click on the `Disabled` button and mark it as `Active`.
+- Click on the **Update** button.
+- You should now be able to send notifications using Mailgun in Novu.
+
+## Next Steps
+
+<Columns cols={2}>
+  <Card title="Configure bcc, cc, and reply-to" href="/platform/integrations/email#sending-email-overrides">
+    Learn how to configure bcc, cc, and reply-to for your email notifications using email overrides
+  </Card>
+  <Card title="Sending email attachments" href="/platform/integrations/email#sending-email-attachments">
+    Learn how to send attachments with email notifications
+  </Card>
+  <Card title="Use different email integration" href="/platform/integrations/email#sending-email-overrides">
+    Learn how to use different email provider integrations to be used to send emails
+  </Card>
+</Columns>
+

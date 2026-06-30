@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { createHash } from '@novu/application-generic';
 import { EnvironmentRepository, ICredentialsEntity, IntegrationEntity, SubscriberRepository } from '@novu/dal';
 import { ChatProviderIdEnum, ContextPayload } from '@novu/shared';
+import { buildAgentApiRootUrl } from '../../../../agents/shared/util/agent-api-root-url';
 import { areHexDigestsEqual } from '../../../../shared/helpers/timing-safe-equal';
 import { CHAT_OAUTH_CALLBACK_PATH } from '../chat-oauth.constants';
 import { encodeOAuthState, splitOAuthState } from '../chat-oauth-state.util';
@@ -69,13 +70,7 @@ export class GenerateMsTeamsOauthUrl {
         throw new BadRequestException('subscriberId is required for link_user mode');
       }
 
-      const { tenantId } = credentials;
-
-      if (!tenantId) {
-        throw new NotFoundException('MS Teams integration missing tenantId');
-      }
-
-      return this.getLinkUserOAuthUrl(clientId, tenantId, secureState);
+      return this.getLinkUserOAuthUrl(clientId, secureState);
     }
 
     return this.getAdminConsentUrl(clientId, secureState);
@@ -118,7 +113,13 @@ export class GenerateMsTeamsOauthUrl {
     return `${this.MS_TEAMS_ADMIN_CONSENT_URL}${oauthParams.toString()}`;
   }
 
-  private getLinkUserOAuthUrl(clientId: string, tenantId: string, secureState: string): string {
+  /*
+   * Multi-tenant link_user: authorize against the `/organizations` authority rather than the bot's
+   * home tenant, so a user signs in within their OWN tenant (the bot's home tenant or any external
+   * customer tenant that has consented to the app). The user's actual tenant is read from the
+   * returned id_token (`tid` claim) in the callback.
+   */
+  private getLinkUserOAuthUrl(clientId: string, secureState: string): string {
     const oauthParams = new URLSearchParams({
       client_id: clientId,
       response_type: 'code',
@@ -128,7 +129,7 @@ export class GenerateMsTeamsOauthUrl {
       response_mode: 'query',
     });
 
-    return `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/authorize?${oauthParams.toString()}`;
+    return `https://login.microsoftonline.com/organizations/oauth2/v2.0/authorize?${oauthParams.toString()}`;
   }
 
   private async createSecureState(
@@ -189,12 +190,7 @@ export class GenerateMsTeamsOauthUrl {
   }
 
   static buildRedirectUri(): string {
-    if (!process.env.API_ROOT_URL) {
-      throw new Error('API_ROOT_URL environment variable is required');
-    }
-    const baseUrl = process.env.API_ROOT_URL.replace(/\/$/, ''); // Remove trailing slash
-
-    return `${baseUrl}${CHAT_OAUTH_CALLBACK_PATH}`;
+    return `${buildAgentApiRootUrl()}${CHAT_OAUTH_CALLBACK_PATH}`;
   }
 
   private async getIntegrationCredentials(integration: IntegrationEntity): Promise<ICredentialsEntity> {

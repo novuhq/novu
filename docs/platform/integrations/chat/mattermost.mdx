@@ -1,0 +1,57 @@
+---
+title: 'Mattermost'
+description: 'Learn about how to use Mattermost provider for chat notifications'
+---
+
+When using Mattermost, you will have to store the integration credentials within the subscriber entity. Mattermost supports two ways to do this:
+
+1. Using the **Mattermost Webhook** integration.
+2. Using the **Mattermost Bot** integration.
+
+### Mattermost Webhook Integration
+
+To integrate Mattermost with your application using the Mattermost Webhook integration, follow these steps:
+
+1. Create an incoming webhook in Mattermost. This can be done by going to the **Integrations** page and clicking on the **Incoming Webhooks** tab.
+2. Click on the **Add Incoming Webhook** button and configure the webhook settings. Be sure to select the channel where you want to receive notifications.
+3. Click on the **Save** button to generate a webhook URL.
+
+Once you have the webhook URL, you can store it in the subscriber entity in your application. This will allow you to send notifications to Mattermost using the following code:
+
+```typescript
+import { Novu } from '@novu/api';
+import { ChatOrPushProviderEnum } from "@novu/api/models/components";
+
+const novu = new Novu({
+  secretKey: "<NOVU_SECRET_KEY>",
+  // Required if using EU region
+  // serverURL: "https://eu.api.novu.co",
+});
+
+await novu.subscribers.credentials.update(
+  {
+    providerId: ChatOrPushProviderEnum.Mattermost,
+    credentials: {
+      webhookUrl: "<WEBHOOK_URL>",
+    },
+    integrationIdentifier: "mattermost-MnGLxp8uy",
+  },
+  "subscriberId"
+);
+```
+
+## SDK trigger example
+
+Send a notification to mattermost using the subscriber ID and workflow ID via `@novu/api` sdk
+
+```typescript
+await novu.trigger({
+  workflowId: "workflowId",
+  to: {
+    subscriberId: 'subscriberId',
+  },
+  payload: {
+    message: 'This is a notification from my application!',
+  },
+});
+```

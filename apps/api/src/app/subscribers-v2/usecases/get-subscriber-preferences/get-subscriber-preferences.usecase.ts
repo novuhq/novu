@@ -25,6 +25,7 @@ import {
   GetSubscriberGlobalPreference,
   GetSubscriberGlobalPreferenceCommand,
 } from '../../../subscribers/usecases/get-subscriber-global-preference';
+import { assertGetPreferencesEnabled } from '../../../subscribers/utils/assert-get-preferences-enabled';
 import {
   GetSubscriberPreference,
   GetSubscriberPreferenceCommand,
@@ -47,6 +48,8 @@ export class GetSubscriberPreferences {
   ) {}
 
   async execute(command: GetSubscriberPreferencesCommand): Promise<GetSubscriberPreferencesDto> {
+    await assertGetPreferencesEnabled(this.featureFlagsService, command.organizationId, command.environmentId);
+
     const subscriber = await this.subscriberRepository.findBySubscriberId(
       command.environmentId,
       command.subscriberId,

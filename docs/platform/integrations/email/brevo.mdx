@@ -1,0 +1,50 @@
+---
+title: 'Brevo'
+description: 'Learn how to use the Sendinblue provider to send email notifications using Novu'
+---
+
+
+You can use the [Brevo](https://www.brevo.com/) provider to send transactional emails to your customers using the Novu Platform with a single API.
+
+## Getting Started
+
+To use the Brevo provider in the email channel, you will need to create a Brevo account and add your API key to the Brevo integration on the Novu platform.
+
+## Finding the API Key
+
+- To find your Brevo API key, log into your Brevo account and navigate to the [API Keys](https://account.brevo.com/advanced/api) page.
+
+## Authenticating your sender identity
+
+Before you can send emails on a large scale, you will need to authenticate your sender's identity. This is due to the latest regulatory changes regarding SPAM rules and email fraud. Most of the providers including Brevo require you to authenticate your sender identity before you can send emails.
+
+Brevo allows you to authenticate your sender identity using one of the following methods:
+
+- [Single Sender Verification](https://account.brevo.com/senders) - This is the easiest way to authenticate your sender identity.
+- [Entire Domain Authentication](https://help.brevo.com/hc/en-us/articles/12163873383186-Authenticate-your-domain-with-Brevo-Brevo-code-DKIM-record-DMARC-record) - This is recommended if you are sending emails from multiple accounts under your domain.
+
+## Creating a Brevo integration with Novu
+
+- Visit the [Integrations store](https://dashboard.novu.co/integrations?utm_campaign=docs-brevo) on the Novu web dashboard.
+- Click on Add a Provider.
+- Select Brevo service.
+- Enter your Brevo API key.
+- Fill in the `From email address` field using the authenticated email from the previous step.
+- Click on the `Disabled` button and mark it as `Active`.
+- Click on the **Update** button.
+- You should now be able to send notifications using Brevo in Novu.
+
+## Next Steps
+
+<Columns cols={2}>
+  <Card title="Configure bcc, cc, and reply-to" href="/platform/integrations/email#sending-email-overrides">
+    Learn how to configure bcc, cc, and reply-to for your email notifications using email overrides
+  </Card>
+  <Card title="Sending email attachments" href="/platform/integrations/email#sending-email-attachments">
+    Learn how to send attachments with email notifications
+  </Card>
+  <Card title="Use different email integration" href="/platform/integrations/email#sending-email-overrides">
+    Learn how to use different email provider integrations to be used to send emails
+  </Card>
+</Columns>
+

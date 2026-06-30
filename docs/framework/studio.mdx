@@ -1,0 +1,88 @@
+---
+title: 'Studio'
+description: 'Learn how to use the Local Studio companion app for Novu Framework SDK'
+---
+
+
+The Local Studio is a companion app to the Novu Framework SDK. Its goal is to provide a local environment that lives near your code.
+
+To launch the Local Studio locally you can run the following command in your terminal:
+
+<Warning>
+  Local Studio currently works only in the **Chrome** browser
+</Warning>
+
+```bash
+npx novu@latest dev
+```
+
+<Note>
+  Learn how to use the `novu` CLI package and the available [CLI flags](#novu-cli-flags) to use for
+  customization
+</Note>
+
+The Dev Studio will be started by default on port 2022, and accessible via: http://localhost:2022
+
+After successfully connecting the Studio to your local [Bridge Endpoint](/framework/endpoint), you will be able to preview in real time any workflows and content defined in your code. This is ideal for quick prototyping, debugging, styling, and adjusting your workflows before syncing them to Novu Cloud.
+
+## Control and Payload forms
+
+You can quickly modify the Step Controls and workflow Payload to preview your workflow's different states. This is helpful to quickly debug how the email will behave in case of a missing control, or iterate more complex content structures.
+
+## Syncing State
+
+Syncing state to your Production or Development environment in Novu, is recommended to do via your CI pipeline. However, a sync can be made using the Local Studio for quick experimentation.
+
+Click on the Sync button at the top right corner of the navigation bar. This will open the Sync State modal.
+
+## Tunnel URL
+
+By default the Novu CLI will automatically create a tunnel URL connected to your local computer. This tunnel will proxy any workflow engine requests on our cloud to your local machine.
+
+## Connect Studio to your local server
+
+By default, the Studio will connect to the Novu [Bridge Endpoint](/framework/endpoint) running on your local machine at `http://localhost:4000/api/novu` if your server is running on a different port or the workflows are served from a different endpoint path you can use the following optional parameters to connect:
+
+```bash
+npx novu@latest dev --port <YOUR_SERVER_PORT> --route <YOUR_NOVU_ROUTE_PATH>
+```
+
+- **YOUR_SERVER_PORT** - This accepts the port number where your server is running. Defaults to 4000.
+- **YOUR_NOVU_ROUTE_PATH** - This is the mounted path of the framework `serve` function. Defaults to `/api/novu`.
+
+## Novu CLI flags
+
+The Novu CLI command `npx novu@latest dev` supports a number of flags:
+
+| Flag | Long form usage example | Description                 | Default value                |
+| ---- | ----------------------- | --------------------------- | ---------------------------- |
+| -p   | --port `<port>`         | Bridge application port     | 4000                         |
+| -r   | --route `<route>`       | Bridge application route    | /api/novu                    |
+| -o   | --origin `<origin>`     | Bridge application origin   | http://localhost             |
+| -d   | --dashboard-url `<url>` | Novu Cloud dashboard URL    | https://dashboard.novu.co |
+| -sp  | --studio-port `<port>`  | Local Studio server port    | 2022                         |
+| -t   | --tunnel `<url>`        | Self hosted tunnel url      | null                         |
+| -H   | --headless              | Run bridge in headless mode | false                        |
+
+Example: If bridge application is running on port `3002` and Novu account is in `EU` region.
+
+```bash
+npx novu@latest dev --port 3002 --dashboard-url https://eu.dashboard.novu.co
+```
+
+## FAQ
+
+<AccordionGroup>
+  <Accordion title="Running Studio without a tunnel">
+    It is possible to run the Studio without generating the default tunnel by passing the `--tunnel` flag with the URL of your application.
+
+    ```bash
+    npx novu@latest dev -t http://custom-tunnel-url.ngrok.app
+    ```
+
+    <Warning>
+      While the preview will work, you won't be able to test your notifications by the triggering them from the Studio UI.
+    </Warning>
+
+  </Accordion>
+</AccordionGroup>

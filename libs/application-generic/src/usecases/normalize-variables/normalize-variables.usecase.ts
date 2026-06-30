@@ -30,7 +30,7 @@ export class NormalizeVariables {
       variant?.filters ? variant?.filters : []
     );
 
-    filterVariables.subscriber = await this.fetchSubscriberIfMissing(command, combinedFilters);
+    filterVariables.subscriber = await this.fetchSubscriberIfMissing(command);
     filterVariables.tenant = await this.fetchTenantIfMissing(command, combinedFilters);
     filterVariables.payload = command.variables?.payload
       ? command.variables?.payload
@@ -42,28 +42,30 @@ export class NormalizeVariables {
 
     return filterVariables;
   }
-  private async fetchSubscriberIfMissing(
-    command: ConditionsFilterCommand,
-    filters: IMessageFilter[]
-  ): Promise<SubscriberEntity | undefined> {
+  private async fetchSubscriberIfMissing(command: ConditionsFilterCommand): Promise<SubscriberEntity | undefined> {
     if (command.variables?.subscriber) {
       return command.variables.subscriber;
     }
 
-    const subscriberFilterExist = filters?.find((filter) => {
-      return filter?.children?.find((item) => item?.on === FilterPartTypeEnum.SUBSCRIBER);
-    });
-
-    if (subscriberFilterExist && command.job) {
-      return (
-        (await this.getSubscriberBySubscriberId({
-          subscriberId: command.job.subscriberId,
-          _environmentId: command.environmentId,
-        })) ?? undefined
-      );
+    if (!command.job) {
+      return undefined;
     }
 
-    return undefined;
+    /*
+     * Always hydrate the subscriber for filter evaluation so that deferred steps
+     * (Digest / Delay / Throttle) receive the same subscriber context as channel steps.
+     * Previously the subscriber was only loaded when a `subscriber`-typed filter was
+     * detected up front, which dropped the subscriber for deferred steps and for
+     * conditions that reference it only inside a Handlebars value (e.g. `{{subscriber.x}}`).
+     * The lookup is cached via @CachedResponse, so this is effectively free when the
+     * subscriber was already loaded earlier in the job lifecycle. See issue #11602.
+     */
+    return (
+      (await this.getSubscriberBySubscriberId({
+        subscriberId: command.job.subscriberId,
+        _environmentId: command.environmentId,
+      })) ?? undefined
+    );
   }
 
   private async fetchTenantIfMissing(

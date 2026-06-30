@@ -1,0 +1,77 @@
+---
+title: 'Sendchamp'
+description: 'Learn how to use the Sendchamp provider to send sms notifications using Novu'
+---
+
+You can use the [Sendchamp](https://www.sendchamp.com/) provider to send SMS messages to your customers using the Novu Platform with a single API to create multi-channel experiences.
+
+## Setting up Sendchamp
+
+<Steps>
+<Step title="Get your API Key">
+1. [Sign up](https://my.sendchamp.com/signup) or [Login](https://my.sendchamp.com/login) to your Sendchamp account
+2. Click on the Avatar icon in the top right corner of the screen
+3. Select `API & Integrations` from the drop-down menu
+
+<img
+  alt="Click on the Avatar icon in the top right corner of the screen, and then click API & Integrations"
+  src="/images/channels-and-providers/sms/sendchamp/image-67.png"
+/>
+
+Alternatively, you can access the API key from the Accounts menu:
+
+1. Scroll to the bottom of the sidebar and click on `Accounts`
+2. Click on `API keys & Webhooks` from the dropdown
+
+<img
+  alt="Click on the API keys and webhooks to view your API key"
+  src="/images/channels-and-providers/sms/sendchamp/image-68.png"
+/>
+
+3. On the API Keys page, copy the Public access key
+
+<img alt="Copy your public access key" src="/images/channels-and-providers/sms/sendchamp/image-69.png" />
+</Step>
+
+<Step title="Set up your Sender ID">
+The Sender ID represents the sender of the message to your customers.
+
+To view your Sender IDs:
+
+1. On the sidebar menu, click on `SMS`
+2. Select `Sender ID` from the dropdown options
+3. You'll find a list of your Sender IDs
+
+<img
+  alt="Click sms and select sender ID"
+  src="/images/channels-and-providers/sms/sendchamp/image-70.png"
+/>
+
+To create a new Sender ID:
+
+1. Click on the `Create Sender ID` button
+2. Fill in the form
+3. Click on `Add Sender ID` button
+
+<img
+  alt="Click on the add sender ID button"
+  src="/images/channels-and-providers/sms/sendchamp/image-71.png"
+/>
+
+<Note>
+  Wait for your Sender ID to be approved before using it as the from field on the Novu platform.
+</Note>
+</Step>
+
+<Step title="Connect Sendchamp to Novu">
+1. Visit the [Integrations](https://dashboard.novu.co/integrations?utm_campaign=docs-sms-sendchamp) page on Novu
+2. Click the "Add a provider" button
+3. Locate **Sendchamp** under the SMS section and click on the **Connect** button
+4. Enter your Sendchamp API Key
+5. Fill in the `From` field with your approved Sender ID
+6. Click on the `Disabled` button and mark it as `Active`
+7. Click on the **Connect** button
+</Step>
+</Steps>
+
+Now it is possible to send SMS notifications using **Sendchamp** in Novu.

@@ -1,0 +1,123 @@
+---
+title: 'Authentication'
+description: 'Authenticate REST API requests with your Novu secret key, manage environment credentials, and follow security best practices.'
+---
+
+The Novu REST API uses API key authentication. Every server-side request must include your environment's secret key in the `Authorization` header.
+
+<Note>
+  The REST API and server-side SDKs are intended for server-side applications only. Using them in client-side code causes Cross-Origin Resource Sharing (CORS) errors and exposes your secret key.
+</Note>
+
+## API key authentication
+
+Include your secret key in the `Authorization` header, prefixed with `ApiKey`:
+
+```bash
+--header 'Authorization: ApiKey <NOVU_SECRET_KEY>'
+```
+
+Example request:
+
+```bash
+curl -X GET https://api.novu.co/v1/subscribers \
+  --header 'Authorization: ApiKey <NOVU_SECRET_KEY>'
+```
+
+### Initialize the SDK
+
+When using a server-side SDK, pass your secret key during initialization:
+
+```javascript
+import { Novu } from '@novu/api';
+
+const novu = new Novu({
+  secretKey: process.env.NOVU_SECRET_KEY,
+});
+```
+
+<Warning>
+  Do not hardcode credentials in source code. Store your secret key in environment variables or a secrets manager.
+</Warning>
+
+## Credential types
+
+Each Novu environment has two credentials. Use the right one for the context:
+
+| Credential | Visibility | Used for |
+| --- | --- | --- |
+| **Secret key** | Private | Authenticating REST API and server-side SDK requests |
+| **Application identifier** | Public | Initializing the [`<Inbox />`](/platform/inbox) component and client-side SDKs |
+
+The secret key grants full administrative access to your environment. Never expose it in frontend code, public repositories, or browser network requests.
+
+The application identifier is safe to use in client-side code. It identifies your application within Novu but does not authorize API requests on its own.
+
+## Find your API keys
+
+1. Log in to the [Novu Dashboard](https://dashboard.novu.co).
+2. Go to **Developer** → **API Keys**.
+3. Select the environment you want to use (Development, Production, or a custom environment).
+
+Each environment has its own secret key and application identifier. Use the credentials that match the environment you are targeting.
+
+![API Keys](/images/developer-tools/api-keys.png)
+
+<Card title="API keys" icon="key" href="/platform/developer/api-keys">
+  Learn more about application identifiers, secret keys, and API hostnames.
+</Card>
+
+## Environment-specific credentials
+
+API keys are scoped to a single environment. Requests authenticated with a secret key only access resources in that environment.
+
+- **Development** — Build and test workflows, subscribers, and integrations.
+- **Production** — Send live notifications to subscribers.
+- **Custom environments** — Available on Team and Enterprise plans for staging, QA, or other release stages.
+
+When you regenerate a secret key in the dashboard, the previous key is invalidated immediately. Update your environment variables before rotating keys in production.
+
+## API base URLs
+
+Use the base URL that matches your Novu Cloud region:
+
+| Region | Base URL |
+| --- | --- |
+| **US (default)** | `https://api.novu.co/v1` |
+| **EU** | `https://eu.api.novu.co/v1` |
+
+When using the EU region, also configure the WebSocket hostname for real-time Inbox updates:
+
+| Region | WebSocket URL |
+| --- | --- |
+| **US (default)** | `wss://ws.novu.co` |
+| **EU** | `wss://eu.socket.novu.co` |
+
+<Note>
+  Self-hosted deployments use your own API hostname. See [Self Hosting Novu](/community/self-hosting-novu/overview) for configuration details.
+</Note>
+
+## Security best practices
+
+- Store secret keys in environment variables or a secrets manager — never commit them to version control.
+- Use separate credentials for development and production environments.
+- Rotate secret keys from the dashboard if a key may have been exposed.
+- Restrict server-side API access to trusted backend services only.
+- Enable [HMAC encryption](/platform/inbox/prepare-for-production#secure-your-inbox-with-hmac-encryption) for Inbox to prevent subscriber impersonation in client-side applications.
+
+## Authentication errors
+
+If authentication fails, the API returns a `401 Unauthorized` response. Common causes:
+
+- Missing or malformed `Authorization` header
+- Secret key from a different environment than the target resources
+- Expired or regenerated secret key that has not been updated in your application
+
+Verify that your header uses the `ApiKey` prefix (not `Bearer`) and that the secret key matches the active environment.
+
+## Related documentation
+
+- [Overview](/api-reference) — REST API capabilities and developer resources
+- [Rate Limiting](/api-reference/rate-limiting) — Request limits by plan and endpoint category
+- [Idempotency](/api-reference/idempotency) — Prevent duplicate requests by replaying responses for the same idempotency key
+- [Environments](/platform/developer/environments) — How environments isolate resources and credentials

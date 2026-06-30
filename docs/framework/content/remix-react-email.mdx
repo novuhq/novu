@@ -1,0 +1,60 @@
+---
+title: 'Remix & React Email'
+description: 'Learn how to integrate React Email with Novu Framework in a Remix application'
+---
+
+Integrating Novu Framework with [React email](https://react.email/) for your Remix application can be done in three steps. If you don't have an app, you can [clone our Remix example](https://github.com/novuhq/novu-framework-remix-example).
+
+<Steps>
+  <Step title="Install React email components">
+    Install the required React email components.
+
+    ```bash
+      npm i @react-email/components react-email
+    ```
+
+  </Step>
+  <Step title="Create email templates folder">
+        Create an `emails` folder in the `app` directory of your Remix app.
+  </Step>
+  <Step title="Write your email">
+    Create a new `sample-email.tsx` file for your email template.
+
+    ```ts
+
+    function Email(props) {
+      return (
+        <Html>
+          <Button
+            href="https://example.com"
+            style={{ background: "#000", color: "#fff", padding: "12px 20px" }}
+          >
+            Click me
+          </Button>
+        </Html>
+      );
+    }
+
+    export function renderEmail(inputs) {
+      return render(<Email {...inputs} />);
+    }
+    ```
+
+  </Step>
+  <Step title="Write your workflow">
+    Define your workflow using the above template
+
+    ```tsx
+
+    workflow('new-signup', async ({ step, payload }) => {
+      await step.email('send-email', async (inputs) => {
+        return {
+          subject: `Welcome to Remix and React E-mail`,
+          body: renderEmail(inputs),
+        }
+      });
+    });
+    ```
+
+  </Step>
+</Steps>

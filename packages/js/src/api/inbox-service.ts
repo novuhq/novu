@@ -7,6 +7,8 @@ import type {
   GenerateChatOAuthUrlArgs,
   GenerateConnectOAuthUrlArgs,
   GenerateLinkUserOAuthUrlArgs,
+  LinkChannelEndpointArgs,
+  LinkChannelEndpointResponse,
   ListChannelConnectionsArgs,
   ListChannelEndpointsArgs,
 } from '../channel-connections/types';
@@ -681,5 +683,11 @@ export class InboxService {
 
   deleteChannelEndpoint(identifier: string): Promise<void> {
     return this.#httpClient.delete(`${CHANNEL_ENDPOINTS_ROUTE}/${identifier}`);
+  }
+
+  linkChannelEndpoint({ integrationIdentifier }: LinkChannelEndpointArgs): Promise<LinkChannelEndpointResponse> {
+    return this.#httpClient.post(`${CHANNEL_ENDPOINTS_ROUTE}/link`, {
+      integrationIdentifier,
+    });
   }
 }

@@ -1,10 +1,5 @@
 import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
-import {
-  AnalyticsService,
-  decryptChannelConnectionAuth,
-  decryptCredentials,
-  PinoLogger,
-} from '@novu/application-generic';
+import { decryptChannelConnectionAuth, decryptCredentials, PinoLogger } from '@novu/application-generic';
 import {
   AgentIntegrationEntity,
   AgentIntegrationRepository,
@@ -18,7 +13,6 @@ import {
 import { EmailProviderIdEnum } from '@novu/shared';
 import type { WellKnownEmoji } from 'chat';
 import { isKeylessOrganization } from '../../keyless/keyless-organization.helpers';
-import { trackAgentIntegrationFirstWebhook } from '../shared/analytics/agent-analytics';
 import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
 import { AgentInactiveException } from '../shared/errors/agent-inactive.exception';
 import { AgentIntegrationDisconnectedException } from '../shared/errors/agent-integration-disconnected.exception';
@@ -113,8 +107,7 @@ export class AgentConfigResolver {
     private readonly integrationRepository: IntegrationRepository,
     private readonly channelConnectionRepository: ChannelConnectionRepository,
     private readonly organizationRepository: CommunityOrganizationRepository,
-    private readonly logger: PinoLogger,
-    private readonly analyticsService: AnalyticsService
+    private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -255,31 +248,14 @@ export class AgentConfigResolver {
       }
     }
 
-    // `connectedAt` is set the first time the platform actually delivers a
-    // real inbound message. Verification handshakes and outbound flows
-    // (replies, reactions, DMs) also call `resolve`, so we gate the write
-    // on the caller's declared source.
-    const isFirstInboundMessage = options.source === 'webhook_message' && !agentIntegration.connectedAt;
-
-    if (isFirstInboundMessage) {
-      await this.agentIntegrationRepository.updateOne(
-        {
-          _id: agentIntegration._id,
-          _environmentId: environmentId,
-          _organizationId: organizationId,
-        },
-        { $set: { connectedAt: new Date() } }
-      );
-
-      trackAgentIntegrationFirstWebhook(this.analyticsService, {
-        organizationId,
-        environmentId,
-        agentId,
-        agentIdentifier: agent.identifier,
-        integrationIdentifier,
-        platform,
-      });
-    }
+    // NOTE: `connectedAt` is intentionally NOT written here. Marking the link
+    // connected on any inbound webhook POST is too eager: every webhook event
+    // hits `resolve` first, including the agent's own outbound messages that the
+    // platform echoes back (e.g. the post-install welcome DM Slack delivers as a
+    // `message.im` event). That echo would mark the integration connected — and
+    // complete onboarding — before the user ever sends a message. Connection is
+    // now recorded only when a genuine, non-bot user message is dispatched, in
+    // `AgentInboundHandler.handle` (after the bot-author filter).
 
     return {
       platform,

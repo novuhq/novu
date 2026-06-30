@@ -39,6 +39,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives
 import { useEnvironment } from '@/context/environment/hooks';
 import { useAgentRoutes } from '@/hooks/use-agent-routes';
 import { useHasPermission } from '@/hooks/use-has-permission';
+import { getAgentChannelDisplayName } from '@/utils/agent-email-provider-display';
 import { formatDateSimple } from '@/utils/format-date';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
@@ -85,7 +86,9 @@ function AgentNavTableCell({ children, className, to, ...rest }: AgentNavTableCe
 const MAX_VISIBLE_INTEGRATION_ICONS = 3;
 
 function getProviderDisplayName(providerId: string): string {
-  return novuProviders.find((p) => p.id === providerId)?.displayName ?? providerId;
+  const displayName = novuProviders.find((p) => p.id === providerId)?.displayName ?? providerId;
+
+  return getAgentChannelDisplayName(providerId, displayName);
 }
 
 // Renders an icon reflecting the agent's runtime: the managed provider's brand
@@ -125,12 +128,14 @@ function AgentIntegrationsCell({ agent }: { agent: AgentResponse }) {
     <div className="relative z-10 flex min-h-[41px] items-center">
       <div className="flex items-center">
         {visible.map((integration, index) => {
+          const integrationLabel = getAgentChannelDisplayName(integration.providerId, integration.name);
+
           return (
             <Tooltip key={integration.integrationId}>
               <TooltipTrigger asChild>
                 <button
                   type="button"
-                  aria-label={integration.name}
+                  aria-label={integrationLabel}
                   className={cn(
                     'border-static-white bg-bg-white shadow-xs relative box-border flex size-6 shrink-0 cursor-default items-center justify-center rounded-full border border-solid p-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-sub',
                     index > 0 && '-ml-2'
@@ -147,7 +152,7 @@ function AgentIntegrationsCell({ agent }: { agent: AgentResponse }) {
                   />
                 </button>
               </TooltipTrigger>
-              <TooltipContent side="top">{integration.name}</TooltipContent>
+              <TooltipContent side="top">{integrationLabel}</TooltipContent>
             </Tooltip>
           );
         })}

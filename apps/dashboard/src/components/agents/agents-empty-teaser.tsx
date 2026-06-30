@@ -6,6 +6,13 @@ import { cn } from '@/utils/ui';
 const slackIcon = '/images/providers/light/square/slack.svg';
 const msTeamsIcon = '/images/providers/light/square/msteams.svg';
 
+const AGENTS_TEASER_BULLETS = [
+  'Unified conversation model — one model across every channel',
+  'Bidirectional messaging — send and receive through the same layer',
+  'Bring your own agent — Claude, AI SDK, LangGraph, or your custom stack',
+  'Best practices built in — threading, reactions, formatting, and actions',
+] as const;
+
 type AgentsPillProps = {
   children: ReactNode;
   className?: string;
@@ -51,28 +58,35 @@ export function AgentsEmptyTeaser({ cta }: AgentsEmptyTeaserProps) {
           </div>
 
           <ul className="flex flex-col gap-1.5 py-3">
-            <li className="text-text-sub flex flex-wrap items-center gap-1 text-[14px] font-medium leading-5 tracking-[-0.084px]">
-              <RiCheckLine className="text-success size-3 shrink-0" aria-hidden />
-              <span>Talk to your agent across</span>
-              <AgentsPill className="-rotate-1">
-                <img src={slackIcon} alt="" className="size-3.5" />
-                <span>Slack</span>
-              </AgentsPill>
-              <AgentsPill className="rotate-1">
-                <SiWhatsapp className="size-3.5 shrink-0 text-[#25D366]" aria-hidden />
-                <span>WhatsApp</span>
-              </AgentsPill>
-              <AgentsPill className="-rotate-1">
-                <img src={msTeamsIcon} alt="" className="size-3.5" />
-                <span>MS Teams</span>
-              </AgentsPill>
-              <span>and a lot more.</span>
+            <li className="text-text-sub flex items-start gap-1.5 text-[14px] font-medium leading-5 tracking-[-0.084px]">
+              <RiCheckLine className="text-success mt-0.5 size-3 shrink-0" aria-hidden />
+              <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1">
+                <span>Talk to your users across</span>
+                <AgentsPill className="-rotate-1">
+                  <img src={slackIcon} alt="" className="size-3.5" />
+                  <span>Slack</span>
+                </AgentsPill>
+                <AgentsPill className="rotate-1">
+                  <SiWhatsapp className="size-3.5 shrink-0 text-[#25D366]" aria-hidden />
+                  <span>WhatsApp</span>
+                </AgentsPill>
+                <AgentsPill className="-rotate-1">
+                  <img src={msTeamsIcon} alt="" className="size-3.5" />
+                  <span>MS Teams</span>
+                </AgentsPill>
+                <span>and a lot more.</span>
+              </div>
             </li>
 
-            <li className="text-text-sub flex flex-wrap items-center gap-1 text-[14px] font-medium leading-5 tracking-[-0.084px]">
-              <RiCheckLine className="text-success size-3 shrink-0" aria-hidden />
-              <span>Authorize tools mid-conversation. No setup gauntlets.</span>
-            </li>
+            {AGENTS_TEASER_BULLETS.map((bullet) => (
+              <li
+                key={bullet}
+                className="text-text-sub flex items-start gap-1.5 text-[14px] font-medium leading-5 tracking-[-0.084px]"
+              >
+                <RiCheckLine className="text-success mt-0.5 size-3 shrink-0" aria-hidden />
+                <span className="min-w-0 flex-1">{bullet}</span>
+              </li>
+            ))}
           </ul>
 
           <div className="flex w-full justify-start">{cta}</div>

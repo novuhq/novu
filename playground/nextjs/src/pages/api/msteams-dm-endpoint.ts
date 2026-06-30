@@ -10,10 +10,10 @@
  * Required ENV vars:
  *   NOVU_SECRET_KEY                      Novu API secret (sk_...)
  *   NOVU_API_BASE_URL                    Optional Novu API base URL
- *   NOVU_MSTEAMS_INTEGRATION_IDENTIFIER  Novu MS Teams integration identifier
+ *   NOVU_CONNECT_MSTEAMS_INTEGRATION_IDENTIFIER  Novu MS Teams integration identifier
  *
  * Optional ENV vars:
- *   NEXT_PUBLIC_MS_TEAMS_AAD_OBJECT_ID   Fallback AAD Object ID used when none is
+ *   NEXT_PUBLIC_CONNECT_MSTEAMS_AAD_OBJECT_ID   Fallback AAD Object ID used when none is
  *                                        provided in the request body
  */
 
@@ -48,12 +48,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     const integrationIdentifier =
       (typeof body.integrationIdentifier === 'string' && body.integrationIdentifier.trim()) ||
-      process.env.NOVU_MSTEAMS_INTEGRATION_IDENTIFIER;
+      process.env.NOVU_CONNECT_MSTEAMS_INTEGRATION_IDENTIFIER;
 
     if (!integrationIdentifier) {
       res
         .status(400)
-        .json({ error: 'integrationIdentifier is required (body or NOVU_MSTEAMS_INTEGRATION_IDENTIFIER)' });
+        .json({ error: 'integrationIdentifier is required (body or NOVU_CONNECT_MSTEAMS_INTEGRATION_IDENTIFIER)' });
 
       return;
     }

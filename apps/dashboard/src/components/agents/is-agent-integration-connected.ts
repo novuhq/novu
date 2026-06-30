@@ -1,6 +1,16 @@
 import { EmailProviderIdEnum } from '@novu/shared';
 import type { AgentIntegrationLink } from '@/api/agents';
 
+function hasMeaningfulConnectedAt(connectedAt: string | null | undefined): boolean {
+  if (!connectedAt) {
+    return false;
+  }
+
+  const timestampMs = new Date(connectedAt).getTime();
+
+  return !Number.isNaN(timestampMs) && timestampMs > 0;
+}
+
 /**
  * Returns whether an agent–integration link should be presented as "Connected"
  * in the dashboard.
@@ -15,7 +25,17 @@ import type { AgentIntegrationLink } from '@/api/agents';
  * agent that already has a working shared inbox.
  */
 export function isAgentIntegrationConnected(link: Pick<AgentIntegrationLink, 'connectedAt' | 'integration'>): boolean {
-  if (link.connectedAt) return true;
+  if (hasMeaningfulConnectedAt(link.connectedAt)) return true;
 
   return link.integration.providerId === EmailProviderIdEnum.NovuAgent;
+}
+
+/**
+ * User-configured channels only. Excludes the auto-provisioned Novu Email
+ * integration so setup/onboarding flows stay aligned with managed-agent state.
+ */
+export function isUserFacingConnectedAgentIntegration(
+  link: Pick<AgentIntegrationLink, 'connectedAt' | 'integration'>
+): boolean {
+  return hasMeaningfulConnectedAt(link.connectedAt) && link.integration.providerId !== EmailProviderIdEnum.NovuAgent;
 }
