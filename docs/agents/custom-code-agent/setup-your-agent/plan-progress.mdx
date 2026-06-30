@@ -1,0 +1,146 @@
+---
+title: "Plan progress"
+description: 'Show a live plan card with in-progress steps while your agent handler runs.'
+---
+
+
+A plan card is a live status message your agent posts at the start of a turn and updates as it works. Steps appear as they start, flip to complete when they finish, and the card finalizes automatically when your handler returns.
+
+Use plan progress when a turn does meaningful work before it can reply — calling tools, hitting external APIs, running multi-step reasoning — and you want the user to see what is happening instead of staring at a "typing…" indicator.
+
+Plan progress is independent of [replies](/agents/custom-code-agent/setup-your-agent/reply) and [signals](/agents/custom-code-agent/setup-your-agent/signals): the plan card shows progress while your handler runs; `ctx.reply()` (or returning a value) posts the final user-facing message.
+
+## When to use a plan card
+
+Reach for plan progress when:
+
+- The handler runs tool calls or chained API requests before replying.
+- A turn takes more than a couple of seconds and you want visible feedback.
+- You want users (or operators) to see which step failed when something goes wrong.
+
+If your handler is a single fast LLM call or a static response, stick with `ctx.typing()` and `ctx.reply()`.
+
+## How plan cards work
+
+`ctx.plan(title?)` returns a `PlanHandle`. Calling it renders the card immediately on the provider thread and gives you methods to add steps and update the title.
+
+| API | What it does |
+| --- | --- |
+| `ctx.plan('Working…')` | Renders the plan card with an optional title. Returns a `PlanHandle`. |
+| `plan.step(title, fn)` | Runs `fn`, marking the step `in_progress` while it runs and `complete` (or `error` on throw) when it settles. Returns the value of `fn`. |
+| `plan.step(title)` | Creates a step you control manually. Returns a `PlanStep` with `update()`, `done()`, and `fail()`. |
+| `plan.title(text)` | Updates the card title. |
+| `plan.finish(title?)` | Marks the card finished. Only needed for early finalization. |
+| `plan.fail(title?)` | Marks the card failed. Only needed for early finalization. |
+
+The plan auto-finalizes when the handler returns, so most handlers never call `finish()` or `fail()` explicitly.
+
+## Basic example
+
+Use the scoped `plan.step(title, fn)` form for the common case: each `await` is one visible step.
+
+```tsx
+import { agent } from '@novu/framework';
+
+export const refundAgent = agent('refund-agent', {
+  onMessage: async ({ message, ctx }) => {
+    const plan = ctx.plan('Processing your refund…');
+
+    const order = await plan.step('Look up order', () => fetchOrder(message.text ?? ''));
+    await plan.step('Issue refund', () => refund(order));
+
+    return 'Refund complete. You should see it in 3–5 business days.';
+  },
+});
+```
+
+The card renders as soon as `ctx.plan()` is called, each step toggles to `complete` as its promise resolves, and the final string is delivered as the reply. If any step throws, the step is marked `error` and the exception propagates as usual.
+
+## Manual steps
+
+Use the unscoped form when you need to update a step's title or details mid-flight, or when the step's lifetime does not match a single `await`.
+
+```tsx
+const plan = ctx.plan('Reversing charge…');
+
+const step = plan.step('Reverse charge');
+step.update({ title: 'Stripe: Reverse charge', details: 'customer cus_abc' });
+
+try {
+  await stripe.refunds.create({ charge: 'ch_123' });
+  step.done('Refund issued');
+} catch (err) {
+  step.fail(err instanceof Error ? err.message : 'Unknown error');
+  throw err;
+}
+```
+
+`update()`, `done()`, and `fail()` are chainable and accept optional `details` strings that render under the step title.
+
+## Track AI SDK tool calls
+
+If your handler drives an LLM with the [AI SDK](https://sdk.vercel.ai), wrap your tools with `trackPlanTools(plan, tools)` to surface each tool call as a plan step automatically. Steps appear when the model decides to call a tool and complete (or error) when the tool returns.
+
+```tsx
+import { agent, trackPlanTools } from '@novu/framework';
+import { openai } from '@ai-sdk/openai';
+import { streamText, tool } from 'ai';
+import { z } from 'zod';
+
+export const researchAgent = agent('research-agent', {
+  onMessage: async ({ message, ctx }) => {
+    const plan = ctx.plan('Researching…');
+
+    const tools = trackPlanTools(plan, {
+      search: tool({
+        description: 'Search the knowledge base',
+        parameters: z.object({ query: z.string() }),
+        execute: async ({ query }) => searchKb(query),
+      }),
+      fetchDoc: tool({
+        description: 'Fetch a document by path',
+        parameters: z.object({ path: z.string() }),
+        execute: async ({ path }) => readDoc(path),
+      }),
+    });
+
+    const { text } = await streamText({
+      model: openai('gpt-4o-mini'),
+      tools,
+      messages: ctx.history.map((h) => ({ role: h.role, content: h.content })),
+    });
+
+    return text;
+  },
+});
+```
+
+Each tool call shows up as its own step on the card. The step title is the tool name and the details column summarizes the input arguments, so users see what the model is doing as it works.
+
+You can mix `trackPlanTools` with manual `plan.step()` calls in the same handler — for example, run a manual "Loading context" step before handing off to the LLM.
+
+## Lifecycle
+
+A plan card moves through three phases per turn:
+
+1. **Created.** `ctx.plan(title?)` posts the initial card.
+2. **Updating.** Each `plan.step()` and `plan.title()` call streams an update onto the same card.
+3. **Finalized.** When the handler returns, the framework finalizes the card as `finished` (or `failed` if the handler throws). Steps still `in_progress` at that point are left as-is on the card.
+
+Call `plan.finish()` or `plan.fail()` only when you need to finalize earlier than the handler return — for example, before kicking off a long-running background job whose status you do not want reflected on the card.
+
+Updates are queued in order, so steps render in the order you create them even if their underlying promises settle out of order.
+
+## Related
+
+<Columns cols={2}>
+  <Card icon="layout-grid" href="/agents/custom-code-agent/setup-your-agent/reply" title="Reply">
+    Send the final message after your plan completes.
+  </Card>
+  <Card icon="signal" href="/agents/custom-code-agent/setup-your-agent/signals" title="Signals">
+    Metadata, workflow triggers, and conversation resolution.
+  </Card>
+  <Card icon="mouse-pointer-click" href="/agents/custom-code-agent/setup-your-agent/handle-events" title="Handle events">
+    Event handlers and the context object your agent receives on every turn.
+  </Card>
+</Columns>
