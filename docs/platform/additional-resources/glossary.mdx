@@ -201,7 +201,11 @@ A single execution of a [workflow](#workflow) for one [subscriber](#subscriber),
 
 ### ACI (Agent Communication Infrastructure)
 
-Novu's two-way agent messaging layer across channels such as Slack, Teams, WhatsApp, email, and Telegram. ACI handles inbound channel events, conversation history, and delivery—separate from the [agent brain](#agent-brain) that decides how an agent responds. See [What is ACI](/agents/get-started/what-is-aci).
+Novu's two-way agent messaging layer across channels such as Slack, Teams, WhatsApp, email, and Telegram. ACI handles inbound channel events, conversation history, and delivery—separate from the [agent brain](#agent-brain) that decides how an agent responds. See [What is ACI](/agents/get-started/what-is-aci) and [Handling channel replies](/platform/handling-replies).
+
+### Inbound Email
+
+Novu feature for receiving mail on verified domains and routing messages to [agents](#aci-agent-communication-infrastructure) or [webhook](/platform/developer/webhooks/webhooks) endpoints via [`email.received`](/platform/developer/webhooks/event-types#email-events). Not the same as [Email Activity Tracking](/platform/integrations/email/activity-tracking) (outbound provider delivery events). See [Inbound Email](/platform/inbound-email/overview).
 
 ### Agent brain
 

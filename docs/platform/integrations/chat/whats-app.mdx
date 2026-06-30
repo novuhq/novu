@@ -126,3 +126,39 @@ await novu.trigger({
 ```
 </Step>
 </Steps>
+
+## Using WhatsApp with agents
+
+WhatsApp is a supported [agent provider](/agents/get-started/agents-and-providers). Connect your WhatsApp Business account to an agent so users can message your number and get replies in the same thread — without building Meta webhook handling yourself.
+
+<Card title="Build agents on WhatsApp" icon="bot" href="/agents">
+  Learn how Novu agents work, including managed and custom code agents.
+</Card>
+
+### What you get
+
+When WhatsApp is connected to an agent:
+
+- Users message your WhatsApp number and your agent responds in the same chat
+- Conversations appear in the dashboard under **Agent Conversations**
+- Supported content includes text, markdown, and interactive buttons; inbound media is surfaced via attachments
+
+See [agent conversations](/agents/conversations#supported-platforms) for capabilities across all providers.
+
+### Agent conversations vs. workflow notifications
+
+| Use case | What happens |
+| --- | --- |
+| **Agent conversation** | The user messages your WhatsApp number and your agent replies in the same chat. |
+| **Workflow notification** | You trigger a workflow with a Chat step and Novu sends a one-way template message to the subscriber. |
+
+## Related
+
+<Columns cols={2}>
+  <Card icon="reply" href="/platform/handling-replies" title="Handling channel replies">
+    Compare reply options across channels.
+  </Card>
+  <Card icon="bot" href="/agents/get-started/agents-and-providers" title="Agents and providers">
+    Connect WhatsApp and other providers to an agent.
+  </Card>
+</Columns>

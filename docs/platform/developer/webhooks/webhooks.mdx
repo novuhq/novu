@@ -25,17 +25,22 @@ You can learn more about it in the signature verification section.
 
 The core value of webhooks is to notify users when events happen, so it's extremely important to understand what events are available and their payload schemas.
 
-Novu webhooks allow you to receive notifications when specific events occur in your Novu account. These events include workflow updates, subscriber changes, and message delivery status updates.
+Novu webhooks allow you to receive notifications when specific events occur in your Novu account. These events include workflow updates, subscriber changes, message delivery status updates, and inbound email received on your verified domains.
 
 ### Supported event types
 
 Novu supports the following webhook event types:
 
+- **Email Events**: Inbound mail received on [Inbound Email](/platform/inbound-email/overview) webhook routes
 - **Workflow Events**: Events about workflow creation, updates, and deletions,
 - **Message Events**: Events about message delivery status changes
 - **Preference Events**: Events about subscriber preference changes
 
 Each event includes detailed information about the affected resource and the changes that occurred.
+
+#### Email Events
+
+- **email.received**: Triggered when Novu receives inbound mail matching an Inbound Email webhook route. See [Event types — Email events](/platform/developer/webhooks/event-types#email-events) for the payload schema and [Inbound Email](/platform/inbound-email/overview) for setup.
 
 #### Workflow Events
 

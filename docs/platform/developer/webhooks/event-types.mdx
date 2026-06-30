@@ -5,11 +5,51 @@ description: 'Learn more about the types of events that Novu sends webhook event
 
 Novu supports the following webhook event types:
 
+- **Email events**: Events when Novu receives inbound mail on a verified domain with a webhook route.
 - **Message events**: Events about message delivery status changes.
 - **Preference event**: Event about subscriber preference changes.
 - **Workflow events**: Events about workflow creation, updates, and deletions.
 
 Each event includes detailed information about the affected resource and the changes that occurred.
+
+## Email events
+
+- `email.received`: Triggered when Novu receives an inbound email that matches an [Inbound Email](/platform/inbound-email/overview) **Webhook** route on a verified domain. The payload includes normalized mail content (from, to, subject, text, html, headers, attachments, threading fields) plus domain and route metadata.
+
+<Note>
+  `email.received` is for **user mail** received on your domain. It is not the same as delivery or engagement events from your outbound email provider — see [Email Activity Tracking](/platform/integrations/email/activity-tracking) for those.
+</Note>
+
+Example payload shape:
+
+```json
+{
+  "object": {
+    "domain": {
+      "id": "domain_id",
+      "name": "mail.yourcompany.com",
+      "data": {}
+    },
+    "route": {
+      "address": "support",
+      "data": { "tenantId": "acme" }
+    },
+    "mail": {
+      "from": [{ "address": "user@example.com", "name": "Jane" }],
+      "to": [{ "address": "support@mail.yourcompany.com" }],
+      "subject": "Re: Your order",
+      "text": "Thanks, that helps!",
+      "html": "<p>Thanks, that helps!</p>",
+      "messageId": "<message-id@example.com>",
+      "inReplyTo": "<original-message-id@novu.co>",
+      "references": ["<thread-root@novu.co>"],
+      "headers": {},
+      "attachments": [],
+      "date": "2026-06-30T12:00:00.000Z"
+    }
+  }
+}
+```
 
 ## Message events
 

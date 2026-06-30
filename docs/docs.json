@@ -39,6 +39,7 @@
             "pages": [
               "platform",
               "platform/what-is-novu",
+              "platform/handling-replies",
               "platform/how-novu-works",
               {
                 "group": "Novu for your team",
@@ -345,8 +346,16 @@
               "platform/developer/environment-variables",
               "platform/developer/limits",
               {
+                "group": "Inbound email",
+                "pages": ["platform/inbound-email/overview"]
+              },
+              {
                 "group": "Webhooks",
-                "pages": ["platform/developer/webhooks/event-types", "platform/developer/webhooks/connectors"]
+                "pages": [
+                  "platform/developer/webhooks/webhooks",
+                  "platform/developer/webhooks/event-types",
+                  "platform/developer/webhooks/connectors"
+                ]
               }
             ],
             "icon": "terminal"
