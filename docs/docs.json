@@ -395,7 +395,7 @@
         "tab": "Agents",
         "groups": [
           {
-            "group": "Get Started",
+            "group": "Getting Started",
             "boost": 3,
             "pages": [
               "agents",
@@ -451,7 +451,7 @@
         "tab": "API Reference",
         "groups": [
           {
-            "group": "Overview",
+            "group": "Getting Started",
             "pages": [
               "api-reference",
               "api-reference/authentication",
