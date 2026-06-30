@@ -75,14 +75,14 @@ try {
 }
 ```
 
-`update()`, `done()`, and `fail()` are chainable and accept optional `details` strings that render under the step title.
+`update()`, `done()`, and `fail()` are chainable. `done(details?)` and `fail(details?)` accept an optional string that renders under the step title. `update({ title?, details? })` accepts an object with optional `title` and `details` fields.
 
 ## Track AI SDK tool calls
 
 If your handler drives an LLM with the [AI SDK](https://sdk.vercel.ai), wrap your tools with `trackPlanTools(plan, tools)` to surface each tool call as a plan step automatically. Steps appear when the model decides to call a tool and complete (or error) when the tool returns.
 
 ```tsx
-import { agent, trackPlanTools } from '@novu/framework';
+import { agent, trackPlanTools } from '@novu/framework/ai-sdk';
 import { openai } from '@ai-sdk/openai';
 import { streamText, tool } from 'ai';
 import { z } from 'zod';
