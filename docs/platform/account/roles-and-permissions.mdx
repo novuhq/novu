@@ -13,11 +13,11 @@ When you invite a team member to your organization, you can assign them a role t
 Below is an overview of the four roles available in Novu:
 - **Owner**. For your primary account administrator. This role has full access across the platform, including organization-level settings, billing, API keys, environment management, and user administration. Each Novu organization must have at least one owner.
 
-- **Admin**. For users who manage configuration and operational aspects of Novu. Admins can manage workflows, integrations, subscribers, environments, and message logs. They do not have access to billing.
+- **Admin**. For users who manage configuration and operational aspects of Novu. Admins can manage workflows, integrations, subscribers, environments, API keys, team members, and organization settings. They do not have access to billing.
 
-- **Author**. For users who design and update notification workflows. Authors can create and modify workflows, preview steps, manage topics, and trigger events. They do not have access to organization-level settings, billing, or member management.
+- **Author**. For users who design and update notification workflows. Authors can create and modify workflows, manage integrations, subscribers, topics, agents, bridges, and environment variables, and trigger events. They do not have access to organization-level settings, billing, API keys, webhooks, or member management.
 
-- **Viewer**. For read-only users. Viewers can view workflows, environments, logs, and messages, but cannot create, update, or delete resources.
+- **Viewer**. For read-only users. Viewers can view workflows, agents, integrations, environments, logs, and messages, but cannot create, update, or delete resources.
 
 ## Roles and permissions table
 
@@ -31,20 +31,21 @@ Legend:
 | Permission                      | **Viewer** | **Author** | **Admin** | **Owner** |
 | ------------------------------ | ---------- | ---------- | --------- | --------- |
 | Create and manage environments | ❌         | ❌         | ✏️         | ✏️         |
-| Create and manage messages     | 📖         | ✏️         | ✏️         | ✏️         |
+| Create and manage messages     | 📖         | 📖         | ✏️         | ✏️         |
 | Create and manage topics       | 📖         | ✏️         | ✏️         | ✏️         |
-| Create and manage webhooks     | 📖         | 📖         | ✏️         | ✏️         |
+| Create and manage webhooks     | ❌         | ❌         | ✏️         | ✏️         |
 | Create and manage workflows    | 📖         | ✏️         | ✏️         | ✏️         |
+| Manage agents                  | 📖         | ✏️         | ✏️         | ✏️         |
 | Manage API keys                | ❌         | ❌         | ✏️         | ✏️         |
 | Manage billing                 | ❌         | ❌         | ❌         | ✏️         |
-| Manage bridges                 | ❌         | ❌         | ✏️         | ✏️         |
-| Manage custom domains          | 📖         | 📖         | ✏️         | ✏️         |
-| Manage integrations            | 📖         | 📖         | ✏️         | ✏️         |
-| Manage organization metadata   | ❌         | ❌         | ❌         | ✏️         |
-| Manage organization profile    | ❌         | ❌         | ❌         | ✏️         |
-| Manage partner integrations    | 📖         | 📖         | ✏️         | ✏️         |
+| Manage bridges                 | ❌         | ✏️         | ✏️         | ✏️         |
+| Manage custom domains          | ❌         | ❌         | ✏️         | ✏️         |
+| Manage integrations            | 📖         | ✏️         | ✏️         | ✏️         |
+| Manage organization metadata   | ❌         | ❌         | ✏️         | ✏️         |
+| Manage organization profile    | ❌         | ❌         | ✏️         | ✏️         |
+| Manage partner integrations    | ❌         | ❌         | ✏️         | ✏️         |
 | Manage subscribers             | 📖         | ✏️         | ✏️         | ✏️         |
 | Trigger events                 | ❌         | ✏️         | ✏️         | ✏️         |
-| View and manage team members   | 📖         | 📖         | 📖         | ✏️         |
+| View and manage team members   | 📖         | 📖         | ✏️         | ✏️         |
 | View notifications             | 📖         | 📖         | 📖         | 📖         |
-| Environment Variables          | 📖         | ✏️         | ✏️         | ✏️         |
+| Environment variables          | 📖         | ✏️         | ✏️         | ✏️         |
