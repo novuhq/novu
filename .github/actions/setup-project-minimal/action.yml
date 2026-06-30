@@ -21,8 +21,7 @@ runs:
     - name: 🚀 Install root dependencies
       shell: bash
       run: |
-        TRUST_FLAG="$(bash scripts/configure-pnpm-private-registry.sh)"
         # Install all root dependencies (includes Nx and other tools)
-        pnpm install --frozen-lockfile ${TRUST_FLAG} --filter=root --ignore-scripts
+        pnpm install --frozen-lockfile --filter=root --ignore-scripts
         # Reset Nx cache
         npx nx reset || true

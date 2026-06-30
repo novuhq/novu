@@ -156,6 +156,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 90
     environment: novu-ee
+    env:
+      pnpm_config_//npm.taskforce.sh/:_authToken: ${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}
     strategy:
       fail-fast: false
       matrix:

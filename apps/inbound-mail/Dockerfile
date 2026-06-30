@@ -24,6 +24,7 @@ RUN --mount=type=secret,id=BULL_MQ_PRO_NPM_TOKEN,uid=1000 export BULL_MQ_PRO_NPM
 
 RUN --mount=type=cache,id=pnpm-store-inbound-mail,target=/root/.pnpm-store\
     --mount=type=secret,id=BULL_MQ_PRO_NPM_TOKEN,uid=1000 export BULL_MQ_PRO_NPM_TOKEN=$(cat /run/secrets/BULL_MQ_PRO_NPM_TOKEN) && \
+    export "pnpm_config_//npm.taskforce.sh/:_authToken=${BULL_MQ_PRO_NPM_TOKEN}" && \
  pnpm install --reporter=silent --filter "novuhq" --filter "{${PACKAGE_PATH}}..."\
  --frozen-lockfile\
  --unsafe-perm\

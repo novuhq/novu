@@ -1,10 +1,9 @@
 [build]
-  install = "bash scripts/netlify-install.sh"
+  install = "export \"pnpm_config_//npm.taskforce.sh/:_authToken=${BULL_MQ_PRO_NPM_TOKEN}\" && pnpm install --frozen-lockfile"
   command = "pnpm run build:dashboard --skip-nx-cache"
 
 [build.environment]
   NODE_OPTIONS="--max_old_space_size=4096"
-  PNPM_FLAGS="--config.trustLockfile=true"
 
 [context.deploy-preview]
   command = "pnpm run build:dashboard --skip-nx-cache"

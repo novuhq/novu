@@ -105,6 +105,8 @@ jobs:
     needs: setup_matrix
     runs-on: ubuntu-latest
     timeout-minutes: 90
+    env:
+      pnpm_config_//npm.taskforce.sh/:_authToken: ${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}
     strategy:
       fail-fast: false
       matrix:

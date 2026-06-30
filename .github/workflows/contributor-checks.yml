@@ -50,6 +50,7 @@ jobs:
     timeout-minutes: 30
     env:
       NX_NO_CLOUD: "true"
+      pnpm_config_trust_lockfile: "true"
     steps:
       - name: Checkout code
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5

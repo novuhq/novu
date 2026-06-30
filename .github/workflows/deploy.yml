@@ -291,6 +291,8 @@ jobs:
   run-clickhouse-migrations:
     needs: prepare-matrix
     runs-on: ubuntu-latest
+    env:
+      pnpm_config_//npm.taskforce.sh/:_authToken: ${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}
     strategy:
       matrix:
         env: ${{ fromJson(needs.prepare-matrix.outputs.env_matrix).environment }}
@@ -341,6 +343,8 @@ jobs:
     needs: [prepare-matrix, run-clickhouse-migrations]
     timeout-minutes: 60
     runs-on: blacksmith-8vcpu-ubuntu-2404
+    env:
+      pnpm_config_//npm.taskforce.sh/:_authToken: ${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}
     environment: ${{ fromJson(needs.prepare-matrix.outputs.env_matrix).environment[0] }}
     permissions:
       contents: read
