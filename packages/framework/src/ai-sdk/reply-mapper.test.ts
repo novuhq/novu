@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { AgentContextBase } from '../resources/agent/agent.types';
-import { deliverResult, isAiSdkResult } from './reply-mapper';
+import { deliverResult, handleResult, isAiSdkResult } from './reply-mapper';
 import type { AiSdkResult } from './types';
 
 function fakeCtx() {
@@ -103,5 +103,33 @@ describe('deliverResult', () => {
 
     expect(ctx.reply).not.toHaveBeenCalled();
     expect(ctx.typing.stop).toHaveBeenCalledOnce();
+  });
+});
+
+describe('handleResult', () => {
+  it('posts only the first approval card when a turn gates multiple tools (sequential approval)', async () => {
+    const ctx = fakeCtx();
+    const result = {
+      text: Promise.resolve(''),
+      content: Promise.resolve([
+        {
+          type: 'tool-approval-request',
+          approvalId: 'a_1',
+          toolCall: { toolCallId: 'toolu_1', toolName: 'issueRefund', input: { amount: 250 } },
+        },
+        {
+          type: 'tool-approval-request',
+          approvalId: 'a_2',
+          toolCall: { toolCallId: 'toolu_2', toolName: 'cancelSub', input: { id: 'S9' } },
+        },
+      ]),
+    } as unknown as AiSdkResult;
+
+    await handleResult(result, ctx, undefined);
+
+    expect(ctx.reply).toHaveBeenCalledOnce();
+    expect(ctx.reply).toHaveBeenCalledWith(expect.anything(), {
+      toolApproval: { approvalId: 'a_1', toolCallId: 'toolu_1', name: 'issueRefund', input: { amount: 250 } },
+    });
   });
 });

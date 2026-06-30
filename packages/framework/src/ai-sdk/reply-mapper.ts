@@ -64,9 +64,8 @@ export async function handleResult(
 ): Promise<void> {
   const requests = await collectApprovalRequests(result);
   if (requests.length > 0) {
-    for (const request of requests) {
-      await postApprovalCard(request, ctx, config);
-    }
+    // Sequential approval: surface only the first gated tool
+    await postApprovalCard(requests[0], ctx, config);
 
     return;
   }
