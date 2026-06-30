@@ -10,7 +10,7 @@ import type {
   AgentResolveContext,
   MessageContent,
 } from './agent.types';
-import { AgentEventEnum } from './agent.types';
+import { AgentEventEnum, PendingApproval } from './agent.types';
 
 export interface DispatchAgentEventOptions {
   agent: Agent;
@@ -21,10 +21,11 @@ export interface DispatchAgentEventOptions {
 }
 
 export async function dispatchAgentEvent(options: DispatchAgentEventOptions): Promise<void> {
-  const ctx = new AgentContextImpl(options.bridge, options.secretKey);
+  const ctx = new AgentContextImpl(options.bridge, options.secretKey, options.agent.handlers.toolApproval);
 
   try {
     await runAgentHandler(options.agent, options.event, ctx);
+    await ctx._pendingApprovalPost;
     await ctx.flush();
     await ctx.finalizePlan('finished');
   } catch (err) {
@@ -49,9 +50,13 @@ async function runAgentHandler(registeredAgent: Agent, event: string, ctx: Agent
   };
 
   switch (event) {
-    case AgentEventEnum.ON_MESSAGE:
-      await replyIfPresent(await registeredAgent.handlers.onMessage(ctx.message!, ctx as AgentMessageContext));
+    case AgentEventEnum.ON_MESSAGE: {
+      const result = await registeredAgent.handlers.onMessage(ctx.message!, ctx as AgentMessageContext);
+      if (!(result instanceof PendingApproval)) {
+        await replyIfPresent(result);
+      }
       break;
+    }
     case AgentEventEnum.ON_ACTION:
       if (registeredAgent.handlers.onAction) {
         await replyIfPresent(await registeredAgent.handlers.onAction(ctx.action!, ctx as AgentActionContext));

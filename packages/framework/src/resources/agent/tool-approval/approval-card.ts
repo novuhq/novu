@@ -38,18 +38,27 @@ export function resolvedApprovalCard(params: { name: string; approved: boolean }
 export function findApprovalPayloadInCard(card: CardElement | undefined): ApprovalPayload | null {
   if (!card) return null;
 
-  const stack: Array<{ type?: string; id?: string; children?: unknown[] }> = [card as never];
-  while (stack.length > 0) {
-    const node = stack.pop();
-    if (!node) break;
-    if (node?.type === 'button' && typeof node.id === 'string') {
-      const parsed = parseApprovalActionId(node.id);
+  const walk = (node: unknown): ApprovalPayload | null => {
+    if (!node || typeof node !== 'object') return null;
+
+    const current = node as { type?: string; id?: string; children?: unknown };
+    if (current.type === 'button' && typeof current.id === 'string') {
+      const parsed = parseApprovalActionId(current.id);
       if (parsed) return parsed.payload;
     }
-    if (Array.isArray(node?.children)) {
-      stack.push(...(node.children as Array<{ type?: string; id?: string; children?: unknown[] }>));
-    }
-  }
 
-  return null;
+    const { children } = current;
+    if (Array.isArray(children)) {
+      for (const child of children) {
+        const found = walk(child);
+        if (found) return found;
+      }
+    } else if (children && typeof children === 'object') {
+      return walk(children);
+    }
+
+    return null;
+  };
+
+  return walk(card);
 }

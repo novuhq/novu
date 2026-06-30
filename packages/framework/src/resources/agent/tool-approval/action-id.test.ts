@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { type ApprovalPayload, buildApprovalActionId, parseApprovalActionId } from './action-id';
+import { defaultApprovalCard, findApprovalPayloadInCard } from './approval-card';
 
 const payload: ApprovalPayload = {
   approvalId: 'tool_123',
@@ -34,5 +35,25 @@ describe('approval action-id grammar', () => {
     ]) {
       expect(parseApprovalActionId(bad)).toBeNull();
     }
+  });
+});
+
+describe('approval card payload scan', () => {
+  it('finds payload on the default card', () => {
+    const toolPayload: ApprovalPayload = {
+      approvalId: 'tc',
+      toolCallId: 'tc',
+      name: 'doIt',
+      input: { x: 1 },
+    };
+    const card = defaultApprovalCard({
+      toolCall: toolPayload,
+      actionIds: {
+        approve: buildApprovalActionId('approve', toolPayload),
+        deny: buildApprovalActionId('deny', toolPayload),
+      },
+    });
+
+    expect(findApprovalPayloadInCard(card)).toMatchObject({ approvalId: 'tc', name: 'doIt', input: { x: 1 } });
   });
 });
