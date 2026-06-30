@@ -3,7 +3,7 @@ import { CodeBlock } from '@/components/primitives/code-block';
 import type { ChannelWhatsNextConfig, WhatsNextConfigContext } from './whats-next-types';
 
 const TELEGRAM_REACT_PACKAGE = '@novu/react';
-const TELEGRAM_DOCS_URL = 'https://docs.novu.co/platform/integrations/chat/telegram';
+const TELEGRAM_DOCS_URL = 'https://docs.novu.co/platform/integrations/chat';
 const APPLICATION_IDENTIFIER_PLACEHOLDER = '<YOUR_NOVU_APPLICATION_IDENTIFIER>';
 
 function escapeJsxStringAttributeValue(value: string): string {

@@ -253,7 +253,7 @@ export const UpsertVariableForm = ({
               <code className="font-mono">{'}}'}</code>
               {'. '}
               <Link
-                to="https://docs.novu.co/platform/workflow/template-editor/variables"
+                to="https://docs.novu.co/platform/developer/environment-variables"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-text-sub underline"
