@@ -31,7 +31,8 @@ To get started, install the Inbox UI:
 
 <Tabs>
   <Tab title="Next.js">
-    <Prompt description="Add Novu Inbox to my Next.js app" icon="sparkles" actions={["copy", "cursor"]}>
+    <!-- prompt-source: snippets/prompts/inbox/nextjs.mdx -->
+<Prompt description="Add Novu Inbox to my Next.js app" icon="sparkles" actions={["copy", "cursor"]}>
 # Add Novu Inbox to Next.js App
 
 Install `@novu/nextjs`. Add the `<Inbox />` component to your header, navbar, or sidebar.
@@ -68,21 +69,7 @@ Use the app's existing auth system to get a unique user identifier for subscribe
 
 ## Appearance
 
-Extract design tokens from the host app (Tailwind config, CSS variables, theme objects) and apply via the appearance prop:
-
-```tsx
-<Inbox
-  appearance={{
-    variables: {
-      colorPrimary: '',
-      colorForeground: '',
-      colorBackground: '',
-    },
-  }}
-/>
-```
-
-Only set values extracted from the host app's design system. Do not add empty or placeholder values.
+Extract design tokens from the host app (Tailwind config, CSS variables, theme objects) and apply them via the appearance prop. Only include values you extracted from the host design system — omit empty or placeholder appearance values.
 
 ## Rules
 
@@ -115,7 +102,8 @@ If any fails, revise.
 </Prompt>
   </Tab>
   <Tab title="React">
-    <Prompt description="Add Novu Inbox to my React app" icon="sparkles" actions={["copy", "cursor"]}>
+    <!-- prompt-source: snippets/prompts/inbox/react.mdx -->
+<Prompt description="Add Novu Inbox to my React app" icon="sparkles" actions={["copy", "cursor"]}>
 # Add Novu Inbox to React App
 
 Install `@novu/react`. Add the `<Inbox />` component to your header, navbar, or sidebar.
@@ -155,21 +143,7 @@ Use the app's existing auth system to get a unique user identifier for subscribe
 
 ## Appearance
 
-Extract design tokens from the host app (Tailwind config, CSS variables, theme objects) and apply via the appearance prop:
-
-```tsx
-<Inbox
-  appearance={{
-    variables: {
-      colorPrimary: '',
-      colorForeground: '',
-      colorBackground: '',
-    },
-  }}
-/>
-```
-
-Only set values extracted from the host app's design system. Do not add empty or placeholder values.
+Extract design tokens from the host app (Tailwind config, CSS variables, theme objects) and apply them via the appearance prop. Only include values you extracted from the host design system — omit empty or placeholder appearance values.
 
 ## Rules
 

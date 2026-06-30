@@ -34,21 +34,7 @@ Use the app's existing auth system to get a unique user identifier for subscribe
 
 ## Appearance
 
-Extract design tokens from the host app (Tailwind config, CSS variables, theme objects) and apply via the appearance prop:
-
-```tsx
-<Inbox
-  appearance={{
-    variables: {
-      colorPrimary: '',
-      colorForeground: '',
-      colorBackground: '',
-    },
-  }}
-/>
-```
-
-Only set values extracted from the host app's design system. Do not add empty or placeholder values.
+Extract design tokens from the host app (Tailwind config, CSS variables, theme objects) and apply them via the appearance prop. Only include values you extracted from the host design system — omit empty or placeholder appearance values.
 
 ## Rules
 

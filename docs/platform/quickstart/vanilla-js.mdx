@@ -12,6 +12,7 @@ This guide walks you through integrating Novu’s Inbox into your Vanilla JS and
   Replace `YOUR_APPLICATION_IDENTIFIER` and `YOUR_SUBSCRIBER_ID` with values from **API Keys** and **Subscribers** in the Novu dashboard.
 </Note>
 
+<!-- prompt-source: snippets/prompts/inbox/vanilla-js.mdx -->
 <Prompt description="Add Novu Inbox to my JavaScript app" icon="sparkles" actions={["copy", "cursor"]}>
 # Add Novu Inbox to JavaScript App
 
@@ -29,7 +30,7 @@ npm install @novu/js
 
 ## Component
 
-```tsx
+```ts
 import { NovuUI } from '@novu/js/ui';
 
 const novu = new NovuUI({

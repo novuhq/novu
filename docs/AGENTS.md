@@ -53,7 +53,7 @@ Install `@novu/nextjs`...
 </Prompt>
 ```
 
-**Workflow:** edit `docs/snippets/prompts/**/*.mdx`, run `node scripts/inline-prompt-snippets.mjs`, commit both snippet files and updated pages.
+**Workflow:** edit `docs/snippets/prompts/**/*.mdx`, run `node scripts/inline-prompt-snippets.mjs`, commit both snippet files and updated pages. The script writes a `<!-- prompt-source: ... -->` marker before each `<Prompt>` so subsequent runs can refresh already-inlined prompts.
 
 **When to use `<Prompt>`**
 

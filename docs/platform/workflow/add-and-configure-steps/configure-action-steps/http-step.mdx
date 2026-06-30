@@ -68,6 +68,11 @@ You can control what happens when a step fails. The workflow can be configured t
 
 With each API request, novu send `novu-signature` header. This header is a HMAC signature of the request body and the timestamp. You can verify the authenticity of the request by verifying the HMAC signature. Below example shows how to verify the HMAC signature in a Next.js API route. Here, Novu secret key is used to generate the HMAC signature. You can copy the secret key from the [Novu API Keys](https://dashboard.novu.co/api-keys) page.
 
+<Note>
+  Replace `YOUR_SUBSCRIBER_ID` with a subscriber from your Novu dashboard and store your secret key as `NOVU_SECRET_KEY` in environment variables.
+</Note>
+
+<!-- prompt-source: snippets/prompts/workflows/http-webhook-handler.mdx -->
 <Prompt description="Implement a Novu HTTP webhook handler" icon="zap" actions={["copy", "cursor"]}>
 I need to implement an HTTP endpoint that will be called by Novu's notification workflow engine.
 

@@ -6,39 +6,14 @@ description: "Set up Novu in-app notifications in your Next.js app. Install the 
 
 Learn how to integrate Novu’s Inbox for real-time in-app notifications in your Next.js application. By the end of this guide, you’ll have a working notification inbox that displays messages triggered from the Novu dashboard.
 
-<Steps>
-  <Step>
-  ### Create a Novu account
-    [Create a Novu account](https://dashboard.novu.co/auth/sign-up) or [sign in](https://dashboard.novu.co/auth/sign-in) to access the Novu dashboard.
-  </Step>
+## Use AI to set up faster
 
-  <Step>
-  ### Create a new Next.js application
-  Run the following command to [create a new Next.js application](https://nextjs.org/docs/app/getting-started/installation):
+<Note>
+  Replace `YOUR_APPLICATION_IDENTIFIER` and `YOUR_SUBSCRIBER_ID` with values from **API Keys** and **Subscribers** in the Novu dashboard.
+</Note>
 
-  ```package-install
-  npm create next-app@latest
-  ```
-  </Step>
-  
-  <Step>
-  ### Install `@novu/nextjs`
-  Run the following command to install the Next.js Novu SDK:
-  
-  ```package-install
-  npm install @novu/nextjs
-  ```
-
-  </Step>
-
-  <Step>
-  ### Use AI to set up faster
-
-  <Note>
-    Replace `YOUR_APPLICATION_IDENTIFIER` and `YOUR_SUBSCRIBER_ID` with values from **API Keys** and **Subscribers** in the Novu dashboard.
-  </Note>
-
-  <Prompt description="Add Novu Inbox to my Next.js app" icon="sparkles" actions={["copy", "cursor"]}>
+<!-- prompt-source: snippets/prompts/inbox/nextjs.mdx -->
+<Prompt description="Add Novu Inbox to my Next.js app" icon="sparkles" actions={["copy", "cursor"]}>
 # Add Novu Inbox to Next.js App
 
 Install `@novu/nextjs`. Add the `<Inbox />` component to your header, navbar, or sidebar.
@@ -75,21 +50,7 @@ Use the app's existing auth system to get a unique user identifier for subscribe
 
 ## Appearance
 
-Extract design tokens from the host app (Tailwind config, CSS variables, theme objects) and apply via the appearance prop:
-
-```tsx
-<Inbox
-  appearance={{
-    variables: {
-      colorPrimary: '',
-      colorForeground: '',
-      colorBackground: '',
-    },
-  }}
-/>
-```
-
-Only set values extracted from the host app's design system. Do not add empty or placeholder values.
+Extract design tokens from the host app (Tailwind config, CSS variables, theme objects) and apply them via the appearance prop. Only include values you extracted from the host design system — omit empty or placeholder appearance values.
 
 ## Rules
 
@@ -120,6 +81,29 @@ NEVER:
 
 If any fails, revise.
 </Prompt>
+
+<Steps>
+  <Step>
+  ### Create a Novu account
+    [Create a Novu account](https://dashboard.novu.co/auth/sign-up) or [sign in](https://dashboard.novu.co/auth/sign-in) to access the Novu dashboard.
+  </Step>
+
+  <Step>
+  ### Create a new Next.js application
+  Run the following command to [create a new Next.js application](https://nextjs.org/docs/app/getting-started/installation):
+
+  ```package-install
+  npm create next-app@latest
+  ```
+  </Step>
+  
+  <Step>
+  ### Install `@novu/nextjs`
+  Run the following command to install the Next.js Novu SDK:
+  
+  ```package-install
+  npm install @novu/nextjs
+  ```
 
   </Step>
 

@@ -10,41 +10,14 @@ This guide walks you through integrating Novu’s Inbox into your Angular applic
   This guide uses @novu/js javascript sdk to build the Inbox component in Angular. Novu currently does not support native Angular Inbox component.
 </Note>
 
-<Steps>
-  <Step>
-  ## Create a Novu account
-    [Create a Novu account](https://dashboard.novu.co/auth/sign-up) or [sign in](https://dashboard.novu.co/auth/sign-in) to access the Novu dashboard.
-  </Step>
+## Use AI to set up faster
 
-    <Step>
-    ## Create an Angular application
-    Run the following command to create a new Angular app using [angular cli](https://angular.dev/tools/cli/setup-local#install-the-angular-cli):
+<Note>
+  Replace `YOUR_APPLICATION_IDENTIFIER` and `YOUR_SUBSCRIBER_ID` with values from **API Keys** and **Subscribers** in the Novu dashboard.
+</Note>
 
-    ```bash
-    ng new novu-inbox-angular
-    cd novu-inbox-angular
-    ```
-  </Step>
-
-  <Step>
-  ## Install `@novu/js`
-  The [Novu JavaScript SDK](/platform/sdks/javascript) gives you access to the Inbox component.
-
-  Run the following command to install the SDK:
-
-    ```package-install
-    npm install @novu/js
-    ```
-  </Step>
-
-  <Step>
-  ## Use AI to set up faster
-
-  <Note>
-    Replace `YOUR_APPLICATION_IDENTIFIER` and `YOUR_SUBSCRIBER_ID` with values from **API Keys** and **Subscribers** in the Novu dashboard.
-  </Note>
-
-  <Prompt description="Add Novu Inbox to my Angular app" icon="sparkles" actions={["copy", "cursor"]}>
+<!-- prompt-source: snippets/prompts/inbox/angular.mdx -->
+<Prompt description="Add Novu Inbox to my Angular app" icon="sparkles" actions={["copy", "cursor"]}>
 # Add Novu Inbox to Angular App
 
 Install `@novu/js`. Mount the Inbox in your header, navbar, or sidebar.
@@ -61,7 +34,7 @@ npm install @novu/js
 
 ## Component
 
-```tsx
+```ts
 import { NovuUI } from '@novu/js/ui';
 
 const novu = new NovuUI({
@@ -110,6 +83,31 @@ NEVER:
 If any fails, revise.
 </Prompt>
 
+<Steps>
+  <Step>
+  ## Create a Novu account
+    [Create a Novu account](https://dashboard.novu.co/auth/sign-up) or [sign in](https://dashboard.novu.co/auth/sign-in) to access the Novu dashboard.
+  </Step>
+
+    <Step>
+    ## Create an Angular application
+    Run the following command to create a new Angular app using [angular cli](https://angular.dev/tools/cli/setup-local#install-the-angular-cli):
+
+    ```bash
+    ng new novu-inbox-angular
+    cd novu-inbox-angular
+    ```
+  </Step>
+
+  <Step>
+  ## Install `@novu/js`
+  The [Novu JavaScript SDK](/platform/sdks/javascript) gives you access to the Inbox component.
+
+  Run the following command to install the SDK:
+
+    ```package-install
+    npm install @novu/js
+    ```
   </Step>
 
   <Step>
