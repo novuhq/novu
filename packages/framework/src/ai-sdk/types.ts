@@ -1,5 +1,13 @@
 import type { generateText, streamText } from 'ai';
-import type { AgentHandlers, AgentMessage, AgentMessageContext, MessageContent } from '../resources/agent/agent.types';
+import type {
+  AgentActionContext,
+  AgentHandlers,
+  AgentMessage,
+  AgentMessageContext,
+  MessageContent,
+  ToolApprovalConfig,
+  ToolApprovalDecision,
+} from '../resources/agent/agent.types';
 import type { Awaitable } from '../types/util.types';
 
 /** Result from `streamText()` or `generateText()`. Return from `onMessage` to reply with the model output. */
@@ -12,6 +20,12 @@ export type AiSdkResult = ReturnType<typeof streamText> | Awaited<ReturnType<typ
  * `streamText()` or `generateText()` result — Novu delivers the model output
  * automatically.
  */
-export type AiSdkAgentHandlers = Omit<AgentHandlers, 'onMessage'> & {
+export type AiSdkAgentHandlers = Omit<AgentHandlers, 'onMessage' | 'onToolApproval'> & {
   onMessage: (message: AgentMessage, ctx: AgentMessageContext) => Awaitable<MessageContent | AiSdkResult | void>;
+  /**
+   * Optional. The adapter auto-resumes by default; define this to add side-effects
+   * (return `void`) or to drive the resume yourself (return a `streamText`/`generateText` result).
+   */
+  onToolApproval?: (decision: ToolApprovalDecision, ctx: AgentActionContext) => Awaitable<AiSdkResult | void>;
+  toolApproval?: ToolApprovalConfig;
 };

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { buildApprovalActionId } from '../resources/agent/tool-approval/action-id';
 import { toModelMessages } from './history-mapper';
 
 describe('toModelMessages', () => {
@@ -60,6 +61,50 @@ describe('toModelMessages', () => {
     expect(result).toEqual([
       { role: 'user', content: 'Alice: one' },
       { role: 'user', content: 'Bob: two' },
+    ]);
+  });
+
+  it('reconstructs tool-call + approval-request from a persisted approval card, and the response from a synthetic entry', () => {
+    const payload = { approvalId: 'tc_1', toolCallId: 'tc_1', name: 'issueRefund', input: { amount: 250 } };
+    const card = {
+      type: 'card',
+      title: 'Tool approval required',
+      children: [
+        {
+          type: 'actions',
+          children: [
+            { type: 'button', id: buildApprovalActionId('deny', payload), label: 'Deny' },
+            { type: 'button', id: buildApprovalActionId('approve', payload), label: 'Approve' },
+          ],
+        },
+      ],
+    };
+
+    const result = toModelMessages([
+      { role: 'user', type: 'message', content: 'refund my order', createdAt: '1' },
+      { role: 'agent', type: 'card', content: '', richContent: { card }, createdAt: '2' },
+      {
+        role: 'agent',
+        type: 'tool-approval-response',
+        content: '',
+        richContent: { approvalId: 'tc_1', approved: true },
+        createdAt: '3',
+      },
+    ]);
+
+    expect(result).toEqual([
+      { role: 'user', content: 'refund my order' },
+      {
+        role: 'assistant',
+        content: [
+          { type: 'tool-call', toolCallId: 'tc_1', toolName: 'issueRefund', input: { amount: 250 } },
+          { type: 'tool-approval-request', approvalId: 'tc_1', toolCallId: 'tc_1' },
+        ],
+      },
+      {
+        role: 'tool',
+        content: [{ type: 'tool-approval-response', approvalId: 'tc_1', approved: true }],
+      },
     ]);
   });
 });
