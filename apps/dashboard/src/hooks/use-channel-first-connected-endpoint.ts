@@ -1,6 +1,10 @@
 import { CONNECT_SUBSCRIBER_PREFIX, ENDPOINT_TYPES } from '@novu/shared';
 import { useQuery } from '@tanstack/react-query';
-import { type ChannelEndpointsListResponse, listChannelEndpoints } from '@/api/channel-endpoints';
+import {
+  type ChannelEndpointDto,
+  type ChannelEndpointsListResponse,
+  listChannelEndpoints,
+} from '@/api/channel-endpoints';
 import { useEnvironment } from '@/context/environment/hooks';
 
 const POLL_INTERVAL_MS = 3000;
@@ -41,30 +45,41 @@ type UseChannelFirstConnectedEndpointParams = {
  *    auto-provision) — deep-link providers like Telegram are exempt from this check, and
  *  - is not the Novu dashboard's own onboarding subscriber (`connect:` prefixed id).
  */
-function hasGenuineConnectedEndpoint(data: ChannelEndpointsListResponse | undefined): boolean {
-  if (!data) {
+function isGenuineConnectedEndpoint(endpoint: ChannelEndpointDto): boolean {
+  if (!CONNECT_FLOW_USER_ENDPOINT_TYPES.has(endpoint.type)) {
     return false;
   }
 
-  return data.data.some((endpoint) => {
-    if (!CONNECT_FLOW_USER_ENDPOINT_TYPES.has(endpoint.type)) {
-      return false;
-    }
+  const requiresConnectionIdentifier = !ENDPOINT_TYPES_WITHOUT_CONNECTION_IDENTIFIER.has(endpoint.type);
+  if (requiresConnectionIdentifier && !endpoint.connectionIdentifier) {
+    return false;
+  }
 
-    const requiresConnectionIdentifier = !ENDPOINT_TYPES_WITHOUT_CONNECTION_IDENTIFIER.has(endpoint.type);
-    if (requiresConnectionIdentifier && !endpoint.connectionIdentifier) {
-      return false;
-    }
+  return !endpoint.subscriberId?.startsWith(CONNECT_SUBSCRIBER_ID_PREFIX);
+}
 
-    return !endpoint.subscriberId?.startsWith(CONNECT_SUBSCRIBER_ID_PREFIX);
-  });
+/** The earliest (first) genuine end-user connection, or null if none exists yet. */
+function findFirstGenuineConnectedEndpoint(data: ChannelEndpointsListResponse | undefined): ChannelEndpointDto | null {
+  if (!data) {
+    return null;
+  }
+
+  const genuine = data.data.filter(isGenuineConnectedEndpoint);
+  if (genuine.length === 0) {
+    return null;
+  }
+
+  return genuine.reduce((earliest, endpoint) =>
+    new Date(endpoint.createdAt).getTime() < new Date(earliest.createdAt).getTime() ? endpoint : earliest
+  );
 }
 
 /**
  * Polls the channel-endpoints API for the first genuine end-user connection created through the
- * embedded SDK connect button for a specific integration. Returns `connected: true` once one
- * appears. Excludes bot-DM auto-provisioned links and the dashboard's own onboarding connect.
- * Callers should disable this where conversations are unavailable (e.g. self-hosted community).
+ * embedded SDK connect button for a specific integration. Returns `connected: true` and the
+ * connection's `connectedAt` (the endpoint's server `createdAt`) once one appears. Excludes bot-DM
+ * auto-provisioned links and the dashboard's own onboarding connect. Callers should disable this
+ * where conversations are unavailable (e.g. self-hosted community).
  */
 export function useChannelFirstConnectedEndpoint({
   integrationIdentifier,
@@ -83,11 +98,14 @@ export function useChannelFirstConnectedEndpoint({
       }),
     enabled: enabled && Boolean(currentEnvironment),
     refetchOnWindowFocus: false,
-    refetchInterval: (query) => (hasGenuineConnectedEndpoint(query.state.data) ? false : POLL_INTERVAL_MS),
+    refetchInterval: (query) => (findFirstGenuineConnectedEndpoint(query.state.data) ? false : POLL_INTERVAL_MS),
   });
 
+  const firstConnected = findFirstGenuineConnectedEndpoint(query.data);
+
   return {
-    connected: hasGenuineConnectedEndpoint(query.data),
+    connected: firstConnected !== null,
+    connectedAt: firstConnected?.createdAt ?? null,
     isLoading: query.isLoading,
   };
 }

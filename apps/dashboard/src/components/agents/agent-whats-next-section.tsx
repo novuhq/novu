@@ -16,9 +16,11 @@ import TruncatedText from '@/components/truncated-text';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useAgentRoutes } from '@/hooks/use-agent-routes';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { useWhatsNextGuideSession } from '@/hooks/use-whats-next-default-expanded';
 import { getAgentChannelDisplayName } from '@/utils/agent-email-provider-display';
 import { buildRoute } from '@/utils/routes';
 import { cn } from '@/utils/ui';
+import { shouldShowAgentWhatsNextSection } from '@/utils/whats-next-guide';
 import { AddChannelPicker } from './add-channel-picker';
 import { hasAgentInboundConnection } from './is-agent-integration-connected';
 import { SetupGuideCard } from './setup-guide-card';
@@ -208,6 +210,7 @@ export function AgentWhatsNextSection({ agent }: AgentWhatsNextSectionProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const agentRoutes = useAgentRoutes();
+  const { defaultExpanded, isFreshSession } = useWhatsNextGuideSession(false);
 
   const integrationsQuery = useQuery({
     queryKey: getAgentIntegrationsQueryKey(currentEnvironment?._id, agent.identifier),
@@ -277,10 +280,19 @@ export function AgentWhatsNextSection({ agent }: AgentWhatsNextSectionProps) {
     return null;
   }
 
+  if (!shouldShowAgentWhatsNextSection(connectedLinks, { isFreshSession })) {
+    return null;
+  }
+
   const persistKey = `agent-whats-next:${currentEnvironment?.slug ?? ''}:${agent.identifier}`;
 
   return (
-    <SetupGuideCard label="What's next" persistKey={persistKey} className="min-w-0 flex-1">
+    <SetupGuideCard
+      label="What's next"
+      persistKey={persistKey}
+      defaultExpanded={defaultExpanded}
+      className="min-w-0 flex-1"
+    >
       <div className="relative flex flex-col gap-10 py-6 pb-3 pl-8 pr-3 md:pr-6">
         <div
           className="absolute bottom-0 left-[22px] top-0 w-px"

@@ -127,7 +127,7 @@ export function EmailAgentIntegrationGuide({
         renderConnectedView={(justConnected) => (
           <>
             <ConnectionConfetti active={justConnected} />
-            <EmailWhatsNextGuide agent={agent} integrationLink={integrationLink} />
+            <EmailWhatsNextGuide agent={agent} integrationLink={integrationLink} justConnected={justConnected} />
             {emailCard}
           </>
         )}

@@ -6,7 +6,9 @@ import type { AgentIntegrationLink, AgentResponse } from '@/api/agents';
 import { IS_SELF_HOSTED_EE } from '@/config';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
+import { useWhatsNextGuideSession } from '@/hooks/use-whats-next-default-expanded';
 import { buildRoute, ROUTES } from '@/utils/routes';
+import { shouldShowWhatsNextGuide } from '@/utils/whats-next-guide';
 import { CopyableEmailAddress } from '../../copyable-email-address';
 import { InboundAddressForm } from '../../inbound-address-form';
 import { isAgentIntegrationConnected } from '../../is-agent-integration-connected';
@@ -26,6 +28,8 @@ const DELIVERABILITY_DOCS_URL = 'https://docs.novu.co/platform/domains';
 type EmailWhatsNextGuideProps = {
   agent: AgentResponse;
   integrationLink: AgentIntegrationLink;
+  /** True when the integration connected during this session (expanded on first view). */
+  justConnected?: boolean;
 };
 
 type GuideStep = {
@@ -98,9 +102,11 @@ function ProductionReadyFooter({ ready }: { ready: boolean }) {
   );
 }
 
-export function EmailWhatsNextGuide({ agent, integrationLink }: EmailWhatsNextGuideProps) {
+export function EmailWhatsNextGuide({ agent, integrationLink, justConnected = false }: EmailWhatsNextGuideProps) {
   const navigate = useNavigate();
   const { currentEnvironment } = useEnvironment();
+  const { defaultExpanded, isFreshSession } = useWhatsNextGuideSession(justConnected);
+  const persistKey = `agent-integration-whats-next:${currentEnvironment?.slug ?? ''}:${agent.identifier}:${integrationLink.integration.identifier}`;
   const { integrations } = useFetchIntegrations();
   const integrationId = integrationLink.integration._id;
 
@@ -284,10 +290,21 @@ export function EmailWhatsNextGuide({ agent, integrationLink }: EmailWhatsNextGu
       />
     ) : null;
 
+  // Completion = the agent moved off the demo sender to the user's own provider, stamped server-side
+  // in `credentials.outboundConnectedAt`. Hide the guide a day after that moment; until then (or in a
+  // fresh onboarding session) keep showing it.
+  const completedAt = emailIntegration.credentials.outboundConnectedAt ?? null;
+
+  if (!shouldShowWhatsNextGuide(completedAt, { isFreshSession })) {
+    return null;
+  }
+
   return (
     <SetupGuideCard
       label="What's next"
       rightContent={isAgentIntegrationConnected(integrationLink) ? <ConnectedBadge /> : null}
+      persistKey={persistKey}
+      defaultExpanded={defaultExpanded}
     >
       <div className="relative flex flex-col gap-10 py-6 pb-3 pl-8 pr-3 md:pr-6">
         <div

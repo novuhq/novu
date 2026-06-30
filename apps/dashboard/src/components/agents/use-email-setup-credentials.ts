@@ -323,7 +323,23 @@ export function useEmailSetupCredentials({
 
   function onOutboundSelect(id: string) {
     setOutboundId(id);
-    saveCredentials({ outboundIntegrationId: id }).catch((err: unknown) => {
+
+    // Stamp the demo -> own-provider transition once. This marks completion of the email
+    // "What's next" layer-2 onboarding (used to time-box that guide). The demo sender
+    // (`Novu`) and the agent inbox integration (`NovuAgent`) are not "own providers".
+    const selectedProviderId = integrations?.find((integration) => integration._id === id)?.providerId;
+    const isOwnProviderSelection =
+      Boolean(selectedProviderId) &&
+      selectedProviderId !== EmailProviderIdEnum.Novu &&
+      selectedProviderId !== EmailProviderIdEnum.NovuAgent;
+    const alreadyStamped = typeof credentialsRef.current.outboundConnectedAt === 'string';
+
+    const patch: Record<string, unknown> = { outboundIntegrationId: id };
+    if (isOwnProviderSelection && !alreadyStamped) {
+      patch.outboundConnectedAt = new Date().toISOString();
+    }
+
+    saveCredentials(patch).catch((err: unknown) => {
       setOutboundId(lastConfirmedOutboundIdRef.current);
       const message = err instanceof Error ? err.message : 'Could not save provider selection.';
       showErrorToast(message, 'Settings not saved');

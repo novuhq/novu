@@ -22,6 +22,7 @@ import { useAgentRoutes } from '@/hooks/use-agent-routes';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { useTelemetry } from '@/hooks/use-telemetry';
+import { withOnboardingSource } from '@/utils/onboarding-redirect';
 import { buildRoute } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { AgentCodeSetupSection } from './agent-code-setup-section';
@@ -650,11 +651,13 @@ export function AgentSetupSteps({
     }
 
     void navigate(
-      `${buildRoute(agentRoutes.integrationDetail, {
-        environmentSlug: currentEnvironment.slug,
-        agentIdentifier: encodeURIComponent(agent.identifier),
-        integrationIdentifier: encodeURIComponent(integrationIdentifier),
-      })}${location.search}`
+      withOnboardingSource(
+        `${buildRoute(agentRoutes.integrationDetail, {
+          environmentSlug: currentEnvironment.slug,
+          agentIdentifier: encodeURIComponent(agent.identifier),
+          integrationIdentifier: encodeURIComponent(integrationIdentifier),
+        })}${location.search}`
+      )
     );
   }, [
     agent.identifier,

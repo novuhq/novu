@@ -56,6 +56,12 @@ export interface ICredentials {
   tenantId?: string;
   signingSecret?: string;
   outboundIntegrationId?: string;
+  /**
+   * Agent email: ISO timestamp of when the agent's outbound was first switched from the demo
+   * sender to the user's own provider. Marks completion of the email "What's next" layer-2
+   * onboarding and time-boxes that guide. Only meaningful on the NovuAgent email integration.
+   */
+  outboundConnectedAt?: string;
   useFromAddressOverride?: boolean;
   fromAddressOverride?: string;
   /**
