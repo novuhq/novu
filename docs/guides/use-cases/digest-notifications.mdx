@@ -29,16 +29,135 @@ Typical digest settings:
 
 Trigger the same workflow for each individual event. Novu handles batching automatically based on the digest step configuration and digest key.
 
-```bash
-curl -X POST https://api.novu.co/v1/events/trigger \
-  -H "Authorization: ApiKey <NOVU_SECRET_KEY>" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "post-liked",
-    "to": { "subscriberId": "user_123" },
-    "payload": { "postId": "post_456", "likerName": "Alex" }
-  }'
+<Tabs>
+  <Tab title="Node.js">
+```typescript
+import { Novu } from '@novu/api';
+
+const novu = new Novu({ secretKey: process.env.NOVU_SECRET_KEY });
+
+await novu.trigger({
+  workflowId: 'post-liked',
+  to: { subscriberId: 'user_123' },
+  payload: { postId: 'post_456', likerName: 'Alex' },
+});
 ```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="post-liked",
+        to={"subscriber_id": "user_123"},
+        payload={"postId": "post_456", "likerName": "Alex"},
+    ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+_, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "post-liked",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: "user_123",
+    }),
+    Payload: map[string]any{
+        "postId":    "post_456",
+        "likerName": "Alex",
+    },
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()
+    ->setSecurity('<YOUR_SECRET_KEY_HERE>')
+    ->build();
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'post-liked',
+        to: new Components\SubscriberPayloadDto(subscriberId: 'user_123'),
+        payload: [
+            'postId' => 'post_456',
+            'likerName' => 'Alex',
+        ],
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+
+var sdk = new NovuSDK(secretKey: "<YOUR_SECRET_KEY_HERE>");
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "post-liked",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() {
+        SubscriberId = "user_123",
+    }),
+    Payload = new Dictionary<string, object>() {
+        { "postId", "post_456" },
+        { "likerName", "Alex" },
+    },
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+import java.util.Map;
+
+Novu novu = Novu.builder()
+    .secretKey("<YOUR_SECRET_KEY_HERE>")
+    .build();
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("post-liked")
+        .to(To2.of(SubscriberPayloadDto.builder()
+            .subscriberId("user_123")
+            .build()))
+        .payload(Map.ofEntries(
+            Map.entry("postId", "post_456"),
+            Map.entry("likerName", "Alex")))
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -X POST 'https://api.novu.co/v1/events/trigger' \
+-H 'Content-Type: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+  "name": "post-liked",
+  "to": { "subscriberId": "user_123" },
+  "payload": { "postId": "post_456", "likerName": "Alex" }
+}'
+```
+  </Tab>
+</Tabs>
 
 ## Related guides
 

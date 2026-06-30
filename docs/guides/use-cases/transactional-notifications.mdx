@@ -15,16 +15,144 @@ Common transactional events include order confirmations, shipping updates, payme
 2. Register or upsert a [subscriber](/platform/concepts/subscribers) with the recipient's `subscriberId`, email, and phone.
 3. [Trigger the workflow](/api-reference/events/trigger-event) from your backend with the workflow identifier, `subscriberId`, and event payload.
 
-```bash
-curl -X POST https://api.novu.co/v1/events/trigger \
-  -H "Authorization: ApiKey <NOVU_SECRET_KEY>" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "order-shipped",
-    "to": { "subscriberId": "user_123" },
-    "payload": { "orderId": "ORD-456", "trackingUrl": "https://example.com/track/456" }
-  }'
+<Tabs>
+  <Tab title="Node.js">
+```typescript
+import { Novu } from '@novu/api';
+
+const novu = new Novu({ secretKey: process.env.NOVU_SECRET_KEY });
+
+await novu.trigger({
+  workflowId: 'order-shipped',
+  to: { subscriberId: 'user_123' },
+  payload: {
+    orderId: 'ORD-456',
+    trackingUrl: 'https://example.com/track/456',
+  },
+});
 ```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="order-shipped",
+        to={"subscriber_id": "user_123"},
+        payload={
+            "orderId": "ORD-456",
+            "trackingUrl": "https://example.com/track/456",
+        },
+    ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+_, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "order-shipped",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: "user_123",
+    }),
+    Payload: map[string]any{
+        "orderId":     "ORD-456",
+        "trackingUrl": "https://example.com/track/456",
+    },
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()
+    ->setSecurity('<YOUR_SECRET_KEY_HERE>')
+    ->build();
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'order-shipped',
+        to: new Components\SubscriberPayloadDto(subscriberId: 'user_123'),
+        payload: [
+            'orderId' => 'ORD-456',
+            'trackingUrl' => 'https://example.com/track/456',
+        ],
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+
+var sdk = new NovuSDK(secretKey: "<YOUR_SECRET_KEY_HERE>");
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "order-shipped",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() {
+        SubscriberId = "user_123",
+    }),
+    Payload = new Dictionary<string, object>() {
+        { "orderId", "ORD-456" },
+        { "trackingUrl", "https://example.com/track/456" },
+    },
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+import java.util.Map;
+
+Novu novu = Novu.builder()
+    .secretKey("<YOUR_SECRET_KEY_HERE>")
+    .build();
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("order-shipped")
+        .to(To2.of(SubscriberPayloadDto.builder()
+            .subscriberId("user_123")
+            .build()))
+        .payload(Map.ofEntries(
+            Map.entry("orderId", "ORD-456"),
+            Map.entry("trackingUrl", "https://example.com/track/456")))
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -X POST 'https://api.novu.co/v1/events/trigger' \
+-H 'Content-Type: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+  "name": "order-shipped",
+  "to": { "subscriberId": "user_123" },
+  "payload": {
+    "orderId": "ORD-456",
+    "trackingUrl": "https://example.com/track/456"
+  }
+}'
+```
+  </Tab>
+</Tabs>
 
 ## What channels should I use for transactional messages?
 
