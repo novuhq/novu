@@ -1,10 +1,17 @@
 import { RedirectToSignIn, Show, useAuth } from '@clerk/react';
+import { useLocation } from 'react-router-dom';
 import { AnimatedOutlet } from '@/components/animated-outlet';
 import { AuthLayout } from '../components/auth-layout';
 import { EnvironmentProvider } from '../context/environment/environment-provider';
+import { ROUTES } from '../utils/routes';
 
 export const OnboardingParentRoute = () => {
   const { isLoaded } = useAuth();
+  const location = useLocation();
+  const signedOutRedirectUrl =
+    typeof window !== 'undefined'
+      ? `${window.location.origin}${ROUTES.ROOT}${location.search}${location.hash}`
+      : undefined;
 
   if (!isLoaded) {
     return null;
@@ -20,7 +27,7 @@ export const OnboardingParentRoute = () => {
         </EnvironmentProvider>
       </Show>
       <Show when="signed-out">
-        <RedirectToSignIn redirectUrl={typeof window !== 'undefined' ? window.location.href : undefined} />
+        <RedirectToSignIn redirectUrl={signedOutRedirectUrl} />
       </Show>
     </>
   );
