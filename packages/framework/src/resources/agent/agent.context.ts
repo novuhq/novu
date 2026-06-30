@@ -11,20 +11,26 @@ import type {
   AgentReaction,
   AgentReplyPayload,
   AgentSubscriber,
+  AgentToolCall,
   FileRef,
   MessageContent,
+  PendingApproval as PendingApprovalType,
   PlanControl,
   PlanProgressEvent,
   ReplyContent,
   ReplyHandle,
   SentMessageInfo,
   Signal,
+  ToolApprovalConfig,
+  ToolApprovalControl,
   TriggerRecipientsPayload,
   TypingControl,
   TypingOp,
 } from './agent.types';
-import { AgentEventEnum } from './agent.types';
+import { AgentEventEnum, PendingApproval } from './agent.types';
 import { createPlanHandle } from './plan-handle';
+import { type ApprovalPayload, buildApprovalActionId } from './tool-approval/action-id';
+import { defaultApprovalCard } from './tool-approval/approval-card';
 
 const MAX_INLINE_FILE_BYTES = 5 * 1024 * 1024;
 const MAX_INLINE_AGGREGATE_FILE_BYTES = 5 * 1024 * 1024;
@@ -217,6 +223,8 @@ interface ReplyPoster {
 class ReplyHandleImpl implements ReplyHandle {
   public messageId: string;
   public platformThreadId: string;
+  /** @internal set when the handler calls `edit()`; dispatch skips the default resolved card. */
+  public editedByHandler = false;
 
   constructor(
     messageId: string,
@@ -230,6 +238,7 @@ class ReplyHandleImpl implements ReplyHandle {
   }
 
   async edit(content: MessageContent, options?: { files?: FileRef[] }): Promise<ReplyHandle> {
+    this.editedByHandler = true;
     const info = await this.poster.post({
       conversationId: this.conversationId,
       integrationIdentifier: this.integrationIdentifier,
@@ -265,6 +274,7 @@ export class AgentContextImpl {
   readonly platformContext: AgentPlatformContext;
   readonly typing: TypingControl;
   readonly plan: PlanControl;
+  readonly toolApproval: ToolApprovalControl;
 
   readonly metadata: {
     get(key: string): unknown;
@@ -282,13 +292,16 @@ export class AgentContextImpl {
   private _planFinalized = false;
   private _planTitle: string | undefined;
   private _drainPlanQueue: (() => Promise<void>) | null = null;
+  /** @internal in-flight approval card post; awaited by dispatch before the turn ends. */
+  _pendingApprovalPost: Promise<void> | null = null;
+  private readonly _toolApprovalConfig?: ToolApprovalConfig;
   private readonly _replyUrl: string;
   private readonly _conversationId: string;
   private readonly _integrationIdentifier: string;
   private readonly _secretKey: string;
   private readonly _poster: ReplyPoster;
 
-  constructor(request: AgentBridgeRequest, secretKey: string) {
+  constructor(request: AgentBridgeRequest, secretKey: string, toolApprovalConfig?: ToolApprovalConfig) {
     this.event = request.event as AgentEventEnum;
     this.action = request.action ?? null;
     this.message = request.message;
@@ -304,6 +317,7 @@ export class AgentContextImpl {
     this._integrationIdentifier = request.integrationIdentifier;
     this._secretKey = secretKey;
     this._poster = { post: (body) => this._post(body) };
+    this._toolApprovalConfig = toolApprovalConfig;
 
     this._metadataState = { ...(request.conversation.metadata ?? {}) };
 
@@ -374,6 +388,28 @@ export class AgentContextImpl {
 
       return handle;
     }) as PlanControl;
+
+    this.toolApproval = {
+      request: (toolCall: AgentToolCall): PendingApprovalType => {
+        const payload: ApprovalPayload = {
+          approvalId: toolCall.id,
+          toolCallId: toolCall.id,
+          name: toolCall.name,
+          input: toolCall.input,
+        };
+        const actionIds = {
+          approve: buildApprovalActionId('approve', payload),
+          deny: buildApprovalActionId('deny', payload),
+        };
+        const content =
+          this._toolApprovalConfig?.renderApproval?.({ toolCall, actionIds }) ??
+          defaultApprovalCard({ toolCall, actionIds });
+
+        this._pendingApprovalPost = this.reply(content).then(() => undefined);
+
+        return new PendingApproval();
+      },
+    };
   }
 
   async reply(content: MessageContent, options?: { files?: FileRef[] }): Promise<ReplyHandle> {
@@ -410,6 +446,11 @@ export class AgentContextImpl {
       this._integrationIdentifier,
       this._poster
     );
+  }
+
+  /** @internal Build a handle to an already-posted message (used to resume an approval). */
+  createReplyHandle(messageId: string): ReplyHandleImpl {
+    return new ReplyHandleImpl(messageId, '', this._conversationId, this._integrationIdentifier, this._poster);
   }
 
   resolve(summary?: string): void {

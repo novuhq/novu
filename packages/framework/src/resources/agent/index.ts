@@ -52,8 +52,10 @@ export type {
   ReplyHandle,
   SentMessageInfo,
   Signal,
+  ToolApprovalConfig,
+  ToolApprovalDecision,
   TriggerSignal,
   TypingControl,
   TypingOp,
 } from './agent.types';
-export { AgentEventEnum } from './agent.types';
+export { AgentEventEnum, PendingApproval } from './agent.types';

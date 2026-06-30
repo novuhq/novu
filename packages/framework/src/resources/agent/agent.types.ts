@@ -185,11 +185,56 @@ export interface AgentAction {
   sourceMessageId?: string;
 }
 
-/** Provider-agnostic tool call passed to the approval primitives. */
+/**
+ * A tool call that requires user approval before it runs.
+ * Pass this to `ctx.toolApproval.request()` when your agent wants to gate a tool.
+ */
 export interface AgentToolCall {
   id: string;
   name: string;
   input?: Record<string, unknown>;
+}
+
+/**
+ * Returned by `ctx.toolApproval.request()`. Return it from `onMessage` to post
+ * an approval card and end the turn until the user approves or denies.
+ */
+export class PendingApproval {
+  readonly __novuPendingApproval = true as const;
+}
+
+/** Optional customization for tool approval messages. */
+export interface ToolApprovalConfig {
+  /**
+   * Build the approval message shown while waiting for a decision.
+   * Return a string or card. Defaults to a built-in Approve/Deny card.
+   *
+   * Use the provided `actionIds` on your `<Button>` elements so Novu can route
+   * the click back to `onToolApproval`.
+   */
+  renderApproval?: (args: { toolCall: AgentToolCall; actionIds: { approve: string; deny: string } }) => MessageContent;
+}
+
+/** Passed to `onToolApproval` when the user clicks Approve or Deny. */
+export interface ToolApprovalDecision {
+  /** The tool that was awaiting approval. */
+  toolCall: AgentToolCall;
+  /** `true` if the user approved, `false` if they denied. */
+  approved: boolean;
+  /**
+   * Handle to the approval message. Edit it to show a custom resolved state,
+   * or leave it unchanged to use the default resolved card.
+   */
+  approvalMessage: ReplyHandle;
+}
+
+/** Controls on `ctx.toolApproval` for gating tool calls. */
+export interface ToolApprovalControl {
+  /**
+   * Post an approval message and pause the turn.
+   * Return the result from `onMessage` to end the turn until the user decides.
+   */
+  request(toolCall: AgentToolCall): PendingApproval;
 }
 
 // ---------------------------------------------------------------------------
@@ -254,6 +299,15 @@ export interface AgentContextBase {
    *   });
    */
   reply(content: MessageContent, options?: { files?: FileRef[] }): Promise<ReplyHandle>;
+  /**
+   * Gate tool calls that need user approval before they run.
+   *
+   * @example
+   *   if (needsApproval(toolCall)) {
+   *     return ctx.toolApproval.request(toolCall);
+   *   }
+   */
+  readonly toolApproval: ToolApprovalControl;
   /**
    * Mark the conversation as resolved. Optionally provide a summary for the resolution record.
    * Triggers the `onResolve` handler if one is registered.
@@ -411,6 +465,21 @@ export interface AgentHandlers {
    *   `ctx.subscriber` and `ctx.conversation`.
    */
   onResolve?: (ctx: AgentResolveContext) => Awaitable<MessageContent | void>;
+  /**
+   * Fires when the user approves or denies a tool call you previously gated with
+   * `ctx.toolApproval.request()`.
+   *
+   * @param decision - The tool, the user's verdict, and a handle to the approval message.
+   * @param ctx - Conversation context (history, subscriber, metadata, reply/trigger methods).
+   *
+   * Run the tool (or skip it), then return a reply or call `ctx.reply()` directly.
+   * Register this handler whenever you call `ctx.toolApproval.request()` in `onMessage`.
+   */
+  onToolApproval?: (decision: ToolApprovalDecision, ctx: AgentActionContext) => Awaitable<MessageContent | void>;
+  /**
+   * Customize how approval messages look. Omit to use the built-in Approve/Deny card.
+   */
+  toolApproval?: ToolApprovalConfig;
 }
 
 export interface Agent {

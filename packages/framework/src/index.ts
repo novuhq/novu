@@ -40,6 +40,8 @@ export type {
   ReplyHandle,
   SentMessageInfo,
   Signal,
+  ToolApprovalConfig,
+  ToolApprovalDecision,
   TriggerSignal,
 } from './resources';
 export {
@@ -52,6 +54,7 @@ export {
   CardLink,
   CardText,
   Divider,
+  PendingApproval,
   Select,
   SelectOption,
   TextInput,
