@@ -1,12 +1,30 @@
 ---
-title: 'Overview'
-description: 'Step-by-step guides for integrating Novu with popular services like Clerk, Stripe, and Segment.'
+title: 'Novu Integration Guides and Recipes'
+description: 'Step-by-step guides for integrating Novu with Clerk, Stripe, Segment, Auth0, Supabase, and other popular services.'
+sidebarTitle: Overview
 ---
 
 
 ## Integration Guides
 
 Novu provides various ways to integrate with external services to trigger notification workflows. Here are the main integration approaches:
+
+## Use case guides
+
+<Columns cols={2}>
+  <Card title="Transactional notifications" icon="send" href="/guides/use-cases/transactional-notifications">
+    Send order confirmations, payment alerts, and account notifications through Novu workflows.
+  </Card>
+  <Card title="Password reset alerts" icon="key" href="/guides/use-cases/password-reset-notifications">
+    Build password reset and authentication alert workflows with email and in-app channels.
+  </Card>
+  <Card title="Digest notifications" icon="layers" href="/guides/use-cases/digest-notifications">
+    Batch notifications into summaries such as "10 new comments on your post."
+  </Card>
+  <Card title="Multi-channel fallback" icon="git-branch" href="/guides/use-cases/multi-channel-fallback">
+    Send in-app first, then email or SMS if the message remains unread.
+  </Card>
+</Columns>
 
 ### Webhook Integration Guides
 
@@ -22,6 +40,11 @@ This allows for real-time notifications—whether it's a welcome email, payment 
   <Card title="Clerk" icon="/images/icons/clerk.svg" href="/guides/webhooks/clerk">
   <p>
     Use Clerks webhooks events to trigger authentication related notifications workflows.
+  </p>
+  </Card>
+  <Card title="Auth0" icon="key" href="/guides/webhooks/auth0">
+  <p>
+    Trigger Novu workflows from Auth0 signup, password reset, and security events.
   </p>
   </Card>
   <Card title="Stripe" icon="/images/icons/stripe.svg" href="/guides/webhooks/stripe">

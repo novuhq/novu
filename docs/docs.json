@@ -18,6 +18,13 @@
     "dark": "/logo/dark.svg",
     "href": "https://novu.co"
   },
+  "seo": {
+    "indexing": "all",
+    "metatags": {
+      "og:type": "website",
+      "twitter:card": "summary_large_image"
+    }
+  },
   "navigation": {
     "global": {
       "anchors": []
@@ -33,6 +40,13 @@
               "platform",
               "platform/what-is-novu",
               "platform/how-novu-works",
+              {
+                "group": "Novu for your team",
+                "pages": [
+                  "platform/novu-for/developers",
+                  "platform/novu-for/product"
+                ]
+              },
               {
                 "group": "Core Concepts",
                 "pages": [
@@ -204,6 +218,7 @@
                   "platform/integrations/email/sparkpost",
                   "platform/integrations/email/webhook",
                   "platform/integrations/email/custom-smtp",
+                  "platform/integrations/email/writing-email-template",
                   {
                     "group": "Activity Tracking",
                     "pages": [
@@ -678,6 +693,17 @@
             "item": "Guides",
             "groups": [
               {
+                "group": "Use Cases",
+                "pages": [
+                  "guides/use-cases/transactional-notifications",
+                  "guides/use-cases/password-reset-notifications",
+                  "guides/use-cases/digest-notifications",
+                  "guides/use-cases/multi-channel-fallback",
+                  "guides/use-cases/notification-preferences"
+                ],
+                "icon": "lightbulb"
+              },
+              {
                 "group": "Guides",
                 "pages": [
                   "guides",
@@ -690,6 +716,7 @@
                 "group": "Inbound Webhooks",
                 "pages": [
                   "guides/webhooks/clerk",
+                  "guides/webhooks/auth0",
                   "guides/webhooks/stripe",
                   "guides/webhooks/segment"
                 ],
@@ -698,7 +725,8 @@
               {
                 "group": "Recipes",
                 "pages": [
-                  "guides/recipes/managing-workflows"
+                  "guides/recipes/managing-workflows",
+                  "guides/recipes/supabase-auth-notifications"
                 ],
                 "icon": "chef-hat"
               },
@@ -712,7 +740,10 @@
               {
                 "group": "Migrate to Novu",
                 "pages": [
-                  "guides/migrate-from-courier-to-novu"
+                  "guides/migrate-from-courier-to-novu",
+                  "guides/migrate-from-knock-to-novu",
+                  "guides/migrate-from-magicbell-to-novu",
+                  "guides/migrate-from-in-house-to-novu"
                 ],
                 "icon": "arrow-right-left"
               }
@@ -838,6 +869,7 @@
                   "community",
                   {
                     "group": "Self Hosting Novu",
+                    "boost": 1,
                     "pages": [
                       "community/self-hosting-novu/overview",
                       "community/self-hosting-novu/deploy-with-docker",
