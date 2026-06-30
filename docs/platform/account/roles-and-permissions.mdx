@@ -10,42 +10,102 @@ When you invite a team member to your organization, you can assign them a role t
   This feature is available to users on the Team and Enterprise pricing plans, and it is supported on both the new dashboard and the legacy dashboard.
 </Note>
 
-Below is an overview of the four roles available in Novu:
-- **Owner**. For your primary account administrator. This role has full access across the platform, including organization-level settings, billing, API keys, environment management, and user administration. Each Novu organization must have at least one owner.
+## Roles overview
 
-- **Admin**. For users who manage configuration and operational aspects of Novu. Admins can manage workflows, integrations, subscribers, environments, API keys, team members, and organization settings. They do not have access to billing.
+Novu includes four organization roles. Use the cards below for a quick summary, then expand the permission groups to compare access across roles.
 
-- **Author**. For users who design and update notification workflows. Authors can create and modify workflows, manage integrations, subscribers, topics, agents, bridges, and environment variables, and trigger events. They do not have access to organization-level settings, billing, API keys, webhooks, or member management.
+<Columns cols={2}>
+  <Card title="Owner" icon="crown">
+    Primary account administrator with full access across the platform, including billing, API keys, environment management, and user administration. Each organization must have at least one owner.
+  </Card>
+  <Card title="Admin" icon="shield">
+    Manages configuration and day-to-day operations, including workflows, integrations, subscribers, environments, API keys, team members, and organization settings. Does not have access to billing.
+  </Card>
+  <Card title="Author" icon="pen-line">
+    Designs and updates notification workflows. Can manage workflows, integrations, subscribers, topics, agents, bridges, and environment variables, and trigger events. Does not have access to organization settings, billing, API keys, webhooks, or member management.
+  </Card>
+  <Card title="Viewer" icon="eye">
+    Read-only access to workflows, agents, integrations, environments, logs, and messages. Cannot create, update, or delete resources.
+  </Card>
+</Columns>
 
-- **Viewer**. For read-only users. Viewers can view workflows, agents, integrations, environments, logs, and messages, but cannot create, update, or delete resources.
+## Permissions by category
 
-## Roles and permissions table
+<Note>
+  Access levels: <Badge icon="eye" color="blue" size="sm" stroke>Read</Badge> view only · <Badge icon="check" color="green" size="sm">Write</Badge> read, create, update, and delete · <Badge icon="ban" color="gray" size="sm" stroke disabled>No access</Badge>
+</Note>
 
-Below is a detailed table showing which permissions are associated with each role.
+<AccordionGroup>
+  <Accordion title="Workflows and delivery" icon="git-branch">
+    | Permission | Viewer | Author | Admin | Owner |
+    | --- | --- | --- | --- | --- |
+    | Create and manage workflows | Read | Write | Write | Write |
+    | Create and manage messages | Read | Read | Write | Write |
+    | Create and manage topics | Read | Write | Write | Write |
+    | Trigger events | No access | Write | Write | Write |
+    | View notifications | Read | Read | Read | Read |
+    | Environment variables | Read | Write | Write | Write |
+  </Accordion>
 
-Legend:
-- 📖 - Read access
-- ✏️ - Write (full access: read, write, delete)
-- ❌ - No access
+  <Accordion title="Integrations and webhooks" icon="plug">
+    | Permission | Viewer | Author | Admin | Owner |
+    | --- | --- | --- | --- | --- |
+    | Manage integrations | Read | Write | Write | Write |
+    | Create and manage webhooks | No access | No access | Write | Write |
+    | Manage bridges | No access | Write | Write | Write |
+    | Manage partner integrations | No access | No access | Write | Write |
+  </Accordion>
 
-| Permission                      | **Viewer** | **Author** | **Admin** | **Owner** |
-| ------------------------------ | ---------- | ---------- | --------- | --------- |
-| Create and manage environments | ❌         | ❌         | ✏️         | ✏️         |
-| Create and manage messages     | 📖         | 📖         | ✏️         | ✏️         |
-| Create and manage topics       | 📖         | ✏️         | ✏️         | ✏️         |
-| Create and manage webhooks     | ❌         | ❌         | ✏️         | ✏️         |
-| Create and manage workflows    | 📖         | ✏️         | ✏️         | ✏️         |
-| Manage agents                  | 📖         | ✏️         | ✏️         | ✏️         |
-| Manage API keys                | ❌         | ❌         | ✏️         | ✏️         |
-| Manage billing                 | ❌         | ❌         | ❌         | ✏️         |
-| Manage bridges                 | ❌         | ✏️         | ✏️         | ✏️         |
-| Manage custom domains          | ❌         | ❌         | ✏️         | ✏️         |
-| Manage integrations            | 📖         | ✏️         | ✏️         | ✏️         |
-| Manage organization metadata   | ❌         | ❌         | ✏️         | ✏️         |
-| Manage organization profile    | ❌         | ❌         | ✏️         | ✏️         |
-| Manage partner integrations    | ❌         | ❌         | ✏️         | ✏️         |
-| Manage subscribers             | 📖         | ✏️         | ✏️         | ✏️         |
-| Trigger events                 | ❌         | ✏️         | ✏️         | ✏️         |
-| View and manage team members   | 📖         | 📖         | ✏️         | ✏️         |
-| View notifications             | 📖         | 📖         | 📖         | 📖         |
-| Environment variables          | 📖         | ✏️         | ✏️         | ✏️         |
+  <Accordion title="Subscribers and agents" icon="users">
+    | Permission | Viewer | Author | Admin | Owner |
+    | --- | --- | --- | --- | --- |
+    | Manage subscribers | Read | Write | Write | Write |
+    | Manage agents | Read | Write | Write | Write |
+  </Accordion>
+
+  <Accordion title="Organization and billing" icon="building-2">
+    | Permission | Viewer | Author | Admin | Owner |
+    | --- | --- | --- | --- | --- |
+    | Create and manage environments | No access | No access | Write | Write |
+    | Manage API keys | No access | No access | Write | Write |
+    | Manage custom domains | No access | No access | Write | Write |
+    | Manage organization metadata | No access | No access | Write | Write |
+    | Manage organization profile | No access | No access | Write | Write |
+    | View and manage team members | Read | Read | Write | Write |
+    | Manage billing | No access | No access | No access | Write |
+  </Accordion>
+</AccordionGroup>
+
+<Tabs sync={false}>
+  <Tab title="Viewer" icon="eye">
+    **Can view**
+    - Workflows, messages, topics, notifications, and environment variables
+    - Integrations, subscribers, and agents
+    - Team members
+
+    **Cannot access**
+    - Webhooks, bridges, partner integrations, environments, API keys, custom domains, organization settings, billing, or event triggering
+  </Tab>
+  <Tab title="Author" icon="pen-line">
+    **Can manage**
+    - Workflows, topics, subscribers, agents, integrations, bridges, and environment variables
+    - Event triggering
+
+    **Can view only**
+    - Messages, notifications, and team members
+
+    **Cannot access**
+    - Webhooks, partner integrations, environments, API keys, custom domains, organization settings, or billing
+  </Tab>
+  <Tab title="Admin" icon="shield">
+    **Can manage**
+    - Everything except billing, including environments, API keys, custom domains, organization settings, and team members
+
+    **Cannot access**
+    - Billing
+  </Tab>
+  <Tab title="Owner" icon="crown">
+    **Can manage**
+    - Full access across the organization, including billing
+  </Tab>
+</Tabs>
