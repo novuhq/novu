@@ -1,9 +1,8 @@
 ---
-title: 'Firebase Cloud Messaging (FCM)'
+title: "FCM Push Integration with Novu"
 sidebarTitle: 'FCM'
-description: 'Learn how to use the Firebase Cloud Messaging (FCM) provider to send push notifications using Novu'
+description: "Connect FCM to Novu to send push notifications through notification workflows. Step-by-step credential setup."
 ---
-
 
 This guide explains the process of configuring and using FCM with Novu, from getting your credentials to sending your first notification.
 
@@ -65,8 +64,7 @@ You can do this by making an API call to [update the subscriber's credentials](/
   <Tab title="Node.js">
   ```typescript
 
- 
-  const novu = new Novu({ secretKey: "YOUR_SECRET_KEY_HERE",});
+const novu = new Novu({ secretKey: "YOUR_SECRET_KEY_HERE",});
   
   async function run() {
     const result = await novu.subscribers.credentials.update({
@@ -241,15 +239,15 @@ await novu.trigger({
       fcm: {
         type: "data",
 
-        // URL of an image to be displayed in the notification.
+// URL of an image to be displayed in the notification.
         imageUrl: "https://domain.com/image.png",
 
-        // If type is not set, you can use the "data" override to send notification messages with optional data payload
+// If type is not set, you can use the "data" override to send notification messages with optional data payload
         data: {
           key: "value",
         },
 
-        // Check FCM Overrides section above for these types
+// Check FCM Overrides section above for these types
         android: {},
         apns: {},
         webPush: {},

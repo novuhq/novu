@@ -1,0 +1,54 @@
+---
+title: 'Transactional Notifications with Novu'
+sidebarTitle: 'Transactional'
+description: 'Send transactional notifications for orders, payments, and account events using Novu workflows and the REST API.'
+---
+
+
+Send transactional notifications through Novu by triggering a workflow when a business event occurs in your application. Novu delivers the message across in-app, email, SMS, push, or chat based on your workflow steps and the subscriber's contact details.
+
+Common transactional events include order confirmations, shipping updates, payment failures, and subscription renewals.
+
+## How do I send a transactional notification?
+
+1. Create a [workflow](/platform/workflow/create-a-workflow) in the Novu Dashboard with the channels you need (for example, email + in-app).
+2. Register or upsert a [subscriber](/platform/concepts/subscribers) with the recipient's `subscriberId`, email, and phone.
+3. [Trigger the workflow](/api-reference/events/trigger-event) from your backend with the workflow identifier, `subscriberId`, and event payload.
+
+```bash
+curl -X POST https://api.novu.co/v1/events/trigger \
+  -H "Authorization: ApiKey <NOVU_SECRET_KEY>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "order-shipped",
+    "to": { "subscriberId": "user_123" },
+    "payload": { "orderId": "ORD-456", "trackingUrl": "https://example.com/track/456" }
+  }'
+```
+
+## What channels should I use for transactional messages?
+
+| Event type | Recommended channels |
+| --- | --- |
+| Order confirmation | Email + in-app |
+| Shipping update | Email, SMS, or push |
+| Payment failure | Email + in-app, with SMS fallback |
+| Password reset | Email (see [password reset guide](/guides/use-cases/password-reset-notifications)) |
+
+## Related guides
+
+- [Create a workflow](/platform/workflow/create-a-workflow)
+- [Trigger a workflow](/platform/workflow/trigger-workflow)
+- [Personalize content](/platform/workflow/add-notification-content/personalize-content)
+- [Multi-channel fallback workflows](/guides/use-cases/multi-channel-fallback)
+
+## Frequently asked questions
+
+<AccordionGroup>
+  <Accordion title="Do I need to create subscribers before sending notifications?">
+    No. You can pass subscriber details inline when triggering a workflow. Novu creates or updates the subscriber automatically if the `subscriberId` does not exist yet.
+  </Accordion>
+  <Accordion title="Can I send transactional email through my existing ESP?">
+    Yes. Connect providers such as SendGrid, Postmark, or Amazon SES in the [Integrations store](/platform/integrations) and use them in email workflow steps.
+  </Accordion>
+</AccordionGroup>

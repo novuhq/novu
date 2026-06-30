@@ -376,6 +376,29 @@ By default, Novu does not add any unsubscribe links to the email. Few providers 
 - Send the value of `unsubscribeEmail` variable in the payload while triggering the workflow.
 - Novu will add the unsubscribe link to the email and end user will be able to unsubscribe from the email by clicking on the link.
 
+## Receiving email replies
+
+Novu supports **inbound email replies** — not only sending mail through your email provider. The `replyTo` override above sets where replies are addressed when sending; to **process** replies, choose one of these paths:
+
+| Goal | Approach |
+| --- | --- |
+| Two-way agent conversation on email | Connect [email to an agent](/agents/get-started/agents-and-providers) via ACI |
+| Forward inbound mail to your backend | [Inbound Email](/platform/inbound-email/overview) with a **Webhook** route → [`email.received`](/platform/developer/webhooks/event-types#email-events) |
+| User replies to a workflow email open an agent thread | [Workflow to conversation](/agents/custom-code-agent/concepts#conversations-and-workflows) handoff |
+
+<Note>
+  **SMS replies are not supported** in Novu. The SMS channel is outbound-only.
+</Note>
+
+<Columns cols={2}>
+  <Card icon="mail" href="/platform/inbound-email/overview" title="Inbound Email">
+    Verify a domain, add routes, and receive mail on your addresses.
+  </Card>
+  <Card icon="bot" href="/agents/get-started/agents-and-providers" title="Agents and providers">
+    Connect email to an agent for two-way conversations.
+  </Card>
+</Columns>
+
 ## Supported providers
 
 Here are the email providers that are currently supported by Novu. Select any provider to see its detailed setup guide.

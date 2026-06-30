@@ -1,0 +1,58 @@
+---
+title: 'Digest and Batched Notifications'
+sidebarTitle: 'Digest'
+description: 'Batch and summarize notifications with Novu digest steps. Send digests like "10 new comments" instead of individual alerts.'
+---
+
+
+Batch related notifications into a single digest message using Novu's digest step. Instead of sending one notification per event, Novu collects events over a time window and delivers a summarized message such as "10 people liked your post."
+
+## How does digest work in Novu?
+
+Add a [digest step](/platform/workflow/add-and-configure-steps/configure-action-steps/digest) to your workflow before the channel step. Novu collects events that match the digest key within the configured window, then renders a single notification with aggregated content.
+
+Typical digest settings:
+
+- **Window:** 5 minutes, 1 hour, or 24 hours depending on urgency
+- **Digest key:** A field such as `payload.postId` to group events
+- **Template:** Use digest variables to list aggregated items
+
+## When should I use digest notifications?
+
+| Scenario | Digest window | Example message |
+| --- | --- | --- |
+| Social activity | 1–24 hours | "10 people liked your post" |
+| Weekly summary | 7 days | "Your weekly activity report" |
+| Comment threads | 15–60 minutes | "5 new replies on your thread" |
+
+## How do I trigger events for digest workflows?
+
+Trigger the same workflow for each individual event. Novu handles batching automatically based on the digest step configuration and digest key.
+
+```bash
+curl -X POST https://api.novu.co/v1/events/trigger \
+  -H "Authorization: ApiKey <NOVU_SECRET_KEY>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "post-liked",
+    "to": { "subscriberId": "user_123" },
+    "payload": { "postId": "post_456", "likerName": "Alex" }
+  }'
+```
+
+## Related guides
+
+- [Digest step configuration](/platform/workflow/add-and-configure-steps/configure-action-steps/digest)
+- [Framework digest channel](/framework/digest)
+- [Throttle step](/platform/workflow/add-and-configure-steps/configure-action-steps/throttle)
+
+## Frequently asked questions
+
+<AccordionGroup>
+  <Accordion title="What is the difference between digest and throttle?">
+    Digest batches multiple events into one summarized notification. Throttle limits how often a subscriber receives notifications for the same workflow within a time window.
+  </Accordion>
+  <Accordion title="Can I send digests across multiple channels?">
+    Yes. Place digest before multiple channel steps (for example, in-app and email) so all channels receive the batched summary.
+  </Accordion>
+</AccordionGroup>

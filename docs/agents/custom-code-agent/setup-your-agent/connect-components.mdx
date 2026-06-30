@@ -43,6 +43,21 @@ const SlackConnectButtonComponent = () => {
 export default SlackConnectButtonComponent;
 ```
 
+<Prompt description="Add SlackConnectButton to my app" icon="plug" actions={["copy", "cursor"]}>
+Add the Novu SlackConnectButton from @novu/react to my app so each of my end users can connect "YOUR_AGENT_NAME" to their own Slack workspace.
+
+Context: The Slack integration already exists in Novu. This is purely a frontend code integration — do NOT run the Novu CLI or the agent-onboarding flow.
+
+Requirements:
+- Install @novu/react with my project's package manager.
+- Render `<SlackConnectButton />` inside a `<NovuProvider>` configured for the currently signed-in end user.
+- Use applicationIdentifier="YOUR_APPLICATION_IDENTIFIER" and integrationIdentifier="YOUR_INTEGRATION_IDENTIFIER" with connectionMode="subscriber". Store applicationIdentifier in an environment variable rather than hardcoding it.
+- In subscriber mode each user gets their own connection, so pass the authenticated user's id as subscriberId — source it from my app's existing auth, don't hardcode it.
+- Follow my app's existing framework, routing, styling, and TypeScript conventions, place the button in a sensible spot in the UI, and add no unnecessary wrappers.
+
+Optional reference: https://docs.novu.co/agents/custom-code-agent/setup-your-agent/connect-components
+</Prompt>
+
 ### API reference
 
 `SlackConnectButton` accepts the following props to customize the UI and behavior:
@@ -105,6 +120,21 @@ const TelegramConnectButtonComponent = () => {
 
 export default TelegramConnectButtonComponent;
 ```
+
+<Prompt description="Add TelegramConnectButton to my app" icon="plug" actions={["copy", "cursor"]}>
+Add the Novu TelegramConnectButton from @novu/react to my app so each of my end users can connect "YOUR_AGENT_NAME" to their own Telegram chat.
+
+Context: The Telegram integration already exists in Novu. This is purely a frontend code integration — do NOT run the Novu CLI or the agent-onboarding flow.
+
+Requirements:
+- Install @novu/react with my project's package manager.
+- Render `<TelegramConnectButton />` inside a `<NovuProvider>` configured for the currently signed-in end user.
+- Use applicationIdentifier="YOUR_APPLICATION_IDENTIFIER" and integrationIdentifier="YOUR_INTEGRATION_IDENTIFIER". Store applicationIdentifier in an environment variable rather than hardcoding it.
+- Pass the authenticated user's id as subscriberId — source it from my app's existing auth, don't hardcode it.
+- Follow my app's existing framework, routing, styling, and TypeScript conventions, place the button in a sensible spot in the UI, and add no unnecessary wrappers.
+
+Optional reference: https://docs.novu.co/agents/custom-code-agent/setup-your-agent/connect-components
+</Prompt>
 
 ### API reference
 

@@ -1,0 +1,58 @@
+---
+title: 'Migrate from MagicBell to Novu'
+sidebarTitle: 'From MagicBell'
+description: 'Plan and execute a migration from MagicBell to Novu. Map in-app feeds, workflows, and user preferences.'
+---
+
+
+Migrate from MagicBell to Novu by replacing the MagicBell notification feed with the Novu Inbox component, rebuilding notification workflows, and connecting your existing delivery providers.
+
+## Why migrate to Novu?
+
+- **Multi-channel from one platform:** MagicBell focuses on in-app feeds; Novu handles in-app, email, SMS, push, and chat
+- **Workflow orchestration:** Delays, digests, throttles, and multi-step logic in one workflow
+- **Open source:** Deploy on Novu Cloud or self-host for full control
+- **Headless and prebuilt UI:** Use the drop-in Inbox or build custom UI with [`@novu/react`](/platform/sdks/react) hooks
+
+Compare platforms on [Novu vs MagicBell](https://novu.co/comparison/magicbell/).
+
+## How do MagicBell concepts map to Novu?
+
+| MagicBell Concept | Novu Equivalent | Notes |
+| --- | --- | --- |
+| **Notification feed** | **Inbox** | Prebuilt React component with bell, feed, and preferences |
+| **Users** | **Subscribers** | Identified by `subscriberId` |
+| **Categories / Topics** | **Topics** | Group subscribers for broadcast notifications |
+| **Preferences** | **Preferences** | Built into Inbox and manageable via API |
+| **Channels (external)** | **Integrations + Workflows** | Novu workflows deliver to email, SMS, and push providers |
+
+## What are the migration steps?
+
+<Steps>
+  <Step title="Phase 1: Set up Novu">
+    1. Create a [Novu Cloud](https://dashboard.novu.co/auth/signup) account.
+    2. Connect delivery providers if you send email, SMS, or push alongside in-app notifications.
+  </Step>
+
+  <Step title="Phase 2: Replace the in-app feed">
+    Remove MagicBell feed components and add the Novu Inbox. Follow the [React quickstart](/platform/quickstart/react) to install `@novu/react` and render `<Inbox />`.
+  </Step>
+
+  <Step title="Phase 3: Migrate notification triggers">
+    Replace MagicBell API calls with Novu [Trigger event](/api-reference/events/trigger-event) requests. Create workflows in Novu for each notification type you previously sent through MagicBell.
+  </Step>
+
+  <Step title="Phase 4: Migrate user preferences">
+    Export MagicBell preference data and import via [Update subscriber preferences](/api-reference/subscribers/update-subscriber-preferences), or let users reconfigure through the Novu Inbox preferences UI.
+  </Step>
+
+  <Step title="Phase 5: Validate and cut over">
+    Run Novu alongside MagicBell during testing. Verify unread counts, real-time delivery, and preference behavior before removing MagicBell from production.
+  </Step>
+</Steps>
+
+## Related guides
+
+- [Inbox setup](/platform/inbox/setup-inbox)
+- [Notification preferences](/guides/use-cases/notification-preferences)
+- [Migrate from Knock to Novu](/guides/migrate-from-knock-to-novu)

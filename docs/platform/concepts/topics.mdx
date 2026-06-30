@@ -76,6 +76,96 @@ await novu.trigger({
 });
 ```
   </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="workflow_identifier",
+        to={"type": "Topic", "topic_key": "topic_key"},
+    ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "workflow_identifier",
+    To: components.CreateToTopicPayloadDto(components.TopicPayloadDto{
+        Type:     components.TriggerRecipientsTypeEnumTopic,
+        TopicKey: "topic_key",
+    }),
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()
+    ->setSecurity('<YOUR_SECRET_KEY_HERE>')
+    ->build();
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'workflow_identifier',
+        to: new Components\TopicPayloadDto(
+            topicKey: 'topic_key',
+            type: Components\TriggerRecipientsTypeEnum::Topic,
+        ),
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+
+var sdk = new NovuSDK(secretKey: "<YOUR_SECRET_KEY_HERE>");
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "workflow_identifier",
+    To = To.CreateTopicPayloadDto(new TopicPayloadDto() {
+        Type = TriggerRecipientsTypeEnum.Topic,
+        TopicKey = "topic_key",
+    }),
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+
+Novu novu = Novu.builder()
+    .secretKey("<YOUR_SECRET_KEY_HERE>")
+    .build();
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("workflow_identifier")
+        .to(To2.of(TopicPayloadDto.builder()
+            .type(TriggerRecipientsTypeEnum.TOPIC)
+            .topicKey("topic_key")
+            .build()))
+        .build())
+    .call();
+```
+  </Tab>
   <Tab title="cURL">
 ```bash
 curl -L -g -X POST 'https://api.novu.co/v1/events/trigger' \
@@ -111,6 +201,124 @@ await novu.trigger({
   ],
   workflowId: "workflow_identifier",
 });
+```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="workflow_identifier",
+        to=[
+            {"type": "Topic", "topic_key": "topic_key_1"},
+            {"type": "Topic", "topic_key": "topic_key_2"},
+        ],
+    ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "workflow_identifier",
+    To: components.CreateToArrayOfTo1([]components.To1{
+        components.CreateTo1TopicPayloadDto(components.TopicPayloadDto{
+            Type:     components.TriggerRecipientsTypeEnumTopic,
+            TopicKey: "topic_key_1",
+        }),
+        components.CreateTo1TopicPayloadDto(components.TopicPayloadDto{
+            Type:     components.TriggerRecipientsTypeEnumTopic,
+            TopicKey: "topic_key_2",
+        }),
+    }),
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()
+    ->setSecurity('<YOUR_SECRET_KEY_HERE>')
+    ->build();
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'workflow_identifier',
+        to: [
+            new Components\TopicPayloadDto(
+                topicKey: 'topic_key_1',
+                type: Components\TriggerRecipientsTypeEnum::Topic,
+            ),
+            new Components\TopicPayloadDto(
+                topicKey: 'topic_key_2',
+                type: Components\TriggerRecipientsTypeEnum::Topic,
+            ),
+        ],
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+
+var sdk = new NovuSDK(secretKey: "<YOUR_SECRET_KEY_HERE>");
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "workflow_identifier",
+    To = To.CreateArrayOfTo1(new List<To1> {
+        To1.CreateTopicPayloadDto(new TopicPayloadDto() {
+            Type = TriggerRecipientsTypeEnum.Topic,
+            TopicKey = "topic_key_1",
+        }),
+        To1.CreateTopicPayloadDto(new TopicPayloadDto() {
+            Type = TriggerRecipientsTypeEnum.Topic,
+            TopicKey = "topic_key_2",
+        }),
+    }),
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+import java.util.List;
+
+Novu novu = Novu.builder()
+    .secretKey("<YOUR_SECRET_KEY_HERE>")
+    .build();
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("workflow_identifier")
+        .to(To2.of(List.of(
+            To1.of(TopicPayloadDto.builder()
+                .type(TriggerRecipientsTypeEnum.TOPIC)
+                .topicKey("topic_key_1")
+                .build()),
+            To1.of(TopicPayloadDto.builder()
+                .type(TriggerRecipientsTypeEnum.TOPIC)
+                .topicKey("topic_key_2")
+                .build()))))
+        .build())
+    .call();
 ```
   </Tab>
   <Tab title="cURL">
@@ -152,6 +360,110 @@ await novu.trigger({
   workflowId: "workflow_identifier",
   actor: "actor_subscriber_Id"
 });
+```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="workflow_identifier",
+        to=[{"type": "Topic", "topic_key": "topic_key_1"}],
+        actor="actor_subscriber_Id",
+    ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "workflow_identifier",
+    To: components.CreateToArrayOfTo1([]components.To1{
+        components.CreateTo1TopicPayloadDto(components.TopicPayloadDto{
+            Type:     components.TriggerRecipientsTypeEnumTopic,
+            TopicKey: "topic_key_1",
+        }),
+    }),
+    Actor: components.CreateActorStr("actor_subscriber_Id"),
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()
+    ->setSecurity('<YOUR_SECRET_KEY_HERE>')
+    ->build();
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'workflow_identifier',
+        to: [
+            new Components\TopicPayloadDto(
+                topicKey: 'topic_key_1',
+                type: Components\TriggerRecipientsTypeEnum::Topic,
+            ),
+        ],
+        actor: 'actor_subscriber_Id',
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+
+var sdk = new NovuSDK(secretKey: "<YOUR_SECRET_KEY_HERE>");
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "workflow_identifier",
+    To = To.CreateArrayOfTo1(new List<To1> {
+        To1.CreateTopicPayloadDto(new TopicPayloadDto() {
+            Type = TriggerRecipientsTypeEnum.Topic,
+            TopicKey = "topic_key_1",
+        }),
+    }),
+    Actor = Actor.CreateStr("actor_subscriber_Id"),
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+import java.util.List;
+
+Novu novu = Novu.builder()
+    .secretKey("<YOUR_SECRET_KEY_HERE>")
+    .build();
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("workflow_identifier")
+        .to(To2.of(List.of(
+            To1.of(TopicPayloadDto.builder()
+                .type(TriggerRecipientsTypeEnum.TOPIC)
+                .topicKey("topic_key_1")
+                .build()))))
+        .actor(TriggerEventRequestDtoActor.of("actor_subscriber_Id"))
+        .build())
+    .call();
 ```
   </Tab>
   <Tab title="cURL">

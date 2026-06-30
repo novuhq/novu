@@ -1,16 +1,17 @@
 ---
-title: 'Introduction to Inbox'
-description: "Learn how to integrate Novu Inbox component, a pre-built notification center component for real-time in-app notifications in your application."
+title: 'Novu Inbox — In-App Notification Component for React'
+description: "Integrate the Novu Inbox component for real-time in-app notifications in your application. Drop-in UI with bell icon, feed, and preferences."
+sidebarTitle: 'Introduction to Inbox'
 ---
 
 
+Add real-time in-app notifications to your application with the Novu Inbox component. Install a client SDK such as [`@novu/react`](/platform/sdks/react), render the [`<Inbox />`](/platform/inbox/setup-inbox) component with your application identifier and subscriber ID, and Novu handles delivery, unread counts, and preferences.
+
 The Novu Inbox is a prebuilt, ready-to-use, and fully customizable UI component for delivering real-time in-app notifications. It gives your subscribers a centralized place to view and manage notifications.
 
-With just a few lines of code, you can embed a polished, real-time notification experience directly into your application.
+![Novu Inbox component showing bell icon, notification list, and preferences panel](/images/inbox/intro-to-inbox.png)
 
-![Introduction to inbox](/images/inbox/intro-to-inbox.png)
-
-## Composable architecture
+## What is the composable Inbox architecture?
 
 The Novu Inbox is built with a composable architecture. It is composed of other sub-components:
 
@@ -33,7 +34,7 @@ The Novu Inbox is built with a composable architecture. It is composed of other 
   </Card>
 </Columns>
 
-![Fully functional and customizable React Inbox component](/images/inbox/overview@2x.png)
+![Fully functional and customizable React Inbox component with bell, notification feed, and preference controls](/images/inbox/overview@2x.png)
 
 By composing these individual components, you can create multiple popular inbox layouts that fit perfectly within your application's design.
 
@@ -41,22 +42,22 @@ By composing these individual components, you can create multiple popular inbox 
   To aid your design process, we provide a [free Figma file](https://www.figma.com/community/file/1425407348374863860) that contains all of the design assets. Make a copy of the file into your own account to get started with customizing your graphical Inbox elements.
 </Tip>
 
-## Key feature
+## What features does the Inbox include?
 - Full stack integration: The Inbox handles UI, unread states, routing, and preferences all in one place.
 - Highly customizable: Override styles, replace every UI elements and icons.
 - Flexible layouts: Use the default Inbox UI layout or build your own.
 - Built-in support for Tabs and filters, localization, snoozing, preferences management, and more.
 
-## How it works
+## How does the Novu Inbox component work?
 
-At a high level, the Inbox abstracts away the complexity of building a notification center.
+At a high level, the Inbox abstracts away the complexity of building an in-app notification feed.
 
 1. When you drop the Inbox component into your application, it securely connects to Novu's services.
 2. It automatically fetches user notifications and manages the real-time unread count displayed on the bell icon.
 3. When a user clicks the bell, it presents the list of notifications and user preferences.
 4. All user interactions, such as marking a notification as read or changing a preference, are automatically synchronized with the Novu backend in real-time.
 
-## Ways to implement the Novu Inbox
+## What are the ways to implement the Novu Inbox?
 
 There are two integration approaches, depending on your needs for speed versus customization.
 
@@ -74,3 +75,20 @@ You get the power of Novu's notification engine while building a user interface 
 
   </Tab>
 </Tabs>
+
+## Frequently asked questions
+
+<AccordionGroup>
+  <Accordion title="How do I add the Inbox to my app?">
+    Follow a framework quickstart such as [Next.js](/platform/quickstart/nextjs) or [React](/platform/quickstart/react). Install the SDK, add the `<Inbox />` component with your application identifier and subscriber ID, then trigger a workflow from the Novu Dashboard.
+  </Accordion>
+  <Accordion title="Can I customize the Inbox UI?">
+    Yes. Override styles, replace sub-components, or use headless hooks from [`@novu/react`](/platform/sdks/react) or [`@novu/js`](/platform/sdks/javascript) to build a fully custom Inbox experience.
+  </Accordion>
+  <Accordion title="Does the Inbox support user notification preferences?">
+    Yes. The Inbox includes built-in preference management so subscribers can control which workflows and channels they receive notifications through.
+  </Accordion>
+  <Accordion title="What is the minimum React version required for the Inbox?">
+    The [`@novu/react`](/platform/sdks/react) package requires **React 18.0.0 or later**. React 19 is also supported. React 17 and earlier versions are not supported.
+  </Accordion>
+</AccordionGroup>

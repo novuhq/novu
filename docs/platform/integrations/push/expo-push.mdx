@@ -1,6 +1,7 @@
 ---
-title: 'Expo Push'
-description: 'Learn how to use the Expo Push provider to send push notifications using Novu'
+title: "Expo Push Push Integration with Novu"
+sidebarTitle: "Expo Push"
+description: "Connect Expo Push to Novu to send push notifications through notification workflows. Step-by-step credential setup."
 ---
 
 This guide explains the process of configuring and using Expo Push with Novu, from getting your credentials to sending your first notification.
@@ -18,22 +19,22 @@ Generate an access token from your dashboard. This token authorizes Novu to send
     Log in to the [Expo console](https://expo.dev/).
   </Step>
 
-  <Step title="Open Access Token">
+<Step title="Open Access Token">
     Navigate to the **Credentials** section in the project settings sidebar.
     Click [**Access Token**](https://expo.dev/settings/access-tokens).
     ![Create Expo token](/images/channels-and-providers/push/expo-push/create-token.png)
   </Step>
 
-  <Step title="Create a token">
+<Step title="Create a token">
     Click **Create Token**. A menu appears.
   </Step>
 
-  <Step title="Generate the token">
+<Step title="Generate the token">
     Give it a descriptive name, and then click **Generate New Token**.
     ![Generate Expo token](/images/channels-and-providers/push/expo-push/generate-token.png)
   </Step>
 
-  <Step title="Copy the token">
+<Step title="Copy the token">
     Copy and save the generated access token. You need it in the next step.
     ![Copy Expo token](/images/channels-and-providers/push/expo-push/copy-token.png)
   </Step>
@@ -48,24 +49,24 @@ Next, add the access token to your Expo integration in the Novu dashboard.
     Log in to the Novu dashboard.
   </Step>
 
-  <Step title="Open Integration Store">
+<Step title="Open Integration Store">
     On the Novu dashboard, navigate to the **Integration Store**.
   </Step>
 
-  <Step title="Connect a provider">
+<Step title="Connect a provider">
     Click **Connect provider**.
   </Step>
 
-  <Step title="Select Expo Push">
+<Step title="Select Expo Push">
     In the **Push** tab, select **Expo Push**.
   </Step>
 
-  <Step title="Paste the access token">
+<Step title="Paste the access token">
     In the Expo integration form, paste the access token that you copied from Expo into the **Access Token** field.
     ![Expo Integration in Novu](/images/channels-and-providers/push/expo-push/expo-integration.png)
   </Step>
 
-  <Step title="Create the integration">
+<Step title="Create the integration">
     Click **Create Integration**.
   </Step>
 </Steps>
@@ -129,7 +130,7 @@ curl -L -X PUT 'https://api.novu.co/v1/subscribers/<SUBSCRIBER_ID>/credentials' 
 
 ### Step 2: Send a notification
 
-Now you're ready to send a push notification. [Create a workflow with a Push step](/platform/workflow/create-a-workflow) and trigger it. Novu sends the notification to all devices associated with the subscriber. 
+Now you're ready to send a push notification. [Create a workflow with a Push step](/platform/workflow/create-a-workflow) and trigger it. Novu sends the notification to all devices associated with the subscriber.
 
 The example below demonstrates a simple trigger using Novu’s SDK.
 

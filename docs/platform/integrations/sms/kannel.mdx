@@ -1,6 +1,7 @@
 ---
-title: 'Kannel'
-description: 'Learn how to use the Kannel sms provider to send sms notifications using Novu'
+title: "Kannel SMS Integration with Novu"
+sidebarTitle: 'Kannel'
+description: "Connect Kannel to Novu to send SMS notifications through notification workflows. Step-by-step credential setup."
 ---
 
 Before integrating Kannel with Novu, you should have Kannel set up and configured as an SMS gateway on your server. Let’s look at how you can do that:
@@ -10,7 +11,7 @@ Before integrating Kannel with Novu, you should have Kannel set up and configure
 1. First, you need to install Kannel on your server. You can download it from the [official-website](https://www.kannel.org/download.shtml) or use a package manager specific to your operating system (e.g., apt- get for Ubuntu, yum for CentOS, etc.).
 2. Kannel's configuration is done through a file called kannel.conf. You need to edit this file to specify your SMS provider settings. Here's a basic configuration example:
 
-   ```bash
+```bash
    group = smsc
    smsc = smpp
    smsc-id = YourSMSCID
@@ -23,11 +24,11 @@ Before integrating Kannel with Novu, you should have Kannel set up and configure
    allow-ip = "127.0.0.1"
    ```
 
-   Replace the placeholders (e.g., **YourSMSCID**, **SMSC_Hostname_or_IP**, **SMSC_Port**, **SMSC_System_Type**, **YourUsername**, and **YourPassword**) with the actual values provided by your SMS provider.
+Replace the placeholders (e.g., **YourSMSCID**, **SMSC_Hostname_or_IP**, **SMSC_Port**, **SMSC_System_Type**, **YourUsername**, and **YourPassword**) with the actual values provided by your SMS provider.
 
 3. You can define services that will handle incoming and outgoing SMS messages. These services specify how Kannel should process SMS requests. Here's an example of an SMS service configuration:
 
-   ```bash
+```bash
    group = sendsms-user
    username = YourUsername
    password = YourPassword
@@ -35,15 +36,15 @@ Before integrating Kannel with Novu, you should have Kannel set up and configure
    max-messages = 3
    ```
 
-   Adjust the settings to your needs.
+Adjust the settings to your needs.
 
 4. Start Kannel with the following command:
 
-   ```bash
+```bash
    bearerbox /path/to/kannel.conf
    ```
 
-   Make sure to replace /path/to/kannel.conf with the actual path to your Kannel configuration file.
+Make sure to replace /path/to/kannel.conf with the actual path to your Kannel configuration file.
 
 ## Creating a Kannel integration with Novu
 
@@ -55,11 +56,11 @@ After setting up your Kannel, follow these steps to integrate with novu:
 - Choose your preferred deployment environment: `Development` or `Production`. Then Click the `Create` button.
 - Once the integration is active, you'll need to configure it. This configuration usually involves providing the necessary details for Novu to connect to your Kannel SMS gateway. These details typically include:
 
-  - **Kannel Gateway URL or IP Address**: If your Kannel SMS gateway is hosted on your server, you should use the server's IP address or hostname.
+- **Kannel Gateway URL or IP Address**: If your Kannel SMS gateway is hosted on your server, you should use the server's IP address or hostname.
   - **Port**: The port number through which Novu should communicate with Kannel (usually 13013, or a custom port you've configured in Kannel).
   - **Username and Password**: If you've set up authentication for your Kannel SMS gateway, provide the username and password required for authentication:
 
-  ```bash
+```bash
   group = smsc
   smsc = smpp
   smsc-id = YourSMSCID
@@ -71,7 +72,7 @@ After setting up your Kannel, follow these steps to integrate with novu:
   allow-ip = "127.0.0.1"
   ```
 
-  In this example, **YourUsername** and **YourPassword** are the credentials you'd use for authentication.
+In this example, **YourUsername** and **YourPassword** are the credentials you'd use for authentication.
 
 - Fill in the `From` field.
 - Click on the `Update` button.
