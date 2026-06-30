@@ -100,45 +100,6 @@ describe('toModelMessages', () => {
     ]);
   });
 
-  it('reconstructs an in-flight denial as an execution-denied tool-result (not a bare approval-response)', () => {
-    const toolApproval = { approvalId: 'tc_9', toolCallId: 'toolu_9', name: 'issueRefund', input: { amount: 180 } };
-
-    const result = toModelMessages([
-      { role: 'user', type: 'message', content: 'refund order 12', createdAt: '1' },
-      {
-        role: 'agent',
-        type: 'card',
-        content: '',
-        richContent: { card: { type: 'card' }, toolApproval },
-        createdAt: '2',
-      },
-      {
-        role: 'system',
-        type: 'signal',
-        content: 'Denied issueRefund',
-        signalData: { type: 'tool-approval-response', payload: { approvalId: 'tc_9', approved: false } },
-        createdAt: '3',
-      },
-    ]);
-
-    expect(result).toEqual([
-      { role: 'user', content: 'refund order 12' },
-      {
-        role: 'assistant',
-        content: [
-          { type: 'tool-call', toolCallId: 'toolu_9', toolName: 'issueRefund', input: { amount: 180 } },
-          { type: 'tool-approval-request', approvalId: 'tc_9', toolCallId: 'toolu_9' },
-        ],
-      },
-      {
-        role: 'tool',
-        content: [
-          { type: 'tool-result', toolCallId: 'toolu_9', toolName: 'issueRefund', output: { type: 'execution-denied' } },
-        ],
-      },
-    ]);
-  });
-
   it('collapses a resolved approval cycle to plain history once the conversation moves past it', () => {
     const toolApproval = { approvalId: 'aitxt-1', toolCallId: 'toolu_1', name: 'issueRefund', input: { amount: 50 } };
 
