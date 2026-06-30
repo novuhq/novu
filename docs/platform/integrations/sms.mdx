@@ -7,12 +7,12 @@ The SMS channel delivers messages to your subscribers’ mobile devices through 
 
 ## How SMS delivery works in Novu
 
-Here’s the typical flow for sending an email notification through Novu:
+Here’s the typical flow for sending an SMS notification through Novu:
 
 <Steps> 
 <Step> 
 
-### Add an email provider
+### Add an SMS provider
 
 Start by adding an SMS provider in the **Integration Store** on your Novu dashboard. You can connect one or more integrations for the different or the same providers.
 
@@ -20,20 +20,20 @@ To learn [how to add an SMS provider](/platform/integrations/sms#supported-provi
 
 </Step>
 <Step> 
-### Add the email channel to your workflow
+### Add the SMS channel to your workflow
 
 Next, include an [SMS step in your workflow](/platform/workflow/create-a-workflow). This step defines when and how an SMS should be sent as part of your notification workflow.
 </Step>
 <Step> 
 ### Define the SMS content
 
-Within the Email step editor, write the message body. The editor supports dynamic data for personalized content.
+Within the SMS step editor, write the message body. The editor supports dynamic data for personalized content.
 
 </Step>
 <Step> 
 ### Store subscriber phone number
 
-Novu automatically sends the notification to the phone number stored on the subscriber's profile . You must ensure that this field is set for any subscriber who needs to receive emails. You can store subscribers phone number using the Novu API, or SDK.
+Novu automatically sends the notification to the phone number stored on the subscriber's profile. You must ensure that this field is set for any subscriber who needs to receive SMS messages. You can store subscribers phone number using the Novu API, or SDK.
 </Step>
 <Step>
 ### Trigger the workflow
@@ -42,8 +42,8 @@ Novu automatically sends the notification to the phone number stored on the subs
 Novu automatically:
 - Resolves the subscriber.
 - Selects the correct provider.
-- Renders the email template.
-- Delivers the message through the configured email integration.
+- Renders the SMS template.
+- Delivers the message through the configured SMS integration.
 </Step>
 </Steps>
 
@@ -53,15 +53,15 @@ Novu automatically:
 
 ## Configuring SMS providers
 
-To add an SMS provider from the **Integration Store**, you must configure settings and credentials that are specific to that email providers.
+To add an SMS provider from the **Integration Store**, you must configure settings and credentials that are specific to that SMS provider.
 
 ### Default sender settings
 
-The **From** field, which is displayed as the sender of the SMS, is a required default setting for any email provider that you connect. You can override this field during trigger if necessary.
+The **From** field, which is displayed as the sender of the SMS, is a required default setting for any SMS provider that you connect. You can override this field during trigger if necessary.
 
 ### Provider authentication
 
-You must provide credentials specific to your email provider, such as:
+You must provide credentials specific to your SMS provider, such as:
 - API key
 - Auth token
 - Account SID
