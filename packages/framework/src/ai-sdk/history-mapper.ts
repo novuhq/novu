@@ -1,6 +1,6 @@
 import type { ModelMessage } from 'ai';
 import type { AgentHistoryEntry } from '../resources/agent/agent.types';
-import { findApprovalPayloadInCard } from '../resources/agent/tool-approval/approval-card';
+import type { ApprovalPayload } from '../resources/agent/tool-approval/action-id';
 
 function isAssistantRole(role: string): boolean {
   return role === 'agent' || role === 'assistant';
@@ -34,8 +34,7 @@ function mapToolApprovalResponse(entry: AgentHistoryEntry): ModelMessage | undef
 }
 
 function mapApprovalCard(entry: AgentHistoryEntry): ModelMessage | undefined {
-  const card = (entry.richContent as { card?: unknown } | undefined)?.card;
-  const approval = card ? findApprovalPayloadInCard(card as never) : null;
+  const approval = (entry.richContent as { toolApproval?: ApprovalPayload } | undefined)?.toolApproval;
   if (!approval) {
     return undefined;
   }
@@ -69,15 +68,8 @@ function mapHistoryEntry(entry: AgentHistoryEntry, multiSender: boolean): ModelM
   return mapToolApprovalResponse(entry) ?? mapApprovalCard(entry) ?? mapTextMessage(entry, multiSender);
 }
 
-/**
- * Map Novu conversation history into AI SDK `ModelMessage[]`.
- * Reconstructs tool-approval parts from the persisted approval card (request) and
- * the persisted decision signal (`signalData.type === 'tool-approval-response'`).
- * Other system/metadata signal entries are skipped.
- *
- * The current inbound message is already appended to `history` by Novu before the
- * bridge fires — do not append the handler's `message` arg again.
- */
+// Novu already appends the current inbound message to `history` before the bridge
+// fires, so callers must not append the handler's `message` arg again.
 export function toModelMessages(history: AgentHistoryEntry[], system?: string): ModelMessage[] {
   const multiSender = distinctHumanSenders(history) > 1;
   const fromHistory = history

@@ -1,7 +1,5 @@
-import { toCardElement } from 'chat/jsx-runtime';
 import { describe, expect, it, vi } from 'vitest';
 import type { AgentHistoryEntry, AgentMessageContext } from '../resources/agent/agent.types';
-import { findApprovalPayloadInCard } from '../resources/agent/tool-approval/approval-card';
 import { agent } from './ai-sdk-agent';
 import type { AiSdkResult } from './types';
 
@@ -90,9 +88,11 @@ describe('tool approval', () => {
     await supportAgent.handlers.onMessage({} as never, ctx);
 
     expect(ctx.reply).toHaveBeenCalledTimes(1);
-    const card = toCardElement((ctx.reply as ReturnType<typeof vi.fn>).mock.calls[0][0]);
-    expect(card && findApprovalPayloadInCard(card)).toMatchObject({
+    // The payload is carried as structured richContent, not encoded into the card.
+    const options = (ctx.reply as ReturnType<typeof vi.fn>).mock.calls[0][1];
+    expect(options?.toolApproval).toMatchObject({
       approvalId: 'tc_9',
+      toolCallId: 'tc_9',
       name: 'issueRefund',
       input: { amount: 300 },
     });

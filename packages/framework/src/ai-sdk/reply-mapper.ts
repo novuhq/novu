@@ -1,3 +1,4 @@
+import type { AgentContextImpl } from '../resources/agent/agent.context';
 import type { AgentContextBase, ToolApprovalConfig } from '../resources/agent/agent.types';
 import { type ApprovalPayload, buildApprovalActionId } from '../resources/agent/tool-approval/action-id';
 import { defaultApprovalCard } from '../resources/agent/tool-approval/approval-card';
@@ -40,19 +41,19 @@ async function postApprovalCard(
   config: ToolApprovalConfig | undefined
 ): Promise<void> {
   const toolCall = { id: request.toolCall.toolCallId, name: request.toolCall.toolName, input: request.toolCall.input };
+  const actionIds = {
+    approve: buildApprovalActionId('approve', request.approvalId),
+    deny: buildApprovalActionId('deny', request.approvalId),
+  };
+  const content = config?.renderApproval?.({ toolCall, actionIds }) ?? defaultApprovalCard({ toolCall, actionIds });
   const payload: ApprovalPayload = {
     approvalId: request.approvalId,
     toolCallId: request.toolCall.toolCallId,
     name: request.toolCall.toolName,
     input: request.toolCall.input,
   };
-  const actionIds = {
-    approve: buildApprovalActionId('approve', payload),
-    deny: buildApprovalActionId('deny', payload),
-  };
-  const content = config?.renderApproval?.({ toolCall, actionIds }) ?? defaultApprovalCard({ toolCall, actionIds });
 
-  await ctx.reply(content);
+  await (ctx as AgentContextImpl).reply(content, { toolApproval: payload });
 }
 
 /** Route an AI SDK result: pause (post approval card) if gated, else deliver the text. */

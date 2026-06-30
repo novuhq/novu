@@ -5,6 +5,7 @@ import type {
   Agent,
   AgentActionContext,
   AgentBridgeRequest,
+  AgentHistoryEntry,
   AgentMessageContext,
   AgentReactionContext,
   AgentResolveContext,
@@ -13,8 +14,19 @@ import type {
   ToolApprovalDecision,
 } from './agent.types';
 import { AgentEventEnum, PendingApproval } from './agent.types';
-import { parseApprovalActionId } from './tool-approval/action-id';
+import { type ApprovalPayload, parseApprovalActionId } from './tool-approval/action-id';
 import { resolvedApprovalCard } from './tool-approval/approval-card';
+
+function findApprovalInHistory(history: AgentHistoryEntry[], approvalId: string): ApprovalPayload | undefined {
+  for (const entry of history) {
+    const payload = (entry.richContent as { toolApproval?: ApprovalPayload } | undefined)?.toolApproval;
+    if (payload?.approvalId === approvalId) {
+      return payload;
+    }
+  }
+
+  return undefined;
+}
 
 export interface DispatchAgentEventOptions {
   agent: Agent;
@@ -29,7 +41,6 @@ export async function dispatchAgentEvent(options: DispatchAgentEventOptions): Pr
 
   try {
     await runAgentHandler(options.agent, options.event, ctx);
-    await ctx._pendingApprovalPost;
     await ctx.flush();
     await ctx.finalizePlan('finished');
   } catch (err) {
@@ -65,8 +76,11 @@ async function runAgentHandler(registeredAgent: Agent, event: string, ctx: Agent
       const parsed = parseApprovalActionId(ctx.action?.id);
 
       if (parsed && registeredAgent.handlers.onToolApproval) {
-        const { payload, approved } = parsed;
-        const toolCall: AgentToolCall = { id: payload.toolCallId, name: payload.name, input: payload.input };
+        const { approved, approvalId } = parsed;
+        const approval = findApprovalInHistory(ctx.history, approvalId);
+        const toolCall: AgentToolCall = approval
+          ? { id: approval.toolCallId, name: approval.name, input: approval.input }
+          : { id: approvalId, name: '' };
         const approvalMessage = ctx.createReplyHandle(ctx.action!.sourceMessageId ?? '');
 
         const decision: ToolApprovalDecision = { toolCall, approved, approvalMessage };

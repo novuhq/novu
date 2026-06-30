@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { buildApprovalActionId } from '../resources/agent/tool-approval/action-id';
 import { toModelMessages } from './history-mapper';
 
 describe('toModelMessages', () => {
@@ -64,25 +63,18 @@ describe('toModelMessages', () => {
     ]);
   });
 
-  it('reconstructs tool-call + approval-request from a persisted approval card, and the response from a synthetic entry', () => {
-    const payload = { approvalId: 'tc_1', toolCallId: 'tc_1', name: 'issueRefund', input: { amount: 250 } };
-    const card = {
-      type: 'card',
-      title: 'Tool approval required',
-      children: [
-        {
-          type: 'actions',
-          children: [
-            { type: 'button', id: buildApprovalActionId('deny', payload), label: 'Deny' },
-            { type: 'button', id: buildApprovalActionId('approve', payload), label: 'Approve' },
-          ],
-        },
-      ],
-    };
+  it('reconstructs tool-call + approval-request from persisted richContent.toolApproval, and the response from the signal', () => {
+    const toolApproval = { approvalId: 'tc_1', toolCallId: 'tc_1', name: 'issueRefund', input: { amount: 250 } };
 
     const result = toModelMessages([
       { role: 'user', type: 'message', content: 'refund my order', createdAt: '1' },
-      { role: 'agent', type: 'card', content: '', richContent: { card }, createdAt: '2' },
+      {
+        role: 'agent',
+        type: 'card',
+        content: '',
+        richContent: { card: { type: 'card' }, toolApproval },
+        createdAt: '2',
+      },
       {
         role: 'system',
         type: 'signal',

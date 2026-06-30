@@ -1,6 +1,7 @@
 import type { CardElement, ChatElement, Emoji } from 'chat';
 import type { TriggerRecipientsPayload } from '../../shared';
 import type { Awaitable } from '../../types/util.types';
+import type { ApprovalPayload } from './tool-approval/action-id';
 export type { TriggerRecipientsPayload };
 
 export enum AgentEventEnum {
@@ -168,6 +169,9 @@ export interface ReplyContent {
   markdown?: string;
   card?: CardElement;
   files?: FileRef[];
+  // Persisted into the message richContent so a stateless resume can rebuild the
+  // tool call; the action id only carries the routing key.
+  toolApproval?: ApprovalPayload;
 }
 
 /**
@@ -232,9 +236,10 @@ export interface ToolApprovalDecision {
 export interface ToolApprovalControl {
   /**
    * Post an approval message and pause the turn.
-   * Return the result from `onMessage` to end the turn until the user decides.
+   * Return the result (`return ctx.toolApproval.request(...)`) from `onMessage`
+   * to end the turn until the user decides.
    */
-  request(toolCall: AgentToolCall): PendingApproval;
+  request(toolCall: AgentToolCall): Promise<PendingApproval>;
 }
 
 // ---------------------------------------------------------------------------

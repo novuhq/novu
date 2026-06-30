@@ -1037,11 +1037,7 @@ export class AgentInboundHandler implements OnModuleInit {
   ): { approvalId: string; approved: boolean; toolName?: string } | null {
     const selfHosted = parseApprovalActionId(actionId);
     if (selfHosted) {
-      return {
-        approvalId: selfHosted.payload.approvalId,
-        approved: selfHosted.approved,
-        toolName: selfHosted.payload.name,
-      };
+      return { approvalId: selfHosted.approvalId, approved: selfHosted.approved };
     }
 
     const managed = parseToolApprovalActionId(actionId);

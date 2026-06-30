@@ -292,8 +292,6 @@ export class AgentContextImpl {
   private _planFinalized = false;
   private _planTitle: string | undefined;
   private _drainPlanQueue: (() => Promise<void>) | null = null;
-  /** @internal in-flight approval card post; awaited by dispatch before the turn ends. */
-  _pendingApprovalPost: Promise<void> | null = null;
   private readonly _toolApprovalConfig?: ToolApprovalConfig;
   private readonly _replyUrl: string;
   private readonly _conversationId: string;
@@ -390,33 +388,41 @@ export class AgentContextImpl {
     }) as PlanControl;
 
     this.toolApproval = {
-      request: (toolCall: AgentToolCall): PendingApprovalType => {
+      request: async (toolCall: AgentToolCall): Promise<PendingApprovalType> => {
+        const actionIds = {
+          approve: buildApprovalActionId('approve', toolCall.id),
+          deny: buildApprovalActionId('deny', toolCall.id),
+        };
+        const content =
+          this._toolApprovalConfig?.renderApproval?.({ toolCall, actionIds }) ??
+          defaultApprovalCard({ toolCall, actionIds });
         const payload: ApprovalPayload = {
           approvalId: toolCall.id,
           toolCallId: toolCall.id,
           name: toolCall.name,
           input: toolCall.input,
         };
-        const actionIds = {
-          approve: buildApprovalActionId('approve', payload),
-          deny: buildApprovalActionId('deny', payload),
-        };
-        const content =
-          this._toolApprovalConfig?.renderApproval?.({ toolCall, actionIds }) ??
-          defaultApprovalCard({ toolCall, actionIds });
 
-        this._pendingApprovalPost = this.reply(content).then(() => undefined);
+        await this.reply(content, { toolApproval: payload });
 
         return new PendingApproval();
       },
     };
   }
 
-  async reply(content: MessageContent, options?: { files?: FileRef[] }): Promise<ReplyHandle> {
+  async reply(
+    content: MessageContent,
+    options?: { files?: FileRef[]; toolApproval?: ApprovalPayload }
+  ): Promise<ReplyHandle> {
+    const reply = await serializeContent(content, options?.files);
+    if (options?.toolApproval) {
+      reply.toolApproval = options.toolApproval;
+    }
+
     const body: AgentReplyPayload = {
       conversationId: this._conversationId,
       integrationIdentifier: this._integrationIdentifier,
-      reply: await serializeContent(content, options?.files),
+      reply,
     };
 
     if (this._signals.length) {

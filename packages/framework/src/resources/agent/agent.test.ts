@@ -11,7 +11,6 @@ import { PendingApproval } from './agent.types';
 import { dispatchAgentEvent } from './agent-dispatch';
 import { Button, Card, CardText } from './index';
 import { buildApprovalActionId } from './tool-approval/action-id';
-import { findApprovalPayloadInCard } from './tool-approval/approval-card';
 
 function createMockBridgeRequest(overrides?: Partial<AgentBridgeRequest>): AgentBridgeRequest {
   return {
@@ -2026,11 +2025,14 @@ describe('tool approval', () => {
 
     expect(posts).toHaveLength(1);
     expect(posts[0].reply.card).toBeTruthy();
-    expect(findApprovalPayloadInCard(posts[0].reply.card)).toMatchObject({
+    // The tool-call payload rides in richContent.toolApproval, not in the button id.
+    expect(posts[0].reply.toolApproval).toMatchObject({
       approvalId: 'tc',
+      toolCallId: 'tc',
       name: 'doIt',
       input: { x: 1 },
     });
+    expect(JSON.stringify(posts[0].reply.card)).not.toContain('"x":1');
     expect(posts.some((p) => p.reply instanceof PendingApproval)).toBe(false);
   });
 
@@ -2065,7 +2067,9 @@ describe('tool approval', () => {
       bridge: approvalBridge({
         event: 'onAction',
         message: null,
-        action: { id: buildApprovalActionId('approve', payload), sourceMessageId: 'm_prev' },
+        // The tool call is reconstructed from persisted history, not the action id.
+        history: [{ role: 'agent', type: 'card', content: '', richContent: { toolApproval: payload }, createdAt: '1' }],
+        action: { id: buildApprovalActionId('approve', 'tc'), sourceMessageId: 'm_prev' },
       }),
       secretKey: 's',
     });
@@ -2074,6 +2078,7 @@ describe('tool approval', () => {
     expect(seen.decision?.toolCall).toMatchObject({ id: 'tc', name: 'doIt', input: { x: 1 } });
     const editPost = posts.find((p) => p.edit?.messageId === 'm_prev');
     expect(editPost).toBeTruthy();
-    expect(findApprovalPayloadInCard(editPost.edit.content.card)).toBeNull();
+    // Default resolution edits the card to a resolved state (no actionable buttons).
+    expect(editPost.edit.content.card.title).toBe('Approved');
   });
 });

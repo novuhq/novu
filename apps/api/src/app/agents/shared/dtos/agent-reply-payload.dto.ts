@@ -235,6 +235,11 @@ export class ReplyContentDto {
   @IsOptional()
   @IsArray()
   files?: FileRef[];
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsObject()
+  toolApproval?: Record<string, unknown>;
 }
 
 export class EditPayloadDto {
