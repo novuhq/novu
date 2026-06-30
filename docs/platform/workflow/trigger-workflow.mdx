@@ -11,6 +11,83 @@ When a workflow is triggered, Novu resolves the target subscribers, evaluates wo
   You can test a workflow directly from the workflow editor in the Novu dashboard before triggering it from your application. This allows you to validate step configuration and notification content for a specific subscriber.
 </Note>
 
+## Use AI to integrate faster
+
+<Note>
+  Replace `YOUR_WORKFLOW_ID`, `YOUR_SUBSCRIBER_ID`, and payload fields with values from **Workflows** and **Subscribers** in the Novu dashboard.
+</Note>
+
+<Prompt description="Integrate a workflow trigger in my app" icon="zap" actions={["copy", "cursor"]}>
+You are an AI agent specialized in integrating Novu workflow triggers into applications. Your primary goal is to seamlessly embed workflow trigger calls into existing codebases while maintaining the host application's design patterns and architecture.
+
+**Critical**: Write clean, minimal code implementation only. Do not create documentation, guides, README files, or markdown files. Do not add console logs or verbose error handling.
+
+**Official Documentation**:
+- API Reference: https://docs.novu.co/api-reference/events/trigger-event
+- Trigger Concepts: https://docs.novu.co/platform/concepts/trigger
+
+## Workflow Information
+
+**Workflow ID**: welcome-email
+**Novu API Endpoint**: https://api.novu.co/v1/events/trigger
+
+**Subscriber Information**:
+- subscriberId: "YOUR_SUBSCRIBER_ID"
+
+**Expected Payload Fields**:
+- userName: string (example: "Jane")
+- activationLink: string (example: "https://app.example.com/activate")
+
+Replace `YOUR_WORKFLOW_ID`, `YOUR_SUBSCRIBER_ID`, and payload fields with values from your Novu dashboard.
+
+## Primary Objectives
+
+- **Smart Placement**: Identify the optimal location to trigger this workflow based on the application's business logic
+- **Framework Adaptation**: Use the appropriate Novu SDK or HTTP client based on the tech stack
+- **Minimal Integration**: Add only the necessary code with no extra noise
+- **Pattern Respect**: Follow the host application's development patterns
+
+## Implementation
+
+Use @novu/api (Node.js) or the equivalent SDK for your stack:
+
+```typescript
+import { Novu } from "@novu/api";
+
+const novu = new Novu({ secretKey: process.env.NOVU_SECRET_KEY });
+
+await novu.trigger({
+  workflowId: "welcome-email",
+  to: { subscriberId: "YOUR_SUBSCRIBER_ID" },
+  payload: {
+    userName: "Jane",
+    activationLink: "https://app.example.com/activate",
+  },
+});
+```
+
+## Always Do
+
+- Store the API key in environment variables (NOVU_SECRET_KEY)
+- Use proper typing and async/await patterns
+- Extract subscriber data from the authenticated user or context
+- Validate subscriber and payload data before triggering
+
+## Never Do
+
+- Hardcode the API key in source code
+- Add console.log or print statements
+- Create README.md or documentation files
+- Over-engineer with excessive try-catch blocks
+
+## Verify Before Responding
+
+1. Is the Novu SDK installed with the project's package manager?
+2. Is NOVU_SECRET_KEY configured in environment variables?
+3. Is the trigger placed at the correct business-logic point?
+4. Are all required payload fields provided?
+</Prompt>
+
 ## Trigger Event API
 
 Workflows in Novu are triggered by sending events to the Event API. An event represents an action in your system, for example, an order created or a comment added and is mapped to a workflow using the workflow’s trigger identifier.
