@@ -81,12 +81,21 @@ export class AnypostEmailProvider extends BaseProvider implements IEmailProvider
       reply_to: options.replyTo,
       attachments: this.mapAttachments(options.attachments),
       ...(Object.keys(headers).length ? { headers } : {}),
-      // Anypost rejects template_id combined with an inline html/text body.
-      ...(templateId ? { template_id: templateId } : { html: options.html, text: options.text }),
+      html: options.html,
+      text: options.text,
+      ...(templateId ? { template_id: templateId } : {}),
       ...(variables ? { variables } : {}),
     };
 
     const body = this.transform<EmailSendRequest>(bridgeProviderData, mailData).body;
+
+    // Anypost rejects template_id combined with an inline html/text body. A
+    // template_id from customData OR a provider override (bridgeProviderData)
+    // takes precedence, so drop any inline content once the merge is final.
+    if (body.template_id) {
+      delete body.html;
+      delete body.text;
+    }
 
     // Reuse Novu's transaction id as the idempotency key so retries don't double-send.
     const response = options.id

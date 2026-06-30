@@ -155,6 +155,10 @@ test('merges bridgeProviderData and transforms camelCase keys to snake_case', as
   expect(body.campaign).toBe('spring-2026');
   expect(body.template_id).toBe('template_abc');
   expect((body as any).templateId).toBeUndefined();
+  // A template_id supplied via a provider override must drop the inline
+  // html/text body — Anypost rejects template_id combined with inline content.
+  expect(body.html).toBeUndefined();
+  expect(body.text).toBeUndefined();
 });
 
 test('surfaces a stored template + variables from customData and omits inline body', async () => {
