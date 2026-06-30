@@ -1,91 +1,232 @@
 ---
 title: 'Glossary'
-description: 'Definitions'
+description: 'Definitions of key Novu terms and concepts'
 ---
 
 ## Introduction
 
-In this section, you'll find a list of key terms, their definitions and various concepts associated with Novu. Familiarising yourself with these will help you understand and use Novu better. They will help you navigate our docs more effectively and utilise Novu to its maximum potential.
+This glossary defines the key terms and concepts used across Novu documentation, the Dashboard, and the API. Terms are grouped by topic and listed alphabetically within each section.
 
-If you have any questions or need further clarification on any of the terms listed above, please feel free to reach out to our support team or join our community!
+For deeper guides, see the [Core Concepts](/platform/concepts/notification-event) pages. If you need help with a term not listed here, reach out to our [support team](https://novu.co/support) or join the [Novu community](https://discord.gg/novu).
 
-## List of key terms and definitions
+## Core lifecycle
 
-### Actor
+### Event / Trigger
 
-An `actor` refers to a user or subscriber who initiates actions that trigger events within the system. Each actor is uniquely identified by an "actorId," also known as "subscriberId". Actors hold user-related variables and can enhance notifications by allowing their avatars to be displayed.
+An API request (typically to [`POST /v1/events/trigger`](/api-reference/events/trigger-event)) that starts a [workflow](#workflow) for one or more recipients. A trigger includes a `workflowId`, a `to` field (subscriber, topic, or broadcast target), and optional `payload`, `context`, `actor`, and `overrides`.
 
-### Agent brain
+Novu bills one event per subscriber resolved from the trigger, even if a notification is later filtered by [preferences](#preference) or [step conditions](#step-conditions). See [Trigger](/platform/concepts/trigger) and [Notification event](/platform/concepts/notification-event).
 
-The agent brain is the system that decides how an agent responds. It can be powered by an LLM, custom code, a rules engine, a human-in-the-loop workflow, a managed agent platform, or a combination of systems. The agent brain is separate from the communication infrastructure that delivers messages across channels, which is handled by [ACI](/agents/get-started/what-is-aci).
+### Job
 
-### Channels
+A unit of work created for each [workflow](#workflow) [step](#step) during execution. Jobs move through statuses such as `PENDING`, `QUEUED`, `RUNNING`, `COMPLETED`, `FAILED`, `DELAYED`, `MERGED`, `SKIPPED`, and `CANCELED`. See [Trigger](/platform/concepts/trigger#jobs).
 
-Novu lets you send notifications across different communication mediums, including emails, in-app messages, push notifications, SMS, and chat. Each of these five communication mediums is referred to as a notification 'channel'.
+### Message
 
-### Delay Actions
-
-Delay actions introduce time intervals between workflow steps, optimizing message delivery timing.
-
-### Digest Engine
-
-The digest engine aggregates multiple trigger events into a single message, ensuring efficient communication.
-
-### Environments
-
-Novu runs all your requests in the context of an environment. By default, Novu creates two environments:
-
-1. Development environment: For testing purposes and validating notification changes
-2. Production environment: Your live environment (read-only, changes must be promoted from development)
-
-Data associated with an environment includes:
-
-- Subscribers (can't be promoted to production)
-- Workflows (can be promoted to production)
-- Messages
-- Execution logs
-- Connected integrations (can't be promoted to production)
-- Notification feeds (can be promoted to production)
-- Brand-related assets and settings
-
-### Layouts
-
-Layouts are HTML designs or structures to wrap the content of email notifications. Layouts can be manipulated and assigned to new or existing workflows within the Novu platform.
+The rendered output delivered on a [channel](#channel)—for example, an email body, SMS text, push notification, or in-app item. A single [notification](#notification) can produce multiple messages across different channel steps. See [Notification event](/platform/concepts/notification-event#message).
 
 ### Notification
 
-A brief message or alert that informs users about events, updates, or some other information.
+The container that tracks one [trigger](#event--trigger) execution for one [subscriber](#subscriber). It holds the trigger payload, subscriber details, [jobs](#job), [messages](#message), and delivery status for that execution. One trigger to one subscriber creates one notification. See [Notification event](/platform/concepts/notification-event#notification).
 
-### Organizations
+### Payload
 
-Organizations allow separation of notifications across multiple products, managed through the Novu web dashboard.
+Dynamic JSON data passed at trigger time. Payload values personalize templates (`{{payload.*}}`), drive [step conditions](#step-conditions), and configure action steps such as [digest](#digest-step) grouping keys. Payload is distinct from [controls](#controls), which are dashboard-editable step settings in Framework workflows.
 
-### Providers
+### Step
 
-Providers are responsible for handling message delivery across various channels. Novu currently supports multiple notification channels, each with its own set of providers.
-
-- Chat: Discord, MS Teams, Slack, Zulip
-- Email: Sendgrid, Amazon SES, Brevo, Resend, SparkPost, Postmark, Mailjet, Mailtrap, Plunk, Braze, Mailersend, Outlook 365, Mailgun, Mandrill, Netcore, Infobip, Custom SMTP
-- SMS: Twilio SMS, SMS77, Africa's Talking, Infobip, Nexmo, Plivo, Sendchamp, AWS SNS, Telnyx, Termii, Firetext, Gupshup, Clickatell, Azure SMS, BulkSMS, SimpleTexting, MessageBird
-- Push Notification: Firebase Cloud Messaging (FCM), Expo Push, Apple Push Notification Service (APNS), One Signal, Pushpad, Pusher Beams, Push Webhook
-- Inbox: React component, Angular component, Vue component, Web component, iFrame embed, Custom styling, Headless Inbox
-
-### Step Filter
-
-Step filters customize workflow by specifying notification criteria, enhancing communication efficiency.
-
-### Subscribers
-
-Subscribers are entities designated to receive the notifications you send. Each subscriber in Novu is uniquely identified by their `subscriberId`.
-
-### Team members
-
-Members of a team have access to the Novu web dashboard. This allows you to have individuals work on and manage templates and notifications.
-
-### Topics
-
-Topics facilitate bulk notifications to multiple subscribers simultaneously, streamlining communication.
+A node in a [workflow](#workflow). Steps are either **channel steps** (`in_app`, `email`, `sms`, `push`, `chat`) that deliver [messages](#message), or **action steps** (`delay`, `digest`, `throttle`, `http_request`, `custom`) that control execution flow. See [Add and configure steps](/platform/workflow/add-and-configure-steps).
 
 ### Workflow
 
-Workflow templates define the flow of messages sent to subscribers.
+An environment-scoped orchestration definition that determines what to send, when, and on which [channels](#channel). Workflows are identified by an immutable `identifier` used in API triggers, composed of ordered [steps](#step), and can include a payload schema, channel [preferences](#preference), and tags. See [Workflows](/platform/concepts/workflows).
+
+## Recipients and targeting
+
+### Actor
+
+A [subscriber](#subscriber) referenced at trigger time or in in-app message templates—not necessarily the notification recipient.
+
+- **Trigger actor**: Optional field on a trigger representing who performed an action (for example, who commented on a post). Powers template variables like `{{actor.firstName}}`. When triggering to a [topic](#topic), the actor can be excluded from the fan-out.
+- **Display actor**: In-app message configuration that controls the avatar or icon shown on a notification.
+
+The actor's `subscriberId` is not the same as the recipient's `subscriberId`.
+
+### Broadcast
+
+A trigger mode that sends a [workflow](#workflow) to all [subscribers](#subscriber) in an environment, instead of targeting specific subscribers or [topics](#topic).
+
+### Subscriber
+
+An entity designated to receive notifications, uniquely identified by `subscriberId` within an environment. Subscribers can be created ahead of time or just-in-time when a workflow is triggered. They store profile data, channel endpoints, timezone, and [preferences](#preference). Subscribers are notification recipients—they are not the same as [team members](#team-member), who access the Dashboard. See [Subscribers](/platform/concepts/subscribers).
+
+### Subscription
+
+A topic-level, condition-based opt-in layer. Subscribers on a [topic](#topic) can define rules evaluated against the trigger [payload](#payload) before delivery—for example, only notify when a price threshold is met. See [Subscription](/platform/subscription).
+
+### Topic
+
+A named group of [subscribers](#subscriber) used to fan out a [workflow](#workflow) with a single trigger. The topic is referenced by its immutable `topicKey` in the trigger `to` field. Novu creates one billed [event](#event--trigger) per topic subscriber. See [Topics](/platform/concepts/topics).
+
+## Delivery
+
+### Channel
+
+A communication medium used to deliver notifications: in-app ([Inbox](#inbox)), email, SMS, push, or chat. Channel steps require valid subscriber channel data and an active [integration](#integration), except for in-app, which is handled internally by Novu.
+
+### Credential
+
+Encrypted authentication and configuration values stored on an [integration](#integration)—for example, API keys, OAuth tokens, and sender addresses.
+
+### Inbox
+
+Novu's in-app notification UI and client SDK component (`<Inbox />`). The Inbox delivers `in_app` [channel](#channel) [messages](#message), unread counts, [preferences](#preference), tabs, snooze, and delivery schedules. It is not a third-party [provider](#provider). See [Inbox](/platform/inbox).
+
+### Integration
+
+An environment-scoped, configured connection to a third-party [provider](#provider). Integrations store [credentials](#credential), active/primary flags, and channel settings required for external channel delivery. The in-app channel does not require a third-party integration. See [Integrations](/platform/concepts/integrations).
+
+### Layout
+
+An HTML wrapper used to structure [email](#channel) notifications. Layouts can be shared across workflows and [published](#publish) between environments. See [Email layouts](/platform/workflow/add-notification-content/channels-template-editors#email-layouts).
+
+### Provider
+
+A third-party service responsible for delivering notifications on a [channel](#channel)—for example, SendGrid for email, Twilio for SMS, or Firebase Cloud Messaging for push. An [integration](#integration) is your configured instance of a provider. See the full list in [Integrations](/platform/integrations).
+
+## Workflow logic
+
+### Controls
+
+Dashboard-editable fields defined by JSON Schema or Zod in [Novu Framework](#novu-framework) workflows. Controls let non-technical users change step content, styling, or behavior without code changes. Controls are distinct from trigger [payload](#payload).
+
+### Delay step
+
+An action step that pauses [workflow](#workflow) execution for a fixed duration, until a scheduled time, or until a dynamic [payload](#payload) value. See [Delay step](/platform/workflow/add-and-configure-steps/configure-action-steps/delay).
+
+### Digest step
+
+An action step that batches multiple [trigger](#event--trigger) events into one downstream execution per digest window. Supports regular, backoff, and timed digest modes, with optional grouping beyond `subscriberId`. See [Digest step](/platform/workflow/add-and-configure-steps/configure-action-steps/digest).
+
+### HTTP step
+
+An action step that calls an external API during workflow execution. Response fields are available to later steps via `{{steps.<stepId>.<field>}}`. See [HTTP step](/platform/workflow/add-and-configure-steps/configure-action-steps/http-step).
+
+### Step conditions
+
+Rule-based logic that determines whether a [step](#step) runs or is skipped, based on subscriber data, [payload](#payload), [context](#context), or previous step results. Formerly called step filters. See [Step conditions](/platform/workflow/add-and-configure-steps/step-conditions).
+
+### Throttle step
+
+An action step that limits how many times a [workflow](#workflow) may continue within a time window. When the limit is reached, downstream steps are skipped. See [Throttle step](/platform/workflow/add-and-configure-steps/configure-action-steps/throttle).
+
+## Preferences and control
+
+### Critical workflow
+
+A [workflow](#workflow) marked as critical whose channel [preferences](#preference) are not shown to subscribers. Critical notifications bypass normal opt-out, though delivery schedules may still apply to some channels.
+
+### Preference
+
+Rules that control whether notifications are sent on a [channel](#channel). Novu supports workflow channel preferences, subscriber global preferences, subscriber per-workflow preferences, and subscription-scoped preferences. See [Preferences](/platform/concepts/preferences).
+
+### Trigger overrides
+
+Per-trigger customizations that override default template content or [integration](#integration) settings at the workflow or step level. See [Trigger overrides](/platform/integrations/trigger-overrides).
+
+## Multi-tenancy
+
+### Context
+
+Multi-dimensional metadata passed at trigger time as `{ type: id | { id, data } }`—for example, `tenant`, `app`, or `region`. Context data is available in templates (`{{context.tenant.data.name}}`), [step conditions](#step-conditions), [Inbox](#inbox) filtering, and Activity Feed search. You can pass up to five contexts per trigger. See [Manage contexts](/platform/workflow/advanced-features/contexts/manage-contexts).
+
+### Tenant
+
+A legacy multi-tenancy approach using environment-scoped tenant entities and subscriber ID prefixing. For new implementations, prefer [contexts](#context). See [Multi-tenancy](/platform/concepts/tenants).
+
+## Environments and account
+
+### Application identifier
+
+The public, environment-scoped key used by client SDKs and the [Inbox](#inbox) to connect to Novu. Safe to expose in frontend code. Each environment has its own application identifier.
+
+### Environment
+
+An isolated scope for workflows, subscribers, integrations, and other Novu data. By default, Novu provides Development and Production environments. Team and Enterprise plans also support custom environments such as staging or QA.
+
+Environment-specific resources (not shared between environments):
+
+- Activity feed
+- API keys (application identifier and secret key)
+- [Integrations](#integration)
+- [Subscribers](#subscriber)
+- [Topics](#topic)
+- Webhooks
+
+Publishable assets (edited in Development, then [published](#publish) to other environments):
+
+- [Layouts](#layout)
+- Translations
+- [Workflows](#workflow)
+
+See [Environments](/platform/developer/environments).
+
+### Organization
+
+The top-level Novu account that owns environments, workflows, and team access. Managed through the Novu Dashboard.
+
+### Publish
+
+The process of promoting changes to [workflows](#workflow), [layouts](#layout), and translations from the Development environment to Production or custom environments. Subscribers, integrations, and topics are environment-specific and are not published. See [Environments](/platform/developer/environments#publish-changes-to-other-environments).
+
+### Team member
+
+A person with access to the Novu Dashboard to manage workflows, integrations, and settings. Team members have roles within an [organization](#organization). They are not the same as [subscribers](#subscriber), who receive notifications.
+
+## Observability
+
+### Activity Feed
+
+The Dashboard observability surface for an environment, including workflow runs, API request traces, and agent conversations. See [Monitor and debug workflow](/platform/workflow/monitor-and-debug-workflow).
+
+### Transaction ID
+
+A unique identifier (`transactionId`) for one [trigger](#event--trigger) execution. Used for tracing across the Activity Feed, logs, and APIs. Can be supplied at trigger time for idempotency or cancellation.
+
+### Workflow run
+
+A single execution of a [workflow](#workflow) for one [subscriber](#subscriber), visible in the Activity Feed with trigger payload, [context](#context), status, and per-step execution details.
+
+## Code-first workflows and agents
+
+### ACI (Agent Communication Infrastructure)
+
+Novu's two-way agent messaging layer across channels such as Slack, Teams, WhatsApp, email, and Telegram. ACI handles inbound channel events, conversation history, and delivery—separate from the [agent brain](#agent-brain) that decides how an agent responds. See [What is ACI](/agents/get-started/what-is-aci).
+
+### Agent brain
+
+The system that decides how an agent responds. It can be powered by an LLM, custom code, a rules engine, a human-in-the-loop workflow, or a combination of systems. The agent brain is separate from message delivery, which is handled by [ACI](#aci-agent-communication-infrastructure).
+
+### Bridge / Bridge endpoint
+
+An HTTP endpoint in your application that Novu Cloud calls for [Novu Framework](#novu-framework) workflow discovery, preview, and execution. Dashboard-built workflows use Novu's shared bridge endpoint instead.
+
+### Novu Framework
+
+The code-first SDK (`@novu/framework`) for defining [workflows](#workflow) in TypeScript with typed [payload](#payload) and [controls](#controls) schemas. See [Novu Framework](/framework/introduction).
+
+## Legacy terms
+
+These terms appear in older docs, SDKs, or APIs. Prefer the modern equivalents listed above.
+
+### Digest engine
+
+Legacy name for the [digest step](#digest-step).
+
+### Feed
+
+A deprecated inbox categorization entity replaced by [workflow](#workflow) tags for [Inbox](#inbox) tabs. See the [Inbox migration guide](/platform/inbox/migration-guide#multiple-tabs-support).
+
+### Step filter
+
+Legacy name for [step conditions](#step-conditions).
