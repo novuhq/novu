@@ -1,0 +1,70 @@
+---
+title: 'Auth0 Webhook Integration with Novu'
+sidebarTitle: 'Auth0'
+description: 'Trigger Novu notification workflows from Auth0 events such as password reset, signup, and login alerts.'
+---
+
+
+Trigger Novu notification workflows when Auth0 events occur by receiving Auth0 log stream or webhook events in your backend and calling the Novu Trigger API.
+
+## How does the Auth0 and Novu integration work?
+
+1. Auth0 emits an event (for example, password reset requested or successful signup).
+2. Your backend receives the event via an Auth0 log stream or Actions webhook.
+3. Your handler verifies the event and calls Novu's [Trigger event](/api-reference/events/trigger-event) API.
+4. Novu delivers the notification through your configured workflow channels.
+
+## Prerequisites
+
+- An Auth0 tenant with log streams or Actions configured
+- A Novu account with a workflow for each auth event
+- A backend endpoint to receive Auth0 events
+
+## How do I trigger a Novu workflow from Auth0?
+
+<Steps>
+  <Step title="Create auth workflows in Novu">
+    Create workflows for events such as `password-reset`, `welcome-email`, and `new-device-login`. Add email and optional in-app steps.
+  </Step>
+
+  <Step title="Configure Auth0 to send events">
+    Set up an Auth0 log stream or Action that POSTs to your backend when target events occur. See [Auth0 log streams](https://auth0.com/docs/customize/log-streams) documentation.
+  </Step>
+
+  <Step title="Handle the webhook and trigger Novu">
+    Verify the Auth0 event, then trigger the matching Novu workflow:
+
+```typescript
+import { Novu } from '@novu/api';
+
+const novu = new Novu({ secretKey: process.env.NOVU_SECRET_KEY });
+
+export async function handleAuth0Event(event: Auth0LogEvent) {
+  if (event.type === 's' && event.description === 'Success Signup') {
+    await novu.trigger({
+      workflowId: 'welcome-email',
+      to: { subscriberId: event.user_id, email: event.user_name },
+      payload: { firstName: event.details?.body?.firstName },
+    });
+  }
+}
+```
+  </Step>
+</Steps>
+
+## Related guides
+
+- [Password reset notifications](/guides/use-cases/password-reset-notifications)
+- [Clerk webhook integration](/guides/webhooks/clerk)
+- [Authentication API reference](/api-reference/authentication)
+
+## Frequently asked questions
+
+<AccordionGroup>
+  <Accordion title="Should I use Auth0 Actions or log streams?">
+    Auth0 Actions give you inline control during the auth flow. Log streams are better for post-event processing such as security alerts and analytics-driven notifications.
+  </Accordion>
+  <Accordion title="Where should I verify Auth0 webhook signatures?">
+    Always verify signatures in your backend before triggering Novu workflows. Never expose your Novu secret key in client-side Auth0 Actions.
+  </Accordion>
+</AccordionGroup>

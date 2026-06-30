@@ -1,0 +1,60 @@
+---
+title: 'Migrate from Knock to Novu'
+sidebarTitle: 'From Knock'
+description: 'Plan and execute a migration from Knock to Novu. Map concepts, migrate workflows, subscribers, and in-app notifications.'
+---
+
+
+Migrate from Knock to Novu by mapping Knock workflows and users to Novu workflows and subscribers, reconnecting your delivery providers, and replacing the Knock in-app feed with the Novu Inbox component.
+
+## Why migrate to Novu?
+
+- **Open source:** Self-host Novu or use Novu Cloud with full transparency
+- **Unified workflows:** Content, routing, delays, and digests in one workflow
+- **Inbox component:** Drop-in React Inbox with headless hooks for custom UI
+- **Code-first option:** Define workflows in TypeScript with the [Novu Framework](/framework)
+
+Compare platforms in detail on [Novu vs Knock](https://novu.co/comparison/knock/).
+
+## How do Knock concepts map to Novu?
+
+| Knock Concept | Novu Equivalent | Notes |
+| --- | --- | --- |
+| **Workflows** | **Workflows** | Novu workflows combine content and delivery logic in one definition |
+| **Users** | **Subscribers** | Identified by `subscriberId`; pass data inline when triggering |
+| **Objects / Tenants** | **Contexts** | Scope notifications to tenants with [contexts](/platform/workflow/advanced-features/contexts) |
+| **Channels** | **Integrations** | Connect SendGrid, Twilio, FCM, Slack, and 60+ providers |
+| **In-app feed** | **Inbox** | Replace Knock feed components with [`<Inbox />`](/platform/inbox) |
+| **Preferences** | **Preferences** | Global and per-workflow preferences built into Novu |
+
+## What are the migration steps?
+
+<Steps>
+  <Step title="Phase 1: Set up Novu and connect providers">
+    1. Create a [Novu Cloud](https://dashboard.novu.co/auth/signup) account.
+    2. Connect your email, SMS, push, and chat providers in the Integrations store.
+    3. Copy API keys for Development and Production environments.
+  </Step>
+
+  <Step title="Phase 2: Recreate workflows">
+    Rebuild each Knock workflow in the Novu Dashboard or with the [Novu Framework](/framework). Map Knock steps to Novu channel and action steps (delay, digest, throttle).
+  </Step>
+
+  <Step title="Phase 3: Migrate subscribers">
+    Use a lazy migration: pass subscriber details inline when triggering workflows. Novu creates or updates subscribers automatically. For bulk sync, use [Bulk create subscribers](/api-reference/subscribers/bulk-create-subscribers).
+  </Step>
+
+  <Step title="Phase 4: Replace the in-app feed">
+    Replace Knock feed components with the Novu Inbox. Follow the [Next.js quickstart](/platform/quickstart/nextjs) or [React quickstart](/platform/quickstart/react).
+  </Step>
+
+  <Step title="Phase 5: Switch triggers and validate">
+    Update your backend to call Novu's [Trigger event](/api-reference/events/trigger-event) API instead of Knock. Run both systems in parallel during a transition window, then disable Knock triggers.
+  </Step>
+</Steps>
+
+## Related guides
+
+- [Migrate from Courier to Novu](/guides/migrate-from-courier-to-novu)
+- [Migrate from MagicBell to Novu](/guides/migrate-from-magicbell-to-novu)
+- [What is Novu?](/platform/what-is-novu)

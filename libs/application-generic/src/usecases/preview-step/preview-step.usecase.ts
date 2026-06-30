@@ -43,6 +43,7 @@ export class PreviewStep {
       payload: command.payload || {},
       state: command.state || [],
       subscriber: command.subscriber || {},
+      ...(command.actor && { actor: command.actor }),
       context: command.context || {},
       stepId: command.stepId,
       workflowId: command.workflowId,

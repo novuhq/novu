@@ -1,0 +1,60 @@
+---
+title: 'Migrate from In-House Notifications to Novu'
+sidebarTitle: 'From in-house'
+description: 'Replace a custom-built notification system with Novu. Reduce maintenance, add multi-channel delivery, and ship an Inbox faster.'
+---
+
+
+Replace a custom in-house notification system with Novu to eliminate maintenance of delivery plumbing, provider integrations, and in-app feed infrastructure. Novu provides workflows, multi-channel delivery, observability, and a drop-in Inbox component.
+
+## Why replace an in-house notification system?
+
+Building notifications in-house typically requires maintaining:
+
+- Provider integrations for email, SMS, and push
+- A real-time in-app feed with unread counts and WebSocket connections
+- User preference management
+- Retry logic, digests, and multi-step delivery rules
+- Delivery logs and debugging tools
+
+Novu provides all of these out of the box as open-source infrastructure. Compare the build-vs-buy analysis on [Novu vs building in-house](https://novu.co/comparison/building-in-house/).
+
+## How do I plan the migration?
+
+<Steps>
+  <Step title="Audit your current system">
+    List every notification type, channel, template, and trigger point in your codebase. Identify which map to Novu workflows.
+  </Step>
+
+  <Step title="Set up Novu">
+    Create a Novu account or [self-host Novu](/community/self-hosting-novu/overview). Connect your existing ESP, SMS, and push providers.
+  </Step>
+
+  <Step title="Rebuild workflows">
+    Create Novu workflows for each notification type. Use [delay](/platform/workflow/add-and-configure-steps/configure-action-steps/delay), [digest](/platform/workflow/add-and-configure-steps/configure-action-steps/digest), and [step conditions](/platform/workflow/add-and-configure-steps/step-conditions) to replicate your existing logic.
+  </Step>
+
+  <Step title="Replace the in-app feed">
+    Remove custom feed UI and add the [Novu Inbox](/platform/inbox). Use headless hooks if you need a fully custom design.
+  </Step>
+
+  <Step title="Migrate triggers incrementally">
+    Replace in-house notification calls one workflow at a time. Use Novu's [activity feed](/platform/workflow/monitor-and-debug-workflow) to validate delivery during the transition.
+  </Step>
+
+  <Step title="Decommission legacy code">
+    Remove provider SDKs, queue workers, and feed infrastructure once all notification types run through Novu.
+  </Step>
+</Steps>
+
+## What about data migration?
+
+- **Users:** Map your user IDs to Novu `subscriberId` values. Pass contact details inline when triggering workflows for lazy migration.
+- **Templates:** Rebuild templates in Novu workflow steps. For code-based templates, use the [Novu Framework](/framework) with React Email or MJML.
+- **Preferences:** Import via the [preferences API](/api-reference/subscribers/update-subscriber-preferences) or let users reconfigure through the Inbox.
+
+## Related guides
+
+- [Self-host Novu](/community/self-hosting-novu/overview)
+- [Transactional notifications](/guides/use-cases/transactional-notifications)
+- [What is Novu?](/platform/what-is-novu)

@@ -35,6 +35,11 @@ Use Novu-specific terms consistently. For full definitions, see the [glossary](/
 - Code formatting for file names, commands, paths, and code references
 - Capitalize **Novu** and product names: Inbox, Framework, Dashboard
 - Include frontmatter `title` and `description` on MDX pages
+- Use `sidebarTitle` for short navigation labels when the page `title` is long (for example, SEO question-format titles)
+- API endpoint pages must include a `description` and a 1–2 sentence intro before the OpenAPI block
+- Provider integration pages use the title pattern `{Provider} {Channel} Integration with Novu` with `sidebarTitle` for the short provider name
+- Use descriptive alt text on all diagrams and screenshots
+- See [SEO and GEO maintenance](/SEO_MAINTENANCE.md) for the ongoing review checklist
 - Use icons on top-level navigation section titles only (set `"icon"` on groups in `docs.json`), not on individual pages or nested collapsible groups
 - For icons we use the [Lucide](https://lucide.dev/) library.
 - Prefer Mintlify components (`<Card>`, `<Columns>`, `<Steps>`, `<CodeGroup>`) over raw HTML

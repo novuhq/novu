@@ -1,6 +1,7 @@
 ---
-title: 'Push Webhook'
-description: 'Learn how to use the Push Webhook provider to send notifications using Novu'
+title: "Push Webhook Push Integration with Novu"
+sidebarTitle: "Push Webhook"
+description: "Connect Push Webhook to Novu to send push notifications through notification workflows. Step-by-step credential setup."
 ---
 
 This guide walks you through the entire process of configuring and using Push Webhook with Novu.
@@ -31,26 +32,26 @@ Next, add these keys to your Push Webhook integration in the Novu dashboard:
     Log in to the Novu dashboard.
   </Step>
 
-  <Step title="Open Integration Store">
+<Step title="Open Integration Store">
     On the Novu dashboard, navigate to the **Integration Store**.
   </Step>
 
-  <Step title="Connect a provider">
+<Step title="Connect a provider">
     Click **Connect Provider**.
   </Step>
 
-  <Step title="Select Push Webhook">
+<Step title="Select Push Webhook">
     In the **Push** tab, select **Push Webhook**.
   </Step>
 
-  <Step title="Fill in integration fields">
+<Step title="Fill in integration fields">
     In the integration form, fill in the following fields:
     * **Webhook URL:** The endpoint URL that you prepared in Step 1.
     * **Secret HMAC Key:** The secret key used to sign webhook calls.
     ![Push Webhook Integration in Novu](/images/channels-and-providers/push/push-webhook/push-webhook-integration.png)
   </Step>
 
-  <Step title="Create the integration">
+<Step title="Create the integration">
     Click **Create Integration**.
   </Step>
 </Steps>
@@ -211,12 +212,12 @@ async function acceptNovuPushWebHookRequest(request, response) {
   const payloadSentByNovu = request.body;
   const hmacHashSentByNovu = request.headers['x-novu-signature'];
 
-  const actualHashValue = crypto
+const actualHashValue = crypto
     .createHmac('sha256', secretKey)
     .update(payloadSentByNovu, 'utf-8')
     .digest('hex');
 
-  if (hmacHashSentByNovu === actualHashValue) {
+if (hmacHashSentByNovu === actualHashValue) {
     // handle the notification
     console.log('Request sent by Novu');
   } else {

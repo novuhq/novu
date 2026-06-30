@@ -1,9 +1,18 @@
 ---
-title: 'Overview'
-description: 'High-level overview of the Novu REST API, available resources, and links to OpenAPI, Postman, SDKs, and getting started guides.'
+title: 'Novu REST API Reference'
+description: 'Manage subscribers, trigger workflows, configure integrations, and operate your notification infrastructure with the Novu REST API.'
+sidebarTitle: Overview
 ---
 
-The Novu REST API lets you manage subscribers, trigger workflows, configure integrations, and operate your notification infrastructure from your backend. Use it directly with HTTP requests, or through one of our [server-side SDKs](/platform/sdks#server-side-sdks).
+The Novu REST API lets you manage subscribers, trigger workflows, configure integrations, and operate your notification infrastructure from your backend. Start with these common operations:
+
+- [Trigger event](/api-reference/events/trigger-event) — send a workflow to a subscriber
+- [Create a subscriber](/api-reference/subscribers/create-a-subscriber) — register a notification recipient
+- [Retrieve subscriber notifications](/api-reference/subscribers/retrieve-subscriber-notifications) — read in-app notifications for the Inbox
+- [Create a workflow](/api-reference/workflows/create-a-workflow) — define a notification workflow programmatically
+- [Authentication](/api-reference/authentication) — authenticate requests with your secret API key
+
+Use the API directly with HTTP requests, or through one of our [server-side SDKs](/platform/sdks#server-side-sdks).
 
 <Note>
   The REST API and server-side SDKs are intended for server-side applications only. Using them in client-side code causes Cross-Origin Resource Sharing (CORS) errors and exposes your secret key.

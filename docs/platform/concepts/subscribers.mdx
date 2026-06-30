@@ -1,12 +1,12 @@
 ---
-title: 'Subscribers'
+title: 'How do subscribers work in Novu?'
+sidebarTitle: 'Subscribers'
 description: "Learn what a subscriber is in Novu, how they’re identified, and how they fit into the notification system."
 ---
 
+A subscriber is a notification recipient in Novu, identified by a unique `subscriberId`. Workflows are triggered for subscribers, and Novu applies channel routing, preferences, and personalization at the subscriber level.
 
-In Novu, a subscriber represents a user or system entity that is intended to receive notifications. Subscribers are central to Novu’s delivery model: workflows are triggered with one or more targeted subscribers, and all delivery logic, such as channel routing, preferences, and personalization is applied at the subscriber level.
-
-## How Novu identifies a subscriber
+## How does Novu identify a subscriber?
 
 Each subscriber is uniquely identified in Novu by a `subscriberId`. This ID is defined by your application and serves as the reference point for all subscriber-related operations whether sending messages, retrieving preferences, or managing user data. 
 

@@ -13,7 +13,12 @@ import {
   WorkflowCreationSourceEnum,
   WorkflowResponseDto,
 } from '@novu/api/models/components';
-import { buildWorkflowSchema, DEFAULT_ARRAY_ELEMENTS, EmailControlType } from '@novu/application-generic';
+import {
+  buildActorSchema,
+  buildWorkflowSchema,
+  DEFAULT_ARRAY_ELEMENTS,
+  EmailControlType,
+} from '@novu/application-generic';
 import { EnvironmentRepository, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
 import { CronExpressionEnum, RedirectTargetEnum, StepTypeEnum, slugify } from '@novu/shared';
 import { UserSession } from '@novu/testing';
@@ -27,6 +32,17 @@ const TEST_WORKFLOW_NAME = 'Test Workflow Name';
 const SUBJECT_TEST_PAYLOAD = '{{payload.subject.test.payload}}';
 const PLACEHOLDER_SUBJECT_INAPP = '{{payload.subject}}';
 const PLACEHOLDER_SUBJECT_INAPP_PAYLOAD_VALUE = 'this is the replacement text for the placeholder';
+
+const EXPECTED_MOCK_ACTOR_PREVIEW = {
+  firstName: 'Jane',
+  lastName: 'Actor',
+  email: 'actor@example.com',
+  phone: '+1234567890',
+  avatar: 'https://example.com/avatar.png',
+  locale: 'en_US',
+  timezone: 'America/New_York',
+  data: {},
+};
 
 describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v2', async () => {
   let session: UserSession;
@@ -180,6 +196,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
             required: ['subscriberId'],
             additionalProperties: false,
           },
+          actor: buildActorSchema(undefined),
           steps: {
             type: 'object',
             properties: {},
@@ -271,6 +288,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
           timezone: 'America/New_York',
           data: {},
         },
+        actor: EXPECTED_MOCK_ACTOR_PREVIEW,
         payload: {
           placeholder: {
             body: 'This is a body',
@@ -471,6 +489,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
             required: ['subscriberId'],
             type: 'object',
           },
+          actor: buildActorSchema(undefined),
           steps: {
             type: 'object',
             properties: {},
@@ -533,6 +552,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
           timezone: 'America/New_York',
           data: {},
         },
+        actor: EXPECTED_MOCK_ACTOR_PREVIEW,
         payload: {
           placeholder: {
             body: 'Default body text',

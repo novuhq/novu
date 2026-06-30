@@ -1,0 +1,69 @@
+---
+title: 'Supabase Auth Notifications with Novu'
+sidebarTitle: 'Supabase auth'
+description: 'Send signup, password reset, and auth alert notifications from Supabase Auth events using Novu workflows.'
+---
+
+
+Send auth notifications from Supabase by listening to Supabase Auth events in your backend or Edge Function and triggering Novu workflows for signup confirmations, password resets, and security alerts.
+
+## How does the Supabase and Novu integration work?
+
+1. Supabase Auth emits an event (for example, `SIGNED_UP` or password recovery initiated).
+2. Your application or Edge Function handles the event.
+3. Your handler calls Novu's [Trigger event](/api-reference/events/trigger-event) API with the user's `subscriberId` and event payload.
+4. Novu delivers the notification through your configured workflow.
+
+## How do I send a signup notification?
+
+<Steps>
+  <Step title="Create a welcome workflow in Novu">
+    Add email and optional in-app steps to a `welcome` workflow in the Novu Dashboard.
+  </Step>
+
+  <Step title="Listen for Supabase auth events">
+    Use a Supabase Edge Function or your application backend to handle auth events:
+
+```typescript
+import { createClient } from '@supabase/supabase-js';
+import { Novu } from '@novu/api';
+
+const novu = new Novu({ secretKey: Deno.env.get('NOVU_SECRET_KEY')! });
+
+Deno.serve(async (req) => {
+  const { type, record } = await req.json();
+
+  if (type === 'INSERT' && record.email) {
+    await novu.trigger({
+      workflowId: 'welcome',
+      to: { subscriberId: record.id, email: record.email },
+      payload: { email: record.email },
+    });
+  }
+
+  return new Response('ok');
+});
+```
+  </Step>
+
+  <Step title="Handle password reset emails">
+    When using Supabase's built-in password reset, customize the email template in Supabase or disable it and trigger a Novu `password-reset` workflow instead. See [password reset notifications](/guides/use-cases/password-reset-notifications).
+  </Step>
+</Steps>
+
+## Related guides
+
+- [Password reset notifications](/guides/use-cases/password-reset-notifications)
+- [Auth0 webhook integration](/guides/webhooks/auth0)
+- [Transactional notifications](/guides/use-cases/transactional-notifications)
+
+## Frequently asked questions
+
+<AccordionGroup>
+  <Accordion title="Can I replace Supabase auth emails entirely with Novu?">
+    Yes. Disable Supabase email templates for the events you want Novu to handle, then trigger Novu workflows from your auth hooks or Edge Functions.
+  </Accordion>
+  <Accordion title="What should I use as the subscriberId?">
+    Use the Supabase user UUID as the `subscriberId` to keep identifiers consistent across your application and Novu.
+  </Accordion>
+</AccordionGroup>
