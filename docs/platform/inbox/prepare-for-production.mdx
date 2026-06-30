@@ -140,8 +140,8 @@ subscriber_hash = OpenSSL::HMAC.hexdigest('SHA256', novu_secret_key, subscriber_
 ```java title="utils/HmacHash.java"
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
-import java.util.HexFormat;
 
 public class HmacHash {
   public static String getSubscriberHash(String subscriberId, String novuSecretKey) throws Exception {
@@ -150,7 +150,7 @@ public class HmacHash {
 
     byte[] hash = mac.doFinal(subscriberId.getBytes(StandardCharsets.UTF_8));
 
-    return HexFormat.of().formatHex(hash);
+    return String.format("%064x", new BigInteger(1, hash));
   }
 }
 ```
@@ -168,7 +168,7 @@ string novuSecretKey = Environment.GetEnvironmentVariable("NOVU_SECRET_KEY");
 
 using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(novuSecretKey));
 byte[] hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(subscriberId));
-string subscriberHash = Convert.ToHexString(hash).ToLower();
+string subscriberHash = BitConverter.ToString(hash).Replace("-", "").ToLower();
 ```
   </Tab>
 </Tabs>
