@@ -54,6 +54,7 @@ overrides:
   fast-xml-parser@>=5.0.0 <5.7.3: 5.7.3
   basic-ftp@<5.3.1: ^5.3.1
   axios@>=1.0.0 <1.18.0: ^1.18.1
+  '@slack/web-api': 7.17.0
   seroval@<1.4.1: ^1.4.1
   h3@<1.15.9: ^1.15.9
   immutable@>=4.0.0 <4.3.8: ^4.3.8
@@ -12761,10 +12762,6 @@ packages:
   '@slack/types@2.21.1':
     resolution: {integrity: sha512-I8vmSjNYWsaxuWPx6dz4yeh0h7vRBWbgAMK14LEmblbZ404BtrPbXs6jDPx4cYgGf8msDGF4A9opLZBu21FViQ==}
     engines: {node: '>= 12.13.0', npm: '>= 6.12.0'}
-
-  '@slack/web-api@7.15.0':
-    resolution: {integrity: sha512-va7zYIt3QHG1x9M/jqXXRPFMoOVlVSSRHC5YH+DzKYsrz5xUKOA3lR4THsu/Zxha9N1jOndbKFKLtr0WOPW1Vw==}
-    engines: {node: '>= 18', npm: '>= 8.6.0'}
 
   '@slack/web-api@7.17.0':
     resolution: {integrity: sha512-jejr34a8B4L5AS713wOAx1LAqNkW16HVMDEa6sYBvFDc/llUBl8hXaiI4BwF+Al+Sug19Vn2O7iokTVIhVvZ1Q==}
@@ -32083,7 +32080,7 @@ snapshots:
       '@opentelemetry/api': 1.9.0
       '@opentelemetry/semantic-conventions': 1.39.0
       '@standard-schema/spec': 1.1.0
-      better-call: 1.3.2(zod@4.3.6)
+      better-call: 1.3.2(zod@4.3.5)
       jose: 6.1.3
       kysely: 0.28.17
       nanostores: 1.2.0
@@ -32226,7 +32223,7 @@ snapshots:
     dependencies:
       '@chat-adapter/shared': 4.30.0(ai@6.0.208(zod@3.25.20))(zod@3.25.20)
       '@slack/socket-mode': 2.0.7
-      '@slack/web-api': 7.15.0
+      '@slack/web-api': 7.17.0
       chat: 4.30.0(ai@6.0.208(zod@3.25.20))(zod@3.25.20)
     transitivePeerDependencies:
       - ai
@@ -40741,7 +40738,7 @@ snapshots:
   '@slack/socket-mode@2.0.7':
     dependencies:
       '@slack/logger': 4.0.1
-      '@slack/web-api': 7.15.0
+      '@slack/web-api': 7.17.0
       '@types/node': 22.15.13
       '@types/ws': 8.18.1
       eventemitter3: 5.0.4
@@ -40755,24 +40752,6 @@ snapshots:
   '@slack/types@2.20.1': {}
 
   '@slack/types@2.21.1': {}
-
-  '@slack/web-api@7.15.0':
-    dependencies:
-      '@slack/logger': 4.0.1
-      '@slack/types': 2.20.1
-      '@types/node': 22.15.13
-      '@types/retry': 0.12.0
-      axios: 1.18.1
-      eventemitter3: 5.0.4
-      form-data: 4.0.6
-      is-electron: 2.2.2
-      is-stream: 2.0.1
-      p-queue: 6.6.2
-      p-retry: 4.6.2
-      retry: 0.13.1
-    transitivePeerDependencies:
-      - debug
-      - supports-color
 
   '@slack/web-api@7.17.0':
     dependencies:
@@ -45941,7 +45920,7 @@ snapshots:
       '@better-fetch/fetch': 1.1.21
       '@noble/ciphers': 2.1.1
       '@noble/hashes': 2.0.1
-      better-call: 1.3.2(zod@4.3.6)
+      better-call: 1.3.2(zod@4.3.5)
       defu: 6.1.6
       jose: 6.1.3
       kysely: 0.28.17
@@ -45959,6 +45938,15 @@ snapshots:
     transitivePeerDependencies:
       - '@cloudflare/workers-types'
       - '@opentelemetry/api'
+
+  better-call@1.3.2(zod@4.3.5):
+    dependencies:
+      '@better-auth/utils': 0.3.1
+      '@better-fetch/fetch': 1.1.21
+      rou3: 0.7.12
+      set-cookie-parser: 3.1.0
+    optionalDependencies:
+      zod: 4.3.5
 
   better-call@1.3.2(zod@4.3.6):
     dependencies:
