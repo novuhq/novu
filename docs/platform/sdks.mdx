@@ -1,6 +1,7 @@
 ---
-title: 'Overview'
-description: "Explore Novu's server-side and client-side SDKs for integrating notifications across multiple languages and frameworks."
+title: 'Novu SDKs for server, web, and mobile apps'
+sidebarTitle: 'Overview'
+description: "Browse Novu's official and community SDKs for Node, Python, Go, PHP, .NET, Java, React, React Native, and the Headless client for custom UIs."
 ---
 
 ## Server-side SDKs
@@ -104,3 +105,10 @@ Novu provides the following web client SDKs to enable integrations with Novu's p
     Official React Native SDK for mobile applications
   </Card>
 </Columns>
+
+### Platforms without a native client SDK
+
+Novu does not currently provide native client SDKs for Flutter, native iOS (Swift), native Android (Kotlin/Java), or other non-JavaScript mobile frameworks. You can still use Novu from these platforms:
+
+- **Push, email, SMS, and chat channels** work identically regardless of client platform, because they are delivered by Novu's backend. Trigger workflows from your server using any [server-side SDK](#server-side-sdks) or the [REST API](/api-reference/events/trigger-event), and register device tokens (FCM/APNs) on the subscriber. See [Push notifications (FCM)](/platform/integrations/push/fcm) for setup.
+- **In-app Inbox** has no native component outside React, React Native, and the Headless SDK. To show an in-app inbox in Flutter or another non-JS framework, call the [Inbox REST API](/api-reference/subscribers/retrieve-subscriber-notifications) directly to list, mark as read, and update notifications, and implement your own UI. The [Headless SDK](/platform/inbox/headless-mode) source can be used as a reference for the expected data and socket layer.
