@@ -94,9 +94,9 @@ You can send attachments by passing an `attachments` array in the `payload` of y
 There is a total limit of 20MB for all attachments included in an email.
 
 <Tabs>
-<Tab title="Node.js">
+  <Tab title="Node.js">
 ```javascript
-import { Novu } from '@novu/api';  
+import { Novu } from '@novu/api';
 
 const novu = new Novu({
   secretKey: "<NOVU_SECRET_KEY>",
@@ -127,9 +127,161 @@ await novu.trigger({
   },
 });
 ```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
 
-</Tab>
-<Tab title="cURL">
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="workflowId",
+        to={"subscriber_id": "subscriberId"},
+        payload={
+            "attachments": [
+                {
+                    "file": "iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFUlEQVR42mNkYPhfz0AEYBxVSF+FAP5FDvcfRYWgAAAAAElFTkSuQmCC",
+                    "name": "blue.png",
+                    "mime": "image/png",
+                },
+                {
+                    "file": "iVBORw0KGgoAAAANSUhEUgAAAAgAAAAIAQMAAAD+wSzIAAAABlBMVEX///+/v7+jQ3Y5AAAADklEQVQI12P4AIX8EAgALgAD/aNpbtEAAAAASUVORK5CYII",
+                    "name": "transparent.png",
+                    "mime": "image/png",
+                },
+            ],
+        },
+    ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+_, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "workflowId",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: "subscriberId",
+    }),
+    Payload: map[string]any{
+        "attachments": []map[string]any{
+            {
+                "file": "iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFUlEQVR42mNkYPhfz0AEYBxVSF+FAP5FDvcfRYWgAAAAAElFTkSuQmCC",
+                "name": "blue.png",
+                "mime": "image/png",
+            },
+            {
+                "file": "iVBORw0KGgoAAAANSUhEUgAAAAgAAAAIAQMAAAD+wSzIAAAABlBMVEX///+/v7+jQ3Y5AAAADklEQVQI12P4AIX8EAgALgAD/aNpbtEAAAAASUVORK5CYII",
+                "name": "transparent.png",
+                "mime": "image/png",
+            },
+        },
+    },
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()
+    ->setSecurity('<NOVU_SECRET_KEY>')
+    ->build();
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'workflowId',
+        to: new Components\SubscriberPayloadDto(subscriberId: 'subscriberId'),
+        payload: [
+            'attachments' => [
+                [
+                    'file' => 'iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFUlEQVR42mNkYPhfz0AEYBxVSF+FAP5FDvcfRYWgAAAAAElFTkSuQmCC',
+                    'name' => 'blue.png',
+                    'mime' => 'image/png',
+                ],
+                [
+                    'file' => 'iVBORw0KGgoAAAANSUhEUgAAAAgAAAAIAQMAAAD+wSzIAAAABlBMVEX///+/v7+jQ3Y5AAAADklEQVQI12P4AIX8EAgALgAD/aNpbtEAAAAASUVORK5CYII',
+                    'name' => 'transparent.png',
+                    'mime' => 'image/png',
+                ],
+            ],
+        ],
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "workflowId",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() {
+        SubscriberId = "subscriberId",
+    }),
+    Payload = new Dictionary<string, object>() {
+        { "attachments", new List<Dictionary<string, object>>() {
+            new Dictionary<string, object>() {
+                { "file", "iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFUlEQVR42mNkYPhfz0AEYBxVSF+FAP5FDvcfRYWgAAAAAElFTkSuQmCC" },
+                { "name", "blue.png" },
+                { "mime", "image/png" },
+            },
+            new Dictionary<string, object>() {
+                { "file", "iVBORw0KGgoAAAANSUhEUgAAAAgAAAAIAQMAAAD+wSzIAAAABlBMVEX///+/v7+jQ3Y5AAAADklEQVQI12P4AIX8EAgALgAD/aNpbtEAAAAASUVORK5CYII" },
+                { "name", "transparent.png" },
+                { "mime", "image/png" },
+            },
+        } },
+    },
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+import java.util.List;
+import java.util.Map;
+
+Novu novu = Novu.builder()
+    .secretKey("<NOVU_SECRET_KEY>")
+    .build();
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("workflowId")
+        .to(To2.of(SubscriberPayloadDto.builder()
+            .subscriberId("subscriberId")
+            .build()))
+        .payload(Map.of(
+            "attachments", List.of(
+                Map.of(
+                    "file", "iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFUlEQVR42mNkYPhfz0AEYBxVSF+FAP5FDvcfRYWgAAAAAElFTkSuQmCC",
+                    "name", "blue.png",
+                    "mime", "image/png"),
+                Map.of(
+                    "file", "iVBORw0KGgoAAAANSUhEUgAAAAgAAAAIAQMAAAD+wSzIAAAABlBMVEX///+/v7+jQ3Y5AAAADklEQVQI12P4AIX8EAgALgAD/aNpbtEAAAAASUVORK5CYII",
+                    "name", "transparent.png",
+                    "mime", "image/png"))))
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
 Use https://eu.api.novu.co/v1/events/trigger api endpoint for the EU region.
 ```bash
 curl -L -X POST 'https://api.novu.co/v1/events/trigger' \
@@ -160,7 +312,7 @@ curl -L -X POST 'https://api.novu.co/v1/events/trigger' \
     }
 }'
 ```
-</Tab>
+  </Tab>
 </Tabs>
 
 ### Sending email overrides
@@ -176,7 +328,7 @@ You can override the email settings for a single trigger by passing an `override
 - `to` address
 
 <Tabs>
-<Tab title="Node.js">
+  <Tab title="Node.js">
 ```javascript
 import { Novu } from '@novu/api';
 
@@ -204,7 +356,173 @@ await novu.trigger({
   },
 });
 ```
-</Tab>
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="workflowId",
+        to={"subscriber_id": "subscriberId"},
+        overrides={
+            "email": {
+                "to": ["to@novu.co"],
+                "from": "from@novu.co",
+                "senderName": "Novu Team",
+                "text": "text version of email using overrides",
+                "replyTo": "no-reply@novu.co",
+                "cc": ["1@novu.co"],
+                "bcc": ["2@novu.co"],
+            },
+        },
+    ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+_, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "workflowId",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: "subscriberId",
+    }),
+    Overrides: map[string]map[string]any{
+        "email": {
+            "to":         []string{"to@novu.co"},
+            "from":       "from@novu.co",
+            "senderName": "Novu Team",
+            "text":       "text version of email using overrides",
+            "replyTo":    "no-reply@novu.co",
+            "cc":         []string{"1@novu.co"},
+            "bcc":        []string{"2@novu.co"},
+        },
+    },
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()
+    ->setSecurity('<NOVU_SECRET_KEY>')
+    ->build();
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'workflowId',
+        to: new Components\SubscriberPayloadDto(subscriberId: 'subscriberId'),
+        overrides: [
+            'email' => [
+                'to' => ['to@novu.co'],
+                'from' => 'from@novu.co',
+                'senderName' => 'Novu Team',
+                'text' => 'text version of email using overrides',
+                'replyTo' => 'no-reply@novu.co',
+                'cc' => ['1@novu.co'],
+                'bcc' => ['2@novu.co'],
+            ],
+        ],
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "workflowId",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() {
+        SubscriberId = "subscriberId",
+    }),
+    Overrides = new Overrides() {
+        Email = new Dictionary<string, object>() {
+            { "to", new List<string>() { "to@novu.co" } },
+            { "from", "from@novu.co" },
+            { "senderName", "Novu Team" },
+            { "text", "text version of email using overrides" },
+            { "replyTo", "no-reply@novu.co" },
+            { "cc", new List<string>() { "1@novu.co" } },
+            { "bcc", new List<string>() { "2@novu.co" } },
+        },
+    },
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+import java.util.List;
+import java.util.Map;
+
+Novu novu = Novu.builder()
+    .secretKey("<NOVU_SECRET_KEY>")
+    .build();
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("workflowId")
+        .to(To2.of(SubscriberPayloadDto.builder()
+            .subscriberId("subscriberId")
+            .build()))
+        .overrides(TriggerEventRequestDtoOverrides.builder()
+            .email(Map.of(
+                "to", List.of("to@novu.co"),
+                "from", "from@novu.co",
+                "senderName", "Novu Team",
+                "text", "text version of email using overrides",
+                "replyTo", "no-reply@novu.co",
+                "cc", List.of("1@novu.co"),
+                "bcc", List.of("2@novu.co")))
+            .build())
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -L -X POST 'https://api.novu.co/v1/events/trigger' \
+-H 'Content-Type: application/json' \
+-H 'Accept: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+    "name": "workflowId",
+    "to": {
+        "subscriberId": "subscriberId"
+    },
+    "overrides": {
+        "email": {
+            "to": ["to@novu.co"],
+            "from": "from@novu.co",
+            "senderName": "Novu Team",
+            "text": "text version of email using overrides",
+            "replyTo": "no-reply@novu.co",
+            "cc": ["1@novu.co"],
+            "bcc": ["2@novu.co"]
+        }
+    }
+}'
+```
+  </Tab>
 </Tabs>
 
 <Note>
@@ -228,7 +546,7 @@ By default, Novu uses your primary email provider. However, if you want to bypas
 This is useful if you have multiple active integrations for different purposes. For example, you might have one integration for transactional emails and one for marketing emails. You can find the `integrationIdentifier` for each provider in provider page in the **Integration Store**.
 
 <Tabs>
-<Tab title="Node.js">
+  <Tab title="Node.js">
 ```javascript
 import { Novu } from '@novu/api';
 
@@ -250,7 +568,135 @@ await novu.trigger({
   },
 });
 ```
-</Tab>
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="workflowId",
+        to={"subscriber_id": "subscriberId"},
+        overrides={
+            "email": {
+                "integrationIdentifier": "brevo-abcdef",
+            },
+        },
+    ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+_, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "workflowId",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: "subscriberId",
+    }),
+    Overrides: map[string]map[string]any{
+        "email": {
+            "integrationIdentifier": "brevo-abcdef",
+        },
+    },
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()
+    ->setSecurity('<NOVU_SECRET_KEY>')
+    ->build();
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'workflowId',
+        to: new Components\SubscriberPayloadDto(subscriberId: 'subscriberId'),
+        overrides: [
+            'email' => [
+                'integrationIdentifier' => 'brevo-abcdef',
+            ],
+        ],
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "workflowId",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() {
+        SubscriberId = "subscriberId",
+    }),
+    Overrides = new Overrides() {
+        Email = new Dictionary<string, object>() {
+            { "integrationIdentifier", "brevo-abcdef" },
+        },
+    },
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+import java.util.Map;
+
+Novu novu = Novu.builder()
+    .secretKey("<NOVU_SECRET_KEY>")
+    .build();
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("workflowId")
+        .to(To2.of(SubscriberPayloadDto.builder()
+            .subscriberId("subscriberId")
+            .build()))
+        .overrides(TriggerEventRequestDtoOverrides.builder()
+            .email(Map.of("integrationIdentifier", "brevo-abcdef"))
+            .build())
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -L -X POST 'https://api.novu.co/v1/events/trigger' \
+-H 'Content-Type: application/json' \
+-H 'Accept: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+    "name": "workflowId",
+    "to": {
+        "subscriberId": "subscriberId"
+    },
+    "overrides": {
+        "email": {
+            "integrationIdentifier": "brevo-abcdef"
+        }
+    }
+}'
+```
+  </Tab>
 </Tabs>
 
 ### Overriding email layout 
@@ -274,7 +720,7 @@ Each Novu environment can have multiple layouts. Each email step in the workflow
 4. **Environment default layout** - **Lowest priority**
 
 <Tabs>
-<Tab title="Node.js">
+  <Tab title="Node.js">
 ```typescript
 import { Novu } from '@novu/api';
 
@@ -314,7 +760,204 @@ await novu.trigger({
   }
 });
 ```
-</Tab>
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="workflowId",
+        to={"subscriber_id": "subscriberId"},
+        payload={},
+        overrides={
+            "channels": {
+                "email": {
+                    "layoutId": "black-friday-layout",
+                },
+            },
+            "steps": {
+                "welcome-email": {
+                    "layoutId": "welcome-v2",
+                },
+                "promotional-email": {},
+                "transactional-receipt": {
+                    "layoutId": None,
+                },
+            },
+        },
+    ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+_, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "workflowId",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: "subscriberId",
+    }),
+    Payload: map[string]any{},
+    Overrides: map[string]map[string]any{
+        "channels": {
+            "email": map[string]any{
+                "layoutId": "black-friday-layout",
+            },
+        },
+        "steps": map[string]any{
+            "welcome-email": map[string]any{
+                "layoutId": "welcome-v2",
+            },
+            "promotional-email": map[string]any{},
+            "transactional-receipt": map[string]any{
+                "layoutId": nil,
+            },
+        },
+    },
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()
+    ->setSecurity('<NOVU_SECRET_KEY>')
+    ->build();
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'workflowId',
+        to: new Components\SubscriberPayloadDto(subscriberId: 'subscriberId'),
+        payload: [],
+        overrides: [
+            'channels' => [
+                'email' => [
+                    'layoutId' => 'black-friday-layout',
+                ],
+            ],
+            'steps' => [
+                'welcome-email' => [
+                    'layoutId' => 'welcome-v2',
+                ],
+                'promotional-email' => [],
+                'transactional-receipt' => [
+                    'layoutId' => null,
+                ],
+            ],
+        ],
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "workflowId",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() {
+        SubscriberId = "subscriberId",
+    }),
+    Payload = new Dictionary<string, object>(),
+    Overrides = new Overrides() {
+        Channels = new Channels() {
+            Email = new EmailChannelOverrides() {
+                LayoutId = "black-friday-layout",
+            },
+        },
+        Steps = new Dictionary<string, StepsOverrides>() {
+            { "welcome-email", new StepsOverrides() { LayoutId = "welcome-v2" } },
+            { "promotional-email", new StepsOverrides() },
+            { "transactional-receipt", new StepsOverrides() { LayoutId = null } },
+        },
+    },
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+import java.util.Map;
+
+Novu novu = Novu.builder()
+    .secretKey("<NOVU_SECRET_KEY>")
+    .build();
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("workflowId")
+        .to(To2.of(SubscriberPayloadDto.builder()
+            .subscriberId("subscriberId")
+            .build()))
+        .payload(Map.of())
+        .overrides(TriggerEventRequestDtoOverrides.builder()
+            .channels(Channels.builder()
+                .email(EmailChannelOverrides.builder()
+                    .layoutId("black-friday-layout")
+                    .build())
+                .build())
+            .steps(Map.of(
+                "welcome-email", StepsOverrides.builder()
+                    .layoutId("welcome-v2")
+                    .build(),
+                "promotional-email", StepsOverrides.builder().build(),
+                "transactional-receipt", StepsOverrides.builder()
+                    .layoutId(null)
+                    .build()))
+            .build())
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -L -X POST 'https://api.novu.co/v1/events/trigger' \
+-H 'Content-Type: application/json' \
+-H 'Accept: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+    "name": "workflowId",
+    "to": {
+        "subscriberId": "subscriberId"
+    },
+    "payload": {},
+    "overrides": {
+        "channels": {
+            "email": {
+                "layoutId": "black-friday-layout"
+            }
+        },
+        "steps": {
+            "welcome-email": {
+                "layoutId": "welcome-v2"
+            },
+            "promotional-email": {},
+            "transactional-receipt": {
+                "layoutId": null
+            }
+        }
+    }
+}'
+```
+  </Tab>
 </Tabs>
 
 ### Sending provider specific extra fields
@@ -322,7 +965,7 @@ await novu.trigger({
 You can send provider specific extra fields by passing a `_passthrough` object in the `overrides` object. This lets you send extra fields to the provider SDK. Novu internally uses provider's official SDK to send the email. Each provider has its own supported extra fields. Those extra fields are not validated by Novu and are passed directly to the provider SDK. There are three type of fields that you can send: `body`, `headers`, and `query`. Below is an example of sending `tags` supported by [Resend provider](/platform/integrations/email/resend).
 
 <Tabs>
-<Tab title="Node.js">
+  <Tab title="Node.js">
 ```typescript
 import { Novu } from '@novu/api';
 
@@ -362,7 +1005,238 @@ await novu.trigger({
   }
 });
 ```
-</Tab>
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="workflowId",
+        to={"subscriber_id": "subscriberId"},
+        payload={},
+        overrides={
+            "providers": {
+                "resend": {
+                    "_passthrough": {
+                        "body": {
+                            "tags": [
+                                {
+                                    "name": "category",
+                                    "value": "confirm_email",
+                                },
+                            ],
+                        },
+                        "headers": {
+                            "X-Custom-Header": "custom-header-value",
+                        },
+                        "query": {
+                            "queryParam": "queryValue",
+                        },
+                    },
+                },
+            },
+        },
+    ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+_, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "workflowId",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: "subscriberId",
+    }),
+    Payload: map[string]any{},
+    Overrides: map[string]map[string]any{
+        "providers": {
+            "resend": map[string]any{
+                "_passthrough": map[string]any{
+                    "body": map[string]any{
+                        "tags": []map[string]any{
+                            {
+                                "name":  "category",
+                                "value": "confirm_email",
+                            },
+                        },
+                    },
+                    "headers": map[string]any{
+                        "X-Custom-Header": "custom-header-value",
+                    },
+                    "query": map[string]any{
+                        "queryParam": "queryValue",
+                    },
+                },
+            },
+        },
+    },
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()
+    ->setSecurity('<NOVU_SECRET_KEY>')
+    ->build();
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'workflowId',
+        to: new Components\SubscriberPayloadDto(subscriberId: 'subscriberId'),
+        payload: [],
+        overrides: [
+            'providers' => [
+                'resend' => [
+                    '_passthrough' => [
+                        'body' => [
+                            'tags' => [
+                                [
+                                    'name' => 'category',
+                                    'value' => 'confirm_email',
+                                ],
+                            ],
+                        ],
+                        'headers' => [
+                            'X-Custom-Header' => 'custom-header-value',
+                        ],
+                        'query' => [
+                            'queryParam' => 'queryValue',
+                        ],
+                    ],
+                ],
+            ],
+        ],
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "workflowId",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() {
+        SubscriberId = "subscriberId",
+    }),
+    Payload = new Dictionary<string, object>(),
+    Overrides = new Overrides() {
+        Providers = new Dictionary<string, Dictionary<string, object>>() {
+            { "resend", new Dictionary<string, object>() {
+                { "_passthrough", new Dictionary<string, object>() {
+                    { "body", new Dictionary<string, object>() {
+                        { "tags", new List<Dictionary<string, object>>() {
+                            new Dictionary<string, object>() {
+                                { "name", "category" },
+                                { "value", "confirm_email" },
+                            },
+                        } },
+                    } },
+                    { "headers", new Dictionary<string, object>() {
+                        { "X-Custom-Header", "custom-header-value" },
+                    } },
+                    { "query", new Dictionary<string, object>() {
+                        { "queryParam", "queryValue" },
+                    } },
+                } },
+            } },
+        },
+    },
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+import java.util.List;
+import java.util.Map;
+
+Novu novu = Novu.builder()
+    .secretKey("<NOVU_SECRET_KEY>")
+    .build();
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("workflowId")
+        .to(To2.of(SubscriberPayloadDto.builder()
+            .subscriberId("subscriberId")
+            .build()))
+        .payload(Map.of())
+        .overrides(TriggerEventRequestDtoOverrides.builder()
+            .providers(Map.of(
+                "resend", Map.of(
+                    "_passthrough", Map.of(
+                        "body", Map.of(
+                            "tags", List.of(
+                                Map.of(
+                                    "name", "category",
+                                    "value", "confirm_email"))),
+                        "headers", Map.of(
+                            "X-Custom-Header", "custom-header-value"),
+                        "query", Map.of(
+                            "queryParam", "queryValue")))))
+            .build())
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -L -X POST 'https://api.novu.co/v1/events/trigger' \
+-H 'Content-Type: application/json' \
+-H 'Accept: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+    "name": "workflowId",
+    "to": {
+        "subscriberId": "subscriberId"
+    },
+    "payload": {},
+    "overrides": {
+        "providers": {
+            "resend": {
+                "_passthrough": {
+                    "body": {
+                        "tags": [
+                            {
+                                "name": "category",
+                                "value": "confirm_email"
+                            }
+                        ]
+                    },
+                    "headers": {
+                        "X-Custom-Header": "custom-header-value"
+                    },
+                    "query": {
+                        "queryParam": "queryValue"
+                    }
+                }
+            }
+        }
+    }
+}'
+```
+  </Tab>
 </Tabs>
 
 ## Unsubscribe email 
