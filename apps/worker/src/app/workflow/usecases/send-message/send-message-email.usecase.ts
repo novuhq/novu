@@ -6,6 +6,8 @@ import {
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   DetailEnum,
+  dashboardSanitizeControlValues,
+  EmailControlType,
   FeatureFlagsService,
   GetLayoutCommandV0,
   GetLayoutUseCaseV0,
@@ -14,17 +16,20 @@ import {
   InstrumentUsecase,
   MailFactory,
   messageWebhookMapper,
+  PinoLogger,
   SelectIntegration,
   SelectVariant,
   SendWebhookMessage,
 } from '@novu/application-generic';
 import {
+  ControlValuesRepository,
   EnvironmentEntity,
   EnvironmentRepository,
   IntegrationEntity,
   LayoutRepository,
   MessageEntity,
   MessageRepository,
+  NotificationTemplateRepository,
   OrganizationEntity,
   SubscriberRepository,
   UserEntity,
@@ -32,6 +37,7 @@ import {
 import { EmailOutput } from '@novu/framework/internal';
 import {
   ChannelTypeEnum,
+  ControlValuesLevelEnum,
   DeliveryLifecycleDetail,
   DeliveryLifecycleStatusEnum,
   EmailProviderIdEnum,
@@ -40,6 +46,7 @@ import {
   FeatureFlagsKeysEnum,
   IAttachmentOptions,
   IEmailOptions,
+  ResourceOriginEnum,
   safeJsonStringify,
   WebhookEventEnum,
   WebhookObjectTypeEnum,
@@ -70,7 +77,10 @@ export class SendMessageEmail extends SendMessageBase {
     protected moduleRef: ModuleRef,
     private featureFlagService: FeatureFlagsService,
     private getLayoutUseCaseV0: GetLayoutUseCaseV0,
-    private sendWebhookMessage: SendWebhookMessage
+    private sendWebhookMessage: SendWebhookMessage,
+    private controlValuesRepository: ControlValuesRepository,
+    private notificationTemplateRepository: NotificationTemplateRepository,
+    private logger: PinoLogger
   ) {
     super(
       messageRepository,
@@ -81,6 +91,7 @@ export class SendMessageEmail extends SendMessageBase {
       selectVariant,
       moduleRef
     );
+    this.logger.setContext(this.constructor.name);
   }
 
   @InstrumentUsecase()
@@ -275,6 +286,10 @@ export class SendMessageEmail extends SendMessageBase {
       };
     }
 
+    if (content !== undefined) {
+      payload.content = content;
+    }
+
     if (this.storeContent()) {
       await this.messageRepository.update(
         {
@@ -373,6 +388,14 @@ export class SendMessageEmail extends SendMessageBase {
     }
 
     if (integration.providerId === EmailProviderIdEnum.EmailWebhook) {
+      if (!hasEmailTemplateContent(payload.content)) {
+        const emailControlValues = await this.fetchEmailControlValues(command);
+
+        if (typeof emailControlValues.body === 'string' && emailControlValues.body) {
+          payload.content = emailControlValues.body;
+        }
+      }
+
       mailData.payloadDetails = payload;
     }
 
@@ -613,6 +636,38 @@ export class SendMessageEmail extends SendMessageBase {
     }
   }
 
+  private async fetchEmailControlValues(command: SendMessageChannelCommand): Promise<EmailControlType> {
+    const workflow =
+      command.workflow ??
+      (command._templateId
+        ? await this.notificationTemplateRepository.findById(command._templateId, command.environmentId)
+        : null);
+
+    if (!workflow) {
+      return { body: '', subject: '', editorType: 'block' };
+    }
+
+    const controlsEntity = await this.controlValuesRepository.findOne({
+      _organizationId: command.organizationId,
+      _workflowId: workflow._id,
+      _stepId: command.step._templateId ?? command.step._id,
+      level: ControlValuesLevelEnum.STEP_CONTROLS,
+    });
+
+    const rawControls = controlsEntity?.controls;
+
+    if (!rawControls) {
+      return { body: '', subject: '', editorType: 'block' };
+    }
+
+    if (workflow.origin === ResourceOriginEnum.NOVU_CLOUD) {
+      return (dashboardSanitizeControlValues(this.logger, rawControls, command.step?.template?.type) ??
+        {}) as EmailControlType;
+    }
+
+    return rawControls as EmailControlType;
+  }
+
   @Instrument()
   private async getOverrideLayoutId(command: SendMessageChannelCommand, isBridge: boolean) {
     const { overrides, step } = command;
@@ -723,6 +778,22 @@ export class SendMessageEmail extends SendMessageBase {
       providerId: integration.providerId,
     };
   }
+}
+
+function hasEmailTemplateContent(content: unknown): boolean {
+  if (content == null) {
+    return false;
+  }
+
+  if (typeof content === 'string') {
+    return content.length > 0;
+  }
+
+  if (Array.isArray(content)) {
+    return content.length > 0;
+  }
+
+  return true;
 }
 
 function hasEmailOverrideRecipients(emailOverrides?: Record<string, unknown>): boolean {
