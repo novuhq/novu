@@ -13,6 +13,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.restoreAllMocks();
+  (ValueFirstSmsProvider as any).tokenCache.clear();
 });
 
 describe('ValueFirstSmsProvider', () => {
@@ -27,9 +28,15 @@ describe('ValueFirstSmsProvider', () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce({
-        json: () => Promise.resolve(tokenResponse),
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        text: () => Promise.resolve(JSON.stringify(tokenResponse)),
       })
       .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        statusText: 'OK',
         text: () => Promise.resolve(smsResponse),
       });
     global.fetch = fetchMock;
@@ -72,9 +79,9 @@ describe('ValueFirstSmsProvider', () => {
 
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce({ json: () => Promise.resolve(tokenResponse) })
-      .mockResolvedValueOnce({ text: () => Promise.resolve(smsResponse) })
-      .mockResolvedValue({ text: () => Promise.resolve(smsResponse) });
+      .mockResolvedValueOnce({ ok: true, status: 200, statusText: 'OK', text: () => Promise.resolve(JSON.stringify(tokenResponse)) })
+      .mockResolvedValueOnce({ ok: true, status: 200, statusText: 'OK', text: () => Promise.resolve(smsResponse) })
+      .mockResolvedValue({ ok: true, status: 200, statusText: 'OK', text: () => Promise.resolve(smsResponse) });
     global.fetch = fetchMock;
 
     await provider.sendMessage({ content: 'First', to: '+919876543210' });
@@ -99,12 +106,43 @@ describe('ValueFirstSmsProvider', () => {
 
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce({ json: () => Promise.resolve(tokenResponse) })
-      .mockResolvedValue({ text: () => Promise.resolve(errorResponse) });
+      .mockResolvedValueOnce({ ok: true, status: 200, statusText: 'OK', text: () => Promise.resolve(JSON.stringify(tokenResponse)) })
+      .mockResolvedValue({ ok: true, status: 200, statusText: 'OK', text: () => Promise.resolve(errorResponse) });
     global.fetch = fetchMock;
 
     await expect(provider.sendMessage({ content: 'Test', to: '+919876543210' })).rejects.toThrow(
       'ValueFirst error codes: 28682'
+    );
+  });
+
+  test('should throw on token endpoint HTTP error', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 401,
+      statusText: 'Unauthorized',
+      text: () => Promise.resolve('Bad credentials'),
+    });
+    global.fetch = fetchMock;
+
+    await expect(provider.sendMessage({ content: 'Test', to: '+919876543210' })).rejects.toThrow(
+      'ValueFirst token request failed: 401 Unauthorized. Bad credentials'
+    );
+  });
+
+  test('should throw on SMS endpoint HTTP error', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, status: 200, statusText: 'OK', text: () => Promise.resolve(JSON.stringify({ token: 't' })) })
+      .mockResolvedValue({
+        ok: false,
+        status: 500,
+        statusText: 'Internal Server Error',
+        text: () => Promise.resolve('Server error'),
+      });
+    global.fetch = fetchMock;
+
+    await expect(provider.sendMessage({ content: 'Test', to: '+919876543210' })).rejects.toThrow(
+      'ValueFirst SMS request failed: 500 Internal Server Error. Server error'
     );
   });
 
@@ -117,8 +155,8 @@ describe('ValueFirstSmsProvider', () => {
 
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce({ json: () => Promise.resolve(tokenResponse) })
-      .mockResolvedValue({ text: () => Promise.resolve(smsResponse) });
+      .mockResolvedValueOnce({ ok: true, status: 200, statusText: 'OK', text: () => Promise.resolve(JSON.stringify(tokenResponse)) })
+      .mockResolvedValue({ ok: true, status: 200, statusText: 'OK', text: () => Promise.resolve(smsResponse) });
     global.fetch = fetchMock;
 
     await provider.sendMessage(
@@ -244,8 +282,8 @@ describe('ValueFirstSmsProvider', () => {
 
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce({ json: () => Promise.resolve(tokenResponse) })
-      .mockResolvedValueOnce({ text: () => Promise.resolve(smsResponse) });
+      .mockResolvedValueOnce({ ok: true, status: 200, statusText: 'OK', text: () => Promise.resolve(JSON.stringify(tokenResponse)) })
+      .mockResolvedValueOnce({ ok: true, status: 200, statusText: 'OK', text: () => Promise.resolve(smsResponse) });
     global.fetch = fetchMock;
 
     await provider.sendMessage({

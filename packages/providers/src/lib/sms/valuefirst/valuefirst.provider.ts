@@ -25,8 +25,7 @@ export class ValueFirstSmsProvider extends BaseProvider implements ISmsProvider 
 
   private readonly TOKEN_URL = 'https://api.myvfirst.com/psms/api/messages/token?action=generate';
   private readonly BASE_URL = 'https://api.myvfirst.com/psms/servlet/psms.Eservice2';
-  private token: string | null = null;
-  private tokenExpiry = 0;
+  private static tokenCache = new Map<string, { token: string; expiry: number }>();
 
   constructor(
     private config: {
@@ -41,8 +40,11 @@ export class ValueFirstSmsProvider extends BaseProvider implements ISmsProvider 
   private async getAccessToken(): Promise<string> {
     const now = Date.now();
     const refreshBuffer = 15 * 60 * 1000;
-    if (this.token && now < this.tokenExpiry - refreshBuffer) {
-      return this.token;
+    const cacheKey = `${this.config.user}\0${this.config.password}`;
+    const cached = ValueFirstSmsProvider.tokenCache.get(cacheKey);
+
+    if (cached && now < cached.expiry - refreshBuffer) {
+      return cached.token;
     }
 
     const credentials = Buffer.from(`${this.config.user}:${this.config.password}`).toString('base64');
@@ -61,11 +63,19 @@ export class ValueFirstSmsProvider extends BaseProvider implements ISmsProvider 
       signal: undefined,
     });
 
-    const data = await response.json();
-    this.token = data.token;
-    this.tokenExpiry = now + 7 * 24 * 60 * 60 * 1000;
+    const body = await response.text();
+    if (!response.ok) {
+      throw new Error(`ValueFirst token request failed: ${response.status} ${response.statusText}. ${body}`);
+    }
 
-    return this.token;
+    const data = JSON.parse(body);
+    const token = data.token;
+    ValueFirstSmsProvider.tokenCache.set(cacheKey, {
+      token,
+      expiry: now + 7 * 24 * 60 * 60 * 1000,
+    });
+
+    return token;
   }
 
   async sendMessage(
@@ -118,6 +128,10 @@ export class ValueFirstSmsProvider extends BaseProvider implements ISmsProvider 
     });
 
     const responseText = await response.text();
+
+    if (!response.ok) {
+      throw new Error(`ValueFirst SMS request failed: ${response.status} ${response.statusText}. ${responseText}`);
+    }
     const messageId = this.extractMessageId(responseText);
     const errors = this.extractErrors(responseText);
 
