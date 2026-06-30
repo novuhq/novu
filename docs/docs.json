@@ -363,6 +363,7 @@
             "group": "Account",
             "pages": [
               "platform/account/authentication",
+              "platform/account/organizations",
               "platform/account/roles-and-permissions",
               "platform/account/manage-members",
               "platform/account/billing",
