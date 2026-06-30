@@ -19,110 +19,28 @@ const result = await novu.trigger({
     companyName: "Acme Inc",
   },
 });
+
+console.log(result);
 ```
 
 ### Python
 
 ```python
-import os
-import novu_py
 from novu_py import Novu
+from novu_py.models import TriggerEventRequestDto
 
-with Novu(secret_key=os.environ["NOVU_SECRET_KEY"]) as novu:
-    result = novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
-        workflow_id="welcome-email",
-        to="subscriber-123",
-        payload={
-            "userName": "Jane",
-            "companyName": "Acme Inc",
-        },
-    ))
-```
+novu = Novu(security=Security(secret_key=os.environ["NOVU_SECRET_KEY"]))
 
-### Go
-
-```go
-import (
-    "context"
-    "os"
-
-    novugo "github.com/novuhq/novu-go"
-    "github.com/novuhq/novu-go/models/components"
-)
-
-s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
-
-res, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
-    WorkflowID: "welcome-email",
-    To:         components.CreateToStr("subscriber-123"),
-    Payload: map[string]any{
-        "userName":    "Jane",
+result = novu.trigger(request=TriggerEventRequestDto(
+    workflow_id="welcome-email",
+    to="subscriber-123",
+    payload={
+        "userName": "Jane",
         "companyName": "Acme Inc",
     },
-}, nil)
-```
+))
 
-### PHP
-
-```php
-use novu;
-use novu\Models\Components;
-
-$sdk = novu\Novu::builder()
-    ->setSecurity(getenv('NOVU_SECRET_KEY'))
-    ->build();
-
-$response = $sdk->trigger(
-    triggerEventRequestDto: new Components\TriggerEventRequestDto(
-        workflowId: 'welcome-email',
-        to: 'subscriber-123',
-        payload: [
-            'userName' => 'Jane',
-            'companyName' => 'Acme Inc',
-        ],
-    ),
-);
-```
-
-### .NET
-
-```csharp
-using Novu;
-using Novu.Models.Components;
-using System.Collections.Generic;
-
-var sdk = new NovuSDK(secretKey: Environment.GetEnvironmentVariable("NOVU_SECRET_KEY"));
-
-var result = await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
-    WorkflowId = "welcome-email",
-    To = To.CreateStr("subscriber-123"),
-    Payload = new Dictionary<string, object>() {
-        { "userName", "Jane" },
-        { "companyName", "Acme Inc" },
-    },
-});
-```
-
-### Java
-
-```java
-import co.novu.Novu;
-import co.novu.models.components.*;
-import java.util.Map;
-
-Novu novu = Novu.builder()
-    .secretKey(System.getenv("NOVU_SECRET_KEY"))
-    .build();
-
-var res = novu.trigger()
-    .body(TriggerEventRequestDto.builder()
-        .workflowId("welcome-email")
-        .to(To2.of("subscriber-123"))
-        .payload(Map.of(
-            "userName", "Jane",
-            "companyName", "Acme Inc"))
-        .build())
-    .call();
+print(result)
 ```
 
 ### cURL
