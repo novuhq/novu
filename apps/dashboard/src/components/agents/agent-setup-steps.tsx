@@ -667,7 +667,7 @@ export function AgentSetupSteps({
 
   const connectedProviderIds = useMemo<ReadonlyArray<string>>(() => {
     return agentIntegrationLinks
-      .filter((link) => Boolean(link.connectedAt) && link.integration.providerId !== EmailProviderIdEnum.NovuAgent)
+      .filter((link) => hasAgentInboundConnection(link.connectedAt))
       .map((link) => link.integration.providerId);
   }, [agentIntegrationLinks]);
 

@@ -27,7 +27,7 @@ import { getAgentChannelDisplayName } from '@/utils/agent-email-provider-display
 import { ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { openInNewTab } from '@/utils/url';
-import { isAgentIntegrationConnected } from './is-agent-integration-connected';
+import { hasAgentInboundConnection, isAgentIntegrationConnected } from './is-agent-integration-connected';
 import { getProviderCardInteraction, resolveProviderCardVisualState } from './provider-card-interaction';
 
 /**
@@ -394,7 +394,7 @@ export function ProviderCards({
     const ids = new Set<string>();
 
     for (const link of existingLinks ?? []) {
-      if (isAgentIntegrationConnected(link)) {
+      if (hasAgentInboundConnection(link.connectedAt)) {
         ids.add(link.integration.providerId);
       }
     }
@@ -482,7 +482,6 @@ export function ProviderCards({
           const isSelected = item.providerId === selectedProviderId;
           const isConnected = connectedProviderIds.has(item.providerId);
           const interaction = getProviderCardInteraction(item.providerId);
-          const isConnectedForCard = interaction === 'auto-provisioned-connectable' ? false : isConnected;
           const isLocked = item.requiresBusinessTier && !isAgentEmailAvailable;
           const itemKeyPrefix = `${item.providerId}-`;
           const isLoadingThis = pendingItemKey?.startsWith(itemKeyPrefix) ?? false;
@@ -508,7 +507,7 @@ export function ProviderCards({
                 key={item.providerId}
                 item={item}
                 isSelected={isSelected}
-                isConnected={isConnectedForCard}
+                isConnected={isConnected}
                 isLoading={isLoadingThis}
                 isAgentEmailAvailable={isAgentEmailAvailable}
                 disabled={disabled}
@@ -522,7 +521,7 @@ export function ProviderCards({
               key={item.providerId}
               item={item}
               isSelected={isSelected}
-              isConnected={isConnectedForCard}
+              isConnected={isConnected}
               isLoading={isLoadingThis}
               isAgentEmailAvailable={isAgentEmailAvailable}
               disabled={disabled}
@@ -538,7 +537,7 @@ export function ProviderCards({
 
                 if (isSelected) return;
 
-                if (isConnectedForCard) {
+                if (isConnected) {
                   const linkedIntegration = existingLinks?.find(
                     (link) => link.integration.providerId === item.providerId && isAgentIntegrationConnected(link)
                   )?.integration as unknown as IIntegration | undefined;

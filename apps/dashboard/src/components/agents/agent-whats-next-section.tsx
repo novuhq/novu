@@ -20,7 +20,7 @@ import { getAgentChannelDisplayName } from '@/utils/agent-email-provider-display
 import { buildRoute } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { AddChannelPicker } from './add-channel-picker';
-import { isUserFacingConnectedAgentIntegration } from './is-agent-integration-connected';
+import { hasAgentInboundConnection } from './is-agent-integration-connected';
 import { SetupGuideCard } from './setup-guide-card';
 import { SetupStep } from './setup-guide-primitives';
 
@@ -222,7 +222,7 @@ export function AgentWhatsNextSection({ agent }: AgentWhatsNextSectionProps) {
 
   const links = integrationsQuery.data?.data ?? [];
   const planUsage = integrationsQuery.data?.planUsage;
-  const connectedLinks = useMemo(() => links.filter(isUserFacingConnectedAgentIntegration), [links]);
+  const connectedLinks = useMemo(() => links.filter((link) => hasAgentInboundConnection(link.connectedAt)), [links]);
 
   const integrationsTabPath = `${buildRoute(agentRoutes.detailsTab, {
     environmentSlug: currentEnvironment?.slug ?? '',

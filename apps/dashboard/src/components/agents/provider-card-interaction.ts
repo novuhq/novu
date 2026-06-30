@@ -26,11 +26,13 @@ export function resolveProviderCardVisualState(
   }
 ): ProviderCardVisualState {
   if (interaction === 'auto-provisioned-connectable') {
+    const effectiveConnected = params.isConnected;
+
     return {
-      effectiveConnected: false,
-      showSelectedIndicator: params.isLoading,
-      showConnecting: params.isLoading,
-      isActive: params.isSelected,
+      effectiveConnected,
+      showSelectedIndicator: effectiveConnected ? params.isSelected || effectiveConnected : params.isLoading,
+      showConnecting: effectiveConnected ? false : params.isLoading,
+      isActive: effectiveConnected ? params.isSelected || effectiveConnected : params.isSelected,
     };
   }
 
