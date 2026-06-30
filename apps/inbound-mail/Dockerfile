@@ -73,6 +73,9 @@ COPY --chown=1000:1000 --from=assets /usr/src/app .
 
 RUN --mount=type=cache,id=pnpm-store-inbound-mail,target=/root/.pnpm-store\
     --mount=type=secret,id=BULL_MQ_PRO_NPM_TOKEN,uid=1000 export BULL_MQ_PRO_NPM_TOKEN=$(cat /run/secrets/BULL_MQ_PRO_NPM_TOKEN) && \
+    if [ -n "${BULL_MQ_PRO_NPM_TOKEN}" ]; then \
+      printf '@taskforcesh:registry=https://npm.taskforce.sh/\n//npm.taskforce.sh/:_authToken=%s\nalways-auth=true\n' "${BULL_MQ_PRO_NPM_TOKEN}" > .npmrc; \
+    fi && \
  pnpm install --reporter=silent --filter "{${PACKAGE_PATH}}..."\
  --frozen-lockfile\
  --unsafe-perm\

@@ -36,7 +36,9 @@ jobs:
         run: corepack enable
 
       - name: Install dependencies
-        run: pnpm ci
+        run: |
+          TRUST_FLAG="$(bash scripts/configure-pnpm-private-registry.sh)"
+          pnpm ci ${TRUST_FLAG}
 
       - name: Teach Novu preview packages to work with latest dependencies
         run: pnpm run packages:set-latest

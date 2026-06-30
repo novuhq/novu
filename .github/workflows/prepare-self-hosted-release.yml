@@ -160,7 +160,9 @@ jobs:
           cache: "pnpm"
 
       - name: Install dependencies
-        run: pnpm ci
+        run: |
+          TRUST_FLAG="$(bash scripts/configure-pnpm-private-registry.sh)"
+          pnpm ci ${TRUST_FLAG}
 
       - name: Setup Docker
         uses: crazy-max/ghaction-setup-docker@69b561f709cbd934060981d481ccfc316cfb77b7 # v2

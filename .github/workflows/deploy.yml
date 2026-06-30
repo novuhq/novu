@@ -329,7 +329,9 @@ jobs:
 
       - name: Install Dependencies
         shell: bash
-        run: pnpm ci
+        run: |
+          TRUST_FLAG="$(bash scripts/configure-pnpm-private-registry.sh)"
+          pnpm ci ${TRUST_FLAG}
       - name: Run ClickHouse Migrations
         working-directory: apps/api
         env:
@@ -375,7 +377,9 @@ jobs:
 
       - name: Install Dependencies
         shell: bash
-        run: pnpm ci
+        run: |
+          TRUST_FLAG="$(bash scripts/configure-pnpm-private-registry.sh)"
+          pnpm ci ${TRUST_FLAG}
 
       - name: Set Up Docker Buildx
         uses: useblacksmith/setup-docker-builder@a592b831ebb20e68f7cf47329cf2c3c67b8a7655 # v1

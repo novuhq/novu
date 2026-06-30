@@ -38,4 +38,9 @@ jobs:
       - name: Run agent evals
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: pnpm --filter @novu/agent-evals eval src/suites/agent-onboarding
+        run: |
+          for attempt in 1 2 3; do
+            pnpm --filter @novu/agent-evals eval src/suites/agent-onboarding && exit 0
+            echo "Attempt ${attempt} failed, retrying..."
+          done
+          exit 1

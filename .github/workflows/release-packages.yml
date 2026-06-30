@@ -77,7 +77,8 @@ jobs:
       - name: Install Dependencies
         shell: bash
         run: |
-          pnpm ci
+          TRUST_FLAG="$(bash scripts/configure-pnpm-private-registry.sh)"
+          pnpm ci ${TRUST_FLAG}
           pnpm nx --version
           pnpm list nx
 
@@ -236,7 +237,8 @@ jobs:
       - name: Install Dependencies
         shell: bash
         run: |
-          pnpm ci
+          TRUST_FLAG="$(bash scripts/configure-pnpm-private-registry.sh)"
+          pnpm ci ${TRUST_FLAG}
 
       - name: Build packages
         env:

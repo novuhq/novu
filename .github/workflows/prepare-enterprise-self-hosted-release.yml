@@ -225,7 +225,9 @@ jobs:
 
       - name: Install Dependencies
         shell: bash
-        run: pnpm ci
+        run: |
+          TRUST_FLAG="$(bash scripts/configure-pnpm-private-registry.sh)"
+          pnpm ci ${TRUST_FLAG}
 
       - name: Symlink Enterprise Packages
         shell: bash
