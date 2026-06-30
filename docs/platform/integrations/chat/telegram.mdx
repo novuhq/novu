@@ -83,25 +83,21 @@ Novu gives you a link that opens your bot in Telegram. When the subscriber taps 
 
 Request a connection URL from your server when the subscriber chooses to connect Telegram:
 
-```tsx
-import { Novu } from '@novu/api';
-
-const novu = new Novu({ secretKey: '<YOUR_SECRET_KEY_HERE>' });
-
-async function getTelegramConnectUrl(subscriberId: string) {
-  const { url, providerMetadata } = await novu.integrations.linkChannelEndpoint({
-    integrationIdentifier: 'telegram',
-    subscriberId,
-  });
-
-  return {
-    connectUrl: url,
-    botUsername: providerMetadata?.botUsername,
-  };
-}
+<Tabs>
+<Tab title="cURL">
+```bash
+curl -L -X POST 'https://api.novu.co/v1/integrations/channel-endpoints/link' \
+-H 'Content-Type: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+  "integrationIdentifier": "telegram",
+  "subscriberId": "<SUBSCRIBER_ID>"
+}'
 ```
+</Tab>
+</Tabs>
 
-Open the returned URL in a new tab or show it as a button in your UI. Generate a fresh link each time the subscriber starts the flow — links expire after a short time.
+Open the returned `url` in a new tab or show it as a button in your UI. Generate a fresh link each time the subscriber starts the flow — links expire after a short time.
 
 #### From your app with `@novu/react`
 
