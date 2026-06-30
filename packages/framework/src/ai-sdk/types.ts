@@ -1,4 +1,3 @@
-import type { generateText, streamText } from 'ai';
 import type {
   AgentActionContext,
   AgentHandlers,
@@ -10,8 +9,13 @@ import type {
 } from '../resources/agent/agent.types';
 import type { Awaitable } from '../types/util.types';
 
-/** Result from `streamText()` or `generateText()`. Return from `onMessage` to reply with the model output. */
-export type AiSdkResult = ReturnType<typeof streamText> | Awaited<ReturnType<typeof generateText>>;
+/** The fields Novu reads from a `streamText()` / `generateText()` result. */
+export type AiSdkResult = {
+  text: string | PromiseLike<string>;
+  textStream?: AsyncIterable<string>;
+  content?: unknown;
+  steps?: unknown;
+};
 
 /**
  * Event handlers for an AI SDK agent.
