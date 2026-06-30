@@ -193,10 +193,18 @@ export class ResolveChannelEndpoints {
     connectionMap: Map<string, ChannelConnectionEntity>
   ): Promise<Record<string, unknown>> {
     const connection = endpoint.connectionIdentifier ? connectionMap.get(endpoint.connectionIdentifier) : undefined;
-    const subscriberTenantId = connection?.workspace?.id;
+
+    /*
+     * The subscriber's Azure AD tenant. Prefer the linked admin-consent connection's workspace id,
+     * then fall back to the tenant stored on the endpoint itself (set for multi-tenant /
+     * auto-provisioned MS Teams users that have no separate connection). For multi-tenant
+     * distribution this can be an external customer tenant, not the bot's home tenant.
+     */
+    const endpointTenantId = (endpoint.endpoint as { tenantId?: string }).tenantId;
+    const subscriberTenantId = connection?.workspace?.id ?? endpointTenantId;
 
     if (!subscriberTenantId) {
-      throw new Error(`MS Teams endpoint ${endpoint.identifier} requires a connection with tenant ID`);
+      throw new Error(`MS Teams endpoint ${endpoint.identifier} requires a connection or endpoint tenant ID`);
     }
 
     // Fetch integration credentials

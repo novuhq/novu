@@ -49,8 +49,8 @@
               {
                 "group": "Quickstart",
                 "pages": [
-                  "platform/quickstart/react",
                   "platform/quickstart/nextjs",
+                  "platform/quickstart/react",
                   "platform/quickstart/remix",
                   "platform/quickstart/angular",
                   "platform/quickstart/vue",
@@ -390,17 +390,6 @@
             ]
           },
           {
-            "group": "Managed Agent",
-            "pages": [
-              "agents/managed-agent/overview",
-              "agents/managed-agent/quickstart",
-              "agents/managed-agent/concepts",
-              "agents/managed-agent/configure-mcp-servers",
-              "agents/managed-agent/add-skills"
-            ],
-            "icon": "bot"
-          },
-          {
             "group": "Custom Code Agent",
             "pages": [
               "agents/custom-code-agent/quickstart",
@@ -424,6 +413,17 @@
             "icon": "code"
           },
           {
+            "group": "Managed Agent",
+            "pages": [
+              "agents/managed-agent/overview",
+              "agents/managed-agent/quickstart",
+              "agents/managed-agent/concepts",
+              "agents/managed-agent/configure-mcp-servers",
+              "agents/managed-agent/add-skills"
+            ],
+            "icon": "bot"
+          },
+          {
             "group": "Observability",
             "pages": [
               "agents/conversations"
@@ -440,6 +440,8 @@
             "pages": [
               "api-reference",
               "api-reference/authentication",
+              "api-reference/errors",
+              "api-reference/pagination",
               "api-reference/rate-limiting",
               "api-reference/idempotency",
               "api-reference/payload-limits"
@@ -1127,6 +1129,16 @@
     },
     {
       "source": "/get-started",
+      "destination": "/platform/quickstart/nextjs",
+      "permanent": true
+    },
+    {
+      "source": "/getting-started",
+      "destination": "/platform/quickstart/nextjs",
+      "permanent": true
+    },
+    {
+      "source": "/getting-started/:slug*",
       "destination": "/platform/quickstart/nextjs",
       "permanent": true
     },

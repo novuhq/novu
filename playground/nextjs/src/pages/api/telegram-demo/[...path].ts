@@ -4,7 +4,7 @@
  * Lets you exercise the `useTelegramSubscriberLink` headless logic end-to-end
  * WITHOUT a real Telegram bot, agent, or secret key. Point the page at it with:
  *
- *   NEXT_PUBLIC_NOVU_TELEGRAM_API_URL=/api/telegram-demo
+ *   NEXT_PUBLIC_CONNECT_TELEGRAM_API_URL=/api/telegram-demo
  *
  * It mimics the two endpoints the hook calls:
  *   POST .../integrations/channel-endpoints/link  -> issues a fake deep link + expiry

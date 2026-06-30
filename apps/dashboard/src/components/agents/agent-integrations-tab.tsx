@@ -1,3 +1,8 @@
+import { ChannelTypeEnum, type IIntegration, providers as novuProviders, PermissionsEnum } from '@novu/shared';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { type ReactNode, useEffect } from 'react';
+import { RiAddLine, RiArrowRightSLine, RiErrorWarningFill } from 'react-icons/ri';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   type AgentIntegrationLink,
   type AgentResponse,
@@ -20,17 +25,11 @@ import { getAgentChannelDisplayName } from '@/utils/agent-email-provider-display
 import { buildRoute } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
-import { ChannelTypeEnum, type IIntegration, providers as novuProviders, PermissionsEnum } from '@novu/shared';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
-import { RiAddLine, RiArrowRightSLine, RiErrorWarningFill } from 'react-icons/ri';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { AddChannelPicker } from './add-channel-picker';
 import { ResolveAgentIntegrationGuide } from './agent-integration-guides/resolve-agent-integration-guide';
 import { ChannelsPlanLimitBanner } from './agents-plan-limit-banner';
 import { getExceedsPlanTooltipCopy } from './exceeds-plan-indicator';
 import { isAgentIntegrationConnected } from './is-agent-integration-connected';
-import { ChannelLimitUpgradeDialog } from './plan-limit-upgrade-dialog';
-import { ProviderDropdown } from './provider-dropdown';
 
 type AgentIntegrationsTabProps = {
   agent: AgentResponse;
@@ -200,8 +199,8 @@ function IntegrationsMainPanel({
   if (links.length > 0) {
     return (
       <IntegrationsHubPlaceholder
-        title="Select a provider"
-        description="Choose a connected provider on the left to open its setup guide and finish configuration."
+        title="Select a channel"
+        description="Choose a connected channel on the left to open its setup guide and finish configuration."
       />
     );
   }
@@ -211,7 +210,7 @@ function IntegrationsMainPanel({
       title="No integrations linked yet"
       description={
         <>
-          Use <span className="text-text-strong">Add provider</span> in the list to connect an integration from this
+          Use <span className="text-text-strong">Add channel</span> in the list to connect an integration from this
           environment.
         </>
       }
@@ -267,54 +266,6 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
   const linkedRows = listQuery.data?.data;
   const planUsage = listQuery.data?.planUsage;
   const isOverChannelLimit = Boolean(planUsage && planUsage.used > planUsage.limit);
-  const isAtChannelLimit = Boolean(planUsage && planUsage.used >= planUsage.limit);
-
-  const [providerDropdownOpen, setProviderDropdownOpen] = useState(false);
-  const [channelLimitDialogOpen, setChannelLimitDialogOpen] = useState(false);
-  // Deferred link to run when the user accepts the channel-limit warning ("Add
-  // anyway"). Intentionally not cleared on dialog dismissal: the dialog fires
-  // onOpenChange(false) before onContinueAnyway, so clearing on close would
-  // race-null this ref before handleChannelLimitContinue can read it. It's
-  // always re-set in handleChannelLimitConfirmRequired before the dialog
-  // reopens, so a dismissed dialog never leaves a stale link that could fire.
-  const pendingChannelLinkRef = useRef<(() => void) | null>(null);
-
-  // Providers that already occupy a within-limit active-channel slot. Adding
-  // another integration of one of these (e.g. a second Slack workspace) does not
-  // consume a new slot, so it must not trigger the channel-limit warning.
-  const connectedWithinLimitProviderIds = useMemo(
-    () =>
-      new Set(
-        (linkedRows ?? [])
-          .filter((row) => Boolean(row.connectedAt) && !row.exceedsPlanLimit)
-          .map((row) => row.integration.providerId)
-      ),
-    [linkedRows]
-  );
-
-  // Confirm only when adding the selected provider would actually exceed the
-  // plan: the environment is at its active-channel limit and the provider is a
-  // new channel type (not one that already holds a within-limit slot).
-  const confirmChannelLimitBeforeLink = (providerId: string) => {
-    if (!isAtChannelLimit) {
-      return false;
-    }
-
-    return !connectedWithinLimitProviderIds.has(providerId);
-  };
-
-  const handleChannelLimitConfirmRequired = (proceed: () => void) => {
-    pendingChannelLinkRef.current = proceed;
-    setProviderDropdownOpen(false);
-    setChannelLimitDialogOpen(true);
-  };
-
-  const handleChannelLimitContinue = () => {
-    const proceed = pendingChannelLinkRef.current;
-    pendingChannelLinkRef.current = null;
-    setChannelLimitDialogOpen(false);
-    proceed?.();
-  };
 
   useEffect(() => {
     if (integrationIdentifier != null) {
@@ -362,11 +313,6 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
     navigate,
     integrationIdentifier,
   ]);
-
-  const linkedIntegrationIdSet = useMemo(
-    () => new Set(linkedRows?.map((row) => row.integration._id) ?? []),
-    [linkedRows]
-  );
 
   const handleProviderDropdownSelect = (_providerId: string, integration?: IIntegration) => {
     if (integration?.identifier) {
@@ -483,7 +429,7 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
             />
           )}
           <div className="bg-bg-weak flex flex-col gap-2 rounded p-1 py-1.5">
-            <p className="text-text-sub px-1 pt-1 text-label-xs font-medium leading-4">Connected providers</p>
+            <p className="text-text-sub px-1 pt-1 text-label-xs font-medium leading-4">Connected channels</p>
             {isLoading ? (
               <>
                 <div className="text-text-soft px-1 pt-1 text-label-xs font-medium leading-4">In-app</div>
@@ -580,17 +526,13 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
                 {links.length > 0 ? <div className="bg-stroke-weak h-px" role="presentation" /> : null}
 
                 {!readOnly && (
-                  <ProviderDropdown
+                  <AddChannelPicker
                     agentIdentifier={agent.identifier}
                     agentName={agent.name}
+                    links={links}
+                    planUsage={planUsage}
                     selectedIntegrationId={selectedIntegration?.integration._id}
-                    linkedIntegrationIds={linkedIntegrationIdSet}
-                    excludeLinked
-                    open={providerDropdownOpen}
-                    onOpenChange={setProviderDropdownOpen}
-                    onSelect={handleProviderDropdownSelect}
-                    confirmBeforeLink={confirmChannelLimitBeforeLink}
-                    onConfirmRequired={handleChannelLimitConfirmRequired}
+                    onSelected={handleProviderDropdownSelect}
                     renderTrigger={({ isBusy }) => (
                       <button
                         type="button"
@@ -599,7 +541,7 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
                       >
                         <span className="flex items-center gap-1.5">
                           <RiAddLine className="size-4 shrink-0" aria-hidden />
-                          <span className="text-label-sm leading-5">Add provider</span>
+                          <span className="text-label-sm leading-5">Add channel</span>
                         </span>
                         <RiArrowRightSLine className="text-text-soft size-4 shrink-0" aria-hidden />
                       </button>
@@ -620,15 +562,6 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
       <div className="min-w-0 flex-1 mt-10 md:mt-0 border-t border-stroke-weak md:border-t-0 pt-4 md:pt-0">
         {mainPanel}
       </div>
-
-      {planUsage && (
-        <ChannelLimitUpgradeDialog
-          open={channelLimitDialogOpen}
-          onOpenChange={setChannelLimitDialogOpen}
-          planUsage={planUsage}
-          onContinueAnyway={handleChannelLimitContinue}
-        />
-      )}
     </div>
   );
 }

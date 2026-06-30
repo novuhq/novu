@@ -15,8 +15,13 @@ import { useAuth } from '@/context/auth/hooks';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { buildConnectSubscriberId } from '@/utils/connect-subscriber-id';
-import { cn } from '@/utils/ui';
-import { IntegrationCredentialsSidebar, ListeningStatus, SetupButton, SetupStep } from './setup-guide-primitives';
+import {
+  IntegrationCredentialsSidebar,
+  ListeningStatus,
+  SetupButton,
+  SetupStep,
+  SetupStepperRail,
+} from './setup-guide-primitives';
 import { deriveStepStatus, hasIntegrationCredentials } from './setup-guide-step-utils';
 
 type TelegramQrInlineProps = {
@@ -343,23 +348,15 @@ export function TelegramSetupGuide({
       watchedIntegrationId={integrationId}
       onConnected={handleConnected}
       connectedMessage="Telegram is connected — your agent is ready to receive messages."
-      listeningMessage="Waiting for a message to your bot to confirm the webhook is working…"
+      listeningMessage="Open the link in Telegram, then reply to the bot's confirmation message to verify delivery."
     />
   );
 
   if (embedded) {
     return (
       <div className="flex flex-col gap-0">
-        <div className={cn('relative flex flex-col gap-10 py-6 pb-3 pl-8 pr-6')}>
-          <div
-            className="absolute bottom-0 left-[22px] top-0 w-px"
-            style={{
-              background: 'linear-gradient(to bottom, transparent 0%, #E1E4EA 10%, #E1E4EA 90%, transparent 100%)',
-            }}
-          />
-          {stepsColumn}
-        </div>
-        {listening}
+        <SetupStepperRail className="py-6 pb-3 pr-6">{stepsColumn}</SetupStepperRail>
+        <div className="pl-8">{listening}</div>
         <IntegrationCredentialsSidebar
           integrationId={integrationId}
           isOpen={isCredentialsSidebarOpen}
@@ -379,8 +376,8 @@ export function TelegramSetupGuide({
 
   return (
     <>
-      {stepsColumn}
-      {listening}
+      <SetupStepperRail>{stepsColumn}</SetupStepperRail>
+      <div className="pl-8">{listening}</div>
       <IntegrationCredentialsSidebar
         integrationId={integrationId}
         isOpen={isCredentialsSidebarOpen}

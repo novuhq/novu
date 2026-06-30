@@ -880,7 +880,6 @@ export class IntegrationsController {
       case ChatProviderIdEnum.Telegram: {
         const result = await this.issueTelegramSubscriberLinkUsecase.execute(
           IssueTelegramSubscriberLinkCommand.create({
-            userId: user._id,
             environmentId: user.environmentId,
             organizationId: user.organizationId,
             integrationIdentifier: body.integrationIdentifier,

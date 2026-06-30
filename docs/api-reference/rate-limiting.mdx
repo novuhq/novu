@@ -1,6 +1,6 @@
 ---
 title: 'Rate Limiting'
-description: "In this page you can learn about how rate limiting works with Novu's API"
+description: 'Understand Novu API rate limits, response headers, and how to handle 429 responses with exponential backoff.'
 ---
 
 Rate limiting is an essential functionality for establishing a robust and resilient system. It safeguards system resources from being misused by malicious actors or being monopolized by one client.
@@ -45,3 +45,48 @@ RateLimit-Policy: 300;w=5;burst=330;comment="token bucket";category="trigger";co
 - `RateLimit-Reset` - Indicates the number of seconds until the current window resets and the request token limit is fully replenished.
 - `RateLimit-Policy` - Defines the details of the applied rate limiting policy.
 - `Retry-After` - Specifies the number of seconds to wait before making another request.
+
+## Rate limit errors
+
+When you exceed the rate limit, the API returns `429 Too Many Requests` with a JSON body:
+
+```json
+{
+  "statusCode": 429,
+  "timestamp": "2024-12-12T13:00:00Z",
+  "path": "/v1/events/trigger",
+  "message": "API rate limit exceeded"
+}
+```
+
+The response also includes a `Retry-After` header with the number of seconds to wait before retrying. See [Errors](/api-reference/errors) for the full error response format.
+
+## Handling rate limits
+
+When you receive a `429`, wait for the duration in the `Retry-After` header before retrying. For sustained traffic, use exponential backoff with jitter so retries spread out and do not all hit the limit at once:
+
+```javascript
+async function requestWithBackoff(fn, maxRetries = 5) {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      if (error.statusCode !== 429 || attempt === maxRetries - 1) {
+        throw error;
+      }
+
+      const retryAfter = Number(error.headers?.['retry-after'] ?? 1);
+      const delayMs = (retryAfter + Math.random()) * 1000;
+
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+  }
+}
+```
+
+Monitor the `RateLimit-Remaining` header on successful responses to slow down before you hit the limit.
+
+## Related documentation
+
+- [Errors](/api-reference/errors) — HTTP status codes and error response format
+- [Idempotency](/api-reference/idempotency) — Safely retry requests without creating duplicates

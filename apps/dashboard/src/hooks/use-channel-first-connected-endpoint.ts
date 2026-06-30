@@ -7,11 +7,24 @@ const POLL_INTERVAL_MS = 3000;
 
 /**
  * Endpoint types created when an end user links their own account through the embedded
- * connect button (e.g. `<SlackConnectButton />`). Bot-DM auto-provision creates the same
- * endpoint types but without a `connectionIdentifier`, so the presence of one is what
- * separates a deliberate connect from someone merely messaging the bot.
+ * connect button (e.g. `<SlackConnectButton />`, `<TelegramConnectButton />`). For OAuth
+ * providers (Slack/Teams) bot-DM auto-provision creates the same endpoint types without a
+ * `connectionIdentifier`, so the presence of one is what separates a deliberate connect from
+ * someone merely messaging the bot.
  */
-const CONNECT_FLOW_USER_ENDPOINT_TYPES = new Set<string>([ENDPOINT_TYPES.SLACK_USER, ENDPOINT_TYPES.MS_TEAMS_USER]);
+const CONNECT_FLOW_USER_ENDPOINT_TYPES = new Set<string>([
+  ENDPOINT_TYPES.SLACK_USER,
+  ENDPOINT_TYPES.MS_TEAMS_USER,
+  ENDPOINT_TYPES.TELEGRAM_CHAT,
+]);
+
+/**
+ * Deep-link providers (Telegram) never carry a `connectionIdentifier`, and a bare bot DM does not
+ * auto-provision an endpoint — only the `/start <code>` deep-link connect flow does. So for these
+ * types we rely solely on the `connect:` subscriber-prefix exclusion to filter out the dashboard's
+ * own setup test, rather than requiring a `connectionIdentifier`.
+ */
+const ENDPOINT_TYPES_WITHOUT_CONNECTION_IDENTIFIER = new Set<string>([ENDPOINT_TYPES.TELEGRAM_CHAT]);
 
 const CONNECT_SUBSCRIBER_ID_PREFIX = `${CONNECT_SUBSCRIBER_PREFIX}:`;
 
@@ -23,7 +36,9 @@ type UseChannelFirstConnectedEndpointParams = {
 
 /**
  * A genuine end-user connection is a user-type channel endpoint that:
- *  - came from the OAuth connect flow (`connectionIdentifier` is set, not a bot-DM auto-provision), and
+ *  - is a connect-flow endpoint type, and
+ *  - for OAuth providers, came from the connect flow (`connectionIdentifier` is set, not a bot-DM
+ *    auto-provision) — deep-link providers like Telegram are exempt from this check, and
  *  - is not the Novu dashboard's own onboarding subscriber (`connect:` prefixed id).
  */
 function hasGenuineConnectedEndpoint(data: ChannelEndpointsListResponse | undefined): boolean {
@@ -31,12 +46,18 @@ function hasGenuineConnectedEndpoint(data: ChannelEndpointsListResponse | undefi
     return false;
   }
 
-  return data.data.some(
-    (endpoint) =>
-      CONNECT_FLOW_USER_ENDPOINT_TYPES.has(endpoint.type) &&
-      Boolean(endpoint.connectionIdentifier) &&
-      !endpoint.subscriberId?.startsWith(CONNECT_SUBSCRIBER_ID_PREFIX)
-  );
+  return data.data.some((endpoint) => {
+    if (!CONNECT_FLOW_USER_ENDPOINT_TYPES.has(endpoint.type)) {
+      return false;
+    }
+
+    const requiresConnectionIdentifier = !ENDPOINT_TYPES_WITHOUT_CONNECTION_IDENTIFIER.has(endpoint.type);
+    if (requiresConnectionIdentifier && !endpoint.connectionIdentifier) {
+      return false;
+    }
+
+    return !endpoint.subscriberId?.startsWith(CONNECT_SUBSCRIBER_ID_PREFIX);
+  });
 }
 
 /**

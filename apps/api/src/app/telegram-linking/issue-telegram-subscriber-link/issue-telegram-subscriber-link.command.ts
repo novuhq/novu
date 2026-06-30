@@ -1,8 +1,8 @@
 import { IsNotEmpty, IsString } from 'class-validator';
 
-import { EnvironmentWithUserCommand } from '../../shared/commands/project.command';
+import { EnvironmentCommand } from '../../shared/commands/project.command';
 
-export class IssueTelegramSubscriberLinkCommand extends EnvironmentWithUserCommand {
+export class IssueTelegramSubscriberLinkCommand extends EnvironmentCommand {
   @IsString()
   @IsNotEmpty()
   integrationIdentifier: string;

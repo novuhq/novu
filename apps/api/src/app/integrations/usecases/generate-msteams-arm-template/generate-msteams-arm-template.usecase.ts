@@ -3,6 +3,7 @@ import { GetDecryptedIntegrations } from '@novu/application-generic';
 import { EnvironmentRepository, IntegrationRepository } from '@novu/dal';
 import { ChatProviderIdEnum } from '@novu/shared';
 import { createHmac } from 'crypto';
+import { buildAgentApiRootUrl } from '../../../agents/shared/util/agent-api-root-url';
 import { areHexDigestsEqual } from '../../../shared/helpers/timing-safe-equal';
 import { GenerateMsTeamsArmTemplateCommand } from './generate-msteams-arm-template.command';
 
@@ -81,8 +82,6 @@ export class GenerateMsTeamsArmTemplate {
   }
 
   private buildTemplateApiUrl(integrationId: string, sig: string, exp: number): string {
-    const base = (process.env.API_ROOT_URL ?? '').replace(/\/$/, '');
-
-    return `${base}/v1/integrations/${integrationId}/msteams-arm-template?sig=${sig}&exp=${exp}`;
+    return `${buildAgentApiRootUrl()}/v1/integrations/${integrationId}/msteams-arm-template?sig=${sig}&exp=${exp}`;
   }
 }
