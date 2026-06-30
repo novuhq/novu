@@ -101,7 +101,7 @@ When documenting REST API operations that developers call from backend code, sho
 - Keep examples minimal and aligned across tabs — same workflow ID, subscriber ID, and payload shape.
 - Use `<YOUR_SECRET_KEY_HERE>` or `NOVU_SECRET_KEY` placeholders; never hardcode real keys.
 - Community SDKs (Kotlin, Laravel, Ruby) do not need tabs on platform pages unless the page is SDK-specific.
-- Update `.mintlify/skills/` reference files when changing trigger, subscriber, or preference examples so the docs AI assistant stays accurate.
+- Do not edit files under `docs/.mintlify/skills/` in this repo — they are synced from [novuhq/skills](https://github.com/novuhq/skills). Update trigger, subscriber, or preference skill examples there instead.
 
 ## Content boundaries
 
