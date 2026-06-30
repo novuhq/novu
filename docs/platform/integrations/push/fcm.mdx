@@ -265,15 +265,15 @@ res, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
         SubscriberID: "subscriberId",
     }),
     Payload: map[string]any{
-    "key": "value"
-},
+        "key": "value",
+    },
     Overrides: map[string]any{
-    "providers": {
-        "fcm": {
-            "topic": "topic-123"
-        }
-    }
-},
+        "providers": map[string]any{
+            "fcm": map[string]any{
+                "topic": "topic-123",
+            },
+        },
+    },
 }, nil)
 ```
   </Tab>
@@ -288,16 +288,14 @@ $sdk->trigger(
     triggerEventRequestDto: new Components\TriggerEventRequestDto(
         workflowId: 'workflowId',
         to: new Components\SubscriberPayloadDto(subscriberId: 'subscriberId'),
-        payload: {
-        "key": "value"
-},
-        overrides: {
-        "providers": {
-                "fcm": {
-                        "topic": "topic-123"
-                }
-        }
-},
+        payload: ['key' => 'value'],
+        overrides: [
+            'providers' => [
+                'fcm' => [
+                    'topic' => 'topic-123',
+                ],
+            ],
+        ],
     ),
 );
 ```
@@ -306,22 +304,23 @@ $sdk->trigger(
 ```csharp
 using Novu;
 using Novu.Models.Components;
+using System.Collections.Generic;
 
 var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
 
 await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
     WorkflowId = "workflowId",
     To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() { SubscriberId = "subscriberId" }),
-    Payload = {
-    "key": "value"
-},
-    Overrides = {
-    "providers": {
-        "fcm": {
-            "topic": "topic-123"
-        }
-    }
-},
+    Payload = new Dictionary<string, object>() {
+        { "key", "value" },
+    },
+    Overrides = new Overrides() {
+        Providers = new Dictionary<string, Dictionary<string, object>>() {
+            { "fcm", new Dictionary<string, object>() {
+                { "topic", "topic-123" },
+            } },
+        },
+    },
 });
 ```
   </Tab>
@@ -329,6 +328,7 @@ await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
 ```java
 import co.novu.Novu;
 import co.novu.models.components.*;
+import java.util.Map;
 
 Novu novu = Novu.builder().secretKey("<NOVU_SECRET_KEY>").build();
 
@@ -336,16 +336,10 @@ novu.trigger()
     .body(TriggerEventRequestDto.builder()
         .workflowId("workflowId")
         .to(To2.of(SubscriberPayloadDto.builder().subscriberId("subscriberId").build()))
-        .payload({
-        "key": "value"
-})
-        .overrides({
-        "providers": {
-                "fcm": {
-                        "topic": "topic-123"
-                }
-        }
-})
+        .payload(Map.of("key", "value"))
+        .overrides(TriggerEventRequestDtoOverrides.builder()
+            .additionalProperties(Map.of("providers", Map.of("fcm", Map.of("topic", "topic-123"))))
+            .build())
         .build())
     .call();
 ```
@@ -453,19 +447,19 @@ res, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
         SubscriberID: "subscriberId",
     }),
     Payload: map[string]any{
-    "key": "value"
-},
+        "key": "value",
+    },
     Overrides: map[string]any{
-    "providers": {
-        "fcm": {
-            "webPush": {
-                "fcmOptions": {
-                    "link": "/foo"
-                }
-            }
-        }
-    }
-},
+        "providers": map[string]any{
+            "fcm": map[string]any{
+                "webPush": map[string]any{
+                    "fcmOptions": map[string]any{
+                        "link": "/foo",
+                    },
+                },
+            },
+        },
+    },
 }, nil)
 ```
   </Tab>
@@ -480,20 +474,18 @@ $sdk->trigger(
     triggerEventRequestDto: new Components\TriggerEventRequestDto(
         workflowId: 'workflowId',
         to: new Components\SubscriberPayloadDto(subscriberId: 'subscriberId'),
-        payload: {
-        "key": "value"
-},
-        overrides: {
-        "providers": {
-                "fcm": {
-                        "webPush": {
-                                "fcmOptions": {
-                                        "link": "/foo"
-                                }
-                        }
-                }
-        }
-},
+        payload: ['key' => 'value'],
+        overrides: [
+            'providers' => [
+                'fcm' => [
+                    'webPush' => [
+                        'fcmOptions' => [
+                            'link' => '/foo',
+                        ],
+                    ],
+                ],
+            ],
+        ],
     ),
 );
 ```
@@ -502,26 +494,27 @@ $sdk->trigger(
 ```csharp
 using Novu;
 using Novu.Models.Components;
+using System.Collections.Generic;
 
 var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
 
 await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
     WorkflowId = "workflowId",
     To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() { SubscriberId = "subscriberId" }),
-    Payload = {
-    "key": "value"
-},
-    Overrides = {
-    "providers": {
-        "fcm": {
-            "webPush": {
-                "fcmOptions": {
-                    "link": "/foo"
-                }
-            }
-        }
-    }
-},
+    Payload = new Dictionary<string, object>() {
+        { "key", "value" },
+    },
+    Overrides = new Overrides() {
+        Providers = new Dictionary<string, Dictionary<string, object>>() {
+            { "fcm", new Dictionary<string, object>() {
+                { "webPush", new Dictionary<string, object>() {
+                    { "fcmOptions", new Dictionary<string, object>() {
+                        { "link", "/foo" },
+                    } },
+                } },
+            } },
+        },
+    },
 });
 ```
   </Tab>
@@ -529,6 +522,7 @@ await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
 ```java
 import co.novu.Novu;
 import co.novu.models.components.*;
+import java.util.Map;
 
 Novu novu = Novu.builder().secretKey("<NOVU_SECRET_KEY>").build();
 
@@ -536,20 +530,11 @@ novu.trigger()
     .body(TriggerEventRequestDto.builder()
         .workflowId("workflowId")
         .to(To2.of(SubscriberPayloadDto.builder().subscriberId("subscriberId").build()))
-        .payload({
-        "key": "value"
-})
-        .overrides({
-        "providers": {
-                "fcm": {
-                        "webPush": {
-                                "fcmOptions": {
-                                        "link": "/foo"
-                                }
-                        }
-                }
-        }
-})
+        .payload(Map.of("key", "value"))
+        .overrides(TriggerEventRequestDtoOverrides.builder()
+            .additionalProperties(Map.of("providers", Map.of("fcm", Map.of(
+                "webPush", Map.of("fcmOptions", Map.of("link", "/foo"))))))
+            .build())
         .build())
     .call();
 ```

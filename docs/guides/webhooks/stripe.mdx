@@ -299,10 +299,8 @@ import os
 import novu_py
 from novu_py import Novu
 
-novu = Novu(secret_key=os.getenv("NOVU_SECRET_KEY", ""))
-
 def trigger_workflow(workflow_id: str, subscriber: dict, payload: dict):
-    with novu:
+    with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
         novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
             workflow_id=workflow_id,
             to=subscriber,
