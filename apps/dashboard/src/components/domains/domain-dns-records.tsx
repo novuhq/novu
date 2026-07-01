@@ -20,7 +20,7 @@ function DnsRecordsBody({ domain, isLoading }: { domain?: DomainResponse; isLoad
   if (isLoading) {
     return (
       <TableRow className="[&>td]:border-0">
-        <TableCell colSpan={6} className="px-3 py-4">
+        <TableCell colSpan={6} className="px-2 py-4">
           <Skeleton className="h-8 w-full" />
         </TableCell>
       </TableRow>
@@ -30,7 +30,7 @@ function DnsRecordsBody({ domain, isLoading }: { domain?: DomainResponse; isLoad
   if (!domain?.expectedDnsRecords?.length) {
     return (
       <TableRow className="[&>td]:border-0">
-        <TableCell colSpan={6} className="text-text-soft px-3 py-4 text-center text-label-xs">
+        <TableCell colSpan={6} className="text-text-soft px-2 py-4 text-center text-label-xs">
           No DNS records available.
         </TableCell>
       </TableRow>
@@ -41,27 +41,27 @@ function DnsRecordsBody({ domain, isLoading }: { domain?: DomainResponse; isLoad
     <>
       {domain.expectedDnsRecords.map((record, i) => (
         <TableRow key={i} className="[&>td]:border-0">
-          <TableCell className="font-code text-code-xs text-text-sub px-3 py-4">{record.type}</TableCell>
-          <TableCell className="font-code text-code-xs text-text-sub px-3 py-4">
-            <span className="inline-flex max-w-full items-center gap-1">
-              <span className="truncate">{record.name}</span>
-              <CopyButton valueToCopy={record.name} size="2xs" />
+          <TableCell className="font-code text-code-xs text-text-sub px-2 py-4">{record.type}</TableCell>
+          <TableCell className="font-code text-code-xs text-text-sub px-2 py-4">
+            <span className="flex min-w-0 items-center gap-1">
+              <span className="min-w-0 flex-1 truncate">{record.name}</span>
+              <CopyButton valueToCopy={record.name} size="2xs" className="shrink-0" />
             </span>
           </TableCell>
-          <TableCell className="max-w-[200px] truncate font-code text-code-xs text-text-sub px-3 py-4">
-            <span className="inline-flex max-w-full items-center gap-1">
+          <TableCell className="font-code text-code-xs text-text-sub px-2 py-4">
+            <span className="flex min-w-0 items-center gap-1">
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <span className="block truncate">{record.content}</span>
+                  <span className="min-w-0 flex-1 truncate">{record.content}</span>
                 </TooltipTrigger>
                 <TooltipContent className="max-w-sm break-all font-code text-code-xs">{record.content}</TooltipContent>
               </Tooltip>
-              <CopyButton valueToCopy={record.content} size="2xs" />
+              <CopyButton valueToCopy={record.content} size="2xs" className="shrink-0" />
             </span>
           </TableCell>
-          <TableCell className="text-label-xs text-text-sub px-3 py-4">{record.ttl}</TableCell>
-          <TableCell className="text-label-xs text-text-sub px-3 py-4">{record.priority}</TableCell>
-          <TableCell className="px-3 py-4">
+          <TableCell className="text-label-xs text-text-sub px-2 py-4">{record.ttl}</TableCell>
+          <TableCell className="text-label-xs text-text-sub px-2 py-4">{record.priority}</TableCell>
+          <TableCell className="px-2 py-4">
             <MxRecordStatusBadge configured={domain.mxRecordConfigured} />
           </TableCell>
         </TableRow>
@@ -89,15 +89,15 @@ export function DomainDnsRecords({ domain, isLoading = false }: DomainDnsRecords
 
       {showApexWarning && <ApexDomainMxWarning />}
 
-      <Table containerClassname="rounded-none border-0 shadow-none overflow-visible">
+      <Table className="table-fixed" containerClassname="rounded-none border-0 shadow-none overflow-x-auto">
         <TableHeader className="shadow-none [&>tr>th]:bg-bg-weak [&>tr>th]:border-stroke-weak [&>tr>th]:border-y [&>tr>th:first-child]:rounded-l-lg [&>tr>th:first-child]:border-l [&>tr>th:last-child]:rounded-r-lg [&>tr>th:last-child]:border-r">
           <TableRow>
-            <TableHead className="h-8 px-3 text-label-xs w-[60px]">Type</TableHead>
-            <TableHead className="h-8 px-3 text-label-xs">Name</TableHead>
-            <TableHead className="h-8 px-3 text-label-xs">Content</TableHead>
-            <TableHead className="h-8 px-3 text-label-xs w-[75px]">TTL</TableHead>
-            <TableHead className="h-8 px-3 text-label-xs w-[75px]">Priority</TableHead>
-            <TableHead className="h-8 px-3 text-label-xs w-[150px]">Status</TableHead>
+            <TableHead className="h-8 px-2 text-label-xs w-[52px]">Type</TableHead>
+            <TableHead className="h-8 px-2 text-label-xs">Name</TableHead>
+            <TableHead className="h-8 px-2 text-label-xs">Content</TableHead>
+            <TableHead className="h-8 px-2 text-label-xs w-[56px]">TTL</TableHead>
+            <TableHead className="h-8 px-2 text-label-xs w-[72px]">Priority</TableHead>
+            <TableHead className="h-8 px-2 text-label-xs w-[100px]">Status</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
