@@ -3,3 +3,22 @@ title: "Trigger event"
 description: "Trigger a Novu workflow by sending an event with workflowId, subscriberId, and payload. Returns a transactionId for tracking."
 openapi: "POST /v1/events/trigger"
 ---
+
+Trigger a workflow by sending a `POST` request with the workflow identifier, target subscriber(s), and optional payload. The response includes a `transactionId` you can use to trace the run in the Activity Feed, cancel the event, or look up related messages.
+
+## Idempotency and billing
+
+If you retry a trigger request, use an [idempotency key](/api-reference/idempotency) to avoid duplicate workflow runs and duplicate billing.
+
+| Mechanism | Where it applies | Effect on billing |
+| --- | --- | --- |
+| `Idempotency-Key` header | API layer, before the request is queued | Repeated requests with the same key return the cached response and count as **one** workflow run |
+| `transactionId` in the request body | During trigger processing | Does **not** provide the same API-level protection as an idempotency key |
+
+When you send the same `Idempotency-Key` on multiple `POST /v1/events/trigger` requests, Novu halts duplicates at the API layer. The request never reaches the worker queue again, so only the first successful trigger counts toward billing.
+
+The optional `transactionId` field is useful for tracing and [cancellation](/api-reference/events/cancel-triggered-event), but it is not a substitute for idempotency. Novu checks `transactionId` uniqueness during processing rather than at the API boundary, so concurrent or retried requests with the same `transactionId` are not deduplicated the same way. For safe retries and atomic deduplication, send an `Idempotency-Key` header on every trigger request.
+
+<Note>
+  Idempotency is not enabled for all organizations. Contact [support](mailto:support@novu.co) to enable it for your organization.
+</Note>
