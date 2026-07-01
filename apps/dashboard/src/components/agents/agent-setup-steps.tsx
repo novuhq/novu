@@ -322,11 +322,6 @@ export function AgentSetupSteps({
   }, [agentIntegrationsQuery.data?.data]);
 
   const [isInstructionsExpanded, setIsInstructionsExpanded] = useState(false);
-  // Agent details page: tracks the channel-selection expand toggle.
-  //  false = collapsed "Connecting…" card + layer-1 guide visible (the active connecting state)
-  //  true  = expanded "Connect" cards + guide hidden
-  // Starts collapsed so a picked/in-progress channel resumes its guide.
-  const [detailsChannelSelectionExpanded, setDetailsChannelSelectionExpanded] = useState(false);
 
   const selectedIntegration = useMemo(() => {
     if (validatedSelectedId) {
@@ -412,17 +407,14 @@ export function AgentSetupSteps({
     : selectedProviderId;
   const ProviderGuide = guideProviderId ? resolveProviderSetupGuide(guideProviderId) : null;
   const isChannelGuideActive = Boolean(ProviderGuide && guideIntegrationId && !skipProviderGuide);
-  const detailsChannelSelectionCollapsed = !isOnboarding && isChannelGuideActive && !detailsChannelSelectionExpanded;
-
-  const toggleDetailsChannelSelection = useCallback(() => {
-    setDetailsChannelSelectionExpanded((prev) => !prev);
-  }, []);
+  // Agent details page: once a channel is picked and its guide is showing, the channel cards render
+  // as a persistent compact switcher rail so the user can switch or start another channel in one
+  // click without ever losing sight of the other channels.
+  const detailsChannelSelectionCollapsed = !isOnboarding && isChannelGuideActive;
 
   const detailsChannelSelectionToggleProps = !isOnboarding
     ? {
         channelSelectionCollapsed: detailsChannelSelectionCollapsed,
-        channelSelectionExpanded: detailsChannelSelectionExpanded,
-        onToggleChannelSelection: toggleDetailsChannelSelection,
       }
     : {};
 
@@ -568,10 +560,6 @@ export function AgentSetupSteps({
         setSelectedIntegrationId(integration._id);
         setPickedChannelProviderId(providerId);
         sessionStorage.setItem(SESSION_KEY(agent.identifier), integration._id);
-
-        if (!isOnboarding) {
-          setDetailsChannelSelectionExpanded(false);
-        }
 
         // Activate the collapse in the same render as the selection so the preview,
         // channel cards, and provider guide animate together rather than in two stages.

@@ -23,36 +23,48 @@ export function resolveProviderCardVisualState(
     isConnected: boolean;
     isSelected: boolean;
     isLoading: boolean;
-    /**
-     * Agent-details channel-selection toggle: true = expanded "Connect" cards (plain state),
-     * false = collapsed "Connecting…" card (surfaces the in-progress connecting/selected indicators).
-     * Omitted in the onboarding flow, where it defaults to false so selected cards still read
-     * "Connecting…" as before.
-     */
-    channelSelectionExpanded?: boolean;
   }
 ): ProviderCardVisualState {
-  const channelSelectionExpanded = params.channelSelectionExpanded ?? false;
+  const effectiveConnected = params.isConnected;
 
   if (interaction === 'auto-provisioned-connectable') {
-    const effectiveConnected = params.isConnected;
-
-    const inProgress = !channelSelectionExpanded && !effectiveConnected && (params.isSelected || params.isLoading);
+    const inProgress = !effectiveConnected && (params.isSelected || params.isLoading);
 
     return {
       effectiveConnected,
-      showSelectedIndicator: !channelSelectionExpanded && (params.isSelected || effectiveConnected),
+      showSelectedIndicator: params.isSelected || effectiveConnected,
       showConnecting: inProgress,
       isActive: params.isSelected || effectiveConnected,
     };
   }
 
-  const effectiveConnected = params.isConnected;
-
   return {
     effectiveConnected,
-    showSelectedIndicator: !channelSelectionExpanded && (params.isSelected || effectiveConnected),
-    showConnecting: !channelSelectionExpanded && params.isSelected && !effectiveConnected,
+    showSelectedIndicator: params.isSelected || effectiveConnected,
+    showConnecting: params.isSelected && !effectiveConnected,
     isActive: params.isSelected || effectiveConnected,
   };
+}
+
+/**
+ * Status shown on a channel card in the compact switcher rail (rendered on the agent details page
+ * once a channel has been picked). Unlike the visual state above, this is independent of which
+ * channel is currently selected, so every linked channel surfaces its own setup progress and the
+ * user can freely switch between them.
+ */
+export type ProviderSwitcherStatus = 'connected' | 'in-setup' | 'connectable';
+
+export function resolveProviderSwitcherStatus(params: {
+  isConnected: boolean;
+  isLinked: boolean;
+}): ProviderSwitcherStatus {
+  if (params.isConnected) {
+    return 'connected';
+  }
+
+  if (params.isLinked) {
+    return 'in-setup';
+  }
+
+  return 'connectable';
 }

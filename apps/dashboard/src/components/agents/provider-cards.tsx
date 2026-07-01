@@ -28,7 +28,12 @@ import { ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { openInNewTab } from '@/utils/url';
 import { hasAgentInboundConnection, isAgentIntegrationConnected } from './is-agent-integration-connected';
-import { getProviderCardInteraction, resolveProviderCardVisualState } from './provider-card-interaction';
+import {
+  getProviderCardInteraction,
+  type ProviderSwitcherStatus,
+  resolveProviderCardVisualState,
+  resolveProviderSwitcherStatus,
+} from './provider-card-interaction';
 
 /**
  * Estimated time to complete the setup for each provider, displayed as a hint
@@ -114,18 +119,12 @@ type ProviderCardsProps = {
   existingLinks?: AgentIntegrationLink[];
   onSelect: (providerId: string, integration?: IIntegration) => void;
   /**
-   * When true, only the selected/active channel card is shown while onboarding is collapsed.
-   * The pill reads "Connecting…"; clicking it opens onboarding. When expanded, the pill reads
-   * "Connect" on the selected card and clicking it closes onboarding again.
+   * When true, the cards render as a compact, persistent "switcher" rail instead of the full grid.
+   * Every connectable/linked channel stays visible with its own status chip, the active channel is
+   * highlighted, and clicking a different channel switches its setup guide in one click. Used on the
+   * agent details page once a channel has been picked and its guide is showing below.
    */
   channelSelectionCollapsed?: boolean;
-  /**
-   * Agent-details channel-selection toggle: true = expanded "Connect" grid (guide hidden below),
-   * false = collapsed "Connecting…" card (guide shown). Distinct from `channelSelectionCollapsed`,
-   * which only drives the single-card layout.
-   */
-  channelSelectionExpanded?: boolean;
-  onToggleChannelSelection?: () => void;
   /**
    * Renders the cards as a non-interactive, dimmed preview — every card button and the scroll
    * arrows are disabled. Used in the onboarding connect phase to show the channel step before the
@@ -160,12 +159,14 @@ function ProviderPill({
   locked,
   connected,
   connecting,
+  inSetup,
 }: {
   loading: boolean;
   comingSoon: boolean;
   locked: boolean;
   connected: boolean;
   connecting: boolean;
+  inSetup: boolean;
 }) {
   let label: string;
   if (comingSoon) {
@@ -174,6 +175,8 @@ function ProviderPill({
     label = 'Upgrade';
   } else if (connected) {
     label = 'Connected';
+  } else if (inSetup) {
+    label = 'In setup';
   } else if (connecting) {
     label = 'Connecting...';
   } else {
@@ -204,6 +207,10 @@ function ProviderPill({
 
 function SelectedStatusBadge() {
   return <RiCheckboxCircleFill className="text-success-base size-4 shrink-0" aria-hidden />;
+}
+
+function InSetupBadge() {
+  return <span className="bg-warning-base size-2 shrink-0 rounded-full" aria-hidden />;
 }
 
 function ScrollEdgeButton({
@@ -243,17 +250,20 @@ function ScrollEdgeButton({
 
 function TopRightIndicator({
   isLocked,
-  isSelected,
+  showCheck,
+  showInSetup,
   comingSoon,
   setupTime,
 }: {
   isLocked: boolean;
-  isSelected: boolean;
+  showCheck: boolean;
+  showInSetup: boolean;
   comingSoon: boolean;
   setupTime: string;
 }) {
   if (isLocked) return <LockedBadge />;
-  if (isSelected) return <SelectedStatusBadge />;
+  if (showCheck) return <SelectedStatusBadge />;
+  if (showInSetup) return <InSetupBadge />;
 
   return (
     <span className="text-text-soft shrink-0 whitespace-nowrap text-[10px] font-medium leading-[14px]">
@@ -269,8 +279,7 @@ function ProviderCard({
   isLoading,
   isAgentEmailAvailable,
   disabled,
-  collapsed,
-  channelSelectionExpanded,
+  switcherStatus,
   onClick,
 }: {
   item: ProviderCardItem;
@@ -279,8 +288,13 @@ function ProviderCard({
   isLoading: boolean;
   isAgentEmailAvailable: boolean;
   disabled?: boolean;
-  collapsed?: boolean;
-  channelSelectionExpanded?: boolean;
+  /**
+   * Set only when this card is rendered inside the persistent switcher rail (after a channel has
+   * been picked). It enriches the shared card design with an explicit per-channel status ("In setup"
+   * for a linked-but-not-yet-connected channel) plus an active border on the selected channel. Left
+   * undefined in the pre-pick grid, where the original connect/connecting/connected state is used.
+   */
+  switcherStatus?: ProviderSwitcherStatus;
   onClick: () => void;
 }) {
   const interaction = getProviderCardInteraction(item.providerId);
@@ -288,9 +302,15 @@ function ProviderCard({
     isConnected,
     isSelected,
     isLoading,
-    channelSelectionExpanded,
   });
-  const { effectiveConnected, showSelectedIndicator, showConnecting } = visualState;
+
+  const inSwitcher = switcherStatus !== undefined;
+  const effectiveConnected = inSwitcher ? switcherStatus === 'connected' : visualState.effectiveConnected;
+  const showInSetup = inSwitcher && switcherStatus === 'in-setup';
+  const showConnecting = !inSwitcher && visualState.showConnecting;
+  const showCheck = inSwitcher ? effectiveConnected : visualState.showSelectedIndicator;
+  const showActiveBorder = inSwitcher && isSelected;
+
   const isLocked = item.requiresBusinessTier && !isAgentEmailAvailable && !effectiveConnected;
   const setupTime = getSetupTimeLabel(item.providerId);
   const isInteractionDisabled = item.comingSoon || disabled;
@@ -302,11 +322,10 @@ function ProviderCard({
       disabled={isInteractionDisabled}
       aria-disabled={isInteractionDisabled || undefined}
       aria-pressed={visualState.isActive || undefined}
+      aria-current={showActiveBorder || undefined}
       className={cn(
-        'group relative flex min-w-[175px] shrink-0 items-start overflow-hidden rounded-[8px] border bg-bg-white p-2 text-left shadow-xs',
-        'transition-colors border-stroke-weak hover:border-stroke-soft',
-        // Collapsed: a single "current channel" card that sizes to content instead of stretching.
-        collapsed ? 'w-[220px] max-w-full flex-none' : 'flex-1',
+        'group relative flex min-w-[175px] flex-1 shrink-0 items-start overflow-hidden rounded-[8px] border bg-bg-white p-2 text-left shadow-xs transition-colors',
+        showActiveBorder ? 'border-stroke-strong' : 'border-stroke-weak hover:border-stroke-soft',
         item.comingSoon && 'cursor-not-allowed opacity-60',
         disabled && 'cursor-default',
         !isLocked && !disabled && 'cursor-pointer!'
@@ -319,7 +338,8 @@ function ProviderCard({
           </div>
           <TopRightIndicator
             isLocked={isLocked}
-            isSelected={showSelectedIndicator}
+            showCheck={showCheck}
+            showInSetup={showInSetup}
             comingSoon={item.comingSoon}
             setupTime={setupTime}
           />
@@ -335,6 +355,7 @@ function ProviderCard({
           locked={isLocked}
           connected={effectiveConnected}
           connecting={showConnecting}
+          inSetup={showInSetup}
         />
       </div>
     </button>
@@ -383,8 +404,6 @@ export function ProviderCards({
   existingLinks,
   onSelect,
   channelSelectionCollapsed,
-  channelSelectionExpanded,
-  onToggleChannelSelection,
   disabled,
   dimmed,
 }: ProviderCardsProps) {
@@ -441,15 +460,33 @@ export function ProviderCards({
     return found?.providerId;
   }, [integrations, selectedIntegrationId]);
 
-  const visibleItems = useMemo(() => {
-    if (!channelSelectionCollapsed || !selectedProviderId) {
-      return items;
+  const linkedProviderIds = useMemo(() => {
+    const ids = new Set<string>();
+
+    for (const link of existingLinks ?? []) {
+      ids.add(link.integration.providerId);
     }
 
-    const selectedItem = items.find((item) => item.providerId === selectedProviderId);
+    return ids;
+  }, [existingLinks]);
 
-    return selectedItem ? [selectedItem] : items;
-  }, [channelSelectionCollapsed, items, selectedProviderId]);
+  // Uses isAgentIntegrationConnected so the auto-provisioned Novu email (which is "connected" the
+  // moment it is linked, without waiting for an inbound message) reads as Connected in the switcher.
+  const connectedLinkProviderIds = useMemo(() => {
+    const ids = new Set<string>();
+
+    for (const link of existingLinks ?? []) {
+      if (isAgentIntegrationConnected(link)) {
+        ids.add(link.integration.providerId);
+      }
+    }
+
+    return ids;
+  }, [existingLinks]);
+
+  // The switcher rail keeps every connectable/linked channel visible; coming-soon channels are
+  // dropped so the compact rail stays tight (they still appear in the full grid before a pick).
+  const switcherItems = useMemo(() => items.filter((item) => !item.comingSoon), [items]);
 
   const handleUpgradeClick = () => {
     if (IS_SELF_HOSTED) {
@@ -458,7 +495,7 @@ export function ProviderCards({
       return;
     }
 
-    navigate(`${ROUTES.SETTINGS_BILLING}?utm_source=agent_provider_cards`);
+    void navigate(`${ROUTES.SETTINGS_BILLING}?utm_source=agent_provider_cards`);
   };
 
   const handleCreateAndLink = (item: ProviderCardItem) => {
@@ -495,13 +532,96 @@ export function ProviderCards({
     );
   };
 
+  // Re-select a channel that is already linked to the agent (connected or still in setup) without
+  // re-creating it, so switching between channels never destroys in-progress setup. Returns false
+  // when the provider has no existing link yet (caller then falls back to create + link).
+  const selectExistingLink = (item: ProviderCardItem): boolean => {
+    const existingLink = existingLinks?.find((link) => link.integration.providerId === item.providerId);
+
+    if (!existingLink) {
+      return false;
+    }
+
+    const integration =
+      integrations?.find((i) => i._id === existingLink.integration._id) ??
+      (existingLink.integration as unknown as IIntegration);
+    onSelect(item.providerId, integration);
+
+    return true;
+  };
+
+  // Shared activation for both the full grid and the switcher rail: route the auto-provisioned email
+  // through its dedicated flow, re-select an already-linked channel in place, and only create + link
+  // a brand-new integration otherwise.
+  const activateProvider = (item: ProviderCardItem) => {
+    if (isBusy) return;
+
+    if (getProviderCardInteraction(item.providerId) === 'auto-provisioned-connectable') {
+      handleNovuAgentLink(item);
+
+      return;
+    }
+
+    if (selectExistingLink(item)) {
+      return;
+    }
+
+    handleCreateAndLink(item);
+  };
+
   const { ref: scrollRef, canScrollLeft, canScrollRight, scrollBy } = useHorizontalScrollEdges<HTMLDivElement>();
   const maskImage = buildEdgeFadeMask(canScrollLeft, canScrollRight);
-  const showScrollControls = !disabled && !channelSelectionCollapsed;
+
+  if (channelSelectionCollapsed) {
+    return (
+      <div className={cn('relative w-full', dimmed && 'opacity-30')}>
+        <ScrollEdgeButton direction="left" visible={canScrollLeft} onClick={() => scrollBy('left')} />
+        <ScrollEdgeButton direction="right" visible={canScrollRight} onClick={() => scrollBy('right')} />
+        <div
+          ref={scrollRef}
+          className="nv-no-scrollbar -mx-1 flex items-stretch gap-2.5 overflow-x-auto px-1 pb-1 pt-px"
+          style={maskImage ? { maskImage, WebkitMaskImage: maskImage } : undefined}
+        >
+          {switcherItems.map((item) => {
+            const isSelected = item.providerId === selectedProviderId;
+            const isConnected = connectedLinkProviderIds.has(item.providerId);
+            const isLinked = linkedProviderIds.has(item.providerId);
+            const isLocked = item.requiresBusinessTier && !isAgentEmailAvailable && !isConnected;
+            const isLoadingThis = pendingItemKey?.startsWith(`${item.providerId}-`) ?? false;
+            const status = resolveProviderSwitcherStatus({ isConnected, isLinked });
+
+            return (
+              <ProviderCard
+                key={item.providerId}
+                item={item}
+                isSelected={isSelected}
+                isConnected={isConnected}
+                isLoading={isLoadingThis}
+                isAgentEmailAvailable={isAgentEmailAvailable}
+                switcherStatus={status}
+                onClick={() => {
+                  if (isLocked) {
+                    handleUpgradeClick();
+
+                    return;
+                  }
+
+                  if (isSelected) return;
+
+                  activateProvider(item);
+                }}
+              />
+            );
+          })}
+        </div>
+        <p className="text-text-soft mt-2 px-1 text-label-xs leading-4">Set up multiple channels — switch anytime.</p>
+      </div>
+    );
+  }
 
   return (
     <div className={cn('relative w-full', dimmed && 'opacity-30')}>
-      {showScrollControls && (
+      {!disabled && (
         <>
           <ScrollEdgeButton direction="left" visible={canScrollLeft} onClick={() => scrollBy('left')} />
           <ScrollEdgeButton direction="right" visible={canScrollRight} onClick={() => scrollBy('right')} />
@@ -509,19 +629,14 @@ export function ProviderCards({
       )}
       <div
         ref={scrollRef}
-        className={cn(
-          'nv-no-scrollbar -mx-1 flex items-stretch gap-2.5 overflow-x-auto px-1 pb-1 pt-px',
-          channelSelectionCollapsed && 'overflow-visible'
-        )}
-        style={maskImage && !channelSelectionCollapsed ? { maskImage, WebkitMaskImage: maskImage } : undefined}
+        className="nv-no-scrollbar -mx-1 flex items-stretch gap-2.5 overflow-x-auto px-1 pb-1 pt-px"
+        style={maskImage ? { maskImage, WebkitMaskImage: maskImage } : undefined}
       >
-        {visibleItems.map((item) => {
+        {items.map((item) => {
           const isSelected = item.providerId === selectedProviderId;
           const isConnected = connectedProviderIds.has(item.providerId);
-          const interaction = getProviderCardInteraction(item.providerId);
           const isLocked = item.requiresBusinessTier && !isAgentEmailAvailable;
-          const itemKeyPrefix = `${item.providerId}-`;
-          const isLoadingThis = pendingItemKey?.startsWith(itemKeyPrefix) ?? false;
+          const isLoadingThis = pendingItemKey?.startsWith(`${item.providerId}-`) ?? false;
 
           if (item.comingSoon) {
             return (
@@ -562,41 +677,12 @@ export function ProviderCards({
               isLoading={isLoadingThis}
               isAgentEmailAvailable={isAgentEmailAvailable}
               disabled={disabled}
-              collapsed={channelSelectionCollapsed}
-              channelSelectionExpanded={channelSelectionExpanded}
               onClick={() => {
                 if (disabled) return;
 
-                // Selected in-progress card toggles the guide: "Connecting…" opens it, "Connect" closes it.
-                if (onToggleChannelSelection && isSelected && !isConnected) {
-                  onToggleChannelSelection();
-
-                  return;
-                }
-
-                if (isBusy) return;
-
-                if (interaction === 'auto-provisioned-connectable') {
-                  handleNovuAgentLink(item);
-
-                  return;
-                }
-
                 if (isSelected) return;
 
-                if (isConnected) {
-                  const linkedIntegration = existingLinks?.find(
-                    (link) => link.integration.providerId === item.providerId && isAgentIntegrationConnected(link)
-                  )?.integration as unknown as IIntegration | undefined;
-
-                  if (linkedIntegration) {
-                    onSelect(item.providerId, linkedIntegration);
-                  }
-
-                  return;
-                }
-
-                handleCreateAndLink(item);
+                activateProvider(item);
               }}
             />
           );
