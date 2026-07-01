@@ -322,11 +322,11 @@ export function AgentSetupSteps({
   }, [agentIntegrationsQuery.data?.data]);
 
   const [isInstructionsExpanded, setIsInstructionsExpanded] = useState(false);
-  // Agent details page: tracks the channel-cards expand toggle.
-  //  false = collapsed "Connecting…" card + layer-1 guide visible (the active onboarding state)
+  // Agent details page: tracks the channel-selection expand toggle.
+  //  false = collapsed "Connecting…" card + layer-1 guide visible (the active connecting state)
   //  true  = expanded "Connect" cards + guide hidden
   // Starts collapsed so a picked/in-progress channel resumes its guide.
-  const [detailsOnboardingExpanded, setDetailsOnboardingExpanded] = useState(false);
+  const [detailsChannelSelectionExpanded, setDetailsChannelSelectionExpanded] = useState(false);
 
   const selectedIntegration = useMemo(() => {
     if (validatedSelectedId) {
@@ -412,17 +412,17 @@ export function AgentSetupSteps({
     : selectedProviderId;
   const ProviderGuide = guideProviderId ? resolveProviderSetupGuide(guideProviderId) : null;
   const isChannelGuideActive = Boolean(ProviderGuide && guideIntegrationId && !skipProviderGuide);
-  const detailsChannelSelectionCollapsed = !isOnboarding && isChannelGuideActive && !detailsOnboardingExpanded;
+  const detailsChannelSelectionCollapsed = !isOnboarding && isChannelGuideActive && !detailsChannelSelectionExpanded;
 
-  const toggleDetailsOnboarding = useCallback(() => {
-    setDetailsOnboardingExpanded((prev) => !prev);
+  const toggleDetailsChannelSelection = useCallback(() => {
+    setDetailsChannelSelectionExpanded((prev) => !prev);
   }, []);
 
-  const detailsOnboardingToggleProps = !isOnboarding
+  const detailsChannelSelectionToggleProps = !isOnboarding
     ? {
         channelSelectionCollapsed: detailsChannelSelectionCollapsed,
-        onboardingExpanded: detailsOnboardingExpanded,
-        onToggleOnboarding: toggleDetailsOnboarding,
+        channelSelectionExpanded: detailsChannelSelectionExpanded,
+        onToggleChannelSelection: toggleDetailsChannelSelection,
       }
     : {};
 
@@ -486,20 +486,6 @@ export function AgentSetupSteps({
   useEffect(() => {
     onChannelGuideActiveChangeRef.current?.(isChannelGuideActive);
   }, [isChannelGuideActive]);
-
-  useEffect(() => {
-    if (isChannelGuideActive) {
-      return;
-    }
-
-    // Only reset when the user truly cleared channel selection. A transient
-    // `isChannelGuideActive=false` (e.g. while integrations refetch) must not undo an explicit expand.
-    if (selectedIntegrationId || effectiveIntegrationId) {
-      return;
-    }
-
-    setDetailsOnboardingExpanded(false);
-  }, [isChannelGuideActive, selectedIntegrationId, effectiveIntegrationId]);
   const integrationIdentifier = selectedIntegration?.identifier ?? legacyDefaultFromAgent?.identifier;
 
   const onSetupCompleteRef = useRef(onSetupComplete);
@@ -584,7 +570,7 @@ export function AgentSetupSteps({
         sessionStorage.setItem(SESSION_KEY(agent.identifier), integration._id);
 
         if (!isOnboarding) {
-          setDetailsOnboardingExpanded(false);
+          setDetailsChannelSelectionExpanded(false);
         }
 
         // Activate the collapse in the same render as the selection so the preview,
@@ -835,7 +821,7 @@ export function AgentSetupSteps({
               selectedIntegrationId={effectiveIntegrationId}
               existingLinks={agentIntegrationLinks}
               onSelect={handleProviderSelect}
-              {...detailsOnboardingToggleProps}
+              {...detailsChannelSelectionToggleProps}
             />
           ) : (
             <SetupStep
@@ -850,7 +836,7 @@ export function AgentSetupSteps({
                   selectedIntegrationId={effectiveIntegrationId}
                   existingLinks={agentIntegrationLinks}
                   onSelect={handleProviderSelect}
-                  {...detailsOnboardingToggleProps}
+                  {...detailsChannelSelectionToggleProps}
                 />
               }
             />

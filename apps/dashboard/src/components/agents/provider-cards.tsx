@@ -119,9 +119,13 @@ type ProviderCardsProps = {
    * "Connect" on the selected card and clicking it closes onboarding again.
    */
   channelSelectionCollapsed?: boolean;
-  /** Agent-details page: mirrors whether the provider setup guide is expanded below the cards. */
-  onboardingExpanded?: boolean;
-  onToggleOnboarding?: () => void;
+  /**
+   * Agent-details channel-selection toggle: true = expanded "Connect" grid (guide hidden below),
+   * false = collapsed "Connecting…" card (guide shown). Distinct from `channelSelectionCollapsed`,
+   * which only drives the single-card layout.
+   */
+  channelSelectionExpanded?: boolean;
+  onToggleChannelSelection?: () => void;
   /**
    * Renders the cards as a non-interactive, dimmed preview — every card button and the scroll
    * arrows are disabled. Used in the onboarding connect phase to show the channel step before the
@@ -266,7 +270,7 @@ function ProviderCard({
   isAgentEmailAvailable,
   disabled,
   collapsed,
-  onboardingExpanded,
+  channelSelectionExpanded,
   onClick,
 }: {
   item: ProviderCardItem;
@@ -276,7 +280,7 @@ function ProviderCard({
   isAgentEmailAvailable: boolean;
   disabled?: boolean;
   collapsed?: boolean;
-  onboardingExpanded?: boolean;
+  channelSelectionExpanded?: boolean;
   onClick: () => void;
 }) {
   const interaction = getProviderCardInteraction(item.providerId);
@@ -284,8 +288,7 @@ function ProviderCard({
     isConnected,
     isSelected,
     isLoading,
-    onboardingExpanded,
-    channelSelectionCollapsed: collapsed ?? true,
+    channelSelectionExpanded,
   });
   const { effectiveConnected, showSelectedIndicator, showConnecting } = visualState;
   const isLocked = item.requiresBusinessTier && !isAgentEmailAvailable && !effectiveConnected;
@@ -380,8 +383,8 @@ export function ProviderCards({
   existingLinks,
   onSelect,
   channelSelectionCollapsed,
-  onboardingExpanded,
-  onToggleOnboarding,
+  channelSelectionExpanded,
+  onToggleChannelSelection,
   disabled,
   dimmed,
 }: ProviderCardsProps) {
@@ -560,13 +563,13 @@ export function ProviderCards({
               isAgentEmailAvailable={isAgentEmailAvailable}
               disabled={disabled}
               collapsed={channelSelectionCollapsed}
-              onboardingExpanded={onboardingExpanded}
+              channelSelectionExpanded={channelSelectionExpanded}
               onClick={() => {
                 if (disabled) return;
 
-                // Selected in-progress card toggles onboarding: "Connecting…" opens it, "Connect" closes it.
-                if (onToggleOnboarding && isSelected && !isConnected) {
-                  onToggleOnboarding();
+                // Selected in-progress card toggles the guide: "Connecting…" opens it, "Connect" closes it.
+                if (onToggleChannelSelection && isSelected && !isConnected) {
+                  onToggleChannelSelection();
 
                   return;
                 }

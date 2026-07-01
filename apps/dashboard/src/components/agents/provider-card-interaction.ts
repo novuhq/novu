@@ -24,23 +24,24 @@ export function resolveProviderCardVisualState(
     isSelected: boolean;
     isLoading: boolean;
     /**
-     * Agent-details toggle: false = onboarding collapsed ("Connecting…"), true = open ("Connect").
-     * When omitted (onboarding flow), falls back to channelSelectionCollapsed.
+     * Agent-details channel-selection toggle: true = expanded "Connect" cards (plain state),
+     * false = collapsed "Connecting…" card (surfaces the in-progress connecting/selected indicators).
+     * Omitted in the onboarding flow, where it defaults to false so selected cards still read
+     * "Connecting…" as before.
      */
-    onboardingExpanded?: boolean;
-    channelSelectionCollapsed?: boolean;
+    channelSelectionExpanded?: boolean;
   }
 ): ProviderCardVisualState {
-  const onboardingExpanded = params.onboardingExpanded ?? !(params.channelSelectionCollapsed ?? true);
+  const channelSelectionExpanded = params.channelSelectionExpanded ?? false;
 
   if (interaction === 'auto-provisioned-connectable') {
     const effectiveConnected = params.isConnected;
 
-    const inProgress = !onboardingExpanded && !effectiveConnected && (params.isSelected || params.isLoading);
+    const inProgress = !channelSelectionExpanded && !effectiveConnected && (params.isSelected || params.isLoading);
 
     return {
       effectiveConnected,
-      showSelectedIndicator: !onboardingExpanded && (params.isSelected || effectiveConnected),
+      showSelectedIndicator: !channelSelectionExpanded && (params.isSelected || effectiveConnected),
       showConnecting: inProgress,
       isActive: params.isSelected || effectiveConnected,
     };
@@ -50,8 +51,8 @@ export function resolveProviderCardVisualState(
 
   return {
     effectiveConnected,
-    showSelectedIndicator: !onboardingExpanded && (params.isSelected || effectiveConnected),
-    showConnecting: !onboardingExpanded && params.isSelected && !effectiveConnected,
+    showSelectedIndicator: !channelSelectionExpanded && (params.isSelected || effectiveConnected),
+    showConnecting: !channelSelectionExpanded && params.isSelected && !effectiveConnected,
     isActive: params.isSelected || effectiveConnected,
   };
 }

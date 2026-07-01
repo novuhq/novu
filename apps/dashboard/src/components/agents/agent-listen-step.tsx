@@ -14,8 +14,8 @@ type AgentListenStepProps = {
   existingLinks: AgentIntegrationLink[];
   onSelect: (providerId: string, integration?: IIntegration) => void;
   channelSelectionCollapsed?: boolean;
-  onboardingExpanded?: boolean;
-  onToggleOnboarding?: () => void;
+  channelSelectionExpanded?: boolean;
+  onToggleChannelSelection?: () => void;
 };
 
 export function AgentListenStep({
@@ -28,8 +28,8 @@ export function AgentListenStep({
   existingLinks,
   onSelect,
   channelSelectionCollapsed,
-  onboardingExpanded,
-  onToggleOnboarding,
+  channelSelectionExpanded,
+  onToggleChannelSelection,
 }: AgentListenStepProps) {
   return (
     <SetupStep
@@ -46,8 +46,8 @@ export function AgentListenStep({
           existingLinks={existingLinks}
           onSelect={onSelect}
           channelSelectionCollapsed={channelSelectionCollapsed}
-          onboardingExpanded={onboardingExpanded}
-          onToggleOnboarding={onToggleOnboarding}
+          channelSelectionExpanded={channelSelectionExpanded}
+          onToggleChannelSelection={onToggleChannelSelection}
         />
       }
     />
