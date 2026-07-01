@@ -59,7 +59,9 @@ function isGenuineConnectedEndpoint(endpoint: ChannelEndpointDto): boolean {
 }
 
 /** The earliest (first) genuine end-user connection, or null if none exists yet. */
-function findFirstGenuineConnectedEndpoint(data: ChannelEndpointsListResponse | undefined): ChannelEndpointDto | null {
+export function findFirstGenuineConnectedEndpoint(
+  data: ChannelEndpointsListResponse | undefined
+): ChannelEndpointDto | null {
   if (!data) {
     return null;
   }
