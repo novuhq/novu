@@ -12,6 +12,21 @@ const TEST_CASE_PATTERN = /\bit(?:\.only)?\s*\(/g;
 const DEFAULT_MOCHA_REPORTER = process.env.CI ? 'dot' : 'spec';
 const MOCHA_REPORTER = process.env.NOVU_V2_MOCHA_REPORTER || DEFAULT_MOCHA_REPORTER;
 
+// CE fork PRs run with CI_EE_TEST=false, so cloud-EE-only behavior (outbound SSRF
+// pinning, Stripe billing periods, RBAC permissions, translations, novu-app MCP)
+// is unavailable. Exclude mixed files that contain those tests.
+const CE_EXCLUDED_FILES = new Set([
+  'src/app/agents/e2e/active-conversations.e2e.ts',
+  'src/app/agents/e2e/agent-mcp-servers.e2e.ts',
+  'src/app/auth/e2e/permissions.guard.e2e.ts',
+  'src/app/bridge/e2e/sync.e2e.ts',
+  'src/app/environments-v1/e2e/api-key-environments-exposure.e2e.ts',
+  'src/app/environments-v2/e2e/environments-v2-diff.e2e.ts',
+  'src/app/events/e2e/trigger-event-ssrf.e2e.ts',
+  'src/app/organization/e2e/update-organization-settings.e2e.ts',
+  'src/app/workflows-v2/e2e/test-http-endpoint.e2e.ts',
+]);
+
 const MOCHA_ARGS = [
   '--timeout',
   '30000',
@@ -149,11 +164,19 @@ function compareWeightedFiles(left, right) {
   return right.weight - left.weight || compareFileNames(left.relativePath, right.relativePath);
 }
 
+function isCeExcludedFile(relativePath) {
+  return CE_EXCLUDED_FILES.has(relativePath);
+}
+
 function collectWeightedFiles(ceOnly) {
   const candidates = collectTestFileRoots(ceOnly).flatMap((dir) => collectTestFiles(ceOnly, dir));
 
   return candidates
     .map((relativePath) => {
+      if (ceOnly && isCeExcludedFile(relativePath)) {
+        return null;
+      }
+
       const source = readSource(relativePath);
 
       if (!source.includes(NOVU_V2_TAG)) {
