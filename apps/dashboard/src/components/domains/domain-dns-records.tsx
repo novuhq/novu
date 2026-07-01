@@ -44,7 +44,12 @@ function DnsRecordsBody({ domain, isLoading }: { domain?: DomainResponse; isLoad
           <TableCell className="font-code text-code-xs text-text-sub px-2 py-4">{record.type}</TableCell>
           <TableCell className="font-code text-code-xs text-text-sub px-2 py-4">
             <span className="flex min-w-0 items-center gap-1">
-              <span className="min-w-0 flex-1 truncate">{record.name}</span>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="min-w-0 flex-1 truncate">{record.name}</span>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-sm break-all font-code text-code-xs">{record.name}</TooltipContent>
+              </Tooltip>
               <CopyButton valueToCopy={record.name} size="2xs" className="shrink-0" />
             </span>
           </TableCell>

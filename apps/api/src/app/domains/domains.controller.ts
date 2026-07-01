@@ -17,6 +17,7 @@ import { ExternalApiAccessible, ProductFeature, RequirePermissions } from '@novu
 import {
   ApiRateLimitCategoryEnum,
   DirectionEnum,
+  DomainStatusEnum,
   PermissionsEnum,
   ProductFeatureKeyEnum,
   UserSessionData,

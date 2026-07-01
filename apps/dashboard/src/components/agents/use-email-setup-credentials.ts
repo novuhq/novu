@@ -381,6 +381,9 @@ export function useEmailSetupCredentials({
   );
 
   const outboundFromAddress = (outboundIntegration?.credentials?.from as string | undefined) ?? '';
+  const routesQueryEnabled = Boolean(currentEnvironment && agent.identifier && domainsQuery.isSuccess);
+  const isCredentialStateReady =
+    Boolean(emailIntegration) && domainsQuery.isFetched && (!routesQueryEnabled || routesQuery.isFetched);
 
   return {
     outboundId,
@@ -400,5 +403,6 @@ export function useEmailSetupCredentials({
     saveSenderOverride,
     setSharedInboxDisabled,
     isSharedToggleUpdating: setSharedDisabledMutation.isPending,
+    isCredentialStateReady,
   };
 }

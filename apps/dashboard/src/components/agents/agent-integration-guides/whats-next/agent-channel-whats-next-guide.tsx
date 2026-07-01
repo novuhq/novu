@@ -2,9 +2,11 @@ import type { ICredentials } from '@novu/shared';
 import { useMemo, useState } from 'react';
 import { RiExpandUpDownLine } from 'react-icons/ri';
 import type { AgentIntegrationLink, AgentResponse } from '@/api/agents';
+import { ConnectionConfetti } from '@/components/agents/connection-confetti';
 import { IS_ENTERPRISE, IS_SELF_HOSTED } from '@/config';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useChannelFirstConnectedEndpoint } from '@/hooks/use-channel-first-connected-endpoint';
+import { useInSessionMilestone } from '@/hooks/use-in-session-milestone';
 import { useWhatsNextGuideSession } from '@/hooks/use-whats-next-default-expanded';
 import { shouldShowWhatsNextGuide } from '@/utils/whats-next-guide';
 import { isAgentIntegrationConnected } from '../../is-agent-integration-connected';
@@ -108,9 +110,17 @@ export function AgentChannelWhatsNextGuide({
   const { currentEnvironment } = useEnvironment();
   const { defaultExpanded, isFreshSession } = useWhatsNextGuideSession(justConnected);
   const persistKey = `agent-integration-whats-next:${currentEnvironment?.slug ?? ''}:${agent.identifier}:${integrationLink.integration.identifier}`;
-  const { connected: hasUserConnection, connectedAt } = useChannelFirstConnectedEndpoint({
+  const {
+    connected: hasUserConnection,
+    connectedAt,
+    isLoading: isEndpointsLoading,
+  } = useChannelFirstConnectedEndpoint({
     integrationIdentifier: integrationLink.integration.identifier,
     enabled: CONVERSATIONS_AVAILABLE,
+  });
+  const justUserConnected = useInSessionMilestone(hasUserConnection, {
+    ready: !CONVERSATIONS_AVAILABLE || !isEndpointsLoading,
+    persistKey: `${persistKey}:layer2`,
   });
 
   const config = useMemo(
@@ -131,37 +141,40 @@ export function AgentChannelWhatsNextGuide({
   const recapCount = config.recapSteps.length;
 
   return (
-    <SetupGuideCard
-      label="What's next"
-      rightContent={isAgentIntegrationConnected(integrationLink) ? <ConnectedBadge /> : null}
-      persistKey={persistKey}
-      defaultExpanded={defaultExpanded}
-    >
-      <div className="relative flex flex-col gap-10 py-6 pb-3 pl-8 pr-3 md:pr-6">
-        <div
-          className="absolute bottom-0 left-[22px] top-0 w-px"
-          style={{
-            background: 'linear-gradient(to bottom, transparent 0%, #E1E4EA 10%, #E1E4EA 90%, transparent 100%)',
-          }}
-        />
-        <RecapToggleRow
-          count={recapCount}
-          isExpanded={isRecapExpanded}
-          onToggle={() => setIsRecapExpanded((prev) => !prev)}
-        />
-        {isRecapExpanded
-          ? config.recapSteps.map((step, i) => (
-              <StepRow key={`recap-${i}`} step={step} index={i + 1} defaultStatus="completed" />
-            ))
-          : null}
-        {config.devSteps.map((step, i) => {
-          const devStepIndex = isRecapExpanded ? recapCount + 1 + i : i + 1;
-          const devStepStatus = hasUserConnection ? 'completed' : 'current';
+    <>
+      <ConnectionConfetti active={justUserConnected} />
+      <SetupGuideCard
+        label="What's next"
+        rightContent={isAgentIntegrationConnected(integrationLink) ? <ConnectedBadge /> : null}
+        persistKey={persistKey}
+        defaultExpanded={defaultExpanded}
+      >
+        <div className="relative flex flex-col gap-10 py-6 pb-3 pl-8 pr-3 md:pr-6">
+          <div
+            className="absolute bottom-0 left-[22px] top-0 w-px"
+            style={{
+              background: 'linear-gradient(to bottom, transparent 0%, #E1E4EA 10%, #E1E4EA 90%, transparent 100%)',
+            }}
+          />
+          <RecapToggleRow
+            count={recapCount}
+            isExpanded={isRecapExpanded}
+            onToggle={() => setIsRecapExpanded((prev) => !prev)}
+          />
+          {isRecapExpanded
+            ? config.recapSteps.map((step, i) => (
+                <StepRow key={`recap-${i}`} step={step} index={i + 1} defaultStatus="completed" />
+              ))
+            : null}
+          {config.devSteps.map((step, i) => {
+            const devStepIndex = isRecapExpanded ? recapCount + 1 + i : i + 1;
+            const devStepStatus = hasUserConnection ? 'completed' : 'current';
 
-          return <StepRow key={`dev-${i}`} step={step} index={devStepIndex} defaultStatus={devStepStatus} />;
-        })}
-      </div>
-      <ChannelListeningFooter connected={hasUserConnection} />
-    </SetupGuideCard>
+            return <StepRow key={`dev-${i}`} step={step} index={devStepIndex} defaultStatus={devStepStatus} />;
+          })}
+        </div>
+        <ChannelListeningFooter connected={hasUserConnection} />
+      </SetupGuideCard>
+    </>
   );
 }

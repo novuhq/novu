@@ -3,15 +3,16 @@ import { type ReactNode, useMemo, useState } from 'react';
 import { RiArrowRightSLine, RiCloseLine, RiExpandUpDownLine, RiKey2Line } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
 import type { AgentIntegrationLink, AgentResponse } from '@/api/agents';
+import { ConnectionConfetti } from '@/components/agents/connection-confetti';
 import { IS_SELF_HOSTED_EE } from '@/config';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
+import { useInSessionMilestone } from '@/hooks/use-in-session-milestone';
 import { useWhatsNextGuideSession } from '@/hooks/use-whats-next-default-expanded';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { shouldShowWhatsNextGuide } from '@/utils/whats-next-guide';
 import { CopyableEmailAddress } from '../../copyable-email-address';
 import { InboundAddressForm } from '../../inbound-address-form';
-import { isAgentIntegrationConnected } from '../../is-agent-integration-connected';
 import { OutboundProviderSelect } from '../../outbound-provider-select';
 import { SetupGuideCard } from '../../setup-guide-card';
 import {
@@ -107,7 +108,7 @@ export function EmailWhatsNextGuide({ agent, integrationLink, justConnected = fa
   const { currentEnvironment } = useEnvironment();
   const { defaultExpanded, isFreshSession } = useWhatsNextGuideSession(justConnected);
   const persistKey = `agent-integration-whats-next:${currentEnvironment?.slug ?? ''}:${agent.identifier}:${integrationLink.integration.identifier}`;
-  const { integrations } = useFetchIntegrations();
+  const { integrations, isLoading: isIntegrationsLoading } = useFetchIntegrations();
   const integrationId = integrationLink.integration._id;
 
   const emailIntegration = useMemo(
@@ -126,6 +127,7 @@ export function EmailWhatsNextGuide({ agent, integrationLink, justConnected = fa
     onOutboundSelect,
     addAddress,
     removeAddress,
+    isCredentialStateReady,
   } = useEmailSetupCredentials({ emailIntegration, integrations, agent });
 
   const [isCredentialsSidebarOpen, setIsCredentialsSidebarOpen] = useState(false);
@@ -142,19 +144,20 @@ export function EmailWhatsNextGuide({ agent, integrationLink, justConnected = fa
     ? buildRoute(ROUTES.DOMAINS, { environmentSlug: currentEnvironment.slug })
     : ROUTES.DOMAINS;
 
+  const providerDone = !isOutboundDemo && hasOutboundCredentials;
+  const addressBranded = configuredAddresses.length > 0;
+  const isSelfHosted = IS_SELF_HOSTED_EE;
+  const productionReady = Boolean(emailIntegration) && (isSelfHosted ? providerDone && addressBranded : providerDone);
+  const justProductionReady = useInSessionMilestone(productionReady, {
+    ready: !isIntegrationsLoading && isCredentialStateReady,
+    persistKey: `${persistKey}:layer2`,
+  });
+  const completedAt = emailIntegration?.credentials.outboundConnectedAt ?? null;
+
   if (!emailIntegration) {
     return null;
   }
 
-  const providerDone = !isOutboundDemo && hasOutboundCredentials;
-  // A branded address can only be added on a verified domain (the picker only lists verified
-  // domains with MX configured), so a configured address implies a verified, deliverable domain.
-  const addressBranded = configuredAddresses.length > 0;
-  // Cloud surfaces only the provider upgrade in "What's next" (custom domain + sharing move to the
-  // EMAIL card below), so production-readiness keys off the provider alone. Self-hosted EE keeps the
-  // full inline checklist and still requires a branded address.
-  const isSelfHosted = IS_SELF_HOSTED_EE;
-  const productionReady = isSelfHosted ? providerDone && addressBranded : providerDone;
   const primaryUserAddress = inboundAddresses[0] ?? sharedInboundAddress ?? undefined;
 
   const recapSteps: Array<{ title: string; description: string }> = [
@@ -293,48 +296,49 @@ export function EmailWhatsNextGuide({ agent, integrationLink, justConnected = fa
   // Completion = the agent moved off the demo sender to the user's own provider, stamped server-side
   // in `credentials.outboundConnectedAt`. Hide the guide a day after that moment; until then (or in a
   // fresh onboarding session) keep showing it.
-  const completedAt = emailIntegration.credentials.outboundConnectedAt ?? null;
-
   if (!shouldShowWhatsNextGuide(completedAt, { isFreshSession })) {
     return null;
   }
 
   return (
-    <SetupGuideCard
-      label="What's next"
-      rightContent={isAgentIntegrationConnected(integrationLink) ? <ConnectedBadge /> : null}
-      persistKey={persistKey}
-      defaultExpanded={defaultExpanded}
-    >
-      <div className="relative flex flex-col gap-10 py-6 pb-3 pl-8 pr-3 md:pr-6">
-        <div
-          className="absolute bottom-0 left-[22px] top-0 w-px"
-          style={{
-            background: 'linear-gradient(to bottom, transparent 0%, #E1E4EA 10%, #E1E4EA 90%, transparent 100%)',
-          }}
-        />
-        <RecapToggleRow
-          count={recapCount}
-          isExpanded={isRecapExpanded}
-          onToggle={() => setIsRecapExpanded((prev) => !prev)}
-        />
-        {isRecapExpanded
-          ? recapSteps.map((step, i) => (
-              <StepRow
-                key={`recap-${step.title}`}
-                step={{ key: `recap-${i}`, status: 'completed', title: step.title, description: step.description }}
-                index={i + 1}
-              />
-            ))
-          : null}
-        {devSteps.map((step, i) => {
-          const index = isRecapExpanded ? recapCount + 1 + i : i + 1;
+    <>
+      <ConnectionConfetti active={justProductionReady} />
+      <SetupGuideCard
+        label="What's next"
+        rightContent={productionReady ? <ConnectedBadge /> : null}
+        persistKey={persistKey}
+        defaultExpanded={defaultExpanded}
+      >
+        <div className="relative flex flex-col gap-10 py-6 pb-3 pl-8 pr-3 md:pr-6">
+          <div
+            className="absolute bottom-0 left-[22px] top-0 w-px"
+            style={{
+              background: 'linear-gradient(to bottom, transparent 0%, #E1E4EA 10%, #E1E4EA 90%, transparent 100%)',
+            }}
+          />
+          <RecapToggleRow
+            count={recapCount}
+            isExpanded={isRecapExpanded}
+            onToggle={() => setIsRecapExpanded((prev) => !prev)}
+          />
+          {isRecapExpanded
+            ? recapSteps.map((step, i) => (
+                <StepRow
+                  key={`recap-${step.title}`}
+                  step={{ key: `recap-${i}`, status: 'completed', title: step.title, description: step.description }}
+                  index={i + 1}
+                />
+              ))
+            : null}
+          {devSteps.map((step, i) => {
+            const index = isRecapExpanded ? recapCount + 1 + i : i + 1;
 
-          return <StepRow key={step.key} step={step} index={index} />;
-        })}
-      </div>
-      <ProductionReadyFooter ready={productionReady} />
-      {credentialsSidebar}
-    </SetupGuideCard>
+            return <StepRow key={step.key} step={step} index={index} />;
+          })}
+        </div>
+        <ProductionReadyFooter ready={productionReady} />
+        {credentialsSidebar}
+      </SetupGuideCard>
+    </>
   );
 }
