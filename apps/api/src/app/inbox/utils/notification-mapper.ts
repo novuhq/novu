@@ -1,31 +1,61 @@
 import type { MessageEntity } from '@novu/dal';
-import { ButtonTypeEnum, MessageActionStatusEnum, sanitizeInAppRedirect, SeverityLevelEnum } from '@novu/shared';
+import {
+  ButtonTypeEnum,
+  MessageActionStatusEnum,
+  ResourceOriginEnum,
+  ResourceTypeEnum,
+  sanitizeInAppRedirect,
+  SeverityLevelEnum,
+} from '@novu/shared';
 
 import { InboxNotificationDto, InboxSubscriberResponseDto } from '../dtos/inbox-notification.dto';
 
-const mapSingleItem = ({
-  _id,
-  content,
-  read,
-  seen,
-  archived,
-  snoozedUntil,
-  deliveredAt,
-  createdAt,
-  lastReadDate,
-  firstSeenDate,
-  archivedAt,
-  channel,
-  subscriber,
-  subject,
-  avatar,
-  cta,
-  tags,
-  severity,
-  data,
-  template,
-  transactionId,
-}: MessageEntity): InboxNotificationDto => {
+function isV0WorkflowTemplate(template: NonNullable<MessageEntity['template']>): boolean {
+  if (template.type === ResourceTypeEnum.REGULAR || template.origin === ResourceOriginEnum.NOVU_CLOUD_V1) {
+    return true;
+  }
+
+  return template.type === undefined && template.origin === undefined;
+}
+
+function resolveNotificationData(message: MessageEntity): Record<string, unknown> | undefined {
+  if (message.data != null) {
+    return message.data;
+  }
+
+  const template = message.template;
+
+  if (template && isV0WorkflowTemplate(template) && message.payload) {
+    return message.payload;
+  }
+
+  return undefined;
+}
+
+const mapSingleItem = (message: MessageEntity): InboxNotificationDto => {
+  const {
+    _id,
+    content,
+    read,
+    seen,
+    archived,
+    snoozedUntil,
+    deliveredAt,
+    createdAt,
+    lastReadDate,
+    firstSeenDate,
+    archivedAt,
+    channel,
+    subscriber,
+    subject,
+    avatar,
+    cta,
+    tags,
+    severity,
+    template,
+    transactionId,
+  } = message;
+  const data = resolveNotificationData(message);
   const to: InboxSubscriberResponseDto = {
     id: subscriber?._id ?? '',
     firstName: subscriber?.firstName,
