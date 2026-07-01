@@ -137,7 +137,7 @@ export function usePollDomainVerification(domain: string | undefined, currentSta
       const args = requireDomainRequestArgs(domain, currentEnvironment);
       const data = await verifyDomain(args.domain, args.currentEnvironment);
 
-      syncDomainInCaches(queryClient, currentEnvironment._id, domain, data);
+      syncDomainInCaches(queryClient, args.currentEnvironment._id, args.domain, data);
 
       return data;
     },

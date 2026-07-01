@@ -1,8 +1,8 @@
 import { ChatProviderIdEnum, EmailProviderIdEnum, FeatureFlagsKeysEnum } from '@novu/shared';
-import { useQueries } from '@tanstack/react-query';
+import { type Query, useQueries } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import type { AgentIntegrationLink } from '@/api/agents';
-import { listChannelEndpoints } from '@/api/channel-endpoints';
+import { type ChannelEndpointsListResponse, listChannelEndpoints } from '@/api/channel-endpoints';
 import { providerHasWhatsNextPhase } from '@/components/agents/agent-integration-guides/whats-next/whats-next-config';
 import { IS_ENTERPRISE, IS_SELF_HOSTED } from '@/config';
 import { useEnvironment } from '@/context/environment/hooks';
@@ -83,7 +83,8 @@ export function useAgentChannelsRolloutStatus(links: AgentIntegrationLink[]): Ro
         }),
       enabled: CONVERSATIONS_AVAILABLE && Boolean(currentEnvironment),
       refetchOnWindowFocus: false,
-      refetchInterval: (query) => (findFirstGenuineConnectedEndpoint(query.state.data) ? false : POLL_INTERVAL_MS),
+      refetchInterval: (query: Query<ChannelEndpointsListResponse>) =>
+        findFirstGenuineConnectedEndpoint(query.state.data) ? false : POLL_INTERVAL_MS,
     })),
   });
 
