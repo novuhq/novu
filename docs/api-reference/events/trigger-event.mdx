@@ -12,10 +12,10 @@ If you retry a trigger request, use an [idempotency key](/api-reference/idempote
 
 | Mechanism | Where it applies | Effect on billing |
 | --- | --- | --- |
-| `Idempotency-Key` header | API layer, before the request is queued | Repeated requests with the same key return the cached response and count as **one** workflow run |
+| `Idempotency-Key` header | API layer, before the request is queued | After the first request completes, duplicates return the cached response and count as **one** workflow run |
 | `transactionId` in the request body | During trigger processing | Does **not** provide the same API-level protection as an idempotency key |
 
-When you send the same `Idempotency-Key` on multiple `POST /v1/events/trigger` requests, Novu halts duplicates at the API layer. The request never reaches the worker queue again, so only the first successful trigger counts toward billing.
+When you send the same `Idempotency-Key` on multiple `POST /v1/events/trigger` requests, Novu halts duplicates at the API layer. Once the first request completes, later requests return the cached response and never reach the worker queue, so only one trigger counts toward billing. While the first request is still processing, duplicates receive a `409 Conflict` response.
 
 The optional `transactionId` field is useful for tracing and [cancellation](/api-reference/events/cancel-triggered-event), but it is not a substitute for idempotency. Novu checks `transactionId` uniqueness during processing rather than at the API boundary, so concurrent or retried requests with the same `transactionId` are not deduplicated the same way. For safe retries and atomic deduplication, send an `Idempotency-Key` header on every trigger request.
 

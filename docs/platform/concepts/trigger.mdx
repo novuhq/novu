@@ -65,7 +65,7 @@ Jobs play a crucial role in the trigger event lifecycle. They are created based 
   </Accordion>
 
   <Accordion title="How are duplicate trigger requests with the same idempotency key billed?">
-    Repeated `POST /v1/events/trigger` requests that include the same `Idempotency-Key` header are halted at the API layer. Novu returns the cached response from the first request and does not queue the trigger again, so the duplicate requests count as **one** workflow run for billing. See [Idempotency](/api-reference/idempotency) for header requirements and retry behavior.
+    Repeated `POST /v1/events/trigger` requests that include the same `Idempotency-Key` header are halted at the API layer. Once the first request completes, duplicates return the cached response and do not queue the trigger again, so they count as **one** workflow run for billing. While the first request is still processing, duplicates receive a `409 Conflict` response. See [Idempotency](/api-reference/idempotency) for header requirements and retry behavior.
   </Accordion>
 
   <Accordion title="Does transactionId deduplicate triggers the same way as an idempotency key?">
