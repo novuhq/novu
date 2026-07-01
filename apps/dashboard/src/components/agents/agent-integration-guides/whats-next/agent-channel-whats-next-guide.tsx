@@ -108,7 +108,7 @@ export function AgentChannelWhatsNextGuide({
 }: AgentChannelWhatsNextGuideProps) {
   const [isRecapExpanded, setIsRecapExpanded] = useState(false);
   const { currentEnvironment } = useEnvironment();
-  const { defaultExpanded, isFreshSession } = useWhatsNextGuideSession(justConnected);
+  const { isFreshSession } = useWhatsNextGuideSession(justConnected);
   const persistKey = `agent-integration-whats-next:${currentEnvironment?.slug ?? ''}:${agent.identifier}:${integrationLink.integration.identifier}`;
   const {
     connected: hasUserConnection,
@@ -147,7 +147,6 @@ export function AgentChannelWhatsNextGuide({
         label="What's next"
         rightContent={isAgentIntegrationConnected(integrationLink) ? <ConnectedBadge /> : null}
         persistKey={persistKey}
-        defaultExpanded={defaultExpanded}
       >
         <div className="relative flex flex-col gap-10 py-6 pb-3 pl-8 pr-3 md:pr-6">
           <div

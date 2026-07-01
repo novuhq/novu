@@ -106,7 +106,7 @@ function ProductionReadyFooter({ ready }: { ready: boolean }) {
 export function EmailWhatsNextGuide({ agent, integrationLink, justConnected = false }: EmailWhatsNextGuideProps) {
   const navigate = useNavigate();
   const { currentEnvironment } = useEnvironment();
-  const { defaultExpanded, isFreshSession } = useWhatsNextGuideSession(justConnected);
+  const { isFreshSession } = useWhatsNextGuideSession(justConnected);
   const persistKey = `agent-integration-whats-next:${currentEnvironment?.slug ?? ''}:${agent.identifier}:${integrationLink.integration.identifier}`;
   const { integrations, isLoading: isIntegrationsLoading } = useFetchIntegrations();
   const integrationId = integrationLink.integration._id;
@@ -307,7 +307,6 @@ export function EmailWhatsNextGuide({ agent, integrationLink, justConnected = fa
         label="What's next"
         rightContent={productionReady ? <ConnectedBadge /> : null}
         persistKey={persistKey}
-        defaultExpanded={defaultExpanded}
       >
         <div className="relative flex flex-col gap-10 py-6 pb-3 pl-8 pr-3 md:pr-6">
           <div

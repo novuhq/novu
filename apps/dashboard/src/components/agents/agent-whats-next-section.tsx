@@ -210,7 +210,7 @@ export function AgentWhatsNextSection({ agent }: AgentWhatsNextSectionProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const agentRoutes = useAgentRoutes();
-  const { defaultExpanded, isFreshSession } = useWhatsNextGuideSession(false);
+  const { isFreshSession } = useWhatsNextGuideSession(false);
 
   const integrationsQuery = useQuery({
     queryKey: getAgentIntegrationsQueryKey(currentEnvironment?._id, agent.identifier),
@@ -287,12 +287,7 @@ export function AgentWhatsNextSection({ agent }: AgentWhatsNextSectionProps) {
   const persistKey = `agent-whats-next:${currentEnvironment?.slug ?? ''}:${agent.identifier}`;
 
   return (
-    <SetupGuideCard
-      label="What's next"
-      persistKey={persistKey}
-      defaultExpanded={defaultExpanded}
-      className="min-w-0 flex-1"
-    >
+    <SetupGuideCard label="What's next" persistKey={persistKey} className="min-w-0 flex-1">
       <div className="relative flex flex-col gap-10 py-6 pb-3 pl-8 pr-3 md:pr-6">
         <div
           className="absolute bottom-0 left-[22px] top-0 w-px"
