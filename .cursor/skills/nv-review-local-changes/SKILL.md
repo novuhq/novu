@@ -1,29 +1,33 @@
 ---
 name: nv-review-local-changes
 description: >-
-  Commit local changes as a baseline, run a thermo-nuclear code quality review scoped
-  to ONLY that commit, then commit the resulting refactor as a separate follow-up
-  commit. Use when the user asks to review their local/uncommitted changes for AI slop
+  Commit local changes as a baseline, hop into a lightweight review worktree, run a
+  thermo-nuclear code quality review scoped to ONLY that commit, commit the resulting
+  refactor as a separate follow-up commit, then land it back and tear the worktree
+  down. Use when the user asks to review their local/uncommitted changes for AI slop
   and redundant code, or invokes nv-review-local-changes.
 disable-model-invocation: true
 ---
 
-# Review Local Changes (commit → nuclear review → refactor commit)
+# Review Local Changes (commit → worktree → nuclear review → refactor commit)
 
-A three-commit workflow: snapshot the current work as a baseline commit, audit **only
-that commit** with the thermo-nuclear code quality review, then land the cleanup as its
-own follow-up commit. Keeps the feature diff and the review-driven refactor separately
-reviewable.
+Snapshot the current work as a baseline commit, immediately exit to a throwaway review
+worktree, audit **only that commit** with the thermo-nuclear code quality review, then
+land the cleanup as its own follow-up commit. Keeps the feature diff and the
+review-driven refactor separately reviewable, and frees the main checkout the moment
+the baseline is committed.
 
-Invoking this skill authorizes the two commits it creates (steps 1 and 3). Do not amend
+Invoking this skill authorizes the two commits it creates (steps 1 and 4). Do not amend
 or squash the baseline commit.
 
 ## Workflow
 
 ```
 - [ ] 1. Baseline commit (the work to review)
-- [ ] 2. Thermo-nuclear review scoped to that commit only
-- [ ] 3. Triage + fix, then a separate refactor commit
+- [ ] 2. Exit to a review worktree (one command)
+- [ ] 3. Thermo-nuclear review scoped to that commit only
+- [ ] 4. Triage + fix, then a separate refactor commit
+- [ ] 5. Land back on the original branch + teardown
 ```
 
 ### 1. Baseline commit
@@ -38,7 +42,22 @@ or squash the baseline commit.
 git rev-parse HEAD   # BASE_SHA
 ```
 
-### 2. Thermo-nuclear review — scoped to BASE_SHA only
+### 2. Exit to a review worktree — immediately after the commit
+
+Move the rest of the workflow (review, triage edits, refactor commit) out of the main
+checkout so it is free for other work. Do **not** use `nv-worktree-create` here — a
+single lightweight command is enough; no env copying, install, or build is needed for a
+review pass:
+
+```bash
+git worktree add -b review/<branch>-<BASE_SHA:0:7> ../review-<BASE_SHA:0:7> <BASE_SHA>
+```
+
+- From here on, run every command and file edit inside the worktree path — never touch
+  the main checkout until step 5.
+- Abort and fall back to reviewing in place if the worktree path already exists.
+
+### 3. Thermo-nuclear review — scoped to BASE_SHA only
 
 Gather the exact scope, then launch **one** `thermo-nuclear-code-quality-review` subagent (Task tool, `readonly: true`, foreground so you can act on results):
 
@@ -57,7 +76,7 @@ SCOPE (critical): Review ONLY the lines changed in commit <BASE_SHA>. You may RE
 files for context, but every finding MUST point at a line introduced/modified by this
 commit. Do not report on pre-existing code or the wider branch.
 
-Full Repository Path: <repo path>
+Full Repository Path: <worktree path>
 Commit under review: <BASE_SHA> "<subject>"
 Changed files (read full current contents for context):
 - <path 1>
@@ -76,13 +95,12 @@ concrete minimal fix. Separate must-fix from optional. Skip nitpicks that don't 
 correctness or maintainability. Do NOT modify files — return findings only.
 ~~~
 
-### 3. Triage, fix, and refactor commit
+### 4. Triage, fix, and refactor commit — in the worktree
 
 - **Verify before deleting**: confirm each dead-code/redundancy claim with `Grep` (call sites, setters, other callers) — do not trust the review blindly.
 - Apply **must-fix** and high-value findings as **behavior-preserving** edits. Defer intentional or low-value findings and state the reason to the user.
 - Don't expand scope or add features during triage.
 - After edits: `ReadLints` on every touched file; `Grep` for stale identifiers after any rename. Only fix pre-existing lints if necessary.
-- **Concurrency guard**: before staging, confirm no one else committed — `git rev-parse HEAD` must still equal `BASE_SHA`, and `git status --porcelain` should list only your triage-touched files. If `HEAD` moved, stop and re-scope: a parallel agent committed into this tree.
 - Stage only the triage-touched files and make a **new** commit (never amend BASE_SHA):
 
 ```bash
@@ -94,28 +112,31 @@ EOF
 
 - Confirm the history: `git log --oneline -3` shows BASE_SHA then the refactor commit.
 
-## Parallel agents / isolation
+### 5. Land back on the original branch + teardown
 
-The git index and working tree are shared, process-global state — this skill assumes **one agent per working tree** and does not coordinate concurrent agents. Two agents in the same checkout will cross-stage each other's files, capture the wrong `BASE_SHA`, and stack commits on the wrong base.
+From the **main checkout**, fast-forward the original branch onto the review branch,
+then remove the worktree — plain commands, no cleanup skill needed:
 
-- **Preferred**: run each agent in its own branch + worktree created with [nv-worktree-create](../nv-worktree-create/SKILL.md) before running this skill — an isolated index/tree/branch means agents physically cannot clobber each other's staging or history.
-- **Always tear the worktree down when done** so no orphan worktrees/branches accumulate:
-  1. Preserve the work first — its commits must be pushed, turned into a PR, or handed back to the orchestrator. Never delete a worktree whose commits aren't captured somewhere.
-  2. `move_agent_to_root` out of the worktree — you cannot remove the worktree you are sitting in.
-  3. Remove the worktree + branch via [nv-worktree-cleanup](../nv-worktree-cleanup/SKILL.md). Never force-remove a dirty/unpushed worktree without explicit confirmation — that silently drops commits.
-- **If sharing one tree is unavoidable**: serialize — only one agent runs steps 1–3 at a time — and rely on the guards above (`HEAD == BASE_SHA`, explicit-path staging, `git status --porcelain` check). Effective parallelism is lost.
+```bash
+git merge --ff-only review/<branch>-<BASE_SHA:0:7>
+git worktree remove ../review-<BASE_SHA:0:7>
+git branch -d review/<branch>-<BASE_SHA:0:7>
+```
+
+If `--ff-only` fails, the original branch moved while you were reviewing — do not
+force anything; report the divergence and leave the review branch in place for the
+user to reconcile.
 
 ## Guardrails
 
-- Keep the commits separate: baseline (step 1) and, when refactors are applied, the refactor (step 3). Never squash them or `--amend` the baseline.
+- Keep the commits separate: baseline (step 1) and, when refactors are applied, the refactor (step 4). Never squash them or `--amend` the baseline.
 - The review targets the single baseline commit only — never the whole branch.
-- If the review surfaces nothing worth fixing, skip step 3 and report a clean result.
+- If the review surfaces nothing worth fixing, skip step 4, and in step 5 just remove the worktree and branch (nothing to merge) and report a clean result.
 - Do not push or open a PR unless the user asks.
 
 ## Related skills
 
-- `thermo-nuclear-code-quality-review` — the audit rubric used in step 2
+- `thermo-nuclear-code-quality-review` — the audit rubric used in step 3
 - `deslop` — remove AI slop from a diff
-- [nv-worktree-create](../nv-worktree-create/SKILL.md) — isolate parallel agents in their own branch + worktree
-- [nv-worktree-cleanup](../nv-worktree-cleanup/SKILL.md) — tear down the worktree + branch when done
+- [nv-worktree-commands](../nv-worktree-commands/SKILL.md) — worktree command reference if the lightweight setup needs debugging
 - [novu-prepare-pr](../novu-prepare-pr/SKILL.md) — full post-implementation PR prep
