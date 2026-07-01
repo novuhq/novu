@@ -114,6 +114,15 @@ type ProviderCardsProps = {
   existingLinks?: AgentIntegrationLink[];
   onSelect: (providerId: string, integration?: IIntegration) => void;
   /**
+   * When true, only the selected/active channel card is shown while onboarding is collapsed.
+   * The pill reads "Connecting…"; clicking it opens onboarding. When expanded, the pill reads
+   * "Connect" on the selected card and clicking it closes onboarding again.
+   */
+  channelSelectionCollapsed?: boolean;
+  /** Agent-details page: mirrors whether the provider setup guide is expanded below the cards. */
+  onboardingExpanded?: boolean;
+  onToggleOnboarding?: () => void;
+  /**
    * Renders the cards as a non-interactive, dimmed preview — every card button and the scroll
    * arrows are disabled. Used in the onboarding connect phase to show the channel step before the
    * agent exists, then flips back on once the agent is created.
@@ -256,6 +265,8 @@ function ProviderCard({
   isLoading,
   isAgentEmailAvailable,
   disabled,
+  collapsed,
+  onboardingExpanded,
   onClick,
 }: {
   item: ProviderCardItem;
@@ -264,6 +275,8 @@ function ProviderCard({
   isLoading: boolean;
   isAgentEmailAvailable: boolean;
   disabled?: boolean;
+  collapsed?: boolean;
+  onboardingExpanded?: boolean;
   onClick: () => void;
 }) {
   const interaction = getProviderCardInteraction(item.providerId);
@@ -271,6 +284,8 @@ function ProviderCard({
     isConnected,
     isSelected,
     isLoading,
+    onboardingExpanded,
+    channelSelectionCollapsed: collapsed ?? true,
   });
   const { effectiveConnected, showSelectedIndicator, showConnecting } = visualState;
   const isLocked = item.requiresBusinessTier && !isAgentEmailAvailable && !effectiveConnected;
@@ -285,8 +300,10 @@ function ProviderCard({
       aria-disabled={isInteractionDisabled || undefined}
       aria-pressed={visualState.isActive || undefined}
       className={cn(
-        'group relative flex min-w-[175px] flex-1 shrink-0 items-start overflow-hidden rounded-[8px] border bg-bg-white p-2 text-left shadow-xs',
+        'group relative flex min-w-[175px] shrink-0 items-start overflow-hidden rounded-[8px] border bg-bg-white p-2 text-left shadow-xs',
         'transition-colors border-stroke-weak hover:border-stroke-soft',
+        // Collapsed: a single "current channel" card that sizes to content instead of stretching.
+        collapsed ? 'w-[220px] max-w-full flex-none' : 'flex-1',
         item.comingSoon && 'cursor-not-allowed opacity-60',
         disabled && 'cursor-default',
         !isLocked && !disabled && 'cursor-pointer!'
@@ -362,6 +379,9 @@ export function ProviderCards({
   selectedIntegrationId,
   existingLinks,
   onSelect,
+  channelSelectionCollapsed,
+  onboardingExpanded,
+  onToggleOnboarding,
   disabled,
   dimmed,
 }: ProviderCardsProps) {
@@ -418,6 +438,16 @@ export function ProviderCards({
     return found?.providerId;
   }, [integrations, selectedIntegrationId]);
 
+  const visibleItems = useMemo(() => {
+    if (!channelSelectionCollapsed || !selectedProviderId) {
+      return items;
+    }
+
+    const selectedItem = items.find((item) => item.providerId === selectedProviderId);
+
+    return selectedItem ? [selectedItem] : items;
+  }, [channelSelectionCollapsed, items, selectedProviderId]);
+
   const handleUpgradeClick = () => {
     if (IS_SELF_HOSTED) {
       openInNewTab(`${SELF_HOSTED_UPGRADE_REDIRECT_URL}?utm_campaign=agent_email_integration`);
@@ -464,10 +494,11 @@ export function ProviderCards({
 
   const { ref: scrollRef, canScrollLeft, canScrollRight, scrollBy } = useHorizontalScrollEdges<HTMLDivElement>();
   const maskImage = buildEdgeFadeMask(canScrollLeft, canScrollRight);
+  const showScrollControls = !disabled && !channelSelectionCollapsed;
 
   return (
     <div className={cn('relative w-full', dimmed && 'opacity-30')}>
-      {!disabled && (
+      {showScrollControls && (
         <>
           <ScrollEdgeButton direction="left" visible={canScrollLeft} onClick={() => scrollBy('left')} />
           <ScrollEdgeButton direction="right" visible={canScrollRight} onClick={() => scrollBy('right')} />
@@ -475,10 +506,13 @@ export function ProviderCards({
       )}
       <div
         ref={scrollRef}
-        className="nv-no-scrollbar -mx-1 flex items-stretch gap-2.5 overflow-x-auto px-1 pb-1 pt-px"
-        style={maskImage ? { maskImage, WebkitMaskImage: maskImage } : undefined}
+        className={cn(
+          'nv-no-scrollbar -mx-1 flex items-stretch gap-2.5 overflow-x-auto px-1 pb-1 pt-px',
+          channelSelectionCollapsed && 'overflow-visible'
+        )}
+        style={maskImage && !channelSelectionCollapsed ? { maskImage, WebkitMaskImage: maskImage } : undefined}
       >
-        {items.map((item) => {
+        {visibleItems.map((item) => {
           const isSelected = item.providerId === selectedProviderId;
           const isConnected = connectedProviderIds.has(item.providerId);
           const interaction = getProviderCardInteraction(item.providerId);
@@ -525,8 +559,18 @@ export function ProviderCards({
               isLoading={isLoadingThis}
               isAgentEmailAvailable={isAgentEmailAvailable}
               disabled={disabled}
+              collapsed={channelSelectionCollapsed}
+              onboardingExpanded={onboardingExpanded}
               onClick={() => {
                 if (disabled) return;
+
+                // Selected in-progress card toggles onboarding: "Connecting…" opens it, "Connect" closes it.
+                if (onToggleOnboarding && isSelected && !isConnected) {
+                  onToggleOnboarding();
+
+                  return;
+                }
+
                 if (isBusy) return;
 
                 if (interaction === 'auto-provisioned-connectable') {

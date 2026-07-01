@@ -23,22 +23,24 @@ export function resolveProviderCardVisualState(
     isConnected: boolean;
     isSelected: boolean;
     isLoading: boolean;
+    /**
+     * Agent-details toggle: false = onboarding collapsed ("Connecting…"), true = open ("Connect").
+     * When omitted (onboarding flow), falls back to channelSelectionCollapsed.
+     */
+    onboardingExpanded?: boolean;
+    channelSelectionCollapsed?: boolean;
   }
 ): ProviderCardVisualState {
+  const onboardingExpanded = params.onboardingExpanded ?? !(params.channelSelectionCollapsed ?? true);
+
   if (interaction === 'auto-provisioned-connectable') {
     const effectiveConnected = params.isConnected;
 
-    // Email is auto-provisioned, so its link exists before the user does anything — that alone
-    // must not read as "Connected" (that still requires a real inbound message via `isConnected`).
-    // Once the user opens the setup guide (selects the card), or a link mutation is mid-flight, and
-    // before that first message lands, surface the in-progress "Connecting…" state so the first-row
-    // card mirrors the open onboarding guide below it instead of snapping back to "Connect". This
-    // matches how standard channels present a selected-but-not-yet-connected provider.
-    const inProgress = !effectiveConnected && (params.isSelected || params.isLoading);
+    const inProgress = !onboardingExpanded && !effectiveConnected && (params.isSelected || params.isLoading);
 
     return {
       effectiveConnected,
-      showSelectedIndicator: params.isSelected || effectiveConnected,
+      showSelectedIndicator: !onboardingExpanded && (params.isSelected || effectiveConnected),
       showConnecting: inProgress,
       isActive: params.isSelected || effectiveConnected,
     };
@@ -48,8 +50,8 @@ export function resolveProviderCardVisualState(
 
   return {
     effectiveConnected,
-    showSelectedIndicator: params.isSelected || effectiveConnected,
-    showConnecting: params.isSelected && !effectiveConnected,
+    showSelectedIndicator: !onboardingExpanded && (params.isSelected || effectiveConnected),
+    showConnecting: !onboardingExpanded && params.isSelected && !effectiveConnected,
     isActive: params.isSelected || effectiveConnected,
   };
 }

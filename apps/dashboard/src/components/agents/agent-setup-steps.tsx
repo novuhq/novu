@@ -322,6 +322,11 @@ export function AgentSetupSteps({
   }, [agentIntegrationsQuery.data?.data]);
 
   const [isInstructionsExpanded, setIsInstructionsExpanded] = useState(false);
+  // Agent details page: tracks the channel-cards expand toggle.
+  //  false = collapsed "Connecting…" card + layer-1 guide visible (the active onboarding state)
+  //  true  = expanded "Connect" cards + guide hidden
+  // Starts collapsed so a picked/in-progress channel resumes its guide.
+  const [detailsOnboardingExpanded, setDetailsOnboardingExpanded] = useState(false);
 
   const selectedIntegration = useMemo(() => {
     if (validatedSelectedId) {
@@ -357,7 +362,7 @@ export function AgentSetupSteps({
   const legacyDefaultFromAgent = useCloudMergedListenStep ? undefined : agent.integrations?.[0];
   const selectedProviderId = selectedIntegration?.providerId ?? legacyDefaultFromAgent?.providerId;
   const isEmailChannelSelected = selectedProviderId === EmailProviderIdEnum.NovuAgent;
-  const effectiveIntegrationId = validatedSelectedId ?? legacyDefaultFromAgent?.integrationId;
+  const effectiveIntegrationId = validatedSelectedId ?? selectedIntegrationId ?? legacyDefaultFromAgent?.integrationId;
 
   // Email is surfaced as a provider card inside the listen step, so it never gets its own numbered
   // step — the channel cards are always the first step after the brain section.
@@ -407,6 +412,19 @@ export function AgentSetupSteps({
     : selectedProviderId;
   const ProviderGuide = guideProviderId ? resolveProviderSetupGuide(guideProviderId) : null;
   const isChannelGuideActive = Boolean(ProviderGuide && guideIntegrationId && !skipProviderGuide);
+  const detailsChannelSelectionCollapsed = !isOnboarding && isChannelGuideActive && !detailsOnboardingExpanded;
+
+  const toggleDetailsOnboarding = useCallback(() => {
+    setDetailsOnboardingExpanded((prev) => !prev);
+  }, []);
+
+  const detailsOnboardingToggleProps = !isOnboarding
+    ? {
+        channelSelectionCollapsed: detailsChannelSelectionCollapsed,
+        onboardingExpanded: detailsOnboardingExpanded,
+        onToggleOnboarding: toggleDetailsOnboarding,
+      }
+    : {};
 
   // The agent–integration link carries the server-computed shared inbound address (e.g. the demo
   // email's default `…@agentconnect.sh` inbox). The email guide needs it to surface that address.
@@ -468,6 +486,20 @@ export function AgentSetupSteps({
   useEffect(() => {
     onChannelGuideActiveChangeRef.current?.(isChannelGuideActive);
   }, [isChannelGuideActive]);
+
+  useEffect(() => {
+    if (isChannelGuideActive) {
+      return;
+    }
+
+    // Only reset when the user truly cleared channel selection. A transient
+    // `isChannelGuideActive=false` (e.g. while integrations refetch) must not undo an explicit expand.
+    if (selectedIntegrationId || effectiveIntegrationId) {
+      return;
+    }
+
+    setDetailsOnboardingExpanded(false);
+  }, [isChannelGuideActive, selectedIntegrationId, effectiveIntegrationId]);
   const integrationIdentifier = selectedIntegration?.identifier ?? legacyDefaultFromAgent?.identifier;
 
   const onSetupCompleteRef = useRef(onSetupComplete);
@@ -550,6 +582,10 @@ export function AgentSetupSteps({
         setSelectedIntegrationId(integration._id);
         setPickedChannelProviderId(providerId);
         sessionStorage.setItem(SESSION_KEY(agent.identifier), integration._id);
+
+        if (!isOnboarding) {
+          setDetailsOnboardingExpanded(false);
+        }
 
         // Activate the collapse in the same render as the selection so the preview,
         // channel cards, and provider guide animate together rather than in two stages.
@@ -799,6 +835,7 @@ export function AgentSetupSteps({
               selectedIntegrationId={effectiveIntegrationId}
               existingLinks={agentIntegrationLinks}
               onSelect={handleProviderSelect}
+              {...detailsOnboardingToggleProps}
             />
           ) : (
             <SetupStep
@@ -813,6 +850,7 @@ export function AgentSetupSteps({
                   selectedIntegrationId={effectiveIntegrationId}
                   existingLinks={agentIntegrationLinks}
                   onSelect={handleProviderSelect}
+                  {...detailsOnboardingToggleProps}
                 />
               }
             />
@@ -820,8 +858,11 @@ export function AgentSetupSteps({
         </motion.div>
       </SetupStepperRail>
 
-      <AnimatePresence mode="wait" initial={false}>
-        {ProviderGuide && guideIntegrationId && !skipProviderGuide ? (
+      <AnimatePresence initial={false}>
+        {ProviderGuide &&
+        guideIntegrationId &&
+        !skipProviderGuide &&
+        (isOnboarding || detailsChannelSelectionCollapsed) ? (
           <motion.div
             key={guideIntegrationId}
             initial={{ height: 0, opacity: 0 }}
@@ -829,7 +870,7 @@ export function AgentSetupSteps({
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
             className="flex flex-col gap-10"
-            style={{ clipPath: 'inset(0 -100% -100% -100%)' }}
+            style={{ clipPath: 'inset(0 -100% -100% -100%)', overflow: 'hidden' }}
           >
             {useRolloutGate && guideIntegrationId && guideProviderId ? (
               <AgentIntegrationGuideTransition
