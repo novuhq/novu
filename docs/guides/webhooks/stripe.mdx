@@ -274,28 +274,143 @@ Create `app/utils/novu.ts` :
   </Tree.Folder>
 </Tree>
 
-```jsx
+<Tabs>
+  <Tab title="Node.js">
+```typescript
 import { Novu } from '@novu/api';
-import { SubscriberPayloadDto } from '@novu/api/models/components/subscriberpayloaddto';
 
 const novu = new Novu({
-    secretKey: process.env['NOVU_SECRET_KEY']
+  secretKey: process.env['NOVU_SECRET_KEY']!,
 });
 
-export async function triggerWorkflow(workflowId: string, subscriber: SubscriberPayloadDto, payload: object) {
-    try {
-        console.log("Payload:", payload ,"Triggering workflow:", workflowId, "Subscriber:", subscriber)
-        await novu.trigger({
-            workflowId,
-            to: subscriber,
-            payload
-        });
-        return new Response('Notification triggered', { status: 200 });
-    } catch (error) {
-        return new Response('Error triggering notification', { status: 500 });
-    }
+export async function triggerWorkflow(workflowId: string, subscriber: object, payload: object) {
+  try {
+    await novu.trigger({ workflowId, to: subscriber, payload });
+    return new Response('Notification triggered', { status: 200 });
+  } catch (error) {
+    return new Response('Error triggering notification', { status: 500 });
+  }
 }
 ```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+def trigger_workflow(workflow_id: str, subscriber: dict, payload: dict):
+    with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+        novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+            workflow_id=workflow_id,
+            to=subscriber,
+            payload=payload,
+        ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+func triggerWorkflow(workflowID string, subscriber components.SubscriberPayloadDto, payload map[string]any) error {
+    s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+    _, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+        WorkflowID: workflowID,
+        To:         components.CreateToSubscriberPayloadDto(subscriber),
+        Payload:    payload,
+    }, nil)
+    return err
+}
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+function triggerWorkflow(string $workflowId, array $subscriber, array $payload): void
+{
+    $sdk = novu\Novu::builder()
+        ->setSecurity('<YOUR_SECRET_KEY_HERE>')
+        ->build();
+
+    $sdk->trigger(
+        triggerEventRequestDto: new Components\TriggerEventRequestDto(
+            workflowId: $workflowId,
+            to: new Components\SubscriberPayloadDto(
+                subscriberId: $subscriber['subscriberId'],
+                email: $subscriber['email'] ?? null,
+                firstName: $subscriber['firstName'] ?? null,
+                lastName: $subscriber['lastName'] ?? null,
+            ),
+            payload: $payload,
+        ),
+    );
+}
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+
+var novu = new NovuSDK(secretKey: "<YOUR_SECRET_KEY_HERE>");
+
+async Task TriggerWorkflow(string workflowId, SubscriberPayloadDto subscriber, Dictionary<string, object> payload)
+{
+    await novu.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+        WorkflowId = workflowId,
+        To = To.CreateSubscriberPayloadDto(subscriber),
+        Payload = payload,
+    });
+}
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+import java.util.Map;
+
+Novu novu = Novu.builder()
+    .secretKey("<YOUR_SECRET_KEY_HERE>")
+    .build();
+
+void triggerWorkflow(String workflowId, SubscriberPayloadDto subscriber, Map<String, Object> payload) {
+    novu.trigger()
+        .body(TriggerEventRequestDto.builder()
+            .workflowId(workflowId)
+            .to(To2.of(subscriber))
+            .payload(payload)
+            .build())
+        .call();
+}
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -X POST 'https://api.novu.co/v1/events/trigger' \
+-H 'Content-Type: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+  "name": "customer-subscription-created",
+  "to": {
+    "subscriberId": "cus_123",
+    "email": "customer@example.com",
+    "firstName": "Jane"
+  },
+  "payload": {}
+}'
+```
+  </Tab>
+</Tabs>
 
 </Step>
 

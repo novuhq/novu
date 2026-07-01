@@ -82,46 +82,136 @@ Before Novu can send a push notification to a subscriber (user), you must associ
 You can do this by making an API call to [update the subscriber's credentials](/api-reference/subscribers/update-provider-credentials).
 
 <Tabs>
-<Tab title="Node.js">
+  <Tab title="Node.js">
 ```typescript
 import { Novu } from '@novu/api';
 import { ChatOrPushProviderEnum } from "@novu/api/models/components";
 
-const novu = new Novu({
-  secretKey: "<NOVU_SECRET_KEY>",
-  // Required if using EU region
-  // serverURL: "https://eu.api.novu.co",
-});
+const novu = new Novu({ secretKey: "<NOVU_SECRET_KEY>" });
 
 await novu.subscribers.credentials.update(
   {
     providerId: ChatOrPushProviderEnum.Expo,
-    // Use integrationIdentifier to store device tokens for a specific integration
     integrationIdentifier: "string",
-    credentials: {
-      deviceTokens: [
-        "token1",
-        "token2"
-      ]
-    },
+    credentials: { deviceTokens: ["token1", "token2"] },
   },
   "subscriberId"
 );
 ```
-</Tab>
-<Tab title="cURL">
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.subscribers.credentials.update(
+        subscriber_id="subscriberId",
+        update_subscriber_channel_request_dto={
+            "provider_id": novu_py.ChatOrPushProviderEnum.EXPO,
+            "credentials": {"deviceTokens": ["token1", "token2"]},
+            "integration_identifier": "string",
+        },
+    )
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Subscribers.Credentials.Update(context.Background(), "subscriberId", components.UpdateSubscriberChannelRequestDto{
+    ProviderID: components.ChatOrPushProviderEnumExpo,
+        IntegrationIdentifier: novugo.String("string"),
+    Credentials: components.ChannelCredentials{
+        DeviceTokens: []string{"token1", "token2"},
+    },
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()->setSecurity('<NOVU_SECRET_KEY>')->build();
+
+$sdk->subscribersCredentials->update(
+    subscriberId: 'subscriberId',
+    updateSubscriberChannelRequestDto: new Components\UpdateSubscriberChannelRequestDto(
+        providerId: Components\ChatOrPushProviderEnum::Expo,
+        integrationIdentifier: 'string',
+        credentials: new Components\ChannelCredentials(
+            deviceTokens: ['token1', 'token2'],
+        ),
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+
+await sdk.Subscribers.Credentials.UpdateAsync(
+    subscriberId: "subscriberId",
+    updateSubscriberChannelRequestDto: new UpdateSubscriberChannelRequestDto() {
+        ProviderId = ChatOrPushProviderEnum.Expo,
+        IntegrationIdentifier = "string",
+        Credentials = new ChannelCredentials() {
+            DeviceTokens = new List<string> { "token1", "token2" },
+        },
+    });
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+import java.util.List;
+
+Novu novu = Novu.builder().secretKey("<NOVU_SECRET_KEY>").build();
+
+novu.subscribers().credentials().update()
+    .subscriberId("subscriberId")
+    .body(UpdateSubscriberChannelRequestDto.builder()
+        .providerId(ChatOrPushProviderEnum.EXPO)
+            .integrationIdentifier("string")
+        .credentials(ChannelCredentials.builder()
+            .deviceTokens(List.of("token1", "token2"))
+            .build())
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
 ```bash
 curl -L -X PUT 'https://api.novu.co/v1/subscribers/<SUBSCRIBER_ID>/credentials' \
 -H 'Content-Type: application/json' \
--H 'Accept: application/json' \
 -H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
 -d '{
   "providerId": "expo",
-  "deviceTokens": ["token1", "token2"],
+  "credentials": {
+    "deviceTokens": [
+      "token1",
+      "token2"
+    ]
+  },
   "integrationIdentifier": "string"
 }'
 ```
-</Tab>
+  </Tab>
 </Tabs>
 
 <Note>
@@ -130,63 +220,346 @@ curl -L -X PUT 'https://api.novu.co/v1/subscribers/<SUBSCRIBER_ID>/credentials' 
 
 ### Step 2: Send a notification
 
-Now you're ready to send a push notification. [Create a workflow with a Push step](/platform/workflow/create-a-workflow) and trigger it. Novu sends the notification to all devices associated with the subscriber.
+Now you're ready to send a push notification.
 
-The example below demonstrates a simple trigger using Novu’s SDK.
-
+<Tabs>
+  <Tab title="Node.js">
 ```typescript
 import { Novu } from '@novu/api';
 
-const novu = new Novu({
-  secretKey: "<NOVU_SECRET_KEY>",
-});
+const novu = new Novu({ secretKey: "<NOVU_SECRET_KEY>" });
 
 await novu.trigger({
   workflowId: "workflowId",
-  to: {
-    subscriberId: 'SUBSCRIBER_ID',
-  },
-  payload: {
-    // Your payload data
-  },
+  to: { subscriberId: "SUBSCRIBER_ID", },
+  payload: {},
 });
 ```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
 
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="workflowId",
+        to={"subscriber_id": "SUBSCRIBER_ID"},
+        payload={},
+    ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "workflowId",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: "SUBSCRIBER_ID",
+    }),
+    Payload: map[string]any{},
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()->setSecurity('<NOVU_SECRET_KEY>')->build();
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'workflowId',
+        to: new Components\SubscriberPayloadDto(subscriberId: 'SUBSCRIBER_ID'),
+        payload: {},
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "workflowId",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() { SubscriberId = "SUBSCRIBER_ID" }),
+    Payload = {},
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+
+Novu novu = Novu.builder().secretKey("<NOVU_SECRET_KEY>").build();
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("workflowId")
+        .to(To2.of(SubscriberPayloadDto.builder().subscriberId("SUBSCRIBER_ID").build()))
+        .payload({})
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl --location 'https://api.novu.co/v1/events/trigger' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+    "name": "workflowId",
+    "to": [
+        "SUBSCRIBER_ID"
+    ],
+    "payload": {}
+}'
+```
+  </Tab>
+</Tabs>
 ## Using overrides to customize notifications
 
-Novu provides an overrides field that let you send additional Expo-specific message fields. You can use this to control how messages are displayed or to attach custom payloads.
-
-The overrides field supports all [Expo Message Request](https://docs.expo.dev/push-notifications/sending-notifications/#message-request-format) values. Here is an example:
-
+<Tabs>
+  <Tab title="Node.js">
 ```typescript
 import { Novu } from '@novu/api';
 
-const novu = new Novu({
-  secretKey: "<NOVU_SECRET_KEY>",
-  // Required if using EU region
-  // serverURL: "https://eu.api.novu.co",
-});
+const novu = new Novu({ secretKey: "<NOVU_SECRET_KEY>" });
 
 await novu.trigger({
   workflowId: "workflowId",
-  to: { subscriberId: "subscriber-id-123" },
+  to: { subscriberId: "subscriber-id-123", },
   payload: {
-    orderId: "12345",
-  },
+    "orderId": "12345"
+},
   overrides: {
-    providers: {
-      expo: {
-        title: "Order Update",
-        body: "Your order #12345 has been shipped!",
-        data: {
-          deepLink: "myapp://orders/12345",
-          orderId: "12345",
-        },
-        sound: "default",
-        priority: "high",
-        ttl: 3600,
-      },
-    },
-  },
+    "providers": {
+        "expo": {
+            "title": "Order Update",
+            "body": "Your order #12345 has been shipped!",
+            "data": {
+                "deepLink": "myapp://orders/12345",
+                "orderId": "12345"
+            },
+            "sound": "default",
+            "priority": "high",
+            "ttl": 3600
+        }
+    }
+},
 });
 ```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="workflowId",
+        to={"subscriber_id": "subscriber-id-123"},
+        payload={
+        "orderId": "12345"
+},
+        overrides={
+        "providers": {
+                "expo": {
+                        "title": "Order Update",
+                        "body": "Your order #12345 has been shipped!",
+                        "data": {
+                                "deepLink": "myapp://orders/12345",
+                                "orderId": "12345"
+                        },
+                        "sound": "default",
+                        "priority": "high",
+                        "ttl": 3600
+                }
+        }
+},
+    ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "workflowId",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: "subscriber-id-123",
+    }),
+    Payload: map[string]any{
+    "orderId": "12345"
+},
+    Overrides: map[string]any{
+    "providers": {
+        "expo": {
+            "title": "Order Update",
+            "body": "Your order #12345 has been shipped!",
+            "data": {
+                "deepLink": "myapp://orders/12345",
+                "orderId": "12345"
+            },
+            "sound": "default",
+            "priority": "high",
+            "ttl": 3600
+        }
+    }
+},
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()->setSecurity('<NOVU_SECRET_KEY>')->build();
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'workflowId',
+        to: new Components\SubscriberPayloadDto(subscriberId: 'subscriber-id-123'),
+        payload: {
+        "orderId": "12345"
+},
+        overrides: {
+        "providers": {
+                "expo": {
+                        "title": "Order Update",
+                        "body": "Your order #12345 has been shipped!",
+                        "data": {
+                                "deepLink": "myapp://orders/12345",
+                                "orderId": "12345"
+                        },
+                        "sound": "default",
+                        "priority": "high",
+                        "ttl": 3600
+                }
+        }
+},
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "workflowId",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() { SubscriberId = "subscriber-id-123" }),
+    Payload = {
+    "orderId": "12345"
+},
+    Overrides = {
+    "providers": {
+        "expo": {
+            "title": "Order Update",
+            "body": "Your order #12345 has been shipped!",
+            "data": {
+                "deepLink": "myapp://orders/12345",
+                "orderId": "12345"
+            },
+            "sound": "default",
+            "priority": "high",
+            "ttl": 3600
+        }
+    }
+},
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+
+Novu novu = Novu.builder().secretKey("<NOVU_SECRET_KEY>").build();
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("workflowId")
+        .to(To2.of(SubscriberPayloadDto.builder().subscriberId("subscriber-id-123").build()))
+        .payload({
+        "orderId": "12345"
+})
+        .overrides({
+        "providers": {
+                "expo": {
+                        "title": "Order Update",
+                        "body": "Your order #12345 has been shipped!",
+                        "data": {
+                                "deepLink": "myapp://orders/12345",
+                                "orderId": "12345"
+                        },
+                        "sound": "default",
+                        "priority": "high",
+                        "ttl": 3600
+                }
+        }
+})
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl --location 'https://api.novu.co/v1/events/trigger' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+    "name": "workflowId",
+    "to": [
+        "subscriber-id-123"
+    ],
+    "payload": {
+        "orderId": "12345"
+    },
+    "overrides": {
+        "providers": {
+            "expo": {
+                "title": "Order Update",
+                "body": "Your order #12345 has been shipped!",
+                "data": {
+                    "deepLink": "myapp://orders/12345",
+                    "orderId": "12345"
+                },
+                "sound": "default",
+                "priority": "high",
+                "ttl": 3600
+            }
+        }
+    }
+}'
+```
+  </Tab>
+</Tabs>

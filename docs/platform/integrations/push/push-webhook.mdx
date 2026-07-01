@@ -72,34 +72,128 @@ Any random string can be used as a device token. This token is included in the w
 import { Novu } from '@novu/api';
 import { ChatOrPushProviderEnum } from "@novu/api/models/components";
 
-const novu = new Novu({
-  secretKey: "<NOVU_SECRET_KEY>",
-  // Required if using EU region
-  // serverURL: "https://eu.api.novu.co",
-});
+const novu = new Novu({ secretKey: "<NOVU_SECRET_KEY>" });
 
 await novu.subscribers.credentials.update(
   {
     providerId: ChatOrPushProviderEnum.PushWebhook,
-    // Use integrationIdentifier to store device tokens for a specific integration
     integrationIdentifier: "push-webhook-MnGLxp8uy",
-    credentials: {
-      deviceTokens: ["token1", "token2", "token3"],
-    },
+    credentials: { deviceTokens: ["token1", "token2", "token3"] },
   },
   "subscriberId"
 );
+```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.subscribers.credentials.update(
+        subscriber_id="subscriberId",
+        update_subscriber_channel_request_dto={
+            "provider_id": novu_py.ChatOrPushProviderEnum.PUSHWEBHOOK,
+            "credentials": {"deviceTokens": ["token1", "token2", "token3"]},
+            "integration_identifier": "push-webhook-MnGLxp8uy",
+        },
+    )
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Subscribers.Credentials.Update(context.Background(), "subscriberId", components.UpdateSubscriberChannelRequestDto{
+    ProviderID: components.ChatOrPushProviderEnumPushWebhook,
+        IntegrationIdentifier: novugo.String("push-webhook-MnGLxp8uy"),
+    Credentials: components.ChannelCredentials{
+        DeviceTokens: []string{"token1", "token2", "token3"},
+    },
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()->setSecurity('<NOVU_SECRET_KEY>')->build();
+
+$sdk->subscribersCredentials->update(
+    subscriberId: 'subscriberId',
+    updateSubscriberChannelRequestDto: new Components\UpdateSubscriberChannelRequestDto(
+        providerId: Components\ChatOrPushProviderEnum::PushWebhook,
+        integrationIdentifier: 'push-webhook-MnGLxp8uy',
+        credentials: new Components\ChannelCredentials(
+            deviceTokens: ['token1', 'token2', 'token3'],
+        ),
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+
+await sdk.Subscribers.Credentials.UpdateAsync(
+    subscriberId: "subscriberId",
+    updateSubscriberChannelRequestDto: new UpdateSubscriberChannelRequestDto() {
+        ProviderId = ChatOrPushProviderEnum.PushWebhook,
+        IntegrationIdentifier = "push-webhook-MnGLxp8uy",
+        Credentials = new ChannelCredentials() {
+            DeviceTokens = new List<string> { "token1", "token2", "token3" },
+        },
+    });
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+import java.util.List;
+
+Novu novu = Novu.builder().secretKey("<NOVU_SECRET_KEY>").build();
+
+novu.subscribers().credentials().update()
+    .subscriberId("subscriberId")
+    .body(UpdateSubscriberChannelRequestDto.builder()
+        .providerId(ChatOrPushProviderEnum.PUSHWEBHOOK)
+            .integrationIdentifier("push-webhook-MnGLxp8uy")
+        .credentials(ChannelCredentials.builder()
+            .deviceTokens(List.of("token1", "token2", "token3"))
+            .build())
+        .build())
+    .call();
 ```
   </Tab>
   <Tab title="cURL">
 ```bash
 curl -L -X PUT 'https://api.novu.co/v1/subscribers/<SUBSCRIBER_ID>/credentials' \
 -H 'Content-Type: application/json' \
--H 'Accept: application/json' \
 -H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
 -d '{
   "providerId": "push-webhook",
-  "deviceTokens": ['ANY_RANDOM_STRING'],
+  "credentials": {
+    "deviceTokens": [
+      "token1",
+      "token2",
+      "token3"
+    ]
+  },
   "integrationIdentifier": "push-webhook-MnGLxp8uy"
 }'
 ```
@@ -112,25 +206,130 @@ Now you're ready to send a push notification. [Create a workflow with a Push ste
 
 The example below demonstrates a simple trigger using Novu’s SDK.
 
-```jsx
+<Tabs>
+  <Tab title="Node.js">
+```typescript
 import { Novu } from '@novu/api';
 
-const novu = new Novu({
-  secretKey: "<NOVU_SECRET_KEY>",
-});
+const novu = new Novu({ secretKey: "<NOVU_SECRET_KEY>" });
 
 await novu.trigger({
   workflowId: "workflowId",
-  to: {
-    subscriberId: 'SUBSCRIBER_ID',
-  },
-  payload: {
-    // This payload data will be included
-    // in the webhook request
-    custom_message: "This is custom message from payload.",
-  },  
+  to: { subscriberId: "SUBSCRIBER_ID", },
+  payload: {
+    "custom_message": "This is custom message from payload."
+},
 });
 ```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="workflowId",
+        to={"subscriber_id": "SUBSCRIBER_ID"},
+        payload={
+        "custom_message": "This is custom message from payload."
+},
+    ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "workflowId",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: "SUBSCRIBER_ID",
+    }),
+    Payload: map[string]any{
+    "custom_message": "This is custom message from payload."
+},
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()->setSecurity('<NOVU_SECRET_KEY>')->build();
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'workflowId',
+        to: new Components\SubscriberPayloadDto(subscriberId: 'SUBSCRIBER_ID'),
+        payload: {
+        "custom_message": "This is custom message from payload."
+},
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "workflowId",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() { SubscriberId = "SUBSCRIBER_ID" }),
+    Payload = {
+    "custom_message": "This is custom message from payload."
+},
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+
+Novu novu = Novu.builder().secretKey("<NOVU_SECRET_KEY>").build();
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("workflowId")
+        .to(To2.of(SubscriberPayloadDto.builder().subscriberId("SUBSCRIBER_ID").build()))
+        .payload({
+        "custom_message": "This is custom message from payload."
+})
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl --location 'https://api.novu.co/v1/events/trigger' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+    "name": "workflowId",
+    "to": [
+        "SUBSCRIBER_ID"
+    ],
+    "payload": {
+        "custom_message": "This is custom message from payload."
+    }
+}'
+```
+  </Tab>
+</Tabs>
 
 ## Payload sent by Novu to webhook URL
 

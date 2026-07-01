@@ -49,20 +49,133 @@ We recommend a phased approach to migrate safely without dropping any messages.
 
     *If you prefer to sync ahead of time, you can easily script it:*
 
+    *If you prefer to sync ahead of time, you can easily script it:*
+
+    <Tabs>
+      <Tab title="Node.js">
     ```typescript
+    import { Novu } from '@novu/api';
 
-    const novu = new Novu({ secretKey: 'YOUR_NOVU_API_KEY' });
+    const novu = new Novu({ secretKey: process.env.NOVU_SECRET_KEY });
 
-    // Translating a Courier profile to a Novu subscriber
     await novu.subscribers.create({
-      subscriberId: 'usr_123', // Your internal user ID
+      subscriberId: 'usr_123',
       email: 'alex@example.com',
       phone: '+15551234567',
-      data: {
-        subscriptionTier: 'premium' // Custom data
-      }
+      data: { subscriptionTier: 'premium' },
     });
     ```
+      </Tab>
+      <Tab title="Python">
+    ```python
+    import os
+    import novu_py
+    from novu_py import Novu
+
+    with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+        novu.subscribers.create(
+            create_subscriber_request_dto=novu_py.CreateSubscriberRequestDto(
+                subscriber_id="usr_123",
+                email="alex@example.com",
+                phone="+15551234567",
+                data={"subscriptionTier": "premium"},
+            )
+        )
+    ```
+      </Tab>
+      <Tab title="Go">
+    ```go
+    import (
+        "context"
+        "os"
+
+        novugo "github.com/novuhq/novu-go"
+        "github.com/novuhq/novu-go/models/components"
+    )
+
+    s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+    _, err := s.Subscribers.Create(context.Background(), components.CreateSubscriberRequestDto{
+        SubscriberID: "usr_123",
+        Email:        "alex@example.com",
+        Phone:        "+15551234567",
+        Data: map[string]any{
+            "subscriptionTier": "premium",
+        },
+    }, nil)
+    ```
+      </Tab>
+      <Tab title="PHP">
+    ```php
+    use novu;
+    use novu\Models\Components;
+
+    $sdk = novu\Novu::builder()
+        ->setSecurity('<YOUR_SECRET_KEY_HERE>')
+        ->build();
+
+    $sdk->subscribers->create(
+        createSubscriberRequestDto: new Components\CreateSubscriberRequestDto(
+            subscriberId: 'usr_123',
+            email: 'alex@example.com',
+            phone: '+15551234567',
+            data: ['subscriptionTier' => 'premium'],
+        ),
+    );
+    ```
+      </Tab>
+      <Tab title=".NET">
+    ```csharp
+    using Novu;
+    using Novu.Models.Components;
+    using System.Collections.Generic;
+
+    var sdk = new NovuSDK(secretKey: "<YOUR_SECRET_KEY_HERE>");
+
+    await sdk.Subscribers.CreateAsync(createSubscriberRequestDto: new CreateSubscriberRequestDto() {
+        SubscriberId = "usr_123",
+        Email = "alex@example.com",
+        Phone = "+15551234567",
+        Data = new Dictionary<string, object>() {
+            { "subscriptionTier", "premium" },
+        },
+    });
+    ```
+      </Tab>
+      <Tab title="Java">
+    ```java
+    import co.novu.Novu;
+    import co.novu.models.components.*;
+    import java.util.Map;
+
+    Novu novu = Novu.builder()
+        .secretKey("<YOUR_SECRET_KEY_HERE>")
+        .build();
+
+    novu.subscribers().create()
+        .body(CreateSubscriberRequestDto.builder()
+            .subscriberId("usr_123")
+            .email("alex@example.com")
+            .phone("+15551234567")
+            .data(Map.of("subscriptionTier", "premium"))
+            .build())
+        .call();
+    ```
+      </Tab>
+      <Tab title="cURL">
+    ```bash
+    curl -X POST 'https://api.novu.co/v2/subscribers' \
+    -H 'Content-Type: application/json' \
+    -H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+    -d '{
+      "subscriberId": "usr_123",
+      "email": "alex@example.com",
+      "phone": "+15551234567",
+      "data": { "subscriptionTier": "premium" }
+    }'
+    ```
+      </Tab>
+    </Tabs>
 
     You can also use the [Bulk Import API](/api-reference/subscribers/bulk-create-subscribers) to import your subscribers in bulk.
   </Step>
@@ -132,71 +245,132 @@ We recommend a phased approach to migrate safely without dropping any messages.
 
     <Tabs>
       <Tab title="Node.js">
-      ```javascript
+      ```typescript
+      import { Novu } from '@novu/api';
 
-      const novu = new Novu({ secretKey: 'YOUR_SECRET_KEY' });
+      const novu = new Novu({ secretKey: process.env.NOVU_SECRET_KEY });
 
-      // Replaces courier.send()
       await novu.trigger({
         workflowId: 'weekly-digest',
-        to: { 
+        to: {
           subscriberId: 'usr_123',
-          // Pass details inline for easy lazy migration
-          email: 'alex@example.com' 
+          email: 'alex@example.com',
         },
         payload: {
-          activityType: 'login'
-        }
+          activityType: 'login',
+        },
       });
       ```
       </Tab>
       <Tab title="Python">
       ```python
+      import os
       import novu_py
       from novu_py import Novu
-      import os
-       
-      with Novu(
-      secret_key=os.getenv("NOVU_SECRET_KEY", ""),
-      ) as novu:
-       
-          res = novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
-              workflow_id="workflow_identifier",
-              to={
-                  "subscriber_id": "subscriber_unique_identifier",
-                  "first_name": "Albert",
-                  "last_name": "Einstein",
-                  "email": "albert@einstein.com",
-              },
-              payload={
-                  "comment_id": "string",
-                  "post": {
-                      "text": "string",
-                  },
-              },
-              overrides={
-                "email": {
-                  "bcc": "no-reply@novu.co"
-                }
-              },
+
+      with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+          novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+              workflow_id="weekly-digest",
+              to={"subscriber_id": "usr_123", "email": "alex@example.com"},
+              payload={"activityType": "login"},
           ))
-       
-          # Handle response
-          print(res)
+      ```
+      </Tab>
+      <Tab title="Go">
+      ```go
+      import (
+          "context"
+          "os"
+
+          novugo "github.com/novuhq/novu-go"
+          "github.com/novuhq/novu-go/models/components"
+      )
+
+      s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+      _, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+          WorkflowID: "weekly-digest",
+          To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+              SubscriberID: "usr_123",
+              Email:        "alex@example.com",
+          }),
+          Payload: map[string]any{"activityType": "login"},
+      }, nil)
+      ```
+      </Tab>
+      <Tab title="PHP">
+      ```php
+      use novu;
+      use novu\Models\Components;
+
+      $sdk = novu\Novu::builder()
+          ->setSecurity('<YOUR_SECRET_KEY_HERE>')
+          ->build();
+
+      $sdk->trigger(
+          triggerEventRequestDto: new Components\TriggerEventRequestDto(
+              workflowId: 'weekly-digest',
+              to: new Components\SubscriberPayloadDto(
+                  subscriberId: 'usr_123',
+                  email: 'alex@example.com',
+              ),
+              payload: ['activityType' => 'login'],
+          ),
+      );
+      ```
+      </Tab>
+      <Tab title=".NET">
+      ```csharp
+      using Novu;
+      using Novu.Models.Components;
+      using System.Collections.Generic;
+
+      var sdk = new NovuSDK(secretKey: "<YOUR_SECRET_KEY_HERE>");
+
+      await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+          WorkflowId = "weekly-digest",
+          To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() {
+              SubscriberId = "usr_123",
+              Email = "alex@example.com",
+          }),
+          Payload = new Dictionary<string, object>() {
+              { "activityType", "login" },
+          },
+      });
+      ```
+      </Tab>
+      <Tab title="Java">
+      ```java
+      import co.novu.Novu;
+      import co.novu.models.components.*;
+      import java.util.Map;
+
+      Novu novu = Novu.builder()
+          .secretKey("<YOUR_SECRET_KEY_HERE>")
+          .build();
+
+      novu.trigger()
+          .body(TriggerEventRequestDto.builder()
+              .workflowId("weekly-digest")
+              .to(To2.of(SubscriberPayloadDto.builder()
+                  .subscriberId("usr_123")
+                  .email("alex@example.com")
+                  .build()))
+              .payload(Map.of("activityType", "login"))
+              .build())
+          .call();
       ```
       </Tab>
       <Tab title="cURL">
       ```bash
-      curl -X POST https://api.novu.co/v1/events/trigger \
-        -H "Authorization: ApiKey YOUR_API_KEY" \
-        -H "Content-Type: application/json" \
-        -d '{
-          "name": "weekly-digest",
-          "to": { "subscriberId": "usr_123" },
-          "payload": {
-            "activityType": "login"
-          }
-        }'
+      curl -X POST 'https://api.novu.co/v1/events/trigger' \
+      -H 'Content-Type: application/json' \
+      -H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+      -d '{
+        "name": "weekly-digest",
+        "to": { "subscriberId": "usr_123", "email": "alex@example.com" },
+        "payload": { "activityType": "login" }
+      }'
       ```
       </Tab>
     </Tabs>

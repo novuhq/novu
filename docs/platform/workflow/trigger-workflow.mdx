@@ -46,24 +46,9 @@ Replace `YOUR_WORKFLOW_ID`, `YOUR_SUBSCRIBER_ID`, and payload fields with values
 
 Novu provides official server-side SDKs for TypeScript/Node.js (`@novu/api`), Python (`novu-py`), Go (`novu-go`), PHP (`novuhq/novu`), .NET (`Novu`), and Java (`co.novu:novu-java`). Use the SDK that matches the project's language. Fall back to the REST API only when no SDK fits the stack.
 
-Example with the Node.js SDK:
+Example with the Node.js SDK — see the **Trigger Event API** section below for the same trigger pattern in Python, Go, PHP, .NET, Java, and cURL (replace `workflow_identifier` with your workflow ID, such as `welcome-email`).
 
-```typescript
-import { Novu } from "@novu/api";
-
-const novu = new Novu({ secretKey: process.env.NOVU_SECRET_KEY });
-
-await novu.trigger({
-  workflowId: "welcome-email",
-  to: { subscriberId: "YOUR_SUBSCRIBER_ID" },
-  payload: {
-    userName: "Jane",
-    activationLink: "https://app.example.com/activate",
-  },
-});
-```
-
-See https://docs.novu.co/platform/sdks/server/typescript for other SDK installation and usage examples.
+See https://docs.novu.co/platform/sdks/server/typescript for SDK installation and usage details.
 
 ## Always Do
 

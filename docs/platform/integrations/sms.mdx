@@ -82,6 +82,8 @@ Each provider has different requirements.
 
 You can override the SMS settings when triggerring a notification by passing the `overrides` object. The overrides object field supports an `sms` property and `from`, `to`, and `content` field overrides. This lets you send a message to a different recipient, from a different sender, or with a different content.
 
+<Tabs>
+  <Tab title="Node.js">
 ```javascript
 import { Novu } from '@novu/api';  
 
@@ -105,6 +107,149 @@ await novu.trigger({
   },
 });
 ```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="workflowId",
+        to={"subscriber_id": "subscriberId"},
+        overrides={
+            "sms": {
+                "to": "+123012345678",
+                "from": "Novu Team",
+                "content": "This SMS message is from overrides",
+            },
+        },
+    ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+_, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "workflowId",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: "subscriberId",
+    }),
+    Overrides: map[string]map[string]any{
+        "sms": {
+            "to":      "+123012345678",
+            "from":    "Novu Team",
+            "content": "This SMS message is from overrides",
+        },
+    },
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()
+    ->setSecurity('<NOVU_SECRET_KEY>')
+    ->build();
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'workflowId',
+        to: new Components\SubscriberPayloadDto(subscriberId: 'subscriberId'),
+        overrides: [
+            'sms' => [
+                'to' => '+123012345678',
+                'from' => 'Novu Team',
+                'content' => 'This SMS message is from overrides',
+            ],
+        ],
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "workflowId",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() {
+        SubscriberId = "subscriberId",
+    }),
+    Overrides = new Overrides() {
+        Sms = new Dictionary<string, object>() {
+            { "to", "+123012345678" },
+            { "from", "Novu Team" },
+            { "content", "This SMS message is from overrides" },
+        },
+    },
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+import java.util.Map;
+
+Novu novu = Novu.builder()
+    .secretKey("<NOVU_SECRET_KEY>")
+    .build();
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("workflowId")
+        .to(To2.of(SubscriberPayloadDto.builder()
+            .subscriberId("subscriberId")
+            .build()))
+        .overrides(TriggerEventRequestDtoOverrides.builder()
+            .sms(Map.of(
+                "to", "+123012345678",
+                "from", "Novu Team",
+                "content", "This SMS message is from overrides"))
+            .build())
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -L -X POST 'https://api.novu.co/v1/events/trigger' \
+-H 'Content-Type: application/json' \
+-H 'Accept: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+    "name": "workflowId",
+    "to": {
+        "subscriberId": "subscriberId"
+    },
+    "overrides": {
+        "sms": {
+            "to": "+123012345678",
+            "from": "Novu Team",
+            "content": "This SMS message is from overrides"
+        }
+    }
+}'
+```
+  </Tab>
+</Tabs>
 
 ## Target a specific provider
 
@@ -113,7 +258,7 @@ By default, Novu uses your primary SMS provider. If you want to bypass this and 
 This is useful if you have multiple active integrations for different purposes. For example, you might have one integration for transactional SMS and one for security SMS. You can find the `integrationIdentifier` in the **Integration Store** of the Novu dashboard.
 
 <Tabs>
-<Tab title="Node.js">
+  <Tab title="Node.js">
 ```javascript
 import { Novu } from '@novu/api';  
 
@@ -132,9 +277,136 @@ await novu.trigger({
     sms: { integrationIdentifier: 'infobip-abcdef', },
   },
 });
-
 ```
-</Tab>
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="workflowId",
+        to={"subscriber_id": "subscriberId"},
+        overrides={
+            "sms": {
+                "integrationIdentifier": "infobip-abcdef",
+            },
+        },
+    ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+_, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "workflowId",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: "subscriberId",
+    }),
+    Overrides: map[string]map[string]any{
+        "sms": {
+            "integrationIdentifier": "infobip-abcdef",
+        },
+    },
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()
+    ->setSecurity('<NOVU_SECRET_KEY>')
+    ->build();
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'workflowId',
+        to: new Components\SubscriberPayloadDto(subscriberId: 'subscriberId'),
+        overrides: [
+            'sms' => [
+                'integrationIdentifier' => 'infobip-abcdef',
+            ],
+        ],
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "workflowId",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() {
+        SubscriberId = "subscriberId",
+    }),
+    Overrides = new Overrides() {
+        Sms = new Dictionary<string, object>() {
+            { "integrationIdentifier", "infobip-abcdef" },
+        },
+    },
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+import java.util.Map;
+
+Novu novu = Novu.builder()
+    .secretKey("<NOVU_SECRET_KEY>")
+    .build();
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("workflowId")
+        .to(To2.of(SubscriberPayloadDto.builder()
+            .subscriberId("subscriberId")
+            .build()))
+        .overrides(TriggerEventRequestDtoOverrides.builder()
+            .sms(Map.of("integrationIdentifier", "infobip-abcdef"))
+            .build())
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -L -X POST 'https://api.novu.co/v1/events/trigger' \
+-H 'Content-Type: application/json' \
+-H 'Accept: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+    "name": "workflowId",
+    "to": {
+        "subscriberId": "subscriberId"
+    },
+    "overrides": {
+        "sms": {
+            "integrationIdentifier": "infobip-abcdef"
+        }
+    }
+}'
+```
+  </Tab>
 </Tabs>
 
 ## Supported providers

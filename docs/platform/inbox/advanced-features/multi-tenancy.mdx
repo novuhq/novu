@@ -59,29 +59,204 @@ Once you’ve defined your tenant context, you can use it when triggering workfl
 
 If not, Novu automatically creates it — but if it does exist, Novu reuses the existing record instead of updating it, to prevent accidental overwrites.
 
-```tsx
-import { novu } from './client';
+<Tabs>
+  <Tab title="Node.js">
+```ts
+import { Novu } from "@novu/api"
+
+const novu = new Novu({ secretKey: "<YOUR_SECRET_KEY_HERE>" });
 
 await novu.trigger({
   workflowId: "workflowId",
-  to: {
-    subscriberId: 'user-123',
-  },
+  to: { subscriberId: "user-123" },
   payload: {
-    amount: '$250',
-    plan: 'Pro',
+    amount: "$250",
+    plan: "Pro",
   },
   context: {
     tenant: {
-      id: 'acme-corp',
+      id: "acme-corp",
       data: {
-        name: 'Acme Corporation',
-        plan: 'enterprise',
+        name: "Acme Corporation",
+        plan: "enterprise",
       },
     },
   },
 });
 ```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="workflowId",
+        to={"subscriber_id": "user-123"},
+        payload={"amount": "$250", "plan": "Pro"},
+        context={
+            "tenant": {
+                "id": "acme-corp",
+                "data": {
+                    "name": "Acme Corporation",
+                    "plan": "enterprise",
+                },
+            },
+        },
+    ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "workflowId",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: "user-123",
+    }),
+    Payload: map[string]any{
+        "amount": "$250",
+        "plan":   "Pro",
+    },
+    Context: map[string]any{
+        "tenant": map[string]any{
+            "id": "acme-corp",
+            "data": map[string]any{
+                "name": "Acme Corporation",
+                "plan": "enterprise",
+            },
+        },
+    },
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()
+    ->setSecurity('<YOUR_SECRET_KEY_HERE>')
+    ->build();
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'workflowId',
+        to: new Components\SubscriberPayloadDto(subscriberId: 'user-123'),
+        payload: [
+            'amount' => '$250',
+            'plan' => 'Pro',
+        ],
+        context: [
+            'tenant' => [
+                'id' => 'acme-corp',
+                'data' => [
+                    'name' => 'Acme Corporation',
+                    'plan' => 'enterprise',
+                ],
+            ],
+        ],
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+
+var sdk = new NovuSDK(secretKey: "<YOUR_SECRET_KEY_HERE>");
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "workflowId",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() {
+        SubscriberId = "user-123",
+    }),
+    Payload = new Dictionary<string, object>() {
+        { "amount", "$250" },
+        { "plan", "Pro" },
+    },
+    Context = new Dictionary<string, object>() {
+        { "tenant", new Dictionary<string, object>() {
+            { "id", "acme-corp" },
+            { "data", new Dictionary<string, object>() {
+                { "name", "Acme Corporation" },
+                { "plan", "enterprise" },
+            } },
+        } },
+    },
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+import java.util.Map;
+
+Novu novu = Novu.builder()
+    .secretKey("<YOUR_SECRET_KEY_HERE>")
+    .build();
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("workflowId")
+        .to(To2.of(SubscriberPayloadDto.builder()
+            .subscriberId("user-123")
+            .build()))
+        .payload(Map.ofEntries(
+            Map.entry("amount", "$250"),
+            Map.entry("plan", "Pro")))
+        .context(Map.ofEntries(
+            Map.entry("tenant", TriggerEventRequestDtoContextUnion.of(
+                TriggerEventRequestDtoContext2.builder()
+                    .id("acme-corp")
+                    .data(Map.ofEntries(
+                        Map.entry("name", "Acme Corporation"),
+                        Map.entry("plan", "enterprise")))
+                    .build()))))
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -L -g -X POST 'https://api.novu.co/v1/events/trigger' \
+-H 'Content-Type: application/json' \
+-H 'Accept: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+    "name": "workflowId",
+    "to": { "subscriberId": "user-123" },
+    "payload": {
+        "amount": "$250",
+        "plan": "Pro"
+    },
+    "context": {
+        "tenant": {
+            "id": "acme-corp",
+            "data": {
+                "name": "Acme Corporation",
+                "plan": "enterprise"
+            }
+        }
+    }
+}'
+```
+  </Tab>
+</Tabs>
 
 In this example:
 - The tenant context identifies the organization (“Acme Corporation”).

@@ -31,110 +31,247 @@ Novu has its own email editor for writing email template. If you want to use pre
 </Note>
 
 <Tabs>
-<Tab title="Node.js">
+  <Tab title="Node.js">
 ```typescript
 import { Novu } from '@novu/api';
 
-const novu = new Novu({
-  secretKey: "<NOVU_SECRET_KEY>",
-  // Required if using EU region
-  // serverURL: "https://eu.api.novu.co",
-});
+const novu = new Novu({ secretKey: "<NOVU_SECRET_KEY>" });
 
 await novu.trigger({
   workflowId: "workflowId",
-  to: "subscriberId",
+  to: { subscriberId: "subscriberId", },
   payload: {},
   overrides: {
-    email: {
-      customData: {
-        // mailersend template templateId 
-        templateId: "mailersend-template-id",
-        // mailersend template variables 
-        personalization: [{
-          email: 'recipient@email.com',
-          data: {
-            items: {
-              price: '',
-              product: '',
-              quantity: '',
-            },
-            order: {
-              date: '',
-              order_number: '',
-              billing_address: '',
-              customer_message: '',
-            },
-            store: {
-              name: '',
-            },
-            invoice: {
-              total: '',
-              subtotal: '',
-              pay_method: '',
-            },
-            customer: {
-              name: '',
-              email: '',
-              phone: '',
-            },
-          },
-        }, ],
-      },
-    }
-  },
-});
-```
-</Tab>
-<Tab title="cURL">
-```bash
-curl --location 'https://api.novu.co/v1/events/trigger' \
---header 'Content-Type: application/json' \
---header 'Accept: application/json' \
---header 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
---data '{
-    "name": "workflowIdentifier",
-    "to":  ["subscriberId"],
-    "payload": {},
-    "overrides": {
-        "email": {
-            "customData": {
-                "templateId": "mailersend-template-id",
-                "personalization": [{
+    "email": {
+        "customData": {
+            "templateId": "mailersend-template-id",
+            "personalization": [
+                {
                     "email": "recipient@email.com",
                     "data": {
                         "items": {
                             "price": "",
                             "product": "",
                             "quantity": ""
-                        },
-                        "order": {
-                            "date": "",
-                            "order_number": "",
-                            "billing_address": "",
-                            "customer_message": ""
-                        },
-                        "store": {
-                            "name": ""
-                        },
-                        "invoice": {
-                            "total": "",
-                            "subtotal": "",
-                            "pay_method": ""
-                        },
-                        "customer": {
-                            "name": "",
-                            "email": "",
-                            "phone": ""
                         }
                     }
-                }]
+                }
+            ]
+        }
+    }
+},
+});
+```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="workflowId",
+        to={"subscriber_id": "subscriberId"},
+        payload={},
+        overrides={
+        "email": {
+                "customData": {
+                        "templateId": "mailersend-template-id",
+                        "personalization": [
+                                {
+                                        "email": "recipient@email.com",
+                                        "data": {
+                                                "items": {
+                                                        "price": "",
+                                                        "product": "",
+                                                        "quantity": ""
+                                                }
+                                        }
+                                }
+                        ]
+                }
+        }
+},
+    ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "workflowId",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: "subscriberId",
+    }),
+    Payload: map[string]any{},
+    Overrides: map[string]any{
+    "email": {
+        "customData": {
+            "templateId": "mailersend-template-id",
+            "personalization": [
+                {
+                    "email": "recipient@email.com",
+                    "data": {
+                        "items": {
+                            "price": "",
+                            "product": "",
+                            "quantity": ""
+                        }
+                    }
+                }
+            ]
+        }
+    }
+},
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()->setSecurity('<NOVU_SECRET_KEY>')->build();
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'workflowId',
+        to: new Components\SubscriberPayloadDto(subscriberId: 'subscriberId'),
+        payload: {},
+        overrides: {
+        "email": {
+                "customData": {
+                        "templateId": "mailersend-template-id",
+                        "personalization": [
+                                {
+                                        "email": "recipient@email.com",
+                                        "data": {
+                                                "items": {
+                                                        "price": "",
+                                                        "product": "",
+                                                        "quantity": ""
+                                                }
+                                        }
+                                }
+                        ]
+                }
+        }
+},
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "workflowId",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() { SubscriberId = "subscriberId" }),
+    Payload = {},
+    Overrides = {
+    "email": {
+        "customData": {
+            "templateId": "mailersend-template-id",
+            "personalization": [
+                {
+                    "email": "recipient@email.com",
+                    "data": {
+                        "items": {
+                            "price": "",
+                            "product": "",
+                            "quantity": ""
+                        }
+                    }
+                }
+            ]
+        }
+    }
+},
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+
+Novu novu = Novu.builder().secretKey("<NOVU_SECRET_KEY>").build();
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("workflowId")
+        .to(To2.of(SubscriberPayloadDto.builder().subscriberId("subscriberId").build()))
+        .payload({})
+        .overrides({
+        "email": {
+                "customData": {
+                        "templateId": "mailersend-template-id",
+                        "personalization": [
+                                {
+                                        "email": "recipient@email.com",
+                                        "data": {
+                                                "items": {
+                                                        "price": "",
+                                                        "product": "",
+                                                        "quantity": ""
+                                                }
+                                        }
+                                }
+                        ]
+                }
+        }
+})
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl --location 'https://api.novu.co/v1/events/trigger' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+    "name": "workflowId",
+    "to": [
+        "subscriberId"
+    ],
+    "payload": {},
+    "overrides": {
+        "email": {
+            "customData": {
+                "templateId": "mailersend-template-id",
+                "personalization": [
+                    {
+                        "email": "recipient@email.com",
+                        "data": {
+                            "items": {
+                                "price": "",
+                                "product": "",
+                                "quantity": ""
+                            }
+                        }
+                    }
+                ]
             }
         }
     }
 }'
 ```
-</Tab>
+  </Tab>
 </Tabs>
 
 ## Next Steps

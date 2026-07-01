@@ -130,9 +130,10 @@ Follow the novu-dashboard-workflows skill. Use Liquid variables for personalizat
 
 Send notifications by triggering Novu workflows. Supports single, bulk, broadcast, and topic-based delivery.
 
-<Tabs>
-<Tab title="Single">
+#### Single trigger
 
+<Tabs>
+<Tab title="Node.js">
 ```typescript
 import { Novu } from "@novu/api";
 
@@ -147,12 +148,129 @@ await novu.trigger({
   },
 });
 ```
-
 </Tab>
-<Tab title="Bulk">
+<Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="welcome-email",
+        to="subscriber-123",
+        payload={
+            "userName": "Jane",
+            "activationLink": "https://app.example.com/activate",
+        },
+    ))
+```
+</Tab>
+<Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+_, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "welcome-email",
+    To:         components.CreateToStr("subscriber-123"),
+    Payload: map[string]any{
+        "userName":       "Jane",
+        "activationLink": "https://app.example.com/activate",
+    },
+}, nil)
+```
+</Tab>
+<Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()
+    ->setSecurity('<YOUR_SECRET_KEY_HERE>')
+    ->build();
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'welcome-email',
+        to: 'subscriber-123',
+        payload: [
+            'userName' => 'Jane',
+            'activationLink' => 'https://app.example.com/activate',
+        ],
+    ),
+);
+```
+</Tab>
+<Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+
+var sdk = new NovuSDK(secretKey: "<YOUR_SECRET_KEY_HERE>");
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "welcome-email",
+    To = To.CreateStr("subscriber-123"),
+    Payload = new Dictionary<string, object>() {
+        { "userName", "Jane" },
+        { "activationLink", "https://app.example.com/activate" },
+    },
+});
+```
+</Tab>
+<Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+import java.util.Map;
+
+Novu novu = Novu.builder()
+    .secretKey("<YOUR_SECRET_KEY_HERE>")
+    .build();
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("welcome-email")
+        .to(To2.of("subscriber-123"))
+        .payload(Map.ofEntries(
+            Map.entry("userName", "Jane"),
+            Map.entry("activationLink", "https://app.example.com/activate")))
+        .build())
+    .call();
+```
+</Tab>
+<Tab title="cURL">
+```bash
+curl -X POST 'https://api.novu.co/v1/events/trigger' \
+-H 'Content-Type: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+  "name": "welcome-email",
+  "to": "subscriber-123",
+  "payload": {
+    "userName": "Jane",
+    "activationLink": "https://app.example.com/activate"
+  }
+}'
+```
+</Tab>
+</Tabs>
+
+#### Bulk trigger
 
 Send up to **100 events** in a single request:
 
+<Tabs>
+<Tab title="Node.js">
 ```typescript
 await novu.triggerBulk({
   events: [
@@ -161,24 +279,143 @@ await novu.triggerBulk({
   ],
 });
 ```
-
 </Tab>
-<Tab title="Broadcast">
+<Tab title="Python">
+```python
+novu.trigger_bulk(trigger_bulk_request_dto=novu_py.TriggerBulkRequestDto(
+    events=[
+        {"workflow_id": "welcome-email", "to": "subscriber-1", "payload": {"userName": "Alice"}},
+        {"workflow_id": "welcome-email", "to": "subscriber-2", "payload": {"userName": "Bob"}},
+    ],
+))
+```
+</Tab>
+<Tab title="Go">
+```go
+_, err := s.TriggerBulk(ctx, components.TriggerBulkRequestDto{
+    Events: []components.TriggerEventRequestDto{
+        {WorkflowID: "welcome-email", To: components.CreateToStr("subscriber-1"), Payload: map[string]any{"userName": "Alice"}},
+        {WorkflowID: "welcome-email", To: components.CreateToStr("subscriber-2"), Payload: map[string]any{"userName": "Bob"}},
+    },
+}, nil)
+```
+</Tab>
+<Tab title="PHP">
+```php
+$sdk->triggerBulk(triggerBulkRequestDto: new Components\TriggerBulkRequestDto(
+    events: [
+        new Components\TriggerEventRequestDto(workflowId: 'welcome-email', to: 'subscriber-1', payload: ['userName' => 'Alice']),
+        new Components\TriggerEventRequestDto(workflowId: 'welcome-email', to: 'subscriber-2', payload: ['userName' => 'Bob']),
+    ],
+));
+```
+</Tab>
+<Tab title=".NET">
+```csharp
+await sdk.TriggerBulkAsync(new TriggerBulkRequestDto {
+    Events = new List<TriggerEventRequestDto> {
+        new() { WorkflowId = "welcome-email", To = To.CreateStr("subscriber-1"), Payload = new Dictionary<string, object>() { { "userName", "Alice" } } },
+        new() { WorkflowId = "welcome-email", To = To.CreateStr("subscriber-2"), Payload = new Dictionary<string, object>() { { "userName", "Bob" } } },
+    },
+});
+```
+</Tab>
+<Tab title="Java">
+```java
+novu.triggerBulk().body(TriggerBulkRequestDto.builder()
+    .events(List.of(
+        TriggerEventRequestDto.builder().workflowId("welcome-email").to(To2.of("subscriber-1")).payload(Map.of("userName", "Alice")).build(),
+        TriggerEventRequestDto.builder().workflowId("welcome-email").to(To2.of("subscriber-2")).payload(Map.of("userName", "Bob")).build()))
+    .build()).call();
+```
+</Tab>
+<Tab title="cURL">
+```bash
+curl -X POST 'https://api.novu.co/v1/events/trigger/bulk' \
+-H 'Content-Type: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+  "events": [
+    { "name": "welcome-email", "to": "subscriber-1", "payload": { "userName": "Alice" } },
+    { "name": "welcome-email", "to": "subscriber-2", "payload": { "userName": "Bob" } }
+  ]
+}'
+```
+</Tab>
+</Tabs>
+
+#### Broadcast trigger
 
 Send to **all subscribers** in the environment:
 
+<Tabs>
+<Tab title="Node.js">
 ```typescript
 await novu.triggerBroadcast({
   name: "system-announcement",
   payload: { message: "Scheduled maintenance at 2am UTC" },
 });
 ```
-
 </Tab>
-<Tab title="Topic">
+<Tab title="Python">
+```python
+novu.trigger_broadcast(trigger_broadcast_request_dto=novu_py.TriggerBroadcastRequestDto(
+    name="system-announcement",
+    payload={"message": "Scheduled maintenance at 2am UTC"},
+))
+```
+</Tab>
+<Tab title="Go">
+```go
+_, err := s.TriggerBroadcast(ctx, components.TriggerBroadcastRequestDto{
+    Name:    "system-announcement",
+    Payload: map[string]any{"message": "Scheduled maintenance at 2am UTC"},
+}, nil)
+```
+</Tab>
+<Tab title="PHP">
+```php
+$sdk->triggerBroadcast(triggerBroadcastRequestDto: new Components\TriggerBroadcastRequestDto(
+    name: 'system-announcement',
+    payload: ['message' => 'Scheduled maintenance at 2am UTC'],
+));
+```
+</Tab>
+<Tab title=".NET">
+```csharp
+await sdk.TriggerBroadcastAsync(new TriggerBroadcastRequestDto {
+    Name = "system-announcement",
+    Payload = new Dictionary<string, object>() { { "message", "Scheduled maintenance at 2am UTC" } },
+});
+```
+</Tab>
+<Tab title="Java">
+```java
+novu.triggerBroadcast().body(TriggerBroadcastRequestDto.builder()
+    .name("system-announcement")
+    .payload(Map.of("message", "Scheduled maintenance at 2am UTC"))
+    .build()).call();
+```
+</Tab>
+<Tab title="cURL">
+```bash
+curl -X POST 'https://api.novu.co/v1/events/trigger/broadcast' \
+-H 'Content-Type: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+  "name": "system-announcement",
+  "payload": { "message": "Scheduled maintenance at 2am UTC" }
+}'
+```
+</Tab>
+</Tabs>
+
+#### Topic trigger
 
 Send to all subscribers in a topic:
 
+<Tabs>
+<Tab title="Node.js">
 ```typescript
 await novu.trigger({
   workflowId: "project-update",
@@ -186,7 +423,78 @@ await novu.trigger({
   payload: { update: "New release deployed" },
 });
 ```
-
+</Tab>
+<Tab title="Python">
+```python
+novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+    workflow_id="project-update",
+    to=[{"type": "Topic", "topic_key": "project-alpha-watchers"}],
+    payload={"update": "New release deployed"},
+))
+```
+</Tab>
+<Tab title="Go">
+```go
+_, err := s.Trigger(ctx, components.TriggerEventRequestDto{
+    WorkflowID: "project-update",
+    To: components.CreateToArrayOfTo1([]components.To1{
+        components.CreateTo1TopicPayloadDto(components.TopicPayloadDto{
+            Type: components.TriggerRecipientsTypeEnumTopic, TopicKey: "project-alpha-watchers",
+        }),
+    }),
+    Payload: map[string]any{"update": "New release deployed"},
+}, nil)
+```
+</Tab>
+<Tab title="PHP">
+```php
+$sdk->trigger(triggerEventRequestDto: new Components\TriggerEventRequestDto(
+    workflowId: 'project-update',
+    to: [new Components\TopicPayloadDto(
+        topicKey: 'project-alpha-watchers',
+        type: Components\TriggerRecipientsTypeEnum::Topic,
+    )],
+    payload: ['update' => 'New release deployed'],
+));
+```
+</Tab>
+<Tab title=".NET">
+```csharp
+await sdk.TriggerAsync(new TriggerEventRequestDto {
+    WorkflowId = "project-update",
+    To = To.CreateArrayOfTo1(new List<To1> {
+        To1.CreateTopicPayloadDto(new TopicPayloadDto {
+            Type = TriggerRecipientsTypeEnum.Topic,
+            TopicKey = "project-alpha-watchers",
+        }),
+    }),
+    Payload = new Dictionary<string, object>() { { "update", "New release deployed" } },
+});
+```
+</Tab>
+<Tab title="Java">
+```java
+novu.trigger().body(TriggerEventRequestDto.builder()
+    .workflowId("project-update")
+    .to(To2.of(List.of(To1.of(TopicPayloadDto.builder()
+        .type(TriggerRecipientsTypeEnum.TOPIC)
+        .topicKey("project-alpha-watchers")
+        .build()))))
+    .payload(Map.of("update", "New release deployed"))
+    .build()).call();
+```
+</Tab>
+<Tab title="cURL">
+```bash
+curl -X POST 'https://api.novu.co/v1/events/trigger' \
+-H 'Content-Type: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+  "name": "project-update",
+  "to": [{ "type": "Topic", "topicKey": "project-alpha-watchers" }],
+  "payload": { "update": "New release deployed" }
+}'
+```
 </Tab>
 </Tabs>
 
@@ -208,49 +516,253 @@ await novu.trigger({
 
 Subscribers are the recipients of your notifications. Each subscriber has a unique `subscriberId` — typically your application's user ID.
 
-<Tabs>
-<Tab title="Create">
+#### Create
 
+<Tabs>
+<Tab title="Node.js">
 ```typescript
 await novu.subscribers.create({
-  subscriberId: "user-123",         // required
+  subscriberId: "user-123",
   email: "jane@example.com",
   firstName: "Jane",
   lastName: "Doe",
   phone: "+15551234567",
-  data: { plan: "pro" },            // custom key-value data
+  data: { plan: "pro" },
 });
 ```
-
 </Tab>
-<Tab title="Retrieve">
+<Tab title="Python">
+```python
+novu.subscribers.create(
+    create_subscriber_request_dto=novu_py.CreateSubscriberRequestDto(
+        subscriber_id="user-123",
+        email="jane@example.com",
+        first_name="Jane",
+        last_name="Doe",
+        phone="+15551234567",
+        data={"plan": "pro"},
+    )
+)
+```
+</Tab>
+<Tab title="Go">
+```go
+_, err := s.Subscribers.Create(ctx, components.CreateSubscriberRequestDto{
+    SubscriberID: "user-123",
+    Email:        "jane@example.com",
+    FirstName:    "Jane",
+    LastName:     "Doe",
+    Phone:        "+15551234567",
+    Data:         map[string]any{"plan": "pro"},
+}, nil)
+```
+</Tab>
+<Tab title="PHP">
+```php
+$sdk->subscribers->create(
+    createSubscriberRequestDto: new Components\CreateSubscriberRequestDto(
+        subscriberId: 'user-123',
+        email: 'jane@example.com',
+        firstName: 'Jane',
+        lastName: 'Doe',
+        phone: '+15551234567',
+        data: ['plan' => 'pro'],
+    ),
+);
+```
+</Tab>
+<Tab title=".NET">
+```csharp
+await sdk.Subscribers.CreateAsync(new CreateSubscriberRequestDto {
+    SubscriberId = "user-123",
+    Email = "jane@example.com",
+    FirstName = "Jane",
+    LastName = "Doe",
+    Phone = "+15551234567",
+    Data = new Dictionary<string, object>() { { "plan", "pro" } },
+});
+```
+</Tab>
+<Tab title="Java">
+```java
+novu.subscribers().create()
+    .body(CreateSubscriberRequestDto.builder()
+        .subscriberId("user-123")
+        .email("jane@example.com")
+        .firstName("Jane")
+        .lastName("Doe")
+        .phone("+15551234567")
+        .data(Map.of("plan", "pro"))
+        .build())
+    .call();
+```
+</Tab>
+<Tab title="cURL">
+```bash
+curl -X POST 'https://api.novu.co/v2/subscribers' \
+-H 'Content-Type: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+  "subscriberId": "user-123",
+  "email": "jane@example.com",
+  "firstName": "Jane",
+  "lastName": "Doe",
+  "phone": "+15551234567",
+  "data": { "plan": "pro" }
+}'
+```
+</Tab>
+</Tabs>
 
+#### Retrieve
+
+<Tabs>
+<Tab title="Node.js">
 ```typescript
 const subscriber = await novu.subscribers.retrieve("user-123");
 ```
-
 </Tab>
-<Tab title="Update">
+<Tab title="Python">
+```python
+subscriber = novu.subscribers.retrieve(subscriber_id="user-123")
+```
+</Tab>
+<Tab title="Go">
+```go
+res, err := s.Subscribers.Get(ctx, "user-123", nil)
+```
+</Tab>
+<Tab title="PHP">
+```php
+$response = $sdk->subscribers->get(subscriberId: 'user-123');
+```
+</Tab>
+<Tab title=".NET">
+```csharp
+var subscriber = await sdk.Subscribers.GetAsync("user-123");
+```
+</Tab>
+<Tab title="Java">
+```java
+var subscriber = novu.subscribers().get("user-123").call();
+```
+</Tab>
+<Tab title="cURL">
+```bash
+curl 'https://api.novu.co/v2/subscribers/user-123' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>'
+```
+</Tab>
+</Tabs>
 
+#### Update
+
+<Tabs>
+<Tab title="Node.js">
 ```typescript
 await novu.subscribers.patch(
   { firstName: "Jane", data: { plan: "enterprise" } },
   "user-123"
 );
 ```
-
 </Tab>
-<Tab title="Delete">
+<Tab title="Python">
+```python
+novu.subscribers.patch(
+    subscriber_id="user-123",
+    patch_subscriber_request_dto={"first_name": "Jane", "data": {"plan": "enterprise"}},
+)
+```
+</Tab>
+<Tab title="Go">
+```go
+_, err := s.Subscribers.Patch(ctx, "user-123", components.PatchSubscriberRequestDto{
+    FirstName: novu.String("Jane"),
+    Data:      map[string]any{"plan": "enterprise"},
+}, nil)
+```
+</Tab>
+<Tab title="PHP">
+```php
+$sdk->subscribers->patch('user-123', new Components\PatchSubscriberRequestDto(
+    firstName: 'Jane',
+    data: ['plan' => 'enterprise'],
+));
+```
+</Tab>
+<Tab title=".NET">
+```csharp
+await sdk.Subscribers.PatchAsync("user-123", new PatchSubscriberRequestDto {
+    FirstName = "Jane",
+    Data = new Dictionary<string, object>() { { "plan", "enterprise" } },
+});
+```
+</Tab>
+<Tab title="Java">
+```java
+novu.subscribers().patch("user-123").body(PatchSubscriberRequestDto.builder()
+    .firstName("Jane")
+    .data(Map.of("plan", "enterprise"))
+    .build()).call();
+```
+</Tab>
+<Tab title="cURL">
+```bash
+curl -X PATCH 'https://api.novu.co/v2/subscribers/user-123' \
+-H 'Content-Type: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{ "firstName": "Jane", "data": { "plan": "enterprise" } }'
+```
+</Tab>
+</Tabs>
 
+#### Delete
+
+<Tabs>
+<Tab title="Node.js">
 ```typescript
 await novu.subscribers.delete("user-123");
 ```
-
 </Tab>
-<Tab title="Bulk Create">
+<Tab title="Python">
+```python
+novu.subscribers.delete(subscriber_id="user-123")
+```
+</Tab>
+<Tab title="Go">
+```go
+_, err := s.Subscribers.Delete(ctx, "user-123", nil)
+```
+</Tab>
+<Tab title="PHP">
+```php
+$sdk->subscribers->delete(subscriberId: 'user-123');
+```
+</Tab>
+<Tab title=".NET">
+```csharp
+await sdk.Subscribers.DeleteAsync("user-123");
+```
+</Tab>
+<Tab title="Java">
+```java
+novu.subscribers().delete("user-123").call();
+```
+</Tab>
+<Tab title="cURL">
+```bash
+curl -X DELETE 'https://api.novu.co/v2/subscribers/user-123' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>'
+```
+</Tab>
+</Tabs>
+
+#### Bulk create
 
 Create up to **500 subscribers** in one request:
 
+<Tabs>
+<Tab title="Node.js">
 ```typescript
 await novu.subscribers.createBulk({
   subscribers: [
@@ -259,22 +771,157 @@ await novu.subscribers.createBulk({
   ],
 });
 ```
-
+</Tab>
+<Tab title="Python">
+```python
+novu.subscribers.create_bulk(
+    bulk_subscriber_create_dto=novu_py.BulkSubscriberCreateDto(
+        subscribers=[
+            {"subscriber_id": "user-1", "email": "alice@example.com", "first_name": "Alice"},
+            {"subscriber_id": "user-2", "email": "bob@example.com", "first_name": "Bob"},
+        ],
+    )
+)
+```
+</Tab>
+<Tab title="Go">
+```go
+_, err := s.Subscribers.CreateBulk(ctx, components.BulkSubscriberCreateDto{
+    Subscribers: []components.CreateSubscriberRequestDto{
+        {SubscriberID: "user-1", Email: "alice@example.com", FirstName: "Alice"},
+        {SubscriberID: "user-2", Email: "bob@example.com", FirstName: "Bob"},
+    },
+}, nil)
+```
+</Tab>
+<Tab title="PHP">
+```php
+$sdk->subscribers->createBulk(bulkSubscriberCreateDto: new Components\BulkSubscriberCreateDto(
+    subscribers: [
+        new Components\CreateSubscriberRequestDto(subscriberId: 'user-1', email: 'alice@example.com', firstName: 'Alice'),
+        new Components\CreateSubscriberRequestDto(subscriberId: 'user-2', email: 'bob@example.com', firstName: 'Bob'),
+    ],
+));
+```
+</Tab>
+<Tab title=".NET">
+```csharp
+await sdk.Subscribers.CreateBulkAsync(new BulkSubscriberCreateDto {
+    Subscribers = new List<CreateSubscriberRequestDto> {
+        new() { SubscriberId = "user-1", Email = "alice@example.com", FirstName = "Alice" },
+        new() { SubscriberId = "user-2", Email = "bob@example.com", FirstName = "Bob" },
+    },
+});
+```
+</Tab>
+<Tab title="Java">
+```java
+novu.subscribers().createBulk().body(BulkSubscriberCreateDto.builder()
+    .subscribers(List.of(
+        CreateSubscriberRequestDto.builder().subscriberId("user-1").email("alice@example.com").firstName("Alice").build(),
+        CreateSubscriberRequestDto.builder().subscriberId("user-2").email("bob@example.com").firstName("Bob").build()))
+    .build()).call();
+```
+</Tab>
+<Tab title="cURL">
+```bash
+curl -X POST 'https://api.novu.co/v2/subscribers/bulk' \
+-H 'Content-Type: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+  "subscribers": [
+    { "subscriberId": "user-1", "email": "alice@example.com", "firstName": "Alice" },
+    { "subscriberId": "user-2", "email": "bob@example.com", "firstName": "Bob" }
+  ]
+}'
+```
 </Tab>
 </Tabs>
 
 **Topics** are named groups of subscribers for group-based notification targeting:
 
+<Tabs>
+<Tab title="Node.js">
 ```typescript
-// Create a topic
 await novu.topics.create({ key: "engineering-team", name: "Engineering Team" });
 
-// Add subscribers
 await novu.topics.subscriptions.create(
   { subscriptions: ["user-1", "user-2", "user-3"] },
   "engineering-team"
 );
 ```
+</Tab>
+<Tab title="Python">
+```python
+novu.topics.create(create_topic_request_dto={"key": "engineering-team", "name": "Engineering Team"})
+
+novu.topics.subscriptions.create(
+    topic_key="engineering-team",
+    create_topic_subscriptions_request_dto={"subscriptions": ["user-1", "user-2", "user-3"]},
+)
+```
+</Tab>
+<Tab title="Go">
+```go
+_, err := s.Topics.Create(ctx, components.CreateTopicRequestDto{
+    Key: "engineering-team", Name: "Engineering Team",
+}, nil)
+
+_, err = s.Topics.Subscriptions.Create(ctx, "engineering-team", components.CreateTopicSubscriptionsRequestDto{
+    Subscriptions: []string{"user-1", "user-2", "user-3"},
+}, nil)
+```
+</Tab>
+<Tab title="PHP">
+```php
+$sdk->topics->create(createTopicRequestDto: new Components\CreateTopicRequestDto(
+    key: 'engineering-team',
+    name: 'Engineering Team',
+));
+
+$sdk->topics->subscriptions->create(
+    topicKey: 'engineering-team',
+    createTopicSubscriptionsRequestDto: new Components\CreateTopicSubscriptionsRequestDto(
+        subscriptions: ['user-1', 'user-2', 'user-3'],
+    ),
+);
+```
+</Tab>
+<Tab title=".NET">
+```csharp
+await sdk.Topics.CreateAsync(new CreateTopicRequestDto {
+    Key = "engineering-team", Name = "Engineering Team",
+});
+
+await sdk.Topics.Subscriptions.CreateAsync("engineering-team", new CreateTopicSubscriptionsRequestDto {
+    Subscriptions = new List<string> { "user-1", "user-2", "user-3" },
+});
+```
+</Tab>
+<Tab title="Java">
+```java
+novu.topics().create().body(CreateTopicRequestDto.builder()
+    .key("engineering-team").name("Engineering Team").build()).call();
+
+novu.topics().subscriptions().create("engineering-team")
+    .body(CreateTopicSubscriptionsRequestDto.builder()
+        .subscriptions(List.of("user-1", "user-2", "user-3")).build()).call();
+```
+</Tab>
+<Tab title="cURL">
+```bash
+curl -X POST 'https://api.novu.co/v2/topics' \
+-H 'Content-Type: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{ "key": "engineering-team", "name": "Engineering Team" }'
+
+curl -X POST 'https://api.novu.co/v2/topics/engineering-team/subscriptions' \
+-H 'Content-Type: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{ "subscriptions": ["user-1", "user-2", "user-3"] }'
+```
+</Tab>
+</Tabs>
 
 ---
 
@@ -366,8 +1013,10 @@ Novu uses a two-level preference system: **workflow defaults** and **subscriber 
 
 **Subscriber-level overrides**:
 
+#### Workflow-level preferences
+
 <Tabs>
-<Tab title="Workflow level">
+<Tab title="Node.js">
 ```typescript
 await novu.subscribers.preferences.update(
   {
@@ -378,7 +1027,70 @@ await novu.subscribers.preferences.update(
 );
 ```
 </Tab>
-<Tab title="Global level">
+<Tab title="Python">
+```python
+novu.subscribers.preferences.update(
+    subscriber_id="subscriber-123",
+    patch_subscriber_preferences_dto={
+        "workflow_id": "weekly-newsletter",
+        "channels": {"email": False, "in_app": True},
+    },
+)
+```
+</Tab>
+<Tab title="Go">
+```go
+_, err := s.Subscribers.Preferences.Update(ctx, "subscriber-123", components.PatchSubscriberPreferencesDto{
+    WorkflowID: novu.String("weekly-newsletter"),
+    Channels:   &components.Channels{Email: novu.Bool(false), InApp: novu.Bool(true)},
+}, nil)
+```
+</Tab>
+<Tab title="PHP">
+```php
+$sdk->subscribers->preferences->update(
+    subscriberId: 'subscriber-123',
+    patchSubscriberPreferencesDto: new Components\PatchSubscriberPreferencesDto(
+        workflowId: 'weekly-newsletter',
+        channels: new Components\Channels(email: false, inApp: true),
+    ),
+);
+```
+</Tab>
+<Tab title=".NET">
+```csharp
+await sdk.Subscribers.Preferences.UpdateAsync("subscriber-123", new PatchSubscriberPreferencesDto {
+    WorkflowId = "weekly-newsletter",
+    Channels = new Channels { Email = false, InApp = true },
+});
+```
+</Tab>
+<Tab title="Java">
+```java
+novu.subscribers().preferences().update("subscriber-123")
+    .body(PatchSubscriberPreferencesDto.builder()
+        .workflowId("weekly-newsletter")
+        .channels(Channels.builder().email(false).inApp(true).build())
+        .build()).call();
+```
+</Tab>
+<Tab title="cURL">
+```bash
+curl -X PATCH 'https://api.novu.co/v2/subscribers/subscriber-123/preferences' \
+-H 'Content-Type: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+  "workflowId": "weekly-newsletter",
+  "channels": { "email": false, "inApp": true }
+}'
+```
+</Tab>
+</Tabs>
+
+#### Global preferences
+
+<Tabs>
+<Tab title="Node.js">
 ```typescript
 await novu.subscribers.preferences.update(
   {
@@ -386,6 +1098,56 @@ await novu.subscribers.preferences.update(
   },
   "subscriber-123"
 );
+```
+</Tab>
+<Tab title="Python">
+```python
+novu.subscribers.preferences.update(
+    subscriber_id="subscriber-123",
+    patch_subscriber_preferences_dto={
+        "channels": {"email": False, "in_app": True},
+    },
+)
+```
+</Tab>
+<Tab title="Go">
+```go
+_, err := s.Subscribers.Preferences.Update(ctx, "subscriber-123", components.PatchSubscriberPreferencesDto{
+    Channels: &components.Channels{Email: novu.Bool(false), InApp: novu.Bool(true)},
+}, nil)
+```
+</Tab>
+<Tab title="PHP">
+```php
+$sdk->subscribers->preferences->update(
+    subscriberId: 'subscriber-123',
+    patchSubscriberPreferencesDto: new Components\PatchSubscriberPreferencesDto(
+        channels: new Components\Channels(email: false, inApp: true),
+    ),
+);
+```
+</Tab>
+<Tab title=".NET">
+```csharp
+await sdk.Subscribers.Preferences.UpdateAsync("subscriber-123", new PatchSubscriberPreferencesDto {
+    Channels = new Channels { Email = false, InApp = true },
+});
+```
+</Tab>
+<Tab title="Java">
+```java
+novu.subscribers().preferences().update("subscriber-123")
+    .body(PatchSubscriberPreferencesDto.builder()
+        .channels(Channels.builder().email(false).inApp(true).build())
+        .build()).call();
+```
+</Tab>
+<Tab title="cURL">
+```bash
+curl -X PATCH 'https://api.novu.co/v2/subscribers/subscriber-123/preferences' \
+-H 'Content-Type: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{ "channels": { "email": false, "inApp": true } }'
 ```
 </Tab>
 </Tabs>
