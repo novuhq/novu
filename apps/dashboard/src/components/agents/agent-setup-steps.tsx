@@ -410,13 +410,7 @@ export function AgentSetupSteps({
   // Agent details page: once a channel is picked and its guide is showing, the channel cards render
   // as a persistent compact switcher rail so the user can switch or start another channel in one
   // click without ever losing sight of the other channels.
-  const detailsChannelSelectionCollapsed = !isOnboarding && isChannelGuideActive;
-
-  const detailsChannelSelectionToggleProps = !isOnboarding
-    ? {
-        channelSelectionCollapsed: detailsChannelSelectionCollapsed,
-      }
-    : {};
+  const showChannelSwitcherRail = !isOnboarding && isChannelGuideActive;
 
   // The agent–integration link carries the server-computed shared inbound address (e.g. the demo
   // email's default `…@agentconnect.sh` inbox). The email guide needs it to surface that address.
@@ -809,7 +803,7 @@ export function AgentSetupSteps({
               selectedIntegrationId={effectiveIntegrationId}
               existingLinks={agentIntegrationLinks}
               onSelect={handleProviderSelect}
-              {...detailsChannelSelectionToggleProps}
+              showChannelSwitcherRail={showChannelSwitcherRail}
             />
           ) : (
             <SetupStep
@@ -824,7 +818,7 @@ export function AgentSetupSteps({
                   selectedIntegrationId={effectiveIntegrationId}
                   existingLinks={agentIntegrationLinks}
                   onSelect={handleProviderSelect}
-                  {...detailsChannelSelectionToggleProps}
+                  showChannelSwitcherRail={showChannelSwitcherRail}
                 />
               }
             />
@@ -833,10 +827,7 @@ export function AgentSetupSteps({
       </SetupStepperRail>
 
       <AnimatePresence initial={false}>
-        {ProviderGuide &&
-        guideIntegrationId &&
-        !skipProviderGuide &&
-        (isOnboarding || detailsChannelSelectionCollapsed) ? (
+        {ProviderGuide && guideIntegrationId && !skipProviderGuide && (isOnboarding || showChannelSwitcherRail) ? (
           <motion.div
             key={guideIntegrationId}
             initial={{ height: 0, opacity: 0 }}
