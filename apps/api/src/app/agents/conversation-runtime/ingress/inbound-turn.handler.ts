@@ -994,7 +994,11 @@ export class AgentInboundHandler implements OnModuleInit {
       return;
     }
 
-    await this.recordApprovalVerdict(conversation, config, action);
+    const actorType =
+      participantType === ConversationParticipantTypeEnum.SUBSCRIBER
+        ? ConversationActivitySenderTypeEnum.SUBSCRIBER
+        : ConversationActivitySenderTypeEnum.PLATFORM_USER;
+    await this.recordApprovalVerdict(conversation, config, action, actorType, participantId);
 
     // Everything else (incl. mcp-approval:* for managed) routes through the runtime,
     // which owns its own action semantics.
@@ -1053,7 +1057,9 @@ export class AgentInboundHandler implements OnModuleInit {
   private async recordApprovalVerdict(
     conversation: ConversationEntity,
     config: ResolvedAgentConfig,
-    action: AgentAction
+    action: AgentAction,
+    actorType: ConversationActivitySenderTypeEnum.SUBSCRIBER | ConversationActivitySenderTypeEnum.PLATFORM_USER,
+    actorId: string
   ): Promise<void> {
     const verdict = this.parseApprovalVerdict(action.id);
     if (!verdict) {
@@ -1068,6 +1074,8 @@ export class AgentInboundHandler implements OnModuleInit {
         approvalId: verdict.approvalId,
         approved: verdict.approved,
         toolName: verdict.toolName,
+        actorType,
+        actorId,
         environmentId: config.environmentId,
         organizationId: config.organizationId,
       });

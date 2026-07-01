@@ -15,6 +15,7 @@ export type AiSdkResult = {
   textStream?: AsyncIterable<string>;
   content?: unknown;
   steps?: unknown;
+  response?: PromiseLike<{ messages?: Array<{ role: string; content?: unknown }> }>;
 };
 
 /**

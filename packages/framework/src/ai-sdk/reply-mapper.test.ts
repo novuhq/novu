@@ -8,10 +8,12 @@ function fakeCtx() {
   const typing = Object.assign(vi.fn().mockResolvedValue(undefined), {
     stop: vi.fn().mockResolvedValue(undefined),
   });
+  const emitToolResult = vi.fn();
 
-  return { reply, typing } as unknown as AgentContextBase & {
+  return { reply, typing, history: [], emitToolResult } as unknown as AgentContextBase & {
     reply: ReturnType<typeof vi.fn>;
     typing: ReturnType<typeof vi.fn> & { stop: ReturnType<typeof vi.fn> };
+    emitToolResult: ReturnType<typeof vi.fn>;
   };
 }
 
@@ -130,6 +132,55 @@ describe('handleResult', () => {
     expect(ctx.reply).toHaveBeenCalledOnce();
     expect(ctx.reply).toHaveBeenCalledWith(expect.anything(), {
       toolApproval: { approvalId: 'a_1', toolCallId: 'toolu_1', name: 'issueRefund', input: { amount: 250 } },
+    });
+  });
+
+  it('emits tool results from response.messages after approval-resume execution', async () => {
+    const ctx = fakeCtx();
+    ctx.history = [
+      {
+        role: 'agent',
+        type: 'tool_approval_request',
+        content: '',
+        toolData: { approvalId: 'a_1', toolCallId: 'toolu_1', toolName: 'issueRefund', input: { amount: 150 } },
+        createdAt: '1',
+      },
+    ];
+
+    const result = {
+      text: Promise.resolve(''),
+      steps: Promise.resolve([]),
+      content: Promise.resolve([
+        {
+          type: 'tool-approval-request',
+          approvalId: 'a_2',
+          toolCall: { toolCallId: 'toolu_2', toolName: 'cancelSub', input: { id: 'B' } },
+        },
+      ]),
+      response: Promise.resolve({
+        messages: [
+          {
+            role: 'tool',
+            content: [
+              {
+                type: 'tool-result',
+                toolCallId: 'toolu_1',
+                toolName: 'issueRefund',
+                output: { type: 'json', value: { ok: true } },
+              },
+            ],
+          },
+        ],
+      }),
+    } as unknown as AiSdkResult;
+
+    await handleResult(result, ctx, undefined);
+
+    expect(ctx.emitToolResult).toHaveBeenCalledWith({
+      toolCallId: 'toolu_1',
+      toolName: 'issueRefund',
+      output: { ok: true },
+      preview: 'Tool "issueRefund" result',
     });
   });
 });

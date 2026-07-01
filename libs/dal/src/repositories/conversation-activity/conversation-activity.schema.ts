@@ -60,6 +60,9 @@ const conversationActivitySchema = new Schema<ConversationActivityDBModel>(
     signalData: {
       type: Schema.Types.Mixed,
     },
+    toolData: {
+      type: Schema.Types.Mixed,
+    },
     _environmentId: {
       type: Schema.Types.ObjectId,
       ref: 'Environment',

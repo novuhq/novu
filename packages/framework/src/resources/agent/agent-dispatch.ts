@@ -19,9 +19,14 @@ import { resolvedApprovalCard } from './tool-approval/approval-card';
 
 function findApprovalInHistory(history: AgentHistoryEntry[], approvalId: string): ApprovalPayload | undefined {
   for (const entry of history) {
-    const payload = (entry.richContent as { toolApproval?: ApprovalPayload } | undefined)?.toolApproval;
-    if (payload?.approvalId === approvalId) {
-      return payload;
+    const tool = entry.toolData;
+    if (entry.type === 'tool_approval_request' && tool?.approvalId === approvalId && tool.toolCallId) {
+      return {
+        approvalId: tool.approvalId,
+        toolCallId: tool.toolCallId,
+        name: tool.toolName ?? 'tool',
+        input: tool.input,
+      };
     }
   }
 

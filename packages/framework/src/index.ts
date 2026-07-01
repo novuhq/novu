@@ -42,6 +42,7 @@ export type {
   Signal,
   ToolApprovalConfig,
   ToolApprovalDecision,
+  ToolResult,
   TriggerSignal,
 } from './resources';
 export {

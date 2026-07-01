@@ -2025,7 +2025,7 @@ describe('tool approval', () => {
 
     expect(posts).toHaveLength(1);
     expect(posts[0].reply.card).toBeTruthy();
-    // The tool-call payload rides in richContent.toolApproval, not in the button id.
+    // The tool-call payload rides in reply.toolApproval (persisted as toolData), not in the button id.
     expect(posts[0].reply.toolApproval).toMatchObject({
       approvalId: 'tc',
       toolCallId: 'tc',
@@ -2048,7 +2048,6 @@ describe('tool approval', () => {
     );
 
     const seen: { decision?: { approved: boolean; toolCall: unknown } } = {};
-    const payload = { approvalId: 'tc', toolCallId: 'tc', name: 'doIt', input: { x: 1 } };
     const testAgent = {
       id: 'a',
       handlers: {
@@ -2068,7 +2067,15 @@ describe('tool approval', () => {
         event: 'onAction',
         message: null,
         // The tool call is reconstructed from persisted history, not the action id.
-        history: [{ role: 'agent', type: 'card', content: '', richContent: { toolApproval: payload }, createdAt: '1' }],
+        history: [
+          {
+            role: 'agent',
+            type: 'tool_approval_request',
+            content: '',
+            toolData: { approvalId: 'tc', toolCallId: 'tc', toolName: 'doIt', input: { x: 1 } },
+            createdAt: '1',
+          },
+        ],
         action: { id: buildApprovalActionId('approve', 'tc'), sourceMessageId: 'm_prev' },
       }),
       secretKey: 's',

@@ -54,6 +54,7 @@ export type {
   Signal,
   ToolApprovalConfig,
   ToolApprovalDecision,
+  ToolResult,
   TriggerSignal,
   TypingControl,
   TypingOp,

@@ -99,20 +99,21 @@ describe('tool approval', () => {
   });
 
   it('auto-resumes by re-invoking onMessage; the decision is read from persisted history', async () => {
-    // Novu persists the decision as a signal activity before this turn fires.
+    // Novu persists the decision as a first-class tool_approval_decision activity before this turn fires.
     const historyArr: AgentHistoryEntry[] = [
       {
         role: 'agent',
-        type: 'card',
+        type: 'tool_approval_request',
         content: '',
         richContent: { card: { type: 'card', children: [] } },
+        toolData: { approvalId: 'tc_1', toolCallId: 'tc_1', toolName: 'issueRefund', input: { amount: 300 } },
         createdAt: '1',
       },
       {
         role: 'system',
-        type: 'signal',
+        type: 'tool_approval_decision',
         content: 'Approved issueRefund',
-        signalData: { type: 'tool-approval-response', payload: { approvalId: 'tc_1', approved: true } },
+        toolData: { approvalId: 'tc_1', approved: true },
         createdAt: '2',
       },
     ];
@@ -144,7 +145,9 @@ describe('tool approval', () => {
     );
 
     const lastSnapshot = calls.at(-1);
-    expect(lastSnapshot?.some((entry) => entry.signalData?.type === 'tool-approval-response')).toBe(true);
+    expect(
+      lastSnapshot?.some((entry) => entry.type === 'tool_approval_decision' && entry.toolData?.approved === true)
+    ).toBe(true);
     // resume must not mutate the persisted history (no synthetic push).
     expect(ctx.history).toHaveLength(2);
     expect(ctx.reply).toHaveBeenCalledWith('done');

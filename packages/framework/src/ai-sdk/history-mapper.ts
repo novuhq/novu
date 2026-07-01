@@ -2,34 +2,52 @@ import type { AssistantModelMessage, ModelMessage, ToolModelMessage } from 'ai';
 import type { AgentHistoryEntry } from '../resources/agent/agent.types';
 import type { ApprovalPayload } from '../resources/agent/tool-approval/action-id';
 
-interface ApprovalDecision {
-  approvalId: string;
-  approved: boolean;
-}
+// History entry types this mapper handles.
+const TYPE_MESSAGE = 'message';
+const TYPE_TOOL_APPROVAL_REQUEST = 'tool_approval_request';
+const TYPE_TOOL_APPROVAL_DECISION = 'tool_approval_decision';
+const TYPE_TOOL_RESULT = 'tool_result';
 
 function isAssistantRole(role: string): boolean {
   return role === 'agent' || role === 'assistant';
 }
 
-function approvalCardOf(entry: AgentHistoryEntry): ApprovalPayload | undefined {
-  return (entry.richContent as { toolApproval?: ApprovalPayload } | undefined)?.toolApproval;
-}
-
-function approvalDecisionOf(entry: AgentHistoryEntry): ApprovalDecision | undefined {
-  if (entry.signalData?.type !== 'tool-approval-response') {
+function approvalOf(entry: AgentHistoryEntry): ApprovalPayload | undefined {
+  const tool = entry.toolData;
+  if (!tool || typeof tool.approvalId !== 'string' || typeof tool.toolCallId !== 'string') {
     return undefined;
   }
 
-  const { approvalId, approved } = (entry.signalData.payload ?? {}) as Partial<ApprovalDecision>;
-  if (typeof approvalId !== 'string' || typeof approved !== 'boolean') {
+  return { approvalId: tool.approvalId, toolCallId: tool.toolCallId, name: tool.toolName ?? 'tool', input: tool.input };
+}
+
+interface DecisionPayload {
+  approvalId: string;
+  approved: boolean;
+}
+
+function decisionOf(entry: AgentHistoryEntry): DecisionPayload | undefined {
+  const tool = entry.toolData;
+  if (!tool || typeof tool.approvalId !== 'string' || typeof tool.approved !== 'boolean') {
     return undefined;
   }
 
-  return { approvalId, approved };
+  return { approvalId: tool.approvalId, approved: tool.approved };
 }
 
-function isConversationalEntry(entry: AgentHistoryEntry): boolean {
-  return Boolean(entry.content.trim()) && !entry.signalData;
+interface ToolResultPayload {
+  toolCallId: string;
+  toolName?: string;
+  output: unknown;
+}
+
+function toolResultOf(entry: AgentHistoryEntry): ToolResultPayload | undefined {
+  const tool = entry.toolData;
+  if (!tool || typeof tool.toolCallId !== 'string') {
+    return undefined;
+  }
+
+  return { toolCallId: tool.toolCallId, toolName: tool.toolName, output: tool.output };
 }
 
 function distinctHumanSenders(history: AgentHistoryEntry[]): number {
@@ -44,64 +62,121 @@ function distinctHumanSenders(history: AgentHistoryEntry[]): number {
 }
 
 /**
- * The only approval cycle that needs its structured tool-call / approval-request /
- * approval-response replayed is the one currently being resumed — i.e. whose
- * decision signal is the most recent thing in the conversation. `streamText`
- * consumes those parts to execute the tool exactly once and produce the
- * `tool-result` itself.
- *
- * Once the conversation moves past a cycle (a later message or another approval
- * card exists), it is resolved: its result lived only in that resume turn's
- * `streamText` run, never in the transcript. Replaying its `tool-call` on later
- * turns would leave a `tool_use` with no `tool_result` (Anthropic rejects this)
- * and could re-execute the tool. Resolved cycles therefore collapse to the
- * agent's natural-language reply — mirroring the managed runtime, whose display
- * transcript also never carries tool results for replay.
+ * Correlations built once per turn. An approval cycle is "resolved" when the tool ran
+ * (a result exists for its `toolCallId`) or the user denied it. Only the one cycle that's
+ * approved-but-not-yet-run is replayed as a request/response pair, so the model runs it once.
  */
-function inFlightApprovalId(history: AgentHistoryEntry[]): string | undefined {
-  const lastRelevant = [...history]
-    .reverse()
-    .find((entry) => approvalDecisionOf(entry) || isConversationalEntry(entry) || approvalCardOf(entry));
-
-  return lastRelevant ? approvalDecisionOf(lastRelevant)?.approvalId : undefined;
+interface ApprovalIndex {
+  resultToolCallIds: Set<string>;
+  deniedApprovalIds: Set<string>;
+  toolCallIdByApprovalId: Map<string, string>;
 }
 
-function mapToolApprovalResponse(
-  entry: AgentHistoryEntry,
-  inFlightId: string | undefined
-): ToolModelMessage | undefined {
-  const decision = approvalDecisionOf(entry);
-  if (!decision || decision.approvalId !== inFlightId) {
+function buildApprovalIndex(history: AgentHistoryEntry[]): ApprovalIndex {
+  const resultToolCallIds = new Set<string>();
+  const deniedApprovalIds = new Set<string>();
+  const toolCallIdByApprovalId = new Map<string, string>();
+
+  for (const entry of history) {
+    if (entry.type === TYPE_TOOL_APPROVAL_REQUEST) {
+      const approval = approvalOf(entry);
+      if (approval) {
+        toolCallIdByApprovalId.set(approval.approvalId, approval.toolCallId);
+      }
+    } else if (entry.type === TYPE_TOOL_APPROVAL_DECISION) {
+      const decision = decisionOf(entry);
+      if (decision && !decision.approved) {
+        deniedApprovalIds.add(decision.approvalId);
+      }
+    } else if (entry.type === TYPE_TOOL_RESULT) {
+      const result = toolResultOf(entry);
+      if (result) {
+        resultToolCallIds.add(result.toolCallId);
+      }
+    }
+  }
+
+  return { resultToolCallIds, deniedApprovalIds, toolCallIdByApprovalId };
+}
+
+function assistantToolCall(approval: ApprovalPayload, withApprovalRequest: boolean): AssistantModelMessage {
+  const content: AssistantModelMessage['content'] = [
+    { type: 'tool-call', toolCallId: approval.toolCallId, toolName: approval.name, input: approval.input ?? {} },
+  ];
+
+  if (withApprovalRequest) {
+    content.push({ type: 'tool-approval-request', approvalId: approval.approvalId, toolCallId: approval.toolCallId });
+  }
+
+  return { role: 'assistant', content };
+}
+
+function executionDeniedResult(toolCallId: string): ToolModelMessage {
+  return {
+    role: 'tool',
+    content: [{ type: 'tool-result', toolCallId, toolName: 'tool', output: { type: 'execution-denied' } }],
+  };
+}
+
+function mapApprovalRequest(entry: AgentHistoryEntry, index: ApprovalIndex): ModelMessage | undefined {
+  const approval = approvalOf(entry);
+  if (!approval) {
+    return undefined;
+  }
+
+  const resolved = index.resultToolCallIds.has(approval.toolCallId) || index.deniedApprovalIds.has(approval.approvalId);
+
+  // Resolved cycle → just the completed tool call (its result message follows).
+  // In-flight cycle → include the approval request so the paired response can run it.
+  return assistantToolCall(approval, !resolved);
+}
+
+function mapApprovalDecision(entry: AgentHistoryEntry, index: ApprovalIndex): ModelMessage | undefined {
+  const decision = decisionOf(entry);
+  if (!decision) {
+    return undefined;
+  }
+
+  const toolCallId = index.toolCallIdByApprovalId.get(decision.approvalId);
+
+  if (!decision.approved) {
+    // Denied → emit the execution-denied result to keep tool-call/result paired.
+    return toolCallId ? executionDeniedResult(toolCallId) : undefined;
+  }
+
+  // Approved and already run → its result message carries the outcome; skip this.
+  if (toolCallId && index.resultToolCallIds.has(toolCallId)) {
+    return undefined;
+  }
+
+  // Approved but not yet run → emit the response that makes the model run the tool.
+  return {
+    role: 'tool',
+    content: [{ type: 'tool-approval-response', approvalId: decision.approvalId, approved: true }],
+  };
+}
+
+function mapToolResult(entry: AgentHistoryEntry): ModelMessage | undefined {
+  const result = toolResultOf(entry);
+  if (!result) {
     return undefined;
   }
 
   return {
     role: 'tool',
-    content: [{ type: 'tool-approval-response', approvalId: decision.approvalId, approved: decision.approved }],
-  };
-}
-
-function mapApprovalCard(entry: AgentHistoryEntry, inFlightId: string | undefined): AssistantModelMessage | undefined {
-  const approval = approvalCardOf(entry);
-  if (!approval || approval.approvalId !== inFlightId) {
-    return undefined;
-  }
-
-  return {
-    role: 'assistant',
     content: [
-      { type: 'tool-call', toolCallId: approval.toolCallId, toolName: approval.name, input: approval.input ?? {} },
-      { type: 'tool-approval-request', approvalId: approval.approvalId, toolCallId: approval.toolCallId },
+      {
+        type: 'tool-result',
+        toolCallId: result.toolCallId,
+        toolName: result.toolName ?? 'tool',
+        output: { type: 'json', value: result.output as never },
+      },
     ],
   };
 }
 
-function isSkippedEntry(entry: AgentHistoryEntry): boolean {
-  return Boolean(entry.signalData) || entry.role === 'system' || entry.type === 'signal' || !entry.content.trim();
-}
-
 function mapTextMessage(entry: AgentHistoryEntry, multiSender: boolean): ModelMessage | undefined {
-  if (isSkippedEntry(entry)) {
+  if (!entry.content.trim()) {
     return undefined;
   }
 
@@ -115,27 +190,40 @@ function mapTextMessage(entry: AgentHistoryEntry, multiSender: boolean): ModelMe
 function mapHistoryEntry(
   entry: AgentHistoryEntry,
   multiSender: boolean,
-  inFlightId: string | undefined
+  index: ApprovalIndex
 ): ModelMessage | undefined {
-  return (
-    mapToolApprovalResponse(entry, inFlightId) ??
-    mapApprovalCard(entry, inFlightId) ??
-    mapTextMessage(entry, multiSender)
-  );
+  switch (entry.type) {
+    case TYPE_MESSAGE:
+      return mapTextMessage(entry, multiSender);
+    case TYPE_TOOL_APPROVAL_REQUEST:
+      return mapApprovalRequest(entry, index);
+    case TYPE_TOOL_APPROVAL_DECISION:
+      return mapApprovalDecision(entry, index);
+    case TYPE_TOOL_RESULT:
+      return mapToolResult(entry);
+    default:
+      // Other entry types (`edit`, `signal`, unknown) aren't part of the model transcript.
+      return undefined;
+  }
 }
 
-// Novu already appends the current inbound message to `history` before the bridge
-// fires, so callers must not append the handler's `message` arg again.
+/**
+ * Convert `ctx.history` into AI SDK `ModelMessage[]` ready to pass to `streamText`/`generateText`.
+ * Optionally prepends a `system` prompt.
+ *
+ * `history` already includes the current incoming message, so don't add the handler's
+ * `message` argument on top of it.
+ */
 export function toModelMessages(history: AgentHistoryEntry[], system?: string): ModelMessage[] {
   const multiSender = distinctHumanSenders(history) > 1;
-  const inFlightId = inFlightApprovalId(history);
+  const index = buildApprovalIndex(history);
   const fromHistory = history
-    .map((entry) => mapHistoryEntry(entry, multiSender, inFlightId))
+    .map((entry) => mapHistoryEntry(entry, multiSender, index))
     .filter((message): message is ModelMessage => message !== undefined);
 
   if (!system) {
     return fromHistory;
   }
 
-  return [{ role: 'system', content: system }, ...fromHistory];
+  return [{ role: 'system' as const, content: system }, ...fromHistory];
 }

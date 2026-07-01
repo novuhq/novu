@@ -1,4 +1,4 @@
-import type { Signal } from '@novu/framework';
+import type { Signal, ToolResult } from '@novu/framework';
 import type { PlanModel } from 'chat';
 import { Type } from 'class-transformer';
 import { IsArray, IsNotEmpty, IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
@@ -37,6 +37,10 @@ export class HandleAgentReplyCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   @IsArray()
   signals?: Signal[];
+
+  @IsOptional()
+  @IsArray()
+  toolResults?: ToolResult[];
 
   @IsOptional()
   @IsArray()

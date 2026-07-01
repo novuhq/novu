@@ -75,6 +75,25 @@ export interface AgentSubscriber {
 }
 
 /**
+ * Tool-call details on a tool-related history entry. Which fields are set depends on the
+ * entry's `type` (`tool_approval_request`, `tool_approval_decision`, or `tool_result`).
+ */
+export interface AgentToolData {
+  /** Id of the tool call. */
+  toolCallId?: string;
+  /** Name of the tool. */
+  toolName?: string;
+  /** Id linking an approval request to its decision. */
+  approvalId?: string;
+  /** Arguments the tool was called with. */
+  input?: Record<string, unknown>;
+  /** Whether the tool call was approved or denied. */
+  approved?: boolean;
+  /** What the tool returned (or the `execution-denied` marker for a denied call). */
+  output?: unknown;
+}
+
+/**
  * A single entry in the conversation history.
  * `ctx.history` is an ordered array of these entries — map them to your LLM's
  * message format before making a model call.
@@ -82,14 +101,19 @@ export interface AgentSubscriber {
 export interface AgentHistoryEntry {
   /** Message role: `'user'`, `'assistant'`, or `'system'`. */
   role: string;
-  /** Content type: `'text'`, `'card'`, etc. */
+  /**
+   * The kind of entry: `'message'`, `'edit'`, `'signal'`, or a tool-lifecycle event
+   * (`'tool_approval_request'`, `'tool_approval_decision'`, `'tool_result'`).
+   */
   type: string;
   /** Plain-text representation of the message content. */
   content: string;
   richContent?: Record<string, unknown>;
   senderName?: string;
-  /** Present on system entries that carry a Novu signal (e.g. metadata updates). */
+  /** Structured data for `signal` entries (e.g. metadata updates). */
   signalData?: { type: string; payload?: Record<string, unknown> };
+  /** Tool-call details — set on tool-lifecycle entries (`tool_*`). */
+  toolData?: AgentToolData;
   createdAt: string;
 }
 
@@ -169,8 +193,7 @@ export interface ReplyContent {
   markdown?: string;
   card?: CardElement;
   files?: FileRef[];
-  // Persisted into the message richContent so a stateless resume can rebuild the
-  // tool call; the action id only carries the routing key.
+  /** Set when this reply is an approval card; carries the tool call it gates. */
   toolApproval?: ApprovalPayload;
 }
 
@@ -538,6 +561,18 @@ export type TriggerSignal = {
 
 export type Signal = MetadataSignal | TriggerSignal;
 
+/** The outcome of a tool call, reported back so it's saved in the conversation history. */
+export type ToolResult = {
+  /** Id of the tool call this result belongs to. */
+  toolCallId: string;
+  /** Name of the tool. */
+  toolName?: string;
+  /** What the tool returned (or the `execution-denied` marker for a denied call). */
+  output: unknown;
+  /** Optional human-readable summary shown in the conversation timeline. */
+  preview?: string;
+};
+
 /** In-place edit of a previously posted agent message. Identified by platform message id. */
 export interface EditPayload {
   messageId: string;
@@ -615,6 +650,7 @@ export interface AgentReplyPayload {
   edit?: EditPayload;
   resolve?: { summary?: string };
   signals?: Signal[];
+  toolResults?: ToolResult[];
   addReactions?: AddReactionPayload[];
   typing?: TypingOp;
   planProgress?: PlanProgressEvent;

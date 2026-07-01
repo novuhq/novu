@@ -63,23 +63,35 @@ describe('toModelMessages', () => {
     ]);
   });
 
-  it('reconstructs tool-call + approval-request from persisted richContent.toolApproval, and the response from the signal', () => {
-    const toolApproval = { approvalId: 'tc_1', toolCallId: 'tc_1', name: 'issueRefund', input: { amount: 250 } };
+  it('skips edit entries (in-place card resolution artifacts)', () => {
+    const result = toModelMessages([
+      { role: 'user', type: 'message', content: 'q', createdAt: '1' },
+      { role: 'agent', type: 'edit', content: 'Approved', createdAt: '2' },
+      { role: 'agent', type: 'message', content: 'done', createdAt: '3' },
+    ]);
 
+    expect(result).toEqual([
+      { role: 'user', content: 'q' },
+      { role: 'assistant', content: 'done' },
+    ]);
+  });
+
+  it('reconstructs an in-flight approved cycle as tool-call + approval-request + response (triggers execution on resume)', () => {
     const result = toModelMessages([
       { role: 'user', type: 'message', content: 'refund my order', createdAt: '1' },
       {
         role: 'agent',
-        type: 'card',
-        content: '',
-        richContent: { card: { type: 'card' }, toolApproval },
+        type: 'tool_approval_request',
+        content: 'Tool approval required',
+        richContent: { card: { type: 'card' } },
+        toolData: { approvalId: 'tc_1', toolCallId: 'tc_1', toolName: 'issueRefund', input: { amount: 250 } },
         createdAt: '2',
       },
       {
         role: 'system',
-        type: 'signal',
+        type: 'tool_approval_decision',
         content: 'Approved issueRefund',
-        signalData: { type: 'tool-approval-response', payload: { approvalId: 'tc_1', approved: true } },
+        toolData: { approvalId: 'tc_1', approved: true },
         createdAt: '3',
       },
     ]);
@@ -100,74 +112,149 @@ describe('toModelMessages', () => {
     ]);
   });
 
-  it('collapses a resolved approval cycle to plain history once the conversation moves past it', () => {
-    const toolApproval = { approvalId: 'aitxt-1', toolCallId: 'toolu_1', name: 'issueRefund', input: { amount: 50 } };
-
+  it('replays a resolved approved cycle as a complete tool-call + tool-result pair (no approval parts)', () => {
     const result = toModelMessages([
-      { role: 'user', type: 'message', content: 'refund $50 for order A1', createdAt: '1' },
+      { role: 'user', type: 'message', content: 'refund $50', createdAt: '1' },
       {
         role: 'agent',
-        type: 'card',
-        content: '',
-        richContent: { card: { type: 'card' }, toolApproval },
+        type: 'tool_approval_request',
+        content: 'Tool approval required',
+        richContent: { card: { type: 'card' } },
+        toolData: { approvalId: 'a_1', toolCallId: 'toolu_1', toolName: 'issueRefund', input: { amount: 50 } },
         createdAt: '2',
       },
       {
         role: 'system',
-        type: 'signal',
-        content: 'Denied issueRefund',
-        signalData: { type: 'tool-approval-response', payload: { approvalId: 'aitxt-1', approved: false } },
+        type: 'tool_approval_decision',
+        content: 'Approved issueRefund',
+        toolData: { approvalId: 'a_1', approved: true },
         createdAt: '3',
       },
-      { role: 'agent', type: 'message', content: 'The refund request was denied.', createdAt: '4' },
-      { role: 'user', type: 'message', content: 'ok now refund 30', createdAt: '5' },
+      {
+        role: 'system',
+        type: 'tool_result',
+        content: 'Tool result',
+        toolData: { toolCallId: 'toolu_1', toolName: 'issueRefund', output: { ok: true } },
+        createdAt: '4',
+      },
+      { role: 'agent', type: 'message', content: 'Refund issued.', createdAt: '5' },
     ]);
 
     expect(result).toEqual([
-      { role: 'user', content: 'refund $50 for order A1' },
-      { role: 'assistant', content: 'The refund request was denied.' },
-      { role: 'user', content: 'ok now refund 30' },
+      { role: 'user', content: 'refund $50' },
+      {
+        role: 'assistant',
+        content: [{ type: 'tool-call', toolCallId: 'toolu_1', toolName: 'issueRefund', input: { amount: 50 } }],
+      },
+      {
+        role: 'tool',
+        content: [
+          {
+            type: 'tool-result',
+            toolCallId: 'toolu_1',
+            toolName: 'issueRefund',
+            output: { type: 'json', value: { ok: true } },
+          },
+        ],
+      },
+      { role: 'assistant', content: 'Refund issued.' },
     ]);
   });
 
-  it('only reconstructs the cycle being resumed when approvals are chained', () => {
-    const first = { approvalId: 'a_1', toolCallId: 'toolu_1', name: 'lookupOrder', input: { id: 'A1' } };
-    const second = { approvalId: 'a_2', toolCallId: 'toolu_2', name: 'issueRefund', input: { amount: 200 } };
+  it('derives an execution-denied result for a denied cycle straight from the decision', () => {
+    const result = toModelMessages([
+      { role: 'user', type: 'message', content: 'refund $50', createdAt: '1' },
+      {
+        role: 'agent',
+        type: 'tool_approval_request',
+        content: 'Tool approval required',
+        richContent: { card: { type: 'card' } },
+        toolData: { approvalId: 'a_1', toolCallId: 'toolu_1', toolName: 'issueRefund', input: { amount: 50 } },
+        createdAt: '2',
+      },
+      {
+        role: 'system',
+        type: 'tool_approval_decision',
+        content: 'Denied issueRefund',
+        toolData: { approvalId: 'a_1', approved: false },
+        createdAt: '3',
+      },
+    ]);
 
+    expect(result).toEqual([
+      { role: 'user', content: 'refund $50' },
+      {
+        role: 'assistant',
+        content: [{ type: 'tool-call', toolCallId: 'toolu_1', toolName: 'issueRefund', input: { amount: 50 } }],
+      },
+      {
+        role: 'tool',
+        content: [
+          { type: 'tool-result', toolCallId: 'toolu_1', toolName: 'tool', output: { type: 'execution-denied' } },
+        ],
+      },
+    ]);
+  });
+
+  it('replays a resolved cycle as a completed pair while resuming a chained in-flight cycle', () => {
     const result = toModelMessages([
       { role: 'user', type: 'message', content: 'refund order A1', createdAt: '1' },
       {
         role: 'agent',
-        type: 'card',
-        content: '',
-        richContent: { card: { type: 'card' }, toolApproval: first },
+        type: 'tool_approval_request',
+        content: 'Tool approval required',
+        richContent: { card: { type: 'card' } },
+        toolData: { approvalId: 'a_1', toolCallId: 'toolu_1', toolName: 'lookupOrder', input: { id: 'A1' } },
         createdAt: '2',
       },
       {
         role: 'system',
-        type: 'signal',
+        type: 'tool_approval_decision',
         content: 'Approved lookupOrder',
-        signalData: { type: 'tool-approval-response', payload: { approvalId: 'a_1', approved: true } },
+        toolData: { approvalId: 'a_1', approved: true },
         createdAt: '3',
       },
       {
-        role: 'agent',
-        type: 'card',
-        content: '',
-        richContent: { card: { type: 'card' }, toolApproval: second },
+        role: 'system',
+        type: 'tool_result',
+        content: 'Tool result',
+        toolData: { toolCallId: 'toolu_1', toolName: 'lookupOrder', output: { order: 'A1' } },
         createdAt: '4',
       },
       {
-        role: 'system',
-        type: 'signal',
-        content: 'Approved issueRefund',
-        signalData: { type: 'tool-approval-response', payload: { approvalId: 'a_2', approved: true } },
+        role: 'agent',
+        type: 'tool_approval_request',
+        content: 'Tool approval required',
+        richContent: { card: { type: 'card' } },
+        toolData: { approvalId: 'a_2', toolCallId: 'toolu_2', toolName: 'issueRefund', input: { amount: 200 } },
         createdAt: '5',
+      },
+      {
+        role: 'system',
+        type: 'tool_approval_decision',
+        content: 'Approved issueRefund',
+        toolData: { approvalId: 'a_2', approved: true },
+        createdAt: '6',
       },
     ]);
 
     expect(result).toEqual([
       { role: 'user', content: 'refund order A1' },
+      {
+        role: 'assistant',
+        content: [{ type: 'tool-call', toolCallId: 'toolu_1', toolName: 'lookupOrder', input: { id: 'A1' } }],
+      },
+      {
+        role: 'tool',
+        content: [
+          {
+            type: 'tool-result',
+            toolCallId: 'toolu_1',
+            toolName: 'lookupOrder',
+            output: { type: 'json', value: { order: 'A1' } },
+          },
+        ],
+      },
       {
         role: 'assistant',
         content: [
@@ -178,6 +265,95 @@ describe('toModelMessages', () => {
       {
         role: 'tool',
         content: [{ type: 'tool-approval-response', approvalId: 'a_2', approved: true }],
+      },
+    ]);
+  });
+
+  it('approve one tool + deny another (multi-tool): every tool-call is paired with a result', () => {
+    const result = toModelMessages([
+      { role: 'user', type: 'message', content: 'refund 150 for order C and cancel subscription B', createdAt: '1' },
+      {
+        role: 'agent',
+        type: 'tool_approval_request',
+        content: '',
+        toolData: {
+          approvalId: 'a_refund',
+          toolCallId: 'toolu_refund',
+          toolName: 'issueRefund',
+          input: { orderId: 'C', amount: 150 },
+        },
+        createdAt: '2',
+      },
+      {
+        role: 'system',
+        type: 'tool_approval_decision',
+        content: '',
+        toolData: { approvalId: 'a_refund', approved: true },
+        createdAt: '3',
+      },
+      {
+        role: 'system',
+        type: 'tool_result',
+        content: '',
+        toolData: { toolCallId: 'toolu_refund', toolName: 'issueRefund', output: { ok: true } },
+        createdAt: '4',
+      },
+      {
+        role: 'agent',
+        type: 'tool_approval_request',
+        content: '',
+        toolData: {
+          approvalId: 'a_cancel',
+          toolCallId: 'toolu_cancel',
+          toolName: 'cancelSubscription',
+          input: { subId: 'B' },
+        },
+        createdAt: '5',
+      },
+      {
+        role: 'system',
+        type: 'tool_approval_decision',
+        content: '',
+        toolData: { approvalId: 'a_cancel', approved: false },
+        createdAt: '6',
+      },
+    ]);
+
+    expect(result).toEqual([
+      { role: 'user', content: 'refund 150 for order C and cancel subscription B' },
+      {
+        role: 'assistant',
+        content: [
+          {
+            type: 'tool-call',
+            toolCallId: 'toolu_refund',
+            toolName: 'issueRefund',
+            input: { orderId: 'C', amount: 150 },
+          },
+        ],
+      },
+      {
+        role: 'tool',
+        content: [
+          {
+            type: 'tool-result',
+            toolCallId: 'toolu_refund',
+            toolName: 'issueRefund',
+            output: { type: 'json', value: { ok: true } },
+          },
+        ],
+      },
+      {
+        role: 'assistant',
+        content: [
+          { type: 'tool-call', toolCallId: 'toolu_cancel', toolName: 'cancelSubscription', input: { subId: 'B' } },
+        ],
+      },
+      {
+        role: 'tool',
+        content: [
+          { type: 'tool-result', toolCallId: 'toolu_cancel', toolName: 'tool', output: { type: 'execution-denied' } },
+        ],
       },
     ]);
   });

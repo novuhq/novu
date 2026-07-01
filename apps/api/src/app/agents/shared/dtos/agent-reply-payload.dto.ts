@@ -312,6 +312,30 @@ export class SignalDto {
   payload?: Record<string, unknown>;
 }
 
+/**
+ * Reports the outcome of a tool call back to Novu so it's saved in the conversation history.
+ */
+export class ToolResultDto {
+  @ApiProperty({ description: 'Id of the tool call this result resolves.' })
+  @IsString()
+  @IsNotEmpty()
+  toolCallId: string;
+
+  @ApiPropertyOptional({ description: 'Name of the tool that produced this result.' })
+  @IsOptional()
+  @IsString()
+  toolName?: string;
+
+  @ApiPropertyOptional({ description: 'JSON-serializable tool output (or the execution-denied marker).' })
+  @IsOptional()
+  output?: unknown;
+
+  @ApiPropertyOptional({ description: 'Human-readable preview for the display timeline.' })
+  @IsOptional()
+  @IsString()
+  preview?: string;
+}
+
 export class AgentReplyPayloadDto {
   @ApiProperty()
   @IsString()
@@ -352,6 +376,13 @@ export class AgentReplyPayloadDto {
   @Validate(IsValidSignal, { each: true })
   @Type(() => SignalDto)
   signals?: SignalDto[];
+
+  @ApiPropertyOptional({ type: [ToolResultDto] })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ToolResultDto)
+  toolResults?: ToolResultDto[];
 
   @ApiPropertyOptional({ type: [AddReactionPayloadDto] })
   @IsOptional()

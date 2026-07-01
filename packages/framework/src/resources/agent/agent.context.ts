@@ -23,6 +23,7 @@ import type {
   Signal,
   ToolApprovalConfig,
   ToolApprovalControl,
+  ToolResult,
   TriggerRecipientsPayload,
   TypingControl,
   TypingOp,
@@ -285,6 +286,7 @@ export class AgentContextImpl {
   };
 
   private _signals: Signal[] = [];
+  private _toolResults: ToolResult[] = [];
   private _pendingReactions: AddReactionPayload[] = [];
   private _resolveSignal: { summary?: string } | null = null;
   private _metadataState: Record<string, unknown>;
@@ -430,6 +432,11 @@ export class AgentContextImpl {
       this._signals = [];
     }
 
+    if (this._toolResults.length) {
+      body.toolResults = this._toolResults;
+      this._toolResults = [];
+    }
+
     if (this._pendingReactions.length) {
       body.addReactions = this._pendingReactions;
       this._pendingReactions = [];
@@ -467,6 +474,11 @@ export class AgentContextImpl {
     this._signals.push({ ...opts, type: 'trigger', workflowId });
   }
 
+  /** @internal Queue a tool-call outcome to be recorded in history; flushed with the next reply. */
+  emitToolResult(result: ToolResult): void {
+    this._toolResults.push(result);
+  }
+
   addReaction(messageId: string, emojiName: Emoji): void {
     this._pendingReactions.push({ messageId, emojiName });
   }
@@ -476,7 +488,7 @@ export class AgentContextImpl {
    * Called internally after onResolve returns.
    */
   async flush(): Promise<void> {
-    if (!this._signals.length && !this._resolveSignal && !this._pendingReactions.length) {
+    if (!this._signals.length && !this._toolResults.length && !this._resolveSignal && !this._pendingReactions.length) {
       return;
     }
 
@@ -488,6 +500,11 @@ export class AgentContextImpl {
     if (this._signals.length) {
       body.signals = this._signals;
       this._signals = [];
+    }
+
+    if (this._toolResults.length) {
+      body.toolResults = this._toolResults;
+      this._toolResults = [];
     }
 
     if (this._pendingReactions.length) {

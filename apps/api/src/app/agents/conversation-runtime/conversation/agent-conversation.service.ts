@@ -4,6 +4,7 @@ import {
   ConversationActivityEntity,
   ConversationActivityRepository,
   ConversationActivitySenderTypeEnum,
+  ConversationActivityToolData,
   ConversationActivityTypeEnum,
   ConversationChannel,
   ConversationEntity,
@@ -97,6 +98,11 @@ export interface PersistAgentActivityParams extends ConversationActivityContext 
   richContent?: Record<string, unknown>;
 }
 
+/** Agent message params plus the tool call the approval card gates. */
+export interface PersistToolApprovalRequestParams extends PersistAgentActivityParams {
+  toolData: ConversationActivityToolData;
+}
+
 export type MetadataOp =
   | { action: 'set'; key: string; value: unknown }
   | { action: 'delete'; key: string }
@@ -121,6 +127,17 @@ export interface PersistToolApprovalDecisionParams extends ConversationActivityC
   approvalId: string;
   approved: boolean;
   toolName?: string;
+  actorType: ConversationActivitySenderTypeEnum.SUBSCRIBER | ConversationActivitySenderTypeEnum.PLATFORM_USER;
+  actorId: string;
+}
+
+export interface PersistToolResultParams extends ConversationActivityContext {
+  toolCallId: string;
+  toolName?: string;
+  /** The tool's output as returned by the model runtime (JSON-serializable). */
+  output: unknown;
+  /** Human-readable preview for the display timeline; defaults to a generic line. */
+  preview?: string;
 }
 
 @Injectable()
@@ -353,12 +370,16 @@ export class AgentConversationService {
     return this.persistAgentActivity(params, ConversationActivityTypeEnum.MESSAGE, 'activity');
   }
 
+  async persistToolApprovalRequest(params: PersistToolApprovalRequestParams): Promise<ConversationActivityEntity> {
+    return this.persistAgentActivity(params, ConversationActivityTypeEnum.TOOL_APPROVAL_REQUEST, 'activity');
+  }
+
   async persistAgentEdit(params: PersistAgentActivityParams): Promise<ConversationActivityEntity> {
     return this.persistAgentActivity(params, ConversationActivityTypeEnum.EDIT, 'preview');
   }
 
   private async persistAgentActivity(
-    params: PersistAgentActivityParams,
+    params: PersistAgentActivityParams & { toolData?: ConversationActivityToolData },
     type: ConversationActivityTypeEnum,
     touch: 'activity' | 'preview'
   ): Promise<ConversationActivityEntity> {
@@ -381,6 +402,7 @@ export class AgentConversationService {
         senderName: params.agentName,
         content: params.content,
         richContent: params.richContent,
+        toolData: params.toolData,
         type,
         environmentId: params.environmentId,
         organizationId: params.organizationId,
@@ -480,18 +502,34 @@ export class AgentConversationService {
   async persistToolApprovalDecision(params: PersistToolApprovalDecisionParams): Promise<void> {
     const toolName = params.toolName ?? 'tool call';
 
-    await this.activityRepository.createSignalActivity({
+    await this.activityRepository.createToolActivity({
       identifier: `act_${shortId(12)}`,
       conversationId: params.conversationId,
       platform: params.channel.platform,
       integrationId: params.channel._integrationId,
       platformThreadId: params.channel.platformThreadId,
-      agentId: params.agentIdentifier,
+      senderType: params.actorType,
+      senderId: params.actorId,
       content: params.approved ? `Approved ${toolName}` : `Denied ${toolName}`,
-      signalData: {
-        type: 'tool-approval-response',
-        payload: { approvalId: params.approvalId, approved: params.approved },
-      },
+      type: ConversationActivityTypeEnum.TOOL_APPROVAL_DECISION,
+      toolData: { approvalId: params.approvalId, approved: params.approved, toolName: params.toolName },
+      environmentId: params.environmentId,
+      organizationId: params.organizationId,
+    });
+  }
+
+  async persistToolResult(params: PersistToolResultParams): Promise<void> {
+    await this.activityRepository.createToolActivity({
+      identifier: `act_${shortId(12)}`,
+      conversationId: params.conversationId,
+      platform: params.channel.platform,
+      integrationId: params.channel._integrationId,
+      platformThreadId: params.channel.platformThreadId,
+      senderType: ConversationActivitySenderTypeEnum.AGENT,
+      senderId: params.agentIdentifier,
+      content: params.preview ?? `Tool result: ${params.toolName ?? params.toolCallId}`,
+      type: ConversationActivityTypeEnum.TOOL_RESULT,
+      toolData: { toolCallId: params.toolCallId, toolName: params.toolName, output: params.output },
       environmentId: params.environmentId,
       organizationId: params.organizationId,
     });
