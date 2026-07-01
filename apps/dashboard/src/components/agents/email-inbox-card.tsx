@@ -1,10 +1,4 @@
-import {
-  ApiServiceLevelEnum,
-  DomainStatusEnum,
-  FeatureNameEnum,
-  getFeatureForTierAsBoolean,
-  type IIntegration,
-} from '@novu/shared';
+import { ApiServiceLevelEnum, FeatureNameEnum, getFeatureForTierAsBoolean, type IIntegration } from '@novu/shared';
 import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { RiAddLine, RiCloseLine, RiInformation2Line } from 'react-icons/ri';
 import { useSearchParams } from 'react-router-dom';
@@ -20,7 +14,6 @@ import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { useUpdateIntegration } from '@/hooks/use-update-integration';
 import { cn } from '@/utils/ui';
 import { AgentCustomDomainSheet } from './agent-custom-domain-sheet';
-import { InboundAddressForm } from './inbound-address-form';
 import { useEmailSetupCredentials } from './use-email-setup-credentials';
 
 const DELIVERABILITY_DOCS_URL = 'https://docs.novu.co/platform/domains';
@@ -61,18 +54,19 @@ export function EmailInboxCardBody({
 }: EmailInboxCardProps) {
   const { mutateAsync: updateIntegration } = useUpdateIntegration();
   const { integrations } = useFetchIntegrations();
-  const { subscription } = useFetchSubscription();
-  const domainsEnabled = getFeatureForTierAsBoolean(
-    FeatureNameEnum.DOMAINS_BOOLEAN,
-    subscription?.apiServiceLevel || ApiServiceLevelEnum.FREE
-  );
+  // LOCAL-DEV-ONLY — DO NOT MERGE: bypass domains paywall. Revert before PR.
+  // const { subscription } = useFetchSubscription();
+  // const domainsEnabled = getFeatureForTierAsBoolean(
+  //   FeatureNameEnum.DOMAINS_BOOLEAN,
+  //   subscription?.apiServiceLevel || ApiServiceLevelEnum.FREE
+  // );
+  const domainsEnabled = true; // LOCAL-DEV-ONLY — DO NOT MERGE
 
   const { configuredAddresses, domains, addAddress, removeAddress, setSharedInboxDisabled, isSharedToggleUpdating } =
     useEmailSetupCredentials({ emailIntegration, integrations, agent });
 
   const serverCredentials = emailIntegration.credentials ?? {};
   const [isToggling, setIsToggling] = useState(false);
-  const [isAddingCustom, setIsAddingCustom] = useState(false);
   const [isDomainSheetOpen, setIsDomainSheetOpen] = useState(false);
   const [returnDomainName, setReturnDomainName] = useState<string | undefined>(undefined);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -85,14 +79,6 @@ export function EmailInboxCardBody({
   const sharedAddress = integrationEmbedded.sharedInboundAddress;
   const sharedDisabled = Boolean(integrationEmbedded.sharedInboxDisabled);
   const hasCustomAddresses = configuredAddresses.length > 0;
-  // Mirror the verified-domain filter the add-form applies so the affordance
-  // and the picker stay in sync: no point offering "Connect custom domain"
-  // when the picker would open empty. When no usable domains exist, the
-  // discoverability tip below points the user at the domain-management page.
-  const hasUsableDomains = useMemo(
-    () => domains.some((d) => d.status === DomainStatusEnum.VERIFIED && d.mxRecordConfigured),
-    [domains]
-  );
 
   // Domain Connect returns the user to this page with a `?customDomain=<name>` marker; reopen the
   // sheet on that domain so verification resumes inline, then strip the marker from the URL.
@@ -170,23 +156,8 @@ export function EmailInboxCardBody({
     setSharedInboxDisabled(!nextEnabled);
   }
 
-  function handleAddAddress(address: string, domain: (typeof domains)[number]): boolean {
-    addAddress(address, domain);
-    setIsAddingCustom(false);
-
-    return true;
-  }
-
   function handleConnectDomain() {
     if (!domainsEnabled) {
-      return;
-    }
-
-    // With a verified domain available, reveal the inline address picker; otherwise open the sheet
-    // to add and verify a new domain (no redirect).
-    if (hasUsableDomains) {
-      setIsAddingCustom(true);
-
       return;
     }
 
@@ -269,28 +240,7 @@ export function EmailInboxCardBody({
             })}
           </div>
 
-          {!hideCustomAddressForm && isAddingCustom && hasUsableDomains ? (
-            <div className="flex flex-col gap-1.5">
-              <InboundAddressForm
-                domains={domains}
-                isDisabled={inboxSectionDisabled}
-                onSubmit={handleAddAddress}
-                isExistingAddress={(address, domainId) =>
-                  configuredAddresses.some((a) => a.address === address && a.domainId === domainId)
-                }
-                onAddDomain={() => setIsDomainSheetOpen(true)}
-              />
-              <button
-                type="button"
-                className="text-text-soft hover:text-text-sub text-label-xs self-start font-medium transition-colors"
-                onClick={() => setIsAddingCustom(false)}
-              >
-                Cancel
-              </button>
-            </div>
-          ) : null}
-
-          {!hideCustomAddressForm && !isAddingCustom ? (
+          {!hideCustomAddressForm ? (
             domainsEnabled ? (
               <button
                 type="button"
@@ -335,6 +285,9 @@ export function EmailInboxCardBody({
         open={isDomainSheetOpen}
         onOpenChange={handleDomainSheetOpenChange}
         initialDomainName={returnDomainName}
+        domains={domains}
+        configuredAddresses={configuredAddresses}
+        onAddAddress={addAddress}
       />
     </>
   );

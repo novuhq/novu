@@ -1,4 +1,4 @@
-import { ApiServiceLevelEnum, DomainStatusEnum, FeatureNameEnum, getFeatureForTierAsBoolean } from '@novu/shared';
+import { DomainStatusEnum } from '@novu/shared';
 import { formatDistanceToNow } from 'date-fns';
 import { useState } from 'react';
 import { RiAddLine, RiMore2Fill } from 'react-icons/ri';
@@ -169,10 +169,13 @@ export function DomainsPage() {
   const environmentSlug = currentEnvironment?.slug;
   const isTableLoading = isLoading || !environmentSlug;
 
-  const domainsEnabled = getFeatureForTierAsBoolean(
-    FeatureNameEnum.DOMAINS_BOOLEAN,
-    subscription?.apiServiceLevel || ApiServiceLevelEnum.FREE
-  );
+  // LOCAL-DEV-ONLY — DO NOT MERGE: bypass domains paywall. Revert before PR.
+  // const { subscription } = useFetchSubscription();
+  // const domainsEnabled = getFeatureForTierAsBoolean(
+  //   FeatureNameEnum.DOMAINS_BOOLEAN,
+  //   subscription?.apiServiceLevel || ApiServiceLevelEnum.FREE
+  // );
+  const domainsEnabled = true; // LOCAL-DEV-ONLY — DO NOT MERGE
   const domains = domainsResponse?.data ?? [];
   const hasActiveCursor = Boolean(afterCursor || beforeCursor);
   const isEmptyDomainsState = !isTableLoading && !search && !hasActiveCursor && domainsResponse?.totalCount === 0;
