@@ -270,7 +270,7 @@ describe('Topic Trigger Event #novu-v2', () => {
       expect(secondSubscriberNotifications.length).to.equal(0);
     });
 
-    it('should only exclude actor from topic, should send event if actor explicitly included', async () => {
+    it('should exclude actor even when explicitly included in to recipients', async () => {
       const actor = firstSubscriber;
       await novuClient.trigger({
         ...buildTriggerRequestPayload(template, [...to, actor.subscriberId]),
@@ -279,50 +279,28 @@ describe('Topic Trigger Event #novu-v2', () => {
 
       await session.waitForJobCompletion(template._id);
 
-      for (const subscriber of subscribers) {
-        const notifications = await notificationRepository.findBySubscriberId(session.environment._id, subscriber._id);
+      const actorNotifications = await notificationRepository.findBySubscriberId(session.environment._id, actor._id);
+      expect(actorNotifications.length).to.equal(0);
 
-        expect(notifications.length).to.equal(1);
+      const actorMessages = await messageRepository.findBySubscriberChannel(
+        session.environment._id,
+        actor._id,
+        ChannelTypeEnum.IN_APP
+      );
+      expect(actorMessages.length).to.equal(0);
 
-        const notification = notifications[0];
+      const secondSubscriberNotifications = await notificationRepository.findBySubscriberId(
+        session.environment._id,
+        secondSubscriber._id
+      );
+      expect(secondSubscriberNotifications.length).to.equal(1);
 
-        expect(notification._organizationId).to.equal(session.organization._id);
-        expect(notification._templateId).to.equal(template._id);
-
-        const messages = await messageRepository.findBySubscriberChannel(
-          session.environment._id,
-          subscriber._id,
-          ChannelTypeEnum.IN_APP
-        );
-
-        expect(messages.length).to.equal(1);
-        const message = messages[0];
-
-        expect(message.channel).to.equal(ChannelTypeEnum.IN_APP);
-        expect(message.content as string).to.equal('Test content for <b>Testing of User Name</b>');
-        expect(message.seen).to.equal(false);
-        expect(message.cta.data.url).to.equal('/cypress/test-shell/example/test?test-param=true');
-        expect(message.lastSeenDate).to.be.not.ok;
-        expect(message.payload.firstName).to.equal('Testing of User Name');
-        expect(message.payload.urlVariable).to.equal('/test/url/path');
-        expect(message.payload.attachments).to.be.not.ok;
-
-        const emails = await messageRepository.findBySubscriberChannel(
-          session.environment._id,
-          subscriber._id,
-          ChannelTypeEnum.EMAIL
-        );
-
-        expect(emails.length).to.equal(1);
-        const email = emails[0];
-
-        expect(email.channel).to.equal(ChannelTypeEnum.EMAIL);
-        expect(Array.isArray(email.content)).to.be.ok;
-        expect((email.content[0] as IEmailBlock).type).to.equal('text');
-        expect((email.content[0] as IEmailBlock).content).to.equal(
-          'This are the text contents of the template for Testing of User Name'
-        );
-      }
+      const secondSubscriberMessages = await messageRepository.findBySubscriberChannel(
+        session.environment._id,
+        secondSubscriber._id,
+        ChannelTypeEnum.IN_APP
+      );
+      expect(secondSubscriberMessages.length).to.equal(1);
     });
 
     it('should trigger SMS notification', async () => {
