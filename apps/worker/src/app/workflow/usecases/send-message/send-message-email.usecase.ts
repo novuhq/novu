@@ -373,10 +373,9 @@ export class SendMessageEmail extends SendMessageBase {
     }
 
     if (integration.providerId === EmailProviderIdEnum.EmailWebhook) {
-      payload.subject = subject;
-      payload.content = command.bridgeData
-        ? (bridgeOutputs as EmailOutput)?.body || html || ''
-        : (content ?? html ?? step.template.content);
+      if (command.bridgeData) {
+        payload.content = (bridgeOutputs as EmailOutput)?.body || html || '';
+      }
 
       mailData.payloadDetails = payload;
     }
