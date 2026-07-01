@@ -23,8 +23,7 @@ export class CreateDomain {
   async execute(command: CreateDomainCommand): Promise<DomainResponseDto> {
     // Both checks count the same domains: the plan entitlement (402/409) runs
     // first so its errors take precedence over the global anti-abuse cap.
-    // LOCAL-DEV-ONLY — DO NOT MERGE: skip plan-tier custom domain limit. Revert before PR.
-    // await this.resourceValidatorService.validateCustomEmailDomainsLimit(command.organizationId);
+    await this.resourceValidatorService.validateCustomEmailDomainsLimit(command.organizationId);
     await this.resourceValidatorService.validateDomainsLimit(command.organizationId);
     const name = command.name.toLowerCase();
 

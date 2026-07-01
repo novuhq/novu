@@ -54,13 +54,11 @@ export function EmailInboxCardBody({
 }: EmailInboxCardProps) {
   const { mutateAsync: updateIntegration } = useUpdateIntegration();
   const { integrations } = useFetchIntegrations();
-  // LOCAL-DEV-ONLY — DO NOT MERGE: bypass domains paywall. Revert before PR.
-  // const { subscription } = useFetchSubscription();
-  // const domainsEnabled = getFeatureForTierAsBoolean(
-  //   FeatureNameEnum.DOMAINS_BOOLEAN,
-  //   subscription?.apiServiceLevel || ApiServiceLevelEnum.FREE
-  // );
-  const domainsEnabled = true; // LOCAL-DEV-ONLY — DO NOT MERGE
+  const { subscription } = useFetchSubscription();
+  const domainsEnabled = getFeatureForTierAsBoolean(
+    FeatureNameEnum.DOMAINS_BOOLEAN,
+    subscription?.apiServiceLevel || ApiServiceLevelEnum.FREE
+  );
 
   const { configuredAddresses, domains, addAddress, removeAddress, setSharedInboxDisabled, isSharedToggleUpdating } =
     useEmailSetupCredentials({ emailIntegration, integrations, agent });

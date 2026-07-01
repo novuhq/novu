@@ -43,15 +43,9 @@ export class ProductFeatureInterceptor implements NestInterceptor {
       throw new UnauthorizedException();
     }
 
-    // LOCAL-DEV-ONLY — DO NOT MERGE: bypass CUSTOM_DOMAINS billing gate. Revert before PR.
-    if (requestedFeature === ProductFeatureKeyEnum.CUSTOM_DOMAINS) {
+    if (requestedFeature === ProductFeatureKeyEnum.CUSTOM_DOMAINS && process.env.IS_SELF_HOSTED === 'true') {
       return next.handle();
     }
-
-    // LOCAL-DEV-ONLY — DO NOT MERGE: restore this block when reverting the hack above.
-    // if (requestedFeature === ProductFeatureKeyEnum.CUSTOM_DOMAINS && process.env.IS_SELF_HOSTED === 'true') {
-    //   return next.handle();
-    // }
 
     const { organizationId } = user;
 

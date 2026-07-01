@@ -615,7 +615,7 @@ describe('AgentInboundHandler', () => {
         _organizationId: 'org1',
         _agentId: 'agent1',
         _integrationId: 'integration1',
-        $or: [{ connectedAt: null }, { connectedAt: { $exists: false } }, { connectedAt: { $lte: new Date(1) } }],
+        $or: [{ connectedAt: null }, { connectedAt: { $exists: false } }, { connectedAt: { $lte: new Date(0) } }],
       });
       expect(update.$set.connectedAt).to.be.instanceOf(Date);
     });
