@@ -140,6 +140,7 @@ describe('SendMessageEmail - email-webhook payloadDetails', () => {
     expect(mailData.payloadDetails).to.exist;
     expect(mailData.payloadDetails.content).to.equal(renderedEmailBody);
     expect(mailData.payloadDetails.subject).to.equal('Welcome Ada!');
+    expect(command.step?.template?.content).to.equal('');
   });
 
   it('should preserve legacy payloadDetails content for v0 workflows without bridge output', async () => {

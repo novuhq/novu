@@ -373,11 +373,12 @@ export class SendMessageEmail extends SendMessageBase {
     }
 
     if (integration.providerId === EmailProviderIdEnum.EmailWebhook) {
-      if (command.bridgeData) {
-        payload.content = (bridgeOutputs as EmailOutput)?.body || html || '';
-      }
-
-      mailData.payloadDetails = payload;
+      mailData.payloadDetails = command.bridgeData
+        ? {
+            ...payload,
+            content: (bridgeOutputs as EmailOutput)?.body || html || '',
+          }
+        : payload;
     }
 
     return await this.sendMessage(integration, mailData, message, command);
