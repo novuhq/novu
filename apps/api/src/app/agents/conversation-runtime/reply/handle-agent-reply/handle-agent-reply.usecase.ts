@@ -106,19 +106,26 @@ export class HandleAgentReply {
 
     let replyInfo: SentMessageInfo | undefined;
     if (command.reply) {
-      // Free-tier short-circuit: an agent-initiated reply that would start a new
-      // active conversation is rejected once the included limit is reached
-      // (covers proactive/outbound-only threads). Replies inside an already-counted
-      // conversation pass through.
-      await this.conversationActivation.assertOutboundWithinLimit({
-        conversation,
-        platform: channel.platform as AgentPlatformEnum,
-        organizationId: command.organizationId,
-      });
+      // System-generated replies (e.g. runtime error notices) are always
+      // delivered but never count an active conversation, and they bypass the
+      // free-tier gate so an error message is never swallowed by a 402.
+      if (!command.isSystemGenerated) {
+        // Free-tier short-circuit: an agent-initiated reply that would start a new
+        // active conversation is rejected once the included limit is reached
+        // (covers proactive/outbound-only threads). Replies inside an already-counted
+        // conversation pass through.
+        await this.conversationActivation.assertOutboundWithinLimit({
+          conversation,
+          platform: channel.platform as AgentPlatformEnum,
+          organizationId: command.organizationId,
+        });
+      }
 
       replyInfo = await this.deliverMessage(command, conversation, channel, command.reply, agentName);
 
-      await this.registerConversationEngagement(command, conversation, channel);
+      if (!command.isSystemGenerated) {
+        await this.registerConversationEngagement(command, conversation, channel);
+      }
 
       if (!config!.isManaged) {
         void this.inboundAck.onBridgeReplyDelivered({

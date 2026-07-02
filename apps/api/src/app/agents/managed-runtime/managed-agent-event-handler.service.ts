@@ -279,7 +279,7 @@ export class ManagedAgentEventHandler {
 
     try {
       await this.handleAgentReply.execute(
-        HandleAgentReplyCommand.create({ ...baseCommand, reply: { markdown: message } })
+        HandleAgentReplyCommand.create({ ...baseCommand, reply: { markdown: message }, isSystemGenerated: true })
       );
       await this.inboundAck.onManagedTurnComplete(metadata);
       await this.handlePlanProgress.execute(
