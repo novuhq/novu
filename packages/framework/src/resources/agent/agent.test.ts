@@ -2066,9 +2066,11 @@ describe('tool approval', () => {
       secretKey: 's',
     });
 
-    const phases = posts.filter((p) => p.planProgress?.kind === 'phase').map((p) => p.planProgress.phase);
-    expect(phases).toContain('awaiting-approval');
-    expect(phases).not.toContain('finished');
+    const phases = posts.filter((p) => p.planProgress?.kind === 'phase').map((p) => p.planProgress);
+    expect(phases.map((p) => p.phase)).toContain('awaiting-approval');
+    expect(phases.map((p) => p.phase)).not.toContain('finished');
+    const awaiting = phases.find((p) => p.phase === 'awaiting-approval');
+    expect(awaiting?.title).toBeUndefined();
   });
 
   it('routes an approval click to onToolApproval and resolves the card by default', async () => {
@@ -2118,9 +2120,54 @@ describe('tool approval', () => {
 
     expect(seen.decision?.approved).toBe(true);
     expect(seen.decision?.toolCall).toMatchObject({ id: 'tc', name: 'doIt', input: { x: 1 } });
+    const approvedPhase = posts.find((p) => p.planProgress?.kind === 'phase' && p.planProgress.phase === 'approved');
+    expect(approvedPhase?.planProgress.title).toBeUndefined();
     const editPost = posts.find((p) => p.edit?.messageId === 'm_prev');
     expect(editPost).toBeTruthy();
     // Default resolution edits the card to a resolved state (no actionable buttons).
     expect(editPost.edit.content.card.title).toBe('Approved');
+  });
+
+  it('marks the plan task as denied when the user denies approval', async () => {
+    const posts: any[] = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (_url, init: any) => {
+        posts.push(JSON.parse(init.body));
+
+        return new Response(JSON.stringify({ messageId: 'm', platformThreadId: 't' }), { status: 200 });
+      })
+    );
+
+    const testAgent = {
+      id: 'a',
+      handlers: {
+        onMessage: () => undefined,
+        onToolApproval: async () => undefined,
+      },
+    };
+
+    await dispatchAgentEvent({
+      agent: testAgent as never,
+      event: 'onAction',
+      bridge: approvalBridge({
+        event: 'onAction',
+        message: null,
+        history: [
+          {
+            role: 'agent',
+            type: 'tool_approval_request',
+            content: '',
+            toolData: { approvalId: 'tc', toolCallId: 'tc', toolName: 'doIt', input: { x: 1 } },
+            createdAt: '1',
+          },
+        ],
+        action: { id: buildApprovalActionId('deny', 'tc'), sourceMessageId: 'm_prev' },
+      }),
+      secretKey: 's',
+    });
+
+    const deniedTask = posts.find((p) => p.planProgress?.kind === 'task' && p.planProgress.task?.id === 'tc');
+    expect(deniedTask?.planProgress.task).toMatchObject({ status: 'error', details: 'Denied' });
   });
 });

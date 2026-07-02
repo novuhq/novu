@@ -10,17 +10,9 @@ import type {
 
 type PlanPostFn = (event: PlanProgressEvent) => Promise<void>;
 
-/**
- * Public plan handle plus the internal lifecycle hooks the runtime calls.
- * The handle owns all plan state (title, queue ordering, finalized/paused) so
- * the context can simply delegate.
- */
 export interface InternalPlanHandle extends PlanHandle {
-  /** @internal Used by ctx.plan.track — not part of the author-facing plan API. */
   upsertTask(id: string, task: Omit<PlanTaskInput, 'id'>): void;
-  /** @internal Emit the awaiting-approval phase so the card doesn't show as finished. */
   pauseForApproval(): Promise<void>;
-  /** @internal Dispatch fallback finalize: no-op once finalized, and won't finish a paused plan. */
   autoFinalize(phase: 'finished' | 'failed'): Promise<void>;
 }
 
@@ -64,7 +56,6 @@ class PlanHandleImpl implements InternalPlanHandle {
     this.enqueue({ kind: 'title', ...(initialTitle !== undefined ? { title: initialTitle } : {}) });
   }
 
-  /** @internal Used by ctx.plan.track — do not call directly. */
   upsertTask(id: string, task: Omit<PlanTaskInput, 'id'>): void {
     this.enqueue({
       kind: 'task',
@@ -129,7 +120,7 @@ class PlanHandleImpl implements InternalPlanHandle {
   pauseForApproval(): Promise<void> {
     this.pausedForApproval = true;
 
-    return this.enqueuePhase('awaiting-approval', this.cardTitle);
+    return this.enqueuePhase('awaiting-approval');
   }
 
   autoFinalize(phase: 'finished' | 'failed'): Promise<void> {
@@ -146,10 +137,11 @@ class PlanHandleImpl implements InternalPlanHandle {
     }
     this.finalized = true;
 
-    return this.enqueuePhase(phase, title ?? this.cardTitle);
+    return this.enqueuePhase(phase, title);
   }
 
   private enqueuePhase(phase: PlanProgressPhase, title?: string): Promise<void> {
+    // Phase titles come from the API (planTitleForPhase) unless the author passed title to finish()/fail().
     return this.enqueueAwait(() => this.post({ kind: 'phase', phase, ...(title ? { title } : {}) }));
   }
 

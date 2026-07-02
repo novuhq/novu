@@ -87,6 +87,15 @@ async function runAgentHandler(registeredAgent: Agent, event: string, ctx: Agent
           : { id: approvalId, name: '' };
         const approvalMessage = ctx.createReplyHandle(ctx.action!.sourceMessageId ?? '');
 
+        if (approved) {
+          await ctx.postPlanProgress({ kind: 'phase', phase: 'approved' });
+        } else {
+          await ctx.postPlanProgress({
+            kind: 'task',
+            task: { id: toolCall.id, status: 'error', details: 'Denied' },
+          });
+        }
+
         const decision: ToolApprovalDecision = { toolCall, approved, approvalMessage };
         const result = await registeredAgent.handlers.onToolApproval(decision, ctx as AgentActionContext);
         await replyIfPresent(result);

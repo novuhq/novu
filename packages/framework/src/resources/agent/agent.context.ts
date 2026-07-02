@@ -296,6 +296,8 @@ export class AgentContextImpl implements AgentRuntimeContext {
   private _resolveSignal: { summary?: string } | null = null;
   private _metadataState: Record<string, unknown>;
   private _planHandle: InternalPlanHandle | undefined;
+  /** Set when this turn updates a plan card from a prior turn (e.g. approval). */
+  private _remotePlanActive = false;
   private readonly _toolApprovalConfig?: ToolApprovalConfig;
   private readonly _replyUrl: string;
   private readonly _conversationId: string;
@@ -496,10 +498,6 @@ export class AgentContextImpl implements AgentRuntimeContext {
     }
   }
 
-  /**
-   * Returns the turn's plan handle, creating one with the default title when
-   * `ctx.plan.track(tools)` runs before an explicit `ctx.plan()` call.
-   */
   private resolvePlanForToolTracking(): InternalPlanHandle {
     if (this._planHandle) {
       return this._planHandle;
@@ -513,14 +511,32 @@ export class AgentContextImpl implements AgentRuntimeContext {
     return this._planHandle;
   }
 
-  /** @internal Pause the active plan while waiting for tool approval. */
   private async _pausePlanForApproval(): Promise<void> {
     await this._planHandle?.pauseForApproval();
   }
 
-  /** @internal Dispatch fallback to finalize the plan when the handler didn't. */
   async finalizePlan(phase: 'finished' | 'failed'): Promise<void> {
-    await this._planHandle?.autoFinalize(phase);
+    if (this._planHandle) {
+      await this._planHandle.autoFinalize(phase);
+
+      return;
+    }
+
+    if (!this._remotePlanActive) {
+      return;
+    }
+
+    await this.postPlanProgress({ kind: 'phase', phase });
+  }
+
+  async postPlanProgress(event: PlanProgressEvent): Promise<void> {
+    this._remotePlanActive = true;
+
+    await this._post({
+      conversationId: this._conversationId,
+      integrationIdentifier: this._integrationIdentifier,
+      planProgress: event,
+    });
   }
 
   private async _post(body: AgentReplyPayload): Promise<SentMessageInfo | null> {
