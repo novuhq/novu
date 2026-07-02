@@ -1,9 +1,19 @@
 import { agent as frameworkAgent } from '../resources/agent/agent.resource';
-import type { Agent, AgentMessage, AgentMessageContext } from '../resources/agent/agent.types';
+import type {
+  Agent,
+  AgentMessage,
+  AgentMessageContext,
+  MessageContent,
+  ReplyHandle,
+} from '../resources/agent/agent.types';
 import { handleResult, isAiSdkResult } from './reply-mapper';
 import type { AiSdkAgentHandlers } from './types';
 
 type AiSdkMessageHandler = AiSdkAgentHandlers['onMessage'];
+
+function isReplyHandle(value: unknown): value is ReplyHandle {
+  return typeof value === 'object' && value !== null && 'messageId' in value && 'platformThreadId' in value;
+}
 
 function normalize(id: string, handlers: AiSdkMessageHandler | AiSdkAgentHandlers): AiSdkAgentHandlers {
   const normalized = typeof handlers === 'function' ? { onMessage: handlers } : handlers;
@@ -46,6 +56,10 @@ export function agent(id: string, handlers: AiSdkMessageHandler | AiSdkAgentHand
           await handleResult(result, ctx, config);
 
           return;
+        }
+
+        if (result != null && !isReplyHandle(result)) {
+          await ctx.reply(result as MessageContent);
         }
       }
 

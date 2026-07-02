@@ -152,4 +152,55 @@ describe('tool approval', () => {
     expect(ctx.history).toHaveLength(2);
     expect(ctx.reply).toHaveBeenCalledWith('done');
   });
+
+  it('posts string returns from onToolApproval before auto-resume', async () => {
+    const historyArr: AgentHistoryEntry[] = [
+      {
+        role: 'agent',
+        type: 'tool_approval_request',
+        content: '',
+        richContent: { card: { type: 'card', children: [] } },
+        toolData: { approvalId: 'tc_1', toolCallId: 'tc_1', toolName: 'issueRefund', input: { amount: 300 } },
+        createdAt: '1',
+      },
+      {
+        role: 'system',
+        type: 'tool_approval_decision',
+        content: 'Approved issueRefund',
+        toolData: { approvalId: 'tc_1', approved: true },
+        createdAt: '2',
+      },
+    ];
+
+    const billingAgent = agent('billing', {
+      onMessage: async () => ({ text: Promise.resolve('done'), steps: [], content: [] }),
+      onToolApproval: async (decision) => {
+        if (decision.approved) {
+          return 'test123';
+        }
+      },
+    });
+
+    const ctx = {
+      history: historyArr,
+      action: { id: 'x', sourceMessageId: 'm' },
+      reply: vi.fn(async () => ({ messageId: 'm', platformThreadId: 't' })),
+    };
+
+    if (!billingAgent.handlers.onToolApproval) {
+      throw new Error('expected onToolApproval handler');
+    }
+
+    await billingAgent.handlers.onToolApproval(
+      {
+        toolCall: { id: 'tc_1', name: 'issueRefund', input: { amount: 1 } },
+        approved: true,
+        approvalMessage: { editedByHandler: false } as never,
+      },
+      ctx as never
+    );
+
+    expect(ctx.reply).toHaveBeenCalledWith('test123');
+    expect(ctx.reply).toHaveBeenCalledWith('done');
+  });
 });

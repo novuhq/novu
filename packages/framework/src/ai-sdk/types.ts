@@ -29,8 +29,12 @@ export type AiSdkAgentHandlers = Omit<AgentHandlers, 'onMessage' | 'onToolApprov
   onMessage: (message: AgentMessage, ctx: AgentMessageContext) => Awaitable<MessageContent | AiSdkResult | void>;
   /**
    * Optional. The adapter auto-resumes by default; define this to add side-effects
-   * (return `void`) or to drive the resume yourself (return a `streamText`/`generateText` result).
+   * (return `void`), post a reply (return `MessageContent`), or drive the resume yourself
+   * (return a `streamText`/`generateText` result).
    */
-  onToolApproval?: (decision: ToolApprovalDecision, ctx: AgentActionContext) => Awaitable<AiSdkResult | void>;
+  onToolApproval?: (
+    decision: ToolApprovalDecision,
+    ctx: AgentActionContext
+  ) => Awaitable<MessageContent | AiSdkResult | void>;
   toolApproval?: ToolApprovalConfig;
 };
