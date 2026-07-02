@@ -5,12 +5,33 @@ import type {
   Agent,
   AgentActionContext,
   AgentBridgeRequest,
+  AgentHistoryEntry,
   AgentMessageContext,
   AgentReactionContext,
   AgentResolveContext,
+  AgentToolCall,
   MessageContent,
+  ToolApprovalDecision,
 } from './agent.types';
-import { AgentEventEnum } from './agent.types';
+import { AgentEventEnum, PendingApproval } from './agent.types';
+import { type ApprovalPayload, parseApprovalActionId } from './tool-approval/action-id';
+import { resolvedApprovalCard } from './tool-approval/approval-card';
+
+function findApprovalInHistory(history: AgentHistoryEntry[], approvalId: string): ApprovalPayload | undefined {
+  for (const entry of history) {
+    const tool = entry.toolData;
+    if (entry.type === 'tool_approval_request' && tool?.approvalId === approvalId && tool.toolCallId) {
+      return {
+        approvalId: tool.approvalId,
+        toolCallId: tool.toolCallId,
+        name: tool.toolName ?? 'tool',
+        input: tool.input,
+      };
+    }
+  }
+
+  return undefined;
+}
 
 export interface DispatchAgentEventOptions {
   agent: Agent;
@@ -21,7 +42,7 @@ export interface DispatchAgentEventOptions {
 }
 
 export async function dispatchAgentEvent(options: DispatchAgentEventOptions): Promise<void> {
-  const ctx = new AgentContextImpl(options.bridge, options.secretKey);
+  const ctx = new AgentContextImpl(options.bridge, options.secretKey, options.agent.handlers.toolApproval);
 
   try {
     await runAgentHandler(options.agent, options.event, ctx);
@@ -49,14 +70,39 @@ async function runAgentHandler(registeredAgent: Agent, event: string, ctx: Agent
   };
 
   switch (event) {
-    case AgentEventEnum.ON_MESSAGE:
-      await replyIfPresent(await registeredAgent.handlers.onMessage(ctx.message!, ctx as AgentMessageContext));
+    case AgentEventEnum.ON_MESSAGE: {
+      const result = await registeredAgent.handlers.onMessage(ctx.message!, ctx as AgentMessageContext);
+      if (!(result instanceof PendingApproval)) {
+        await replyIfPresent(result);
+      }
       break;
-    case AgentEventEnum.ON_ACTION:
+    }
+    case AgentEventEnum.ON_ACTION: {
+      const parsed = parseApprovalActionId(ctx.action?.id);
+
+      if (parsed && registeredAgent.handlers.onToolApproval) {
+        const { approved, approvalId } = parsed;
+        const approval = findApprovalInHistory(ctx.history, approvalId);
+        const toolCall: AgentToolCall = approval
+          ? { id: approval.toolCallId, name: approval.name, input: approval.input }
+          : { id: approvalId, name: '' };
+        const approvalMessage = ctx.createReplyHandle(ctx.action!.sourceMessageId ?? '');
+
+        const decision: ToolApprovalDecision = { toolCall, approved, approvalMessage };
+        const result = await registeredAgent.handlers.onToolApproval(decision, ctx as AgentActionContext);
+        await replyIfPresent(result);
+
+        if (!approvalMessage.editedByHandler && ctx.action!.sourceMessageId) {
+          await approvalMessage.edit(resolvedApprovalCard({ name: toolCall.name, approved }));
+        }
+        break;
+      }
+
       if (registeredAgent.handlers.onAction) {
         await replyIfPresent(await registeredAgent.handlers.onAction(ctx.action!, ctx as AgentActionContext));
       }
       break;
+    }
     case AgentEventEnum.ON_REACTION:
       if (registeredAgent.handlers.onReaction) {
         await replyIfPresent(await registeredAgent.handlers.onReaction(ctx.reaction!, ctx as AgentReactionContext));

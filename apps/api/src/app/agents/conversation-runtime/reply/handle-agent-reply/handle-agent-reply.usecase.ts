@@ -8,7 +8,7 @@ import {
   ConversationParticipantTypeEnum,
   SubscriberRepository,
 } from '@novu/dal';
-import type { SentMessageInfo, TriggerSignal } from '@novu/framework';
+import type { SentMessageInfo, ToolResult, TriggerSignal } from '@novu/framework';
 import { AddressingTypeEnum, type TriggerRecipientsPayload, TriggerRequestCategoryEnum } from '@novu/shared';
 import { ParseEventRequest, ParseEventRequestMulticastCommand } from '../../../../events/usecases/parse-event-request';
 import { AgentConfigResolver, ResolvedAgentConfig } from '../../../channels/agent-config-resolver.service';
@@ -48,20 +48,24 @@ export class HandleAgentReply {
     if (command.reply && command.edit) {
       throw new BadRequestException('Only one of reply or edit can be provided');
     }
-    if (command.edit && (command.resolve || command.signals?.length || command.addReactions?.length)) {
-      throw new BadRequestException('edit cannot be combined with resolve, signals, or addReactions');
+    if (
+      command.edit &&
+      (command.resolve || command.signals?.length || command.toolResults?.length || command.addReactions?.length)
+    ) {
+      throw new BadRequestException('edit cannot be combined with resolve, signals, toolResults, or addReactions');
     }
     if (
       !command.reply &&
       !command.edit &&
       !command.resolve &&
       !command.signals?.length &&
+      !command.toolResults?.length &&
       !command.addReactions?.length &&
       !command.plan &&
       !command.typing
     ) {
       throw new BadRequestException(
-        'At least one of reply, edit, resolve, signals, addReactions, plan, or typing must be provided'
+        'At least one of reply, edit, resolve, signals, toolResults, addReactions, plan, or typing must be provided'
       );
     }
 
@@ -93,6 +97,12 @@ export class HandleAgentReply {
     const config = needsConfig
       ? await this.agentConfigResolver.resolve(conversation._agentId, command.integrationIdentifier)
       : null;
+
+    // Persist tool results before the reply so the ledger reads
+    // tool-call → tool-result → assistant text in transcript order.
+    if (command.toolResults?.length) {
+      await this.persistToolResults(command, conversation, channel, command.toolResults);
+    }
 
     let replyInfo: SentMessageInfo | undefined;
     if (command.reply) {
@@ -357,6 +367,34 @@ export class HandleAgentReply {
     const triggerSignals = (signals ?? []).filter((s): s is TriggerSignal => s.type === 'trigger');
     if (triggerSignals.length) {
       await this.executeTriggerSignals(command, conversation, channel, triggerSignals);
+    }
+  }
+
+  private async persistToolResults(
+    command: HandleAgentReplyCommand,
+    conversation: ConversationEntity,
+    channel: ConversationChannel,
+    toolResults: ToolResult[]
+  ): Promise<void> {
+    for (const toolResult of toolResults) {
+      try {
+        await this.conversationService.persistToolResult({
+          conversationId: conversation._id,
+          channel,
+          agentIdentifier: command.agentIdentifier,
+          toolCallId: toolResult.toolCallId,
+          toolName: toolResult.toolName,
+          output: toolResult.output,
+          preview: toolResult.preview,
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+        });
+      } catch (err) {
+        this.logger.warn(
+          { err, agentIdentifier: command.agentIdentifier, toolCallId: toolResult.toolCallId },
+          `[agent:${command.agentIdentifier}] Failed to persist tool-result activity for ${toolResult.toolCallId}`
+        );
+      }
     }
   }
 
