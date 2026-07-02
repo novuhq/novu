@@ -63,7 +63,7 @@ sequenceDiagram
   </Step>
 
   <Step title="Novu receives the event">
-    Novu receives the event through the provider connection.
+    The provider delivers the inbound message to your agent endpoint.
   </Step>
 
   <Step title="Novu maps the thread">
@@ -75,7 +75,6 @@ sequenceDiagram
   </Step>
 
   <Step title="Handler passes context to agent logic">
-    Your handler passes the message and conversation context to your agent logic.
   </Step>
 
   <Step title="Agent logic decides next action">
@@ -83,11 +82,10 @@ sequenceDiagram
   </Step>
 
   <Step title="Handler sends reply or signals">
-    Your handler sends a reply, emits signals, or both.
   </Step>
 
   <Step title="Novu delivers the reply">
-    Novu delivers the reply back to the provider thread.
+    The agent response is posted back to the original provider thread.
   </Step>
 
   <Step title="Novu records conversation state">

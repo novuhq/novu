@@ -24,8 +24,9 @@ Send auth notifications from Supabase by listening to Supabase Auth events in yo
   <Step title="Listen for Supabase auth events">
     Use a Supabase Edge Function or your application backend to handle auth events:
 
+<Tabs>
+  <Tab title="Node.js">
 ```typescript
-import { createClient } from '@supabase/supabase-js';
 import { Novu } from '@novu/api';
 
 const novu = new Novu({ secretKey: Deno.env.get('NOVU_SECRET_KEY')! });
@@ -44,6 +45,145 @@ Deno.serve(async (req) => {
   return new Response('ok');
 });
 ```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+def handle_supabase_auth_event(event_type, record):
+    if event_type == "INSERT" and record.get("email"):
+        with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+            novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+                workflow_id="welcome",
+                to={"subscriber_id": record["id"], "email": record["email"]},
+                payload={"email": record["email"]},
+            ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+func handleSupabaseAuthEvent(eventType string, record map[string]any) error {
+    email, _ := record["email"].(string)
+    id, _ := record["id"].(string)
+    if eventType != "INSERT" || email == "" {
+        return nil
+    }
+
+    s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+    _, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+        WorkflowID: "welcome",
+        To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+            SubscriberID: id,
+            Email:        email,
+        }),
+        Payload: map[string]any{"email": email},
+    }, nil)
+    return err
+}
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+function handleSupabaseAuthEvent(string $type, array $record): void
+{
+    if ($type !== 'INSERT' || empty($record['email'])) {
+        return;
+    }
+
+    $sdk = novu\Novu::builder()
+        ->setSecurity('<YOUR_SECRET_KEY_HERE>')
+        ->build();
+
+    $sdk->trigger(
+        triggerEventRequestDto: new Components\TriggerEventRequestDto(
+            workflowId: 'welcome',
+            to: new Components\SubscriberPayloadDto(
+                subscriberId: $record['id'],
+                email: $record['email'],
+            ),
+            payload: ['email' => $record['email']],
+        ),
+    );
+}
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+
+async Task HandleSupabaseAuthEvent(string type, Dictionary<string, object> record)
+{
+    if (type != "INSERT" || !record.ContainsKey("email")) return;
+
+    var sdk = new NovuSDK(secretKey: "<YOUR_SECRET_KEY_HERE>");
+
+    await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+        WorkflowId = "welcome",
+        To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() {
+            SubscriberId = record["id"].ToString(),
+            Email = record["email"].ToString(),
+        }),
+        Payload = new Dictionary<string, object>() {
+            { "email", record["email"] },
+        },
+    });
+}
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+import java.util.Map;
+
+void handleSupabaseAuthEvent(String type, Map<String, Object> record) {
+    if (!"INSERT".equals(type) || record.get("email") == null) return;
+
+    Novu novu = Novu.builder()
+        .secretKey("<YOUR_SECRET_KEY_HERE>")
+        .build();
+
+    novu.trigger()
+        .body(TriggerEventRequestDto.builder()
+            .workflowId("welcome")
+            .to(To2.of(SubscriberPayloadDto.builder()
+                .subscriberId(record.get("id").toString())
+                .email(record.get("email").toString())
+                .build()))
+            .payload(Map.of("email", record.get("email")))
+            .build())
+        .call();
+}
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -X POST 'https://api.novu.co/v1/events/trigger' \
+-H 'Content-Type: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+  "name": "welcome",
+  "to": { "subscriberId": "supabase-user-uuid", "email": "user@example.com" },
+  "payload": { "email": "user@example.com" }
+}'
+```
+  </Tab>
+</Tabs>
   </Step>
 
   <Step title="Handle password reset emails">

@@ -34,6 +34,8 @@ Trigger Novu notification workflows when Auth0 events occur by receiving Auth0 l
   <Step title="Handle the webhook and trigger Novu">
     Verify the Auth0 event, then trigger the matching Novu workflow:
 
+<Tabs>
+  <Tab title="Node.js">
 ```typescript
 import { Novu } from '@novu/api';
 
@@ -49,6 +51,146 @@ export async function handleAuth0Event(event: Auth0LogEvent) {
   }
 }
 ```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+def handle_auth0_event(event):
+    if event["type"] == "s" and event["description"] == "Success Signup":
+        with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+            novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+                workflow_id="welcome-email",
+                to={"subscriber_id": event["user_id"], "email": event["user_name"]},
+                payload={"firstName": event.get("details", {}).get("body", {}).get("firstName")},
+            ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+func handleAuth0Event(event Auth0LogEvent) error {
+    if event.Type == "s" && event.Description == "Success Signup" {
+        s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+        _, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+            WorkflowID: "welcome-email",
+            To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+                SubscriberID: event.UserID,
+                Email:        event.UserName,
+            }),
+            Payload: map[string]any{
+                "firstName": event.Details.Body.FirstName,
+            },
+        }, nil)
+        return err
+    }
+    return nil
+}
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+function handleAuth0Event(array $event): void
+{
+    if ($event['type'] === 's' && $event['description'] === 'Success Signup') {
+        $sdk = novu\Novu::builder()
+            ->setSecurity('<YOUR_SECRET_KEY_HERE>')
+            ->build();
+
+        $sdk->trigger(
+            triggerEventRequestDto: new Components\TriggerEventRequestDto(
+                workflowId: 'welcome-email',
+                to: new Components\SubscriberPayloadDto(
+                    subscriberId: $event['user_id'],
+                    email: $event['user_name'],
+                ),
+                payload: [
+                    'firstName' => $event['details']['body']['firstName'] ?? null,
+                ],
+            ),
+        );
+    }
+}
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+
+async Task HandleAuth0Event(Auth0LogEvent auth0Event)
+{
+    if (auth0Event.Type == "s" && auth0Event.Description == "Success Signup")
+    {
+        var sdk = new NovuSDK(secretKey: "<YOUR_SECRET_KEY_HERE>");
+
+        await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+            WorkflowId = "welcome-email",
+            To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() {
+                SubscriberId = auth0Event.UserId,
+                Email = auth0Event.UserName,
+            }),
+            Payload = new Dictionary<string, object>() {
+                { "firstName", auth0Event.Details?.Body?.FirstName },
+            },
+        });
+    }
+}
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+import java.util.Map;
+
+void handleAuth0Event(Auth0LogEvent event) {
+    if ("s".equals(event.getType()) && "Success Signup".equals(event.getDescription())) {
+        Novu novu = Novu.builder()
+            .secretKey("<YOUR_SECRET_KEY_HERE>")
+            .build();
+
+        novu.trigger()
+            .body(TriggerEventRequestDto.builder()
+                .workflowId("welcome-email")
+                .to(To2.of(SubscriberPayloadDto.builder()
+                    .subscriberId(event.getUserId())
+                    .email(event.getUserName())
+                    .build()))
+                .payload(Map.ofEntries(
+                    Map.entry("firstName", event.getDetails().getBody().getFirstName())))
+                .build())
+            .call();
+    }
+}
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -X POST 'https://api.novu.co/v1/events/trigger' \
+-H 'Content-Type: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+  "name": "welcome-email",
+  "to": { "subscriberId": "auth0|user_id", "email": "user@example.com" },
+  "payload": { "firstName": "Jane" }
+}'
+```
+  </Tab>
+</Tabs>
   </Step>
 </Steps>
 

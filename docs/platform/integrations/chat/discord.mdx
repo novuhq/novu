@@ -22,44 +22,133 @@ To get started with using Novu's Discord Webhook integration, you need a 'webhoo
 5. After obtaining the webhook URL in the previous step, you need to store it within the subscriber entity. Doing this ensures that Novu knows where (in which discord channel) to send the notification to. Here's how to do it:
 
 <Tabs>
-<Tab title="Node.js">
+  <Tab title="Node.js">
 ```typescript
 import { Novu } from '@novu/api';
 import { ChatOrPushProviderEnum } from "@novu/api/models/components";
 
-const novu = new Novu({
-  secretKey: "<NOVU_SECRET_KEY>",
-  // Required if using EU region
-  // serverURL: "https://eu.api.novu.co",
-});
+const novu = new Novu({ secretKey: "<NOVU_SECRET_KEY>" });
 
 await novu.subscribers.credentials.update(
   {
     providerId: ChatOrPushProviderEnum.Discord,
-    credentials: {
-      webhookUrl: "<WEBHOOK_URL>",
-    },
     integrationIdentifier: "discord-MnGLxp8uy",
+    credentials: { webhookUrl: "<WEBHOOK_URL>", },
   },
   "subscriberId"
 );
 ```
-</Tab>
-<Tab title="cURL">
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.subscribers.credentials.update(
+        subscriber_id="subscriberId",
+        update_subscriber_channel_request_dto={
+            "provider_id": novu_py.ChatOrPushProviderEnum.DISCORD,
+            "credentials": {"webhookUrl": "<WEBHOOK_URL>"},
+            "integration_identifier": "discord-MnGLxp8uy",
+        },
+    )
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Subscribers.Credentials.Update(context.Background(), "subscriberId", components.UpdateSubscriberChannelRequestDto{
+    ProviderID: components.ChatOrPushProviderEnumDiscord,
+        IntegrationIdentifier: novugo.String("discord-MnGLxp8uy"),
+    Credentials: components.ChannelCredentials{
+        WebhookURL: novugo.String("<WEBHOOK_URL>"),
+    },
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()->setSecurity('<NOVU_SECRET_KEY>')->build();
+
+$sdk->subscribersCredentials->update(
+    subscriberId: 'subscriberId',
+    updateSubscriberChannelRequestDto: new Components\UpdateSubscriberChannelRequestDto(
+        providerId: Components\ChatOrPushProviderEnum::Discord,
+        integrationIdentifier: 'discord-MnGLxp8uy',
+        credentials: new Components\ChannelCredentials(
+            webhookUrl: '<WEBHOOK_URL>',
+        ),
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+
+await sdk.Subscribers.Credentials.UpdateAsync(
+    subscriberId: "subscriberId",
+    updateSubscriberChannelRequestDto: new UpdateSubscriberChannelRequestDto() {
+        ProviderId = ChatOrPushProviderEnum.Discord,
+        IntegrationIdentifier = "discord-MnGLxp8uy",
+        Credentials = new ChannelCredentials() {
+            WebhookUrl = "<WEBHOOK_URL>",
+        },
+    });
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+import java.util.List;
+
+Novu novu = Novu.builder().secretKey("<NOVU_SECRET_KEY>").build();
+
+novu.subscribers().credentials().update()
+    .subscriberId("subscriberId")
+    .body(UpdateSubscriberChannelRequestDto.builder()
+        .providerId(ChatOrPushProviderEnum.DISCORD)
+            .integrationIdentifier("discord-MnGLxp8uy")
+        .credentials(ChannelCredentials.builder()
+            .webhookUrl("<WEBHOOK_URL>")
+            .build())
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
 ```bash
 curl -L -X PUT 'https://api.novu.co/v1/subscribers/<SUBSCRIBER_ID>/credentials' \
 -H 'Content-Type: application/json' \
--H 'Accept: application/json' \
 -H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
 -d '{
   "providerId": "discord",
   "credentials": {
-      "webhookUrl": "<WEBHOOK_URL>"
+    "webhookUrl": "<WEBHOOK_URL>"
   },
   "integrationIdentifier": "discord-MnGLxp8uy"
 }'
 ```
-</Tab>
+  </Tab>
 </Tabs>
 
 Checkout the [API reference](/api-reference/subscribers/update-provider-credentials) for more details.

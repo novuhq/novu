@@ -67,26 +67,201 @@ For more detailed instructions, follow one of their many [Tutorials](https://www
 To send WhatsApp messages with Twilio integration, prefix the phone number of the subscriber with `whatsapp:` as shown below:
 
 <Tabs>
-<Tab title="Node.js">
-```ts
-import { Novu } from "@novu/api";
+  <Tab title="Node.js">
+```typescript
+import { Novu } from '@novu/api';
 
-const novu = new Novu({ 
-  secretKey: "<NOVU_SECRET_KEY>",
-  // Required if using EU region
-  // serverURL: "https://eu.api.novu.co",
-});
+const novu = new Novu({ secretKey: "<NOVU_SECRET_KEY>" });
 
 await novu.trigger({
   workflowId: "workflowId",
-  to: {
-    subscriberId: "subscriberId",
-    phone: "whatsapp:+14155238886",
-  },
+  to: { subscriberId: "subscriberId",
+    phone: "whatsapp:+14155238886", },
   payload: {},
+  overrides: {
+    "providers": {
+        "twilio": {
+            "_passthrough": {
+                "body": {
+                    "contentSid": "HXb5b62575e6e4ff6129ad7c8efe1f983e",
+                    "contentVariables": "{\"1\":\"12/1\",\"2\":\"3pm\"}"
+                }
+            }
+        }
+    }
+},
 });
 ```
-</Tab>
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="workflowId",
+        to={"subscriber_id": "subscriberId", "phone": "whatsapp:+14155238886"},
+        payload={},
+        overrides={
+        "providers": {
+                "twilio": {
+                        "_passthrough": {
+                                "body": {
+                                        "contentSid": "HXb5b62575e6e4ff6129ad7c8efe1f983e",
+                                        "contentVariables": "{\"1\":\"12/1\",\"2\":\"3pm\"}"
+                                }
+                        }
+                }
+        }
+},
+    ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "workflowId",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: "subscriberId",
+            Phone: novugo.String("whatsapp:+14155238886"),
+    }),
+    Payload: map[string]any{},
+    Overrides: map[string]any{
+    "providers": {
+        "twilio": {
+            "_passthrough": {
+                "body": {
+                    "contentSid": "HXb5b62575e6e4ff6129ad7c8efe1f983e",
+                    "contentVariables": "{\"1\":\"12/1\",\"2\":\"3pm\"}"
+                }
+            }
+        }
+    }
+},
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()->setSecurity('<NOVU_SECRET_KEY>')->build();
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'workflowId',
+        to: new Components\SubscriberPayloadDto(subscriberId: 'subscriberId', phone: 'whatsapp:+14155238886'),
+        payload: {},
+        overrides: {
+        "providers": {
+                "twilio": {
+                        "_passthrough": {
+                                "body": {
+                                        "contentSid": "HXb5b62575e6e4ff6129ad7c8efe1f983e",
+                                        "contentVariables": "{\"1\":\"12/1\",\"2\":\"3pm\"}"
+                                }
+                        }
+                }
+        }
+},
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "workflowId",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() { SubscriberId = "subscriberId", Phone = "whatsapp:+14155238886" }),
+    Payload = {},
+    Overrides = {
+    "providers": {
+        "twilio": {
+            "_passthrough": {
+                "body": {
+                    "contentSid": "HXb5b62575e6e4ff6129ad7c8efe1f983e",
+                    "contentVariables": "{\"1\":\"12/1\",\"2\":\"3pm\"}"
+                }
+            }
+        }
+    }
+},
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+
+Novu novu = Novu.builder().secretKey("<NOVU_SECRET_KEY>").build();
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("workflowId")
+        .to(To2.of(SubscriberPayloadDto.builder().subscriberId("subscriberId").phone("whatsapp:+14155238886").build()))
+        .payload({})
+        .overrides({
+        "providers": {
+                "twilio": {
+                        "_passthrough": {
+                                "body": {
+                                        "contentSid": "HXb5b62575e6e4ff6129ad7c8efe1f983e",
+                                        "contentVariables": "{\"1\":\"12/1\",\"2\":\"3pm\"}"
+                                }
+                        }
+                }
+        }
+})
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl --location 'https://api.novu.co/v1/events/trigger' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+    "name": "workflowId",
+    "to": {
+        "subscriberId": "subscriberId",
+        "phone": "whatsapp:+14155238886"
+    },
+    "payload": {},
+    "overrides": {
+        "providers": {
+            "twilio": {
+                "_passthrough": {
+                    "body": {
+                        "contentSid": "HXb5b62575e6e4ff6129ad7c8efe1f983e",
+                        "contentVariables": "{\"1\":\"12/1\",\"2\":\"3pm\"}"
+                    }
+                }
+            }
+        }
+    }
+}'
+```
+  </Tab>
 </Tabs>
 
 ### Sending WhatsApp template message
@@ -94,7 +269,7 @@ await novu.trigger({
 To send WhatsApp template messages with Twilio integration, you can use the `template` field in the `overrides` object.
 
 <Tabs>
-<Tab title="Node.js">
+  <Tab title="Node.js">
 ```typescript
 import { Novu } from "@novu/api";
 
@@ -116,9 +291,7 @@ await novu.trigger({
       twilio: {
         "_passthrough": {
           "body": {
-            // example contentSid
             "contentSid": "HXb5b62575e6e4ff6129ad7c8efe1f983e",
-            // example contentVariables
             "contentVariables": "{\"1\":\"12/1\",\"2\":\"3pm\"}"
           }
         }
@@ -127,7 +300,173 @@ await novu.trigger({
   }
 });
 ```
-</Tab>
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="workflowId",
+        to={"subscriber_id": "subscriberId", "phone": "whatsapp:+14155238886"},
+        payload={},
+        overrides={
+            "providers": {
+                "twilio": {
+                    "_passthrough": {
+                        "body": {
+                            "contentSid": "HXb5b62575e6e4ff6129ad7c8efe1f983e",
+                            "contentVariables": "{\"1\":\"12/1\",\"2\":\"3pm\"}"
+                        }
+                    }
+                }
+            }
+        },
+    ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "workflowId",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: "subscriberId",
+        Phone: novugo.String("whatsapp:+14155238886"),
+    }),
+    Payload: map[string]any{},
+    Overrides: map[string]any{
+        "providers": map[string]any{
+            "twilio": map[string]any{
+                "_passthrough": map[string]any{
+                    "body": map[string]any{
+                        "contentSid": "HXb5b62575e6e4ff6129ad7c8efe1f983e",
+                        "contentVariables": "{\"1\":\"12/1\",\"2\":\"3pm\"}",
+                    },
+                },
+            },
+        },
+    },
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()->setSecurity('<NOVU_SECRET_KEY>')->build();
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'workflowId',
+        to: new Components\SubscriberPayloadDto(subscriberId: 'subscriberId', phone: 'whatsapp:+14155238886'),
+        payload: [],
+        overrides: [
+            'providers' => [
+                'twilio' => [
+                    '_passthrough' => [
+                        'body' => [
+                            'contentSid' => 'HXb5b62575e6e4ff6129ad7c8efe1f983e',
+                            'contentVariables' => '{"1":"12/1","2":"3pm"}',
+                        ],
+                    ],
+                ],
+            ],
+        ],
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "workflowId",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() { SubscriberId = "subscriberId", Phone = "whatsapp:+14155238886" }),
+    Payload = new Dictionary<string, object>(),
+    Overrides = new Overrides() {
+        Providers = new Dictionary<string, Dictionary<string, object>>() {
+            { "twilio", new Dictionary<string, object>() {
+                { "_passthrough", new Dictionary<string, object>() {
+                    { "body", new Dictionary<string, object>() {
+                        { "contentSid", "HXb5b62575e6e4ff6129ad7c8efe1f983e" },
+                        { "contentVariables", "{\"1\":\"12/1\",\"2\":\"3pm\"}" },
+                    } },
+                } },
+            } },
+        },
+    },
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+import java.util.Map;
+
+Novu novu = Novu.builder().secretKey("<NOVU_SECRET_KEY>").build();
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("workflowId")
+        .to(To2.of(SubscriberPayloadDto.builder().subscriberId("subscriberId").phone("whatsapp:+14155238886").build()))
+        .overrides(TriggerEventRequestDtoOverrides.builder()
+            .additionalProperties(Map.of("providers", Map.of("twilio", Map.of(
+                "_passthrough", Map.of("body", Map.of(
+                    "contentSid", "HXb5b62575e6e4ff6129ad7c8efe1f983e",
+                    "contentVariables", "{\"1\":\"12/1\",\"2\":\"3pm\"}"
+                ))
+            ))))
+            .build())
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl --location 'https://api.novu.co/v1/events/trigger' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+    "name": "workflowId",
+    "to": {
+        "subscriberId": "subscriberId",
+        "phone": "whatsapp:+14155238886"
+    },
+    "payload": {},
+    "overrides": {
+        "providers": {
+            "twilio": {
+                "_passthrough": {
+                    "body": {
+                        "contentSid": "HXb5b62575e6e4ff6129ad7c8efe1f983e",
+                        "contentVariables": "{\"1\":\"12/1\",\"2\":\"3pm\"}"
+                    }
+                }
+            }
+        }
+    }
+}'
+```
+  </Tab>
 </Tabs>
 
 <Note>

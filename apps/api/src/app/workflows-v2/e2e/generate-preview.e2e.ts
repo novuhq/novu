@@ -13,7 +13,12 @@ import {
   WorkflowCreationSourceEnum,
   WorkflowResponseDto,
 } from '@novu/api/models/components';
-import { buildActorSchema, buildWorkflowSchema, DEFAULT_ARRAY_ELEMENTS, EmailControlType } from '@novu/application-generic';
+import {
+  buildActorSchema,
+  buildWorkflowSchema,
+  DEFAULT_ARRAY_ELEMENTS,
+  EmailControlType,
+} from '@novu/application-generic';
 import { EnvironmentRepository, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
 import { CronExpressionEnum, RedirectTargetEnum, StepTypeEnum, slugify } from '@novu/shared';
 import { UserSession } from '@novu/testing';

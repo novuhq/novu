@@ -43,13 +43,60 @@ This guide teaches you how to:
     
     Import Novu's SDK and provide the credentials to initialize the Novu instance.
     
+    <Tabs>
+      <Tab title="Node.js">
     ```typescript
+    import { Novu } from '@novu/api';
 
-    
-    const novu = new Novu({ 
-      secretKey: 'ApiKey ' + process.env['NOVU_SECRET_KEY']
+    const novu = new Novu({
+      secretKey: process.env.NOVU_SECRET_KEY,
     });
     ```
+      </Tab>
+      <Tab title="Python">
+    ```python
+    import os
+    from novu_py import Novu
+
+    novu = Novu(secret_key=os.getenv("NOVU_SECRET_KEY", ""))
+    ```
+      </Tab>
+      <Tab title="Go">
+    ```go
+    import (
+        novugo "github.com/novuhq/novu-go"
+        "os"
+    )
+
+    novu := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+    ```
+      </Tab>
+      <Tab title="PHP">
+    ```php
+    use novu;
+
+    $novu = novu\Novu::builder()
+        ->setSecurity(getenv('NOVU_SECRET_KEY'))
+        ->build();
+    ```
+      </Tab>
+      <Tab title=".NET">
+    ```csharp
+    using Novu;
+
+    var novu = new NovuSDK(secretKey: Environment.GetEnvironmentVariable("NOVU_SECRET_KEY")!);
+    ```
+      </Tab>
+      <Tab title="Java">
+    ```java
+    import co.novu.Novu;
+
+    Novu novu = Novu.builder()
+        .secretKey(System.getenv("NOVU_SECRET_KEY"))
+        .build();
+    ```
+      </Tab>
+    </Tabs>
     
     For the sake of this guide, we will create a new dedicated functions for 2 common Novu actions:
     
@@ -80,33 +127,108 @@ When calling Novu's `trigger` method, you must provide the following information
 
 Here's a simple Inngest function that triggers a Novu workflow when the function is being invoked. It assumes the function invoke receives a `userId` and `email` in its payload.
 
-```tsx
+<Tabs>
+  <Tab title="Node.js">
+```typescript
 import { inngest } from "./client";
 import { Novu } from "@novu/api";
 
-const novu = new Novu({ 
-    secretKey: 'ApiKey ' + process.env['NOVU_SECRET_KEY']
-  });
+const novu = new Novu({ secretKey: process.env.NOVU_SECRET_KEY });
 
 export const sendNotification = inngest.createFunction(
   { id: "send-notification" },
   { event: "test/hello.world" },
   async ({ event, step }) => {
     await step.run("send-welcome-email", async () => {
-        await novu.trigger({
-            workflowId: "welcome-email",
-            to: {
-                subscriberId: event.data.userId,
-                email: event.data.email,
-            },
-            payload: {},
-        });
+      await novu.trigger({
+        workflowId: "welcome-email",
+        to: {
+          subscriberId: event.data.userId,
+          email: event.data.email,
+        },
+        payload: {},
+      });
     });
 
     return { message: `Welcome email sent to ${event.data.email}!` };
   },
 );
 ```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="welcome-email",
+        to={"subscriber_id": user_id, "email": email},
+        payload={},
+    ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+_, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "welcome-email",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: userID,
+        Email:        email,
+    }),
+    Payload: map[string]any{},
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'welcome-email',
+        to: new Components\SubscriberPayloadDto(subscriberId: $userId, email: $email),
+        payload: [],
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "welcome-email",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() {
+        SubscriberId = userId,
+        Email = email,
+    }),
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("welcome-email")
+        .to(To2.of(SubscriberPayloadDto.builder()
+            .subscriberId(userId)
+            .email(email)
+            .build()))
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -X POST 'https://api.novu.co/v1/events/trigger' \
+-H 'Content-Type: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+  "name": "welcome-email",
+  "to": { "subscriberId": "user_id", "email": "user@example.com" },
+  "payload": {}
+}'
+```
+  </Tab>
+</Tabs>
 
 ### Adding Dynamic Content with `payload`
 
@@ -129,49 +251,132 @@ To achieve this, you would pass the `userName` and `functionName` in the `payloa
 
 Let's modify the previous function to accept more data (like a user's `name`) in its own payload and pass relevant parts to the Novu `trigger` payload.
 
+<Tabs>
+  <Tab title="Node.js">
 ```typescript
 import { inngest } from "./client";
 import { Novu } from "@novu/api";
 
-const novu = new Novu({ 
-  secretKey: 'ApiKey ' + process.env['NOVU_SECRET_KEY']
-});
+const novu = new Novu({ secretKey: process.env.NOVU_SECRET_KEY });
 
-export const sendNotification = inngest.createFunction(  
+export const sendNotification = inngest.createFunction(
   { id: "send-notification" },
   { event: "test/hello.world" },
   async ({ event, step }) => {
     await step.run("send-welcome-email", async () => {
-      try {
-        // Construct the payload specifically for Novu
-        const novuPayload = {
-          userName: event.data.userName,   // Map 'name' from task payload to 'userName' for the template
-          functionName: `Data Processing Function #${event.id}`, // Can include static text or transform data
-        };
+      const novuPayload = {
+        userName: event.data.userName,
+        functionName: `Data Processing Function #${event.id}`,
+      };
 
-        await novu.trigger({
-          workflowId: "inbox-test", // Use the appropriate workflow ID
-          to: {
-            subscriberId: event.data.userId,
-            email: event.data.email,
-          },
-          payload: {
-            ...novuPayload,
-          },
-        });
+      await novu.trigger({
+        workflowId: "inbox-test",
+        to: {
+          subscriberId: event.data.userId,
+          email: event.data.email,
+        },
+        payload: { ...novuPayload },
+      });
 
-        console.log("Novu workflow triggered successfully with payload:", novuPayload);
-        return novuPayload;
-
-      } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error triggering Novu';
-        console.error("Failed to trigger Novu workflow with payload:", errorMessage, error);
-        throw new Error(`Novu trigger failed: ${errorMessage}`);
-      }
+      return novuPayload;
     });
   },
 );
 ```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="inbox-test",
+        to={"subscriber_id": user_id, "email": email},
+        payload={
+            "userName": user_name,
+            "functionName": f"Data Processing Function #{event_id}",
+        },
+    ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+_, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "inbox-test",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: userID,
+        Email:        email,
+    }),
+    Payload: map[string]any{
+        "userName":     userName,
+        "functionName": fmt.Sprintf("Data Processing Function #%s", eventID),
+    },
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'inbox-test',
+        to: new Components\SubscriberPayloadDto(subscriberId: $userId, email: $email),
+        payload: [
+            'userName' => $userName,
+            'functionName' => "Data Processing Function #{$eventId}",
+        ],
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "inbox-test",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() {
+        SubscriberId = userId,
+        Email = email,
+    }),
+    Payload = new Dictionary<string, object>() {
+        { "userName", userName },
+        { "functionName", $"Data Processing Function #{eventId}" },
+    },
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("inbox-test")
+        .to(To2.of(SubscriberPayloadDto.builder()
+            .subscriberId(userId)
+            .email(email)
+            .build()))
+        .payload(Map.ofEntries(
+            Map.entry("userName", userName),
+            Map.entry("functionName", "Data Processing Function #" + eventId)))
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -X POST 'https://api.novu.co/v1/events/trigger' \
+-H 'Content-Type: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+  "name": "inbox-test",
+  "to": { "subscriberId": "user_id", "email": "user@example.com" },
+  "payload": {
+    "userName": "Jane",
+    "functionName": "Data Processing Function #evt_123"
+  }
+}'
+```
+  </Tab>
+</Tabs>
 
 ## Add a New Subscriber to Novu
 
@@ -197,57 +402,135 @@ Create or update a subscriber in Novu when:
 
 Below is a task that creates a Novu subscriber using a Inngest task. It also supports optional fields like `phone` and `avatar`.
 
+<Tabs>
+  <Tab title="Node.js">
 ```typescript
 import { inngest } from "./client";
 import { Novu } from "@novu/api";
 
-const novu = new Novu({ 
-  secretKey: 'ApiKey ' + process.env['NOVU_SECRET_KEY']
-});
+const novu = new Novu({ secretKey: process.env.NOVU_SECRET_KEY });
 
-export const createSubscriber = inngest.createFunction(  
+export const createSubscriber = inngest.createFunction(
   { id: "create-subscriber" },
   { event: "app/account.created" },
   async ({ event, step }) => {
     await step.run("create-subscriber", async () => {
-      try {
-        // Construct the payload specifically for Novu
-        const subscriberPayload = Object.fromEntries(
-          Object.entries({
-            subscriberId: event.data.userId,
-            email: event.data.email,
-            firstName: event.data.firstName,
-            lastName: event.data.lastName,
-            phone: event.data.phone,
-            avatar: event.data.avatar,
-            locale: event.data.locale,
-            data: event.data.userName ? { userName: event.data.userName } : undefined
-          }).filter(([, value]) => value !== undefined)
-        ) as {
-          subscriberId: string;
-          email?: string;
-          firstName?: string;
-          lastName?: string;
-          phone?: string;
-          avatar?: string;
-          locale?: string;
-          data?: { userName: string };
-        };
+      const subscriberPayload = {
+        subscriberId: event.data.userId,
+        email: event.data.email,
+        firstName: event.data.firstName,
+        lastName: event.data.lastName,
+        phone: event.data.phone,
+        avatar: event.data.avatar,
+        locale: event.data.locale,
+        data: event.data.userName ? { userName: event.data.userName } : undefined,
+      };
 
-        await novu.subscribers.create(subscriberPayload);
-
-        console.log("Novu subscriber created successfully with payload:", subscriberPayload);
-        return subscriberPayload;
-
-      } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error creating Novu subscriber';
-        console.error("Failed to create Novu subscriber with payload:", errorMessage, error);
-        throw new Error(`Novu subscriber creation failed: ${errorMessage}`);
-      }
+      await novu.subscribers.create(subscriberPayload);
+      return subscriberPayload;
     });
   },
 );
 ```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.subscribers.create(
+        create_subscriber_request_dto=novu_py.CreateSubscriberRequestDto(
+            subscriber_id=user_id,
+            email=email,
+            first_name=first_name,
+            last_name=last_name,
+            phone=phone,
+            avatar=avatar,
+            locale=locale,
+            data={"userName": user_name} if user_name else None,
+        )
+    )
+```
+  </Tab>
+  <Tab title="Go">
+```go
+_, err := s.Subscribers.Create(context.Background(), components.CreateSubscriberRequestDto{
+    SubscriberID: userID,
+    Email:        email,
+    FirstName:    firstName,
+    LastName:     lastName,
+    Phone:        phone,
+    Avatar:       avatar,
+    Locale:       locale,
+    Data: map[string]any{
+        "userName": userName,
+    },
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+$sdk->subscribers->create(
+    createSubscriberRequestDto: new Components\CreateSubscriberRequestDto(
+        subscriberId: $userId,
+        email: $email,
+        firstName: $firstName,
+        lastName: $lastName,
+        phone: $phone,
+        avatar: $avatar,
+        locale: $locale,
+        data: ['userName' => $userName],
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+await sdk.Subscribers.CreateAsync(createSubscriberRequestDto: new CreateSubscriberRequestDto() {
+    SubscriberId = userId,
+    Email = email,
+    FirstName = firstName,
+    LastName = lastName,
+    Phone = phone,
+    Avatar = avatar,
+    Locale = locale,
+    Data = new Dictionary<string, object>() { { "userName", userName } },
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+novu.subscribers().create()
+    .body(CreateSubscriberRequestDto.builder()
+        .subscriberId(userId)
+        .email(email)
+        .firstName(firstName)
+        .lastName(lastName)
+        .phone(phone)
+        .avatar(avatar)
+        .locale(locale)
+        .data(Map.of("userName", userName))
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -X POST 'https://api.novu.co/v2/subscribers' \
+-H 'Content-Type: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+  "subscriberId": "user_id",
+  "email": "user@example.com",
+  "firstName": "Jane",
+  "lastName": "Doe",
+  "data": { "userName": "jane" }
+}'
+```
+  </Tab>
+</Tabs>
 
 ---
 
@@ -306,9 +589,7 @@ export const inngest = new Inngest({ id: "video-processing-app" });
 // --- End Inngest Client Setup ---
 
 // --- Novu Client Setup ---
-const novu = new Novu({ 
-  secretKey: 'ApiKey ' + process.env['NOVU_SECRET_KEY']
-});
+const novu = new Novu({ secretKey: process.env.NOVU_SECRET_KEY });
 // --- End Novu Client Setup ---
 
 // --- Combined Inngest Function ---
@@ -388,24 +669,16 @@ export const processVideoAndNotify = inngest.createFunction(
 
       console.log(`Attempting to send Novu notification for videoId: ${videoId} to user: ${userId}`);
 
-      // Construct a relevant payload for your Novu template
       const novuPayload = {
         userName: userName,
         videoId: videoId,
-        summarySnippet: summary.substring(0, 100) + (summary.length > 100 ? "..." : ""), // Send a preview
-        // Add any other data your Novu template needs, e.g., a link to view the full video/summary
-        // videoUrl: `https://yourapp.com/videos/${videoId}`
+        summarySnippet: summary.substring(0, 100) + (summary.length > 100 ? "..." : ""),
       };
 
       try {
         const triggerResult = await novu.trigger({
-          // Ensure this workflow ID exists in your Novu dashboard
           workflowId: "video-processed-notification",
-          to: {
-            subscriberId: userId, // Crucial for identifying the user in Novu
-            email: email, // Can be used by Novu email channel
-            // Add other channels like phone if needed and available
-          },
+          to: { subscriberId: userId, email: email },
           payload: novuPayload,
         });
 
@@ -465,6 +738,97 @@ handleVideoUpload({
 });
 */
 ```
+
+The Novu trigger call inside the implementation example maps to these SDK equivalents:
+
+<Tabs>
+  <Tab title="Node.js">
+```typescript
+await novu.trigger({
+  workflowId: "video-processed-notification",
+  to: { subscriberId: userId, email: email },
+  payload: {
+    userName: userName,
+    videoId: videoId,
+    summarySnippet: summary.substring(0, 100) + "...",
+  },
+});
+```
+  </Tab>
+  <Tab title="Python">
+```python
+novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+    workflow_id="video-processed-notification",
+    to={"subscriber_id": user_id, "email": email},
+    payload={
+        "userName": user_name,
+        "videoId": video_id,
+        "summarySnippet": summary[:100] + "...",
+    },
+))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+_, err := s.Trigger(ctx, components.TriggerEventRequestDto{
+    WorkflowID: "video-processed-notification",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: userID,
+        Email:        email,
+    }),
+    Payload: map[string]any{
+        "userName": userName, "videoId": videoID, "summarySnippet": summary[:100] + "...",
+    },
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+$novu->trigger(triggerEventRequestDto: new Components\TriggerEventRequestDto(
+    workflowId: 'video-processed-notification',
+    to: new Components\SubscriberPayloadDto(subscriberId: $userId, email: $email),
+    payload: [
+        'userName' => $userName,
+        'videoId' => $videoId,
+        'summarySnippet' => substr($summary, 0, 100) . '...',
+    ],
+));
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+await novu.TriggerAsync(new TriggerEventRequestDto {
+    WorkflowId = "video-processed-notification",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto { SubscriberId = userId, Email = email }),
+    Payload = new Dictionary<string, object>() {
+        { "userName", userName }, { "videoId", videoId }, { "summarySnippet", summary[..100] + "..." },
+    },
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+novu.trigger().body(TriggerEventRequestDto.builder()
+    .workflowId("video-processed-notification")
+    .to(To2.of(SubscriberPayloadDto.builder().subscriberId(userId).email(email).build()))
+    .payload(Map.of(
+        "userName", userName, "videoId", videoId, "summarySnippet", summary.substring(0, 100) + "..."))
+    .build()).call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -X POST 'https://api.novu.co/v1/events/trigger' \
+-H 'Content-Type: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+  "name": "video-processed-notification",
+  "to": { "subscriberId": "user_id", "email": "user@example.com" },
+  "payload": { "userName": "Alice", "videoId": "vid_123", "summarySnippet": "..." }
+}'
+```
+  </Tab>
+</Tabs>
 
 ---
 

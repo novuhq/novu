@@ -42,10 +42,7 @@
               "platform/how-novu-works",
               {
                 "group": "Novu for your team",
-                "pages": [
-                  "platform/novu-for/developers",
-                  "platform/novu-for/product"
-                ]
+                "pages": ["platform/novu-for/developers", "platform/novu-for/product"]
               },
               {
                 "group": "Core Concepts",
@@ -80,10 +77,7 @@
               "platform/inbox/setup-inbox",
               {
                 "group": "Features",
-                "pages": [
-                  "platform/inbox/features/snooze",
-                  "platform/inbox/features/schedule"
-                ]
+                "pages": ["platform/inbox/features/snooze", "platform/inbox/features/schedule"]
               },
               {
                 "group": "Customize and Configure",
@@ -191,6 +185,7 @@
                   "platform/integrations/chat/mattermost",
                   "platform/integrations/chat/ms-teams",
                   "platform/integrations/chat/slack",
+                  "platform/integrations/chat/telegram",
                   "platform/integrations/chat/whats-app",
                   "platform/integrations/chat/zulip"
                 ]
@@ -272,6 +267,7 @@
                   "platform/integrations/sms/sendchamp",
                   "platform/integrations/sms/simpletexting",
                   "platform/integrations/sms/sms-central",
+                  "platform/integrations/sms/sms-webhook",
                   "platform/integrations/sms/sms77",
                   "platform/integrations/sms/sns",
                   "platform/integrations/sms/telnyx",
@@ -350,8 +346,13 @@
               "platform/developer/environment-variables",
               "platform/developer/limits",
               {
+                "group": "Inbound email",
+                "pages": ["platform/inbound-email/overview"]
+              },
+              {
                 "group": "Webhooks",
                 "pages": [
+                  "platform/developer/webhooks/webhooks",
                   "platform/developer/webhooks/event-types",
                   "platform/developer/webhooks/connectors"
                 ]
@@ -441,9 +442,7 @@
           },
           {
             "group": "Observability",
-            "pages": [
-              "agents/conversations"
-            ],
+            "pages": ["agents/conversations"],
             "icon": "eye"
           }
         ]
@@ -665,9 +664,7 @@
           },
           {
             "group": "Activity",
-            "pages": [
-              "api-reference/activity/track-activity-and-engagement-events"
-            ],
+            "pages": ["api-reference/activity/track-activity-and-engagement-events"],
             "icon": "activity"
           },
           {
@@ -706,11 +703,7 @@
               },
               {
                 "group": "Guides",
-                "pages": [
-                  "guides",
-                  "guides/inngest",
-                  "guides/triggerdotdev"
-                ],
+                "pages": ["guides", "guides/inngest", "guides/triggerdotdev"],
                 "icon": "book-open"
               },
               {
@@ -725,17 +718,12 @@
               },
               {
                 "group": "Recipes",
-                "pages": [
-                  "guides/recipes/managing-workflows",
-                  "guides/recipes/supabase-auth-notifications"
-                ],
+                "pages": ["guides/recipes/managing-workflows", "guides/recipes/supabase-auth-notifications"],
                 "icon": "chef-hat"
               },
               {
                 "group": "Framework",
-                "pages": [
-                  "guides/framework/using-translations"
-                ],
+                "pages": ["guides/framework/using-translations"],
                 "icon": "blocks"
               },
               {
@@ -812,12 +800,7 @@
               {
                 "group": "Advanced Features",
                 "boost": 0.1,
-                "pages": [
-                  "framework/digest",
-                  "framework/delay",
-                  "framework/custom",
-                  "framework/skip"
-                ],
+                "pages": ["framework/digest", "framework/delay", "framework/custom", "framework/skip"],
                 "icon": "sparkles"
               },
               {
@@ -908,15 +891,7 @@
     }
   },
   "contextual": {
-    "options": [
-      "copy",
-      "view",
-      "cursor",
-      "claude",
-      "chatgpt",
-      "mcp",
-      "add-mcp"
-    ]
+    "options": ["copy", "view", "cursor", "claude", "chatgpt", "mcp", "add-mcp"]
   },
   "footer": {
     "socials": {
@@ -1369,6 +1344,16 @@
     {
       "source": "/platform/integrations/sms/bulksms",
       "destination": "/platform/integrations/sms/bulk-sms",
+      "permanent": true
+    },
+    {
+      "source": "/channels/sms/generic-sms",
+      "destination": "/platform/integrations/sms/sms-webhook",
+      "permanent": true
+    },
+    {
+      "source": "/integrations/providers/sms/generic-sms",
+      "destination": "/platform/integrations/sms/sms-webhook",
       "permanent": true
     },
     {

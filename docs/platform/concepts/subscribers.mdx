@@ -59,11 +59,13 @@ This approach is useful when:
 - Notifications are sent during real-time events like sign-ups or transactions.
 - You want to keep the creation and delivery logic tightly coupled.
 
-```typescript
+<Tabs>
+  <Tab title="Node.js">
+```ts
 import { Novu } from "@novu/api";
- 
-const novu = new Novu({ secretKey: "<YOUR_SECRET_KEY_HERE>", });
- 
+
+const novu = new Novu({ secretKey: "<YOUR_SECRET_KEY_HERE>" });
+
 await novu.trigger({
   to: {
     subscriberId: "subscriber_unique_identifier",
@@ -75,16 +77,146 @@ await novu.trigger({
   workflowId: "workflow_identifier",
 });
 ```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="workflow_identifier",
+        to={
+            "subscriber_id": "subscriber_unique_identifier",
+            "first_name": "Albert",
+            "last_name": "Einstein",
+            "email": "albert@einstein.com",
+            "phone": "+1234567890",
+        },
+    ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "workflow_identifier",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: "subscriber_unique_identifier",
+        FirstName:    "Albert",
+        LastName:     "Einstein",
+        Email:        "albert@einstein.com",
+        Phone:        "+1234567890",
+    }),
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()
+    ->setSecurity('<YOUR_SECRET_KEY_HERE>')
+    ->build();
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'workflow_identifier',
+        to: new Components\SubscriberPayloadDto(
+            subscriberId: 'subscriber_unique_identifier',
+            firstName: 'Albert',
+            lastName: 'Einstein',
+            email: 'albert@einstein.com',
+            phone: '+1234567890',
+        ),
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+
+var sdk = new NovuSDK(secretKey: "<YOUR_SECRET_KEY_HERE>");
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "workflow_identifier",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() {
+        SubscriberId = "subscriber_unique_identifier",
+        FirstName = "Albert",
+        LastName = "Einstein",
+        Email = "albert@einstein.com",
+        Phone = "+1234567890",
+    }),
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+
+Novu novu = Novu.builder()
+    .secretKey("<YOUR_SECRET_KEY_HERE>")
+    .build();
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("workflow_identifier")
+        .to(To2.of(SubscriberPayloadDto.builder()
+            .subscriberId("subscriber_unique_identifier")
+            .firstName("Albert")
+            .lastName("Einstein")
+            .email("albert@einstein.com")
+            .phone("+1234567890")
+            .build()))
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -L -g -X POST 'https://api.novu.co/v1/events/trigger' \
+-H 'Content-Type: application/json' \
+-H 'Accept: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+    "name": "workflow_identifier",
+    "to": {
+        "subscriberId": "subscriber_unique_identifier",
+        "firstName": "Albert",
+        "lastName": "Einstein",
+        "email": "albert@einstein.com",
+        "phone": "+1234567890"
+    }
+}'
+```
+  </Tab>
+</Tabs>
 
 ### Ahead of trigger
 
 Alternatively, you can create and store subscriber profiles ahead of time — typically during onboarding, registration, or data sync events. This approach allows you to manage subscriber preferences, enrich profiles, and inspect delivery readiness before any notification is triggered.
 
-```typescript
+<Tabs>
+  <Tab title="Node.js">
+```ts
 import { Novu } from "@novu/api";
- 
-const novu = new Novu({ secretKey: "<YOUR_SECRET_KEY_HERE>", });
- 
+
+const novu = new Novu({ secretKey: "<YOUR_SECRET_KEY_HERE>" });
+
 await novu.subscribers.create({
   subscriberId: "subscriber_unique_identifier",
   firstName: "Albert",
@@ -98,6 +230,147 @@ await novu.subscribers.create({
   },
 });
 ```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.subscribers.create(create_subscriber_request_dto={
+        "subscriber_id": "subscriber_unique_identifier",
+        "first_name": "Albert",
+        "last_name": "Einstein",
+        "email": "albert@einstein.com",
+        "phone": "+1234567890",
+        "data": {
+            "address": "123 Main St, Anytown, USA",
+            "membershipLevel": "Gold",
+            "preferredTopics": ["News", "Sports"],
+        },
+    })
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Subscribers.Create(context.Background(), components.CreateSubscriberRequestDto{
+    SubscriberID: "subscriber_unique_identifier",
+    FirstName:    "Albert",
+    LastName:     "Einstein",
+    Email:        "albert@einstein.com",
+    Phone:        "+1234567890",
+    Data: map[string]any{
+        "address":         "123 Main St, Anytown, USA",
+        "membershipLevel": "Gold",
+        "preferredTopics": []string{"News", "Sports"},
+    },
+}, nil, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()
+    ->setSecurity('<YOUR_SECRET_KEY_HERE>')
+    ->build();
+
+$sdk->subscribers->create(
+    createSubscriberRequestDto: new Components\CreateSubscriberRequestDto(
+        subscriberId: 'subscriber_unique_identifier',
+        firstName: 'Albert',
+        lastName: 'Einstein',
+        email: 'albert@einstein.com',
+        phone: '+1234567890',
+        data: [
+            'address' => '123 Main St, Anytown, USA',
+            'membershipLevel' => 'Gold',
+            'preferredTopics' => ['News', 'Sports'],
+        ],
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+
+var sdk = new NovuSDK(secretKey: "<YOUR_SECRET_KEY_HERE>");
+
+await sdk.Subscribers.CreateAsync(createSubscriberRequestDto: new CreateSubscriberRequestDto() {
+    SubscriberId = "subscriber_unique_identifier",
+    FirstName = "Albert",
+    LastName = "Einstein",
+    Email = "albert@einstein.com",
+    Phone = "+1234567890",
+    Data = new Dictionary<string, object>() {
+        { "address", "123 Main St, Anytown, USA" },
+        { "membershipLevel", "Gold" },
+        { "preferredTopics", new List<string> { "News", "Sports" } },
+    },
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.CreateSubscriberRequestDto;
+import java.util.List;
+import java.util.Map;
+
+Novu novu = Novu.builder()
+    .secretKey("<YOUR_SECRET_KEY_HERE>")
+    .build();
+
+novu.subscribers().create()
+    .body(CreateSubscriberRequestDto.builder()
+        .subscriberId("subscriber_unique_identifier")
+        .firstName("Albert")
+        .lastName("Einstein")
+        .email("albert@einstein.com")
+        .phone("+1234567890")
+        .data(Map.ofEntries(
+            Map.entry("address", "123 Main St, Anytown, USA"),
+            Map.entry("membershipLevel", "Gold"),
+            Map.entry("preferredTopics", List.of("News", "Sports"))))
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -L -g -X POST 'https://api.novu.co/v2/subscribers' \
+-H 'Content-Type: application/json' \
+-H 'Accept: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+    "subscriberId": "subscriber_unique_identifier",
+    "firstName": "Albert",
+    "lastName": "Einstein",
+    "email": "albert@einstein.com",
+    "phone": "+1234567890",
+    "data": {
+        "address": "123 Main St, Anytown, USA",
+        "membershipLevel": "Gold",
+        "preferredTopics": ["News", "Sports"]
+    }
+}'
+```
+  </Tab>
+</Tabs>
 
 This is recommended when:
 - You want to decouple user creation from notification logic.
@@ -108,11 +381,13 @@ This is recommended when:
 
 For scenarios like data migration, syncing large lists, or preloading subscribers, Novu supports bulk creation. This is especially useful when integrating with existing systems or importing subscriber data from external sources. Bulk create method supports creating up to 500 subscribers at once.
 
-```typescript
+<Tabs>
+  <Tab title="Node.js">
+```ts
 import { Novu } from "@novu/api";
- 
-const novu = new Novu({ secretKey: "<YOUR_SECRET_KEY_HERE>", });
- 
+
+const novu = new Novu({ secretKey: "<YOUR_SECRET_KEY_HERE>" });
+
 await novu.subscribers.createBulk({
   subscribers: [
     {
@@ -132,6 +407,183 @@ await novu.subscribers.createBulk({
   ],
 });
 ```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.subscribers.create_bulk(bulk_subscriber_create_dto={
+        "subscribers": [
+            {
+                "subscriber_id": "subscriber_unique_identifier_1",
+                "first_name": "Albert",
+                "last_name": "Einstein",
+                "email": "albert@einstein.com",
+                "phone": "+1234567890",
+            },
+            {
+                "subscriber_id": "subscriber_unique_identifier_2",
+                "first_name": "Isaac",
+                "last_name": "Newton",
+                "email": "isaac@newton.com",
+                "phone": "+1234567891",
+            },
+        ],
+    })
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Subscribers.CreateBulk(context.Background(), components.BulkSubscriberCreateDto{
+    Subscribers: []components.CreateSubscriberRequestDto{
+        {
+            SubscriberID: "subscriber_unique_identifier_1",
+            FirstName:    "Albert",
+            LastName:     "Einstein",
+            Email:        "albert@einstein.com",
+            Phone:        "+1234567890",
+        },
+        {
+            SubscriberID: "subscriber_unique_identifier_2",
+            FirstName:    "Isaac",
+            LastName:     "Newton",
+            Email:        "isaac@newton.com",
+            Phone:        "+1234567891",
+        },
+    },
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()
+    ->setSecurity('<YOUR_SECRET_KEY_HERE>')
+    ->build();
+
+$sdk->subscribers->createBulk(
+    bulkSubscriberCreateDto: new Components\BulkSubscriberCreateDto(
+        subscribers: [
+            new Components\CreateSubscriberRequestDto(
+                subscriberId: 'subscriber_unique_identifier_1',
+                firstName: 'Albert',
+                lastName: 'Einstein',
+                email: 'albert@einstein.com',
+                phone: '+1234567890',
+            ),
+            new Components\CreateSubscriberRequestDto(
+                subscriberId: 'subscriber_unique_identifier_2',
+                firstName: 'Isaac',
+                lastName: 'Newton',
+                email: 'isaac@newton.com',
+                phone: '+1234567891',
+            ),
+        ],
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+
+var sdk = new NovuSDK(secretKey: "<YOUR_SECRET_KEY_HERE>");
+
+await sdk.Subscribers.CreateBulkAsync(bulkSubscriberCreateDto: new BulkSubscriberCreateDto() {
+    Subscribers = new List<CreateSubscriberRequestDto> {
+        new CreateSubscriberRequestDto() {
+            SubscriberId = "subscriber_unique_identifier_1",
+            FirstName = "Albert",
+            LastName = "Einstein",
+            Email = "albert@einstein.com",
+            Phone = "+1234567890",
+        },
+        new CreateSubscriberRequestDto() {
+            SubscriberId = "subscriber_unique_identifier_2",
+            FirstName = "Isaac",
+            LastName = "Newton",
+            Email = "isaac@newton.com",
+            Phone = "+1234567891",
+        },
+    },
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.BulkSubscriberCreateDto;
+import co.novu.models.components.CreateSubscriberRequestDto;
+import java.util.List;
+
+Novu novu = Novu.builder()
+    .secretKey("<YOUR_SECRET_KEY_HERE>")
+    .build();
+
+novu.subscribers().createBulk()
+    .body(BulkSubscriberCreateDto.builder()
+        .subscribers(List.of(
+            CreateSubscriberRequestDto.builder()
+                .subscriberId("subscriber_unique_identifier_1")
+                .firstName("Albert")
+                .lastName("Einstein")
+                .email("albert@einstein.com")
+                .phone("+1234567890")
+                .build(),
+            CreateSubscriberRequestDto.builder()
+                .subscriberId("subscriber_unique_identifier_2")
+                .firstName("Isaac")
+                .lastName("Newton")
+                .email("isaac@newton.com")
+                .phone("+1234567891")
+                .build()))
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -L -g -X POST 'https://api.novu.co/v1/subscribers/bulk' \
+-H 'Content-Type: application/json' \
+-H 'Accept: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+    "subscribers": [
+        {
+            "subscriberId": "subscriber_unique_identifier_1",
+            "firstName": "Albert",
+            "lastName": "Einstein",
+            "email": "albert@einstein.com",
+            "phone": "+1234567890"
+        },
+        {
+            "subscriberId": "subscriber_unique_identifier_2",
+            "firstName": "Isaac",
+            "lastName": "Newton",
+            "email": "isaac@newton.com",
+            "phone": "+1234567891"
+        }
+    ]
+}'
+```
+  </Tab>
+</Tabs>
 
 ## Where to manage subscriber data
 

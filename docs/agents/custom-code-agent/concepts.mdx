@@ -109,35 +109,32 @@ ACI extends Novu's workflow system; it does not replace it. Transactional workfl
 
 <Steps>
   <Step title="User messages the agent">
-    User messages the agent in Slack.
+    The user sends a message from a connected provider such as Slack.
   </Step>
 
   <Step title="Novu receives the event">
-    Novu receives the event via the provider connection.
+    The provider delivers the inbound message to your agent endpoint.
   </Step>
 
   <Step title="Novu maps the thread">
-    Novu maps the thread to a conversation and resolves the subscriber when possible.
+    Novu resolves the conversation and subscriber from the provider metadata.
   </Step>
 
   <Step title="Novu calls onMessage">
-    Novu calls `onMessage` with the context object.
+    Your agent handler receives the message context and generates a reply.
   </Step>
 
   <Step title="Handler passes context to agent logic">
-    Your handler passes message and history to your agent logic.
   </Step>
 
   <Step title="Agent logic decides next action">
-    Your logic decides the next action.
   </Step>
 
   <Step title="Handler sends reply or signals">
-    Handler sends a reply, signals, or both.
   </Step>
 
   <Step title="Novu posts the reply">
-    Novu posts the reply to the Slack thread.
+    The reply is sent to the provider thread the user is messaging from.
   </Step>
 
   <Step title="Novu records conversation state">

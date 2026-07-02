@@ -45,44 +45,178 @@ Novu has its own SMS editor for writing SMS template. To use premade Gupshup tem
 </Note>
 
 <Tabs>
-  <Tab title="Node.Js">
-```typescript 
+  <Tab title="Node.js">
+```typescript
 import { Novu } from '@novu/api';
 
-const novu = new Novu({ secretKey: "NOVU_SECRET_KEY" });
+const novu = new Novu({ secretKey: "<NOVU_SECRET_KEY>" });
 
 await novu.trigger({
   workflowId: "WORKFLOW_ID",
-  to: "SUBSCRIBER_ID",
+  to: { subscriberId: "SUBSCRIBER_ID", },
   payload: {
-    key: "value",
-  },
+    "key": "value"
+},
   overrides: {
-    providers: {
-      gupshup: {
-        principalEntityId: "principal-entity-id",
-        dltTemplateId: "dlt-template-id",
-      },
-    },
-  },
+    "providers": {
+        "gupshup": {
+            "principalEntityId": "principal-entity-id",
+            "dltTemplateId": "dlt-template-id"
+        }
+    }
+},
 });
+```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="WORKFLOW_ID",
+        to={"subscriber_id": "SUBSCRIBER_ID"},
+        payload={
+        "key": "value"
+},
+        overrides={
+        "providers": {
+                "gupshup": {
+                        "principalEntityId": "principal-entity-id",
+                        "dltTemplateId": "dlt-template-id"
+                }
+        }
+},
+    ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "WORKFLOW_ID",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: "SUBSCRIBER_ID",
+    }),
+    Payload: map[string]any{
+    "key": "value"
+},
+    Overrides: map[string]any{
+    "providers": {
+        "gupshup": {
+            "principalEntityId": "principal-entity-id",
+            "dltTemplateId": "dlt-template-id"
+        }
+    }
+},
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()->setSecurity('<NOVU_SECRET_KEY>')->build();
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'WORKFLOW_ID',
+        to: new Components\SubscriberPayloadDto(subscriberId: 'SUBSCRIBER_ID'),
+        payload: {
+        "key": "value"
+},
+        overrides: {
+        "providers": {
+                "gupshup": {
+                        "principalEntityId": "principal-entity-id",
+                        "dltTemplateId": "dlt-template-id"
+                }
+        }
+},
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "WORKFLOW_ID",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() { SubscriberId = "SUBSCRIBER_ID" }),
+    Payload = {
+    "key": "value"
+},
+    Overrides = {
+    "providers": {
+        "gupshup": {
+            "principalEntityId": "principal-entity-id",
+            "dltTemplateId": "dlt-template-id"
+        }
+    }
+},
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+
+Novu novu = Novu.builder().secretKey("<NOVU_SECRET_KEY>").build();
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("WORKFLOW_ID")
+        .to(To2.of(SubscriberPayloadDto.builder().subscriberId("SUBSCRIBER_ID").build()))
+        .payload({
+        "key": "value"
+})
+        .overrides({
+        "providers": {
+                "gupshup": {
+                        "principalEntityId": "principal-entity-id",
+                        "dltTemplateId": "dlt-template-id"
+                }
+        }
+})
+        .build())
+    .call();
 ```
   </Tab>
   <Tab title="cURL">
 ```bash
 curl --location 'https://api.novu.co/v1/events/trigger' \
 --header 'Content-Type: application/json' \
---header 'Accept: application/json' \
 --header 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
---data '{
-    "name": "workflowIdentifier",
-    "to":  ["subscriberId"],
-    "payload": {},
+-d '{
+    "name": "WORKFLOW_ID",
+    "to": [
+        "SUBSCRIBER_ID"
+    ],
+    "payload": {
+        "key": "value"
+    },
     "overrides": {
         "providers": {
             "gupshup": {
-              "principalEntityId": "principal-entity-id",
-              "dltTemplateId": "dlt-template-id"
+                "principalEntityId": "principal-entity-id",
+                "dltTemplateId": "dlt-template-id"
             }
         }
     }
