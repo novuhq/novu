@@ -273,8 +273,8 @@ jobs:
       # secrets — even after a maintainer approves the run — so the EE branch,
       # which checks out the private enterprise submodule using
       # ${{ secrets.SUBMODULES_TOKEN }}, fails immediately with
-      # "Input required and not supplied: token". Fall back to the non-EE e2e
-      # suite (Novu V1) for fork PRs so the change still gets validated.
+      # "Input required and not supplied: token". Fall back to the community
+      # edition Novu V2 e2e suite for fork PRs so the change still gets validated.
       ee: ${{ github.event.pull_request.head.repo.fork != true }}
     secrets: inherit
 
