@@ -70,18 +70,24 @@ interface ApprovalIndex {
   resultToolCallIds: Set<string>;
   deniedApprovalIds: Set<string>;
   toolCallIdByApprovalId: Map<string, string>;
+  toolResultByToolCallId: Map<string, ToolResultPayload>;
+  /** Approval-gated tool results emitted adjacent to their request entry. */
+  pairedApprovalResultIds: Set<string>;
 }
 
 function buildApprovalIndex(history: AgentHistoryEntry[]): ApprovalIndex {
   const resultToolCallIds = new Set<string>();
   const deniedApprovalIds = new Set<string>();
   const toolCallIdByApprovalId = new Map<string, string>();
+  const approvalToolCallIds = new Set<string>();
+  const toolResultByToolCallId = new Map<string, ToolResultPayload>();
 
   for (const entry of history) {
     if (entry.type === TYPE_TOOL_APPROVAL_REQUEST) {
       const approval = approvalOf(entry);
       if (approval) {
         toolCallIdByApprovalId.set(approval.approvalId, approval.toolCallId);
+        approvalToolCallIds.add(approval.toolCallId);
       }
     } else if (entry.type === TYPE_TOOL_APPROVAL_DECISION) {
       const decision = decisionOf(entry);
@@ -92,11 +98,25 @@ function buildApprovalIndex(history: AgentHistoryEntry[]): ApprovalIndex {
       const result = toolResultOf(entry);
       if (result) {
         resultToolCallIds.add(result.toolCallId);
+        toolResultByToolCallId.set(result.toolCallId, result);
       }
     }
   }
 
-  return { resultToolCallIds, deniedApprovalIds, toolCallIdByApprovalId };
+  const pairedApprovalResultIds = new Set<string>();
+  for (const toolCallId of resultToolCallIds) {
+    if (approvalToolCallIds.has(toolCallId)) {
+      pairedApprovalResultIds.add(toolCallId);
+    }
+  }
+
+  return {
+    resultToolCallIds,
+    deniedApprovalIds,
+    toolCallIdByApprovalId,
+    toolResultByToolCallId,
+    pairedApprovalResultIds,
+  };
 }
 
 function assistantToolCall(approval: ApprovalPayload, withApprovalRequest: boolean): AssistantModelMessage {
@@ -118,6 +138,20 @@ function executionDeniedResult(toolCallId: string): ToolModelMessage {
   };
 }
 
+function executedToolResult(result: ToolResultPayload): ToolModelMessage {
+  return {
+    role: 'tool',
+    content: [
+      {
+        type: 'tool-result',
+        toolCallId: result.toolCallId,
+        toolName: result.toolName ?? 'tool',
+        output: { type: 'json', value: result.output as never },
+      },
+    ],
+  };
+}
+
 function mapApprovalRequest(entry: AgentHistoryEntry, index: ApprovalIndex): ModelMessage[] {
   const approval = approvalOf(entry);
   if (!approval) {
@@ -133,7 +167,15 @@ function mapApprovalRequest(entry: AgentHistoryEntry, index: ApprovalIndex): Mod
     return [assistantToolCall(approval, false), executionDeniedResult(approval.toolCallId)];
   }
 
-  // Resolved cycle → just the completed tool call (its result message follows).
+  if (ran) {
+    const result = index.toolResultByToolCallId.get(approval.toolCallId);
+    if (result) {
+      // Pair tool-call + tool-result at the request so onToolApproval side-effect replies
+      // (or other interleaved ledger entries) cannot split them in the transcript.
+      return [assistantToolCall(approval, false), executedToolResult(result)];
+    }
+  }
+
   // In-flight cycle → include the approval request so the paired response can run it.
   return [assistantToolCall(approval, !(ran || denied))];
 }
@@ -163,23 +205,17 @@ function mapApprovalDecision(entry: AgentHistoryEntry, index: ApprovalIndex): Mo
   };
 }
 
-function mapToolResult(entry: AgentHistoryEntry): ModelMessage | undefined {
+function mapToolResult(entry: AgentHistoryEntry, index: ApprovalIndex): ModelMessage | undefined {
   const result = toolResultOf(entry);
   if (!result) {
     return undefined;
   }
 
-  return {
-    role: 'tool',
-    content: [
-      {
-        type: 'tool-result',
-        toolCallId: result.toolCallId,
-        toolName: result.toolName ?? 'tool',
-        output: { type: 'json', value: result.output as never },
-      },
-    ],
-  };
+  if (index.pairedApprovalResultIds.has(result.toolCallId)) {
+    return undefined;
+  }
+
+  return executedToolResult(result);
 }
 
 function mapTextMessage(entry: AgentHistoryEntry, multiSender: boolean): ModelMessage | undefined {
@@ -209,7 +245,7 @@ function mapHistoryEntry(entry: AgentHistoryEntry, multiSender: boolean, index: 
       return decisionMessage ? [decisionMessage] : [];
     }
     case TYPE_TOOL_RESULT: {
-      const resultMessage = mapToolResult(entry);
+      const resultMessage = mapToolResult(entry, index);
 
       return resultMessage ? [resultMessage] : [];
     }

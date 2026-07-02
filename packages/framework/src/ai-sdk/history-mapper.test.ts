@@ -269,6 +269,57 @@ describe('toModelMessages', () => {
     ]);
   });
 
+  it('pairs resolved approved cycles when onToolApproval reply is interleaved before tool_result', () => {
+    const result = toModelMessages([
+      { role: 'user', type: 'message', content: 'refund $170', createdAt: '1' },
+      {
+        role: 'agent',
+        type: 'tool_approval_request',
+        content: 'Tool approval required',
+        richContent: { card: { type: 'card' } },
+        toolData: { approvalId: 'a_1', toolCallId: 'toolu_1', toolName: 'issueRefund', input: { amount: 170 } },
+        createdAt: '2',
+      },
+      {
+        role: 'system',
+        type: 'tool_approval_decision',
+        content: 'Approved issueRefund',
+        toolData: { approvalId: 'a_1', approved: true },
+        createdAt: '3',
+      },
+      { role: 'agent', type: 'message', content: 'Tool approved test123', createdAt: '4' },
+      {
+        role: 'system',
+        type: 'tool_result',
+        content: 'Tool result',
+        toolData: { toolCallId: 'toolu_1', toolName: 'issueRefund', output: { ok: true } },
+        createdAt: '5',
+      },
+      { role: 'agent', type: 'message', content: 'Refund issued.', createdAt: '6' },
+    ]);
+
+    expect(result).toEqual([
+      { role: 'user', content: 'refund $170' },
+      {
+        role: 'assistant',
+        content: [{ type: 'tool-call', toolCallId: 'toolu_1', toolName: 'issueRefund', input: { amount: 170 } }],
+      },
+      {
+        role: 'tool',
+        content: [
+          {
+            type: 'tool-result',
+            toolCallId: 'toolu_1',
+            toolName: 'issueRefund',
+            output: { type: 'json', value: { ok: true } },
+          },
+        ],
+      },
+      { role: 'assistant', content: 'Tool approved test123' },
+      { role: 'assistant', content: 'Refund issued.' },
+    ]);
+  });
+
   it('approve one tool + deny another (multi-tool): every tool-call is paired with a result', () => {
     const result = toModelMessages([
       { role: 'user', type: 'message', content: 'refund 150 for order C and cancel subscription B', createdAt: '1' },
