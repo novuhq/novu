@@ -29,20 +29,135 @@ This differs from the optional `transactionId` request field, which is checked f
 
 ## Using Idempotency Keys
 
-To make an idempotent request, include the `Idempotency-Key` header with a unique identifier:
+To make an idempotent trigger request, pass a unique idempotency key with your request:
 
-<CodeGroup>
-```bash title="Trigger event"
+<Tabs>
+  <Tab title="Node.js">
+```typescript
+import { Novu } from '@novu/api';
+
+const novu = new Novu({ secretKey: "<NOVU_SECRET_KEY>" });
+
+await novu.trigger(
+  {
+    workflowId: "workflow-id",
+    to: "unique_subscriber_identifier",
+    payload: {
+      postId: "123",
+    },
+  },
+  // Idempotency key
+  "unique-request-id-12345"
+);
+```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.trigger(
+        trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+            workflow_id="workflow-id",
+            to="unique_subscriber_identifier",
+            payload={
+                "postId": "123",
+            },
+        ),
+        idempotency_key="unique-request-id-12345",
+    )
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+idempotencyKey := "unique-request-id-12345"
+
+res, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "workflow-id",
+    To: components.CreateToStr("unique_subscriber_identifier"),
+    Payload: map[string]any{
+        "postId": "123",
+    },
+}, &idempotencyKey)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()->setSecurity('<NOVU_SECRET_KEY>')->build();
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'workflow-id',
+        to: 'unique_subscriber_identifier',
+        payload: ['postId' => '123'],
+    ),
+    idempotencyKey: 'unique-request-id-12345',
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+
+await sdk.TriggerAsync(
+    triggerEventRequestDto: new TriggerEventRequestDto() {
+        WorkflowId = "workflow-id",
+        To = To.CreateStr("unique_subscriber_identifier"),
+        Payload = new Dictionary<string, object>() {
+            { "postId", "123" },
+        },
+    },
+    idempotencyKey: "unique-request-id-12345"
+);
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+import java.util.Map;
+
+Novu novu = Novu.builder().secretKey("<NOVU_SECRET_KEY>").build();
+
+novu.trigger()
+    .idempotencyKey("unique-request-id-12345")
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("workflow-id")
+        .to(To2.of("unique_subscriber_identifier"))
+        .payload(Map.of("postId", "123"))
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
 curl -X POST https://api.novu.co/v1/events/trigger \
   --header 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
   --header 'Idempotency-Key: unique-request-id-12345' \
   --header 'Content-Type: application/json' \
-  --data '{"name": "workflow-id", "to": {"subscriberId": "subscriber-123"}}'
+  --data '{"name": "workflow-id", "to": "unique_subscriber_identifier", "payload": {"postId": "123"}}'
 ```
-```bash title="Authorization header"
---header 'Authorization: ApiKey <NOVU_SECRET_KEY>'
-```
-</CodeGroup>
+  </Tab>
+</Tabs>
 
 ### Key Requirements
 
@@ -72,7 +187,7 @@ Idempotency is supported for the following HTTP methods:
 
 ## Authentication Requirements
 
-Idempotency is only available when authenticating with an API Key. Include the `Authorization: ApiKey` header shown in the **Authorization header** tab above.
+Idempotency is only available when authenticating with an API Key. Include the `Authorization: ApiKey <NOVU_SECRET_KEY>` header, as shown in the **cURL** tab above.
 
 Requests using other authentication methods will be processed normally without idempotency support.
 
