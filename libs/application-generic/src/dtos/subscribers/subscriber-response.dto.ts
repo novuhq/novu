@@ -55,8 +55,9 @@ export class SubscriberResponseDtoOptional {
   @ApiPropertyOptional({
     type: [ChannelSettingsDto],
     description: 'An array of channel settings associated with the subscriber.',
+    nullable: true,
   })
-  channels?: ChannelSettingsDto[];
+  channels?: ChannelSettingsDto[] | null;
 
   @ApiPropertyOptional({
     description: 'An array of topics that the subscriber is subscribed to.',
