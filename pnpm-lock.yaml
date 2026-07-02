@@ -937,6 +937,30 @@ importers:
       '@tanstack/react-query':
         specifier: ^5.101.2
         version: 5.101.2(react@19.2.3)
+      '@tiptap/extension-document':
+        specifier: ^2.11.5
+        version: 2.11.5(@tiptap/core@2.11.5(@tiptap/pm@2.11.5))
+      '@tiptap/extension-dropcursor':
+        specifier: ^2.11.5
+        version: 2.11.5(@tiptap/core@2.11.5(@tiptap/pm@2.11.5))(@tiptap/pm@2.11.5)
+      '@tiptap/extension-gapcursor':
+        specifier: ^2.11.5
+        version: 2.11.5(@tiptap/core@2.11.5(@tiptap/pm@2.11.5))(@tiptap/pm@2.11.5)
+      '@tiptap/extension-history':
+        specifier: ^2.11.5
+        version: 2.11.5(@tiptap/core@2.11.5(@tiptap/pm@2.11.5))(@tiptap/pm@2.11.5)
+      '@tiptap/extension-paragraph':
+        specifier: ^2.11.5
+        version: 2.11.5(@tiptap/core@2.11.5(@tiptap/pm@2.11.5))
+      '@tiptap/extension-placeholder':
+        specifier: ^2.11.5
+        version: 2.11.5(@tiptap/core@2.11.5(@tiptap/pm@2.11.5))(@tiptap/pm@2.11.5)
+      '@tiptap/extension-text':
+        specifier: ^2.11.5
+        version: 2.11.5(@tiptap/core@2.11.5(@tiptap/pm@2.11.5))
+      '@tiptap/extension-text-style':
+        specifier: ^2.11.5
+        version: 2.11.5(@tiptap/core@2.11.5(@tiptap/pm@2.11.5))
       '@tiptap/react':
         specifier: ^2.6.6
         version: 2.10.3(@tiptap/core@2.11.5(@tiptap/pm@2.11.5))(@tiptap/pm@2.11.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -1534,6 +1558,12 @@ importers:
       '@aws-sdk/client-secrets-manager':
         specifier: ^3.1048.0
         version: 3.1048.0
+      '@chat-adapter/slack':
+        specifier: ^4.25.0
+        version: 4.31.0(ai@6.0.208(zod@4.3.6))(zod@4.3.6)
+      '@chat-adapter/teams':
+        specifier: ^4.25.0
+        version: 4.31.0(ai@6.0.208(zod@4.3.6))(zod@4.3.6)
       '@nestjs/axios':
         specifier: 4.0.1
         version: 4.0.1(@nestjs/common@11.1.27(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(axios@1.18.1)(rxjs@7.8.2)
@@ -1606,6 +1636,9 @@ importers:
       body-parser:
         specifier: ^2.2.1
         version: 2.2.2
+      chat:
+        specifier: ^4.25.0
+        version: 4.31.0(ai@6.0.208(zod@4.3.6))(zod@4.3.6)
       class-transformer:
         specifier: 0.5.1
         version: 0.5.1
@@ -2522,6 +2555,12 @@ importers:
       '@azure/storage-blob':
         specifier: ^12.11.0
         version: 12.13.0(encoding@0.1.13)
+      '@chat-adapter/slack':
+        specifier: ^4.25.0
+        version: 4.31.0(ai@6.0.208(zod@3.25.20))(zod@3.25.20)
+      '@chat-adapter/teams':
+        specifier: ^4.25.0
+        version: 4.31.0(ai@6.0.208(zod@3.25.20))(zod@3.25.20)
       '@clickhouse/client':
         specifier: ^1.20.0
         version: 1.20.0
@@ -2657,6 +2696,9 @@ importers:
       bullmq:
         specifier: ^3.10.2
         version: 3.10.4
+      chat:
+        specifier: ^4.25.0
+        version: 4.31.0(ai@6.0.208(zod@3.25.20))(zod@3.25.20)
       class-transformer:
         specifier: 0.5.1
         version: 0.5.1
@@ -6739,6 +6781,7 @@ packages:
 
   '@clickhouse/client-common@1.18.2':
     resolution: {integrity: sha512-J0SG6q9V31ydxonglpj9xhNRsUxCsF71iEZ784yldqMYwsHixj/9xHFDgBDX3DuMiDx/kPDfXnf+pimp08wIBA==}
+    deprecated: 'Deprecated: import from @clickhouse/client or @clickhouse/client-web instead.'
 
   '@clickhouse/client-common@1.20.0':
     resolution: {integrity: sha512-s0oDSwxQyJO/Xwne6sNE7xTAlms72Hq2AHzHAB9oSOBfiaXTzQOyHQrhufJ9ldPJTwr4L47/RxG1i6I0I8Xy9A==}
@@ -32233,6 +32276,20 @@ snapshots:
       - utf-8-validate
       - zod
 
+  '@chat-adapter/slack@4.31.0(ai@6.0.208(zod@4.3.6))(zod@4.3.6)':
+    dependencies:
+      '@chat-adapter/shared': 4.31.0(ai@6.0.208(zod@4.3.6))(zod@4.3.6)
+      '@slack/socket-mode': 2.0.7
+      '@slack/web-api': 7.17.0
+      chat: 4.31.0(ai@6.0.208(zod@4.3.6))(zod@4.3.6)
+    transitivePeerDependencies:
+      - ai
+      - bufferutil
+      - debug
+      - supports-color
+      - utf-8-validate
+      - zod
+
   '@chat-adapter/state-ioredis@4.31.0(ai@6.0.208(zod@3.25.20))(zod@3.25.20)':
     dependencies:
       chat: 4.31.0(ai@6.0.208(zod@3.25.20))(zod@3.25.20)
@@ -32266,6 +32323,20 @@ snapshots:
       '@microsoft/teams.cards': 2.0.11
       '@microsoft/teams.graph-endpoints': 2.0.11
       chat: 4.31.0(ai@6.0.208(zod@3.25.20))(zod@3.25.20)
+    transitivePeerDependencies:
+      - ai
+      - debug
+      - supports-color
+      - zod
+
+  '@chat-adapter/teams@4.31.0(ai@6.0.208(zod@4.3.6))(zod@4.3.6)':
+    dependencies:
+      '@chat-adapter/shared': 4.31.0(ai@6.0.208(zod@4.3.6))(zod@4.3.6)
+      '@microsoft/teams.api': 2.0.11
+      '@microsoft/teams.apps': 2.0.11
+      '@microsoft/teams.cards': 2.0.11
+      '@microsoft/teams.graph-endpoints': 2.0.11
+      chat: 4.31.0(ai@6.0.208(zod@4.3.6))(zod@4.3.6)
     transitivePeerDependencies:
       - ai
       - debug
