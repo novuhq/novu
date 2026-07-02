@@ -44,7 +44,7 @@ export type SubscriberResponseDto = {
   /**
    * An array of channel settings associated with the subscriber.
    */
-  channels?: Array<ChannelSettingsDto> | null | undefined;
+  channels?: Array<ChannelSettingsDto> | undefined;
   /**
    * An array of topics that the subscriber is subscribed to.
    *
@@ -110,7 +110,7 @@ export const SubscriberResponseDto$inboundSchema: z.ZodType<
   phone: z.nullable(z.string()).optional(),
   avatar: z.nullable(z.string()).optional(),
   locale: z.nullable(z.string()).optional(),
-  channels: z.nullable(z.array(ChannelSettingsDto$inboundSchema)).optional(),
+  channels: z.array(ChannelSettingsDto$inboundSchema).optional(),
   topics: z.array(z.string()).optional(),
   isOnline: z.nullable(z.boolean()).optional(),
   lastOnlineAt: z.nullable(z.string()).optional(),
