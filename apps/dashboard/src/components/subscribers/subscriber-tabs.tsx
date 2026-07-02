@@ -1,8 +1,9 @@
 import { motion } from 'motion/react';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { RiGroup2Line } from 'react-icons/ri';
 import { Separator } from '@/components/primitives/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
+import { SubscriberCredentials } from '@/components/subscribers/credentials/subscriber-credentials';
 import { Preferences } from '@/components/subscribers/preferences/preferences';
 import { PreferencesSkeleton } from '@/components/subscribers/preferences/preferences-skeleton';
 import { SubscriberActivity } from '@/components/subscribers/subscriber-activity';
@@ -13,15 +14,19 @@ import TruncatedText from '@/components/truncated-text';
 import { useFetchSubscriber } from '@/hooks/use-fetch-subscriber';
 import useFetchSubscriberPreferences from '@/hooks/use-fetch-subscriber-preferences';
 
+type OverviewFocusField = 'email' | 'phone';
+
 type SubscriberOverviewProps = {
   subscriberId: string;
   readOnly?: boolean;
   onCloseDrawer?: () => void;
   closeOnSave?: boolean;
+  focusField?: OverviewFocusField;
+  onFocusHandled?: () => void;
 };
 
 const SubscriberOverview = (props: SubscriberOverviewProps) => {
-  const { subscriberId, readOnly = false, onCloseDrawer, closeOnSave = false } = props;
+  const { subscriberId, readOnly = false, onCloseDrawer, closeOnSave = false, focusField, onFocusHandled } = props;
   const { data, isPending } = useFetchSubscriber({
     subscriberId,
   });
@@ -36,6 +41,8 @@ const SubscriberOverview = (props: SubscriberOverviewProps) => {
       readOnly={readOnly}
       onCloseDrawer={onCloseDrawer}
       closeOnSave={closeOnSave}
+      focusField={focusField}
+      onFocusHandled={onFocusHandled}
     />
   );
 };
@@ -82,6 +89,14 @@ type SubscriberTabsProps = {
 export function SubscriberTabs(props: SubscriberTabsProps) {
   const { subscriberId, readOnly = false, onCloseDrawer, closeOnSave = false } = props;
   const [tab, setTab] = useState('overview');
+  const [overviewFocusField, setOverviewFocusField] = useState<OverviewFocusField | undefined>();
+
+  const focusOverviewField = (field: OverviewFocusField) => {
+    setOverviewFocusField(field);
+    setTab('overview');
+  };
+
+  const clearOverviewFocusField = useCallback(() => setOverviewFocusField(undefined), []);
 
   return (
     <Tabs className="flex h-full w-full flex-col" value={tab} onValueChange={setTab}>
@@ -96,6 +111,10 @@ export function SubscriberTabs(props: SubscriberTabsProps) {
         <TabsTrigger value="overview" className={tabTriggerClasses} variant="regular" size="lg">
           <span>Overview</span>
           {tab === 'overview' && <ActiveTabIndicator />}
+        </TabsTrigger>
+        <TabsTrigger value="credentials" className={tabTriggerClasses} variant="regular" size="lg">
+          <span>Credentials</span>
+          {tab === 'credentials' && <ActiveTabIndicator />}
         </TabsTrigger>
         <TabsTrigger value="preferences" className={tabTriggerClasses} variant="regular" size="lg">
           <span>Preferences</span>
@@ -116,7 +135,12 @@ export function SubscriberTabs(props: SubscriberTabsProps) {
           readOnly={readOnly}
           onCloseDrawer={onCloseDrawer}
           closeOnSave={closeOnSave}
+          focusField={overviewFocusField}
+          onFocusHandled={clearOverviewFocusField}
         />
+      </TabsContent>
+      <TabsContent value="credentials" className="h-full w-full overflow-y-auto">
+        <SubscriberCredentials subscriberId={subscriberId} readOnly={readOnly} onEditInOverview={focusOverviewField} />
       </TabsContent>
       <TabsContent value="preferences" className="h-full w-full overflow-y-auto">
         <SubscriberPreferences subscriberId={subscriberId} readOnly={readOnly} />

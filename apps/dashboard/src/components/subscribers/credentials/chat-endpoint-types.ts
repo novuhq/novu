@@ -1,0 +1,92 @@
+import type { ChannelEndpointType } from '@novu/shared';
+import { ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
+
+/** A chat endpoint type a user can manually add for an integration. */
+export type ChatEndpointTypeOption = {
+  type: ChannelEndpointType;
+  label: string;
+  /** Empty payload skeleton pre-filled in the JSON editor. */
+  skeleton: Record<string, string>;
+  /** Token-based types (Slack/Teams channel & user) only deliver when linked to an OAuth connection. */
+  requiresConnection: boolean;
+};
+
+const WEBHOOK: ChatEndpointTypeOption = {
+  type: ENDPOINT_TYPES.WEBHOOK,
+  label: 'Webhook',
+  skeleton: { url: '' },
+  requiresConnection: false,
+};
+
+/** Webhook variant for providers that route by channel/room (Mattermost, Rocket.Chat). */
+const WEBHOOK_WITH_CHANNEL: ChatEndpointTypeOption = {
+  type: ENDPOINT_TYPES.WEBHOOK,
+  label: 'Webhook',
+  skeleton: { url: '', channel: '' },
+  requiresConnection: false,
+};
+
+const SLACK_CHANNEL: ChatEndpointTypeOption = {
+  type: ENDPOINT_TYPES.SLACK_CHANNEL,
+  label: 'Slack channel',
+  skeleton: { channelId: '' },
+  requiresConnection: true,
+};
+
+const SLACK_USER: ChatEndpointTypeOption = {
+  type: ENDPOINT_TYPES.SLACK_USER,
+  label: 'Slack user',
+  skeleton: { userId: '' },
+  requiresConnection: true,
+};
+
+const MS_TEAMS_CHANNEL: ChatEndpointTypeOption = {
+  type: ENDPOINT_TYPES.MS_TEAMS_CHANNEL,
+  label: 'Teams channel',
+  skeleton: { teamId: '', channelId: '' },
+  requiresConnection: true,
+};
+
+const MS_TEAMS_USER: ChatEndpointTypeOption = {
+  type: ENDPOINT_TYPES.MS_TEAMS_USER,
+  label: 'Teams user',
+  skeleton: { userId: '' },
+  requiresConnection: true,
+};
+
+const TELEGRAM_CHAT: ChatEndpointTypeOption = {
+  type: ENDPOINT_TYPES.TELEGRAM_CHAT,
+  label: 'Telegram chat',
+  skeleton: { chatId: '' },
+  requiresConnection: false,
+};
+
+/**
+ * Endpoint types each chat provider actually consumes, mirroring the provider `sendMessage`
+ * implementations in `packages/providers/src/lib/chat`. Providers not listed fall back to a
+ * plain webhook. WhatsApp Business (phone-only) is handled separately in the UI.
+ */
+const SUPPORTED_TYPES_BY_PROVIDER: Partial<Record<string, ChatEndpointTypeOption[]>> = {
+  [ChatProviderIdEnum.Slack]: [WEBHOOK, SLACK_CHANNEL, SLACK_USER],
+  [ChatProviderIdEnum.MsTeams]: [WEBHOOK, MS_TEAMS_CHANNEL, MS_TEAMS_USER],
+  [ChatProviderIdEnum.Telegram]: [TELEGRAM_CHAT],
+  [ChatProviderIdEnum.Discord]: [WEBHOOK],
+  [ChatProviderIdEnum.Mattermost]: [WEBHOOK_WITH_CHANNEL],
+  [ChatProviderIdEnum.Ryver]: [WEBHOOK],
+  [ChatProviderIdEnum.Zulip]: [WEBHOOK],
+  [ChatProviderIdEnum.GetStream]: [WEBHOOK],
+  [ChatProviderIdEnum.RocketChat]: [WEBHOOK_WITH_CHANNEL],
+  [ChatProviderIdEnum.GrafanaOnCall]: [WEBHOOK],
+  [ChatProviderIdEnum.ChatWebhook]: [WEBHOOK],
+};
+
+/**
+ * Resolves the endpoint types a user may manually add for a chat integration.
+ * Only types the provider actually supports are offered; connection-based types
+ * (Slack/Teams channel & user) are hidden unless an OAuth connection exists.
+ */
+export function getAddableEndpointTypes(providerId: string, hasConnection: boolean): ChatEndpointTypeOption[] {
+  const supported = SUPPORTED_TYPES_BY_PROVIDER[providerId] ?? [WEBHOOK];
+
+  return supported.filter((option) => !option.requiresConnection || hasConnection);
+}
