@@ -10,10 +10,14 @@
     "cf-typegen": "wrangler types",
     "namespace:create:staging": "wrangler dispatch-namespace create novu-step-resolvers-staging",
     "namespace:create:production": "wrangler dispatch-namespace create novu-step-resolvers-production",
+    "namespace:create:production-eu": "wrangler dispatch-namespace create novu-step-resolvers-production-eu",
     "secret:staging": "wrangler secret put STEP_RESOLVER_HMAC_SECRET --env staging",
     "secret:production": "wrangler secret put STEP_RESOLVER_HMAC_SECRET --env production",
+    "secret:production-eu": "wrangler secret put STEP_RESOLVER_HMAC_SECRET --env production-eu",
     "deploy:staging": "wrangler deploy --env staging",
-    "deploy:production": "wrangler deploy --env production"
+    "deploy:production": "wrangler deploy --env production",
+    "deploy:production-eu": "wrangler deploy --env production-eu",
+    "regional-services:production-eu": "bash scripts/configure-eu-regional-hostname.sh"
   },
   "devDependencies": {
     "typescript": "^5.5.2",

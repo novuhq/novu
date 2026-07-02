@@ -3,7 +3,7 @@ import { FormControl, FormField, FormItem, FormMessage } from '@/components/prim
 import { ControlInput } from '@/components/workflow-editor/control-input';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useParseVariables } from '@/hooks/use-parse-variables';
-import { capitalize, containsHTMLEntities, containsVariables } from '@/utils/string';
+import { capitalize, containsHTMLEntities } from '@/utils/string';
 import { InputRoot } from '../../../primitives/input';
 
 const bodyKey = 'body';

@@ -11,9 +11,11 @@ export function PaginationRequestDto(defaultLimit = 10, maxLimit = 100): Constru
       type: Number,
       required: false,
       example: 0,
+      minimum: 0,
     })
     @Type(() => Number)
     @IsInt()
+    @Min(0)
     page = 0;
 
     @ApiPropertyOptional({

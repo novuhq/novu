@@ -65,7 +65,15 @@ export const useEditorPreview = ({ workflowSlug, stepSlug, controlValues, payloa
     isPending: isPreviewPending,
     isFetching,
   } = useQuery({
-    queryKey: [QueryKeys.previewStep, workflowSlug, stepSlug, debouncedControlValues, editorValue, payloadSchema],
+    queryKey: [
+      QueryKeys.previewStep,
+      currentEnvironment?._id,
+      workflowSlug,
+      stepSlug,
+      debouncedControlValues,
+      editorValue,
+      payloadSchema,
+    ],
     queryFn: async ({ signal }) => {
       if (!parsedEditorPayload) {
         throw new Error('Invalid JSON in editor');

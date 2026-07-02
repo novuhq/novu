@@ -1,5 +1,5 @@
 import { SERVER_HOST } from '../../constants';
-import { CloudRegionEnum, DashboardUrlEnum } from './enums';
+import { CloudRegionEnum, DashboardUrlEnum, LOCAL_DASHBOARD_URL } from './enums';
 import { DevCommandOptions } from './types';
 
 export function wait(ms: number) {
@@ -18,6 +18,8 @@ function getDefaultDashboardUrl(region: string) {
       return DashboardUrlEnum.EU;
     case CloudRegionEnum.STAGING:
       return DashboardUrlEnum.STAGING;
+    case CloudRegionEnum.LOCAL:
+      return LOCAL_DASHBOARD_URL;
     case CloudRegionEnum.US:
     default:
       return DashboardUrlEnum.US;

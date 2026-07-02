@@ -190,6 +190,18 @@ export type NotificationFilter = {
   archived?: boolean;
   snoozed?: boolean;
   seen?: boolean;
+  /**
+   * Filter notifications by keys in their `data` object.
+   *
+   * Each top-level key value can be:
+   *  - a scalar (exact equality)
+   *  - `Scalar[]` (OR — match any of the listed values)
+   *  - `{ or: Scalar[] }` (explicit OR)
+   *  - `{ and: [{ or: Scalar[] }, ...] }` (AND of OR-groups)
+   *  - a 1-level nested object whose sub-keys follow the same rules
+   *
+   * Across keys clauses are AND-ed together.
+   */
   data?: Record<string, unknown>;
   severity?: SeverityLevelEnum | SeverityLevelEnum[];
   createdGte?: number;

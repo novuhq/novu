@@ -1,13 +1,17 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ApiContextPayload, IsValidContextPayload } from '@novu/application-generic';
 import { ConnectionMode, ContextPayload } from '@novu/shared';
-import { IsArray, IsDefined, IsIn, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsBoolean, IsDefined, IsIn, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import {
   OAuthMode,
   SLACK_DEFAULT_OAUTH_SCOPES,
   SLACK_LINK_USER_OAUTH_SCOPES,
 } from '../usecases/generate-chat-oath-url/generate-slack-oath-url/generate-slack-oauth-url.usecase';
 
+/**
+ * @deprecated Use GenerateConnectOauthUrlRequestDto (POST /channel-connections/oauth) or
+ * GenerateLinkUserOauthUrlRequestDto (POST /channel-endpoints/oauth) instead.
+ */
 export class GenerateChatOauthUrlRequestDto {
   @ApiProperty({
     type: String,
@@ -113,4 +117,20 @@ export class GenerateChatOauthUrlRequestDto {
   @IsString()
   @IsIn(['subscriber', 'shared'])
   connectionMode?: ConnectionMode;
+
+  @ApiPropertyOptional({
+    type: Boolean,
+    description:
+      'When true, after the workspace/tenant connection is created the OAuth flow also links the subscriber ' +
+      'who clicked "Connect" as a personal endpoint. ' +
+      'For Slack, this uses the authed_user.id already returned by oauth.v2.access — no extra redirect. ' +
+      'For MS Teams, this triggers a second OAuth redirect for delegated user-identity consent. ' +
+      'Defaults to false when omitted; the SlackConnectButton and MsTeamsConnectButton SDK components ' +
+      'default this to true.',
+    example: true,
+    required: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  autoLinkUser?: boolean;
 }

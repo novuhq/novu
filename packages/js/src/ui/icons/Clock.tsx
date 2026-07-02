@@ -1,6 +1,6 @@
 import { JSX } from 'solid-js';
 
-export const Clock = (props?: JSX.HTMLAttributes<SVGSVGElement>) => {
+export const Clock = (props?: JSX.SvgSVGAttributes<SVGSVGElement>) => {
   return (
     <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
       <g clip-path="url(#clip0_3188_15050)">

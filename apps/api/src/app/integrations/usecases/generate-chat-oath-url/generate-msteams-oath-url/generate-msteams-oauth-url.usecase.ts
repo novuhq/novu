@@ -2,9 +2,15 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { createHash } from '@novu/application-generic';
 import { EnvironmentRepository, ICredentialsEntity, IntegrationEntity, SubscriberRepository } from '@novu/dal';
 import { ChatProviderIdEnum, ContextPayload } from '@novu/shared';
+import { buildAgentApiRootUrl } from '../../../../agents/shared/util/agent-api-root-url';
+import { areHexDigestsEqual } from '../../../../shared/helpers/timing-safe-equal';
 import { CHAT_OAUTH_CALLBACK_PATH } from '../chat-oauth.constants';
 import { encodeOAuthState, splitOAuthState } from '../chat-oauth-state.util';
 import { GenerateMsTeamsOauthUrlCommand } from './generate-msteams-oauth-url.command';
+
+export type OAuthMode = 'connect' | 'link_user';
+
+export const MS_TEAMS_LINK_USER_OAUTH_SCOPES = ['openid', 'profile', 'User.Read'] as const;
 
 export type StateData = {
   identifier?: string;
@@ -15,6 +21,8 @@ export type StateData = {
   integrationIdentifier: string;
   providerId: ChatProviderIdEnum;
   timestamp: number;
+  mode?: OAuthMode;
+  autoLinkUser?: boolean;
 };
 
 @Injectable()
@@ -27,7 +35,7 @@ export class GenerateMsTeamsOauthUrl {
    * - Messages sent as bot/app identity, not as user
    * - Requires application permissions configured in Azure app registration:
    *   Team.ReadBasic.All, Channel.ReadBasic.All, AppCatalog.Read.All,
-   *   TeamsAppInstallation.ReadWriteSelfForTeam.All, TeamsAppInstallation.ReadWriteSelfForUser.All
+   *   TeamsAppInstallation.ReadWriteSelfForTeam.All
    */
   private readonly MS_TEAMS_ADMIN_CONSENT_URL = 'https://login.microsoftonline.com/organizations/v2.0/adminconsent?';
 
@@ -40,7 +48,8 @@ export class GenerateMsTeamsOauthUrl {
     this.validateSubscriberIdOrContext(command);
     await this.assertResourceExists(command);
 
-    const { clientId } = await this.getIntegrationCredentials(command.integration);
+    const credentials = await this.getIntegrationCredentials(command.integration);
+    const { clientId } = credentials;
 
     if (!clientId) {
       throw new NotFoundException('MS Teams integration missing clientId');
@@ -50,10 +59,21 @@ export class GenerateMsTeamsOauthUrl {
       command.integration,
       command.subscriberId,
       command.context,
-      command.connectionIdentifier
+      command.connectionIdentifier,
+      command.mode,
+      command.autoLinkUser
     );
 
-    return this.getOAuthUrl(clientId, secureState);
+    if (command.mode === 'link_user') {
+      // the callback requires subscriberId to be present
+      if (!command.subscriberId) {
+        throw new BadRequestException('subscriberId is required for link_user mode');
+      }
+
+      return this.getLinkUserOAuthUrl(clientId, secureState);
+    }
+
+    return this.getAdminConsentUrl(clientId, secureState);
   }
 
   private validateSubscriberIdOrContext(command: GenerateMsTeamsOauthUrlCommand): void {
@@ -82,7 +102,7 @@ export class GenerateMsTeamsOauthUrl {
     return;
   }
 
-  private async getOAuthUrl(clientId: string, secureState: string): Promise<string> {
+  private getAdminConsentUrl(clientId: string, secureState: string): string {
     const oauthParams = new URLSearchParams({
       client_id: clientId,
       redirect_uri: GenerateMsTeamsOauthUrl.buildRedirectUri(),
@@ -93,11 +113,32 @@ export class GenerateMsTeamsOauthUrl {
     return `${this.MS_TEAMS_ADMIN_CONSENT_URL}${oauthParams.toString()}`;
   }
 
+  /*
+   * Multi-tenant link_user: authorize against the `/organizations` authority rather than the bot's
+   * home tenant, so a user signs in within their OWN tenant (the bot's home tenant or any external
+   * customer tenant that has consented to the app). The user's actual tenant is read from the
+   * returned id_token (`tid` claim) in the callback.
+   */
+  private getLinkUserOAuthUrl(clientId: string, secureState: string): string {
+    const oauthParams = new URLSearchParams({
+      client_id: clientId,
+      response_type: 'code',
+      redirect_uri: GenerateMsTeamsOauthUrl.buildRedirectUri(),
+      scope: MS_TEAMS_LINK_USER_OAUTH_SCOPES.join(' '),
+      state: secureState,
+      response_mode: 'query',
+    });
+
+    return `https://login.microsoftonline.com/organizations/oauth2/v2.0/authorize?${oauthParams.toString()}`;
+  }
+
   private async createSecureState(
     integration: IntegrationEntity,
     subscriberId?: string,
     context?: ContextPayload,
-    connectionIdentifier?: string
+    connectionIdentifier?: string,
+    mode?: OAuthMode,
+    autoLinkUser?: boolean
   ): Promise<string> {
     const { _environmentId, _organizationId, identifier, providerId } = integration;
 
@@ -110,6 +151,8 @@ export class GenerateMsTeamsOauthUrl {
       integrationIdentifier: identifier,
       providerId: providerId as ChatProviderIdEnum,
       timestamp: Date.now(),
+      mode,
+      autoLinkUser,
     };
 
     const payload = JSON.stringify(stateData);
@@ -128,7 +171,7 @@ export class GenerateMsTeamsOauthUrl {
       const { payload, signature } = splitOAuthState(state);
 
       const expectedSignature = createHash(environmentApiKey, payload);
-      if (signature !== expectedSignature) {
+      if (!areHexDigestsEqual(expectedSignature, signature)) {
         throw new Error('Invalid state signature');
       }
 
@@ -147,12 +190,7 @@ export class GenerateMsTeamsOauthUrl {
   }
 
   static buildRedirectUri(): string {
-    if (!process.env.API_ROOT_URL) {
-      throw new Error('API_ROOT_URL environment variable is required');
-    }
-
-    const baseUrl = process.env.API_ROOT_URL.replace(/\/$/, ''); // Remove trailing slash
-    return `${baseUrl}${CHAT_OAUTH_CALLBACK_PATH}`;
+    return `${buildAgentApiRootUrl()}${CHAT_OAUTH_CALLBACK_PATH}`;
   }
 
   private async getIntegrationCredentials(integration: IntegrationEntity): Promise<ICredentialsEntity> {

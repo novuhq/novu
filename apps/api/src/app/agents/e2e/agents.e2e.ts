@@ -31,6 +31,11 @@ describe('Agents API - /agents #novu-v2', () => {
     expect(createRes.body.data.identifier).to.equal(identifier);
     expect(createRes.body.data.description).to.equal('e2e description');
     expect(createRes.body.data._id).to.be.a('string');
+    // Self-hosted agents have no managed-runtime view (no provider to read
+    // tools/mcpServers from). The field must be absent — see managedRuntime
+    // tests in managed-agent.e2e.ts for the populated-view contract.
+    expect(createRes.body.data.managedRuntime).to.equal(undefined);
+    expect(createRes.body.data.createdBy).to.equal(session.user._id);
 
     const listRes = await session.testAgent.get('/v1/agents');
 
@@ -160,7 +165,7 @@ describe('Agents API - /agents #novu-v2', () => {
     expect(response.body.message).to.contain('Cannot specify both "before" and "after" cursors');
   });
 
-  it('should return 409 when creating a duplicate agent identifier in the same environment', async () => {
+  it('should append a suffix when creating a scratch agent with a duplicate identifier', async () => {
     const identifier = `e2e-dup-${Date.now()}`;
 
     await session.testAgent.post('/v1/agents').send({
@@ -173,7 +178,12 @@ describe('Agents API - /agents #novu-v2', () => {
       identifier,
     });
 
-    expect(second.status).to.equal(409);
+    expect(second.status).to.equal(201);
+    expect(second.body.data.identifier).to.not.equal(identifier);
+    expect(second.body.data.identifier.startsWith(`${identifier}-`)).to.be.true;
+
+    await session.testAgent.delete(`/v1/agents/${encodeURIComponent(identifier)}`);
+    await session.testAgent.delete(`/v1/agents/${encodeURIComponent(second.body.data.identifier)}`);
   });
 
   it('should add, list, update, and remove agent-integration links', async () => {

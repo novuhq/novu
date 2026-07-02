@@ -30,4 +30,8 @@ export class GetRequestsCommand extends EnvironmentCommand {
   @IsOptional()
   @IsNumber()
   createdGte?: number;
+
+  @IsString()
+  @IsOptional()
+  source?: string;
 }

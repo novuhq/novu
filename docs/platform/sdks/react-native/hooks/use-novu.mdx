@@ -1,0 +1,169 @@
+---
+title: 'useNovu'
+description: 'Learn how to use the useNovu hook to access the Novu client instance in your React Native application'
+---
+
+
+The `useNovu` hook provides access to the [Novu client instance](/platform/inbox/headless-mode) from anywhere in your React Native application. This hook must be used within a component that is wrapped by the `NovuProvider`.
+
+## Return Value
+
+```typescript
+type NovuReturn = {
+  novu: Novu;
+  isLoading: boolean;
+  error: Error | null;
+};
+```
+
+## Example Usage
+
+Here's how to use the `useNovu` hook to interact with the Novu client:
+
+```tsx
+import { useNovu } from '@novu/react-native';
+import { View, Button, ActivityIndicator } from 'react-native';
+
+function NotificationActions() {
+  const novu = useNovu();
+
+  if (isLoading) return <ActivityIndicator />;
+
+  const markAllAsRead = async () => {
+    await novu.notifications.readAll();
+  };
+
+  const archiveAllRead = async () => {
+    await novu.notifications.archiveAllRead();
+  };
+
+  return (
+    <View>
+      <Button title="Mark All as Read" onPress={markAllAsRead} />
+      <Button title="Archive All Read" onPress={archiveAllRead} />
+    </View>
+  );
+}
+```
+
+### Accessing Notification Methods
+
+The Novu client provides methods for managing notifications:
+
+```tsx
+import { View, Text, Button } from 'react-native';
+import { useNovu } from '@novu/react-native';
+
+function NotificationItem({ notification }) {
+  const { novu } = useNovu();
+
+  const markAsRead = async () => {
+    await novu.notifications.read(notification.id);
+  };
+
+  const archive = async () => {
+    await novu.notifications.archive(notification.id);
+  };
+
+  return (
+    <View>
+      <Text>{notification.content}</Text>
+      <Button title="Mark as Read" onPress={markAsRead} />
+      <Button title="Archive" onPress={archive} />
+    </View>
+  );
+}
+```
+
+### Updating single workflow's channel preferences
+
+Workflow's channel preferences can be updated using `novu.preferences.update` method.
+
+```tsx
+import { Button } from 'react-native';
+import { useNovu } from '@novu/react-native';
+
+function PreferencesManager() {
+  const novu = useNovu();
+
+  const updatePreferences = async () => {
+    await novu.preferences.update({
+      workflowId: 'workflow_id',
+      channels: {
+        email: false,
+        sms: true,
+      },
+    });
+  };
+
+  return <Button title="Update SinglePreferences" onPress={updatePreferences} />;
+}
+```
+
+### Updating multiple workflow's channel preferences
+
+Using `novu.preferences.bulkUpdate` method multiple workflow's channel preferences can be updated at once.
+
+```tsx
+import { Button } from 'react-native';
+import { useNovu } from "@novu/react-native";
+
+function UpdateMultiplePreferences() {
+  const novu = useNovu();
+
+  const updateBulkPreferences = async () => {
+    try {
+      await novu.preferences.bulkUpdate([
+      {
+        workflowId: "workflowId_1",
+        channels: {
+          email: true,
+          in_app: false,
+        },
+      },
+      {
+        workflowId: "workflowId_2",
+        channels: {
+          email: true,
+          in_app: false,
+        },
+      },
+    ]);
+    } catch (error) {
+      console.error("Failed to update preferences:", error);
+    }
+  };
+
+  return <Button title="Update Multiple Preferences" onPress={updateBulkPreferences} />;
+}
+```
+
+### Listening for new notifications 
+
+```tsx
+import { useNovu } from '@novu/react-native';
+
+const NotificationToast = () => {
+  const novu = useNovu();
+
+  useEffect(() => {
+    const listener = ({ result: notification }) => {
+      // Show a toast notification
+    };
+
+    novu.on('notifications.notification_received', listener);
+
+    return () => {
+      novu.off('notifications.notification_received', listener);
+    };
+  }, [novu]);
+
+  return null;
+};
+```
+
+<Note>
+  The Novu client instance provides access to all the functionality available in the [Headless
+  API](/platform/inbox/headless-mode).
+</Note>
+

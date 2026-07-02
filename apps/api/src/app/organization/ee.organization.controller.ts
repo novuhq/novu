@@ -63,6 +63,7 @@ export class EEOrganizationController {
   @ApiOperation({
     summary: 'Update organization branding details',
   })
+  @RequirePermissions(PermissionsEnum.ORG_SETTINGS_WRITE)
   async updateBrandingDetails(@UserSession() user: UserSessionData, @Body() body: UpdateBrandingDetailsDto) {
     return await this.updateBrandingDetailsUsecase.execute(
       UpdateBrandingDetailsCommand.create({
@@ -86,6 +87,7 @@ export class EEOrganizationController {
   @ApiOperation({
     summary: 'Rename organization name',
   })
+  @RequirePermissions(PermissionsEnum.ORG_SETTINGS_WRITE)
   async renameOrganization(@UserSession() user: UserSessionData, @Body() body: RenameOrganizationDto) {
     return await this.renameOrganizationUsecase.execute(
       RenameOrganizationCommand.create({

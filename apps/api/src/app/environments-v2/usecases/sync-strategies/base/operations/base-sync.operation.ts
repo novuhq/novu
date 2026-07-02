@@ -81,7 +81,7 @@ export abstract class BaseSyncOperation<T> {
 
   @Instrument()
   async execute(context: ISyncContext): Promise<ISyncResult> {
-    this.logger.info(this.getStartingSyncMessage(context.sourceEnvironmentId, context.targetEnvironmentId));
+    this.logger.debug(this.getStartingSyncMessage(context.sourceEnvironmentId, context.targetEnvironmentId));
 
     const resultBuilder = new SyncResultBuilder(this.getResourceType());
 
@@ -96,10 +96,10 @@ export abstract class BaseSyncOperation<T> {
         sourceResources = this.filterResourcesForSelectiveSync(sourceResources, context.options.resources);
       }
 
-      this.logger.info(this.getFoundResourcesMessage(sourceResources.length));
+      this.logger.debug(this.getFoundResourcesMessage(sourceResources.length));
 
       if (context.options.dryRun) {
-        this.logger.info(this.getDryRunMessage());
+        this.logger.debug(this.getDryRunMessage());
 
         sourceResources.forEach((resource) => {
           resultBuilder.addSkipped(
@@ -168,14 +168,14 @@ export abstract class BaseSyncOperation<T> {
             this.getResourceName(decision.resource),
             decision.action
           );
-          this.logger.info(this.getSyncSuccessMessage(this.getResourceName(decision.resource), decision.action));
+          this.logger.debug(this.getSyncSuccessMessage(this.getResourceName(decision.resource), decision.action));
         } else {
           resultBuilder.addSkipped(
             this.repositoryService.getResourceIdentifier(decision.resource),
             this.getResourceName(decision.resource),
             decision.reason!
           );
-          this.logger.info(this.getSyncSkipMessage(this.getResourceName(decision.resource), decision.action));
+          this.logger.debug(this.getSyncSkipMessage(this.getResourceName(decision.resource), decision.action));
         }
       } catch (error) {
         resultBuilder.addFailure(
@@ -199,7 +199,7 @@ export abstract class BaseSyncOperation<T> {
     const batches = this.createBatches(sourceResources, BaseSyncOperation.COMPARISON_BATCH_SIZE);
     const syncDecisions: IResourceSyncDecision<T>[] = [];
 
-    this.logger.info(
+    this.logger.debug(
       `Determining sync decisions for ${sourceResources.length} resources in ${batches.length} batches of ${BaseSyncOperation.COMPARISON_BATCH_SIZE}`
     );
 
@@ -275,7 +275,7 @@ export abstract class BaseSyncOperation<T> {
             this.getResourceName(targetResource),
             SYNC_ACTIONS.DELETED
           );
-          this.logger.info(this.getDeleteSuccessMessage(this.getResourceName(targetResource)));
+          this.logger.debug(this.getDeleteSuccessMessage(this.getResourceName(targetResource)));
         }
       } catch (error) {
         resultBuilder.addFailure(

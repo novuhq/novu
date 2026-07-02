@@ -1,6 +1,7 @@
 import {
   ApiServiceLevelEnum,
   ChannelTypeEnum,
+  EnvironmentTypeEnum,
   type IEnvironment,
   type IIntegration,
   type IProviderConfig,
@@ -24,7 +25,7 @@ import { EnvironmentBranchIcon } from '../../primitives/environment-branch-icon'
 import { StatusBadge, StatusBadgeIcon } from '../../primitives/status-badge';
 import { TableIntegration } from '../types';
 import { ProviderIcon } from './provider-icon';
-import { isDemoIntegration } from './utils/helpers';
+import { getDemoIntegrationTooltipMessage, isDemoIntegration } from './utils/helpers';
 
 type IntegrationCardVariant = 'default' | 'connectSheet';
 
@@ -47,7 +48,12 @@ export function IntegrationCard({
   const { subscription } = useFetchSubscription();
 
   const handleConfigureClick = (e: React.MouseEvent<HTMLElement>) => {
-    if (integration.channel === ChannelTypeEnum.IN_APP && !integration.connected) {
+    const shouldRedirectToInboxOnboarding =
+      integration.channel === ChannelTypeEnum.IN_APP &&
+      !integration.connected &&
+      environment.type === EnvironmentTypeEnum.DEV;
+
+    if (shouldRedirectToInboxOnboarding) {
       e.preventDefault();
 
       navigate(ROUTES.INBOX_EMBED + `?environmentId=${environment._id}`);
@@ -58,7 +64,7 @@ export function IntegrationCard({
         identifier: integration.identifier,
         provider: provider.displayName,
         providerId: provider.id,
-        channel: integration.channel,
+        channel: integration.channel ?? provider.channel,
         environment: environment.name,
         active: integration.active,
       });
@@ -67,6 +73,7 @@ export function IntegrationCard({
 
   const isDemo = isDemoIntegration(provider.id);
   const isFreePlan = subscription?.apiServiceLevel === ApiServiceLevelEnum.FREE;
+  const demoTooltipMessage = getDemoIntegrationTooltipMessage(provider.id, provider.channel);
 
   if (variant === 'connectSheet') {
     return (
@@ -101,19 +108,12 @@ export function IntegrationCard({
                 </span>
               </TooltipTrigger>
               <TooltipContent>
-                <p>
-                  This is a demo provider for testing purposes only and capped at 300{' '}
-                  {provider.channel === 'email' ? 'emails' : 'sms'} per month. Not suitable for production use.
-                </p>
+                <p>{demoTooltipMessage}</p>
               </TooltipContent>
             </Tooltip>
           ) : null}
           <div className="shadow-xs ring-stroke-soft/80 flex size-10 shrink-0 items-center justify-center rounded-full bg-bg-white p-2 ring-1">
-            <ProviderIcon
-              providerId={provider.id}
-              providerDisplayName={provider.displayName}
-              className="size-5"
-            />
+            <ProviderIcon providerId={provider.id} providerDisplayName={provider.displayName} className="size-5" />
           </div>
         </div>
         <div className="flex min-h-4 max-w-full items-center gap-2">
@@ -175,10 +175,7 @@ export function IntegrationCard({
               </span>
             </TooltipTrigger>
             <TooltipContent>
-              <p>
-                This is a demo provider for testing purposes only and capped at 300{' '}
-                {provider.channel === 'email' ? 'emails' : 'sms'} per month. Not suitable for production use.
-              </p>
+              <p>{demoTooltipMessage}</p>
             </TooltipContent>
           </Tooltip>
         )}

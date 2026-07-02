@@ -1,11 +1,12 @@
-import { ConflictException, Injectable } from '@nestjs/common';
-import { ResourceValidatorService } from '@novu/application-generic';
+import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
+import { getSharedAgentDomain, isAgentSharedInboxEnabled, ResourceValidatorService } from '@novu/application-generic';
 import { DomainEntity, DomainRepository } from '@novu/dal';
 import { DomainStatusEnum } from '@novu/shared';
 
 import { DomainResponseDto } from '../../dtos/domain-response.dto';
 import { toDomainResponse } from '../../mappers/domain-response.mapper';
 import { detectDnsProvider } from '../../utils/dns-provider';
+import { buildExpectedDnsRecords } from '../../utils/dns-records';
 import { CreateDomainCommand } from './create-domain.command';
 
 function isDuplicateKeyError(err: unknown): boolean {
@@ -20,43 +21,49 @@ export class CreateDomain {
   ) {}
 
   async execute(command: CreateDomainCommand): Promise<DomainResponseDto> {
+    // Both checks count the same domains: the plan entitlement (402/409) runs
+    // first so its errors take precedence over the global anti-abuse cap.
+    await this.resourceValidatorService.validateCustomEmailDomainsLimit(command.organizationId);
     await this.resourceValidatorService.validateDomainsLimit(command.organizationId);
+    const name = command.name.toLowerCase();
 
-    const existing = await this.domainRepository.findOne(
-      {
-        name: command.name,
-        _environmentId: command.environmentId,
-        _organizationId: command.organizationId,
-      },
-      ['_id']
-    );
-
-    if (existing) {
-      throw new ConflictException(`A domain with name "${command.name}" already exists.`);
+    if (isAgentSharedInboxEnabled() && name === getSharedAgentDomain()) {
+      throw new BadRequestException(
+        `The domain "${name}" is reserved for Novu's shared agent inbox and cannot be claimed.`
+      );
     }
 
-    const dnsProvider = await detectDnsProvider(command.name);
+    const existing = await this.domainRepository.findByName(name);
+
+    if (existing) {
+      throw new ConflictException(`A domain with name "${name}" already exists.`);
+    }
+
+    const dnsProvider = await detectDnsProvider(name);
 
     let domain: DomainEntity;
 
     try {
       domain = await this.domainRepository.create({
-        name: command.name,
+        name,
         status: DomainStatusEnum.PENDING,
         mxRecordConfigured: false,
         dnsProvider: dnsProvider ?? undefined,
-        routes: [],
+        ...(command.data !== undefined ? { data: command.data } : {}),
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
       });
     } catch (err: unknown) {
       if (isDuplicateKeyError(err)) {
-        throw new ConflictException(`A domain with name "${command.name}" already exists.`);
+        throw new ConflictException(`A domain with name "${name}" already exists.`);
       }
 
       throw err;
     }
 
-    return toDomainResponse(domain);
+    return {
+      ...toDomainResponse(domain),
+      expectedDnsRecords: buildExpectedDnsRecords(domain.name),
+    };
   }
 }

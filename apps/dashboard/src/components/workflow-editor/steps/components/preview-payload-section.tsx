@@ -1,9 +1,8 @@
 import { ResourceOriginEnum } from '@novu/shared';
-import { RiInformation2Line, RiRefreshLine, RiSettings3Line } from 'react-icons/ri';
+import { RiInformation2Line, RiRefreshLine } from 'react-icons/ri';
 import { AccordionContent, AccordionItem, AccordionTrigger } from '@/components/primitives/accordion';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { Button } from '../../../primitives/button';
-import { Hint, HintIcon } from '../../../primitives/hint';
 import { ACCORDION_STYLES } from '../constants/preview-context.constants';
 import { EditableJsonViewer } from '../shared/editable-json-viewer/editable-json-viewer';
 import { PayloadSectionProps } from '../types/preview-context.types';
@@ -15,12 +14,33 @@ export function PreviewPayloadSection({
   schema,
   onUpdate,
   onClearPersisted,
-  hasDigestStep,
   onManageSchema,
 }: PayloadSectionProps & { onManageSchema?: () => void }) {
   return (
     <AccordionItem value="payload" className={ACCORDION_STYLES.item}>
-      <AccordionTrigger className={ACCORDION_STYLES.trigger}>
+      <AccordionTrigger
+        className={ACCORDION_STYLES.trigger}
+        rightSlot={
+          onClearPersisted && workflow?.origin === ResourceOriginEnum.NOVU_CLOUD ? (
+            <div className="mr-2">
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onClearPersisted();
+                }}
+                type="button"
+                variant="secondary"
+                mode="ghost"
+                size="2xs"
+                className="text-foreground-600 gap-1"
+              >
+                <RiRefreshLine className="h-3 w-3" />
+                Reset defaults
+              </Button>
+            </div>
+          ) : null
+        }
+      >
         <div className="flex w-full items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-0.5">
@@ -38,26 +58,6 @@ export function PreviewPayloadSection({
               </Tooltip>
             </div>
           </div>
-          {onClearPersisted && workflow?.origin === ResourceOriginEnum.NOVU_CLOUD && (
-            <div className="mr-2">
-              <Button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-
-                  onClearPersisted();
-                }}
-                type="button"
-                variant="secondary"
-                mode="ghost"
-                size="2xs"
-                className="text-foreground-600 gap-1"
-              >
-                <RiRefreshLine className="h-3 w-3" />
-                Reset defaults
-              </Button>
-            </div>
-          )}
         </div>
       </AccordionTrigger>
       <AccordionContent className="flex flex-col gap-2">
@@ -75,16 +75,16 @@ export function PreviewPayloadSection({
             <RiInformation2Line className="h-3 w-3 shrink-0" />
             <span>
               Manage required fields and validations with{' '}
-              <b
+              <button
+                type="button"
                 onClick={(e) => {
                   e.stopPropagation();
-                  e.preventDefault();
                   onManageSchema();
                 }}
-                className="text-foreground-600 cursor-pointer font-medium"
+                className="text-foreground-600 cursor-pointer bg-transparent p-0 font-medium"
               >
                 Payload schema ↗
-              </b>
+              </button>
             </span>
           </div>
         )}

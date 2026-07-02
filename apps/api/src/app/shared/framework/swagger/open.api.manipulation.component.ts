@@ -88,7 +88,7 @@ export function overloadDocumentForSdkGeneration(inputDocument: OpenAPIObject, i
   return addIdempotencyKeyHeader(openAPIObject) as OpenAPIObject;
 }
 
-export function addIdempotencyKeyHeader<T>(openApiDocument: T): T {
+function addIdempotencyKeyHeader<T>(openApiDocument: T): T {
   const parsedDocument = JSON.parse(JSON.stringify(openApiDocument));
 
   if (!parsedDocument.paths) {

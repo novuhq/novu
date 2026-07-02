@@ -91,16 +91,21 @@ export const getAzureCacheForRedisClusterProviderConfig = (): IAzureCacheForRedi
 export const getAzureCacheForRedisCluster = (enableAutoPipelining?: boolean): Cluster | undefined => {
   const { instances, password, tls, username } = getAzureCacheForRedisClusterProviderConfig();
 
+  const skipVersionCheck = process.env.REDIS_SKIP_VERSION_CHECK === 'true';
+
+  const redisOptions = {
+    tls,
+    connectTimeout: 10000,
+    ...(password && { password }),
+    ...(username && { username }),
+    skipVersionCheck,
+  };
+
   const options: ClusterOptions = {
     dnsLookup: (address, callback) => callback(null, address),
     enableAutoPipelining: enableAutoPipelining ?? false,
     enableOfflineQueue: false,
-    redisOptions: {
-      tls,
-      connectTimeout: 10000,
-      ...(password && { password }),
-      ...(username && { username }),
-    },
+    redisOptions,
     scaleReads: 'slave',
     /*
      *  Disabled in Prod as affects performance

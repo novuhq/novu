@@ -47,13 +47,11 @@ describe('Workflow Worker', () => {
     const workflowInMemoryProviderService = moduleRef.get<WorkflowInMemoryProviderService>(
       WorkflowInMemoryProviderService
     );
-    const organizationRepository = moduleRef.get<CommunityOrganizationRepository>(CommunityOrganizationRepository);
     const featureFlagsService = moduleRef.get<FeatureFlagsService>(FeatureFlagsService);
 
     workflowWorker = new WorkflowWorker(
       triggerEventUseCase,
       workflowInMemoryProviderService,
-      organizationRepository,
       mockSqsService,
       new PinoLogger({}),
       featureFlagsService

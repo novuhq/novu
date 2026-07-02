@@ -23,7 +23,9 @@ export class WorkflowComparator {
     private workflowNormalizer: WorkflowNormalizer,
     private workflowRepositoryService: WorkflowRepositoryService,
     private moduleRef: ModuleRef
-  ) {}
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   async compareWorkflows(
     sourceWorkflow: NotificationTemplateEntity,

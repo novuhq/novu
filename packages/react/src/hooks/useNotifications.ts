@@ -2,7 +2,7 @@ import { checkNotificationMatchesFilter, isSameFilter, Notification, Notificatio
 import { useCallback, useEffect, useState } from 'react';
 import { useDataRef } from './internal/useDataRef';
 import { useWebSocketEvent } from './internal/useWebsocketEvent';
-import { useNovu } from './NovuProvider';
+import { useNovu, useRealtime } from './NovuProvider';
 
 /**
  * Props for the useNotifications hook.
@@ -30,6 +30,12 @@ import { useNovu } from './NovuProvider';
  *   createdGte: 1704067200000,
  *   createdLte: 1735689599999
  * });
+ *
+ * // Opt out of the built-in realtime updates and drive them yourself
+ * const { notifications, refetch } = useNotifications({
+ *   read: false,
+ *   realtime: false,
+ * });
  * ```
  */
 export type UseNotificationsProps = {
@@ -43,6 +49,18 @@ export type UseNotificationsProps = {
   createdGte?: NotificationFilter['createdGte'];
   createdLte?: NotificationFilter['createdLte'];
   limit?: number;
+  /**
+   * When `false`, disables the WebSocket subscription that auto-injects
+   * newly received notifications into the list. Built-in mutations like
+   * `readAll`, `seenAll`, `archiveAll`, and `archiveAllRead` continue to
+   * update local state. Use this when you want to drive new-notification updates yourself (e.g.
+   * via your own `novu.on('notifications.notification_received', ...)`
+   * handler combined with `refetch()`).
+   *
+   * When set, this prop takes precedence over the `realtime` config on
+   * `<NovuProvider />`. When omitted, the provider value (default `true`) is used.
+   */
+  realtime?: boolean;
   onSuccess?: (data: Notification[]) => void;
   onError?: (error: NovuError) => void;
 };
@@ -85,6 +103,7 @@ export const useNotifications = (props?: UseNotificationsProps): UseNotification
     createdGte,
     createdLte,
     limit = 10,
+    realtime: propsRealtime,
     onSuccess,
     onError,
   } = props || {};
@@ -101,6 +120,8 @@ export const useNotifications = (props?: UseNotificationsProps): UseNotification
     createdLte,
   });
   const novu = useNovu();
+  const providerRealtime = useRealtime();
+  const realtime = propsRealtime ?? providerRealtime;
   const [data, setData] = useState<Array<Notification>>();
   const [error, setError] = useState<NovuError>();
   const [isLoading, setIsLoading] = useState(true);
@@ -134,6 +155,7 @@ export const useNotifications = (props?: UseNotificationsProps): UseNotification
 
   useWebSocketEvent({
     event: 'notifications.notification_received',
+    enabled: realtime,
     eventHandler: ({ result: notification }) => {
       const currentFilter = filterRef.current;
       const matches = checkNotificationMatchesFilter(notification, currentFilter);

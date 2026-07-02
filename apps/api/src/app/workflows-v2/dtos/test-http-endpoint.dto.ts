@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { PreviewPayloadDto } from '@novu/application-generic';
 import { Type } from 'class-transformer';
-import { IsNumber, IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsNumber, IsObject, IsOptional, IsString, ValidateIf, ValidateNested } from 'class-validator';
 
 export class TestHttpEndpointRequestDto {
   @ApiPropertyOptional({
@@ -43,12 +43,15 @@ export class ResolvedRequestDto {
 
   @ApiPropertyOptional({
     description: 'Resolved body after template compilation',
-    type: 'object',
-    additionalProperties: true,
+    oneOf: [
+      { type: 'object', additionalProperties: true },
+      { type: 'array', items: {} },
+    ],
   })
   @IsOptional()
+  @ValidateIf((_object, value) => !Array.isArray(value))
   @IsObject()
-  body?: Record<string, unknown>;
+  body?: Record<string, unknown> | unknown[];
 }
 
 export class TestHttpEndpointResponseDto {
@@ -56,7 +59,7 @@ export class TestHttpEndpointResponseDto {
   @IsNumber()
   statusCode: number;
 
-  @ApiPropertyOptional({
+  @ApiProperty({
     description: 'Parsed response body',
     nullable: true,
   })

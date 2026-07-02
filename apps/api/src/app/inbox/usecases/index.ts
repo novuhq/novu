@@ -27,6 +27,7 @@ import { MarkNotificationsAsSeen } from './mark-notifications-as-seen/mark-notif
 import { NotificationsCount } from './notifications-count/notifications-count.usecase';
 import { Session } from './session/session.usecase';
 import { SnoozeNotification } from './snooze-notification/snooze-notification.usecase';
+import { TriggerKeylessEvent } from './trigger-keyless-event/trigger-keyless-event.usecase';
 import { UnsnoozeNotification } from './unsnooze-notification/unsnooze-notification.usecase';
 import { UpdateAllNotifications } from './update-all-notifications/update-all-notifications.usecase';
 import { UpdateNotificationAction } from './update-notification-action/update-notification-action.usecase';
@@ -48,6 +49,7 @@ export const USE_CASES = [
   UpdatePreferences,
   BulkUpdatePreferences,
   SnoozeNotification,
+  TriggerKeylessEvent,
   UnsnoozeNotification,
   DeleteNotification,
   DeleteManyNotifications,

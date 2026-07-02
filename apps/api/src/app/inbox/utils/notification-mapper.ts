@@ -1,31 +1,61 @@
 import type { MessageEntity } from '@novu/dal';
-import { ButtonTypeEnum, MessageActionStatusEnum, SeverityLevelEnum } from '@novu/shared';
+import {
+  ButtonTypeEnum,
+  MessageActionStatusEnum,
+  ResourceOriginEnum,
+  ResourceTypeEnum,
+  sanitizeInAppRedirect,
+  SeverityLevelEnum,
+} from '@novu/shared';
 
 import { InboxNotificationDto, InboxSubscriberResponseDto } from '../dtos/inbox-notification.dto';
 
-const mapSingleItem = ({
-  _id,
-  content,
-  read,
-  seen,
-  archived,
-  snoozedUntil,
-  deliveredAt,
-  createdAt,
-  lastReadDate,
-  firstSeenDate,
-  archivedAt,
-  channel,
-  subscriber,
-  subject,
-  avatar,
-  cta,
-  tags,
-  severity,
-  data,
-  template,
-  transactionId,
-}: MessageEntity): InboxNotificationDto => {
+function isV0WorkflowTemplate(template: NonNullable<MessageEntity['template']>): boolean {
+  if (template.type === ResourceTypeEnum.REGULAR || template.origin === ResourceOriginEnum.NOVU_CLOUD_V1) {
+    return true;
+  }
+
+  return template.type === undefined && template.origin === undefined;
+}
+
+function resolveNotificationData(message: MessageEntity): Record<string, unknown> | undefined {
+  if (message.data != null) {
+    return message.data;
+  }
+
+  const template = message.template;
+
+  if (template && isV0WorkflowTemplate(template) && message.payload) {
+    return message.payload;
+  }
+
+  return undefined;
+}
+
+const mapSingleItem = (message: MessageEntity): InboxNotificationDto => {
+  const {
+    _id,
+    content,
+    read,
+    seen,
+    archived,
+    snoozedUntil,
+    deliveredAt,
+    createdAt,
+    lastReadDate,
+    firstSeenDate,
+    archivedAt,
+    channel,
+    subscriber,
+    subject,
+    avatar,
+    cta,
+    tags,
+    severity,
+    template,
+    transactionId,
+  } = message;
+  const data = resolveNotificationData(message);
   const to: InboxSubscriberResponseDto = {
     id: subscriber?._id ?? '',
     firstName: subscriber?.firstName,
@@ -62,32 +92,17 @@ const mapSingleItem = ({
     primaryAction: primaryCta && {
       label: primaryCta.content,
       isCompleted: actionType === ButtonTypeEnum.PRIMARY && actionStatus === MessageActionStatusEnum.DONE,
-      redirect: primaryCta.url
-        ? {
-            url: primaryCta.url,
-            target: primaryCta.target,
-          }
-        : undefined,
+      redirect: sanitizeInAppRedirect(primaryCta.url, primaryCta.target),
     },
     secondaryAction: secondaryCta && {
       label: secondaryCta.content,
       isCompleted: actionType === ButtonTypeEnum.SECONDARY && actionStatus === MessageActionStatusEnum.DONE,
-      redirect: secondaryCta.url
-        ? {
-            url: secondaryCta.url,
-            target: secondaryCta.target,
-          }
-        : undefined,
+      redirect: sanitizeInAppRedirect(secondaryCta.url, secondaryCta.target),
     },
     channelType: channel,
     tags,
     severity: severity ?? SeverityLevelEnum.NONE,
-    redirect: cta.data?.url
-      ? {
-          url: cta.data.url,
-          target: cta.data.target,
-        }
-      : undefined,
+    redirect: sanitizeInAppRedirect(cta.data?.url, cta.data?.target),
     data,
     workflow: template
       ? {

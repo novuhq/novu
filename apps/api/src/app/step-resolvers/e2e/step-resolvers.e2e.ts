@@ -94,7 +94,9 @@ describe('Step Resolvers #novu-v2', () => {
       .field('manifest', manifest);
   }
 
-  async function createActionWorkflow(actionStepType: StepTypeEnum.DELAY | StepTypeEnum.DIGEST | StepTypeEnum.THROTTLE) {
+  async function createActionWorkflow(
+    actionStepType: StepTypeEnum.DELAY | StepTypeEnum.DIGEST | StepTypeEnum.THROTTLE
+  ) {
     const uid = Date.now();
     const { result } = await novuClient.workflows.create({
       name: `${actionStepType} Workflow ${uid}`,
@@ -268,8 +270,11 @@ describe('Step Resolvers #novu-v2', () => {
     describe('Action step types (delay, digest, throttle)', () => {
       for (const actionStepType of [StepTypeEnum.DELAY, StepTypeEnum.DIGEST, StepTypeEnum.THROTTLE] as const) {
         it(`should deploy step resolver for a ${actionStepType} step`, async () => {
-          const { workflowId: actionWorkflowId, stepId: actionStepId, stepInternalId: actionStepInternalId } =
-            await createActionWorkflow(actionStepType);
+          const {
+            workflowId: actionWorkflowId,
+            stepId: actionStepId,
+            stepInternalId: actionStepInternalId,
+          } = await createActionWorkflow(actionStepType);
 
           const { body, status } = await deployStep({
             workflowId: actionWorkflowId,
@@ -320,8 +325,11 @@ describe('Step Resolvers #novu-v2', () => {
     });
 
     it('should disconnect step resolver from a delay step and reset schema to default', async () => {
-      const { workflowId: delayWorkflowId, stepId: delayStepId, stepInternalId: delayStepInternalId } =
-        await createActionWorkflow(StepTypeEnum.DELAY);
+      const {
+        workflowId: delayWorkflowId,
+        stepId: delayStepId,
+        stepInternalId: delayStepInternalId,
+      } = await createActionWorkflow(StepTypeEnum.DELAY);
 
       await deployStep({ workflowId: delayWorkflowId, stepId: delayStepId, stepType: StepTypeEnum.DELAY });
 
@@ -478,8 +486,11 @@ describe('Step Resolvers #novu-v2', () => {
     it('should promote stepResolverHash to production for a delay step on publish', async () => {
       const prodEnv = await getProdEnv();
 
-      const { workflowId: delayWorkflowId, stepId: delayStepId, stepInternalId: delayStepInternalId } =
-        await createActionWorkflow(StepTypeEnum.DELAY);
+      const {
+        workflowId: delayWorkflowId,
+        stepId: delayStepId,
+        stepInternalId: delayStepInternalId,
+      } = await createActionWorkflow(StepTypeEnum.DELAY);
 
       const { body: deployBody } = await deployStep({
         workflowId: delayWorkflowId,

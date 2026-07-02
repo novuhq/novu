@@ -1,6 +1,6 @@
 import { ENDPOINT_TYPES } from '@novu/stateless';
 import { expect, test, vi } from 'vitest';
-import { axiosSpy } from '../../../utils/test/spy-axios';
+import { safeOutboundJsonSpy } from '../../../utils/test/spy-safe-outbound';
 import { GetstreamChatProvider } from './getstream.provider';
 
 test('should trigger getstream correctly', async () => {
@@ -40,9 +40,9 @@ test('should trigger getstream correctly', async () => {
 test('should trigger getstream correctly with _passthrough', async () => {
   const config = { apiKey: 'test' };
 
-  const { mockPost } = axiosSpy({
+  const { mockSafeOutboundJsonRequest } = safeOutboundJsonSpy({
     headers: {
-      'X-WEBHOOK-ID': 'X-WEBHOOK-ID',
+      'x-webhook-id': 'X-WEBHOOK-ID',
     },
   });
 
@@ -71,10 +71,15 @@ test('should trigger getstream correctly with _passthrough', async () => {
     }
   );
 
-  expect(mockPost).toHaveBeenCalledWith('https://www.google.com/', {
-    headers: {
-      'X-API-KEY': 'test1',
+  expect(mockSafeOutboundJsonRequest).toHaveBeenCalledWith({
+    url: 'https://www.google.com/',
+    method: 'POST',
+    headers: undefined,
+    body: {
+      headers: {
+        'X-API-KEY': 'test1',
+      },
+      text: 'passthrough message',
     },
-    text: 'passthrough message',
   });
 });

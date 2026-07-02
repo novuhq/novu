@@ -3,6 +3,9 @@
  */
 
 import * as z from "zod/v3";
+import { safeParse } from "../../lib/schemas.js";
+import { Result as SafeParseResult } from "../../types/fp.js";
+import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 
 export type MsTeamsUserEndpointDto = {
   /**
@@ -11,6 +14,14 @@ export type MsTeamsUserEndpointDto = {
   userId: string;
 };
 
+/** @internal */
+export const MsTeamsUserEndpointDto$inboundSchema: z.ZodType<
+  MsTeamsUserEndpointDto,
+  z.ZodTypeDef,
+  unknown
+> = z.object({
+  userId: z.string(),
+});
 /** @internal */
 export type MsTeamsUserEndpointDto$Outbound = {
   userId: string;
@@ -30,5 +41,14 @@ export function msTeamsUserEndpointDtoToJSON(
 ): string {
   return JSON.stringify(
     MsTeamsUserEndpointDto$outboundSchema.parse(msTeamsUserEndpointDto),
+  );
+}
+export function msTeamsUserEndpointDtoFromJSON(
+  jsonString: string,
+): SafeParseResult<MsTeamsUserEndpointDto, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => MsTeamsUserEndpointDto$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'MsTeamsUserEndpointDto' from JSON`,
   );
 }

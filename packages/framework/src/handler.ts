@@ -22,9 +22,10 @@ import {
 } from './errors';
 import { isPlatformError } from './errors/guard.errors';
 import type { Agent, AgentBridgeRequest } from './resources/agent';
-import { AgentContextImpl, AgentEventEnum } from './resources/agent';
+import { dispatchAgentEvent } from './resources/agent/agent-dispatch';
 import type { Awaitable, EventTriggerParams, Workflow } from './types';
-import { createHmacSubtle, initApiClient } from './utils';
+import { createHmacSubtle, initApiClient, timingSafeEqual } from './utils';
+import { parseSignatureHeader } from './utils/bridge-signature';
 
 export interface ServeHandlerOptions {
   client?: Client;
@@ -223,10 +224,12 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
           return this.createResponse(HttpStatusEnum.NOT_FOUND, { error: `Agent '${agentId}' not registered` });
         }
 
-        const ctx = new AgentContextImpl(body as AgentBridgeRequest, this.client.secretKey);
-
-        const handlerPromise = this.runAgentHandler(registeredAgent, agentEvent, ctx).catch((err) => {
-          console.error(`[agent:${agentId}] Handler error:`, err);
+        const handlerPromise = dispatchAgentEvent({
+          agent: registeredAgent,
+          event: agentEvent,
+          bridge: body as AgentBridgeRequest,
+          secretKey: this.client.secretKey,
+          logger: this.client.logger,
         });
 
         if (waitUntil) {
@@ -304,26 +307,6 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
     }
   }
 
-  private async runAgentHandler(registeredAgent: Agent, event: string, ctx: AgentContextImpl): Promise<void> {
-    const handlerMap: Partial<Record<AgentEventEnum, (ctx: AgentContextImpl) => Promise<void>>> = {
-      [AgentEventEnum.ON_MESSAGE]: registeredAgent.handlers.onMessage,
-      [AgentEventEnum.ON_REACTION]: registeredAgent.handlers.onReaction,
-      [AgentEventEnum.ON_ACTION]: registeredAgent.handlers.onAction,
-      [AgentEventEnum.ON_RESOLVE]: registeredAgent.handlers.onResolve,
-    };
-
-    if (!Object.prototype.hasOwnProperty.call(handlerMap, event)) {
-      throw new InvalidActionError(event, AgentEventEnum);
-    }
-
-    const handler = handlerMap[event as AgentEventEnum];
-    if (handler) {
-      await handler(ctx);
-    }
-
-    await ctx.flush();
-  }
-
   private handleError(error: unknown): IActionResponse {
     if (isFrameworkError(error)) {
       if (error.statusCode >= 500) {
@@ -331,7 +314,7 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
          * Log bridge server errors to assist the Developer in debugging errors with their integration.
          * This path is reached when the Bridge application throws an error, ensuring they can see the error in their logs.
          */
-        console.error(error);
+        this.client.logger.error(error);
       }
 
       return this.createError(error);
@@ -339,7 +322,7 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
       return this.createError(error);
     } else {
       const bridgeError = new BridgeError(error);
-      console.error(bridgeError);
+      this.client.logger.error(bridgeError);
 
       return this.createError(bridgeError);
     }
@@ -355,24 +338,19 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
       throw new SigningKeyNotFoundError();
     }
 
-    const [timestampPart, signaturePart] = hmacHeader.split(',');
-    if (!timestampPart || !signaturePart) {
+    const parsed = parseSignatureHeader(hmacHeader);
+    if (!parsed.v1 || parsed.t === undefined) {
       throw new SignatureInvalidError();
     }
 
-    const [timestamp, timestampPayload] = timestampPart.split('=');
-
-    const [signatureVersion, signaturePayload] = signaturePart.split('=');
-
-    if (Number(timestamp) < Date.now() - SIGNATURE_TIMESTAMP_TOLERANCE) {
+    const now = Date.now();
+    if (parsed.t < now - SIGNATURE_TIMESTAMP_TOLERANCE || parsed.t > now + SIGNATURE_TIMESTAMP_TOLERANCE) {
       throw new SignatureExpiredError();
     }
 
-    const localHash = await createHmacSubtle(this.client.secretKey, `${timestampPayload}.${JSON.stringify(payload)}`);
+    const localHash = await createHmacSubtle(this.client.secretKey, `${parsed.t}.${JSON.stringify(payload)}`);
 
-    const isMatching = localHash === signaturePayload;
-
-    if (!isMatching) {
+    if (!timingSafeEqual(localHash, parsed.v1)) {
       throw new SignatureMismatchError();
     }
   }

@@ -26,7 +26,7 @@ export class OutboundWebhooksController {
   @ApiOperation({
     summary: 'Get Webhook Portal Access Token',
     description:
-      'Generates a short-lived token and URL for accessing the Svix application portal for the current environment.',
+      'Generates a short-lived token and URL for accessing the outbound webhook portal for the current environment.',
   })
   async getPortalToken(@UserSession() user: UserSessionData): Promise<GetWebhookPortalTokenResponseDto> {
     return await this.getWebhookPortalTokenUsecase.execute(

@@ -195,6 +195,12 @@ describe('Get workflows - /workflows (GET) #novu-v0', async () => {
     }
   });
 
+  it('should reject a negative page parameter', async () => {
+    const { body } = await session.testAgent.get(`/v1/workflows?page=-1&limit=10`);
+
+    expect(body.statusCode).to.equal(400);
+  });
+
   it('should filter workflows based on both the name and trigger identifier', async () => {
     const promises: Promise<NotificationTemplateEntity>[] = [];
     const count = 10;

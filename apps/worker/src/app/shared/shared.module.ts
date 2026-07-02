@@ -21,12 +21,15 @@ import {
   GetDecryptedSecretKey,
   GetTenant,
   HttpClientService,
+  InboundMailRequestLogger,
   InMemoryLRUCacheService,
   InvalidateCacheService,
   LoggerModule,
   MetricsModule,
   ProcessTenant,
   QueuesModule,
+  RequestLogRepository,
+  SafeOutboundHttpService,
   StepRunRepository,
   StorageHelperService,
   storageService,
@@ -38,6 +41,7 @@ import {
   WorkflowRunService,
 } from '@novu/application-generic';
 import {
+  AgentIntegrationRepository,
   ControlValuesRepository,
   DalService,
   EnvironmentRepository,
@@ -64,6 +68,7 @@ import { UNIQUE_WORKER_DEPENDENCIES } from '../../config/worker-init.config';
 import { ActiveJobsMetricService } from '../workflow/services';
 
 const DAL_MODELS = [
+  AgentIntegrationRepository,
   EnvironmentRepository,
   EnvironmentVariableRepository,
   ExecutionDetailsRepository,
@@ -99,11 +104,16 @@ const ANALYTICS_PROVIDERS = [
   TraceLogRepository,
   StepRunRepository,
   WorkflowRunRepository,
+  RequestLogRepository,
 
   // Services
   clickHouseService,
   clickHouseBatchService,
   WorkflowRunService,
+
+  // Inbound mail logging (shared with apps/inbound-mail; worker only writes
+  // terminal completion traces so the tenant resolver is not needed here).
+  InboundMailRequestLogger,
 ];
 
 const PROVIDERS = [
@@ -136,6 +146,7 @@ const PROVIDERS = [
   ExecuteStepResolverRequest,
   GetDecryptedSecretKey,
   HttpClientService,
+  SafeOutboundHttpService,
   ...ANALYTICS_PROVIDERS,
 ];
 

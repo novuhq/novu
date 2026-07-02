@@ -42,8 +42,13 @@ export class ListChannelEndpoints {
     }
 
     if (command.contextKeys !== undefined) {
-      const contextQuery = this.channelEndpointRepository.buildContextExactMatchQuery(command.contextKeys);
-      filter.contextKeys = contextQuery.contextKeys;
+      // Apply context filter under `$and` so it survives the cursor-pagination
+      // helper, which sets its own top-level `$or` and would otherwise drop
+      // the `$or` form returned for the empty/default-context case.
+      filter.$and = [
+        ...(filter.$and ?? []),
+        this.channelEndpointRepository.buildContextExactMatchQuery(command.contextKeys),
+      ];
     }
 
     let channelEndpoint: ChannelEndpointEntity | null = null;

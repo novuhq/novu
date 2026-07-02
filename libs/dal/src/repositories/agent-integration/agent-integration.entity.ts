@@ -15,6 +15,13 @@ export class AgentIntegrationEntity {
 
   connectedAt?: string | null;
 
+  /**
+   * Tombstone marker. Set when the user deliberately disconnects the integration
+   * from an agent. Tombstoned links are excluded from reads by default via schema
+   * pre-hooks; query with an explicit `disconnectedAt` condition to see them.
+   */
+  disconnectedAt?: string | null;
+
   createdAt: string;
 
   updatedAt: string;

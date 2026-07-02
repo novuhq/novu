@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { LinkButton } from '@/components/primitives/button-link';
 import { IS_SELF_HOSTED, SELF_HOSTED_UPGRADE_REDIRECT_URL } from '@/config';
 import { useTelemetry } from '@/hooks/use-telemetry';
+import { AGENTS_DOCS_CONVERSATIONS_URL } from '@/utils/agent-docs';
 import { ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
@@ -81,7 +82,7 @@ export function ConversationsUpgradeCta({ source, variant = 'default', className
           {IS_SELF_HOSTED ? 'Contact Sales' : 'Upgrade now'}
         </Button>
         <LinkButton asChild size="sm" leadingIcon={RiBookMarkedLine}>
-          <a href="https://docs.novu.co/agents/overview" target="_blank" rel="noreferrer noopener">
+          <a href={AGENTS_DOCS_CONVERSATIONS_URL} target="_blank" rel="noreferrer noopener">
             How does this help?
           </a>
         </LinkButton>

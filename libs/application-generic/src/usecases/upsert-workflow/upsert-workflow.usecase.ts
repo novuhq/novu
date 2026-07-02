@@ -14,7 +14,6 @@ import {
   ResourceOriginEnum,
   ResourceTypeEnum,
   StepTypeEnum,
-  slugify,
   WebhookEventEnum,
   WebhookObjectTypeEnum,
   WorkflowCreationSourceEnum,
@@ -28,7 +27,13 @@ import { WorkflowResponseDto } from '../../dtos/workflow/workflow-response.dto';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { EmailControlType } from '../../schemas/control';
 import { AnalyticsService } from '../../services';
-import { computeWorkflowStatus, removeBrandingFromHtml, shortId, stepTypeToControlSchema } from '../../utils';
+import {
+  computeWorkflowStatus,
+  removeBrandingFromHtml,
+  shortId,
+  slugifyOrRandom,
+  stepTypeToControlSchema,
+} from '../../utils';
 import { isStringifiedMailyJSONContent } from '../../utils/maily-utils';
 import { isStepResolverActive } from '../../utils/step-resolver-control-state';
 import { NotificationStep } from '../../value-objects';
@@ -155,7 +160,7 @@ export class UpsertWorkflowUseCase {
       tags: workflowDto.tags || [],
       userPreferences: workflowDto.preferences?.user ?? null,
       defaultPreferences: workflowDto.preferences?.workflow ?? DEFAULT_WORKFLOW_PREFERENCES,
-      triggerIdentifier: preserveWorkflowId ? workflowDto.workflowId : slugify(workflowDto.name),
+      triggerIdentifier: preserveWorkflowId ? workflowDto.workflowId : slugifyOrRandom(workflowDto.name),
       status: computeWorkflowStatus(isWorkflowActive, steps),
       payloadSchema: workflowDto.payloadSchema,
       validatePayload: workflowDto.validatePayload,
@@ -298,7 +303,7 @@ export class UpsertWorkflowUseCase {
 
   @Instrument()
   private generateUniqueStepId(step: UpsertStepDataCommand, previousSteps: NotificationStep[]): string {
-    const slug = slugify(step.name);
+    const slug = slugifyOrRandom(step.name);
 
     let finalStepId = slug;
     let attempts = 0;

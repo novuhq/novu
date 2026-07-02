@@ -1,4 +1,4 @@
-import { formatToRelativeTime, formatSnoozedUntil } from './formatToRelativeTime';
+import { formatSnoozedUntil, formatToRelativeTime } from './formatToRelativeTime';
 
 const SECONDS = {
   inMinute: 60,

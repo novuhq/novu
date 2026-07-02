@@ -1,5 +1,5 @@
-import type { IEnvironment } from '@novu/shared';
-import { get, patch } from './api.client';
+import type { IEnvironment, UpdateExternalOrganizationDto } from '@novu/shared';
+import { get, patch, post } from './api.client';
 
 export type GetOrganizationSettingsDto = {
   removeNovuBranding: boolean;
@@ -29,4 +29,10 @@ export async function updateOrganizationSettings({
   environment: IEnvironment;
 }): Promise<{ data: GetOrganizationSettingsDto }> {
   return patch('/organizations/settings', { environment, body: data });
+}
+
+// Writes onboarding metadata (e.g. productUseCases) onto the external (Clerk) organization.
+// Org context is resolved server-side from the session, so no environment is required.
+export async function updateExternalOrganization(data: UpdateExternalOrganizationDto): Promise<unknown> {
+  return post('/clerk/organization', { body: data });
 }

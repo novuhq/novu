@@ -1,5 +1,14 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsArray, IsBoolean, IsEnum, IsObject, IsOptional, IsString } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
+import {
+  IsArray,
+  IsBoolean,
+  IsEnum,
+  IsObject,
+  IsOptional,
+  IsString,
+  ValidateBy,
+  type ValidationOptions,
+} from 'class-validator';
 
 export enum HttpMethodEnum {
   GET = 'GET',
@@ -17,6 +26,34 @@ export class HttpRequestKeyValuePairDto {
   @ApiProperty({ description: 'Value of the key-value pair' })
   @IsString()
   value: string;
+}
+
+function IsHttpRequestBodyControl(validationOptions?: ValidationOptions) {
+  return ValidateBy(
+    {
+      name: 'isHttpRequestBodyControl',
+      validator: {
+        validate: (value: unknown) => {
+          if (value === undefined || value === null || typeof value === 'string') {
+            return true;
+          }
+
+          return (
+            Array.isArray(value) &&
+            value.every(
+              (item) =>
+                item !== null &&
+                typeof item === 'object' &&
+                typeof (item as HttpRequestKeyValuePairDto).key === 'string' &&
+                typeof (item as HttpRequestKeyValuePairDto).value === 'string'
+            )
+          );
+        },
+        defaultMessage: () => 'body must be a raw JSON string or an array of key-value pairs',
+      },
+    },
+    validationOptions
+  );
 }
 
 export class HttpRequestControlDto {
@@ -41,12 +78,18 @@ export class HttpRequestControlDto {
   headers?: HttpRequestKeyValuePairDto[];
 
   @ApiPropertyOptional({
-    description: 'Request body as key-value pairs',
-    type: [HttpRequestKeyValuePairDto],
+    description: 'Request body as a raw JSON string. Key-value arrays are supported for legacy workflows.',
+    oneOf: [
+      { type: 'string' },
+      {
+        type: 'array',
+        items: { $ref: getSchemaPath(HttpRequestKeyValuePairDto) },
+      },
+    ],
   })
-  @IsArray()
+  @IsHttpRequestBodyControl()
   @IsOptional()
-  body?: HttpRequestKeyValuePairDto[];
+  body?: string | HttpRequestKeyValuePairDto[];
 
   @ApiPropertyOptional({
     description: 'JSON schema to validate response body against',

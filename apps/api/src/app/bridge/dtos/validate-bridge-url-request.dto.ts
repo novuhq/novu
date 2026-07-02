@@ -6,6 +6,7 @@ export class ValidateBridgeUrlRequestDto {
   @IsUrl({
     require_protocol: true,
     require_tld: false,
+    protocols: ['http', 'https'],
   })
   bridgeUrl: string;
 }

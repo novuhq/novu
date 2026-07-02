@@ -20,6 +20,7 @@ import {
 } from 'react-icons/ri';
 import { Link, useMatch, useNavigate, useParams } from 'react-router-dom';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
+import { IS_AI_FEATURES_ENABLED } from '@/config';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useDeleteWorkflow } from '@/hooks/use-delete-workflow';
@@ -54,7 +55,8 @@ export const WorkflowTabs = () => {
   const { currentEnvironment, areEnvironmentsInitialLoading } = useEnvironment();
   const { currentUser } = useAuth();
   const navigate = useNavigate();
-  const isAiWorkflowGenerationEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_AI_WORKFLOW_GENERATION_ENABLED);
+  const isAiWorkflowGenerationEnabled =
+    useFeatureFlag(FeatureFlagsKeysEnum.IS_AI_WORKFLOW_GENERATION_ENABLED) && IS_AI_FEATURES_ENABLED;
   const activityMatch = useMatch(ROUTES.EDIT_WORKFLOW_ACTIVITY);
   const [isIntegrateDrawerOpen, setIsIntegrateDrawerOpen] = useState(false);
   const [isTriggerDrawerOpen, setIsTriggerDrawerOpen] = useState(false);

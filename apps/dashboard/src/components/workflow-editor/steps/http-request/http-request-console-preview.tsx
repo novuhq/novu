@@ -12,7 +12,7 @@ import { showErrorToast, showToast } from '@/components/primitives/sonner-helper
 import { useStepEditor } from '../context/step-editor-context';
 import { parseJsonValue } from '../utils/preview-context.utils';
 import { CurlDisplay } from './curl-display';
-import { buildRawCurlString, type KeyValuePair } from './curl-utils';
+import { buildRawCurlString, type HttpRequestBodyValue, type KeyValuePair } from './curl-utils';
 import { useCopyPrompt } from './use-copy-prompt';
 import { useHttpRequestTest } from './use-http-request-test';
 
@@ -271,7 +271,7 @@ function PreTestState({ novuSignature, onTest }: { novuSignature?: string; onTes
   const url = (controlValues?.url as string) ?? '';
   const method = (controlValues?.method as string) ?? 'GET';
   const headers = (controlValues?.headers as KeyValuePair[]) ?? [];
-  const body = (controlValues?.body as KeyValuePair[]) ?? [];
+  const body = controlValues?.body as HttpRequestBodyValue;
 
   const curlString = buildRawCurlString(url, method, headers, body, novuSignature);
   const activeHeaders = headers.filter((h) => h.key);
@@ -389,7 +389,7 @@ function ErrorState({
   const url = (controlValues?.url as string) ?? '';
   const method = (controlValues?.method as string) ?? 'GET';
   const headers = ((controlValues?.headers as KeyValuePair[]) ?? []).filter((h) => h.key);
-  const body = (controlValues?.body as KeyValuePair[]) ?? [];
+  const body = controlValues?.body as HttpRequestBodyValue;
 
   const curlString = buildRawCurlString(url, method, headers, body, novuSignature);
 

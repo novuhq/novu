@@ -5,6 +5,8 @@
 import { integrationsCreate } from "../funcs/integrationsCreate.js";
 import { integrationsDelete } from "../funcs/integrationsDelete.js";
 import { integrationsGenerateChatOAuthUrl } from "../funcs/integrationsGenerateChatOAuthUrl.js";
+import { integrationsGenerateConnectOAuthUrl } from "../funcs/integrationsGenerateConnectOAuthUrl.js";
+import { integrationsGenerateLinkUserOAuthUrl } from "../funcs/integrationsGenerateLinkUserOAuthUrl.js";
 import { integrationsIntegrationsControllerAutoConfigureIntegration } from "../funcs/integrationsIntegrationsControllerAutoConfigureIntegration.js";
 import { integrationsList } from "../funcs/integrationsList.js";
 import { integrationsListActive } from "../funcs/integrationsListActive.js";
@@ -20,7 +22,7 @@ export class Integrations extends ClientSDK {
    * List all integrations
    *
    * @remarks
-   * List all the channels integrations created in the organization
+   * List all the channels integrations created in the organization. Only integration metadata is returned, credentials field is returned as an empty object.
    */
   async list(
     idempotencyKey?: string | undefined,
@@ -38,7 +40,7 @@ export class Integrations extends ClientSDK {
    *
    * @remarks
    * Create an integration for the current environment the user is based on the API key provided.
-   *     Each provider supports different credentials, check the provider documentation for more details.
+   *     Each provider supports different credentials, check the provider documentation for more details. Only integration metadata is returned, credentials field is returned as an empty object.
    */
   async create(
     createIntegrationRequestDto: components.CreateIntegrationRequestDto,
@@ -58,7 +60,7 @@ export class Integrations extends ClientSDK {
    *
    * @remarks
    * Update an integration by its unique key identifier **integrationId**.
-   *     Each provider supports different credentials, check the provider documentation for more details.
+   *     Each provider supports different credentials, check the provider documentation for more details. Only integration metadata is returned, credentials field is returned as an empty object.
    */
   async update(
     updateIntegrationRequestDto: components.UpdateIntegrationRequestDto,
@@ -80,7 +82,7 @@ export class Integrations extends ClientSDK {
    *
    * @remarks
    * Delete an integration by its unique key identifier **integrationId**.
-   *     This action is irreversible.
+   *     This action is irreversible. Only integration metadata is returned, credentials field is returned as empty object.
    */
   async delete(
     integrationId: string,
@@ -100,7 +102,7 @@ export class Integrations extends ClientSDK {
    *
    * @remarks
    * Auto-configure an integration by its unique key identifier **integrationId** for inbound webhook support.
-   *     This will automatically generate required webhook signing keys and configure webhook endpoints.
+   *     This will automatically generate required webhook signing keys and configure webhook endpoints. Only integration metadata is returned, credentials field is returned as an empty object.
    */
   async integrationsControllerAutoConfigureIntegration(
     integrationId: string,
@@ -126,6 +128,7 @@ export class Integrations extends ClientSDK {
    * Update an integration as **primary** by its unique key identifier **integrationId**.
    *     This API will set the integration as primary for that channel in the current environment.
    *     Primary integration is used to deliver notification for sms and email channels in the workflow.
+   *     Only integration metadata is returned, credentials field is returned as an empty object.
    */
   async setAsPrimary(
     integrationId: string,
@@ -144,7 +147,7 @@ export class Integrations extends ClientSDK {
    * List active integrations
    *
    * @remarks
-   * List all the active integrations created in the organization
+   * List all the active integrations created in the organization. Only integration metadata is returned, credentials field is returned as an empty object.
    */
   async listActive(
     idempotencyKey?: string | undefined,
@@ -158,12 +161,59 @@ export class Integrations extends ClientSDK {
   }
 
   /**
+   * Generate OAuth URL for a workspace/tenant connection
+   *
+   * @remarks
+   * Generate an OAuth URL that creates a workspace or tenant-level channel connection (Slack workspace install or MS Teams admin consent).
+   *     The generated URL expires after 5 minutes.
+   */
+  async generateConnectOAuthUrl(
+    generateConnectOauthUrlRequestDto:
+      components.GenerateConnectOauthUrlRequestDto,
+    idempotencyKey?: string | undefined,
+    options?: RequestOptions,
+  ): Promise<operations.IntegrationsControllerGenerateConnectOAuthUrlResponse> {
+    return unwrapAsync(integrationsGenerateConnectOAuthUrl(
+      this,
+      generateConnectOauthUrlRequestDto,
+      idempotencyKey,
+      options,
+    ));
+  }
+
+  /**
+   * Generate OAuth URL to link a subscriber user identity
+   *
+   * @remarks
+   * Generate an OAuth URL that links a specific subscriber to their chat identity (Slack user ID or MS Teams user OID).
+   *     The generated URL expires after 5 minutes.
+   */
+  async generateLinkUserOAuthUrl(
+    generateLinkUserOauthUrlRequestDto:
+      components.GenerateLinkUserOauthUrlRequestDto,
+    idempotencyKey?: string | undefined,
+    options?: RequestOptions,
+  ): Promise<
+    operations.IntegrationsControllerGenerateLinkUserOAuthUrlResponse
+  > {
+    return unwrapAsync(integrationsGenerateLinkUserOAuthUrl(
+      this,
+      generateLinkUserOauthUrlRequestDto,
+      idempotencyKey,
+      options,
+    ));
+  }
+
+  /**
    * Generate chat OAuth URL
    *
    * @remarks
-   * Generate an OAuth URL for chat integrations like Slack and MS Teams.
+   * **Deprecated** — use `POST /integrations/channel-connections/oauth` (connect) or `POST /integrations/channel-endpoints/oauth` (link_user) instead.
+   *     Generate an OAuth URL for chat integrations like Slack and MS Teams.
    *     This URL allows subscribers to authorize the integration, enabling the system to send messages
    *     through their chat workspace. The generated URL expires after 5 minutes.
+   *
+   * @deprecated method: This will be removed in a future release, please migrate away from it as soon as possible.
    */
   async generateChatOAuthUrl(
     generateChatOauthUrlRequestDto: components.GenerateChatOauthUrlRequestDto,

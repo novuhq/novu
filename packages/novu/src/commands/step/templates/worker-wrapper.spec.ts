@@ -38,7 +38,9 @@ describe('generateWorkerWrapper', () => {
   it('should import providerSchemas from @novu/framework/step-resolver', () => {
     const result = generateWorkerWrapper(mockSteps, '/root');
 
-    expect(result).toContain("import { actionStepSchemas, channelStepSchemas, providerSchemas } from '@novu/framework/step-resolver'");
+    expect(result).toContain(
+      "import { actionStepSchemas, channelStepSchemas, providerSchemas } from '@novu/framework/step-resolver'"
+    );
   });
 
   it('should use inline workflowId strings and stepHandler.stepId for map keys', () => {

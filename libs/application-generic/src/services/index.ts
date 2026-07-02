@@ -24,15 +24,18 @@ export * from './helper-service';
 export * from './http-client';
 export * from './in-memory-lru-cache';
 export * from './in-memory-provider';
+export * from './inbound-mail-logging';
 export {
   MessageInteractionResult,
   MessageInteractionService,
   MessageInteractionTrace,
 } from './message-interaction.service';
 export * from './metrics';
+export { MsTeamsTokenService } from './ms-teams-token.service';
 export * from './query-parser';
 export * from './queues';
 export { INovuWorker, ReadinessService } from './readiness';
+export * from './safe-outbound-http';
 export * from './sanitize/sanitizer.service';
 export * from './sanitize/sanitizer-v0.service';
 export * from './socket-worker';

@@ -61,6 +61,11 @@ import {
   SmsStepUpsertDto$Outbound,
   SmsStepUpsertDto$outboundSchema,
 } from "./smsstepupsertdto.js";
+import {
+  ThrottleStepUpsertDto,
+  ThrottleStepUpsertDto$Outbound,
+  ThrottleStepUpsertDto$outboundSchema,
+} from "./throttlestepupsertdto.js";
 
 export type UpdateWorkflowDtoSteps =
   | InAppStepUpsertDto
@@ -70,6 +75,7 @@ export type UpdateWorkflowDtoSteps =
   | ChatStepUpsertDto
   | DelayStepUpsertDto
   | DigestStepUpsertDto
+  | ThrottleStepUpsertDto
   | CustomStepUpsertDto
   | HttpRequestStepUpsertDto;
 
@@ -117,6 +123,7 @@ export type UpdateWorkflowDto = {
     | ChatStepUpsertDto
     | DelayStepUpsertDto
     | DigestStepUpsertDto
+    | ThrottleStepUpsertDto
     | CustomStepUpsertDto
     | HttpRequestStepUpsertDto
   >;
@@ -143,6 +150,7 @@ export type UpdateWorkflowDtoSteps$Outbound =
   | ChatStepUpsertDto$Outbound
   | DelayStepUpsertDto$Outbound
   | DigestStepUpsertDto$Outbound
+  | ThrottleStepUpsertDto$Outbound
   | CustomStepUpsertDto$Outbound
   | HttpRequestStepUpsertDto$Outbound;
 
@@ -159,6 +167,7 @@ export const UpdateWorkflowDtoSteps$outboundSchema: z.ZodType<
   ChatStepUpsertDto$outboundSchema,
   DelayStepUpsertDto$outboundSchema,
   DigestStepUpsertDto$outboundSchema,
+  ThrottleStepUpsertDto$outboundSchema,
   CustomStepUpsertDto$outboundSchema,
   HttpRequestStepUpsertDto$outboundSchema,
 ]);
@@ -189,6 +198,7 @@ export type UpdateWorkflowDto$Outbound = {
     | ChatStepUpsertDto$Outbound
     | DelayStepUpsertDto$Outbound
     | DigestStepUpsertDto$Outbound
+    | ThrottleStepUpsertDto$Outbound
     | CustomStepUpsertDto$Outbound
     | HttpRequestStepUpsertDto$Outbound
   >;
@@ -220,6 +230,7 @@ export const UpdateWorkflowDto$outboundSchema: z.ZodType<
       ChatStepUpsertDto$outboundSchema,
       DelayStepUpsertDto$outboundSchema,
       DigestStepUpsertDto$outboundSchema,
+      ThrottleStepUpsertDto$outboundSchema,
       CustomStepUpsertDto$outboundSchema,
       HttpRequestStepUpsertDto$outboundSchema,
     ]),

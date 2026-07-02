@@ -8,32 +8,32 @@ export const BroomSparkle = ({
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 12 12" {...props}>
       <defs>
         <linearGradient id="a0" x1="11.33" x2="6.41" y1=".5" y2="5.42" gradientUnits="userSpaceOnUse">
-          <stop offset=".23" stop-color="#ff884d" />
-          <stop offset=".8" stop-color="#e300bd" />
+          <stop offset=".23" stopColor="#ff884d" />
+          <stop offset=".8" stopColor="#e300bd" />
         </linearGradient>
         <linearGradient id="a1" x1="8.3" x2="4.33" y1="3.84" y2="7.86" gradientUnits="userSpaceOnUse">
-          <stop offset=".23" stop-color="#ff884d" />
-          <stop offset=".8" stop-color="#e300bd" />
+          <stop offset=".23" stopColor="#ff884d" />
+          <stop offset=".8" stopColor="#e300bd" />
         </linearGradient>
         <linearGradient id="a2" x1="7.68" x2=".99" y1="4.55" y2="11.56" gradientUnits="userSpaceOnUse">
-          <stop offset=".23" stop-color="#ff884d" />
-          <stop offset=".8" stop-color="#e300bd" />
+          <stop offset=".23" stopColor="#ff884d" />
+          <stop offset=".8" stopColor="#e300bd" />
         </linearGradient>
         <linearGradient id="a3" x1="12" x2="8.69" y1="6.67" y2="10" gradientUnits="userSpaceOnUse">
-          <stop offset=".23" stop-color="#ff884d" />
-          <stop offset=".8" stop-color="#e300bd" />
+          <stop offset=".23" stopColor="#ff884d" />
+          <stop offset=".8" stopColor="#e300bd" />
         </linearGradient>
         <linearGradient id="a4" x1="12" x2="9.32" y1="8.34" y2="9.67" gradientUnits="userSpaceOnUse">
-          <stop offset=".23" stop-color="#ff884d" />
-          <stop offset=".8" stop-color="#e300bd" />
+          <stop offset=".23" stopColor="#ff884d" />
+          <stop offset=".8" stopColor="#e300bd" />
         </linearGradient>
         <linearGradient id="a5" x1="3.83" x2="1.35" y1="1.33" y2="3.83" gradientUnits="userSpaceOnUse">
-          <stop offset=".23" stop-color="#ff884d" />
-          <stop offset=".8" stop-color="#e300bd" />
+          <stop offset=".23" stopColor="#ff884d" />
+          <stop offset=".8" stopColor="#e300bd" />
         </linearGradient>
         <linearGradient id="a6" x1="6" x2="5" y1="1" y2="2" gradientUnits="userSpaceOnUse">
-          <stop offset=".23" stop-color="#ff884d" />
-          <stop offset=".8" stop-color="#e300bd" />
+          <stop offset=".23" stopColor="#ff884d" />
+          <stop offset=".8" stopColor="#e300bd" />
         </linearGradient>
       </defs>
       <g style={{ animation: isAnimating ? 'float 3.2s ease-in-out infinite' : 'none', transformOrigin: '6px 6px' }}>
@@ -62,7 +62,7 @@ export const BroomSparkle = ({
         />
         <path
           fill="url(#a4)"
-          fill-opacity=".15"
+          fillOpacity=".15"
           d="m11.77 7.995-.842-.281-.28-.842c-.092-.272-.542-.272-.633 0l-.28.842-.843.28a.333.333 0 0 0 0 .633l.842.28.28.842a.334.334 0 0 0 .634 0l.28-.842.843-.28a.333.333 0 0 0 0-.632"
           className="star-lg"
         />

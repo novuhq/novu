@@ -48,7 +48,9 @@ export class UpsertLayout {
     private getLayoutUseCase: GetLayoutUseCase,
     private moduleRef: ModuleRef,
     private logger: PinoLogger
-  ) {}
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   @InstrumentUsecase()
   async execute(command: UpsertLayoutCommand): Promise<LayoutResponseDto> {

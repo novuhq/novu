@@ -4,5 +4,5 @@ import { EnvironmentWithUserCommand } from '../../../shared/commands/project.com
 export class DeleteDomainCommand extends EnvironmentWithUserCommand {
   @IsString()
   @IsNotEmpty()
-  domainId: string;
+  domain: string;
 }

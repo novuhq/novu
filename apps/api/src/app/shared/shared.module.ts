@@ -22,6 +22,7 @@ import {
   LoggerModule,
   QueuesModule,
   RequestLogRepository,
+  SafeOutboundHttpService,
   StepRunRepository,
   storageService,
   TraceLogRepository,
@@ -39,6 +40,7 @@ import {
   ControlValuesRepository,
   DalService,
   DomainRepository,
+  DomainRouteRepository,
   EnvironmentRepository,
   EnvironmentVariableRepository,
   ExecutionDetailsRepository,
@@ -117,6 +119,7 @@ const DAL_MODELS = [
   AgentRepository,
   AgentIntegrationRepository,
   DomainRepository,
+  DomainRouteRepository,
 ];
 
 const dalService = {
@@ -162,6 +165,7 @@ const PROVIDERS = [
   ExecuteStepResolverRequest,
   GetDecryptedSecretKey,
   HttpClientService,
+  SafeOutboundHttpService,
   ...ANALYTICS_PROVIDERS,
 ];
 

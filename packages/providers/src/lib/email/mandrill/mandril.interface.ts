@@ -15,6 +15,7 @@ interface IMandrillSendOptionsMessage {
   html: string;
   to: { email: string; type: 'to' | string }[];
   attachments: IMandrillAttachment[];
+  headers?: Record<string, string>;
 }
 interface IMandrillTemplateSendOptionsMessage extends IMandrillSendOptionsMessage {
   global_merge_vars?: { name: string; content: string }[];

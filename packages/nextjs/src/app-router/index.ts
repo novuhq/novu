@@ -5,6 +5,8 @@ export type * from '@novu/react';
 export {
   Bell,
   InboxContent,
+  MsTeamsConnectButton,
+  MsTeamsLinkUser,
   Notifications,
   NovuProvider,
   PreferenceLevel,
@@ -14,6 +16,7 @@ export {
   SlackLinkUser,
   SubscriptionButton,
   SubscriptionPreferences,
+  TelegramConnectButton,
   useNovu,
   WorkflowCriticalityEnum,
 } from '@novu/react';

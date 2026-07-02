@@ -230,54 +230,172 @@ export const isSameFilter = (filter1: NotificationFilter, filter2: NotificationF
   );
 };
 
+type DataFilterScalar = string | number | boolean | null;
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function isOperatorObject(value: Record<string, unknown>): boolean {
+  return Object.prototype.hasOwnProperty.call(value, 'or') || Object.prototype.hasOwnProperty.call(value, 'and');
+}
+
+function isScalarValue(value: unknown): value is DataFilterScalar {
+  if (value === null) return true;
+  if (typeof value === 'boolean') return true;
+  if (typeof value === 'string') return true;
+  if (typeof value === 'number') return Number.isFinite(value);
+
+  return false;
+}
+
+/**
+ * Normalize a single data field's filter value into CNF — `Scalar[][]`.
+ *
+ * Mirrors `packages/shared/src/utils/data-filter.ts#normalizeFieldValue` but
+ * inlined here because `packages/js` is intentionally not allowed to depend on
+ * `@novu/shared` (bundle size / publish footprint).
+ *
+ * Returns `null` if the value is structurally invalid so callers can decide
+ * whether to treat the notification as a non-match.
+ */
+function normalizeDataFieldValue(value: unknown): DataFilterScalar[][] | null {
+  if (value === undefined) {
+    return [];
+  }
+
+  if (Array.isArray(value)) {
+    if (value.length === 0) return [];
+    if (!value.every(isScalarValue)) return null;
+
+    return [value as DataFilterScalar[]];
+  }
+
+  if (isPlainObject(value)) {
+    const hasOr = Object.prototype.hasOwnProperty.call(value, 'or');
+    const hasAnd = Object.prototype.hasOwnProperty.call(value, 'and');
+    if (hasOr && hasAnd) return null;
+    const keys = Object.keys(value);
+
+    if (hasOr) {
+      if (keys.length !== 1) return null;
+      const orVal = (value as { or: unknown }).or;
+      if (!Array.isArray(orVal)) return null;
+      if (orVal.length === 0) return [];
+      if (!orVal.every(isScalarValue)) return null;
+
+      return [orVal as DataFilterScalar[]];
+    }
+
+    if (hasAnd) {
+      if (keys.length !== 1) return null;
+      const andVal = (value as { and: unknown }).and;
+      if (!Array.isArray(andVal)) return null;
+      const groups: DataFilterScalar[][] = [];
+      for (const item of andVal) {
+        if (!isPlainObject(item)) return null;
+        const itemKeys = Object.keys(item);
+        if (itemKeys.length !== 1 || !('or' in item)) return null;
+        const innerOr = (item as { or: unknown }).or;
+        if (!Array.isArray(innerOr) || innerOr.length === 0) return null;
+        if (!innerOr.every(isScalarValue)) return null;
+        groups.push(innerOr as DataFilterScalar[]);
+      }
+
+      return groups;
+    }
+
+    return null;
+  }
+
+  if (!isScalarValue(value)) return null;
+
+  return [[value]];
+}
+
+function dataValueAtPath(obj: Record<string, unknown>, path: string[]): unknown {
+  let current: unknown = obj;
+  for (const segment of path) {
+    if (current === null || current === undefined) return undefined;
+    if (typeof current !== 'object' || Array.isArray(current)) return undefined;
+    current = (current as Record<string, unknown>)[segment];
+  }
+
+  return current;
+}
+
+function orGroupMatchesNotifValue(group: DataFilterScalar[], notifValue: unknown): boolean {
+  if (Array.isArray(notifValue)) {
+    return notifValue.some((v) => group.some((g) => g === v));
+  }
+
+  return group.some((g) => g === notifValue);
+}
+
+function checkDataEntries(
+  notificationData: Record<string, unknown> | null | undefined,
+  filterData: Record<string, unknown>,
+  pathPrefix: string[],
+  depth: number
+): boolean {
+  if (depth > 2) return false;
+
+  for (const [rawKey, rawValue] of Object.entries(filterData)) {
+    if (
+      rawKey.startsWith('$') ||
+      rawKey.startsWith('.') ||
+      rawKey === '__proto__' ||
+      rawKey === 'constructor' ||
+      rawKey === 'prototype'
+    ) {
+      return false;
+    }
+    const path = [...pathPrefix, rawKey];
+
+    if (isPlainObject(rawValue) && !isOperatorObject(rawValue)) {
+      if (!checkDataEntries(notificationData, rawValue, path, depth + 1)) return false;
+      continue;
+    }
+
+    const groups = normalizeDataFieldValue(rawValue);
+    if (groups === null) return false;
+    if (groups.length === 0) continue;
+
+    const notifValue = notificationData ? dataValueAtPath(notificationData, path) : undefined;
+    if (notifValue === undefined) return false;
+
+    if (!groups.every((g) => orGroupMatchesNotifValue(g, notifValue))) return false;
+  }
+
+  return true;
+}
+
+/**
+ * Check whether a notification's `data` matches the supplied filter shape.
+ *
+ * Supports per-key:
+ *   - scalar (exact equality)
+ *   - `Scalar[]` (OR — match any)
+ *   - `{ or: Scalar[] }` (explicit OR)
+ *   - `{ and: [{ or: Scalar[] }, ...] }` (AND of OR-groups)
+ *   - 1 level of nested objects whose sub-keys follow the same rules
+ *
+ * Mirrors the server-side semantics from `@novu/shared#checkDataFilterMatches`
+ * so realtime, cache, and counts stay consistent.
+ */
 export function checkNotificationDataFilter(
   notificationData: Notification['data'],
   filterData: NotificationFilter['data']
 ): boolean {
   if (!filterData || Object.keys(filterData).length === 0) {
-    // No data filter defined, so it's a match on the data aspect.
     return true;
   }
+
   if (!notificationData) {
-    // Filter has data criteria, but the notification has no data.
     return false;
   }
 
-  return Object.entries(filterData).every(([key, filterValue]) => {
-    const notifValue = notificationData[key];
-
-    if (notifValue === undefined && filterValue !== undefined) {
-      // Key is specified in filter, but not present in notification data.
-      return false;
-    }
-
-    if (Array.isArray(filterValue)) {
-      if (Array.isArray(notifValue)) {
-        /*
-         * Both filter value and notification value are arrays.
-         * Check for set equality (same elements, regardless of order).
-         */
-        if (filterValue.length !== notifValue.length) return false;
-        /*
-         * Ensure elements are of primitive types for direct sort and comparison.
-         * If elements can be objects, a more sophisticated comparison is needed.
-         */
-        const sortedFilterValue = [...(filterValue as (string | number | boolean)[])].sort();
-        const sortedNotifValue = [...(notifValue as (string | number | boolean)[])].sort();
-
-        return sortedFilterValue.every((val, index) => val === sortedNotifValue[index]);
-      } else {
-        /*
-         * Filter value is an array, notification value is scalar.
-         * Check if the scalar notification value is present in the filter array.
-         */
-        return (filterValue as unknown[]).includes(notifValue);
-      }
-    } else {
-      // Filter value is scalar. Notification value must be equal.
-      return notifValue === filterValue;
-    }
-  });
+  return checkDataEntries(notificationData, filterData, [], 1);
 }
 
 /**

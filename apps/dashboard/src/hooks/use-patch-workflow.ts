@@ -17,7 +17,7 @@ export const usePatchWorkflow = (
   const { mutateAsync, ...rest } = useMutation({
     mutationFn: (args: PatchWorkflowParameters) => patchWorkflow({ environment: currentEnvironment!, ...args }),
     ...options,
-    onSuccess: async (data, variables, ctx) => {
+    onSuccess: async (data, variables, onMutateResult, context) => {
       await queryClient.setQueryData(
         [
           QueryKeys.fetchWorkflow,
@@ -35,7 +35,7 @@ export const usePatchWorkflow = (
         queryKey: [QueryKeys.diffEnvironments],
       });
 
-      options?.onSuccess?.(data, variables, ctx);
+      options?.onSuccess?.(data, variables, onMutateResult, context);
     },
   });
 

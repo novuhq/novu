@@ -483,6 +483,7 @@ export default {
         soft: 'hsl(var(--bg-soft))',
         weak: 'hsl(var(--bg-weak))',
         white: 'hsl(var(--bg-white))',
+        muted: 'hsl(var(--bg-muted))',
       },
       icon: {
         strong: 'hsl(var(--icon-strong))',

@@ -221,6 +221,7 @@
 
     --neutral-0: 210 10% 100%;
     --neutral-50: 0 0% 98%;
+    --neutral-75: 210 10% 96%;
     --neutral-100: 210 30% 96%;
     --neutral-200: 220 18% 90%;
     --neutral-300: 219 15% 82%;
@@ -409,6 +410,7 @@
     --bg-soft: var(--neutral-200);
     --bg-weak: var(--neutral-50);
     --bg-white: var(--neutral-0);
+    --bg-muted: var(--neutral-75);
 
     --text-strong: var(--neutral-950);
     --text-sub: var(--neutral-600);

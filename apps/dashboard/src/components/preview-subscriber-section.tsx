@@ -21,30 +21,14 @@ export function PreviewSubscriberSection({
 
   return (
     <AccordionItem value="subscriber" className={ACCORDION_STYLES.item}>
-      <AccordionTrigger className={ACCORDION_STYLES.trigger}>
-        <div className="flex w-full items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-0.5">
-              Subscriber
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="text-foreground-400 inline-block hover:cursor-help">
-                    <RiInformation2Line className="size-3" />
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent className="max-w-xs">
-                  Information about the recipient of the notification, including their profile data and preferences.
-                </TooltipContent>
-              </Tooltip>
-            </div>
-          </div>
-          {onEditSubscriber ? (
+      <AccordionTrigger
+        className={ACCORDION_STYLES.trigger}
+        rightSlot={
+          onEditSubscriber ? (
             <div className="mr-2">
               <Button
                 onClick={(e) => {
                   e.stopPropagation();
-                  e.preventDefault();
-
                   onEditSubscriber();
                 }}
                 type="button"
@@ -62,8 +46,6 @@ export function PreviewSubscriberSection({
               <Button
                 onClick={(e) => {
                   e.stopPropagation();
-                  e.preventDefault();
-
                   onClearPersisted();
                 }}
                 type="button"
@@ -76,7 +58,25 @@ export function PreviewSubscriberSection({
                 Reset defaults
               </Button>
             </div>
-          ) : null}
+          ) : null
+        }
+      >
+        <div className="flex w-full items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-0.5">
+              Subscriber
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="text-foreground-400 inline-block hover:cursor-help">
+                    <RiInformation2Line className="size-3" />
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  Information about the recipient of the notification, including their profile data and preferences.
+                </TooltipContent>
+              </Tooltip>
+            </div>
+          </div>
         </div>
       </AccordionTrigger>
       <AccordionContent className="flex flex-col gap-2">

@@ -1,0 +1,353 @@
+---
+title: "JSON Schema"
+description: "Learn how to use JSON Schema to define the workflow payload and step inputs"
+---
+
+JSON Schema can be used to define the [workflow payload](/framework/payload) and [step inputs](/framework/typescript/steps).
+It provides a strongly-typed way to define the structure of the data that is expected by the workflow or Step.
+And also as a contract for changing the workflow behaviour using the Platform User Interface.
+
+Learn more about JSON schema at [json-schema.org](https://json-schema.org/).
+
+## Examples
+
+### Simple
+
+```json
+{
+  "type": "object",
+  "required": ["firstName", "lastName"],
+  "properties": {
+    "firstName": {
+      "type": "string",
+      "title": "First name",
+      "default": "Chuck"
+    },
+    "lastName": {
+      "type": "string",
+      "title": "Last name"
+    },
+    "age": {
+      "type": "integer",
+      "title": "Age"
+    }
+  }
+}
+```
+
+### Nested array structure
+
+```json
+{
+  "type": "object",
+  "required": ["title"],
+  "properties": {
+    "title": {
+      "type": "string",
+      "title": "Task list title"
+    },
+    "tasks": {
+      "type": "array",
+      "title": "Tasks",
+      "items": {
+        "type": "object",
+        "required": ["title"],
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "description": "A sample title"
+          },
+          "details": {
+            "type": "string",
+            "title": "Task details",
+            "description": "Enter the task details"
+          },
+          "done": {
+            "type": "boolean",
+            "title": "Done?",
+            "default": false
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+### Reference and reuse blocks
+
+```json
+{
+  "definitions": {
+    "address": {
+      "type": "object",
+      "properties": {
+        "street_address": {
+          "type": "string"
+        },
+        "city": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string"
+        }
+      },
+      "required": ["street_address", "city", "state"]
+    },
+    "node": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/node"
+          }
+        }
+      }
+    }
+  },
+  "type": "object",
+  "properties": {
+    "billing_address": {
+      "title": "Billing address",
+      "$ref": "#/definitions/address"
+    },
+    "shipping_address": {
+      "title": "Shipping address",
+      "$ref": "#/definitions/address"
+    },
+    "tree": {
+      "title": "Recursive references",
+      "$ref": "#/definitions/node"
+    }
+  }
+}
+```
+
+### Any of schemas
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "age": {
+      "type": "integer",
+      "title": "Age"
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "anyOf": [
+          {
+            "properties": {
+              "foo": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "properties": {
+              "bar": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "anyOf": [
+    {
+      "title": "First method of identification",
+      "properties": {
+        "firstName": {
+          "type": "string",
+          "title": "First name",
+          "default": "Chuck"
+        },
+        "lastName": {
+          "type": "string",
+          "title": "Last name"
+        }
+      }
+    },
+    {
+      "title": "Second method of identification",
+      "properties": {
+        "idCode": {
+          "type": "string",
+          "title": "ID code"
+        }
+      }
+    }
+  ]
+}
+```
+
+### One of schema
+
+```json
+{
+  "type": "object",
+  "oneOf": [
+    {
+      "properties": {
+        "lorem": {
+          "type": "string"
+        }
+      },
+      "required": ["lorem"]
+    },
+    {
+      "properties": {
+        "ipsum": {
+          "type": "string"
+        }
+      },
+      "required": ["ipsum"]
+    }
+  ]
+}
+```
+
+### If then else
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "animal": {
+      "enum": ["Cat", "Fish"]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "animal": {
+            "const": "Cat"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "food": {
+            "type": "string",
+            "enum": ["meat", "grass", "fish"]
+          }
+        },
+        "required": ["food"]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "animal": {
+            "const": "Fish"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "food": {
+            "type": "string",
+            "enum": ["insect", "worms"]
+          },
+          "water": {
+            "type": "string",
+            "enum": ["lake", "sea"]
+          }
+        },
+        "required": ["food", "water"]
+      }
+    },
+    {
+      "required": ["animal"]
+    }
+  ]
+}
+```
+
+### Enum objects
+
+```json
+{
+  "definitions": {
+    "locations": {
+      "enumNames": ["New York", "Amsterdam", "Hong Kong"],
+      "enum": [
+        {
+          "name": "New York",
+          "lat": 40,
+          "lon": 74
+        },
+        {
+          "name": "Amsterdam",
+          "lat": 52,
+          "lon": 5
+        },
+        {
+          "name": "Hong Kong",
+          "lat": 22,
+          "lon": 114
+        }
+      ]
+    }
+  },
+  "type": "object",
+  "properties": {
+    "location": {
+      "title": "Location",
+      "$ref": "#/definitions/locations"
+    },
+    "locationRadio": {
+      "title": "Location Radio",
+      "$ref": "#/definitions/locations"
+    },
+    "multiSelect": {
+      "title": "Locations",
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/definitions/locations"
+      }
+    },
+    "checkboxes": {
+      "title": "Locations Checkboxes",
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/definitions/locations"
+      }
+    }
+  }
+}
+```
+
+### Regex validation
+
+The following example matches a simple North American telephone number with an optional area code:
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "phone": {
+      "type": "string",
+      "pattern": "^(\\([0-9]{3}\\))?[0-9]{3}-[0-9]{4}$"
+    }
+  }
+}
+```
+
+## Other resources
+
+- [Examples](https://json-schema.org/learn/miscellaneous-examples)
+- [React JSON schema](https://rjsf-team.github.io/react-jsonschema-form/)
+- [JSON schema validator](https://www.jsonschemavalidator.net/)
+- [JSON schema lint](https://jsonschemalint.com/)

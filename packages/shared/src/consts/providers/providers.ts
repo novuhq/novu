@@ -1,4 +1,5 @@
 import {
+  AgentRuntimeProviderIdEnum,
   ChannelTypeEnum,
   ChatProviderIdEnum,
   EmailProviderIdEnum,
@@ -23,7 +24,9 @@ export const NOVU_PROVIDERS: ProvidersIdEnum[] = [
   InAppProviderIdEnum.Novu,
   SmsProviderIdEnum.Novu,
   EmailProviderIdEnum.Novu,
+  EmailProviderIdEnum.NovuAgent,
   ChatProviderIdEnum.Novu,
+  AgentRuntimeProviderIdEnum.NovuAnthropic,
 ];
 
 export const NOVU_SMS_EMAIL_PROVIDERS: ProvidersIdEnum[] = [SmsProviderIdEnum.Novu, EmailProviderIdEnum.Novu];

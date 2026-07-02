@@ -1,5 +1,13 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import { CompileTemplate, createHash } from '@novu/application-generic';
+import {
+  AttachmentRehydrator,
+  assertSafeOutboundUrl,
+  CompileTemplate,
+  createHash,
+  normalizeOutboundHttpUrl,
+  SsrfBlockedError,
+  safeOutboundJsonRequest,
+} from '@novu/application-generic';
 import {
   JobEntity,
   JobRepository,
@@ -8,21 +16,32 @@ import {
   NotificationEntity,
   NotificationTemplateEntity,
 } from '@novu/dal';
-import { StepTypeEnum } from '@novu/shared';
-import axios from 'axios';
+import { InboundEmailAttachment, StepTypeEnum } from '@novu/shared';
 import { InboundEmailParseCommand } from '../inbound-email-parse.command';
+import {
+  InboundParseOutcome,
+  InboundParseProcessingError,
+  toCustomerDeliveryFailureMessage,
+} from '../inbound-parse-outcome';
 
 const LOG_CONTEXT = 'ReplyToStrategy';
+
+type ResolvedReplyToContext = {
+  organizationId: string;
+  environmentId: string;
+  transactionId: string;
+};
 
 @Injectable()
 export class ReplyToStrategy {
   constructor(
     private jobRepository: JobRepository,
     private messageRepository: MessageRepository,
-    private compileTemplate: CompileTemplate
+    private compileTemplate: CompileTemplate,
+    private attachmentRehydrator: AttachmentRehydrator
   ) {}
 
-  async execute(command: InboundEmailParseCommand): Promise<void> {
+  async execute(command: InboundEmailParseCommand): Promise<InboundParseOutcome> {
     const { domain, transactionId, environmentId } = this.splitTo(command.to[0].address);
 
     Logger.log({ domain, transactionId, environmentId }, 'Processing reply-to email', LOG_CONTEXT);
@@ -32,15 +51,25 @@ export class ReplyToStrategy {
       environmentId
     );
 
+    // Tenant context is fully resolved here; failures from this point on carry it
+    // so the centralized emit point can still write a request log row.
+    const resolved: ResolvedReplyToContext = {
+      organizationId: job._organizationId,
+      environmentId,
+      transactionId,
+    };
+
     if (domain !== environment?.dns?.inboundParseDomain) {
-      this.throwError('Domain is not in environment white list');
+      this.fail(resolved, 422, 'Domain is not in environment white list');
     }
 
     const currentParseWebhook = template?.steps?.find((step) => step?._id?.toString() === job?.step?._id)?.replyCallback
       ?.url;
 
     if (!currentParseWebhook) {
-      this.throwError(
+      this.fail(
+        resolved,
+        422,
         `Missing parse webhook on template ${template._id} job ${job._id} transactionId ${transactionId}.`
       );
     }
@@ -50,6 +79,27 @@ export class ReplyToStrategy {
       data: job.payload,
     });
 
+    const requestUrl = normalizeOutboundHttpUrl(compiledDomain);
+
+    if (!requestUrl) {
+      this.fail(resolved, 422, 'Reply callback URL blocked (SSRF): Invalid URL format.');
+    }
+
+    try {
+      assertSafeOutboundUrl(requestUrl);
+    } catch (err) {
+      if (err instanceof SsrfBlockedError) {
+        this.fail(resolved, 422, `Reply callback URL blocked (SSRF): ${err.message}`);
+      }
+      throw err;
+    }
+
+    // HMAC is built only after the URL passes the synchronous policy check.
+    // safeOutboundJsonRequest below performs the connect-time DNS guard and
+    // re-runs the policy on every redirect target.
+    const rehydratedAttachments: InboundEmailAttachment[] = await this.attachmentRehydrator.rehydrate(
+      command.attachments
+    );
     const userPayload: IUserWebhookPayload = {
       hmac: createHash(environment?.apiKeys[0]?.key, subscriber.subscriberId) || '',
       transactionId,
@@ -58,10 +108,34 @@ export class ReplyToStrategy {
       template,
       notification,
       message,
-      mail: command,
+      mail: { ...command, attachments: rehydratedAttachments },
     };
 
-    await axios.post(compiledDomain, userPayload);
+    try {
+      await safeOutboundJsonRequest({ url: requestUrl, method: 'POST', body: userPayload });
+    } catch (err) {
+      if (err instanceof SsrfBlockedError) {
+        this.fail(resolved, 422, `Reply callback URL blocked (SSRF): ${err.message}`);
+      }
+      this.fail(
+        resolved,
+        502,
+        `Reply callback delivery failed: ${err instanceof Error ? err.message : 'Unknown error'}`
+      );
+    }
+
+    return { ...resolved, strategy: 'reply-to', status: 200 };
+  }
+
+  private fail(resolved: ResolvedReplyToContext, status: number, message: string): never {
+    Logger.error(message, LOG_CONTEXT);
+    const customerMessage = toCustomerDeliveryFailureMessage(status, message);
+    throw new InboundParseProcessingError(message, {
+      ...resolved,
+      strategy: 'reply-to',
+      status,
+      message: customerMessage,
+    });
   }
 
   private splitTo(address: string) {
@@ -116,7 +190,9 @@ export class ReplyToStrategy {
   }
 }
 
-class MailMetadata extends InboundEmailParseCommand {}
+type MailMetadata = Omit<InboundEmailParseCommand, 'attachments'> & {
+  attachments?: InboundEmailAttachment[];
+};
 
 export interface IUserWebhookPayload {
   transactionId: string;

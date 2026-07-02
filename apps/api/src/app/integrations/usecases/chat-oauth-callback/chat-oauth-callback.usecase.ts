@@ -33,14 +33,11 @@ export class ChatOauthCallback {
         );
 
       case ChatProviderIdEnum.MsTeams:
-        if (!command.tenant) {
-          throw new BadRequestException('Missing required parameter: tenant');
-        }
-
         return await this.msTeamsOauthCallback.execute(
           MsTeamsOauthCallbackCommand.create({
             tenant: command.tenant,
             adminConsent: command.adminConsent,
+            providerCode: command.providerCode,
             state: command.state,
           })
         );

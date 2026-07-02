@@ -12,6 +12,7 @@ export interface GetRequestLogsParams {
   transactionId?: string;
   search?: string;
   createdGte?: number;
+  source?: string;
 }
 
 export interface GetRequestLogsResponse {

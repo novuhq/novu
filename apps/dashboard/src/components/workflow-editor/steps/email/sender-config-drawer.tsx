@@ -25,9 +25,10 @@ import { usePrimaryEmailIntegration } from '@/hooks/use-primary-email-integratio
 type SenderConfigDrawerProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  disabled?: boolean;
 };
 
-export function SenderConfigDrawer({ open, onOpenChange }: SenderConfigDrawerProps) {
+export function SenderConfigDrawer({ open, onOpenChange, disabled = false }: SenderConfigDrawerProps) {
   const { getValues, setValue } = useFormContext();
   const { saveForm } = useSaveForm();
   const { senderEmail: integrationEmail, senderName: integrationName } = usePrimaryEmailIntegration();
@@ -120,7 +121,7 @@ export function SenderConfigDrawer({ open, onOpenChange }: SenderConfigDrawerPro
                 </TooltipContent>
               </Tooltip>
             </div>
-            <Switch checked={localUseDefaults} onCheckedChange={handleToggleDefaults} />
+            <Switch checked={localUseDefaults} onCheckedChange={handleToggleDefaults} disabled={disabled} />
           </div>
           <Separator />
 
@@ -144,7 +145,7 @@ export function SenderConfigDrawer({ open, onOpenChange }: SenderConfigDrawerPro
                       placeholder={
                         localUseDefaults ? integrationName || 'Acme Inc.' : integrationName || 'e.g. Acme Security'
                       }
-                      disabled={localUseDefaults}
+                      disabled={disabled || localUseDefaults}
                       value={localName}
                       onChange={setLocalName}
                       variables={variables}
@@ -181,7 +182,7 @@ export function SenderConfigDrawer({ open, onOpenChange }: SenderConfigDrawerPro
                           ? integrationEmail || 'noreply@novu.co'
                           : integrationEmail || 'e.g. noreply@acme.com'
                       }
-                      disabled={localUseDefaults}
+                      disabled={disabled || localUseDefaults}
                       value={localEmail}
                       onChange={(newEmail) => {
                         setLocalEmail(newEmail);
@@ -202,12 +203,16 @@ export function SenderConfigDrawer({ open, onOpenChange }: SenderConfigDrawerPro
           </div>
         </SheetMain>
 
-        <Separator />
-        <SheetFooter className="border-neutral-content-weak flex border-t px-3 py-1.5">
-          <Button size="xs" mode="gradient" variant="secondary" onClick={handleSave}>
-            Save changes
-          </Button>
-        </SheetFooter>
+        {!disabled && (
+          <>
+            <Separator />
+            <SheetFooter className="border-neutral-content-weak flex border-t px-3 py-1.5">
+              <Button size="xs" mode="gradient" variant="secondary" onClick={handleSave}>
+                Save changes
+              </Button>
+            </SheetFooter>
+          </>
+        )}
       </SheetContent>
     </Sheet>
   );

@@ -1,4 +1,4 @@
-import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
+import { EnvironmentRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import {
   ChannelTypeEnum,
   ChatProviderIdEnum,
@@ -12,6 +12,7 @@ import { expect } from 'chai';
 describe('Set Integration As Primary - /integrations/:integrationId/set-primary (POST) #novu-v2', () => {
   let session: UserSession;
   const integrationRepository = new IntegrationRepository();
+  const envRepository = new EnvironmentRepository();
 
   beforeEach(async () => {
     session = new UserSession();
@@ -33,6 +34,35 @@ describe('Set Integration As Primary - /integrations/:integrationId/set-primary 
 
     expect(body.statusCode).to.equal(404);
     expect(body.message).to.equal(`Integration with id ${fakeIntegrationId} not found`);
+  });
+
+  it('should not allow setting an integration in another organization as primary', async () => {
+    const otherSession = new UserSession();
+    await otherSession.initialize();
+
+    const otherOrgIntegration = await integrationRepository.create({
+      name: 'OtherOrgPrimary',
+      identifier: 'other-org-primary',
+      providerId: EmailProviderIdEnum.SendGrid,
+      channel: ChannelTypeEnum.EMAIL,
+      active: false,
+      primary: false,
+      priority: 0,
+      _organizationId: otherSession.organization._id,
+      _environmentId: otherSession.environment._id,
+    });
+
+    const { body } = await session.testAgent.post(`/v1/integrations/${otherOrgIntegration._id}/set-primary`).send({});
+
+    expect(body.statusCode).to.equal(404);
+    expect(body.message).to.equal(`Integration with id ${otherOrgIntegration._id} not found`);
+
+    const untouched = (await integrationRepository.findOne({
+      _id: otherOrgIntegration._id,
+      _environmentId: otherSession.environment._id,
+    })) as IntegrationEntity;
+    expect(untouched.primary).to.equal(false);
+    expect(untouched.active).to.equal(false);
   });
 
   it('in-app channel does not support primary flag, then for integration it should throw bad request exception', async () => {
@@ -473,5 +503,38 @@ describe('Set Integration As Primary - /integrations/:integrationId/set-primary 
     expect(third.primary).to.equal(false);
     expect(third.active).to.equal(false);
     expect(third.priority).to.equal(0);
+  });
+
+  describe('API key authentication is scoped to the key environment', () => {
+    it('should forbid setting an integration in a different environment as primary when authenticated via API key', async () => {
+      const prodEnv = await envRepository.findOne({ name: 'Production', _organizationId: session.organization._id });
+      expect(prodEnv?._id, 'Expected Production environment fixture').to.exist;
+
+      const otherEnvironmentIntegration = await integrationRepository.create({
+        name: 'OtherEnvPrimary',
+        identifier: 'other-env-primary-api-key',
+        providerId: EmailProviderIdEnum.SendGrid,
+        channel: ChannelTypeEnum.EMAIL,
+        active: true,
+        primary: false,
+        priority: 1,
+        _organizationId: session.organization._id,
+        _environmentId: prodEnv!._id,
+      });
+
+      const { body } = await session.testAgent
+        .post(`/v1/integrations/${otherEnvironmentIntegration._id}/set-primary`)
+        .set('authorization', `ApiKey ${session.apiKey}`)
+        .send({});
+
+      expect(body.statusCode).to.equal(403);
+      expect(body.message).to.contain('is scoped to a single environment');
+
+      const untouched = (await integrationRepository.findOne({
+        _id: otherEnvironmentIntegration._id,
+        _environmentId: prodEnv!._id,
+      })) as IntegrationEntity;
+      expect(untouched.primary).to.equal(false);
+    });
   });
 });

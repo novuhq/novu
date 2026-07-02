@@ -4,6 +4,7 @@ import {
   FeatureFlagsService,
   getSubscriberProcessWorkerOptions,
   IProcessSubscriberDataDto,
+  Job,
   PinoLogger,
   SqsService,
   Store,
@@ -41,7 +42,40 @@ export class SubscriberProcessWorker extends SubscriberProcessWorkerService {
   ) {
     super(new BullMqService(workflowInMemoryProviderService), sqsService, logger);
 
-    this.initWorker(this.getWorkerProcessor(), this.getWorkerOpts());
+    this.initWorker(this.getWorkerProcessor(), this.getWorkerOpts(), true);
+
+    /*
+     * Subscriber-process jobs run at-most-once: any failure here is
+     * acked. The dominant failure mode is `subscriberId under property
+     * to is not configured`, a non-retryable client-side validation
+     * error, so redelivery cannot succeed and only burns consumer slots.
+     *
+     * Backed at the infra level by `RedrivePolicy.maxReceiveCount=1` on
+     * the subscriber-process SQS queue.
+     */
+    this.setSqsFailedHandler(
+      async (job: Job<IProcessSubscriberDataDto, void, string>, error: Error): Promise<boolean> => {
+        const isValidationError = isSubscriberIdValidationError(error);
+        Logger.warn(
+          {
+            jobId: job.id,
+            transactionId: job.data?.transactionId,
+            identifier: job.data?.identifier,
+            organizationId: job.data?.organizationId,
+            environmentId: job.data?.environmentId,
+            attemptsMade: job.attemptsMade,
+            isValidationError,
+            error: error instanceof Error ? error.message : String(error),
+          },
+          'Subscriber-process job failed, dropping (matches BullMQ at-most-once)',
+          LOG_CONTEXT
+        );
+
+        return false;
+      }
+    );
+
+    this.startSqsConsumer();
   }
 
   private async isKillSwitchEnabled(data: IProcessSubscriberDataDto): Promise<boolean> {

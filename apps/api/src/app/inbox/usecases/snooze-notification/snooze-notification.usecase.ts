@@ -44,7 +44,9 @@ export class SnoozeNotification {
     private createExecutionDetails: CreateExecutionDetails,
     private markNotificationAs: MarkNotificationAs,
     private analyticsService: AnalyticsService
-  ) {}
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   public async execute(command: SnoozeNotificationCommand): Promise<InboxNotificationDto> {
     const snoozeDurationMs = this.calculateDelayInMs(command.snoozeUntil);

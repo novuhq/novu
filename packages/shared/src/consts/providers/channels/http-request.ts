@@ -69,9 +69,17 @@ export const httpRequestControlSchema = {
       maxItems: 50,
     },
     body: {
-      type: 'array',
-      items: keyValuePairSchema,
-      maxItems: 100,
+      oneOf: [
+        {
+          type: 'string',
+          maxLength: 65536,
+        },
+        {
+          type: 'array',
+          items: keyValuePairSchema,
+          maxItems: 100,
+        },
+      ],
     },
     responseBodySchema: {
       type: 'object',

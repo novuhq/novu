@@ -104,13 +104,25 @@ async function getSecretValue(secretName) {
 
 // Function to escape or quote values for .env format
 function escapeValue(value) {
-  // If the value contains special characters or spaces, quote it
-  if (value && /[ \t"=$]/.test(value)) {
-    // Escape backslashes and double quotes, then wrap the value in quotes
-    return `"${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
+  if (value === undefined || value === null) {
+    return '';
   }
 
-  return value;
+  const stringValue = String(value);
+
+  // Quote when the value contains whitespace, quotes, equals, dollar signs, or line breaks.
+  // Multi-line values (e.g. PEM keys) must be encoded on a single line so dotenv parses them
+  // back into a single env var; we convert real newlines/CRs into literal `\n`/`\r` sequences,
+  // which dotenv expands inside double quotes when reading the file.
+  if (/[ \t"=$\r\n]/.test(stringValue)) {
+    return `"${stringValue
+      .replace(/\r\n/g, '\\n')
+      .replace(/\n/g, '\\n')
+      .replace(/\r/g, '\\r')
+      .replace(/"/g, '\\"')}"`;
+  }
+
+  return stringValue;
 }
 
 // Function to update or add to .env file with new key-value pairs (for cloud enterprise)

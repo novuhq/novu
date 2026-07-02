@@ -93,6 +93,10 @@ export class NetCoreProvider extends BaseProvider implements IEmailProvider {
       });
     }
 
+    if (options.headers && Object.keys(options.headers).length > 0) {
+      data.personalizations[0].headers = options.headers;
+    }
+
     const emailOptions = {
       method: 'POST',
       url: '/mail/send',

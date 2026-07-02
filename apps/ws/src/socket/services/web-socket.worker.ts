@@ -4,6 +4,7 @@ import {
   BullMqService,
   getWebSocketWorkerOptions,
   IWebSocketDataDto,
+  Job,
   PinoLogger,
   SqsService,
   WebSocketsWorkerService,
@@ -28,7 +29,33 @@ export class WebSocketWorker extends WebSocketsWorkerService {
   ) {
     super(new BullMqService(workflowInMemoryProviderService), sqsService, logger);
 
-    this.initWorker(this.getWorkerProcessor(), this.getWorkerOpts());
+    this.initWorker(this.getWorkerProcessor(), this.getWorkerOpts(), true);
+
+    /*
+     * WS jobs run at-most-once: any failure here is acked. WS payloads
+     * are point-in-time UI hints (unseen-count changes, in-app updates);
+     * replaying them after the visibility timeout is harmful — the
+     * target socket may be gone, or a fresher emit / client poll has
+     * already healed the UI.
+     *
+     * Backed at the infra level by `RedrivePolicy.maxReceiveCount=1` on
+     * the WS SQS queue.
+     */
+    this.setSqsFailedHandler(async (job: Job<IWebSocketDataDto, void, string>, error: Error): Promise<boolean> => {
+      Logger.warn(
+        {
+          jobId: job.id,
+          event: job.data?.event,
+          error: error instanceof Error ? error.message : String(error),
+        },
+        'WS emit failed, dropping (real-time event, no replay)',
+        LOG_CONTEXT
+      );
+
+      return false;
+    });
+
+    this.startSqsConsumer();
   }
 
   private getWorkerProcessor() {

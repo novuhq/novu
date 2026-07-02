@@ -1,0 +1,533 @@
+---
+title: "APNS Push Integration with Novu"
+sidebarTitle: 'APNS'
+description: "Connect APNS to Novu to send push notifications through notification workflows. Step-by-step credential setup."
+---
+
+This guide explains how to configure and use the [Apple Push Notification Service (APNS)](https://developer.apple.com/notifications/) with Novu to deliver push notifications to iOS devices. It outlines:
+- The required setup in your Apple Developer account.
+- The connection process in Novu.
+- How to manage device tokens and message payloads.
+
+## Configuring APNS with Novu
+
+Before sending notifications, APNS must be configured with the correct credentials from your Apple Developer account. Novu uses these credentials to securely authenticate with Apple’s servers.
+
+### Obtain APNS credentials
+
+Apple provides two authentication options for connecting to APNS:  
+- A certificate-based `.p12` certificate  
+- A token-based `.p8` key
+
+Novu supports both, but this guide focuses on the `.p8` token-based approach, which is recommended for most production setups.
+
+To generate the required credentials, use an [Apple Developer account](https://developer.apple.com/) with an [Admin role](https://appstoreconnect.apple.com/access/users). Follow [Apple’s official steps](https://developer.apple.com/help/account/keys/create-a-private-key) to create and download a private `.p8` key.
+
+The following identifiers are also needed for integration:
+
+- [**Key ID**](https://developer.apple.com/help/account/keys/get-a-key-identifier/): A unique 10-character identifier for the authentication key.  
+- **Team ID**: This is found in your Apple Developer account.  
+- **Bundle ID**: The identifier for your app, which is available in the app info section.
+
+### Add APNS credentials to Novu
+
+Once the Apple credentials are available, you can add them in Novu’s Integration Store.
+
+1. Log in to your Novu account.
+2. On your dashboard, click **Integration Store**.  
+3. Click **Connect provider**.
+4. Click the **Push** tab.
+5. Select **APNS**.
+6. In the APNS integration form, fill in the **Name** and **Identifier** fields.
+7. In the **Delivery Provider Credentials** section, fill in the following fields:
+    * **Private Key**: The content of your `.p8` file.
+    * **Key ID**: Your 10-character Key ID.
+    * **Team ID**: Your 10-character Team ID.
+    * **Bundle ID**: Your app's Bundle ID.
+![APNS Integration in Novu](/images/channels-and-providers/push/apns/apns-integration.png)
+8. Click **Create Integration**.
+
+## Sending notifications with APNS
+
+After configuration, APNS can be used in any Novu workflow that includes a Push step. The process involves registering device tokens for subscribers and then triggering workflows to deliver messages.
+
+### Registering subscriber device tokens
+
+Each subscriber (user) must have one or more device tokens registered to receive push notifications. Tokens can be added or updated through Novu’s API using the [Update Subscriber Credentials](/api-reference/subscribers/update-provider-credentials) endpoint.
+
+<Tabs>
+  <Tab title="Node.js">
+```typescript
+import { Novu } from '@novu/api';
+import { ChatOrPushProviderEnum } from "@novu/api/models/components";
+
+const novu = new Novu({ secretKey: "<NOVU_SECRET_KEY>" });
+
+await novu.subscribers.credentials.update(
+  {
+    providerId: ChatOrPushProviderEnum.Apns,
+    integrationIdentifier: "string",
+    credentials: { deviceTokens: ["token1", "token2", "token3"] },
+  },
+  "subscriberId"
+);
+```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.subscribers.credentials.update(
+        subscriber_id="subscriberId",
+        update_subscriber_channel_request_dto={
+            "provider_id": novu_py.ChatOrPushProviderEnum.APNS,
+            "credentials": {"deviceTokens": ["token1", "token2", "token3"]},
+            "integration_identifier": "string",
+        },
+    )
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Subscribers.Credentials.Update(context.Background(), "subscriberId", components.UpdateSubscriberChannelRequestDto{
+    ProviderID: components.ChatOrPushProviderEnumApns,
+        IntegrationIdentifier: novugo.String("string"),
+    Credentials: components.ChannelCredentials{
+        DeviceTokens: []string{"token1", "token2", "token3"},
+    },
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()->setSecurity('<NOVU_SECRET_KEY>')->build();
+
+$sdk->subscribersCredentials->update(
+    subscriberId: 'subscriberId',
+    updateSubscriberChannelRequestDto: new Components\UpdateSubscriberChannelRequestDto(
+        providerId: Components\ChatOrPushProviderEnum::Apns,
+        integrationIdentifier: 'string',
+        credentials: new Components\ChannelCredentials(
+            deviceTokens: ['token1', 'token2', 'token3'],
+        ),
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+using System.Collections.Generic;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+
+await sdk.Subscribers.Credentials.UpdateAsync(
+    subscriberId: "subscriberId",
+    updateSubscriberChannelRequestDto: new UpdateSubscriberChannelRequestDto() {
+        ProviderId = ChatOrPushProviderEnum.Apns,
+        IntegrationIdentifier = "string",
+        Credentials = new ChannelCredentials() {
+            DeviceTokens = new List<string> { "token1", "token2", "token3" },
+        },
+    });
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+import java.util.List;
+
+Novu novu = Novu.builder().secretKey("<NOVU_SECRET_KEY>").build();
+
+novu.subscribers().credentials().update()
+    .subscriberId("subscriberId")
+    .body(UpdateSubscriberChannelRequestDto.builder()
+        .providerId(ChatOrPushProviderEnum.APNS)
+            .integrationIdentifier("string")
+        .credentials(ChannelCredentials.builder()
+            .deviceTokens(List.of("token1", "token2", "token3"))
+            .build())
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -L -X PUT 'https://api.novu.co/v1/subscribers/<SUBSCRIBER_ID>/credentials' \
+-H 'Content-Type: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+  "providerId": "apns",
+  "credentials": {
+    "deviceTokens": [
+      "token1",
+      "token2",
+      "token3"
+    ]
+  },
+  "integrationIdentifier": "string"
+}'
+```
+  </Tab>
+</Tabs>
+
+### Triggering workflows
+
+Once subscribers’ devices are registered, push notifications are delivered through [workflows that include a Push step](/platform/workflow/create-a-workflow). A workflow can be triggered using the Novu [SDK](/platform/sdks) or [API](/api-reference/events/trigger-event).
+
+<Tabs>
+  <Tab title="Node.js">
+```typescript
+import { Novu } from '@novu/api';
+
+const novu = new Novu({ secretKey: "<NOVU_SECRET_KEY>" });
+
+await novu.trigger({
+  workflowId: "workflowId",
+  to: { subscriberId: "SUBSCRIBER_ID", },
+  payload: {},
+});
+```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="workflowId",
+        to={"subscriber_id": "SUBSCRIBER_ID"},
+        payload={},
+    ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "workflowId",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: "SUBSCRIBER_ID",
+    }),
+    Payload: map[string]any{},
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()->setSecurity('<NOVU_SECRET_KEY>')->build();
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'workflowId',
+        to: new Components\SubscriberPayloadDto(subscriberId: 'SUBSCRIBER_ID'),
+        payload: [],
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "workflowId",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() { SubscriberId = "SUBSCRIBER_ID" }),
+    Payload = new Dictionary<string, object>(),
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+import java.util.Map;
+
+Novu novu = Novu.builder().secretKey("<NOVU_SECRET_KEY>").build();
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("workflowId")
+        .to(To2.of(SubscriberPayloadDto.builder().subscriberId("SUBSCRIBER_ID").build()))
+        .payload(Map.of())
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl --location 'https://api.novu.co/v1/events/trigger' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+    "name": "workflowId",
+    "to": [
+        "SUBSCRIBER_ID"
+    ],
+    "payload": {}
+}'
+```
+  </Tab>
+</Tabs>
+## Customizing notifications with overrides
+
+Novu supports an `overrides` field that lets you attach APNS-specific payload parameters when triggering a workflow.
+
+The `overrides` field supports all [APNS Notification payload](https://developer.apple.com/documentation/usernotifications/setting_up_a_remote_notification_server/generating_a_remote_notification?language=objc) values. Here is an example:
+
+<Tabs>
+  <Tab title="Node.js">
+```typescript
+import { Novu } from '@novu/api';
+
+const novu = new Novu({ secretKey: "<NOVU_SECRET_KEY>" });
+
+await novu.trigger({
+  workflowId: "workflowId",
+  to: { subscriberId: "subscriberId", },
+  payload: {
+    "abc": "def"
+},
+  overrides: {
+    "apns": {
+        "payload": {
+            "aps": {
+                "notification": {
+                    "title": "Test",
+                    "body": "Test push"
+                },
+                "data": {
+                    "key": "value"
+                }
+            }
+        }
+    }
+},
+});
+```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="workflowId",
+        to={"subscriber_id": "subscriberId"},
+        payload={
+        "abc": "def"
+},
+        overrides={
+        "apns": {
+                "payload": {
+                        "aps": {
+                                "notification": {
+                                        "title": "Test",
+                                        "body": "Test push"
+                                },
+                                "data": {
+                                        "key": "value"
+                                }
+                        }
+                }
+        }
+},
+    ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "workflowId",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: "subscriberId",
+    }),
+    Payload: map[string]any{
+        "abc": "def",
+    },
+    Overrides: map[string]any{
+        "apns": map[string]any{
+            "payload": map[string]any{
+                "aps": map[string]any{
+                    "notification": map[string]any{
+                        "title": "Test",
+                        "body":  "Test push",
+                    },
+                    "data": map[string]any{
+                        "key": "value",
+                    },
+                },
+            },
+        },
+    },
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()->setSecurity('<NOVU_SECRET_KEY>')->build();
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'workflowId',
+        to: new Components\SubscriberPayloadDto(subscriberId: 'subscriberId'),
+        payload: ['abc' => 'def'],
+        overrides: [
+            'apns' => [
+                'payload' => [
+                    'aps' => [
+                        'notification' => [
+                            'title' => 'Test',
+                            'body' => 'Test push',
+                        ],
+                        'data' => [
+                            'key' => 'value',
+                        ],
+                    ],
+                ],
+            ],
+        ],
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "workflowId",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() { SubscriberId = "subscriberId" }),
+    Payload = new Dictionary<string, object>() {
+        { "abc", "def" },
+    },
+    Overrides = new Overrides() {
+        Push = new Dictionary<string, object>() {
+            { "payload", new Dictionary<string, object>() {
+                { "aps", new Dictionary<string, object>() {
+                    { "notification", new Dictionary<string, object>() {
+                        { "title", "Test" },
+                        { "body", "Test push" },
+                    } },
+                    { "data", new Dictionary<string, object>() {
+                        { "key", "value" },
+                    } },
+                } },
+            } },
+        },
+    },
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+import java.util.Map;
+
+Novu novu = Novu.builder().secretKey("<NOVU_SECRET_KEY>").build();
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("workflowId")
+        .to(To2.of(SubscriberPayloadDto.builder().subscriberId("subscriberId").build()))
+        .payload(Map.of("abc", "def"))
+        .overrides(TriggerEventRequestDtoOverrides.builder()
+            .additionalProperties(Map.of("apns", Map.of(
+                "payload", Map.of(
+                    "aps", Map.of(
+                        "notification", Map.of("title", "Test", "body", "Test push"),
+                        "data", Map.of("key", "value"))))))
+            .build())
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl --location 'https://api.novu.co/v1/events/trigger' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+    "name": "workflowId",
+    "to": [
+        "subscriberId"
+    ],
+    "payload": {
+        "abc": "def"
+    },
+    "overrides": {
+        "apns": {
+            "payload": {
+                "aps": {
+                    "notification": {
+                        "title": "Test",
+                        "body": "Test push"
+                    },
+                    "data": {
+                        "key": "value"
+                    }
+                }
+            }
+        }
+    }
+}'
+```
+  </Tab>
+</Tabs>

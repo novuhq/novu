@@ -1,8 +1,9 @@
 import { createHash, randomBytes } from 'node:crypto';
-import { Injectable, UnprocessableEntityException } from '@nestjs/common';
+import { BadRequestException, Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import type { EventType, RequestTraceInput } from '@novu/application-generic';
 import {
+  assertSafeOutboundUrl,
   ExecuteBridgeRequest,
   ExecuteBridgeRequestCommand,
   ExecuteBridgeRequestDto,
@@ -11,10 +12,12 @@ import {
   InMemoryLRUCacheStore,
   Instrument,
   InstrumentUsecase,
+  isClickHouseConfigured,
   IWorkflowDataDto,
   LogRepository,
   mapEventTypeToTitle,
   PinoLogger,
+  SsrfBlockedError,
   StorageHelperService,
   TraceLogRepository,
   WorkflowQueueService,
@@ -31,6 +34,7 @@ import {
 import { DiscoverWorkflowOutput, GetActionEnum } from '@novu/framework/internal';
 import {
   FeatureFlagsKeysEnum,
+  isOutboundSsrfProtectionEnabled,
   ResourceOriginEnum,
   TriggerEventStatusEnum,
   TriggerRecipientsPayload,
@@ -294,16 +298,47 @@ export class ParseEventRequest {
       return null;
     }
 
+    this.assertSafeBridgeUrl(command.bridgeUrl);
+
     const discover = (await this.executeBridgeRequest.execute(
       ExecuteBridgeRequestCommand.create({
         statelessBridgeUrl: command.bridgeUrl,
         environmentId: command.environmentId,
         action: GetActionEnum.DISCOVER,
         workflowOrigin: ResourceOriginEnum.EXTERNAL,
+        // User-supplied stateless bridgeUrl: pin the connection to a validated
+        // public IP and re-validate every redirect so IP literals like
+        // 127.0.0.1 / 169.254.169.254 / fc00::/7 cannot reach internal hosts.
+        // The downstream EXECUTE call from the worker enforces the same guard
+        // — see `apps/worker/src/app/workflow/usecases/execute-bridge-job`.
+        enforceSsrfProtection: isOutboundSsrfProtectionEnabled(),
       })
     )) as ExecuteBridgeRequestDto<GetActionEnum.DISCOVER>;
 
     return discover?.workflows?.find((findWorkflow) => findWorkflow.workflowId === command.identifier) || null;
+  }
+
+  // The trigger pipeline performs an outbound DISCOVER request against the
+  // caller-supplied `bridgeUrl` (stateless workflow flow used by the local
+  // Studio / CLI), and then persists that URL onto the queued workflow job
+  // so the worker re-uses it for every step's EXECUTE call. Without an SSRF
+  // guard, a caller with EVENT_WRITE can repoint the bridge at internal
+  // hosts (loopback, RFC1918, link-local 169.254.169.254, cloud metadata)
+  // and have the API + worker process fan out to those targets.
+  //
+  // The synchronous `assertSafeOutboundUrl` check rejects the obvious vectors
+  // (non-http schemes, embedded credentials, blocked hostnames). The
+  // connect-time DNS-pinned guard against IP-literal private addresses is
+  // applied via `enforceSsrfProtection: true` on the actual outbound request.
+  private assertSafeBridgeUrl(bridgeUrl: string): void {
+    try {
+      assertSafeOutboundUrl(bridgeUrl);
+    } catch (err) {
+      if (err instanceof SsrfBlockedError) {
+        throw new BadRequestException(`bridgeUrl: ${err.message}`);
+      }
+      throw err;
+    }
   }
 
   @Instrument()
@@ -381,12 +416,27 @@ export class ParseEventRequest {
       );
     }
 
-    const activityFeedLink = `${process.env.DASHBOARD_URL || process.env.FRONT_BASE_URL}/env/${command.environmentId}/activity/requests?selectedLogId=${requestId}`;
+    const dashboardBaseUrl = process.env.DASHBOARD_URL || process.env.FRONT_BASE_URL;
+    let activityFeedLink: string | undefined;
+    if (isClickHouseConfigured() && dashboardBaseUrl) {
+      const isHttpLogsPageEnabled = await this.featureFlagService.getFlag({
+        environment: { _id: command.environmentId },
+        organization: { _id: command.organizationId },
+        user: { _id: command.userId } as UserEntity,
+        key: FeatureFlagsKeysEnum.IS_HTTP_LOGS_PAGE_ENABLED,
+        defaultValue: false,
+      });
+
+      if (isHttpLogsPageEnabled) {
+        activityFeedLink = `${dashboardBaseUrl}/env/${command.environmentId}/activity/requests?selectedLogId=${requestId}`;
+      }
+    }
+
     return {
       acknowledged: true,
       status: TriggerEventStatusEnum.PROCESSED,
       transactionId,
-      activityFeedLink,
+      ...(activityFeedLink ? { activityFeedLink } : {}),
       jobData: command.skipQueueInsertion ? jobData : undefined,
     };
   }
@@ -416,6 +466,31 @@ export class ParseEventRequest {
 
   @Instrument()
   private modifyAttachments(command: ParseEventRequestCommand): void {
+    const invalidAttachmentIndices = command.payload.attachments
+      .map((attachment, index) => {
+        const file = attachment?.file;
+
+        if (file === null || file === undefined) {
+          return index;
+        }
+
+        if (isAttachmentFileContent(file)) {
+          return -1;
+        }
+
+        return index;
+      })
+      .filter((index) => index >= 0);
+
+    if (invalidAttachmentIndices.length > 0) {
+      throw new PayloadValidationException(
+        invalidAttachmentIndices.map((index) => ({
+          field: `attachments.${index}.file`,
+          message: 'Each attachment must include file content as a base64-encoded string or Buffer',
+        }))
+      );
+    }
+
     // eslint-disable-next-line no-param-reassign
     command.payload.attachments = command.payload.attachments.map((attachment) => {
       const randomId = randomBytes(16).toString('hex');
@@ -423,7 +498,7 @@ export class ParseEventRequest {
       return {
         ...attachment,
         name: attachment.name,
-        file: Buffer.from(attachment.file, 'base64'),
+        file: toAttachmentFileBuffer(attachment.file),
         storagePath: `${command.organizationId}/${command.environmentId}/${randomId}/${attachment.name}`,
       };
     });
@@ -509,4 +584,32 @@ export class ParseEventRequest {
 
     return validate;
   }
+}
+
+type SerializedBuffer = { type: 'Buffer'; data: number[] };
+
+function isSerializedBuffer(value: unknown): value is SerializedBuffer {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const candidate = value as Partial<SerializedBuffer>;
+
+  return candidate.type === 'Buffer' && Array.isArray(candidate.data);
+}
+
+function isAttachmentFileContent(file: unknown): file is string | Buffer | SerializedBuffer {
+  return typeof file === 'string' || Buffer.isBuffer(file) || isSerializedBuffer(file);
+}
+
+function toAttachmentFileBuffer(file: string | Buffer | SerializedBuffer): Buffer {
+  if (Buffer.isBuffer(file)) {
+    return file;
+  }
+
+  if (isSerializedBuffer(file)) {
+    return Buffer.from(file.data);
+  }
+
+  return Buffer.from(file, 'base64');
 }

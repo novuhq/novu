@@ -30,6 +30,7 @@ const schemaDefinition = {
   environment_id: { type: CHString() },
   auth_type: { type: CHString() },
   duration_ms: { type: CHUInt32() },
+  source: { type: CHLowCardinality(CHString('http')) },
   expires_at: { type: CHDateTime64(3, 'UTC') },
 };
 
@@ -54,3 +55,14 @@ export const requestLogSchema = new ClickhouseSchema(schemaDefinition, clickhous
 export type RequestLogComplex = InferClickhouseSchemaType<typeof requestLogSchema>;
 
 export type RequestLog = Prettify<RequestLogComplex>;
+
+/**
+ * Origin of a logged request. `http` covers the authenticated NestJS HTTP API
+ * (trigger endpoints); `inbound_email` covers inbound mail processed by the worker.
+ */
+export const RequestLogSourceEnum = {
+  HTTP: 'http',
+  INBOUND_EMAIL: 'inbound_email',
+} as const;
+
+export type RequestLogSource = (typeof RequestLogSourceEnum)[keyof typeof RequestLogSourceEnum];

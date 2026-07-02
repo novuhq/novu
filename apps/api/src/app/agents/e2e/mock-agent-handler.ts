@@ -39,15 +39,15 @@ if (!NOVU_SECRET_KEY) {
 }
 
 const echoBot = agent('novu-agent', {
-  onMessage: async (ctx) => {
+  onMessage: async (message, ctx) => {
     console.log('\n─────────────────────────────────────────');
-    console.log(`[${ctx.event}] from ${ctx.subscriber?.firstName ?? 'unknown'} on ${ctx.platform}`);
-    console.log(`Message: ${ctx.message?.text ?? '(none)'}`);
+    console.log(`[onMessage] from ${ctx.subscriber?.firstName ?? 'unknown'} on ${ctx.platform}`);
+    console.log(`Message: ${message.text ?? '(none)'}`);
     console.log(`Conversation: ${ctx.conversation.identifier} (${ctx.conversation.status})`);
     console.log(`History: ${ctx.history.length} entries`);
     console.log('─────────────────────────────────────────');
 
-    const userText = ctx.message?.text ?? '';
+    const userText = message.text ?? '';
     const turnCount = (ctx.conversation.metadata?.turnCount as number) ?? 0;
 
     ctx.metadata.set('turnCount', turnCount + 1);
@@ -108,8 +108,8 @@ const echoBot = agent('novu-agent', {
     }
 
     if (userText.toLowerCase().includes('markdown')) {
-      await ctx.reply({
-        markdown: [
+      await ctx.reply(
+        [
           `**Echo:** ${userText}`,
           '',
           '| Metric | Value |',
@@ -119,8 +119,8 @@ const echoBot = agent('novu-agent', {
           '| Error rate | 0.02% |',
           '',
           '> Sent from _Novu Agent Framework_',
-        ].join('\n'),
-      });
+        ].join('\n')
+      );
 
       return;
     }
@@ -128,15 +128,12 @@ const echoBot = agent('novu-agent', {
     await ctx.reply(`Echo: ${userText}`);
   },
 
-  onAction: async (ctx) => {
+  onAction: async (action, ctx) => {
     console.log('\n─────────────────────────────────────────');
-    console.log(`[${ctx.event}] action: ${ctx.action?.actionId} = ${ctx.action?.value ?? '(no value)'}`);
+    console.log(`[onAction] action: ${action.id} = ${action.value ?? '(no value)'}`);
     console.log('─────────────────────────────────────────');
 
-    const actionId = ctx.action?.actionId ?? 'unknown';
-    const value = ctx.action?.value;
-
-    if (actionId === 'ack') {
+    if (action.id === 'ack') {
       await ctx.reply(
         Card({
           title: 'Incident Acknowledged',
@@ -148,17 +145,17 @@ const echoBot = agent('novu-agent', {
           ],
         })
       );
-    } else if (actionId === 'resolve') {
+    } else if (action.id === 'resolve') {
       ctx.resolve('Incident resolved via action');
       await ctx.reply(`Incident resolved by *${ctx.subscriber?.firstName ?? 'unknown'}*.`);
-    } else if (actionId === 'assign') {
-      await ctx.reply(`On-call assignment updated to *${value}*.`);
-    } else if (actionId === 'escalate') {
-      await ctx.reply({
-        markdown: `**Escalated** — paging the secondary on-call team.\n\n_Triggered by ${ctx.subscriber?.firstName ?? 'unknown'}_`,
-      });
+    } else if (action.id === 'assign') {
+      await ctx.reply(`On-call assignment updated to *${action.value}*.`);
+    } else if (action.id === 'escalate') {
+      await ctx.reply(
+        `**Escalated** — paging the secondary on-call team.\n\n_Triggered by ${ctx.subscriber?.firstName ?? 'unknown'}_`
+      );
     } else {
-      await ctx.reply(`Got action: *${actionId}*${value ? ` = ${value}` : ''}`);
+      await ctx.reply(`Got action: *${action.id}*${action.value ? ` = ${action.value}` : ''}`);
     }
   },
 

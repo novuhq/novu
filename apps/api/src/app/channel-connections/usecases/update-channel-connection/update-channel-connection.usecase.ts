@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InstrumentUsecase } from '@novu/application-generic';
+import { encryptChannelConnectionAuth, InstrumentUsecase } from '@novu/application-generic';
 import { ChannelConnectionEntity, ChannelConnectionRepository } from '@novu/dal';
 import { UpdateChannelConnectionCommand } from './update-channel-connection.command';
 
@@ -23,7 +23,7 @@ export class UpdateChannelConnection {
       },
       {
         workspace: command.workspace,
-        auth: command.auth,
+        auth: encryptChannelConnectionAuth(command.auth),
       },
       {
         new: true,

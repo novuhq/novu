@@ -50,6 +50,7 @@ import { getEditorTitle } from '@/components/workflow-editor/steps/utils/step-ut
 import { TestWorkflowDrawer } from '@/components/workflow-editor/test-workflow/test-workflow-drawer';
 import { TranslationStatus } from '@/components/workflow-editor/translation-status';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
+import { IS_AI_FEATURES_ENABLED } from '@/config';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useDisconnectStepResolver } from '@/hooks/use-disconnect-step-resolver';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
@@ -120,7 +121,7 @@ function StepEditorContent() {
   const { isPending: isWorkflowPending, refetch: refetchWorkflow } = useWorkflow();
   const { currentEnvironment } = useEnvironment();
   const { onBlur } = useSaveForm();
-  const isAiEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_AI_WORKFLOW_GENERATION_ENABLED);
+  const isAiEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_AI_WORKFLOW_GENERATION_ENABLED) && IS_AI_FEATURES_ENABLED;
   const isDevEnvironment = currentEnvironment?.type === EnvironmentTypeEnum.DEV;
   const isExternalWorkflow = !workflow || workflow.origin === ResourceOriginEnum.EXTERNAL;
   const showCopilot = isAiEnabled && isDevEnvironment && !isExternalWorkflow;

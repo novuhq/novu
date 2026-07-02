@@ -26,8 +26,8 @@ export class GetWebhookSupportStatus {
     }
 
     const { channel, providerId } = integration;
-    if (![ChannelTypeEnum.EMAIL, ChannelTypeEnum.SMS].includes(channel)) {
-      throw new BadRequestException(`Webhook for ${providerId}-${channel} is not supported yet`);
+    if (!channel || ![ChannelTypeEnum.EMAIL, ChannelTypeEnum.SMS].includes(channel)) {
+      throw new BadRequestException(`Webhook for ${providerId}-${channel ?? 'unknown'} is not supported yet`);
     }
 
     this.createProvider(integration);

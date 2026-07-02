@@ -5,8 +5,6 @@ export class BaseUserProfileUsecase {
   protected mapToDto(user: UserEntity): UserResponseDto {
     const {
       _id,
-      resetToken,
-      resetTokenDate,
       firstName,
       lastName,
       email,
@@ -20,8 +18,6 @@ export class BaseUserProfileUsecase {
 
     return {
       _id,
-      resetToken,
-      resetTokenDate,
       firstName,
       lastName,
       email,

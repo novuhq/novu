@@ -62,6 +62,45 @@ test('should trigger postmark correctly', async () => {
   });
 });
 
+test('should forward custom headers in Postmark Headers format', async () => {
+  const provider = new PostmarkEmailProvider(mockConfig);
+  const spy = vi.spyOn((provider as any).client, 'sendEmail').mockImplementation(async () => {
+    return {};
+  });
+
+  await provider.sendMessage({
+    ...mockNovuMessage,
+    headers: {
+      'In-Reply-To': '<original-message-id@example.com>',
+      References: '<original-message-id@example.com>',
+    },
+  });
+
+  expect(spy).toHaveBeenCalledWith(
+    expect.objectContaining({
+      Headers: [
+        { Name: 'In-Reply-To', Value: '<original-message-id@example.com>' },
+        { Name: 'References', Value: '<original-message-id@example.com>' },
+      ],
+    })
+  );
+});
+
+test('should not add Headers field when no custom headers provided', async () => {
+  const provider = new PostmarkEmailProvider(mockConfig);
+  const spy = vi.spyOn((provider as any).client, 'sendEmail').mockImplementation(async () => {
+    return {};
+  });
+
+  await provider.sendMessage(mockNovuMessage);
+
+  expect(spy).toHaveBeenCalledWith(
+    expect.not.objectContaining({
+      Headers: expect.anything(),
+    })
+  );
+});
+
 test('should trigger postmark correctly with _passthrough', async () => {
   const provider = new PostmarkEmailProvider(mockConfig);
   const spy = vi.spyOn((provider as any).client, 'sendEmail').mockImplementation(async () => {

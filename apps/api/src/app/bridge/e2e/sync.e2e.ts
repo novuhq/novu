@@ -11,7 +11,7 @@ import { expect } from 'chai';
 import getPort from 'get-port';
 import { TestBridgeServer } from '../../../../e2e/test-bridge-server';
 
-describe('Bridge Sync - /bridge/sync (POST) #novu-v2', async () => {
+describe('Bridge Sync - /bridge/sync (POST) #novu-v2', () => {
   let session: UserSession;
   const environmentRepository = new EnvironmentRepository();
   const workflowsRepository = new NotificationTemplateRepository();
@@ -739,6 +739,142 @@ describe('Bridge Sync - /bridge/sync (POST) #novu-v2', async () => {
       _id: dashboardWorkflow._id,
     });
     expect(workflows).to.deep.equal(dashboardWorkflow);
+  });
+
+  describe('SSRF protection', () => {
+    // Locks in the SSRF guard — see Sync.assertSafeBridgeUrl. /bridge/sync is
+    // gated by BRIDGE_WRITE, but an authenticated operator must not be able to
+    // repoint the bridge at internal hosts (loopback name, cloud metadata) or
+    // sneak in non-http schemes / embedded credentials.
+    it('should reject bridgeUrl pointing at localhost', async () => {
+      const result = await session.testAgent.post(`/v1/bridge/sync`).send({
+        bridgeUrl: 'http://localhost:4000/api/novu',
+      });
+
+      expect(result.status).to.equal(400);
+      expect(JSON.stringify(result.body)).to.match(/bridgeUrl/i);
+    });
+
+    it('should reject bridgeUrl pointing at cloud metadata hostname', async () => {
+      const result = await session.testAgent.post(`/v1/bridge/sync`).send({
+        bridgeUrl: 'http://metadata.google.internal/computeMetadata/v1/',
+      });
+
+      expect(result.status).to.equal(400);
+      expect(JSON.stringify(result.body)).to.match(/bridgeUrl/i);
+    });
+
+    it('should reject bridgeUrl with embedded credentials', async () => {
+      const result = await session.testAgent.post(`/v1/bridge/sync`).send({
+        bridgeUrl: 'http://attacker:pass@example.com/api/novu',
+      });
+
+      expect(result.status).to.equal(400);
+    });
+
+    it('should reject bridgeUrl with non-http scheme', async () => {
+      const result = await session.testAgent.post(`/v1/bridge/sync`).send({
+        bridgeUrl: 'ftp://example.com/api/novu',
+      });
+
+      // CreateBridgeRequestDto's IsUrl validator rejects non-http schemes
+      // before the use-case runs, so the request fails at the DTO layer (422).
+      expect(result.status).to.equal(422);
+    });
+
+    // Locks in the connect-time DNS-pinned guard (enforceSsrfProtection:
+    // true). IP-literal private addresses pass the synchronous URL check but
+    // must be rejected before the TCP connect.
+    // Connect-time block returns a stable client-safe message — the
+    // resolved IP must NOT leak to the response (it's logged server-side
+    // instead).
+    it('should reject bridgeUrl pointing at link-local cloud metadata IP', async () => {
+      const result = await session.testAgent.post(`/v1/bridge/sync`).send({
+        bridgeUrl: 'http://169.254.169.254/computeMetadata/v1/',
+      });
+
+      expect(result.status).to.equal(400);
+      expect(JSON.stringify(result.body)).to.match(/blocked by the outbound SSRF policy/i);
+      expect(JSON.stringify(result.body)).to.not.match(/169\.254\.169\.254/);
+    });
+
+    it('should reject bridgeUrl pointing at RFC1918 private IP', async () => {
+      const result = await session.testAgent.post(`/v1/bridge/sync`).send({
+        bridgeUrl: 'http://10.0.0.1/api/novu',
+      });
+
+      expect(result.status).to.equal(400);
+      expect(JSON.stringify(result.body)).to.match(/blocked by the outbound SSRF policy/i);
+      expect(JSON.stringify(result.body)).to.not.match(/10\.0\.0\.1/);
+    });
+  });
+
+  describe('/bridge/validate (POST)', () => {
+    it('should report isValid false for localhost bridge URL', async () => {
+      const result = await session.testAgent.post(`/v1/bridge/validate`).send({
+        bridgeUrl: 'http://localhost:4000/api/novu',
+      });
+
+      expect(result.status).to.equal(201);
+      expect(result.body.data.isValid).to.equal(false);
+      expect(result.body.data.error).to.match(/localhost/i);
+    });
+
+    it('should report isValid false for cloud metadata hostname', async () => {
+      const result = await session.testAgent.post(`/v1/bridge/validate`).send({
+        bridgeUrl: 'http://metadata.google.internal/computeMetadata/v1/',
+      });
+
+      expect(result.status).to.equal(201);
+      expect(result.body.data.isValid).to.equal(false);
+      expect(result.body.data.error).to.match(/metadata\.google\.internal/i);
+    });
+
+    it('should reject non-http scheme at the DTO layer', async () => {
+      const result = await session.testAgent.post(`/v1/bridge/validate`).send({
+        bridgeUrl: 'ftp://example.com/api/novu',
+      });
+
+      // ValidateBridgeUrlRequestDto's IsUrl validator rejects non-http
+      // schemes before the controller runs, so the request fails at the DTO
+      // layer (422).
+      expect(result.status).to.equal(422);
+    });
+
+    it('should report isValid false for embedded credentials', async () => {
+      const result = await session.testAgent.post(`/v1/bridge/validate`).send({
+        bridgeUrl: 'http://attacker:pass@example.com/api/novu',
+      });
+
+      expect(result.status).to.equal(201);
+      expect(result.body.data.isValid).to.equal(false);
+      expect(result.body.data.error).to.match(/credentials/i);
+    });
+
+    // Connect-time block returns a stable client-safe message — the
+    // resolved IP must NOT leak to the response (it's logged server-side
+    // instead).
+    it('should report isValid false for link-local cloud metadata IP', async () => {
+      const result = await session.testAgent.post(`/v1/bridge/validate`).send({
+        bridgeUrl: 'http://169.254.169.254/computeMetadata/v1/',
+      });
+
+      expect(result.status).to.equal(201);
+      expect(result.body.data.isValid).to.equal(false);
+      expect(result.body.data.error).to.match(/blocked by the outbound SSRF policy/i);
+      expect(result.body.data.error).to.not.match(/169\.254\.169\.254/);
+    });
+
+    it('should report isValid false for RFC1918 private IP', async () => {
+      const result = await session.testAgent.post(`/v1/bridge/validate`).send({
+        bridgeUrl: 'http://10.0.0.1/api/novu',
+      });
+
+      expect(result.status).to.equal(201);
+      expect(result.body.data.isValid).to.equal(false);
+      expect(result.body.data.error).to.match(/blocked by the outbound SSRF policy/i);
+      expect(result.body.data.error).to.not.match(/10\.0\.0\.1/);
+    });
   });
 
   it('should allow syncing a workflow with same ID if original was created externally', async () => {

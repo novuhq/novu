@@ -50,20 +50,20 @@ jobs:
       pr_number: ${{ github.event.inputs.release_type == 'stable' && steps.create-pr.outputs.pull-request-number || '' }}
       pr_url: ${{ github.event.inputs.release_type == 'stable' && steps.create-pr.outputs.pull-request-url || '' }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           fetch-depth: 0
           fetch-tags: true
           ref: ${{ github.ref_name }}
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
         with:
-          version: 10.33.0
+          version: 11.0.9
           run_install: false
 
       - name: Setup Node Version
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: "22.22.1"
           cache: "pnpm"
@@ -76,7 +76,7 @@ jobs:
       - name: Install Dependencies
         shell: bash
         run: |
-          pnpm install --frozen-lockfile
+          pnpm ci
           pnpm nx --version
           pnpm list nx
 
@@ -142,7 +142,7 @@ jobs:
       - name: Create Pull Request
         if: github.event.inputs.release_type == 'stable'
         id: create-pr
-        uses: peter-evans/create-pull-request@v5
+        uses: peter-evans/create-pull-request@4e1beaa7521e8b457b572c090b25bd3db56bf1c5 # v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "chore: release ${{ github.event.inputs.version }} (${{ github.event.inputs.packages }})"
@@ -179,7 +179,7 @@ jobs:
       contents: write
       id-token: write
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           fetch-depth: 0
           fetch-tags: true
@@ -216,13 +216,13 @@ jobs:
           echo "✅ Extracted packages: $PACKAGES"
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
         with:
-          version: 10.33.0
+          version: 11.0.9
           run_install: false
 
       - name: Setup Node Version
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: "22.22.1"
           cache: "pnpm"
@@ -235,7 +235,7 @@ jobs:
       - name: Install Dependencies
         shell: bash
         run: |
-          pnpm install --frozen-lockfile
+          pnpm ci
 
       - name: Build packages
         env:

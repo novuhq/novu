@@ -1,0 +1,226 @@
+---
+title: "Gupshup SMS Integration with Novu"
+sidebarTitle: 'Gupshup'
+description: "Connect Gupshup to Novu to send SMS notifications through notification workflows. Step-by-step credential setup."
+---
+
+You can use the [Gupshup](https://www.gupshup.io/) provider to send SMS messages to your customers using the Novu Platform with a single API to create multi-channel experiences.
+
+## Getting Started
+
+To use the Gupshup provider in the SMS channel, the first step is to create a Gupshup account and add the Account User Id and Password to the Gupshup integration on the Novu platform.
+
+## What is User id and Password?
+
+- `User Id` : The account number provided by the Enterprise SMS GupShup.
+- `Password` : Password is provided by Gupshup for authentication of user id. The password must be the same as used to log on to the Enterprise SMS GupShup website.
+
+## Creating a gupshup integration with Novu
+
+- Visit the [Integrations](https://dashboard.novu.co/integrations?utm_campaign=docs-sms-gupshup) page on Novu.
+- Click the **Connect** button on the top right corner of the page.
+- Select SMS and locate **Gupshup** and click on the **Connect** button.
+- Choose environment from top right corner in which you want to create the integration.
+- Enter the `User id`.
+- Enter the `Password`.
+- Make sure **Active Integration** toggle is on to use this integration.
+- If you want to use this integration, then mark this integration as `primary` using **Primary Integration** toggle.
+- Click on the **Create Integration** button.
+
+Now it is possible to send SMS notifications using Gupshup in Novu.
+
+## Using Gupshup templateId
+
+Novu has its own SMS editor for writing SMS template. To use premade Gupshup templates, providers overrides can be used.
+
+<Note>
+  Sending `customData` field in overrides to send Gupshup template will work
+  only in following cases:
+
+- if workflow is triggered to only one subscriber
+  - if workflow is triggered to multiple subscribers or topic but Gupshup
+  template does not have any dynamic variables related to subscriber attributes
+  like `firstName`, `lastName`, `phone`, etc as same overrides will be applied
+  to all subscribers.
+</Note>
+
+<Tabs>
+  <Tab title="Node.js">
+```typescript
+import { Novu } from '@novu/api';
+
+const novu = new Novu({ secretKey: "<NOVU_SECRET_KEY>" });
+
+await novu.trigger({
+  workflowId: "WORKFLOW_ID",
+  to: { subscriberId: "SUBSCRIBER_ID", },
+  payload: {
+    "key": "value"
+},
+  overrides: {
+    "providers": {
+        "gupshup": {
+            "principalEntityId": "principal-entity-id",
+            "dltTemplateId": "dlt-template-id"
+        }
+    }
+},
+});
+```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="WORKFLOW_ID",
+        to={"subscriber_id": "SUBSCRIBER_ID"},
+        payload={
+        "key": "value"
+},
+        overrides={
+        "providers": {
+                "gupshup": {
+                        "principalEntityId": "principal-entity-id",
+                        "dltTemplateId": "dlt-template-id"
+                }
+        }
+},
+    ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "WORKFLOW_ID",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: "SUBSCRIBER_ID",
+    }),
+    Payload: map[string]any{
+    "key": "value"
+},
+    Overrides: map[string]any{
+    "providers": {
+        "gupshup": {
+            "principalEntityId": "principal-entity-id",
+            "dltTemplateId": "dlt-template-id"
+        }
+    }
+},
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()->setSecurity('<NOVU_SECRET_KEY>')->build();
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'WORKFLOW_ID',
+        to: new Components\SubscriberPayloadDto(subscriberId: 'SUBSCRIBER_ID'),
+        payload: {
+        "key": "value"
+},
+        overrides: {
+        "providers": {
+                "gupshup": {
+                        "principalEntityId": "principal-entity-id",
+                        "dltTemplateId": "dlt-template-id"
+                }
+        }
+},
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "WORKFLOW_ID",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() { SubscriberId = "SUBSCRIBER_ID" }),
+    Payload = {
+    "key": "value"
+},
+    Overrides = {
+    "providers": {
+        "gupshup": {
+            "principalEntityId": "principal-entity-id",
+            "dltTemplateId": "dlt-template-id"
+        }
+    }
+},
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+
+Novu novu = Novu.builder().secretKey("<NOVU_SECRET_KEY>").build();
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("WORKFLOW_ID")
+        .to(To2.of(SubscriberPayloadDto.builder().subscriberId("SUBSCRIBER_ID").build()))
+        .payload({
+        "key": "value"
+})
+        .overrides({
+        "providers": {
+                "gupshup": {
+                        "principalEntityId": "principal-entity-id",
+                        "dltTemplateId": "dlt-template-id"
+                }
+        }
+})
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl --location 'https://api.novu.co/v1/events/trigger' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+    "name": "WORKFLOW_ID",
+    "to": [
+        "SUBSCRIBER_ID"
+    ],
+    "payload": {
+        "key": "value"
+    },
+    "overrides": {
+        "providers": {
+            "gupshup": {
+                "principalEntityId": "principal-entity-id",
+                "dltTemplateId": "dlt-template-id"
+            }
+        }
+    }
+}'
+```
+  </Tab>
+</Tabs>

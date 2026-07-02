@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { EnvironmentVariableType } from '@novu/shared';
+import { EnvironmentVariableType, SECRET_MASK } from '@novu/shared';
 
-export const SECRET_MASK = '••••••••';
+export { SECRET_MASK };
 
 export class EnvironmentVariableValueResponseDto {
   @ApiProperty()

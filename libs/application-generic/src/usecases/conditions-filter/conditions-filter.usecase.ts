@@ -24,17 +24,17 @@ import {
   PreviousStepTypeEnum,
   TimeOperatorEnum,
 } from '@novu/shared';
-import axios from 'axios';
 import { differenceInDays, differenceInHours, differenceInMinutes, parseISO } from 'date-fns';
 import { decryptApiKey } from '../../encryption';
-import { buildSubscriberKey, CachedResponse } from '../../services';
+import { buildSubscriberKey, CachedResponse, safeOutboundJsonRequest } from '../../services';
 import {
+  assertSafeOutboundUrl,
   createHash,
   Filter,
   FilterProcessingDetails,
   IFilterVariables,
   PlatformException,
-  validateUrlSsrf,
+  SsrfBlockedError,
 } from '../../utils';
 import { CompileTemplate } from '../compile-template';
 import { CreateExecutionDetails, CreateExecutionDetailsCommand, DetailEnum } from '../create-execution-details';
@@ -252,38 +252,38 @@ export class ConditionsFilter extends Filter {
 
     const payload = await this.buildPayload(variables, command);
 
-    const hmac = await this.buildHmac(command);
-
-    const config: { headers: Record<string, string> } = {
-      headers: {},
-    };
-
-    if (hmac) {
-      config.headers['nv-hmac-256'] = hmac;
+    // Validate the URL syntax before any HMAC is built; the connect-time guard
+    // and redirect re-validation happen inside safeOutboundJsonRequest.
+    try {
+      assertSafeOutboundUrl(child.webhookUrl);
+    } catch (err) {
+      if (err instanceof SsrfBlockedError) {
+        throw new Error(JSON.stringify({ message: err.message, data: 'Webhook URL blocked by SSRF protection.' }));
+      }
+      throw err;
     }
 
-    const ssrfError = await validateUrlSsrf(child.webhookUrl);
-
-    if (ssrfError) {
-      throw new Error(
-        JSON.stringify({
-          message: ssrfError,
-          data: 'Webhook URL blocked by SSRF protection.',
-        })
-      );
+    const hmac = await this.buildHmac(command);
+    const headers: Record<string, string> = {};
+    if (hmac) {
+      headers['nv-hmac-256'] = hmac;
     }
 
     try {
-      return await axios.post(child.webhookUrl, payload, config).then((response) => {
-        return response.data as Record<string, unknown>;
+      const response = await safeOutboundJsonRequest<Record<string, unknown>>({
+        url: child.webhookUrl,
+        method: 'POST',
+        headers,
+        body: payload,
       });
-    } catch (err: any) {
-      throw new Error(
-        JSON.stringify({
-          message: err.message,
-          data: 'Exception while performing webhook request.',
-        })
-      );
+
+      return response.body;
+    } catch (err) {
+      if (err instanceof SsrfBlockedError) {
+        throw new Error(JSON.stringify({ message: err.message, data: 'Webhook URL blocked by SSRF protection.' }));
+      }
+      const message = err instanceof Error ? err.message : String(err);
+      throw new Error(JSON.stringify({ message, data: 'Exception while performing webhook request.' }));
     }
   }
 

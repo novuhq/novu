@@ -3,13 +3,23 @@ import { buildSubscriber } from '@novu/js/internal';
 import { createContext, ReactNode, useContext, useMemo } from 'react';
 
 export type NovuProviderProps = NovuOptions & {
+  /**
+   * When `false`, disables the WebSocket subscription that auto-injects
+   * newly received notifications into the list and subscription that auto-resync
+   * notification counts. Built-in mutations like
+   * `readAll`, `seenAll`, `archiveAll`, and `archiveAllRead` continue to
+   * update local state. Use this when you want to drive new-notification updates yourself (e.g.
+   * via your own `novu.on('notifications.notification_received', ...)`
+   * handler combined with `refetch()`). Defaults to `true`.
+   */
+  realtime?: boolean;
   children: ReactNode;
 };
 
-const NovuContext = createContext<Novu | undefined>(undefined);
+const NovuContext = createContext<{ novu: Novu; realtime: boolean }>({ novu: undefined as any, realtime: true });
 
 export const NovuProvider = (props: NovuProviderProps) => {
-  const { subscriberId, ...propsWithoutSubscriberId } = props;
+  const { subscriberId, realtime = true, ...propsWithoutSubscriberId } = props;
   const subscriberObj = useMemo(
     () => buildSubscriber({ subscriberId, subscriber: props.subscriber }),
     [subscriberId, props.subscriber]
@@ -22,6 +32,7 @@ export const NovuProvider = (props: NovuProviderProps) => {
     ...propsWithoutSubscriberId,
     applicationIdentifier,
     subscriber: subscriberObj,
+    realtime,
   };
 
   return (
@@ -52,11 +63,12 @@ export const InternalNovuProvider = (props: NovuProviderProps) => {
     useCache,
     defaultSchedule,
     context,
+    realtime = true,
   } = props;
 
-  const novu = useMemo(
-    () =>
-      new Novu({
+  const value = useMemo(
+    () => ({
+      novu: new Novu({
         applicationIdentifier,
         subscriberHash,
         contextHash,
@@ -69,6 +81,8 @@ export const InternalNovuProvider = (props: NovuProviderProps) => {
         defaultSchedule,
         context,
       }),
+      realtime,
+    }),
     [
       applicationIdentifier,
       subscriberHash,
@@ -80,23 +94,30 @@ export const InternalNovuProvider = (props: NovuProviderProps) => {
       socketUrl,
       socketOptions,
       useCache,
+      realtime,
     ]
   );
 
-  return <NovuContext.Provider value={novu}>{children}</NovuContext.Provider>;
+  return <NovuContext.Provider value={value}>{children}</NovuContext.Provider>;
 };
 
 export const useNovu = () => {
   const context = useContext(NovuContext);
-  if (!context) {
+  if (!context.novu) {
     throw new Error('useNovu must be used within a <NovuProvider />');
   }
 
-  return context;
+  return context.novu;
 };
 
 export const useUnsafeNovu = () => {
   const context = useContext(NovuContext);
 
-  return context;
+  return context.novu;
+};
+
+export const useRealtime = () => {
+  const context = useContext(NovuContext);
+
+  return context.realtime;
 };

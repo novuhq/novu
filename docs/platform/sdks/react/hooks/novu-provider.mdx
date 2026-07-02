@@ -1,0 +1,108 @@
+---
+title: "NovuProvider"
+description: "Learn how to use the NovuProvider component to set up the Novu context in your React application"
+---
+
+The `NovuProvider` is the top-level component that provides the [Novu instance](/platform/inbox/headless-mode) to the rest of the hooks through the context.
+Usually, it's placed somewhere in the root of your application, which makes the hooks accessible throughout the application.
+
+## Props
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `subscriberId` | `string` | The unique identifier of the subscriber |
+| `applicationIdentifier` | `string` | Your application identifier from Novu |
+| `subscriberHash` | `string` | HMAC encryption hash for the subscriber |
+| `context` | `object` | Defines contextual attributes (for example, tenant, app, team) for filtering and personalizing notifications. |
+| `contextHash` | `string` | The HMAC-SHA256 hash of the context object. Required if context is provided and HMAC is enabled. |
+| `apiUrl` | `string` | Custom backend URL for self-hosted instances |
+| `socketUrl` | `string` | Custom socket URL for self-hosted instances |
+| `children` | `ReactNode` | The child components that will have access to the Novu context |
+
+## Example Usage
+
+<Tabs>
+  <Tab title="US">
+    ```tsx
+
+    function App() {
+      return (
+        <NovuProvider
+          subscriber="SUBSCRIBER_ID"
+          applicationIdentifier="APPLICATION_IDENTIFIER"
+        >
+          {/* Your app components */}
+        </NovuProvider>
+      );
+    }
+    ```
+
+  </Tab>
+  <Tab title="EU">
+    ```tsx
+
+    function App() {
+      return (
+        <NovuProvider
+          subscriber="SUBSCRIBER_ID"
+          applicationIdentifier="APPLICATION_IDENTIFIER"
+          apiUrl="https://eu.api.novu.co"
+          socketUrl="wss://eu.socket.novu.co"
+        >
+          {/* Your app components */}
+        </NovuProvider>
+      );
+    }
+    ```
+
+  </Tab>
+  <Tab title="Using Context">
+    <Note>
+      Learn how to use Context for filtering and personalization in the [Inbox withContext](/platform/inbox/configuration/inbox-with-context) guide.
+    </Note>
+    ```tsx
+
+    function App() {
+      return (
+      <NovuProvider
+        applicationIdentifier="APPLICATION_IDENTIFIER"
+        subscriber="SUBSCRIBER_ID"
+        context={{
+          tenant: { id: "org-123" }
+        }}
+      >
+        <App />
+      </NovuProvider>
+      );
+    }
+
+    // In child components
+    const MyComponent = () => {
+      const novu = useNovu();
+      console.log(novu.context);
+      // Logs: { tenant: { id: "org-123" } }
+    };
+    ```
+  </Tab>
+  <Tab title="HMAC Encryption">
+    <Note>
+      Read more about [HMAC Encryption](/platform/inbox/prepare-for-production#secure-your-inbox-with-hmac-encryption).
+    </Note>
+
+    ```tsx
+
+    function App() {
+      return (
+        <NovuProvider
+          subscriber="SUBSCRIBER_ID"
+          applicationIdentifier="APPLICATION_IDENTIFIER"
+          subscriberHash="SUBSCRIBER_HASH_HMAC_ENCRYPTION"
+        >
+          {/* Your app components */}
+        </NovuProvider>
+      );
+    }
+    ```
+
+  </Tab>
+</Tabs>

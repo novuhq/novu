@@ -21,7 +21,9 @@ export class BuildLayoutIssuesUsecase {
   constructor(
     private layoutVariablesSchemaUseCase: LayoutVariablesSchemaUseCase,
     private logger: PinoLogger
-  ) {}
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   @InstrumentUsecase()
   async execute(command: BuildLayoutIssuesCommand): Promise<LayoutIssuesDto> {

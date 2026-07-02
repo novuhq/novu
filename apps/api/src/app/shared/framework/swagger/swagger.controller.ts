@@ -78,6 +78,9 @@ function buildBaseOptions() {
     })
     .addTag('Translations', `Used to localize your notifications to different languages.`, {
       url: 'https://docs.novu.co/platform/workflow/advanced-features/translations',
+    })
+    .addTag('Domains', `Used to manage your inbound email domains.`, {
+      url: 'https://docs.novu.co/platform/domains',
     });
 
   return options;

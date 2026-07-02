@@ -14,14 +14,14 @@ export const useDeleteEnvironmentVariable = (
   const { mutateAsync, ...rest } = useMutation({
     mutationFn: ({ variableKey }: DeleteEnvironmentVariableArgs) => deleteEnvironmentVariable(variableKey),
     ...options,
-    onSuccess: async (_, variables, ctx) => {
+    onSuccess: async (_, variables, onMutateResult, context) => {
       queryClient.removeQueries({ queryKey: [QueryKeys.fetchEnvironmentVariable, variables.variableKey], exact: true });
       queryClient.invalidateQueries({
         queryKey: [QueryKeys.fetchEnvironmentVariables],
         exact: false,
         refetchType: 'all',
       });
-      options?.onSuccess?.(_, variables, ctx);
+      options?.onSuccess?.(_, variables, onMutateResult, context);
     },
   });
 

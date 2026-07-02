@@ -55,7 +55,7 @@ export class SendTestEmail {
 
     if (integration.providerId === EmailProviderIdEnum.Novu) {
       integration.credentials = await this.getNovuProviderCredentials.execute({
-        channelType: integration.channel,
+        channelType: ChannelTypeEnum.EMAIL,
         providerId: integration.providerId,
         environmentId: integration._environmentId,
         organizationId: integration._organizationId,

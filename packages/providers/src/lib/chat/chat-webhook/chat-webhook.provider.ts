@@ -1,4 +1,10 @@
 import { ChatProviderIdEnum } from '@novu/shared';
+import { safeOutboundJsonRequest } from '@novu/shared/utils/safe-outbound-http';
+import {
+  assertSafeOutboundUrl,
+  normalizeOutboundHttpUrl,
+  SsrfBlockedError,
+} from '@novu/shared/utils/ssrf-url-validation';
 import {
   ChannelTypeEnum,
   ENDPOINT_TYPES,
@@ -7,7 +13,6 @@ import {
   ISendMessageSuccessResponse,
   isChannelDataOfType,
 } from '@novu/stateless';
-import axios from 'axios';
 import crypto from 'crypto';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
@@ -42,25 +47,51 @@ export class ChatWebhookProvider extends BaseProvider implements IChatProvider {
       channel: endpoint.channel,
       phoneNumber,
     });
-    const body = this.createBody(data.body);
+
+    const targetUrlRaw = (data?.body?.webhookUrl as string) || endpoint.url;
+    const targetUrl = normalizeOutboundHttpUrl(targetUrlRaw);
+
+    if (!targetUrl) {
+      throw new Error('Chat webhook URL blocked: Invalid URL format.');
+    }
+
+    // Validate the destination before computing the HMAC, so a blocked URL
+    // never sees the signed payload. The connect-time DNS guard and redirect
+    // re-validation happen inside safeOutboundJsonRequest.
+    try {
+      assertSafeOutboundUrl(targetUrl);
+    } catch (err) {
+      if (err instanceof SsrfBlockedError) {
+        throw new Error(`Chat webhook URL blocked: ${err.message}`);
+      }
+      throw err;
+    }
 
     const hmacSecretKey = (data.body.hmacSecretKey as string) || this.config.hmacSecretKey;
-    const hmacValue = this.computeHmac(body, hmacSecretKey);
-
     if (data.body.hmacSecretKey as string) {
       delete data.body.hmacSecretKey;
     }
+    const body = this.createBody(data.body);
+    const hmacValue = this.computeHmac(body, hmacSecretKey);
 
-    const response = await axios.create().post((data?.body?.webhookUrl as string) || endpoint.url, body, {
+    const response = await safeOutboundJsonRequest<{ id: string }>({
+      url: targetUrl,
+      method: 'POST',
       headers: {
         'content-type': 'application/json',
         'X-Novu-Signature': hmacValue,
         ...data.headers,
       },
+      body,
+    }).catch((err: unknown) => {
+      if (err instanceof SsrfBlockedError) {
+        throw new Error(`Chat webhook URL blocked: ${err.message}`);
+      }
+      throw err;
     });
 
     return {
-      id: response.data.id,
+      id: response.body?.id,
       date: new Date().toDateString(),
     };
   }

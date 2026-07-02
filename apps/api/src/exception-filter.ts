@@ -56,17 +56,23 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const user = req.user as UserSessionData;
     const basicLog = buildLog(request, statusCode, errorDto, user);
 
-    try {
-      if (basicLog) {
-        this.requestLogRepository.create(basicLog, {
-          organizationId: user?.organizationId,
-          environmentId: user?.environmentId,
-          userId: user?._id,
-        });
-      }
-    } catch (err) {
-      this.logger.warn({ err }, 'Failed to log analytics to ClickHouse after retries');
-    }
+    if (!basicLog) return;
+
+    /**
+     * Fire-and-forget the ClickHouse write so a slow or failing analytics
+     * pipeline never blocks the error response. The `.catch` handler is
+     * required to prevent unhandled promise rejections from escaping to
+     * the runtime when the underlying ClickHouse write rejects.
+     */
+    this.requestLogRepository
+      .create(basicLog, {
+        organizationId: user?.organizationId,
+        environmentId: user?.environmentId,
+        userId: user?._id,
+      })
+      .catch((err) => {
+        this.logger.warn({ err }, 'Failed to log analytics to ClickHouse after retries');
+      });
   }
 
   private async shouldRun(ctx: HttpArgumentsHost): Promise<boolean> {

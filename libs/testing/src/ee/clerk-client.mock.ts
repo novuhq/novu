@@ -1,5 +1,7 @@
-import type { Organization, OrganizationMembership, User } from '@clerk/backend';
-import type { OrganizationAPI, UserAPI } from '@clerk/backend/dist/api/endpoints';
+import type { ClerkClient, Organization, OrganizationMembership, User } from '@clerk/backend';
+
+type UserAPI = ClerkClient['users'];
+type OrganizationAPI = ClerkClient['organizations'];
 import {
   CLERK_ORGANIZATION_1,
   CLERK_ORGANIZATION_1_MEMBERSHIP_1,

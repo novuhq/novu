@@ -45,7 +45,7 @@ export class GetWebhookPortalTokenUsecase {
         throw new NotFoundException(`Portal not found for environment ${command.environmentId}`);
       }
 
-      throw new BadRequestException(`Failed to generate Svix portal token: ${error?.message}`);
+      throw new BadRequestException(`Failed to generate webhook portal token: ${error?.message}`);
     }
   }
 }

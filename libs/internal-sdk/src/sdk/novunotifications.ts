@@ -353,7 +353,9 @@ export class NovuNotifications extends ClientSDK {
    * Retrieve subscriber notifications
    *
    * @remarks
-   * Retrieve subscriber in-app (inbox) notifications by its unique key identifier **subscriberId**.
+   * This API is deprecated, use v2 API instead. Retrieve subscriber in-app notifications by its unique key identifier **subscriberId**.
+   *
+   * @deprecated method: This will be removed in a future release, please migrate away from it as soon as possible.
    */
   async feed(
     request: operations.SubscribersV1ControllerGetNotificationsFeedRequest,
@@ -370,7 +372,9 @@ export class NovuNotifications extends ClientSDK {
    * Retrieve unseen notifications count
    *
    * @remarks
-   * Retrieve unseen in-app (inbox) notifications count for a subscriber by its unique key identifier **subscriberId**.
+   * This API is deprecated, use v2 API instead. Retrieve unseen in-app notifications count for a subscriber by its unique key identifier **subscriberId**.
+   *
+   * @deprecated method: This will be removed in a future release, please migrate away from it as soon as possible.
    */
   async unseenCount(
     request: operations.SubscribersV1ControllerGetUnseenCountRequest,

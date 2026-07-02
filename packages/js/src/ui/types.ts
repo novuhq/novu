@@ -9,6 +9,7 @@ import {
   commonAppearanceKeys,
   connectChatAppearanceKeys,
   inboxAppearanceKeys,
+  linkMsTeamsUserAppearanceKeys,
   linkSlackUserAppearanceKeys,
   subscriptionAppearanceKeys,
 } from './config';
@@ -325,6 +326,7 @@ export type SubscriptionAppearanceCallbackFunction<K extends SubscriptionAppeara
 export type SubscriptionAppearanceKey = (typeof subscriptionAppearanceKeys)[number];
 export type ConnectChatAppearanceKey = (typeof connectChatAppearanceKeys)[number];
 export type SlackLinkUserAppearanceKey = (typeof linkSlackUserAppearanceKeys)[number];
+export type MsTeamsLinkUserAppearanceKey = (typeof linkMsTeamsUserAppearanceKeys)[number];
 export type ChannelConnectButtonAppearanceKey = (typeof channelConnectButtonAppearanceKeys)[number];
 
 // SLACK LINK USER APPEARANCE
@@ -338,6 +340,18 @@ export type SlackLinkUserAppearanceCallback = {
 export type SlackLinkUserAppearanceCallbackKeys = keyof SlackLinkUserAppearanceCallback;
 export type SlackLinkUserAppearanceCallbackFunction<K extends SlackLinkUserAppearanceCallbackKeys> =
   SlackLinkUserAppearanceCallback[K];
+
+// MS TEAMS LINK USER APPEARANCE
+export type MsTeamsLinkUserAppearanceCallback = {
+  linkMsTeamsUserContainer: (context: { linked: boolean }) => string;
+  linkMsTeamsUserButton: (context: { linked: boolean }) => string;
+  linkMsTeamsUserButtonContainer: (context: { linked: boolean }) => string;
+  linkMsTeamsUserButtonIcon: (context: { linked: boolean }) => string;
+  linkMsTeamsUserButtonLabel: (context: { linked: boolean }) => string;
+};
+export type MsTeamsLinkUserAppearanceCallbackKeys = keyof MsTeamsLinkUserAppearanceCallback;
+export type MsTeamsLinkUserAppearanceCallbackFunction<K extends MsTeamsLinkUserAppearanceCallbackKeys> =
+  MsTeamsLinkUserAppearanceCallback[K];
 
 // CHANNEL CONNECT BUTTON APPEARANCE
 export type ChannelConnectButtonAppearanceCallback = {
@@ -376,6 +390,7 @@ export type AllAppearanceCallbackKeys =
   | InboxAppearanceCallbackKeys
   | SubscriptionAppearanceCallbackKeys
   | SlackLinkUserAppearanceCallbackKeys
+  | MsTeamsLinkUserAppearanceCallbackKeys
   | ChannelConnectButtonAppearanceCallbackKeys;
 export type AllAppearanceCallbackFunction<K extends AllAppearanceCallbackKeys> = K extends InboxAppearanceCallbackKeys
   ? InboxAppearanceCallbackFunction<K>
@@ -383,15 +398,18 @@ export type AllAppearanceCallbackFunction<K extends AllAppearanceCallbackKeys> =
     ? SubscriptionAppearanceCallbackFunction<K>
     : K extends SlackLinkUserAppearanceCallbackKeys
       ? SlackLinkUserAppearanceCallbackFunction<K>
-      : K extends ChannelConnectButtonAppearanceCallbackKeys
-        ? ChannelConnectButtonAppearanceCallbackFunction<K>
-        : never;
+      : K extends MsTeamsLinkUserAppearanceCallbackKeys
+        ? MsTeamsLinkUserAppearanceCallbackFunction<K>
+        : K extends ChannelConnectButtonAppearanceCallbackKeys
+          ? ChannelConnectButtonAppearanceCallbackFunction<K>
+          : never;
 export type AllAppearanceKey =
   | CommonAppearanceKey
   | InboxAppearanceKey
   | SubscriptionAppearanceKey
   | ConnectChatAppearanceKey
   | SlackLinkUserAppearanceKey
+  | MsTeamsLinkUserAppearanceKey
   | ChannelConnectButtonAppearanceKey;
 export type AllElements = Partial<
   {

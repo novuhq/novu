@@ -17,12 +17,18 @@ export interface IProvider {
   }>;
 }
 
+export interface IEmailAlternative {
+  contentType: string;
+  content: string | Buffer;
+}
+
 export interface IEmailOptions {
   to: string[];
   subject: string;
   html: string;
   from?: string;
   text?: string;
+  alternatives?: IEmailAlternative[];
   attachments?: IAttachmentOptions[];
   id?: string;
   replyTo?: string;

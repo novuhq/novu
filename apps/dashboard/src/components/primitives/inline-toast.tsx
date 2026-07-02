@@ -8,6 +8,7 @@ const inlineToastVariants = cva('flex items-center justify-between gap-3 rounded
     variant: {
       tip: 'border-neutral-100 bg-neutral-50',
       warning: 'border-warning/20 bg-warning/10',
+      'soft-warning': 'border-neutral-100 bg-neutral-50',
       success: 'border-success/20 bg-success/10',
       error: 'border-destructive/20 bg-destructive/10',
       info: 'border-information/20 bg-information/10',
@@ -21,6 +22,7 @@ const inlineToastVariants = cva('flex items-center justify-between gap-3 rounded
 const VARIANT_COLORS = {
   tip: 'bg-[#717784]',
   warning: 'bg-warning',
+  'soft-warning': 'bg-warning',
   success: 'bg-success',
   error: 'bg-destructive',
   info: 'bg-information',
@@ -29,6 +31,7 @@ const VARIANT_COLORS = {
 const BUTTON_COLORS = {
   tip: 'text-[#DD2450]',
   warning: 'text-warning',
+  'soft-warning': 'text-warning',
   success: 'text-success',
   error: 'text-destructive',
   info: 'text-information',

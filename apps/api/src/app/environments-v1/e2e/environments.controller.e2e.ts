@@ -1,5 +1,6 @@
 import { Novu } from '@novu/api';
-import { ApiServiceLevelEnum, EnvironmentEnum } from '@novu/shared';
+import { IntegrationRepository } from '@novu/dal';
+import { ApiServiceLevelEnum, ChannelTypeEnum, EnvironmentEnum, InAppProviderIdEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { expectSdkExceptionGeneric, initNovuClassSdkInternalAuth } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
@@ -22,6 +23,28 @@ describe('Env Controller', async () => {
         expect(result).to.be.ok;
         expect(result.name).to.equal(name);
       });
+    });
+
+    it('should default the in-app integration HMAC to ON for non-dev environments (NV-7593)', async () => {
+      await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.BUSINESS);
+
+      const { environmentRequestDto } = generateRandomEnvRequest();
+      const createdEnv = await novuClient.environments.create(environmentRequestDto);
+      expect(createdEnv.result).to.be.ok;
+
+      const integrationRepository = new IntegrationRepository();
+      const inAppIntegration = await integrationRepository.findOne({
+        _organizationId: session.organization._id,
+        _environmentId: createdEnv.result?.id!,
+        providerId: InAppProviderIdEnum.Novu,
+        channel: ChannelTypeEnum.IN_APP,
+      });
+
+      expect(inAppIntegration, 'in-app integration should be provisioned for the new environment').to.be.ok;
+      expect(
+        inAppIntegration?.credentials?.hmac,
+        'HMAC must default to true for non-dev environments to prevent inbox session HMAC fail-open'
+      ).to.equal(true);
     });
 
     [ApiServiceLevelEnum.PRO, ApiServiceLevelEnum.FREE].forEach((serviceLevel) => {

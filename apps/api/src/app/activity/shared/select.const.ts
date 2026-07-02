@@ -38,5 +38,6 @@ export const requestLogSelectColumns = [
   'organization_id',
   'environment_id',
   'transaction_id',
+  'source',
 ] as const;
 type GetRequestLogFetchResult = Pick<RequestLog, (typeof requestLogSelectColumns)[number]>;

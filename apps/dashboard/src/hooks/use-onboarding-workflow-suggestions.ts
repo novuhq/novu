@@ -9,6 +9,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { fetchOnboardingWorkflowSuggestions, OnboardingSuggestionsResponse } from '@/api/ai';
 import { IWorkflowSuggestion } from '@/components/template-store/types';
+import { IS_AI_FEATURES_ENABLED } from '@/config';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFeatureFlag } from './use-feature-flag';
 import { QuickTemplate } from './use-template-store';
@@ -52,12 +53,21 @@ function mapWorkflowToQuickTemplate(wf: WorkflowResponseDto): QuickTemplate {
 }
 
 export function useOnboardingWorkflowSuggestions() {
-  const isAiWorkflowGenerationEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_AI_WORKFLOW_GENERATION_ENABLED);
+  const isAiWorkflowGenerationEnabled =
+    useFeatureFlag(FeatureFlagsKeysEnum.IS_AI_WORKFLOW_GENERATION_ENABLED) && IS_AI_FEATURES_ENABLED;
   const { currentEnvironment } = useEnvironment();
 
-  const { data, isLoading, isError } = useQuery<OnboardingSuggestionsResponse>({
+  const {
+    data: queryData,
+    isLoading,
+    isError,
+  } = useQuery<OnboardingSuggestionsResponse>({
     queryKey: [QUERY_KEY, currentEnvironment?._id],
-    queryFn: () => fetchOnboardingWorkflowSuggestions({ environment: currentEnvironment! }),
+    queryFn: () => {
+      if (!currentEnvironment) throw new Error('Environment not loaded');
+
+      return fetchOnboardingWorkflowSuggestions({ environment: currentEnvironment });
+    },
     enabled: isAiWorkflowGenerationEnabled && !!currentEnvironment,
     refetchInterval: (query) => {
       const status = query.state.data?.status;
@@ -69,6 +79,7 @@ export function useOnboardingWorkflowSuggestions() {
     },
   });
 
+  const data = isAiWorkflowGenerationEnabled ? queryData : undefined;
   const status = data?.status ?? null;
   const isGenerating = status === 'pending' || status === 'generating';
   const hasPersonalizedSuggestions = status === 'completed' && (data?.suggestions?.length ?? 0) > 0;

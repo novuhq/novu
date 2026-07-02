@@ -1,6 +1,7 @@
 import { MiddlewareConsumer, ModuleMetadata } from '@nestjs/common';
 import {
   cacheService,
+  FeatureFlagsService,
   featureFlagsService,
   InMemoryLRUCacheService,
   PlatformException,
@@ -32,7 +33,7 @@ export function getEEModuleConfig(): ModuleMetadata {
       InMemoryLRUCacheService,
       RootEnvironmentGuard,
     ],
-    exports: [...eeAuthModule.exports, RootEnvironmentGuard, AuthService],
+    exports: [...eeAuthModule.exports, RootEnvironmentGuard, AuthService, FeatureFlagsService],
   };
 }
 

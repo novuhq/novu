@@ -2,11 +2,18 @@ import { InboxService } from '../api';
 import { BaseModule } from '../base-module';
 import { NovuEventEmitter } from '../event-emitter';
 import type { Result } from '../types';
-import { deleteChannelConnection, generateChatOAuthUrl, getChannelConnection, listChannelConnections } from './helpers';
+import {
+  deleteChannelConnection,
+  generateChatOAuthUrl,
+  generateConnectOAuthUrl,
+  getChannelConnection,
+  listChannelConnections,
+} from './helpers';
 import type {
   ChannelConnectionResponse,
   DeleteChannelConnectionArgs,
   GenerateChatOAuthUrlArgs,
+  GenerateConnectOAuthUrlArgs,
   GetChannelConnectionArgs,
   ListChannelConnectionsArgs,
 } from './types';
@@ -22,9 +29,22 @@ export class ChannelConnections extends BaseModule {
     super({ inboxServiceInstance, eventEmitterInstance });
   }
 
+  /**
+   * @deprecated Use generateConnectOAuthUrl() instead. For user-level linking use channelEndpoints.generateLinkUserOAuthUrl().
+   */
   async generateOAuthUrl(args: GenerateChatOAuthUrlArgs): Result<{ url: string }> {
     return this.callWithSession(() =>
       generateChatOAuthUrl({
+        emitter: this._emitter,
+        apiService: this._inboxService,
+        args,
+      })
+    );
+  }
+
+  async generateConnectOAuthUrl(args: GenerateConnectOAuthUrlArgs): Result<{ url: string }> {
+    return this.callWithSession(() =>
+      generateConnectOAuthUrl({
         emitter: this._emitter,
         apiService: this._inboxService,
         args,

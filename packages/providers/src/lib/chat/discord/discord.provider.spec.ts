@@ -1,6 +1,6 @@
 import { ENDPOINT_TYPES } from '@novu/shared';
 import { expect, test, vi } from 'vitest';
-import { axiosSpy } from '../../../utils/test/spy-axios';
+import { safeOutboundJsonSpy } from '../../../utils/test/spy-safe-outbound';
 import { DiscordProvider } from './discord.provider';
 
 test('should trigger Discord provider correctly', async () => {
@@ -36,8 +36,8 @@ test('should trigger Discord provider correctly', async () => {
 });
 
 test('should trigger Discord provider correctly with _passthrough', async () => {
-  const { mockPost } = axiosSpy({
-    data: {
+  const { mockSafeOutboundJsonRequest } = safeOutboundJsonSpy({
+    body: {
       id: 'id',
       timestamp: new Date().toISOString(),
     },
@@ -64,7 +64,12 @@ test('should trigger Discord provider correctly with _passthrough', async () => 
     }
   );
 
-  expect(mockPost).toHaveBeenCalledWith('https://www.google.com/?wait=true', {
-    content: 'passthrough content',
+  expect(mockSafeOutboundJsonRequest).toHaveBeenCalledWith({
+    url: 'https://www.google.com/?wait=true',
+    method: 'POST',
+    headers: undefined,
+    body: {
+      content: 'passthrough content',
+    },
   });
 });

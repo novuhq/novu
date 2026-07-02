@@ -1,4 +1,4 @@
-import { IntegrationEntity } from '@novu/dal';
+import { EnvironmentRepository, IntegrationEntity } from '@novu/dal';
 import { ChannelTypeEnum, EmailProviderIdEnum, SmsProviderIdEnum } from '@novu/shared';
 import { IntegrationService, UserSession } from '@novu/testing';
 import { expect } from 'chai';
@@ -6,6 +6,7 @@ import { expect } from 'chai';
 describe('Get Active Integrations - Multi-Provider Configuration - /integrations/active (GET) #novu-v2', () => {
   let session: UserSession;
   const integrationService = new IntegrationService();
+  const envRepository = new EnvironmentRepository();
 
   beforeEach(async () => {
     session = new UserSession();
@@ -97,6 +98,35 @@ describe('Get Active Integrations - Multi-Provider Configuration - /integrations
     expect(allOrgSelectedIntegrations.length).to.equal(2);
     expect(allEnvSelectedIntegrations.length).to.equal(1);
     expect(allEnvNotSelectedIntegrations.length).to.equal(1);
+  });
+
+  describe('API key authentication is scoped to the key environment', () => {
+    it('should only return active integrations for the API key environment', async () => {
+      const activeIntegrations: IntegrationEntity[] = (
+        await session.testAgent.get(`/v1/integrations/active`).set('authorization', `ApiKey ${session.apiKey}`)
+      ).body.data;
+
+      expect(activeIntegrations.length).to.be.greaterThan(0);
+      for (const integration of activeIntegrations) {
+        expect(integration.active).to.equal(true);
+        expect(integration._environmentId).to.equal(session.environment._id);
+      }
+    });
+
+    it('should still return active integrations from all environments when authenticated via session', async () => {
+      const activeIntegrations: IntegrationEntity[] = (await session.testAgent.get(`/v1/integrations/active`)).body
+        .data;
+      const prodEnv = await envRepository.findOne({ name: 'Production', _organizationId: session.organization._id });
+      expect(prodEnv?._id, 'Expected Production environment fixture').to.exist;
+
+      const fromOtherEnvs = activeIntegrations.filter(
+        (integration) => integration._environmentId !== session.environment._id
+      );
+      const fromProd = activeIntegrations.filter((integration) => integration._environmentId === prodEnv!._id);
+
+      expect(fromOtherEnvs.length).to.be.greaterThan(0);
+      expect(fromProd.length).to.be.greaterThan(0);
+    });
   });
 });
 

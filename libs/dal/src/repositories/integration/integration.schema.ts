@@ -1,3 +1,4 @@
+import { EmailProviderIdEnum } from '@novu/shared';
 import mongoose, { Schema } from 'mongoose';
 
 import { schemaOptions } from '../schema-default.options';
@@ -18,6 +19,11 @@ const integrationSchema = new Schema<IntegrationDBModel>(
     },
     providerId: Schema.Types.String,
     channel: Schema.Types.String,
+    kind: {
+      type: Schema.Types.String,
+      enum: ['delivery', 'agent'],
+      default: 'delivery',
+    },
     credentials: {
       apiVersion: Schema.Types.String,
       apiKey: Schema.Types.String,
@@ -61,22 +67,42 @@ const integrationSchema = new Schema<IntegrationDBModel>(
       apiToken: Schema.Types.String,
       channelId: Schema.Types.String,
       phoneNumberIdentification: Schema.Types.String,
+      businessAccountId: Schema.Types.String,
       accessKey: Schema.Types.String,
       appSid: Schema.Types.String,
       senderId: Schema.Types.String,
       servicePlanId: Schema.Types.String,
       tenantId: Schema.Types.String,
       signingSecret: Schema.Types.String,
+      outboundIntegrationId: Schema.Types.String,
+      useFromAddressOverride: Schema.Types.Boolean,
+      fromAddressOverride: Schema.Types.String,
+      emailSlugPrefix: Schema.Types.String,
+      inboxRoutingKey: Schema.Types.String,
+      sharedInboxDisabled: Schema.Types.Boolean,
       AppIOBaseUrl: Schema.Types.String,
       AppIOSubscriptionId: Schema.Types.String,
       AppIOBearerToken: Schema.Types.String,
       AppIOOriginalSignature: Schema.Types.String,
+      externalEnvironmentId: Schema.Types.String,
+      externalVaultId: Schema.Types.String,
+      externalWorkspaceId: Schema.Types.String,
     },
     configurations: {
       inboundWebhookEnabled: Schema.Types.Boolean,
       inboundWebhookSigningKey: Schema.Types.String,
       configurationSetName: Schema.Types.String,
       inboxCount: Schema.Types.String,
+    },
+    provisioning: {
+      status: {
+        type: Schema.Types.String,
+        enum: ['pending', 'ready', 'failed'],
+      },
+      startedAt: Schema.Types.String,
+      completedAt: Schema.Types.String,
+      errorMessage: Schema.Types.String,
+      teamsAppCatalogId: Schema.Types.String,
     },
     active: {
       type: Schema.Types.Boolean,
@@ -110,6 +136,11 @@ const integrationSchema = new Schema<IntegrationDBModel>(
       },
     ],
     connected: Schema.Types.Boolean,
+    _parentId: {
+      type: Schema.Types.ObjectId,
+      required: false,
+      default: null,
+    },
   },
   schemaOptions
 );
@@ -122,6 +153,24 @@ integrationSchema.index({
 integrationSchema.index({
   _environmentId: 1,
 });
+
+/**
+ * Globally-unique routing key for the agent default shared inbox feature
+ * (`{emailSlugPrefix}-{inboxRoutingKey}@<shared-domain>`). The partial filter
+ * scopes the index to NovuAgent rows so every other provider stays unconstrained
+ * — and lets a string-typed `inboxRoutingKey` exist on legacy NovuAgent docs
+ * provisioned before this field was added without forcing a backfill.
+ */
+integrationSchema.index(
+  { 'credentials.inboxRoutingKey': 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      providerId: EmailProviderIdEnum.NovuAgent,
+      'credentials.inboxRoutingKey': { $type: 'string' },
+    },
+  }
+);
 
 integrationSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrideMethods: 'all' });
 

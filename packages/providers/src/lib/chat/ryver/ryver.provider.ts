@@ -7,15 +7,14 @@ import {
   ISendMessageSuccessResponse,
   isChannelDataOfType,
 } from '@novu/stateless';
-import axios from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { resolveSafeChatWebhookUrl, safeChatWebhookJsonRequest } from '../../../utils/safe-chat-webhook-request';
 import { WithPassthrough } from '../../../utils/types';
 
 export class RyverChatProvider extends BaseProvider implements IChatProvider {
   public id = ChatProviderIdEnum.Ryver;
   protected casing: CasingEnum = CasingEnum.CAMEL_CASE;
   channelType = ChannelTypeEnum.CHAT as ChannelTypeEnum.CHAT;
-  private axiosInstance = axios.create();
 
   async sendMessage(
     options: IChatOptions,
@@ -26,16 +25,16 @@ export class RyverChatProvider extends BaseProvider implements IChatProvider {
     }
 
     const { channelData } = options;
-    const url = new URL(channelData.endpoint.url);
-    const response = await this.axiosInstance.post(
-      url.toString(),
-      this.transform(bridgeProviderData, {
+    const url = new URL(resolveSafeChatWebhookUrl(channelData.endpoint.url));
+    const response = await safeChatWebhookJsonRequest({
+      url: url.toString(),
+      body: this.transform(bridgeProviderData, {
         content: options.content,
-      }).body
-    );
+      }).body,
+    });
 
     return {
-      id: `${response.status}`,
+      id: `${response.statusCode}`,
       date: new Date().toISOString(),
     };
   }

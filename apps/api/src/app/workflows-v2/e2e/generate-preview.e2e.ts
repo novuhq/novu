@@ -13,7 +13,12 @@ import {
   WorkflowCreationSourceEnum,
   WorkflowResponseDto,
 } from '@novu/api/models/components';
-import { buildWorkflowSchema, DEFAULT_ARRAY_ELEMENTS, EmailControlType } from '@novu/application-generic';
+import {
+  buildActorSchema,
+  buildWorkflowSchema,
+  DEFAULT_ARRAY_ELEMENTS,
+  EmailControlType,
+} from '@novu/application-generic';
 import { EnvironmentRepository, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
 import { CronExpressionEnum, RedirectTargetEnum, StepTypeEnum, slugify } from '@novu/shared';
 import { UserSession } from '@novu/testing';
@@ -27,6 +32,17 @@ const TEST_WORKFLOW_NAME = 'Test Workflow Name';
 const SUBJECT_TEST_PAYLOAD = '{{payload.subject.test.payload}}';
 const PLACEHOLDER_SUBJECT_INAPP = '{{payload.subject}}';
 const PLACEHOLDER_SUBJECT_INAPP_PAYLOAD_VALUE = 'this is the replacement text for the placeholder';
+
+const EXPECTED_MOCK_ACTOR_PREVIEW = {
+  firstName: 'Jane',
+  lastName: 'Actor',
+  email: 'actor@example.com',
+  phone: '+1234567890',
+  avatar: 'https://example.com/avatar.png',
+  locale: 'en_US',
+  timezone: 'America/New_York',
+  data: {},
+};
 
 describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v2', async () => {
   let session: UserSession;
@@ -180,6 +196,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
             required: ['subscriberId'],
             additionalProperties: false,
           },
+          actor: buildActorSchema(undefined),
           steps: {
             type: 'object',
             properties: {},
@@ -271,6 +288,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
           timezone: 'America/New_York',
           data: {},
         },
+        actor: EXPECTED_MOCK_ACTOR_PREVIEW,
         payload: {
           placeholder: {
             body: 'This is a body',
@@ -471,6 +489,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
             required: ['subscriberId'],
             type: 'object',
           },
+          actor: buildActorSchema(undefined),
           steps: {
             type: 'object',
             properties: {},
@@ -533,6 +552,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
           timezone: 'America/New_York',
           data: {},
         },
+        actor: EXPECTED_MOCK_ACTOR_PREVIEW,
         payload: {
           placeholder: {
             body: 'Default body text',
@@ -544,6 +564,61 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
         steps: {},
       },
     });
+  });
+
+  it('should generate URL-safe in-app preview payload values for redirect URL variables', async () => {
+    const payloadSchema = {
+      type: 'object',
+      properties: {
+        reservation: {
+          type: 'string',
+        },
+        payment: {
+          type: 'string',
+        },
+      },
+    };
+    const workflow = await createWorkflow({}, payloadSchema);
+    await emulateExternalOrigin(workflow.id);
+
+    const stepId = workflow.steps[0].id;
+    const controlValues = {
+      subject: 'Payment pending',
+      body: 'Complete your payment',
+      primaryAction: {
+        label: 'Pay',
+        redirect: {
+          target: RedirectTargetEnum.SELF,
+          url: '/payments/{{payload.payment}}',
+        },
+      },
+      redirect: {
+        target: RedirectTargetEnum.SELF,
+        url: '/reservations/{{payload.reservation}}/payments',
+      },
+    };
+
+    const { result } = await novuClient.workflows.steps.generatePreview({
+      workflowId: workflow.id,
+      stepId,
+      generatePreviewRequestDto: {
+        controlValues,
+        previewPayload: {
+          payload: {
+            reservation: 'example text',
+            payment: 'example {payment}',
+          },
+        },
+      },
+    });
+
+    expect(result.result.type).to.equal(ChannelTypeEnum.InApp);
+    if (result.result.type !== ChannelTypeEnum.InApp) throw new Error('should have an in-app preview');
+
+    expect(result.previewPayloadExample.payload?.reservation).to.equal('example-text');
+    expect(result.previewPayloadExample.payload?.payment).to.equal('example-%7Bpayment%7D');
+    expect(result.result.preview.primaryAction?.redirect?.url).to.equal('/payments/example-%7Bpayment%7D');
+    expect(result.result.preview.redirect?.url).to.equal('/reservations/example-text/payments');
   });
 
   it('should return 201 for non-existent workflow', async () => {
@@ -1979,7 +2054,9 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
         _id: session.environment._id,
       },
       {
-        bridge: { url: `http://localhost:${process.env.PORT}/v1/environments/${session.environment._id}/bridge` },
+        bridge: {
+          url: `http://127.0.0.1:${process.env.PORT}/v1/environments/${session.environment._id}/bridge`,
+        },
       }
     );
   }

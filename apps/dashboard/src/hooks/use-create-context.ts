@@ -19,12 +19,12 @@ export const useCreateContext = (
       return createContext({ environment, ...args });
     },
     ...options,
-    onSuccess: async (data, variables, ctx) => {
+    onSuccess: async (data, variables, onMutateResult, context) => {
       queryClient.invalidateQueries({
         queryKey: [QueryKeys.fetchContexts],
       });
 
-      options?.onSuccess?.(data, variables, ctx);
+      options?.onSuccess?.(data, variables, onMutateResult, context);
     },
   });
 

@@ -1,25 +1,33 @@
-name: 'Pull Request Labeler'
+name: "Pull Request Labeler"
 
 on:
-  - pull_request_target
+  - pull_request
 
 jobs:
   on_pr:
+    # Skip on fork PRs. GitHub forces GITHUB_TOKEN to read-only for
+    # `pull_request` runs from forks regardless of the `permissions:`
+    # block, so the labeler can't add labels and the job fails with
+    # "Resource not accessible by integration". Skipping cleanly produces
+    # a "skipped" status (treated as passing by branch protection). Uses
+    # the same `head.repo.fork != true` discriminator as `test_e2e_api`
+    # in on-pr.yml.
+    if: ${{ github.event.pull_request.head.repo.fork != true }}
     permissions:
       contents: read
       pull-requests: write
       statuses: write
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
 
       - name: PR Labels
-        uses: actions/labeler@v4
+        uses: actions/labeler@ac9175f8a1f3625fd0d4fb234536d26811351594 # v4
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: PR Metrics
-        uses: microsoft/PR-Metrics@v1.5.7
+        uses: microsoft/PR-Metrics@e86b71aff6f8115577697864c63856d151bb6b33 # v1.5.7
         env:
           PR_METRICS_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:

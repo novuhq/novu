@@ -1,4 +1,4 @@
-import { useUser } from '@clerk/clerk-react';
+import { useUser } from '@clerk/react';
 import { NewDashboardOptInStatusEnum } from '@novu/shared';
 import { LEGACY_DASHBOARD_URL } from '@/config';
 import { useTelemetry } from '@/hooks/use-telemetry';

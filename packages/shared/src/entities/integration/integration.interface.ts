@@ -1,4 +1,10 @@
-import { ChannelTypeEnum, EnvironmentId, IPreviousStepFilterPart, OrganizationId } from '../../types';
+import {
+  ChannelTypeEnum,
+  EnvironmentId,
+  IntegrationKindEnum,
+  IPreviousStepFilterPart,
+  OrganizationId,
+} from '../../types';
 import { IConfigurations } from './configuration.interface';
 import { ICredentials } from './credential.interface';
 
@@ -11,7 +17,10 @@ export interface IIntegration {
 
   providerId: string;
 
-  channel: ChannelTypeEnum;
+  channel?: ChannelTypeEnum;
+
+  /** Distinguishes delivery integrations from agent-runtime integrations. Defaults to 'delivery'. */
+  kind?: IntegrationKindEnum;
 
   credentials: ICredentials;
 

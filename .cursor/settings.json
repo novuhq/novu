@@ -8,6 +8,9 @@
     },
     "clickhouse-cursor-plugin": {
       "enabled": true
+    },
+    "cursor-team-kit": {
+      "enabled": true
     }
   }
 }

@@ -1,0 +1,67 @@
+---
+title: 'React Email'
+description: 'Learn how to use React Email to build beautiful email templates'
+---
+
+React Email is a collection of high-quality, unstyled components for creating beautiful emails using React and TypeScript.
+It's a great way to build email templates that are consistent with your brand and easy to maintain.
+
+## Getting Started
+
+<Steps>
+    <Step title="Install React.Email components">
+        ```bash
+        npm install @react-email/components react-email
+        ```
+    </Step>
+    <Step title="Write your email">
+        ```tsx
+
+        interface TestEmailProps {
+            name: string
+        }
+
+        export const TestEmailTemplate = ({ name }: TestEmailProps) => {
+            return (
+                <Html>
+                    <Head />
+                    <Body>
+                        <Container>
+                            Hello {name} welcome to your first React E-mail template!
+                        </Container>
+                    </Body>
+                </Html>
+            );
+        };
+
+        export default TestEmailTemplate;
+
+        export function renderEmail(name: string) {
+            return render(<TestEmailTemplate name={name} />);
+        }
+        ```
+    </Step>
+    <Step title="Write your workflow">
+        ```tsx
+
+        export const testWorkflow = workflow('test-workflow', async ({ step, payload }) => {
+            await step.email('send-email', async (controls) => {
+                return {
+                    subject: controls.subject,
+                    body: renderEmail(payload.userName),
+                };
+            },
+            {
+                controlSchema: z.object({
+                    subject: z.string().default('A Successful Test on Novu from {{userName}}'),
+                }),
+            });
+        }, {
+            payloadSchema: z.object({
+                userName: z.string().default('John Doe'),
+            }),
+        });
+        ```
+    </Step>
+
+</Steps>

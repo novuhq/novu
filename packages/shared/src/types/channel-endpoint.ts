@@ -10,6 +10,7 @@ export const ENDPOINT_TYPES = {
   PHONE: 'phone',
   MS_TEAMS_CHANNEL: 'ms_teams_channel',
   MS_TEAMS_USER: 'ms_teams_user',
+  TELEGRAM_CHAT: 'telegram_chat',
 } as const;
 
 export type ChannelEndpointType = (typeof ENDPOINT_TYPES)[keyof typeof ENDPOINT_TYPES];
@@ -20,7 +21,13 @@ export type ChannelEndpointByType = {
   [ENDPOINT_TYPES.WEBHOOK]: { url: string; channel?: string };
   [ENDPOINT_TYPES.PHONE]: { phoneNumber: string };
   [ENDPOINT_TYPES.MS_TEAMS_CHANNEL]: { teamId: string; channelId: string };
-  [ENDPOINT_TYPES.MS_TEAMS_USER]: { userId: string };
+  /**
+   * `tenantId` is the Azure AD tenant the user belongs to. For multi-tenant distribution this can
+   * differ from the bot's home tenant (the customer's tenant), and is used to scope Graph/Bot
+   * Framework calls when delivering to that user. Optional for backward compatibility.
+   */
+  [ENDPOINT_TYPES.MS_TEAMS_USER]: { userId: string; tenantId?: string };
+  [ENDPOINT_TYPES.TELEGRAM_CHAT]: { chatId: string };
 };
 
 export type ChannelEndpoint<T extends ChannelEndpointType = ChannelEndpointType> = {

@@ -46,6 +46,7 @@ export enum CredentialsKeyEnum {
   externalLink = 'externalLink',
   channelId = 'channelId',
   phoneNumberIdentification = 'phoneNumberIdentification',
+  businessAccountId = 'businessAccountId',
   ApiVersion = 'apiVersion',
   AppSid = 'appSid',
   SenderId = 'senderId',
@@ -53,6 +54,11 @@ export enum CredentialsKeyEnum {
   ServicePlanId = 'servicePlanId',
   TenantId = 'tenantId',
   SigningSecret = 'signingSecret',
+  OutboundIntegrationId = 'outboundIntegrationId',
+  /** Claude Managed Agents: ID of the Anthropic environment tied to this integration. Auto-populated by the API — never entered by the user. */
+  ExternalEnvironmentId = 'externalEnvironmentId',
+  /** Claude Platform on AWS: workspace ID (`wrkspc_…`) required for agent runtime dispatch. */
+  ExternalWorkspaceId = 'externalWorkspaceId',
 }
 
 export type ConfigurationKey = keyof IConfigurations;
@@ -79,6 +85,7 @@ export enum EmailProviderIdEnum {
   SparkPost = 'sparkpost',
   EmailWebhook = 'email-webhook',
   Braze = 'braze',
+  NovuAgent = 'novu-email-agent',
 }
 
 export enum SmsProviderIdEnum {
@@ -137,6 +144,7 @@ export enum ChatProviderIdEnum {
   WhatsAppBusiness = 'whatsapp-business',
   ChatWebhook = 'chat-webhook',
   Novu = 'novu-slack',
+  Telegram = 'telegram',
 }
 
 export enum PushProviderIdEnum {
@@ -154,12 +162,25 @@ export enum InAppProviderIdEnum {
   Novu = 'novu',
 }
 
+export enum AgentRuntimeProviderIdEnum {
+  Anthropic = 'anthropic',
+  NovuAnthropic = 'novu-anthropic',
+  AnthropicAws = 'anthropic-aws',
+}
+
+/** Distinguishes integrations used for notification delivery from those used as agent runtimes. */
+export enum IntegrationKindEnum {
+  DELIVERY = 'delivery',
+  AGENT = 'agent',
+}
+
 export type ProvidersIdEnum =
   | EmailProviderIdEnum
   | SmsProviderIdEnum
   | PushProviderIdEnum
   | InAppProviderIdEnum
-  | ChatProviderIdEnum;
+  | ChatProviderIdEnum
+  | AgentRuntimeProviderIdEnum;
 
 export const ProvidersIdEnumConst = {
   EmailProviderIdEnum,
@@ -167,4 +188,9 @@ export const ProvidersIdEnumConst = {
   PushProviderIdEnum,
   InAppProviderIdEnum,
   ChatProviderIdEnum,
+  AgentRuntimeProviderIdEnum,
 };
+
+export const providerIdValues = [
+  ...new Set(Object.values(ProvidersIdEnumConst).flatMap((enumObj) => Object.values(enumObj))),
+];

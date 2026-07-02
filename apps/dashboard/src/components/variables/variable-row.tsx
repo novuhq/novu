@@ -1,4 +1,4 @@
-import { IEnvironment, PermissionsEnum } from '@novu/shared';
+import { IEnvironment, PermissionsEnum, SECRET_MASK } from '@novu/shared';
 import React, { useState } from 'react';
 import {
   RiAlertLine,
@@ -32,8 +32,6 @@ import { Protect } from '@/utils/protect';
 import { cn } from '@/utils/ui';
 import { DeleteVariableDialog } from './delete-variable-dialog';
 import { UpsertVariableDrawer } from './upsert-variable-drawer';
-
-const SECRET_MASK = '••••••••';
 
 type VariableRowProps = {
   variable: EnvironmentVariableResponseDto;

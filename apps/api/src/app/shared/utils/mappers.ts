@@ -1,4 +1,4 @@
-import { LogRepository, RequestLog } from '@novu/application-generic';
+import { LogRepository, RequestLog, RequestLogSourceEnum } from '@novu/application-generic';
 import { UserSessionData } from '@novu/shared';
 import { getClientIp } from 'request-ip';
 import { sanitizePayload } from '../../../utils/payload-sanitizer';
@@ -56,5 +56,6 @@ export function buildLog(
     environment_id: user.environmentId,
     auth_type: user.scheme,
     duration_ms: duration,
+    source: RequestLogSourceEnum.HTTP,
   };
 }

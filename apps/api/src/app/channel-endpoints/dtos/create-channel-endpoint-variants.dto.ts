@@ -9,6 +9,7 @@ import {
   PhoneEndpointDto,
   SlackChannelEndpointDto,
   SlackUserEndpointDto,
+  TelegramChatEndpointDto,
   WebhookEndpointDto,
 } from './endpoint-types.dto';
 
@@ -174,4 +175,24 @@ export class CreateMsTeamsUserEndpointDto extends CreateChannelEndpointBaseDto {
   @ValidateNested()
   @Type(() => MsTeamsUserEndpointDto)
   endpoint: MsTeamsUserEndpointDto;
+}
+
+export class CreateTelegramChatEndpointDto extends CreateChannelEndpointBaseDto {
+  @ApiProperty({
+    description: 'Type of channel endpoint',
+    enum: [ENDPOINT_TYPES.TELEGRAM_CHAT],
+    example: ENDPOINT_TYPES.TELEGRAM_CHAT,
+  })
+  @IsDefined()
+  @IsEnum([ENDPOINT_TYPES.TELEGRAM_CHAT])
+  type: typeof ENDPOINT_TYPES.TELEGRAM_CHAT;
+
+  @ApiProperty({
+    description: 'Telegram chat endpoint data',
+    type: TelegramChatEndpointDto,
+  })
+  @IsDefined()
+  @ValidateNested()
+  @Type(() => TelegramChatEndpointDto)
+  endpoint: TelegramChatEndpointDto;
 }

@@ -1,0 +1,104 @@
+---
+title: 'useCounts'
+description: 'Learn how to use the useCounts hook to fetch notification counts in your React Native application'
+---
+
+
+The `useCounts` hook provides a way to fetch various notification counts, including unread, unseen, and total counts. This hook is useful for displaying notification badges and indicators in your application.
+
+## Hook Parameters
+
+| Parameter | Type   | Required | Description                               |
+| --------- | ------ | -------- | ----------------------------------------- |
+| storeId   | string | No       | Filter counts by a specific store ID      |
+| query     | object | No       | Additional query parameters for filtering |
+
+## Return Value
+
+```typescript
+type CountsReturn = {
+  data: {
+    unreadCount: number;
+    unseenCount: number;
+    total: number;
+  };
+  isLoading: boolean;
+  error: Error | null;
+  refetch: () => void;
+};
+```
+
+## Example Usage
+
+Here's how to use the `useCounts` hook to fetch and display notification counts:
+
+```tsx
+import { View, Text, ActivityIndicator } from 'react-native';
+import { useCounts } from '@novu/react-native';
+
+function NotificationBadge() {
+  const { data, isLoading, error } = useCounts();
+
+  if (isLoading) return <ActivityIndicator />;
+  if (error) return <Text>Error: {error.message}</Text>;
+
+  return (
+    <View>
+      <Text>Unread: {data?.unreadCount}</Text>
+      <Text>Unseen: {data?.unseenCount}</Text>
+      <Text>Total: {data?.total}</Text>
+    </View>
+  );
+}
+```
+
+### With Store ID
+
+You can filter counts for a specific store:
+
+```tsx
+import { View, Text, ActivityIndicator } from 'react-native';
+function StoreNotifications({ storeId }) {
+  const { data, isLoading } = useCounts({
+    storeId: storeId,
+  });
+
+  if (isLoading) return <ActivityIndicator />;
+
+  return (
+    <View>
+      <Text>Store Notifications: {data?.total}</Text>
+      <Text>Unread: {data?.unreadCount}</Text>
+    </View>
+  );
+}
+```
+
+### With Query Filters
+
+You can also apply additional filters using the query parameter:
+
+```tsx
+import { View, Text, ActivityIndicator } from 'react-native';
+function FilteredNotifications() {
+  const { data, isLoading } = useCounts({
+    query: {
+      templates: ['welcome-template', 'order-update'],
+      emails: ['user@example.com'],
+    },
+  });
+
+  if (isLoading) return <ActivityIndicator />;
+
+  return (
+    <View>
+      <Text>Filtered Notifications: {data?.total}</Text>
+      <Text>Unread: {data?.unreadCount}</Text>
+    </View>
+  );
+}
+```
+
+<Note>
+  `refetch` function can be used to refetch updated counts after notifications are marked as read/unread/archived etc.
+</Note>

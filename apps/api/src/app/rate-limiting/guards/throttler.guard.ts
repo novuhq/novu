@@ -25,7 +25,10 @@ import {
   UserSessionData,
 } from '@novu/shared';
 import { getClientIp } from 'request-ip';
-import { checkIsKeylessHeader } from '../../shared/utils/auth.utils';
+import {
+  isKeylessApplicationIdentifierHeader,
+  isResolvedKeylessAuthScheme,
+} from '../../shared/utils/auth.utils';
 import { EvaluateApiRateLimit, EvaluateApiRateLimitCommand } from '../usecases/evaluate-api-rate-limit';
 import { ThrottlerCategory, ThrottlerCost } from './throttler.decorator';
 
@@ -144,14 +147,12 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
     const handler = context.getHandler();
     const classRef = context.getClass();
 
-    const isKeylessHeader =
-      checkIsKeylessHeader(req.headers.authorization) ||
-      checkIsKeylessHeader(req.headers['novu-application-identifier']);
-    const isKeylessRequest = isKeylessHeader || this.isKeylessRoute(context);
+    const user = this.getReqUser(context);
+    const isKeylessRequest =
+      isResolvedKeylessAuthScheme(req.authScheme ?? user?.scheme) || this.isKeylessRoute(context);
     const apiRateLimitCategory =
       this.reflector.getAllAndOverride(ThrottlerCategory, [handler, classRef]) || defaultApiRateLimitCategory;
 
-    const user = this.getReqUser(context);
     const organizationId = user?.organizationId;
     const _id = user?._id;
     const environmentId = user?.environmentId || req.headers['novu-application-identifier'];
@@ -165,6 +166,7 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
       environmentId,
       apiRateLimitCategory,
       apiRateLimitCost,
+      isKeyless: isKeylessRequest,
       ip: isKeylessRequest ? clientIp : undefined,
     });
 
@@ -313,7 +315,7 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
       return false;
     }
 
-    return applicationIdentifier.startsWith('pk_keyless_');
+    return isKeylessApplicationIdentifierHeader(applicationIdentifier);
   }
 
   private isAllowedRoute(context: ExecutionContext): boolean {

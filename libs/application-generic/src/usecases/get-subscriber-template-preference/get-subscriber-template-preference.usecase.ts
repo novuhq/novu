@@ -96,6 +96,17 @@ export class GetSubscriberTemplatePreference {
       contextKeys: command.contextKeys,
     });
 
+    if (!subscriberWorkflowPreference) {
+      const emptyWorkflowChannels = GetPreferences.mapWorkflowPreferencesToChannelPreferences(undefined);
+
+      return {
+        channels: emptyWorkflowChannels,
+        critical: undefined,
+        type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
+        enabled: true,
+      };
+    }
+
     const subscriberWorkflowChannels = GetPreferences.mapWorkflowPreferencesToChannelPreferences(
       subscriberWorkflowPreference.preferences
     );

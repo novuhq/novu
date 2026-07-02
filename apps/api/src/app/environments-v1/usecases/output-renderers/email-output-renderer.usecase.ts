@@ -751,19 +751,24 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
   }
 
   private async getIterableArray(iterablePath: string, variables: FullPayloadForRender): Promise<unknown[]> {
-    const iterableArrayString = await this.liquidEngine.parseAndRender(iterablePath, variables);
+    // evalValue returns the real JS array; avoids a lossy " <-> ' JSON round-trip that
+    // breaks on apostrophes in string values (e.g. digest events with `John's order`).
+    const cleanPath = iterablePath.replace(/\{\{|\}\}/g, '').trim();
 
+    let value: unknown;
     try {
-      const parsedArray = JSON.parse(iterableArrayString.replace(/'/g, '"'));
-
-      if (!Array.isArray(parsedArray)) {
-        throw new Error(`Iterable "${iterablePath}" is not an array`);
-      }
-
-      return parsedArray;
+      value = await this.liquidEngine.evalValue(cleanPath, variables);
     } catch (error) {
-      throw new Error(`Failed to parse iterable value for "${iterablePath}": ${error.message}`);
+      throw new Error(
+        `Failed to resolve iterable value for "${iterablePath}": ${error instanceof Error ? error.message : String(error)}`
+      );
     }
+
+    if (!Array.isArray(value)) {
+      throw new Error(`Iterable "${iterablePath}" is not an array`);
+    }
+
+    return value;
   }
 
   private processForEachNodes(

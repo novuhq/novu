@@ -1,5 +1,5 @@
 import cronParser from 'cron-parser';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { RiInformation2Line } from 'react-icons/ri';
 import { Hint, HintIcon } from '@/components/primitives/hint';
 import { DaysOfWeek } from '@/components/workflow-editor/steps/digest-delay-tabs/days-of-week';
@@ -28,23 +28,25 @@ export const ScheduledType = ({
   onValueChange: (cron: string) => void;
   onError?: (error: unknown) => void;
 }) => {
-  const period = useMemo(() => {
+  const onErrorRef = useRef(onError);
+  onErrorRef.current = onError;
+
+  const { period, periodError } = useMemo(() => {
     try {
       const cronParts = parseCronString(value);
-      return getPeriodFromCronParts(cronParts);
-    } catch (e) {
-      onError?.(e);
-      return PeriodValues.MINUTE;
-    }
-  }, [value, onError]);
 
-  const { second, month, dayOfMonth, dayOfWeek, hour, minute } = useMemo(() => {
+      return { period: getPeriodFromCronParts(cronParts), periodError: null };
+    } catch (e) {
+      return { period: PeriodValues.MINUTE, periodError: e };
+    }
+  }, [value]);
+
+  const { second, month, dayOfMonth, dayOfWeek, hour, minute, fieldsError } = useMemo(() => {
     try {
       const expression = cronParser.parseExpression(value);
-      return toUiFields(expression.fields);
-    } catch (e) {
-      onError?.(e);
 
+      return { ...toUiFields(expression.fields), fieldsError: null };
+    } catch (e) {
       return {
         second: [],
         minute: [],
@@ -52,9 +54,17 @@ export const ScheduledType = ({
         dayOfMonth: [],
         month: [],
         dayOfWeek: [],
+        fieldsError: e,
       };
     }
-  }, [value, onError]);
+  }, [value]);
+
+  useEffect(() => {
+    const error = periodError ?? fieldsError;
+    if (error) {
+      onErrorRef.current?.(error);
+    }
+  }, [periodError, fieldsError]);
 
   const handleValueChange = (fields: Partial<UiCronFields>) => {
     const cronFields = toCronFields({

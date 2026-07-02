@@ -14,6 +14,7 @@ import { Activity } from "./activity.js";
 import { ChannelConnections } from "./channelconnections.js";
 import { ChannelEndpoints } from "./channelendpoints.js";
 import { Contexts } from "./contexts.js";
+import { Domains } from "./domains.js";
 import { Environments } from "./environments.js";
 import { EnvironmentVariables } from "./environmentvariables.js";
 import { Integrations } from "./integrations.js";
@@ -74,6 +75,11 @@ export class Novu extends ClientSDK {
   private _channelEndpoints?: ChannelEndpoints;
   get channelEndpoints(): ChannelEndpoints {
     return (this._channelEndpoints ??= new ChannelEndpoints(this._options));
+  }
+
+  private _domains?: Domains;
+  get domains(): Domains {
+    return (this._domains ??= new Domains(this._options));
   }
 
   private _environmentVariables?: EnvironmentVariables;

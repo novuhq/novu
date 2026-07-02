@@ -23,4 +23,13 @@ export class UpdateSubscriptionCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   @IsString({ each: true })
   contextKeys?: string[];
+
+  /**
+   * When set, restricts the subscription lookup to a specific subscriber owner.
+   * Used by inbox subscriber JWT callers to enforce per-subscriber ownership.
+   * Admin / API-key callers should leave this undefined.
+   */
+  @IsString()
+  @IsOptional()
+  _subscriberId?: string;
 }

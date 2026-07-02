@@ -37,6 +37,8 @@ export type {
   BellProps,
   InboxContentProps,
   InboxProps,
+  MsTeamsConnectButtonProps,
+  MsTeamsLinkUserProps,
   NotificationProps,
   NovuProviderProps,
   SlackConnectButtonProps,
@@ -44,11 +46,14 @@ export type {
   SubscriptionButtonProps,
   SubscriptionPreferencesProps,
   SubscriptionProps,
+  TelegramConnectButtonProps,
 } from './components';
 export {
   Bell,
   Inbox,
   InboxContent,
+  MsTeamsConnectButton,
+  MsTeamsLinkUser,
   Notifications,
   NovuProvider,
   Preferences,
@@ -57,6 +62,7 @@ export {
   Subscription,
   SubscriptionButton,
   SubscriptionPreferences,
+  TelegramConnectButton,
 } from './components';
 export type {
   UseChannelConnectionProps,
@@ -75,6 +81,8 @@ export type {
   UseNotificationsResult,
   UsePreferencesResult,
   UseScheduleProps as UsePreferencesProps,
+  UseTelegramSubscriberLinkProps,
+  UseTelegramSubscriberLinkResult,
 } from './hooks';
 export {
   useChannelConnection,
@@ -91,6 +99,7 @@ export {
   useSchedule,
   useSubscription,
   useSubscriptions,
+  useTelegramSubscriberLink,
   useUpdateSubscription,
 } from './hooks';
 

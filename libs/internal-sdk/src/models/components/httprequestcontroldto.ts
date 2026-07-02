@@ -18,6 +18,11 @@ import {
   HttpRequestKeyValuePairDto$outboundSchema,
 } from "./httprequestkeyvaluepairdto.js";
 
+/**
+ * Request body as a raw JSON string. Key-value arrays are supported for legacy workflows.
+ */
+export type Body = string | Array<HttpRequestKeyValuePairDto>;
+
 export type HttpRequestControlDto = {
   /**
    * HTTP method
@@ -32,9 +37,9 @@ export type HttpRequestControlDto = {
    */
   headers?: Array<HttpRequestKeyValuePairDto> | undefined;
   /**
-   * Request body as key-value pairs
+   * Request body as a raw JSON string. Key-value arrays are supported for legacy workflows.
    */
-  body?: Array<HttpRequestKeyValuePairDto> | undefined;
+  body?: string | Array<HttpRequestKeyValuePairDto> | undefined;
   /**
    * JSON schema to validate response body against
    */
@@ -50,6 +55,29 @@ export type HttpRequestControlDto = {
 };
 
 /** @internal */
+export const Body$inboundSchema: z.ZodType<Body, z.ZodTypeDef, unknown> = z
+  .union([z.string(), z.array(HttpRequestKeyValuePairDto$inboundSchema)]);
+/** @internal */
+export type Body$Outbound = string | Array<HttpRequestKeyValuePairDto$Outbound>;
+
+/** @internal */
+export const Body$outboundSchema: z.ZodType<Body$Outbound, z.ZodTypeDef, Body> =
+  z.union([z.string(), z.array(HttpRequestKeyValuePairDto$outboundSchema)]);
+
+export function bodyToJSON(body: Body): string {
+  return JSON.stringify(Body$outboundSchema.parse(body));
+}
+export function bodyFromJSON(
+  jsonString: string,
+): SafeParseResult<Body, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => Body$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'Body' from JSON`,
+  );
+}
+
+/** @internal */
 export const HttpRequestControlDto$inboundSchema: z.ZodType<
   HttpRequestControlDto,
   z.ZodTypeDef,
@@ -58,7 +86,8 @@ export const HttpRequestControlDto$inboundSchema: z.ZodType<
   method: HttpMethodEnum$inboundSchema,
   url: z.string(),
   headers: z.array(HttpRequestKeyValuePairDto$inboundSchema).optional(),
-  body: z.array(HttpRequestKeyValuePairDto$inboundSchema).optional(),
+  body: z.union([z.string(), z.array(HttpRequestKeyValuePairDto$inboundSchema)])
+    .optional(),
   responseBodySchema: z.record(z.any()).optional(),
   enforceSchemaValidation: z.boolean().optional(),
   continueOnFailure: z.boolean().optional(),
@@ -68,7 +97,7 @@ export type HttpRequestControlDto$Outbound = {
   method: string;
   url: string;
   headers?: Array<HttpRequestKeyValuePairDto$Outbound> | undefined;
-  body?: Array<HttpRequestKeyValuePairDto$Outbound> | undefined;
+  body?: string | Array<HttpRequestKeyValuePairDto$Outbound> | undefined;
   responseBodySchema?: { [k: string]: any } | undefined;
   enforceSchemaValidation?: boolean | undefined;
   continueOnFailure?: boolean | undefined;
@@ -83,7 +112,10 @@ export const HttpRequestControlDto$outboundSchema: z.ZodType<
   method: HttpMethodEnum$outboundSchema,
   url: z.string(),
   headers: z.array(HttpRequestKeyValuePairDto$outboundSchema).optional(),
-  body: z.array(HttpRequestKeyValuePairDto$outboundSchema).optional(),
+  body: z.union([
+    z.string(),
+    z.array(HttpRequestKeyValuePairDto$outboundSchema),
+  ]).optional(),
   responseBodySchema: z.record(z.any()).optional(),
   enforceSchemaValidation: z.boolean().optional(),
   continueOnFailure: z.boolean().optional(),

@@ -1,0 +1,586 @@
+---
+title: "FCM Push Integration with Novu"
+sidebarTitle: 'FCM'
+description: "Connect FCM to Novu to send push notifications through notification workflows. Step-by-step credential setup."
+---
+
+This guide explains the process of configuring and using FCM with Novu, from getting your credentials to sending your first notification.
+
+<Note>
+  Novu uses FCM version V1
+</Note>
+
+## Step 1: Generate your service account key from Firebase
+
+Get your project's service account credentials from the Firebase Console.
+
+1. Log in to the [Firebase console](https://console.firebase.google.com/).
+2. Create a new Firebase project or select an existing project.
+![Select Firebase Project](/images/channels-and-providers/push/select-firebase-project.png)
+3. Click the gear icon ⚙️ next to **Project Overview**.
+4. Select **Project settings**.
+![Firebase Project Settings](/images/channels-and-providers/push/firebase-project-settings.png)
+5. Click the **Service accounts** tab.
+6. Click the **Generate new private key** button. A confirmation menu appears.
+![Firebase Service Accounts](/images/channels-and-providers/push/firebase-service-accounts.png)
+7. Click **Generate key** to download a JSON file containing your credentials.
+![Firebase generate private key confirmation dialog](/images/channels-and-providers/push/confirmation-menu.png)
+8. Open the downloaded JSON file and ensure it contains these fields:
+    ```json
+    {
+      "type": "service_account",
+      "project_id": "PROJECT_ID",
+      "private_key_id": "PRIVATE_KEY_ID",
+      "private_key": "PRIVATE_KEY",
+      "client_email": "FIREBASE_ADMIN_SDK_EMAIL",
+      "client_id": "CLIENT_ID",
+      "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+      "token_uri": "https://oauth2.googleapis.com/token",
+      "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+      "client_x509_cert_url": "CLIENT_X509_CERT_URL"
+    }
+    ```
+
+## Step 2: Connect FCM to Novu
+
+Add the credentials to your FCM integration in the Novu dashboard.
+
+1. Log in to the Novu dashboard.
+2. Navigate to the **Integration Store**.
+3. Click **Connect provider**.
+4. Click the **Push** tab, then select **Firebase Cloud Messaging (FCM)**.
+5. Open the JSON file you downloaded from Firebase in [Step 1](/platform/integrations/push/fcm#step-1-generate-your-service-account-key-from-firebase).
+6.  Copy the entire content of the JSON file and paste it into the **Service Account** field in the FCM integration modal.
+![FCM integration](/images/channels-and-providers/push/fcm-integration.png)
+7.  Click **Create Integration** to save the integration.
+
+## Step 3: Register a subscriber's device token
+
+Before Novu can send a push notification to your subscriber, you must associate their device's unique push token with their Novu subscriber profile.
+
+You can do this by making an API call to [update the subscriber's credentials](/api-reference/subscribers/update-provider-credentials).
+
+<Tabs>
+  <Tab title="Node.js">
+```typescript
+import { Novu } from '@novu/api';
+import { ChatOrPushProviderEnum } from "@novu/api/models/components";
+
+const novu = new Novu({ secretKey: "<NOVU_SECRET_KEY>" });
+
+await novu.subscribers.credentials.update(
+  {
+    providerId: ChatOrPushProviderEnum.Fcm,
+    integrationIdentifier: "string",
+    credentials: { deviceTokens: ["token1", "token2"] },
+  },
+  "subscriberId"
+);
+```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.subscribers.credentials.update(
+        subscriber_id="subscriberId",
+        update_subscriber_channel_request_dto={
+            "provider_id": novu_py.ChatOrPushProviderEnum.FCM,
+            "credentials": {"deviceTokens": ["token1", "token2"]},
+            "integration_identifier": "string",
+        },
+    )
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Subscribers.Credentials.Update(context.Background(), "subscriberId", components.UpdateSubscriberChannelRequestDto{
+    ProviderID: components.ChatOrPushProviderEnumFcm,
+        IntegrationIdentifier: novugo.String("string"),
+    Credentials: components.ChannelCredentials{
+        DeviceTokens: []string{"token1", "token2"},
+    },
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()->setSecurity('<NOVU_SECRET_KEY>')->build();
+
+$sdk->subscribersCredentials->update(
+    subscriberId: 'subscriberId',
+    updateSubscriberChannelRequestDto: new Components\UpdateSubscriberChannelRequestDto(
+        providerId: Components\ChatOrPushProviderEnum::Fcm,
+        integrationIdentifier: 'string',
+        credentials: new Components\ChannelCredentials(
+            deviceTokens: ['token1', 'token2'],
+        ),
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+
+await sdk.Subscribers.Credentials.UpdateAsync(
+    subscriberId: "subscriberId",
+    updateSubscriberChannelRequestDto: new UpdateSubscriberChannelRequestDto() {
+        ProviderId = ChatOrPushProviderEnum.Fcm,
+        IntegrationIdentifier = "string",
+        Credentials = new ChannelCredentials() {
+            DeviceTokens = new List<string> { "token1", "token2" },
+        },
+    });
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+import java.util.List;
+
+Novu novu = Novu.builder().secretKey("<NOVU_SECRET_KEY>").build();
+
+novu.subscribers().credentials().update()
+    .subscriberId("subscriberId")
+    .body(UpdateSubscriberChannelRequestDto.builder()
+        .providerId(ChatOrPushProviderEnum.FCM)
+            .integrationIdentifier("string")
+        .credentials(ChannelCredentials.builder()
+            .deviceTokens(List.of("token1", "token2"))
+            .build())
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -L -X PUT 'https://api.novu.co/v1/subscribers/<SUBSCRIBER_ID>/credentials' \
+-H 'Content-Type: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+  "providerId": "fcm",
+  "credentials": {
+    "deviceTokens": [
+      "token1",
+      "token2"
+    ]
+  },
+  "integrationIdentifier": "string"
+}'
+```
+  </Tab>
+</Tabs>
+
+<Note>
+  Novu automatically removes invalid device tokens from a subscribers' profile and then sends the failure details to the `MESSAGE_FAILED` webhook.
+</Note>
+
+## Step 4: Send a notification
+
+Now you're ready to send a push notification. You can trigger a notification to a subscriber who has a registered device token.
+
+<Tabs>
+  <Tab title="Node.js">
+```typescript
+import { Novu } from '@novu/api';
+
+const novu = new Novu({ secretKey: "<NOVU_SECRET_KEY>" });
+
+await novu.trigger({
+  workflowId: "workflowId",
+  to: { subscriberId: "subscriberId", },
+  payload: {
+    "key": "value"
+},
+  overrides: {
+    "providers": {
+        "fcm": {
+            "topic": "topic-123"
+        }
+    }
+},
+});
+```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="workflowId",
+        to={"subscriber_id": "subscriberId"},
+        payload={
+        "key": "value"
+},
+        overrides={
+        "providers": {
+                "fcm": {
+                        "topic": "topic-123"
+                }
+        }
+},
+    ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "workflowId",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: "subscriberId",
+    }),
+    Payload: map[string]any{
+        "key": "value",
+    },
+    Overrides: map[string]any{
+        "providers": map[string]any{
+            "fcm": map[string]any{
+                "topic": "topic-123",
+            },
+        },
+    },
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()->setSecurity('<NOVU_SECRET_KEY>')->build();
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'workflowId',
+        to: new Components\SubscriberPayloadDto(subscriberId: 'subscriberId'),
+        payload: ['key' => 'value'],
+        overrides: [
+            'providers' => [
+                'fcm' => [
+                    'topic' => 'topic-123',
+                ],
+            ],
+        ],
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "workflowId",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() { SubscriberId = "subscriberId" }),
+    Payload = new Dictionary<string, object>() {
+        { "key", "value" },
+    },
+    Overrides = new Overrides() {
+        Providers = new Dictionary<string, Dictionary<string, object>>() {
+            { "fcm", new Dictionary<string, object>() {
+                { "topic", "topic-123" },
+            } },
+        },
+    },
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+import java.util.Map;
+
+Novu novu = Novu.builder().secretKey("<NOVU_SECRET_KEY>").build();
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("workflowId")
+        .to(To2.of(SubscriberPayloadDto.builder().subscriberId("subscriberId").build()))
+        .payload(Map.of("key", "value"))
+        .overrides(TriggerEventRequestDtoOverrides.builder()
+            .additionalProperties(Map.of("providers", Map.of("fcm", Map.of("topic", "topic-123"))))
+            .build())
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl --location 'https://api.novu.co/v1/events/trigger' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+    "name": "workflowId",
+    "to": [
+        "subscriberId"
+    ],
+    "payload": {
+        "key": "value"
+    },
+    "overrides": {
+        "providers": {
+            "fcm": {
+                "topic": "topic-123"
+            }
+        }
+    }
+}'
+```
+  </Tab>
+</Tabs>
+
+## Web push with relative links
+
+Suppose you're using the Firebase (FCM) provider to send push notifications to web browsers via Novu and want users to be returned to the website after clicking the notification.
+
+In that case, you must use the `link` property with a relative URL.
+
+<Tabs>
+  <Tab title="Node.js">
+```typescript
+import { Novu } from '@novu/api';
+
+const novu = new Novu({ secretKey: "<NOVU_SECRET_KEY>" });
+
+await novu.trigger({
+  workflowId: "workflowId",
+  to: { subscriberId: "subscriberId", },
+  payload: {
+    "key": "value"
+},
+  overrides: {
+    "providers": {
+        "fcm": {
+            "webPush": {
+                "fcmOptions": {
+                    "link": "/foo"
+                }
+            }
+        }
+    }
+},
+});
+```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="workflowId",
+        to={"subscriber_id": "subscriberId"},
+        payload={
+        "key": "value"
+},
+        overrides={
+        "providers": {
+                "fcm": {
+                        "webPush": {
+                                "fcmOptions": {
+                                        "link": "/foo"
+                                }
+                        }
+                }
+        }
+},
+    ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "workflowId",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: "subscriberId",
+    }),
+    Payload: map[string]any{
+        "key": "value",
+    },
+    Overrides: map[string]any{
+        "providers": map[string]any{
+            "fcm": map[string]any{
+                "webPush": map[string]any{
+                    "fcmOptions": map[string]any{
+                        "link": "/foo",
+                    },
+                },
+            },
+        },
+    },
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()->setSecurity('<NOVU_SECRET_KEY>')->build();
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'workflowId',
+        to: new Components\SubscriberPayloadDto(subscriberId: 'subscriberId'),
+        payload: ['key' => 'value'],
+        overrides: [
+            'providers' => [
+                'fcm' => [
+                    'webPush' => [
+                        'fcmOptions' => [
+                            'link' => '/foo',
+                        ],
+                    ],
+                ],
+            ],
+        ],
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "workflowId",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() { SubscriberId = "subscriberId" }),
+    Payload = new Dictionary<string, object>() {
+        { "key", "value" },
+    },
+    Overrides = new Overrides() {
+        Providers = new Dictionary<string, Dictionary<string, object>>() {
+            { "fcm", new Dictionary<string, object>() {
+                { "webPush", new Dictionary<string, object>() {
+                    { "fcmOptions", new Dictionary<string, object>() {
+                        { "link", "/foo" },
+                    } },
+                } },
+            } },
+        },
+    },
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+import java.util.Map;
+
+Novu novu = Novu.builder().secretKey("<NOVU_SECRET_KEY>").build();
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("workflowId")
+        .to(To2.of(SubscriberPayloadDto.builder().subscriberId("subscriberId").build()))
+        .payload(Map.of("key", "value"))
+        .overrides(TriggerEventRequestDtoOverrides.builder()
+            .additionalProperties(Map.of("providers", Map.of("fcm", Map.of(
+                "webPush", Map.of("fcmOptions", Map.of("link", "/foo"))))))
+            .build())
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl --location 'https://api.novu.co/v1/events/trigger' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+    "name": "workflowId",
+    "to": [
+        "subscriberId"
+    ],
+    "payload": {
+        "key": "value"
+    },
+    "overrides": {
+        "providers": {
+            "fcm": {
+                "webPush": {
+                    "fcmOptions": {
+                        "link": "/foo"
+                    }
+                }
+            }
+        }
+    }
+}'
+```
+  </Tab>
+</Tabs>
+
+## Frequently asked questions
+
+<AccordionGroup>
+  <Accordion title="FCM cost">As per Firebase [pricing](https://firebase.google.com/pricing), **Cloud Messaging** product is free to use. If other Firebase products are used, then the cost are charged per the product.</Accordion>
+  <Accordion title="The registration token is not a valid FCM registration token">
+You might come across an error such as: `Sending message failed due to "The registration token is not a valid FCM registration token"`. This error happens because of an invalid or stale token. The fix for this is:
+
+1. Remove the old tokens.
+2. Generate a new token.
+3. Save the new token into user subscribers.
+  </Accordion>
+  <Accordion title="FCM notifications sent successfully with no error but push notification is not received in device">Try to generate a new token after clearing device cache and retry with this fresh token.</Accordion>
+  <Accordion title="Sending message failed due to 'Requested entity was not found'">This error occurs when your token is no longer valid. To fix this, generate a new token and use it.</Accordion>
+  <Accordion title="Subscriber does not have a configured channel error">This error occurs if the FCM integration is active, but the subscriber is missing from the FCM credentials (deviceTokens). The credentials (deviceTokens) for the subscriber needs to be set.</Accordion>
+  <Accordion title="How to send desktop notifications using FCM">Desktop notifications for websites can be sent using FCM webpush.</Accordion>
+</AccordionGroup>

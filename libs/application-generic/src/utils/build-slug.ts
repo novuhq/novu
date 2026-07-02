@@ -1,5 +1,6 @@
-import { ShortIsPrefixEnum, Slug, slugify } from '@novu/shared';
+import { ShortIsPrefixEnum, Slug } from '@novu/shared';
 import { encodeBase62 } from './base62';
+import { slugifyOrRandom } from './slugify-or-random';
 
 const SLUG_DELIMITER = '_';
 
@@ -8,5 +9,5 @@ const SLUG_DELIMITER = '_';
  * @returns The slug for the entity, example:  slug: "workflow-name_wf_AbC1Xyz9KlmNOpQr"
  */
 export function buildSlug(entityName: string, shortIdPrefix: ShortIsPrefixEnum, internalId: string): Slug {
-  return `${slugify(entityName)}${SLUG_DELIMITER}${shortIdPrefix}${encodeBase62(internalId)}`;
+  return `${slugifyOrRandom(entityName)}${SLUG_DELIMITER}${shortIdPrefix}${encodeBase62(internalId)}`;
 }

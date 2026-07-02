@@ -28,30 +28,23 @@ export class DomainRepository extends BaseRepositoryV2<DomainDBModel, DomainEnti
   }
 
   /**
-   * Looks up a domain by a route address (e.g. "support@customer.com").
    * Domain names are globally unique, so no environment/org filter is needed —
    * the cast bypasses the EnforceEnvOrOrgIds constraint intentionally.
    */
-  async findByRouteAddress(
-    address: string
+  async findByName(
+    name: string
   ): Promise<Pick<
     DomainEntity,
-    '_id' | 'name' | 'status' | 'mxRecordConfigured' | 'routes' | '_environmentId' | '_organizationId'
+    '_id' | 'name' | 'status' | 'mxRecordConfigured' | '_environmentId' | '_organizationId' | 'data'
   > | null> {
-    const domainName = address.split('@')[1];
-
-    if (!domainName) {
-      return null;
-    }
-
-    return this.findOne({ name: domainName } as unknown as FilterQuery<DomainDBModel> & EnforceEnvOrOrgIds, [
+    return this.findOne({ name } as unknown as FilterQuery<DomainDBModel> & EnforceEnvOrOrgIds, [
       '_id',
       'name',
       'status',
       'mxRecordConfigured',
-      'routes',
       '_environmentId',
       '_organizationId',
+      'data',
     ]);
   }
 
@@ -74,6 +67,7 @@ export class DomainRepository extends BaseRepositoryV2<DomainDBModel, DomainEnti
     sortBy = '_id',
     sortDirection = 1,
     includeCursor = false,
+    name,
   }: {
     organizationId: string;
     environmentId: string;
@@ -83,6 +77,7 @@ export class DomainRepository extends BaseRepositoryV2<DomainDBModel, DomainEnti
     sortBy?: string;
     sortDirection?: SortOrder;
     includeCursor?: boolean;
+    name?: string;
   }): Promise<{
     domains: DomainEntity[];
     next: string | null;
@@ -105,6 +100,7 @@ export class DomainRepository extends BaseRepositoryV2<DomainDBModel, DomainEnti
           _environmentId: environmentId,
           _organizationId: organizationId,
           _id: id,
+          ...(name ? { name: { $regex: this.regExpEscape(name), $options: 'i' } } : {}),
         },
         cursorFields as (keyof DomainEntity)[]
       );
@@ -127,6 +123,10 @@ export class DomainRepository extends BaseRepositoryV2<DomainDBModel, DomainEnti
       _environmentId: environmentId,
       _organizationId: organizationId,
     };
+
+    if (name) {
+      query.name = { $regex: this.regExpEscape(name), $options: 'i' };
+    }
 
     const pagination = await this.findWithCursorBasedPagination({
       after: afterCursor,

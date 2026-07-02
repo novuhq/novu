@@ -1,0 +1,188 @@
+---
+title: 'usePreferences'
+description: 'Learn how to use the usePreferences hook to manage notification preferences in your React Native application'
+---
+
+
+The `usePreferences` hook provides a way to fetch and manage notification preferences for the current subscriber. This includes both global preferences and workflow-specific preferences.
+
+## Return Value
+
+```typescript
+type PreferencesReturn = {
+  preferences: Array<{
+    template: {
+      _id: string;
+      name: string;
+      critical: boolean;
+    };
+    channels: {
+      email?: boolean;
+      sms?: boolean;
+      in_app?: boolean;
+      chat?: boolean;
+      push?: boolean;
+    };
+  }>;
+  isLoading: boolean;
+  error: Error | null;
+  updatePreference: (params: {
+    templateId: string;
+    channelType: string;
+    enabled: boolean;
+  }) => Promise<void>;
+};
+```
+
+## Example Usage
+
+Here's how to use the `usePreferences` hook to display and manage notification preferences:
+
+```tsx
+import { usePreferences } from '@novu/react-native';
+import { View, Text, Switch, ActivityIndicator } from 'react-native';
+
+function PreferencesList() {
+  const { preferences, isLoading, error, updatePreference } = usePreferences();
+
+  if (isLoading) return <ActivityIndicator />;
+  if (error) return <Text>Error: {error.message}</Text>;
+
+  return (
+    <View>
+      {preferences.map((preference) => (
+        <View key={preference.template._id}>
+          <Text style={styles.heading}>{preference.template.name}</Text>
+
+          <View style={styles.row}>
+            <Text>Email Notifications</Text>
+            <Switch
+              value={preference.channels.email}
+              onValueChange={(enabled) => {
+                updatePreference({
+                  templateId: preference.template._id,
+                  channelType: 'email',
+                  enabled,
+                });
+              }}
+            />
+          </View>
+
+          <View style={styles.row}>
+            <Text>SMS Notifications</Text>
+            <Switch
+              value={preference.channels.sms}
+              onValueChange={(enabled) => {
+                updatePreference({
+                  templateId: preference.template._id,
+                  channelType: 'sms',
+                  enabled,
+                });
+              }}
+            />
+          </View>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+const styles = {
+  heading: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+};
+```
+
+### With Channel Groups
+
+You can organize preferences by channel type:
+
+```tsx
+import { View, Text, Switch } from 'react-native';
+function ChannelPreferences() {
+  const { preferences, updatePreference } = usePreferences();
+
+  const emailPreferences = preferences.filter((pref) => pref.channels.email !== undefined);
+
+  return (
+    <View>
+      <Text style={styles.heading}>Email Preferences</Text>
+      {emailPreferences.map((preference) => (
+        <View key={preference.template._id} style={styles.row}>
+          <Text>{preference.template.name}</Text>
+          <Switch
+            value={preference.channels.email}
+            onValueChange={(enabled) => {
+              updatePreference({
+                templateId: preference.template._id,
+                channelType: 'email',
+                enabled,
+              });
+            }}
+          />
+        </View>
+      ))}
+    </View>
+  );
+}
+```
+
+### With Critical Workflows
+
+Some workflows might be marked as critical, meaning they cannot be disabled:
+
+```tsx
+import { View, Text, Switch } from 'react-native';
+
+function CriticalPreferences() {
+  const { preferences, updatePreference } = usePreferences();
+
+  return (
+    <View>
+      {preferences.map((preference) => (
+        <View key={preference.template._id}>
+          <Text style={styles.heading}>{preference.template.name}</Text>
+          {preference.template.critical ? (
+            <Text style={styles.critical}>Critical - Cannot be disabled</Text>
+          ) : (
+            <View style={styles.row}>
+              <Text>Enable Notifications</Text>
+              <Switch
+                value={preference.channels.email}
+                onValueChange={(enabled) => {
+                  updatePreference({
+                    templateId: preference.template._id,
+                    channelType: 'email',
+                    enabled,
+                  });
+                }}
+              />
+            </View>
+          )}
+        </View>
+      ))}
+    </View>
+  );
+}
+
+const styles = {
+  critical: {
+    color: 'red',
+    fontStyle: 'italic',
+  },
+};
+```
+
+<Note>
+  Changes to preferences are automatically synchronized with the server and will affect future
+  notifications immediately.
+</Note>

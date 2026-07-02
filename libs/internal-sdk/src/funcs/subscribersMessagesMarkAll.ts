@@ -4,6 +4,7 @@
 
 import { NovuCore } from "../core.js";
 import { encodeJSON, encodeSimple } from "../lib/encodings.js";
+import { matchStatusCode } from "../lib/http.js";
 import * as M from "../lib/matchers.js";
 import { compactMap } from "../lib/primitives.js";
 import { safeParse } from "../lib/schemas.js";
@@ -30,9 +31,11 @@ import { Result } from "../types/fp.js";
  * Update all notifications state
  *
  * @remarks
- * Update all subscriber in-app (inbox) notifications state such as read, unread, seen or unseen by **subscriberId**.
+ * This API is deprecated, use v2 API instead. Update all subscriber in-app notifications state such as read, unread, seen or unseen by **subscriberId**.
  *
  * This operation requires either {@link Security.bearerAuth} or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.
+ *
+ * @deprecated method: This will be removed in a future release, please migrate away from it as soon as possible.
  */
 export function subscribersMessagesMarkAll(
   client: NovuCore,
@@ -176,23 +179,8 @@ async function $do(
 
   const doResult = await client._do(req, {
     context,
-    errorCodes: [
-      "400",
-      "401",
-      "403",
-      "404",
-      "405",
-      "409",
-      "413",
-      "414",
-      "415",
-      "422",
-      "429",
-      "4XX",
-      "500",
-      "503",
-      "5XX",
-    ],
+    isErrorStatusCode: (statusCode: number) =>
+      matchStatusCode({ status: statusCode } as Response, ["4XX", "5XX"]),
     retryConfig: context.retryConfig,
     retryCodes: context.retryCodes,
   });

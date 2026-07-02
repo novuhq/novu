@@ -55,7 +55,7 @@ export type IntegrationsUpdateMutationError =
  *
  * @remarks
  * Update an integration by its unique key identifier **integrationId**.
- *     Each provider supports different credentials, check the provider documentation for more details.
+ *     Each provider supports different credentials, check the provider documentation for more details. Only integration metadata is returned, credentials field is returned as an empty object.
  */
 export function useIntegrationsUpdateMutation(
   options?: MutationHookOptions<

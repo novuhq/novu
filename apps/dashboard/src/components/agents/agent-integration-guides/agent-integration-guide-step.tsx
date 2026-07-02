@@ -5,7 +5,6 @@ type AgentIntegrationGuideStepProps = {
 };
 
 export function AgentIntegrationGuideStep({ step, title, description }: AgentIntegrationGuideStepProps) {
-
   return (
     <div className="border-stroke-soft flex gap-3 rounded-lg border p-4">
       <span className="bg-bg-soft text-text-sub flex size-7 shrink-0 items-center justify-center rounded-md font-mono text-label-xs">

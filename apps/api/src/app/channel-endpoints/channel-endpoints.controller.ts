@@ -5,7 +5,6 @@ import {
   Delete,
   Get,
   HttpCode,
-  NotFoundException,
   Param,
   Patch,
   Post,
@@ -14,14 +13,8 @@ import {
 } from '@nestjs/common';
 
 import { ApiBody, ApiExtraModels, ApiOperation, ApiParam, ApiTags, getSchemaPath } from '@nestjs/swagger';
-import { ExternalApiAccessible, FeatureFlagsService, RequirePermissions } from '@novu/application-generic';
-import {
-  ApiRateLimitCategoryEnum,
-  ENDPOINT_TYPES,
-  FeatureFlagsKeysEnum,
-  PermissionsEnum,
-  UserSessionData,
-} from '@novu/shared';
+import { ExternalApiAccessible, RequirePermissions } from '@novu/application-generic';
+import { ApiRateLimitCategoryEnum, ENDPOINT_TYPES, PermissionsEnum, UserSessionData } from '@novu/shared';
 
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ThrottlerCategory } from '../rate-limiting/guards/throttler.decorator';
@@ -35,6 +28,7 @@ import {
   CreatePhoneEndpointDto,
   CreateSlackChannelEndpointDto,
   CreateSlackUserEndpointDto,
+  CreateTelegramChatEndpointDto,
   CreateWebhookEndpointDto,
 } from './dtos/create-channel-endpoint-variants.dto';
 import { mapChannelEndpointEntityToDto } from './dtos/dto.mapper';
@@ -44,6 +38,7 @@ import {
   PhoneEndpointDto,
   SlackChannelEndpointDto,
   SlackUserEndpointDto,
+  TelegramChatEndpointDto,
   WebhookEndpointDto,
 } from './dtos/endpoint-types.dto';
 import { GetChannelEndpointResponseDto } from './dtos/get-channel-endpoint-response.dto';
@@ -71,12 +66,14 @@ import { UpdateChannelEndpoint } from './usecases/update-channel-endpoint/update
   CreatePhoneEndpointDto,
   CreateMsTeamsChannelEndpointDto,
   CreateMsTeamsUserEndpointDto,
+  CreateTelegramChatEndpointDto,
   SlackChannelEndpointDto,
   SlackUserEndpointDto,
   WebhookEndpointDto,
   PhoneEndpointDto,
   MsTeamsChannelEndpointDto,
-  MsTeamsUserEndpointDto
+  MsTeamsUserEndpointDto,
+  TelegramChatEndpointDto
 )
 @ExternalApiAccessible()
 @RequireAuthentication()
@@ -89,21 +86,8 @@ export class ChannelEndpointsController {
     private readonly getChannelEndpointUsecase: GetChannelEndpoint,
     private readonly createChannelEndpointUsecase: CreateChannelEndpoint,
     private readonly updateChannelEndpointUsecase: UpdateChannelEndpoint,
-    private readonly deleteChannelEndpointUsecase: DeleteChannelEndpoint,
-    private readonly featureFlagsService: FeatureFlagsService
+    private readonly deleteChannelEndpointUsecase: DeleteChannelEndpoint
   ) {}
-
-  private async checkFeatureEnabled(user: UserSessionData) {
-    const isEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_SLACK_TEAMS_ENABLED,
-      defaultValue: false,
-      organization: { _id: user.organizationId },
-    });
-
-    if (!isEnabled) {
-      throw new NotFoundException('Feature not enabled');
-    }
-  }
 
   @Get()
   @ApiOperation({
@@ -118,8 +102,6 @@ export class ChannelEndpointsController {
     @UserSession() user: UserSessionData,
     @Query() query: ListChannelEndpointsQueryDto
   ): Promise<ListChannelEndpointsResponseDto> {
-    await this.checkFeatureEnabled(user);
-
     const result = await this.listChannelEndpointsUsecase.execute(
       ListChannelEndpointsCommand.create({
         user,
@@ -142,8 +124,8 @@ export class ChannelEndpointsController {
       data: result.data.map(mapChannelEndpointEntityToDto),
       next: result.next,
       previous: result.previous,
-      totalCount: result.totalCount!,
-      totalCountCapped: result.totalCountCapped!,
+      totalCount: result.totalCount ?? 0,
+      totalCountCapped: result.totalCountCapped ?? false,
     };
   }
 
@@ -161,8 +143,6 @@ export class ChannelEndpointsController {
     @UserSession() user: UserSessionData,
     @Param('identifier') identifier: string
   ): Promise<GetChannelEndpointResponseDto> {
-    await this.checkFeatureEnabled(user);
-
     const channelEndpoint = await this.getChannelEndpointUsecase.execute(
       GetChannelEndpointCommand.create({
         environmentId: user.environmentId,
@@ -189,6 +169,7 @@ export class ChannelEndpointsController {
         { $ref: getSchemaPath(CreatePhoneEndpointDto) },
         { $ref: getSchemaPath(CreateMsTeamsChannelEndpointDto) },
         { $ref: getSchemaPath(CreateMsTeamsUserEndpointDto) },
+        { $ref: getSchemaPath(CreateTelegramChatEndpointDto) },
       ],
       discriminator: {
         propertyName: 'type',
@@ -199,6 +180,7 @@ export class ChannelEndpointsController {
           [ENDPOINT_TYPES.PHONE]: getSchemaPath(CreatePhoneEndpointDto),
           [ENDPOINT_TYPES.MS_TEAMS_CHANNEL]: getSchemaPath(CreateMsTeamsChannelEndpointDto),
           [ENDPOINT_TYPES.MS_TEAMS_USER]: getSchemaPath(CreateMsTeamsUserEndpointDto),
+          [ENDPOINT_TYPES.TELEGRAM_CHAT]: getSchemaPath(CreateTelegramChatEndpointDto),
         },
       },
     },
@@ -211,8 +193,6 @@ export class ChannelEndpointsController {
     @UserSession() user: UserSessionData,
     @Body() body: CreateChannelEndpointRequest
   ): Promise<GetChannelEndpointResponseDto> {
-    await this.checkFeatureEnabled(user);
-
     const channelEndpoint = await this.createChannelEndpointUsecase.execute(
       CreateChannelEndpointCommand.create({
         environmentId: user.environmentId,
@@ -245,8 +225,6 @@ export class ChannelEndpointsController {
     @Param('identifier') identifier: string,
     @Body() body: UpdateChannelEndpointRequestDto
   ): Promise<GetChannelEndpointResponseDto> {
-    await this.checkFeatureEnabled(user);
-
     const channelEndpoint = await this.updateChannelEndpointUsecase.execute(
       UpdateChannelEndpointCommand.create({
         environmentId: user.environmentId,
@@ -273,8 +251,6 @@ export class ChannelEndpointsController {
     @UserSession() user: UserSessionData,
     @Param('identifier') identifier: string
   ): Promise<void> {
-    await this.checkFeatureEnabled(user);
-
     await this.deleteChannelEndpointUsecase.execute(
       DeleteChannelEndpointCommand.create({
         environmentId: user.environmentId,

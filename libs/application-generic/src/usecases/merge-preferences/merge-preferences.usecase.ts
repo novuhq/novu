@@ -26,22 +26,33 @@ export class MergePreferences {
    * Ensures that `all.enabled` defaults to `true` if undefined.
    * Without this, if the `all` object is missing or `enabled` is undefined,
    * the merge result could incorrectly resolve to `false`, while the intended fallback is `true`.
+   *
+   * Performance note: this method is called for every preference of every workflow during
+   * the subscriber-preferences fetch (`MergePreferences.execute`). The previous
+   * implementation always allocated a shallow clone of `preference` and `preference.preferences`
+   * even when no normalization was needed; under concurrent load this accounted for a
+   * meaningful share of the request's CPU time. We now short-circuit and return the
+   * original reference when the input already satisfies the invariant.
    */
   private static ensureDefaultAllEnabled(preference: PreferencesEntity | undefined): PreferencesEntity | undefined {
     if (!preference?.preferences) {
       return preference;
     }
 
-    const normalized = { ...preference, preferences: { ...preference.preferences } };
-
-    if (normalized.preferences.all && normalized.preferences.all.enabled === undefined) {
-      normalized.preferences.all = {
-        ...normalized.preferences.all,
-        enabled: true,
-      };
+    if (!preference.preferences.all || preference.preferences.all.enabled !== undefined) {
+      return preference;
     }
 
-    return normalized;
+    return {
+      ...preference,
+      preferences: {
+        ...preference.preferences,
+        all: {
+          ...preference.preferences.all,
+          enabled: true,
+        },
+      },
+    };
   }
 
   public static execute(command: MergePreferencesCommand): GetPreferencesResponseDto {

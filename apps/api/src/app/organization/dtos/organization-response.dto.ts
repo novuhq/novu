@@ -11,10 +11,6 @@ export class IPartnerConfigurationResponseDto {
 
   @ApiProperty()
   @IsString()
-  accessToken: string;
-
-  @ApiProperty()
-  @IsString()
   configurationId: string;
 
   @ApiPropertyOptional()

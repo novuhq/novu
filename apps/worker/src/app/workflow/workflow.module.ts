@@ -1,6 +1,7 @@
 import { DynamicModule, Logger, Module, OnApplicationShutdown, Provider, Type } from '@nestjs/common';
 import { ForwardReference } from '@nestjs/common/interfaces/modules/forward-reference.interface';
 import {
+  AttachmentRehydrator,
   BulkCreateExecutionDetails,
   CalculateLimitNovuIntegration,
   ChatContentCompiler,
@@ -18,7 +19,9 @@ import {
   GetSubscriberSchedule,
   GetSubscriberTemplatePreference,
   GetTopicSubscribersUseCase,
+  InboundDomainRouteDelivery,
   InMemoryProviderService,
+  MsTeamsTokenService,
   NormalizeVariables,
   ProcessTenant,
   RedisThrottleService,
@@ -33,12 +36,18 @@ import {
   WorkflowInMemoryProviderService,
 } from '@novu/application-generic';
 import {
+  AgentIntegrationRepository,
+  AgentRepository,
   ChannelConnectionRepository,
   ChannelEndpointRepository,
   CommunityOrganizationRepository,
   CommunityUserRepository,
   ContextRepository,
+  ConversationActivityRepository,
+  ConversationRepository,
   DomainRepository,
+  DomainRouteRepository,
+  IntegrationRepository,
   JobRepository,
   PreferencesRepository,
 } from '@novu/dal';
@@ -69,6 +78,7 @@ import {
 } from './usecases';
 import { AddJob, MergeOrCreateDigest } from './usecases/add-job';
 import { InboundEmailParse } from './usecases/inbound-email-parse/inbound-email-parse.usecase';
+import { LogInboundEmailRequest } from './usecases/inbound-email-parse/log-inbound-email-request.usecase';
 import { DomainRouteStrategy } from './usecases/inbound-email-parse/strategies/domain-route.strategy';
 import { ReplyToStrategy } from './usecases/inbound-email-parse/strategies/reply-to.strategy';
 import { NoopSendWebhookMessage } from './usecases/noop-send-webhook-message.usecase';
@@ -102,7 +112,13 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
 };
 
 const REPOSITORIES = [
+  AgentRepository,
+  AgentIntegrationRepository,
+  ConversationActivityRepository,
+  ConversationRepository,
   DomainRepository,
+  DomainRouteRepository,
+  IntegrationRepository,
   JobRepository,
   CommunityOrganizationRepository,
   PreferencesRepository,
@@ -197,6 +213,9 @@ const USE_CASES = [
   TriggerMulticast,
   CompileInAppTemplate,
   InboundEmailParse,
+  LogInboundEmailRequest,
+  AttachmentRehydrator,
+  InboundDomainRouteDelivery,
   ReplyToStrategy,
   DomainRouteStrategy,
   ExecuteBridgeJob,
@@ -207,7 +226,7 @@ const USE_CASES = [
   ChatContentCompiler,
 ];
 
-const PROVIDERS: Provider[] = [RedisThrottleService];
+const PROVIDERS: Provider[] = [RedisThrottleService, MsTeamsTokenService];
 const activeWorkersToken: any = {
   provide: 'ACTIVE_WORKERS',
   useFactory: (...args: any[]) => {

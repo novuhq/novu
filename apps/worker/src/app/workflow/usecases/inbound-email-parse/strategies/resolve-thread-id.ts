@@ -1,3 +1,4 @@
+import { normalizeReferences } from '@novu/application-generic';
 import { createHash } from 'crypto';
 
 /*
@@ -19,17 +20,7 @@ function hashMessageId(messageId: string): string {
   return createHash('sha256').update(messageId).digest('hex');
 }
 
-export function normalizeReferences(references: string | string[] | undefined): string[] {
-  if (!references) {
-    return [];
-  }
-
-  if (Array.isArray(references)) {
-    return references.flatMap((ref) => ref.trim().split(/\s+/)).filter(Boolean);
-  }
-
-  return references.trim().split(/\s+/).filter(Boolean);
-}
+export { normalizeReferences };
 
 export function resolveThreadId(
   toAddress: string,

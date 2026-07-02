@@ -75,3 +75,13 @@ export class MsTeamsUserEndpointDto {
   @IsString()
   userId: string;
 }
+
+export class TelegramChatEndpointDto {
+  @ApiProperty({
+    description: 'Telegram chat ID',
+    example: '123456789',
+    type: String,
+  })
+  @IsString()
+  chatId: string;
+}

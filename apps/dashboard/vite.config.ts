@@ -45,6 +45,16 @@ export default defineConfig(({ mode }) => {
     },
   });
 
+  // esbuild 0.27.7+ treats Safari <14.1 / iOS <14.5 as not supporting destructuring
+  // (due to a JS engine bug) but cannot lower destructuring, so it errors instead of
+  // generating fallback code. Vite 7.3.3+ applies this automatically; backport here.
+  // https://github.com/evanw/esbuild/issues/4436
+  const esbuildDestructuringWorkaround = {
+    supported: {
+      destructuring: true,
+    },
+  };
+
   return {
     plugins: [
       excludeCloudFilesPlugin(),
@@ -85,7 +95,7 @@ export default defineConfig(({ mode }) => {
       alias: {
         ...(isCommunitySelHosted
           ? {
-              '@clerk/clerk-react': path.resolve(__dirname, './src/utils/self-hosted/index.tsx'),
+              '@clerk/react': path.resolve(__dirname, './src/utils/self-hosted/index.tsx'),
               '@/components/side-navigation/organization-dropdown-clerk': path.resolve(
                 __dirname,
                 './src/utils/self-hosted/organization-switcher.tsx'
@@ -93,7 +103,7 @@ export default defineConfig(({ mode }) => {
             }
           : eeAuthProvider === 'better-auth'
             ? {
-                '@clerk/clerk-react': path.resolve(__dirname, './src/utils/better-auth/index.tsx'),
+                '@clerk/react': path.resolve(__dirname, './src/utils/better-auth/index.tsx'),
                 '@/context/region': path.resolve(__dirname, './src/context/region/index.self-hosted.ts'),
                 '@/components/side-navigation/organization-dropdown-clerk': path.resolve(
                   __dirname,
@@ -114,13 +124,21 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       port: 4201,
+      // Bind to all interfaces so the same dev server answers `localhost` and `*.localhost`.
+      host: true,
+      allowedHosts: ['localhost', '.localhost'],
       headers: {
         'Document-Policy': 'js-profiling',
+      },
+      watch: {
+        ignored: ['**/.env'],
       },
     },
     optimizeDeps: {
       include: ['@novu/api'],
+      esbuildOptions: esbuildDestructuringWorkaround,
     },
+    esbuild: esbuildDestructuringWorkaround,
     build: {
       sourcemap: true,
       chunkSizeWarningLimit: 12000,

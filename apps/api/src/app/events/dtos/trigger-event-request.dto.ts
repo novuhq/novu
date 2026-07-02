@@ -12,8 +12,10 @@ import {
 import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
+  ArrayNotEmpty,
   IsArray,
   IsDefined,
+  IsNotEmpty,
   IsObject,
   IsOptional,
   IsString,
@@ -23,6 +25,7 @@ import {
 import { SdkApiProperty } from '../../shared/framework/swagger/sdk.decorators';
 import { CreateSubscriberRequestDto } from '../../subscribers/dtos';
 import { UpdateTenantRequestDto } from '../../tenant/dtos';
+import { IsTriggerRecipientsPayload } from '../validators/is-trigger-recipients-payload.validator';
 
 export class WorkflowToStepControlValuesDto {
   /**
@@ -48,7 +51,9 @@ export class SubscriberPayloadDto extends CreateSubscriberRequestDto {}
 export class TenantPayloadDto extends UpdateTenantRequestDto {}
 
 export class TopicPayloadDto {
-  @ApiProperty()
+  @ApiProperty({ minLength: 1 })
+  @IsString()
+  @IsNotEmpty({ message: 'topicKey is required' })
   topicKey: string;
 
   @ApiProperty({
@@ -284,6 +289,7 @@ export class TriggerEventRequestDto {
             },
             {
               type: 'string',
+              minLength: 1,
               description: 'Unique identifier of a subscriber in your systems',
               example: 'SUBSCRIBER_ID',
             },
@@ -292,6 +298,7 @@ export class TriggerEventRequestDto {
       },
       {
         type: 'string',
+        minLength: 1,
         description: 'Unique identifier of a subscriber in your systems',
         example: 'SUBSCRIBER_ID',
       },
@@ -304,6 +311,7 @@ export class TriggerEventRequestDto {
     ],
   })
   @IsDefined()
+  @IsTriggerRecipientsPayload()
   to: TriggerRecipientsPayload;
 
   @ApiPropertyOptional({
@@ -358,5 +366,9 @@ export class BulkTriggerEventDto {
     isArray: true,
     type: TriggerEventRequestDto,
   })
+  @IsArray()
+  @ArrayNotEmpty()
+  @ValidateNested({ each: true })
+  @Type(() => TriggerEventRequestDto)
   events: TriggerEventRequestDto[];
 }

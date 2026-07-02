@@ -66,6 +66,7 @@ export class GetSubscription {
       _organizationId: command.organizationId,
       topicKey: command.topicKey,
       identifier: command.identifier,
+      ...(command._subscriberId && { _subscriberId: command._subscriberId }),
       ...contextQuery,
     });
 

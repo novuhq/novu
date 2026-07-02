@@ -195,3 +195,63 @@ describe('Process Inbound Webhook E2E #novu-v2', () => {
     });
   });
 });
+
+describe('Process Inbound Webhook auth E2E #novu-v2', () => {
+  const mockWebhookBody = {
+    eventId: 'A0E2DB50-21D8-4F99-93C9-2BC0A4D32228',
+    eventType: 'clicked',
+    app_version: '1.0.0',
+    appState: 'active',
+    content: {
+      body: 'Test notification body',
+      title: 'Test title',
+    },
+    device_id: '531E306C-A900-4164-AACF-91948F9B4CCE',
+    expoPushToken: 'ExponentPushToken[Dy4R0HK8GkSD8NDlqMzM9w]',
+    notificationId: 'A0E2DB50-21D8-4F99-93C9-2BC0A4D32228',
+    platform: 'ios',
+    timestamp: '2025-09-21T20:02:35.103Z',
+  };
+
+  it('should reject push webhook when API key belongs to a different environment', async () => {
+    const targetSession = new UserSession();
+    await targetSession.initialize();
+
+    const otherSession = new UserSession();
+    await otherSession.initialize();
+
+    const targetIntegrationRepository = targetSession.testServer?.getService(IntegrationRepository);
+
+    await targetIntegrationRepository.update(
+      {
+        _environmentId: targetSession.environment._id,
+        providerId: PushProviderIdEnum.FCM,
+      },
+      { active: false }
+    );
+
+    const targetIntegration = await targetIntegrationRepository.create({
+      name: 'Test Expo Integration',
+      identifier: 'expo-test-auth',
+      providerId: PushProviderIdEnum.EXPO,
+      channel: ChannelTypeEnum.PUSH,
+      credentials: {
+        apiKey: 'test-access-token',
+      },
+      configurations: {
+        inboundWebhookEnabled: true,
+      },
+      active: true,
+      primary: true,
+      _environmentId: targetSession.environment._id,
+      _organizationId: targetSession.organization._id,
+    });
+
+    await targetSession.testAgent
+      .post(`/v2/inbound-webhooks/delivery-providers/${targetSession.environment._id}/${targetIntegration._id}`)
+      .set('Authorization', `Bearer ${otherSession.apiKey}`)
+      .set('content-type', 'application/json')
+      .send(mockWebhookBody)
+      .expect(401);
+  });
+});

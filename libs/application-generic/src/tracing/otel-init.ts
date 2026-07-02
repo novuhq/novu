@@ -226,6 +226,30 @@ export function startOtel(serviceName: string, version: string): NodeSDK | undef
         },
 
         /*
+         * Express:
+         * Skip wrapping middleware-type layers (body-parser, helmet, passport,
+         * cors, compression, etc.). The default behaviour wraps each middleware
+         * call in AsyncLocalStorageContextManager.run(), which on body-parsing
+         * middlewares (raw-body / body-parser) can leave the request stream in
+         * a half-consumed state and surface as `InternalServerError: stream is
+         * not readable` on routes with parsed bodies. Route-handler and router
+         * spans still produce useful tracing data; middleware-level spans are
+         * mostly noise in APM views.
+         *
+         * Upstream tracking:
+         *  - https://github.com/open-telemetry/opentelemetry-js-contrib (instrumentation-express)
+         *  - https://github.com/getsentry/sentry-javascript/issues/17131
+         *
+         * The string literal matches ExpressLayerType.MIDDLEWARE at runtime; we cast
+         * rather than importing the enum to avoid declaring `@opentelemetry/instrumentation-express`
+         * as a direct dependency (it's already transitively pulled in by auto-instrumentations-node).
+         */
+        '@opentelemetry/instrumentation-express': {
+          // biome-ignore lint/suspicious/noExplicitAny: see comment above
+          ignoreLayersType: ['middleware' as any],
+        },
+
+        /*
          * Pino (via nestjs-pino):
          * The instrumentation is already included in getNodeAutoInstrumentations —
          * do NOT add a separate new PinoInstrumentation() or the pino module gets

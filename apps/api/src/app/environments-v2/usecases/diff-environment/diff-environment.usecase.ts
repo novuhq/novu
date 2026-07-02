@@ -9,6 +9,7 @@ import {
 import { ResourceOriginEnum, ResourceTypeEnum } from '@novu/shared';
 import { DependencyAnalyzerService, EnvironmentValidationService } from '../../services';
 import { IDiffResult, IEnvironmentDiffResult } from '../../types/sync.types';
+import { AgentSyncStrategy } from '../sync-strategies/agent-sync.strategy';
 import { LayoutSyncStrategy } from '../sync-strategies/layout-sync.strategy';
 import { WorkflowSyncStrategy } from '../sync-strategies/workflow-sync.strategy';
 import { DiffEnvironmentCommand } from './diff-environment.command';
@@ -20,6 +21,7 @@ export class DiffEnvironmentUseCase {
     private environmentValidationService: EnvironmentValidationService,
     private workflowSyncStrategy: WorkflowSyncStrategy,
     private layoutSyncStrategy: LayoutSyncStrategy,
+    private agentSyncStrategy: AgentSyncStrategy,
     private dependencyAnalyzerService: DependencyAnalyzerService,
     private controlValuesRepository: ControlValuesRepository,
     private workflowRepository: NotificationTemplateRepository,
@@ -45,7 +47,7 @@ export class DiffEnvironmentUseCase {
         user: command.user,
       });
 
-      this.logger.info(`Starting environment diff between ${sourceEnvironmentId} and ${command.targetEnvironmentId}`);
+      this.logger.debug(`Starting environment diff between ${sourceEnvironmentId} and ${command.targetEnvironmentId}`);
 
       // Create workflow data container and pre-load workflow data for optimization
       const workflowDataContainer = new WorkflowDataContainer(this.controlValuesRepository, this.preferencesRepository);
@@ -57,7 +59,7 @@ export class DiffEnvironmentUseCase {
         _organizationId: command.user.organizationId,
       });
 
-      this.logger.info(`Pre-loading data for ${workflows.length} workflows before diff`);
+      this.logger.debug(`Pre-loading data for ${workflows.length} workflows before diff`);
       await workflowDataContainer.loadWorkflowsWithControlValues(
         workflows,
         sourceEnvironmentId,
@@ -65,8 +67,8 @@ export class DiffEnvironmentUseCase {
         command.targetEnvironmentId
       );
 
-      // Execute diff with workflow container optimization and layout strategy normally
-      const [workflowDiffResults, layoutDiffResults] = await Promise.all([
+      // Execute diff with workflow container optimization and layout/agent strategies normally
+      const [workflowDiffResults, layoutDiffResults, agentDiffResults] = await Promise.all([
         this.workflowSyncStrategy.diff(
           sourceEnvironmentId,
           command.targetEnvironmentId,
@@ -80,9 +82,15 @@ export class DiffEnvironmentUseCase {
           command.user.organizationId,
           command.user
         ),
+        this.agentSyncStrategy.diff(
+          sourceEnvironmentId,
+          command.targetEnvironmentId,
+          command.user.organizationId,
+          command.user
+        ),
       ]);
 
-      const resources = [...workflowDiffResults, ...layoutDiffResults];
+      const resources = [...workflowDiffResults, ...layoutDiffResults, ...agentDiffResults];
 
       const dependencyMap = await this.dependencyAnalyzerService.analyzeDependencies(
         resources,
@@ -105,7 +113,7 @@ export class DiffEnvironmentUseCase {
 
       const summary = this.calculateSummary(resources);
 
-      this.logger.info(
+      this.logger.debug(
         `Environment diff completed. Total entities: ${summary.totalEntities}, ` +
           `Total changes: ${summary.totalChanges}, Has changes: ${summary.hasChanges}`
       );

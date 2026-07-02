@@ -1,0 +1,506 @@
+---
+title: "OneSignal Push Integration with Novu"
+sidebarTitle: 'OneSignal'
+description: "Connect OneSignal to Novu to send push notifications through notification workflows. Step-by-step credential setup."
+---
+
+This guide walks you through the entire process of configuring and using [OneSignal](https://onesignal.com/) with Novu, from getting your credentials to sending your first notification.
+
+OneSignal supports sending messages via both [Apple Push Notification Service](https://developer.apple.com/documentation/usernotifications/setting_up_a_remote_notification_server) (APNs) and [Firebase Cloud Messaging](https://firebase.google.com/docs/cloud-messaging) (FCM).
+
+## Configure Onesignal with Novu
+
+Before you can send push notifications via OneSignal from Novu, you need to connect your OneSignal credentials.
+
+### Step 1: Get your OneSignal credentials
+
+To configure the OneSignal integration, you need an active account that has credentials for APNS, FCM, or both, and have access to two values from OneSignal app's settings:
+
+* App ID
+* App API Key
+
+Follow [this OneSignal guide](https://developer.apple.com/help/account/keys/create-a-private-key) to see how to access your OneSignal `App ID` and `App API key`.
+
+### Step 2: Connect Onesignal to Novu
+
+Next, add these keys to your OneSignal integration in the Novu dashboard.
+
+<Steps>
+  <Step title="Log in to the Novu dashboard">
+    Open the [Novu Dashboard](https://dashboard.novu.co).
+  </Step>
+
+<Step title="Open Integration Store">
+    On the Novu dashboard, navigate to the **Integration Store**.
+  </Step>
+
+<Step title="Connect a provider">
+    In the **Integration Store**, click **Connect provider** to begin setup.
+  </Step>
+
+<Step title="Select Push tab">
+  </Step>
+
+<Step title="Select OneSignal">
+    In the **Push** tab, choose **OneSignal** from the provider list.
+  </Step>
+
+<Step title="Paste credentials">
+    In the OneSignal integration form, paste your **App ID** and **App API Key** into the corresponding fields.
+    ![Onesignal Integration in Novu](/images/channels-and-providers/push/onesignal/onesignal-integration.png)
+  </Step>
+
+<Step title="Create the integration">
+    Review your credentials, then click **Create Integration** to save.
+  </Step>
+</Steps>
+
+## Using Onesignal with Novu
+
+Once your integration is configured, you can start sending push notifications by registering your subscribers' `player_id` tokens and triggering a workflow.
+
+### Step 1: Add subscriber device token
+
+When you [set up the OneSignal SDK](https://documentation.onesignal.com/docs/onboarding-with-onesignal#step-1-setup-onesignal-sdk) in your application, your users are automatically assigned a unique OneSignal [`player_id`](https://documentation.onesignal.com/docs/users#player-id). This ID is used to target the user for push notifications.
+
+To target a OneSignal user from Novu, you must register their `player_id` as the `deviceToken` for their Novu subscriber profile.
+
+You can do this by making an API call to [update the subscriber's credentials](/api-reference/subscribers/update-provider-credentials).
+
+<Tabs>
+  <Tab title="Node.js">
+```typescript
+import { Novu } from '@novu/api';
+import { ChatOrPushProviderEnum } from "@novu/api/models/components";
+
+const novu = new Novu({ secretKey: "<NOVU_SECRET_KEY>" });
+
+await novu.subscribers.credentials.update(
+  {
+    providerId: ChatOrPushProviderEnum.OneSignal,
+    integrationIdentifier: "string",
+    credentials: { deviceTokens: ["token1", "token2", "token3"] },
+  },
+  "subscriberId"
+);
+```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.subscribers.credentials.update(
+        subscriber_id="subscriberId",
+        update_subscriber_channel_request_dto={
+            "provider_id": novu_py.ChatOrPushProviderEnum.ONESIGNAL,
+            "credentials": {"deviceTokens": ["token1", "token2", "token3"]},
+            "integration_identifier": "string",
+        },
+    )
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Subscribers.Credentials.Update(context.Background(), "subscriberId", components.UpdateSubscriberChannelRequestDto{
+    ProviderID: components.ChatOrPushProviderEnumOneSignal,
+        IntegrationIdentifier: novugo.String("string"),
+    Credentials: components.ChannelCredentials{
+        DeviceTokens: []string{"token1", "token2", "token3"},
+    },
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()->setSecurity('<NOVU_SECRET_KEY>')->build();
+
+$sdk->subscribersCredentials->update(
+    subscriberId: 'subscriberId',
+    updateSubscriberChannelRequestDto: new Components\UpdateSubscriberChannelRequestDto(
+        providerId: Components\ChatOrPushProviderEnum::OneSignal,
+        integrationIdentifier: 'string',
+        credentials: new Components\ChannelCredentials(
+            deviceTokens: ['token1', 'token2', 'token3'],
+        ),
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+
+await sdk.Subscribers.Credentials.UpdateAsync(
+    subscriberId: "subscriberId",
+    updateSubscriberChannelRequestDto: new UpdateSubscriberChannelRequestDto() {
+        ProviderId = ChatOrPushProviderEnum.OneSignal,
+        IntegrationIdentifier = "string",
+        Credentials = new ChannelCredentials() {
+            DeviceTokens = new List<string> { "token1", "token2", "token3" },
+        },
+    });
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+import java.util.List;
+
+Novu novu = Novu.builder().secretKey("<NOVU_SECRET_KEY>").build();
+
+novu.subscribers().credentials().update()
+    .subscriberId("subscriberId")
+    .body(UpdateSubscriberChannelRequestDto.builder()
+        .providerId(ChatOrPushProviderEnum.ONESIGNAL)
+            .integrationIdentifier("string")
+        .credentials(ChannelCredentials.builder()
+            .deviceTokens(List.of("token1", "token2", "token3"))
+            .build())
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -L -X PUT 'https://api.novu.co/v1/subscribers/<SUBSCRIBER_ID>/credentials' \
+-H 'Content-Type: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+  "providerId": "one-signal",
+  "credentials": {
+    "deviceTokens": [
+      "token1",
+      "token2",
+      "token3"
+    ]
+  },
+  "integrationIdentifier": "string"
+}'
+```
+  </Tab>
+</Tabs>
+
+### Step 2: Send a notification
+
+<Tabs>
+  <Tab title="Node.js">
+```typescript
+import { Novu } from '@novu/api';
+
+const novu = new Novu({ secretKey: "<NOVU_SECRET_KEY>" });
+
+await novu.trigger({
+  workflowId: "workflowId",
+  to: { subscriberId: "SUBSCRIBER_ID", },
+  payload: {},
+});
+```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="workflowId",
+        to={"subscriber_id": "SUBSCRIBER_ID"},
+        payload={},
+    ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "workflowId",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: "SUBSCRIBER_ID",
+    }),
+    Payload: map[string]any{},
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()->setSecurity('<NOVU_SECRET_KEY>')->build();
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'workflowId',
+        to: new Components\SubscriberPayloadDto(subscriberId: 'SUBSCRIBER_ID'),
+        payload: {},
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "workflowId",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() { SubscriberId = "SUBSCRIBER_ID" }),
+    Payload = {},
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+
+Novu novu = Novu.builder().secretKey("<NOVU_SECRET_KEY>").build();
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("workflowId")
+        .to(To2.of(SubscriberPayloadDto.builder().subscriberId("SUBSCRIBER_ID").build()))
+        .payload({})
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl --location 'https://api.novu.co/v1/events/trigger' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+    "name": "workflowId",
+    "to": [
+        "SUBSCRIBER_ID"
+    ],
+    "payload": {}
+}'
+```
+  </Tab>
+</Tabs>
+## Using overrides to customize notifications
+
+<Tabs>
+  <Tab title="Node.js">
+```typescript
+import { Novu } from '@novu/api';
+
+const novu = new Novu({ secretKey: "<NOVU_SECRET_KEY>" });
+
+await novu.trigger({
+  workflowId: "workflowId",
+  to: { subscriberId: "subscriberId", },
+  payload: {
+    "abc": "def"
+},
+  overrides: {
+    "subtitle": "This is subtitle value",
+    "mutableContent": "Mutable content value",
+    "channelId": "category_id",
+    "categoryId": "Category id",
+    "icon": "https://image.com/icon.png",
+    "sound": "sound file url"
+},
+});
+```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="workflowId",
+        to={"subscriber_id": "subscriberId"},
+        payload={
+        "abc": "def"
+},
+        overrides={
+        "subtitle": "This is subtitle value",
+        "mutableContent": "Mutable content value",
+        "channelId": "category_id",
+        "categoryId": "Category id",
+        "icon": "https://image.com/icon.png",
+        "sound": "sound file url"
+},
+    ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "workflowId",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: "subscriberId",
+    }),
+    Payload: map[string]any{
+    "abc": "def"
+},
+    Overrides: map[string]any{
+    "subtitle": "This is subtitle value",
+    "mutableContent": "Mutable content value",
+    "channelId": "category_id",
+    "categoryId": "Category id",
+    "icon": "https://image.com/icon.png",
+    "sound": "sound file url"
+},
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()->setSecurity('<NOVU_SECRET_KEY>')->build();
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'workflowId',
+        to: new Components\SubscriberPayloadDto(subscriberId: 'subscriberId'),
+        payload: {
+        "abc": "def"
+},
+        overrides: {
+        "subtitle": "This is subtitle value",
+        "mutableContent": "Mutable content value",
+        "channelId": "category_id",
+        "categoryId": "Category id",
+        "icon": "https://image.com/icon.png",
+        "sound": "sound file url"
+},
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "workflowId",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() { SubscriberId = "subscriberId" }),
+    Payload = {
+    "abc": "def"
+},
+    Overrides = {
+    "subtitle": "This is subtitle value",
+    "mutableContent": "Mutable content value",
+    "channelId": "category_id",
+    "categoryId": "Category id",
+    "icon": "https://image.com/icon.png",
+    "sound": "sound file url"
+},
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+
+Novu novu = Novu.builder().secretKey("<NOVU_SECRET_KEY>").build();
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("workflowId")
+        .to(To2.of(SubscriberPayloadDto.builder().subscriberId("subscriberId").build()))
+        .payload({
+        "abc": "def"
+})
+        .overrides({
+        "subtitle": "This is subtitle value",
+        "mutableContent": "Mutable content value",
+        "channelId": "category_id",
+        "categoryId": "Category id",
+        "icon": "https://image.com/icon.png",
+        "sound": "sound file url"
+})
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl --location 'https://api.novu.co/v1/events/trigger' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+    "name": "workflowId",
+    "to": [
+        "subscriberId"
+    ],
+    "payload": {
+        "abc": "def"
+    },
+    "overrides": {
+        "subtitle": "This is subtitle value",
+        "mutableContent": "Mutable content value",
+        "channelId": "category_id",
+        "categoryId": "Category id",
+        "icon": "https://image.com/icon.png",
+        "sound": "sound file url"
+    }
+}'
+```
+  </Tab>
+</Tabs>
+## Using external user ID
+
+By default, Novu uses `player_id` to send notifications, but you can select the `External ID` option in the OneSignal integration settings in Novu. If `External ID` option is selected, then `deviceTokens` stored in subscriber credentials for the OneSignal provider, are used as external user IDs.
+
+By default, Novu uses player IDs to send notifications. If your OneSignal integration uses external user IDs, then you can switch this behavior in the OneSignal integration settings in Novu.
+
+<video autoPlay loop muted playsInline src="/images/channels-and-providers/push/onesignal/select-external-id-option.mp4" />
+
+Once enabled, the `deviceTokens` stored in subscriber credentials are treated as external user IDs instead of player IDs.

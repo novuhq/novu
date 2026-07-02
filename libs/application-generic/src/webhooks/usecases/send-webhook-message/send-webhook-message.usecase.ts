@@ -20,7 +20,7 @@ export class SendWebhookMessage {
   @InstrumentUsecase()
   async execute(command: SendWebhookMessageCommand): Promise<{ eventId: string } | undefined> {
     if (!this.svix) {
-      this.logger.debug('Svix client not available – webhooks are disabled for this instance.');
+      this.logger.debug('Outbound webhook client not available – webhooks are disabled for this instance.');
 
       return;
     }
@@ -62,15 +62,13 @@ export class SendWebhookMessage {
         `Attempting to send webhook ${command.eventType} for application ${appId}, Event ID: ${eventId}`
       );
 
-      const message = await this.svix.message.create(appId, {
+      await this.svix.message.create(appId, {
         eventType: command.eventType,
         eventId,
         payload: webhookPayload,
       });
 
-      this.logger.debug(
-        `Successfully sent webhook ${command.eventType}. Svix Message ID: ${message.id}, Event ID: ${eventId}`
-      );
+      this.logger.debug(`Successfully sent webhook ${command.eventType}. Event ID: ${eventId}`);
 
       return { eventId };
     } catch (error: any) {

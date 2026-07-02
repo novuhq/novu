@@ -14,6 +14,7 @@ import { PreviewPayloadDto } from '../../dtos/workflow/preview-payload.dto';
 import { resolveEnvironmentVariables } from '../../encryption/encrypt-environment-variable';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import {
+  buildActorSchema,
   buildContextSchema,
   buildEnvSchema,
   buildSubscriberSchema,
@@ -73,7 +74,7 @@ export class BuildVariableSchemaUsecase {
     }
 
     const optimisticControlValues = Object.values(command.optimisticControlValues || {});
-    const { payload, subscriber, context } = await this.createVariablesObject.execute(
+    const { payload, subscriber, actor, context } = await this.createVariablesObject.execute(
       CreateVariablesObjectCommand.create({
         environmentId: command.environmentId,
         organizationId: command.organizationId,
@@ -84,10 +85,16 @@ export class BuildVariableSchemaUsecase {
     const {
       payload: finalPayload,
       subscriber: finalSubscriber,
+      actor: finalActor,
       context: finalContext,
     } = previewData
-      ? this.mergePreviewData({ payload, subscriber, context }, previewData)
-      : { payload: payload || {}, subscriber: subscriber || {}, context: context || {} };
+      ? this.mergePreviewData({ payload, subscriber, actor, context }, previewData)
+      : {
+          payload: payload || {},
+          subscriber: subscriber || {},
+          actor: actor || {},
+          context: context || {},
+        };
 
     const effectiveSteps = this.buildEffectiveSteps(workflow, optimisticSteps);
 
@@ -115,6 +122,7 @@ export class BuildVariableSchemaUsecase {
       properties: {
         workflow: buildWorkflowSchema(),
         subscriber: buildSubscriberSchema(finalSubscriber),
+        actor: buildActorSchema(finalActor),
         steps: buildPreviousStepsSchema({
           previousSteps,
           payloadSchema: effectivePayloadSchema,
@@ -203,12 +211,18 @@ export class BuildVariableSchemaUsecase {
    * Merges preview data with extracted variables for preview scenarios
    */
   private mergePreviewData(
-    extracted: { payload?: unknown; subscriber?: unknown; context?: unknown },
+    extracted: { payload?: unknown; subscriber?: unknown; actor?: unknown; context?: unknown },
     previewData?: PreviewPayloadDto
-  ): { payload: Record<string, unknown>; subscriber: Record<string, unknown>; context: Record<string, unknown> } {
+  ): {
+    payload: Record<string, unknown>;
+    subscriber: Record<string, unknown>;
+    actor: Record<string, unknown>;
+    context: Record<string, unknown>;
+  } {
     return {
       payload: { ...((extracted.payload as Record<string, unknown>) || {}), ...(previewData?.payload || {}) },
       subscriber: { ...((extracted.subscriber as Record<string, unknown>) || {}), ...(previewData?.subscriber || {}) },
+      actor: { ...((extracted.actor as Record<string, unknown>) || {}), ...(previewData?.actor || {}) },
       context: { ...((extracted.context as Record<string, unknown>) || {}), ...(previewData?.context || {}) },
     };
   }

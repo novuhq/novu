@@ -148,3 +148,19 @@ export function allRequired<V extends Record<string, unknown>>(
 
   return v as ReturnType<typeof allRequired<V>>;
 }
+
+export function isPlainObject(
+  value: unknown,
+): value is Record<string, unknown> {
+  if (value === null || typeof value !== "object") return false;
+  if (Object.prototype.toString.call(value) !== "[object Object]") return false;
+  const proto = Object.getPrototypeOf(value);
+  if (proto === null || proto === Object.prototype) return true;
+  // cross-realm plain objects (vm contexts, iframes) inherit from a
+  // different realm's Object.prototype, which itself has a null prototype
+  try {
+    return Object.getPrototypeOf(proto) === null;
+  } catch {
+    return false;
+  }
+}

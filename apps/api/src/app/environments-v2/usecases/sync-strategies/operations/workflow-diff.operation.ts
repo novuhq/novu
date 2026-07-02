@@ -34,7 +34,7 @@ export class WorkflowDiffOperation extends BaseDiffOperation<NotificationTemplat
     if (!workflowDataContainer) {
       throw new Error('WorkflowDataContainer is required for workflow diff operations');
     }
-    this.logger.info(this.getWorkflowDiffStartMessage(sourceEnvId, targetEnvId));
+    this.logger.debug(this.getWorkflowDiffStartMessage(sourceEnvId, targetEnvId));
 
     const resultBuilder = new DiffResultBuilder(this.getResourceType());
 
@@ -42,7 +42,7 @@ export class WorkflowDiffOperation extends BaseDiffOperation<NotificationTemplat
       const sourceResources = workflowDataContainer.getWorkflowsByEnvironment(sourceEnvId);
       const targetResources = workflowDataContainer.getWorkflowsByEnvironment(targetEnvId);
 
-      this.logger.info(
+      this.logger.debug(
         `Filtered ${sourceResources.length} source resources and ${targetResources.length} target resources from container`
       );
 
@@ -55,7 +55,7 @@ export class WorkflowDiffOperation extends BaseDiffOperation<NotificationTemplat
       );
       await this.processDeletedWorkflowResources(sourceResources, targetResources, resultBuilder);
 
-      this.logger.info(`Resource diff completed. Processed ${sourceResources.length} resources in batches.`);
+      this.logger.debug(`Resource diff completed. Processed ${sourceResources.length} resources in batches.`);
 
       return resultBuilder.build();
     } catch (error) {
@@ -84,7 +84,7 @@ export class WorkflowDiffOperation extends BaseDiffOperation<NotificationTemplat
     const BATCH_SIZE = 10;
     const batches = this.createWorkflowBatches(sourceResources, BATCH_SIZE);
 
-    this.logger.info(`Processing ${sourceResources.length} resources in ${batches.length} batches of ${BATCH_SIZE}`);
+    this.logger.debug(`Processing ${sourceResources.length} resources in ${batches.length} batches of ${BATCH_SIZE}`);
 
     for (let i = 0; i < batches.length; i += 1) {
       const batch = batches[i];

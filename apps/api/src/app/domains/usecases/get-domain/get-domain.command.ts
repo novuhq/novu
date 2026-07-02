@@ -4,5 +4,5 @@ import { EnvironmentWithUserCommand } from '../../../shared/commands/project.com
 export class GetDomainCommand extends EnvironmentWithUserCommand {
   @IsString()
   @IsNotEmpty()
-  domainId: string;
+  domain: string;
 }

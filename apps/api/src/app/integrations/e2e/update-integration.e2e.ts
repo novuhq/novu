@@ -21,6 +21,21 @@ describe('Update Integration - /integrations/:integrationId (PUT) #novu-v2', () 
     await session.initialize();
   });
 
+  it('should reject integration id that is not a MongoDB ObjectId', async () => {
+    const payload = {
+      providerId: EmailProviderIdEnum.SendGrid,
+      channel: ChannelTypeEnum.EMAIL,
+      credentials: { apiKey: 'new_key', secretKey: 'new_secret' },
+      active: true,
+      check: false,
+    };
+
+    const { body } = await session.testAgent.put('/v1/integrations/telegram').send(payload);
+
+    expect(body.statusCode).to.equal(422);
+    expect(body.errors.integrationId.messages[0]).to.equal('integrationId must be a mongodb id');
+  });
+
   it('should throw not found exception when integration is not found', async () => {
     const integrationId = IntegrationRepository.createObjectId();
     const payload = {
@@ -223,6 +238,64 @@ describe('Update Integration - /integrations/:integrationId (PUT) #novu-v2', () 
     } = await session.testAgent.put(`/v1/integrations/${integrationOne._id}`).send(payload);
 
     expect(data._environmentId).to.equal(prodEnv?._id);
+  });
+
+  it('should allow updating an integration that lives in a different environment of the same organization', async () => {
+    const prodEnv = await envRepository.findOne({ name: 'Production', _organizationId: session.organization._id });
+    const otherEnvironmentIntegration = await integrationRepository.create({
+      name: 'OtherEnv',
+      identifier: 'other-env-update',
+      providerId: EmailProviderIdEnum.SendGrid,
+      channel: ChannelTypeEnum.EMAIL,
+      active: false,
+      _organizationId: session.organization._id,
+      _environmentId: prodEnv!._id,
+    });
+
+    const payload = {
+      name: 'Renamed cross env',
+      check: false,
+    };
+
+    const {
+      body: { data },
+    } = await session.testAgent.put(`/v1/integrations/${otherEnvironmentIntegration._id}`).send(payload);
+
+    expect(data.name).to.equal('Renamed cross env');
+    expect(data._environmentId).to.equal(prodEnv!._id);
+  });
+
+  it('should not allow moving an integration into an environment owned by another organization', async () => {
+    const integrationOne = await integrationRepository.create({
+      name: 'TestCrossOrg',
+      identifier: 'identifier-cross-org',
+      providerId: EmailProviderIdEnum.SendGrid,
+      channel: ChannelTypeEnum.EMAIL,
+      active: false,
+      _organizationId: session.organization._id,
+      _environmentId: session.environment._id,
+    });
+
+    const otherSession = new UserSession();
+    await otherSession.initialize();
+
+    const payload = {
+      _environmentId: otherSession.environment._id,
+      name: 'Hijacked',
+      check: false,
+    };
+
+    const { body } = await session.testAgent.put(`/v1/integrations/${integrationOne._id}`).send(payload);
+
+    expect(body.statusCode).to.equal(404);
+    expect(body.message).to.equal(`Environment with id ${otherSession.environment._id} not found`);
+
+    const untouched = await integrationRepository.findOne({
+      _id: integrationOne._id,
+      _environmentId: session.environment._id,
+    });
+    expect(untouched?._environmentId).to.equal(session.environment._id);
+    expect(untouched?.name).to.equal('TestCrossOrg');
   });
 
   it('should update custom SMTP integration with TLS options successfully', async () => {
@@ -961,5 +1034,128 @@ describe('Update Integration - /integrations/:integrationId (PUT) #novu-v2', () 
     expect(second.primary).to.equal(false);
     expect(second.active).to.equal(true);
     expect(second.priority).to.equal(1);
+  });
+
+  describe('API key authentication is scoped to the key environment', () => {
+    it('should forbid updating with a different `_environmentId` when authenticated via API key', async () => {
+      const integrationOne = await integrationRepository.create({
+        name: 'Test',
+        identifier: 'identifier-api-key-other-env',
+        providerId: EmailProviderIdEnum.SendGrid,
+        channel: ChannelTypeEnum.EMAIL,
+        active: false,
+        _organizationId: session.organization._id,
+        _environmentId: session.environment._id,
+      });
+      const prodEnv = await envRepository.findOne({ name: 'Production', _organizationId: session.organization._id });
+      expect(prodEnv?._id, 'Expected Production environment fixture').to.exist;
+
+      const payload = {
+        _environmentId: prodEnv!._id,
+        check: false,
+      };
+
+      const { body } = await session.testAgent
+        .put(`/v1/integrations/${integrationOne._id}`)
+        .set('authorization', `ApiKey ${session.apiKey}`)
+        .send(payload);
+
+      expect(body.statusCode).to.equal(403);
+      expect(body.message).to.contain('is scoped to a single environment');
+
+      const untouched = await integrationRepository.findOne({
+        _id: integrationOne._id,
+        _environmentId: session.environment._id,
+      });
+      expect(untouched?._environmentId).to.equal(session.environment._id);
+    });
+
+    it('should allow updating with the same `_environmentId` as the API key environment', async () => {
+      const integrationOne = await integrationRepository.create({
+        name: 'Test',
+        identifier: 'identifier-api-key-same-env',
+        providerId: EmailProviderIdEnum.SendGrid,
+        channel: ChannelTypeEnum.EMAIL,
+        active: false,
+        _organizationId: session.organization._id,
+        _environmentId: session.environment._id,
+      });
+
+      const payload = {
+        _environmentId: session.environment._id,
+        name: 'Renamed via API key',
+        check: false,
+      };
+
+      const {
+        body: { data },
+      } = await session.testAgent
+        .put(`/v1/integrations/${integrationOne._id}`)
+        .set('authorization', `ApiKey ${session.apiKey}`)
+        .send(payload);
+
+      expect(data.name).to.equal('Renamed via API key');
+      expect(data._environmentId).to.equal(session.environment._id);
+    });
+
+    it('should forbid updating an integration that lives in a different environment when authenticated via API key', async () => {
+      const prodEnv = await envRepository.findOne({ name: 'Production', _organizationId: session.organization._id });
+      expect(prodEnv?._id, 'Expected Production environment fixture').to.exist;
+      const otherEnvironmentIntegration = await integrationRepository.create({
+        name: 'OtherEnv',
+        identifier: 'other-env-update-api-key',
+        providerId: EmailProviderIdEnum.SendGrid,
+        channel: ChannelTypeEnum.EMAIL,
+        active: false,
+        _organizationId: session.organization._id,
+        _environmentId: prodEnv!._id,
+      });
+
+      const payload = {
+        name: 'Should not change',
+        check: false,
+      };
+
+      const { body } = await session.testAgent
+        .put(`/v1/integrations/${otherEnvironmentIntegration._id}`)
+        .set('authorization', `ApiKey ${session.apiKey}`)
+        .send(payload);
+
+      expect(body.statusCode).to.equal(403);
+      expect(body.message).to.contain('is scoped to a single environment');
+
+      const untouched = await integrationRepository.findOne({
+        _id: otherEnvironmentIntegration._id,
+        _environmentId: prodEnv!._id,
+      });
+      expect(untouched?.name).to.equal('OtherEnv');
+    });
+
+    it('should still allow JWT-authenticated requests to update integrations in another environment', async () => {
+      const prodEnv = await envRepository.findOne({ name: 'Production', _organizationId: session.organization._id });
+      expect(prodEnv?._id, 'Expected Production environment fixture').to.exist;
+      const otherEnvironmentIntegration = await integrationRepository.create({
+        name: 'OtherEnv',
+        identifier: 'other-env-update-jwt',
+        providerId: EmailProviderIdEnum.SendGrid,
+        channel: ChannelTypeEnum.EMAIL,
+        active: false,
+        _organizationId: session.organization._id,
+        _environmentId: prodEnv!._id,
+      });
+
+      const payload = {
+        _environmentId: prodEnv!._id,
+        name: 'Renamed via JWT',
+        check: false,
+      };
+
+      const {
+        body: { data },
+      } = await session.testAgent.put(`/v1/integrations/${otherEnvironmentIntegration._id}`).send(payload);
+
+      expect(data.name).to.equal('Renamed via JWT');
+      expect(data._environmentId).to.equal(prodEnv!._id);
+    });
   });
 });

@@ -1,6 +1,7 @@
 import {
   DeleteObjectCommand,
   GetObjectCommand,
+  HeadObjectCommand,
   PutObjectCommand,
   PutObjectCommandOutput,
   S3Client,
@@ -33,6 +34,8 @@ export abstract class StorageService {
     path: string;
     additionalHeaders?: Record<string, string>;
   }>;
+  abstract getReadSignedUrl(key: string, ttlSeconds: number): Promise<string>;
+  abstract fileExists(key: string): Promise<boolean>;
   abstract uploadFile(key: string, file: Buffer, contentType: string): Promise<PutObjectCommandOutput>;
   abstract getFile(key: string): Promise<Buffer>;
   abstract deleteFile(key: string): Promise<void>;
@@ -105,6 +108,39 @@ export class S3StorageService implements StorageService {
 
     return { signedUrl, path };
   }
+
+  async getReadSignedUrl(key: string, ttlSeconds: number): Promise<string> {
+    const command = new GetObjectCommand({
+      Bucket: process.env.S3_BUCKET_NAME,
+      Key: key,
+    });
+
+    return await getSignedUrl(this.s3, command, { expiresIn: ttlSeconds });
+  }
+
+  async fileExists(key: string): Promise<boolean> {
+    try {
+      await this.s3.send(
+        new HeadObjectCommand({
+          Bucket: process.env.S3_BUCKET_NAME,
+          Key: key,
+        })
+      );
+
+      return true;
+    } catch (error: any) {
+      if (
+        error.name === 'NotFound' ||
+        error.Code === 'NotFound' ||
+        error.Code === 'NoSuchKey' ||
+        error.$metadata?.httpStatusCode === 404
+      ) {
+        return false;
+      }
+
+      throw error;
+    }
+  }
 }
 
 export class GCSStorageService implements StorageService {
@@ -118,9 +154,6 @@ export class GCSStorageService implements StorageService {
 
     return (await fileObject.save(file, {
       contentType,
-      metadata: {
-        cacheControl: 'public, max-age=31536000',
-      },
     })) as unknown as PutObjectCommandOutput;
   }
 
@@ -168,6 +201,29 @@ export class GCSStorageService implements StorageService {
       : `${process.env.GCS_DOMAIN}${parsedUrl.pathname}`;
 
     return { signedUrl, path };
+  }
+
+  async getReadSignedUrl(key: string, ttlSeconds: number): Promise<string> {
+    if (!process.env.GCS_BUCKET_NAME) throw new Error('GCS_BUCKET_NAME is not defined as env variable');
+
+    const [signedUrl] = await this.gcs
+      .bucket(process.env.GCS_BUCKET_NAME)
+      .file(key)
+      .getSignedUrl({
+        version: 'v4',
+        action: 'read',
+        expires: Date.now() + ttlSeconds * 1000,
+      });
+
+    return signedUrl;
+  }
+
+  async fileExists(key: string): Promise<boolean> {
+    if (!process.env.GCS_BUCKET_NAME) throw new Error('GCS_BUCKET_NAME is not defined as env variable');
+
+    const [exists] = await this.gcs.bucket(process.env.GCS_BUCKET_NAME).file(key).exists();
+
+    return exists;
   }
 }
 
@@ -247,5 +303,34 @@ export class AzureBlobStorageService implements StorageService {
       path,
       additionalHeaders,
     };
+  }
+
+  async getReadSignedUrl(key: string, ttlSeconds: number): Promise<string> {
+    const containerName = process.env.AZURE_CONTAINER_NAME || 'novu';
+    const blobName = key;
+    const containerClient = this.blobServiceClient.getContainerClient(containerName);
+    const blobClient = containerClient.getBlobClient(blobName);
+    const blobSAS = generateBlobSASQueryParameters(
+      {
+        containerName,
+        blobName,
+        permissions: BlobSASPermissions.parse('r'),
+        startsOn: new Date(),
+        expiresOn: new Date(Date.now() + ttlSeconds * 1000),
+        protocol: SASProtocol.Https,
+      },
+      this.sharedKeyCredential
+    ).toString();
+
+    return `${blobClient.url}?${blobSAS}`;
+  }
+
+  async fileExists(key: string): Promise<boolean> {
+    if (!process.env.AZURE_CONTAINER_NAME) throw new Error('AZURE_CONTAINER_NAME is not defined as env variable');
+
+    const containerClient = this.blobServiceClient.getContainerClient(process.env.AZURE_CONTAINER_NAME);
+    const blockBlobClient = containerClient.getBlockBlobClient(key);
+
+    return await blockBlobClient.exists();
   }
 }

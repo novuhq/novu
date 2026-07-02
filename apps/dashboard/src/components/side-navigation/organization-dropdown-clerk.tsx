@@ -1,4 +1,4 @@
-import { useAuth, useClerk, useOrganization, useOrganizationList } from '@clerk/clerk-react';
+import { useAuth, useClerk, useOrganization, useOrganizationList } from '@clerk/react';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 type OrganizationMembershipLike = {
@@ -14,6 +14,7 @@ type OrganizationMembershipLike = {
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { RiAddCircleLine, RiArrowDownSLine, RiArrowRightSLine, RiLoader4Line } from 'react-icons/ri';
+import { useNavigate } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/primitives/avatar';
 import {
   DropdownMenu,
@@ -106,6 +107,7 @@ export function OrganizationDropdown() {
   const { organization: currentOrganization } = useOrganization();
   const { orgId } = useAuth();
   const clerk = useClerk();
+  const navigate = useNavigate();
   const { selectedRegion } = useRegion();
   const isRegionSelectorEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_REGION_SELECTOR_ENABLED, false);
 
@@ -141,6 +143,7 @@ export function OrganizationDropdown() {
     setSwitchingToId(organizationId);
     try {
       await clerk.setActive({ organization: organizationId });
+
       setIsOpen(false);
     } catch (error) {
       console.error('Failed to switch organization:', error);
@@ -249,7 +252,7 @@ export function OrganizationDropdown() {
             isScrolled && 'shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]'
           )}
           onSelect={() => {
-            window.location.href = ROUTES.SIGNUP_ORGANIZATION_LIST;
+            navigate(ROUTES.SIGNUP_ORGANIZATION_LIST);
           }}
         >
           <RiAddCircleLine className="size-4 text-text-sub" />

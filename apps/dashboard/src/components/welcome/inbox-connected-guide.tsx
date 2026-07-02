@@ -131,7 +131,7 @@ export function InboxConnectedGuide({ subscriberId, environment }: InboxConnecte
   async function handleCompleteOnboarding() {
     try {
       // Track telemetry event
-      await telemetry(TelemetryEvent.ONBOARDING_COMPLETED);
+      await telemetry(TelemetryEvent.ONBOARDING_COMPLETED, { usecase: 'inbox' });
     } catch (error) {
       console.error('Failed to track onboarding completion telemetry:', error);
       // Continue with navigation even if telemetry fails

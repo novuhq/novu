@@ -19,6 +19,10 @@ function getSubscriberStorageKey(workflowId: string, environmentId: string): str
   return `preview-subscriber-${workflowId}-${environmentId}`;
 }
 
+function getActorStorageKey(workflowId: string, environmentId: string): string {
+  return `preview-actor-${workflowId}-${environmentId}`;
+}
+
 function getContextStorageKey(workflowId: string, environmentId: string): string {
   return `preview-context-data-${workflowId}-${environmentId}`;
 }
@@ -31,6 +35,11 @@ export function savePayloadData(workflowId: string, environmentId: string, paylo
 export function saveSubscriberData(workflowId: string, environmentId: string, subscriber: PreviewSubscriberData): void {
   const storageKey = getSubscriberStorageKey(workflowId, environmentId);
   saveToStorage(storageKey, subscriber, 'subscriber');
+}
+
+export function saveActorData(workflowId: string, environmentId: string, actor: PreviewSubscriberData): void {
+  const storageKey = getActorStorageKey(workflowId, environmentId);
+  saveToStorage(storageKey, actor, 'actor');
 }
 
 export function saveContextData(workflowId: string, environmentId: string, context: ContextPayload): void {
@@ -48,6 +57,11 @@ export function loadSubscriberData(workflowId: string, environmentId: string): P
   return loadFromStorage<PreviewSubscriberData>(storageKey, 'subscriber');
 }
 
+export function loadActorData(workflowId: string, environmentId: string): PreviewSubscriberData | null {
+  const storageKey = getActorStorageKey(workflowId, environmentId);
+  return loadFromStorage<PreviewSubscriberData>(storageKey, 'actor');
+}
+
 export function loadContextData(workflowId: string, environmentId: string): ContextPayload | null {
   const storageKey = getContextStorageKey(workflowId, environmentId);
   return loadFromStorage<ContextPayload>(storageKey, 'context');
@@ -57,6 +71,7 @@ export function mergePreviewContextData(persistedData: ParsedData, serverDefault
   return {
     payload: mergeObjectData(persistedData.payload, serverDefaults.payload),
     subscriber: mergeObjectData(persistedData.subscriber, serverDefaults.subscriber),
+    actor: mergeObjectData(persistedData.actor, serverDefaults.actor),
     steps: mergeObjectData(persistedData.steps, serverDefaults.steps),
     context: mergeObjectData(persistedData.context, serverDefaults.context),
     env: mergeObjectData(persistedData.env, serverDefaults.env),
@@ -103,6 +118,11 @@ export function clearSubscriberData(workflowId: string, environmentId: string): 
   clearFromStorage(storageKey, 'subscriber data');
 }
 
+export function clearActorData(workflowId: string, environmentId: string): void {
+  const storageKey = getActorStorageKey(workflowId, environmentId);
+  clearFromStorage(storageKey, 'actor data');
+}
+
 export function clearContextData(workflowId: string, environmentId: string): void {
   const storageKey = getContextStorageKey(workflowId, environmentId);
   clearFromStorage(storageKey, 'context data');
@@ -111,7 +131,7 @@ export function clearContextData(workflowId: string, environmentId: string): voi
 export function cleanupExpiredPreviewData(): void {
   try {
     const keysToRemove: string[] = [];
-    const prefixes = ['preview-context-data-', 'preview-payload-', 'preview-subscriber-'];
+    const prefixes = ['preview-context-data-', 'preview-payload-', 'preview-subscriber-', 'preview-actor-'];
 
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);

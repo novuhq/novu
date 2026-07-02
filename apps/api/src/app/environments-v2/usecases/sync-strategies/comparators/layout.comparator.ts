@@ -11,7 +11,9 @@ export class LayoutComparator {
     private logger: PinoLogger,
     private getLayoutUseCase: GetLayoutUseCase,
     private layoutNormalizer: LayoutNormalizer
-  ) {}
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   async compareLayouts(sourceLayout: LayoutEntity, targetLayout: LayoutEntity): Promise<ILayoutComparison> {
     try {

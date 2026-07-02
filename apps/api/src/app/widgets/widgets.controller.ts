@@ -17,7 +17,7 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { ApiExcludeController, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { AnalyticsService } from '@novu/application-generic';
-import { MessageEntity, BaseRepository } from '@novu/dal';
+import { BaseRepository, MessageEntity } from '@novu/dal';
 import {
   ButtonTypeEnum,
   IPreferenceChannels,

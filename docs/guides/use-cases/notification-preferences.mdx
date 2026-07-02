@@ -1,0 +1,65 @@
+---
+title: 'User Notification Preferences with Novu'
+sidebarTitle: 'Preferences'
+description: 'Let subscribers manage notification preferences per workflow and channel using Novu Inbox and the preferences API.'
+---
+
+
+Let subscribers control how they receive notifications using Novu's built-in preference management. The Inbox component includes a preferences UI, and the REST API lets you read and update preferences programmatically.
+
+## How do subscriber preferences work in Novu?
+
+Each subscriber has preferences at two levels:
+
+- **Global channel preferences** — opt in or out of email, SMS, push, in-app, and chat globally
+- **Workflow-level preferences** — opt in or out of specific workflows
+
+When you trigger a workflow, Novu checks preferences before delivering each channel step.
+
+## How do I expose preferences in the Inbox?
+
+The Novu Inbox includes a built-in preferences modal. Enable it in your Inbox configuration:
+
+```tsx
+import { Inbox } from '@novu/react';
+
+<Inbox
+  applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+  subscriberId="YOUR_SUBSCRIBER_ID"
+/>
+```
+
+See [Inbox preferences configuration](/platform/inbox/configuration/preferences) for customization options.
+
+## How do I update preferences via the API?
+
+Use the [Update subscriber preferences](/api-reference/subscribers/update-subscriber-preferences) endpoint to set preferences from your backend.
+
+```bash
+curl -X PATCH https://api.novu.co/v2/subscribers/user_123/preferences \
+  -H "Authorization: ApiKey <NOVU_SECRET_KEY>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "preferences": [
+      { "workflowId": "marketing-digest", "enabled": false },
+      { "channel": { "type": "sms", "enabled": true } }
+    ]
+  }'
+```
+
+## Related guides
+
+- [Preferences concept](/platform/concepts/preferences)
+- [Configure workflow channel preferences](/platform/workflow/configure-workflow)
+- [Inbox preferences UI](/platform/inbox/configuration/preferences)
+
+## Frequently asked questions
+
+<AccordionGroup>
+  <Accordion title="Can subscribers opt out of specific workflows only?">
+    Yes. Workflow-level preferences let subscribers disable individual workflows while staying subscribed to others such as security alerts.
+  </Accordion>
+  <Accordion title="Do preferences apply to topic broadcasts?">
+    Yes. When triggering a workflow to a topic, Novu respects each subscriber's preferences before delivering messages.
+  </Accordion>
+</AccordionGroup>

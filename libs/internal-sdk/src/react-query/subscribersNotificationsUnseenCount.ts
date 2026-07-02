@@ -57,7 +57,9 @@ export type SubscribersNotificationsUnseenCountQueryError =
  * Retrieve unseen notifications count
  *
  * @remarks
- * Retrieve unseen in-app (inbox) notifications count for a subscriber by its unique key identifier **subscriberId**.
+ * This API is deprecated, use v2 API instead. Retrieve unseen in-app notifications count for a subscriber by its unique key identifier **subscriberId**.
+ *
+ * @deprecated method: This will be removed in a future release, please migrate away from it as soon as possible.
  */
 export function useSubscribersNotificationsUnseenCount(
   request: operations.SubscribersV1ControllerGetUnseenCountRequest,
@@ -84,7 +86,9 @@ export function useSubscribersNotificationsUnseenCount(
  * Retrieve unseen notifications count
  *
  * @remarks
- * Retrieve unseen in-app (inbox) notifications count for a subscriber by its unique key identifier **subscriberId**.
+ * This API is deprecated, use v2 API instead. Retrieve unseen in-app notifications count for a subscriber by its unique key identifier **subscriberId**.
+ *
+ * @deprecated method: This will be removed in a future release, please migrate away from it as soon as possible.
  */
 export function useSubscribersNotificationsUnseenCountSuspense(
   request: operations.SubscribersV1ControllerGetUnseenCountRequest,

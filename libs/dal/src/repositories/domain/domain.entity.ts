@@ -1,15 +1,7 @@
-import { DomainRouteTypeEnum, DomainStatusEnum } from '@novu/shared';
+import { DomainStatusEnum } from '@novu/shared';
 import type { ChangePropsValueType } from '../../types/helpers';
 import type { EnvironmentId } from '../environment';
 import type { OrganizationId } from '../organization';
-
-export class DomainRoute {
-  address: string;
-
-  destination?: string;
-
-  type: DomainRouteTypeEnum;
-}
 
 export class DomainEntity {
   _id: string;
@@ -22,7 +14,7 @@ export class DomainEntity {
 
   dnsProvider?: string;
 
-  routes: DomainRoute[];
+  data?: Record<string, string>;
 
   _environmentId: EnvironmentId;
 

@@ -118,6 +118,7 @@ export class MailjetEmailProvider extends BaseProvider implements IEmailProvider
           Base64Content: attachment.file.toString('base64'),
           ContentID: attachment.cid,
         })),
+      ...(options.headers && Object.keys(options.headers).length > 0 && { Headers: options.headers }),
     }).body;
 
     if (options.replyTo) {

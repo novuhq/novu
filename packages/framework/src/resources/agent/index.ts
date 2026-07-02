@@ -12,30 +12,47 @@ export type {
 } from 'chat';
 export { Actions, Button, Card, CardLink, CardText, Divider, Select, SelectOption, TextInput } from 'chat';
 export { AgentContextImpl } from './agent.context';
+export { AgentDeliveryError } from './agent.errors';
 export { agent } from './agent.resource';
 export type {
   Agent,
   AgentAction,
+  AgentActionContext,
   AgentAttachment,
   AgentBridgeRequest,
   AgentContext,
+  AgentContextBase,
   AgentConversation,
   AgentHandlers,
   AgentHistoryEntry,
   AgentMessage,
   AgentMessageAuthor,
+  AgentMessageContext,
   AgentPlatformContext,
   AgentReaction,
+  AgentReactionContext,
   AgentReplyPayload,
+  AgentResolveContext,
   AgentSubscriber,
   EditPayload,
   FileRef,
   MessageContent,
   MetadataSignal,
+  PlanControl,
+  PlanHandle,
+  PlanProgressEvent,
+  PlanProgressPhase,
+  PlanStep,
+  PlanStepOpts,
+  PlanStepUpdate,
+  PlanTaskInput,
+  PlanTaskStatus,
   ReplyContent,
   ReplyHandle,
   SentMessageInfo,
   Signal,
   TriggerSignal,
+  TypingControl,
+  TypingOp,
 } from './agent.types';
 export { AgentEventEnum } from './agent.types';

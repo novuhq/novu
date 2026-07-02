@@ -23,7 +23,7 @@ export function DomainsPaywallBanner() {
             </div>
             <h2 className="text-foreground-900 text-label-md">Domains</h2>
             <p className="text-text-soft text-label-xs mb-3 max-w-[300px]">
-              Send email from a domain you own - better deliverability, stronger brand.
+              Receive emails on your domain and route them to agents or webhooks.
             </p>
           </div>
         </div>
@@ -51,7 +51,7 @@ export function DomainsPaywallBanner() {
             {IS_SELF_HOSTED ? 'Contact Sales' : 'Upgrade to Team Tier'}
           </Button>
 
-          <Link to="https://docs.novu.co/platform/domains" target="_blank" rel="noreferrer noopener">
+          <Link to="https://docs.novu.co/agents/get-started/mental-model" target="_blank" rel="noreferrer noopener">
             <LinkButton size="sm" leadingIcon={RiBookMarkedLine}>
               How does this help?
             </LinkButton>
@@ -62,7 +62,7 @@ export function DomainsPaywallBanner() {
   );
 }
 
-function DomainsIllustrationSvg() {
+export function DomainsIllustrationSvg() {
   const id = useId();
   const g = (name: string) => `${id}-${name}`;
 
