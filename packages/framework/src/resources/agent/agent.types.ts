@@ -294,7 +294,7 @@ export interface ReplyHandle {
   edit(content: MessageContent, options?: { files?: FileRef[] }): Promise<ReplyHandle>;
 }
 
-export interface AgentContextBase {
+export interface AgentHandlerContext {
   /** Live state of the current conversation, including persisted metadata. */
   readonly conversation: AgentConversation;
   /**
@@ -406,49 +406,43 @@ export interface AgentContextBase {
    */
   typing: TypingControl;
   /**
-   * Live plan-card control for the current turn. Returns a handle that renders the card immediately.
-   * Use `plan.step(title, fn)` for scoped steps or `plan.step(title)` for manual control.
-   * The plan auto-finalizes when the handler completes — call `finish()`/`fail()` only for early control.
+   * Live plan-card control for the current turn.
    *
-   * The plan card and the handler return value are separate: the card updates live while the handler
-   * runs; `return` (or `ctx.reply()`) posts the final reply message.
-   *
-   * @example
-   *   const plan = ctx.plan('Processing your refund…'); // card renders immediately
-   *   const order = await plan.step('Fetch order', () => fetchOrder(msg.text));
-   *   await plan.step('Issue refund', () => refund(order));
-   *   return 'Refund complete.'; // plan auto-finalizes; this is the reply message
+   * - `ctx.plan(title?)` — create or reuse the turn's plan card; returns a handle for manual steps.
+   * - `ctx.plan.track(tools)` — wrap a tools map so each call reports progress on the same card
+   *   (lazy-creates with default title on first tool activity if `ctx.plan()` wasn't called).
    *
    * @example
-   *   const plan = ctx.plan('Processing…');
-   *   const step = plan.step('Reverse charge');
-   *   step.update({ title: 'Stripe: Reverse charge', details: 'customer cus_abc' });
-   *   step.done();
+   *   ctx.plan('Processing your refund…');
+   *   return streamText({ tools: ctx.plan.track(tools), ... });
+   *
+   * @example
+   *   return streamText({ tools: ctx.plan.track(tools), ... }); // default title on first tool
    */
   plan: PlanControl;
 }
 
 /** Context passed to the `onMessage` handler. */
-export interface AgentMessageContext extends AgentContextBase {
+export interface AgentMessageContext extends AgentHandlerContext {
   readonly event: 'onMessage';
 }
 
 /** Context passed to the `onAction` handler. */
-export interface AgentActionContext extends AgentContextBase {
+export interface AgentActionContext extends AgentHandlerContext {
   readonly event: 'onAction';
   /** The button click or interactive action that triggered this handler. */
   readonly action: AgentAction;
 }
 
 /** Context passed to the `onReaction` handler. */
-export interface AgentReactionContext extends AgentContextBase {
+export interface AgentReactionContext extends AgentHandlerContext {
   readonly event: 'onReaction';
   /** The emoji reaction that triggered this handler. */
   readonly reaction: AgentReaction;
 }
 
 /** Context passed to the `onResolve` handler. */
-export interface AgentResolveContext extends AgentContextBase {
+export interface AgentResolveContext extends AgentHandlerContext {
   readonly event: 'onResolve';
 }
 
@@ -632,8 +626,6 @@ export interface PlanStep {
 }
 
 export interface PlanHandle {
-  /** @internal Used by trackPlanTools — do not call directly. */
-  upsertTask(id: string, task: Omit<PlanTaskInput, 'id'>): void;
   step<T>(title: string, fn: () => Promise<T>, opts?: PlanStepOpts): Promise<T>;
   step(title: string, opts?: PlanStepOpts): PlanStep;
   title(text: string): this;
@@ -641,7 +633,9 @@ export interface PlanHandle {
   fail(title?: string): Promise<void>;
 }
 
-export type PlanControl = (title?: string) => PlanHandle;
+export type PlanControl = ((title?: string) => PlanHandle) & {
+  track<T>(tools: T): T;
+};
 
 export interface AgentReplyPayload {
   conversationId: string;

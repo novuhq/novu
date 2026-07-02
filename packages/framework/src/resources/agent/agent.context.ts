@@ -1,5 +1,6 @@
 import type { Emoji } from 'chat';
 import { AgentDeliveryError } from './agent.errors';
+import { type AgentRuntimeContext, RUNTIME_CONTEXT_BRAND } from './agent.runtime';
 import type {
   AddReactionPayload,
   AgentAction,
@@ -7,6 +8,7 @@ import type {
   AgentConversation,
   AgentHistoryEntry,
   AgentMessage,
+  AgentMessageContext,
   AgentPlatformContext,
   AgentReaction,
   AgentReplyPayload,
@@ -16,6 +18,7 @@ import type {
   MessageContent,
   PendingApproval as PendingApprovalType,
   PlanControl,
+  PlanHandle,
   PlanProgressEvent,
   ReplyContent,
   ReplyHandle,
@@ -29,18 +32,19 @@ import type {
   TypingOp,
 } from './agent.types';
 import { AgentEventEnum, PendingApproval } from './agent.types';
-import { createPlanHandle } from './plan-handle';
-import { type ApprovalPayload, buildApprovalActionId } from './tool-approval/action-id';
-import { defaultApprovalCard } from './tool-approval/approval-card';
+import { isCardElement } from './guards';
+import { createPlanHandle, type InternalPlanHandle } from './plan-handle';
+import { wrapToolsWithPlan } from './plan-track';
+import type { ApprovalPayload } from './tool-approval/action-id';
+import { postToolApprovalCard } from './tool-approval/post-card';
+
+/** Default plan card title when `ctx.plan.track(tools)` lazy-creates a plan. */
+export const DEFAULT_TRACKED_PLAN_TITLE = 'Thinking…';
 
 const MAX_INLINE_FILE_BYTES = 5 * 1024 * 1024;
 const MAX_INLINE_AGGREGATE_FILE_BYTES = 5 * 1024 * 1024;
 const CHUNK_SIZE = 0x8000;
 const BASE64_REGEX = /^[A-Za-z0-9+/]*={0,2}$/;
-
-function isCardElement(content: object): content is import('chat').CardElement {
-  return 'type' in content && (content as { type: string }).type === 'card';
-}
 
 function describeFile(file: FileRef, index: number): string {
   return file.filename ? `"${file.filename}"` : `at index ${index}`;
@@ -263,7 +267,8 @@ class ReplyHandleImpl implements ReplyHandle {
   }
 }
 
-export class AgentContextImpl {
+export class AgentContextImpl implements AgentRuntimeContext {
+  readonly [RUNTIME_CONTEXT_BRAND] = true;
   readonly event: AgentEventEnum;
   readonly action: AgentAction | null;
   readonly message: AgentMessage | null;
@@ -290,10 +295,7 @@ export class AgentContextImpl {
   private _pendingReactions: AddReactionPayload[] = [];
   private _resolveSignal: { summary?: string } | null = null;
   private _metadataState: Record<string, unknown>;
-  private _planActive = false;
-  private _planFinalized = false;
-  private _planTitle: string | undefined;
-  private _drainPlanQueue: (() => Promise<void>) | null = null;
+  private _planHandle: InternalPlanHandle | undefined;
   private readonly _toolApprovalConfig?: ToolApprovalConfig;
   private readonly _replyUrl: string;
   private readonly _conversationId: string;
@@ -361,55 +363,35 @@ export class AgentContextImpl {
         planProgress: event,
       }).then(() => undefined);
 
-    const finalizePlanHandle = async (phase: 'finished' | 'failed', title?: string): Promise<void> => {
-      await postPlan({ kind: 'phase', phase, ...(title ? { title } : {}) });
-      this._planFinalized = true;
-    };
+    const planFn = (title?: string): PlanHandle => {
+      if (this._planHandle) {
+        if (title !== undefined) {
+          this._planHandle.title(title);
+        }
 
-    this.plan = ((title?: string) => {
-      this._planActive = true;
-      if (title !== undefined) {
-        this._planTitle = title;
+        return this._planHandle;
       }
 
-      const handle = createPlanHandle(
-        {
-          post: postPlan,
-          onTitleChange: (text) => {
-            this._planTitle = text;
-          },
-          finalize: finalizePlanHandle,
-          registerDrain: (drain) => {
-            this._drainPlanQueue = drain;
-          },
-        },
-        title
-      );
+      this._planHandle = createPlanHandle(postPlan, title);
 
-      return handle;
-    }) as PlanControl;
+      return this._planHandle;
+    };
+
+    const planControl = planFn as PlanControl;
+    planControl.track = (tools) => wrapToolsWithPlan(() => this.resolvePlanForToolTracking(), tools);
+    this.plan = planControl;
 
     this.toolApproval = {
       request: async (toolCall: AgentToolCall): Promise<PendingApprovalType> => {
-        const actionIds = {
-          approve: buildApprovalActionId('approve', toolCall.id),
-          deny: buildApprovalActionId('deny', toolCall.id),
-        };
-        const content =
-          this._toolApprovalConfig?.renderApproval?.({ toolCall, actionIds }) ??
-          defaultApprovalCard({ toolCall, actionIds });
-        const payload: ApprovalPayload = {
-          approvalId: toolCall.id,
-          toolCallId: toolCall.id,
-          name: toolCall.name,
-          input: toolCall.input,
-        };
-
-        await this.reply(content, { toolApproval: payload });
+        await postToolApprovalCard(this, toolCall, this._toolApprovalConfig);
 
         return new PendingApproval();
       },
     };
+  }
+
+  asMessageContext(): AgentMessageContext {
+    return this as unknown as AgentMessageContext;
   }
 
   async reply(
@@ -427,29 +409,15 @@ export class AgentContextImpl {
       reply,
     };
 
-    if (this._signals.length) {
-      body.signals = this._signals;
-      this._signals = [];
-    }
-
-    if (this._toolResults.length) {
-      body.toolResults = this._toolResults;
-      this._toolResults = [];
-    }
-
-    if (this._pendingReactions.length) {
-      body.addReactions = this._pendingReactions;
-      this._pendingReactions = [];
-    }
-
-    if (this._resolveSignal) {
-      body.resolve = this._resolveSignal;
-      this._resolveSignal = null;
-    }
+    this._drainSideEffects(body);
 
     const info = await this._post(body);
     if (!info) {
       throw new Error('Agent reply did not return a message handle');
+    }
+
+    if (options?.toolApproval) {
+      await this._pausePlanForApproval();
     }
 
     return new ReplyHandleImpl(
@@ -488,7 +456,7 @@ export class AgentContextImpl {
    * Called internally after onResolve returns.
    */
   async flush(): Promise<void> {
-    if (!this._signals.length && !this._toolResults.length && !this._resolveSignal && !this._pendingReactions.length) {
+    if (!this._hasPendingSideEffects()) {
       return;
     }
 
@@ -497,6 +465,16 @@ export class AgentContextImpl {
       integrationIdentifier: this._integrationIdentifier,
     };
 
+    this._drainSideEffects(body);
+
+    await this._post(body);
+  }
+
+  private _hasPendingSideEffects(): boolean {
+    return !!(this._signals.length || this._toolResults.length || this._resolveSignal || this._pendingReactions.length);
+  }
+
+  private _drainSideEffects(body: AgentReplyPayload): void {
     if (this._signals.length) {
       body.signals = this._signals;
       this._signals = [];
@@ -516,27 +494,33 @@ export class AgentContextImpl {
       body.resolve = this._resolveSignal;
       this._resolveSignal = null;
     }
-
-    await this._post(body);
   }
 
+  /**
+   * Returns the turn's plan handle, creating one with the default title when
+   * `ctx.plan.track(tools)` runs before an explicit `ctx.plan()` call.
+   */
+  private resolvePlanForToolTracking(): InternalPlanHandle {
+    if (this._planHandle) {
+      return this._planHandle;
+    }
+
+    this.plan(DEFAULT_TRACKED_PLAN_TITLE);
+    if (!this._planHandle) {
+      throw new Error('Plan handle missing after ctx.plan()');
+    }
+
+    return this._planHandle;
+  }
+
+  /** @internal Pause the active plan while waiting for tool approval. */
+  private async _pausePlanForApproval(): Promise<void> {
+    await this._planHandle?.pauseForApproval();
+  }
+
+  /** @internal Dispatch fallback to finalize the plan when the handler didn't. */
   async finalizePlan(phase: 'finished' | 'failed'): Promise<void> {
-    if (!this._planActive || this._planFinalized) return;
-
-    await this._drainPlanQueue?.();
-
-    if (this._planFinalized) return;
-
-    await this._post({
-      conversationId: this._conversationId,
-      integrationIdentifier: this._integrationIdentifier,
-      planProgress: {
-        kind: 'phase',
-        phase,
-        ...(this._planTitle ? { title: this._planTitle } : {}),
-      },
-    });
-    this._planFinalized = true;
+    await this._planHandle?.autoFinalize(phase);
   }
 
   private async _post(body: AgentReplyPayload): Promise<SentMessageInfo | null> {

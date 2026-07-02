@@ -1,40 +1,47 @@
-import type { ToolExecutionOptions, ToolSet } from 'ai';
-import type { PlanHandle } from '../resources/agent/agent.types';
+import type { InternalPlanHandle } from './plan-handle';
 
-type ToolInputAvailableOptions = {
-  input: unknown;
-} & ToolExecutionOptions;
-
-const SUMMARY_KEY_PRIORITY = ['query', 'command', 'path', 'action'];
-const MAX_DETAIL_LENGTH = 200;
+/** AI SDK tool hooks wrapped by plan tracking — internal to this module. */
+type PlanTrackedTool = {
+  execute?: (input: unknown, options: { toolCallId: string }) => Promise<unknown>;
+  onInputAvailable?: (options: { input: unknown; toolCallId: string }) => Promise<void>;
+};
 
 /**
- * Wrap an AI SDK `tools` map so each tool call reports progress via the plan handle.
- * Pass the result to `streamText` / `generateText` as `tools`.
+ * Wrap a tools map so each call reports progress on the turn's plan card.
+ * Used by `ctx.plan.track(tools)`.
  */
-export function trackPlanTools<T extends ToolSet>(plan: PlanHandle, tools: T): T {
-  const wrapped = {} as T;
+export function wrapToolsWithPlan<T>(getPlan: () => InternalPlanHandle, tools: T): T {
+  if (typeof tools !== 'object' || tools === null) {
+    return tools;
+  }
 
-  for (const [name, tool] of Object.entries(tools) as [keyof T & string, T[keyof T]][]) {
-    const runExecute = tool.execute;
+  const wrapped = { ...tools } as T;
+
+  for (const [name, tool] of Object.entries(tools as Record<string, unknown>)) {
+    if (typeof tool !== 'object' || tool === null) {
+      continue;
+    }
+
+    const source = tool as PlanTrackedTool;
+    const runExecute = source.execute;
     const reportedInProgress = new Set<string>();
-    const wrappedTool = {
-      ...tool,
-      onInputAvailable: async (options: ToolInputAvailableOptions) => {
+    const wrappedTool: PlanTrackedTool = {
+      ...source,
+      onInputAvailable: async (options) => {
         reportedInProgress.add(options.toolCallId);
-        plan.upsertTask(options.toolCallId, {
+        getPlan().upsertTask(options.toolCallId, {
           title: name,
           status: 'in_progress',
           details: summarizePlanInput(options.input),
         });
-        await tool.onInputAvailable?.(options);
+        await source.onInputAvailable?.(options);
       },
     };
 
     if (typeof runExecute === 'function') {
-      wrappedTool.execute = async (input: unknown, options: ToolExecutionOptions) => {
+      wrappedTool.execute = async (input, options) => {
         if (!reportedInProgress.has(options.toolCallId)) {
-          plan.upsertTask(options.toolCallId, {
+          getPlan().upsertTask(options.toolCallId, {
             title: name,
             status: 'in_progress',
             details: summarizePlanInput(input),
@@ -42,11 +49,11 @@ export function trackPlanTools<T extends ToolSet>(plan: PlanHandle, tools: T): T
         }
         try {
           const out = await runExecute(input, options);
-          plan.upsertTask(options.toolCallId, { status: 'complete' });
+          getPlan().upsertTask(options.toolCallId, { status: 'complete' });
 
           return out;
         } catch (err) {
-          plan.upsertTask(options.toolCallId, {
+          getPlan().upsertTask(options.toolCallId, {
             status: 'error',
             details: err instanceof Error ? err.message : String(err),
           });
@@ -55,11 +62,14 @@ export function trackPlanTools<T extends ToolSet>(plan: PlanHandle, tools: T): T
       };
     }
 
-    wrapped[name as keyof T] = wrappedTool as T[keyof T];
+    (wrapped as Record<string, PlanTrackedTool>)[name] = wrappedTool;
   }
 
   return wrapped;
 }
+
+const SUMMARY_KEY_PRIORITY = ['query', 'command', 'path', 'action'];
+const MAX_DETAIL_LENGTH = 200;
 
 function summarizePlanInput(input: unknown): string | undefined {
   if (input == null || typeof input !== 'object') return undefined;

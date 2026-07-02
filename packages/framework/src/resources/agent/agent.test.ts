@@ -2036,6 +2036,41 @@ describe('tool approval', () => {
     expect(posts.some((p) => p.reply instanceof PendingApproval)).toBe(false);
   });
 
+  it('does not finalize plan as finished when turn ends on tool approval', async () => {
+    const posts: any[] = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (_url, init: any) => {
+        posts.push(JSON.parse(init.body));
+
+        return new Response(JSON.stringify({ messageId: 'm', platformThreadId: 't' }), { status: 200 });
+      })
+    );
+
+    const testAgent = {
+      id: 'a',
+      handlers: {
+        onMessage: async (_m: unknown, ctx: any) => {
+          ctx.plan('Working…');
+
+          return ctx.toolApproval.request({ id: 'tc', name: 'doIt', input: { x: 1 } });
+        },
+        onToolApproval: async () => undefined,
+      },
+    };
+
+    await dispatchAgentEvent({
+      agent: testAgent as never,
+      event: 'onMessage',
+      bridge: approvalBridge(),
+      secretKey: 's',
+    });
+
+    const phases = posts.filter((p) => p.planProgress?.kind === 'phase').map((p) => p.planProgress.phase);
+    expect(phases).toContain('awaiting-approval');
+    expect(phases).not.toContain('finished');
+  });
+
   it('routes an approval click to onToolApproval and resolves the card by default', async () => {
     const posts: any[] = [];
     vi.stubGlobal(

@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
+import { type AgentRuntimeContext, RUNTIME_CONTEXT_BRAND } from '../resources/agent/agent.runtime';
 import type {
   Agent,
+  AgentActionContext,
   AgentHistoryEntry,
   AgentMessageContext,
   ToolApprovalDecision,
@@ -10,10 +12,29 @@ import type { AiSdkResult } from './types';
 
 // ─── Test fixtures ────────────────────────────────────────────────────────────
 
-function fakeCtx(overrides: Partial<AgentMessageContext> = {}) {
+function fakeRuntimeCtx(overrides: Partial<{ history: AgentHistoryEntry[] }> = {}) {
   const reply = vi.fn().mockResolvedValue({ messageId: 'm', platformThreadId: 'p' });
+  const history = overrides.history ?? [];
+  const ctx = {
+    [RUNTIME_CONTEXT_BRAND]: true as const,
+    reply,
+    history,
+    emitToolResult: vi.fn(),
+    asMessageContext: () => ctx as unknown as AgentMessageContext,
+  };
 
-  return { reply, history: [], ...overrides } as unknown as AgentMessageContext & {
+  return ctx as unknown as AgentRuntimeContext & { reply: ReturnType<typeof vi.fn>; history: AgentHistoryEntry[] };
+}
+
+function fakeMessageCtx(overrides: Partial<{ history: AgentHistoryEntry[] }> = {}) {
+  return fakeRuntimeCtx(overrides) as unknown as AgentMessageContext & {
+    reply: ReturnType<typeof vi.fn>;
+    history: AgentHistoryEntry[];
+  };
+}
+
+function fakeActionCtx(overrides: Partial<{ history: AgentHistoryEntry[] }> = {}) {
+  return fakeRuntimeCtx(overrides) as unknown as AgentActionContext & {
     reply: ReturnType<typeof vi.fn>;
     history: AgentHistoryEntry[];
   };
@@ -55,7 +76,7 @@ function approvalClick(overrides: Partial<ToolApprovalDecision> = {}): ToolAppro
 
 async function invokeToolApproval(
   supportAgent: Agent,
-  ctx: AgentMessageContext,
+  ctx: AgentActionContext,
   decision: ToolApprovalDecision = approvalClick()
 ) {
   expect(supportAgent.handlers.onToolApproval).toBeTypeOf('function');
@@ -93,7 +114,7 @@ describe('ai-sdk agent adapter', () => {
   describe('onMessage', () => {
     it('passes string returns through for runtime replyIfPresent', async () => {
       const supportAgent = agent('support', async () => 'hello');
-      const ctx = fakeCtx();
+      const ctx = fakeMessageCtx();
 
       const result = await supportAgent.handlers.onMessage({} as never, ctx);
 
@@ -106,7 +127,7 @@ describe('ai-sdk agent adapter', () => {
         text: Promise.resolve('model reply'),
         textStream: (async function* () {})(),
       }));
-      const ctx = fakeCtx();
+      const ctx = fakeMessageCtx();
 
       const result = await supportAgent.handlers.onMessage({} as never, ctx);
 
@@ -116,7 +137,7 @@ describe('ai-sdk agent adapter', () => {
 
     it('auto-delivers generateText-style results', async () => {
       const supportAgent = agent('support', async () => ({ text: 'done', steps: [] }) as AiSdkResult);
-      const ctx = fakeCtx();
+      const ctx = fakeMessageCtx();
 
       await supportAgent.handlers.onMessage({} as never, ctx);
 
@@ -135,7 +156,7 @@ describe('ai-sdk agent adapter', () => {
           },
         ],
       }));
-      const ctx = fakeCtx();
+      const ctx = fakeMessageCtx();
 
       await supportAgent.handlers.onMessage({} as never, ctx);
 
@@ -163,7 +184,7 @@ describe('ai-sdk agent adapter', () => {
         return aiSdkTextResult('done');
       });
 
-      const ctx = fakeCtx({ history });
+      const ctx = fakeActionCtx({ history });
 
       await invokeToolApproval(billingAgent, ctx);
 
@@ -182,7 +203,7 @@ describe('ai-sdk agent adapter', () => {
         },
       });
 
-      const ctx = fakeCtx({ history: approvedCycleHistory() });
+      const ctx = fakeActionCtx({ history: approvedCycleHistory() });
 
       await invokeToolApproval(billingAgent, ctx);
 
@@ -196,7 +217,7 @@ describe('ai-sdk agent adapter', () => {
         onToolApproval: async (_decision, ctx) => ctx.reply('already posted'),
       });
 
-      const ctx = fakeCtx({ history: approvedCycleHistory() });
+      const ctx = fakeActionCtx({ history: approvedCycleHistory() });
 
       await invokeToolApproval(billingAgent, ctx);
 
@@ -212,7 +233,7 @@ describe('ai-sdk agent adapter', () => {
         onToolApproval: async () => aiSdkTextResult('custom resume'),
       });
 
-      const ctx = fakeCtx({ history: approvedCycleHistory() });
+      const ctx = fakeActionCtx({ history: approvedCycleHistory() });
 
       await invokeToolApproval(billingAgent, ctx);
 

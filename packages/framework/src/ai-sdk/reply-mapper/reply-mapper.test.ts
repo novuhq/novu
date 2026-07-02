@@ -1,23 +1,24 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { AgentContextBase, AgentHistoryEntry } from '../../resources/agent/agent.types';
+import type { AgentRuntimeContext } from '../../resources/agent/agent.runtime';
+import type { AgentHistoryEntry } from '../../resources/agent/agent.types';
 import type { AiSdkResult } from '../types';
 import { deliverResult, handleResult, isAiSdkResult } from './index';
 
 // ─── Test fixtures ────────────────────────────────────────────────────────────
 
-function fakeCtx(history: AgentHistoryEntry[] = []) {
+function fakeCtx(history: AgentHistoryEntry[] = []): AgentRuntimeContext {
   const reply = vi.fn().mockResolvedValue({ messageId: 'm', platformThreadId: 'p' });
   const typing = Object.assign(vi.fn().mockResolvedValue(undefined), {
     stop: vi.fn().mockResolvedValue(undefined),
   });
   const emitToolResult = vi.fn();
 
-  return { reply, typing, history, emitToolResult } as unknown as AgentContextBase & {
-    reply: ReturnType<typeof vi.fn>;
-    typing: ReturnType<typeof vi.fn> & { stop: ReturnType<typeof vi.fn> };
-    history: AgentHistoryEntry[];
-    emitToolResult: ReturnType<typeof vi.fn>;
-  };
+  return {
+    reply,
+    typing,
+    history,
+    emitToolResult,
+  } as unknown as AgentRuntimeContext;
 }
 
 function streamTextResult(overrides: Partial<AiSdkResult> = {}): AiSdkResult {

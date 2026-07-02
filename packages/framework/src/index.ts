@@ -9,6 +9,7 @@ export type {
   AgentBridgeRequest,
   AgentContext,
   AgentConversation,
+  AgentHandlerContext,
   AgentHandlers,
   AgentHistoryEntry,
   AgentMessage,

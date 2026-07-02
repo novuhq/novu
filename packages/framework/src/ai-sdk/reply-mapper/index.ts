@@ -1,13 +1,7 @@
-import type {
-  AgentContextBase,
-  FileRef,
-  MessageContent,
-  ReplyHandle,
-  ToolApprovalConfig,
-  ToolResult,
-} from '../../resources/agent/agent.types';
-import { type ApprovalPayload, buildApprovalActionId } from '../../resources/agent/tool-approval/action-id';
-import { defaultApprovalCard } from '../../resources/agent/tool-approval/approval-card';
+import type { AgentRuntimeContext } from '../../resources/agent/agent.runtime';
+import type { ToolApprovalConfig } from '../../resources/agent/agent.types';
+import { isCardElement } from '../../resources/agent/guards';
+import { postToolApprovalCard } from '../../resources/agent/tool-approval/post-card';
 import type { AiSdkResult } from '../types';
 import { emitExecutedToolResults } from './collect-results';
 
@@ -21,15 +15,6 @@ import { emitExecutedToolResults } from './collect-results';
  *
  * Order matters: tool results are emitted before replies so ledger chronology stays consistent.
  */
-
-interface AiSdkContext extends AgentContextBase {
-  reply(content: MessageContent, options?: { files?: FileRef[]; toolApproval?: ApprovalPayload }): Promise<ReplyHandle>;
-  emitToolResult(result: ToolResult): void;
-}
-
-function isCardElement(value: object): boolean {
-  return 'type' in value && (value as { type: string }).type === 'card';
-}
 
 export function isAiSdkResult(value: unknown): value is AiSdkResult {
   if (typeof value !== 'object' || value === null || isCardElement(value)) {
@@ -80,42 +65,26 @@ async function awaitAiSdkRun(result: AiSdkResult): Promise<void> {
   await Promise.all(pending);
 }
 
-async function postApprovalCard(
-  request: ToolApprovalRequestPart,
-  ctx: AiSdkContext,
-  config: ToolApprovalConfig | undefined
-): Promise<void> {
-  const toolCall = { id: request.toolCall.toolCallId, name: request.toolCall.toolName, input: request.toolCall.input };
-  const actionIds = {
-    approve: buildApprovalActionId('approve', request.approvalId),
-    deny: buildApprovalActionId('deny', request.approvalId),
-  };
-  const content = config?.renderApproval?.({ toolCall, actionIds }) ?? defaultApprovalCard({ toolCall, actionIds });
-  const payload: ApprovalPayload = {
-    approvalId: request.approvalId,
-    toolCallId: request.toolCall.toolCallId,
-    name: request.toolCall.toolName,
-    input: request.toolCall.input,
-  };
-
-  await ctx.reply(content, { toolApproval: payload });
-}
-
 /** Route an AI SDK result: pause (post approval card) if gated, else deliver the text. */
 export async function handleResult(
   result: AiSdkResult,
-  ctx: AgentContextBase,
+  ctx: AgentRuntimeContext,
   config: ToolApprovalConfig | undefined
 ): Promise<void> {
-  const internal = ctx as unknown as AiSdkContext;
-
   await awaitAiSdkRun(result);
-  await emitExecutedToolResults(result, internal);
+  await emitExecutedToolResults(result, ctx);
 
   const requests = await collectApprovalRequests(result);
   if (requests.length > 0) {
+    const request = requests[0];
+    const toolCall = {
+      id: request.toolCall.toolCallId,
+      name: request.toolCall.toolName,
+      input: request.toolCall.input,
+    };
+
     // One card at a time — multi-tool turns surface sequentially.
-    await postApprovalCard(requests[0], internal, config);
+    await postToolApprovalCard(ctx, toolCall, config, request.approvalId);
 
     return;
   }
@@ -123,7 +92,7 @@ export async function handleResult(
   await deliverResult(result, ctx);
 }
 
-export async function deliverResult(result: AiSdkResult, ctx: AgentContextBase): Promise<void> {
+export async function deliverResult(result: AiSdkResult, ctx: AgentRuntimeContext): Promise<void> {
   const text = (await result.text).trim();
 
   if (!text) {

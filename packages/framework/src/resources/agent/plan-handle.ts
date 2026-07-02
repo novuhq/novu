@@ -1,6 +1,7 @@
 import type {
   PlanHandle,
   PlanProgressEvent,
+  PlanProgressPhase,
   PlanStep,
   PlanStepOpts,
   PlanStepUpdate,
@@ -9,12 +10,19 @@ import type {
 
 type PlanPostFn = (event: PlanProgressEvent) => Promise<void>;
 
-type PlanHandleDeps = {
-  post: PlanPostFn;
-  onTitleChange: (title: string) => void;
-  finalize: (phase: 'finished' | 'failed', title?: string) => Promise<void>;
-  registerDrain: (drain: () => Promise<void>) => void;
-};
+/**
+ * Public plan handle plus the internal lifecycle hooks the runtime calls.
+ * The handle owns all plan state (title, queue ordering, finalized/paused) so
+ * the context can simply delegate.
+ */
+export interface InternalPlanHandle extends PlanHandle {
+  /** @internal Used by ctx.plan.track — not part of the author-facing plan API. */
+  upsertTask(id: string, task: Omit<PlanTaskInput, 'id'>): void;
+  /** @internal Emit the awaiting-approval phase so the card doesn't show as finished. */
+  pauseForApproval(): Promise<void>;
+  /** @internal Dispatch fallback finalize: no-op once finalized, and won't finish a paused plan. */
+  autoFinalize(phase: 'finished' | 'failed'): Promise<void>;
+}
 
 class PlanStepImpl implements PlanStep {
   constructor(
@@ -41,21 +49,22 @@ class PlanStepImpl implements PlanStep {
   }
 }
 
-class PlanHandleImpl implements PlanHandle {
+class PlanHandleImpl implements InternalPlanHandle {
   private readonly queue: { tail: Promise<void> };
   private cardTitle: string | undefined;
+  private finalized = false;
+  private pausedForApproval = false;
 
   constructor(
-    private readonly deps: PlanHandleDeps,
+    private readonly post: PlanPostFn,
     initialTitle?: string
   ) {
     this.queue = { tail: Promise.resolve() };
     this.cardTitle = initialTitle;
-    deps.registerDrain(() => this.queue.tail);
     this.enqueue({ kind: 'title', ...(initialTitle !== undefined ? { title: initialTitle } : {}) });
   }
 
-  /** @internal Used by trackPlanTools — do not call directly. */
+  /** @internal Used by ctx.plan.track — do not call directly. */
   upsertTask(id: string, task: Omit<PlanTaskInput, 'id'>): void {
     this.enqueue({
       kind: 'task',
@@ -66,7 +75,6 @@ class PlanHandleImpl implements PlanHandle {
 
   title(text: string): this {
     this.cardTitle = text;
-    this.deps.onTitleChange(text);
     this.enqueue({ kind: 'title', title: text });
 
     return this;
@@ -111,19 +119,43 @@ class PlanHandleImpl implements PlanHandle {
   }
 
   finish(title?: string): Promise<void> {
-    const resolvedTitle = title ?? this.cardTitle;
-
-    return this.enqueueAwait(() => this.deps.finalize('finished', resolvedTitle));
+    return this.finalize('finished', title);
   }
 
   fail(title?: string): Promise<void> {
-    const resolvedTitle = title ?? this.cardTitle;
+    return this.finalize('failed', title);
+  }
 
-    return this.enqueueAwait(() => this.deps.finalize('failed', resolvedTitle));
+  pauseForApproval(): Promise<void> {
+    this.pausedForApproval = true;
+
+    return this.enqueuePhase('awaiting-approval', this.cardTitle);
+  }
+
+  autoFinalize(phase: 'finished' | 'failed'): Promise<void> {
+    if (phase === 'finished' && this.pausedForApproval) {
+      return Promise.resolve();
+    }
+
+    return this.finalize(phase);
+  }
+
+  private finalize(phase: 'finished' | 'failed', title?: string): Promise<void> {
+    if (this.finalized) {
+      return Promise.resolve();
+    }
+    this.finalized = true;
+
+    return this.enqueuePhase(phase, title ?? this.cardTitle);
+  }
+
+  private enqueuePhase(phase: PlanProgressPhase, title?: string): Promise<void> {
+    return this.enqueueAwait(() => this.post({ kind: 'phase', phase, ...(title ? { title } : {}) }));
   }
 
   private enqueue(event: PlanProgressEvent): void {
-    this.queue.tail = this.queue.tail.then(() => this.deps.post(event)).catch(() => undefined);
+    // Plan progress is best-effort UI — a failed post must not break the agent turn.
+    this.queue.tail = this.queue.tail.then(() => this.post(event)).catch(() => undefined);
   }
 
   private enqueueAwait(fn: () => Promise<void>): Promise<void> {
@@ -134,8 +166,8 @@ class PlanHandleImpl implements PlanHandle {
   }
 }
 
-export function createPlanHandle(deps: PlanHandleDeps, initialTitle?: string): PlanHandle {
-  return new PlanHandleImpl(deps, initialTitle);
+export function createPlanHandle(post: PlanPostFn, initialTitle?: string): InternalPlanHandle {
+  return new PlanHandleImpl(post, initialTitle);
 }
 
 function nextStepId(): string {

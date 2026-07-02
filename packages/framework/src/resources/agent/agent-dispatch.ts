@@ -63,18 +63,17 @@ export async function dispatchAgentEvent(options: DispatchAgentEventOptions): Pr
 }
 
 async function runAgentHandler(registeredAgent: Agent, event: string, ctx: AgentContextImpl): Promise<void> {
-  const replyIfPresent = async (result: MessageContent | void) => {
-    if (result != null) {
-      await ctx.reply(result);
+  const replyIfPresent = async (result: MessageContent | PendingApproval | undefined) => {
+    if (result instanceof PendingApproval || result === undefined) {
+      return;
     }
+
+    await ctx.reply(result);
   };
 
   switch (event) {
     case AgentEventEnum.ON_MESSAGE: {
-      const result = await registeredAgent.handlers.onMessage(ctx.message!, ctx as AgentMessageContext);
-      if (!(result instanceof PendingApproval)) {
-        await replyIfPresent(result);
-      }
+      await replyIfPresent(await registeredAgent.handlers.onMessage(ctx.message!, ctx as AgentMessageContext));
       break;
     }
     case AgentEventEnum.ON_ACTION: {

@@ -4,7 +4,6 @@ import type {
   AgentMessage,
   AgentMessageContext,
   MessageContent,
-  ToolApprovalConfig,
   ToolApprovalDecision,
 } from '../resources/agent/agent.types';
 import type { Awaitable } from '../types/util.types';
@@ -19,22 +18,19 @@ export type AiSdkResult = {
 };
 
 /**
- * Event handlers for an AI SDK agent.
+ * Handlers for `@novu/framework/ai-sdk` agents.
  *
- * Same shape as `AgentHandlers`, except `onMessage` may also return a
- * `streamText()` or `generateText()` result — Novu delivers the model output
- * automatically.
+ * Extends {@link AgentHandlers}: same events and config (`toolApproval`, etc.),
+ * but `onMessage` and `onToolApproval` may return an AI SDK result for automatic delivery.
  */
 export type AiSdkAgentHandlers = Omit<AgentHandlers, 'onMessage' | 'onToolApproval'> & {
   onMessage: (message: AgentMessage, ctx: AgentMessageContext) => Awaitable<MessageContent | AiSdkResult | void>;
   /**
-   * Optional. The adapter auto-resumes by default; define this to add side-effects
-   * (return `void`), post a reply (return `MessageContent`), or drive the resume yourself
-   * (return a `streamText`/`generateText` result).
+   * Optional. Auto-resumes `onMessage` after approve/deny unless you return an
+   * `AiSdkResult` to drive the resume yourself.
    */
   onToolApproval?: (
     decision: ToolApprovalDecision,
     ctx: AgentActionContext
   ) => Awaitable<MessageContent | AiSdkResult | void>;
-  toolApproval?: ToolApprovalConfig;
 };

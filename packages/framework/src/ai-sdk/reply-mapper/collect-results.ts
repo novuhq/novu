@@ -1,15 +1,11 @@
 import type { StepResult, ToolSet } from 'ai';
-import type { AgentContextBase } from '../../resources/agent/agent.types';
+import type { AgentRuntimeContext } from '../../resources/agent/agent.runtime';
 import type { AiSdkResult } from '../types';
 
 interface ExecutedToolResult {
   toolCallId: string;
   toolName?: string;
   output: unknown;
-}
-
-interface AiSdkContext extends AgentContextBase {
-  emitToolResult(result: { toolCallId: string; toolName?: string; output: unknown; preview: string }): void;
 }
 
 function unwrapToolOutput(output: unknown): unknown {
@@ -104,7 +100,7 @@ async function collectExecutedToolResults(result: AiSdkResult): Promise<Executed
 }
 
 /** Tool calls that were gated behind approval — only these get persisted as ledger tool_result rows. */
-function gatedToolCallIds(ctx: AgentContextBase): Set<string> {
+function gatedToolCallIds(ctx: AgentRuntimeContext): Set<string> {
   const ids = new Set<string>();
   for (const entry of ctx.history) {
     if (entry.type === 'tool_approval_request' && entry.toolData?.toolCallId) {
@@ -119,7 +115,7 @@ function gatedToolCallIds(ctx: AgentContextBase): Set<string> {
  * Record approved tool outcomes in history before posting text or new approval cards.
  * Auto-run (non-gated) tools stay ephemeral — the model already saw them in-context.
  */
-export async function emitExecutedToolResults(result: AiSdkResult, ctx: AiSdkContext): Promise<void> {
+export async function emitExecutedToolResults(result: AiSdkResult, ctx: AgentRuntimeContext): Promise<void> {
   const executed = await collectExecutedToolResults(result);
   if (executed.length === 0) {
     return;
