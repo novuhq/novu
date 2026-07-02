@@ -50,11 +50,6 @@ export class TriggerMulticast extends TriggerBase {
       const mappedRecipients = Array.isArray(recipients) ? recipients : [recipients];
 
       const { singleSubscribers, topicKeys, topicExclusions } = splitByRecipientType(mappedRecipients);
-
-      if (actor?.subscriberId) {
-        singleSubscribers.delete(actor.subscriberId);
-      }
-
       const subscribersToProcess = Array.from(singleSubscribers.values());
       let totalProcessed = 0;
 

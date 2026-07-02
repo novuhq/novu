@@ -275,30 +275,6 @@ describe('TriggerMulticast #novu-v2', () => {
     expectBulkTopicStub(firstCallStubData, firstJobs);
   });
 
-  it('should exclude the actor from single subscriber recipients', async () => {
-    const actor = firstSubscriber;
-    const singleSubscribers = firstTopicSubscribers;
-    const command: TriggerMulticastCommand = buildTriggerMulticastCommandMock({
-      to: singleSubscribers,
-      organizationId: session.organization._id,
-      environmentId: session.environment._id,
-      userId: session.user._id,
-      actor,
-    }) as any;
-
-    await triggerMulticast.execute(command);
-
-    expect(addBulkStub.callCount).to.be.equal(1);
-
-    const subscribersWithoutActor = singleSubscribers.filter(
-      (subscriber) => subscriber.subscriberId !== actor.subscriberId
-    );
-    const firstCallStubData = addBulkStub.getCall(0).args[0];
-    const firstJobs = mapSubscribersToJobs(SubscriberSourceEnum.SINGLE, subscribersWithoutActor, command);
-
-    expectBulkSingleSubscriberStub(firstCallStubData, firstJobs);
-  });
-
   it('should deduplicate single subscriber from topic fan-out', async () => {
     const singleSubscribers = firstTopicSubscribers;
     const newSubscriber = await subscriberService.createSubscriber();
