@@ -42,7 +42,6 @@ import {
   BotAuthorSkippedError,
   ConnectOrgSubscriberCapExceededError,
 } from '../conversation/agent-subscriber-resolver.service';
-import { ConversationActivationService } from '../conversation/conversation-activation.service';
 import { OutboundGateway } from '../egress/outbound.gateway';
 import type { BridgeReaction } from '../runtime/bridge-executor.service';
 import type { ConversationTurn } from '../runtime/conversation-turn';
@@ -244,8 +243,7 @@ export class AgentInboundHandler implements OnModuleInit {
     private readonly connectClaimTokenService: ConnectClaimTokenService,
     private readonly keylessAbuseGuard: KeylessAbuseGuardService,
     private readonly planLimitGate: PlanLimitGateService,
-    private readonly inboundAck: InboundAckService,
-    private readonly conversationActivation: ConversationActivationService
+    private readonly inboundAck: InboundAckService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -432,8 +430,6 @@ export class AgentInboundHandler implements OnModuleInit {
     };
 
     await runtime.dispatch(turn);
-
-    await this.registerConversationEngagement(agentId, config, conversation, thread.isDM);
   }
 
   /**
@@ -476,37 +472,6 @@ export class AgentInboundHandler implements OnModuleInit {
       captureAgentWarning(err, {
         component: 'agent-inbound-handler',
         operation: 'mark-integration-connected',
-        agentId,
-      });
-    }
-  }
-
-  /**
-   * Counts the active conversation once the agent has actually engaged
-   * (dispatch succeeded). Idempotent per activation — repeated engagements
-   * inside the same window/period only slide the rolling window. Fail-soft:
-   * billing accounting must never crash the inbound webhook.
-   */
-  private async registerConversationEngagement(
-    agentId: string,
-    config: ResolvedAgentConfig,
-    conversation: ConversationEntity,
-    isDirectMessage: boolean
-  ): Promise<void> {
-    try {
-      await this.conversationActivation.registerEngagement({
-        conversation,
-        platform: config.platform,
-        organizationId: config.organizationId,
-        environmentId: config.environmentId,
-        agentId,
-        isDirectMessage,
-      });
-    } catch (err) {
-      this.logger.warn(err, `[agent:${agentId}] Failed to register active-conversation engagement`);
-      captureAgentWarning(err, {
-        component: 'agent-inbound-handler',
-        operation: 'register-conversation-engagement',
         agentId,
       });
     }
