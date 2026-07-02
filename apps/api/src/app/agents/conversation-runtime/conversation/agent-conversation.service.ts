@@ -127,7 +127,10 @@ export interface PersistToolApprovalDecisionParams extends ConversationActivityC
   approvalId: string;
   approved: boolean;
   toolName?: string;
-  actorType: ConversationActivitySenderTypeEnum.SUBSCRIBER | ConversationActivitySenderTypeEnum.PLATFORM_USER;
+  actorType:
+    | ConversationActivitySenderTypeEnum.SUBSCRIBER
+    | ConversationActivitySenderTypeEnum.PLATFORM_USER
+    | ConversationActivitySenderTypeEnum.SYSTEM;
   actorId: string;
 }
 

@@ -118,17 +118,24 @@ function executionDeniedResult(toolCallId: string): ToolModelMessage {
   };
 }
 
-function mapApprovalRequest(entry: AgentHistoryEntry, index: ApprovalIndex): ModelMessage | undefined {
+function mapApprovalRequest(entry: AgentHistoryEntry, index: ApprovalIndex): ModelMessage[] {
   const approval = approvalOf(entry);
   if (!approval) {
-    return undefined;
+    return [];
   }
 
-  const resolved = index.resultToolCallIds.has(approval.toolCallId) || index.deniedApprovalIds.has(approval.approvalId);
+  const denied = index.deniedApprovalIds.has(approval.approvalId);
+  const ran = index.resultToolCallIds.has(approval.toolCallId);
+
+  if (denied) {
+    // Pair tool-call + execution-denied at the request so later ledger entries (e.g. a
+    // superseding user message or auto-deny decision) cannot split them in the transcript.
+    return [assistantToolCall(approval, false), executionDeniedResult(approval.toolCallId)];
+  }
 
   // Resolved cycle → just the completed tool call (its result message follows).
   // In-flight cycle → include the approval request so the paired response can run it.
-  return assistantToolCall(approval, !resolved);
+  return [assistantToolCall(approval, !(ran || denied))];
 }
 
 function mapApprovalDecision(entry: AgentHistoryEntry, index: ApprovalIndex): ModelMessage | undefined {
@@ -140,8 +147,8 @@ function mapApprovalDecision(entry: AgentHistoryEntry, index: ApprovalIndex): Mo
   const toolCallId = index.toolCallIdByApprovalId.get(decision.approvalId);
 
   if (!decision.approved) {
-    // Denied → emit the execution-denied result to keep tool-call/result paired.
-    return toolCallId ? executionDeniedResult(toolCallId) : undefined;
+    // Denied cycles emit execution-denied adjacent to the request entry.
+    return undefined;
   }
 
   // Approved and already run → its result message carries the outcome; skip this.
@@ -187,23 +194,28 @@ function mapTextMessage(entry: AgentHistoryEntry, multiSender: boolean): ModelMe
   return { role: isAssistant ? 'assistant' : 'user', content: text };
 }
 
-function mapHistoryEntry(
-  entry: AgentHistoryEntry,
-  multiSender: boolean,
-  index: ApprovalIndex
-): ModelMessage | undefined {
+function mapHistoryEntry(entry: AgentHistoryEntry, multiSender: boolean, index: ApprovalIndex): ModelMessage[] {
   switch (entry.type) {
-    case TYPE_MESSAGE:
-      return mapTextMessage(entry, multiSender);
+    case TYPE_MESSAGE: {
+      const message = mapTextMessage(entry, multiSender);
+
+      return message ? [message] : [];
+    }
     case TYPE_TOOL_APPROVAL_REQUEST:
       return mapApprovalRequest(entry, index);
-    case TYPE_TOOL_APPROVAL_DECISION:
-      return mapApprovalDecision(entry, index);
-    case TYPE_TOOL_RESULT:
-      return mapToolResult(entry);
+    case TYPE_TOOL_APPROVAL_DECISION: {
+      const decisionMessage = mapApprovalDecision(entry, index);
+
+      return decisionMessage ? [decisionMessage] : [];
+    }
+    case TYPE_TOOL_RESULT: {
+      const resultMessage = mapToolResult(entry);
+
+      return resultMessage ? [resultMessage] : [];
+    }
     default:
       // Other entry types (`edit`, `signal`, unknown) aren't part of the model transcript.
-      return undefined;
+      return [];
   }
 }
 
@@ -217,9 +229,7 @@ function mapHistoryEntry(
 export function toModelMessages(history: AgentHistoryEntry[], system?: string): ModelMessage[] {
   const multiSender = distinctHumanSenders(history) > 1;
   const index = buildApprovalIndex(history);
-  const fromHistory = history
-    .map((entry) => mapHistoryEntry(entry, multiSender, index))
-    .filter((message): message is ModelMessage => message !== undefined);
+  const fromHistory = history.flatMap((entry) => mapHistoryEntry(entry, multiSender, index));
 
   if (!system) {
     return fromHistory;

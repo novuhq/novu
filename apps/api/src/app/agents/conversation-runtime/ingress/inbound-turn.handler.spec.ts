@@ -104,11 +104,15 @@ describe('AgentInboundHandler', () => {
       showWorkingSignal: sinon.stub().resolves(undefined),
       showQueuedSignal: sinon.stub().resolves(undefined),
     };
+    const expireSupersededApprovals = {
+      expireOnNewMessage: sinon.stub().resolves(undefined),
+    };
     const bridgeRuntime = new BridgeRuntime(
       bridgeExecutor as any,
       outboundGateway as any,
       conversationService as any,
       environmentRepository as any,
+      expireSupersededApprovals as any,
       logger as any
     );
     const managedRuntime = new ManagedRuntime(
