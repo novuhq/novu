@@ -2,6 +2,8 @@ import { NOVU_ENCRYPTION_SUB_MASK } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
+process.env.LAUNCH_DARKLY_SDK_KEY = ''; // disable Launch Darkly to allow test to define FF state
+
 describe('Manage Environment API Keys - /environments/api-keys (POST/DELETE) #novu-v2', () => {
   let session: UserSession;
 
