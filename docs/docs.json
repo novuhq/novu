@@ -267,6 +267,7 @@
                   "platform/integrations/sms/sendchamp",
                   "platform/integrations/sms/simpletexting",
                   "platform/integrations/sms/sms-central",
+                  "platform/integrations/sms/sms-webhook",
                   "platform/integrations/sms/sms77",
                   "platform/integrations/sms/sns",
                   "platform/integrations/sms/telnyx",
@@ -1343,6 +1344,16 @@
     {
       "source": "/platform/integrations/sms/bulksms",
       "destination": "/platform/integrations/sms/bulk-sms",
+      "permanent": true
+    },
+    {
+      "source": "/channels/sms/generic-sms",
+      "destination": "/platform/integrations/sms/sms-webhook",
+      "permanent": true
+    },
+    {
+      "source": "/integrations/providers/sms/generic-sms",
+      "destination": "/platform/integrations/sms/sms-webhook",
       "permanent": true
     },
     {

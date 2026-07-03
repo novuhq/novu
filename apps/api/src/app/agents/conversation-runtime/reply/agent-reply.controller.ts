@@ -1,6 +1,6 @@
 import { Body, Controller, HttpCode, HttpStatus, Param, Post } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
-import type { Signal } from '@novu/framework';
+import type { Signal, ToolResult } from '@novu/framework';
 import { UserSessionData } from '@novu/shared';
 import { RequireAuthentication } from '../../../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../../../auth/framework/external-api.decorator';
@@ -54,6 +54,7 @@ export class AgentReplyController {
         edit: body.edit,
         resolve: body.resolve,
         signals: body.signals as Signal[],
+        toolResults: body.toolResults as ToolResult[],
         addReactions: body.addReactions,
         typing: body.typing,
       })

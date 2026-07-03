@@ -16,6 +16,7 @@ import { getProviderSquareIconFileName } from '@/utils/provider-square-icon';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { ConversationStatusBadge } from './conversation-status-badge';
+import { getCycleEventLabel, groupActivitiesForTimeline } from './conversation-timeline-grouping';
 import { SubscriberFallbackAvatar } from './subscriber-fallback-avatar';
 import { ToolProgressCard } from './tool-progress-card';
 
@@ -182,11 +183,12 @@ function MessageCard({ activity }: { activity: ConversationActivityDto }) {
   );
 }
 
-function InlineLogRow({ activity }: { activity: ConversationActivityDto }) {
+function InlineLogRow({ activity, label }: { activity: ConversationActivityDto; label?: string }) {
   const isAgentAction = activity.senderType === 'agent' || activity.senderType === 'system';
   const signalData = activity.signalData;
   const signalType = signalData?.type;
   const { currentEnvironment } = useEnvironment();
+  const displayLabel = label ?? activity.content;
 
   const transactionId =
     signalType === 'trigger' && signalData?.type === 'trigger' ? signalData.payload?.transactionId : undefined;
@@ -211,16 +213,33 @@ function InlineLogRow({ activity }: { activity: ConversationActivityDto }) {
           to={activityFeedLink}
           className="text-text-sub text-label-xs min-w-0 truncate font-medium underline decoration-dashed underline-offset-[3px] decoration-[currentColor]/40 transition-colors hover:text-text-strong hover:decoration-[currentColor]/70"
         >
-          {activity.content}
+          {displayLabel}
         </Link>
       ) : (
-        <span className="text-text-sub text-label-xs min-w-0 truncate font-medium">{activity.content}</span>
+        <span className="text-text-sub text-label-xs min-w-0 truncate font-medium">{displayLabel}</span>
       )}
       <span className="text-text-soft font-code shrink-0 text-[11px] leading-normal">•</span>
       <span className="text-text-soft shrink-0 text-[10px] font-medium leading-[14px]">
         {formatActivityTimestamp(activity.createdAt)}
       </span>
     </div>
+  );
+}
+
+function ToolApprovalCycleRows({
+  request,
+  events,
+}: {
+  request: ConversationActivityDto;
+  events: ConversationActivityDto[];
+}) {
+  return (
+    <>
+      <InlineLogRow activity={request} />
+      {events.map((event) => (
+        <InlineLogRow key={event._id} activity={event} label={getCycleEventLabel(event)} />
+      ))}
+    </>
   );
 }
 
@@ -247,41 +266,6 @@ function ResolvedFooter({ totalCount }: { totalCount: number }) {
       </div>
     </div>
   );
-}
-
-type TimelineEntry =
-  | { type: 'single'; key: string; activity: ConversationActivityDto }
-  | { type: 'tool-progress'; key: string; activities: ConversationActivityDto[] };
-
-function isToolUseSignal(activity: ConversationActivityDto): boolean {
-  return activity.type === 'signal' && activity.signalData?.type === 'tool-use';
-}
-
-function groupActivitiesForTimeline(activities: ConversationActivityDto[]): TimelineEntry[] {
-  const result: TimelineEntry[] = [];
-  const toolGroups = new Map<string, ConversationActivityDto[]>();
-
-  for (const activity of activities) {
-    if (isToolUseSignal(activity)) {
-      const runId = String((activity.signalData?.payload as Record<string, unknown>)?.runId ?? '');
-      if (!runId) {
-        result.push({ type: 'single', key: activity._id, activity });
-        continue;
-      }
-
-      let group = toolGroups.get(runId);
-      if (!group) {
-        group = [];
-        toolGroups.set(runId, group);
-        result.push({ type: 'tool-progress', key: `tools-${runId}`, activities: group });
-      }
-      group.push(activity);
-    } else {
-      result.push({ type: 'single', key: activity._id, activity });
-    }
-  }
-
-  return result;
 }
 
 export function ConversationTimeline({
@@ -333,6 +317,8 @@ export function ConversationTimeline({
             {index > 0 && <TimelineDivider />}
             {entry.type === 'tool-progress' ? (
               <ToolProgressCard activities={entry.activities} />
+            ) : entry.type === 'tool-approval-cycle' ? (
+              <ToolApprovalCycleRows request={entry.request} events={entry.events} />
             ) : entry.activity.type === 'message' ? (
               <MessageCard activity={entry.activity} />
             ) : (

@@ -114,4 +114,48 @@ describe('ExecuteBridgeJob - redundant workflow lookup', () => {
     expect(executeBridgeRequest.execute.calledOnce).to.equal(true);
     expect(result).to.deep.equal({ outputs: {}, options: {} });
   });
+
+  it('passes actor to the bridge event when provided in variables', async () => {
+    const { usecase, executeBridgeRequest } = buildUsecase();
+    const actor = {
+      subscriberId: 'actor-subscriber-01',
+      firstName: 'Actor',
+      lastName: 'User',
+      email: 'actor@example.com',
+    };
+
+    const command = {
+      environmentId: 'env_1',
+      organizationId: 'org_1',
+      userId: 'user_1',
+      identifier: 'wf-identifier',
+      jobId: 'job_1',
+      job: {
+        _id: 'job_1',
+        _templateId: 'tpl_1',
+        _parentId: undefined,
+        _environmentId: 'env_1',
+        _organizationId: 'org_1',
+        step: { stepId: 'step_1', uuid: 'step_1' },
+      },
+      variables: {
+        subscriber: { subscriberId: 'recipient-01' },
+        actor,
+        payload: {},
+        env: { name: 'Development', type: 'dev' },
+      },
+      workflow: {
+        _id: 'tpl_1',
+        type: ResourceTypeEnum.BRIDGE,
+        origin: ResourceOriginEnum.NOVU_CLOUD,
+        triggers: [{ identifier: 'wf-identifier' }],
+      },
+    } as never;
+
+    await usecase.execute(command);
+
+    expect(executeBridgeRequest.execute.calledOnce).to.equal(true);
+    const bridgeRequest = executeBridgeRequest.execute.firstCall.args[0];
+    expect(bridgeRequest.event.actor).to.deep.equal(actor);
+  });
 });

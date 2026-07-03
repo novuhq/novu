@@ -31,7 +31,7 @@ When you add the Inbox to your application, you're required to pass:
   Without additional security, a malicious actor could potentially guess another subscriber's `subscriberId` and use your public `applicationIdentifier` to view that user's notifications.
 </Warning>
 
-You can prevent this by enabling HMAC (Hash-based Message Authentication Code) encryption. This process uses a _secret key_ to create a secure signature (`subscriberHash`) for each `subscriberId`. Novu then verifies this hash to ensure that requests to view a notification feed are authentic and not from an impersonator.
+You can prevent this by enabling HMAC (Hash-based Message Authentication Code) encryption. This process uses a _secret key_ to create a secure signature (`subscriberHash`) for each `subscriberId`. Novu verifies this hash to authenticate feed requests and to authorize updates to subscriber profile fields (`firstName`, `email`, `locale`, `data`, and so on) passed via the `subscriber` prop. Without `subscriberHash`, new subscribers are created with those fields, but existing profiles are not updated.
 
 Follow these steps to enable HMAC encryption.
 
@@ -231,7 +231,12 @@ const hmacHash = user?.novuSubscriberHash;
 
 <Inbox
   applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
-  subscriber="YOUR_SUBSCRIBER_ID"
+  subscriber={{
+    subscriberId: user.id,
+    firstName: user.firstName,
+    email: user.email,
+    locale: user.locale,
+  }}
   subscriberHash={hmacHash}
 />;
 ```
@@ -266,8 +271,7 @@ const context = {
 </Tabs>
 
 <Note>
-  If HMAC encryption is active in In-App provider settings and `subscriberHash` along with
-  `subscriberId` is not provided, then Inbox will not load
+  If HMAC encryption is active in In-App provider settings and `subscriberHash` is not provided, the Inbox will not load. When passing a `subscriber` object, `subscriberHash` is also required to update an existing subscriber's profile fields.
 </Note>
 
 ## Remove Novu branding

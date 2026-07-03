@@ -9,6 +9,7 @@ import {
   ConversationActivityEntity,
   ConversationActivitySenderTypeEnum,
   ConversationActivitySignalData,
+  ConversationActivityToolData,
   ConversationActivityTypeEnum,
 } from './conversation-activity.entity';
 import { ConversationActivity } from './conversation-activity.schema';
@@ -112,16 +113,19 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
     agentId: string;
     content: string;
     richContent?: Record<string, unknown>;
+    toolData?: ConversationActivityToolData;
     type?: ConversationActivityTypeEnum;
     senderName?: string;
     platformMessageId?: string;
     environmentId: string;
     organizationId: string;
   }): Promise<ConversationActivityEntity> {
+    const type = params.type ?? ConversationActivityTypeEnum.MESSAGE;
+
     return this.create({
       identifier: params.identifier,
       _conversationId: params.conversationId,
-      type: params.type ?? ConversationActivityTypeEnum.MESSAGE,
+      type,
       platform: params.platform,
       _integrationId: params.integrationId,
       platformThreadId: params.platformThreadId,
@@ -129,6 +133,7 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
       senderId: params.agentId,
       content: params.content,
       richContent: params.richContent,
+      toolData: params.toolData,
       senderName: params.senderName,
       platformMessageId: params.platformMessageId,
       _environmentId: params.environmentId,
@@ -161,6 +166,36 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
       content: params.content,
       signalData: params.signalData,
       platformMessageId: params.platformMessageId,
+      _environmentId: params.environmentId,
+      _organizationId: params.organizationId,
+    });
+  }
+
+  async createToolActivity(params: {
+    identifier: string;
+    conversationId: string;
+    platform: string;
+    integrationId: string;
+    platformThreadId: string;
+    senderType: ConversationActivitySenderTypeEnum;
+    senderId: string;
+    content: string;
+    type: ConversationActivityTypeEnum;
+    toolData: ConversationActivityToolData;
+    environmentId: string;
+    organizationId: string;
+  }): Promise<ConversationActivityEntity> {
+    return this.create({
+      identifier: params.identifier,
+      _conversationId: params.conversationId,
+      type: params.type,
+      platform: params.platform,
+      _integrationId: params.integrationId,
+      platformThreadId: params.platformThreadId,
+      senderType: params.senderType,
+      senderId: params.senderId,
+      content: params.content,
+      toolData: params.toolData,
       _environmentId: params.environmentId,
       _organizationId: params.organizationId,
     });

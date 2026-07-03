@@ -49,6 +49,7 @@ import { PlanLimitGateService } from './conversation-runtime/ingress/plan-limit-
 import { AgentReplyController } from './conversation-runtime/reply/agent-reply.controller';
 import { BridgeRuntime } from './conversation-runtime/runtime/bridge.runtime';
 import { BridgeExecutorService } from './conversation-runtime/runtime/bridge-executor.service';
+import { BridgeExpireSupersededApprovalsService } from './conversation-runtime/runtime/bridge-expire-superseded-approvals.service';
 import { RuntimeResolver } from './conversation-runtime/runtime/runtime-resolver.service';
 import { AgentEmailActionTokenService } from './email/agent-email-action-token.service';
 import { AgentEmailActionsController } from './email/agent-email-actions.controller';
@@ -122,6 +123,7 @@ import { USE_CASES } from './usecases';
     AgentActionTokenService,
     AgentInboundHandler,
     BridgeExecutorService,
+    BridgeExpireSupersededApprovalsService,
     BridgeRuntime,
     ManagedRuntime,
     RuntimeResolver,

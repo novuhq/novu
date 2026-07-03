@@ -1,9 +1,19 @@
 import { agent as frameworkAgent } from '../resources/agent/agent.resource';
-import type { Agent } from '../resources/agent/agent.types';
-import { deliverResult, isAiSdkResult } from './reply-mapper';
+import type {
+  Agent,
+  AgentMessage,
+  AgentMessageContext,
+  MessageContent,
+  ReplyHandle,
+} from '../resources/agent/agent.types';
+import { handleResult, isAiSdkResult } from './reply-mapper';
 import type { AiSdkAgentHandlers } from './types';
 
 type AiSdkMessageHandler = AiSdkAgentHandlers['onMessage'];
+
+function isReplyHandle(value: unknown): value is ReplyHandle {
+  return typeof value === 'object' && value !== null && 'messageId' in value && 'platformThreadId' in value;
+}
 
 function normalize(id: string, handlers: AiSdkMessageHandler | AiSdkAgentHandlers): AiSdkAgentHandlers {
   const normalized = typeof handlers === 'function' ? { onMessage: handlers } : handlers;
@@ -16,19 +26,46 @@ function normalize(id: string, handlers: AiSdkMessageHandler | AiSdkAgentHandler
 
 export function agent(id: string, handlers: AiSdkMessageHandler | AiSdkAgentHandlers): Agent {
   const h = normalize(id, handlers);
+  const config = h.toolApproval;
+
+  // The decision is persisted to `ctx.history` by Novu before this turn fires, so
+  // resuming is just re-running `onMessage`: `toModelMessages(ctx.history)` now
+  // yields the tool-approval-response and `streamText` continues the tool loop.
+  const resume = async (ctx: AgentMessageContext): Promise<void> => {
+    const result = await h.onMessage({ text: '' } as AgentMessage, ctx);
+    if (isAiSdkResult(result)) {
+      await handleResult(result, ctx, config);
+    }
+  };
 
   return frameworkAgent(id, {
     onMessage: async (message, ctx) => {
       const result = await h.onMessage(message, ctx);
-
       if (isAiSdkResult(result)) {
-        await deliverResult(result, ctx);
+        await handleResult(result, ctx, config);
 
         return;
       }
 
       return result;
     },
+    onToolApproval: async (decision, ctx) => {
+      if (h.onToolApproval) {
+        const result = await h.onToolApproval(decision, ctx);
+        if (isAiSdkResult(result)) {
+          await handleResult(result, ctx, config);
+
+          return;
+        }
+
+        if (result != null && !isReplyHandle(result)) {
+          await ctx.reply(result as MessageContent);
+        }
+      }
+
+      await resume(ctx as unknown as AgentMessageContext);
+    },
+    ...(config && { toolApproval: config }),
     ...(h.onAction && { onAction: h.onAction }),
     ...(h.onReaction && { onReaction: h.onReaction }),
     ...(h.onResolve && { onResolve: h.onResolve }),

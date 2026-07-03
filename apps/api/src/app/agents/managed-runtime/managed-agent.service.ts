@@ -409,7 +409,8 @@ export class ManagedAgentService implements OnModuleInit {
     );
 
     const messages: Message[] = history
-      .filter((entry) => entry.type !== ConversationActivityTypeEnum.SIGNAL)
+      // TODO: should we persist just message activities? or all activities (tool calls, approvals, signals, etc.)?
+      .filter((entry) => entry.type === ConversationActivityTypeEnum.MESSAGE)
       .reverse()
       .map((entry) => ({
         role: entry.senderType === ConversationActivitySenderTypeEnum.AGENT ? MessageRole.ASSISTANT : MessageRole.USER,
