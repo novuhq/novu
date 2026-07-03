@@ -229,6 +229,7 @@ export class StandardWorker extends StandardWorkerService {
 
   private async jobHasFailed(job: Job<IStandardDataDto, void, string>, error: Error): Promise<boolean> {
     let jobId;
+    let hasToBackoff = false;
 
     nr.noticeError(error);
 
@@ -236,7 +237,7 @@ export class StandardWorker extends StandardWorkerService {
       const minimalData = this.extractMinimalJobData(job.data);
       jobId = minimalData.jobId;
 
-      const hasToBackoff = this.runJob.shouldBackoff(error);
+      hasToBackoff = this.runJob.shouldBackoff(error);
       const hasReachedMaxAttempts = job.attemptsMade >= this.DEFAULT_ATTEMPTS;
       const shouldHandleLastFailedJob = hasToBackoff && hasReachedMaxAttempts;
 
@@ -280,7 +281,7 @@ export class StandardWorker extends StandardWorkerService {
     } catch (anotherError) {
       Logger.error(anotherError, `Failed to set job ${jobId} as failed`, LOG_CONTEXT);
 
-      return true;
+      return hasToBackoff && job.attemptsMade < this.DEFAULT_ATTEMPTS;
     }
   }
 

@@ -23,6 +23,7 @@ import sinon from 'sinon';
 describe('Message filter matcher', () => {
   const executionLogQueueService = {
     add: sinon.stub(),
+    execute: sinon.stub().resolves(),
   };
   const conditionsFilter = new ConditionsFilter(
     undefined as any,
@@ -370,6 +371,35 @@ describe('Message filter matcher', () => {
     );
 
     expect(matchedMessage.passed).to.equal(false);
+  });
+
+  it('should fail closed when filter evaluation throws', async () => {
+    const processFilterEqualityStub = sinon
+      .stub(ConditionsFilter.prototype as any, 'processFilterEquality')
+      .throws(new TypeError('Cannot read properties of undefined (reading "includes")'));
+
+    const matchedMessage = await conditionsFilter.filter(
+      mapConditionsFilterCommand({
+        step: makeStep('Throws On Eval', FieldLogicalOperatorEnum.AND, [
+          {
+            operator: FieldOperatorEnum.EQUAL,
+            value: 'true',
+            field: 'varField',
+            on: FilterPartTypeEnum.PAYLOAD,
+          },
+        ]),
+        variables: {
+          payload: {
+            varField: true,
+          },
+        },
+      })
+    );
+
+    expect(matchedMessage.passed).to.equal(false);
+    expect(matchedMessage.conditions[0]?.passed).to.equal(false);
+
+    processFilterEqualityStub.restore();
   });
 
   it('should check if key is defined or not in subscriber data', async () => {
