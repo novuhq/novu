@@ -310,6 +310,68 @@ describe('Message filter matcher', () => {
     expect(matchedMessage.passed).to.equal(true);
   });
 
+  it('should handle IN operator when payload field is missing', async () => {
+    const matchedMessage = await conditionsFilter.filter(
+      mapConditionsFilterCommand({
+        step: makeStep('Missing Field', FieldLogicalOperatorEnum.AND, [
+          {
+            operator: FieldOperatorEnum.IN,
+            value: 'premium',
+            field: 'tags',
+            on: FilterPartTypeEnum.PAYLOAD,
+          },
+        ]),
+        variables: {
+          payload: {},
+        },
+      })
+    );
+
+    expect(matchedMessage.passed).to.equal(false);
+  });
+
+  it('should handle NOT_IN operator when payload field is missing', async () => {
+    const matchedMessage = await conditionsFilter.filter(
+      mapConditionsFilterCommand({
+        step: makeStep('Missing Field', FieldLogicalOperatorEnum.AND, [
+          {
+            operator: FieldOperatorEnum.NOT_IN,
+            value: 'blocked',
+            field: 'tags',
+            on: FilterPartTypeEnum.PAYLOAD,
+          },
+        ]),
+        variables: {
+          payload: {},
+        },
+      })
+    );
+
+    expect(matchedMessage.passed).to.equal(true);
+  });
+
+  it('should handle IN operator when payload field is not an array', async () => {
+    const matchedMessage = await conditionsFilter.filter(
+      mapConditionsFilterCommand({
+        step: makeStep('Non Array Field', FieldLogicalOperatorEnum.AND, [
+          {
+            operator: FieldOperatorEnum.IN,
+            value: 'premium',
+            field: 'tags',
+            on: FilterPartTypeEnum.PAYLOAD,
+          },
+        ]),
+        variables: {
+          payload: {
+            tags: 'premium',
+          },
+        },
+      })
+    );
+
+    expect(matchedMessage.passed).to.equal(false);
+  });
+
   it('should check if key is defined or not in subscriber data', async () => {
     const matchedMessage = await conditionsFilter.filter(
       mapConditionsFilterCommand({
