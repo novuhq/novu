@@ -16,9 +16,8 @@ import { getProviderSquareIconFileName } from '@/utils/provider-square-icon';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { ConversationStatusBadge } from './conversation-status-badge';
-import { getCycleEventLabel, groupActivitiesForTimeline } from './conversation-timeline-grouping';
+import { getTimelineLabel, groupActivitiesForTimeline } from './conversation-timeline-grouping';
 import { SubscriberFallbackAvatar } from './subscriber-fallback-avatar';
-import { ToolProgressCard } from './tool-progress-card';
 
 type ConversationTimelineProps = {
   activities: ConversationActivityDto[];
@@ -183,12 +182,11 @@ function MessageCard({ activity }: { activity: ConversationActivityDto }) {
   );
 }
 
-function InlineLogRow({ activity, label }: { activity: ConversationActivityDto; label?: string }) {
-  const isAgentAction = activity.senderType === 'agent' || activity.senderType === 'system';
+function InlineLogRow({ activity }: { activity: ConversationActivityDto }) {
   const signalData = activity.signalData;
   const signalType = signalData?.type;
   const { currentEnvironment } = useEnvironment();
-  const displayLabel = label ?? activity.content;
+  const label = getTimelineLabel(activity);
 
   const transactionId =
     signalType === 'trigger' && signalData?.type === 'trigger' ? signalData.payload?.transactionId : undefined;
@@ -202,7 +200,7 @@ function InlineLogRow({ activity, label }: { activity: ConversationActivityDto; 
     signalType === 'trigger' ? (
       <RiRouteFill className="text-text-soft size-3.5 shrink-0" />
     ) : (
-      <RiRobot2Line className={cn('size-3.5 shrink-0', isAgentAction ? 'text-text-soft' : 'text-text-soft')} />
+      <RiRobot2Line className="text-text-soft size-3.5 shrink-0" />
     );
 
   return (
@@ -213,33 +211,16 @@ function InlineLogRow({ activity, label }: { activity: ConversationActivityDto; 
           to={activityFeedLink}
           className="text-text-sub text-label-xs min-w-0 truncate font-medium underline decoration-dashed underline-offset-[3px] decoration-[currentColor]/40 transition-colors hover:text-text-strong hover:decoration-[currentColor]/70"
         >
-          {displayLabel}
+          {label}
         </Link>
       ) : (
-        <span className="text-text-sub text-label-xs min-w-0 truncate font-medium">{displayLabel}</span>
+        <span className="text-text-sub text-label-xs min-w-0 truncate font-medium">{label}</span>
       )}
       <span className="text-text-soft font-code shrink-0 text-[11px] leading-normal">•</span>
       <span className="text-text-soft shrink-0 text-[10px] font-medium leading-[14px]">
         {formatActivityTimestamp(activity.createdAt)}
       </span>
     </div>
-  );
-}
-
-function ToolApprovalCycleRows({
-  request,
-  events,
-}: {
-  request: ConversationActivityDto;
-  events: ConversationActivityDto[];
-}) {
-  return (
-    <>
-      <InlineLogRow activity={request} />
-      {events.map((event) => (
-        <InlineLogRow key={event._id} activity={event} label={getCycleEventLabel(event)} />
-      ))}
-    </>
   );
 }
 
@@ -312,18 +293,10 @@ export function ConversationTimeline({
       </div>
 
       <div className="flex flex-col">
-        {groupActivitiesForTimeline(activities).map((entry, index) => (
-          <Fragment key={entry.key}>
+        {groupActivitiesForTimeline(activities).map((activity, index) => (
+          <Fragment key={activity._id}>
             {index > 0 && <TimelineDivider />}
-            {entry.type === 'tool-progress' ? (
-              <ToolProgressCard activities={entry.activities} />
-            ) : entry.type === 'tool-approval-cycle' ? (
-              <ToolApprovalCycleRows request={entry.request} events={entry.events} />
-            ) : entry.activity.type === 'message' ? (
-              <MessageCard activity={entry.activity} />
-            ) : (
-              <InlineLogRow activity={entry.activity} />
-            )}
+            {activity.type === 'message' ? <MessageCard activity={activity} /> : <InlineLogRow activity={activity} />}
           </Fragment>
         ))}
 
