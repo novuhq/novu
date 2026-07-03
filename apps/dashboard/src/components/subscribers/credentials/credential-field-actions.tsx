@@ -4,6 +4,7 @@ import { CopyButton } from '@/components/primitives/copy-button';
 import { DeleteButton } from '@/components/primitives/delete-button';
 import { EditButton } from '@/components/primitives/edit-button';
 import { cn } from '@/utils/ui';
+import { CREDENTIAL_HOVER_ACTIONS_CLASS, CREDENTIAL_VISIBLE_ACTIONS_CLASS } from './credential-fields';
 
 const iconButtonClassName = 'p-0.5 hover:bg-transparent';
 
@@ -45,7 +46,12 @@ export function CredentialFieldActions({
   const hasCopy = Boolean(copyValue);
 
   return (
-    <div className="absolute right-1 top-1/2 flex -translate-y-1/2 items-center gap-1">
+    <div
+      className={cn(
+        'absolute right-1 top-1/2 flex -translate-y-1/2 items-center gap-1',
+        mode === 'view' ? CREDENTIAL_HOVER_ACTIONS_CLASS : CREDENTIAL_VISIBLE_ACTIONS_CLASS
+      )}
+    >
       <AnimatePresence mode="wait" initial={false}>
         {mode === 'view' ? (
           <motion.div

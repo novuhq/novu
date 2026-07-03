@@ -6,6 +6,7 @@ import {
   CREDENTIAL_CARD_CLASS,
   CREDENTIAL_FIELD_BOX_CLASS,
   CREDENTIAL_FIELD_LABEL_CLASS,
+  CREDENTIAL_HOVER_ACTIONS_CLASS,
   type CredentialField,
 } from './credential-fields';
 import { maskCredentialValue } from './mask-credential-value';
@@ -110,7 +111,9 @@ export function CredentialFormRow({
                     />
                   ) : (
                     hasCopy && (
-                      <div className="absolute right-1 top-1/2 flex -translate-y-1/2 items-center gap-1">
+                      <div
+                        className={`absolute right-1 top-1/2 flex -translate-y-1/2 items-center gap-1 ${CREDENTIAL_HOVER_ACTIONS_CLASS}`}
+                      >
                         <CopyButton
                           valueToCopy={field.value}
                           size="2xs"

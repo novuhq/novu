@@ -10,10 +10,16 @@ export type CredentialField = {
  * Shared layout classes so the read-only value box and the editable input occupy the exact
  * same space (matching the `Input size="2xs"` metrics), preventing any layout shift on toggle.
  */
-export const CREDENTIAL_CARD_CLASS = 'bg-bg-white flex flex-col gap-2 rounded-md p-1.5 shadow-xs';
+export const CREDENTIAL_CARD_CLASS = 'group/credential bg-bg-white flex flex-col gap-2 rounded-md p-1.5 shadow-xs';
 export const CREDENTIAL_FIELD_LABEL_CLASS = 'text-2xs text-text-soft px-0.5';
 export const CREDENTIAL_FIELD_BOX_CLASS =
   'flex h-7 items-center rounded-lg px-2 text-paragraph-xs font-mono text-text-sub';
+
+/** Reveal copy/edit/delete on credential item hover; edit-mode actions stay visible. */
+export const CREDENTIAL_HOVER_ACTIONS_CLASS =
+  'pointer-events-none opacity-0 transition-opacity duration-200 ease-out group-hover/credential:opacity-100 group-hover/credential:pointer-events-auto group-focus-within/credential:opacity-100 group-focus-within/credential:pointer-events-auto';
+
+export const CREDENTIAL_VISIBLE_ACTIONS_CLASS = 'pointer-events-auto opacity-100';
 
 /** Human-readable labels for the credential payload keys used by chat/push credentials. */
 const CREDENTIAL_FIELD_LABELS: Record<string, string> = {

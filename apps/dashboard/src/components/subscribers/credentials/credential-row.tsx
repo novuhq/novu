@@ -4,6 +4,7 @@ import type { ChannelEndpointPayload } from '@/api/channel-endpoints';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import { CopyButton } from '@/components/primitives/copy-button';
 import { EditButton } from '@/components/primitives/edit-button';
+import { cn } from '@/utils/ui';
 import type {
   ChatCredentialItem,
   ChatIntegrationRow,
@@ -13,7 +14,12 @@ import type {
   ReadonlyCredentialRow,
 } from './build-credential-groups';
 import { ChatIntegrationCard } from './chat-integration-card';
-import { CREDENTIAL_CARD_CLASS, CREDENTIAL_FIELD_BOX_CLASS, CREDENTIAL_FIELD_LABEL_CLASS } from './credential-fields';
+import {
+  CREDENTIAL_CARD_CLASS,
+  CREDENTIAL_FIELD_BOX_CLASS,
+  CREDENTIAL_FIELD_LABEL_CLASS,
+  CREDENTIAL_HOVER_ACTIONS_CLASS,
+} from './credential-fields';
 import { CredentialVisibilityToggle } from './credential-visibility-toggle';
 import { maskCredentialValue } from './mask-credential-value';
 import { PushIntegrationCard } from './push-integration-card';
@@ -76,7 +82,12 @@ function ReadonlyCard({
             <span className={CREDENTIAL_FIELD_LABEL_CLASS}>{fieldLabel}</span>
             <div className={`relative ${CREDENTIAL_FIELD_BOX_CLASS}`}>
               <span className={`min-w-0 flex-1 truncate ${actionPaddingClass}`}>{displayValue}</span>
-              <div className="absolute right-1 top-1/2 flex -translate-y-1/2 items-center gap-1">
+              <div
+                className={cn(
+                  'absolute right-1 top-1/2 flex -translate-y-1/2 items-center gap-1',
+                  CREDENTIAL_HOVER_ACTIONS_CLASS
+                )}
+              >
                 {row.hideProviderHeader && (
                   <CredentialVisibilityToggle
                     visible={valuesVisible}
@@ -104,12 +115,12 @@ function ReadonlyCard({
           </div>
         </div>
       ) : (
-        <div className="border-stroke-soft bg-bg-white flex items-center gap-1 rounded border border-dashed px-2 py-2">
+        <div className="group/credential border-stroke-soft bg-bg-white flex items-center gap-1 rounded border border-dashed px-2 py-2">
           <span className="text-[10px] leading-4 min-w-0 flex-1 text-text-soft">{emptyLabel}</span>
           {!readOnly && (
             <EditButton
               size="2xs"
-              className={iconButtonClassName}
+              className={cn(iconButtonClassName, CREDENTIAL_HOVER_ACTIONS_CLASS)}
               tooltip="Edit in overview"
               aria-label={`Edit ${row.overviewField} in Overview`}
               onClick={() => onEditInOverview(row.overviewField)}
