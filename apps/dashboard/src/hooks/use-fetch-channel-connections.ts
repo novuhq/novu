@@ -4,7 +4,7 @@ import { useEnvironment } from '@/context/environment/hooks';
 import { QueryKeys } from '@/utils/query-keys';
 
 type UseFetchChannelConnectionsParams = {
-  subscriberId: string;
+  subscriberId?: string;
   channel?: string;
   enabled?: boolean;
 };
@@ -13,14 +13,14 @@ export function useFetchChannelConnections({
   subscriberId,
   channel,
   enabled = true,
-}: UseFetchChannelConnectionsParams) {
+}: UseFetchChannelConnectionsParams = {}) {
   const { currentEnvironment } = useEnvironment();
 
   const { data, ...rest } = useQuery({
     queryKey: [QueryKeys.fetchChannelConnections, currentEnvironment?._id, subscriberId, channel],
     queryFn: ({ signal }) =>
       listChannelConnections({ environment: currentEnvironment!, subscriberId, channel, signal }),
-    enabled: !!currentEnvironment?._id && !!subscriberId && enabled,
+    enabled: !!currentEnvironment?._id && enabled,
   });
 
   const channelConnections: ChannelConnectionDto[] = data?.data ?? [];

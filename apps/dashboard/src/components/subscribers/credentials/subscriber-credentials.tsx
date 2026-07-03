@@ -1,5 +1,5 @@
 import type { ChannelEndpointType } from '@novu/shared';
-import { ChannelTypeEnum, ENDPOINT_TYPES } from '@novu/shared';
+import { ChannelTypeEnum } from '@novu/shared';
 import { formatDistanceToNow } from 'date-fns';
 import { useMemo, useState } from 'react';
 import { ExternalToast } from 'sonner';
@@ -73,7 +73,6 @@ export function SubscriberCredentials({
     channel: ChannelTypeEnum.CHAT,
   });
   const { channelConnections, isPending: isConnectionsPending } = useFetchChannelConnections({
-    subscriberId,
     channel: ChannelTypeEnum.CHAT,
   });
 
@@ -99,6 +98,9 @@ export function SubscriberCredentials({
     });
   }, [subscriber, integrations, channelEndpoints, channelConnections]);
 
+  console.dir({ groups }, { depth: null });
+  console.dir({ channelConnections }, { depth: null });
+
   if (isSubscriberPending || isIntegrationsPending || isEndpointsPending || isConnectionsPending) {
     return <CredentialsSkeleton />;
   }
@@ -108,16 +110,15 @@ export function SubscriberCredentials({
       if (item.source === 'endpoint') {
         await updateChannelEndpoint({ subscriberId, identifier: item.endpointIdentifier, endpoint: payload });
       } else {
-        // Editing a legacy webhook migrates it into a channel endpoint for this subscriber.
-        await createChannelEndpoint({
-          subscriberId,
-          integrationIdentifier: item.integrationIdentifier,
-          type: ENDPOINT_TYPES.WEBHOOK,
-          endpoint: payload,
-        });
-        await deleteSubscriberCredentials({
+        // Editing a legacy webhook updates the stored credential in place
+        const webhook = payload as { url?: string; channel?: string };
+
+        await updateSubscriberCredentials({
           subscriberId,
           providerId: item.providerId as SubscriberCredentialsProviderId,
+          integrationIdentifier: item.integrationIdentifier,
+          credentials: { webhookUrl: webhook.url, ...(webhook.channel ? { channel: webhook.channel } : {}) },
+          mode: 'replace',
         });
       }
 
@@ -262,7 +263,13 @@ export function SubscriberCredentials({
         {groups.length > 0 ? (
           <div className="flex flex-col gap-2">
             {groups.map((group) => (
-              <CredentialSection key={group.channel} group={group} readOnly={readOnly} actions={actions} />
+              <CredentialSection
+                key={group.channel}
+                group={group}
+                subscriberId={subscriberId}
+                readOnly={readOnly}
+                actions={actions}
+              />
             ))}
           </div>
         ) : (

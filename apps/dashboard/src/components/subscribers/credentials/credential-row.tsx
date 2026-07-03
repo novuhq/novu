@@ -1,4 +1,5 @@
 import type { ChannelEndpointType } from '@novu/shared';
+import { useState } from 'react';
 import type { ChannelEndpointPayload } from '@/api/channel-endpoints';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import { CopyButton } from '@/components/primitives/copy-button';
@@ -12,9 +13,20 @@ import type {
   ReadonlyCredentialRow,
 } from './build-credential-groups';
 import { ChatIntegrationCard } from './chat-integration-card';
+import { CREDENTIAL_CARD_CLASS, CREDENTIAL_FIELD_BOX_CLASS, CREDENTIAL_FIELD_LABEL_CLASS } from './credential-fields';
+import { CredentialVisibilityToggle } from './credential-visibility-toggle';
+import { maskCredentialValue } from './mask-credential-value';
 import { PushIntegrationCard } from './push-integration-card';
 
 const iconButtonClassName = 'p-0.5 hover:bg-transparent';
+
+function getOverviewFieldLabel(overviewField: OverviewField): string {
+  if (overviewField === 'email') {
+    return 'Email';
+  }
+
+  return 'Phone number';
+}
 
 export type CredentialActions = {
   onSaveItem: (item: ChatCredentialItem, payload: ChannelEndpointPayload) => Promise<boolean>;
@@ -34,8 +46,11 @@ function ReadonlyCard({
   readOnly: boolean;
   onEditInOverview: (field: OverviewField) => void;
 }) {
+  const [valuesVisible, setValuesVisible] = useState(false);
   const emptyLabel = row.overviewField === 'email' ? 'Email address not set' : 'Phone number not set';
-  const displayValue = row.jsonKey ? JSON.stringify({ [row.jsonKey]: row.value }, null, 2) : row.value;
+  const fieldLabel = getOverviewFieldLabel(row.overviewField);
+  const displayValue = valuesVisible || !row.value ? row.value : maskCredentialValue(row.value);
+  const actionPaddingClass = row.hideProviderHeader ? 'pr-16' : 'pr-7';
 
   return (
     <div className="bg-bg-weak flex w-full flex-col gap-1.5 rounded-lg p-1.5">
@@ -43,31 +58,49 @@ function ReadonlyCard({
         <div className="flex min-h-7 items-center gap-1.5 px-0.5">
           <ProviderIcon providerId={row.providerId} providerDisplayName={row.displayName} className="size-5 shrink-0" />
           <span className="text-label-xs truncate font-medium text-text-strong">{row.displayName}</span>
+          {row.value && (
+            <div className="ml-auto flex shrink-0 items-center gap-1">
+              <CredentialVisibilityToggle
+                visible={valuesVisible}
+                ariaLabel={`${row.displayName} credentials`}
+                onToggle={() => setValuesVisible((prev) => !prev)}
+              />
+            </div>
+          )}
         </div>
       )}
 
       {row.value ? (
-        <div className="bg-bg-white flex items-start gap-1 rounded-md p-1.5 shadow-xs">
-          {row.jsonKey ? (
-            <pre className="text-paragraph-xs nv-no-scrollbar min-w-0 flex-1 overflow-x-auto font-mono text-text-sub">
-              {displayValue}
-            </pre>
-          ) : (
-            <span className="text-paragraph-xs min-w-0 flex-1 truncate font-mono tracking-[-0.2px] text-text-sub py-1">
-              {displayValue}
-            </span>
-          )}
-          <div className="flex shrink-0 items-center gap-1">
-            <CopyButton valueToCopy={displayValue} size="2xs" className={iconButtonClassName} />
-            {!readOnly && (
-              <EditButton
-                size="2xs"
-                className={iconButtonClassName}
-                tooltip="Edit in overview"
-                aria-label={`Edit ${row.overviewField} in Overview`}
-                onClick={() => onEditInOverview(row.overviewField)}
-              />
-            )}
+        <div className={CREDENTIAL_CARD_CLASS}>
+          <div className="flex min-w-0 flex-col gap-1">
+            <span className={CREDENTIAL_FIELD_LABEL_CLASS}>{fieldLabel}</span>
+            <div className={`relative ${CREDENTIAL_FIELD_BOX_CLASS}`}>
+              <span className={`min-w-0 flex-1 truncate ${actionPaddingClass}`}>{displayValue}</span>
+              <div className="absolute right-1 top-1/2 flex -translate-y-1/2 items-center gap-1">
+                {row.hideProviderHeader && (
+                  <CredentialVisibilityToggle
+                    visible={valuesVisible}
+                    ariaLabel={`${row.displayName} credentials`}
+                    onToggle={() => setValuesVisible((prev) => !prev)}
+                  />
+                )}
+                <CopyButton
+                  valueToCopy={row.value}
+                  size="2xs"
+                  className={iconButtonClassName}
+                  ariaLabel={`Copy ${fieldLabel}`}
+                />
+                {!readOnly && (
+                  <EditButton
+                    size="2xs"
+                    className={iconButtonClassName}
+                    tooltip="Edit in overview"
+                    aria-label={`Edit ${row.overviewField} in Overview`}
+                    onClick={() => onEditInOverview(row.overviewField)}
+                  />
+                )}
+              </div>
+            </div>
           </div>
         </div>
       ) : (
@@ -90,15 +123,17 @@ function ReadonlyCard({
 
 type CredentialRowProps = {
   row: CredentialRowModel;
+  subscriberId: string;
   readOnly: boolean;
   actions: CredentialActions;
 };
 
-export function CredentialRow({ row, readOnly, actions }: CredentialRowProps) {
+export function CredentialRow({ row, subscriberId, readOnly, actions }: CredentialRowProps) {
   if (row.kind === 'chatIntegration') {
     return (
       <ChatIntegrationCard
         row={row}
+        subscriberId={subscriberId}
         readOnly={readOnly}
         onSaveItem={actions.onSaveItem}
         onDeleteItem={actions.onDeleteItem}

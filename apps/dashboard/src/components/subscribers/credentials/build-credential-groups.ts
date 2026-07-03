@@ -28,8 +28,6 @@ export type ReadonlyCredentialRow = {
   value: string;
   /** The Overview form field this credential maps to. */
   overviewField: OverviewField;
-  /** When set, the value is rendered as a JSON object (e.g. `{ "phone": "..." }`). */
-  jsonKey?: string;
   /** Hides the per-provider icon/name header, rendering a single generic value row (email/SMS). */
   hideProviderHeader?: boolean;
 };
@@ -194,8 +192,7 @@ function buildEndpointItem(dto: ChannelEndpointDto, integration?: IIntegration):
 function buildReadonlyRows(
   integrations: IIntegration[],
   value: string,
-  overviewField: OverviewField,
-  jsonKey?: string
+  overviewField: OverviewField
 ): ReadonlyCredentialRow[] {
   return integrations.map((integration) => ({
     id: `${integration.providerId}:${integration.identifier}`,
@@ -205,7 +202,6 @@ function buildReadonlyRows(
     displayName: integration.name || getProviderDisplayName(integration.providerId),
     value,
     overviewField,
-    jsonKey,
   }));
 }
 
@@ -259,7 +255,6 @@ function buildChatGroup(
   const whatsAppRows = buildReadonlyRows(
     chatIntegrations.filter((integration) => isWhatsApp(integration.providerId)),
     phone,
-    'phone',
     'phone'
   );
   rows.push(...whatsAppRows);

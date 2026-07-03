@@ -1,45 +1,15 @@
 import { useState } from 'react';
 import { AddButton } from '@/components/primitives/add-button';
 import type { EditableCredentialRow } from './build-credential-groups';
+import { type CredentialField, getFieldLabel } from './credential-fields';
+import { CredentialFormEditor } from './credential-form-editor';
+import { CredentialFormRow } from './credential-form-row';
 import { CredentialItemsCard } from './credential-items-card';
-import { CredentialJsonEditor, type ParseResult } from './credential-json-editor';
-import { CredentialJsonRow } from './credential-json-row';
 
 const iconButtonClassName = 'p-0.5 hover:bg-transparent';
-const EDITOR_HEIGHT = '80px';
 
-/**
- * Device tokens are stored as plain strings, but the editor exposes them as a JSON object
- * (`{ "deviceToken": "..." }`) so the shape can grow additional fields in the future.
- */
-function parseDeviceToken(value: string): ParseResult<string> {
-  const trimmed = value.trim();
-
-  if (!trimmed) {
-    return { ok: false, error: 'Payload is required' };
-  }
-
-  try {
-    const parsed = JSON.parse(trimmed);
-
-    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
-      return { ok: false, error: 'Payload must be a JSON object' };
-    }
-
-    const token = (parsed as { deviceToken?: unknown }).deviceToken;
-
-    if (typeof token !== 'string' || token.trim().length === 0) {
-      return { ok: false, error: '"deviceToken" is required' };
-    }
-
-    return { ok: true, value: token.trim() };
-  } catch {
-    return { ok: false, error: 'Invalid JSON' };
-  }
-}
-
-function toDeviceTokenJson(token: string): string {
-  return JSON.stringify({ deviceToken: token }, null, 2);
+function deviceTokenField(token: string): CredentialField[] {
+  return [{ key: 'deviceToken', label: getFieldLabel('deviceToken'), value: token }];
 }
 
 type PushIntegrationCardProps = {
@@ -55,7 +25,7 @@ export function PushIntegrationCard({ row, readOnly, onSaveToken, onDeleteToken 
   const addControl = readOnly ? null : (
     <AddButton
       size="2xs"
-      className={`${iconButtonClassName} ml-auto`}
+      className={iconButtonClassName}
       tooltip="Add device token"
       aria-label={`Add ${row.displayName} device token`}
       onClick={() => setIsAdding(true)}
@@ -63,13 +33,10 @@ export function PushIntegrationCard({ row, readOnly, onSaveToken, onDeleteToken 
   );
 
   const addEditor = isAdding ? (
-    <CredentialJsonEditor<string>
-      initialValue={toDeviceTokenJson('')}
-      saveLabel="Add token"
-      parse={parseDeviceToken}
-      onSave={(value) => onSaveToken(row, value, 'add')}
+    <CredentialFormEditor
+      fields={deviceTokenField('')}
+      onSave={(values) => onSaveToken(row, values.deviceToken, 'add')}
       onCancel={() => setIsAdding(false)}
-      height={EDITOR_HEIGHT}
     />
   ) : null;
 
@@ -80,16 +47,15 @@ export function PushIntegrationCard({ row, readOnly, onSaveToken, onDeleteToken 
       items={row.values}
       addControl={addControl}
       addEditor={addEditor}
-      renderItem={(token, index) => (
-        <CredentialJsonRow<string>
+      renderItem={(token, index, valuesVisible) => (
+        <CredentialFormRow
           key={`${row.id}:token:${index}`}
-          json={toDeviceTokenJson(token)}
+          fields={deviceTokenField(token)}
           ariaEntity={`${row.displayName} device token`}
           readOnly={readOnly}
-          parse={parseDeviceToken}
-          onSave={(value) => onSaveToken(row, value, 'edit', index)}
+          valuesVisible={valuesVisible}
+          onSave={(values) => onSaveToken(row, values.deviceToken, 'edit', index)}
           onDelete={() => onDeleteToken(row, index)}
-          editorHeight={EDITOR_HEIGHT}
         />
       )}
     />

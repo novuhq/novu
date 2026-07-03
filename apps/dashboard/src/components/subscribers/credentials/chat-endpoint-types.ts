@@ -1,11 +1,14 @@
 import type { ChannelEndpointType } from '@novu/shared';
 import { ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
+import type { IconType } from 'react-icons';
+import { RiAtLine, RiHashtag, RiLinksLine, RiTelegramLine } from 'react-icons/ri';
 
 /** A chat endpoint type a user can manually add for an integration. */
 export type ChatEndpointTypeOption = {
   type: ChannelEndpointType;
   label: string;
-  /** Empty payload skeleton pre-filled in the JSON editor. */
+  icon: IconType;
+  /** Empty payload skeleton whose keys seed the add form's labeled fields. */
   skeleton: Record<string, string>;
   /** Token-based types (Slack/Teams channel & user) only deliver when linked to an OAuth connection. */
   requiresConnection: boolean;
@@ -14,6 +17,7 @@ export type ChatEndpointTypeOption = {
 const WEBHOOK: ChatEndpointTypeOption = {
   type: ENDPOINT_TYPES.WEBHOOK,
   label: 'Webhook',
+  icon: RiLinksLine,
   skeleton: { url: '' },
   requiresConnection: false,
 };
@@ -22,6 +26,7 @@ const WEBHOOK: ChatEndpointTypeOption = {
 const WEBHOOK_WITH_CHANNEL: ChatEndpointTypeOption = {
   type: ENDPOINT_TYPES.WEBHOOK,
   label: 'Webhook',
+  icon: RiLinksLine,
   skeleton: { url: '', channel: '' },
   requiresConnection: false,
 };
@@ -29,6 +34,7 @@ const WEBHOOK_WITH_CHANNEL: ChatEndpointTypeOption = {
 const SLACK_CHANNEL: ChatEndpointTypeOption = {
   type: ENDPOINT_TYPES.SLACK_CHANNEL,
   label: 'Slack channel',
+  icon: RiHashtag,
   skeleton: { channelId: '' },
   requiresConnection: true,
 };
@@ -36,6 +42,7 @@ const SLACK_CHANNEL: ChatEndpointTypeOption = {
 const SLACK_USER: ChatEndpointTypeOption = {
   type: ENDPOINT_TYPES.SLACK_USER,
   label: 'Slack user',
+  icon: RiAtLine,
   skeleton: { userId: '' },
   requiresConnection: true,
 };
@@ -43,6 +50,7 @@ const SLACK_USER: ChatEndpointTypeOption = {
 const MS_TEAMS_CHANNEL: ChatEndpointTypeOption = {
   type: ENDPOINT_TYPES.MS_TEAMS_CHANNEL,
   label: 'Teams channel',
+  icon: RiHashtag,
   skeleton: { teamId: '', channelId: '' },
   requiresConnection: true,
 };
@@ -50,6 +58,7 @@ const MS_TEAMS_CHANNEL: ChatEndpointTypeOption = {
 const MS_TEAMS_USER: ChatEndpointTypeOption = {
   type: ENDPOINT_TYPES.MS_TEAMS_USER,
   label: 'Teams user',
+  icon: RiAtLine,
   skeleton: { userId: '' },
   requiresConnection: true,
 };
@@ -57,9 +66,20 @@ const MS_TEAMS_USER: ChatEndpointTypeOption = {
 const TELEGRAM_CHAT: ChatEndpointTypeOption = {
   type: ENDPOINT_TYPES.TELEGRAM_CHAT,
   label: 'Telegram chat',
+  icon: RiTelegramLine,
   skeleton: { chatId: '' },
   requiresConnection: false,
 };
+
+const CONNECT_LINK_PROVIDERS = new Set<string>([
+  ChatProviderIdEnum.Slack,
+  ChatProviderIdEnum.MsTeams,
+  ChatProviderIdEnum.Telegram,
+]);
+
+export function supportsConnectLink(providerId: string): boolean {
+  return CONNECT_LINK_PROVIDERS.has(providerId);
+}
 
 /**
  * Endpoint types each chat provider actually consumes, mirroring the provider `sendMessage`

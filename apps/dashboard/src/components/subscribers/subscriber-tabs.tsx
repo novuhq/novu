@@ -91,10 +91,10 @@ export function SubscriberTabs(props: SubscriberTabsProps) {
   const [tab, setTab] = useState('overview');
   const [overviewFocusField, setOverviewFocusField] = useState<OverviewFocusField | undefined>();
 
-  const focusOverviewField = (field: OverviewFocusField) => {
+  const focusOverviewField = useCallback((field: OverviewFocusField) => {
     setOverviewFocusField(field);
     setTab('overview');
-  };
+  }, []);
 
   const clearOverviewFocusField = useCallback(() => setOverviewFocusField(undefined), []);
 
