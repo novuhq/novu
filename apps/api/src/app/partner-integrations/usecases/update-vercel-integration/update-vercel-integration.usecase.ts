@@ -55,6 +55,8 @@ export class UpdateVercelIntegration {
     try {
       const { userId, organizationId, configurationId, data: orgIdsToProjectIds } = command;
 
+      this.validateOrganizationsAccess(organizationId, Object.keys(orgIdsToProjectIds));
+
       const configuration = await this.getCurrentOrgPartnerConfiguration({
         userId,
         configurationId,
@@ -162,6 +164,16 @@ export class UpdateVercelIntegration {
       });
     } catch (error) {
       this.logger.error({ err: error }, 'Error updating bridge url');
+    }
+  }
+
+  private validateOrganizationsAccess(organizationId: string, requestedOrganizationIds: string[]): void {
+    const hasUnauthorizedOrganization = requestedOrganizationIds.some(
+      (requestedOrganizationId) => requestedOrganizationId !== organizationId
+    );
+
+    if (hasUnauthorizedOrganization) {
+      throw new BadRequestException('One or more organizations are not accessible.');
     }
   }
 
