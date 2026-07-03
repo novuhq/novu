@@ -1,0 +1,81 @@
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  decryptApiKey,
+  FeatureFlagsService,
+  InMemoryLRUCacheService,
+  InMemoryLRUCacheStore,
+} from '@novu/application-generic';
+import { EnvironmentRepository, IApiKey } from '@novu/dal';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { createHash } from 'crypto';
+import { ApiKeyDto } from '../../dtos/api-key.dto';
+import { DeleteApiKeyCommand } from './delete-api-key.command';
+
+@Injectable()
+export class DeleteApiKey {
+  constructor(
+    private environmentRepository: EnvironmentRepository,
+    private featureFlagsService: FeatureFlagsService,
+    private inMemoryLRUCacheService: InMemoryLRUCacheService
+  ) {}
+
+  async execute(command: DeleteApiKeyCommand): Promise<ApiKeyDto[]> {
+    const isMultipleSecretKeysAllowed = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_MULTIPLE_SECRET_KEYS_ALLOWED,
+      organization: { _id: command.organizationId },
+      user: { _id: command.userId },
+      environment: { _id: command.environmentId },
+      defaultValue: false,
+    });
+
+    if (!isMultipleSecretKeysAllowed) {
+      throw new ForbiddenException('Deleting API keys is not enabled for your organization');
+    }
+
+    const apiKeys = await this.environmentRepository.getApiKeys(command.environmentId);
+
+    if (apiKeys.length === 0) {
+      throw new NotFoundException(`Environment id: ${command.environmentId} has no API keys`);
+    }
+
+    const keyToDelete = apiKeys.find((apiKey) => this.getKeyHash(apiKey) === command.hash);
+
+    if (!keyToDelete) {
+      throw new NotFoundException('API key not found');
+    }
+
+    if (apiKeys.length === 1) {
+      throw new BadRequestException('Cannot delete the last remaining API key. Create a new key first.');
+    }
+
+    const remainingKeys = await this.environmentRepository.deleteApiKey(
+      command.environmentId,
+      keyToDelete.hash ? { hash: keyToDelete.hash } : { key: keyToDelete.key }
+    );
+
+    /*
+     * Best-effort invalidation of the local auth cache so the deleted key stops
+     * authenticating immediately on this instance. Other instances converge via
+     * the store's short TTL.
+     */
+    this.inMemoryLRUCacheService.invalidate(InMemoryLRUCacheStore.API_KEY_USER, command.hash);
+
+    return remainingKeys.map((item) => {
+      const decryptedKey = decryptApiKey(item.key);
+
+      return {
+        _userId: item._userId,
+        key: decryptedKey,
+        hash: item.hash ?? createHash('sha256').update(decryptedKey).digest('hex'),
+      };
+    });
+  }
+
+  private getKeyHash(apiKey: IApiKey): string {
+    if (apiKey.hash) {
+      return apiKey.hash;
+    }
+
+    return createHash('sha256').update(decryptApiKey(apiKey.key)).digest('hex');
+  }
+}

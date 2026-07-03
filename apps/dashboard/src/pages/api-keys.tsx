@@ -1,7 +1,8 @@
-import { PermissionsEnum } from '@novu/shared';
+import { FeatureFlagsKeysEnum, IApiKey, PermissionsEnum } from '@novu/shared';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { RiEyeLine, RiEyeOffLine, RiLoopRightFill } from 'react-icons/ri';
+import { RiAddLine, RiDeleteBin2Line, RiEyeLine, RiEyeOffLine, RiLoopRightFill } from 'react-icons/ri';
+import { ConfirmationModal } from '@/components/confirmation-modal';
 import { PageMeta } from '@/components/page-meta';
 import { Card, CardContent, CardHeader } from '@/components/primitives/card';
 import { CopyButton } from '@/components/primitives/copy-button';
@@ -20,8 +21,11 @@ import { showErrorToast, showSuccessToast } from '../components/primitives/sonne
 import { Tooltip, TooltipContent, TooltipTrigger } from '../components/primitives/tooltip';
 import { RegenerateApiKeysDialog } from '../components/regenerate-api-keys-dialog';
 import { IS_SELF_HOSTED } from '../config';
-import { useFetchApiKeys, useRegenerateApiKeys } from '../hooks/use-fetch-api-keys';
+import { useFeatureFlag } from '../hooks/use-feature-flag';
+import { useCreateApiKey, useDeleteApiKey, useFetchApiKeys, useRegenerateApiKeys } from '../hooks/use-fetch-api-keys';
 import { useHasPermission } from '../hooks/use-has-permission';
+
+const MAX_SECRET_KEYS = 2;
 
 // Convert https:// to wss:// for WebSocket URLs
 const getWebSocketUrl = (url: string) => {
@@ -42,9 +46,14 @@ export function ApiKeysPage() {
   const apiKeys = apiKeysQuery.data?.data;
   const isLoading = apiKeysQuery.isLoading;
   const [isRegenerateDialogOpen, setIsRegenerateDialogOpen] = useState(false);
+  const [keyPendingDeletion, setKeyPendingDeletion] = useState<IApiKey | null>(null);
   const regenerateApiKeysMutation = useRegenerateApiKeys();
+  const createApiKeyMutation = useCreateApiKey();
+  const deleteApiKeyMutation = useDeleteApiKey();
   const has = useHasPermission();
   const canRegenerateApiKeys = has({ permission: PermissionsEnum.API_KEY_WRITE });
+  const isMultipleSecretKeysAllowed = useFeatureFlag(FeatureFlagsKeysEnum.IS_MULTIPLE_SECRET_KEYS_ALLOWED);
+  const hasMaxSecretKeys = (apiKeys?.length ?? 0) >= MAX_SECRET_KEYS;
 
   const form = useForm<ApiKeysFormData>({
     values: {
@@ -61,6 +70,29 @@ export function ApiKeysPage() {
       setIsRegenerateDialogOpen(false);
     } catch (e: any) {
       const message = e?.message || 'Failed to regenerate API keys';
+      showErrorToast(message);
+    }
+  };
+
+  const handleCreateKey = async () => {
+    try {
+      await createApiKeyMutation.mutateAsync();
+      showSuccessToast('New secret key generated');
+    } catch (e: any) {
+      const message = e?.message || 'Failed to generate a new secret key';
+      showErrorToast(message);
+    }
+  };
+
+  const handleDeleteKey = async () => {
+    if (!keyPendingDeletion?.hash) return;
+
+    try {
+      await deleteApiKeyMutation.mutateAsync({ hash: keyPendingDeletion.hash });
+      showSuccessToast('Secret key deleted');
+      setKeyPendingDeletion(null);
+    } catch (e: any) {
+      const message = e?.message || 'Failed to delete the secret key';
       showErrorToast(message);
     }
   };
@@ -111,18 +143,71 @@ export function ApiKeysPage() {
               </CardHeader>
 
               <CardContent className="rounded-b-xl border-t bg-neutral-50 bg-white p-4">
-                <div className="space-y-4">
-                  <SettingField
-                    label="Secret Key"
-                    tooltip="Keep it secure and never share it publicly"
-                    value={form.getValues('apiKey')}
-                    secret
-                    isLoading={isLoading}
-                    showRegenerateButton={canRegenerateApiKeys}
-                    onRegenerateClick={() => setIsRegenerateDialogOpen(true)}
-                    isRegenerateLoading={regenerateApiKeysMutation.isPending}
-                  />
-                </div>
+                {isMultipleSecretKeysAllowed ? (
+                  <div className="space-y-4">
+                    {isLoading && <SettingField label="Secret Key" secret isLoading />}
+                    {!isLoading &&
+                      apiKeys?.map((apiKey, index) => (
+                        <SettingField
+                          key={apiKey.hash ?? apiKey.key}
+                          label={index === 0 ? 'Secret Key' : 'Secret Key (new)'}
+                          tooltip="Keep it secure and never share it publicly"
+                          value={apiKey.key}
+                          secret
+                          showRegenerateButton={canRegenerateApiKeys && index === 0}
+                          onRegenerateClick={() => setIsRegenerateDialogOpen(true)}
+                          isRegenerateLoading={regenerateApiKeysMutation.isPending}
+                          showDeleteButton={canRegenerateApiKeys && (apiKeys?.length ?? 0) > 1}
+                          onDeleteClick={() => setKeyPendingDeletion(apiKey)}
+                          isDeleteLoading={
+                            deleteApiKeyMutation.isPending && keyPendingDeletion?.hash === apiKey.hash
+                          }
+                        />
+                      ))}
+                    {canRegenerateApiKeys && (
+                      <div className="flex items-center justify-between gap-3 border-t border-neutral-100 pt-3">
+                        <p className="text-foreground-500 text-xs">
+                          Rotate without downtime: generate a new key, switch your apps to it, then delete the old key.
+                        </p>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span>
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                mode="outline"
+                                leadingIcon={RiAddLine}
+                                onClick={handleCreateKey}
+                                disabled={isLoading || hasMaxSecretKeys}
+                                isLoading={createApiKeyMutation.isPending}
+                              >
+                                Generate new key
+                              </Button>
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {hasMaxSecretKeys
+                              ? `You can have up to ${MAX_SECRET_KEYS} secret keys. Delete a key to generate a new one.`
+                              : 'Generate an additional secret key for a rolling rotation'}
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <SettingField
+                      label="Secret Key"
+                      tooltip="Keep it secure and never share it publicly"
+                      value={form.getValues('apiKey')}
+                      secret
+                      isLoading={isLoading}
+                      showRegenerateButton={canRegenerateApiKeys}
+                      onRegenerateClick={() => setIsRegenerateDialogOpen(true)}
+                      isRegenerateLoading={regenerateApiKeysMutation.isPending}
+                    />
+                  </div>
+                )}
               </CardContent>
             </Card>
             <Card className="w-full overflow-hidden shadow-none">
@@ -168,6 +253,25 @@ export function ApiKeysPage() {
         onConfirm={handleRegenerateKeys}
         isLoading={regenerateApiKeysMutation.isPending}
       />
+      <ConfirmationModal
+        open={!!keyPendingDeletion}
+        onOpenChange={(open) => {
+          if (!open) {
+            setKeyPendingDeletion(null);
+          }
+        }}
+        onConfirm={handleDeleteKey}
+        title="Delete secret key"
+        description={
+          <span>
+            The secret key ending in <span className="font-mono">…{keyPendingDeletion?.key?.slice(-4)}</span> will stop
+            working within about a minute. Make sure none of your applications still use it before deleting.
+          </span>
+        }
+        confirmButtonText="Delete key"
+        confirmButtonVariant="error"
+        isLoading={deleteApiKeyMutation.isPending}
+      />
     </>
   );
 }
@@ -182,6 +286,9 @@ interface SettingFieldProps {
   showRegenerateButton?: boolean;
   onRegenerateClick?: () => void;
   isRegenerateLoading?: boolean;
+  showDeleteButton?: boolean;
+  onDeleteClick?: () => void;
+  isDeleteLoading?: boolean;
 }
 
 function SettingField({
@@ -194,6 +301,9 @@ function SettingField({
   showRegenerateButton = false,
   onRegenerateClick,
   isRegenerateLoading,
+  showDeleteButton = false,
+  onDeleteClick,
+  isDeleteLoading,
 }: SettingFieldProps) {
   const [showSecret, setShowSecret] = useState(false);
 
@@ -217,6 +327,7 @@ function SettingField({
             <Skeleton className="h-[38px] flex-1 rounded-lg" />
             {secret && <Skeleton className="h-[38px] w-[38px] rounded-lg" />}
             {showRegenerateButton && <Skeleton className="h-[38px] w-[38px] rounded-lg" />}
+            {showDeleteButton && <Skeleton className="h-[38px] w-[38px] rounded-lg" />}
           </>
         ) : (
           <>
@@ -252,6 +363,23 @@ function SettingField({
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>Regenerate API Key</TooltipContent>
+              </Tooltip>
+            )}
+            {showDeleteButton && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="md"
+                    variant="secondary"
+                    mode="outline"
+                    onClick={onDeleteClick}
+                    disabled={isDeleteLoading}
+                    className="h-[38px] min-w-[38px] p-0"
+                  >
+                    <RiDeleteBin2Line className="text-destructive h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Delete API Key</TooltipContent>
               </Tooltip>
             )}
           </>

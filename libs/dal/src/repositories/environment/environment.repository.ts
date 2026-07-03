@@ -23,8 +23,11 @@ export class EnvironmentRepository extends BaseRepository<EnvironmentDBModel, En
       },
       {
         $set: {
-          'apiKeys.$._userId': newUserId,
+          'apiKeys.$[element]._userId': newUserId,
         },
+      },
+      {
+        arrayFilters: [{ 'element._userId': oldUserId }],
       }
     );
   }
@@ -42,8 +45,8 @@ export class EnvironmentRepository extends BaseRepository<EnvironmentDBModel, En
     });
   }
 
-  async addApiKey(environmentId: string, key: EncryptedSecret, userId: string) {
-    return await this.update(
+  async addApiKey(environmentId: string, key: EncryptedSecret, userId: string, hash?: string) {
+    await this.update(
       {
         _id: environmentId,
       },
@@ -52,10 +55,28 @@ export class EnvironmentRepository extends BaseRepository<EnvironmentDBModel, En
           apiKeys: {
             key,
             _userId: userId,
+            hash,
           },
         },
       }
     );
+
+    return await this.getApiKeys(environmentId);
+  }
+
+  async deleteApiKey(environmentId: string, keyQuery: { hash: string } | { key: EncryptedSecret | string }) {
+    await this.update(
+      {
+        _id: environmentId,
+      },
+      {
+        $pull: {
+          apiKeys: keyQuery,
+        },
+      }
+    );
+
+    return await this.getApiKeys(environmentId);
   }
 
   async findByApiKey({ hash }: { hash: string }) {
