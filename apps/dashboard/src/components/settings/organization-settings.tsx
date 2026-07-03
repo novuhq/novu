@@ -2,6 +2,7 @@
 import { OrganizationProfile } from '@clerk/react';
 import type { ClerkAppearanceTheme } from '@clerk/shared/types';
 import { PermissionsEnum } from '@novu/shared';
+import { useState } from 'react';
 import { RiInformation2Line } from 'react-icons/ri';
 import { Tooltip, TooltipContent, TooltipPortal, TooltipTrigger } from '@/components/primitives/tooltip';
 import { EE_AUTH_PROVIDER } from '@/config';
@@ -20,6 +21,22 @@ import { NovuBrandingSwitch } from './novu-branding-switch';
 // the picker renders the right product's empty state.
 const AFTER_LEAVE_ORG_URL = ROUTES.SIGNUP_ORGANIZATION_LIST;
 
+// `<OrganizationProfile>` from `@clerk/react` uses hash-based routing when no `path` is provided,
+// so its internal pages live at `#/<route>` (e.g. `#/organization-security`). We drive that hash
+// directly instead of React Router, since these are Clerk routes, not app routes.
+const ORGANIZATION_SECURITY_HASH = '/organization-security';
+const ORGANIZATION_GENERAL_HASH = '/';
+
+type OrganizationProfileTab = 'general' | 'security';
+
+function getOrganizationProfileTabClass(isActive: boolean) {
+  if (isActive) {
+    return 'text-text-strong border-neutral-950';
+  }
+
+  return 'text-text-soft border-transparent hover:text-text-strong';
+}
+
 export function OrganizationSettings({ clerkAppearance }: { clerkAppearance: ClerkAppearanceTheme }) {
   const { data: organizationSettings, isLoading: isLoadingSettings } = useFetchOrganizationSettings();
   const updateOrganizationSettings = useUpdateOrganizationSettings();
@@ -32,6 +49,21 @@ export function OrganizationSettings({ clerkAppearance }: { clerkAppearance: Cle
 
   const removeNovuBranding = organizationSettings?.data?.removeNovuBranding;
   const isUpdating = updateOrganizationSettings.isPending;
+
+  // The self-serve SSO "Security" page is not a mountable `<OrganizationProfile.Page>`
+  // (valid labels are only general/members/billing/apiKeys). Clerk auto-injects it into the
+  // OrganizationProfile router when self-serve SSO is enabled for the environment and the org.
+  // Keep Clerk's embedded navbar hidden and drive its hash routes from Novu's own sub-tabs.
+  const [activeTab, setActiveTab] = useState<OrganizationProfileTab>(() =>
+    window.location.hash.includes('organization-security') ? 'security' : 'general'
+  );
+
+  const handleOrganizationProfileTabChange = (tab: OrganizationProfileTab) => {
+    setActiveTab(tab);
+    // Assigning to `window.location.hash` fires a `hashchange` event, which Clerk's hash router
+    // listens for (React Router's `navigate` uses `pushState` and would not notify Clerk).
+    window.location.hash = tab === 'security' ? ORGANIZATION_SECURITY_HASH : ORGANIZATION_GENERAL_HASH;
+  };
 
   return (
     <div className="space-y-8">
@@ -90,9 +122,25 @@ export function OrganizationSettings({ clerkAppearance }: { clerkAppearance: Cle
       <div>
         <h1 className="text-label-sm text-text-strong mb-3">Organization Settings</h1>
         {EE_AUTH_PROVIDER === 'clerk' ? (
-          <OrganizationProfile appearance={clerkAppearance} afterLeaveOrganizationUrl={AFTER_LEAVE_ORG_URL}>
-            <OrganizationProfile.Page label="members" />
-          </OrganizationProfile>
+          <>
+            <div className="mb-4 flex gap-4 border-b border-neutral-100">
+              <button
+                type="button"
+                className={`text-label-sm border-b px-0 pb-2 ${getOrganizationProfileTabClass(activeTab === 'general')}`}
+                onClick={() => handleOrganizationProfileTabChange('general')}
+              >
+                General
+              </button>
+              <button
+                type="button"
+                className={`text-label-sm border-b px-0 pb-2 ${getOrganizationProfileTabClass(activeTab === 'security')}`}
+                onClick={() => handleOrganizationProfileTabChange('security')}
+              >
+                Security
+              </button>
+            </div>
+            <OrganizationProfile appearance={clerkAppearance} afterLeaveOrganizationUrl={AFTER_LEAVE_ORG_URL} />
+          </>
         ) : (
           <BetterAuthOrganizationSettings />
         )}
