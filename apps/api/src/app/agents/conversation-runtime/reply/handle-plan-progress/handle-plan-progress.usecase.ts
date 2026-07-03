@@ -8,9 +8,9 @@ import {
   ConversationEntity,
   ConversationRepository,
 } from '@novu/dal';
-import type { PlanProgressPhase, PlanTaskInput, PlanTaskStatus } from '@novu/framework';
-import type { PlanModel } from 'chat';
+import type { PlanModel, PlanTaskStatus } from 'chat';
 import { AgentConversationService } from '../../conversation/agent-conversation.service';
+import type { PlanProgressPhase, PlanTaskInput } from '../../egress/plan-phase';
 import { PLAN_THINKING_TASK_ID, type PlanPhase, planTitleForPhase } from '../../egress/plan-phase';
 import { HandleAgentReplyCommand } from '../handle-agent-reply/handle-agent-reply.command';
 import { HandleAgentReply } from '../handle-agent-reply/handle-agent-reply.usecase';

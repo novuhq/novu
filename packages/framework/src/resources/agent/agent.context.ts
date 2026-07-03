@@ -17,9 +17,6 @@ import type {
   FileRef,
   MessageContent,
   PendingApproval as PendingApprovalType,
-  PlanControl,
-  PlanHandle,
-  PlanProgressEvent,
   ReplyContent,
   ReplyHandle,
   SentMessageInfo,
@@ -33,13 +30,8 @@ import type {
 } from './agent.types';
 import { AgentEventEnum, PendingApproval } from './agent.types';
 import { isCardElement } from './guards';
-import { createPlanHandle, type InternalPlanHandle } from './plan-handle';
-import { wrapToolsWithPlan } from './plan-track';
 import type { ToolApprovalRequestPayload } from './tool-approval/action-id';
 import { postToolApprovalCard } from './tool-approval/post-card';
-
-/** Default plan card title when `ctx.plan.track(tools)` lazy-creates a plan. */
-export const DEFAULT_TRACKED_PLAN_TITLE = 'Thinking…';
 
 const MAX_INLINE_FILE_BYTES = 5 * 1024 * 1024;
 const MAX_INLINE_AGGREGATE_FILE_BYTES = 5 * 1024 * 1024;
@@ -279,7 +271,6 @@ export class AgentContextImpl implements AgentRuntimeContext {
   readonly platform: string;
   readonly platformContext: AgentPlatformContext;
   readonly typing: TypingControl;
-  readonly plan: PlanControl;
   readonly toolApproval: ToolApprovalControl;
 
   readonly metadata: {
@@ -296,9 +287,6 @@ export class AgentContextImpl implements AgentRuntimeContext {
   private _pendingReactions: AddReactionPayload[] = [];
   private _resolveSignal: { summary?: string } | null = null;
   private _metadataState: Record<string, unknown>;
-  private _planHandle: InternalPlanHandle | undefined;
-  /** Set when this turn updates a plan card from a prior turn (e.g. approval). */
-  private _remotePlanActive = false;
   private readonly _toolApprovalConfig?: ToolApprovalConfig;
   private readonly _replyUrl: string;
   private readonly _conversationId: string;
@@ -359,31 +347,6 @@ export class AgentContextImpl implements AgentRuntimeContext {
     typing.stop = () => postTyping('stop');
     this.typing = typing;
 
-    const postPlan = (event: PlanProgressEvent): Promise<void> =>
-      this._post({
-        conversationId: this._conversationId,
-        integrationIdentifier: this._integrationIdentifier,
-        planProgress: event,
-      }).then(() => undefined);
-
-    const planFn = (title?: string): PlanHandle => {
-      if (this._planHandle) {
-        if (title !== undefined) {
-          this._planHandle.title(title);
-        }
-
-        return this._planHandle;
-      }
-
-      this._planHandle = createPlanHandle(postPlan, title);
-
-      return this._planHandle;
-    };
-
-    const planControl = planFn as PlanControl;
-    planControl.track = (tools) => wrapToolsWithPlan(() => this.resolvePlanForToolTracking(), tools);
-    this.plan = planControl;
-
     this.toolApproval = {
       request: async (toolCall: AgentToolCall): Promise<PendingApprovalType> => {
         await postToolApprovalCard(this, toolCall, this._toolApprovalConfig);
@@ -411,10 +374,6 @@ export class AgentContextImpl implements AgentRuntimeContext {
     const info = await this._post(body);
     if (!info) {
       throw new Error('Agent reply did not return a message handle');
-    }
-
-    if (body.toolApprovalRequest) {
-      await this._pausePlanForApproval();
     }
 
     return new ReplyHandleImpl(
@@ -474,10 +433,6 @@ export class AgentContextImpl implements AgentRuntimeContext {
     this._drainSideEffects(body);
 
     await this._post(body);
-
-    if (body.toolApprovalRequest) {
-      await this._pausePlanForApproval();
-    }
   }
 
   private _hasPendingSideEffects(): boolean {
@@ -515,47 +470,6 @@ export class AgentContextImpl implements AgentRuntimeContext {
       body.resolve = this._resolveSignal;
       this._resolveSignal = null;
     }
-  }
-
-  private resolvePlanForToolTracking(): InternalPlanHandle {
-    if (this._planHandle) {
-      return this._planHandle;
-    }
-
-    this.plan(DEFAULT_TRACKED_PLAN_TITLE);
-    if (!this._planHandle) {
-      throw new Error('Plan handle missing after ctx.plan()');
-    }
-
-    return this._planHandle;
-  }
-
-  private async _pausePlanForApproval(): Promise<void> {
-    await this._planHandle?.pauseForApproval();
-  }
-
-  async finalizePlan(phase: 'finished' | 'failed'): Promise<void> {
-    if (this._planHandle) {
-      await this._planHandle.autoFinalize(phase);
-
-      return;
-    }
-
-    if (!this._remotePlanActive) {
-      return;
-    }
-
-    await this.postPlanProgress({ kind: 'phase', phase });
-  }
-
-  async postPlanProgress(event: PlanProgressEvent): Promise<void> {
-    this._remotePlanActive = true;
-
-    await this._post({
-      conversationId: this._conversationId,
-      integrationIdentifier: this._integrationIdentifier,
-      planProgress: event,
-    });
   }
 
   private async _post(body: AgentReplyPayload): Promise<SentMessageInfo | null> {

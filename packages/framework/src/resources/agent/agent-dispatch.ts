@@ -50,13 +50,7 @@ export async function dispatchAgentEvent(options: DispatchAgentEventOptions): Pr
   try {
     await runAgentHandler(options.agent, options.event, ctx);
     await ctx.flush();
-    await ctx.finalizePlan('finished');
   } catch (err) {
-    try {
-      await ctx.finalizePlan('failed');
-    } catch (finalizeErr) {
-      options.logger?.error(`[agent:${options.agent.id}] plan finalize failed:`, finalizeErr);
-    }
     if (err instanceof AgentDeliveryError) {
       options.logger?.error(`[agent:${options.agent.id}] ${err.message}`);
     } else {
@@ -89,22 +83,6 @@ async function runAgentHandler(registeredAgent: Agent, event: string, ctx: Agent
           ? { id: approval.toolCallId, name: approval.name, input: approval.input }
           : { id: approvalId, name: '' };
         const approvalMessage = ctx.createReplyHandle(ctx.action!.sourceMessageId ?? '');
-
-        if (approved) {
-          await ctx.postPlanProgress({
-            kind: 'task',
-            task: {
-              id: toolCall.id,
-              title: toolCall.name,
-              status: 'in_progress',
-            },
-          });
-        } else {
-          await ctx.postPlanProgress({
-            kind: 'task',
-            task: { id: toolCall.id, status: 'error', details: 'Denied' },
-          });
-        }
 
         const decision: ToolApprovalDecision = { toolCall, approved, approvalMessage };
         const result = await registeredAgent.handlers.onToolApproval(decision, ctx as AgentActionContext);

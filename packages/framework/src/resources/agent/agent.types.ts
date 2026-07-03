@@ -403,21 +403,6 @@ export interface AgentHandlerContext {
    * (e.g. email). A normal turn that ends with `ctx.reply()` clears the status automatically.
    */
   typing: TypingControl;
-  /**
-   * Live plan-card control for the current turn.
-   *
-   * - `ctx.plan(title?)` — create or reuse the turn's plan card; returns a handle for manual steps.
-   * - `ctx.plan.track(tools)` — wrap a tools map so each call reports progress on the same card
-   *   (lazy-creates with default title on first tool activity if `ctx.plan()` wasn't called).
-   *
-   * @example
-   *   ctx.plan('Processing your refund…');
-   *   return streamText({ tools: ctx.plan.track(tools), ... });
-   *
-   * @example
-   *   return streamText({ tools: ctx.plan.track(tools), ... }); // default title on first tool
-   */
-  plan: PlanControl;
 }
 
 /** Context passed to the `onMessage` handler. */
@@ -591,50 +576,6 @@ export type TypingControl = ((status?: string) => Promise<void>) & {
   stop: () => Promise<void>;
 };
 
-export type PlanTaskStatus = 'pending' | 'in_progress' | 'complete' | 'error';
-
-export interface PlanTaskInput {
-  id: string;
-  title?: string;
-  status: PlanTaskStatus;
-  details?: string;
-  group?: string;
-}
-
-export type PlanProgressPhase = 'awaiting-approval' | 'approved' | 'denied' | 'finished' | 'failed';
-
-export type PlanProgressEvent =
-  | { kind: 'task'; task: PlanTaskInput; cardTitle?: string }
-  | { kind: 'phase'; phase: PlanProgressPhase; title?: string }
-  | { kind: 'title'; title?: string };
-
-export type PlanStepOpts = {
-  details?: string;
-};
-
-export type PlanStepUpdate = {
-  title?: string;
-  details?: string;
-};
-
-export interface PlanStep {
-  update(opts: PlanStepUpdate): this;
-  done(details?: string): this;
-  fail(details?: string): this;
-}
-
-export interface PlanHandle {
-  step<T>(title: string, fn: () => Promise<T>, opts?: PlanStepOpts): Promise<T>;
-  step(title: string, opts?: PlanStepOpts): PlanStep;
-  title(text: string): this;
-  finish(title?: string): Promise<void>;
-  fail(title?: string): Promise<void>;
-}
-
-export type PlanControl = ((title?: string) => PlanHandle) & {
-  track<T>(tools: T): T;
-};
-
 export interface AgentReplyPayload {
   conversationId: string;
   integrationIdentifier: string;
@@ -646,7 +587,6 @@ export interface AgentReplyPayload {
   toolApprovalRequest?: ToolApprovalRequestPayload;
   addReactions?: AddReactionPayload[];
   typing?: TypingOp;
-  planProgress?: PlanProgressEvent;
 }
 
 /** Shape returned by /agents/:id/reply when a reply or edit was delivered. */
