@@ -153,7 +153,7 @@ describe('UpdateVercelIntegration', () => {
   it('should update vercel configuration successfully', async () => {
     const command = {
       userId: session.user._id,
-      organizationId: session.organization._id,
+      organizationId: 'org-id',
       environmentId: session.environment._id,
       configurationId: 'test-config-id',
       data: {
@@ -300,7 +300,7 @@ describe('UpdateVercelIntegration', () => {
 
     const command = {
       userId: session.user._id,
-      organizationId: session.organization._id,
+      organizationId: 'org-id',
       environmentId: session.environment._id,
       configurationId: 'test-config-id',
       data: {
@@ -336,7 +336,7 @@ describe('UpdateVercelIntegration', () => {
 
     const command = {
       userId: session.user._id,
-      organizationId: session.organization._id,
+      organizationId: 'org-id',
       environmentId: session.environment._id,
       configurationId: 'test-config-id',
       data: {
@@ -350,13 +350,36 @@ describe('UpdateVercelIntegration', () => {
     assert.notCalled(httpServiceMock.delete);
   });
 
+  it('should reject organizations other than the logged-in organization', async () => {
+    const command = {
+      userId: session.user._id,
+      organizationId: 'org-id',
+      environmentId: session.environment._id,
+      configurationId: 'test-config-id',
+      data: {
+        'foreign-org-id': ['project-1'],
+      },
+    };
+
+    try {
+      await updateVercelIntegration.execute(command);
+      throw new Error('Should not reach here');
+    } catch (error) {
+      expect(error).to.be.instanceOf(BadRequestException);
+      expect(error.message).to.equal('One or more organizations are not accessible.');
+      assert.notCalled(organizationRepositoryMock.bulkUpdatePartnerConfiguration);
+      assert.notCalled(environmentRepositoryMock.find);
+      assert.notCalled(httpServiceMock.get);
+    }
+  });
+
   it('should throw BadRequestException when configuration not found', async () => {
     organizationRepositoryMock.findByPartnerConfigurationId.resolves([]);
 
     try {
       await updateVercelIntegration.execute({
         userId: session.user._id,
-        organizationId: session.organization._id,
+        organizationId: 'org-id',
         environmentId: session.environment._id,
         configurationId: 'test-config-id',
         data: {},
@@ -376,7 +399,7 @@ describe('UpdateVercelIntegration', () => {
     try {
       await updateVercelIntegration.execute({
         userId: session.user._id,
-        organizationId: session.organization._id,
+        organizationId: 'org-id',
         environmentId: session.environment._id,
         configurationId: 'test-config-id',
         data: {
@@ -397,7 +420,7 @@ describe('UpdateVercelIntegration', () => {
     try {
       await updateVercelIntegration.execute({
         userId: session.user._id,
-        organizationId: session.organization._id,
+        organizationId: 'org-id',
         environmentId: session.environment._id,
         configurationId: 'test-config-id',
         data: {
@@ -458,7 +481,7 @@ describe('UpdateVercelIntegration', () => {
 
     const command = {
       userId: session.user._id,
-      organizationId: session.organization._id,
+      organizationId: 'org-id',
       environmentId: session.environment._id,
       configurationId: 'test-config-id',
       data: {
