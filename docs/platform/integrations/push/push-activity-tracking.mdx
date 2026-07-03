@@ -137,16 +137,14 @@ messaging()
 
 Create an endpoint on your backend that receives the event data from your application and uses the Novu SDK to forward it to Novu.
 
+<Tabs>
+  <Tab title="Node.js">
 ```typescript
 import { Novu } from '@novu/api';
 
-const novuClient = new Novu({
-  apiKey: process.env.NOVU_API_KEY,
-});
+const novuClient = new Novu({ secretKey: process.env.NOVU_SECRET_KEY });
 
-// Your backend API endpoint that receives events from your mobile application
 app.post('/api/notifications/events', async (req, res) => {
-  // Forward the event data to Novu
   const response = await novuClient.activity.track({
     environmentId: process.env.NOVU_ENVIRONMENT_ID,
     integrationId: process.env.NOVU_INTEGRATION_ID,
@@ -156,6 +154,104 @@ app.post('/api/notifications/events', async (req, res) => {
   res.status(200).json({ success: true, data: response });
 });
 ```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+from novu_py import Novu
+
+novu_client = Novu(secret_key=os.getenv("NOVU_SECRET_KEY", ""))
+
+@app.post("/api/notifications/events")
+async def track_push_event(req_body: dict):
+    with novu_client as novu:
+        response = novu.activity.track(
+            environment_id=os.getenv("NOVU_ENVIRONMENT_ID", ""),
+            integration_id=os.getenv("NOVU_INTEGRATION_ID", ""),
+            request_body=req_body,
+        )
+    return {"success": True, "data": response}
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Activity.Track(context.Background(), components.ActivityTrackRequestDto{
+    EnvironmentID: os.Getenv("NOVU_ENVIRONMENT_ID"),
+    IntegrationID: os.Getenv("NOVU_INTEGRATION_ID"),
+    RequestBody:   eventData,
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()->setSecurity(getenv('NOVU_SECRET_KEY'))->build();
+$response = $sdk->activity->track(
+    activityTrackRequestDto: new Components\ActivityTrackRequestDto(
+        environmentId: getenv('NOVU_ENVIRONMENT_ID'),
+        integrationId: getenv('NOVU_INTEGRATION_ID'),
+        requestBody: $reqBody,
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+
+var sdk = new NovuSDK(secretKey: Environment.GetEnvironmentVariable("NOVU_SECRET_KEY"));
+var response = await sdk.Activity.TrackAsync(
+    activityTrackRequestDto: new ActivityTrackRequestDto() {
+        EnvironmentId = Environment.GetEnvironmentVariable("NOVU_ENVIRONMENT_ID"),
+        IntegrationId = Environment.GetEnvironmentVariable("NOVU_INTEGRATION_ID"),
+        RequestBody = reqBody,
+    });
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+
+Novu novu = Novu.builder().secretKey(System.getenv("NOVU_SECRET_KEY")).build();
+var response = novu.activity().track()
+    .body(ActivityTrackRequestDto.builder()
+        .environmentId(System.getenv("NOVU_ENVIRONMENT_ID"))
+        .integrationId(System.getenv("NOVU_INTEGRATION_ID"))
+        .requestBody(reqBody)
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -L -X POST 'https://api.novu.co/v1/activity/track' \
+-H 'Content-Type: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+  "environmentId": "<NOVU_ENVIRONMENT_ID>",
+  "integrationId": "<NOVU_INTEGRATION_ID>",
+  "requestBody": {
+    "eventType": "opened",
+    "eventId": "<__nvMessageId>"
+  }
+}'
+```
+  </Tab>
+</Tabs>
 
 <Note>
   Both `Integration ID` and `Environment ID` can be found in the push provider integration page after enabling Push Activity Tracking.

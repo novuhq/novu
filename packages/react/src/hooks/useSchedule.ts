@@ -50,8 +50,9 @@ export const useSchedule = (props?: UseScheduleProps): UseScheduleResult => {
     if (response.error) {
       setError(response.error);
       onError?.(response.error);
-    } else {
-      onSuccess?.(response.data!);
+    } else if (response.data) {
+      setData(response.data);
+      onSuccess?.(response.data);
     }
     setIsLoading(false);
     setIsFetching(false);

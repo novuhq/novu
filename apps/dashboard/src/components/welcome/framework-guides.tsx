@@ -203,9 +203,9 @@ const FRAMEWORK_DOCS: Record<string, string> = {
   'Next.js': 'https://docs.novu.co/platform/quickstart/nextjs',
   React: 'https://docs.novu.co/platform/quickstart/react',
   Remix: 'https://docs.novu.co/platform/quickstart/remix',
-  Native: 'https://docs.novu.co/platform/quickstart/react-native',
+  Native: 'https://docs.novu.co/platform/sdks/react-native',
   Angular: 'https://docs.novu.co/platform/quickstart/angular',
-  JavaScript: 'https://docs.novu.co/platform/quickstart/js',
+  JavaScript: 'https://docs.novu.co/platform/quickstart/vanilla-js',
   Vue: 'https://docs.novu.co/platform/quickstart/vue',
 };
 

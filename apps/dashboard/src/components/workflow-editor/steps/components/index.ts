@@ -1,3 +1,4 @@
+export { PreviewActorSection } from '../../../preview-actor-section';
 export { PreviewContextSection } from '../../../preview-context-section';
 export { PreviewEnvSection } from '../../../preview-env-section';
 export { PreviewSubscriberSection } from '../../../preview-subscriber-section';

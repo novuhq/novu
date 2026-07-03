@@ -1,6 +1,7 @@
 import { MemberRoleEnum, PermissionsEnum } from '@novu/shared';
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { appendRedirectUrlParam } from '@/utils/cli-auth-pending';
 import { ROUTES } from '@/utils/routes';
 import { EE_AUTH_PROVIDER, IS_SELF_HOSTED } from '../../config';
 import { AuthContext, type BetterAuthOrganization, type BetterAuthUser } from './auth-context';
@@ -357,12 +358,15 @@ export function SignedOut({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-export function RedirectToSignIn() {
+export function RedirectToSignIn({ redirectUrl }: { redirectUrl?: string }) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    navigate(ROUTES.SIGN_IN);
-  }, [navigate]);
+    const signInTarget = redirectUrl ? appendRedirectUrlParam(ROUTES.SIGN_IN, redirectUrl) : ROUTES.SIGN_IN;
+    const { pathname, search } = new URL(signInTarget, window.location.origin);
+
+    navigate(`${pathname}${search}`);
+  }, [navigate, redirectUrl]);
 
   return null;
 }

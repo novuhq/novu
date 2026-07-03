@@ -45,14 +45,39 @@ flowchart TB
 Install the SDK for your stack and set your secret key from the [Novu Dashboard](https://dashboard.novu.co):
 
 <Tabs>
-  <Tab title="Node.js (@novu/api)">
+  <Tab title="Node.js">
     ```bash
     npm install @novu/api zod
     ```
   </Tab>
-  <Tab title="Python (novu-py)">
+  <Tab title="Python">
     ```bash
     pip install novu-py
+    ```
+  </Tab>
+  <Tab title="Go">
+    ```bash
+    go get github.com/novuhq/novu-go
+    ```
+  </Tab>
+  <Tab title="PHP">
+    ```bash
+    composer require novuhq/novu
+    ```
+  </Tab>
+  <Tab title=".NET">
+    ```bash
+    dotnet add package Novu
+    ```
+  </Tab>
+  <Tab title="Java">
+    Maven:
+    ```xml
+    <dependency>
+      <groupId>co.novu</groupId>
+      <artifactId>novu-java</artifactId>
+      <version>LATEST</version>
+    </dependency>
     ```
   </Tab>
 </Tabs>
@@ -71,6 +96,7 @@ Keep a list of every `workflowId` you manage as code (a constant array, a regist
 <Tabs>
   <Tab title="Node.js">
     ```typescript
+    import { Novu } from '@novu/api';
 
     const novu = new Novu({
       secretKey: process.env.NOVU_SECRET_KEY!,
@@ -85,7 +111,6 @@ Keep a list of every `workflowId` you manage as code (a constant array, a regist
 
     /** Build the definition for one workflowId from your in-repo registry. */
     function buildWorkflowDefinition(workflowId: string) {
-      // Example: return workflowDefinitions[workflowId];
       return {
         name: "Payout Initiated",
         description: "This workflow is used to initiate a payout",
@@ -129,33 +154,7 @@ Keep a list of every `workflowId` you manage as code (a constant array, a regist
   </Tab>
   <Tab title="Python">
     ```python
-
-    const novu = new Novu({
-      secretKey: process.env.NOVU_SECRET_KEY!,
-    });
-
-    const MANAGED_WORKFLOW_IDS = [
-      "payout-initiated",
-      "weekly-digest",
-      "order-shipped",
-    ];
-
-    async function publishAllWorkflows() {
-      for (const workflowId of MANAGED_WORKFLOW_IDS) {
-        await novu.workflows.sync(
-          { targetEnvironmentId: process.env.NOVU_TARGET_ENVIRONMENT_ID! },
-          workflowId
-        );
-      }
-    }
-
-    await publishAllWorkflows();
-    ```
-  </Tab>
-  <Tab title="Python">
-    ```python
     import os
-
     from novu_py import Novu
 
     MANAGED_WORKFLOW_IDS = (
@@ -164,14 +163,130 @@ Keep a list of every `workflowId` you manage as code (a constant array, a regist
         "order-shipped",
     )
 
-    with Novu(secret_key=os.environ["NOVU_SECRET_KEY"]) as novu:
+    def build_workflow_definition(workflow_id: str) -> dict:
+        return {
+            "name": "Payout Initiated",
+            "description": "This workflow is used to initiate a payout",
+            "tags": ["payout"],
+            "origin": "external",
+            "validate_payload": False,
+            "steps": [],
+        }
+
+    def create_or_update_workflow_in_development(workflow_id: str):
+        definition = build_workflow_definition(workflow_id)
+        with Novu(secret_key=os.environ["NOVU_SECRET_KEY"]) as novu:
+            try:
+                return novu.workflows.update(workflow_id=workflow_id, update_workflow_dto=definition)
+            except Exception as error:
+                if getattr(error, "status_code", None) == 404:
+                    return novu.workflows.create(create_workflow_dto={**definition, "workflow_id": workflow_id})
+                raise
+
+    def create_or_update_all_workflows_in_development():
         for workflow_id in MANAGED_WORKFLOW_IDS:
-            novu.workflows.sync(
-                workflow_id=workflow_id,
-                sync_workflow_dto={
-                    "target_environment_id": os.environ["NOVU_TARGET_ENVIRONMENT_ID"],
-                },
-            )
+            create_or_update_workflow_in_development(workflow_id)
+    ```
+  </Tab>
+  <Tab title="Go">
+    ```go
+    import (
+        "context"
+        "os"
+
+        novugo "github.com/novuhq/novu-go"
+    )
+
+    var managedWorkflowIDs = []string{
+        "payout-initiated",
+        "weekly-digest",
+        "order-shipped",
+    }
+
+    func createOrUpdateAllWorkflowsInDevelopment(ctx context.Context) error {
+        s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+        for _, workflowID := range managedWorkflowIDs {
+            if err := createOrUpdateWorkflowInDevelopment(ctx, s, workflowID); err != nil {
+                return err
+            }
+        }
+        return nil
+    }
+    ```
+  </Tab>
+  <Tab title="PHP">
+    ```php
+    use novu;
+
+    $managedWorkflowIds = [
+        'payout-initiated',
+        'weekly-digest',
+        'order-shipped',
+    ];
+
+    $sdk = novu\Novu::builder()
+        ->setSecurity(getenv('NOVU_SECRET_KEY'))
+        ->build();
+
+    foreach ($managedWorkflowIds as $workflowId) {
+        try {
+            $sdk->workflows->update($workflowId, buildWorkflowDefinition($workflowId));
+        } catch (\Exception $e) {
+            if ($e->getCode() === 404) {
+                $sdk->workflows->create([...buildWorkflowDefinition($workflowId), 'workflowId' => $workflowId]);
+            } else {
+                throw $e;
+            }
+        }
+    }
+    ```
+  </Tab>
+  <Tab title=".NET">
+    ```csharp
+    using Novu;
+
+    var managedWorkflowIds = new[] { "payout-initiated", "weekly-digest", "order-shipped" };
+    var sdk = new NovuSDK(secretKey: Environment.GetEnvironmentVariable("NOVU_SECRET_KEY")!);
+
+    foreach (var workflowId in managedWorkflowIds)
+    {
+        try
+        {
+            await sdk.Workflows.UpdateAsync(workflowId, BuildWorkflowDefinition(workflowId));
+        }
+        catch (Exception ex) when (ex.Message.Contains("404"))
+        {
+            await sdk.Workflows.CreateAsync(BuildWorkflowDefinition(workflowId, workflowId));
+        }
+    }
+    ```
+  </Tab>
+  <Tab title="Java">
+    ```java
+    import co.novu.Novu;
+    import java.util.List;
+
+    List<String> managedWorkflowIds = List.of(
+        "payout-initiated",
+        "weekly-digest",
+        "order-shipped"
+    );
+
+    Novu novu = Novu.builder()
+        .secretKey(System.getenv("NOVU_SECRET_KEY"))
+        .build();
+
+    for (String workflowId : managedWorkflowIds) {
+        try {
+            novu.workflows().update(workflowId).body(buildWorkflowDefinition(workflowId)).call();
+        } catch (Exception e) {
+            if (e.getMessage().contains("404")) {
+                novu.workflows().create().body(buildWorkflowDefinition(workflowId)).call();
+            } else {
+                throw e;
+            }
+        }
+    }
     ```
   </Tab>
 </Tabs>

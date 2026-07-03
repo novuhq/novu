@@ -17,19 +17,142 @@ Some of the common multi-tenancy use cases are:
 
 Novu supports multi-tenancy out of the box, the most simple way to implement tenant separation is by prefixing the subscriber identifier with the <Tooltip tip="The tenant identifier is a unique identifier for the tenant in your application. Usually the tenant id in your database.">tenant identifier</Tooltip>
 
-```typescript
+<Tabs>
+  <Tab title="Node.js">
+```ts
+import { Novu } from "@novu/api";
+
+const novu = new Novu({ secretKey: "<YOUR_SECRET_KEY_HERE>" });
+
 const subscriberId = `${tenantId}:${userId}`;
 
 await novu.trigger({
-  workflowId,
-  to: {
-    subscriberId,
-  },
-  payload: {
-    tenantId,
-  },
+  workflowId: "workflow_identifier",
+  to: { subscriberId },
+  payload: { tenantId },
 });
 ```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+subscriber_id = f"{tenant_id}:{user_id}"
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="workflow_identifier",
+        to={"subscriber_id": subscriber_id},
+        payload={"tenantId": tenant_id},
+    ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "fmt"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+subscriberID := fmt.Sprintf("%s:%s", tenantID, userID)
+
+res, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "workflow_identifier",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: subscriberID,
+    }),
+    Payload: map[string]any{
+        "tenantId": tenantID,
+    },
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()
+    ->setSecurity('<YOUR_SECRET_KEY_HERE>')
+    ->build();
+
+$subscriberId = "{$tenantId}:{$userId}";
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'workflow_identifier',
+        to: new Components\SubscriberPayloadDto(subscriberId: $subscriberId),
+        payload: ['tenantId' => $tenantId],
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+
+var sdk = new NovuSDK(secretKey: "<YOUR_SECRET_KEY_HERE>");
+
+var subscriberId = $"{tenantId}:{userId}";
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "workflow_identifier",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() {
+        SubscriberId = subscriberId,
+    }),
+    Payload = new Dictionary<string, object>() {
+        { "tenantId", tenantId },
+    },
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+import java.util.Map;
+
+Novu novu = Novu.builder()
+    .secretKey("<YOUR_SECRET_KEY_HERE>")
+    .build();
+
+String subscriberId = tenantId + ":" + userId;
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("workflow_identifier")
+        .to(To2.of(SubscriberPayloadDto.builder()
+            .subscriberId(subscriberId)
+            .build()))
+        .payload(Map.of("tenantId", tenantId))
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -L -g -X POST 'https://api.novu.co/v1/events/trigger' \
+-H 'Content-Type: application/json' \
+-H 'Accept: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+    "name": "workflow_identifier",
+    "to": { "subscriberId": "TENANT_ID:USER_ID" },
+    "payload": { "tenantId": "TENANT_ID" }
+}'
+```
+  </Tab>
+</Tabs>
 
 ### Tenant in Inbox
 
@@ -49,24 +172,184 @@ Each subscriber in a tenant will have it's own unique inbox feed, including a se
 
 When triggering a notification, you can pass a custom tenant object or identifier and use it to manipulate workflows or content.
 
-```typescript
+<Tabs>
+  <Tab title="Node.js">
+```ts
+import { Novu } from "@novu/api";
+
+const novu = new Novu({ secretKey: "<YOUR_SECRET_KEY_HERE>" });
+
 const subscriberId = `${tenantId}:${userId}`;
 
 await novu.trigger({
-  workflowId,
-  to: {
-    subscriberId,
-  },
+  workflowId: "workflow_identifier",
+  to: { subscriberId },
   payload: {
     tenant: {
       id: tenantId,
       name: "Airbnb",
       logo: "https://airbnb.com/logo.png",
       primaryColor: "red",
-    }
+    },
   },
 });
 ```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+subscriber_id = f"{tenant_id}:{user_id}"
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="workflow_identifier",
+        to={"subscriber_id": subscriber_id},
+        payload={
+            "tenant": {
+                "id": tenant_id,
+                "name": "Airbnb",
+                "logo": "https://airbnb.com/logo.png",
+                "primaryColor": "red",
+            },
+        },
+    ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "fmt"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+subscriberID := fmt.Sprintf("%s:%s", tenantID, userID)
+
+res, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "workflow_identifier",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: subscriberID,
+    }),
+    Payload: map[string]any{
+        "tenant": map[string]any{
+            "id":           tenantID,
+            "name":         "Airbnb",
+            "logo":         "https://airbnb.com/logo.png",
+            "primaryColor": "red",
+        },
+    },
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()
+    ->setSecurity('<YOUR_SECRET_KEY_HERE>')
+    ->build();
+
+$subscriberId = "{$tenantId}:{$userId}";
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'workflow_identifier',
+        to: new Components\SubscriberPayloadDto(subscriberId: $subscriberId),
+        payload: [
+            'tenant' => [
+                'id' => $tenantId,
+                'name' => 'Airbnb',
+                'logo' => 'https://airbnb.com/logo.png',
+                'primaryColor' => 'red',
+            ],
+        ],
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+
+var sdk = new NovuSDK(secretKey: "<YOUR_SECRET_KEY_HERE>");
+
+var subscriberId = $"{tenantId}:{userId}";
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "workflow_identifier",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() {
+        SubscriberId = subscriberId,
+    }),
+    Payload = new Dictionary<string, object>() {
+        { "tenant", new Dictionary<string, object>() {
+            { "id", tenantId },
+            { "name", "Airbnb" },
+            { "logo", "https://airbnb.com/logo.png" },
+            { "primaryColor", "red" },
+        } },
+    },
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+import java.util.Map;
+
+Novu novu = Novu.builder()
+    .secretKey("<YOUR_SECRET_KEY_HERE>")
+    .build();
+
+String subscriberId = tenantId + ":" + userId;
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("workflow_identifier")
+        .to(To2.of(SubscriberPayloadDto.builder()
+            .subscriberId(subscriberId)
+            .build()))
+        .payload(Map.of("tenant", Map.ofEntries(
+            Map.entry("id", tenantId),
+            Map.entry("name", "Airbnb"),
+            Map.entry("logo", "https://airbnb.com/logo.png"),
+            Map.entry("primaryColor", "red"))))
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -L -g -X POST 'https://api.novu.co/v1/events/trigger' \
+-H 'Content-Type: application/json' \
+-H 'Accept: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+    "name": "workflow_identifier",
+    "to": { "subscriberId": "TENANT_ID:USER_ID" },
+    "payload": {
+        "tenant": {
+            "id": "TENANT_ID",
+            "name": "Airbnb",
+            "logo": "https://airbnb.com/logo.png",
+            "primaryColor": "red"
+        }
+    }
+}'
+```
+  </Tab>
+</Tabs>
 
 The tenant object will be available to use in the workflow editor as a variable for the following areas:
 

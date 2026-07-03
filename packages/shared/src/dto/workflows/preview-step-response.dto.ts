@@ -130,6 +130,7 @@ export type PreviewError = {
 
 export class PreviewPayload {
   subscriber?: Partial<SubscriberDto>;
+  actor?: Partial<SubscriberDto>;
   payload?: Record<string, unknown>;
   context?: ContextPayload;
   steps?: Record<string, unknown>; // step.stepId.unknown

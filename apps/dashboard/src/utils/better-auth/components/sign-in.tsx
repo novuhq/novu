@@ -1,13 +1,34 @@
 import { useId, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/primitives/button';
 import { Input } from '@/components/primitives/input';
 import { IS_ENTERPRISE } from '@/config';
+import { readClerkRedirectUrlParam } from '@/utils/product-auth-urls';
 import { ROUTES } from '@/utils/routes';
 import { authClient } from '../client';
 
+function resolveSameOriginRedirectUrl(redirectUrl: string | null): string | null {
+  if (!redirectUrl) {
+    return null;
+  }
+
+  try {
+    const parsed = new URL(redirectUrl, window.location.origin);
+
+    if (parsed.origin !== window.location.origin) {
+      return null;
+    }
+
+    return parsed.href;
+  } catch {
+    return null;
+  }
+}
+
 export function SignIn() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const postSignInRedirectUrl = resolveSameOriginRedirectUrl(readClerkRedirectUrlParam(searchParams));
   const emailId = useId();
   const passwordId = useId();
   const [email, setEmail] = useState('');
@@ -67,6 +88,12 @@ export function SignIn() {
 
       if (pendingInvitationId) {
         window.location.href = `${ROUTES.INVITATION_ACCEPT}?id=${pendingInvitationId}`;
+
+        return;
+      }
+
+      if (postSignInRedirectUrl) {
+        window.location.href = postSignInRedirectUrl;
 
         return;
       }

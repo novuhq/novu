@@ -11,7 +11,7 @@ export abstract class BaseCommand {
       ...data,
     });
 
-    const errors = validateSync(convertedObject);
+    const errors = validateSync(convertedObject, { forbidUnknownValues: false });
     const flattenedErrors = flattenErrors(errors);
     if (Object.keys(flattenedErrors).length > 0) {
       // biome-ignore lint/complexity/noThisInStatic: Biome linter is configured to newer JS/TS version than the compiler
