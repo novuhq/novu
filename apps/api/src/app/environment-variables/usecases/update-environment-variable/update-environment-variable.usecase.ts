@@ -1,14 +1,18 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { encryptSecret } from '@novu/application-generic';
-import { EnvironmentVariableRepository } from '@novu/dal';
+import { EnvironmentRepository, EnvironmentVariableRepository } from '@novu/dal';
 import { SECRET_MASK } from '@novu/shared';
 import { EnvironmentVariableResponseDto } from '../../dtos/environment-variable-response.dto';
 import { toEnvironmentVariableResponseDto } from '../get-environment-variables/get-environment-variables.usecase';
+import { validateEnvironmentVariableValues } from '../validate-environment-variable-values';
 import { UpdateEnvironmentVariableCommand } from './update-environment-variable.command';
 
 @Injectable()
 export class UpdateEnvironmentVariable {
-  constructor(private environmentVariableRepository: EnvironmentVariableRepository) {}
+  constructor(
+    private environmentVariableRepository: EnvironmentVariableRepository,
+    private environmentRepository: EnvironmentRepository
+  ) {}
 
   async execute(command: UpdateEnvironmentVariableCommand): Promise<EnvironmentVariableResponseDto> {
     const existing = await this.environmentVariableRepository.findOne(
@@ -33,6 +37,12 @@ export class UpdateEnvironmentVariable {
     }
 
     if (command.values !== undefined) {
+      await validateEnvironmentVariableValues(
+        this.environmentRepository,
+        command.organizationId,
+        command.values
+      );
+
       // Defense in depth: never let the public secret mask string be persisted as an
       // actual variable value. The dashboard returns mask strings on reads, so accepting
       // them on writes would silently overwrite real secrets.
