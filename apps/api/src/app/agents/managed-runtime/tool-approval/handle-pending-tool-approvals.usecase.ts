@@ -373,6 +373,12 @@ export class HandlePendingToolApprovals {
           integrationIdentifier: command.integrationIdentifier,
           reply: delivery.content,
           slackNative: delivery.slackNative,
+          toolApprovalRequest: {
+            approvalId: tool.toolUseId,
+            toolCallId: tool.toolUseId,
+            name: tool.toolName,
+            input: tool.input,
+          },
         })
       );
     } catch (err) {

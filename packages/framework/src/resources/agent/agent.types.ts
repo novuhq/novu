@@ -1,7 +1,7 @@
 import type { CardElement, ChatElement, Emoji } from 'chat';
 import type { TriggerRecipientsPayload } from '../../shared';
 import type { Awaitable } from '../../types/util.types';
-import type { ApprovalPayload } from './tool-approval/action-id';
+import type { ToolApprovalRequestPayload } from './tool-approval/action-id';
 export type { TriggerRecipientsPayload };
 
 export enum AgentEventEnum {
@@ -193,8 +193,6 @@ export interface ReplyContent {
   markdown?: string;
   card?: CardElement;
   files?: FileRef[];
-  /** Set when this reply is an approval card; carries the tool call it gates. */
-  toolApproval?: ApprovalPayload;
 }
 
 /**
@@ -294,7 +292,7 @@ export interface ReplyHandle {
   edit(content: MessageContent, options?: { files?: FileRef[] }): Promise<ReplyHandle>;
 }
 
-export interface AgentContextBase {
+export interface AgentHandlerContext {
   /** Live state of the current conversation, including persisted metadata. */
   readonly conversation: AgentConversation;
   /**
@@ -405,50 +403,29 @@ export interface AgentContextBase {
    * (e.g. email). A normal turn that ends with `ctx.reply()` clears the status automatically.
    */
   typing: TypingControl;
-  /**
-   * Live plan-card control for the current turn. Returns a handle that renders the card immediately.
-   * Use `plan.step(title, fn)` for scoped steps or `plan.step(title)` for manual control.
-   * The plan auto-finalizes when the handler completes — call `finish()`/`fail()` only for early control.
-   *
-   * The plan card and the handler return value are separate: the card updates live while the handler
-   * runs; `return` (or `ctx.reply()`) posts the final reply message.
-   *
-   * @example
-   *   const plan = ctx.plan('Processing your refund…'); // card renders immediately
-   *   const order = await plan.step('Fetch order', () => fetchOrder(msg.text));
-   *   await plan.step('Issue refund', () => refund(order));
-   *   return 'Refund complete.'; // plan auto-finalizes; this is the reply message
-   *
-   * @example
-   *   const plan = ctx.plan('Processing…');
-   *   const step = plan.step('Reverse charge');
-   *   step.update({ title: 'Stripe: Reverse charge', details: 'customer cus_abc' });
-   *   step.done();
-   */
-  plan: PlanControl;
 }
 
 /** Context passed to the `onMessage` handler. */
-export interface AgentMessageContext extends AgentContextBase {
+export interface AgentMessageContext extends AgentHandlerContext {
   readonly event: 'onMessage';
 }
 
 /** Context passed to the `onAction` handler. */
-export interface AgentActionContext extends AgentContextBase {
+export interface AgentActionContext extends AgentHandlerContext {
   readonly event: 'onAction';
   /** The button click or interactive action that triggered this handler. */
   readonly action: AgentAction;
 }
 
 /** Context passed to the `onReaction` handler. */
-export interface AgentReactionContext extends AgentContextBase {
+export interface AgentReactionContext extends AgentHandlerContext {
   readonly event: 'onReaction';
   /** The emoji reaction that triggered this handler. */
   readonly reaction: AgentReaction;
 }
 
 /** Context passed to the `onResolve` handler. */
-export interface AgentResolveContext extends AgentContextBase {
+export interface AgentResolveContext extends AgentHandlerContext {
   readonly event: 'onResolve';
 }
 
@@ -599,50 +576,6 @@ export type TypingControl = ((status?: string) => Promise<void>) & {
   stop: () => Promise<void>;
 };
 
-export type PlanTaskStatus = 'pending' | 'in_progress' | 'complete' | 'error';
-
-export interface PlanTaskInput {
-  id: string;
-  title?: string;
-  status: PlanTaskStatus;
-  details?: string;
-  group?: string;
-}
-
-export type PlanProgressPhase = 'awaiting-approval' | 'approved' | 'denied' | 'finished' | 'failed';
-
-export type PlanProgressEvent =
-  | { kind: 'task'; task: PlanTaskInput; cardTitle?: string }
-  | { kind: 'phase'; phase: PlanProgressPhase; title?: string }
-  | { kind: 'title'; title?: string };
-
-export type PlanStepOpts = {
-  details?: string;
-};
-
-export type PlanStepUpdate = {
-  title?: string;
-  details?: string;
-};
-
-export interface PlanStep {
-  update(opts: PlanStepUpdate): this;
-  done(details?: string): this;
-  fail(details?: string): this;
-}
-
-export interface PlanHandle {
-  /** @internal Used by trackPlanTools — do not call directly. */
-  upsertTask(id: string, task: Omit<PlanTaskInput, 'id'>): void;
-  step<T>(title: string, fn: () => Promise<T>, opts?: PlanStepOpts): Promise<T>;
-  step(title: string, opts?: PlanStepOpts): PlanStep;
-  title(text: string): this;
-  finish(title?: string): Promise<void>;
-  fail(title?: string): Promise<void>;
-}
-
-export type PlanControl = (title?: string) => PlanHandle;
-
 export interface AgentReplyPayload {
   conversationId: string;
   integrationIdentifier: string;
@@ -651,9 +584,9 @@ export interface AgentReplyPayload {
   resolve?: { summary?: string };
   signals?: Signal[];
   toolResults?: ToolResult[];
+  toolApprovalRequest?: ToolApprovalRequestPayload;
   addReactions?: AddReactionPayload[];
   typing?: TypingOp;
-  planProgress?: PlanProgressEvent;
 }
 
 /** Shape returned by /agents/:id/reply when a reply or edit was delivered. */

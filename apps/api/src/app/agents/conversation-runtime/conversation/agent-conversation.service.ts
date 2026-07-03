@@ -98,9 +98,13 @@ export interface PersistAgentActivityParams extends ConversationActivityContext 
   richContent?: Record<string, unknown>;
 }
 
-/** Agent message params plus the tool call the approval card gates. */
-export interface PersistToolApprovalRequestParams extends PersistAgentActivityParams {
-  toolData: ConversationActivityToolData;
+export interface PersistToolApprovalRequestParams extends ConversationActivityContext {
+  approvalId: string;
+  toolCallId: string;
+  toolName: string;
+  input?: Record<string, unknown>;
+  /** Human-readable preview for the display timeline. */
+  preview?: string;
 }
 
 export type MetadataOp =
@@ -374,7 +378,47 @@ export class AgentConversationService {
   }
 
   async persistToolApprovalRequest(params: PersistToolApprovalRequestParams): Promise<ConversationActivityEntity> {
-    return this.persistAgentActivity(params, ConversationActivityTypeEnum.TOOL_APPROVAL_REQUEST, 'activity');
+    const toolName = params.toolName;
+
+    return this.activityRepository.createToolActivity({
+      identifier: `act_${shortId(12)}`,
+      conversationId: params.conversationId,
+      platform: params.channel.platform,
+      integrationId: params.channel._integrationId,
+      platformThreadId: params.channel.platformThreadId,
+      senderType: ConversationActivitySenderTypeEnum.AGENT,
+      senderId: params.agentIdentifier,
+      content: params.preview ?? `Approval required: ${toolName}`,
+      type: ConversationActivityTypeEnum.TOOL_APPROVAL_REQUEST,
+      toolData: {
+        approvalId: params.approvalId,
+        toolCallId: params.toolCallId,
+        toolName: params.toolName,
+        input: params.input,
+      },
+      environmentId: params.environmentId,
+      organizationId: params.organizationId,
+    });
+  }
+
+  /** Links a delivered approval card message to its ledger row (for platform edits). */
+  async linkToolApprovalRequestCard(params: {
+    environmentId: string;
+    organizationId: string;
+    conversationId: string;
+    activityId: string;
+    platformMessageId: string;
+  }): Promise<void> {
+    await this.activityRepository.update(
+      {
+        _environmentId: params.environmentId,
+        _organizationId: params.organizationId,
+        _conversationId: params.conversationId,
+        _id: params.activityId,
+        type: ConversationActivityTypeEnum.TOOL_APPROVAL_REQUEST,
+      },
+      { $set: { platformMessageId: params.platformMessageId } }
+    );
   }
 
   async persistAgentEdit(params: PersistAgentActivityParams): Promise<ConversationActivityEntity> {

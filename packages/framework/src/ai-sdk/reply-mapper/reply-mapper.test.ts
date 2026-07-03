@@ -1,31 +1,47 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { AgentContextBase, AgentHistoryEntry } from '../../resources/agent/agent.types';
-import type { AiSdkResult } from '../types';
-import { deliverResult, handleResult, isAiSdkResult } from './index';
+import type { AgentRuntimeContext } from '../../resources/agent/agent.runtime';
+import type { AgentHistoryEntry } from '../../resources/agent/agent.types';
+import type { AiSdkGenerateResult, AiSdkStreamResult } from '../types';
+import { deliverResult, handleAiSdkResult, isAiSdkResult } from './index';
 
 // ─── Test fixtures ────────────────────────────────────────────────────────────
 
-function fakeCtx(history: AgentHistoryEntry[] = []) {
+function fakeCtx(history: AgentHistoryEntry[] = []): AgentRuntimeContext {
   const reply = vi.fn().mockResolvedValue({ messageId: 'm', platformThreadId: 'p' });
   const typing = Object.assign(vi.fn().mockResolvedValue(undefined), {
     stop: vi.fn().mockResolvedValue(undefined),
   });
   const emitToolResult = vi.fn();
+  const emitToolApprovalRequest = vi.fn();
 
-  return { reply, typing, history, emitToolResult } as unknown as AgentContextBase & {
-    reply: ReturnType<typeof vi.fn>;
-    typing: ReturnType<typeof vi.fn> & { stop: ReturnType<typeof vi.fn> };
-    history: AgentHistoryEntry[];
-    emitToolResult: ReturnType<typeof vi.fn>;
-  };
+  return {
+    reply,
+    typing,
+    history,
+    emitToolResult,
+    emitToolApprovalRequest,
+  } as unknown as AgentRuntimeContext;
 }
 
-function streamTextResult(overrides: Partial<AiSdkResult> = {}): AiSdkResult {
+function streamTextResult(overrides: Record<string, unknown> = {}): AiSdkStreamResult {
   return {
     text: Promise.resolve(''),
+    content: Promise.resolve([]),
     response: Promise.resolve({ messages: [] }),
+    consumeStream: async () => {},
     ...overrides,
-  };
+  } as unknown as AiSdkStreamResult;
+}
+
+function generateTextMock(overrides: Record<string, unknown> = {}): AiSdkGenerateResult {
+  return {
+    text: '',
+    steps: [],
+    totalUsage: {},
+    content: [],
+    response: { messages: [] },
+    ...overrides,
+  } as unknown as AiSdkGenerateResult;
 }
 
 function approvalRequestContent(
@@ -57,17 +73,18 @@ function gatedToolHistory(toolCallId: string, toolName: string): AgentHistoryEnt
 
 describe('reply mapper', () => {
   describe('isAiSdkResult', () => {
-    it('recognizes streamText results (text + textStream)', () => {
+    it('recognizes streamText results (consumeStream)', () => {
       expect(
         isAiSdkResult({
           text: Promise.resolve('hello'),
           textStream: (async function* () {})(),
+          consumeStream: async () => {},
         })
       ).toBe(true);
     });
 
-    it('recognizes generateText results (text + steps)', () => {
-      expect(isAiSdkResult({ text: 'hello', steps: [] })).toBe(true);
+    it('recognizes generateText results (text + steps + totalUsage)', () => {
+      expect(isAiSdkResult({ text: 'hello', steps: [], totalUsage: {} })).toBe(true);
     });
 
     it('rejects MessageContent and non-result objects', () => {
@@ -112,7 +129,7 @@ describe('reply mapper', () => {
     it('supports generateText-style plain string text', async () => {
       const ctx = fakeCtx();
 
-      await deliverResult({ text: 'answer', steps: [], response: { messages: [] } } as AiSdkResult, ctx);
+      await deliverResult(generateTextMock({ text: 'answer' }), ctx);
 
       expect(ctx.reply).toHaveBeenCalledWith('answer');
     });
@@ -131,7 +148,7 @@ describe('reply mapper', () => {
     it('delivers text when the turn has no gated tools', async () => {
       const ctx = fakeCtx();
 
-      await handleResult(streamTextResult({ text: Promise.resolve('all done') }), ctx, undefined);
+      await handleAiSdkResult(streamTextResult({ text: Promise.resolve('all done') }), ctx, undefined);
 
       expect(ctx.reply).toHaveBeenCalledWith('all done');
       expect(ctx.emitToolResult).not.toHaveBeenCalled();
@@ -140,7 +157,7 @@ describe('reply mapper', () => {
     it('posts only the first approval card when multiple tools gate in one turn', async () => {
       const ctx = fakeCtx();
 
-      await handleResult(
+      await handleAiSdkResult(
         streamTextResult({
           content: Promise.resolve([
             approvalRequestContent('a_1', 'toolu_1', 'issueRefund', { amount: 250 }),
@@ -151,17 +168,45 @@ describe('reply mapper', () => {
         undefined
       );
 
-      expect(ctx.reply).toHaveBeenCalledOnce();
-      expect(ctx.reply).toHaveBeenCalledWith(expect.anything(), {
-        toolApproval: { approvalId: 'a_1', toolCallId: 'toolu_1', name: 'issueRefund', input: { amount: 250 } },
+      expect(ctx.emitToolApprovalRequest).toHaveBeenCalledOnce();
+      expect(ctx.emitToolApprovalRequest).toHaveBeenCalledWith({
+        approvalId: 'a_1',
+        toolCallId: 'toolu_1',
+        name: 'issueRefund',
+        input: { amount: 250 },
       });
+      expect(ctx.reply).toHaveBeenCalledOnce();
+      expect(ctx.reply).toHaveBeenCalledWith(expect.objectContaining({ type: 'card' }));
+    });
+
+    it('ignores automatic approval parts and delivers text', async () => {
+      const ctx = fakeCtx();
+
+      await handleAiSdkResult(
+        streamTextResult({
+          text: Promise.resolve('Refund processed.'),
+          content: Promise.resolve([
+            {
+              type: 'tool-approval-request',
+              approvalId: 'a_auto',
+              isAutomatic: true,
+              toolCall: { toolCallId: 'toolu_auto', toolName: 'issueRefund', input: { amount: 50 } },
+            },
+          ]),
+        }),
+        ctx,
+        undefined
+      );
+
+      expect(ctx.reply).toHaveBeenCalledWith('Refund processed.');
+      expect(ctx.reply).toHaveBeenCalledOnce();
     });
 
     it('persists gated tool results from response.messages after approval-resume', async () => {
-      // toolu_1 was gated in a prior turn; this resume execution lands in response.messages.
+      // toolu_1 was gated in a prior turn; SDK places pre-step execution in response.messages.
       const ctx = fakeCtx(gatedToolHistory('toolu_1', 'issueRefund'));
 
-      await handleResult(
+      await handleAiSdkResult(
         streamTextResult({
           content: Promise.resolve([approvalRequestContent('a_2', 'toolu_2', 'cancelSub', { id: 'B' })]),
           response: Promise.resolve({
@@ -192,16 +237,65 @@ describe('reply mapper', () => {
       });
     });
 
+    it('unwraps text-shaped tool outputs from response.messages', async () => {
+      const ctx = fakeCtx(gatedToolHistory('toolu_01QgoZBYEGKaeAZM31DcTU59', 'issueRefund'));
+
+      await handleAiSdkResult(
+        generateTextMock({
+          text: "I've successfully issued a refund of $150 for order ID a2.",
+          response: {
+            messages: [
+              {
+                role: 'tool',
+                content: [
+                  {
+                    type: 'tool-result',
+                    toolCallId: 'toolu_01QgoZBYEGKaeAZM31DcTU59',
+                    toolName: 'issueRefund',
+                    output: { type: 'text', value: 'Refund of $150 issued for a2.' },
+                  },
+                ],
+              },
+              {
+                role: 'assistant',
+                content: [{ type: 'text', text: "I've successfully issued a refund of $150 for order ID a2." }],
+              },
+            ],
+          },
+        }),
+        ctx,
+        undefined
+      );
+
+      expect(ctx.emitToolResult).toHaveBeenCalledWith({
+        toolCallId: 'toolu_01QgoZBYEGKaeAZM31DcTU59',
+        toolName: 'issueRefund',
+        output: 'Refund of $150 issued for a2.',
+        preview: 'Tool "issueRefund" result',
+      });
+      expect(ctx.reply).toHaveBeenCalledWith("I've successfully issued a refund of $150 for order ID a2.");
+    });
+
     it('does not persist auto-run tool results that were not approval-gated', async () => {
       const ctx = fakeCtx();
 
-      await handleResult(
+      await handleAiSdkResult(
         streamTextResult({
-          steps: Promise.resolve([
-            {
-              toolResults: [{ toolCallId: 'toolu_auto', toolName: 'lookup', output: { found: true } }],
-            },
-          ] as never),
+          response: Promise.resolve({
+            messages: [
+              {
+                role: 'tool',
+                content: [
+                  {
+                    type: 'tool-result',
+                    toolCallId: 'toolu_auto',
+                    toolName: 'lookup',
+                    output: { type: 'json', value: { found: true } },
+                  },
+                ],
+              },
+            ],
+          }),
         }),
         ctx,
         undefined

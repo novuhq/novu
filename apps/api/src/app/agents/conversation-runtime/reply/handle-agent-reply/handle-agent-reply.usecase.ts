@@ -13,7 +13,11 @@ import { AddressingTypeEnum, type TriggerRecipientsPayload, TriggerRequestCatego
 import { ParseEventRequest, ParseEventRequestMulticastCommand } from '../../../../events/usecases/parse-event-request';
 import { AgentConfigResolver, ResolvedAgentConfig } from '../../../channels/agent-config-resolver.service';
 import { trackAgentReplyProcessed } from '../../../shared/analytics/agent-analytics';
-import type { EditPayloadDto, ReplyContentDto } from '../../../shared/dtos/agent-reply-payload.dto';
+import type {
+  EditPayloadDto,
+  ReplyContentDto,
+  ToolApprovalRequestPayloadDto,
+} from '../../../shared/dtos/agent-reply-payload.dto';
 import { isValidMetadataSignalKey } from '../../../shared/dtos/agent-reply-payload.dto';
 import { AgentEventEnum } from '../../../shared/enums/agent-event.enum';
 import { AgentPlatformEnum } from '../../../shared/enums/agent-platform.enum';
@@ -50,9 +54,15 @@ export class HandleAgentReply {
     }
     if (
       command.edit &&
-      (command.resolve || command.signals?.length || command.toolResults?.length || command.addReactions?.length)
+      (command.resolve ||
+        command.signals?.length ||
+        command.toolResults?.length ||
+        command.toolApprovalRequest ||
+        command.addReactions?.length)
     ) {
-      throw new BadRequestException('edit cannot be combined with resolve, signals, toolResults, or addReactions');
+      throw new BadRequestException(
+        'edit cannot be combined with resolve, signals, toolResults, toolApprovalRequest, or addReactions'
+      );
     }
     if (
       !command.reply &&
@@ -60,12 +70,13 @@ export class HandleAgentReply {
       !command.resolve &&
       !command.signals?.length &&
       !command.toolResults?.length &&
+      !command.toolApprovalRequest &&
       !command.addReactions?.length &&
       !command.plan &&
       !command.typing
     ) {
       throw new BadRequestException(
-        'At least one of reply, edit, resolve, signals, toolResults, addReactions, plan, or typing must be provided'
+        'At least one of reply, edit, resolve, signals, toolResults, toolApprovalRequest, addReactions, plan, or typing must be provided'
       );
     }
 
@@ -104,6 +115,16 @@ export class HandleAgentReply {
       await this.persistToolResults(command, conversation, channel, command.toolResults);
     }
 
+    let toolApprovalActivityId: string | undefined;
+    if (command.toolApprovalRequest) {
+      toolApprovalActivityId = await this.persistToolApprovalRequest(
+        command,
+        conversation,
+        channel,
+        command.toolApprovalRequest
+      );
+    }
+
     let replyInfo: SentMessageInfo | undefined;
     if (command.reply) {
       // System-generated replies (e.g. runtime error notices) are always
@@ -122,6 +143,10 @@ export class HandleAgentReply {
       }
 
       replyInfo = await this.deliverMessage(command, conversation, channel, command.reply, agentName);
+
+      if (toolApprovalActivityId && replyInfo) {
+        await this.linkToolApprovalRequestCard(command, conversation, toolApprovalActivityId, replyInfo.messageId);
+      }
 
       if (!command.isSystemGenerated) {
         await this.registerConversationEngagement(command, conversation, channel);
@@ -168,6 +193,7 @@ export class HandleAgentReply {
     if (command.reply) actions.push('reply');
     if (command.edit) actions.push('edit');
     if (command.resolve) actions.push('resolve');
+    if (command.toolApprovalRequest) actions.push('tool_approval_request');
     if (triggerSignalCount > 0) actions.push('trigger_signals');
     if (metadataSignalCount > 0) actions.push('metadata_signals');
     if (reactionCount > 0) actions.push('add_reactions');
@@ -374,6 +400,58 @@ export class HandleAgentReply {
     const triggerSignals = (signals ?? []).filter((s): s is TriggerSignal => s.type === 'trigger');
     if (triggerSignals.length) {
       await this.executeTriggerSignals(command, conversation, channel, triggerSignals);
+    }
+  }
+
+  private async persistToolApprovalRequest(
+    command: HandleAgentReplyCommand,
+    conversation: ConversationEntity,
+    channel: ConversationChannel,
+    request: ToolApprovalRequestPayloadDto
+  ): Promise<string | undefined> {
+    try {
+      const activity = await this.conversationService.persistToolApprovalRequest({
+        conversationId: conversation._id,
+        channel,
+        agentIdentifier: command.agentIdentifier,
+        approvalId: request.approvalId,
+        toolCallId: request.toolCallId,
+        toolName: request.name,
+        input: request.input,
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+      });
+
+      return activity._id;
+    } catch (err) {
+      this.logger.warn(
+        { err, agentIdentifier: command.agentIdentifier, approvalId: request.approvalId },
+        `[agent:${command.agentIdentifier}] Failed to persist tool-approval-request activity`
+      );
+
+      return undefined;
+    }
+  }
+
+  private async linkToolApprovalRequestCard(
+    command: HandleAgentReplyCommand,
+    conversation: ConversationEntity,
+    activityId: string,
+    platformMessageId: string
+  ): Promise<void> {
+    try {
+      await this.conversationService.linkToolApprovalRequestCard({
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        conversationId: conversation._id,
+        activityId,
+        platformMessageId,
+      });
+    } catch (err) {
+      this.logger.warn(
+        { err, agentIdentifier: command.agentIdentifier, activityId, platformMessageId },
+        `[agent:${command.agentIdentifier}] Failed to link tool-approval card message`
+      );
     }
   }
 

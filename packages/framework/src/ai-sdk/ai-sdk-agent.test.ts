@@ -1,26 +1,69 @@
 import { describe, expect, it, vi } from 'vitest';
+import { type AgentRuntimeContext, RUNTIME_CONTEXT_BRAND } from '../resources/agent/agent.runtime';
 import type {
   Agent,
+  AgentActionContext,
   AgentHistoryEntry,
   AgentMessageContext,
   ToolApprovalDecision,
 } from '../resources/agent/agent.types';
 import { agent } from './ai-sdk-agent';
-import type { AiSdkResult } from './types';
+import type { AiSdkGenerateResult, AiSdkStreamResult } from './types';
 
 // ─── Test fixtures ────────────────────────────────────────────────────────────
 
-function fakeCtx(overrides: Partial<AgentMessageContext> = {}) {
+function fakeRuntimeCtx(overrides: Partial<{ history: AgentHistoryEntry[] }> = {}) {
   const reply = vi.fn().mockResolvedValue({ messageId: 'm', platformThreadId: 'p' });
+  const history = overrides.history ?? [];
+  const ctx = {
+    [RUNTIME_CONTEXT_BRAND]: true as const,
+    reply,
+    history,
+    emitToolResult: vi.fn(),
+    emitToolApprovalRequest: vi.fn(),
+    asMessageContext: () => ctx as unknown as AgentMessageContext,
+  };
 
-  return { reply, history: [], ...overrides } as unknown as AgentMessageContext & {
+  return ctx as unknown as AgentRuntimeContext & { reply: ReturnType<typeof vi.fn>; history: AgentHistoryEntry[] };
+}
+
+function fakeMessageCtx(overrides: Partial<{ history: AgentHistoryEntry[] }> = {}) {
+  return fakeRuntimeCtx(overrides) as unknown as AgentMessageContext & {
     reply: ReturnType<typeof vi.fn>;
     history: AgentHistoryEntry[];
   };
 }
 
-function aiSdkTextResult(text: string): AiSdkResult {
-  return { text: Promise.resolve(text), steps: [], content: [] };
+function fakeActionCtx(overrides: Partial<{ history: AgentHistoryEntry[] }> = {}) {
+  return fakeRuntimeCtx(overrides) as unknown as AgentActionContext & {
+    reply: ReturnType<typeof vi.fn>;
+    history: AgentHistoryEntry[];
+  };
+}
+
+function streamTextMock(overrides: Record<string, unknown> = {}): AiSdkStreamResult {
+  return {
+    text: Promise.resolve(''),
+    content: Promise.resolve([]),
+    response: Promise.resolve({ messages: [] }),
+    consumeStream: async () => {},
+    ...overrides,
+  } as unknown as AiSdkStreamResult;
+}
+
+function generateTextMock(overrides: Record<string, unknown> = {}): AiSdkGenerateResult {
+  return {
+    text: '',
+    steps: [],
+    totalUsage: {},
+    content: [],
+    response: { messages: [] },
+    ...overrides,
+  } as unknown as AiSdkGenerateResult;
+}
+
+function aiSdkTextResult(text: string): AiSdkStreamResult {
+  return streamTextMock({ text: Promise.resolve(text) });
 }
 
 /** Ledger snapshot after Novu persists an approval decision (before resume). */
@@ -55,7 +98,7 @@ function approvalClick(overrides: Partial<ToolApprovalDecision> = {}): ToolAppro
 
 async function invokeToolApproval(
   supportAgent: Agent,
-  ctx: AgentMessageContext,
+  ctx: AgentActionContext,
   decision: ToolApprovalDecision = approvalClick()
 ) {
   expect(supportAgent.handlers.onToolApproval).toBeTypeOf('function');
@@ -93,7 +136,7 @@ describe('ai-sdk agent adapter', () => {
   describe('onMessage', () => {
     it('passes string returns through for runtime replyIfPresent', async () => {
       const supportAgent = agent('support', async () => 'hello');
-      const ctx = fakeCtx();
+      const ctx = fakeMessageCtx();
 
       const result = await supportAgent.handlers.onMessage({} as never, ctx);
 
@@ -102,11 +145,8 @@ describe('ai-sdk agent adapter', () => {
     });
 
     it('auto-delivers streamText-style results and returns void', async () => {
-      const supportAgent = agent('support', async () => ({
-        text: Promise.resolve('model reply'),
-        textStream: (async function* () {})(),
-      }));
-      const ctx = fakeCtx();
+      const supportAgent = agent('support', async () => streamTextMock({ text: Promise.resolve('model reply') }));
+      const ctx = fakeMessageCtx();
 
       const result = await supportAgent.handlers.onMessage({} as never, ctx);
 
@@ -115,8 +155,8 @@ describe('ai-sdk agent adapter', () => {
     });
 
     it('auto-delivers generateText-style results', async () => {
-      const supportAgent = agent('support', async () => ({ text: 'done', steps: [] }) as AiSdkResult);
-      const ctx = fakeCtx();
+      const supportAgent = agent('support', async () => generateTextMock({ text: 'done' }));
+      const ctx = fakeMessageCtx();
 
       await supportAgent.handlers.onMessage({} as never, ctx);
 
@@ -124,30 +164,30 @@ describe('ai-sdk agent adapter', () => {
     });
 
     it('posts an approval card when the model returns a gated tool (no text reply)', async () => {
-      const supportAgent = agent('support', async () => ({
-        text: Promise.resolve(''),
-        steps: [],
-        content: [
-          {
-            type: 'tool-approval-request',
-            approvalId: 'tc_9',
-            toolCall: { toolCallId: 'tc_9', toolName: 'issueRefund', input: { amount: 300 } },
-          },
-        ],
-      }));
-      const ctx = fakeCtx();
+      const supportAgent = agent('support', async () =>
+        streamTextMock({
+          text: Promise.resolve(''),
+          content: Promise.resolve([
+            {
+              type: 'tool-approval-request',
+              approvalId: 'tc_9',
+              toolCall: { toolCallId: 'tc_9', toolName: 'issueRefund', input: { amount: 300 } },
+            },
+          ]),
+        })
+      );
+      const ctx = fakeMessageCtx();
 
       await supportAgent.handlers.onMessage({} as never, ctx);
 
       expect(ctx.reply).toHaveBeenCalledTimes(1);
-      // Payload is structured richContent — not encoded into the card body.
-      const options = ctx.reply.mock.calls[0][1];
-      expect(options?.toolApproval).toMatchObject({
+      expect(ctx.emitToolApprovalRequest).toHaveBeenCalledWith({
         approvalId: 'tc_9',
         toolCallId: 'tc_9',
         name: 'issueRefund',
         input: { amount: 300 },
       });
+      expect(ctx.reply.mock.calls[0]).toHaveLength(1);
     });
   });
 
@@ -163,7 +203,7 @@ describe('ai-sdk agent adapter', () => {
         return aiSdkTextResult('done');
       });
 
-      const ctx = fakeCtx({ history });
+      const ctx = fakeActionCtx({ history });
 
       await invokeToolApproval(billingAgent, ctx);
 
@@ -182,7 +222,7 @@ describe('ai-sdk agent adapter', () => {
         },
       });
 
-      const ctx = fakeCtx({ history: approvedCycleHistory() });
+      const ctx = fakeActionCtx({ history: approvedCycleHistory() });
 
       await invokeToolApproval(billingAgent, ctx);
 
@@ -196,7 +236,7 @@ describe('ai-sdk agent adapter', () => {
         onToolApproval: async (_decision, ctx) => ctx.reply('already posted'),
       });
 
-      const ctx = fakeCtx({ history: approvedCycleHistory() });
+      const ctx = fakeActionCtx({ history: approvedCycleHistory() });
 
       await invokeToolApproval(billingAgent, ctx);
 
@@ -212,7 +252,7 @@ describe('ai-sdk agent adapter', () => {
         onToolApproval: async () => aiSdkTextResult('custom resume'),
       });
 
-      const ctx = fakeCtx({ history: approvedCycleHistory() });
+      const ctx = fakeActionCtx({ history: approvedCycleHistory() });
 
       await invokeToolApproval(billingAgent, ctx);
 
