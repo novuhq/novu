@@ -1,6 +1,6 @@
 import type { AgentRuntimeContext } from '../agent.runtime';
 import type { AgentToolCall, ToolApprovalConfig } from '../agent.types';
-import { type ApprovalPayload, buildApprovalActionId } from './action-id';
+import { buildApprovalActionId, type ToolApprovalRequestPayload } from './action-id';
 import { defaultApprovalCard } from './approval-card';
 
 export async function postToolApprovalCard(
@@ -15,12 +15,13 @@ export async function postToolApprovalCard(
     deny: buildApprovalActionId('deny', id),
   };
   const content = config?.renderApproval?.({ toolCall, actionIds }) ?? defaultApprovalCard({ toolCall, actionIds });
-  const payload: ApprovalPayload = {
+  const payload: ToolApprovalRequestPayload = {
     approvalId: id,
     toolCallId: toolCall.id,
     name: toolCall.name,
     input: toolCall.input,
   };
 
-  await ctx.reply(content, { toolApproval: payload });
+  ctx.emitToolApprovalRequest(payload);
+  await ctx.reply(content);
 }

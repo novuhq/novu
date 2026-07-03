@@ -1,7 +1,7 @@
 import type { CardElement, ChatElement, Emoji } from 'chat';
 import type { TriggerRecipientsPayload } from '../../shared';
 import type { Awaitable } from '../../types/util.types';
-import type { ApprovalPayload } from './tool-approval/action-id';
+import type { ToolApprovalRequestPayload } from './tool-approval/action-id';
 export type { TriggerRecipientsPayload };
 
 export enum AgentEventEnum {
@@ -193,8 +193,6 @@ export interface ReplyContent {
   markdown?: string;
   card?: CardElement;
   files?: FileRef[];
-  /** Set when this reply is an approval card; carries the tool call it gates. */
-  toolApproval?: ApprovalPayload;
 }
 
 /**
@@ -645,6 +643,7 @@ export interface AgentReplyPayload {
   resolve?: { summary?: string };
   signals?: Signal[];
   toolResults?: ToolResult[];
+  toolApprovalRequest?: ToolApprovalRequestPayload;
   addReactions?: AddReactionPayload[];
   typing?: TypingOp;
   planProgress?: PlanProgressEvent;

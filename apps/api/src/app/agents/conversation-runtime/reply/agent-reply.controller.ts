@@ -51,6 +51,7 @@ export class AgentReplyController {
         agentIdentifier: agentId,
         integrationIdentifier: body.integrationIdentifier,
         reply: body.reply,
+        toolApprovalRequest: body.toolApprovalRequest,
         edit: body.edit,
         resolve: body.resolve,
         signals: body.signals as Signal[],

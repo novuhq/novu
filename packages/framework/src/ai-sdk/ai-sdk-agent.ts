@@ -1,7 +1,7 @@
 import { agent as frameworkAgent } from '../resources/agent/agent.resource';
 import { requireRuntimeContext } from '../resources/agent/agent.runtime';
 import type { Agent, AgentActionContext, AgentMessage, ReplyHandle } from '../resources/agent/agent.types';
-import { handleResult, isAiSdkResult } from './reply-mapper';
+import { handleAiSdkResult, isAiSdkResult } from './reply-mapper';
 import type { AiSdkAgentHandlers } from './types';
 
 type AiSdkMessageHandler = AiSdkAgentHandlers['onMessage'];
@@ -38,16 +38,16 @@ export function agent(id: string, handlers: AiSdkMessageHandler | AiSdkAgentHand
     const runtime = requireRuntimeContext(ctx);
     const result = await h.onMessage(RESUME_MESSAGE, runtime.asMessageContext());
     if (isAiSdkResult(result)) {
-      await handleResult(result, runtime, config);
+      await handleAiSdkResult(result, runtime, config);
     }
   };
 
   return frameworkAgent(id, {
     onMessage: async (message, ctx) => {
-      const runtime = requireRuntimeContext(ctx);
-      const result = await h.onMessage(message, runtime.asMessageContext());
+      const result = await h.onMessage(message, ctx);
+
       if (isAiSdkResult(result)) {
-        await handleResult(result, runtime, config);
+        await handleAiSdkResult(result, requireRuntimeContext(ctx), config);
 
         return;
       }
@@ -59,7 +59,7 @@ export function agent(id: string, handlers: AiSdkMessageHandler | AiSdkAgentHand
       if (h.onToolApproval) {
         const result = await h.onToolApproval(decision, ctx);
         if (isAiSdkResult(result)) {
-          await handleResult(result, runtime, config);
+          await handleAiSdkResult(result, runtime, config);
 
           return;
         }

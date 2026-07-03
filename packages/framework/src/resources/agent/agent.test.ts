@@ -2025,8 +2025,8 @@ describe('tool approval', () => {
 
     expect(posts).toHaveLength(1);
     expect(posts[0].reply.card).toBeTruthy();
-    // The tool-call payload rides in reply.toolApproval (persisted as toolData), not in the button id.
-    expect(posts[0].reply.toolApproval).toMatchObject({
+    // The tool-call payload rides in toolApprovalRequest (persisted as toolData), not in the button id.
+    expect(posts[0].toolApprovalRequest).toMatchObject({
       approvalId: 'tc',
       toolCallId: 'tc',
       name: 'doIt',

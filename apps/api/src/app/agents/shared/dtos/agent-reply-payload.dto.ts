@@ -235,11 +235,28 @@ export class ReplyContentDto {
   @IsOptional()
   @IsArray()
   files?: FileRef[];
+}
 
-  @ApiPropertyOptional()
+export class ToolApprovalRequestPayloadDto {
+  @ApiProperty({ description: 'Unique id for this approval request (matches the AI SDK approvalId).' })
+  @IsString()
+  @IsNotEmpty()
+  approvalId: string;
+
+  @ApiProperty({ description: 'Id of the tool call awaiting approval.' })
+  @IsString()
+  @IsNotEmpty()
+  toolCallId: string;
+
+  @ApiProperty({ description: 'Name of the gated tool.' })
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+
+  @ApiPropertyOptional({ description: 'Tool input the model proposed.' })
   @IsOptional()
   @IsObject()
-  toolApproval?: Record<string, unknown>;
+  input?: Record<string, unknown>;
 }
 
 export class EditPayloadDto {
@@ -354,6 +371,15 @@ export class AgentReplyPayloadDto {
   @Validate(IsValidReplyContent)
   @Type(() => ReplyContentDto)
   reply?: ReplyContentDto;
+
+  @ApiPropertyOptional({
+    type: ToolApprovalRequestPayloadDto,
+    description: 'Tool-lifecycle ledger row for a gated tool call. Optional reply delivers the approval card.',
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => ToolApprovalRequestPayloadDto)
+  toolApprovalRequest?: ToolApprovalRequestPayloadDto;
 
   @ApiPropertyOptional({ type: EditPayloadDto })
   @IsOptional()

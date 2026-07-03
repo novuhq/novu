@@ -1,21 +1,24 @@
+import type { generateText, streamText } from 'ai';
 import type {
   AgentActionContext,
   AgentHandlers,
   AgentMessage,
   AgentMessageContext,
   MessageContent,
+  ReplyHandle,
   ToolApprovalDecision,
 } from '../resources/agent/agent.types';
 import type { Awaitable } from '../types/util.types';
 
-/** The fields Novu reads from a `streamText()` / `generateText()` result. */
-export type AiSdkResult = {
-  text: string | PromiseLike<string>;
-  textStream?: AsyncIterable<string>;
-  content?: unknown;
-  steps?: unknown;
-  response?: PromiseLike<{ messages?: Array<{ role: string; content?: unknown }> }>;
-};
+export type AiSdkStreamResult = Awaited<ReturnType<typeof streamText>>;
+export type AiSdkGenerateResult = Awaited<ReturnType<typeof generateText>>;
+export type AiSdkResult = AiSdkStreamResult | AiSdkGenerateResult;
+
+/** Pause marker in `result.content` — the SDK's `ToolApprovalRequestOutput`, not assistant-message `ToolApprovalRequest`. */
+export type AiSdkApprovalRequestPart = Extract<
+  AiSdkGenerateResult['content'][number],
+  { type: 'tool-approval-request' }
+>;
 
 /**
  * Handlers for `@novu/framework/ai-sdk` agents.
@@ -32,5 +35,5 @@ export type AiSdkAgentHandlers = Omit<AgentHandlers, 'onMessage' | 'onToolApprov
   onToolApproval?: (
     decision: ToolApprovalDecision,
     ctx: AgentActionContext
-  ) => Awaitable<MessageContent | AiSdkResult | void>;
+  ) => Awaitable<MessageContent | AiSdkResult | ReplyHandle | void>;
 };

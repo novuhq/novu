@@ -14,10 +14,13 @@ import type {
   ToolApprovalDecision,
 } from './agent.types';
 import { AgentEventEnum, PendingApproval } from './agent.types';
-import { type ApprovalPayload, parseApprovalActionId } from './tool-approval/action-id';
+import { parseApprovalActionId, type ToolApprovalRequestPayload } from './tool-approval/action-id';
 import { resolvedApprovalCard } from './tool-approval/approval-card';
 
-function findApprovalInHistory(history: AgentHistoryEntry[], approvalId: string): ApprovalPayload | undefined {
+function findApprovalInHistory(
+  history: AgentHistoryEntry[],
+  approvalId: string
+): ToolApprovalRequestPayload | undefined {
   for (const entry of history) {
     const tool = entry.toolData;
     if (entry.type === 'tool_approval_request' && tool?.approvalId === approvalId && tool.toolCallId) {
@@ -88,7 +91,14 @@ async function runAgentHandler(registeredAgent: Agent, event: string, ctx: Agent
         const approvalMessage = ctx.createReplyHandle(ctx.action!.sourceMessageId ?? '');
 
         if (approved) {
-          await ctx.postPlanProgress({ kind: 'phase', phase: 'approved' });
+          await ctx.postPlanProgress({
+            kind: 'task',
+            task: {
+              id: toolCall.id,
+              title: toolCall.name,
+              status: 'in_progress',
+            },
+          });
         } else {
           await ctx.postPlanProgress({
             kind: 'task',

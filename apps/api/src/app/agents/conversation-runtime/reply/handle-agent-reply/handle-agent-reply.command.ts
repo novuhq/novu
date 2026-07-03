@@ -3,7 +3,12 @@ import type { PlanModel } from 'chat';
 import { Type } from 'class-transformer';
 import { IsArray, IsBoolean, IsNotEmpty, IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../../shared/commands/project.command';
-import { AddReactionPayloadDto, EditPayloadDto, ReplyContentDto } from '../../../shared/dtos/agent-reply-payload.dto';
+import {
+  AddReactionPayloadDto,
+  EditPayloadDto,
+  ReplyContentDto,
+  ToolApprovalRequestPayloadDto,
+} from '../../../shared/dtos/agent-reply-payload.dto';
 import type { PlanPhase } from '../../egress/plan-phase';
 import type { SlackNativeDelivery } from '../../egress/slack-native-delivery';
 
@@ -24,6 +29,11 @@ export class HandleAgentReplyCommand extends EnvironmentWithUserCommand {
   @ValidateNested()
   @Type(() => ReplyContentDto)
   reply?: ReplyContentDto;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => ToolApprovalRequestPayloadDto)
+  toolApprovalRequest?: ToolApprovalRequestPayloadDto;
 
   @IsOptional()
   @ValidateNested()

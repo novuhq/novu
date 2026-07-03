@@ -1,4 +1,4 @@
-import type { StepResult, ToolSet } from 'ai';
+import type { ToolModelMessage } from 'ai';
 import type { AgentRuntimeContext } from '../../resources/agent/agent.runtime';
 import type { AiSdkResult } from '../types';
 
@@ -8,95 +8,61 @@ interface ExecutedToolResult {
   output: unknown;
 }
 
-function unwrapToolOutput(output: unknown): unknown {
-  if (
-    output &&
+interface ToolResultPart {
+  type: 'tool-result';
+  toolCallId: string;
+  toolName?: string;
+  output?: unknown;
+}
+
+function isToolMessage(message: { role: string; content?: unknown }): message is ToolModelMessage {
+  return message.role === 'tool' && Array.isArray(message.content);
+}
+
+function isToolResultPart(part: unknown): part is ToolResultPart {
+  return typeof part === 'object' && part !== null && (part as ToolResultPart).type === 'tool-result';
+}
+
+function isDeniedOutput(output: unknown): boolean {
+  return (
     typeof output === 'object' &&
+    output !== null &&
     'type' in output &&
-    (output as { type: string }).type === 'json' &&
-    'value' in output
-  ) {
-    return (output as { value: unknown }).value;
+    (output as { type: string }).type === 'execution-denied'
+  );
+}
+
+function unwrapToolOutput(output: unknown): unknown {
+  if (output && typeof output === 'object' && 'type' in output && 'value' in output) {
+    const typed = output as { type: string; value: unknown };
+    if (typed.type === 'json' || typed.type === 'text') {
+      return typed.value;
+    }
   }
 
   return output;
 }
 
-/** Pull executed tool results out of a step's `toolResults` array. */
-async function collectToolResultsFromSteps(result: AiSdkResult): Promise<ExecutedToolResult[]> {
-  const steps = (await result.steps) as StepResult<ToolSet>[] | undefined;
-  if (!Array.isArray(steps)) {
-    return [];
-  }
-
-  return steps.flatMap((step) =>
-    step.toolResults.map((r) => ({ toolCallId: r.toolCallId, toolName: r.toolName, output: r.output }))
-  );
-}
-
 /**
- * After approval-resume, executed tools often appear in `response.messages` rather than `steps`.
- * See AI SDK `stream-text.ts` — initial `executeToolCall` after `collectToolApprovals`.
+ * Collect executed tool results from `response.messages` (the SDK's `responseMessages`).
+ *
+ * Per AI SDK docs, `responseMessages` is the accumulated assistant/tool history for the
+ * call — including tool results from approved tools executed before the first model step.
+ * @see https://ai-sdk.dev/docs/ai-sdk-core/tools-and-tool-calling#response-messages
  */
-async function collectToolResultsFromResponse(result: AiSdkResult): Promise<ExecutedToolResult[]> {
-  if (result.response == null) {
-    return [];
-  }
-
-  const response = await result.response;
-  if (!Array.isArray(response.messages)) {
-    return [];
-  }
-
-  const collected: ExecutedToolResult[] = [];
-
-  for (const message of response.messages) {
-    if (message.role !== 'tool' || !Array.isArray(message.content)) {
-      continue;
-    }
-
-    for (const part of message.content) {
-      if (typeof part !== 'object' || part === null || (part as { type?: string }).type !== 'tool-result') {
-        continue;
-      }
-
-      const toolResult = part as { toolCallId: string; toolName?: string; output?: unknown };
-      if (
-        toolResult.output &&
-        typeof toolResult.output === 'object' &&
-        'type' in toolResult.output &&
-        (toolResult.output as { type: string }).type === 'execution-denied'
-      ) {
-        continue;
-      }
-
-      collected.push({
-        toolCallId: toolResult.toolCallId,
-        toolName: toolResult.toolName,
-        output: unwrapToolOutput(toolResult.output),
-      });
-    }
-  }
-
-  return collected;
-}
-
 async function collectExecutedToolResults(result: AiSdkResult): Promise<ExecutedToolResult[]> {
-  const fromSteps = await collectToolResultsFromSteps(result);
-  const fromResponse = await collectToolResultsFromResponse(result);
-  const byId = new Map<string, ExecutedToolResult>();
+  const { messages = [] } = await Promise.resolve(result.response);
 
-  for (const toolResult of fromSteps) {
-    byId.set(toolResult.toolCallId, toolResult);
-  }
-
-  for (const toolResult of fromResponse) {
-    if (!byId.has(toolResult.toolCallId)) {
-      byId.set(toolResult.toolCallId, toolResult);
-    }
-  }
-
-  return [...byId.values()];
+  return messages
+    .filter(isToolMessage)
+    .flatMap((message) => message.content as unknown[])
+    .filter(isToolResultPart)
+    .filter((part) => !isDeniedOutput(part.output))
+    .map((part) => ({
+      toolCallId: part.toolCallId,
+      toolName: part.toolName,
+      output: unwrapToolOutput(part.output),
+    }));
 }
 
 /** Tool calls that were gated behind approval — only these get persisted as ledger tool_result rows. */
@@ -111,16 +77,14 @@ function gatedToolCallIds(ctx: AgentRuntimeContext): Set<string> {
   return ids;
 }
 
-/**
- * Record approved tool outcomes in history before posting text or new approval cards.
- * Auto-run (non-gated) tools stay ephemeral — the model already saw them in-context.
- */
+/** Save tool results to Novu history — but only for tools that required user approval. */
 export async function emitExecutedToolResults(result: AiSdkResult, ctx: AgentRuntimeContext): Promise<void> {
   const executed = await collectExecutedToolResults(result);
   if (executed.length === 0) {
     return;
   }
 
+  // scan ctx.history for past tool_approval_request entries and collect their toolCallIds
   const gated = gatedToolCallIds(ctx);
 
   for (const toolResult of executed) {

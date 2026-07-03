@@ -35,7 +35,7 @@ import { AgentEventEnum, PendingApproval } from './agent.types';
 import { isCardElement } from './guards';
 import { createPlanHandle, type InternalPlanHandle } from './plan-handle';
 import { wrapToolsWithPlan } from './plan-track';
-import type { ApprovalPayload } from './tool-approval/action-id';
+import type { ToolApprovalRequestPayload } from './tool-approval/action-id';
 import { postToolApprovalCard } from './tool-approval/post-card';
 
 /** Default plan card title when `ctx.plan.track(tools)` lazy-creates a plan. */
@@ -292,6 +292,7 @@ export class AgentContextImpl implements AgentRuntimeContext {
 
   private _signals: Signal[] = [];
   private _toolResults: ToolResult[] = [];
+  private _pendingToolApprovalRequest: ToolApprovalRequestPayload | null = null;
   private _pendingReactions: AddReactionPayload[] = [];
   private _resolveSignal: { summary?: string } | null = null;
   private _metadataState: Record<string, unknown>;
@@ -396,14 +397,8 @@ export class AgentContextImpl implements AgentRuntimeContext {
     return this as unknown as AgentMessageContext;
   }
 
-  async reply(
-    content: MessageContent,
-    options?: { files?: FileRef[]; toolApproval?: ApprovalPayload }
-  ): Promise<ReplyHandle> {
+  async reply(content: MessageContent, options?: { files?: FileRef[] }): Promise<ReplyHandle> {
     const reply = await serializeContent(content, options?.files);
-    if (options?.toolApproval) {
-      reply.toolApproval = options.toolApproval;
-    }
 
     const body: AgentReplyPayload = {
       conversationId: this._conversationId,
@@ -418,7 +413,7 @@ export class AgentContextImpl implements AgentRuntimeContext {
       throw new Error('Agent reply did not return a message handle');
     }
 
-    if (options?.toolApproval) {
+    if (body.toolApprovalRequest) {
       await this._pausePlanForApproval();
     }
 
@@ -442,6 +437,15 @@ export class AgentContextImpl implements AgentRuntimeContext {
 
   trigger(workflowId: string, opts?: { to?: TriggerRecipientsPayload; payload?: Record<string, unknown> }): void {
     this._signals.push({ ...opts, type: 'trigger', workflowId });
+  }
+
+  /** @internal Queue a gated tool call for the ledger; flushed with the next reply. */
+  emitToolApprovalRequest(request: ToolApprovalRequestPayload): void {
+    if (this._pendingToolApprovalRequest) {
+      throw new Error('Only one tool approval request can be queued before the next reply');
+    }
+
+    this._pendingToolApprovalRequest = request;
   }
 
   /** @internal Queue a tool-call outcome to be recorded in history; flushed with the next reply. */
@@ -470,13 +474,28 @@ export class AgentContextImpl implements AgentRuntimeContext {
     this._drainSideEffects(body);
 
     await this._post(body);
+
+    if (body.toolApprovalRequest) {
+      await this._pausePlanForApproval();
+    }
   }
 
   private _hasPendingSideEffects(): boolean {
-    return !!(this._signals.length || this._toolResults.length || this._resolveSignal || this._pendingReactions.length);
+    return !!(
+      this._pendingToolApprovalRequest ||
+      this._signals.length ||
+      this._toolResults.length ||
+      this._resolveSignal ||
+      this._pendingReactions.length
+    );
   }
 
   private _drainSideEffects(body: AgentReplyPayload): void {
+    if (this._pendingToolApprovalRequest) {
+      body.toolApprovalRequest = this._pendingToolApprovalRequest;
+      this._pendingToolApprovalRequest = null;
+    }
+
     if (this._signals.length) {
       body.signals = this._signals;
       this._signals = [];

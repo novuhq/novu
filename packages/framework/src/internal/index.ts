@@ -3,7 +3,7 @@ export * from '../errors';
 export * from '../filters';
 export { AgentContextImpl } from '../resources/agent/agent.context';
 export type { AgentRuntimeContext } from '../resources/agent/agent.runtime';
-export type { ApprovalPayload, ParsedApprovalAction } from '../resources/agent/tool-approval/action-id';
+export type { ParsedApprovalAction, ToolApprovalRequestPayload } from '../resources/agent/tool-approval/action-id';
 export { parseApprovalActionId } from '../resources/agent/tool-approval/action-id';
 export { actionStepSchemas, channelStepSchemas } from '../schemas';
 export * from '../types';
