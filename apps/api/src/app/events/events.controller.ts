@@ -13,7 +13,7 @@ import {
 } from '@novu/shared';
 import { PayloadValidationExceptionDto } from '../../error-dto';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
-import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
+import { ExternalApiAccessible, OAuthAccessible } from '../auth/framework/external-api.decorator';
 import { ThrottlerCategory, ThrottlerCost } from '../rate-limiting/guards';
 import { AnalyticsStrategyEnum, LogAnalytics } from '../shared/framework/analytics-logs.interceptor';
 import {
@@ -84,6 +84,7 @@ export class EventsController {
 
   @KeylessAccessible()
   @ExternalApiAccessible()
+  @OAuthAccessible()
   @Post('/trigger')
   @RequestAnalytics(AnalyticsStrategyEnum.EVENTS)
   @LogAnalytics(AnalyticsStrategyEnum.EVENTS)
@@ -137,6 +138,7 @@ export class EventsController {
   @RequestAnalytics(AnalyticsStrategyEnum.EVENTS_BULK)
   @LogAnalytics(AnalyticsStrategyEnum.EVENTS_BULK)
   @Post('/trigger/bulk')
+  @OAuthAccessible()
   @SdkMethodName('triggerBulk')
   @SdkUsageExample('Trigger Notification Events in Bulk')
   @SdkGroupName('')
@@ -242,6 +244,7 @@ export class EventsController {
 
   @ExternalApiAccessible()
   @Delete('/trigger/:transactionId')
+  @OAuthAccessible()
   @ApiOkResponse({
     type: Boolean,
   })

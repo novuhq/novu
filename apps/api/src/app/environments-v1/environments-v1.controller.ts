@@ -29,7 +29,7 @@ import {
 } from '@novu/shared';
 import { ErrorDto } from '../../error-dto';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
-import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
+import { ExternalApiAccessible, OAuthAccessible } from '../auth/framework/external-api.decorator';
 import { ApiKey } from '../shared/dtos/api-key';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
@@ -123,6 +123,7 @@ export class EnvironmentsControllerV1 {
   }
 
   @Get('/')
+  @OAuthAccessible()
   @ApiOperation({
     summary: 'List all environments',
     description: `This API returns a list of environments for the current organization. 
