@@ -159,9 +159,7 @@ export function ApiKeysPage() {
                           isRegenerateLoading={regenerateApiKeysMutation.isPending}
                           showDeleteButton={canRegenerateApiKeys && (apiKeys?.length ?? 0) > 1}
                           onDeleteClick={() => setKeyPendingDeletion(apiKey)}
-                          isDeleteLoading={
-                            deleteApiKeyMutation.isPending && keyPendingDeletion?.hash === apiKey.hash
-                          }
+                          isDeleteLoading={deleteApiKeyMutation.isPending && keyPendingDeletion?.hash === apiKey.hash}
                         />
                       ))}
                     {canRegenerateApiKeys && (

@@ -2,7 +2,8 @@ import { NOVU_ENCRYPTION_SUB_MASK } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
-process.env.LAUNCH_DARKLY_SDK_KEY = ''; // disable Launch Darkly to allow test to define FF state
+const mutableEnv = process.env as Record<string, string | undefined>;
+mutableEnv.LAUNCH_DARKLY_SDK_KEY = ''; // disable Launch Darkly to allow test to define FF state
 
 describe('Manage Environment API Keys - /environments/api-keys (POST/DELETE) #novu-v2', () => {
   let session: UserSession;
@@ -10,11 +11,11 @@ describe('Manage Environment API Keys - /environments/api-keys (POST/DELETE) #no
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
-    process.env.IS_MULTIPLE_SECRET_KEYS_ALLOWED = 'true';
+    mutableEnv.IS_MULTIPLE_SECRET_KEYS_ALLOWED = 'true';
   });
 
   afterEach(() => {
-    delete process.env.IS_MULTIPLE_SECRET_KEYS_ALLOWED;
+    delete mutableEnv.IS_MULTIPLE_SECRET_KEYS_ALLOWED;
   });
 
   it('should create an additional api key', async () => {
@@ -117,7 +118,7 @@ describe('Manage Environment API Keys - /environments/api-keys (POST/DELETE) #no
       body: { data: keys },
     } = await session.testAgent.get('/v1/environments/api-keys').send();
 
-    delete process.env.IS_MULTIPLE_SECRET_KEYS_ALLOWED;
+    delete mutableEnv.IS_MULTIPLE_SECRET_KEYS_ALLOWED;
 
     const { status: createStatus } = await session.testAgent.post('/v1/environments/api-keys').send();
     expect(createStatus).to.equal(403);
