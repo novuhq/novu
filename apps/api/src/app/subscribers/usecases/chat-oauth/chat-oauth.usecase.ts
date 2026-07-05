@@ -1,11 +1,12 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { FeatureFlagsService } from '@novu/application-generic';
 import { EnvironmentRepository, ICredentialsEntity, IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/stateless';
 
 import { ChatOauthCommand } from './chat-oauth.command';
 import {
+  assertSubscriberChatOAuthHmacWhenRequired,
   createSubscriberChatOAuthState,
-  validateSubscriberHmac,
 } from './subscriber-chat-oauth-state.util';
 
 @Injectable()
@@ -14,13 +15,16 @@ export class ChatOauth {
 
   constructor(
     private integrationRepository: IntegrationRepository,
-    private environmentRepository: EnvironmentRepository
+    private environmentRepository: EnvironmentRepository,
+    private featureFlagsService: FeatureFlagsService
   ) {}
   async execute(command: ChatOauthCommand): Promise<string> {
     const { clientId } = await this.getCredentials(command);
     const apiKey = await this.getEnvironmentApiKey(command.environmentId);
 
-    validateSubscriberHmac({
+    await assertSubscriberChatOAuthHmacWhenRequired({
+      featureFlagsService: this.featureFlagsService,
+      environmentId: command.environmentId,
       apiKey,
       subscriberId: command.subscriberId,
       hmacHash: command.hmacHash,

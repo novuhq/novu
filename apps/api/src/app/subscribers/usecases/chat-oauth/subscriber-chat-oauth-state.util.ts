@@ -3,11 +3,12 @@ import {
   assertOAuthStateFieldsMatch,
   createHash,
   createSignedOAuthState,
+  FeatureFlagsService,
   peekOAuthStatePayload,
   validateSignedOAuthState,
 } from '@novu/application-generic';
 import { EnvironmentRepository } from '@novu/dal';
-import { ChatProviderIdEnum } from '@novu/shared';
+import { ChatProviderIdEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { areHexDigestsEqual } from '../../../shared/helpers/timing-safe-equal';
 
 export type SubscriberChatOAuthState = {
@@ -66,6 +67,47 @@ export function validateSubscriberHmac({
   if (!expectedHmacHash || !areHexDigestsEqual(expectedHmacHash, hmacHash)) {
     throw new BadRequestException('Invalid HMAC hash for subscriber chat OAuth');
   }
+}
+
+export async function isSubscriberChatOAuthHmacRequired(
+  featureFlagsService: FeatureFlagsService,
+  environmentId: string
+): Promise<boolean> {
+  return featureFlagsService.getFlag({
+    key: FeatureFlagsKeysEnum.IS_SUBSCRIBER_CHAT_OAUTH_HMAC_REQUIRED_ENABLED,
+    defaultValue: true,
+    environment: { _id: environmentId },
+  });
+}
+
+export async function assertSubscriberChatOAuthHmacWhenRequired({
+  featureFlagsService,
+  environmentId,
+  apiKey,
+  subscriberId,
+  hmacHash,
+}: {
+  featureFlagsService: FeatureFlagsService;
+  environmentId: string;
+  apiKey: string;
+  subscriberId: string;
+  hmacHash?: string;
+}): Promise<void> {
+  const isHmacRequired = await isSubscriberChatOAuthHmacRequired(featureFlagsService, environmentId);
+
+  if (!isHmacRequired) {
+    return;
+  }
+
+  if (!hmacHash) {
+    throw new BadRequestException('HMAC hash is required to initiate subscriber chat OAuth');
+  }
+
+  validateSubscriberHmac({
+    apiKey,
+    subscriberId,
+    hmacHash,
+  });
 }
 
 async function getEnvironmentApiKey(

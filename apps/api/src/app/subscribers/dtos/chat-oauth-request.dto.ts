@@ -3,12 +3,13 @@ import { IsMongoId, IsOptional, IsString } from 'class-validator';
 
 export class ChatOauthRequestDto {
   @ApiProperty({
-    description: 'HMAC hash for the request',
+    description: 'HMAC hash for the request. Required when IS_SUBSCRIBER_CHAT_OAUTH_HMAC_REQUIRED_ENABLED is enabled (default).',
     type: String,
-    required: true,
+    required: false,
   })
+  @IsOptional()
   @IsString()
-  hmacHash: string;
+  hmacHash?: string;
 
   @ApiProperty({
     description: 'The ID of the environment, must be a valid MongoDB ID',

@@ -4,11 +4,14 @@ import {
   createSignedOAuthState,
   DEFAULT_OAUTH_STATE_TTL_MS,
   encodeOAuthState,
+  FeatureFlagsService,
   validateSignedOAuthState,
 } from '@novu/application-generic';
 import { ChatProviderIdEnum } from '@novu/shared';
 import { expect } from 'chai';
+import sinon from 'sinon';
 import {
+  assertSubscriberChatOAuthHmacWhenRequired,
   assertSubscriberChatOAuthStateMatchesRoute,
   createSubscriberChatOAuthState,
   validateSubscriberHmac,
@@ -80,5 +83,35 @@ describe('subscriber-chat-oauth-state.util', () => {
       subscriberId: MOCK_SUBSCRIBER_ID,
       hmacHash,
     });
+  });
+
+  it('should skip HMAC validation when feature flag is disabled', async () => {
+    const featureFlagsService = sinon.createStubInstance(FeatureFlagsService);
+    featureFlagsService.getFlag.resolves(false);
+
+    await assertSubscriberChatOAuthHmacWhenRequired({
+      featureFlagsService: featureFlagsService as any,
+      environmentId: MOCK_ENVIRONMENT_ID,
+      apiKey: MOCK_API_KEY,
+      subscriberId: MOCK_SUBSCRIBER_ID,
+    });
+  });
+
+  it('should require HMAC when feature flag is enabled', async () => {
+    const featureFlagsService = sinon.createStubInstance(FeatureFlagsService);
+    featureFlagsService.getFlag.resolves(true);
+
+    try {
+      await assertSubscriberChatOAuthHmacWhenRequired({
+        featureFlagsService: featureFlagsService as any,
+        environmentId: MOCK_ENVIRONMENT_ID,
+        apiKey: MOCK_API_KEY,
+        subscriberId: MOCK_SUBSCRIBER_ID,
+      });
+      throw new Error('expected HMAC validation to fail');
+    } catch (error) {
+      expect(error).to.be.instanceOf(BadRequestException);
+      expect((error as BadRequestException).message).to.equal('HMAC hash is required to initiate subscriber chat OAuth');
+    }
   });
 });

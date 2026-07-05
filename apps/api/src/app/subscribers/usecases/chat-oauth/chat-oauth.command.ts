@@ -21,7 +21,7 @@ export class ChatOauthCommand extends BaseCommand {
   @IsString()
   readonly integrationIdentifier?: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
-  readonly hmacHash: string;
+  readonly hmacHash?: string;
 }
