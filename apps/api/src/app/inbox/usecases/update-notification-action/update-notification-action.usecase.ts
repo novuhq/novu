@@ -69,7 +69,9 @@ export class UpdateNotificationAction {
     return mapToDto(
       (await this.messageRepository.findOneForInbox({
         _environmentId: command.environmentId,
+        _subscriberId: subscriber._id,
         _id: command.notificationId,
+        contextKeys: command.contextKeys,
       })) as MessageEntity
     );
   }
