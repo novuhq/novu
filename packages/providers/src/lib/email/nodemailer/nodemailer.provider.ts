@@ -1,4 +1,4 @@
-import { EmailProviderIdEnum } from '@novu/shared';
+import { EmailProviderIdEnum, assertSafeSmtpOutboundTarget } from '@novu/shared';
 import {
   ChannelTypeEnum,
   CheckIntegrationResponseEnum,
@@ -97,6 +97,12 @@ export class NodemailerProvider extends BaseProvider implements IEmailProvider {
     options: IEmailOptions,
     bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
+    await assertSafeSmtpOutboundTarget(this.config.host, this.config.port, {
+      secure: this.config.secure,
+      requireTls: this.config.requireTls,
+      ignoreTls: this.config.ignoreTls,
+    });
+
     const mailData = this.createMailData(options);
     const merged = this.transform(bridgeProviderData, mailData);
     const info = await this.transports.sendMail(merged.body);
@@ -109,6 +115,12 @@ export class NodemailerProvider extends BaseProvider implements IEmailProvider {
 
   async checkIntegration(options: IEmailOptions): Promise<ICheckIntegrationResponse> {
     try {
+      await assertSafeSmtpOutboundTarget(this.config.host, this.config.port, {
+        secure: this.config.secure,
+        requireTls: this.config.requireTls,
+        ignoreTls: this.config.ignoreTls,
+      });
+
       const mailData = this.createMailData(options);
       await this.transports.sendMail(mailData);
 

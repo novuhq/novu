@@ -1,5 +1,5 @@
 import { NodemailerProvider } from '@novu/providers';
-import { ChannelTypeEnum, EmailProviderIdEnum, ICredentials } from '@novu/shared';
+import { assertSafeSmtpOutboundTargetSync, ChannelTypeEnum, EmailProviderIdEnum, ICredentials } from '@novu/shared';
 import { BaseEmailHandler } from './base.handler';
 
 export class NodemailerHandler extends BaseEmailHandler {
@@ -7,6 +7,12 @@ export class NodemailerHandler extends BaseEmailHandler {
     super(EmailProviderIdEnum.CustomSMTP, ChannelTypeEnum.EMAIL);
   }
   buildProvider(credentials: ICredentials, from?: string) {
+    assertSafeSmtpOutboundTargetSync(credentials.host, credentials.port, {
+      secure: credentials.secure,
+      requireTls: credentials.requireTls,
+      ignoreTls: credentials.ignoreTls,
+    });
+
     this.provider = new NodemailerProvider({
       from,
       host: credentials.host,
