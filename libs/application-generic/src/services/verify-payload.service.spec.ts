@@ -108,9 +108,35 @@ describe('VerifyPayloadService', () => {
 
       expect(result).to.deep.equal({
         data: {
-          'items[0]': {
-            name: 'fallback',
-          },
+          items: [
+            {
+              name: 'fallback',
+            },
+          ],
+        },
+      });
+      expect((result.data as { items: Array<{ name: string }> }).items[0].name).to.equal('fallback');
+    });
+
+    it('should fill defaults for nested bracket-notation path segments', () => {
+      const variables = [
+        {
+          name: 'payload.items[0].products[1].name',
+          type: TemplateVariableTypeEnum.STRING,
+          defaultValue: 'widget',
+          required: false,
+        },
+      ];
+
+      const result = service.fillDefaults(variables);
+
+      expect(result).to.deep.equal({
+        payload: {
+          items: [
+            {
+              products: [undefined, { name: 'widget' }],
+            },
+          ],
         },
       });
     });
