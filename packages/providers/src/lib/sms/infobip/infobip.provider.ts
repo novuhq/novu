@@ -2,6 +2,7 @@ import { AuthType, Infobip } from '@infobip-api/sdk';
 import { SmsProviderIdEnum } from '@novu/shared';
 import { ChannelTypeEnum, ISendMessageSuccessResponse, ISmsOptions, ISmsProvider } from '@novu/stateless';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { resolveSafeInfobipBaseUrl } from '../../../utils/safe-infobip-base-url';
 import { WithPassthrough } from '../../../utils/types';
 
 export class InfobipSmsProvider extends BaseProvider implements ISmsProvider {
@@ -19,8 +20,10 @@ export class InfobipSmsProvider extends BaseProvider implements ISmsProvider {
     }
   ) {
     super();
+    const baseUrl = resolveSafeInfobipBaseUrl(this.config.baseUrl ?? '');
+
     this.infobipClient = new Infobip({
-      baseUrl: this.config.baseUrl,
+      baseUrl,
       apiKey: this.config.apiKey,
       authType: AuthType.ApiKey,
     });
