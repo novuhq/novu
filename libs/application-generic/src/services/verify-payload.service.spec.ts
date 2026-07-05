@@ -93,5 +93,49 @@ describe('VerifyPayloadService', () => {
         },
       });
     });
+
+    it('should fill defaults for bracket-notation path segments', () => {
+      const variables = [
+        {
+          name: 'data.items[0].name',
+          type: TemplateVariableTypeEnum.STRING,
+          defaultValue: 'fallback',
+          required: false,
+        },
+      ];
+
+      const result = service.fillDefaults(variables);
+
+      expect(result).to.deep.equal({
+        data: {
+          'items[0]': {
+            name: 'fallback',
+          },
+        },
+      });
+    });
+
+    it('should preserve scalar prefix defaults when a nested default is incompatible', () => {
+      const variables = [
+        {
+          name: 'user',
+          type: TemplateVariableTypeEnum.STRING,
+          defaultValue: 'scalar-user',
+          required: false,
+        },
+        {
+          name: 'user.firstName',
+          type: TemplateVariableTypeEnum.STRING,
+          defaultValue: 'John',
+          required: false,
+        },
+      ];
+
+      const result = service.fillDefaults(variables);
+
+      expect(result).to.deep.equal({
+        user: 'scalar-user',
+      });
+    });
   });
 });

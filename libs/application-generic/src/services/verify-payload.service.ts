@@ -2,10 +2,18 @@ import { BadRequestException } from '@nestjs/common';
 import { ITemplateVariable, TemplateSystemVariables } from '@novu/shared';
 
 const PROTOTYPE_POLLUTION_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
-const TEMPLATE_VARIABLE_SEGMENT_REGEX = /^[a-zA-Z_][a-zA-Z0-9_-]*$/;
+const TEMPLATE_VARIABLE_SEGMENT_REGEX = /^[a-zA-Z_][a-zA-Z0-9_-]*(?:\[\d+\])?$/;
+
+function getSegmentBaseName(segment: string): string {
+  const bracketIndex = segment.indexOf('[');
+
+  return bracketIndex === -1 ? segment : segment.slice(0, bracketIndex);
+}
 
 function isSafeVariablePathSegment(segment: string): boolean {
-  if (PROTOTYPE_POLLUTION_KEYS.has(segment)) {
+  const baseName = getSegmentBaseName(segment);
+
+  if (PROTOTYPE_POLLUTION_KEYS.has(baseName)) {
     return false;
   }
 
@@ -82,7 +90,13 @@ export class VerifyPayloadService {
       return;
     }
 
-    if (!obj[path[0]] || typeof obj[path[0]] !== 'object') {
+    const existing = obj[path[0]];
+
+    if (existing !== undefined && existing !== null && typeof existing !== 'object') {
+      return;
+    }
+
+    if (!existing) {
       obj[path[0]] = Object.create(null);
     }
 
