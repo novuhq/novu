@@ -32,7 +32,11 @@ export class CreateEnvironmentVariable {
     await validateEnvironmentVariableValues(
       this.environmentRepository,
       command.organizationId,
-      incomingValues
+      incomingValues,
+      {
+        restrictToUserEnvironment: command.restrictToUserEnvironment,
+        userEnvironmentId: command.environmentId,
+      }
     );
 
     const maskedValue = incomingValues.find((v) => v.value === SECRET_MASK);

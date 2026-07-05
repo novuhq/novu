@@ -32,6 +32,7 @@ import {
 import { ErrorDto } from '../../error-dto';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
+import { isEnvironmentScopedAuthScheme } from '../shared/utils/auth.utils';
 import { ApiKey } from '../shared/dtos/api-key';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
@@ -286,6 +287,8 @@ export class EnvironmentsControllerV1 {
         userId: user._id,
         organizationId: user.organizationId,
         environmentId,
+        userEnvironmentId: user.environmentId,
+        restrictToUserEnvironment: isEnvironmentScopedAuthScheme(user.scheme),
       })
     );
   }

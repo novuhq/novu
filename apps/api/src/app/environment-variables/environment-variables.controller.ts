@@ -18,6 +18,7 @@ import { ApiRateLimitCategoryEnum, PermissionsEnum, UserSessionData } from '@nov
 import { ErrorDto } from '../../error-dto';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
+import { isEnvironmentScopedAuthScheme } from '../shared/utils/auth.utils';
 import { ThrottlerCategory } from '../rate-limiting/guards';
 import {
   ApiCommonResponses,
@@ -167,14 +168,18 @@ export class EnvironmentVariablesController {
     @UserSession() user: UserSessionData,
     @Body() body: CreateEnvironmentVariableRequestDto
   ): Promise<EnvironmentVariableResponseDto> {
+    const restrictToUserEnvironment = isEnvironmentScopedAuthScheme(user.scheme);
+
     return this.createEnvironmentVariableUsecase.execute(
       CreateEnvironmentVariableCommand.create({
         organizationId: user.organizationId,
+        environmentId: user.environmentId,
         userId: user._id,
         key: body.key,
         type: body.type,
         isSecret: body.isSecret,
         values: body.values,
+        restrictToUserEnvironment,
       })
     );
   }
@@ -204,15 +209,19 @@ export class EnvironmentVariablesController {
     @Param('variableKey') variableKey: string,
     @Body() body: UpdateEnvironmentVariableRequestDto
   ): Promise<EnvironmentVariableResponseDto> {
+    const restrictToUserEnvironment = isEnvironmentScopedAuthScheme(user.scheme);
+
     return this.updateEnvironmentVariableUsecase.execute(
       UpdateEnvironmentVariableCommand.create({
         organizationId: user.organizationId,
+        environmentId: user.environmentId,
         userId: user._id,
         variableKey,
         key: body.key,
         type: body.type,
         isSecret: body.isSecret,
         values: body.values,
+        restrictToUserEnvironment,
       })
     );
   }
