@@ -26,7 +26,7 @@ export function resolveSafePusherBeamsBaseUrl(
     throw err;
   }
 
-  if (parsed.hostname !== expectedHostname) {
+  if (parsed.hostname !== expectedHostname.toLowerCase()) {
     throw new Error(`${blockedPrefix}: Invalid hostname.`);
   }
 
