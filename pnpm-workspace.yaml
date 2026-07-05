@@ -219,6 +219,7 @@ allowBuilds:
   '@newrelic/native-metrics': true
   '@novu/thalamus': true
   '@sentry/cli': true
+  '@sentry/node-cpu-profiler': true
   '@sentry/profiling-node': true
   '@sveltejs/kit': true
   '@swc/core': true

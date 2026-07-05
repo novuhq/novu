@@ -27,7 +27,7 @@
     "@novu/ee-auth": "workspace:*",
     "@novu/shared": "workspace:*",
     "@novu/testing": "workspace:*",
-    "@sentry/node": "^8.33.1",
+    "@sentry/node": "^10.63.0",
     "@types/express": "4.17.17",
     "ai": "6.0.50",
     "async-mutex": "^0.5.0",
