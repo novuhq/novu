@@ -93,6 +93,43 @@ describe('Manage Environment API Keys - /environments/api-keys (POST/DELETE) #no
     expect(remainingKeyAuthStatus).to.equal(200);
   });
 
+  it('should never exceed the key cap under concurrent create requests', async () => {
+    const [first, second] = await Promise.all([
+      session.testAgent.post('/v1/environments/api-keys').send(),
+      session.testAgent.post('/v1/environments/api-keys').send(),
+    ]);
+
+    const statuses = [first.status, second.status].sort();
+    expect(statuses).to.deep.equal([201, 400]);
+
+    const {
+      body: { data: keys },
+    } = await session.testAgent.get('/v1/environments/api-keys').send();
+
+    expect(keys.length).to.equal(2);
+  });
+
+  it('should never delete all keys under concurrent delete requests', async () => {
+    const {
+      body: { data: keysAfterCreate },
+    } = await session.testAgent.post('/v1/environments/api-keys').send();
+    const [firstKey, secondKey] = keysAfterCreate;
+
+    const [first, second] = await Promise.all([
+      session.testAgent.delete(`/v1/environments/api-keys/${firstKey.hash}`).send(),
+      session.testAgent.delete(`/v1/environments/api-keys/${secondKey.hash}`).send(),
+    ]);
+
+    const statuses = [first.status, second.status].sort();
+    expect(statuses).to.deep.equal([200, 400]);
+
+    const {
+      body: { data: remainingKeys },
+    } = await session.testAgent.get('/v1/environments/api-keys').send();
+
+    expect(remainingKeys.length).to.equal(1);
+  });
+
   it('should not delete the last remaining api key', async () => {
     const {
       body: { data: keys },
@@ -123,9 +160,7 @@ describe('Manage Environment API Keys - /environments/api-keys (POST/DELETE) #no
     const { status: createStatus } = await session.testAgent.post('/v1/environments/api-keys').send();
     expect(createStatus).to.equal(403);
 
-    const { status: deleteStatus } = await session.testAgent
-      .delete(`/v1/environments/api-keys/${keys[0].hash}`)
-      .send();
+    const { status: deleteStatus } = await session.testAgent.delete(`/v1/environments/api-keys/${keys[0].hash}`).send();
     expect(deleteStatus).to.equal(403);
   });
 

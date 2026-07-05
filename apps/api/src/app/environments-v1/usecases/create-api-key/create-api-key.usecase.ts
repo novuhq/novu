@@ -36,22 +36,27 @@ export class CreateApiKey {
       throw new NotFoundException(`Environment id: ${command.environmentId} not found`);
     }
 
-    if (environment.apiKeys.length >= MAX_API_KEYS_PER_ENVIRONMENT) {
-      throw new BadRequestException(
-        `Environment can have a maximum of ${MAX_API_KEYS_PER_ENVIRONMENT} API keys. Delete an existing key before creating a new one.`
-      );
-    }
-
     const key = await this.generateUniqueApiKey.execute();
     const encryptedApiKey = encryptApiKey(key);
     const hashedApiKey = createHash('sha256').update(key).digest('hex');
 
+    /*
+     * The cap is enforced atomically in the update predicate so concurrent
+     * requests cannot push the environment above the maximum.
+     */
     const apiKeys = await this.environmentRepository.addApiKey(
       command.environmentId,
       encryptedApiKey,
       command.userId,
-      hashedApiKey
+      hashedApiKey,
+      MAX_API_KEYS_PER_ENVIRONMENT
     );
+
+    if (apiKeys === null) {
+      throw new BadRequestException(
+        `Environment can have a maximum of ${MAX_API_KEYS_PER_ENVIRONMENT} API keys. Delete an existing key before creating a new one.`
+      );
+    }
 
     return apiKeys.map((item) => {
       const decryptedKey = decryptApiKey(item.key);

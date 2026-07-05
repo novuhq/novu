@@ -45,29 +45,47 @@ export class EnvironmentRepository extends BaseRepository<EnvironmentDBModel, En
     });
   }
 
-  async addApiKey(environmentId: string, key: EncryptedSecret, userId: string, hash?: string) {
-    await this.update(
-      {
-        _id: environmentId,
-      },
-      {
-        $push: {
-          apiKeys: {
-            key,
-            _userId: userId,
-            hash,
-          },
+  /**
+   * Appends an API key. When `maxKeysCount` is provided, the cap is enforced
+   * atomically in the update predicate (no key at index `maxKeysCount - 1`),
+   * so concurrent creates cannot exceed the cap. Returns `null` when the cap
+   * was reached (or the environment does not exist).
+   */
+  async addApiKey(environmentId: string, key: EncryptedSecret, userId: string, hash?: string, maxKeysCount?: number) {
+    const query = {
+      _id: environmentId,
+      ...(maxKeysCount !== undefined && { [`apiKeys.${maxKeysCount - 1}`]: { $exists: false } }),
+    };
+
+    const { matched } = await this.update(query, {
+      $push: {
+        apiKeys: {
+          key,
+          _userId: userId,
+          hash,
         },
-      }
-    );
+      },
+    });
+
+    if (matched === 0) {
+      return null;
+    }
 
     return await this.getApiKeys(environmentId);
   }
 
+  /**
+   * Removes a single API key. The "at least one key must remain" invariant is
+   * enforced atomically in the update predicate (a second key must exist at
+   * pull time), so concurrent deletes cannot empty the array.
+   * `matched === 0` means only one key remained; `modified === 0` means the
+   * key was not found (e.g. already deleted concurrently).
+   */
   async deleteApiKey(environmentId: string, keyQuery: { hash: string } | { key: EncryptedSecret | string }) {
-    await this.update(
+    const { matched, modified } = await this.update(
       {
         _id: environmentId,
+        'apiKeys.1': { $exists: true },
       },
       {
         $pull: {
@@ -76,7 +94,7 @@ export class EnvironmentRepository extends BaseRepository<EnvironmentDBModel, En
       }
     );
 
-    return await this.getApiKeys(environmentId);
+    return { matched, modified };
   }
 
   async findByApiKey({ hash }: { hash: string }) {

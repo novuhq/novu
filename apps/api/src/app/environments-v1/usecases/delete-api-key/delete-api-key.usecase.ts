@@ -48,10 +48,22 @@ export class DeleteApiKey {
       throw new BadRequestException('Cannot delete the last remaining API key. Create a new key first.');
     }
 
-    const remainingKeys = await this.environmentRepository.deleteApiKey(
+    /*
+     * The "at least one key must remain" invariant is enforced atomically in
+     * the delete predicate, so concurrent deletes cannot empty the array.
+     */
+    const { matched, modified } = await this.environmentRepository.deleteApiKey(
       command.environmentId,
       keyToDelete.hash ? { hash: keyToDelete.hash } : { key: keyToDelete.key }
     );
+
+    if (matched === 0) {
+      throw new BadRequestException('Cannot delete the last remaining API key. Create a new key first.');
+    }
+
+    if (modified === 0) {
+      throw new NotFoundException('API key not found');
+    }
 
     /*
      * Best-effort invalidation of the local auth cache so the deleted key stops
@@ -59,6 +71,8 @@ export class DeleteApiKey {
      * the store's short TTL.
      */
     this.inMemoryLRUCacheService.invalidate(InMemoryLRUCacheStore.API_KEY_USER, command.hash);
+
+    const remainingKeys = await this.environmentRepository.getApiKeys(command.environmentId);
 
     return remainingKeys.map((item) => {
       const decryptedKey = decryptApiKey(item.key);
