@@ -1,10 +1,12 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { createHash } from '@novu/application-generic';
 import { EnvironmentRepository, ICredentialsEntity, IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/stateless';
 
 import { ChatOauthCommand } from './chat-oauth.command';
-import { createSubscriberChatOAuthState } from './subscriber-chat-oauth-state.util';
+import {
+  createSubscriberChatOAuthState,
+  validateSubscriberHmac,
+} from './subscriber-chat-oauth-state.util';
 
 @Injectable()
 export class ChatOauth {
@@ -21,7 +23,7 @@ export class ChatOauth {
     validateSubscriberHmac({
       apiKey,
       subscriberId: command.subscriberId,
-      externalHmacHash: command.hmacHash,
+      hmacHash: command.hmacHash,
     });
 
     const secureState = createSubscriberChatOAuthState(
@@ -34,28 +36,16 @@ export class ChatOauth {
       apiKey
     );
 
-    return this.getOAuthUrl(
-      command.subscriberId,
-      command.environmentId,
-      clientId!,
-      command.integrationIdentifier,
-      secureState
-    );
+    return this.getOAuthUrl(command, clientId!, secureState);
   }
 
-  private getOAuthUrl(
-    subscriberId: string,
-    environmentId: string,
-    clientId: string,
-    integrationIdentifier: string | undefined,
-    secureState: string
-  ): string {
+  private getOAuthUrl(command: ChatOauthCommand, clientId: string, secureState: string): string {
     let redirectUri = `${
       process.env.API_ROOT_URL
-    }/v1/subscribers/${subscriberId}/credentials/slack/oauth/callback?environmentId=${environmentId}`;
+    }/v1/subscribers/${command.subscriberId}/credentials/${command.providerId}/oauth/callback?environmentId=${command.environmentId}`;
 
-    if (integrationIdentifier) {
-      redirectUri = `${redirectUri}&integrationIdentifier=${integrationIdentifier}`;
+    if (command.integrationIdentifier) {
+      redirectUri = `${redirectUri}&integrationIdentifier=${command.integrationIdentifier}`;
     }
 
     const oauthParams = new URLSearchParams({
@@ -115,24 +105,5 @@ export class ChatOauth {
     }
 
     return apiKeys[0].key;
-  }
-}
-
-export function validateSubscriberHmac({
-  apiKey,
-  subscriberId,
-  externalHmacHash,
-}: {
-  apiKey: string;
-  subscriberId: string;
-  externalHmacHash: string | undefined;
-}) {
-  if (!externalHmacHash) {
-    throw new BadRequestException('HMAC hash is required to initiate subscriber chat OAuth');
-  }
-
-  const hmacHash = createHash(apiKey, subscriberId);
-  if (hmacHash !== externalHmacHash) {
-    throw new BadRequestException('Invalid HMAC hash for subscriber chat OAuth');
   }
 }

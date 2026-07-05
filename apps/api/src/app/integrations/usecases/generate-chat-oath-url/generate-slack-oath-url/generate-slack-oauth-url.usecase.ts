@@ -1,10 +1,11 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import {
   CreateOrUpdateSubscriberUseCase,
-  createHash,
+  createSignedOAuthState,
   GetNovuProviderCredentials,
   GetNovuProviderCredentialsCommand,
   PinoLogger,
+  validateSignedOAuthState,
 } from '@novu/application-generic';
 import {
   AgentIntegrationRepository,
@@ -22,9 +23,7 @@ import {
 } from '@novu/shared';
 import { validateConnectionMode } from '../../../../channel-connections/usecases/channel-connection.utils';
 import { ensureConnectDashboardSubscriber } from '../../../../channel-connections/usecases/ensure-connect-dashboard-subscriber';
-import { areHexDigestsEqual } from '../../../../shared/helpers/timing-safe-equal';
 import { CHAT_OAUTH_CALLBACK_PATH } from '../chat-oauth.constants';
-import { encodeOAuthState, splitOAuthState } from '../chat-oauth-state.util';
 import { GenerateSlackOauthUrlCommand } from './generate-slack-oauth-url.command';
 
 export type OAuthMode = 'connect' | 'link_user';
@@ -192,15 +191,7 @@ export class GenerateSlackOauthUrl {
       autoLinkUser,
     };
 
-    const payload = JSON.stringify(stateData);
-    const secret = await this.getEnvironmentApiKey(_environmentId);
-    const signature = createHash(secret, payload);
-
-    if (!signature) {
-      throw new BadRequestException('Failed to create OAuth state signature');
-    }
-
-    const base64EncodedState = encodeOAuthState(payload, signature);
+    const base64EncodedState = createSignedOAuthState(stateData, await this.getEnvironmentApiKey(_environmentId));
 
     this.logger.info({ stateData, base64EncodedState }, 'Slack OAuth secure state generated');
 
@@ -208,26 +199,7 @@ export class GenerateSlackOauthUrl {
   }
 
   static async validateAndDecodeState(state: string, environmentApiKey: string): Promise<StateData> {
-    try {
-      const { payload, signature } = splitOAuthState(state);
-
-      const expectedSignature = createHash(environmentApiKey, payload);
-      if (!areHexDigestsEqual(expectedSignature, signature)) {
-        throw new Error('Invalid state signature');
-      }
-
-      const data = JSON.parse(payload);
-
-      // Validate timestamp (5 minutes expiry)
-      const FIVE_MINUTES = 5 * 60 * 1000;
-      if (Date.now() - data.timestamp > FIVE_MINUTES) {
-        throw new Error('OAuth state expired');
-      }
-
-      return data;
-    } catch (error) {
-      throw new BadRequestException('Invalid OAuth state parameter');
-    }
+    return validateSignedOAuthState<StateData>(state, environmentApiKey, undefined, 'Invalid OAuth state parameter');
   }
 
   static buildRedirectUri(): string {

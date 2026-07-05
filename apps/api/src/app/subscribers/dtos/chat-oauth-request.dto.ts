@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString } from 'class-validator';
+import { IsMongoId, IsOptional, IsString } from 'class-validator';
 
 export class ChatOauthRequestDto {
   @ApiProperty({
@@ -15,6 +15,8 @@ export class ChatOauthRequestDto {
     type: String,
     required: true,
   })
+  @IsMongoId()
+  @IsString()
   environmentId: string;
 
   @ApiProperty({
@@ -49,6 +51,8 @@ export class ChatOauthCallbackRequestDto {
     type: String,
     required: true,
   })
+  @IsMongoId()
+  @IsString()
   environmentId: string;
 
   @ApiProperty({

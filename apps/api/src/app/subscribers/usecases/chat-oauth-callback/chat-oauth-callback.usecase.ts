@@ -15,7 +15,11 @@ import { ENDPOINT_TYPES, ICredentialsDto } from '@novu/shared';
 import axios from 'axios';
 import { CreateChannelEndpointCommand } from '../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.command';
 import { CreateChannelEndpoint } from '../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.usecase';
-import { validateSubscriberChatOAuthState } from '../chat-oauth/subscriber-chat-oauth-state.util';
+import {
+  assertSubscriberChatOAuthStateMatchesRoute,
+  decodeSubscriberChatOAuthState,
+  SubscriberChatOAuthState,
+} from '../chat-oauth/subscriber-chat-oauth-state.util';
 import { ChatOauthCallbackCommand } from './chat-oauth-callback.command';
 import { ChatOauthCallbackResult, ResponseTypeEnum } from './chat-oauth-callback.result';
 
@@ -36,21 +40,15 @@ export class ChatOauthCallback {
   ) {}
 
   async execute(command: ChatOauthCallbackCommand): Promise<ChatOauthCallbackResult> {
-    const integration = await this.getIntegration(command);
+    const stateData = await this.decodeState(command);
+
+    const integration = await this.getIntegration(stateData);
     const integrationCredentials = integration.credentials;
+    const environment = await this.getEnvironment(stateData.environmentId);
 
-    const { _organizationId, apiKeys } = await this.getEnvironment(command.environmentId);
+    const webhookUrl = await this.getWebhook(stateData, command.providerCode, integrationCredentials);
 
-    validateSubscriberChatOAuthState(command.state, apiKeys[0].key, {
-      environmentId: command.environmentId,
-      subscriberId: command.subscriberId,
-      providerId: command.providerId,
-      integrationIdentifier: command.integrationIdentifier,
-    });
-
-    const webhookUrl = await this.getWebhook(command, integrationCredentials);
-
-    await this.createSubscriber(_organizationId, command, webhookUrl, integration);
+    await this.createSubscriber(environment._organizationId, stateData, webhookUrl, integration);
 
     if (integrationCredentials?.redirectUrl) {
       return { typeOfResponse: ResponseTypeEnum.URL, resultString: integrationCredentials.redirectUrl };
@@ -59,26 +57,47 @@ export class ChatOauthCallback {
     return { typeOfResponse: ResponseTypeEnum.HTML, resultString: this.SCRIPT_CLOSE_TAB };
   }
 
+  private async decodeState(command: ChatOauthCallbackCommand): Promise<SubscriberChatOAuthState> {
+    try {
+      const stateData = await decodeSubscriberChatOAuthState(command.state, this.environmentRepository);
+
+      assertSubscriberChatOAuthStateMatchesRoute(stateData, {
+        environmentId: command.environmentId,
+        subscriberId: command.subscriberId,
+        providerId: command.providerId,
+        integrationIdentifier: command.integrationIdentifier,
+      });
+
+      return stateData;
+    } catch (error) {
+      if (error instanceof BadRequestException || error instanceof NotFoundException) {
+        throw error;
+      }
+
+      throw new BadRequestException('Invalid or expired OAuth state parameter');
+    }
+  }
+
   private async createSubscriber(
     organizationId: string,
-    command: ChatOauthCallbackCommand,
+    stateData: SubscriberChatOAuthState,
     webhookUrl: string,
     integration: IntegrationEntity
   ): Promise<void> {
     await this.createSubscriberUsecase.execute(
       CreateOrUpdateSubscriberCommand.create({
         organizationId,
-        environmentId: command.environmentId,
-        subscriberId: command?.subscriberId,
+        environmentId: stateData.environmentId,
+        subscriberId: stateData.subscriberId,
       })
     );
 
     await this.createChannelEndpoint.execute(
       CreateChannelEndpointCommand.create({
         organizationId: organizationId,
-        environmentId: command.environmentId,
+        environmentId: stateData.environmentId,
         integrationIdentifier: integration.identifier,
-        subscriberId: command.subscriberId,
+        subscriberId: stateData.subscriberId,
         type: ENDPOINT_TYPES.WEBHOOK,
         endpoint: {
           url: webhookUrl,
@@ -98,20 +117,21 @@ export class ChatOauthCallback {
   }
 
   private async getWebhook(
-    command: ChatOauthCallbackCommand,
+    stateData: SubscriberChatOAuthState,
+    providerCode: string,
     integrationCredentials: ICredentialsDto
   ): Promise<string> {
     let redirectUri = `${
       process.env.API_ROOT_URL
-    }/v1/subscribers/${command.subscriberId}/credentials/${command.providerId}/oauth/callback?environmentId=${command.environmentId}`;
+    }/v1/subscribers/${stateData.subscriberId}/credentials/${stateData.providerId}/oauth/callback?environmentId=${stateData.environmentId}`;
 
-    if (command.integrationIdentifier) {
-      redirectUri = `${redirectUri}&integrationIdentifier=${command.integrationIdentifier}`;
+    if (stateData.integrationIdentifier) {
+      redirectUri = `${redirectUri}&integrationIdentifier=${stateData.integrationIdentifier}`;
     }
 
     const body = {
       redirect_uri: redirectUri,
-      code: command.providerCode,
+      code: providerCode,
       client_id: integrationCredentials.clientId,
       client_secret: integrationCredentials.secretKey,
     };
@@ -127,26 +147,26 @@ export class ChatOauthCallback {
     if (res?.data?.ok === false) {
       const metaData = res?.data?.response_metadata?.messages?.join(', ');
       throw new BadRequestException(
-        `Provider ${command.providerId} returned error ${res.data.error}${metaData ? `, metadata:${metaData}` : ''}`
+        `Provider ${stateData.providerId} returned error ${res.data.error}${metaData ? `, metadata:${metaData}` : ''}`
       );
     }
 
     if (!webhook) {
-      throw new BadRequestException(`Provider ${command.providerId} did not return a webhook url`);
+      throw new BadRequestException(`Provider ${stateData.providerId} did not return a webhook url`);
     }
 
     return webhook;
   }
 
-  private async getIntegration(command: ChatOauthCallbackCommand) {
+  private async getIntegration(stateData: SubscriberChatOAuthState) {
     const query: Partial<IntegrationEntity> & { _environmentId: string } = {
-      _environmentId: command.environmentId,
+      _environmentId: stateData.environmentId,
       channel: ChannelTypeEnum.CHAT,
-      providerId: command.providerId,
+      providerId: stateData.providerId,
     };
 
-    if (command.integrationIdentifier) {
-      query.identifier = command.integrationIdentifier;
+    if (stateData.integrationIdentifier) {
+      query.identifier = stateData.integrationIdentifier;
     }
 
     const integration = await this.integrationRepository.findOne(query, undefined, {
@@ -155,8 +175,8 @@ export class ChatOauthCallback {
 
     if (integration == null) {
       throw new NotFoundException(
-        `Integration in environment ${command.environmentId} was not found, channel: ${ChannelTypeEnum.CHAT}, ` +
-          `providerId: ${command.providerId}`
+        `Integration in environment ${stateData.environmentId} was not found, channel: ${ChannelTypeEnum.CHAT}, ` +
+          `providerId: ${stateData.providerId}`
       );
     }
 

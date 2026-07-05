@@ -1,9 +1,14 @@
-import { BadRequestException } from '@nestjs/common';
-import { createHash, encodeOAuthState, splitOAuthState } from '@novu/application-generic';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  assertOAuthStateFieldsMatch,
+  createHash,
+  createSignedOAuthState,
+  peekOAuthStatePayload,
+  validateSignedOAuthState,
+} from '@novu/application-generic';
+import { EnvironmentRepository } from '@novu/dal';
 import { ChatProviderIdEnum } from '@novu/shared';
 import { areHexDigestsEqual } from '../../../shared/helpers/timing-safe-equal';
-
-export const SUBSCRIBER_CHAT_OAUTH_STATE_TTL_MS = 5 * 60 * 1000;
 
 export type SubscriberChatOAuthState = {
   environmentId: string;
@@ -17,57 +22,61 @@ export function createSubscriberChatOAuthState(
   stateData: Omit<SubscriberChatOAuthState, 'timestamp'>,
   environmentApiKey: string
 ): string {
-  const payload = JSON.stringify({
-    ...stateData,
-    timestamp: Date.now(),
-  } satisfies SubscriberChatOAuthState);
-
-  const signature = createHash(environmentApiKey, payload);
-
-  if (!signature) {
-    throw new BadRequestException('Failed to create OAuth state signature');
-  }
-
-  return encodeOAuthState(payload, signature);
+  return createSignedOAuthState<SubscriberChatOAuthState>(stateData, environmentApiKey);
 }
 
-export function validateSubscriberChatOAuthState(
+export async function decodeSubscriberChatOAuthState(
   state: string,
-  environmentApiKey: string,
-  expected: Omit<SubscriberChatOAuthState, 'timestamp'>
-): SubscriberChatOAuthState {
-  try {
-    const { payload, signature } = splitOAuthState(state);
-    const expectedSignature = createHash(environmentApiKey, payload);
+  environmentRepository: EnvironmentRepository
+): Promise<SubscriberChatOAuthState> {
+  const preliminaryData = peekOAuthStatePayload<Partial<SubscriberChatOAuthState>>(state);
 
-    if (!expectedSignature || !areHexDigestsEqual(expectedSignature, signature)) {
-      throw new Error('Invalid state signature');
-    }
-
-    const data = JSON.parse(payload) as SubscriberChatOAuthState;
-
-    if (Date.now() - data.timestamp > SUBSCRIBER_CHAT_OAUTH_STATE_TTL_MS) {
-      throw new Error('OAuth state expired');
-    }
-
-    if (data.environmentId !== expected.environmentId) {
-      throw new Error('OAuth state environment mismatch');
-    }
-
-    if (data.subscriberId !== expected.subscriberId) {
-      throw new Error('OAuth state subscriber mismatch');
-    }
-
-    if (data.providerId !== expected.providerId) {
-      throw new Error('OAuth state provider mismatch');
-    }
-
-    if (expected.integrationIdentifier !== data.integrationIdentifier) {
-      throw new Error('OAuth state integration mismatch');
-    }
-
-    return data;
-  } catch {
+  if (!preliminaryData.environmentId) {
     throw new BadRequestException('Invalid or expired OAuth state parameter');
   }
+
+  const environmentApiKey = await getEnvironmentApiKey(environmentRepository, preliminaryData.environmentId);
+
+  return validateSignedOAuthState<SubscriberChatOAuthState>(
+    state,
+    environmentApiKey,
+    undefined,
+    'Invalid or expired OAuth state parameter'
+  );
+}
+
+export function assertSubscriberChatOAuthStateMatchesRoute(
+  decoded: SubscriberChatOAuthState,
+  routeParams: Omit<SubscriberChatOAuthState, 'timestamp'>
+): void {
+  assertOAuthStateFieldsMatch(decoded, routeParams, 'Invalid or expired OAuth state parameter');
+}
+
+export function validateSubscriberHmac({
+  apiKey,
+  subscriberId,
+  hmacHash,
+}: {
+  apiKey: string;
+  subscriberId: string;
+  hmacHash: string;
+}) {
+  const expectedHmacHash = createHash(apiKey, subscriberId);
+
+  if (!expectedHmacHash || !areHexDigestsEqual(expectedHmacHash, hmacHash)) {
+    throw new BadRequestException('Invalid HMAC hash for subscriber chat OAuth');
+  }
+}
+
+async function getEnvironmentApiKey(
+  environmentRepository: EnvironmentRepository,
+  environmentId: string
+): Promise<string> {
+  const apiKeys = await environmentRepository.getApiKeys(environmentId);
+
+  if (!apiKeys.length) {
+    throw new NotFoundException(`Environment ID: ${environmentId} not found`);
+  }
+
+  return apiKeys[0].key;
 }
