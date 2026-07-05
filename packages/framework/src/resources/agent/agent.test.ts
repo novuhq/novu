@@ -2152,7 +2152,7 @@ describe('tool approval', () => {
     expect(posts.some((p) => p.reply instanceof PendingApproval)).toBe(false);
   });
 
-  it('routes an approval click to onToolApproval and resolves the card by default', async () => {
+  it('routes an approval click to onToolApproval without auto card cleanup when user-defined', async () => {
     const posts: any[] = [];
     vi.stubGlobal(
       'fetch',
@@ -2166,6 +2166,7 @@ describe('tool approval', () => {
     const seen: { decision?: { approved: boolean; toolCall: unknown } } = {};
     const testAgent = {
       id: 'a',
+      userOnToolApproval: true,
       handlers: {
         onMessage: () => undefined,
         onToolApproval: (decision: { approved: boolean; toolCall: unknown }) => {
@@ -2199,9 +2200,150 @@ describe('tool approval', () => {
 
     expect(seen.decision?.approved).toBe(true);
     expect(seen.decision?.toolCall).toMatchObject({ id: 'tc', name: 'doIt', input: { x: 1 } });
-    const editPost = posts.find((p) => p.edit?.messageId === 'm_prev');
-    expect(editPost).toBeTruthy();
-    // Default resolution edits the card to a resolved state (no actionable buttons).
-    expect(editPost.edit.content.card.title).toBe('Approved');
+    expect(posts.find((p) => p.edit?.messageId === 'm_prev')).toBeUndefined();
+    expect(
+      posts.find((p) => p.deleteMessages?.some((d: { messageId: string }) => d.messageId === 'm_prev'))
+    ).toBeUndefined();
+  });
+
+  it('does not auto-delete when userOnToolApproval is unset on a hand-built agent', async () => {
+    const posts: any[] = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (_url, init: any) => {
+        posts.push(JSON.parse(init.body));
+
+        return new Response(JSON.stringify({ messageId: 'm', platformThreadId: 't' }), { status: 200 });
+      })
+    );
+
+    const testAgent = {
+      id: 'a',
+      handlers: {
+        onMessage: () => undefined,
+        onToolApproval: () => undefined,
+      },
+    };
+
+    await dispatchAgentEvent({
+      agent: testAgent as never,
+      event: 'onAction',
+      bridge: approvalBridge({
+        event: 'onAction',
+        message: null,
+        history: [
+          {
+            role: 'agent',
+            type: 'tool_approval_request',
+            content: '',
+            toolData: { approvalId: 'tc', toolCallId: 'tc', toolName: 'doIt', input: { x: 1 } },
+            createdAt: '1',
+          },
+        ],
+        action: { id: buildApprovalActionId('approve', 'tc'), sourceMessageId: 'm_prev' },
+      }),
+      secretKey: 's',
+    });
+
+    expect(posts.find((p) => p.typing !== undefined)).toBeUndefined();
+    expect(
+      posts.find((p) => p.deleteMessages?.some((d: { messageId: string }) => d.messageId === 'm_prev'))
+    ).toBeUndefined();
+  });
+
+  it('auto-deletes the approval card when onToolApproval is framework-provided', async () => {
+    const posts: any[] = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (_url, init: any) => {
+        posts.push(JSON.parse(init.body));
+
+        return new Response(JSON.stringify({ messageId: 'm', platformThreadId: 't' }), { status: 200 });
+      })
+    );
+
+    const testAgent = {
+      id: 'a',
+      userOnToolApproval: false,
+      handlers: {
+        onMessage: () => undefined,
+        onToolApproval: async () => undefined,
+      },
+    };
+
+    await dispatchAgentEvent({
+      agent: testAgent as never,
+      event: 'onAction',
+      bridge: approvalBridge({
+        event: 'onAction',
+        message: null,
+        history: [
+          {
+            role: 'agent',
+            type: 'tool_approval_request',
+            content: '',
+            toolData: { approvalId: 'tc', toolCallId: 'tc', toolName: 'doIt', input: { x: 1 } },
+            createdAt: '1',
+          },
+        ],
+        action: { id: buildApprovalActionId('approve', 'tc'), sourceMessageId: 'm_prev' },
+      }),
+      secretKey: 's',
+    });
+
+    expect(posts[0].typing).toEqual({});
+    const deletePost = posts.find((p) =>
+      p.deleteMessages?.some((d: { messageId: string }) => d.messageId === 'm_prev')
+    );
+    expect(deletePost).toBeTruthy();
+    expect(posts.indexOf(deletePost!)).toBe(1);
+    expect(posts.find((p) => p.edit?.messageId === 'm_prev')).toBeUndefined();
+  });
+
+  it('starts typing before handler when onToolApproval is framework-provided', async () => {
+    const posts: any[] = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (_url, init: any) => {
+        posts.push(JSON.parse(init.body));
+
+        return new Response(JSON.stringify({ messageId: 'm', platformThreadId: 't' }), { status: 200 });
+      })
+    );
+
+    const testAgent = {
+      id: 'a',
+      userOnToolApproval: false,
+      handlers: {
+        onMessage: () => undefined,
+        onToolApproval: async (_decision: unknown, ctx: { reply: (text: string) => Promise<unknown> }) => {
+          await ctx.reply('resumed');
+        },
+      },
+    };
+
+    await dispatchAgentEvent({
+      agent: testAgent as never,
+      event: 'onAction',
+      bridge: approvalBridge({
+        event: 'onAction',
+        message: null,
+        history: [
+          {
+            role: 'agent',
+            type: 'tool_approval_request',
+            content: '',
+            toolData: { approvalId: 'tc', toolCallId: 'tc', toolName: 'doIt', input: { x: 1 } },
+            createdAt: '1',
+          },
+        ],
+        action: { id: buildApprovalActionId('approve', 'tc'), sourceMessageId: 'm_prev' },
+      }),
+      secretKey: 's',
+    });
+
+    expect(posts[0].typing).toEqual({});
+    expect(posts[1].deleteMessages).toEqual([{ messageId: 'm_prev' }]);
+    expect(posts[2].reply).toEqual({ markdown: 'resumed' });
   });
 });
