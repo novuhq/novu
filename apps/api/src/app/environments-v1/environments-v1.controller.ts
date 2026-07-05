@@ -4,6 +4,8 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   Post,
   Put,
@@ -37,8 +39,11 @@ import { UserSession } from '../shared/framework/user.decorator';
 import { CreateEnvironmentRequestDto } from './dtos/create-environment-request.dto';
 import { EnvironmentResponseDto } from './dtos/environment-response.dto';
 import { UpdateEnvironmentRequestDto } from './dtos/update-environment-request.dto';
+import { CreateApiKey } from './usecases/create-api-key/create-api-key.usecase';
 import { CreateEnvironmentCommand } from './usecases/create-environment/create-environment.command';
 import { CreateEnvironment } from './usecases/create-environment/create-environment.usecase';
+import { DeleteApiKeyCommand } from './usecases/delete-api-key/delete-api-key.command';
+import { DeleteApiKey } from './usecases/delete-api-key/delete-api-key.usecase';
 import { DeleteEnvironmentCommand } from './usecases/delete-environment/delete-environment.command';
 import { DeleteEnvironment } from './usecases/delete-environment/delete-environment.usecase';
 import { GetApiKeysCommand } from './usecases/get-api-keys/get-api-keys.command';
@@ -63,6 +68,8 @@ export class EnvironmentsControllerV1 {
     private createEnvironmentUsecase: CreateEnvironment,
     private updateEnvironmentUsecase: UpdateEnvironment,
     private getApiKeysUsecase: GetApiKeys,
+    private createApiKeyUsecase: CreateApiKey,
+    private deleteApiKeyUsecase: DeleteApiKey,
     private regenerateApiKeysUsecase: RegenerateApiKeys,
     private getEnvironmentUsecase: GetEnvironment,
     private getMyEnvironmentsUsecase: GetMyEnvironments,
@@ -206,6 +213,45 @@ export class EnvironmentsControllerV1 {
     });
 
     return await this.getApiKeysUsecase.execute(command);
+  }
+
+  @Post('/api-keys')
+  @ApiOperation({
+    summary: 'Create an additional api key',
+    description:
+      'Creates an additional API key for the current environment to support rolling key rotation without downtime.',
+  })
+  @ApiResponse(ApiKey, 201, true)
+  @ApiExcludeEndpoint()
+  @RequirePermissions(PermissionsEnum.API_KEY_WRITE)
+  async createOrganizationApiKey(@UserSession() user: UserSessionData): Promise<ApiKey[]> {
+    const command = GetApiKeysCommand.create({
+      userId: user._id,
+      organizationId: user.organizationId,
+      environmentId: user.environmentId,
+    });
+
+    return await this.createApiKeyUsecase.execute(command);
+  }
+
+  @Delete('/api-keys/:hash')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({
+    summary: 'Delete an api key',
+    description: 'Deletes a specific API key of the current environment, identified by its SHA-256 hash.',
+  })
+  @ApiParam({ name: 'hash', description: 'The SHA-256 hash of the API key to delete', type: String })
+  @ApiExcludeEndpoint()
+  @RequirePermissions(PermissionsEnum.API_KEY_WRITE)
+  async deleteOrganizationApiKey(@UserSession() user: UserSessionData, @Param('hash') hash: string): Promise<void> {
+    const command = DeleteApiKeyCommand.create({
+      userId: user._id,
+      organizationId: user.organizationId,
+      environmentId: user.environmentId,
+      hash,
+    });
+
+    await this.deleteApiKeyUsecase.execute(command);
   }
 
   @Post('/api-keys/regenerate')

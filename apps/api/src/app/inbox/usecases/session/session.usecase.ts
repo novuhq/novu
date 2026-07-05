@@ -65,7 +65,7 @@ import { KeylessAbuseGuardService } from '../../../keyless/keyless-abuse-guard.s
 import { GetOrganizationSettingsCommand } from '../../../organization/usecases/get-organization-settings/get-organization-settings.command';
 import { GetOrganizationSettings } from '../../../organization/usecases/get-organization-settings/get-organization-settings.usecase';
 import { ScheduleDto } from '../../../shared/dtos/schedule';
-import { isHmacValid } from '../../../shared/helpers/is-valid-hmac';
+import { isHmacValidForAnyKey } from '../../../shared/helpers/is-valid-hmac';
 import { SubscriberDto, SubscriberSessionRequestDto } from '../../dtos/subscriber-session-request.dto';
 import { SubscriberSessionResponseDto } from '../../dtos/subscriber-session-response.dto';
 import {
@@ -144,16 +144,18 @@ export class Session {
       throw new NotFoundException('The active in-app integration could not be found');
     }
 
+    const environmentApiKeys = environment.apiKeys.map((apiKey) => apiKey.key);
+
     if (inAppIntegration.credentials.hmac) {
       validateHmacEncryption({
-        apiKey: environment.apiKeys[0].key,
+        apiKeys: environmentApiKeys,
         subscriberId: subscriber.subscriberId,
         subscriberHash: command.requestData.subscriberHash,
       });
 
       if (command.requestData.context) {
         validateContextHmacEncryption({
-          apiKey: environment.apiKeys[0].key,
+          apiKeys: environmentApiKeys,
           context: command.requestData.context,
           contextHash: command.requestData.contextHash,
         });
@@ -179,8 +181,8 @@ export class Session {
         locale: subscriber.locale,
         data: subscriber.data as CustomDataType,
         timezone: subscriber.timezone,
-        allowUpdate: isHmacValid(
-          environment.apiKeys[0].key,
+        allowUpdate: isHmacValidForAnyKey(
+          environmentApiKeys,
           subscriber.subscriberId,
           command.requestData.subscriberHash
         ),
