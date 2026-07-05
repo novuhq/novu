@@ -1,7 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import {
   assertAllowedSinchSmsRegion,
-  assertSafeSmtpOutboundTarget,
+  assertSafeSmtpOutboundTargetSync,
   EmailProviderIdEnum,
   ICredentials,
   SmsProviderIdEnum,
@@ -18,7 +18,7 @@ export async function validateOutboundIntegrationCredentials(
 
   try {
     if (providerId === EmailProviderIdEnum.CustomSMTP) {
-      await assertSafeSmtpOutboundTarget(credentials.host, credentials.port, {
+      assertSafeSmtpOutboundTargetSync(credentials.host, credentials.port, {
         secure: credentials.secure,
         requireTls: credentials.requireTls,
         ignoreTls: credentials.ignoreTls,
