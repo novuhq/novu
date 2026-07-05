@@ -19,11 +19,11 @@ Novu webhook delivery is powered by [Svix](https://docs.svix.com/introduction). 
   </Step>
 
   <Step title="Select the Endpoints tab">
-    Select the **Endpoints** tab.
+    In the Novu dashboard, open **Settings** > **Webhooks**, then select **Endpoints**.
   </Step>
 
   <Step title="Add an endpoint">
-    Click **Add Endpoint**.
+    On the **Webhooks** page, click **Add Endpoint**.
   </Step>
 
   <Step title="Select a connector">
@@ -32,7 +32,7 @@ Novu webhook delivery is powered by [Svix](https://docs.svix.com/introduction). 
   </Step>
 
   <Step title="Enter a description">
-    Enter a **Description** to identify this endpoint.
+    Add a label that helps you identify this connector later.
   </Step>
 
   <Step title="Configure connection settings">
@@ -52,7 +52,7 @@ Novu webhook delivery is powered by [Svix](https://docs.svix.com/introduction). 
   </Step>
 
   <Step title="Create the endpoint">
-    Click **Create**.
+    Review the configuration, then click **Create**.
   </Step>
 
   <Step title="Test delivery">
@@ -111,23 +111,23 @@ Data warehouse connectors (ClickHouse, Snowflake, Redshift, and similar) insert 
 
 <Steps>
   <Step title="Create the destination table">
-    **Create the destination table** in your warehouse with columns for the fields you want to store (for example, `event_type`, `message_id`, `subscriber_id`, `payload`, `created_at`).
+    Create a table with columns for the webhook fields you want to store.
   </Step>
 
   <Step title="Grant insert permissions">
-    **Grant insert permissions** to the user or role Novu connects with.
+    Ensure the database user Novu connects with can insert rows into the destination table.
   </Step>
 
   <Step title="Add the connector endpoint">
-    **Add the connector endpoint** in Novu and fill in connection settings (URL, credentials, database, table name, and so on).
+    In Novu, add the connector endpoint and fill in connection settings (URL, credentials, database, and table).
   </Step>
 
   <Step title="Define the table schema">
-    **Define the table schema** in the connector configuration so it matches your destination table.
+    Map Novu payload fields to your destination table columns.
   </Step>
 
   <Step title="Write the transformation">
-    **Write the transformation** to map Novu payloads into that schema. Start from the dashboard template and adjust field names and types for your table.
+    Map Novu payloads into your table schema. Start from the dashboard template and adjust as needed.
   </Step>
 
   <Step title="Subscribe to event types">
@@ -203,7 +203,7 @@ The ClickHouse connector stores Novu webhook events directly in a ClickHouse tab
 
 <Steps>
   <Step title="Create a ClickHouse table">
-    Create a ClickHouse table to receive webhook events.
+    Define columns for the webhook event fields you want to store.
   </Step>
 
   <Step title="Grant insert permissions">
@@ -215,7 +215,7 @@ The ClickHouse connector stores Novu webhook events directly in a ClickHouse tab
   </Step>
 
   <Step title="Fill in connection settings">
-    Fill in connection settings, **table schema**, and **transformation**.
+    Enter credentials, define the table schema, and review the transformation.
   </Step>
 
   <Step title="Verify with Send Example">
@@ -244,7 +244,7 @@ The Snowflake connector stores Novu webhook events directly in a Snowflake table
 
 <Steps>
   <Step title="Create a Snowflake table">
-    Create a Snowflake table to receive webhook events.
+    Define columns for the webhook event fields you want to store.
   </Step>
 
   <Step title="Configure key-pair authentication">
@@ -256,7 +256,7 @@ The Snowflake connector stores Novu webhook events directly in a Snowflake table
   </Step>
 
   <Step title="Fill in connection settings">
-    Fill in connection settings, **table schema**, and **transformation**.
+    Enter credentials, define the table schema, and review the transformation.
   </Step>
 
   <Step title="Verify with Send Example">
@@ -292,11 +292,11 @@ The Amazon Redshift connector stores Novu webhook events directly in a Redshift 
 
 <Steps>
   <Step title="Create a Redshift table">
-    Create a Redshift table to receive webhook events.
+    Define columns for the webhook event fields you want to store.
   </Step>
 
   <Step title="Create an IAM user">
-    Create an IAM user with the permissions required to write data to Redshift.
+    Grant only the permissions this connector needs.
   </Step>
 
   <Step title="Select Redshift in Novu">
@@ -304,7 +304,7 @@ The Amazon Redshift connector stores Novu webhook events directly in a Redshift 
   </Step>
 
   <Step title="Fill in connection settings">
-    Fill in connection settings, **table schema**, and **transformation**.
+    Enter credentials, define the table schema, and review the transformation.
   </Step>
 
   <Step title="Verify with Send Example">
@@ -331,11 +331,11 @@ The Amazon SQS connector sends Novu webhook events to an Amazon SQS queue. Use i
 
 <Steps>
   <Step title="Create an SQS queue">
-    Create an SQS queue in your AWS account.
+    Use this queue as the destination for Novu webhook events.
   </Step>
 
   <Step title="Create an IAM user">
-    Create an IAM user with `sqs:SendMessage` permission on the target queue.
+    Grant only the permissions this connector needs.
   </Step>
 
   <Step title="Select SQS in Novu">
@@ -343,7 +343,7 @@ The Amazon SQS connector sends Novu webhook events to an Amazon SQS queue. Use i
   </Step>
 
   <Step title="Fill in connection settings">
-    Fill in connection settings and review the **transformation**.
+    Enter your connection credentials and review the transformation before saving.
   </Step>
 
   <Step title="Verify with Send Example">
@@ -370,11 +370,11 @@ The Amazon SNS connector publishes Novu webhook events to an Amazon SNS topic. U
 
 <Steps>
   <Step title="Create an SNS topic">
-    Create an SNS topic in your AWS account.
+    Use this topic as the destination for Novu webhook events.
   </Step>
 
   <Step title="Create an IAM user">
-    Create an IAM user with `sns:Publish` permission on the target topic.
+    Grant only the permissions this connector needs.
   </Step>
 
   <Step title="Select SNS in Novu">
@@ -382,7 +382,7 @@ The Amazon SNS connector publishes Novu webhook events to an Amazon SNS topic. U
   </Step>
 
   <Step title="Fill in connection settings">
-    Fill in connection settings and review the **transformation**.
+    Enter your connection credentials and review the transformation before saving.
   </Step>
 
   <Step title="Verify with Send Example">

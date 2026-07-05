@@ -1,6 +1,7 @@
 import type { CardElement, ChatElement, Emoji } from 'chat';
 import type { TriggerRecipientsPayload } from '../../shared';
 import type { Awaitable } from '../../types/util.types';
+import type { ToolApprovalRequestPayload } from './tool-approval/action-id';
 export type { TriggerRecipientsPayload };
 
 export enum AgentEventEnum {
@@ -74,6 +75,25 @@ export interface AgentSubscriber {
 }
 
 /**
+ * Tool-call details on a tool-related history entry. Which fields are set depends on the
+ * entry's `type` (`tool_approval_request`, `tool_approval_decision`, or `tool_result`).
+ */
+export interface AgentToolData {
+  /** Id of the tool call. */
+  toolCallId?: string;
+  /** Name of the tool. */
+  toolName?: string;
+  /** Id linking an approval request to its decision. */
+  approvalId?: string;
+  /** Arguments the tool was called with. */
+  input?: Record<string, unknown>;
+  /** Whether the tool call was approved or denied. */
+  approved?: boolean;
+  /** What the tool returned (or the `execution-denied` marker for a denied call). */
+  output?: unknown;
+}
+
+/**
  * A single entry in the conversation history.
  * `ctx.history` is an ordered array of these entries — map them to your LLM's
  * message format before making a model call.
@@ -81,14 +101,19 @@ export interface AgentSubscriber {
 export interface AgentHistoryEntry {
   /** Message role: `'user'`, `'assistant'`, or `'system'`. */
   role: string;
-  /** Content type: `'text'`, `'card'`, etc. */
+  /**
+   * The kind of entry: `'message'`, `'edit'`, `'signal'`, or a tool-lifecycle event
+   * (`'tool_approval_request'`, `'tool_approval_decision'`, `'tool_result'`).
+   */
   type: string;
   /** Plain-text representation of the message content. */
   content: string;
   richContent?: Record<string, unknown>;
   senderName?: string;
-  /** Present on system entries that carry a Novu signal (e.g. metadata updates). */
+  /** Structured data for `signal` entries (e.g. metadata updates). */
   signalData?: { type: string; payload?: Record<string, unknown> };
+  /** Tool-call details — set on tool-lifecycle entries (`tool_*`). */
+  toolData?: AgentToolData;
   createdAt: string;
 }
 
@@ -185,6 +210,59 @@ export interface AgentAction {
   sourceMessageId?: string;
 }
 
+/**
+ * A tool call that requires user approval before it runs.
+ * Pass this to `ctx.toolApproval.request()` when your agent wants to gate a tool.
+ */
+export interface AgentToolCall {
+  id: string;
+  name: string;
+  input?: Record<string, unknown>;
+}
+
+/**
+ * Returned by `ctx.toolApproval.request()`. Return it from `onMessage` to post
+ * an approval card and end the turn until the user approves or denies.
+ */
+export class PendingApproval {
+  readonly __novuPendingApproval = true as const;
+}
+
+/** Optional customization for tool approval messages. */
+export interface ToolApprovalConfig {
+  /**
+   * Build the approval message shown while waiting for a decision.
+   * Return a string or card. Defaults to a built-in Approve/Deny card.
+   *
+   * Use the provided `actionIds` on your `<Button>` elements so Novu can route
+   * the click back to `onToolApproval`.
+   */
+  renderApproval?: (args: { toolCall: AgentToolCall; actionIds: { approve: string; deny: string } }) => MessageContent;
+}
+
+/** Passed to `onToolApproval` when the user clicks Approve or Deny. */
+export interface ToolApprovalDecision {
+  /** The tool that was awaiting approval. */
+  toolCall: AgentToolCall;
+  /** `true` if the user approved, `false` if they denied. */
+  approved: boolean;
+  /**
+   * Handle to the approval message. Edit it to show a custom resolved state,
+   * or leave it unchanged to use the default resolved card.
+   */
+  approvalMessage: ReplyHandle;
+}
+
+/** Controls on `ctx.toolApproval` for gating tool calls. */
+export interface ToolApprovalControl {
+  /**
+   * Post an approval message and pause the turn.
+   * Return the result (`return ctx.toolApproval.request(...)`) from `onMessage`
+   * to end the turn until the user decides.
+   */
+  request(toolCall: AgentToolCall): Promise<PendingApproval>;
+}
+
 // ---------------------------------------------------------------------------
 // Context + handlers
 // ---------------------------------------------------------------------------
@@ -214,7 +292,7 @@ export interface ReplyHandle {
   edit(content: MessageContent, options?: { files?: FileRef[] }): Promise<ReplyHandle>;
 }
 
-export interface AgentContextBase {
+export interface AgentHandlerContext {
   /** Live state of the current conversation, including persisted metadata. */
   readonly conversation: AgentConversation;
   /**
@@ -247,6 +325,15 @@ export interface AgentContextBase {
    *   });
    */
   reply(content: MessageContent, options?: { files?: FileRef[] }): Promise<ReplyHandle>;
+  /**
+   * Gate tool calls that need user approval before they run.
+   *
+   * @example
+   *   if (needsApproval(toolCall)) {
+   *     return ctx.toolApproval.request(toolCall);
+   *   }
+   */
+  readonly toolApproval: ToolApprovalControl;
   /**
    * Mark the conversation as resolved. Optionally provide a summary for the resolution record.
    * Triggers the `onResolve` handler if one is registered.
@@ -316,50 +403,29 @@ export interface AgentContextBase {
    * (e.g. email). A normal turn that ends with `ctx.reply()` clears the status automatically.
    */
   typing: TypingControl;
-  /**
-   * Live plan-card control for the current turn. Returns a handle that renders the card immediately.
-   * Use `plan.step(title, fn)` for scoped steps or `plan.step(title)` for manual control.
-   * The plan auto-finalizes when the handler completes — call `finish()`/`fail()` only for early control.
-   *
-   * The plan card and the handler return value are separate: the card updates live while the handler
-   * runs; `return` (or `ctx.reply()`) posts the final reply message.
-   *
-   * @example
-   *   const plan = ctx.plan('Processing your refund…'); // card renders immediately
-   *   const order = await plan.step('Fetch order', () => fetchOrder(msg.text));
-   *   await plan.step('Issue refund', () => refund(order));
-   *   return 'Refund complete.'; // plan auto-finalizes; this is the reply message
-   *
-   * @example
-   *   const plan = ctx.plan('Processing…');
-   *   const step = plan.step('Reverse charge');
-   *   step.update({ title: 'Stripe: Reverse charge', details: 'customer cus_abc' });
-   *   step.done();
-   */
-  plan: PlanControl;
 }
 
 /** Context passed to the `onMessage` handler. */
-export interface AgentMessageContext extends AgentContextBase {
+export interface AgentMessageContext extends AgentHandlerContext {
   readonly event: 'onMessage';
 }
 
 /** Context passed to the `onAction` handler. */
-export interface AgentActionContext extends AgentContextBase {
+export interface AgentActionContext extends AgentHandlerContext {
   readonly event: 'onAction';
   /** The button click or interactive action that triggered this handler. */
   readonly action: AgentAction;
 }
 
 /** Context passed to the `onReaction` handler. */
-export interface AgentReactionContext extends AgentContextBase {
+export interface AgentReactionContext extends AgentHandlerContext {
   readonly event: 'onReaction';
   /** The emoji reaction that triggered this handler. */
   readonly reaction: AgentReaction;
 }
 
 /** Context passed to the `onResolve` handler. */
-export interface AgentResolveContext extends AgentContextBase {
+export interface AgentResolveContext extends AgentHandlerContext {
   readonly event: 'onResolve';
 }
 
@@ -404,6 +470,21 @@ export interface AgentHandlers {
    *   `ctx.subscriber` and `ctx.conversation`.
    */
   onResolve?: (ctx: AgentResolveContext) => Awaitable<MessageContent | void>;
+  /**
+   * Fires when the user approves or denies a tool call you previously gated with
+   * `ctx.toolApproval.request()`.
+   *
+   * @param decision - The tool, the user's verdict, and a handle to the approval message.
+   * @param ctx - Conversation context (history, subscriber, metadata, reply/trigger methods).
+   *
+   * Run the tool (or skip it), then return a reply or call `ctx.reply()` directly.
+   * Register this handler whenever you call `ctx.toolApproval.request()` in `onMessage`.
+   */
+  onToolApproval?: (decision: ToolApprovalDecision, ctx: AgentActionContext) => Awaitable<MessageContent | void>;
+  /**
+   * Customize how approval messages look. Omit to use the built-in Approve/Deny card.
+   */
+  toolApproval?: ToolApprovalConfig;
 }
 
 export interface Agent {
@@ -457,6 +538,18 @@ export type TriggerSignal = {
 
 export type Signal = MetadataSignal | TriggerSignal;
 
+/** The outcome of a tool call, reported back so it's saved in the conversation history. */
+export type ToolResult = {
+  /** Id of the tool call this result belongs to. */
+  toolCallId: string;
+  /** Name of the tool. */
+  toolName?: string;
+  /** What the tool returned (or the `execution-denied` marker for a denied call). */
+  output: unknown;
+  /** Optional human-readable summary shown in the conversation timeline. */
+  preview?: string;
+};
+
 /** In-place edit of a previously posted agent message. Identified by platform message id. */
 export interface EditPayload {
   messageId: string;
@@ -483,50 +576,6 @@ export type TypingControl = ((status?: string) => Promise<void>) & {
   stop: () => Promise<void>;
 };
 
-export type PlanTaskStatus = 'pending' | 'in_progress' | 'complete' | 'error';
-
-export interface PlanTaskInput {
-  id: string;
-  title?: string;
-  status: PlanTaskStatus;
-  details?: string;
-  group?: string;
-}
-
-export type PlanProgressPhase = 'awaiting-approval' | 'approved' | 'denied' | 'finished' | 'failed';
-
-export type PlanProgressEvent =
-  | { kind: 'task'; task: PlanTaskInput; cardTitle?: string }
-  | { kind: 'phase'; phase: PlanProgressPhase; title?: string }
-  | { kind: 'title'; title?: string };
-
-export type PlanStepOpts = {
-  details?: string;
-};
-
-export type PlanStepUpdate = {
-  title?: string;
-  details?: string;
-};
-
-export interface PlanStep {
-  update(opts: PlanStepUpdate): this;
-  done(details?: string): this;
-  fail(details?: string): this;
-}
-
-export interface PlanHandle {
-  /** @internal Used by trackPlanTools — do not call directly. */
-  upsertTask(id: string, task: Omit<PlanTaskInput, 'id'>): void;
-  step<T>(title: string, fn: () => Promise<T>, opts?: PlanStepOpts): Promise<T>;
-  step(title: string, opts?: PlanStepOpts): PlanStep;
-  title(text: string): this;
-  finish(title?: string): Promise<void>;
-  fail(title?: string): Promise<void>;
-}
-
-export type PlanControl = (title?: string) => PlanHandle;
-
 export interface AgentReplyPayload {
   conversationId: string;
   integrationIdentifier: string;
@@ -534,9 +583,10 @@ export interface AgentReplyPayload {
   edit?: EditPayload;
   resolve?: { summary?: string };
   signals?: Signal[];
+  toolResults?: ToolResult[];
+  toolApprovalRequest?: ToolApprovalRequestPayload;
   addReactions?: AddReactionPayload[];
   typing?: TypingOp;
-  planProgress?: PlanProgressEvent;
 }
 
 /** Shape returned by /agents/:id/reply when a reply or edit was delivered. */

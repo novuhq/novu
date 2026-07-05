@@ -1,15 +1,17 @@
 import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
 import { encryptSecret, ResourceValidatorService } from '@novu/application-generic';
-import { EnvironmentVariableRepository, ErrorCodesEnum } from '@novu/dal';
+import { EnvironmentRepository, EnvironmentVariableRepository, ErrorCodesEnum } from '@novu/dal';
 import { EnvironmentVariableType, SECRET_MASK } from '@novu/shared';
 import { EnvironmentVariableResponseDto } from '../../dtos/environment-variable-response.dto';
 import { toEnvironmentVariableResponseDto } from '../get-environment-variables/get-environment-variables.usecase';
+import { validateEnvironmentVariableValues } from '../validate-environment-variable-values';
 import { CreateEnvironmentVariableCommand } from './create-environment-variable.command';
 
 @Injectable()
 export class CreateEnvironmentVariable {
   constructor(
     private environmentVariableRepository: EnvironmentVariableRepository,
+    private environmentRepository: EnvironmentRepository,
     private resourceValidatorService: ResourceValidatorService
   ) {}
 
@@ -26,6 +28,13 @@ export class CreateEnvironmentVariable {
     }
 
     const incomingValues = command.values ?? [];
+
+    await validateEnvironmentVariableValues(
+      this.environmentRepository,
+      command.organizationId,
+      incomingValues
+    );
+
     const maskedValue = incomingValues.find((v) => v.value === SECRET_MASK);
     if (maskedValue) {
       throw new BadRequestException(

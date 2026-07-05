@@ -16,6 +16,15 @@ export class PreviewPayloadDto {
   subscriber?: SubscriberResponseDtoOptional;
 
   @ApiPropertyOptional({
+    description: 'Partial actor information',
+    type: SubscriberResponseDtoOptional,
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => SubscriberResponseDtoOptional)
+  actor?: SubscriberResponseDtoOptional;
+
+  @ApiPropertyOptional({
     description: 'Payload data',
     type: 'object',
     additionalProperties: true,

@@ -1,9 +1,10 @@
 ---
-title: 'Workflows'
-description: 'Learn what workflows are and how they work in Novu.'
+title: 'How do workflows work in Novu?'
+sidebarTitle: 'Workflows'
+description: 'Learn what workflows are and how they orchestrate multi-channel notification delivery in Novu.'
 ---
 
-In Novu, a workflow is the blueprint that defines the end-to-end process for delivering a notification to one or more subscribers. It acts as the central logic layer for routing messages across different channels such as email, SMS, in-app, push, or chat and controlling what notification to send, when to send it and through which channels they are sent.
+A Novu workflow defines the end-to-end process for delivering a notification to one or more subscribers across email, SMS, in-app, push, and chat channels. Workflows control what to send, when to send it, and which channels to use.
 
 You can think of a workflow as a CI/CD pipeline for notifications or an assembly line:
 - The event enters at the start.
@@ -19,7 +20,7 @@ Or complex:
 
 It can also be extended further than these depending on your use case.
 
-## Workflow steps
+## What are workflow steps?
 
 A workflow in Novu is built as a sequence of steps, each representing a distinct action or delivery mechanism. These steps are the building blocks of your notification logic. They determine what happens, when it happens, and how the message is sent to the user.
 

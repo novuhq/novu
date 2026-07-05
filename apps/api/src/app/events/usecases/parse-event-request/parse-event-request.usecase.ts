@@ -466,6 +466,31 @@ export class ParseEventRequest {
 
   @Instrument()
   private modifyAttachments(command: ParseEventRequestCommand): void {
+    const invalidAttachmentIndices = command.payload.attachments
+      .map((attachment, index) => {
+        const file = attachment?.file;
+
+        if (file === null || file === undefined) {
+          return index;
+        }
+
+        if (isAttachmentFileContent(file)) {
+          return -1;
+        }
+
+        return index;
+      })
+      .filter((index) => index >= 0);
+
+    if (invalidAttachmentIndices.length > 0) {
+      throw new PayloadValidationException(
+        invalidAttachmentIndices.map((index) => ({
+          field: `attachments.${index}.file`,
+          message: 'Each attachment must include file content as a base64-encoded string or Buffer',
+        }))
+      );
+    }
+
     // eslint-disable-next-line no-param-reassign
     command.payload.attachments = command.payload.attachments.map((attachment) => {
       const randomId = randomBytes(16).toString('hex');
@@ -473,7 +498,7 @@ export class ParseEventRequest {
       return {
         ...attachment,
         name: attachment.name,
-        file: Buffer.from(attachment.file, 'base64'),
+        file: toAttachmentFileBuffer(attachment.file),
         storagePath: `${command.organizationId}/${command.environmentId}/${randomId}/${attachment.name}`,
       };
     });
@@ -559,4 +584,32 @@ export class ParseEventRequest {
 
     return validate;
   }
+}
+
+type SerializedBuffer = { type: 'Buffer'; data: number[] };
+
+function isSerializedBuffer(value: unknown): value is SerializedBuffer {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const candidate = value as Partial<SerializedBuffer>;
+
+  return candidate.type === 'Buffer' && Array.isArray(candidate.data);
+}
+
+function isAttachmentFileContent(file: unknown): file is string | Buffer | SerializedBuffer {
+  return typeof file === 'string' || Buffer.isBuffer(file) || isSerializedBuffer(file);
+}
+
+function toAttachmentFileBuffer(file: string | Buffer | SerializedBuffer): Buffer {
+  if (Buffer.isBuffer(file)) {
+    return file;
+  }
+
+  if (isSerializedBuffer(file)) {
+    return Buffer.from(file.data);
+  }
+
+  return Buffer.from(file, 'base64');
 }

@@ -1,59 +1,90 @@
 ---
 title: 'Authentication'
-description: 'Configure authentication for Novu with OAuth, SSO, MFA, and more. Available for Enterprise customers on Novu Cloud.'
+description: 'Sign in to Novu Cloud with Google, GitHub, email and password, or enterprise OIDC and SAML. Learn about MFA, sessions, and account security.'
 ---
 
-
 <Note>
-  This feature is only available to Enterprise customers on our [Cloud
-  platform](https://dashboard.novu.co/?utm_campaign=docs_account_authentication). For more
-  information, please see our [Enterprise plan](https://novu.co/pricing) in the pricing page.
+  Dashboard authentication described here applies to [Novu Cloud](https://dashboard.novu.co). Self-hosted deployments use email and password only. See [Self-Hosted and Novu Cloud](/community/self-hosted-and-novu-cloud) for a full comparison.
 </Note>
 
-## Key capabilities
+Novu Cloud handles sign-in, session management, and account security for the dashboard. After you authenticate, you can access every [organization](/platform/account/organizations) you belong to and switch between them without signing in again.
 
-### Out-of-the-box OAuth providers
+## Sign-in methods
 
-Currently providing authentication via Github, with the plan to expand to a number of other providers such as:
+Novu Cloud supports the following ways to create an account and sign in:
 
-- Google
-- Facebook
-- Apple
-- Microsoft
-- LinkedIn
+### Email and password
 
-### SSO, SAML and OpenID connect
+Create an account with your email address and a password. Novu sends a verification email before your account is fully activated. Use this method if you prefer a traditional credential-based sign-in or if your organization does not use SSO.
 
-Novu provides a streamlined implementation of SAML and OpenID Connect protocols, allowing integration with a wide range of enterprise IdPs. Arrange setup of known providers like Okta, Microsoft Entra ID, Google workspace or a custom SSO provider.
+### Google and GitHub
 
-Novu adheres to industry-standard security protocols to ensure secure and reliable user authentication.
+Sign up or sign in with your existing **Google** or **GitHub** account. Social sign-in links your Novu account to the provider you choose, so you do not need a separate password.
 
-### Advanced security features
+### Enterprise SSO (OIDC and SAML)
+
+Enterprise customers can connect a corporate identity provider using **OpenID Connect (OIDC)** or **SAML 2.0**. This lets your team sign in with credentials managed by your organization—common providers include Okta, Microsoft Entra ID, and Google Workspace.
+
+For setup details, see [SAML SSO & SCIM](/platform/account/sso).
+
+## Multi-factor authentication (MFA)
+
+Add a second verification step to protect your account. Novu supports:
+
+- **Authenticator app (TOTP)** — Use an app such as Google Authenticator or 1Password to generate time-based codes.
+- **SMS verification code** — Receive a one-time code by text message where enabled.
+
+Users can enable MFA from their account security settings. Enterprise customers can require MFA for all organization members—contact [support@novu.co](mailto:support@novu.co) to configure organization-wide MFA policies.
+
+## Session management
+
+Novu manages authenticated sessions with industry-standard security practices:
+
+- **Active sessions** — View devices and browsers where you are currently signed in.
+- **Session revocation** — Sign out of a specific device or end all active sessions from your account settings.
+- **Automatic expiration** — Sessions expire after a period of inactivity to reduce the risk of unauthorized access.
+
+## Authorization after sign-in
+
+Authentication confirms who you are. [Authorization](/platform/account/roles-and-permissions) controls what you can do inside each organization:
+
+- Each organization has its own [roles and permissions](/platform/account/roles-and-permissions) (Owner, Admin, Author, Viewer).
+- [Team members](/platform/account/manage-members) are invited and managed per organization.
+- Enterprise customers can use [SAML SSO and SCIM](/platform/account/sso) for centralized provisioning and offboarding.
+
+## Best practices
 
 <AccordionGroup>
-  <Accordion title="Multi-Factor Authentication (MFA)">
-    Robust MFA options including SMS passcodes, authenticator apps, hardware keys, and recovery
-    codes, enhancing security and reducing the risk of unauthorized access.
+  <Accordion title="Prefer SSO for teams">
+    If your company uses a corporate identity provider, enable [OIDC or SAML SSO](/platform/account/sso) so access is governed by your existing IT policies, including password rotation and account deactivation.
   </Accordion>
-  <Accordion title="Session Management">
-    Comprehensive session management features including active device monitoring, session
-    revocation, and adaptive session durations to balance security and user convenience.
+  <Accordion title="Enable MFA for privileged roles">
+    Require MFA for users with Owner or Admin roles. Owners control billing, API keys, and team membership. Admins can manage workflows, integrations, and API keys.
+  </Accordion>
+  <Accordion title="Use verified domains for onboarding">
+    Add a [verified domain](/platform/account/manage-members#add-a-verified-domain-for-automatic-or-request-based-onboarding) so colleagues with your company email can join your organization through a controlled process instead of ad-hoc sign-ups.
+  </Accordion>
+  <Accordion title="Remove access promptly">
+    When someone leaves your team, remove them from the organization or rely on SCIM deprovisioning so their dashboard access is revoked immediately.
+  </Accordion>
+  <Accordion title="Choose the right data region at sign-up">
+    Select your preferred [data region](/platform/additional-resources/security#available-regions) when creating your account. Region selection affects where your notification data is stored.
   </Accordion>
 </AccordionGroup>
 
-### User management and customization
+## Related topics
 
 <Columns cols={2}>
-  <Card title="Roles and permissions">
-    Detailed control over user roles and permissions to tailor access levels and ensure appropriate
-    access control.
+  <Card title="Organizations" icon="building-2" href="/platform/account/organizations">
+    How organizations work, creating orgs, and switching between them.
   </Card>
-  <Card title="User invitations and Onboarding">
-    Smooth onboarding processes with customizable invitation workflows, ensuring a positive initial
-    user experience.
+  <Card title="Roles and permissions" icon="shield" href="/platform/account/roles-and-permissions">
+    Role-based access control for dashboard actions.
   </Card>
-  <Card title="Profile management">
-    Intuitive profile management for users to update their information and authentication methods
-    easily.
+  <Card title="Team members" icon="users" href="/platform/account/manage-members">
+    Invite, manage, and remove organization members.
+  </Card>
+  <Card title="Security and compliance" icon="lock" href="/platform/additional-resources/security">
+    SOC 2, ISO 27001, GDPR, HIPAA, and data residency.
   </Card>
 </Columns>

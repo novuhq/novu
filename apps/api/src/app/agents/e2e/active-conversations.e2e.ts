@@ -9,6 +9,8 @@ import { ConversationActivationService } from '../conversation-runtime/conversat
 import { OutboundGateway } from '../conversation-runtime/egress/outbound.gateway';
 import { ChatInstanceRegistry } from '../conversation-runtime/ingress/chat-instance.registry';
 import { AgentInboundHandler } from '../conversation-runtime/ingress/inbound-turn.handler';
+import { HandleAgentReplyCommand } from '../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.command';
+import { HandleAgentReply } from '../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.usecase';
 import { AgentExecutionParams, BridgeExecutorService } from '../conversation-runtime/runtime/bridge-executor.service';
 import { RuntimeResolver } from '../conversation-runtime/runtime/runtime-resolver.service';
 import { AgentEventEnum } from '../shared/enums/agent-event.enum';
@@ -61,6 +63,7 @@ describe('Active Conversations metering - inbound flow #novu-v2', () => {
   let inboundHandler: AgentInboundHandler;
   let configResolver: AgentConfigResolver;
   let activationService: ConversationActivationService;
+  let handleAgentReply: HandleAgentReply;
   let bridgeCalls: AgentExecutionParams[];
 
   beforeEach(async () => {
@@ -68,11 +71,37 @@ describe('Active Conversations metering - inbound flow #novu-v2', () => {
     inboundHandler = testServer.getService(AgentInboundHandler);
     configResolver = testServer.getService(AgentConfigResolver);
     activationService = testServer.getService(ConversationActivationService);
+    handleAgentReply = testServer.getService(HandleAgentReply);
+
+    // Active conversations are counted on a delivered agent reply, not on the
+    // raw inbound message. Stub the network delivery and have the (stubbed)
+    // bridge simulate the agent replying back for every dispatched message —
+    // this mirrors production, where the bridge posts a reply via the reply
+    // API, and is what drives activation counting.
+    sinon
+      .stub(testServer.getService(OutboundGateway), 'deliver')
+      .resolves({ messageId: 'sent-e2e', platformThreadId: 'thread-e2e' } as any);
 
     bridgeCalls = [];
     const bridgeExecutor = testServer.getService(BridgeExecutorService);
     sinon.stub(bridgeExecutor, 'execute').callsFake(async (params: AgentExecutionParams) => {
       bridgeCalls.push(params);
+
+      if (params.event !== AgentEventEnum.ON_MESSAGE) {
+        return;
+      }
+
+      await handleAgentReply.execute(
+        HandleAgentReplyCommand.create({
+          userId: ctx.session.user._id,
+          environmentId: params.config.environmentId,
+          organizationId: params.config.organizationId,
+          conversationId: params.conversation._id,
+          agentIdentifier: params.config.agentIdentifier,
+          integrationIdentifier: params.config.integrationIdentifier,
+          reply: { markdown: 'ack' },
+        })
+      );
     });
   });
 

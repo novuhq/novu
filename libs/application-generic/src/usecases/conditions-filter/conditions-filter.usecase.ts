@@ -346,34 +346,90 @@ export class ConditionsFilter extends Filter {
     command: ConditionsFilterCommand,
     filterProcessingDetails: FilterProcessingDetails
   ): Promise<boolean> {
-    let passed = false;
+    try {
+      let passed = false;
 
-    if (child.on === FilterPartTypeEnum.WEBHOOK) {
-      if (process.env.NODE_ENV === 'test') return true;
-      child.value = await this.compileFilter(child.value, variables, command.job);
-      const res = await this.getWebhookResponse(child, variables, command);
-      passed = this.processFilterEquality({ payload: undefined, webhook: res }, child, filterProcessingDetails);
+      if (child.on === FilterPartTypeEnum.WEBHOOK) {
+        if (process.env.NODE_ENV === 'test') return true;
+        child.value = await this.compileFilter(child.value, variables, command.job);
+        const res = await this.getWebhookResponse(child, variables, command);
+        passed = this.processFilterEquality({ payload: undefined, webhook: res }, child, filterProcessingDetails);
+      }
+
+      if (
+        child.on === FilterPartTypeEnum.TENANT ||
+        child.on === FilterPartTypeEnum.PAYLOAD ||
+        child.on === FilterPartTypeEnum.SUBSCRIBER
+      ) {
+        child.value = await this.compileFilter(child.value, variables, command.job);
+
+        passed = this.processFilterEquality(variables, child, filterProcessingDetails);
+      }
+
+      if (child.on === FilterPartTypeEnum.IS_ONLINE || child.on === FilterPartTypeEnum.IS_ONLINE_IN_LAST) {
+        passed = await this.processIsOnline(child, command, filterProcessingDetails);
+      }
+
+      if (child.on === FilterPartTypeEnum.PREVIOUS_STEP) {
+        passed = await this.processPreviousStep(child, command, filterProcessingDetails);
+      }
+
+      return passed;
+    } catch (error) {
+      if (this.isRetryableWebhookFilterError(error)) {
+        throw error;
+      }
+
+      await this.recordFilterEvaluationError(error, child, command, filterProcessingDetails);
+
+      return false;
     }
+  }
 
-    if (
-      child.on === FilterPartTypeEnum.TENANT ||
-      child.on === FilterPartTypeEnum.PAYLOAD ||
-      child.on === FilterPartTypeEnum.SUBSCRIBER
-    ) {
-      child.value = await this.compileFilter(child.value, variables, command.job);
+  private isRetryableWebhookFilterError(error: unknown): boolean {
+    const message = error instanceof Error ? error.message : String(error);
 
-      passed = this.processFilterEquality(variables, child, filterProcessingDetails);
+    return (
+      message.includes('Exception while performing webhook request.') ||
+      message.includes('Webhook URL blocked by SSRF protection.')
+    );
+  }
+
+  private async recordFilterEvaluationError(
+    error: unknown,
+    child: FilterParts,
+    command: ConditionsFilterCommand,
+    filterProcessingDetails: FilterProcessingDetails
+  ): Promise<void> {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const field = 'field' in child ? child.field : '';
+    const operator = 'operator' in child ? child.operator : FieldOperatorEnum.EQUAL;
+    const expected = 'value' in child ? `${child.value ?? ''}` : '';
+
+    filterProcessingDetails.addCondition({
+      filter: FILTER_TO_LABEL[child.on],
+      field,
+      expected,
+      actual: errorMessage,
+      operator,
+      passed: false,
+    });
+
+    try {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          detail: DetailEnum.PROCESSING_STEP_FILTER_ERROR,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify({ error: errorMessage, filterOn: child.on, field }),
+        })
+      );
+    } catch {
+      // Execution detail logging is best-effort; the filter still fails closed.
     }
-
-    if (child.on === FilterPartTypeEnum.IS_ONLINE || child.on === FilterPartTypeEnum.IS_ONLINE_IN_LAST) {
-      passed = await this.processIsOnline(child, command, filterProcessingDetails);
-    }
-
-    if (child.on === FilterPartTypeEnum.PREVIOUS_STEP) {
-      passed = await this.processPreviousStep(child, command, filterProcessingDetails);
-    }
-
-    return passed;
   }
   private async handleGroupFilters(
     filter: StepFilter,

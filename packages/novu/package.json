@@ -77,7 +77,7 @@
     "@novu/shared": "workspace:*",
     "@segment/analytics-node": "^1.1.4",
     "async-sema": "3.0.1",
-    "axios": "^1.17.0",
+    "axios": "^1.18.1",
     "chalk": "4.1.2",
     "cli-highlight": "2.1.11",
     "cli-table3": "0.6.5",

@@ -51,7 +51,7 @@
     "@vonage/auth": "^1.7.0",
     "@vonage/server-sdk": "^3.10.0",
     "africastalking": "^0.7.9",
-    "axios": "^1.17.0",
+    "axios": "^1.18.1",
     "braze-api": "^2.5.6",
     "cross-fetch": "^4.0.0",
     "date-fns": "2.29.3",
@@ -75,7 +75,7 @@
     "resend": "^6.0.3",
     "sms77-client": "^2.14.0",
     "sns-validator": "^0.3.5",
-    "svix": "^1.29.0",
+    "svix": "^1.96.1",
     "telnyx": "^1.23.0",
     "twilio": "^4.19.3",
     "uuid": "^11.1.1"
