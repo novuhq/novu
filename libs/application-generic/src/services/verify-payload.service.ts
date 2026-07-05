@@ -1,6 +1,17 @@
 import { BadRequestException } from '@nestjs/common';
 import { ITemplateVariable, TemplateSystemVariables } from '@novu/shared';
 
+const PROTOTYPE_POLLUTION_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+const TEMPLATE_VARIABLE_SEGMENT_REGEX = /^[a-zA-Z_][a-zA-Z0-9_-]*$/;
+
+function isSafeVariablePathSegment(segment: string): boolean {
+  if (PROTOTYPE_POLLUTION_KEYS.has(segment)) {
+    return false;
+  }
+
+  return TEMPLATE_VARIABLE_SEGMENT_REGEX.test(segment);
+}
+
 export class VerifyPayloadService {
   checkRequired(variables: ITemplateVariable[], payload: Record<string, unknown>): string[] {
     const invalidKeys: string[] = [];
@@ -41,18 +52,28 @@ export class VerifyPayloadService {
   }
 
   fillDefaults(variables: ITemplateVariable[]): Record<string, unknown> {
-    const payload = {};
+    const payload = Object.create(null) as Record<string, unknown>;
 
     for (const variable of variables.filter(
       (elem) => elem.defaultValue !== undefined && elem.defaultValue !== null && !this.isSystemVariable(elem.name)
     )) {
-      this.setNestedKey(payload, variable.name.split('.'), variable.defaultValue);
+      const pathSegments = variable.name.split('.');
+
+      if (!pathSegments.every(isSafeVariablePathSegment)) {
+        continue;
+      }
+
+      this.setNestedKey(payload, pathSegments, variable.defaultValue);
     }
 
     return payload;
   }
 
-  private setNestedKey(obj, path, value) {
+  private setNestedKey(obj: Record<string, unknown>, path: string[], value: string | boolean): void {
+    if (path.length === 0 || !path.every(isSafeVariablePathSegment)) {
+      return;
+    }
+
     if (path.length === 1) {
       if (value !== '') {
         obj[path[0]] = value;
@@ -61,11 +82,11 @@ export class VerifyPayloadService {
       return;
     }
 
-    if (!obj[path[0]]) {
-      obj[path[0]] = {};
+    if (!obj[path[0]] || typeof obj[path[0]] !== 'object') {
+      obj[path[0]] = Object.create(null);
     }
 
-    return this.setNestedKey(obj[path[0]], path.slice(1), value);
+    this.setNestedKey(obj[path[0]] as Record<string, unknown>, path.slice(1), value);
   }
 
   isSystemVariable(variableName: string): boolean {
