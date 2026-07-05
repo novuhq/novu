@@ -5,6 +5,7 @@ import {
   areNovuManagedClaudeCredentialsSet,
   areNovuSlackCredentialsSet,
   areNovuSmsCredentialsSet,
+  assertInfobipSmsCredentials,
   decryptCredentials,
   encryptCredentials,
   PinoLogger,
@@ -194,6 +195,12 @@ export class CreateIntegration {
       const managedCredentials = ensureWhatsAppManagedCredentials({
         providerId: command.providerId,
         nextCredentials: command.credentials ?? {},
+      });
+
+      assertInfobipSmsCredentials({
+        providerId: command.providerId,
+        channel: command.channel,
+        credentials: managedCredentials,
       });
 
       const query: IntegrationQuery = {
