@@ -12,8 +12,14 @@ function isAllowedInfobipHostname(hostname: string): boolean {
   return normalized === 'api.infobip.com' || normalized.endsWith('.api.infobip.com');
 }
 
-export function resolveSafeInfobipBaseUrl(rawUrl: string, blockedPrefix = DEFAULT_BLOCKED_PREFIX): string {
-  const url = normalizeOutboundHttpUrl(rawUrl);
+export function resolveSafeInfobipBaseUrl(rawUrl: string | undefined, blockedPrefix = DEFAULT_BLOCKED_PREFIX): string {
+  const trimmed = rawUrl?.trim();
+
+  if (!trimmed) {
+    throw new Error(`${blockedPrefix}: Base URL is required.`);
+  }
+
+  const url = normalizeOutboundHttpUrl(trimmed);
 
   if (!url) {
     throw new Error(`${blockedPrefix}: Invalid URL format.`);

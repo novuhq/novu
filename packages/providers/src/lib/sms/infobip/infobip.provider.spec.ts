@@ -97,3 +97,13 @@ test('rejects unsafe base URLs at construction time', () => {
       })
   ).toThrow(/Infobip base URL blocked/);
 });
+
+test('rejects missing base URLs at construction time', () => {
+  expect(
+    () =>
+      new InfobipSmsProvider({
+        baseUrl: '',
+        apiKey: '<infobip-auth-token>',
+      })
+  ).toThrow('Infobip base URL blocked: Base URL is required.');
+});

@@ -30,3 +30,7 @@ test('rejects non-https URLs', () => {
     'Infobip base URL blocked: Only https URLs are allowed.'
   );
 });
+
+test('rejects missing base URLs', () => {
+  expect(() => resolveSafeInfobipBaseUrl(undefined)).toThrow('Infobip base URL blocked: Base URL is required.');
+});

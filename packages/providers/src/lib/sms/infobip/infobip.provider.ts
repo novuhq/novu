@@ -14,13 +14,13 @@ export class InfobipSmsProvider extends BaseProvider implements ISmsProvider {
 
   constructor(
     private config: {
-      baseUrl?: string;
+      baseUrl: string;
       apiKey?: string;
       from?: string;
     }
   ) {
     super();
-    const baseUrl = resolveSafeInfobipBaseUrl(this.config.baseUrl ?? '');
+    const baseUrl = resolveSafeInfobipBaseUrl(this.config.baseUrl);
 
     this.infobipClient = new Infobip({
       baseUrl,
