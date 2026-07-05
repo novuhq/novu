@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { encryptSecret } from '@novu/application-generic';
 import { EnvironmentRepository, EnvironmentVariableRepository } from '@novu/dal';
 import { SECRET_MASK } from '@novu/shared';
@@ -22,6 +22,16 @@ export class UpdateEnvironmentVariable {
 
     if (!existing) {
       throw new NotFoundException(`Environment variable with key "${command.variableKey}" not found`);
+    }
+
+    if (
+      command.restrictToUserEnvironment &&
+      (command.key !== undefined || command.type !== undefined || command.isSecret !== undefined)
+    ) {
+      throw new ForbiddenException(
+        'This authentication scheme is scoped to a single environment and cannot update shared environment variable metadata. ' +
+          'Only per-environment values can be updated, or authenticate with a session token.'
+      );
     }
 
     const updateBody: Record<string, unknown> = {};

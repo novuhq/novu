@@ -79,6 +79,49 @@ describe('Environment Variables API key environment scope - /environment-variabl
       expect(body.message).to.contain('is scoped to a single environment');
     });
 
+    it('should forbid updating shared variable metadata without values via API key', async () => {
+      const {
+        body: { data: created },
+      } = await session.testAgent.post('/v1/environment-variables').send({
+        key: 'METADATA_SCOPE_TEST',
+        values: [
+          { _environmentId: devEnvironmentId, value: 'dev-value' },
+          { _environmentId: prodEnvironmentId, value: 'prod-value' },
+        ],
+      });
+
+      expect(created.key).to.equal('METADATA_SCOPE_TEST');
+
+      const { body } = await session.testAgent
+        .patch('/v1/environment-variables/METADATA_SCOPE_TEST')
+        .set('authorization', `ApiKey ${session.apiKey}`)
+        .send({
+          key: 'RENAMED_BY_API_KEY',
+        });
+
+      expect(body.statusCode).to.equal(403);
+      expect(body.message).to.contain('cannot update shared environment variable metadata');
+    });
+
+    it('should allow bearer auth to update shared variable metadata', async () => {
+      const {
+        body: { data: created },
+      } = await session.testAgent.post('/v1/environment-variables').send({
+        key: 'BEARER_METADATA_UPDATE',
+        values: [{ _environmentId: devEnvironmentId, value: 'dev-value' }],
+      });
+
+      expect(created.key).to.equal('BEARER_METADATA_UPDATE');
+
+      const {
+        body: { data: updated },
+      } = await session.testAgent.patch('/v1/environment-variables/BEARER_METADATA_UPDATE').send({
+        key: 'BEARER_METADATA_RENAMED',
+      });
+
+      expect(updated.key).to.equal('BEARER_METADATA_RENAMED');
+    });
+
     it('should allow bearer auth to update variables across environments in the same org', async () => {
       const {
         body: { data: created },
