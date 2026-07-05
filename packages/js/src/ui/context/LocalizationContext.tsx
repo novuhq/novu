@@ -6,7 +6,6 @@ import {
   dynamicLocalization,
 } from '../config/defaultLocalization';
 import { normalizeIntlLocale } from '../helpers/normalizeIntlLocale';
-import { useNovu } from './NovuContext';
 
 export type InboxLocalizationKey = keyof typeof defaultInboxLocalization;
 export type SubscriptionLocalizationKey = keyof typeof defaultSubscriptionLocalization;
@@ -61,20 +60,14 @@ const LocalizationContext = createContext<LocalizationContextType | undefined>(u
 type LocalizationProviderProps = ParentProps & { localization?: AllLocalization };
 
 export const LocalizationProvider = (props: LocalizationProviderProps) => {
-  const novu = useNovu();
-
   const localization = createMemo<Record<string, string | Function>>(() => {
-    const { dynamic, locale: explicitLocale, ...localizationObject } = props.localization || {};
-    const subscriber = novu().options.subscriber;
-    const subscriberLocale = typeof subscriber === 'object' ? subscriber?.locale : undefined;
-    const resolvedLocale = explicitLocale ?? subscriberLocale ?? defaultLocalization.locale;
+    const { dynamic, ...localizationObject } = props.localization || {};
 
     return {
       ...defaultLocalization,
       ...dynamicLocalization(),
       ...(dynamic || {}),
       ...localizationObject,
-      locale: resolvedLocale,
     };
   });
 
