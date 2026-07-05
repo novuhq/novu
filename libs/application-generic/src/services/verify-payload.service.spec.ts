@@ -141,6 +141,26 @@ describe('VerifyPayloadService', () => {
       });
     });
 
+    it('should fill defaults for chained bracket-notation path segments', () => {
+      const variables = [
+        {
+          name: 'data.matrix[0][1]',
+          type: TemplateVariableTypeEnum.STRING,
+          defaultValue: 'fallback',
+          required: false,
+        },
+      ];
+
+      const result = service.fillDefaults(variables);
+
+      expect(result).to.deep.equal({
+        data: {
+          matrix: [[undefined, 'fallback']],
+        },
+      });
+      expect((result.data as { matrix: string[][] }).matrix[0][1]).to.equal('fallback');
+    });
+
     it('should preserve scalar prefix defaults when a nested default is incompatible', () => {
       const variables = [
         {

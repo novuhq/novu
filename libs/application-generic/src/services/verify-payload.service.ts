@@ -2,7 +2,7 @@ import { BadRequestException } from '@nestjs/common';
 import { ITemplateVariable, TemplateSystemVariables } from '@novu/shared';
 
 const PROTOTYPE_POLLUTION_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
-const TEMPLATE_VARIABLE_SEGMENT_REGEX = /^[a-zA-Z_][a-zA-Z0-9_-]*(?:\[\d+\])?$/;
+const TEMPLATE_VARIABLE_SEGMENT_REGEX = /^[a-zA-Z_][a-zA-Z0-9_-]*(?:\[\d+\])*$/;
 
 type PathPart = { kind: 'key'; value: string } | { kind: 'index'; value: number };
 
@@ -22,6 +22,31 @@ function isSafeVariablePathSegment(segment: string): boolean {
   return TEMPLATE_VARIABLE_SEGMENT_REGEX.test(segment);
 }
 
+function expandPathSegment(segment: string): PathPart[] | null {
+  const bracketIndex = segment.indexOf('[');
+
+  if (bracketIndex === -1) {
+    return [{ kind: 'key', value: segment }];
+  }
+
+  const baseName = segment.slice(0, bracketIndex);
+  const parts: PathPart[] = [{ kind: 'key', value: baseName }];
+  let remaining = segment.slice(bracketIndex);
+
+  while (remaining.length > 0) {
+    const indexMatch = remaining.match(/^\[(\d+)\]/);
+
+    if (!indexMatch) {
+      return null;
+    }
+
+    parts.push({ kind: 'index', value: Number(indexMatch[1]) });
+    remaining = remaining.slice(indexMatch[0].length);
+  }
+
+  return parts;
+}
+
 function parseVariablePath(variableName: string): PathPart[] | null {
   const segments = variableName.split('.');
 
@@ -32,22 +57,13 @@ function parseVariablePath(variableName: string): PathPart[] | null {
   const parts: PathPart[] = [];
 
   for (const segment of segments) {
-    const bracketIndex = segment.indexOf('[');
+    const expanded = expandPathSegment(segment);
 
-    if (bracketIndex === -1) {
-      parts.push({ kind: 'key', value: segment });
-      continue;
-    }
-
-    const baseName = segment.slice(0, bracketIndex);
-    const indexMatch = segment.slice(bracketIndex).match(/^\[(\d+)\]$/);
-
-    if (!indexMatch) {
+    if (!expanded) {
       return null;
     }
 
-    parts.push({ kind: 'key', value: baseName });
-    parts.push({ kind: 'index', value: Number(indexMatch[1]) });
+    parts.push(...expanded);
   }
 
   return parts;
