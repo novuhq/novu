@@ -165,13 +165,13 @@ export function ApiKeysPage() {
                     {canRegenerateApiKeys && (
                       <div className="flex items-center justify-between gap-3 border-t border-neutral-100 pt-3">
                         <p className="text-foreground-500 text-xs">
-                          Rotate without downtime: generate a new key, switch your apps to it, then delete the old key.
+                          Key rotation: generate a new key, switch your apps to it, then delete the old key.
                         </p>
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <span>
                               <Button
-                                size="sm"
+                                size="xs"
                                 variant="secondary"
                                 mode="outline"
                                 leadingIcon={RiAddLine}
