@@ -1,12 +1,11 @@
 import { BadRequestException } from '@nestjs/common';
-import {
-  assertAllowedSinchSmsRegion,
-  assertSafeSmtpOutboundTargetSync,
-  EmailProviderIdEnum,
-  ICredentials,
-  SmsProviderIdEnum,
-  SsrfBlockedError,
-} from '@novu/shared';
+import { assertAllowedSinchSmsRegion, EmailProviderIdEnum, ICredentials, SmsProviderIdEnum } from '@novu/shared';
+
+type ValidateSmtpOutboundTargetModule = typeof import('@novu/shared/dist/cjs/utils/validate-smtp-outbound-target');
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { assertSafeSmtpOutboundTargetSync, SsrfBlockedError } =
+  require('@novu/shared/utils/validate-smtp-outbound-target') as ValidateSmtpOutboundTargetModule;
 
 export async function validateOutboundIntegrationCredentials(
   providerId: string,

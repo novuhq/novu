@@ -13,11 +13,3 @@ export { safeJsonStringify } from './safe-json-stringify';
 export { createMockObjectFromSchema } from './schema/create-mock-object-from-schema';
 export { slugify } from './slugify';
 export * from './tags-filter';
-export {
-  assertSafeSmtpOutboundTarget,
-  assertSafeSmtpOutboundTargetSync,
-  assertSafeSmtpHostFormat,
-  assertSafeSmtpPort,
-  assertSmtpTlsRequired,
-  SsrfBlockedError,
-} from './validate-smtp-outbound-target';

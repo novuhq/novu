@@ -1,4 +1,5 @@
-import { EmailProviderIdEnum, assertSafeSmtpOutboundTarget } from '@novu/shared';
+import { EmailProviderIdEnum } from '@novu/shared';
+import { assertSafeSmtpOutboundTarget } from '@novu/shared/utils/validate-smtp-outbound-target';
 import {
   ChannelTypeEnum,
   CheckIntegrationResponseEnum,

@@ -1,6 +1,12 @@
 import { NodemailerProvider } from '@novu/providers';
-import { assertSafeSmtpOutboundTargetSync, ChannelTypeEnum, EmailProviderIdEnum, ICredentials } from '@novu/shared';
+import { ChannelTypeEnum, EmailProviderIdEnum, ICredentials } from '@novu/shared';
 import { BaseEmailHandler } from './base.handler';
+
+type ValidateSmtpOutboundTargetModule = typeof import('@novu/shared/dist/cjs/utils/validate-smtp-outbound-target');
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { assertSafeSmtpOutboundTargetSync } =
+  require('@novu/shared/utils/validate-smtp-outbound-target') as ValidateSmtpOutboundTargetModule;
 
 export class NodemailerHandler extends BaseEmailHandler {
   constructor() {
