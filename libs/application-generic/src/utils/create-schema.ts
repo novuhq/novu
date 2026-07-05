@@ -60,6 +60,15 @@ export function buildVariablesSchema(object: unknown) {
   return schema;
 }
 
+export const buildActorSchema = (actor: unknown) => {
+  const subscriberSchema = buildSubscriberSchema(actor);
+
+  return {
+    ...subscriberSchema,
+    description: 'Schema representing the actor entity sent during workflow trigger',
+  };
+};
+
 export const buildSubscriberSchema = (subscriber: unknown) => {
   return {
     type: JsonSchemaTypeEnum.OBJECT,

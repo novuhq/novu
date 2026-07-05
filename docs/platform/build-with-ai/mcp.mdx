@@ -167,8 +167,6 @@ Codex reads MCP configuration from `~/.codex/config.toml`. The CLI and IDE exten
 
 <Steps>
   <Step title="Export your API key">
-    Export your API key as an environment variable:
-
     ```bash
     export NOVU_API_KEY="your-novu-api-key"
     ```
@@ -254,7 +252,7 @@ Claude Desktop connects to remote MCP servers through a local proxy (`mcp-remote
   </Step>
 
   <Step title="Restart Claude Desktop">
-    Save the file and restart Claude Desktop.
+    Quit and reopen Claude Desktop to load the new MCP configuration.
   </Step>
 </Steps>
 
@@ -272,6 +270,44 @@ Any MCP-compatible tool can connect to the Novu MCP Server using these connectio
 
   </Tab>
 </Tabs>
+
+## Example prompts
+
+After connecting the Novu MCP server, copy or open these prompts in Cursor to verify the connection and perform common tasks.
+
+<Note>
+  Replace placeholder values (for example, subscriber IDs and workflow identifiers) with values from your Novu dashboard.
+</Note>
+
+### Verify connection
+
+<Prompt description="Test your Novu MCP connection" icon="bot" actions={["copy", "cursor"]}>
+Check my Novu API key status and confirm my region configuration.
+</Prompt>
+
+<Prompt description="List your notification workflows" icon="bot" actions={["copy", "cursor"]}>
+Show me all my notification workflows in Novu.
+</Prompt>
+
+### Subscriber management
+
+<Prompt description="Find a subscriber by email" icon="bot" actions={["copy", "cursor"]}>
+Find subscriber user@example.com in my Novu account and show their profile details.
+</Prompt>
+
+<Prompt description="Create a new subscriber" icon="bot" actions={["copy", "cursor"]}>
+Create a new subscriber with subscriberId user-456, email jane@example.com, and firstName Jane in my Novu account.
+</Prompt>
+
+### Trigger and debug
+
+<Prompt description="Trigger a workflow for a subscriber" icon="bot" actions={["copy", "cursor"]}>
+Trigger my welcome-email workflow for subscriber test-user-123 with payload containing userName "Jane" and activationLink "https://app.example.com/activate".
+</Prompt>
+
+<Prompt description="Debug failed notifications" icon="bot" actions={["copy", "cursor"]}>
+Show recent failed notifications in the last 24 hours and help me debug delivery issues.
+</Prompt>
 
 ## MCP tools
 

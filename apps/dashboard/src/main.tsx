@@ -40,7 +40,7 @@ import { ConnectSubscriberProvider } from './components/connect/connect-subscrib
 import { CreateIntegrationSidebar } from './components/integrations/components/create-integration-sidebar';
 import { UpdateIntegrationSidebar } from './components/integrations/components/update-integration-sidebar';
 import { ChannelPreferences } from './components/workflow-editor/channel-preferences';
-import { IS_ENTERPRISE, IS_SELF_HOSTED } from './config';
+import { EE_AUTH_PROVIDER, IS_ENTERPRISE, IS_SELF_HOSTED } from './config';
 import { FeatureFlagsProvider } from './context/feature-flags-provider';
 import { AgentDetailsPage } from './pages/agent-details';
 import { AgentSlackSetupPage } from './pages/agent-slack-setup-page';
@@ -681,11 +681,14 @@ const router = createBrowserRouter([
           },
           {
             path: ROUTES.PARTNER_INTEGRATIONS_VERCEL,
-            element: (
-              <ProtectedRoute permission={PermissionsEnum.PARTNER_INTEGRATION_READ}>
-                <VercelIntegrationPage />
-              </ProtectedRoute>
-            ),
+            element:
+              EE_AUTH_PROVIDER === 'clerk' && !IS_SELF_HOSTED ? (
+                <ProtectedRoute permission={PermissionsEnum.PARTNER_INTEGRATION_READ}>
+                  <VercelIntegrationPage />
+                </ProtectedRoute>
+              ) : (
+                <Navigate to={ROUTES.ROOT} replace />
+              ),
           },
           {
             path: ROUTES.SETTINGS,

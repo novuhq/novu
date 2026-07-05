@@ -1,6 +1,7 @@
 import {
   ApiServiceLevelEnum,
   ChannelTypeEnum,
+  EnvironmentTypeEnum,
   type IEnvironment,
   type IIntegration,
   type IProviderConfig,
@@ -47,7 +48,12 @@ export function IntegrationCard({
   const { subscription } = useFetchSubscription();
 
   const handleConfigureClick = (e: React.MouseEvent<HTMLElement>) => {
-    if (integration.channel === ChannelTypeEnum.IN_APP && !integration.connected) {
+    const shouldRedirectToInboxOnboarding =
+      integration.channel === ChannelTypeEnum.IN_APP &&
+      !integration.connected &&
+      environment.type === EnvironmentTypeEnum.DEV;
+
+    if (shouldRedirectToInboxOnboarding) {
       e.preventDefault();
 
       navigate(ROUTES.INBOX_EMBED + `?environmentId=${environment._id}`);

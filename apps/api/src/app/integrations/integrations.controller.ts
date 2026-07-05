@@ -4,7 +4,6 @@ import {
   ClassSerializerInterceptor,
   Controller,
   Delete,
-  ForbiddenException,
   Get,
   HttpCode,
   HttpStatus,
@@ -56,7 +55,7 @@ import { KeylessAccessible } from '../shared/framework/swagger/keyless.security'
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import { UserSession } from '../shared/framework/user.decorator';
 import { CONNECTION_RESULT_CSP } from '../shared/html/connection-result-page';
-import { isEnvironmentScopedAuthScheme } from '../shared/utils/auth.utils';
+import { isEnvironmentScopedAuthScheme, assertEnvironmentScopedAccess } from '../shared/utils/auth.utils';
 import { ConfigureTelegramWebhookCommand } from '../telegram-linking/configure-telegram-webhook/configure-telegram-webhook.command';
 import { ConfigureTelegramWebhook } from '../telegram-linking/configure-telegram-webhook/configure-telegram-webhook.usecase';
 import { IssueTelegramMobileLinkCommand } from '../telegram-linking/issue-telegram-mobile-link/issue-telegram-mobile-link.command';
@@ -261,7 +260,7 @@ export class IntegrationsController {
     @Body() body: CreateIntegrationRequestDto
   ): Promise<IntegrationResponseDto> {
     try {
-      this.assertEnvironmentScopedForApiKey(user, body._environmentId);
+      assertEnvironmentScopedAccess(user.scheme, user.environmentId, body._environmentId);
 
       const canAccessCredentials = await this.canUserAccessCredentials(user);
       const integration = await this.createIntegrationUsecase.execute(
@@ -317,7 +316,7 @@ export class IntegrationsController {
     @Body() body: UpdateIntegrationRequestDto
   ): Promise<IntegrationResponseDto> {
     try {
-      this.assertEnvironmentScopedForApiKey(user, body._environmentId);
+      assertEnvironmentScopedAccess(user.scheme, user.environmentId, body._environmentId);
 
       const canAccessCredentials = await this.canUserAccessCredentials(user);
       const integration = await this.updateIntegrationUsecase.execute(
@@ -1053,20 +1052,6 @@ export class IntegrationsController {
         connectionIdentifier: body.connectionIdentifier,
       })
     );
-  }
-
-  private assertEnvironmentScopedForApiKey(user: UserSessionData, requestedEnvironmentId?: string): void {
-    const isEnvironmentScopedScheme = isEnvironmentScopedAuthScheme(user.scheme);
-    if (!isEnvironmentScopedScheme) {
-      return;
-    }
-
-    if (requestedEnvironmentId && requestedEnvironmentId !== user.environmentId) {
-      throw new ForbiddenException(
-        'This authentication scheme is scoped to a single environment and cannot target a different `_environmentId`. ' +
-          'Use credentials from the target environment, or authenticate with a session token.'
-      );
-    }
   }
 
   private async canUserAccessCredentials(user: UserSessionData): Promise<boolean> {

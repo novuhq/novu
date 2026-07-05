@@ -14,6 +14,7 @@ type InitializationProps = {
   isPayloadSchemaEnabled: boolean;
   loadPersistedPayload: () => PayloadData | null;
   loadPersistedSubscriber: () => PreviewSubscriberData | null;
+  loadPersistedActor: () => PreviewSubscriberData | null;
   loadPersistedContext: () => ContextPayload | null;
 };
 
@@ -27,6 +28,7 @@ export function usePreviewDataInitialization({
   isPayloadSchemaEnabled,
   loadPersistedPayload,
   loadPersistedSubscriber,
+  loadPersistedActor,
   loadPersistedContext,
 }: InitializationProps) {
   const isInitializedRef = useRef(false);
@@ -52,6 +54,7 @@ export function usePreviewDataInitialization({
           {
             payload: persistedPayload,
             subscriber: {},
+            actor: {},
             steps: {},
             context: {},
             env: {},
@@ -59,6 +62,7 @@ export function usePreviewDataInitialization({
           {
             payload: workflow.payloadExample as PayloadData,
             subscriber: {},
+            actor: {},
             steps: {},
             context: {},
             env: {},
@@ -83,6 +87,13 @@ export function usePreviewDataInitialization({
 
       if (persistedSubscriber) {
         finalData.subscriber = persistedSubscriber;
+        hasChanges = true;
+      }
+
+      const persistedActor = loadPersistedActor();
+
+      if (persistedActor) {
+        finalData.actor = persistedActor;
         hasChanges = true;
       }
 
@@ -114,6 +125,7 @@ export function usePreviewDataInitialization({
     isPayloadSchemaEnabled,
     loadPersistedPayload,
     loadPersistedSubscriber,
+    loadPersistedActor,
     loadPersistedContext,
     onChange,
   ]);

@@ -1,6 +1,7 @@
 ---
-title: 'WhatsApp Business'
-description: 'Learn about how to use WhatsApp for chat notifications'
+title: "WhatsApp Business Chat Integration with Novu"
+sidebarTitle: "WhatsApp Business"
+description: "Connect WhatsApp Business to Novu to send chat notifications through notification workflows. Step-by-step credential setup."
 ---
 
 <Note>
@@ -95,33 +96,219 @@ After your template is approved, you can use the `template_name` to send notific
 
 To send a notification with a template, you will need to add the following to the `overrides` field:
 
+<Tabs>
+  <Tab title="Node.js">
 ```typescript
 import { Novu } from '@novu/api';
 
-const novu = new Novu({
-  secretKey: "<NOVU_SECRET_KEY>",
-  // Required if using EU region
-  // serverURL: "https://eu.api.novu.co",
-});
+const novu = new Novu({ secretKey: "<NOVU_SECRET_KEY>" });
 
 await novu.trigger({
   workflowId: "workflowId",
-  to: {
-    subscriberId: "subscriberId",
-    phone: '+11111111111',
-  },
+  to: { subscriberId: "subscriberId",
+    phone: "+11111111111", },
   payload: {},
   overrides: {
-    chat: {
-      template: {
-        name: 'template_name',
-        language: {
-          code: 'en_US',
-        },
-      },
-    },
-  },
+    "chat": {
+        "template": {
+            "name": "template_name",
+            "language": {
+                "code": "en_US"
+            }
+        }
+    }
+},
 });
 ```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="workflowId",
+        to={"subscriber_id": "subscriberId", "phone": "+11111111111"},
+        payload={},
+        overrides={
+        "chat": {
+                "template": {
+                        "name": "template_name",
+                        "language": {
+                                "code": "en_US"
+                        }
+                }
+        }
+},
+    ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "workflowId",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: "subscriberId",
+            Phone: novugo.String("+11111111111"),
+    }),
+    Payload: map[string]any{},
+    Overrides: map[string]any{
+    "chat": {
+        "template": {
+            "name": "template_name",
+            "language": {
+                "code": "en_US"
+            }
+        }
+    }
+},
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()->setSecurity('<NOVU_SECRET_KEY>')->build();
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'workflowId',
+        to: new Components\SubscriberPayloadDto(subscriberId: 'subscriberId', phone: '+11111111111'),
+        payload: {},
+        overrides: {
+        "chat": {
+                "template": {
+                        "name": "template_name",
+                        "language": {
+                                "code": "en_US"
+                        }
+                }
+        }
+},
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "workflowId",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() { SubscriberId = "subscriberId", Phone = "+11111111111" }),
+    Payload = {},
+    Overrides = {
+    "chat": {
+        "template": {
+            "name": "template_name",
+            "language": {
+                "code": "en_US"
+            }
+        }
+    }
+},
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+
+Novu novu = Novu.builder().secretKey("<NOVU_SECRET_KEY>").build();
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("workflowId")
+        .to(To2.of(SubscriberPayloadDto.builder().subscriberId("subscriberId").phone("+11111111111").build()))
+        .payload({})
+        .overrides({
+        "chat": {
+                "template": {
+                        "name": "template_name",
+                        "language": {
+                                "code": "en_US"
+                        }
+                }
+        }
+})
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl --location 'https://api.novu.co/v1/events/trigger' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+    "name": "workflowId",
+    "to": {
+        "subscriberId": "subscriberId",
+        "phone": "+11111111111"
+    },
+    "payload": {},
+    "overrides": {
+        "chat": {
+            "template": {
+                "name": "template_name",
+                "language": {
+                    "code": "en_US"
+                }
+            }
+        }
+    }
+}'
+```
+  </Tab>
+</Tabs>
 </Step>
 </Steps>
+
+## Using WhatsApp with agents
+
+WhatsApp is a supported [agent provider](/agents/get-started/agents-and-providers). Connect your WhatsApp Business account to an agent so users can message your number and get replies in the same thread — without building Meta webhook handling yourself.
+
+<Card title="Build agents on WhatsApp" icon="bot" href="/agents">
+  Learn how Novu agents work, including managed and custom code agents.
+</Card>
+
+### What you get
+
+When WhatsApp is connected to an agent:
+
+- Users message your WhatsApp number and your agent responds in the same chat
+- Conversations appear in the dashboard under **Agent Conversations**
+- Supported content includes text, markdown, and interactive buttons; inbound media is surfaced via attachments
+
+See [agent conversations](/agents/conversations#supported-platforms) for capabilities across all providers.
+
+### Agent conversations vs. workflow notifications
+
+| Use case | What happens |
+| --- | --- |
+| **Agent conversation** | The user messages your WhatsApp number and your agent replies in the same chat. |
+| **Workflow notification** | You trigger a workflow with a Chat step and Novu sends a one-way template message to the subscriber. |
+
+## Related
+
+<Card icon="bot" href="/agents/get-started/agents-and-providers" title="Agents and providers">
+  Connect WhatsApp and other providers to an agent.
+</Card>

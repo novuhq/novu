@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { EnvironmentRepository, IntegrationRepository } from '@novu/dal';
 import { EnvironmentEnum, PROTECTED_ENVIRONMENTS } from '@novu/shared';
 import { RemoveIntegrationCommand } from '../../../integrations/usecases/remove-integration/remove-integration.command';
@@ -14,6 +14,17 @@ export class DeleteEnvironment {
   ) {}
 
   async execute(command: DeleteEnvironmentCommand): Promise<void> {
+    if (
+      command.restrictToUserEnvironment &&
+      command.userEnvironmentId &&
+      command.environmentId !== command.userEnvironmentId
+    ) {
+      throw new ForbiddenException(
+        'This authentication scheme is scoped to a single environment and cannot delete a different environment. ' +
+          'Use credentials from the target environment, or authenticate with a session token.'
+      );
+    }
+
     const environment = await this.environmentRepository.findOne({
       _id: command.environmentId,
       _organizationId: command.organizationId,

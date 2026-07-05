@@ -11,6 +11,7 @@ import {
   SubscriberRepository,
 } from '@novu/dal';
 import type { AgentAction } from '@novu/framework';
+import { parseApprovalActionId } from '@novu/framework/internal';
 import { ENDPOINT_TYPES } from '@novu/shared';
 import type { CardElement, EmojiValue, Message, Thread } from 'chat';
 import { ConnectClaimTokenService } from '../../../connect/services/connect-claim-token.service';
@@ -21,6 +22,7 @@ import { LinkTelegramChatToSubscriberCommand } from '../../../telegram-linking/l
 import { LinkTelegramChatToSubscriber } from '../../../telegram-linking/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.usecase';
 import { TelegramStartCodeService } from '../../../telegram-linking/telegram-start-code.service';
 import { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
+import { parseToolApprovalActionId } from '../../managed-runtime/tool-approval/approval-card.builder';
 import {
   trackAgentInboundAction,
   trackAgentInboundMessage,
@@ -40,7 +42,6 @@ import {
   BotAuthorSkippedError,
   ConnectOrgSubscriberCapExceededError,
 } from '../conversation/agent-subscriber-resolver.service';
-import { ConversationActivationService } from '../conversation/conversation-activation.service';
 import { OutboundGateway } from '../egress/outbound.gateway';
 import type { BridgeReaction } from '../runtime/bridge-executor.service';
 import type { ConversationTurn } from '../runtime/conversation-turn';
@@ -242,8 +243,7 @@ export class AgentInboundHandler implements OnModuleInit {
     private readonly connectClaimTokenService: ConnectClaimTokenService,
     private readonly keylessAbuseGuard: KeylessAbuseGuardService,
     private readonly planLimitGate: PlanLimitGateService,
-    private readonly inboundAck: InboundAckService,
-    private readonly conversationActivation: ConversationActivationService
+    private readonly inboundAck: InboundAckService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -430,8 +430,6 @@ export class AgentInboundHandler implements OnModuleInit {
     };
 
     await runtime.dispatch(turn);
-
-    await this.registerConversationEngagement(agentId, config, conversation, thread.isDM);
   }
 
   /**
@@ -474,37 +472,6 @@ export class AgentInboundHandler implements OnModuleInit {
       captureAgentWarning(err, {
         component: 'agent-inbound-handler',
         operation: 'mark-integration-connected',
-        agentId,
-      });
-    }
-  }
-
-  /**
-   * Counts the active conversation once the agent has actually engaged
-   * (dispatch succeeded). Idempotent per activation — repeated engagements
-   * inside the same window/period only slide the rolling window. Fail-soft:
-   * billing accounting must never crash the inbound webhook.
-   */
-  private async registerConversationEngagement(
-    agentId: string,
-    config: ResolvedAgentConfig,
-    conversation: ConversationEntity,
-    isDirectMessage: boolean
-  ): Promise<void> {
-    try {
-      await this.conversationActivation.registerEngagement({
-        conversation,
-        platform: config.platform,
-        organizationId: config.organizationId,
-        environmentId: config.environmentId,
-        agentId,
-        isDirectMessage,
-      });
-    } catch (err) {
-      this.logger.warn(err, `[agent:${agentId}] Failed to register active-conversation engagement`);
-      captureAgentWarning(err, {
-        component: 'agent-inbound-handler',
-        operation: 'register-conversation-engagement',
         agentId,
       });
     }
@@ -992,6 +959,12 @@ export class AgentInboundHandler implements OnModuleInit {
       return;
     }
 
+    const actorType =
+      participantType === ConversationParticipantTypeEnum.SUBSCRIBER
+        ? ConversationActivitySenderTypeEnum.SUBSCRIBER
+        : ConversationActivitySenderTypeEnum.PLATFORM_USER;
+    await this.recordApprovalVerdict(conversation, config, action, actorType, participantId);
+
     // Everything else (incl. mcp-approval:* for managed) routes through the runtime,
     // which owns its own action semantics.
     const [subscriber, agent] = await Promise.all([
@@ -1020,5 +993,66 @@ export class AgentInboundHandler implements OnModuleInit {
     };
 
     await runtime.dispatch(turn);
+  }
+
+  /**
+   * Normalise an approval-card click into a verdict. Self-hosted and managed
+   * cards use distinct action-id grammars (`tool-approval:*` vs
+   * `mcp-approval:*` / `direct-approval:*`), so they never collide; non-approval
+   * actions return `null` and are skipped.
+   */
+  private parseApprovalVerdict(
+    actionId: string | undefined
+  ): { approvalId: string; approved: boolean; toolName?: string } | null {
+    const selfHosted = parseApprovalActionId(actionId);
+    if (selfHosted) {
+      return { approvalId: selfHosted.approvalId, approved: selfHosted.approved };
+    }
+
+    const managed = parseToolApprovalActionId(actionId);
+    if (managed) {
+      const toolName = managed.trust?.scope === 'tool' ? managed.trust.toolName : undefined;
+
+      return { approvalId: managed.toolUseId, approved: managed.approved, toolName };
+    }
+
+    return null;
+  }
+
+  private async recordApprovalVerdict(
+    conversation: ConversationEntity,
+    config: ResolvedAgentConfig,
+    action: AgentAction,
+    actorType: ConversationActivitySenderTypeEnum.SUBSCRIBER | ConversationActivitySenderTypeEnum.PLATFORM_USER,
+    actorId: string
+  ): Promise<void> {
+    const verdict = this.parseApprovalVerdict(action.id);
+    if (!verdict) {
+      return;
+    }
+
+    try {
+      await this.conversationService.persistToolApprovalDecision({
+        conversationId: conversation._id,
+        channel: this.conversationService.getPrimaryChannel(conversation),
+        agentIdentifier: config.agentIdentifier,
+        approvalId: verdict.approvalId,
+        approved: verdict.approved,
+        toolName: verdict.toolName,
+        actorType,
+        actorId,
+        environmentId: config.environmentId,
+        organizationId: config.organizationId,
+      });
+    } catch (err) {
+      // A failed transcript write must never drop the click — the runtime still
+      // receives onAction and can resolve the card.
+      this.logger.warn(err, `[agent:${config.agentIdentifier}] Failed to persist tool-approval decision`);
+      captureAgentWarning(err, {
+        component: 'inbound-turn-handler',
+        operation: 'persist-tool-approval-decision',
+        agentIdentifier: config.agentIdentifier,
+      });
+    }
   }
 }

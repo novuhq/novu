@@ -1,0 +1,11 @@
+{
+  "tags": [
+    "github-actions",
+    "node"
+  ],
+  "sentinels": [
+    "package.json"
+  ],
+  "detectedAt": "2026-07-05T10:37:03.508Z",
+  "rootPath": "/Users/dimagrossman/projects/novu"
+}

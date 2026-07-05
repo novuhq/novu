@@ -7,7 +7,10 @@ import { NovuRequestHandler } from '../../handler';
 import { AgentDeliveryError } from './agent.errors';
 import { agent } from './agent.resource';
 import type { AgentBridgeRequest } from './agent.types';
+import { PendingApproval } from './agent.types';
+import { dispatchAgentEvent } from './agent-dispatch';
 import { Button, Card, CardText } from './index';
+import { buildApprovalActionId } from './tool-approval/action-id';
 
 function createMockBridgeRequest(overrides?: Partial<AgentBridgeRequest>): AgentBridgeRequest {
   return {
@@ -1964,5 +1967,125 @@ describe('agent dispatch via NovuRequestHandler', () => {
 
     expect(body.typing).toBe('stop');
     expect(body.reply).toBeUndefined();
+  });
+});
+
+function approvalBridge(overrides: Record<string, unknown> = {}) {
+  return {
+    version: 1,
+    timestamp: '',
+    deliveryId: 'd',
+    event: 'onMessage',
+    agentId: 'a',
+    replyUrl: 'https://example.test/reply',
+    conversationId: 'c',
+    integrationIdentifier: 'i',
+    message: { text: 'hi' },
+    action: null,
+    reaction: null,
+    conversation: { metadata: {} },
+    subscriber: null,
+    history: [],
+    platform: 'slack',
+    platformContext: {},
+    ...overrides,
+  } as never;
+}
+
+describe('tool approval', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('posts an approval card and does not reply with the PendingApproval sentinel', async () => {
+    const posts: any[] = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (_url, init: any) => {
+        posts.push(JSON.parse(init.body));
+
+        return new Response(JSON.stringify({ messageId: 'm', platformThreadId: 't' }), { status: 200 });
+      })
+    );
+
+    const testAgent = {
+      id: 'a',
+      handlers: {
+        onMessage: (_m: unknown, ctx: any) => ctx.toolApproval.request({ id: 'tc', name: 'doIt', input: { x: 1 } }),
+        onToolApproval: async () => undefined,
+      },
+    };
+
+    await dispatchAgentEvent({
+      agent: testAgent as never,
+      event: 'onMessage',
+      bridge: approvalBridge(),
+      secretKey: 's',
+    });
+
+    expect(posts).toHaveLength(1);
+    expect(posts[0].reply.card).toBeTruthy();
+    // The tool-call payload rides in toolApprovalRequest (persisted as toolData), not in the button id.
+    expect(posts[0].toolApprovalRequest).toMatchObject({
+      approvalId: 'tc',
+      toolCallId: 'tc',
+      name: 'doIt',
+      input: { x: 1 },
+    });
+    expect(JSON.stringify(posts[0].reply.card)).not.toContain('"x":1');
+    expect(posts.some((p) => p.reply instanceof PendingApproval)).toBe(false);
+  });
+
+  it('routes an approval click to onToolApproval and resolves the card by default', async () => {
+    const posts: any[] = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (_url, init: any) => {
+        posts.push(JSON.parse(init.body));
+
+        return new Response(JSON.stringify({ messageId: 'm', platformThreadId: 't' }), { status: 200 });
+      })
+    );
+
+    const seen: { decision?: { approved: boolean; toolCall: unknown } } = {};
+    const testAgent = {
+      id: 'a',
+      handlers: {
+        onMessage: () => undefined,
+        onToolApproval: (decision: { approved: boolean; toolCall: unknown }) => {
+          seen.decision = decision;
+
+          return undefined;
+        },
+      },
+    };
+
+    await dispatchAgentEvent({
+      agent: testAgent as never,
+      event: 'onAction',
+      bridge: approvalBridge({
+        event: 'onAction',
+        message: null,
+        // The tool call is reconstructed from persisted history, not the action id.
+        history: [
+          {
+            role: 'agent',
+            type: 'tool_approval_request',
+            content: '',
+            toolData: { approvalId: 'tc', toolCallId: 'tc', toolName: 'doIt', input: { x: 1 } },
+            createdAt: '1',
+          },
+        ],
+        action: { id: buildApprovalActionId('approve', 'tc'), sourceMessageId: 'm_prev' },
+      }),
+      secretKey: 's',
+    });
+
+    expect(seen.decision?.approved).toBe(true);
+    expect(seen.decision?.toolCall).toMatchObject({ id: 'tc', name: 'doIt', input: { x: 1 } });
+    const editPost = posts.find((p) => p.edit?.messageId === 'm_prev');
+    expect(editPost).toBeTruthy();
+    // Default resolution edits the card to a resolved state (no actionable buttons).
+    expect(editPost.edit.content.card.title).toBe('Approved');
   });
 });

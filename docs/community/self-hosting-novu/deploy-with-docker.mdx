@@ -125,28 +125,127 @@ To test notifications, create and trigger a workflow from your self-hosted Novu 
 
 For more information on customizing the Inbox component, refer to the [Inbox documentation](/inbox/overview).
 
-## Initializing the Node SDK
+## Initializing the Server SDK
 
-When using a self-hosted Novu deployment with your backend services, you need to configure the Node SDK to connect to your Docker-hosted Novu instance.
+When using a self-hosted Novu deployment with your backend services, configure the server SDK to connect to your Docker-hosted Novu API instance.
 
 ### Install the package
 
-```bash
-npm install @novu/api
-```
+<Tabs>
+  <Tab title="Node.js">
+    ```bash
+    npm install @novu/api
+    ```
+  </Tab>
+  <Tab title="Python">
+    ```bash
+    pip install novu-py
+    ```
+  </Tab>
+  <Tab title="Go">
+    ```bash
+    go get github.com/novuhq/novu-go
+    ```
+  </Tab>
+  <Tab title="PHP">
+    ```bash
+    composer require novuhq/novu
+    ```
+  </Tab>
+  <Tab title=".NET">
+    ```bash
+    dotnet add package Novu
+    ```
+  </Tab>
+  <Tab title="Java">
+    Maven:
+    ```xml
+    <dependency>
+      <groupId>co.novu</groupId>
+      <artifactId>novu-java</artifactId>
+      <version>LATEST</version>
+    </dependency>
+    ```
+  </Tab>
+</Tabs>
 
 ### Initialize the SDK
 
 Configure the SDK with your self-hosted backend URL:
 
+<Tabs>
+  <Tab title="Node.js">
 ```typescript
 import { Novu } from '@novu/api';
 
 const novu = new Novu({
-  secretKey: "<YOUR_SECRET_KEY_HERE>", // Your Novu API key from the dashboard
-  serverURL: "http://<your-docker-host>:3000", // URL of your self-hosted Novu API instance
+  secretKey: '<YOUR_SECRET_KEY_HERE>',
+  serverURL: 'http://<your-docker-host>:3000',
 });
 ```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+from novu_py import Novu
+
+novu = Novu(
+    secret_key=os.getenv('NOVU_SECRET_KEY', ''),
+    server_url='http://<your-docker-host>:3000',
+)
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    novugo "github.com/novuhq/novu-go"
+    "os"
+)
+
+s := novugo.New(
+    novugo.WithServerURL("http://<your-docker-host>:3000"),
+    novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")),
+)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+
+$novu = novu\Novu::builder()
+    ->setServerURL('http://<your-docker-host>:3000')
+    ->setSecurity('<YOUR_SECRET_KEY_HERE>')
+    ->build();
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+
+var novu = new NovuSDK(
+    serverUrl: "http://<your-docker-host>:3000",
+    secretKey: "<YOUR_SECRET_KEY_HERE>"
+);
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+
+Novu novu = Novu.builder()
+    .serverUrl("http://<your-docker-host>:3000")
+    .secretKey("<YOUR_SECRET_KEY_HERE>")
+    .build();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+# Set your self-hosted API base URL for REST calls
+export NOVU_API_URL=http://<your-docker-host>:3000
+export NOVU_SECRET_KEY=<YOUR_SECRET_KEY_HERE>
+```
+  </Tab>
+</Tabs>
 
 ### Configure for different environments
 
@@ -156,19 +255,85 @@ Adjust the `backendUrl` based on your deployment:
 
 Once initialized, you can trigger notification events:
 
+<Tabs>
+  <Tab title="Node.js">
 ```typescript
-await novu.trigger({ 
-  workflowId: 'workflowId', 
-  to: {
-    subscriberId: 'subscriberId',
-  },
+await novu.trigger({
+  workflowId: 'workflowId',
+  to: { subscriberId: 'subscriberId' },
   payload: {
-    // Your custom payload data
     name: 'John Doe',
     orderId: 'ORDER_ID_123',
   },
 });
 ```
+  </Tab>
+  <Tab title="Python">
+```python
+novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+    workflow_id='workflowId',
+    to={'subscriber_id': 'subscriberId'},
+    payload={'name': 'John Doe', 'orderId': 'ORDER_ID_123'},
+))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+_, err := s.Trigger(ctx, components.TriggerEventRequestDto{
+    WorkflowID: "workflowId",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: "subscriberId",
+    }),
+    Payload: map[string]any{
+        "name": "John Doe", "orderId": "ORDER_ID_123",
+    },
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+$novu->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'workflowId',
+        to: new Components\SubscriberPayloadDto(subscriberId: 'subscriberId'),
+        payload: ['name' => 'John Doe', 'orderId' => 'ORDER_ID_123'],
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+await novu.TriggerAsync(new TriggerEventRequestDto {
+    WorkflowId = "workflowId",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto { SubscriberId = "subscriberId" }),
+    Payload = new Dictionary<string, object>() {
+        { "name", "John Doe" }, { "orderId", "ORDER_ID_123" },
+    },
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+novu.trigger().body(TriggerEventRequestDto.builder()
+    .workflowId("workflowId")
+    .to(To2.of(SubscriberPayloadDto.builder().subscriberId("subscriberId").build()))
+    .payload(Map.of("name", "John Doe", "orderId", "ORDER_ID_123"))
+    .build()).call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -X POST 'http://<your-docker-host>:3000/v1/events/trigger' \
+-H 'Content-Type: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+  "name": "workflowId",
+  "to": { "subscriberId": "subscriberId" },
+  "payload": { "name": "John Doe", "orderId": "ORDER_ID_123" }
+}'
+```
+  </Tab>
+</Tabs>
 
 For more information on using the Node SDK, refer to the [Server-Side SDKs documentation](/sdks/overview).
 
@@ -288,24 +453,112 @@ When deploying to a VPS, consider these additional security measures:
 
 ### Triggering events with custom installation
 
-When self-hosting Novu, in order to trigger an event you must first create a new `Novu` object and configure it with the proper `backendUrl`.
+When self-hosting Novu, configure your server SDK with the self-hosted `serverURL` (or `server_url`) before triggering events.
 
-```tsx
-import { Novu } from '@novu/api';  
+<Tabs>
+  <Tab title="Node.js">
+```typescript
+import { Novu } from '@novu/api';
 
 const novu = new Novu({
   secretKey: '<YOUR_SECRET_KEY_HERE>',
-  serverURL: '<REPLACE_WITH_SELF_HOSTED_BACKEND_URL>',
+  serverURL: 'http://<your-docker-host>:3000',
 });
 
 await novu.trigger({
   workflowId: 'workflowId',
-  to: {
-    subscriberId: 'subscriberId',
-  },
+  to: { subscriberId: 'subscriberId' },
   payload: {},
 });
 ```
+  </Tab>
+  <Tab title="Python">
+```python
+from novu_py import Novu
+
+novu = Novu(
+    secret_key='<YOUR_SECRET_KEY_HERE>',
+    server_url='http://<your-docker-host>:3000',
+)
+
+novu.trigger(trigger_event_request_dto={
+    'workflow_id': 'workflowId',
+    'to': {'subscriber_id': 'subscriberId'},
+    'payload': {},
+})
+```
+  </Tab>
+  <Tab title="Go">
+```go
+s := novugo.New(
+    novugo.WithServerURL("http://<your-docker-host>:3000"),
+    novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")),
+)
+
+_, err := s.Trigger(ctx, components.TriggerEventRequestDto{
+    WorkflowID: "workflowId",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: "subscriberId",
+    }),
+    Payload: map[string]any{},
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+$novu = novu\Novu::builder()
+    ->setServerURL('http://<your-docker-host>:3000')
+    ->setSecurity('<YOUR_SECRET_KEY_HERE>')
+    ->build();
+
+$novu->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'workflowId',
+        to: new Components\SubscriberPayloadDto(subscriberId: 'subscriberId'),
+        payload: [],
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+var novu = new NovuSDK(
+    serverUrl: "http://<your-docker-host>:3000",
+    secretKey: "<YOUR_SECRET_KEY_HERE>"
+);
+
+await novu.TriggerAsync(new TriggerEventRequestDto {
+    WorkflowId = "workflowId",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto { SubscriberId = "subscriberId" }),
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+Novu novu = Novu.builder()
+    .serverUrl("http://<your-docker-host>:3000")
+    .secretKey("<YOUR_SECRET_KEY_HERE>")
+    .build();
+
+novu.trigger().body(TriggerEventRequestDto.builder()
+    .workflowId("workflowId")
+    .to(To2.of(SubscriberPayloadDto.builder().subscriberId("subscriberId").build()))
+    .build()).call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -X POST 'http://<your-docker-host>:3000/v1/events/trigger' \
+-H 'Content-Type: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+  "name": "workflowId",
+  "to": { "subscriberId": "subscriberId" },
+  "payload": {}
+}'
+```
+  </Tab>
+</Tabs>
 
 ### Caching
 

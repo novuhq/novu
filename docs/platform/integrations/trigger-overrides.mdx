@@ -58,46 +58,266 @@ Use workflow-level overrides when:
 - You need to define common metadata like headers, personalization, or layout settings.
 - You want consistent behavior across all steps for a given provider.
 
-```typescript
+<Tabs>
+  <Tab title="Node.js">
+```ts
 import { Novu } from "@novu/api";
 
-const novu = new Novu("<YOUR_SECRET_KEY_HERE>");
+const novu = new Novu({ secretKey: "<YOUR_SECRET_KEY_HERE>" });
 
-async function run() {
-  const result = await novu.trigger({
-    to: {
-      subscriberId: "subscriber_unique_identifier",
-      firstName: "Albert",
-      lastName: "Einstein",
-      email: "albert@einstein.com",
-      phone: "+1234567890",
-    },
-    workflowId: "workflow_identifier",
-    payload: {
-      comment_id: "string",
-      post: {
-        text: "string",
-      },
-    },
-    overrides: {
-      providers: {
-        sendgrid: {
-          template_id: "xxxxxxxx", // Make sure this is a string
-          trackingSettings: {
-            clickTracking: {
-              enable: true,
-              enableText: false,
-            },
+await novu.trigger({
+  to: {
+    subscriberId: "subscriber_unique_identifier",
+    firstName: "Albert",
+    lastName: "Einstein",
+    email: "albert@einstein.com",
+    phone: "+1234567890",
+  },
+  workflowId: "workflow_identifier",
+  payload: {
+    comment_id: "string",
+    post: { text: "string" },
+  },
+  overrides: {
+    providers: {
+      sendgrid: {
+        template_id: "xxxxxxxx",
+        trackingSettings: {
+          clickTracking: {
+            enable: true,
+            enableText: false,
           },
         },
       },
     },
-  });
-}
-
-run();
-
+  },
+});
 ```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="workflow_identifier",
+        to={
+            "subscriber_id": "subscriber_unique_identifier",
+            "first_name": "Albert",
+            "last_name": "Einstein",
+            "email": "albert@einstein.com",
+            "phone": "+1234567890",
+        },
+        payload={
+            "comment_id": "string",
+            "post": {"text": "string"},
+        },
+        overrides={
+            "providers": {
+                "sendgrid": {
+                    "template_id": "xxxxxxxx",
+                    "trackingSettings": {
+                        "clickTracking": {
+                            "enable": True,
+                            "enableText": False,
+                        },
+                    },
+                },
+            },
+        },
+    ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "workflow_identifier",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: "subscriber_unique_identifier",
+        FirstName:    "Albert",
+        LastName:     "Einstein",
+        Email:        "albert@einstein.com",
+        Phone:        "+1234567890",
+    }),
+    Payload: map[string]any{
+        "comment_id": "string",
+        "post":       map[string]any{"text": "string"},
+    },
+    Overrides: map[string]map[string]any{
+        "providers": {
+            "sendgrid": map[string]any{
+                "template_id": "xxxxxxxx",
+                "trackingSettings": map[string]any{
+                    "clickTracking": map[string]any{
+                        "enable":     true,
+                        "enableText": false,
+                    },
+                },
+            },
+        },
+    },
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()
+    ->setSecurity('<YOUR_SECRET_KEY_HERE>')
+    ->build();
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'workflow_identifier',
+        to: new Components\SubscriberPayloadDto(
+            subscriberId: 'subscriber_unique_identifier',
+            firstName: 'Albert',
+            lastName: 'Einstein',
+            email: 'albert@einstein.com',
+            phone: '+1234567890',
+        ),
+        payload: [
+            'comment_id' => 'string',
+            'post' => ['text' => 'string'],
+        ],
+        overrides: [
+            'providers' => [
+                'sendgrid' => [
+                    'template_id' => 'xxxxxxxx',
+                    'trackingSettings' => [
+                        'clickTracking' => [
+                            'enable' => true,
+                            'enableText' => false,
+                        ],
+                    ],
+                ],
+            ],
+        ],
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+
+var sdk = new NovuSDK(secretKey: "<YOUR_SECRET_KEY_HERE>");
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "workflow_identifier",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() {
+        SubscriberId = "subscriber_unique_identifier",
+        FirstName = "Albert",
+        LastName = "Einstein",
+        Email = "albert@einstein.com",
+        Phone = "+1234567890",
+    }),
+    Payload = new Dictionary<string, object>() {
+        { "comment_id", "string" },
+        { "post", new Dictionary<string, object>() { { "text", "string" } } },
+    },
+    Overrides = new Overrides() {
+        Providers = new Dictionary<string, Dictionary<string, object>>() {
+            { "sendgrid", new Dictionary<string, object>() {
+                { "template_id", "xxxxxxxx" },
+                { "trackingSettings", new Dictionary<string, object>() {
+                    { "clickTracking", new Dictionary<string, object>() {
+                        { "enable", true },
+                        { "enableText", false },
+                    } },
+                } },
+            } },
+        },
+    },
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+import java.util.Map;
+
+Novu novu = Novu.builder()
+    .secretKey("<YOUR_SECRET_KEY_HERE>")
+    .build();
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("workflow_identifier")
+        .to(To2.of(SubscriberPayloadDto.builder()
+            .subscriberId("subscriber_unique_identifier")
+            .firstName("Albert")
+            .lastName("Einstein")
+            .email("albert@einstein.com")
+            .phone("+1234567890")
+            .build()))
+        .payload(Map.ofEntries(
+            Map.entry("comment_id", "string"),
+            Map.entry("post", Map.of("text", "string"))))
+        .overrides(TriggerEventRequestDtoOverrides.builder()
+            .additionalProperties(Map.of("providers", Map.of("sendgrid", Map.ofEntries(
+                Map.entry("template_id", "xxxxxxxx"),
+                Map.entry("trackingSettings", Map.of("clickTracking", Map.ofEntries(
+                    Map.entry("enable", true),
+                    Map.entry("enableText", false))))))))
+            .build())
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -L -g -X POST 'https://api.novu.co/v1/events/trigger' \
+-H 'Content-Type: application/json' \
+-H 'Accept: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+    "name": "workflow_identifier",
+    "to": {
+        "subscriberId": "subscriber_unique_identifier",
+        "firstName": "Albert",
+        "lastName": "Einstein",
+        "email": "albert@einstein.com",
+        "phone": "+1234567890"
+    },
+    "payload": {
+        "comment_id": "string",
+        "post": { "text": "string" }
+    },
+    "overrides": {
+        "providers": {
+            "sendgrid": {
+                "template_id": "xxxxxxxx",
+                "trackingSettings": {
+                    "clickTracking": {
+                        "enable": true,
+                        "enableText": false
+                    }
+                }
+            }
+        }
+    }
+}'
+```
+  </Tab>
+</Tabs>
 
 This configuration affects every step in the workflow that uses SendGrid, unless a step-level override provides a more specific value.
 
@@ -127,59 +347,352 @@ Use step-level overrides when:
 - You want to send push notifications through the same provider, but with different settings for each step. For example, two steps use FCM, but each sends a different sound or title.
 - You need to customize the payload for a specific push step, such as platform-specific settings for Android and iOS, without affecting other steps.
 
-```typescript
+<Tabs>
+  <Tab title="Node.js">
+```ts
 import { Novu } from "@novu/api";
 
 const novu = new Novu({ secretKey: "<YOUR_SECRET_KEY_HERE>" });
 
-async function run() {
-  const result = await novu.trigger({
-    to: {
-      subscriberId: "subscriber_unique_identifier",
-      firstName: "Albert",
-      lastName: "Einstein",
-      email: "albert@einstein.com",
-      phone: "+1234567890",
-    },
-    workflowId: "workflow_identifier",
-    payload: {
-      comment_id: "string",
-      post: {
-        text: "string",
+await novu.trigger({
+  to: {
+    subscriberId: "subscriber_unique_identifier",
+    firstName: "Albert",
+    lastName: "Einstein",
+    email: "albert@einstein.com",
+    phone: "+1234567890",
+  },
+  workflowId: "workflow_identifier",
+  payload: {
+    comment_id: "string",
+    post: { text: "string" },
+  },
+  overrides: {
+    steps: {
+      "push-step": {
+        providers: {
+          fcm: {
+            notification: {
+              title: "New Comment",
+              body: "Someone replied to your post!",
+              sound: "default",
+            },
+            android: {
+              notification: {
+                sound: "sound_bell",
+              },
+            },
+            apns: {
+              payload: {
+                aps: {
+                  sound: "notification_bell.caf",
+                },
+              },
+            },
+          },
+        },
       },
     },
-    overrides: {
-      steps: {
-        'push-step': {
-          providers: {
-            fcm: {
-              notification: {
-                title: 'New Comment',
-                body: 'Someone replied to your post!',
-                sound: 'default', // Play default system sound
-              },
-              android: {
-                notification: {
-                  sound: 'sound_bell' // matches res/raw/sound_bell.mp3
-                }
-              },
-              apns: {
-                payload: {
-                  aps: {
-                    sound: 'notification_bell.caf' // For iOS
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  });
-}
-
-run();
+  },
+});
 ```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="workflow_identifier",
+        to={
+            "subscriber_id": "subscriber_unique_identifier",
+            "first_name": "Albert",
+            "last_name": "Einstein",
+            "email": "albert@einstein.com",
+            "phone": "+1234567890",
+        },
+        payload={
+            "comment_id": "string",
+            "post": {"text": "string"},
+        },
+        overrides={
+            "steps": {
+                "push-step": {
+                    "providers": {
+                        "fcm": {
+                            "notification": {
+                                "title": "New Comment",
+                                "body": "Someone replied to your post!",
+                                "sound": "default",
+                            },
+                            "android": {
+                                "notification": {
+                                    "sound": "sound_bell",
+                                },
+                            },
+                            "apns": {
+                                "payload": {
+                                    "aps": {
+                                        "sound": "notification_bell.caf",
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        },
+    ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "workflow_identifier",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: "subscriber_unique_identifier",
+        FirstName:    "Albert",
+        LastName:     "Einstein",
+        Email:        "albert@einstein.com",
+        Phone:        "+1234567890",
+    }),
+    Payload: map[string]any{
+        "comment_id": "string",
+        "post":       map[string]any{"text": "string"},
+    },
+    Overrides: map[string]map[string]any{
+        "steps": {
+            "push-step": map[string]any{
+                "providers": map[string]any{
+                    "fcm": map[string]any{
+                        "notification": map[string]any{
+                            "title": "New Comment",
+                            "body":  "Someone replied to your post!",
+                            "sound": "default",
+                        },
+                        "android": map[string]any{
+                            "notification": map[string]any{
+                                "sound": "sound_bell",
+                            },
+                        },
+                        "apns": map[string]any{
+                            "payload": map[string]any{
+                                "aps": map[string]any{
+                                    "sound": "notification_bell.caf",
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        },
+    },
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()
+    ->setSecurity('<YOUR_SECRET_KEY_HERE>')
+    ->build();
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'workflow_identifier',
+        to: new Components\SubscriberPayloadDto(
+            subscriberId: 'subscriber_unique_identifier',
+            firstName: 'Albert',
+            lastName: 'Einstein',
+            email: 'albert@einstein.com',
+            phone: '+1234567890',
+        ),
+        payload: [
+            'comment_id' => 'string',
+            'post' => ['text' => 'string'],
+        ],
+        overrides: [
+            'steps' => [
+                'push-step' => [
+                    'providers' => [
+                        'fcm' => [
+                            'notification' => [
+                                'title' => 'New Comment',
+                                'body' => 'Someone replied to your post!',
+                                'sound' => 'default',
+                            ],
+                            'android' => [
+                                'notification' => [
+                                    'sound' => 'sound_bell',
+                                ],
+                            ],
+                            'apns' => [
+                                'payload' => [
+                                    'aps' => [
+                                        'sound' => 'notification_bell.caf',
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ],
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+
+var sdk = new NovuSDK(secretKey: "<YOUR_SECRET_KEY_HERE>");
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "workflow_identifier",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() {
+        SubscriberId = "subscriber_unique_identifier",
+        FirstName = "Albert",
+        LastName = "Einstein",
+        Email = "albert@einstein.com",
+        Phone = "+1234567890",
+    }),
+    Payload = new Dictionary<string, object>() {
+        { "comment_id", "string" },
+        { "post", new Dictionary<string, object>() { { "text", "string" } } },
+    },
+    Overrides = new Overrides() {
+        Steps = new Dictionary<string, Dictionary<string, Dictionary<string, object>>>() {
+            { "push-step", new Dictionary<string, Dictionary<string, object>>() {
+                { "providers", new Dictionary<string, object>() {
+                    { "fcm", new Dictionary<string, object>() {
+                        { "notification", new Dictionary<string, object>() {
+                            { "title", "New Comment" },
+                            { "body", "Someone replied to your post!" },
+                            { "sound", "default" },
+                        } },
+                        { "android", new Dictionary<string, object>() {
+                            { "notification", new Dictionary<string, object>() {
+                                { "sound", "sound_bell" },
+                            } },
+                        } },
+                        { "apns", new Dictionary<string, object>() {
+                            { "payload", new Dictionary<string, object>() {
+                                { "aps", new Dictionary<string, object>() {
+                                    { "sound", "notification_bell.caf" },
+                                } },
+                            } },
+                        } },
+                    } },
+                } },
+            } },
+        },
+    },
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+import java.util.Map;
+
+Novu novu = Novu.builder()
+    .secretKey("<YOUR_SECRET_KEY_HERE>")
+    .build();
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("workflow_identifier")
+        .to(To2.of(SubscriberPayloadDto.builder()
+            .subscriberId("subscriber_unique_identifier")
+            .firstName("Albert")
+            .lastName("Einstein")
+            .email("albert@einstein.com")
+            .phone("+1234567890")
+            .build()))
+        .payload(Map.ofEntries(
+            Map.entry("comment_id", "string"),
+            Map.entry("post", Map.of("text", "string"))))
+        .overrides(TriggerEventRequestDtoOverrides.builder()
+            .additionalProperties(Map.of("steps", Map.of("push-step", Map.of("providers", Map.of("fcm", Map.ofEntries(
+                Map.entry("notification", Map.ofEntries(
+                    Map.entry("title", "New Comment"),
+                    Map.entry("body", "Someone replied to your post!"),
+                    Map.entry("sound", "default"))),
+                Map.entry("android", Map.of("notification", Map.of("sound", "sound_bell"))),
+                Map.entry("apns", Map.of("payload", Map.of("aps", Map.of("sound", "notification_bell.caf"))))))))))
+            .build())
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -L -g -X POST 'https://api.novu.co/v1/events/trigger' \
+-H 'Content-Type: application/json' \
+-H 'Accept: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+    "name": "workflow_identifier",
+    "to": {
+        "subscriberId": "subscriber_unique_identifier",
+        "firstName": "Albert",
+        "lastName": "Einstein",
+        "email": "albert@einstein.com",
+        "phone": "+1234567890"
+    },
+    "payload": {
+        "comment_id": "string",
+        "post": { "text": "string" }
+    },
+    "overrides": {
+        "steps": {
+            "push-step": {
+                "providers": {
+                    "fcm": {
+                        "notification": {
+                            "title": "New Comment",
+                            "body": "Someone replied to your post!",
+                            "sound": "default"
+                        },
+                        "android": {
+                            "notification": {
+                                "sound": "sound_bell"
+                            }
+                        },
+                        "apns": {
+                            "payload": {
+                                "aps": {
+                                    "sound": "notification_bell.caf"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}'
+```
+  </Tab>
+</Tabs>
 
 <Note>
   The `push-step` refers to the step identifier, which you can copy directly from your workflow in the Novu dashboard. Use this identifier to target the specific step you want to override. 

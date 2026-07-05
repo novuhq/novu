@@ -3,8 +3,6 @@ import {
   AnalyticsService,
   CreateOrUpdateSubscriberCommand,
   CreateOrUpdateSubscriberUseCase,
-  createHash,
-  decryptApiKey,
   InstrumentUsecase,
   LogDecorator,
   SelectIntegration,
@@ -13,7 +11,7 @@ import {
 import { EnvironmentRepository } from '@novu/dal';
 import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
 import { AuthService } from '../../../auth/services/auth.service';
-import { isHmacValid } from '../../../shared/helpers/is-valid-hmac';
+import { isHmacValidForAnyKey } from '../../../shared/helpers/is-valid-hmac';
 
 import { SessionInitializeResponseDto } from '../../dtos/session-initialize-response.dto';
 import { InitializeSessionCommand } from './initialize-session.command';
@@ -64,7 +62,11 @@ export class InitializeSession {
         lastName: command.lastName,
         email: command.email,
         phone: command.phone,
-        allowUpdate: isHmacValid(environment.apiKeys[0].key, command.subscriberId, command.hmacHash),
+        allowUpdate: isHmacValidForAnyKey(
+          environment.apiKeys.map((apiKey) => apiKey.key),
+          command.subscriberId,
+          command.hmacHash
+        ),
       })
     );
 
@@ -87,7 +89,9 @@ export class InitializeSession {
 }
 
 function validateNotificationCenterEncryption(environment, command: InitializeSessionCommand) {
-  if (!isHmacValid(environment.apiKeys[0].key, command.subscriberId, command.hmacHash)) {
+  const apiKeys = environment.apiKeys.map((apiKey) => apiKey.key);
+
+  if (!isHmacValidForAnyKey(apiKeys, command.subscriberId, command.hmacHash)) {
     throw new BadRequestException('Please provide a valid HMAC hash');
   }
 }

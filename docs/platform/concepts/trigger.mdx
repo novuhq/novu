@@ -63,4 +63,12 @@ Jobs play a crucial role in the trigger event lifecycle. They are created based 
   <Accordion title="How events are billed for digested events?">
     As a workflow triggered to one subscriber is billed as 1 event. if events are digested 15 times and a single digested notification is sent, then 15 events will be billed.
   </Accordion>
+
+  <Accordion title="How are duplicate trigger requests with the same idempotency key billed?">
+    Repeated `POST /v1/events/trigger` requests that include the same `Idempotency-Key` header are halted at the API layer. Once the first request completes, duplicates return the cached response and do not queue the trigger again, so they count as **one** workflow run for billing. While the first request is still processing, duplicates receive a `409 Conflict` response. See [Idempotency](/api-reference/idempotency) for header requirements and retry behavior.
+  </Accordion>
+
+  <Accordion title="Does transactionId deduplicate triggers the same way as an idempotency key?">
+    No. The optional `transactionId` field is returned for tracing and can be used to [cancel a triggered event](/api-reference/events/cancel-triggered-event), but duplicate `transactionId` values are **not** deduplicated at the API layer the way `Idempotency-Key` is. Uniqueness is enforced during trigger processing, so retried or concurrent requests with the same `transactionId` do not get the same billing protection as an idempotency key. For safe retries and atomic deduplication, use an `Idempotency-Key` header on every trigger request.
+  </Accordion>
 </AccordionGroup>

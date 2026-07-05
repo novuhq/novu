@@ -26,6 +26,7 @@ export interface CompletionOption {
 // Novu JIT namespaces
 const PAYLOAD_NAMESPACE = 'payload';
 const SUBSCRIBER_DATA_NAMESPACE = 'subscriber.data';
+const ACTOR_DATA_NAMESPACE = 'actor.data';
 const CONTEXT_NAMESPACE = 'context';
 const STEP_PAYLOAD_REGEX = /^steps\.[a-zA-Z0-9_-]+\.events/;
 
@@ -215,7 +216,15 @@ const createInfoPanel = ({ component }: { component: React.ReactNode }) => {
  *    Invalid:
  *    - subscriber.someOtherField (must use valid subscriber field)
  *
- * 3. Step Variables:
+ * 3. Actor Variables:
+ *    Valid:
+ *    - actor.data.
+ *    - actor.data.anyNewField (allows any new field)
+ *    - actor.firstName
+ *    - actor.email
+ *    - actor.subscriberId
+ *
+ * 4. Step Variables:
  *    Valid:
  *    - steps.
  *    - steps.digest-step (must be existing step ID)
@@ -383,7 +392,7 @@ function getMatchingVariables(
   }, []);
 
   // Create JIT variables based on the search text e.g. payload.foo, subscriber.data.foo, context.tenant.data, steps.digest-step.events.0.payload.foo
-  const baseNamespaces = [PAYLOAD_NAMESPACE, SUBSCRIBER_DATA_NAMESPACE, ...stepPayloadNamespaces];
+  const baseNamespaces = [PAYLOAD_NAMESPACE, SUBSCRIBER_DATA_NAMESPACE, ACTOR_DATA_NAMESPACE, ...stepPayloadNamespaces];
   const namespaces = isContextEnabled ? [...baseNamespaces, CONTEXT_NAMESPACE] : baseNamespaces;
 
   const jitVariables = createJitVariables({
