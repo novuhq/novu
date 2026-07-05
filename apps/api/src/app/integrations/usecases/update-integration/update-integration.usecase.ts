@@ -1,5 +1,5 @@
 import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { AnalyticsService, assertInfobipSmsCredentials, decryptCredentials, encryptCredentials, PinoLogger } from '@novu/application-generic';
+import { AnalyticsService, decryptCredentials, encryptCredentials, PinoLogger } from '@novu/application-generic';
 import { EnvironmentRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { CHANNELS_WITH_PRIMARY } from '@novu/shared';
 import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
@@ -188,13 +188,6 @@ export class UpdateIntegration {
         nextCredentials: whatsAppMerged,
         existingCredentials,
       });
-
-      assertInfobipSmsCredentials({
-        providerId: existingIntegration.providerId,
-        channel: existingIntegration.channel,
-        credentials: managedCredentials,
-      });
-
       updatePayload.credentials = encryptCredentials(managedCredentials);
     }
 
