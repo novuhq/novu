@@ -8,123 +8,50 @@
       "name": "region",
       "title": "Region (deployment)",
       "type": "ENUM",
-      "defaultValue": "All",
+      "defaultValue": "%",
       "items": [
-        { "title": "All regions", "value": "All" },
-        { "title": "US", "value": "[PROD-US] - API" },
-        { "title": "EU", "value": "[PROD-EU] - API" },
-        { "title": "UK", "value": "[PROD-UK] - API" },
-        { "title": "SG", "value": "[PROD-SG] - API" },
-        { "title": "AU", "value": "[PROD-AU] - API" },
-        { "title": "KR", "value": "[PROD-KR] - API" },
-        { "title": "JP", "value": "[PROD-JP] - API" },
-        { "title": "DEV", "value": "[DEV] - API" },
-        { "title": "EE", "value": "[EE] - API" }
+        { "title": "All regions", "value": "%" },
+        { "title": "US", "value": "%US%" },
+        { "title": "EU", "value": "%EU%" },
+        { "title": "UK", "value": "%UK%" },
+        { "title": "SG", "value": "%SG%" },
+        { "title": "AU", "value": "%AU%" },
+        { "title": "KR", "value": "%KR%" },
+        { "title": "JP", "value": "%JP%" },
+        { "title": "DEV", "value": "%DEV%" },
+        { "title": "EE", "value": "%EE%" }
       ]
     },
     {
       "name": "organizationId",
-      "title": "Organization ID (optional)",
+      "title": "Organization ID (optional, use % for all)",
       "type": "STRING",
-      "defaultValue": ""
+      "defaultValue": "%"
     },
     {
       "name": "environmentId",
-      "title": "Novu environment ID (optional)",
+      "title": "Novu environment ID (optional, use % for all)",
       "type": "STRING",
-      "defaultValue": ""
+      "defaultValue": "%"
     }
   ],
   "pages": [
     {
       "name": "Overview",
-      "description": "Regional API traffic and top organizations",
+      "description": "API request volume by organization over time",
       "widgets": [
         {
-          "title": "",
-          "visualization": { "id": "viz.markdown" },
-          "layout": { "column": 1, "row": 1, "width": 12, "height": 2 },
-          "rawConfiguration": {
-            "text": "# API Usage Overview\n\nUse the filters above to narrow by **deployment region** (US/EU/UK/...), **organization ID**, or **Novu environment ID**.\n\n- **Region** = where the API runs (`[PROD-US] - API`, `[PROD-EU] - API`, ...)\n- **Environment ID** = Novu workspace environment within an org (dev/prod)\n- Data comes from APM `Transaction` events with `organizationId` / `environmentId` custom attributes"
-          }
-        },
-        {
-          "title": "Authenticated API requests",
-          "visualization": { "id": "viz.billboard" },
-          "layout": { "column": 1, "row": 3, "width": 4, "height": 3 },
-          "rawConfiguration": {
-            "nrqlQueries": [
-              {
-                "accountId": 3812408,
-                "query": "SELECT count(*) AS 'Requests', uniqueCount(organizationId) AS 'Organizations', uniqueCount(environmentId) AS 'Novu envs' FROM Transaction WHERE appName LIKE '[PROD-%] - API' AND organizationId IS NOT NULL AND ({{region}} = 'All' OR appName = '{{region}}') AND ('{{environmentId}}' = '' OR environmentId = '{{environmentId}}') AND ('{{organizationId}}' = '' OR organizationId = '{{organizationId}}')"
-              }
-            ]
-          }
-        },
-        {
-          "title": "Error rate",
-          "visualization": { "id": "viz.billboard" },
-          "layout": { "column": 5, "row": 3, "width": 4, "height": 3 },
-          "rawConfiguration": {
-            "nrqlQueries": [
-              {
-                "accountId": 3812408,
-                "query": "SELECT percentage(count(*), WHERE error IS true) AS 'Error %', filter(count(*), WHERE error IS true) AS 'Errors' FROM Transaction WHERE appName LIKE '[PROD-%] - API' AND organizationId IS NOT NULL AND ({{region}} = 'All' OR appName = '{{region}}') AND ('{{environmentId}}' = '' OR environmentId = '{{environmentId}}') AND ('{{organizationId}}' = '' OR organizationId = '{{organizationId}}')"
-              }
-            ]
-          }
-        },
-        {
-          "title": "Avg response time (ms)",
-          "visualization": { "id": "viz.billboard" },
-          "layout": { "column": 9, "row": 3, "width": 4, "height": 3 },
-          "rawConfiguration": {
-            "nrqlQueries": [
-              {
-                "accountId": 3812408,
-                "query": "SELECT average(duration) AS 'Avg ms', percentile(duration, 95) AS 'P95 ms' FROM Transaction WHERE appName LIKE '[PROD-%] - API' AND organizationId IS NOT NULL AND ({{region}} = 'All' OR appName = '{{region}}') AND ('{{environmentId}}' = '' OR environmentId = '{{environmentId}}') AND ('{{organizationId}}' = '' OR organizationId = '{{organizationId}}')"
-              }
-            ]
-          }
-        },
-        {
-          "title": "Request volume by region",
+          "title": "Requests by organization over time",
           "visualization": { "id": "viz.line" },
-          "layout": { "column": 1, "row": 6, "width": 8, "height": 3 },
+          "layout": { "column": 1, "row": 1, "width": 12, "height": 8 },
           "rawConfiguration": {
             "nrqlQueries": [
               {
                 "accountId": 3812408,
-                "query": "SELECT count(*) FROM Transaction WHERE appName LIKE '[PROD-%] - API' AND organizationId IS NOT NULL AND ({{region}} = 'All' OR appName = '{{region}}') AND ('{{environmentId}}' = '' OR environmentId = '{{environmentId}}') AND ('{{organizationId}}' = '' OR organizationId = '{{organizationId}}') FACET appName TIMESERIES 1 hour"
+                "query": "SELECT count(*) FROM Transaction WHERE appName LIKE '% - API' AND organizationId IS NOT NULL AND organizationId LIKE {{organizationId}} AND environmentId LIKE {{environmentId}} AND appName LIKE {{region}} FACET organizationId TIMESERIES 1 hour LIMIT 15"
               }
             ],
             "legend": { "enabled": true }
-          }
-        },
-        {
-          "title": "Share by region",
-          "visualization": { "id": "viz.pie" },
-          "layout": { "column": 9, "row": 6, "width": 4, "height": 3 },
-          "rawConfiguration": {
-            "nrqlQueries": [
-              {
-                "accountId": 3812408,
-                "query": "SELECT count(*) FROM Transaction WHERE appName LIKE '[PROD-%] - API' AND organizationId IS NOT NULL AND ({{region}} = 'All' OR appName = '{{region}}') AND ('{{environmentId}}' = '' OR environmentId = '{{environmentId}}') AND ('{{organizationId}}' = '' OR organizationId = '{{organizationId}}') FACET appName LIMIT 20"
-              }
-            ]
-          }
-        },
-        {
-          "title": "Top organizations",
-          "visualization": { "id": "viz.table" },
-          "layout": { "column": 1, "row": 9, "width": 12, "height": 4 },
-          "rawConfiguration": {
-            "nrqlQueries": [
-              {
-                "accountId": 3812408,
-                "query": "SELECT count(*) AS 'Requests', uniqueCount(name) AS 'Endpoints', uniqueCount(environmentId) AS 'Novu envs', average(duration) AS 'Avg ms', percentage(count(*), WHERE error IS true) AS 'Error %' FROM Transaction WHERE appName LIKE '[PROD-%] - API' AND organizationId IS NOT NULL AND ({{region}} = 'All' OR appName = '{{region}}') AND ('{{environmentId}}' = '' OR environmentId = '{{environmentId}}') AND ('{{organizationId}}' = '' OR organizationId = '{{organizationId}}') FACET organizationId, appName LIMIT 50"
-              }
-            ]
           }
         }
       ]
@@ -149,7 +76,7 @@
             "nrqlQueries": [
               {
                 "accountId": 3812408,
-                "query": "SELECT count(*) FROM Transaction WHERE appName LIKE '[PROD-%] - API' AND organizationId IS NOT NULL AND ({{region}} = 'All' OR appName = '{{region}}') AND ('{{environmentId}}' = '' OR environmentId = '{{environmentId}}') AND ('{{organizationId}}' = '' OR organizationId = '{{organizationId}}') FACET appName TIMESERIES 1 hour"
+                "query": "SELECT count(*) FROM Transaction WHERE appName LIKE '% - API' AND organizationId IS NOT NULL AND organizationId LIKE {{organizationId}} AND environmentId LIKE {{environmentId}} AND appName LIKE {{region}} FACET appName TIMESERIES 1 hour"
               }
             ],
             "legend": { "enabled": true }
@@ -163,7 +90,7 @@
             "nrqlQueries": [
               {
                 "accountId": 3812408,
-                "query": "SELECT count(*) AS 'Requests', average(duration) AS 'Avg ms', percentage(count(*), WHERE error IS true) AS 'Error %' FROM Transaction WHERE appName LIKE '[PROD-%] - API' AND organizationId IS NOT NULL AND ({{region}} = 'All' OR appName = '{{region}}') AND ('{{environmentId}}' = '' OR environmentId = '{{environmentId}}') AND ('{{organizationId}}' = '' OR organizationId = '{{organizationId}}') FACET organizationId, environmentId, appName LIMIT 100"
+                "query": "SELECT count(*) AS 'Requests', average(duration) AS 'Avg ms', percentage(count(*), WHERE error IS true) AS 'Error %' FROM Transaction WHERE appName LIKE '% - API' AND organizationId IS NOT NULL AND organizationId LIKE {{organizationId}} AND environmentId LIKE {{environmentId}} AND appName LIKE {{region}} FACET organizationId, environmentId, appName LIMIT 100"
               }
             ]
           }
@@ -176,7 +103,7 @@
             "nrqlQueries": [
               {
                 "accountId": 3812408,
-                "query": "SELECT count(*) AS 'Requests', average(duration) AS 'Avg ms', percentage(count(*), WHERE error IS true) AS 'Error %' FROM Transaction WHERE appName LIKE '[PROD-%] - API' AND organizationId IS NOT NULL AND ({{region}} = 'All' OR appName = '{{region}}') AND ('{{environmentId}}' = '' OR environmentId = '{{environmentId}}') AND ('{{organizationId}}' = '' OR organizationId = '{{organizationId}}') FACET name LIMIT 50"
+                "query": "SELECT count(*) AS 'Requests', average(duration) AS 'Avg ms', percentage(count(*), WHERE error IS true) AS 'Error %' FROM Transaction WHERE appName LIKE '% - API' AND organizationId IS NOT NULL AND organizationId LIKE {{organizationId}} AND environmentId LIKE {{environmentId}} AND appName LIKE {{region}} FACET name LIMIT 50"
               }
             ]
           }
@@ -189,7 +116,7 @@
             "nrqlQueries": [
               {
                 "accountId": 3812408,
-                "query": "SELECT count(*) AS 'Requests', average(duration) AS 'Avg ms' FROM Transaction WHERE appName LIKE '[PROD-%] - API' AND organizationId IS NOT NULL AND name LIKE '%events/trigger%' AND ({{region}} = 'All' OR appName = '{{region}}') AND ('{{environmentId}}' = '' OR environmentId = '{{environmentId}}') AND ('{{organizationId}}' = '' OR organizationId = '{{organizationId}}') FACET organizationId, environmentId, appName, name LIMIT 50"
+                "query": "SELECT count(*) AS 'Requests', average(duration) AS 'Avg ms' FROM Transaction WHERE appName LIKE '% - API' AND organizationId IS NOT NULL AND name LIKE '%events/trigger%' AND organizationId LIKE {{organizationId}} AND environmentId LIKE {{environmentId}} AND appName LIKE {{region}} FACET organizationId, environmentId, appName, name LIMIT 50"
               }
             ]
           }
@@ -216,7 +143,7 @@
             "nrqlQueries": [
               {
                 "accountId": 3812408,
-                "query": "SELECT count(*) AS 'Requests' FROM Transaction WHERE appName LIKE '[PROD-%] - API' AND organizationId IS NOT NULL AND ({{region}} = 'All' OR appName = '{{region}}') AND ('{{environmentId}}' = '' OR environmentId = '{{environmentId}}') AND ('{{organizationId}}' = '' OR organizationId = '{{organizationId}}') FACET organizationId, appName, name SINCE 1 hour ago COMPARE WITH 1 day ago LIMIT 100"
+                "query": "SELECT count(*) AS 'Requests' FROM Transaction WHERE appName LIKE '% - API' AND organizationId IS NOT NULL AND organizationId LIKE {{organizationId}} AND environmentId LIKE {{environmentId}} AND appName LIKE {{region}} FACET organizationId, appName, name SINCE 1 hour ago COMPARE WITH 1 day ago LIMIT 100"
               }
             ]
           }
@@ -229,7 +156,7 @@
             "nrqlQueries": [
               {
                 "accountId": 3812408,
-                "query": "SELECT count(*) AS 'Requests' FROM Transaction WHERE appName LIKE '[PROD-%] - API' AND organizationId IS NOT NULL AND name LIKE '%events/trigger%' AND ({{region}} = 'All' OR appName = '{{region}}') AND ('{{environmentId}}' = '' OR environmentId = '{{environmentId}}') AND ('{{organizationId}}' = '' OR organizationId = '{{organizationId}}') FACET organizationId, environmentId, appName, name SINCE 1 hour ago COMPARE WITH 1 day ago LIMIT 50"
+                "query": "SELECT count(*) AS 'Requests' FROM Transaction WHERE appName LIKE '% - API' AND organizationId IS NOT NULL AND name LIKE '%events/trigger%' AND organizationId LIKE {{organizationId}} AND environmentId LIKE {{environmentId}} AND appName LIKE {{region}} FACET organizationId, environmentId, appName, name SINCE 1 hour ago COMPARE WITH 1 day ago LIMIT 50"
               }
             ]
           }
@@ -242,7 +169,7 @@
             "nrqlQueries": [
               {
                 "accountId": 3812408,
-                "query": "SELECT count(*) FROM Transaction WHERE appName LIKE '[PROD-%] - API' AND organizationId IS NOT NULL AND ({{region}} = 'All' OR appName = '{{region}}') AND ('{{organizationId}}' = '' OR organizationId = '{{organizationId}}') FACET appName TIMESERIES SINCE today COMPARE WITH 1 week ago"
+                "query": "SELECT count(*) FROM Transaction WHERE appName LIKE '% - API' AND organizationId IS NOT NULL AND organizationId LIKE {{organizationId}} AND appName LIKE {{region}} FACET appName TIMESERIES SINCE today COMPARE WITH 1 week ago"
               }
             ],
             "legend": { "enabled": true }
@@ -256,7 +183,7 @@
             "nrqlQueries": [
               {
                 "accountId": 3812408,
-                "query": "SELECT count(*) FROM Transaction WHERE appName LIKE '[PROD-%] - API' AND organizationId IS NOT NULL AND name LIKE '%events/trigger%' AND ({{region}} = 'All' OR appName = '{{region}}') FACET organizationId TIMESERIES 15 minutes SINCE 24 hours ago LIMIT 10"
+                "query": "SELECT count(*) FROM Transaction WHERE appName LIKE '% - API' AND organizationId IS NOT NULL AND name LIKE '%events/trigger%' AND organizationId LIKE {{organizationId}} AND environmentId LIKE {{environmentId}} AND appName LIKE {{region}} FACET organizationId TIMESERIES 15 minutes SINCE 24 hours ago LIMIT 10"
               }
             ],
             "legend": { "enabled": true }
