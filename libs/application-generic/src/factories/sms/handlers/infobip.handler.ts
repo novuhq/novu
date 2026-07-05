@@ -1,5 +1,6 @@
-import { InfobipSmsProvider, resolveSafeInfobipBaseUrl } from '@novu/providers';
+import { InfobipSmsProvider } from '@novu/providers';
 import { ChannelTypeEnum, ICredentials, SmsProviderIdEnum } from '@novu/shared';
+import { resolveInfobipSmsBaseUrl } from '../../../utils/infobip-sms-credentials';
 import { BaseSmsHandler } from './base.handler';
 
 export class InfobipSmsHandler extends BaseSmsHandler {
@@ -7,7 +8,7 @@ export class InfobipSmsHandler extends BaseSmsHandler {
     super(SmsProviderIdEnum.Infobip, ChannelTypeEnum.SMS);
   }
   buildProvider(credentials: ICredentials) {
-    const baseUrl = resolveSafeInfobipBaseUrl(credentials.baseUrl);
+    const baseUrl = resolveInfobipSmsBaseUrl(credentials.baseUrl);
 
     this.provider = new InfobipSmsProvider({
       baseUrl,
