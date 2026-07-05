@@ -48,7 +48,9 @@ export class ChatOauthCallbackCommand extends BaseCommand {
   @IsString()
   readonly providerCode: string;
 
-  readonly hmacHash?: string;
+  @IsNotEmpty()
+  @IsString()
+  readonly state: string;
 
   @IsOptional()
   @IsString()

@@ -4,6 +4,7 @@ import { EnvironmentRepository, ICredentialsEntity, IntegrationEntity, Integrati
 import { ChannelTypeEnum } from '@novu/stateless';
 
 import { ChatOauthCommand } from './chat-oauth.command';
+import { createSubscriberChatOAuthState } from './subscriber-chat-oauth-state.util';
 
 @Injectable()
 export class ChatOauth {
@@ -14,51 +15,40 @@ export class ChatOauth {
     private environmentRepository: EnvironmentRepository
   ) {}
   async execute(command: ChatOauthCommand): Promise<string> {
-    const { clientId, hmac } = await this.getCredentials(command);
+    const { clientId } = await this.getCredentials(command);
+    const apiKey = await this.getEnvironmentApiKey(command.environmentId);
 
-    await this.hmacValidation({
-      credentialHmac: hmac,
-      environmentId: command.environmentId,
+    validateSubscriberHmac({
+      apiKey,
       subscriberId: command.subscriberId,
       externalHmacHash: command.hmacHash,
     });
 
-    return this.getOAuthUrl(command.subscriberId, command.environmentId, clientId!, command.integrationIdentifier);
-  }
+    const secureState = createSubscriberChatOAuthState(
+      {
+        environmentId: command.environmentId,
+        subscriberId: command.subscriberId,
+        providerId: command.providerId,
+        integrationIdentifier: command.integrationIdentifier,
+      },
+      apiKey
+    );
 
-  private async hmacValidation({
-    credentialHmac,
-    environmentId,
-    subscriberId,
-    externalHmacHash,
-  }: {
-    credentialHmac: boolean | undefined;
-    environmentId: string;
-    subscriberId: string;
-    externalHmacHash: string | undefined;
-  }) {
-    if (credentialHmac) {
-      if (!externalHmacHash) {
-        throw new BadRequestException(
-          'Hmac is enabled on the integration, please provide a HMAC hash on the request params'
-        );
-      }
-
-      const apiKey = await this.getEnvironmentApiKey(environmentId);
-
-      validateEncryption({
-        apiKey,
-        subscriberId,
-        externalHmacHash,
-      });
-    }
+    return this.getOAuthUrl(
+      command.subscriberId,
+      command.environmentId,
+      clientId!,
+      command.integrationIdentifier,
+      secureState
+    );
   }
 
   private getOAuthUrl(
     subscriberId: string,
     environmentId: string,
     clientId: string,
-    integrationIdentifier?: string
+    integrationIdentifier: string | undefined,
+    secureState: string
   ): string {
     let redirectUri = `${
       process.env.API_ROOT_URL
@@ -68,9 +58,14 @@ export class ChatOauth {
       redirectUri = `${redirectUri}&integrationIdentifier=${integrationIdentifier}`;
     }
 
-    return `${
-      this.SLACK_OAUTH_URL
-    }client_id=${clientId}&scope=incoming-webhook&user_scope=&redirect_uri=${encodeURIComponent(redirectUri)}`;
+    const oauthParams = new URLSearchParams({
+      client_id: clientId,
+      scope: 'incoming-webhook',
+      redirect_uri: redirectUri,
+      state: secureState,
+    });
+
+    return `${this.SLACK_OAUTH_URL}${oauthParams.toString()}`;
   }
 
   private async getCredentials(command: ChatOauthCommand): Promise<ICredentialsEntity> {
@@ -123,17 +118,21 @@ export class ChatOauth {
   }
 }
 
-export function validateEncryption({
+export function validateSubscriberHmac({
   apiKey,
   subscriberId,
   externalHmacHash,
 }: {
   apiKey: string;
   subscriberId: string;
-  externalHmacHash: string;
+  externalHmacHash: string | undefined;
 }) {
+  if (!externalHmacHash) {
+    throw new BadRequestException('HMAC hash is required to initiate subscriber chat OAuth');
+  }
+
   const hmacHash = createHash(apiKey, subscriberId);
   if (hmacHash !== externalHmacHash) {
-    throw new BadRequestException('Hmac is enabled on the integration, please provide a valid HMAC hash');
+    throw new BadRequestException('Invalid HMAC hash for subscriber chat OAuth');
   }
 }

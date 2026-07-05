@@ -823,7 +823,7 @@ export class SubscribersV1Controller {
     const callbackResult = await this.chatOauthCallbackUsecase.execute(
       ChatOauthCallbackCommand.create({
         providerCode: query?.code,
-        hmacHash: query?.hmacHash,
+        state: query?.state,
         environmentId: query?.environmentId,
         integrationIdentifier: query?.integrationIdentifier,
         subscriberId,

@@ -15,7 +15,7 @@ import { ENDPOINT_TYPES, ICredentialsDto } from '@novu/shared';
 import axios from 'axios';
 import { CreateChannelEndpointCommand } from '../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.command';
 import { CreateChannelEndpoint } from '../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.usecase';
-import { validateEncryption } from '../chat-oauth/chat-oauth.usecase';
+import { validateSubscriberChatOAuthState } from '../chat-oauth/subscriber-chat-oauth-state.util';
 import { ChatOauthCallbackCommand } from './chat-oauth-callback.command';
 import { ChatOauthCallbackResult, ResponseTypeEnum } from './chat-oauth-callback.result';
 
@@ -41,11 +41,11 @@ export class ChatOauthCallback {
 
     const { _organizationId, apiKeys } = await this.getEnvironment(command.environmentId);
 
-    await this.hmacValidation({
-      credentialHmac: integrationCredentials.hmac,
-      apiKey: apiKeys[0].key,
+    validateSubscriberChatOAuthState(command.state, apiKeys[0].key, {
+      environmentId: command.environmentId,
       subscriberId: command.subscriberId,
-      externalHmacHash: command.hmacHash,
+      providerId: command.providerId,
+      integrationIdentifier: command.integrationIdentifier,
     });
 
     const webhookUrl = await this.getWebhook(command, integrationCredentials);
@@ -163,31 +163,5 @@ export class ChatOauthCallback {
     integration.credentials = decryptCredentials(integration.credentials);
 
     return integration;
-  }
-
-  private async hmacValidation({
-    credentialHmac,
-    apiKey,
-    subscriberId,
-    externalHmacHash,
-  }: {
-    credentialHmac: boolean | undefined;
-    apiKey: string;
-    subscriberId: string;
-    externalHmacHash: string | undefined;
-  }) {
-    if (credentialHmac) {
-      if (!externalHmacHash) {
-        throw new BadRequestException(
-          'Hmac is enabled on the integration, please provide a HMAC hash on the request params'
-        );
-      }
-
-      validateEncryption({
-        apiKey,
-        subscriberId,
-        externalHmacHash,
-      });
-    }
   }
 }
