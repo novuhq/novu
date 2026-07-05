@@ -1,3 +1,5 @@
+import { normalizeIntlLocale } from './normalizeIntlLocale';
+
 const DEFAULT_LOCALE = 'en-US';
 
 const SECONDS = {
@@ -17,15 +19,17 @@ export function formatToRelativeTime({
   locale?: string;
   toDate?: Date;
 }) {
+  const intlLocale = normalizeIntlLocale(locale);
+
   // time elapsed in milliseconds between the two dates
   const elapsed = toDate.getTime() - fromDate.getTime();
 
-  const formatter = new Intl.RelativeTimeFormat(locale, { style: 'narrow' });
+  const formatter = new Intl.RelativeTimeFormat(intlLocale, { style: 'narrow' });
 
   const diffInSeconds = Math.floor(elapsed / 1000);
 
   if (Math.abs(diffInSeconds) < SECONDS.inMinute) {
-    const subMinuteFormatter = new Intl.RelativeTimeFormat(locale, { style: 'narrow', numeric: 'auto' });
+    const subMinuteFormatter = new Intl.RelativeTimeFormat(intlLocale, { style: 'narrow', numeric: 'auto' });
 
     return subMinuteFormatter.format(-0, 'second');
   }
@@ -43,7 +47,7 @@ export function formatToRelativeTime({
   }
   // Otherwise, return the date formatted with month and day. i.e Dec 3
   else {
-    return new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric' }).format(fromDate);
+    return new Intl.DateTimeFormat(intlLocale, { month: 'short', day: 'numeric' }).format(fromDate);
   }
 }
 
@@ -52,6 +56,8 @@ export function formatToRelativeTime({
  * Returns formats that pair well with "Snoozed until" label, like "2 hours" or "Mar 5"
  */
 export function formatSnoozedUntil({ untilDate, locale = DEFAULT_LOCALE }: { untilDate: Date; locale?: string }) {
+  const intlLocale = normalizeIntlLocale(locale);
+
   // time remaining in milliseconds between the two dates
   const remaining = untilDate.getTime() - new Date().getTime();
 
@@ -90,6 +96,6 @@ export function formatSnoozedUntil({ untilDate, locale = DEFAULT_LOCALE }: { unt
   }
   // Otherwise, return the date formatted with month and day
   else {
-    return new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric' }).format(untilDate);
+    return new Intl.DateTimeFormat(intlLocale, { month: 'short', day: 'numeric' }).format(untilDate);
   }
 }
