@@ -5,24 +5,40 @@ type JsonSchema = Record<string, unknown>;
 const SUPPORTED_STRING_FORMATS = new Set(['email', 'uri', 'uuid', 'date-time', 'date', 'time']);
 
 export function safeJsonSchemaToZod(schema: JsonSchema): ZodTypeAny {
-  return buildSchema(schema);
+  return buildSchema(schema, schema);
 }
 
-function buildSchema(schema: JsonSchema): ZodTypeAny {
-  if ('$ref' in schema) {
-    return fallbackSchema();
+function buildSchema(schema: JsonSchema, root: JsonSchema, refStack: Set<string> = new Set()): ZodTypeAny {
+  if ('$ref' in schema && typeof schema.$ref === 'string') {
+    if (refStack.has(schema.$ref)) {
+      return fallbackSchema();
+    }
+
+    const resolved = resolveRef(schema.$ref, root);
+
+    if (!resolved) {
+      return fallbackSchema();
+    }
+
+    refStack.add(schema.$ref);
+
+    const resolvedSchema = buildSchema(resolved, root, refStack);
+
+    refStack.delete(schema.$ref);
+
+    return resolvedSchema;
   }
 
   if (Array.isArray(schema.allOf)) {
-    return buildAllOf(schema.allOf);
+    return buildAllOf(schema.allOf, root, refStack);
   }
 
   if (Array.isArray(schema.anyOf)) {
-    return buildUnion(schema.anyOf);
+    return buildUnion(schema.anyOf, root, refStack);
   }
 
   if (Array.isArray(schema.oneOf)) {
-    return buildUnion(schema.oneOf);
+    return buildUnion(schema.oneOf, root, refStack);
   }
 
   if (Array.isArray(schema.enum)) {
@@ -42,7 +58,7 @@ function buildSchema(schema: JsonSchema): ZodTypeAny {
       return z.null();
     }
 
-    const variants = nonNullTypes.map((value) => buildSchema({ ...schema, type: value }));
+    const variants = nonNullTypes.map((value) => buildSchema({ ...schema, type: value }, root, refStack));
     const unionSchema =
       variants.length === 1 ? variants[0] : z.union(variants as [ZodTypeAny, ZodTypeAny, ...ZodTypeAny[]]);
 
@@ -54,11 +70,11 @@ function buildSchema(schema: JsonSchema): ZodTypeAny {
   }
 
   if (type === 'object' || schema.properties) {
-    return buildObject(schema);
+    return buildObject(schema, root, refStack);
   }
 
   if (type === 'array') {
-    return buildArray(schema);
+    return buildArray(schema, root, refStack);
   }
 
   if (type === 'string') {
@@ -80,10 +96,41 @@ function buildSchema(schema: JsonSchema): ZodTypeAny {
   return fallbackSchema();
 }
 
-function buildAllOf(schemas: unknown[]): ZodTypeAny {
+function resolveRef(ref: string, root: JsonSchema): JsonSchema | null {
+  if (!ref.startsWith('#/')) {
+    return null;
+  }
+
+  const parts = ref.slice(2).split('/');
+  let current: unknown = root;
+
+  for (const part of parts) {
+    const key = part.replace(/~1/g, '/').replace(/~0/g, '~');
+
+    if (typeof current !== 'object' || current === null) {
+      return null;
+    }
+
+    const record = current as Record<string, unknown>;
+
+    if (!(key in record)) {
+      return null;
+    }
+
+    current = record[key];
+  }
+
+  if (typeof current === 'object' && current !== null) {
+    return current as JsonSchema;
+  }
+
+  return null;
+}
+
+function buildAllOf(schemas: unknown[], root: JsonSchema, refStack: Set<string>): ZodTypeAny {
   const zodSchemas = schemas
     .filter((value): value is JsonSchema => typeof value === 'object' && value !== null)
-    .map((value) => buildSchema(value));
+    .map((value) => buildSchema(value, root, refStack));
 
   if (zodSchemas.length === 0) {
     return fallbackSchema();
@@ -92,10 +139,10 @@ function buildAllOf(schemas: unknown[]): ZodTypeAny {
   return zodSchemas.reduce((left, right) => z.intersection(left, right));
 }
 
-function buildUnion(schemas: unknown[]): ZodTypeAny {
+function buildUnion(schemas: unknown[], root: JsonSchema, refStack: Set<string>): ZodTypeAny {
   const zodSchemas = schemas
     .filter((value): value is JsonSchema => typeof value === 'object' && value !== null)
-    .map((value) => buildSchema(value));
+    .map((value) => buildSchema(value, root, refStack));
 
   if (zodSchemas.length === 0) {
     return fallbackSchema();
@@ -122,13 +169,13 @@ function buildEnum(values: unknown[]): ZodTypeAny {
   return z.union(literals as [ZodTypeAny, ZodTypeAny, ...ZodTypeAny[]]);
 }
 
-function buildObject(schema: JsonSchema): ZodTypeAny {
+function buildObject(schema: JsonSchema, root: JsonSchema, refStack: Set<string>): ZodTypeAny {
   const properties = (schema.properties as Record<string, JsonSchema> | undefined) ?? {};
   const required = new Set(Array.isArray(schema.required) ? schema.required : []);
   const shape: Record<string, ZodTypeAny> = {};
 
   for (const [key, propertySchema] of Object.entries(properties)) {
-    let property = buildSchema(propertySchema);
+    let property = buildSchema(propertySchema, root, refStack);
 
     if (!required.has(key)) {
       property = property.optional();
@@ -143,22 +190,23 @@ function buildObject(schema: JsonSchema): ZodTypeAny {
     objectSchema = (objectSchema as z.ZodObject<z.ZodRawShape>).strict();
   } else if (typeof schema.additionalProperties === 'object' && schema.additionalProperties !== null) {
     objectSchema = (objectSchema as z.ZodObject<z.ZodRawShape>).catchall(
-      buildSchema(schema.additionalProperties as JsonSchema)
+      buildSchema(schema.additionalProperties as JsonSchema, root, refStack)
     );
   }
 
   return applyDescription(objectSchema, schema);
 }
 
-function buildArray(schema: JsonSchema): ZodTypeAny {
+function buildArray(schema: JsonSchema, root: JsonSchema, refStack: Set<string>): ZodTypeAny {
   const items = schema.items;
+  const isTuple = Array.isArray(items);
 
   let arraySchema: ZodTypeAny;
 
-  if (Array.isArray(items)) {
+  if (isTuple) {
     const tupleItems = items
       .filter((value): value is JsonSchema => typeof value === 'object' && value !== null)
-      .map((value) => buildSchema(value));
+      .map((value) => buildSchema(value, root, refStack));
 
     if (tupleItems.length === 0) {
       arraySchema = z.array(z.unknown());
@@ -166,17 +214,19 @@ function buildArray(schema: JsonSchema): ZodTypeAny {
       arraySchema = z.tuple(tupleItems as [ZodTypeAny, ...ZodTypeAny[]]);
     }
   } else if (typeof items === 'object' && items !== null) {
-    arraySchema = z.array(buildSchema(items as JsonSchema));
+    arraySchema = z.array(buildSchema(items as JsonSchema, root, refStack));
   } else {
     arraySchema = z.array(z.unknown());
   }
 
-  if (typeof schema.minItems === 'number') {
-    arraySchema = (arraySchema as z.ZodArray<ZodTypeAny>).min(schema.minItems);
-  }
+  if (!isTuple) {
+    if (typeof schema.minItems === 'number') {
+      arraySchema = (arraySchema as z.ZodArray<ZodTypeAny>).min(schema.minItems);
+    }
 
-  if (typeof schema.maxItems === 'number') {
-    arraySchema = (arraySchema as z.ZodArray<ZodTypeAny>).max(schema.maxItems);
+    if (typeof schema.maxItems === 'number') {
+      arraySchema = (arraySchema as z.ZodArray<ZodTypeAny>).max(schema.maxItems);
+    }
   }
 
   return applyDescription(arraySchema, schema);
@@ -197,7 +247,7 @@ function buildString(schema: JsonSchema): ZodTypeAny {
     try {
       stringSchema = (stringSchema as z.ZodString).regex(new RegExp(schema.pattern));
     } catch {
-      return fallbackSchema();
+      // Keep an unconstrained string when the workflow pattern is invalid.
     }
   }
 
