@@ -24,6 +24,7 @@ export type {
   AgentToolCall,
   CardChild,
   CardElement,
+  DeleteMessagePayload,
   EditPayload,
   FileRef,
   MessageContent,
