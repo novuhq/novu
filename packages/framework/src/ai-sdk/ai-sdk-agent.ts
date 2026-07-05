@@ -1,6 +1,11 @@
-import { agent as frameworkAgent } from '../resources/agent/agent.resource';
 import { requireRuntimeContext } from '../resources/agent/agent.runtime';
-import type { Agent, AgentActionContext, AgentMessage, ReplyHandle } from '../resources/agent/agent.types';
+import type {
+  Agent,
+  AgentActionContext,
+  AgentHandlers,
+  AgentMessage,
+  ReplyHandle,
+} from '../resources/agent/agent.types';
 import { handleAiSdkResult, isAiSdkResult } from './reply-mapper';
 import type { AiSdkAgentHandlers } from './types';
 
@@ -28,8 +33,13 @@ function normalize(id: string, handlers: AiSdkMessageHandler | AiSdkAgentHandler
 }
 
 export function agent(id: string, handlers: AiSdkMessageHandler | AiSdkAgentHandlers): Agent {
+  if (!id) {
+    throw new Error('agent() requires a non-empty agentId');
+  }
+
   const h = normalize(id, handlers);
   const config = h.toolApproval;
+  const userOnToolApproval = typeof h.onToolApproval === 'function';
 
   // The decision is persisted to `ctx.history` by Novu before this turn fires, so
   // resuming is just re-running `onMessage`: `toModelMessages(ctx.history)` now
@@ -42,7 +52,7 @@ export function agent(id: string, handlers: AiSdkMessageHandler | AiSdkAgentHand
     }
   };
 
-  return frameworkAgent(id, {
+  const wrappedHandlers: AgentHandlers = {
     onMessage: async (message, ctx) => {
       const result = await h.onMessage(message, ctx);
 
@@ -75,5 +85,7 @@ export function agent(id: string, handlers: AiSdkMessageHandler | AiSdkAgentHand
     ...(h.onAction && { onAction: h.onAction }),
     ...(h.onReaction && { onReaction: h.onReaction }),
     ...(h.onResolve && { onResolve: h.onResolve }),
-  });
+  };
+
+  return { id, handlers: wrappedHandlers, userOnToolApproval };
 }

@@ -15,7 +15,6 @@ import type {
 } from './agent.types';
 import { AgentEventEnum, PendingApproval } from './agent.types';
 import { parseApprovalActionId, type ToolApprovalRequestPayload } from './tool-approval/action-id';
-import { resolvedApprovalCard } from './tool-approval/approval-card';
 
 function findApprovalInHistory(
   history: AgentHistoryEntry[],
@@ -88,8 +87,8 @@ async function runAgentHandler(registeredAgent: Agent, event: string, ctx: Agent
         const result = await registeredAgent.handlers.onToolApproval(decision, ctx as AgentActionContext);
         await replyIfPresent(result);
 
-        if (!approvalMessage.editedByHandler && ctx.action!.sourceMessageId) {
-          await approvalMessage.edit(resolvedApprovalCard({ name: toolCall.name, approved }));
+        if (!registeredAgent.userOnToolApproval && ctx.action!.sourceMessageId) {
+          await approvalMessage.delete();
         }
         break;
       }

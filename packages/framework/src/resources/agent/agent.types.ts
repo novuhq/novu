@@ -247,8 +247,9 @@ export interface ToolApprovalDecision {
   /** `true` if the user approved, `false` if they denied. */
   approved: boolean;
   /**
-   * Handle to the approval message. Edit it to show a custom resolved state,
-   * or leave it unchanged to use the default resolved card.
+   * Handle to the approval message. When you register `onToolApproval`, you own
+   * card cleanup — call `edit()` or `delete()` as needed. When the framework
+   * handles the approval click, the card is deleted for you.
    */
   approvalMessage: ReplyHandle;
 }
@@ -502,6 +503,12 @@ export interface AgentHandlers {
 export interface Agent {
   id: string;
   handlers: AgentHandlers;
+  /**
+   * @internal Set by `agent()` / ai-sdk registration. True when the application
+   * author registered `onToolApproval` (full manual card cleanup). False when
+   * only a framework wrapper handles approval clicks (auto-delete after handler).
+   */
+  userOnToolApproval?: boolean;
 }
 
 // ---------------------------------------------------------------------------
