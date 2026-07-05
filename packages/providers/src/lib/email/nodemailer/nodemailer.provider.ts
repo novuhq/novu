@@ -1,5 +1,8 @@
 import { EmailProviderIdEnum } from '@novu/shared';
-import { assertSafeSmtpOutboundTarget } from '@novu/shared/utils/validate-smtp-outbound-target';
+import {
+  resolveSafeSmtpPinnedTarget,
+  SmtpOutboundTlsOptions,
+} from '@novu/shared/utils/validate-smtp-outbound-target';
 import {
   ChannelTypeEnum,
   CheckIntegrationResponseEnum,
@@ -35,10 +38,18 @@ export class NodemailerProvider extends BaseProvider implements IEmailProvider {
 
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
 
-  private transports: Transporter;
-
   constructor(private config: INodemailerConfig) {
     super();
+  }
+
+  private getTlsConfig(servername: string): ConnectionOptions {
+    return {
+      ...(this.getTlsOptions() ?? {}),
+      servername,
+    };
+  }
+
+  private buildTransportOptions(connectionHost: string, port: number, tlsServername: string): SMTPTransport.Options {
     let { dkim } = this.config;
 
     if (!dkim?.domainName || !dkim?.privateKey || !dkim?.keySelector) {
@@ -46,13 +57,12 @@ export class NodemailerProvider extends BaseProvider implements IEmailProvider {
     }
 
     const authEnabled = this.config.user && this.config.password;
+    const tls = this.getTlsConfig(tlsServername);
 
-    const tls: ConnectionOptions = this.getTlsOptions();
-
-    const smtpTransportOptions: SMTPTransport.Options = {
-      name: this.config.host,
-      host: this.config.host,
-      port: this.config.port,
+    return {
+      name: tlsServername,
+      host: connectionHost,
+      port,
       secure: this.config.secure,
       connectionTimeout: 10000,
       socketTimeout: 10000,
@@ -65,10 +75,29 @@ export class NodemailerProvider extends BaseProvider implements IEmailProvider {
       dkim,
       ignoreTLS: this.config.ignoreTls,
       requireTLS: this.config.requireTls,
-      ...(tls && { tls }),
+      tls,
     };
+  }
 
-    this.transports = nodemailer.createTransport(smtpTransportOptions);
+  private getSmtpTlsOptions(): SmtpOutboundTlsOptions {
+    return {
+      secure: this.config.secure,
+      requireTls: this.config.requireTls,
+      ignoreTls: this.config.ignoreTls,
+    };
+  }
+
+  private async withPinnedTransport<T>(operation: (transport: Transporter) => Promise<T>): Promise<T> {
+    const pinned = await resolveSafeSmtpPinnedTarget(this.config.host, this.config.port, this.getSmtpTlsOptions());
+    const transport = nodemailer.createTransport(
+      this.buildTransportOptions(pinned.address, pinned.port, pinned.hostname)
+    );
+
+    try {
+      return await operation(transport);
+    } finally {
+      transport.close();
+    }
   }
 
   getTlsOptions(): ConnectionOptions | undefined {
@@ -98,15 +127,9 @@ export class NodemailerProvider extends BaseProvider implements IEmailProvider {
     options: IEmailOptions,
     bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
-    await assertSafeSmtpOutboundTarget(this.config.host, this.config.port, {
-      secure: this.config.secure,
-      requireTls: this.config.requireTls,
-      ignoreTls: this.config.ignoreTls,
-    });
-
     const mailData = this.createMailData(options);
     const merged = this.transform(bridgeProviderData, mailData);
-    const info = await this.transports.sendMail(merged.body);
+    const info = await this.withPinnedTransport((transport) => transport.sendMail(merged.body));
 
     return {
       id: info?.messageId,
@@ -116,14 +139,8 @@ export class NodemailerProvider extends BaseProvider implements IEmailProvider {
 
   async checkIntegration(options: IEmailOptions): Promise<ICheckIntegrationResponse> {
     try {
-      await assertSafeSmtpOutboundTarget(this.config.host, this.config.port, {
-        secure: this.config.secure,
-        requireTls: this.config.requireTls,
-        ignoreTls: this.config.ignoreTls,
-      });
-
       const mailData = this.createMailData(options);
-      await this.transports.sendMail(mailData);
+      await this.withPinnedTransport((transport) => transport.sendMail(mailData));
 
       return {
         success: true,

@@ -78,14 +78,39 @@ export function assertSafeSmtpOutboundTargetSync(
   assertSafeSmtpPort(port);
 }
 
+export type SafeSmtpPinnedTarget = {
+  hostname: string;
+  address: string;
+  port: number;
+};
+
+export async function resolveSafeSmtpPinnedTarget(
+  host: string | undefined,
+  port: number | string | undefined,
+  tlsOptions: SmtpOutboundTlsOptions
+): Promise<SafeSmtpPinnedTarget> {
+  assertSmtpTlsRequired(tlsOptions);
+
+  const hostname = assertSafeSmtpHostFormat(host);
+  const parsedPort = assertSafeSmtpPort(port);
+  const addresses = await resolvePublicAddresses(hostname);
+  const chosen = addresses[0];
+
+  if (!chosen) {
+    throw new SsrfBlockedError('DNS_LOOKUP_FAILED', `Unable to resolve hostname "${hostname}".`, { hostname });
+  }
+
+  return {
+    hostname,
+    address: chosen.address,
+    port: parsedPort,
+  };
+}
+
 export async function assertSafeSmtpOutboundTarget(
   host: string | undefined,
   port: number | string | undefined,
   tlsOptions: SmtpOutboundTlsOptions
 ): Promise<void> {
-  assertSafeSmtpOutboundTargetSync(host, port, tlsOptions);
-
-  const normalizedHost = assertSafeSmtpHostFormat(host);
-
-  await resolvePublicAddresses(normalizedHost);
+  await resolveSafeSmtpPinnedTarget(host, port, tlsOptions);
 }

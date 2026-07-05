@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   assertSafeSmtpOutboundTarget,
   assertSafeSmtpOutboundTargetSync,
+  resolveSafeSmtpPinnedTarget,
   SsrfBlockedError,
 } from './validate-smtp-outbound-target';
 
@@ -46,6 +47,18 @@ describe('validate-smtp-outbound-target', () => {
       await expect(assertSafeSmtpOutboundTarget('ssrf-link-local-test.invalid', 587, tlsEnabled)).rejects.toThrow(
         SsrfBlockedError
       );
+    });
+  });
+
+  describe('resolveSafeSmtpPinnedTarget', () => {
+    it('returns a pinned public address for literal IPs', async () => {
+      const pinned = await resolveSafeSmtpPinnedTarget('8.8.8.8', 587, tlsEnabled);
+
+      expect(pinned).toEqual({
+        hostname: '8.8.8.8',
+        address: '8.8.8.8',
+        port: 587,
+      });
     });
   });
 });

@@ -4,7 +4,7 @@ import { assertAllowedSinchSmsRegion, EmailProviderIdEnum, ICredentials, SmsProv
 type ValidateSmtpOutboundTargetModule = typeof import('@novu/shared/dist/cjs/utils/validate-smtp-outbound-target');
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const { assertSafeSmtpOutboundTargetSync, SsrfBlockedError } =
+const { assertSafeSmtpOutboundTargetSync } =
   require('@novu/shared/utils/validate-smtp-outbound-target') as ValidateSmtpOutboundTargetModule;
 
 export async function validateOutboundIntegrationCredentials(
@@ -28,7 +28,7 @@ export async function validateOutboundIntegrationCredentials(
       assertAllowedSinchSmsRegion(credentials.region);
     }
   } catch (error) {
-    if (error instanceof SsrfBlockedError) {
+    if (error instanceof Error) {
       throw new BadRequestException(error.message);
     }
 
