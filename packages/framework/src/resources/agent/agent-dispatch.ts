@@ -84,12 +84,17 @@ async function runAgentHandler(registeredAgent: Agent, event: string, ctx: Agent
         const approvalMessage = ctx.createReplyHandle(ctx.action!.sourceMessageId ?? '');
 
         const decision: ToolApprovalDecision = { toolCall, approved, approvalMessage };
+
+        if (!registeredAgent.userOnToolApproval) {
+          await ctx.typing();
+
+          if (ctx.action!.sourceMessageId) {
+            await approvalMessage.delete();
+          }
+        }
+
         const result = await registeredAgent.handlers.onToolApproval(decision, ctx as AgentActionContext);
         await replyIfPresent(result);
-
-        if (!registeredAgent.userOnToolApproval && ctx.action!.sourceMessageId) {
-          await approvalMessage.delete();
-        }
         break;
       }
 

@@ -2246,10 +2246,59 @@ describe('tool approval', () => {
       secretKey: 's',
     });
 
+    expect(posts[0].typing).toEqual({});
     const deletePost = posts.find((p) =>
       p.deleteMessages?.some((d: { messageId: string }) => d.messageId === 'm_prev')
     );
     expect(deletePost).toBeTruthy();
+    expect(posts.indexOf(deletePost!)).toBe(1);
     expect(posts.find((p) => p.edit?.messageId === 'm_prev')).toBeUndefined();
+  });
+
+  it('starts typing before handler when onToolApproval is framework-provided', async () => {
+    const posts: any[] = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (_url, init: any) => {
+        posts.push(JSON.parse(init.body));
+
+        return new Response(JSON.stringify({ messageId: 'm', platformThreadId: 't' }), { status: 200 });
+      })
+    );
+
+    const testAgent = {
+      id: 'a',
+      userOnToolApproval: false,
+      handlers: {
+        onMessage: () => undefined,
+        onToolApproval: async (_decision: unknown, ctx: { reply: (text: string) => Promise<unknown> }) => {
+          await ctx.reply('resumed');
+        },
+      },
+    };
+
+    await dispatchAgentEvent({
+      agent: testAgent as never,
+      event: 'onAction',
+      bridge: approvalBridge({
+        event: 'onAction',
+        message: null,
+        history: [
+          {
+            role: 'agent',
+            type: 'tool_approval_request',
+            content: '',
+            toolData: { approvalId: 'tc', toolCallId: 'tc', toolName: 'doIt', input: { x: 1 } },
+            createdAt: '1',
+          },
+        ],
+        action: { id: buildApprovalActionId('approve', 'tc'), sourceMessageId: 'm_prev' },
+      }),
+      secretKey: 's',
+    });
+
+    expect(posts[0].typing).toEqual({});
+    expect(posts[1].deleteMessages).toEqual([{ messageId: 'm_prev' }]);
+    expect(posts[2].reply).toEqual({ markdown: 'resumed' });
   });
 });

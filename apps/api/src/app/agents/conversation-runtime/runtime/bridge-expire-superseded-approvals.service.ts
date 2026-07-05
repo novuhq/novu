@@ -7,7 +7,6 @@ import {
   ConversationChannel,
   ConversationEntity,
 } from '@novu/dal';
-import { Card, CardText } from '@novu/framework';
 import { captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
 import { AgentConversationService } from '../conversation/agent-conversation.service';
 import { OutboundGateway } from '../egress/outbound.gateway';
@@ -55,19 +54,9 @@ function findUnresolvedToolApprovalRequests(activities: ConversationActivityEnti
   return unresolved;
 }
 
-function buildDeniedApprovalCard(toolName: string): Record<string, unknown> {
-  const card = Card({
-    title: 'Denied',
-    subtitle: toolName,
-    children: [CardText(`Skipped ${toolName}.`)],
-  });
-
-  return card as unknown as Record<string, unknown>;
-}
-
 /**
  * Self-hosted bridge only: when the user sends a new message while tool-approval
- * cards are still pending, auto-deny them in the ledger and resolve the cards in Slack.
+ * cards are still pending, auto-deny them in the ledger and delete the cards on-channel.
  */
 @Injectable()
 export class BridgeExpireSupersededApprovalsService {
@@ -103,7 +92,6 @@ export class BridgeExpireSupersededApprovalsService {
   ): Promise<void> {
     const { config } = turn;
     const approvalId = request.toolData?.approvalId;
-    const toolName = request.toolData?.toolName ?? 'tool call';
 
     if (typeof approvalId !== 'string') {
       return;
@@ -140,28 +128,18 @@ export class BridgeExpireSupersededApprovalsService {
     }
 
     try {
-      await this.outboundGateway.edit(
-        {
-          agentId: turn.agentId,
-          integrationIdentifier: config.integrationIdentifier,
-          platform: channel.platform,
-          platformThreadId: channel.platformThreadId,
-        },
-        platformMessageId,
-        { card: buildDeniedApprovalCard(toolName) },
-        {
-          conversationId: conversation._id,
-          channel,
-          agentIdentifier: config.agentIdentifier,
-          environmentId: config.environmentId,
-          organizationId: config.organizationId,
-        }
+      await this.outboundGateway.deleteInConversation(
+        turn.agentId,
+        config.integrationIdentifier,
+        channel.platform,
+        channel.platformThreadId,
+        platformMessageId
       );
     } catch (err) {
-      this.logger.warn(err, `[agent:${config.agentIdentifier}] Failed to edit superseded tool-approval card`);
+      this.logger.warn(err, `[agent:${config.agentIdentifier}] Failed to delete superseded tool-approval card`);
       captureAgentWarning(err, {
         component: 'bridge-expire-superseded-approvals',
-        operation: 'edit-tool-approval-card',
+        operation: 'delete-tool-approval-card',
         agentIdentifier: config.agentIdentifier,
         extra: { approvalId, platformMessageId },
       });
