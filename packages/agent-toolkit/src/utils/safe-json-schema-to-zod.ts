@@ -211,7 +211,15 @@ function buildArray(schema: JsonSchema, root: JsonSchema, refStack: Set<string>)
     if (tupleItems.length === 0) {
       arraySchema = z.array(z.unknown());
     } else {
-      arraySchema = z.tuple(tupleItems as [ZodTypeAny, ...ZodTypeAny[]]);
+      const tupleSchema = z.tuple(tupleItems as [ZodTypeAny, ...ZodTypeAny[]]);
+
+      if (schema.additionalItems === false) {
+        arraySchema = tupleSchema;
+      } else if (typeof schema.additionalItems === 'object' && schema.additionalItems !== null) {
+        arraySchema = tupleSchema.rest(buildSchema(schema.additionalItems as JsonSchema, root, refStack));
+      } else {
+        arraySchema = tupleSchema.rest(z.unknown());
+      }
     }
   } else if (typeof items === 'object' && items !== null) {
     arraySchema = z.array(buildSchema(items as JsonSchema, root, refStack));
@@ -219,17 +227,44 @@ function buildArray(schema: JsonSchema, root: JsonSchema, refStack: Set<string>)
     arraySchema = z.array(z.unknown());
   }
 
-  if (!isTuple) {
-    if (typeof schema.minItems === 'number') {
-      arraySchema = (arraySchema as z.ZodArray<ZodTypeAny>).min(schema.minItems);
-    }
-
-    if (typeof schema.maxItems === 'number') {
-      arraySchema = (arraySchema as z.ZodArray<ZodTypeAny>).max(schema.maxItems);
-    }
-  }
+  arraySchema = applyArrayLengthConstraints(arraySchema, schema);
 
   return applyDescription(arraySchema, schema);
+}
+
+function applyArrayLengthConstraints(arraySchema: ZodTypeAny, schema: JsonSchema): ZodTypeAny {
+  const minItems = typeof schema.minItems === 'number' ? schema.minItems : undefined;
+  const maxItems = typeof schema.maxItems === 'number' ? schema.maxItems : undefined;
+
+  if (minItems === undefined && maxItems === undefined) {
+    return arraySchema;
+  }
+
+  return arraySchema.superRefine((value, ctx) => {
+    if (!Array.isArray(value)) {
+      return;
+    }
+
+    if (minItems !== undefined && value.length < minItems) {
+      ctx.addIssue({
+        code: 'too_small',
+        origin: 'array',
+        minimum: minItems,
+        inclusive: true,
+        message: `Array must contain at least ${minItems} element(s)`,
+      });
+    }
+
+    if (maxItems !== undefined && value.length > maxItems) {
+      ctx.addIssue({
+        code: 'too_big',
+        origin: 'array',
+        maximum: maxItems,
+        inclusive: true,
+        message: `Array must contain at most ${maxItems} element(s)`,
+      });
+    }
+  });
 }
 
 function buildString(schema: JsonSchema): ZodTypeAny {
