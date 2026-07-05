@@ -2206,6 +2206,51 @@ describe('tool approval', () => {
     ).toBeUndefined();
   });
 
+  it('does not auto-delete when userOnToolApproval is unset on a hand-built agent', async () => {
+    const posts: any[] = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (_url, init: any) => {
+        posts.push(JSON.parse(init.body));
+
+        return new Response(JSON.stringify({ messageId: 'm', platformThreadId: 't' }), { status: 200 });
+      })
+    );
+
+    const testAgent = {
+      id: 'a',
+      handlers: {
+        onMessage: () => undefined,
+        onToolApproval: () => undefined,
+      },
+    };
+
+    await dispatchAgentEvent({
+      agent: testAgent as never,
+      event: 'onAction',
+      bridge: approvalBridge({
+        event: 'onAction',
+        message: null,
+        history: [
+          {
+            role: 'agent',
+            type: 'tool_approval_request',
+            content: '',
+            toolData: { approvalId: 'tc', toolCallId: 'tc', toolName: 'doIt', input: { x: 1 } },
+            createdAt: '1',
+          },
+        ],
+        action: { id: buildApprovalActionId('approve', 'tc'), sourceMessageId: 'm_prev' },
+      }),
+      secretKey: 's',
+    });
+
+    expect(posts.find((p) => p.typing !== undefined)).toBeUndefined();
+    expect(
+      posts.find((p) => p.deleteMessages?.some((d: { messageId: string }) => d.messageId === 'm_prev'))
+    ).toBeUndefined();
+  });
+
   it('auto-deletes the approval card when onToolApproval is framework-provided', async () => {
     const posts: any[] = [];
     vi.stubGlobal(

@@ -221,7 +221,7 @@ interface ReplyPoster {
 class ReplyHandleImpl implements ReplyHandle {
   public messageId: string;
   public platformThreadId: string;
-  /** @internal set when the handler calls `edit()`; dispatch skips the default resolved card. */
+  /** @internal set when the handler calls `edit()`; dispatch skips default approval card cleanup. */
   public editedByHandler = false;
 
   constructor(

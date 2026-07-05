@@ -85,7 +85,7 @@ async function runAgentHandler(registeredAgent: Agent, event: string, ctx: Agent
 
         const decision: ToolApprovalDecision = { toolCall, approved, approvalMessage };
 
-        if (!registeredAgent.userOnToolApproval) {
+        if (registeredAgent.userOnToolApproval === false) {
           await ctx.typing();
 
           if (ctx.action!.sourceMessageId) {
