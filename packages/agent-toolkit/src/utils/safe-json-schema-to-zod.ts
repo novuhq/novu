@@ -204,25 +204,17 @@ function buildArray(schema: JsonSchema, root: JsonSchema, refStack: Set<string>)
   let arraySchema: ZodTypeAny;
 
   if (isTuple) {
-    const tupleItems = items
-      .filter((value): value is JsonSchema => typeof value === 'object' && value !== null)
-      .map((value) => buildSchema(value, root, refStack));
+    const tupleItems = items.map((item) => buildTupleItemSchema(item, root, refStack));
 
     if (tupleItems.length === 0) {
       arraySchema = z.array(z.unknown());
     } else {
-      const tupleSchema = z.tuple(tupleItems as [ZodTypeAny, ...ZodTypeAny[]]);
-
-      if (schema.additionalItems === false) {
-        arraySchema = tupleSchema;
-      } else if (typeof schema.additionalItems === 'object' && schema.additionalItems !== null) {
-        arraySchema = tupleSchema.rest(buildSchema(schema.additionalItems as JsonSchema, root, refStack));
-      } else {
-        arraySchema = tupleSchema.rest(z.unknown());
-      }
+      arraySchema = buildTupleArraySchema(tupleItems, schema, root, refStack);
     }
   } else if (typeof items === 'object' && items !== null) {
     arraySchema = z.array(buildSchema(items as JsonSchema, root, refStack));
+  } else if (items === false) {
+    arraySchema = z.array(z.never());
   } else {
     arraySchema = z.array(z.unknown());
   }
@@ -230,6 +222,74 @@ function buildArray(schema: JsonSchema, root: JsonSchema, refStack: Set<string>)
   arraySchema = applyArrayLengthConstraints(arraySchema, schema);
 
   return applyDescription(arraySchema, schema);
+}
+
+function buildTupleItemSchema(item: unknown, root: JsonSchema, refStack: Set<string>): ZodTypeAny {
+  if (item === false) {
+    return z.never();
+  }
+
+  if (item === true) {
+    return z.unknown();
+  }
+
+  if (typeof item === 'object' && item !== null) {
+    return buildSchema(item as JsonSchema, root, refStack);
+  }
+
+  return z.unknown();
+}
+
+function buildTupleArraySchema(
+  tupleItems: ZodTypeAny[],
+  schema: JsonSchema,
+  root: JsonSchema,
+  refStack: Set<string>
+): ZodTypeAny {
+  const prefixLength = tupleItems.length;
+  const additionalItemsSchema =
+    schema.additionalItems === false
+      ? null
+      : typeof schema.additionalItems === 'object' && schema.additionalItems !== null
+        ? buildSchema(schema.additionalItems as JsonSchema, root, refStack)
+        : z.unknown();
+
+  return z.array(z.unknown()).superRefine((value, ctx) => {
+    if (!Array.isArray(value)) {
+      return;
+    }
+
+    if (schema.additionalItems === false && value.length > prefixLength) {
+      ctx.addIssue({
+        code: 'custom',
+        message: `Array must contain at most ${prefixLength} element(s)`,
+      });
+    }
+
+    for (let index = 0; index < value.length && index < prefixLength; index++) {
+      const result = tupleItems[index].safeParse(value[index]);
+
+      if (!result.success) {
+        ctx.addIssue({
+          code: 'custom',
+          message: `Invalid element at index ${index}`,
+        });
+      }
+    }
+
+    if (additionalItemsSchema) {
+      for (let index = prefixLength; index < value.length; index++) {
+        const result = additionalItemsSchema.safeParse(value[index]);
+
+        if (!result.success) {
+          ctx.addIssue({
+            code: 'custom',
+            message: `Invalid element at index ${index}`,
+          });
+        }
+      }
+    }
+  });
 }
 
 function applyArrayLengthConstraints(arraySchema: ZodTypeAny, schema: JsonSchema): ZodTypeAny {
