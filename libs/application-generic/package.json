@@ -144,7 +144,7 @@
     "ts-jest": "^27.0.5",
     "ts-node": "~10.9.1",
     "typescript": "5.6.2",
-    "vitest": "^2.1.9"
+    "vitest": "^4.1.0"
   },
   "files": [
     "build/main",
