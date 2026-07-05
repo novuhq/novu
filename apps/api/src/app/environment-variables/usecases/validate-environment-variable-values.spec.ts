@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { EnvironmentRepository } from '@novu/dal';
 import { expect } from 'chai';
 import { stub } from 'sinon';
@@ -58,5 +58,25 @@ describe('validateEnvironmentVariableValues', () => {
       expect(error).to.be.instanceOf(NotFoundException);
       expect(error.message).to.equal('Environment with id foreign-env-id not found');
     }
+  });
+
+  it('should reject cross-environment values when scoped to the authenticated environment', async () => {
+    try {
+      await validateEnvironmentVariableValues(
+        environmentRepositoryMock as unknown as EnvironmentRepository,
+        organizationId,
+        [{ _environmentId: 'env-b', value: 'value' }],
+        {
+          restrictToUserEnvironment: true,
+          userEnvironmentId: 'env-a',
+        }
+      );
+      throw new Error('Should not reach here');
+    } catch (error) {
+      expect(error).to.be.instanceOf(ForbiddenException);
+      expect(error.message).to.contain('is scoped to a single environment');
+    }
+
+    expect(environmentRepositoryMock.findByIdAndOrganization.called).to.equal(false);
   });
 });

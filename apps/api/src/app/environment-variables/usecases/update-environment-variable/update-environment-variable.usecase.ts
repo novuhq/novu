@@ -40,7 +40,11 @@ export class UpdateEnvironmentVariable {
       await validateEnvironmentVariableValues(
         this.environmentRepository,
         command.organizationId,
-        command.values
+        command.values,
+        {
+          restrictToUserEnvironment: command.restrictToUserEnvironment,
+          userEnvironmentId: command.environmentId,
+        }
       );
 
       // Defense in depth: never let the public secret mask string be persisted as an
