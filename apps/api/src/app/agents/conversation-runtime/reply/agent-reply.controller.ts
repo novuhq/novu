@@ -38,6 +38,7 @@ export class AgentReplyController {
         signals: body.signals as Signal[],
         toolResults: body.toolResults as ToolResult[],
         addReactions: body.addReactions,
+        deleteMessages: body.deleteMessages,
         typing: body.typing,
       })
     );

@@ -35,6 +35,7 @@ export type {
   AgentResolveContext,
   AgentSubscriber,
   AgentToolCall,
+  DeleteMessagePayload,
   EditPayload,
   FileRef,
   MessageContent,

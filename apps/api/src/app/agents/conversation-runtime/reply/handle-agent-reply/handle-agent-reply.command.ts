@@ -5,6 +5,7 @@ import { IsArray, IsBoolean, IsNotEmpty, IsObject, IsOptional, IsString, Validat
 import { EnvironmentWithUserCommand } from '../../../../shared/commands/project.command';
 import {
   AddReactionPayloadDto,
+  DeleteMessagePayloadDto,
   EditPayloadDto,
   ReplyContentDto,
   ToolApprovalRequestPayloadDto,
@@ -57,6 +58,12 @@ export class HandleAgentReplyCommand extends EnvironmentWithUserCommand {
   @ValidateNested({ each: true })
   @Type(() => AddReactionPayloadDto)
   addReactions?: AddReactionPayloadDto[];
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => DeleteMessagePayloadDto)
+  deleteMessages?: DeleteMessagePayloadDto[];
 
   @IsOptional()
   @IsObject()

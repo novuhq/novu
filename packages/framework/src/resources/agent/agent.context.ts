@@ -14,6 +14,7 @@ import type {
   AgentReplyPayload,
   AgentSubscriber,
   AgentToolCall,
+  DeleteMessagePayload,
   FileRef,
   MessageContent,
   PendingApproval as PendingApprovalType,
@@ -257,6 +258,14 @@ class ReplyHandleImpl implements ReplyHandle {
 
     return this;
   }
+
+  async delete(): Promise<void> {
+    await this.poster.post({
+      conversationId: this.conversationId,
+      integrationIdentifier: this.integrationIdentifier,
+      deleteMessages: [{ messageId: this.messageId }],
+    });
+  }
 }
 
 export class AgentContextImpl implements AgentRuntimeContext {
@@ -285,6 +294,7 @@ export class AgentContextImpl implements AgentRuntimeContext {
   private _toolResults: ToolResult[] = [];
   private _pendingToolApprovalRequest: ToolApprovalRequestPayload | null = null;
   private _pendingReactions: AddReactionPayload[] = [];
+  private _pendingDeletes: DeleteMessagePayload[] = [];
   private _resolveSignal: { summary?: string } | null = null;
   private _metadataState: Record<string, unknown>;
   private readonly _toolApprovalConfig?: ToolApprovalConfig;
@@ -416,6 +426,10 @@ export class AgentContextImpl implements AgentRuntimeContext {
     this._pendingReactions.push({ messageId, emojiName });
   }
 
+  deleteMessage(messageId: string): void {
+    this._pendingDeletes.push({ messageId });
+  }
+
   /**
    * Flush any remaining signals that weren't sent with reply().
    * Called internally after onResolve returns.
@@ -441,7 +455,8 @@ export class AgentContextImpl implements AgentRuntimeContext {
       this._signals.length ||
       this._toolResults.length ||
       this._resolveSignal ||
-      this._pendingReactions.length
+      this._pendingReactions.length ||
+      this._pendingDeletes.length
     );
   }
 
@@ -464,6 +479,11 @@ export class AgentContextImpl implements AgentRuntimeContext {
     if (this._pendingReactions.length) {
       body.addReactions = this._pendingReactions;
       this._pendingReactions = [];
+    }
+
+    if (this._pendingDeletes.length) {
+      body.deleteMessages = this._pendingDeletes;
+      this._pendingDeletes = [];
     }
 
     if (this._resolveSignal) {

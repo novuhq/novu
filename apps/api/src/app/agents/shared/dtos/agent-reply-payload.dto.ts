@@ -241,6 +241,13 @@ export class AddReactionPayloadDto {
   emojiName: string;
 }
 
+export class DeleteMessagePayloadDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  messageId: string;
+}
+
 export class SignalDto {
   @ApiProperty({ enum: SIGNAL_TYPES })
   @IsString()
@@ -365,6 +372,17 @@ export class AgentReplyPayloadDto {
   @ValidateNested({ each: true })
   @Type(() => AddReactionPayloadDto)
   addReactions?: AddReactionPayloadDto[];
+
+  @ApiPropertyOptional({
+    type: [DeleteMessagePayloadDto],
+    description:
+      'Delete previously posted platform messages. Removes the rendered message only — history is preserved.',
+  })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => DeleteMessagePayloadDto)
+  deleteMessages?: DeleteMessagePayloadDto[];
 
   @ApiPropertyOptional({
     description:
