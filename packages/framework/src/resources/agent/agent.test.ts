@@ -1442,6 +1442,122 @@ describe('agent dispatch via NovuRequestHandler', () => {
     expect(replyBody.addReactions[0]).toEqual({ messageId: 'msg-reacted', emojiName: 'thumbs_up' });
   });
 
+  it('should delete a previously sent reply via the returned handle', async () => {
+    const testBot = agent('test-bot', {
+      onMessage: async (_message, ctx) => {
+        const msg = await ctx.reply('Temporary notice');
+        await msg.delete();
+      },
+    });
+
+    const handler = new NovuRequestHandler({
+      frameworkName: 'test',
+      agents: [testBot],
+      client,
+      handler: () => {
+        const body = createMockBridgeRequest();
+        const url = new URL(`http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onMessage`);
+
+        return {
+          body: () => body,
+          headers: () => null,
+          method: () => 'POST',
+          url: () => url,
+          transformResponse: (res: any) => res,
+        };
+      },
+    });
+
+    await handler.createHandler()();
+
+    await vi.waitFor(() => expect(fetchMock.mock.calls.length).toBeGreaterThanOrEqual(2));
+
+    const replyCalls = fetchMock.mock.calls.filter(
+      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
+    );
+    const parsedBodies = replyCalls.map(([, init]: any[]) => JSON.parse(init.body));
+    const deleteBody = parsedBodies.find((body: any) => body.deleteMessages);
+
+    expect(deleteBody).toBeDefined();
+    expect(deleteBody.deleteMessages).toEqual([{ messageId: 'msg-1' }]);
+    expect(deleteBody.reply).toBeUndefined();
+  });
+
+  it('should flush deleteMessage without a reply', async () => {
+    const testBot = agent('test-bot', {
+      onMessage: async (_message, ctx) => {
+        ctx.deleteMessage('msg-stale');
+      },
+    });
+
+    const handler = new NovuRequestHandler({
+      frameworkName: 'test',
+      agents: [testBot],
+      client,
+      handler: () => {
+        const body = createMockBridgeRequest();
+        const url = new URL(`http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onMessage`);
+
+        return {
+          body: () => body,
+          headers: () => null,
+          method: () => 'POST',
+          url: () => url,
+          transformResponse: (res: any) => res,
+        };
+      },
+    });
+
+    await handler.createHandler()();
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
+
+    const replyCall = fetchMock.mock.calls.find(
+      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
+    );
+    const flushBody = JSON.parse(replyCall![1].body);
+
+    expect(flushBody.reply).toBeUndefined();
+    expect(flushBody.deleteMessages).toEqual([{ messageId: 'msg-stale' }]);
+  });
+
+  it('should batch deleteMessage with reply', async () => {
+    const testBot = agent('test-bot', {
+      onMessage: async (_message, ctx) => {
+        ctx.deleteMessage('msg-stale');
+        await ctx.reply('Got it');
+      },
+    });
+
+    const handler = new NovuRequestHandler({
+      frameworkName: 'test',
+      agents: [testBot],
+      client,
+      handler: () => {
+        const body = createMockBridgeRequest();
+        const url = new URL(`http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onMessage`);
+
+        return {
+          body: () => body,
+          headers: () => null,
+          method: () => 'POST',
+          url: () => url,
+          transformResponse: (res: any) => res,
+        };
+      },
+    });
+
+    await handler.createHandler()();
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
+
+    const replyCall = fetchMock.mock.calls.find(
+      (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply' && JSON.parse(call[1].body).reply
+    );
+    const replyBody = JSON.parse(replyCall![1].body);
+
+    expect(replyBody.reply.markdown).toBe('Got it');
+    expect(replyBody.deleteMessages).toEqual([{ messageId: 'msg-stale' }]);
+  });
+
   it('should have null reaction on non-reaction events', async () => {
     let capturedCtx: any;
 

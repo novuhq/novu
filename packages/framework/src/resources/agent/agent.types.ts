@@ -290,6 +290,8 @@ export interface ReplyHandle {
   readonly platformThreadId: string;
   /** Edit this message in place with new content. Returns the same handle for chaining. */
   edit(content: MessageContent, options?: { files?: FileRef[] }): Promise<ReplyHandle>;
+  /** Delete this message from the platform. Removes the rendered message only — history is preserved. */
+  delete(): Promise<void>;
 }
 
 export interface AgentHandlerContext {
@@ -389,6 +391,16 @@ export interface AgentHandlerContext {
    *   await ctx.reply('Done!');
    */
   addReaction(messageId: string, emojiName: Emoji): void;
+  /**
+   * Delete a platform message by id. Queued and flushed with the next `ctx.reply()`,
+   * or automatically when the handler completes (same batching as `ctx.addReaction()`).
+   * Deletes the rendered message only — conversation history is preserved.
+   *
+   * @example
+   *   ctx.deleteMessage(ctx.action!.sourceMessageId!);
+   *   await ctx.reply('Processing…');
+   */
+  deleteMessage(messageId: string): void;
   /**
    * Control the typing / "Thinking…" status for the current turn.
    * Posts immediately (like `reply()`), updating the indicator Novu already shows on inbound.
@@ -562,6 +574,11 @@ export interface AddReactionPayload {
   emojiName: Emoji;
 }
 
+/** Delete a previously posted platform message. Removes the rendered message only — history is preserved. */
+export interface DeleteMessagePayload {
+  messageId: string;
+}
+
 /**
  * Per-turn typing/status control op sent on the reply contract.
  * - `{ status?: string }` — set/replace the status; omit `status` for the default "Thinking…".
@@ -586,6 +603,7 @@ export interface AgentReplyPayload {
   toolResults?: ToolResult[];
   toolApprovalRequest?: ToolApprovalRequestPayload;
   addReactions?: AddReactionPayload[];
+  deleteMessages?: DeleteMessagePayload[];
   typing?: TypingOp;
 }
 

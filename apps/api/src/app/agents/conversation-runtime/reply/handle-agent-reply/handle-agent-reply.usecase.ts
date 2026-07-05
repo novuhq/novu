@@ -58,10 +58,11 @@ export class HandleAgentReply {
         command.signals?.length ||
         command.toolResults?.length ||
         command.toolApprovalRequest ||
-        command.addReactions?.length)
+        command.addReactions?.length ||
+        command.deleteMessages?.length)
     ) {
       throw new BadRequestException(
-        'edit cannot be combined with resolve, signals, toolResults, toolApprovalRequest, or addReactions'
+        'edit cannot be combined with resolve, signals, toolResults, toolApprovalRequest, addReactions, or deleteMessages'
       );
     }
     if (
@@ -72,11 +73,12 @@ export class HandleAgentReply {
       !command.toolResults?.length &&
       !command.toolApprovalRequest &&
       !command.addReactions?.length &&
+      !command.deleteMessages?.length &&
       !command.plan &&
       !command.typing
     ) {
       throw new BadRequestException(
-        'At least one of reply, edit, resolve, signals, toolResults, toolApprovalRequest, addReactions, plan, or typing must be provided'
+        'At least one of reply, edit, resolve, signals, toolResults, toolApprovalRequest, addReactions, deleteMessages, plan, or typing must be provided'
       );
     }
 
@@ -181,6 +183,20 @@ export class HandleAgentReply {
       );
     }
 
+    if (command.deleteMessages?.length) {
+      await Promise.allSettled(
+        command.deleteMessages.map((d) =>
+          this.outboundGateway.deleteInConversation(
+            conversation._agentId,
+            command.integrationIdentifier,
+            channel.platform,
+            channel.platformThreadId,
+            d.messageId
+          )
+        )
+      );
+    }
+
     if (command.resolve) {
       await this.resolveConversation(command, config!, conversation, channel, command.resolve);
     }
@@ -188,6 +204,7 @@ export class HandleAgentReply {
     const triggerSignalCount = (command.signals ?? []).filter((s) => s.type === 'trigger').length;
     const metadataSignalCount = (command.signals ?? []).filter((s) => s.type === 'metadata').length;
     const reactionCount = command.addReactions?.length ?? 0;
+    const deleteMessageCount = command.deleteMessages?.length ?? 0;
     const actions: string[] = [];
 
     if (command.reply) actions.push('reply');
@@ -197,6 +214,7 @@ export class HandleAgentReply {
     if (triggerSignalCount > 0) actions.push('trigger_signals');
     if (metadataSignalCount > 0) actions.push('metadata_signals');
     if (reactionCount > 0) actions.push('add_reactions');
+    if (deleteMessageCount > 0) actions.push('delete_messages');
     if (command.typing) actions.push('typing');
 
     trackAgentReplyProcessed(this.analyticsService, {
