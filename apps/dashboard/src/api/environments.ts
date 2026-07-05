@@ -138,14 +138,8 @@ export async function createApiKey({ environment }: { environment: IEnvironment 
   return post<{ data: IApiKey[] }>(`/environments/api-keys`, { environment });
 }
 
-export async function deleteApiKey({
-  environment,
-  hash,
-}: {
-  environment: IEnvironment;
-  hash: string;
-}): Promise<{ data: IApiKey[] }> {
-  return del<{ data: IApiKey[] }>(`/environments/api-keys/${hash}`, { environment });
+export async function deleteApiKey({ environment, hash }: { environment: IEnvironment; hash: string }): Promise<void> {
+  return del<void>(`/environments/api-keys/${hash}`, { environment });
 }
 
 export async function diffEnvironments({

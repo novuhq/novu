@@ -74,9 +74,15 @@ describe('Manage Environment API Keys - /environments/api-keys (POST/DELETE) #no
 
     const { body, status } = await session.testAgent.delete(`/v1/environments/api-keys/${oldKey.hash}`).send();
 
-    expect(status).to.equal(200);
-    expect(body.data.length).to.equal(1);
-    expect(body.data[0].key).to.equal(newKey.key);
+    expect(status).to.equal(204);
+    expect(body).to.deep.equal({});
+
+    const {
+      body: { data: remainingKeys },
+    } = await session.testAgent.get('/v1/environments/api-keys').send();
+
+    expect(remainingKeys.length).to.equal(1);
+    expect(remainingKeys[0].key).to.equal(newKey.key);
 
     const { status: deletedKeyAuthStatus } = await session.testAgent
       .get('/v1/environments/me')
@@ -121,7 +127,7 @@ describe('Manage Environment API Keys - /environments/api-keys (POST/DELETE) #no
     ]);
 
     const statuses = [first.status, second.status].sort();
-    expect(statuses).to.deep.equal([200, 400]);
+    expect(statuses).to.deep.equal([204, 400]);
 
     const {
       body: { data: remainingKeys },

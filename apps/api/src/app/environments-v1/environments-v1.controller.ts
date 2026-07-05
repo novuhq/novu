@@ -4,6 +4,8 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   Post,
   Put,
@@ -233,15 +235,15 @@ export class EnvironmentsControllerV1 {
   }
 
   @Delete('/api-keys/:hash')
+  @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
     summary: 'Delete an api key',
     description: 'Deletes a specific API key of the current environment, identified by its SHA-256 hash.',
   })
   @ApiParam({ name: 'hash', description: 'The SHA-256 hash of the API key to delete', type: String })
-  @ApiResponse(ApiKey, 200, true)
   @ApiExcludeEndpoint()
   @RequirePermissions(PermissionsEnum.API_KEY_WRITE)
-  async deleteOrganizationApiKey(@UserSession() user: UserSessionData, @Param('hash') hash: string): Promise<ApiKey[]> {
+  async deleteOrganizationApiKey(@UserSession() user: UserSessionData, @Param('hash') hash: string): Promise<void> {
     const command = DeleteApiKeyCommand.create({
       userId: user._id,
       organizationId: user.organizationId,
@@ -249,7 +251,7 @@ export class EnvironmentsControllerV1 {
       hash,
     });
 
-    return await this.deleteApiKeyUsecase.execute(command);
+    await this.deleteApiKeyUsecase.execute(command);
   }
 
   @Post('/api-keys/regenerate')

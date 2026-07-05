@@ -8,7 +8,6 @@ import {
 import { EnvironmentRepository, IApiKey } from '@novu/dal';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { createHash } from 'crypto';
-import { ApiKeyDto } from '../../dtos/api-key.dto';
 import { DeleteApiKeyCommand } from './delete-api-key.command';
 
 @Injectable()
@@ -19,7 +18,7 @@ export class DeleteApiKey {
     private inMemoryLRUCacheService: InMemoryLRUCacheService
   ) {}
 
-  async execute(command: DeleteApiKeyCommand): Promise<ApiKeyDto[]> {
+  async execute(command: DeleteApiKeyCommand): Promise<void> {
     const isMultipleSecretKeysAllowed = await this.featureFlagsService.getFlag({
       key: FeatureFlagsKeysEnum.IS_MULTIPLE_SECRET_KEYS_ALLOWED,
       organization: { _id: command.organizationId },
@@ -71,18 +70,6 @@ export class DeleteApiKey {
      * the store's short TTL.
      */
     this.inMemoryLRUCacheService.invalidate(InMemoryLRUCacheStore.API_KEY_USER, command.hash);
-
-    const remainingKeys = await this.environmentRepository.getApiKeys(command.environmentId);
-
-    return remainingKeys.map((item) => {
-      const decryptedKey = decryptApiKey(item.key);
-
-      return {
-        _userId: item._userId,
-        key: decryptedKey,
-        hash: item.hash ?? createHash('sha256').update(decryptedKey).digest('hex'),
-      };
-    });
   }
 
   private getKeyHash(apiKey: IApiKey): string {
