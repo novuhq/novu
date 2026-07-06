@@ -959,6 +959,7 @@ export class IntegrationsController {
   @KeylessAccessible()
   @HttpCode(HttpStatus.OK)
   @ApiResponse(IssueTelegramMobileLinkResponseDto, 200)
+  @SdkMethodName('createMobileLink')
   @ApiOperation({
     summary: 'Issue a short-lived mobile setup link for an existing integration',
     description:
