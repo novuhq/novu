@@ -1,4 +1,4 @@
-import { MAX_DESCRIPTION_LENGTH, PermissionsEnum } from '@novu/shared';
+import { AGENT_NAME_MAX_LENGTH, MAX_DESCRIPTION_LENGTH, PermissionsEnum } from '@novu/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
 import { AnimatePresence, motion } from 'motion/react';
@@ -34,8 +34,6 @@ import { ConnectorSection } from './connector-section';
 type AgentSidebarWidgetProps = {
   agent: AgentResponse;
 };
-
-const AGENT_NAME_MAX_LENGTH = 64;
 
 const DATE_FORMAT_OPTIONS: Intl.DateTimeFormatOptions = {
   year: 'numeric',
