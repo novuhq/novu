@@ -44,7 +44,7 @@ export function UpgradeCTATooltip({
 
   return (
     <Tooltip>
-      <TooltipTrigger type="button">{children}</TooltipTrigger>
+      <TooltipTrigger asChild>{children}</TooltipTrigger>
       <TooltipContent
         side={side}
         align={align}

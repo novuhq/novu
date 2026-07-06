@@ -23,10 +23,7 @@ export function assertSmtpTlsRequired(options: SmtpOutboundTlsOptions): void {
   }
 
   if (!options.secure && !options.requireTls) {
-    throw new SsrfBlockedError(
-      'UNSUPPORTED_SCHEME',
-      'SMTP connections must use TLS (enable Secure or Require TLS).'
-    );
+    throw new SsrfBlockedError('UNSUPPORTED_SCHEME', 'SMTP connections must use TLS (enable Secure or Require TLS).');
   }
 }
 

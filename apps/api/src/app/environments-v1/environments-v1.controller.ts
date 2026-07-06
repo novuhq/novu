@@ -31,12 +31,12 @@ import {
 } from '@novu/shared';
 import { ErrorDto } from '../../error-dto';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
-import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
-import { isEnvironmentScopedAuthScheme } from '../shared/utils/auth.utils';
+import { ExternalApiAccessible, OAuthAccessible } from '../auth/framework/external-api.decorator';
 import { ApiKey } from '../shared/dtos/api-key';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import { UserSession } from '../shared/framework/user.decorator';
+import { isEnvironmentScopedAuthScheme } from '../shared/utils/auth.utils';
 import { CreateEnvironmentRequestDto } from './dtos/create-environment-request.dto';
 import { EnvironmentResponseDto } from './dtos/environment-response.dto';
 import { UpdateEnvironmentRequestDto } from './dtos/update-environment-request.dto';
@@ -131,6 +131,7 @@ export class EnvironmentsControllerV1 {
   }
 
   @Get('/')
+  @OAuthAccessible()
   @ApiOperation({
     summary: 'List all environments',
     description: `This API returns a list of environments for the current organization. 
@@ -143,7 +144,14 @@ export class EnvironmentsControllerV1 {
   @SkipPermissionsCheck()
   async listMyEnvironments(@UserSession() user: UserSessionData): Promise<EnvironmentResponseDto[]> {
     const isApiKeyAuth = user.scheme === ApiAuthSchemeEnum.API_KEY;
-    const canAccessApiKeys = isApiKeyAuth ? true : await this.canUserAccessApiKeys(user);
+    const isOAuthAuth = user.scheme === ApiAuthSchemeEnum.OAUTH2;
+    let canAccessApiKeys = false;
+
+    if (isApiKeyAuth) {
+      canAccessApiKeys = true;
+    } else if (!isOAuthAuth) {
+      canAccessApiKeys = await this.canUserAccessApiKeys(user);
+    }
 
     const isListEnvironmentsApiKeysEnabled = await this.featureFlagService.getFlag({
       organization: { _id: user.organizationId },

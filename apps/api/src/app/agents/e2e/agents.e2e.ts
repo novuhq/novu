@@ -303,6 +303,99 @@ describe('Agents API - /agents #novu-v2', () => {
     expect(agentAfter).to.equal(null);
   });
 
+  describe('Name length validation', () => {
+    // Kept in sync with AGENT_NAME_MAX_LENGTH in @novu/shared. Validation failures are
+    // surfaced by AllExceptionsFilter as 422 (not the class-validator default 400).
+    const MAX = 60;
+
+    it('should reject creating an agent with a name longer than the limit', async () => {
+      const identifier = `e2e-name-too-long-${Date.now()}`;
+
+      const res = await session.testAgent.post('/v1/agents').send({
+        name: 'a'.repeat(MAX + 1),
+        identifier,
+      });
+
+      expect(res.status).to.equal(422);
+      const messages = res.body?.errors?.general?.messages;
+      const text = Array.isArray(messages) ? messages.join(' ') : String(messages ?? '');
+      expect(text.toLowerCase()).to.contain(`${MAX} characters`);
+
+      const leftover = await agentRepository.findOne(
+        {
+          identifier,
+          _environmentId: session.environment._id,
+          _organizationId: session.organization._id,
+        },
+        ['_id']
+      );
+      expect(leftover, 'no agent should be created when the name is too long').to.equal(null);
+    });
+
+    it('should allow creating an agent with a name exactly at the limit', async () => {
+      const identifier = `e2e-name-exact-${Date.now()}`;
+      const name = 'a'.repeat(MAX);
+
+      const res = await session.testAgent.post('/v1/agents').send({ name, identifier });
+
+      expect(res.status, JSON.stringify(res.body)).to.equal(201);
+      expect(res.body.data.name).to.equal(name);
+      expect(res.body.data.name.length).to.equal(MAX);
+
+      await session.testAgent.delete(`/v1/agents/${encodeURIComponent(identifier)}`);
+    });
+
+    it('should trim trailing whitespace before measuring the name length', async () => {
+      const identifier = `e2e-name-trim-${Date.now()}`;
+      const trimmedName = 'a'.repeat(MAX);
+
+      // 60 real chars + trailing whitespace => 63 raw chars, but trims back to 60.
+      const res = await session.testAgent.post('/v1/agents').send({
+        name: `${trimmedName}   `,
+        identifier,
+      });
+
+      expect(res.status, JSON.stringify(res.body)).to.equal(201);
+      expect(res.body.data.name).to.equal(trimmedName);
+      expect(res.body.data.name.length).to.equal(MAX);
+
+      await session.testAgent.delete(`/v1/agents/${encodeURIComponent(identifier)}`);
+    });
+
+    it('should reject updating an agent with a name longer than the limit', async () => {
+      const identifier = `e2e-name-update-long-${Date.now()}`;
+      await session.testAgent.post('/v1/agents').send({ name: 'Update Name Agent', identifier });
+
+      const res = await session.testAgent.patch(`/v1/agents/${encodeURIComponent(identifier)}`).send({
+        name: 'a'.repeat(MAX + 1),
+      });
+
+      expect(res.status).to.equal(422);
+      const messages = res.body?.errors?.general?.messages;
+      const text = Array.isArray(messages) ? messages.join(' ') : String(messages ?? '');
+      expect(text.toLowerCase()).to.contain(`${MAX} characters`);
+
+      const getRes = await session.testAgent.get(`/v1/agents/${encodeURIComponent(identifier)}`);
+      expect(getRes.body.data.name, 'name must be unchanged after a rejected update').to.equal('Update Name Agent');
+
+      await session.testAgent.delete(`/v1/agents/${encodeURIComponent(identifier)}`);
+    });
+
+    it('should allow updating an agent with a name exactly at the limit', async () => {
+      const identifier = `e2e-name-update-exact-${Date.now()}`;
+      await session.testAgent.post('/v1/agents').send({ name: 'Update Name Agent', identifier });
+
+      const name = 'b'.repeat(MAX);
+      const res = await session.testAgent.patch(`/v1/agents/${encodeURIComponent(identifier)}`).send({ name });
+
+      expect(res.status, JSON.stringify(res.body)).to.equal(200);
+      expect(res.body.data.name).to.equal(name);
+      expect(res.body.data.name.length).to.equal(MAX);
+
+      await session.testAgent.delete(`/v1/agents/${encodeURIComponent(identifier)}`);
+    });
+  });
+
   describe('Bridge URL management', () => {
     let identifier: string;
 

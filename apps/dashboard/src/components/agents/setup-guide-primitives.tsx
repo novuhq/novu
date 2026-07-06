@@ -20,6 +20,7 @@ import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { useUpdateIntegration } from '@/hooks/use-update-integration';
 import { AGENTS_DOCS_PROVIDERS_URL } from '@/utils/agent-docs';
 import { cn } from '@/utils/ui';
+import { hasAgentInboundConnection } from './is-agent-integration-connected';
 import type { StepStatus } from './setup-guide-step-utils';
 
 export type SetupMode = 'quick' | 'manual';
@@ -332,11 +333,15 @@ export function ListeningStatus({
 
         const link = res.data.find((l) => l.integration._id === watchedIntegrationId);
 
-        if (!link?.connectedAt) {
+        if (!link) {
           return;
         }
 
-        setConnectedAt(link.connectedAt);
+        if (!hasAgentInboundConnection(link.connectedAt)) {
+          return;
+        }
+
+        setConnectedAt(link.connectedAt ?? null);
 
         if (!confettiFired) {
           confettiFired = true;

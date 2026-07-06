@@ -1,6 +1,7 @@
 import { DomainStatusEnum, type IEnvironment } from '@novu/shared';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { type QueryClient, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  type CursorPaginatedResponse,
   type DomainConnectStatusResponse,
   type DomainResponse,
   fetchDomain,
@@ -24,6 +25,43 @@ function requireDomainRequestArgs<TEnvironment extends Pick<IEnvironment, '_id'>
   }
 
   return { domain, currentEnvironment };
+}
+
+function syncDomainInCaches(queryClient: QueryClient, environmentId: string, domainName: string, data: DomainResponse) {
+  queryClient.setQueryData([QueryKeys.fetchDomain, domainName, environmentId], data);
+
+  const verificationPatch = {
+    status: data.status,
+    mxRecordConfigured: data.mxRecordConfigured,
+    updatedAt: data.updatedAt,
+  };
+
+  queryClient.setQueriesData({ queryKey: [QueryKeys.fetchDomains, environmentId] }, (old: unknown) => {
+    if (!old) {
+      return old;
+    }
+
+    if (Array.isArray(old)) {
+      return old.map((entry: DomainResponse) =>
+        entry.name === domainName ? { ...entry, ...verificationPatch } : entry
+      );
+    }
+
+    if (
+      typeof old === 'object' &&
+      'data' in old &&
+      Array.isArray((old as CursorPaginatedResponse<DomainResponse>).data)
+    ) {
+      const paginated = old as CursorPaginatedResponse<DomainResponse>;
+
+      return {
+        ...paginated,
+        data: paginated.data.map((entry) => (entry.name === domainName ? { ...entry, ...verificationPatch } : entry)),
+      };
+    }
+
+    return old;
+  });
 }
 
 export function useFetchDomain(domain: string | undefined) {
@@ -65,7 +103,7 @@ export function useVerifyDomain(domain: string | undefined) {
     onSuccess: (data) => {
       if (!domain || !currentEnvironment) return;
 
-      queryClient.setQueryData([QueryKeys.fetchDomain, domain, currentEnvironment._id], data);
+      syncDomainInCaches(queryClient, currentEnvironment._id, domain, data);
     },
   });
 }
@@ -99,7 +137,7 @@ export function usePollDomainVerification(domain: string | undefined, currentSta
       const args = requireDomainRequestArgs(domain, currentEnvironment);
       const data = await verifyDomain(args.domain, args.currentEnvironment);
 
-      queryClient.setQueryData([QueryKeys.fetchDomain, domain, currentEnvironment?._id], data);
+      syncDomainInCaches(queryClient, args.currentEnvironment._id, args.domain, data);
 
       return data;
     },

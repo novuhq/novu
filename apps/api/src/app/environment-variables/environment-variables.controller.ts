@@ -18,7 +18,6 @@ import { ApiRateLimitCategoryEnum, PermissionsEnum, UserSessionData } from '@nov
 import { ErrorDto } from '../../error-dto';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
-import { isEnvironmentScopedAuthScheme } from '../shared/utils/auth.utils';
 import { ThrottlerCategory } from '../rate-limiting/guards';
 import {
   ApiCommonResponses,
@@ -27,10 +26,9 @@ import {
   ApiNotFoundResponse,
   ApiResponse,
 } from '../shared/framework/response.decorator';
-
 import { SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
-
 import { UserSession } from '../shared/framework/user.decorator';
+import { isEnvironmentScopedAuthScheme } from '../shared/utils/auth.utils';
 import {
   CreateEnvironmentVariableRequestDto,
   EnvironmentVariableResponseDto,

@@ -1,4 +1,5 @@
 import type { AgentResponse } from '@/api/agents';
+import { useEnvironment } from '@/context/environment/hooks';
 import { AgentSetupSteps } from './agent-setup-steps';
 import { SetupGuideCard } from './setup-guide-card';
 
@@ -9,8 +10,11 @@ type AgentSetupGuideProps = {
 };
 
 export function AgentSetupGuide({ agent, onSetupComplete }: AgentSetupGuideProps) {
+  const { currentEnvironment } = useEnvironment();
+  const persistKey = `agent-setup-guide:${currentEnvironment?.slug ?? ''}:${agent.identifier}`;
+
   return (
-    <SetupGuideCard label="Setup agent" className="min-w-0 flex-1">
+    <SetupGuideCard label="Setup agent" persistKey={persistKey} className="min-w-0 flex-1">
       <AgentSetupSteps agent={agent} onSetupComplete={onSetupComplete} />
     </SetupGuideCard>
   );

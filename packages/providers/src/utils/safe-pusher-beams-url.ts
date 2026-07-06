@@ -4,10 +4,7 @@ const PUSHER_BEAMS_INSTANCE_ID_PATTERN = /^[A-Za-z0-9_-]+$/;
 const PUSHER_BEAMS_HOST_SUFFIX = '.pushnotifications.pusher.com';
 const DEFAULT_BLOCKED_PREFIX = 'Pusher Beams instance ID blocked';
 
-export function resolveSafePusherBeamsBaseUrl(
-  instanceId: string,
-  blockedPrefix = DEFAULT_BLOCKED_PREFIX
-): string {
+export function resolveSafePusherBeamsBaseUrl(instanceId: string, blockedPrefix = DEFAULT_BLOCKED_PREFIX): string {
   if (!PUSHER_BEAMS_INSTANCE_ID_PATTERN.test(instanceId)) {
     throw new Error(`${blockedPrefix}: Invalid instance ID format.`);
   }

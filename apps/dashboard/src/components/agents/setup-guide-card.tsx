@@ -9,9 +9,11 @@ type SetupGuideCardProps = {
   className?: string;
   /** When set, persist collapsed/expanded state in localStorage under this key. */
   persistKey?: string;
+  /** Initial expanded state when nothing is persisted yet. Defaults to true. */
+  defaultExpanded?: boolean;
 };
 
-function readPersistedExpanded(persistKey: string): boolean {
+function readPersistedExpanded(persistKey: string, defaultExpanded: boolean): boolean {
   try {
     const stored = localStorage.getItem(persistKey);
 
@@ -19,9 +21,13 @@ function readPersistedExpanded(persistKey: string): boolean {
       return false;
     }
 
-    return true;
+    if (stored === 'true') {
+      return true;
+    }
+
+    return defaultExpanded;
   } catch {
-    return true;
+    return defaultExpanded;
   }
 }
 
@@ -33,8 +39,17 @@ function writePersistedExpanded(persistKey: string, expanded: boolean) {
   }
 }
 
-export function SetupGuideCard({ label, rightContent, children, className, persistKey }: SetupGuideCardProps) {
-  const [isExpanded, setIsExpanded] = useState(() => (persistKey ? readPersistedExpanded(persistKey) : true));
+export function SetupGuideCard({
+  label,
+  rightContent,
+  children,
+  className,
+  persistKey,
+  defaultExpanded = true,
+}: SetupGuideCardProps) {
+  const [isExpanded, setIsExpanded] = useState(() =>
+    persistKey ? readPersistedExpanded(persistKey, defaultExpanded) : defaultExpanded
+  );
 
   const handleToggle = useCallback(() => {
     setIsExpanded((prev) => {

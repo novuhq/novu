@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ConfirmationModal } from '@/components/confirmation-modal';
 import { Checkbox } from '@/components/primitives/checkbox';
 import { Label } from '@/components/primitives/label';
+import TruncatedText from '@/components/truncated-text';
 
 type DeleteAgentDialogProps = {
   open: boolean;
@@ -40,8 +41,12 @@ export function DeleteAgentDialog({
       description={
         <div className="flex flex-col gap-3">
           <p>
-            This will permanently delete <span className="font-semibold">{agentName}</span>{' '}
-            <span className="font-mono text-label-xs">({agentIdentifier})</span> and remove its integration links.
+            This will permanently delete{' '}
+            <TruncatedText className="max-w-[32ch] font-semibold">{agentName}</TruncatedText>{' '}
+            <span className="font-mono text-label-xs">
+              (<TruncatedText className="max-w-[32ch] font-normal">{agentIdentifier}</TruncatedText>)
+            </span>{' '}
+            and remove its integration links.
           </p>
           {isManagedRuntime && (
             <div className="flex items-center gap-2">
