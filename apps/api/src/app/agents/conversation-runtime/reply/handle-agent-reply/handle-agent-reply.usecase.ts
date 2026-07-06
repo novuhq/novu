@@ -21,6 +21,10 @@ import type {
 import { isValidMetadataSignalKey } from '../../../shared/dtos/agent-reply-payload.dto';
 import { AgentEventEnum } from '../../../shared/enums/agent-event.enum';
 import { AgentPlatformEnum } from '../../../shared/enums/agent-platform.enum';
+import {
+  buildSelfHostedApprovalCard,
+  type SelfHostedApprovalDescriptor,
+} from '../../../shared/tool-approval/self-hosted-approval';
 import { InboundAckService } from '../../ack/inbound-ack.service';
 import type { MetadataOp } from '../../conversation/agent-conversation.service';
 import { AgentConversationService } from '../../conversation/agent-conversation.service';
@@ -291,6 +295,22 @@ export class HandleAgentReply {
     content: ReplyContentDto,
     agentName?: string
   ): Promise<SentMessageInfo> {
+    let deliverContent = content;
+    let slackNative = command.slackNative;
+
+    if (content.toolApprovalCard) {
+      if (!command.toolApprovalRequest) {
+        throw new BadRequestException('toolApprovalCard reply requires an accompanying toolApprovalRequest');
+      }
+
+      const built = buildSelfHostedApprovalCard(
+        content.toolApprovalCard as SelfHostedApprovalDescriptor,
+        command.toolApprovalRequest
+      );
+      deliverContent = built.content;
+      slackNative = built.slackNative;
+    }
+
     return this.outboundGateway.deliver(
       {
         agentId: conversation._agentId,
@@ -298,7 +318,7 @@ export class HandleAgentReply {
         platform: channel.platform,
         platformThreadId: channel.platformThreadId,
       },
-      content,
+      deliverContent,
       {
         conversationId: conversation._id,
         channel,
@@ -307,7 +327,7 @@ export class HandleAgentReply {
         environmentId: command.environmentId,
         organizationId: command.organizationId,
       },
-      { slackNative: command.slackNative }
+      { slackNative }
     );
   }
 

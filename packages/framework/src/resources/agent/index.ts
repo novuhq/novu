@@ -44,6 +44,7 @@ export type {
   ReplyHandle,
   SentMessageInfo,
   Signal,
+  ToolApprovalCard,
   ToolApprovalConfig,
   ToolApprovalDecision,
   ToolResult,
@@ -52,3 +53,4 @@ export type {
   TypingOp,
 } from './agent.types';
 export { AgentEventEnum, PendingApproval } from './agent.types';
+export { buildApprovalActionId } from './tool-approval/action-id';
