@@ -53,7 +53,9 @@ describe('CreateContext', () => {
       expect.fail('expected ConflictException');
     } catch (error) {
       expect(error).to.be.instanceOf(ConflictException);
-      expect((error as ConflictException).message).to.contain("Context with type 'tenant' and id 'org-acme' already exists");
+      expect((error as ConflictException).message).to.contain(
+        "Context with type 'tenant' and id 'org-acme' already exists"
+      );
     }
   });
 
@@ -66,7 +68,9 @@ describe('CreateContext', () => {
       expect.fail('expected ConflictException');
     } catch (error) {
       expect(error).to.be.instanceOf(ConflictException);
-      expect((error as ConflictException).message).to.contain("Context with type 'tenant' and id 'org-acme' already exists");
+      expect((error as ConflictException).message).to.contain(
+        "Context with type 'tenant' and id 'org-acme' already exists"
+      );
     }
   });
 

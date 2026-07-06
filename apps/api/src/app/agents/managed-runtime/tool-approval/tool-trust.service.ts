@@ -12,7 +12,7 @@ import {
   type ToolTrustPolicy,
 } from '@novu/dal';
 import { resolveMcpCatalogIdByName } from '@novu/shared';
-import type { ToolTrustTarget } from './approval-card.builder';
+import type { ToolTrustTarget } from '../../shared/tool-approval/action-id';
 
 @Injectable()
 export class ToolTrustService {

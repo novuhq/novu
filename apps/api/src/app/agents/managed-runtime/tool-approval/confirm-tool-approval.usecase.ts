@@ -3,8 +3,8 @@ import { PinoLogger } from '@novu/application-generic';
 import { OutboundGateway } from '../../conversation-runtime/egress/outbound.gateway';
 import { HandlePlanProgressCommand } from '../../conversation-runtime/reply/handle-plan-progress/handle-plan-progress.command';
 import { HandlePlanProgress } from '../../conversation-runtime/reply/handle-plan-progress/handle-plan-progress.usecase';
+import { type ParsedToolApprovalAction } from '../../shared/tool-approval/action-id';
 import { ManagedAgentService } from '../managed-agent.service';
-import { type ParsedToolApprovalAction } from './approval-card.builder';
 import { ConfirmToolApprovalCommand } from './confirm-tool-approval.command';
 import { ToolTrustService } from './tool-trust.service';
 

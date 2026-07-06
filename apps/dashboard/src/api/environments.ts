@@ -134,6 +134,14 @@ export async function regenerateApiKeys({ environment }: { environment: IEnviron
   return post<{ data: IApiKey[] }>(`/environments/api-keys/regenerate`, { environment });
 }
 
+export async function createApiKey({ environment }: { environment: IEnvironment }): Promise<{ data: IApiKey[] }> {
+  return post<{ data: IApiKey[] }>(`/environments/api-keys`, { environment });
+}
+
+export async function deleteApiKey({ environment, hash }: { environment: IEnvironment; hash: string }): Promise<void> {
+  return del<void>(`/environments/api-keys/${hash}`, { environment });
+}
+
 export async function diffEnvironments({
   sourceEnvironmentId,
   targetEnvironmentId,

@@ -18,6 +18,7 @@ import {
   CreateOrUpdateSubscriberUseCase,
   ExternalApiAccessible,
   FeatureFlagsService,
+  OAuthAccessible,
   RequirePermissions,
   SubscriberResponseDto,
   UserSession,
@@ -134,6 +135,7 @@ export class SubscribersController {
   ) {}
 
   @Get('')
+  @OAuthAccessible()
   @ExternalApiAccessible()
   @SdkMethodName('search')
   @ApiOperation({
@@ -165,6 +167,7 @@ export class SubscribersController {
   }
 
   @Get('/:subscriberId')
+  @OAuthAccessible()
   @ExternalApiAccessible()
   @ApiOperation({
     summary: 'Retrieve a subscriber',
@@ -189,6 +192,7 @@ export class SubscribersController {
   }
 
   @Post('')
+  @OAuthAccessible()
   @ExternalApiAccessible()
   @ApiOperation({
     summary: 'Create a subscriber',
@@ -239,6 +243,7 @@ export class SubscribersController {
   }
 
   @Patch('/:subscriberId')
+  @OAuthAccessible()
   @ExternalApiAccessible()
   @ApiOperation({
     summary: 'Update a subscriber',
@@ -266,6 +271,7 @@ export class SubscribersController {
   }
 
   @Delete('/:subscriberId')
+  @OAuthAccessible()
   @ExternalApiAccessible()
   @ApiOperation({
     summary: 'Delete a subscriber',
@@ -290,6 +296,7 @@ export class SubscribersController {
   }
 
   @Get('/:subscriberId/preferences')
+  @OAuthAccessible()
   @ExternalApiAccessible()
   @ApiOperation({
     summary: 'Retrieve subscriber preferences',
@@ -385,6 +392,7 @@ export class SubscribersController {
   }
 
   @Patch('/:subscriberId/preferences')
+  @OAuthAccessible()
   @ExternalApiAccessible()
   @ApiOperation({
     summary: 'Update subscriber preferences',

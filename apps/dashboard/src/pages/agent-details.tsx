@@ -34,6 +34,7 @@ import { CompactButton } from '@/components/primitives/button-compact';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
+import TruncatedText from '@/components/truncated-text';
 import { IS_EU } from '@/config';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useAgentRoutes } from '@/hooks/use-agent-routes';
@@ -109,13 +110,20 @@ export function AgentDetailsPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: ({ identifier, deleteFromProvider }: { identifier: string; deleteFromProvider?: boolean }) =>
+    mutationFn: ({
+      identifier,
+      deleteFromProvider,
+    }: {
+      identifier: string;
+      name: string;
+      deleteFromProvider?: boolean;
+    }) =>
       deleteAgent(requireEnvironment(currentEnvironment, 'No environment selected'), identifier, {
         deleteFromProvider,
       }),
-    onSuccess: async (_, { identifier }) => {
+    onSuccess: async (_, { identifier, name }) => {
       setAgentToDelete(null);
-      showSuccessToast('Agent deleted', 'The agent was removed.');
+      showSuccessToast(`Deleted agent: ${name.length > 40 ? `${name.slice(0, 40)}…` : name}`);
       track(TelemetryEvent.AGENT_DELETED_FROM_DASHBOARD, { agentIdentifier: identifier });
       await queryClient.invalidateQueries({ queryKey: [AGENTS_LIST_QUERY_KEY] });
       navigate(agentsListPath);
@@ -265,7 +273,7 @@ export function AgentDetailsPage() {
             ) : (
               <BreadcrumbPage className="flex min-w-0 items-center gap-1.5">
                 <RiRobot2Line className="text-text-sub size-4 shrink-0" aria-hidden />
-                <span className="truncate">{breadcrumbCurrentLabel}</span>
+                <TruncatedText className="min-w-0 max-w-[40ch]">{breadcrumbCurrentLabel}</TruncatedText>
                 <Badge color="gray" size="sm" variant="lighter" className="shrink-0">
                   BETA
                 </Badge>
@@ -342,7 +350,11 @@ export function AgentDetailsPage() {
               }}
               onConfirm={({ deleteFromProvider }) => {
                 if (agentToDelete) {
-                  deleteMutation.mutate({ identifier: agentToDelete.identifier, deleteFromProvider });
+                  deleteMutation.mutate({
+                    identifier: agentToDelete.identifier,
+                    name: agentToDelete.name,
+                    deleteFromProvider,
+                  });
                 }
               }}
               agentName={agentToDelete?.name ?? ''}

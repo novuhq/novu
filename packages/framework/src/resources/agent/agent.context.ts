@@ -14,6 +14,7 @@ import type {
   AgentReplyPayload,
   AgentSubscriber,
   AgentToolCall,
+  DeleteMessagePayload,
   FileRef,
   MessageContent,
   PendingApproval as PendingApprovalType,
@@ -21,6 +22,7 @@ import type {
   ReplyHandle,
   SentMessageInfo,
   Signal,
+  ToolApprovalCard,
   ToolApprovalConfig,
   ToolApprovalControl,
   ToolResult,
@@ -220,7 +222,7 @@ interface ReplyPoster {
 class ReplyHandleImpl implements ReplyHandle {
   public messageId: string;
   public platformThreadId: string;
-  /** @internal set when the handler calls `edit()`; dispatch skips the default resolved card. */
+  /** @internal set when the handler calls `edit()`; dispatch skips default approval card cleanup. */
   public editedByHandler = false;
 
   constructor(
@@ -257,6 +259,14 @@ class ReplyHandleImpl implements ReplyHandle {
 
     return this;
   }
+
+  async delete(): Promise<void> {
+    await this.poster.post({
+      conversationId: this.conversationId,
+      integrationIdentifier: this.integrationIdentifier,
+      deleteMessages: [{ messageId: this.messageId }],
+    });
+  }
 }
 
 export class AgentContextImpl implements AgentRuntimeContext {
@@ -285,6 +295,7 @@ export class AgentContextImpl implements AgentRuntimeContext {
   private _toolResults: ToolResult[] = [];
   private _pendingToolApprovalRequest: ToolApprovalRequestPayload | null = null;
   private _pendingReactions: AddReactionPayload[] = [];
+  private _pendingDeletes: DeleteMessagePayload[] = [];
   private _resolveSignal: { summary?: string } | null = null;
   private _metadataState: Record<string, unknown>;
   private readonly _toolApprovalConfig?: ToolApprovalConfig;
@@ -385,6 +396,29 @@ export class AgentContextImpl implements AgentRuntimeContext {
     );
   }
 
+  async replyApprovalCard(card: ToolApprovalCard): Promise<ReplyHandle> {
+    const body: AgentReplyPayload = {
+      conversationId: this._conversationId,
+      integrationIdentifier: this._integrationIdentifier,
+      reply: { toolApprovalCard: card },
+    };
+
+    this._drainSideEffects(body);
+
+    const info = await this._post(body);
+    if (!info) {
+      throw new Error('Agent approval card reply did not return a message handle');
+    }
+
+    return new ReplyHandleImpl(
+      info.messageId,
+      info.platformThreadId,
+      this._conversationId,
+      this._integrationIdentifier,
+      this._poster
+    );
+  }
+
   /** @internal Build a handle to an already-posted message (used to resume an approval). */
   createReplyHandle(messageId: string): ReplyHandleImpl {
     return new ReplyHandleImpl(messageId, '', this._conversationId, this._integrationIdentifier, this._poster);
@@ -416,6 +450,10 @@ export class AgentContextImpl implements AgentRuntimeContext {
     this._pendingReactions.push({ messageId, emojiName });
   }
 
+  deleteMessage(messageId: string): void {
+    this._pendingDeletes.push({ messageId });
+  }
+
   /**
    * Flush any remaining signals that weren't sent with reply().
    * Called internally after onResolve returns.
@@ -441,7 +479,8 @@ export class AgentContextImpl implements AgentRuntimeContext {
       this._signals.length ||
       this._toolResults.length ||
       this._resolveSignal ||
-      this._pendingReactions.length
+      this._pendingReactions.length ||
+      this._pendingDeletes.length
     );
   }
 
@@ -464,6 +503,11 @@ export class AgentContextImpl implements AgentRuntimeContext {
     if (this._pendingReactions.length) {
       body.addReactions = this._pendingReactions;
       this._pendingReactions = [];
+    }
+
+    if (this._pendingDeletes.length) {
+      body.deleteMessages = this._pendingDeletes;
+      this._pendingDeletes = [];
     }
 
     if (this._resolveSignal) {

@@ -13,13 +13,11 @@ export type {
 export { Actions, Button, Card, CardLink, CardText, Divider, Select, SelectOption, TextInput } from 'chat';
 export { AgentDeliveryError } from './agent.errors';
 export { agent } from './agent.resource';
-export type { AgentRuntimeContext } from './agent.runtime';
 export type {
   Agent,
   AgentAction,
   AgentActionContext,
   AgentAttachment,
-  AgentBridgeRequest,
   AgentContext,
   AgentConversation,
   AgentHandlerContext,
@@ -31,23 +29,13 @@ export type {
   AgentPlatformContext,
   AgentReaction,
   AgentReactionContext,
-  AgentReplyPayload,
   AgentResolveContext,
   AgentSubscriber,
   AgentToolCall,
-  EditPayload,
   FileRef,
   MessageContent,
-  MetadataSignal,
-  ReplyContent,
   ReplyHandle,
-  SentMessageInfo,
-  Signal,
+  ToolApprovalCard,
   ToolApprovalConfig,
   ToolApprovalDecision,
-  ToolResult,
-  TriggerSignal,
-  TypingControl,
-  TypingOp,
 } from './agent.types';
-export { AgentEventEnum, PendingApproval } from './agent.types';

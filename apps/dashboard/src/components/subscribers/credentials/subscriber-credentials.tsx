@@ -98,9 +98,6 @@ export function SubscriberCredentials({
     });
   }, [subscriber, integrations, channelEndpoints, channelConnections]);
 
-  console.dir({ groups }, { depth: null });
-  console.dir({ channelConnections }, { depth: null });
-
   if (isSubscriberPending || isIntegrationsPending || isEndpointsPending || isConnectionsPending) {
     return <CredentialsSkeleton />;
   }

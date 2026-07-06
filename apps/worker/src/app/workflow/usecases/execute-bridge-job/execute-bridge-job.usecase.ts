@@ -249,8 +249,7 @@ export class ExecuteBridgeJob {
       // URL). This blocks internal hosts even if a malicious URL was persisted
       // before validation landed or queued by an older API release.
       enforceSsrfProtection:
-        isOutboundSsrfProtectionEnabled() &&
-        (!!statelessBridgeUrl || workflowOrigin === ResourceOriginEnum.EXTERNAL),
+        isOutboundSsrfProtectionEnabled() && (!!statelessBridgeUrl || workflowOrigin === ResourceOriginEnum.EXTERNAL),
       processError: async (response) => {
         await this.createExecutionDetails.execute({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
