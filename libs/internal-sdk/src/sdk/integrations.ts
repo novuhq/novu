@@ -3,11 +3,14 @@
  */
 
 import { integrationsCreate } from "../funcs/integrationsCreate.js";
+import { integrationsCreateMobileLink } from "../funcs/integrationsCreateMobileLink.js";
 import { integrationsDelete } from "../funcs/integrationsDelete.js";
 import { integrationsGenerateChatOAuthUrl } from "../funcs/integrationsGenerateChatOAuthUrl.js";
 import { integrationsGenerateConnectOAuthUrl } from "../funcs/integrationsGenerateConnectOAuthUrl.js";
 import { integrationsGenerateLinkUserOAuthUrl } from "../funcs/integrationsGenerateLinkUserOAuthUrl.js";
 import { integrationsIntegrationsControllerAutoConfigureIntegration } from "../funcs/integrationsIntegrationsControllerAutoConfigureIntegration.js";
+import { integrationsIntegrationsControllerConfigureIntegrationWebhook } from "../funcs/integrationsIntegrationsControllerConfigureIntegrationWebhook.js";
+import { integrationsLinkChannelEndpoint } from "../funcs/integrationsLinkChannelEndpoint.js";
 import { integrationsList } from "../funcs/integrationsList.js";
 import { integrationsListActive } from "../funcs/integrationsListActive.js";
 import { integrationsSetAsPrimary } from "../funcs/integrationsSetAsPrimary.js";
@@ -144,6 +147,53 @@ export class Integrations extends ClientSDK {
   }
 
   /**
+   * Issue a short-lived mobile setup link for an existing integration
+   *
+   * @remarks
+   * Returns an opaque, single-use setup token plus a mobile URL for configuring an existing chat integration. Telegram is the only supported provider initially.
+   */
+  async createMobileLink(
+    issueIntegrationMobileLinkRequestDto:
+      components.IssueIntegrationMobileLinkRequestDto,
+    integrationIdentifier: string,
+    idempotencyKey?: string | undefined,
+    options?: RequestOptions,
+  ): Promise<
+    operations.IntegrationsControllerCreateIntegrationMobileLinkResponse
+  > {
+    return unwrapAsync(integrationsCreateMobileLink(
+      this,
+      issueIntegrationMobileLinkRequestDto,
+      integrationIdentifier,
+      idempotencyKey,
+      options,
+    ));
+  }
+
+  /**
+   * Configure a chat integration webhook
+   *
+   * @remarks
+   * Registers the Novu webhook URL with the chat provider for the specified integration. Telegram is the only supported provider initially.
+   */
+  async integrationsControllerConfigureIntegrationWebhook(
+    integrationIdentifier: string,
+    idempotencyKey?: string | undefined,
+    options?: RequestOptions,
+  ): Promise<
+    operations.IntegrationsControllerConfigureIntegrationWebhookResponse
+  > {
+    return unwrapAsync(
+      integrationsIntegrationsControllerConfigureIntegrationWebhook(
+        this,
+        integrationIdentifier,
+        idempotencyKey,
+        options,
+      ),
+    );
+  }
+
+  /**
    * List active integrations
    *
    * @remarks
@@ -176,6 +226,25 @@ export class Integrations extends ClientSDK {
     return unwrapAsync(integrationsGenerateConnectOAuthUrl(
       this,
       generateConnectOauthUrlRequestDto,
+      idempotencyKey,
+      options,
+    ));
+  }
+
+  /**
+   * Issue a URL to link a subscriber chat identity
+   *
+   * @remarks
+   * Returns a provider-specific URL the subscriber opens to link their chat identity. The integration provider is resolved from integrationIdentifier; Telegram returns a deep link.
+   */
+  async linkChannelEndpoint(
+    linkChannelEndpointRequestDto: components.LinkChannelEndpointRequestDto,
+    idempotencyKey?: string | undefined,
+    options?: RequestOptions,
+  ): Promise<operations.IntegrationsControllerLinkChannelEndpointResponse> {
+    return unwrapAsync(integrationsLinkChannelEndpoint(
+      this,
+      linkChannelEndpointRequestDto,
       idempotencyKey,
       options,
     ));
