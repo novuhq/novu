@@ -16,6 +16,7 @@ Event handlers are functions that respond to events in a conversation. Your agen
 | `onAction` | A user clicks a button or selects a value in an interactive card | Handle form submissions, button clicks, dropdown selections |
 | `onReaction` | A user adds or removes a reaction | Capture feedback or trigger a follow-up |
 | `onResolve` | The conversation is marked as resolved | Clean up state, log analytics, or send a summary |
+| `onToolApproval` | A user clicks Approve or Deny on a card posted via `ctx.toolApproval.request()` | Run or skip a gated tool call and reply with the outcome |
 
 Handlers are where the communication layer connects to your application logic. For example, an `onMessage` handler receives the user's message, passes conversation context to an LLM or custom function, and sends the response back through Novu.
 
@@ -196,6 +197,24 @@ export const myAgent = agent('my-agent', {
 });
 ```
 
+### onToolApproval
+
+`onToolApproval` fires when a user clicks Approve or Deny on an approval card that your agent posted with `ctx.toolApproval.request()`. Register it whenever your agent gates tool calls. See [Tool approval](/agents/custom-code-agent/setup-your-agent/tool-approval) for the full flow.
+
+```typescript
+import { agent } from '@novu/framework';
+
+export const myAgent = agent('my-agent', {
+  onToolApproval: async (decision, ctx) => {
+    if (decision.approved) {
+      // run the tool
+      return `Ran ${decision.toolCall.name}.`;
+    }
+    return 'Skipped.';
+  },
+});
+```
+
 ## Related
 
 <Columns cols={2}>
@@ -204,6 +223,9 @@ export const myAgent = agent('my-agent', {
   </Card>
   <Card icon="pencil" href="/agents/custom-code-agent/setup-your-agent/edit-sent-messages" title="Edit sent messages">
     Update a message in place after sending it with `ReplyHandle`.
+  </Card>
+  <Card icon="shield-check" href="/agents/custom-code-agent/setup-your-agent/tool-approval" title="Tool approval">
+    Gate tool calls with a user Approve/Deny card before they run.
   </Card>
   <Card icon="brain" href="/agents/custom-code-agent/connect-your-first-agent" title="Connect your first agent">
     Walk through a full support-bot handler file.

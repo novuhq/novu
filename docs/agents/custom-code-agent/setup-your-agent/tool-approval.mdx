@@ -1,0 +1,166 @@
+---
+title: "Tool approval"
+description: 'Gate tool calls with a user approval card before your agent runs them.'
+---
+
+
+Tool approval pauses a turn, posts an Approve/Deny card in the conversation, and only continues after the user clicks. Use it whenever a tool call needs a human in the loop — issuing refunds, sending outbound email, running destructive database mutations, or any action you would not want the model to trigger unattended.
+
+The flow works statelessly: your agent decides a tool needs approval, calls `ctx.toolApproval.request()`, and ends the turn. When the user clicks Approve or Deny, Novu records the decision in `ctx.history` and starts a fresh turn — your handler resumes from history, so nothing needs to be held in memory between clicks.
+
+## When to use it
+
+- The tool has side effects the user should confirm (payments, notifications, deletions).
+- A model with autonomy needs a policy gate before certain calls.
+- You want an auditable, in-thread record of who approved which action.
+
+For tool calls that are safe to run automatically, do nothing special — the model calls them directly.
+
+## AI SDK agents (recommended)
+
+Import `agent` from `@novu/framework/ai-sdk` and use `toModelMessages(ctx.history)` to feed the conversation into `streamText` or `generateText`. When a tool has `needsApproval: true`, return `ctx.toolApproval.request(toolCall)` from `onMessage` to gate it.
+
+```tsx title="app/novu/agents/refund-agent.tsx"
+import { agent } from '@novu/framework/ai-sdk';
+import { toModelMessages } from '@novu/framework/ai-sdk';
+import { openai } from '@ai-sdk/openai';
+import { streamText, tool } from 'ai';
+import { z } from 'zod';
+
+export const refundAgent = agent('refund-agent', {
+  onMessage: async (_message, ctx) => {
+    return streamText({
+      model: openai('gpt-4o-mini'),
+      system: 'You process customer refunds. Confirm risky actions.',
+      messages: toModelMessages(ctx.history),
+      tools: {
+        issueRefund: tool({
+          description: 'Issue a refund for an order.',
+          inputSchema: z.object({ orderId: z.string(), amount: z.number() }),
+          execute: async ({ orderId, amount }, { toolCall }) => {
+            // Ask the user before actually running the refund.
+            return ctx.toolApproval.request({
+              id: toolCall.toolCallId,
+              name: 'issueRefund',
+              input: { orderId, amount },
+            });
+          },
+        }),
+      },
+    });
+  },
+});
+```
+
+When `ctx.toolApproval.request()` runs:
+
+1. Novu posts the default Approve/Deny card in the thread.
+2. The current turn ends. No further tool calls execute.
+3. When the user clicks a button, Novu records the decision in the conversation history.
+4. The adapter starts a new turn, replays history through `toModelMessages(ctx.history)`, and `streamText` resumes the tool loop — the model sees the approval response and either runs the tool or backs off.
+
+The adapter drives the resume automatically. You do not need to define `onToolApproval` for the basic flow.
+
+### Customize the approval card
+
+Pass a `toolApproval.renderApproval` function to change the card contents. Use the provided `actionIds` on your `<Button>` elements so Novu routes clicks back to the approval flow.
+
+```tsx
+import { agent } from '@novu/framework/ai-sdk';
+import { Actions, Button, Card, CardText } from '@novu/framework';
+
+export const refundAgent = agent('refund-agent', {
+  onMessage: /* ... */,
+  toolApproval: {
+    renderApproval: ({ toolCall, actionIds }) => (
+      <Card title="Approve refund?">
+        <CardText>
+          {`${toolCall.name} for order ${toolCall.input?.orderId}`}
+        </CardText>
+        <Actions>
+          <Button id={actionIds.deny} label="Deny" />
+          <Button id={actionIds.approve} label="Approve" style="primary" />
+        </Actions>
+      </Card>
+    ),
+  },
+});
+```
+
+Omit `renderApproval` to use the built-in Approve/Deny card.
+
+### Take over the resume
+
+Define `onToolApproval` when you want to run side effects on the decision, post a custom follow-up, or drive resume yourself with a `streamText` / `generateText` result.
+
+| Return value | What Novu does |
+| --- | --- |
+| `void` / `undefined` | Adapter auto-resumes by replaying history through the LLM. |
+| `MessageContent` (string or card) | Posts your reply, then auto-resumes. |
+| `AiSdkResult` (a `streamText` / `generateText` return) | Streams your result as the reply — you own the resume. |
+
+```tsx
+onToolApproval: async (decision, ctx) => {
+  ctx.metadata.set(`lastDecision:${decision.toolCall.name}`, decision.approved);
+  // Return void — adapter continues the LLM turn.
+},
+```
+
+## Custom framework agents
+
+If you build a handler with `agent` from `@novu/framework` (no AI SDK), the same `ctx.toolApproval.request()` API is available. Handle the click yourself in `onToolApproval`.
+
+```tsx
+import { agent } from '@novu/framework';
+
+export const refundAgent = agent('refund-agent', {
+  onMessage: async ({ message, ctx }) => {
+    if (needsApproval(message)) {
+      return ctx.toolApproval.request({
+        id: 'refund-1',
+        name: 'issueRefund',
+        input: { orderId: 'ord_123', amount: 42 },
+      });
+    }
+    // ...
+  },
+
+  onToolApproval: async (decision, ctx) => {
+    if (decision.approved) {
+      await runRefund(decision.toolCall.input);
+      return `Refund issued for order ${decision.toolCall.input?.orderId}.`;
+    }
+    return 'Refund cancelled.';
+  },
+});
+```
+
+### The `ToolApprovalDecision` object
+
+`onToolApproval` receives:
+
+- `toolCall`: the `{ id, name, input }` originally passed to `request()`.
+- `approved`: `true` if the user clicked Approve, `false` if Deny.
+- `approvalMessage`: a `ReplyHandle` for the approval card. When you register your own `onToolApproval`, you own the card lifecycle — call `approvalMessage.edit()` or `approvalMessage.delete()` if you want a resolved state.
+
+## Card cleanup behavior
+
+- **Framework-owned clicks** (AI SDK adapter without a user-defined `onToolApproval`): Novu shows a typing indicator during the resume and deletes the approval card before posting the next reply.
+- **User-defined `onToolApproval`**: your handler owns the card. Edit or delete `decision.approvalMessage` yourself, or leave it in place.
+- **Superseded approvals**: if a newer approval card replaces an earlier pending one, the older card is deleted rather than left as a stale "Denied" state.
+
+## API reference
+
+- `ctx.toolApproval.request(toolCall)` — post an approval card and pause the turn. Returns a `PendingApproval` marker that ends the turn when returned from a handler.
+- `AgentToolCall` — `{ id, name, input? }` describing the tool call to gate.
+- `ToolApprovalConfig.renderApproval({ toolCall, actionIds })` — build a custom approval card. Wire the two `actionIds` onto your buttons.
+- `ToolApprovalDecision` — `{ toolCall, approved, approvalMessage }` passed to `onToolApproval`.
+- `toModelMessages(ctx.history, system?)` (AI SDK) — map the conversation ledger into `ModelMessage[]` for `streamText` / `generateText`. Include approval requests, decisions, and tool results so the LLM resumes correctly.
+
+## Migrating from plan cards
+
+`ctx.plan`, `PlanControl`, `PlanHandle`, and the `planProgress` field on the self-hosted `/agents/:id/reply` payload are no longer available. If you previously used plan cards to communicate what your agent was doing, migrate to approval cards for gated steps and normal replies for progress updates:
+
+- Replace `plan.step(...)` calls that surfaced a pending action with `ctx.toolApproval.request(...)` so the user can confirm before it runs.
+- Replace progress narration inside a plan with regular `ctx.reply()` calls or a card you edit as work advances.
+- Remove any `planProgress` fields you were sending on custom `/agents/:id/reply` requests.

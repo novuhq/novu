@@ -422,6 +422,7 @@
                   "agents/custom-code-agent/setup-your-agent/reply",
                   "agents/custom-code-agent/setup-your-agent/edit-sent-messages",
                   "agents/custom-code-agent/setup-your-agent/signals",
+                  "agents/custom-code-agent/setup-your-agent/tool-approval",
                   "agents/custom-code-agent/setup-your-agent/connect-components"
                 ]
               },
