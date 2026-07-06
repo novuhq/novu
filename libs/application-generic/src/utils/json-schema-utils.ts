@@ -138,7 +138,7 @@ function buildObjectFromPaths(
   arrayVariables: Array<ArrayVariable>,
   showIfVariablesPaths?: string[]
 ): Record<string, unknown> {
-  const result = Object.create(null) as Record<string, unknown>;
+  const result = {};
 
   // Initialize arrays with the correct number of iterations
   arrayVariables.forEach((arrayVariable) => {
@@ -200,7 +200,7 @@ function buildObjectFromPaths(
       const normalizedKey = finalPart.replace(/\[\d+\]/g, '');
       const payloadProperties = digestPayloadProperties.get(normalizedKey);
       if (payloadProperties && payloadProperties.size > 0) {
-        const payload = Object.create(null) as Record<string, unknown>;
+        const payload = {};
         payloadProperties.forEach((property) => {
           const propertyParts = property.split('.');
           const propertyValue = propertyParts[propertyParts.length - 1];
@@ -246,8 +246,12 @@ const UNSAFE_PATH_KEYS = new Set([
   'toLocaleString',
 ]);
 
-function isUnsafePathKey(key: string): boolean {
-  return UNSAFE_PATH_KEYS.has(key);
+function isIndexSegment(segment: string): boolean {
+  return /^\d+$/.test(segment);
+}
+
+function isUnsafeSegment(segment: string): boolean {
+  return !isIndexSegment(segment) && UNSAFE_PATH_KEYS.has(segment);
 }
 
 function parseVariablePath(path: string): string[] {
@@ -257,21 +261,19 @@ function parseVariablePath(path: string): string[] {
     .filter((segment) => segment.length > 0);
 }
 
-function isSafeVariablePath(path: string): boolean {
-  return parseVariablePath(path).every((segment) => /^\d+$/.test(segment) || !isUnsafePathKey(segment));
-}
-
 function createPathNode(nextSegment: string): Record<string, unknown> | unknown[] {
-  return /^\d+$/.test(nextSegment) ? [] : Object.create(null);
+  return isIndexSegment(nextSegment) ? [] : {};
 }
 
+/**
+ * Assigns `value` at a dot/bracket path, only reusing own properties and never
+ * following inherited ones, so a user-controlled path cannot reach a builtin on
+ * the prototype chain (second-order prototype pollution).
+ */
 function safeSet(root: Record<string, unknown>, path: string, value: unknown): void {
-  if (!isSafeVariablePath(path)) {
-    return;
-  }
-
   const segments = parseVariablePath(path);
-  if (segments.length === 0) {
+
+  if (segments.length === 0 || segments.some(isUnsafeSegment)) {
     return;
   }
 
@@ -279,76 +281,34 @@ function safeSet(root: Record<string, unknown>, path: string, value: unknown): v
 
   for (let index = 0; index < segments.length; index += 1) {
     const segment = segments[index];
-    const isLast = index === segments.length - 1;
-    const isIndex = /^\d+$/.test(segment);
+    const isIndex = isIndexSegment(segment);
 
-    if (isLast) {
-      if (isIndex) {
-        if (!Array.isArray(node)) {
-          return;
-        }
+    if (isIndex && !Array.isArray(node)) {
+      return;
+    }
 
-        node[Number(segment)] = value;
-      } else {
-        (node as Record<string, unknown>)[segment] = value;
-      }
+    const container = node as Record<string, unknown> | unknown[];
+    const key = isIndex ? Number(segment) : segment;
+
+    if (index === segments.length - 1) {
+      (container as Record<string | number, unknown>)[key] = value;
 
       return;
     }
 
-    if (isIndex) {
-      if (!Array.isArray(node)) {
-        return;
-      }
+    const hasOwn = isIndex ? true : Object.prototype.hasOwnProperty.call(container, key);
+    const existing = hasOwn ? (container as Record<string | number, unknown>)[key] : undefined;
 
-      const arrayNode = node as unknown[];
-      const arrayIndex = Number(segment);
-      const nextSegment = segments[index + 1];
-      const existing = arrayNode[arrayIndex];
-
-      if (existing === undefined || existing === null || typeof existing !== 'object') {
-        arrayNode[arrayIndex] = createPathNode(nextSegment);
-      }
-
-      node = arrayNode[arrayIndex] as Record<string, unknown> | unknown[];
-
-      continue;
+    if (existing === null || typeof existing !== 'object') {
+      (container as Record<string | number, unknown>)[key] = createPathNode(segments[index + 1]);
     }
 
-    const record = node as Record<string, unknown>;
-    const nextSegment = segments[index + 1];
-    const existing = Object.prototype.hasOwnProperty.call(record, segment) ? record[segment] : undefined;
-
-    if (existing === undefined || existing === null || typeof existing !== 'object') {
-      record[segment] = createPathNode(nextSegment);
-      node = record[segment] as Record<string, unknown> | unknown[];
-
-      continue;
-    }
-
-    node = existing as Record<string, unknown> | unknown[];
+    node = (container as Record<string | number, unknown>)[key] as Record<string, unknown> | unknown[];
   }
 }
 
 function setNestedProperty(obj: Record<string, unknown>, path: string, value: string) {
-  const keys = path.split('.');
-
-  if (keys.some(isUnsafePathKey)) return;
-
-  let current = obj;
-
-  for (let i = 0; i < keys.length - 1; i += 1) {
-    const key = keys[i];
-    const existing = Object.prototype.hasOwnProperty.call(current, key) ? current[key] : undefined;
-
-    if (existing === undefined || existing === null || typeof existing !== 'object') {
-      current[key] = Object.create(null);
-    }
-
-    current = current[key] as Record<string, unknown>;
-  }
-
-  current[keys[keys.length - 1]] = value;
+  safeSet(obj, path, value);
 }
 
 /**
