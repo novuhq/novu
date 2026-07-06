@@ -1,9 +1,8 @@
 ---
-title: 'Adding Email Channel'
-sidebarTitle: 'Adding Email Channel'
-description: 'Learn how to add the Email channel to your application'
+title: "Adding Email Channel Email Integration with Novu"
+sidebarTitle: "Adding Email Channel"
+description: "Connect Adding Email Channel to Novu to send email notifications through notification workflows. Step-by-step credential setup."
 ---
-
 
 The Email channel enables you to send email notifications to users for events like password resets, onboarding, or system alerts.
 
@@ -27,29 +26,29 @@ The Email channel enables you to send email notifications to users for events li
    - Provider-specific credentials such as API key / Auth token, Account SID, username, or password
 8. Save the configuration by clicking **"Update"**
 
-  </Step>
+</Step>
 
-  <Step title="Setup workflow with email channel in Novu Dashboard">
+<Step title="Setup workflow with email channel in Novu Dashboard">
     
     1. Go to the Novu Dashboard and click **"Workflows"** on the left sidebar.
     2. Click the **"Add a Workflow"** button.
     3. Add a step and select **"Email"** as the channel.
     4. Configure the email content, such as subject, message body, and any dynamic variables.
 
-  </Step>
+</Step>
 
-  <Step title="Add a workflow trigger to your backend">
+<Step title="Add a workflow trigger to your backend">
 Novu's server-side SDKs make integrating Novu's REST APIs straightforward, letting you focus on implementing workflows without dealing with repetitive code.
 
 <Card title="Server-side SDKs" icon="code" href="/platform/sdks/server" />
   </Step>
 
-  <Step title="Test and Verify Email Channel">
+<Step title="Test and Verify Email Channel">
 Ensure your configuration is working by sending a test notification.
 
-    1. Go to the Novu Dashboard, navigate to the "Workflows" section, and locate your configured workflow.
+1. Go to the Novu Dashboard, navigate to the "Workflows" section, and locate your configured workflow.
     2. Click **"Test Workflow"** and provide sample data (e.g., user ID, email address).
     3. Verify the email delivery in the Novu Logs or your email provider dashboard.
 
-  </Step>
+</Step>
 </Steps>

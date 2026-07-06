@@ -157,7 +157,7 @@ Novu provisions a **unique inbound address** for your agent — for example `my-
 
 Unlike Slack or Telegram, email starts with the user sending the first message. The CLI opens a pre-filled draft so you can send a test email and confirm the connection.
 
-**Custom domains** — the shared `@agentconnect.sh` address works out of the box. For production, configure your own inbound domain in the [Novu dashboard](https://docs.novu.co) (Domains → add domain → verify DNS). Route mail to your agent on `@yourcompany.com` while keeping the same bridge handlers.
+**Custom domains** — the shared `@agentconnect.sh` address works out of the box. For production, configure your own inbound domain in the [Novu dashboard](https://docs.novu.co/platform/inbound-email/overview) (Domains → add domain → verify DNS). Route mail to your agent on `@yourcompany.com` while keeping the same bridge handlers.
 
 Use `getNovuContext(thread).getEmailContext()` inside handlers for email-specific metadata (routing domain, thread headers).
 

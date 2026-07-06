@@ -51,7 +51,7 @@ export function DomainsPaywallBanner() {
             {IS_SELF_HOSTED ? 'Contact Sales' : 'Upgrade to Team Tier'}
           </Button>
 
-          <Link to="https://docs.novu.co/platform/domains" target="_blank" rel="noreferrer noopener">
+          <Link to="https://docs.novu.co/agents/get-started/mental-model" target="_blank" rel="noreferrer noopener">
             <LinkButton size="sm" leadingIcon={RiBookMarkedLine}>
               How does this help?
             </LinkButton>

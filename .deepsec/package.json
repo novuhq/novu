@@ -1,0 +1,22 @@
+{
+  "name": "deepsec-workspace",
+  "version": "0.1.0",
+  "private": true,
+  "description": "deepsec scanning workspace",
+  "type": "module",
+  "workspaces": [],
+  "packageManager": "pnpm@9.15.4",
+  "dependencies": {
+    "deepsec": "^2.1.2"
+  },
+  "overrides": {
+    "@openai/codex": "0.142.5",
+    "@openai/codex-sdk": "0.142.5"
+  },
+  "pnpm": {
+    "overrides": {
+      "@openai/codex": "0.142.5",
+      "@openai/codex-sdk": "0.142.5"
+    }
+  }
+}

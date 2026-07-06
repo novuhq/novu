@@ -7,7 +7,7 @@ import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-c
 import type { ReplyContentDto } from '../../shared/dtos/agent-reply-payload.dto';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { esmImport } from '../../shared/util/esm-import';
-import { buildPoweredByWatermark, contentHasPoweredByWatermark } from '../../shared/util/novu-powered-by-watermark';
+import { buildBrandedMarkdownReply, contentHasPoweredByWatermark } from '../../shared/util/novu-powered-by-watermark';
 import { type AgentActionTokenBinding, AgentActionTokenService } from '../action-token/agent-action-token.service';
 import { AgentConversationService } from '../conversation/agent-conversation.service';
 import { ChatInstanceRegistry } from '../ingress/chat-instance.registry';
@@ -45,6 +45,18 @@ export interface OutboundPersistContext {
 }
 
 export type OutboundMessage = ReplyContentDto;
+
+function extractReplyRichContent(content: OutboundMessage): Record<string, unknown> | undefined {
+  if (!content.card && !content.files?.length) {
+    return undefined;
+  }
+
+  return {
+    ...(content.markdown !== undefined && { markdown: content.markdown }),
+    ...(content.card !== undefined && { card: content.card }),
+    ...(content.files !== undefined && { files: content.files }),
+  };
+}
 
 export type OutboundDeliveryOptions = {
   slackNative?: SlackNativeDelivery;
@@ -153,7 +165,7 @@ export class OutboundGateway {
       agentIdentifier: persist.agentIdentifier,
       agentName: persist.agentName,
       content: this.extractTextFallback(msg),
-      richContent: msg.card || msg.files?.length ? (msg as Record<string, unknown>) : undefined,
+      richContent: extractReplyRichContent(msg),
       environmentId: persist.environmentId,
       organizationId: persist.organizationId,
     });
@@ -509,10 +521,10 @@ export class OutboundGateway {
   }
 
   /**
-   * Appends the "Powered by Novu" watermark as the last line of outbound text
-   * messages for organizations that have not removed Novu branding (free plan).
-   * Pro and above can disable it via the existing `removeNovuBranding` org
-   * setting, resolved once per delivery by `AgentConfigResolver`.
+   * Wraps outbound markdown replies with a muted "Powered by Novu" footnote for
+   * organizations that have not removed Novu branding (free plan). Pro and above
+   * can disable it via the existing `removeNovuBranding` org setting, resolved
+   * once per delivery by `AgentConfigResolver`.
    *
    * Only plain markdown replies are branded — cards/action messages are left
    * untouched.
@@ -526,9 +538,9 @@ export class OutboundGateway {
       return content;
     }
 
-    const watermark = buildPoweredByWatermark(branding.agentIdentifier, branding.platform);
+    const card = buildBrandedMarkdownReply(content.markdown, branding.agentIdentifier, branding.platform);
 
-    return { ...content, markdown: `${content.markdown}\n\n${watermark}` };
+    return { ...content, card: card as unknown as Record<string, unknown>, markdown: undefined };
   }
 
   /**
@@ -572,7 +584,7 @@ export class OutboundGateway {
       agentIdentifier: persist.agentIdentifier,
       agentName: persist.agentName,
       content: this.extractTextFallback(msg),
-      richContent: msg.card || msg.files?.length ? (msg as Record<string, unknown>) : undefined,
+      richContent: extractReplyRichContent(msg),
       environmentId: persist.environmentId,
       organizationId: persist.organizationId,
     });

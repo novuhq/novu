@@ -18,6 +18,13 @@
     "dark": "/logo/dark.svg",
     "href": "https://novu.co"
   },
+  "seo": {
+    "indexing": "all",
+    "metatags": {
+      "og:type": "website",
+      "twitter:card": "summary_large_image"
+    }
+  },
   "navigation": {
     "global": {
       "anchors": []
@@ -33,6 +40,10 @@
               "platform",
               "platform/what-is-novu",
               "platform/how-novu-works",
+              {
+                "group": "Novu for your team",
+                "pages": ["platform/novu-for/developers", "platform/novu-for/product"]
+              },
               {
                 "group": "Core Concepts",
                 "pages": [
@@ -66,10 +77,7 @@
               "platform/inbox/setup-inbox",
               {
                 "group": "Features",
-                "pages": [
-                  "platform/inbox/features/snooze",
-                  "platform/inbox/features/schedule"
-                ]
+                "pages": ["platform/inbox/features/snooze", "platform/inbox/features/schedule"]
               },
               {
                 "group": "Customize and Configure",
@@ -177,6 +185,7 @@
                   "platform/integrations/chat/mattermost",
                   "platform/integrations/chat/ms-teams",
                   "platform/integrations/chat/slack",
+                  "platform/integrations/chat/telegram",
                   "platform/integrations/chat/whats-app",
                   "platform/integrations/chat/zulip"
                 ]
@@ -204,6 +213,7 @@
                   "platform/integrations/email/sparkpost",
                   "platform/integrations/email/webhook",
                   "platform/integrations/email/custom-smtp",
+                  "platform/integrations/email/writing-email-template",
                   {
                     "group": "Activity Tracking",
                     "pages": [
@@ -257,6 +267,7 @@
                   "platform/integrations/sms/sendchamp",
                   "platform/integrations/sms/simpletexting",
                   "platform/integrations/sms/sms-central",
+                  "platform/integrations/sms/sms-webhook",
                   "platform/integrations/sms/sms77",
                   "platform/integrations/sms/sns",
                   "platform/integrations/sms/telnyx",
@@ -335,8 +346,13 @@
               "platform/developer/environment-variables",
               "platform/developer/limits",
               {
+                "group": "Inbound email",
+                "pages": ["platform/inbound-email/overview"]
+              },
+              {
                 "group": "Webhooks",
                 "pages": [
+                  "platform/developer/webhooks/webhooks",
                   "platform/developer/webhooks/event-types",
                   "platform/developer/webhooks/connectors"
                 ]
@@ -348,6 +364,7 @@
             "group": "Account",
             "pages": [
               "platform/account/authentication",
+              "platform/account/organizations",
               "platform/account/roles-and-permissions",
               "platform/account/manage-members",
               "platform/account/billing",
@@ -380,7 +397,7 @@
         "tab": "Agents",
         "groups": [
           {
-            "group": "Get Started",
+            "group": "Getting Started",
             "boost": 3,
             "pages": [
               "agents",
@@ -425,9 +442,7 @@
           },
           {
             "group": "Observability",
-            "pages": [
-              "agents/conversations"
-            ],
+            "pages": ["agents/conversations"],
             "icon": "eye"
           }
         ]
@@ -436,7 +451,7 @@
         "tab": "API Reference",
         "groups": [
           {
-            "group": "Overview",
+            "group": "Getting Started",
             "pages": [
               "api-reference",
               "api-reference/authentication",
@@ -649,9 +664,7 @@
           },
           {
             "group": "Activity",
-            "pages": [
-              "api-reference/activity/track-activity-and-engagement-events"
-            ],
+            "pages": ["api-reference/activity/track-activity-and-engagement-events"],
             "icon": "activity"
           },
           {
@@ -678,18 +691,26 @@
             "item": "Guides",
             "groups": [
               {
-                "group": "Guides",
+                "group": "Use Cases",
                 "pages": [
-                  "guides",
-                  "guides/inngest",
-                  "guides/triggerdotdev"
+                  "guides/use-cases/transactional-notifications",
+                  "guides/use-cases/password-reset-notifications",
+                  "guides/use-cases/digest-notifications",
+                  "guides/use-cases/multi-channel-fallback",
+                  "guides/use-cases/notification-preferences"
                 ],
+                "icon": "lightbulb"
+              },
+              {
+                "group": "Guides",
+                "pages": ["guides", "guides/inngest", "guides/triggerdotdev"],
                 "icon": "book-open"
               },
               {
                 "group": "Inbound Webhooks",
                 "pages": [
                   "guides/webhooks/clerk",
+                  "guides/webhooks/auth0",
                   "guides/webhooks/stripe",
                   "guides/webhooks/segment"
                 ],
@@ -697,22 +718,21 @@
               },
               {
                 "group": "Recipes",
-                "pages": [
-                  "guides/recipes/managing-workflows"
-                ],
+                "pages": ["guides/recipes/managing-workflows", "guides/recipes/supabase-auth-notifications"],
                 "icon": "chef-hat"
               },
               {
                 "group": "Framework",
-                "pages": [
-                  "guides/framework/using-translations"
-                ],
+                "pages": ["guides/framework/using-translations"],
                 "icon": "blocks"
               },
               {
                 "group": "Migrate to Novu",
                 "pages": [
-                  "guides/migrate-from-courier-to-novu"
+                  "guides/migrate-from-courier-to-novu",
+                  "guides/migrate-from-knock-to-novu",
+                  "guides/migrate-from-magicbell-to-novu",
+                  "guides/migrate-from-in-house-to-novu"
                 ],
                 "icon": "arrow-right-left"
               }
@@ -780,12 +800,7 @@
               {
                 "group": "Advanced Features",
                 "boost": 0.1,
-                "pages": [
-                  "framework/digest",
-                  "framework/delay",
-                  "framework/custom",
-                  "framework/skip"
-                ],
+                "pages": ["framework/digest", "framework/delay", "framework/custom", "framework/skip"],
                 "icon": "sparkles"
               },
               {
@@ -838,6 +853,7 @@
                   "community",
                   {
                     "group": "Self Hosting Novu",
+                    "boost": 1,
                     "pages": [
                       "community/self-hosting-novu/overview",
                       "community/self-hosting-novu/deploy-with-docker",
@@ -849,6 +865,7 @@
                   "community/get-involved",
                   "community/code-of-conduct",
                   "community/roadmap",
+                  "community/changelog",
                   "community/self-hosted-and-novu-cloud",
                   "community/run-in-local-machine",
                   "community/add-a-new-provider"
@@ -874,15 +891,7 @@
     }
   },
   "contextual": {
-    "options": [
-      "copy",
-      "view",
-      "cursor",
-      "claude",
-      "chatgpt",
-      "mcp",
-      "add-mcp"
-    ]
+    "options": ["copy", "view", "cursor", "claude", "chatgpt", "mcp", "add-mcp"]
   },
   "footer": {
     "socials": {
@@ -1335,6 +1344,16 @@
     {
       "source": "/platform/integrations/sms/bulksms",
       "destination": "/platform/integrations/sms/bulk-sms",
+      "permanent": true
+    },
+    {
+      "source": "/channels/sms/generic-sms",
+      "destination": "/platform/integrations/sms/sms-webhook",
+      "permanent": true
+    },
+    {
+      "source": "/integrations/providers/sms/generic-sms",
+      "destination": "/platform/integrations/sms/sms-webhook",
       "permanent": true
     },
     {

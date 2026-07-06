@@ -42,6 +42,7 @@ import {
 } from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ThrottlerCategory } from '../rate-limiting/guards/throttler.decorator';
+import { assertEnvironmentScopedAccess } from '../shared/utils/auth.utils';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import { DeleteWorkflowCommand } from '../workflows-v1/usecases/delete-workflow/delete-workflow.command';
@@ -203,6 +204,8 @@ export class WorkflowController {
     @Param('workflowId', ParseSlugIdPipe) workflowIdOrInternalId: string,
     @Query('environmentId') environmentId?: string
   ): Promise<WorkflowResponseDto> {
+    assertEnvironmentScopedAccess(user.scheme, user.environmentId, environmentId);
+
     return this.getWorkflowUseCase.execute(
       GetWorkflowCommand.create({
         workflowIdOrInternalId,

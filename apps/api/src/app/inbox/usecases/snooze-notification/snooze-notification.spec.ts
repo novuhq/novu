@@ -18,6 +18,7 @@ import { ApiServiceLevelEnum, ChannelTypeEnum, JobStatusEnum, SeverityLevelEnum 
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { InboxNotificationDto } from '../../dtos/inbox-notification.dto';
+import { GetSubscriber } from '../../../subscribers/usecases/get-subscriber';
 import { MarkNotificationAsCommand } from '../mark-notification-as/mark-notification-as.command';
 import { MarkNotificationAs } from '../mark-notification-as/mark-notification-as.usecase';
 import { SnoozeNotificationCommand } from './snooze-notification.command';
@@ -48,6 +49,7 @@ describe('SnoozeNotification', () => {
   let createExecutionDetailsMock: sinon.SinonStubbedInstance<CreateExecutionDetails>;
   let markNotificationAsMock: sinon.SinonStubbedInstance<MarkNotificationAs>;
   let analyticsServiceMock: sinon.SinonStubbedInstance<AnalyticsService>;
+  let getSubscriberMock: sinon.SinonStubbedInstance<GetSubscriber>;
 
   const mockMessage: MessageEntity = {
     _id: validNotificationId,
@@ -96,6 +98,7 @@ describe('SnoozeNotification', () => {
     createExecutionDetailsMock = sinon.createStubInstance(CreateExecutionDetails);
     markNotificationAsMock = sinon.createStubInstance(MarkNotificationAs);
     analyticsServiceMock = sinon.createStubInstance(AnalyticsService);
+    getSubscriberMock = sinon.createStubInstance(GetSubscriber);
 
     // Mock the MarkNotificationAsCommand.create method
     sinon.stub(MarkNotificationAsCommand, 'create').returns({
@@ -120,7 +123,8 @@ describe('SnoozeNotification', () => {
       organizationRepositoryMock as any,
       createExecutionDetailsMock as any,
       markNotificationAsMock as any,
-      analyticsServiceMock as any
+      analyticsServiceMock as any,
+      getSubscriberMock as any
     );
 
     sinon.stub(JobRepository, 'createObjectId').returns('new-job-id');
@@ -140,6 +144,7 @@ describe('SnoozeNotification', () => {
 
     organizationRepositoryMock.findOne.resolves(orgEntity);
     standardQueueServiceMock.add.resolves();
+    getSubscriberMock.execute.resolves({ _id: validSubscriberId } as any);
     messageRepositoryMock.findOne.resolves(mockMessage);
   });
 

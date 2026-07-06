@@ -2,6 +2,7 @@ import { PushProviderIdEnum } from '@novu/shared';
 import { ChannelTypeEnum, IPushOptions, IPushProvider, ISendMessageSuccessResponse } from '@novu/stateless';
 import axios, { AxiosInstance } from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { resolveSafePusherBeamsBaseUrl } from '../../../utils/safe-pusher-beams-url';
 import { WithPassthrough } from '../../../utils/types';
 
 export class PusherBeamsPushProvider extends BaseProvider implements IPushProvider {
@@ -18,8 +19,10 @@ export class PusherBeamsPushProvider extends BaseProvider implements IPushProvid
     }
   ) {
     super();
+    const baseURL = resolveSafePusherBeamsBaseUrl(this.config.instanceId);
+
     this.axiosInstance = axios.create({
-      baseURL: `https://${this.config.instanceId}.pushnotifications.pusher.com/publish_api/v1/instances/${this.config.instanceId}`,
+      baseURL,
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${this.config.secretKey}`,

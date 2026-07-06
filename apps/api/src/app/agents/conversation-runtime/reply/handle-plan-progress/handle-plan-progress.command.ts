@@ -1,6 +1,6 @@
-import type { PlanProgressEvent } from '@novu/framework';
 import { IsNotEmpty, IsObject, IsString } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../../shared/commands/project.command';
+import type { PlanProgressEvent } from '../../egress/plan-phase';
 
 export class HandlePlanProgressCommand extends EnvironmentWithUserCommand {
   @IsString()
