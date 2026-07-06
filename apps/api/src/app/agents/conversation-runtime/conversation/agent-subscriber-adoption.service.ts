@@ -7,7 +7,7 @@ import {
   McpConnectionRepository,
   SubscriberRepository,
 } from '@novu/dal';
-import { AGENT_PLATFORM_PROVISION_SOURCE, AGENT_PROVISION_DATA_KEYS } from './agent-subscriber-provision.constants';
+import { AGENT_PLATFORM_PROVISION_SOURCE, AGENT_PROVISION_DATA_KEYS } from '@novu/shared';
 
 /**
  * Identity pair for a subscriber involved in an adoption merge. The email
@@ -74,19 +74,19 @@ export class AgentSubscriberAdoptionService {
     phantom: AdoptionSubscriberRef
   ): Promise<void> {
     try {
-      const conversations = await this.conversationRepository.repointSubscriberParticipant(
+      const conversations = await this.conversationRepository.repointSubscriberParticipant({
         environmentId,
         organizationId,
-        phantom.subscriberId,
-        real.subscriberId
-      );
+        fromSubscriberId: phantom.subscriberId,
+        toSubscriberId: real.subscriberId,
+      });
 
-      const activities = await this.conversationActivityRepository.repointSubscriberSender(
+      const activities = await this.conversationActivityRepository.repointSubscriberSender({
         environmentId,
         organizationId,
-        phantom.subscriberId,
-        real.subscriberId
-      );
+        fromSubscriberId: phantom.subscriberId,
+        toSubscriberId: real.subscriberId,
+      });
 
       const mcp = await this.mcpConnectionRepository.repointSubscriberConnections({
         environmentId,

@@ -157,21 +157,21 @@ export class ConversationRepository extends BaseRepositoryV2<
    * 1:1 (one human + agent), so a conversation never carries both ids. Returns
    * the number of conversations updated.
    */
-  async repointSubscriberParticipant(
-    environmentId: string,
-    organizationId: string,
-    fromSubscriberId: string,
-    toSubscriberId: string,
-    options?: { session?: ClientSession | null }
-  ): Promise<number> {
+  async repointSubscriberParticipant(params: {
+    environmentId: string;
+    organizationId: string;
+    fromSubscriberId: string;
+    toSubscriberId: string;
+  }): Promise<number> {
     const result = await this.update(
       {
-        _environmentId: environmentId,
-        _organizationId: organizationId,
-        participants: { $elemMatch: { id: fromSubscriberId, type: ConversationParticipantTypeEnum.SUBSCRIBER } },
+        _environmentId: params.environmentId,
+        _organizationId: params.organizationId,
+        participants: {
+          $elemMatch: { id: params.fromSubscriberId, type: ConversationParticipantTypeEnum.SUBSCRIBER },
+        },
       },
-      { $set: { 'participants.$.id': toSubscriberId } },
-      options?.session ? { session: options.session } : {}
+      { $set: { 'participants.$.id': params.toSubscriberId } }
     );
 
     return result.modified;

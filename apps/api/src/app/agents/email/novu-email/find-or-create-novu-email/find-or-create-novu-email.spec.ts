@@ -222,7 +222,7 @@ describe('NovuEmailProvisioningService', () => {
       expect(filter._organizationId).to.equal(ORG_ID);
       // One-time default: only fires when the agent has no explicit preference.
       expect(filter['behavior.subscriberAccess']).to.deep.equal({ $exists: false });
-      expect(update).to.deep.equal({ $set: { 'behavior.subscriberAccess': 'open' } });
+      expect(update.$set['behavior.subscriberAccess']).to.equal('open');
     });
 
     it('does not touch behavior.subscriberAccess when an existing NovuAgent link is returned', async () => {

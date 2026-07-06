@@ -1,3 +1,4 @@
+import { AgentSubscriberAccessEnum } from '@novu/shared';
 import mongoose, { Schema } from 'mongoose';
 
 import { schemaOptions } from '../schema-default.options';
@@ -23,7 +24,7 @@ const agentSchema = new Schema<AgentDBModel>(
       reactionOnResolved: Schema.Types.String,
       subscriberAccess: {
         type: Schema.Types.String,
-        enum: ['open', 'restricted'],
+        enum: Object.values(AgentSubscriberAccessEnum),
       },
     },
     bridgeUrl: Schema.Types.String,

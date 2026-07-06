@@ -1,5 +1,5 @@
 import { McpConnectionScopeEnum } from '@novu/shared';
-import { type ClientSession, FilterQuery } from 'mongoose';
+import { FilterQuery } from 'mongoose';
 
 import type { EnforceEnvOrOrgIds } from '../../types';
 import { BaseRepositoryV2 } from '../base-repository-v2';
@@ -245,17 +245,18 @@ export class McpConnectionRepository extends BaseRepositoryV2<
    * The partial unique index on `(_agentMcpServerId, _subscriberId, mcpId)`
    * means a blind move would throw E11000 when the destination already owns a
    * connection for the same enablement — in that case the real subscriber's
-   * credentials win and the phantom row is dropped instead of moved. Processes
-   * rows individually so one collision never aborts the whole merge.
+   * credentials win and the phantom row is dropped instead of moved. Source
+   * rows are deduped by the same key (rows outside the partial index — e.g. a
+   * null `_agentMcpServerId` — are not covered by its uniqueness guarantee), so
+   * both branches reduce to a single bulk write.
    */
   async repointSubscriberConnections(params: {
     environmentId: string;
     organizationId: string;
     fromSubscriberId: string;
     toSubscriberId: string;
-    session?: ClientSession | null;
   }): Promise<{ moved: number; dropped: number }> {
-    const { environmentId, organizationId, fromSubscriberId, toSubscriberId, session } = params;
+    const { environmentId, organizationId, fromSubscriberId, toSubscriberId } = params;
 
     const sourceRows = await this.find(
       {
@@ -264,8 +265,7 @@ export class McpConnectionRepository extends BaseRepositoryV2<
         _subscriberId: fromSubscriberId,
         scope: McpConnectionScopeEnum.Subscriber,
       },
-      ['_id', '_agentMcpServerId', 'mcpId'],
-      session ? { session } : {}
+      ['_id', '_agentMcpServerId', 'mcpId']
     );
 
     if (sourceRows.length === 0) {
@@ -279,35 +279,36 @@ export class McpConnectionRepository extends BaseRepositoryV2<
         _subscriberId: toSubscriberId,
         scope: McpConnectionScopeEnum.Subscriber,
       },
-      ['_agentMcpServerId', 'mcpId'],
-      session ? { session } : {}
+      ['_agentMcpServerId', 'mcpId']
     );
 
     const claimedKeys = new Set(destinationRows.map((row) => `${row._agentMcpServerId}:${row.mcpId}`));
-    let moved = 0;
-    let dropped = 0;
+    const droppedIds: string[] = [];
+    const movedIds: string[] = [];
 
     for (const row of sourceRows) {
       const key = `${row._agentMcpServerId}:${row.mcpId}`;
 
       if (claimedKeys.has(key)) {
-        await this.delete(
-          { _id: row._id, _environmentId: environmentId, _organizationId: organizationId },
-          session ? { session } : {}
-        );
-        dropped += 1;
+        droppedIds.push(row._id);
       } else {
-        await this.update(
-          { _id: row._id, _environmentId: environmentId, _organizationId: organizationId },
-          { $set: { _subscriberId: toSubscriberId } },
-          session ? { session } : {}
-        );
         claimedKeys.add(key);
-        moved += 1;
+        movedIds.push(row._id);
       }
     }
 
-    return { moved, dropped };
+    if (droppedIds.length > 0) {
+      await this.delete({ _id: { $in: droppedIds }, _environmentId: environmentId, _organizationId: organizationId });
+    }
+
+    if (movedIds.length > 0) {
+      await this.update(
+        { _id: { $in: movedIds }, _environmentId: environmentId, _organizationId: organizationId },
+        { $set: { _subscriberId: toSubscriberId } }
+      );
+    }
+
+    return { moved: movedIds.length, dropped: droppedIds.length };
   }
 }
 

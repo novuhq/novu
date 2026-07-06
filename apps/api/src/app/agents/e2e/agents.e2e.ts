@@ -183,7 +183,8 @@ describe('Agents API - /agents #novu-v2', () => {
       behavior: { subscriberAccess: 'everyone' },
     });
 
-    expect(badRes.status).to.equal(400);
+    // Class-validator failures are surfaced by AllExceptionsFilter as 422.
+    expect(badRes.status).to.equal(422);
 
     await session.testAgent.delete(`/v1/agents/${encodeURIComponent(identifier)}`);
   });

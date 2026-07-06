@@ -1,7 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import type { AgentSubscriberAccess } from '@novu/dal';
+import { AgentSubscriberAccessEnum } from '@novu/shared';
 import { IsBoolean, IsEnum, IsOptional, ValidateIf } from 'class-validator';
-import { AgentSubscriberAccessEnum } from '../enums/agent-subscriber-access.enum';
 import { IsWellKnownEmoji } from '../validators/is-well-known-emoji.validator';
 
 export class AgentBehaviorDto {
@@ -38,5 +37,5 @@ export class AgentBehaviorDto {
   })
   @IsOptional()
   @IsEnum(AgentSubscriberAccessEnum)
-  subscriberAccess?: AgentSubscriberAccess;
+  subscriberAccess?: AgentSubscriberAccessEnum;
 }

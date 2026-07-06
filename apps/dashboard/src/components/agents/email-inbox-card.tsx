@@ -1,7 +1,7 @@
 import { ApiServiceLevelEnum, FeatureNameEnum, getFeatureForTierAsBoolean, type IIntegration } from '@novu/shared';
 import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
-import { RiAddLine, RiCloseLine, RiInformation2Line } from 'react-icons/ri';
-import { useSearchParams } from 'react-router-dom';
+import { RiAddLine, RiArrowRightSLine, RiArrowRightUpLine, RiCloseLine, RiInformation2Line } from 'react-icons/ri';
+import { Link, useSearchParams } from 'react-router-dom';
 import type { AgentIntegrationEmbedded, AgentResponse } from '@/api/agents';
 import { CopyableEmailAddress } from '@/components/agents/copyable-email-address';
 import { EmailSubscriberAccessToggle } from '@/components/agents/email-subscriber-access-toggle';
@@ -10,14 +10,25 @@ import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { Switch } from '@/components/primitives/switch';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { UpgradeCTATooltip } from '@/components/upgrade-cta-tooltip';
+import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { useUpdateIntegration } from '@/hooks/use-update-integration';
+import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { AgentCustomDomainSheet } from './agent-custom-domain-sheet';
 import { useEmailSetupCredentials } from './use-email-setup-credentials';
 
 const DELIVERABILITY_DOCS_URL = 'https://docs.novu.co/platform/domains';
+const CREATE_SUBSCRIBER_DOCS_URL = 'https://docs.novu.co/api-reference/subscribers/create-a-subscriber';
+
+const quietLinkClassName =
+  'text-text-sub hover:text-text-strong inline-flex items-center gap-0.5 text-label-xs font-medium leading-4 transition-colors';
+
+const connectDomainButtonClassName = cn(
+  quietLinkClassName,
+  'self-start py-1 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:text-text-sub'
+);
 
 export type EmailInboxCardProps = {
   emailIntegration: IIntegration;
@@ -53,6 +64,7 @@ export function EmailInboxCardBody({
   agent,
   hideCustomAddressForm = false,
 }: EmailInboxCardProps) {
+  const { currentEnvironment } = useEnvironment();
   const { mutateAsync: updateIntegration } = useUpdateIntegration();
   const { integrations } = useFetchIntegrations();
   const { subscription } = useFetchSubscription();
@@ -171,8 +183,9 @@ export function EmailInboxCardBody({
     }
   }
 
-  const connectDomainButtonClassName =
-    'text-text-sub hover:text-text-strong inline-flex items-center gap-0.5 self-start py-1 text-label-xs font-medium leading-4 transition-colors disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:text-text-sub';
+  const subscribersPath = currentEnvironment?.slug
+    ? buildRoute(ROUTES.SUBSCRIBERS, { environmentSlug: currentEnvironment.slug })
+    : ROUTES.SUBSCRIBERS;
 
   return (
     <>
@@ -283,6 +296,24 @@ export function EmailInboxCardBody({
       <CardRow
         title="Who can email this agent"
         description="Open lets anyone email your agent — a lightweight subscriber is created from their address so the agent can reply, and it merges into their account when they sign up with the same email. Off replies only to known subscribers."
+        divider
+        footer={
+          <div className="flex items-center gap-3">
+            <Link to={subscribersPath} className={quietLinkClassName}>
+              <span>Add subscribers manually</span>
+              <RiArrowRightSLine className="size-3.5" aria-hidden />
+            </Link>
+            <a
+              href={CREATE_SUBSCRIBER_DOCS_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={quietLinkClassName}
+            >
+              <span>Create via SDK</span>
+              <RiArrowRightUpLine className="size-3.5" aria-hidden />
+            </a>
+          </div>
+        }
       >
         <div className="flex items-center justify-end gap-2">
           <span className="text-text-soft text-label-xs font-medium leading-4">Accept email from anyone</span>
@@ -393,26 +424,26 @@ function CardRow({
   children,
   divider,
   disabled,
+  footer,
 }: {
   title: ReactNode;
   description: ReactNode;
   children: ReactNode;
   divider?: boolean;
   disabled?: boolean;
+  /** Full-width content rendered below the two-column row, e.g. section-level links. */
+  footer?: ReactNode;
 }) {
   return (
-    <div
-      className={cn(
-        'flex items-start justify-between gap-6 p-3',
-        divider && 'border-stroke-weak border-b',
-        disabled && 'opacity-60'
-      )}
-    >
-      <div className="flex min-w-0 max-w-[350px] flex-1 flex-col gap-1">
-        <div className="text-text-sub text-label-sm font-medium leading-5">{title}</div>
-        <p className="text-text-soft text-paragraph-xs leading-4">{description}</p>
+    <div className={cn('flex flex-col p-3', divider && 'border-stroke-weak border-b', disabled && 'opacity-60')}>
+      <div className="flex items-start justify-between gap-6">
+        <div className="flex min-w-0 max-w-[350px] flex-1 flex-col gap-1">
+          <div className="text-text-sub text-label-sm font-medium leading-5">{title}</div>
+          <p className="text-text-soft text-paragraph-xs leading-4">{description}</p>
+        </div>
+        <div className="flex w-[360px] shrink-0 flex-col gap-1.5">{children}</div>
       </div>
-      <div className="flex w-[360px] shrink-0 flex-col gap-1.5">{children}</div>
+      {footer ? <div className="pt-3">{footer}</div> : null}
     </div>
   );
 }

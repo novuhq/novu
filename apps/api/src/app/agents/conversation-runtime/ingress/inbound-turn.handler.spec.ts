@@ -1,9 +1,9 @@
+import { AgentSubscriberAccessEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { ManagedRuntime } from '../../managed-runtime/managed.runtime';
 import { AgentEventEnum } from '../../shared/enums/agent-event.enum';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
-import { AgentSubscriberAccessEnum } from '../../shared/enums/agent-subscriber-access.enum';
 import { UNRESOLVED_SUBSCRIBER_ACCESS_REPLY } from '../../shared/util/agent-inbound-replies';
 import { BridgeRuntime } from '../runtime/bridge.runtime';
 import { NoBridgeUrlError } from '../runtime/bridge-executor.service';
@@ -46,15 +46,16 @@ describe('AgentInboundHandler', () => {
       agentFindOne?: sinon.SinonStub;
       subscriberFindById?: sinon.SinonStub;
       subscriberResolve?: sinon.SinonStub;
-      provisionEmailSubscriber?: sinon.SinonStub;
+      subscriberResolveOrProvision?: sinon.SinonStub;
     } = {}
   ) {
     const logger = makeLogger();
     const subscriberResolver = {
       resolveOnly: overrides.subscriberResolve ?? sinon.stub().resolves(null),
       resolveOrProvision:
-        overrides.subscriberResolve ?? sinon.stub().resolves(`sub_${Math.random().toString(36).slice(2, 14)}`),
-      provisionEmailSubscriber: overrides.provisionEmailSubscriber ?? sinon.stub().resolves(null),
+        overrides.subscriberResolveOrProvision ??
+        overrides.subscriberResolve ??
+        sinon.stub().resolves(`sub_${Math.random().toString(36).slice(2, 14)}`),
     };
     const conversationService = {
       createOrGetConversation: sinon.stub().resolves(conversation),
@@ -493,7 +494,7 @@ describe('AgentInboundHandler', () => {
       });
     });
 
-    it('should auto-provision and dispatch for an open-access email agent when the sender is unknown', async () => {
+    it('should route an open-access email agent through resolveOrProvision and dispatch', async () => {
       const emailConfig = {
         ...config,
         platform: AgentPlatformEnum.EMAIL,
@@ -502,10 +503,9 @@ describe('AgentInboundHandler', () => {
         subscriberAccess: AgentSubscriberAccessEnum.OPEN,
       };
       const senderEmail = 'newcomer@example.com';
-      const provisionEmailSubscriber = sinon.stub().resolves('sub-provisioned');
-      const { handler, managedAgentService, outboundGateway, subscriberResolver } = makeHandler({
-        subscriberResolve: sinon.stub().resolves(null),
-        provisionEmailSubscriber,
+      const resolveOrProvision = sinon.stub().resolves('sub-provisioned');
+      const { handler, managedAgentService, outboundGateway } = makeHandler({
+        subscriberResolveOrProvision: resolveOrProvision,
         subscriberFindById: sinon.stub().resolves({ _id: 'sub-mongo', subscriberId: 'sub-provisioned' }),
         agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
       });
@@ -514,9 +514,11 @@ describe('AgentInboundHandler', () => {
 
       await handler.handle('agent1', emailConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
 
-      expect(provisionEmailSubscriber.calledOnce).to.equal(true);
-      expect(provisionEmailSubscriber.firstCall.args[0].email).to.equal(senderEmail);
-      expect(subscriberResolver.resolveOnly.calledOnce).to.equal(true);
+      expect(resolveOrProvision.calledOnce).to.equal(true);
+      expect(resolveOrProvision.firstCall.args[0]).to.include({
+        platform: AgentPlatformEnum.EMAIL,
+        platformUserId: senderEmail,
+      });
       expect(outboundGateway.replyOnThread.called).to.equal(false);
       expect(managedAgentService.dispatch.calledOnce).to.equal(true);
     });
@@ -530,10 +532,10 @@ describe('AgentInboundHandler', () => {
         subscriberAccess: AgentSubscriberAccessEnum.RESTRICTED,
       };
       const senderEmail = 'stranger@example.com';
-      const provisionEmailSubscriber = sinon.stub().resolves('sub-provisioned');
+      const resolveOrProvision = sinon.stub().resolves('sub-provisioned');
       const { handler, managedAgentService, outboundGateway } = makeHandler({
         subscriberResolve: sinon.stub().resolves(null),
-        provisionEmailSubscriber,
+        subscriberResolveOrProvision: resolveOrProvision,
         subscriberFindById: sinon.stub().resolves(null),
         agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
       });
@@ -542,7 +544,7 @@ describe('AgentInboundHandler', () => {
 
       await handler.handle('agent1', emailConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
 
-      expect(provisionEmailSubscriber.called).to.equal(false);
+      expect(resolveOrProvision.called).to.equal(false);
       expect(managedAgentService.dispatch.called).to.equal(false);
       expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
       expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.include(senderEmail);
@@ -557,10 +559,10 @@ describe('AgentInboundHandler', () => {
         isManaged: true,
         subscriberAccess: AgentSubscriberAccessEnum.OPEN,
       };
-      const provisionEmailSubscriber = sinon.stub().resolves('sub-provisioned');
+      const resolveOrProvision = sinon.stub().resolves('sub-provisioned');
       const { handler, managedAgentService } = makeHandler({
         subscriberResolve: sinon.stub().resolves(null),
-        provisionEmailSubscriber,
+        subscriberResolveOrProvision: resolveOrProvision,
         subscriberFindById: sinon.stub().resolves(null),
         agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
       });
@@ -569,7 +571,7 @@ describe('AgentInboundHandler', () => {
 
       await handler.handle('agent1', emailConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
 
-      expect(provisionEmailSubscriber.called).to.equal(false);
+      expect(resolveOrProvision.called).to.equal(false);
       // Keyless demo agents bypass the subscriber gate and still dispatch.
       expect(managedAgentService.dispatch.calledOnce).to.equal(true);
     });

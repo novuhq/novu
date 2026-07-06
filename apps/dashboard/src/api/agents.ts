@@ -2,6 +2,7 @@ import type {
   AgentMcpServerEnablementDto,
   AgentRuntime,
   AgentRuntimeProviderIdEnum,
+  AgentSubscriberAccessEnum,
   ChannelTypeEnum,
   DirectionEnum,
   IEnvironment,
@@ -54,7 +55,7 @@ export type AgentIntegrationSummary = {
   active: boolean;
 };
 
-export type AgentSubscriberAccess = 'open' | 'restricted';
+export type AgentSubscriberAccess = `${AgentSubscriberAccessEnum}`;
 
 export type AgentBehavior = {
   acknowledgeOnReceived?: boolean;

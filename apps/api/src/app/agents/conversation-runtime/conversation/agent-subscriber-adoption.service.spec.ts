@@ -1,7 +1,7 @@
+import { AGENT_PLATFORM_PROVISION_SOURCE, AGENT_PROVISION_DATA_KEYS } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { AgentSubscriberAdoptionService } from './agent-subscriber-adoption.service';
-import { AGENT_PLATFORM_PROVISION_SOURCE, AGENT_PROVISION_DATA_KEYS } from './agent-subscriber-provision.constants';
 
 describe('AgentSubscriberAdoptionService', () => {
   function makeService(
@@ -76,12 +76,20 @@ describe('AgentSubscriberAdoptionService', () => {
 
     await service.adoptPhantomsInto({ ...baseParams, real, phantoms: [phantom] });
 
-    expect(
-      conversationRepository.repointSubscriberParticipant.calledOnceWith('env-1', 'org-1', 'sub-phantom', 'sub-real')
-    ).to.equal(true);
-    expect(
-      conversationActivityRepository.repointSubscriberSender.calledOnceWith('env-1', 'org-1', 'sub-phantom', 'sub-real')
-    ).to.equal(true);
+    expect(conversationRepository.repointSubscriberParticipant.calledOnce).to.equal(true);
+    expect(conversationRepository.repointSubscriberParticipant.firstCall.args[0]).to.include({
+      environmentId: 'env-1',
+      organizationId: 'org-1',
+      fromSubscriberId: 'sub-phantom',
+      toSubscriberId: 'sub-real',
+    });
+    expect(conversationActivityRepository.repointSubscriberSender.calledOnce).to.equal(true);
+    expect(conversationActivityRepository.repointSubscriberSender.firstCall.args[0]).to.include({
+      environmentId: 'env-1',
+      organizationId: 'org-1',
+      fromSubscriberId: 'sub-phantom',
+      toSubscriberId: 'sub-real',
+    });
     expect(mcpConnectionRepository.repointSubscriberConnections.calledOnce).to.equal(true);
     expect(mcpConnectionRepository.repointSubscriberConnections.firstCall.args[0]).to.include({
       fromSubscriberId: 'mongo-phantom',

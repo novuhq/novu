@@ -23,6 +23,7 @@ import {
   IntegrationRepository,
 } from '@novu/dal';
 import {
+  AgentSubscriberAccessEnum,
   ApiServiceLevelEnum,
   ChannelTypeEnum,
   EmailProviderIdEnum,
@@ -137,7 +138,7 @@ export class NovuEmailProvisioningService {
         _organizationId: organizationId,
         'behavior.subscriberAccess': { $exists: false },
       },
-      { $set: { 'behavior.subscriberAccess': 'open' } },
+      { $set: { 'behavior.subscriberAccess': AgentSubscriberAccessEnum.OPEN } },
       session ? { session } : {}
     );
   }

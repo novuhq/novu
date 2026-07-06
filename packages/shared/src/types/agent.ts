@@ -1,3 +1,41 @@
+/**
+ * Controls whether an agent accepts inbound messages from senders that are not
+ * yet linked to a Novu subscriber.
+ *
+ * - `restricted` (default): unknown senders are rejected with the "couldn't
+ *   verify your email" reply and no LLM dispatch fires.
+ * - `open`: unknown email senders are auto-provisioned as lightweight
+ *   subscribers (marked with agent-platform provenance) so the agent can reply.
+ *   Abuse mitigation is the customer's responsibility in this mode.
+ */
+export enum AgentSubscriberAccessEnum {
+  OPEN = 'open',
+  RESTRICTED = 'restricted',
+}
+
+/**
+ * Provenance keys stamped on every auto-provisioned `Subscriber.data` blob.
+ * Shared across the API resolver/adoption services, the sparse index in
+ * `subscriber.schema.ts`, and the dashboard's "Auto-created" badge so they can
+ * never drift. Flat scalar keys because `SubscriberCustomData` is a
+ * `Record<string, scalar>`.
+ */
+export const AGENT_PROVISION_DATA_KEYS = {
+  source: '__novu_source',
+  platform: '__novu_platform',
+  platformUserId: '__novu_platformUserId',
+  agentIdentifier: '__novu_agentIdentifier',
+  firstSeenAt: '__novu_firstSeenAt',
+} as const;
+
+/**
+ * Sentinel value written to `Subscriber.data[AGENT_PROVISION_DATA_KEYS.source]`
+ * for every subscriber auto-created from an inbound platform message. The
+ * sparse index in `subscriber.schema.ts` keys off this marker — never mutate
+ * without coordinating the index.
+ */
+export const AGENT_PLATFORM_PROVISION_SOURCE = 'agent-platform-provision' as const;
+
 export interface NovuEmailAttachment {
   filename: string;
   contentType: string;

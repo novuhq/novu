@@ -10,11 +10,10 @@ import {
   IntegrationEntity,
   IntegrationRepository,
 } from '@novu/dal';
-import { EmailProviderIdEnum } from '@novu/shared';
+import { AgentSubscriberAccessEnum, EmailProviderIdEnum } from '@novu/shared';
 import type { WellKnownEmoji } from 'chat';
 import { isKeylessOrganization } from '../../keyless/keyless-organization.helpers';
 import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
-import { AgentSubscriberAccessEnum } from '../shared/enums/agent-subscriber-access.enum';
 import { AgentInactiveException } from '../shared/errors/agent-inactive.exception';
 import { AgentIntegrationDisconnectedException } from '../shared/errors/agent-integration-disconnected.exception';
 import { esmImport } from '../shared/util/esm-import';

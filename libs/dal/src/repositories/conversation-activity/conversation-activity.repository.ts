@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DirectionEnum } from '@novu/shared';
-import { type ClientSession, FilterQuery } from 'mongoose';
+import { FilterQuery } from 'mongoose';
 import { EnforceEnvOrOrgIds } from '../../types';
 import { SortOrder } from '../../types/sort-order';
 import { BaseRepositoryV2 } from '../base-repository-v2';
@@ -78,22 +78,20 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
    * attributed to the surviving identity. Returns the number of activities
    * updated.
    */
-  async repointSubscriberSender(
-    environmentId: string,
-    organizationId: string,
-    fromSubscriberId: string,
-    toSubscriberId: string,
-    options?: { session?: ClientSession | null }
-  ): Promise<number> {
+  async repointSubscriberSender(params: {
+    environmentId: string;
+    organizationId: string;
+    fromSubscriberId: string;
+    toSubscriberId: string;
+  }): Promise<number> {
     const result = await this.update(
       {
-        _environmentId: environmentId,
-        _organizationId: organizationId,
+        _environmentId: params.environmentId,
+        _organizationId: params.organizationId,
         senderType: ConversationActivitySenderTypeEnum.SUBSCRIBER,
-        senderId: fromSubscriberId,
+        senderId: params.fromSubscriberId,
       },
-      { $set: { senderId: toSubscriberId } },
-      options?.session ? { session: options.session } : {}
+      { $set: { senderId: params.toSubscriberId } }
     );
 
     return result.modified;

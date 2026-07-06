@@ -7,19 +7,15 @@ import {
   PinoLogger,
 } from '@novu/application-generic';
 import { ChannelEndpointRepository, isDuplicateKeyError, SubscriberEntity, SubscriberRepository } from '@novu/dal';
-import { ENDPOINT_TYPES } from '@novu/shared';
+import { AGENT_PLATFORM_PROVISION_SOURCE, AGENT_PROVISION_DATA_KEYS, ENDPOINT_TYPES } from '@novu/shared';
 import { CreateChannelEndpointCommand } from '../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.command';
 import { CreateChannelEndpoint } from '../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.usecase';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
+import { captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
 import { isValidEmailForLookup, normalizeEmailForLookup } from '../../shared/util/email-normalization';
 import { getPhoneLookupCandidates } from '../../shared/util/phone-normalization';
 import { AUTO_PROVISION_PLATFORMS, PLATFORM_ENDPOINT_CONFIG } from '../../shared/util/platform-endpoint-config';
 import { AgentSubscriberAdoptionService } from './agent-subscriber-adoption.service';
-import { AGENT_PLATFORM_PROVISION_SOURCE, AGENT_PROVISION_DATA_KEYS } from './agent-subscriber-provision.constants';
-
-// Re-exported from their standalone module so existing importers (tests,
-// callers) keep a single source path. See `agent-subscriber-provision.constants.ts`.
-export { AGENT_PLATFORM_PROVISION_SOURCE, AGENT_PROVISION_DATA_KEYS };
 
 export interface ResolveSubscriberParams {
   environmentId: string;
@@ -152,24 +148,32 @@ export class AgentSubscriberResolver {
   }
 
   /**
-   * Lookup-or-provision for Slack/Teams inbound text messages.
+   * Lookup-or-provision for inbound text messages on platforms where the agent
+   * may create the subscriber itself: Slack/Teams (always) and email when the
+   * caller has established open access (`subscriberAccess === 'open'`, never
+   * keyless — that policy lives with the caller's config).
    *
    * Branches:
    *   - Author is a bot → throw `BotAuthorSkippedError` (runs before lookup so
    *     bot-authored messages cannot reach the bridge even when the bot's
    *     identity is already linked to a subscriber).
    *   - Hit on lookup → return existing subscriberId.
-   *   - Miss → upsert Subscriber + ChannelEndpoint and return the new
-   *     subscriberId. The subscriberId is deterministic from
-   *     `(orgId, integrationIdentifier, platform, platformUserId)`, so any
-   *     retry — race-loss, transient error, redelivery — lands on the same
-   *     `Subscriber` row instead of accumulating phantoms.
+   *   - Miss → provision and return the new subscriberId. The subscriberId is
+   *     deterministic from `(orgId, integrationIdentifier, platform,
+   *     platformUserId)`, so any retry — race-loss, transient error,
+   *     redelivery — lands on the same `Subscriber` row instead of
+   *     accumulating phantoms. Slack/Teams also create the ChannelEndpoint
+   *     binding; email identity lives on `Subscriber.email` alone.
    *
-   * Throws for non-provisionable platforms; callers MUST route reactions,
-   * actions, and non-Slack/Teams inbound through `resolveOnly`.
+   * Slack/Teams throw on provisioning failure (dispatch stays off); the email
+   * branch soft-fails to `null` so a provisioning hiccup never crashes the
+   * inbound webhook. Throws for non-provisionable platforms; callers MUST
+   * route reactions, actions, and other inbound through `resolveOnly`.
    */
-  async resolveOrProvision(params: ResolveOrProvisionParams): Promise<string> {
-    if (!AUTO_PROVISION_PLATFORMS.has(params.platform)) {
+  async resolveOrProvision(params: ResolveOrProvisionParams): Promise<string | null> {
+    const isOpenAccessEmail = params.platform === AgentPlatformEnum.EMAIL;
+
+    if (!AUTO_PROVISION_PLATFORMS.has(params.platform) && !isOpenAccessEmail) {
       throw new Error(
         `resolveOrProvision called for unsupported platform "${params.platform}". Route through resolveOnly instead.`
       );
@@ -185,12 +189,52 @@ export class AgentSubscriberResolver {
       throw new BotAuthorSkippedError(params.platform, params.platformUserId);
     }
 
+    if (isOpenAccessEmail) {
+      return this.resolveOrProvisionEmail(params);
+    }
+
     const existing = await this.resolveOnly(params);
     if (existing) {
       return existing;
     }
 
     return this.provisionSubscriberAndEndpoint(params);
+  }
+
+  /**
+   * Email flavor of lookup-or-provision, used for open-access agents. Fully
+   * soft-fail: a lookup or provisioning error is logged and swallowed so the
+   * inbound webhook keeps flowing — the turn then continues unresolved and the
+   * managed subscriber gate replies instead.
+   */
+  private async resolveOrProvisionEmail(params: ResolveOrProvisionParams): Promise<string | null> {
+    try {
+      const existing = await this.resolveOnly(params);
+      if (existing) {
+        return existing;
+      }
+
+      return await this.provisionEmailSubscriber({
+        environmentId: params.environmentId,
+        organizationId: params.organizationId,
+        integrationIdentifier: params.integrationIdentifier,
+        agentIdentifier: params.agentIdentifier,
+        email: params.platformUserId,
+      });
+    } catch (err) {
+      this.logger.warn(
+        err,
+        `Open-access email subscriber resolution failed for agent ${params.agentIdentifier}, continuing without it`
+      );
+      captureAgentWarning(err, {
+        component: 'agent-subscriber-resolver',
+        operation: 'provision-open-access-email-subscriber',
+        agentIdentifier: params.agentIdentifier,
+        integrationIdentifier: params.integrationIdentifier,
+      });
+
+      return null;
+    }
   }
 
   /**
