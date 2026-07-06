@@ -64,6 +64,16 @@ declare global {
 
 This allows TypeScript to infer the structure of `notification.data`, reducing errors when accessing properties.
 
+## Legacy workflow behavior
+
+For workflows created before the current workflow engine (v0 workflows, identified as `REGULAR` type or the `novu-cloud-v1` origin), Novu falls back to the trigger payload when no data object is configured on the in-app step. In that case, `notification.data` returns the payload that was sent to `novu.trigger(...)`. If a data object is configured on the step, only the configured data object is returned.
+
+This preserves the behavior that `@novu/headless` exposed and helps customers migrating to `@novu/js` or `@novu/react` who relied on receiving the trigger payload on the notification. Workflows built with the current engine (v2) always return only the configured data object on `notification.data`, never the trigger payload.
+
+<Note>
+  This fallback applies only when reading notifications through the Inbox API. Server-side filters on `data` (for example, `tabs[].filter.data` or feed queries) match against the stored data object on the message, not the trigger payload, so v0 payload fields cannot be used as filter keys.
+</Note>
+
 ## Use data object keys as filters for tabs
 
 You can use data object keys as filter for tabs. For more information, refer to [Tabs](/platform/inbox/configuration/tabs#filter-tabs-by-data-attributes).
