@@ -1,5 +1,6 @@
 export * from '../hooks/NovuProvider';
 export * from './Bell';
+export * from './conversation/ConversationCard';
 export * from './Inbox';
 export * from './InboxContent';
 export * from './msteams-connect-button/MsTeamsConnectButton';

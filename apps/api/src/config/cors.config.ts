@@ -46,7 +46,11 @@ export const corsOptionsDelegate: Parameters<INestApplication['enableCors']>[0] 
 
 function enableWildcard(req: Request): boolean {
   return (
-    (isDevelopmentEnvironment() || isWidgetRoute(req.url) || isInboxRoute(req.url) || isBlueprintRoute(req.url)) &&
+    (isDevelopmentEnvironment() ||
+      isWidgetRoute(req.url) ||
+      isInboxRoute(req.url) ||
+      isAgentWebRoute(req.url) ||
+      isBlueprintRoute(req.url)) &&
     !isBetterAuthRoute(req.url)
   );
 }
@@ -62,6 +66,11 @@ function isWidgetRoute(url: string): boolean {
 
 function isInboxRoute(url: string): boolean {
   return url.startsWith('/v1/inbox');
+}
+
+/** Subscriber-JWT-guarded web agent chat routes are embedded in customer apps, like the Inbox. */
+function isAgentWebRoute(url: string): boolean {
+  return url.startsWith('/v1/agents/web');
 }
 
 function isBlueprintRoute(url: string): boolean {

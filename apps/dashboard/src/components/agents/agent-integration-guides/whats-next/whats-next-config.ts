@@ -2,6 +2,7 @@ import { ChatProviderIdEnum } from '@novu/shared';
 import { buildMsTeamsWhatsNextConfig } from './msteams-whats-next-config';
 import { buildSlackWhatsNextConfig } from './slack-whats-next-config';
 import { buildTelegramWhatsNextConfig } from './telegram-whats-next-config';
+import { buildWebWhatsNextConfig } from './web-whats-next-config';
 import type { ChannelWhatsNextConfig, ChannelWhatsNextConfigBuilder, WhatsNextConfigContext } from './whats-next-types';
 
 /**
@@ -12,6 +13,7 @@ const WHATS_NEXT_CONFIG_BUILDERS: Partial<Record<string, ChannelWhatsNextConfigB
   [ChatProviderIdEnum.Slack]: buildSlackWhatsNextConfig,
   [ChatProviderIdEnum.MsTeams]: buildMsTeamsWhatsNextConfig,
   [ChatProviderIdEnum.Telegram]: buildTelegramWhatsNextConfig,
+  [ChatProviderIdEnum.NovuWeb]: buildWebWhatsNextConfig,
 };
 
 export function resolveChannelWhatsNextConfig(ctx: WhatsNextConfigContext): ChannelWhatsNextConfig | null {

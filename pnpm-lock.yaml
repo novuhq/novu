@@ -416,6 +416,9 @@ importers:
       '@novu/chat-adapter-email':
         specifier: workspace:*
         version: link:../../packages/chat-adapter-email
+      '@novu/chat-adapter-web':
+        specifier: workspace:*
+        version: link:../../packages/chat-adapter-web
       '@novu/dal':
         specifier: workspace:*
         version: link:../../libs/dal
@@ -3440,6 +3443,19 @@ importers:
       '@types/react':
         specifier: ^19.0.0
         version: 19.2.8
+      rimraf:
+        specifier: ~3.0.2
+        version: 3.0.2
+      typescript:
+        specifier: 5.6.2
+        version: 5.6.2
+
+  packages/chat-adapter-web:
+    dependencies:
+      chat:
+        specifier: '>=4.31.0'
+        version: 4.31.0(ai@6.0.208(zod@4.3.6))(zod@4.3.6)
+    devDependencies:
       rimraf:
         specifier: ~3.0.2
         version: 3.0.2

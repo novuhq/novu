@@ -50,6 +50,8 @@ export type {
 } from './components';
 export {
   Bell,
+  ConversationCard,
+  ConversationMessageContent,
   Inbox,
   InboxContent,
   MsTeamsConnectButton,
@@ -71,6 +73,10 @@ export type {
   UseChannelConnectionsResult,
   UseChannelEndpointProps,
   UseChannelEndpointResult,
+  UseConversationProps,
+  UseConversationResult,
+  UseConversationsProps,
+  UseConversationsResult,
   UseCountsProps,
   UseCountsResult,
   UseCreateChannelEndpointProps,
@@ -88,6 +94,8 @@ export {
   useChannelConnection,
   useChannelConnections,
   useChannelEndpoint,
+  useConversation,
+  useConversations,
   useCounts,
   useCreateChannelEndpoint,
   useCreateSubscription,

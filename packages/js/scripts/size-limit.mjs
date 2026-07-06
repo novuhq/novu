@@ -11,16 +11,17 @@ const formatBytes = (size) => {
   return bytes.format(size, { unitSeparator: ' ' });
 };
 
+// Limits raised for the agent web-chat `conversations` module (SSE turn streaming + message store).
 const modules = [
   {
     name: 'UMD minified',
     filePath: umdPath,
-    limitInBytes: 216_000,
+    limitInBytes: 232_000,
   },
   {
     name: 'UMD gzip',
     filePath: umdGzipPath,
-    limitInBytes: 60_000,
+    limitInBytes: 64_000,
   },
 ];
 

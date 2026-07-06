@@ -59,6 +59,15 @@ function extractRecipientFromThreadId(threadId: string): string {
 const MAX_CACHED_INSTANCES = 200;
 const INSTANCE_TTL_MS = 1000 * 60 * 30;
 
+/**
+ * Redis pub/sub channel prefix for the web relay. The full channel is
+ * `<prefix>:<platformThreadId>` — the web adapter publishes outbound events
+ * there and the WebStreamRelay on the SSE-holding instance subscribes.
+ */
+export function buildWebStreamChannelPrefix(agentId: string, integrationIdentifier: string): string {
+  return `novu:agent:web:stream:${agentId}:${integrationIdentifier}`;
+}
+
 @Injectable()
 export class ChatInstanceRegistry implements OnModuleDestroy {
   readonly instances: LRUCache<string, CachedChat>;
@@ -363,6 +372,22 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
 
               return url;
             },
+          }),
+        };
+      }
+      case AgentPlatformEnum.WEB: {
+        const client = this.cacheService.client;
+        if (!client) {
+          throw new Error('Cache in-memory provider client is not available for the web agent relay publisher');
+        }
+
+        const { createNovuWebAdapter } = await esmImport('@novu/chat-adapter-web');
+
+        return {
+          web: createNovuWebAdapter({
+            channelPrefix: buildWebStreamChannelPrefix(agentId, config.integrationIdentifier),
+            publish: (channel: string, payload: string) => client.publish(channel, payload),
+            agentName: config.agentName,
           }),
         };
       }

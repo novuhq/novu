@@ -15,6 +15,7 @@ import { GenericAgentIntegrationGuide } from './generic-agent-integration-guide'
 import { SlackAgentConnectedDetails } from './slack-agent-connected-details';
 import { TeamsAgentConnectedDetails } from './teams-agent-connected-details';
 import { TelegramAgentConnectedDetails } from './telegram-agent-connected-details';
+import { WebAgentIntegrationGuide } from './web-agent-integration-guide';
 import { providerHasWhatsNextPhase } from './whats-next/whats-next-config';
 import { WhatsAppAgentIntegrationGuide } from './whatsapp-agent-integration-guide';
 
@@ -109,6 +110,22 @@ export function ResolveAgentIntegrationGuide({
   if (providerId === EmailProviderIdEnum.NovuAgent) {
     return (
       <EmailAgentIntegrationGuide
+        embedded={embedded}
+        onBack={onBack}
+        agent={agent}
+        integrationLink={integrationLink}
+        canRemoveIntegration={canRemoveIntegration}
+        onRequestRemoveIntegration={onRequestRemoveIntegration}
+        isRemovingIntegration={isRemovingIntegration}
+      />
+    );
+  }
+
+  // The web channel is credential-less and connects on the first message from the
+  // customer's app — its single guide is the developer what's-next flow.
+  if (providerId === ChatProviderIdEnum.NovuWeb) {
+    return (
+      <WebAgentIntegrationGuide
         embedded={embedded}
         onBack={onBack}
         agent={agent}

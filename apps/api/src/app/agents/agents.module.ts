@@ -33,6 +33,10 @@ import { TelegramLinkingModule } from '../telegram-linking/telegram-linking.modu
 import { AgentConfigResolver } from './channels/agent-config-resolver.service';
 import { AgentIntegrationsController } from './channels/integrations/agent-integrations.controller';
 import { AgentsPublicController } from './channels/slack-linking/agents-public.controller';
+import { AgentWebController } from './channels/web/agent-web.controller';
+import { ResolveWebAgentContext } from './channels/web/resolve-web-agent-context.service';
+import { WebConversationReader } from './channels/web/web-conversation-reader.service';
+import { WebStreamRelay } from './channels/web/web-stream-relay.service';
 import { InboundAckService } from './conversation-runtime/ack/inbound-ack.service';
 import { AgentActionTokenService } from './conversation-runtime/action-token/agent-action-token.service';
 import { AgentAttachmentStorage } from './conversation-runtime/conversation/agent-attachment-storage.service';
@@ -88,6 +92,10 @@ import { USE_CASES } from './usecases';
     forwardRef(() => IntegrationModule),
   ],
   controllers: [
+    // Must precede AgentsController: its routes live under the literal
+    // /agents/web prefix, which the param route /agents/:agentId would
+    // otherwise capture.
+    AgentWebController,
     AgentsController,
     AgentIntegrationsController,
     AgentRuntimeController,
@@ -116,6 +124,9 @@ import { USE_CASES } from './usecases';
     AgentAttachmentStorage,
     AgentConfigResolver,
     AgentSubscriberResolver,
+    ResolveWebAgentContext,
+    WebConversationReader,
+    WebStreamRelay,
     AgentConversationService,
     ConversationActivationService,
     InboundAckService,

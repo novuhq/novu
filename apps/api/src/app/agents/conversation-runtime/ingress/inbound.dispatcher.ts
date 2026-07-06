@@ -1,12 +1,38 @@
+import { randomUUID } from 'node:crypto';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
-import type { Chat } from 'chat';
+import type { NovuWebRawMessage } from '@novu/chat-adapter-web';
+import type { Chat, Message } from 'chat';
 import { Request as ExpressRequest, Response as ExpressResponse } from 'express';
-import { AgentConfigResolver, AgentConfigResolveSource } from '../../channels/agent-config-resolver.service';
+import {
+  AgentConfigResolver,
+  AgentConfigResolveSource,
+  ResolvedAgentConfig,
+} from '../../channels/agent-config-resolver.service';
+import { encodeWebThreadId } from '../../channels/web/web-thread-id.util';
 import type { AgentEmailActionClaims } from '../../email/agent-email-action-token.service';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { sendWebResponse, toWebRequest } from '../../shared/util/express-to-web-request';
 import { ChatInstanceRegistry, InboundCallbacks } from './chat-instance.registry';
+
+export interface ProcessWebMessageParams {
+  config: ResolvedAgentConfig;
+  subscriberId: string;
+  senderName?: string;
+  conversationId: string;
+  text: string;
+  clientMessageId?: string;
+}
+
+export interface ProcessWebActionParams {
+  config: ResolvedAgentConfig;
+  subscriberId: string;
+  senderName?: string;
+  conversationId: string;
+  actionId: string;
+  value?: string;
+  sourceMessageId?: string;
+}
 
 /**
  * Thrown by `InboundDispatcher.processEmailAction` when a failure is provably pre-dispatch —
@@ -114,5 +140,84 @@ export class InboundDispatcher {
       },
       undefined
     );
+  }
+
+  /**
+   * Dispatches a subscriber-JWT-authenticated web chat message into the chat
+   * SDK natively (`chat.processMessage`) — the web platform has no webhook.
+   * From there the flow is identical to every other platform: onNewMention /
+   * onSubscribedMessage → AgentInboundHandler.handle → plan gates →
+   * conversation persistence → runtime dispatch.
+   */
+  async processWebMessage(params: ProcessWebMessageParams): Promise<{ platformThreadId: string }> {
+    const { config } = params;
+    const { chat, adapter } = await this.resolveWebChatInstance(config);
+    const platformThreadId = encodeWebThreadId({
+      subscriberId: params.subscriberId,
+      conversationId: params.conversationId,
+    });
+
+    const raw: NovuWebRawMessage = {
+      id: params.clientMessageId ?? `webu-${randomUUID()}`,
+      subscriberId: params.subscriberId,
+      conversationId: params.conversationId,
+      text: params.text,
+      senderName: params.senderName,
+      createdAt: new Date().toISOString(),
+    };
+
+    const message = (adapter as { parseMessage(rawMessage: NovuWebRawMessage): Message }).parseMessage(raw);
+
+    await chat.processMessage(adapter, platformThreadId, message);
+
+    return { platformThreadId };
+  }
+
+  /** Routes a web card interaction into the same onAction path as other platforms. */
+  async processWebAction(params: ProcessWebActionParams): Promise<{ platformThreadId: string }> {
+    const { config } = params;
+    const { chat, adapter } = await this.resolveWebChatInstance(config);
+    const platformThreadId = encodeWebThreadId({
+      subscriberId: params.subscriberId,
+      conversationId: params.conversationId,
+    });
+
+    await chat.processAction(
+      {
+        adapter,
+        actionId: params.actionId,
+        value: params.value,
+        messageId: params.sourceMessageId ?? '',
+        threadId: platformThreadId,
+        user: {
+          userId: params.subscriberId,
+          userName: params.subscriberId,
+          fullName: params.senderName ?? params.subscriberId,
+          isBot: false,
+          isMe: false,
+        },
+        raw: {},
+      },
+      undefined
+    );
+
+    return { platformThreadId };
+  }
+
+  private async resolveWebChatInstance(config: ResolvedAgentConfig) {
+    if (config.platform !== AgentPlatformEnum.WEB) {
+      throw new BadRequestException(
+        `Integration ${config.integrationIdentifier} is not configured for the web platform`
+      );
+    }
+
+    const instanceKey = `${config.agentId}:${config.integrationIdentifier}`;
+    const chat = await this.registry.getOrCreate(instanceKey, config.agentId, config.platform, config);
+    const adapter = chat.getAdapter(AgentPlatformEnum.WEB);
+    if (!adapter) {
+      throw new BadRequestException(`Web adapter not available for agent ${config.agentId}`);
+    }
+
+    return { chat, adapter };
   }
 }

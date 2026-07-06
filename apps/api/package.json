@@ -69,6 +69,7 @@
     "@novu/api": "workspace:*",
     "@novu/application-generic": "workspace:*",
     "@novu/chat-adapter-email": "workspace:*",
+    "@novu/chat-adapter-web": "workspace:*",
     "@novu/dal": "workspace:*",
     "@novu/framework": "workspace:*",
     "@novu/maily-render": "workspace:*",

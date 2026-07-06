@@ -294,6 +294,10 @@ export class ConversationActivationService {
           : ACTIVATION_WINDOW_MS.WEEK;
       case AgentPlatformEnum.EMAIL:
         return ACTIVATION_WINDOW_MS.MONTH_30;
+      case AgentPlatformEnum.WEB:
+        // Web chat threads are always 1:1 with the authenticated subscriber —
+        // same rolling window as other direct-message surfaces.
+        return ACTIVATION_WINDOW_MS.MONTH_30;
       default:
         return this.unhandledPlatformWindow(platform);
     }

@@ -1,6 +1,7 @@
 import { InboxService } from './api';
 import { ChannelConnections } from './channel-connections';
 import { ChannelEndpoints } from './channel-endpoints';
+import { Conversations } from './conversations';
 import type { EventHandler, EventNames, Events } from './event-emitter';
 import { NovuEventEmitter } from './event-emitter';
 import { Notifications } from './notifications';
@@ -19,6 +20,7 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
   #options: NovuOptions;
 
   public readonly notifications: Notifications;
+  public readonly conversations: Conversations;
   public readonly preferences: Preferences;
   public readonly subscriptions: Subscriptions;
   public readonly channelConnections: ChannelConnections;
@@ -76,6 +78,10 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
     this.#session.initialize();
     this.notifications = new Notifications({
       useCache: options.useCache ?? true,
+      inboxServiceInstance: this.#inboxService,
+      eventEmitterInstance: this.#emitter,
+    });
+    this.conversations = new Conversations({
       inboxServiceInstance: this.#inboxService,
       eventEmitterInstance: this.#emitter,
     });

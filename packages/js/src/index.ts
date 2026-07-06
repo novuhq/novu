@@ -14,6 +14,24 @@ export type {
   ListChannelConnectionsArgs,
   ListChannelEndpointsArgs,
 } from './channel-connections';
+export { Conversations, getCardNodeId, getCardNodeValue } from './conversations';
+export type {
+  CardElement,
+  Conversation,
+  ConversationMessage,
+  ConversationMessagePart,
+  ConversationMessagesResponse,
+  ConversationMessageStatus,
+  ConversationTargetArgs,
+  ConversationTurnStatus,
+  ConversationTypingState,
+  FetchConversationMessagesArgs,
+  GetConversationArgs,
+  ListConversationsArgs,
+  ListConversationsResponse,
+  SendConversationActionArgs,
+  SendConversationMessageArgs,
+} from './conversations';
 export type { EventHandler, Events, SocketEventNames } from './event-emitter';
 export { Novu } from './novu';
 export type {

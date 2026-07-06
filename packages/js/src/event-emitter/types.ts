@@ -14,6 +14,16 @@ import type {
   ListChannelEndpointsArgs,
 } from '../channel-connections/types';
 import type {
+  ConversationMessage,
+  ConversationMessagesResponse,
+  ConversationTurnStatus,
+  FetchConversationMessagesArgs,
+  ListConversationsArgs,
+  ListConversationsResponse,
+  SendConversationActionArgs,
+  SendConversationMessageArgs,
+} from '../conversations/types';
+import type {
   ArchivedArgs,
   CompleteArgs,
   CountArgs,
@@ -170,6 +180,25 @@ type ChannelEndpointLinkEvents = BaseEvents<
   LinkChannelEndpointResponse
 >;
 
+type ConversationsListEvents = BaseEvents<'conversations.list', ListConversationsArgs, ListConversationsResponse>;
+type ConversationMessagesFetchEvents = BaseEvents<
+  'conversation.messages',
+  FetchConversationMessagesArgs,
+  ConversationMessagesResponse
+>;
+type ConversationSendEvents = BaseEvents<'conversation.send', SendConversationMessageArgs, ConversationMessage>;
+type ConversationActionEvents = BaseEvents<'conversation.action', SendConversationActionArgs, undefined>;
+type ConversationLiveEvents = {
+  'conversation.messages.updated': { agent: string; conversationId: string; messages: ConversationMessage[] };
+  'conversation.typing.updated': { agent: string; conversationId: string; isTyping: boolean; status?: string };
+  'conversation.turn.updated': {
+    agent: string;
+    conversationId: string;
+    status: ConversationTurnStatus;
+    error?: unknown;
+  };
+};
+
 type SocketConnectEvents = BaseEvents<'socket.connect', { socketUrl: string }, undefined>;
 export type NotificationReceivedEvent = `notifications.${WebSocketEvent.RECEIVED}`;
 export type NotificationUnseenEvent = `notifications.${WebSocketEvent.UNSEEN}`;
@@ -194,7 +223,7 @@ type SocketEvents = {
  * - pending: the args that are passed to the action and the optional optimistic value
  * - resolved: the args that are passed to the action and the result of the action or the error that is thrown
  */
-export type   Events = SessionInitializeEvents &
+export type Events = SessionInitializeEvents &
   NotificationsFetchEvents & {
     'notifications.list.updated': { data: ListNotificationsResponse };
   } & NotificationsFetchCountEvents &
@@ -213,7 +242,12 @@ export type   Events = SessionInitializeEvents &
   SubscriptionPreferencesBulkUpdateEvents &
   SubscriptionDeleteEvents & {
     'subscriptions.list.updated': { data: { topicKey: string; subscriptions: TopicSubscription[] } };
-  } & ChannelConnectionOAuthUrlEvents &
+  } & ConversationsListEvents &
+  ConversationMessagesFetchEvents &
+  ConversationSendEvents &
+  ConversationActionEvents &
+  ConversationLiveEvents &
+  ChannelConnectionOAuthUrlEvents &
   ChannelConnectionsFetchEvents &
   ChannelConnectionGetEvents &
   ChannelConnectionDeleteEvents &

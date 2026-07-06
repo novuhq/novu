@@ -93,6 +93,43 @@ export class HttpClient {
     });
   }
 
+  /**
+   * POST expecting a streamed response (SSE). Returns the raw Response so the
+   * caller can read `response.body` incrementally; auth and version headers are
+   * applied like every other request.
+   */
+  async postAndStream(
+    path: string,
+    body?: unknown,
+    options?: { searchParams?: URLSearchParams; signal?: AbortSignal }
+  ): Promise<Response> {
+    const fullUrl = combineUrl(
+      this.apiUrl,
+      path,
+      options?.searchParams?.size ? `?${options.searchParams.toString()}` : ''
+    );
+
+    const response = await fetch(fullUrl, {
+      method: 'POST',
+      headers: { ...this.headers, Accept: 'text/event-stream' },
+      body: body ? JSON.stringify(body) : undefined,
+      signal: options?.signal,
+    });
+
+    if (!response.ok) {
+      let message = response.statusText;
+      try {
+        const errorData = await response.json();
+        message = errorData.message ?? message;
+      } catch {
+        // Non-JSON error body — keep statusText.
+      }
+      throw new Error(`${this.headers['Novu-Client-Version']} error. Status: ${response.status}, Message: ${message}`);
+    }
+
+    return response;
+  }
+
   private async doFetch<T>({
     path,
     searchParams,

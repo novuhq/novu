@@ -118,6 +118,12 @@ export class AgentSubscriberResolver {
       return null;
     }
 
+    // Web chat authenticates with a subscriber JWT, so the platform user id IS
+    // the subscriberId — no endpoint lookup or provisioning involved.
+    if (platform === AgentPlatformEnum.WEB) {
+      return platformUserId;
+    }
+
     if (platform === AgentPlatformEnum.WHATSAPP) {
       return this.resolveWhatsAppSubscriber({
         environmentId,

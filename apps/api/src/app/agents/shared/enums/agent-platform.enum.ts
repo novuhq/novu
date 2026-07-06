@@ -4,6 +4,7 @@ export enum AgentPlatformEnum {
   TEAMS = 'teams',
   EMAIL = 'email',
   TELEGRAM = 'telegram',
+  WEB = 'web',
 }
 
 export const PLATFORMS_WITH_TYPING_INDICATOR = new Set<AgentPlatformEnum>([
@@ -11,6 +12,7 @@ export const PLATFORMS_WITH_TYPING_INDICATOR = new Set<AgentPlatformEnum>([
   AgentPlatformEnum.WHATSAPP,
   AgentPlatformEnum.TEAMS,
   AgentPlatformEnum.TELEGRAM,
+  AgentPlatformEnum.WEB,
 ]);
 
 type PlatformEgressCapabilities = {
@@ -32,6 +34,7 @@ const PLATFORM_EGRESS_CAPABILITIES: Record<AgentPlatformEnum, PlatformEgressCapa
     markdownLinks: false,
     nativeUrlButtons: false,
   },
+  [AgentPlatformEnum.WEB]: DEFAULT_EGRESS_CAPABILITIES,
 };
 
 function resolvePlatformEgressCapabilities(platform: string): PlatformEgressCapabilities {

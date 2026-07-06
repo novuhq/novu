@@ -4,6 +4,8 @@ export { NovuProvider, useNovu } from './NovuProvider';
 export * from './useChannelConnection';
 export * from './useChannelConnections';
 export * from './useChannelEndpoint';
+export * from './useConversation';
+export * from './useConversations';
 export * from './useCounts';
 export * from './useCreateChannelEndpoint';
 export * from './useCreateSubscription';

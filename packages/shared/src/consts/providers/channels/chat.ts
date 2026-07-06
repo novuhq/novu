@@ -22,6 +22,14 @@ export const chatProviders: IProviderConfig[] = [
     logoFileName: { light: 'slack.svg', dark: 'slack.svg' },
   },
   {
+    id: ChatProviderIdEnum.NovuWeb,
+    displayName: 'Web Chat',
+    channel: ChannelTypeEnum.CHAT,
+    credentials: [] as IConfigCredential[],
+    docReference: `https://docs.novu.co/agents/get-started/agents-and-providers${UTM_CAMPAIGN_QUERY_PARAM}`,
+    logoFileName: { light: 'novu.png', dark: 'novu.png' },
+  },
+  {
     id: ChatProviderIdEnum.Slack,
     displayName: 'Slack',
     channel: ChannelTypeEnum.CHAT,

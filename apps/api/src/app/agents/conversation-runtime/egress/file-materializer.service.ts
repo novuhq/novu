@@ -48,6 +48,10 @@ export class FileMaterializer {
       return content as ChatSdkReplyContent;
     }
 
+    if (platform === AgentPlatformEnum.WEB) {
+      return this.prepareWebContent(content);
+    }
+
     if (UNSUPPORTED_FILE_PLATFORMS.has(platform)) {
       this.logger.warn(
         {
@@ -110,6 +114,63 @@ export class FileMaterializer {
       ...content,
       files,
     };
+  }
+
+  /**
+   * Web delivery is URL-refs only: file URLs travel over the Redis relay and
+   * render as links/previews in the browser, so nothing is fetched or buffered
+   * server-side. URLs are still SSRF-validated (they end up persisted and
+   * shown to end users). Inline base64 payloads are rejected — rehosting them
+   * behind signed storage URLs is a planned follow-up.
+   */
+  private prepareWebContent(content: ReplyContentDto): ChatSdkReplyContent {
+    if (!content.files?.length) {
+      return content as ChatSdkReplyContent;
+    }
+
+    if (content.files.length > MAX_FILES_PER_MESSAGE) {
+      throw new BadRequestException({
+        error: 'attachment_failed',
+        message: `Too many attachments: maximum is ${MAX_FILES_PER_MESSAGE} files per message.`,
+      });
+    }
+
+    const files: ChatSdkFile[] = content.files.map((file, index) => {
+      const url = (file as { url?: unknown }).url;
+      const data = (file as { data?: unknown }).data;
+
+      if (data !== undefined && data !== null) {
+        throw new BadRequestException({
+          error: 'attachment_failed',
+          message: `Invalid file ${this.describeFile(file, index)}: the web platform only supports URL file references — provide a public HTTP(S) url instead of inline data.`,
+        });
+      }
+
+      if (typeof url !== 'string' || !url) {
+        throw new BadRequestException({
+          error: 'attachment_failed',
+          message: `Invalid file ${this.describeFile(file, index)}: provide a public HTTP(S) url.`,
+        });
+      }
+
+      try {
+        assertSafeOutboundUrl(url);
+      } catch (err) {
+        if (err instanceof SsrfBlockedError) {
+          throw new BadRequestException({
+            error: 'attachment_failed',
+            message: `Invalid file ${this.describeFile(file, index)} url: ${err.message}`,
+          });
+        }
+        throw err;
+      }
+
+      const { data: _data, ...fileWithoutData } = file;
+
+      return fileWithoutData as ChatSdkFile;
+    });
+
+    return { ...content, files };
   }
 
   private async prepareFileForDelivery(file: FileRef, index: number): Promise<MaterializedFile> {

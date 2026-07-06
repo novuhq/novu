@@ -12,6 +12,11 @@ import type {
   ListChannelConnectionsArgs,
   ListChannelEndpointsArgs,
 } from '../channel-connections/types';
+import type {
+  WebConversationDto,
+  WebConversationListResponseDto,
+  WebConversationMessagesResponseDto,
+} from '../conversations/types';
 import type { PreferenceFilter } from '../subscriptions/types';
 import type {
   ActionTypeEnum,
@@ -35,6 +40,20 @@ import { HttpClient, HttpClientOptions } from './http-client';
 export type InboxServiceOptions = HttpClientOptions;
 
 const INBOX_ROUTE = '/inbox';
+const AGENTS_WEB_ROUTE = '/agents/web';
+
+function buildWebAgentSearchParams(args: {
+  integrationIdentifier?: string;
+  limit?: number;
+  before?: string;
+}): URLSearchParams | undefined {
+  const searchParams = new URLSearchParams();
+  if (args.integrationIdentifier) searchParams.append('integrationIdentifier', args.integrationIdentifier);
+  if (args.limit) searchParams.append('limit', String(args.limit));
+  if (args.before) searchParams.append('before', args.before);
+
+  return searchParams.size ? searchParams : undefined;
+}
 const INBOX_NOTIFICATIONS_ROUTE = `${INBOX_ROUTE}/notifications`;
 const CHAT_OAUTH_ROUTE = `${INBOX_ROUTE}/chat/oauth`;
 const CHANNEL_CONNECTIONS_ROUTE = `${INBOX_ROUTE}/channel-connections`;
@@ -689,5 +708,80 @@ export class InboxService {
     return this.#httpClient.post(`${CHANNEL_ENDPOINTS_ROUTE}/link`, {
       integrationIdentifier,
     });
+  }
+
+  // -- Web agent conversations (subscriber-JWT guarded /agents/web routes) --
+
+  listWebConversations(args: {
+    agent: string;
+    integrationIdentifier?: string;
+    limit?: number;
+    before?: string;
+  }): Promise<WebConversationListResponseDto> {
+    const searchParams = buildWebAgentSearchParams(args);
+
+    return this.#httpClient.get(
+      `${AGENTS_WEB_ROUTE}/${encodeURIComponent(args.agent)}/conversations`,
+      searchParams,
+      false
+    );
+  }
+
+  getWebConversation(args: {
+    agent: string;
+    conversationId: string;
+    integrationIdentifier?: string;
+  }): Promise<WebConversationDto> {
+    const searchParams = buildWebAgentSearchParams(args);
+
+    return this.#httpClient.get(
+      `${AGENTS_WEB_ROUTE}/${encodeURIComponent(args.agent)}/conversations/${encodeURIComponent(args.conversationId)}`,
+      searchParams,
+      false
+    );
+  }
+
+  listWebConversationMessages(args: {
+    agent: string;
+    conversationId: string;
+    integrationIdentifier?: string;
+    limit?: number;
+    before?: string;
+  }): Promise<WebConversationMessagesResponseDto> {
+    const searchParams = buildWebAgentSearchParams(args);
+
+    return this.#httpClient.get(
+      `${AGENTS_WEB_ROUTE}/${encodeURIComponent(args.agent)}/conversations/${encodeURIComponent(args.conversationId)}/messages`,
+      searchParams,
+      false
+    );
+  }
+
+  streamWebConversationMessage(args: {
+    agent: string;
+    conversationId: string;
+    integrationIdentifier?: string;
+    signal?: AbortSignal;
+    body: { text: string; clientMessageId?: string };
+  }): Promise<Response> {
+    return this.#httpClient.postAndStream(
+      `${AGENTS_WEB_ROUTE}/${encodeURIComponent(args.agent)}/conversations/${encodeURIComponent(args.conversationId)}/messages`,
+      args.body,
+      { searchParams: buildWebAgentSearchParams(args), signal: args.signal }
+    );
+  }
+
+  streamWebConversationAction(args: {
+    agent: string;
+    conversationId: string;
+    integrationIdentifier?: string;
+    signal?: AbortSignal;
+    body: { actionId: string; value?: string; sourceMessageId?: string };
+  }): Promise<Response> {
+    return this.#httpClient.postAndStream(
+      `${AGENTS_WEB_ROUTE}/${encodeURIComponent(args.agent)}/conversations/${encodeURIComponent(args.conversationId)}/actions`,
+      args.body,
+      { searchParams: buildWebAgentSearchParams(args), signal: args.signal }
+    );
   }
 }
