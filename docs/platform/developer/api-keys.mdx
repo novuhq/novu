@@ -35,6 +35,51 @@ This key grants full administrative access to your account. It should never be u
 
 You can regenerate the secret key from the API Keys dashboard. This will invalidate the old key and require you to update your environment variables.
 
+## Rolling secret key rotation
+
+Rolling rotation lets you replace a secret key without downtime by keeping two active keys during the switchover. You generate a second key, roll your applications over to it, and then delete the old key once nothing is still using it.
+
+<Note>
+  Rolling rotation is behind a feature flag. On Novu Cloud, enable the `IS_MULTIPLE_SECRET_KEYS_ALLOWED` LaunchDarkly flag for your organization. For self-hosted deployments, set the `IS_MULTIPLE_SECRET_KEYS_ALLOWED` environment variable on the API service and `VITE_IS_MULTIPLE_SECRET_KEYS_ALLOWED` on the dashboard.
+</Note>
+
+An environment can have at most **two active secret keys** at any time, and at least one key must always exist.
+
+### Rotate a key from the dashboard
+
+When the feature is enabled, the **Secret Keys** card on the API Keys page lists every active key with per-key mask, reveal, and copy controls.
+
+1. Click **Generate new key** to add a second secret key. The card now shows both keys.
+2. Update your applications, workflow bridge endpoints, and any other integrations to use the new key.
+3. Once nothing is using the old key, click **Delete** next to it and confirm. The dashboard blocks deletion of the last remaining key.
+
+### Rotate a key via the API
+
+The same flow is available on the API. Each returned key includes a `hash` field (SHA-256 of the key) that you use to address a specific key for deletion.
+
+<CodeGroup>
+```bash Create a second key
+curl -X POST https://api.novu.co/v1/environments/api-keys \
+  -H "Authorization: ApiKey <SECRET_KEY>"
+```
+
+```bash Delete a key by hash
+curl -X DELETE https://api.novu.co/v1/environments/api-keys/<HASH> \
+  -H "Authorization: ApiKey <SECRET_KEY>"
+```
+</CodeGroup>
+
+- `POST /v1/environments/api-keys` creates an additional secret key and returns the updated list of active keys. The request fails with `400` if the environment already has two keys.
+- `DELETE /v1/environments/api-keys/:hash` removes the key whose SHA-256 hash matches `:hash` and responds with `204 No Content`. It returns `400` if you try to delete the last remaining key and `404` if the hash does not match any active key.
+- `GET /v1/environments/api-keys` returns every active key, each with a `hash` field you can pass to the delete endpoint.
+
+### HMAC and webhook signatures during rotation
+
+While two keys are active:
+
+- **Inbox HMAC** and **legacy notification-center widget HMAC** validation accept a signature computed with **either** active key, so clients can be rolled over one at a time without breaking sessions.
+- **Bridge and webhook signatures** are still signed with the **first (oldest) key only**. If you verify these signatures on your side with a single-key verifier, you will see a brief mismatch window between the moment you rotate your verifier to the new key and the moment you delete the old key. Complete the deletion (or update your verifier to accept both keys) to close that window.
+
 ## API URLs
 
 The following hostnames are used to connect to the Novu cloud platform.
