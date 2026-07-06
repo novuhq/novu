@@ -162,7 +162,7 @@ export function AgentsList() {
       }),
     onSuccess: async (_, { identifier, name }) => {
       setAgentToDelete(null);
-      showSuccessToast(`Agent "${name}" deleted`, 'The agent was removed.');
+      showSuccessToast(`Deleted agent: ${name}`);
 
       track(TelemetryEvent.AGENT_DELETED_FROM_DASHBOARD, { agentIdentifier: identifier });
 
