@@ -5,6 +5,7 @@ import { CHANNELS_WITH_PRIMARY } from '@novu/shared';
 import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
 import { assertIntegrationEnvironmentScope } from '../../utils/assert-integration-environment-scope';
+import { validateOutboundIntegrationCredentials } from '../../utils/validate-outbound-integration-credentials';
 import { ensureNovuAgentManagedCredentials } from '../novu-agent/novu-agent-credentials.utils';
 import { ensureWhatsAppManagedCredentials } from '../whatsapp/whatsapp-credentials.utils';
 import { UpdateIntegrationCommand } from './update-integration.command';
@@ -141,13 +142,18 @@ export class UpdateIntegration {
     });
 
     const environmentId = command.environmentId ?? existingIntegration._environmentId;
+    const credentialsForValidation = command.credentials ?? existingIntegration.credentials ?? {};
+
+    if (command.check || command.credentials) {
+      await validateOutboundIntegrationCredentials(existingIntegration.providerId, credentialsForValidation);
+    }
 
     if (command.check) {
       await this.checkIntegration.execute(
         CheckIntegrationCommand.create({
           environmentId,
           organizationId: command.organizationId,
-          credentials: command.credentials ?? existingIntegration.credentials ?? {},
+          credentials: credentialsForValidation,
           providerId: existingIntegration.providerId,
           channel: existingIntegration.channel,
         })

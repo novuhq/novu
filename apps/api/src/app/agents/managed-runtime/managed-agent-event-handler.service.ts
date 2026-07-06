@@ -121,6 +121,8 @@ export class ManagedAgentEventHandler {
         }
       },
 
+      // TODO(agents): also persist a TOOL_RESULT activity once Thalamus sends the tool output
+      // (today this event only has { toolUseId, isError }), so the ledger holds the full tool trail.
       onToolUseResult: async (event: { toolUseId: string; isError?: boolean }) => {
         try {
           await this.handlePlanProgress.execute(
@@ -277,7 +279,7 @@ export class ManagedAgentEventHandler {
 
     try {
       await this.handleAgentReply.execute(
-        HandleAgentReplyCommand.create({ ...baseCommand, reply: { markdown: message } })
+        HandleAgentReplyCommand.create({ ...baseCommand, reply: { markdown: message }, isSystemGenerated: true })
       );
       await this.inboundAck.onManagedTurnComplete(metadata);
       await this.handlePlanProgress.execute(

@@ -1,5 +1,5 @@
 import type { CardElement } from 'chat';
-import { supportsMarkdownLinks } from '../enums/agent-platform.enum';
+import { AgentPlatformEnum, supportsMarkdownLinks } from '../enums/agent-platform.enum';
 import { buildAttributedNovuUrl } from './novu-attribution-url';
 
 export const NOVU_AGENT_POWERED_URL = 'https://go.novu.co/agent-powered';
@@ -10,14 +10,26 @@ const NOVU_POWERED_WATERMARK_MARKER = '\u200B';
 
 const ATTRIBUTED_POWERED_BY_WATERMARK_PREFIX = `Powered by [Novu](${NOVU_AGENT_POWERED_URL}`;
 
+const SLACK_ATTRIBUTED_POWERED_BY_WATERMARK_PREFIX = `Powered by <${NOVU_AGENT_POWERED_URL}`;
+
 const LEGACY_ATTRIBUTED_POWERED_BY_WATERMARK_PREFIX = `[${NOVU_AGENT_POWERED_WATERMARK_TEXT}](${NOVU_AGENT_POWERED_URL}`;
+
+function formatPoweredByLink(label: string, url: string, platform: string): string {
+  if (platform === AgentPlatformEnum.SLACK) {
+    return `<${url}|${label}>`;
+  }
+
+  return `[${label}](${url})`;
+}
 
 export function buildPoweredByWatermark(agentIdentifier: string, platform: string): string {
   if (!supportsMarkdownLinks(platform)) {
     return `${NOVU_AGENT_POWERED_WATERMARK_TEXT}${NOVU_POWERED_WATERMARK_MARKER}`;
   }
 
-  return `Powered by [Novu](${buildAttributedNovuUrl(NOVU_AGENT_POWERED_URL, 'agent-powered', agentIdentifier, platform)})`;
+  const url = buildAttributedNovuUrl(NOVU_AGENT_POWERED_URL, 'agent-powered', agentIdentifier, platform);
+
+  return `Powered by ${formatPoweredByLink('Novu', url, platform)}`;
 }
 
 export function buildBrandedMarkdownReply(
@@ -39,6 +51,7 @@ export function buildBrandedMarkdownReply(
 export function contentHasPoweredByWatermark(markdown: string): boolean {
   if (
     markdown.includes(ATTRIBUTED_POWERED_BY_WATERMARK_PREFIX) ||
+    markdown.includes(SLACK_ATTRIBUTED_POWERED_BY_WATERMARK_PREFIX) ||
     markdown.includes(LEGACY_ATTRIBUTED_POWERED_BY_WATERMARK_PREFIX)
   ) {
     return true;

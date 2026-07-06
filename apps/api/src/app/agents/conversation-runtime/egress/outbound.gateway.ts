@@ -7,10 +7,7 @@ import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-c
 import type { ReplyContentDto } from '../../shared/dtos/agent-reply-payload.dto';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { esmImport } from '../../shared/util/esm-import';
-import {
-  buildBrandedMarkdownReply,
-  contentHasPoweredByWatermark,
-} from '../../shared/util/novu-powered-by-watermark';
+import { buildBrandedMarkdownReply, contentHasPoweredByWatermark } from '../../shared/util/novu-powered-by-watermark';
 import { type AgentActionTokenBinding, AgentActionTokenService } from '../action-token/agent-action-token.service';
 import { AgentConversationService } from '../conversation/agent-conversation.service';
 import { ChatInstanceRegistry } from '../ingress/chat-instance.registry';
@@ -48,6 +45,18 @@ export interface OutboundPersistContext {
 }
 
 export type OutboundMessage = ReplyContentDto;
+
+function extractReplyRichContent(content: OutboundMessage): Record<string, unknown> | undefined {
+  if (!content.card && !content.files?.length) {
+    return undefined;
+  }
+
+  return {
+    ...(content.markdown !== undefined && { markdown: content.markdown }),
+    ...(content.card !== undefined && { card: content.card }),
+    ...(content.files !== undefined && { files: content.files }),
+  };
+}
 
 export type OutboundDeliveryOptions = {
   slackNative?: SlackNativeDelivery;
@@ -156,7 +165,7 @@ export class OutboundGateway {
       agentIdentifier: persist.agentIdentifier,
       agentName: persist.agentName,
       content: this.extractTextFallback(msg),
-      richContent: msg.card || msg.files?.length ? (msg as Record<string, unknown>) : undefined,
+      richContent: extractReplyRichContent(msg),
       environmentId: persist.environmentId,
       organizationId: persist.organizationId,
     });
@@ -575,7 +584,7 @@ export class OutboundGateway {
       agentIdentifier: persist.agentIdentifier,
       agentName: persist.agentName,
       content: this.extractTextFallback(msg),
-      richContent: msg.card || msg.files?.length ? (msg as Record<string, unknown>) : undefined,
+      richContent: extractReplyRichContent(msg),
       environmentId: persist.environmentId,
       organizationId: persist.organizationId,
     });

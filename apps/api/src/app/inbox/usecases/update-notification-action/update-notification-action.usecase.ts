@@ -66,11 +66,15 @@ export class UpdateNotificationAction {
       actionStatus: command.actionStatus,
     });
 
-    return mapToDto(
-      (await this.messageRepository.findOneForInbox({
-        _environmentId: command.environmentId,
-        _id: command.notificationId,
-      })) as MessageEntity
-    );
+    const updatedMessage = await this.messageRepository.findOneForInbox({
+      _environmentId: command.environmentId,
+      _subscriberId: subscriber._id,
+      _id: command.notificationId,
+    });
+    if (!updatedMessage) {
+      throw new NotFoundException(`Notification with id: ${command.notificationId} could not be found after update.`);
+    }
+
+    return mapToDto(updatedMessage);
   }
 }

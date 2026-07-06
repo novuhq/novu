@@ -19,54 +19,439 @@ Without context, you might have to create two different subscribers or use worka
 
 However, with context, you can provide this metadata directly in the trigger. This allows you to use a single workflow and subscriber entity, while dynamically changing content or logic based on the context.
 
-<CodeGroup>
-```javascript title="Without context"
-// Problem: How does Novu know which app is sending the notification?
+### Without context
+
+<Tabs>
+  <Tab title="Node.js">
+```ts
+import { Novu } from "@novu/api"
+
+const novu = new Novu({ secretKey: "<YOUR_SECRET_KEY_HERE>" });
 
 // Notion Email notification
 await novu.trigger({
   workflowId: "workflowId",
-  to: { subscriberId: 'john@acme.com' },
-  payload: { title: 'You have 1 new email' }
+  to: { subscriberId: "john@acme.com" },
+  payload: { title: "You have 1 new email" },
 });
 
-// Notion Calendar notification  
-await novu.trigger({  
+// Notion Calendar notification
+await novu.trigger({
   workflowId: "workflowId",
-  to: 'john@acme.com',
-  payload: { title: 'You have a new meeting invite' }
+  to: { subscriberId: "john@acme.com" },
+  payload: { title: "You have a new meeting invite" },
 });
 ```
-```javascript title="With context"
-// Solution: Pass an 'app' context to differentiate triggers.
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="workflowId",
+        to={"subscriber_id": "john@acme.com"},
+        payload={"title": "You have 1 new email"},
+    ))
+
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="workflowId",
+        to={"subscriber_id": "john@acme.com"},
+        payload={"title": "You have a new meeting invite"},
+    ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "workflowId",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: "john@acme.com",
+    }),
+    Payload: map[string]any{"title": "You have 1 new email"},
+}, nil)
+
+s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "workflowId",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: "john@acme.com",
+    }),
+    Payload: map[string]any{"title": "You have a new meeting invite"},
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()
+    ->setSecurity('<YOUR_SECRET_KEY_HERE>')
+    ->build();
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'workflowId',
+        to: new Components\SubscriberPayloadDto(subscriberId: 'john@acme.com'),
+        payload: ['title' => 'You have 1 new email'],
+    ),
+);
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'workflowId',
+        to: new Components\SubscriberPayloadDto(subscriberId: 'john@acme.com'),
+        payload: ['title' => 'You have a new meeting invite'],
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+
+var sdk = new NovuSDK(secretKey: "<YOUR_SECRET_KEY_HERE>");
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "workflowId",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() {
+        SubscriberId = "john@acme.com",
+    }),
+    Payload = new Dictionary<string, object>() {
+        { "title", "You have 1 new email" },
+    },
+});
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "workflowId",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() {
+        SubscriberId = "john@acme.com",
+    }),
+    Payload = new Dictionary<string, object>() {
+        { "title", "You have a new meeting invite" },
+    },
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+import java.util.Map;
+
+Novu novu = Novu.builder()
+    .secretKey("<YOUR_SECRET_KEY_HERE>")
+    .build();
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("workflowId")
+        .to(To2.of(SubscriberPayloadDto.builder()
+            .subscriberId("john@acme.com")
+            .build()))
+        .payload(Map.of("title", "You have 1 new email"))
+        .build())
+    .call();
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("workflowId")
+        .to(To2.of(SubscriberPayloadDto.builder()
+            .subscriberId("john@acme.com")
+            .build()))
+        .payload(Map.of("title", "You have a new meeting invite"))
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -L -g -X POST 'https://api.novu.co/v1/events/trigger' \
+-H 'Content-Type: application/json' \
+-H 'Accept: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+    "name": "workflowId",
+    "to": { "subscriberId": "john@acme.com" },
+    "payload": { "title": "You have 1 new email" }
+}'
+
+curl -L -g -X POST 'https://api.novu.co/v1/events/trigger' \
+-H 'Content-Type: application/json' \
+-H 'Accept: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+    "name": "workflowId",
+    "to": { "subscriberId": "john@acme.com" },
+    "payload": { "title": "You have a new meeting invite" }
+}'
+```
+  </Tab>
+</Tabs>
+
+### With context
+
+<Tabs>
+  <Tab title="Node.js">
+```ts
+import { Novu } from "@novu/api"
+
+const novu = new Novu({ secretKey: "<YOUR_SECRET_KEY_HERE>" });
 
 // Notion Email notification
 await novu.trigger({
   workflowId: "workflowId",
-  to: { subscriberId: 'john@acme.com' },
-  payload: { title: 'You have 1 new email' },
+  to: { subscriberId: "john@acme.com" },
+  payload: { title: "You have 1 new email" },
   context: {
-    app: 'notion-email',
-    branding: {
-      logo: "url_for_email_logo.png"
-    }
-  }
+    app: "notion-email",
+    branding: { logo: "url_for_email_logo.png" },
+  },
 });
 
-// Notion Calendar notification  
+// Notion Calendar notification
 await novu.trigger({
   workflowId: "workflowId",
-  to: { subscriberId: 'john@acme.com' },
-  payload: { title: 'You have a new meeting invite' },
+  to: { subscriberId: "john@acme.com" },
+  payload: { title: "You have a new meeting invite" },
   context: {
-    app: 'notion-calendar',
-    branding: {
-      logo: "url_for_calendar_logo.png"
-    }
-  }
+    app: "notion-calendar",
+    branding: { logo: "url_for_calendar_logo.png" },
+  },
 });
 ```
-</CodeGroup>
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="workflowId",
+        to={"subscriber_id": "john@acme.com"},
+        payload={"title": "You have 1 new email"},
+        context={
+            "app": "notion-email",
+            "branding": {"logo": "url_for_email_logo.png"},
+        },
+    ))
+
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="workflowId",
+        to={"subscriber_id": "john@acme.com"},
+        payload={"title": "You have a new meeting invite"},
+        context={
+            "app": "notion-calendar",
+            "branding": {"logo": "url_for_calendar_logo.png"},
+        },
+    ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "workflowId",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: "john@acme.com",
+    }),
+    Payload: map[string]any{"title": "You have 1 new email"},
+    Context: map[string]any{
+        "app":      "notion-email",
+        "branding": map[string]any{"logo": "url_for_email_logo.png"},
+    },
+}, nil)
+
+s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "workflowId",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: "john@acme.com",
+    }),
+    Payload: map[string]any{"title": "You have a new meeting invite"},
+    Context: map[string]any{
+        "app":      "notion-calendar",
+        "branding": map[string]any{"logo": "url_for_calendar_logo.png"},
+    },
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()
+    ->setSecurity('<YOUR_SECRET_KEY_HERE>')
+    ->build();
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'workflowId',
+        to: new Components\SubscriberPayloadDto(subscriberId: 'john@acme.com'),
+        payload: ['title' => 'You have 1 new email'],
+        context: [
+            'app' => 'notion-email',
+            'branding' => ['logo' => 'url_for_email_logo.png'],
+        ],
+    ),
+);
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'workflowId',
+        to: new Components\SubscriberPayloadDto(subscriberId: 'john@acme.com'),
+        payload: ['title' => 'You have a new meeting invite'],
+        context: [
+            'app' => 'notion-calendar',
+            'branding' => ['logo' => 'url_for_calendar_logo.png'],
+        ],
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+
+var sdk = new NovuSDK(secretKey: "<YOUR_SECRET_KEY_HERE>");
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "workflowId",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() {
+        SubscriberId = "john@acme.com",
+    }),
+    Payload = new Dictionary<string, object>() {
+        { "title", "You have 1 new email" },
+    },
+    Context = new Dictionary<string, object>() {
+        { "app", "notion-email" },
+        { "branding", new Dictionary<string, object>() {
+            { "logo", "url_for_email_logo.png" },
+        } },
+    },
+});
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "workflowId",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() {
+        SubscriberId = "john@acme.com",
+    }),
+    Payload = new Dictionary<string, object>() {
+        { "title", "You have a new meeting invite" },
+    },
+    Context = new Dictionary<string, object>() {
+        { "app", "notion-calendar" },
+        { "branding", new Dictionary<string, object>() {
+            { "logo", "url_for_calendar_logo.png" },
+        } },
+    },
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+import java.util.Map;
+
+Novu novu = Novu.builder()
+    .secretKey("<YOUR_SECRET_KEY_HERE>")
+    .build();
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("workflowId")
+        .to(To2.of(SubscriberPayloadDto.builder()
+            .subscriberId("john@acme.com")
+            .build()))
+        .payload(Map.of("title", "You have 1 new email"))
+        .context(Map.ofEntries(
+            Map.entry("app", TriggerEventRequestDtoContextUnion.of("notion-email")),
+            Map.entry("branding", TriggerEventRequestDtoContextUnion.of(
+                TriggerEventRequestDtoContext2.builder()
+                    .id("branding")
+                    .data(Map.of("logo", "url_for_email_logo.png"))
+                    .build()))))
+        .build())
+    .call();
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("workflowId")
+        .to(To2.of(SubscriberPayloadDto.builder()
+            .subscriberId("john@acme.com")
+            .build()))
+        .payload(Map.of("title", "You have a new meeting invite"))
+        .context(Map.ofEntries(
+            Map.entry("app", TriggerEventRequestDtoContextUnion.of("notion-calendar")),
+            Map.entry("branding", TriggerEventRequestDtoContextUnion.of(
+                TriggerEventRequestDtoContext2.builder()
+                    .id("branding")
+                    .data(Map.of("logo", "url_for_calendar_logo.png"))
+                    .build()))))
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -L -g -X POST 'https://api.novu.co/v1/events/trigger' \
+-H 'Content-Type: application/json' \
+-H 'Accept: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+    "name": "workflowId",
+    "to": { "subscriberId": "john@acme.com" },
+    "payload": { "title": "You have 1 new email" },
+    "context": {
+        "app": "notion-email",
+        "branding": { "logo": "url_for_email_logo.png" }
+    }
+}'
+
+curl -L -g -X POST 'https://api.novu.co/v1/events/trigger' \
+-H 'Content-Type: application/json' \
+-H 'Accept: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+    "name": "workflowId",
+    "to": { "subscriberId": "john@acme.com" },
+    "payload": { "title": "You have a new meeting invite" },
+    "context": {
+        "app": "notion-calendar",
+        "branding": { "logo": "url_for_calendar_logo.png" }
+    }
+}'
+```
+  </Tab>
+</Tabs>
 
 Here are some ways that you can use contexts:
 

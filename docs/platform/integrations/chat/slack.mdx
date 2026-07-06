@@ -1,7 +1,7 @@
 ---
 title: "Slack Chat Integration with Novu"
 sidebarTitle: 'Slack'
-description: "Connect Slack to Novu to send chat notifications through notification workflows. Step-by-step credential setup."
+description: "Connect Slack to Novu to send chat notifications through workflows using OAuth. Deliver messages to channels or DMs and manage subscriber Slack credentials."
 ---
 
 <Note>
@@ -27,15 +27,15 @@ First, you need to create a Slack app. This provides you with the credential you
 
 <Steps>
   <Step title="Open the Slack API dashboard">
-    Go to the [Slack API dashboard](https://api.slack.com/apps).
+    Sign in at the [Slack API dashboard](https://api.slack.com/apps).
   </Step>
 
 <Step title="Create an app">
-    Click **Create an App**.
+    In Slack, click **Create an App** to start a new app registration.
   </Step>
 
 <Step title="Select From scratch">
-    Select **From scratch**.
+    Choose **From scratch** and enter an app name and workspace.
   </Step>
 
 <Step title="Enter app name and workspace">
@@ -71,7 +71,6 @@ Your app needs permission to perform actions like sending messages or reading ch
   </Step>
 
 <Step title="Add recommended scopes">
-    Add the following recommended scopes:
     - `chat:write`
     - `chat:write.public`
     - `channels:read`
@@ -98,7 +97,6 @@ This tells Slack where to send the user after they successfully authorize your a
   </Step>
 
 <Step title="Add a redirect URL">
-    Click **Add New Redirect URL**.
     ![Add New Redirect URL](/images/channels-and-providers/chat/slack/redirect-urls.png)
   </Step>
 
@@ -116,7 +114,6 @@ This tells Slack where to send the user after they successfully authorize your a
   </Step>
 
 <Step title="Save the URLs">
-    Click **Add** to save the URLs. If you use a self-hosted Novu instance, then add your instance's callback URL instead.
   </Step>
 </Steps>
 
@@ -126,7 +123,7 @@ Once your Slack app is set up, the next step is to configure the Slack Chat inte
 
 <Steps>
   <Step title="Log in to the Novu dashboard">
-    Log in to the Novu dashboard.
+    Open the [Novu Dashboard](https://dashboard.novu.co).
   </Step>
 
 <Step title="Open Integrations Store">
@@ -134,11 +131,10 @@ Once your Slack app is set up, the next step is to configure the Slack Chat inte
   </Step>
 
 <Step title="Connect a provider">
-    Click **Connect Provider**
+    In the **Integration Store**, click **Connect provider** to begin setup.
   </Step>
 
 <Step title="Select Slack">
-    Select **Chat** and click **Slack**.
   </Step>
 
 <Step title="Fill in credentials">
@@ -173,23 +169,111 @@ This URL is specific to the Subscriber or the Context (Tenant) it will be genera
   The generated OAuth URL is valid for only <strong>5 minutes</strong>. Do not cache this URL; generate it dynamically when the user initiates the flow.
 </Warning>
 
-```tsx
+<Tabs>
+  <Tab title="Node.js">
+```typescript
 import { Novu } from '@novu/api';
 
-const novu = new Novu({ secretKey: "<YOUR_SECRET_KEY_HERE>", });
+const novu = new Novu({ secretKey: "<NOVU_SECRET_KEY>" });
 
-// This function should be called by your API when the user requests to connect
-async function getSlackUrl(user, orgId) {
-  
-  const oauthUrl = await novu.integrations.generateChatOAuthUrl({
-    integrationIdentifier: 'slack',
-    subscriberId: user.id,           // The ID of the user performing the action
-    context: { tenant: orgId },      // The tenant/workspace context
-  });
-
-return oauthUrl;
-}
+const response = await novu.integrations.generateChatOAuthUrl({
+  integrationIdentifier: 'slack',
+  subscriberId: 'subscriberId',
+  context: {
+    "tenant": "orgId"
+},
+});
 ```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    response = novu.integrations.generate_chat_o_auth_url(generate_chat_oauth_url_request_dto={
+        "integration_identifier": "slack",
+        "subscriber_id": "subscriberId",
+        context={
+        "tenant": "orgId"
+},
+    })
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Integrations.GenerateChatOAuthURL(context.Background(), components.GenerateChatOauthURLRequestDto{
+    IntegrationIdentifier: "slack",
+    SubscriberID: novugo.String("subscriberId"),
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()->setSecurity('<NOVU_SECRET_KEY>')->build();
+$response = $sdk->integrations->generateChatOAuthUrl(
+    generateChatOauthUrlRequestDto: new Components\GenerateChatOauthUrlRequestDto(
+        integrationIdentifier: 'slack',
+        subscriberId: 'subscriberId',
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+var response = await sdk.Integrations.GenerateChatOAuthUrlAsync(
+    generateChatOauthUrlRequestDto: new GenerateChatOauthUrlRequestDto() {
+        IntegrationIdentifier = "slack",
+        SubscriberId = "subscriberId",
+    });
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+
+Novu novu = Novu.builder().secretKey("<NOVU_SECRET_KEY>").build();
+var response = novu.integrations().generateChatOAuthUrl()
+    .body(GenerateChatOauthUrlRequestDto.builder()
+        .integrationIdentifier("slack")
+        .subscriberId("subscriberId")
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -L -X POST 'https://api.novu.co/v1/integrations/chat/oauth' \
+-H 'Content-Type: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+  "integrationIdentifier": "slack",
+  "subscriberId": "subscriberId",
+  "context": {
+    "tenant": "orgId"
+  }
+}'
+```
+  </Tab>
+</Tabs>
 
 Your application can support multiple Slack workspace connections per user or per tenant by triggering separate OAuth flows.
 
@@ -223,13 +307,34 @@ After the user approves access, Novu handles the rest of the OAuth flow automati
 
 <Steps>
   <Step title="Novu exchanges the code">
-    Novu exchanges the code for a Slack token.
+    Novu stores the Slack access token for the connected workspace.
   </Step>
 
 <Step title="Novu creates a connection">
     Novu creates a Slack connection for that workspace, it is referenced by `connectionIdentifier` when creating endpoints.You can also provider a custom `connectionIdentifier` to the `generateChatOAuthUrl()` and then connection with such identifier will be created instead of randomly generated one.
   </Step>
 </Steps>
+
+<Note>
+  **Alternative: handle OAuth yourself.** Instead of `generateChatOAuthUrl()`, you can run the Slack OAuth flow with your own app, use the access token with Slack's APIs directly, then register the workspace with Novu via [`channelConnections.create`](/api-reference/channel-connections/create-a-channel-connection) (or `POST /v1/channel-connections`):
+
+```tsx
+await novu.channelConnections.create({
+  integrationIdentifier: 'slack',
+  subscriberId: 'user-123',        // provide subscriberId, context, or both — at least one is required
+  context: { tenant: 'acme' },     // scope to a tenant (required when subscriberId is omitted)
+  workspace: {
+    id: authData.team.id,          // Slack workspace ID from OAuth
+    name: authData.team.name,
+  },
+  auth: {
+    accessToken: authData.access_token,
+  },
+});
+```
+
+Provide at least one of `subscriberId` or `context` — same as the Novu-managed OAuth flow.
+</Note>
 
 ## Choose delivery destinations
 
@@ -242,9 +347,7 @@ This is the typical flow for sending notifications to public or private channels
 
 <Steps>
   <Step title="Get the channel ID">
-    **Get the channel ID**: First, the channel where the message will be sent to must be selected, one way to do this is by using your Slack app token to list channels in your own UI.
-
-```bash
+    ```bash
     curl -X GET "https://slack.com/api/conversations.list" \
       -H "Authorization: Bearer <YOUR_BOT_TOKEN>"
     ```
@@ -253,20 +356,134 @@ To learn more about using [Slack conversations API](https://docs.slack.dev/apis/
   </Step>
 
 <Step title="Create the endpoint">
-    **Create the endpoint**: Once the user selects a channel, save it as an endpoint in Novu.
+    <Tabs>
+  <Tab title="Node.js">
+```typescript
+import { Novu } from '@novu/api';
 
-```tsx
-    await novu.channelEndpoints.create({
-      subscriberId: 'user-123',
-      integrationIdentifier: 'slack',
-      connectionIdentifier: 'conn_slack_acme', // The identifier of the connection created in Step 2
-      context: { tenant: 'acme' },
-      type: 'slack_channel',                   // TYPE: Channel
-      endpoint: {
-        channelId: 'C012345'                   // Slack channel ID of the channel selected by the user
-      }
-    });
-    ```
+const novu = new Novu({ secretKey: "<NOVU_SECRET_KEY>" });
+
+await novu.channelEndpoints.create({
+  subscriberId: 'user-123',
+  integrationIdentifier: 'slack',
+  connectionIdentifier: 'conn_slack_acme',
+  context: { tenant: 'acme' },
+  type: 'slack_channel',
+  endpoint: { channelId: 'C012345' },
+});
+```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.channel_endpoints.create(request_body={
+        "subscriber_id": "user-123",
+        "integration_identifier": "slack",
+        "connection_identifier": "conn_slack_acme",
+        "context": {"tenant": "acme"},
+        "type": "slack_channel",
+        "endpoint": {"channel_id": "C012345"},
+    })
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+    "github.com/novuhq/novu-go/models/operations"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.ChannelEndpoints.Create(context.Background(), operations.CreateChannelEndpointsControllerCreateChannelEndpointRequestBodySlackChannel(
+    components.CreateSlackChannelEndpointDto{
+        SubscriberID: "user-123",
+        IntegrationIdentifier: "slack",
+        ConnectionIdentifier: novugo.String("conn_slack_acme"),
+        Type: components.CreateSlackChannelEndpointDtoTypeSlackChannel,
+        Endpoint: components.SlackChannelEndpointDto{ChannelID: "C012345"},
+    },
+), nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()->setSecurity('<NOVU_SECRET_KEY>')->build();
+$sdk->channelEndpoints->create(
+    requestBody: new Components\CreateSlackChannelEndpointDto(
+        subscriberId: 'user-123',
+        integrationIdentifier: 'slack',
+        connectionIdentifier: 'conn_slack_acme',
+        type: Components\CreateSlackChannelEndpointDtoType::SlackChannel,
+        endpoint: new Components\SlackChannelEndpointDto(channelId: 'C012345'),
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+await sdk.ChannelEndpoints.CreateAsync(
+    requestBody: CreateSlackChannelEndpointDto.CreateSlackChannel(
+        new CreateSlackChannelEndpointDto() {
+            SubscriberId = "user-123",
+            IntegrationIdentifier = "slack",
+            ConnectionIdentifier = "conn_slack_acme",
+            Type = CreateSlackChannelEndpointDtoType.SlackChannel,
+            Endpoint = new SlackChannelEndpointDto() { ChannelId = "C012345" },
+        }));
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+
+Novu novu = Novu.builder().secretKey("<NOVU_SECRET_KEY>").build();
+novu.channelEndpoints().create()
+    .requestBody(CreateSlackChannelEndpointDto.builder()
+        .subscriberId("user-123")
+        .integrationIdentifier("slack")
+        .connectionIdentifier("conn_slack_acme")
+        .type(CreateSlackChannelEndpointDtoType.SLACK_CHANNEL)
+        .endpoint(SlackChannelEndpointDto.builder().channelId("C012345").build())
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -L -X POST 'https://api.novu.co/v1/channel-endpoints' \
+-H 'Content-Type: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+  "subscriberId": "user-123",
+  "integrationIdentifier": "slack",
+  "connectionIdentifier": "conn_slack_acme",
+  "context": {
+    "tenant": "acme"
+  },
+  "type": "slack_channel",
+  "endpoint": {
+    "channelId": "C012345"
+  }
+}'
+```
+  </Tab>
+</Tabs>
   </Step>
 </Steps>
 
@@ -277,9 +494,7 @@ Use this to send personal messages and notifications directly to a specific user
 
 <Steps>
   <Step title="Get the Slack user ID">
-    **Get the Slack user ID**: You can use Slack’s users API to get user IDs.
-
-```bash
+    ```bash
     curl -X GET "https://slack.com/api/users.list" \
       -H "Authorization: Bearer <YOUR_BOT_TOKEN>"
     ```
@@ -290,20 +505,134 @@ To learn more about using [Slack `users.list` method](https://docs.slack.dev/ref
   </Step>
 
 <Step title="Create the endpoint">
-    Create the endpoint: Save the returned User ID as the endpoint.
+    <Tabs>
+  <Tab title="Node.js">
+```typescript
+import { Novu } from '@novu/api';
 
-```tsx
-    await novu.channelEndpoints.create({
-      type: 'slack_user',
-      subscriberId: 'user-123',
-      integrationIdentifier: 'slack',
-      connectionIdentifier: 'conn_slack_acme',
-      context: { tenant: 'acme' },
-      endpoint: {
-        userId: 'U01234567',                  // Slack user ID
-      },
-    });
-    ```
+const novu = new Novu({ secretKey: "<NOVU_SECRET_KEY>" });
+
+await novu.channelEndpoints.create({
+  type: 'slack_user',
+  subscriberId: 'user-123',
+  integrationIdentifier: 'slack',
+  connectionIdentifier: 'conn_slack_acme',
+  context: { tenant: 'acme' },
+  endpoint: { userId: 'U01234567' },
+});
+```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.channel_endpoints.create(request_body={
+        "type": "slack_user",
+        "subscriber_id": "user-123",
+        "integration_identifier": "slack",
+        "connection_identifier": "conn_slack_acme",
+        "context": {"tenant": "acme"},
+        "endpoint": {"user_id": "U01234567"},
+    })
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+    "github.com/novuhq/novu-go/models/operations"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.ChannelEndpoints.Create(context.Background(), operations.CreateChannelEndpointsControllerCreateChannelEndpointRequestBodySlackUser(
+    components.CreateSlackUserEndpointDto{
+        SubscriberID: "user-123",
+        IntegrationIdentifier: "slack",
+        ConnectionIdentifier: novugo.String("conn_slack_acme"),
+        Type: components.CreateSlackUserEndpointDtoTypeSlackUser,
+        Endpoint: components.SlackUserEndpointDto{UserID: "U01234567"},
+    },
+), nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()->setSecurity('<NOVU_SECRET_KEY>')->build();
+$sdk->channelEndpoints->create(
+    requestBody: new Components\CreateSlackUserEndpointDto(
+        subscriberId: 'user-123',
+        integrationIdentifier: 'slack',
+        connectionIdentifier: 'conn_slack_acme',
+        type: Components\CreateSlackUserEndpointDtoType::SlackUser,
+        endpoint: new Components\SlackUserEndpointDto(userId: 'U01234567'),
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+await sdk.ChannelEndpoints.CreateAsync(
+    requestBody: CreateSlackUserEndpointDto.CreateSlackUser(
+        new CreateSlackUserEndpointDto() {
+            SubscriberId = "user-123",
+            IntegrationIdentifier = "slack",
+            ConnectionIdentifier = "conn_slack_acme",
+            Type = CreateSlackUserEndpointDtoType.SlackUser,
+            Endpoint = new SlackUserEndpointDto() { UserId = "U01234567" },
+        }));
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+
+Novu novu = Novu.builder().secretKey("<NOVU_SECRET_KEY>").build();
+novu.channelEndpoints().create()
+    .requestBody(CreateSlackUserEndpointDto.builder()
+        .subscriberId("user-123")
+        .integrationIdentifier("slack")
+        .connectionIdentifier("conn_slack_acme")
+        .type(CreateSlackUserEndpointDtoType.SLACK_USER)
+        .endpoint(SlackUserEndpointDto.builder().userId("U01234567").build())
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -L -X POST 'https://api.novu.co/v1/channel-endpoints' \
+-H 'Content-Type: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+  "type": "slack_user",
+  "subscriberId": "user-123",
+  "integrationIdentifier": "slack",
+  "connectionIdentifier": "conn_slack_acme",
+  "context": {
+    "tenant": "acme"
+  },
+  "endpoint": {
+    "userId": "U01234567"
+  }
+}'
+```
+  </Tab>
+</Tabs>
   </Step>
 </Steps>
 
@@ -314,11 +643,10 @@ If `incoming-webhook` scope was included when configuring the OAuth and permissi
 
 <Steps>
   <Step title="User selects a channel">
-    The user selects a channel directly in Slack.
+    The subscriber picks a Slack channel where notifications should be delivered.
   </Step>
 
 <Step title="Slack returns webhook URL">
-    Slack returns an `incoming_webhook.url`.
   </Step>
 
 <Step title="Novu creates webhook endpoint">
@@ -335,37 +663,171 @@ You don’t need to collect `channelId` yourself in this mode, Slack’s native 
 
 Once you have at least one Slack connection, and one or more Slack endpoints. You can trigger the workflow:
 
-```jsx
+<Tabs>
+  <Tab title="Node.js">
+```typescript
 import { Novu } from '@novu/api';
 
-const novu = new Novu({ secretKey: "<YOUR_SECRET_KEY_HERE>", });
+const novu = new Novu({ secretKey: "<NOVU_SECRET_KEY>" });
 
 await novu.trigger({
-  name: 'order-shipped',
-  to: {
-    subscriberId: 'user-123',
-  },
-  context: { tenant: 'acme' },       // optional routing context
+  workflowId: "order-shipped",
+  to: { subscriberId: "user-123", },
   payload: {
-    orderNumber: 'ORD-12345',
-    trackingUrl: 'https://acme.com/track/123',
-  },
+    "orderNumber": "ORD-12345",
+    "trackingUrl": "https://acme.com/track/123"
+},
+  context: {
+    "tenant": "acme"
+},
 });
 ```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="order-shipped",
+        to={"subscriber_id": "user-123"},
+        payload={
+        "orderNumber": "ORD-12345",
+        "trackingUrl": "https://acme.com/track/123"
+},
+        context={
+        "tenant": "acme"
+},
+    ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "order-shipped",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: "user-123",
+    }),
+    Payload: map[string]any{
+    "orderNumber": "ORD-12345",
+    "trackingUrl": "https://acme.com/track/123"
+},
+    Context: map[string]any{
+    "tenant": "acme"
+},
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()->setSecurity('<NOVU_SECRET_KEY>')->build();
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'order-shipped',
+        to: new Components\SubscriberPayloadDto(subscriberId: 'user-123'),
+        payload: {
+        "orderNumber": "ORD-12345",
+        "trackingUrl": "https://acme.com/track/123"
+},
+        context: {
+        "tenant": "acme"
+},
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "order-shipped",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() { SubscriberId = "user-123" }),
+    Payload = {
+    "orderNumber": "ORD-12345",
+    "trackingUrl": "https://acme.com/track/123"
+},
+    Context = {
+    "tenant": "acme"
+},
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+
+Novu novu = Novu.builder().secretKey("<NOVU_SECRET_KEY>").build();
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("order-shipped")
+        .to(To2.of(SubscriberPayloadDto.builder().subscriberId("user-123").build()))
+        .payload({
+        "orderNumber": "ORD-12345",
+        "trackingUrl": "https://acme.com/track/123"
+})
+        .context({
+        "tenant": "acme"
+})
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl --location 'https://api.novu.co/v1/events/trigger' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+    "name": "order-shipped",
+    "to": [
+        "user-123"
+    ],
+    "payload": {
+        "orderNumber": "ORD-12345",
+        "trackingUrl": "https://acme.com/track/123"
+    },
+    "context": {
+        "tenant": "acme"
+    }
+}'
+```
+  </Tab>
+</Tabs>
 
 When the workflow is triggered, Novu will:
 
 <Steps>
   <Step title="Find Slack endpoints">
-    Find Slack endpoints matching `subscriberId` and `context`.
+    Novu looks up Slack endpoints that match the subscriber ID and context.
   </Step>
 
 <Step title="Use the workspace connection">
-    Use the right Slack workspace connection.
   </Step>
 
   <Step title="Deliver messages">
-    Deliver messages to the configured destinations.
+    Novu sends the notification to each configured Slack destination.
   </Step>
 </Steps>
 
