@@ -149,13 +149,20 @@ export function AgentsList() {
   const { submit: submitCreateAgent, isPending: isCreatingAgent } = useCreateAgentMutation();
 
   const deleteMutation = useMutation({
-    mutationFn: ({ identifier, deleteFromProvider }: { identifier: string; deleteFromProvider?: boolean }) =>
+    mutationFn: ({
+      identifier,
+      deleteFromProvider,
+    }: {
+      identifier: string;
+      name: string;
+      deleteFromProvider?: boolean;
+    }) =>
       deleteAgent(requireEnvironment(currentEnvironment, 'No environment selected'), identifier, {
         deleteFromProvider,
       }),
-    onSuccess: async (_, { identifier }) => {
+    onSuccess: async (_, { identifier, name }) => {
       setAgentToDelete(null);
-      showSuccessToast('Agent deleted', 'The agent was removed.');
+      showSuccessToast(`Agent "${name}" deleted`, 'The agent was removed.');
 
       track(TelemetryEvent.AGENT_DELETED_FROM_DASHBOARD, { agentIdentifier: identifier });
 
@@ -602,7 +609,11 @@ export function AgentsList() {
         }}
         onConfirm={({ deleteFromProvider }) => {
           if (agentToDelete) {
-            deleteMutation.mutate({ identifier: agentToDelete.identifier, deleteFromProvider });
+            deleteMutation.mutate({
+              identifier: agentToDelete.identifier,
+              name: agentToDelete.name,
+              deleteFromProvider,
+            });
           }
         }}
         agentName={agentToDelete?.name ?? ''}
