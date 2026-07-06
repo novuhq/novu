@@ -236,9 +236,7 @@ export function SettingsTabs({ routes, rootRoute }: SettingsTabsProps) {
                   />
                 )}
                 {EE_AUTH_PROVIDER === 'clerk' ? (
-                  <OrganizationProfile appearance={clerkAppearance} afterLeaveOrganizationUrl={AFTER_LEAVE_ORG_URL}>
-                    <OrganizationProfile.Page label="general" />
-                  </OrganizationProfile>
+                  <OrganizationProfile appearance={clerkAppearance} afterLeaveOrganizationUrl={AFTER_LEAVE_ORG_URL} />
                 ) : (
                   <TeamMembers appearance={clerkAppearance} />
                 )}

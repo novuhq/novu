@@ -90,9 +90,7 @@ export function OrganizationSettings({ clerkAppearance }: { clerkAppearance: Cle
       <div>
         <h1 className="text-label-sm text-text-strong mb-3">Organization Settings</h1>
         {EE_AUTH_PROVIDER === 'clerk' ? (
-          <OrganizationProfile appearance={clerkAppearance} afterLeaveOrganizationUrl={AFTER_LEAVE_ORG_URL}>
-            <OrganizationProfile.Page label="members" />
-          </OrganizationProfile>
+          <OrganizationProfile appearance={clerkAppearance} afterLeaveOrganizationUrl={AFTER_LEAVE_ORG_URL} />
         ) : (
           <BetterAuthOrganizationSettings />
         )}

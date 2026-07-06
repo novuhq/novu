@@ -609,8 +609,8 @@ const CreateWorkflowButton = () => {
           Create workflow
         </Button>
       </ButtonGroupItem>
-      <ButtonGroupItem asChild>
-        <DropdownMenu modal={false}>
+      <DropdownMenu modal={false}>
+        <ButtonGroupItem asChild>
           <DropdownMenuTrigger asChild>
             <Button
               mode="gradient"
@@ -620,18 +620,18 @@ const CreateWorkflowButton = () => {
               leadingIcon={RiArrowDownSLine}
             ></Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56">
-            <DropdownMenuItem className="cursor-pointer" onSelect={handleCreateWorkflow}>
-              <RiFileAddLine />
-              From Blank
-            </DropdownMenuItem>
-            <DropdownMenuItem className="cursor-pointer" onSelect={navigateToTemplateStore}>
-              <RiFileMarkedLine />
-              From Template
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </ButtonGroupItem>
+        </ButtonGroupItem>
+        <DropdownMenuContent className="w-56">
+          <DropdownMenuItem className="cursor-pointer" onSelect={handleCreateWorkflow}>
+            <RiFileAddLine />
+            From Blank
+          </DropdownMenuItem>
+          <DropdownMenuItem className="cursor-pointer" onSelect={navigateToTemplateStore}>
+            <RiFileMarkedLine />
+            From Template
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </ButtonGroupRoot>
   );
 };
