@@ -1,228 +1,109 @@
 ---
 title: 'Multi-tenancy'
-description: "Learn how to implement multi-tenant notifications in Novu by scoping subscribers and workflow content per tenant using the tenants API and template overrides."
+description: "Learn how to implement multi-tenant notifications in Novu using contexts to isolate Inbox feeds, scope preferences, and personalize workflow content per tenant."
 ---
 
+Multi-tenancy is a common requirement for applications that serve multiple organizations, workspaces, or customers from a single Novu project. Tenants are also commonly called workspaces or organizations.
 
-Multi-tenancy is a common use case for a lot of companies that have multiple organizations that use their applications. In some cases, there is a need to separate the behavior of the notification system depending on the individual tenants.
+Typical multi-tenancy goals include:
 
-Tenants are also commonly called workspaces or organizations.
+- Grouping each subscriber's Inbox feed by tenant
+- Scoping notification preferences per tenant
+- Adjusting notification content and branding per tenant
 
-Some of the common multi-tenancy use cases are:
+Novu supports multi-tenancy through [contexts](/platform/concepts/contexts). Use a `tenant` context to define tenant boundaries instead of duplicating subscribers, prefixing subscriber IDs, or maintaining separate workflows per tenant.
 
-- Group subscribers notification feeds by the tenant
-- Adjust the content of the notification depending on the tenant
+<Note>
+  New to contexts? Start with [Contexts](/platform/concepts/contexts) to understand how context scoping, persistence, and Inbox filtering work.
+</Note>
 
-## How to implement multi-tenancy in Novu
+## How multi-tenancy works in Novu
 
-Novu supports multi-tenancy out of the box, the most simple way to implement tenant separation is by prefixing the subscriber identifier with the <Tooltip tip="The tenant identifier is a unique identifier for the tenant in your application. Usually the tenant id in your database.">tenant identifier</Tooltip>
+Multi-tenancy in Novu is built on top of contexts. A `tenant` context identifies which organization a notification belongs to.
 
-<Tabs>
-  <Tab title="Node.js">
+When you trigger a workflow with a tenant context:
+
+- Notifications are associated with that tenant
+- The same subscriber can receive different notifications per tenant
+- [Inbox](/platform/inbox) preferences are scoped to the subscriber and tenant context combination
+
+When you initialize the Inbox with the same tenant context, the subscriber sees only notifications for that tenant.
+
+## Implement multi-tenancy with contexts
+
+<Steps>
+  <Step title="Define a tenant context">
+    A tenant context identifies a specific tenant. Use a simple string for the tenant ID, or a rich object when you need metadata such as company name, logo, or plan type.
+
+    ```ts
+    const tenantContext = {
+      tenant: {
+        id: "acme-corp",
+        data: {
+          name: "Acme Corporation",
+          plan: "enterprise",
+          logo: "https://cdn.acme.com/logo.png",
+        },
+      },
+    };
+    ```
+
+    Contexts are auto-created on first use. Manage them from the **Contexts** section in the Novu dashboard or through the [Contexts API](/api-reference/contexts/context-schema).
+  </Step>
+
+  <Step title="Trigger workflows with a tenant context">
+    Pass the tenant context when triggering a workflow. Keep the subscriber ID stable—use your application's user ID, not a tenant-prefixed value.
+
+    <Tabs>
+      <Tab title="Node.js">
 ```ts
 import { Novu } from "@novu/api";
 
 const novu = new Novu({ secretKey: "<YOUR_SECRET_KEY_HERE>" });
 
-const subscriberId = `${tenantId}:${userId}`;
-
 await novu.trigger({
-  workflowId: "workflow_identifier",
-  to: { subscriberId },
-  payload: { tenantId },
-});
-```
-  </Tab>
-  <Tab title="Python">
-```python
-import os
-import novu_py
-from novu_py import Novu
-
-subscriber_id = f"{tenant_id}:{user_id}"
-
-with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
-    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
-        workflow_id="workflow_identifier",
-        to={"subscriber_id": subscriber_id},
-        payload={"tenantId": tenant_id},
-    ))
-```
-  </Tab>
-  <Tab title="Go">
-```go
-import (
-    "context"
-    "fmt"
-    "os"
-
-    novugo "github.com/novuhq/novu-go"
-    "github.com/novuhq/novu-go/models/components"
-)
-
-s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
-
-subscriberID := fmt.Sprintf("%s:%s", tenantID, userID)
-
-res, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
-    WorkflowID: "workflow_identifier",
-    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
-        SubscriberID: subscriberID,
-    }),
-    Payload: map[string]any{
-        "tenantId": tenantID,
-    },
-}, nil)
-```
-  </Tab>
-  <Tab title="PHP">
-```php
-use novu;
-use novu\Models\Components;
-
-$sdk = novu\Novu::builder()
-    ->setSecurity('<YOUR_SECRET_KEY_HERE>')
-    ->build();
-
-$subscriberId = "{$tenantId}:{$userId}";
-
-$sdk->trigger(
-    triggerEventRequestDto: new Components\TriggerEventRequestDto(
-        workflowId: 'workflow_identifier',
-        to: new Components\SubscriberPayloadDto(subscriberId: $subscriberId),
-        payload: ['tenantId' => $tenantId],
-    ),
-);
-```
-  </Tab>
-  <Tab title=".NET">
-```csharp
-using Novu;
-using Novu.Models.Components;
-using System.Collections.Generic;
-
-var sdk = new NovuSDK(secretKey: "<YOUR_SECRET_KEY_HERE>");
-
-var subscriberId = $"{tenantId}:{userId}";
-
-await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
-    WorkflowId = "workflow_identifier",
-    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() {
-        SubscriberId = subscriberId,
-    }),
-    Payload = new Dictionary<string, object>() {
-        { "tenantId", tenantId },
-    },
-});
-```
-  </Tab>
-  <Tab title="Java">
-```java
-import co.novu.Novu;
-import co.novu.models.components.*;
-import java.util.Map;
-
-Novu novu = Novu.builder()
-    .secretKey("<YOUR_SECRET_KEY_HERE>")
-    .build();
-
-String subscriberId = tenantId + ":" + userId;
-
-novu.trigger()
-    .body(TriggerEventRequestDto.builder()
-        .workflowId("workflow_identifier")
-        .to(To2.of(SubscriberPayloadDto.builder()
-            .subscriberId(subscriberId)
-            .build()))
-        .payload(Map.of("tenantId", tenantId))
-        .build())
-    .call();
-```
-  </Tab>
-  <Tab title="cURL">
-```bash
-curl -L -g -X POST 'https://api.novu.co/v1/events/trigger' \
--H 'Content-Type: application/json' \
--H 'Accept: application/json' \
--H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
--d '{
-    "name": "workflow_identifier",
-    "to": { "subscriberId": "TENANT_ID:USER_ID" },
-    "payload": { "tenantId": "TENANT_ID" }
-}'
-```
-  </Tab>
-</Tabs>
-
-### Tenant in Inbox
-
-When using the Inbox feature, you can use the tenant identifier to group notifications by tenant.
-
-```tsx
-import { Inbox } from "@novu/react";
-
-function InboxComponent({ tenantId, userId }) {
-  return <Inbox subscriber={`${tenantId}:${userId}`} />;
-}
-```
-
-Each subscriber in a tenant will have it's own unique inbox feed, including a separate preference configuration set.
-
-## Adjusting notification content based on tenant
-
-When triggering a notification, you can pass a custom tenant object or identifier and use it to manipulate workflows or content.
-
-<Tabs>
-  <Tab title="Node.js">
-```ts
-import { Novu } from "@novu/api";
-
-const novu = new Novu({ secretKey: "<YOUR_SECRET_KEY_HERE>" });
-
-const subscriberId = `${tenantId}:${userId}`;
-
-await novu.trigger({
-  workflowId: "workflow_identifier",
-  to: { subscriberId },
-  payload: {
+  workflowId: "invoice-paid",
+  to: { subscriberId: "user-123" },
+  payload: { amount: "$250" },
+  context: {
     tenant: {
-      id: tenantId,
-      name: "Airbnb",
-      logo: "https://airbnb.com/logo.png",
-      primaryColor: "red",
+      id: "acme-corp",
+      data: {
+        name: "Acme Corporation",
+        plan: "enterprise",
+      },
     },
   },
 });
 ```
-  </Tab>
-  <Tab title="Python">
+      </Tab>
+      <Tab title="Python">
 ```python
 import os
 import novu_py
 from novu_py import Novu
 
-subscriber_id = f"{tenant_id}:{user_id}"
-
 with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
     novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
-        workflow_id="workflow_identifier",
-        to={"subscriber_id": subscriber_id},
-        payload={
+        workflow_id="invoice-paid",
+        to={"subscriber_id": "user-123"},
+        payload={"amount": "$250"},
+        context={
             "tenant": {
-                "id": tenant_id,
-                "name": "Airbnb",
-                "logo": "https://airbnb.com/logo.png",
-                "primaryColor": "red",
+                "id": "acme-corp",
+                "data": {
+                    "name": "Acme Corporation",
+                    "plan": "enterprise",
+                },
             },
         },
     ))
 ```
-  </Tab>
-  <Tab title="Go">
+      </Tab>
+      <Tab title="Go">
 ```go
 import (
     "context"
-    "fmt"
     "os"
 
     novugo "github.com/novuhq/novu-go"
@@ -231,25 +112,25 @@ import (
 
 s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
 
-subscriberID := fmt.Sprintf("%s:%s", tenantID, userID)
-
-res, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
-    WorkflowID: "workflow_identifier",
+s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "invoice-paid",
     To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
-        SubscriberID: subscriberID,
+        SubscriberID: "user-123",
     }),
-    Payload: map[string]any{
+    Payload: map[string]any{"amount": "$250"},
+    Context: map[string]any{
         "tenant": map[string]any{
-            "id":           tenantID,
-            "name":         "Airbnb",
-            "logo":         "https://airbnb.com/logo.png",
-            "primaryColor": "red",
+            "id": "acme-corp",
+            "data": map[string]any{
+                "name": "Acme Corporation",
+                "plan": "enterprise",
+            },
         },
     },
 }, nil)
 ```
-  </Tab>
-  <Tab title="PHP">
+      </Tab>
+      <Tab title="PHP">
 ```php
 use novu;
 use novu\Models\Components;
@@ -258,25 +139,25 @@ $sdk = novu\Novu::builder()
     ->setSecurity('<YOUR_SECRET_KEY_HERE>')
     ->build();
 
-$subscriberId = "{$tenantId}:{$userId}";
-
 $sdk->trigger(
     triggerEventRequestDto: new Components\TriggerEventRequestDto(
-        workflowId: 'workflow_identifier',
-        to: new Components\SubscriberPayloadDto(subscriberId: $subscriberId),
-        payload: [
+        workflowId: 'invoice-paid',
+        to: new Components\SubscriberPayloadDto(subscriberId: 'user-123'),
+        payload: ['amount' => '$250'],
+        context: [
             'tenant' => [
-                'id' => $tenantId,
-                'name' => 'Airbnb',
-                'logo' => 'https://airbnb.com/logo.png',
-                'primaryColor' => 'red',
+                'id' => 'acme-corp',
+                'data' => [
+                    'name' => 'Acme Corporation',
+                    'plan' => 'enterprise',
+                ],
             ],
         ],
     ),
 );
 ```
-  </Tab>
-  <Tab title=".NET">
+      </Tab>
+      <Tab title=".NET">
 ```csharp
 using Novu;
 using Novu.Models.Components;
@@ -284,25 +165,27 @@ using System.Collections.Generic;
 
 var sdk = new NovuSDK(secretKey: "<YOUR_SECRET_KEY_HERE>");
 
-var subscriberId = $"{tenantId}:{userId}";
-
 await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
-    WorkflowId = "workflow_identifier",
+    WorkflowId = "invoice-paid",
     To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() {
-        SubscriberId = subscriberId,
+        SubscriberId = "user-123",
     }),
     Payload = new Dictionary<string, object>() {
+        { "amount", "$250" },
+    },
+    Context = new Dictionary<string, object>() {
         { "tenant", new Dictionary<string, object>() {
-            { "id", tenantId },
-            { "name", "Airbnb" },
-            { "logo", "https://airbnb.com/logo.png" },
-            { "primaryColor", "red" },
+            { "id", "acme-corp" },
+            { "data", new Dictionary<string, object>() {
+                { "name", "Acme Corporation" },
+                { "plan", "enterprise" },
+            } },
         } },
     },
 });
 ```
-  </Tab>
-  <Tab title="Java">
+      </Tab>
+      <Tab title="Java">
 ```java
 import co.novu.Novu;
 import co.novu.models.components.*;
@@ -312,61 +195,132 @@ Novu novu = Novu.builder()
     .secretKey("<YOUR_SECRET_KEY_HERE>")
     .build();
 
-String subscriberId = tenantId + ":" + userId;
-
 novu.trigger()
     .body(TriggerEventRequestDto.builder()
-        .workflowId("workflow_identifier")
+        .workflowId("invoice-paid")
         .to(To2.of(SubscriberPayloadDto.builder()
-            .subscriberId(subscriberId)
+            .subscriberId("user-123")
             .build()))
-        .payload(Map.of("tenant", Map.ofEntries(
-            Map.entry("id", tenantId),
-            Map.entry("name", "Airbnb"),
-            Map.entry("logo", "https://airbnb.com/logo.png"),
-            Map.entry("primaryColor", "red"))))
+        .payload(Map.of("amount", "$250"))
+        .context(Map.ofEntries(
+            Map.entry("tenant", TriggerEventRequestDtoContextUnion.of(
+                TriggerEventRequestDtoContext2.builder()
+                    .id("acme-corp")
+                    .data(Map.ofEntries(
+                        Map.entry("name", "Acme Corporation"),
+                        Map.entry("plan", "enterprise")))
+                    .build()))))
         .build())
     .call();
 ```
-  </Tab>
-  <Tab title="cURL">
+      </Tab>
+      <Tab title="cURL">
 ```bash
 curl -L -g -X POST 'https://api.novu.co/v1/events/trigger' \
 -H 'Content-Type: application/json' \
 -H 'Accept: application/json' \
 -H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
 -d '{
-    "name": "workflow_identifier",
-    "to": { "subscriberId": "TENANT_ID:USER_ID" },
-    "payload": {
+    "name": "invoice-paid",
+    "to": { "subscriberId": "user-123" },
+    "payload": { "amount": "$250" },
+    "context": {
         "tenant": {
-            "id": "TENANT_ID",
-            "name": "Airbnb",
-            "logo": "https://airbnb.com/logo.png",
-            "primaryColor": "red"
+            "id": "acme-corp",
+            "data": {
+                "name": "Acme Corporation",
+                "plan": "enterprise"
+            }
         }
     }
 }'
 ```
-  </Tab>
-</Tabs>
+      </Tab>
+    </Tabs>
+  </Step>
 
-The tenant object will be available to use in the workflow editor as a variable for the following areas:
+  <Step title="Filter the Inbox by tenant">
+    Pass the same tenant context to the Inbox so each subscriber sees only notifications for their active tenant.
 
-- Content (use `{{payload.tenant.name}}` to display the tenant name in an email or any other channel)
-- Step Conditions (use `{{payload.tenant.id}}` to conditionally execute a step based on the tenant)
-- Use the Inbox [data object](/platform/inbox/configuration/data-object) to filter notifications by tenant.
+    ```tsx
+    import { Inbox } from "@novu/react";
+
+    function TenantInbox({ userId, tenant }) {
+      return (
+        <Inbox
+          applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+          subscriberId={userId}
+          context={{
+            tenant: {
+              id: tenant.id,
+              data: tenant.data,
+            },
+          }}
+        />
+      );
+    }
+    ```
+
+    When a subscriber switches tenants, re-render the Inbox with the new context. Novu refetches notifications and reconnects the WebSocket scope.
+
+    <Note>
+      Secure tenant context in production with `contextHash`. See [Inbox with context](/platform/inbox/configuration/inbox-with-context).
+    </Note>
+  </Step>
+
+  <Step title="Personalize content per tenant">
+    Use tenant metadata in templates with the `{{context}}` helper:
+
+    ```liquid
+    Hello {{subscriber.firstName}}, your {{context.tenant.data.plan}} plan
+    on {{context.tenant.data.name}} just renewed.
+    ```
+
+    You can also branch workflow logic on tenant data in [step conditions](/platform/workflow/add-and-configure-steps/step-conditions). See [Contexts in workflows](/platform/workflow/advanced-features/contexts/contexts-in-workflows).
+  </Step>
+</Steps>
+
+## Tenant context in the Inbox
+
+The Inbox uses exact-match context filtering. The tenant context on `<Inbox />` must match the context used at trigger time.
+
+| Workflow context | Inbox context | Displayed? |
+| --- | --- | --- |
+| `{ tenant: { id: "acme-corp" } }` | `{ tenant: { id: "acme-corp" } }` | Yes |
+| `{ tenant: { id: "acme-corp" } }` | `{ tenant: { id: "globex" } }` | No |
+| `{ tenant: { id: "acme-corp" } }` | `{}` | No |
+
+Each subscriber gets a separate Inbox feed and preference configuration per tenant context.
 
 ## Frequently asked questions
 
-The following are the frequently asked questions about multi-tenancy in Novu.
-
 <AccordionGroup>
   <Accordion title="Can I use a different delivery provider for each tenant?">
-    Currently, we do not support using a different delivery provider for each tenant. You can reach out to support@novu.co in case this is a feature required for your use case.
+    Currently, Novu does not support using a different delivery provider per tenant. Contact support@novu.co if this is required for your use case.
   </Accordion>
 
-  <Accordion title="Can I specify different workflow preferences for each tenant?">
-    We don't support specifying different workflow preferences for each tenant. You can reach out to support@novu.co in case this is a feature required for your use case.
+  <Accordion title="Can subscribers manage different preferences per tenant?">
+    Yes. When you scope the Inbox with a tenant context, preferences are stored per subscriber and tenant context combination. A subscriber can enable email for one tenant and disable it for another.
+  </Accordion>
+
+  <Accordion title="Can I combine tenant context with other context types?">
+    Yes. You can pass up to five context keys per trigger—for example, `tenant` and `app` together. The Inbox must declare the same combined context to display those notifications. See [Contexts](/platform/concepts/contexts).
   </Accordion>
 </AccordionGroup>
+
+## Related guides
+
+<CardGroup cols={2}>
+  <Card title="Contexts" icon="layers" href="/platform/concepts/contexts">
+    Learn what contexts are and how they work across Novu.
+  </Card>
+  <Card title="Multi-tenancy in the Inbox" icon="inbox" href="/platform/inbox/advanced-features/multi-tenancy">
+    End-to-end Inbox setup for multi-tenant applications.
+  </Card>
+  <Card title="Manage contexts" icon="database" href="/platform/workflow/advanced-features/contexts/manage-contexts">
+    Create, update, and delete tenant contexts through the API.
+  </Card>
+  <Card title="Inbox with context" icon="shield" href="/platform/inbox/configuration/inbox-with-context">
+    Secure tenant context with `contextHash`.
+  </Card>
+</CardGroup>
