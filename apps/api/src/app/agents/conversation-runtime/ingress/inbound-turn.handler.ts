@@ -22,7 +22,6 @@ import { LinkTelegramChatToSubscriberCommand } from '../../../telegram-linking/l
 import { LinkTelegramChatToSubscriber } from '../../../telegram-linking/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.usecase';
 import { TelegramStartCodeService } from '../../../telegram-linking/telegram-start-code.service';
 import { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
-import { parseToolApprovalActionId } from '../../managed-runtime/tool-approval/approval-card.builder';
 import {
   trackAgentInboundAction,
   trackAgentInboundMessage,
@@ -32,6 +31,7 @@ import {
 import { AgentEventEnum } from '../../shared/enums/agent-event.enum';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { captureAgentException, captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
+import { parseToolApprovalActionId } from '../../shared/tool-approval/action-id';
 import { extractMsTeamsTenantId } from '../../shared/util/msteams-activity';
 import { type AutoProvisionPlatform, isAutoProvisionPlatform } from '../../shared/util/platform-endpoint-config';
 import { InboundAckService } from '../ack/inbound-ack.service';

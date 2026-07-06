@@ -192,6 +192,7 @@ export type MessageContent = string | ChatElement;
 export interface ReplyContent {
   markdown?: string;
   card?: CardElement;
+  toolApprovalCard?: ToolApprovalCard;
   files?: FileRef[];
 }
 
@@ -221,6 +222,34 @@ export interface AgentToolCall {
 }
 
 /**
+ * Presentation descriptor for Novu's built-in tool-approval card. Returned by the
+ * injected `approvalCard()` helper. Novu renders it natively on Slack and as a
+ * portable fallback elsewhere; Approve/Deny action ids are always supplied by Novu.
+ *
+ * Channel mapping (self-hosted):
+ * - **Slack (native card):** `icon`, `title`, `subtitle`, `body`, `approveLabel`, `denyLabel`
+ * - **Other channels (portable card):** `title`, `subtitle`, `approveLabel`, `denyLabel`
+ *
+ * `icon` and `body` are ignored on non-Slack channels — the portable fallback has no
+ * card image or body block. Catalog icons are 32×32; custom `https://` URLs should match.
+ */
+export interface ToolApprovalCard {
+  type: 'tool-approval-card';
+  /** Slack only. Catalog id (`'stripe'`), `https://` URL, or omit to auto-match the tool name. Use 32×32 px for custom URLs. */
+  icon?: string;
+  /** All channels. Card title. Defaults to `Tool approval required`. */
+  title?: string;
+  /** All channels. Card subtitle; auto-generated from the tool name/input when omitted. */
+  subtitle?: string;
+  /** Slack only. Optional markdown body (e.g. argument preview). Not shown on portable fallback. */
+  body?: string;
+  /** All channels. Approve button label. Defaults to `Approve`. */
+  approveLabel?: string;
+  /** All channels. Deny button label. Defaults to `Deny`. */
+  denyLabel?: string;
+}
+
+/**
  * Returned by `ctx.toolApproval.request()`. Return it from `onMessage` to post
  * an approval card and end the turn until the user approves or denies.
  */
@@ -232,12 +261,16 @@ export class PendingApproval {
 export interface ToolApprovalConfig {
   /**
    * Build the approval message shown while waiting for a decision.
-   * Return a string or card. Defaults to a built-in Approve/Deny card.
    *
-   * Use the provided `actionIds` on your `<Button>` elements so Novu can route
-   * the click back to `onToolApproval`.
+   * Return `approvalCard(...)` for Novu's channel-adaptive card (native on Slack,
+   * fallback elsewhere), or return a string/`Card` to take full control (portable
+   * on every channel). Use the provided `actionIds` on your own buttons.
    */
-  renderApproval?: (args: { toolCall: AgentToolCall; actionIds: { approve: string; deny: string } }) => MessageContent;
+  renderApproval?: (args: {
+    toolCall: AgentToolCall;
+    actionIds: { approve: string; deny: string };
+    approvalCard: (overrides?: Omit<ToolApprovalCard, 'type'>) => ToolApprovalCard;
+  }) => MessageContent | ToolApprovalCard;
 }
 
 /** Passed to `onToolApproval` when the user clicks Approve or Deny. */

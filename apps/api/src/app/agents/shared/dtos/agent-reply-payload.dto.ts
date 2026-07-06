@@ -123,10 +123,10 @@ export class IsValidReplyContent implements ValidatorConstraintInterface {
   validate(content: ReplyContentDto): boolean {
     if (!content) return true;
 
-    const fields = [content.markdown, content.card].filter((v) => v !== undefined);
+    const fields = [content.markdown, content.card, content.toolApprovalCard].filter((v) => v !== undefined);
     if (fields.length !== 1) return false;
 
-    if (content.files?.length && !content.markdown && !content.card) return false;
+    if (content.files?.length && !content.markdown && !content.card && !content.toolApprovalCard) return false;
     if ((content.files?.length ?? 0) > MAX_FILES_PER_MESSAGE) return false;
 
     for (const file of content.files ?? []) {
@@ -142,7 +142,7 @@ export class IsValidReplyContent implements ValidatorConstraintInterface {
 
   defaultMessage(): string {
     return (
-      'Content must have exactly one of markdown or card. Files require markdown or card. ' +
+      'Content must have exactly one of markdown, card, or toolApprovalCard. Files require one of them. ' +
       `At most ${MAX_FILES_PER_MESSAGE} files are allowed. Each file needs exactly one of data or url. ` +
       'Inline data must be 5 MB or smaller.'
     );
@@ -179,6 +179,11 @@ export class ReplyContentDto {
   @IsOptional()
   @IsObject()
   card?: Record<string, unknown>;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsObject()
+  toolApprovalCard?: Record<string, unknown>;
 
   @ApiPropertyOptional()
   @IsOptional()
