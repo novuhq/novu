@@ -59,7 +59,7 @@ export const chatProviders: IProviderConfig[] = [
     displayName: 'Webex Messaging',
     channel: ChannelTypeEnum.CHAT,
     credentials: webexMessagingConfig,
-    docReference: 'https://developer.webex.com/docs/integrations',
+    docReference: `https://docs.novu.co/platform/integrations/chat/webex-messaging${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'webex-messaging.svg', dark: 'webex-messaging.svg' },
   },
   {
