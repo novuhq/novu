@@ -54,6 +54,7 @@
                   "platform/concepts/integrations",
                   "platform/concepts/trigger",
                   "platform/concepts/preferences",
+                  "platform/concepts/contexts",
                   "platform/concepts/tenants"
                 ]
               },

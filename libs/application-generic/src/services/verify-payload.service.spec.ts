@@ -60,6 +60,23 @@ describe('VerifyPayloadService', () => {
       expect(after).to.equal(undefined);
     });
 
+    it('should not allow unsafe inherited property names via default values', () => {
+      const variables = [
+        {
+          name: 'toString.call',
+          type: TemplateVariableTypeEnum.STRING,
+          defaultValue: 'yes',
+          required: false,
+        },
+      ];
+      const toStringCall = Object.prototype.toString.call;
+
+      service.fillDefaults(variables);
+
+      expect(Object.prototype.toString.call).to.equal(toStringCall);
+      expect(typeof Object.prototype.toString.call).to.equal('function');
+    });
+
     it('should reject variable path segments outside the allowlist', () => {
       const variables = [
         {
