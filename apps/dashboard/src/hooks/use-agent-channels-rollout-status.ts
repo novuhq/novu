@@ -18,11 +18,15 @@ type RolloutStatus = {
   isSettled: boolean;
 };
 
-function isRolloutCapableLink(link: AgentIntegrationLink, isMsTeamsWhatsNextEnabled: boolean): boolean {
+function isRolloutCapableLink(
+  link: AgentIntegrationLink,
+  isMsTeamsWhatsNextEnabled: boolean,
+  isEmailWhatsNextEnabled: boolean
+): boolean {
   const providerId = link.integration.providerId;
 
   if (providerId === EmailProviderIdEnum.NovuAgent) {
-    return true;
+    return isEmailWhatsNextEnabled;
   }
 
   if (!providerHasWhatsNextPhase(providerId)) {
@@ -55,11 +59,12 @@ function isEmailRolloutComplete(
 export function useAgentChannelsRolloutStatus(links: AgentIntegrationLink[]): RolloutStatus {
   const { currentEnvironment } = useEnvironment();
   const isMsTeamsWhatsNextEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_AGENT_MSTEAMS_WHATS_NEXT_ENABLED);
+  const isEmailWhatsNextEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_AGENT_EMAIL_WHATS_NEXT_ENABLED);
   const { integrations, isLoading: isIntegrationsLoading } = useFetchIntegrations();
 
   const rolloutLinks = useMemo(
-    () => links.filter((link) => isRolloutCapableLink(link, isMsTeamsWhatsNextEnabled)),
-    [links, isMsTeamsWhatsNextEnabled]
+    () => links.filter((link) => isRolloutCapableLink(link, isMsTeamsWhatsNextEnabled, isEmailWhatsNextEnabled)),
+    [links, isMsTeamsWhatsNextEnabled, isEmailWhatsNextEnabled]
   );
 
   const chatRolloutLinks = useMemo(
