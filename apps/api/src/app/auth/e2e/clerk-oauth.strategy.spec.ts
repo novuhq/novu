@@ -23,7 +23,11 @@ describe('ClerkOAuthStrategy', () => {
     users: { getOrganizationMembershipList: sinon.SinonStub };
   };
 
+  // `authScheme` is assigned by EEUserAuthGuard before passport runs; OAUTH2
+  // marks requests routed through the guard branch that enforces the
+  // `oauth_accessible` endpoint opt-in.
   const mockRequest = {
+    authScheme: ApiAuthSchemeEnum.OAUTH2,
     headers: {
       authorization: 'Bearer oat_test_token',
     },
@@ -149,11 +153,34 @@ describe('ClerkOAuthStrategy', () => {
 
     it('should throw UnauthorizedException when the authorization header is missing', async () => {
       try {
-        await strategy.validate({ headers: {} });
+        await strategy.validate({ authScheme: ApiAuthSchemeEnum.OAUTH2, headers: {} });
         expect.fail('Should have thrown an error');
       } catch (err) {
         expect(err).to.be.instanceOf(UnauthorizedException);
       }
+    });
+
+    it('should reject a valid OAuth token when the request was not routed through the OAuth2 scheme', async () => {
+      // Passport falls through the guard's strategy array (e.g. from a failed
+      // keyless attempt), so a request detected as another scheme must not be
+      // authenticated here — its guard branch never checked `oauth_accessible`.
+      const keylessRoutedRequest = {
+        authScheme: ApiAuthSchemeEnum.KEYLESS,
+        headers: {
+          authorization: 'Bearer oat_test_token',
+          'novu-application-identifier': 'pk_keyless_invalid',
+        },
+      };
+
+      try {
+        await strategy.validate(keylessRoutedRequest);
+        expect.fail('Should have thrown an error');
+      } catch (err) {
+        expect(err).to.be.instanceOf(UnauthorizedException);
+        expect(err.message).to.equal('OAuth authentication is not allowed for this request');
+      }
+
+      expect(mockClerkClient.authenticateRequest.called).to.be.false;
     });
 
     it('should throw UnauthorizedException when the user has no organization membership', async () => {
@@ -227,6 +254,7 @@ describe('ClerkOAuthStrategy', () => {
       mockEnvironmentRepository.findOne.resolves({ _id: 'env-prod-456' });
 
       const result: UserSessionData = await strategy.validate({
+        authScheme: ApiAuthSchemeEnum.OAUTH2,
         headers: {
           authorization: 'Bearer oat_test_token',
           'novu-environment-id': 'env-prod-456',
@@ -250,6 +278,7 @@ describe('ClerkOAuthStrategy', () => {
 
       try {
         await strategy.validate({
+          authScheme: ApiAuthSchemeEnum.OAUTH2,
           headers: {
             authorization: 'Bearer oat_test_token',
             'novu-environment-id': 'env-other-org',

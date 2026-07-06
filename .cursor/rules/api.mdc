@@ -27,6 +27,7 @@ apps/api/migrations/clickhouse-migrations/ # ClickHouse schema migrations
 **Controllers**
 - Every protected route must use `@RequireAuthentication()`.
 - Routes accessible via user API keys or the official SDK must also use `@ExternalApiAccessible`.
+- Routes accessible via Clerk OAuth (DCR) access tokens must also use `@OAuthAccessible`.
 - Controller method names follow: `getEntityName`, `listEntityName`, `createEntityName`, `updateEntityName`, `deleteEntityName`.
 - List endpoints must support pagination and use `@SdkUsePagination`.
 - Group SDK endpoints with `@SdkGroupName` using `.` as the subresource separator (e.g., `Subscribers.Notifications`).
