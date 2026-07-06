@@ -1,4 +1,4 @@
-import type { Signal, ToolResult } from '@novu/framework';
+import type { Signal, ToolResult } from '@novu/framework/internal';
 import type { PlanModel } from 'chat';
 import { Type } from 'class-transformer';
 import { IsArray, IsBoolean, IsNotEmpty, IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';

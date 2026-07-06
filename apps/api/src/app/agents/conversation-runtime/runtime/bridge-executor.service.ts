@@ -12,7 +12,6 @@ import {
 import { ConversationActivityEntity, ConversationEntity, SubscriberEntity } from '@novu/dal';
 import type {
   AgentAction,
-  AgentBridgeRequest,
   AgentConversation,
   AgentHistoryEntry,
   AgentMessage,
@@ -20,8 +19,8 @@ import type {
   AgentReaction,
   AgentSubscriber,
 } from '@novu/framework';
-import { AgentEventEnum } from '@novu/framework';
-import { HttpHeaderKeysEnum } from '@novu/framework/internal';
+import type { AgentBridgeRequest } from '@novu/framework/internal';
+import { AgentEventEnum, HttpHeaderKeysEnum } from '@novu/framework/internal';
 import type { Message } from 'chat';
 import { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import { captureAgentException, captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
