@@ -1,7 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import { ITemplateVariable, TemplateSystemVariables } from '@novu/shared';
+import { isUnsafePathSegment, safeSetPath } from '../utils/safe-set-path';
 
-const PROTOTYPE_POLLUTION_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
 const TEMPLATE_VARIABLE_SEGMENT_REGEX = /^[a-zA-Z_][a-zA-Z0-9_-]*(?:\[\d+\])*$/;
 
 type PathPart = { kind: 'key'; value: string } | { kind: 'index'; value: number };
@@ -15,7 +15,7 @@ function getSegmentBaseName(segment: string): string {
 function isSafeVariablePathSegment(segment: string): boolean {
   const baseName = getSegmentBaseName(segment);
 
-  if (PROTOTYPE_POLLUTION_KEYS.has(baseName)) {
+  if (isUnsafePathSegment(baseName)) {
     return false;
   }
 
@@ -153,85 +153,14 @@ export class VerifyPayloadService {
         continue;
       }
 
-      this.setNestedValue(payload, pathParts, variable.defaultValue);
+      if (pathParts.length === 1 && variable.defaultValue === '') {
+        continue;
+      }
+
+      safeSetPath(payload, variable.name, variable.defaultValue);
     }
 
     return payload;
-  }
-
-  private setNestedValue(target: unknown, parts: PathPart[], value: string | boolean): void {
-    if (parts.length === 0) {
-      return;
-    }
-
-    if (parts.length === 1) {
-      const [part] = parts;
-
-      if (value === '') {
-        return;
-      }
-
-      if (part.kind === 'key') {
-        (target as Record<string, unknown>)[part.value] = value;
-
-        return;
-      }
-
-      const array = target as unknown[];
-
-      while (array.length <= part.value) {
-        array.push(undefined);
-      }
-
-      array[part.value] = value;
-
-      return;
-    }
-
-    const [head, ...tail] = parts;
-    const next = tail[0];
-
-    if (head.kind === 'key') {
-      const record = target as Record<string, unknown>;
-      const existing = record[head.value];
-
-      if (existing !== undefined && existing !== null && typeof existing !== 'object') {
-        return;
-      }
-
-      if (!existing) {
-        record[head.value] = next.kind === 'index' ? [] : Object.create(null);
-      } else if (next.kind === 'index' && !Array.isArray(existing)) {
-        return;
-      } else if (next.kind === 'key' && (typeof existing !== 'object' || Array.isArray(existing))) {
-        return;
-      }
-
-      this.setNestedValue(record[head.value], tail, value);
-
-      return;
-    }
-
-    const array = target as unknown[];
-    const existing = array[head.value];
-
-    if (existing !== undefined && existing !== null && typeof existing !== 'object') {
-      return;
-    }
-
-    while (array.length <= head.value) {
-      array.push(undefined);
-    }
-
-    if (existing === undefined || existing === null) {
-      array[head.value] = next.kind === 'index' ? [] : Object.create(null);
-    } else if (next.kind === 'index' && !Array.isArray(existing)) {
-      return;
-    } else if (next.kind === 'key' && (typeof existing !== 'object' || Array.isArray(existing))) {
-      return;
-    }
-
-    this.setNestedValue(array[head.value], tail, value);
   }
 
   isSystemVariable(variableName: string): boolean {
