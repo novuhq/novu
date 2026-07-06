@@ -7,6 +7,7 @@ import {
   PinoLogger,
 } from '@novu/application-generic';
 import { ChannelEndpointRepository, isDuplicateKeyError, SubscriberRepository } from '@novu/dal';
+import { ENDPOINT_TYPES } from '@novu/shared';
 import { CreateChannelEndpointCommand } from '../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.command';
 import { CreateChannelEndpoint } from '../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.usecase';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
@@ -53,6 +54,12 @@ export interface ResolveOrProvisionParams extends ResolveSubscriberParams {
   authorUserName?: string | null;
   /** True when the inbound message is itself from another bot — resolver short-circuits. */
   authorIsBot?: boolean;
+  /**
+   * MS Teams only: the Azure AD tenant the inbound user belongs to. For multi-tenant distribution
+   * this can be a customer tenant different from the bot's home tenant, and is persisted on the
+   * endpoint so deliveries target the right tenant. Ignored for other platforms.
+   */
+  platformTenantId?: string | null;
 }
 
 /**
@@ -412,6 +419,16 @@ export class AgentSubscriberResolver {
       })
     );
 
+    /*
+     * Only MS Teams endpoints carry a tenantId (the user's Azure AD tenant). Adding it to other
+     * platform endpoints (e.g. Slack) would fail their strict endpoint validators, so it is gated
+     * on the Teams endpoint type and the tenant being present.
+     */
+    const endpoint =
+      endpointConfig.endpointType === ENDPOINT_TYPES.MS_TEAMS_USER && params.platformTenantId
+        ? { userId: params.platformUserId, tenantId: params.platformTenantId }
+        : { userId: params.platformUserId };
+
     try {
       await this.createChannelEndpoint.execute(
         CreateChannelEndpointCommand.create({
@@ -420,7 +437,7 @@ export class AgentSubscriberResolver {
           integrationIdentifier: params.integrationIdentifier,
           subscriberId,
           type: endpointConfig.endpointType,
-          endpoint: { userId: params.platformUserId },
+          endpoint,
         })
       );
     } catch (err) {

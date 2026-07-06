@@ -1,11 +1,14 @@
-import type { CliDeviceSessionPollResponse, CreateCliDeviceSessionResponse } from '@novu/shared';
+import {
+  CLI_DEVICE_SESSION_CONNECT_MAX_POLL_SECONDS,
+  CLI_DEVICE_SESSION_NAME_NOVU_CONNECT,
+  type CliDeviceSessionPollResponse,
+  type CreateCliDeviceSessionResponse,
+} from '@novu/shared';
 import open from 'open';
 import ora from 'ora';
 import type { CloudRegionEnum } from '../../dev/enums';
 import { requestApiJson } from '../../shared/novu-http';
 import { ResolvedAuth } from '../types';
-
-const DEFAULT_TIMEOUT_MS = 5 * 60 * 1000;
 
 export interface BrowserAuthInput {
   apiUrl: string;
@@ -91,13 +94,18 @@ export async function browserDeviceAuth(input: BrowserAuthInput): Promise<Resolv
     });
 
     const pollIntervalMs = resolvePollIntervalMs(session.interval);
+    const maxPollMs =
+      input.name === CLI_DEVICE_SESSION_NAME_NOVU_CONNECT
+        ? CLI_DEVICE_SESSION_CONNECT_MAX_POLL_SECONDS * 1000
+        : session.expiresIn * 1000;
     let approved: Extract<CliDeviceSessionPollResponse, { status: 'approved' }>;
     try {
       approved = await pollUntilApproved({
         apiUrl: input.apiUrl,
         deviceCode: session.deviceCode,
         pollIntervalMs,
-        timeoutMs: input.timeoutMs ?? DEFAULT_TIMEOUT_MS,
+        timeoutMs: input.timeoutMs ?? session.expiresIn * 1000,
+        maxPollMs,
       });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
@@ -149,8 +157,11 @@ async function pollUntilApproved(params: {
   deviceCode: string;
   pollIntervalMs: number;
   timeoutMs: number;
+  maxPollMs: number;
 }): Promise<Extract<CliDeviceSessionPollResponse, { status: 'approved' }>> {
-  const deadline = Date.now() + params.timeoutMs;
+  const startedAt = Date.now();
+  const absoluteDeadline = startedAt + params.maxPollMs;
+  let deadline = Math.min(startedAt + params.timeoutMs, absoluteDeadline);
 
   while (Date.now() < deadline) {
     const payload = await requestApiJson<CliDeviceSessionPollResponse>(
@@ -169,6 +180,10 @@ async function pollUntilApproved(params: {
 
     if (payload.status === 'expired') {
       throw new Error('Authorization session expired. Please try again.');
+    }
+
+    if (payload.status === 'pending' && payload.expiresIn > 0) {
+      deadline = Math.min(Date.now() + payload.expiresIn * 1000, absoluteDeadline);
     }
 
     await sleep(params.pollIntervalMs);

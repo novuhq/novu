@@ -1,0 +1,241 @@
+---
+title: "useNovu"
+description: "Learn how to use the useNovu hook to access the Novu client instance in your React application"
+---
+
+
+The `useNovu` hook provides direct access to the [Novu client instance](/platform/inbox/headless-mode) from anywhere in your application. This hook must be used within a component that is wrapped by the `NovuProvider`.
+
+## Return Value
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `novu` | `Novu` | The Novu client instance that provides access to all Novu API methods |
+
+## Example usage
+
+Here's how to use the `useNovu` hook to interact with the Novu client:
+
+```tsx
+import { useNovu } from "@novu/react";
+
+function NotificationActions() {
+  const novu = useNovu();
+
+  const markAllAsRead = async () => {
+    try {
+      await novu.notifications.readAll();
+      console.log("All notifications marked as read");
+    } catch (error) {
+      console.error("Failed to mark all as read:", error);
+    }
+  };
+
+  const archiveAllRead = async () => {
+    try {
+      await novu.notifications.archiveAllRead();
+      console.log("All read notifications archived");
+    } catch (error) {
+      console.error("Failed to archive read notifications:", error);
+    }
+  };
+
+  return (
+    <div className="flex gap-2">
+      <button
+        onClick={markAllAsRead}
+        className="px-3 py-1 bg-blue-500 text-white rounded-md"
+      >
+        Mark All as Read
+      </button>
+      <button
+        onClick={archiveAllRead}
+        className="px-3 py-1 bg-gray-500 text-white rounded-md"
+      >
+        Archive All Read
+      </button>
+    </div>
+  );
+}
+```
+
+### Managing individual notifications
+
+The Novu client provides methods for managing individual notifications:
+
+```tsx
+import type { Notification as INotification } from "@novu/react";
+import { useNovu } from "@novu/react";
+
+function NotificationItem({ notification }: { notification: INotification }) {
+  const novu = useNovu();
+
+  const markAsRead = async () => {
+    try {
+      await novu.notifications.read({ notificationId: notification.id });
+      console.log("Notification marked as read");
+    } catch (error) {
+      console.error("Failed to mark as read:", error);
+    }
+  };
+
+  const markAsUnread = async () => {
+    try {
+      await novu.notifications.unread({ notificationId: notification.id });
+      console.log("Notification marked as unread");
+    } catch (error) {
+      console.error("Failed to mark as unread:", error);
+    }
+  };
+
+  const archive = async () => {
+    try {
+      await novu.notifications.archive({ notificationId: notification.id });
+      console.log("Notification archived");
+    } catch (error) {
+      console.error("Failed to archive:", error);
+    }
+  };
+
+  return (
+    <div className="p-4 border rounded-lg">
+      <h3 className="font-medium">{notification.subject}</h3>
+      <p>{notification.body}</p>
+      <div className="flex gap-2 mt-2">
+        <button
+          onClick={markAsRead}
+          className="px-2 py-1 text-sm bg-blue-50 text-blue-600 rounded"
+          disabled={notification.isRead}
+        >
+          Mark as Read
+        </button>
+        <button
+          onClick={markAsUnread}
+          className="px-2 py-1 text-sm bg-blue-50 text-blue-600 rounded"
+          disabled={!notification.isRead}
+        >
+          Mark as Unread
+        </button>
+        <button
+          onClick={archive}
+          className="px-2 py-1 text-sm bg-gray-50 text-gray-600 rounded"
+          disabled={notification.isArchived}
+        >
+          Archive
+        </button>
+      </div>
+    </div>
+  );
+}
+```
+
+### Updating single workflow's channel preferences
+
+Workflow's channel preferences can be updated using `novu.preferences.update` method.
+
+```tsx
+import { useNovu } from '@novu/react';
+
+function UpdateSinglePreferences() {
+  const { novu } = useNovu();
+
+  const updatePreferences = async () => {
+    await novu.preferences.update({
+      workflowId: 'workflow_id',
+      channels: {
+        email: false,
+        sms: true,
+      },
+    });
+  };
+
+  return <Button title="Update Single Preferences" onPress={updatePreferences} />;
+}
+```
+
+### Updating multiple workflow's channel preferences
+
+Using `novu.preferences.bulkUpdate` multiple workflow's channel preferences can be updated at once.
+
+```tsx
+import { useNovu } from "@novu/react";
+
+function UpdateMultiplePreferences() {
+  const novu = useNovu();
+
+  const updateBulkPreferences = async () => {
+    try {
+      await novu.preferences.bulkUpdate([
+      {
+        workflowId: "workflowId_1",
+        channels: {
+          email: true,
+          in_app: false,
+        },
+      },
+      {
+        workflowId: "workflowId_2",
+        channels: {
+          email: true,
+          in_app: false,
+        },
+      },
+    ]);
+    } catch (error) {
+      console.error("Failed to update preferences:", error);
+    }
+  };
+
+  return (
+    <button onClick={updateBulkPreferences}>Update Bulk Preferences</button>
+  );
+}
+```
+
+### Listening to real-time events
+
+The Novu client allows you to listen for real-time events:
+
+```tsx
+import { useNovu } from "@novu/react";
+import { useEffect } from "react";
+import type { Notification as INotification } from "@novu/react";
+
+function NotificationListener() {
+  const novu = useNovu();
+
+  useEffect(() => {
+    // Handler for new notifications
+    const handleNewNotification = ({ result }: { result: INotification }) => {
+      console.log("New notification:", result.subject);
+      // You can use a toast library to show notifications
+      // toast({
+      //   title: result.subject,
+      //   description: result.body,
+      // });
+    };
+
+    // Handler for unread count changes
+    const handleUnreadCountChanged = ({ result }: { result: number }) => {
+      // Update favicon or title to show unread count
+      document.title = result > 0 ? `(${result}) My App` : "My App";
+    };
+
+    // Subscribe to events
+    novu.on("notifications.notification_received", handleNewNotification);
+    novu.on("notifications.unread_count_changed", handleUnreadCountChanged);
+
+    // Cleanup function
+    return () => {
+      novu.off("notifications.notification_received", handleNewNotification);
+      novu.off("notifications.unread_count_changed", handleUnreadCountChanged);
+    };
+  }, [novu]);
+
+  return null; // This component doesn't render anything
+}
+```
+
+<Note>
+  The Novu client instance provides access to all the functionality available in the [Headless API](/platform/sdks/javascript). For a complete list of methods and events, refer to the API documentation.
+</Note>

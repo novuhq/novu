@@ -1,5 +1,6 @@
 import { motion } from 'motion/react';
 import { ReactNode } from 'react';
+import { cn } from '@/utils/ui';
 
 type OnboardingShellProps = {
   left: ReactNode;
@@ -9,6 +10,8 @@ type OnboardingShellProps = {
    */
   right?: ReactNode;
   maxLeftWidth?: string;
+  /** Tailwind classes for the inner content container (e.g. responsive max-width). Overrides `maxLeftWidth` when set. */
+  contentClassName?: string;
   alignLeft?: 'center' | 'top';
 };
 
@@ -24,7 +27,13 @@ const GLOW_BACKGROUND = [
   'radial-gradient(60% 50% at 88% 12%, rgba(245,226,240,0.45) 0%, rgba(245,226,240,0) 70%)',
 ].join(', ');
 
-export function OnboardingShell({ left, right, maxLeftWidth = '480px', alignLeft = 'center' }: OnboardingShellProps) {
+export function OnboardingShell({
+  left,
+  right,
+  maxLeftWidth = '480px',
+  contentClassName,
+  alignLeft = 'center',
+}: OnboardingShellProps) {
   const isSingleColumn = right === undefined || right === null;
 
   return (
@@ -50,8 +59,8 @@ export function OnboardingShell({ left, right, maxLeftWidth = '480px', alignLeft
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-          className="w-full px-8"
-          style={{ maxWidth: maxLeftWidth }}
+          className={cn('w-full px-8', contentClassName)}
+          style={contentClassName ? undefined : { maxWidth: maxLeftWidth }}
         >
           {left}
         </motion.div>

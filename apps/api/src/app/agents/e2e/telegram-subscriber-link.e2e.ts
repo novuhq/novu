@@ -9,8 +9,8 @@ import { ChannelTypeEnum, ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/share
 import { testServer, UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import sinon from 'sinon';
+import { TelegramStartCodeService } from '../../telegram-linking/telegram-start-code.service';
 import { AgentConfigResolver } from '../channels/agent-config-resolver.service';
-import { TelegramStartCodeService } from '../channels/telegram-linking/telegram-start-code.service';
 import { AgentInboundHandler } from '../conversation-runtime/ingress/inbound-turn.handler';
 import { AgentEventEnum } from '../shared/enums/agent-event.enum';
 import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';

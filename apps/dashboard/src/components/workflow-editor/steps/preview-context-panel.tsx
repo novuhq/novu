@@ -1,4 +1,4 @@
-import { ISubscriberResponseDto } from '@novu/shared';
+import { DEFAULT_LOCALE, ISubscriberResponseDto } from '@novu/shared';
 import { JSONSchema7 } from 'json-schema';
 
 import { useCallback, useEffect, useMemo, useRef } from 'react';
@@ -13,6 +13,7 @@ import { StepTypeEnum } from '@/utils/enums';
 import { usePreviewContext } from '../../../hooks/use-preview-context';
 import { PayloadSchemaDrawer } from '../payload-schema-drawer';
 import {
+  PreviewActorSection,
   PreviewContextSection,
   PreviewEnvSection,
   PreviewPayloadSection,
@@ -29,7 +30,7 @@ import {
   PreviewSubscriberData,
   ValidationErrors,
 } from './types/preview-context.types';
-import { createSubscriberData, parseJsonValue } from './utils/preview-context.utils';
+import { createDefaultActorData, createSubscriberData, parseJsonValue } from './utils/preview-context.utils';
 
 function usePrevious<T>(value: T): T | undefined {
   const ref = useRef<T | undefined>(undefined);
@@ -107,6 +108,7 @@ export function PreviewContextPanel({
     () => ({
       payload: workflow?.payloadSchema,
       subscriber: previewSchema?.properties?.subscriber as JSONSchema7 | undefined,
+      actor: previewSchema?.properties?.actor as JSONSchema7 | undefined,
       context: previewSchema?.properties?.context as JSONSchema7 | undefined,
       steps: previewSchema?.properties?.steps as JSONSchema7 | undefined,
       env: previewSchema?.properties?.env as JSONSchema7 | undefined,
@@ -123,6 +125,12 @@ export function PreviewContextPanel({
     organizationSettings?.data?.defaultLocale
   );
 
+  const createDefaultActorDataWithLocale = useCallback(() => {
+    const defaultLocale = selectedLocale || organizationSettings?.data?.defaultLocale || DEFAULT_LOCALE;
+
+    return createDefaultActorData(defaultLocale);
+  }, [selectedLocale, organizationSettings?.data?.defaultLocale]);
+
   const {
     loadPersistedPayload,
     savePersistedPayload,
@@ -130,6 +138,9 @@ export function PreviewContextPanel({
     loadPersistedSubscriber,
     savePersistedSubscriber,
     clearPersistedSubscriber,
+    loadPersistedActor,
+    savePersistedActor,
+    clearPersistedActor,
     loadPersistedContext,
     savePersistedContext,
     clearPersistedContext,
@@ -146,6 +157,7 @@ export function PreviewContextPanel({
       defaultAccordionValue: DEFAULT_ACCORDION_VALUES,
       defaultErrors: {
         subscriber: null,
+        actor: null,
         payload: null,
         steps: null,
         context: null,
@@ -159,6 +171,10 @@ export function PreviewContextPanel({
 
         if (data.subscriber !== undefined) {
           savePersistedSubscriber(data.subscriber);
+        }
+
+        if (data.actor !== undefined) {
+          savePersistedActor(data.actor);
         }
 
         if (data.context !== undefined) {
@@ -181,6 +197,7 @@ export function PreviewContextPanel({
     isPayloadSchemaEnabled,
     loadPersistedPayload,
     loadPersistedSubscriber,
+    loadPersistedActor,
     loadPersistedContext,
   });
 
@@ -227,6 +244,14 @@ export function PreviewContextPanel({
     [updatePreviewSection, selectedLocale, onLocaleChange]
   );
 
+  const handleActorSelection = useCallback(
+    (subscriber: ISubscriberResponseDto) => {
+      const actorData = createSubscriberData(subscriber);
+      updatePreviewSection('actor', actorData);
+    },
+    [updatePreviewSection]
+  );
+
   const handleClearPersistedPayload = useCallback(() => {
     clearPersistedPayload();
 
@@ -240,6 +265,11 @@ export function PreviewContextPanel({
     clearPersistedSubscriber();
     updatePreviewSection('subscriber', createDefaultSubscriberData());
   }, [clearPersistedSubscriber, updatePreviewSection, createDefaultSubscriberData]);
+
+  const handleClearPersistedActor = useCallback(() => {
+    clearPersistedActor();
+    updatePreviewSection('actor', createDefaultActorDataWithLocale());
+  }, [clearPersistedActor, updatePreviewSection, createDefaultActorDataWithLocale]);
 
   const handleClearPersistedContext = useCallback(() => {
     clearPersistedContext();
@@ -270,6 +300,15 @@ export function PreviewContextPanel({
           schema={schemas.subscriber}
           onSubscriberSelect={handleSubscriberSelection}
           onClearPersisted={canClearPersisted ? handleClearPersistedSubscriber : undefined}
+        />
+
+        <PreviewActorSection
+          error={errors.actor}
+          actor={previewContext.actor}
+          schema={schemas.actor}
+          onUpdate={updatePreviewSection}
+          onActorSelect={handleActorSelection}
+          onClearPersisted={canClearPersisted ? handleClearPersistedActor : undefined}
         />
 
         <PreviewStepResultsSection

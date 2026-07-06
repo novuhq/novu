@@ -44,7 +44,8 @@ export class AgentIntegrationResponseIntegrationDto {
   @ApiPropertyOptional({
     description:
       'When true, the worker drops inbound mail addressed to this agent on the shared `agentconnect.sh` domain. ' +
-      'Custom-domain routes still deliver. Only meaningful on cloud-enabled NovuAgent integrations.',
+      'Custom-domain routes still deliver. Meaningful on cloud-enabled NovuAgent integrations; on self-hosted it ' +
+      'is set defensively at provisioning time and is effectively redundant.',
   })
   sharedInboxDisabled?: boolean;
 }

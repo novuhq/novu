@@ -537,7 +537,7 @@ describe('Session', () => {
     expect(
       validateContextHmacEncryptionStub.calledWith(
         sinon.match({
-          apiKey: environment.apiKeys[0].key,
+          apiKeys: [environment.apiKeys[0].key],
           context: command.requestData.context,
           contextHash: command.requestData.contextHash,
         })

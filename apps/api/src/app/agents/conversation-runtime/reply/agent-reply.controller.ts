@@ -1,6 +1,6 @@
 import { Body, Controller, HttpCode, HttpStatus, Param, Post } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
-import type { Signal } from '@novu/framework';
+import type { Signal, ToolResult } from '@novu/framework/internal';
 import { UserSessionData } from '@novu/shared';
 import { RequireAuthentication } from '../../../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../../../auth/framework/external-api.decorator';
@@ -12,18 +12,18 @@ import { HandleAgentReply } from './handle-agent-reply/handle-agent-reply.usecas
 @Controller('/agents')
 @ApiExcludeController()
 export class AgentReplyController {
-  constructor(private handleAgentReplyUsecase: HandleAgentReply) {}
+  constructor(private handleAgentReply: HandleAgentReply) {}
 
   @Post('/:agentId/reply')
   @HttpCode(HttpStatus.OK)
   @RequireAuthentication()
   @ExternalApiAccessible()
-  async handleAgentReply(
+  async handleAgentReplyHandler(
     @UserSession() user: UserSessionData,
     @Param('agentId') agentId: string,
     @Body() body: AgentReplyPayloadDto
   ) {
-    return this.handleAgentReplyUsecase.execute(
+    return this.handleAgentReply.execute(
       HandleAgentReplyCommand.create({
         userId: user._id,
         environmentId: user.environmentId,
@@ -32,10 +32,14 @@ export class AgentReplyController {
         agentIdentifier: agentId,
         integrationIdentifier: body.integrationIdentifier,
         reply: body.reply,
+        toolApprovalRequest: body.toolApprovalRequest,
         edit: body.edit,
         resolve: body.resolve,
         signals: body.signals as Signal[],
+        toolResults: body.toolResults as ToolResult[],
         addReactions: body.addReactions,
+        deleteMessages: body.deleteMessages,
+        typing: body.typing,
       })
     );
   }

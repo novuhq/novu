@@ -14,9 +14,9 @@ import { ManagedAgentService } from '../managed-agent.service';
 import { ManagedAgentProviderFactory } from '../managed-agent-provider-factory.service';
 import { HandleNovuToolsCommand, NovuToolsActionEnum } from '../tool-connect/handle-novu-tools.command';
 import { HandleNovuTools } from '../tool-connect/handle-novu-tools.usecase';
-import { extractPendingToolApprovals, getToolApprovalCard } from './approval-card.builder';
 import { HandlePendingToolApprovalsCommand } from './handle-pending-tool-approvals.command';
 import { recoverEmailFromParticipants, recoverSubscriberParticipantId } from './handle-pending-tool-approvals.helpers';
+import { buildManagedApprovalCard, extractPendingToolApprovals } from './managed-approval';
 import { ToolTrustService } from './tool-trust.service';
 
 @Injectable()
@@ -182,7 +182,7 @@ export class HandlePendingToolApprovals {
           conversationId: command.conversationId,
           agentIdentifier: command.agentIdentifier,
           integrationIdentifier: command.integrationIdentifier,
-          toolProgress: { action: 'fail' },
+          event: { kind: 'phase', phase: 'failed' },
         })
       );
     } catch (deliveryErr) {
@@ -357,7 +357,7 @@ export class HandlePendingToolApprovals {
     command: HandlePendingToolApprovalsCommand,
     tool: PendingToolApproval
   ): Promise<void> {
-    const delivery = getToolApprovalCard({
+    const delivery = buildManagedApprovalCard({
       platform: command.platform,
       tool,
     });
@@ -373,6 +373,12 @@ export class HandlePendingToolApprovals {
           integrationIdentifier: command.integrationIdentifier,
           reply: delivery.content,
           slackNative: delivery.slackNative,
+          toolApprovalRequest: {
+            approvalId: tool.toolUseId,
+            toolCallId: tool.toolUseId,
+            name: tool.toolName,
+            input: tool.input,
+          },
         })
       );
     } catch (err) {
@@ -394,7 +400,7 @@ export class HandlePendingToolApprovals {
         conversationId: command.conversationId,
         agentIdentifier: command.agentIdentifier,
         integrationIdentifier: command.integrationIdentifier,
-        toolProgress: { action: 'awaiting-approval' },
+        event: { kind: 'phase', phase: 'awaiting-approval' },
       })
     );
   }

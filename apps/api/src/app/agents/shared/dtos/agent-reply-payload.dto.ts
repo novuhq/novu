@@ -123,10 +123,10 @@ export class IsValidReplyContent implements ValidatorConstraintInterface {
   validate(content: ReplyContentDto): boolean {
     if (!content) return true;
 
-    const fields = [content.markdown, content.card].filter((v) => v !== undefined);
+    const fields = [content.markdown, content.card, content.toolApprovalCard].filter((v) => v !== undefined);
     if (fields.length !== 1) return false;
 
-    if (content.files?.length && !content.markdown && !content.card) return false;
+    if (content.files?.length && !content.markdown && !content.card && !content.toolApprovalCard) return false;
     if ((content.files?.length ?? 0) > MAX_FILES_PER_MESSAGE) return false;
 
     for (const file of content.files ?? []) {
@@ -142,10 +142,30 @@ export class IsValidReplyContent implements ValidatorConstraintInterface {
 
   defaultMessage(): string {
     return (
-      'Content must have exactly one of markdown or card. Files require markdown or card. ' +
+      'Content must have exactly one of markdown, card, or toolApprovalCard. Files require one of them. ' +
       `At most ${MAX_FILES_PER_MESSAGE} files are allowed. Each file needs exactly one of data or url. ` +
       'Inline data must be 5 MB or smaller.'
     );
+  }
+}
+
+@ValidatorConstraint({ name: 'isValidTypingOp', async: false })
+export class IsValidTypingOp implements ValidatorConstraintInterface {
+  validate(value: unknown): boolean {
+    if (value === undefined) return true;
+    if (value === 'stop') return true;
+
+    if (typeof value === 'object' && value !== null) {
+      const status = (value as { status?: unknown }).status;
+
+      return status === undefined || typeof status === 'string';
+    }
+
+    return false;
+  }
+
+  defaultMessage(): string {
+    return "typing must be 'stop' or an object with an optional string status.";
   }
 }
 
@@ -162,8 +182,35 @@ export class ReplyContentDto {
 
   @ApiPropertyOptional()
   @IsOptional()
+  @IsObject()
+  toolApprovalCard?: Record<string, unknown>;
+
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsArray()
   files?: FileRef[];
+}
+
+export class ToolApprovalRequestPayloadDto {
+  @ApiProperty({ description: 'Unique id for this approval request (matches the AI SDK approvalId).' })
+  @IsString()
+  @IsNotEmpty()
+  approvalId: string;
+
+  @ApiProperty({ description: 'Id of the tool call awaiting approval.' })
+  @IsString()
+  @IsNotEmpty()
+  toolCallId: string;
+
+  @ApiProperty({ description: 'Name of the gated tool.' })
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+
+  @ApiPropertyOptional({ description: 'Tool input the model proposed.' })
+  @IsOptional()
+  @IsObject()
+  input?: Record<string, unknown>;
 }
 
 export class EditPayloadDto {
@@ -197,6 +244,13 @@ export class AddReactionPayloadDto {
   @IsString()
   @IsNotEmpty()
   emojiName: string;
+}
+
+export class DeleteMessagePayloadDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  messageId: string;
 }
 
 export class SignalDto {
@@ -236,6 +290,30 @@ export class SignalDto {
   payload?: Record<string, unknown>;
 }
 
+/**
+ * Reports the outcome of a tool call back to Novu so it's saved in the conversation history.
+ */
+export class ToolResultDto {
+  @ApiProperty({ description: 'Id of the tool call this result resolves.' })
+  @IsString()
+  @IsNotEmpty()
+  toolCallId: string;
+
+  @ApiPropertyOptional({ description: 'Name of the tool that produced this result.' })
+  @IsOptional()
+  @IsString()
+  toolName?: string;
+
+  @ApiPropertyOptional({ description: 'JSON-serializable tool output (or the execution-denied marker).' })
+  @IsOptional()
+  output?: unknown;
+
+  @ApiPropertyOptional({ description: 'Human-readable preview for the display timeline.' })
+  @IsOptional()
+  @IsString()
+  preview?: string;
+}
+
 export class AgentReplyPayloadDto {
   @ApiProperty()
   @IsString()
@@ -254,6 +332,15 @@ export class AgentReplyPayloadDto {
   @Validate(IsValidReplyContent)
   @Type(() => ReplyContentDto)
   reply?: ReplyContentDto;
+
+  @ApiPropertyOptional({
+    type: ToolApprovalRequestPayloadDto,
+    description: 'Tool-lifecycle ledger row for a gated tool call. Optional reply delivers the approval card.',
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => ToolApprovalRequestPayloadDto)
+  toolApprovalRequest?: ToolApprovalRequestPayloadDto;
 
   @ApiPropertyOptional({ type: EditPayloadDto })
   @IsOptional()
@@ -277,10 +364,37 @@ export class AgentReplyPayloadDto {
   @Type(() => SignalDto)
   signals?: SignalDto[];
 
+  @ApiPropertyOptional({ type: [ToolResultDto] })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ToolResultDto)
+  toolResults?: ToolResultDto[];
+
   @ApiPropertyOptional({ type: [AddReactionPayloadDto] })
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => AddReactionPayloadDto)
   addReactions?: AddReactionPayloadDto[];
+
+  @ApiPropertyOptional({
+    type: [DeleteMessagePayloadDto],
+    description:
+      'Delete previously posted platform messages. Removes the rendered message only — history is preserved.',
+  })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => DeleteMessagePayloadDto)
+  deleteMessages?: DeleteMessagePayloadDto[];
+
+  @ApiPropertyOptional({
+    description:
+      'Per-turn typing/status control. `{ status?: string }` sets the status text ' +
+      '(omit for the default "Thinking…"); `"stop"` clears it. Best-effort per platform.',
+  })
+  @IsOptional()
+  @Validate(IsValidTypingOp)
+  typing?: { status?: string } | 'stop';
 }

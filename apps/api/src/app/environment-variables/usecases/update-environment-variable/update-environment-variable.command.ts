@@ -27,4 +27,8 @@ export class UpdateEnvironmentVariableCommand extends OrganizationLevelWithUserC
   @Type(() => EnvironmentVariableValueCommand)
   @IsOptional()
   values?: EnvironmentVariableValueCommand[];
+
+  @IsBoolean()
+  @IsOptional()
+  restrictToUserEnvironment?: boolean;
 }

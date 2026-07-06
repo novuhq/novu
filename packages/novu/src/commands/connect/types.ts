@@ -8,10 +8,29 @@ export type AgentRuntimeChoice = 'demo' | 'claude' | 'claude-aws';
 
 export const AGENT_RUNTIME_CHOICES: readonly AgentRuntimeChoice[] = ['demo', 'claude', 'claude-aws'];
 
-/** Unified agent setup mode — managed runtimes plus self-hosted Chat SDK. */
-export type AgentConnectMode = AgentRuntimeChoice | 'chat-sdk';
+export type CustomCodeConnectMode = 'ai-sdk' | 'langchain' | 'custom-code';
 
-export const AGENT_CONNECT_MODES: readonly AgentConnectMode[] = [...AGENT_RUNTIME_CHOICES, 'chat-sdk'];
+export const CUSTOM_CODE_CONNECT_MODES: readonly CustomCodeConnectMode[] = ['ai-sdk', 'langchain', 'custom-code'];
+
+export type BridgeConnectMode = CustomCodeConnectMode | 'chat-sdk';
+
+export const BRIDGE_CONNECT_MODES: readonly BridgeConnectMode[] = [...CUSTOM_CODE_CONNECT_MODES, 'chat-sdk'];
+
+/** Unified agent setup mode — managed runtimes plus self-hosted bridge agents. */
+export type AgentConnectMode = AgentRuntimeChoice | BridgeConnectMode;
+
+export const AGENT_CONNECT_MODES: readonly AgentConnectMode[] = [
+  ...AGENT_RUNTIME_CHOICES,
+  ...BRIDGE_CONNECT_MODES,
+];
+
+export function isBridgeConnectMode(mode: AgentConnectMode): mode is BridgeConnectMode {
+  return (BRIDGE_CONNECT_MODES as readonly string[]).includes(mode);
+}
+
+export function isCustomCodeScaffoldMode(mode: AgentConnectMode): mode is CustomCodeConnectMode {
+  return (CUSTOM_CODE_CONNECT_MODES as readonly string[]).includes(mode);
+}
 
 export type ChatSdkProjectKind = 'empty' | 'project';
 
@@ -43,6 +62,13 @@ export type ChatSdkConnectOutcome = {
   wiringInstructions?: string;
 };
 
+export type CustomCodeConnectOutcome = {
+  projectDir: string;
+  scaffolded: boolean;
+  skippedInstall?: boolean;
+  agentFilePath?: string;
+};
+
 export interface ConnectCommandOptions {
   secretKey?: string;
   region: CloudRegionEnum;
@@ -53,8 +79,8 @@ export interface ConnectCommandOptions {
   /** Pre-fill the agent description, skipping the input screen. Enables non-interactive runs. */
   prompt?: string;
   /**
-   * Agent runtime for new managed agents, or `chat-sdk` for a self-hosted bridge agent.
-   * `demo` uses Novu's demo Claude integration (default).
+   * Agent connect mode: managed runtimes (`demo`, `claude`, `claude-aws`) or bridge agents
+   * (`ai-sdk`, `langchain`, `custom-code`, `chat-sdk`). `demo` uses Novu's demo Claude integration (default).
    */
   runtime?: AgentConnectMode;
   /** Use an existing agent-runtime integration instead of creating one. */

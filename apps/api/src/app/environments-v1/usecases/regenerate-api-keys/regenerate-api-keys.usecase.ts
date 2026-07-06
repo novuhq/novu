@@ -36,6 +36,7 @@ export class RegenerateApiKeys {
       return {
         _userId: item._userId,
         key: decryptApiKey(item.key),
+        hash: item.hash,
       };
     });
   }

@@ -1,9 +1,11 @@
 import {
   areTagsEqual,
+  checkBasicFilters,
   checkNotificationDataFilter,
   checkNotificationTagFilter,
   normalizeTagGroups,
 } from './notification-utils';
+import { Notification } from '../notifications/notification';
 
 describe('normalizeTagGroups', () => {
   it('wraps flat tags as one OR-group', () => {
@@ -125,5 +127,34 @@ describe('areTagsEqual', () => {
         }
       )
     ).toBe(true);
+  });
+});
+
+describe('cache bucket membership', () => {
+  const baseNotification = {
+    isRead: false,
+    isSeen: false,
+    isArchived: false,
+    isSnoozed: false,
+    tags: ['tag1'],
+    createdAt: new Date().toISOString(),
+  } as Notification;
+
+  function matchesCacheBucket(notification: Notification, filter: { read?: boolean; tags?: string[] }) {
+    return checkBasicFilters(notification, filter) && checkNotificationTagFilter(notification.tags, filter.tags);
+  }
+
+  it('returns false when read status no longer matches the bucket filter', () => {
+    const readNotification = { ...baseNotification, isRead: true } as Notification;
+
+    expect(matchesCacheBucket(readNotification, { read: false })).toBe(false);
+  });
+
+  it('returns false when tags no longer match the bucket filter', () => {
+    expect(matchesCacheBucket(baseNotification, { tags: ['tag2'] })).toBe(false);
+  });
+
+  it('returns true when status and tags still match the bucket filter', () => {
+    expect(matchesCacheBucket(baseNotification, { read: false, tags: ['tag1'] })).toBe(true);
   });
 });

@@ -32,6 +32,10 @@ export type PreviewPayloadDto = {
    */
   subscriber?: SubscriberResponseDtoOptional | undefined;
   /**
+   * Partial actor information
+   */
+  actor?: SubscriberResponseDtoOptional | undefined;
+  /**
    * Payload data
    */
   payload?: { [k: string]: any } | undefined;
@@ -136,6 +140,7 @@ export const PreviewPayloadDto$inboundSchema: z.ZodType<
   unknown
 > = z.object({
   subscriber: SubscriberResponseDtoOptional$inboundSchema.optional(),
+  actor: SubscriberResponseDtoOptional$inboundSchema.optional(),
   payload: z.record(z.any()).optional(),
   steps: z.record(z.any()).optional(),
   context: z.record(
@@ -149,6 +154,7 @@ export const PreviewPayloadDto$inboundSchema: z.ZodType<
 /** @internal */
 export type PreviewPayloadDto$Outbound = {
   subscriber?: SubscriberResponseDtoOptional$Outbound | undefined;
+  actor?: SubscriberResponseDtoOptional$Outbound | undefined;
   payload?: { [k: string]: any } | undefined;
   steps?: { [k: string]: any } | undefined;
   context?:
@@ -164,6 +170,7 @@ export const PreviewPayloadDto$outboundSchema: z.ZodType<
   PreviewPayloadDto
 > = z.object({
   subscriber: SubscriberResponseDtoOptional$outboundSchema.optional(),
+  actor: SubscriberResponseDtoOptional$outboundSchema.optional(),
   payload: z.record(z.any()).optional(),
   steps: z.record(z.any()).optional(),
   context: z.record(

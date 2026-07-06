@@ -6,16 +6,13 @@ import {
   issueTelegramSubscriberLink,
   type TelegramSubscriberLinkResult,
 } from '../../api/agents';
+import { isTelegramSubscriberConnected, pollForTelegramChannelEndpoint } from '../../api/channel-endpoints';
 import { type ConnectApiClient, NovuApiError } from '../../api/client';
 import { createTelegramIntegration, type IntegrationRecord } from '../../api/integrations';
 import type { AgentSummary, ConnectCommandOptions } from '../../types';
 import { renderQR } from '../../ui/qr';
 import type { ConnectUI } from '../../ui/ui';
-import {
-  ensureAgentIntegrationLinked,
-  pollForAgentLinkConnected,
-  resolveIntegrationForAgent,
-} from '../integration-helpers';
+import { ensureAgentIntegrationLinked, resolveIntegrationForAgent } from '../integration-helpers';
 import { CHANNEL_POLL_INTERVAL_MS, CHANNEL_POLL_TIMEOUT_MS, pollUntil, sleep } from '../poll-until';
 
 const TELEGRAM_PROVIDER_ID = 'telegram';
@@ -49,8 +46,9 @@ export async function connectTelegramForAgent(
     create: createTelegramIntegration,
   });
 
-  const existingLink = await ensureAgentIntegrationLinked(client, agent.identifier, integration.identifier);
-  if (existingLink?.connectedAt) {
+  await ensureAgentIntegrationLinked(client, agent.identifier, integration.identifier);
+
+  if (await isTelegramSubscriberConnected(client, integration.identifier, subscriberId)) {
     ui.telegramConnected();
     track(CONNECT_EVENTS.TELEGRAM_CONNECTED, {
       agent: agent.identifier,
@@ -66,13 +64,7 @@ export async function connectTelegramForAgent(
   if (botToken) {
     ui.savingTelegramBotToken();
     try {
-      prefetchedSubscriberLink = await saveTelegramBotTokenViaMobileLink(
-        client,
-        agent,
-        integration,
-        subscriberId,
-        botToken
-      );
+      prefetchedSubscriberLink = await saveTelegramBotTokenViaMobileLink(client, integration, subscriberId, botToken);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       throw new Error(
@@ -85,15 +77,15 @@ export async function connectTelegramForAgent(
     await ui.showTelegramIntro({ botfatherQr, botfatherUrl: BOTFATHER_URL });
 
     if (ui.interactive && (await ui.pickTelegramTokenDelivery()) === 'terminal') {
-      prefetchedSubscriberLink = await promptAndSaveTelegramBotToken(client, agent, integration, subscriberId, ui);
+      prefetchedSubscriberLink = await promptAndSaveTelegramBotToken(client, integration, subscriberId, ui);
     } else {
-      await waitForTelegramSetupPageToken(client, agent, integration, subscriberId, ui);
+      await waitForTelegramSetupPageToken(client, integration, subscriberId, ui);
     }
   }
 
   const subscriberLink =
     prefetchedSubscriberLink ??
-    (await issueSubscriberLinkWithCredentialRetry(client, agent.identifier, integration._id, subscriberId));
+    (await issueSubscriberLinkWithCredentialRetry(client, integration.identifier, subscriberId));
   const deepLinkQr = await renderQR(subscriberLink.deepLinkUrl);
   ui.showTelegramTest({
     deepLinkQr,
@@ -101,7 +93,7 @@ export async function connectTelegramForAgent(
     botUsername: subscriberLink.botUsername,
   });
 
-  const connected = await pollForAgentLinkConnected(client, agent.identifier, integration.identifier, {
+  const connected = await pollForTelegramChannelEndpoint(client, integration.identifier, subscriberId, {
     intervalMs: CHANNEL_POLL_INTERVAL_MS,
     timeoutMs: CHANNEL_POLL_TIMEOUT_MS,
   });
@@ -124,15 +116,14 @@ export async function connectTelegramForAgent(
 
 async function issueSubscriberLinkWithCredentialRetry(
   client: ConnectApiClient,
-  agentIdentifier: string,
-  integrationId: string,
+  integrationIdentifier: string,
   subscriberId: string
 ): Promise<TelegramSubscriberLinkResult> {
   const deadline = Date.now() + TELEGRAM_CREDENTIAL_PROPAGATION_TIMEOUT_MS;
 
   while (true) {
     try {
-      return await issueTelegramSubscriberLink(client, agentIdentifier, integrationId, subscriberId);
+      return await issueTelegramSubscriberLink(client, integrationIdentifier, subscriberId);
     } catch (err) {
       if (!isMissingBotTokenError(err) || Date.now() >= deadline) {
         throw err;
@@ -152,12 +143,11 @@ function isMissingBotTokenError(err: unknown): boolean {
 
 async function saveTelegramBotTokenViaMobileLink(
   client: ConnectApiClient,
-  agent: AgentSummary,
   integration: IntegrationRecord,
   subscriberId: string,
   botToken: string
 ): Promise<TelegramSubscriberLinkResult | undefined> {
-  const mobileLink = await issueTelegramMobileLink(client, agent.identifier, integration._id, subscriberId);
+  const mobileLink = await issueTelegramMobileLink(client, integration.identifier, subscriberId);
   const consumeResult = await consumeTelegramMobileLink(client, { token: mobileLink.token, botToken });
 
   if (consumeResult.deepLinkUrl) {
@@ -173,7 +163,6 @@ async function saveTelegramBotTokenViaMobileLink(
 
 async function promptAndSaveTelegramBotToken(
   client: ConnectApiClient,
-  agent: AgentSummary,
   integration: IntegrationRecord,
   subscriberId: string,
   ui: ConnectUI
@@ -189,7 +178,7 @@ async function promptAndSaveTelegramBotToken(
     });
 
     try {
-      return await saveTelegramBotTokenViaMobileLink(client, agent, integration, subscriberId, token.trim());
+      return await saveTelegramBotTokenViaMobileLink(client, integration, subscriberId, token.trim());
     } catch (err) {
       if (!isRepromptableTelegramTokenError(err)) {
         throw err;
@@ -214,12 +203,11 @@ function isRepromptableTelegramTokenError(err: unknown): boolean {
 
 async function waitForTelegramSetupPageToken(
   client: ConnectApiClient,
-  agent: AgentSummary,
   integration: IntegrationRecord,
   subscriberId: string,
   ui: ConnectUI
 ): Promise<void> {
-  const mobileLink = await issueTelegramMobileLink(client, agent.identifier, integration._id, subscriberId);
+  const mobileLink = await issueTelegramMobileLink(client, integration.identifier, subscriberId);
   const mobileQr = await renderQR(mobileLink.url);
   ui.showTelegramLinkToken({ mobileQr, mobileUrl: mobileLink.url });
 

@@ -759,6 +759,7 @@ export class Client {
         },
         payload: event.payload,
         subscriber: event.subscriber,
+        ...(event.actor && { actor: event.actor }),
         context: event.context,
         steps: buildSteps(event.state),
         env: event.env ?? {},

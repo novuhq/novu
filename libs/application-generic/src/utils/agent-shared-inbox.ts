@@ -49,6 +49,33 @@ export function isAgentSharedInboxEnabled(): boolean {
 }
 
 /**
+ * Whether agent email is available for the deployment at all (inbound via
+ * custom domains + outbound via a connected provider), independent of the
+ * cloud-only zero-config shared inbox.
+ *
+ * The `(isSelfHosted || hasDomain)` clause is a deliberate short-circuit so this
+ * gate is identical to `isAgentSharedInboxEnabled()` on every Cloud
+ * configuration — including the degraded case where the shared domain env var
+ * is missing/invalid — and only adds the self-hosted-enterprise case. Cloud
+ * therefore has a provable zero behavioral delta:
+ *
+ *   - Cloud + domain set (normal)        -> true  (same as shared inbox gate)
+ *   - Cloud + domain missing/invalid     -> false (same as shared inbox gate)
+ *   - Self-hosted + enterprise           -> true  (new: uses custom domains)
+ *   - Community (self-hosted or not)     -> false
+ *
+ * Self-hosted does not need the shared domain because inbound is wired through
+ * a per-tenant verified Domain + DomainRoute(type=AGENT).
+ */
+export function isAgentEmailEnabled(): boolean {
+  const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
+  const isSelfHosted = process.env.IS_SELF_HOSTED === 'true';
+  const hasDomain = !!getSharedAgentDomainOrNull();
+
+  return isEnterprise && (isSelfHosted || hasDomain);
+}
+
+/**
  * Returns the configured shared inbound domain (e.g. `agentconnect.sh`).
  * Throws if the env var is not set — callers that may run in a degraded
  * configuration should gate on `isAgentSharedInboxEnabled()` first.

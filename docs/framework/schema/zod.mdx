@@ -1,0 +1,52 @@
+---
+title: "Zod"
+description: "Learn how to integrate Zod with Novu Framework"
+---
+
+Novu Framework allows you to use [Zod](https://zod.dev/) to define the [Control](/framework/controls) and [Payload](/framework/payload) schemas for your workflows. _(Supports Zod v3)_
+
+## Add Zod to your project
+
+<Steps>
+    <Step title="Install Zod Packages">
+        ```bash
+        npm install zod
+        ```
+        
+        <Note>
+          Novu Framework supports Zod v3. Make sure you're using this version for optimal performance and feature support.
+        </Note>
+    </Step>
+    <Step title="Use Zod in your workflow">
+        ```typescript
+
+        export const testWorkflow = workflow('test-workflow', async ({ step, payload }) => {
+            await step.email('send-email', async (controls) => {
+                return {
+                    subject: controls.subject,
+                    body: 'Hello World',
+                };
+            },
+            {
+                controlSchema: z.object({
+                    subject: z.string().default('A Successful Test on Novu from {{userName}}'),
+                }),
+            });
+        }, {
+            payloadSchema: z.object({
+                userName: z.string().default('John Doe'),
+            }),
+        });
+        ```
+    </Step>
+
+</Steps>
+
+## Controls and Payload UI
+
+When you define a `controlSchema` for a step, Novu will automatically generate a UI for the controls in the workflow editor.
+
+- **Form Input Title** - Will be derived from the key of the Zod schema. Unfortunately Zod does not support custom titles at this point.
+- **Form Input Type** - Will be derived from the Zod schema type, with support for `string`, `number`, `boolean`, and `enum` and `array` types.
+- **Default Value** - Will be derived from the Zod schema default value.
+- **Validation** - Will be derived from the Zod schema validation rules, including `min`, `max`, `email`, `url`, `regex` and etc...

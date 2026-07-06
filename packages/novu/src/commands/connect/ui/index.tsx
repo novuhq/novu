@@ -1,10 +1,14 @@
 import { render } from 'ink';
+import chalk from 'chalk';
 // biome-ignore lint/correctness/noUnusedImports: classic-JSX linter falls back here because tsconfig.json excludes ui/.
 import React from 'react';
 import type { GeneratedAgentSpec } from '../api/agents';
 import { ConnectChannelBackError } from '../errors';
+import { printBridgeScaffolded } from '../pipeline/bridge/print-bridge-scaffolded';
 import type { AgentSummary, ConnectCommandOptions } from '../types';
 import { App } from './app';
+import { promptChatSdkReconcilePlanInConsole, promptChatSdkTunnelInConsole } from './console-chat-sdk-prompts';
+import { printConnectSuccess, shouldSkipConnectSuccessSummary } from './print-connect-success';
 import { type ConnectStore, createConnectStore } from './store';
 import type {
   ChatSdkTunnelOfferResult,
@@ -26,6 +30,7 @@ export interface MountConnectUIResult {
 export function mountConnectUI(_params: MountConnectUIParams): MountConnectUIResult {
   const store = createConnectStore();
   let exitInk: (() => void) | undefined;
+  let terminalReleased = false;
   let resolveDone!: (code: number) => void;
   const done = new Promise<number>((resolve) => {
     resolveDone = resolve;
@@ -56,7 +61,19 @@ export function mountConnectUI(_params: MountConnectUIParams): MountConnectUIRes
     resolveDone(Number(process.exitCode ?? 0));
   });
 
-  const ui = createUiController(store, async () => {
+  const releaseTerminal = async () => {
+    if (terminalReleased) return;
+    terminalReleased = true;
+    exitInk?.();
+    await instance.waitUntilExit();
+    console.log('');
+  };
+
+  const shutdown = async () => {
+    if (terminalReleased) {
+      return Number(process.exitCode ?? 0);
+    }
+
     // Hold the final frame (error or success) on screen long enough for the
     // user to read it before Ink tears down. Without this, the App re-renders
     // with the new phase and then unmounts in the same microtask — the user
@@ -68,14 +85,28 @@ export function mountConnectUI(_params: MountConnectUIParams): MountConnectUIRes
     await instance.waitUntilExit();
 
     return Number(process.exitCode ?? 0);
+  };
+
+  const ui = createUiController(store, {
+    shutdown,
+    releaseTerminal,
+    isTerminalReleased: () => terminalReleased,
   });
 
   return { ui, done };
 }
 
-function createUiController(store: ConnectStore, shutdown: () => Promise<number>): ConnectUI {
+function createUiController(
+  store: ConnectStore,
+  ctx: {
+    shutdown: () => Promise<number>;
+    releaseTerminal: () => Promise<void>;
+    isTerminalReleased: () => boolean;
+  }
+): ConnectUI {
   return {
     interactive: true,
+    releaseTerminal: ctx.releaseTerminal,
     showWelcome() {
       return new Promise<void>((resolve) => {
         store.phase.set({ kind: 'welcome', resolve });
@@ -201,26 +232,22 @@ function createUiController(store: ConnectStore, shutdown: () => Promise<number>
         });
       });
     },
-    confirmScaffold({ projectDir, appName }) {
+    confirmScaffold({ projectDir, appName, variant }) {
       return new Promise<boolean>((resolve) => {
         store.phase.set({
           kind: 'confirm-scaffold',
           projectDir,
           appName,
+          variant,
           resolve,
         });
       });
     },
-    scaffoldingChatSdk() {
-      store.phase.set({ kind: 'scaffolding-chat-sdk' });
+    scaffoldingBridge({ variant }) {
+      store.phase.set({ kind: 'scaffolding-bridge', variant });
     },
-    chatSdkScaffolded({ projectDir, envPaths, skippedInstall }) {
-      store.phase.set({
-        kind: 'chat-sdk-scaffolded',
-        projectDir,
-        envPaths,
-        skippedInstall,
-      });
+    bridgeScaffolded(opts) {
+      printBridgeScaffolded(opts);
     },
     confirmInstallChatSdkDeps({ projectDir, installCommand, packages }) {
       return new Promise<boolean>((resolve) => {
@@ -237,6 +264,16 @@ function createUiController(store: ConnectStore, shutdown: () => Promise<number>
       store.phase.set({ kind: 'chat-sdk-install-deps' });
     },
     showChatSdkReconcilePlan({ projectDir, requirements, envPaths, wiringInstructions, requirementsFile }) {
+      if (ctx.isTerminalReleased()) {
+        return promptChatSdkReconcilePlanInConsole({
+          projectDir,
+          requirements,
+          envPaths,
+          wiringInstructions,
+          requirementsFile,
+        });
+      }
+
       return new Promise<void>((resolve) => {
         store.phase.set({
           kind: 'chat-sdk-reconcile-plan',
@@ -250,6 +287,10 @@ function createUiController(store: ConnectStore, shutdown: () => Promise<number>
       });
     },
     offerChatSdkTunnel({ projectDir, devCommand }) {
+      if (ctx.isTerminalReleased()) {
+        return promptChatSdkTunnelInConsole({ projectDir, devCommand });
+      }
+
       return new Promise<ChatSdkTunnelOfferResult>((resolve) => {
         store.phase.set({
           kind: 'chat-sdk-tunnel-offer',
@@ -365,6 +406,16 @@ function createUiController(store: ConnectStore, shutdown: () => Promise<number>
       store.phase.set({ kind: 'sending-welcome' });
     },
     success(result) {
+      if (shouldSkipConnectSuccessSummary(result)) {
+        return;
+      }
+
+      if (ctx.isTerminalReleased()) {
+        printConnectSuccess(result);
+
+        return;
+      }
+
       store.phase.set({
         kind: 'success',
         agent: result.agent,
@@ -377,11 +428,19 @@ function createUiController(store: ConnectStore, shutdown: () => Promise<number>
         claimUrl: result.claimUrl,
         connectMode: result.connectMode,
         chatSdkOutcome: result.chatSdkOutcome,
+        customCodeOutcome: result.customCodeOutcome,
       });
     },
     failure(message) {
+      if (ctx.isTerminalReleased()) {
+        console.error(`${chalk.red('✗')} ${message}`);
+        process.exitCode = 1;
+
+        return;
+      }
+
       store.phase.set({ kind: 'error', message });
     },
-    shutdown,
+    shutdown: ctx.shutdown,
   };
 }

@@ -2,10 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import {
-  buildChatSdkInstallCommand,
-  resolveChatSdkPackagesToInstall,
-} from './package-install';
+import { buildChatSdkInstallCommand, resolveChatSdkPackagesToInstall } from './package-install';
 
 const tempDirs: string[] = [];
 
@@ -29,8 +26,8 @@ describe('resolveChatSdkPackagesToInstall', () => {
       path.join(dir, 'package.json'),
       JSON.stringify({
         dependencies: {
-          chat: '4.30.0',
-          '@chat-adapter/state-redis': '4.30.0',
+          chat: '4.31.0',
+          '@chat-adapter/state-redis': '4.31.0',
         },
       })
     );
@@ -45,14 +42,14 @@ describe('resolveChatSdkPackagesToInstall', () => {
       path.join(dir, 'package.json'),
       JSON.stringify({
         dependencies: {
-          chat: '4.30.0',
+          chat: '4.31.0',
         },
       })
     );
 
     expect(resolveChatSdkPackagesToInstall(dir)).toEqual([
       '@novu/chat-sdk-adapter',
-      '@chat-adapter/state-memory@4.30.0',
+      '@chat-adapter/state-memory@4.31.0',
     ]);
   });
 });

@@ -98,6 +98,10 @@ export enum FeatureFlagsKeysEnum {
   IS_DEMO_MANAGED_CLAUDE_ENABLED = 'IS_DEMO_MANAGED_CLAUDE_ENABLED',
   /** Enable the "What's next" section on the agent overview. Create the boolean in LaunchDarkly for cloud, or set `VITE_IS_AGENT_WHATS_NEXT_ENABLED` when self-hosted. */
   IS_AGENT_WHATS_NEXT_ENABLED = 'IS_AGENT_WHATS_NEXT_ENABLED',
+  /** Enable the MS Teams subscriber-rollout "What's next" guide (distribute the bot + connect end users) and its post-connect "Continue" CTA. When off, MS Teams shows the generic continue note and hides the rollout guide. Create the boolean in LaunchDarkly for cloud, or set `VITE_IS_AGENT_MSTEAMS_WHATS_NEXT_ENABLED` when self-hosted. */
+  IS_AGENT_MSTEAMS_WHATS_NEXT_ENABLED = 'IS_AGENT_MSTEAMS_WHATS_NEXT_ENABLED',
+  /** Enable the production-readiness "What's next" guide for the Novu email agent (own provider, verified domain/deliverability, branded inbound address, custom From, user rollout) and simplify the out-of-box email setup to address + test on cloud. When off, the email integration keeps its current single-guide behavior. Create the boolean in LaunchDarkly for cloud, or set `VITE_IS_AGENT_EMAIL_WHATS_NEXT_ENABLED` when self-hosted. */
+  IS_AGENT_EMAIL_WHATS_NEXT_ENABLED = 'IS_AGENT_EMAIL_WHATS_NEXT_ENABLED',
   /** Enable Microsoft Teams Quick Setup in the dashboard; create the boolean in LaunchDarkly for cloud, or set `VITE_IS_MSTEAMS_QUICK_SETUP_ENABLED` when self-hosted. */
   IS_MSTEAMS_QUICK_SETUP_ENABLED = 'IS_MSTEAMS_QUICK_SETUP_ENABLED',
   /** Enable Slack Quick Setup in the dashboard; create the boolean in LaunchDarkly for cloud, or set `VITE_IS_SLACK_QUICK_SETUP_ENABLED` when self-hosted. */
@@ -123,6 +127,15 @@ export enum FeatureFlagsKeysEnum {
    * button is disabled.
    */
   IS_MCP_PROVIDER_MANAGED_ENABLED = 'IS_MCP_PROVIDER_MANAGED_ENABLED',
+  /**
+   * Temporary flag for rolling secret key rotation. When enabled, customers can
+   * create a second API key (`POST /v1/environments/api-keys`) and delete a specific
+   * key (`DELETE /v1/environments/api-keys/:hash`) so they can rotate keys without
+   * downtime. Also gates the multi-key UI on the dashboard API Keys page
+   * (`VITE_IS_MULTIPLE_SECRET_KEYS_ALLOWED` when self-hosted). Enable per
+   * organization for the duration of the rotation, then disable.
+   */
+  IS_MULTIPLE_SECRET_KEYS_ALLOWED = 'IS_MULTIPLE_SECRET_KEYS_ALLOWED',
 
   // String flags
   CF_SCHEDULER_MODE = 'CF_SCHEDULER_MODE', // Values: "off" | "shadow" | "live" | "complete"

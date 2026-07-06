@@ -12,6 +12,11 @@ import { ROUTES } from '@/utils/routes';
 export type EmailConfigurationCardProps = {
   agent: AgentResponse;
   integrationId: string;
+  /** When false, omits the outbound provider row (e.g. provider selection lives in "What's next"). */
+  showOutboundProvider?: boolean;
+  senderTitle?: string;
+  senderDescription?: string;
+  senderDisabledReason?: string;
 };
 
 /**
@@ -22,6 +27,10 @@ export function EmailConfigurationCardBody({
   integrationId,
   defaultSenderName,
   sharedInboundAddress,
+  showOutboundProvider = true,
+  senderTitle = 'Sender address',
+  senderDescription = 'By default, replies send from the agent inbox address using the agent name as the From display name. Override the address to send from another email. Reply-To always routes back to the agent so subscriber replies stay in the thread.',
+  senderDisabledReason = 'Custom From addresses are only supported with your own email provider. Connect SendGrid, Resend, or another provider above to enable this.',
 }: EmailConfigurationCardProps & { defaultSenderName?: string; sharedInboundAddress?: string }) {
   const { integrations } = useFetchIntegrations();
   const emailIntegration = useMemo(
@@ -49,23 +58,22 @@ export function EmailConfigurationCardBody({
 
   return (
     <>
-      <CardRow
-        title="Send emails via"
-        description="The Novu Email demo sender is used by default so your agent can reply out of the box. Switch to your own provider for higher volume and full deliverability control."
-        divider
-      >
-        <OutboundProviderSelect selectedId={outboundId || undefined} onSelect={onOutboundSelect} hideLabel />
-        {isOutboundDemo ? (
-          <DemoProviderHint />
-        ) : (
-          <ManageLink to={ROUTES.INTEGRATIONS}>Manage email providers</ManageLink>
-        )}
-      </CardRow>
+      {showOutboundProvider ? (
+        <CardRow
+          title="Send emails via"
+          description="The Novu Email demo sender is used by default so your agent can reply out of the box. Switch to your own provider for higher volume and full deliverability control."
+          divider
+        >
+          <OutboundProviderSelect selectedId={outboundId || undefined} onSelect={onOutboundSelect} hideLabel />
+          {isOutboundDemo ? (
+            <DemoProviderHint />
+          ) : (
+            <ManageLink to={ROUTES.INTEGRATIONS}>Manage email providers</ManageLink>
+          )}
+        </CardRow>
+      ) : null}
 
-      <CardRow
-        title="Sender address"
-        description="By default, replies send from the agent inbox address using the agent name as the From display name. Override the address to send from another email. Reply-To always routes back to the agent so subscriber replies stay in the thread."
-      >
+      <CardRow title={senderTitle} description={senderDescription}>
         <SenderAddressOverride
           serverEnabled={serverUseFromAddressOverride}
           serverValue={serverFromAddressOverride}
@@ -75,7 +83,7 @@ export function EmailConfigurationCardBody({
           inboundAddresses={inboundAddresses}
           onSave={saveSenderOverride}
           disabled={isOutboundDemo}
-          disabledReason="Custom From addresses are only supported with your own email provider. Connect SendGrid, Resend, or another provider above to enable this."
+          disabledReason={senderDisabledReason}
         />
       </CardRow>
     </>

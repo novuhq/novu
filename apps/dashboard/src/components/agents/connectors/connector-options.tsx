@@ -1,12 +1,18 @@
 import { AgentRuntimeProviderIdEnum } from '@novu/shared';
 import type { ReactNode } from 'react';
 import { RiFileCodeLine } from 'react-icons/ri';
+import { AiSdkIcon } from '@/components/icons/ai-sdk';
 import { AwsIcon } from '@/components/icons/aws';
-import { MistralIcon } from '@/components/icons/mistral';
+import { LangChainIcon } from '@/components/icons/langchain';
 import { ClaudeIcon } from '../../icons/claude';
-import { GoogleIcon } from '../../icons/google';
 
-export type ConnectorId = 'claude' | 'claude-aws' | 'vertex' | 'bedrock' | 'mistral' | 'scratch' | 'custom-scaffold';
+export type ConnectorId =
+  | 'claude'
+  | 'claude-aws'
+  | 'bedrock'
+  | 'ai-sdk'
+  | 'langchain'
+  | 'custom-code';
 
 export type ConnectorGroup = 'external' | 'custom';
 
@@ -36,15 +42,21 @@ const CLAUDE_AVATAR = (
   </div>
 );
 
-const GOOGLE_AVATAR = (
-  <div className="bg-primary-base/10 flex size-4 items-center justify-center rounded-full">
-    <GoogleIcon className="size-3" />
-  </div>
-);
-
 const CUSTOM_CODE_AVATAR = (
   <div className="bg-bg-weak text-text-sub flex size-4 items-center justify-center rounded-full">
     <RiFileCodeLine className="size-3" />
+  </div>
+);
+
+const AI_SDK_AVATAR = (
+  <div className="bg-bg-weak text-text-strong flex size-4 items-center justify-center rounded-full">
+    <AiSdkIcon className="size-2.5" />
+  </div>
+);
+
+const LANGCHAIN_AVATAR = (
+  <div className="bg-bg-weak flex size-4 items-center justify-center rounded-full">
+    <LangChainIcon className="size-3" />
   </div>
 );
 
@@ -54,13 +66,31 @@ const AWS_AVATAR = (
   </div>
 );
 
-const MISTRAL_AVATAR = (
-  <div className="bg-bg-weak text-text-sub flex size-4 items-center justify-center rounded-full text-[10px] font-semibold">
-    <MistralIcon className="size-3" />
-  </div>
-);
-
 export const CONNECTOR_OPTIONS: ConnectorOption[] = [
+  {
+    id: 'ai-sdk',
+    label: 'AI SDK',
+    group: 'custom',
+    icon: AI_SDK_AVATAR,
+    comingSoon: false,
+    runtime: 'scratch',
+  },
+  {
+    id: 'langchain',
+    label: 'LangChain',
+    group: 'custom',
+    icon: LANGCHAIN_AVATAR,
+    comingSoon: false,
+    runtime: 'scratch',
+  },
+  {
+    id: 'custom-code',
+    label: 'Custom code',
+    group: 'custom',
+    icon: CUSTOM_CODE_AVATAR,
+    comingSoon: false,
+    runtime: 'scratch',
+  },
   {
     id: 'claude',
     label: 'Claude Managed Agent',
@@ -82,33 +112,11 @@ export const CONNECTOR_OPTIONS: ConnectorOption[] = [
     providerLabel: 'AWS Claude Platform',
   },
   {
-    id: 'vertex',
-    label: 'Google Vertex AI',
-    group: 'external',
-    icon: GOOGLE_AVATAR,
-    comingSoon: true,
-  },
-  {
     id: 'bedrock',
     label: 'AWS Bedrock AgentCore',
     group: 'external',
     icon: AWS_AVATAR,
     comingSoon: true,
-  },
-  {
-    id: 'mistral',
-    label: 'Mistral Studio',
-    group: 'external',
-    icon: MISTRAL_AVATAR,
-    comingSoon: true,
-  },
-  {
-    id: 'custom-scaffold',
-    label: 'Custom code (AI SDK, langchain, etc...)',
-    group: 'custom',
-    icon: CUSTOM_CODE_AVATAR,
-    comingSoon: false,
-    runtime: 'scratch',
   },
 ];
 
@@ -119,7 +127,7 @@ export function pickInitialConnector(isManagedEnabled: boolean): ConnectorId {
 
   const fallback = CONNECTOR_OPTIONS.find((o) => !o.comingSoon && o.runtime === 'scratch');
 
-  return fallback?.id ?? 'custom-scaffold';
+  return fallback?.id ?? 'ai-sdk';
 }
 
 export function getConnectorById(id: ConnectorId | undefined): ConnectorOption | undefined {

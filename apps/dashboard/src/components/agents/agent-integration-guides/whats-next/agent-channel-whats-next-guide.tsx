@@ -2,8 +2,13 @@ import type { ICredentials } from '@novu/shared';
 import { useMemo, useState } from 'react';
 import { RiExpandUpDownLine } from 'react-icons/ri';
 import type { AgentIntegrationLink, AgentResponse } from '@/api/agents';
+import { ConnectionConfetti } from '@/components/agents/connection-confetti';
 import { IS_ENTERPRISE, IS_SELF_HOSTED } from '@/config';
+import { useEnvironment } from '@/context/environment/hooks';
 import { useChannelFirstConnectedEndpoint } from '@/hooks/use-channel-first-connected-endpoint';
+import { useInSessionMilestone } from '@/hooks/use-in-session-milestone';
+import { useWhatsNextGuideSession } from '@/hooks/use-whats-next-default-expanded';
+import { shouldShowWhatsNextGuide } from '@/utils/whats-next-guide';
 import { isAgentIntegrationConnected } from '../../is-agent-integration-connected';
 import { SetupGuideCard } from '../../setup-guide-card';
 import { CompletedStepIndicator, ListeningStatusView, SetupStep } from '../../setup-guide-primitives';
@@ -17,6 +22,8 @@ type AgentChannelWhatsNextGuideProps = {
   credentials?: ICredentials;
   /** Current environment's identifier — used as the Novu `applicationIdentifier` in code samples and prompts. */
   applicationIdentifier?: string;
+  /** True when the integration connected during this session (expanded on first view). */
+  justConnected?: boolean;
 };
 
 const CONVERSATIONS_AVAILABLE = !IS_SELF_HOSTED || IS_ENTERPRISE;
@@ -77,12 +84,7 @@ function RecapToggleRow({ count, isExpanded, onToggle }: { count: number; isExpa
   );
 }
 
-function ChannelListeningFooter({ integrationIdentifier }: { integrationIdentifier: string }) {
-  const { connected } = useChannelFirstConnectedEndpoint({
-    integrationIdentifier,
-    enabled: CONVERSATIONS_AVAILABLE,
-  });
-
+function ChannelListeningFooter({ connected }: { connected: boolean }) {
   const showListeningIndicator = CONVERSATIONS_AVAILABLE && !connected;
 
   return (
@@ -102,8 +104,24 @@ export function AgentChannelWhatsNextGuide({
   integrationLink,
   credentials,
   applicationIdentifier,
+  justConnected = false,
 }: AgentChannelWhatsNextGuideProps) {
   const [isRecapExpanded, setIsRecapExpanded] = useState(false);
+  const { currentEnvironment } = useEnvironment();
+  const { isFreshSession } = useWhatsNextGuideSession(justConnected);
+  const persistKey = `agent-integration-whats-next:${currentEnvironment?.slug ?? ''}:${agent.identifier}:${integrationLink.integration.identifier}`;
+  const {
+    connected: hasUserConnection,
+    connectedAt,
+    isLoading: isEndpointsLoading,
+  } = useChannelFirstConnectedEndpoint({
+    integrationIdentifier: integrationLink.integration.identifier,
+    enabled: CONVERSATIONS_AVAILABLE,
+  });
+  const justUserConnected = useInSessionMilestone(hasUserConnection, {
+    ready: !CONVERSATIONS_AVAILABLE || !isEndpointsLoading,
+    persistKey: `${persistKey}:layer2`,
+  });
 
   const config = useMemo(
     () => resolveChannelWhatsNextConfig({ agent, integrationLink, credentials, applicationIdentifier }),
@@ -114,37 +132,48 @@ export function AgentChannelWhatsNextGuide({
     return null;
   }
 
+  // Completion = a genuine end-user connected through the embedded connect button. Hide the guide a
+  // day after that moment; until then (or in a fresh onboarding session) keep showing it.
+  if (!shouldShowWhatsNextGuide(connectedAt, { isFreshSession })) {
+    return null;
+  }
+
   const recapCount = config.recapSteps.length;
 
   return (
-    <SetupGuideCard
-      label="What's next"
-      rightContent={isAgentIntegrationConnected(integrationLink) ? <ConnectedBadge /> : null}
-    >
-      <div className="relative flex flex-col gap-10 py-6 pb-3 pl-8 pr-3 md:pr-6">
-        <div
-          className="absolute bottom-0 left-[22px] top-0 w-px"
-          style={{
-            background: 'linear-gradient(to bottom, transparent 0%, #E1E4EA 10%, #E1E4EA 90%, transparent 100%)',
-          }}
-        />
-        <RecapToggleRow
-          count={recapCount}
-          isExpanded={isRecapExpanded}
-          onToggle={() => setIsRecapExpanded((prev) => !prev)}
-        />
-        {isRecapExpanded
-          ? config.recapSteps.map((step, i) => (
-              <StepRow key={`recap-${i}`} step={step} index={i + 1} defaultStatus="completed" />
-            ))
-          : null}
-        {config.devSteps.map((step, i) => {
-          const devStepIndex = isRecapExpanded ? recapCount + 1 + i : i + 1;
+    <>
+      <ConnectionConfetti active={justUserConnected} />
+      <SetupGuideCard
+        label="What's next"
+        rightContent={isAgentIntegrationConnected(integrationLink) ? <ConnectedBadge /> : null}
+        persistKey={persistKey}
+      >
+        <div className="relative flex flex-col gap-10 py-6 pb-3 pl-8 pr-3 md:pr-6">
+          <div
+            className="absolute bottom-0 left-[22px] top-0 w-px"
+            style={{
+              background: 'linear-gradient(to bottom, transparent 0%, #E1E4EA 10%, #E1E4EA 90%, transparent 100%)',
+            }}
+          />
+          <RecapToggleRow
+            count={recapCount}
+            isExpanded={isRecapExpanded}
+            onToggle={() => setIsRecapExpanded((prev) => !prev)}
+          />
+          {isRecapExpanded
+            ? config.recapSteps.map((step, i) => (
+                <StepRow key={`recap-${i}`} step={step} index={i + 1} defaultStatus="completed" />
+              ))
+            : null}
+          {config.devSteps.map((step, i) => {
+            const devStepIndex = isRecapExpanded ? recapCount + 1 + i : i + 1;
+            const devStepStatus = hasUserConnection ? 'completed' : 'current';
 
-          return <StepRow key={`dev-${i}`} step={step} index={devStepIndex} defaultStatus="current" />;
-        })}
-      </div>
-      <ChannelListeningFooter integrationIdentifier={integrationLink.integration.identifier} />
-    </SetupGuideCard>
+            return <StepRow key={`dev-${i}`} step={step} index={devStepIndex} defaultStatus={devStepStatus} />;
+          })}
+        </div>
+        <ChannelListeningFooter connected={hasUserConnection} />
+      </SetupGuideCard>
+    </>
   );
 }
