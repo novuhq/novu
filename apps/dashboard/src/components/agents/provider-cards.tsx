@@ -496,9 +496,14 @@ export function ProviderCards({
   }, [integrations, selectedIntegrationId]);
 
   // Per-provider status for the switcher rail, built in one pass over existingLinks. A provider is
-  // "connected" if any of its links reads connected (isAgentIntegrationConnected also covers the
-  // auto-provisioned Novu email, which is connected the moment it is linked); otherwise "in-setup"
+  // "connected" only once a real inbound message has landed (`connectedAt`); otherwise "in-setup"
   // while a link exists. Providers with no link are "connectable" (absent from the map).
+  //
+  // The Novu email link is auto-provisioned at agent creation, so — unlike a chat channel's link,
+  // which is only created when the user clicks "Connect" — its mere existence does not signal that
+  // the user has engaged with the channel. An inbound-less email link is therefore treated as
+  // unlinked so it falls back to "Connect", matching how an untouched Telegram/Slack card reads.
+  // Selecting it promotes the card to "In setup" via resolveProviderCardDisplayState.
   const switcherStatusByProvider = useMemo(() => {
     const statuses = new Map<string, ProviderSwitcherStatus>();
 
@@ -509,9 +514,14 @@ export function ProviderCards({
         continue;
       }
 
+      const isNovuAgentEmail = providerId === EmailProviderIdEnum.NovuAgent;
+
       statuses.set(
         providerId,
-        resolveProviderSwitcherStatus({ isConnected: isAgentIntegrationConnected(link), isLinked: true })
+        resolveProviderSwitcherStatus({
+          isConnected: hasAgentInboundConnection(link.connectedAt),
+          isLinked: !isNovuAgentEmail,
+        })
       );
     }
 

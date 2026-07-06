@@ -37,12 +37,17 @@ export function resolveProviderCardDisplayState(params: {
 
   if (switcherStatus !== undefined) {
     const effectiveConnected = switcherStatus === 'connected';
+    // A selected-but-not-yet-connected channel is actively being set up (its guide is open), even
+    // when no link records that engagement yet — as is the case for the auto-provisioned email
+    // inbox. Promote it to "In setup" so it reads consistently with a chat channel, whose link
+    // already flips it to "in-setup" the moment the user clicks "Connect".
+    const showInSetup = !effectiveConnected && (switcherStatus === 'in-setup' || isSelected);
 
     return {
       effectiveConnected,
       showCheck: effectiveConnected,
       showConnecting: false,
-      showInSetup: switcherStatus === 'in-setup',
+      showInSetup,
       showActiveBorder: isSelected,
       isActive: isSelected || effectiveConnected,
     };
