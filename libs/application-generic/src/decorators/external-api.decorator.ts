@@ -11,8 +11,5 @@ export function ExternalApiAccessible() {
 }
 
 export function OAuthAccessible() {
-  return applyDecorators(
-    SetMetadata(OAUTH_ACCESSIBLE_METADATA_KEY, true),
-    ApiSecurity(BEARER_SWAGGER_SECURITY_NAME)
-  );
+  return applyDecorators(SetMetadata(OAUTH_ACCESSIBLE_METADATA_KEY, true), ApiSecurity(BEARER_SWAGGER_SECURITY_NAME));
 }

@@ -1,16 +1,7 @@
 import { OrganizationLevelWithUserCommand } from '@novu/application-generic';
 import { EnvironmentVariableType } from '@novu/shared';
 import { Type } from 'class-transformer';
-import {
-  IsArray,
-  IsBoolean,
-  IsEnum,
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-  Matches,
-  ValidateNested,
-} from 'class-validator';
+import { IsArray, IsBoolean, IsEnum, IsNotEmpty, IsOptional, IsString, Matches, ValidateNested } from 'class-validator';
 
 export class EnvironmentVariableValueCommand {
   @IsString()

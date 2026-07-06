@@ -15,11 +15,7 @@ export type UserSessionData = {
   organizationId: string;
   roles: MemberRoleEnum[];
   permissions: PermissionsEnum[];
-  scheme:
-    | ApiAuthSchemeEnum.BEARER
-    | ApiAuthSchemeEnum.API_KEY
-    | ApiAuthSchemeEnum.KEYLESS
-    | ApiAuthSchemeEnum.OAUTH2;
+  scheme: ApiAuthSchemeEnum.BEARER | ApiAuthSchemeEnum.API_KEY | ApiAuthSchemeEnum.KEYLESS | ApiAuthSchemeEnum.OAUTH2;
   environmentId: string;
 };
 

@@ -32,11 +32,7 @@ export function buildPoweredByWatermark(agentIdentifier: string, platform: strin
   return `Powered by ${formatPoweredByLink('Novu', url, platform)}`;
 }
 
-export function buildBrandedMarkdownReply(
-  markdown: string,
-  agentIdentifier: string,
-  platform: string
-): CardElement {
+export function buildBrandedMarkdownReply(markdown: string, agentIdentifier: string, platform: string): CardElement {
   const watermark = buildPoweredByWatermark(agentIdentifier, platform);
 
   return {

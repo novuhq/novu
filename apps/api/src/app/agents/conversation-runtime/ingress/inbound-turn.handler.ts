@@ -32,6 +32,7 @@ import { AgentEventEnum } from '../../shared/enums/agent-event.enum';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { captureAgentException, captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
 import { parseToolApprovalActionId } from '../../shared/tool-approval/action-id';
+import { agentLinkAwaitingInboundConnectionFilter } from '../../shared/util/agent-inbound-connection';
 import { extractMsTeamsTenantId } from '../../shared/util/msteams-activity';
 import { type AutoProvisionPlatform, isAutoProvisionPlatform } from '../../shared/util/platform-endpoint-config';
 import { InboundAckService } from '../ack/inbound-ack.service';
@@ -439,20 +440,22 @@ export class AgentInboundHandler implements OnModuleInit {
    * proactive messages — e.g. the post-install welcome DM, which Slack echoes
    * back to our webhook — never mark the integration connected. The conditional
    * `connectedAt: null` filter makes the write idempotent and fires the
-   * analytics event exactly once. Fail-soft: connection bookkeeping must never
-   * crash the inbound webhook.
+   * analytics event exactly once. Placeholder epoch timestamps are treated as
+   * unconnected so they can be self-healed on the next genuine inbound message.
+   * Fail-soft: connection bookkeeping must never crash the inbound webhook.
    */
   private async markIntegrationConnectedOnFirstMessage(agentId: string, config: ResolvedAgentConfig): Promise<void> {
     try {
+      const connectedAt = new Date();
       const { modified } = await this.agentIntegrationRepository.updateOne(
         {
           _environmentId: config.environmentId,
           _organizationId: config.organizationId,
           _agentId: agentId,
           _integrationId: config.integrationId,
-          connectedAt: null,
+          ...agentLinkAwaitingInboundConnectionFilter(),
         },
-        { $set: { connectedAt: new Date() } }
+        { $set: { connectedAt } }
       );
 
       if (modified === 0) {
