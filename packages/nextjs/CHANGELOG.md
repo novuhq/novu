@@ -1,3 +1,13 @@
+## v3.17.1 (2026-07-06)
+
+### 🚀 Features
+
+- **js, react, api-service:** add Telegram connect button (SDK peer to Slack/MS Teams) ([#11661](https://github.com/novuhq/novu/pull/11661))
+
+### ❤️ Thank You
+
+- George Djabarov @djabarovgeorge
+
 ## v3.17.0 (2026-06-01)
 
 ### 🚀 Features

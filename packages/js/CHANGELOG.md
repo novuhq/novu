@@ -1,3 +1,24 @@
+## v3.17.1 (2026-07-06)
+
+### 🚀 Features
+
+- **js, react, api-service:** add Telegram connect button (SDK peer to Slack/MS Teams) ([#11661](https://github.com/novuhq/novu/pull/11661))
+- **api-service,js,react:** Telegram subscriber-link SDK + shared linking module fixes NV-8095 ([#11619](https://github.com/novuhq/novu/pull/11619))
+
+### 🩹 Fixes
+
+- **js:** localize de-DE sub-minute inbox timestamps fixes NV-8169 ([#11765](https://github.com/novuhq/novu/pull/11765))
+- **js,react:** keep inbox badge counts in sync after mark-as-read fixes NV-7398 ([#11599](https://github.com/novuhq/novu/pull/11599))
+- **js:** dedupe notifications by id in cache.unshift ([#10785](https://github.com/novuhq/novu/pull/10785))
+- **js:** ensure notification instances in cache after cross-tab sync fixes NV-8092 ([#11617](https://github.com/novuhq/novu/pull/11617))
+- **js:** validate in-app redirect URLs in inbox API and client fixes NV-7971 ([#11453](https://github.com/novuhq/novu/pull/11453))
+
+### ❤️ Thank You
+
+- Abhay J Nayak
+- Dima Grossman @scopsy
+- George Djabarov @djabarovgeorge
+
 ## v3.17.0 (2026-06-01)
 
 ### 🚀 Features

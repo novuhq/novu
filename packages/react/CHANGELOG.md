@@ -1,3 +1,21 @@
+## v3.17.1 (2026-07-06)
+
+### 🚀 Features
+
+- **js, react, api-service:** add Telegram connect button (SDK peer to Slack/MS Teams) ([#11661](https://github.com/novuhq/novu/pull/11661))
+- **api-service,js,react:** Telegram subscriber-link SDK + shared linking module fixes NV-8095 ([#11619](https://github.com/novuhq/novu/pull/11619))
+
+### 🩹 Fixes
+
+- **react:** set preferences/schedule data directly on fetch to prevent undefined state on re-mount ([#11756](https://github.com/novuhq/novu/pull/11756))
+- **js,react:** keep inbox badge counts in sync after mark-as-read fixes NV-7398 ([#11599](https://github.com/novuhq/novu/pull/11599))
+
+### ❤️ Thank You
+
+- Dima Grossman @scopsy
+- George Djabarov @djabarovgeorge
+- Shivam S @BIGSUS24
+
 ## v3.17.0 (2026-06-01)
 
 ### 🚀 Features
