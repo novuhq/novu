@@ -799,37 +799,3 @@ curl -X POST 'https://api.novu.co/v1/events/trigger' \
 ```
   </Tab>
 </Tabs>
-
-## Broadcast to every subscriber
-
-To trigger a workflow for every subscriber in the current environment, use the dedicated [Broadcast event to all](/api-reference/events/broadcast-event-to-all) endpoint (`POST /v1/events/trigger/broadcast`). This is useful for environment-wide announcements such as maintenance windows or platform-level notices.
-
-<Tabs>
-  <Tab title="Node.js">
-```ts
-import { Novu } from "@novu/api";
-
-const novu = new Novu({ secretKey: "<YOUR_SECRET_KEY_HERE>" });
-
-await novu.triggerBroadcast({
-  workflowId: "system-announcement",
-  payload: { message: "Scheduled maintenance at 2am UTC" },
-});
-```
-  </Tab>
-  <Tab title="cURL">
-```bash
-curl -X POST 'https://api.novu.co/v1/events/trigger/broadcast' \
-  -H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "name": "system-announcement",
-    "payload": { "message": "Scheduled maintenance at 2am UTC" }
-  }'
-```
-  </Tab>
-</Tabs>
-
-<Note>
-  Broadcasting to all subscribers is an API-only operation — the Novu dashboard does not expose a "trigger for everyone" button. Test triggers in the dashboard target a single subscriber. For repeated announcements to a defined audience (paying customers, beta testers, and so on), prefer a [topic trigger](#trigger-a-workflow-to-a-topic) so you can manage membership explicitly.
-</Note>
