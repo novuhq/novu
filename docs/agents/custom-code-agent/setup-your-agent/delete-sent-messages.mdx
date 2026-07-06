@@ -1,0 +1,74 @@
+---
+title: "Delete sent messages"
+description: 'Remove a rendered message from the chat platform while preserving conversation history.'
+---
+
+Sometimes an agent posts a placeholder, an interactive prompt, or a card that no longer belongs in the thread once the turn resolves. You can delete that message from the chat platform without touching the underlying conversation history.
+
+Deletes are **platform-only**: the rendered message disappears from the provider (Slack, Teams, etc.), but the conversation ledger Novu keeps on your behalf is preserved. This mirrors how the managed agent behaves.
+
+## Delete via `ReplyHandle.delete()`
+
+`ctx.reply()` returns a `ReplyHandle`. Call `.delete()` on it to remove that specific message immediately.
+
+```tsx
+const placeholder = await ctx.reply('Working on it…');
+
+// ... do some work ...
+
+await placeholder.delete();
+await ctx.reply('Here are your results.');
+```
+
+Use this when you already have a handle to the message you want to remove — typically a placeholder you just posted.
+
+## Delete via `ctx.deleteMessage(messageId)`
+
+To delete a message you don't hold a handle for (for example, an earlier message referenced by `ctx.action?.sourceMessageId`), queue the delete on the context:
+
+```tsx
+ctx.deleteMessage(ctx.action!.sourceMessageId!);
+await ctx.reply('Processing…');
+```
+
+`ctx.deleteMessage()` batches like `ctx.addReaction()`: the delete is queued and flushed with the next `ctx.reply()` call, or automatically when the handler returns. You can queue multiple deletes in a single turn.
+
+```tsx
+ctx.deleteMessage(oldPromptId);
+ctx.deleteMessage(oldCardId);
+await ctx.reply('Updated.'); // flushes both deletes with this reply
+```
+
+## When to use each
+
+| Method | Best for |
+| --- | --- |
+| `ReplyHandle.delete()` | Removing a message your handler just posted, where latency matters (posts immediately). |
+| `ctx.deleteMessage(id)` | Removing one or more messages by id alongside your next reply, with a single round-trip. |
+
+## Reply contract
+
+The underlying `POST /agents/:id/reply` request accepts a `deleteMessages` array on the `AgentReplyPayload` DTO. Each entry is a `DeleteMessagePayload`:
+
+```ts
+import type { DeleteMessagePayload } from '@novu/framework';
+
+interface DeleteMessagePayload {
+  messageId: string;
+}
+```
+
+`DeleteMessagePayload` is exported from `@novu/framework` if you need to build the payload yourself.
+
+Not every provider supports message deletion. For which capabilities each provider supports, see [Agents and providers](/agents/get-started/agents-and-providers#provider-connections).
+
+## Related
+
+<Columns cols={2}>
+  <Card icon="pencil" href="/agents/custom-code-agent/setup-your-agent/edit-sent-messages" title="Edit sent messages">
+    Update a message in place after sending it.
+  </Card>
+  <Card icon="mouse-pointer-click" href="/agents/custom-code-agent/setup-your-agent/handle-events" title="Handle events">
+    Event handlers and the context object your agent receives on every turn.
+  </Card>
+</Columns>

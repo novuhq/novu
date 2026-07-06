@@ -421,6 +421,7 @@
                   "agents/custom-code-agent/setup-your-agent/handle-events",
                   "agents/custom-code-agent/setup-your-agent/reply",
                   "agents/custom-code-agent/setup-your-agent/edit-sent-messages",
+                  "agents/custom-code-agent/setup-your-agent/delete-sent-messages",
                   "agents/custom-code-agent/setup-your-agent/signals",
                   "agents/custom-code-agent/setup-your-agent/connect-components"
                 ]
