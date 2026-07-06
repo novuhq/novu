@@ -1,5 +1,5 @@
 import { BadGatewayException } from '@nestjs/common';
-import type { SentMessageInfo } from '@novu/framework';
+import type { SentMessageInfo } from '@novu/framework/internal';
 import { WebClient } from '@slack/web-api';
 import type {
   ChannelAndBlocks,
