@@ -122,6 +122,17 @@ export const getClientAndConfigForCluster = (
 
   const provider = clusterProviders[providerId];
 
+  if (provider && !provider.validate()) {
+    /*
+     * The Redis Master-Slave cache (self-hosted Enterprise without ElastiCache) is optional.
+     * When it isn't configured we neither fall back to a cluster nor crash the process: the
+     * client is left undefined and the cache degrades gracefully, matching the single-node path.
+     */
+    if (providerId === InMemoryProviderEnum.REDIS_MASTER_SLAVE) {
+      return provider;
+    }
+  }
+
   if (!provider || !provider.validate()) {
     const defaultProvider = clusterProviders[InMemoryProviderEnum.REDIS_CLUSTER];
     if (!defaultProvider.validate()) {
