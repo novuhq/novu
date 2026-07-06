@@ -4,6 +4,8 @@ import { RiArrowRightSLine, RiCloseLine, RiExpandUpDownLine, RiKey2Line } from '
 import { useNavigate } from 'react-router-dom';
 import type { AgentIntegrationLink, AgentResponse } from '@/api/agents';
 import { ConnectionConfetti } from '@/components/agents/connection-confetti';
+import { EmailSubscriberAccessToggle } from '@/components/agents/email-subscriber-access-toggle';
+import { CodeBlock } from '@/components/primitives/code-block';
 import { IS_SELF_HOSTED_EE } from '@/config';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
@@ -25,6 +27,19 @@ import type { StepStatus } from '../../setup-guide-step-utils';
 import { useEmailSetupCredentials } from '../../use-email-setup-credentials';
 
 const DELIVERABILITY_DOCS_URL = 'https://docs.novu.co/platform/domains';
+
+const CREATE_SUBSCRIBER_SNIPPET = `import { Novu } from '@novu/api';
+
+const novu = new Novu({ secretKey: process.env.NOVU_SECRET_KEY });
+
+// Create the subscriber with the SAME email they'll use to message your agent.
+// Email is the link key: someone who emails the agent before signing up gets a
+// lightweight subscriber automatically, and this call merges that history into
+// their real account once it exists.
+await novu.subscribers.create({
+  subscriberId: 'YOUR_INTERNAL_USER_ID',
+  email: 'user@example.com',
+});`;
 
 type EmailWhatsNextGuideProps = {
   agent: AgentResponse;
@@ -279,7 +294,37 @@ export function EmailWhatsNextGuide({ agent, integrationLink, justConnected = fa
     },
   ];
 
-  const devSteps: GuideStep[] = isSelfHosted ? [providerStep, ...productionHardeningSteps] : [providerStep];
+  // Access-control step: on cloud it opens the "FOR YOUR USERS" section on its
+  // own (the "share address" step lives in the EMAIL card there); on self-hosted
+  // the "share address" step above already opened the section, so this one omits
+  // the label to avoid repeating the header.
+  const subscriberAccessStep: GuideStep = {
+    key: 'subscriber-access',
+    status: 'current',
+    title: 'Choose who can email your agent',
+    description: (
+      <span>
+        With open access, anyone who emails your agent gets a lightweight subscriber created automatically so it can
+        reply right away — and when they later sign up in your app with the same email, their conversation history
+        carries over. Turn this off to only reply to known subscribers, recommended once you go to production.
+      </span>
+    ),
+    rightContent: (
+      <div className="flex items-center justify-end gap-2">
+        <span className="text-text-soft text-label-xs font-medium leading-4">Accept email from anyone</span>
+        <EmailSubscriberAccessToggle agent={agent} ariaLabel="Accept email from anyone" />
+      </div>
+    ),
+    fullWidthContent: (
+      <div className="pt-3">
+        <CodeBlock code={CREATE_SUBSCRIBER_SNIPPET} language="typescript" title="server.ts" />
+      </div>
+    ),
+  };
+
+  const devSteps: GuideStep[] = isSelfHosted
+    ? [providerStep, ...productionHardeningSteps, subscriberAccessStep]
+    : [providerStep, { ...subscriberAccessStep, sectionLabel: 'FOR YOUR USERS' }];
 
   const recapCount = recapSteps.length;
 

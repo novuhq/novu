@@ -21,6 +21,10 @@ const agentSchema = new Schema<AgentDBModel>(
     behavior: {
       acknowledgeOnReceived: Schema.Types.Boolean,
       reactionOnResolved: Schema.Types.String,
+      subscriberAccess: {
+        type: Schema.Types.String,
+        enum: ['open', 'restricted'],
+      },
     },
     bridgeUrl: Schema.Types.String,
     devBridgeUrl: Schema.Types.String,

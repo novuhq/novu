@@ -30,6 +30,7 @@ import {
 } from '../../shared/analytics/agent-analytics';
 import { AgentEventEnum } from '../../shared/enums/agent-event.enum';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
+import { AgentSubscriberAccessEnum } from '../../shared/enums/agent-subscriber-access.enum';
 import { captureAgentException, captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
 import { parseToolApprovalActionId } from '../../shared/tool-approval/action-id';
 import { agentLinkAwaitingInboundConnectionFilter } from '../../shared/util/agent-inbound-connection';
@@ -323,6 +324,22 @@ export class AgentInboundHandler implements OnModuleInit {
       captureAgentWarning(err, { component: 'agent-inbound-handler', operation: 'resolve-subscriber', agentId });
 
       throw err;
+    }
+
+    // Open-access email: when the sender is not linked to any subscriber,
+    // auto-provision a lightweight one from the sender address so the agent can
+    // reply instead of rejecting the email with the "couldn't verify" gate.
+    // Gated on the per-agent `subscriberAccess` setting (default `open` for
+    // newly provisioned email inboxes). Keyless demo agents are excluded — they
+    // deliberately provision lazily at tool-approval time and bound abuse via
+    // the demo cap, so the ephemeral env stays subscriber-free until needed.
+    if (
+      subscriberId === null &&
+      !config.isKeyless &&
+      config.platform === AgentPlatformEnum.EMAIL &&
+      config.subscriberAccess === AgentSubscriberAccessEnum.OPEN
+    ) {
+      subscriberId = await this.provisionOpenAccessEmailSubscriber(agentId, config, message.author.userId);
     }
 
     // A genuine, non-bot user has messaged the agent (bot-authored echoes threw
@@ -651,6 +668,49 @@ export class AgentInboundHandler implements OnModuleInit {
 
         return null;
       });
+  }
+
+  /**
+   * Auto-provision a lightweight subscriber for an unknown email sender on an
+   * open-access agent. Reuses the resolver's idempotent provisioning (deterministic
+   * `sub_<hash>` id + agent-platform provenance markers). Soft-fails to `null` on
+   * any error — a provisioning failure must not crash the inbound webhook; the
+   * turn then continues as a `PLATFORM_USER` and the managed gate handles it.
+   */
+  private async provisionOpenAccessEmailSubscriber(
+    agentId: string,
+    config: ResolvedAgentConfig,
+    email: string
+  ): Promise<string | null> {
+    try {
+      const subscriberId = await this.subscriberResolver.provisionEmailSubscriber({
+        environmentId: config.environmentId,
+        organizationId: config.organizationId,
+        integrationIdentifier: config.integrationIdentifier,
+        agentIdentifier: config.agentIdentifier,
+        email,
+      });
+
+      if (subscriberId) {
+        this.logger.debug(
+          `[agent:${agentId}] Open-access email auto-provisioned subscriber ${subscriberId} for sender ${email}`
+        );
+      }
+
+      return subscriberId;
+    } catch (err) {
+      this.logger.warn(
+        err,
+        `[agent:${agentId}] Open-access email subscriber provisioning failed, continuing without it`
+      );
+      captureAgentWarning(err, {
+        component: 'agent-inbound-handler',
+        operation: 'provision-open-access-email-subscriber',
+        agentId,
+      });
+
+      return null;
+    }
   }
 
   /**

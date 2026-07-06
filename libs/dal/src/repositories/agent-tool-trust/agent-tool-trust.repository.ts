@@ -1,3 +1,4 @@
+import type { ClientSession } from 'mongoose';
 import type { EnforceEnvOrOrgIds } from '../../types';
 import { BaseRepositoryV2 } from '../base-repository-v2';
 import {
@@ -110,6 +111,67 @@ export class AgentToolTrustRepository extends BaseRepositoryV2<
       { $set: { [`trust.mcp.${params.mcpServerName}`]: params.bucket } },
       { upsert: true }
     );
+  }
+
+  /**
+   * Repoint tool-trust rows from `fromSubscriberId` to `toSubscriberId` (both
+   * Mongo `Subscriber._id`s). Used by the email adoption merge so a phantom's
+   * approved-tool decisions follow the surviving real subscriber.
+   *
+   * The unique index on `(_environmentId, _agentId, _subscriberId)` means a
+   * blind move would throw E11000 when the real subscriber already has a trust
+   * row for the same agent — in that case the real subscriber's decisions win
+   * and the phantom row is dropped instead of moved. Processes rows individually
+   * so one collision never aborts the whole merge.
+   */
+  async repointSubscriber(params: {
+    environmentId: string;
+    organizationId: string;
+    fromSubscriberId: string;
+    toSubscriberId: string;
+    session?: ClientSession | null;
+  }): Promise<{ moved: number; dropped: number }> {
+    const { environmentId, organizationId, fromSubscriberId, toSubscriberId, session } = params;
+
+    const sourceRows = await this.find(
+      { _environmentId: environmentId, _organizationId: organizationId, _subscriberId: fromSubscriberId },
+      ['_id', '_agentId'],
+      session ? { session } : {}
+    );
+
+    if (sourceRows.length === 0) {
+      return { moved: 0, dropped: 0 };
+    }
+
+    const destinationRows = await this.find(
+      { _environmentId: environmentId, _organizationId: organizationId, _subscriberId: toSubscriberId },
+      ['_agentId'],
+      session ? { session } : {}
+    );
+
+    const claimedAgents = new Set(destinationRows.map((row) => row._agentId));
+    let moved = 0;
+    let dropped = 0;
+
+    for (const row of sourceRows) {
+      if (claimedAgents.has(row._agentId)) {
+        await this.delete(
+          { _id: row._id, _environmentId: environmentId, _organizationId: organizationId },
+          session ? { session } : {}
+        );
+        dropped += 1;
+      } else {
+        await this.update(
+          { _id: row._id, _environmentId: environmentId, _organizationId: organizationId },
+          { $set: { _subscriberId: toSubscriberId } },
+          session ? { session } : {}
+        );
+        claimedAgents.add(row._agentId);
+        moved += 1;
+      }
+    }
+
+    return { moved, dropped };
   }
 
   private buildTrustPath(params: {

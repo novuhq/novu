@@ -147,6 +147,36 @@ export class ConversationRepository extends BaseRepositoryV2<
     );
   }
 
+  /**
+   * Repoint every SUBSCRIBER participant from `fromSubscriberId` to
+   * `toSubscriberId` (both external `subscriberId` strings) across the whole
+   * environment. Used by the email adoption merge when an auto-provisioned
+   * "phantom" subscriber is folded into a real customer-created one so its
+   * conversation history follows the surviving identity. The positional `$`
+   * updates the single matching participant per conversation — email threads are
+   * 1:1 (one human + agent), so a conversation never carries both ids. Returns
+   * the number of conversations updated.
+   */
+  async repointSubscriberParticipant(
+    environmentId: string,
+    organizationId: string,
+    fromSubscriberId: string,
+    toSubscriberId: string,
+    options?: { session?: ClientSession | null }
+  ): Promise<number> {
+    const result = await this.update(
+      {
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+        participants: { $elemMatch: { id: fromSubscriberId, type: ConversationParticipantTypeEnum.SUBSCRIBER } },
+      },
+      { $set: { 'participants.$.id': toSubscriberId } },
+      options?.session ? { session: options.session } : {}
+    );
+
+    return result.modified;
+  }
+
   async touchActivity(
     environmentId: string,
     organizationId: string,

@@ -6,7 +6,7 @@ import {
   CreateOrUpdateSubscriberUseCase,
   PinoLogger,
 } from '@novu/application-generic';
-import { ChannelEndpointRepository, isDuplicateKeyError, SubscriberRepository } from '@novu/dal';
+import { ChannelEndpointRepository, isDuplicateKeyError, SubscriberEntity, SubscriberRepository } from '@novu/dal';
 import { ENDPOINT_TYPES } from '@novu/shared';
 import { CreateChannelEndpointCommand } from '../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.command';
 import { CreateChannelEndpoint } from '../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.usecase';
@@ -14,28 +14,12 @@ import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { isValidEmailForLookup, normalizeEmailForLookup } from '../../shared/util/email-normalization';
 import { getPhoneLookupCandidates } from '../../shared/util/phone-normalization';
 import { AUTO_PROVISION_PLATFORMS, PLATFORM_ENDPOINT_CONFIG } from '../../shared/util/platform-endpoint-config';
+import { AgentSubscriberAdoptionService } from './agent-subscriber-adoption.service';
+import { AGENT_PLATFORM_PROVISION_SOURCE, AGENT_PROVISION_DATA_KEYS } from './agent-subscriber-provision.constants';
 
-/**
- * Provenance keys stamped on every auto-provisioned `Subscriber.data` blob.
- * Centralised so the resolver, the sparse index in `subscriber.schema.ts`,
- * and tests stay in lockstep. Flat scalar keys because `SubscriberCustomData`
- * is a `Record<string, scalar>`.
- */
-export const AGENT_PROVISION_DATA_KEYS = {
-  source: '__novu_source',
-  platform: '__novu_platform',
-  platformUserId: '__novu_platformUserId',
-  agentIdentifier: '__novu_agentIdentifier',
-  firstSeenAt: '__novu_firstSeenAt',
-} as const;
-
-/**
- * Sentinel value written to `Subscriber.data[AGENT_PROVISION_DATA_KEYS.source]`
- * for every subscriber the resolver auto-creates from an inbound platform
- * message. The sparse index in `subscriber.schema.ts` keys off this marker —
- * never mutate without coordinating the index.
- */
-export const AGENT_PLATFORM_PROVISION_SOURCE = 'agent-platform-provision' as const;
+// Re-exported from their standalone module so existing importers (tests,
+// callers) keep a single source path. See `agent-subscriber-provision.constants.ts`.
+export { AGENT_PLATFORM_PROVISION_SOURCE, AGENT_PROVISION_DATA_KEYS };
 
 export interface ResolveSubscriberParams {
   environmentId: string;
@@ -101,6 +85,7 @@ export class AgentSubscriberResolver {
     private readonly createOrUpdateSubscriber: CreateOrUpdateSubscriberUseCase,
     private readonly createChannelEndpoint: CreateChannelEndpoint,
     private readonly analyticsService: AnalyticsService,
+    private readonly adoptionService: AgentSubscriberAdoptionService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -360,23 +345,58 @@ export class AgentSubscriberResolver {
 
     const matches = await this.subscriberRepository.findByEmail(environmentId, organizationId, email);
 
-    if (matches.length > 1) {
+    if (matches.length === 0) {
+      this.logger.debug(`No subscriber found for email ${email}`);
+
+      return null;
+    }
+
+    // Partition matches into real (customer-created) vs auto-provisioned
+    // "phantom" subscribers. A real subscriber always wins over a phantom so an
+    // end user who signed up through the customer's app keeps their own identity
+    // and history rather than fragmenting onto the address-derived phantom.
+    const phantoms = matches.filter(isAgentProvisionedSubscriber);
+    const realSubscribers = matches.filter((m) => !isAgentProvisionedSubscriber(m));
+
+    if (realSubscribers.length > 0) {
+      const real = realSubscribers[0];
+
+      if (realSubscribers.length > 1) {
+        this.logger.warn(
+          `Multiple customer-created subscribers (${realSubscribers.length}) share email ${email} in environment ${environmentId} — using first match`
+        );
+      }
+
+      // Lazy adoption: fold any phantom(s) that share this address into the real
+      // subscriber so their conversations and tool grants follow the surviving
+      // identity. Best-effort and idempotent — never throws, so a merge hiccup
+      // can't block the inbound turn (it retries on the next email).
+      if (phantoms.length > 0) {
+        await this.adoptionService.adoptPhantomsInto({
+          environmentId,
+          organizationId,
+          real: { _id: real._id, subscriberId: real.subscriberId },
+          phantoms: phantoms.map((p) => ({ _id: p._id, subscriberId: p.subscriberId })),
+        });
+      }
+
+      this.logger.debug(`Resolved email ${email} → subscriber ${real.subscriberId}`);
+
+      return real.subscriberId;
+    }
+
+    // Only phantom(s) exist — no customer-created subscriber yet. Resolve to the
+    // phantom so the open-access agent keeps replying under the same identity.
+    if (phantoms.length > 1) {
       this.logger.warn(
-        `Multiple subscribers (${matches.length}) share email ${email} in environment ${environmentId} — using first match`
+        `Multiple auto-provisioned subscribers (${phantoms.length}) share email ${email} in environment ${environmentId} — using first match`
       );
     }
 
-    const subscriber = matches[0];
+    const phantom = phantoms[0];
+    this.logger.debug(`Resolved email ${email} → auto-provisioned subscriber ${phantom.subscriberId}`);
 
-    if (subscriber) {
-      this.logger.debug(`Resolved email ${email} → subscriber ${subscriber.subscriberId}`);
-
-      return subscriber.subscriberId;
-    }
-
-    this.logger.debug(`No subscriber found for email ${email}`);
-
-    return null;
+    return phantom.subscriberId;
   }
 
   private async provisionSubscriberAndEndpoint(params: ResolveOrProvisionParams): Promise<string> {
@@ -524,6 +544,16 @@ export class AgentSubscriberResolver {
  */
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * True when a subscriber was auto-created from an inbound platform message
+ * (identified by the `__novu_source` provenance marker on `Subscriber.data`)
+ * rather than by the customer's API/dashboard. Used to prefer real subscribers
+ * over phantoms and to target phantoms for adoption.
+ */
+function isAgentProvisionedSubscriber(subscriber: Pick<SubscriberEntity, 'data'>): boolean {
+  return subscriber.data?.[AGENT_PROVISION_DATA_KEYS.source] === AGENT_PLATFORM_PROVISION_SOURCE;
 }
 
 function buildPlatformSubscriberId(params: {

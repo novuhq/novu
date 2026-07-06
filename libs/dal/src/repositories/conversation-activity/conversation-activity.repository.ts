@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DirectionEnum } from '@novu/shared';
-import { FilterQuery } from 'mongoose';
+import { type ClientSession, FilterQuery } from 'mongoose';
 import { EnforceEnvOrOrgIds } from '../../types';
 import { SortOrder } from '../../types/sort-order';
 import { BaseRepositoryV2 } from '../base-repository-v2';
@@ -69,6 +69,34 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
       senderType: ConversationActivitySenderTypeEnum.AGENT,
       type: ConversationActivityTypeEnum.MESSAGE,
     });
+  }
+
+  /**
+   * Repoint SUBSCRIBER-authored activities from `fromSubscriberId` to
+   * `toSubscriberId` (both external `subscriberId` strings, stored in
+   * `senderId`). Used by the email adoption merge so past timeline entries stay
+   * attributed to the surviving identity. Returns the number of activities
+   * updated.
+   */
+  async repointSubscriberSender(
+    environmentId: string,
+    organizationId: string,
+    fromSubscriberId: string,
+    toSubscriberId: string,
+    options?: { session?: ClientSession | null }
+  ): Promise<number> {
+    const result = await this.update(
+      {
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+        senderType: ConversationActivitySenderTypeEnum.SUBSCRIBER,
+        senderId: fromSubscriberId,
+      },
+      { $set: { senderId: toSubscriberId } },
+      options?.session ? { session: options.session } : {}
+    );
+
+    return result.modified;
   }
 
   async createUserActivity(params: {

@@ -3,6 +3,7 @@ import sinon from 'sinon';
 import { ManagedRuntime } from '../../managed-runtime/managed.runtime';
 import { AgentEventEnum } from '../../shared/enums/agent-event.enum';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
+import { AgentSubscriberAccessEnum } from '../../shared/enums/agent-subscriber-access.enum';
 import { UNRESOLVED_SUBSCRIBER_ACCESS_REPLY } from '../../shared/util/agent-inbound-replies';
 import { BridgeRuntime } from '../runtime/bridge.runtime';
 import { NoBridgeUrlError } from '../runtime/bridge-executor.service';
@@ -45,6 +46,7 @@ describe('AgentInboundHandler', () => {
       agentFindOne?: sinon.SinonStub;
       subscriberFindById?: sinon.SinonStub;
       subscriberResolve?: sinon.SinonStub;
+      provisionEmailSubscriber?: sinon.SinonStub;
     } = {}
   ) {
     const logger = makeLogger();
@@ -52,6 +54,7 @@ describe('AgentInboundHandler', () => {
       resolveOnly: overrides.subscriberResolve ?? sinon.stub().resolves(null),
       resolveOrProvision:
         overrides.subscriberResolve ?? sinon.stub().resolves(`sub_${Math.random().toString(36).slice(2, 14)}`),
+      provisionEmailSubscriber: overrides.provisionEmailSubscriber ?? sinon.stub().resolves(null),
     };
     const conversationService = {
       createOrGetConversation: sinon.stub().resolves(conversation),
@@ -488,6 +491,87 @@ describe('AgentInboundHandler', () => {
       expect(outboundGateway.replyOnThread.firstCall.args[1]).to.deep.equal({
         markdown: UNRESOLVED_SUBSCRIBER_ACCESS_REPLY,
       });
+    });
+
+    it('should auto-provision and dispatch for an open-access email agent when the sender is unknown', async () => {
+      const emailConfig = {
+        ...config,
+        platform: AgentPlatformEnum.EMAIL,
+        integrationIdentifier: 'email-main',
+        isManaged: true,
+        subscriberAccess: AgentSubscriberAccessEnum.OPEN,
+      };
+      const senderEmail = 'newcomer@example.com';
+      const provisionEmailSubscriber = sinon.stub().resolves('sub-provisioned');
+      const { handler, managedAgentService, outboundGateway, subscriberResolver } = makeHandler({
+        subscriberResolve: sinon.stub().resolves(null),
+        provisionEmailSubscriber,
+        subscriberFindById: sinon.stub().resolves({ _id: 'sub-mongo', subscriberId: 'sub-provisioned' }),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+      });
+      const thread = makeEmailDmThread();
+      const message = makeEmailDmMessage(senderEmail);
+
+      await handler.handle('agent1', emailConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(provisionEmailSubscriber.calledOnce).to.equal(true);
+      expect(provisionEmailSubscriber.firstCall.args[0].email).to.equal(senderEmail);
+      expect(subscriberResolver.resolveOnly.calledOnce).to.equal(true);
+      expect(outboundGateway.replyOnThread.called).to.equal(false);
+      expect(managedAgentService.dispatch.calledOnce).to.equal(true);
+    });
+
+    it('should not auto-provision for a restricted email agent and keep the no-access gate', async () => {
+      const emailConfig = {
+        ...config,
+        platform: AgentPlatformEnum.EMAIL,
+        integrationIdentifier: 'email-main',
+        isManaged: true,
+        subscriberAccess: AgentSubscriberAccessEnum.RESTRICTED,
+      };
+      const senderEmail = 'stranger@example.com';
+      const provisionEmailSubscriber = sinon.stub().resolves('sub-provisioned');
+      const { handler, managedAgentService, outboundGateway } = makeHandler({
+        subscriberResolve: sinon.stub().resolves(null),
+        provisionEmailSubscriber,
+        subscriberFindById: sinon.stub().resolves(null),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+      });
+      const thread = makeEmailDmThread();
+      const message = makeEmailDmMessage(senderEmail);
+
+      await handler.handle('agent1', emailConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(provisionEmailSubscriber.called).to.equal(false);
+      expect(managedAgentService.dispatch.called).to.equal(false);
+      expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
+      expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.include(senderEmail);
+    });
+
+    it('should not auto-provision for a keyless open-access email agent (demo path owns provisioning)', async () => {
+      const emailConfig = {
+        ...config,
+        platform: AgentPlatformEnum.EMAIL,
+        integrationIdentifier: 'email-main',
+        isKeyless: true,
+        isManaged: true,
+        subscriberAccess: AgentSubscriberAccessEnum.OPEN,
+      };
+      const provisionEmailSubscriber = sinon.stub().resolves('sub-provisioned');
+      const { handler, managedAgentService } = makeHandler({
+        subscriberResolve: sinon.stub().resolves(null),
+        provisionEmailSubscriber,
+        subscriberFindById: sinon.stub().resolves(null),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+      });
+      const thread = makeEmailDmThread();
+      const message = makeEmailDmMessage('demo@example.com');
+
+      await handler.handle('agent1', emailConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(provisionEmailSubscriber.called).to.equal(false);
+      // Keyless demo agents bypass the subscriber gate and still dispatch.
+      expect(managedAgentService.dispatch.calledOnce).to.equal(true);
     });
   });
 

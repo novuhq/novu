@@ -35,6 +35,7 @@ describe('AgentSubscriberResolver', () => {
       createChannelEndpointExecute?: sinon.SinonStub;
       subscriberDelete?: sinon.SinonStub;
       trackAnalytics?: sinon.SinonStub;
+      adoptPhantomsInto?: sinon.SinonStub;
     } = {}
   ) {
     const channelEndpointRepository = {
@@ -55,6 +56,9 @@ describe('AgentSubscriberResolver', () => {
     const analyticsService = {
       track: overrides.trackAnalytics ?? sinon.stub(),
     };
+    const adoptionService = {
+      adoptPhantomsInto: overrides.adoptPhantomsInto ?? sinon.stub().resolves(undefined),
+    };
     const logger = {
       setContext: sinon.stub(),
       warn: sinon.stub(),
@@ -69,6 +73,7 @@ describe('AgentSubscriberResolver', () => {
       createOrUpdateSubscriber as any,
       createChannelEndpoint as any,
       analyticsService as any,
+      adoptionService as any,
       logger as any
     );
 
@@ -79,6 +84,7 @@ describe('AgentSubscriberResolver', () => {
       createOrUpdateSubscriber,
       createChannelEndpoint,
       analyticsService,
+      adoptionService,
       logger,
     };
   }
@@ -183,6 +189,70 @@ describe('AgentSubscriberResolver', () => {
 
       expect(result).to.equal(null);
       expect(subscriberRepository.findByEmail.called).to.equal(false);
+    });
+  });
+
+  describe('resolveOnly — Email adoption / prefer customer-created', () => {
+    const realMatch = { _id: 'mongo-real', subscriberId: 'sub-real', email: 'user@example.com', data: {} };
+    const phantomMatch = {
+      _id: 'mongo-phantom',
+      subscriberId: 'sub-phantom',
+      email: 'user@example.com',
+      data: { [AGENT_PROVISION_DATA_KEYS.source]: AGENT_PLATFORM_PROVISION_SOURCE },
+    };
+
+    it('prefers the customer-created subscriber and adopts the phantom on a dual match', async () => {
+      const adoptPhantomsInto = sinon.stub().resolves(undefined);
+      const { resolver } = makeResolver({
+        findByEmail: sinon.stub().resolves([phantomMatch, realMatch]),
+        adoptPhantomsInto,
+      });
+
+      const result = await resolver.resolveOnly({
+        ...baseLookupParams,
+        platform: AgentPlatformEnum.EMAIL,
+        platformUserId: 'user@example.com',
+      });
+
+      expect(result).to.equal('sub-real');
+      expect(adoptPhantomsInto.calledOnce).to.equal(true);
+      const arg = adoptPhantomsInto.firstCall.args[0];
+      expect(arg.real).to.deep.equal({ _id: 'mongo-real', subscriberId: 'sub-real' });
+      expect(arg.phantoms).to.deep.equal([{ _id: 'mongo-phantom', subscriberId: 'sub-phantom' }]);
+    });
+
+    it('resolves to the phantom and does not adopt when no customer-created subscriber exists', async () => {
+      const adoptPhantomsInto = sinon.stub().resolves(undefined);
+      const { resolver } = makeResolver({
+        findByEmail: sinon.stub().resolves([phantomMatch]),
+        adoptPhantomsInto,
+      });
+
+      const result = await resolver.resolveOnly({
+        ...baseLookupParams,
+        platform: AgentPlatformEnum.EMAIL,
+        platformUserId: 'user@example.com',
+      });
+
+      expect(result).to.equal('sub-phantom');
+      expect(adoptPhantomsInto.called).to.equal(false);
+    });
+
+    it('resolves to the customer-created subscriber without adoption when no phantom exists', async () => {
+      const adoptPhantomsInto = sinon.stub().resolves(undefined);
+      const { resolver } = makeResolver({
+        findByEmail: sinon.stub().resolves([realMatch]),
+        adoptPhantomsInto,
+      });
+
+      const result = await resolver.resolveOnly({
+        ...baseLookupParams,
+        platform: AgentPlatformEnum.EMAIL,
+        platformUserId: 'user@example.com',
+      });
+
+      expect(result).to.equal('sub-real');
+      expect(adoptPhantomsInto.called).to.equal(false);
     });
   });
 

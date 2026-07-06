@@ -4,6 +4,7 @@ import { RiAddLine, RiCloseLine, RiInformation2Line } from 'react-icons/ri';
 import { useSearchParams } from 'react-router-dom';
 import type { AgentIntegrationEmbedded, AgentResponse } from '@/api/agents';
 import { CopyableEmailAddress } from '@/components/agents/copyable-email-address';
+import { EmailSubscriberAccessToggle } from '@/components/agents/email-subscriber-access-toggle';
 import { CompactButton } from '@/components/primitives/button-compact';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { Switch } from '@/components/primitives/switch';
@@ -276,6 +277,16 @@ export function EmailInboxCardBody({
               </a>
             </p>
           ) : null}
+        </div>
+      </CardRow>
+
+      <CardRow
+        title="Who can email this agent"
+        description="Open lets anyone email your agent — a lightweight subscriber is created from their address so the agent can reply, and it merges into their account when they sign up with the same email. Off replies only to known subscribers."
+      >
+        <div className="flex items-center justify-end gap-2">
+          <span className="text-text-soft text-label-xs font-medium leading-4">Accept email from anyone</span>
+          <EmailSubscriberAccessToggle agent={agent} ariaLabel="Accept email from anyone" />
         </div>
       </CardRow>
 

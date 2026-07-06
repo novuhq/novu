@@ -136,6 +136,58 @@ describe('Agents API - /agents #novu-v2', () => {
     await session.testAgent.delete(`/v1/agents/${encodeURIComponent(identifier)}`);
   });
 
+  it('should update and return subscriberAccess behavior', async () => {
+    const identifier = `e2e-subscriber-access-${Date.now()}`;
+
+    const createRes = await session.testAgent.post('/v1/agents').send({
+      name: 'Access Agent',
+      identifier,
+    });
+
+    expect(createRes.status).to.equal(201);
+    expect(createRes.body.data.behavior).to.equal(undefined);
+
+    const openRes = await session.testAgent.patch(`/v1/agents/${encodeURIComponent(identifier)}`).send({
+      behavior: { subscriberAccess: 'open' },
+    });
+
+    expect(openRes.status).to.equal(200);
+    expect(openRes.body.data.behavior.subscriberAccess).to.equal('open');
+
+    const getRes = await session.testAgent.get(`/v1/agents/${encodeURIComponent(identifier)}`);
+
+    expect(getRes.status).to.equal(200);
+    expect(getRes.body.data.behavior.subscriberAccess).to.equal('open');
+
+    const restrictRes = await session.testAgent.patch(`/v1/agents/${encodeURIComponent(identifier)}`).send({
+      behavior: { subscriberAccess: 'restricted' },
+    });
+
+    expect(restrictRes.status).to.equal(200);
+    expect(restrictRes.body.data.behavior.subscriberAccess).to.equal('restricted');
+
+    await session.testAgent.delete(`/v1/agents/${encodeURIComponent(identifier)}`);
+  });
+
+  it('should reject an invalid subscriberAccess value', async () => {
+    const identifier = `e2e-subscriber-access-invalid-${Date.now()}`;
+
+    const createRes = await session.testAgent.post('/v1/agents').send({
+      name: 'Access Agent Invalid',
+      identifier,
+    });
+
+    expect(createRes.status).to.equal(201);
+
+    const badRes = await session.testAgent.patch(`/v1/agents/${encodeURIComponent(identifier)}`).send({
+      behavior: { subscriberAccess: 'everyone' },
+    });
+
+    expect(badRes.status).to.equal(400);
+
+    await session.testAgent.delete(`/v1/agents/${encodeURIComponent(identifier)}`);
+  });
+
   it('should return 422 when identifier is not a valid slug', async () => {
     const res = await session.testAgent.post('/v1/agents').send({
       name: 'Invalid Slug Agent',

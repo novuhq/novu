@@ -14,6 +14,7 @@ import { EmailProviderIdEnum } from '@novu/shared';
 import type { WellKnownEmoji } from 'chat';
 import { isKeylessOrganization } from '../../keyless/keyless-organization.helpers';
 import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
+import { AgentSubscriberAccessEnum } from '../shared/enums/agent-subscriber-access.enum';
 import { AgentInactiveException } from '../shared/errors/agent-inactive.exception';
 import { AgentIntegrationDisconnectedException } from '../shared/errors/agent-integration-disconnected.exception';
 import { esmImport } from '../shared/util/esm-import';
@@ -70,6 +71,12 @@ export interface ResolvedAgentConfig {
   removeNovuBranding: boolean;
   acknowledgeOnReceived: boolean;
   reactionOnResolved: WellKnownEmoji | null;
+  /**
+   * Whether unknown senders are auto-provisioned as subscribers (`open`) or
+   * rejected (`restricted`). Defaults to `restricted` when the agent has no
+   * explicit setting. Consumed by the inbound handler for the email platform.
+   */
+  subscriberAccess: AgentSubscriberAccessEnum;
   bridgeUrl?: string;
   devBridgeUrl?: string;
   devBridgeActive?: boolean;
@@ -278,6 +285,10 @@ export class AgentConfigResolver {
         DEFAULT_REACTION_ON_RESOLVED,
         this.logger
       ),
+      subscriberAccess:
+        agent.behavior?.subscriberAccess === 'open'
+          ? AgentSubscriberAccessEnum.OPEN
+          : AgentSubscriberAccessEnum.RESTRICTED,
       bridgeUrl: agent.bridgeUrl,
       devBridgeUrl: agent.devBridgeUrl,
       devBridgeActive: agent.devBridgeActive,
