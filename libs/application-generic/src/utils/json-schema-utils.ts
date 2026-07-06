@@ -4,6 +4,7 @@ import isArray from 'lodash/isArray';
 import isObject from 'lodash/isObject';
 import reduce from 'lodash/reduce';
 import { JSONSchemaDto } from '../dtos/json-schema.dto';
+import { safeSetPath } from './safe-set-path';
 import { DIGEST_EVENTS_VARIABLE_PATTERN } from './template-parser/parser-utils';
 
 export type ArrayVariable = {
@@ -142,7 +143,7 @@ function buildObjectFromPaths(
 
   // Initialize arrays with the correct number of iterations
   arrayVariables.forEach((arrayVariable) => {
-    safeSet(result, arrayVariable.path, Array(arrayVariable.iterations).fill({}));
+    safeSetPath(result, arrayVariable.path, Array(arrayVariable.iterations).fill({}));
   });
 
   // Sort paths by number of dots (depth) in ascending order
@@ -204,7 +205,7 @@ function buildObjectFromPaths(
         payloadProperties.forEach((property) => {
           const propertyParts = property.split('.');
           const propertyValue = propertyParts[propertyParts.length - 1];
-          setNestedProperty(payload, property, propertyValue);
+          safeSetPath(payload, property, propertyValue);
         });
         value = payload;
       } else {
@@ -216,7 +217,7 @@ function buildObjectFromPaths(
       (arrayVariable) => arrayVariable.path === path || path.startsWith(`${arrayVariable.path}.`)
     );
     if (!arrayParent) {
-      safeSet(result, path.replace(/\[\d+\]/g, '[0]'), value);
+      safeSetPath(result, path.replace(/\[\d+\]/g, '[0]'), value);
 
       return;
     }
@@ -225,90 +226,13 @@ function buildObjectFromPaths(
     const targetPath = isDirectArrayPath ? path : `${arrayParent.path}[0].${path.slice(arrayParent.path.length + 1)}`;
 
     if (isDirectArrayPath) {
-      safeSet(result, targetPath, Array(arrayParent.iterations).fill(value));
+      safeSetPath(result, targetPath, Array(arrayParent.iterations).fill(value));
     } else {
-      safeSet(result, targetPath, value);
+      safeSetPath(result, targetPath, value);
     }
   });
 
   return result;
-}
-
-const UNSAFE_PATH_KEYS = new Set([
-  '__proto__',
-  'constructor',
-  'prototype',
-  'toString',
-  'valueOf',
-  'hasOwnProperty',
-  'isPrototypeOf',
-  'propertyIsEnumerable',
-  'toLocaleString',
-]);
-
-function isIndexSegment(segment: string): boolean {
-  return /^\d+$/.test(segment);
-}
-
-function isUnsafeSegment(segment: string): boolean {
-  return !isIndexSegment(segment) && UNSAFE_PATH_KEYS.has(segment);
-}
-
-function parseVariablePath(path: string): string[] {
-  return path
-    .replace(/\[(\d+)\]/g, '.$1')
-    .split('.')
-    .filter((segment) => segment.length > 0);
-}
-
-function createPathNode(nextSegment: string): Record<string, unknown> | unknown[] {
-  return isIndexSegment(nextSegment) ? [] : {};
-}
-
-/**
- * Assigns `value` at a dot/bracket path, only reusing own properties and never
- * following inherited ones, so a user-controlled path cannot reach a builtin on
- * the prototype chain (second-order prototype pollution).
- */
-function safeSet(root: Record<string, unknown>, path: string, value: unknown): void {
-  const segments = parseVariablePath(path);
-
-  if (segments.length === 0 || segments.some(isUnsafeSegment)) {
-    return;
-  }
-
-  let node: Record<string, unknown> | unknown[] = root;
-
-  for (let index = 0; index < segments.length; index += 1) {
-    const segment = segments[index];
-    const isIndex = isIndexSegment(segment);
-
-    if (isIndex && !Array.isArray(node)) {
-      return;
-    }
-
-    const container = node as Record<string, unknown> | unknown[];
-    const key = isIndex ? Number(segment) : segment;
-
-    if (index === segments.length - 1) {
-      (container as Record<string | number, unknown>)[key] = value;
-
-      return;
-    }
-
-    const hasOwn = isIndex ? true : Object.prototype.hasOwnProperty.call(container, key);
-    const existing = hasOwn ? (container as Record<string | number, unknown>)[key] : undefined;
-
-    if (existing === null || typeof existing !== 'object') {
-      (container as Record<string | number, unknown>)[key] = createPathNode(segments[index + 1]);
-    }
-
-    node = (container as Record<string | number, unknown>)[key] as Record<string, unknown> | unknown[];
-  }
-}
-
-function setNestedProperty(obj: Record<string, unknown>, path: string, value: string) {
-  safeSet(obj, path, value);
 }
 
 /**
