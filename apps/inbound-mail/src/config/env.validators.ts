@@ -1,5 +1,6 @@
+import { getRedisHostPortEnvValidators, InMemoryProviderConsumer } from '@novu/application-generic';
 import { StringifyEnv } from '@novu/shared';
-import { bool, CleanedEnv, cleanEnv, json, num, port, str, ValidatorSpec } from 'envalid';
+import { bool, CleanedEnv, cleanEnv, json, num, str, ValidatorSpec } from 'envalid';
 
 export function validateEnv() {
   return cleanEnv(process.env, envValidators);
@@ -11,8 +12,7 @@ const processEnv = process.env as Record<string, string>;
 export const envValidators = {
   TZ: str({ default: 'UTC' }),
   NODE_ENV: str({ choices: ['dev', 'test', 'production', 'ci', 'local'], default: 'local' }),
-  REDIS_HOST: str(),
-  REDIS_PORT: port(),
+  ...getRedisHostPortEnvValidators(processEnv, InMemoryProviderConsumer.WORKFLOW),
   REDIS_TLS: json({ default: undefined }),
   WORKER_DEFAULT_CONCURRENCY: num({ default: undefined }),
   WORKER_DEFAULT_LOCK_DURATION: num({ default: undefined }),

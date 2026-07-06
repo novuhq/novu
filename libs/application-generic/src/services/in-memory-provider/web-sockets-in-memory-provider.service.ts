@@ -1,6 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { InMemoryProviderService } from './in-memory-provider.service';
 import { InMemoryProviderClient, InMemoryProviderEnum, ScanStream } from './types';
+import { getWebSocketsInMemoryProvider } from './in-memory-provider-selection';
 import { isClusterModeEnabled } from './utils';
 
 const LOG_CONTEXT = 'WebSocketsInMemoryProviderService';
@@ -25,11 +26,7 @@ export class WebSocketsInMemoryProviderService {
    * mapping in the /in-memory-provider/providers/index.ts
    */
   private selectProvider(): InMemoryProviderEnum {
-    if (process.env.IS_SELF_HOSTED === 'true' && process.env.NOVU_ENTERPRISE === 'false') {
-      return InMemoryProviderEnum.REDIS;
-    }
-
-    return InMemoryProviderEnum.ELASTICACHE;
+    return getWebSocketsInMemoryProvider(process.env);
   }
 
   private descriptiveLogMessage(message) {

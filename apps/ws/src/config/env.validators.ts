@@ -1,3 +1,4 @@
+import { getRedisHostPortEnvValidators, InMemoryProviderConsumer } from '@novu/application-generic';
 import { StringifyEnv } from '@novu/shared';
 import { bool, CleanedEnv, cleanEnv, json, num, port, str, ValidatorSpec } from 'envalid';
 
@@ -6,6 +7,8 @@ export function validateEnv() {
 }
 
 export type ValidatedEnv = StringifyEnv<CleanedEnv<typeof envValidators>>;
+
+const processEnv = process.env as Record<string, string>;
 
 export const envValidators = {
   JWT_SECRET: str(),
@@ -16,8 +19,7 @@ export const envValidators = {
   MONGO_URL: str(),
   NODE_ENV: str({ choices: ['dev', 'test', 'production', 'ci', 'local'], default: 'local' }),
   PORT: port(),
-  REDIS_HOST: str(),
-  REDIS_PORT: port(),
+  ...getRedisHostPortEnvValidators(processEnv, InMemoryProviderConsumer.WEB_SOCKETS),
   REDIS_TLS: json({ default: undefined }),
   REDIS_MASTER_HOST: str({ default: '' }),
   REDIS_MASTER_PORT: str({ default: '' }),
