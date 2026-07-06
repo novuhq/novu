@@ -25,7 +25,7 @@ import type { StepStatus } from './setup-guide-step-utils';
 export type SetupMode = 'quick' | 'manual';
 
 /** Shared vertical rail gradient — fades at the bottom of the numbered-steps column only. */
-export const SETUP_STEPPER_RAIL_GRADIENT =
+const SETUP_STEPPER_RAIL_GRADIENT =
   'linear-gradient(to bottom, transparent 0%, #E1E4EA 10%, #E1E4EA 90%, transparent 100%)';
 
 /**
