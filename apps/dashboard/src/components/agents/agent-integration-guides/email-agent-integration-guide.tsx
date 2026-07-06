@@ -1,5 +1,5 @@
-import { EmailProviderIdEnum, FeatureFlagsKeysEnum } from '@novu/shared';
-import { useMemo } from 'react';
+import { EmailProviderIdEnum, FeatureFlagsKeysEnum, type IIntegration } from '@novu/shared';
+import { type ReactNode, useMemo } from 'react';
 import type { AgentIntegrationLink, AgentResponse } from '@/api/agents';
 import { ConnectionConfetti } from '@/components/agents/connection-confetti';
 import { EmailConfigurationCardBody } from '@/components/agents/email-configuration-card';
@@ -12,7 +12,9 @@ import {
 import { IS_SELF_HOSTED_EE } from '@/config';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
+import { useWhatsNextGuideSession } from '@/hooks/use-whats-next-default-expanded';
 import { AGENT_EMAIL_PROVIDER_LABEL } from '@/utils/agent-email-provider-display';
+import { shouldShowWhatsNextGuide } from '@/utils/whats-next-guide';
 import { AgentIntegrationGuideLayout } from './agent-integration-guide-layout';
 import { AgentIntegrationGuideTransition } from './agent-integration-guide-transition';
 import { EmailWhatsNextGuide } from './whats-next/email-whats-next-guide';
@@ -65,7 +67,10 @@ export function EmailAgentIntegrationGuide({
     emailIntegration && integrationId && (showInboxSection || showConfigCard || showSenderAddressRow)
   );
 
-  const emailCard =
+  // The sender-address row can also host the outbound provider selector. It stays hidden while the
+  // "What's next" guide is up (the guide owns that selector during layer-2 onboarding) and is
+  // surfaced here once the guide retires — see `EmailConnectedView`.
+  const renderEmailCard = (showOutboundProvider: boolean) =>
     showEmailCard && emailIntegration && integrationId ? (
       <div className="bg-bg-weak flex flex-col rounded-[10px] p-1">
         <div className="flex items-center px-2 py-1.5">
@@ -96,7 +101,7 @@ export function EmailAgentIntegrationGuide({
               integrationId={integrationId}
               defaultSenderName={integrationLink?.integration?.defaultSenderName}
               sharedInboundAddress={integrationLink?.integration?.sharedInboundAddress}
-              showOutboundProvider={false}
+              showOutboundProvider={showOutboundProvider}
               senderTitle="Set a custom From address"
               senderDescription="By default replies come from the agent inbox address. Send from your own address instead — Reply-To always routes back to the agent so subscriber replies stay in the thread."
               senderDisabledReason="Custom From addresses are only supported with your own email provider. Connect one above to enable this."
@@ -125,16 +130,18 @@ export function EmailAgentIntegrationGuide({
           </>
         )}
         renderConnectedView={(justConnected) => (
-          <>
-            <ConnectionConfetti active={justConnected} />
-            <EmailWhatsNextGuide agent={agent} integrationLink={integrationLink} justConnected={justConnected} />
-            {emailCard}
-          </>
+          <EmailConnectedView
+            agent={agent}
+            integrationLink={integrationLink}
+            emailIntegration={emailIntegration}
+            justConnected={justConnected}
+            renderEmailCard={renderEmailCard}
+          />
         )}
       />
     ) : (
       <>
-        {emailCard}
+        {renderEmailCard(true)}
         {!isConnected && integrationId ? (
           <EmailSetupGuide agent={agent} integrationId={integrationId} embedded integrationLink={integrationLink} />
         ) : null}
@@ -155,5 +162,43 @@ export function EmailAgentIntegrationGuide({
     >
       {body}
     </AgentIntegrationGuideLayout>
+  );
+}
+
+type EmailConnectedViewProps = {
+  agent: AgentResponse;
+  integrationLink: AgentIntegrationLink;
+  emailIntegration?: IIntegration;
+  /** True when the integration connected during this session (drives the celebration + fresh session). */
+  justConnected: boolean;
+  renderEmailCard: (showOutboundProvider: boolean) => ReactNode;
+};
+
+/**
+ * Layer-2 connected view: the "What's next" guide plus the EMAIL card.
+ *
+ * The guide owns the "Send from your own email provider" selector, but it retires itself ~a day
+ * after the demo -> own-provider switch (see `shouldShowWhatsNextGuide`). Without this, the selector
+ * would vanish entirely once the guide is gone, leaving no way to change the production sending
+ * provider. So we surface it back inside the EMAIL card at exactly the moment the guide hides — using
+ * the same visibility decision so the two never show it at once.
+ */
+function EmailConnectedView({
+  agent,
+  integrationLink,
+  emailIntegration,
+  justConnected,
+  renderEmailCard,
+}: EmailConnectedViewProps) {
+  const { isFreshSession } = useWhatsNextGuideSession(justConnected);
+  const completedAt = emailIntegration?.credentials.outboundConnectedAt ?? null;
+  const showOutboundProvider = !shouldShowWhatsNextGuide(completedAt, { isFreshSession });
+
+  return (
+    <>
+      <ConnectionConfetti active={justConnected} />
+      <EmailWhatsNextGuide agent={agent} integrationLink={integrationLink} justConnected={justConnected} />
+      {renderEmailCard(showOutboundProvider)}
+    </>
   );
 }
