@@ -44,6 +44,22 @@ These fields ensure Novu can deliver messages reliably to all supported destinat
   Each subscriber channel is limited to a maximum of **100 device tokens**. Requests that exceed this limit will be rejected. See [Platform Limits](/platform/developer/limits) for details.
 </Note>
 
+#### Managing credentials from the dashboard
+
+Each subscriber's detail view in the Novu dashboard includes a **Credentials** tab that lets you view and manage all of the delivery credentials associated with a subscriber. Credentials are grouped by channel (Email, SMS, Push, Chat), and every card represents a specific provider integration configured in the current environment.
+
+Use this tab when you want to:
+- Inspect which push device tokens are registered for a subscriber and add, edit, or remove tokens without calling the API.
+- Add or update chat webhooks and endpoints (for example, a Slack webhook URL, a Microsoft Teams channel, a Telegram or Discord destination) for the subscriber.
+- Confirm which email address or phone number the subscriber will receive Email and SMS notifications on.
+
+The tab behaves as follows:
+- **Email** and **SMS** cards are read-only and reflect the subscriber's `email` and `phone` fields. Use the **Edit in overview** action on the card to jump to the Overview tab with the corresponding field focused.
+- **Push** cards let you add, edit, and delete `deviceTokens` for each active push integration.
+- **Chat** cards let you add, edit, and delete chat credentials for each active chat integration, including both legacy `webhookUrl` credentials and per-endpoint destinations (for example, multiple Slack channels attached to the same connection). WhatsApp Business is treated as a read-only card that maps to the subscriber's phone number.
+
+Any changes made from the Credentials tab are equivalent to calling the [Update subscriber credentials](/api-reference/subscribers/update-provider-credentials) API and take effect immediately for future notification triggers.
+
 Learn more about subscriber attributes and schema in the [Subscribers API](/api-reference/subscribers/subscriber-schema).
 
 ## Subscriber creation in Novu
