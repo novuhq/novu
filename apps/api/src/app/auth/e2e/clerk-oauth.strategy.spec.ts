@@ -23,9 +23,6 @@ describe('ClerkOAuthStrategy', () => {
     users: { getOrganizationMembershipList: sinon.SinonStub };
   };
 
-  // `authScheme` is assigned by EEUserAuthGuard before passport runs; OAUTH2
-  // marks requests routed through the guard branch that enforces the
-  // `oauth_accessible` endpoint opt-in.
   const mockRequest = {
     authScheme: ApiAuthSchemeEnum.OAUTH2,
     headers: {
@@ -47,9 +44,6 @@ describe('ClerkOAuthStrategy', () => {
   let originalIssuerUrl: string | undefined;
 
   beforeEach(() => {
-    // Default: no issuer configured, so the userinfo lookup is skipped and org
-    // resolution falls back to the membership list. Tests that exercise the
-    // consent-selected org set `CLERK_ISSUER_URL` and stub `fetch` explicitly.
     originalIssuerUrl = process.env.CLERK_ISSUER_URL;
     delete process.env.CLERK_ISSUER_URL;
 
@@ -160,10 +154,7 @@ describe('ClerkOAuthStrategy', () => {
       }
     });
 
-    it('should reject a valid OAuth token when the request was not routed through the OAuth2 scheme', async () => {
-      // Passport falls through the guard's strategy array (e.g. from a failed
-      // keyless attempt), so a request detected as another scheme must not be
-      // authenticated here — its guard branch never checked `oauth_accessible`.
+    it('should return false when the request was not routed through the OAuth2 scheme', async () => {
       const keylessRoutedRequest = {
         authScheme: ApiAuthSchemeEnum.KEYLESS,
         headers: {
@@ -172,14 +163,9 @@ describe('ClerkOAuthStrategy', () => {
         },
       };
 
-      try {
-        await strategy.validate(keylessRoutedRequest);
-        expect.fail('Should have thrown an error');
-      } catch (err) {
-        expect(err).to.be.instanceOf(UnauthorizedException);
-        expect(err.message).to.equal('OAuth authentication is not allowed for this request');
-      }
+      const result = await strategy.validate(keylessRoutedRequest);
 
+      expect(result).to.be.false;
       expect(mockClerkClient.authenticateRequest.called).to.be.false;
     });
 

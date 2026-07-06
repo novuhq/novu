@@ -5,9 +5,9 @@ import { expect } from 'chai';
 
 /**
  * Regression coverage for GHSA-rgr9-mpmj-mpw8 / NV-7640:
- * An environment API key (and, by the same gate, a Clerk OAuth access token)
- * must never receive decrypted provider credentials from the integrations
- * endpoints, regardless of RBAC state.
+ * An environment API key must never receive decrypted provider credentials
+ * from the integrations endpoints, regardless of RBAC state. OAuth tokens are
+ * gated the same way.
  *
  * Session-token (JWT/dashboard) callers must keep receiving decrypted credentials
  * so dashboard flows continue to work.

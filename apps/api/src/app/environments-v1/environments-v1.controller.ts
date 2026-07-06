@@ -145,8 +145,13 @@ export class EnvironmentsControllerV1 {
   async listMyEnvironments(@UserSession() user: UserSessionData): Promise<EnvironmentResponseDto[]> {
     const isApiKeyAuth = user.scheme === ApiAuthSchemeEnum.API_KEY;
     const isOAuthAuth = user.scheme === ApiAuthSchemeEnum.OAUTH2;
-    const canAccessApiKeys =
-      isApiKeyAuth || isOAuthAuth ? isApiKeyAuth : await this.canUserAccessApiKeys(user);
+    let canAccessApiKeys = false;
+
+    if (isApiKeyAuth) {
+      canAccessApiKeys = true;
+    } else if (!isOAuthAuth) {
+      canAccessApiKeys = await this.canUserAccessApiKeys(user);
+    }
 
     const isListEnvironmentsApiKeysEnabled = await this.featureFlagService.getFlag({
       organization: { _id: user.organizationId },
