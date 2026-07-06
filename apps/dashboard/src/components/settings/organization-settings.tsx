@@ -1,8 +1,8 @@
 /** biome-ignore-all lint/correctness/useUniqueElementIds: expected */
-import { OrganizationProfile } from '@clerk/react';
-import type { ClerkAppearanceTheme } from '@clerk/shared/types';
-import { PermissionsEnum } from '@novu/shared';
-import { useState } from 'react';
+import { OrganizationProfile, useAuth, useOrganization } from '@clerk/react';
+import type { ClerkAppearanceTheme, OrganizationResource } from '@clerk/shared/types';
+import { MemberRoleEnum, PermissionsEnum } from '@novu/shared';
+import { useEffect, useState } from 'react';
 import { RiInformation2Line } from 'react-icons/ri';
 import { Tooltip, TooltipContent, TooltipPortal, TooltipTrigger } from '@/components/primitives/tooltip';
 import { EE_AUTH_PROVIDER } from '@/config';
@@ -29,6 +29,32 @@ const ORGANIZATION_GENERAL_HASH = '/';
 
 type OrganizationProfileTab = 'general' | 'security';
 
+type OrganizationWithSelfServeSSO = OrganizationResource & {
+  self_serve_sso_enabled?: boolean;
+};
+
+function getOrganizationProfileTabFromHash(): OrganizationProfileTab {
+  return window.location.hash.includes('organization-security') ? 'security' : 'general';
+}
+
+function isOrganizationOwner(orgRole: string | null | undefined, membershipRole: string | undefined): boolean {
+  return orgRole === MemberRoleEnum.OWNER || membershipRole === MemberRoleEnum.OWNER;
+}
+
+function isOrganizationSelfServeSSOEnabled(organization: OrganizationResource | null | undefined): boolean {
+  if (!organization) {
+    return false;
+  }
+
+  if (organization.selfServeSSOEnabled === true) {
+    return true;
+  }
+
+  const organizationWithLegacyField = organization as OrganizationWithSelfServeSSO;
+
+  return organizationWithLegacyField.self_serve_sso_enabled === true;
+}
+
 function getOrganizationProfileTabClass(isActive: boolean) {
   if (isActive) {
     return 'text-text-strong border-neutral-950';
@@ -38,8 +64,14 @@ function getOrganizationProfileTabClass(isActive: boolean) {
 }
 
 export function OrganizationSettings({ clerkAppearance }: { clerkAppearance: ClerkAppearanceTheme }) {
+  const { orgRole, isLoaded: isAuthLoaded } = useAuth();
+  const { organization, membership, isLoaded: isOrganizationLoaded } = useOrganization();
   const { data: organizationSettings, isLoading: isLoadingSettings } = useFetchOrganizationSettings();
   const updateOrganizationSettings = useUpdateOrganizationSettings();
+
+  const isOwner = isOrganizationOwner(orgRole, membership?.role);
+  const isSelfServeSSOEnabled = isOrganizationSelfServeSSOEnabled(organization);
+  const canShowSecurityTab = isOrganizationLoaded && isAuthLoaded && isOwner && isSelfServeSSOEnabled;
 
   const handleRemoveBrandingChange = (value: boolean) => {
     updateOrganizationSettings.mutate({
@@ -54,12 +86,39 @@ export function OrganizationSettings({ clerkAppearance }: { clerkAppearance: Cle
   // (valid labels are only general/members/billing/apiKeys). Clerk auto-injects it into the
   // OrganizationProfile router when self-serve SSO is enabled for the environment and the org.
   // Keep Clerk's embedded navbar hidden and drive its hash routes from Novu's own sub-tabs.
-  const [activeTab, setActiveTab] = useState<OrganizationProfileTab>(() =>
-    window.location.hash.includes('organization-security') ? 'security' : 'general'
-  );
+  const [activeTab, setActiveTab] = useState<OrganizationProfileTab>(getOrganizationProfileTabFromHash);
+
+  useEffect(() => {
+    if (EE_AUTH_PROVIDER !== 'clerk' || !organization) {
+      return;
+    }
+
+    void organization.reload();
+  }, [organization?.id]);
+
+  useEffect(() => {
+    const syncTabFromHash = () => setActiveTab(getOrganizationProfileTabFromHash());
+
+    window.addEventListener('hashchange', syncTabFromHash);
+
+    return () => window.removeEventListener('hashchange', syncTabFromHash);
+  }, []);
+
+  useEffect(() => {
+    if (!isOrganizationLoaded || !isAuthLoaded) {
+      return;
+    }
+
+    if (!canShowSecurityTab && getOrganizationProfileTabFromHash() === 'security') {
+      window.location.hash = ORGANIZATION_GENERAL_HASH;
+    }
+  }, [canShowSecurityTab, isOrganizationLoaded, isAuthLoaded]);
 
   const handleOrganizationProfileTabChange = (tab: OrganizationProfileTab) => {
-    setActiveTab(tab);
+    if (tab === 'security' && !canShowSecurityTab) {
+      return;
+    }
+
     // Assigning to `window.location.hash` fires a `hashchange` event, which Clerk's hash router
     // listens for (React Router's `navigate` uses `pushState` and would not notify Clerk).
     window.location.hash = tab === 'security' ? ORGANIZATION_SECURITY_HASH : ORGANIZATION_GENERAL_HASH;
@@ -123,22 +182,24 @@ export function OrganizationSettings({ clerkAppearance }: { clerkAppearance: Cle
         <h1 className="text-label-sm text-text-strong mb-3">Organization Settings</h1>
         {EE_AUTH_PROVIDER === 'clerk' ? (
           <>
-            <div className="mb-4 flex gap-4 border-b border-neutral-100">
-              <button
-                type="button"
-                className={`text-label-sm border-b px-0 pb-2 ${getOrganizationProfileTabClass(activeTab === 'general')}`}
-                onClick={() => handleOrganizationProfileTabChange('general')}
-              >
-                General
-              </button>
-              <button
-                type="button"
-                className={`text-label-sm border-b px-0 pb-2 ${getOrganizationProfileTabClass(activeTab === 'security')}`}
-                onClick={() => handleOrganizationProfileTabChange('security')}
-              >
-                Security
-              </button>
-            </div>
+            {canShowSecurityTab ? (
+              <div className="mb-4 flex gap-4 border-b border-neutral-100">
+                <button
+                  type="button"
+                  className={`text-label-sm border-b px-0 pb-2 ${getOrganizationProfileTabClass(activeTab === 'general')}`}
+                  onClick={() => handleOrganizationProfileTabChange('general')}
+                >
+                  General
+                </button>
+                <button
+                  type="button"
+                  className={`text-label-sm border-b px-0 pb-2 ${getOrganizationProfileTabClass(activeTab === 'security')}`}
+                  onClick={() => handleOrganizationProfileTabChange('security')}
+                >
+                  Security
+                </button>
+              </div>
+            ) : null}
             <OrganizationProfile appearance={clerkAppearance} afterLeaveOrganizationUrl={AFTER_LEAVE_ORG_URL} />
           </>
         ) : (
