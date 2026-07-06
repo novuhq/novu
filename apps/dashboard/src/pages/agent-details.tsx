@@ -34,6 +34,7 @@ import { CompactButton } from '@/components/primitives/button-compact';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
+import TruncatedText from '@/components/truncated-text';
 import { IS_EU } from '@/config';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useAgentRoutes } from '@/hooks/use-agent-routes';
@@ -272,7 +273,7 @@ export function AgentDetailsPage() {
             ) : (
               <BreadcrumbPage className="flex min-w-0 items-center gap-1.5">
                 <RiRobot2Line className="text-text-sub size-4 shrink-0" aria-hidden />
-                <span className="truncate">{breadcrumbCurrentLabel}</span>
+                <TruncatedText className="min-w-0 max-w-[40ch]">{breadcrumbCurrentLabel}</TruncatedText>
                 <Badge color="gray" size="sm" variant="lighter" className="shrink-0">
                   BETA
                 </Badge>
