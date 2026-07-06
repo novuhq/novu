@@ -3,7 +3,6 @@ import difference from 'lodash/difference';
 import isArray from 'lodash/isArray';
 import isObject from 'lodash/isObject';
 import reduce from 'lodash/reduce';
-import set from 'lodash/set';
 import { JSONSchemaDto } from '../dtos/json-schema.dto';
 import { DIGEST_EVENTS_VARIABLE_PATTERN } from './template-parser/parser-utils';
 
@@ -139,11 +138,11 @@ function buildObjectFromPaths(
   arrayVariables: Array<ArrayVariable>,
   showIfVariablesPaths?: string[]
 ): Record<string, unknown> {
-  const result = {};
+  const result = Object.create(null) as Record<string, unknown>;
 
   // Initialize arrays with the correct number of iterations
   arrayVariables.forEach((arrayVariable) => {
-    set(result, arrayVariable.path, Array(arrayVariable.iterations).fill({}));
+    safeSet(result, arrayVariable.path, Array(arrayVariable.iterations).fill({}));
   });
 
   // Sort paths by number of dots (depth) in ascending order
@@ -201,7 +200,7 @@ function buildObjectFromPaths(
       const normalizedKey = finalPart.replace(/\[\d+\]/g, '');
       const payloadProperties = digestPayloadProperties.get(normalizedKey);
       if (payloadProperties && payloadProperties.size > 0) {
-        const payload = {};
+        const payload = Object.create(null) as Record<string, unknown>;
         payloadProperties.forEach((property) => {
           const propertyParts = property.split('.');
           const propertyValue = propertyParts[propertyParts.length - 1];
@@ -217,7 +216,7 @@ function buildObjectFromPaths(
       (arrayVariable) => arrayVariable.path === path || path.startsWith(`${arrayVariable.path}.`)
     );
     if (!arrayParent) {
-      set(result, path.replace(/\[\d+\]/g, '[0]'), value);
+      safeSet(result, path.replace(/\[\d+\]/g, '[0]'), value);
 
       return;
     }
@@ -226,33 +225,126 @@ function buildObjectFromPaths(
     const targetPath = isDirectArrayPath ? path : `${arrayParent.path}[0].${path.slice(arrayParent.path.length + 1)}`;
 
     if (isDirectArrayPath) {
-      set(result, targetPath, Array(arrayParent.iterations).fill(value));
+      safeSet(result, targetPath, Array(arrayParent.iterations).fill(value));
     } else {
-      set(result, targetPath, value);
+      safeSet(result, targetPath, value);
     }
   });
 
   return result;
 }
 
-const PROTOTYPE_POLLUTION_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+const UNSAFE_PATH_KEYS = new Set([
+  '__proto__',
+  'constructor',
+  'prototype',
+  'toString',
+  'valueOf',
+  'hasOwnProperty',
+  'isPrototypeOf',
+  'propertyIsEnumerable',
+  'toLocaleString',
+]);
 
-function isPrototypePollutionKey(key: string): boolean {
-  return PROTOTYPE_POLLUTION_KEYS.has(key);
+function isUnsafePathKey(key: string): boolean {
+  return UNSAFE_PATH_KEYS.has(key);
+}
+
+function parseVariablePath(path: string): string[] {
+  return path
+    .replace(/\[(\d+)\]/g, '.$1')
+    .split('.')
+    .filter((segment) => segment.length > 0);
+}
+
+function isSafeVariablePath(path: string): boolean {
+  return parseVariablePath(path).every((segment) => /^\d+$/.test(segment) || !isUnsafePathKey(segment));
+}
+
+function createPathNode(nextSegment: string): Record<string, unknown> | unknown[] {
+  return /^\d+$/.test(nextSegment) ? [] : Object.create(null);
+}
+
+function safeSet(root: Record<string, unknown>, path: string, value: unknown): void {
+  if (!isSafeVariablePath(path)) {
+    return;
+  }
+
+  const segments = parseVariablePath(path);
+  if (segments.length === 0) {
+    return;
+  }
+
+  let node: Record<string, unknown> | unknown[] = root;
+
+  for (let index = 0; index < segments.length; index += 1) {
+    const segment = segments[index];
+    const isLast = index === segments.length - 1;
+    const isIndex = /^\d+$/.test(segment);
+
+    if (isLast) {
+      if (isIndex) {
+        if (!Array.isArray(node)) {
+          return;
+        }
+
+        node[Number(segment)] = value;
+      } else {
+        (node as Record<string, unknown>)[segment] = value;
+      }
+
+      return;
+    }
+
+    if (isIndex) {
+      if (!Array.isArray(node)) {
+        return;
+      }
+
+      const arrayNode = node as unknown[];
+      const arrayIndex = Number(segment);
+      const nextSegment = segments[index + 1];
+      const existing = arrayNode[arrayIndex];
+
+      if (existing === undefined || existing === null || typeof existing !== 'object') {
+        arrayNode[arrayIndex] = createPathNode(nextSegment);
+      }
+
+      node = arrayNode[arrayIndex] as Record<string, unknown> | unknown[];
+
+      continue;
+    }
+
+    const record = node as Record<string, unknown>;
+    const nextSegment = segments[index + 1];
+    const existing = Object.prototype.hasOwnProperty.call(record, segment) ? record[segment] : undefined;
+
+    if (existing === undefined || existing === null || typeof existing !== 'object') {
+      record[segment] = createPathNode(nextSegment);
+      node = record[segment] as Record<string, unknown> | unknown[];
+
+      continue;
+    }
+
+    node = existing as Record<string, unknown> | unknown[];
+  }
 }
 
 function setNestedProperty(obj: Record<string, unknown>, path: string, value: string) {
   const keys = path.split('.');
 
-  if (keys.some(isPrototypePollutionKey)) return;
+  if (keys.some(isUnsafePathKey)) return;
 
   let current = obj;
 
   for (let i = 0; i < keys.length - 1; i += 1) {
     const key = keys[i];
-    if (!(key in current) || typeof current[key] !== 'object' || current[key] === null) {
-      current[key] = {};
+    const existing = Object.prototype.hasOwnProperty.call(current, key) ? current[key] : undefined;
+
+    if (existing === undefined || existing === null || typeof existing !== 'object') {
+      current[key] = Object.create(null);
     }
+
     current = current[key] as Record<string, unknown>;
   }
 
