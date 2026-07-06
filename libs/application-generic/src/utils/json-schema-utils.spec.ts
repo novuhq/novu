@@ -297,6 +297,26 @@ describe('prototype pollution guard', () => {
       },
     });
   });
+
+  it('should ignore unsafe array variable paths', () => {
+    const arrayVariables: ArrayVariable[] = [{ path: 'toString.call', iterations: 3 }];
+    const toStringCall = Object.prototype.toString.call;
+
+    keysToObject([], arrayVariables);
+
+    expect(Object.prototype.toString.call).to.equal(toStringCall);
+    expect(typeof Object.prototype.toString.call).to.equal('function');
+  });
+
+  it('should ignore unsafe nested variable paths', () => {
+    const arrayVariables: ArrayVariable[] = [{ path: 'payload.toString.call', iterations: 3 }];
+    const toStringCall = Object.prototype.toString.call;
+
+    keysToObject(['payload.name'], arrayVariables);
+
+    expect(Object.prototype.toString.call).to.equal(toStringCall);
+    expect(typeof Object.prototype.toString.call).to.equal('function');
+  });
 });
 
 describe('mockSchemaDefaults', () => {
