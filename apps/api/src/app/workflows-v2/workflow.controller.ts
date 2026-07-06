@@ -20,6 +20,7 @@ import {
   GeneratePreviewResponseDto,
   GetWorkflowCommand,
   GetWorkflowUseCase,
+  OAuthAccessible,
   ParseSlugEnvironmentIdPipe,
   ParseSlugIdPipe,
   PreviewCommand,
@@ -95,6 +96,7 @@ export class WorkflowController {
   ) {}
 
   @Post('')
+  @OAuthAccessible()
   @ApiOperation({
     summary: 'Create a workflow',
     description: 'Creates a new workflow in the Novu Cloud environment',
@@ -147,6 +149,7 @@ export class WorkflowController {
   }
 
   @Put(':workflowId')
+  @OAuthAccessible()
   @ExternalApiAccessible()
   @ApiOperation({
     summary: 'Update a workflow',
@@ -183,6 +186,7 @@ export class WorkflowController {
 
   @Get(':workflowId')
   @ExternalApiAccessible()
+  @OAuthAccessible()
   @ApiOperation({
     summary: 'Retrieve a workflow',
     description: 'Fetches details of a specific workflow by its unique identifier **workflowId**',
@@ -212,6 +216,7 @@ export class WorkflowController {
   }
 
   @Delete(':workflowId')
+  @OAuthAccessible()
   @ExternalApiAccessible()
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
@@ -235,6 +240,7 @@ export class WorkflowController {
   }
 
   @Get('')
+  @OAuthAccessible()
   @ExternalApiAccessible()
   @ApiOperation({
     summary: 'List all workflows',
