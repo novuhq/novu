@@ -197,6 +197,14 @@ curl -L -X PUT 'https://api.novu.co/v1/subscribers/<SUBSCRIBER_ID>/credentials' 
   Novu automatically removes invalid device tokens from a subscribers' profile and then sends the failure details to the `MESSAGE_FAILED` webhook.
 </Note>
 
+### Removing device tokens
+
+Novu stores device tokens on the subscriber's provider credentials. A few properties are worth knowing before you design token cleanup on your side — these apply equally to APNs, Expo, OneSignal, and other push providers.
+
+- **`deviceTokens` is a full-list replacement.** Calling [Update Provider Credentials](/api-reference/subscribers/update-provider-credentials) with a `deviceTokens` array replaces the stored list for that subscriber and provider. To remove a single token, fetch the current list with [Retrieve a subscriber](/api-reference/subscribers/retrieve-a-subscriber), drop the token client-side, and update with the remaining values.
+- **To clear every token for a provider,** use [Delete Provider Credentials](/api-reference/subscribers/delete-provider-credentials) (`DELETE /v1/subscribers/{subscriberId}/credentials/{providerId}`). This removes all credentials for that provider on that subscriber; re-add the tokens you want to keep afterwards.
+- **There is no reverse-lookup endpoint** that returns the subscriber for a given device token. If you need to revoke a token when you only know the token value (for example, from an OS-level uninstall signal), track the token → subscriber mapping in your own store so you can call the endpoints above.
+
 ## Step 4: Send a notification
 
 Now you're ready to send a push notification. You can trigger a notification to a subscriber who has a registered device token.

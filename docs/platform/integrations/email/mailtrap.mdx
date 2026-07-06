@@ -6,6 +6,10 @@ description: "Connect Mailtrap to Novu to send email notifications through notif
 
 You can use the [Mailtrap](https://mailtrap.io/email-sending/) provider to send transactional emails to your customers using the Novu Platform with a single API to create multi-channel experiences.
 
+<Note>
+  Novu's Mailtrap provider targets Mailtrap's **Email Sending** (production transactional) API — not the **Email Testing** sandbox (`sandbox.api.mailtrap.io`). The integration form accepts an API token and a verified `From` address, and does not expose a sandbox host or inbox ID. To preview outgoing messages without delivering to real recipients, use Novu's [Development environment](/platform/developer/environments) or capture mail with a provider whose sandbox exposes standard SMTP (for example, the [Custom SMTP](/platform/integrations/email/custom-smtp) provider pointed at your test SMTP host).
+</Note>
+
 ## Getting Started
 
 To use the Mailtrap provider in the email channel, you will need to create a Mailtrap account and add your API key to the Mailtrap integration on the Novu platform.
