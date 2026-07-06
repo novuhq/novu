@@ -1,6 +1,6 @@
 import { Body, ClassSerializerInterceptor, Controller, Get, Put, UseInterceptors } from '@nestjs/common';
 import { ApiExcludeController, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { PinoLogger } from '@novu/application-generic';
+import { OAuthAccessible, PinoLogger } from '@novu/application-generic';
 import { UserSessionData } from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
@@ -45,6 +45,7 @@ export class UsersController {
   @ApiOperation({
     summary: 'Get User',
   })
+  @OAuthAccessible()
   @ExternalApiAccessible()
   async getMyProfile(@UserSession() user: UserSessionData): Promise<UserResponseDto> {
     this.logger.trace('Getting User');

@@ -2,11 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import { EnvironmentRepository } from '@novu/dal';
 import type { CardChild, CardElement } from 'chat';
+import { AgentEventEnum } from '../../shared/enums/agent-event.enum';
 import { captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
 import { AgentConversationService } from '../conversation/agent-conversation.service';
 import { OutboundGateway } from '../egress/outbound.gateway';
 import type { AgentRuntime } from './agent-runtime.port';
 import { type AgentExecutionParams, BridgeExecutorService, NoBridgeUrlError } from './bridge-executor.service';
+import { BridgeExpireSupersededApprovalsService } from './bridge-expire-superseded-approvals.service';
 import { buildAgentPlatformContext, buildEmailPlatformContext } from './build-platform-context.util';
 import type { ConversationTurn } from './conversation-turn';
 import { applyPlatformThreadIdToThread } from './platform-thread.util';
@@ -43,6 +45,7 @@ export class BridgeRuntime implements AgentRuntime {
     private readonly outboundGateway: OutboundGateway,
     private readonly conversationService: AgentConversationService,
     private readonly environmentRepository: EnvironmentRepository,
+    private readonly expireSupersededApprovals: BridgeExpireSupersededApprovalsService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -50,6 +53,19 @@ export class BridgeRuntime implements AgentRuntime {
 
   /** Bridge handles every turn shape the same way: forward it to the customer bridge. */
   async dispatch(turn: ConversationTurn): Promise<void> {
+    if (turn.event === AgentEventEnum.ON_MESSAGE) {
+      try {
+        await this.expireSupersededApprovals.expireOnNewMessage(turn);
+      } catch (err) {
+        this.logger.warn(err, `[agent:${turn.config.agentIdentifier}] Failed to expire superseded tool approvals`);
+        captureAgentWarning(err, {
+          component: 'bridge-runtime',
+          operation: 'expire-on-new-message',
+          agentIdentifier: turn.config.agentIdentifier,
+        });
+      }
+    }
+
     try {
       await this.bridgeExecutor.execute(this.toExecutionParams(turn));
     } catch (err) {

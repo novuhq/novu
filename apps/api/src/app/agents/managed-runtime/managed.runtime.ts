@@ -8,9 +8,9 @@ import type { ConversationTurn } from '../conversation-runtime/runtime/conversat
 import { applyPlatformThreadIdToThread } from '../conversation-runtime/runtime/platform-thread.util';
 import { AgentEventEnum } from '../shared/enums/agent-event.enum';
 import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
+import { parseToolApprovalActionId } from '../shared/tool-approval/action-id';
 import { buildUnresolvedSubscriberAccessReply } from '../shared/util/agent-inbound-replies';
 import { ManagedAgentService } from './managed-agent.service';
-import { parseToolApprovalActionId } from './tool-approval/approval-card.builder';
 import { ConfirmToolApprovalCommand } from './tool-approval/confirm-tool-approval.command';
 import { ConfirmToolApproval } from './tool-approval/confirm-tool-approval.usecase';
 

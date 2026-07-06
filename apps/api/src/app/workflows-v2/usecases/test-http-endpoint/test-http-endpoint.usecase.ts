@@ -15,6 +15,7 @@ import {
   shouldIncludeBody,
 } from '@novu/application-generic';
 import { createLiquidEngine } from '@novu/framework/internal';
+import { isOutboundSsrfProtectionEnabled } from '@novu/shared';
 import { Liquid } from 'liquidjs';
 import { TestHttpEndpointResponseDto } from '../../dtos/test-http-endpoint.dto';
 import { TestHttpEndpointCommand } from './test-http-endpoint.command';
@@ -128,7 +129,7 @@ export class TestHttpEndpointUsecase {
         ...(hasBody ? { body: resolvedBody } : {}),
         timeout: 30_000,
         responseType: 'text',
-        enforceSsrfProtection: true,
+        enforceSsrfProtection: isOutboundSsrfProtectionEnabled(),
       });
       const durationMs = Math.round(performance.now() - startTime);
 

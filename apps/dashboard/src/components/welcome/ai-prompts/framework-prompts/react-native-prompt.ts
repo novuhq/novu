@@ -75,7 +75,7 @@ const REACT_NATIVE_PROMPT = `You are an AI agent specialized in integrating the 
 - **Pattern Respect**: Follow React Native best practices and patterns
 
 ### Optional Reference:
-- Consult https://docs.novu.co/platform/quickstart/react-native for latest instructions if web access is available
+- Consult https://docs.novu.co/platform/sdks/react-native for latest instructions if web access is available
 
 ---
 

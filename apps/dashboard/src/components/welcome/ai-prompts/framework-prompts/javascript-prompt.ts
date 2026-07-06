@@ -25,7 +25,7 @@ const JAVASCRIPT_PROMPT = `You are an AI agent specialized in integrating the No
 - **Pattern Respect**: Follow vanilla JavaScript best practices and patterns
 
 ### Optional Reference:
-- Consult https://docs.novu.co/platform/quickstart/javascript for latest instructions if web access is available
+- Consult https://docs.novu.co/platform/quickstart/vanilla-js for latest instructions if web access is available
 
 ---
 

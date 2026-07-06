@@ -26,6 +26,7 @@ import {
   DeliveryLifecycleStatusEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
+  isOutboundSsrfProtectionEnabled,
   ResourceOriginEnum,
 } from '@novu/shared';
 import Ajv from 'ajv';
@@ -216,7 +217,7 @@ export class ExecuteHttpRequestStep extends SendMessageType {
         headers: mergedHeaders,
         timeout,
         responseType: 'text',
-        enforceSsrfProtection: true,
+        enforceSsrfProtection: isOutboundSsrfProtectionEnabled(),
         ...(hasBody ? { body: bodyObject } : {}),
       });
 

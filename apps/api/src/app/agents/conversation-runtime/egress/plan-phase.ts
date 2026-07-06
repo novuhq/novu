@@ -1,3 +1,5 @@
+import type { PlanTaskStatus } from 'chat';
+
 export type PlanPhase = 'thinking' | 'awaiting-approval' | 'approved' | 'denied' | 'finished' | 'failed';
 
 export const PLAN_THINKING_TASK_ID = '__thinking__';
@@ -27,3 +29,19 @@ export function planTitleForPhase(phase: PlanPhase): string {
 export function planTitleEmojiForPhase(phase: PlanPhase): string {
   return PHASE_TITLE_EMOJI[phase];
 }
+
+export interface PlanTaskInput {
+  id: string;
+  title?: string;
+  status: PlanTaskStatus;
+  details?: string;
+  group?: string;
+}
+
+/** Phase on progress events — never `thinking`, which is inferred internally. */
+export type PlanProgressPhase = Exclude<PlanPhase, 'thinking'>;
+
+export type PlanProgressEvent =
+  | { kind: 'task'; task: PlanTaskInput; cardTitle?: string }
+  | { kind: 'phase'; phase: PlanProgressPhase; title?: string }
+  | { kind: 'title'; title?: string };

@@ -127,6 +127,15 @@ export enum FeatureFlagsKeysEnum {
    * button is disabled.
    */
   IS_MCP_PROVIDER_MANAGED_ENABLED = 'IS_MCP_PROVIDER_MANAGED_ENABLED',
+  /**
+   * Temporary flag for rolling secret key rotation. When enabled, customers can
+   * create a second API key (`POST /v1/environments/api-keys`) and delete a specific
+   * key (`DELETE /v1/environments/api-keys/:hash`) so they can rotate keys without
+   * downtime. Also gates the multi-key UI on the dashboard API Keys page
+   * (`VITE_IS_MULTIPLE_SECRET_KEYS_ALLOWED` when self-hosted). Enable per
+   * organization for the duration of the rotation, then disable.
+   */
+  IS_MULTIPLE_SECRET_KEYS_ALLOWED = 'IS_MULTIPLE_SECRET_KEYS_ALLOWED',
 
   // String flags
   CF_SCHEDULER_MODE = 'CF_SCHEDULER_MODE', // Values: "off" | "shadow" | "live" | "complete"

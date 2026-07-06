@@ -1,6 +1,7 @@
 ---
-title: 'Overview'
-description: 'Learn about the providers that Novu supports for Email, Push, SMS and Chant channels, and how to integrate them to send notifications and receive events.'
+title: 'Notification Channel Providers and Integrations'
+description: 'Learn about the providers that Novu supports for Email, Push, SMS, and Chat channels, and how to integrate them to send notifications and receive events.'
+sidebarTitle: Overview
 ---
 
 Providers are the third-party services that deliver your notifications through the various channels. These are services such as SendGrid for email, Twilio for SMS, or Slack for chat.
@@ -19,7 +20,7 @@ Understanding the difference between a provider and an integration is key to man
 
   While the name can be changged, the identifier cannot be changed after creation. This identifier is called the `integrationIdentifier`.
 
-![integrationIdentifier](/images/channels-and-providers/integrationidentifier.png)
+![Integration identifier field in the Novu Dashboard for naming a provider connection](/images/channels-and-providers/integrationidentifier.png)
 
 This means that you can have provider but two separate integrations for that particular provider. Each of these is a unique integration that you can manage and trigger independently.
 
@@ -31,7 +32,7 @@ This means that you can have provider but two separate integrations for that par
 
 Each environment can have multiple active integrations for a single channel.
 
-![Primary and active integration](/images/channels-and-providers/primary-active-integrations.png)
+![Primary and active integration settings in the Novu Dashboard channel configuration](/images/channels-and-providers/primary-active-integrations.png)
 
 - **Active integration**: Any integration that is "on" and ready to send notifications. You can disable an active integration at any time to stop sending messages through it.
 - **Primary integration**: This is the default integration used when you trigger a notification.
@@ -79,6 +80,6 @@ Select a channel below to find the list of all supported providers integrations 
     Integrate with chat platforms
   </Card>
   <Card title="In-App" href="/platform/inbox">
-    Manage in-app notification center
+    Manage in-app Inbox notifications
   </Card>
 </Columns>

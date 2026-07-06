@@ -120,6 +120,11 @@ export class PayloadMergerService {
 
     mergedPayload.subscriber = merge({}, fullSubscriberSchema, userSubscriberData);
 
+    const fullActorSchema = this.mockDataGenerator.createFullActorObject();
+    const userActorData = (userPayloadExample?.actor as Record<string, unknown>) || {};
+
+    mergedPayload.actor = merge({}, fullActorSchema, userActorData);
+
     mergedPayload.context = this.resolveContext(userPayloadExample?.context);
 
     if (workflow && stepIdOrInternalId) {
@@ -208,6 +213,11 @@ export class PayloadMergerService {
     const userSubscriberData = (userPayloadExample?.subscriber as Record<string, unknown>) || {};
 
     finalPayload.subscriber = merge({}, fullSubscriberSchema, userSubscriberData);
+
+    const fullActorSchema = this.mockDataGenerator.createFullActorObject();
+    const userActorData = (userPayloadExample?.actor as Record<string, unknown>) || {};
+
+    finalPayload.actor = merge({}, fullActorSchema, userActorData);
 
     finalPayload.context = this.resolveContext(userPayloadExample?.context);
 

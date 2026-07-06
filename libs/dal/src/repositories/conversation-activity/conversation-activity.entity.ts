@@ -8,6 +8,12 @@ export enum ConversationActivityTypeEnum {
   EDIT = 'edit',
   /** System-generated timeline event (e.g. workflow triggered, conversation resolved) */
   SIGNAL = 'signal',
+  /** Agent proposed a tool call that requires human approval before it runs. Carries `{ approvalId, toolCallId, toolName, input }` in `toolData`. */
+  TOOL_APPROVAL_REQUEST = 'tool_approval_request',
+  /** Human approve/deny verdict for a pending tool approval. Carries `{ approvalId, approved }` in `toolData`. */
+  TOOL_APPROVAL_DECISION = 'tool_approval_decision',
+  /** Outcome of an executed (or denied) tool call. Carries `{ toolCallId, toolName, output }` in `toolData`. */
+  TOOL_RESULT = 'tool_result',
 }
 
 export enum ConversationActivitySenderTypeEnum {
@@ -22,6 +28,21 @@ export interface ConversationActivitySignalData {
   type: string;
   /** Relevant IDs or metadata about the signal execution */
   payload?: Record<string, unknown>;
+}
+
+export interface ConversationActivityToolData {
+  /** The tool call this activity relates to (request + result). */
+  toolCallId?: string;
+  /** Human-readable tool name (request + result). */
+  toolName?: string;
+  /** Correlation id linking an approval request to its decision (request + decision). */
+  approvalId?: string;
+  /** Tool input arguments (request). */
+  input?: Record<string, unknown>;
+  /** Approve/deny verdict (decision). */
+  approved?: boolean;
+  /** Executed tool output, or the `execution-denied` marker (result). */
+  output?: unknown;
 }
 
 export class ConversationActivityEntity {
@@ -61,6 +82,9 @@ export class ConversationActivityEntity {
 
   /** Populated only when type === SIGNAL */
   signalData?: ConversationActivitySignalData;
+
+  /** Populated only for the `TOOL_*` activity types — the tool call, decision, or result. */
+  toolData?: ConversationActivityToolData;
 
   _environmentId: EnvironmentId;
 

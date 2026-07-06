@@ -1,14 +1,13 @@
 ---
-title: 'How Novu Works'
+title: 'How Novu Works — Architecture and Notification Flow'
+sidebarTitle: 'How Novu Works'
 description: 'A high-level overview of Novu’s architecture: workflows, triggers, subscribers, and environments, and how they connect to support in-app and external channels.'
 ---
 
 
-Novu is a notification infrastructure built around the concept of workflows, environments, and subscriber-based delivery. It centralizes multi-channel messaging and supports real-time in-app experiences through a customizable [`<Inbox />`](/platform/inbox) component.
+Novu triggers workflows that deliver notifications to subscribers across in-app, email, SMS, push, and chat channels. Your application sends an event to the Novu API, Novu resolves the subscriber and executes each workflow step, then delivers messages through configured integrations or the [`<Inbox />`](/platform/inbox) component.
 
-At its core, Novu uses workflows to orchestrate how notifications are sent, step by step, to different channels like email, SMS, in-app, push, and chat. Each workflow is triggered by your application and executed in the context of a specific environment.
-
-## The Inbox component in the notification lifecycle
+## How does the Inbox component fit in the notification lifecycle?
 
 The [`<Inbox />`](/platform/inbox) component is Novu’s in-app delivery endpoint. This component makes it possible for users to receive and manage notifications directly within your application interface.
 
@@ -16,7 +15,7 @@ Unlike external channels that rely on third-party providers, the Inbox is intern
 
 When a workflow includes an in-app step, messages are routed to the subscriber’s inbox in real time. The Inbox component handles rendering, notification management, users' preferences, and message actions without requiring additional backend logic.
 
-## Core concepts overview
+## What are the core concepts in Novu?
 
 At a high level, Novu’s architecture is built around modular but connected concepts. Each concept serves a specific role in the delivery pipeline and is scoped to an environment.
 
@@ -24,7 +23,7 @@ At a high level, Novu’s architecture is built around modular but connected con
   ![How Novu works](/images/how-novu-works.png)
 </Frame>
 
-### Organization and environments
+### How do organizations and environments work?
 
 Everything starts with your organization, the top-level entity in Novu. Each organization can have multiple environments, such as:
 - Development for testing
@@ -40,7 +39,7 @@ Each environment contains:
 
 This isolation allows teams to test workflows and notifications on one environment without affecting the other environments.
 
-### Workflows and Triggers
+### How do workflows and triggers work?
 
 A workflow defines the steps Novu takes to deliver a notification. Steps are either channel steps (email, in-app, push, chat, and SMS) or action steps (Delay and Digest).
 
@@ -50,7 +49,7 @@ Each trigger becomes an event that flows through the workflow. Steps in the work
 
 To learn more about workflows, refer to the [Workflows documentation](/platform/concepts/workflows).
 
-### Subscribers and topics
+### How do subscribers and topics work?
 
 A subscriber represents a user in a given environment. Each subscriber has:
 
@@ -66,7 +65,7 @@ Subscriber resolution is part of workflow execution. Novu uses the subscriber's 
 
 To learn more about subscribers, refer to the [Subscribers documentation](/platform/concepts/subscribers).
 
-### Channels and the Inbox component
+### How do channels and the Inbox component work?
 
 Each channel represents a delivery medium (email, SMS, push, chat, or in-app). Channels are linked to provider configurations known as integrations, which are defined per environment.
 
@@ -74,7 +73,7 @@ In-app messages are delivered to the [`<Inbox />`](/platform/inbox) component, w
 
 To learn more about channels and the Inbox component, refer to the [Channels documentation](/platform/integrations)
 
-### Integrations
+### How do integrations work?
 
 Integrations connect Novu to external delivery providers (for example, SendGrid, Twilio, Firebase Cloud Messaging, Slack). They are configured per environment and mapped to specific channels.
 
@@ -82,7 +81,7 @@ During workflow execution, Novu uses these integrations to send messages for ste
 
 To learn more about Integrations, refer to the [Integrations documentation](/platform/concepts/integrations).
 
-## How it all connects
+## How does the full notification flow work?
 
 See how the concepts work together:
 
