@@ -27,8 +27,8 @@ describe('computeChatSdkRequirements', () => {
       JSON.stringify({
         dependencies: {
           '@novu/chat-sdk-adapter': 'latest',
-          chat: '4.30.0',
-          '@chat-adapter/state-memory': '4.30.0',
+          chat: '4.31.0',
+          '@chat-adapter/state-memory': '4.31.0',
         },
         scripts: {
           'dev:novu': 'npx novu dev -p 4005 --no-studio --route /api/webhooks/novu --run "next dev --port=4005"',

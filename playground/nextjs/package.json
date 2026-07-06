@@ -15,7 +15,7 @@
   "dependencies": {
     "@ai-sdk/openai": "^3.0.0",
     "@ai-sdk/react": "^3.0.0",
-    "@chat-adapter/state-memory": "4.30.0",
+    "@chat-adapter/state-memory": "4.31.0",
     "@clerk/react": "^6.6.6",
     "@novu/agent-toolkit": "workspace:*",
     "@novu/api": "workspace:*",
@@ -50,7 +50,7 @@
     "@xyflow/react": "^12.3.2",
     "ai": "^6.0.50",
     "ansi-to-react": "^6.2.6",
-    "chat": "4.30.0",
+    "chat": "4.31.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "1.0.0",

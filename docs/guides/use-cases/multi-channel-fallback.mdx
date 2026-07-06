@@ -1,0 +1,57 @@
+---
+title: 'Multi-Channel Notification Fallback Workflows'
+sidebarTitle: 'Multi-channel fallback'
+description: 'Build multi-channel notification workflows with delays and fallbacks. Send in-app first, then email or SMS if unread.'
+---
+
+
+Build multi-channel fallback workflows in Novu by chaining channel steps with delay and condition logic. A common pattern sends an in-app notification first, waits 24 hours, then sends email or SMS if the message remains unread.
+
+## How do I build an in-app to email fallback workflow?
+
+1. Add an **in-app step** as the first channel step.
+2. Add a **delay step** (for example, 24 hours).
+3. Add a **step condition** that checks whether the in-app notification was read.
+4. Add an **email step** (or SMS step) that runs only when the condition is met.
+
+See [step conditions](/platform/workflow/add-and-configure-steps/step-conditions) for filtering steps based on subscriber state.
+
+## Example fallback flow
+
+<Steps>
+  <Step title="Send in-app notification">
+    Deliver the alert to the subscriber's Inbox immediately.
+  </Step>
+  <Step title="Wait 24 hours">
+    Use a [delay step](/platform/workflow/add-and-configure-steps/configure-action-steps/delay) to pause before the fallback.
+  </Step>
+  <Step title="Check if unread">
+    Apply a step condition so the email step runs only when the in-app message is still unread.
+  </Step>
+  <Step title="Send email fallback">
+    Deliver the same content through the subscriber's email integration.
+  </Step>
+</Steps>
+
+## How do I route VIP subscribers to SMS?
+
+Use [step conditions](/platform/workflow/add-and-configure-steps/step-conditions) with subscriber metadata. If `subscriber.data.tier === 'vip'`, route to an SMS step; otherwise use email.
+
+Pass tier data when creating or updating the subscriber, or inline when triggering the workflow.
+
+## Related guides
+
+- [Add and configure steps](/platform/workflow/add-and-configure-steps)
+- [Delay step](/platform/workflow/add-and-configure-steps/configure-action-steps/delay)
+- [Subscriber preferences](/platform/concepts/preferences)
+
+## Frequently asked questions
+
+<AccordionGroup>
+  <Accordion title="Can I fallback from email to SMS?">
+    Yes. Chain any channel steps with delays and conditions. Ensure the subscriber has the required contact fields and integrations configured for each channel.
+  </Accordion>
+  <Accordion title="How do I respect subscriber channel preferences?">
+    Novu applies subscriber [preferences](/platform/concepts/preferences) automatically. Subscribers who opt out of a channel will not receive messages on that channel even if the workflow includes the step.
+  </Accordion>
+</AccordionGroup>

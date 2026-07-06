@@ -4,6 +4,7 @@ import {
   ConversationActivityEntity,
   ConversationActivityRepository,
   ConversationActivitySenderTypeEnum,
+  ConversationActivityToolData,
   ConversationActivityTypeEnum,
   ConversationChannel,
   ConversationEntity,
@@ -97,6 +98,15 @@ export interface PersistAgentActivityParams extends ConversationActivityContext 
   richContent?: Record<string, unknown>;
 }
 
+export interface PersistToolApprovalRequestParams extends ConversationActivityContext {
+  approvalId: string;
+  toolCallId: string;
+  toolName: string;
+  input?: Record<string, unknown>;
+  /** Human-readable preview for the display timeline. */
+  preview?: string;
+}
+
 export type MetadataOp =
   | { action: 'set'; key: string; value: unknown }
   | { action: 'delete'; key: string }
@@ -115,6 +125,26 @@ export interface PersistTriggerSignalParams extends ConversationActivityContext 
   workflowId: string;
   to: TriggerRecipientsPayload;
   transactionId: string;
+}
+
+export interface PersistToolApprovalDecisionParams extends ConversationActivityContext {
+  approvalId: string;
+  approved: boolean;
+  toolName?: string;
+  actorType:
+    | ConversationActivitySenderTypeEnum.SUBSCRIBER
+    | ConversationActivitySenderTypeEnum.PLATFORM_USER
+    | ConversationActivitySenderTypeEnum.SYSTEM;
+  actorId: string;
+}
+
+export interface PersistToolResultParams extends ConversationActivityContext {
+  toolCallId: string;
+  toolName?: string;
+  /** The tool's output as returned by the model runtime (JSON-serializable). */
+  output: unknown;
+  /** Human-readable preview for the display timeline; defaults to a generic line. */
+  preview?: string;
 }
 
 @Injectable()
@@ -347,12 +377,56 @@ export class AgentConversationService {
     return this.persistAgentActivity(params, ConversationActivityTypeEnum.MESSAGE, 'activity');
   }
 
+  async persistToolApprovalRequest(params: PersistToolApprovalRequestParams): Promise<ConversationActivityEntity> {
+    const toolName = params.toolName;
+
+    return this.activityRepository.createToolActivity({
+      identifier: `act_${shortId(12)}`,
+      conversationId: params.conversationId,
+      platform: params.channel.platform,
+      integrationId: params.channel._integrationId,
+      platformThreadId: params.channel.platformThreadId,
+      senderType: ConversationActivitySenderTypeEnum.AGENT,
+      senderId: params.agentIdentifier,
+      content: params.preview ?? `Approval required: ${toolName}`,
+      type: ConversationActivityTypeEnum.TOOL_APPROVAL_REQUEST,
+      toolData: {
+        approvalId: params.approvalId,
+        toolCallId: params.toolCallId,
+        toolName: params.toolName,
+        input: params.input,
+      },
+      environmentId: params.environmentId,
+      organizationId: params.organizationId,
+    });
+  }
+
+  /** Links a delivered approval card message to its ledger row (for platform edits). */
+  async linkToolApprovalRequestCard(params: {
+    environmentId: string;
+    organizationId: string;
+    conversationId: string;
+    activityId: string;
+    platformMessageId: string;
+  }): Promise<void> {
+    await this.activityRepository.update(
+      {
+        _environmentId: params.environmentId,
+        _organizationId: params.organizationId,
+        _conversationId: params.conversationId,
+        _id: params.activityId,
+        type: ConversationActivityTypeEnum.TOOL_APPROVAL_REQUEST,
+      },
+      { $set: { platformMessageId: params.platformMessageId } }
+    );
+  }
+
   async persistAgentEdit(params: PersistAgentActivityParams): Promise<ConversationActivityEntity> {
     return this.persistAgentActivity(params, ConversationActivityTypeEnum.EDIT, 'preview');
   }
 
   private async persistAgentActivity(
-    params: PersistAgentActivityParams,
+    params: PersistAgentActivityParams & { toolData?: ConversationActivityToolData },
     type: ConversationActivityTypeEnum,
     touch: 'activity' | 'preview'
   ): Promise<ConversationActivityEntity> {
@@ -375,6 +449,7 @@ export class AgentConversationService {
         senderName: params.agentName,
         content: params.content,
         richContent: params.richContent,
+        toolData: params.toolData,
         type,
         environmentId: params.environmentId,
         organizationId: params.organizationId,
@@ -463,6 +538,48 @@ export class AgentConversationService {
         organizationId: params.organizationId,
       }),
     ]);
+  }
+
+  /**
+   * Persist a tool-approval decision as a signal activity so it becomes part of
+   * the durable transcript. Self-hosted (stateless) agents reconstruct the resume
+   * message list from history via `toModelMessages`, so the decision must live in
+   * the transcript — not only in the ephemeral approval card.
+   */
+  async persistToolApprovalDecision(params: PersistToolApprovalDecisionParams): Promise<void> {
+    const toolName = params.toolName ?? 'tool call';
+
+    await this.activityRepository.createToolActivity({
+      identifier: `act_${shortId(12)}`,
+      conversationId: params.conversationId,
+      platform: params.channel.platform,
+      integrationId: params.channel._integrationId,
+      platformThreadId: params.channel.platformThreadId,
+      senderType: params.actorType,
+      senderId: params.actorId,
+      content: params.approved ? `Approved ${toolName}` : `Denied ${toolName}`,
+      type: ConversationActivityTypeEnum.TOOL_APPROVAL_DECISION,
+      toolData: { approvalId: params.approvalId, approved: params.approved, toolName: params.toolName },
+      environmentId: params.environmentId,
+      organizationId: params.organizationId,
+    });
+  }
+
+  async persistToolResult(params: PersistToolResultParams): Promise<void> {
+    await this.activityRepository.createToolActivity({
+      identifier: `act_${shortId(12)}`,
+      conversationId: params.conversationId,
+      platform: params.channel.platform,
+      integrationId: params.channel._integrationId,
+      platformThreadId: params.channel.platformThreadId,
+      senderType: ConversationActivitySenderTypeEnum.AGENT,
+      senderId: params.agentIdentifier,
+      content: params.preview ?? `Tool result: ${params.toolName ?? params.toolCallId}`,
+      type: ConversationActivityTypeEnum.TOOL_RESULT,
+      toolData: { toolCallId: params.toolCallId, toolName: params.toolName, output: params.output },
+      environmentId: params.environmentId,
+      organizationId: params.organizationId,
+    });
   }
 
   async persistTriggerSignal(params: PersistTriggerSignalParams): Promise<void> {

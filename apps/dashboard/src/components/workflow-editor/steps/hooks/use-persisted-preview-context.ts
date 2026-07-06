@@ -3,12 +3,15 @@ import { useEffect } from 'react';
 import { PayloadData, PreviewSubscriberData } from '../types/preview-context.types';
 import {
   cleanupExpiredPreviewData,
+  clearActorData,
   clearContextData,
   clearPayloadData,
   clearSubscriberData,
+  loadActorData,
   loadContextData,
   loadPayloadData,
   loadSubscriberData,
+  saveActorData,
   saveContextData,
   savePayloadData,
   saveSubscriberData,
@@ -60,6 +63,24 @@ export function usePersistedPreviewContext({ workflowId, environmentId }: UsePer
     clearSubscriberData(workflowId, environmentId);
   };
 
+  const loadPersistedActor = (): PreviewSubscriberData | null => {
+    if (!workflowId || !environmentId) return null;
+
+    return loadActorData(workflowId, environmentId);
+  };
+
+  const savePersistedActor = (actor: PreviewSubscriberData) => {
+    if (!workflowId || !environmentId) return;
+
+    saveActorData(workflowId, environmentId, actor);
+  };
+
+  const clearPersistedActor = () => {
+    if (!workflowId || !environmentId) return;
+
+    clearActorData(workflowId, environmentId);
+  };
+
   const loadPersistedContext = (): ContextPayload | null => {
     if (!workflowId || !environmentId) return null;
 
@@ -85,6 +106,9 @@ export function usePersistedPreviewContext({ workflowId, environmentId }: UsePer
     loadPersistedSubscriber,
     savePersistedSubscriber,
     clearPersistedSubscriber,
+    loadPersistedActor,
+    savePersistedActor,
+    clearPersistedActor,
     loadPersistedContext,
     savePersistedContext,
     clearPersistedContext,

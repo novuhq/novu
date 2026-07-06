@@ -1,5 +1,6 @@
 import type { Emoji } from 'chat';
 import { AgentDeliveryError } from './agent.errors';
+import { type AgentRuntimeContext, RUNTIME_CONTEXT_BRAND } from './agent.runtime';
 import type {
   AddReactionPayload,
   AgentAction,
@@ -7,33 +8,36 @@ import type {
   AgentConversation,
   AgentHistoryEntry,
   AgentMessage,
+  AgentMessageContext,
   AgentPlatformContext,
   AgentReaction,
   AgentReplyPayload,
   AgentSubscriber,
+  AgentToolCall,
+  DeleteMessagePayload,
   FileRef,
   MessageContent,
-  PlanControl,
-  PlanProgressEvent,
+  PendingApproval as PendingApprovalType,
   ReplyContent,
   ReplyHandle,
   SentMessageInfo,
   Signal,
+  ToolApprovalConfig,
+  ToolApprovalControl,
+  ToolResult,
   TriggerRecipientsPayload,
   TypingControl,
   TypingOp,
 } from './agent.types';
-import { AgentEventEnum } from './agent.types';
-import { createPlanHandle } from './plan-handle';
+import { AgentEventEnum, PendingApproval } from './agent.types';
+import { isCardElement } from './guards';
+import type { ToolApprovalRequestPayload } from './tool-approval/action-id';
+import { postToolApprovalCard } from './tool-approval/post-card';
 
 const MAX_INLINE_FILE_BYTES = 5 * 1024 * 1024;
 const MAX_INLINE_AGGREGATE_FILE_BYTES = 5 * 1024 * 1024;
 const CHUNK_SIZE = 0x8000;
 const BASE64_REGEX = /^[A-Za-z0-9+/]*={0,2}$/;
-
-function isCardElement(content: object): content is import('chat').CardElement {
-  return 'type' in content && (content as { type: string }).type === 'card';
-}
 
 function describeFile(file: FileRef, index: number): string {
   return file.filename ? `"${file.filename}"` : `at index ${index}`;
@@ -217,6 +221,8 @@ interface ReplyPoster {
 class ReplyHandleImpl implements ReplyHandle {
   public messageId: string;
   public platformThreadId: string;
+  /** @internal set when the handler calls `edit()`; dispatch skips default approval card cleanup. */
+  public editedByHandler = false;
 
   constructor(
     messageId: string,
@@ -230,6 +236,7 @@ class ReplyHandleImpl implements ReplyHandle {
   }
 
   async edit(content: MessageContent, options?: { files?: FileRef[] }): Promise<ReplyHandle> {
+    this.editedByHandler = true;
     const info = await this.poster.post({
       conversationId: this.conversationId,
       integrationIdentifier: this.integrationIdentifier,
@@ -251,9 +258,18 @@ class ReplyHandleImpl implements ReplyHandle {
 
     return this;
   }
+
+  async delete(): Promise<void> {
+    await this.poster.post({
+      conversationId: this.conversationId,
+      integrationIdentifier: this.integrationIdentifier,
+      deleteMessages: [{ messageId: this.messageId }],
+    });
+  }
 }
 
-export class AgentContextImpl {
+export class AgentContextImpl implements AgentRuntimeContext {
+  readonly [RUNTIME_CONTEXT_BRAND] = true;
   readonly event: AgentEventEnum;
   readonly action: AgentAction | null;
   readonly message: AgentMessage | null;
@@ -264,7 +280,7 @@ export class AgentContextImpl {
   readonly platform: string;
   readonly platformContext: AgentPlatformContext;
   readonly typing: TypingControl;
-  readonly plan: PlanControl;
+  readonly toolApproval: ToolApprovalControl;
 
   readonly metadata: {
     get(key: string): unknown;
@@ -275,20 +291,20 @@ export class AgentContextImpl {
   };
 
   private _signals: Signal[] = [];
+  private _toolResults: ToolResult[] = [];
+  private _pendingToolApprovalRequest: ToolApprovalRequestPayload | null = null;
   private _pendingReactions: AddReactionPayload[] = [];
+  private _pendingDeletes: DeleteMessagePayload[] = [];
   private _resolveSignal: { summary?: string } | null = null;
   private _metadataState: Record<string, unknown>;
-  private _planActive = false;
-  private _planFinalized = false;
-  private _planTitle: string | undefined;
-  private _drainPlanQueue: (() => Promise<void>) | null = null;
+  private readonly _toolApprovalConfig?: ToolApprovalConfig;
   private readonly _replyUrl: string;
   private readonly _conversationId: string;
   private readonly _integrationIdentifier: string;
   private readonly _secretKey: string;
   private readonly _poster: ReplyPoster;
 
-  constructor(request: AgentBridgeRequest, secretKey: string) {
+  constructor(request: AgentBridgeRequest, secretKey: string, toolApprovalConfig?: ToolApprovalConfig) {
     this.event = request.event as AgentEventEnum;
     this.action = request.action ?? null;
     this.message = request.message;
@@ -304,6 +320,7 @@ export class AgentContextImpl {
     this._integrationIdentifier = request.integrationIdentifier;
     this._secretKey = secretKey;
     this._poster = { post: (body) => this._post(body) };
+    this._toolApprovalConfig = toolApprovalConfig;
 
     this._metadataState = { ...(request.conversation.metadata ?? {}) };
 
@@ -340,63 +357,29 @@ export class AgentContextImpl {
     typing.stop = () => postTyping('stop');
     this.typing = typing;
 
-    const postPlan = (event: PlanProgressEvent): Promise<void> =>
-      this._post({
-        conversationId: this._conversationId,
-        integrationIdentifier: this._integrationIdentifier,
-        planProgress: event,
-      }).then(() => undefined);
+    this.toolApproval = {
+      request: async (toolCall: AgentToolCall): Promise<PendingApprovalType> => {
+        await postToolApprovalCard(this, toolCall, this._toolApprovalConfig);
 
-    const finalizePlanHandle = async (phase: 'finished' | 'failed', title?: string): Promise<void> => {
-      await postPlan({ kind: 'phase', phase, ...(title ? { title } : {}) });
-      this._planFinalized = true;
+        return new PendingApproval();
+      },
     };
+  }
 
-    this.plan = ((title?: string) => {
-      this._planActive = true;
-      if (title !== undefined) {
-        this._planTitle = title;
-      }
-
-      const handle = createPlanHandle(
-        {
-          post: postPlan,
-          onTitleChange: (text) => {
-            this._planTitle = text;
-          },
-          finalize: finalizePlanHandle,
-          registerDrain: (drain) => {
-            this._drainPlanQueue = drain;
-          },
-        },
-        title
-      );
-
-      return handle;
-    }) as PlanControl;
+  asMessageContext(): AgentMessageContext {
+    return this as unknown as AgentMessageContext;
   }
 
   async reply(content: MessageContent, options?: { files?: FileRef[] }): Promise<ReplyHandle> {
+    const reply = await serializeContent(content, options?.files);
+
     const body: AgentReplyPayload = {
       conversationId: this._conversationId,
       integrationIdentifier: this._integrationIdentifier,
-      reply: await serializeContent(content, options?.files),
+      reply,
     };
 
-    if (this._signals.length) {
-      body.signals = this._signals;
-      this._signals = [];
-    }
-
-    if (this._pendingReactions.length) {
-      body.addReactions = this._pendingReactions;
-      this._pendingReactions = [];
-    }
-
-    if (this._resolveSignal) {
-      body.resolve = this._resolveSignal;
-      this._resolveSignal = null;
-    }
+    this._drainSideEffects(body);
 
     const info = await this._post(body);
     if (!info) {
@@ -412,6 +395,11 @@ export class AgentContextImpl {
     );
   }
 
+  /** @internal Build a handle to an already-posted message (used to resume an approval). */
+  createReplyHandle(messageId: string): ReplyHandleImpl {
+    return new ReplyHandleImpl(messageId, '', this._conversationId, this._integrationIdentifier, this._poster);
+  }
+
   resolve(summary?: string): void {
     this._resolveSignal = { summary };
   }
@@ -420,8 +408,26 @@ export class AgentContextImpl {
     this._signals.push({ ...opts, type: 'trigger', workflowId });
   }
 
+  /** @internal Queue a gated tool call for the ledger; flushed with the next reply. */
+  emitToolApprovalRequest(request: ToolApprovalRequestPayload): void {
+    if (this._pendingToolApprovalRequest) {
+      throw new Error('Only one tool approval request can be queued before the next reply');
+    }
+
+    this._pendingToolApprovalRequest = request;
+  }
+
+  /** @internal Queue a tool-call outcome to be recorded in history; flushed with the next reply. */
+  emitToolResult(result: ToolResult): void {
+    this._toolResults.push(result);
+  }
+
   addReaction(messageId: string, emojiName: Emoji): void {
     this._pendingReactions.push({ messageId, emojiName });
+  }
+
+  deleteMessage(messageId: string): void {
+    this._pendingDeletes.push({ messageId });
   }
 
   /**
@@ -429,7 +435,7 @@ export class AgentContextImpl {
    * Called internally after onResolve returns.
    */
   async flush(): Promise<void> {
-    if (!this._signals.length && !this._resolveSignal && !this._pendingReactions.length) {
+    if (!this._hasPendingSideEffects()) {
       return;
     }
 
@@ -438,9 +444,36 @@ export class AgentContextImpl {
       integrationIdentifier: this._integrationIdentifier,
     };
 
+    this._drainSideEffects(body);
+
+    await this._post(body);
+  }
+
+  private _hasPendingSideEffects(): boolean {
+    return !!(
+      this._pendingToolApprovalRequest ||
+      this._signals.length ||
+      this._toolResults.length ||
+      this._resolveSignal ||
+      this._pendingReactions.length ||
+      this._pendingDeletes.length
+    );
+  }
+
+  private _drainSideEffects(body: AgentReplyPayload): void {
+    if (this._pendingToolApprovalRequest) {
+      body.toolApprovalRequest = this._pendingToolApprovalRequest;
+      this._pendingToolApprovalRequest = null;
+    }
+
     if (this._signals.length) {
       body.signals = this._signals;
       this._signals = [];
+    }
+
+    if (this._toolResults.length) {
+      body.toolResults = this._toolResults;
+      this._toolResults = [];
     }
 
     if (this._pendingReactions.length) {
@@ -448,31 +481,15 @@ export class AgentContextImpl {
       this._pendingReactions = [];
     }
 
+    if (this._pendingDeletes.length) {
+      body.deleteMessages = this._pendingDeletes;
+      this._pendingDeletes = [];
+    }
+
     if (this._resolveSignal) {
       body.resolve = this._resolveSignal;
       this._resolveSignal = null;
     }
-
-    await this._post(body);
-  }
-
-  async finalizePlan(phase: 'finished' | 'failed'): Promise<void> {
-    if (!this._planActive || this._planFinalized) return;
-
-    await this._drainPlanQueue?.();
-
-    if (this._planFinalized) return;
-
-    await this._post({
-      conversationId: this._conversationId,
-      integrationIdentifier: this._integrationIdentifier,
-      planProgress: {
-        kind: 'phase',
-        phase,
-        ...(this._planTitle ? { title: this._planTitle } : {}),
-      },
-    });
-    this._planFinalized = true;
   }
 
   private async _post(body: AgentReplyPayload): Promise<SentMessageInfo | null> {

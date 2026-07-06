@@ -20,7 +20,7 @@
     "@novu/ee-shared-services": "workspace:*",
     "@novu/shared": "workspace:*",
     "class-transformer": "0.5.1",
-    "class-validator": "0.14.1",
+    "class-validator": "0.15.1",
     "deep-object-diff": "^1.1.9",
     "i18next": "^23.7.11",
     "lodash": "^4.18.0",
@@ -40,11 +40,11 @@
     "sinon": "^9.2.4",
     "ts-node": "~10.9.1",
     "typescript": "5.6.2",
-    "liquidjs": "^10.25.7"
+    "liquidjs": "^10.27.1"
   },
   "peerDependencies": {
-    "@nestjs/common": "11.1.24",
-    "@nestjs/platform-express": "11.1.24",
+    "@nestjs/common": "11.1.27",
+    "@nestjs/platform-express": "11.1.27",
     "@nestjs/swagger": "7.4.0",
     "@novu/dal": "workspace:*"
   }

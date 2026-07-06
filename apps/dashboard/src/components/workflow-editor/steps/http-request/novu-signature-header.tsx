@@ -15,7 +15,10 @@ export function NovuSignatureHeader() {
           </TooltipTrigger>
           <TooltipContent className="max-w-xs">
             HMAC signature header automatically included with every request for secure communication.{' '}
-            <ExternalLink href="https://docs.novu.co/framework/deployment/production" target="_blank">
+            <ExternalLink
+              href="https://docs.novu.co/platform/workflow/add-and-configure-steps/configure-action-steps/http-step#securing-http-requests"
+              target="_blank"
+            >
               Learn more
             </ExternalLink>
           </TooltipContent>

@@ -424,6 +424,7 @@ export class BridgeExecutorService {
         richContent: await this.mapRichContentForBridge(activity.richContent, activity),
         senderName: activity.senderName || undefined,
         signalData: activity.signalData || undefined,
+        toolData: activity.toolData || undefined,
         createdAt: activity.createdAt,
       });
     }

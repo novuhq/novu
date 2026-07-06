@@ -21,10 +21,10 @@
     "@novu/shared": "workspace:*",
     "@novu/notifications": "workspace:*",
     "class-transformer": "0.5.1",
-    "class-validator": "0.14.1",
+    "class-validator": "0.15.1",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
-    "mongoose": "^8.9.5",
+    "mongoose": "^8.22.1",
     "rxjs": "7.8.2",
     "shortid": "^2.2.17",
     "stripe": "^11.18.0",
@@ -43,10 +43,10 @@
     "typescript": "5.6.2"
   },
   "peerDependencies": {
-    "@nestjs/common": "11.1.24",
-    "@nestjs/core": "11.1.24",
+    "@nestjs/common": "11.1.27",
+    "@nestjs/core": "11.1.27",
     "@nestjs/jwt": "11.0.2",
-    "@nestjs/platform-express": "11.1.24",
+    "@nestjs/platform-express": "11.1.27",
     "@nestjs/swagger": "7.4.0",
     "@nestjs/throttler": "6.5.0",
     "@novu/dal": "workspace:*"

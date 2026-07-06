@@ -147,7 +147,6 @@ const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | Forward
   LayoutsV1Module,
   LayoutsV2Module,
   MessagesModule,
-  PartnerIntegrationsModule,
   TopicsV1Module,
   TopicsV2Module,
   BlueprintModule,
@@ -173,6 +172,8 @@ const enterpriseModules = enterpriseImports();
 if (!isClerkEnabled()) {
   const communityModules = [InvitesModule];
   baseModules.push(...communityModules);
+} else if (process.env.IS_SELF_HOSTED !== 'true') {
+  baseModules.push(PartnerIntegrationsModule);
 }
 
 const modules = baseModules.concat(enterpriseModules);

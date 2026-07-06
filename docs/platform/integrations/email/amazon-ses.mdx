@@ -1,8 +1,8 @@
 ---
-title: 'Amazon SES'
-description: 'Learn how to use the Amazon SES provider to send email notifications using Novu'
+title: "Amazon SES Email Integration with Novu"
+sidebarTitle: "Amazon SES"
+description: "Connect Amazon SES to Novu to send email notifications through notification workflows. Step-by-step credential setup."
 ---
-
 
 You can use the [Amazon SES](https://aws.amazon.com/ses/) provider to send transactional emails to your customers using the Novu Platform with a single API to create multi-channel experiences.
 
@@ -51,7 +51,7 @@ To use the Amazon SES provider in the email channel, you will need to create an 
     - Incorrect credentials have been used while creating SES integration.
   </Accordion>
 
-  <Accordion title="SignatureDoesNotMatch error with SES">
+<Accordion title="SignatureDoesNotMatch error with SES">
     - Ensure that the `ACCESS_KEY_ID` and `ACCESS_SECRET_KEY` values are correct and have the necessary permissions. If using SMTP credentials, change it with IAM role credentials.
     - If the issue persists, regenerate the credentials and update the integration with new credentials.
   </Accordion>

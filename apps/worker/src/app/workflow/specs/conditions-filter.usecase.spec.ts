@@ -23,6 +23,7 @@ import sinon from 'sinon';
 describe('Message filter matcher', () => {
   const executionLogQueueService = {
     add: sinon.stub(),
+    execute: sinon.stub().resolves(),
   };
   const conditionsFilter = new ConditionsFilter(
     undefined as any,
@@ -308,6 +309,97 @@ describe('Message filter matcher', () => {
     );
 
     expect(matchedMessage.passed).to.equal(true);
+  });
+
+  it('should handle IN operator when payload field is missing', async () => {
+    const matchedMessage = await conditionsFilter.filter(
+      mapConditionsFilterCommand({
+        step: makeStep('Missing Field', FieldLogicalOperatorEnum.AND, [
+          {
+            operator: FieldOperatorEnum.IN,
+            value: 'premium',
+            field: 'tags',
+            on: FilterPartTypeEnum.PAYLOAD,
+          },
+        ]),
+        variables: {
+          payload: {},
+        },
+      })
+    );
+
+    expect(matchedMessage.passed).to.equal(false);
+  });
+
+  it('should handle NOT_IN operator when payload field is missing', async () => {
+    const matchedMessage = await conditionsFilter.filter(
+      mapConditionsFilterCommand({
+        step: makeStep('Missing Field', FieldLogicalOperatorEnum.AND, [
+          {
+            operator: FieldOperatorEnum.NOT_IN,
+            value: 'blocked',
+            field: 'tags',
+            on: FilterPartTypeEnum.PAYLOAD,
+          },
+        ]),
+        variables: {
+          payload: {},
+        },
+      })
+    );
+
+    expect(matchedMessage.passed).to.equal(true);
+  });
+
+  it('should handle IN operator when payload field is not an array', async () => {
+    const matchedMessage = await conditionsFilter.filter(
+      mapConditionsFilterCommand({
+        step: makeStep('Non Array Field', FieldLogicalOperatorEnum.AND, [
+          {
+            operator: FieldOperatorEnum.IN,
+            value: 'premium',
+            field: 'tags',
+            on: FilterPartTypeEnum.PAYLOAD,
+          },
+        ]),
+        variables: {
+          payload: {
+            tags: 'premium',
+          },
+        },
+      })
+    );
+
+    expect(matchedMessage.passed).to.equal(false);
+  });
+
+  it('should fail closed when filter evaluation throws', async () => {
+    const processFilterEqualityStub = sinon
+      .stub(ConditionsFilter.prototype as any, 'processFilterEquality')
+      .throws(new TypeError('Cannot read properties of undefined (reading "includes")'));
+
+    const matchedMessage = await conditionsFilter.filter(
+      mapConditionsFilterCommand({
+        step: makeStep('Throws On Eval', FieldLogicalOperatorEnum.AND, [
+          {
+            operator: FieldOperatorEnum.EQUAL,
+            value: 'true',
+            field: 'varField',
+            on: FilterPartTypeEnum.PAYLOAD,
+          },
+        ]),
+        variables: {
+          payload: {
+            varField: true,
+          },
+        },
+      })
+    );
+
+    expect(matchedMessage.passed).to.equal(false);
+    expect(matchedMessage.conditions[0]?.passed).to.equal(false);
+
+    processFilterEqualityStub.restore();
   });
 
   it('should check if key is defined or not in subscriber data', async () => {

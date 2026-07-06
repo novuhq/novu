@@ -1,5 +1,11 @@
 import { Novu } from '@novu/api';
-import { LogRepository, RequestLog, RequestLogRepository, RequestLogSourceEnum } from '@novu/application-generic';
+import {
+  LogRepository,
+  RequestLog,
+  RequestLogRepository,
+  RequestLogSource,
+  RequestLogSourceEnum,
+} from '@novu/application-generic';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { format, isAfter, subHours } from 'date-fns';
@@ -72,7 +78,7 @@ describe('Activity - /activity/requests (GET) #novu-v2', () => {
       organizationId: requestLog.organization_id,
       environmentId: requestLog.environment_id,
       statusCode: requestLog.status_code,
-      source: requestLog.source,
+      source: requestLog.source as RequestLogSource,
     });
     const responseLog = normalizeRequestLogForTesting(body.data[0]);
     expect(responseLog).to.deep.equal(expectedLog);

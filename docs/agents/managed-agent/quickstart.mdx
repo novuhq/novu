@@ -39,9 +39,11 @@ npx novu connect
 
     For this quickstart, select **Demo credentials**.
 2. Describe your agent. Type a description of what you want the agent to do and press **Enter**. For example:
+
     ```text
     Create an engineering assistant agent that checks Linear and GitHub for open issues, pending PR reviews, and review requests. It summarizes what needs attention, flags blockers and stale tickets, and posts a short daily standup digest. It keeps responses concise and links back to the relevant Linear issue or GitHub pull request.
     ```
+
     Novu generates the agent for you, including its system prompt, tools, MCP servers, and skills based on your description.
 3. Review and create the agent. The CLI shows the generated agent for you to review. You can adjust any of the following fields before confirming:
       * Name
@@ -91,6 +93,14 @@ To manage your agent, add more channels, or view conversations from the Connect 
 </Step>
 
 </Steps>
+
+<Prompt description="Copy an example agent description" icon="plug" actions={["copy", "cursor"]}>
+Create an engineering assistant agent that checks Linear and GitHub for open issues, pending PR reviews, and review requests. It summarizes what needs attention, flags blockers and stale tickets, and posts a short daily standup digest. It keeps responses concise and links back to the relevant Linear issue or GitHub pull request.
+
+Use the Novu CLI (`npx novu connect`) or the Novu dashboard to create this managed agent. Connect Slack as the first channel.
+
+Reference: https://docs.novu.co/agents/managed-agent/quickstart
+</Prompt>
 
 ## Next steps
 

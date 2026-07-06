@@ -68,6 +68,59 @@ You can control what happens when a step fails. The workflow can be configured t
 
 With each API request, novu send `novu-signature` header. This header is a HMAC signature of the request body and the timestamp. You can verify the authenticity of the request by verifying the HMAC signature. Below example shows how to verify the HMAC signature in a Next.js API route. Here, Novu secret key is used to generate the HMAC signature. You can copy the secret key from the [Novu API Keys](https://dashboard.novu.co/api-keys) page.
 
+<Note>
+  Replace `YOUR_SUBSCRIBER_ID` with a subscriber from your Novu dashboard and store your secret key as `NOVU_SECRET_KEY` in environment variables.
+</Note>
+
+<Prompt description="Implement a Novu HTTP webhook handler" icon="zap" actions={["copy", "cursor"]}>
+I need to implement an HTTP endpoint that will be called by Novu's notification workflow engine.
+
+## Request my endpoint will receive
+
+Method: POST
+URL: https://your-app.example.com/api/novu-webhook
+
+Headers:
+  Content-Type: application/json
+  novu-signature: t=TIMESTAMP,v1=HMAC_SHA256_SIGNATURE
+
+Body (JSON):
+```json
+{
+  "subscriberId": "YOUR_SUBSCRIBER_ID",
+  "payload": {
+    "orderId": "order-123",
+    "status": "shipped"
+  }
+}
+```
+
+## Signature verification
+
+Every request from Novu includes a `novu-signature` header to prove authenticity.
+Format: `t=TIMESTAMP,v1=SIGNATURE`
+
+To verify:
+1. Parse the header: split on comma, extract `t` (timestamp) and `v1` (HMAC)
+2. Build the signed string: timestamp dot JSON.stringify(requestBody)
+3. Compute HMAC-SHA256 of that string using your Novu secret key
+4. Compare (constant-time) your computed HMAC against the `v1` value
+5. Reject requests where the timestamp is more than 5 minutes old
+
+Reference: https://docs.novu.co/platform/workflow/add-and-configure-steps/configure-action-steps/http-step
+
+## What to generate
+
+Please write a complete endpoint handler (Node.js/Express by default, or match my project's framework) that:
+1. Accepts the POST request described above
+2. Reads the raw request body and verifies the `novu-signature` header
+3. Parses the JSON body and extracts relevant fields
+4. Implements placeholder business logic
+5. Returns a 200 JSON response
+
+Store NOVU_SECRET_KEY in environment variables. Do not create documentation files.
+</Prompt>
+
 ```typescript title="api/novu-http-step-request/route.ts"
 import { NextRequest, NextResponse } from "next/server";
 import { createHmac, timingSafeEqual } from "node:crypto";

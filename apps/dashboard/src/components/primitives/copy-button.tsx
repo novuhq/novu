@@ -9,6 +9,7 @@ type CopyButtonProps = {
   className?: string;
   valueToCopy: string;
   size?: '2xs' | 'xs';
+  ariaLabel?: string;
   onCopySuccess?: () => void;
   onCopyError?: (error: unknown) => void;
 };
@@ -19,7 +20,7 @@ const PADDING_CLASS_BY_SIZE: Record<NonNullable<CopyButtonProps['size']>, string
 };
 
 export const CopyButton = (props: CopyButtonProps) => {
-  const { className, valueToCopy, size, onCopySuccess, onCopyError, ...rest } = props;
+  const { className, valueToCopy, size, ariaLabel, onCopySuccess, onCopyError } = props;
 
   const [copied, setCopied] = useState<boolean>(false);
 
@@ -43,13 +44,14 @@ export const CopyButton = (props: CopyButtonProps) => {
     <Tooltip>
       <TooltipTrigger asChild>
         <button
+          aria-label={ariaLabel ?? 'Click to copy'}
           onClick={(e) => {
-            handleCopy();
+            void handleCopy();
             e.stopPropagation();
             e.preventDefault();
           }}
           className={cn(
-            'inline-flex select-none items-center justify-center whitespace-nowrap outline-hidden',
+            'cursor-pointer inline-flex select-none items-center justify-center whitespace-nowrap outline-hidden',
             paddingClass,
             // colors
             'text-text-sub',
@@ -60,7 +62,6 @@ export const CopyButton = (props: CopyButtonProps) => {
             // focus
             className
           )}
-          {...rest}
         >
           <AnimatePresence mode="wait" initial={false}>
             {copied ? (

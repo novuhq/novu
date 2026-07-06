@@ -35,6 +35,8 @@ export const QueryKeys = Object.freeze({
   fetchContexts: 'fetchContexts',
   fetchContext: 'fetchContext',
   fetchSubscriberSubscriptions: 'fetchSubscriberSubscriptions',
+  fetchChannelEndpoints: 'fetchChannelEndpoints',
+  fetchChannelConnections: 'fetchChannelConnections',
   fetchChat: 'fetchChat',
   fetchEnvironmentVariables: 'fetchEnvironmentVariables',
   fetchEnvironmentVariable: 'fetchEnvironmentVariable',
