@@ -1,4 +1,9 @@
-import { AgentRuntimeProviderIdEnum, SLUG_IDENTIFIER_REGEX, slugIdentifierFormatMessage } from '@novu/shared';
+import {
+  AGENT_NAME_MAX_LENGTH,
+  AgentRuntimeProviderIdEnum,
+  SLUG_IDENTIFIER_REGEX,
+  slugIdentifierFormatMessage,
+} from '@novu/shared';
 import type { CreateAgentForm, CreateAgentFormErrors } from './types';
 
 export function validateManagedCredentialFields(fields: {
@@ -37,7 +42,11 @@ export function validateCreateAgentForm(form: CreateAgentForm): CreateAgentFormE
     const trimmedName = form.name.trim();
     const trimmedIdentifier = form.identifier.trim();
 
-    if (!trimmedName) errors.name = 'Name is required.';
+    if (!trimmedName) {
+      errors.name = 'Name is required.';
+    } else if (trimmedName.length > AGENT_NAME_MAX_LENGTH) {
+      errors.name = `Name must be ${AGENT_NAME_MAX_LENGTH} characters or fewer.`;
+    }
 
     if (!trimmedIdentifier) {
       errors.identifier = 'Identifier is required.';
