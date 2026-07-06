@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadGatewayException, Injectable } from '@nestjs/common';
 import axios from 'axios';
 
 export interface WebexTokenRefreshResponse {
@@ -24,11 +24,42 @@ export class WebexTokenService {
       client_secret: clientSecret,
     });
 
-    const response = await axios.post<WebexTokenRefreshResponse>(this.WEBEX_ACCESS_TOKEN_URL, body.toString(), {
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      timeout: 10000,
-    });
+    let response: { data: WebexTokenRefreshResponse };
+    try {
+      response = await axios.post<WebexTokenRefreshResponse>(this.WEBEX_ACCESS_TOKEN_URL, body.toString(), {
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        timeout: 10000,
+      });
+    } catch (error) {
+      this.handleWebexRefreshError(error);
+    }
 
     return response.data;
+  }
+
+  private handleWebexRefreshError(error: unknown): never {
+    if (!axios.isAxiosError(error)) {
+      throw error;
+    }
+
+    const status = error.response?.status;
+    const message = this.getWebexErrorMessage(error.response?.data) || error.message;
+    const statusText = status ? ` (HTTP ${status})` : '';
+
+    throw new BadGatewayException(
+      `Webex token refresh failed${statusText}: ${message}. Reconnect the Webex channel connection.`
+    );
+  }
+
+  private getWebexErrorMessage(data: unknown): string {
+    if (typeof data === 'string') {
+      return data;
+    }
+
+    if (typeof data === 'object' && data !== null && 'message' in data) {
+      return String(data.message);
+    }
+
+    return data === undefined ? '' : JSON.stringify(data);
   }
 }

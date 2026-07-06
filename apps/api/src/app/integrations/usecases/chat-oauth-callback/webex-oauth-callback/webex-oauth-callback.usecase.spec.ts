@@ -245,6 +245,9 @@ describe('WebexOauthCallback', () => {
     expect(updateArg.auth.refreshToken).to.equal(MOCK_REFRESH_TOKEN);
     expect(updateArg.auth.expiresAt).to.be.a('string');
     expect(updateArg.workspace.id).to.equal(MOCK_ORG_ID);
+
+    const lookupArg = channelConnectionRepository.findOne.firstCall.args[0];
+    expect(lookupArg.integrationIdentifier).to.equal(MOCK_INTEGRATION_IDENTIFIER);
   });
 
   it('should update the existing Webex connection token when reconnecting with the same integration, subscriber, and context', async () => {
