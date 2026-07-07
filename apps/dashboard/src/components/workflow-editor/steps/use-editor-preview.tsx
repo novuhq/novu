@@ -16,6 +16,8 @@ type UseEditorPreviewProps = {
   payloadSchema?: Record<string, any>;
 };
 
+const LOCAL_PREVIEW_REFRESH_INTERVAL_MS = 5 * 1000;
+
 function useDebounced<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
   const oldValueRef = useDataRef(debouncedValue);
@@ -57,7 +59,7 @@ export const useEditorPreview = ({ workflowSlug, stepSlug, controlValues, payloa
     onError: (error) => Sentry.captureException(error),
   });
   // Routes to the stateless bridge endpoint for virtual (local mode) workflows.
-  const { previewStepFn, isReady: isPreviewFnReady, bridgeUrl } = usePreviewStepFn();
+  const { previewStepFn, isReady: isPreviewFnReady, bridgeUrl, isLocalPreview } = usePreviewStepFn();
 
   const { data: parsedEditorPayload } = parse(editorValue);
 
@@ -94,7 +96,13 @@ export const useEditorPreview = ({ workflowSlug, stepSlug, controlValues, payloa
     enabled: Boolean(workflowSlug && stepSlug && currentEnvironment && parsedEditorPayload && isPreviewFnReady),
     staleTime: 0,
     retry: false,
-    refetchOnWindowFocus: false,
+    // In local mode the step template lives in the developer's code and can
+    // change at any moment without anything in the query key changing (the
+    // bridge renders it at preview time). Re-render on tab focus and on a
+    // short interval so the preview tracks code edits; `keepPreviousData`
+    // prevents flicker between renders.
+    refetchOnWindowFocus: isLocalPreview,
+    refetchInterval: isLocalPreview ? LOCAL_PREVIEW_REFRESH_INTERVAL_MS : false,
     placeholderData: keepPreviousData,
   });
 

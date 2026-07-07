@@ -102,6 +102,9 @@ export const LocalModeProvider = ({ children }: { children: ReactNode }) => {
     enabled: hasSession && isLocalRoute,
     networkMode: 'always',
     refetchInterval: DISCOVER_REFRESH_INTERVAL_MS,
+    // Editing code and tabbing back to the dashboard should reflect the
+    // change immediately, without waiting for the next poll tick.
+    refetchOnWindowFocus: true,
     placeholderData: (previous) => previous,
     retry: false,
     meta: { showError: false },
