@@ -267,11 +267,16 @@ class Unpacker:
             d = self.getbyte()
             j = d
             pointer = ((i<<8) | j) & ~0xC000
+            pointer_start = self.offset - 2
             # RFC 1035 4.1.4 compression pointers must only ever point
-            # backwards to a prior offset. A pointer that targets itself or
-            # forms a cycle would otherwise recurse until the process
-            # crashes with a RecursionError, letting a malicious nameserver
-            # DoS the inbound-mail service. Reject any repeated target.
+            # backwards to a prior offset. A pointer that targets itself,
+            # points forward, or forms a cycle would otherwise recurse until
+            # the process crashes with a RecursionError, letting a malicious
+            # nameserver DoS the inbound-mail service. A strictly-backwards
+            # rule guarantees termination; the seen-target set is a
+            # belt-and-suspenders guard against any remaining cycle.
+            if pointer >= pointer_start:
+                raise UnpackError("compression pointer must point backwards")
             if seen_pointers is None:
                 seen_pointers = set()
             if pointer in seen_pointers:

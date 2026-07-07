@@ -30,6 +30,18 @@ class CompressionPointerLoopTest(unittest.TestCase):
         with self.assertRaises(Lib.UnpackError):
             Lib.Unpacker(b"\xc0\x02\xc0\x00").getname()
 
+    def test_forward_pointer_chain_is_rejected(self):
+        # A chain of forward pointers (0 -> 2 -> 4 -> ...) never repeats a
+        # target but still recurses unboundedly, so it must be rejected by
+        # the strictly-backwards rule rather than crashing.
+        buf = bytearray()
+        for k in range(400):
+            target = (k + 1) * 2
+            buf += bytes([0xC0 | (target >> 8), target & 0xFF])
+        buf += b"\x00"
+        with self.assertRaises(Lib.UnpackError):
+            Lib.Unpacker(bytes(buf)).getname()
+
     def test_legitimate_backward_pointer_still_resolves(self):
         # "isi.arpa" stored at offset 0, then "foo" + a pointer back to it.
         prefix = b"\x03isi\x04arpa\x00"
