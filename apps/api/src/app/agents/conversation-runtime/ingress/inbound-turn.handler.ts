@@ -12,7 +12,7 @@ import {
 } from '@novu/dal';
 import type { AgentAction } from '@novu/framework';
 import { parseApprovalActionId } from '@novu/framework/internal';
-import { ENDPOINT_TYPES } from '@novu/shared';
+import { AgentSubscriberAccessEnum, ENDPOINT_TYPES } from '@novu/shared';
 import type { CardElement, EmojiValue, Message, Thread } from 'chat';
 import { ConnectClaimTokenService } from '../../../connect/services/connect-claim-token.service';
 import { parsePositiveIntEnv } from '../../../keyless/keyless-abuse.constants';
@@ -157,6 +157,19 @@ function resolveInboundFirstMessageText(platform: AgentPlatformEnum, message: Me
   return preview;
 }
 
+/**
+ * An inbound email's sender identity is taken from the `From` header, which is
+ * trivially spoofable. The upstream inbound-mail service verifies DKIM and SPF
+ * and forwards the verdicts on the webhook payload (surfaced on `message.raw`).
+ * The sender is only trusted when both verdicts are `'pass'`; anything else —
+ * including a missing verdict on an older payload — is treated as unverified so
+ * the resolver never maps a spoofed `From` onto a registered subscriber. Fails
+ * closed by design.
+ */
+function isInboundEmailSenderVerified(raw: Record<string, unknown> | undefined): boolean {
+  return raw?.dkim === 'pass' && raw?.spf === 'pass';
+}
+
 function getInboundPlatformThreadId(platform: AgentPlatformEnum, thread: Thread, message: Message): string {
   const rawEvent = getMessageRawEvent(message);
   const rawThreadTs = rawEvent?.thread_ts;
@@ -273,26 +286,57 @@ export class AgentInboundHandler implements OnModuleInit {
       return;
     }
 
+    const emailAuthRaw = config.platform === AgentPlatformEnum.EMAIL ? asRecord(message.raw) : undefined;
+    const isVerifiedEmailSender =
+      config.platform !== AgentPlatformEnum.EMAIL || isInboundEmailSenderVerified(emailAuthRaw);
+
+    // Open-access email agents provision the sender themselves, so email joins
+    // the Slack/Teams lookup-or-provision path (soft-failing to `null` inside
+    // the resolver). Keyless demo agents are excluded — they deliberately
+    // provision lazily at tool-approval time and bound abuse via the demo cap,
+    // so the ephemeral env stays subscriber-free until needed.
+    const canAutoProvision =
+      isAutoProvisionPlatform(config.platform) ||
+      (config.platform === AgentPlatformEnum.EMAIL &&
+        config.subscriberAccess === AgentSubscriberAccessEnum.OPEN &&
+        !config.isKeyless);
+
     let subscriberId: string | null;
     try {
-      subscriberId = isAutoProvisionPlatform(config.platform)
-        ? await this.subscriberResolver.resolveOrProvision({
-            environmentId: config.environmentId,
+      if (!isVerifiedEmailSender) {
+        this.logger.warn(
+          {
+            agentId,
             organizationId: config.organizationId,
-            platform: config.platform,
-            platformUserId: message.author.userId,
-            integrationIdentifier: config.integrationIdentifier,
-            agentIdentifier: config.agentIdentifier,
-            authorFullName: message.author.fullName,
-            authorUserName: message.author.userName,
-            // chat-sdk types isBot as `boolean | "unknown"`; treat anything except `true` as a non-bot author.
-            authorIsBot: message.author.isBot === true,
-            // Teams multi-tenant: capture the user's tenant from the inbound activity so the endpoint
-            // records which (possibly external customer) tenant the user belongs to.
-            platformTenantId:
-              config.platform === AgentPlatformEnum.TEAMS ? extractMsTeamsTenantId(message.raw) : undefined,
-          })
-        : await this.resolveSubscriberId(agentId, config, message.author.userId, 'resolve-subscriber');
+            environmentId: config.environmentId,
+            fromAddress: message.author.userId,
+            dkim: emailAuthRaw?.dkim,
+            spf: emailAuthRaw?.spf,
+            messageId: message.id,
+          },
+          'Inbound email sender failed DKIM/SPF verification — skipping subscriber resolution so a spoofed From cannot assume an existing identity.'
+        );
+        subscriberId = null;
+      } else {
+        subscriberId = canAutoProvision
+          ? await this.subscriberResolver.resolveOrProvision({
+              environmentId: config.environmentId,
+              organizationId: config.organizationId,
+              platform: config.platform,
+              platformUserId: message.author.userId,
+              integrationIdentifier: config.integrationIdentifier,
+              agentIdentifier: config.agentIdentifier,
+              authorFullName: message.author.fullName,
+              authorUserName: message.author.userName,
+              // chat-sdk types isBot as `boolean | "unknown"`; treat anything except `true` as a non-bot author.
+              authorIsBot: message.author.isBot === true,
+              // Teams multi-tenant: capture the user's tenant from the inbound activity so the endpoint
+              // records which (possibly external customer) tenant the user belongs to.
+              platformTenantId:
+                config.platform === AgentPlatformEnum.TEAMS ? extractMsTeamsTenantId(message.raw) : undefined,
+            })
+          : await this.resolveSubscriberId(agentId, config, message.author.userId, 'resolve-subscriber');
+      }
     } catch (err) {
       if (err instanceof BotAuthorSkippedError) {
         this.logger.debug(
@@ -313,12 +357,13 @@ export class AgentInboundHandler implements OnModuleInit {
       }
 
       /**
-       * Only `resolveOrProvision` (SLACK / TEAMS) can reach here — the
-       * `resolveSubscriberId` read path soft-fails to `null` internally and
-       * never throws. For auto-provision platforms an unknown error means we
-       * don't know the subscriber state, so we keep dispatch off and surface
-       * the failure rather than silently degrading to a PLATFORM_USER
-       * participant the removed-anonymous-state contract was meant to eliminate.
+       * Only `resolveOrProvision` on SLACK / TEAMS can reach here — the
+       * `resolveSubscriberId` read path and the resolver's open-access email
+       * branch both soft-fail to `null` internally. For auto-provision
+       * platforms an unknown error means we don't know the subscriber state,
+       * so we keep dispatch off and surface the failure rather than silently
+       * degrading to a PLATFORM_USER participant the removed-anonymous-state
+       * contract was meant to eliminate.
        */
       captureAgentWarning(err, { component: 'agent-inbound-handler', operation: 'resolve-subscriber', agentId });
 

@@ -1,7 +1,7 @@
 ---
 title: "Slack Chat Integration with Novu"
 sidebarTitle: 'Slack'
-description: "Connect Slack to Novu to send chat notifications through workflows using OAuth. Deliver messages to channels or DMs and manage subscriber Slack credentials."
+description: "Connect Slack to Novu to send chat notifications through workflows using OAuth. Deliver messages to channels or DMs, format messages with Block Kit, and manage subscriber Slack credentials."
 ---
 
 <Note>
@@ -13,6 +13,19 @@ The Slack chat integration lets your application send notifications directly to 
 Novu handles the full lifecycle of Slack connections and message delivery. You define where notifications should be delivered, and Novu automatically routes each message to the correct Slack workspace, channel, or user.
 
 This guide walks you through setting up Slack chat, connect workspaces, and deliver notifications to the exact Slack destinations your users expect it.
+
+<CardGroup cols={2}>
+  <Card title="Send notifications" icon="send" href="#send-notifications">
+    Trigger a workflow to deliver a message to a subscriber's Slack channel, DM, or webhook.
+  </Card>
+  <Card title="Format with Block Kit" icon="layout-template" href="#format-messages-with-block-kit">
+    Send rich Slack messages with sections, buttons, and context blocks using trigger overrides or Framework.
+  </Card>
+</CardGroup>
+
+<Note>
+  The Chat step in the dashboard sends plain text by default. To send [Slack Block Kit](https://api.slack.com/block-kit) messages from a dashboard workflow, pass `blocks` in [trigger overrides](/platform/integrations/trigger-overrides) when you call the API. See [Format messages with Block Kit](#format-messages-with-block-kit) for examples, including `_passthrough` for raw Slack API fields.
+</Note>
 
 <Note>
   Check out the [agents](/agents) documentation for more information on how to build agents using Slack.
@@ -827,13 +840,712 @@ When the workflow is triggered, Novu will:
   </Step>
 
   <Step title="Deliver messages">
-    Novu sends the notification to each configured Slack destination.
+    Novu sends the notification to each configured Slack destination. By default, the Chat step body is sent as plain text. To send Block Kit formatting, see [Format messages with Block Kit](#format-messages-with-block-kit).
   </Step>
 </Steps>
 
+<Note>
+  **Message formatting:** The dashboard Chat step editor supports a plain text `body`. For rich Slack messages (sections, buttons, context blocks), use trigger overrides at send time or Framework provider overrides in code-first workflows. Digest summaries in the dashboard work as plain text using [digest variables](/platform/workflow/add-notification-content/personalize-content#digest-variables).
+</Note>
+
+## Format messages with Block Kit
+
+The Chat step in the Novu dashboard sends a plain text message body to Slack. There is no Block Kit editor in the workflow UI today.
+
+You still have a few ways to send richer Slack messages:
+
+| Approach | Best for |
+| --- | --- |
+| **Chat step body (dashboard)** | Plain text summaries, including [digest variables](/platform/workflow/add-notification-content/personalize-content#digest-variables) |
+| **Trigger overrides (API)** | Block Kit sections, buttons, and context blocks built from your trigger payload |
+| **Framework provider overrides** | Full Block Kit control in code-first workflows, including dynamic digest formatting |
+
+### Plain text and digest summaries
+
+For digest workflows built in the dashboard, use digest variables in the Chat step body to build a text summary. For example:
+
+```liquid
+{{ steps.digest-step.countSummary }}
+
+{% for event in steps.digest-step.events %}
+• {{ event.payload.title }}
+{% endfor %}
+```
+
+This renders as plain text in Slack. It does not produce Block Kit formatting such as buttons or styled sections.
+
+### Send Block Kit with trigger overrides
+
+To send [Slack Block Kit](https://api.slack.com/block-kit) messages from a dashboard workflow, pass `blocks` in the `overrides` object when you trigger the workflow. The Chat step `body` from your template is still sent as the fallback `text` field unless you override it.
+
+Copy the **step identifier** from your workflow in the dashboard and use it under `overrides.steps`.
+
+<Tabs>
+  <Tab title="Node.js">
+```typescript
+import { Novu } from '@novu/api';
+
+const novu = new Novu({ secretKey: '<NOVU_SECRET_KEY>' });
+
+await novu.trigger({
+  workflowId: 'comment-alert',
+  to: { subscriberId: 'user-123' },
+  payload: {
+    postTitle: 'Q1 planning thread',
+    postUrl: 'https://app.example.com/posts/456',
+  },
+  overrides: {
+    steps: {
+      'slack-chat-step': {
+        providers: {
+          slack: {
+            text: 'You have new comments',
+            blocks: [
+              {
+                type: 'section',
+                text: {
+                  type: 'mrkdwn',
+                  text: '*New comments on Q1 planning thread*',
+                },
+              },
+              {
+                type: 'actions',
+                elements: [
+                  {
+                    type: 'button',
+                    text: { type: 'plain_text', text: 'View thread' },
+                    url: 'https://app.example.com/posts/456',
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      },
+    },
+  },
+});
+```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv('NOVU_SECRET_KEY', '')) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id='comment-alert',
+        to={'subscriber_id': 'user-123'},
+        payload={
+            'postTitle': 'Q1 planning thread',
+            'postUrl': 'https://app.example.com/posts/456',
+        },
+        overrides={
+            'steps': {
+                'slack-chat-step': {
+                    'providers': {
+                        'slack': {
+                            'text': 'You have new comments',
+                            'blocks': [
+                                {
+                                    'type': 'section',
+                                    'text': {
+                                        'type': 'mrkdwn',
+                                        'text': '*New comments on Q1 planning thread*',
+                                    },
+                                },
+                                {
+                                    'type': 'actions',
+                                    'elements': [
+                                        {
+                                            'type': 'button',
+                                            'text': {'type': 'plain_text', 'text': 'View thread'},
+                                            'url': 'https://app.example.com/posts/456',
+                                        },
+                                    ],
+                                },
+                            ],
+                        },
+                    },
+                },
+            },
+        },
+    ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+_, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "comment-alert",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: "user-123",
+    }),
+    Payload: map[string]any{
+        "postTitle": "Q1 planning thread",
+        "postUrl":   "https://app.example.com/posts/456",
+    },
+    Overrides: map[string]map[string]any{
+        "steps": {
+            "slack-chat-step": map[string]any{
+                "providers": map[string]any{
+                    "slack": map[string]any{
+                        "text": "You have new comments",
+                        "blocks": []map[string]any{
+                            {
+                                "type": "section",
+                                "text": map[string]any{
+                                    "type": "mrkdwn",
+                                    "text": "*New comments on Q1 planning thread*",
+                                },
+                            },
+                            {
+                                "type": "actions",
+                                "elements": []map[string]any{
+                                    {
+                                        "type": "button",
+                                        "text": map[string]any{
+                                            "type": "plain_text",
+                                            "text": "View thread",
+                                        },
+                                        "url": "https://app.example.com/posts/456",
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        },
+    },
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()->setSecurity('<NOVU_SECRET_KEY>')->build();
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'comment-alert',
+        to: new Components\SubscriberPayloadDto(subscriberId: 'user-123'),
+        payload: [
+            'postTitle' => 'Q1 planning thread',
+            'postUrl' => 'https://app.example.com/posts/456',
+        ],
+        overrides: [
+            'steps' => [
+                'slack-chat-step' => [
+                    'providers' => [
+                        'slack' => [
+                            'text' => 'You have new comments',
+                            'blocks' => [
+                                [
+                                    'type' => 'section',
+                                    'text' => [
+                                        'type' => 'mrkdwn',
+                                        'text' => '*New comments on Q1 planning thread*',
+                                    ],
+                                ],
+                                [
+                                    'type' => 'actions',
+                                    'elements' => [
+                                        [
+                                            'type' => 'button',
+                                            'text' => ['type' => 'plain_text', 'text' => 'View thread'],
+                                            'url' => 'https://app.example.com/posts/456',
+                                        ],
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ],
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "comment-alert",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() { SubscriberId = "user-123" }),
+    Payload = new Dictionary<string, object>() {
+        { "postTitle", "Q1 planning thread" },
+        { "postUrl", "https://app.example.com/posts/456" },
+    },
+    Overrides = new Overrides() {
+        Steps = new Dictionary<string, Dictionary<string, Dictionary<string, object>>>() {
+            { "slack-chat-step", new Dictionary<string, Dictionary<string, object>>() {
+                { "providers", new Dictionary<string, object>() {
+                    { "slack", new Dictionary<string, object>() {
+                        { "text", "You have new comments" },
+                        { "blocks", new List<Dictionary<string, object>>() {
+                            new Dictionary<string, object>() {
+                                { "type", "section" },
+                                { "text", new Dictionary<string, object>() {
+                                    { "type", "mrkdwn" },
+                                    { "text", "*New comments on Q1 planning thread*" },
+                                } },
+                            },
+                            new Dictionary<string, object>() {
+                                { "type", "actions" },
+                                { "elements", new List<Dictionary<string, object>>() {
+                                    new Dictionary<string, object>() {
+                                        { "type", "button" },
+                                        { "text", new Dictionary<string, object>() {
+                                            { "type", "plain_text" },
+                                            { "text", "View thread" },
+                                        } },
+                                        { "url", "https://app.example.com/posts/456" },
+                                    },
+                                } },
+                            },
+                        } },
+                    } },
+                } },
+            } },
+        },
+    },
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+import java.util.List;
+import java.util.Map;
+
+Novu novu = Novu.builder().secretKey("<NOVU_SECRET_KEY>").build();
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("comment-alert")
+        .to(To2.of(SubscriberPayloadDto.builder().subscriberId("user-123").build()))
+        .payload(Map.of(
+            "postTitle", "Q1 planning thread",
+            "postUrl", "https://app.example.com/posts/456"))
+        .overrides(TriggerEventRequestDtoOverrides.builder()
+            .additionalProperties(Map.of(
+                "steps", Map.of(
+                    "slack-chat-step", Map.of(
+                        "providers", Map.of(
+                            "slack", Map.of(
+                                "text", "You have new comments",
+                                "blocks", List.of(
+                                    Map.of(
+                                        "type", "section",
+                                        "text", Map.of(
+                                            "type", "mrkdwn",
+                                            "text", "*New comments on Q1 planning thread*")),
+                                    Map.of(
+                                        "type", "actions",
+                                        "elements", List.of(
+                                            Map.of(
+                                                "type", "button",
+                                                "text", Map.of("type", "plain_text", "text", "View thread"),
+                                                "url", "https://app.example.com/posts/456")))))))))
+            .build())
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -X POST 'https://api.novu.co/v1/events/trigger' \
+  -H 'Content-Type: application/json' \
+  -H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+  -d '{
+    "name": "comment-alert",
+    "to": { "subscriberId": "user-123" },
+    "payload": {
+      "postTitle": "Q1 planning thread",
+      "postUrl": "https://app.example.com/posts/456"
+    },
+    "overrides": {
+      "steps": {
+        "slack-chat-step": {
+          "providers": {
+            "slack": {
+              "text": "You have new comments",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*New comments on Q1 planning thread*"
+                  }
+                },
+                {
+                  "type": "actions",
+                  "elements": [
+                    {
+                      "type": "button",
+                      "text": { "type": "plain_text", "text": "View thread" },
+                      "url": "https://app.example.com/posts/456"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  }'
+```
+  </Tab>
+</Tabs>
+
+Replace `slack-chat-step` with the step identifier from your workflow. Step-level overrides take priority over workflow-level overrides.
+
+#### Workflow-level overrides
+
+If your workflow has a single Slack Chat step, you can apply Block Kit to all Slack steps in that workflow without targeting a step ID:
+
+```json
+"overrides": {
+  "providers": {
+    "slack": {
+      "blocks": [
+        {
+          "type": "section",
+          "text": { "type": "mrkdwn", "text": "*Deploy succeeded*" }
+        }
+      ]
+    }
+  }
+}
+```
+
+### Send extra Slack fields with `_passthrough`
+
+Use `_passthrough` when you need raw [Slack `chat.postMessage`](https://api.slack.com/methods/chat.postMessage) fields that are not exposed in the dashboard. Values in `_passthrough.body` are merged last and take priority over other override fields.
+
+<Tabs>
+  <Tab title="Node.js">
+```typescript
+await novu.trigger({
+  workflowId: 'comment-alert',
+  to: { subscriberId: 'user-123' },
+  payload: {
+    postTitle: 'Q1 planning thread',
+    postUrl: 'https://app.example.com/posts/456',
+  },
+  overrides: {
+    steps: {
+      'slack-chat-step': {
+        providers: {
+          slack: {
+            _passthrough: {
+              body: {
+                text: 'You have new comments',
+                unfurl_links: false,
+                blocks: [
+                  {
+                    type: 'section',
+                    text: {
+                      type: 'mrkdwn',
+                      text: '*New comments on Q1 planning thread*',
+                    },
+                  },
+                  {
+                    type: 'context',
+                    elements: [
+                      {
+                        type: 'mrkdwn',
+                        text: 'Sent via Novu',
+                      },
+                    ],
+                  },
+                ],
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+});
+```
+  </Tab>
+  <Tab title="Python">
+```python
+novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+    workflow_id='comment-alert',
+    to={'subscriber_id': 'user-123'},
+    payload={
+        'postTitle': 'Q1 planning thread',
+        'postUrl': 'https://app.example.com/posts/456',
+    },
+    overrides={
+        'steps': {
+            'slack-chat-step': {
+                'providers': {
+                    'slack': {
+                        '_passthrough': {
+                            'body': {
+                                'text': 'You have new comments',
+                                'unfurl_links': False,
+                                'blocks': [
+                                    {
+                                        'type': 'section',
+                                        'text': {
+                                            'type': 'mrkdwn',
+                                            'text': '*New comments on Q1 planning thread*',
+                                        },
+                                    },
+                                    {
+                                        'type': 'context',
+                                        'elements': [
+                                            {
+                                                'type': 'mrkdwn',
+                                                'text': 'Sent via Novu',
+                                            },
+                                        ],
+                                    },
+                                ],
+                            },
+                        },
+                    },
+                },
+            },
+        },
+    },
+))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+_, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "comment-alert",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: "user-123",
+    }),
+    Payload: map[string]any{
+        "postTitle": "Q1 planning thread",
+        "postUrl":   "https://app.example.com/posts/456",
+    },
+    Overrides: map[string]map[string]any{
+        "steps": {
+            "slack-chat-step": map[string]any{
+                "providers": map[string]any{
+                    "slack": map[string]any{
+                        "_passthrough": map[string]any{
+                            "body": map[string]any{
+                                "text":         "You have new comments",
+                                "unfurl_links": false,
+                                "blocks": []map[string]any{
+                                    {
+                                        "type": "section",
+                                        "text": map[string]any{
+                                            "type": "mrkdwn",
+                                            "text": "*New comments on Q1 planning thread*",
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        },
+    },
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'comment-alert',
+        to: new Components\SubscriberPayloadDto(subscriberId: 'user-123'),
+        payload: [
+            'postTitle' => 'Q1 planning thread',
+            'postUrl' => 'https://app.example.com/posts/456',
+        ],
+        overrides: [
+            'steps' => [
+                'slack-chat-step' => [
+                    'providers' => [
+                        'slack' => [
+                            '_passthrough' => [
+                                'body' => [
+                                    'text' => 'You have new comments',
+                                    'unfurl_links' => false,
+                                    'blocks' => [
+                                        [
+                                            'type' => 'section',
+                                            'text' => [
+                                                'type' => 'mrkdwn',
+                                                'text' => '*New comments on Q1 planning thread*',
+                                            ],
+                                        ],
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ],
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "comment-alert",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() { SubscriberId = "user-123" }),
+    Payload = new Dictionary<string, object>() {
+        { "postTitle", "Q1 planning thread" },
+        { "postUrl", "https://app.example.com/posts/456" },
+    },
+    Overrides = new Overrides() {
+        Steps = new Dictionary<string, Dictionary<string, Dictionary<string, object>>>() {
+            { "slack-chat-step", new Dictionary<string, Dictionary<string, object>>() {
+                { "providers", new Dictionary<string, object>() {
+                    { "slack", new Dictionary<string, object>() {
+                        { "_passthrough", new Dictionary<string, object>() {
+                            { "body", new Dictionary<string, object>() {
+                                { "text", "You have new comments" },
+                                { "unfurl_links", false },
+                                { "blocks", new List<Dictionary<string, object>>() {
+                                    new Dictionary<string, object>() {
+                                        { "type", "section" },
+                                        { "text", new Dictionary<string, object>() {
+                                            { "type", "mrkdwn" },
+                                            { "text", "*New comments on Q1 planning thread*" },
+                                        } },
+                                    },
+                                } },
+                            } },
+                        } },
+                    } },
+                } },
+            } },
+        },
+    },
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("comment-alert")
+        .to(To2.of(SubscriberPayloadDto.builder().subscriberId("user-123").build()))
+        .payload(Map.of(
+            "postTitle", "Q1 planning thread",
+            "postUrl", "https://app.example.com/posts/456"))
+        .overrides(TriggerEventRequestDtoOverrides.builder()
+            .additionalProperties(Map.of(
+                "steps", Map.of(
+                    "slack-chat-step", Map.of(
+                        "providers", Map.of(
+                            "slack", Map.of(
+                                "_passthrough", Map.of(
+                                    "body", Map.of(
+                                        "text", "You have new comments",
+                                        "unfurl_links", false,
+                                        "blocks", List.of(
+                                            Map.of(
+                                                "type", "section",
+                                                "text", Map.of(
+                                                    "type", "mrkdwn",
+                                                    "text", "*New comments on Q1 planning thread*"))))))))))
+            .build())
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -X POST 'https://api.novu.co/v1/events/trigger' \
+  -H 'Content-Type: application/json' \
+  -H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+  -d '{
+    "name": "comment-alert",
+    "to": { "subscriberId": "user-123" },
+    "payload": {
+      "postTitle": "Q1 planning thread",
+      "postUrl": "https://app.example.com/posts/456"
+    },
+    "overrides": {
+      "steps": {
+        "slack-chat-step": {
+          "providers": {
+            "slack": {
+              "_passthrough": {
+                "body": {
+                  "text": "You have new comments",
+                  "unfurl_links": false,
+                  "blocks": [
+                    {
+                      "type": "section",
+                      "text": {
+                        "type": "mrkdwn",
+                        "text": "*New comments on Q1 planning thread*"
+                      }
+                    },
+                    {
+                      "type": "context",
+                      "elements": [
+                        {
+                          "type": "mrkdwn",
+                          "text": "Sent via Novu"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }'
+```
+  </Tab>
+</Tabs>
+
+<Note>
+  For a full guide on how overrides work, including workflow-level and step-level scopes, see [Trigger overrides](/platform/integrations/trigger-overrides).
+</Note>
+
+### Block Kit with digest workflows
+
+Trigger overrides are set when you call the trigger API. They work well when each trigger carries the data you need to build the message.
+
+For [digest workflows](/platform/workflow/add-and-configure-steps/configure-action-steps/digest), Novu batches multiple triggers into one notification. The Chat step body can use [digest variables](/platform/workflow/add-notification-content/personalize-content#digest-variables) to summarize batched events, but `overrides` are not re-evaluated with that aggregated data. To build Block Kit dynamically from a digest batch, use [Framework provider overrides](/framework/typescript/steps#provider-overrides) in a code-first workflow.
+
 ## Using Slack with agents
 
-Slack is a supported [agent provider](/agents/get-started/agents-and-providers). Connect your Slack app to an agent so users can message in channels or DMs and get replies in the same thread — without building Slack event handling yourself.
+Slack is a supported [agent provider](/agents/get-started/agents-and-providers). Connect your Slack app to an agent so users can message in channels or DMs and get replies in the same thread, without building Slack event handling yourself.
 
 <Card title="Build agents on Slack" icon="bot" href="/agents">
   Learn how Novu agents work, including managed and custom code agents.
@@ -860,6 +1572,11 @@ Both can use the same Slack integration. Your agent handles back-and-forth conve
 
 ## Related
 
-<Card icon="bot" href="/agents/get-started/agents-and-providers" title="Agents and providers">
-  Connect Slack and other providers to an agent.
-</Card>
+<CardGroup cols={2}>
+  <Card icon="messages-square" href="/platform/integrations/trigger-overrides" title="Trigger overrides">
+    Pass Slack `blocks` and `_passthrough` fields when triggering a workflow from your application.
+  </Card>
+  <Card icon="bot" href="/agents/get-started/agents-and-providers" title="Agents and providers">
+    Connect Slack and other providers to an agent.
+  </Card>
+</CardGroup>

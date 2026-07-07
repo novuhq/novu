@@ -38,10 +38,10 @@ export function AgentManagedOverview({ agent }: AgentManagedOverviewProps) {
   });
 
   // A channel counts as connected once the API stamps `connectedAt` (first real
-  // inbound message). The auto-provisioned Novu email integration follows the
-  // same rule: it only counts once a real email has landed, so a freshly created
-  // managed agent (no inbound yet) still surfaces the setup guide, and a connected
-  // email swaps the guide for the "What's next" card just like other channels.
+  // inbound message). Novu email follows the same rule: it only counts once a
+  // real email has landed, so a freshly created managed agent (no inbound yet)
+  // still surfaces the setup guide, and a connected email swaps the guide for
+  // the "What's next" card just like other channels.
   const hasConnectedChannel = useMemo(() => {
     const links = integrationsQuery.data?.data;
 

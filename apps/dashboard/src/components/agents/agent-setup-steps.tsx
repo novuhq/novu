@@ -69,7 +69,7 @@ type AgentSetupStepsProps = {
    * - other runtimes: when the user's bridge endpoint becomes reachable
    */
   onSetupComplete?: () => void;
-  /** Called when a non-email-auto-provisioned channel becomes connected during onboarding. */
+  /** Called when a channel becomes connected (first real inbound message) during onboarding. */
   onChannelConnected?: (providerId: string) => void;
   hideAddProvider?: boolean;
   /**
@@ -314,11 +314,7 @@ export function AgentSetupSteps({
     const links = agentIntegrationsQuery.data?.data;
     if (!links?.length) return false;
 
-    // The novu-email-agent integration is auto-provisioned for every agent, so
-    // it must not count toward marking the provider setup step as completed.
-    return links.some(
-      (link) => Boolean(link.connectedAt) && link.integration.providerId !== EmailProviderIdEnum.NovuAgent
-    );
+    return links.some((link) => hasAgentInboundConnection(link.connectedAt));
   }, [agentIntegrationsQuery.data?.data]);
 
   const [isInstructionsExpanded, setIsInstructionsExpanded] = useState(false);
@@ -365,10 +361,8 @@ export function AgentSetupSteps({
   const providerGuideStepOffset = channelStepIndex + 1;
 
   const channelReadyForBridge = isChannelReadyForBridge({
-    selectedProviderId,
     selectedIntegrationId: validatedSelectedId,
     agentIntegrationLinks,
-    useCloudMergedListenStep,
   });
 
   const skipProviderGuide = useCloudMergedListenStep && isEmailChannelSelected && channelReadyForBridge;
@@ -399,8 +393,8 @@ export function AgentSetupSteps({
   }, [effectiveIntegrationId, channelReadyForBridge, bridgeStepOffset, providerGuideStepOffset, channelStepIndex]);
 
   // In onboarding the setup guide (and the collapse it triggers) only appears once the user
-  // explicitly picks a channel — not for the auto-provisioned default. On the agent details page
-  // the guide keeps following the agent's default/selected integration.
+  // explicitly picks a channel. On the agent details page the guide keeps following the agent's
+  // default/selected integration.
   const guideIntegrationId = isOnboarding ? (validatedSelectedId ?? selectedIntegrationId) : effectiveIntegrationId;
   const guideProviderId = isOnboarding
     ? (selectedIntegration?.providerId ?? pickedChannelProviderId)
@@ -518,29 +512,6 @@ export function AgentSetupSteps({
     [agent.identifier, currentEnvironment, integrationIdentifier, trackWelcomeSent]
   );
 
-  useEffect(() => {
-    if (
-      !isOnboarding ||
-      !skipProviderGuide ||
-      !channelReadyForBridge ||
-      !isEmailChannelSelected ||
-      !currentEnvironment ||
-      !integrationIdentifier
-    ) {
-      return;
-    }
-
-    requestEmailWelcome();
-  }, [
-    channelReadyForBridge,
-    currentEnvironment,
-    integrationIdentifier,
-    isEmailChannelSelected,
-    isOnboarding,
-    requestEmailWelcome,
-    skipProviderGuide,
-  ]);
-
   const handleProviderSelect = useCallback(
     (providerId: string, integration?: IIntegration) => {
       if (isOnboarding) {
@@ -557,7 +528,7 @@ export function AgentSetupSteps({
 
         // Activate the collapse in the same render as the selection so the preview,
         // channel cards, and provider guide animate together rather than in two stages.
-        if (isOnboarding && shouldShowProviderSetupGuide({ providerId, isOnboarding, useCloudMergedListenStep })) {
+        if (isOnboarding && shouldShowProviderSetupGuide(providerId)) {
           onChannelGuideActiveChangeRef.current?.(true);
         }
       }
@@ -566,28 +537,16 @@ export function AgentSetupSteps({
         requestEmailWelcome(integration.identifier);
       }
     },
-    [agent.identifier, isOnboarding, requestEmailWelcome, telemetry, useCloudMergedListenStep]
+    [agent.identifier, isOnboarding, requestEmailWelcome, telemetry]
   );
 
   useEffect(() => {
     if (!isOnboarding || channelConnectedTrackedRef.current) return;
 
-    if (useCloudMergedListenStep && channelReadyForBridge && isEmailChannelSelected) {
-      channelConnectedTrackedRef.current = true;
-      onChannelConnected?.(EmailProviderIdEnum.NovuAgent);
-      telemetry(TelemetryEvent.ONBOARDING_CHANNEL_CONNECTED, {
-        agentIdentifier: agent.identifier,
-        providerId: EmailProviderIdEnum.NovuAgent,
-        integrationIdentifier: selectedIntegration?.identifier,
-      });
-
-      return;
-    }
-
     if (!hasConnectedIntegration) return;
 
-    const connectedLink = agentIntegrationsQuery.data?.data?.find(
-      (link) => Boolean(link.connectedAt) && link.integration.providerId !== EmailProviderIdEnum.NovuAgent
+    const connectedLink = agentIntegrationsQuery.data?.data?.find((link) =>
+      hasAgentInboundConnection(link.connectedAt)
     );
     if (!connectedLink) return;
 
@@ -601,14 +560,10 @@ export function AgentSetupSteps({
   }, [
     agent.identifier,
     agentIntegrationsQuery.data?.data,
-    channelReadyForBridge,
     hasConnectedIntegration,
     isOnboarding,
     onChannelConnected,
-    selectedIntegration?.identifier,
-    isEmailChannelSelected,
     telemetry,
-    useCloudMergedListenStep,
   ]);
 
   useEffect(() => {
@@ -751,7 +706,9 @@ export function AgentSetupSteps({
 
   return (
     <div className="flex flex-col gap-10 py-6 pb-3 pr-3 md:pr-6">
-      <SetupStepperRail>
+      {/* When a provider guide renders below, its steps live in a second rail — keep the line solid
+          across the junction instead of fading out and back in. */}
+      <SetupStepperRail continuesBelow={isChannelGuideActive}>
         {connectSummary &&
           !hideRecap &&
           (isManagedRuntime ? (

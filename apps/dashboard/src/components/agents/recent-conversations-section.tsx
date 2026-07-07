@@ -221,13 +221,13 @@ function getAgentName(conversation: ConversationDto): string {
 
 function formatTimestamp(dateStr: string | undefined): string {
   if (!dateStr?.trim()) {
-    return '—';
+    return '-';
   }
 
   const d = new Date(dateStr);
 
   if (Number.isNaN(d.getTime())) {
-    return '—';
+    return '-';
   }
 
   const month = d.toLocaleDateString('en-US', { month: 'short' });

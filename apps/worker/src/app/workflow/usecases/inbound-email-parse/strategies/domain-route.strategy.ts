@@ -350,6 +350,10 @@ export class DomainRouteStrategy {
       references: command.references,
       date: command.date,
       cc: command.cc,
+      // Forward the inbound-mail DKIM/SPF verdicts so the agent runtime can
+      // reject identity resolution for spoofed (unverified) senders.
+      dkim: command.dkim,
+      spf: command.spf,
     };
   }
 

@@ -1,12 +1,8 @@
+import { AGENT_PLATFORM_PROVISION_SOURCE, AGENT_PROVISION_DATA_KEYS } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
-import {
-  AGENT_PLATFORM_PROVISION_SOURCE,
-  AGENT_PROVISION_DATA_KEYS,
-  AgentSubscriberResolver,
-  BotAuthorSkippedError,
-} from './agent-subscriber-resolver.service';
+import { AgentSubscriberResolver, BotAuthorSkippedError } from './agent-subscriber-resolver.service';
 
 const DUPLICATE_KEY_ERROR = Object.assign(new Error('duplicate key'), { code: 11000 });
 
@@ -35,6 +31,7 @@ describe('AgentSubscriberResolver', () => {
       createChannelEndpointExecute?: sinon.SinonStub;
       subscriberDelete?: sinon.SinonStub;
       trackAnalytics?: sinon.SinonStub;
+      adoptPhantomsInto?: sinon.SinonStub;
     } = {}
   ) {
     const channelEndpointRepository = {
@@ -55,6 +52,9 @@ describe('AgentSubscriberResolver', () => {
     const analyticsService = {
       track: overrides.trackAnalytics ?? sinon.stub(),
     };
+    const adoptionService = {
+      adoptPhantomsInto: overrides.adoptPhantomsInto ?? sinon.stub().resolves(undefined),
+    };
     const logger = {
       setContext: sinon.stub(),
       warn: sinon.stub(),
@@ -69,6 +69,7 @@ describe('AgentSubscriberResolver', () => {
       createOrUpdateSubscriber as any,
       createChannelEndpoint as any,
       analyticsService as any,
+      adoptionService as any,
       logger as any
     );
 
@@ -79,6 +80,7 @@ describe('AgentSubscriberResolver', () => {
       createOrUpdateSubscriber,
       createChannelEndpoint,
       analyticsService,
+      adoptionService,
       logger,
     };
   }
@@ -183,6 +185,70 @@ describe('AgentSubscriberResolver', () => {
 
       expect(result).to.equal(null);
       expect(subscriberRepository.findByEmail.called).to.equal(false);
+    });
+  });
+
+  describe('resolveOnly — Email adoption / prefer customer-created', () => {
+    const realMatch = { _id: 'mongo-real', subscriberId: 'sub-real', email: 'user@example.com', data: {} };
+    const phantomMatch = {
+      _id: 'mongo-phantom',
+      subscriberId: 'sub-phantom',
+      email: 'user@example.com',
+      data: { [AGENT_PROVISION_DATA_KEYS.source]: AGENT_PLATFORM_PROVISION_SOURCE },
+    };
+
+    it('prefers the customer-created subscriber and adopts the phantom on a dual match', async () => {
+      const adoptPhantomsInto = sinon.stub().resolves(undefined);
+      const { resolver } = makeResolver({
+        findByEmail: sinon.stub().resolves([phantomMatch, realMatch]),
+        adoptPhantomsInto,
+      });
+
+      const result = await resolver.resolveOnly({
+        ...baseLookupParams,
+        platform: AgentPlatformEnum.EMAIL,
+        platformUserId: 'user@example.com',
+      });
+
+      expect(result).to.equal('sub-real');
+      expect(adoptPhantomsInto.calledOnce).to.equal(true);
+      const arg = adoptPhantomsInto.firstCall.args[0];
+      expect(arg.real).to.deep.equal({ _id: 'mongo-real', subscriberId: 'sub-real' });
+      expect(arg.phantoms).to.deep.equal([{ _id: 'mongo-phantom', subscriberId: 'sub-phantom' }]);
+    });
+
+    it('resolves to the phantom and does not adopt when no customer-created subscriber exists', async () => {
+      const adoptPhantomsInto = sinon.stub().resolves(undefined);
+      const { resolver } = makeResolver({
+        findByEmail: sinon.stub().resolves([phantomMatch]),
+        adoptPhantomsInto,
+      });
+
+      const result = await resolver.resolveOnly({
+        ...baseLookupParams,
+        platform: AgentPlatformEnum.EMAIL,
+        platformUserId: 'user@example.com',
+      });
+
+      expect(result).to.equal('sub-phantom');
+      expect(adoptPhantomsInto.called).to.equal(false);
+    });
+
+    it('resolves to the customer-created subscriber without adoption when no phantom exists', async () => {
+      const adoptPhantomsInto = sinon.stub().resolves(undefined);
+      const { resolver } = makeResolver({
+        findByEmail: sinon.stub().resolves([realMatch]),
+        adoptPhantomsInto,
+      });
+
+      const result = await resolver.resolveOnly({
+        ...baseLookupParams,
+        platform: AgentPlatformEnum.EMAIL,
+        platformUserId: 'user@example.com',
+      });
+
+      expect(result).to.equal('sub-real');
+      expect(adoptPhantomsInto.called).to.equal(false);
     });
   });
 
@@ -543,6 +609,58 @@ describe('AgentSubscriberResolver', () => {
       } catch (err) {
         expect(err).to.equal(DUPLICATE_KEY_ERROR);
       }
+    });
+  });
+
+  describe('resolveOrProvision — open-access email', () => {
+    it('returns an existing subscriber without provisioning', async () => {
+      const { resolver, createOrUpdateSubscriber } = makeResolver({
+        findByEmail: sinon.stub().resolves([{ _id: 'mongo-1', subscriberId: 'sub-known', data: {} }]),
+      });
+
+      const result = await resolver.resolveOrProvision({
+        ...baseProvisionParams,
+        platform: AgentPlatformEnum.EMAIL,
+        platformUserId: 'known@example.com',
+      });
+
+      expect(result).to.equal('sub-known');
+      expect(createOrUpdateSubscriber.execute.called).to.equal(false);
+    });
+
+    it('provisions a phantom subscriber when the sender is unknown', async () => {
+      const createOrUpdateSubscriberExecute = sinon.stub().resolves(undefined);
+      const { resolver } = makeResolver({
+        findByEmail: sinon.stub().resolves([]),
+        find: sinon.stub().resolves([]),
+        createOrUpdateSubscriberExecute,
+      });
+
+      const result = await resolver.resolveOrProvision({
+        ...baseProvisionParams,
+        platform: AgentPlatformEnum.EMAIL,
+        platformUserId: 'newcomer@example.com',
+      });
+
+      expect(result).to.be.a('string').and.to.match(/^sub_/);
+      expect(createOrUpdateSubscriberExecute.calledOnce).to.equal(true);
+    });
+
+    it('soft-fails to null when provisioning throws', async () => {
+      const { resolver, logger } = makeResolver({
+        findByEmail: sinon.stub().resolves([]),
+        find: sinon.stub().resolves([]),
+        createOrUpdateSubscriberExecute: sinon.stub().rejects(new Error('mongo down')),
+      });
+
+      const result = await resolver.resolveOrProvision({
+        ...baseProvisionParams,
+        platform: AgentPlatformEnum.EMAIL,
+        platformUserId: 'fail@example.com',
+      });
+
+      expect(result).to.equal(null);
+      expect(logger.warn.called).to.equal(true);
     });
   });
 

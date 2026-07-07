@@ -125,7 +125,7 @@ export function TelegramCredentialsPaste({
         className={cn('font-mono text-xs', outcome?.recognized && 'border-success-base')}
       />
       <p className="text-text-soft text-label-xs leading-4">
-        Copy the full confirmation message from BotFather and paste it here — the token is set automatically.
+        Copy the full confirmation message from BotFather and paste it here: the token is set automatically.
       </p>
 
       {outcome && <PasteOutcome outcome={outcome} onDismiss={dismiss} />}
@@ -190,7 +190,7 @@ function PasteOutcome({ outcome, onDismiss }: { outcome: ApplyOutcome; onDismiss
       </span>
       <div className="flex flex-1 flex-col gap-0.5">
         <p className="text-text-strong text-label-xs font-medium">
-          {outcome.token ? 'Bot token set.' : 'Token not found — fill it manually below.'}
+          {outcome.token ? 'Bot token set.' : 'Token not found: fill it manually below.'}
         </p>
         {outcome.botUsername && (
           <p className="text-text-soft text-label-xs leading-4">
