@@ -313,6 +313,9 @@ export class AgentInboundHandler implements OnModuleInit {
             dkim: emailAuthRaw?.dkim,
             spf: emailAuthRaw?.spf,
             messageId: message.id,
+            subscriberAccess: config.subscriberAccess,
+            isKeyless: config.isKeyless,
+            canAutoProvision,
           },
           'Inbound email sender failed DKIM/SPF verification — skipping subscriber resolution so a spoofed From cannot assume an existing identity.'
         );
