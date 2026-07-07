@@ -14,6 +14,7 @@ export * from './providers';
 export * from './rate-limiting';
 export * from './severity';
 export * from './sinch-sms-regions';
+export * from './slack-agent-manifest';
 export * from './slack-agent-oauth-scopes';
 export * from './slug-identifier';
 export * from './template-store';
