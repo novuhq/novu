@@ -40,6 +40,14 @@ on:
           - production-kr
           - production-us-and-eu
           - production-sg-au-uk-jp-kr
+      runner:
+        description: "Build runner"
+        required: true
+        type: choice
+        default: blacksmith
+        options:
+          - blacksmith
+          - github
 
       deploy_api:
         description: "Deploy API"
@@ -66,14 +74,6 @@ on:
         required: true
         type: boolean
         default: false
-      runner:
-        description: "Build runner"
-        required: true
-        type: choice
-        default: blacksmith
-        options:
-          - blacksmith
-          - github
 
 jobs:
   prepare-matrix:
