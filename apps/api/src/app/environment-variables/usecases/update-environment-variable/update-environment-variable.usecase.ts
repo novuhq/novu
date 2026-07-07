@@ -43,6 +43,25 @@ export class UpdateEnvironmentVariable {
       updateBody.type = command.type;
     }
     if (command.isSecret !== undefined) {
+      if (existing.isSecret && command.isSecret === false) {
+        if (!command.values?.length) {
+          throw new BadRequestException(
+            'Cannot mark a secret variable as public without providing new plaintext values for each environment.'
+          );
+        }
+
+        const existingEnvIds = new Set(existing.values.map((v) => v._environmentId));
+        const providedEnvIds = new Set(command.values.map((v) => v._environmentId));
+
+        for (const envId of existingEnvIds) {
+          if (!providedEnvIds.has(envId)) {
+            throw new BadRequestException(
+              'When marking a secret variable as public, provide new plaintext values for every environment.'
+            );
+          }
+        }
+      }
+
       updateBody.isSecret = command.isSecret;
     }
 

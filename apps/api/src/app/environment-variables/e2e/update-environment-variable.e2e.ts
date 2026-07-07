@@ -141,4 +141,37 @@ describe('Update Environment Variable - /environment-variables/:variableKey (PAT
     expect(error).to.exist;
     expect(error?.name).to.equal('ErrorDto');
   });
+
+  it('rejects flipping a secret variable to public without replacing values', async () => {
+    const variableKey = 'SECRET_TO_PUBLIC_TEST';
+
+    await novuClient.environmentVariables.create({
+      key: variableKey,
+      isSecret: true,
+      values: [
+        { environmentId: devEnvironmentId, value: 'dev-secret' },
+        { environmentId: prodEnvironmentId, value: 'prod-secret' },
+      ],
+    });
+
+    const { error: flipWithoutValuesError } = await expectSdkExceptionGeneric(() =>
+      novuClient.environmentVariables.update({ isSecret: false }, variableKey)
+    );
+
+    expect(flipWithoutValuesError).to.exist;
+    expect(flipWithoutValuesError?.name).to.equal('ErrorDto');
+
+    const { error: partialValuesError } = await expectSdkExceptionGeneric(() =>
+      novuClient.environmentVariables.update(
+        {
+          isSecret: false,
+          values: [{ environmentId: devEnvironmentId, value: 'new-dev-value' }],
+        },
+        variableKey
+      )
+    );
+
+    expect(partialValuesError).to.exist;
+    expect(partialValuesError?.name).to.equal('ErrorDto');
+  });
 });

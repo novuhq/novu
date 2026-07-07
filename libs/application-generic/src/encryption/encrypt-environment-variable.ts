@@ -1,6 +1,6 @@
 import { Logger } from '@nestjs/common';
 import { EnvironmentVariableForTemplate } from '@novu/dal';
-import { NOVU_ENCRYPTION_SUB_MASK } from '@novu/shared';
+import { NOVU_ENCRYPTION_SUB_MASK, SECRET_MASK } from '@novu/shared';
 
 import { decryptSecret } from './encrypt-provider';
 
@@ -25,6 +25,20 @@ export function resolveEnvironmentVariables(variables: EnvironmentVariableForTem
 
   for (const variable of variables) {
     resolved[variable.key] = decryptEnvironmentVariableValue(variable.value);
+  }
+
+  return resolved;
+}
+
+export function resolveEnvironmentVariablesForPreview(
+  variables: EnvironmentVariableForTemplate[]
+): Record<string, string> {
+  const resolved: Record<string, string> = {};
+
+  for (const variable of variables) {
+    resolved[variable.key] = variable.isSecret
+      ? SECRET_MASK
+      : decryptEnvironmentVariableValue(variable.value);
   }
 
   return resolved;

@@ -119,6 +119,7 @@ import { UpdateIntegrationCommand } from './usecases/update-integration/update-i
 import { UpdateIntegration } from './usecases/update-integration/update-integration.usecase';
 import { WhatsAppValidateTokenCommand } from './usecases/whatsapp/whatsapp-validate-token.command';
 import { WhatsAppValidateToken } from './usecases/whatsapp/whatsapp-validate-token.usecase';
+import { toIntegrationResponseDto } from './utils/sanitize-integration-response';
 
 @ApiCommonResponses()
 @Controller('/integrations')
@@ -372,6 +373,7 @@ export class IntegrationsController {
     @UserSession() user: UserSessionData,
     @Param('integrationId') integrationId: string
   ): Promise<AutoConfigureIntegrationResponseDto> {
+    const canAccessCredentials = await this.canUserAccessCredentials(user);
     const result = await this.autoConfigureIntegrationUsecase.execute(
       AutoConfigureIntegrationCommand.create({
         userId: user._id,
@@ -382,7 +384,14 @@ export class IntegrationsController {
       })
     );
 
-    return result;
+    if (!result.integration) {
+      return result;
+    }
+
+    return {
+      ...result,
+      integration: toIntegrationResponseDto(result.integration, canAccessCredentials),
+    };
   }
 
   @Post('/:integrationId/set-primary')

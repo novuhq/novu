@@ -7,17 +7,16 @@ import { PinoLogger } from 'nestjs-pino';
 import { GeneratePreviewResponseDto } from '../../dtos/workflow/generate-preview-response.dto';
 import { PreviewPayloadDto } from '../../dtos/workflow/preview-payload.dto';
 import { StepResponseDto } from '../../dtos/workflow/step.response.dto';
-import { resolveEnvironmentVariables } from '../../encryption/encrypt-environment-variable';
+import { resolveEnvironmentVariablesForPreview } from '../../encryption/encrypt-environment-variable';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { ControlValueSanitizerService } from '../../services/control-value-sanitizer.service';
 import { resolveHttpRequestBody, shouldIncludeBody } from '../../services/http-client/http-request.utils';
 import { buildVariables } from '../../utils/build-variables';
-import { buildNovuSignatureHeader } from '../../utils/hmac';
+import { buildPreviewNovuSignatureHeader } from '../../utils/hmac';
 import { isStepResolverActive } from '../../utils/step-resolver-control-state';
 import { BuildStepDataUsecase } from '../build-step-data';
 import { CreateVariablesObjectCommand } from '../create-variables-object/create-variables-object.command';
 import { CreateVariablesObject } from '../create-variables-object/create-variables-object.usecase';
-import { GetDecryptedSecretKey, GetDecryptedSecretKeyCommand } from '../get-decrypted-secret-key';
 import { PreviewStep, PreviewStepCommand } from '../preview-step';
 import { GetWorkflowByIdsCommand, GetWorkflowByIdsUseCase } from '../workflow';
 import { PreviewCommand } from './preview.command';
@@ -36,7 +35,6 @@ export class PreviewUsecase {
     private readonly payloadMerger: PayloadMergerService,
     private readonly payloadProcessor: PreviewPayloadProcessorService,
     private readonly errorHandler: PreviewErrorHandler,
-    private readonly getDecryptedSecretKey: GetDecryptedSecretKey,
     private readonly logger: PinoLogger,
     private readonly environmentVariableRepository: EnvironmentVariableRepository,
     private readonly environmentRepository: EnvironmentRepository
@@ -96,7 +94,7 @@ export class PreviewUsecase {
         );
 
         const novuSignature = isHttpRequestStep
-          ? await this.buildNovuSignatureSample(command.user.environmentId, executeOutput.outputs)
+          ? this.buildNovuSignatureSample(executeOutput.outputs)
           : undefined;
 
         return {
@@ -115,9 +113,7 @@ export class PreviewUsecase {
          * For step resolver steps, surface a structured error so the dashboard can
          * render a channel-agnostic error UI regardless of step type.
          */
-        const novuSignature = isHttpRequestStep
-          ? await this.buildNovuSignatureSample(command.user.environmentId)
-          : undefined;
+        const novuSignature = isHttpRequestStep ? this.buildNovuSignatureSample() : undefined;
 
         if (isStepResolver) {
           return {
@@ -237,7 +233,7 @@ export class PreviewUsecase {
       };
 
       envVars = {
-        ...resolveEnvironmentVariables(rawEnvVars),
+        ...resolveEnvironmentVariablesForPreview(rawEnvVars),
         ...environmentSystemVars,
       };
     } catch (error) {
@@ -271,24 +267,13 @@ export class PreviewUsecase {
     });
   }
 
-  private async buildNovuSignatureSample(
-    environmentId: string,
-    resolvedOutputs?: Record<string, unknown>
-  ): Promise<string | undefined> {
-    try {
-      const secretKey = await this.getDecryptedSecretKey.execute(
-        GetDecryptedSecretKeyCommand.create({ environmentId })
-      );
+  private buildNovuSignatureSample(resolvedOutputs?: Record<string, unknown>): string {
+    const body = resolvedOutputs?.body as string | Array<{ key: string; value: string }> | undefined;
+    const method = (resolvedOutputs?.method as string) ?? 'GET';
+    const bodyRecord = resolveHttpRequestBody(body);
+    const payload = shouldIncludeBody(bodyRecord, method) ? bodyRecord : {};
 
-      const body = resolvedOutputs?.body as string | Array<{ key: string; value: string }> | undefined;
-      const method = (resolvedOutputs?.method as string) ?? 'GET';
-      const bodyRecord = resolveHttpRequestBody(body);
-      const payload = shouldIncludeBody(bodyRecord, method) ? bodyRecord : {};
-
-      return buildNovuSignatureHeader(secretKey, payload);
-    } catch {
-      return undefined;
-    }
+    return buildPreviewNovuSignatureHeader(payload);
   }
 
   @Instrument()

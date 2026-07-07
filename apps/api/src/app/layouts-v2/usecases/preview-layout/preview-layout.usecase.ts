@@ -15,7 +15,7 @@ import {
   PreviewPayloadProcessorService,
   PreviewStep,
   PreviewStepCommand,
-  resolveEnvironmentVariables,
+  resolveEnvironmentVariablesForPreview,
 } from '@novu/application-generic';
 import { EnvironmentRepository, EnvironmentVariableRepository, JsonSchemaTypeEnum } from '@novu/dal';
 import { ContextResolved } from '@novu/framework/internal';
@@ -105,7 +105,7 @@ export class PreviewLayoutUsecase {
       };
 
       const envVars = {
-        ...resolveEnvironmentVariables(rawEnvVars),
+        ...resolveEnvironmentVariablesForPreview(rawEnvVars),
         ...environmentSystemVars,
       };
 

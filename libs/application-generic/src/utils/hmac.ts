@@ -3,12 +3,18 @@ import { ContextPayload } from '@novu/shared';
 import { canonicalize } from '@tufjs/canonical-json';
 import { createHmac } from 'crypto';
 
+const PREVIEW_NOVU_SIGNATURE_SECRET = 'preview-placeholder-do-not-use-for-auth';
+
 export function buildNovuSignatureHeader(secretKey: string, payload: unknown): string {
   const timestamp = Date.now();
   const publicKey = `${timestamp}.${JSON.stringify(payload)}`;
   const hmac = createHmac('sha256', secretKey).update(publicKey).digest('hex');
 
   return `t=${timestamp},v1=${hmac}`;
+}
+
+export function buildPreviewNovuSignatureHeader(payload: unknown): string {
+  return buildNovuSignatureHeader(PREVIEW_NOVU_SIGNATURE_SECRET, payload);
 }
 
 export function createHash(key: string, valueToHash: string): string | null {
