@@ -5,10 +5,7 @@ import { ConnectionConfetti } from '@/components/agents/connection-confetti';
 import { EmailConfigurationCardBody } from '@/components/agents/email-configuration-card';
 import { EmailInboxCardBody } from '@/components/agents/email-inbox-card';
 import { EmailSetupGuide } from '@/components/agents/email-setup-guide';
-import {
-  hasAgentInboundConnection,
-  isAgentIntegrationConnected,
-} from '@/components/agents/is-agent-integration-connected';
+import { hasAgentInboundConnection } from '@/components/agents/is-agent-integration-connected';
 import { IS_SELF_HOSTED_EE } from '@/config';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
@@ -38,8 +35,7 @@ export function EmailAgentIntegrationGuide({
   onRequestRemoveIntegration,
   isRemovingIntegration,
 }: EmailAgentIntegrationGuideProps) {
-  const isConnected = integrationLink ? isAgentIntegrationConnected(integrationLink) : false;
-  const isEmailLayer1Complete = integrationLink ? hasAgentInboundConnection(integrationLink.connectedAt) : false;
+  const isConnected = integrationLink ? hasAgentInboundConnection(integrationLink.connectedAt) : false;
   const integrationId = integrationLink?.integration?._id;
   const { integrations } = useFetchIntegrations();
   const isEmailWhatsNextEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_AGENT_EMAIL_WHATS_NEXT_ENABLED);
@@ -120,7 +116,7 @@ export function EmailAgentIntegrationGuide({
     isEmailWhatsNextEnabled && integrationLink && integrationId ? (
       <AgentIntegrationGuideTransition
         key={integrationLink._id}
-        isConnected={isEmailLayer1Complete}
+        isConnected={isConnected}
         providerDisplayName={AGENT_EMAIL_PROVIDER_LABEL}
         hasUserRolloutPhase
         renderSetupView={(footer) => (

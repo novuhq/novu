@@ -18,6 +18,7 @@ import { buildConnectSubscriberId } from '@/utils/connect-subscriber-id';
 import {
   IntegrationCredentialsSidebar,
   ListeningStatus,
+  ProviderSetupStepperRail,
   SetupButton,
   SetupStep,
   SetupStepperRail,
@@ -376,7 +377,7 @@ export function TelegramSetupGuide({
 
   return (
     <>
-      <SetupStepperRail>{stepsColumn}</SetupStepperRail>
+      <ProviderSetupStepperRail>{stepsColumn}</ProviderSetupStepperRail>
       <div className="pl-8">{listening}</div>
       <IntegrationCredentialsSidebar
         integrationId={integrationId}

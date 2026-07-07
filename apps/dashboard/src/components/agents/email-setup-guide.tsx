@@ -14,6 +14,7 @@ import { OutboundProviderSelect } from './outbound-provider-select';
 import {
   IntegrationCredentialsSidebar,
   ListeningStatus,
+  ProviderSetupStepperRail,
   SetupButton,
   SetupStep,
   SetupStepperRail,
@@ -404,7 +405,7 @@ export function EmailSetupGuide({
 
   return (
     <>
-      <SetupStepperRail>{activeStepsColumn}</SetupStepperRail>
+      <ProviderSetupStepperRail>{activeStepsColumn}</ProviderSetupStepperRail>
       {credentialsSidebar}
     </>
   );

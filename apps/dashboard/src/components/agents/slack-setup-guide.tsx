@@ -28,6 +28,7 @@ import type { SetupMode } from './setup-guide-primitives';
 import {
   IntegrationCredentialsSidebar,
   ListeningStatus,
+  ProviderSetupStepperRail,
   SetupButton,
   SetupModeToggle,
   SetupStep,
@@ -554,7 +555,7 @@ export function SlackSetupGuide({
 
   return (
     <>
-      <SetupStepperRail>{stepsColumn}</SetupStepperRail>
+      <ProviderSetupStepperRail>{stepsColumn}</ProviderSetupStepperRail>
       <div className="pl-8">{listening}</div>
       <IntegrationCredentialsSidebar
         integrationId={integrationId}
