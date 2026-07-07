@@ -259,7 +259,7 @@ class Unpacker:
         return (self.getbytes(16))
     def getstring(self):
         return self.getbytes(self.getbyte())
-    def getname(self):
+    def getname(self, seen_pointers=None):
         # Domain name unpacking (section 4.1.4)
         i = self.getbyte()
         #i = ord(i)
@@ -267,10 +267,20 @@ class Unpacker:
             d = self.getbyte()
             j = d
             pointer = ((i<<8) | j) & ~0xC000
+            # RFC 1035 4.1.4 compression pointers must only ever point
+            # backwards to a prior offset. A pointer that targets itself or
+            # forms a cycle would otherwise recurse until the process
+            # crashes with a RecursionError, letting a malicious nameserver
+            # DoS the inbound-mail service. Reject any repeated target.
+            if seen_pointers is None:
+                seen_pointers = set()
+            if pointer in seen_pointers:
+                raise UnpackError("compression pointer loop detected")
+            seen_pointers.add(pointer)
             save_offset = self.offset
             try:
                 self.offset = pointer
-                domain = self.getname()
+                domain = self.getname(seen_pointers)
             finally:
                 self.offset = save_offset
             return domain
@@ -281,7 +291,7 @@ class Unpacker:
         else:
           enc = DNS.LABEL_ENCODING
         domain = str(self.getbytes(i), enc)
-        remains = self.getname()
+        remains = self.getname(seen_pointers)
         if not remains:
             return domain
         else:
