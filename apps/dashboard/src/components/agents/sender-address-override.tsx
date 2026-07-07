@@ -1,9 +1,8 @@
-import { type ReactNode, useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { Button } from '@/components/primitives/button';
 import { Input } from '@/components/primitives/input';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { Switch } from '@/components/primitives/switch';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 
 export type SenderAddressOverrideProps = {
   serverEnabled: boolean;
@@ -24,7 +23,6 @@ export type SenderAddressOverrideProps = {
    * attaches a real outbound provider.
    */
   disabled?: boolean;
-  disabledReason?: ReactNode;
 };
 
 export function SenderAddressOverride({
@@ -36,7 +34,6 @@ export function SenderAddressOverride({
   inboundAddresses,
   onSave,
   disabled = false,
-  disabledReason,
 }: SenderAddressOverrideProps) {
   const switchId = useId();
   const inputId = useId();
@@ -110,16 +107,7 @@ export function SenderAddressOverride({
         <label htmlFor={switchId} className={labelClassName}>
           Use a custom From address
         </label>
-        {disabled && disabledReason ? (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="inline-flex">{switchControl}</span>
-            </TooltipTrigger>
-            <TooltipContent className="max-w-xs">{disabledReason}</TooltipContent>
-          </Tooltip>
-        ) : (
-          switchControl
-        )}
+        {switchControl}
       </div>
 
       {enabled && !disabled && (
@@ -145,10 +133,6 @@ export function SenderAddressOverride({
       )}
 
       <AddressPreview fromName={defaultSenderName} from={resolvedFrom} replyTo={resolvedReplyTo} />
-
-      {disabled && disabledReason ? (
-        <p className="text-text-soft text-paragraph-xs leading-4">{disabledReason}</p>
-      ) : null}
 
       {!disabled && isDirty && (
         <div className="flex justify-end">

@@ -60,7 +60,7 @@ function getEventsTooltipContent(
     ? "Further workflow runs won't be allowed after the free limit is exceeded."
     : 'Pay as you grow. No hard limit.';
 
-  return `Includes ${formatLimit(usageData.included)} workflow runs — ${limitMessage}`;
+  return `Includes ${formatLimit(usageData.included)} workflow runs: ${limitMessage}`;
 }
 
 function getConversationsTooltipContent(
@@ -71,10 +71,10 @@ function getConversationsTooltipContent(
   const isFreePlan = currentPlan === ApiServiceLevelEnum.FREE;
 
   const limitMessage = isFreePlan
-    ? "New conversations won't be allowed after the free limit is reached — existing conversations keep working."
+    ? "New conversations won't be allowed after the free limit is reached: existing conversations keep working."
     : 'Counted for usage. No hard limit.';
 
-  return `Includes ${formatLimit(usageData.included)} active conversations / month — ${limitMessage}`;
+  return `Includes ${formatLimit(usageData.included)} active conversations / month: ${limitMessage}`;
 }
 
 function getUsageTooltipContent(

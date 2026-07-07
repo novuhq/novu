@@ -289,7 +289,7 @@ export function EmailSetupGuide({
               connectedMessage="Your email integration is connected. This agent is ready to receive emails."
               listeningMessage={
                 isManagedAgent
-                  ? 'Waiting for your email — send a message to your configured inbound address.'
+                  ? 'Waiting for your email: send a message to your configured inbound address.'
                   : 'Send a test email to verify the inbound pipeline reaches your agent.'
               }
             />
@@ -355,7 +355,7 @@ export function EmailSetupGuide({
               connectedMessage="Your email integration is connected. This agent is ready to receive emails."
               listeningMessage={
                 isManagedAgent
-                  ? 'Waiting for your email — send a message to your inbound address.'
+                  ? 'Waiting for your email: send a message to your inbound address.'
                   : 'Send a test email to verify the inbound pipeline reaches your agent.'
               }
             />

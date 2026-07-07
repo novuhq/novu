@@ -489,7 +489,7 @@ function resolveStepCopy({
     return {
       stepTitle: 'Start from a template',
       stepDescription:
-        'Pick a starter or describe what your agent should do — we configure the tools, MCPs, skills, and system prompt for you.',
+        'Pick a starter or describe what your agent should do: we configure the tools, MCPs, skills, and system prompt for you.',
     };
   }
 

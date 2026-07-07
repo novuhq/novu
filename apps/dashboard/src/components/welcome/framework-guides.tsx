@@ -417,7 +417,7 @@ function StepButton({
             Open in Cursor
           </a>
         </div>
-        <p className="text-foreground-400 text-xs">(No terminal, no docs — just let your pair programmer handle it.)</p>
+        <p className="text-foreground-400 text-xs">(No terminal, no docs: just let your pair programmer handle it.)</p>
       </div>
     </motion.div>
   );

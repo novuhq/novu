@@ -99,8 +99,7 @@ export function EmailAgentIntegrationGuide({
               sharedInboundAddress={integrationLink?.integration?.sharedInboundAddress}
               showOutboundProvider={showOutboundProvider}
               senderTitle="Set a custom From address"
-              senderDescription="By default replies come from the agent inbox address. Send from your own address instead — Reply-To always routes back to the agent so subscriber replies stay in the thread."
-              senderDisabledReason="Custom From addresses are only supported with your own email provider. Connect one above to enable this."
+              senderDescription="By default replies come from the agent inbox address. Send from your own address instead: Reply-To always routes back to the agent so subscriber replies stay in the thread."
             />
           ) : null}
         </div>

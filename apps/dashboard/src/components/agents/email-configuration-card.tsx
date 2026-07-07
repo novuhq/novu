@@ -16,7 +16,6 @@ export type EmailConfigurationCardProps = {
   showOutboundProvider?: boolean;
   senderTitle?: string;
   senderDescription?: string;
-  senderDisabledReason?: string;
 };
 
 /**
@@ -30,7 +29,6 @@ export function EmailConfigurationCardBody({
   showOutboundProvider = true,
   senderTitle = 'Sender address',
   senderDescription = 'By default, replies send from the agent inbox address using the agent name as the From display name. Override the address to send from another email. Reply-To always routes back to the agent so subscriber replies stay in the thread.',
-  senderDisabledReason = 'Custom From addresses are only supported with your own email provider. Connect SendGrid, Resend, or another provider above to enable this.',
 }: EmailConfigurationCardProps & { defaultSenderName?: string; sharedInboundAddress?: string }) {
   const { integrations } = useFetchIntegrations();
   const emailIntegration = useMemo(
@@ -83,7 +81,6 @@ export function EmailConfigurationCardBody({
           inboundAddresses={inboundAddresses}
           onSave={saveSenderOverride}
           disabled={isOutboundDemo}
-          disabledReason={senderDisabledReason}
         />
       </CardRow>
     </>

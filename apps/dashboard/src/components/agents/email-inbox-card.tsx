@@ -19,7 +19,6 @@ import { cn } from '@/utils/ui';
 import { AgentCustomDomainSheet } from './agent-custom-domain-sheet';
 import { useEmailSetupCredentials } from './use-email-setup-credentials';
 
-const DELIVERABILITY_DOCS_URL = 'https://docs.novu.co/platform/domains';
 const CREATE_SUBSCRIBER_DOCS_URL = 'https://docs.novu.co/api-reference/subscribers/create-a-subscriber';
 
 const quietLinkClassName =
@@ -158,7 +157,7 @@ export function EmailInboxCardBody({
     // so the agent isn't left with zero inbound paths.
     if (!nextEnabled && !hasCustomAddresses) {
       showErrorToast(
-        'Connect a custom domain first — the agent must keep at least one inbound address.',
+        'Connect a custom domain first: the agent must keep at least one inbound address.',
         'Cannot turn off the shared inbox'
       );
 
@@ -209,7 +208,7 @@ export function EmailInboxCardBody({
             </Tooltip>
           </span>
         }
-        description="Users can reach this agent at any of the addresses below — share one in your product's contact or reply flows, support footer, or docs. Mail delivered to any of them is forwarded to the agent."
+        description="Users can reach this agent at any of the addresses below: share one in your product's contact or reply flows, support footer, or docs. Mail delivered to any of them is forwarded to the agent."
         divider
         disabled={inboxSectionDisabled}
       >
@@ -276,26 +275,12 @@ export function EmailInboxCardBody({
               </UpgradeCTATooltip>
             )
           ) : null}
-
-          {!hideCustomAddressForm ? (
-            <p className="text-text-soft text-paragraph-xs leading-4">
-              {'Custom domains route inbound mail to your agent (MX) and let your replies pass SPF, DKIM, and DMARC. '}
-              <a
-                href={DELIVERABILITY_DOCS_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-text-sub underline underline-offset-2"
-              >
-                Learn about deliverability
-              </a>
-            </p>
-          ) : null}
         </div>
       </CardRow>
 
       <CardRow
         title="Who can email this agent"
-        description="Open lets anyone email your agent — a lightweight subscriber is created from their address so the agent can reply, and it merges into their account when they sign up with the same email. Off replies only to known subscribers."
+        description="Open lets anyone email your agent: a lightweight subscriber is created from their address so the agent can reply, and it merges into their account when they sign up with the same email. Off replies only to known subscribers."
         divider
         footer={
           <div className="flex items-center gap-3">
@@ -412,7 +397,7 @@ function SharedInboxRow({ address, disabled, toggleDisabled, toggleTooltip, onTo
     <Tooltip>
       <TooltipTrigger asChild>{rowContent}</TooltipTrigger>
       <TooltipContent className="max-w-xs">
-        Shared inbox is off — mail to this address is dropped. Flip the switch to re-enable it.
+        Shared inbox is off: mail to this address is dropped. Flip the switch to re-enable it.
       </TooltipContent>
     </Tooltip>
   );

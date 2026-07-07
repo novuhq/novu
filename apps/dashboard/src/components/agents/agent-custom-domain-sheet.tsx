@@ -282,13 +282,13 @@ export function AgentCustomDomainSheet({
 
   const description = (() => {
     if (view === 'add') {
-      return "Add the domain, set the MX record, and we'll verify it — all without leaving this page.";
+      return "Add the domain, set the MX record, and we'll verify it: all without leaving this page.";
     }
 
     if (view === 'domain') {
       return isSelectedVerified
         ? 'Add an inbound address that routes mail to this agent.'
-        : 'Set the MX record at your DNS provider — we check automatically.';
+        : 'Set the MX record at your DNS provider: we check automatically.';
     }
 
     return 'Connect your own domain so this agent can receive email on it.';

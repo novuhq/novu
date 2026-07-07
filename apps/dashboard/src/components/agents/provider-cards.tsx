@@ -569,7 +569,7 @@ export function ProviderCards({
       <CardScroller
         dimmed={dimmed}
         footer={
-          <p className="text-text-soft mt-2 px-1 text-label-xs leading-4">Set up multiple channels — switch anytime.</p>
+          <p className="text-text-soft mt-2 px-1 text-label-xs leading-4">Set up multiple channels: switch anytime.</p>
         }
       >
         {switcherItems.map((item) => {
