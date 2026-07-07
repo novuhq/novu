@@ -109,24 +109,23 @@ export const InboxButton = ({
   const isNovuStagingEnvironment = apiHostnameManager.getHostname() === 'https://api.novu-staging.co';
   const shouldUseProductionApi = (isNovuProductionDashboard || isNovuStagingEnvironment) && !isTestPage;
 
-  const subscriber = useMemo(() => {
-    const email = user?.primaryEmailAddress?.emailAddress || user?.emailAddresses?.[0]?.emailAddress || '';
-
-    return {
+  const subscriber = useMemo(
+    () => ({
       subscriberId: isTestPage ? (user?.externalId ?? '') : `org_${currentOrganization?._id}:user_${user?.externalId}`,
-      ...(email ? { email } : {}),
+      email: user?.primaryEmailAddress?.emailAddress ?? user?.emailAddresses?.[0]?.emailAddress ?? '',
       firstName: user?.firstName ?? '',
       lastName: user?.lastName ?? '',
-    };
-  }, [
-    isTestPage,
-    user?.externalId,
-    user?.primaryEmailAddress?.emailAddress,
-    user?.emailAddresses,
-    user?.firstName,
-    user?.lastName,
-    currentOrganization?._id,
-  ]);
+    }),
+    [
+      isTestPage,
+      user?.externalId,
+      user?.primaryEmailAddress?.emailAddress,
+      user?.emailAddresses,
+      user?.firstName,
+      user?.lastName,
+      currentOrganization?._id,
+    ]
+  );
 
   const localization = useMemo(
     () => ({

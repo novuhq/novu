@@ -427,47 +427,6 @@ export function AgentsPage() {
     return <Navigate to={ROUTES.ROOT} replace />;
   }
 
-  let agentsContent: ReactElement;
-
-  if (areAgentsAvailable) {
-    agentsContent = <AgentsList />;
-  } else if (IS_SELF_HOSTED) {
-    // Self-hosted has no early-access flow, so surface the Contact Sales upgrade path instead.
-    agentsContent = (
-      <AgentsEmptyTeaser
-        cta={
-          <Button
-            variant="primary"
-            mode="gradient"
-            size="xs"
-            leadingIcon={RiSparkling2Line}
-            type="button"
-            onClick={handleUpgradeClick}
-          >
-            {UPGRADE_CTA_LABEL}
-          </Button>
-        }
-      />
-    );
-  } else {
-    agentsContent = (
-      <AgentsEmptyTeaser
-        cta={
-          <Button
-            variant="secondary"
-            mode="gradient"
-            size="xs"
-            trailingIcon={RiArrowRightSLine}
-            type="button"
-            onClick={() => setEarlyAccessOpen(true)}
-          >
-            Request early access
-          </Button>
-        }
-      />
-    );
-  }
-
   return (
     <>
       <PageMeta title="Agents" />
@@ -484,7 +443,37 @@ export function AgentsPage() {
           </h1>
         }
       >
-        {agentsContent}
+        {areAgentsAvailable ? (
+          <AgentsList />
+        ) : (
+          <AgentsEmptyTeaser
+            cta={
+              IS_SELF_HOSTED ? (
+                <Button
+                  variant="primary"
+                  mode="gradient"
+                  size="xs"
+                  leadingIcon={RiSparkling2Line}
+                  type="button"
+                  onClick={handleUpgradeClick}
+                >
+                  {UPGRADE_CTA_LABEL}
+                </Button>
+              ) : (
+                <Button
+                  variant="secondary"
+                  mode="gradient"
+                  size="xs"
+                  trailingIcon={RiArrowRightSLine}
+                  type="button"
+                  onClick={() => setEarlyAccessOpen(true)}
+                >
+                  Request early access
+                </Button>
+              )
+            }
+          />
+        )}
       </DashboardLayout>
     </>
   );

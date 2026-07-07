@@ -157,7 +157,6 @@ export function AgentsSetupPage() {
 
   // When the user arrives here via `?product_type=agents` (the usecase picker is skipped), persist the
   // agents usecase on the org once it's resolved. Runs once; the usecase picker path persists itself.
-  // Skipped when agents are unavailable (EU, Community self-hosted, or flag off) since the page redirects to the inbox path.
   useEffect(() => {
     if (productUseCasesPersistedRef.current || !areAgentsAvailable || !currentOrganization?._id) {
       return;

@@ -27,7 +27,7 @@ export function createUserFromJwt(decodedJwt: DecodedJwt | null): SelfHostedUser
     firstName: decodedJwt.firstName,
     lastName: decodedJwt.lastName,
     emailAddresses: [{ emailAddress: decodedJwt.email }],
-    primaryEmailAddress: decodedJwt.email ? { emailAddress: decodedJwt.email } : undefined,
+    primaryEmailAddress: { emailAddress: decodedJwt.email },
     createdAt: new Date(),
     publicMetadata: { newDashboardOptInStatus: 'opted_in' },
     unsafeMetadata: { newDashboardOptInStatus: 'opted_in' },

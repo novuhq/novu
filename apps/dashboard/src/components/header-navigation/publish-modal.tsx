@@ -74,6 +74,10 @@ export function PublishModal({
     const initialSelection: ResourceSelection = {};
 
     diffData.resources.forEach((resource) => {
+      if (!areAgentsAvailable && resource.resourceType === 'agent') {
+        return;
+      }
+
       const resourceId = resource.sourceResource?.id || resource.targetResource?.id;
 
       if (resourceId) {
@@ -88,7 +92,7 @@ export function PublishModal({
     // Apply dependency rules to the initial selection
     const selectionWithDependencies = calculateDependencyState(initialSelection);
     setResourceSelection(selectionWithDependencies);
-  }, [diffData, calculateDependencyState]);
+  }, [diffData, calculateDependencyState, areAgentsAvailable]);
 
   const handleResourceToggle = (resourceId: string) => {
     setResourceSelection((prev) => {
