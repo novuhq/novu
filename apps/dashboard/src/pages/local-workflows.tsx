@@ -6,6 +6,7 @@ import { DashboardLayout } from '@/components/dashboard-layout';
 import { Badge } from '@/components/primitives/badge';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/primitives/table';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/primitives/tooltip';
 import TruncatedText from '@/components/truncated-text';
 import { WorkflowSteps } from '@/components/workflow-steps';
 import { useLocalMode } from '@/context/local-mode';
@@ -13,26 +14,62 @@ import type { StepTypeEnum } from '@/utils/enums';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { ConnectionStatus } from '@/utils/types';
 
-const LocalBridgeStatus = () => {
-  const { healthStatus, bridgeUrl } = useLocalMode();
+const statusDotClass: Record<ConnectionStatus, string> = {
+  [ConnectionStatus.CONNECTED]: 'bg-success',
+  [ConnectionStatus.LOADING]: 'bg-warning',
+  [ConnectionStatus.DISCONNECTED]: 'bg-neutral-300',
+};
+
+/**
+ * The single "you are looking at your machine" signal for the page: a quiet
+ * pill with a live status dot and the tunnel host, full details on hover.
+ * The environment picker already says "Local" — no need to repeat it here.
+ */
+const LocalBridgePill = () => {
+  const { healthStatus, bridgeUrl, session } = useLocalMode();
   const isConnected = healthStatus === ConnectionStatus.CONNECTED;
 
+  const tunnelHost = (() => {
+    try {
+      return session ? new URL(session.tunnelOrigin).host : null;
+    } catch {
+      return null;
+    }
+  })();
+
   return (
-    <div className="flex items-center gap-2">
-      <span
-        className={`inline-block size-2 rounded-full ${
-          isConnected ? 'bg-success' : healthStatus === ConnectionStatus.LOADING ? 'bg-warning' : 'bg-destructive'
-        }`}
-      />
-      <span className="text-foreground-600 text-xs">
-        {isConnected ? 'Connected to local bridge' : 'Local bridge disconnected'}
-      </span>
-      {bridgeUrl && (
-        <span className="text-foreground-400 max-w-[280px] truncate font-mono text-xs" title={bridgeUrl}>
-          {bridgeUrl}
-        </span>
-      )}
-    </div>
+    <TooltipProvider delayDuration={100}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className="border-neutral-alpha-200 bg-neutral-alpha-50 flex cursor-default items-center gap-1.5 rounded-full border px-2.5 py-1">
+            <span className="relative flex size-1.5">
+              {isConnected && (
+                <span className="bg-success absolute inline-flex h-full w-full animate-ping rounded-full opacity-60" />
+              )}
+              <span className={`relative inline-flex size-1.5 rounded-full ${statusDotClass[healthStatus]}`} />
+            </span>
+            {isConnected && tunnelHost ? (
+              <span className="text-foreground-600 max-w-[240px] truncate font-mono text-xs">{tunnelHost}</span>
+            ) : (
+              <span className="text-foreground-600 text-xs">
+                {healthStatus === ConnectionStatus.LOADING ? 'Connecting…' : 'Bridge offline'}
+              </span>
+            )}
+          </div>
+        </TooltipTrigger>
+        <TooltipContent side="bottom" className="max-w-[340px]">
+          <div className="flex flex-col gap-1">
+            <span className="font-medium">
+              {isConnected ? 'Connected to your local bridge' : 'Local bridge is not reachable'}
+            </span>
+            {bridgeUrl && <span className="break-all font-mono text-xs opacity-80">{bridgeUrl}</span>}
+            <span className="text-xs opacity-80">
+              Workflows stream live from your machine — nothing here is saved to Novu Cloud.
+            </span>
+          </div>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 };
 
@@ -80,7 +117,9 @@ const WorkflowRows = ({
                 >
                   <TruncatedText className="max-w-[360px]">{workflow.name}</TruncatedText>
                 </Link>
-                <span className="text-foreground-400 font-mono text-xs">{workflow.workflowId}</span>
+                {workflow.workflowId !== workflow.name && (
+                  <span className="text-foreground-400 font-mono text-xs">{workflow.workflowId}</span>
+                )}
               </div>
             </div>
           </TableCell>
@@ -121,14 +160,9 @@ export const LocalWorkflowsPage = () => {
     <DashboardLayout
       showBridgeUrl={false}
       headerStartItems={
-        <div className="flex items-center gap-3">
-          <h1 className="text-foreground-950 flex items-center gap-2">
-            Local workflows
-            <Badge variant="light" size="sm" color="orange">
-              LOCAL
-            </Badge>
-          </h1>
-          <LocalBridgeStatus />
+        <div className="flex items-center gap-2.5">
+          <h1 className="text-foreground-950">Local workflows</h1>
+          <LocalBridgePill />
         </div>
       }
     >
@@ -148,8 +182,8 @@ export const LocalWorkflowsPage = () => {
           <div className="flex flex-col gap-1">
             <span className="text-foreground-900 text-sm font-medium">No workflows discovered</span>
             <span className="text-foreground-600 text-xs">
-              Define workflows with <code className="bg-neutral-alpha-100 rounded px-1 py-0.5">@novu/framework</code>{' '}
-              in your app — they will appear here automatically.
+              Define workflows with <code className="bg-neutral-alpha-100 rounded px-1 py-0.5">@novu/framework</code> in
+              your app — they will appear here automatically.
             </span>
           </div>
         </div>

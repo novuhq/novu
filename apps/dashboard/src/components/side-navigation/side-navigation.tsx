@@ -157,7 +157,13 @@ export const LegacySideNavigation = () => {
                 <NavigationLink
                   to={
                     currentEnvironment?.slug
-                      ? buildRoute(ROUTES.WORKFLOWS, { environmentSlug: currentEnvironment?.slug ?? '' })
+                      ? buildRoute(
+                          // Workflows is the one resource the Local pseudo-environment
+                          // overlays — keep the nav inside local mode instead of
+                          // silently dropping the user back to the synced dev list.
+                          localMode.isLocalRoute ? ROUTES.LOCAL_WORKFLOWS : ROUTES.WORKFLOWS,
+                          { environmentSlug: currentEnvironment?.slug ?? '' }
+                        )
                       : undefined
                   }
                 >
