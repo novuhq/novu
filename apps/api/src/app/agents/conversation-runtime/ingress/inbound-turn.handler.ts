@@ -333,12 +333,14 @@ export class AgentInboundHandler implements OnModuleInit {
 
       /**
        * Only `resolveOrProvision` on SLACK / TEAMS can reach here — the
-       * `resolveSubscriberId` read path and the resolver's open-access email
-       * branch both soft-fail to `null` internally. For auto-provision
-       * platforms an unknown error means we don't know the subscriber state,
-       * so we keep dispatch off and surface the failure rather than silently
-       * degrading to a PLATFORM_USER participant the removed-anonymous-state
-       * contract was meant to eliminate.
+       * `resolveSubscriberId` read path and both open-access email branches
+       * (verified via the resolver's `resolveOrProvisionEmail`, unverified via
+       * `provisionUnverifiedInboundEmailSubscriber`) soft-fail to `null`
+       * internally. For auto-provision platforms an unknown error means we
+       * don't know the subscriber state, so we keep dispatch off and surface
+       * the failure rather than silently degrading to a PLATFORM_USER
+       * participant the removed-anonymous-state contract was meant to
+       * eliminate.
        */
       captureAgentWarning(err, { component: 'agent-inbound-handler', operation: 'resolve-subscriber', agentId });
 
@@ -690,31 +692,62 @@ export class AgentInboundHandler implements OnModuleInit {
       return null;
     }
 
-    const isAddressFree = await this.subscriberResolver.isEmailAddressFreeForUnverifiedAutoProvision({
-      environmentId: config.environmentId,
-      organizationId: config.organizationId,
-      email: message.author.userId,
-    });
+    return this.provisionUnverifiedInboundEmailSubscriber(agentId, config, message, emailAuthRaw);
+  }
 
-    if (!isAddressFree) {
-      this.logUnverifiedInboundEmailSkipped(
-        agentId,
-        config,
-        message,
-        emailAuthRaw,
-        'Inbound email sender failed DKIM/SPF verification — skipping subscriber resolution so a spoofed From cannot assume an existing identity.'
+  /**
+   * Open-access, DKIM/SPF-failed inbound with auth enforcement disabled: provision
+   * the sender only when no customer-created subscriber already owns the address,
+   * so a spoofed `From` cannot assume a registered identity. Fully soft-fail — a
+   * lookup or write error is logged and swallowed so the inbound webhook keeps
+   * flowing and the managed subscriber gate replies instead, mirroring the
+   * verified open-access email path (`resolveOrProvisionEmail`).
+   */
+  private async provisionUnverifiedInboundEmailSubscriber(
+    agentId: string,
+    config: ResolvedAgentConfig,
+    message: Message,
+    emailAuthRaw: Record<string, unknown> | undefined
+  ): Promise<string | null> {
+    try {
+      const isAddressFree = await this.subscriberResolver.isEmailAddressFreeForUnverifiedAutoProvision({
+        environmentId: config.environmentId,
+        organizationId: config.organizationId,
+        email: message.author.userId,
+      });
+
+      if (!isAddressFree) {
+        this.logUnverifiedInboundEmailSkipped(
+          agentId,
+          config,
+          message,
+          emailAuthRaw,
+          'Inbound email sender failed DKIM/SPF verification — skipping subscriber resolution so a spoofed From cannot assume an existing identity.'
+        );
+
+        return null;
+      }
+
+      return await this.subscriberResolver.provisionEmailSubscriber({
+        environmentId: config.environmentId,
+        organizationId: config.organizationId,
+        integrationIdentifier: config.integrationIdentifier,
+        agentIdentifier: config.agentIdentifier,
+        email: message.author.userId,
+      });
+    } catch (err) {
+      this.logger.warn(
+        err,
+        `[agent:${agentId}] Unverified open-access email subscriber resolution failed, continuing without it`
       );
+      captureAgentWarning(err, {
+        component: 'agent-inbound-handler',
+        operation: 'provision-unverified-email-subscriber',
+        agentId,
+      });
 
       return null;
     }
-
-    return this.subscriberResolver.provisionEmailSubscriber({
-      environmentId: config.environmentId,
-      organizationId: config.organizationId,
-      integrationIdentifier: config.integrationIdentifier,
-      agentIdentifier: config.agentIdentifier,
-      email: message.author.userId,
-    });
   }
 
   private buildResolveOrProvisionParams(config: ResolvedAgentConfig, message: Message) {

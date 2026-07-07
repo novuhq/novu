@@ -648,6 +648,35 @@ describe('AgentInboundHandler', () => {
       expect(outboundGateway.replyOnThread.called).to.equal(false);
     });
 
+    it('should soft-fail to the managed subscriber gate when provisioning an unverified email sender throws', async () => {
+      const emailConfig = {
+        ...config,
+        platform: AgentPlatformEnum.EMAIL,
+        integrationIdentifier: 'email-main',
+        isManaged: true,
+        subscriberAccess: AgentSubscriberAccessEnum.OPEN,
+      };
+      const { handler, subscriberResolver, managedAgentService, outboundGateway, featureFlagsService } = makeHandler({
+        subscriberFindById: sinon.stub().resolves(null),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+        featureFlagGet: sinon.stub().resolves(false),
+      });
+      // A lookup/write hiccup while provisioning must not crash the inbound webhook —
+      // the open-access email path soft-fails to null so the managed gate can reply.
+      subscriberResolver.provisionEmailSubscriber = sinon.stub().rejects(new Error('mongo unavailable'));
+      const thread = makeEmailDmThread();
+      const message = makeEmailDmMessage('newcomer@example.com', { dkim: 'failed', spf: 'failed' });
+
+      // Must resolve (not reject); a throw here means the inbound webhook would 500.
+      await handler.handle('agent1', emailConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(featureFlagsService.getFlag.calledOnce).to.equal(true);
+      expect(subscriberResolver.provisionEmailSubscriber.calledOnce).to.equal(true);
+      // Soft-failed to null → managed subscriber gate blocks dispatch and replies.
+      expect(managedAgentService.dispatch.called).to.equal(false);
+      expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
+    });
+
     it('should skip auto-provision for an unverified open-access email sender when auth enforcement is on', async () => {
       const emailConfig = {
         ...config,
