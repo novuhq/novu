@@ -76,6 +76,15 @@ export interface InboundDomainRouteMailInput {
   references?: string | string[];
   date: Date;
   cc?: unknown[];
+  /**
+   * Sender-authentication verdicts (`'pass'` / `'failed'`) computed by the
+   * inbound-mail service. Forwarded to the agent webhook so the agent runtime
+   * can decide whether to trust the spoofable `from` address for subscriber
+   * resolution. Optional because the dashboard route-preview path builds a
+   * synthetic mail without them.
+   */
+  dkim?: string;
+  spf?: string;
 }
 
 export interface DomainRouteWebhookPayload {
@@ -248,6 +257,8 @@ export class InboundDomainRouteDelivery {
       messageId: mail.messageId,
       inReplyTo: mail.inReplyTo ?? undefined,
       references: refs.length > 0 ? refs.join(' ') : undefined,
+      dkim: mail.dkim,
+      spf: mail.spf,
       from: { address: from.address, name: from.name },
       to: mail.to.map((t: { address: string; name?: string }) => ({
         address: t.address,

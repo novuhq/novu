@@ -157,6 +157,21 @@ function resolveInboundFirstMessageText(platform: AgentPlatformEnum, message: Me
   return preview;
 }
 
+/**
+ * An inbound email's sender identity is taken from the `From` header, which is
+ * trivially spoofable. The upstream inbound-mail service verifies DKIM and SPF
+ * and forwards the verdicts on the webhook payload (surfaced on `message.raw`).
+ * The sender is only trusted when both verdicts are `'pass'`; anything else —
+ * including a missing verdict on an older payload — is treated as unverified so
+ * the resolver never maps a spoofed `From` onto a registered subscriber. Fails
+ * closed by design.
+ */
+function isInboundEmailSenderVerified(message: Message): boolean {
+  const raw = asRecord(message.raw);
+
+  return raw?.dkim === 'pass' && raw?.spf === 'pass';
+}
+
 function getInboundPlatformThreadId(platform: AgentPlatformEnum, thread: Thread, message: Message): string {
   const rawEvent = getMessageRawEvent(message);
   const rawThreadTs = rawEvent?.thread_ts;
@@ -273,37 +288,70 @@ export class AgentInboundHandler implements OnModuleInit {
       return;
     }
 
+    // Inbound email carries a spoofable `From` header, so its sender is only
+    // trusted for subscriber resolution when the upstream inbound-mail service
+    // verified it (DKIM and SPF both `'pass'`). An unverified email sender
+    // resolves to no subscriber — neither a lookup nor an auto-provision runs —
+    // so a spoofed `From` can never assume a registered subscriber's identity
+    // or provision one under it. The turn then continues unauthenticated and
+    // the managed subscriber gate replies instead. Non-email platforms are
+    // authenticated at the webhook layer and are unaffected.
+    const isUntrustedEmailSender =
+      config.platform === AgentPlatformEnum.EMAIL && !isInboundEmailSenderVerified(message);
+
     // Open-access email agents provision the sender themselves, so email joins
     // the Slack/Teams lookup-or-provision path (soft-failing to `null` inside
     // the resolver). Keyless demo agents are excluded — they deliberately
     // provision lazily at tool-approval time and bound abuse via the demo cap,
-    // so the ephemeral env stays subscriber-free until needed.
+    // so the ephemeral env stays subscriber-free until needed. An unverified
+    // (spoofable) email sender never auto-provisions.
     const canAutoProvision =
       isAutoProvisionPlatform(config.platform) ||
       (config.platform === AgentPlatformEnum.EMAIL &&
         config.subscriberAccess === AgentSubscriberAccessEnum.OPEN &&
-        !config.isKeyless);
+        !config.isKeyless &&
+        !isUntrustedEmailSender);
 
     let subscriberId: string | null;
     try {
-      subscriberId = canAutoProvision
-        ? await this.subscriberResolver.resolveOrProvision({
-            environmentId: config.environmentId,
+      if (isUntrustedEmailSender) {
+        const raw = asRecord(message.raw);
+        this.logger.warn(
+          {
+            agentId,
             organizationId: config.organizationId,
-            platform: config.platform,
-            platformUserId: message.author.userId,
-            integrationIdentifier: config.integrationIdentifier,
-            agentIdentifier: config.agentIdentifier,
-            authorFullName: message.author.fullName,
-            authorUserName: message.author.userName,
-            // chat-sdk types isBot as `boolean | "unknown"`; treat anything except `true` as a non-bot author.
-            authorIsBot: message.author.isBot === true,
-            // Teams multi-tenant: capture the user's tenant from the inbound activity so the endpoint
-            // records which (possibly external customer) tenant the user belongs to.
-            platformTenantId:
-              config.platform === AgentPlatformEnum.TEAMS ? extractMsTeamsTenantId(message.raw) : undefined,
-          })
-        : await this.resolveSubscriberId(agentId, config, message.author.userId, 'resolve-subscriber');
+            environmentId: config.environmentId,
+            fromAddress: message.author.userId,
+            dkim: raw?.dkim,
+            spf: raw?.spf,
+            messageId: message.id,
+          },
+          'Inbound email sender failed DKIM/SPF verification — skipping subscriber resolution so a spoofed From cannot assume an existing identity.'
+        );
+        // Spoofable, unverified `From` — resolve no identity at all (this also
+        // blocks the restricted/keyless read path, which would otherwise map
+        // the forged address onto an existing subscriber via `resolveOnly`).
+        subscriberId = null;
+      } else if (canAutoProvision) {
+        subscriberId = await this.subscriberResolver.resolveOrProvision({
+          environmentId: config.environmentId,
+          organizationId: config.organizationId,
+          platform: config.platform,
+          platformUserId: message.author.userId,
+          integrationIdentifier: config.integrationIdentifier,
+          agentIdentifier: config.agentIdentifier,
+          authorFullName: message.author.fullName,
+          authorUserName: message.author.userName,
+          // chat-sdk types isBot as `boolean | "unknown"`; treat anything except `true` as a non-bot author.
+          authorIsBot: message.author.isBot === true,
+          // Teams multi-tenant: capture the user's tenant from the inbound activity so the endpoint
+          // records which (possibly external customer) tenant the user belongs to.
+          platformTenantId:
+            config.platform === AgentPlatformEnum.TEAMS ? extractMsTeamsTenantId(message.raw) : undefined,
+        });
+      } else {
+        subscriberId = await this.resolveSubscriberId(agentId, config, message.author.userId, 'resolve-subscriber');
+      }
     } catch (err) {
       if (err instanceof BotAuthorSkippedError) {
         this.logger.debug(

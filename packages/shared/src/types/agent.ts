@@ -81,4 +81,14 @@ export interface EmailWebhookPayload {
   headers?: Record<string, string>;
   domain?: EmailWebhookDomainContext;
   route?: EmailWebhookRouteContext;
+  /**
+   * Sender-authentication verdicts computed by the inbound-mail service
+   * (`'pass'` / `'failed'`). Because the `From` header is trivially spoofable,
+   * consumers that resolve a sender identity from it MUST treat the address as
+   * untrusted unless both verdicts are `'pass'`. Optional for backward
+   * compatibility with payloads produced before this field existed — a missing
+   * verdict must be treated as unverified (fail closed).
+   */
+  dkim?: string;
+  spf?: string;
 }

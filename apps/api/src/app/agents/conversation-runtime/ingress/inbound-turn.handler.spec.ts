@@ -252,7 +252,12 @@ describe('AgentInboundHandler', () => {
     };
   }
 
-  function makeEmailDmMessage(senderEmail: string) {
+  function makeEmailDmMessage(senderEmail: string, auth: { dkim?: string; spf?: string } = {}) {
+    // Default to a DKIM/SPF-verified sender so existing cases model a legitimate
+    // (non-spoofed) email; pass `{ dkim: 'failed' }` / `{ spf: 'failed' }` to
+    // simulate a spoofed `From`.
+    const { dkim = 'pass', spf = 'pass' } = auth;
+
     return {
       id: 'email-msg-1',
       threadId: 'email:thread1:',
@@ -263,7 +268,7 @@ describe('AgentInboundHandler', () => {
         userName: senderEmail,
         isBot: false,
       },
-      raw: {},
+      raw: { dkim, spf },
       attachments: [],
     };
   }
@@ -574,6 +579,90 @@ describe('AgentInboundHandler', () => {
       expect(resolveOrProvision.called).to.equal(false);
       // Keyless demo agents bypass the subscriber gate and still dispatch.
       expect(managedAgentService.dispatch.calledOnce).to.equal(true);
+    });
+
+    it('should not resolve or provision an identity for a spoofed (unverified) open-access email sender', async () => {
+      const emailConfig = {
+        ...config,
+        platform: AgentPlatformEnum.EMAIL,
+        integrationIdentifier: 'email-main',
+        isManaged: true,
+        subscriberAccess: AgentSubscriberAccessEnum.OPEN,
+      };
+      // On unpatched code the open-access path provisions/looks up the forged
+      // address, handing the attacker a subscriber identity.
+      const resolveOrProvision = sinon.stub().resolves('sub-provisioned');
+      const resolveOnly = sinon.stub().resolves('victim-subscriber');
+      const { handler, subscriberResolver, managedAgentService, outboundGateway } = makeHandler({
+        subscriberResolve: resolveOnly,
+        subscriberResolveOrProvision: resolveOrProvision,
+        subscriberFindById: sinon.stub().resolves({ _id: 'victim-mongo', subscriberId: 'victim-subscriber' }),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+      });
+      const thread = makeEmailDmThread();
+      // Attacker spoofs a real subscriber's address; DKIM/SPF failed upstream.
+      const message = makeEmailDmMessage('victim@example.com', { dkim: 'failed', spf: 'failed' });
+
+      await handler.handle('agent1', emailConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(subscriberResolver.resolveOrProvision.called).to.equal(false);
+      expect(subscriberResolver.resolveOnly.called).to.equal(false);
+      // No identity resolved → managed subscriber gate blocks dispatch.
+      expect(managedAgentService.dispatch.called).to.equal(false);
+      expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
+    });
+
+    it('should not map a spoofed (unverified) email onto an existing subscriber for a restricted agent', async () => {
+      const emailConfig = {
+        ...config,
+        platform: AgentPlatformEnum.EMAIL,
+        integrationIdentifier: 'email-main',
+        isManaged: true,
+        subscriberAccess: AgentSubscriberAccessEnum.RESTRICTED,
+      };
+      // On unpatched code this lookup returns the victim's subscriberId from the
+      // forged `From`, letting the attacker act as the victim. A single failing
+      // verdict (SPF passes, DKIM fails) must still be treated as unverified.
+      const resolveOnly = sinon.stub().resolves('victim-subscriber');
+      const { handler, subscriberResolver, subscriberRepository, managedAgentService, outboundGateway } = makeHandler({
+        subscriberResolve: resolveOnly,
+        subscriberFindById: sinon.stub().resolves({ _id: 'victim-mongo', subscriberId: 'victim-subscriber' }),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+      });
+      const thread = makeEmailDmThread();
+      const message = makeEmailDmMessage('victim@example.com', { dkim: 'failed', spf: 'pass' });
+
+      await handler.handle('agent1', emailConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(subscriberResolver.resolveOnly.called).to.equal(false);
+      expect(subscriberRepository.findBySubscriberId.called).to.equal(false);
+      expect(managedAgentService.dispatch.called).to.equal(false);
+      expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
+    });
+
+    it('should resolve identity for a DKIM/SPF-verified restricted email sender', async () => {
+      const emailConfig = {
+        ...config,
+        platform: AgentPlatformEnum.EMAIL,
+        integrationIdentifier: 'email-main',
+        isManaged: true,
+        subscriberAccess: AgentSubscriberAccessEnum.RESTRICTED,
+      };
+      const resolveOnly = sinon.stub().resolves('known-subscriber');
+      const { handler, subscriberResolver, managedAgentService, outboundGateway } = makeHandler({
+        subscriberResolve: resolveOnly,
+        subscriberFindById: sinon.stub().resolves({ _id: 'known-mongo', subscriberId: 'known-subscriber' }),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+      });
+      const thread = makeEmailDmThread();
+      // Defaults to a verified (dkim/spf pass) sender.
+      const message = makeEmailDmMessage('member@example.com');
+
+      await handler.handle('agent1', emailConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(subscriberResolver.resolveOnly.calledOnce).to.equal(true);
+      expect(managedAgentService.dispatch.calledOnce).to.equal(true);
+      expect(outboundGateway.replyOnThread.called).to.equal(false);
     });
   });
 
