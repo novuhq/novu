@@ -3,6 +3,7 @@ import { Switch } from '@/components/primitives/switch';
 import { UpgradeCTATooltip } from '@/components/upgrade-cta-tooltip';
 import { IS_ENTERPRISE, IS_SELF_HOSTED } from '@/config';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
+import { getMinimumTierForFeature } from '@/utils/upgrade-tier';
 import { PermissionSwitch } from '../primitives/permission-switch';
 
 type TranslationSwitchProps = {
@@ -30,7 +31,8 @@ export function TranslationSwitch({ id, value, onChange, isReadOnly }: Translati
     <div className="flex items-center">
       {!canUseTranslationFeature ? (
         <UpgradeCTATooltip
-          description="Connect better with every user — Upgrade to reach users in their own language."
+          description="Connect better with every user by reaching them in their own language."
+          requiredTier={getMinimumTierForFeature(FeatureNameEnum.AUTO_TRANSLATIONS)}
           utmCampaign="translation_prompt"
           utmSource="translation_prompt"
         >

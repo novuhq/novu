@@ -23,6 +23,7 @@ import { useHasPermission } from '@/hooks/use-has-permission';
 import { TeamMembers } from '@/utils/better-auth/components/team-members';
 import { UserProfile as BetterAuthUserProfile } from '@/utils/better-auth/index';
 import { ROUTES } from '@/utils/routes';
+import { getRequiredTierLabelForFeature } from '@/utils/upgrade-tier';
 
 // Pin Clerk's post-leave/delete redirect to the local `/auth/organization-list` so `AuthProvider`
 // can clear any org Clerk auto-activates and let the picker render the empty state.
@@ -130,6 +131,7 @@ export function SettingsTabs({ routes, rootRoute }: SettingsTabsProps) {
   const UserProfile = EE_AUTH_PROVIDER === 'clerk' ? ClerkUserProfile : BetterAuthUserProfile;
 
   const canShowBilling = !IS_SELF_HOSTED && hasBillingPermission;
+  const brandingTierLabel = getRequiredTierLabelForFeature(FeatureNameEnum.PLATFORM_REMOVE_NOVU_BRANDING_BOOLEAN);
 
   const currentTab = resolveCurrentTab(location.pathname, routes, rootRoute);
 
@@ -208,8 +210,12 @@ export function SettingsTabs({ routes, rootRoute }: SettingsTabsProps) {
                 {subscription?.apiServiceLevel === ApiServiceLevelEnum.FREE && canShowBilling && (
                   <InlineToast
                     title="Tip:"
-                    description="Hide Novu branding from your notification channels by upgrading to a paid plan."
-                    ctaLabel="Upgrade Plan"
+                    description={
+                      brandingTierLabel
+                        ? `Hide Novu branding from your notification channels by upgrading to the ${brandingTierLabel} plan.`
+                        : 'Hide Novu branding from your notification channels by upgrading to a paid plan.'
+                    }
+                    ctaLabel={brandingTierLabel ? `Upgrade to ${brandingTierLabel}` : 'Upgrade Plan'}
                     onCtaClick={() => navigate(`${routes.billing}?utm_source=organization_settings_upgrade_prompt`)}
                     className="mb-4"
                     variant="tip"

@@ -1,9 +1,11 @@
+import { ApiServiceLevelEnum } from '@novu/shared';
 import { RiArrowRightSLine, RiBookMarkedLine, RiSparkling2Line } from 'react-icons/ri';
 import { Link, useNavigate } from 'react-router-dom';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchLayouts } from '@/hooks/use-fetch-layouts';
 import { formatDateSimple } from '@/utils/format-date';
 import { buildRoute, ROUTES } from '@/utils/routes';
+import { getUpgradeButtonLabel } from '@/utils/upgrade-tier';
 import { openInNewTab } from '@/utils/url';
 import { IS_SELF_HOSTED, SELF_HOSTED_UPGRADE_REDIRECT_URL } from '../../config';
 import { useTelemetry } from '../../hooks/use-telemetry';
@@ -132,7 +134,7 @@ export const LayoutsListUpgradeCta = () => {
               }}
               leadingIcon={RiSparkling2Line}
             >
-              {IS_SELF_HOSTED ? 'Contact Sales' : 'Upgrade plan'}
+              {getUpgradeButtonLabel(ApiServiceLevelEnum.PRO)}
             </Button>
             <Link
               to={'https://docs.novu.co/platform/workflow/layouts'}

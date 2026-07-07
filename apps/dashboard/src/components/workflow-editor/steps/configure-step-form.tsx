@@ -64,6 +64,7 @@ import { getControlsDefaultValues } from '@/utils/default-values';
 import { StepTypeEnum } from '@/utils/enums';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
+import { getPlanLabel } from '@/utils/upgrade-tier';
 import { DEFAULT_STEP_ICON, STEP_TYPE_ICONS } from './constants/preview-context.constants';
 
 const STEP_TYPE_TO_INLINE_CONTROL_VALUES: Record<StepTypeEnum, () => React.JSX.Element | null> = {
@@ -154,10 +155,15 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
     !step.stepResolverHash &&
     stepResolversCount !== undefined &&
     stepResolversCount >= codeStepLimit;
+  const currentPlanLabel = getPlanLabel(tier);
+  const proLabel = getPlanLabel(ApiServiceLevelEnum.PRO);
+  const teamLabel = getPlanLabel(ApiServiceLevelEnum.BUSINESS);
   const codeStepLimitDescription =
     tier === ApiServiceLevelEnum.FREE
-      ? `You've reached the ${codeStepLimit} code step limit on your Free plan. Upgrade to Pro for 10 code steps, or Business for unlimited.`
-      : `You've reached the ${codeStepLimit} code step limit on your ${tier.charAt(0).toUpperCase() + tier.slice(1)} plan. Upgrade to Business for unlimited code steps.`;
+      ? `You've reached the ${codeStepLimit} code step limit on your ${currentPlanLabel} plan. Upgrade to ${proLabel} for 10 code steps, or ${teamLabel} for unlimited.`
+      : `You've reached the ${codeStepLimit} code step limit on your ${currentPlanLabel} plan. Upgrade to ${teamLabel} for unlimited code steps.`;
+  const codeStepRequiredTier =
+    tier === ApiServiceLevelEnum.FREE ? ApiServiceLevelEnum.PRO : ApiServiceLevelEnum.BUSINESS;
 
   const hasCustomControls = Object.keys(step.controls.dataSchema ?? {}).length > 0 && !step.controls.uiSchema;
   const isInlineConfigurableStepWithCustomControls = isInlineConfigurableStep && hasCustomControls;
@@ -552,7 +558,11 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
           {isInlineResolverSupportedStep && !isInlineResolverActive && !isReadOnly && (
             <SidebarContent size="lg" className="gap-0 px-0 py-0">
               {isAtCodeStepLimit ? (
-                <UpgradeCTATooltip description={codeStepLimitDescription} utmCampaign="code_steps_limit">
+                <UpgradeCTATooltip
+                  description={codeStepLimitDescription}
+                  requiredTier={codeStepRequiredTier}
+                  utmCampaign="code_steps_limit"
+                >
                   <span className="inline-flex w-full cursor-not-allowed">
                     <Button
                       variant="secondary"
