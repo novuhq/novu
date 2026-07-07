@@ -18,6 +18,39 @@ describe('formatToRelativeTime', () => {
     expect(result).toMatch(/now/i);
   });
 
+  it('returns German sub-minute text for de-DE locale', () => {
+    const result = formatToRelativeTime({
+      fromDate: dateSecondsAgo(30, now),
+      toDate: now,
+      locale: 'de-DE',
+    });
+
+    expect(result).toMatch(/jetzt/i);
+    expect(result).not.toMatch(/just now/i);
+  });
+
+  it('returns German sub-minute text for de_DE locale', () => {
+    const result = formatToRelativeTime({
+      fromDate: dateSecondsAgo(30, now),
+      toDate: now,
+      locale: 'de_DE',
+    });
+
+    expect(result).toMatch(/jetzt/i);
+    expect(result).not.toMatch(/just now/i);
+  });
+
+  it('returns German hour text for de-DE locale', () => {
+    const result = formatToRelativeTime({
+      fromDate: dateSecondsAgo(17 * SECONDS.inHour, now),
+      toDate: now,
+      locale: 'de-DE',
+    });
+
+    expect(result).toMatch(/17/);
+    expect(result).toMatch(/Std/i);
+  });
+
   it('returns 1 minute for 61 seconds', () => {
     const result = formatToRelativeTime({ fromDate: dateSecondsAgo(61, now), toDate: now });
     expect(result).toMatch(/1/);

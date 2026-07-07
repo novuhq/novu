@@ -8,10 +8,24 @@ const ROOT = path.resolve(__dirname, '..');
 const DEFAULT_SHARD_INDEX = 1;
 const DEFAULT_TOTAL_SHARDS = 1;
 const NOVU_V2_TAG = '#novu-v2';
-const TEST_FILE_PATTERN = /\.e2e(-ee)?\.ts$/;
 const TEST_CASE_PATTERN = /\bit(?:\.only)?\s*\(/g;
 const DEFAULT_MOCHA_REPORTER = process.env.CI ? 'dot' : 'spec';
 const MOCHA_REPORTER = process.env.NOVU_V2_MOCHA_REPORTER || DEFAULT_MOCHA_REPORTER;
+
+// CE fork PRs run with CI_EE_TEST=false, so cloud-EE-only behavior (outbound SSRF
+// pinning, Stripe billing periods, RBAC permissions, translations, novu-app MCP)
+// is unavailable. Exclude mixed files that contain those tests.
+const CE_EXCLUDED_FILES = new Set([
+  'src/app/agents/e2e/active-conversations.e2e.ts',
+  'src/app/agents/e2e/agent-mcp-servers.e2e.ts',
+  'src/app/auth/e2e/permissions.guard.e2e.ts',
+  'src/app/bridge/e2e/sync.e2e.ts',
+  'src/app/environments-v1/e2e/api-key-environments-exposure.e2e.ts',
+  'src/app/environments-v2/e2e/environments-v2-diff.e2e.ts',
+  'src/app/events/e2e/trigger-event-ssrf.e2e.ts',
+  'src/app/organization/e2e/update-organization-settings.e2e.ts',
+  'src/app/workflows-v2/e2e/test-http-endpoint.e2e.ts',
+]);
 
 const MOCHA_ARGS = [
   '--timeout',
@@ -42,7 +56,33 @@ function readSortedEntries(dir) {
   return fs.readdirSync(dir, { withFileTypes: true }).sort((left, right) => left.name.localeCompare(right.name));
 }
 
-function collectTestFiles(dir, files = []) {
+function getCliArgs() {
+  return process.argv.slice(2).filter((arg) => arg !== '--');
+}
+
+function parseCeOnly() {
+  const args = getCliArgs();
+
+  return args.includes('--ce-only') || process.env.NOVU_V2_CE_ONLY === 'true';
+}
+
+function getTestFilePattern(ceOnly) {
+  return ceOnly ? /\.e2e\.ts$/ : /\.e2e(-ee)?\.ts$/;
+}
+
+function collectTestFileRoots(ceOnly) {
+  const roots = [path.join(ROOT, 'src')];
+
+  if (!ceOnly) {
+    roots.push(path.join(ROOT, 'e2e', 'enterprise'));
+  }
+
+  return roots;
+}
+
+function collectTestFiles(ceOnly, dir, files = []) {
+  const testFilePattern = getTestFilePattern(ceOnly);
+
   if (!fs.existsSync(dir)) {
     return files;
   }
@@ -51,20 +91,16 @@ function collectTestFiles(dir, files = []) {
     const fullPath = path.join(dir, entry.name);
 
     if (entry.isDirectory()) {
-      collectTestFiles(fullPath, files);
+      collectTestFiles(ceOnly, fullPath, files);
       continue;
     }
 
-    if (TEST_FILE_PATTERN.test(entry.name)) {
+    if (testFilePattern.test(entry.name)) {
       files.push(toPosixPath(path.relative(ROOT, fullPath)));
     }
   }
 
   return files;
-}
-
-function getCliArgs() {
-  return process.argv.slice(2).filter((arg) => arg !== '--');
 }
 
 function parseShardValue(rawValue) {
@@ -128,14 +164,19 @@ function compareWeightedFiles(left, right) {
   return right.weight - left.weight || compareFileNames(left.relativePath, right.relativePath);
 }
 
-function collectWeightedFiles() {
-  const candidates = [
-    ...collectTestFiles(path.join(ROOT, 'src')),
-    ...collectTestFiles(path.join(ROOT, 'e2e', 'enterprise')),
-  ];
+function isCeExcludedFile(relativePath) {
+  return CE_EXCLUDED_FILES.has(relativePath);
+}
+
+function collectWeightedFiles(ceOnly) {
+  const candidates = collectTestFileRoots(ceOnly).flatMap((dir) => collectTestFiles(ceOnly, dir));
 
   return candidates
     .map((relativePath) => {
+      if (ceOnly && isCeExcludedFile(relativePath)) {
+        return null;
+      }
+
       const source = readSource(relativePath);
 
       if (!source.includes(NOVU_V2_TAG)) {
@@ -186,8 +227,9 @@ function getShard(weightedFiles, shardIndex, totalShards) {
   return buildShards(weightedFiles, totalShards)[shardIndex - 1];
 }
 
-function printShardSummary(shardIndex, totalShards, shard) {
-  console.log(`Running Novu V2 E2E shard ${shardIndex}/${totalShards} with ${shard.files.length} files (weight ${shard.weight}).`);
+function printShardSummary(shardIndex, totalShards, shard, ceOnly) {
+  const suiteLabel = ceOnly ? 'Novu V2 CE E2E' : 'Novu V2 E2E';
+  console.log(`Running ${suiteLabel} shard ${shardIndex}/${totalShards} with ${shard.files.length} files (weight ${shard.weight}).`);
 }
 
 function runMocha(filePaths) {
@@ -201,14 +243,15 @@ function runMocha(filePaths) {
 function run() {
   applyDefaultEnv();
 
+  const ceOnly = parseCeOnly();
   const { listOnly, shardIndex, totalShards } = parseShardConfig();
-  const shard = getShard(collectWeightedFiles(), shardIndex, totalShards);
+  const shard = getShard(collectWeightedFiles(ceOnly), shardIndex, totalShards);
 
   if (!shard || shard.files.length === 0) {
     throw new Error(`No files assigned to shard ${shardIndex}/${totalShards}`);
   }
 
-  printShardSummary(shardIndex, totalShards, shard);
+  printShardSummary(shardIndex, totalShards, shard, ceOnly);
 
   if (listOnly) {
     for (const file of shard.files) {

@@ -102,7 +102,7 @@ export const SystemVariableRow = ({ variableKey, description, resolve, environme
           )}
         </SystemVariableCell>
         <SystemVariableCell>
-          <span className="text-text-disabled text-xs">—</span>
+          <span className="text-text-disabled text-xs">-</span>
         </SystemVariableCell>
         <SystemVariableCell className="flex w-1 items-center justify-center">
           <Tooltip>
@@ -111,7 +111,7 @@ export const SystemVariableRow = ({ variableKey, description, resolve, environme
                 <RiLockLine className="size-4" />
               </span>
             </TooltipTrigger>
-            <TooltipContent>System variable — read only</TooltipContent>
+            <TooltipContent>System variable: read only</TooltipContent>
           </Tooltip>
         </SystemVariableCell>
       </TableRow>

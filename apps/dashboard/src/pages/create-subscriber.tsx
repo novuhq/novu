@@ -122,7 +122,7 @@ export function CreateSubscriberPage() {
               Looking for no-PII handling?{' '}
               <Link
                 className="text-2xs text-neutral-600 underline"
-                to="https://docs.novu.co/additional-resources/security#what-should-i-do-if-i-have-regulatory-or-security-issues-with-pii"
+                to="https://docs.novu.co/platform/additional-resources/security#regulatory-and-pii-concerns"
                 target="_blank"
               >
                 Learn more

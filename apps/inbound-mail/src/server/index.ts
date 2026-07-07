@@ -515,6 +515,29 @@ class Mailin extends events.EventEmitter {
       parsedEmail.language = language;
 
       /*
+       * One searchable line per email with the final sender-auth verdicts and
+       * the exact inputs the SPF check used. Downstream (agent runtime) fails
+       * closed on anything but pass/pass, so this is the primary breadcrumb
+       * when inbound agent mail bounces with "couldn't verify your email".
+       */
+      logger.info(
+        {
+          context: LOG_CONTEXT,
+          connectionId: connection.id,
+          messageId: parsedEmail.messageId,
+          from: connection.envelope?.mailFrom?.address,
+          remoteAddress: connection.remoteAddress,
+          clientHostname: connection.clientHostname,
+          dkim: parsedEmail.dkim,
+          spf: parsedEmail.spf,
+          spamScore,
+          dkimCheckDisabled: configuration.disableDkim,
+          spfCheckDisabled: configuration.disableSpf,
+        },
+        `${connection.id} Inbound mail sender authentication verdict: dkim=${parsedEmail.dkim} spf=${parsedEmail.spf}`
+      );
+
+      /*
        * Make fields exist, even if empty. That will make
        * json easier to use on the webhook receiver side.
        */

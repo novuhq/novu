@@ -64,6 +64,11 @@
       "import": "./dist/esm/utils/safe-outbound-http.js",
       "types": "./dist/esm/utils/safe-outbound-http.d.ts"
     },
+    "./utils/validate-smtp-outbound-target": {
+      "require": "./dist/cjs/utils/validate-smtp-outbound-target.js",
+      "import": "./dist/esm/utils/validate-smtp-outbound-target.js",
+      "types": "./dist/esm/utils/validate-smtp-outbound-target.d.ts"
+    },
     "./docs/agent-onboarding.md": "./docs/agent-onboarding.md"
   },
   "dependencies": {
@@ -73,7 +78,7 @@
     "madge": "^8.0.0",
     "rimraf": "^3.0.2",
     "typescript": "5.6.2",
-    "vitest": "^2.1.9"
+    "vitest": "^4.1.0"
   },
   "nx": {
     "tags": [

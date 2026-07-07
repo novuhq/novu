@@ -18,6 +18,6 @@ export const SYSTEM_VARIABLE_DEFINITIONS: SystemVariableDefinition[] = [
     key: 'env.type',
     resolve: (env) => env.type,
     description:
-      'System classification for the environment: dev or prod.\n\n• Development → dev\n• Production and custom environments (e.g. Staging) → prod\n\nNovu uses this for platform behavior — for example, content can only be edited in dev environments, and prod environments receive updates through publishing. This value is managed by Novu and cannot be changed. Create a custom variable (e.g. environmentType) if you need your own classification.',
+      'System classification for the environment: dev or prod.\n\n• Development → dev\n• Production and custom environments (e.g. Staging) → prod\n\nNovu uses this for platform behavior: for example, content can only be edited in dev environments, and prod environments receive updates through publishing. This value is managed by Novu and cannot be changed. Create a custom variable (e.g. environmentType) if you need your own classification.',
   },
 ];

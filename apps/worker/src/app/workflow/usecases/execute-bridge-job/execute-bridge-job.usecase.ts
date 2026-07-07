@@ -110,7 +110,7 @@ export class ExecuteBridgeJob {
       throw new Error(`Bridge URL is not set for environment id: ${environment._id}`);
     }
 
-    const { subscriber, payload: originalPayload, context, env } = command.variables || {};
+    const { subscriber, actor, payload: originalPayload, context, env } = command.variables || {};
     const payload = this.normalizePayload(originalPayload);
     const state = await this.generateState(command);
 
@@ -124,6 +124,7 @@ export class ExecuteBridgeJob {
       controls: variablesStores ?? {},
       state,
       subscriber: subscriber ?? {},
+      ...(actor && { actor }),
       context: context ?? {},
       // biome-ignore lint/style/noNonNullAssertion: <explanation> we always have env.type and env.name
       env: env!,
@@ -248,8 +249,7 @@ export class ExecuteBridgeJob {
       // URL). This blocks internal hosts even if a malicious URL was persisted
       // before validation landed or queued by an older API release.
       enforceSsrfProtection:
-        isOutboundSsrfProtectionEnabled() &&
-        (!!statelessBridgeUrl || workflowOrigin === ResourceOriginEnum.EXTERNAL),
+        isOutboundSsrfProtectionEnabled() && (!!statelessBridgeUrl || workflowOrigin === ResourceOriginEnum.EXTERNAL),
       processError: async (response) => {
         await this.createExecutionDetails.execute({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(job),

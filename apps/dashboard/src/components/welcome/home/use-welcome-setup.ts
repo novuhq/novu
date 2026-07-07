@@ -170,7 +170,7 @@ export function useWelcomeSetup(): UseWelcomeSetupResult {
     const accountStep: WelcomeSetupStep = {
       id: 'account-creation',
       title: 'Account creation',
-      description: "We know it's not always easy — take a moment to celebrate!",
+      description: "We know it's not always easy: take a moment to celebrate!",
       status: 'completed',
     };
 

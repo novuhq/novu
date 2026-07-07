@@ -21,7 +21,7 @@ export function isWithinSchedule(schedule?: Schedule, currentTime: Date = new Da
   // Convert current time to subscriber's timezone if provided
   const subscriberTime = timezone ? utcToZonedTime(currentTime, timezone) : currentTime;
 
-  const currentDay = getDayOfWeek(subscriberTime);
+  const currentDay = getDayOfWeek(subscriberTime, !!timezone);
   const currentTimeString = formatTime(subscriberTime, !!timezone);
 
   // Check both the current day and the previous day for overnight schedules
@@ -67,10 +67,17 @@ export function isWithinSchedule(schedule?: Schedule, currentTime: Date = new Da
 }
 
 /**
- * Gets the day of the week as a string key for the weekly schedule
+ * Gets the day of the week as a string key for the weekly schedule.
+ *
+ * When a subscriber timezone is in effect the date has already been converted
+ * with `utcToZonedTime`, whose result is meant to be read with the local
+ * getters. The day of week must therefore be read with `getDay`, the same way
+ * `formatTime` reads the hour with `getHours`. Reading `getUTCDay` on a zoned
+ * date returns the wrong day around midnight whenever the process timezone is
+ * not UTC.
  */
-export function getDayOfWeek(date: Date): keyof NonNullable<Schedule['weeklySchedule']> {
-  return DAYS_OF_WEEK[date.getUTCDay()];
+export function getDayOfWeek(date: Date, hasTimezone = false): keyof NonNullable<Schedule['weeklySchedule']> {
+  return DAYS_OF_WEEK[hasTimezone ? date.getDay() : date.getUTCDay()];
 }
 
 /**
@@ -146,7 +153,7 @@ export function calculateNextAvailableTime(schedule?: Schedule, nowUtc = new Dat
   // start from yesterday to handle overnight schedules
   for (let dayOffset = -1; dayOffset <= 7; dayOffset++) {
     const candidateDay = addDays(nowWorking, dayOffset);
-    const weekday = getDayOfWeek(candidateDay);
+    const weekday = getDayOfWeek(candidateDay, !!timeZone);
 
     const daySchedule = schedule.weeklySchedule?.[weekday];
     if (!daySchedule?.isEnabled || !daySchedule?.hours) {

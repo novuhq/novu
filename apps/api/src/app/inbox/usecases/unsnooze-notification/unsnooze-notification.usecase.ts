@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import {
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
@@ -7,6 +7,7 @@ import {
 } from '@novu/application-generic';
 import { ChannelTypeEnum, JobEntity, JobRepository, JobStatusEnum, MessageRepository } from '@novu/dal';
 import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
+import { GetSubscriber } from '../../../subscribers/usecases/get-subscriber';
 import { InboxNotificationDto } from '../../dtos/inbox-notification.dto';
 import { MarkNotificationAsCommand } from '../mark-notification-as/mark-notification-as.command';
 import { MarkNotificationAs } from '../mark-notification-as/mark-notification-as.usecase';
@@ -19,15 +20,26 @@ export class UnsnoozeNotification {
     private messageRepository: MessageRepository,
     private jobRepository: JobRepository,
     private markNotificationAs: MarkNotificationAs,
-    private createExecutionDetails: CreateExecutionDetails
+    private createExecutionDetails: CreateExecutionDetails,
+    private getSubscriber: GetSubscriber
   ) {
     this.logger.setContext(this.constructor.name);
   }
 
   async execute(command: UnsnoozeNotificationCommand): Promise<InboxNotificationDto> {
+    const subscriber = await this.getSubscriber.execute({
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+      subscriberId: command.subscriberId,
+    });
+    if (!subscriber) {
+      throw new BadRequestException(`Subscriber with id: ${command.subscriberId} is not found.`);
+    }
+
     const snoozedNotification = await this.messageRepository.findOne({
       _id: command.notificationId,
       _environmentId: command.environmentId,
+      _subscriberId: subscriber._id,
       channel: ChannelTypeEnum.IN_APP,
       snoozedUntil: { $exists: true, $ne: null },
       contextKeys: command.contextKeys,

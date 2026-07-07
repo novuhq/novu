@@ -306,6 +306,7 @@ export class PreviewUsecase {
       PreviewStepCommand.create({
         payload: previewPayloadExample.payload || {},
         subscriber: previewPayloadExample.subscriber,
+        actor: previewPayloadExample.actor,
         controls: controlValues || {},
         context: previewPayloadExample.context as ContextResolved,
         environmentId: command.user.environmentId,

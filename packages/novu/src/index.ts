@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+import fs from 'node:fs';
+import path from 'node:path';
 import { Command } from 'commander';
 import { v4 as uuidv4 } from 'uuid';
 import { DevCommandOptions, devCommand } from './commands';
@@ -37,9 +39,33 @@ const anonymousId = anonymousIdLocalState || uuidv4();
 if (!anonymousIdLocalState) {
   config.setValue('anonymousId', anonymousId);
 }
+/**
+ * Resolve the CLI version from package.json at runtime so `novu --version`
+ * always matches the published package. `__dirname` differs between the
+ * compiled build (`dist/src/index.js`) and local ts-node dev (`src/index.ts`),
+ * so we try both relative locations and fall back gracefully.
+ */
+function getCliVersion(): string {
+  for (const candidate of ['../../package.json', '../package.json']) {
+    try {
+      const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, candidate), 'utf8')) as { version?: string };
+      if (pkg.version) {
+        return pkg.version;
+      }
+    } catch {
+      // Try the next candidate location.
+    }
+  }
+
+  return '0.0.0';
+}
+
 const program = new Command();
 
-program.name('novu').description(`A CLI tool to interact with Novu Cloud`);
+program
+  .name('novu')
+  .description(`A CLI tool to interact with Novu Cloud`)
+  .version(getCliVersion(), '-v, --version', 'Output the Novu CLI version');
 
 program
   .command('sync')

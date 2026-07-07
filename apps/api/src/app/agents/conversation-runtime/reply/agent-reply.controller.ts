@@ -1,6 +1,6 @@
 import { Body, Controller, HttpCode, HttpStatus, Param, Post } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
-import type { Signal } from '@novu/framework';
+import type { Signal, ToolResult } from '@novu/framework/internal';
 import { UserSessionData } from '@novu/shared';
 import { RequireAuthentication } from '../../../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../../../auth/framework/external-api.decorator';
@@ -8,16 +8,11 @@ import { UserSession } from '../../../shared/framework/user.decorator';
 import { AgentReplyPayloadDto } from '../../shared/dtos/agent-reply-payload.dto';
 import { HandleAgentReplyCommand } from './handle-agent-reply/handle-agent-reply.command';
 import { HandleAgentReply } from './handle-agent-reply/handle-agent-reply.usecase';
-import { HandlePlanProgressCommand } from './handle-plan-progress/handle-plan-progress.command';
-import { HandlePlanProgress } from './handle-plan-progress/handle-plan-progress.usecase';
 
 @Controller('/agents')
 @ApiExcludeController()
 export class AgentReplyController {
-  constructor(
-    private handleAgentReply: HandleAgentReply,
-    private handlePlanProgress: HandlePlanProgress
-  ) {}
+  constructor(private handleAgentReply: HandleAgentReply) {}
 
   @Post('/:agentId/reply')
   @HttpCode(HttpStatus.OK)
@@ -28,20 +23,6 @@ export class AgentReplyController {
     @Param('agentId') agentId: string,
     @Body() body: AgentReplyPayloadDto
   ) {
-    if (body.planProgress) {
-      return this.handlePlanProgress.execute(
-        HandlePlanProgressCommand.create({
-          userId: user._id,
-          environmentId: user.environmentId,
-          organizationId: user.organizationId,
-          conversationId: body.conversationId,
-          agentIdentifier: agentId,
-          integrationIdentifier: body.integrationIdentifier,
-          event: body.planProgress as HandlePlanProgressCommand['event'],
-        })
-      );
-    }
-
     return this.handleAgentReply.execute(
       HandleAgentReplyCommand.create({
         userId: user._id,
@@ -51,10 +32,13 @@ export class AgentReplyController {
         agentIdentifier: agentId,
         integrationIdentifier: body.integrationIdentifier,
         reply: body.reply,
+        toolApprovalRequest: body.toolApprovalRequest,
         edit: body.edit,
         resolve: body.resolve,
         signals: body.signals as Signal[],
+        toolResults: body.toolResults as ToolResult[],
         addReactions: body.addReactions,
+        deleteMessages: body.deleteMessages,
         typing: body.typing,
       })
     );

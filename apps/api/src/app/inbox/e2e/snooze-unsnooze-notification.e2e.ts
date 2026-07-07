@@ -203,4 +203,21 @@ describe('Snooze and Unsnooze Notifications - /inbox/notifications/:id/{snooze,u
 
     expect(response.status).to.equal(404);
   });
+
+  it('should ensure notifications can only be unsnoozed by their owner', async () => {
+    const snoozeUntil = new Date();
+    snoozeUntil.setHours(snoozeUntil.getHours() + 1);
+
+    await snoozeNotification(notificationId, snoozeUntil);
+
+    const secondSession = new UserSession();
+    await secondSession.initialize();
+
+    const response = await session.testAgent
+      .patch(`/v1/inbox/notifications/${notificationId}/unsnooze`)
+      .set('Authorization', `Bearer ${secondSession.subscriberToken}`)
+      .send();
+
+    expect(response.status).to.equal(404);
+  });
 });

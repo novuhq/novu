@@ -1,13 +1,12 @@
 import { RiBookOpenLine, RiChat1Line, RiSparklingLine } from 'react-icons/ri';
-import { useAiDrawer } from '@/components/ai-drawer';
 import { IS_AI_FEATURES_ENABLED } from '@/config';
 import { useTelemetry } from '@/hooks/use-telemetry';
+import { openDocsAssistant } from '@/utils/docs-assistant';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { Command, CommandExecutionContext } from '../command-types';
 
 export function useHelpCommands(_context: CommandExecutionContext): Command[] {
   const track = useTelemetry();
-  const { openAiDrawer } = useAiDrawer();
 
   const commands: Command[] = [
     {
@@ -41,17 +40,17 @@ export function useHelpCommands(_context: CommandExecutionContext): Command[] {
     },
   ];
 
-  if (IS_AI_FEATURES_ENABLED && import.meta.env.VITE_INKEEP_API_KEY) {
+  if (IS_AI_FEATURES_ENABLED) {
     commands.push({
       id: 'help-ai-search',
       label: 'Ask Novu AI',
-      description: 'Get instant answers powered by AI',
+      description: 'Get instant answers from the Novu documentation assistant',
       category: 'help',
       icon: <RiSparklingLine />,
       priority: 'high',
-      keywords: ['ai', 'ask', 'search', 'help', 'question', 'assistant', 'inkeep'],
+      keywords: ['ai', 'ask', 'search', 'help', 'question', 'assistant', 'docs'],
       execute: () => {
-        openAiDrawer();
+        openDocsAssistant();
       },
     });
   }
