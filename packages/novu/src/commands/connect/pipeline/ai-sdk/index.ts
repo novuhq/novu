@@ -98,11 +98,15 @@ async function scaffoldThenReconcile(
     skippedInstall: scaffolded.skippedInstall,
   });
 
-  return reconcileAiSdkProject(input, scaffolded.root, 'empty', {
+  return {
+    projectKind: 'empty',
+    projectDir: scaffolded.root,
     scaffolded: true,
+    envPaths,
     skippedInstall: scaffolded.skippedInstall,
     agentFilePath: scaffolded.agentFilePath,
-  });
+    coreReady: true,
+  };
 }
 
 async function reconcileAiSdkProject(

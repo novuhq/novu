@@ -101,10 +101,14 @@ async function scaffoldThenReconcile(
     skippedInstall: scaffolded.skippedInstall,
   });
 
-  return reconcileChatSdkProject(input, scaffolded.root, 'empty', {
+  return {
+    projectKind: 'empty',
+    projectDir: scaffolded.root,
     scaffolded: true,
+    envPaths,
     skippedInstall: scaffolded.skippedInstall,
-  });
+    coreReady: true,
+  };
 }
 
 async function reconcileChatSdkProject(
