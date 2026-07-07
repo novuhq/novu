@@ -1,69 +1,76 @@
-Docker is the easiest way to get started with self-hosted Novu,
-however if you want to set up the system on docker for local development look [here](local/Readme.md)
-or if you want to deploy Novu to Kubernetes using Helm check [here](kubernetes/helm/Readme.md) or using Kustomize check [here](kubernetes/helm/Readme.md).
+Docker is the easiest way to get started with self-hosted Novu.
+For production-style self-hosting, see [Deploy with Docker](/community/self-hosting-novu/deploy-with-docker).
+For Kubernetes deployments, see [Helm](kubernetes/helm/Readme.md) or [Kustomize](kubernetes/helm/Readme.md).
+
+The `docker/local/` compose file is for **local development dependencies only** — it does not start the Novu API, Worker, WebSocket, or Dashboard services.
 
 ## Before you begin
 
 You need the following installed in your system:
 
-- [Docker](https://docs.docker.com/engine/install/) and [docker-compose](https://docs.docker.com/compose/install/)
+- [Docker](https://docs.docker.com/engine/install/) and [Docker Compose](https://docs.docker.com/compose/install/)
 - [Git](https://git-scm.com/downloads)
+- Node.js v22.22.1 and pnpm 11.x (to run Novu application services from source)
 
-## Quick Start
+## Quick Start (local development)
 
-### Get the code
+### 1. Start dependency services
 
-Clone the Novu repo and enter the docker directory locally:
+From the repo root:
 
 ```sh
-# Get the code
-git clone https://github.com/novuhq/novu
-
-# Go to the docker folder
-cd novu/docker
-
-# Copy the example env file
-cp .env.example ./local/.env
-
-# Start Novu
-docker-compose -f ./local/docker-compose.yml up
+docker compose -f docker/local/docker-compose.yml up -d
 ```
 
-Now visit [http://127.0.0.1:4200](http://127.0.0.1:4200) to start using Novu.
+This starts MongoDB, Redis, ClickHouse, and LocalStack.
+
+Apply ClickHouse migrations:
+
+```sh
+pnpm --filter @novu/api-service clickhouse:migrate:local
+```
+
+### 2. Install and run Novu from source
+
+Follow the [Run Novu in local machine](https://docs.novu.co/community/run-in-local-machine) guide:
+
+```sh
+npm run setup:project
+pnpm dev:portless
+```
+
+The Dashboard dev server runs at [http://127.0.0.1:4201](http://127.0.0.1:4201) by default.
 
 ### Managing services
 
-#### Running all services
-
-For local development, you'll typically need to run all dependency services:
+#### Running all dependency services
 
 ```sh
-# Start all dependency services (recommended)
-docker-compose -f docker/local/docker-compose.yml up -d
+docker compose -f docker/local/docker-compose.yml up -d
 ```
 
 #### Running specific services
 
-If you only need specific services running (for development or resource management), you can start individual services by specifying their names. This is particularly useful when you already have some services running locally on your system and want to avoid port conflicts or resource duplication:
+If you only need specific services (for example, to avoid port conflicts):
 
 ```sh
-# Run only ClickHouse
-docker-compose -f docker/local/docker-compose.yml up -d clickhouse
+docker compose -f docker/local/docker-compose.yml up -d clickhouse
 ```
 
 ### Securing your setup
 
-While we provide you with some example secrets for getting started, you should NEVER deploy your Novu setup using the defaults provided.
+While we provide example secrets for getting started, you should NEVER deploy your Novu setup using the defaults provided.
 
 ### Update Secrets
 
-Update the `.env` file with your own secrets. In particular, these are required:
+Update the `.env` files under `apps/` with your own secrets. In particular, these are required:
 
 - `JWT_SECRET`: used by the API to generate JWT keys
+- `STORE_ENCRYPTION_KEY`: used to encrypt/decrypt provider credentials (32 characters)
 
 ### Redis config
 
-Redis TLS can be configured by adding the following variables to the `.env` file and specifying the necessary properties inside:
+Redis TLS can be configured by adding the following variables to the `.env` file:
 
 - `REDIS_TLS={"servername":"localhost"}`
 - `REDIS_CACHE_SERVICE_TLS={"servername":"localhost"}`
@@ -72,11 +79,13 @@ Redis TLS can be configured by adding the following variables to the `.env` file
 
 To keep the setup simple, we made some choices that may not be optimal for production:
 
-- the database is in the same machine as the servers
-- the storage uses the filesystem backend instead of S3
+- the database is on the same machine as the servers
+- the storage uses LocalStack or the filesystem backend instead of S3
 
 We strongly recommend that you decouple your database before deploying.
 
 ## Next steps
 
+- Full local development guide: [docs.novu.co/community/run-in-local-machine](https://docs.novu.co/community/run-in-local-machine)
+- Self-hosted Docker deployment: [docs.novu.co/community/self-hosting-novu/deploy-with-docker](https://docs.novu.co/community/self-hosting-novu/deploy-with-docker)
 - Got a question? [Ask here](https://discord.gg/novu).

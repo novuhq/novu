@@ -23,6 +23,7 @@ For optimal performance, host Novu's core services across multiple virtual machi
 | Dashboard | 1 VM | 2 vCPUs, 4 GB RAM |
 | Redis | 2 clusters (one for queues with AOF enabled) | 8 GB RAM per cluster |
 | MongoDB | 1 cluster | M20 or higher (MongoDB Atlas) |
+| ClickHouse | 1 cluster | 8 GB RAM (activity feed and analytics) |
 | S3 storage | — | 10 GB minimum |
 
 ### Single-VM deployment
@@ -34,6 +35,7 @@ If resources are limited or simplicity is a priority, all services can run on a 
 | All Novu services (API, Worker, WS, Dashboard) | 4 vCPUs, 8 GB RAM |
 | MongoDB | 2 GB RAM, 20 GB disk |
 | Redis | 2 GB RAM, AOF enabled |
+| ClickHouse | 2 GB RAM (for activity feed and analytics) |
 | S3 storage | 10 GB minimum |
 
 ### Infrastructure details
