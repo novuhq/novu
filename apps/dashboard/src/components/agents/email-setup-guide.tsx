@@ -404,7 +404,9 @@ export function EmailSetupGuide({
 
   return (
     <>
-      <SetupStepperRail>{activeStepsColumn}</SetupStepperRail>
+      {/* Non-embedded guides render below the channel-step rail in AgentSetupSteps — keep the
+          stepper line solid across the junction between the two rails. */}
+      <SetupStepperRail continuesAbove>{activeStepsColumn}</SetupStepperRail>
       {credentialsSidebar}
     </>
   );

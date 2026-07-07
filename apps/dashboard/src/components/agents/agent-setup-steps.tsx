@@ -730,7 +730,9 @@ export function AgentSetupSteps({
 
   return (
     <div className="flex flex-col gap-10 py-6 pb-3 pr-3 md:pr-6">
-      <SetupStepperRail>
+      {/* When a provider guide renders below, its steps live in a second rail — keep the line solid
+          across the junction instead of fading out and back in. */}
+      <SetupStepperRail continuesBelow={isChannelGuideActive}>
         {connectSummary &&
           !hideRecap &&
           (isManagedRuntime ? (
