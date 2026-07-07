@@ -1,4 +1,5 @@
 import { ApiExtraModels, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
+import { TOPIC_SUBSCRIPTION_IDENTIFIER_MAX_LENGTH } from '@novu/shared';
 import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
@@ -16,6 +17,7 @@ export class TopicSubscriberIdentifierDto {
   @ApiProperty({
     description: 'Unique identifier for this subscription',
     example: 'subscriber-123-subscription-a',
+    maxLength: TOPIC_SUBSCRIPTION_IDENTIFIER_MAX_LENGTH,
   })
   @IsString()
   @IsDefined()
