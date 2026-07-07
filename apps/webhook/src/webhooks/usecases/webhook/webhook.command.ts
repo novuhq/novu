@@ -11,5 +11,10 @@ export class WebhookCommand extends EnvironmentCommand {
   body: any;
 
   @IsDefined()
+  headers: Record<string, string>;
+
+  rawBody: Buffer | undefined;
+
+  @IsDefined()
   type: WebhookTypes;
 }

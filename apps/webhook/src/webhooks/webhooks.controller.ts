@@ -1,6 +1,17 @@
-import { Body, ClassSerializerInterceptor, Controller, Param, Post, UseInterceptors } from '@nestjs/common';
+import {
+  Body,
+  ClassSerializerInterceptor,
+  Controller,
+  Headers,
+  Param,
+  Post,
+  RawBodyRequest,
+  Req,
+  UseInterceptors,
+} from '@nestjs/common';
 
 import { IWebhookResult } from './dtos/webhooks-response.dto';
+import { normalizeHeaders } from './helpers/normalize-headers';
 import { WebhookCommand } from './usecases/webhook/webhook.command';
 import { Webhook } from './usecases/webhook/webhook.usecase';
 
@@ -14,7 +25,9 @@ export class WebhooksController {
     @Param('organizationId') organizationId: string,
     @Param('environmentId') environmentId: string,
     @Param('providerOrIntegrationId') providerOrIntegrationId: string,
-    @Body() body: any
+    @Body() body: any,
+    @Headers() headers: Record<string, string | string[] | undefined>,
+    @Req() request: RawBodyRequest<Request>
   ): Promise<IWebhookResult[]> {
     return this.webhookUsecase.execute(
       WebhookCommand.create({
@@ -22,6 +35,8 @@ export class WebhooksController {
         organizationId,
         providerOrIntegrationId,
         body,
+        headers: normalizeHeaders(headers),
+        rawBody: request.rawBody,
         type: 'email',
       })
     );
@@ -32,7 +47,9 @@ export class WebhooksController {
     @Param('organizationId') organizationId: string,
     @Param('environmentId') environmentId: string,
     @Param('providerOrIntegrationId') providerOrIntegrationId: string,
-    @Body() body: any
+    @Body() body: any,
+    @Headers() headers: Record<string, string | string[] | undefined>,
+    @Req() request: RawBodyRequest<Request>
   ): Promise<IWebhookResult[]> {
     return this.webhookUsecase.execute(
       WebhookCommand.create({
@@ -40,6 +57,8 @@ export class WebhooksController {
         organizationId,
         providerOrIntegrationId,
         body,
+        headers: normalizeHeaders(headers),
+        rawBody: request.rawBody,
         type: 'sms',
       })
     );

@@ -1,12 +1,13 @@
 import './instrument';
 import { INestApplication } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { getErrorInterceptor, Logger } from '@novu/application-generic';
 
 import { AppModule } from './app.module';
 
 export async function bootstrap(): Promise<INestApplication> {
-  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, { bufferLogs: true, rawBody: true });
 
   app.useLogger(app.get(Logger));
   app.flushLogs();

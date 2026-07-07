@@ -1,4 +1,11 @@
-import { BadRequestException, Injectable, Logger, NotFoundException, Scope } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+  Scope,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { AnalyticsService, IMailHandler, ISmsHandler, MailFactory, SmsFactory } from '@novu/application-generic';
 import { IntegrationEntity, IntegrationQuery, IntegrationRepository, MessageRepository } from '@novu/dal';
 import { ChannelTypeEnum, providers } from '@novu/shared';
@@ -12,6 +19,7 @@ import { WebhookCommand } from './webhook.command';
 export class Webhook {
   public readonly mailFactory = new MailFactory();
   public readonly smsFactory = new SmsFactory();
+  private handler: IMailHandler | ISmsHandler;
   private provider: IEmailProvider | ISmsProvider;
 
   constructor(
@@ -56,6 +64,8 @@ export class Webhook {
     if (!this.provider.getMessageId || !this.provider.parseEventBody) {
       throw new NotFoundException(`Provider with ${integration.providerId} can not handle webhooks`);
     }
+
+    await this.authenticate(command);
 
     const events = await this.parseEvents(command, integration.providerId, channel);
 
@@ -146,6 +156,18 @@ export class Webhook {
     return parsedEvent;
   }
 
+  private async authenticate(command: WebhookCommand): Promise<void> {
+    const verificationResult = await this.handler.verifySignature({
+      body: command.body,
+      headers: command.headers,
+      rawBody: command.rawBody,
+    });
+
+    if (!verificationResult.success) {
+      throw new UnauthorizedException(`Invalid signature: ${verificationResult.message}`);
+    }
+  }
+
   private getHandler(integration: IntegrationEntity, type: WebhookTypes): ISmsHandler | IMailHandler | null {
     switch (type) {
       case 'sms':
@@ -162,6 +184,7 @@ export class Webhook {
     }
     handler.buildProvider(integration.credentials);
 
+    this.handler = handler;
     this.provider = handler.getProvider();
   }
 }
