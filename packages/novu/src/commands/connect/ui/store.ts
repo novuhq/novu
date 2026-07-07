@@ -10,6 +10,7 @@ import type {
   ChatSdkConnectOutcome,
   CustomCodeConnectOutcome,
 } from '../types';
+import type { BridgeReconcileVariant } from './bridge-reconcile-variant';
 import type {
   BridgeTunnelOfferResult,
   GeneratedAgentPreviewResult,
@@ -88,14 +89,16 @@ export type Phase =
       envPaths: string[];
       wiringInstructions?: string;
       requirementsFile?: string;
+      variant?: BridgeReconcileVariant;
       resolve: () => void;
     }
-  | { kind: 'bridge-install-deps' }
+  | { kind: 'bridge-install-deps'; variant?: BridgeReconcileVariant }
   | {
       kind: 'bridge-install-deps-confirm';
       projectDir: string;
       installCommand: string;
       packages: string[];
+      variant?: BridgeReconcileVariant;
       resolve: (confirmed: boolean) => void;
     }
   | {

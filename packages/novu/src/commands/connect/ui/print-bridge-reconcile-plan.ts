@@ -1,6 +1,6 @@
 import chalk from 'chalk';
-import { CHAT_SDK_REQUIREMENTS_FILE_ENV } from '../pipeline/chat-sdk/requirements';
 import type { BridgeRequirement } from '../types';
+import { type BridgeReconcileVariant, reconcilePlanTitle, requirementsFileEnvName } from './bridge-reconcile-variant';
 
 type PrintBridgeReconcilePlanInput = {
   projectDir: string;
@@ -8,6 +8,7 @@ type PrintBridgeReconcilePlanInput = {
   envPaths: string[];
   wiringInstructions?: string;
   requirementsFile?: string;
+  variant?: BridgeReconcileVariant;
 };
 
 function requirementMarker(req: BridgeRequirement): string {
@@ -23,8 +24,10 @@ function requirementMarker(req: BridgeRequirement): string {
 }
 
 export function printBridgeReconcilePlan(opts: PrintBridgeReconcilePlanInput): void {
+  const variant = opts.variant ?? 'chat-sdk';
+
   console.log('');
-  console.log(chalk.bold('Chat SDK project setup'));
+  console.log(chalk.bold(reconcilePlanTitle(variant)));
   console.log(chalk.dim(opts.projectDir));
   for (const req of opts.requirements) {
     console.log(`  ${requirementMarker(req)} ${req.id}: ${req.detail}`);
@@ -33,7 +36,7 @@ export function printBridgeReconcilePlan(opts: PrintBridgeReconcilePlanInput): v
     console.log(chalk.gray(`  Env: ${envPath}`));
   }
   if (opts.requirementsFile) {
-    console.log(`${CHAT_SDK_REQUIREMENTS_FILE_ENV}=${opts.requirementsFile}`);
+    console.log(`${requirementsFileEnvName(variant)}=${opts.requirementsFile}`);
   }
   if (opts.wiringInstructions) {
     console.log('');

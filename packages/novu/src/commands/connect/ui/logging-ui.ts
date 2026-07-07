@@ -8,6 +8,7 @@ import { printBridgeScaffolded } from '../pipeline/bridge/print-bridge-scaffolde
 import type { BridgeScaffoldVariant } from '../pipeline/bridge/types';
 import type { AgentSummary } from '../types';
 import { resolveGeneratedAgentSpecLabels } from './agent-spec-labels';
+import { installDepsPrompt, installingDepsMessage, reconcilePlanTitle } from './bridge-reconcile-variant';
 import {
   logAuthUrlFileHandoffEvent,
   logEmailHandoffEvents,
@@ -219,21 +220,28 @@ export function createLoggingUI(): ConnectUI {
       stop();
       printBridgeScaffolded(opts);
     },
-    confirmInstallBridgeDeps({ projectDir, installCommand, packages }) {
+    confirmInstallBridgeDeps({ projectDir, installCommand, packages, variant = 'chat-sdk' }) {
       console.log('');
-      console.log(chalk.bold('Install Chat SDK packages?'));
+      console.log(chalk.bold(installDepsPrompt(variant)));
       console.log(chalk.dim(`Adding: ${packages.join(', ')}`));
       console.log(chalk.gray(`  Project: ${projectDir}`));
       console.log(chalk.cyan(`  ${installCommand}`));
 
       return Promise.resolve(true);
     },
-    installingBridgeDeps() {
-      start('Installing Chat SDK packages…');
+    installingBridgeDeps(variant = 'chat-sdk') {
+      start(installingDepsMessage(variant));
     },
-    showBridgeReconcilePlan({ projectDir, requirements, envPaths, wiringInstructions, requirementsFile }) {
-      succeed('Chat SDK project reconciled');
-      printBridgeReconcilePlan({ projectDir, requirements, envPaths, wiringInstructions, requirementsFile });
+    showBridgeReconcilePlan({
+      projectDir,
+      requirements,
+      envPaths,
+      wiringInstructions,
+      requirementsFile,
+      variant = 'chat-sdk',
+    }) {
+      succeed(`${reconcilePlanTitle(variant)} reconciled`);
+      printBridgeReconcilePlan({ projectDir, requirements, envPaths, wiringInstructions, requirementsFile, variant });
       console.log(chalk.gray('Non-interactive mode: continuing automatically.'));
 
       return Promise.resolve();

@@ -1,4 +1,3 @@
-import chalk from 'chalk';
 import type { ResolvedConnectAuth } from '../../auth/resolve-connect-auth';
 import type {
   AgentSummary,
@@ -161,6 +160,7 @@ async function reconcileAiSdkProject(
       envPaths,
       wiringInstructions,
       requirementsFile,
+      variant: 'ai-sdk',
     },
   });
 
@@ -240,19 +240,15 @@ async function applyPackageRequirement(opts: ApplyAutofixInput): Promise<AiSdkRe
     projectDir: opts.projectDir,
     installCommand,
     packages: packagesToInstall,
+    variant: 'ai-sdk',
   });
 
   if (shouldInstall) {
-    if (opts.input.ui.interactive) {
-      await opts.input.ui.releaseTerminal();
-      console.log(`${chalk.cyan('Installing AI SDK packages…')}\n`);
-    } else {
-      opts.input.ui.installingBridgeDeps();
-    }
+    opts.input.ui.installingBridgeDeps('ai-sdk');
 
     await runAiSdkPackageInstall({
       projectDir: opts.projectDir,
-      silent: false,
+      silent: opts.input.ui.interactive,
     });
 
     return computeAiSdkRequirements({

@@ -9,6 +9,7 @@ import type {
   ChatSdkConnectOutcome,
   CustomCodeConnectOutcome,
 } from '../types';
+import type { BridgeReconcileVariant } from './bridge-reconcile-variant';
 
 export type PickResult = { action: 'new' } | { action: 'use'; agent: AgentSummary };
 
@@ -92,14 +93,20 @@ export interface ConnectUI {
     envPaths?: string[];
     agentFilePath?: string;
   }): void;
-  confirmInstallBridgeDeps(opts: { projectDir: string; installCommand: string; packages: string[] }): Promise<boolean>;
-  installingBridgeDeps(): void;
+  confirmInstallBridgeDeps(opts: {
+    projectDir: string;
+    installCommand: string;
+    packages: string[];
+    variant?: BridgeReconcileVariant;
+  }): Promise<boolean>;
+  installingBridgeDeps(variant?: BridgeReconcileVariant): void;
   showBridgeReconcilePlan(opts: {
     projectDir: string;
     requirements: BridgeRequirement[];
     envPaths: string[];
     wiringInstructions?: string;
     requirementsFile?: string;
+    variant?: BridgeReconcileVariant;
   }): Promise<void>;
   offerBridgeTunnel(opts: { projectDir: string; devCommand: string }): Promise<BridgeTunnelOfferResult>;
 

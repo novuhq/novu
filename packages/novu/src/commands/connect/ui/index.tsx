@@ -9,6 +9,7 @@ import type { AgentSummary, ConnectCommandOptions } from '../types';
 import { App } from './app';
 import { promptBridgeReconcilePlanInConsole, promptBridgeTunnelInConsole } from './console-bridge-reconcile-prompts';
 import { printConnectSuccess, shouldSkipConnectSuccessSummary } from './print-connect-success';
+import { restoreStdinForConsole } from './restore-stdin-for-console';
 import { type ConnectStore, createConnectStore } from './store';
 import type {
   BridgeTunnelOfferResult,
@@ -31,10 +32,20 @@ export function mountConnectUI(_params: MountConnectUIParams): MountConnectUIRes
   const store = createConnectStore();
   let exitInk: (() => void) | undefined;
   let terminalReleased = false;
+  let doneResolved = false;
   let resolveDone!: (code: number) => void;
   const done = new Promise<number>((resolve) => {
     resolveDone = resolve;
   });
+
+  const resolveDoneOnce = (code: number) => {
+    if (doneResolved) {
+      return;
+    }
+
+    doneResolved = true;
+    resolveDone(code);
+  };
 
   const instance = render(
     <App
@@ -58,7 +69,11 @@ export function mountConnectUI(_params: MountConnectUIParams): MountConnectUIRes
   );
 
   void instance.waitUntilExit().then(() => {
-    resolveDone(Number(process.exitCode ?? 0));
+    if (terminalReleased) {
+      return;
+    }
+
+    resolveDoneOnce(Number(process.exitCode ?? 0));
   });
 
   const releaseTerminal = async () => {
@@ -66,12 +81,16 @@ export function mountConnectUI(_params: MountConnectUIParams): MountConnectUIRes
     terminalReleased = true;
     exitInk?.();
     await instance.waitUntilExit();
+    restoreStdinForConsole();
     console.log('');
   };
 
   const shutdown = async () => {
     if (terminalReleased) {
-      return Number(process.exitCode ?? 0);
+      const exitCode = Number(process.exitCode ?? 0);
+      resolveDoneOnce(exitCode);
+
+      return exitCode;
     }
 
     // Hold the final frame (error or success) on screen long enough for the
@@ -83,8 +102,10 @@ export function mountConnectUI(_params: MountConnectUIParams): MountConnectUIRes
     await new Promise<void>((resolve) => setTimeout(resolve, holdMs));
     exitInk?.();
     await instance.waitUntilExit();
+    const exitCode = Number(process.exitCode ?? 0);
+    resolveDoneOnce(exitCode);
 
-    return Number(process.exitCode ?? 0);
+    return exitCode;
   };
 
   const ui = createUiController(store, {
@@ -249,21 +270,22 @@ function createUiController(
     bridgeScaffolded(opts) {
       printBridgeScaffolded(opts);
     },
-    confirmInstallBridgeDeps({ projectDir, installCommand, packages }) {
+    confirmInstallBridgeDeps({ projectDir, installCommand, packages, variant }) {
       return new Promise<boolean>((resolve) => {
         store.phase.set({
           kind: 'bridge-install-deps-confirm',
           projectDir,
           installCommand,
           packages,
+          variant,
           resolve,
         });
       });
     },
-    installingBridgeDeps() {
-      store.phase.set({ kind: 'bridge-install-deps' });
+    installingBridgeDeps(variant) {
+      store.phase.set({ kind: 'bridge-install-deps', variant });
     },
-    showBridgeReconcilePlan({ projectDir, requirements, envPaths, wiringInstructions, requirementsFile }) {
+    showBridgeReconcilePlan({ projectDir, requirements, envPaths, wiringInstructions, requirementsFile, variant }) {
       if (ctx.isTerminalReleased()) {
         return promptBridgeReconcilePlanInConsole({
           projectDir,
@@ -271,6 +293,7 @@ function createUiController(
           envPaths,
           wiringInstructions,
           requirementsFile,
+          variant,
         });
       }
 
@@ -282,6 +305,7 @@ function createUiController(
           envPaths,
           wiringInstructions,
           requirementsFile,
+          variant,
           resolve,
         });
       });

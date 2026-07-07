@@ -1,4 +1,3 @@
-import chalk from 'chalk';
 import { createBridgeAgent, listAgents } from '../../api/agents';
 import type { ConnectApiClient } from '../../api/client';
 import type { ResolvedConnectAuth } from '../../auth/resolve-connect-auth';
@@ -161,6 +160,7 @@ async function reconcileChatSdkProject(
       envPaths,
       wiringInstructions,
       requirementsFile,
+      variant: 'chat-sdk',
     },
   });
 
@@ -238,19 +238,15 @@ async function applyPackageRequirement(opts: ApplyAutofixInput): Promise<ChatSdk
     projectDir: opts.projectDir,
     installCommand,
     packages: packagesToInstall,
+    variant: 'chat-sdk',
   });
 
   if (shouldInstall) {
-    if (opts.input.ui.interactive) {
-      await opts.input.ui.releaseTerminal();
-      console.log(`${chalk.cyan('Installing Chat SDK packages…')}\n`);
-    } else {
-      opts.input.ui.installingBridgeDeps();
-    }
+    opts.input.ui.installingBridgeDeps('chat-sdk');
 
     await runChatSdkPackageInstall({
       projectDir: opts.projectDir,
-      silent: false,
+      silent: opts.input.ui.interactive,
     });
 
     return computeChatSdkRequirements({

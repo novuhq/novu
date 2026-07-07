@@ -1,16 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { promptBridgeReconcilePlanInConsole, promptBridgeTunnelInConsole } from './console-bridge-reconcile-prompts';
 
-const readlineMocks = vi.hoisted(() => ({
-  question: vi.fn<() => Promise<string>>(),
-  close: vi.fn(),
-}));
+const waitForConsoleLine = vi.hoisted(() => vi.fn<() => Promise<string>>());
 
-vi.mock('node:readline/promises', () => ({
-  createInterface: () => ({
-    question: readlineMocks.question,
-    close: readlineMocks.close,
-  }),
+vi.mock('./wait-for-console-line', () => ({
+  waitForConsoleLine,
 }));
 
 describe('console-bridge-reconcile-prompts', () => {
@@ -19,21 +13,36 @@ describe('console-bridge-reconcile-prompts', () => {
   });
 
   it('promptBridgeReconcilePlanInConsole resolves after Enter', async () => {
-    readlineMocks.question.mockResolvedValue('');
+    waitForConsoleLine.mockResolvedValue('');
     const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
 
     await promptBridgeReconcilePlanInConsole({
       projectDir: '/tmp/chat-sdk',
       requirements: [{ id: 'env', status: 'ok', detail: 'NOVU_SECRET_KEY set' }],
       envPaths: ['/tmp/chat-sdk/.env.local'],
+      variant: 'chat-sdk',
     });
 
-    expect(readlineMocks.question).toHaveBeenCalledWith('');
+    expect(waitForConsoleLine).toHaveBeenCalledTimes(1);
     expect(log).toHaveBeenCalledWith(expect.stringContaining('Press Enter to continue'));
   });
 
+  it('promptBridgeReconcilePlanInConsole uses AI SDK title', async () => {
+    waitForConsoleLine.mockResolvedValue('');
+    const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
+    await promptBridgeReconcilePlanInConsole({
+      projectDir: '/tmp/ai-sdk',
+      requirements: [{ id: 'package', status: 'ok', detail: '@novu/framework installed' }],
+      envPaths: [],
+      variant: 'ai-sdk',
+    });
+
+    expect(log).toHaveBeenCalledWith(expect.stringContaining('AI SDK project setup'));
+  });
+
   it('promptBridgeTunnelInConsole accepts on Enter', async () => {
-    readlineMocks.question.mockResolvedValue('');
+    waitForConsoleLine.mockResolvedValue('');
 
     await expect(
       promptBridgeTunnelInConsole({
@@ -44,7 +53,7 @@ describe('console-bridge-reconcile-prompts', () => {
   });
 
   it('promptBridgeTunnelInConsole skips when s is entered', async () => {
-    readlineMocks.question.mockResolvedValue('s');
+    waitForConsoleLine.mockResolvedValue('s');
 
     await expect(
       promptBridgeTunnelInConsole({

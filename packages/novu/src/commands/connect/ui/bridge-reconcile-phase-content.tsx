@@ -3,6 +3,7 @@ import { Box, Text, useInput } from 'ink';
 // biome-ignore lint/correctness/noUnusedImports: classic-JSX linter falls back here because tsconfig.json excludes ui/.
 import React from 'react';
 import type { BridgeRequirement } from '../types';
+import { installDepsPrompt, installingDepsMessage, reconcilePlanTitle } from './bridge-reconcile-variant';
 import { ConfirmScaffoldContent } from './confirm-scaffold-content';
 import type { Phase } from './store';
 
@@ -66,7 +67,7 @@ export function BridgeReconcilePhaseContent({ phase }: { phase: BridgeReconcileP
     case 'bridge-install-deps':
       return (
         <Box flexDirection="column" gap={1}>
-          <Text color="cyan">Installing Chat SDK packages…</Text>
+          <Text color="cyan">{installingDepsMessage(phase.variant ?? 'chat-sdk')}</Text>
         </Box>
       );
 
@@ -109,7 +110,7 @@ function BridgeReconcilePlanContent({
 
   return (
     <Box flexDirection="column" gap={1}>
-      <Text bold>Chat SDK project setup</Text>
+      <Text bold>{reconcilePlanTitle(phase.variant ?? 'chat-sdk')}</Text>
       <Text dimColor>{phase.projectDir}</Text>
       {phase.requirements.map((req) => (
         <Text key={req.id}>
@@ -148,7 +149,7 @@ function BridgeInstallDepsConfirmContent({
 
   return (
     <Box flexDirection="column" gap={1}>
-      <Text bold>Install Chat SDK packages?</Text>
+      <Text bold>{installDepsPrompt(phase.variant ?? 'chat-sdk')}</Text>
       <Text dimColor>We'll add: {phase.packages.join(', ')}</Text>
       <Text color="cyan">{phase.installCommand}</Text>
       <Text color="cyan">Enter · install · Esc · skip</Text>
