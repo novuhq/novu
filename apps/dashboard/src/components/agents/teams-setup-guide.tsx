@@ -29,6 +29,7 @@ import { cn } from '@/utils/ui';
 import {
   IntegrationCredentialsSidebar,
   ListeningStatus,
+  ProviderSetupStepperRail,
   SetupButton,
   type SetupMode,
   SetupModeToggle,
@@ -1504,9 +1505,7 @@ export function TeamsSetupGuide({
 
   return (
     <>
-      {/* Non-embedded guides render below the channel-step rail in AgentSetupSteps — keep the
-          stepper line solid across the junction between the two rails. */}
-      <SetupStepperRail continuesAbove>{stepsContent}</SetupStepperRail>
+      <ProviderSetupStepperRail>{stepsContent}</ProviderSetupStepperRail>
       <div className="pl-8">{listening}</div>
       {credentialsSidebar}
     </>

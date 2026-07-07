@@ -75,6 +75,15 @@ export function SetupStepperRail({
   );
 }
 
+/** Provider guide rail in AgentSetupSteps — continues the channel-step rail rendered above. */
+export function ProviderSetupStepperRail({ children, className }: { children: ReactNode; className?: string }) {
+  return (
+    <SetupStepperRail continuesAbove className={className}>
+      {children}
+    </SetupStepperRail>
+  );
+}
+
 export function SetupModeToggle({ mode, onChange }: { mode: SetupMode; onChange: (m: SetupMode) => void }) {
   return (
     <div className="inline-flex w-fit items-start gap-px rounded-[5px] bg-bg-weak p-px">

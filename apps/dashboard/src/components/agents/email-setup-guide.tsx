@@ -14,6 +14,7 @@ import { OutboundProviderSelect } from './outbound-provider-select';
 import {
   IntegrationCredentialsSidebar,
   ListeningStatus,
+  ProviderSetupStepperRail,
   SetupButton,
   SetupStep,
   SetupStepperRail,
@@ -404,9 +405,7 @@ export function EmailSetupGuide({
 
   return (
     <>
-      {/* Non-embedded guides render below the channel-step rail in AgentSetupSteps — keep the
-          stepper line solid across the junction between the two rails. */}
-      <SetupStepperRail continuesAbove>{activeStepsColumn}</SetupStepperRail>
+      <ProviderSetupStepperRail>{activeStepsColumn}</ProviderSetupStepperRail>
       {credentialsSidebar}
     </>
   );

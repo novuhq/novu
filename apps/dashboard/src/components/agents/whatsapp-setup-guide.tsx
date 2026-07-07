@@ -20,6 +20,7 @@ import { QueryKeys } from '@/utils/query-keys';
 import {
   IntegrationCredentialsSidebar,
   ListeningStatus,
+  ProviderSetupStepperRail,
   SetupButton,
   SetupStep,
   SetupStepperRail,
@@ -609,9 +610,7 @@ export function WhatsAppSetupGuide({
 
   return (
     <>
-      {/* Non-embedded guides render below the channel-step rail in AgentSetupSteps — keep the
-          stepper line solid across the junction between the two rails. */}
-      <SetupStepperRail continuesAbove>{stepsColumn}</SetupStepperRail>
+      <ProviderSetupStepperRail>{stepsColumn}</ProviderSetupStepperRail>
       <div className="pl-8">{listening}</div>
       <IntegrationCredentialsSidebar
         integrationId={integrationId}
