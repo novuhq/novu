@@ -10,7 +10,7 @@ export function AccessDeniedPage() {
         <div className="flex flex-col items-center gap-1">
           <h3 className="text-base font-medium text-gray-900">🔒 Access Denied</h3>
           <p className="max-w-[367px] text-center text-xs font-medium text-[#99A0AE]">
-            Your role doesn't have the keys to this door - but hey, you found our nicest error message!
+            Your role doesn't have the keys to this door: but hey, you found our nicest error message!
           </p>
         </div>
 

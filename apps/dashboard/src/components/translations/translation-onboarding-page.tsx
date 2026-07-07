@@ -171,7 +171,7 @@ export const TranslationOnboardingPage = () => {
                 index={2}
                 layout="grid"
                 title="Enable translations where they matter"
-                description="Head over to Workflows > Select a workflow > Enable Translations, we’ll handle the right version for each subscriber."
+                description="Head over to Workflows > Select a workflow > Enable Translations. We'll handle the right version for each subscriber."
                 leftExtraContent={
                   <InlineToast
                     variant="tip"

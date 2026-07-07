@@ -41,8 +41,8 @@ export const LayoutsListUpgradeCta = () => {
           <div className="flex flex-col items-center gap-2">
             <h2 className="text-foreground-900 text-label-md">Need more layouts?</h2>
             <p className="text-text-soft text-label-xs max-w-[300px]">
-              You’ve got a default layout to start fast. Create custom ones to scale across use cases: and plug
-              anywhere: your emails (and teammates) will love you for it.
+              You&apos;ve got a default layout to start fast. Create custom ones to scale across use cases and plug them
+              anywhere. Your emails (and teammates) will love you for it.
             </p>
           </div>
           <div className="flex w-full flex-col items-center justify-center px-5">

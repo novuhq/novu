@@ -282,7 +282,7 @@ export function AgentCustomDomainSheet({
 
   const description = (() => {
     if (view === 'add') {
-      return "Add the domain, set the MX record, and we'll verify it: all without leaving this page.";
+      return "Add the domain, set the MX record, and we'll verify it, all without leaving this page.";
     }
 
     if (view === 'domain') {

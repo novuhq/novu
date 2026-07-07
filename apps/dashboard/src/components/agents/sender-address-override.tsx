@@ -97,18 +97,26 @@ export function SenderAddressOverride({
     ? 'text-text-soft text-label-xs font-medium leading-4'
     : 'text-text-sub text-label-xs cursor-pointer font-medium leading-4';
 
-  const switchControl = (
-    <Switch id={switchId} checked={enabled && !disabled} onCheckedChange={setEnabled} disabled={isSaving || disabled} />
-  );
-
   return (
     <div className="flex w-full flex-col gap-2">
       <div className="flex w-full items-center justify-between gap-2">
         <label htmlFor={switchId} className={labelClassName}>
           Use a custom From address
         </label>
-        {switchControl}
+        <Switch
+          id={switchId}
+          checked={enabled && !disabled}
+          onCheckedChange={setEnabled}
+          disabled={isSaving || disabled}
+        />
       </div>
+
+      {disabled ? (
+        <p className="text-text-soft text-paragraph-xs leading-4">
+          Custom From addresses require your own email provider. Connect SendGrid, Resend, or another provider to enable
+          this.
+        </p>
+      ) : null}
 
       {enabled && !disabled && (
         <div className="flex w-full flex-col gap-1">
