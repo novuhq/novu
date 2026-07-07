@@ -258,7 +258,7 @@ function StepResolverIllustration() {
 }
 
 const FEATURE_BULLETS = [
-  'The CLI auto-scaffolds a handler file in your project — no manual setup needed.',
+  'The CLI auto-scaffolds a handler file in your project: no manual setup needed.',
   'Write your step output in TypeScript using any library or template engine.',
   'Subscriber data, trigger payload, and dashboard controls are all available at runtime.',
   'Commit the file to your repo and re-publish to deploy updates at any time.',
@@ -398,7 +398,7 @@ export const StepResolverNotPublished = ({ workflowId, stepId }: StepResolverNot
                   <code className="rounded bg-neutral-100 px-1 py-0.5 font-mono text-[10px] text-[#525866]">
                     novu/{workflowId}/{stepId}.step.tsx
                   </code>{' '}
-                  if it doesn't exist yet — edit it with your logic and re-run to redeploy anytime.
+                  if it doesn't exist yet: edit it with your logic and re-run to redeploy anytime.
                   <br />
                   <br />💡 Your handler is bundled and deployed to Novu's serverless infrastructure on every publish.
                 </p>

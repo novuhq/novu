@@ -14,6 +14,7 @@ const baseConfig: Options = {
     'src/validators.ts',
     ...frameworks.map((framework) => `src/servers/${framework}.ts`),
     'src/ai-sdk/index.ts',
+    'src/langchain/index.ts',
     'src/cards.ts',
   ],
   sourcemap: false,

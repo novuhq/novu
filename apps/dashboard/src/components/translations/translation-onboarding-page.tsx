@@ -79,7 +79,7 @@ export const TranslationOnboardingPage = () => {
         {/* Header Section */}
         <EmptyTranslationsIllustration />
         <div className="flex flex-col gap-1">
-          <h2 className="text-text-strong text-base font-medium">No translations yet — Let’s set things up</h2>
+          <h2 className="text-text-strong text-base font-medium">No translations yet. Let&apos;s set things up</h2>
           <p className="text-text-soft text-xs font-medium">Start localizing your notifications in just a few steps.</p>
         </div>
 
@@ -90,7 +90,7 @@ export const TranslationOnboardingPage = () => {
               <TimelineStep
                 index={0}
                 title="Set your default language"
-                description="This is your default language — the one your content is written in."
+                description="This is your default language: the one your content is written in."
                 layout="grid"
                 rightContent={
                   <div className="space-y-2">
@@ -129,7 +129,7 @@ export const TranslationOnboardingPage = () => {
                     title="Tip:"
                     description={
                       <>
-                        Don't worry about getting this perfect — you can add more languages anytime.{' '}
+                        Don't worry about getting this perfect: you can add more languages anytime.{' '}
                         <Link
                           to="https://docs.novu.co/platform/workflow/advanced-features/translations"
                           className="underline"
@@ -171,7 +171,7 @@ export const TranslationOnboardingPage = () => {
                 index={2}
                 layout="grid"
                 title="Enable translations where they matter"
-                description="Head over to Workflows > Select a workflow > Enable Translations, — we’ll handle the right version for each subscriber."
+                description="Head over to Workflows > Select a workflow > Enable Translations. We'll handle the right version for each subscriber."
                 leftExtraContent={
                   <InlineToast
                     variant="tip"

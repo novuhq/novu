@@ -1,4 +1,4 @@
-import type { AgentRuntime, AgentVisibility, ManagedRuntimeConfigDto } from '@novu/shared';
+import type { AgentRuntime, AgentSubscriberAccessEnum, AgentVisibility, ManagedRuntimeConfigDto } from '@novu/shared';
 import type { ChangePropsValueType } from '../../types/helpers';
 import type { EnvironmentId } from '../environment';
 import type { OrganizationId } from '../organization';
@@ -6,6 +6,12 @@ import type { OrganizationId } from '../organization';
 export interface AgentBehavior {
   acknowledgeOnReceived?: boolean;
   reactionOnResolved?: string | null;
+  /**
+   * Whether the agent accepts inbound messages from senders not yet linked to a
+   * subscriber. `open` auto-provisions email senders; `restricted` (default
+   * when unset) rejects them.
+   */
+  subscriberAccess?: AgentSubscriberAccessEnum;
 }
 
 export interface ManagedRuntimeConfig {

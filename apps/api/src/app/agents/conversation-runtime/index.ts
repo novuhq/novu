@@ -1,5 +1,6 @@
 export { AgentAttachmentStorage } from './conversation/agent-attachment-storage.service';
 export { AgentConversationService } from './conversation/agent-conversation.service';
+export { AgentSubscriberAdoptionService } from './conversation/agent-subscriber-adoption.service';
 export { AgentSubscriberResolver } from './conversation/agent-subscriber-resolver.service';
 export { FileMaterializer } from './egress/file-materializer.service';
 export { OutboundGateway } from './egress/outbound.gateway';

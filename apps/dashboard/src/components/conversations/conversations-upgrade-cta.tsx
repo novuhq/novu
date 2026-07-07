@@ -25,7 +25,7 @@ const COPY = {
   compact: {
     title: 'Conversations is part of Novu Enterprise',
     description:
-      'Upgrade to see every message your agent sends and receives across Slack, WhatsApp, and more — live, in one place.',
+      'Upgrade to see every message your agent sends and receives across Slack, WhatsApp, and more: live, in one place.',
   },
 } as const;
 

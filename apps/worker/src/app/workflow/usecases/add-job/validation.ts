@@ -53,14 +53,14 @@ const validateWeekDays = (weekDays?: DaysEnum[]) => {
   }
 };
 
-const validMonthDayRange = (monthDay: number) => monthDay < 1 || monthDay > 31;
+const isValidMonthDay = (monthDay: number) => monthDay >= 1 && monthDay <= 31;
 
 const validateMonthDays = (monthDays?: number[]) => {
   if (!monthDays) {
     throw new BadRequestException('Digest timed config monthDays is missing');
   }
 
-  const allValid = monthDays.every((day) => validMonthDayRange(day));
+  const allValid = monthDays.every(isValidMonthDay);
   if (!allValid) {
     throw new BadRequestException('Digest timed config monthDays values are invalid');
   }
