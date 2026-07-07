@@ -3,8 +3,8 @@ import type { ResolvedConnectAuth } from '../../auth/resolve-connect-auth';
 import type {
   AgentSummary,
   AiSdkConnectOutcome,
-  ChatSdkRequirement,
-  ChatSdkRequirementId,
+  BridgeRequirement,
+  BridgeRequirementId,
   ConnectCommandOptions,
 } from '../../types';
 import type { ConnectUI } from '../../ui/ui';
@@ -180,7 +180,7 @@ type ApplyAutofixInput = {
   input: AiSdkSetupInput;
   projectDir: string;
   secretKey: string;
-  requirementId: ChatSdkRequirementId;
+  requirementId: BridgeRequirementId;
   snapshot: AiSdkRequirementsSnapshot;
   envPaths: string[];
 };
@@ -232,7 +232,7 @@ async function applyPackageRequirement(opts: ApplyAutofixInput): Promise<AiSdkRe
     };
   }
 
-  const shouldInstall = await opts.input.ui.confirmInstallChatSdkDeps({
+  const shouldInstall = await opts.input.ui.confirmInstallBridgeDeps({
     projectDir: opts.projectDir,
     installCommand,
     packages: packagesToInstall,
@@ -243,7 +243,7 @@ async function applyPackageRequirement(opts: ApplyAutofixInput): Promise<AiSdkRe
       await opts.input.ui.releaseTerminal();
       console.log(`${chalk.cyan('Installing AI SDK packages…')}\n`);
     } else {
-      opts.input.ui.installingChatSdkDeps();
+      opts.input.ui.installingBridgeDeps();
     }
 
     await runAiSdkPackageInstall({
@@ -319,7 +319,7 @@ async function resolveEnvSecretOverwrite(opts: {
   });
 }
 
-type AiSdkReconcilePlanInput = Parameters<ConnectUI['showChatSdkReconcilePlan']>[0];
+type AiSdkReconcilePlanInput = Parameters<ConnectUI['showBridgeReconcilePlan']>[0];
 
 async function promptAiSdkTunnelIfReady(opts: {
   input: AiSdkSetupInput;
@@ -327,7 +327,7 @@ async function promptAiSdkTunnelIfReady(opts: {
   coreReady: boolean;
   reconcilePlan: AiSdkReconcilePlanInput;
 }): Promise<boolean> {
-  await opts.input.ui.showChatSdkReconcilePlan(opts.reconcilePlan);
+  await opts.input.ui.showBridgeReconcilePlan(opts.reconcilePlan);
 
   if (!opts.coreReady || opts.input.options.ci) {
     return false;
@@ -338,7 +338,7 @@ async function promptAiSdkTunnelIfReady(opts: {
   }
 
   const devCommand = buildDevNovuScript(opts.projectDir);
-  const choice = await opts.input.ui.offerChatSdkTunnel({
+  const choice = await opts.input.ui.offerBridgeTunnel({
     projectDir: opts.projectDir,
     devCommand,
   });
@@ -387,7 +387,7 @@ function shouldRunAiSdkTunnel(outcome: AiSdkConnectOutcome | undefined, ci?: boo
 }
 
 function isAiSdkWiringReadyForTunnel(
-  requirements: ChatSdkRequirement[] | undefined,
+  requirements: BridgeRequirement[] | undefined,
   projectDir: string,
   scaffolded = false
 ): boolean {

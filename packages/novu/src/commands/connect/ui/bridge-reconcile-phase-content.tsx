@@ -2,30 +2,30 @@ import { TextInput } from '@inkjs/ui';
 import { Box, Text, useInput } from 'ink';
 // biome-ignore lint/correctness/noUnusedImports: classic-JSX linter falls back here because tsconfig.json excludes ui/.
 import React from 'react';
-import type { ChatSdkRequirement } from '../types';
+import type { BridgeRequirement } from '../types';
 import { ConfirmScaffoldContent } from './confirm-scaffold-content';
 import type { Phase } from './store';
 
-const CHAT_SDK_PHASE_KINDS = [
+const BRIDGE_RECONCILE_PHASE_KINDS = [
   'confirm-env-secret-overwrite',
   'confirm-scaffold',
   'prompt-agent-name',
   'scaffolding-bridge',
-  'chat-sdk-install-deps-confirm',
-  'chat-sdk-install-deps',
-  'chat-sdk-reconcile-plan',
-  'chat-sdk-tunnel-offer',
+  'bridge-install-deps-confirm',
+  'bridge-install-deps',
+  'bridge-reconcile-plan',
+  'bridge-tunnel-offer',
 ] as const;
 
-type ChatSdkPhaseKind = (typeof CHAT_SDK_PHASE_KINDS)[number];
+type BridgeReconcilePhaseKind = (typeof BRIDGE_RECONCILE_PHASE_KINDS)[number];
 
-export type ChatSdkPhase = Extract<Phase, { kind: ChatSdkPhaseKind }>;
+export type BridgeReconcilePhase = Extract<Phase, { kind: BridgeReconcilePhaseKind }>;
 
-export function isChatSdkPhase(phase: Phase): phase is ChatSdkPhase {
-  return (CHAT_SDK_PHASE_KINDS as readonly string[]).includes(phase.kind);
+export function isBridgeReconcilePhase(phase: Phase): phase is BridgeReconcilePhase {
+  return (BRIDGE_RECONCILE_PHASE_KINDS as readonly string[]).includes(phase.kind);
 }
 
-export function ChatSdkPhaseContent({ phase }: { phase: ChatSdkPhase }): React.ReactElement {
+export function BridgeReconcilePhaseContent({ phase }: { phase: BridgeReconcilePhase }): React.ReactElement {
   switch (phase.kind) {
     case 'confirm-env-secret-overwrite':
       return (
@@ -60,21 +60,21 @@ export function ChatSdkPhaseContent({ phase }: { phase: ChatSdkPhase }): React.R
         </Box>
       );
 
-    case 'chat-sdk-install-deps-confirm':
-      return <ChatSdkInstallDepsConfirmContent phase={phase} />;
+    case 'bridge-install-deps-confirm':
+      return <BridgeInstallDepsConfirmContent phase={phase} />;
 
-    case 'chat-sdk-install-deps':
+    case 'bridge-install-deps':
       return (
         <Box flexDirection="column" gap={1}>
           <Text color="cyan">Installing Chat SDK packages…</Text>
         </Box>
       );
 
-    case 'chat-sdk-reconcile-plan':
-      return <ChatSdkReconcilePlanContent phase={phase} />;
+    case 'bridge-reconcile-plan':
+      return <BridgeReconcilePlanContent phase={phase} />;
 
-    case 'chat-sdk-tunnel-offer':
-      return <ChatSdkTunnelOfferContent phase={phase} />;
+    case 'bridge-tunnel-offer':
+      return <BridgeTunnelOfferContent phase={phase} />;
 
     default: {
       const _exhaustive: never = phase;
@@ -84,7 +84,7 @@ export function ChatSdkPhaseContent({ phase }: { phase: ChatSdkPhase }): React.R
   }
 }
 
-function requirementIcon(req: ChatSdkRequirement): string {
+function requirementIcon(req: BridgeRequirement): string {
   if (req.status === 'ok') {
     return '✓';
   }
@@ -96,10 +96,10 @@ function requirementIcon(req: ChatSdkRequirement): string {
   return '…';
 }
 
-function ChatSdkReconcilePlanContent({
+function BridgeReconcilePlanContent({
   phase,
 }: {
-  phase: Extract<Phase, { kind: 'chat-sdk-reconcile-plan' }>;
+  phase: Extract<Phase, { kind: 'bridge-reconcile-plan' }>;
 }): React.ReactElement {
   useInput((_input, key) => {
     if (key.return) {
@@ -132,10 +132,10 @@ function ChatSdkReconcilePlanContent({
   );
 }
 
-function ChatSdkInstallDepsConfirmContent({
+function BridgeInstallDepsConfirmContent({
   phase,
 }: {
-  phase: Extract<Phase, { kind: 'chat-sdk-install-deps-confirm' }>;
+  phase: Extract<Phase, { kind: 'bridge-install-deps-confirm' }>;
 }): React.ReactElement {
   useInput((_input, key) => {
     if (key.return) {
@@ -156,10 +156,10 @@ function ChatSdkInstallDepsConfirmContent({
   );
 }
 
-function ChatSdkTunnelOfferContent({
+function BridgeTunnelOfferContent({
   phase,
 }: {
-  phase: Extract<Phase, { kind: 'chat-sdk-tunnel-offer' }>;
+  phase: Extract<Phase, { kind: 'bridge-tunnel-offer' }>;
 }): React.ReactElement {
   useInput((input, key) => {
     if (key.return) {

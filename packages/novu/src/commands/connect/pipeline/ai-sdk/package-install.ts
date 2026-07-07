@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { installPackages } from '../../../init/helpers/install';
 import { detectPackageManager } from '../../../step/utils/package-manager';
-import { hasDependency, readProjectPackageJson } from '../chat-sdk/project-package';
+import { hasDependency, readProjectPackageJson } from '../bridge/project-package';
 
 const FRAMEWORK_PACKAGE = '@novu/framework';
 

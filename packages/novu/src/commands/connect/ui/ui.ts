@@ -4,9 +4,9 @@ import type {
   AgentConnectMode,
   AgentSummary,
   AiSdkConnectOutcome,
+  BridgeRequirement,
   ChannelChoice,
   ChatSdkConnectOutcome,
-  ChatSdkRequirement,
   CustomCodeConnectOutcome,
 } from '../types';
 
@@ -18,7 +18,7 @@ export type PickAgentIntegrationResult = { kind: 'existing'; integrationId: stri
 
 export type TelegramTokenDelivery = 'setup-page' | 'terminal';
 
-export type ChatSdkTunnelOfferResult = 'accept' | 'skip';
+export type BridgeTunnelOfferResult = 'accept' | 'skip';
 
 export interface ConnectUI {
   /** True when running the Ink TUI; false for CI / non-TTY logging mode. */
@@ -92,16 +92,16 @@ export interface ConnectUI {
     envPaths?: string[];
     agentFilePath?: string;
   }): void;
-  confirmInstallChatSdkDeps(opts: { projectDir: string; installCommand: string; packages: string[] }): Promise<boolean>;
-  installingChatSdkDeps(): void;
-  showChatSdkReconcilePlan(opts: {
+  confirmInstallBridgeDeps(opts: { projectDir: string; installCommand: string; packages: string[] }): Promise<boolean>;
+  installingBridgeDeps(): void;
+  showBridgeReconcilePlan(opts: {
     projectDir: string;
-    requirements: ChatSdkRequirement[];
+    requirements: BridgeRequirement[];
     envPaths: string[];
     wiringInstructions?: string;
     requirementsFile?: string;
   }): Promise<void>;
-  offerChatSdkTunnel(opts: { projectDir: string; devCommand: string }): Promise<ChatSdkTunnelOfferResult>;
+  offerBridgeTunnel(opts: { projectDir: string; devCommand: string }): Promise<BridgeTunnelOfferResult>;
 
   // Channel selection
   pickChannel(): Promise<ChannelChoice>;

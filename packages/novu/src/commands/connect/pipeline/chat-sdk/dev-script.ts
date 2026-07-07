@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { readProjectPackageJson } from './project-package';
+import { readProjectPackageJson } from '../bridge/project-package';
 import { readProjectEnvValue } from './wire-env';
 
 /** Default local port for Chat SDK connect — avoids 3000/4000 collisions. */

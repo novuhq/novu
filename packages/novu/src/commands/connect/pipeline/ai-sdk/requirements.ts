@@ -2,8 +2,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import type { ChatSdkRequirement, ChatSdkRequirementId } from '../../types';
-import { hasDependency, readProjectPackageJson } from '../chat-sdk/project-package';
+import type { BridgeRequirement, BridgeRequirementId } from '../../types';
+import { hasDependency, readProjectPackageJson } from '../bridge/project-package';
 import { detectAiSdkWiring } from './detect-wiring';
 import { hasDevNovuScript, shouldRefreshDevNovuScript } from './dev-script';
 import { resolveAiSdkPackagesToInstall } from './package-install';
@@ -16,11 +16,11 @@ export type ComputeRequirementsInput = {
 };
 
 export type AiSdkRequirementsSnapshot = {
-  requirements: ChatSdkRequirement[];
+  requirements: BridgeRequirement[];
   coreReady: boolean;
 };
 
-const AI_SDK_CORE_REQUIREMENT_IDS: readonly ChatSdkRequirementId[] = ['package', 'env', 'dev-script'];
+const AI_SDK_CORE_REQUIREMENT_IDS: readonly BridgeRequirementId[] = ['package', 'env', 'dev-script'];
 
 const PROVIDER_ENV_HINTS = [
   {
@@ -40,7 +40,7 @@ const PROVIDER_ENV_HINTS = [
   },
 ] as const;
 
-function computePackageRequirement(projectDir: string): ChatSdkRequirement {
+function computePackageRequirement(projectDir: string): BridgeRequirement {
   const pkg = readProjectPackageJson(projectDir);
   if (!pkg) {
     return {
@@ -67,7 +67,7 @@ function computePackageRequirement(projectDir: string): ChatSdkRequirement {
   };
 }
 
-function computeEnvRequirement(projectDir: string, input: ComputeRequirementsInput): ChatSdkRequirement {
+function computeEnvRequirement(projectDir: string, input: ComputeRequirementsInput): BridgeRequirement {
   const secretKey = readEnvSecretKey(projectDir);
 
   if (!secretKey) {
@@ -93,7 +93,7 @@ function computeEnvRequirement(projectDir: string, input: ComputeRequirementsInp
   };
 }
 
-function computeDevScriptRequirement(projectDir: string): ChatSdkRequirement {
+function computeDevScriptRequirement(projectDir: string): BridgeRequirement {
   if (!hasDevNovuScript(projectDir)) {
     return {
       id: 'dev-script',
@@ -117,7 +117,7 @@ function computeDevScriptRequirement(projectDir: string): ChatSdkRequirement {
   };
 }
 
-function computeCodeWiringRequirement(projectDir: string): ChatSdkRequirement {
+function computeCodeWiringRequirement(projectDir: string): BridgeRequirement {
   const wiring = detectAiSdkWiring(projectDir);
 
   if (wiring.isWired) {
@@ -143,13 +143,13 @@ function computeCodeWiringRequirement(projectDir: string): ChatSdkRequirement {
   };
 }
 
-function computeProviderEnvHints(projectDir: string): ChatSdkRequirement[] {
+function computeProviderEnvHints(projectDir: string): BridgeRequirement[] {
   const pkg = readProjectPackageJson(projectDir);
   if (!pkg) {
     return [];
   }
 
-  const hints: ChatSdkRequirement[] = [];
+  const hints: BridgeRequirement[] = [];
 
   for (const hint of PROVIDER_ENV_HINTS) {
     if (!hasDependency(pkg, hint.packageName)) {
@@ -172,7 +172,7 @@ function computeProviderEnvHints(projectDir: string): ChatSdkRequirement[] {
 
 export function computeAiSdkRequirements(input: ComputeRequirementsInput): AiSdkRequirementsSnapshot {
   const projectDir = path.resolve(input.projectDir);
-  const requirements: ChatSdkRequirement[] = [
+  const requirements: BridgeRequirement[] = [
     computePackageRequirement(projectDir),
     computeEnvRequirement(projectDir, input),
     computeDevScriptRequirement(projectDir),
@@ -188,17 +188,17 @@ export function computeAiSdkRequirements(input: ComputeRequirementsInput): AiSdk
   };
 }
 
-export function recomputeCoreReady(requirements: ChatSdkRequirement[]): boolean {
+export function recomputeCoreReady(requirements: BridgeRequirement[]): boolean {
   return requirements.filter((req) => AI_SDK_CORE_REQUIREMENT_IDS.includes(req.id)).every((req) => req.status === 'ok');
 }
 
 export const AI_SDK_REQUIREMENTS_FILE_ENV = 'NOVU_CONNECT_AI_SDK_REQUIREMENTS_FILE';
 
-export const AUTOFIX_REQUIREMENT_ORDER: readonly ChatSdkRequirementId[] = ['env', 'dev-script', 'package'];
+export const AUTOFIX_REQUIREMENT_ORDER: readonly BridgeRequirementId[] = ['env', 'dev-script', 'package'];
 
 export async function writeAiSdkRequirementsFile(opts: {
   projectDir: string;
-  requirements: ChatSdkRequirement[];
+  requirements: BridgeRequirement[];
   wiringInstructions?: string;
 }): Promise<string> {
   const lines = [

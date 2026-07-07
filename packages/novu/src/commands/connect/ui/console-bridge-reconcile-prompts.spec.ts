@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { promptChatSdkReconcilePlanInConsole, promptChatSdkTunnelInConsole } from './console-chat-sdk-prompts';
+import { promptBridgeReconcilePlanInConsole, promptBridgeTunnelInConsole } from './console-bridge-reconcile-prompts';
 
 const readlineMocks = vi.hoisted(() => ({
   question: vi.fn<() => Promise<string>>(),
@@ -13,16 +13,16 @@ vi.mock('node:readline/promises', () => ({
   }),
 }));
 
-describe('console-chat-sdk-prompts', () => {
+describe('console-bridge-reconcile-prompts', () => {
   afterEach(() => {
     vi.clearAllMocks();
   });
 
-  it('promptChatSdkReconcilePlanInConsole resolves after Enter', async () => {
+  it('promptBridgeReconcilePlanInConsole resolves after Enter', async () => {
     readlineMocks.question.mockResolvedValue('');
     const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
 
-    await promptChatSdkReconcilePlanInConsole({
+    await promptBridgeReconcilePlanInConsole({
       projectDir: '/tmp/chat-sdk',
       requirements: [{ id: 'env', status: 'ok', detail: 'NOVU_SECRET_KEY set' }],
       envPaths: ['/tmp/chat-sdk/.env.local'],
@@ -32,22 +32,22 @@ describe('console-chat-sdk-prompts', () => {
     expect(log).toHaveBeenCalledWith(expect.stringContaining('Press Enter to continue'));
   });
 
-  it('promptChatSdkTunnelInConsole accepts on Enter', async () => {
+  it('promptBridgeTunnelInConsole accepts on Enter', async () => {
     readlineMocks.question.mockResolvedValue('');
 
     await expect(
-      promptChatSdkTunnelInConsole({
+      promptBridgeTunnelInConsole({
         projectDir: '/tmp/chat-sdk',
         devCommand: 'npm run dev:novu',
       })
     ).resolves.toBe('accept');
   });
 
-  it('promptChatSdkTunnelInConsole skips when s is entered', async () => {
+  it('promptBridgeTunnelInConsole skips when s is entered', async () => {
     readlineMocks.question.mockResolvedValue('s');
 
     await expect(
-      promptChatSdkTunnelInConsole({
+      promptBridgeTunnelInConsole({
         projectDir: '/tmp/chat-sdk',
         devCommand: 'npm run dev:novu',
       })

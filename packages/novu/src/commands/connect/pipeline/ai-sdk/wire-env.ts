@@ -6,7 +6,7 @@ export {
   readEnvSecretKey,
   readProjectEnvValue,
   resolveProjectEnvPaths,
-} from '../chat-sdk/wire-env';
+} from '../bridge/wire-env';
 
 const DEFAULT_API_BASE_URL = 'https://api.novu.co';
 

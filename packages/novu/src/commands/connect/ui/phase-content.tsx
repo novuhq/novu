@@ -9,7 +9,7 @@ import { channelDisplayName, isDashboardOnlyChannel } from '../dashboard-urls';
 import { resolveBridgeSetupFollowUpMessage } from '../pipeline/bridge/setup-outcome-message';
 import { validateSlackConfigTokenFormat } from '../pipeline/channels/slack-config-token';
 import type { ChannelChoice } from '../types';
-import { ChatSdkPhaseContent, isChatSdkPhase } from './chat-sdk-phase-content';
+import { BridgeReconcilePhaseContent, isBridgeReconcilePhase } from './bridge-reconcile-phase-content';
 import { CopyableLink } from './copyable-link';
 import { GroupedConnectModeSelect } from './grouped-connect-mode-select';
 import { PreviewGeneratedContent } from './preview-generated-content';
@@ -37,8 +37,8 @@ export function PhaseContent({
   onChannelHover: (channel: ChannelChoice | null) => void;
   previewMorphComplete: boolean;
 }): React.ReactElement {
-  if (isChatSdkPhase(phase)) {
-    return ChatSdkPhaseContent({ phase });
+  if (isBridgeReconcilePhase(phase)) {
+    return BridgeReconcilePhaseContent({ phase });
   }
 
   switch (phase.kind) {

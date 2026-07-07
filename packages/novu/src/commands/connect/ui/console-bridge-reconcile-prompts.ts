@@ -1,22 +1,22 @@
 import { stdin as input, stdout as output } from 'node:process';
 import * as readline from 'node:readline/promises';
 import chalk from 'chalk';
-import { printChatSdkReconcilePlan } from './print-chat-sdk-reconcile-plan';
-import type { ChatSdkTunnelOfferResult } from './ui';
+import { printBridgeReconcilePlan } from './print-bridge-reconcile-plan';
+import type { BridgeTunnelOfferResult } from './ui';
 
-type ChatSdkReconcilePlanInput = Parameters<typeof printChatSdkReconcilePlan>[0];
+type BridgeReconcilePlanInput = Parameters<typeof printBridgeReconcilePlan>[0];
 
-export async function promptChatSdkReconcilePlanInConsole(opts: ChatSdkReconcilePlanInput): Promise<void> {
-  printChatSdkReconcilePlan(opts);
+export async function promptBridgeReconcilePlanInConsole(opts: BridgeReconcilePlanInput): Promise<void> {
+  printBridgeReconcilePlan(opts);
   console.log(chalk.cyan('Press Enter to continue'));
 
   await waitForLine();
 }
 
-export async function promptChatSdkTunnelInConsole(opts: {
+export async function promptBridgeTunnelInConsole(opts: {
   projectDir: string;
   devCommand: string;
-}): Promise<ChatSdkTunnelOfferResult> {
+}): Promise<BridgeTunnelOfferResult> {
   console.log('');
   console.log(chalk.bold('Start the dev tunnel?'));
   console.log(chalk.dim('Runs your app and registers a public bridge URL with Novu.'));

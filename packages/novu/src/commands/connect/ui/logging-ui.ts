@@ -20,7 +20,7 @@ import {
   logTelegramSetupLinkQrPngHandoffEvent,
   writeAuthUrlHandoffFile,
 } from './handoff-events';
-import { printChatSdkReconcilePlan } from './print-chat-sdk-reconcile-plan';
+import { printBridgeReconcilePlan } from './print-bridge-reconcile-plan';
 import { printConnectSuccess, shouldSkipConnectSuccessSummary } from './print-connect-success';
 import { renderQRPngFile } from './qr';
 import type { ConnectUI, GeneratedAgentPreviewResult, PickResult } from './ui';
@@ -219,7 +219,7 @@ export function createLoggingUI(): ConnectUI {
       stop();
       printBridgeScaffolded(opts);
     },
-    confirmInstallChatSdkDeps({ projectDir, installCommand, packages }) {
+    confirmInstallBridgeDeps({ projectDir, installCommand, packages }) {
       console.log('');
       console.log(chalk.bold('Install Chat SDK packages?'));
       console.log(chalk.dim(`Adding: ${packages.join(', ')}`));
@@ -228,17 +228,17 @@ export function createLoggingUI(): ConnectUI {
 
       return Promise.resolve(true);
     },
-    installingChatSdkDeps() {
+    installingBridgeDeps() {
       start('Installing Chat SDK packages…');
     },
-    showChatSdkReconcilePlan({ projectDir, requirements, envPaths, wiringInstructions, requirementsFile }) {
+    showBridgeReconcilePlan({ projectDir, requirements, envPaths, wiringInstructions, requirementsFile }) {
       succeed('Chat SDK project reconciled');
-      printChatSdkReconcilePlan({ projectDir, requirements, envPaths, wiringInstructions, requirementsFile });
+      printBridgeReconcilePlan({ projectDir, requirements, envPaths, wiringInstructions, requirementsFile });
       console.log(chalk.gray('Non-interactive mode: continuing automatically.'));
 
       return Promise.resolve();
     },
-    offerChatSdkTunnel({ devCommand }) {
+    offerBridgeTunnel({ devCommand }) {
       console.log('');
       console.log(chalk.bold('Start the dev tunnel?'));
       console.log(chalk.cyan(`  ${devCommand}`));

@@ -7,11 +7,11 @@ import { ConnectChannelBackError } from '../errors';
 import { printBridgeScaffolded } from '../pipeline/bridge/print-bridge-scaffolded';
 import type { AgentSummary, ConnectCommandOptions } from '../types';
 import { App } from './app';
-import { promptChatSdkReconcilePlanInConsole, promptChatSdkTunnelInConsole } from './console-chat-sdk-prompts';
+import { promptBridgeReconcilePlanInConsole, promptBridgeTunnelInConsole } from './console-bridge-reconcile-prompts';
 import { printConnectSuccess, shouldSkipConnectSuccessSummary } from './print-connect-success';
 import { type ConnectStore, createConnectStore } from './store';
 import type {
-  ChatSdkTunnelOfferResult,
+  BridgeTunnelOfferResult,
   ConnectUI,
   GeneratedAgentPreviewResult,
   PickResult,
@@ -249,10 +249,10 @@ function createUiController(
     bridgeScaffolded(opts) {
       printBridgeScaffolded(opts);
     },
-    confirmInstallChatSdkDeps({ projectDir, installCommand, packages }) {
+    confirmInstallBridgeDeps({ projectDir, installCommand, packages }) {
       return new Promise<boolean>((resolve) => {
         store.phase.set({
-          kind: 'chat-sdk-install-deps-confirm',
+          kind: 'bridge-install-deps-confirm',
           projectDir,
           installCommand,
           packages,
@@ -260,12 +260,12 @@ function createUiController(
         });
       });
     },
-    installingChatSdkDeps() {
-      store.phase.set({ kind: 'chat-sdk-install-deps' });
+    installingBridgeDeps() {
+      store.phase.set({ kind: 'bridge-install-deps' });
     },
-    showChatSdkReconcilePlan({ projectDir, requirements, envPaths, wiringInstructions, requirementsFile }) {
+    showBridgeReconcilePlan({ projectDir, requirements, envPaths, wiringInstructions, requirementsFile }) {
       if (ctx.isTerminalReleased()) {
-        return promptChatSdkReconcilePlanInConsole({
+        return promptBridgeReconcilePlanInConsole({
           projectDir,
           requirements,
           envPaths,
@@ -276,7 +276,7 @@ function createUiController(
 
       return new Promise<void>((resolve) => {
         store.phase.set({
-          kind: 'chat-sdk-reconcile-plan',
+          kind: 'bridge-reconcile-plan',
           projectDir,
           requirements,
           envPaths,
@@ -286,14 +286,14 @@ function createUiController(
         });
       });
     },
-    offerChatSdkTunnel({ projectDir, devCommand }) {
+    offerBridgeTunnel({ projectDir, devCommand }) {
       if (ctx.isTerminalReleased()) {
-        return promptChatSdkTunnelInConsole({ projectDir, devCommand });
+        return promptBridgeTunnelInConsole({ projectDir, devCommand });
       }
 
-      return new Promise<ChatSdkTunnelOfferResult>((resolve) => {
+      return new Promise<BridgeTunnelOfferResult>((resolve) => {
         store.phase.set({
-          kind: 'chat-sdk-tunnel-offer',
+          kind: 'bridge-tunnel-offer',
           projectDir,
           devCommand,
           resolve,

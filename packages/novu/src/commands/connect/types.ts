@@ -37,26 +37,26 @@ export function isVanillaCustomCodeConnectMode(mode: AgentConnectMode): mode is 
   return mode === 'langchain' || mode === 'custom-code';
 }
 
-export type ChatSdkProjectKind = 'empty' | 'project';
+export type BridgeProjectKind = 'empty' | 'project';
 
-export type ChatSdkRequirementId = 'package' | 'env' | 'dev-script' | 'code-wiring' | 'provider-env';
+export type BridgeRequirementId = 'package' | 'env' | 'dev-script' | 'code-wiring' | 'provider-env';
 
-export type ChatSdkReqStatus = 'ok' | 'autofixable' | 'manual';
+export type BridgeReqStatus = 'ok' | 'autofixable' | 'manual';
 
-export type ChatSdkRequirement = {
-  id: ChatSdkRequirementId;
-  status: ChatSdkReqStatus;
+export type BridgeRequirement = {
+  id: BridgeRequirementId;
+  status: BridgeReqStatus;
   detail: string;
 };
 
 export type ChatSdkConnectOutcome = {
-  projectKind: ChatSdkProjectKind;
+  projectKind: BridgeProjectKind;
   projectDir: string;
   scaffolded: boolean;
   envPaths?: string[];
   /** True when npm install was skipped (e.g. scaffolding inside a monorepo). */
   skippedInstall?: boolean;
-  requirements?: ChatSdkRequirement[];
+  requirements?: BridgeRequirement[];
   /** Absolute path to a requirements summary file (CI / logging handoff). */
   requirementsFile?: string;
   /** package + env + dev-script satisfied after reconcile. */
@@ -68,12 +68,12 @@ export type ChatSdkConnectOutcome = {
 };
 
 export type AiSdkConnectOutcome = {
-  projectKind: ChatSdkProjectKind;
+  projectKind: BridgeProjectKind;
   projectDir: string;
   scaffolded: boolean;
   envPaths?: string[];
   skippedInstall?: boolean;
-  requirements?: ChatSdkRequirement[];
+  requirements?: BridgeRequirement[];
   requirementsFile?: string;
   coreReady?: boolean;
   tunnelAccepted?: boolean;

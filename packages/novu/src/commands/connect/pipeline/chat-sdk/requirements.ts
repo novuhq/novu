@@ -2,11 +2,11 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import type { ChatSdkRequirement, ChatSdkRequirementId } from '../../types';
+import type { BridgeRequirement, BridgeRequirementId } from '../../types';
+import { readProjectPackageJson } from '../bridge/project-package';
 import { detectChatSdkWiring } from './detect-wiring';
 import { hasDevNovuScript, shouldRefreshDevNovuScript } from './dev-script';
 import { resolveChatSdkPackagesToInstall } from './package-install';
-import { readProjectPackageJson } from './project-package';
 import { readEnvAgentIdentifier, readEnvSecretKey } from './wire-env';
 
 export type ComputeRequirementsInput = {
@@ -16,11 +16,11 @@ export type ComputeRequirementsInput = {
 };
 
 export type ChatSdkRequirementsSnapshot = {
-  requirements: ChatSdkRequirement[];
+  requirements: BridgeRequirement[];
   coreReady: boolean;
 };
 
-function computePackageRequirement(projectDir: string): ChatSdkRequirement {
+function computePackageRequirement(projectDir: string): BridgeRequirement {
   const pkg = readProjectPackageJson(projectDir);
   if (!pkg) {
     return {
@@ -47,7 +47,7 @@ function computePackageRequirement(projectDir: string): ChatSdkRequirement {
   };
 }
 
-function computeEnvRequirement(projectDir: string, input: ComputeRequirementsInput): ChatSdkRequirement {
+function computeEnvRequirement(projectDir: string, input: ComputeRequirementsInput): BridgeRequirement {
   const secretKey = readEnvSecretKey(projectDir);
   const agentIdentifier = readEnvAgentIdentifier(projectDir);
 
@@ -98,7 +98,7 @@ function computeEnvRequirement(projectDir: string, input: ComputeRequirementsInp
   };
 }
 
-function computeDevScriptRequirement(projectDir: string): ChatSdkRequirement {
+function computeDevScriptRequirement(projectDir: string): BridgeRequirement {
   if (!hasDevNovuScript(projectDir)) {
     return {
       id: 'dev-script',
@@ -122,7 +122,7 @@ function computeDevScriptRequirement(projectDir: string): ChatSdkRequirement {
   };
 }
 
-function computeCodeWiringRequirement(projectDir: string): ChatSdkRequirement {
+function computeCodeWiringRequirement(projectDir: string): BridgeRequirement {
   const wiring = detectChatSdkWiring(projectDir);
 
   if (wiring.isWired) {
@@ -150,7 +150,7 @@ function computeCodeWiringRequirement(projectDir: string): ChatSdkRequirement {
 
 export function computeChatSdkRequirements(input: ComputeRequirementsInput): ChatSdkRequirementsSnapshot {
   const projectDir = path.resolve(input.projectDir);
-  const requirements: ChatSdkRequirement[] = [
+  const requirements: BridgeRequirement[] = [
     computePackageRequirement(projectDir),
     computeEnvRequirement(projectDir, input),
     computeDevScriptRequirement(projectDir),
@@ -162,17 +162,17 @@ export function computeChatSdkRequirements(input: ComputeRequirementsInput): Cha
   return { requirements, coreReady };
 }
 
-export function recomputeCoreReady(requirements: ChatSdkRequirement[]): boolean {
+export function recomputeCoreReady(requirements: BridgeRequirement[]): boolean {
   return requirements.filter((req) => req.id !== 'code-wiring').every((req) => req.status === 'ok');
 }
 
 export const CHAT_SDK_REQUIREMENTS_FILE_ENV = 'NOVU_CONNECT_CHAT_SDK_REQUIREMENTS_FILE';
 
-export const AUTOFIX_REQUIREMENT_ORDER: readonly ChatSdkRequirementId[] = ['env', 'dev-script', 'package'];
+export const AUTOFIX_REQUIREMENT_ORDER: readonly BridgeRequirementId[] = ['env', 'dev-script', 'package'];
 
 export async function writeChatSdkRequirementsFile(opts: {
   projectDir: string;
-  requirements: ChatSdkRequirement[];
+  requirements: BridgeRequirement[];
   wiringInstructions?: string;
 }): Promise<string> {
   const lines = [

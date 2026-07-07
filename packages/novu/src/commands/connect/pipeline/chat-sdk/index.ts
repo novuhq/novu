@@ -4,9 +4,9 @@ import type { ConnectApiClient } from '../../api/client';
 import type { ResolvedConnectAuth } from '../../auth/resolve-connect-auth';
 import type {
   AgentSummary,
+  BridgeRequirement,
+  BridgeRequirementId,
   ChatSdkConnectOutcome,
-  ChatSdkRequirement,
-  ChatSdkRequirementId,
   ConnectCommandOptions,
 } from '../../types';
 import type { ConnectUI } from '../../ui/ui';
@@ -178,7 +178,7 @@ type ApplyAutofixInput = {
   input: ChatSdkSetupInput;
   projectDir: string;
   secretKey: string;
-  requirementId: ChatSdkRequirementId;
+  requirementId: BridgeRequirementId;
   snapshot: ChatSdkRequirementsSnapshot;
   envPaths: string[];
 };
@@ -230,7 +230,7 @@ async function applyPackageRequirement(opts: ApplyAutofixInput): Promise<ChatSdk
     };
   }
 
-  const shouldInstall = await opts.input.ui.confirmInstallChatSdkDeps({
+  const shouldInstall = await opts.input.ui.confirmInstallBridgeDeps({
     projectDir: opts.projectDir,
     installCommand,
     packages: packagesToInstall,
@@ -241,7 +241,7 @@ async function applyPackageRequirement(opts: ApplyAutofixInput): Promise<ChatSdk
       await opts.input.ui.releaseTerminal();
       console.log(`${chalk.cyan('Installing Chat SDK packages…')}\n`);
     } else {
-      opts.input.ui.installingChatSdkDeps();
+      opts.input.ui.installingBridgeDeps();
     }
 
     await runChatSdkPackageInstall({
@@ -318,7 +318,7 @@ async function resolveEnvSecretOverwrite(opts: {
   });
 }
 
-type ChatSdkReconcilePlanInput = Parameters<ConnectUI['showChatSdkReconcilePlan']>[0];
+type ChatSdkReconcilePlanInput = Parameters<ConnectUI['showBridgeReconcilePlan']>[0];
 
 async function promptChatSdkTunnelIfReady(opts: {
   input: ChatSdkSetupInput;
@@ -326,7 +326,7 @@ async function promptChatSdkTunnelIfReady(opts: {
   coreReady: boolean;
   reconcilePlan: ChatSdkReconcilePlanInput;
 }): Promise<boolean> {
-  await opts.input.ui.showChatSdkReconcilePlan(opts.reconcilePlan);
+  await opts.input.ui.showBridgeReconcilePlan(opts.reconcilePlan);
 
   if (!opts.coreReady || opts.input.options.ci) {
     return false;
@@ -337,7 +337,7 @@ async function promptChatSdkTunnelIfReady(opts: {
   }
 
   const devCommand = buildDevNovuScript(opts.projectDir);
-  const choice = await opts.input.ui.offerChatSdkTunnel({
+  const choice = await opts.input.ui.offerBridgeTunnel({
     projectDir: opts.projectDir,
     devCommand,
   });
@@ -417,7 +417,7 @@ function shouldRunChatSdkTunnel(
 }
 
 function isChatSdkWiringReadyForTunnel(
-  requirements: ChatSdkRequirement[] | undefined,
+  requirements: BridgeRequirement[] | undefined,
   projectDir: string,
   scaffolded = false
 ): boolean {
