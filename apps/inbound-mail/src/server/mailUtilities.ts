@@ -8,18 +8,20 @@ const LOG_CONTEXT = 'MailUtilities';
 
 const spamc = new Spamc();
 
-/* Verify Python availability. */
-const isPythonAvailable = shell.which('python');
-if (!isPythonAvailable) {
+/*
+ * Resolve the Python interpreter once. Alpine images ship `python3` (via
+ * py3-pip) without a `python` alias, so prefer python3 and keep the absolute
+ * path to avoid any PATH/spawn ambiguity at request time.
+ */
+const resolvedPython = shell.which('python3') || shell.which('python');
+const pythonBin = resolvedPython ? resolvedPython.toString() : null;
+if (!pythonBin) {
   logger.warn(
     { context: LOG_CONTEXT, path: process.env.PATH },
     'Python is not available. Dkim and spf checking is disabled — every inbound email will carry dkim/spf "failed" verdicts.'
   );
 } else {
-  logger.info(
-    { context: LOG_CONTEXT, pythonPath: isPythonAvailable.toString() },
-    'Python found — dkim and spf checking is enabled.'
-  );
+  logger.info({ context: LOG_CONTEXT, pythonPath: pythonBin }, 'Python found — dkim and spf checking is enabled.');
 }
 
 /* Verify spamc/spamassassin availability. */
@@ -39,12 +41,12 @@ if (!shell.which('spamassassin') || !shell.which('spamc')) {
 module.exports = {
   /* @param rawEmail is the full raw mime email as a string. */
   validateDkim(rawEmail, callback) {
-    if (!isPythonAvailable) {
+    if (!pythonBin) {
       return callback(null, false);
     }
 
     const verifyDkimPath = path.join(__dirname, '../python/verifydkim.py');
-    const verifyDkim = child_process.spawn('python', [verifyDkimPath]);
+    const verifyDkim = child_process.spawn(pythonBin, [verifyDkimPath]);
 
     let stdout = '';
     let stderr = '';
@@ -84,15 +86,14 @@ module.exports = {
   },
 
   validateSpf(ip, address, host, callback) {
-    if (!isPythonAvailable) {
+    if (!pythonBin) {
       return callback(null, false);
     }
 
     const verifySpfPath = path.join(__dirname, '../python/verifyspf.py');
-    const cmd = 'python ';
     const args = [verifySpfPath, ip, address, host];
 
-    child_process.execFile(cmd, args, (err, stdout, stderr) => {
+    child_process.execFile(pythonBin, args, (err, stdout, stderr) => {
       logger.verbose({ context: LOG_CONTEXT }, stdout);
       let code = 0;
       if (err) {
