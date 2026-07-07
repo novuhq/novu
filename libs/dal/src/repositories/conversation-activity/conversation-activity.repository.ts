@@ -71,6 +71,32 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
     });
   }
 
+  /**
+   * Repoint SUBSCRIBER-authored activities from `fromSubscriberId` to
+   * `toSubscriberId` (both external `subscriberId` strings, stored in
+   * `senderId`). Used by the email adoption merge so past timeline entries stay
+   * attributed to the surviving identity. Returns the number of activities
+   * updated.
+   */
+  async repointSubscriberSender(params: {
+    environmentId: string;
+    organizationId: string;
+    fromSubscriberId: string;
+    toSubscriberId: string;
+  }): Promise<number> {
+    const result = await this.update(
+      {
+        _environmentId: params.environmentId,
+        _organizationId: params.organizationId,
+        senderType: ConversationActivitySenderTypeEnum.SUBSCRIBER,
+        senderId: params.fromSubscriberId,
+      },
+      { $set: { senderId: params.toSubscriberId } }
+    );
+
+    return result.modified;
+  }
+
   async createUserActivity(params: {
     identifier: string;
     conversationId: string;
