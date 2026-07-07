@@ -528,7 +528,7 @@ export function SlackSetupGuide({
       agentIdentifier={agent.identifier}
       watchedIntegrationId={integrationId}
       onConnected={handleSlackWorkspaceConnected}
-      connectedMessage="Your Slack workspace is connected — check your DMs for a welcome message from the bot!"
+      connectedMessage="Your Slack workspace is connected: check your DMs for a welcome message from the bot!"
       listeningMessage={
         isSlackAppInstalled
           ? `Send a message to ${agent.name} in your Slack workspace to finish connecting.`

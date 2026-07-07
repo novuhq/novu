@@ -30,7 +30,7 @@ export function TranslationSwitch({ id, value, onChange, isReadOnly }: Translati
     <div className="flex items-center">
       {!canUseTranslationFeature ? (
         <UpgradeCTATooltip
-          description="Connect better with every user — Upgrade to reach users in their own language."
+          description="Connect better with every user: Upgrade to reach users in their own language."
           utmCampaign="translation_prompt"
           utmSource="translation_prompt"
         >
