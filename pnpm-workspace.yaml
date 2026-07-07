@@ -168,7 +168,7 @@ overrides:
   protobufjs@<7.6.3: ^7.6.3
   protobufjs@>=8.0.0 <8.6.0: ^8.6.0
   ip-address@<10.1.1: ^10.1.1
-  mongoose@>=8.0.0 <8.22.1: ^8.22.1
+  mongoose@>=8.0.0 <8.24.1: ^8.24.1
   newrelic: 13.19.2
   fast-uri@<3.1.2: ^3.1.2
   '@babel/plugin-transform-modules-systemjs@<7.29.4': ^7.29.4

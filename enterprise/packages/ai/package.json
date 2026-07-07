@@ -21,7 +21,7 @@
     "@langchain/langgraph-checkpoint": "^1.0.0",
     "@langchain/langgraph-checkpoint-mongodb": "^1.1.6",
     "@langchain/openai": "^1.2.4",
-    "@nestjs/swagger": "7.4.0",
+    "@nestjs/swagger": "11.4.5",
     "@novu/application-generic": "workspace:*",
     "@novu/dal": "workspace:*",
     "@novu/ee-auth": "workspace:*",

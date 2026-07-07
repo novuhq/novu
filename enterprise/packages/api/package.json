@@ -15,7 +15,7 @@
   "dependencies": {
     "@novu/application-generic": "workspace:*",
     "@novu/dal": "workspace:*",
-    "@nestjs/swagger": "7.4.0",
+    "@nestjs/swagger": "11.4.5",
     "@novu/shared": "workspace:*",
     "@novu/stateless": "workspace:*",
     "@types/express": "4.17.17",

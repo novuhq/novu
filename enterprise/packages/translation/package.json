@@ -45,7 +45,7 @@
   "peerDependencies": {
     "@nestjs/common": "11.1.27",
     "@nestjs/platform-express": "11.1.27",
-    "@nestjs/swagger": "7.4.0",
+    "@nestjs/swagger": "11.4.5",
     "@novu/dal": "workspace:*"
   }
 }
