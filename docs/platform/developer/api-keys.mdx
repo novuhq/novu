@@ -49,26 +49,6 @@ The **Secret Keys** card on the API Keys page lists every active key with per-ke
 2. Update your applications, workflow bridge endpoints, and any other integrations to use the new key.
 3. Once nothing is using the old key, click **Delete** next to it and confirm. The dashboard blocks deletion of the last remaining key.
 
-### Rotate a key via the API
-
-The same flow is available on the API. Each returned key includes a `hash` field (SHA-256 of the key) that you use to address a specific key for deletion.
-
-<CodeGroup>
-```bash Create a second key
-curl -X POST https://api.novu.co/v1/environments/api-keys \
-  -H "Authorization: ApiKey <SECRET_KEY>"
-```
-
-```bash Delete a key by hash
-curl -X DELETE https://api.novu.co/v1/environments/api-keys/<HASH> \
-  -H "Authorization: ApiKey <SECRET_KEY>"
-```
-</CodeGroup>
-
-- `POST /v1/environments/api-keys` creates an additional secret key and returns the updated list of active keys. The request fails with `400` if the environment already has two keys.
-- `DELETE /v1/environments/api-keys/:hash` removes the key whose SHA-256 hash matches `:hash` and responds with `204 No Content`. It returns `400` if you try to delete the last remaining key and `404` if the hash does not match any active key.
-- `GET /v1/environments/api-keys` returns every active key, each with a `hash` field you can pass to the delete endpoint.
-
 ### HMAC and webhook signatures during rotation
 
 While two keys are active:
