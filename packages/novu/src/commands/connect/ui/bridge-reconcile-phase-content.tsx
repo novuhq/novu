@@ -5,6 +5,7 @@ import React from 'react';
 import type { BridgeRequirement } from '../types';
 import { installDepsPrompt, installingDepsMessage, reconcilePlanTitle } from './bridge-reconcile-variant';
 import { ConfirmScaffoldContent } from './confirm-scaffold-content';
+import { copyToClipboard } from './copy-to-clipboard';
 import type { Phase } from './store';
 
 const BRIDGE_RECONCILE_PHASE_KINDS = [
@@ -102,9 +103,19 @@ function BridgeReconcilePlanContent({
 }: {
   phase: Extract<Phase, { kind: 'bridge-reconcile-plan' }>;
 }): React.ReactElement {
-  useInput((_input, key) => {
+  const [copyState, setCopyState] = React.useState<'idle' | 'copied' | 'failed'>('idle');
+  const canCopyPrompt = Boolean(phase.agentPrompt);
+
+  useInput((input, key) => {
     if (key.return) {
       phase.resolve();
+
+      return;
+    }
+
+    if (canCopyPrompt && (input === 'c' || input === 'C')) {
+      const prompt = phase.agentPrompt ?? '';
+      void copyToClipboard(prompt).then((ok) => setCopyState(ok ? 'copied' : 'failed'));
     }
   });
 
@@ -128,7 +139,13 @@ function BridgeReconcilePlanContent({
           </Box>
         </Box>
       ) : null}
-      <Text color="cyan">Enter · continue</Text>
+      {copyState === 'copied' ? (
+        <Text color="green">✓ Agent prompt copied to clipboard — paste it into your coding agent.</Text>
+      ) : null}
+      {copyState === 'failed' && phase.requirementsFile ? (
+        <Text color="yellow">Clipboard unavailable — the prompt is saved at {phase.requirementsFile}</Text>
+      ) : null}
+      <Text color="cyan">{canCopyPrompt ? 'Enter · continue    C · copy agent prompt' : 'Enter · continue'}</Text>
     </Box>
   );
 }

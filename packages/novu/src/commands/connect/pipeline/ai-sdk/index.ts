@@ -11,6 +11,7 @@ import { defaultCustomCodeScaffoldDirName, resolveAgentHandlerPathIfExists } fro
 import { confirmEmptyDirScaffold } from '../bridge/confirm-empty-dir-scaffold';
 import { requireConnectSecretKey } from '../bridge/require-secret-key';
 import { runScaffoldWithConsole } from '../bridge/run-scaffold-with-console';
+import { AI_SDK_AGENT_PROMPT } from './agent-prompt';
 import { detectAiSdkWiring } from './detect-wiring';
 import { applyDevNovuScript, buildDevNovuScript } from './dev-script';
 import { buildAiSdkInstallCommand, resolveAiSdkPackagesToInstall, runAiSdkPackageInstall } from './package-install';
@@ -144,10 +145,13 @@ async function reconcileAiSdkProject(
       ? buildAiSdkWiringInstructions(projectDir, input.agent.identifier)
       : undefined;
 
+  const agentPrompt = wiringInstructions ? AI_SDK_AGENT_PROMPT : undefined;
+
   const requirementsFile = await writeAiSdkRequirementsFile({
     projectDir,
     requirements: snapshot.requirements,
     wiringInstructions,
+    agentPrompt,
   });
 
   const tunnelAccepted = await promptAiSdkTunnelIfReady({
@@ -160,6 +164,7 @@ async function reconcileAiSdkProject(
       envPaths,
       wiringInstructions,
       requirementsFile,
+      agentPrompt,
       variant: 'ai-sdk',
     },
   });

@@ -285,7 +285,15 @@ function createUiController(
     installingBridgeDeps(variant) {
       store.phase.set({ kind: 'bridge-install-deps', variant });
     },
-    showBridgeReconcilePlan({ projectDir, requirements, envPaths, wiringInstructions, requirementsFile, variant }) {
+    showBridgeReconcilePlan({
+      projectDir,
+      requirements,
+      envPaths,
+      wiringInstructions,
+      requirementsFile,
+      agentPrompt,
+      variant,
+    }) {
       if (ctx.isTerminalReleased()) {
         return promptBridgeReconcilePlanInConsole({
           projectDir,
@@ -305,6 +313,7 @@ function createUiController(
           envPaths,
           wiringInstructions,
           requirementsFile,
+          agentPrompt,
           variant,
           resolve,
         });

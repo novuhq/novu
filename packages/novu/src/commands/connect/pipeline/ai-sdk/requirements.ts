@@ -200,6 +200,7 @@ export async function writeAiSdkRequirementsFile(opts: {
   projectDir: string;
   requirements: BridgeRequirement[];
   wiringInstructions?: string;
+  agentPrompt?: string;
 }): Promise<string> {
   const lines = [
     '# Novu AI SDK connect requirements',
@@ -211,6 +212,17 @@ export async function writeAiSdkRequirementsFile(opts: {
 
   if (opts.wiringInstructions) {
     lines.push('', '## Code wiring', '', opts.wiringInstructions);
+  }
+
+  if (opts.agentPrompt) {
+    lines.push(
+      '',
+      '## Agent prompt',
+      '',
+      'Paste the following into your coding agent to finish wiring:',
+      '',
+      opts.agentPrompt
+    );
   }
 
   const filePath = path.join(os.tmpdir(), `novu-ai-sdk-requirements-${process.pid}.txt`);

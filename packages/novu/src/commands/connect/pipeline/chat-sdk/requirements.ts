@@ -174,6 +174,7 @@ export async function writeChatSdkRequirementsFile(opts: {
   projectDir: string;
   requirements: BridgeRequirement[];
   wiringInstructions?: string;
+  agentPrompt?: string;
 }): Promise<string> {
   const lines = [
     '# Novu Chat SDK connect requirements',
@@ -185,6 +186,17 @@ export async function writeChatSdkRequirementsFile(opts: {
 
   if (opts.wiringInstructions) {
     lines.push('', '## Code wiring', '', opts.wiringInstructions);
+  }
+
+  if (opts.agentPrompt) {
+    lines.push(
+      '',
+      '## Agent prompt',
+      '',
+      'Paste the following into your coding agent to finish wiring:',
+      '',
+      opts.agentPrompt
+    );
   }
 
   const filePath = path.join(os.tmpdir(), `novu-chat-sdk-requirements-${process.pid}.txt`);

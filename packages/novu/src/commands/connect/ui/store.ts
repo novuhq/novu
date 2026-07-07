@@ -89,6 +89,7 @@ export type Phase =
       envPaths: string[];
       wiringInstructions?: string;
       requirementsFile?: string;
+      agentPrompt?: string;
       variant?: BridgeReconcileVariant;
       resolve: () => void;
     }

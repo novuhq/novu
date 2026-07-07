@@ -106,6 +106,7 @@ export interface ConnectUI {
     envPaths: string[];
     wiringInstructions?: string;
     requirementsFile?: string;
+    agentPrompt?: string;
     variant?: BridgeReconcileVariant;
   }): Promise<void>;
   offerBridgeTunnel(opts: { projectDir: string; devCommand: string }): Promise<BridgeTunnelOfferResult>;

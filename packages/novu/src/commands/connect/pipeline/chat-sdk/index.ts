@@ -13,6 +13,7 @@ import { confirmEmptyDirScaffold } from '../bridge/confirm-empty-dir-scaffold';
 import { defaultChatSdkScaffoldDirName } from '../bridge/detect-project';
 import { requireConnectSecretKey } from '../bridge/require-secret-key';
 import { runScaffoldWithConsole } from '../bridge/run-scaffold-with-console';
+import { CHAT_SDK_AGENT_PROMPT } from './agent-prompt';
 import { defaultAgentNameFromDir, deriveAgentIdentifier } from './derive-identifier';
 import { detectChatSdkWiring } from './detect-wiring';
 import { applyDevNovuScript, buildDevNovuScript } from './dev-script';
@@ -144,10 +145,13 @@ async function reconcileChatSdkProject(
   const wiringInstructions =
     wiringReq && wiringReq.status !== 'ok' ? buildCodeWiringInstructions(projectDir) : undefined;
 
+  const agentPrompt = wiringInstructions ? CHAT_SDK_AGENT_PROMPT : undefined;
+
   const requirementsFile = await writeChatSdkRequirementsFile({
     projectDir,
     requirements: snapshot.requirements,
     wiringInstructions,
+    agentPrompt,
   });
 
   const tunnelAccepted = await promptChatSdkTunnelIfReady({
@@ -160,6 +164,7 @@ async function reconcileChatSdkProject(
       envPaths,
       wiringInstructions,
       requirementsFile,
+      agentPrompt,
       variant: 'chat-sdk',
     },
   });
