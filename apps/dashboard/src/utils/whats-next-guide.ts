@@ -1,4 +1,3 @@
-import { EmailProviderIdEnum } from '@novu/shared';
 import type { AgentIntegrationLink } from '@/api/agents';
 import { hasAgentInboundConnection } from '@/components/agents/is-agent-integration-connected';
 
@@ -14,12 +13,6 @@ export function resolveWhatsNextConnectionAt(
 ): string | null {
   if (hasAgentInboundConnection(link.connectedAt)) {
     return link.connectedAt ?? null;
-  }
-
-  // Auto-provisioned Novu email is treated as connected from link creation even before the first
-  // inbound message stamps `connectedAt`.
-  if (link.integration.providerId === EmailProviderIdEnum.NovuAgent) {
-    return link.createdAt;
   }
 
   return null;

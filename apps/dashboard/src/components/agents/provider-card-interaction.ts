@@ -1,15 +1,3 @@
-import { EmailProviderIdEnum } from '@novu/shared';
-
-export type ProviderCardInteraction = 'standard' | 'auto-provisioned-connectable';
-
-export function getProviderCardInteraction(providerId: string): ProviderCardInteraction {
-  if (providerId === EmailProviderIdEnum.NovuAgent) {
-    return 'auto-provisioned-connectable';
-  }
-
-  return 'standard';
-}
-
 /**
  * Unified per-card display state for the agent channel cards. `ProviderCard` consumes this directly
  * so it never has to branch on which mode it renders in: the pre-pick grid derives state from the
@@ -26,22 +14,16 @@ export type ProviderCardDisplayState = {
 };
 
 export function resolveProviderCardDisplayState(params: {
-  interaction: ProviderCardInteraction;
   isConnected: boolean;
   isSelected: boolean;
-  isLoading: boolean;
   /** Set only for cards inside the switcher rail; drives status independently of the selection. */
   switcherStatus?: ProviderSwitcherStatus;
 }): ProviderCardDisplayState {
-  const { interaction, isConnected, isSelected, isLoading, switcherStatus } = params;
+  const { isConnected, isSelected, switcherStatus } = params;
 
   if (switcherStatus !== undefined) {
     const effectiveConnected = switcherStatus === 'connected';
-    // A selected-but-not-yet-connected channel is actively being set up (its guide is open), even
-    // when no link records that engagement yet — as is the case for the auto-provisioned email
-    // inbox. Promote it to "In setup" so it reads consistently with a chat channel, whose link
-    // already flips it to "in-setup" the moment the user clicks "Connect".
-    const showInSetup = !effectiveConnected && (switcherStatus === 'in-setup' || isSelected);
+    const showInSetup = !effectiveConnected && switcherStatus === 'in-setup';
 
     return {
       effectiveConnected,
@@ -53,15 +35,10 @@ export function resolveProviderCardDisplayState(params: {
     };
   }
 
-  const showConnecting =
-    interaction === 'auto-provisioned-connectable'
-      ? !isConnected && (isSelected || isLoading)
-      : isSelected && !isConnected;
-
   return {
     effectiveConnected: isConnected,
     showCheck: isSelected || isConnected,
-    showConnecting,
+    showConnecting: isSelected && !isConnected,
     showInSetup: false,
     showActiveBorder: false,
     isActive: isSelected || isConnected,

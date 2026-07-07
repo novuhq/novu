@@ -69,7 +69,7 @@ type AgentSetupStepsProps = {
    * - other runtimes: when the user's bridge endpoint becomes reachable
    */
   onSetupComplete?: () => void;
-  /** Called when a non-email-auto-provisioned channel becomes connected during onboarding. */
+  /** Called when a channel becomes connected (first real inbound message) during onboarding. */
   onChannelConnected?: (providerId: string) => void;
   hideAddProvider?: boolean;
   /**
@@ -314,11 +314,7 @@ export function AgentSetupSteps({
     const links = agentIntegrationsQuery.data?.data;
     if (!links?.length) return false;
 
-    // The novu-email-agent integration is auto-provisioned for every agent, so
-    // it must not count toward marking the provider setup step as completed.
-    return links.some(
-      (link) => Boolean(link.connectedAt) && link.integration.providerId !== EmailProviderIdEnum.NovuAgent
-    );
+    return links.some((link) => hasAgentInboundConnection(link.connectedAt));
   }, [agentIntegrationsQuery.data?.data]);
 
   const [isInstructionsExpanded, setIsInstructionsExpanded] = useState(false);
@@ -368,7 +364,6 @@ export function AgentSetupSteps({
     selectedProviderId,
     selectedIntegrationId: validatedSelectedId,
     agentIntegrationLinks,
-    useCloudMergedListenStep,
   });
 
   const skipProviderGuide = useCloudMergedListenStep && isEmailChannelSelected && channelReadyForBridge;
@@ -399,8 +394,8 @@ export function AgentSetupSteps({
   }, [effectiveIntegrationId, channelReadyForBridge, bridgeStepOffset, providerGuideStepOffset, channelStepIndex]);
 
   // In onboarding the setup guide (and the collapse it triggers) only appears once the user
-  // explicitly picks a channel — not for the auto-provisioned default. On the agent details page
-  // the guide keeps following the agent's default/selected integration.
+  // explicitly picks a channel. On the agent details page the guide keeps following the agent's
+  // default/selected integration.
   const guideIntegrationId = isOnboarding ? (validatedSelectedId ?? selectedIntegrationId) : effectiveIntegrationId;
   const guideProviderId = isOnboarding
     ? (selectedIntegration?.providerId ?? pickedChannelProviderId)
@@ -572,22 +567,10 @@ export function AgentSetupSteps({
   useEffect(() => {
     if (!isOnboarding || channelConnectedTrackedRef.current) return;
 
-    if (useCloudMergedListenStep && channelReadyForBridge && isEmailChannelSelected) {
-      channelConnectedTrackedRef.current = true;
-      onChannelConnected?.(EmailProviderIdEnum.NovuAgent);
-      telemetry(TelemetryEvent.ONBOARDING_CHANNEL_CONNECTED, {
-        agentIdentifier: agent.identifier,
-        providerId: EmailProviderIdEnum.NovuAgent,
-        integrationIdentifier: selectedIntegration?.identifier,
-      });
-
-      return;
-    }
-
     if (!hasConnectedIntegration) return;
 
-    const connectedLink = agentIntegrationsQuery.data?.data?.find(
-      (link) => Boolean(link.connectedAt) && link.integration.providerId !== EmailProviderIdEnum.NovuAgent
+    const connectedLink = agentIntegrationsQuery.data?.data?.find((link) =>
+      hasAgentInboundConnection(link.connectedAt)
     );
     if (!connectedLink) return;
 
@@ -601,14 +584,10 @@ export function AgentSetupSteps({
   }, [
     agent.identifier,
     agentIntegrationsQuery.data?.data,
-    channelReadyForBridge,
     hasConnectedIntegration,
     isOnboarding,
     onChannelConnected,
-    selectedIntegration?.identifier,
-    isEmailChannelSelected,
     telemetry,
-    useCloudMergedListenStep,
   ]);
 
   useEffect(() => {
