@@ -6,6 +6,7 @@ import { ConversationsContent } from '@/components/conversations/conversations-c
 import { DashboardLayout } from '@/components/dashboard-layout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useAreConversationalAgentsAvailable } from '@/hooks/use-are-conversational-agents-available';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { buildRoute, ROUTES } from '@/utils/routes';
@@ -15,7 +16,7 @@ import { PageMeta } from '../components/page-meta';
 
 export function ActivityFeed() {
   const isHttpLogsPageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_HTTP_LOGS_PAGE_ENABLED, false);
-  const isConversationalAgentsEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONVERSATIONAL_AGENTS_ENABLED, false);
+  const areAgentsAvailable = useAreConversationalAgentsAvailable();
   const { currentEnvironment } = useEnvironment();
   const location = useLocation();
   const navigate = useNavigate();
@@ -23,7 +24,7 @@ export function ActivityFeed() {
 
   const getCurrentTab = () => {
     if (location.pathname.includes('/activity/conversations')) {
-      if (!isConversationalAgentsEnabled) {
+      if (!areAgentsAvailable) {
         return 'workflow-runs';
       }
 
@@ -70,14 +71,14 @@ export function ActivityFeed() {
 
   useEffect(() => {
     if (
-      !isConversationalAgentsEnabled &&
+      !areAgentsAvailable &&
       location.pathname.includes('/activity/conversations') &&
       currentEnvironment?.slug
     ) {
       const fallbackPath = buildRoute(ROUTES.ACTIVITY_WORKFLOW_RUNS, { environmentSlug: currentEnvironment.slug });
       navigate(`${fallbackPath}${location.search}`, { replace: true });
     }
-  }, [isConversationalAgentsEnabled, location.pathname, location.search, currentEnvironment?.slug, navigate]);
+  }, [areAgentsAvailable, location.pathname, location.search, currentEnvironment?.slug, navigate]);
 
   useEffect(() => {
     if (!isHttpLogsPageEnabled && location.pathname.includes('/activity/requests') && currentEnvironment?.slug) {
@@ -107,7 +108,7 @@ export function ActivityFeed() {
             <TabsTrigger value="workflow-runs" variant="regular" size="lg">
               Workflow Runs
             </TabsTrigger>
-            {isConversationalAgentsEnabled && (
+            {areAgentsAvailable && (
               <TabsTrigger value="conversations" variant="regular" size="lg">
                 Agent conversations
               </TabsTrigger>
@@ -121,7 +122,7 @@ export function ActivityFeed() {
           <TabsContent value="workflow-runs">
             <ActivityFeedContent contentHeight="h-[calc(100vh-170px)]" />
           </TabsContent>
-          {isConversationalAgentsEnabled && (
+          {areAgentsAvailable && (
             <TabsContent value="conversations">
               <ConversationsContent contentHeight="h-[calc(100vh-170px)]" />
             </TabsContent>

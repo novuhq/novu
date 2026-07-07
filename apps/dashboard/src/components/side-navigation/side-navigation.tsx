@@ -20,10 +20,11 @@ import {
 } from 'react-icons/ri';
 import { SidebarContent } from '@/components/side-navigation/sidebar';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useAreConversationalAgentsAvailable } from '@/hooks/use-are-conversational-agents-available';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { Protect } from '@/utils/protect';
 import { buildRoute, ROUTES } from '@/utils/routes';
-import { IS_ENTERPRISE, IS_EU, IS_SELF_HOSTED } from '../../config';
+import { IS_ENTERPRISE, IS_SELF_HOSTED } from '../../config';
 import { useFetchSubscription } from '../../hooks/use-fetch-subscription';
 import { ChangelogStack } from './changelog-cards';
 import { EnvironmentDropdown } from './environment-dropdown';
@@ -92,9 +93,7 @@ export const LegacySideNavigation = () => {
   const isDomainsPageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_DOMAINS_PAGE_ENABLED);
   const isHttpLogsPageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_HTTP_LOGS_PAGE_ENABLED, false);
   const isAnalyticsPageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ANALYTICS_PAGE_ENABLED, false);
-  const isAgentsEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONVERSATIONAL_AGENTS_ENABLED, false);
-  // Agents are hard-disabled in the EU region regardless of the rollout flag.
-  const showAgents = !IS_EU && isAgentsEnabled;
+  const showAgents = useAreConversationalAgentsAvailable();
 
   const { currentEnvironment, environments, switchEnvironment } = useEnvironment();
 

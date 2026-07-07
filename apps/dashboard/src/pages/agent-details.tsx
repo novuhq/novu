@@ -1,4 +1,3 @@
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { RiArrowLeftSLine, RiRobot2Line } from 'react-icons/ri';
@@ -35,10 +34,9 @@ import { Skeleton } from '@/components/primitives/skeleton';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import TruncatedText from '@/components/truncated-text';
-import { IS_EU } from '@/config';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
+import { useAreConversationalAgentsAvailable } from '@/hooks/use-are-conversational-agents-available';
 import { useAgentRoutes } from '@/hooks/use-agent-routes';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import {
   AGENT_DETAILS_DEFAULT_TAB,
@@ -92,7 +90,7 @@ export function AgentDetailsPage() {
   const location = useLocation();
   const queryClient = useQueryClient();
   const { currentEnvironment, readOnly } = useEnvironment();
-  const isConversationalAgentsEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONVERSATIONAL_AGENTS_ENABLED, false);
+  const areAgentsAvailable = useAreConversationalAgentsAvailable();
   const agentRoutes = useAgentRoutes();
   const [agentToDelete, setAgentToDelete] = useState<AgentResponse | null>(null);
   const [setupModalDismissed, setSetupModalDismissed] = useState(false);
@@ -106,7 +104,7 @@ export function AgentDetailsPage() {
   const agentQuery = useQuery({
     queryKey: getAgentDetailQueryKey(currentEnvironment?._id, agentIdentifier),
     queryFn: () => getAgent(requireEnvironment(currentEnvironment, 'No environment selected'), agentIdentifier),
-    enabled: Boolean(currentEnvironment && agentIdentifier && isConversationalAgentsEnabled),
+    enabled: Boolean(currentEnvironment && agentIdentifier && areAgentsAvailable),
   });
 
   const deleteMutation = useMutation({
@@ -143,7 +141,7 @@ export function AgentDetailsPage() {
         agentIdentifier,
         limit: 100,
       }),
-    enabled: Boolean(currentEnvironment && agentIdentifier && isConversationalAgentsEnabled),
+    enabled: Boolean(currentEnvironment && agentIdentifier && areAgentsAvailable),
   });
 
   const hasConnectedIntegration = useMemo(() => {
@@ -167,7 +165,7 @@ export function AgentDetailsPage() {
   const currentTab = integrationIdentifier ? 'integrations' : parseAgentDetailsTab(agentTabParam);
 
   useEffect(() => {
-    if (!isConversationalAgentsEnabled || !agentIdentifier || !agentQuery.data) {
+    if (!areAgentsAvailable || !agentIdentifier || !agentQuery.data) {
       return;
     }
 
@@ -190,9 +188,9 @@ export function AgentDetailsPage() {
         integrationIdentifier,
       });
     }
-  }, [agentIdentifier, agentQuery.data, currentTab, integrationIdentifier, isConversationalAgentsEnabled, track]);
+  }, [agentIdentifier, agentQuery.data, currentTab, integrationIdentifier, areAgentsAvailable, track]);
 
-  if (IS_EU || !isConversationalAgentsEnabled) {
+  if (!areAgentsAvailable) {
     return <Navigate to={agentsListPath} replace />;
   }
 

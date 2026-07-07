@@ -1,9 +1,16 @@
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { CaretSortIcon } from '@radix-ui/react-icons';
 import { useMutation } from '@tanstack/react-query';
 import type { FormEvent, ReactElement } from 'react';
 import { useCallback, useEffect, useId, useMemo, useState } from 'react';
-import { RiArrowRightSLine, RiCheckLine, RiCloseLine, RiMailLine, RiMessage3Line, RiMoreLine } from 'react-icons/ri';
+import {
+  RiArrowRightSLine,
+  RiCheckLine,
+  RiCloseLine,
+  RiMailLine,
+  RiMessage3Line,
+  RiMoreLine,
+  RiSparkling2Line,
+} from 'react-icons/ri';
 import {
   SiGithub,
   SiGooglechat,
@@ -18,9 +25,10 @@ import { Navigate } from 'react-router-dom';
 import { NovuApiError, post } from '@/api/api.client';
 import { AgentsEmptyTeaser } from '@/components/agents/agents-empty-teaser';
 import { AgentsList } from '@/components/agents/agents-list';
+import { UPGRADE_CTA_LABEL, usePlanUpgradeClick } from '@/components/billing/use-plan-upgrade-click';
 import { DashboardLayout } from '@/components/dashboard-layout';
 import { PageMeta } from '@/components/page-meta';
-import { IS_EU } from '@/config';
+import { IS_EU, IS_SELF_HOSTED_CE } from '@/config';
 import { Badge } from '@/components/primitives/badge';
 import { Button } from '@/components/primitives/button';
 import { CompactButton } from '@/components/primitives/button-compact';
@@ -31,7 +39,7 @@ import { Separator } from '@/components/primitives/separator';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { DismissButton, Icon as TagIcon, Root as TagRoot } from '@/components/primitives/tag';
 import { Textarea } from '@/components/primitives/textarea';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { useAreConversationalAgentsAvailable } from '@/hooks/use-are-conversational-agents-available';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
@@ -406,8 +414,9 @@ function AgentsEarlyAccessDialog({ open, onOpenChange }: AgentsEarlyAccessDialog
 
 export function AgentsPage() {
   const [earlyAccessOpen, setEarlyAccessOpen] = useState(false);
-  const isConversationalAgentsEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONVERSATIONAL_AGENTS_ENABLED, false);
+  const areAgentsAvailable = useAreConversationalAgentsAvailable();
   const track = useTelemetry();
+  const handleUpgradeClick = usePlanUpgradeClick('agents-page', 'agents');
 
   useEffect(() => {
     track(TelemetryEvent.AGENTS_PAGE_VISITED);
@@ -418,10 +427,50 @@ export function AgentsPage() {
     return <Navigate to={ROUTES.ROOT} replace />;
   }
 
+  let agentsContent: ReactElement;
+
+  if (IS_SELF_HOSTED_CE) {
+    agentsContent = (
+      <AgentsEmptyTeaser
+        cta={
+          <Button
+            variant="primary"
+            mode="gradient"
+            size="xs"
+            leadingIcon={RiSparkling2Line}
+            type="button"
+            onClick={handleUpgradeClick}
+          >
+            {UPGRADE_CTA_LABEL}
+          </Button>
+        }
+      />
+    );
+  } else if (areAgentsAvailable) {
+    agentsContent = <AgentsList />;
+  } else {
+    agentsContent = (
+      <AgentsEmptyTeaser
+        cta={
+          <Button
+            variant="secondary"
+            mode="gradient"
+            size="xs"
+            trailingIcon={RiArrowRightSLine}
+            type="button"
+            onClick={() => setEarlyAccessOpen(true)}
+          >
+            Request early access
+          </Button>
+        }
+      />
+    );
+  }
+
   return (
     <>
       <PageMeta title="Agents" />
-      {!isConversationalAgentsEnabled ? (
+      {!areAgentsAvailable && !IS_SELF_HOSTED_CE ? (
         <AgentsEarlyAccessDialog open={earlyAccessOpen} onOpenChange={setEarlyAccessOpen} />
       ) : null}
       <DashboardLayout
@@ -434,24 +483,7 @@ export function AgentsPage() {
           </h1>
         }
       >
-        {isConversationalAgentsEnabled ? (
-          <AgentsList />
-        ) : (
-          <AgentsEmptyTeaser
-            cta={
-              <Button
-                variant="secondary"
-                mode="gradient"
-                size="xs"
-                trailingIcon={RiArrowRightSLine}
-                type="button"
-                onClick={() => setEarlyAccessOpen(true)}
-              >
-                Request early access
-              </Button>
-            }
-          />
-        )}
+        {agentsContent}
       </DashboardLayout>
     </>
   );
