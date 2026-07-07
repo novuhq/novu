@@ -1,5 +1,5 @@
-import { render } from 'ink';
 import chalk from 'chalk';
+import { render } from 'ink';
 // biome-ignore lint/correctness/noUnusedImports: classic-JSX linter falls back here because tsconfig.json excludes ui/.
 import React from 'react';
 import type { GeneratedAgentSpec } from '../api/agents';
@@ -428,6 +428,7 @@ function createUiController(
         claimUrl: result.claimUrl,
         connectMode: result.connectMode,
         chatSdkOutcome: result.chatSdkOutcome,
+        aiSdkOutcome: result.aiSdkOutcome,
         customCodeOutcome: result.customCodeOutcome,
       });
     },

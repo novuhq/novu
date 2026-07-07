@@ -6,7 +6,11 @@ import type { ConnectUI } from './ui';
 type ConnectSuccessResult = Parameters<ConnectUI['success']>[0];
 
 export function shouldSkipConnectSuccessSummary(result: ConnectSuccessResult): boolean {
-  return result.customCodeOutcome?.scaffolded === true || result.chatSdkOutcome?.scaffolded === true;
+  return (
+    result.customCodeOutcome?.scaffolded === true ||
+    result.chatSdkOutcome?.scaffolded === true ||
+    result.aiSdkOutcome?.scaffolded === true
+  );
 }
 
 export function printConnectSuccess(result: ConnectSuccessResult): void {
@@ -46,6 +50,7 @@ export function printConnectSuccess(result: ConnectSuccessResult): void {
   }
   const followUp = resolveBridgeSetupFollowUpMessage(result.connectMode, {
     chatSdk: result.chatSdkOutcome,
+    aiSdk: result.aiSdkOutcome,
     customCode: result.customCodeOutcome,
   });
 

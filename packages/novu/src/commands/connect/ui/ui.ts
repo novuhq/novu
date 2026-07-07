@@ -3,6 +3,7 @@ import type { BridgeScaffoldVariant } from '../pipeline/bridge/types';
 import type {
   AgentConnectMode,
   AgentSummary,
+  AiSdkConnectOutcome,
   ChannelChoice,
   ChatSdkConnectOutcome,
   ChatSdkRequirement,
@@ -205,6 +206,7 @@ export interface ConnectUI {
     claimUrl: string | null;
     connectMode?: AgentConnectMode;
     chatSdkOutcome?: ChatSdkConnectOutcome;
+    aiSdkOutcome?: AiSdkConnectOutcome;
     customCodeOutcome?: CustomCodeConnectOutcome;
   }): void;
   failure(message: string): void;

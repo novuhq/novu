@@ -23,9 +23,10 @@ describe('resolveBridgeSetupFollowUpMessage', () => {
     expect(message).toBeNull();
   });
 
-  it('returns null for scaffolded custom-code projects after next steps are printed', () => {
+  it('returns null for scaffolded ai-sdk projects after next steps are printed', () => {
     const message = resolveBridgeSetupFollowUpMessage('ai-sdk', {
-      customCode: {
+      aiSdk: {
+        projectKind: 'empty',
         projectDir: '/tmp/agent-app',
         scaffolded: true,
       },

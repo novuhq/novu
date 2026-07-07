@@ -19,10 +19,7 @@ export const BRIDGE_CONNECT_MODES: readonly BridgeConnectMode[] = [...CUSTOM_COD
 /** Unified agent setup mode — managed runtimes plus self-hosted bridge agents. */
 export type AgentConnectMode = AgentRuntimeChoice | BridgeConnectMode;
 
-export const AGENT_CONNECT_MODES: readonly AgentConnectMode[] = [
-  ...AGENT_RUNTIME_CHOICES,
-  ...BRIDGE_CONNECT_MODES,
-];
+export const AGENT_CONNECT_MODES: readonly AgentConnectMode[] = [...AGENT_RUNTIME_CHOICES, ...BRIDGE_CONNECT_MODES];
 
 export function isBridgeConnectMode(mode: AgentConnectMode): mode is BridgeConnectMode {
   return (BRIDGE_CONNECT_MODES as readonly string[]).includes(mode);
@@ -32,9 +29,17 @@ export function isCustomCodeScaffoldMode(mode: AgentConnectMode): mode is Custom
   return (CUSTOM_CODE_CONNECT_MODES as readonly string[]).includes(mode);
 }
 
+export function isAiSdkConnectMode(mode: AgentConnectMode): mode is 'ai-sdk' {
+  return mode === 'ai-sdk';
+}
+
+export function isVanillaCustomCodeConnectMode(mode: AgentConnectMode): mode is 'langchain' | 'custom-code' {
+  return mode === 'langchain' || mode === 'custom-code';
+}
+
 export type ChatSdkProjectKind = 'empty' | 'project';
 
-export type ChatSdkRequirementId = 'package' | 'env' | 'dev-script' | 'code-wiring';
+export type ChatSdkRequirementId = 'package' | 'env' | 'dev-script' | 'code-wiring' | 'provider-env';
 
 export type ChatSdkReqStatus = 'ok' | 'autofixable' | 'manual';
 
@@ -60,6 +65,20 @@ export type ChatSdkConnectOutcome = {
   tunnelAccepted?: boolean;
   /** Instructions for manual code wiring when adapter is not wired in source. */
   wiringInstructions?: string;
+};
+
+export type AiSdkConnectOutcome = {
+  projectKind: ChatSdkProjectKind;
+  projectDir: string;
+  scaffolded: boolean;
+  envPaths?: string[];
+  skippedInstall?: boolean;
+  requirements?: ChatSdkRequirement[];
+  requirementsFile?: string;
+  coreReady?: boolean;
+  tunnelAccepted?: boolean;
+  wiringInstructions?: string;
+  agentFilePath?: string;
 };
 
 export type CustomCodeConnectOutcome = {

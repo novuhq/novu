@@ -1,14 +1,15 @@
 import { atom, type WritableAtom } from 'nanostores';
 import type { GeneratedAgentSpec } from '../api/agents';
+import type { BridgeScaffoldVariant } from '../pipeline/bridge/types';
 import type {
   AgentConnectMode,
   AgentSummary,
+  AiSdkConnectOutcome,
   ChannelChoice,
   ChatSdkConnectOutcome,
   ChatSdkRequirement,
   CustomCodeConnectOutcome,
 } from '../types';
-import type { BridgeScaffoldVariant } from '../pipeline/bridge/types';
 import type {
   ChatSdkTunnelOfferResult,
   GeneratedAgentPreviewResult,
@@ -191,6 +192,7 @@ export type Phase =
       claimUrl: string | null;
       connectMode?: AgentConnectMode;
       chatSdkOutcome?: ChatSdkConnectOutcome;
+      aiSdkOutcome?: AiSdkConnectOutcome;
       customCodeOutcome?: CustomCodeConnectOutcome;
     }
   | { kind: 'error'; message: string };

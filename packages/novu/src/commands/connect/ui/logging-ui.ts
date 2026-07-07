@@ -5,7 +5,7 @@ import type { GeneratedAgentSpec } from '../api/agents';
 import { SEND_FROM_ACCOUNT_LABEL } from '../copy/email-onboarding';
 import { channelDisplayName } from '../dashboard-urls';
 import { printBridgeScaffolded } from '../pipeline/bridge/print-bridge-scaffolded';
-import { printChatSdkReconcilePlan } from './print-chat-sdk-reconcile-plan';
+import type { BridgeScaffoldVariant } from '../pipeline/bridge/types';
 import type { AgentSummary } from '../types';
 import { resolveGeneratedAgentSpecLabels } from './agent-spec-labels';
 import {
@@ -20,8 +20,9 @@ import {
   logTelegramSetupLinkQrPngHandoffEvent,
   writeAuthUrlHandoffFile,
 } from './handoff-events';
-import { renderQRPngFile } from './qr';
+import { printChatSdkReconcilePlan } from './print-chat-sdk-reconcile-plan';
 import { printConnectSuccess, shouldSkipConnectSuccessSummary } from './print-connect-success';
+import { renderQRPngFile } from './qr';
 import type { ConnectUI, GeneratedAgentPreviewResult, PickResult } from './ui';
 
 export function createLoggingUI(): ConnectUI {
@@ -207,13 +208,12 @@ export function createLoggingUI(): ConnectUI {
       return Promise.resolve(false);
     },
     confirmScaffold({ projectDir, appName, variant = 'chat-sdk' }) {
-      const label = variant === 'custom-code' ? 'agent app' : 'Chat SDK app';
-      console.log(chalk.cyan(`→ Scaffolding ${label} "${appName}" in ${projectDir}`));
+      console.log(chalk.cyan(`→ Scaffolding ${bridgeScaffoldLabel(variant)} "${appName}" in ${projectDir}`));
 
       return Promise.resolve(true);
     },
     scaffoldingBridge({ variant }) {
-      start(variant === 'custom-code' ? 'Scaffolding agent project…' : 'Scaffolding Chat SDK project…');
+      start(bridgeScaffoldSpinnerText(variant));
     },
     bridgeScaffolded(opts) {
       stop();
@@ -400,4 +400,28 @@ function logGeneratedAgentPreview(spec: GeneratedAgentSpec): void {
     console.log(`  ${chalk.bold('Skills:')} ${labels.skills.join(', ')}`);
   }
   console.log(chalk.gray('Non-interactive mode: continuing without confirmation.'));
+}
+
+function bridgeScaffoldLabel(variant: BridgeScaffoldVariant): string {
+  if (variant === 'chat-sdk') {
+    return 'Chat SDK app';
+  }
+
+  if (variant === 'ai-sdk') {
+    return 'AI SDK agent app';
+  }
+
+  return 'agent app';
+}
+
+function bridgeScaffoldSpinnerText(variant: BridgeScaffoldVariant): string {
+  if (variant === 'chat-sdk') {
+    return 'Scaffolding Chat SDK project…';
+  }
+
+  if (variant === 'ai-sdk') {
+    return 'Scaffolding AI SDK agent project…';
+  }
+
+  return 'Scaffolding agent project…';
 }
