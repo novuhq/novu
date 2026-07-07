@@ -668,7 +668,7 @@ export class AgentInboundHandler implements OnModuleInit {
     }
 
     if (config.platform !== AgentPlatformEnum.EMAIL || !canAutoProvision) {
-      this.logUnverifiedInboundEmailSkipped(agentId, config, message, emailAuthRaw);
+      this.logUnverifiedInboundEmailSkipped(agentId, config, message, canAutoProvision, emailAuthRaw);
 
       return null;
     }
@@ -685,6 +685,7 @@ export class AgentInboundHandler implements OnModuleInit {
         agentId,
         config,
         message,
+        canAutoProvision,
         emailAuthRaw,
         'Inbound email sender failed DKIM/SPF verification — skipping auto-provision because auth enforcement is enabled.'
       );
@@ -692,7 +693,7 @@ export class AgentInboundHandler implements OnModuleInit {
       return null;
     }
 
-    return this.provisionUnverifiedInboundEmailSubscriber(agentId, config, message, emailAuthRaw);
+    return this.provisionUnverifiedInboundEmailSubscriber(agentId, config, message, canAutoProvision, emailAuthRaw);
   }
 
   /**
@@ -707,6 +708,7 @@ export class AgentInboundHandler implements OnModuleInit {
     agentId: string,
     config: ResolvedAgentConfig,
     message: Message,
+    canAutoProvision: boolean,
     emailAuthRaw: Record<string, unknown> | undefined
   ): Promise<string | null> {
     try {
@@ -721,6 +723,7 @@ export class AgentInboundHandler implements OnModuleInit {
           agentId,
           config,
           message,
+          canAutoProvision,
           emailAuthRaw,
           'Inbound email sender failed DKIM/SPF verification — skipping subscriber resolution so a spoofed From cannot assume an existing identity.'
         );
@@ -772,6 +775,7 @@ export class AgentInboundHandler implements OnModuleInit {
     agentId: string,
     config: ResolvedAgentConfig,
     message: Message,
+    canAutoProvision: boolean,
     emailAuthRaw: Record<string, unknown> | undefined,
     logMessage = 'Inbound email sender failed DKIM/SPF verification — skipping subscriber resolution so a spoofed From cannot assume an existing identity.'
   ): void {
@@ -784,6 +788,9 @@ export class AgentInboundHandler implements OnModuleInit {
         dkim: emailAuthRaw?.dkim,
         spf: emailAuthRaw?.spf,
         messageId: message.id,
+        subscriberAccess: config.subscriberAccess,
+        isKeyless: config.isKeyless,
+        canAutoProvision,
       },
       logMessage
     );

@@ -11,7 +11,15 @@ const spamc = new Spamc();
 /* Verify Python availability. */
 const isPythonAvailable = shell.which('python');
 if (!isPythonAvailable) {
-  logger.warn({ context: LOG_CONTEXT }, 'Python is not available. Dkim and spf checking is disabled.');
+  logger.warn(
+    { context: LOG_CONTEXT, path: process.env.PATH },
+    'Python is not available. Dkim and spf checking is disabled — every inbound email will carry dkim/spf "failed" verdicts.'
+  );
+} else {
+  logger.info(
+    { context: LOG_CONTEXT, pythonPath: isPythonAvailable.toString() },
+    'Python found — dkim and spf checking is enabled.'
+  );
 }
 
 /* Verify spamc/spamassassin availability. */
@@ -38,12 +46,34 @@ module.exports = {
     const verifyDkimPath = path.join(__dirname, '../python/verifydkim.py');
     const verifyDkim = child_process.spawn('python', [verifyDkimPath]);
 
+    let stdout = '';
+    let stderr = '';
+
     verifyDkim.stdout.on('data', (data) => {
+      stdout += data.toString();
       logger.verbose({ context: LOG_CONTEXT }, data.toString());
     });
 
+    verifyDkim.stderr.on('data', (data) => {
+      stderr += data.toString();
+    });
+
     verifyDkim.on('close', (code) => {
-      logger.verbose({ context: LOG_CONTEXT }, `closed with return code ${code}`);
+      if (code) {
+        /*
+         * Exit 11 is the script's "signature did not verify" code; anything
+         * else (tracebacks, missing modules, spawn issues) means the check
+         * itself is broken and every email would be stamped as failed.
+         */
+        logger.warn(
+          { context: LOG_CONTEXT, exitCode: code, stdout: stdout.trim(), stderr: stderr.trim() },
+          code === 11
+            ? 'DKIM verification failed: signature did not verify.'
+            : 'DKIM verification errored: verifier script did not run cleanly — treating dkim as failed.'
+        );
+      } else {
+        logger.verbose({ context: LOG_CONTEXT }, `closed with return code ${code}`);
+      }
 
       /* Convert return code to appropriate boolean. */
       return callback(null, !code);
@@ -62,14 +92,37 @@ module.exports = {
     const cmd = 'python ';
     const args = [verifySpfPath, ip, address, host];
 
-    child_process.execFile(cmd, args, (err, stdout) => {
+    child_process.execFile(cmd, args, (err, stdout, stderr) => {
       logger.verbose({ context: LOG_CONTEXT }, stdout);
       let code = 0;
       if (err) {
         code = err.code;
       }
 
-      logger.verbose({ context: LOG_CONTEXT }, `closed with return code ${code}`);
+      if (code) {
+        /*
+         * Exit 11 is the script's "spf did not pass" code; any other code —
+         * including string codes like ENOENT when the python binary cannot be
+         * spawned — means the check itself is broken, not the sender.
+         */
+        logger.warn(
+          {
+            context: LOG_CONTEXT,
+            err,
+            exitCode: code,
+            ip,
+            address,
+            host,
+            stdout: typeof stdout === 'string' ? stdout.trim() : stdout,
+            stderr: typeof stderr === 'string' ? stderr.trim() : stderr,
+          },
+          code === 11
+            ? 'SPF verification failed: sender IP is not authorized for the domain.'
+            : 'SPF verification errored: verifier did not run cleanly — treating spf as failed.'
+        );
+      } else {
+        logger.verbose({ context: LOG_CONTEXT }, `closed with return code ${code}`);
+      }
 
       /* Convert return code to appropriate boolean. */
       return callback(null, !code);
