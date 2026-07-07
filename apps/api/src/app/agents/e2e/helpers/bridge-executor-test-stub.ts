@@ -24,7 +24,7 @@ import {
   GetDecryptedSecretKeyCommand,
   safeOutboundJsonRequest,
 } from '@novu/application-generic';
-import type { AgentBridgeRequest } from '@novu/framework';
+import type { AgentBridgeRequest } from '@novu/framework/internal';
 import { HttpHeaderKeysEnum } from '@novu/framework/internal';
 import sinon from 'sinon';
 import {

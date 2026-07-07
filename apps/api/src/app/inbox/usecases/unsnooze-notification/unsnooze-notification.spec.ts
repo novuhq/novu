@@ -4,8 +4,8 @@ import { JobEntity, JobRepository, MessageEntity, MessageRepository } from '@nov
 import { ChannelTypeEnum, JobStatusEnum, SeverityLevelEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { InboxNotificationDto } from '../../dtos/inbox-notification.dto';
 import { GetSubscriber } from '../../../subscribers/usecases/get-subscriber';
+import { InboxNotificationDto } from '../../dtos/inbox-notification.dto';
 import { MarkNotificationAsCommand } from '../mark-notification-as/mark-notification-as.command';
 import { MarkNotificationAs } from '../mark-notification-as/mark-notification-as.usecase';
 import { UnsnoozeNotificationCommand } from './unsnooze-notification.command';

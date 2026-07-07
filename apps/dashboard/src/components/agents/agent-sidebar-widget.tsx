@@ -1,4 +1,4 @@
-import { MAX_DESCRIPTION_LENGTH, PermissionsEnum } from '@novu/shared';
+import { AGENT_NAME_MAX_LENGTH, MAX_DESCRIPTION_LENGTH, PermissionsEnum } from '@novu/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
 import { AnimatePresence, motion } from 'motion/react';
@@ -23,6 +23,7 @@ import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner
 import { Switch } from '@/components/primitives/switch';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
+import TruncatedText from '@/components/truncated-text';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useAgentRoutes } from '@/hooks/use-agent-routes';
 import { useHasPermission } from '@/hooks/use-has-permission';
@@ -33,8 +34,6 @@ import { ConnectorSection } from './connector-section';
 type AgentSidebarWidgetProps = {
   agent: AgentResponse;
 };
-
-const AGENT_NAME_MAX_LENGTH = 64;
 
 const DATE_FORMAT_OPTIONS: Intl.DateTimeFormatOptions = {
   year: 'numeric',
@@ -432,7 +431,9 @@ export function AgentSidebarWidget({ agent }: AgentSidebarWidgetProps) {
                     !canEditFields && 'cursor-default'
                   )}
                 >
-                  <span className="block w-full min-w-0 truncate text-right">{name || 'Untitled agent'}</span>
+                  <TruncatedText className="block w-full min-w-0 text-right font-medium">
+                    {name || 'Untitled agent'}
+                  </TruncatedText>
                 </motion.button>
               )}
             </AnimatePresence>
@@ -440,7 +441,9 @@ export function AgentSidebarWidget({ agent }: AgentSidebarWidgetProps) {
         </div>
 
         <DetailsSidebarRow label="Agent ID">
-          <span className="text-text-sub font-code text-label-xs tracking-tight">{agent.identifier}</span>
+          <TruncatedText className="text-text-sub font-code block max-w-[24ch] text-label-xs font-normal tracking-tight">
+            {agent.identifier}
+          </TruncatedText>
         </DetailsSidebarRow>
 
         <DetailsSidebarRow label="Created on">

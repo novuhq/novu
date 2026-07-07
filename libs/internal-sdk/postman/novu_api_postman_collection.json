@@ -2141,7 +2141,7 @@
                                 },
                                 {
                                     "key": "providerId",
-                                    "value": "afro-message",
+                                    "value": "unifonic",
                                     "type": "enum"
                                 },
                                 {
@@ -2401,7 +2401,7 @@
                                 },
                                 {
                                     "key": "providerId",
-                                    "value": "novu-email-agent",
+                                    "value": "nexmo",
                                     "type": "enum"
                                 },
                                 {
@@ -3151,7 +3151,7 @@
                                 "integrations"
                             ]
                         },
-                        "description": "List all the channels integrations created in the organization"
+                        "description": "List all the channels integrations created in the organization. Only integration metadata is returned, credentials field is returned as an empty object."
                     }
                 },
                 {
@@ -3189,7 +3189,7 @@
                                 "integrations"
                             ]
                         },
-                        "description": "Create an integration for the current environment the user is based on the API key provided. \n    Each provider supports different credentials, check the provider documentation for more details."
+                        "description": "Create an integration for the current environment the user is based on the API key provided. \n    Each provider supports different credentials, check the provider documentation for more details. Only integration metadata is returned, credentials field is returned as an empty object."
                     }
                 },
                 {
@@ -3235,7 +3235,7 @@
                                 }
                             ]
                         },
-                        "description": "Update an integration by its unique key identifier **integrationId**. \n    Each provider supports different credentials, check the provider documentation for more details."
+                        "description": "Update an integration by its unique key identifier **integrationId**. \n    Each provider supports different credentials, check the provider documentation for more details. Only integration metadata is returned, credentials field is returned as an empty object."
                     }
                 },
                 {
@@ -3272,7 +3272,7 @@
                                 }
                             ]
                         },
-                        "description": "Delete an integration by its unique key identifier **integrationId**. \n    This action is irreversible."
+                        "description": "Delete an integration by its unique key identifier **integrationId**. \n    This action is irreversible. Only integration metadata is returned, credentials field is returned as empty object."
                     }
                 },
                 {
@@ -3310,7 +3310,7 @@
                                 }
                             ]
                         },
-                        "description": "Auto-configure an integration by its unique key identifier **integrationId** for inbound webhook support. \n    This will automatically generate required webhook signing keys and configure webhook endpoints."
+                        "description": "Auto-configure an integration by its unique key identifier **integrationId** for inbound webhook support. \n    This will automatically generate required webhook signing keys and configure webhook endpoints. Only integration metadata is returned, credentials field is returned as an empty object."
                     }
                 },
                 {
@@ -3348,7 +3348,93 @@
                                 }
                             ]
                         },
-                        "description": "Update an integration as **primary** by its unique key identifier **integrationId**. \n    This API will set the integration as primary for that channel in the current environment. \n    Primary integration is used to deliver notification for sms and email channels in the workflow."
+                        "description": "Update an integration as **primary** by its unique key identifier **integrationId**. \n    This API will set the integration as primary for that channel in the current environment. \n    Primary integration is used to deliver notification for sms and email channels in the workflow. \n    Only integration metadata is returned, credentials field is returned as an empty object."
+                    }
+                },
+                {
+                    "name": "Issue a short-lived mobile setup link for an existing integration",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "idempotency-key",
+                                "value": "<value>",
+                                "type": "string"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "string"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "string"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/integrations/{integrationIdentifier}/mobile-link",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v1",
+                                "integrations",
+                                ":integrationIdentifier",
+                                "mobile-link"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "integrationIdentifier",
+                                    "value": "<value>",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "description": "Returns an opaque, single-use setup token plus a mobile URL for configuring an existing chat integration. Telegram is the only supported provider initially."
+                    }
+                },
+                {
+                    "name": "Configure a chat integration webhook",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "idempotency-key",
+                                "value": "<value>",
+                                "type": "string"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "string"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/integrations/{integrationIdentifier}/webhook/configure",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v1",
+                                "integrations",
+                                ":integrationIdentifier",
+                                "webhook",
+                                "configure"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "integrationIdentifier",
+                                    "value": "<value>",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "description": "Registers the Novu webhook URL with the chat provider for the specified integration. Telegram is the only supported provider initially."
                     }
                 },
                 {
@@ -3378,7 +3464,7 @@
                                 "active"
                             ]
                         },
-                        "description": "List all the active integrations created in the organization"
+                        "description": "List all the active integrations created in the organization. Only integration metadata is returned, credentials field is returned as an empty object."
                     }
                 },
                 {
@@ -3419,6 +3505,46 @@
                             ]
                         },
                         "description": "Generate an OAuth URL that creates a workspace or tenant-level channel connection (Slack workspace install or MS Teams admin consent). \n    The generated URL expires after 5 minutes."
+                    }
+                },
+                {
+                    "name": "Issue a URL to link a subscriber chat identity",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "idempotency-key",
+                                "value": "<value>",
+                                "type": "string"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "string"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "string"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/v1/integrations/channel-endpoints/link",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v1",
+                                "integrations",
+                                "channel-endpoints",
+                                "link"
+                            ]
+                        },
+                        "description": "Returns a provider-specific URL the subscriber opens to link their chat identity. The integration provider is resolved from integrationIdentifier; Telegram returns a deep link."
                     }
                 },
                 {

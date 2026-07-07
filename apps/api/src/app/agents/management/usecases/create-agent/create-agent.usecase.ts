@@ -9,7 +9,13 @@ import {
   throwPlanLimitExceeded,
 } from '@novu/application-generic';
 import { AgentRepository, CommunityOrganizationRepository, EnvironmentRepository } from '@novu/dal';
-import { ApiServiceLevelEnum, EnvironmentTypeEnum, FeatureNameEnum, getFeatureForTierAsBoolean } from '@novu/shared';
+import {
+  AGENT_NAME_MAX_LENGTH,
+  ApiServiceLevelEnum,
+  EnvironmentTypeEnum,
+  FeatureNameEnum,
+  getFeatureForTierAsBoolean,
+} from '@novu/shared';
 import { KeylessAbuseGuardService } from '../../../../keyless/keyless-abuse-guard.service';
 import { NovuEmailProvisioningService } from '../../../email/novu-email/find-or-create-novu-email/find-or-create-novu-email.service';
 import { trackAgentCreated } from '../../../shared/analytics/agent-analytics';
@@ -132,10 +138,14 @@ export class CreateAgent {
             }
 
             if (isAdoptMode && provisionResult.adoptedName) {
+              // Externally-sourced provider names may exceed our limit. Truncate
+              // instead of rejecting so adopting a long-named provider agent never fails.
+              const adoptedName = provisionResult.adoptedName.slice(0, AGENT_NAME_MAX_LENGTH);
+
               // Resolve a unique identifier from the Claude agent name, following the
               // same pattern used elsewhere in the platform: slugify + random short ID on collision.
               const resolvedIdentifier = await this.resolveUniqueIdentifier(
-                provisionResult.adoptedName,
+                adoptedName,
                 command.environmentId,
                 command.organizationId,
                 created._id
@@ -149,7 +159,7 @@ export class CreateAgent {
                 },
                 {
                   $set: {
-                    name: provisionResult.adoptedName,
+                    name: adoptedName,
                     identifier: resolvedIdentifier,
                   },
                 },

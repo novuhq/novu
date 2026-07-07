@@ -47,15 +47,10 @@ export class UpdateEnvironmentVariable {
     }
 
     if (command.values !== undefined) {
-      await validateEnvironmentVariableValues(
-        this.environmentRepository,
-        command.organizationId,
-        command.values,
-        {
-          restrictToUserEnvironment: command.restrictToUserEnvironment,
-          userEnvironmentId: command.environmentId,
-        }
-      );
+      await validateEnvironmentVariableValues(this.environmentRepository, command.organizationId, command.values, {
+        restrictToUserEnvironment: command.restrictToUserEnvironment,
+        userEnvironmentId: command.environmentId,
+      });
 
       // Defense in depth: never let the public secret mask string be persisted as an
       // actual variable value. The dashboard returns mask strings on reads, so accepting

@@ -56,8 +56,9 @@ jobs:
           done
 
           # Use GitHub API to check user permissions
+          encoded_author=$(printf '%s' "$author" | jq -sRr @uri)
           response=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            "https://api.github.com/repos/${{ github.repository }}/collaborators/$author/permission")
+            "https://api.github.com/repos/${{ github.repository }}/collaborators/${encoded_author}/permission")
 
           permission=$(echo "$response" | jq -r '.permission // "none"')
           echo "Permission level: $permission"

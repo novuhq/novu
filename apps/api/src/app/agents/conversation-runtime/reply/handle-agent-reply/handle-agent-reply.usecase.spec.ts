@@ -23,6 +23,7 @@ describe('HandleAgentReply - active-conversation counting', () => {
     const analyticsService = { track: sinon.stub() };
     const outboundGateway = {
       deliver: sinon.stub().resolves({ messageId: 'm1', platformThreadId: 'thread1' }),
+      deleteInConversation: sinon.stub().resolves(undefined),
     };
     const inboundAck = { onBridgeReplyDelivered: sinon.stub().resolves(undefined) };
     const conversationActivation = {
@@ -74,5 +75,19 @@ describe('HandleAgentReply - active-conversation counting', () => {
     expect(outboundGateway.deliver.calledOnce).to.equal(true);
     expect(conversationActivation.assertOutboundWithinLimit.called).to.equal(false);
     expect(conversationActivation.registerEngagement.called).to.equal(false);
+  });
+
+  it('deletes platform messages for a deleteMessages-only request', async () => {
+    const { usecase, baseCommand, outboundGateway } = setup();
+
+    await usecase.execute({
+      ...baseCommand,
+      deleteMessages: [{ messageId: 'msg-abc' }, { messageId: 'msg-def' }],
+    } as any);
+
+    expect(outboundGateway.deliver.called).to.equal(false);
+    expect(outboundGateway.deleteInConversation.callCount).to.equal(2);
+    expect(outboundGateway.deleteInConversation.getCall(0).args[4]).to.equal('msg-abc');
+    expect(outboundGateway.deleteInConversation.getCall(1).args[4]).to.equal('msg-def');
   });
 });

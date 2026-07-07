@@ -3,7 +3,7 @@ import { ApiExcludeEndpoint, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swa
 import { RequirePermissions } from '@novu/application-generic';
 import { ChannelTypeEnum, PermissionsEnum, SeverityLevelEnum, UserSessionData } from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
-import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
+import { ExternalApiAccessible, OAuthAccessible } from '../auth/framework/external-api.decorator';
 import { ApiCommonResponses, ApiOkResponse, ApiResponse } from '../shared/framework/response.decorator';
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import { UserSession } from '../shared/framework/user.decorator';
@@ -32,6 +32,7 @@ export class NotificationsController {
   ) {}
 
   @Get('')
+  @OAuthAccessible()
   @ApiOkResponse({
     type: ActivitiesResponseDto,
   })
@@ -155,6 +156,7 @@ export class NotificationsController {
   }
 
   @Get('/:notificationId')
+  @OAuthAccessible()
   @ApiResponse(ActivityNotificationResponseDto)
   @ApiOperation({
     summary: 'Retrieve an event',

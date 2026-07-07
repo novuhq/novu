@@ -48,10 +48,10 @@ export function AgentIntegrationGuideTransition({
   const showContinueStep = justConnected && isConnected && !hasContinued;
 
   useEffect(() => {
-    if (!showConnected) return;
+    if (!hasContinued) return;
 
     onContinuedRef.current?.();
-  }, [showConnected]);
+  }, [hasContinued]);
 
   if (showConnected) {
     return <>{renderConnectedView(justConnected)}</>;
