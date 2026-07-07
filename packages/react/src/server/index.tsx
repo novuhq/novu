@@ -19,6 +19,8 @@ import type {
   UseUpdateSubscriptionResult,
 } from '../hooks';
 import type { NovuProviderProps } from '../hooks/NovuProvider';
+import type { UseConversationProps, UseConversationResult } from '../hooks/useConversation';
+import type { UseConversationsProps, UseConversationsResult } from '../hooks/useConversations';
 import type { UseCountsProps, UseCountsResult } from '../hooks/useCounts';
 
 /**
@@ -71,8 +73,44 @@ export function TelegramConnectButton() {
   return <ShadowRootDetector />;
 }
 
+export function ConversationCard() {
+  return null;
+}
+
+export function ConversationMessageContent() {
+  return null;
+}
+
 export function useNovu() {
   return null;
+}
+
+/**
+ * SSR stub matching the client hook's pre-fetch state (loading, no messages),
+ * so hydration starts from an identical render.
+ */
+export function useConversation(props: UseConversationProps): UseConversationResult {
+  return {
+    conversationId: props.conversationId ?? '',
+    messages: [],
+    isLoading: true,
+    isStreaming: false,
+    isTyping: false,
+    sendMessage: () => Promise.resolve({}),
+    sendAction: () => Promise.resolve({}),
+    refetch: () => Promise.resolve(),
+    newConversation: () => {},
+  };
+}
+
+export function useConversations(_: UseConversationsProps): UseConversationsResult {
+  return {
+    isLoading: true,
+    isFetching: false,
+    hasMore: false,
+    refetch: () => Promise.resolve(),
+    fetchMore: () => Promise.resolve(),
+  };
 }
 
 export function useCounts(_: UseCountsProps): UseCountsResult {
@@ -191,6 +229,10 @@ export type {
 export type { BellProps, InboxContentProps, InboxProps, NotificationProps, NovuProviderProps } from '../components';
 
 export type {
+  UseConversationProps,
+  UseConversationResult,
+  UseConversationsProps,
+  UseConversationsResult,
   UseCountsProps,
   UseCountsResult,
   UseNotificationsProps,
