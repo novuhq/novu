@@ -28,9 +28,10 @@ import { useFetchWorkflow } from '@/hooks/use-fetch-workflow';
 import type { ProviderColorToken } from '@/utils/color';
 import { STEP_TYPE_TO_COLOR } from '@/utils/color';
 import { STEP_TYPE_LABELS, TEMPLATE_CONFIGURABLE_STEP_TYPES } from '@/utils/constants';
-import { buildRoute, ROUTES } from '@/utils/routes';
+import { buildRoute } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { SavingStatusIndicator } from './saving-status-indicator';
+import { useWorkflowEditorRoutes } from './use-workflow-editor-routes';
 import { useWorkflow } from './workflow-provider';
 
 const COLOR_TOKEN_TO_TEXT: Record<ProviderColorToken, string> = {
@@ -59,10 +60,16 @@ export function EditorBreadcrumbs() {
   const navigate = useNavigate();
   const location = useLocation();
   const isNewWorkflowSlug = workflowSlug === 'new';
-  const { workflow } = useFetchWorkflow({ workflowSlug: !isNewWorkflowSlug ? workflowSlug : undefined });
-  const { step } = useWorkflow();
+  const { isLocalRoute, editWorkflowRoute, workflowsRoute: workflowsRoutePattern } = useWorkflowEditorRoutes();
+  // Virtual (local bridge) workflows are not persisted — take them from the
+  // editor context instead of fetching by slug.
+  const { workflow: fetchedWorkflow } = useFetchWorkflow({
+    workflowSlug: !isNewWorkflowSlug && !isLocalRoute ? workflowSlug : undefined,
+  });
+  const { step, workflow: contextWorkflow } = useWorkflow();
+  const workflow = isLocalRoute ? contextWorkflow : fetchedWorkflow;
 
-  const workflowsRoute = buildRoute(ROUTES.WORKFLOWS, {
+  const workflowsRoute = buildRoute(workflowsRoutePattern, {
     environmentSlug: currentEnvironment?.slug ?? '',
   });
 
@@ -70,7 +77,7 @@ export function EditorBreadcrumbs() {
 
   const breadcrumbs: BreadcrumbData[] = [
     {
-      label: currentEnvironment?.name || '',
+      label: isLocalRoute ? `${currentEnvironment?.name || ''} (Local)` : currentEnvironment?.name || '',
       href: workflowsRoute,
     },
     {
@@ -80,7 +87,7 @@ export function EditorBreadcrumbs() {
   ];
 
   if (workflow) {
-    const workflowRoute = buildRoute(ROUTES.EDIT_WORKFLOW, {
+    const workflowRoute = buildRoute(editWorkflowRoute, {
       environmentSlug: currentEnvironment?.slug ?? '',
       workflowSlug: workflow.slug,
     });
@@ -93,7 +100,7 @@ export function EditorBreadcrumbs() {
   const handleBackNavigation = () => {
     if (isOnStepRoute && workflow) {
       navigate(
-        buildRoute(ROUTES.EDIT_WORKFLOW, {
+        buildRoute(editWorkflowRoute, {
           environmentSlug: currentEnvironment?.slug ?? '',
           workflowSlug: workflow.slug,
         })
@@ -169,6 +176,7 @@ function StepBreadcrumb({ step }: { step: StepResponseDto }) {
   const { isUpdatePatchPending, lastSaveError, workflow } = useWorkflow();
   const navigate = useNavigate();
   const { currentEnvironment } = useEnvironment();
+  const { editWorkflowRoute } = useWorkflowEditorRoutes();
   const { workflowSlug = '' } = useParams<{ workflowSlug: string }>();
   const steps = workflow?.steps ?? [];
   const hasMultipleSteps = steps.length > 1;
@@ -178,7 +186,7 @@ function StepBreadcrumb({ step }: { step: StepResponseDto }) {
     if (targetStep.slug === step.slug) return;
 
     const basePath =
-      buildRoute(ROUTES.EDIT_WORKFLOW, {
+      buildRoute(editWorkflowRoute, {
         environmentSlug: currentEnvironment.slug,
         workflowSlug,
       }) + `/steps/${targetStep.slug}`;

@@ -68,6 +68,9 @@ import { InboxEmbedPage } from './pages/inbox-embed-page';
 import { InboxEmbedSuccessPage } from './pages/inbox-embed-success-page';
 import { InboxUsecasePage } from './pages/inbox-usecase-page';
 import { IntegrationStoreTelegramMobileSetupPage } from './pages/integration-store-telegram-mobile-setup-page';
+import { LocalEditWorkflowPage } from './pages/local-edit-workflow';
+import { LocalHandshakePage } from './pages/local-handshake';
+import { LocalWorkflowsPage } from './pages/local-workflows';
 import { RedirectToLegacyStudioAuth } from './pages/redirect-to-legacy-studio-auth';
 import { ResetPasswordPage } from './pages/reset-password';
 import { TestWorkflowDrawerPage } from './pages/test-workflow-drawer-page';
@@ -514,6 +517,55 @@ const router = createBrowserRouter([
                 ),
               },
               {
+                path: ROUTES.LOCAL_WORKFLOWS,
+                element: (
+                  <ProtectedRoute permission={PermissionsEnum.WORKFLOW_READ}>
+                    <LocalWorkflowsPage />
+                  </ProtectedRoute>
+                ),
+              },
+              {
+                // Workflow editor mounted on virtual local-bridge workflows;
+                // children mirror ROUTES.EDIT_WORKFLOW so relative step
+                // navigation behaves identically.
+                path: ROUTES.LOCAL_EDIT_WORKFLOW,
+                element: (
+                  <ProtectedRoute permission={PermissionsEnum.WORKFLOW_READ}>
+                    <LocalEditWorkflowPage />
+                  </ProtectedRoute>
+                ),
+                children: [
+                  {
+                    element: <ConfigureWorkflow />,
+                    index: true,
+                  },
+                  {
+                    element: <ConfigureStep />,
+                    path: ROUTES.EDIT_STEP,
+                  },
+                  {
+                    element: <EditStepTemplateV2Page />,
+                    path: ROUTES.EDIT_STEP_TEMPLATE,
+                  },
+                  {
+                    element: <EditStepConditions />,
+                    path: ROUTES.EDIT_STEP_CONDITIONS,
+                  },
+                  {
+                    element: <ChannelPreferences />,
+                    path: ROUTES.EDIT_WORKFLOW_PREFERENCES,
+                  },
+                  {
+                    path: ROUTES.LOCAL_TRIGGER_WORKFLOW,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.EVENT_WRITE} isDrawerRoute>
+                        <TestWorkflowDrawerPage />
+                      </ProtectedRoute>
+                    ),
+                  },
+                ],
+              },
+              {
                 path: ROUTES.EDIT_WORKFLOW,
                 element: (
                   <ProtectedRoute permission={PermissionsEnum.WORKFLOW_READ}>
@@ -713,6 +765,15 @@ const router = createBrowserRouter([
           {
             path: ROUTES.LOCAL_STUDIO_AUTH,
             element: <RedirectToLegacyStudioAuth />,
+          },
+          {
+            // Handshake target opened by `novu dev` (new dashboard local mode).
+            path: ROUTES.LOCAL_HANDSHAKE,
+            element: (
+              <ProtectedRoute permission={PermissionsEnum.WORKFLOW_READ}>
+                <LocalHandshakePage />
+              </ProtectedRoute>
+            ),
           },
           {
             path: '*',

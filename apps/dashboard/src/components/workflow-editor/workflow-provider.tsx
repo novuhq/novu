@@ -51,7 +51,7 @@ export type WorkflowContextType = {
   lastSaveError: unknown | null;
 };
 
-const WorkflowContext = createContext<WorkflowContextType>({} as WorkflowContextType);
+export const WorkflowContext = createContext<WorkflowContextType>({} as WorkflowContextType);
 
 export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
   const { currentEnvironment } = useEnvironment();

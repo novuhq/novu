@@ -6,7 +6,6 @@ import ora from 'ora';
 import ws from 'ws';
 import packageJson from '../../../package.json';
 import { NOVU_API_URL, NOVU_SECRET_KEY } from '../../constants';
-import { DevServer } from '../../dev-server';
 import { config } from '../../index';
 import { showWelcomeScreen } from '../shared';
 import { DevCommandOptions, LocalTunnelResponse } from './types';
@@ -78,29 +77,24 @@ export async function devCommand(options: DevCommandOptions, anonymousId?: strin
   }
   devSpinner.succeed(`🛣️  Tunnel    → ${tunnelOrigin}${NOVU_ENDPOINT_PATH}`);
 
-  const opts = {
-    ...parsedOptions,
-    tunnelOrigin,
-    anonymousId,
-  };
-
-  const skipStudio = parsedOptions.studio === false;
-
-  if (!skipStudio) {
-    const httpServer = new DevServer(opts);
-
-    const dashboardSpinner = ora('Opening dashboard').start();
-    const studioSpinner = ora('Starting local studio server').start();
-    await httpServer.listen();
-
-    dashboardSpinner.succeed(`🖥️  Dashboard → ${parsedOptions.dashboardUrl}`);
-    studioSpinner.succeed(`🎨 Studio    → ${httpServer.getStudioAddress()}`);
-    if (process.env.NODE_ENV !== 'dev' && parsedOptions.headless === false) {
-      await open(httpServer.getStudioAddress());
-    }
-  }
+  warnAboutDeprecatedStudioOptions(options);
 
   await monitorEndpointHealth(parsedOptions, NOVU_ENDPOINT_PATH);
+
+  // The legacy local studio is gone: local development happens in the cloud
+  // dashboard's "Local" environment mode, connected through the tunnel.
+  const handshakeUrl = buildDashboardHandshakeUrl(
+    parsedOptions.dashboardUrl,
+    tunnelOrigin,
+    NOVU_ENDPOINT_PATH,
+    anonymousId
+  );
+  const dashboardSpinner = ora('Opening dashboard').start();
+  dashboardSpinner.succeed(`🖥️  Dashboard → ${handshakeUrl}`);
+
+  if (process.env.NODE_ENV !== 'dev' && parsedOptions.headless === false) {
+    await open(handshakeUrl);
+  }
 
   if (!parsedOptions.tunnel) {
     startTunnelWatchdog();
@@ -110,6 +104,39 @@ export async function devCommand(options: DevCommandOptions, anonymousId?: strin
   if (NOVU_SECRET_KEY) {
     const bridgeUrl = `${tunnelOrigin}${NOVU_ENDPOINT_PATH}`;
     await discoverAndRegisterAgents(parsedOptions, bridgeUrl);
+  }
+}
+
+function buildDashboardHandshakeUrl(
+  dashboardUrl: string,
+  tunnelOrigin: string,
+  endpointRoute: string,
+  anonymousId?: string
+): string {
+  const url = new URL('/local', dashboardUrl);
+  url.searchParams.set('tunnel_origin', tunnelOrigin);
+  url.searchParams.set('route', endpointRoute);
+
+  if (anonymousId) {
+    url.searchParams.set('anonymous_id', anonymousId);
+  }
+
+  return url.toString();
+}
+
+function warnAboutDeprecatedStudioOptions(options: DevCommandOptions) {
+  const usedDeprecated: string[] = [];
+
+  if (options.studioPort && options.studioPort !== '2022') usedDeprecated.push('--studio-port');
+  if (options.studioHost && options.studioHost !== 'localhost') usedDeprecated.push('--studio-host');
+  if (options.studio === false) usedDeprecated.push('--no-studio');
+
+  if (usedDeprecated.length > 0) {
+    console.log(
+      chalk.yellow(
+        `  ⚠ ${usedDeprecated.join(', ')} ${usedDeprecated.length > 1 ? 'are' : 'is'} deprecated and ignored — the local studio was replaced by the dashboard's Local environment.`
+      )
+    );
   }
 }
 

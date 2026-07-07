@@ -33,6 +33,7 @@ import { useTriggerWorkflow } from '@/hooks/use-trigger-workflow';
 import { generatePostmanCollection, generateTriggerCurlCommand } from '@/utils/code-snippets';
 import { Protect } from '@/utils/protect';
 import { buildRoute, ROUTES } from '@/utils/routes';
+import { useLocalMode } from '@/context/local-mode';
 import { AiChatProvider, NovuCopilotPanel, useAiChat } from '../ai-sidekick';
 import { SidekickToast } from '../ai-sidekick/sidekick-toast';
 import { DeleteWorkflowDialog } from '../delete-workflow-dialog';
@@ -53,6 +54,7 @@ import { WorkflowCanvas } from './workflow-canvas';
 export const WorkflowTabs = () => {
   const { workflow, isPending: isWorkflowPending, refetch: refetchWorkflow } = useWorkflow();
   const { currentEnvironment, areEnvironmentsInitialLoading } = useEnvironment();
+  const { isLocalRoute } = useLocalMode();
   const { currentUser } = useAuth();
   const navigate = useNavigate();
   const isAiWorkflowGenerationEnabled =
@@ -287,10 +289,14 @@ export const WorkflowTabs = () => {
                   mode="ghost"
                   size="xs"
                   onClick={() => {
-                    const activityUrl = `${buildRoute(ROUTES.EDIT_WORKFLOW_ACTIVITY, {
-                      environmentSlug: currentEnvironment?.slug ?? '',
-                      workflowSlug: workflow?.slug ?? '',
-                    })}?transactionId=${transactionId}`;
+                    const activityUrl = isLocalRoute
+                      ? `${buildRoute(ROUTES.ACTIVITY_FEED, {
+                          environmentSlug: currentEnvironment?.slug ?? '',
+                        })}?transactionId=${transactionId}`
+                      : `${buildRoute(ROUTES.EDIT_WORKFLOW_ACTIVITY, {
+                          environmentSlug: currentEnvironment?.slug ?? '',
+                          workflowSlug: workflow?.slug ?? '',
+                        })}?transactionId=${transactionId}`;
                     navigate(activityUrl);
                     close();
                   }}
@@ -429,7 +435,7 @@ export const WorkflowTabs = () => {
           >
             {currentEnvironment && workflow ? (
               <Link
-                to={buildRoute(ROUTES.EDIT_WORKFLOW, {
+                to={buildRoute(isLocalRoute ? ROUTES.LOCAL_EDIT_WORKFLOW : ROUTES.EDIT_WORKFLOW, {
                   environmentSlug: currentEnvironment?.slug ?? '',
                   workflowSlug: workflow?.slug ?? '',
                 })}
@@ -449,10 +455,14 @@ export const WorkflowTabs = () => {
           >
             {currentEnvironment && workflow ? (
               <Link
-                to={buildRoute(ROUTES.EDIT_WORKFLOW_ACTIVITY, {
-                  environmentSlug: currentEnvironment?.slug ?? '',
-                  workflowSlug: workflow?.slug ?? '',
-                })}
+                to={
+                  isLocalRoute
+                    ? buildRoute(ROUTES.ACTIVITY_FEED, { environmentSlug: currentEnvironment?.slug ?? '' })
+                    : buildRoute(ROUTES.EDIT_WORKFLOW_ACTIVITY, {
+                        environmentSlug: currentEnvironment?.slug ?? '',
+                        workflowSlug: workflow?.slug ?? '',
+                      })
+                }
               >
                 Activity
               </Link>
