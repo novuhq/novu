@@ -17,9 +17,32 @@ import { WorkflowSchemaProvider } from './workflow-schema-provider';
  */
 export const LocalWorkflowProvider = ({ children }: { children: ReactNode }) => {
   const { workflowSlug = '', stepSlug = '' } = useParams<{ workflowSlug?: string; stepSlug?: string }>();
-  const { workflows, isDiscoverPending, refetchDiscover } = useLocalMode();
+  const { workflows, isDiscoverPending, refetchDiscover, controlOverrides, setStepControlOverrides } = useLocalMode();
 
-  const workflow = useMemo(() => findLocalWorkflow(workflows, workflowSlug), [workflows, workflowSlug]);
+  const baseWorkflow = useMemo(() => findLocalWorkflow(workflows, workflowSlug), [workflows, workflowSlug]);
+
+  // Overlay sandbox-edited control values on top of the discovered ones, so
+  // the editor form, previews, and test triggers all agree on what the user
+  // sees after "override code defined defaults" edits.
+  const workflow = useMemo(() => {
+    if (!baseWorkflow) return undefined;
+
+    const overrides = controlOverrides[baseWorkflow.workflowId];
+    if (!overrides || Object.keys(overrides).length === 0) return baseWorkflow;
+
+    return {
+      ...baseWorkflow,
+      steps: baseWorkflow.steps.map((candidate) => {
+        const stepOverride = overrides[candidate.stepId];
+        if (!stepOverride) return candidate;
+
+        return {
+          ...candidate,
+          controls: { ...candidate.controls, values: stepOverride },
+        };
+      }),
+    };
+  }, [baseWorkflow, controlOverrides]);
 
   const step = useMemo(() => findLocalStep(workflow, stepSlug), [workflow, stepSlug]);
 
@@ -49,6 +72,26 @@ export const LocalWorkflowProvider = ({ children }: { children: ReactNode }) => 
     [refetchDiscover, workflow]
   );
 
+  // Nothing to persist for virtual workflows — but "update" carries the
+  // sandbox control-value edits (autosave calls it with the merged workflow),
+  // so capture them into the session-scoped overrides instead of dropping.
+  const update = useCallback<WorkflowContextType['update']>(
+    (data, options) => {
+      if (!baseWorkflow) return;
+
+      for (const updatedStep of data.steps ?? []) {
+        const stepId = 'stepId' in updatedStep ? updatedStep.stepId : undefined;
+
+        if (stepId && updatedStep.controlValues !== undefined && updatedStep.controlValues !== null) {
+          setStepControlOverrides(baseWorkflow.workflowId, stepId, updatedStep.controlValues);
+        }
+      }
+
+      options?.onSuccess?.(workflow ?? baseWorkflow);
+    },
+    [baseWorkflow, workflow, setStepControlOverrides]
+  );
+
   const value = useMemo<WorkflowContextType>(
     () => ({
       isPending: isDiscoverPending,
@@ -56,13 +99,12 @@ export const LocalWorkflowProvider = ({ children }: { children: ReactNode }) => 
       workflow,
       step,
       refetch,
-      // Virtual workflows live in code; there is nothing to persist.
-      update: () => undefined,
+      update,
       patch: () => undefined,
       digestStepBeforeCurrent,
       lastSaveError: null,
     }),
-    [isDiscoverPending, workflow, step, refetch, digestStepBeforeCurrent]
+    [isDiscoverPending, workflow, step, refetch, update, digestStepBeforeCurrent]
   );
 
   return (

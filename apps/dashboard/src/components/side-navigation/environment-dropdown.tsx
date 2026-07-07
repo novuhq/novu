@@ -1,6 +1,6 @@
 import { EnvironmentTypeEnum, IEnvironment } from '@novu/shared';
 import { useState } from 'react';
-import { RiExpandUpDownLine, RiTerminalBoxLine } from 'react-icons/ri';
+import { RiExpandUpDownLine, RiTerminalFill } from 'react-icons/ri';
 import TruncatedText from '../../components/truncated-text';
 import { cn } from '../../utils/ui';
 import { ConnectionStatus } from '../../utils/types';
@@ -31,21 +31,33 @@ type EnvironmentDropdownProps = {
   isLocalSelected?: boolean;
 };
 
-const LocalStatusDot = ({ status }: { status: ConnectionStatus }) => (
-  <span
-    className={cn('inline-block size-1.5 shrink-0 rounded-full', {
-      'bg-success': status === ConnectionStatus.CONNECTED,
-      'bg-warning': status === ConnectionStatus.LOADING,
-      'bg-destructive': status === ConnectionStatus.DISCONNECTED,
-    })}
-  />
+/**
+ * Mirrors `EnvironmentBranchIcon`'s rounded-square badge so the Local entry
+ * reads as a sibling of the real environments; the badge color doubles as
+ * the bridge connection status.
+ */
+const LocalEnvironmentIcon = ({ status, size = 'sm' }: { status: ConnectionStatus; size?: 'sm' | 'md' }) => (
+  <div
+    className={cn(
+      'flex shrink-0 items-center justify-center rounded-[6px] border border-solid p-1',
+      size === 'md' ? 'size-6' : 'size-5',
+      {
+        'bg-success/10 border-success text-success': status === ConnectionStatus.CONNECTED,
+        'bg-warning/10 border-warning text-warning': status === ConnectionStatus.LOADING,
+        'bg-neutral-alpha-100 border-neutral-alpha-400 text-neutral-400': status === ConnectionStatus.DISCONNECTED,
+      }
+    )}
+  >
+    <RiTerminalFill className={size === 'md' ? 'size-4' : 'size-3'} />
+  </div>
 );
 
-const LocalEntryContent = ({ status }: { status: ConnectionStatus }) => (
+const LocalEntryContent = ({ status, size = 'sm' }: { status: ConnectionStatus; size?: 'sm' | 'md' }) => (
   <div className="flex items-center gap-2">
-    <RiTerminalBoxLine className="size-4 shrink-0" />
-    <TruncatedText className="max-w-[190px]">Local</TruncatedText>
-    <LocalStatusDot status={status} />
+    <LocalEnvironmentIcon status={status} size={size} />
+    <TruncatedText className={cn('max-w-[190px]', size === 'md' ? 'text-foreground text-sm' : '')}>
+      Local
+    </TruncatedText>
   </div>
 );
 
@@ -75,7 +87,7 @@ export const EnvironmentDropdown = ({
         <SelectTrigger className={cn('group p-1.5 shadow-sm [&>svg]:last:hidden', className)}>
           <SelectValue asChild>
             {isLocalSelected && localEntry ? (
-              <LocalEntryContent status={localEntry.status} />
+              <LocalEntryContent status={localEntry.status} size="md" />
             ) : (
               <div className="flex items-center gap-2">
                 <EnvironmentBranchIcon environment={currentEnvironment} />

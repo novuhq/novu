@@ -18,6 +18,9 @@ import { ConnectionStatus } from '@/utils/types';
 const HEALTH_REFRESH_INTERVAL_MS = 10 * 1000;
 const DISCOVER_REFRESH_INTERVAL_MS = 10 * 1000;
 
+/** workflowId → stepId → control values overridden in the sandbox. */
+export type LocalControlOverrides = Record<string, Record<string, Record<string, unknown>>>;
+
 export type LocalModeContextValue = {
   /** Whether the feature is enabled and a handshaked session exists in this browser. */
   isEnabled: boolean;
@@ -32,6 +35,14 @@ export type LocalModeContextValue = {
   refetchDiscover: () => Promise<unknown>;
   saveSession: (session: LocalBridgeSession) => void;
   clearSession: () => void;
+  /**
+   * Sandbox-edited control values. Virtual workflows have nothing to persist
+   * to, so "override code defined defaults" edits live here for the session
+   * and are sent with previews (via the form) and test triggers (as stateless
+   * `controls` on the trigger event).
+   */
+  controlOverrides: LocalControlOverrides;
+  setStepControlOverrides: (workflowId: string, stepId: string, values: Record<string, unknown>) => void;
 };
 
 const inactiveContext: LocalModeContextValue = {
@@ -46,6 +57,8 @@ const inactiveContext: LocalModeContextValue = {
   refetchDiscover: async () => undefined,
   saveSession: () => undefined,
   clearSession: () => undefined,
+  controlOverrides: {},
+  setStepControlOverrides: () => undefined,
 };
 
 const LocalModeContext = createContext<LocalModeContextValue>(inactiveContext);
@@ -110,6 +123,18 @@ export const LocalModeProvider = ({ children }: { children: ReactNode }) => {
     meta: { showError: false },
   });
 
+  const [controlOverrides, setControlOverrides] = useState<LocalControlOverrides>({});
+
+  const setStepControlOverrides = useCallback(
+    (workflowId: string, stepId: string, values: Record<string, unknown>) => {
+      setControlOverrides((previous) => ({
+        ...previous,
+        [workflowId]: { ...previous[workflowId], [stepId]: values },
+      }));
+    },
+    []
+  );
+
   const saveSession = useCallback(
     (newSession: LocalBridgeSession) => {
       if (!organizationId) return;
@@ -123,6 +148,7 @@ export const LocalModeProvider = ({ children }: { children: ReactNode }) => {
     if (!organizationId) return;
     clearLocalBridgeSession(organizationId);
     setSession(null);
+    setControlOverrides({});
   }, [organizationId]);
 
   const healthStatus = useMemo<ConnectionStatus>(() => {
@@ -149,6 +175,8 @@ export const LocalModeProvider = ({ children }: { children: ReactNode }) => {
       refetchDiscover: discoverQuery.refetch,
       saveSession,
       clearSession,
+      controlOverrides,
+      setStepControlOverrides,
     };
   }, [
     isLocalEnvironmentEnabled,
@@ -163,6 +191,8 @@ export const LocalModeProvider = ({ children }: { children: ReactNode }) => {
     discoverQuery.refetch,
     saveSession,
     clearSession,
+    controlOverrides,
+    setStepControlOverrides,
   ]);
 
   return <LocalModeContext.Provider value={value}>{children}</LocalModeContext.Provider>;
