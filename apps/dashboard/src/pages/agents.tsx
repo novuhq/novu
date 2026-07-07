@@ -28,7 +28,7 @@ import { AgentsList } from '@/components/agents/agents-list';
 import { UPGRADE_CTA_LABEL, usePlanUpgradeClick } from '@/components/billing/use-plan-upgrade-click';
 import { DashboardLayout } from '@/components/dashboard-layout';
 import { PageMeta } from '@/components/page-meta';
-import { IS_EU, IS_SELF_HOSTED_CE } from '@/config';
+import { IS_EU, IS_SELF_HOSTED } from '@/config';
 import { Badge } from '@/components/primitives/badge';
 import { Button } from '@/components/primitives/button';
 import { CompactButton } from '@/components/primitives/button-compact';
@@ -429,7 +429,10 @@ export function AgentsPage() {
 
   let agentsContent: ReactElement;
 
-  if (IS_SELF_HOSTED_CE) {
+  if (areAgentsAvailable) {
+    agentsContent = <AgentsList />;
+  } else if (IS_SELF_HOSTED) {
+    // Self-hosted has no early-access flow, so surface the Contact Sales upgrade path instead.
     agentsContent = (
       <AgentsEmptyTeaser
         cta={
@@ -446,8 +449,6 @@ export function AgentsPage() {
         }
       />
     );
-  } else if (areAgentsAvailable) {
-    agentsContent = <AgentsList />;
   } else {
     agentsContent = (
       <AgentsEmptyTeaser
@@ -470,7 +471,7 @@ export function AgentsPage() {
   return (
     <>
       <PageMeta title="Agents" />
-      {!areAgentsAvailable && !IS_SELF_HOSTED_CE ? (
+      {!areAgentsAvailable && !IS_SELF_HOSTED ? (
         <AgentsEarlyAccessDialog open={earlyAccessOpen} onOpenChange={setEarlyAccessOpen} />
       ) : null}
       <DashboardLayout
