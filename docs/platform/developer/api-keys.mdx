@@ -49,13 +49,6 @@ The **Secret Keys** card on the API Keys page lists every active key with per-ke
 2. Update your applications, workflow bridge endpoints, and any other integrations to use the new key.
 3. Once nothing is using the old key, click **Delete** next to it and confirm. The dashboard blocks deletion of the last remaining key.
 
-### HMAC and webhook signatures during rotation
-
-While two keys are active:
-
-- **Inbox HMAC** and **legacy notification-center widget HMAC** validation accept a signature computed with **either** active key, so clients can be rolled over one at a time without breaking sessions.
-- **Bridge and webhook signatures** are still signed with the **first (oldest) key only**. If you verify these signatures on your side with a single-key verifier, you will see a brief mismatch window between the moment you rotate your verifier to the new key and the moment you delete the old key. Complete the deletion (or update your verifier to accept both keys) to close that window.
-
 ## API URLs
 
 The following hostnames are used to connect to the Novu cloud platform.
