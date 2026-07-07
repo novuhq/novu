@@ -191,16 +191,6 @@ export class ManagedAgentEventHandler {
             return;
           }
 
-          // TODO: remove after the observer is fully rolled out.
-          // Old observers still send `response.content`; new ones reply via `onMessage`
-          // and never set `content`, so this only runs against an old observer.
-          const legacyContent = (event.response as { content?: string }).content?.trim();
-          if (legacyContent) {
-            await this.handleAgentReply.execute(
-              HandleAgentReplyCommand.create({ ...baseFields, reply: { markdown: legacyContent } })
-            );
-          }
-
           await this.inboundAck.onManagedTurnComplete(metadata);
 
           await this.demoQuota.recordUsage(

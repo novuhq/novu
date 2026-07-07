@@ -37,6 +37,7 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
       .stub(outboundGateway, 'editInConversation')
       .resolves({ messageId: 'platform-msg-1', platformThreadId: 'platform-thread-1' });
     sinon.stub(outboundGateway, 'reactToMessage').resolves();
+    sinon.stub(outboundGateway, 'deleteInConversation').resolves();
     sinon.stub(outboundGateway, 'removeReaction').resolves();
     sinon.stub(outboundGateway, 'startTypingInConversation').resolves();
   });
@@ -320,6 +321,40 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
         integrationIdentifier: ctx.integrationIdentifier,
         edit: { messageId: 'msg-edit', content: { markdown: 'updated' } },
         addReactions: [{ messageId: 'msg-abc', emojiName: 'thumbs_up' }],
+      });
+
+      expect(res.status).to.equal(400);
+    });
+  });
+
+  describe('deleteMessages', () => {
+    it('should call deleteInConversation for each deleteMessages entry', async () => {
+      const conversationId = await seedConversation(ctx);
+      const outboundGateway = testServer.getService(OutboundGateway);
+
+      const res = await postReply({
+        conversationId,
+        integrationIdentifier: ctx.integrationIdentifier,
+        deleteMessages: [{ messageId: 'msg-abc' }, { messageId: 'msg-def' }],
+      });
+
+      expect(res.status).to.equal(200);
+      expect(res.body.data).to.be.null;
+
+      const stub = outboundGateway.deleteInConversation as sinon.SinonStub;
+      expect(stub.callCount).to.equal(2);
+      expect(stub.getCall(0).args[4]).to.equal('msg-abc');
+      expect(stub.getCall(1).args[4]).to.equal('msg-def');
+    });
+
+    it('should return 400 when edit and deleteMessages are combined', async () => {
+      const conversationId = await seedConversation(ctx);
+
+      const res = await postReply({
+        conversationId,
+        integrationIdentifier: ctx.integrationIdentifier,
+        edit: { messageId: 'msg-edit', content: { markdown: 'updated' } },
+        deleteMessages: [{ messageId: 'msg-abc' }],
       });
 
       expect(res.status).to.equal(400);

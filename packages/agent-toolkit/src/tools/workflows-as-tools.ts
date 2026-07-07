@@ -1,8 +1,8 @@
-import { z } from 'zod';
-import { jsonSchemaToZod } from 'json-schema-to-zod';
 import type { Novu } from '@novu/api';
+import { z } from 'zod';
 import { NovuTool } from '../core/novu-tool.js';
 import type { NovuToolDefinition, NovuToolkitConfig } from '../core/types.js';
+import { safeJsonSchemaToZod } from '../utils/safe-json-schema-to-zod.js';
 
 type WorkflowSummary = {
   workflowId: string;
@@ -17,11 +17,7 @@ function buildPayloadSchema(payloadSchema?: Record<string, unknown> | null): z.Z
   }
 
   try {
-    const zodCode = jsonSchemaToZod(payloadSchema as object);
-    // Using Function constructor to avoid bundler warnings about direct eval
-    // This is intentional: we need to dynamically evaluate generated Zod schema code
-    // from the workflow's JSON Schema definition at runtime.
-    const schema = new Function('z', `return ${zodCode}`)(z) as z.ZodTypeAny;
+    const schema = safeJsonSchemaToZod(payloadSchema);
 
     return schema.describe('Payload data to pass to the workflow.');
   } catch {
@@ -78,18 +74,13 @@ function workflowAsTool(workflow: WorkflowSummary): NovuToolDefinition {
   });
 }
 
-export async function createWorkflowTools(
-  client: Novu,
-  config: NovuToolkitConfig,
-): Promise<NovuToolDefinition[]> {
+export async function createWorkflowTools(client: Novu, config: NovuToolkitConfig): Promise<NovuToolDefinition[]> {
   const { tags, workflowIds } = config.workflows ?? {};
 
   const listResponse = await client.workflows.list({ tags });
   const workflows = listResponse.result.workflows ?? [];
 
-  const filtered = workflowIds
-    ? workflows.filter((w) => workflowIds.includes(w.workflowId))
-    : workflows;
+  const filtered = workflowIds ? workflows.filter((w) => workflowIds.includes(w.workflowId)) : workflows;
 
   const tools: NovuToolDefinition[] = [];
 
@@ -109,7 +100,7 @@ export async function createWorkflowTools(
         name: summary.name,
         description: undefined,
         payloadSchema,
-      }),
+      })
     );
   }
 

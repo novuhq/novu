@@ -13,6 +13,7 @@ type AgentListenStepProps = {
   selectedIntegrationId?: string;
   existingLinks: AgentIntegrationLink[];
   onSelect: (providerId: string, integration?: IIntegration) => void;
+  showChannelSwitcherRail?: boolean;
 };
 
 export function AgentListenStep({
@@ -24,6 +25,7 @@ export function AgentListenStep({
   selectedIntegrationId,
   existingLinks,
   onSelect,
+  showChannelSwitcherRail,
 }: AgentListenStepProps) {
   return (
     <SetupStep
@@ -39,6 +41,7 @@ export function AgentListenStep({
           selectedIntegrationId={selectedIntegrationId}
           existingLinks={existingLinks}
           onSelect={onSelect}
+          showChannelSwitcherRail={showChannelSwitcherRail}
         />
       }
     />

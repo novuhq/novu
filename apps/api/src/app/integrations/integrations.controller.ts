@@ -4,7 +4,6 @@ import {
   ClassSerializerInterceptor,
   Controller,
   Delete,
-  ForbiddenException,
   Get,
   HttpCode,
   HttpStatus,
@@ -45,7 +44,7 @@ import { Response } from 'express';
 import { ConfigureTelegramWebhookResponseDto } from '../agents/shared/dtos/configure-telegram-webhook-response.dto';
 import { IssueTelegramMobileLinkResponseDto } from '../agents/shared/dtos/issue-telegram-mobile-link-response.dto';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
-import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
+import { ExternalApiAccessible, OAuthAccessible } from '../auth/framework/external-api.decorator';
 import {
   ApiCommonResponses,
   ApiNotFoundResponse,
@@ -56,7 +55,7 @@ import { KeylessAccessible } from '../shared/framework/swagger/keyless.security'
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import { UserSession } from '../shared/framework/user.decorator';
 import { CONNECTION_RESULT_CSP } from '../shared/html/connection-result-page';
-import { isEnvironmentScopedAuthScheme } from '../shared/utils/auth.utils';
+import { assertEnvironmentScopedAccess, isEnvironmentScopedAuthScheme } from '../shared/utils/auth.utils';
 import { ConfigureTelegramWebhookCommand } from '../telegram-linking/configure-telegram-webhook/configure-telegram-webhook.command';
 import { ConfigureTelegramWebhook } from '../telegram-linking/configure-telegram-webhook/configure-telegram-webhook.usecase';
 import { IssueTelegramMobileLinkCommand } from '../telegram-linking/issue-telegram-mobile-link/issue-telegram-mobile-link.command';
@@ -161,6 +160,7 @@ export class IntegrationsController {
   }
 
   @Get('/')
+  @OAuthAccessible()
   @ApiOkResponse({
     type: [IntegrationResponseDto],
     description: 'The list of integrations belonging to the organization that are successfully returned.',
@@ -189,6 +189,7 @@ export class IntegrationsController {
   }
 
   @Get('/active')
+  @OAuthAccessible()
   @ApiOkResponse({
     type: [IntegrationResponseDto],
     description: 'The list of active integrations belonging to the organization that are successfully returned.',
@@ -261,7 +262,7 @@ export class IntegrationsController {
     @Body() body: CreateIntegrationRequestDto
   ): Promise<IntegrationResponseDto> {
     try {
-      this.assertEnvironmentScopedForApiKey(user, body._environmentId);
+      assertEnvironmentScopedAccess(user.scheme, user.environmentId, body._environmentId);
 
       const canAccessCredentials = await this.canUserAccessCredentials(user);
       const integration = await this.createIntegrationUsecase.execute(
@@ -317,7 +318,7 @@ export class IntegrationsController {
     @Body() body: UpdateIntegrationRequestDto
   ): Promise<IntegrationResponseDto> {
     try {
-      this.assertEnvironmentScopedForApiKey(user, body._environmentId);
+      assertEnvironmentScopedAccess(user.scheme, user.environmentId, body._environmentId);
 
       const canAccessCredentials = await this.canUserAccessCredentials(user);
       const integration = await this.updateIntegrationUsecase.execute(
@@ -385,6 +386,7 @@ export class IntegrationsController {
   }
 
   @Post('/:integrationId/set-primary')
+  @OAuthAccessible()
   @ApiResponse(IntegrationResponseDto)
   @ApiNotFoundResponse({
     description: 'The integration with the integrationId provided does not exist in the database.',
@@ -425,6 +427,7 @@ export class IntegrationsController {
   }
 
   @Delete('/:integrationId')
+  @OAuthAccessible()
   @ApiResponse(IntegrationResponseDto, 200, true)
   @ApiOperation({
     summary: 'Delete an integration',
@@ -956,6 +959,7 @@ export class IntegrationsController {
   @KeylessAccessible()
   @HttpCode(HttpStatus.OK)
   @ApiResponse(IssueTelegramMobileLinkResponseDto, 200)
+  @SdkMethodName('createMobileLink')
   @ApiOperation({
     summary: 'Issue a short-lived mobile setup link for an existing integration',
     description:
@@ -1055,28 +1059,18 @@ export class IntegrationsController {
     );
   }
 
-  private assertEnvironmentScopedForApiKey(user: UserSessionData, requestedEnvironmentId?: string): void {
-    const isEnvironmentScopedScheme = isEnvironmentScopedAuthScheme(user.scheme);
-    if (!isEnvironmentScopedScheme) {
-      return;
-    }
-
-    if (requestedEnvironmentId && requestedEnvironmentId !== user.environmentId) {
-      throw new ForbiddenException(
-        'This authentication scheme is scoped to a single environment and cannot target a different `_environmentId`. ' +
-          'Use credentials from the target environment, or authenticate with a session token.'
-      );
-    }
-  }
-
   private async canUserAccessCredentials(user: UserSessionData): Promise<boolean> {
     /*
-     * API-key and keyless auth must never receive decrypted provider credentials, regardless of RBAC state.
-     * API keys grant ALL_PERMISSIONS in `community.auth.service.ts`, which would otherwise
-     * allow the RBAC path below to succeed and leak every stored provider secret to any
-     * caller holding an environment API key.
+     * API-key, keyless, and OAuth auth must never receive decrypted provider credentials,
+     * regardless of RBAC state. API keys grant ALL_PERMISSIONS in `community.auth.service.ts`,
+     * which would otherwise allow the RBAC path below to succeed and leak every stored
+     * provider secret to any caller holding an environment API key or OAuth token.
      */
-    if (user.scheme === ApiAuthSchemeEnum.API_KEY || user.scheme === ApiAuthSchemeEnum.KEYLESS) {
+    if (
+      user.scheme === ApiAuthSchemeEnum.API_KEY ||
+      user.scheme === ApiAuthSchemeEnum.KEYLESS ||
+      user.scheme === ApiAuthSchemeEnum.OAUTH2
+    ) {
       return false;
     }
 

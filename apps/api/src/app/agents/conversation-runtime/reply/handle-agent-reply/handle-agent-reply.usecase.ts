@@ -8,7 +8,7 @@ import {
   ConversationParticipantTypeEnum,
   SubscriberRepository,
 } from '@novu/dal';
-import type { SentMessageInfo, ToolResult, TriggerSignal } from '@novu/framework';
+import type { SentMessageInfo, ToolResult, TriggerSignal } from '@novu/framework/internal';
 import { AddressingTypeEnum, type TriggerRecipientsPayload, TriggerRequestCategoryEnum } from '@novu/shared';
 import { ParseEventRequest, ParseEventRequestMulticastCommand } from '../../../../events/usecases/parse-event-request';
 import { AgentConfigResolver, ResolvedAgentConfig } from '../../../channels/agent-config-resolver.service';
@@ -21,6 +21,10 @@ import type {
 import { isValidMetadataSignalKey } from '../../../shared/dtos/agent-reply-payload.dto';
 import { AgentEventEnum } from '../../../shared/enums/agent-event.enum';
 import { AgentPlatformEnum } from '../../../shared/enums/agent-platform.enum';
+import {
+  buildSelfHostedApprovalCard,
+  type SelfHostedApprovalDescriptor,
+} from '../../../shared/tool-approval/self-hosted-approval';
 import { InboundAckService } from '../../ack/inbound-ack.service';
 import type { MetadataOp } from '../../conversation/agent-conversation.service';
 import { AgentConversationService } from '../../conversation/agent-conversation.service';
@@ -58,10 +62,11 @@ export class HandleAgentReply {
         command.signals?.length ||
         command.toolResults?.length ||
         command.toolApprovalRequest ||
-        command.addReactions?.length)
+        command.addReactions?.length ||
+        command.deleteMessages?.length)
     ) {
       throw new BadRequestException(
-        'edit cannot be combined with resolve, signals, toolResults, toolApprovalRequest, or addReactions'
+        'edit cannot be combined with resolve, signals, toolResults, toolApprovalRequest, addReactions, or deleteMessages'
       );
     }
     if (
@@ -72,11 +77,12 @@ export class HandleAgentReply {
       !command.toolResults?.length &&
       !command.toolApprovalRequest &&
       !command.addReactions?.length &&
+      !command.deleteMessages?.length &&
       !command.plan &&
       !command.typing
     ) {
       throw new BadRequestException(
-        'At least one of reply, edit, resolve, signals, toolResults, toolApprovalRequest, addReactions, plan, or typing must be provided'
+        'At least one of reply, edit, resolve, signals, toolResults, toolApprovalRequest, addReactions, deleteMessages, plan, or typing must be provided'
       );
     }
 
@@ -181,6 +187,20 @@ export class HandleAgentReply {
       );
     }
 
+    if (command.deleteMessages?.length) {
+      await Promise.allSettled(
+        command.deleteMessages.map((d) =>
+          this.outboundGateway.deleteInConversation(
+            conversation._agentId,
+            command.integrationIdentifier,
+            channel.platform,
+            channel.platformThreadId,
+            d.messageId
+          )
+        )
+      );
+    }
+
     if (command.resolve) {
       await this.resolveConversation(command, config!, conversation, channel, command.resolve);
     }
@@ -188,6 +208,7 @@ export class HandleAgentReply {
     const triggerSignalCount = (command.signals ?? []).filter((s) => s.type === 'trigger').length;
     const metadataSignalCount = (command.signals ?? []).filter((s) => s.type === 'metadata').length;
     const reactionCount = command.addReactions?.length ?? 0;
+    const deleteMessageCount = command.deleteMessages?.length ?? 0;
     const actions: string[] = [];
 
     if (command.reply) actions.push('reply');
@@ -197,6 +218,7 @@ export class HandleAgentReply {
     if (triggerSignalCount > 0) actions.push('trigger_signals');
     if (metadataSignalCount > 0) actions.push('metadata_signals');
     if (reactionCount > 0) actions.push('add_reactions');
+    if (deleteMessageCount > 0) actions.push('delete_messages');
     if (command.typing) actions.push('typing');
 
     trackAgentReplyProcessed(this.analyticsService, {
@@ -273,6 +295,22 @@ export class HandleAgentReply {
     content: ReplyContentDto,
     agentName?: string
   ): Promise<SentMessageInfo> {
+    let deliverContent = content;
+    let slackNative = command.slackNative;
+
+    if (content.toolApprovalCard) {
+      if (!command.toolApprovalRequest) {
+        throw new BadRequestException('toolApprovalCard reply requires an accompanying toolApprovalRequest');
+      }
+
+      const built = buildSelfHostedApprovalCard(
+        content.toolApprovalCard as SelfHostedApprovalDescriptor,
+        command.toolApprovalRequest
+      );
+      deliverContent = built.content;
+      slackNative = built.slackNative;
+    }
+
     return this.outboundGateway.deliver(
       {
         agentId: conversation._agentId,
@@ -280,7 +318,7 @@ export class HandleAgentReply {
         platform: channel.platform,
         platformThreadId: channel.platformThreadId,
       },
-      content,
+      deliverContent,
       {
         conversationId: conversation._id,
         channel,
@@ -289,7 +327,7 @@ export class HandleAgentReply {
         environmentId: command.environmentId,
         organizationId: command.organizationId,
       },
-      { slackNative: command.slackNative }
+      { slackNative }
     );
   }
 

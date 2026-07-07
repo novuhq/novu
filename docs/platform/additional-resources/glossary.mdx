@@ -1,6 +1,6 @@
 ---
 title: 'Glossary'
-description: 'Definitions of key Novu terms and concepts'
+description: "Definitions of key Novu terms and concepts, including workflows, subscribers, topics, tenants, layouts, environments, and the Novu bridge, in one place."
 ---
 
 ## Introduction
@@ -138,11 +138,11 @@ Per-trigger customizations that override default template content or [integratio
 
 ### Context
 
-Multi-dimensional metadata passed at trigger time as `{ type: id | { id, data } }`—for example, `tenant`, `app`, or `region`. Context data is available in templates (`{{context.tenant.data.name}}`), [step conditions](#step-conditions), [Inbox](#inbox) filtering, and Activity Feed search. You can pass up to five contexts per trigger. See [Manage contexts](/platform/workflow/advanced-features/contexts/manage-contexts).
+Multi-dimensional metadata passed at trigger time as `{ type: id | { id, data } }`—for example, `tenant`, `app`, or `region`. Context data is available in templates (`{{context.tenant.data.name}}`), [step conditions](#step-conditions), [Inbox](#inbox) filtering, and Activity Feed search. You can pass up to five contexts per trigger. See [Contexts](/platform/concepts/contexts).
 
 ### Tenant
 
-A legacy multi-tenancy approach using environment-scoped tenant entities and subscriber ID prefixing. For new implementations, prefer [contexts](#context). See [Multi-tenancy](/platform/concepts/tenants).
+A logical organization, workspace, or customer boundary within your application. In Novu, implement multi-tenancy with a `tenant` [context](#context) rather than prefixing subscriber IDs. See [Multi-tenancy](/platform/concepts/tenants).
 
 ## Environments and account
 

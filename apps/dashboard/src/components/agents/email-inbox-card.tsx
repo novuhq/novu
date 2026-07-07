@@ -1,20 +1,22 @@
-import { DomainStatusEnum, type IIntegration } from '@novu/shared';
-import { type ReactNode, useMemo, useRef, useState } from 'react';
+import { ApiServiceLevelEnum, FeatureNameEnum, getFeatureForTierAsBoolean, type IIntegration } from '@novu/shared';
+import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { RiAddLine, RiCloseLine, RiInformation2Line } from 'react-icons/ri';
-import { Link } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import type { AgentIntegrationEmbedded, AgentResponse } from '@/api/agents';
 import { CopyableEmailAddress } from '@/components/agents/copyable-email-address';
 import { CompactButton } from '@/components/primitives/button-compact';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { Switch } from '@/components/primitives/switch';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
-import { useEnvironment } from '@/context/environment/hooks';
+import { UpgradeCTATooltip } from '@/components/upgrade-cta-tooltip';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
+import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { useUpdateIntegration } from '@/hooks/use-update-integration';
-import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
-import { InboundAddressForm } from './inbound-address-form';
+import { AgentCustomDomainSheet } from './agent-custom-domain-sheet';
 import { useEmailSetupCredentials } from './use-email-setup-credentials';
+
+const DELIVERABILITY_DOCS_URL = 'https://docs.novu.co/platform/domains';
 
 export type EmailInboxCardProps = {
   emailIntegration: IIntegration;
@@ -28,6 +30,12 @@ export type EmailInboxCardProps = {
    */
   integrationEmbedded: AgentIntegrationEmbedded;
   agent: AgentResponse;
+  /**
+   * Hide the "Connect custom domain" add-form + tip. Used when the parent surface (the layer-2
+   * "What's next" guide) owns the branded-address add flow, so this card stays a pure manager
+   * (enable + shared-inbox toggles + the existing address list with remove).
+   */
+  hideCustomAddressForm?: boolean;
 };
 
 /**
@@ -38,36 +46,57 @@ export type EmailInboxCardProps = {
  * custom domain" affordance reveals the add-form on demand instead of always
  * occupying screen real estate.
  */
-export function EmailInboxCardBody({ emailIntegration, integrationEmbedded, agent }: EmailInboxCardProps) {
-  const { currentEnvironment } = useEnvironment();
+export function EmailInboxCardBody({
+  emailIntegration,
+  integrationEmbedded,
+  agent,
+  hideCustomAddressForm = false,
+}: EmailInboxCardProps) {
   const { mutateAsync: updateIntegration } = useUpdateIntegration();
   const { integrations } = useFetchIntegrations();
+  const { subscription } = useFetchSubscription();
+  const domainsEnabled = getFeatureForTierAsBoolean(
+    FeatureNameEnum.DOMAINS_BOOLEAN,
+    subscription?.apiServiceLevel || ApiServiceLevelEnum.FREE
+  );
 
   const { configuredAddresses, domains, addAddress, removeAddress, setSharedInboxDisabled, isSharedToggleUpdating } =
     useEmailSetupCredentials({ emailIntegration, integrations, agent });
 
   const serverCredentials = emailIntegration.credentials ?? {};
   const [isToggling, setIsToggling] = useState(false);
-  const [isAddingCustom, setIsAddingCustom] = useState(false);
+  const [isDomainSheetOpen, setIsDomainSheetOpen] = useState(false);
+  const [returnDomainName, setReturnDomainName] = useState<string | undefined>(undefined);
+  const [searchParams, setSearchParams] = useSearchParams();
   const activeRef = useRef(emailIntegration.active !== false);
+  const hasHandledDomainReturnRef = useRef(false);
 
   const enabled = emailIntegration.active !== false;
   const inboxSectionDisabled = !enabled;
-  const domainsPath = currentEnvironment?.slug
-    ? buildRoute(ROUTES.DOMAINS, { environmentSlug: currentEnvironment.slug })
-    : ROUTES.INTEGRATIONS;
 
   const sharedAddress = integrationEmbedded.sharedInboundAddress;
   const sharedDisabled = Boolean(integrationEmbedded.sharedInboxDisabled);
   const hasCustomAddresses = configuredAddresses.length > 0;
-  // Mirror the verified-domain filter the add-form applies so the affordance
-  // and the picker stay in sync: no point offering "Connect custom domain"
-  // when the picker would open empty. When no usable domains exist, the
-  // discoverability tip below points the user at the domain-management page.
-  const hasUsableDomains = useMemo(
-    () => domains.some((d) => d.status === DomainStatusEnum.VERIFIED && d.mxRecordConfigured),
-    [domains]
-  );
+
+  // Domain Connect returns the user to this page with a `?customDomain=<name>` marker; reopen the
+  // sheet on that domain so verification resumes inline, then strip the marker from the URL.
+  const customDomainReturn = searchParams.get('customDomain');
+  useEffect(() => {
+    if (!customDomainReturn || hasHandledDomainReturnRef.current || !domainsEnabled) {
+      return;
+    }
+
+    hasHandledDomainReturnRef.current = true;
+    setReturnDomainName(customDomainReturn);
+    setIsDomainSheetOpen(true);
+
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('customDomain');
+    nextParams.delete('domainConnect');
+    nextParams.delete('error');
+    nextParams.delete('error_description');
+    setSearchParams(nextParams, { replace: true });
+  }, [customDomainReturn, domainsEnabled, searchParams, setSearchParams]);
 
   async function persistActive(nextActive: boolean): Promise<void> {
     const previousActive = activeRef.current;
@@ -125,12 +154,24 @@ export function EmailInboxCardBody({ emailIntegration, integrationEmbedded, agen
     setSharedInboxDisabled(!nextEnabled);
   }
 
-  function handleAddAddress(address: string, domain: (typeof domains)[number]): boolean {
-    addAddress(address, domain);
-    setIsAddingCustom(false);
+  function handleConnectDomain() {
+    if (!domainsEnabled) {
+      return;
+    }
 
-    return true;
+    setIsDomainSheetOpen(true);
   }
+
+  function handleDomainSheetOpenChange(open: boolean) {
+    setIsDomainSheetOpen(open);
+
+    if (!open) {
+      setReturnDomainName(undefined);
+    }
+  }
+
+  const connectDomainButtonClassName =
+    'text-text-sub hover:text-text-strong inline-flex items-center gap-0.5 self-start py-1 text-label-xs font-medium leading-4 transition-colors disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:text-text-sub';
 
   return (
     <>
@@ -154,7 +195,7 @@ export function EmailInboxCardBody({ emailIntegration, integrationEmbedded, agen
             </Tooltip>
           </span>
         }
-        description="Users can reach this agent at any of the addresses below. Mail delivered to any of them is forwarded to the agent."
+        description="Users can reach this agent at any of the addresses below — share one in your product's contact or reply flows, support footer, or docs. Mail delivered to any of them is forwarded to the agent."
         divider
         disabled={inboxSectionDisabled}
       >
@@ -197,49 +238,55 @@ export function EmailInboxCardBody({ emailIntegration, integrationEmbedded, agen
             })}
           </div>
 
-          {isAddingCustom && hasUsableDomains ? (
-            <div className="flex flex-col gap-1.5">
-              <InboundAddressForm
-                domains={domains}
-                isDisabled={inboxSectionDisabled}
-                onSubmit={handleAddAddress}
-                isExistingAddress={(address, domainId) =>
-                  configuredAddresses.some((a) => a.address === address && a.domainId === domainId)
-                }
-              />
+          {!hideCustomAddressForm ? (
+            domainsEnabled ? (
               <button
                 type="button"
-                className="text-text-soft hover:text-text-sub text-label-xs self-start font-medium transition-colors"
-                onClick={() => setIsAddingCustom(false)}
+                disabled={inboxSectionDisabled}
+                onClick={handleConnectDomain}
+                className={connectDomainButtonClassName}
               >
-                Cancel
+                <RiAddLine className="size-3.5" aria-hidden />
+                <span>Connect custom domain</span>
               </button>
-            </div>
+            ) : (
+              <UpgradeCTATooltip
+                description="To create domains, upgrade your plan."
+                utmCampaign="domains"
+                utmSource="agent-email-inbox"
+              >
+                <button type="button" disabled className={connectDomainButtonClassName}>
+                  <RiAddLine className="size-3.5" aria-hidden />
+                  <span>Connect custom domain</span>
+                </button>
+              </UpgradeCTATooltip>
+            )
           ) : null}
 
-          {!isAddingCustom && hasUsableDomains ? (
-            <button
-              type="button"
-              disabled={inboxSectionDisabled}
-              onClick={() => setIsAddingCustom(true)}
-              className="text-text-sub hover:text-text-strong inline-flex items-center gap-0.5 self-start py-1 text-label-xs font-medium leading-4 transition-colors disabled:opacity-50"
-            >
-              <RiAddLine className="size-3.5" aria-hidden />
-              <span>Connect custom domain</span>
-            </button>
-          ) : null}
-
-          {hasCustomAddresses ? null : (
+          {!hideCustomAddressForm ? (
             <p className="text-text-soft text-paragraph-xs leading-4">
-              <span aria-hidden>💡</span> Tip:{' '}
-              <Link to={domainsPath} className="text-text-sub underline underline-offset-2">
-                Configure custom domains
-              </Link>{' '}
-              in Novu to make them available here.
+              {'Custom domains route inbound mail to your agent (MX) and let your replies pass SPF, DKIM, and DMARC. '}
+              <a
+                href={DELIVERABILITY_DOCS_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-text-sub underline underline-offset-2"
+              >
+                Learn about deliverability
+              </a>
             </p>
-          )}
+          ) : null}
         </div>
       </CardRow>
+
+      <AgentCustomDomainSheet
+        open={isDomainSheetOpen}
+        onOpenChange={handleDomainSheetOpenChange}
+        initialDomainName={returnDomainName}
+        domains={domains}
+        configuredAddresses={configuredAddresses}
+        onAddAddress={addAddress}
+      />
     </>
   );
 }

@@ -249,6 +249,7 @@ export function AgentConnectedDetailsShell({
           integrationLink={integrationLink}
           credentials={credentials}
           applicationIdentifier={currentEnvironment?.identifier}
+          justConnected={justConnected}
         />
       ) : null}
 
