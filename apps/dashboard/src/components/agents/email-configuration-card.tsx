@@ -1,11 +1,12 @@
 import { EmailProviderIdEnum } from '@novu/shared';
 import { type ReactNode, useMemo } from 'react';
-import { RiArrowRightSLine, RiInformation2Fill } from 'react-icons/ri';
+import { RiArrowRightSLine, RiInformation2Fill, RiInformation2Line } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
 import type { AgentResponse } from '@/api/agents';
 import { OutboundProviderSelect } from '@/components/agents/outbound-provider-select';
 import { SenderAddressOverride } from '@/components/agents/sender-address-override';
 import { useEmailSetupCredentials } from '@/components/agents/use-email-setup-credentials';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { ROUTES } from '@/utils/routes';
 
@@ -16,6 +17,7 @@ export type EmailConfigurationCardProps = {
   showOutboundProvider?: boolean;
   senderTitle?: string;
   senderDescription?: string;
+  senderInfoTooltip?: string;
 };
 
 /**
@@ -28,7 +30,8 @@ export function EmailConfigurationCardBody({
   sharedInboundAddress,
   showOutboundProvider = true,
   senderTitle = 'Sender address',
-  senderDescription = 'By default, replies send from the agent inbox address using the agent name as the From display name. Override the address to send from another email. Reply-To always routes back to the agent so subscriber replies stay in the thread.',
+  senderDescription = 'Send replies from your own address instead of the agent inbox.',
+  senderInfoTooltip = 'By default, the agent name is used as the From display name. Reply-To always points back to the agent, so subscriber replies stay in the thread.',
 }: EmailConfigurationCardProps & { defaultSenderName?: string; sharedInboundAddress?: string }) {
   const { integrations } = useFetchIntegrations();
   const emailIntegration = useMemo(
@@ -71,7 +74,7 @@ export function EmailConfigurationCardBody({
         </CardRow>
       ) : null}
 
-      <CardRow title={senderTitle} description={senderDescription}>
+      <CardRow title={senderTitle} description={senderDescription} infoTooltip={senderInfoTooltip}>
         <SenderAddressOverride
           serverEnabled={serverUseFromAddressOverride}
           serverValue={serverFromAddressOverride}
@@ -104,12 +107,30 @@ function CardRow({
   description,
   children,
   divider,
+  infoTooltip,
 }: {
   title: string;
   description: string;
   children: ReactNode;
   divider?: boolean;
+  infoTooltip?: string;
 }) {
+  const titleContent = infoTooltip ? (
+    <span className="flex items-center gap-1">
+      {title}
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button type="button" aria-label="More info">
+            <RiInformation2Line className="text-text-soft size-5" aria-hidden />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent className="max-w-xs">{infoTooltip}</TooltipContent>
+      </Tooltip>
+    </span>
+  ) : (
+    title
+  );
+
   return (
     <div
       className={
@@ -119,7 +140,7 @@ function CardRow({
       }
     >
       <div className="flex max-w-[350px] min-w-0 flex-1 flex-col gap-1">
-        <h4 className="text-text-sub text-label-sm font-medium leading-5">{title}</h4>
+        <h4 className="text-text-sub text-label-sm font-medium leading-5">{titleContent}</h4>
         <p className="text-text-soft text-paragraph-xs leading-4">{description}</p>
       </div>
       <div className="flex w-[340px] shrink-0 flex-col gap-1.5">{children}</div>

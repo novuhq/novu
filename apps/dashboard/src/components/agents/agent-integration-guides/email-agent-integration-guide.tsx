@@ -65,7 +65,7 @@ export function EmailAgentIntegrationGuide({
 
   // The sender-address row can also host the outbound provider selector. It stays hidden while the
   // "What's next" guide is up (the guide owns that selector during layer-2 onboarding) and is
-  // surfaced here once the guide retires — see `EmailConnectedView`.
+  // surfaced here once the guide retires; see `EmailConnectedView`.
   const renderEmailCard = (showOutboundProvider: boolean) =>
     showEmailCard && emailIntegration && integrationId ? (
       <div className="bg-bg-weak flex flex-col rounded-[10px] p-1">
@@ -99,7 +99,8 @@ export function EmailAgentIntegrationGuide({
               sharedInboundAddress={integrationLink?.integration?.sharedInboundAddress}
               showOutboundProvider={showOutboundProvider}
               senderTitle="Set a custom From address"
-              senderDescription="By default replies come from the agent inbox address. Send from your own address instead: Reply-To always routes back to the agent so subscriber replies stay in the thread."
+              senderDescription="Send replies from your own address instead of the agent inbox."
+              senderInfoTooltip="Reply-To always points back to the agent, so subscriber replies stay in the thread no matter which From address you use."
             />
           ) : null}
         </div>
@@ -175,7 +176,7 @@ type EmailConnectedViewProps = {
  * The guide owns the "Send from your own email provider" selector, but it retires itself ~a day
  * after the demo -> own-provider switch (see `shouldShowWhatsNextGuide`). Without this, the selector
  * would vanish entirely once the guide is gone, leaving no way to change the production sending
- * provider. So we surface it back inside the EMAIL card at exactly the moment the guide hides — using
+ * provider. So we surface it back inside the EMAIL card at exactly the moment the guide hides, using
  * the same visibility decision so the two never show it at once.
  */
 function EmailConnectedView({
