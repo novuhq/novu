@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import {
   AnalyticsService,
-  ClickHouseService,
   CreateExecutionDetails,
   CreateVariablesObject,
   FeatureFlagsService,
@@ -10,7 +9,6 @@ import {
   GetLayoutUseCaseV0,
   InMemoryLRUCacheService,
   LayoutVariablesSchemaUseCase,
-  TraceLogRepository,
 } from '@novu/application-generic';
 import {
   CommunityOrganizationRepository,
@@ -84,8 +82,6 @@ export const featureFlagsService = {
     GetLayoutUseCase,
     JobRepository,
     ExecutionDetailsRepository,
-    TraceLogRepository,
-    ClickHouseService,
     CreateExecutionDetails,
     featureFlagsService,
     InMemoryLRUCacheService,

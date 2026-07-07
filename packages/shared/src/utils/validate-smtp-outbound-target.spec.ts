@@ -23,20 +23,11 @@ describe('validate-smtp-outbound-target', () => {
       expect(() => assertSafeSmtpOutboundTargetSync('evil.com/internal', 587, tlsEnabled)).toThrow(SsrfBlockedError);
     });
 
-    it('rejects non-TLS SMTP configurations', () => {
+    it('allows non-TLS SMTP configurations', () => {
       expect(() =>
         assertSafeSmtpOutboundTargetSync('smtp.example.com', 25, {
           secure: false,
           requireTls: false,
-        })
-      ).toThrow(SsrfBlockedError);
-    });
-
-    it('allows STARTTLS configurations', () => {
-      expect(() =>
-        assertSafeSmtpOutboundTargetSync('smtp.example.com', 587, {
-          secure: false,
-          requireTls: true,
         })
       ).not.toThrow();
     });

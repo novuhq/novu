@@ -17,16 +17,6 @@ export type SmtpOutboundTlsOptions = {
   ignoreTls?: boolean;
 };
 
-export function assertSmtpTlsRequired(options: SmtpOutboundTlsOptions): void {
-  if (options.ignoreTls) {
-    throw new SsrfBlockedError('UNSUPPORTED_SCHEME', 'SMTP connections with TLS disabled are not allowed.');
-  }
-
-  if (!options.secure && !options.requireTls) {
-    throw new SsrfBlockedError('UNSUPPORTED_SCHEME', 'SMTP connections must use TLS (enable Secure or Require TLS).');
-  }
-}
-
 export function assertSafeSmtpHostFormat(host: string | undefined): string {
   const trimmed = host?.trim();
 
@@ -68,9 +58,8 @@ export function assertSafeSmtpPort(port: number | string | undefined): number {
 export function assertSafeSmtpOutboundTargetSync(
   host: string | undefined,
   port: number | string | undefined,
-  tlsOptions: SmtpOutboundTlsOptions
+  _tlsOptions: SmtpOutboundTlsOptions
 ): void {
-  assertSmtpTlsRequired(tlsOptions);
   assertSafeSmtpHostFormat(host);
   assertSafeSmtpPort(port);
 }
@@ -84,10 +73,8 @@ export type SafeSmtpPinnedTarget = {
 export async function resolveSafeSmtpPinnedTarget(
   host: string | undefined,
   port: number | string | undefined,
-  tlsOptions: SmtpOutboundTlsOptions
+  _tlsOptions: SmtpOutboundTlsOptions
 ): Promise<SafeSmtpPinnedTarget> {
-  assertSmtpTlsRequired(tlsOptions);
-
   const hostname = assertSafeSmtpHostFormat(host);
   const parsedPort = assertSafeSmtpPort(port);
   const addresses = await resolvePublicAddresses(hostname);
