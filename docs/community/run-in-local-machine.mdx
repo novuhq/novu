@@ -12,13 +12,12 @@ description: 'Prerequisites and steps to run Novu in local machine. Learn how to
 - pnpm 11.x (required — the repo enforces pnpm via `preinstall`)
 - MongoDB
 - Redis
-- ClickHouse (required for activity feed, analytics, and traces)
-- Docker (recommended for running MongoDB, Redis, ClickHouse, and LocalStack together)
+- Docker (recommended for running MongoDB, Redis, and LocalStack together)
 - **(Optional)** LocalStack (required only for S3-related modules)
 
 <Note>
   We recommend having at least 8GB of RAM to run Novu on a local machine as Novu has multiple
-  services running together with external services like Redis, MongoDB, ClickHouse, and more.
+  services running together with external services like Redis, MongoDB, and more.
 </Note>
 
 ## Setup the project
@@ -52,16 +51,10 @@ After installing Node.js and pnpm, clone and set up your forked version of the p
   </Step>
 
   <Step title="Start infrastructure services">
-    Start MongoDB, Redis, ClickHouse, and LocalStack with Docker Compose:
+    Start MongoDB, Redis, and LocalStack with Docker Compose:
 
     ```shell
     docker compose -f docker/local/docker-compose.yml up -d
-    ```
-
-    Apply ClickHouse migrations:
-
-    ```shell
-    pnpm --filter @novu/api-service clickhouse:migrate:local
     ```
   </Step>
 
@@ -117,7 +110,6 @@ If you used `npm run setup:project` or Jarvis, default `.env` files are created 
     - `STORE_ENCRYPTION_KEY` — Encrypts provider credentials (must be 32 characters)
     - `NOVU_SECRET_KEY` — Server-side API secret key
     - `S3_LOCAL_STACK`, `S3_BUCKET_NAME`, `S3_REGION` — LocalStack/S3 storage settings
-    - `CLICK_HOUSE_URL`, `CLICK_HOUSE_DATABASE`, `CLICK_HOUSE_USER`, `CLICK_HOUSE_PASSWORD` — ClickHouse connection for analytics and activity feed
     - `SENTRY_DSN` — Optional Sentry DSN for error reporting
   </Accordion>
 
@@ -196,7 +188,6 @@ cd apps/dashboard && pnpm test:e2e:ui
 | 3003 | Webhook |
 | 3004 | Worker |
 | 4201 | Dashboard (local Vite dev server) |
-| 8123 | ClickHouse HTTP |
 | 4566 | LocalStack (S3) |
 
 <Note>

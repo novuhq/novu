@@ -22,13 +22,7 @@ From the repo root:
 docker compose -f docker/local/docker-compose.yml up -d
 ```
 
-This starts MongoDB, Redis, ClickHouse, and LocalStack.
-
-Apply ClickHouse migrations:
-
-```sh
-pnpm --filter @novu/api-service clickhouse:migrate:local
-```
+This starts MongoDB, Redis, and LocalStack.
 
 ### 2. Install and run Novu from source
 
@@ -54,7 +48,7 @@ docker compose -f docker/local/docker-compose.yml up -d
 If you only need specific services (for example, to avoid port conflicts):
 
 ```sh
-docker compose -f docker/local/docker-compose.yml up -d clickhouse
+docker compose -f docker/local/docker-compose.yml up -d redis
 ```
 
 ### Securing your setup
