@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, type OnModuleInit } from '@nestjs/common';
-import { AnalyticsService, PinoLogger } from '@novu/application-generic';
+import { AnalyticsService, FeatureFlagsService, PinoLogger } from '@novu/application-generic';
 import {
   AgentIntegrationRepository,
   AgentRepository,
@@ -12,7 +12,7 @@ import {
 } from '@novu/dal';
 import type { AgentAction } from '@novu/framework';
 import { parseApprovalActionId } from '@novu/framework/internal';
-import { AgentSubscriberAccessEnum, ENDPOINT_TYPES } from '@novu/shared';
+import { AgentSubscriberAccessEnum, ENDPOINT_TYPES, FeatureFlagsKeysEnum } from '@novu/shared';
 import type { CardElement, EmojiValue, Message, Thread } from 'chat';
 import { ConnectClaimTokenService } from '../../../connect/services/connect-claim-token.service';
 import { parsePositiveIntEnv } from '../../../keyless/keyless-abuse.constants';
@@ -257,7 +257,8 @@ export class AgentInboundHandler implements OnModuleInit {
     private readonly connectClaimTokenService: ConnectClaimTokenService,
     private readonly keylessAbuseGuard: KeylessAbuseGuardService,
     private readonly planLimitGate: PlanLimitGateService,
-    private readonly inboundAck: InboundAckService
+    private readonly inboundAck: InboundAckService,
+    private readonly featureFlagsService: FeatureFlagsService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -303,40 +304,14 @@ export class AgentInboundHandler implements OnModuleInit {
 
     let subscriberId: string | null;
     try {
-      if (!isVerifiedEmailSender) {
-        this.logger.warn(
-          {
-            agentId,
-            organizationId: config.organizationId,
-            environmentId: config.environmentId,
-            fromAddress: message.author.userId,
-            dkim: emailAuthRaw?.dkim,
-            spf: emailAuthRaw?.spf,
-            messageId: message.id,
-          },
-          'Inbound email sender failed DKIM/SPF verification — skipping subscriber resolution so a spoofed From cannot assume an existing identity.'
-        );
-        subscriberId = null;
-      } else {
-        subscriberId = canAutoProvision
-          ? await this.subscriberResolver.resolveOrProvision({
-              environmentId: config.environmentId,
-              organizationId: config.organizationId,
-              platform: config.platform,
-              platformUserId: message.author.userId,
-              integrationIdentifier: config.integrationIdentifier,
-              agentIdentifier: config.agentIdentifier,
-              authorFullName: message.author.fullName,
-              authorUserName: message.author.userName,
-              // chat-sdk types isBot as `boolean | "unknown"`; treat anything except `true` as a non-bot author.
-              authorIsBot: message.author.isBot === true,
-              // Teams multi-tenant: capture the user's tenant from the inbound activity so the endpoint
-              // records which (possibly external customer) tenant the user belongs to.
-              platformTenantId:
-                config.platform === AgentPlatformEnum.TEAMS ? extractMsTeamsTenantId(message.raw) : undefined,
-            })
-          : await this.resolveSubscriberId(agentId, config, message.author.userId, 'resolve-subscriber');
-      }
+      subscriberId = await this.resolveInboundMessageSubscriberId(
+        agentId,
+        config,
+        message,
+        canAutoProvision,
+        isVerifiedEmailSender,
+        emailAuthRaw
+      );
     } catch (err) {
       if (err instanceof BotAuthorSkippedError) {
         this.logger.debug(
@@ -674,6 +649,111 @@ export class AgentInboundHandler implements OnModuleInit {
           });
         });
     }
+  }
+
+  private async resolveInboundMessageSubscriberId(
+    agentId: string,
+    config: ResolvedAgentConfig,
+    message: Message,
+    canAutoProvision: boolean,
+    isVerifiedEmailSender: boolean,
+    emailAuthRaw: Record<string, unknown> | undefined
+  ): Promise<string | null> {
+    if (isVerifiedEmailSender) {
+      return canAutoProvision
+        ? this.subscriberResolver.resolveOrProvision(this.buildResolveOrProvisionParams(config, message))
+        : this.resolveSubscriberId(agentId, config, message.author.userId, 'resolve-subscriber');
+    }
+
+    if (config.platform !== AgentPlatformEnum.EMAIL || !canAutoProvision) {
+      this.logUnverifiedInboundEmailSkipped(agentId, config, message, emailAuthRaw);
+
+      return null;
+    }
+
+    const enforceAuth = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_AGENT_EMAIL_AUTO_PROVISION_AUTH_ENFORCEMENT_ENABLED,
+      defaultValue: false,
+      organization: { _id: config.organizationId },
+      environment: { _id: config.environmentId },
+    });
+
+    if (enforceAuth) {
+      this.logUnverifiedInboundEmailSkipped(
+        agentId,
+        config,
+        message,
+        emailAuthRaw,
+        'Inbound email sender failed DKIM/SPF verification — skipping auto-provision because auth enforcement is enabled.'
+      );
+
+      return null;
+    }
+
+    const isAddressFree = await this.subscriberResolver.isEmailAddressFreeForUnverifiedAutoProvision({
+      environmentId: config.environmentId,
+      organizationId: config.organizationId,
+      email: message.author.userId,
+    });
+
+    if (!isAddressFree) {
+      this.logUnverifiedInboundEmailSkipped(
+        agentId,
+        config,
+        message,
+        emailAuthRaw,
+        'Inbound email sender failed DKIM/SPF verification — skipping subscriber resolution so a spoofed From cannot assume an existing identity.'
+      );
+
+      return null;
+    }
+
+    return this.subscriberResolver.provisionEmailSubscriber({
+      environmentId: config.environmentId,
+      organizationId: config.organizationId,
+      integrationIdentifier: config.integrationIdentifier,
+      agentIdentifier: config.agentIdentifier,
+      email: message.author.userId,
+    });
+  }
+
+  private buildResolveOrProvisionParams(config: ResolvedAgentConfig, message: Message) {
+    return {
+      environmentId: config.environmentId,
+      organizationId: config.organizationId,
+      platform: config.platform,
+      platformUserId: message.author.userId,
+      integrationIdentifier: config.integrationIdentifier,
+      agentIdentifier: config.agentIdentifier,
+      authorFullName: message.author.fullName,
+      authorUserName: message.author.userName,
+      // chat-sdk types isBot as `boolean | "unknown"`; treat anything except `true` as a non-bot author.
+      authorIsBot: message.author.isBot === true,
+      // Teams multi-tenant: capture the user's tenant from the inbound activity so the endpoint
+      // records which (possibly external customer) tenant the user belongs to.
+      platformTenantId: config.platform === AgentPlatformEnum.TEAMS ? extractMsTeamsTenantId(message.raw) : undefined,
+    };
+  }
+
+  private logUnverifiedInboundEmailSkipped(
+    agentId: string,
+    config: ResolvedAgentConfig,
+    message: Message,
+    emailAuthRaw: Record<string, unknown> | undefined,
+    logMessage = 'Inbound email sender failed DKIM/SPF verification — skipping subscriber resolution so a spoofed From cannot assume an existing identity.'
+  ): void {
+    this.logger.warn(
+      {
+        agentId,
+        organizationId: config.organizationId,
+        environmentId: config.environmentId,
+        fromAddress: message.author.userId,
+        dkim: emailAuthRaw?.dkim,
+        spf: emailAuthRaw?.spf,
+        messageId: message.id,
+      },
+      logMessage
+    );
   }
 
   private async resolveSubscriberId(

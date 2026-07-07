@@ -102,6 +102,15 @@ export enum FeatureFlagsKeysEnum {
   IS_AGENT_MSTEAMS_WHATS_NEXT_ENABLED = 'IS_AGENT_MSTEAMS_WHATS_NEXT_ENABLED',
   /** Enable the production-readiness "What's next" guide for the Novu email agent (own provider, verified domain/deliverability, branded inbound address, custom From, user rollout) and simplify the out-of-box email setup to address + test on cloud. When off, the email integration keeps its current single-guide behavior. Create the boolean in LaunchDarkly for cloud, or set `VITE_IS_AGENT_EMAIL_WHATS_NEXT_ENABLED` when self-hosted. */
   IS_AGENT_EMAIL_WHATS_NEXT_ENABLED = 'IS_AGENT_EMAIL_WHATS_NEXT_ENABLED',
+  /**
+   * When enabled, open-access email agents require inbound DKIM and SPF to pass before
+   * auto-provisioning a new subscriber. When off (default), unknown senders are
+   * auto-provisioned even when authentication fails; existing customer-created
+   * subscribers are never matched on failed authentication. Create the boolean in
+   * LaunchDarkly for cloud, or set `IS_AGENT_EMAIL_AUTO_PROVISION_AUTH_ENFORCEMENT_ENABLED`
+   * when self-hosted.
+   */
+  IS_AGENT_EMAIL_AUTO_PROVISION_AUTH_ENFORCEMENT_ENABLED = 'IS_AGENT_EMAIL_AUTO_PROVISION_AUTH_ENFORCEMENT_ENABLED',
   /** Enable Microsoft Teams Quick Setup in the dashboard; create the boolean in LaunchDarkly for cloud, or set `VITE_IS_MSTEAMS_QUICK_SETUP_ENABLED` when self-hosted. */
   IS_MSTEAMS_QUICK_SETUP_ENABLED = 'IS_MSTEAMS_QUICK_SETUP_ENABLED',
   /** Enable Slack Quick Setup in the dashboard; create the boolean in LaunchDarkly for cloud, or set `VITE_IS_SLACK_QUICK_SETUP_ENABLED` when self-hosted. */

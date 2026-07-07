@@ -308,6 +308,32 @@ export class AgentSubscriberResolver {
     return subscriberId;
   }
 
+  /**
+   * Returns false when a customer-created subscriber already owns the address,
+   * so an unverified inbound `From` cannot be auto-provisioned (or rebound) to a
+   * registered identity. Agent-provisioned phantoms alone do not block.
+   */
+  async isEmailAddressFreeForUnverifiedAutoProvision(params: {
+    environmentId: string;
+    organizationId: string;
+    email: string;
+  }): Promise<boolean> {
+    const email = normalizeEmailForLookup(params.email);
+
+    if (!isValidEmailForLookup(email)) {
+      return false;
+    }
+
+    const matches = await this.subscriberRepository.findByEmail(
+      params.environmentId,
+      params.organizationId,
+      email
+    );
+    const realSubscribers = matches.filter((match) => !isAgentProvisionedSubscriber(match));
+
+    return realSubscribers.length === 0;
+  }
+
   private async resolveWhatsAppSubscriber(params: {
     environmentId: string;
     organizationId: string;

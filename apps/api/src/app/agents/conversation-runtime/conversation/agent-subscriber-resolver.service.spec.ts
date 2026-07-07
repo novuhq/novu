@@ -373,6 +373,52 @@ describe('AgentSubscriberResolver', () => {
     });
   });
 
+  describe('isEmailAddressFreeForUnverifiedAutoProvision', () => {
+    it('returns true when no subscriber owns the address', async () => {
+      const { resolver } = makeResolver({
+        findByEmail: sinon.stub().resolves([]),
+      });
+
+      const result = await resolver.isEmailAddressFreeForUnverifiedAutoProvision({
+        ...baseLookupParams,
+        email: 'new@example.com',
+      });
+
+      expect(result).to.equal(true);
+    });
+
+    it('returns false when a customer-created subscriber owns the address', async () => {
+      const { resolver } = makeResolver({
+        findByEmail: sinon.stub().resolves([{ subscriberId: 'sub-real', data: {} }]),
+      });
+
+      const result = await resolver.isEmailAddressFreeForUnverifiedAutoProvision({
+        ...baseLookupParams,
+        email: 'real@example.com',
+      });
+
+      expect(result).to.equal(false);
+    });
+
+    it('returns true when only agent-provisioned phantoms own the address', async () => {
+      const { resolver } = makeResolver({
+        findByEmail: sinon.stub().resolves([
+          {
+            subscriberId: 'sub-phantom',
+            data: { [AGENT_PROVISION_DATA_KEYS.source]: AGENT_PLATFORM_PROVISION_SOURCE },
+          },
+        ]),
+      });
+
+      const result = await resolver.isEmailAddressFreeForUnverifiedAutoProvision({
+        ...baseLookupParams,
+        email: 'phantom@example.com',
+      });
+
+      expect(result).to.equal(true);
+    });
+  });
+
   describe('resolveOnly — channel endpoint resolution', () => {
     it('resolves Slack via channel endpoints', async () => {
       const { resolver, channelEndpointRepository } = makeResolver({

@@ -47,6 +47,7 @@ describe('AgentInboundHandler', () => {
       subscriberFindById?: sinon.SinonStub;
       subscriberResolve?: sinon.SinonStub;
       subscriberResolveOrProvision?: sinon.SinonStub;
+      featureFlagGet?: sinon.SinonStub;
     } = {}
   ) {
     const logger = makeLogger();
@@ -56,6 +57,8 @@ describe('AgentInboundHandler', () => {
         overrides.subscriberResolveOrProvision ??
         overrides.subscriberResolve ??
         sinon.stub().resolves(`sub_${Math.random().toString(36).slice(2, 14)}`),
+      provisionEmailSubscriber: sinon.stub().resolves('sub-provisioned-unverified'),
+      isEmailAddressFreeForUnverifiedAutoProvision: sinon.stub().resolves(true),
     };
     const conversationService = {
       createOrGetConversation: sinon.stub().resolves(conversation),
@@ -163,6 +166,9 @@ describe('AgentInboundHandler', () => {
       maybeBlock: sinon.stub().resolves(false),
       maybeBlockConversation: sinon.stub().resolves(false),
     };
+    const featureFlagsService = {
+      getFlag: overrides.featureFlagGet ?? sinon.stub().resolves(false),
+    };
     const handler = new AgentInboundHandler(
       logger as any,
       subscriberResolver as any,
@@ -181,7 +187,8 @@ describe('AgentInboundHandler', () => {
       connectClaimTokenService as any,
       keylessAbuseGuard as any,
       planLimitGate as any,
-      inboundAck as any
+      inboundAck as any,
+      featureFlagsService as any
     );
 
     return {
@@ -199,6 +206,7 @@ describe('AgentInboundHandler', () => {
       subscriberRepository,
       outboundGateway,
       inboundAck,
+      featureFlagsService,
     };
   }
 
@@ -599,6 +607,7 @@ describe('AgentInboundHandler', () => {
         subscriberFindById: sinon.stub().resolves({ _id: 'victim-mongo', subscriberId: 'victim-subscriber' }),
         agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
       });
+      subscriberResolver.isEmailAddressFreeForUnverifiedAutoProvision = sinon.stub().resolves(false);
       const thread = makeEmailDmThread();
       // Attacker spoofs a real subscriber's address; DKIM/SPF failed upstream.
       const message = makeEmailDmMessage('victim@example.com', { dkim: 'failed', spf: 'failed' });
@@ -607,7 +616,60 @@ describe('AgentInboundHandler', () => {
 
       expect(subscriberResolver.resolveOrProvision.called).to.equal(false);
       expect(subscriberResolver.resolveOnly.called).to.equal(false);
+      expect(subscriberResolver.provisionEmailSubscriber.called).to.equal(false);
       // No identity resolved → managed subscriber gate blocks dispatch.
+      expect(managedAgentService.dispatch.called).to.equal(false);
+      expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
+    });
+
+    it('should auto-provision an unverified open-access email sender when auth enforcement is off', async () => {
+      const emailConfig = {
+        ...config,
+        platform: AgentPlatformEnum.EMAIL,
+        integrationIdentifier: 'email-main',
+        isManaged: true,
+        subscriberAccess: AgentSubscriberAccessEnum.OPEN,
+      };
+      const { handler, subscriberResolver, managedAgentService, outboundGateway, featureFlagsService } = makeHandler({
+        subscriberFindById: sinon.stub().resolves({ _id: 'sub-mongo', subscriberId: 'sub-provisioned-unverified' }),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+        featureFlagGet: sinon.stub().resolves(false),
+      });
+      const thread = makeEmailDmThread();
+      const message = makeEmailDmMessage('newcomer@example.com', { dkim: 'failed', spf: 'failed' });
+
+      await handler.handle('agent1', emailConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(featureFlagsService.getFlag.calledOnce).to.equal(true);
+      expect(subscriberResolver.isEmailAddressFreeForUnverifiedAutoProvision.calledOnce).to.equal(true);
+      expect(subscriberResolver.provisionEmailSubscriber.calledOnce).to.equal(true);
+      expect(subscriberResolver.resolveOrProvision.called).to.equal(false);
+      expect(managedAgentService.dispatch.calledOnce).to.equal(true);
+      expect(outboundGateway.replyOnThread.called).to.equal(false);
+    });
+
+    it('should skip auto-provision for an unverified open-access email sender when auth enforcement is on', async () => {
+      const emailConfig = {
+        ...config,
+        platform: AgentPlatformEnum.EMAIL,
+        integrationIdentifier: 'email-main',
+        isManaged: true,
+        subscriberAccess: AgentSubscriberAccessEnum.OPEN,
+      };
+      const { handler, subscriberResolver, managedAgentService, outboundGateway, featureFlagsService } = makeHandler({
+        subscriberFindById: sinon.stub().resolves(null),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+        featureFlagGet: sinon.stub().resolves(true),
+      });
+      const thread = makeEmailDmThread();
+      const message = makeEmailDmMessage('newcomer@example.com', { dkim: 'failed', spf: 'failed' });
+
+      await handler.handle('agent1', emailConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(featureFlagsService.getFlag.calledOnce).to.equal(true);
+      expect(subscriberResolver.isEmailAddressFreeForUnverifiedAutoProvision.called).to.equal(false);
+      expect(subscriberResolver.provisionEmailSubscriber.called).to.equal(false);
+      expect(subscriberResolver.resolveOrProvision.called).to.equal(false);
       expect(managedAgentService.dispatch.called).to.equal(false);
       expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
     });
