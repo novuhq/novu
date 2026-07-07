@@ -29,7 +29,11 @@ const ORGANIZATION_GENERAL_HASH = '/';
 
 type OrganizationProfileTab = 'general' | 'security';
 
-type OrganizationWithSelfServeSSO = OrganizationResource & {
+// `selfServeSSOEnabled` is a newer Clerk field that isn't guaranteed to be present on
+// `OrganizationResource` across SDK versions, and the raw API payload uses snake_case. Read both
+// candidate runtime fields through this narrowed shape instead of accessing the base type directly.
+type OrganizationWithSelfServeSSO = {
+  selfServeSSOEnabled?: boolean;
   self_serve_sso_enabled?: boolean;
 };
 
@@ -46,13 +50,9 @@ function isOrganizationSelfServeSSOEnabled(organization: OrganizationResource | 
     return false;
   }
 
-  if (organization.selfServeSSOEnabled === true) {
-    return true;
-  }
+  const { selfServeSSOEnabled, self_serve_sso_enabled } = organization as OrganizationWithSelfServeSSO;
 
-  const organizationWithLegacyField = organization as OrganizationWithSelfServeSSO;
-
-  return organizationWithLegacyField.self_serve_sso_enabled === true;
+  return selfServeSSOEnabled === true || self_serve_sso_enabled === true;
 }
 
 function getOrganizationProfileTabClass(isActive: boolean) {
