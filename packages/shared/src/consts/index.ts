@@ -17,6 +17,7 @@ export * from './sinch-sms-regions';
 export * from './slack-agent-oauth-scopes';
 export * from './slug-identifier';
 export * from './template-store';
+export * from './topic-subscription';
 export * from './translation';
 export * from './upsert-validation-constants';
 export * from './validIdRegex';
