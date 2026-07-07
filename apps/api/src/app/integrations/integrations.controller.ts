@@ -28,7 +28,7 @@ import {
   PinoLogger,
   RequirePermissions,
 } from '@novu/application-generic';
-import { CommunityOrganizationRepository, IntegrationRepository } from '@novu/dal';
+import { CommunityOrganizationRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import {
   ApiAuthSchemeEnum,
   ApiServiceLevelEnum,
@@ -390,7 +390,7 @@ export class IntegrationsController {
 
     return {
       ...result,
-      integration: toIntegrationResponseDto(result.integration, canAccessCredentials),
+      integration: toIntegrationResponseDto(result.integration as IntegrationEntity, canAccessCredentials),
     };
   }
 
