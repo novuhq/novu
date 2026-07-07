@@ -361,7 +361,6 @@ export function AgentSetupSteps({
   const providerGuideStepOffset = channelStepIndex + 1;
 
   const channelReadyForBridge = isChannelReadyForBridge({
-    selectedProviderId,
     selectedIntegrationId: validatedSelectedId,
     agentIntegrationLinks,
   });
@@ -513,29 +512,6 @@ export function AgentSetupSteps({
     [agent.identifier, currentEnvironment, integrationIdentifier, trackWelcomeSent]
   );
 
-  useEffect(() => {
-    if (
-      !isOnboarding ||
-      !skipProviderGuide ||
-      !channelReadyForBridge ||
-      !isEmailChannelSelected ||
-      !currentEnvironment ||
-      !integrationIdentifier
-    ) {
-      return;
-    }
-
-    requestEmailWelcome();
-  }, [
-    channelReadyForBridge,
-    currentEnvironment,
-    integrationIdentifier,
-    isEmailChannelSelected,
-    isOnboarding,
-    requestEmailWelcome,
-    skipProviderGuide,
-  ]);
-
   const handleProviderSelect = useCallback(
     (providerId: string, integration?: IIntegration) => {
       if (isOnboarding) {
@@ -552,7 +528,7 @@ export function AgentSetupSteps({
 
         // Activate the collapse in the same render as the selection so the preview,
         // channel cards, and provider guide animate together rather than in two stages.
-        if (isOnboarding && shouldShowProviderSetupGuide({ providerId, isOnboarding, useCloudMergedListenStep })) {
+        if (isOnboarding && shouldShowProviderSetupGuide(providerId)) {
           onChannelGuideActiveChangeRef.current?.(true);
         }
       }
@@ -561,7 +537,7 @@ export function AgentSetupSteps({
         requestEmailWelcome(integration.identifier);
       }
     },
-    [agent.identifier, isOnboarding, requestEmailWelcome, telemetry, useCloudMergedListenStep]
+    [agent.identifier, isOnboarding, requestEmailWelcome, telemetry]
   );
 
   useEffect(() => {

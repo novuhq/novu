@@ -1,8 +1,8 @@
 /**
  * Unified per-card display state for the agent channel cards. `ProviderCard` consumes this directly
  * so it never has to branch on which mode it renders in: the pre-pick grid derives state from the
- * connect/connecting/connected interaction, while a card inside the switcher rail derives it from
- * its own `switcherStatus` (independent of the current selection).
+ * connect/connecting/connected flow, while a card inside the switcher rail derives it from its own
+ * `switcherStatus` (independent of the current selection).
  */
 export type ProviderCardDisplayState = {
   effectiveConnected: boolean;
@@ -23,7 +23,7 @@ export function resolveProviderCardDisplayState(params: {
 
   if (switcherStatus !== undefined) {
     const effectiveConnected = switcherStatus === 'connected';
-    const showInSetup = !effectiveConnected && switcherStatus === 'in-setup';
+    const showInSetup = switcherStatus === 'in-setup';
 
     return {
       effectiveConnected,
@@ -51,18 +51,3 @@ export function resolveProviderCardDisplayState(params: {
  * linked channel surfaces its own setup progress and the user can freely switch between them.
  */
 export type ProviderSwitcherStatus = 'connected' | 'in-setup' | 'connectable';
-
-export function resolveProviderSwitcherStatus(params: {
-  isConnected: boolean;
-  isLinked: boolean;
-}): ProviderSwitcherStatus {
-  if (params.isConnected) {
-    return 'connected';
-  }
-
-  if (params.isLinked) {
-    return 'in-setup';
-  }
-
-  return 'connectable';
-}

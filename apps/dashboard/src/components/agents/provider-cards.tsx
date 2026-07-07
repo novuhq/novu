@@ -28,11 +28,7 @@ import { ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { openInNewTab } from '@/utils/url';
 import { hasAgentInboundConnection } from './is-agent-integration-connected';
-import {
-  type ProviderSwitcherStatus,
-  resolveProviderCardDisplayState,
-  resolveProviderSwitcherStatus,
-} from './provider-card-interaction';
+import { type ProviderSwitcherStatus, resolveProviderCardDisplayState } from './provider-card-display-state';
 
 /**
  * Estimated time to complete the setup for each provider, displayed as a hint
@@ -506,13 +502,7 @@ export function ProviderCards({
         continue;
       }
 
-      statuses.set(
-        providerId,
-        resolveProviderSwitcherStatus({
-          isConnected: hasAgentInboundConnection(link.connectedAt),
-          isLinked: true,
-        })
-      );
+      statuses.set(providerId, hasAgentInboundConnection(link.connectedAt) ? 'connected' : 'in-setup');
     }
 
     return statuses;
@@ -561,31 +551,13 @@ export function ProviderCards({
     return true;
   };
 
-  // Novu email links by providerId (the server mints a per-agent 1:1 integration on first
-  // Connect), so it cannot go through the create-integration-then-link path used by chat providers.
-  const handleNovuAgentLink = (item: ProviderCardItem) => {
-    void linkProvider(
-      {
-        providerId: item.providerId,
-        displayName: item.displayName,
-      },
-      `${item.providerId}-novu-agent`
-    );
-  };
-
   // Shared activation for both the full grid and the switcher rail: re-select an already-linked
-  // channel in place, then provision on first Connect (by providerId for Novu email, or
-  // create-integration-then-link for everything else).
+  // channel in place, then provision on first Connect via the link hook (Novu email routes by
+  // providerId inside the hook; chat providers go through create-integration-then-link).
   const activateProvider = (item: ProviderCardItem) => {
     if (isBusy) return;
 
     if (selectExistingLink(item)) {
-      return;
-    }
-
-    if (item.providerId === EmailProviderIdEnum.NovuAgent) {
-      handleNovuAgentLink(item);
-
       return;
     }
 

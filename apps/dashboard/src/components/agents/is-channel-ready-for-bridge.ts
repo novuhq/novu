@@ -2,17 +2,15 @@ import type { AgentIntegrationLink } from '@/api/agents';
 import { hasAgentInboundConnection } from './is-agent-integration-connected';
 
 type IsChannelReadyForBridgeParams = {
-  selectedProviderId: string | undefined;
   selectedIntegrationId: string | undefined;
   agentIntegrationLinks: AgentIntegrationLink[];
 };
 
 export function isChannelReadyForBridge({
-  selectedProviderId,
   selectedIntegrationId,
   agentIntegrationLinks,
 }: IsChannelReadyForBridgeParams): boolean {
-  if (!selectedProviderId || !selectedIntegrationId) {
+  if (!selectedIntegrationId) {
     return false;
   }
 

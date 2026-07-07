@@ -11,13 +11,7 @@ export function hasAgentInboundConnection(connectedAt: string | null | undefined
   return !Number.isNaN(timestampMs) && timestampMs > 0;
 }
 
-/**
- * Returns whether an agent–integration link should be presented as "Connected"
- * in the dashboard: `connectedAt` is stamped by the API the first time an
- * inbound webhook delivers a real message. This applies uniformly to every
- * provider — the Novu Email link is only created when the user clicks Connect,
- * so like a chat channel it stays "in setup" until the first inbound email.
- */
-export function isAgentIntegrationConnected(link: Pick<AgentIntegrationLink, 'connectedAt' | 'integration'>): boolean {
+/** Whether an agent–integration link should be presented as "Connected" in the dashboard. */
+export function isAgentIntegrationConnected(link: Pick<AgentIntegrationLink, 'connectedAt'>): boolean {
   return hasAgentInboundConnection(link.connectedAt);
 }
