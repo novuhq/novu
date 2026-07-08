@@ -10,6 +10,8 @@
     "build": "cross-env node_modules/.bin/tsc -p tsconfig.build.json",
     "build:watch": "cross-env node_modules/.bin/tsc -p tsconfig.build.json -w --preserveWatchOutput",
     "start:dev": "pnpm build:watch",
+    "typecheck:tsc": "tsc -p tsconfig.tsgo.json",
+    "typecheck:tsgo": "tsgo -p tsconfig.tsgo.json",
     "precommit": "lint-staged",
     "check": "biome check .",
     "check:fix": "biome check --write .",

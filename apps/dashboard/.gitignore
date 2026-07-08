@@ -22,6 +22,7 @@ dist-ssr
 *.sw?
 tsconfig.app.tsbuildinfo
 tsconfig.node.tsbuildinfo
+*.tsgo.tsbuildinfo
 /test-results/
 /playwright-report/
 /blob-report/
