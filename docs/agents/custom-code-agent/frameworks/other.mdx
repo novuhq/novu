@@ -7,6 +7,14 @@ sidebarTitle: Other
 
 Import `agent` from `@novu/framework` when you are not using `@novu/framework/ai-sdk` or `@novu/framework/langchain`. Call your LLM, orchestration library, or business logic yourself, then reply through Novu's handler API. Use this path for the OpenAI SDK, Anthropic SDK, or any stack Novu does not ship a dedicated adapter for.
 
+## Before you start
+
+Completed the [Quickstart](/agents/custom-code-agent/quickstart)? Your agent, bridge, and project are already set up — [jump to Minimal agent](#minimal-agent).
+
+Otherwise start with the [Quickstart](/agents/custom-code-agent/quickstart) first. All three onboarding paths (dashboard, CLI, AI assistant) walk you through creating the agent and wiring the bridge.
+
+This page covers only what's specific to wiring your own LLM stack.
+
 ## Prerequisites
 
 Install the framework package:
@@ -35,7 +43,7 @@ export const supportAgent = agent('support-bot', {
 });
 ```
 
-If you scaffolded through the [Quickstart](/agents/custom-code-agent/quickstart), your project already serves this handler over its `/api/novu` bridge route — see [Connecting your app](/agents/custom-code-agent/connecting-your-app) for how the project is wired. Make sure the agent id (`'support-bot'`) matches the **Identifier** in your dashboard.
+Make sure the agent id (`'support-bot'`) matches the **Identifier** in your dashboard, and that this handler is registered on your bridge route — see [Connecting your app](/agents/custom-code-agent/connecting-your-app).
 
 For handlers, replies, signals, typing, and tool approval, see [Building blocks](/agents/custom-code-agent/building-blocks/handle-events). The sections below cover what's specific to wiring your own LLM stack — return types and manual tool approval.
 

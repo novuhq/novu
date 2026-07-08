@@ -7,26 +7,34 @@ sidebarTitle: AI SDK
 
 `@novu/framework/ai-sdk` lets you write agent handlers with the [Vercel AI SDK](https://ai-sdk.dev/). Return an AI SDK result straight from `onMessage` and Novu delivers the text — including tool loops and approval gating — to the conversation.
 
+## Before you start
+
+Completed the [Quickstart](/agents/custom-code-agent/quickstart)? Your agent, bridge, and project are already set up — [jump to Minimal agent](#minimal-agent).
+
+Otherwise start with the [Quickstart](/agents/custom-code-agent/quickstart) first. All three onboarding paths (dashboard, CLI, AI assistant) walk you through creating the agent and wiring the bridge.
+
+This page covers only what's specific to the AI SDK adapter.
+
 ## Prerequisites
 
-Install the AI SDK and a model provider alongside the framework:
+Install the framework, the AI SDK, and a model provider:
 
 <CodeGroup>
 ```bash title="OpenAI"
-npm install ai @ai-sdk/openai
+npm install @novu/framework ai @ai-sdk/openai
 ```
 ```bash title="Anthropic"
-npm install ai @ai-sdk/anthropic
+npm install @novu/framework ai @ai-sdk/anthropic
 ```
 ```bash title="Google"
-npm install ai @ai-sdk/google
+npm install @novu/framework ai @ai-sdk/google
 ```
 ```bash title="Groq"
-npm install ai @ai-sdk/groq
+npm install @novu/framework ai @ai-sdk/groq
 ```
 </CodeGroup>
 
-`ai` is required; pick one provider package. Examples on this page use OpenAI — see the [AI SDK providers list](https://ai-sdk.dev/providers/ai-sdk-providers) for others.
+`@novu/framework` and `ai` are required; pick one provider package. Examples on this page use OpenAI — see the [AI SDK providers list](https://ai-sdk.dev/providers/ai-sdk-providers) for others.
 
 ## Minimal agent
 
@@ -47,7 +55,7 @@ export const supportAgent = agent('support-bot', {
 });
 ```
 
-If you scaffolded through the [Quickstart](/agents/custom-code-agent/quickstart), your project already serves this handler over its `/api/novu` bridge route — see [Connecting your app](/agents/custom-code-agent/connecting-your-app) for how the project is wired. Make sure the agent id (`'support-bot'`) matches the **Identifier** in your dashboard.
+Make sure the agent id (`'support-bot'`) matches the **Identifier** in your dashboard, and that this handler is registered on your bridge route — see [Connecting your app](/agents/custom-code-agent/connecting-your-app).
 
 For handlers, replies, signals, typing, and tool approval, see [Building blocks](/agents/custom-code-agent/building-blocks/handle-events). The sections below cover what's specific to the AI SDK adapter.
 
