@@ -17,7 +17,7 @@ export function isGenerateResult(value: unknown): value is AiSdkGenerateResult {
     value !== null &&
     'text' in value &&
     'steps' in value &&
-    'totalUsage' in value &&
+    'usage' in value &&
     !isStreamResult(value)
   );
 }
