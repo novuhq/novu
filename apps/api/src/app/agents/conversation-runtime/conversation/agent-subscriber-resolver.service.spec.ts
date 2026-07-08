@@ -85,35 +85,35 @@ describe('AgentSubscriberResolver', () => {
     };
   }
 
-  describe('resolveOnly — WhatsApp phone resolution', () => {
+  describe('resolveSubscriber — WhatsApp phone resolution', () => {
     it('resolves when inbound phone has no + and subscriber has +', async () => {
       const { resolver, subscriberRepository, channelEndpointRepository } = makeResolver({
         findByPhone: sinon.stub().resolves([{ subscriberId: 'sub-1' }]),
       });
 
-      const result = await resolver.resolveOnly({
+      const result = await resolver.resolveSubscriber({
         ...baseLookupParams,
         platform: AgentPlatformEnum.WHATSAPP,
         platformUserId: '972541111111',
       });
 
-      expect(result).to.equal('sub-1');
+      expect(result).to.deep.equal({ outcome: 'resolved', subscriberId: 'sub-1' });
       expect(
         subscriberRepository.findByPhone.calledOnceWith('env-1', 'org-1', ['+972541111111', '972541111111'])
       ).to.equal(true);
       expect(channelEndpointRepository.findByPlatformIdentity.called).to.equal(false);
     });
 
-    it('returns null when no subscriber matches', async () => {
+    it('returns not_found when no subscriber matches', async () => {
       const { resolver } = makeResolver({ findByPhone: sinon.stub().resolves([]) });
 
-      const result = await resolver.resolveOnly({
+      const result = await resolver.resolveSubscriber({
         ...baseLookupParams,
         platform: AgentPlatformEnum.WHATSAPP,
         platformUserId: '972541111111',
       });
 
-      expect(result).to.equal(null);
+      expect(result).to.deep.equal({ outcome: 'not_found' });
     });
 
     it('warns and returns first match when multiple subscribers share the phone', async () => {
@@ -121,74 +121,90 @@ describe('AgentSubscriberResolver', () => {
         findByPhone: sinon.stub().resolves([{ subscriberId: 'sub-1' }, { subscriberId: 'sub-2' }]),
       });
 
-      const result = await resolver.resolveOnly({
+      const result = await resolver.resolveSubscriber({
         ...baseLookupParams,
         platform: AgentPlatformEnum.WHATSAPP,
         platformUserId: '972541111111',
       });
 
-      expect(result).to.equal('sub-1');
+      expect(result).to.deep.equal({ outcome: 'resolved', subscriberId: 'sub-1' });
       expect(logger.warn.calledOnce).to.equal(true);
     });
 
-    it('returns null for empty platformUserId without DB call', async () => {
+    it('returns invalid_identity for empty platformUserId without DB call', async () => {
       const { resolver, subscriberRepository, channelEndpointRepository } = makeResolver();
 
-      const result = await resolver.resolveOnly({
+      const result = await resolver.resolveSubscriber({
         ...baseLookupParams,
         platform: AgentPlatformEnum.WHATSAPP,
         platformUserId: '   ',
       });
 
-      expect(result).to.equal(null);
+      expect(result).to.deep.equal({ outcome: 'invalid_identity' });
       expect(subscriberRepository.findByPhone.called).to.equal(false);
       expect(channelEndpointRepository.findByPlatformIdentity.called).to.equal(false);
     });
   });
 
-  describe('resolveOnly — Email resolution', () => {
+  describe('resolveSubscriber — Email resolution', () => {
     it('resolves when subscriber.email matches inbound address (lowercased)', async () => {
       const { resolver, subscriberRepository } = makeResolver({
         findByEmail: sinon.stub().resolves([{ subscriberId: 'sub-email' }]),
       });
 
-      const result = await resolver.resolveOnly({
+      const result = await resolver.resolveSubscriber({
         ...baseLookupParams,
         platform: AgentPlatformEnum.EMAIL,
         platformUserId: 'User@Example.com',
       });
 
-      expect(result).to.equal('sub-email');
+      expect(result).to.deep.equal({ outcome: 'resolved', subscriberId: 'sub-email' });
       expect(subscriberRepository.findByEmail.calledOnceWith('env-1', 'org-1', 'user@example.com')).to.equal(true);
     });
 
-    it('returns null when no subscriber matches', async () => {
+    it('returns not_found when no subscriber matches', async () => {
       const { resolver } = makeResolver({ findByEmail: sinon.stub().resolves([]) });
 
-      const result = await resolver.resolveOnly({
+      const result = await resolver.resolveSubscriber({
         ...baseLookupParams,
         platform: AgentPlatformEnum.EMAIL,
         platformUserId: 'unknown@example.com',
       });
 
-      expect(result).to.equal(null);
+      expect(result).to.deep.equal({ outcome: 'not_found' });
     });
 
-    it('returns null for invalid email without DB call', async () => {
+    it('returns invalid_identity for invalid email without DB call', async () => {
       const { resolver, subscriberRepository } = makeResolver();
 
-      const result = await resolver.resolveOnly({
+      const result = await resolver.resolveSubscriber({
         ...baseLookupParams,
         platform: AgentPlatformEnum.EMAIL,
         platformUserId: 'not-an-email',
       });
 
-      expect(result).to.equal(null);
+      expect(result).to.deep.equal({ outcome: 'invalid_identity' });
       expect(subscriberRepository.findByEmail.called).to.equal(false);
+    });
+
+    it('propagates lookup errors instead of flattening them to a miss', async () => {
+      const lookupError = new Error('mongo timeout');
+      const { resolver } = makeResolver({ findByEmail: sinon.stub().rejects(lookupError) });
+
+      try {
+        await resolver.resolveSubscriber({
+          ...baseLookupParams,
+          platform: AgentPlatformEnum.EMAIL,
+          platformUserId: 'user@example.com',
+        });
+        expect.fail('Expected the lookup error to propagate');
+      } catch (err) {
+        expect(err).to.equal(lookupError);
+      }
     });
   });
 
-  describe('resolveOnly — Email adoption / prefer customer-created', () => {
+  describe('resolveSubscriber — Email adoption / prefer customer-created', () => {
     const realMatch = { _id: 'mongo-real', subscriberId: 'sub-real', email: 'user@example.com', data: {} };
     const phantomMatch = {
       _id: 'mongo-phantom',
@@ -204,13 +220,13 @@ describe('AgentSubscriberResolver', () => {
         adoptPhantomsInto,
       });
 
-      const result = await resolver.resolveOnly({
+      const result = await resolver.resolveSubscriber({
         ...baseLookupParams,
         platform: AgentPlatformEnum.EMAIL,
         platformUserId: 'user@example.com',
       });
 
-      expect(result).to.equal('sub-real');
+      expect(result).to.deep.equal({ outcome: 'resolved', subscriberId: 'sub-real' });
       expect(adoptPhantomsInto.calledOnce).to.equal(true);
       const arg = adoptPhantomsInto.firstCall.args[0];
       expect(arg.real).to.deep.equal({ _id: 'mongo-real', subscriberId: 'sub-real' });
@@ -224,13 +240,13 @@ describe('AgentSubscriberResolver', () => {
         adoptPhantomsInto,
       });
 
-      const result = await resolver.resolveOnly({
+      const result = await resolver.resolveSubscriber({
         ...baseLookupParams,
         platform: AgentPlatformEnum.EMAIL,
         platformUserId: 'user@example.com',
       });
 
-      expect(result).to.equal('sub-phantom');
+      expect(result).to.deep.equal({ outcome: 'resolved', subscriberId: 'sub-phantom' });
       expect(adoptPhantomsInto.called).to.equal(false);
     });
 
@@ -241,13 +257,13 @@ describe('AgentSubscriberResolver', () => {
         adoptPhantomsInto,
       });
 
-      const result = await resolver.resolveOnly({
+      const result = await resolver.resolveSubscriber({
         ...baseLookupParams,
         platform: AgentPlatformEnum.EMAIL,
         platformUserId: 'user@example.com',
       });
 
-      expect(result).to.equal('sub-real');
+      expect(result).to.deep.equal({ outcome: 'resolved', subscriberId: 'sub-real' });
       expect(adoptPhantomsInto.called).to.equal(false);
     });
   });
@@ -373,19 +389,19 @@ describe('AgentSubscriberResolver', () => {
     });
   });
 
-  describe('resolveOnly — channel endpoint resolution', () => {
+  describe('resolveSubscriber — channel endpoint resolution', () => {
     it('resolves Slack via channel endpoints', async () => {
       const { resolver, channelEndpointRepository } = makeResolver({
         findByPlatformIdentity: sinon.stub().resolves({ subscriberId: 'sub-slack' }),
       });
 
-      const result = await resolver.resolveOnly({
+      const result = await resolver.resolveSubscriber({
         ...baseLookupParams,
         platform: AgentPlatformEnum.SLACK,
         platformUserId: 'U_LINKED',
       });
 
-      expect(result).to.equal('sub-slack');
+      expect(result).to.deep.equal({ outcome: 'resolved', subscriberId: 'sub-slack' });
       expect(channelEndpointRepository.findByPlatformIdentity.calledOnce).to.equal(true);
     });
   });
@@ -402,7 +418,7 @@ describe('AgentSubscriberResolver', () => {
         platformUserId: 'U_EXISTING',
       });
 
-      expect(result).to.equal('sub-existing');
+      expect(result).to.deep.equal({ outcome: 'resolved', subscriberId: 'sub-existing' });
       expect(createOrUpdateSubscriber.execute.called).to.equal(false);
       expect(createChannelEndpoint.execute.called).to.equal(false);
       expect(analyticsService.track.called).to.equal(false);
@@ -417,10 +433,12 @@ describe('AgentSubscriberResolver', () => {
         platformUserId: 'U_NEW',
       });
 
-      expect(result).to.match(/^sub_/);
+      expect(result.outcome).to.equal('resolved');
+      const subscriberId = result.outcome === 'resolved' ? result.subscriberId : '';
+      expect(subscriberId).to.match(/^sub_/);
       expect(createOrUpdateSubscriber.execute.calledOnce).to.equal(true);
       const subscriberCommand = createOrUpdateSubscriber.execute.firstCall.args[0];
-      expect(subscriberCommand.subscriberId).to.equal(result);
+      expect(subscriberCommand.subscriberId).to.equal(subscriberId);
       expect(subscriberCommand.firstName).to.equal('Alice Smith');
       expect(subscriberCommand.data).to.deep.include({
         [AGENT_PROVISION_DATA_KEYS.source]: AGENT_PLATFORM_PROVISION_SOURCE,
@@ -432,7 +450,7 @@ describe('AgentSubscriberResolver', () => {
 
       expect(createChannelEndpoint.execute.calledOnce).to.equal(true);
       const endpointCommand = createChannelEndpoint.execute.firstCall.args[0];
-      expect(endpointCommand.subscriberId).to.equal(result);
+      expect(endpointCommand.subscriberId).to.equal(subscriberId);
       expect(endpointCommand.type).to.equal('slack_user');
       expect(endpointCommand.endpoint).to.deep.equal({ userId: 'U_NEW' });
 
@@ -455,7 +473,7 @@ describe('AgentSubscriberResolver', () => {
         platformUserId: 'U_DETERMINISTIC',
       });
 
-      expect(first).to.equal(second);
+      expect(first).to.deep.equal(second);
       expect(u1.execute.firstCall.args[0].subscriberId).to.equal(u2.execute.firstCall.args[0].subscriberId);
     });
 
@@ -557,7 +575,7 @@ describe('AgentSubscriberResolver', () => {
       // would have generated locally, so returning the winner's row
       // converges every racer on a single `Subscriber` without leaving
       // orphan rows behind to log or clean up.
-      expect(result).to.equal('sub-winner');
+      expect(result).to.deep.equal({ outcome: 'resolved', subscriberId: 'sub-winner' });
       expect(createChannelEndpoint.execute.calledOnce).to.equal(true);
       expect(findByPlatformIdentity.callCount).to.equal(2);
 
@@ -624,7 +642,7 @@ describe('AgentSubscriberResolver', () => {
         platformUserId: 'known@example.com',
       });
 
-      expect(result).to.equal('sub-known');
+      expect(result).to.deep.equal({ outcome: 'resolved', subscriberId: 'sub-known' });
       expect(createOrUpdateSubscriber.execute.called).to.equal(false);
     });
 
@@ -642,15 +660,17 @@ describe('AgentSubscriberResolver', () => {
         platformUserId: 'newcomer@example.com',
       });
 
-      expect(result).to.be.a('string').and.to.match(/^sub_/);
+      expect(result.outcome).to.equal('resolved');
+      expect(result.outcome === 'resolved' ? result.subscriberId : '').to.match(/^sub_/);
       expect(createOrUpdateSubscriberExecute.calledOnce).to.equal(true);
     });
 
-    it('soft-fails to null when provisioning throws', async () => {
+    it('soft-fails to an error outcome when provisioning throws', async () => {
+      const provisionError = new Error('mongo down');
       const { resolver, logger } = makeResolver({
         findByEmail: sinon.stub().resolves([]),
         find: sinon.stub().resolves([]),
-        createOrUpdateSubscriberExecute: sinon.stub().rejects(new Error('mongo down')),
+        createOrUpdateSubscriberExecute: sinon.stub().rejects(provisionError),
       });
 
       const result = await resolver.resolveOrProvision({
@@ -659,8 +679,22 @@ describe('AgentSubscriberResolver', () => {
         platformUserId: 'fail@example.com',
       });
 
-      expect(result).to.equal(null);
+      expect(result).to.deep.equal({ outcome: 'error', err: provisionError });
       expect(logger.warn.called).to.equal(true);
+    });
+
+    it('returns invalid_identity for an unusable address without provisioning', async () => {
+      const createOrUpdateSubscriberExecute = sinon.stub().resolves(undefined);
+      const { resolver } = makeResolver({ createOrUpdateSubscriberExecute });
+
+      const result = await resolver.resolveOrProvision({
+        ...baseProvisionParams,
+        platform: AgentPlatformEnum.EMAIL,
+        platformUserId: 'not-an-email',
+      });
+
+      expect(result).to.deep.equal({ outcome: 'invalid_identity' });
+      expect(createOrUpdateSubscriberExecute.called).to.equal(false);
     });
   });
 
