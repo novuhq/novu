@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import { RiExpandUpDownLine } from 'react-icons/ri';
 import type { AgentIntegrationLink, AgentResponse } from '@/api/agents';
 import { ConnectionConfetti } from '@/components/agents/connection-confetti';
-import { IS_ENTERPRISE, IS_SELF_HOSTED } from '@/config';
+import { IS_SELF_HOSTED_CE } from '@/config';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useChannelFirstConnectedEndpoint } from '@/hooks/use-channel-first-connected-endpoint';
 import { useInSessionMilestone } from '@/hooks/use-in-session-milestone';
@@ -26,7 +26,7 @@ type AgentChannelWhatsNextGuideProps = {
   justConnected?: boolean;
 };
 
-const CONVERSATIONS_AVAILABLE = !IS_SELF_HOSTED || IS_ENTERPRISE;
+const CONVERSATIONS_AVAILABLE = !IS_SELF_HOSTED_CE;
 
 function ConnectedBadge() {
   return (
