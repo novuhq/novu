@@ -60,7 +60,7 @@ type LastUpdatedParts = {
 
 function formatLastUpdatedParts(timestamp: number | undefined): LastUpdatedParts {
   if (timestamp == null || Number.isNaN(timestamp)) {
-    return { prefix: 'Last updated ', emphasis: '—' };
+    return { prefix: 'Last updated ', emphasis: '-' };
   }
 
   const diffSec = Math.max(0, Math.round((Date.now() - timestamp) / 1000));
@@ -369,7 +369,7 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
     selectedIntegration != null ? Date.parse(selectedIntegration.updatedAt) : undefined;
   const lastUpdatedParts = listQuery.isSuccess
     ? formatLastUpdatedParts(selectedIntegrationUpdatedAtMs)
-    : { prefix: 'Last updated ', emphasis: '—' };
+    : { prefix: 'Last updated ', emphasis: '-' };
 
   if (listQuery.isError) {
     return (
@@ -406,7 +406,7 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
       <aside className="w-full md:w-[300px] md:shrink-0">
         <div className="flex flex-col gap-2.5">
           {/* When the agent itself is over the agent limit it won't respond on any
-              channel — the agent-level banner above already says so, and stacking
+              channel: the agent-level banner above already says so, and stacking
               the channel-limit banner here would just be duplicate warning noise. */}
           {isOverChannelLimit && planUsage && !agent.exceedsPlanLimit && (
             <ChannelsPlanLimitBanner planUsage={planUsage} />
@@ -477,7 +477,7 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
                           key={link._id}
                           type="button"
                           onClick={() => handleLinkedRowClick(link)}
-                          aria-label={`${channelDisplayName} — ${statusLabel}`}
+                          aria-label={`${channelDisplayName}, ${statusLabel}`}
                           className={cn(
                             'bg-bg-white border-stroke-weak hover:border-stroke-soft flex w-full items-center justify-between gap-1.5 rounded-md border px-2 py-1.5 text-left transition-colors',
                             isSelected && 'border-stroke-soft'

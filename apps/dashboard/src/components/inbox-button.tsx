@@ -112,7 +112,7 @@ export const InboxButton = ({
   const subscriber = useMemo(
     () => ({
       subscriberId: isTestPage ? (user?.externalId ?? '') : `org_${currentOrganization?._id}:user_${user?.externalId}`,
-      email: user?.primaryEmailAddress?.emailAddress ?? '',
+      email: user?.primaryEmailAddress?.emailAddress ?? user?.emailAddresses?.[0]?.emailAddress ?? '',
       firstName: user?.firstName ?? '',
       lastName: user?.lastName ?? '',
     }),
@@ -120,6 +120,7 @@ export const InboxButton = ({
       isTestPage,
       user?.externalId,
       user?.primaryEmailAddress?.emailAddress,
+      user?.emailAddresses,
       user?.firstName,
       user?.lastName,
       currentOrganization?._id,

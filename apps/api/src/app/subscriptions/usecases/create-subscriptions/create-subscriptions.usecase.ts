@@ -25,6 +25,7 @@ import {
   FeatureFlagsKeysEnum,
   PreferencesTypeEnum,
   SeverityLevelEnum,
+  TOPIC_SUBSCRIPTION_IDENTIFIER_MAX_LENGTH,
   VALID_ID_REGEX,
 } from '@novu/shared';
 import { RulesLogic } from 'json-logic-js';
@@ -57,6 +58,21 @@ export class CreateSubscriptionsUsecase {
 
   @InstrumentUsecase()
   async execute(command: CreateSubscriptionsCommand): Promise<CreateSubscriptionsResponseDto> {
+    const { validSubscriptions, identifierErrors } = this.validateSubscriptionIdentifiers(command.subscriptions);
+    const errors: SubscriptionErrorDto[] = [...identifierErrors];
+
+    if (validSubscriptions.length === 0) {
+      return {
+        data: [],
+        meta: {
+          totalCount: command.subscriptions.length,
+          successful: 0,
+          failed: command.subscriptions.length,
+        },
+        errors,
+      };
+    }
+
     const useContextFiltering = await this.featureFlagsService.getFlag({
       key: FeatureFlagsKeysEnum.IS_CONTEXT_PREFERENCES_ENABLED,
       defaultValue: false,
@@ -75,10 +91,9 @@ export class CreateSubscriptionsUsecase {
     );
     const topic = await this.upsertTopic(command);
 
-    const errors: SubscriptionErrorDto[] = [];
     const subscriptionData: SubscriptionResponseDto[] = [];
 
-    const externalSubscriberIds = command.subscriptions.map((subscription) => subscription.subscriberId);
+    const externalSubscriberIds = validSubscriptions.map((subscription) => subscription.subscriberId);
     const foundSubscribers = await this.subscriberRepository.searchByExternalSubscriberIds({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
@@ -111,7 +126,7 @@ export class CreateSubscriptionsUsecase {
     const subscribersToFind = foundSubscribers.map((sub) => ({
       _subscriberId: sub._id.toString(),
       identifier:
-        command.subscriptions.find((s) => s.subscriberId === sub.subscriberId)?.identifier ||
+        validSubscriptions.find((s) => s.subscriberId === sub.subscriberId)?.identifier ||
         buildDefaultSubscriptionIdentifier(command.topicKey, sub.subscriberId, contextKeys),
     }));
 
@@ -180,7 +195,7 @@ export class CreateSubscriptionsUsecase {
       const subscriptionsToCreate = this.buildSubscriptionEntity(
         topic,
         subscribersToCreate,
-        command.subscriptions,
+        validSubscriptions,
         contextKeys
       );
       const newSubscriptions = await this.topicSubscribersRepository.createSubscriptions(subscriptionsToCreate);
@@ -339,6 +354,33 @@ export class CreateSubscriptionsUsecase {
     }
 
     return topic;
+  }
+
+  private validateSubscriptionIdentifiers(
+    subscriptions: Array<{ identifier?: string; subscriberId: string; name?: string }>
+  ): {
+    validSubscriptions: Array<{ identifier?: string; subscriberId: string; name?: string }>;
+    identifierErrors: SubscriptionErrorDto[];
+  } {
+    const identifierErrors: SubscriptionErrorDto[] = [];
+    const validSubscriptions = subscriptions.filter((subscription) => {
+      if (
+        subscription.identifier &&
+        subscription.identifier.length > TOPIC_SUBSCRIPTION_IDENTIFIER_MAX_LENGTH
+      ) {
+        identifierErrors.push({
+          subscriberId: subscription.subscriberId,
+          code: 'INVALID_SUBSCRIPTION_IDENTIFIER',
+          message: `Subscription identifier must not exceed ${TOPIC_SUBSCRIPTION_IDENTIFIER_MAX_LENGTH} characters.`,
+        });
+
+        return false;
+      }
+
+      return true;
+    });
+
+    return { validSubscriptions, identifierErrors };
   }
 
   private validateTopicKey(key: string): void {

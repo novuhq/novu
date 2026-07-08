@@ -54,7 +54,7 @@ type SettingsTabsProps = {
 const getClerkComponentAppearance = (isRbacEnabled: boolean): ClerkAppearanceTheme => ({
   variables: {
     colorPrimary: 'hsl(var(--bg-surface))',
-    colorText: 'rgba(82, 88, 102, 0.95)',
+    colorForeground: 'rgba(82, 88, 102, 0.95)',
     fontSize: '14px',
   },
   elements: {

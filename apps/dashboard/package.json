@@ -33,7 +33,7 @@
     "@ai-sdk/react": "^3.0.51",
     "@better-auth/sso": "^1.3.0",
     "@calcom/embed-react": "1.5.2",
-    "@clerk/react": "^6.6.6",
+    "@clerk/react": "^6.11.3",
     "@codemirror/autocomplete": "^6.18.3",
     "@codemirror/lang-html": "^6.4.11",
     "@codemirror/lang-liquid": "^6.3.2",
@@ -159,7 +159,7 @@
   "devDependencies": {
     "@biomejs/biome": "2.2.0",
     "@clerk/backend": "^3.4.11",
-    "@clerk/shared": "^4.12.2",
+    "@clerk/shared": "^4.23.0",
     "@clerk/testing": "^2.0.31",
     "@faker-js/faker": "^9.5.0",
     "@hookform/devtools": "^4.3.0",

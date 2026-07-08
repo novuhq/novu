@@ -2,30 +2,33 @@ import { TextInput } from '@inkjs/ui';
 import { Box, Text, useInput } from 'ink';
 // biome-ignore lint/correctness/noUnusedImports: classic-JSX linter falls back here because tsconfig.json excludes ui/.
 import React from 'react';
-import type { ChatSdkRequirement } from '../types';
+import type { BridgeScaffoldVariant } from '../pipeline/bridge/types';
+import type { BridgeRequirement } from '../types';
+import { installDepsPrompt, installingDepsMessage, reconcilePlanTitle } from './bridge-reconcile-variant';
 import { ConfirmScaffoldContent } from './confirm-scaffold-content';
+import { copyToClipboard } from './copy-to-clipboard';
 import type { Phase } from './store';
 
-const CHAT_SDK_PHASE_KINDS = [
+const BRIDGE_RECONCILE_PHASE_KINDS = [
   'confirm-env-secret-overwrite',
   'confirm-scaffold',
   'prompt-agent-name',
   'scaffolding-bridge',
-  'chat-sdk-install-deps-confirm',
-  'chat-sdk-install-deps',
-  'chat-sdk-reconcile-plan',
-  'chat-sdk-tunnel-offer',
+  'bridge-install-deps-confirm',
+  'bridge-install-deps',
+  'bridge-reconcile-plan',
+  'bridge-tunnel-offer',
 ] as const;
 
-type ChatSdkPhaseKind = (typeof CHAT_SDK_PHASE_KINDS)[number];
+type BridgeReconcilePhaseKind = (typeof BRIDGE_RECONCILE_PHASE_KINDS)[number];
 
-export type ChatSdkPhase = Extract<Phase, { kind: ChatSdkPhaseKind }>;
+export type BridgeReconcilePhase = Extract<Phase, { kind: BridgeReconcilePhaseKind }>;
 
-export function isChatSdkPhase(phase: Phase): phase is ChatSdkPhase {
-  return (CHAT_SDK_PHASE_KINDS as readonly string[]).includes(phase.kind);
+export function isBridgeReconcilePhase(phase: Phase): phase is BridgeReconcilePhase {
+  return (BRIDGE_RECONCILE_PHASE_KINDS as readonly string[]).includes(phase.kind);
 }
 
-export function ChatSdkPhaseContent({ phase }: { phase: ChatSdkPhase }): React.ReactElement {
+export function BridgeReconcilePhaseContent({ phase }: { phase: BridgeReconcilePhase }): React.ReactElement {
   switch (phase.kind) {
     case 'confirm-env-secret-overwrite':
       return (
@@ -53,28 +56,26 @@ export function ChatSdkPhaseContent({ phase }: { phase: ChatSdkPhase }): React.R
     case 'scaffolding-bridge':
       return (
         <Box flexDirection="column" gap={1}>
-          <Text color="cyan">
-            {phase.variant === 'custom-code' ? 'Scaffolding your agent app…' : 'Scaffolding your Chat SDK app…'}
-          </Text>
+          <Text color="cyan">{scaffoldingBridgeMessage(phase.variant)}</Text>
           <Text dimColor>Installing dependencies — this may take a minute.</Text>
         </Box>
       );
 
-    case 'chat-sdk-install-deps-confirm':
-      return <ChatSdkInstallDepsConfirmContent phase={phase} />;
+    case 'bridge-install-deps-confirm':
+      return <BridgeInstallDepsConfirmContent phase={phase} />;
 
-    case 'chat-sdk-install-deps':
+    case 'bridge-install-deps':
       return (
         <Box flexDirection="column" gap={1}>
-          <Text color="cyan">Installing Chat SDK packages…</Text>
+          <Text color="cyan">{installingDepsMessage(phase.variant ?? 'chat-sdk')}</Text>
         </Box>
       );
 
-    case 'chat-sdk-reconcile-plan':
-      return <ChatSdkReconcilePlanContent phase={phase} />;
+    case 'bridge-reconcile-plan':
+      return <BridgeReconcilePlanContent phase={phase} />;
 
-    case 'chat-sdk-tunnel-offer':
-      return <ChatSdkTunnelOfferContent phase={phase} />;
+    case 'bridge-tunnel-offer':
+      return <BridgeTunnelOfferContent phase={phase} />;
 
     default: {
       const _exhaustive: never = phase;
@@ -84,7 +85,7 @@ export function ChatSdkPhaseContent({ phase }: { phase: ChatSdkPhase }): React.R
   }
 }
 
-function requirementIcon(req: ChatSdkRequirement): string {
+function requirementIcon(req: BridgeRequirement): string {
   if (req.status === 'ok') {
     return '✓';
   }
@@ -96,20 +97,30 @@ function requirementIcon(req: ChatSdkRequirement): string {
   return '…';
 }
 
-function ChatSdkReconcilePlanContent({
+function BridgeReconcilePlanContent({
   phase,
 }: {
-  phase: Extract<Phase, { kind: 'chat-sdk-reconcile-plan' }>;
+  phase: Extract<Phase, { kind: 'bridge-reconcile-plan' }>;
 }): React.ReactElement {
-  useInput((_input, key) => {
+  const [copyState, setCopyState] = React.useState<'idle' | 'copied' | 'failed'>('idle');
+  const canCopyPrompt = Boolean(phase.agentPrompt);
+
+  useInput((input, key) => {
     if (key.return) {
       phase.resolve();
+
+      return;
+    }
+
+    if (canCopyPrompt && (input === 'c' || input === 'C')) {
+      const prompt = phase.agentPrompt ?? '';
+      void copyToClipboard(prompt).then((ok) => setCopyState(ok ? 'copied' : 'failed'));
     }
   });
 
   return (
     <Box flexDirection="column" gap={1}>
-      <Text bold>Chat SDK project setup</Text>
+      <Text bold>{reconcilePlanTitle(phase.variant ?? 'chat-sdk')}</Text>
       <Text dimColor>{phase.projectDir}</Text>
       {phase.requirements.map((req) => (
         <Text key={req.id}>
@@ -127,15 +138,21 @@ function ChatSdkReconcilePlanContent({
           </Box>
         </Box>
       ) : null}
-      <Text color="cyan">Enter · continue</Text>
+      {copyState === 'copied' ? (
+        <Text color="green">✓ Agent prompt copied to clipboard — paste it into your coding agent.</Text>
+      ) : null}
+      {copyState === 'failed' && phase.requirementsFile ? (
+        <Text color="yellow">Clipboard unavailable — the prompt is saved at {phase.requirementsFile}</Text>
+      ) : null}
+      <Text color="cyan">{canCopyPrompt ? 'Enter · continue    C · copy agent prompt' : 'Enter · continue'}</Text>
     </Box>
   );
 }
 
-function ChatSdkInstallDepsConfirmContent({
+function BridgeInstallDepsConfirmContent({
   phase,
 }: {
-  phase: Extract<Phase, { kind: 'chat-sdk-install-deps-confirm' }>;
+  phase: Extract<Phase, { kind: 'bridge-install-deps-confirm' }>;
 }): React.ReactElement {
   useInput((_input, key) => {
     if (key.return) {
@@ -148,7 +165,7 @@ function ChatSdkInstallDepsConfirmContent({
 
   return (
     <Box flexDirection="column" gap={1}>
-      <Text bold>Install Chat SDK packages?</Text>
+      <Text bold>{installDepsPrompt(phase.variant ?? 'chat-sdk')}</Text>
       <Text dimColor>We'll add: {phase.packages.join(', ')}</Text>
       <Text color="cyan">{phase.installCommand}</Text>
       <Text color="cyan">Enter · install · Esc · skip</Text>
@@ -156,10 +173,10 @@ function ChatSdkInstallDepsConfirmContent({
   );
 }
 
-function ChatSdkTunnelOfferContent({
+function BridgeTunnelOfferContent({
   phase,
 }: {
-  phase: Extract<Phase, { kind: 'chat-sdk-tunnel-offer' }>;
+  phase: Extract<Phase, { kind: 'bridge-tunnel-offer' }>;
 }): React.ReactElement {
   useInput((input, key) => {
     if (key.return) {
@@ -180,6 +197,18 @@ function ChatSdkTunnelOfferContent({
   );
 }
 
+function scaffoldingBridgeMessage(variant: BridgeScaffoldVariant): string {
+  if (variant === 'custom-code') {
+    return 'Scaffolding your agent app…';
+  }
+
+  if (variant === 'ai-sdk') {
+    return 'Scaffolding your AI SDK agent app…';
+  }
+
+  return 'Scaffolding your Chat SDK app…';
+}
+
 function PromptAgentNameContent({
   defaultName,
   onResolve,
@@ -189,12 +218,12 @@ function PromptAgentNameContent({
 }): React.ReactElement {
   return (
     <Box flexDirection="column" gap={1}>
-      <Text bold>Name your Chat SDK agent</Text>
+      <Text bold>Name your bridge agent</Text>
       <Text dimColor>This creates a self-hosted bridge agent in Novu — your app is the brain.</Text>
       <Box borderStyle="round" paddingX={1}>
         <TextInput
           defaultValue={defaultName}
-          placeholder="My Chat SDK Agent"
+          placeholder="My Bridge Agent"
           onSubmit={(value) => onResolve(value.trim() || defaultName)}
         />
       </Box>

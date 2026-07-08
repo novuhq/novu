@@ -139,7 +139,10 @@ export class DomainRouteStrategy {
         this.failDelivery(resolved, err);
       }
 
-      this.logger.info({ toAddress, domain: domain.name }, 'Fired email.received agent event');
+      this.logger.info(
+        { toAddress, domain: domain.name, messageId: command.messageId, dkim: command.dkim, spf: command.spf },
+        'Fired email.received agent event'
+      );
 
       return { ...resolved, status: 200 };
     }
@@ -314,7 +317,10 @@ export class DomainRouteStrategy {
         mail: this.commandToMail(command),
         toAddress,
       });
-      this.logger.info({ toAddress, agentId: agent._id }, 'Forwarded shared-domain inbound email to agent webhook');
+      this.logger.info(
+        { toAddress, agentId: agent._id, messageId: command.messageId, dkim: command.dkim, spf: command.spf },
+        'Forwarded shared-domain inbound email to agent webhook'
+      );
 
       return { ...resolved, status: 200 };
     } catch (err) {

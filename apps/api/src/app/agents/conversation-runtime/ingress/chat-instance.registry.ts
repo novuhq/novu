@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, OnModuleDestroy } from '@nestjs/common';
 import { CacheService, PinoLogger } from '@novu/application-generic';
-import type { Chat, Message, ReactionEvent, Thread } from 'chat';
+import type { Chat, Message, ReactionEvent, SlashCommandEvent, Thread } from 'chat';
 import { LRUCache } from 'lru-cache';
 import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import { AgentEmailActionTokenService } from '../../email/agent-email-action-token.service';
@@ -403,6 +403,20 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
       }
     });
 
+    cached.chat.onSlashCommand(async (event: SlashCommandEvent) => {
+      try {
+        await this.redispatchTelegramCommandAsMessage(cached, event);
+      } catch (err) {
+        this.logger.error(err, `[agent:${agentId}] Error handling slash command ${event.command}`);
+        captureAgentException(err, {
+          component: 'chat-instance-registry',
+          operation: 'on-slash-command',
+          agentId,
+          extra: { command: event.command },
+        });
+      }
+    });
+
     cached.chat.onAction(async (event) => {
       try {
         if (!event.thread) {
@@ -458,6 +472,65 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
         this.logger.error(err, `[agent:${agentId}] Error handling reaction`);
         captureAgentException(err, { component: 'chat-instance-registry', operation: 'on-reaction', agentId });
       }
+    });
+  }
+
+  /**
+   * chat SDK ≥ 4.31 routes Telegram bot commands (any inbound message whose
+   * text starts with a `bot_command` entity) to slash-command handlers and no
+   * longer delivers them through the regular message pipeline. Novu consumes
+   * those commands as ordinary inbound messages — most importantly the
+   * `/start <code>` deep-link payload that drives the Telegram subscriber-link
+   * flow in `AgentInboundHandler` — so without this re-dispatch the command is
+   * silently dropped and the subscriber's channel endpoint is never created.
+   * Re-entering `chat.processMessage` restores the pre-4.31 behavior,
+   * including dedupe, thread locking, and DM/mention routing.
+   */
+  private async redispatchTelegramCommandAsMessage(cached: CachedChat, event: SlashCommandEvent): Promise<void> {
+    if (cached.config.platform !== AgentPlatformEnum.TELEGRAM) {
+      return;
+    }
+
+    const threadId = event.channel.id;
+    const message = await this.resolveTelegramCommandMessage(event, threadId);
+
+    await cached.chat.processMessage(event.adapter, threadId, message);
+  }
+
+  /**
+   * The Telegram adapter parses and caches the inbound message before emitting
+   * the slash-command event, so the cached copy (with formatting, author flags,
+   * and attachments intact) is preferred. Falls back to rebuilding the message
+   * from the event payload when the in-process cache no longer holds it.
+   */
+  private async resolveTelegramCommandMessage(event: SlashCommandEvent, threadId: string): Promise<Message> {
+    const raw = event.raw as { message_id?: number; chat?: { id?: number | string }; date?: number } | undefined;
+    const chatId = raw?.chat?.id;
+    const rawMessageId = raw?.message_id;
+    const hasPlatformIds = chatId !== undefined && rawMessageId !== undefined;
+    // Mirrors the Telegram adapter's `encodeMessageId` composite format so the
+    // chat SDK dedupe key matches the one a regular-message delivery would use.
+    const messageId = hasPlatformIds ? `${chatId}:${rawMessageId}` : `telegram-command:${threadId}:${Date.now()}`;
+
+    if (hasPlatformIds && event.adapter.fetchMessage) {
+      const cachedMessage = await event.adapter.fetchMessage(threadId, messageId);
+      if (cachedMessage) {
+        return cachedMessage;
+      }
+    }
+
+    const { Message: MessageCtor, parseMarkdown } = await esmImport('chat');
+    const text = event.text ? `${event.command} ${event.text}` : event.command;
+
+    return new MessageCtor({
+      id: messageId,
+      threadId,
+      text,
+      formatted: parseMarkdown(text),
+      raw: event.raw,
+      author: event.user,
+      metadata: { dateSent: raw?.date !== undefined ? new Date(raw.date * 1000) : new Date() },
+      attachments: [],
     });
   }
 }

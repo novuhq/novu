@@ -285,7 +285,7 @@ export function TelegramSetupGuide({
         index={base + 1}
         status={deriveStepStatus(base + 1, firstIncompleteStep)}
         title="Save the Bot Token in Novu"
-        description="Open the credentials form to paste the full BotFather confirmation message — or scan the QR code inside the form to finish setup from the phone where BotFather sent the token."
+        description="Open the credentials form to paste the full BotFather confirmation message, or scan the QR code inside the form to finish setup from the phone where BotFather sent the token."
         extraContent={
           <>
             {configureErrorMessage && (
@@ -348,7 +348,7 @@ export function TelegramSetupGuide({
       agentIdentifier={agent.identifier}
       watchedIntegrationId={integrationId}
       onConnected={handleConnected}
-      connectedMessage="Telegram is connected — your agent is ready to receive messages."
+      connectedMessage="Telegram is connected: your agent is ready to receive messages."
       listeningMessage="Open the link in Telegram, then reply to the bot's confirmation message to verify delivery."
     />
   );

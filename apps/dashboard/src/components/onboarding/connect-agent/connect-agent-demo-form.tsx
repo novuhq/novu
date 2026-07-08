@@ -207,7 +207,7 @@ export function ConnectAgentDemoForm({
         description={
           isDemoCredentialSelected
             ? "We'll provide demo Claude credentials so you can set up an agent without bringing your own keys. Later, you can replace it with your own agent and credentials."
-            : 'Describe what your agent should do — we configure the tools, MCPs, skills, and system prompt for you.'
+            : 'Describe what your agent should do: we configure the tools, MCPs, skills, and system prompt for you.'
         }
         fullWidthContent={
           <div className="mt-5 flex max-w-[500px] flex-col gap-3">

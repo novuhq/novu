@@ -1,5 +1,11 @@
 import { SlackConnectButton } from '@novu/react';
-import { ChatProviderIdEnum, FeatureFlagsKeysEnum, SLACK_AGENT_OAUTH_SCOPES } from '@novu/shared';
+import {
+  ChatProviderIdEnum,
+  FeatureFlagsKeysEnum,
+  SLACK_AGENT_BOT_EVENTS,
+  SLACK_AGENT_DEFAULT_DESCRIPTION,
+  SLACK_AGENT_OAUTH_SCOPES,
+} from '@novu/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -73,10 +79,11 @@ function sanitizeBotDisplayName(name: string): string {
 
 function buildSlackManifestYaml(agent: AgentResponse, webhookHandlerUrl: string, chatOAuthCallbackUrl: string): string {
   const botName = escapeYamlDoubleQuoted(sanitizeBotDisplayName(agent.name));
-  const displayDescription = escapeYamlDoubleQuoted(agent.description?.trim() || 'Agent built with Novu');
+  const displayDescription = escapeYamlDoubleQuoted(agent.description?.trim() || SLACK_AGENT_DEFAULT_DESCRIPTION);
   const oauthCallbackQuoted = escapeYamlDoubleQuoted(chatOAuthCallbackUrl);
   const webhookHandlerUrlQuoted = escapeYamlDoubleQuoted(webhookHandlerUrl);
   const botScopesYaml = SLACK_AGENT_OAUTH_SCOPES.map((scope) => `      - ${scope}`).join('\n');
+  const botEventsYaml = SLACK_AGENT_BOT_EVENTS.map((event) => `      - ${event}`).join('\n');
 
   return `display_information:
   name: "${botName}"
@@ -87,8 +94,8 @@ features:
     home_tab_enabled: false
     messages_tab_enabled: true
     messages_tab_read_only_enabled: false
-  assistant_view:
-    assistant_description: "${displayDescription}"
+  agent_view:
+    agent_description: "${displayDescription}"
     suggested_prompts:
       - title: "Say hello"
         message: "Hello!"
@@ -107,16 +114,7 @@ settings:
   event_subscriptions:
     request_url: "${webhookHandlerUrlQuoted}"
     bot_events:
-      - app_mention
-      - message.channels
-      - message.groups
-      - message.im
-      - message.mpim
-      - member_joined_channel
-      - assistant_thread_started
-      - assistant_thread_context_changed
-      - reaction_added
-      - reaction_removed
+${botEventsYaml}
   interactivity:
     is_enabled: true
     request_url: "${webhookHandlerUrlQuoted}"
@@ -528,7 +526,7 @@ export function SlackSetupGuide({
       agentIdentifier={agent.identifier}
       watchedIntegrationId={integrationId}
       onConnected={handleSlackWorkspaceConnected}
-      connectedMessage="Your Slack workspace is connected — check your DMs for a welcome message from the bot!"
+      connectedMessage="Your Slack workspace is connected: check your DMs for a welcome message from the bot!"
       listeningMessage={
         isSlackAppInstalled
           ? `Send a message to ${agent.name} in your Slack workspace to finish connecting.`
