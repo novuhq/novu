@@ -373,6 +373,75 @@ describe('AgentSubscriberResolver', () => {
     });
   });
 
+  describe('resolveSubscriber — discriminated outcomes', () => {
+    it('returns resolved with the subscriberId on an email hit', async () => {
+      const { resolver } = makeResolver({
+        findByEmail: sinon.stub().resolves([{ subscriberId: 'sub-email' }]),
+      });
+
+      const result = await resolver.resolveSubscriber({
+        ...baseLookupParams,
+        platform: AgentPlatformEnum.EMAIL,
+        platformUserId: 'user@example.com',
+      });
+
+      expect(result).to.deep.equal({ outcome: 'resolved', subscriberId: 'sub-email' });
+    });
+
+    it('returns not_found when the email lookup ran cleanly but matched nothing', async () => {
+      const { resolver } = makeResolver({ findByEmail: sinon.stub().resolves([]) });
+
+      const result = await resolver.resolveSubscriber({
+        ...baseLookupParams,
+        platform: AgentPlatformEnum.EMAIL,
+        platformUserId: 'unknown@example.com',
+      });
+
+      expect(result).to.deep.equal({ outcome: 'not_found' });
+    });
+
+    it('returns invalid_identity for an unusable email address without a DB call', async () => {
+      const { resolver, subscriberRepository } = makeResolver();
+
+      const result = await resolver.resolveSubscriber({
+        ...baseLookupParams,
+        platform: AgentPlatformEnum.EMAIL,
+        platformUserId: 'not-an-email',
+      });
+
+      expect(result).to.deep.equal({ outcome: 'invalid_identity' });
+      expect(subscriberRepository.findByEmail.called).to.equal(false);
+    });
+
+    it('returns invalid_identity for an empty platformUserId', async () => {
+      const { resolver } = makeResolver();
+
+      const result = await resolver.resolveSubscriber({
+        ...baseLookupParams,
+        platform: AgentPlatformEnum.SLACK,
+        platformUserId: '   ',
+      });
+
+      expect(result).to.deep.equal({ outcome: 'invalid_identity' });
+    });
+
+    it('propagates lookup errors instead of flattening them to a miss', async () => {
+      const lookupError = new Error('mongo timeout');
+      const { resolver } = makeResolver({ findByEmail: sinon.stub().rejects(lookupError) });
+
+      try {
+        await resolver.resolveSubscriber({
+          ...baseLookupParams,
+          platform: AgentPlatformEnum.EMAIL,
+          platformUserId: 'user@example.com',
+        });
+        expect.fail('Expected the lookup error to propagate');
+      } catch (err) {
+        expect(err).to.equal(lookupError);
+      }
+    });
+  });
+
   describe('resolveOnly — channel endpoint resolution', () => {
     it('resolves Slack via channel endpoints', async () => {
       const { resolver, channelEndpointRepository } = makeResolver({

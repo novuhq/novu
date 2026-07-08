@@ -32,6 +32,7 @@ import { AgentEventEnum } from '../../shared/enums/agent-event.enum';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { captureAgentException, captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
 import { parseToolApprovalActionId } from '../../shared/tool-approval/action-id';
+import type { SubscriberResolution } from '../../shared/types/subscriber-resolution';
 import { agentLinkAwaitingInboundConnectionFilter } from '../../shared/util/agent-inbound-connection';
 import { extractMsTeamsTenantId } from '../../shared/util/msteams-activity';
 import { type AutoProvisionPlatform, isAutoProvisionPlatform } from '../../shared/util/platform-endpoint-config';
@@ -301,7 +302,7 @@ export class AgentInboundHandler implements OnModuleInit {
         config.subscriberAccess === AgentSubscriberAccessEnum.OPEN &&
         !config.isKeyless);
 
-    let subscriberId: string | null;
+    let resolution: SubscriberResolution;
     try {
       if (!isVerifiedEmailSender) {
         this.logger.warn(
@@ -319,26 +320,29 @@ export class AgentInboundHandler implements OnModuleInit {
           },
           'Inbound email sender failed DKIM/SPF verification — skipping subscriber resolution so a spoofed From cannot assume an existing identity.'
         );
-        subscriberId = null;
+        resolution = { outcome: 'not_found' };
+      } else if (canAutoProvision) {
+        const provisionedSubscriberId = await this.subscriberResolver.resolveOrProvision({
+          environmentId: config.environmentId,
+          organizationId: config.organizationId,
+          platform: config.platform,
+          platformUserId: message.author.userId,
+          integrationIdentifier: config.integrationIdentifier,
+          agentIdentifier: config.agentIdentifier,
+          authorFullName: message.author.fullName,
+          authorUserName: message.author.userName,
+          // chat-sdk types isBot as `boolean | "unknown"`; treat anything except `true` as a non-bot author.
+          authorIsBot: message.author.isBot === true,
+          // Teams multi-tenant: capture the user's tenant from the inbound activity so the endpoint
+          // records which (possibly external customer) tenant the user belongs to.
+          platformTenantId:
+            config.platform === AgentPlatformEnum.TEAMS ? extractMsTeamsTenantId(message.raw) : undefined,
+        });
+        resolution = provisionedSubscriberId
+          ? { outcome: 'resolved', subscriberId: provisionedSubscriberId }
+          : { outcome: 'not_found' };
       } else {
-        subscriberId = canAutoProvision
-          ? await this.subscriberResolver.resolveOrProvision({
-              environmentId: config.environmentId,
-              organizationId: config.organizationId,
-              platform: config.platform,
-              platformUserId: message.author.userId,
-              integrationIdentifier: config.integrationIdentifier,
-              agentIdentifier: config.agentIdentifier,
-              authorFullName: message.author.fullName,
-              authorUserName: message.author.userName,
-              // chat-sdk types isBot as `boolean | "unknown"`; treat anything except `true` as a non-bot author.
-              authorIsBot: message.author.isBot === true,
-              // Teams multi-tenant: capture the user's tenant from the inbound activity so the endpoint
-              // records which (possibly external customer) tenant the user belongs to.
-              platformTenantId:
-                config.platform === AgentPlatformEnum.TEAMS ? extractMsTeamsTenantId(message.raw) : undefined,
-            })
-          : await this.resolveSubscriberId(agentId, config, message.author.userId, 'resolve-subscriber');
+        resolution = await this.resolveSubscriber(agentId, config, message.author.userId, 'resolve-subscriber');
       }
     } catch (err) {
       if (err instanceof BotAuthorSkippedError) {
@@ -360,18 +364,20 @@ export class AgentInboundHandler implements OnModuleInit {
       }
 
       /**
-       * Only `resolveOrProvision` on SLACK / TEAMS can reach here — the
-       * `resolveSubscriberId` read path and the resolver's open-access email
-       * branch both soft-fail to `null` internally. For auto-provision
-       * platforms an unknown error means we don't know the subscriber state,
-       * so we keep dispatch off and surface the failure rather than silently
-       * degrading to a PLATFORM_USER participant the removed-anonymous-state
-       * contract was meant to eliminate.
+       * Only `resolveOrProvision` on Slack / Teams / open-access email can reach
+       * here — the `resolveSubscriber` read path maps its own failures to an
+       * `error` outcome internally and never throws. For auto-provision platforms
+       * an unknown error means we don't know the subscriber state, so we keep
+       * dispatch off and surface the failure rather than silently degrading to
+       * a PLATFORM_USER participant the removed-anonymous-state contract was
+       * meant to eliminate.
        */
       captureAgentWarning(err, { component: 'agent-inbound-handler', operation: 'resolve-subscriber', agentId });
 
       throw err;
     }
+
+    const subscriberId = resolution.outcome === 'resolved' ? resolution.subscriberId : null;
 
     // A genuine, non-bot user has messaged the agent (bot-authored echoes threw
     // `BotAuthorSkippedError` above). This — not the raw webhook POST — is what
@@ -471,6 +477,7 @@ export class AgentInboundHandler implements OnModuleInit {
       config,
       conversation,
       subscriber,
+      subscriberResolution: resolution,
       message,
       event,
       thread,
@@ -679,26 +686,31 @@ export class AgentInboundHandler implements OnModuleInit {
     }
   }
 
-  private async resolveSubscriberId(
+  /**
+   * Read-path resolution that never throws: lookup failures are mapped to an
+   * `error` outcome instead of being flattened to `null`, so downstream gates
+   * (and their logs) can tell "no such subscriber" apart from "resolution broke".
+   */
+  private async resolveSubscriber(
     agentId: string,
     config: ResolvedAgentConfig,
     platformUserId: string,
     operation: string
-  ): Promise<string | null> {
-    return this.subscriberResolver
-      .resolveOnly({
+  ): Promise<SubscriberResolution> {
+    try {
+      return await this.subscriberResolver.resolveSubscriber({
         environmentId: config.environmentId,
         organizationId: config.organizationId,
         platform: config.platform,
         platformUserId,
         integrationIdentifier: config.integrationIdentifier,
-      })
-      .catch((err) => {
-        this.logger.warn(err, `[agent:${agentId}] Subscriber resolution failed (${operation}), continuing without it`);
-        captureAgentWarning(err, { component: 'agent-inbound-handler', operation, agentId });
-
-        return null;
       });
+    } catch (err) {
+      this.logger.warn(err, `[agent:${agentId}] Subscriber resolution failed (${operation}), continuing without it`);
+      captureAgentWarning(err, { component: 'agent-inbound-handler', operation, agentId });
+
+      return { outcome: 'error', err };
+    }
   }
 
   /**
@@ -909,9 +921,10 @@ export class AgentInboundHandler implements OnModuleInit {
 
     const platformUserId = event.user?.userId;
 
-    const subscriberId = platformUserId
-      ? await this.resolveSubscriberId(agentId, config, platformUserId, 'resolve-subscriber-reaction')
-      : null;
+    const reactionResolution = platformUserId
+      ? await this.resolveSubscriber(agentId, config, platformUserId, 'resolve-subscriber-reaction')
+      : undefined;
+    const subscriberId = reactionResolution?.outcome === 'resolved' ? reactionResolution.subscriberId : null;
 
     const [subscriber, sourceActivity] = await Promise.all([
       subscriberId
@@ -949,6 +962,7 @@ export class AgentInboundHandler implements OnModuleInit {
       config,
       conversation,
       subscriber,
+      subscriberResolution: reactionResolution,
       message: null,
       event: AgentEventEnum.ON_REACTION,
       thread: event.thread ?? ({ id: threadId, channelId: '', isDM: false } as Thread),
@@ -972,7 +986,8 @@ export class AgentInboundHandler implements OnModuleInit {
       return;
     }
 
-    const subscriberId = await this.resolveSubscriberId(agentId, config, userId, 'resolve-subscriber-action');
+    const actionResolution = await this.resolveSubscriber(agentId, config, userId, 'resolve-subscriber-action');
+    const subscriberId = actionResolution.outcome === 'resolved' ? actionResolution.subscriberId : null;
 
     const participantId = subscriberId ?? `${config.platform}:${userId}`;
     const participantType = subscriberId
@@ -1036,6 +1051,7 @@ export class AgentInboundHandler implements OnModuleInit {
       config,
       conversation,
       subscriber,
+      subscriberResolution: actionResolution,
       message: null,
       event: AgentEventEnum.ON_ACTION,
       thread,

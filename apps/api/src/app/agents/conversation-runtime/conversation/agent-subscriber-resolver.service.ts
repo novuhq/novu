@@ -12,6 +12,7 @@ import { CreateChannelEndpointCommand } from '../../../channel-endpoints/usecase
 import { CreateChannelEndpoint } from '../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.usecase';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
+import type { SubscriberResolution } from '../../shared/types/subscriber-resolution';
 import { isValidEmailForLookup, normalizeEmailForLookup } from '../../shared/util/email-normalization';
 import { getPhoneLookupCandidates } from '../../shared/util/phone-normalization';
 import { AUTO_PROVISION_PLATFORMS, PLATFORM_ENDPOINT_CONFIG } from '../../shared/util/platform-endpoint-config';
@@ -88,15 +89,17 @@ export class AgentSubscriberResolver {
   }
 
   /**
-   * Pure platform-identity lookup. Returns the linked subscriberId or `null`
-   * when no link exists. Safe for read-only callers (reactions, actions, and
-   * platforms outside the auto-provision scope).
+   * Pure platform-identity lookup returning a discriminated outcome, so callers
+   * can tell a genuine miss (`not_found`) apart from an unusable identity
+   * (`invalid_identity`). Never returns the `error` outcome — lookup failures
+   * propagate as rejections for the caller to classify. Safe for read-only
+   * callers (reactions, actions, and platforms outside the auto-provision scope).
    */
-  async resolveOnly(params: ResolveSubscriberParams): Promise<string | null> {
+  async resolveSubscriber(params: ResolveSubscriberParams): Promise<SubscriberResolution> {
     const { environmentId, organizationId, platform, platformUserId, integrationIdentifier } = params;
 
     if (!platformUserId.trim()) {
-      return null;
+      return { outcome: 'invalid_identity' };
     }
 
     if (platform === AgentPlatformEnum.WHATSAPP) {
@@ -122,7 +125,7 @@ export class AgentSubscriberResolver {
         `No endpoint config for platform ${platform} — subscriber resolution skipped (integration: ${integrationIdentifier})`
       );
 
-      return null;
+      return { outcome: 'not_found' };
     }
 
     const endpoint = await this.channelEndpointRepository.findByPlatformIdentity({
@@ -137,14 +140,25 @@ export class AgentSubscriberResolver {
     if (endpoint) {
       this.logger.debug(`Resolved platform user ${platform}:${platformUserId} → subscriber ${endpoint.subscriberId}`);
 
-      return endpoint.subscriberId;
+      return { outcome: 'resolved', subscriberId: endpoint.subscriberId };
     }
 
     this.logger.debug(
       `No subscriber linked for platform user ${platform}:${platformUserId} (integration: ${integrationIdentifier})`
     );
 
-    return null;
+    return { outcome: 'not_found' };
+  }
+
+  /**
+   * Legacy convenience view over `resolveSubscriber` that flattens the outcome
+   * back to `subscriberId | null` for callers that only care about the happy
+   * path (e.g. the `resolveOrProvision` pre-check).
+   */
+  async resolveOnly(params: ResolveSubscriberParams): Promise<string | null> {
+    const resolution = await this.resolveSubscriber(params);
+
+    return resolution.outcome === 'resolved' ? resolution.subscriberId : null;
   }
 
   /**
@@ -312,7 +326,7 @@ export class AgentSubscriberResolver {
     environmentId: string;
     organizationId: string;
     platformUserId: string;
-  }): Promise<string | null> {
+  }): Promise<SubscriberResolution> {
     const { environmentId, organizationId, platformUserId } = params;
     const phoneCandidates = getPhoneLookupCandidates(platformUserId);
     const matches = await this.subscriberRepository.findByPhone(environmentId, organizationId, phoneCandidates);
@@ -328,12 +342,12 @@ export class AgentSubscriberResolver {
     if (subscriber) {
       this.logger.debug(`Resolved WhatsApp phone ${platformUserId} → subscriber ${subscriber.subscriberId}`);
 
-      return subscriber.subscriberId;
+      return { outcome: 'resolved', subscriberId: subscriber.subscriberId };
     }
 
     this.logger.debug(`No subscriber found for WhatsApp phone ${platformUserId}`);
 
-    return null;
+    return { outcome: 'not_found' };
   }
 
   private async resolveAgentProvisionedEmailSubscriber(params: {
@@ -377,14 +391,14 @@ export class AgentSubscriberResolver {
     environmentId: string;
     organizationId: string;
     platformUserId: string;
-  }): Promise<string | null> {
+  }): Promise<SubscriberResolution> {
     const { environmentId, organizationId, platformUserId } = params;
     const email = normalizeEmailForLookup(platformUserId);
 
     if (!isValidEmailForLookup(email)) {
       this.logger.debug(`Skipping email subscriber lookup for invalid address "${platformUserId}"`);
 
-      return null;
+      return { outcome: 'invalid_identity' };
     }
 
     const matches = await this.subscriberRepository.findByEmail(environmentId, organizationId, email);
@@ -392,7 +406,7 @@ export class AgentSubscriberResolver {
     if (matches.length === 0) {
       this.logger.debug(`No subscriber found for email ${email}`);
 
-      return null;
+      return { outcome: 'not_found' };
     }
 
     // Partition matches into real (customer-created) vs auto-provisioned
@@ -426,7 +440,7 @@ export class AgentSubscriberResolver {
 
       this.logger.debug(`Resolved email ${email} → subscriber ${real.subscriberId}`);
 
-      return real.subscriberId;
+      return { outcome: 'resolved', subscriberId: real.subscriberId };
     }
 
     // Only phantom(s) exist — no customer-created subscriber yet. Resolve to the
@@ -440,7 +454,7 @@ export class AgentSubscriberResolver {
     const phantom = phantoms[0];
     this.logger.debug(`Resolved email ${email} → auto-provisioned subscriber ${phantom.subscriberId}`);
 
-    return phantom.subscriberId;
+    return { outcome: 'resolved', subscriberId: phantom.subscriberId };
   }
 
   private async provisionSubscriberAndEndpoint(params: ResolveOrProvisionParams): Promise<string> {
