@@ -13,6 +13,7 @@ type UseFormAutosaveProps<U extends Record<string, unknown>, T extends FieldValu
   form: UseFormReturn<T>;
   isReadOnly?: boolean;
   shouldClientValidate?: boolean;
+  canSave?: () => boolean;
   save: (data: U, options: { onSuccess?: () => void }) => void;
 };
 
@@ -26,8 +27,12 @@ export function useFormAutosave<U extends Record<string, unknown>, T extends Fie
 
   const onSave = useCallback(
     async (data: T, options?: { forceSubmit?: boolean; onSuccess?: () => void }) => {
-      const { save, isReadOnly, shouldClientValidate, previousData } = savePropsRef.current;
+      const { save, isReadOnly, shouldClientValidate, previousData, canSave } = savePropsRef.current;
       if (isReadOnly) {
+        return;
+      }
+
+      if (canSave && !canSave()) {
         return;
       }
 
@@ -74,6 +79,11 @@ export function useFormAutosave<U extends Record<string, unknown>, T extends Fie
 
   const debouncedOnSave = useDebounce(onSave, TEN_SECONDS);
   const shortDebouncedOnSave = useDebounce(onSave, FIVE_HUNDRED_MS);
+
+  const cancelPendingSaves = useCallback(() => {
+    debouncedOnSave.cancel();
+    shortDebouncedOnSave.cancel();
+  }, [debouncedOnSave, shortDebouncedOnSave]);
 
   const onBlur = useCallback(
     (e: React.FocusEvent<HTMLFormElement, Element>) => {
@@ -136,5 +146,6 @@ export function useFormAutosave<U extends Record<string, unknown>, T extends Fie
     onBlur,
     saveForm,
     saveFormDebounced,
+    cancelPendingSaves,
   };
 }

@@ -1,5 +1,5 @@
 import { ContentIssueEnum, StepUpdateDto } from '@novu/shared';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { PageMeta } from '@/components/page-meta';
 import { Form } from '@/components/primitives/form/form';
@@ -23,17 +23,59 @@ export function EditStepTemplateV2Page() {
   // form.reset() constantly and regenerates useFieldArray field IDs (visible flicker).
   // Instead reset when the step identity or server-sourced controls actually change
   // (navigation, resolver hash, autosave response, or refetch e.g. Copilot).
-  const hasInitializedRef = useRef(false);
   const prevStepIdRef = useRef<string | undefined>(undefined);
   const prevHashRef = useRef<string | undefined>(undefined);
   const prevControlsFingerprintRef = useRef<string | null>(null);
+  // Step whose control values are currently loaded into the form. Autosave is blocked
+  // until this matches the active route step, preventing mid-transition blur saves.
+  const formLoadedStepIdRef = useRef<string | undefined>(undefined);
+  const [formLoadedStepId, setFormLoadedStepId] = useState<string | undefined>(undefined);
   // Tracks ALL in-flight save fingerprints so that any server response that
   // echoes back one of our own saves is recognized and does not reset the form.
   // A single ref would be overwritten by rapid successive saves, causing the
   // guard to fail for earlier in-flight requests.
   const inFlightFingerprintsRef = useRef<Set<string>>(new Set());
 
-  useEffect(() => {
+  const canSaveForm = useCallback(() => {
+    return Boolean(step?.stepId && formLoadedStepIdRef.current === step.stepId);
+  }, [step?.stepId]);
+
+  const { onBlur, saveForm, saveFormDebounced, cancelPendingSaves } = useFormAutosave({
+    previousData: {},
+    form,
+    canSave: canSaveForm,
+    save: (data, { onSuccess }) => {
+      const targetStepId = formLoadedStepIdRef.current;
+      const targetStep = workflow?.steps.find((s) => s.stepId === targetStepId);
+      if (!workflow || !targetStep || !targetStepId) return;
+
+      const fp = JSON.stringify({
+        v: data,
+        ui: targetStep.controls?.uiSchema,
+        ds: targetStep.controls?.dataSchema,
+      });
+
+      // Add to in-flight set before the request goes out. The fingerprint
+      // effect will recognize any server response that matches this value and
+      // skip the form.reset() that would otherwise overwrite in-progress edits.
+      inFlightFingerprintsRef.current.add(fp);
+
+      const updateStepData: Partial<StepUpdateDto> = {
+        controlValues: data,
+      };
+      update(updateStepInWorkflow(workflow, targetStepId, updateStepData), {
+        onSuccess: () => {
+          // Clean up the in-flight fingerprint on success.
+          inFlightFingerprintsRef.current.delete(fp);
+          onSuccess?.();
+        },
+      });
+    },
+  });
+
+  const cancelPendingSavesRef = useDataRef(cancelPendingSaves);
+
+  useLayoutEffect(() => {
     if (!step) return;
 
     const fingerprint = JSON.stringify({
@@ -62,45 +104,31 @@ export function EditStepTemplateV2Page() {
 
     const shouldReset = isFirstBind || stepIdChanged || hashChanged || (controlsChanged && !isOwnSaveEcho);
 
+    if (stepIdChanged) {
+      // Hide the editor and block autosave until the incoming step's values are loaded.
+      formLoadedStepIdRef.current = undefined;
+      setFormLoadedStepId(undefined);
+      cancelPendingSavesRef.current();
+
+      // Persist any unsaved edits on the step we're leaving before resetting the form.
+      if (workflow && form.formState.isDirty) {
+        const outgoingStepId = prevStepIdRef.current as string;
+        const outgoingValues = form.getValues();
+        update(updateStepInWorkflow(workflow, outgoingStepId, { controlValues: outgoingValues }));
+      }
+    }
+
     prevStepIdRef.current = step.stepId;
     prevHashRef.current = step.stepResolverHash;
     prevControlsFingerprintRef.current = fingerprint;
 
     if (shouldReset) {
-      hasInitializedRef.current = true;
+      cancelPendingSavesRef.current();
       form.reset(getControlsDefaultValues(step), { keepErrors: true });
+      formLoadedStepIdRef.current = step.stepId;
+      setFormLoadedStepId(step.stepId);
     }
-  }, [form, step]);
-
-  const { onBlur, saveForm, saveFormDebounced } = useFormAutosave({
-    previousData: {},
-    form,
-    save: (data, { onSuccess }) => {
-      if (!workflow || !step) return;
-
-      const fp = JSON.stringify({
-        v: data,
-        ui: step.controls?.uiSchema,
-        ds: step.controls?.dataSchema,
-      });
-
-      // Add to in-flight set before the request goes out. The fingerprint
-      // effect will recognize any server response that matches this value and
-      // skip the form.reset() that would otherwise overwrite in-progress edits.
-      inFlightFingerprintsRef.current.add(fp);
-
-      const updateStepData: Partial<StepUpdateDto> = {
-        controlValues: data,
-      };
-      update(updateStepInWorkflow(workflow, step.stepId, updateStepData), {
-        onSuccess: () => {
-          // Clean up the in-flight fingerprint on success.
-          inFlightFingerprintsRef.current.delete(fp);
-          onSuccess?.();
-        },
-      });
-    },
-  });
+  }, [form, step, workflow, update, cancelPendingSavesRef]);
 
   // Run saveForm on unmount
   const saveFormRef = useDataRef(saveForm);
@@ -149,10 +177,9 @@ export function EditStepTemplateV2Page() {
     return null;
   }
 
-  // Wait for the one-time initialization effect to fire before rendering the editor.
-  // Without this guard the form still has defaultValues: {} and the editor would
-  // render with empty fields for one tick before the reset populates them.
-  if (!hasInitializedRef.current) {
+  // Do not mount field editors until the form has been reset to this step's values.
+  // Mounting earlier lets blur/autosave persist a stale or empty snapshot.
+  if (formLoadedStepId !== step.stepId) {
     return null;
   }
 
@@ -162,7 +189,7 @@ export function EditStepTemplateV2Page() {
       <Form {...form}>
         <div className="flex h-full w-full flex-col">
           <SaveFormContext.Provider value={value}>
-            <StepEditorLayout workflow={workflow} step={step} />
+            <StepEditorLayout key={step.stepId} workflow={workflow} step={step} />
           </SaveFormContext.Provider>
         </div>
       </Form>

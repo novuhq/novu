@@ -34,7 +34,9 @@ export function HttpRequestEditor({ uiSchema }: HttpRequestEditorProps) {
   const { currentEnvironment } = useEnvironment();
   const { watch, setValue, getValues } = useFormContext();
   const { saveForm } = useSaveForm();
-  const method = watch('method');
+  // Falls back to 'GET' during the brief render where the shared step form still holds
+  // the previous step's values (reset happens in an effect after the step identity changes).
+  const method = (watch('method') as string | undefined) ?? 'GET';
   const [bodyMode, setBodyMode] = useState<BodyEditorMode>(() =>
     getInitialBodyEditorMode(getValues('body') as HttpRequestBodyValue)
   );
