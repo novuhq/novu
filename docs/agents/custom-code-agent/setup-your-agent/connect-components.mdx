@@ -62,22 +62,22 @@ Optional reference: https://docs.novu.co/agents/custom-code-agent/setup-your-age
 
 `SlackConnectButton` accepts the following props to customize the UI and behavior:
 
-<Fields>
-  <Field name="integrationIdentifier" type="string" />
-  <Field name="connectionIdentifier" type="string" />
-  <Field name="subscriberId" type="string" />
-  <Field name="context" type="Partial<Record<string, ContextValue>>" />
-  <Field name="scope" type="string[]" />
-  <Field name="connectionMode" type="ConnectionMode" />
-  <Field name="onConnectSuccess" type="(connectionIdentifier: string) => void" />
-  <Field name="onConnectError" type="(error: unknown) => void" />
-  <Field name="onDisconnectSuccess" type="() => void" />
-  <Field name="onDisconnectError" type="(error: unknown) => void" />
-  <Field name="connectLabel" type="string" />
-  <Field name="connectedLabel" type="string" />
-  <Field name="appearance" type="ReactInboxAppearance | ReactSubscriptionAppearance | ReactAllAppearance" />
-  <Field name="container" type="any" />
-</Fields>
+| Property | Type | Description |
+| --- | --- | --- |
+| `integrationIdentifier` | `string` | Required. Identifier of the Slack integration to connect against. |
+| `connectionIdentifier` | `string` | Optional. Unique identifier for the connection. Auto-generated per subscriber when omitted. |
+| `subscriberId` | `string` | Optional. Subscriber to connect. Defaults to the `NovuProvider` subscriber. |
+| `context` | `Partial<Record<string, ContextValue>>` | Optional. Contextual attributes used to scope the connection. Required when `connectionMode` is `shared`. |
+| `scope` | `string[]` | Optional. OAuth scopes requested during connect. |
+| `connectionMode` | `ConnectionMode` | Optional. `subscriber` (default) or `shared`. |
+| `onConnectSuccess` | `(connectionIdentifier: string) => void` | Called once the connection is established. |
+| `onConnectError` | `(error: unknown) => void` | Called when the connect flow fails or times out. |
+| `onDisconnectSuccess` | `() => void` | Called after the connection is removed. |
+| `onDisconnectError` | `(error: unknown) => void` | Called when disconnecting fails. |
+| `connectLabel` | `string` | Label shown when disconnected. |
+| `connectedLabel` | `string` | Label shown when connected. |
+| `appearance` | `ReactInboxAppearance \| ReactSubscriptionAppearance \| ReactAllAppearance` | Style overrides reusing the shared `channelConnectButton*` keys. |
+| `container` | `HTMLElement` | Optional element to render the component into. |
 
 ## Microsoft Teams connect button
 
@@ -138,23 +138,23 @@ Optional reference: https://docs.novu.co/agents/custom-code-agent/setup-your-age
 
 `MsTeamsConnectButton` accepts the following props to customize the UI and behavior:
 
-<Fields>
-  <Field name="integrationIdentifier" type="string" />
-  <Field name="connectionIdentifier" type="string" />
-  <Field name="subscriberId" type="string" />
-  <Field name="context" type="Partial<Record<string, ContextValue>>" />
-  <Field name="scope" type="string[]" />
-  <Field name="connectionMode" type="ConnectionMode" />
-  <Field name="autoLinkUser" type="boolean" />
-  <Field name="onConnectSuccess" type="(connectionIdentifier: string) => void" />
-  <Field name="onConnectError" type="(error: unknown) => void" />
-  <Field name="onDisconnectSuccess" type="() => void" />
-  <Field name="onDisconnectError" type="(error: unknown) => void" />
-  <Field name="connectLabel" type="string" />
-  <Field name="connectedLabel" type="string" />
-  <Field name="appearance" type="ReactInboxAppearance | ReactSubscriptionAppearance | ReactAllAppearance" />
-  <Field name="container" type="any" />
-</Fields>
+| Property | Type | Description |
+| --- | --- | --- |
+| `integrationIdentifier` | `string` | Required. Identifier of the Microsoft Teams integration to connect against. |
+| `connectionIdentifier` | `string` | Optional. Unique identifier for the connection. Auto-generated per subscriber when omitted. |
+| `subscriberId` | `string` | Optional. Subscriber to connect. Defaults to the `NovuProvider` subscriber. |
+| `context` | `Partial<Record<string, ContextValue>>` | Optional. Contextual attributes used to scope the connection. Required when `connectionMode` is `shared`. |
+| `scope` | `string[]` | Optional. OAuth scopes requested during connect. |
+| `connectionMode` | `ConnectionMode` | Optional. `subscriber` (default) or `shared`. |
+| `autoLinkUser` | `boolean` | Optional. When `true` (default in subscriber mode), chains into the delegated user-linking flow after admin consent. Set `false` for tenant-only admin consent. |
+| `onConnectSuccess` | `(connectionIdentifier: string) => void` | Called once the connection is established. |
+| `onConnectError` | `(error: unknown) => void` | Called when the connect flow fails or times out. |
+| `onDisconnectSuccess` | `() => void` | Called after the connection is removed. |
+| `onDisconnectError` | `(error: unknown) => void` | Called when disconnecting fails. |
+| `connectLabel` | `string` | Label shown when disconnected. Defaults to `Connect MS Teams`. |
+| `connectedLabel` | `string` | Label shown when connected. Defaults to `Connected`. |
+| `appearance` | `ReactInboxAppearance \| ReactSubscriptionAppearance \| ReactAllAppearance` | Style overrides reusing the shared `channelConnectButton*` keys. |
+| `container` | `HTMLElement` | Optional element to render the component into. |
 
 ### Link a subscriber for direct messages
 
@@ -194,19 +194,19 @@ export default MsTeamsLinkUserComponent;
 
 `MsTeamsLinkUser` accepts the following props to customize the UI and behavior:
 
-<Fields>
-  <Field name="integrationIdentifier" type="string" />
-  <Field name="connectionIdentifier" type="string" />
-  <Field name="context" type="Partial<Record<string, ContextValue>>" />
-  <Field name="onLinkSuccess" type="(endpoint: { identifier: string }) => void" />
-  <Field name="onLinkError" type="(error: unknown) => void" />
-  <Field name="onUnlinkSuccess" type="() => void" />
-  <Field name="onUnlinkError" type="(error: unknown) => void" />
-  <Field name="linkLabel" type="string" />
-  <Field name="unlinkLabel" type="string" />
-  <Field name="appearance" type="ReactInboxAppearance | ReactSubscriptionAppearance | ReactAllAppearance" />
-  <Field name="container" type="any" />
-</Fields>
+| Property | Type | Description |
+| --- | --- | --- |
+| `integrationIdentifier` | `string` | Required. Identifier of the Microsoft Teams integration to link against. |
+| `connectionIdentifier` | `string` | Optional. Unique identifier for the connection. Auto-generated per subscriber when omitted. |
+| `context` | `Partial<Record<string, ContextValue>>` | Optional. Contextual attributes used to scope the endpoint. |
+| `onLinkSuccess` | `(endpoint: { identifier: string }) => void` | Called once the `ms_teams_user` endpoint is created. |
+| `onLinkError` | `(error: unknown) => void` | Called when linking fails or polling times out. |
+| `onUnlinkSuccess` | `() => void` | Called after the endpoint is removed. |
+| `onUnlinkError` | `(error: unknown) => void` | Called when unlinking fails. |
+| `linkLabel` | `string` | Label shown when not linked. |
+| `unlinkLabel` | `string` | Label shown when linked. |
+| `appearance` | `ReactInboxAppearance \| ReactSubscriptionAppearance \| ReactAllAppearance` | Style overrides reusing the shared `channelConnectButton*` keys. |
+| `container` | `HTMLElement` | Optional element to render the component into. |
 
 ## Telegram connect button
 
