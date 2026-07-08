@@ -94,6 +94,7 @@
     "@types/inquirer": "8.2.10",
     "@types/jest": "30.0.0",
     "@types/node": "^22.0.0",
+    "@typescript/native-preview": "7.0.0-dev.20260704.1",
     "auto": "^10.36.5",
     "chalk": "4.1.2",
     "chalk-animation": "^1.6.0",
