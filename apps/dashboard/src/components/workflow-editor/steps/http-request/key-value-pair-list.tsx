@@ -182,7 +182,7 @@ function BodyKeyValuePairList({
 
   useEffect(() => {
     if (Array.isArray(initialBodyRef.current)) {
-      setValue('body', keyValuePairsToBodyString(initialBodyRef.current), { shouldDirty: true });
+      setValue('body', keyValuePairsToBodyString(initialBodyRef.current), { shouldDirty: false });
     }
   }, [setValue]);
 
