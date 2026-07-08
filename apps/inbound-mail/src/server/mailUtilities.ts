@@ -91,7 +91,13 @@ module.exports = {
     }
 
     const verifySpfPath = path.join(__dirname, '../python/verifyspf.py');
-    const args = [verifySpfPath, ip, address, host];
+    /*
+     * execFile stringifies non-string args, so an undefined sender would reach
+     * the script as the literal "undefined". Empty strings are fine: pyspf
+     * falls back to the HELO identity for an empty MAIL FROM (null sender,
+     * e.g. bounces), per RFC 7208 §2.4.
+     */
+    const args = [verifySpfPath, ip ?? '', address ?? '', host ?? ''];
 
     child_process.execFile(pythonBin, args, (err, stdout, stderr) => {
       logger.verbose({ context: LOG_CONTEXT }, stdout);
@@ -102,25 +108,51 @@ module.exports = {
 
       if (code) {
         /*
-         * Exit 11 is the script's "spf did not pass" code; any other code —
-         * including string codes like ENOENT when the python binary cannot be
-         * spawned — means the check itself is broken, not the sender.
+         * For known verdict exit codes (11-14) the err object is just
+         * "Command failed" + exit code — attaching it makes an expected
+         * verdict read like a crash. Only the default branch (spawn/runtime
+         * breakage) includes it.
          */
-        logger.warn(
-          {
-            context: LOG_CONTEXT,
-            err,
-            exitCode: code,
-            ip,
-            address,
-            host,
-            stdout: typeof stdout === 'string' ? stdout.trim() : stdout,
-            stderr: typeof stderr === 'string' ? stderr.trim() : stderr,
-          },
-          code === 11
-            ? 'SPF verification failed: sender IP is not authorized for the domain.'
-            : 'SPF verification errored: verifier did not run cleanly — treating spf as failed.'
-        );
+        const logPayload = {
+          context: LOG_CONTEXT,
+          exitCode: code,
+          ip,
+          address,
+          host,
+          stdout: typeof stdout === 'string' ? stdout.trim() : stdout,
+          stderr: typeof stderr === 'string' ? stderr.trim() : stderr,
+        };
+
+        /*
+         * Exit codes are defined in verifyspf.py — keep in sync:
+         * 11 fail/softfail, 12 none/neutral, 13 temperror, 14 permerror.
+         * Any other code — including string codes like ENOENT when the python
+         * binary cannot be spawned — means the check itself is broken, not the
+         * sender. Everything except exit 0 resolves to spf=failed; the split
+         * here is purely for accurate log levels and messages.
+         */
+        switch (code) {
+          case 11:
+            logger.warn(logPayload, 'SPF verification failed: sender IP is not authorized for the domain.');
+            break;
+          case 12:
+            logger.info(
+              logPayload,
+              'SPF verification returned no verdict: sender domain publishes no applicable SPF record.'
+            );
+            break;
+          case 13:
+            logger.warn(logPayload, 'SPF verification hit a transient DNS error — treating spf as failed.');
+            break;
+          case 14:
+            logger.warn(logPayload, 'SPF verification found an invalid SPF record — treating spf as failed.');
+            break;
+          default:
+            logger.warn(
+              { ...logPayload, err },
+              'SPF verification errored: verifier did not run cleanly — treating spf as failed.'
+            );
+        }
       } else {
         logger.verbose({ context: LOG_CONTEXT }, `closed with return code ${code}`);
       }
