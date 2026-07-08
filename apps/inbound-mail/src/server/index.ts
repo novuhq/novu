@@ -405,12 +405,11 @@ class Mailin extends events.EventEmitter {
         logger.verbose({ context: LOG_CONTEXT, connectionId: connection.id }, `${connection.id} Validating spf.`);
 
         /*
-         * smtp-server sessions carry the sender under envelope.mailFrom (false
-         * until MAIL FROM is received), not `.from` — the old mailin field.
-         * Passing the wrong field made pyspf fall back to the HELO identity,
-         * so SPF was never evaluated against the actual sender domain.
+         * smtp-server sessions carry the sender under envelope.mailFrom, not
+         * `.from` (the old mailin field). Passing the wrong field made pyspf
+         * fall back to the HELO identity instead of the actual sender domain.
          */
-        const envelopeFrom = connection.envelope?.mailFrom?.address || '';
+        const envelopeFrom = connection.envelope?.mailFrom?.address;
 
         return mailUtilities
           .validateSpfAsync(connection.remoteAddress, envelopeFrom, connection.clientHostname)
