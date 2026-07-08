@@ -12,6 +12,7 @@ import { CreateChannelEndpointCommand } from '../../../channel-endpoints/usecase
 import { CreateChannelEndpoint } from '../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.usecase';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
+import type { SubscriberResolution } from '../../shared/types/subscriber-resolution';
 import { isValidEmailForLookup, normalizeEmailForLookup } from '../../shared/util/email-normalization';
 import { getPhoneLookupCandidates } from '../../shared/util/phone-normalization';
 import { AUTO_PROVISION_PLATFORMS, PLATFORM_ENDPOINT_CONFIG } from '../../shared/util/platform-endpoint-config';
@@ -88,15 +89,17 @@ export class AgentSubscriberResolver {
   }
 
   /**
-   * Pure platform-identity lookup. Returns the linked subscriberId or `null`
-   * when no link exists. Safe for read-only callers (reactions, actions, and
-   * platforms outside the auto-provision scope).
+   * Pure platform-identity lookup returning a discriminated outcome, so callers
+   * can tell a genuine miss (`not_found`) apart from an unusable identity
+   * (`invalid_identity`). Never returns the `error` outcome — lookup failures
+   * propagate as rejections for the caller to classify. Safe for read-only
+   * callers (reactions, actions, and platforms outside the auto-provision scope).
    */
-  async resolveOnly(params: ResolveSubscriberParams): Promise<string | null> {
+  async resolveSubscriber(params: ResolveSubscriberParams): Promise<SubscriberResolution> {
     const { environmentId, organizationId, platform, platformUserId, integrationIdentifier } = params;
 
     if (!platformUserId.trim()) {
-      return null;
+      return { outcome: 'invalid_identity' };
     }
 
     if (platform === AgentPlatformEnum.WHATSAPP) {
@@ -122,7 +125,7 @@ export class AgentSubscriberResolver {
         `No endpoint config for platform ${platform} — subscriber resolution skipped (integration: ${integrationIdentifier})`
       );
 
-      return null;
+      return { outcome: 'not_found' };
     }
 
     const endpoint = await this.channelEndpointRepository.findByPlatformIdentity({
@@ -137,14 +140,14 @@ export class AgentSubscriberResolver {
     if (endpoint) {
       this.logger.debug(`Resolved platform user ${platform}:${platformUserId} → subscriber ${endpoint.subscriberId}`);
 
-      return endpoint.subscriberId;
+      return { outcome: 'resolved', subscriberId: endpoint.subscriberId };
     }
 
     this.logger.debug(
       `No subscriber linked for platform user ${platform}:${platformUserId} (integration: ${integrationIdentifier})`
     );
 
-    return null;
+    return { outcome: 'not_found' };
   }
 
   /**
@@ -166,16 +169,17 @@ export class AgentSubscriberResolver {
    *     binding; email identity lives on `Subscriber.email` alone.
    *
    * Slack/Teams throw on provisioning failure (dispatch stays off); the email
-   * branch soft-fails to `null` so a provisioning hiccup never crashes the
-   * inbound webhook. Throws for non-provisionable platforms; callers MUST
-   * route reactions, actions, and other inbound through `resolveOnly`.
+   * branch soft-fails to an `error` outcome so a provisioning hiccup never
+   * crashes the inbound webhook. Throws for non-provisionable platforms;
+   * callers MUST route reactions, actions, and other inbound through
+   * `resolveSubscriber`.
    */
-  async resolveOrProvision(params: ResolveOrProvisionParams): Promise<string | null> {
+  async resolveOrProvision(params: ResolveOrProvisionParams): Promise<SubscriberResolution> {
     const isOpenAccessEmail = params.platform === AgentPlatformEnum.EMAIL;
 
     if (!AUTO_PROVISION_PLATFORMS.has(params.platform) && !isOpenAccessEmail) {
       throw new Error(
-        `resolveOrProvision called for unsupported platform "${params.platform}". Route through resolveOnly instead.`
+        `resolveOrProvision called for unsupported platform "${params.platform}". Route through resolveSubscriber instead.`
       );
     }
 
@@ -193,34 +197,40 @@ export class AgentSubscriberResolver {
       return this.resolveOrProvisionEmail(params);
     }
 
-    const existing = await this.resolveOnly(params);
-    if (existing) {
+    const existing = await this.resolveSubscriber(params);
+    if (existing.outcome === 'resolved') {
       return existing;
     }
 
-    return this.provisionSubscriberAndEndpoint(params);
+    return { outcome: 'resolved', subscriberId: await this.provisionSubscriberAndEndpoint(params) };
   }
 
   /**
    * Email flavor of lookup-or-provision, used for open-access agents. Fully
-   * soft-fail: a lookup or provisioning error is logged and swallowed so the
-   * inbound webhook keeps flowing — the turn then continues unresolved and the
-   * managed subscriber gate replies instead.
+   * soft-fail: a lookup or provisioning error is logged and mapped to an
+   * `error` outcome so the inbound webhook keeps flowing — the turn then
+   * continues unresolved and the managed subscriber gate replies instead.
    */
-  private async resolveOrProvisionEmail(params: ResolveOrProvisionParams): Promise<string | null> {
+  private async resolveOrProvisionEmail(params: ResolveOrProvisionParams): Promise<SubscriberResolution> {
     try {
-      const existing = await this.resolveOnly(params);
-      if (existing) {
+      const existing = await this.resolveSubscriber(params);
+      if (existing.outcome !== 'not_found') {
         return existing;
       }
 
-      return await this.provisionEmailSubscriber({
+      const provisionedSubscriberId = await this.provisionEmailSubscriber({
         environmentId: params.environmentId,
         organizationId: params.organizationId,
         integrationIdentifier: params.integrationIdentifier,
         agentIdentifier: params.agentIdentifier,
         email: params.platformUserId,
       });
+
+      // `provisionEmailSubscriber` only returns null for an unusable address,
+      // which the lookup above would already have classified — kept for safety.
+      return provisionedSubscriberId
+        ? { outcome: 'resolved', subscriberId: provisionedSubscriberId }
+        : { outcome: 'invalid_identity' };
     } catch (err) {
       this.logger.warn(
         err,
@@ -233,7 +243,7 @@ export class AgentSubscriberResolver {
         integrationIdentifier: params.integrationIdentifier,
       });
 
-      return null;
+      return { outcome: 'error', err };
     }
   }
 
@@ -312,7 +322,7 @@ export class AgentSubscriberResolver {
     environmentId: string;
     organizationId: string;
     platformUserId: string;
-  }): Promise<string | null> {
+  }): Promise<SubscriberResolution> {
     const { environmentId, organizationId, platformUserId } = params;
     const phoneCandidates = getPhoneLookupCandidates(platformUserId);
     const matches = await this.subscriberRepository.findByPhone(environmentId, organizationId, phoneCandidates);
@@ -328,12 +338,12 @@ export class AgentSubscriberResolver {
     if (subscriber) {
       this.logger.debug(`Resolved WhatsApp phone ${platformUserId} → subscriber ${subscriber.subscriberId}`);
 
-      return subscriber.subscriberId;
+      return { outcome: 'resolved', subscriberId: subscriber.subscriberId };
     }
 
     this.logger.debug(`No subscriber found for WhatsApp phone ${platformUserId}`);
 
-    return null;
+    return { outcome: 'not_found' };
   }
 
   private async resolveAgentProvisionedEmailSubscriber(params: {
@@ -377,14 +387,14 @@ export class AgentSubscriberResolver {
     environmentId: string;
     organizationId: string;
     platformUserId: string;
-  }): Promise<string | null> {
+  }): Promise<SubscriberResolution> {
     const { environmentId, organizationId, platformUserId } = params;
     const email = normalizeEmailForLookup(platformUserId);
 
     if (!isValidEmailForLookup(email)) {
       this.logger.debug(`Skipping email subscriber lookup for invalid address "${platformUserId}"`);
 
-      return null;
+      return { outcome: 'invalid_identity' };
     }
 
     const matches = await this.subscriberRepository.findByEmail(environmentId, organizationId, email);
@@ -392,7 +402,7 @@ export class AgentSubscriberResolver {
     if (matches.length === 0) {
       this.logger.debug(`No subscriber found for email ${email}`);
 
-      return null;
+      return { outcome: 'not_found' };
     }
 
     // Partition matches into real (customer-created) vs auto-provisioned
@@ -426,7 +436,7 @@ export class AgentSubscriberResolver {
 
       this.logger.debug(`Resolved email ${email} → subscriber ${real.subscriberId}`);
 
-      return real.subscriberId;
+      return { outcome: 'resolved', subscriberId: real.subscriberId };
     }
 
     // Only phantom(s) exist — no customer-created subscriber yet. Resolve to the
@@ -440,7 +450,7 @@ export class AgentSubscriberResolver {
     const phantom = phantoms[0];
     this.logger.debug(`Resolved email ${email} → auto-provisioned subscriber ${phantom.subscriberId}`);
 
-    return phantom.subscriberId;
+    return { outcome: 'resolved', subscriberId: phantom.subscriberId };
   }
 
   private async provisionSubscriberAndEndpoint(params: ResolveOrProvisionParams): Promise<string> {

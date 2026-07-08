@@ -5,7 +5,7 @@ import open from 'open';
 import ora from 'ora';
 import ws from 'ws';
 import packageJson from '../../../package.json';
-import { NOVU_API_URL, NOVU_SECRET_KEY } from '../../constants';
+import { NOVU_SECRET_KEY } from '../../constants';
 import { config } from '../../index';
 import { showWelcomeScreen } from '../shared';
 import { DevCommandOptions, LocalTunnelResponse } from './types';
@@ -383,7 +383,7 @@ async function discoverAgents(endpointUrl: string): Promise<string[]> {
 }
 
 async function activateAgentBridge(agentId: string, devBridgeUrl: string) {
-  const apiUrl = NOVU_API_URL || 'https://api.novu.co';
+  const apiUrl = process.env.NOVU_API_URL || process.env.NOVU_API_BASE_URL || 'https://api.novu.co';
   let res: Response;
   try {
     res = await fetch(`${apiUrl}/v1/agents/${encodeURIComponent(agentId)}/bridge`, {

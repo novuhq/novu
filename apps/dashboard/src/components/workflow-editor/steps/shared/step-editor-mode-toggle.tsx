@@ -14,7 +14,7 @@ import { Switch } from '@/components/primitives/switch';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { UpgradeCTATooltip } from '@/components/upgrade-cta-tooltip';
 import { useStepEditor } from '@/components/workflow-editor/steps/context/step-editor-context';
-import { IS_SELF_HOSTED } from '@/config';
+import { IS_CLOUD } from '@/config';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useDisconnectStepResolver } from '@/hooks/use-disconnect-step-resolver';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
@@ -49,7 +49,7 @@ export function StepEditorModeToggle() {
   const isUnlimited = codeStepLimit >= UNLIMITED_VALUE;
   const stepResolversCount = stepResolversCountData?.count;
   const isAtCodeStepLimit =
-    !IS_SELF_HOSTED &&
+    IS_CLOUD &&
     !isSubscriptionLoading &&
     !isCountLoading &&
     !isUnlimited &&

@@ -15,6 +15,7 @@ import util from 'util';
 import { v4 as uuidv4 } from 'uuid';
 
 import { uploadAttachmentsToS3 } from './attachment-uploader';
+import { collectClientIpSources } from './client-ip-sources';
 import { InboundMailService } from './inbound-mail.service';
 import logger from './logger';
 
@@ -404,9 +405,15 @@ class Mailin extends events.EventEmitter {
 
         logger.verbose({ context: LOG_CONTEXT, connectionId: connection.id }, `${connection.id} Validating spf.`);
 
-        /* Get ip and host. */
+        /*
+         * smtp-server sessions carry the sender under envelope.mailFrom, not
+         * `.from` (the old mailin field). Passing the wrong field made pyspf
+         * fall back to the HELO identity instead of the actual sender domain.
+         */
+        const envelopeFrom = connection.envelope?.mailFrom?.address;
+
         return mailUtilities
-          .validateSpfAsync(connection.remoteAddress, connection.from, connection.clientHostname)
+          .validateSpfAsync(connection.remoteAddress, envelopeFrom, connection.clientHostname)
           .catch((err) => {
             logger.error(
               { err, context: LOG_CONTEXT, connectionId: connection.id },
@@ -535,6 +542,42 @@ class Mailin extends events.EventEmitter {
           spfCheckDisabled: configuration.disableSpf,
         },
         `${connection.id} Inbound mail sender authentication verdict: dkim=${parsedEmail.dkim} spf=${parsedEmail.spf}`
+      );
+
+      /*
+       * Structured client-IP source dump for debugging sender-auth issues in
+       * cloud envs: mirrors @supercharge/request-ip precedence (proxy headers
+       * first, then socket/connection fallbacks) adapted for SMTP session
+       * fields plus Received-chain IPs. Shows which property SPF currently
+       * uses vs the first public candidate elsewhere in the chain. Verbose and
+       * may include attacker-controlled header values.
+       */
+      const clientIpSources = collectClientIpSources(connection, parsedEmail.headers);
+
+      logger.info(
+        {
+          context: LOG_CONTEXT,
+          connectionId: connection.id,
+          envelopeFrom: connection.envelope?.mailFrom?.address,
+          clientIpSources,
+        },
+        `${connection.id} Inbound mail client IP source dump`
+      );
+
+      /*
+       * Full header dump when you need every raw header value beyond the
+       * structured IP-source view above.
+       */
+      logger.info(
+        {
+          context: LOG_CONTEXT,
+          connectionId: connection.id,
+          remoteAddress: connection.remoteAddress,
+          clientHostname: connection.clientHostname,
+          envelopeFrom: connection.envelope?.mailFrom?.address,
+          headers: parsedEmail.headers,
+        },
+        `${connection.id} Inbound mail header dump`
       );
 
       /*
