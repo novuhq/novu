@@ -6,6 +6,7 @@ import {
   grafanaOnCallConfig,
   msTeamsConfig,
   rocketChatConfig,
+  sendblueConfig,
   slackConfigLegacy,
   telegramConfig,
   whatsAppBusinessConfig,
@@ -117,5 +118,13 @@ export const chatProviders: IProviderConfig[] = [
     credentials: telegramConfig,
     docReference: `https://docs.novu.co/platform/integrations/chat/telegram${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'telegram.svg', dark: 'telegram.svg' },
+  },
+  {
+    id: ChatProviderIdEnum.Sendblue,
+    displayName: 'Sendblue',
+    channel: ChannelTypeEnum.CHAT,
+    credentials: sendblueConfig,
+    docReference: 'https://sendblue.com/docs',
+    logoFileName: { light: 'sendblue.svg', dark: 'sendblue.svg' },
   },
 ];

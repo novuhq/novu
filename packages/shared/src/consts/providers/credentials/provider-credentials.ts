@@ -1316,6 +1316,30 @@ export const whatsAppBusinessConfig: IConfigCredential[] = [
   },
 ];
 
+export const sendblueConfig: IConfigCredential[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    description: 'Your Sendblue API key',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.SecretKey,
+    displayName: 'Secret Key',
+    description: 'Your Sendblue secret key',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.From,
+    displayName: 'From Number',
+    description: 'One of your registered Sendblue phone numbers to send messages from, in E.164 format',
+    type: 'string',
+    required: true,
+  },
+];
+
 export const mobishastraConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.BaseUrl,
