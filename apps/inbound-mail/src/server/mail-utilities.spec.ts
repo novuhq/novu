@@ -22,16 +22,18 @@ describe('mailUtilities.validateSpf', () => {
     execFileStub.restore();
   });
 
-  function stubSpfExit(code: number) {
-    execFileStub.callsFake((_bin, _args, callback: (err, stdout, stderr) => void) => {
-      const err = code === 0 ? null : Object.assign(new Error(`Command failed`), { code });
+  function stubSpfExit(code: number | string) {
+    execFileStub.callsFake((_bin, _args, callback: (err: Error | null, stdout: string, stderr: string) => void) => {
+      const err = code === 0 ? null : Object.assign(new Error('Command failed'), { code });
       callback(err, '[verifyspf.py] (stubbed, )', '');
     });
   }
 
-  function validateSpf(ip, address, host): Promise<boolean> {
+  function validateSpf(ip?: string, address?: string, host?: string): Promise<boolean> {
     return new Promise((resolve, reject) => {
-      mailUtilities.validateSpf(ip, address, host, (err, isValid) => (err ? reject(err) : resolve(isValid)));
+      mailUtilities.validateSpf(ip, address, host, (err: Error | null, isValid: boolean) =>
+        err ? reject(err) : resolve(isValid)
+      );
     });
   }
 
@@ -47,6 +49,12 @@ describe('mailUtilities.validateSpf', () => {
 
       expect(await validateSpf('8.8.8.8', 'someone@gmail.com', 'gmail.com')).to.equal(false);
     });
+  });
+
+  it('should resolve spf=failed for string spawn error codes like ENOENT', async () => {
+    stubSpfExit('ENOENT');
+
+    expect(await validateSpf('8.8.8.8', 'someone@gmail.com', 'gmail.com')).to.equal(false);
   });
 
   it('should pass empty strings instead of undefined args so python never receives the literal "undefined"', async () => {

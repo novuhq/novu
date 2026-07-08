@@ -6,6 +6,22 @@ import logger from './logger';
 
 const LOG_CONTEXT = 'MailUtilities';
 
+/*
+ * Verdict exit codes defined in verifyspf.py — keep in sync. Everything except
+ * exit 0 resolves to spf=failed; this map only picks log levels and messages.
+ * Codes outside the map — including string codes like ENOENT when the python
+ * binary cannot be spawned — mean the check itself is broken, not the sender.
+ */
+const SPF_VERDICT_LOGS: Record<number, { level: 'warn' | 'info'; message: string }> = {
+  11: { level: 'warn', message: 'SPF verification failed: sender IP is not authorized for the domain.' },
+  12: {
+    level: 'info',
+    message: 'SPF verification returned no verdict: sender domain publishes no applicable SPF record.',
+  },
+  13: { level: 'warn', message: 'SPF verification hit a transient DNS error — treating spf as failed.' },
+  14: { level: 'warn', message: 'SPF verification found an invalid SPF record — treating spf as failed.' },
+};
+
 const spamc = new Spamc();
 
 /*
@@ -94,8 +110,7 @@ module.exports = {
     /*
      * execFile stringifies non-string args, so an undefined sender would reach
      * the script as the literal "undefined". Empty strings are fine: pyspf
-     * falls back to the HELO identity for an empty MAIL FROM (null sender,
-     * e.g. bounces), per RFC 7208 §2.4.
+     * falls back to the HELO identity for an empty MAIL FROM (RFC 7208 §2.4).
      */
     const args = [verifySpfPath, ip ?? '', address ?? '', host ?? ''];
 
@@ -107,12 +122,6 @@ module.exports = {
       }
 
       if (code) {
-        /*
-         * For known verdict exit codes (11-14) the err object is just
-         * "Command failed" + exit code — attaching it makes an expected
-         * verdict read like a crash. Only the default branch (spawn/runtime
-         * breakage) includes it.
-         */
         const logPayload = {
           context: LOG_CONTEXT,
           exitCode: code,
@@ -123,35 +132,19 @@ module.exports = {
           stderr: typeof stderr === 'string' ? stderr.trim() : stderr,
         };
 
-        /*
-         * Exit codes are defined in verifyspf.py — keep in sync:
-         * 11 fail/softfail, 12 none/neutral, 13 temperror, 14 permerror.
-         * Any other code — including string codes like ENOENT when the python
-         * binary cannot be spawned — means the check itself is broken, not the
-         * sender. Everything except exit 0 resolves to spf=failed; the split
-         * here is purely for accurate log levels and messages.
-         */
-        switch (code) {
-          case 11:
-            logger.warn(logPayload, 'SPF verification failed: sender IP is not authorized for the domain.');
-            break;
-          case 12:
-            logger.info(
-              logPayload,
-              'SPF verification returned no verdict: sender domain publishes no applicable SPF record.'
-            );
-            break;
-          case 13:
-            logger.warn(logPayload, 'SPF verification hit a transient DNS error — treating spf as failed.');
-            break;
-          case 14:
-            logger.warn(logPayload, 'SPF verification found an invalid SPF record — treating spf as failed.');
-            break;
-          default:
-            logger.warn(
-              { ...logPayload, err },
-              'SPF verification errored: verifier did not run cleanly — treating spf as failed.'
-            );
+        const verdict = SPF_VERDICT_LOGS[code];
+        if (verdict) {
+          logger[verdict.level](logPayload, verdict.message);
+        } else {
+          /*
+           * Spawn/runtime breakage rather than an SPF verdict — this is the
+           * only branch where the err object adds signal; for verdict codes it
+           * is just "Command failed" + exit code and reads like a crash.
+           */
+          logger.warn(
+            { ...logPayload, err },
+            'SPF verification errored: verifier did not run cleanly — treating spf as failed.'
+          );
         }
       } else {
         logger.verbose({ context: LOG_CONTEXT }, `closed with return code ${code}`);
