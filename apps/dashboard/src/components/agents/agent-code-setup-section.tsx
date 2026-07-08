@@ -26,16 +26,16 @@ function maskSecretKey(key: string): string {
   return `nv-${'•'.repeat(16)}${key.slice(-4)}`;
 }
 
-const DEFAULT_CONNECTOR_ID: ConnectorId = 'ai-sdk';
-
 type ConnectRuntimeFlag = 'ai-sdk' | 'langchain' | 'custom-code';
+
+const DEFAULT_CONNECT_RUNTIME: ConnectRuntimeFlag = 'ai-sdk';
 
 function resolveConnectRuntime(connectorId: ConnectorId | undefined): ConnectRuntimeFlag {
   if (connectorId === 'ai-sdk' || connectorId === 'langchain' || connectorId === 'custom-code') {
     return connectorId;
   }
 
-  return DEFAULT_CONNECTOR_ID;
+  return DEFAULT_CONNECT_RUNTIME;
 }
 
 function buildConnectScaffoldCommand({
