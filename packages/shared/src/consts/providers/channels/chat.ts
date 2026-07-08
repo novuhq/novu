@@ -124,7 +124,7 @@ export const chatProviders: IProviderConfig[] = [
     displayName: 'Sendblue',
     channel: ChannelTypeEnum.CHAT,
     credentials: sendblueConfig,
-    docReference: 'https://sendblue.com/docs',
+    docReference: 'https://docs.sendblue.com',
     logoFileName: { light: 'sendblue.svg', dark: 'sendblue.svg' },
   },
 ];

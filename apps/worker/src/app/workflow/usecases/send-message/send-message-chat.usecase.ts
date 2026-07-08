@@ -11,6 +11,7 @@ import {
   InstrumentUsecase,
   messageWebhookMapper,
   SelectIntegration,
+  SelectIntegrationCommand,
   SelectVariant,
   SendWebhookMessage,
   validateEndpointForType,
@@ -49,6 +50,15 @@ import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageResult, SendMessageStatus } from './send-message-type.usecase';
 
 const LOG_CONTEXT = 'SendMessageChat';
+
+/**
+ * Chat providers that deliver to the subscriber's phone number rather than a webhook/channel.
+ * These are auto-resolved from `subscriber.phone` and select their integration by providerId.
+ */
+const PHONE_BASED_CHAT_PROVIDERS: ChatProviderIdEnum[] = [
+  ChatProviderIdEnum.WhatsAppBusiness,
+  ChatProviderIdEnum.Sendblue,
+];
 
 type UnifiedChannel = {
   type: 'new' | 'legacy';
@@ -187,7 +197,7 @@ export class SendMessageChat extends SendMessageBase {
    */
   private async resolveAllChannels(command: SendMessageChannelCommand): Promise<UnifiedChannel[]> {
     const integrationChannelGroups = await this.getChannelEndpointGroups(command);
-    const legacyChatChannels = this.getLegacyChatChannels(command);
+    const legacyChatChannels = await this.getLegacyChatChannels(command);
 
     const unifiedChannels: UnifiedChannel[] = [];
 
@@ -291,7 +301,7 @@ export class SendMessageChat extends SendMessageBase {
     };
   }
 
-  private getLegacyChatChannels(command: SendMessageChannelCommand): IChannelSettings[] {
+  private async getLegacyChatChannels(command: SendMessageChannelCommand): Promise<IChannelSettings[]> {
     const { subscriber } = command.compileContext;
 
     const chatChannels =
@@ -299,18 +309,53 @@ export class SendMessageChat extends SendMessageBase {
         Object.values(ChatProviderIdEnum).includes(chan.providerId as ChatProviderIdEnum)
       ) || [];
 
-    // Add WhatsApp Business if subscriber has phone
+    /*
+     * Phone-based chat providers (WhatsApp Business, Sendblue) deliver to the subscriber's phone
+     * number. Auto-resolve a channel from `subscriber.phone` for each such provider that has an
+     * active integration, so we only attempt providers the environment is actually configured for.
+     */
     if (subscriber.phone) {
-      // @ts-expect-error - Adding WhatsApp channel without _integrationId
-      chatChannels.push({
-        providerId: ChatProviderIdEnum.WhatsAppBusiness,
-        credentials: {
-          phoneNumber: subscriber.phone,
-        },
-      });
+      const activePhoneProviders = await this.getActivePhoneBasedProviders(command);
+
+      for (const providerId of activePhoneProviders) {
+        // @ts-expect-error - Adding a phone-based channel without _integrationId
+        chatChannels.push({
+          providerId,
+          credentials: {
+            phoneNumber: subscriber.phone,
+          },
+        });
+      }
     }
 
     return chatChannels;
+  }
+
+  /**
+   * Returns the phone-based chat providers that have an active integration selectable for this job,
+   * mirroring the selection performed later by {@link getAndValidateIntegration}.
+   */
+  private async getActivePhoneBasedProviders(command: SendMessageChannelCommand): Promise<ChatProviderIdEnum[]> {
+    const results = await Promise.all(
+      PHONE_BASED_CHAT_PROVIDERS.map(async (providerId) => {
+        const integration = await this.selectIntegration.execute(
+          SelectIntegrationCommand.create({
+            organizationId: command.organizationId,
+            environmentId: command.environmentId,
+            channelType: ChannelTypeEnum.CHAT,
+            providerId,
+            userId: command.userId,
+            filterData: {
+              tenant: command.job.tenant,
+            },
+          })
+        );
+
+        return integration ? providerId : null;
+      })
+    );
+
+    return results.filter((providerId): providerId is ChatProviderIdEnum => providerId !== null);
   }
 
   /**
@@ -375,12 +420,13 @@ export class SendMessageChat extends SendMessageBase {
     content: string
   ): Promise<SendMessageResult> {
     /**
-     * Current a workaround as chat providers for whatsapp is more similar to sms than to our chat implementation
+     * Workaround: phone-based chat providers (WhatsApp, Sendblue) behave more like SMS than our
+     * webhook-based chat implementation, so they select their integration by providerId rather
+     * than by the subscriber channel's _integrationId (which is absent on auto-resolved channels).
      */
-    const integrationId =
-      subscriberChannel.providerId !== ChatProviderIdEnum.WhatsAppBusiness
-        ? subscriberChannel._integrationId
-        : undefined;
+    const integrationId = PHONE_BASED_CHAT_PROVIDERS.includes(subscriberChannel.providerId as ChatProviderIdEnum)
+      ? undefined
+      : subscriberChannel._integrationId;
 
     const { integration, error } = await this.getAndValidateIntegration(
       command,

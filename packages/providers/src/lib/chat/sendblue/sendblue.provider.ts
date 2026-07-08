@@ -17,7 +17,7 @@ export class SendblueChatProvider extends BaseProvider implements IChatProvider 
   protected casing: CasingEnum = CasingEnum.SNAKE_CASE;
 
   private readonly axiosClient: AxiosInstance;
-  private readonly baseUrl = 'https://api.sendblue.com/api/';
+  private readonly baseUrl = 'https://api.sendblue.co/api/';
 
   constructor(
     private config: {

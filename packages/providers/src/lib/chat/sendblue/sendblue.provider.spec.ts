@@ -107,7 +107,7 @@ test('should throw an error when sendblue returns an ERROR status', async () => 
 });
 
 function baseUrl() {
-  return 'https://api.sendblue.com/api/send-message';
+  return 'https://api.sendblue.co/api/send-message';
 }
 
 function expectedHeaders(apiKey: string, secretKey: string) {
