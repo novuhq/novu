@@ -1,14 +1,4 @@
-/*
- * inbound-mail compiles with node10 module resolution, which cannot resolve
- * the `@novu/shared/utils/private-ip-classification` exports subpath, so we
- * go through the @novu/application-generic re-export instead. Deep build-path
- * import (same pattern as instrument.ts) to avoid pulling the full barrel
- * (mongoose, newrelic, clickhouse) into this pure utility module.
- */
-import {
-  isPrivateIp,
-  normalizeHostnameForLookup,
-} from '@novu/application-generic/build/main/utils/ssrf-url-validation';
+import { isPrivateIp, normalizeHostnameForLookup } from '@novu/application-generic';
 
 export interface ClientIpSourceCandidate {
   rank: number;
