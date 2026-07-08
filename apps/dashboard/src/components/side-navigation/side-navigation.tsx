@@ -24,7 +24,7 @@ import { useAreConversationalAgentsAvailable } from '@/hooks/use-are-conversatio
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { Protect } from '@/utils/protect';
 import { buildRoute, ROUTES } from '@/utils/routes';
-import { IS_ENTERPRISE, IS_SELF_HOSTED } from '../../config';
+import { IS_SELF_HOSTED, IS_SELF_HOSTED_CE } from '../../config';
 import { useFetchSubscription } from '../../hooks/use-fetch-subscription';
 import { ChangelogStack } from './changelog-cards';
 import { EnvironmentDropdown } from './environment-dropdown';
@@ -283,7 +283,7 @@ export const LegacySideNavigation = () => {
                     </NavigationLink>
                   </Protect>
                 )}
-                {isDomainsPageEnabled && (!IS_SELF_HOSTED || IS_ENTERPRISE) && (
+                {isDomainsPageEnabled && !IS_SELF_HOSTED_CE && (
                   <NavigationLink
                     to={
                       currentEnvironment?.slug
@@ -318,9 +318,7 @@ export const LegacySideNavigation = () => {
               </NavigationGroup>
             </Protect>
             <Protect
-              condition={(has) =>
-                has({ permission: PermissionsEnum.INTEGRATION_READ }) || !IS_SELF_HOSTED || IS_ENTERPRISE
-              }
+              condition={(has) => has({ permission: PermissionsEnum.INTEGRATION_READ }) || !IS_SELF_HOSTED_CE}
             >
               <NavigationGroup label="Platform">
                 <Protect permission={PermissionsEnum.INTEGRATION_READ}>
@@ -335,7 +333,7 @@ export const LegacySideNavigation = () => {
                     <span>Integration Store</span>
                   </NavigationLink>
                 </Protect>
-                {(!IS_SELF_HOSTED || IS_ENTERPRISE) && (
+                {!IS_SELF_HOSTED_CE && (
                   <NavigationLink to={ROUTES.SETTINGS}>
                     <RiSettings4Line className="size-4" />
                     <span>Settings</span>

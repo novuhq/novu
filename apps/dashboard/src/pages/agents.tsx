@@ -28,7 +28,7 @@ import { AgentsList } from '@/components/agents/agents-list';
 import { UPGRADE_CTA_LABEL, usePlanUpgradeClick } from '@/components/billing/use-plan-upgrade-click';
 import { DashboardLayout } from '@/components/dashboard-layout';
 import { PageMeta } from '@/components/page-meta';
-import { IS_EU, IS_SELF_HOSTED } from '@/config';
+import { IS_CLOUD, IS_EU, IS_SELF_HOSTED } from '@/config';
 import { Badge } from '@/components/primitives/badge';
 import { Button } from '@/components/primitives/button';
 import { CompactButton } from '@/components/primitives/button-compact';
@@ -430,7 +430,7 @@ export function AgentsPage() {
   return (
     <>
       <PageMeta title="Agents" />
-      {!areAgentsAvailable && !IS_SELF_HOSTED ? (
+      {!areAgentsAvailable && IS_CLOUD ? (
         <AgentsEarlyAccessDialog open={earlyAccessOpen} onOpenChange={setEarlyAccessOpen} />
       ) : null}
       <DashboardLayout

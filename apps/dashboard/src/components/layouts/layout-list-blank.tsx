@@ -1,7 +1,7 @@
 import { ApiServiceLevelEnum } from '@novu/shared';
 import { RiAddCircleLine, RiInformation2Line } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
-import { IS_SELF_HOSTED } from '@/config';
+import { IS_CLOUD } from '@/config';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { ROUTES } from '@/utils/routes';
 import { CreateLayoutButton } from './create-layout-btn';
@@ -36,7 +36,7 @@ export const LayoutListBlank = () => {
 
       <div className="flex flex-col items-center gap-1">
         <CreateLayoutButton text="Create your first layout" icon={RiAddCircleLine} />
-        {!IS_SELF_HOSTED && tier === ApiServiceLevelEnum.FREE && (
+        {IS_CLOUD && tier === ApiServiceLevelEnum.FREE && (
           <p className="text-text-soft text-paragraph-xs mt-2 flex items-center gap-1">
             <RiInformation2Line />
             One layout is included in your plan,{' '}

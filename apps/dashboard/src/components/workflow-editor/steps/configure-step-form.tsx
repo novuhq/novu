@@ -49,7 +49,7 @@ import { SkipConditionsButton } from '@/components/workflow-editor/steps/skip-co
 import { ConfigureSmsStepPreview } from '@/components/workflow-editor/steps/sms/configure-sms-step-preview';
 import { ThrottleControlValues } from '@/components/workflow-editor/steps/throttle/throttle-control-values';
 import { UpdateWorkflowFn } from '@/components/workflow-editor/workflow-provider';
-import { IS_SELF_HOSTED } from '@/config';
+import { IS_CLOUD } from '@/config';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { useFormAutosave } from '@/hooks/use-form-autosave';
@@ -148,7 +148,7 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
   const isUnlimited = codeStepLimit >= UNLIMITED_VALUE;
   const stepResolversCount = stepResolversCountData?.count;
   const isAtCodeStepLimit =
-    !IS_SELF_HOSTED &&
+    IS_CLOUD &&
     !isSubscriptionLoading &&
     !isCountLoading &&
     !isUnlimited &&

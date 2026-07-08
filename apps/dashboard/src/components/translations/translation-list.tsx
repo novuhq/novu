@@ -13,7 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/primitives/table';
-import { IS_ENTERPRISE, IS_SELF_HOSTED } from '@/config';
+import { IS_SELF_HOSTED_CE } from '@/config';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-settings';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
@@ -193,7 +193,7 @@ export function TranslationList(props: TranslationListProps) {
       FeatureNameEnum.AUTO_TRANSLATIONS,
       subscription?.apiServiceLevel || ApiServiceLevelEnum.FREE
     ) &&
-    (!IS_SELF_HOSTED || IS_ENTERPRISE);
+    !IS_SELF_HOSTED_CE;
 
   // Only make API call if user has proper tier
   const { filterValues, handleFiltersChange, resetFilters, data, isPending, isFetching, areFiltersApplied } =
