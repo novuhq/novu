@@ -18,4 +18,10 @@ export class PreviewStepCommand extends EnvironmentWithUserCommand {
   layoutId?: string;
   stepResolverHash?: string;
   env?: Record<string, string>;
+  /**
+   * When set, the preview request is sent to this bridge URL instead of the
+   * environment's persisted bridge URL (dashboard local mode / non-persisted workflows).
+   */
+  statelessBridgeUrl?: string;
+  enforceSsrfProtection?: boolean;
 }

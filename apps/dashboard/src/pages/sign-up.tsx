@@ -4,7 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 import { AuthSideBanner } from '@/components/auth/auth-side-banner';
 import { RegionPicker } from '@/components/auth/region-picker';
 import { PageMeta } from '@/components/page-meta';
-import { IS_SELF_HOSTED } from '@/config';
+import { IS_CLOUD } from '@/config';
 import { useSegment } from '@/context/segment';
 import { clerkSignupAppearance } from '@/utils/clerk-appearance';
 import { appendRedirectUrlParam, readCliAuthReturnUrl } from '@/utils/cli-auth-pending';
@@ -68,7 +68,7 @@ export const SignUpPage = () => {
             appearance={clerkSignupAppearance}
             forceRedirectUrl={ROUTES.SIGNUP_ORGANIZATION_LIST}
           />
-          {!IS_SELF_HOSTED && <RegionPicker />}
+          {IS_CLOUD && <RegionPicker />}
         </div>
       </div>
     </div>

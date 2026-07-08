@@ -1,8 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-export const CHAT_SDK_ADAPTER_PACKAGE = '@novu/chat-sdk-adapter';
-
 const DEPENDENCY_SECTIONS = ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies'] as const;
 
 export function readProjectPackageJson(projectDir: string): Record<string, unknown> | null {

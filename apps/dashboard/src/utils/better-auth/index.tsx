@@ -3,7 +3,7 @@ import React, { useCallback, useContext, useEffect, useMemo, useState } from 're
 import { useNavigate } from 'react-router-dom';
 import { appendRedirectUrlParam } from '@/utils/cli-auth-pending';
 import { ROUTES } from '@/utils/routes';
-import { EE_AUTH_PROVIDER, IS_SELF_HOSTED } from '../../config';
+import { EE_AUTH_PROVIDER } from '../../config';
 import { AuthContext, type BetterAuthOrganization, type BetterAuthUser } from './auth-context';
 import { authClient } from './client';
 import {

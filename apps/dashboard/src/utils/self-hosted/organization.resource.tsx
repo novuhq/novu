@@ -34,6 +34,8 @@ export function OrganizationContextProvider({ children }: any) {
             externalOrgId: organization._id,
           },
           _id: organization._id,
+          update: async () => null,
+          reload: async () => null,
         }
       : undefined,
     isLoaded: hasToken ? !isLoading : true,

@@ -1,4 +1,4 @@
-import { FeatureFlagsKeysEnum, type IEnvironment } from '@novu/shared';
+import type { IEnvironment } from '@novu/shared';
 import { useEffect, useState } from 'react';
 import {
   RiAddBoxLine,
@@ -13,8 +13,8 @@ import {
   RiRouteFill,
 } from 'react-icons/ri';
 import type { IResourceDependency, IResourceDiffResult, ResourceToPublish } from '@/api/environments';
+import { useAreConversationalAgentsAvailable } from '@/hooks/use-are-conversational-agents-available';
 import { useDiffEnvironments } from '@/hooks/use-environments';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useResourceDependencies } from '@/hooks/use-resource-dependencies';
 import { formatDateSimple } from '@/utils/format-date';
 import { Badge, BadgeIcon } from '../primitives/badge';
@@ -63,7 +63,7 @@ export function PublishModal({
     enabled: isOpen,
   });
 
-  const isAgentsEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONVERSATIONAL_AGENTS_ENABLED, false);
+  const areAgentsAvailable = useAreConversationalAgentsAvailable();
 
   const { workflows, layouts, agents, dependencyMap, calculateDependencyState } = useResourceDependencies(diffData);
 
@@ -74,6 +74,10 @@ export function PublishModal({
     const initialSelection: ResourceSelection = {};
 
     diffData.resources.forEach((resource) => {
+      if (!areAgentsAvailable && resource.resourceType === 'agent') {
+        return;
+      }
+
       const resourceId = resource.sourceResource?.id || resource.targetResource?.id;
 
       if (resourceId) {
@@ -88,7 +92,7 @@ export function PublishModal({
     // Apply dependency rules to the initial selection
     const selectionWithDependencies = calculateDependencyState(initialSelection);
     setResourceSelection(selectionWithDependencies);
-  }, [diffData, calculateDependencyState]);
+  }, [diffData, calculateDependencyState, areAgentsAvailable]);
 
   const handleResourceToggle = (resourceId: string) => {
     setResourceSelection((prev) => {
@@ -219,7 +223,7 @@ export function PublishModal({
             </ResourceGroupCompact>
           )}
 
-          {isAgentsEnabled && agents.length > 0 && (
+          {areAgentsAvailable && agents.length > 0 && (
             <ResourceGroupCompact
               title="Agents"
               count={agents.length}
@@ -247,7 +251,7 @@ export function PublishModal({
           )}
         </div>
 
-        {isAgentsEnabled && newSelectedAgentCount > 0 && <AgentInactiveWarning count={newSelectedAgentCount} />}
+        {areAgentsAvailable && newSelectedAgentCount > 0 && <AgentInactiveWarning count={newSelectedAgentCount} />}
 
         <PublishModalActions
           environment={environment}
