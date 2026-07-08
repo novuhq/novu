@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { readProjectPackageJson } from './project-package';
+import { readProjectPackageJson } from '../bridge/project-package';
 import { readProjectEnvValue } from './wire-env';
 
 /** Default local port for Chat SDK connect — avoids 3000/4000 collisions. */
@@ -139,10 +139,26 @@ export function shouldRefreshDevNovuScript(projectDir: string): boolean {
   return existing !== expected;
 }
 
+const CHAT_SDK_BRIDGE_ROUTE = '/api/webhooks/novu';
+
+export type DevNovuSpawnArgs = {
+  command: string;
+  args: string[];
+};
+
+export function buildDevNovuSpawnArgs(projectDir: string): DevNovuSpawnArgs {
+  const { port, runCommand } = inferDevRunCommand(projectDir);
+
+  return {
+    command: 'npx',
+    args: ['novu', 'dev', '-p', String(port), '--no-studio', '--route', CHAT_SDK_BRIDGE_ROUTE, '--run', runCommand],
+  };
+}
+
 export function buildDevNovuScript(projectDir: string): string {
   const { port, runCommand } = inferDevRunCommand(projectDir);
 
-  return `npx novu dev -p ${port} --no-studio --route /api/webhooks/novu --run "${runCommand}"`;
+  return `npx novu dev -p ${port} --no-studio --route ${CHAT_SDK_BRIDGE_ROUTE} --run "${runCommand}"`;
 }
 
 export function applyDevNovuScript(projectDir: string): DevScriptApplyResult {

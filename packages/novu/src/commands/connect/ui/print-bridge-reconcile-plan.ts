@@ -1,16 +1,17 @@
 import chalk from 'chalk';
-import { CHAT_SDK_REQUIREMENTS_FILE_ENV } from '../pipeline/chat-sdk/requirements';
-import type { ChatSdkRequirement } from '../types';
+import type { BridgeRequirement } from '../types';
+import { type BridgeReconcileVariant, reconcilePlanTitle, requirementsFileEnvName } from './bridge-reconcile-variant';
 
-type PrintChatSdkReconcilePlanInput = {
+type PrintBridgeReconcilePlanInput = {
   projectDir: string;
-  requirements: ChatSdkRequirement[];
+  requirements: BridgeRequirement[];
   envPaths: string[];
   wiringInstructions?: string;
   requirementsFile?: string;
+  variant?: BridgeReconcileVariant;
 };
 
-function requirementMarker(req: ChatSdkRequirement): string {
+function requirementMarker(req: BridgeRequirement): string {
   if (req.status === 'ok') {
     return chalk.green('✓');
   }
@@ -22,9 +23,11 @@ function requirementMarker(req: ChatSdkRequirement): string {
   return chalk.cyan('…');
 }
 
-export function printChatSdkReconcilePlan(opts: PrintChatSdkReconcilePlanInput): void {
+export function printBridgeReconcilePlan(opts: PrintBridgeReconcilePlanInput): void {
+  const variant = opts.variant ?? 'chat-sdk';
+
   console.log('');
-  console.log(chalk.bold('Chat SDK project setup'));
+  console.log(chalk.bold(reconcilePlanTitle(variant)));
   console.log(chalk.dim(opts.projectDir));
   for (const req of opts.requirements) {
     console.log(`  ${requirementMarker(req)} ${req.id}: ${req.detail}`);
@@ -33,7 +36,7 @@ export function printChatSdkReconcilePlan(opts: PrintChatSdkReconcilePlanInput):
     console.log(chalk.gray(`  Env: ${envPath}`));
   }
   if (opts.requirementsFile) {
-    console.log(`${CHAT_SDK_REQUIREMENTS_FILE_ENV}=${opts.requirementsFile}`);
+    console.log(`${requirementsFileEnvName(variant)}=${opts.requirementsFile}`);
   }
   if (opts.wiringInstructions) {
     console.log('');
