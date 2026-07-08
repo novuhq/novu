@@ -2,6 +2,7 @@ import { TextInput } from '@inkjs/ui';
 import { Box, Text, useInput } from 'ink';
 // biome-ignore lint/correctness/noUnusedImports: classic-JSX linter falls back here because tsconfig.json excludes ui/.
 import React from 'react';
+import type { BridgeScaffoldVariant } from '../pipeline/bridge/types';
 import type { BridgeRequirement } from '../types';
 import { installDepsPrompt, installingDepsMessage, reconcilePlanTitle } from './bridge-reconcile-variant';
 import { ConfirmScaffoldContent } from './confirm-scaffold-content';
@@ -55,9 +56,7 @@ export function BridgeReconcilePhaseContent({ phase }: { phase: BridgeReconcileP
     case 'scaffolding-bridge':
       return (
         <Box flexDirection="column" gap={1}>
-          <Text color="cyan">
-            {phase.variant === 'custom-code' ? 'Scaffolding your agent app…' : 'Scaffolding your Chat SDK app…'}
-          </Text>
+          <Text color="cyan">{scaffoldingBridgeMessage(phase.variant)}</Text>
           <Text dimColor>Installing dependencies — this may take a minute.</Text>
         </Box>
       );
@@ -198,6 +197,18 @@ function BridgeTunnelOfferContent({
   );
 }
 
+function scaffoldingBridgeMessage(variant: BridgeScaffoldVariant): string {
+  if (variant === 'custom-code') {
+    return 'Scaffolding your agent app…';
+  }
+
+  if (variant === 'ai-sdk') {
+    return 'Scaffolding your AI SDK agent app…';
+  }
+
+  return 'Scaffolding your Chat SDK app…';
+}
+
 function PromptAgentNameContent({
   defaultName,
   onResolve,
@@ -207,12 +218,12 @@ function PromptAgentNameContent({
 }): React.ReactElement {
   return (
     <Box flexDirection="column" gap={1}>
-      <Text bold>Name your Chat SDK agent</Text>
+      <Text bold>Name your bridge agent</Text>
       <Text dimColor>This creates a self-hosted bridge agent in Novu — your app is the brain.</Text>
       <Box borderStyle="round" paddingX={1}>
         <TextInput
           defaultValue={defaultName}
-          placeholder="My Chat SDK Agent"
+          placeholder="My Bridge Agent"
           onSubmit={(value) => onResolve(value.trim() || defaultName)}
         />
       </Box>

@@ -1,5 +1,6 @@
 import fs from 'node:fs';
-import path from 'node:path';
+
+import { DEFAULT_API_BASE_URL, parseEnvFile, resolveProjectEnvPaths } from '../bridge/wire-env';
 
 export {
   maskSecretKey,
@@ -7,10 +8,6 @@ export {
   readProjectEnvValue,
   resolveProjectEnvPaths,
 } from '../bridge/wire-env';
-
-const DEFAULT_API_BASE_URL = 'https://api.novu.co';
-
-const ENV_FILE_NAMES = ['.env.local', '.env'] as const;
 
 export type EnvMergeInput = {
   projectDir: string;
@@ -25,29 +22,6 @@ export type EnvMergeResult = {
   updatedKeys: string[];
   secretKeyOverwritten: boolean;
 };
-
-function parseEnvFile(contents: string): Map<string, string> {
-  const entries = new Map<string, string>();
-
-  for (const line of contents.split(/\r?\n/)) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith('#')) {
-      continue;
-    }
-
-    const eq = trimmed.indexOf('=');
-    if (eq <= 0) {
-      continue;
-    }
-
-    const key = trimmed.slice(0, eq).trim();
-    const value = trimmed.slice(eq + 1).trim();
-
-    entries.set(key, value);
-  }
-
-  return entries;
-}
 
 function serializeEnvFile(entries: Map<string, string>): string {
   const lines: string[] = [];
@@ -108,16 +82,12 @@ function mergeEnvFileAtPath(
 }
 
 export function mergeProjectEnv(input: EnvMergeInput): EnvMergeResult {
-  const resolvedDir = path.resolve(input.projectDir);
-  const envPaths = ENV_FILE_NAMES.map((name) => path.join(resolvedDir, name)).filter((envPath) =>
-    fs.existsSync(envPath)
-  );
-  const targetPaths = envPaths.length > 0 ? envPaths : [path.join(resolvedDir, '.env.local')];
+  const envPaths = resolveProjectEnvPaths(input.projectDir);
   const updatedKeys = new Set<string>();
   let created = false;
   let secretKeyOverwritten = false;
 
-  for (const envPath of targetPaths) {
+  for (const envPath of envPaths) {
     const result = mergeEnvFileAtPath(envPath, input);
     if (result.created) {
       created = true;
@@ -133,7 +103,7 @@ export function mergeProjectEnv(input: EnvMergeInput): EnvMergeResult {
   }
 
   return {
-    envPaths: targetPaths,
+    envPaths,
     created,
     updatedKeys: [...updatedKeys],
     secretKeyOverwritten,

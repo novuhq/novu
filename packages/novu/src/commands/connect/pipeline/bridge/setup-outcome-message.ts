@@ -1,6 +1,7 @@
 import type {
   AgentConnectMode,
   AiSdkConnectOutcome,
+  BridgeRequirement,
   ChatSdkConnectOutcome,
   CustomCodeConnectOutcome,
 } from '../../types';
@@ -12,6 +13,15 @@ export type BridgeSetupOutcomes = {
   customCode?: CustomCodeConnectOutcome;
 };
 
+function formatManualRequirementsFollowUp(requirements: BridgeRequirement[] | undefined): string | null {
+  const manual = requirements?.filter((req) => req.status !== 'ok') ?? [];
+  if (manual.length > 0) {
+    return `Finish setup: ${manual.map((req) => req.detail).join('; ')}`;
+  }
+
+  return null;
+}
+
 function resolveChatSdkFollowUp(outcome: ChatSdkConnectOutcome): string | null {
   if (outcome.scaffolded) {
     if (outcome.tunnelAccepted) {
@@ -21,17 +31,17 @@ function resolveChatSdkFollowUp(outcome: ChatSdkConnectOutcome): string | null {
     return null;
   }
 
+  const manualFollowUp = formatManualRequirementsFollowUp(outcome.requirements);
+  if (manualFollowUp) {
+    return manualFollowUp;
+  }
+
   if (outcome.coreReady && outcome.tunnelAccepted) {
     return 'Project configured — starting dev server and tunnel…';
   }
 
   if (outcome.coreReady) {
     return 'Project configured. Run npm run dev:novu to start the tunnel.';
-  }
-
-  const manual = outcome.requirements?.filter((req) => req.status !== 'ok') ?? [];
-  if (manual.length > 0) {
-    return `Finish setup: ${manual.map((req) => req.detail).join('; ')}`;
   }
 
   return null;
@@ -42,17 +52,17 @@ function resolveAiSdkFollowUp(outcome: AiSdkConnectOutcome): string | null {
     return null;
   }
 
+  const manualFollowUp = formatManualRequirementsFollowUp(outcome.requirements);
+  if (manualFollowUp) {
+    return manualFollowUp;
+  }
+
   if (outcome.coreReady && outcome.tunnelAccepted) {
     return 'Project configured — starting dev server and tunnel…';
   }
 
   if (outcome.coreReady) {
     return 'Project configured. Run npm run dev:novu to start the tunnel.';
-  }
-
-  const manual = outcome.requirements?.filter((req) => req.status !== 'ok') ?? [];
-  if (manual.length > 0) {
-    return `Finish setup: ${manual.map((req) => req.detail).join('; ')}`;
   }
 
   if (!outcome.scaffolded) {

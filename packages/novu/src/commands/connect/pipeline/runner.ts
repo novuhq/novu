@@ -28,10 +28,11 @@ import type {
 import { isAiSdkConnectMode, isBridgeConnectMode, isVanillaCustomCodeConnectMode } from '../types';
 import type { ConnectUI } from '../ui/ui';
 import { maybeRunAiSdkTunnel, runAiSdkProjectSetup } from './ai-sdk';
+import { createBridgeAgentFlow } from './bridge/create-bridge-agent';
 import { connectEmailForAgent } from './channels/email';
 import { connectSlackForAgent } from './channels/slack';
 import { connectTelegramForAgent } from './channels/telegram';
-import { createBridgeAgentFlow, maybeRunChatSdkTunnel, runChatSdkProjectSetup } from './chat-sdk';
+import { maybeRunChatSdkTunnel, runChatSdkProjectSetup } from './chat-sdk';
 import { runCustomCodeProjectSetup } from './custom-code';
 import { resolveAgentRuntimeIntegration, resolveRuntimeFromOptions } from './resolve-agent-runtime-integration';
 

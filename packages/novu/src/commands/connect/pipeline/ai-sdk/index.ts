@@ -407,17 +407,3 @@ function isAiSdkWiringReadyForTunnel(
 
   return detectAiSdkWiring(projectDir).isWired;
 }
-
-export async function shutdownConnectUiAndMaybeRunAiSdkTunnel(input: {
-  ui: ConnectUI;
-  outcome: AiSdkConnectOutcome | undefined;
-  ci?: boolean;
-}): Promise<number> {
-  const exitCode = await input.ui.shutdown();
-
-  if (await maybeRunAiSdkTunnel({ outcome: input.outcome, ci: input.ci })) {
-    return 0;
-  }
-
-  return exitCode;
-}
