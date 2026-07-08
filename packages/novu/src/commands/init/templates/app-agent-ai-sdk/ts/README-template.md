@@ -2,7 +2,7 @@
 
 A conversational AI agent powered by [Novu](https://novu.co), the [Vercel AI SDK](https://sdk.vercel.ai/), and [Next.js](https://nextjs.org).
 
-The scaffold uses `@novu/framework/ai-sdk` and ships with an **echo demo** that works without any LLM API key. When you're ready, uncomment the `generateText` example in your agent handler and install `ai` plus your model provider.
+The scaffold uses `@novu/framework/ai-sdk` and ships with an **echo demo** that works without any LLM API key. The `ai` package (v6) is already installed — when you're ready, uncomment the `generateText` example in your agent handler and add your model provider.
 
 ## Getting Started
 
@@ -18,12 +18,12 @@ The scaffold uses `@novu/framework/ai-sdk` and ships with an **echo demo** that 
 
 4. Wire your LLM when ready:
 
-   - Install the AI SDK and a provider:
+   - Install a provider:
 
      ```bash
-     npm install ai @ai-sdk/openai        # OpenAI
-     # npm install ai @ai-sdk/anthropic   # Anthropic
-     # npm install ai @ai-sdk/google      # Google
+     npm install @ai-sdk/openai        # OpenAI
+     # npm install @ai-sdk/anthropic   # Anthropic
+     # npm install @ai-sdk/google      # Google
      ```
 
    - Set your provider API key (e.g. `OPENAI_API_KEY` in `.env.local`).

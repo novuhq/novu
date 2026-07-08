@@ -27,6 +27,7 @@ describe('computeAiSdkRequirements', () => {
       JSON.stringify({
         dependencies: {
           '@novu/framework': 'latest',
+          ai: '^6.0.0',
         },
         scripts: {
           'dev:novu': 'next dev --port=4005',
@@ -77,6 +78,7 @@ describe('computeAiSdkRequirements', () => {
       JSON.stringify({
         dependencies: {
           '@novu/framework': 'latest',
+          ai: '^6.0.0',
           '@ai-sdk/openai': '1.0.0',
         },
         scripts: {

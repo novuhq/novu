@@ -262,6 +262,10 @@ export const installTemplate = async ({
     baseDependencies['@novu/framework'] = resolveFrameworkVersion();
   }
 
+  if (template === TemplateTypeEnum.APP_AGENT_AI_SDK) {
+    baseDependencies.ai = '^6.0.0';
+  }
+
   if (isChatSdkTemplate) {
     baseDependencies.chat = '4.31.0';
     baseDependencies['@novu/chat-sdk-adapter'] = 'latest';

@@ -56,7 +56,7 @@ function computePackageRequirement(projectDir: string): BridgeRequirement {
     return {
       id: 'package',
       status: 'ok',
-      detail: '@novu/framework installed',
+      detail: '@novu/framework and ai installed',
     };
   }
 

@@ -2,10 +2,10 @@
 import { Actions, Button, Card, CardText } from '@novu/framework';
 import { agent } from '@novu/framework/ai-sdk';
 
-// Wire your LLM — install `ai` + a provider, then uncomment the imports and return below:
-//   npm install ai @ai-sdk/openai        # OpenAI
-//   npm install ai @ai-sdk/anthropic     # Anthropic
-//   npm install ai @ai-sdk/google        # Google
+// Wire your LLM — install a provider, then uncomment the imports and return below:
+//   npm install @ai-sdk/openai        # OpenAI
+//   npm install @ai-sdk/anthropic     # Anthropic
+//   npm install @ai-sdk/google        # Google
 //
 // import { generateText } from 'ai';
 // import { openai } from '@ai-sdk/openai';
