@@ -11,14 +11,40 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 import { TelegramStartCodeService } from '../../telegram-linking/telegram-start-code.service';
 import { AgentConfigResolver } from '../channels/agent-config-resolver.service';
+import { ChatInstanceRegistry } from '../conversation-runtime/ingress/chat-instance.registry';
 import { AgentInboundHandler } from '../conversation-runtime/ingress/inbound-turn.handler';
 import { AgentEventEnum } from '../shared/enums/agent-event.enum';
 import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
+import { startTelegramApiStub, type TelegramApiStub } from './helpers/telegram-api-stub';
 
 const integrationRepository = new IntegrationRepository();
 const agentIntegrationRepository = new AgentIntegrationRepository();
 const subscriberRepository = new SubscriberRepository();
 const channelEndpointRepository = new ChannelEndpointRepository();
+
+const TELEGRAM_WEBHOOK_SECRET = 'e2e-telegram-secret-token';
+
+const POLL_TIMEOUT_MS = 10_000;
+const POLL_INTERVAL_MS = 50;
+
+async function pollFor<T>(fn: () => Promise<T | null | undefined>, timeoutMs = POLL_TIMEOUT_MS): Promise<T> {
+  const deadline = Date.now() + timeoutMs;
+  let lastError: unknown;
+
+  while (Date.now() < deadline) {
+    try {
+      const result = await fn();
+      if (result) return result;
+    } catch (err) {
+      lastError = err;
+    }
+    await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
+  }
+
+  throw new Error(
+    `pollFor timed out after ${timeoutMs}ms${lastError ? `; last error: ${(lastError as Error).message}` : ''}`
+  );
+}
 
 describe('Telegram subscriber start link (cache + inbound) #novu-v2', () => {
   let session: UserSession;
@@ -27,9 +53,11 @@ describe('Telegram subscriber start link (cache + inbound) #novu-v2', () => {
   let integrationId: string;
   let integrationIdentifier: string;
   let subscriberId: string;
+  let telegramApiStub: TelegramApiStub;
 
-  before(() => {
+  before(async () => {
     process.env.IS_CONVERSATIONAL_AGENTS_ENABLED = 'true';
+    telegramApiStub = await startTelegramApiStub();
   });
 
   beforeEach(async () => {
@@ -50,7 +78,7 @@ describe('Telegram subscriber start link (cache + inbound) #novu-v2', () => {
       channel: ChannelTypeEnum.CHAT,
       credentials: encryptCredentials({
         apiToken: '12345678:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-        token: 'e2e-telegram-secret-token',
+        token: TELEGRAM_WEBHOOK_SECRET,
       }),
       active: true,
       identifier: `telegram-sub-e2e-${Date.now()}`,
@@ -158,5 +186,90 @@ describe('Telegram subscriber start link (cache + inbound) #novu-v2', () => {
 
     expect((thread.post as sinon.SinonStub).calledOnce).to.equal(true);
     expect(String((thread.post as sinon.SinonStub).firstCall.args[0])).to.match(/expired|valid/i);
+  });
+
+  describe('inbound webhook /start delivery (full chat SDK path)', () => {
+    const TELEGRAM_CHAT_ID = 777_042;
+
+    afterEach(async () => {
+      // Drop cached Chat instances so each test builds a fresh Telegram adapter
+      // (and re-reads TELEGRAM_API_BASE_URL) for its own integration.
+      const registry = testServer.getService(ChatInstanceRegistry);
+      await registry.onModuleDestroy();
+      telegramApiStub.reset();
+    });
+
+    function buildStartUpdate(text: string) {
+      return {
+        update_id: Date.now(),
+        message: {
+          message_id: Math.floor(Math.random() * 1_000_000) + 1,
+          date: Math.floor(Date.now() / 1000),
+          chat: { id: TELEGRAM_CHAT_ID, type: 'private', first_name: 'TG' },
+          from: { id: TELEGRAM_CHAT_ID, is_bot: false, first_name: 'TG', username: 'tguser' },
+          text,
+          entities: [{ type: 'bot_command', offset: 0, length: '/start'.length }],
+        },
+      };
+    }
+
+    async function postTelegramWebhook(update: Record<string, unknown>) {
+      const res = await session.testAgent
+        .post(`/v1/agents/${agentId}/webhook/${integrationIdentifier}`)
+        .set('x-telegram-bot-api-secret-token', TELEGRAM_WEBHOOK_SECRET)
+        .set('content-type', 'application/json')
+        .send(update);
+
+      expect(res.status).to.equal(200);
+    }
+
+    it('creates the telegram_chat endpoint when /start <code> arrives as a real Telegram webhook update', async () => {
+      // Regression: chat SDK >= 4.31 routes Telegram bot commands to
+      // slash-command handlers instead of the message pipeline, which used to
+      // silently drop `/start <code>` so no channel endpoint was ever created.
+      const startCodeService = testServer.getService(TelegramStartCodeService);
+      const { code } = await startCodeService.issue({
+        environmentId: session.environment._id,
+        organizationId: session.organization._id,
+        agentIdentifier,
+        integrationId,
+        subscriberId,
+      });
+
+      await postTelegramWebhook(buildStartUpdate(`/start ${code}`));
+
+      const created = await pollFor(() =>
+        channelEndpointRepository.findByPlatformIdentity({
+          _environmentId: session.environment._id,
+          _organizationId: session.organization._id,
+          integrationIdentifier,
+          type: ENDPOINT_TYPES.TELEGRAM_CHAT,
+          endpointField: 'chatId',
+          endpointValue: String(TELEGRAM_CHAT_ID),
+        })
+      );
+
+      expect(created.subscriberId).to.equal(subscriberId);
+
+      const confirmation = await pollFor(async () =>
+        telegramApiStub.calls.find(
+          (call) => call.method === 'sendMessage' && String(call.payload.chat_id) === String(TELEGRAM_CHAT_ID)
+        )
+      );
+
+      expect(String(confirmation.payload.text)).to.match(/connected/i);
+    });
+
+    it('replies with an expired-style message when the /start code is unknown', async () => {
+      await postTelegramWebhook(buildStartUpdate('/start boguscodeboguscodeboguscodebogus'));
+
+      const reply = await pollFor(async () =>
+        telegramApiStub.calls.find(
+          (call) => call.method === 'sendMessage' && String(call.payload.chat_id) === String(TELEGRAM_CHAT_ID)
+        )
+      );
+
+      expect(String(reply.payload.text)).to.match(/expired|valid/i);
+    });
   });
 });
