@@ -423,7 +423,11 @@
               "agents/custom-code-agent/connecting-your-app",
               {
                 "group": "Frameworks",
-                "pages": ["agents/custom-code-agent/frameworks/ai-sdk", "agents/custom-code-agent/frameworks/other"]
+                "pages": [
+                  "agents/custom-code-agent/frameworks/ai-sdk",
+                  "agents/custom-code-agent/frameworks/langchain",
+                  "agents/custom-code-agent/frameworks/other"
+                ]
               },
               {
                 "group": "Building blocks",

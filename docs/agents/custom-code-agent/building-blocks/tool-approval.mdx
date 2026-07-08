@@ -41,9 +41,32 @@ See [AI SDK](/agents/custom-code-agent/frameworks/ai-sdk#automatic-tool-approval
   </Tab>
   <Tab title="LangChain">
 
-<Note>
-  LangChain support is coming soon.
-</Note>
+Set `needsApproval` on a `LangChainAgentConfig`. When the model calls a gated tool, Novu posts the approval card and pauses the turn. After the user clicks **Approve** or **Deny**, Novu re-runs `onMessage` and resumes from `ctx.history` — no `ctx.toolApproval.request()` needed.
+
+```typescript
+import { tool } from '@langchain/core/tools';
+import { agent } from '@novu/framework/langchain';
+import { z } from 'zod';
+
+const issueRefund = tool(
+  async ({ orderId }) => refund(orderId),
+  {
+    name: 'issueRefund',
+    description: 'Issue a refund for an order',
+    schema: z.object({ orderId: z.string() }),
+  },
+);
+
+export const myAgent = agent('my-agent', {
+  onMessage: async (message, ctx) => ({
+    model: 'openai:gpt-4o',
+    tools: [issueRefund],
+    needsApproval: (toolCall) => toolCall.name === 'issueRefund',
+  }),
+});
+```
+
+See [LangChain](/agents/custom-code-agent/frameworks/langchain#automatic-tool-approval) for auto-resume and optional `onToolApproval` hooks.
 
   </Tab>
   <Tab title="Custom code">
@@ -136,9 +159,38 @@ export const myAgent = agent('my-agent', {
   </Tab>
   <Tab title="LangChain">
 
-<Note>
-  LangChain support is coming soon.
-</Note>
+```typescript
+import { tool } from '@langchain/core/tools';
+import { agent } from '@novu/framework/langchain';
+import { z } from 'zod';
+
+const issueRefund = tool(
+  async ({ orderId }) => refund(orderId),
+  {
+    name: 'issueRefund',
+    description: 'Issue a refund for an order',
+    schema: z.object({ orderId: z.string() }),
+  },
+);
+
+export const myAgent = agent('my-agent', {
+  onMessage: async (message, ctx) => ({
+    model: 'openai:gpt-4o',
+    tools: [issueRefund],
+    needsApproval: (toolCall) => toolCall.name === 'issueRefund',
+  }),
+
+  onToolApproval: async (decision, ctx) => {
+    if (!decision.approved) {
+      await decision.approvalMessage.delete();
+      return 'No problem — I did not issue the refund.';
+    }
+
+    await decision.approvalMessage.delete();
+    // return nothing → onMessage auto-resumes
+  },
+});
+```
 
   </Tab>
   <Tab title="Custom code">
@@ -265,6 +317,9 @@ toolApproval: {
 <Columns cols={2}>
   <Card icon="sparkles" href="/agents/custom-code-agent/frameworks/ai-sdk" title="AI SDK">
     Automatic gating with `needsApproval: true` and auto-resume.
+  </Card>
+  <Card icon="link" href="/agents/custom-code-agent/frameworks/langchain" title="LangChain">
+    Automatic gating with `needsApproval` callback and auto-resume.
   </Card>
   <Card icon="pencil" href="/agents/custom-code-agent/building-blocks/edit-sent-messages" title="Edit sent messages">
     Edit and delete cards in place with `ReplyHandle`.

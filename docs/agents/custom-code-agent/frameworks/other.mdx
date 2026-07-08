@@ -1,11 +1,11 @@
 ---
 title: "Other frameworks"
-description: "Build custom code agents with @novu/framework and any LLM stack — LangChain, OpenAI SDK, or your own integration."
+description: "Build custom code agents with @novu/framework and any LLM stack — OpenAI SDK, Anthropic SDK, or your own integration."
 sidebarTitle: Other
 ---
 
 
-Import `agent` from `@novu/framework` when you are not using `@novu/framework/ai-sdk`. Call your LLM, orchestration library, or business logic yourself, then reply through Novu's handler API. Use this path for LangChain, the OpenAI SDK, Anthropic SDK, or any stack Novu does not ship a dedicated adapter for yet.
+Import `agent` from `@novu/framework` when you are not using `@novu/framework/ai-sdk` or `@novu/framework/langchain`. Call your LLM, orchestration library, or business logic yourself, then reply through Novu's handler API. Use this path for the OpenAI SDK, Anthropic SDK, or any stack Novu does not ship a dedicated adapter for.
 
 ## Prerequisites
 
@@ -37,7 +37,7 @@ export const supportAgent = agent('support-bot', {
 
 If you scaffolded through the [Quickstart](/agents/custom-code-agent/quickstart), your project already serves this handler over its `/api/novu` bridge route — see [Connecting your app](/agents/custom-code-agent/connecting-your-app) for how the project is wired. Make sure the agent id (`'support-bot'`) matches the **Identifier** in your dashboard.
 
-For handlers, replies, signals, typing, and tool approval, see [Building blocks](/agents/custom-code-agent/building-blocks/handle-events). The sections below cover what's specific to wiring your own LLM stack — return types, manual tool approval, and differences from the AI SDK path.
+For handlers, replies, signals, typing, and tool approval, see [Building blocks](/agents/custom-code-agent/building-blocks/handle-events). The sections below cover what's specific to wiring your own LLM stack — return types and manual tool approval.
 
 ## Returning from `onMessage`
 
@@ -60,17 +60,6 @@ const supportAgent = agent('support-bot', async (message, ctx) => {
   return text;
 });
 ```
-
-## Key differences from the AI SDK path
-
-| | AI SDK (`@novu/framework/ai-sdk`) | Other frameworks (`@novu/framework`) |
-| --- | --- | --- |
-| LLM calls | Return `generateText()` / `streamText()` from `onMessage` | You call the model or library yourself |
-| History mapping | `toModelMessages(ctx.history)` | Map `ctx.history` to your library's format |
-| Tool approval | `needsApproval: true` on AI SDK tools — Novu auto-resumes the tool loop after the click | `ctx.toolApproval.request()` — you run the tool in `onToolApproval` |
-| MCP tools | Wire MCP clients inside `onMessage` — see [AI SDK](/agents/custom-code-agent/frameworks/ai-sdk#mcp-tools) | Same manual wiring through your stack |
-
-There is no automatic tool-loop resume on this path. After the user approves or denies, implement `onToolApproval` to run the tool and post the result.
 
 ## Tool approval
 
@@ -112,6 +101,9 @@ See [Tool approval](/agents/custom-code-agent/building-blocks/tool-approval) for
 <Columns cols={2}>
   <Card icon="sparkles" href="/agents/custom-code-agent/frameworks/ai-sdk" title="AI SDK">
     Return AI SDK results from handlers with automatic tool approval resume.
+  </Card>
+  <Card icon="link" href="/agents/custom-code-agent/frameworks/langchain" title="LangChain">
+    Return LangChain agent configs with automatic tool approval resume.
   </Card>
   <Card icon="loader" href="/agents/custom-code-agent/building-blocks/typing-indicator" title="Typing indicator">
     Show a Thinking… or custom status while your handler runs.
