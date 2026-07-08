@@ -1,4 +1,4 @@
-import { FeatureFlagsKeysEnum, ProductUseCasesEnum } from '@novu/shared';
+import { ProductUseCasesEnum } from '@novu/shared';
 import {
   Bot,
   CalendarDays,
@@ -22,8 +22,7 @@ import { Notification5Fill } from '@/components/icons/notification-5-fill';
 import { AgentUsecasePreviewIllustration } from '@/components/onboarding/agent-usecase-preview-illustration';
 import { OnboardingShell } from '@/components/onboarding/onboarding-shell';
 import { PageMeta } from '@/components/page-meta';
-import { IS_EU } from '@/config';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { useAreConversationalAgentsAvailable } from '@/hooks/use-are-conversational-agents-available';
 import { useOnboardingProvisioningActive, useOnboardingProvisioningDismiss } from '@/hooks/use-onboarding-provisioning';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { useUpdateProductUseCases } from '@/hooks/use-update-product-use-cases';
@@ -413,7 +412,7 @@ function UsecaseSelector({ selected, onSelect }: { selected: UsecaseId; onSelect
 }
 
 export function UsecaseSelectPage() {
-  const isAgentsEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONVERSATIONAL_AGENTS_ENABLED, false);
+  const areAgentsAvailable = useAreConversationalAgentsAvailable();
   const telemetry = useTelemetry();
   const [selected, setSelected] = useState<UsecaseId>('inbox');
   const provisioningActive = useOnboardingProvisioningActive();
@@ -431,8 +430,7 @@ export function UsecaseSelectPage() {
     return null;
   }
 
-  // Agents are hard-disabled in the EU region; skip the usecase picker entirely there.
-  if (IS_EU || !isAgentsEnabled) {
+  if (!areAgentsAvailable) {
     return <Navigate to={ROUTES.INBOX_USECASE} replace />;
   }
 
