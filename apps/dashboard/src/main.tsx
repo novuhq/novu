@@ -518,7 +518,9 @@ const router = createBrowserRouter([
               {
                 path: ROUTES.LOCAL_WORKFLOWS,
                 element: (
-                  <ProtectedRoute permission={PermissionsEnum.WORKFLOW_READ}>
+                  // BRIDGE_WRITE mirrors the stateless bridge API guard: local
+                  // mode signs requests to the caller's tunnel with the env key.
+                  <ProtectedRoute permission={PermissionsEnum.BRIDGE_WRITE}>
                     <LocalWorkflowsPage />
                   </ProtectedRoute>
                 ),
@@ -529,7 +531,7 @@ const router = createBrowserRouter([
                 // navigation behaves identically.
                 path: ROUTES.LOCAL_EDIT_WORKFLOW,
                 element: (
-                  <ProtectedRoute permission={PermissionsEnum.WORKFLOW_READ}>
+                  <ProtectedRoute permission={PermissionsEnum.BRIDGE_WRITE}>
                     <LocalEditWorkflowPage />
                   </ProtectedRoute>
                 ),
@@ -769,7 +771,7 @@ const router = createBrowserRouter([
             // Handshake target opened by `novu dev` (new dashboard local mode).
             path: ROUTES.LOCAL_HANDSHAKE,
             element: (
-              <ProtectedRoute permission={PermissionsEnum.WORKFLOW_READ}>
+              <ProtectedRoute permission={PermissionsEnum.BRIDGE_WRITE}>
                 <LocalHandshakePage />
               </ProtectedRoute>
             ),

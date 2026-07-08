@@ -23,6 +23,7 @@ import { SidebarContent } from '@/components/side-navigation/sidebar';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useLocalMode } from '@/context/local-mode';
 import { useAreConversationalAgentsAvailable } from '@/hooks/use-are-conversational-agents-available';
+import { useHasPermission } from '@/hooks/use-has-permission';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { Protect } from '@/utils/protect';
 import { buildRoute, ROUTES } from '@/utils/routes';
@@ -99,7 +100,14 @@ export const LegacySideNavigation = () => {
 
   const { currentEnvironment, environments, switchEnvironment } = useEnvironment();
   const localMode = useLocalMode();
+  const has = useHasPermission();
   const navigate = useNavigate();
+
+  // Local mode makes the API sign requests to the caller's tunnel with the
+  // environment key, so it is gated on BRIDGE_WRITE (see bridge.controller.ts).
+  // Hide the picker entry from members who would only hit a 403.
+  const canUseLocalMode = has({ permission: PermissionsEnum.BRIDGE_WRITE });
+  const showLocalEntry = canUseLocalMode && Boolean(localMode.session);
 
   const onEnvironmentChange = (value: string) => {
     if (value === LOCAL_ENVIRONMENT_VALUE) {
@@ -131,7 +139,7 @@ export const LegacySideNavigation = () => {
           currentEnvironment={currentEnvironment}
           data={environments}
           onChange={onEnvironmentChange}
-          localEntry={localMode.session ? { status: localMode.healthStatus } : undefined}
+          localEntry={showLocalEntry ? { status: localMode.healthStatus } : undefined}
           isLocalSelected={localMode.isLocalRoute}
         />
         <nav className="flex h-full flex-1 flex-col overflow-auto">

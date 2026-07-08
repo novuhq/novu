@@ -268,12 +268,14 @@ export class BridgeController {
    * proves the local app belongs to a different environment; these errors
    * propagate untouched for the dashboard to branch on.
    *
-   * Gated by WORKFLOW_READ (not BRIDGE_WRITE) so read-only members can use
-   * local mode; nothing here mutates state.
+   * Gated by BRIDGE_WRITE (matching POST /bridge/validate): these endpoints
+   * make Novu sign a request to a caller-supplied bridgeUrl with the
+   * environment's secret key, so a lower permission would hand read-only
+   * members a signing oracle for any URL they control.
    */
 
   @Post('/stateless/status')
-  @RequirePermissions(PermissionsEnum.WORKFLOW_READ)
+  @RequirePermissions(PermissionsEnum.BRIDGE_WRITE)
   async statelessStatus(
     @UserSession() user: UserSessionData,
     @Body() body: StatelessBridgeRequestDto
@@ -290,7 +292,7 @@ export class BridgeController {
   }
 
   @Post('/stateless/discover')
-  @RequirePermissions(PermissionsEnum.WORKFLOW_READ)
+  @RequirePermissions(PermissionsEnum.BRIDGE_WRITE)
   async statelessDiscover(
     @UserSession() user: UserSessionData,
     @Body() body: StatelessBridgeRequestDto
@@ -308,7 +310,7 @@ export class BridgeController {
   }
 
   @Post('/stateless/preview/:workflowId/:stepId')
-  @RequirePermissions(PermissionsEnum.WORKFLOW_READ)
+  @RequirePermissions(PermissionsEnum.BRIDGE_WRITE)
   async statelessPreview(
     @Param('workflowId') workflowId: string,
     @Param('stepId') stepId: string,
