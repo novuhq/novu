@@ -3,8 +3,8 @@ import { WorkflowResponseDto } from '@novu/shared';
 import { ReactNode, useCallback, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { useLocalMode } from '@/context/local-mode';
-import { getIdFromSlug, STEP_DIVIDER } from '@/utils/id-utils';
 import { findLocalStep, findLocalWorkflow } from '@/utils/local-bridge';
+import { findDigestStepBeforeCurrent } from './step-utils';
 import { WorkflowContext, WorkflowContextType } from './workflow-provider';
 import { WorkflowSchemaProvider } from './workflow-schema-provider';
 
@@ -46,22 +46,10 @@ export const LocalWorkflowProvider = ({ children }: { children: ReactNode }) => 
 
   const step = useMemo(() => findLocalStep(workflow, stepSlug), [workflow, stepSlug]);
 
-  const digestStepBeforeCurrent = useMemo(() => {
-    if (!workflow || !step) return undefined;
-
-    const index = workflow.steps.findIndex(
-      (candidate) =>
-        getIdFromSlug({ slug: candidate.slug, divider: STEP_DIVIDER }) ===
-        getIdFromSlug({ slug: step.slug, divider: STEP_DIVIDER })
-    );
-
-    if (index < 1) return undefined;
-
-    return workflow.steps
-      .slice(0, index)
-      .reverse()
-      .find((candidate) => candidate.type === 'digest');
-  }, [workflow, step]);
+  const digestStepBeforeCurrent = useMemo(
+    () => findDigestStepBeforeCurrent(workflow?.steps, step),
+    [workflow?.steps, step]
+  );
 
   const refetch = useCallback(
     async (_options?: RefetchOptions) => {

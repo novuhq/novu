@@ -16,5 +16,6 @@ export const useWorkflowEditorRoutes = () => {
     editWorkflowRoute: isLocalRoute ? ROUTES.LOCAL_EDIT_WORKFLOW : ROUTES.EDIT_WORKFLOW,
     triggerWorkflowRoute: isLocalRoute ? ROUTES.LOCAL_TRIGGER_WORKFLOW : ROUTES.TRIGGER_WORKFLOW,
     workflowsRoute: isLocalRoute ? ROUTES.LOCAL_WORKFLOWS : ROUTES.WORKFLOWS,
+    activityRoute: isLocalRoute ? ROUTES.ACTIVITY_FEED : ROUTES.EDIT_WORKFLOW_ACTIVITY,
   };
 };

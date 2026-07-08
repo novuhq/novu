@@ -6,20 +6,24 @@ import {
   computeWorkflowStatus,
   generatePayloadExample,
   JSONSchemaDto,
+  StepForResponseMapper,
+  StepForVariableSchema,
   StepIssuesDto,
   StepResponseDto,
+  StepTemplateForMapper,
   toResponseWorkflowDto,
+  WorkflowForPayloadExample,
+  WorkflowForResponseMapper,
+  WorkflowForVariableSchema,
   WorkflowResponseDto,
-  WorkflowWithPreferencesResponseDto,
+  WorkflowWithPreferencesForMapper,
 } from '@novu/application-generic';
-import { NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
 import { DiscoverStepOutput, DiscoverWorkflowOutput } from '@novu/framework/internal';
 import {
   ResourceOriginEnum,
   ResourceTypeEnum,
   SeverityLevelEnum,
   StepTypeEnum,
-  TriggerTypeEnum,
   UserSessionData,
 } from '@novu/shared';
 import {
@@ -32,6 +36,31 @@ import {
   getDiscoveredWorkflowTags,
 } from '../../utils/discover-workflow.mapper';
 import { BuildVirtualWorkflowsCommand } from './build-virtual-workflows.command';
+
+interface VirtualStepBuild extends StepForResponseMapper, StepForVariableSchema {
+  _id: string;
+  uuid: string;
+  shouldStopOnFail: boolean;
+  template: StepTemplateForMapper & {
+    _id: string;
+    name: string;
+    output?: DiscoverStepOutput['outputs'];
+    options?: DiscoverStepOutput['options'];
+    code?: DiscoverStepOutput['code'];
+  };
+}
+
+interface VirtualWorkflowBuild
+  extends WorkflowForResponseMapper,
+    WorkflowForPayloadExample,
+    WorkflowForVariableSchema,
+    WorkflowWithPreferencesForMapper {
+  _environmentId: string;
+  _organizationId: string;
+  draft: boolean;
+  rawData: Record<string, unknown>;
+  steps: VirtualStepBuild[];
+}
 
 /**
  * Maps a bridge `discover` response into `WorkflowResponseDto`s without
@@ -53,30 +82,51 @@ export class BuildVirtualWorkflows {
     command: BuildVirtualWorkflowsCommand,
     workflow: DiscoverWorkflowOutput
   ): Promise<WorkflowResponseDto> {
-    const steps = await this.mapVirtualSteps(command, workflow);
-    const virtualEntity = this.buildVirtualEntity(command, workflow, steps);
-
+    const virtualWorkflow = await this.buildVirtualWorkflowEntity(command, workflow);
     const stepDtos = await Promise.all(
-      steps.map((step) => this.buildVirtualStepResponse(command, virtualEntity, step))
+      virtualWorkflow.steps.map((step) => this.buildVirtualStepResponse(command, virtualWorkflow, step))
     );
-    const payloadExample = await generatePayloadExample(virtualEntity);
+    const payloadExample = await generatePayloadExample(virtualWorkflow);
 
-    const workflowWithPreferences: WorkflowWithPreferencesResponseDto = Object.assign(
-      new WorkflowWithPreferencesResponseDto(),
-      virtualEntity,
-      {
-        userPreferences: null,
-        defaultPreferences: getDiscoveredWorkflowPreferences(workflow),
-      }
-    );
+    return toResponseWorkflowDto(virtualWorkflow, stepDtos, payloadExample);
+  }
 
-    return toResponseWorkflowDto(workflowWithPreferences, stepDtos, payloadExample);
+  private async buildVirtualWorkflowEntity(
+    command: BuildVirtualWorkflowsCommand,
+    workflow: DiscoverWorkflowOutput
+  ): Promise<VirtualWorkflowBuild> {
+    const workflowActive = getDiscoveredWorkflowActive(workflow);
+    const steps = await this.mapVirtualSteps(command, workflow);
+    const now = new Date().toISOString();
+
+    return {
+      _id: buildVirtualInternalId(workflow.workflowId),
+      _environmentId: command.environmentId,
+      _organizationId: command.organizationId,
+      name: getDiscoveredWorkflowName(workflow),
+      description: getDiscoveredWorkflowDescription(workflow),
+      tags: getDiscoveredWorkflowTags(workflow),
+      active: workflowActive,
+      draft: !workflowActive,
+      type: ResourceTypeEnum.BRIDGE,
+      origin: ResourceOriginEnum.EXTERNAL,
+      triggers: [{ identifier: workflow.workflowId }],
+      steps,
+      payloadSchema: workflow.payload?.schema,
+      status: computeWorkflowStatus(workflowActive, steps),
+      severity: workflow.severity || SeverityLevelEnum.NONE,
+      rawData: buildDiscoveredWorkflowRawData(workflow),
+      createdAt: now,
+      updatedAt: now,
+      userPreferences: null,
+      defaultPreferences: getDiscoveredWorkflowPreferences(workflow),
+    };
   }
 
   private async mapVirtualSteps(
     command: BuildVirtualWorkflowsCommand,
     workflow: DiscoverWorkflowOutput
-  ): Promise<NotificationStepEntity[]> {
+  ): Promise<VirtualStepBuild[]> {
     return Promise.all(
       (workflow.steps ?? []).map(async (step: DiscoverStepOutput) => {
         const issues: StepIssuesDto = await this.buildStepIssuesUsecase.execute({
@@ -97,7 +147,7 @@ export class BuildVirtualWorkflows {
           _templateId: stepInternalId,
           template: {
             _id: stepInternalId,
-            type: step.type,
+            type: step.type as StepTypeEnum,
             name: step.stepId,
             controls: step.controls,
             output: step.outputs,
@@ -107,64 +157,28 @@ export class BuildVirtualWorkflows {
           name: step.stepId,
           stepId: step.stepId,
           uuid: step.stepId,
-          shouldStopOnFail: (step.options as Record<string, any>)?.failOnErrorEnabled ?? false,
+          shouldStopOnFail: (step.options as Record<string, unknown> | undefined)?.failOnErrorEnabled === true,
           issues,
-        } as unknown as NotificationStepEntity;
+        };
       })
     );
   }
 
-  private buildVirtualEntity(
-    command: BuildVirtualWorkflowsCommand,
-    workflow: DiscoverWorkflowOutput,
-    steps: NotificationStepEntity[]
-  ): NotificationTemplateEntity {
-    const workflowActive = getDiscoveredWorkflowActive(workflow);
-    const now = new Date().toISOString();
-
-    return {
-      _id: buildVirtualInternalId(workflow.workflowId),
-      _environmentId: command.environmentId,
-      _organizationId: command.organizationId,
-      name: getDiscoveredWorkflowName(workflow),
-      description: getDiscoveredWorkflowDescription(workflow),
-      tags: getDiscoveredWorkflowTags(workflow),
-      active: workflowActive,
-      draft: !workflowActive,
-      type: ResourceTypeEnum.BRIDGE,
-      origin: ResourceOriginEnum.EXTERNAL,
-      triggers: [
-        {
-          type: TriggerTypeEnum.EVENT,
-          identifier: workflow.workflowId,
-          variables: [],
-        },
-      ],
-      steps,
-      payloadSchema: workflow.payload?.schema,
-      status: computeWorkflowStatus(workflowActive, steps),
-      severity: workflow.severity || SeverityLevelEnum.NONE,
-      rawData: buildDiscoveredWorkflowRawData(workflow),
-      createdAt: now,
-      updatedAt: now,
-    } as unknown as NotificationTemplateEntity;
-  }
-
   private async buildVirtualStepResponse(
     command: BuildVirtualWorkflowsCommand,
-    virtualEntity: NotificationTemplateEntity,
-    step: NotificationStepEntity
+    virtualWorkflow: VirtualWorkflowBuild,
+    step: VirtualStepBuild
   ): Promise<StepResponseDto> {
     const variables = await this.buildVariableSchemaUsecase.execute({
       environmentId: command.environmentId,
       organizationId: command.organizationId,
       userId: command.userId,
       stepInternalId: step._templateId,
-      workflow: virtualEntity,
+      workflow: virtualWorkflow,
       // Virtual workflows have no persisted control values; skip the DB lookup.
       preloadedControlValues: [],
     });
 
-    return BuildStepDataUsecase.mapToStepResponse(virtualEntity, step, {}, variables);
+    return BuildStepDataUsecase.mapToStepResponse(virtualWorkflow, step, {}, variables);
   }
 }

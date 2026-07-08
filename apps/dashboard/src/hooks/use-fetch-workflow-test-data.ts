@@ -1,9 +1,9 @@
 import type { JSONSchemaDto, WorkflowTestDataResponseDto } from '@novu/shared';
-import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { getWorkflowTestData } from '@/api/workflows';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useLocalMode } from '@/context/local-mode';
+import { useLocalOrRemoteData } from '@/hooks/use-local-or-remote-data';
 import { getIdFromSlug, WORKFLOW_DIVIDER } from '@/utils/id-utils';
 import { findLocalWorkflow } from '@/utils/local-bridge';
 import { QueryKeys } from '@/utils/query-keys';
@@ -21,8 +21,6 @@ export const useFetchWorkflowTestData = ({ workflowSlug }: { workflowSlug: strin
   const { currentEnvironment } = useEnvironment();
   const { isLocalRoute, workflows } = useLocalMode();
 
-  // Virtual (local bridge) workflows have no test-data endpoint; derive the
-  // test data from the discovered payload schema instead.
   const localTestData = useMemo<WorkflowTestDataResponseDto | undefined>(() => {
     if (!isLocalRoute) return undefined;
 
@@ -36,24 +34,19 @@ export const useFetchWorkflowTestData = ({ workflowSlug }: { workflowSlug: strin
     };
   }, [isLocalRoute, workflows, workflowSlug]);
 
-  const { data, isPending, error } = useQuery<WorkflowTestDataResponseDto>({
+  const { data, isPending, error } = useLocalOrRemoteData({
+    isLocalRoute,
+    localData: localTestData,
+    localIsPending: !localTestData,
     queryKey: [
       QueryKeys.fetchWorkflowTestData,
       currentEnvironment?._id,
       getIdFromSlug({ slug: workflowSlug, divider: WORKFLOW_DIVIDER }),
     ],
     queryFn: () => getWorkflowTestData({ environment: currentEnvironment!, workflowSlug }),
-    enabled: !!currentEnvironment?._id && !!workflowSlug && !isLocalRoute,
+    enabled: !!currentEnvironment?._id && !!workflowSlug,
     gcTime: 0,
   });
-
-  if (isLocalRoute) {
-    return {
-      testData: localTestData,
-      isPending: !localTestData,
-      error: null,
-    };
-  }
 
   return {
     testData: data,

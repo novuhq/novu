@@ -1,6 +1,6 @@
 import { FeatureFlagsKeysEnum, IEnvironment, WorkflowResponseDto } from '@novu/shared';
 import { useQuery } from '@tanstack/react-query';
-import { createContext, ReactNode, useCallback, useContext, useMemo, useState } from 'react';
+import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { discoverStatelessWorkflows, getStatelessBridgeStatus } from '@/api/stateless-bridge';
 import { useAuth } from '@/context/auth/hooks';
@@ -74,13 +74,10 @@ export const LocalModeProvider = ({ children }: { children: ReactNode }) => {
   const organizationId = currentOrganization?._id;
 
   const [session, setSession] = useState<LocalBridgeSession | null>(() => loadLocalBridgeSession(organizationId));
-  const [loadedForOrganizationId, setLoadedForOrganizationId] = useState(organizationId);
 
-  // Re-read the persisted session when the organization changes (org switcher).
-  if (organizationId !== loadedForOrganizationId) {
-    setLoadedForOrganizationId(organizationId);
+  useEffect(() => {
     setSession(loadLocalBridgeSession(organizationId));
-  }
+  }, [organizationId]);
 
   const isLocalRoute = isLocalModePathname(pathname);
   const bridgeUrl = session ? buildLocalBridgeUrl(session) : null;
