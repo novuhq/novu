@@ -2,7 +2,7 @@ import { useId, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/primitives/button';
 import { Input } from '@/components/primitives/input';
-import { IS_ENTERPRISE } from '@/config';
+import { IS_SELF_HOSTED_EE } from '@/config';
 import { readClerkRedirectUrlParam } from '@/utils/product-auth-urls';
 import { ROUTES } from '@/utils/routes';
 import { authClient } from '../client';
@@ -186,7 +186,7 @@ export function SignIn() {
           </span>
         </p>
       </form>
-      {IS_ENTERPRISE && (
+      {IS_SELF_HOSTED_EE && (
         <>
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">

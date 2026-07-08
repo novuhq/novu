@@ -16,7 +16,7 @@ import { Card } from '@/components/primitives/card';
 import { InlineToast } from '@/components/primitives/inline-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import { OrganizationSettings } from '@/components/settings/organization-settings';
-import { EE_AUTH_PROVIDER, IS_SELF_HOSTED } from '@/config';
+import { EE_AUTH_PROVIDER, IS_CLOUD } from '@/config';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { useHasPermission } from '@/hooks/use-has-permission';
@@ -129,7 +129,7 @@ export function SettingsTabs({ routes, rootRoute }: SettingsTabsProps) {
   const clerkAppearance = useMemo(() => getClerkComponentAppearance(isRbacEnabled), [isRbacEnabled]);
   const UserProfile = EE_AUTH_PROVIDER === 'clerk' ? ClerkUserProfile : BetterAuthUserProfile;
 
-  const canShowBilling = !IS_SELF_HOSTED && hasBillingPermission;
+  const canShowBilling = IS_CLOUD && hasBillingPermission;
 
   const currentTab = resolveCurrentTab(location.pathname, routes, rootRoute);
 
