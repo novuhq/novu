@@ -10,7 +10,7 @@ Interactive cards include buttons, dropdowns, links, and text inputs. When a use
 
 Use replies when the agent needs to communicate something to the participant in the conversation.
 
-Replies are user-facing messages your agent sends back into the conversation. Use [signals](/agents/custom-code-agent/setup-your-agent/signals) when you need to update conversation state, trigger workflows, or resolve the thread without messaging the user.
+Replies are user-facing messages your agent sends back into the conversation. Use [signals](/agents/custom-code-agent/building-blocks/signals) when you need to update conversation state, trigger workflows, or resolve the thread without messaging the user.
 
 The public API is `ctx.reply(content, options?)`. You can also return a string or JSX card from a handler instead of calling `ctx.reply()` directly.
 
@@ -26,7 +26,7 @@ The following table summarizes the reply types your agent can send:
 | Markdown | String with markdown | Via `options.files` | None |
 | Interactive cards | `Card` and child components | Not on cards | Buttons, dropdowns, links, inputs trigger `onAction` |
 
-To change a message after you send it, see [Edit sent messages](/agents/custom-code-agent/setup-your-agent/edit-sent-messages).
+To change a message after you send it, see [Edit sent messages](/agents/custom-code-agent/building-blocks/edit-sent-messages).
 
 ## Plain text
 
@@ -114,9 +114,42 @@ await ctx.reply(Card({ title: 'Order #1234', children: [
   </Tab>
   <Tab title="JSX API">
 
-Configure `tsconfig.json` with `"jsxImportSource": "@novu/framework"`, then return JSX from a handler or pass it to `ctx.reply()`. For a full JSX card example with `Card`, `CardText`, `Actions`, and `Button`, see [Connect your first agent](/agents/custom-code-agent/connect-your-first-agent).
+Add `"jsxImportSource": "@novu/framework"` to `tsconfig.json`, then return JSX from a handler or pass it to `ctx.reply()`:
 
-When a user clicks a button or selects a dropdown value, `onAction` fires with `actionId` and `value`. See [Handle events](/agents/custom-code-agent/setup-your-agent/handle-events#onaction).
+```tsx
+/** @jsxImportSource @novu/framework */
+import {
+  Actions, agent, Button, Card, CardLink, CardText, Divider,
+} from '@novu/framework';
+
+export const myAgent = agent('my-agent', {
+  onMessage: async (message, ctx) => {
+    return (
+      <Card title="Order #1234">
+        <CardText>Your order is ready for pickup.</CardText>
+        <Divider />
+        <Actions>
+          <Button id="ack" label="Acknowledge" />
+          <Button id="escalate" label="Escalate" style="danger" />
+        </Actions>
+        <CardLink url="https://example.com/order/1234">View details</CardLink>
+      </Card>
+    );
+  },
+});
+```
+
+You can also pass JSX to `ctx.reply()`:
+
+```tsx
+await ctx.reply(
+  <Card title="Order #1234">
+    <CardText>Your order is ready for pickup.</CardText>
+  </Card>,
+);
+```
+
+When a user clicks a button or selects a dropdown value, `onAction` fires with `action.id` and `action.value`. See [Handlers and context](/agents/custom-code-agent/building-blocks/handle-events#onaction).
 
   </Tab>
 </Tabs>
@@ -129,7 +162,7 @@ The following table lists the card components you can use in replies:
 | --- | --- |
 | `Card` | Container with an optional `title` |
 | `CardText` | Text block inside a card |
-| `Button` | Interactive button; `id` maps to `actionId` in `onAction` |
+| `Button` | Interactive button; `id` maps to `action.id` in `onAction` |
 | `Actions` | Required wrapper around `Button` elements |
 | `Select` / `SelectOption` | Dropdown; triggers `onAction` with selected value |
 | `Divider` | Visual separator |
@@ -139,14 +172,14 @@ The following table lists the card components you can use in replies:
 ## Related
 
 <Columns cols={2}>
-  <Card icon="pencil" href="/agents/custom-code-agent/setup-your-agent/edit-sent-messages" title="Edit sent messages">
+  <Card icon="pencil" href="/agents/custom-code-agent/building-blocks/edit-sent-messages" title="Edit sent messages">
     Update a message in place after sending it with `ReplyHandle`.
   </Card>
-  <Card icon="signal" href="/agents/custom-code-agent/setup-your-agent/signals" title="Signals">
+  <Card icon="signal" href="/agents/custom-code-agent/building-blocks/signals" title="Signals">
     Metadata, workflow triggers, and conversation resolution.
   </Card>
-  <Card icon="brain" href="/agents/custom-code-agent/connect-your-first-agent" title="Connect your first agent">
-    Walk through a full support-bot handler file.
+  <Card icon="sparkles" href="/agents/custom-code-agent/frameworks/ai-sdk" title="AI SDK">
+    Build end to end with `@novu/framework/ai-sdk`.
   </Card>
   <Card icon="code" href="/api-reference/agents/send-an-agent-reply" title="Send an agent reply API">
     Send replies from your backend without a bridge handler.

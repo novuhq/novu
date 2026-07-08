@@ -54,7 +54,7 @@ Later resolution upgrades them to a full subscriber. Identity is provider-aware 
 
 ## Bridge surface
 
-The same handler API applies no matter which provider sent the event or which model you use.
+The same handler API applies no matter which provider sent the event or which model you use. Your app exposes a bridge endpoint where Novu calls your handlers — see [Connecting your app](/agents/custom-code-agent/connecting-your-app) for project structure, `serve()`, and environment variables.
 
 ### Event handlers
 
@@ -150,8 +150,8 @@ The same handler code works on every connected provider; adding a provider does 
   <Card icon="house" href="/agents/custom-code-agent/quickstart" title="Quickstart">
     Create an agent, connect Slack, and get a reply in-thread.
   </Card>
-  <Card icon="brain" href="/agents/custom-code-agent/connect-your-first-agent" title="Connect your first agent">
-    Walk through a full support-bot handler file.
+  <Card icon="sparkles" href="/agents/custom-code-agent/frameworks/ai-sdk" title="AI SDK">
+    Build end to end with `@novu/framework/ai-sdk`.
   </Card>
   <Card icon="code" href="/api-reference/agents/agent-schema" title="Agents API reference">
     Create agents, link providers, and update bridge URLs programmatically.

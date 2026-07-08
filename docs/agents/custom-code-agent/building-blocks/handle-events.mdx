@@ -8,7 +8,7 @@ Novu gives your handler the same building blocks whether the message came from S
 
 ## Event handlers
 
-Event handlers are functions that respond to events in a conversation. Your agent can respond to four event types:
+Event handlers are functions that respond to events in a conversation. Your agent can respond to these event types:
 
 | Handler | When it runs | Common use case |
 | --- | --- | --- |
@@ -16,6 +16,7 @@ Event handlers are functions that respond to events in a conversation. Your agen
 | `onAction` | A user clicks a button or selects a value in an interactive card | Handle form submissions, button clicks, dropdown selections |
 | `onReaction` | A user adds or removes a reaction | Capture feedback or trigger a follow-up |
 | `onResolve` | The conversation is marked as resolved | Clean up state, log analytics, or send a summary |
+| `onToolApproval` | A user approves or denies a gated tool call | Run or skip the tool, audit the decision. See [Tool approval](/agents/custom-code-agent/building-blocks/tool-approval) |
 
 Handlers are where the communication layer connects to your application logic. For example, an `onMessage` handler receives the user's message, passes conversation context to an LLM or custom function, and sends the response back through Novu.
 
@@ -99,12 +100,46 @@ The same agent logic works across all connected providers because Novu handles t
 
 `onMessage` fires every time a user sends a message in a conversation with your agent.
 
+<Tabs>
+  <Tab title="AI SDK">
+
 ```typescript
-/** @jsxImportSource @novu/framework */
+import { agent, toModelMessages } from '@novu/framework/ai-sdk';
+import { openai } from '@ai-sdk/openai';
+import { generateText } from 'ai';
+
+export const myAgent = agent('my-agent', {
+  onMessage: async (message, ctx) => {
+    const userMessage = message.text ?? '';
+    const conversationHistory = ctx.history;
+    const subscriber = ctx.subscriber;
+
+    return generateText({
+      model: openai('gpt-4o-mini'),
+      instructions: 'You are a helpful support agent.',
+      messages: toModelMessages(conversationHistory),
+    });
+  },
+});
+```
+
+Return `generateText()` or `streamText()` from the handler — Novu delivers the model output to the thread. See [AI SDK](/agents/custom-code-agent/frameworks/ai-sdk).
+
+  </Tab>
+  <Tab title="LangChain">
+
+<Note>
+  LangChain support is coming soon.
+</Note>
+
+  </Tab>
+  <Tab title="Custom code">
+
+```typescript
 import { agent } from '@novu/framework';
 
 export const myAgent = agent('my-agent', {
-  onMessage: async ({ message, ctx }) => {
+  onMessage: async (message, ctx) => {
     const userMessage = message.text ?? '';
     const conversationHistory = ctx.history;
     const subscriber = ctx.subscriber;
@@ -116,6 +151,11 @@ export const myAgent = agent('my-agent', {
   },
 });
 ```
+
+Call your LLM or business logic yourself, then reply with `ctx.reply()` or by returning a string.
+
+  </Tab>
+</Tabs>
 
 #### Handling attachments
 
@@ -129,7 +169,7 @@ Inbound messages can include file attachments when the platform supports them. N
 import { agent } from '@novu/framework';
 
 export const myAgent = agent('my-agent', {
-  onMessage: async ({ message, ctx }) => {
+  onMessage: async (message, ctx) => {
     const attachments = message.attachments ?? [];
 
     for (const file of attachments) {
@@ -145,14 +185,14 @@ export const myAgent = agent('my-agent', {
 
 ### onAction
 
-`onAction` fires when a user clicks a button or selects a value in an interactive card. See [Interactive cards](/agents/custom-code-agent/setup-your-agent/reply#interactive-cards).
+`onAction` fires when a user clicks a button or selects a value in an interactive card. The `action` payload carries `action.id` (the element's `id` prop), `action.value` (its `value` prop, if set), and `action.sourceMessageId`. See [Interactive cards](/agents/custom-code-agent/building-blocks/reply#interactive-cards).
 
 ```typescript
 import { agent } from '@novu/framework';
 
 export const myAgent = agent('my-agent', {
-  onAction: async ({ actionId, value, ctx }) => {
-    if (actionId === 'approve' && value === 'true') {
+  onAction: async (action, ctx) => {
+    if (action.id === 'approve' && action.value === 'true') {
       await ctx.reply('Request approved!');
       ctx.trigger('approval-workflow', {
         to: ctx.subscriber?.subscriberId,
@@ -165,16 +205,16 @@ export const myAgent = agent('my-agent', {
 
 ### onReaction
 
-`onReaction` fires when a user adds or removes an emoji reaction on a message.
+`onReaction` fires when a user adds or removes an emoji reaction on a message. The `reaction` payload carries `reaction.emoji.name`, `reaction.added` (`true` when added, `false` when removed), and `reaction.messageId`.
 
 ```typescript
 import { agent } from '@novu/framework';
 
 export const myAgent = agent('my-agent', {
-  onReaction: async ({ emoji, added, message, ctx }) => {
-    if (emoji.name === 'thumbs_up' && added) {
+  onReaction: async (reaction, ctx) => {
+    if (reaction.emoji.name === 'thumbs_up' && reaction.added) {
       ctx.metadata.set('userSatisfied', true);
-    } else if (emoji.name === 'thumbs_down' && added) {
+    } else if (reaction.emoji.name === 'thumbs_down' && reaction.added) {
       ctx.metadata.set('userUnsatisfied', true);
     }
     await ctx.reply('Thank you for your feedback!');
@@ -184,7 +224,7 @@ export const myAgent = agent('my-agent', {
 
 ### onResolve
 
-`onResolve` fires when the conversation is marked as resolved via `ctx.resolve()` or the resolve signal.
+`onResolve` fires when the conversation is marked as resolved via `ctx.resolve()` or the resolve signal. It receives only the context object.
 
 ```typescript
 import { agent } from '@novu/framework';
@@ -196,16 +236,93 @@ export const myAgent = agent('my-agent', {
 });
 ```
 
+### onToolApproval
+
+`onToolApproval` fires when a user approves or denies a gated tool call. It receives a `decision` with the tool call, the verdict, and a handle to the approval card.
+
+<Tabs>
+  <Tab title="AI SDK">
+
+On the AI SDK path, tools gated with `needsApproval: true` in `onMessage` trigger this handler when the user clicks **Approve** or **Deny**. Register it when you need a hook after the click — for example to audit the decision or change how the card is handled.
+
+```typescript
+import { agent, toModelMessages } from '@novu/framework/ai-sdk';
+import { openai } from '@ai-sdk/openai';
+import { generateText, tool } from 'ai';
+import { z } from 'zod';
+
+export const myAgent = agent('my-agent', {
+  onMessage: async (message, ctx) => {
+    return generateText({
+      model: openai('gpt-4o'),
+      messages: toModelMessages(ctx.history),
+      tools: {
+        issueRefund: tool({
+          inputSchema: z.object({ orderId: z.string() }),
+          needsApproval: true,
+          execute: async ({ orderId }) => refund(orderId),
+        }),
+      },
+    });
+  },
+
+  onToolApproval: async (decision, ctx) => {
+    await decision.approvalMessage.delete();
+
+    if (!decision.approved) return 'Refund denied.';
+    // return nothing → onMessage auto-resumes
+  },
+});
+```
+
+  </Tab>
+  <Tab title="LangChain">
+
+<Note>
+  LangChain support is coming soon.
+</Note>
+
+  </Tab>
+  <Tab title="Custom code">
+
+Gate the tool with `ctx.toolApproval.request()` and handle the click in `onToolApproval`:
+
+```typescript
+import { agent } from '@novu/framework';
+
+export const myAgent = agent('my-agent', {
+  onMessage: async (message, ctx) => {
+    return ctx.toolApproval.request({ id: 'call_1', name: 'issueRefund', input: { orderId: 'A-123' } });
+  },
+
+  onToolApproval: async (decision, ctx) => {
+    await decision.approvalMessage.delete();
+    if (!decision.approved) return 'Action cancelled.';
+
+    await issueRefund(decision.toolCall.input);
+    return 'Done.';
+  },
+});
+```
+
+  </Tab>
+</Tabs>
+
+See [Tool approval](/agents/custom-code-agent/building-blocks/tool-approval) for card customization, auditing, and `renderApproval`.
+
 ## Related
 
 <Columns cols={2}>
-  <Card icon="reply" href="/agents/custom-code-agent/setup-your-agent/reply" title="Reply">
+  <Card icon="reply" href="/agents/custom-code-agent/building-blocks/reply" title="Reply">
     Send plain text, markdown, attachments, and interactive cards.
   </Card>
-  <Card icon="pencil" href="/agents/custom-code-agent/setup-your-agent/edit-sent-messages" title="Edit sent messages">
-    Update a message in place after sending it with `ReplyHandle`.
+  <Card icon="loader" href="/agents/custom-code-agent/building-blocks/typing-indicator" title="Typing indicator">
+    Show a Thinking… or custom status while your handler runs.
   </Card>
-  <Card icon="brain" href="/agents/custom-code-agent/connect-your-first-agent" title="Connect your first agent">
-    Walk through a full support-bot handler file.
+  <Card icon="shield-check" href="/agents/custom-code-agent/building-blocks/tool-approval" title="Tool approval">
+    Gate tool calls with an in-thread Approve / Deny card.
+  </Card>
+  <Card icon="sparkles" href="/agents/custom-code-agent/frameworks/ai-sdk" title="AI SDK">
+    Build end to end with `@novu/framework/ai-sdk`.
   </Card>
 </Columns>
