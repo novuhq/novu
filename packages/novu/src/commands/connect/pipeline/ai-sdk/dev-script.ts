@@ -139,10 +139,26 @@ export function shouldRefreshDevNovuScript(projectDir: string): boolean {
   return existing !== expected;
 }
 
+const AI_SDK_BRIDGE_ROUTE = '/api/novu';
+
+export type DevNovuSpawnArgs = {
+  command: string;
+  args: string[];
+};
+
+export function buildDevNovuSpawnArgs(projectDir: string): DevNovuSpawnArgs {
+  const { port, runCommand } = inferDevRunCommand(projectDir);
+
+  return {
+    command: 'npx',
+    args: ['novu', 'dev', '-p', String(port), '--no-studio', '--route', AI_SDK_BRIDGE_ROUTE, '--run', runCommand],
+  };
+}
+
 export function buildDevNovuScript(projectDir: string): string {
   const { port, runCommand } = inferDevRunCommand(projectDir);
 
-  return `npx novu dev -p ${port} --no-studio --route /api/novu --run "${runCommand}"`;
+  return `npx novu dev -p ${port} --no-studio --route ${AI_SDK_BRIDGE_ROUTE} --run "${runCommand}"`;
 }
 
 export function applyDevNovuScript(projectDir: string): DevScriptApplyResult {

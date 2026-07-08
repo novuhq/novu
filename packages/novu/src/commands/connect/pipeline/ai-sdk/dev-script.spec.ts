@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { applyDevNovuScript, buildDevNovuScript } from './dev-script';
+import { applyDevNovuScript, buildDevNovuScript, buildDevNovuSpawnArgs } from './dev-script';
 
 const tempDirs: string[] = [];
 
@@ -38,5 +38,19 @@ describe('ai-sdk dev-script', () => {
 
     expect(result.applied).toBe(false);
     expect(result.script).toBe(existing);
+  });
+
+  it('keeps a malicious dev script in a single --run argv element', () => {
+    const dir = makeTempDir();
+    const malicious = 'node server.js" && touch /tmp/pwned #';
+    fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ scripts: { dev: malicious } }));
+
+    const { command, args } = buildDevNovuSpawnArgs(dir);
+    const runArgIndex = args.indexOf('--run');
+
+    expect(command).toBe('npx');
+    expect(runArgIndex).toBeGreaterThanOrEqual(0);
+    expect(args[runArgIndex + 1]).toBe(malicious);
+    expect(buildDevNovuScript(dir)).toContain(malicious);
   });
 });

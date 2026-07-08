@@ -1,7 +1,7 @@
 import { type ChildProcess, execSync, spawn } from 'node:child_process';
 import chalk from 'chalk';
 
-import { buildDevNovuScript } from './dev-script';
+import { buildDevNovuScript, buildDevNovuSpawnArgs } from './dev-script';
 import { readEnvSecretKey, readProjectEnvValue } from './wire-env';
 
 export type RunAiSdkBridgeInput = {
@@ -43,6 +43,7 @@ function buildBridgeSpawnEnv(projectDir: string): NodeJS.ProcessEnv {
 
 export async function runAiSdkBridge(input: RunAiSdkBridgeInput): Promise<void> {
   const devCommand = buildDevNovuScript(input.projectDir);
+  const isWindows = process.platform === 'win32';
   let child: ChildProcess | null = null;
   let exiting = false;
 
@@ -68,11 +69,9 @@ export async function runAiSdkBridge(input: RunAiSdkBridgeInput): Promise<void> 
   console.log(chalk.dim('\n  Send a message on your connected channel to test the agent.'));
   console.log(chalk.dim('  Press Ctrl+C to stop.\n'));
 
-  const isWindows = process.platform === 'win32';
-  const shell = isWindows ? 'cmd' : 'sh';
-  const shellFlag = isWindows ? '/c' : '-c';
+  const { command, args } = buildDevNovuSpawnArgs(input.projectDir);
 
-  child = spawn(shell, [shellFlag, devCommand], {
+  child = spawn(command, args, {
     cwd: input.projectDir,
     stdio: 'inherit',
     detached: !isWindows,
