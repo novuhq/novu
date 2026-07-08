@@ -7,11 +7,10 @@
     "start": "npm run start:dev",
     "afterinstall": "pnpm build",
     "prebuild": "rimraf dist",
-    "build": "cross-env node_modules/.bin/tsc -p tsconfig.build.json",
-    "build:watch": "cross-env node_modules/.bin/tsc -p tsconfig.build.json -w --preserveWatchOutput",
+    "build": "cross-env tsgo -p tsconfig.build.json",
+    "build:watch": "cross-env tsgo -p tsconfig.build.json -w --preserveWatchOutput",
     "start:dev": "pnpm build:watch",
-    "typecheck:tsc": "tsc -p tsconfig.tsgo.json",
-    "typecheck:tsgo": "tsgo -p tsconfig.tsgo.json",
+    "typecheck": "tsgo -p tsconfig.build.json --noEmit",
     "precommit": "lint-staged",
     "check": "biome check .",
     "check:fix": "biome check --write .",
@@ -49,7 +48,6 @@
     "rimraf": "^3.0.2",
     "supertest": "^7.0.0",
     "ts-node": "~10.9.1",
-    "tsconfig-paths": "~4.1.0",
-    "typescript": "5.6.2"
+    "tsconfig-paths": "~4.1.0"
   }
 }

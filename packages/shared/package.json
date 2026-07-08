@@ -7,13 +7,12 @@
     "afterinstall": "pnpm build",
     "prebuild": "rimraf dist",
     "build": "npm run build:cjs && npm run build:esm",
-    "build:esm": "tsc -p tsconfig.esm.json",
-    "build:cjs": "tsc -p tsconfig.json",
-    "build:watch": "cross-env node_modules/.bin/tsc -p tsconfig.json -w --preserveWatchOutput",
+    "build:esm": "tsgo -p tsconfig.esm.json",
+    "build:cjs": "tsgo -p tsconfig.json",
+    "build:watch": "cross-env tsgo -p tsconfig.json -w --preserveWatchOutput",
     "postbuild": "npm run check:circulars",
     "start:dev": "pnpm build:watch",
-    "typecheck:tsc": "tsc -p tsconfig.tsgo.json",
-    "typecheck:tsgo": "tsgo -p tsconfig.tsgo.json",
+    "typecheck": "tsgo -p tsconfig.json --noEmit",
     "precommit": "lint-staged",
     "check": "biome check .",
     "check:fix": "biome check --write .",
@@ -79,7 +78,6 @@
   "devDependencies": {
     "madge": "^8.0.0",
     "rimraf": "^3.0.2",
-    "typescript": "5.6.2",
     "vitest": "^4.1.0"
   },
   "nx": {
