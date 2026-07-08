@@ -40,6 +40,7 @@ function buildBridgeSpawnEnv(projectDir: string): NodeJS.ProcessEnv {
 
   if (apiBaseUrl) {
     env.NOVU_API_BASE_URL = apiBaseUrl;
+    env.NOVU_API_URL = apiBaseUrl;
   }
 
   return env;
