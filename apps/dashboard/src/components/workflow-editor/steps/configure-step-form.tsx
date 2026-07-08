@@ -30,6 +30,7 @@ import { SidebarContent, SidebarFooter, SidebarHeader } from '@/components/side-
 import TruncatedText from '@/components/truncated-text';
 import { UpgradeCTATooltip } from '@/components/upgrade-cta-tooltip';
 import { stepSchema } from '@/components/workflow-editor/schema';
+import { useWorkflowEditorRoutes } from '@/components/workflow-editor/use-workflow-editor-routes';
 import { flattenIssues, getFirstErrorMessage, updateStepInWorkflow } from '@/components/workflow-editor/step-utils';
 import { ConfigureChatStepPreview } from '@/components/workflow-editor/steps/chat/configure-chat-step-preview';
 import {
@@ -114,6 +115,7 @@ type ConfigureStepFormProps = {
 export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
   const { step, workflow, update, environment } = props;
   const navigate = useNavigate();
+  const { editWorkflowRoute } = useWorkflowEditorRoutes();
   const isActionStepResolverEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ACTION_STEP_RESOLVER_ENABLED);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
@@ -174,7 +176,7 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
       {
         onSuccess: () => {
           navigate(
-            buildRoute(ROUTES.EDIT_WORKFLOW, { environmentSlug: environment.slug!, workflowSlug: workflow.slug })
+            buildRoute(editWorkflowRoute, { environmentSlug: environment.slug!, workflowSlug: workflow.slug })
           );
         },
       }
@@ -288,7 +290,7 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
         >
           <SidebarHeader className="flex items-center gap-2.5 border-b py-3 text-sm font-medium">
             <Link
-              to={buildRoute(ROUTES.EDIT_WORKFLOW, {
+              to={buildRoute(editWorkflowRoute, {
                 environmentSlug: environment.slug!,
                 workflowSlug: workflow.slug,
               })}
@@ -300,7 +302,7 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
             </Link>
             <span>Configure Step</span>
             <Link
-              to={buildRoute(ROUTES.EDIT_WORKFLOW, {
+              to={buildRoute(editWorkflowRoute, {
                 environmentSlug: environment.slug!,
                 workflowSlug: workflow.slug,
               })}
