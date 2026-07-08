@@ -32,3 +32,7 @@ export type SubscriberResolution =
   | SubscriberResolutionError;
 
 export type SubscriberResolutionOutcome = SubscriberResolution['outcome'];
+
+export function getResolvedSubscriberId(resolution: SubscriberResolution | undefined): string | null {
+  return resolution?.outcome === 'resolved' ? resolution.subscriberId : null;
+}

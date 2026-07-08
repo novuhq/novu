@@ -54,20 +54,25 @@ describe('AgentInboundHandler', () => {
   ) {
     const logger = makeLogger();
     // Legacy overrides stub the resolver with `subscriberId | null` (or a rejection);
-    // adapt them to the discriminated `SubscriberResolution` contract of `resolveSubscriber`.
+    // adapt them to the discriminated `SubscriberResolution` contract.
     const legacySubscriberResolve = overrides.subscriberResolve;
+    const toResolution = async (...args: unknown[]) => {
+      const subscriberId = await legacySubscriberResolve?.(...args);
+
+      return subscriberId ? { outcome: 'resolved', subscriberId } : { outcome: 'not_found' };
+    };
     const subscriberResolver = {
       resolveSubscriber: legacySubscriberResolve
-        ? sinon.stub().callsFake(async (...args: unknown[]) => {
-            const subscriberId = await legacySubscriberResolve(...args);
-
-            return subscriberId ? { outcome: 'resolved', subscriberId } : { outcome: 'not_found' };
-          })
+        ? sinon.stub().callsFake(toResolution)
         : sinon.stub().resolves({ outcome: 'not_found' }),
       resolveOrProvision:
         overrides.subscriberResolveOrProvision ??
-        legacySubscriberResolve ??
-        sinon.stub().resolves(`sub_${Math.random().toString(36).slice(2, 14)}`),
+        (legacySubscriberResolve
+          ? sinon.stub().callsFake(toResolution)
+          : sinon.stub().resolves({
+              outcome: 'resolved',
+              subscriberId: `sub_${Math.random().toString(36).slice(2, 14)}`,
+            })),
     };
     const conversationService = {
       createOrGetConversation: sinon.stub().resolves(conversation),
@@ -497,6 +502,28 @@ describe('AgentInboundHandler', () => {
       });
     });
 
+    it('should reclassify a resolved id whose subscriber record cannot be loaded as a transient error', async () => {
+      const emailConfig = {
+        ...config,
+        platform: AgentPlatformEnum.EMAIL,
+        integrationIdentifier: 'email-main',
+      };
+      const { handler, managedAgentService, outboundGateway } = makeHandler({
+        subscriberResolve: sinon.stub().resolves('ghost-subscriber'),
+        subscriberFindById: sinon.stub().resolves(null),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+      });
+      const thread = makeEmailDmThread();
+      const message = makeEmailDmMessage('known@example.com');
+
+      await handler.handle('agent1', emailConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(managedAgentService.dispatch.called).to.equal(false);
+      // Internal inconsistency, not a sender problem — must not blame the address.
+      expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
+      expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.equal(UNRESOLVED_SUBSCRIBER_TRANSIENT_REPLY);
+    });
+
     it('should dispatch keyless managed agent even when subscriber is unresolved (email)', async () => {
       const emailConfig = {
         ...config,
@@ -559,7 +586,7 @@ describe('AgentInboundHandler', () => {
         subscriberAccess: AgentSubscriberAccessEnum.OPEN,
       };
       const senderEmail = 'newcomer@example.com';
-      const resolveOrProvision = sinon.stub().resolves('sub-provisioned');
+      const resolveOrProvision = sinon.stub().resolves({ outcome: 'resolved', subscriberId: 'sub-provisioned' });
       const { handler, managedAgentService, outboundGateway } = makeHandler({
         subscriberResolveOrProvision: resolveOrProvision,
         subscriberFindById: sinon.stub().resolves({ _id: 'sub-mongo', subscriberId: 'sub-provisioned' }),
@@ -588,7 +615,7 @@ describe('AgentInboundHandler', () => {
         subscriberAccess: AgentSubscriberAccessEnum.RESTRICTED,
       };
       const senderEmail = 'stranger@example.com';
-      const resolveOrProvision = sinon.stub().resolves('sub-provisioned');
+      const resolveOrProvision = sinon.stub().resolves({ outcome: 'resolved', subscriberId: 'sub-provisioned' });
       const { handler, managedAgentService, outboundGateway } = makeHandler({
         subscriberResolve: sinon.stub().resolves(null),
         subscriberResolveOrProvision: resolveOrProvision,
@@ -615,7 +642,7 @@ describe('AgentInboundHandler', () => {
         isManaged: true,
         subscriberAccess: AgentSubscriberAccessEnum.OPEN,
       };
-      const resolveOrProvision = sinon.stub().resolves('sub-provisioned');
+      const resolveOrProvision = sinon.stub().resolves({ outcome: 'resolved', subscriberId: 'sub-provisioned' });
       const { handler, managedAgentService } = makeHandler({
         subscriberResolve: sinon.stub().resolves(null),
         subscriberResolveOrProvision: resolveOrProvision,
@@ -642,7 +669,7 @@ describe('AgentInboundHandler', () => {
       };
       // On unpatched code the open-access path provisions/looks up the forged
       // address, handing the attacker a subscriber identity.
-      const resolveOrProvision = sinon.stub().resolves('sub-provisioned');
+      const resolveOrProvision = sinon.stub().resolves({ outcome: 'resolved', subscriberId: 'sub-provisioned' });
       const resolveOnly = sinon.stub().resolves('victim-subscriber');
       const { handler, subscriberResolver, managedAgentService, outboundGateway } = makeHandler({
         subscriberResolve: resolveOnly,

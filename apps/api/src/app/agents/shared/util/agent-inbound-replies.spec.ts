@@ -40,14 +40,14 @@ describe('buildUnresolvedSubscriberAccessReply', () => {
     expect(reply).to.not.include('known@example.com');
   });
 
-  it('returns transient copy when the id resolved but the subscriber record failed to load', () => {
+  it('does not treat a resolved outcome as transient — the handler reclassifies unloadable records as error', () => {
     const reply = buildUnresolvedSubscriberAccessReply({
       platform: AgentPlatformEnum.EMAIL,
       senderEmail: 'known@example.com',
       resolutionOutcome: 'resolved',
     });
 
-    expect(reply).to.equal(UNRESOLVED_SUBSCRIBER_TRANSIENT_REPLY);
+    expect(reply).to.not.equal(UNRESOLVED_SUBSCRIBER_TRANSIENT_REPLY);
   });
 
   it('returns generic access copy for invalid_identity', () => {

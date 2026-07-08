@@ -17,7 +17,11 @@ export function buildUnresolvedSubscriberAccessReply(params: {
   senderEmail?: string;
   resolutionOutcome?: SubscriberResolutionOutcome;
 }): string {
-  if (isTransientResolutionOutcome(params.resolutionOutcome)) {
+  // On `error` the sender's identity was never actually rejected, so the
+  // access-denied copy would be wrong. (`resolved` never reaches this gate —
+  // the inbound handler reclassifies resolved-but-unloadable records as
+  // `error` before dispatch.)
+  if (params.resolutionOutcome === 'error') {
     return UNRESOLVED_SUBSCRIBER_TRANSIENT_REPLY;
   }
 
@@ -31,27 +35,4 @@ export function buildUnresolvedSubscriberAccessReply(params: {
   }
 
   return UNRESOLVED_SUBSCRIBER_ACCESS_REPLY;
-}
-
-/**
- * `error` means the lookup failed outright. `resolved` reaching the unresolved
- * gate means the id resolved but the Subscriber record could not be loaded
- * afterwards. In both cases the sender's identity was never actually rejected,
- * so the access-denied copy would be wrong.
- */
-function isTransientResolutionOutcome(outcome: SubscriberResolutionOutcome | undefined): boolean {
-  switch (outcome) {
-    case 'error':
-    case 'resolved':
-      return true;
-    case 'not_found':
-    case 'invalid_identity':
-    case undefined:
-      return false;
-    default: {
-      const exhaustiveCheck: never = outcome;
-
-      throw new Error(`Unhandled subscriber resolution outcome: ${exhaustiveCheck as string}`);
-    }
-  }
 }

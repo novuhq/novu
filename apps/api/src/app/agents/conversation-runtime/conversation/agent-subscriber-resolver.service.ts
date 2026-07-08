@@ -151,17 +151,6 @@ export class AgentSubscriberResolver {
   }
 
   /**
-   * Legacy convenience view over `resolveSubscriber` that flattens the outcome
-   * back to `subscriberId | null` for callers that only care about the happy
-   * path (e.g. the `resolveOrProvision` pre-check).
-   */
-  async resolveOnly(params: ResolveSubscriberParams): Promise<string | null> {
-    const resolution = await this.resolveSubscriber(params);
-
-    return resolution.outcome === 'resolved' ? resolution.subscriberId : null;
-  }
-
-  /**
    * Lookup-or-provision for inbound text messages on platforms where the agent
    * may create the subscriber itself: Slack/Teams (always) and email when the
    * caller has established open access (`subscriberAccess === 'open'`, never
@@ -180,16 +169,17 @@ export class AgentSubscriberResolver {
    *     binding; email identity lives on `Subscriber.email` alone.
    *
    * Slack/Teams throw on provisioning failure (dispatch stays off); the email
-   * branch soft-fails to `null` so a provisioning hiccup never crashes the
-   * inbound webhook. Throws for non-provisionable platforms; callers MUST
-   * route reactions, actions, and other inbound through `resolveOnly`.
+   * branch soft-fails to an `error` outcome so a provisioning hiccup never
+   * crashes the inbound webhook. Throws for non-provisionable platforms;
+   * callers MUST route reactions, actions, and other inbound through
+   * `resolveSubscriber`.
    */
-  async resolveOrProvision(params: ResolveOrProvisionParams): Promise<string | null> {
+  async resolveOrProvision(params: ResolveOrProvisionParams): Promise<SubscriberResolution> {
     const isOpenAccessEmail = params.platform === AgentPlatformEnum.EMAIL;
 
     if (!AUTO_PROVISION_PLATFORMS.has(params.platform) && !isOpenAccessEmail) {
       throw new Error(
-        `resolveOrProvision called for unsupported platform "${params.platform}". Route through resolveOnly instead.`
+        `resolveOrProvision called for unsupported platform "${params.platform}". Route through resolveSubscriber instead.`
       );
     }
 
@@ -207,34 +197,40 @@ export class AgentSubscriberResolver {
       return this.resolveOrProvisionEmail(params);
     }
 
-    const existing = await this.resolveOnly(params);
-    if (existing) {
+    const existing = await this.resolveSubscriber(params);
+    if (existing.outcome === 'resolved') {
       return existing;
     }
 
-    return this.provisionSubscriberAndEndpoint(params);
+    return { outcome: 'resolved', subscriberId: await this.provisionSubscriberAndEndpoint(params) };
   }
 
   /**
    * Email flavor of lookup-or-provision, used for open-access agents. Fully
-   * soft-fail: a lookup or provisioning error is logged and swallowed so the
-   * inbound webhook keeps flowing — the turn then continues unresolved and the
-   * managed subscriber gate replies instead.
+   * soft-fail: a lookup or provisioning error is logged and mapped to an
+   * `error` outcome so the inbound webhook keeps flowing — the turn then
+   * continues unresolved and the managed subscriber gate replies instead.
    */
-  private async resolveOrProvisionEmail(params: ResolveOrProvisionParams): Promise<string | null> {
+  private async resolveOrProvisionEmail(params: ResolveOrProvisionParams): Promise<SubscriberResolution> {
     try {
-      const existing = await this.resolveOnly(params);
-      if (existing) {
+      const existing = await this.resolveSubscriber(params);
+      if (existing.outcome !== 'not_found') {
         return existing;
       }
 
-      return await this.provisionEmailSubscriber({
+      const provisionedSubscriberId = await this.provisionEmailSubscriber({
         environmentId: params.environmentId,
         organizationId: params.organizationId,
         integrationIdentifier: params.integrationIdentifier,
         agentIdentifier: params.agentIdentifier,
         email: params.platformUserId,
       });
+
+      // `provisionEmailSubscriber` only returns null for an unusable address,
+      // which the lookup above would already have classified — kept for safety.
+      return provisionedSubscriberId
+        ? { outcome: 'resolved', subscriberId: provisionedSubscriberId }
+        : { outcome: 'invalid_identity' };
     } catch (err) {
       this.logger.warn(
         err,
@@ -247,7 +243,7 @@ export class AgentSubscriberResolver {
         integrationIdentifier: params.integrationIdentifier,
       });
 
-      return null;
+      return { outcome: 'error', err };
     }
   }
 

@@ -32,7 +32,7 @@ import { AgentEventEnum } from '../../shared/enums/agent-event.enum';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { captureAgentException, captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
 import { parseToolApprovalActionId } from '../../shared/tool-approval/action-id';
-import type { SubscriberResolution } from '../../shared/types/subscriber-resolution';
+import { getResolvedSubscriberId, type SubscriberResolution } from '../../shared/types/subscriber-resolution';
 import { agentLinkAwaitingInboundConnectionFilter } from '../../shared/util/agent-inbound-connection';
 import { extractMsTeamsTenantId } from '../../shared/util/msteams-activity';
 import { type AutoProvisionPlatform, isAutoProvisionPlatform } from '../../shared/util/platform-endpoint-config';
@@ -322,7 +322,7 @@ export class AgentInboundHandler implements OnModuleInit {
         );
         resolution = { outcome: 'not_found' };
       } else if (canAutoProvision) {
-        const provisionedSubscriberId = await this.subscriberResolver.resolveOrProvision({
+        resolution = await this.subscriberResolver.resolveOrProvision({
           environmentId: config.environmentId,
           organizationId: config.organizationId,
           platform: config.platform,
@@ -338,9 +338,6 @@ export class AgentInboundHandler implements OnModuleInit {
           platformTenantId:
             config.platform === AgentPlatformEnum.TEAMS ? extractMsTeamsTenantId(message.raw) : undefined,
         });
-        resolution = provisionedSubscriberId
-          ? { outcome: 'resolved', subscriberId: provisionedSubscriberId }
-          : { outcome: 'not_found' };
       } else {
         resolution = await this.resolveSubscriber(agentId, config, message.author.userId, 'resolve-subscriber');
       }
@@ -377,7 +374,7 @@ export class AgentInboundHandler implements OnModuleInit {
       throw err;
     }
 
-    const subscriberId = resolution.outcome === 'resolved' ? resolution.subscriberId : null;
+    const subscriberId = getResolvedSubscriberId(resolution);
 
     // A genuine, non-bot user has messaged the agent (bot-authored echoes threw
     // `BotAuthorSkippedError` above). This — not the raw webhook POST — is what
@@ -459,6 +456,16 @@ export class AgentInboundHandler implements OnModuleInit {
         'managedRuntime',
       ]),
     ]);
+
+    // An id that resolved but whose Subscriber record cannot be loaded is an
+    // internal inconsistency, not a sender problem — reclassify so downstream
+    // gates reply with the transient copy instead of rejecting the sender.
+    if (resolution.outcome === 'resolved' && !subscriber) {
+      resolution = {
+        outcome: 'error',
+        err: new Error(`Subscriber record ${resolution.subscriberId} not found after resolution`),
+      };
+    }
 
     if (!config.isManaged) {
       await this.inboundAck.showWorkingSignal({
@@ -924,7 +931,7 @@ export class AgentInboundHandler implements OnModuleInit {
     const reactionResolution = platformUserId
       ? await this.resolveSubscriber(agentId, config, platformUserId, 'resolve-subscriber-reaction')
       : undefined;
-    const subscriberId = reactionResolution?.outcome === 'resolved' ? reactionResolution.subscriberId : null;
+    const subscriberId = getResolvedSubscriberId(reactionResolution);
 
     const [subscriber, sourceActivity] = await Promise.all([
       subscriberId
@@ -987,7 +994,7 @@ export class AgentInboundHandler implements OnModuleInit {
     }
 
     const actionResolution = await this.resolveSubscriber(agentId, config, userId, 'resolve-subscriber-action');
-    const subscriberId = actionResolution.outcome === 'resolved' ? actionResolution.subscriberId : null;
+    const subscriberId = getResolvedSubscriberId(actionResolution);
 
     const participantId = subscriberId ?? `${config.platform}:${userId}`;
     const participantType = subscriberId
