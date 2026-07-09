@@ -1,11 +1,11 @@
 import path from 'node:path';
 import { installPackages } from '../../../init/helpers/install';
 import { detectPackageManager } from '../../../step/utils/package-manager';
-import { hasDependency, readProjectPackageJson } from '../bridge/project-package';
+import { getDependencyVersion, hasDependency, readProjectPackageJson } from '../bridge/project-package';
 
 const FRAMEWORK_PACKAGE = '@novu/framework';
 const AI_CORE_PACKAGE = 'ai';
-const AI_CORE_PACKAGE_SPEC = `${AI_CORE_PACKAGE}@^7.0.0`;
+export const AI_SDK_V7_SPEC = `${AI_CORE_PACKAGE}@^7.0.0`;
 
 export type PackageInstallResult = {
   installed: boolean;
@@ -13,26 +13,27 @@ export type PackageInstallResult = {
   packages: string[];
 };
 
-/** Packages the connect flow should offer to install for this project. */
-export function resolveAiSdkPackagesToInstall(projectDir: string): string[] {
-  const pkg = readProjectPackageJson(projectDir);
-  if (!pkg) {
-    return [FRAMEWORK_PACKAGE, AI_CORE_PACKAGE_SPEC];
+export type AiSdkPackageStatus =
+  | { kind: 'ok' }
+  | { kind: 'missing'; packages: string[] }
+  | { kind: 'incompatible-ai'; declaredVersion: string };
+
+function isAiSdkV7Declared(version: string): boolean {
+  const trimmed = version.trim();
+
+  if (/^(file:|workspace:|link:)/.test(trimmed)) {
+    return true;
   }
 
-  const missing: string[] = [];
-  if (!hasDependency(pkg, FRAMEWORK_PACKAGE)) {
-    missing.push(FRAMEWORK_PACKAGE);
-  }
-  if (!hasDependency(pkg, AI_CORE_PACKAGE)) {
-    missing.push(AI_CORE_PACKAGE_SPEC);
+  const match = trimmed.match(/(\d+)/);
+  if (!match) {
+    return true;
   }
 
-  return missing;
+  return Number.parseInt(match[1], 10) >= 7;
 }
 
-export function buildAiSdkInstallCommand(projectDir: string): string {
-  const packages = resolveAiSdkPackagesToInstall(projectDir);
+function buildInstallCommand(projectDir: string, packages: string[]): string {
   if (packages.length === 0) {
     return '';
   }
@@ -50,6 +51,51 @@ export function buildAiSdkInstallCommand(projectDir: string): string {
     default:
       return `npm install ${packageList} --no-workspaces`;
   }
+}
+
+export function resolveAiSdkPackageStatus(projectDir: string): AiSdkPackageStatus {
+  const pkg = readProjectPackageJson(projectDir);
+  if (!pkg) {
+    return { kind: 'missing', packages: [FRAMEWORK_PACKAGE, AI_SDK_V7_SPEC] };
+  }
+
+  const aiVersion = getDependencyVersion(pkg, AI_CORE_PACKAGE);
+  if (aiVersion && !isAiSdkV7Declared(aiVersion)) {
+    return { kind: 'incompatible-ai', declaredVersion: aiVersion };
+  }
+
+  const missing: string[] = [];
+  if (!hasDependency(pkg, FRAMEWORK_PACKAGE)) {
+    missing.push(FRAMEWORK_PACKAGE);
+  }
+  if (!hasDependency(pkg, AI_CORE_PACKAGE)) {
+    missing.push(AI_SDK_V7_SPEC);
+  }
+
+  if (missing.length > 0) {
+    return { kind: 'missing', packages: missing };
+  }
+
+  return { kind: 'ok' };
+}
+
+/** Packages the connect flow should offer to install for this project. */
+export function resolveAiSdkPackagesToInstall(projectDir: string): string[] {
+  const status = resolveAiSdkPackageStatus(projectDir);
+
+  if (status.kind === 'missing') {
+    return status.packages;
+  }
+
+  return [];
+}
+
+export function buildAiSdkInstallCommand(projectDir: string): string {
+  return buildInstallCommand(projectDir, resolveAiSdkPackagesToInstall(projectDir));
+}
+
+export function buildAiSdkUpgradeCommand(projectDir: string): string {
+  return buildInstallCommand(projectDir, [AI_SDK_V7_SPEC]);
 }
 
 export async function runAiSdkPackageInstall(opts: {
