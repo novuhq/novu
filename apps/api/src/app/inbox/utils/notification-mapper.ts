@@ -4,8 +4,8 @@ import {
   MessageActionStatusEnum,
   ResourceOriginEnum,
   ResourceTypeEnum,
-  sanitizeInAppRedirect,
   SeverityLevelEnum,
+  sanitizeInAppRedirect,
 } from '@novu/shared';
 
 import { InboxNotificationDto, InboxSubscriberResponseDto } from '../dtos/inbox-notification.dto';

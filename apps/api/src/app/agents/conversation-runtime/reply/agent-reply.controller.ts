@@ -1,6 +1,6 @@
 import { Body, Controller, HttpCode, HttpStatus, Param, Post } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
-import type { Signal, ToolResult } from '@novu/framework';
+import type { Signal, ToolResult } from '@novu/framework/internal';
 import { UserSessionData } from '@novu/shared';
 import { RequireAuthentication } from '../../../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../../../auth/framework/external-api.decorator';

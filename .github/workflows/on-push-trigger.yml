@@ -133,6 +133,7 @@ jobs:
           gh workflow run "deploy.yml" \
             --ref next \
             -f environment=staging \
+            -f runner=github \
             -f deploy_api=${{ steps.determine-services.outputs.deploy_api }} \
             -f deploy_worker=${{ steps.determine-services.outputs.deploy_worker }} \
             -f deploy_ws=${{ steps.determine-services.outputs.deploy_ws }} \

@@ -5,8 +5,6 @@ import {
   EnvironmentRepository,
   EnvironmentVariableRepository,
   JsonSchemaTypeEnum,
-  NotificationStepEntity,
-  NotificationTemplateEntity,
 } from '@novu/dal';
 import { ControlValuesLevelEnum, EnvironmentSystemVariables, StepTypeEnum } from '@novu/shared';
 import { JSONSchemaDto } from '../../dtos/json-schema.dto';
@@ -26,6 +24,7 @@ import { computeResultSchema } from '../../utils/map-step-type-to-result.mapper'
 import { parsePayloadSchema } from '../../utils/parse-payload-schema';
 import { CreateVariablesObject, CreateVariablesObjectCommand } from '../create-variables-object';
 import { BuildVariableSchemaCommand, IOptimisticStepInfo } from './build-available-variable-schema.command';
+import { StepForVariableSchema, WorkflowForVariableSchema } from '../../types/workflow-mapper.types';
 
 type SelectedControlValuesFields = Pick<ControlValuesEntity, 'controls' | '_stepId'>;
 
@@ -141,9 +140,9 @@ export class BuildVariableSchemaUsecase {
    * with optimistic steps (used during sync scenarios)
    */
   private buildEffectiveSteps(
-    workflow: NotificationTemplateEntity | undefined,
+    workflow: WorkflowForVariableSchema | undefined,
     optimisticSteps: IOptimisticStepInfo[] | undefined
-  ): Array<NotificationStepEntity | IOptimisticStepInfo> | undefined {
+  ): Array<StepForVariableSchema | IOptimisticStepInfo> | undefined {
     if (!optimisticSteps) {
       return workflow?.steps;
     }
@@ -164,7 +163,7 @@ export class BuildVariableSchemaUsecase {
    * Finds the index of a step in the effective steps array
    */
   private findStepIndex(
-    effectiveSteps: Array<NotificationStepEntity | IOptimisticStepInfo> | undefined,
+    effectiveSteps: Array<StepForVariableSchema | IOptimisticStepInfo> | undefined,
     stepInternalId: string | undefined
   ): number {
     if (!effectiveSteps || !stepInternalId) {
@@ -184,7 +183,7 @@ export class BuildVariableSchemaUsecase {
 
   @Instrument()
   private async resolvePayloadSchema(
-    workflow: NotificationTemplateEntity | undefined,
+    workflow: WorkflowForVariableSchema | undefined,
     payload: unknown,
     optimisticPayloadSchema?: JSONSchemaDto
   ): Promise<JSONSchemaDto> {
@@ -233,7 +232,7 @@ function buildPreviousStepsProperties({
   payloadSchema,
   controlValuesMap,
 }: {
-  previousSteps: Array<NotificationStepEntity | IOptimisticStepInfo> | undefined;
+  previousSteps: Array<StepForVariableSchema | IOptimisticStepInfo> | undefined;
   payloadSchema?: JSONSchemaDto;
   controlValuesMap?: Record<string, Record<string, unknown>>;
 }) {
@@ -277,7 +276,7 @@ function buildPreviousStepsSchema({
   payloadSchema,
   controlValuesMap,
 }: {
-  previousSteps: Array<NotificationStepEntity | IOptimisticStepInfo> | undefined;
+  previousSteps: Array<StepForVariableSchema | IOptimisticStepInfo> | undefined;
   payloadSchema?: JSONSchemaDto;
   controlValuesMap?: Record<string, Record<string, unknown>>;
 }): JSONSchemaDto {

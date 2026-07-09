@@ -1,7 +1,7 @@
 import { BadGatewayException, BadRequestException, Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import { ConversationChannel } from '@novu/dal';
-import type { SentMessageInfo } from '@novu/framework';
+import type { SentMessageInfo } from '@novu/framework/internal';
 import type { AdapterPostableMessage, CardElement, EmojiValue, PlanModel, Thread } from 'chat';
 import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import type { ReplyContentDto } from '../../shared/dtos/agent-reply-payload.dto';

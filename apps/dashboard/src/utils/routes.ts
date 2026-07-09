@@ -15,6 +15,11 @@ export const ROUTES = {
   INBOX_EMBED_SUCCESS: '/onboarding/inbox/success',
   ROOT: '/',
   LOCAL_STUDIO_AUTH: '/local-studio/auth',
+  /** Handshake target opened by `novu dev` with tunnel params (see pages/local-handshake.tsx). */
+  LOCAL_HANDSHAKE: '/local',
+  LOCAL_WORKFLOWS: '/env/:environmentSlug/local/workflows',
+  LOCAL_EDIT_WORKFLOW: '/env/:environmentSlug/local/workflows/:workflowSlug',
+  LOCAL_TRIGGER_WORKFLOW: '/env/:environmentSlug/local/workflows/:workflowSlug/trigger',
   CLI_AUTH: '/cli/auth',
   CONNECT_CLAIM: '/connect/claim',
   ENV: '/env',

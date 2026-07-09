@@ -14,22 +14,30 @@ import type { AiSdkGenerateResult, AiSdkStreamResult } from './types';
 
 function fakeRuntimeCtx(overrides: Partial<{ history: AgentHistoryEntry[] }> = {}) {
   const reply = vi.fn().mockResolvedValue({ messageId: 'm', platformThreadId: 'p' });
+  const replyApprovalCard = vi.fn().mockResolvedValue({ messageId: 'm', platformThreadId: 'p' });
   const history = overrides.history ?? [];
   const ctx = {
     [RUNTIME_CONTEXT_BRAND]: true as const,
     reply,
+    replyApprovalCard,
     history,
     emitToolResult: vi.fn(),
     emitToolApprovalRequest: vi.fn(),
     asMessageContext: () => ctx as unknown as AgentMessageContext,
   };
 
-  return ctx as unknown as AgentRuntimeContext & { reply: ReturnType<typeof vi.fn>; history: AgentHistoryEntry[] };
+  return ctx as unknown as AgentRuntimeContext & {
+    reply: ReturnType<typeof vi.fn>;
+    replyApprovalCard: ReturnType<typeof vi.fn>;
+    history: AgentHistoryEntry[];
+  };
 }
 
 function fakeMessageCtx(overrides: Partial<{ history: AgentHistoryEntry[] }> = {}) {
   return fakeRuntimeCtx(overrides) as unknown as AgentMessageContext & {
     reply: ReturnType<typeof vi.fn>;
+    replyApprovalCard: ReturnType<typeof vi.fn>;
+    emitToolApprovalRequest: ReturnType<typeof vi.fn>;
     history: AgentHistoryEntry[];
   };
 }
@@ -180,14 +188,15 @@ describe('ai-sdk agent adapter', () => {
 
       await supportAgent.handlers.onMessage({} as never, ctx);
 
-      expect(ctx.reply).toHaveBeenCalledTimes(1);
+      expect(ctx.replyApprovalCard).toHaveBeenCalledTimes(1);
       expect(ctx.emitToolApprovalRequest).toHaveBeenCalledWith({
         approvalId: 'tc_9',
         toolCallId: 'tc_9',
         name: 'issueRefund',
         input: { amount: 300 },
       });
-      expect(ctx.reply.mock.calls[0]).toHaveLength(1);
+      expect(ctx.replyApprovalCard.mock.calls[0]).toEqual([{ type: 'tool-approval-card' }]);
+      expect(ctx.reply).not.toHaveBeenCalled();
     });
   });
 

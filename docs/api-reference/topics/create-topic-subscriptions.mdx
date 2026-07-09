@@ -1,5 +1,11 @@
 ---
 title: "Create topic subscriptions"
-description: "Create topic subscriptions using the Novu REST API. Requires your environment secret key in the Authorization header."
+description: "Subscribe one or more subscribers to a topic and optionally set per-subscription preferences."
 openapi: "POST /v2/topics/{topicKey}/subscriptions"
 ---
+
+Subscribe one or more subscribers to a topic. Pass `subscriptions` as subscriber IDs, or as objects with `identifier` and `subscriberId` when you need a custom subscription key.
+
+<Note>
+  When you provide a custom `identifier` for a subscription, it must be **512 characters or fewer**. Requests with longer identifiers are rejected.
+</Note>

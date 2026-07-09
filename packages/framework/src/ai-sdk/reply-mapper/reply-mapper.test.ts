@@ -8,6 +8,7 @@ import { deliverResult, handleAiSdkResult, isAiSdkResult } from './index';
 
 function fakeCtx(history: AgentHistoryEntry[] = []): AgentRuntimeContext {
   const reply = vi.fn().mockResolvedValue({ messageId: 'm', platformThreadId: 'p' });
+  const replyApprovalCard = vi.fn().mockResolvedValue({ messageId: 'm', platformThreadId: 'p' });
   const typing = Object.assign(vi.fn().mockResolvedValue(undefined), {
     stop: vi.fn().mockResolvedValue(undefined),
   });
@@ -16,6 +17,7 @@ function fakeCtx(history: AgentHistoryEntry[] = []): AgentRuntimeContext {
 
   return {
     reply,
+    replyApprovalCard,
     typing,
     history,
     emitToolResult,
@@ -175,8 +177,9 @@ describe('reply mapper', () => {
         name: 'issueRefund',
         input: { amount: 250 },
       });
-      expect(ctx.reply).toHaveBeenCalledOnce();
-      expect(ctx.reply).toHaveBeenCalledWith(expect.objectContaining({ type: 'card' }));
+      expect(ctx.replyApprovalCard).toHaveBeenCalledOnce();
+      expect(ctx.replyApprovalCard).toHaveBeenCalledWith({ type: 'tool-approval-card' });
+      expect(ctx.reply).not.toHaveBeenCalled();
     });
 
     it('ignores automatic approval parts and delivers text', async () => {

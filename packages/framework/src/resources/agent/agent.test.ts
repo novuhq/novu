@@ -2140,7 +2140,7 @@ describe('tool approval', () => {
     });
 
     expect(posts).toHaveLength(1);
-    expect(posts[0].reply.card).toBeTruthy();
+    expect(posts[0].reply.toolApprovalCard).toEqual({ type: 'tool-approval-card' });
     // The tool-call payload rides in toolApprovalRequest (persisted as toolData), not in the button id.
     expect(posts[0].toolApprovalRequest).toMatchObject({
       approvalId: 'tc',
@@ -2148,7 +2148,7 @@ describe('tool approval', () => {
       name: 'doIt',
       input: { x: 1 },
     });
-    expect(JSON.stringify(posts[0].reply.card)).not.toContain('"x":1');
+    expect(JSON.stringify(posts[0].reply)).not.toContain('"x":1');
     expect(posts.some((p) => p.reply instanceof PendingApproval)).toBe(false);
   });
 

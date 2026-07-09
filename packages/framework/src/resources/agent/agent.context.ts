@@ -22,6 +22,7 @@ import type {
   ReplyHandle,
   SentMessageInfo,
   Signal,
+  ToolApprovalCard,
   ToolApprovalConfig,
   ToolApprovalControl,
   ToolResult,
@@ -384,6 +385,29 @@ export class AgentContextImpl implements AgentRuntimeContext {
     const info = await this._post(body);
     if (!info) {
       throw new Error('Agent reply did not return a message handle');
+    }
+
+    return new ReplyHandleImpl(
+      info.messageId,
+      info.platformThreadId,
+      this._conversationId,
+      this._integrationIdentifier,
+      this._poster
+    );
+  }
+
+  async replyApprovalCard(card: ToolApprovalCard): Promise<ReplyHandle> {
+    const body: AgentReplyPayload = {
+      conversationId: this._conversationId,
+      integrationIdentifier: this._integrationIdentifier,
+      reply: { toolApprovalCard: card },
+    };
+
+    this._drainSideEffects(body);
+
+    const info = await this._post(body);
+    if (!info) {
+      throw new Error('Agent approval card reply did not return a message handle');
     }
 
     return new ReplyHandleImpl(

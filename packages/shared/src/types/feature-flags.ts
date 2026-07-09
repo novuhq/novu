@@ -43,6 +43,8 @@ export enum FeatureFlagsKeysEnum {
   IS_WORKFLOW_NODE_PREVIEW_ENABLED = 'IS_WORKFLOW_NODE_PREVIEW_ENABLED',
   IS_WEBHOOKS_MANAGEMENT_ENABLED = 'IS_WEBHOOKS_MANAGEMENT_ENABLED',
   IS_KEYLESS_ENVIRONMENT_CREATION_ENABLED = 'IS_KEYLESS_ENVIRONMENT_CREATION_ENABLED',
+  /** Dashboard "Local" pseudo-environment for previewing workflows from a local bridge (replaces the legacy local studio). */
+  IS_LOCAL_ENVIRONMENT_ENABLED = 'IS_LOCAL_ENVIRONMENT_ENABLED',
   IS_KEYLESS_AGENT_AI_ENABLED = 'IS_KEYLESS_AGENT_AI_ENABLED',
   /** When enabled, API-key auth on GET /v1/environments returns decrypted apiKeys for every environment in the org (pre-NV-7641 opt-in behavior). */
   IS_LIST_ENVIRONMENTS_API_KEYS_ENABLED = 'IS_LIST_ENVIRONMENTS_API_KEYS_ENABLED',
@@ -100,6 +102,8 @@ export enum FeatureFlagsKeysEnum {
   IS_AGENT_WHATS_NEXT_ENABLED = 'IS_AGENT_WHATS_NEXT_ENABLED',
   /** Enable the MS Teams subscriber-rollout "What's next" guide (distribute the bot + connect end users) and its post-connect "Continue" CTA. When off, MS Teams shows the generic continue note and hides the rollout guide. Create the boolean in LaunchDarkly for cloud, or set `VITE_IS_AGENT_MSTEAMS_WHATS_NEXT_ENABLED` when self-hosted. */
   IS_AGENT_MSTEAMS_WHATS_NEXT_ENABLED = 'IS_AGENT_MSTEAMS_WHATS_NEXT_ENABLED',
+  /** Enable the production-readiness "What's next" guide for the Novu email agent (own provider, verified domain/deliverability, branded inbound address, custom From, user rollout) and simplify the out-of-box email setup to address + test on cloud. When off, the email integration keeps its current single-guide behavior. Create the boolean in LaunchDarkly for cloud, or set `VITE_IS_AGENT_EMAIL_WHATS_NEXT_ENABLED` when self-hosted. */
+  IS_AGENT_EMAIL_WHATS_NEXT_ENABLED = 'IS_AGENT_EMAIL_WHATS_NEXT_ENABLED',
   /** Enable Microsoft Teams Quick Setup in the dashboard; create the boolean in LaunchDarkly for cloud, or set `VITE_IS_MSTEAMS_QUICK_SETUP_ENABLED` when self-hosted. */
   IS_MSTEAMS_QUICK_SETUP_ENABLED = 'IS_MSTEAMS_QUICK_SETUP_ENABLED',
   /** Enable Slack Quick Setup in the dashboard; create the boolean in LaunchDarkly for cloud, or set `VITE_IS_SLACK_QUICK_SETUP_ENABLED` when self-hosted. */

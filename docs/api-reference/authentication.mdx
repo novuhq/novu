@@ -93,6 +93,10 @@ When using the EU region, also configure the WebSocket hostname for real-time In
 | **US (default)** | `wss://ws.novu.co` |
 | **EU** | `wss://eu.socket.novu.co` |
 
+<Warning>
+  Your account and its API keys are bound to the region you chose at signup. A US secret key will not authenticate against `https://eu.api.novu.co` (and vice versa) — you cannot switch regions by swapping the base URL. To change region, contact [sales@novu.co](mailto:sales@novu.co); see [Data Residency](/platform/additional-resources/security#data-residency) for details.
+</Warning>
+
 <Note>
   Self-hosted deployments use your own API hostname. See [Self Hosting Novu](/community/self-hosting-novu/overview) for configuration details.
 </Note>

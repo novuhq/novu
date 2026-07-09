@@ -8,7 +8,7 @@ import {
   WorkflowCreateAndUpdateKeys,
   WorkflowStatusEnum,
 } from '@novu/shared';
-import { WorkflowWithPreferencesResponseDto } from '../dtos/get-workflow-with-preferences.dto';
+import { WorkflowForResponseMapper, WorkflowWithPreferencesForMapper } from '../types/workflow-mapper.types';
 import { WorkflowPreferencesResponseDto } from '../dtos/workflow/preferences.response.dto';
 import { RuntimeIssueDto } from '../dtos/workflow/runtime-issue.dto';
 import { StepResponseDto } from '../dtos/workflow/step.response.dto';
@@ -18,7 +18,7 @@ import { WorkflowResponseDto } from '../dtos/workflow/workflow-response.dto';
 import { buildSlug } from './build-slug';
 
 export function toResponseWorkflowDto(
-  workflow: WorkflowWithPreferencesResponseDto,
+  workflow: WorkflowWithPreferencesForMapper,
   steps: StepResponseDto[],
   payloadExample?: object
 ): WorkflowResponseDto {
@@ -54,7 +54,7 @@ export function toResponseWorkflowDto(
     status: workflow.status || WorkflowStatusEnum.ACTIVE,
     issues: workflow.issues as unknown as Record<WorkflowCreateAndUpdateKeys, RuntimeIssueDto>,
     lastTriggeredAt: workflow.lastTriggeredAt,
-    payloadSchema: workflow.payloadSchema,
+    payloadSchema: workflow.payloadSchema as object | undefined,
     payloadExample,
     validatePayload: workflow.validatePayload || false,
     isTranslationEnabled: workflow.isTranslationEnabled || false,
@@ -117,7 +117,7 @@ function buildStepTypeOverview(step: NotificationStepEntity): StepTypeEnum | und
   return step.template?.type;
 }
 
-function computeOrigin(template: NotificationTemplateEntity): ResourceOriginEnum {
+function computeOrigin(template: Pick<WorkflowForResponseMapper, 'type' | 'origin'>): ResourceOriginEnum {
   // Required to differentiate between old V1 and new workflows in an attempt to eliminate the need for type field
   if (typeof template.type === 'undefined' && typeof template.origin === 'undefined') {
     return ResourceOriginEnum.NOVU_CLOUD_V1;

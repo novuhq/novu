@@ -30,10 +30,10 @@ import {
   slugify,
 } from '@novu/shared';
 import shortid from 'shortid';
+import { validateOutboundIntegrationCredentials } from '../../utils/validate-outbound-integration-credentials';
 import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
 import { ensureWhatsAppManagedCredentials } from '../whatsapp/whatsapp-credentials.utils';
-import { validateOutboundIntegrationCredentials } from '../../utils/validate-outbound-integration-credentials';
 import { CreateIntegrationCommand } from './create-integration.command';
 
 @Injectable()

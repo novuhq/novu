@@ -10,17 +10,21 @@ import {
   getAgentIntegrationsQueryKey,
   listAgentIntegrations,
 } from '@/api/agents';
+import type { PlanUsage } from '@/api/agents-plan-usage';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import { Button } from '@/components/primitives/button';
 import TruncatedText from '@/components/truncated-text';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
+import { useAgentChannelsRolloutStatus } from '@/hooks/use-agent-channels-rollout-status';
 import { useAgentRoutes } from '@/hooks/use-agent-routes';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { useWhatsNextGuideSession } from '@/hooks/use-whats-next-default-expanded';
 import { getAgentChannelDisplayName } from '@/utils/agent-email-provider-display';
 import { buildRoute } from '@/utils/routes';
 import { cn } from '@/utils/ui';
+import { shouldShowAgentWhatsNextSection } from '@/utils/whats-next-guide';
 import { AddChannelPicker } from './add-channel-picker';
-import { isUserFacingConnectedAgentIntegration } from './is-agent-integration-connected';
+import { hasAgentInboundConnection } from './is-agent-integration-connected';
 import { SetupGuideCard } from './setup-guide-card';
 import { SetupStep } from './setup-guide-primitives';
 
@@ -202,12 +206,78 @@ function AddChannelButton({ onAddChannel }: { onAddChannel: () => void }) {
   );
 }
 
+type AddAnotherChannelCardProps = {
+  agent: AgentResponse;
+  links: AgentIntegrationLink[];
+  planUsage: PlanUsage | undefined;
+  readOnly: boolean;
+  persistKey: string;
+  onAddChannel: () => void;
+  onChannelAdded: (providerId: string, integration?: IIntegration) => void;
+};
+
+function AddAnotherChannelCard({
+  agent,
+  links,
+  planUsage,
+  readOnly,
+  persistKey,
+  onAddChannel,
+  onChannelAdded,
+}: AddAnotherChannelCardProps) {
+  return (
+    <SetupGuideCard label="What's next" persistKey={persistKey} className="min-w-0 flex-1">
+      <div className="relative flex flex-col gap-10 py-6 pb-3 pl-8 pr-3 md:pr-6">
+        <div
+          className="absolute bottom-0 left-[22px] top-0 w-px"
+          style={{
+            background: 'linear-gradient(to bottom, transparent 0%, #E1E4EA 10%, #E1E4EA 90%, transparent 100%)',
+          }}
+        />
+        <SetupStep
+          index={1}
+          status="current"
+          title="Add another channel"
+          description="Add another channel for your users to message and interact with your agent."
+          rightContent={
+            readOnly ? (
+              <AddChannelButton onAddChannel={onAddChannel} />
+            ) : (
+              <AddChannelPicker
+                agentIdentifier={agent.identifier}
+                agentName={agent.name}
+                links={links}
+                planUsage={planUsage}
+                onSelected={onChannelAdded}
+                renderTrigger={({ isBusy }) => (
+                  <Button
+                    variant="secondary"
+                    mode="outline"
+                    size="xs"
+                    type="button"
+                    disabled={isBusy}
+                    className="text-text-sub max-w-[210px] gap-1 px-1.5 py-1.5"
+                    trailingIcon={RiArrowRightSLine}
+                  >
+                    Add channel
+                  </Button>
+                )}
+              />
+            )
+          }
+        />
+      </div>
+    </SetupGuideCard>
+  );
+}
+
 export function AgentWhatsNextSection({ agent }: AgentWhatsNextSectionProps) {
   const isWhatsNextEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_AGENT_WHATS_NEXT_ENABLED);
   const { currentEnvironment, readOnly } = useEnvironment();
   const location = useLocation();
   const navigate = useNavigate();
   const agentRoutes = useAgentRoutes();
+  const { isFreshSession } = useWhatsNextGuideSession(false);
 
   const integrationsQuery = useQuery({
     queryKey: getAgentIntegrationsQueryKey(currentEnvironment?._id, agent.identifier),
@@ -222,7 +292,8 @@ export function AgentWhatsNextSection({ agent }: AgentWhatsNextSectionProps) {
 
   const links = integrationsQuery.data?.data ?? [];
   const planUsage = integrationsQuery.data?.planUsage;
-  const connectedLinks = useMemo(() => links.filter(isUserFacingConnectedAgentIntegration), [links]);
+  const connectedLinks = useMemo(() => links.filter((link) => hasAgentInboundConnection(link.connectedAt)), [links]);
+  const { allRolledOut, isSettled: rolloutSettled } = useAgentChannelsRolloutStatus(connectedLinks);
 
   const integrationsTabPath = `${buildRoute(agentRoutes.detailsTab, {
     environmentSlug: currentEnvironment?.slug ?? '',
@@ -278,6 +349,24 @@ export function AgentWhatsNextSection({ agent }: AgentWhatsNextSectionProps) {
   }
 
   const persistKey = `agent-whats-next:${currentEnvironment?.slug ?? ''}:${agent.identifier}`;
+
+  if (rolloutSettled && allRolledOut) {
+    return (
+      <AddAnotherChannelCard
+        agent={agent}
+        links={links}
+        planUsage={planUsage}
+        readOnly={readOnly}
+        persistKey={persistKey}
+        onAddChannel={handleAddChannel}
+        onChannelAdded={handleChannelAdded}
+      />
+    );
+  }
+
+  if (!shouldShowAgentWhatsNextSection(connectedLinks, { isFreshSession })) {
+    return null;
+  }
 
   return (
     <SetupGuideCard label="What's next" persistKey={persistKey} className="min-w-0 flex-1">

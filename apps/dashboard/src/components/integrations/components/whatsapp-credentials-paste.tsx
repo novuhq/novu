@@ -174,8 +174,8 @@ export function WhatsAppCredentialsPaste({ control, setValue, isReadOnly }: What
           <div className="flex min-w-0 flex-col gap-1">
             <p className="text-text-strong text-label-xs font-medium leading-4">Skip the back and forth.</p>
             <p className="text-text-sub text-label-xs leading-4">
-              Open <strong className="text-text-strong">API Setup</strong> in Meta, hit CMD+A and CMD+C, paste below —
-              we&apos;ll pull out the Access Token, Phone Number ID and WhatsApp Business Account ID for you.
+              Open <strong className="text-text-strong">API Setup</strong> in Meta, hit CMD+A and CMD+C, paste below.
+              We&apos;ll pull out the Access Token, Phone Number ID and WhatsApp Business Account ID for you.
             </p>
           </div>
         </div>
@@ -326,9 +326,9 @@ function PasteOutcomeSummary({ outcome, onDismiss }: { outcome: ApplyOutcome; on
 
         {showAppSecretHint && (
           <p className="text-text-soft text-label-xs leading-4">
-            <strong className="text-text-strong font-medium">App Secret</strong> lives on a different page in Meta —
-            open <strong className="text-text-strong font-medium">App settings &gt; Basic</strong> from the bottom of
-            the left sidebar, then paste the value into the field below.
+            <strong className="text-text-strong font-medium">App Secret</strong> lives on a different page in Meta. Open{' '}
+            <strong className="text-text-strong font-medium">App settings &gt; Basic</strong> from the bottom of the
+            left sidebar, then paste the value into the field below.
           </p>
         )}
 
@@ -357,7 +357,7 @@ function MaskedFieldsHeadline({ outcome }: { outcome: ApplyOutcome }) {
 
   const headline =
     filledCount > 0
-      ? `Filled ${filledCount} of ${WHATSAPP_FIELDS.length} fields — ${formatList(maskedNames)} still hidden.`
+      ? `Filled ${filledCount} of ${WHATSAPP_FIELDS.length} fields: ${formatList(maskedNames)} still hidden.`
       : `${formatList(maskedNames)} ${isSingular ? 'is' : 'are'} still hidden behind dots.`;
 
   return (

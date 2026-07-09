@@ -14,6 +14,7 @@ import {
   PinoLogger,
   StepRunRepository,
   StorageHelperService,
+  type WorkflowForTrace,
   WorkflowRunService,
   WorkflowRunStatusEnum,
 } from '@novu/application-generic';
@@ -162,15 +163,15 @@ export class RunJob {
         throw new PlatformException(`Notification with id ${job._notificationId} not found`);
       }
 
-      const workflow = await this.getWorkflow(
-        job._templateId,
-        job._environmentId,
-        job._organizationId,
-        job.payload?.__source
-      );
+      // Stateless (bridge-URL) jobs carry no persisted workflow — the bridge
+      // is the source of truth (`job.step.bridgeUrl`). Every downstream
+      // consumer accepts an undefined workflow and falls back accordingly.
+      const workflow = job._templateId
+        ? await this.getWorkflow(job._templateId, job._environmentId, job._organizationId, job.payload?.__source)
+        : undefined;
 
       nr.addCustomAttributes({
-        workflow: workflow.name,
+        workflow: workflow?.name ?? job.identifier,
       });
 
       const schedule = await this.getSubscriberSchedule.execute(
@@ -416,6 +417,7 @@ export class RunJob {
           _subscriberId: job._subscriberId,
           notification,
           currentJob: { type: job.type, _id: job._id },
+          workflow: this.buildStatelessWorkflowForRuns(job),
         });
         // Remove the attachments if the job should not be queued
         await this.storageHelperService.deleteAttachments(job.payload?.attachments);
@@ -817,7 +819,9 @@ export class RunJob {
       defaultValue: false,
     });
 
-    if (isTransitionEnabled) {
+    // Stateless (bridge-URL) jobs have no persisted workflow to analyze —
+    // skip the last-step/action-step optimizations and update unconditionally.
+    if (isTransitionEnabled && job._templateId) {
       const workflowWithSteps: SelectedWorkflowFields | null =
         workflow ??
         (await this.notificationTemplateRepository.findOne(
@@ -862,7 +866,24 @@ export class RunJob {
       _subscriberId: job._subscriberId,
       notification,
       currentJob: { type: job.type, _id: job._id },
+      workflow: workflow ?? this.buildStatelessWorkflowForRuns(job),
     });
+  }
+
+  /**
+   * Stateless (bridge-URL) jobs have no notification template in Mongo, which
+   * the workflow-run analytics need for name/trigger metadata. Derive them
+   * from the job so local-mode runs still resolve in the activity feed.
+   */
+  private buildStatelessWorkflowForRuns(job: JobEntity): WorkflowForTrace | undefined {
+    if (job._templateId) {
+      return undefined;
+    }
+
+    return {
+      name: job.identifier,
+      triggers: [{ identifier: job.identifier }],
+    };
   }
 
   private shouldSkipScheduleCheck(job: JobEntity, critical: boolean | undefined): boolean {

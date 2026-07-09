@@ -1,16 +1,18 @@
 import { atom, type WritableAtom } from 'nanostores';
 import type { GeneratedAgentSpec } from '../api/agents';
+import type { BridgeScaffoldVariant } from '../pipeline/bridge/types';
 import type {
   AgentConnectMode,
   AgentSummary,
+  AiSdkConnectOutcome,
+  BridgeRequirement,
   ChannelChoice,
   ChatSdkConnectOutcome,
-  ChatSdkRequirement,
   CustomCodeConnectOutcome,
 } from '../types';
-import type { BridgeScaffoldVariant } from '../pipeline/bridge/types';
+import type { BridgeReconcileVariant } from './bridge-reconcile-variant';
 import type {
-  ChatSdkTunnelOfferResult,
+  BridgeTunnelOfferResult,
   GeneratedAgentPreviewResult,
   PickAgentIntegrationResult,
   PickResult,
@@ -81,27 +83,30 @@ export type Phase =
     }
   | { kind: 'scaffolding-bridge'; variant: BridgeScaffoldVariant }
   | {
-      kind: 'chat-sdk-reconcile-plan';
+      kind: 'bridge-reconcile-plan';
       projectDir: string;
-      requirements: ChatSdkRequirement[];
+      requirements: BridgeRequirement[];
       envPaths: string[];
       wiringInstructions?: string;
       requirementsFile?: string;
+      agentPrompt?: string;
+      variant?: BridgeReconcileVariant;
       resolve: () => void;
     }
-  | { kind: 'chat-sdk-install-deps' }
+  | { kind: 'bridge-install-deps'; variant?: BridgeReconcileVariant }
   | {
-      kind: 'chat-sdk-install-deps-confirm';
+      kind: 'bridge-install-deps-confirm';
       projectDir: string;
       installCommand: string;
       packages: string[];
+      variant?: BridgeReconcileVariant;
       resolve: (confirmed: boolean) => void;
     }
   | {
-      kind: 'chat-sdk-tunnel-offer';
+      kind: 'bridge-tunnel-offer';
       projectDir: string;
       devCommand: string;
-      resolve: (result: ChatSdkTunnelOfferResult) => void;
+      resolve: (result: BridgeTunnelOfferResult) => void;
     }
   | { kind: 'generating' }
   | {
@@ -191,6 +196,7 @@ export type Phase =
       claimUrl: string | null;
       connectMode?: AgentConnectMode;
       chatSdkOutcome?: ChatSdkConnectOutcome;
+      aiSdkOutcome?: AiSdkConnectOutcome;
       customCodeOutcome?: CustomCodeConnectOutcome;
     }
   | { kind: 'error'; message: string };

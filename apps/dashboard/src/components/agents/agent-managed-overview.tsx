@@ -11,7 +11,7 @@ import { AgentWhatsNextSection } from './agent-whats-next-section';
 import { ConnectedProvidersSection } from './connected-providers-section';
 import { DemoClaudeUpgradePanel } from './demo-claude-upgrade-panel';
 import { DemoQuotaBanner } from './demo-quota-banner';
-import { isUserFacingConnectedAgentIntegration } from './is-agent-integration-connected';
+import { hasAgentInboundConnection } from './is-agent-integration-connected';
 import { McpsSection } from './mcps-section';
 import { SystemPromptSection } from './system-prompt-section';
 import { ToolsSection } from './tools-section';
@@ -37,9 +37,11 @@ export function AgentManagedOverview({ agent }: AgentManagedOverviewProps) {
     enabled: Boolean(currentEnvironment && agent.identifier),
   });
 
-  // The novu-email-agent integration is auto-provisioned for every managed agent,
-  // so it must not count toward "has a channel connected" — otherwise the setup
-  // guide would never surface for a freshly created managed agent.
+  // A channel counts as connected once the API stamps `connectedAt` (first real
+  // inbound message). Novu email follows the same rule: it only counts once a
+  // real email has landed, so a freshly created managed agent (no inbound yet)
+  // still surfaces the setup guide, and a connected email swaps the guide for
+  // the "What's next" card just like other channels.
   const hasConnectedChannel = useMemo(() => {
     const links = integrationsQuery.data?.data;
 
@@ -47,7 +49,7 @@ export function AgentManagedOverview({ agent }: AgentManagedOverviewProps) {
       return false;
     }
 
-    return links.some(isUserFacingConnectedAgentIntegration);
+    return links.some((link) => hasAgentInboundConnection(link.connectedAt));
   }, [integrationsQuery.data?.data]);
 
   // Keep the setup guide mounted through the in-session connect → Continue gate for rollout

@@ -57,8 +57,8 @@ export function AgentCreationLimitDialog({ open, onOpenChange, planUsage }: Agen
         description={
           <>
             Your organization has reached the limit of{' '}
-            <span className="font-medium">{planUsage.creationLimit} agents</span>. Please reach out to the Novu team —
-            we&apos;re happy to help raise this limit for your organization.
+            <span className="font-medium">{planUsage.creationLimit} agents</span>. Please reach out to the Novu team.
+            We&apos;re happy to help raise this limit for your organization.
           </>
         }
         primaryCta="contact-support"
@@ -79,7 +79,7 @@ export function AgentCreationLimitDialog({ open, onOpenChange, planUsage }: Agen
           <span className="font-medium">
             {planUsage.limit} {planUsage.limit === 1 ? 'agent' : 'agents'}
           </span>{' '}
-          and allows creating up to {planUsage.creationLimit} in total — you&apos;ve used all {planUsage.totalCreated}.
+          and allows creating up to {planUsage.creationLimit} in total: you&apos;ve used all {planUsage.totalCreated}.
           Upgrade your plan to create more agents.
         </>
       }

@@ -266,6 +266,11 @@ export class CredentialsDto implements ICredentials {
   outboundIntegrationId?: string;
 
   @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  outboundConnectedAt?: string;
+
+  @ApiPropertyOptional()
   @TransformToBoolean()
   @IsBoolean()
   @IsOptional()

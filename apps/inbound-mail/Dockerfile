@@ -37,7 +37,7 @@ RUN cp src/dotenvcreate.mjs dist/dotenvcreate.mjs
 RUN cp src/.env.development dist/src/.env.development
 RUN cp src/.env.production dist/src/.env.production
 
-RUN cp -r src/python dist/python
+RUN cp -r src/python dist/src/python
 
 WORKDIR /usr/src/app
 

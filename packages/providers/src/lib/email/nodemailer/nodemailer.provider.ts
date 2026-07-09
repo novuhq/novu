@@ -1,8 +1,5 @@
 import { EmailProviderIdEnum } from '@novu/shared';
-import {
-  resolveSafeSmtpPinnedTarget,
-  SmtpOutboundTlsOptions,
-} from '@novu/shared/utils/validate-smtp-outbound-target';
+import { resolveSafeSmtpPinnedTarget, SmtpOutboundTlsOptions } from '@novu/shared/utils/validate-smtp-outbound-target';
 import {
   ChannelTypeEnum,
   CheckIntegrationResponseEnum,

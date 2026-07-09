@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { AgentRuntime, SLUG_IDENTIFIER_REGEX, slugIdentifierFormatMessage } from '@novu/shared';
-import { Type } from 'class-transformer';
+import { AGENT_NAME_MAX_LENGTH, AgentRuntime, SLUG_IDENTIFIER_REGEX, slugIdentifierFormatMessage } from '@novu/shared';
+import { Transform, Type } from 'class-transformer';
 import {
   IsBoolean,
   IsEnum,
@@ -8,6 +8,7 @@ import {
   IsOptional,
   IsString,
   Matches,
+  MaxLength,
   ValidateIf,
   ValidateNested,
 } from 'class-validator';
@@ -18,9 +19,15 @@ export class CreateAgentRequestDto {
     description:
       'Required when not adopting an existing managed agent (i.e. when managedRuntime.externalAgentId is absent). ' +
       'Optional in adopt mode where the name is resolved from the provider.',
+    maxLength: AGENT_NAME_MAX_LENGTH,
   })
   @IsOptional()
   @IsString()
+  // Trim before measuring so trailing whitespace can't push a valid name over the limit.
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @MaxLength(AGENT_NAME_MAX_LENGTH, {
+    message: `Agent name must be ${AGENT_NAME_MAX_LENGTH} characters or fewer.`,
+  })
   name: string;
 
   @ApiProperty({

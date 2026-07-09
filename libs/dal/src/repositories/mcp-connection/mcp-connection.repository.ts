@@ -236,6 +236,80 @@ export class McpConnectionRepository extends BaseRepositoryV2<
       { $set }
     );
   }
+
+  /**
+   * Repoint every subscriber-scoped connection from `fromSubscriberId` to
+   * `toSubscriberId` (both Mongo `Subscriber._id`s). Used by the email adoption
+   * merge so a phantom's tool grants follow the surviving real subscriber.
+   *
+   * The partial unique index on `(_agentMcpServerId, _subscriberId, mcpId)`
+   * means a blind move would throw E11000 when the destination already owns a
+   * connection for the same enablement — in that case the real subscriber's
+   * credentials win and the phantom row is dropped instead of moved. Source
+   * rows are deduped by the same key (rows outside the partial index — e.g. a
+   * null `_agentMcpServerId` — are not covered by its uniqueness guarantee), so
+   * both branches reduce to a single bulk write.
+   */
+  async repointSubscriberConnections(params: {
+    environmentId: string;
+    organizationId: string;
+    fromSubscriberId: string;
+    toSubscriberId: string;
+  }): Promise<{ moved: number; dropped: number }> {
+    const { environmentId, organizationId, fromSubscriberId, toSubscriberId } = params;
+
+    const sourceRows = await this.find(
+      {
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+        _subscriberId: fromSubscriberId,
+        scope: McpConnectionScopeEnum.Subscriber,
+      },
+      ['_id', '_agentMcpServerId', 'mcpId']
+    );
+
+    if (sourceRows.length === 0) {
+      return { moved: 0, dropped: 0 };
+    }
+
+    const destinationRows = await this.find(
+      {
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+        _subscriberId: toSubscriberId,
+        scope: McpConnectionScopeEnum.Subscriber,
+      },
+      ['_agentMcpServerId', 'mcpId']
+    );
+
+    const claimedKeys = new Set(destinationRows.map((row) => `${row._agentMcpServerId}:${row.mcpId}`));
+    const droppedIds: string[] = [];
+    const movedIds: string[] = [];
+
+    for (const row of sourceRows) {
+      const key = `${row._agentMcpServerId}:${row.mcpId}`;
+
+      if (claimedKeys.has(key)) {
+        droppedIds.push(row._id);
+      } else {
+        claimedKeys.add(key);
+        movedIds.push(row._id);
+      }
+    }
+
+    if (droppedIds.length > 0) {
+      await this.delete({ _id: { $in: droppedIds }, _environmentId: environmentId, _organizationId: organizationId });
+    }
+
+    if (movedIds.length > 0) {
+      await this.update(
+        { _id: { $in: movedIds }, _environmentId: environmentId, _organizationId: organizationId },
+        { $set: { _subscriberId: toSubscriberId } }
+      );
+    }
+
+    return { moved: movedIds.length, dropped: droppedIds.length };
+  }
 }
 
 function assertSafeMcpToolTrustKeySegment(name: string): void {

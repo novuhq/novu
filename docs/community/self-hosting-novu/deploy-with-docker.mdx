@@ -1,6 +1,6 @@
 ---
 title: 'Deploy with Docker'
-description: 'Learn how to deploy Novu with Docker'
+description: "Deploy Novu on your own infrastructure using Docker Compose, configure environment variables, and run the API, worker, and web dashboard locally."
 ---
 
 Docker compose is the easiest way to get started with self-hosted Novu. This guide will walk you through the steps to run all services in single virtual machine using docker compose. This guide uses latest docker images. If you are looking to self host 0.24.x version, checkout [0.24.x docs](https://v0.x-docs.novu.co/self-hosting-novu/deploy-with-docker)
@@ -91,7 +91,7 @@ npm install @novu/react react-router-dom
 
 ### Create the Inbox component
 
-Create a component file (e.g., `notification-center.tsx`) in your project:
+Create a component file (e.g., `inbox.tsx`) in your project:
 
 ```tsx
 import React from 'react';
@@ -123,7 +123,7 @@ Once your application is running, you should see the bell icon in your navbar. C
 
 To test notifications, create and trigger a workflow from your self-hosted Novu dashboard, selecting In-App as the channel.
 
-For more information on customizing the Inbox component, refer to the [Inbox documentation](/inbox/overview).
+For more information on customizing the Inbox component, refer to the [Inbox documentation](/platform/inbox).
 
 ## Initializing the Server SDK
 
@@ -335,7 +335,7 @@ curl -X POST 'http://<your-docker-host>:3000/v1/events/trigger' \
   </Tab>
 </Tabs>
 
-For more information on using the Node SDK, refer to the [Server-Side SDKs documentation](/sdks/overview).
+For more information on using the server SDKs, refer to the [Server-Side SDKs documentation](/platform/sdks).
 
 ### Setting Up local studio and bridge application
 
@@ -352,11 +352,15 @@ npx novu@latest init \
 # Install dependencies
 npm install
 
-# Start the bridge application
-npm run dev
+# Start the bridge application on a port that does not conflict with the Dashboard (4000)
+npm run dev -- --port 4005
 ```
 
-Nextjs based bridge application having one test workflow written using `@novu/framework` will be running on `http://localhost:4000`, Go to http://localhost:4000/api/novu to see status.
+A Next.js bridge application with a sample `@novu/framework` workflow runs on the port you choose (for example `http://localhost:4005`). Visit `http://localhost:4005/api/novu` to verify the bridge endpoint.
+
+<Warning>
+  The self-hosted Dashboard also runs on port **4000**. Use a different port (such as **4005**) for your bridge application to avoid a conflict.
+</Warning>
 
 #### Setting Up Novu Studio
 
@@ -368,7 +372,7 @@ Nextjs based bridge application having one test workflow written using `@novu/fr
 if novu is run using above docker compose command in local machine, use below commmand
 
 ```bash
-npx novu@latest dev -d http://localhost:4000 -p <bridge_application_port>
+npx novu@latest dev -d http://localhost:4000 -p 4005
 ```
 
 Following actions will occur:
@@ -382,10 +386,7 @@ Following actions will occur:
 To use bridge application url as bridge url, use below command:
 
 ```bash
-npx novu@latest dev -d http://localhost:4000 -p <bridge_application_port> -t http://host.docker.internal:<bridge_application_port>
-
-# example:
-npx novu@latest dev -d http://localhost:4000 -p 4000 -t http://host.docker.internal:4000
+npx novu@latest dev -d http://localhost:4000 -p 4005 -t http://host.docker.internal:4005
 ```
 
 <Warning>
@@ -567,23 +568,24 @@ We are introducing the first stage of caching in our system to improve performan
 - REDIS_CACHE_SERVICE_HOST
 - REDIS_CACHE_SERVICE_PORT
 
-Currently, we are caching data in the most heavily loaded areas of the system: the widget requests such as feed and unseen count, as well as common DAL requests during the execution of trigger event flow. These are the most heavily used areas of our system, and we hope that by implementing caching in these areas, we can improve performance in the near future.
+Currently, caching is applied in the most heavily loaded areas of the system: Inbox feed and unseen-count requests, as well as common DAL requests during the trigger-event flow.
 
 ### Reverse-Proxy / Load Balancers
 
 To implement a reverse-proxy or load balancer in front of Novu, you need to set the GLOBAL_CONTEXT_PATH for the base path of the application. This is the path that the application will be served from after the domain. For example: - company.com/novu This is used to set the base path for the application, and is used to set the base path for the API, Dashboard, and WebSocket connections.
 
-The following environment variables are used to set the context path for each public service that Novu provides: API_CONTEXT_PATH WIDGET_CONTEXT_PATH WS_CONTEXT_PATH DASHBOARD_CONTEXT_PATH
+The following environment variables set the context path for each public service: `API_CONTEXT_PATH`, `WS_CONTEXT_PATH`, `WEBHOOK_CONTEXT_PATH`, and `FRONT_BASE_CONTEXT_PATH`.
 
-These allow you to set the context path for each service independently or dependently of the GLOBAL_CONTEXT_PATH.
+These can be set independently or together with `GLOBAL_CONTEXT_PATH`.
 
-For example, if I was using a reverse proxy to serve Novu from company.com/novu, I would set the GLOBAL_CONTEXT_PATH to novu, and then set the API_CONTEXT_PATH to api, the WIDGET_CONTEXT_PATH to widget, the WS_CONTEXT_PATH to ws, and the DASHBOARD_CONTEXT_PATH to Dashboard.
+For example, to serve Novu from `company.com/novu`, set `GLOBAL_CONTEXT_PATH=novu`, then set `API_CONTEXT_PATH=api` and `WS_CONTEXT_PATH=ws`. That produces:
 
-This would produce the following urls: - API: company.com/novu/api - WIDGET: company.com/novu/widget - WS: company.com/novu/ws - DASHBOARD: company.com/novu/dashboard
+- API: `company.com/novu/api`
+- WS: `company.com/novu/ws`
 
-However the Service context path can be used entirely independently of the GLOBAL_CONTEXT_PATH.
+You can also set a service context path without `GLOBAL_CONTEXT_PATH`. For example, `API_CONTEXT_PATH=novu-api` exposes the API at `company.com/novu-api`.
 
-For example, if I wanted to expose the api as novu-api, I would set the API_CONTEXT_PATH to novu-api without setting the GLOBAL_CONTEXT_PATH. This would producte the following url: - API: company.com/novu-api
+The Dashboard container is served separately on its configured port (default **4000**) and is not controlled by these API/WS context-path variables.
 
 <Note>
   These env variables should be present on all services novu provides due to tight coupling.

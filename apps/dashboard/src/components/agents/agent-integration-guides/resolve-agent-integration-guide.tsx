@@ -104,8 +104,8 @@ export function ResolveAgentIntegrationGuide({
   const hasUserRolloutPhase =
     providerHasWhatsNextPhase(providerId) && (providerId !== ChatProviderIdEnum.MsTeams || isMsTeamsWhatsNextEnabled);
 
-  // The auto-provisioned Novu email integration has no distinct setup phase — render its single
-  // guide regardless of connection state.
+  // The Novu email integration has no distinct setup phase — render its single guide regardless
+  // of connection state.
   if (providerId === EmailProviderIdEnum.NovuAgent) {
     return (
       <EmailAgentIntegrationGuide

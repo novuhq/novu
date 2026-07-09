@@ -1,5 +1,5 @@
-import { assertAllowedSinchSmsRegion } from '../consts/sinch-sms-regions';
 import { describe, expect, it } from 'vitest';
+import { assertAllowedSinchSmsRegion } from '../consts/sinch-sms-regions';
 
 describe('sinch-sms-regions', () => {
   it('accepts known regions', () => {

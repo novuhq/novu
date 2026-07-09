@@ -13,8 +13,8 @@ import { createIntegration, deleteIntegration } from '@/api/integrations';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useTelemetry } from '@/hooks/use-telemetry';
-import { QueryKeys } from '@/utils/query-keys';
 import { AGENT_EMAIL_PROVIDER_LABEL, getAgentChannelDisplayName } from '@/utils/agent-email-provider-display';
+import { QueryKeys } from '@/utils/query-keys';
 import { TelemetryEvent } from '@/utils/telemetry';
 
 type LinkProviderItem = {
@@ -140,24 +140,20 @@ export function useLinkAgentIntegration({
         integrationIdentifier: string,
         mode: 'novu_email' | 'existing_integration' | 'new_integration_then_link'
       ) => {
-        track(
-          TelemetryEvent.AGENT_INTEGRATION_LINKED_FROM_DASHBOARD,
-          {
-            agentIdentifier,
-            providerId,
-            integrationIdentifier,
-            mode,
-          }
-        );
+        track(TelemetryEvent.AGENT_INTEGRATION_LINKED_FROM_DASHBOARD, {
+          agentIdentifier,
+          providerId,
+          integrationIdentifier,
+          mode,
+        });
       };
 
       /**
        * Removes other links for the *same provider* as the freshly linked one. Runs only when
-       * `replaceExisting` is enabled. Links for other providers (including the auto-provisioned
-       * NovuAgent email link) are always preserved — picking a Slack card replaces a previous
-       * Slack link, not MsTeams or NovuEmail. Only integrations provisioned by this hook are
-       * deleted; pre-existing integrations are unlinked but left intact. Failures are logged
-       * but never surfaced because the primary link succeeded.
+       * `replaceExisting` is enabled. Links for other providers are always preserved — picking a
+       * Slack card replaces a previous Slack link, not MsTeams or NovuEmail. Only integrations
+       * provisioned by this hook are deleted; pre-existing integrations are unlinked but left
+       * intact. Failures are logged but never surfaced because the primary link succeeded.
        */
       const removePreviousLinks = async (keepIntegrationId: string | undefined) => {
         if (!replaceExisting || !existingLinks?.length) return;
