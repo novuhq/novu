@@ -12,8 +12,8 @@ const lineUserId = 'U1234567890abcdef';
 
 const buildChannelData = (): IChatOptions['channelData'] => ({
   identifier: '-',
-  type: ENDPOINT_TYPES.WEBHOOK,
-  endpoint: { url: lineUserId },
+  type: ENDPOINT_TYPES.LINE_USER,
+  endpoint: { userId: lineUserId },
 });
 
 const buildResponse = (messageId: string) => ({
@@ -45,7 +45,7 @@ test('should trigger LINE library correctly with text message', async () => {
   const res = await provider.sendMessage(options);
 
   expect(mockPost).toHaveBeenCalledWith('/push', {
-    to: (options.channelData.endpoint as ChannelEndpointByType[typeof ENDPOINT_TYPES.WEBHOOK]).url,
+    to: (options.channelData.endpoint as ChannelEndpointByType[typeof ENDPOINT_TYPES.LINE_USER]).userId,
     messages: [{ type: 'text', text: options.content }],
   });
 

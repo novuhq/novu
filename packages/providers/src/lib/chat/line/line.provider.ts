@@ -35,11 +35,11 @@ export class LineChatProvider extends BaseProvider implements IChatProvider {
     options: IChatOptions,
     bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
-    if (!isChannelDataOfType(options.channelData, ENDPOINT_TYPES.WEBHOOK)) {
+    if (!isChannelDataOfType(options.channelData, ENDPOINT_TYPES.LINE_USER)) {
       throw new Error('Invalid channel data for LINE provider');
     }
 
-    const to = options.channelData.endpoint.url;
+    const to = options.channelData.endpoint.userId;
 
     const payload = this.transform(bridgeProviderData, {
       to,

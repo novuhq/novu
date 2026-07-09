@@ -3,7 +3,7 @@ title: 'LINE'
 description: 'Learn how to use the LINE Messaging API provider for chat notifications'
 ---
 
-The LINE chat integration lets you send messages to subscribers who have added your LINE Official Account as a friend. Novu uses the [LINE Messaging API](https://developers.line.biz/en/docs/messaging-api/) push endpoint with a Channel Access Token configured on the integration, and a LINE user ID stored on each subscriber.
+The LINE chat integration lets you send messages to subscribers who have added your LINE Official Account as a friend. Novu uses the [LINE Messaging API](https://developers.line.biz/en/docs/messaging-api/) push endpoint with a Channel Access Token configured on the integration, and a LINE user ID stored on each subscriber's channel endpoint.
 
 Supported message types:
 
@@ -30,7 +30,7 @@ Before connecting LINE in Novu, create a Messaging API channel in the LINE Devel
   </Step>
 
   <Step title="Enable webhooks (recommended)">
-    On the same tab, enable **Use webhook** if you plan to capture subscriber LINE user IDs from follow or message events. Set the webhook URL to your backend endpoint that stores user IDs in Novu subscriber credentials.
+    On the same tab, enable **Use webhook** if you plan to capture subscriber LINE user IDs from follow or message events. Set the webhook URL to your backend endpoint that creates `line_user` channel endpoints in Novu.
 
     See LINE's docs on [getting user IDs](https://developers.line.biz/en/docs/messaging-api/getting-user-ids/) for details.
   </Step>
@@ -58,7 +58,7 @@ Before connecting LINE in Novu, create a Messaging API channel in the LINE Devel
 
 ## Connect subscribers
 
-Each subscriber needs a LINE user ID (for example, `U1234567890abcdef`) so Novu knows where to deliver messages. Store it on the subscriber using the `webhookUrl` credential field — the same field used by other webhook-style chat providers.
+Each subscriber needs a LINE user ID (for example, `U1234567890abcdef`) so Novu knows where to deliver messages. Create a `line_user` channel endpoint for the subscriber using the [channel endpoints API](/api-reference/channel-endpoints/create-a-channel-endpoint).
 
 <Tabs>
   <Tab title="Node.js">
@@ -71,44 +71,43 @@ const novu = new Novu({
   // serverURL: 'https://eu.api.novu.co',
 });
 
-await novu.subscribers.credentials.update(
-  {
-    providerId: 'line',
-    credentials: {
-      webhookUrl: '<LINE_USER_ID>',
-    },
-    integrationIdentifier: 'line-<integration-id>',
+await novu.channelEndpoints.create({
+  subscriberId: 'subscriberId',
+  integrationIdentifier: 'line-<integration-id>',
+  type: 'line_user',
+  endpoint: {
+    userId: '<LINE_USER_ID>',
   },
-  'subscriberId'
-);
+});
 ```
   </Tab>
   <Tab title="cURL">
 ```bash
-curl -L -X PUT 'https://api.novu.co/v1/subscribers/<SUBSCRIBER_ID>/credentials' \
+curl -L -X POST 'https://api.novu.co/v1/channel-endpoints' \
 -H 'Content-Type: application/json' \
 -H 'Accept: application/json' \
 -H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
 -d '{
-  "providerId": "line",
-  "credentials": {
-    "webhookUrl": "<LINE_USER_ID>"
-  },
-  "integrationIdentifier": "line-<integration-id>"
+  "subscriberId": "<SUBSCRIBER_ID>",
+  "integrationIdentifier": "line-<integration-id>",
+  "type": "line_user",
+  "endpoint": {
+    "userId": "<LINE_USER_ID>"
+  }
 }'
 ```
   </Tab>
 </Tabs>
 
-See the [Update Subscriber Credentials API reference](/api-reference/subscribers/update-provider-credentials) for full request details.
+See the [Create a channel endpoint API reference](/api-reference/channel-endpoints/create-a-channel-endpoint) for full request details.
 
-<Warning>
-  For LINE, `webhookUrl` holds the subscriber's **LINE user ID**, not an HTTP webhook URL.
-</Warning>
+<Note>
+  Push messages can only be delivered to users who have added your LINE Official Account as a friend. Capture the LINE user ID from follow or message webhook events, then register it as a `line_user` channel endpoint.
+</Note>
 
 ## Send notifications
 
-Create a workflow with a **Chat** step, add your message content, and trigger the workflow for a subscriber that has LINE credentials configured.
+Create a workflow with a **Chat** step, add your message content, and trigger the workflow for a subscriber that has a `line_user` channel endpoint configured.
 
 ```typescript
 import { Novu } from '@novu/api';

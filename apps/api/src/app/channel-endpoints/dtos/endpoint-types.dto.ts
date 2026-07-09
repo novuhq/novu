@@ -85,3 +85,13 @@ export class TelegramChatEndpointDto {
   @IsString()
   chatId: string;
 }
+
+export class LineUserEndpointDto {
+  @ApiProperty({
+    description: 'LINE user ID',
+    example: 'U1234567890abcdef',
+    type: String,
+  })
+  @IsString()
+  userId: string;
+}
