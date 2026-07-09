@@ -27,7 +27,7 @@ describe('computeAiSdkRequirements', () => {
       JSON.stringify({
         dependencies: {
           '@novu/framework': 'latest',
-          ai: '^6.0.0',
+          ai: '^7.0.0',
         },
         scripts: {
           'dev:novu': 'next dev --port=4005',
@@ -71,7 +71,7 @@ describe('computeAiSdkRequirements', () => {
     expect(snapshot.requirements.find((req) => req.id === 'code-wiring')?.status).toBe('manual');
   });
 
-  it('adds provider env hints without blocking coreReady', () => {
+  it('flags incompatible ai v6 as manual with upgrade instructions', () => {
     const dir = makeTempDir();
     fs.writeFileSync(
       path.join(dir, 'package.json'),
@@ -79,6 +79,32 @@ describe('computeAiSdkRequirements', () => {
         dependencies: {
           '@novu/framework': 'latest',
           ai: '^6.0.0',
+        },
+      })
+    );
+
+    const snapshot = computeAiSdkRequirements({
+      projectDir: dir,
+      secretKey: 'sk_test_key',
+      agentIdentifier: 'support-agent',
+    });
+
+    const packageReq = snapshot.requirements.find((req) => req.id === 'package');
+
+    expect(snapshot.coreReady).toBe(false);
+    expect(packageReq?.status).toBe('manual');
+    expect(packageReq?.detail).toContain('Incompatible ai version (^6.0.0)');
+    expect(packageReq?.detail).toContain('ai@^7.0.0');
+  });
+
+  it('adds provider env hints without blocking coreReady', () => {
+    const dir = makeTempDir();
+    fs.writeFileSync(
+      path.join(dir, 'package.json'),
+      JSON.stringify({
+        dependencies: {
+          '@novu/framework': 'latest',
+          ai: '^7.0.0',
           '@ai-sdk/openai': '1.0.0',
         },
         scripts: {
