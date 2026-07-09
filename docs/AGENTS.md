@@ -47,6 +47,8 @@ openapi: "POST /v1/agents"
 ```
 
 - Do not omit `description` on OpenAPI-backed pages — Mintlify uses it for SEO and page metadata.
+- API endpoint pages must include a `description` and a 1–2 sentence intro before the OpenAPI block
+- API schema reference pages use markdown tables (`Field | Type | Description`), not `<ResponseField>`. Escape union separators in the **Type** column as `\|` (for example, `` `string \| null` ``). Prefer `Record<string, unknown>` over `{ [k: string]: any; }` in table cells.
 - Provider integration pages use the title pattern `{Provider} {Channel} Integration with Novu` with `sidebarTitle` for the short provider name
 - Use descriptive alt text on all diagrams and screenshots
 - See [SEO and GEO maintenance](/SEO_MAINTENANCE.md) for the ongoing review checklist
