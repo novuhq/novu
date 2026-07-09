@@ -36,7 +36,7 @@ import {
   WebhookEventEnum,
   WebhookObjectTypeEnum,
 } from '@novu/shared';
-import { ChannelData, ISendMessageSuccessResponse } from '@novu/stateless';
+import { ChannelData, ChatCard, ISendMessageSuccessResponse } from '@novu/stateless';
 import { addBreadcrumb } from '@sentry/node';
 import { PlatformException } from '../../../shared/utils';
 import { ResolveChannelEndpointsCommand } from './channel-endpoint-resolution/resolve-channel-endpoints.command';
@@ -59,6 +59,7 @@ type MessageContext = {
   command: SendMessageChannelCommand;
   step: NotificationStepEntity;
   content: string;
+  card?: ChatCard;
   i18nInstance: unknown;
 };
 
@@ -163,6 +164,8 @@ export class SendMessageChat extends SendMessageBase {
 
     const bridgeOutput = command.bridgeData?.outputs as ChatOutput | undefined;
     let content: string = bridgeOutput?.body || '';
+    // Cross-platform card produced by the chat block editor / code-first steps (bridge path only)
+    const card = bridgeOutput?.card as ChatCard | undefined;
 
     try {
       if (!command.bridgeData) {
@@ -179,7 +182,7 @@ export class SendMessageChat extends SendMessageBase {
       throw new PlatformException(DetailEnum.MESSAGE_CONTENT_NOT_GENERATED);
     }
 
-    return { command, step, content, i18nInstance };
+    return { command, step, content, card, i18nInstance };
   }
 
   /**
@@ -228,14 +231,16 @@ export class SendMessageChat extends SendMessageBase {
             messageContext.command,
             channel.data as IntegrationEndpoints,
             messageContext.step,
-            messageContext.content
+            messageContext.content,
+            messageContext.card
           );
         } else {
           result = await this.sendChannelMessageLegacy(
             messageContext.command,
             channel.data as IChannelSettings,
             messageContext.step,
-            messageContext.content
+            messageContext.content,
+            messageContext.card
           );
         }
 
@@ -320,7 +325,8 @@ export class SendMessageChat extends SendMessageBase {
     command: SendMessageChannelCommand,
     integrationChannelData: IntegrationEndpoints,
     step: NotificationStepEntity,
-    content: string
+    content: string,
+    card?: ChatCard
   ): Promise<SendMessageResult> {
     const { integration, error } = await this.getAndValidateIntegration(
       command,
@@ -337,14 +343,15 @@ export class SendMessageChat extends SendMessageBase {
       integrationChannelData.providerId,
       integration,
       {},
-      integrationChannelData.channelData
+      integrationChannelData.channelData,
+      card
     );
 
     let status: SendMessageStatus = SendMessageStatus.FAILED;
 
     for (const channelData of integrationChannelData.channelData) {
       try {
-        const result = await this.sendMessage(channelData, integration, content, message, command);
+        const result = await this.sendMessage(channelData, integration, content, message, command, card);
 
         if (result.status === SendMessageStatus.SUCCESS) {
           status = SendMessageStatus.SUCCESS;
@@ -372,7 +379,8 @@ export class SendMessageChat extends SendMessageBase {
     command: SendMessageChannelCommand,
     subscriberChannel: IChannelSettings,
     step: NotificationStepEntity,
-    content: string
+    content: string,
+    card?: ChatCard
   ): Promise<SendMessageResult> {
     /**
      * Current a workaround as chat providers for whatsapp is more similar to sms than to our chat implementation
@@ -414,11 +422,12 @@ export class SendMessageChat extends SendMessageBase {
         chatWebhookUrl,
         phone: phoneNumber,
       },
-      channelData ? [channelData] : undefined
+      channelData ? [channelData] : undefined,
+      card
     );
 
     if (channelData) {
-      return await this.sendMessage(channelData, integration, content, message, command);
+      return await this.sendMessage(channelData, integration, content, message, command, card);
     }
 
     return await this.sendErrors(chatWebhookUrl, integration, message, command, phoneNumber);
@@ -544,7 +553,8 @@ export class SendMessageChat extends SendMessageBase {
     integration: IntegrationEntity,
     content: string,
     message: MessageEntity,
-    command: SendMessageChannelCommand
+    command: SendMessageChannelCommand,
+    card?: ChatCard
   ): Promise<SendMessageResult> {
     const chatHandler = this.setupChatHandler(integration);
     const overrides = this.buildMessageOverrides(command, integration);
@@ -565,6 +575,7 @@ export class SendMessageChat extends SendMessageBase {
         bridgeProviderData: combinedOverrides,
         customData: overrides,
         content,
+        ...(card && { card }),
       });
 
       return await this.handleMessageSendSuccess(result, message, command, overriddenChannelData);
@@ -589,7 +600,8 @@ export class SendMessageChat extends SendMessageBase {
     providerId: ProvidersIdEnum,
     integration: IntegrationEntity,
     additionalFields: Partial<MessageEntity> = {},
-    channelData?: ChannelData[]
+    channelData?: ChannelData[],
+    card?: ChatCard
   ): Promise<MessageEntity> {
     const message: MessageEntity = await this.messageRepository.create({
       _notificationId: command.notificationId,
@@ -619,7 +631,7 @@ export class SendMessageChat extends SendMessageBase {
       DetailEnum.MESSAGE_CREATED,
       ExecutionDetailsStatusEnum.PENDING,
       message._id,
-      this.storeContent() ? content : null
+      this.storeContent() ? (card ? { content, card } : content) : null
     );
 
     return message;

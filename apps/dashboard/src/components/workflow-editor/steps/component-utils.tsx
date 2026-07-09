@@ -1,5 +1,7 @@
-import { EnvironmentTypeEnum, UiComponentEnum } from '@novu/shared';
+import { EnvironmentTypeEnum, FeatureFlagsKeysEnum, UiComponentEnum } from '@novu/shared';
+import { ChatEditorSelect } from '@/components/chat-editor-select';
 import { EmailEditorSelect } from '@/components/email-editor-select';
+import { ChatBody } from '@/components/workflow-editor/steps/chat/chat-body';
 import { DelayWindow } from '@/components/workflow-editor/steps/delay/delay-window';
 import { DigestDelayTabs } from '@/components/workflow-editor/steps/digest-delay-tabs/digest-delay-tabs';
 import { DigestKey } from '@/components/workflow-editor/steps/digest-delay-tabs/digest-key';
@@ -18,6 +20,7 @@ import { ThrottleKey } from '@/components/workflow-editor/steps/throttle/throttl
 import { ThrottleThreshold } from '@/components/workflow-editor/steps/throttle/throttle-threshold';
 import { ThrottleWindow } from '@/components/workflow-editor/steps/throttle/throttle-window';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useWorkflow } from '../workflow-provider';
 import { BaseBody } from './base/base-body';
 import { BaseSubject } from './base/base-subject';
@@ -34,6 +37,25 @@ const EmailEditorSelectInternal = () => {
 
   return (
     <EmailEditorSelect
+      isLoading={isUpdatePatchPending}
+      saveForm={saveForm}
+      disabled={currentEnvironment?.type !== EnvironmentTypeEnum.DEV}
+    />
+  );
+};
+
+const ChatEditorSelectInternal = () => {
+  const { isUpdatePatchPending } = useWorkflow();
+  const { saveForm } = useSaveForm();
+  const { currentEnvironment } = useEnvironment();
+  const isBlockEditorEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CHAT_BLOCK_EDITOR_ENABLED);
+
+  if (!isBlockEditorEnabled) {
+    return null;
+  }
+
+  return (
+    <ChatEditorSelect
       isLoading={isUpdatePatchPending}
       saveForm={saveForm}
       disabled={currentEnvironment?.type !== EnvironmentTypeEnum.DEV}
@@ -124,7 +146,11 @@ export const getComponentByType = ({ component }: { component?: UiComponentEnum 
     }
 
     case UiComponentEnum.CHAT_BODY: {
-      return <BaseBody />;
+      return <ChatBody />;
+    }
+
+    case UiComponentEnum.CHAT_EDITOR_SELECT: {
+      return <ChatEditorSelectInternal />;
     }
 
     case UiComponentEnum.LAYOUT_SELECT: {

@@ -20,7 +20,7 @@ import {
   EmailControlType,
 } from '@novu/application-generic';
 import { EnvironmentRepository, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
-import { CronExpressionEnum, RedirectTargetEnum, StepTypeEnum, slugify } from '@novu/shared';
+import { ChatRenderOutput, CronExpressionEnum, RedirectTargetEnum, StepTypeEnum, slugify } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { beforeEach } from 'mocha';
@@ -1479,6 +1479,58 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
         .exist;
 
       expect(previewResponseDto.result!.preview).to.deep.equal({ body: 'Hello, World! John' });
+    });
+
+    it('chat: should render a doc body to card and markdown fallback in the preview response', async () => {
+      const { stepDatabaseId, workflowId } = await createWorkflowAndReturnId(novuClient, StepTypeEnum.CHAT);
+
+      const controlValues = {
+        editorType: 'block',
+        body: JSON.stringify({
+          type: 'doc',
+          content: [
+            {
+              type: 'paragraph',
+              content: [
+                { type: 'text', text: 'Hello ' },
+                { type: 'variable', attrs: { id: 'subscriber.firstName' } },
+              ],
+            },
+            {
+              type: 'button',
+              attrs: {
+                text: 'Open dashboard',
+                isTextVariable: false,
+                url: 'https://example.com/dash',
+                isUrlVariable: false,
+                aliasFor: null,
+              },
+            },
+          ],
+        }),
+      };
+
+      const previewResponseDto = await generatePreview(novuClient, workflowId, stepDatabaseId, {
+        controlValues,
+      });
+
+      expect(previewResponseDto.result).to.exist;
+      if (!previewResponseDto.result || previewResponseDto.result.type !== 'chat') {
+        throw new Error('Expected chat preview');
+      }
+
+      const preview = previewResponseDto.result.preview as ChatRenderOutput;
+      expect(preview.body).to.equal('Hello John\n\nOpen dashboard: https://example.com/dash');
+      expect(preview.card).to.deep.equal({
+        type: 'card',
+        children: [
+          { type: 'text', content: 'Hello John' },
+          {
+            type: 'actions',
+            children: [{ type: 'link-button', label: 'Open dashboard', url: 'https://example.com/dash' }],
+          },
+        ],
+      });
     });
 
     it('email: should match the body in the preview response', async () => {

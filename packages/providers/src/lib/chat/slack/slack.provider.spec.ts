@@ -194,3 +194,70 @@ test('should trigger Slack app correctly with OAuth', async () => {
     }
   );
 });
+
+test('should serialize card to Block Kit blocks when no explicit blocks are provided', async () => {
+  const { mockSafeOutboundJsonRequest } = safeOutboundJsonSpy({
+    body: 'ok',
+  });
+
+  const provider = new SlackProvider();
+  await provider.sendMessage({
+    channelData: {
+      endpoint: {
+        url: 'https://hooks.slack.com/services/test',
+      },
+      type: ENDPOINT_TYPES.WEBHOOK,
+      identifier: 'test-webhook-identifier',
+    },
+    content: 'fallback text',
+    card: {
+      type: 'card',
+      children: [{ type: 'text', content: 'Hello **world**' }],
+    },
+  });
+
+  expect(mockSafeOutboundJsonRequest).toHaveBeenCalledWith({
+    url: 'https://hooks.slack.com/services/test',
+    method: 'POST',
+    headers: undefined,
+    body: {
+      text: 'fallback text',
+      blocks: [{ type: 'section', text: { type: 'mrkdwn', text: 'Hello *world*' } }],
+    },
+  });
+});
+
+test('should let explicit blocks win over card serialization', async () => {
+  const { mockSafeOutboundJsonRequest } = safeOutboundJsonSpy({
+    body: 'ok',
+  });
+
+  const explicitBlocks = [{ type: 'header' as const, text: { type: 'mrkdwn' as const, text: 'explicit' } }];
+
+  const provider = new SlackProvider();
+  await provider.sendMessage({
+    channelData: {
+      endpoint: {
+        url: 'https://hooks.slack.com/services/test',
+      },
+      type: ENDPOINT_TYPES.WEBHOOK,
+      identifier: 'test-webhook-identifier',
+    },
+    content: 'fallback text',
+    blocks: explicitBlocks,
+    card: {
+      type: 'card',
+      children: [{ type: 'text', content: 'ignored' }],
+    },
+  });
+
+  expect(mockSafeOutboundJsonRequest).toHaveBeenCalledWith({
+    url: 'https://hooks.slack.com/services/test',
+    method: 'POST',
+    headers: undefined,
+    body: {
+      text: 'fallback text',
+      blocks: explicitBlocks,
+    },
+  });
+});

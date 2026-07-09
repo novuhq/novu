@@ -4,6 +4,7 @@ import { RiSendPlane2Fill } from 'react-icons/ri';
 import { LogoCircle } from '@/components/icons';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { cn } from '@/utils/ui';
+import { ChatCardPreview } from './chat-card-preview';
 
 export const ChatPreview = ({
   isPreviewPending,
@@ -18,6 +19,9 @@ export const ChatPreview = ({
     previewData?.result?.type === ChannelTypeEnum.CHAT &&
     (previewData?.result?.preview as ChatRenderOutput)?.body?.length > 0;
   const body = isValidChatPreview ? ((previewData?.result?.preview as ChatRenderOutput)?.body ?? '') : '';
+  // The mini variant keeps the plain body fallback for compact rendering
+  const card =
+    isValidChatPreview && variant === 'default' ? (previewData?.result?.preview as ChatRenderOutput)?.card : undefined;
 
   return (
     <div className="relative w-full rounded-xl border border-dashed border-[#E1E4EA] p-3">
@@ -36,6 +40,8 @@ export const ChatPreview = ({
             </div>
             {isPreviewPending ? (
               <Skeleton className="h-4 w-1/2" />
+            ) : card ? (
+              <ChatCardPreview card={card} variant={variant} />
             ) : (
               <span
                 className={cn('text-foreground-950 min-h-4 whitespace-pre-wrap text-xs font-normal', {

@@ -38,11 +38,12 @@ export class ChatWebhookProvider extends BaseProvider implements IChatProvider {
       throw new Error('Invalid channel data for ChatWebhook provider');
     }
 
-    const { content, channelData, phoneNumber } = options;
+    const { content, card, channelData, phoneNumber } = options;
     const { endpoint } = channelData;
 
     const data = this.transform(bridgeProviderData, {
       content,
+      ...(card && { card }),
       webhookUrl: endpoint.url,
       channel: endpoint.channel,
       phoneNumber,

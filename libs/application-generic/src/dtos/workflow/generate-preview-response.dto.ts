@@ -1,5 +1,5 @@
 import { ApiExtraModels, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
-import { ActionTypeEnum, ChannelTypeEnum } from '@novu/shared';
+import { ActionTypeEnum, ChannelTypeEnum, ChatCard } from '@novu/shared';
 import { Type } from 'class-transformer';
 import { IsEnum, IsNumber, IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { PreviewPayloadDto } from './preview-payload.dto';
@@ -77,6 +77,15 @@ export class ChatRenderOutput extends RenderOutput {
   @ApiProperty({ description: 'Body of the chat message' })
   @IsString()
   body: string;
+
+  @ApiPropertyOptional({
+    description: 'Cross-platform card rendered natively per chat provider',
+    type: 'object',
+    additionalProperties: true,
+  })
+  @IsOptional()
+  @IsObject()
+  card?: ChatCard;
 }
 
 export class SmsRenderOutput extends RenderOutput {

@@ -14,6 +14,7 @@ import axios from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { safeChatWebhookJsonRequest } from '../../../utils/safe-chat-webhook-request';
 import { WithPassthrough } from '../../../utils/types';
+import { chatCardToSlackBlocks } from './slack-card.serializer';
 
 export class SlackProvider extends BaseProvider implements IChatProvider {
   channelType = ChannelTypeEnum.CHAT as ChannelTypeEnum.CHAT;
@@ -73,7 +74,7 @@ export class SlackProvider extends BaseProvider implements IChatProvider {
       `${this.slackAPI}/chat.postMessage`,
       this.transform(bridgeProviderData, {
         text: data.content,
-        blocks: data.blocks,
+        blocks: data.blocks ?? (data.card ? chatCardToSlackBlocks(data.card) : undefined),
         channel: endpoint.channelId,
         ...(data.customData || {}),
       }).body,
@@ -99,7 +100,7 @@ export class SlackProvider extends BaseProvider implements IChatProvider {
       `${this.slackAPI}/chat.postMessage`,
       this.transform(bridgeProviderData, {
         text: data.content,
-        blocks: data.blocks,
+        blocks: data.blocks ?? (data.card ? chatCardToSlackBlocks(data.card) : undefined),
         channel: endpoint.userId,
         ...(data.customData || {}),
       }).body,
@@ -125,7 +126,7 @@ export class SlackProvider extends BaseProvider implements IChatProvider {
       url: endpoint.url,
       body: this.transform(bridgeProviderData, {
         text: data.content,
-        blocks: data.blocks,
+        blocks: data.blocks ?? (data.card ? chatCardToSlackBlocks(data.card) : undefined),
         ...(data.customData || {}),
       }).body,
     });

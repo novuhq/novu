@@ -1,4 +1,4 @@
-import { ActionTypeEnum, ChannelTypeEnum, ContextPayload } from '../../types';
+import { ActionTypeEnum, ChannelTypeEnum, ChatCard, ContextPayload } from '../../types';
 import { SubscriberDto } from '../subscriber';
 import { JSONSchemaDto } from './json-schema-dto';
 
@@ -6,6 +6,7 @@ export class RenderOutput {}
 
 export class ChatRenderOutput extends RenderOutput {
   body: string;
+  card?: ChatCard;
 }
 
 export class SmsRenderOutput extends RenderOutput {

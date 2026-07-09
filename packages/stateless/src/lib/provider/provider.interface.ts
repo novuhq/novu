@@ -1,5 +1,6 @@
 import { ChannelTypeEnum, IAttachmentOptions } from '../template/template.interface';
 import { ChannelData } from './channel-data.type';
+import { ChatCard } from './chat-card.type';
 import { CheckIntegrationResponseEnum } from './provider.enum';
 
 export interface IProvider {
@@ -107,6 +108,8 @@ export interface IChatOptions {
   phoneNumber?: string;
   channelData?: ChannelData;
   content: string;
+  /** Cross-platform card serialized natively by each provider; explicit blocks always win over card. */
+  card?: ChatCard;
   blocks?: IBlock[];
   customData?: Record<string, any>;
   bridgeProviderData?: Record<string, unknown>;

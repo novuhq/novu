@@ -11,6 +11,7 @@ import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 import { WhatsAppMessageTypeEnum } from './consts/whatsapp-business.enum';
 import { ISendMessageRes } from './types/whatsapp-business.types';
+import { chatCardToWhatsAppPayload } from './whatsapp-card.serializer';
 
 export class WhatsappBusinessChatProvider extends BaseProvider implements IChatProvider {
   id = ChatProviderIdEnum.WhatsAppBusiness;
@@ -65,8 +66,15 @@ export class WhatsappBusinessChatProvider extends BaseProvider implements IChatP
       messaging_product: 'whatsapp',
       recipient_type: 'individual',
       to: phoneNumber,
-      type,
     };
+
+    // Card rendering applies only when customData doesn't explicitly pick a message type
+    if (options.card && type === WhatsAppMessageTypeEnum.TEXT && !options.customData?.text) {
+      return {
+        ...basePayload,
+        ...chatCardToWhatsAppPayload(options.card),
+      };
+    }
 
     // Handle TEXT messages separately (since it's not in `customData`)
     if (type === WhatsAppMessageTypeEnum.TEXT) {
@@ -74,6 +82,7 @@ export class WhatsappBusinessChatProvider extends BaseProvider implements IChatP
 
       return {
         ...basePayload,
+        type,
         text: {
           body: textData?.body ?? options.content,
           preview_url: textData?.preview_url ?? false,
@@ -86,6 +95,7 @@ export class WhatsappBusinessChatProvider extends BaseProvider implements IChatP
 
     return {
       ...basePayload,
+      type,
       [type]: payloadData,
     };
   }

@@ -10,6 +10,7 @@ import {
 import Axios, { AxiosInstance } from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
+import { chatCardToTelegramMessage } from './telegram-card.serializer';
 import { ISendMessageRes } from './types/telegram.types';
 
 export class TelegramChatProvider extends BaseProvider implements IChatProvider {
@@ -42,7 +43,7 @@ export class TelegramChatProvider extends BaseProvider implements IChatProvider 
 
     const payload = this.transform(bridgeProviderData, {
       chat_id: chatId,
-      text: options.content,
+      ...(options.card ? chatCardToTelegramMessage(options.card) : { text: options.content }),
     }).body;
 
     const { data } = await this.axiosInstance.post<ISendMessageRes>(`${this.baseUrl}/sendMessage`, payload);

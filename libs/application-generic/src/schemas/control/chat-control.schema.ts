@@ -8,6 +8,12 @@ export const chatControlZodSchema = z
   .object({
     skip: skipZodSchema,
     body: z.string(),
+    /*
+     * No zod default on purpose: existing steps with a plain-string body have no editorType
+     * and must not be reported as 'block'. The dashboard derives the effective editor by
+     * sniffing the body format and writes editorType explicitly on save.
+     */
+    editorType: z.enum(['block', 'text']).optional(),
   })
   .strict();
 
@@ -19,6 +25,10 @@ export const chatUiSchema: UiSchema = {
   properties: {
     body: {
       component: UiComponentEnum.CHAT_BODY,
+    },
+    editorType: {
+      component: UiComponentEnum.CHAT_EDITOR_SELECT,
+      placeholder: 'block',
     },
     skip: skipStepUiSchema.properties.skip,
   },
