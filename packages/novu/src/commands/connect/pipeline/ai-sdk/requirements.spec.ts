@@ -95,7 +95,6 @@ describe('computeAiSdkRequirements', () => {
     expect(packageReq?.status).toBe('manual');
     expect(packageReq?.detail).toContain('Incompatible ai version (^6.0.0)');
     expect(packageReq?.detail).toContain('ai@^7.0.0');
-    expect(packageReq?.detail).toContain('instructions:');
   });
 
   it('adds provider env hints without blocking coreReady', () => {

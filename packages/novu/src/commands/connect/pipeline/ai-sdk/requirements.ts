@@ -68,7 +68,7 @@ function computePackageRequirement(projectDir: string): BridgeRequirement {
       status: 'manual',
       detail:
         `Incompatible ai version (${status.declaredVersion}). @novu/framework requires ai ^7.0.0. ` +
-        `Run: ${upgradeCommand} — then update your agent for v7 (use instructions:, responseMessages).`,
+        `Run: ${upgradeCommand} — then update your agent for v7.`,
     };
   }
 
