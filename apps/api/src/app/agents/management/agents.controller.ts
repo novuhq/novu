@@ -14,7 +14,7 @@ import {
   UseFilters,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiExcludeController, ApiOperation } from '@nestjs/swagger';
+import { ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { RequirePermissions } from '@novu/application-generic';
 import { ApiRateLimitCategoryEnum, DirectionEnum, PermissionsEnum, UserSessionData } from '@novu/shared';
 import { RequireAuthentication } from '../../auth/framework/auth.decorator';
@@ -27,6 +27,7 @@ import {
   ApiResponse,
 } from '../../shared/framework/response.decorator';
 import { KeylessAccessible } from '../../shared/framework/swagger/keyless.security';
+import { SdkGroupName, SdkMethodName, SdkUsePagination } from '../../shared/framework/swagger/sdk.decorators';
 import { UserSession } from '../../shared/framework/user.decorator';
 import { ConversationActivationService } from '../conversation-runtime/conversation/conversation-activation.service';
 import { AgentRuntimeExceptionFilter } from '../shared/agent-runtime-exception.filter';
@@ -55,7 +56,8 @@ import { UpdateAgent } from './usecases/update-agent/update-agent.usecase';
 @ApiCommonResponses()
 @Controller('/agents')
 @UseInterceptors(ClassSerializerInterceptor)
-@ApiExcludeController()
+@ApiTags('Agents')
+@SdkGroupName('Agents')
 @RequireAuthentication()
 export class AgentsController {
   constructor(
@@ -69,6 +71,7 @@ export class AgentsController {
   ) {}
 
   @Get('/usage/conversations')
+  @ApiExcludeEndpoint()
   @ApiResponse(ConversationUsageResponseDto)
   @ApiOperation({
     summary: 'Get active-conversations usage',
@@ -89,6 +92,7 @@ export class AgentsController {
   }
 
   @Get('/emoji')
+  @ApiExcludeEndpoint()
   @ApiOperation({
     summary: 'List available emoji',
     description:
@@ -103,10 +107,13 @@ export class AgentsController {
   @Post('/')
   @ExternalApiAccessible()
   @KeylessAccessible()
+  @SdkMethodName('create')
   @ApiResponse(AgentResponseDto, 201)
   @ApiOperation({
-    summary: 'Create agent',
-    description: 'Creates an agent scoped to the current environment. The identifier must be unique per environment.',
+    summary: 'Create an agent',
+    description:
+      'Create an agent scoped to the current environment. The identifier must be unique per environment. ' +
+      'Set `runtime` to `managed` and supply `managedRuntime` to provision a provider-hosted agent brain.',
   })
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)
   @UseFilters(AgentRuntimeExceptionFilter)
@@ -129,12 +136,14 @@ export class AgentsController {
   @Get('/')
   @ExternalApiAccessible()
   @KeylessAccessible()
+  @SdkMethodName('list')
   @ApiResponse(ListAgentsResponseDto)
   @ApiOperation({
-    summary: 'List agents',
+    summary: 'List all agents',
     description:
-      'Returns a cursor-paginated list of agents for the current environment. Use **after**, **before**, **limit**, **orderBy**, and **orderDirection** query parameters.',
+      'Retrieve a cursor-paginated list of agents for the current environment. Use **after**, **before**, **limit**, **orderBy**, and **orderDirection** query parameters.',
   })
+  @SdkUsePagination()
   @RequirePermissions(PermissionsEnum.AGENT_READ)
   listAgents(@UserSession() user: UserSessionData, @Query() query: ListAgentsQueryDto): Promise<ListAgentsResponseDto> {
     return this.listAgentsUsecase.execute(
@@ -154,11 +163,12 @@ export class AgentsController {
   }
 
   @Put('/:identifier/bridge')
+  @SdkMethodName('updateBridge')
   @ApiResponse(AgentResponseDto)
   @ApiOperation({
-    summary: 'Update agent bridge configuration',
+    summary: 'Update an agent bridge',
     description:
-      'Updates the bridge URL configuration for an agent. Used by the CLI to register dev tunnel URLs. Refuses to activate dev bridges on production environments.',
+      'Update the bridge URL configuration for an agent. Used by the CLI to register dev tunnel URLs. Refuses to activate dev bridges on production environments.',
   })
   @ApiNotFoundResponse({
     description: 'The agent was not found.',
@@ -184,10 +194,12 @@ export class AgentsController {
   }
 
   @Get('/:identifier')
+  @ExternalApiAccessible()
+  @SdkMethodName('retrieve')
   @ApiResponse(AgentResponseDto)
   @ApiOperation({
-    summary: 'Get agent',
-    description: 'Retrieves an agent by its external identifier (not the internal MongoDB id).',
+    summary: 'Retrieve an agent',
+    description: 'Retrieve an agent by its external identifier (not the internal MongoDB id).',
   })
   @ApiNotFoundResponse({
     description: 'The agent was not found.',
@@ -205,10 +217,12 @@ export class AgentsController {
   }
 
   @Patch('/:identifier')
+  @ExternalApiAccessible()
+  @SdkMethodName('update')
   @ApiResponse(AgentResponseDto)
   @ApiOperation({
-    summary: 'Update agent',
-    description: 'Updates an agent by its external identifier.',
+    summary: 'Update an agent',
+    description: 'Update an agent by its external identifier.',
   })
   @ApiNotFoundResponse({
     description: 'The agent was not found.',
@@ -237,11 +251,13 @@ export class AgentsController {
   }
 
   @Delete('/:identifier')
+  @ExternalApiAccessible()
+  @SdkMethodName('delete')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
-    summary: 'Delete agent',
+    summary: 'Delete an agent',
     description:
-      'Deletes an agent by identifier and removes all agent-integration links. ' +
+      'Delete an agent by identifier and remove all agent-integration links. ' +
       'For managed-runtime agents, pass `deleteFromProvider=true` to also archive the agent on the provider side (e.g. Anthropic). ' +
       'By default only the Novu record is deleted and the provider agent is left intact.',
   })

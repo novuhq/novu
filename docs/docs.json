@@ -642,6 +642,37 @@
             "icon": "plug"
           },
           {
+            "group": "Agents",
+            "pages": [
+              "api-reference/agents/agent-schema",
+              "api-reference/agents/create-an-agent",
+              "api-reference/agents/list-all-agents",
+              "api-reference/agents/retrieve-an-agent",
+              "api-reference/agents/update-an-agent",
+              "api-reference/agents/delete-an-agent",
+              "api-reference/agents/update-an-agent-bridge",
+              "api-reference/agents/send-an-agent-reply",
+              "api-reference/agents/verify-managed-agent-credentials",
+              "api-reference/agents/generate-an-agent-configuration",
+              "api-reference/agents/retrieve-an-agent-runtime-config",
+              "api-reference/agents/update-an-agent-runtime-config",
+              "api-reference/agents/upload-custom-skills",
+              "api-reference/agents/list-agent-mcp-servers",
+              "api-reference/agents/enable-an-agent-mcp-server",
+              "api-reference/agents/replace-agent-mcp-servers",
+              "api-reference/agents/disable-an-agent-mcp-server",
+              "api-reference/agents/retrieve-an-mcp-connection",
+              "api-reference/agents/generate-an-mcp-oauth-url",
+              "api-reference/agents/create-an-agent-integration",
+              "api-reference/agents/list-agent-integrations",
+              "api-reference/agents/update-an-agent-integration",
+              "api-reference/agents/delete-an-agent-integration",
+              "api-reference/agents/send-an-agent-welcome-message",
+              "api-reference/agents/create-a-slack-setup-link"
+            ],
+            "icon": "bot"
+          },
+          {
             "group": "Channel Connections",
             "pages": [
               "api-reference/channel-connections/create-a-channel-connection",

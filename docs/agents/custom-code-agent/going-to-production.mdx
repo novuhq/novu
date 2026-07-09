@@ -107,6 +107,8 @@ You can also use our built-in GitHub Action to deploy your agent to the producti
 
 After you run the command, the agent overview section shows the updated production bridge URL.
 
+You can also set the bridge URL programmatically with [Update an agent bridge](/api-reference/agents/update-an-agent-bridge).
+
 <Warning>
   Local tunnel bridge URLs cannot be activated on production environments (returns 403 Forbidden) to prevent accidental routing of production traffic to a local machine.
 </Warning>
@@ -119,5 +121,8 @@ After you run the command, the agent overview section shows the updated producti
 <Columns cols={2}>
   <Card icon="messages-square" href="/agents/conversations" title="Conversation observability">
     View agent conversations, lifecycle, and signal activity in the dashboard.
+  </Card>
+  <Card icon="code" href="/api-reference/agents/update-an-agent-bridge" title="Update an agent bridge API">
+    Set the bridge URL programmatically after deployment.
   </Card>
 </Columns>

@@ -15,7 +15,7 @@ import {
   UseFilters,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiExcludeController, ApiOperation } from '@nestjs/swagger';
+import { ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { RequirePermissions } from '@novu/application-generic';
 import { ApiAuthSchemeEnum, ApiRateLimitCategoryEnum, PermissionsEnum, UserSessionData } from '@novu/shared';
 import type { Request } from 'express';
@@ -31,6 +31,7 @@ import {
   ApiResponse,
 } from '../../shared/framework/response.decorator';
 import { KeylessAccessible } from '../../shared/framework/swagger/keyless.security';
+import { SdkGroupName, SdkMethodName } from '../../shared/framework/swagger/sdk.decorators';
 import { UserSession } from '../../shared/framework/user.decorator';
 import { EnsureProviderManagedVaultCommand } from '../mcp/connections/ensure-provider-managed-vault/ensure-provider-managed-vault.command';
 import { EnsureProviderManagedVault } from '../mcp/connections/ensure-provider-managed-vault/ensure-provider-managed-vault.usecase';
@@ -86,7 +87,8 @@ import { VerifyManagedCredentials } from './usecases/verify-managed-credentials/
 @ApiCommonResponses()
 @Controller('/agents')
 @UseInterceptors(ClassSerializerInterceptor)
-@ApiExcludeController()
+@ApiTags('Agents')
+@SdkGroupName('Agents')
 @RequireAuthentication()
 export class AgentRuntimeController {
   constructor(
@@ -109,12 +111,13 @@ export class AgentRuntimeController {
   @Post('/verify-credentials')
   @ExternalApiAccessible()
   @KeylessAccessible()
+  @SdkMethodName('verifyCredentials')
   @ApiResponse(VerifyManagedCredentialsResponseDto)
   @ApiOperation({
-    summary: 'Verify managed-runtime credentials',
+    summary: 'Verify managed agent credentials',
     description:
-      'Performs a stateless, read-only validation of the supplied API key against the selected managed-runtime provider. ' +
-      'Used by the dashboard to give immediate feedback when configuring credentials before the integration is created.',
+      'Perform a stateless, read-only validation of the supplied API key against the selected managed-runtime provider. ' +
+      'Used to confirm credentials before creating a runtime integration.',
   })
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)
   @UseFilters(AgentRuntimeExceptionFilter)
@@ -138,11 +141,12 @@ export class AgentRuntimeController {
   @Post('/generate')
   @ExternalApiAccessible()
   @KeylessAccessible()
+  @SdkMethodName('generate')
   @ApiResponse(GenerateManagedAgentResponseDto)
   @ApiOperation({
-    summary: 'Generate an agent configuration from a free-form prompt',
+    summary: 'Generate an agent configuration',
     description:
-      'Translates a user-supplied description into an agent configuration (name, identifier, systemPrompt, tools, MCP servers, skills).',
+      'Translate a user-supplied description into an agent configuration (name, identifier, systemPrompt, tools, MCP servers, skills).',
   })
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)
   async generateManagedAgent(
@@ -179,6 +183,7 @@ export class AgentRuntimeController {
   }
 
   @Get('/:identifier/demo-quota')
+  @ApiExcludeEndpoint()
   @ApiOperation({
     summary: 'Get Novu managed Claude demo quota',
     description:
@@ -196,6 +201,7 @@ export class AgentRuntimeController {
   }
 
   @Post('/:identifier/migrate-runtime')
+  @ApiExcludeEndpoint()
   @ApiOperation({
     summary: 'Migrate managed agent off Novu demo Claude credentials',
     description:
@@ -219,11 +225,13 @@ export class AgentRuntimeController {
   }
 
   @Get('/:identifier/runtime/config')
+  @ExternalApiAccessible()
+  @SdkMethodName('retrieveRuntimeConfig')
   @ApiResponse(AgentRuntimeConfigResponseDto, 200)
   @ApiOperation({
-    summary: 'Get agent runtime config',
+    summary: 'Retrieve an agent runtime config',
     description:
-      'Fetches the live runtime configuration for a managed agent from the provider ' +
+      'Retrieve the live runtime configuration for a managed agent from the provider ' +
       '(model, system prompt, MCP servers, tools). Returns 422 for self-hosted agents.',
   })
   @ApiNotFoundResponse({ description: 'Agent or its runtime integration was not found.' })
@@ -249,11 +257,13 @@ export class AgentRuntimeController {
   }
 
   @Patch('/:identifier/runtime/config')
+  @ExternalApiAccessible()
+  @SdkMethodName('updateRuntimeConfig')
   @ApiResponse(AgentRuntimeConfigResponseDto, 200)
   @ApiOperation({
-    summary: 'Update agent runtime config',
+    summary: 'Update an agent runtime config',
     description:
-      'Applies a partial update to the managed agent runtime config on the provider. ' +
+      'Apply a partial update to the managed agent runtime config on the provider. ' +
       'Accepts any combination of model, systemPrompt, tools, and skills. ' +
       'MCP enablement is managed via the dedicated `POST /agents/:identifier/mcp-servers` and ' +
       '`DELETE /agents/:identifier/mcp-servers/:mcpId` endpoints. ' +
@@ -288,11 +298,13 @@ export class AgentRuntimeController {
   }
 
   @Get('/:identifier/mcp-servers')
+  @ExternalApiAccessible()
+  @SdkMethodName('listMcpServers')
   @ApiResponse(ListAgentMcpServersResponseDto)
   @ApiOperation({
-    summary: 'List MCP servers enabled on agent',
+    summary: 'List agent MCP servers',
     description:
-      'Returns the per-agent enablement records sourced from Mongo. Mongo is the source of truth for ' +
+      'Retrieve the per-agent MCP enablement records sourced from Mongo. Mongo is the source of truth for ' +
       'the agent\u2019s MCP list; the provider\u2019s `agent.mcp_servers` collection is synced from these rows.',
   })
   @ApiNotFoundResponse({ description: 'The agent was not found.' })
@@ -312,11 +324,13 @@ export class AgentRuntimeController {
   }
 
   @Post('/:identifier/mcp-servers')
+  @ExternalApiAccessible()
+  @SdkMethodName('enableMcpServer')
   @ApiResponse(AgentMcpServerEnablementResponseDto, 201)
   @ApiOperation({
-    summary: 'Enable an MCP server on agent',
+    summary: 'Enable an agent MCP server',
     description:
-      'Writes the per-agent enablement record and synchronously projects the new enabled set onto the runtime provider.',
+      'Write the per-agent enablement record and synchronously project the new enabled set onto the runtime provider.',
   })
   @ApiNotFoundResponse({ description: 'The agent or runtime integration was not found.' })
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)
@@ -339,16 +353,17 @@ export class AgentRuntimeController {
   }
 
   @Put('/:identifier/mcp-servers')
+  @ExternalApiAccessible()
+  @SdkMethodName('replaceMcpServers')
   @HttpCode(HttpStatus.OK)
   @ApiResponse(SetAgentMcpServersResponseDto, 200)
   @ApiOperation({
-    summary: 'Replace the agent\u2019s enabled MCP server set',
+    summary: 'Replace agent MCP servers',
     description:
       'Idempotent bulk update: ids in the request not currently enabled are enabled, currently-enabled ids ' +
       'missing from the request are disabled, the rest are untouched. Catalog validation fails the whole ' +
       'request up-front (no partial writes for malformed input). Per-row business / provider errors are ' +
-      'collected into `failed[]` so a single bad row never strands the other edits; the dashboard surfaces ' +
-      'these failures and refetches the list to render the truth.',
+      'collected into `failed[]` so a single bad row never strands the other edits.',
   })
   @ApiNotFoundResponse({ description: 'The agent or runtime integration was not found.' })
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)
@@ -370,11 +385,13 @@ export class AgentRuntimeController {
   }
 
   @Delete('/:identifier/mcp-servers/:mcpId')
+  @ExternalApiAccessible()
+  @SdkMethodName('disableMcpServer')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
-    summary: 'Disable an MCP server on agent',
+    summary: 'Disable an agent MCP server',
     description:
-      'Cascade-deletes any `mcp_connection` rows scoped to this enablement, removes the per-agent record, and resyncs the provider projection.',
+      'Cascade-delete any `mcp_connection` rows scoped to this enablement, remove the per-agent record, and resync the provider projection.',
   })
   @ApiNoContentResponse({ description: 'The MCP was disabled.' })
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)
@@ -397,11 +414,12 @@ export class AgentRuntimeController {
 
   @Post('/:identifier/mcp-servers/:mcpId/oauth/url')
   @HttpCode(HttpStatus.OK)
+  @SdkMethodName('generateMcpOAuthUrl')
   @ApiResponse(GenerateMcpOAuthUrlResponseDto, 200)
   @ApiOperation({
-    summary: 'Generate MCP OAuth authorize URL',
+    summary: 'Generate an MCP OAuth URL',
     description:
-      'Returns the provider authorize URL the subscriber should be redirected to for a `subscriber`-scoped connection. ' +
+      'Return the provider authorize URL the subscriber should be redirected to for a `subscriber`-scoped connection. ' +
       'Reuses the signed-state OAuth pattern already used by chat integrations.',
   })
   @ExternalApiAccessible()
@@ -426,6 +444,7 @@ export class AgentRuntimeController {
   }
 
   @Post('/:identifier/mcp-servers/:mcpId/provider-vault')
+  @ApiExcludeEndpoint()
   @HttpCode(HttpStatus.OK)
   @ApiResponse(EnsureProviderManagedVaultResponseDto, 200)
   @ApiOperation({
@@ -457,12 +476,14 @@ export class AgentRuntimeController {
   }
 
   @Get('/:identifier/mcp-servers/:mcpId/connection')
+  @ExternalApiAccessible()
+  @SdkMethodName('retrieveMcpConnection')
   @ApiResponse(McpConnectionResponseDto)
   @ApiOperation({
-    summary: 'Get MCP connection status for a subscriber',
+    summary: 'Retrieve an MCP connection',
     description:
-      'Returns the per-subscriber connection state for the (agent, mcp) pair, or null when no connection has been initiated yet. ' +
-      'Used by the dashboard to render Authorize / Connected / Re-authorize CTAs without leaking encrypted tokens.',
+      'Retrieve the per-subscriber connection state for the (agent, mcp) pair, or null when no connection has been initiated yet. ' +
+      'Used to render Authorize / Connected / Re-authorize states without leaking encrypted tokens.',
   })
   @ApiNotFoundResponse({ description: 'Agent or MCP enablement not found.' })
   @RequirePermissions(PermissionsEnum.AGENT_READ)
@@ -485,13 +506,15 @@ export class AgentRuntimeController {
   }
 
   @Post('/skills')
+  @ExternalApiAccessible()
+  @SdkMethodName('uploadCustomSkills')
   @HttpCode(HttpStatus.CREATED)
   @ApiResponse(UploadCustomSkillResponseDto, 201)
   @ApiOperation({
-    summary: 'Upload one or more custom skills from a source',
+    summary: 'Upload custom skills',
     description:
-      'Downloads the supplied source, uploads each resulting bundle to the integration provider ' +
-      'as a custom skill, and returns the provider-assigned skill IDs as a uniform `skills[]` array. ' +
+      'Download the supplied source, upload each resulting bundle to the integration provider ' +
+      'as a custom skill, and return the provider-assigned skill IDs as a uniform `skills[]` array. ' +
       'Three source variants are supported:\n\n' +
       '- `type: "github-url"` — full `https://github.com/...` URL. Always uploads exactly one skill; ' +
       'use this form to pin a ref or to disambiguate when multiple repo directories share a basename. ' +
