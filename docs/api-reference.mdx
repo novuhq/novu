@@ -12,7 +12,7 @@ The Novu REST API lets you manage subscribers, trigger workflows, configure inte
 - [Create a workflow](/api-reference/workflows/create-a-workflow) — define a notification workflow programmatically
 - [Authentication](/api-reference/authentication) — authenticate requests with your secret API key
 
-Use the API directly with HTTP requests, or through one of our [server-side SDKs](/platform/sdks#server-side-sdks).
+Use the API directly with HTTP requests, through one of our [server-side SDKs](/platform/sdks#server-side-sdks), or with our official [Postman collection](https://github.com/novuhq/novu-postman).
 
 <Note>
   The REST API and server-side SDKs are intended for server-side applications only. Using them in client-side code causes Cross-Origin Resource Sharing (CORS) errors and exposes your secret key.
@@ -78,8 +78,8 @@ Use these resources to explore, test, and integrate with the API:
   <Card title="OpenAPI specification" icon="file-json" href="https://api.novu.co/openapi.json">
     Machine-readable API schema for code generation, validation, and tooling.
   </Card>
-  <Card title="Postman collection" icon="send" href="https://github.com/novuhq/novu-postman/blob/main/postman/novu_api_postman_collection.json">
-    Pre-built requests to test endpoints in Postman or compatible tools.
+  <Card title="Postman collection" icon="send" href="https://github.com/novuhq/novu-postman">
+    Official Postman collection with pre-built requests for every endpoint.
   </Card>
   <Card title="Server-side SDKs" icon="code" href="/platform/sdks#server-side-sdks">
     Official SDKs for TypeScript, Python, Go, PHP, .NET, and Java.
@@ -97,9 +97,13 @@ Use these resources to explore, test, and integrate with the API:
 
 ### Import the Postman collection
 
-1. Clone or download the [novu-postman](https://github.com/novuhq/novu-postman) repository.
-2. Import `postman/novu_api_postman_collection.json` into Postman.
+The [novu-postman](https://github.com/novuhq/novu-postman) repository contains the official Novu API Postman collection, kept in sync with the REST API.
+
+1. Clone or download the repository from [github.com/novuhq/novu-postman](https://github.com/novuhq/novu-postman).
+2. Import `postman/novu_api_postman_collection.json` into Postman (or any compatible client).
 3. Set the `secretKey` collection variable to your environment's secret key from the [API Keys](https://dashboard.novu.co/api-keys) page.
+
+You can also import the collection directly from the raw JSON file: [novu_api_postman_collection.json](https://raw.githubusercontent.com/novuhq/novu-postman/refs/heads/main/postman/novu_api_postman_collection.json).
 
 ## Getting started
 
@@ -108,7 +112,7 @@ Use these resources to explore, test, and integrate with the API:
     Copy your environment's secret key from the [Novu Dashboard](https://dashboard.novu.co/api-keys). See [Authentication](/api-reference/authentication) for details on credential types and security.
   </Step>
   <Step title="Make your first request">
-    Trigger a workflow or create a subscriber using the REST API or an SDK. Start with [Trigger event](/api-reference/events/trigger-event) or [Create a subscriber](/api-reference/subscribers/create-a-subscriber).
+    Trigger a workflow or create a subscriber using the REST API, a [server-side SDK](/platform/sdks#server-side-sdks), or the [Postman collection](https://github.com/novuhq/novu-postman). Start with [Trigger event](/api-reference/events/trigger-event) or [Create a subscriber](/api-reference/subscribers/create-a-subscriber).
   </Step>
   <Step title="Review API policies">
     Understand [Errors](/api-reference/errors), [Pagination](/api-reference/pagination), [Rate limiting](/api-reference/rate-limiting), [Idempotency](/api-reference/idempotency), and [Payload limits](/api-reference/payload-limits) before building production integrations.
