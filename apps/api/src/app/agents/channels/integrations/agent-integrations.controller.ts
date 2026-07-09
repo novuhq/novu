@@ -31,7 +31,7 @@ import {
   ApiResponse,
 } from '../../../shared/framework/response.decorator';
 import { KeylessAccessible } from '../../../shared/framework/swagger/keyless.security';
-import { SdkGroupName, SdkMethodName, SdkUsePagination } from '../../../shared/framework/swagger/sdk.decorators';
+import { SdkGroupName, SdkMethodName } from '../../../shared/framework/swagger/sdk.decorators';
 import { UserSession } from '../../../shared/framework/user.decorator';
 import { SendAgentWelcomeMessageCommand } from '../../conversation-runtime/reply/send-agent-welcome-message/send-agent-welcome-message.command';
 import { SendAgentWelcomeMessage } from '../../conversation-runtime/reply/send-agent-welcome-message/send-agent-welcome-message.usecase';
@@ -135,7 +135,6 @@ export class AgentIntegrationsController {
   @ApiNotFoundResponse({
     description: 'The agent was not found.',
   })
-  @SdkUsePagination()
   @RequirePermissions(PermissionsEnum.AGENT_READ)
   listAgentIntegrations(
     @UserSession() user: UserSessionData,

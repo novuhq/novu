@@ -27,7 +27,7 @@ import {
   ApiResponse,
 } from '../../shared/framework/response.decorator';
 import { KeylessAccessible } from '../../shared/framework/swagger/keyless.security';
-import { SdkGroupName, SdkMethodName, SdkUsePagination } from '../../shared/framework/swagger/sdk.decorators';
+import { SdkGroupName, SdkMethodName } from '../../shared/framework/swagger/sdk.decorators';
 import { UserSession } from '../../shared/framework/user.decorator';
 import { ConversationActivationService } from '../conversation-runtime/conversation/conversation-activation.service';
 import { AgentRuntimeExceptionFilter } from '../shared/agent-runtime-exception.filter';
@@ -143,7 +143,6 @@ export class AgentsController {
     description:
       'Retrieve a cursor-paginated list of agents for the current environment. Use **after**, **before**, **limit**, **orderBy**, and **orderDirection** query parameters.',
   })
-  @SdkUsePagination()
   @RequirePermissions(PermissionsEnum.AGENT_READ)
   listAgents(@UserSession() user: UserSessionData, @Query() query: ListAgentsQueryDto): Promise<ListAgentsResponseDto> {
     return this.listAgentsUsecase.execute(
