@@ -347,6 +347,18 @@ export const installTemplate = async ({
     };
   }
 
+  if (template === TemplateTypeEnum.APP_AGENT_AI_SDK) {
+    // chat (transitive via @novu/framework) peers ai@^6 for its own AI helpers.
+    // Framework only uses chat for card components; ai-sdk scaffold installs ai@7.
+    packageJson.pnpm = {
+      peerDependencyRules: {
+        allowedVersions: {
+          'chat>ai': '7',
+        },
+      },
+    };
+  }
+
   const devDeps = Object.keys(packageJson.devDependencies).length;
   if (!devDeps) delete packageJson.devDependencies;
 
