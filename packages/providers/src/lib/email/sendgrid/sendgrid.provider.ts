@@ -315,7 +315,11 @@ export class SendgridEmailProvider extends BaseProvider implements IEmailProvide
     if (Array.isArray(body)) {
       if (eventIndex !== undefined) {
         const item = body[eventIndex] as Record<string, unknown> | undefined;
-        eventBody = item?.id === identifier ? item : undefined;
+        if (item?.id === identifier) {
+          eventBody = item;
+        } else {
+          eventBody = body.find((entry: Record<string, unknown>) => entry.id === identifier);
+        }
       } else {
         eventBody = body.find((item: Record<string, unknown>) => item.id === identifier);
       }

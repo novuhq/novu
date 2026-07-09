@@ -284,7 +284,7 @@ test('parseEventBody processes each batched event by index when message ids repe
   expect(opened?.status).toBe(EmailEventStatusEnum.OPENED);
 });
 
-test('parseEventBody returns undefined when batched event index does not match identifier', () => {
+test('parseEventBody falls back to identifier lookup when indexed event does not match', () => {
   const provider = new SendgridEmailProvider(mockConfig);
   const batch = [
     {
@@ -299,7 +299,8 @@ test('parseEventBody returns undefined when batched event index does not match i
 
   const result = provider.parseEventBody(batch, 'message-b', 0);
 
-  expect(result).toBeUndefined();
+  expect(result?.status).toBe(EmailEventStatusEnum.OPENED);
+  expect(result?.externalId).toBe('message-b');
 });
 
 test('getMessageId returns one id per batched event including duplicates', () => {
