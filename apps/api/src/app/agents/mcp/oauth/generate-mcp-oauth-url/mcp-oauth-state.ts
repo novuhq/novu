@@ -25,7 +25,7 @@ export interface McpOAuthState {
   userId?: string;
   /** Where the OAuth URL was generated — round-trips for consistent callback attribution. */
   source?: 'api' | 'user_chat';
-  /** When set, persist server-wide tool auto-approve on the connection after OAuth succeeds. */
+  /** When set, persist server-wide tool auto-approve in `agent_tool_trust` after OAuth succeeds. */
   trustToolsOnConnect?: boolean;
 
   // ── Session resume fields (source: 'user_chat') ──────────────────────
