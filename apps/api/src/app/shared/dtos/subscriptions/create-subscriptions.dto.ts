@@ -51,7 +51,8 @@ export class BasePreferenceDto {
   enabled?: boolean;
 
   @ApiProperty({
-    description: 'Optional condition using JSON Logic rules',
+    description:
+      'Optional JSON Logic condition evaluated against the trigger payload at fan-out time (for example, `{ "var": "payload.tier" }`)',
     required: false,
     type: 'object',
     additionalProperties: true,

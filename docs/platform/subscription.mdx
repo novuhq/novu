@@ -13,7 +13,7 @@ The Subscription introduces a filtering layer between the trigger and the subscr
 
 1. **Trigger**: You trigger a workflow to a `topicKey` and include a data payload and optional [Context](/platform/concepts/contexts).
 2. **Match**: Novu retrieves topic subscriptions whose Context matches the trigger (exact match), then resolves the subscribers.
-3. **Evaluate**: The system checks the conditions and preferences of each matching subscription against the condition variables.
+3. **Evaluate**: The system checks each matching subscription's conditions against the trigger **payload** (and workflow preferences).
 4. **Deliver**: Only subscribers whose subscriptions pass receive the notification.
 
 This filtering happens for every event on a topic, which allows you to support many use cases, including advanced preferences, segmentation, and multi-tenant experiences.
@@ -134,4 +134,4 @@ Subscriptions work with or without the [`<Inbox />`](/platform/inbox), and have 
 
 ## Manage topic subscriptions
 
-To create subscriptions from your backend, from the browser with `@novu/js`, or in React with hooks and components (including JSON Logic conditions), see [Manage topic subscriptions](/platform/subscription/manage-topic-subscriptions).
+To create subscriptions from your backend, from the browser with `@novu/js`, or in React with hooks and components (including payload-based JSON Logic conditions), see [Manage topic subscriptions](/platform/subscription/manage-topic-subscriptions).

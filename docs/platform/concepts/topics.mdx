@@ -23,7 +23,7 @@ Novu’s notification system is built around workflows, which are triggered for 
 When you trigger a workflow using a topic:
 - The `to` field accepts the topic’s key.
 - Novu looks up [topic subscriptions](/platform/subscription) on that topic whose [Context](/platform/concepts/contexts) matches the trigger (exact match).
-- For each matching subscription, Novu evaluates optional JSON Logic conditions against the trigger data.
+- For each matching subscription, Novu evaluates optional JSON Logic conditions against the trigger **payload**.
 - A separate workflow event is created for each subscriber whose subscription passes.
 
 Topics let you target large groups with a single API call, removing the need to loop through subscribers or send multiple workflow triggers.
@@ -36,7 +36,7 @@ Topics let you target large groups with a single API call, removing the need to 
 
 Adding a subscriber to a topic creates a **topic subscription**, the subscriber’s opt-in to receive notifications sent to that `topicKey`. Subscriptions support:
 
-- **JSON Logic conditions**: deliver only when trigger data matches (for example, `payload.tier` is `premium`). See [Manage topic subscriptions](/platform/subscription/manage-topic-subscriptions).
+- **JSON Logic conditions**: deliver only when trigger **payload** fields match (for example, `payload.tier` is `premium`). Conditions do not support subscriber profile, Context data, or step results. See [Manage topic subscriptions](/platform/subscription/manage-topic-subscriptions).
 - **Context scoping**: isolate subscriptions per tenant, app, or region using the same [Context](/platform/concepts/contexts) metadata you pass on workflow triggers.
 
 Context scoping uses **exact-match** filtering, the same rules as the [Inbox](/platform/inbox/configuration/inbox-with-context):
@@ -575,7 +575,7 @@ Below are some of the most frequently asked questions about topics:
   </Accordion>
 
   <Accordion title="How do topic subscriptions differ from topic membership?">
-    A topic subscription is how a subscriber joins a topic. It stores the subscriber's opt-in, optional JSON Logic conditions, and optional [Context](/platform/concepts/contexts) scope. When you trigger to a topic, Novu fan-out runs through matching subscriptions, not a flat list of subscriber IDs. See [Manage topic subscriptions](/platform/subscription/manage-topic-subscriptions).
+    A topic subscription is how a subscriber joins a topic. It stores the subscriber's opt-in, optional JSON Logic conditions (evaluated against the trigger payload), and optional [Context](/platform/concepts/contexts) scope. When you trigger to a topic, Novu fan-out runs through matching subscriptions, not a flat list of subscriber IDs. See [Manage topic subscriptions](/platform/subscription/manage-topic-subscriptions).
   </Accordion>
 
   <Accordion title="Do Context on a trigger and Context on a subscription need to match?">

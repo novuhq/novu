@@ -419,37 +419,33 @@ See the [quickstart](/platform/subscription/quickstart) for setup steps. For Con
 
 ## JSON Logic conditions
 
-Subscription conditions use [JSON Logic](https://jsonlogic.com/), the same rule format as [step conditions](/platform/workflow/add-and-configure-steps/step-conditions). Reference condition variables with `{ "var": "<namespace>.<path>" }`.
+Subscription conditions use [JSON Logic](https://jsonlogic.com/), the same rule format as [step conditions](/platform/workflow/add-and-configure-steps/step-conditions). Reference trigger payload fields with `{ "var": "payload.<path>" }`.
 
 ### Condition variables
 
-These namespaces are available when a condition is evaluated at trigger time:
+Topic subscription conditions are evaluated against the workflow trigger **payload** only. Reference fields with `{ "var": "payload.<path>" }`.
 
 | Namespace | Source | Examples |
 | --- | --- | --- |
 | `payload.*` | Trigger [payload](/platform/concepts/trigger) | `payload.tier`, `payload.status`, `payload.category` |
-| `subscriber.*` | Recipient profile | `subscriber.email`, `subscriber.locale`, `subscriber.data.plan` |
-| `workflow.*` | Workflow metadata | `workflow.name`, `workflow.tags`, `workflow.severity` |
-| `context.*` | [Context](/platform/concepts/contexts) on the trigger | `context.tenant.data.plan`, `context.tenant.id` |
-| `steps.<stepId>.*` | Prior step results | `steps.in-app-step.read`, `steps.digest-step.eventCount` |
 
 <Note>
-  Topic subscription conditions are evaluated at **trigger time** when fanning out a workflow to a topic. At this point, `payload`, `subscriber`, `workflow`, and Context (`context.*`) are in scope. **`steps.*` is not available** at this stage because workflow steps have not executed yet. Use [step conditions](/platform/workflow/add-and-configure-steps/step-conditions) when logic depends on prior step outcomes (for example, send email only if in-app was not read).
+  Topic subscription conditions are evaluated at **trigger time** when fanning out a workflow to a topic. Only `payload.*` is in scope. For rules that depend on subscriber profile, workflow metadata, Context, or prior step results, use [step conditions](/platform/workflow/add-and-configure-steps/step-conditions) instead.
 </Note>
 
 <Warning>
-  Do not confuse **Context** (the Novu feature, referenced as `context.*` in conditions) with the general idea of "execution context." Context is explicit metadata you pass on triggers and subscriptions. [Payload](/platform/concepts/contexts#context-vs-payload) holds event-specific data for a single run.
+  Do not confuse **Context** (the Novu feature used to scope subscriptions and Inbox sessions) with condition variables. Context matching happens before JSON Logic runs: Novu selects subscriptions whose stored Context exactly matches the trigger Context. [Payload](/platform/concepts/contexts#context-vs-payload) holds event-specific data for a single run and is what conditions read.
 </Warning>
 
 ### Syntax rules
 
-- Use dot paths in `{ "var": "..." }`. For example, `{ "var": "payload.tier" }` or `{ "var": "subscriber.data.plan" }`.
+- Use dot paths in `{ "var": "..." }`. For example, `{ "var": "payload.tier" }`.
 - Do **not** use Liquid/template syntax (`{{payload.tier}}`) in conditions. That syntax is for workflow step content, not JSON Logic rules.
-- Do **not** omit the namespace prefix (for example `{ "var": "tier" }`). Always use the full path such as `payload.tier`.
+- Do **not** omit the `payload.` prefix (for example `{ "var": "tier" }`). Always use the full path such as `payload.tier`.
 
-### Examples by variable source
+### Examples
 
-**Payload (tier is premium):**
+**Tier is premium:**
 
 ```json
 {
@@ -457,30 +453,13 @@ These namespaces are available when a condition is evaluated at trigger time:
 }
 ```
 
-**Subscriber (custom data field):**
-
-```json
-{
-  "===": [{ "var": "subscriber.data.plan" }, "enterprise"]
-}
-```
-
-**Context (tenant plan from Context data):**
-
-```json
-{
-  "===": [{ "var": "context.tenant.data.plan" }, "enterprise"]
-}
-```
-
-**Payload + subscriber combined:**
+**Status and price combined:**
 
 ```json
 {
   "and": [
     { "==": [{ "var": "payload.status" }, "completed"] },
-    { ">": [{ "var": "payload.price" }, 100] },
-    { "==": [{ "var": "subscriber.locale" }, "en-US"] }
+    { ">": [{ "var": "payload.price" }, 100] }
   ]
 }
 ```
@@ -504,7 +483,7 @@ These namespaces are available when a condition is evaluated at trigger time:
 
 | Field | Behavior |
 | --- | --- |
-| `condition` | JSON Logic rule evaluated against the available variables. When present, **`enabled` is ignored** during evaluation. |
+| `condition` | JSON Logic rule evaluated against the trigger payload. When present, **`enabled` is ignored** during evaluation. |
 | `enabled` | Simple on/off toggle. Used only when no `condition` is set. Defaults to `true` if omitted. |
 
 ### Preference filter formats
@@ -555,7 +534,7 @@ await novu.trigger({
 ```
   </Step>
   <Step title="Novu matches Context, then evaluates conditions">
-    Novu first selects topic subscriptions whose stored Context exactly matches the trigger Context (including the default/no-Context case). For each matching subscription, Novu evaluates the JSON Logic condition against `payload`, `subscriber`, `workflow`, and Context variables. Subscriptions that pass receive the notification; others are skipped.
+    Novu first selects topic subscriptions whose stored Context exactly matches the trigger Context (including the default/no-Context case). For each matching subscription, Novu evaluates the JSON Logic condition against the trigger **payload** only. Subscriptions that pass receive the notification; others are skipped.
   </Step>
 </Steps>
 
