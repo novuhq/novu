@@ -21,6 +21,7 @@ import { ApiAuthSchemeEnum, ApiRateLimitCategoryEnum, PermissionsEnum, UserSessi
 import type { Request } from 'express';
 import { getClientIp } from 'request-ip';
 import { RequireAuthentication } from '../../auth/framework/auth.decorator';
+import { ExternalApiAccessible } from '../../auth/framework/external-api.decorator';
 import { ThrottlerCategory } from '../../rate-limiting/guards';
 import {
   ApiCommonResponses,
@@ -109,6 +110,7 @@ export class AgentRuntimeController {
 
   @Post('/verify-credentials')
   @ApiExcludeEndpoint()
+  @ExternalApiAccessible()
   @KeylessAccessible()
   @ApiResponse(VerifyManagedCredentialsResponseDto)
   @ApiOperation({
