@@ -1,25 +1,18 @@
 {
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
-    "declaration": true,
-    "declarationMap": true,
-    "removeComments": true,
-    "resolveJsonModule": true,
-    "skipLibCheck": true,
-    "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true,
-    "strict": true,
+    "sourceMap": true,
     "strictNullChecks": false,
-    "noImplicitAny": false,
-    "strictPropertyInitialization": false,
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "target": "es6",
+    "allowSyntheticDefaultImports": true,
     "outDir": "build/main",
+    "module": "commonjs",
+    "target": "es6",
+    "esModuleInterop": true,
     "rootDir": "src",
-    "types": ["node", "jest"]
+    "strict": true,
+    "types": ["node", "jest"],
+    "typeRoots": ["./node_modules/@types", "../../node_modules/@types"]
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["node_modules/**", "**/*.spec.ts"]
+  "exclude": ["node_modules/**"]
 }
