@@ -22,7 +22,7 @@ export class AwsSecretsManagerService implements ISecretsManagerService {
     } else if (data.SecretBinary) {
       raw = Buffer.from(data.SecretBinary as Uint8Array).toString('utf8');
     } else {
-      console.warn(`[${LOG_CONTEXT}] Secret "${this.secretName}" returned no value`);
+      console.warn(`[${LOG_CONTEXT}] AWS Secrets Manager returned no value for configured secret.`);
 
       return {};
     }
