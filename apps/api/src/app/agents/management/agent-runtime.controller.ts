@@ -21,7 +21,6 @@ import { ApiAuthSchemeEnum, ApiRateLimitCategoryEnum, PermissionsEnum, UserSessi
 import type { Request } from 'express';
 import { getClientIp } from 'request-ip';
 import { RequireAuthentication } from '../../auth/framework/auth.decorator';
-import { ExternalApiAccessible } from '../../auth/framework/external-api.decorator';
 import { ThrottlerCategory } from '../../rate-limiting/guards';
 import {
   ApiCommonResponses,
@@ -31,7 +30,7 @@ import {
   ApiResponse,
 } from '../../shared/framework/response.decorator';
 import { KeylessAccessible } from '../../shared/framework/swagger/keyless.security';
-import { SdkGroupName, SdkMethodName } from '../../shared/framework/swagger/sdk.decorators';
+import { SdkGroupName } from '../../shared/framework/swagger/sdk.decorators';
 import { UserSession } from '../../shared/framework/user.decorator';
 import { EnsureProviderManagedVaultCommand } from '../mcp/connections/ensure-provider-managed-vault/ensure-provider-managed-vault.command';
 import { EnsureProviderManagedVault } from '../mcp/connections/ensure-provider-managed-vault/ensure-provider-managed-vault.usecase';
@@ -109,9 +108,8 @@ export class AgentRuntimeController {
   ) {}
 
   @Post('/verify-credentials')
-  @ExternalApiAccessible()
+  @ApiExcludeEndpoint()
   @KeylessAccessible()
-  @SdkMethodName('verifyCredentials')
   @ApiResponse(VerifyManagedCredentialsResponseDto)
   @ApiOperation({
     summary: 'Verify managed agent credentials',
@@ -139,9 +137,8 @@ export class AgentRuntimeController {
   }
 
   @Post('/generate')
-  @ExternalApiAccessible()
+  @ApiExcludeEndpoint()
   @KeylessAccessible()
-  @SdkMethodName('generate')
   @ApiResponse(GenerateManagedAgentResponseDto)
   @ApiOperation({
     summary: 'Generate an agent configuration',
@@ -225,8 +222,7 @@ export class AgentRuntimeController {
   }
 
   @Get('/:identifier/runtime/config')
-  @ExternalApiAccessible()
-  @SdkMethodName('retrieveRuntimeConfig')
+  @ApiExcludeEndpoint()
   @ApiResponse(AgentRuntimeConfigResponseDto, 200)
   @ApiOperation({
     summary: 'Retrieve an agent runtime config',
@@ -257,8 +253,7 @@ export class AgentRuntimeController {
   }
 
   @Patch('/:identifier/runtime/config')
-  @ExternalApiAccessible()
-  @SdkMethodName('updateRuntimeConfig')
+  @ApiExcludeEndpoint()
   @ApiResponse(AgentRuntimeConfigResponseDto, 200)
   @ApiOperation({
     summary: 'Update an agent runtime config',
@@ -499,8 +494,7 @@ export class AgentRuntimeController {
   }
 
   @Post('/skills')
-  @ExternalApiAccessible()
-  @SdkMethodName('uploadCustomSkills')
+  @ApiExcludeEndpoint()
   @HttpCode(HttpStatus.CREATED)
   @ApiResponse(UploadCustomSkillResponseDto, 201)
   @ApiOperation({
