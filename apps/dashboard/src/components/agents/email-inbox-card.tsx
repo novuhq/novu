@@ -16,6 +16,7 @@ import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { useUpdateIntegration } from '@/hooks/use-update-integration';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
+import { getMinimumTierForFeature } from '@/utils/upgrade-tier';
 import { AgentCustomDomainSheet } from './agent-custom-domain-sheet';
 import { useEmailSetupCredentials } from './use-email-setup-credentials';
 
@@ -250,7 +251,8 @@ export function EmailInboxCardBody({
               </button>
             ) : (
               <UpgradeCTATooltip
-                description="To create domains, upgrade your plan."
+                description="Connect a custom domain to receive email on your own domain."
+                requiredTier={getMinimumTierForFeature(FeatureNameEnum.DOMAINS_BOOLEAN)}
                 utmCampaign="domains"
                 utmSource="agent-email-inbox"
               >

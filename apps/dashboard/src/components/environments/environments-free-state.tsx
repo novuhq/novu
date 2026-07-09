@@ -1,9 +1,11 @@
 /** biome-ignore-all lint/correctness/useUniqueElementIds: working correctly */
+import { FeatureNameEnum } from '@novu/shared';
 import { RiBookMarkedLine, RiSparkling2Line } from 'react-icons/ri';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment, useFetchEnvironments } from '@/context/environment/hooks';
 import { ROUTES } from '@/utils/routes';
+import { getMinimumTierForFeature, getPlanLabel, getUpgradeButtonLabel } from '@/utils/upgrade-tier';
 import { openInNewTab } from '@/utils/url';
 import { IS_SELF_HOSTED, SELF_HOSTED_UPGRADE_REDIRECT_URL } from '../../config';
 import { useTelemetry } from '../../hooks/use-telemetry';
@@ -25,6 +27,9 @@ export function FreeTierState() {
     organizationId: currentOrganization?._id,
   });
   const { currentEnvironment } = useEnvironment();
+
+  const requiredTier = getMinimumTierForFeature(FeatureNameEnum.CUSTOM_ENVIRONMENTS_BOOLEAN);
+  const tierLabel = !IS_SELF_HOSTED && requiredTier ? getPlanLabel(requiredTier) : null;
 
   return (
     <div className="flex h-full w-full flex-col items-center justify-center gap-6 px-4">
@@ -85,7 +90,9 @@ export function FreeTierState() {
 
         <div className="flex flex-col items-center gap-1">
           <p className="text-text-soft text-label-xs mb-3 text-center">
-            To create additional custom environments, upgrade your plan.
+            {tierLabel
+              ? `To create additional custom environments, upgrade to the ${tierLabel} plan.`
+              : 'To create additional custom environments, upgrade your plan.'}
           </p>
           <Button
             variant="primary"
@@ -105,7 +112,7 @@ export function FreeTierState() {
             }}
             leadingIcon={RiSparkling2Line}
           >
-            {IS_SELF_HOSTED ? 'Contact Sales' : 'Upgrade to Team Tier'}
+            {getUpgradeButtonLabel(requiredTier)}
           </Button>
           <Link to={'https://docs.novu.co/platform/developer/environments'} target="_blank">
             <LinkButton size="sm" leadingIcon={RiBookMarkedLine}>
