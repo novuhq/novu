@@ -28,6 +28,10 @@ import {
   SlackUserEndpointDto$inboundSchema,
 } from "./slackuserendpointdto.js";
 import {
+  LineUserEndpointDto,
+  LineUserEndpointDto$inboundSchema,
+} from "./lineuserendpointdto.js";
+import {
   TelegramChatEndpointDto,
   TelegramChatEndpointDto$inboundSchema,
 } from "./telegramchatendpointdto.js";
@@ -160,6 +164,7 @@ export const GetChannelEndpointResponseDtoType = {
   MsTeamsChannel: "ms_teams_channel",
   MsTeamsUser: "ms_teams_user",
   TelegramChat: "telegram_chat",
+  LineUser: "line_user",
 } as const;
 /**
  * Type of channel endpoint
@@ -178,7 +183,8 @@ export type Endpoint =
   | WebhookEndpointDto
   | PhoneEndpointDto
   | MsTeamsUserEndpointDto
-  | TelegramChatEndpointDto;
+  | TelegramChatEndpointDto
+  | LineUserEndpointDto;
 
 export type GetChannelEndpointResponseDto = {
   /**
@@ -223,7 +229,8 @@ export type GetChannelEndpointResponseDto = {
     | WebhookEndpointDto
     | PhoneEndpointDto
     | MsTeamsUserEndpointDto
-    | TelegramChatEndpointDto;
+    | TelegramChatEndpointDto
+    | LineUserEndpointDto;
   /**
    * The timestamp indicating when the channel endpoint was created, in ISO 8601 format.
    */
@@ -263,6 +270,7 @@ export const Endpoint$inboundSchema: z.ZodType<
   PhoneEndpointDto$inboundSchema,
   MsTeamsUserEndpointDto$inboundSchema,
   TelegramChatEndpointDto$inboundSchema,
+  LineUserEndpointDto$inboundSchema,
 ]);
 
 export function endpointFromJSON(
@@ -297,6 +305,7 @@ export const GetChannelEndpointResponseDto$inboundSchema: z.ZodType<
     PhoneEndpointDto$inboundSchema,
     MsTeamsUserEndpointDto$inboundSchema,
     TelegramChatEndpointDto$inboundSchema,
+    LineUserEndpointDto$inboundSchema,
   ]),
   createdAt: z.string(),
   updatedAt: z.string(),
