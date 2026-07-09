@@ -77,15 +77,14 @@ function mapHistoryEntry(entry: AgentHistoryEntry, multiSender: boolean, index: 
  *
  * History already includes the current incoming message — do not append the handler's
  * `message` argument on top of it.
+ *
+ * Pass the system prompt via the top-level `instructions` option of `streamText` /
+ * `generateText`. AI SDK 7 rejects `system` messages inside the `messages` array by default,
+ * so this helper never injects one.
  */
-export function toModelMessages(history: AgentHistoryEntry[], system?: string): ModelMessage[] {
+export function toModelMessages(history: AgentHistoryEntry[]): ModelMessage[] {
   const multiSender = distinctHumanSenders(history) > 1;
   const index = buildApprovalIndex(history);
-  const fromHistory = history.flatMap((entry) => mapHistoryEntry(entry, multiSender, index));
 
-  if (!system) {
-    return fromHistory;
-  }
-
-  return [{ role: 'system' as const, content: system }, ...fromHistory];
+  return history.flatMap((entry) => mapHistoryEntry(entry, multiSender, index));
 }
