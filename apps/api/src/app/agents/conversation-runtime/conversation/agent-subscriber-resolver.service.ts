@@ -102,11 +102,13 @@ export class AgentSubscriberResolver {
       return { outcome: 'invalid_identity' };
     }
 
-    if (platform === AgentPlatformEnum.WHATSAPP) {
-      return this.resolveWhatsAppSubscriber({
+    // Phone-based platforms (WhatsApp, Sendblue) identify users by their phone number.
+    if (platform === AgentPlatformEnum.WHATSAPP || platform === AgentPlatformEnum.SENDBLUE) {
+      return this.resolvePhoneSubscriber({
         environmentId,
         organizationId,
         platformUserId,
+        platform,
       });
     }
 
@@ -318,12 +320,13 @@ export class AgentSubscriberResolver {
     return subscriberId;
   }
 
-  private async resolveWhatsAppSubscriber(params: {
+  private async resolvePhoneSubscriber(params: {
     environmentId: string;
     organizationId: string;
     platformUserId: string;
+    platform: AgentPlatformEnum;
   }): Promise<SubscriberResolution> {
-    const { environmentId, organizationId, platformUserId } = params;
+    const { environmentId, organizationId, platformUserId, platform } = params;
     const phoneCandidates = getPhoneLookupCandidates(platformUserId);
     const matches = await this.subscriberRepository.findByPhone(environmentId, organizationId, phoneCandidates);
 
@@ -336,12 +339,12 @@ export class AgentSubscriberResolver {
     const subscriber = matches[0];
 
     if (subscriber) {
-      this.logger.debug(`Resolved WhatsApp phone ${platformUserId} → subscriber ${subscriber.subscriberId}`);
+      this.logger.debug(`Resolved ${platform} phone ${platformUserId} → subscriber ${subscriber.subscriberId}`);
 
       return { outcome: 'resolved', subscriberId: subscriber.subscriberId };
     }
 
-    this.logger.debug(`No subscriber found for WhatsApp phone ${platformUserId}`);
+    this.logger.debug(`No subscriber found for ${platform} phone ${platformUserId}`);
 
     return { outcome: 'not_found' };
   }

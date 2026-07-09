@@ -2,6 +2,7 @@ import { AddAgentIntegration } from '../channels/integrations/add-agent-integrat
 import { ListAgentIntegrations } from '../channels/integrations/list-agent-integrations/list-agent-integrations.usecase';
 import { RemoveAgentIntegration } from '../channels/integrations/remove-agent-integration/remove-agent-integration.usecase';
 import { UpdateAgentIntegration } from '../channels/integrations/update-agent-integration/update-agent-integration.usecase';
+import { ConfigureSendblueWebhook } from '../channels/sendblue/configure-sendblue-webhook/configure-sendblue-webhook.usecase';
 import { ConsumeSlackSetupLink } from '../channels/slack-linking/consume-slack-setup-link/consume-slack-setup-link.usecase';
 import { GetSlackSetupLinkStatus } from '../channels/slack-linking/get-slack-setup-link-status/get-slack-setup-link-status.usecase';
 import { IssueSlackSetupLink } from '../channels/slack-linking/issue-slack-setup-link/issue-slack-setup-link.usecase';
@@ -55,6 +56,7 @@ export const USE_CASES = [
   UploadCustomSkill,
   DeleteAgent,
   AddAgentIntegration,
+  ConfigureSendblueWebhook,
   ConfigureWhatsAppWebhook,
   GenerateManagedAgent,
   IssueSlackSetupLink,

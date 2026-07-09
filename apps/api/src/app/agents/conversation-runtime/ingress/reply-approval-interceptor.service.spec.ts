@@ -1,0 +1,385 @@
+import { ConversationActivityTypeEnum } from '@novu/dal';
+import { expect } from 'chai';
+import sinon from 'sinon';
+import { AgentEventEnum } from '../../shared/enums/agent-event.enum';
+import { ReplyApprovalInterceptor } from './reply-approval-interceptor.service';
+
+describe('ReplyApprovalInterceptor', () => {
+  const pendingRequest = {
+    type: ConversationActivityTypeEnum.TOOL_APPROVAL_REQUEST,
+    platformMessageId: 'msg-approval',
+    toolData: { approvalId: 'approval-1', toolCallId: 'tc-1', toolName: 'issueRefund' },
+  };
+
+  function makeDeps(history: unknown[] = [pendingRequest]) {
+    const channel = { platform: 'sendblue', platformThreadId: 'sendblue:+15551234567' };
+    const conversationService = {
+      getHistory: sinon.stub().resolves(history),
+      getPrimaryChannel: sinon.stub().returns(channel),
+      persistToolApprovalDecision: sinon.stub().resolves(undefined),
+    };
+    const outboundGateway = {
+      replyOnThread: sinon.stub().resolves({ messageId: 'ack-1', platformThreadId: channel.platformThreadId }),
+    };
+    const logger = {
+      info: sinon.stub(),
+      warn: sinon.stub(),
+      setContext: sinon.stub(),
+    };
+    const interceptor = new ReplyApprovalInterceptor(
+      conversationService as any,
+      outboundGateway as any,
+      logger as any
+    );
+
+    return { interceptor, conversationService, outboundGateway };
+  }
+
+  function makeTurn(overrides: Record<string, unknown> = {}) {
+    return {
+      agentId: 'agent-1',
+      agent: { _id: 'agent-1' },
+      config: {
+        environmentId: 'env-1',
+        organizationId: 'org-1',
+        platform: 'sendblue',
+        agentIdentifier: 'support-agent',
+        integrationIdentifier: 'sendblue-main',
+      },
+      conversation: { _id: 'conv-1' },
+      subscriber: { subscriberId: 'sub-1' },
+      message: { id: 'msg-yes', text: 'yes', author: { userId: '+15557654321' } },
+      event: AgentEventEnum.ON_MESSAGE,
+      thread: { id: 'sendblue:+15557654321' },
+      platformThreadId: 'sendblue:+15557654321',
+      ...overrides,
+    } as any;
+  }
+
+  it('should consume an approving reply: persist the decision, ack, and dispatch a self-hosted ON_ACTION', async () => {
+    const { interceptor, conversationService, outboundGateway } = makeDeps();
+    const runtime = { dispatch: sinon.stub().resolves(undefined) };
+    const turn = makeTurn();
+
+    const consumed = await interceptor.tryHandleAsApprovalReply(turn, runtime as any);
+
+    expect(consumed).to.equal(true);
+    expect(conversationService.persistToolApprovalDecision.calledOnce).to.equal(true);
+    expect(conversationService.persistToolApprovalDecision.firstCall.args[0]).to.include({
+      approvalId: 'approval-1',
+      approved: true,
+      toolName: 'issueRefund',
+      actorId: 'sub-1',
+    });
+    expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
+    expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.include('Approved');
+    expect(runtime.dispatch.calledOnce).to.equal(true);
+    const dispatched = runtime.dispatch.firstCall.args[0];
+    expect(dispatched.event).to.equal(AgentEventEnum.ON_ACTION);
+    expect(dispatched.action).to.deep.equal({ id: 'tool-approval:approve:approval-1' });
+    expect(dispatched.message).to.equal(null);
+  });
+
+  it('should consume an iMessage "Liked" tapback (delivered as text) as an approval', async () => {
+    const { interceptor, conversationService } = makeDeps();
+    const runtime = { dispatch: sinon.stub().resolves(undefined) };
+    const turn = makeTurn({
+      message: { id: 'msg-tap', text: 'Liked "Tool approval required: issueRefund"', author: { userId: '+1' } },
+    });
+
+    const consumed = await interceptor.tryHandleAsApprovalReply(turn, runtime as any);
+
+    expect(consumed).to.equal(true);
+    expect(conversationService.persistToolApprovalDecision.firstCall.args[0]).to.include({
+      approvalId: 'approval-1',
+      approved: true,
+    });
+    expect(runtime.dispatch.firstCall.args[0].action).to.deep.equal({ id: 'tool-approval:approve:approval-1' });
+  });
+
+  it('should consume an iMessage "Disliked" tapback as a denial', async () => {
+    const { interceptor, conversationService } = makeDeps();
+    const runtime = { dispatch: sinon.stub().resolves(undefined) };
+    const turn = makeTurn({
+      message: { id: 'msg-tap', text: 'Disliked "Tool approval required: issueRefund"', author: { userId: '+1' } },
+    });
+
+    const consumed = await interceptor.tryHandleAsApprovalReply(turn, runtime as any);
+
+    expect(consumed).to.equal(true);
+    expect(conversationService.persistToolApprovalDecision.firstCall.args[0]).to.include({ approved: false });
+    expect(runtime.dispatch.firstCall.args[0].action).to.deep.equal({ id: 'tool-approval:deny:approval-1' });
+  });
+
+  it('should consume a "Reacted 👍 to" emoji tapback as an approval', async () => {
+    const { interceptor } = makeDeps();
+    const runtime = { dispatch: sinon.stub().resolves(undefined) };
+    const turn = makeTurn({
+      message: { id: 'msg-tap', text: 'Reacted 👍 to "Tool approval required: issueRefund"', author: { userId: '+1' } },
+    });
+
+    const consumed = await interceptor.tryHandleAsApprovalReply(turn, runtime as any);
+
+    expect(consumed).to.equal(true);
+    expect(runtime.dispatch.firstCall.args[0].action).to.deep.equal({ id: 'tool-approval:approve:approval-1' });
+  });
+
+  it('should fall through for a non-verdict tapback (Loved / Laughed)', async () => {
+    const { interceptor, conversationService } = makeDeps();
+    const runtime = { dispatch: sinon.stub().resolves(undefined) };
+    const turn = makeTurn({
+      message: { id: 'msg-tap', text: 'Loved "Tool approval required: issueRefund"', author: { userId: '+1' } },
+    });
+
+    const consumed = await interceptor.tryHandleAsApprovalReply(turn, runtime as any);
+
+    expect(consumed).to.equal(false);
+    expect(conversationService.persistToolApprovalDecision.called).to.equal(false);
+    expect(runtime.dispatch.called).to.equal(false);
+  });
+
+  it('should fall through when a tapback is removed', async () => {
+    const { interceptor } = makeDeps();
+    const runtime = { dispatch: sinon.stub().resolves(undefined) };
+    const turn = makeTurn({
+      message: { id: 'msg-tap', text: 'Removed a like from "Tool approval required: issueRefund"', author: { userId: '+1' } },
+    });
+
+    const consumed = await interceptor.tryHandleAsApprovalReply(turn, runtime as any);
+
+    expect(consumed).to.equal(false);
+    expect(runtime.dispatch.called).to.equal(false);
+  });
+
+  it('should consume a denying reply and dispatch a deny action', async () => {
+    const { interceptor, conversationService } = makeDeps();
+    const runtime = { dispatch: sinon.stub().resolves(undefined) };
+    const turn = makeTurn({ message: { id: 'msg-no', text: 'No.', author: { userId: '+15557654321' } } });
+
+    const consumed = await interceptor.tryHandleAsApprovalReply(turn, runtime as any);
+
+    expect(consumed).to.equal(true);
+    expect(conversationService.persistToolApprovalDecision.firstCall.args[0]).to.include({
+      approvalId: 'approval-1',
+      approved: false,
+    });
+    expect(runtime.dispatch.firstCall.args[0].action).to.deep.equal({ id: 'tool-approval:deny:approval-1' });
+  });
+
+  it('should use the managed action-id grammar for managed agents', async () => {
+    const { interceptor } = makeDeps();
+    const runtime = { dispatch: sinon.stub().resolves(undefined) };
+    const turn = makeTurn({
+      agent: { _id: 'agent-1', runtime: 'managed', managedRuntime: { providerId: 'anthropic' } },
+    });
+
+    const consumed = await interceptor.tryHandleAsApprovalReply(turn, runtime as any);
+
+    expect(consumed).to.equal(true);
+    expect(runtime.dispatch.firstCall.args[0].action).to.deep.equal({ id: 'direct-approval:approve:approval-1' });
+  });
+
+  it('should fall through when the platform has interactive buttons', async () => {
+    const { interceptor, conversationService } = makeDeps();
+    const runtime = { dispatch: sinon.stub().resolves(undefined) };
+    const turn = makeTurn({ config: { ...makeTurn().config, platform: 'slack' } });
+
+    const consumed = await interceptor.tryHandleAsApprovalReply(turn, runtime as any);
+
+    expect(consumed).to.equal(false);
+    expect(conversationService.getHistory.called).to.equal(false);
+    expect(runtime.dispatch.called).to.equal(false);
+  });
+
+  it('should fall through when the reply is not an unambiguous verdict', async () => {
+    const { interceptor, conversationService } = makeDeps();
+    const runtime = { dispatch: sinon.stub().resolves(undefined) };
+    const turn = makeTurn({
+      message: { id: 'msg-1', text: 'yes, but change the amount', author: { userId: '+15557654321' } },
+    });
+
+    const consumed = await interceptor.tryHandleAsApprovalReply(turn, runtime as any);
+
+    expect(consumed).to.equal(false);
+    expect(conversationService.persistToolApprovalDecision.called).to.equal(false);
+    expect(runtime.dispatch.called).to.equal(false);
+  });
+
+  it('should fall through when no approval is pending', async () => {
+    const { interceptor } = makeDeps([]);
+    const runtime = { dispatch: sinon.stub().resolves(undefined) };
+
+    const consumed = await interceptor.tryHandleAsApprovalReply(makeTurn(), runtime as any);
+
+    expect(consumed).to.equal(false);
+    expect(runtime.dispatch.called).to.equal(false);
+  });
+
+  it('should fall through when the pending approval was already decided', async () => {
+    const { interceptor } = makeDeps([
+      {
+        type: ConversationActivityTypeEnum.TOOL_APPROVAL_DECISION,
+        toolData: { approvalId: 'approval-1', approved: true },
+      },
+      pendingRequest,
+    ]);
+    const runtime = { dispatch: sinon.stub().resolves(undefined) };
+
+    const consumed = await interceptor.tryHandleAsApprovalReply(makeTurn(), runtime as any);
+
+    expect(consumed).to.equal(false);
+    expect(runtime.dispatch.called).to.equal(false);
+  });
+
+  it('should answer the oldest pending approval when several are outstanding', async () => {
+    // getHistory returns newest-first; the oldest request is last.
+    const { interceptor } = makeDeps([
+      {
+        type: ConversationActivityTypeEnum.TOOL_APPROVAL_REQUEST,
+        toolData: { approvalId: 'approval-2', toolCallId: 'tc-2', toolName: 'sendEmail' },
+      },
+      pendingRequest,
+    ]);
+    const runtime = { dispatch: sinon.stub().resolves(undefined) };
+
+    const consumed = await interceptor.tryHandleAsApprovalReply(makeTurn(), runtime as any);
+
+    expect(consumed).to.equal(true);
+    expect(runtime.dispatch.firstCall.args[0].action).to.deep.equal({ id: 'tool-approval:approve:approval-1' });
+  });
+
+  it('should still dispatch the verdict when persisting the decision fails', async () => {
+    const { interceptor, conversationService } = makeDeps();
+    conversationService.persistToolApprovalDecision.rejects(new Error('mongo down'));
+    const runtime = { dispatch: sinon.stub().resolves(undefined) };
+
+    const consumed = await interceptor.tryHandleAsApprovalReply(makeTurn(), runtime as any);
+
+    expect(consumed).to.equal(true);
+    expect(runtime.dispatch.calledOnce).to.equal(true);
+  });
+
+  describe('tryHandleAsApprovalReaction', () => {
+    function makeReactionTurn(overrides: Record<string, unknown> = {}) {
+      return makeTurn({
+        message: null,
+        event: AgentEventEnum.ON_REACTION,
+        reaction: { emoji: 'thumbs_up', added: true, messageId: 'msg-approval' },
+        ...overrides,
+      });
+    }
+
+    it('should consume a 👍 on the approval card: persist, ack, and dispatch an approve ON_ACTION', async () => {
+      const { interceptor, conversationService, outboundGateway } = makeDeps();
+      const runtime = { dispatch: sinon.stub().resolves(undefined) };
+
+      const consumed = await interceptor.tryHandleAsApprovalReaction(makeReactionTurn(), runtime as any);
+
+      expect(consumed).to.equal(true);
+      expect(conversationService.persistToolApprovalDecision.firstCall.args[0]).to.include({
+        approvalId: 'approval-1',
+        approved: true,
+        toolName: 'issueRefund',
+        actorId: 'sub-1',
+      });
+      expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
+      const dispatched = runtime.dispatch.firstCall.args[0];
+      expect(dispatched.event).to.equal(AgentEventEnum.ON_ACTION);
+      expect(dispatched.action).to.deep.equal({ id: 'tool-approval:approve:approval-1' });
+      expect(dispatched.reaction).to.equal(undefined);
+      expect(dispatched.message).to.equal(null);
+    });
+
+    it('should consume a 👎 on the approval card as a deny verdict', async () => {
+      const { interceptor, conversationService } = makeDeps();
+      const runtime = { dispatch: sinon.stub().resolves(undefined) };
+      const turn = makeReactionTurn({ reaction: { emoji: 'thumbs_down', added: true, messageId: 'msg-approval' } });
+
+      const consumed = await interceptor.tryHandleAsApprovalReaction(turn, runtime as any);
+
+      expect(consumed).to.equal(true);
+      expect(conversationService.persistToolApprovalDecision.firstCall.args[0]).to.include({
+        approvalId: 'approval-1',
+        approved: false,
+      });
+      expect(runtime.dispatch.firstCall.args[0].action).to.deep.equal({ id: 'tool-approval:deny:approval-1' });
+    });
+
+    it('should use the managed action-id grammar for managed agents', async () => {
+      const { interceptor } = makeDeps();
+      const runtime = { dispatch: sinon.stub().resolves(undefined) };
+      const turn = makeReactionTurn({
+        agent: { _id: 'agent-1', runtime: 'managed', managedRuntime: { providerId: 'anthropic' } },
+      });
+
+      const consumed = await interceptor.tryHandleAsApprovalReaction(turn, runtime as any);
+
+      expect(consumed).to.equal(true);
+      expect(runtime.dispatch.firstCall.args[0].action).to.deep.equal({ id: 'direct-approval:approve:approval-1' });
+    });
+
+    it('should fall through when the reacted message is not the approval card', async () => {
+      const { interceptor, conversationService } = makeDeps();
+      const runtime = { dispatch: sinon.stub().resolves(undefined) };
+      const turn = makeReactionTurn({ reaction: { emoji: 'thumbs_up', added: true, messageId: 'some-other-msg' } });
+
+      const consumed = await interceptor.tryHandleAsApprovalReaction(turn, runtime as any);
+
+      expect(consumed).to.equal(false);
+      expect(conversationService.persistToolApprovalDecision.called).to.equal(false);
+      expect(runtime.dispatch.called).to.equal(false);
+    });
+
+    it('should fall through when the reaction was removed rather than added', async () => {
+      const { interceptor, conversationService } = makeDeps();
+      const runtime = { dispatch: sinon.stub().resolves(undefined) };
+      const turn = makeReactionTurn({ reaction: { emoji: 'thumbs_up', added: false, messageId: 'msg-approval' } });
+
+      const consumed = await interceptor.tryHandleAsApprovalReaction(turn, runtime as any);
+
+      expect(consumed).to.equal(false);
+      expect(conversationService.getHistory.called).to.equal(false);
+      expect(runtime.dispatch.called).to.equal(false);
+    });
+
+    it('should fall through for an emoji that is not a verdict', async () => {
+      const { interceptor, conversationService } = makeDeps();
+      const runtime = { dispatch: sinon.stub().resolves(undefined) };
+      const turn = makeReactionTurn({ reaction: { emoji: 'heart', added: true, messageId: 'msg-approval' } });
+
+      const consumed = await interceptor.tryHandleAsApprovalReaction(turn, runtime as any);
+
+      expect(consumed).to.equal(false);
+      expect(conversationService.getHistory.called).to.equal(false);
+      expect(runtime.dispatch.called).to.equal(false);
+    });
+
+    it('should fall through when the platform has interactive buttons', async () => {
+      const { interceptor, conversationService } = makeDeps();
+      const runtime = { dispatch: sinon.stub().resolves(undefined) };
+      const turn = makeReactionTurn({ config: { ...makeTurn().config, platform: 'slack' } });
+
+      const consumed = await interceptor.tryHandleAsApprovalReaction(turn, runtime as any);
+
+      expect(consumed).to.equal(false);
+      expect(conversationService.getHistory.called).to.equal(false);
+      expect(runtime.dispatch.called).to.equal(false);
+    });
+
+    it('should fall through when the matching approval was already decided', async () => {
+      const { interceptor } = makeDeps([
+        {
+          type: ConversationActivityTypeEnum.TOOL_APPROVAL_DECISION,
+          toolData: { approvalId: 'approval-1', approved: true },
+        },
+        pendingRequest,
+      ]);
+      const runtime = { dispatch: sinon.stub().resolves(undefined) };
+
+      const consumed = await interceptor.tryHandleAsApprovalReaction(makeReactionTurn(), runtime as any);
+
+      expect(consumed).to.equal(false);
+      expect(runtime.dispatch.called).to.equal(false);
+    });
+  });
+});

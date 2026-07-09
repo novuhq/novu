@@ -812,6 +812,32 @@ export async function sendWhatsAppTestTemplate(
   return response.data;
 }
 
+export type ConfigureSendblueWebhookFailure = {
+  code: 'missing_credentials' | 'sendblue_rejected' | 'unknown';
+  message: string;
+};
+
+export type ConfigureSendblueWebhookResponse = {
+  success: boolean;
+  callbackUrl: string;
+  webhookSecret?: string;
+  fallbackToManual?: boolean;
+  reason?: ConfigureSendblueWebhookFailure;
+};
+
+export async function configureAgentSendblueWebhook(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  integrationIdentifier: string
+): Promise<ConfigureSendblueWebhookResponse> {
+  const response = await post<{ data: ConfigureSendblueWebhookResponse }>(
+    `/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationIdentifier)}/sendblue/configure-webhook`,
+    { environment }
+  );
+
+  return response.data;
+}
+
 export type ConfigureTelegramWebhookResult = {
   webhookUrl: string;
   configuredAt: string;

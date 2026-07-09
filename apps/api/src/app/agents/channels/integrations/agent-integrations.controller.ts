@@ -46,6 +46,7 @@ import {
   UpdateAgentInboxSharedRequestDto,
   UpdateAgentIntegrationRequestDto,
 } from '../../shared/dtos';
+import { ConfigureSendblueWebhookResponseDto } from '../../shared/dtos/configure-sendblue-webhook-response.dto';
 import { ConfigureWhatsAppWebhookResponseDto } from '../../shared/dtos/configure-whatsapp-webhook-response.dto';
 import { IssueSlackSetupLinkResponseDto } from '../../shared/dtos/issue-slack-setup-link-response.dto';
 import { SendAgentTestEmailRequestDto } from '../../shared/dtos/send-agent-test-email-request.dto';
@@ -54,6 +55,8 @@ import {
   SendWhatsAppTestTemplateRequestDto,
   SendWhatsAppTestTemplateResponseDto,
 } from '../../shared/dtos/send-whatsapp-test-template.dto';
+import { ConfigureSendblueWebhookCommand } from '../sendblue/configure-sendblue-webhook/configure-sendblue-webhook.command';
+import { ConfigureSendblueWebhook } from '../sendblue/configure-sendblue-webhook/configure-sendblue-webhook.usecase';
 import { IssueSlackSetupLinkCommand } from '../slack-linking/issue-slack-setup-link/issue-slack-setup-link.command';
 import { IssueSlackSetupLink } from '../slack-linking/issue-slack-setup-link/issue-slack-setup-link.usecase';
 import { ConfigureWhatsAppWebhookCommand } from '../whatsapp/configure-whatsapp-webhook/configure-whatsapp-webhook.command';
@@ -84,6 +87,7 @@ export class AgentIntegrationsController {
     private readonly sendAgentTestEmailUsecase: SendAgentTestEmail,
     private readonly sendAgentWelcomeMessageUsecase: SendAgentWelcomeMessage,
     private readonly configureWhatsAppWebhookUsecase: ConfigureWhatsAppWebhook,
+    private readonly configureSendblueWebhookUsecase: ConfigureSendblueWebhook,
     private readonly sendWhatsAppTestTemplateUsecase: SendWhatsAppTestTemplate,
     private readonly issueSlackSetupLinkUsecase: IssueSlackSetupLink,
     private readonly updateAgentInboxSharedUsecase: UpdateAgentInboxShared
@@ -228,6 +232,32 @@ export class AgentIntegrationsController {
   ): Promise<ConfigureWhatsAppWebhookResponseDto> {
     return this.configureWhatsAppWebhookUsecase.execute(
       ConfigureWhatsAppWebhookCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        agentIdentifier: identifier,
+        integrationIdentifier,
+      })
+    );
+  }
+
+  @Post('/:identifier/integrations/:integrationIdentifier/sendblue/configure-webhook')
+  @ApiExcludeEndpoint()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Configure the Sendblue receive webhook for an agent integration',
+    description:
+      'Provisions a webhook signing secret and registers the agent inbound URL as a `receive` webhook on the Sendblue account, so inbound iMessage/SMS messages are delivered to the agent. Falls back to manual configuration when the Sendblue API rejects the registration.',
+  })
+  @ApiNotFoundResponse({ description: 'The agent or integration was not found.' })
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  configureAgentSendblueWebhook(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string,
+    @Param('integrationIdentifier') integrationIdentifier: string
+  ): Promise<ConfigureSendblueWebhookResponseDto> {
+    return this.configureSendblueWebhookUsecase.execute(
+      ConfigureSendblueWebhookCommand.create({
         userId: user._id,
         environmentId: user.environmentId,
         organizationId: user.organizationId,

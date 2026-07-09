@@ -180,6 +180,10 @@ describe('AgentInboundHandler', () => {
       maybeBlock: sinon.stub().resolves(false),
       maybeBlockConversation: sinon.stub().resolves(false),
     };
+    const replyApprovalInterceptor = {
+      tryHandleAsApprovalReply: sinon.stub().resolves(false),
+      tryHandleAsApprovalReaction: sinon.stub().resolves(false),
+    };
     const handler = new AgentInboundHandler(
       logger as any,
       subscriberResolver as any,
@@ -198,12 +202,14 @@ describe('AgentInboundHandler', () => {
       connectClaimTokenService as any,
       keylessAbuseGuard as any,
       planLimitGate as any,
-      inboundAck as any
+      inboundAck as any,
+      replyApprovalInterceptor as any
     );
 
     return {
       handler,
       logger,
+      replyApprovalInterceptor,
       attachmentStorage,
       bridgeExecutor,
       conversationService,

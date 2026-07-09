@@ -50,6 +50,7 @@ import type { ConversationTurn } from '../runtime/conversation-turn';
 import { RuntimeResolver } from '../runtime/runtime-resolver.service';
 import { InboundDispatcher } from './inbound.dispatcher';
 import { isLinkButtonActionId, PlanLimitGateService } from './plan-limit-gate.service';
+import { ReplyApprovalInterceptor } from './reply-approval-interceptor.service';
 
 /**
  * `/start <payload>` is Telegram's deep-link mechanism. Telegram delivers it as
@@ -258,7 +259,8 @@ export class AgentInboundHandler implements OnModuleInit {
     private readonly connectClaimTokenService: ConnectClaimTokenService,
     private readonly keylessAbuseGuard: KeylessAbuseGuardService,
     private readonly planLimitGate: PlanLimitGateService,
-    private readonly inboundAck: InboundAckService
+    private readonly inboundAck: InboundAckService,
+    private readonly replyApprovalInterceptor: ReplyApprovalInterceptor
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -491,6 +493,16 @@ export class AgentInboundHandler implements OnModuleInit {
       platformThreadId,
       storedAttachments: message.attachments?.length ? storedAttachments : undefined,
     };
+
+    // On buttonless platforms (iMessage/SMS) a pending tool approval is
+    // answered by texting back YES / NO — a matching reply is consumed as the
+    // verdict instead of being dispatched as a regular message.
+    if (
+      event === AgentEventEnum.ON_MESSAGE &&
+      (await this.replyApprovalInterceptor.tryHandleAsApprovalReply(turn, runtime))
+    ) {
+      return;
+    }
 
     await runtime.dispatch(turn);
   }
@@ -933,11 +945,16 @@ export class AgentInboundHandler implements OnModuleInit {
       : undefined;
     const subscriberId = getResolvedSubscriberId(reactionResolution);
 
-    const [subscriber, sourceActivity] = await Promise.all([
+    const [subscriber, sourceActivity, agent] = await Promise.all([
       subscriberId
         ? this.subscriberRepository.findBySubscriberId(config.environmentId, subscriberId)
         : Promise.resolve(null),
       this.conversationService.findSourceActivity(config.environmentId, conversation._id, event.messageId),
+      this.agentRepository.findOne({ _id: agentId, _environmentId: config.environmentId }, [
+        '_id',
+        'runtime',
+        'managedRuntime',
+      ]),
     ]);
 
     let sourceMessageStoredAttachments = extractStoredAttachments(sourceActivity);
@@ -962,10 +979,10 @@ export class AgentInboundHandler implements OnModuleInit {
         : undefined,
     };
 
-    const runtime = this.runtimeResolver.resolve(null);
+    const runtime = this.runtimeResolver.resolve(agent);
     const turn: ConversationTurn = {
       agentId,
-      agent: { _id: agentId },
+      agent: agent ?? { _id: agentId },
       config,
       conversation,
       subscriber,
@@ -976,6 +993,13 @@ export class AgentInboundHandler implements OnModuleInit {
       platformThreadId: threadId,
       reaction: reactionPayload,
     };
+
+    // On buttonless platforms (iMessage/SMS) a pending tool approval can be
+    // answered with a 👍 / 👎 reaction on the approval-request card — a matching
+    // reaction is consumed as the verdict instead of forwarding as ON_REACTION.
+    if (await this.replyApprovalInterceptor.tryHandleAsApprovalReaction(turn, runtime)) {
+      return;
+    }
 
     await runtime.dispatch(turn);
   }

@@ -13,6 +13,7 @@ import { handleIntegrationError } from '@/components/integrations/components/uti
 import { cleanCredentials } from '@/components/integrations/components/utils/helpers';
 import type { IntegrationFormData } from '@/components/integrations/types';
 import { Button, buttonVariants } from '@/components/primitives/button';
+import { CopyButton } from '@/components/primitives/copy-button';
 import { showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { ExternalLink } from '@/components/shared/external-link';
 import { useEnvironment } from '@/context/environment/hooks';
@@ -272,6 +273,25 @@ export function SetupButton({
       {leadingIcon}
       <span className="text-label-xs inline-flex min-w-0 items-center font-medium">{children}</span>
     </Button>
+  );
+}
+
+/** Read-only, copyable value row used by manual webhook fallback panels (callback URL, secrets, tokens). */
+export function ReadOnlyValueRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex w-full max-w-[320px] flex-col gap-1.5">
+      <p className="text-text-sub text-label-xs font-medium leading-5">{label}</p>
+      <div className="border-stroke-soft bg-bg-white flex h-7 items-center overflow-hidden rounded-md border shadow-xs">
+        <input
+          type="text"
+          readOnly
+          value={value}
+          aria-label={label}
+          className="text-text-soft min-w-0 flex-1 truncate bg-transparent px-2 font-mono text-[12px] leading-4 outline-none"
+        />
+        <CopyButton valueToCopy={value} size="xs" className="border-stroke-soft shrink-0 border-l" />
+      </div>
+    </div>
   );
 }
 
