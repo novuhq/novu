@@ -105,6 +105,49 @@ _, err := s.Topics.Subscriptions.Create(ctx, "product-updates",
     }, nil)
 ```
   </Tab>
+  <Tab title="PHP">
+```php
+$sdk->topics->subscriptions->create(
+    topicKey: 'product-updates',
+    createTopicSubscriptionsRequestDto: new Components\CreateTopicSubscriptionsRequestDto(
+        subscriptions: [
+            new Components\TopicSubscriberIdentifierDto(
+                identifier: 'user-123-alerts',
+                subscriberId: 'user-123',
+            ),
+        ],
+        preferences: ['product-update-workflow'],
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+await sdk.Topics.Subscriptions.CreateAsync("product-updates", new CreateTopicSubscriptionsRequestDto {
+    Subscriptions = new List<TopicSubscriberIdentifierDto> {
+        new TopicSubscriberIdentifierDto {
+            Identifier = "user-123-alerts",
+            SubscriberId = "user-123",
+        },
+    },
+    Preferences = new List<object> { "product-update-workflow" },
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+novu.topics().subscriptions().create("product-updates")
+    .body(CreateTopicSubscriptionsRequestDto.builder()
+        .subscriptions(List.of(
+            TopicSubscriberIdentifierDto.builder()
+                .identifier("user-123-alerts")
+                .subscriberId("user-123")
+                .build()))
+        .preferences(List.of("product-update-workflow"))
+        .build())
+    .call();
+```
+  </Tab>
   <Tab title="cURL">
 ```bash
 curl -X POST 'https://api.novu.co/v2/topics/product-updates/subscriptions' \
@@ -137,6 +180,109 @@ await novu.topics.subscriptions.create(
   },
   'product-updates',
 );
+```
+  </Tab>
+  <Tab title="Python">
+```python
+novu.topics.subscriptions.create(
+    topic_key="product-updates",
+    create_topic_subscriptions_request_dto={
+        "subscriptions": [
+            {"identifier": "user-123-acme-alerts", "subscriberId": "user-123"}
+        ],
+        "preferences": ["product-update-workflow"],
+        "context": {
+            "tenant": {
+                "id": "acme-corp",
+                "data": {"name": "Acme Corporation", "plan": "enterprise"},
+            }
+        },
+    },
+)
+```
+  </Tab>
+  <Tab title="Go">
+```go
+_, err := s.Topics.Subscriptions.Create(ctx, "product-updates",
+    components.CreateTopicSubscriptionsRequestDto{
+        Subscriptions: []components.TopicSubscriberIdentifierDto{
+            {Identifier: "user-123-acme-alerts", SubscriberID: "user-123"},
+        },
+        Preferences: []interface{}{"product-update-workflow"},
+        Context: map[string]interface{}{
+            "tenant": map[string]interface{}{
+                "id": "acme-corp",
+                "data": map[string]interface{}{
+                    "name": "Acme Corporation",
+                    "plan": "enterprise",
+                },
+            },
+        },
+    }, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+$sdk->topics->subscriptions->create(
+    topicKey: 'product-updates',
+    createTopicSubscriptionsRequestDto: new Components\CreateTopicSubscriptionsRequestDto(
+        subscriptions: [
+            new Components\TopicSubscriberIdentifierDto(
+                identifier: 'user-123-acme-alerts',
+                subscriberId: 'user-123',
+            ),
+        ],
+        preferences: ['product-update-workflow'],
+        context: [
+            'tenant' => [
+                'id' => 'acme-corp',
+                'data' => ['name' => 'Acme Corporation', 'plan' => 'enterprise'],
+            ],
+        ],
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+await sdk.Topics.Subscriptions.CreateAsync("product-updates", new CreateTopicSubscriptionsRequestDto {
+    Subscriptions = new List<TopicSubscriberIdentifierDto> {
+        new TopicSubscriberIdentifierDto {
+            Identifier = "user-123-acme-alerts",
+            SubscriberId = "user-123",
+        },
+    },
+    Preferences = new List<object> { "product-update-workflow" },
+    Context = new Dictionary<string, object> {
+        ["tenant"] = new Dictionary<string, object> {
+            ["id"] = "acme-corp",
+            ["data"] = new Dictionary<string, object> {
+                ["name"] = "Acme Corporation",
+                ["plan"] = "enterprise",
+            },
+        },
+    },
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+novu.topics().subscriptions().create("product-updates")
+    .body(CreateTopicSubscriptionsRequestDto.builder()
+        .subscriptions(List.of(
+            TopicSubscriberIdentifierDto.builder()
+                .identifier("user-123-acme-alerts")
+                .subscriberId("user-123")
+                .build()))
+        .preferences(List.of("product-update-workflow"))
+        .context(Map.of(
+            "tenant", Map.of(
+                "id", "acme-corp",
+                "data", Map.of(
+                    "name", "Acme Corporation",
+                    "plan", "enterprise"))))
+        .build())
+    .call();
 ```
   </Tab>
   <Tab title="cURL">
@@ -214,6 +360,100 @@ novu.topics.subscriptions.create(
         ],
     },
 )
+```
+  </Tab>
+  <Tab title="Go">
+```go
+_, err := s.Topics.Subscriptions.Create(ctx, "product-updates",
+    components.CreateTopicSubscriptionsRequestDto{
+        Subscriptions: []components.TopicSubscriberIdentifierDto{
+            {Identifier: "user-123-premium", SubscriberID: "user-123"},
+        },
+        Preferences: []interface{}{
+            map[string]interface{}{
+                "filter": map[string]interface{}{
+                    "workflowIds": []string{"product-update-workflow"},
+                },
+                "condition": map[string]interface{}{
+                    "===": []interface{}{
+                        map[string]interface{}{"var": "payload.tier"},
+                        "premium",
+                    },
+                },
+            },
+        },
+    }, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+$sdk->topics->subscriptions->create(
+    topicKey: 'product-updates',
+    createTopicSubscriptionsRequestDto: new Components\CreateTopicSubscriptionsRequestDto(
+        subscriptions: [
+            new Components\TopicSubscriberIdentifierDto(
+                identifier: 'user-123-premium',
+                subscriberId: 'user-123',
+            ),
+        ],
+        preferences: [
+            [
+                'filter' => ['workflowIds' => ['product-update-workflow']],
+                'condition' => [
+                    '===' => [
+                        ['var' => 'payload.tier'],
+                        'premium',
+                    ],
+                ],
+            ],
+        ],
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+await sdk.Topics.Subscriptions.CreateAsync("product-updates", new CreateTopicSubscriptionsRequestDto {
+    Subscriptions = new List<TopicSubscriberIdentifierDto> {
+        new TopicSubscriberIdentifierDto {
+            Identifier = "user-123-premium",
+            SubscriberId = "user-123",
+        },
+    },
+    Preferences = new List<object> {
+        new Dictionary<string, object> {
+            ["filter"] = new Dictionary<string, object> {
+                ["workflowIds"] = new[] { "product-update-workflow" },
+            },
+            ["condition"] = new Dictionary<string, object> {
+                ["==="] = new object[] {
+                    new Dictionary<string, object> { ["var"] = "payload.tier" },
+                    "premium",
+                },
+            },
+        },
+    },
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+novu.topics().subscriptions().create("product-updates")
+    .body(CreateTopicSubscriptionsRequestDto.builder()
+        .subscriptions(List.of(
+            TopicSubscriberIdentifierDto.builder()
+                .identifier("user-123-premium")
+                .subscriberId("user-123")
+                .build()))
+        .preferences(List.of(
+            Map.of(
+                "filter", Map.of("workflowIds", List.of("product-update-workflow")),
+                "condition", Map.of(
+                    "===", List.of(
+                        Map.of("var", "payload.tier"),
+                        "premium")))))
+        .build())
+    .call();
 ```
   </Tab>
   <Tab title="cURL">
