@@ -265,8 +265,7 @@ export class AgentRuntimeController {
     description:
       'Apply a partial update to the managed agent runtime config on the provider. ' +
       'Accepts any combination of model, systemPrompt, tools, and skills. ' +
-      'MCP enablement is managed via the dedicated `POST /agents/:identifier/mcp-servers` and ' +
-      '`DELETE /agents/:identifier/mcp-servers/:mcpId` endpoints. ' +
+      'MCP enablement is managed from the Novu dashboard. ' +
       'Server-side diffing issues the minimal set of provider API calls. ' +
       'An empty body is accepted and returns the current config unchanged.',
   })
@@ -298,8 +297,7 @@ export class AgentRuntimeController {
   }
 
   @Get('/:identifier/mcp-servers')
-  @ExternalApiAccessible()
-  @SdkMethodName('listMcpServers')
+  @ApiExcludeEndpoint()
   @ApiResponse(ListAgentMcpServersResponseDto)
   @ApiOperation({
     summary: 'List agent MCP servers',
@@ -324,8 +322,7 @@ export class AgentRuntimeController {
   }
 
   @Post('/:identifier/mcp-servers')
-  @ExternalApiAccessible()
-  @SdkMethodName('enableMcpServer')
+  @ApiExcludeEndpoint()
   @ApiResponse(AgentMcpServerEnablementResponseDto, 201)
   @ApiOperation({
     summary: 'Enable an agent MCP server',
@@ -353,8 +350,7 @@ export class AgentRuntimeController {
   }
 
   @Put('/:identifier/mcp-servers')
-  @ExternalApiAccessible()
-  @SdkMethodName('replaceMcpServers')
+  @ApiExcludeEndpoint()
   @HttpCode(HttpStatus.OK)
   @ApiResponse(SetAgentMcpServersResponseDto, 200)
   @ApiOperation({
@@ -385,8 +381,7 @@ export class AgentRuntimeController {
   }
 
   @Delete('/:identifier/mcp-servers/:mcpId')
-  @ExternalApiAccessible()
-  @SdkMethodName('disableMcpServer')
+  @ApiExcludeEndpoint()
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
     summary: 'Disable an agent MCP server',
@@ -413,8 +408,8 @@ export class AgentRuntimeController {
   }
 
   @Post('/:identifier/mcp-servers/:mcpId/oauth/url')
+  @ApiExcludeEndpoint()
   @HttpCode(HttpStatus.OK)
-  @SdkMethodName('generateMcpOAuthUrl')
   @ApiResponse(GenerateMcpOAuthUrlResponseDto, 200)
   @ApiOperation({
     summary: 'Generate an MCP OAuth URL',
@@ -422,7 +417,6 @@ export class AgentRuntimeController {
       'Return the provider authorize URL the subscriber should be redirected to for a `subscriber`-scoped connection. ' +
       'Reuses the signed-state OAuth pattern already used by chat integrations.',
   })
-  @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)
   generateMcpOAuthUrl(
     @UserSession() user: UserSessionData,
@@ -476,8 +470,7 @@ export class AgentRuntimeController {
   }
 
   @Get('/:identifier/mcp-servers/:mcpId/connection')
-  @ExternalApiAccessible()
-  @SdkMethodName('retrieveMcpConnection')
+  @ApiExcludeEndpoint()
   @ApiResponse(McpConnectionResponseDto)
   @ApiOperation({
     summary: 'Retrieve an MCP connection',
