@@ -56,7 +56,8 @@ export const supportAgent = agent('support-agent', {
 
     // return generateText({
     //   model: openai('gpt-4o-mini'),
-    //   messages: toModelMessages(ctx.history, 'You are a helpful support agent.'),
+    //   instructions: 'You are a helpful support agent.',
+    //   messages: toModelMessages(ctx.history),
     // });
   },
 

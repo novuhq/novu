@@ -257,7 +257,6 @@ jobs:
             --platform=linux/amd64
             --output=type=image,name=$REGISTRY/$REPOSITORY/$REPO_NAME,push-by-digest=true,name-canonical=true
         run: |
-          cp scripts/dotenvcreate.mjs apps/$SERVICE_COMMON_NAME/src/dotenvcreate.mjs
           cd apps/$SERVICE_COMMON_NAME
 
           if [[ "$SERVICE_COMMON_NAME" =~ ^(api|worker|ws)$ ]]; then
