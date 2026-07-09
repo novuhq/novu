@@ -9,7 +9,7 @@ describe('resolveAiSdkPackagesToInstall', () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'novu-ai-sdk-pkg-'));
     fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ name: 'x', dependencies: {} }));
 
-    expect(resolveAiSdkPackagesToInstall(dir)).toEqual(['@novu/framework', 'ai']);
+    expect(resolveAiSdkPackagesToInstall(dir)).toEqual(['@novu/framework', 'ai@^7.0.0']);
   });
 
   it('suggests only ai when framework is already installed', () => {
@@ -19,6 +19,6 @@ describe('resolveAiSdkPackagesToInstall', () => {
       JSON.stringify({ name: 'x', dependencies: { '@novu/framework': 'latest' } })
     );
 
-    expect(resolveAiSdkPackagesToInstall(dir)).toEqual(['ai']);
+    expect(resolveAiSdkPackagesToInstall(dir)).toEqual(['ai@^7.0.0']);
   });
 });

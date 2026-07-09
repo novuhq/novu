@@ -5,6 +5,7 @@ import { hasDependency, readProjectPackageJson } from '../bridge/project-package
 
 const FRAMEWORK_PACKAGE = '@novu/framework';
 const AI_CORE_PACKAGE = 'ai';
+const AI_CORE_PACKAGE_SPEC = `${AI_CORE_PACKAGE}@^7.0.0`;
 
 export type PackageInstallResult = {
   installed: boolean;
@@ -16,7 +17,7 @@ export type PackageInstallResult = {
 export function resolveAiSdkPackagesToInstall(projectDir: string): string[] {
   const pkg = readProjectPackageJson(projectDir);
   if (!pkg) {
-    return [FRAMEWORK_PACKAGE, AI_CORE_PACKAGE];
+    return [FRAMEWORK_PACKAGE, AI_CORE_PACKAGE_SPEC];
   }
 
   const missing: string[] = [];
@@ -24,7 +25,7 @@ export function resolveAiSdkPackagesToInstall(projectDir: string): string[] {
     missing.push(FRAMEWORK_PACKAGE);
   }
   if (!hasDependency(pkg, AI_CORE_PACKAGE)) {
-    missing.push(AI_CORE_PACKAGE);
+    missing.push(AI_CORE_PACKAGE_SPEC);
   }
 
   return missing;

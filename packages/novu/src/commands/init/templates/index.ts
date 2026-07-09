@@ -263,7 +263,7 @@ export const installTemplate = async ({
   }
 
   if (template === TemplateTypeEnum.APP_AGENT_AI_SDK) {
-    baseDependencies.ai = '^6.0.0';
+    baseDependencies.ai = '^7.0.0';
   }
 
   if (isChatSdkTemplate) {
