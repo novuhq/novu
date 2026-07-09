@@ -10,14 +10,15 @@
   "keywords": [],
   "scripts": {
     "build": "run-p build:*",
-    "build:main": "tsc -p tsconfig.json",
-    "build:module": "tsc -p tsconfig.module.json",
+    "build:main": "tsgo -p tsconfig.json",
+    "build:module": "tsgo -p tsconfig.module.json",
     "fix": "run-s fix:*",
     "check": "biome check .",
     "check:fix": "biome check --write .",
     "test": "echo 'Not tests available'",
     "test:watch": "echo 'Not tests available'",
-    "watch:build": "tsc -p tsconfig.json -w",
+    "watch:build": "tsgo -p tsconfig.json -w",
+    "typecheck": "tsgo -p tsconfig.json --noEmit",
     "reset-hard": "git clean -dfx && git reset --hard && pnpm install",
     "start:studio": "novu dev --port 3000 --route /v1/bridge/novu"
   },
@@ -34,7 +35,6 @@
   "devDependencies": {
     "@types/react": "^19.2.8",
     "@types/react-dom": "^19.2.3",
-    "typescript": "5.6.2",
     "npm-run-all": "^4.1.5",
     "novu": "workspace:*"
   },

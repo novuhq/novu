@@ -19,8 +19,9 @@
     "strict": true,
     "strictPropertyInitialization": false,
     "target": "ES2022",
+    "types": ["node"],
     "verbatimModuleSyntax": false
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules/**", "**/node_modules/**"]
+  "exclude": ["node_modules/**", "**/node_modules/**", "**/*.spec.ts"]
 }

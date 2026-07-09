@@ -1,14 +1,22 @@
 {
-  "extends": "./tsconfig",
   "compilerOptions": {
-    "sourceMap": true,
-    "target": "esnext",
-    "outDir": "build/module",
-    "module": "esnext",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
     "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "strictNullChecks": false,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "target": "esnext",
     "types": ["jest", "node"],
     "jsx": "preserve",
-    "typeRoots": ["./node_modules/@types", "../../node_modules/@types"]
+    "declaration": true,
+    "sourceMap": true,
+    "outDir": "build/module",
+    "rootDir": "src"
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"],
   "exclude": ["node_modules/**"]

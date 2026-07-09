@@ -19,7 +19,8 @@
   },
   "scripts": {
     "prebuild": "rimraf dist",
-    "build": "tsc",
+    "build": "tsgo",
+    "typecheck": "tsgo --noEmit",
     "start": "ts-node src/cli/index.ts",
     "prepublishOnly": "npm run build > /dev/null 2>&1",
     "test": "vitest --typecheck",

@@ -1353,9 +1353,6 @@ importers:
       tsx:
         specifier: ^4.21.0
         version: 4.21.0
-      typescript:
-        specifier: 5.6.2
-        version: 5.6.2
 
   apps/webhook:
     dependencies:
@@ -2450,9 +2447,6 @@ importers:
       '@types/node':
         specifier: ^22.0.0
         version: 22.15.13
-      typescript:
-        specifier: 5.6.2
-        version: 5.6.2
       vitest:
         specifier: ^4.1.8
         version: 4.1.9(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@20.8.9)(jsdom@20.0.3)(vite@6.4.3(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3))
@@ -3219,9 +3213,6 @@ importers:
       npm-run-all:
         specifier: ^4.1.5
         version: 4.1.5
-      typescript:
-        specifier: 5.6.2
-        version: 5.6.2
 
   libs/testing:
     dependencies:
@@ -3306,13 +3297,10 @@ importers:
         version: 0.4.9(graphql@16.9.0)
       ts-node:
         specifier: ~10.9.1
-        version: 10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.6.2)
+        version: 10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.9.3)
       tsconfig-paths:
         specifier: ~4.1.0
         version: 4.1.2
-      typescript:
-        specifier: 5.6.2
-        version: 5.6.2
 
   packages/add-inbox:
     dependencies:
@@ -3403,9 +3391,6 @@ importers:
       rimraf:
         specifier: ~3.0.2
         version: 3.0.2
-      typescript:
-        specifier: 5.6.2
-        version: 5.6.2
       vitest:
         specifier: ^4.1.0
         version: 4.1.7(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@20.8.9)(jsdom@20.0.3)(vite@6.4.3(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3))
@@ -3440,9 +3425,6 @@ importers:
       rimraf:
         specifier: ~3.0.2
         version: 3.0.2
-      typescript:
-        specifier: 5.6.2
-        version: 5.6.2
 
   packages/framework:
     dependencies:

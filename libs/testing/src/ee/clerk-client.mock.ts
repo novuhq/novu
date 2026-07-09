@@ -100,7 +100,7 @@ export class ClerkClientMock {
     };
   }
 
-  get organizations() {
+  get organizations(): OrganizationAPI {
     const getOrganization: OrganizationAPI['getOrganization'] = async (params) => {
       if ('organizationId' in params) {
         const org = this.clerkOrganizations.get(params.organizationId);
@@ -184,6 +184,6 @@ export class ClerkClientMock {
       updateOrganization,
       updateOrganizationMetadata,
       deleteOrganization,
-    };
+    } as OrganizationAPI;
   }
 }

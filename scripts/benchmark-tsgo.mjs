@@ -1,11 +1,11 @@
 /**
  * Benchmark harness comparing the TypeScript 5.6.2 CLI (`tsc`) against the
- * TypeScript 7.0 native compiler (`tsgo`, from @typescript/native-preview).
+ * TypeScript 7.0 native compiler (`tsgo`, from @typescript/native-preview`).
  *
  * Both compilers run against the same primary tsconfig per project (type-check
- * only via `--noEmit`, or `tsgo -b` for dashboard). These three packages now use
- * `tsgo` exclusively in their build scripts; root `tsc` 5.6.2 is kept only as a
- * benchmark baseline for the speedup table.
+ * only via `--noEmit`, or `tsgo -b` for dashboard). Migrated packages use `tsgo`
+ * in production builds; root `tsc` 5.6.2 is kept only as a benchmark baseline
+ * and for packages that still require the programmatic API.
  *
  * Usage: node scripts/benchmark-tsgo.mjs [--runs N] [--warmup N]
  */
@@ -25,13 +25,19 @@ const getArg = (name, def) => {
 
   return i >= 0 && argv[i + 1] ? Number(argv[i + 1]) : def;
 };
-const RUNS = getArg('--runs', 5);
+const RUNS = getArg('--runs', 3);
 const WARMUP = getArg('--warmup', 1);
 
 const PROJECTS = [
   { name: '@novu/shared', dir: 'packages/shared', args: ['-p', 'tsconfig.json', '--noEmit'], mode: 'type-check' },
   { name: '@novu/dal', dir: 'libs/dal', args: ['-p', 'tsconfig.build.json', '--noEmit'], mode: 'type-check' },
   { name: '@novu/dashboard', dir: 'apps/dashboard', args: ['-b'], mode: 'type-check (-b)', clean: true },
+  { name: '@novu/inbound-mail', dir: 'apps/inbound-mail', args: ['-p', 'tsconfig.json', '--noEmit'], mode: 'type-check' },
+  { name: '@novu/stateless', dir: 'packages/stateless', args: ['-p', 'tsconfig.json', '--noEmit'], mode: 'type-check' },
+  { name: '@novu/chat-sdk-adapter', dir: 'packages/chat-adapter', args: ['-p', 'tsconfig.json', '--noEmit'], mode: 'type-check' },
+  { name: '@novu/testing', dir: 'libs/testing', args: ['-p', 'tsconfig.build.json', '--noEmit'], mode: 'type-check' },
+  { name: '@novu/notifications', dir: 'libs/notifications', args: ['-p', 'tsconfig.json', '--noEmit'], mode: 'type-check' },
+  { name: '@novu/ee-api', dir: 'enterprise/packages/api', args: ['-p', 'tsconfig.json', '--noEmit'], mode: 'type-check' },
 ];
 
 const TOOLS = [
@@ -89,8 +95,8 @@ for (const project of PROJECTS) {
       if (run.code !== 0) {
         failed = true;
         record(`  ${project.name} | ${tool.label} | run ${i} FAILED exit=${run.code}`);
-        record(run.stdout.split('\n').slice(0, 20).join('\n'));
-        record(run.stderr.split('\n').slice(0, 20).join('\n'));
+        record(run.stdout.split('\n').slice(0, 10).join('\n'));
+        record(run.stderr.split('\n').slice(0, 10).join('\n'));
       }
       if (!isWarmup && run.code === 0) times.push(run.ms);
       record(`  ${project.name} | ${tool.label} | run ${i}${isWarmup ? ' (warmup)' : ''} | ${(run.ms / 1000).toFixed(2)}s | exit=${run.code}`);
@@ -114,10 +120,10 @@ function fmt(ms) {
 const lines = [];
 lines.push('# TypeScript 5.6.2 (`tsc`) vs TypeScript 7.0 (`tsgo`) build-time benchmark');
 lines.push('');
-lines.push(`- \`tsc\`: ${version(TSC)}`);
-lines.push(`- \`tsgo\`: ${version(TSGO)} (\`@typescript/native-preview\`)`);
+lines.push(`- \`tsc\`: ${version(TSC)} (baseline only — not used by migrated packages)`);
+lines.push(`- \`tsgo\`: ${version(TSGO)} (\`@typescript/native-preview\`) — production compiler for migrated packages`);
 lines.push(`- Samples: ${RUNS} timed runs (+${WARMUP} warm-up discarded), median reported`);
-lines.push('- Both compilers run the **same** primary tsconfig per project; migrated packages use `tsgo` in production builds');
+lines.push('- Migrated packages use `tsgo` exclusively in build/typecheck scripts');
 lines.push('');
 lines.push('| Project | Mode | `tsc` 5.6.2 (median) | `tsgo` 7.0 (median) | Speedup |');
 lines.push('| --- | --- | --- | --- | --- |');

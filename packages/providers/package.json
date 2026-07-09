@@ -26,6 +26,7 @@
     "check:fix": "biome check --write .",
     "test": "vitest",
     "watch:build": "tsc -p tsconfig.json -w",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
     "watch:test": "vitest",
     "reset-hard": "git clean -dfx && git reset --hard && yarn",
     "prepare-release": "run-s reset-hard test"

@@ -9,7 +9,7 @@
     "deploy:local": "wrangler deploy --env local",
     "deploy:staging": "wrangler deploy --env staging",
     "deploy:production": "wrangler deploy --env production",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsgo --noEmit",
     "cf-typegen": "wrangler types"
   },
   "dependencies": {

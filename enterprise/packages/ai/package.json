@@ -5,8 +5,8 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "node ./check-ee.mjs",
-    "build:esm": "node_modules/.bin/tsc -p tsconfig.json",
-    "build:watch": "node_modules/.bin/tsc -w -p tsconfig.json",
+    "build:esm": "tsc -p tsconfig.json",
+    "build:watch": "tsc -w -p tsconfig.json",
     "check": "biome check .",
     "check:fix": "biome check --write .",
     "lint": "echo 'skip lint in the ci'"

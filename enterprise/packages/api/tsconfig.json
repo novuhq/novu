@@ -1,18 +1,24 @@
 {
-  "extends": "../../../tsconfig.json",
   "compilerOptions": {
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "declaration": true,
+    "declarationMap": true,
+    "removeComments": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
     "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "strict": true,
     "strictNullChecks": true,
     "noImplicitAny": true,
-    "outDir": "dist",
-    "module": "commonjs",
+    "strictPropertyInitialization": false,
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "target": "es6",
-    "esModuleInterop": true,
+    "outDir": "dist",
     "rootDir": "src",
-    "strict": true,
-    "types": ["node", "mocha"],
-    "skipLibCheck": true,
-    "typeRoots": ["./node_modules/@types", "../../node_modules/@types"]
+    "types": ["node", "mocha"]
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules/**"]

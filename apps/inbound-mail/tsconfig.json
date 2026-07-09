@@ -1,16 +1,25 @@
 {
-  "extends": "../../tsconfig.json",
   "compilerOptions": {
     "allowJs": false,
     "allowSyntheticDefaultImports": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
     "esModuleInterop": true,
-    "module": "commonjs",
-    "outDir": "./dist",
-    "sourceMap": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "strict": false,
+    "noImplicitAny": false,
     "strictNullChecks": false,
+    "strictPropertyInitialization": false,
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "sourceMap": true,
+    "declaration": true,
     "target": "es2017",
     "types": ["node", "mocha", "chai", "sinon"]
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "**/*.spec.ts"]
 }

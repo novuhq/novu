@@ -1,18 +1,22 @@
 {
-  "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "sourceMap": true,
-    "strictNullChecks": false,
-    "allowSyntheticDefaultImports": true,
-    "outDir": "build/main",
-    "module": "commonjs",
-    "target": "es6",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
     "esModuleInterop": true,
-    "rootDir": "src",
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
     "strict": true,
+    "strictNullChecks": false,
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "target": "es2021",
     "types": ["node", "jest"],
     "jsx": "react",
-    "typeRoots": ["./node_modules/@types", "../../node_modules/@types"]
+    "declaration": true,
+    "sourceMap": true,
+    "outDir": "build/main",
+    "rootDir": "src"
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules/**"]

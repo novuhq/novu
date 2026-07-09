@@ -21,6 +21,7 @@
     "strict": true,
     "strictPropertyInitialization": false,
     "target": "ES2021",
+    "types": ["node"],
     "verbatimModuleSyntax": false
   },
   "include": ["src/**/*"],
