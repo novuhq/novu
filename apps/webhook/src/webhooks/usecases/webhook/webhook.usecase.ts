@@ -80,8 +80,9 @@ export class Webhook {
 
     const events: IWebhookResult[] = [];
 
-    for (const messageIdentifier of messageIdentifiers) {
-      const event = await this.parseEvent(messageIdentifier, command, providerId, channel);
+    for (let eventIndex = 0; eventIndex < messageIdentifiers.length; eventIndex++) {
+      const messageIdentifier = messageIdentifiers[eventIndex];
+      const event = await this.parseEvent(messageIdentifier, command, providerId, channel, eventIndex);
 
       if (event === undefined) {
         continue;
@@ -97,7 +98,8 @@ export class Webhook {
     messageIdentifier: string,
     command: WebhookCommand,
     providerId: string,
-    channel: ChannelTypeEnum
+    channel: ChannelTypeEnum,
+    eventIndex: number
   ): Promise<IWebhookResult | undefined> {
     const message = await this.messageRepository.findOne({
       identifier: messageIdentifier,
@@ -111,7 +113,11 @@ export class Webhook {
       return;
     }
 
-    const event = this.provider.parseEventBody(command.body, messageIdentifier);
+    const event = this.provider.parseEventBody(
+      command.body,
+      messageIdentifier,
+      Array.isArray(command.body) ? eventIndex : undefined
+    );
 
     if (event === undefined) {
       return undefined;

@@ -305,3 +305,25 @@ curl -L -g -X POST 'https://api.novu.co/v1/events/trigger' \
     Filter the Inbox by context and secure it with `contextHash`.
   </Card>
 </CardGroup>
+
+## Frequently asked questions
+
+<AccordionGroup>
+  <Accordion title="Should I create and update contexts ahead of time or pass context data on every trigger?">
+    Create and update contexts ahead of time. Novu auto-creates a context the first time it sees a new key, but it does **not** update existing context `data` when you pass new values on a trigger.
+
+    Recommended approach:
+
+    1. [Create the context](/api-reference/contexts/create-a-context) with initial `data` before you need it.
+    2. [Update context data](/api-reference/contexts/update-a-context) through the API or SDK when metadata changes (for example, tenant name or plan).
+    3. When [triggering](/platform/concepts/trigger) workflows, pass only the context key and `id` not the full `data` object.
+
+    This keeps tenant branding and metadata accurate in templates and the Inbox without relying on trigger-time overwrites.
+  </Accordion>
+
+  <Accordion title="Why are notifications sent but not showing in the Inbox after I added context?">
+    Inbox notifications are scoped per context. If you trigger a workflow with `context` but initialize `<Inbox />` without the same context (or vice versa), the notification will not appear in that Inbox session—even though the in-app job may report success.
+
+    Pass the same context to both your workflow trigger and the Inbox `context` prop. See [Inbox with context](/platform/inbox/configuration/inbox-with-context) for the matching rules and troubleshooting steps.
+  </Accordion>
+</AccordionGroup>

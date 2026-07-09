@@ -1,5 +1,5 @@
 import { ApiServiceLevelEnum, FeatureNameEnum, getFeatureForTierAsBoolean } from '@novu/shared';
-import { IS_ENTERPRISE, IS_SELF_HOSTED } from '@/config';
+import { IS_SELF_HOSTED_CE } from '@/config';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 
 export const useIsTranslationEnabled = ({
@@ -14,7 +14,7 @@ export const useIsTranslationEnabled = ({
       FeatureNameEnum.AUTO_TRANSLATIONS,
       subscription?.apiServiceLevel || ApiServiceLevelEnum.FREE
     ) &&
-    (!IS_SELF_HOSTED || IS_ENTERPRISE);
+    !IS_SELF_HOSTED_CE;
 
   const isTranslationEnabled = isTranslationEnabledOnResource && canUseTranslationFeature;
 

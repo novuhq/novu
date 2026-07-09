@@ -4,14 +4,14 @@ import { useMemo } from 'react';
 import type { AgentIntegrationLink } from '@/api/agents';
 import { type ChannelEndpointsListResponse, listChannelEndpoints } from '@/api/channel-endpoints';
 import { providerHasWhatsNextPhase } from '@/components/agents/agent-integration-guides/whats-next/whats-next-config';
-import { IS_ENTERPRISE, IS_SELF_HOSTED } from '@/config';
+import { IS_SELF_HOSTED_CE } from '@/config';
 import { useEnvironment } from '@/context/environment/hooks';
 import { findFirstGenuineConnectedEndpoint } from '@/hooks/use-channel-first-connected-endpoint';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 
 const POLL_INTERVAL_MS = 3000;
-const CONVERSATIONS_AVAILABLE = !IS_SELF_HOSTED || IS_ENTERPRISE;
+const CONVERSATIONS_AVAILABLE = !IS_SELF_HOSTED_CE;
 
 type RolloutStatus = {
   allRolledOut: boolean;

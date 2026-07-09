@@ -41,7 +41,7 @@ export function WhatsAppAgentIntegrationGuide({
         {isConnected ? (
           <p>
             This agent is connected to WhatsApp Business. Send a message to your business phone number to start a
-            conversation — replies are routed through your agent server.
+            conversation: replies are routed through your agent server.
           </p>
         ) : (
           <p>

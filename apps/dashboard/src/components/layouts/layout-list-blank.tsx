@@ -1,7 +1,7 @@
 import { ApiServiceLevelEnum } from '@novu/shared';
 import { RiAddCircleLine, RiInformation2Line } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
-import { IS_SELF_HOSTED } from '@/config';
+import { IS_CLOUD } from '@/config';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { ROUTES } from '@/utils/routes';
 import { CreateLayoutButton } from './create-layout-btn';
@@ -20,7 +20,7 @@ export const LayoutListBlank = () => {
           No layouts. Your emails deserve better than copy-paste
         </span>
         <p className="text-text-soft text-paragraph-sm max-w-[48ch]">
-          Layouts let you reuse structure, stay consistent, and ship faster. Create once, plug anywhere — your emails
+          Layouts let you reuse structure, stay consistent, and ship faster. Create once, plug anywhere: your emails
           (and teammates) will love you for it.{' '}
           <Link
             to="https://docs.novu.co/platform/workflow/layouts"
@@ -36,7 +36,7 @@ export const LayoutListBlank = () => {
 
       <div className="flex flex-col items-center gap-1">
         <CreateLayoutButton text="Create your first layout" icon={RiAddCircleLine} />
-        {!IS_SELF_HOSTED && tier === ApiServiceLevelEnum.FREE && (
+        {IS_CLOUD && tier === ApiServiceLevelEnum.FREE && (
           <p className="text-text-soft text-paragraph-xs mt-2 flex items-center gap-1">
             <RiInformation2Line />
             One layout is included in your plan,{' '}

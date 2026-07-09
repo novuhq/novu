@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { Button } from '@/components/primitives/button';
 import { Input } from '@/components/primitives/input';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
@@ -9,14 +9,14 @@ export type SenderAddressOverrideProps = {
   serverEnabled: boolean;
   serverValue: string;
   defaultSenderName: string;
-  /** Cloud shared inbox (`slug-key@agentconnect.sh`) — used when no custom-domain routes exist. */
+  /** Cloud shared inbox (`slug-key@agentconnect.sh`), used when no custom-domain routes exist. */
   sharedInboundAddress?: string;
   outboundFromAddress: string;
   inboundAddresses: string[];
   onSave: (params: { enabled: boolean; value: string }) => Promise<void>;
   /**
    * Locks the override controls when the agent is wired to a sender that
-   * physically can't honour a custom From — currently the bundled Novu demo
+   * physically can't honour a custom From; currently the bundled Novu demo
    * provider, which sends from the shared agent inbox and ignores
    * `useFromAddressOverride` / `fromAddressOverride` entirely
    * (see chat-sdk.service.ts buildSendEmailCallback). Server state is left
@@ -24,8 +24,10 @@ export type SenderAddressOverrideProps = {
    * attaches a real outbound provider.
    */
   disabled?: boolean;
-  disabledReason?: ReactNode;
 };
+
+const CUSTOM_FROM_REQUIRES_PROVIDER_TOOLTIP =
+  'Custom From addresses require your own email provider. Connect SendGrid, Resend, or another provider to enable this.';
 
 export function SenderAddressOverride({
   serverEnabled,
@@ -36,7 +38,6 @@ export function SenderAddressOverride({
   inboundAddresses,
   onSave,
   disabled = false,
-  disabledReason,
 }: SenderAddressOverrideProps) {
   const switchId = useId();
   const inputId = useId();
@@ -100,25 +101,33 @@ export function SenderAddressOverride({
     ? 'text-text-soft text-label-xs font-medium leading-4'
     : 'text-text-sub text-label-xs cursor-pointer font-medium leading-4';
 
-  const switchControl = (
-    <Switch id={switchId} checked={enabled && !disabled} onCheckedChange={setEnabled} disabled={isSaving || disabled} />
-  );
-
   return (
     <div className="flex w-full flex-col gap-2">
       <div className="flex w-full items-center justify-between gap-2">
         <label htmlFor={switchId} className={labelClassName}>
           Use a custom From address
         </label>
-        {disabled && disabledReason ? (
+        {disabled ? (
           <Tooltip>
             <TooltipTrigger asChild>
-              <span className="inline-flex">{switchControl}</span>
+              <span className="inline-flex">
+                <Switch
+                  id={switchId}
+                  checked={enabled && !disabled}
+                  onCheckedChange={setEnabled}
+                  disabled={isSaving || disabled}
+                />
+              </span>
             </TooltipTrigger>
-            <TooltipContent className="max-w-xs">{disabledReason}</TooltipContent>
+            <TooltipContent className="max-w-xs">{CUSTOM_FROM_REQUIRES_PROVIDER_TOOLTIP}</TooltipContent>
           </Tooltip>
         ) : (
-          switchControl
+          <Switch
+            id={switchId}
+            checked={enabled && !disabled}
+            onCheckedChange={setEnabled}
+            disabled={isSaving || disabled}
+          />
         )}
       </div>
 
@@ -145,10 +154,6 @@ export function SenderAddressOverride({
       )}
 
       <AddressPreview fromName={defaultSenderName} from={resolvedFrom} replyTo={resolvedReplyTo} />
-
-      {disabled && disabledReason ? (
-        <p className="text-text-soft text-paragraph-xs leading-4">{disabledReason}</p>
-      ) : null}
 
       {!disabled && isDirty && (
         <div className="flex justify-end">

@@ -30,6 +30,7 @@
     "jsx-dev-runtime",
     "validators",
     "ai-sdk",
+    "langchain",
     "cards",
     "README.md"
   ],
@@ -42,7 +43,7 @@
     "debug": "NODE_ENV=production tsup --config tsup-debug.config.ts",
     "build:watch": "tsup --watch",
     "postbuild": "pnpm run check:exports && pnpm check:circulars",
-    "check:exports": "attw --pack .",
+    "check:exports": "attw --pack . --exclude-entrypoints ./langchain && attw --pack . --entrypoints ./langchain --ignore-rules no-resolution",
     "check:circulars": "madge --circular --extensions ts ./src",
     "bump:prerelease": "npm version prerelease --preid=alpha & PID=$!; (sleep 1 && kill -9 $PID) & wait $PID",
     "release:alpha": "pnpm bump:prerelease || pnpm build && npm publish",
@@ -217,6 +218,16 @@
         "default": "./dist/esm/ai-sdk/index.js"
       }
     },
+    "./langchain": {
+      "require": {
+        "types": "./dist/cjs/langchain/index.d.cts",
+        "default": "./dist/cjs/langchain/index.cjs"
+      },
+      "import": {
+        "types": "./dist/esm/langchain/index.d.ts",
+        "default": "./dist/esm/langchain/index.js"
+      }
+    },
     "./cards": {
       "require": {
         "types": "./dist/cjs/cards.d.cts",
@@ -229,6 +240,7 @@
     }
   },
   "peerDependencies": {
+    "@langchain/core": ">=1.0.0",
     "@nestjs/common": ">=10.0.0",
     "@sveltejs/kit": ">=1.27.3",
     "@vercel/node": ">=2.15.9",
@@ -236,11 +248,18 @@
     "aws-lambda": ">=1.0.7",
     "express": ">=4.19.2",
     "h3": ">=1.8.1",
+    "langchain": ">=1.0.0",
     "next": ">=12.0.0",
     "zod": ">=3.0.0",
     "zod-to-json-schema": ">=3.0.0"
   },
   "peerDependenciesMeta": {
+    "@langchain/core": {
+      "optional": true
+    },
+    "langchain": {
+      "optional": true
+    },
     "@nestjs/common": {
       "optional": true
     },
@@ -278,6 +297,7 @@
   "devDependencies": {
     "@apidevtools/json-schema-ref-parser": "11.6.4",
     "@arethetypeswrong/cli": "^0.17.4",
+    "@langchain/core": "^1.1.44",
     "@nestjs/common": "11.1.27",
     "@sveltejs/kit": "^1.27.3",
     "@types/aws-lambda": "^8.10.141",
@@ -290,6 +310,7 @@
     "aws-lambda": "^1.0.7",
     "express": "^4.19.2",
     "h3": "^1.11.1",
+    "langchain": "^1.2.16",
     "madge": "^8.0.0",
     "next": "^16.2.1",
     "ts-node": "^10.9.2",

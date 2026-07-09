@@ -119,7 +119,7 @@ function SetupForm({ token }: SetupFormProps) {
         </h1>
         <p className="text-text-soft text-paragraph-xs leading-5">
           Paste the message BotFather just sent you on Telegram. We&apos;ll detect the bot token and add the Telegram
-          integration to your Novu environment — nothing else to fill in.
+          integration to your Novu environment: nothing else to fill in.
         </p>
       </div>
 
@@ -182,7 +182,7 @@ function ParseStatus({ draft, parsedToken, parsedUsername }: ParseStatusProps) {
     return (
       <div className="text-text-soft text-label-xs flex items-start gap-1.5 leading-4">
         <RiAlertLine className="text-warning-base mt-0.5 size-3.5 shrink-0" />
-        <span>We couldn&apos;t find a bot token yet. Paste the entire message — it starts with &quot;Done!&quot;.</span>
+        <span>We couldn&apos;t find a bot token yet. Paste the entire message: it starts with &quot;Done!&quot;.</span>
       </div>
     );
   }

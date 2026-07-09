@@ -274,7 +274,7 @@ export function EmailWhatsNextGuide({ agent, integrationLink, justConnected = fa
       sectionLabel: 'FOR YOUR USERS',
       title: "Share your agent's address",
       description:
-        "Your users reach the agent by emailing its address. Drop it into your product's contact or reply flows, support footer, or docs — replies thread automatically.",
+        "Your users reach the agent by emailing its address. Drop it into your product's contact or reply flows, support footer, or docs: replies thread automatically.",
       extraContent: primaryUserAddress ? <CopyableEmailAddress email={primaryUserAddress} /> : undefined,
     },
   ];

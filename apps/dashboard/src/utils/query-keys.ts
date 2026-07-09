@@ -47,4 +47,6 @@ export const QueryKeys = Object.freeze({
   fetchDomain: 'fetchDomain',
   fetchDomainRoutes: 'fetchDomainRoutes',
   fetchDomainConnectStatus: 'fetchDomainConnectStatus',
+  localBridgeHealth: 'localBridgeHealth',
+  localDiscover: 'localDiscover',
 });

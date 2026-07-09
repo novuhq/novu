@@ -222,7 +222,7 @@ function ConnectClaimContent({ token }: { token: string | null }) {
               <div className="flex w-full items-start gap-2 rounded-lg border border-green-200 bg-green-50 p-3 text-label-xs text-green-700">
                 <RiCheckLine className="mt-0.5 size-4 shrink-0" />
                 <span>
-                  Your agent is connected to your account. Head back to your chat — the agent is ready to continue.
+                  Your agent is connected to your account. Head back to your chat: the agent is ready to continue.
                 </span>
               </div>
               <Button

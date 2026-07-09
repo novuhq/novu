@@ -37,6 +37,7 @@ import { InboundAckService } from './conversation-runtime/ack/inbound-ack.servic
 import { AgentActionTokenService } from './conversation-runtime/action-token/agent-action-token.service';
 import { AgentAttachmentStorage } from './conversation-runtime/conversation/agent-attachment-storage.service';
 import { AgentConversationService } from './conversation-runtime/conversation/agent-conversation.service';
+import { AgentSubscriberAdoptionService } from './conversation-runtime/conversation/agent-subscriber-adoption.service';
 import { AgentSubscriberResolver } from './conversation-runtime/conversation/agent-subscriber-resolver.service';
 import { ConversationActivationService } from './conversation-runtime/conversation/conversation-activation.service';
 import { FileMaterializer } from './conversation-runtime/egress/file-materializer.service';
@@ -116,6 +117,7 @@ import { USE_CASES } from './usecases';
     AgentAttachmentStorage,
     AgentConfigResolver,
     AgentSubscriberResolver,
+    AgentSubscriberAdoptionService,
     AgentConversationService,
     ConversationActivationService,
     InboundAckService,

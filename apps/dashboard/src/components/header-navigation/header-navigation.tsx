@@ -7,7 +7,7 @@ import { MobileSideNavigation } from '@/components/side-navigation/mobile-side-n
 import { UserProfile } from '@/components/user-profile';
 import { RegionSelector } from '@/context/region';
 import { cn } from '@/utils/ui';
-import { IS_ENTERPRISE, IS_SELF_HOSTED } from '../../config';
+import { IS_SELF_HOSTED_EE } from '../../config';
 import { useEnvironment } from '../../context/environment/hooks';
 import { useHasPermission } from '../../hooks/use-has-permission';
 import { Button } from '../primitives/button';
@@ -78,7 +78,7 @@ export const HeaderNavigation = (props: HeaderNavigationProps) => {
         {!hideRestItems && (
           <>
             <div className="flex items-center gap-2">
-              {!(IS_SELF_HOSTED && IS_ENTERPRISE) && <CustomerSupportButton />}
+              {!IS_SELF_HOSTED_EE && <CustomerSupportButton />}
               <InboxButton />
               <div className="hidden h-4 w-px bg-neutral-200 md:block" />
               <span className="hidden md:inline-flex">

@@ -3,11 +3,13 @@ import type { BridgeScaffoldVariant } from '../pipeline/bridge/types';
 import type {
   AgentConnectMode,
   AgentSummary,
+  AiSdkConnectOutcome,
+  BridgeRequirement,
   ChannelChoice,
   ChatSdkConnectOutcome,
-  ChatSdkRequirement,
   CustomCodeConnectOutcome,
 } from '../types';
+import type { BridgeReconcileVariant } from './bridge-reconcile-variant';
 
 export type PickResult = { action: 'new' } | { action: 'use'; agent: AgentSummary };
 
@@ -17,7 +19,7 @@ export type PickAgentIntegrationResult = { kind: 'existing'; integrationId: stri
 
 export type TelegramTokenDelivery = 'setup-page' | 'terminal';
 
-export type ChatSdkTunnelOfferResult = 'accept' | 'skip';
+export type BridgeTunnelOfferResult = 'accept' | 'skip';
 
 export interface ConnectUI {
   /** True when running the Ink TUI; false for CI / non-TTY logging mode. */
@@ -91,16 +93,23 @@ export interface ConnectUI {
     envPaths?: string[];
     agentFilePath?: string;
   }): void;
-  confirmInstallChatSdkDeps(opts: { projectDir: string; installCommand: string; packages: string[] }): Promise<boolean>;
-  installingChatSdkDeps(): void;
-  showChatSdkReconcilePlan(opts: {
+  confirmInstallBridgeDeps(opts: {
     projectDir: string;
-    requirements: ChatSdkRequirement[];
+    installCommand: string;
+    packages: string[];
+    variant?: BridgeReconcileVariant;
+  }): Promise<boolean>;
+  installingBridgeDeps(variant?: BridgeReconcileVariant): void;
+  showBridgeReconcilePlan(opts: {
+    projectDir: string;
+    requirements: BridgeRequirement[];
     envPaths: string[];
     wiringInstructions?: string;
     requirementsFile?: string;
+    agentPrompt?: string;
+    variant?: BridgeReconcileVariant;
   }): Promise<void>;
-  offerChatSdkTunnel(opts: { projectDir: string; devCommand: string }): Promise<ChatSdkTunnelOfferResult>;
+  offerBridgeTunnel(opts: { projectDir: string; devCommand: string }): Promise<BridgeTunnelOfferResult>;
 
   // Channel selection
   pickChannel(): Promise<ChannelChoice>;
@@ -205,6 +214,7 @@ export interface ConnectUI {
     claimUrl: string | null;
     connectMode?: AgentConnectMode;
     chatSdkOutcome?: ChatSdkConnectOutcome;
+    aiSdkOutcome?: AiSdkConnectOutcome;
     customCodeOutcome?: CustomCodeConnectOutcome;
   }): void;
   failure(message: string): void;

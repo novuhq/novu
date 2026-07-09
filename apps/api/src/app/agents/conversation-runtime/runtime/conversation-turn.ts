@@ -3,6 +3,7 @@ import type { AgentAction } from '@novu/framework';
 import type { Message, Thread } from 'chat';
 import type { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import type { AgentEventEnum } from '../../shared/enums/agent-event.enum';
+import type { SubscriberResolution } from '../../shared/types/subscriber-resolution';
 import type { StoredAttachment } from '../conversation/agent-attachment-storage.service';
 import type { BridgeReaction } from './bridge-executor.service';
 
@@ -12,6 +13,12 @@ export interface ConversationTurn {
   config: ResolvedAgentConfig;
   conversation: ConversationEntity;
   subscriber: SubscriberEntity | null;
+  /**
+   * How `subscriber` was (or wasn't) resolved. Lets the unresolved-subscriber
+   * gate distinguish a genuine unknown sender from a resolution failure and
+   * log/reply accordingly.
+   */
+  subscriberResolution?: SubscriberResolution;
   message: Message | null;
   event: AgentEventEnum;
   thread: Thread;

@@ -1,22 +1,34 @@
 import { ApiServiceLevelEnum, FeatureNameEnum, getFeatureForTierAsBoolean, type IIntegration } from '@novu/shared';
-import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
-import { RiAddLine, RiCloseLine, RiInformation2Line } from 'react-icons/ri';
-import { useSearchParams } from 'react-router-dom';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { RiAddLine, RiArrowRightSLine, RiArrowRightUpLine, RiCloseLine, RiInformation2Line } from 'react-icons/ri';
+import { Link, useSearchParams } from 'react-router-dom';
 import type { AgentIntegrationEmbedded, AgentResponse } from '@/api/agents';
 import { CopyableEmailAddress } from '@/components/agents/copyable-email-address';
+import { EmailSubscriberAccessToggle } from '@/components/agents/email-subscriber-access-toggle';
 import { CompactButton } from '@/components/primitives/button-compact';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { Switch } from '@/components/primitives/switch';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { UpgradeCTATooltip } from '@/components/upgrade-cta-tooltip';
+import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { useUpdateIntegration } from '@/hooks/use-update-integration';
+import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
+import { getMinimumTierForFeature } from '@/utils/upgrade-tier';
 import { AgentCustomDomainSheet } from './agent-custom-domain-sheet';
 import { useEmailSetupCredentials } from './use-email-setup-credentials';
 
-const DELIVERABILITY_DOCS_URL = 'https://docs.novu.co/platform/domains';
+const CREATE_SUBSCRIBER_DOCS_URL = 'https://docs.novu.co/api-reference/subscribers/create-a-subscriber';
+
+const quietLinkClassName =
+  'text-text-sub hover:text-text-strong inline-flex items-center gap-0.5 text-label-xs font-medium leading-4 transition-colors';
+
+const connectDomainButtonClassName = cn(
+  quietLinkClassName,
+  'self-start py-1 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:text-text-sub'
+);
 
 export type EmailInboxCardProps = {
   emailIntegration: IIntegration;
@@ -42,7 +54,7 @@ export type EmailInboxCardProps = {
  * Post-setup inbox manager: lists the agent's inbound addresses (Novu shared
  * inbox + each custom-domain `DomainRouteTypeEnum.AGENT` route) and lets the
  * user disable the shared inbox or remove a custom one. There is no notion of
- * a "primary" address — every listed address routes inbound. The "+ Connect
+ * a "primary" address; every listed address routes inbound. The "+ Connect
  * custom domain" affordance reveals the add-form on demand instead of always
  * occupying screen real estate.
  */
@@ -52,6 +64,7 @@ export function EmailInboxCardBody({
   agent,
   hideCustomAddressForm = false,
 }: EmailInboxCardProps) {
+  const { currentEnvironment } = useEnvironment();
   const { mutateAsync: updateIntegration } = useUpdateIntegration();
   const { integrations } = useFetchIntegrations();
   const { subscription } = useFetchSubscription();
@@ -132,20 +145,18 @@ export function EmailInboxCardBody({
     }
   }
 
-  const tooltipCopy = useMemo(
-    () =>
-      sharedAddress
-        ? `Inbound mail sent to ${sharedAddress} is delivered to this agent.`
-        : 'Replies and incoming mail to this address are delivered to the agent.',
-    [sharedAddress]
-  );
+  const inboundAddressesInfoTooltip =
+    'Share an address anywhere users reach you: contact forms, reply flows, support footers, or docs. All listed addresses route inbound. There is no primary.';
+
+  const subscriberAccessInfoTooltip =
+    "With Open, a lightweight subscriber is created from the sender's address so the agent can reply. It merges into their account if they later sign up with the same email.";
 
   function handleSharedToggle(nextEnabled: boolean) {
     // Disabling is only safe when at least one custom-domain address remains
     // so the agent isn't left with zero inbound paths.
     if (!nextEnabled && !hasCustomAddresses) {
       showErrorToast(
-        'Connect a custom domain first — the agent must keep at least one inbound address.',
+        'Connect a custom domain first: the agent must keep at least one inbound address.',
         'Cannot turn off the shared inbox'
       );
 
@@ -170,8 +181,9 @@ export function EmailInboxCardBody({
     }
   }
 
-  const connectDomainButtonClassName =
-    'text-text-sub hover:text-text-strong inline-flex items-center gap-0.5 self-start py-1 text-label-xs font-medium leading-4 transition-colors disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:text-text-sub';
+  const subscribersPath = currentEnvironment?.slug
+    ? buildRoute(ROUTES.SUBSCRIBERS, { environmentSlug: currentEnvironment.slug })
+    : ROUTES.SUBSCRIBERS;
 
   return (
     <>
@@ -182,20 +194,8 @@ export function EmailInboxCardBody({
       </CardRow>
 
       <CardRow
-        title={
-          <span className="flex items-center gap-1">
-            Inbound addresses
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button type="button" aria-label="More info">
-                  <RiInformation2Line className="text-text-soft size-5" aria-hidden />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>{tooltipCopy}</TooltipContent>
-            </Tooltip>
-          </span>
-        }
-        description="Users can reach this agent at any of the addresses below — share one in your product's contact or reply flows, support footer, or docs. Mail delivered to any of them is forwarded to the agent."
+        title={<CardRowInfoTitle label="Inbound addresses" infoTooltip={inboundAddressesInfoTooltip} />}
+        description="Mail sent to any of these addresses is delivered to this agent."
         divider
         disabled={inboxSectionDisabled}
       >
@@ -251,7 +251,8 @@ export function EmailInboxCardBody({
               </button>
             ) : (
               <UpgradeCTATooltip
-                description="To create domains, upgrade your plan."
+                description="Connect a custom domain to receive email on your own domain."
+                requiredTier={getMinimumTierForFeature(FeatureNameEnum.DOMAINS_BOOLEAN)}
                 utmCampaign="domains"
                 utmSource="agent-email-inbox"
               >
@@ -262,20 +263,34 @@ export function EmailInboxCardBody({
               </UpgradeCTATooltip>
             )
           ) : null}
+        </div>
+      </CardRow>
 
-          {!hideCustomAddressForm ? (
-            <p className="text-text-soft text-paragraph-xs leading-4">
-              {'Custom domains route inbound mail to your agent (MX) and let your replies pass SPF, DKIM, and DMARC. '}
-              <a
-                href={DELIVERABILITY_DOCS_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-text-sub underline underline-offset-2"
-              >
-                Learn about deliverability
-              </a>
-            </p>
-          ) : null}
+      <CardRow
+        title={<CardRowInfoTitle label="Who can email this agent" infoTooltip={subscriberAccessInfoTooltip} />}
+        description="Open accepts email from anyone. Off replies only to known subscribers."
+        divider
+        footer={
+          <div className="flex items-center gap-3">
+            <Link to={subscribersPath} className={quietLinkClassName}>
+              <span>Add subscribers manually</span>
+              <RiArrowRightSLine className="size-3.5" aria-hidden />
+            </Link>
+            <a
+              href={CREATE_SUBSCRIBER_DOCS_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={quietLinkClassName}
+            >
+              <span>Create via SDK</span>
+              <RiArrowRightUpLine className="size-3.5" aria-hidden />
+            </a>
+          </div>
+        }
+      >
+        <div className="flex items-center justify-end gap-2">
+          <span className="text-text-soft text-label-xs font-medium leading-4">Accept email from anyone</span>
+          <EmailSubscriberAccessToggle agent={agent} ariaLabel="Accept email from anyone" />
         </div>
       </CardRow>
 
@@ -298,32 +313,24 @@ type InboxRowProps = {
 };
 
 /**
- * Minimal row: lighter visual weight than the previous bordered/shadowed
- * pill — relies on background tint + subtle stroke for separation.
+ * Address row: the pill stays a compact copy target (address + copy button
+ * only) while controls (badge, remove, toggle) live outside it, right-aligned
+ * so they form a consistent column across rows.
  */
-function buildInboxRowTrailing(badge?: string, trailing?: ReactNode) {
-  if (!trailing && !badge) {
-    return undefined;
-  }
-
-  const badgeNode = badge ? (
-    <span className="text-text-soft text-[10px] font-medium uppercase leading-3 tracking-wide">{badge}</span>
-  ) : null;
-
-  if (!trailing) {
-    return badgeNode ?? undefined;
-  }
-
+function InboxRow({ address, badge, trailing }: InboxRowProps) {
   return (
-    <div className="flex items-center gap-1">
-      {badgeNode}
-      {trailing}
+    <div className="flex min-w-0 items-center justify-between gap-2">
+      <CopyableEmailAddress email={address} className="min-w-0" />
+      {badge || trailing ? (
+        <div className="flex shrink-0 items-center gap-1.5">
+          {badge ? (
+            <span className="text-text-soft text-[10px] font-medium uppercase leading-3 tracking-wide">{badge}</span>
+          ) : null}
+          {trailing}
+        </div>
+      ) : null}
     </div>
   );
-}
-
-function InboxRow({ address, badge, trailing }: InboxRowProps) {
-  return <CopyableEmailAddress email={address} trailing={buildInboxRowTrailing(badge, trailing)} />;
 }
 
 type SharedInboxRowProps = {
@@ -336,7 +343,7 @@ type SharedInboxRowProps = {
 
 /**
  * Variant of `InboxRow` for the Novu shared inbox. The row stays visually
- * enabled even when the user has flipped the switch off — only the toggle's
+ * enabled even when the user has flipped the switch off. Only the toggle's
  * off-state signals the disabled status. Hovering anywhere on the row body
  * surfaces a tooltip explaining what "off" means (drops inbound mail to the
  * shared `agentconnect.sh` address while keeping custom-domain routes
@@ -360,7 +367,7 @@ function SharedInboxRow({ address, disabled, toggleDisabled, toggleTooltip, onTo
     </Tooltip>
   );
 
-  const rowContent = <CopyableEmailAddress email={address} trailing={switchControl} />;
+  const rowContent = <InboxRow address={address} trailing={switchControl} />;
 
   if (!disabled) {
     return rowContent;
@@ -370,9 +377,25 @@ function SharedInboxRow({ address, disabled, toggleDisabled, toggleTooltip, onTo
     <Tooltip>
       <TooltipTrigger asChild>{rowContent}</TooltipTrigger>
       <TooltipContent className="max-w-xs">
-        Shared inbox is off — mail to this address is dropped. Flip the switch to re-enable it.
+        Shared inbox is off: mail to this address is dropped. Flip the switch to re-enable it.
       </TooltipContent>
     </Tooltip>
+  );
+}
+
+function CardRowInfoTitle({ label, infoTooltip }: { label: string; infoTooltip: string }) {
+  return (
+    <span className="flex items-center gap-1">
+      {label}
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button type="button" aria-label="More info">
+            <RiInformation2Line className="text-text-soft size-5" aria-hidden />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent className="max-w-xs">{infoTooltip}</TooltipContent>
+      </Tooltip>
+    </span>
   );
 }
 
@@ -382,26 +405,26 @@ function CardRow({
   children,
   divider,
   disabled,
+  footer,
 }: {
   title: ReactNode;
   description: ReactNode;
   children: ReactNode;
   divider?: boolean;
   disabled?: boolean;
+  /** Full-width content rendered below the two-column row, e.g. section-level links. */
+  footer?: ReactNode;
 }) {
   return (
-    <div
-      className={cn(
-        'flex items-start justify-between gap-6 p-3',
-        divider && 'border-stroke-weak border-b',
-        disabled && 'opacity-60'
-      )}
-    >
-      <div className="flex min-w-0 max-w-[350px] flex-1 flex-col gap-1">
-        <div className="text-text-sub text-label-sm font-medium leading-5">{title}</div>
-        <p className="text-text-soft text-paragraph-xs leading-4">{description}</p>
+    <div className={cn('flex flex-col p-3', divider && 'border-stroke-weak border-b', disabled && 'opacity-60')}>
+      <div className="flex items-start justify-between gap-6">
+        <div className="flex min-w-0 max-w-[350px] flex-1 flex-col gap-1">
+          <div className="text-text-sub text-label-sm font-medium leading-5">{title}</div>
+          <p className="text-text-soft text-paragraph-xs leading-4">{description}</p>
+        </div>
+        <div className="flex w-[360px] shrink-0 flex-col gap-1.5">{children}</div>
       </div>
-      <div className="flex w-[360px] shrink-0 flex-col gap-1.5">{children}</div>
+      {footer ? <div className="pt-3">{footer}</div> : null}
     </div>
   );
 }

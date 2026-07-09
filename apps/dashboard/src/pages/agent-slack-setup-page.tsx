@@ -114,7 +114,7 @@ function SetupForm({ token, agentName }: SetupFormProps) {
         </h1>
         <p className="text-text-soft text-paragraph-xs leading-5">
           Paste your Slack App Configuration Token here. Novu uses it once to create the Slack app from a manifest, then
-          discards it — your terminal will continue automatically.
+          discards it: your terminal will continue automatically.
         </p>
       </div>
 
@@ -184,7 +184,7 @@ function SuccessCard({ agentName }: { agentName: string }) {
         <h1 className="text-text-strong text-paragraph-md font-semibold">Slack app created</h1>
         <p className="text-text-soft text-paragraph-xs leading-5">
           Your Slack app is ready for <span className="text-text-strong font-medium">{agentName}</span>. Return to your
-          terminal — the connect command will open Slack authorization next.
+          terminal: the connect command will open Slack authorization next.
         </p>
       </div>
       <p className="text-text-soft text-label-xs mt-5 text-center">You can safely close this tab.</p>

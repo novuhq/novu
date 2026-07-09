@@ -29,6 +29,8 @@ export class PreviewStep {
         workflowOrigin: command.workflowOrigin,
         stepResolverHash,
         retriesLimit: 1,
+        statelessBridgeUrl: command.statelessBridgeUrl,
+        enforceSsrfProtection: command.enforceSsrfProtection,
       })
     );
 
