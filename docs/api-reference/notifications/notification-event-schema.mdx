@@ -22,10 +22,10 @@ Notification event is the event that is generated when a workflow is triggered t
 | `subscriber` | `ActivityNotificationSubscriberResponseDto` | Subscriber of the notification |
 | `template` | `ActivityNotificationTemplateResponseDto` | Template of the notification |
 | `jobs` | `ActivityNotificationJobResponseDto[]` | Jobs of the notification |
-| `payload` | `{ [k: string]: any; }` | Payload of the notification |
+| `payload` | `Record<string, unknown>` | Payload of the notification |
 | `tags` | `string[]` | Tags associated with the notification |
-| `controls` | `{ [k: string]: any; }` | Controls associated with the notification |
-| `to` | `{ [k: string]: any; }` | To field for subscriber definition |
+| `controls` | `Record<string, unknown>` | Controls associated with the notification |
+| `to` | `Record<string, unknown>` | To field for subscriber definition |
 | `topics` | `ActivityTopicDto[]` | Topics of the notification |
 | `severity` | `SeverityLevelEnum` | Severity of the workflow |
 | `critical` | `boolean` | Criticality of the notification |

@@ -45,7 +45,7 @@ Subscriber is a user who can receive notifications. Read more about subscribers 
 | `isOnline` | `boolean` | Indicates whether the subscriber is currently online. |
 | `lastOnlineAt` | `string` | The timestamp indicating when the subscriber was last online, in ISO 8601 format. |
 | `v` | `number` | The version of the subscriber document. |
-| `data` | `{ [k: string]: any; }` | Additional custom data for the subscriber |
+| `data` | `Record<string, unknown>` | Additional custom data for the subscriber |
 | `timezone` | `string` | Timezone of the subscriber |
 | `subscriberId` | `string` | The identifier used to create this subscriber, which typically corresponds to the user ID in your system. |
 | `organizationId` | `string` | The unique identifier of the organization to which the subscriber belongs. |

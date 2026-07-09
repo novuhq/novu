@@ -23,7 +23,7 @@ Message is a single notification that is sent to a subscriber. Each channel step
 | `deliveredAt` | `string[]` | Array of delivery dates for the message, if the message has multiple delivery dates, for example after being snoozed |
 | `lastSeenDate` | `string` | Last seen date of the message, if available |
 | `lastReadDate` | `string` | Last read date of the message, if available |
-| `content` | `string | EmailBlock[]` | Content of the message, can be an email block or a string |
+| `content` | `string \| EmailBlock[]` | Content of the message, can be an email block or a string |
 | `transactionId` | `string` | Transaction ID associated with the message |
 | `subject` | `string` | Subject of the message, if applicable |
 | `channel` | `ChannelTypeEnum` | Channel type through which the message is sent |
@@ -41,8 +41,8 @@ Message is a single notification that is sent to a subscriber. Each channel step
 | `status` | `MessageStatusEnum` | Status of the message |
 | `errorId` | `string` | Error ID if the message has an error |
 | `errorText` | `string` | Error text if the message has an error |
-| `payload` | `{ [k: string]: any; }` | The payload that was used to send the notification trigger |
-| `overrides` | `{ [k: string]: any; }` | Provider specific overrides used when triggering the notification |
+| `payload` | `Record<string, unknown>` | The payload that was used to send the notification trigger |
+| `overrides` | `Record<string, unknown>` | Provider specific overrides used when triggering the notification |
 | `contextKeys` | `string[]` | Context (single or multi) in which the message was sent |
 
 ### ChannelTypeEnum
@@ -93,14 +93,14 @@ Actor can be a **string** (subscriber ID) or a **SubscriberPayloadDto** object w
 | Field | Type | Description |
 | --- | --- | --- |
 | `subscriberId` | `string` | Unique identifier of the subscriber |
-| `firstName` | `string | null` | First name of the subscriber |
-| `lastName` | `string | null` | Last name of the subscriber |
-| `email` | `string | null` | Email address of the subscriber |
-| `phone` | `string | null` | Phone number of the subscriber |
-| `avatar` | `string | null` | Avatar URL or identifier |
-| `locale` | `string | null` | Locale of the subscriber |
-| `timezone` | `string | null` | Timezone of the subscriber |
-| `data` | `{ [k: string]: any; } | null` | Additional custom data associated with the subscriber |
+| `firstName` | `string \| null` | First name of the subscriber |
+| `lastName` | `string \| null` | Last name of the subscriber |
+| `email` | `string \| null` | Email address of the subscriber |
+| `phone` | `string \| null` | Phone number of the subscriber |
+| `avatar` | `string \| null` | Avatar URL or identifier |
+| `locale` | `string \| null` | Locale of the subscriber |
+| `timezone` | `string \| null` | Timezone of the subscriber |
+| `data` | `Record<string, unknown> \| null` | Additional custom data associated with the subscriber |
 
 ### MessageCTA
 
