@@ -20,12 +20,15 @@ import {
   TraceLogRepository,
 } from '@novu/application-generic';
 import {
+  ContextRepository,
   IntegrationRepository,
   NotificationTemplateEntity,
   NotificationTemplateRepository,
   PreferencesRepository,
+  SubscriberEntity,
   TopicPreferenceEvaluation,
 } from '@novu/dal';
+import type { ContextResolved } from '@novu/framework/internal';
 import {
   buildWorkflowPreferences,
   ChannelTypeEnum,
@@ -59,6 +62,7 @@ export class SubscriberJobBound {
     private traceLogRepository: TraceLogRepository,
     private getPreferences: GetPreferences,
     private preferencesRepository: PreferencesRepository,
+    private contextRepository: ContextRepository,
     private featureFlagsService: FeatureFlagsService,
     private inMemoryLRUCacheService: InMemoryLRUCacheService
   ) {
@@ -168,12 +172,7 @@ export class SubscriberJobBound {
     }
 
     if (topics && topics.length > 0) {
-      const evaluatedTopics = await this.evaluateTopicPreferences(
-        command,
-        topics,
-        template._id,
-        subscriberProcessed._id
-      );
+      const evaluatedTopics = await this.evaluateTopicPreferences(command, topics, template, subscriberProcessed);
 
       if (evaluatedTopics === null) {
         return;
@@ -378,8 +377,8 @@ export class SubscriberJobBound {
   private async evaluateTopicPreferences(
     command: SubscriberJobBoundCommand,
     topics: SubscriberTopicPreference[],
-    templateId: string,
-    subscriberId: string
+    template: NotificationTemplateEntity,
+    subscriber: SubscriberEntity
   ): Promise<SubscriberTopicPreference[] | null> {
     const evaluatedTopics: SubscriberTopicPreference[] = [];
     let filteredCount = 0;
@@ -394,8 +393,8 @@ export class SubscriberJobBound {
         command,
         topic._topicSubscriptionId,
         topic.subscriptionIdentifier,
-        templateId,
-        subscriberId
+        template,
+        subscriber
       );
 
       if (!evaluationResult.result) {
@@ -431,8 +430,8 @@ export class SubscriberJobBound {
     command: SubscriberJobBoundCommand,
     internalSubscriptionId: string,
     subscriptionIdentifier: string,
-    templateId: string,
-    subscriberId: string
+    template: NotificationTemplateEntity,
+    subscriber: SubscriberEntity
   ): Promise<TopicPreferenceEvaluation> {
     try {
       const useContextFiltering = await this.featureFlagsService.getFlag({
@@ -450,15 +449,16 @@ export class SubscriberJobBound {
       const subscriptionPreference = await this.preferencesRepository.findOne({
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
-        _subscriberId: subscriberId,
-        _templateId: templateId,
+        _subscriberId: subscriber._id,
+        _templateId: template._id,
         _topicSubscriptionId: internalSubscriptionId,
         type: PreferencesTypeEnum.SUBSCRIPTION_SUBSCRIBER_WORKFLOW,
         ...contextQuery,
       });
 
       if (subscriptionPreference) {
-        const passes = await this.evaluatePreferenceCondition(subscriptionPreference.preferences, command.payload);
+        const evaluationContext = await this.buildSubscriptionConditionEvaluationContext(command, template, subscriber);
+        const passes = await this.evaluatePreferenceCondition(subscriptionPreference.preferences, evaluationContext);
         const condition = subscriptionPreference.preferences.all?.condition;
 
         if (!passes) {
@@ -482,7 +482,7 @@ export class SubscriberJobBound {
         {
           error,
           subscriberId: command.subscriber.subscriberId,
-          workflowId: templateId,
+          workflowId: template._id,
           transactionId: command.transactionId,
         },
         'Error evaluating subscription preferences, allowing subscription to pass through'
@@ -492,15 +492,67 @@ export class SubscriberJobBound {
     }
   }
 
+  private async buildSubscriptionConditionEvaluationContext(
+    command: SubscriberJobBoundCommand,
+    template: NotificationTemplateEntity,
+    subscriber: SubscriberEntity
+  ): Promise<Record<string, unknown>> {
+    const context = await this.resolveContext(command);
+
+    return {
+      payload: command.payload ?? {},
+      subscriber: {
+        subscriberId: subscriber.subscriberId,
+        firstName: subscriber.firstName,
+        lastName: subscriber.lastName,
+        email: subscriber.email,
+        phone: subscriber.phone,
+        avatar: subscriber.avatar,
+        locale: subscriber.locale,
+        timezone: subscriber.timezone,
+        data: subscriber.data ?? {},
+        isOnline: subscriber.isOnline,
+        lastOnlineAt: subscriber.lastOnlineAt,
+      },
+      workflow: {
+        workflowId: command.identifier,
+        name: template.name,
+        description: template.description,
+        tags: template.tags,
+        severity: template.severity,
+      },
+      ...(Object.keys(context).length > 0 && { context }),
+    };
+  }
+
+  private async resolveContext(command: SubscriberJobBoundCommand): Promise<ContextResolved> {
+    const { contextKeys, environmentId, organizationId } = command;
+
+    if (contextKeys.length === 0) {
+      return {} as ContextResolved;
+    }
+
+    const contexts = await this.contextRepository.findByKeys(environmentId, organizationId, contextKeys);
+
+    return contexts.reduce((acc, contextEntity) => {
+      acc[contextEntity.type] = {
+        id: contextEntity.id,
+        data: contextEntity.data,
+      };
+
+      return acc;
+    }, {} as ContextResolved);
+  }
+
   private async evaluatePreferenceCondition(
     preferences: WorkflowPreferencesPartial,
-    payload: Record<string, unknown>
+    evaluationContext: Record<string, unknown>
   ): Promise<boolean> {
     const condition = preferences.all?.condition;
 
     if (condition !== undefined && condition !== null) {
       try {
-        const result = jsonLogic.apply(condition as RulesLogic, { payload });
+        const result = jsonLogic.apply(condition as RulesLogic, evaluationContext);
 
         if (typeof result !== 'boolean') {
           this.logger.warn(

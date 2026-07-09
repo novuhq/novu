@@ -11,10 +11,10 @@ While standard preferences allow subscribers to toggle specific channels on or o
 
 The Subscription introduces a filtering layer between the trigger and the subscriber. When you trigger a notification to a topic key, the system doesn't automatically send it to everyone. Instead, it follows this evaluation flow:
 
-1. **Trigger**: You trigger a workflow to a `topicKey` and include a data payload.
-2. **Match**: Novu retrieves all subscribers associated with that topic.
-3. **Evaluate**: The system checks the conditions and preferences of each subscription against the payload.
-4. **Deliver**: Only subscribers whose conditions match the payload receive the notification.
+1. **Trigger**: You trigger a workflow to a `topicKey` and include a data payload and optional [Context](/platform/concepts/contexts).
+2. **Match**: Novu retrieves topic subscriptions whose Context matches the trigger (exact match), then resolves the subscribers.
+3. **Evaluate**: The system checks the conditions and preferences of each matching subscription against the condition variables.
+4. **Deliver**: Only subscribers whose subscriptions pass receive the notification.
 
 This filtering happens for every event on a topic, which allows you to support many use cases, including advanced preferences, segmentation, and multi-tenant experiences.
 
@@ -131,3 +131,7 @@ export function Novu() {
 If you use the [`<Inbox />`](/platform/inbox), then subscriptions determine which notifications appear in a subscriber's feed. When a subscriber joins a topic, the [`<Inbox />`](/platform/inbox) shows notifications from that topic according to the subscriber's selected conditions. If the subscriber mutes the topic or sets rules that don't match an event, then the Inbox doesn't show those messages to that subscriber.
 
 Subscriptions work with or without the [`<Inbox />`](/platform/inbox), and have a standalone [`<Subscription />`](/platform/subscription/quickstart) component.
+
+## Manage topic subscriptions
+
+To create subscriptions from your backend, from the browser with `@novu/js`, or in React with hooks and components (including JSON Logic conditions), see [Manage topic subscriptions](/platform/subscription/manage-topic-subscriptions).

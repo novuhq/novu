@@ -123,7 +123,7 @@ export class SubscriptionPreferenceDto {
     required: false,
     type: 'object',
     additionalProperties: true,
-    example: { and: [{ '===': [{ var: 'tier' }, 'premium'] }] },
+    example: { and: [{ '===': [{ var: 'payload.tier' }, 'premium'] }] },
   })
   @ValidateIf((o) => o.condition !== undefined)
   @IsOptional()

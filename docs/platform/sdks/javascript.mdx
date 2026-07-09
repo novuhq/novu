@@ -648,13 +648,11 @@ const { data: subscription } = await novu.subscriptions.create({
       enabled: true
     },
     {
-      // Conditional filter
+      // Conditional filter: JSON Logic evaluated against trigger payload
       workflowId: 'price-alert',
       condition: {
-        field: 'price',
-        operation: 'below',
-        value: 100
-      }
+        '===': [{ var: 'payload.tier' }, 'premium'],
+      },
     }
   ]
 });
@@ -672,7 +670,7 @@ Updates an existing subscription.
 ```tsx
 const { data: subscription } = await novu.subscriptions.update({
   topicKey: 'product-updates',
-  subscriptionId: 'subscription-id-123',
+  identifier: 'user-product-alert',
   preferences: [...]
 });
 ```
@@ -684,7 +682,7 @@ Delete a subscription by topic and subscription ID.
 ```tsx
 await novu.subscriptions.delete({
   topicKey: 'product-updates',
-  subscriptionId: 'product-updates-subscription',
+  identifier: 'product-updates-subscription',
 });
 ```
 
