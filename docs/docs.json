@@ -642,6 +642,24 @@
             "icon": "plug"
           },
           {
+            "group": "Agents",
+            "pages": [
+              "api-reference/agents/agent-schema",
+              "api-reference/agents/create-an-agent",
+              "api-reference/agents/list-all-agents",
+              "api-reference/agents/retrieve-an-agent",
+              "api-reference/agents/update-an-agent",
+              "api-reference/agents/delete-an-agent",
+              "api-reference/agents/update-an-agent-bridge",
+              "api-reference/agents/send-an-agent-reply",
+              "api-reference/agents/create-an-agent-integration",
+              "api-reference/agents/list-agent-integrations",
+              "api-reference/agents/update-an-agent-integration",
+              "api-reference/agents/delete-an-agent-integration"
+            ],
+            "icon": "bot"
+          },
+          {
             "group": "Channel Connections",
             "pages": [
               "api-reference/channel-connections/create-a-channel-connection",

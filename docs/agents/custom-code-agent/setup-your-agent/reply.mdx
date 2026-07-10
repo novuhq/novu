@@ -14,6 +14,8 @@ Replies are user-facing messages your agent sends back into the conversation. Us
 
 The public API is `ctx.reply(content, options?)`. You can also return a string or JSX card from a handler instead of calling `ctx.reply()` directly.
 
+To send a reply from your backend without going through the bridge handler, use the [Send an agent reply](/api-reference/agents/send-an-agent-reply) API.
+
 ## Reply types at a glance
 
 The following table summarizes the reply types your agent can send:
@@ -145,5 +147,8 @@ The following table lists the card components you can use in replies:
   </Card>
   <Card icon="brain" href="/agents/custom-code-agent/connect-your-first-agent" title="Connect your first agent">
     Walk through a full support-bot handler file.
+  </Card>
+  <Card icon="code" href="/api-reference/agents/send-an-agent-reply" title="Send an agent reply API">
+    Send replies from your backend without a bridge handler.
   </Card>
 </Columns>
