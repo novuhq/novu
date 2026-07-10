@@ -1,6 +1,6 @@
 {
   "name": "@novu/inbound-mail",
-  "version": "2.1.10",
+  "version": "3.18.0",
   "description": "",
   "author": "",
   "private": true,
@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.996.0",
-    "@aws-sdk/client-secrets-manager": "^3.1037.0",
+    "@aws-sdk/client-secrets-manager": "3.996.0",
     "@aws-sdk/s3-request-presigner": "^3.996.0",
     "@novu/application-generic": "workspace:*",
     "@novu/dal": "workspace:*",
@@ -41,8 +41,7 @@
     "shelljs": "^0.8.5",
     "smtp-server": "^3.18.0",
     "spamc": "0.0.5",
-    "uuid": "^11.1.1",
-    "yargs": "^17.7.2"
+    "uuid": "^11.1.1"
   },
   "devDependencies": {
     "@novu/testing": "workspace:*",

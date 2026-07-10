@@ -31,7 +31,6 @@ RUN --mount=type=secret,id=BULL_MQ_PRO_NPM_TOKEN,uid=1000 export BULL_MQ_PRO_NPM
 
 WORKDIR /usr/src/app/apps/ws
 
-RUN cp src/dotenvcreate.mjs dist/dotenvcreate.mjs
 RUN cp src/.example.env dist/.env
 RUN cp src/.env.development dist/.env.development
 RUN cp src/.env.production dist/.env.production
@@ -76,4 +75,4 @@ COPY --chown=1000:1000 --from=deploy /usr/src/deploy .
 # Built output (not included by pnpm deploy because dist is gitignored)
 COPY --chown=1000:1000 --from=dev /usr/src/app/apps/ws/dist ./dist
 
-ENTRYPOINT [ "sh", "-c", "node dist/dotenvcreate.mjs -s=$SECRET_NAME -r=$NOVU_REGION -e=$NOVU_ENTERPRISE -v=$NODE_ENV -h=$IS_SELF_HOSTED && pm2-runtime start dist/main.js -i max" ]
+ENTRYPOINT [ "sh", "-c", "pm2-runtime start dist/main.js -i max" ]

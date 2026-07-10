@@ -252,7 +252,10 @@ export const createEdges = (nodes: Node<NodeData, keyof typeof nodeTypes>[], sho
 export const createTriggerNode = (
   currentWorkflow?: WorkflowResponseDto,
   currentEnvironment?: IEnvironment,
-  containerWidth?: number
+  containerWidth?: number,
+  // Local mode mounts the editor under /env/:slug/local/* — the trigger node
+  // link must stay within that mount (see use-workflow-editor-routes.ts).
+  triggerRoutePattern: string = ROUTES.TRIGGER_WORKFLOW
 ) => {
   const middleX = containerWidth ? containerWidth / 2 - NODE_WIDTH / 2 : 0;
   const id = generateUUID();
@@ -263,7 +266,7 @@ export const createTriggerNode = (
     height: NODE_HEIGHT,
     data: {
       index: 0,
-      triggerLink: buildRoute(ROUTES.TRIGGER_WORKFLOW, {
+      triggerLink: buildRoute(triggerRoutePattern, {
         environmentSlug: currentEnvironment?.slug ?? '',
         workflowSlug: currentWorkflow?.slug ?? '',
       }),

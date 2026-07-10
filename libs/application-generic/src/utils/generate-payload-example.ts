@@ -1,11 +1,11 @@
-import { NotificationTemplateEntity } from '@novu/dal';
 import { createMockObjectFromSchema, ResourceOriginEnum } from '@novu/shared';
+import { WorkflowForPayloadExample } from '../types/workflow-mapper.types';
 import { JsonSchemaMock } from './json-schema-mock';
 
 /**
  * Generates a payload example from a workflow's payload schema
  */
-export async function generatePayloadExample(workflow: NotificationTemplateEntity): Promise<object | undefined> {
+export async function generatePayloadExample(workflow: WorkflowForPayloadExample): Promise<object | undefined> {
   if (!workflow.payloadSchema) {
     return undefined;
   }

@@ -24,7 +24,7 @@ import {
   TableRow,
 } from '@/components/primitives/table';
 import { TablePaginationFooter } from '@/components/primitives/table-pagination-footer';
-import { IS_SELF_HOSTED } from '@/config';
+import { IS_CLOUD } from '@/config';
 import { useFetchLayouts } from '@/hooks/use-fetch-layouts';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { cn } from '@/utils/ui';
@@ -193,7 +193,7 @@ export const LayoutList = (props: LayoutListProps) => {
     );
   }
 
-  if (!IS_SELF_HOSTED && tier === ApiServiceLevelEnum.FREE && data?.layouts.length === 1) {
+  if (IS_CLOUD && tier === ApiServiceLevelEnum.FREE && data?.layouts.length === 1) {
     return <LayoutsListUpgradeCta />;
   }
 

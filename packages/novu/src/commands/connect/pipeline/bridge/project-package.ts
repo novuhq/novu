@@ -1,8 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-export const CHAT_SDK_ADAPTER_PACKAGE = '@novu/chat-sdk-adapter';
-
 const DEPENDENCY_SECTIONS = ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies'] as const;
 
 export function readProjectPackageJson(projectDir: string): Record<string, unknown> | null {
@@ -27,4 +25,20 @@ export function hasDependency(pkg: Record<string, unknown>, name: string): boole
 
     return Object.prototype.hasOwnProperty.call(deps, name);
   });
+}
+
+export function getDependencyVersion(pkg: Record<string, unknown>, name: string): string | null {
+  for (const section of DEPENDENCY_SECTIONS) {
+    const deps = pkg[section];
+    if (!deps || typeof deps !== 'object') {
+      continue;
+    }
+
+    const version = (deps as Record<string, unknown>)[name];
+    if (typeof version === 'string') {
+      return version;
+    }
+  }
+
+  return null;
 }

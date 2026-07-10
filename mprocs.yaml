@@ -6,6 +6,9 @@ procs:
   worker:
     shell: pnpm --filter @novu/worker start:portless
     autostart: false
+  inbound-mail:
+    shell: pnpm --filter @novu/inbound-mail start:dev
+    autostart: false
 
   shared:
     shell: pnpm --filter @novu/shared start

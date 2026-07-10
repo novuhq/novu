@@ -40,7 +40,7 @@ import { ConnectSubscriberProvider } from './components/connect/connect-subscrib
 import { CreateIntegrationSidebar } from './components/integrations/components/create-integration-sidebar';
 import { UpdateIntegrationSidebar } from './components/integrations/components/update-integration-sidebar';
 import { ChannelPreferences } from './components/workflow-editor/channel-preferences';
-import { EE_AUTH_PROVIDER, IS_ENTERPRISE, IS_SELF_HOSTED } from './config';
+import { EE_AUTH_PROVIDER, IS_CLOUD, IS_SELF_HOSTED, IS_SELF_HOSTED_CE } from './config';
 import { FeatureFlagsProvider } from './context/feature-flags-provider';
 import { AgentDetailsPage } from './pages/agent-details';
 import { AgentSlackSetupPage } from './pages/agent-slack-setup-page';
@@ -68,6 +68,9 @@ import { InboxEmbedPage } from './pages/inbox-embed-page';
 import { InboxEmbedSuccessPage } from './pages/inbox-embed-success-page';
 import { InboxUsecasePage } from './pages/inbox-usecase-page';
 import { IntegrationStoreTelegramMobileSetupPage } from './pages/integration-store-telegram-mobile-setup-page';
+import { LocalEditWorkflowPage } from './pages/local-edit-workflow';
+import { LocalHandshakePage } from './pages/local-handshake';
+import { LocalWorkflowsPage } from './pages/local-workflows';
 import { RedirectToLegacyStudioAuth } from './pages/redirect-to-legacy-studio-auth';
 import { ResetPasswordPage } from './pages/reset-password';
 import { TestWorkflowDrawerPage } from './pages/test-workflow-drawer-page';
@@ -440,12 +443,11 @@ const router = createBrowserRouter([
               },
               {
                 path: ROUTES.DOMAINS,
-                element: !IS_SELF_HOSTED || IS_ENTERPRISE ? <DomainsPage /> : <Navigate to={ROUTES.ROOT} replace />,
+                element: !IS_SELF_HOSTED_CE ? <DomainsPage /> : <Navigate to={ROUTES.ROOT} replace />,
               },
               {
                 path: ROUTES.DOMAIN_DETAIL,
-                element:
-                  !IS_SELF_HOSTED || IS_ENTERPRISE ? <DomainDetailPage /> : <Navigate to={ROUTES.ROOT} replace />,
+                element: !IS_SELF_HOSTED_CE ? <DomainDetailPage /> : <Navigate to={ROUTES.ROOT} replace />,
               },
               {
                 path: ROUTES.API_KEYS,
@@ -512,6 +514,57 @@ const router = createBrowserRouter([
                     <AnalyticsPage />
                   </ProtectedRoute>
                 ),
+              },
+              {
+                path: ROUTES.LOCAL_WORKFLOWS,
+                element: (
+                  // BRIDGE_WRITE mirrors the stateless bridge API guard: local
+                  // mode signs requests to the caller's tunnel with the env key.
+                  <ProtectedRoute permission={PermissionsEnum.BRIDGE_WRITE}>
+                    <LocalWorkflowsPage />
+                  </ProtectedRoute>
+                ),
+              },
+              {
+                // Workflow editor mounted on virtual local-bridge workflows;
+                // children mirror ROUTES.EDIT_WORKFLOW so relative step
+                // navigation behaves identically.
+                path: ROUTES.LOCAL_EDIT_WORKFLOW,
+                element: (
+                  <ProtectedRoute permission={PermissionsEnum.BRIDGE_WRITE}>
+                    <LocalEditWorkflowPage />
+                  </ProtectedRoute>
+                ),
+                children: [
+                  {
+                    element: <ConfigureWorkflow />,
+                    index: true,
+                  },
+                  {
+                    element: <ConfigureStep />,
+                    path: ROUTES.EDIT_STEP,
+                  },
+                  {
+                    element: <EditStepTemplateV2Page />,
+                    path: ROUTES.EDIT_STEP_TEMPLATE,
+                  },
+                  {
+                    element: <EditStepConditions />,
+                    path: ROUTES.EDIT_STEP_CONDITIONS,
+                  },
+                  {
+                    element: <ChannelPreferences />,
+                    path: ROUTES.EDIT_WORKFLOW_PREFERENCES,
+                  },
+                  {
+                    path: ROUTES.LOCAL_TRIGGER_WORKFLOW,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.EVENT_WRITE} isDrawerRoute>
+                        <TestWorkflowDrawerPage />
+                      </ProtectedRoute>
+                    ),
+                  },
+                ],
               },
               {
                 path: ROUTES.EDIT_WORKFLOW,
@@ -682,7 +735,7 @@ const router = createBrowserRouter([
           {
             path: ROUTES.PARTNER_INTEGRATIONS_VERCEL,
             element:
-              EE_AUTH_PROVIDER === 'clerk' && !IS_SELF_HOSTED ? (
+              EE_AUTH_PROVIDER === 'clerk' && IS_CLOUD ? (
                 <ProtectedRoute permission={PermissionsEnum.PARTNER_INTEGRATION_READ}>
                   <VercelIntegrationPage />
                 </ProtectedRoute>
@@ -692,19 +745,19 @@ const router = createBrowserRouter([
           },
           {
             path: ROUTES.SETTINGS,
-            element: IS_SELF_HOSTED && !IS_ENTERPRISE ? <Navigate to={ROUTES.ROOT} /> : <SettingsPage />,
+            element: IS_SELF_HOSTED_CE ? <Navigate to={ROUTES.ROOT} /> : <SettingsPage />,
           },
           {
             path: ROUTES.SETTINGS_ACCOUNT,
-            element: IS_SELF_HOSTED && !IS_ENTERPRISE ? <Navigate to={ROUTES.ROOT} /> : <SettingsPage />,
+            element: IS_SELF_HOSTED_CE ? <Navigate to={ROUTES.ROOT} /> : <SettingsPage />,
           },
           {
             path: ROUTES.SETTINGS_ORGANIZATION,
-            element: IS_SELF_HOSTED && !IS_ENTERPRISE ? <Navigate to={ROUTES.ROOT} /> : <SettingsPage />,
+            element: IS_SELF_HOSTED_CE ? <Navigate to={ROUTES.ROOT} /> : <SettingsPage />,
           },
           {
             path: ROUTES.SETTINGS_TEAM,
-            element: IS_SELF_HOSTED && !IS_ENTERPRISE ? <Navigate to={ROUTES.ROOT} /> : <SettingsPage />,
+            element: IS_SELF_HOSTED_CE ? <Navigate to={ROUTES.ROOT} /> : <SettingsPage />,
           },
           {
             path: ROUTES.SETTINGS_BILLING,
@@ -713,6 +766,15 @@ const router = createBrowserRouter([
           {
             path: ROUTES.LOCAL_STUDIO_AUTH,
             element: <RedirectToLegacyStudioAuth />,
+          },
+          {
+            // Handshake target opened by `novu dev` (new dashboard local mode).
+            path: ROUTES.LOCAL_HANDSHAKE,
+            element: (
+              <ProtectedRoute permission={PermissionsEnum.BRIDGE_WRITE}>
+                <LocalHandshakePage />
+              </ProtectedRoute>
+            ),
           },
           {
             path: '*',

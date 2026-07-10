@@ -702,4 +702,10 @@ These are some of the most frequently asked questions about subscribers in Novu.
   <Accordion title="Can subscriber credentials for chat and push channels be added when creating a new subscriber?">
     Subscriber credentials for Push and Chat channel providers can be added while creating a new subscriber using the `channels` field in the [create subscriber](/api-reference/subscribers/create-a-subscriber) request payload.
   </Accordion>
+
+  <Accordion title="Should I create subscribers ahead of time or rely on just-in-time creation on trigger?">
+    For most apps, rely on **just-in-time (JIT) creation** when you trigger workflows. Novu upserts subscriber details on every trigger, so passing `to: { subscriberId, email, firstName, locale, timezone }` keeps profiles up to date without separate create or update calls.
+
+    Create subscribers ahead of time when you need to manage preferences, enrich profiles, or inspect delivery readiness before any notification is sent—for example during onboarding or bulk migration. See [Just in time](/platform/concepts/subscribers#just-in-time) and [Ahead of trigger](/platform/concepts/subscribers#ahead-of-trigger) for both patterns.
+  </Accordion>
 </AccordionGroup>

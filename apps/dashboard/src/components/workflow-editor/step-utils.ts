@@ -1,4 +1,4 @@
-import type { RuntimeIssue, StepCreateDto, StepUpdateDto, UpdateWorkflowDto, WorkflowResponseDto } from '@novu/shared';
+import type { RuntimeIssue, StepCreateDto, StepResponseDto, StepUpdateDto, UpdateWorkflowDto, WorkflowResponseDto } from '@novu/shared';
 import { SeverityLevelEnum, StepTypeEnum } from '@novu/shared';
 import { flatten } from 'flat';
 import { ERROR_AVATAR, INFO_AVATAR, WARNING_AVATAR } from '@/utils/avatars';
@@ -25,6 +25,27 @@ import {
   DEFAULT_CONTROL_THROTTLE_WINDOW,
   STEP_TYPE_LABELS,
 } from '@/utils/constants';
+import { getIdFromSlug, STEP_DIVIDER } from '@/utils/id-utils';
+
+export function findDigestStepBeforeCurrent(
+  steps: StepResponseDto[] | undefined,
+  currentStep: StepResponseDto | undefined
+): StepResponseDto | undefined {
+  if (!steps || !currentStep) return undefined;
+
+  const index = steps.findIndex(
+    (candidate) =>
+      getIdFromSlug({ slug: candidate.slug, divider: STEP_DIVIDER }) ===
+      getIdFromSlug({ slug: currentStep.slug, divider: STEP_DIVIDER })
+  );
+
+  if (index < 1) return undefined;
+
+  return steps
+    .slice(0, index)
+    .reverse()
+    .find((candidate) => candidate.type === 'digest');
+}
 
 export const getFirstErrorMessage = (
   issues?: {
