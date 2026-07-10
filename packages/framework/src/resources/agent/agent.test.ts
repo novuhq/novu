@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Client } from '../../client';
 import { PostActionEnum } from '../../constants';
 import { NovuRequestHandler } from '../../handler';
-import { AgentDeliveryError } from './agent.errors';
+import { AgentDeliveryError, AgentError } from './agent.errors';
 import { agent } from './agent.resource';
 import type { AgentBridgeRequest } from './agent.types';
 import { PendingApproval } from './agent.types';
@@ -1772,10 +1772,12 @@ describe('agent dispatch via NovuRequestHandler', () => {
     await vi.waitFor(() => expect(caughtError).toBeDefined());
 
     expect(caughtError).toBeInstanceOf(AgentDeliveryError);
+    expect(caughtError).toBeInstanceOf(AgentError);
     const err = caughtError as AgentDeliveryError;
     expect(err.message).toBe(message);
     expect(err.statusCode).toBe(status);
     expect(err.responseBody).toBe(body);
+    expect(err.delivery?.statusCode).toBe(status);
   });
 
   it('should include nested API delivery error details in AgentDeliveryError', async () => {
