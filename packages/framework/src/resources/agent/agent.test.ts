@@ -732,6 +732,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
     );
     const replyBodies = replyCalls.map((call: any[]) => JSON.parse(call[1].body));
     expect(replyBodies.every((body) => body.reply === undefined)).toBe(true);
+    expect(replyBodies.some((body) => body.error === true)).toBe(true);
   });
 
   it('should serialize CardElement on reply', async () => {
@@ -1864,6 +1865,11 @@ describe('agent dispatch via NovuRequestHandler', () => {
 
     const logged = errorSpy.mock.calls[0].join(' ');
     expect(logged).toContain('[agent:test-bot] Turn failed (onMessage): Delivery failed: Bad Gateway');
+
+    const replyBodies = fetchMock.mock.calls
+      .filter((call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply')
+      .map((call: any[]) => JSON.parse(call[1].body));
+    expect(replyBodies.some((body) => body.error === true)).toBe(true);
 
     errorSpy.mockRestore();
   });
