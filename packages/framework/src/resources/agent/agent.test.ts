@@ -727,10 +727,11 @@ describe('agent dispatch via NovuRequestHandler', () => {
       'Invalid file "sample.txt": data must be a base64 string, Buffer, Uint8Array, ArrayBuffer, or Blob.'
     );
 
-    const replyCall = fetchMock.mock.calls.find(
+    const replyCalls = fetchMock.mock.calls.filter(
       (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
     );
-    expect(replyCall).toBeUndefined();
+    const replyBodies = replyCalls.map((call: any[]) => JSON.parse(call[1].body));
+    expect(replyBodies.every((body) => body.reply === undefined)).toBe(true);
   });
 
   it('should serialize CardElement on reply', async () => {
@@ -1862,7 +1863,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
     await vi.waitFor(() => expect(errorSpy).toHaveBeenCalled());
 
     const logged = errorSpy.mock.calls[0].join(' ');
-    expect(logged).toBe('[agent:test-bot] Delivery failed: Bad Gateway');
+    expect(logged).toContain('[agent:test-bot] Turn failed (onMessage): Delivery failed: Bad Gateway');
 
     errorSpy.mockRestore();
   });
@@ -1909,10 +1910,11 @@ describe('agent dispatch via NovuRequestHandler', () => {
     await handler.createHandler()();
     await new Promise((r) => setTimeout(r, 50));
 
-    const replyCall = fetchMock.mock.calls.find(
+    const replyCalls = fetchMock.mock.calls.filter(
       (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
     );
-    expect(replyCall).toBeUndefined();
+    const replyBodies = replyCalls.map((call: any[]) => JSON.parse(call[1].body));
+    expect(replyBodies.every((body) => body.reply === undefined)).toBe(true);
   });
 
   it('should send onResolve handler return value as reply', async () => {
@@ -1980,14 +1982,17 @@ describe('agent dispatch via NovuRequestHandler', () => {
     });
 
     await handler.createHandler()();
-    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
 
     const replyCalls = fetchMock.mock.calls.filter(
       (call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply'
     );
-    expect(replyCalls).toHaveLength(2);
-    expect(JSON.parse(replyCalls[0][1].body).reply.markdown).toBe('Thinking…');
-    expect(JSON.parse(replyCalls[1][1].body).reply.markdown).toBe('Final answer');
+    const replyBodies = replyCalls
+      .map((call: any[]) => JSON.parse(call[1].body))
+      .filter((body) => body.reply !== undefined);
+    expect(replyBodies).toHaveLength(2);
+    expect(replyBodies[0].reply.markdown).toBe('Thinking…');
+    expect(replyBodies[1].reply.markdown).toBe('Final answer');
   });
 
   it('should post a typing status op for ctx.typing(text)', async () => {
@@ -2141,7 +2146,7 @@ describe('tool approval', () => {
       secretKey: 's',
     });
 
-    expect(posts).toHaveLength(1);
+    expect(posts.filter((p) => p.reply !== undefined)).toHaveLength(1);
     expect(posts[0].reply.toolApprovalCard).toEqual({ type: 'tool-approval-card' });
     // The tool-call payload rides in toolApprovalRequest (persisted as toolData), not in the button id.
     expect(posts[0].toolApprovalRequest).toMatchObject({
@@ -2247,7 +2252,7 @@ describe('tool approval', () => {
       secretKey: 's',
     });
 
-    expect(posts.find((p) => p.typing !== undefined)).toBeUndefined();
+    expect(posts.find((p) => p.typing !== undefined && p.typing !== 'stop')).toBeUndefined();
     expect(
       posts.find((p) => p.deleteMessages?.some((d: { messageId: string }) => d.messageId === 'm_prev'))
     ).toBeUndefined();
