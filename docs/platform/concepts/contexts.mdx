@@ -42,7 +42,7 @@ Each key in the `context` object is a context type. Novu supports three formats 
 
 ```ts
 context: {
-  // Simple string — type and id only
+  // Simple string: type and id only
   tenant: "acme-corp",
 
   // Object with id
@@ -65,7 +65,7 @@ Contexts are **auto-created** the first time Novu sees them (via a trigger or th
 
 <CardGroup cols={2}>
   <Card title="Multi-tenancy" icon="building-2" href="/platform/concepts/tenants">
-    Isolate notifications per organization, workspace, or customer using a `tenant` context—without prefixing subscriber IDs or duplicating workflows.
+    Isolate notifications per organization, workspace, or customer using a `tenant` context, without prefixing subscriber IDs or duplicating workflows.
   </Card>
   <Card title="App or feature scoping" icon="layout-grid">
     Route notifications to the right Inbox by scoping with an `app` or feature key when one subscriber uses multiple products.
@@ -75,6 +75,9 @@ Contexts are **auto-created** the first time Novu sees them (via a trigger or th
   </Card>
   <Card title="Conditional workflow logic" icon="git-branch" href="/platform/workflow/add-and-configure-steps/step-conditions">
     Branch workflow steps based on context values, such as sending enterprise-only emails when `context.tenant.data.plan` is `enterprise`.
+  </Card>
+  <Card title="Topic subscriptions" icon="bell-ring" href="/platform/subscription/manage-topic-subscriptions#context-scoped-subscriptions">
+    Scope topic subscriptions per tenant or app, match them to workflow triggers using the same Context keys, and filter delivery with payload-based JSON Logic conditions.
   </Card>
 </CardGroup>
 
@@ -322,7 +325,7 @@ curl -L -g -X POST 'https://api.novu.co/v1/events/trigger' \
   </Accordion>
 
   <Accordion title="Why are notifications sent but not showing in the Inbox after I added context?">
-    Inbox notifications are scoped per context. If you trigger a workflow with `context` but initialize `<Inbox />` without the same context (or vice versa), the notification will not appear in that Inbox session—even though the in-app job may report success.
+    Inbox notifications are scoped per context. If you trigger a workflow with `context` but initialize `<Inbox />` without the same context (or vice versa), the notification will not appear in that Inbox session, even though the in-app job may report success.
 
     Pass the same context to both your workflow trigger and the Inbox `context` prop. See [Inbox with context](/platform/inbox/configuration/inbox-with-context) for the matching rules and troubleshooting steps.
   </Accordion>

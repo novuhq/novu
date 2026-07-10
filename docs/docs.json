@@ -120,6 +120,7 @@
             "pages": [
               "platform/subscription",
               "platform/subscription/quickstart",
+              "platform/subscription/manage-topic-subscriptions",
               "platform/subscription/customize-and-configure",
               "platform/subscription/headless-hooks"
             ],
