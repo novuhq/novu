@@ -84,4 +84,8 @@ export class HandleAgentReplyCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   @IsBoolean()
   isSystemGenerated?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  error?: boolean;
 }

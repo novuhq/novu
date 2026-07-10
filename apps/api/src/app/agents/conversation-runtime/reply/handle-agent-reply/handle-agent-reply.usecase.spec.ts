@@ -77,6 +77,17 @@ describe('HandleAgentReply - active-conversation counting', () => {
     expect(conversationActivation.registerEngagement.called).to.equal(false);
   });
 
+  it('delivers generic copy when bridge reports error: true', async () => {
+    const { usecase, baseCommand, outboundGateway, conversationActivation } = setup();
+
+    await usecase.execute({ ...baseCommand, error: true } as any);
+
+    expect(outboundGateway.deliver.calledOnce).to.equal(true);
+    expect(outboundGateway.deliver.firstCall.args[1].markdown).to.include('Something went wrong');
+    expect(conversationActivation.assertOutboundWithinLimit.called).to.equal(false);
+    expect(conversationActivation.registerEngagement.called).to.equal(false);
+  });
+
   it('deletes platform messages for a deleteMessages-only request', async () => {
     const { usecase, baseCommand, outboundGateway } = setup();
 

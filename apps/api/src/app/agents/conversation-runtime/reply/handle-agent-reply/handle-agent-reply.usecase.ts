@@ -34,6 +34,9 @@ import { BridgeExecutorService } from '../../runtime/bridge-executor.service';
 import { buildAgentPlatformContext, buildEmailPlatformContext } from '../../runtime/build-platform-context.util';
 import { HandleAgentReplyCommand } from './handle-agent-reply.command';
 
+const SELF_HOSTED_TURN_ERROR_MARKDOWN =
+  '*Something went wrong while processing your message. Please try again in a moment.*';
+
 @Injectable()
 export class HandleAgentReply {
   constructor(
@@ -53,6 +56,10 @@ export class HandleAgentReply {
   }
 
   async execute(command: HandleAgentReplyCommand): Promise<SentMessageInfo | null> {
+    if (command.error) {
+      return this.deliverSelfHostedTurnError(command);
+    }
+
     if (command.reply && command.edit) {
       throw new BadRequestException('Only one of reply or edit can be provided');
     }
@@ -79,10 +86,11 @@ export class HandleAgentReply {
       !command.addReactions?.length &&
       !command.deleteMessages?.length &&
       !command.plan &&
-      !command.typing
+      !command.typing &&
+      !command.error
     ) {
       throw new BadRequestException(
-        'At least one of reply, edit, resolve, signals, toolResults, toolApprovalRequest, addReactions, deleteMessages, plan, or typing must be provided'
+        'At least one of reply, edit, resolve, signals, toolResults, toolApprovalRequest, addReactions, deleteMessages, plan, typing, or error must be provided'
       );
     }
 
@@ -232,6 +240,59 @@ export class HandleAgentReply {
       triggerSignalCount,
       metadataSignalCount,
       reactionCount,
+    });
+
+    return replyInfo ?? null;
+  }
+
+  private async deliverSelfHostedTurnError(command: HandleAgentReplyCommand): Promise<SentMessageInfo | null> {
+    const conversation = await this.conversationService.getConversation(
+      command.conversationId,
+      command.environmentId,
+      command.organizationId
+    );
+    if (!conversation) {
+      throw new NotFoundException('Conversation not found');
+    }
+
+    const channel = this.conversationService.getPrimaryChannel(conversation);
+    const agentName = await this.resolveValidatedAgentNameForDelivery(command, conversation);
+
+    this.logger.warn(
+      { conversationId: command.conversationId, agentIdentifier: command.agentIdentifier },
+      'Self-hosted bridge reported turn error'
+    );
+
+    const config = await this.agentConfigResolver.resolve(conversation._agentId, command.integrationIdentifier);
+
+    const replyInfo = await this.deliverMessage(
+      command,
+      conversation,
+      channel,
+      { markdown: SELF_HOSTED_TURN_ERROR_MARKDOWN },
+      agentName
+    );
+
+    if (config && !config.isManaged) {
+      void this.inboundAck.onBridgeReplyDelivered({
+        agentId: conversation._agentId,
+        config,
+        platformThreadId: channel.platformThreadId,
+        firstPlatformMessageId: channel.firstPlatformMessageId,
+      });
+    }
+
+    trackAgentReplyProcessed(this.analyticsService, {
+      userId: command.userId,
+      organizationId: command.organizationId,
+      environmentId: command.environmentId,
+      agentIdentifier: command.agentIdentifier,
+      conversationId: command.conversationId,
+      integrationIdentifier: command.integrationIdentifier,
+      actions: ['turn_error'],
+      triggerSignalCount: 0,
+      metadataSignalCount: 0,
+      reactionCount: 0,
     });
 
     return replyInfo ?? null;

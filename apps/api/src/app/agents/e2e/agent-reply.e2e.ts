@@ -94,6 +94,23 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
       expect(res.body.data.platformThreadId).to.equal('platform-thread-1');
     });
 
+    it('should deliver generic copy when bridge reports error: true', async () => {
+      const conversationId = await seedConversation(ctx);
+      const outboundGateway = testServer.getService(OutboundGateway);
+      const postStub = outboundGateway.postToConversation as sinon.SinonStub;
+
+      const res = await postReply({
+        conversationId,
+        integrationIdentifier: ctx.integrationIdentifier,
+        error: true,
+      });
+
+      expect(res.status).to.equal(200);
+      expect(postStub.calledOnce).to.be.true;
+      const [, , , , content] = postStub.firstCall.args;
+      expect(content.markdown).to.include('Something went wrong');
+    });
+
     it('should edit a previously sent message and persist an edit activity', async () => {
       const conversationId = await seedConversation(ctx);
 
