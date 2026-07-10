@@ -9,6 +9,7 @@ import type {
   ChannelChoice,
   ChatSdkConnectOutcome,
   CustomCodeConnectOutcome,
+  LangChainConnectOutcome,
 } from '../types';
 import type { BridgeReconcileVariant } from './bridge-reconcile-variant';
 import type {
@@ -197,6 +198,7 @@ export type Phase =
       connectMode?: AgentConnectMode;
       chatSdkOutcome?: ChatSdkConnectOutcome;
       aiSdkOutcome?: AiSdkConnectOutcome;
+      langChainOutcome?: LangChainConnectOutcome;
       customCodeOutcome?: CustomCodeConnectOutcome;
     }
   | { kind: 'error'; message: string };
