@@ -16,8 +16,10 @@ import { FileMaterializer } from './file-materializer.service';
 import { resolvePlanDeliveryMode } from './plan-live-delivery';
 import { renderPlanModelAsMarkdown } from './plan-model-to-markdown';
 import type { PlanPhase } from './plan-phase';
+import type { SlackAgentSuggestedPrompt } from '@novu/shared';
 import {
   editSlackNativeBlocks,
+  decodeSlackPlatformThreadId,
   getSlackApiErrorCode,
   postSlackNativeBlocks,
   type SlackNativeDelivery,
@@ -316,6 +318,48 @@ export class OutboundGateway {
     const platformThreadId = sent.threadId.endsWith(':') ? `${sent.threadId}${sent.id}` : sent.threadId;
 
     return { messageId: sent.id, platformThreadId };
+  }
+
+  async setSlackSuggestedPrompts(
+    agentId: string,
+    integrationIdentifier: string,
+    platformThreadId: string,
+    prompts: SlackAgentSuggestedPrompt[],
+    title?: string
+  ): Promise<void> {
+    const { channel, threadTs } = decodeSlackPlatformThreadId(platformThreadId);
+    const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
+    const instanceKey = `${agentId}:${integrationIdentifier}`;
+    const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);
+    const adapter = chat.getAdapter(AgentPlatformEnum.SLACK) as {
+      setSuggestedPrompts?: (
+        channelId: string,
+        threadTs: string,
+        promptList: SlackAgentSuggestedPrompt[],
+        promptTitle?: string
+      ) => Promise<void>;
+    };
+
+    if (typeof adapter.setSuggestedPrompts !== 'function') {
+      return;
+    }
+
+    const resolvedThreadTs = threadTs ?? platformThreadId.split(':').slice(2).join(':');
+    if (!resolvedThreadTs) {
+      this.logger.warn(
+        { platformThreadId, agentId, integrationIdentifier },
+        'Skipping Slack suggested prompts because thread timestamp is missing'
+      );
+
+      return;
+    }
+
+    await adapter.setSuggestedPrompts(channel, resolvedThreadTs, prompts, title).catch((err) => {
+        this.logger.warn(
+          { err, platformThreadId, agentId, integrationIdentifier },
+          'Failed to set Slack suggested prompts'
+        );
+      });
   }
 
   async editInConversation(
