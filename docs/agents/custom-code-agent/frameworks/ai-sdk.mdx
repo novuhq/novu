@@ -132,6 +132,26 @@ const issueRefund = tool({
 
 Add `onToolApproval` when you need a hook after the click. See [Tool approval](/agents/custom-code-agent/building-blocks/tool-approval) for the full API.
 
+## Turn failures and `onError`
+
+When a returned `generateText()` / `streamText()` result rejects — for example the provider errors or stream consumption fails — the failure propagates to the same dispatch boundary as a thrown handler error. Register `onError` on the agent to log, suppress user notification, send custom copy, or fall back to Novu's generic message.
+
+```typescript
+export const supportAgent = agent('support-bot', {
+  onMessage: async (message, ctx) =>
+    generateText({ model: openai('gpt-4o'), messages: toModelMessages(ctx.history) }),
+
+  onError: async (error, ctx) => {
+    console.error(error.message, error.cause);
+    // return nothing → generic user copy from Novu
+    // return { suppress: true } → silent
+    // return 'Custom apology' → your copy
+  },
+});
+```
+
+Recoverable `tool-error` parts inside a multi-step AI SDK flow do not end the turn by themselves — only failures that reject the result or throw from your handler trigger `onError`. See [Handlers and context — onError](/agents/custom-code-agent/building-blocks/handle-events#onerror) for the full pipeline.
+
 ## MCP tools
 
 Self-hosted agents do not use the dashboard [MCP server configuration](/agents/managed-agent/configure-mcp-servers) — that OAuth flow and token vault are for **managed agents** only. On the custom code path, you wire external MCP servers yourself with the [AI SDK MCP client](https://ai-sdk.dev/docs/ai-sdk-core/mcp-tools):

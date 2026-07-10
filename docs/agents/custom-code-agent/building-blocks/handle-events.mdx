@@ -17,6 +17,7 @@ Event handlers are functions that respond to events in a conversation. Your agen
 | `onReaction` | A user adds or removes a reaction | Capture feedback or trigger a follow-up |
 | `onResolve` | The conversation is marked as resolved | Clean up state, log analytics, or send a summary |
 | `onToolApproval` | A user approves or denies a gated tool call | Run or skip the tool, audit the decision. See [Tool approval](/agents/custom-code-agent/building-blocks/tool-approval) |
+| `onError` | A turn fails (handler throw, promise rejection, delivery error) | Log, suppress, send custom copy, or rely on Novu's generic reply |
 
 Handlers are where the communication layer connects to your application logic. For example, an `onMessage` handler receives the user's message, passes conversation context to an LLM or custom function, and sends the response back through Novu.
 
@@ -364,6 +365,82 @@ export const myAgent = agent('my-agent', {
 </Tabs>
 
 See [Tool approval](/agents/custom-code-agent/building-blocks/tool-approval) for card customization, auditing, and `renderApproval`.
+
+### onError
+
+When a turn fails — your handler throws, a returned promise rejects, or message delivery fails inside the handler — Novu runs an error pipeline on the bridge before the turn ends:
+
+1. Log the failure locally on your bridge
+2. Call `onError` if you registered one
+3. If `onError` does not handle the failure, auto-report `{ error: true }` to Novu
+4. Novu delivers safe generic copy to the user in the thread
+5. Clear the typing indicator for the turn (even when no reply is sent)
+
+By default, users see:
+
+> *Something went wrong while processing your message. Please try again in a moment.*
+
+| Return from `onError` | Behavior |
+| --- | --- |
+| nothing / `undefined` | Auto-report — Novu sends the generic message |
+| `{ suppress: true }` | No user-visible reply (failure is logged only) |
+| `string` / JSX `Card` | Custom reply delivered through `ctx.reply()` |
+
+The first argument is an `AgentError` (use `toAgentError()` from `@novu/framework` if you normalize errors in your own code). Reply delivery failures surface as `AgentDeliveryError`, a subclass of `AgentError`, with `statusCode` and `responseBody` for debugging.
+
+```typescript
+import { agent } from '@novu/framework';
+
+export const myAgent = agent('my-agent', {
+  onMessage: async (message, ctx) => {
+    const answer = await runAgent(message, ctx);
+
+    return answer;
+  },
+
+  onError: async (error, ctx) => {
+    console.error('[my-agent]', error.message, error.cause);
+
+    return 'Sorry — something went wrong. Please try again.';
+  },
+});
+```
+
+When `onError` returns message content, Novu posts it like a normal reply. When it returns nothing, the framework auto-reports the turn failure and Novu sends the generic message.
+
+#### When to suppress
+
+Use `{ suppress: true }` when a failure should be logged on your bridge but should **not** post another message in the thread. A common case is side-effect handlers such as `onReaction` or `onAction`: if analytics or feedback logging fails, a generic *"Something went wrong…"* reply is usually more confusing than helpful.
+
+```typescript
+import { agent } from '@novu/framework';
+
+export const myAgent = agent('my-agent', {
+  onMessage: async (message, ctx) => runAgent(message, ctx),
+
+  onReaction: async (reaction, ctx) => {
+    await recordFeedback(reaction, ctx.conversation.identifier);
+  },
+
+  onError: async (error, ctx) => {
+    console.error('[my-agent]', ctx.event, error.message, error.cause);
+
+    if (ctx.event === 'onReaction' || ctx.event === 'onAction') {
+      return { suppress: true };
+    }
+
+    return 'Sorry — something went wrong. Please try again.';
+  },
+});
+```
+
+For `onMessage` failures, prefer a custom reply or the default generic message so the user knows their message was not handled.
+
+Runtime adapters forward `onError` from the same agent config. For adapter-specific failure behavior, see [AI SDK](/agents/custom-code-agent/frameworks/ai-sdk), [LangChain](/agents/custom-code-agent/frameworks/langchain), or [Other frameworks](/agents/custom-code-agent/frameworks/other).
+
+<Note>
+  Reporting turn failures is best-effort. If the bridge cannot reach Novu, the failure is logged locally and is not re-thrown. Failures inside `onError` itself are logged and do not recurse.
+</Note>
 
 ## Related
 
