@@ -1,6 +1,7 @@
 import type { ChannelEndpointType } from '@novu/shared';
 import { ChannelTypeEnum } from '@novu/shared';
 import { formatDistanceToNow } from 'date-fns';
+import { useEnvironment } from '@/context/environment/hooks';
 import { useMemo, useState } from 'react';
 import { ExternalToast } from 'sonner';
 import type { ChannelEndpointPayload } from '@/api/channel-endpoints';
@@ -66,6 +67,7 @@ export function SubscriberCredentials({
   readOnly = false,
   onEditInOverview,
 }: SubscriberCredentialsProps) {
+  const { currentEnvironment } = useEnvironment();
   const { data: subscriber, isPending: isSubscriberPending } = useFetchSubscriber({ subscriberId });
   const { integrations, isPending: isIntegrationsPending } = useFetchIntegrations();
   const { channelEndpoints, isPending: isEndpointsPending } = useFetchChannelEndpoints({
@@ -85,6 +87,14 @@ export function SubscriberCredentials({
   const { deleteChannelEndpoint, isPending: isEndpointDeletePending } = useDeleteChannelEndpoint();
   const { updateSubscriberCredentials, isPending: isCredentialsUpdatePending } = useUpdateSubscriberCredentials();
 
+  const environmentIntegrations = useMemo(() => {
+    if (!integrations || !currentEnvironment?._id) {
+      return [];
+    }
+
+    return integrations.filter((integration) => integration._environmentId === currentEnvironment._id);
+  }, [integrations, currentEnvironment?._id]);
+
   const groups = useMemo(() => {
     if (!subscriber) {
       return [];
@@ -92,11 +102,11 @@ export function SubscriberCredentials({
 
     return buildCredentialGroups({
       subscriber,
-      integrations: integrations ?? [],
+      integrations: environmentIntegrations,
       channelEndpoints,
       channelConnections,
     });
-  }, [subscriber, integrations, channelEndpoints, channelConnections]);
+  }, [subscriber, environmentIntegrations, channelEndpoints, channelConnections]);
 
   if (isSubscriberPending || isIntegrationsPending || isEndpointsPending || isConnectionsPending) {
     return <CredentialsSkeleton />;

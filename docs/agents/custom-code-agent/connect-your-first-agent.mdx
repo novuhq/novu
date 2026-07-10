@@ -41,7 +41,7 @@ In the Novu dashboard, open **Agents** and click **Create agent**. Set the **Ide
 
 On the guided setup page, open **Select provider**, choose **Slack**, and follow the prompts to create and install the Slack app. When it finishes, you get a welcome message from the agent in Slack.
 
-For the full provider flow (Slack tokens, install, permissions), see the [Quickstart](/agents/custom-code-agent/quickstart) and [Create an agent](/agents/custom-code-agent/setup-your-agent/create-an-agent).
+For the full provider flow (Slack tokens, install, permissions), see the [Quickstart](/agents/custom-code-agent/quickstart) and [Create an agent](/agents/custom-code-agent/setup-your-agent/create-an-agent). You can also [create an agent](/api-reference/agents/create-an-agent) and [link a provider](/api-reference/agents/create-an-agent-integration) with the REST API.
 
 </Step>
 
@@ -340,5 +340,8 @@ export const supportAgent = agent('support-agent', {
   </Card>
   <Card icon="rocket" href="/agents/custom-code-agent/going-to-production" title="Going to production">
     Run locally, deploy to development, and publish to production.
+  </Card>
+  <Card icon="code" href="/api-reference/agents/agent-schema" title="Agents API reference">
+    Create agents, link providers, and send replies programmatically.
   </Card>
 </Columns>

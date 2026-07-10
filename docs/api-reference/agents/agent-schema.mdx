@@ -1,0 +1,27 @@
+---
+title: Agent schema
+description: "Reference the Novu agent schema used in API requests and responses. Review fields, data types, and object structure for this resource."
+---
+
+### Agent
+
+An agent is a conversational assistant scoped to an environment. Agents receive inbound messages from linked channel integrations and respond through a self-hosted bridge or a managed runtime provider. Read more in the [agents overview](/agents).
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `_id` | string | Unique identifier of the agent record in the database. |
+| `name` | string | Display name shown in connected channels such as Slack and Microsoft Teams. |
+| `identifier` | string | External slug used in API paths and SDK calls. Unique per environment. |
+| `description` | string | Optional summary of the agent's purpose. |
+| `active` | boolean | Whether the agent accepts inbound messages. |
+| `runtime` | string | Agent brain mode: `self-hosted` (bridge) or `managed` (provider-hosted). |
+| `bridgeUrl` | string | Production bridge URL registered for self-hosted agents. |
+| `devBridgeUrl` | string | Development bridge URL set by `npx novu dev`. |
+| `devBridgeActive` | boolean | Whether the development bridge override is active. |
+| `behavior` | object | Optional delivery behavior such as acknowledgement and reaction settings. |
+| `managedRuntime` | object | Present when `runtime` is `managed`. Contains provider identifiers, tools, MCP servers, and system prompt metadata. |
+| `integrations` | array | Summary of channel integrations linked to the agent. |
+| `_environmentId` | string | Environment the agent belongs to. |
+| `_organizationId` | string | Organization that owns the agent. |
+| `createdAt` | string | ISO timestamp when the agent was created. |
+| `updatedAt` | string | ISO timestamp when the agent was last updated. |

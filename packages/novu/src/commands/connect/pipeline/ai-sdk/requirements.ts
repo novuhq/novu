@@ -6,7 +6,7 @@ import type { BridgeRequirement, BridgeRequirementId } from '../../types';
 import { hasDependency, readProjectPackageJson } from '../bridge/project-package';
 import { detectAiSdkWiring } from './detect-wiring';
 import { hasDevNovuScript, shouldRefreshDevNovuScript } from './dev-script';
-import { resolveAiSdkPackagesToInstall } from './package-install';
+import { buildAiSdkUpgradeCommand, resolveAiSdkPackageStatus } from './package-install';
 import { readEnvSecretKey, readProjectEnvValue } from './wire-env';
 
 export type ComputeRequirementsInput = {
@@ -50,9 +50,9 @@ function computePackageRequirement(projectDir: string): BridgeRequirement {
     };
   }
 
-  const missing = resolveAiSdkPackagesToInstall(projectDir);
+  const status = resolveAiSdkPackageStatus(projectDir);
 
-  if (missing.length === 0) {
+  if (status.kind === 'ok') {
     return {
       id: 'package',
       status: 'ok',
@@ -60,10 +60,22 @@ function computePackageRequirement(projectDir: string): BridgeRequirement {
     };
   }
 
+  if (status.kind === 'incompatible-ai') {
+    const upgradeCommand = buildAiSdkUpgradeCommand(projectDir);
+
+    return {
+      id: 'package',
+      status: 'manual',
+      detail:
+        `Incompatible ai version (${status.declaredVersion}). @novu/framework requires ai ^7.0.0. ` +
+        `Run: ${upgradeCommand} — then update your agent for v7.`,
+    };
+  }
+
   return {
     id: 'package',
     status: 'autofixable',
-    detail: `Missing packages: ${missing.join(', ')}`,
+    detail: `Missing packages: ${status.packages.join(', ')}`,
   };
 }
 

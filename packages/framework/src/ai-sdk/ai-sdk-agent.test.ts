@@ -53,7 +53,7 @@ function streamTextMock(overrides: Record<string, unknown> = {}): AiSdkStreamRes
   return {
     text: Promise.resolve(''),
     content: Promise.resolve([]),
-    response: Promise.resolve({ messages: [] }),
+    responseMessages: Promise.resolve([]),
     consumeStream: async () => {},
     ...overrides,
   } as unknown as AiSdkStreamResult;
@@ -63,9 +63,9 @@ function generateTextMock(overrides: Record<string, unknown> = {}): AiSdkGenerat
   return {
     text: '',
     steps: [],
-    totalUsage: {},
+    usage: {},
     content: [],
-    response: { messages: [] },
+    responseMessages: [],
     ...overrides,
   } as unknown as AiSdkGenerateResult;
 }
