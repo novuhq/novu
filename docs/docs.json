@@ -69,6 +69,7 @@
                   "platform/quickstart/remix",
                   "platform/quickstart/angular",
                   "platform/quickstart/vue",
+                  "platform/quickstart/nuxt",
                   "platform/quickstart/vanilla-js"
                 ]
               }
@@ -123,6 +124,7 @@
             "pages": [
               "platform/subscription",
               "platform/subscription/quickstart",
+              "platform/subscription/manage-topic-subscriptions",
               "platform/subscription/customize-and-configure",
               "platform/subscription/headless-hooks"
             ],
@@ -456,6 +458,7 @@
         "groups": [
           {
             "group": "Getting Started",
+            "openapi": "https://spec.speakeasy.com/novu/novu/json-development-with-code-samples",
             "pages": [
               "api-reference",
               "api-reference/authentication",
@@ -760,6 +763,42 @@
                 ]
               },
               {
+                "group": "Agents",
+                "expanded": false,
+                "pages": [
+                  "api-reference/agents/agent-schema",
+                  {
+                    "group": "Management",
+                    "expanded": false,
+                    "pages": [
+                      "api-reference/agents/create-an-agent",
+                      "api-reference/agents/list-all-agents",
+                      "api-reference/agents/retrieve-an-agent",
+                      "api-reference/agents/update-an-agent",
+                      "api-reference/agents/delete-an-agent"
+                    ]
+                  },
+                  {
+                    "group": "Runtime",
+                    "expanded": false,
+                    "pages": [
+                      "api-reference/agents/update-an-agent-bridge",
+                      "api-reference/agents/send-an-agent-reply"
+                    ]
+                  },
+                  {
+                    "group": "Integrations",
+                    "expanded": false,
+                    "pages": [
+                      "api-reference/agents/create-an-agent-integration",
+                      "api-reference/agents/list-agent-integrations",
+                      "api-reference/agents/update-an-agent-integration",
+                      "api-reference/agents/delete-an-agent-integration"
+                    ]
+                  }
+                ]
+              },
+              {
                 "group": "Channel Connections",
                 "expanded": false,
                 "pages": [
@@ -783,8 +822,7 @@
               }
             ]
           }
-        ],
-        "openapi": "https://spec.speakeasy.com/novu/novu/json-development-with-code-samples"
+        ]
       },
       {
         "tab": "Resources",

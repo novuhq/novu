@@ -1,13 +1,14 @@
 ---
 title: 'Novu REST API Reference'
-description: 'Manage subscribers, trigger workflows, configure integrations, and operate your notification infrastructure with the Novu REST API.'
+description: 'Manage subscribers, trigger workflows, configure integrations, operate agents, and run your notification infrastructure with the Novu REST API.'
 sidebarTitle: Overview
 ---
 
-The Novu REST API lets you manage subscribers, trigger workflows, configure integrations, and operate your notification infrastructure from your backend. Start with these common operations:
+The Novu REST API lets you manage subscribers, trigger workflows, configure integrations, operate agents, and run your notification infrastructure from your backend. Start with these common operations:
 
 - [Trigger event](/api-reference/events/trigger-event) — send a workflow to a subscriber
 - [Create a subscriber](/api-reference/subscribers/create-a-subscriber) — register a notification recipient
+- [Create an agent](/api-reference/agents/create-an-agent) — create a custom code or managed agent
 - [Retrieve subscriber notifications](/api-reference/subscribers/retrieve-subscriber-notifications) — read in-app notifications for the Inbox
 - [Create a workflow](/api-reference/workflows/create-a-workflow) — define a notification workflow programmatically
 - [Authentication](/api-reference/authentication) — authenticate requests with your secret API key
@@ -31,7 +32,7 @@ All endpoints in this reference use the US base URL unless noted otherwise. See 
 
 The Novu API is organized around REST. It has predictable, resource-oriented URLs, accepts and returns JSON request and response bodies, and uses standard HTTP verbs and status codes.
 
-- **Resource-oriented** — Each resource (subscribers, topics, workflows, and more) has its own set of endpoints. Use `POST` to create, `GET` to read, `PATCH`/`PUT` to update, and `DELETE` to remove.
+- **Resource-oriented** — Each resource (subscribers, topics, workflows, agents, and more) has its own set of endpoints. Use `POST` to create, `GET` to read, `PATCH`/`PUT` to update, and `DELETE` to remove.
 - **JSON everywhere** — Send `Content-Type: application/json` on requests with a body. Responses are JSON-encoded.
 - **Response envelope** — Successful responses wrap the result in a `data` field, for example `{ "data": { ... } }`. List endpoints return `{ "data": [ ... ] }` alongside [pagination](/api-reference/pagination) metadata.
 - **Consistent errors** — Failures return a standard error body with a `statusCode` and `message`. See [Errors](/api-reference/errors).
@@ -60,6 +61,9 @@ The REST API is organized around the core resources you use to build and operate
   <Card title="Integrations" icon="plug" href="/api-reference/integrations/create-an-integration">
     Configure channel providers for email, SMS, push, and chat delivery.
   </Card>
+  <Card title="Agents" icon="bot" href="/api-reference/agents/agent-schema">
+    Create agents, link providers, and send replies.
+  </Card>
   <Card title="Environments" icon="server" href="/api-reference/environments/list-all-environments">
     Manage environments and publish resources between them.
   </Card>
@@ -68,7 +72,7 @@ The REST API is organized around the core resources you use to build and operate
   </Card>
 </Columns>
 
-Browse the sidebar for the full endpoint reference, including translations, contexts, layouts, channel connections, and activity tracking.
+Browse the sidebar for the full endpoint reference, including agents, translations, contexts, layouts, channel connections, and activity tracking.
 
 ## Developer resources
 
@@ -112,7 +116,7 @@ You can also import the collection directly from the raw JSON file: [novu_api_po
     Copy your environment's secret key from the [Novu Dashboard](https://dashboard.novu.co/api-keys). See [Authentication](/api-reference/authentication) for details on credential types and security.
   </Step>
   <Step title="Make your first request">
-    Trigger a workflow or create a subscriber using the REST API, a [server-side SDK](/platform/sdks#server-side-sdks), or the [Postman collection](https://github.com/novuhq/novu-postman). Start with [Trigger event](/api-reference/events/trigger-event) or [Create a subscriber](/api-reference/subscribers/create-a-subscriber).
+    Trigger a workflow, create a subscriber, or create an agent using the REST API or an SDK. Start with [Trigger event](/api-reference/events/trigger-event), [Create a subscriber](/api-reference/subscribers/create-a-subscriber), or [Create an agent](/api-reference/agents/create-an-agent).
   </Step>
   <Step title="Review API policies">
     Understand [Errors](/api-reference/errors), [Pagination](/api-reference/pagination), [Rate limiting](/api-reference/rate-limiting), [Idempotency](/api-reference/idempotency), and [Payload limits](/api-reference/payload-limits) before building production integrations.
