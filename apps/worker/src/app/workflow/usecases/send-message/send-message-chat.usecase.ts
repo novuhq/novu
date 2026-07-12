@@ -197,7 +197,7 @@ export class SendMessageChat extends SendMessageBase {
    */
   private async resolveAllChannels(command: SendMessageChannelCommand): Promise<UnifiedChannel[]> {
     const integrationChannelGroups = await this.getChannelEndpointGroups(command);
-    const legacyChatChannels = await this.getLegacyChatChannels(command);
+    const legacyChatChannels = await this.getLegacyChatChannels(command, integrationChannelGroups);
 
     const unifiedChannels: UnifiedChannel[] = [];
 
@@ -301,7 +301,10 @@ export class SendMessageChat extends SendMessageBase {
     };
   }
 
-  private async getLegacyChatChannels(command: SendMessageChannelCommand): Promise<IChannelSettings[]> {
+  private async getLegacyChatChannels(
+    command: SendMessageChannelCommand,
+    channelEndpointGroups: IntegrationEndpoints[] = []
+  ): Promise<IChannelSettings[]> {
     const { subscriber } = command.compileContext;
 
     const chatChannels =
@@ -313,13 +316,17 @@ export class SendMessageChat extends SendMessageBase {
      * Phone-based chat providers (WhatsApp Business, Sendblue) deliver to the subscriber's phone
      * number. Auto-resolve a channel from `subscriber.phone` for each such provider that has an
      * active integration, so we only attempt providers the environment is actually configured for.
+     * Skip providers that already have a legacy channel OR a new channel-endpoint group — otherwise
+     * the same phone number is notified twice (once via endpoints, once via this synthetic channel).
      */
     if (subscriber.phone) {
       const activePhoneProviders = await this.getActivePhoneBasedProviders(command);
-      const existingProviderIds = new Set(chatChannels.map((chan) => chan.providerId));
+      const existingProviderIds = new Set<string>([
+        ...chatChannels.map((channel) => channel.providerId),
+        ...channelEndpointGroups.map((group) => group.providerId),
+      ]);
 
       for (const providerId of activePhoneProviders) {
-        // Avoid double-sending when a legacy channel for this provider already exists
         if (existingProviderIds.has(providerId)) continue;
 
         // @ts-expect-error - Adding a phone-based channel without _integrationId
