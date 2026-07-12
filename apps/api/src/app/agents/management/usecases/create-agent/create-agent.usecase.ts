@@ -69,6 +69,7 @@ export class CreateAgent {
     }
 
     const isManaged = command.runtime === 'managed';
+    const subscriberAccess = isManaged ? AgentSubscriberAccessEnum.OPEN : AgentSubscriberAccessEnum.RESTRICTED;
 
     if (isManaged) {
       await this.keylessAbuseGuard.assertKeylessAiEnabled(command.organizationId);
@@ -93,7 +94,7 @@ export class CreateAgent {
               identifier: tempIdentifier,
               description: command.description,
               active: command.active ?? true,
-              behavior: { subscriberAccess: AgentSubscriberAccessEnum.OPEN },
+              behavior: { subscriberAccess },
               createdBy: command.userId,
               _environmentId: command.environmentId,
               _organizationId: command.organizationId,
@@ -176,7 +177,7 @@ export class CreateAgent {
           identifier: identifier ?? '',
           description: command.description,
           active: command.active ?? true,
-          behavior: { subscriberAccess: AgentSubscriberAccessEnum.RESTRICTED },
+          behavior: { subscriberAccess },
           createdBy: command.userId,
           _environmentId: command.environmentId,
           _organizationId: command.organizationId,

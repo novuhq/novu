@@ -9,10 +9,10 @@ type UpdateManyFn = (
 ) => Promise<{ matchedCount: number; modifiedCount: number }>;
 
 /**
- * One-time backfill: agents created before create-time defaults lacked
- * `behavior.subscriberAccess`. Set those unset documents to `open` so existing
- * tenants keep the previous email-provision default. Explicit `restricted`
- * (or any other value) is left alone via the `$exists: false` filter.
+ * One-time backfill for agents created before create-time defaults existed.
+ * Sets unset `behavior.subscriberAccess` to `open` (the prior email-provision
+ * side-effect default). Explicit values — including `restricted` — are left
+ * alone via `$exists: false`. New creates use runtime-aware defaults instead.
  */
 export async function setOpenSubscriberAccessOnUnsetAgents(
   updateMany: UpdateManyFn

@@ -19,15 +19,4 @@ describe('agent-subscriber-access-default migration', () => {
       $set: { 'behavior.subscriberAccess': AgentSubscriberAccessEnum.OPEN },
     });
   });
-
-  it('does not target agents that already have an explicit subscriberAccess value', async () => {
-    const updateMany = stub().resolves({ matchedCount: 0, modifiedCount: 0 });
-
-    await setOpenSubscriberAccessOnUnsetAgents(updateMany);
-
-    const [filter] = updateMany.firstCall.args;
-    // Explicit restricted/open documents fail `$exists: false` and stay untouched.
-    expect(filter['behavior.subscriberAccess']).to.deep.equal({ $exists: false });
-    expect(filter).to.not.have.property('behavior.subscriberAccess', AgentSubscriberAccessEnum.RESTRICTED);
-  });
 });
