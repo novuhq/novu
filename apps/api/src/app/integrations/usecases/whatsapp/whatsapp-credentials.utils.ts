@@ -7,6 +7,10 @@ import { ChatProviderIdEnum, type ICredentials } from '@novu/shared';
  * the webhook handshake, so making the user invent and paste one is friction
  * with no security benefit. We auto-fill it on the first save and leave it
  * untouched on subsequent updates so Meta's stored value keeps matching.
+ *
+ * Patches are merged over existing credentials so stamp-only / partial updates
+ * (manual "I've already set a permanent token", empty secret inputs omitted by
+ * the form cleaner) cannot wipe Access Token, App Secret, Phone Number ID, etc.
  */
 export function ensureWhatsAppManagedCredentials({
   providerId,
@@ -21,15 +25,31 @@ export function ensureWhatsAppManagedCredentials({
     return nextCredentials;
   }
 
-  const incomingToken = typeof nextCredentials.token === 'string' ? nextCredentials.token.trim() : '';
+  const merged: ICredentials = {
+    ...(existingCredentials ?? {}),
+    ...nextCredentials,
+  };
+
+  // Empty-string overwrites from partial forms would still clobber secrets after
+  // the spread; restore the stored value whenever the incoming secret is blank.
+  for (const key of ['apiToken', 'secretKey'] as const) {
+    const incoming = typeof merged[key] === 'string' ? merged[key].trim() : '';
+    const existing = typeof existingCredentials?.[key] === 'string' ? existingCredentials[key].trim() : '';
+
+    if (!incoming && existing) {
+      merged[key] = existingCredentials![key];
+    }
+  }
+
+  const incomingToken = typeof merged.token === 'string' ? merged.token.trim() : '';
   if (incomingToken) {
-    return nextCredentials;
+    return merged;
   }
 
   const existingToken = typeof existingCredentials?.token === 'string' ? existingCredentials.token.trim() : '';
 
   return {
-    ...nextCredentials,
+    ...merged,
     token: existingToken || randomUUID(),
   };
 }
