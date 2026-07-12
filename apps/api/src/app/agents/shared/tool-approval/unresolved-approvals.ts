@@ -1,4 +1,4 @@
-import { ConversationActivityEntity, ConversationActivityTypeEnum } from '@novu/dal';
+import { ConversationActivityEntity, ConversationActivitySenderTypeEnum, ConversationActivityTypeEnum } from '@novu/dal';
 
 /**
  * Scans a conversation's activity ledger (newest-first, as returned by
@@ -48,4 +48,51 @@ export function findUnresolvedToolApprovalRequests(
   }
 
   return unresolved;
+}
+
+/**
+ * Resolves the human participant whose message the agent was reacting to when
+ * it proposed a given pending tool-approval request — i.e. whichever
+ * participant's turn caused the tool call to be proposed in the first place.
+ *
+ * A conversation thread can have more than one human participant (e.g. a
+ * group iMessage/SMS thread on Sendblue, or a shared Slack channel), so a
+ * reply-based verdict cannot simply be trusted because it landed in the right
+ * thread — it must come from the same participant the approval was implicitly
+ * addressed to. This walks the ledger chronologically backwards from the
+ * request and returns the `senderId` of the nearest preceding human message.
+ *
+ * Returns `null` when no human message precedes the request in the supplied
+ * history (nothing to compare against — callers should not block on this).
+ */
+export function resolveApprovalRequesterId(
+  activities: ConversationActivityEntity[],
+  request: ConversationActivityEntity
+): string | null {
+  const chronological = [...activities].reverse();
+  const requestApprovalId = request.toolData?.approvalId;
+  const requestIndex = chronological.findIndex(
+    (activity) =>
+      activity.type === ConversationActivityTypeEnum.TOOL_APPROVAL_REQUEST &&
+      typeof requestApprovalId === 'string' &&
+      activity.toolData?.approvalId === requestApprovalId
+  );
+
+  if (requestIndex === -1) {
+    return null;
+  }
+
+  for (let i = requestIndex - 1; i >= 0; i -= 1) {
+    const activity = chronological[i];
+    const isHumanMessage =
+      activity.type === ConversationActivityTypeEnum.MESSAGE &&
+      (activity.senderType === ConversationActivitySenderTypeEnum.SUBSCRIBER ||
+        activity.senderType === ConversationActivitySenderTypeEnum.PLATFORM_USER);
+
+    if (isHumanMessage) {
+      return activity.senderId;
+    }
+  }
+
+  return null;
 }

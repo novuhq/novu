@@ -14,12 +14,21 @@ import {
   parseApprovalReplyVerdict,
   parseImessageTapback,
 } from '../../shared/tool-approval/reply-based-approval';
-import { findUnresolvedToolApprovalRequests } from '../../shared/tool-approval/unresolved-approvals';
+import {
+  findUnresolvedToolApprovalRequests,
+  resolveApprovalRequesterId,
+} from '../../shared/tool-approval/unresolved-approvals';
 import { AgentConversationService } from '../conversation/agent-conversation.service';
 import { OutboundGateway } from '../egress/outbound.gateway';
 import type { AgentRuntime } from '../runtime/agent-runtime.port';
 import type { ConversationTurn } from '../runtime/conversation-turn';
 import { applyPlatformThreadIdToThread } from '../runtime/platform-thread.util';
+
+/** A resolved pending-approval activity plus the ledger it was found in, so callers can trace back who requested it. */
+interface PendingApprovalWithHistory {
+  activities: ConversationActivityEntity[];
+  request: ConversationActivityEntity;
+}
 
 function buildAckText(approved: boolean, toolName: string | undefined): string {
   if (approved) {
@@ -69,9 +78,9 @@ export class ReplyApprovalInterceptor {
     // prompted sequentially on these platforms.
     const replyVerdict = parseApprovalReplyVerdict(text);
     if (replyVerdict !== null) {
-      const pending = await this.findOldestPendingApproval(turn);
+      const found = await this.findOldestPendingApproval(turn);
 
-      return this.consumePendingApproval(turn, runtime, pending, replyVerdict);
+      return this.consumePendingApproval(turn, runtime, found, replyVerdict);
     }
 
     // An iMessage tapback (👍/👎) delivered as text by Sendblue (`Liked "…"` /
@@ -85,23 +94,29 @@ export class ReplyApprovalInterceptor {
       return false;
     }
 
-    const pending = await this.findPendingApprovalForTapback(turn, tapback.quotedText);
+    const found = await this.findPendingApprovalForTapback(turn, tapback.quotedText);
 
-    return this.consumePendingApproval(turn, runtime, pending, tapback.approved);
+    return this.consumePendingApproval(turn, runtime, found, tapback.approved);
   }
 
   private async consumePendingApproval(
     turn: ConversationTurn,
     runtime: AgentRuntime,
-    pending: ConversationActivityEntity | null,
+    found: PendingApprovalWithHistory | null,
     approved: boolean
   ): Promise<boolean> {
-    if (!pending) {
+    if (!found) {
       return false;
     }
 
+    const { activities, request: pending } = found;
+
     const approvalId = pending.toolData?.approvalId;
     if (typeof approvalId !== 'string') {
+      return false;
+    }
+
+    if (!this.isFromExpectedApprover(turn, activities, pending)) {
       return false;
     }
 
@@ -139,13 +154,19 @@ export class ReplyApprovalInterceptor {
       return false;
     }
 
-    const pending = await this.findPendingApprovalForMessage(turn, reaction.messageId);
-    if (!pending) {
+    const found = await this.findPendingApprovalForMessage(turn, reaction.messageId);
+    if (!found) {
       return false;
     }
 
+    const { activities, request: pending } = found;
+
     const approvalId = pending.toolData?.approvalId;
     if (typeof approvalId !== 'string') {
+      return false;
+    }
+
+    if (!this.isFromExpectedApprover(turn, activities, pending)) {
       return false;
     }
 
@@ -154,6 +175,82 @@ export class ReplyApprovalInterceptor {
       approved: verdict,
       toolName: pending.toolData?.toolName,
       source: 'reaction',
+    });
+  }
+
+  /**
+   * Verifies the participant issuing the verdict is the same one whose turn
+   * caused the agent to propose this tool call — not just any participant of
+   * the same thread. Matters on threads with more than one human participant
+   * (e.g. group iMessage/SMS on Sendblue): without this, any other
+   * participant could approve or deny someone else's pending tool action.
+   *
+   * Falls open when the ledger has no record of who prompted the request
+   * (preserves today's behavior for the common single-participant case, and
+   * avoids blocking on incomplete history), but falls closed when the
+   * verdict's own actor identity can't be determined — an unresolved sender
+   * is never assumed to be the expected approver.
+   */
+  private isFromExpectedApprover(
+    turn: ConversationTurn,
+    activities: ConversationActivityEntity[],
+    request: ConversationActivityEntity
+  ): boolean {
+    const expectedApproverId = resolveApprovalRequesterId(activities, request);
+    if (!expectedApproverId) {
+      return true;
+    }
+
+    const actorId = this.resolveCurrentActorId(turn);
+    if (!actorId) {
+      this.logWrongApprover(turn, request, expectedApproverId, actorId);
+
+      return false;
+    }
+
+    if (actorId !== expectedApproverId) {
+      this.logWrongApprover(turn, request, expectedApproverId, actorId);
+
+      return false;
+    }
+
+    return true;
+  }
+
+  private resolveCurrentActorId(turn: ConversationTurn): string | null {
+    if (turn.subscriber?.subscriberId) {
+      return turn.subscriber.subscriberId;
+    }
+
+    if (turn.message?.author.userId) {
+      return `${turn.config.platform}:${turn.message.author.userId}`;
+    }
+
+    return null;
+  }
+
+  private logWrongApprover(
+    turn: ConversationTurn,
+    request: ConversationActivityEntity,
+    expectedApproverId: string,
+    actorId: string | null
+  ): void {
+    const { config, conversation } = turn;
+
+    this.logger.warn(
+      {
+        conversationId: conversation._id,
+        approvalId: request.toolData?.approvalId,
+        expectedApproverId,
+        actorId,
+        platform: config.platform,
+      },
+      `[agent:${config.agentIdentifier}] Ignoring reply-based approval verdict from a participant other than the one the approval was addressed to`
+    );
+    captureAgentWarning(new Error('Reply-based approval verdict from an unexpected participant'), {
+      component: 'reply-approval-interceptor',
+      operation: 'verify-approver-identity',
+      agentIdentifier: config.agentIdentifier,
     });
   }
 
@@ -202,12 +299,14 @@ export class ReplyApprovalInterceptor {
     return true;
   }
 
-  private async findOldestPendingApproval(turn: ConversationTurn): Promise<ConversationActivityEntity | null> {
-    const pending = await this.loadUnresolvedApprovals(turn);
+  private async findOldestPendingApproval(turn: ConversationTurn): Promise<PendingApprovalWithHistory | null> {
+    const { activities, pending } = await this.loadConversationContext(turn);
 
     // Approvals are prompted sequentially, so a reply always answers the
     // oldest outstanding request.
-    return pending[0] ?? null;
+    const request = pending[0];
+
+    return request ? { activities, request } : null;
   }
 
   /**
@@ -222,20 +321,20 @@ export class ReplyApprovalInterceptor {
   private async findPendingApprovalForTapback(
     turn: ConversationTurn,
     quotedText: string
-  ): Promise<ConversationActivityEntity | null> {
+  ): Promise<PendingApprovalWithHistory | null> {
     const normalizedQuote = quotedText.trim().toLowerCase();
     if (!normalizedQuote) {
       return null;
     }
 
-    const pending = await this.loadUnresolvedApprovals(turn);
+    const { activities, pending } = await this.loadConversationContext(turn);
     const matches = pending.filter((request) => {
       const toolName = request.toolData?.toolName;
 
       return typeof toolName === 'string' && toolName.length > 0 && normalizedQuote.includes(toolName.toLowerCase());
     });
 
-    return matches.length === 1 ? matches[0] : null;
+    return matches.length === 1 ? { activities, request: matches[0] } : null;
   }
 
   /**
@@ -246,19 +345,22 @@ export class ReplyApprovalInterceptor {
   private async findPendingApprovalForMessage(
     turn: ConversationTurn,
     messageId: string
-  ): Promise<ConversationActivityEntity | null> {
-    const pending = await this.loadUnresolvedApprovals(turn);
+  ): Promise<PendingApprovalWithHistory | null> {
+    const { activities, pending } = await this.loadConversationContext(turn);
+    const request = pending.find((entry) => entry.platformMessageId === messageId);
 
-    return pending.find((request) => request.platformMessageId === messageId) ?? null;
+    return request ? { activities, request } : null;
   }
 
-  private async loadUnresolvedApprovals(turn: ConversationTurn): Promise<ConversationActivityEntity[]> {
+  private async loadConversationContext(
+    turn: ConversationTurn
+  ): Promise<{ activities: ConversationActivityEntity[]; pending: ConversationActivityEntity[] }> {
     const { config, conversation } = turn;
 
     try {
       const activities = await this.conversationService.getHistory(config.environmentId, conversation._id);
 
-      return findUnresolvedToolApprovalRequests(activities);
+      return { activities, pending: findUnresolvedToolApprovalRequests(activities) };
     } catch (err) {
       this.logger.warn(err, `[agent:${config.agentIdentifier}] Failed to load history for reply-based approval check`);
       captureAgentWarning(err, {
@@ -267,7 +369,7 @@ export class ReplyApprovalInterceptor {
         agentIdentifier: config.agentIdentifier,
       });
 
-      return [];
+      return { activities: [], pending: [] };
     }
   }
 

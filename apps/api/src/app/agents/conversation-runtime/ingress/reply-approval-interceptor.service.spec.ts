@@ -310,6 +310,92 @@ describe('ReplyApprovalInterceptor', () => {
     expect(runtime.dispatch.calledOnce).to.equal(true);
   });
 
+  describe('approver identity verification (group threads)', () => {
+    // A group iMessage/SMS thread has more than one human participant sharing
+    // the same conversation. `sub-requester` is the participant whose message
+    // caused the agent to propose the tool call; `sub-other` is a different
+    // participant in the same thread who must not be able to approve/deny it.
+    function makeGroupHistory() {
+      return [
+        pendingRequest,
+        {
+          type: ConversationActivityTypeEnum.MESSAGE,
+          senderType: 'subscriber',
+          senderId: 'sub-requester',
+          content: 'Please issue the refund',
+        },
+      ];
+    }
+
+    it('should not consume a YES/NO reply from a different participant than the one who triggered the approval', async () => {
+      const { interceptor, conversationService } = makeDeps(makeGroupHistory());
+      const runtime = { dispatch: sinon.stub().resolves(undefined) };
+      const turn = makeTurn({ subscriber: { subscriberId: 'sub-other' } });
+
+      const consumed = await interceptor.tryHandleAsApprovalReply(turn, runtime as any);
+
+      expect(consumed).to.equal(false);
+      expect(conversationService.persistToolApprovalDecision.called).to.equal(false);
+      expect(runtime.dispatch.called).to.equal(false);
+    });
+
+    it('should consume a YES/NO reply from the same participant who triggered the approval', async () => {
+      const { interceptor, conversationService } = makeDeps(makeGroupHistory());
+      const runtime = { dispatch: sinon.stub().resolves(undefined) };
+      const turn = makeTurn({ subscriber: { subscriberId: 'sub-requester' } });
+
+      const consumed = await interceptor.tryHandleAsApprovalReply(turn, runtime as any);
+
+      expect(consumed).to.equal(true);
+      expect(conversationService.persistToolApprovalDecision.calledOnce).to.equal(true);
+      expect(runtime.dispatch.calledOnce).to.equal(true);
+    });
+
+    it('should not consume a tapback from a different participant than the one who triggered the approval', async () => {
+      const { interceptor, conversationService } = makeDeps(makeGroupHistory());
+      const runtime = { dispatch: sinon.stub().resolves(undefined) };
+      const turn = makeTurn({
+        subscriber: { subscriberId: 'sub-other' },
+        message: { id: 'msg-tap', text: 'Liked "Tool approval required: issueRefund"', author: { userId: '+1' } },
+      });
+
+      const consumed = await interceptor.tryHandleAsApprovalReply(turn, runtime as any);
+
+      expect(consumed).to.equal(false);
+      expect(conversationService.persistToolApprovalDecision.called).to.equal(false);
+      expect(runtime.dispatch.called).to.equal(false);
+    });
+
+    it('should not consume a reaction verdict from a different participant than the one who triggered the approval', async () => {
+      const { interceptor, conversationService } = makeDeps(makeGroupHistory());
+      const runtime = { dispatch: sinon.stub().resolves(undefined) };
+      const turn = makeTurn({
+        subscriber: { subscriberId: 'sub-other' },
+        message: null,
+        event: AgentEventEnum.ON_REACTION,
+        reaction: { emoji: 'thumbs_up', added: true, messageId: 'msg-approval' },
+      });
+
+      const consumed = await interceptor.tryHandleAsApprovalReaction(turn, runtime as any);
+
+      expect(consumed).to.equal(false);
+      expect(conversationService.persistToolApprovalDecision.called).to.equal(false);
+      expect(runtime.dispatch.called).to.equal(false);
+    });
+
+    it('should not consume a verdict when the actor identity cannot be resolved at all', async () => {
+      const { interceptor, conversationService } = makeDeps(makeGroupHistory());
+      const runtime = { dispatch: sinon.stub().resolves(undefined) };
+      const turn = makeTurn({ subscriber: null, message: { id: 'msg-yes', text: 'yes', author: { userId: '' } } });
+
+      const consumed = await interceptor.tryHandleAsApprovalReply(turn, runtime as any);
+
+      expect(consumed).to.equal(false);
+      expect(conversationService.persistToolApprovalDecision.called).to.equal(false);
+      expect(runtime.dispatch.called).to.equal(false);
+    });
+  });
+
   describe('tryHandleAsApprovalReaction', () => {
     function makeReactionTurn(overrides: Record<string, unknown> = {}) {
       return makeTurn({
