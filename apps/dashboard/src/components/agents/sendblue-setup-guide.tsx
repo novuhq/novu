@@ -616,6 +616,7 @@ export function SendblueSetupGuide({
       <SetupStep
         index={base + 2}
         status={step3Status}
+        dimmed={!isWebhookConfigured}
         title="Send a test message"
         description={
           <span>

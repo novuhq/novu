@@ -40,7 +40,7 @@ const PROVIDER_SETUP_TIME: Record<string, string> = {
   [ChatProviderIdEnum.MsTeams]: '~ 1 hour',
   [ChatProviderIdEnum.WhatsAppBusiness]: '~ 1 hour',
   [ChatProviderIdEnum.Telegram]: '~ 2 min',
-  [ChatProviderIdEnum.Sendblue]: '~ 5 minutes',
+  [ChatProviderIdEnum.Sendblue]: '~ 2 minutes',
   [ChatProviderIdEnum.Discord]: '~ 2 minutes',
   'google-chat': '~ 2 minutes',
   linear: '~ 2 minutes',
