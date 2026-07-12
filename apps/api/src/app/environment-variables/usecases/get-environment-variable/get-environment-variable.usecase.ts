@@ -18,6 +18,8 @@ export class GetEnvironmentVariable {
       throw new NotFoundException(`Environment variable with key "${command.variableKey}" not found`);
     }
 
-    return toEnvironmentVariableResponseDto(variable);
+    return toEnvironmentVariableResponseDto(variable, {
+      scopeToEnvironmentId: command.scopeToEnvironment ? command.environmentId : undefined,
+    });
   }
 }

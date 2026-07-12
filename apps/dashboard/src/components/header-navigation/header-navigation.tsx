@@ -1,4 +1,4 @@
-import { EnvironmentTypeEnum, PermissionsEnum } from '@novu/shared';
+import { EnvironmentTypeEnum } from '@novu/shared';
 import { HTMLAttributes, ReactNode } from 'react';
 import { RiSearchLine } from 'react-icons/ri';
 import { useCommandPalette } from '@/components/command-palette/hooks/use-command-palette';
@@ -9,7 +9,6 @@ import { RegionSelector } from '@/context/region';
 import { cn } from '@/utils/ui';
 import { IS_SELF_HOSTED_EE } from '../../config';
 import { useEnvironment } from '../../context/environment/hooks';
-import { useHasPermission } from '../../hooks/use-has-permission';
 import { Button } from '../primitives/button';
 import { Kbd } from '../primitives/kbd';
 import { CustomerSupportButton } from './customer-support-button';
@@ -35,8 +34,6 @@ export const HeaderNavigation = (props: HeaderNavigationProps) => {
     ...rest
   } = props;
   const { currentEnvironment } = useEnvironment();
-  const has = useHasPermission();
-  const canPublish = has({ permission: PermissionsEnum.ENVIRONMENT_WRITE });
   const { openCommandPalette } = useCommandPalette();
 
   return (
@@ -72,7 +69,7 @@ export const HeaderNavigation = (props: HeaderNavigationProps) => {
           <RiSearchLine className="size-3 text-text-sub" />
         </Button>
         <span className="hidden md:contents">
-          {currentEnvironment?.type === EnvironmentTypeEnum.DEV && canPublish && !hidePublish && <PublishButton />}
+          {currentEnvironment?.type === EnvironmentTypeEnum.DEV && !hidePublish && <PublishButton />}
           {!hideBridgeUrl ? <EditBridgeUrlButton /> : null}
         </span>
         {!hideRestItems && (

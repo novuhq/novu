@@ -199,6 +199,9 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
         }
       );
     }
+    if(filters.length === 0){
+      return [];
+    }
 
     return (
       await this.find(
