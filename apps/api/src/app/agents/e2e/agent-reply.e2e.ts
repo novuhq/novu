@@ -40,6 +40,7 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
     sinon.stub(outboundGateway, 'deleteInConversation').resolves();
     sinon.stub(outboundGateway, 'removeReaction').resolves();
     sinon.stub(outboundGateway, 'startTypingInConversation').resolves();
+    sinon.stub(outboundGateway, 'stopTypingInConversation').resolves();
   });
 
   function postReply(body: Record<string, unknown>) {
@@ -413,7 +414,7 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
       expect(stub.getCall(0).args[3]).to.equal('Thinking...');
     });
 
-    it('should clear the status with an empty string for typing "stop"', async () => {
+    it('should stop typing for typing "stop"', async () => {
       const conversationId = await seedConversation(ctx);
       const outboundGateway = testServer.getService(OutboundGateway);
 
@@ -425,8 +426,10 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
 
       expect(res.status).to.equal(200);
 
-      const stub = outboundGateway.startTypingInConversation as sinon.SinonStub;
-      expect(stub.getCall(0).args[3]).to.equal('');
+      const startStub = outboundGateway.startTypingInConversation as sinon.SinonStub;
+      const stopStub = outboundGateway.stopTypingInConversation as sinon.SinonStub;
+      expect(startStub.called).to.be.false;
+      expect(stopStub.calledOnce).to.be.true;
     });
 
     it('should not fail the turn when the typing call throws', async () => {
