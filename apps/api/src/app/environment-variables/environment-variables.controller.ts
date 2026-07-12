@@ -82,8 +82,10 @@ export class EnvironmentVariablesController {
     return this.getEnvironmentVariablesUsecase.execute(
       GetEnvironmentVariablesCommand.create({
         organizationId: user.organizationId,
+        environmentId: user.environmentId,
         userId: user._id,
         search: query.search,
+        scopeToEnvironment: isEnvironmentScopedAuthScheme(user.scheme),
       })
     );
   }
@@ -141,8 +143,10 @@ export class EnvironmentVariablesController {
     return this.getEnvironmentVariableUsecase.execute(
       GetEnvironmentVariableCommand.create({
         organizationId: user.organizationId,
+        environmentId: user.environmentId,
         userId: user._id,
         variableKey,
+        scopeToEnvironment: isEnvironmentScopedAuthScheme(user.scheme),
       })
     );
   }
@@ -247,8 +251,10 @@ export class EnvironmentVariablesController {
     return this.deleteEnvironmentVariableUsecase.execute(
       DeleteEnvironmentVariableCommand.create({
         organizationId: user.organizationId,
+        environmentId: user.environmentId,
         userId: user._id,
         variableKey,
+        restrictToUserEnvironment: isEnvironmentScopedAuthScheme(user.scheme),
       })
     );
   }
