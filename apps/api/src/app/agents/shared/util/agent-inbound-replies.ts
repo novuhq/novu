@@ -3,7 +3,7 @@ import type { SubscriberResolutionOutcome } from '../types/subscriber-resolution
 
 /** Shown when an inbound turn cannot be mapped to a Novu subscriber (e.g. unknown chat sender). */
 export const UNRESOLVED_SUBSCRIBER_ACCESS_REPLY =
-  "You don't have access to message this agent. Connect your account through your application to continue.";
+  "We couldn't match your identity to a known user, so this agent can't reply yet. Sign in or link your account in the app that owns this agent, then try again.";
 
 /**
  * Shown when resolution itself broke rather than the sender being unknown —
@@ -29,8 +29,8 @@ export function buildUnresolvedSubscriberAccessReply(params: {
 
   if (params.platform === AgentPlatformEnum.EMAIL && sender) {
     return (
-      `We couldn't verify your email (${sender}). ` +
-      'Send from the email address registered with your Novu account, or sign up through your app using that same address.'
+      `We couldn't match ${sender} to a known user. ` +
+      'Send from the address registered with your account, or sign up in the app that owns this agent using that same address.'
     );
   }
 

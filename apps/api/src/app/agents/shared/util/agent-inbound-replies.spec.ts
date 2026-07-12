@@ -13,8 +13,10 @@ describe('buildUnresolvedSubscriberAccessReply', () => {
       senderEmail: 'unknown@example.com',
     });
 
-    expect(reply).to.include('unknown@example.com');
-    expect(reply).to.include('Novu account');
+    expect(reply).to.equal(
+      "We couldn't match unknown@example.com to a known user. " +
+        'Send from the address registered with your account, or sign up in the app that owns this agent using that same address.'
+    );
     expect(reply).to.not.equal(UNRESOLVED_SUBSCRIBER_ACCESS_REPLY);
   });
 
@@ -75,5 +77,12 @@ describe('buildUnresolvedSubscriberAccessReply', () => {
     });
 
     expect(reply).to.equal(UNRESOLVED_SUBSCRIBER_ACCESS_REPLY);
+  });
+
+  it('uses agent-wide identity copy for the generic access reply', () => {
+    expect(UNRESOLVED_SUBSCRIBER_ACCESS_REPLY).to.equal(
+      "We couldn't match your identity to a known user, so this agent can't reply yet. " +
+        'Sign in or link your account in the app that owns this agent, then try again.'
+    );
   });
 });
