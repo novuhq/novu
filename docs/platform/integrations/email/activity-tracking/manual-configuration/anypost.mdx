@@ -1,0 +1,40 @@
+---
+title: 'Anypost'
+description: 'A step-by-step guide to configure Anypost event webhooks for Novu activity tracking.'
+---
+
+Anypost supports automatic webhook configuration. When you enable **Email Activity Tracking** on your Anypost integration in Novu, Novu creates the inbound webhook for you through the Anypost API (this requires a `full`-scope API key). If you would rather set it up yourself, or your key is scoped `send_only`, follow the manual steps below.
+
+<Note>
+  Email Activity Tracking is available on **Novu Cloud** and **Enterprise self-hosted** only. It is not included in the **Community self-hosted** edition. Contact us at sales@novu.co to learn more about Enterprise self-hosted licensing.
+</Note>
+
+## Step 1: Get your webhook URL from Novu
+
+First, you need the unique webhook URL from your Novu dashboard that will receive events from Anypost.
+
+1. Navigate to the **Integration Store** page in Novu and select your **Anypost** integration.
+2. Enable the **Email Activity Tracking** toggle.
+3. A unique Inbound Webhook URL will be displayed. Click the **copy** icon to copy it.
+
+## Step 2: Create the webhook in Anypost
+
+Next, log in to your Anypost dashboard to create the webhook.
+
+1. From your Anypost dashboard, open **Webhooks**.
+2. Click **Create Webhook**.
+3. Configure the following:
+    - **Endpoint URL:** Paste the **Inbound Webhook URL** you copied from Novu.
+    - **Events:** Subscribe to the email events you want to track: `email.sent`, `email.delivered`, `email.delayed`, `email.bounced`, `email.complained`, `email.suppressed`, `email.unsubscribed`, `email.opened`, and `email.clicked`.
+4. Save the webhook.
+
+Your Anypost account will now forward email events to Novu, where they will appear in the Activity Feed and the execution details in the event logs.
+
+## Step 3: Add the signing secret (Recommended)
+
+For a more secure and authenticated connection, add the webhook's signing secret back into Novu. This step is optional but highly recommended.
+
+1. After creating the webhook in Anypost, copy its **Signing Secret**. It is shown only once, at creation time.
+2. Return to your Anypost integration settings in Novu.
+3. Under the **Email Activity Tracking** section, paste the secret into the **Inbound Webhook Signing Key** field.
+4. Click **Save Changes**.
