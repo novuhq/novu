@@ -17,7 +17,7 @@ import {
 } from './setup-guide-primitives';
 import { buildAgentWebhookUrl, deriveStepStatus, hasSendblueUserCredentials } from './setup-guide-step-utils';
 
-const SENDBLUE_DASHBOARD_URL = 'https://app.sendblue.com';
+const SENDBLUE_DASHBOARD_URL = 'https://dashboard.sendblue.com/settings/api';
 
 export type SendblueSetupGuideProps = {
   agent: AgentResponse;
@@ -77,12 +77,14 @@ function ConnectWebhookPanel({
   integrationIdentifier,
   webhookUrl,
   isCredentialsSaved,
+  existingWebhookSecret,
   onConfigured,
 }: {
   agent: AgentResponse;
   integrationIdentifier: string;
   webhookUrl: string;
   isCredentialsSaved: boolean;
+  existingWebhookSecret: string;
   onConfigured: () => void;
 }) {
   const [connectStatus, setConnectStatus] = useState<ConnectStatus>({ state: 'idle' });
@@ -137,9 +139,18 @@ function ConnectWebhookPanel({
 
   const connectAttemptFinished = connectStatus.state === 'connected' || connectStatus.state === 'manual_fallback';
   const showManualFallback = connectStatus.state === 'manual_fallback' && !manualMarkedConfigured;
+  // Detects a webhook secret provisioned in a previous session (auto-registered or manually confirmed).
+  const showExistingSecret = connectStatus.state === 'idle' && Boolean(existingWebhookSecret);
 
   return (
     <div className="flex w-full max-w-[400px] flex-col gap-3">
+      {showExistingSecret ? (
+        <div className="text-success-base flex items-center gap-1.5">
+          <RiCheckLine className="size-4" />
+          <span className="text-label-xs font-medium">Webhook already configured</span>
+        </div>
+      ) : null}
+
       {!connectAttemptFinished ? (
         <Button
           type="button"
@@ -150,7 +161,11 @@ function ConnectWebhookPanel({
           disabled={!isCredentialsSaved || connectStatus.state === 'connecting'}
           isLoading={connectStatus.state === 'connecting'}
         >
-          {connectStatus.state === 'connecting' ? 'Connecting…' : 'Connect Sendblue'}
+          {connectStatus.state === 'connecting'
+            ? 'Connecting…'
+            : showExistingSecret
+              ? 'Reconfigure webhook'
+              : 'Connect Sendblue'}
         </Button>
       ) : (
         <div className="text-success-base flex items-center gap-1.5">
@@ -165,6 +180,13 @@ function ConnectWebhookPanel({
 
       {connectStatus.state === 'error' ? (
         <p className="text-error-base text-label-xs leading-4">{connectStatus.message}</p>
+      ) : null}
+
+      {showExistingSecret ? (
+        <div className="border-stroke-soft flex w-full flex-col gap-2 rounded-md border p-3">
+          <ReadOnlyValueRow label="Callback URL" value={webhookUrl} />
+          <ReadOnlyValueRow label="Webhook Secret" value={existingWebhookSecret} />
+        </div>
       ) : null}
 
       {showManualFallback && connectStatus.state === 'manual_fallback' ? (
@@ -218,8 +240,9 @@ export function SendblueSetupGuide({
   const isCredentialsSaved = hasCredentials || credentialsSavedLocally;
 
   // Set by the Configure webhook step; also detects a webhook configured in a previous session.
-  const hasWebhookSecret =
-    typeof selectedIntegration?.credentials?.token === 'string' && selectedIntegration.credentials.token.length > 0;
+  const existingWebhookSecret =
+    typeof selectedIntegration?.credentials?.token === 'string' ? selectedIntegration.credentials.token.trim() : '';
+  const hasWebhookSecret = existingWebhookSecret.length > 0;
   const isWebhookConfigured = isWebhookConfiguredLocally || hasWebhookSecret;
 
   const fromNumber = (selectedIntegration?.credentials?.from as string | undefined) ?? '';
@@ -279,19 +302,6 @@ export function SendblueSetupGuide({
             >
               {isCredentialsSaved ? 'Edit credentials' : 'Configure credentials'}
             </SetupButton>
-            <a
-              href={SENDBLUE_DASHBOARD_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex w-fit items-center gap-1"
-            >
-              <ProviderIcon
-                providerId={ChatProviderIdEnum.Sendblue}
-                providerDisplayName="Sendblue"
-                className="size-4 shrink-0"
-              />
-              <span className="text-text-sub text-label-xs font-medium">Sendblue Dashboard</span>
-            </a>
           </div>
         }
       />
@@ -311,6 +321,7 @@ export function SendblueSetupGuide({
             integrationIdentifier={selectedIntegrationIdentifier}
             webhookUrl={webhookUrl}
             isCredentialsSaved={isCredentialsSaved && Boolean(selectedIntegrationIdentifier)}
+            existingWebhookSecret={existingWebhookSecret}
             onConfigured={() => setIsWebhookConfiguredLocally(true)}
           />
         }
