@@ -66,6 +66,7 @@
                   "platform/quickstart/remix",
                   "platform/quickstart/angular",
                   "platform/quickstart/vue",
+                  "platform/quickstart/nuxt",
                   "platform/quickstart/vanilla-js"
                 ]
               }
