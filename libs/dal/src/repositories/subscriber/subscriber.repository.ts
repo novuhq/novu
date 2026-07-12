@@ -48,23 +48,25 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
     );
   }
 
-  async findByEmail(
-    environmentId: string,
-    organizationId: string,
-    email: string
-  ): Promise<SubscriberEntity[]> {
+  async findByEmail(environmentId: string, organizationId: string, email: string): Promise<SubscriberEntity[]> {
     if (!email) {
       return [];
     }
 
+    // Projects `_id` and `data` alongside `subscriberId` so the agent email
+    // resolver can (a) map the external id to the Mongo `_id` needed to repoint
+    // MCP / tool-trust rows and (b) read the `__novu_source` provenance marker
+    // to tell an auto-provisioned "phantom" apart from a customer-created
+    // subscriber during the adoption merge. Limit raised from 2 to comfortably
+    // capture a real subscriber plus any phantom(s) sharing the address.
     return this.find(
       {
         _environmentId: environmentId,
         _organizationId: organizationId,
         email,
       },
-      'subscriberId',
-      { limit: 2 }
+      '_id subscriberId email data',
+      { limit: 10 }
     );
   }
 
@@ -196,6 +198,9 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
           subscriberId: { $eq: search },
         }
       );
+    }
+    if(filters.length === 0){
+      return [];
     }
 
     return (

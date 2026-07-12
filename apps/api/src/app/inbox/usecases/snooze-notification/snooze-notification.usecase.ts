@@ -1,4 +1,11 @@
-import { HttpException, HttpStatus, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import {
   AnalyticsService,
   CreateExecutionDetails,
@@ -25,6 +32,7 @@ import {
   JobStatusEnum,
 } from '@novu/shared';
 import { v4 as uuidv4 } from 'uuid';
+import { GetSubscriber } from '../../../subscribers/usecases/get-subscriber';
 import { InboxNotificationDto } from '../../dtos/inbox-notification.dto';
 import { AnalyticsEventsEnum } from '../../utils';
 import { MarkNotificationAsCommand } from '../mark-notification-as/mark-notification-as.command';
@@ -43,7 +51,8 @@ export class SnoozeNotification {
     private organizationRepository: CommunityOrganizationRepository,
     private createExecutionDetails: CreateExecutionDetails,
     private markNotificationAs: MarkNotificationAs,
-    private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
+    private getSubscriber: GetSubscriber
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -146,8 +155,18 @@ export class SnoozeNotification {
   }
 
   private async findNotification(command: SnoozeNotificationCommand): Promise<MessageEntity> {
+    const subscriber = await this.getSubscriber.execute({
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+      subscriberId: command.subscriberId,
+    });
+    if (!subscriber) {
+      throw new BadRequestException(`Subscriber with id: ${command.subscriberId} is not found.`);
+    }
+
     const message = await this.messageRepository.findOne({
       _environmentId: command.environmentId,
+      _subscriberId: subscriber._id,
       channel: ChannelTypeEnum.IN_APP,
       _id: command.notificationId,
       contextKeys: command.contextKeys,

@@ -1,6 +1,6 @@
 ---
 title: 'Topics'
-description: 'Learn how topics work in Novu and how they help you organize and target groups of subscribers efficiently.'
+description: "Learn how topics work in Novu and how they help you organize and target groups of subscribers efficiently for broadcasts, announcements, and segmented alerts."
 ---
 
 In Novu, a _topic_ is a way to group subscribers under a shared label so that you can broadcast a message to many users with a single workflow trigger. This fan-out mechanism removes the need to manage individual subscriber IDs for each notification, streamlining scenarios like product announcements, feature rollouts, or status updates.
@@ -22,14 +22,35 @@ Novu’s notification system is built around workflows, which are triggered for 
 
 When you trigger a workflow using a topic:
 - The `to` field accepts the topic’s key.
-- Novu looks up all subscribers assigned to the topic.
-- A separate workflow event is created for each subscriber.
+- Novu looks up [topic subscriptions](/platform/subscription) on that topic whose [Context](/platform/concepts/contexts) matches the trigger (exact match).
+- For each matching subscription, Novu evaluates optional JSON Logic conditions against the trigger **payload**.
+- A separate workflow event is created for each subscriber whose subscription passes.
 
 Topics let you target large groups with a single API call, removing the need to loop through subscribers or send multiple workflow triggers.
 
 <Note>
   Topics don’t replace individual targeting. You can still trigger workflows for specific subscribers or arrays of subscribers when needed.
 </Note>
+
+## Topic subscriptions and Context scoping
+
+Adding a subscriber to a topic creates a **topic subscription**, the subscriber’s opt-in to receive notifications sent to that `topicKey`. Subscriptions support:
+
+- **JSON Logic conditions**: deliver only when trigger **payload** fields match (for example, `payload.tier` is `premium`). Conditions do not support subscriber profile, Context data, or step results. See [Manage topic subscriptions](/platform/subscription/manage-topic-subscriptions).
+- **Context scoping**: isolate subscriptions per tenant, app, or region using the same [Context](/platform/concepts/contexts) metadata you pass on workflow triggers.
+
+Context scoping uses **exact-match** filtering, the same rules as the [Inbox](/platform/inbox/configuration/inbox-with-context):
+
+| Context on subscription | Context on trigger | Included in fan-out? |
+| --- | --- | --- |
+| `{ tenant: "acme-corp" }` | `{ tenant: "acme-corp" }` | Yes |
+| None (default) | None (default) | Yes |
+| `{ tenant: "acme-corp" }` | None (default) | No |
+| None (default) | `{ tenant: "acme-corp" }` | No |
+
+Both the subscription and the trigger must carry the same Context keys and values. Omitting Context on either side means the **default** (no Context) scope, not a wildcard that matches all Contexts.
+
+A subscriber can hold multiple subscriptions on the same topic (up to 10), each with a different `identifier`, condition, or Context scope. Use the [Topics v2 API](/api-reference/topics/create-topic-subscriptions), [`@novu/js`](/platform/sdks/javascript#subscriptions), or [`@novu/react`](/platform/subscription/quickstart) to create and manage them.
 
 ## Dynamic and decoupled grouping
 
@@ -504,7 +525,7 @@ These are commonly used topics APIs. Explore all topics APIs on topics [api refe
   <Card
     title="Create topic subscription API"
     href="/api-reference/topics/create-topic-subscriptions"
-    description="Add multiple subscribers into a topic"
+    description="Add subscribers to a topic with optional JSON Logic conditions"
   />
   <Card
     title="List topic subscriptions API"
@@ -515,6 +536,11 @@ These are commonly used topics APIs. Explore all topics APIs on topics [api refe
     title="List all topics API"
     href="/api-reference/topics/list-all-topics"
     description="List all topics in an environment"
+  />
+  <Card
+    title="Manage topic subscriptions"
+    href="/platform/subscription/manage-topic-subscriptions"
+    description="Conditions, Context scoping, @novu/js, and @novu/react"
   />
   <Card
     title="Check subscriber subscription API"
@@ -546,5 +572,13 @@ Below are some of the most frequently asked questions about topics:
 
   <Accordion title="What happens if I trigger a workflow to a topic with no subscribers?">
     The workflow is processed, but no notifications are delivered and, hence, this trigger is not counted for billing.
+  </Accordion>
+
+  <Accordion title="How do topic subscriptions differ from topic membership?">
+    A topic subscription is how a subscriber joins a topic. It stores the subscriber's opt-in, optional JSON Logic conditions (evaluated against the trigger payload), and optional [Context](/platform/concepts/contexts) scope. When you trigger to a topic, Novu fan-out runs through matching subscriptions, not a flat list of subscriber IDs. See [Manage topic subscriptions](/platform/subscription/manage-topic-subscriptions).
+  </Accordion>
+
+  <Accordion title="Do Context on a trigger and Context on a subscription need to match?">
+    Yes. Novu uses exact-match Context filtering. A subscription created with `{ tenant: "acme-corp" }` is included only when the workflow trigger passes the same Context. Triggers without Context do not reach Context-scoped subscriptions, and vice versa. See [Context-scoped subscriptions](/platform/subscription/manage-topic-subscriptions#context-scoped-subscriptions).
   </Accordion>
 </AccordionGroup>

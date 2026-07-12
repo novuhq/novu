@@ -675,7 +675,7 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
   });
 
   describe('Email subscriber resolution', () => {
-    async function invokeEmailInbound(email: string, text: string) {
+    async function invokeEmailInbound(email: string, text: string, auth: { dkim?: string; spf?: string } = {}) {
       const baseConfig = await configResolver.resolve(ctx.agentId, ctx.integrationIdentifier);
       const config = {
         ...baseConfig,
@@ -692,7 +692,10 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
         createSentMessageFromMessage: () => mockSentMessage(),
         toJSON: () => ({ id: threadId }),
       };
-      const message = mockMessage({ userId: email, text, fullName: 'Email User' });
+      // Inbound-mail forwards DKIM/SPF verdicts on `message.raw`; default to a
+      // verified sender and let callers spoof by passing failing verdicts.
+      const { dkim = 'pass', spf = 'pass' } = auth;
+      const message = { ...mockMessage({ userId: email, text, fullName: 'Email User' }), raw: { dkim, spf } };
 
       await inboundHandler.handle(ctx.agentId, config, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
 
@@ -764,6 +767,51 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
         (p) => p.type === ConversationParticipantTypeEnum.PLATFORM_USER
       );
       expect(platformParticipant!.id).to.equal('email:mixed@example.com');
+    });
+
+    it('should not map a spoofed (DKIM/SPF-failed) sender onto a matching subscriber', async () => {
+      const victimEmail = `victim-${Date.now()}@example.com`;
+      const victim = await new SubscriberRepository().create({
+        subscriberId: `sub-email-spoof-${Date.now()}`,
+        firstName: 'Victim',
+        lastName: 'Subscriber',
+        email: victimEmail,
+        _environmentId: ctx.session.environment._id,
+        _organizationId: ctx.session.organization._id,
+      });
+
+      // Attacker forges `From: victim@…` but the message fails authentication.
+      const threadId = await invokeEmailInbound(victimEmail, 'Run a privileged tool', {
+        dkim: 'failed',
+        spf: 'failed',
+      });
+
+      const conversation = await conversationRepository.findByPlatformThread(
+        ctx.session.environment._id,
+        ctx.session.organization._id,
+        ctx.agentId,
+        ctx.integrationId,
+        threadId
+      );
+
+      expect(conversation).to.exist;
+
+      // The spoofed sender must NOT assume the victim's subscriber identity.
+      const subParticipant = conversation!.participants.find(
+        (p) => p.type === ConversationParticipantTypeEnum.SUBSCRIBER
+      );
+      expect(subParticipant).to.not.exist;
+
+      const platformParticipant = conversation!.participants.find(
+        (p) => p.type === ConversationParticipantTypeEnum.PLATFORM_USER
+      );
+      expect(platformParticipant).to.exist;
+      expect(platformParticipant!.id).to.equal(`email:${victimEmail}`);
+
+      const activities = await activityRepository.findByConversation(ctx.session.environment._id, conversation!._id);
+      const userActivity = activities.find((a) => a.content === 'Run a privileged tool');
+      expect(userActivity!.senderType).to.equal(ConversationActivitySenderTypeEnum.PLATFORM_USER);
+      expect(userActivity!.senderId).to.not.equal(victim.subscriberId);
     });
   });
 

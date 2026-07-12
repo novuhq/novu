@@ -1,9 +1,15 @@
-import type { Signal, ToolResult } from '@novu/framework';
+import type { Signal, ToolResult } from '@novu/framework/internal';
 import type { PlanModel } from 'chat';
 import { Type } from 'class-transformer';
 import { IsArray, IsBoolean, IsNotEmpty, IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../../shared/commands/project.command';
-import { AddReactionPayloadDto, EditPayloadDto, ReplyContentDto } from '../../../shared/dtos/agent-reply-payload.dto';
+import {
+  AddReactionPayloadDto,
+  DeleteMessagePayloadDto,
+  EditPayloadDto,
+  ReplyContentDto,
+  ToolApprovalRequestPayloadDto,
+} from '../../../shared/dtos/agent-reply-payload.dto';
 import type { PlanPhase } from '../../egress/plan-phase';
 import type { SlackNativeDelivery } from '../../egress/slack-native-delivery';
 
@@ -27,6 +33,11 @@ export class HandleAgentReplyCommand extends EnvironmentWithUserCommand {
 
   @IsOptional()
   @ValidateNested()
+  @Type(() => ToolApprovalRequestPayloadDto)
+  toolApprovalRequest?: ToolApprovalRequestPayloadDto;
+
+  @IsOptional()
+  @ValidateNested()
   @Type(() => EditPayloadDto)
   edit?: EditPayloadDto;
 
@@ -47,6 +58,12 @@ export class HandleAgentReplyCommand extends EnvironmentWithUserCommand {
   @ValidateNested({ each: true })
   @Type(() => AddReactionPayloadDto)
   addReactions?: AddReactionPayloadDto[];
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => DeleteMessagePayloadDto)
+  deleteMessages?: DeleteMessagePayloadDto[];
 
   @IsOptional()
   @IsObject()

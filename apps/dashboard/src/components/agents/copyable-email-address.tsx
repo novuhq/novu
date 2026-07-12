@@ -1,14 +1,12 @@
-import { type ReactNode } from 'react';
 import { CopyButton } from '@/components/primitives/copy-button';
 import { cn } from '@/utils/ui';
 
 type CopyableEmailAddressProps = {
   email: string;
   className?: string;
-  trailing?: ReactNode;
 };
 
-export function CopyableEmailAddress({ email, className, trailing }: CopyableEmailAddressProps) {
+export function CopyableEmailAddress({ email, className }: CopyableEmailAddressProps) {
   return (
     <div
       className={cn(
@@ -17,10 +15,11 @@ export function CopyableEmailAddress({ email, className, trailing }: CopyableEma
       )}
     >
       <span className="text-text-sub text-label-xs px-2 font-mono whitespace-nowrap">{email}</span>
-      <div className="border-stroke-soft flex h-8 shrink-0 items-center border-l">
-        <CopyButton size="2xs" valueToCopy={email} className="size-8 shrink-0 justify-center rounded-none" />
-        {trailing}
-      </div>
+      <CopyButton
+        size="2xs"
+        valueToCopy={email}
+        className="border-stroke-soft size-8 shrink-0 justify-center rounded-none border-l"
+      />
     </div>
   );
 }

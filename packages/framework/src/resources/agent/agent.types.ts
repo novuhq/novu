@@ -1,7 +1,7 @@
 import type { CardElement, ChatElement, Emoji } from 'chat';
 import type { TriggerRecipientsPayload } from '../../shared';
 import type { Awaitable } from '../../types/util.types';
-import type { ApprovalPayload } from './tool-approval/action-id';
+import type { ToolApprovalRequestPayload } from './tool-approval/action-id';
 export type { TriggerRecipientsPayload };
 
 export enum AgentEventEnum {
@@ -192,9 +192,8 @@ export type MessageContent = string | ChatElement;
 export interface ReplyContent {
   markdown?: string;
   card?: CardElement;
+  toolApprovalCard?: ToolApprovalCard;
   files?: FileRef[];
-  /** Set when this reply is an approval card; carries the tool call it gates. */
-  toolApproval?: ApprovalPayload;
 }
 
 /**
@@ -223,6 +222,34 @@ export interface AgentToolCall {
 }
 
 /**
+ * Presentation descriptor for Novu's built-in tool-approval card. Returned by the
+ * injected `approvalCard()` helper. Novu renders it natively on Slack and as a
+ * portable fallback elsewhere; Approve/Deny action ids are always supplied by Novu.
+ *
+ * Channel mapping (self-hosted):
+ * - **Slack (native card):** `icon`, `title`, `subtitle`, `body`, `approveLabel`, `denyLabel`
+ * - **Other channels (portable card):** `title`, `subtitle`, `approveLabel`, `denyLabel`
+ *
+ * `icon` and `body` are ignored on non-Slack channels — the portable fallback has no
+ * card image or body block. Catalog icons are 32×32; custom `https://` URLs should match.
+ */
+export interface ToolApprovalCard {
+  type: 'tool-approval-card';
+  /** Slack only. Catalog id (`'stripe'`), `https://` URL, or omit to auto-match the tool name. Use 32×32 px for custom URLs. */
+  icon?: string;
+  /** All channels. Card title. Defaults to `Tool approval required`. */
+  title?: string;
+  /** All channels. Card subtitle; auto-generated from the tool name/input when omitted. */
+  subtitle?: string;
+  /** Slack only. Optional markdown body (e.g. argument preview). Not shown on portable fallback. */
+  body?: string;
+  /** All channels. Approve button label. Defaults to `Approve`. */
+  approveLabel?: string;
+  /** All channels. Deny button label. Defaults to `Deny`. */
+  denyLabel?: string;
+}
+
+/**
  * Returned by `ctx.toolApproval.request()`. Return it from `onMessage` to post
  * an approval card and end the turn until the user approves or denies.
  */
@@ -234,12 +261,16 @@ export class PendingApproval {
 export interface ToolApprovalConfig {
   /**
    * Build the approval message shown while waiting for a decision.
-   * Return a string or card. Defaults to a built-in Approve/Deny card.
    *
-   * Use the provided `actionIds` on your `<Button>` elements so Novu can route
-   * the click back to `onToolApproval`.
+   * Return `approvalCard(...)` for Novu's channel-adaptive card (native on Slack,
+   * fallback elsewhere), or return a string/`Card` to take full control (portable
+   * on every channel). Use the provided `actionIds` on your own buttons.
    */
-  renderApproval?: (args: { toolCall: AgentToolCall; actionIds: { approve: string; deny: string } }) => MessageContent;
+  renderApproval?: (args: {
+    toolCall: AgentToolCall;
+    actionIds: { approve: string; deny: string };
+    approvalCard: (overrides?: Omit<ToolApprovalCard, 'type'>) => ToolApprovalCard;
+  }) => MessageContent | ToolApprovalCard;
 }
 
 /** Passed to `onToolApproval` when the user clicks Approve or Deny. */
@@ -249,8 +280,9 @@ export interface ToolApprovalDecision {
   /** `true` if the user approved, `false` if they denied. */
   approved: boolean;
   /**
-   * Handle to the approval message. Edit it to show a custom resolved state,
-   * or leave it unchanged to use the default resolved card.
+   * Handle to the approval message. When you register `onToolApproval`, you own
+   * card cleanup — call `edit()` or `delete()` as needed. When the framework
+   * handles the approval click, the card is deleted for you.
    */
   approvalMessage: ReplyHandle;
 }
@@ -292,9 +324,11 @@ export interface ReplyHandle {
   readonly platformThreadId: string;
   /** Edit this message in place with new content. Returns the same handle for chaining. */
   edit(content: MessageContent, options?: { files?: FileRef[] }): Promise<ReplyHandle>;
+  /** Delete this message from the platform. Removes the rendered message only — history is preserved. */
+  delete(): Promise<void>;
 }
 
-export interface AgentContextBase {
+export interface AgentHandlerContext {
   /** Live state of the current conversation, including persisted metadata. */
   readonly conversation: AgentConversation;
   /**
@@ -392,6 +426,16 @@ export interface AgentContextBase {
    */
   addReaction(messageId: string, emojiName: Emoji): void;
   /**
+   * Delete a platform message by id. Queued and flushed with the next `ctx.reply()`,
+   * or automatically when the handler completes (same batching as `ctx.addReaction()`).
+   * Deletes the rendered message only — conversation history is preserved.
+   *
+   * @example
+   *   ctx.deleteMessage(ctx.action!.sourceMessageId!);
+   *   await ctx.reply('Processing…');
+   */
+  deleteMessage(messageId: string): void;
+  /**
    * Control the typing / "Thinking…" status for the current turn.
    * Posts immediately (like `reply()`), updating the indicator Novu already shows on inbound.
    *
@@ -405,50 +449,29 @@ export interface AgentContextBase {
    * (e.g. email). A normal turn that ends with `ctx.reply()` clears the status automatically.
    */
   typing: TypingControl;
-  /**
-   * Live plan-card control for the current turn. Returns a handle that renders the card immediately.
-   * Use `plan.step(title, fn)` for scoped steps or `plan.step(title)` for manual control.
-   * The plan auto-finalizes when the handler completes — call `finish()`/`fail()` only for early control.
-   *
-   * The plan card and the handler return value are separate: the card updates live while the handler
-   * runs; `return` (or `ctx.reply()`) posts the final reply message.
-   *
-   * @example
-   *   const plan = ctx.plan('Processing your refund…'); // card renders immediately
-   *   const order = await plan.step('Fetch order', () => fetchOrder(msg.text));
-   *   await plan.step('Issue refund', () => refund(order));
-   *   return 'Refund complete.'; // plan auto-finalizes; this is the reply message
-   *
-   * @example
-   *   const plan = ctx.plan('Processing…');
-   *   const step = plan.step('Reverse charge');
-   *   step.update({ title: 'Stripe: Reverse charge', details: 'customer cus_abc' });
-   *   step.done();
-   */
-  plan: PlanControl;
 }
 
 /** Context passed to the `onMessage` handler. */
-export interface AgentMessageContext extends AgentContextBase {
+export interface AgentMessageContext extends AgentHandlerContext {
   readonly event: 'onMessage';
 }
 
 /** Context passed to the `onAction` handler. */
-export interface AgentActionContext extends AgentContextBase {
+export interface AgentActionContext extends AgentHandlerContext {
   readonly event: 'onAction';
   /** The button click or interactive action that triggered this handler. */
   readonly action: AgentAction;
 }
 
 /** Context passed to the `onReaction` handler. */
-export interface AgentReactionContext extends AgentContextBase {
+export interface AgentReactionContext extends AgentHandlerContext {
   readonly event: 'onReaction';
   /** The emoji reaction that triggered this handler. */
   readonly reaction: AgentReaction;
 }
 
 /** Context passed to the `onResolve` handler. */
-export interface AgentResolveContext extends AgentContextBase {
+export interface AgentResolveContext extends AgentHandlerContext {
   readonly event: 'onResolve';
 }
 
@@ -513,6 +536,12 @@ export interface AgentHandlers {
 export interface Agent {
   id: string;
   handlers: AgentHandlers;
+  /**
+   * @internal Set by `agent()` / ai-sdk registration. True when the application
+   * author registered `onToolApproval` (full manual card cleanup). False when
+   * only a framework wrapper handles approval clicks (auto-delete after handler).
+   */
+  userOnToolApproval?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -585,6 +614,11 @@ export interface AddReactionPayload {
   emojiName: Emoji;
 }
 
+/** Delete a previously posted platform message. Removes the rendered message only — history is preserved. */
+export interface DeleteMessagePayload {
+  messageId: string;
+}
+
 /**
  * Per-turn typing/status control op sent on the reply contract.
  * - `{ status?: string }` — set/replace the status; omit `status` for the default "Thinking…".
@@ -599,50 +633,6 @@ export type TypingControl = ((status?: string) => Promise<void>) & {
   stop: () => Promise<void>;
 };
 
-export type PlanTaskStatus = 'pending' | 'in_progress' | 'complete' | 'error';
-
-export interface PlanTaskInput {
-  id: string;
-  title?: string;
-  status: PlanTaskStatus;
-  details?: string;
-  group?: string;
-}
-
-export type PlanProgressPhase = 'awaiting-approval' | 'approved' | 'denied' | 'finished' | 'failed';
-
-export type PlanProgressEvent =
-  | { kind: 'task'; task: PlanTaskInput; cardTitle?: string }
-  | { kind: 'phase'; phase: PlanProgressPhase; title?: string }
-  | { kind: 'title'; title?: string };
-
-export type PlanStepOpts = {
-  details?: string;
-};
-
-export type PlanStepUpdate = {
-  title?: string;
-  details?: string;
-};
-
-export interface PlanStep {
-  update(opts: PlanStepUpdate): this;
-  done(details?: string): this;
-  fail(details?: string): this;
-}
-
-export interface PlanHandle {
-  /** @internal Used by trackPlanTools — do not call directly. */
-  upsertTask(id: string, task: Omit<PlanTaskInput, 'id'>): void;
-  step<T>(title: string, fn: () => Promise<T>, opts?: PlanStepOpts): Promise<T>;
-  step(title: string, opts?: PlanStepOpts): PlanStep;
-  title(text: string): this;
-  finish(title?: string): Promise<void>;
-  fail(title?: string): Promise<void>;
-}
-
-export type PlanControl = (title?: string) => PlanHandle;
-
 export interface AgentReplyPayload {
   conversationId: string;
   integrationIdentifier: string;
@@ -651,9 +641,10 @@ export interface AgentReplyPayload {
   resolve?: { summary?: string };
   signals?: Signal[];
   toolResults?: ToolResult[];
+  toolApprovalRequest?: ToolApprovalRequestPayload;
   addReactions?: AddReactionPayload[];
+  deleteMessages?: DeleteMessagePayload[];
   typing?: TypingOp;
-  planProgress?: PlanProgressEvent;
 }
 
 /** Shape returned by /agents/:id/reply when a reply or edit was delivered. */

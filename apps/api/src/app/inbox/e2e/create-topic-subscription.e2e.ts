@@ -1,4 +1,4 @@
-import { StepTypeEnum } from '@novu/shared';
+import { StepTypeEnum, TOPIC_SUBSCRIPTION_IDENTIFIER_MAX_LENGTH } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { CreateTopicSubscriptionRequestDto } from '../dtos/create-topic-subscription-request.dto';
@@ -120,6 +120,35 @@ describe('Create topic subscription - /inbox/topics/:topicKey/subscriptions (POS
     );
     expect(subscriptionResponse.body.data.preferences).to.exist;
     expect(subscriptionResponse.body.data.preferences.length).to.equal(1);
+  });
+
+  it('should reject user-provided subscription identifiers longer than 512 characters', async () => {
+    const topicKey = `topic-${Date.now()}`;
+    const tooLongIdentifier = 'a'.repeat(TOPIC_SUBSCRIPTION_IDENTIFIER_MAX_LENGTH + 1);
+
+    const subscriptionResponse = await createSubscription({
+      session,
+      topicKey,
+      body: {
+        identifier: tooLongIdentifier,
+      },
+    });
+
+    expect(subscriptionResponse.status).to.equal(422);
+  });
+
+  it('should allow auto-generated subscription identifiers when no custom identifier is provided', async () => {
+    const topicKey = `topic-${Date.now()}`;
+
+    const subscriptionResponse = await createSubscription({
+      session,
+      topicKey,
+      body: {},
+    });
+
+    expect(subscriptionResponse.status).to.equal(201);
+    expect(subscriptionResponse.body.data.identifier).to.exist;
+    expect(subscriptionResponse.body.data.identifier.length).to.be.at.most(TOPIC_SUBSCRIPTION_IDENTIFIER_MAX_LENGTH);
   });
 });
 

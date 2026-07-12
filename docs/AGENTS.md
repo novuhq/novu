@@ -36,13 +36,34 @@ Use Novu-specific terms consistently. For full definitions, see the [glossary](/
 - Capitalize **Novu** and product names: Inbox, Framework, Dashboard
 - Include frontmatter `title` and `description` on MDX pages
 - Use `sidebarTitle` for short navigation labels when the page `title` is long (for example, SEO question-format titles)
+- API endpoint pages must include a `description` in frontmatter (one concise sentence) plus the `openapi` path key, for example:
+
+```mdx
+---
+title: "Create an agent"
+description: "Create an agent in the current environment."
+openapi: "POST /v1/agents"
+---
+```
+
+- Do not omit `description` on OpenAPI-backed pages — Mintlify uses it for SEO and page metadata.
 - API endpoint pages must include a `description` and a 1–2 sentence intro before the OpenAPI block
+- API schema reference pages use markdown tables (`Field | Type | Description`), not `<ResponseField>`. Escape union separators in the **Type** column as `\|` (for example, `` `string \| null` ``). Prefer `Record<string, unknown>` over `{ [k: string]: any; }` in table cells.
 - Provider integration pages use the title pattern `{Provider} {Channel} Integration with Novu` with `sidebarTitle` for the short provider name
 - Use descriptive alt text on all diagrams and screenshots
 - See [SEO and GEO maintenance](/SEO_MAINTENANCE.md) for the ongoing review checklist
 - Use icons on top-level navigation section titles only (set `"icon"` on groups in `docs.json`), not on individual pages or nested collapsible groups
 - For icons we use the [Lucide](https://lucide.dev/) library.
 - Prefer Mintlify components (`<Card>`, `<Columns>`, `<Steps>`, `<CodeGroup>`) over raw HTML
+
+## API schema reference pages
+
+Pages under `docs/api-reference/**/**-schema.mdx` document resource field shapes for the API reference sidebar.
+
+- Use a **markdown table** with columns `Field`, `Type`, and `Description`.
+- Do **not** use `<ResponseField>` — it is a legacy Mintlify component that is not supported in this docs setup and does not render reliably.
+- Follow the pattern in `docs/api-reference/agents/agent-schema.mdx` and `docs/api-reference/contexts/context-schema.mdx` (intro prose + table when listing fields).
+- OpenAPI-backed endpoint pages (`openapi: "METHOD /path"` in frontmatter) inherit request/response schemas from the spec; separate schema pages are only needed when you want a human-readable field glossary in the sidebar.
 
 ## AI prompt blocks
 

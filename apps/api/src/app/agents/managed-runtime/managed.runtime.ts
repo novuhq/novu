@@ -8,9 +8,9 @@ import type { ConversationTurn } from '../conversation-runtime/runtime/conversat
 import { applyPlatformThreadIdToThread } from '../conversation-runtime/runtime/platform-thread.util';
 import { AgentEventEnum } from '../shared/enums/agent-event.enum';
 import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
+import { parseToolApprovalActionId } from '../shared/tool-approval/action-id';
 import { buildUnresolvedSubscriberAccessReply } from '../shared/util/agent-inbound-replies';
 import { ManagedAgentService } from './managed-agent.service';
-import { parseToolApprovalActionId } from './tool-approval/approval-card.builder';
 import { ConfirmToolApprovalCommand } from './tool-approval/confirm-tool-approval.command';
 import { ConfirmToolApproval } from './tool-approval/confirm-tool-approval.usecase';
 
@@ -141,9 +141,36 @@ export class ManagedRuntime implements AgentRuntime {
   }
 
   private async replyUnresolvedSubscriberAccess(turn: ConversationTurn): Promise<void> {
+    const resolution = turn.subscriberResolution;
+
+    /*
+     * The only place the access-denied / verify-your-email reply is produced.
+     * This warn is deliberately structured to make the distinct causes
+     * separable in log search without debug logging: `resolutionOutcome`
+     * distinguishes a genuine miss from a broken lookup, `environmentId`
+     * exposes environment mismatches, and a `resolved` outcome paired with a
+     * null `turn.subscriber` flags a subscriber record that failed to load.
+     */
+    this.logger.warn(
+      {
+        agentId: turn.agentId,
+        environmentId: turn.config.environmentId,
+        organizationId: turn.config.organizationId,
+        platform: turn.config.platform,
+        integrationIdentifier: turn.config.integrationIdentifier,
+        conversationId: turn.conversation._id,
+        senderPlatformUserId: turn.message?.author?.userId,
+        resolutionOutcome: resolution?.outcome,
+        resolvedSubscriberId: resolution?.outcome === 'resolved' ? resolution.subscriberId : undefined,
+        err: resolution?.outcome === 'error' ? resolution.err : undefined,
+      },
+      'Unresolved subscriber — replying with access message instead of dispatching'
+    );
+
     const reply = buildUnresolvedSubscriberAccessReply({
       platform: turn.config.platform,
       senderEmail: turn.message?.author?.userId,
+      resolutionOutcome: resolution?.outcome,
     });
 
     applyPlatformThreadIdToThread(turn.thread, turn.platformThreadId);

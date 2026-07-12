@@ -1,34 +1,25 @@
-import type {
-  AgentContextBase,
-  FileRef,
-  MessageContent,
-  ReplyHandle,
-  ToolApprovalConfig,
-  ToolResult,
-} from '../../resources/agent/agent.types';
-import { type ApprovalPayload, buildApprovalActionId } from '../../resources/agent/tool-approval/action-id';
-import { defaultApprovalCard } from '../../resources/agent/tool-approval/approval-card';
-import type { AiSdkResult } from '../types';
+import type { AgentRuntimeContext } from '../../resources/agent/agent.runtime';
+import type { ToolApprovalConfig } from '../../resources/agent/agent.types';
+import { isCardElement } from '../../resources/agent/guards';
+import { postToolApprovalCard } from '../../resources/agent/tool-approval/post-card';
+import type { AiSdkApprovalRequestPart, AiSdkGenerateResult, AiSdkResult, AiSdkStreamResult } from '../types';
 import { emitExecutedToolResults } from './collect-results';
 
-/**
- * Routes AI SDK `streamText` / `generateText` output back to Novu.
- *
- * ## Responsibilities
- * 1. **Persist gated tool results** — approved tools that ran this turn (via `./collect-results`)
- * 2. **Pause for approval** — post one approval card when the model gated a tool
- * 3. **Deliver text** — reply with final model text when the turn is complete
- *
- * Order matters: tool results are emitted before replies so ledger chronology stays consistent.
- */
-
-interface AiSdkContext extends AgentContextBase {
-  reply(content: MessageContent, options?: { files?: FileRef[]; toolApproval?: ApprovalPayload }): Promise<ReplyHandle>;
-  emitToolResult(result: ToolResult): void;
+export function isStreamResult(value: unknown): value is AiSdkStreamResult {
+  return (
+    typeof value === 'object' && value !== null && typeof (value as AiSdkStreamResult).consumeStream === 'function'
+  );
 }
 
-function isCardElement(value: object): boolean {
-  return 'type' in value && (value as { type: string }).type === 'card';
+export function isGenerateResult(value: unknown): value is AiSdkGenerateResult {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'text' in value &&
+    'steps' in value &&
+    'usage' in value &&
+    !isStreamResult(value)
+  );
 }
 
 export function isAiSdkResult(value: unknown): value is AiSdkResult {
@@ -36,86 +27,54 @@ export function isAiSdkResult(value: unknown): value is AiSdkResult {
     return false;
   }
 
-  if ('textStream' in value) {
-    return 'text' in value;
+  return isStreamResult(value) || isGenerateResult(value);
+}
+
+/** Manual approval only — skip `isAutomatic` parts the SDK already resolved in the same turn. */
+function isManualToolApprovalRequestPart(part: unknown): part is AiSdkApprovalRequestPart {
+  if (typeof part !== 'object' || part === null || (part as { type?: string }).type !== 'tool-approval-request') {
+    return false;
   }
 
-  return 'text' in value && 'steps' in value;
+  const request = part as AiSdkApprovalRequestPart & { isAutomatic?: boolean };
+
+  return !request.isAutomatic && typeof request.toolCall?.toolCallId === 'string';
 }
 
-interface ToolApprovalRequestPart {
-  type: 'tool-approval-request';
-  approvalId: string;
-  toolCall: { toolCallId: string; toolName: string; input?: Record<string, unknown> };
-}
-
-async function collectApprovalRequests(result: AiSdkResult): Promise<ToolApprovalRequestPart[]> {
-  const content = await result.content;
+async function collectApprovalRequests(result: AiSdkResult): Promise<AiSdkApprovalRequestPart[]> {
+  const content = await Promise.resolve(result.content);
   if (!Array.isArray(content)) {
     return [];
   }
 
-  return content.filter((p): p is ToolApprovalRequestPart => (p as { type?: string }).type === 'tool-approval-request');
-}
-
-async function awaitAiSdkRun(result: AiSdkResult): Promise<void> {
-  const pending: PromiseLike<unknown>[] = [];
-
-  if (result.text != null) {
-    pending.push(Promise.resolve(result.text));
-  }
-
-  if (result.content != null) {
-    pending.push(Promise.resolve(result.content));
-  }
-
-  if (result.steps != null) {
-    pending.push(Promise.resolve(result.steps));
-  }
-
-  if (result.response != null) {
-    pending.push(Promise.resolve(result.response));
-  }
-
-  await Promise.all(pending);
-}
-
-async function postApprovalCard(
-  request: ToolApprovalRequestPart,
-  ctx: AiSdkContext,
-  config: ToolApprovalConfig | undefined
-): Promise<void> {
-  const toolCall = { id: request.toolCall.toolCallId, name: request.toolCall.toolName, input: request.toolCall.input };
-  const actionIds = {
-    approve: buildApprovalActionId('approve', request.approvalId),
-    deny: buildApprovalActionId('deny', request.approvalId),
-  };
-  const content = config?.renderApproval?.({ toolCall, actionIds }) ?? defaultApprovalCard({ toolCall, actionIds });
-  const payload: ApprovalPayload = {
-    approvalId: request.approvalId,
-    toolCallId: request.toolCall.toolCallId,
-    name: request.toolCall.toolName,
-    input: request.toolCall.input,
-  };
-
-  await ctx.reply(content, { toolApproval: payload });
+  return (content as unknown[]).filter(isManualToolApprovalRequestPart);
 }
 
 /** Route an AI SDK result: pause (post approval card) if gated, else deliver the text. */
-export async function handleResult(
+export async function handleAiSdkResult(
   result: AiSdkResult,
-  ctx: AgentContextBase,
+  ctx: AgentRuntimeContext,
   config: ToolApprovalConfig | undefined
 ): Promise<void> {
-  const internal = ctx as unknown as AiSdkContext;
+  if (isStreamResult(result)) {
+    await result.consumeStream();
+  }
 
-  await awaitAiSdkRun(result);
-  await emitExecutedToolResults(result, internal);
+  // save executed tool results to Novu history
+  await emitExecutedToolResults(result, ctx);
 
   const requests = await collectApprovalRequests(result);
+
   if (requests.length > 0) {
+    const request = requests[0];
+    const toolCall = {
+      id: request.toolCall.toolCallId,
+      name: request.toolCall.toolName,
+      input: request.toolCall.input,
+    };
+
     // One card at a time — multi-tool turns surface sequentially.
-    await postApprovalCard(requests[0], internal, config);
+    await postToolApprovalCard(ctx, toolCall, config, request.approvalId);
 
     return;
   }
@@ -123,8 +82,8 @@ export async function handleResult(
   await deliverResult(result, ctx);
 }
 
-export async function deliverResult(result: AiSdkResult, ctx: AgentContextBase): Promise<void> {
-  const text = (await result.text).trim();
+export async function deliverResult(result: AiSdkResult, ctx: AgentRuntimeContext): Promise<void> {
+  const text = (await Promise.resolve(result.text)).trim();
 
   if (!text) {
     await ctx.typing.stop();

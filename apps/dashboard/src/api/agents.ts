@@ -2,6 +2,7 @@ import type {
   AgentMcpServerEnablementDto,
   AgentRuntime,
   AgentRuntimeProviderIdEnum,
+  AgentSubscriberAccessEnum,
   ChannelTypeEnum,
   DirectionEnum,
   IEnvironment,
@@ -54,9 +55,18 @@ export type AgentIntegrationSummary = {
   active: boolean;
 };
 
+export type AgentSubscriberAccess = `${AgentSubscriberAccessEnum}`;
+
 export type AgentBehavior = {
   acknowledgeOnReceived?: boolean;
   reactionOnResolved?: string | null;
+  /**
+   * Email agents only. `open` auto-creates a lightweight subscriber from an
+   * unknown sender's email so the agent can reply; `restricted` rejects unknown
+   * senders. Newly provisioned email inboxes default to `open`; unset behaves as
+   * `restricted`.
+   */
+  subscriberAccess?: AgentSubscriberAccess;
 };
 
 export type ManagedRuntimeResponse = {

@@ -1,6 +1,6 @@
 {
   "name": "@novu/ws",
-  "version": "3.17.1",
+  "version": "3.18.0",
   "description": "",
   "author": "",
   "private": true,
@@ -24,8 +24,7 @@
     "test": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' NODE_ENV=test NODE_OPTIONS=--no-experimental-strip-types mocha --timeout 10000 --require ts-node/register --exit --file e2e/setup.ts './src/**/*.spec.ts'"
   },
   "dependencies": {
-    "@aws-sdk/client-secrets-manager": "^3.1048.0",
-    "yargs": "^17.7.2",
+    "@aws-sdk/client-secrets-manager": "3.996.0",
     "@godaddy/terminus": "^4.12.1",
     "@nestjs/common": "11.1.27",
     "@nestjs/core": "11.1.27",
@@ -40,12 +39,9 @@
     "@novu/dal": "workspace:*",
     "@novu/shared": "workspace:*",
     "@novu/testing": "workspace:*",
-    "@sentry/browser": "^8.33.1",
-    "@sentry/hub": "^7.114.0",
-    "@sentry/nestjs": "^8.49.0",
-    "@sentry/node": "^8.49.0",
-    "@sentry/profiling-node": "^8.49.0",
-    "@sentry/tracing": "^7.40.0",
+    "@sentry/nestjs": "^10.63.0",
+    "@sentry/node": "^10.63.0",
+    "@sentry/profiling-node": "^10.63.0",
     "@socket.io/admin-ui": "^0.5.1",
     "@socket.io/redis-adapter": "^7.2.0",
     "class-transformer": "0.5.1",

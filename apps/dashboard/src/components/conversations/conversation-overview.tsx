@@ -65,7 +65,7 @@ export function ConversationOverview({ conversation }: ConversationOverviewProps
                     second: '2-digit',
                     hour12: false,
                   })
-                : '—'}
+                : '-'}
             </TimeDisplayHoverCard>
           </MetaRow>
           <MetaRow label="Agent">
@@ -96,7 +96,7 @@ export function ConversationOverview({ conversation }: ConversationOverviewProps
                   />
                 </div>
               ))}
-              {platforms.length === 0 && <span className="text-text-soft text-xs">—</span>}
+              {platforms.length === 0 && <span className="text-text-soft text-xs">-</span>}
             </div>
           </MetaRow>
           <MetaRow label="Status" isLast>

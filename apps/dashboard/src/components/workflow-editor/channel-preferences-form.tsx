@@ -289,7 +289,7 @@ export const ChannelPreferencesForm = (props: ConfigureWorkflowFormProps) => {
                               <span className="text-text-soft text-2xs">What it is:</span>
                               <ul className="text-text-sub text-2xs list-disc pl-4">
                                 <li>
-                                  Severity is a way to classify the importance of a notification — from high-priority to
+                                  Severity is a way to classify the importance of a notification: from high-priority to
                                   low-priority messages.
                                 </li>
                               </ul>

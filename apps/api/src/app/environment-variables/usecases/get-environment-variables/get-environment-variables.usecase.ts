@@ -21,19 +21,31 @@ export class GetEnvironmentVariables {
     }
 
     const variables = await this.environmentVariableRepository.find(query, '*', { sort: { createdAt: -1 } });
+    const scopeToEnvironmentId = command.scopeToEnvironment ? command.environmentId : undefined;
 
-    return variables.map((variable) => toEnvironmentVariableResponseDto(variable));
+    return variables.map((variable) => toEnvironmentVariableResponseDto(variable, { scopeToEnvironmentId }));
   }
 }
 
-export function toEnvironmentVariableResponseDto(variable: EnvironmentVariableEntity): EnvironmentVariableResponseDto {
+type ToEnvironmentVariableResponseOptions = {
+  scopeToEnvironmentId?: string;
+};
+
+export function toEnvironmentVariableResponseDto(
+  variable: EnvironmentVariableEntity,
+  options?: ToEnvironmentVariableResponseOptions
+): EnvironmentVariableResponseDto {
+  const values = options?.scopeToEnvironmentId
+    ? variable.values.filter((value) => value._environmentId === options.scopeToEnvironmentId)
+    : variable.values;
+
   return {
     _id: variable._id,
     _organizationId: variable._organizationId,
     key: variable.key,
     type: variable.type ?? EnvironmentVariableType.STRING,
     isSecret: variable.isSecret,
-    values: variable.values.map((v) => ({
+    values: values.map((v) => ({
       _environmentId: v._environmentId,
       value: variable.isSecret ? SECRET_MASK : decryptEnvironmentVariableValue(v.value),
     })),

@@ -13,6 +13,7 @@ type AgentListenStepProps = {
   selectedIntegrationId?: string;
   existingLinks: AgentIntegrationLink[];
   onSelect: (providerId: string, integration?: IIntegration) => void;
+  showChannelSwitcherRail?: boolean;
 };
 
 export function AgentListenStep({
@@ -24,6 +25,7 @@ export function AgentListenStep({
   selectedIntegrationId,
   existingLinks,
   onSelect,
+  showChannelSwitcherRail,
 }: AgentListenStepProps) {
   return (
     <SetupStep
@@ -31,7 +33,7 @@ export function AgentListenStep({
       status={deriveStepStatus(index, firstIncompleteStep)}
       sectionLabel={`${index}/${totalSteps} SETUP WHERE TO LISTEN`}
       title="Choose where your agent listens and communicates"
-      description="Start with one provider your agent can receive and respond on — you can add more later."
+      description="Start with one provider your agent can receive and respond on: you can add more later."
       fullWidthContent={
         <ProviderCards
           agentIdentifier={agentIdentifier}
@@ -39,6 +41,7 @@ export function AgentListenStep({
           selectedIntegrationId={selectedIntegrationId}
           existingLinks={existingLinks}
           onSelect={onSelect}
+          showChannelSwitcherRail={showChannelSwitcherRail}
         />
       }
     />

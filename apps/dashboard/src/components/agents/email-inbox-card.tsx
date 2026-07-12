@@ -1,20 +1,34 @@
-import { DomainStatusEnum, type IIntegration } from '@novu/shared';
-import { type ReactNode, useMemo, useRef, useState } from 'react';
-import { RiAddLine, RiCloseLine, RiInformation2Line } from 'react-icons/ri';
-import { Link } from 'react-router-dom';
+import { ApiServiceLevelEnum, FeatureNameEnum, getFeatureForTierAsBoolean, type IIntegration } from '@novu/shared';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { RiAddLine, RiArrowRightSLine, RiArrowRightUpLine, RiCloseLine, RiInformation2Line } from 'react-icons/ri';
+import { Link, useSearchParams } from 'react-router-dom';
 import type { AgentIntegrationEmbedded, AgentResponse } from '@/api/agents';
 import { CopyableEmailAddress } from '@/components/agents/copyable-email-address';
+import { EmailSubscriberAccessToggle } from '@/components/agents/email-subscriber-access-toggle';
 import { CompactButton } from '@/components/primitives/button-compact';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { Switch } from '@/components/primitives/switch';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
+import { UpgradeCTATooltip } from '@/components/upgrade-cta-tooltip';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
+import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { useUpdateIntegration } from '@/hooks/use-update-integration';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
-import { InboundAddressForm } from './inbound-address-form';
+import { getMinimumTierForFeature } from '@/utils/upgrade-tier';
+import { AgentCustomDomainSheet } from './agent-custom-domain-sheet';
 import { useEmailSetupCredentials } from './use-email-setup-credentials';
+
+const CREATE_SUBSCRIBER_DOCS_URL = 'https://docs.novu.co/api-reference/subscribers/create-a-subscriber';
+
+const quietLinkClassName =
+  'text-text-sub hover:text-text-strong inline-flex items-center gap-0.5 text-label-xs font-medium leading-4 transition-colors';
+
+const connectDomainButtonClassName = cn(
+  quietLinkClassName,
+  'self-start py-1 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:text-text-sub'
+);
 
 export type EmailInboxCardProps = {
   emailIntegration: IIntegration;
@@ -28,46 +42,74 @@ export type EmailInboxCardProps = {
    */
   integrationEmbedded: AgentIntegrationEmbedded;
   agent: AgentResponse;
+  /**
+   * Hide the "Connect custom domain" add-form + tip. Used when the parent surface (the layer-2
+   * "What's next" guide) owns the branded-address add flow, so this card stays a pure manager
+   * (enable + shared-inbox toggles + the existing address list with remove).
+   */
+  hideCustomAddressForm?: boolean;
 };
 
 /**
  * Post-setup inbox manager: lists the agent's inbound addresses (Novu shared
  * inbox + each custom-domain `DomainRouteTypeEnum.AGENT` route) and lets the
  * user disable the shared inbox or remove a custom one. There is no notion of
- * a "primary" address — every listed address routes inbound. The "+ Connect
+ * a "primary" address; every listed address routes inbound. The "+ Connect
  * custom domain" affordance reveals the add-form on demand instead of always
  * occupying screen real estate.
  */
-export function EmailInboxCardBody({ emailIntegration, integrationEmbedded, agent }: EmailInboxCardProps) {
+export function EmailInboxCardBody({
+  emailIntegration,
+  integrationEmbedded,
+  agent,
+  hideCustomAddressForm = false,
+}: EmailInboxCardProps) {
   const { currentEnvironment } = useEnvironment();
   const { mutateAsync: updateIntegration } = useUpdateIntegration();
   const { integrations } = useFetchIntegrations();
+  const { subscription } = useFetchSubscription();
+  const domainsEnabled = getFeatureForTierAsBoolean(
+    FeatureNameEnum.DOMAINS_BOOLEAN,
+    subscription?.apiServiceLevel || ApiServiceLevelEnum.FREE
+  );
 
   const { configuredAddresses, domains, addAddress, removeAddress, setSharedInboxDisabled, isSharedToggleUpdating } =
     useEmailSetupCredentials({ emailIntegration, integrations, agent });
 
   const serverCredentials = emailIntegration.credentials ?? {};
   const [isToggling, setIsToggling] = useState(false);
-  const [isAddingCustom, setIsAddingCustom] = useState(false);
+  const [isDomainSheetOpen, setIsDomainSheetOpen] = useState(false);
+  const [returnDomainName, setReturnDomainName] = useState<string | undefined>(undefined);
+  const [searchParams, setSearchParams] = useSearchParams();
   const activeRef = useRef(emailIntegration.active !== false);
+  const hasHandledDomainReturnRef = useRef(false);
 
   const enabled = emailIntegration.active !== false;
   const inboxSectionDisabled = !enabled;
-  const domainsPath = currentEnvironment?.slug
-    ? buildRoute(ROUTES.DOMAINS, { environmentSlug: currentEnvironment.slug })
-    : ROUTES.INTEGRATIONS;
 
   const sharedAddress = integrationEmbedded.sharedInboundAddress;
   const sharedDisabled = Boolean(integrationEmbedded.sharedInboxDisabled);
   const hasCustomAddresses = configuredAddresses.length > 0;
-  // Mirror the verified-domain filter the add-form applies so the affordance
-  // and the picker stay in sync: no point offering "Connect custom domain"
-  // when the picker would open empty. When no usable domains exist, the
-  // discoverability tip below points the user at the domain-management page.
-  const hasUsableDomains = useMemo(
-    () => domains.some((d) => d.status === DomainStatusEnum.VERIFIED && d.mxRecordConfigured),
-    [domains]
-  );
+
+  // Domain Connect returns the user to this page with a `?customDomain=<name>` marker; reopen the
+  // sheet on that domain so verification resumes inline, then strip the marker from the URL.
+  const customDomainReturn = searchParams.get('customDomain');
+  useEffect(() => {
+    if (!customDomainReturn || hasHandledDomainReturnRef.current || !domainsEnabled) {
+      return;
+    }
+
+    hasHandledDomainReturnRef.current = true;
+    setReturnDomainName(customDomainReturn);
+    setIsDomainSheetOpen(true);
+
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('customDomain');
+    nextParams.delete('domainConnect');
+    nextParams.delete('error');
+    nextParams.delete('error_description');
+    setSearchParams(nextParams, { replace: true });
+  }, [customDomainReturn, domainsEnabled, searchParams, setSearchParams]);
 
   async function persistActive(nextActive: boolean): Promise<void> {
     const previousActive = activeRef.current;
@@ -103,20 +145,18 @@ export function EmailInboxCardBody({ emailIntegration, integrationEmbedded, agen
     }
   }
 
-  const tooltipCopy = useMemo(
-    () =>
-      sharedAddress
-        ? `Inbound mail sent to ${sharedAddress} is delivered to this agent.`
-        : 'Replies and incoming mail to this address are delivered to the agent.',
-    [sharedAddress]
-  );
+  const inboundAddressesInfoTooltip =
+    'Share an address anywhere users reach you: contact forms, reply flows, support footers, or docs. All listed addresses route inbound. There is no primary.';
+
+  const subscriberAccessInfoTooltip =
+    "With Open, a lightweight subscriber is created from the sender's address so the agent can reply. It merges into their account if they later sign up with the same email.";
 
   function handleSharedToggle(nextEnabled: boolean) {
     // Disabling is only safe when at least one custom-domain address remains
     // so the agent isn't left with zero inbound paths.
     if (!nextEnabled && !hasCustomAddresses) {
       showErrorToast(
-        'Connect a custom domain first — the agent must keep at least one inbound address.',
+        'Connect a custom domain first: the agent must keep at least one inbound address.',
         'Cannot turn off the shared inbox'
       );
 
@@ -125,12 +165,25 @@ export function EmailInboxCardBody({ emailIntegration, integrationEmbedded, agen
     setSharedInboxDisabled(!nextEnabled);
   }
 
-  function handleAddAddress(address: string, domain: (typeof domains)[number]): boolean {
-    addAddress(address, domain);
-    setIsAddingCustom(false);
+  function handleConnectDomain() {
+    if (!domainsEnabled) {
+      return;
+    }
 
-    return true;
+    setIsDomainSheetOpen(true);
   }
+
+  function handleDomainSheetOpenChange(open: boolean) {
+    setIsDomainSheetOpen(open);
+
+    if (!open) {
+      setReturnDomainName(undefined);
+    }
+  }
+
+  const subscribersPath = currentEnvironment?.slug
+    ? buildRoute(ROUTES.SUBSCRIBERS, { environmentSlug: currentEnvironment.slug })
+    : ROUTES.SUBSCRIBERS;
 
   return (
     <>
@@ -141,20 +194,8 @@ export function EmailInboxCardBody({ emailIntegration, integrationEmbedded, agen
       </CardRow>
 
       <CardRow
-        title={
-          <span className="flex items-center gap-1">
-            Inbound addresses
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button type="button" aria-label="More info">
-                  <RiInformation2Line className="text-text-soft size-5" aria-hidden />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>{tooltipCopy}</TooltipContent>
-            </Tooltip>
-          </span>
-        }
-        description="Users can reach this agent at any of the addresses below. Mail delivered to any of them is forwarded to the agent."
+        title={<CardRowInfoTitle label="Inbound addresses" infoTooltip={inboundAddressesInfoTooltip} />}
+        description="Mail sent to any of these addresses is delivered to this agent."
         divider
         disabled={inboxSectionDisabled}
       >
@@ -197,49 +238,70 @@ export function EmailInboxCardBody({ emailIntegration, integrationEmbedded, agen
             })}
           </div>
 
-          {isAddingCustom && hasUsableDomains ? (
-            <div className="flex flex-col gap-1.5">
-              <InboundAddressForm
-                domains={domains}
-                isDisabled={inboxSectionDisabled}
-                onSubmit={handleAddAddress}
-                isExistingAddress={(address, domainId) =>
-                  configuredAddresses.some((a) => a.address === address && a.domainId === domainId)
-                }
-              />
+          {!hideCustomAddressForm ? (
+            domainsEnabled ? (
               <button
                 type="button"
-                className="text-text-soft hover:text-text-sub text-label-xs self-start font-medium transition-colors"
-                onClick={() => setIsAddingCustom(false)}
+                disabled={inboxSectionDisabled}
+                onClick={handleConnectDomain}
+                className={connectDomainButtonClassName}
               >
-                Cancel
+                <RiAddLine className="size-3.5" aria-hidden />
+                <span>Connect custom domain</span>
               </button>
-            </div>
+            ) : (
+              <UpgradeCTATooltip
+                description="Connect a custom domain to receive email on your own domain."
+                requiredTier={getMinimumTierForFeature(FeatureNameEnum.DOMAINS_BOOLEAN)}
+                utmCampaign="domains"
+                utmSource="agent-email-inbox"
+              >
+                <button type="button" disabled className={connectDomainButtonClassName}>
+                  <RiAddLine className="size-3.5" aria-hidden />
+                  <span>Connect custom domain</span>
+                </button>
+              </UpgradeCTATooltip>
+            )
           ) : null}
-
-          {!isAddingCustom && hasUsableDomains ? (
-            <button
-              type="button"
-              disabled={inboxSectionDisabled}
-              onClick={() => setIsAddingCustom(true)}
-              className="text-text-sub hover:text-text-strong inline-flex items-center gap-0.5 self-start py-1 text-label-xs font-medium leading-4 transition-colors disabled:opacity-50"
-            >
-              <RiAddLine className="size-3.5" aria-hidden />
-              <span>Connect custom domain</span>
-            </button>
-          ) : null}
-
-          {hasCustomAddresses ? null : (
-            <p className="text-text-soft text-paragraph-xs leading-4">
-              <span aria-hidden>💡</span> Tip:{' '}
-              <Link to={domainsPath} className="text-text-sub underline underline-offset-2">
-                Configure custom domains
-              </Link>{' '}
-              in Novu to make them available here.
-            </p>
-          )}
         </div>
       </CardRow>
+
+      <CardRow
+        title={<CardRowInfoTitle label="Who can email this agent" infoTooltip={subscriberAccessInfoTooltip} />}
+        description="Open accepts email from anyone. Off replies only to known subscribers."
+        divider
+        footer={
+          <div className="flex items-center gap-3">
+            <Link to={subscribersPath} className={quietLinkClassName}>
+              <span>Add subscribers manually</span>
+              <RiArrowRightSLine className="size-3.5" aria-hidden />
+            </Link>
+            <a
+              href={CREATE_SUBSCRIBER_DOCS_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={quietLinkClassName}
+            >
+              <span>Create via SDK</span>
+              <RiArrowRightUpLine className="size-3.5" aria-hidden />
+            </a>
+          </div>
+        }
+      >
+        <div className="flex items-center justify-end gap-2">
+          <span className="text-text-soft text-label-xs font-medium leading-4">Accept email from anyone</span>
+          <EmailSubscriberAccessToggle agent={agent} ariaLabel="Accept email from anyone" />
+        </div>
+      </CardRow>
+
+      <AgentCustomDomainSheet
+        open={isDomainSheetOpen}
+        onOpenChange={handleDomainSheetOpenChange}
+        initialDomainName={returnDomainName}
+        domains={domains}
+        configuredAddresses={configuredAddresses}
+        onAddAddress={addAddress}
+      />
     </>
   );
 }
@@ -251,32 +313,24 @@ type InboxRowProps = {
 };
 
 /**
- * Minimal row: lighter visual weight than the previous bordered/shadowed
- * pill — relies on background tint + subtle stroke for separation.
+ * Address row: the pill stays a compact copy target (address + copy button
+ * only) while controls (badge, remove, toggle) live outside it, right-aligned
+ * so they form a consistent column across rows.
  */
-function buildInboxRowTrailing(badge?: string, trailing?: ReactNode) {
-  if (!trailing && !badge) {
-    return undefined;
-  }
-
-  const badgeNode = badge ? (
-    <span className="text-text-soft text-[10px] font-medium uppercase leading-3 tracking-wide">{badge}</span>
-  ) : null;
-
-  if (!trailing) {
-    return badgeNode ?? undefined;
-  }
-
+function InboxRow({ address, badge, trailing }: InboxRowProps) {
   return (
-    <div className="flex items-center gap-1">
-      {badgeNode}
-      {trailing}
+    <div className="flex min-w-0 items-center justify-between gap-2">
+      <CopyableEmailAddress email={address} className="min-w-0" />
+      {badge || trailing ? (
+        <div className="flex shrink-0 items-center gap-1.5">
+          {badge ? (
+            <span className="text-text-soft text-[10px] font-medium uppercase leading-3 tracking-wide">{badge}</span>
+          ) : null}
+          {trailing}
+        </div>
+      ) : null}
     </div>
   );
-}
-
-function InboxRow({ address, badge, trailing }: InboxRowProps) {
-  return <CopyableEmailAddress email={address} trailing={buildInboxRowTrailing(badge, trailing)} />;
 }
 
 type SharedInboxRowProps = {
@@ -289,7 +343,7 @@ type SharedInboxRowProps = {
 
 /**
  * Variant of `InboxRow` for the Novu shared inbox. The row stays visually
- * enabled even when the user has flipped the switch off — only the toggle's
+ * enabled even when the user has flipped the switch off. Only the toggle's
  * off-state signals the disabled status. Hovering anywhere on the row body
  * surfaces a tooltip explaining what "off" means (drops inbound mail to the
  * shared `agentconnect.sh` address while keeping custom-domain routes
@@ -313,7 +367,7 @@ function SharedInboxRow({ address, disabled, toggleDisabled, toggleTooltip, onTo
     </Tooltip>
   );
 
-  const rowContent = <CopyableEmailAddress email={address} trailing={switchControl} />;
+  const rowContent = <InboxRow address={address} trailing={switchControl} />;
 
   if (!disabled) {
     return rowContent;
@@ -323,9 +377,25 @@ function SharedInboxRow({ address, disabled, toggleDisabled, toggleTooltip, onTo
     <Tooltip>
       <TooltipTrigger asChild>{rowContent}</TooltipTrigger>
       <TooltipContent className="max-w-xs">
-        Shared inbox is off — mail to this address is dropped. Flip the switch to re-enable it.
+        Shared inbox is off: mail to this address is dropped. Flip the switch to re-enable it.
       </TooltipContent>
     </Tooltip>
+  );
+}
+
+function CardRowInfoTitle({ label, infoTooltip }: { label: string; infoTooltip: string }) {
+  return (
+    <span className="flex items-center gap-1">
+      {label}
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button type="button" aria-label="More info">
+            <RiInformation2Line className="text-text-soft size-5" aria-hidden />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent className="max-w-xs">{infoTooltip}</TooltipContent>
+      </Tooltip>
+    </span>
   );
 }
 
@@ -335,26 +405,26 @@ function CardRow({
   children,
   divider,
   disabled,
+  footer,
 }: {
   title: ReactNode;
   description: ReactNode;
   children: ReactNode;
   divider?: boolean;
   disabled?: boolean;
+  /** Full-width content rendered below the two-column row, e.g. section-level links. */
+  footer?: ReactNode;
 }) {
   return (
-    <div
-      className={cn(
-        'flex items-start justify-between gap-6 p-3',
-        divider && 'border-stroke-weak border-b',
-        disabled && 'opacity-60'
-      )}
-    >
-      <div className="flex min-w-0 max-w-[350px] flex-1 flex-col gap-1">
-        <div className="text-text-sub text-label-sm font-medium leading-5">{title}</div>
-        <p className="text-text-soft text-paragraph-xs leading-4">{description}</p>
+    <div className={cn('flex flex-col p-3', divider && 'border-stroke-weak border-b', disabled && 'opacity-60')}>
+      <div className="flex items-start justify-between gap-6">
+        <div className="flex min-w-0 max-w-[350px] flex-1 flex-col gap-1">
+          <div className="text-text-sub text-label-sm font-medium leading-5">{title}</div>
+          <p className="text-text-soft text-paragraph-xs leading-4">{description}</p>
+        </div>
+        <div className="flex w-[360px] shrink-0 flex-col gap-1.5">{children}</div>
       </div>
-      <div className="flex w-[360px] shrink-0 flex-col gap-1.5">{children}</div>
+      {footer ? <div className="pt-3">{footer}</div> : null}
     </div>
   );
 }

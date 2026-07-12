@@ -231,8 +231,8 @@ function CliAuthContent() {
           ) : (
             <div className="text-text-sub w-full rounded-lg border border-stroke-soft bg-neutral-alpha-50 p-3 text-label-xs">
               {isConnect
-                ? 'New here? Finish sign-up and create your organization first — you will return here to authorize the CLI. Keep your terminal open while you complete this step.'
-                : 'Keep your terminal open while you authorize. If you just signed up, create or select an organization first — you will return here afterward.'}
+                ? 'New here? Finish sign-up and create your organization first: you will return here to authorize the CLI. Keep your terminal open while you complete this step.'
+                : 'Keep your terminal open while you authorize. If you just signed up, create or select an organization first: you will return here afterward.'}
             </div>
           )}
 

@@ -1,6 +1,6 @@
 {
   "name": "@novu/webhook",
-  "version": "3.17.1",
+  "version": "3.18.0",
   "description": "",
   "author": "",
   "private": true,
@@ -32,12 +32,9 @@
     "@novu/shared": "workspace:*",
     "@novu/stateless": "workspace:*",
     "@novu/testing": "workspace:*",
-    "@sentry/browser": "^8.33.1",
-    "@sentry/hub": "^7.114.0",
-    "@sentry/nestjs": "^8.49.0",
-    "@sentry/node": "^8.49.0",
-    "@sentry/profiling-node": "^8.49.0",
-    "@sentry/tracing": "^7.40.0",
+    "@sentry/nestjs": "^10.63.0",
+    "@sentry/node": "^10.63.0",
+    "@sentry/profiling-node": "^10.63.0",
     "axios": "^1.18.1",
     "class-transformer": "0.5.1",
     "class-validator": "0.15.1",
@@ -49,8 +46,7 @@
     "newrelic": "^13.12.0",
     "reflect-metadata": "0.2.2",
     "rimraf": "^3.0.2",
-    "rxjs": "7.8.2",
-    "yargs": "^17.7.2"
+    "rxjs": "7.8.2"
   },
   "devDependencies": {
     "@nestjs/cli": "11.0.23",

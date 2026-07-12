@@ -41,6 +41,7 @@ describe('NovuEmailProvisioningService', () => {
   };
   let agentRepo: {
     findOne: sinon.SinonStub;
+    update: sinon.SinonStub;
   };
 
   let savedNovuEnterprise: string | undefined;
@@ -88,6 +89,7 @@ describe('NovuEmailProvisioningService', () => {
     };
     agentRepo = {
       findOne: stub().resolves(makeAgent()),
+      update: stub().resolves({ matched: 1, modified: 1 }),
     };
   });
 
@@ -190,6 +192,65 @@ describe('NovuEmailProvisioningService', () => {
       }
 
       expect(integrationRepo.create.called).to.equal(false);
+    });
+
+    it('defaults behavior.subscriberAccess to open on first provision, guarded to unset agents only', async () => {
+      integrationRepo.findOne.onFirstCall().resolves({
+        _id: 'sendgrid-id',
+        providerId: 'sendgrid',
+        channel: ChannelTypeEnum.EMAIL,
+        active: true,
+        primary: true,
+      } as IntegrationEntity);
+      integrationRepo.create.resolves({
+        _id: 'novu-agent-int-id',
+        providerId: EmailProviderIdEnum.NovuAgent,
+        channel: ChannelTypeEnum.EMAIL,
+        identifier: 'novu-email-xxx',
+        name: 'Novu Email',
+        active: true,
+        credentials: {},
+      });
+
+      const result = await buildUsecase().execute(AGENT_ID, ENV_ID, ORG_ID);
+
+      expect(result.provisionedNewLink).to.equal(true);
+      expect(agentRepo.update.calledOnce).to.equal(true);
+      const [filter, update] = agentRepo.update.firstCall.args;
+      expect(filter._id).to.equal(AGENT_ID);
+      expect(filter._environmentId).to.equal(ENV_ID);
+      expect(filter._organizationId).to.equal(ORG_ID);
+      // One-time default: only fires when the agent has no explicit preference.
+      expect(filter['behavior.subscriberAccess']).to.deep.equal({ $exists: false });
+      expect(update.$set['behavior.subscriberAccess']).to.equal('open');
+    });
+
+    it('does not touch behavior.subscriberAccess when an existing NovuAgent link is returned', async () => {
+      const existingLink = {
+        _id: 'link-id',
+        _agentId: AGENT_ID,
+        _integrationId: 'existing-novu-agent-int-id',
+        _environmentId: ENV_ID,
+        _organizationId: ORG_ID,
+        connectedAt: null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      agentIntegrationRepo.find.resolves([existingLink]);
+      integrationRepo.findOne.onFirstCall().resolves({
+        _id: 'existing-novu-agent-int-id',
+        providerId: EmailProviderIdEnum.NovuAgent,
+        channel: ChannelTypeEnum.EMAIL,
+        identifier: 'novu-email-existing',
+        name: 'Novu Email',
+        active: true,
+        credentials: { emailSlugPrefix: 'my-agent', inboxRoutingKey: 'abcd1234' },
+      });
+
+      const result = await buildUsecase().execute(AGENT_ID, ENV_ID, ORG_ID);
+
+      expect(result.provisionedNewLink).to.equal(false);
+      expect(agentRepo.update.called).to.equal(false);
     });
 
     it('does not lookup or change outboundIntegrationId when an existing NovuAgent link is returned', async () => {

@@ -1,10 +1,12 @@
+import { AGENT_NAME_MAX_LENGTH } from '../upsert-validation-constants';
 import { CLAUDE_ANTHROPIC_SKILLS } from './claude-skills';
 import { CLAUDE_BUILTIN_TOOLS } from './claude-tools';
 import { MCP_SERVERS } from './mcp-servers';
 
 export const MAX_GENERATED_MCP_SERVERS = 5;
 export const MAX_GENERATED_SKILLS = 4;
-export const MANAGED_AGENT_NAME_MAX_LENGTH = 60;
+// Managed agents share the general agent name limit — keep a single source of truth.
+export const MANAGED_AGENT_NAME_MAX_LENGTH = AGENT_NAME_MAX_LENGTH;
 export const MANAGED_AGENT_IDENTIFIER_MAX_LENGTH = 60;
 export const MANAGED_AGENT_SYSTEM_PROMPT_MAX_LENGTH = 4000;
 
