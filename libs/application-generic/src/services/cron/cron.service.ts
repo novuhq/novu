@@ -151,7 +151,7 @@ export abstract class CronService implements OnApplicationBootstrap, OnApplicati
     this.handleJobOutcome(jobName, CronMetricsEventEnum.CREATE_STARTED);
     try {
       const _this = this;
-      this.addJob(
+      await this.addJob(
         jobName,
         async function runCronJob(job) {
           nr.startBackgroundTransaction(
