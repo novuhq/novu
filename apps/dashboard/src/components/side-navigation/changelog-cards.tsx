@@ -23,7 +23,7 @@ type SanityChangelogPost = {
     current: string;
   };
   publishedAt: string;
-  description?: string;
+  caption?: string;
   cover?: {
     _type: 'image';
     asset: SanityAsset;
@@ -36,7 +36,7 @@ type Changelog = {
   title: string;
   version: number;
   imageUrl?: string;
-  description?: string;
+  caption?: string;
   published: boolean;
   slug: string;
 };
@@ -109,7 +109,7 @@ export function ChangelogStack() {
       title: post.title,
       version: index + 1, // Since Sanity doesn't have version numbers, we'll use index
       imageUrl: getImageUrl(post.cover?.asset),
-      description: post.description?.trim() || undefined,
+      caption: post.caption?.trim() || undefined,
       published: !!post.publishedAt && new Date(post.publishedAt) <= now,
       slug: post.slug?.current || '',
     }));
@@ -125,8 +125,9 @@ export function ChangelogStack() {
         title,
         slug,
         publishedAt,
-        "description": coalesce(
-          description,
+        "caption": coalesce(
+          caption,
+          seo.description,
           pt::text(content[_type == "block" && style == "normal"][0..0]),
           pt::text(content[_type == "block"][0..0])
         ),
@@ -217,7 +218,7 @@ function ChangelogCard({
 }) {
   const [hasImageError, setHasImageError] = useState(false);
   const showImage = Boolean(changelog.imageUrl) && !hasImageError;
-  const showDescription = !showImage && Boolean(changelog.description);
+  const showCaption = !showImage && Boolean(changelog.caption);
 
   return (
     <motion.div
@@ -244,24 +245,58 @@ function ChangelogCard({
         >
           <RiCloseLine size={16} />
         </button>
-        <h5 className="text-label-sm text-text-strong mt-0 line-clamp-1 dark:text-white">{changelog.title}</h5>
-        <div className="mt-2 min-h-0 flex-1">
-          {showImage ? (
-            <div className="relative h-[110px] w-full">
-              <img
-                src={changelog.imageUrl}
-                alt={changelog.title}
-                className="h-full w-full rounded-[6px] object-cover object-top"
-                onError={() => setHasImageError(true)}
-              />
-            </div>
-          ) : showDescription ? (
-            <div className="bg-bg-weak rounded-6 border-stroke-soft flex h-[110px] flex-col overflow-hidden border px-2.5 py-2 dark:bg-white/5">
-              <p className="text-paragraph-xs text-text-soft line-clamp-5 leading-relaxed">{changelog.description}</p>
-            </div>
-          ) : null}
-        </div>
+
+        {showImage ? (
+          <ChangelogImageContent
+            title={changelog.title}
+            imageUrl={changelog.imageUrl!}
+            onImageError={() => setHasImageError(true)}
+          />
+        ) : showCaption ? (
+          <ChangelogTextContent title={changelog.title} caption={changelog.caption!} />
+        ) : (
+          <h5 className="text-label-sm text-text-strong mt-0 line-clamp-2 dark:text-white">{changelog.title}</h5>
+        )}
       </div>
     </motion.div>
+  );
+}
+
+function ChangelogImageContent({
+  title,
+  imageUrl,
+  onImageError,
+}: {
+  title: string;
+  imageUrl: string;
+  onImageError: () => void;
+}) {
+  return (
+    <>
+      <h5 className="text-label-sm text-text-strong mt-0 line-clamp-1 dark:text-white">{title}</h5>
+      <div className="relative mt-2 h-[110px] w-full">
+        <img
+          src={imageUrl}
+          alt={title}
+          className="h-full w-full rounded-[6px] object-cover object-top"
+          onError={onImageError}
+        />
+      </div>
+    </>
+  );
+}
+
+function ChangelogTextContent({ title, caption }: { title: string; caption: string }) {
+  return (
+    <div className="mt-1 flex min-h-0 flex-1 flex-col gap-1.5">
+      <h5 className="text-label-sm text-text-strong line-clamp-2 dark:text-white">{title}</h5>
+      <div className="relative min-h-0 flex-1 overflow-hidden">
+        <p className="text-paragraph-xs text-text-soft line-clamp-4 leading-5">{caption}</p>
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-5 bg-gradient-to-t from-white to-transparent dark:from-black"
+        />
+      </div>
+    </div>
   );
 }
