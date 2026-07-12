@@ -107,7 +107,7 @@ function WhatsAppConnectedView({
     <>
       <ConnectionConfetti active={justConnected} />
       <WhatsAppWhatsNextGuide agent={agent} integrationLink={integrationLink} justConnected={justConnected} />
-      {whatsappIntegration ? <WhatsAppInboxCard whatsappIntegration={whatsappIntegration} agent={agent} /> : null}
+      {whatsappIntegration ? <WhatsAppInboxCard whatsappIntegration={whatsappIntegration} /> : null}
     </>
   );
 }

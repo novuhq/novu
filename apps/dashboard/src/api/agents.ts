@@ -61,10 +61,10 @@ export type AgentBehavior = {
   acknowledgeOnReceived?: boolean;
   reactionOnResolved?: string | null;
   /**
-   * Email agents only. `open` auto-creates a lightweight subscriber from an
-   * unknown sender's email so the agent can reply; `restricted` rejects unknown
-   * senders. Newly provisioned email inboxes default to `open`; unset behaves as
-   * `restricted`.
+   * Channel-agnostic. `open` auto-creates a lightweight subscriber from an
+   * unknown sender so the agent can reply on any channel; `restricted` rejects
+   * unknown senders. First email-inbox provision may set `open`; unset behaves
+   * as `restricted`.
    */
   subscriberAccess?: AgentSubscriberAccess;
 };
