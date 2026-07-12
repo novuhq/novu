@@ -8,7 +8,7 @@ import {
   throwPlanLimitExceeded,
 } from '@novu/application-generic';
 import { AgentRepository } from '@novu/dal';
-import { AGENT_NAME_MAX_LENGTH } from '@novu/shared';
+import { AGENT_NAME_MAX_LENGTH, AgentSubscriberAccessEnum } from '@novu/shared';
 import { KeylessAbuseGuardService } from '../../../../keyless/keyless-abuse-guard.service';
 import { trackAgentCreated } from '../../../shared/analytics/agent-analytics';
 import type { AgentResponseDto, AgentRuntimeConfigResponseDto } from '../../../shared/dtos';
@@ -93,6 +93,7 @@ export class CreateAgent {
               identifier: tempIdentifier,
               description: command.description,
               active: command.active ?? true,
+              behavior: { subscriberAccess: AgentSubscriberAccessEnum.OPEN },
               createdBy: command.userId,
               _environmentId: command.environmentId,
               _organizationId: command.organizationId,
@@ -175,6 +176,7 @@ export class CreateAgent {
           identifier: identifier ?? '',
           description: command.description,
           active: command.active ?? true,
+          behavior: { subscriberAccess: AgentSubscriberAccessEnum.RESTRICTED },
           createdBy: command.userId,
           _environmentId: command.environmentId,
           _organizationId: command.organizationId,
