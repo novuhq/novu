@@ -506,6 +506,42 @@
             ]
           },
           {
+            "group": "Agents",
+            "icon": "bot",
+            "pages": [
+              "api-reference/agents/agent-schema",
+              {
+                "group": "Management",
+                "expanded": false,
+                "pages": [
+                  "api-reference/agents/create-an-agent",
+                  "api-reference/agents/list-all-agents",
+                  "api-reference/agents/retrieve-an-agent",
+                  "api-reference/agents/update-an-agent",
+                  "api-reference/agents/delete-an-agent"
+                ]
+              },
+              {
+                "group": "Runtime",
+                "expanded": false,
+                "pages": [
+                  "api-reference/agents/update-an-agent-bridge",
+                  "api-reference/agents/send-an-agent-reply"
+                ]
+              },
+              {
+                "group": "Integrations",
+                "expanded": false,
+                "pages": [
+                  "api-reference/agents/create-an-agent-integration",
+                  "api-reference/agents/list-agent-integrations",
+                  "api-reference/agents/update-an-agent-integration",
+                  "api-reference/agents/delete-an-agent-integration"
+                ]
+              }
+            ]
+          },
+          {
             "group": "Data",
             "icon": "database",
             "pages": [
@@ -778,42 +814,6 @@
                   "api-reference/integrations/update-integration-as-primary",
                   "api-reference/integrations/generate-chat-oauth-url",
                   "api-reference/integrations/auto-configure-an-integration-for-inbound-webhooks"
-                ]
-              },
-              {
-                "group": "Agents",
-                "expanded": false,
-                "pages": [
-                  "api-reference/agents/agent-schema",
-                  {
-                    "group": "Management",
-                    "expanded": false,
-                    "pages": [
-                      "api-reference/agents/create-an-agent",
-                      "api-reference/agents/list-all-agents",
-                      "api-reference/agents/retrieve-an-agent",
-                      "api-reference/agents/update-an-agent",
-                      "api-reference/agents/delete-an-agent"
-                    ]
-                  },
-                  {
-                    "group": "Runtime",
-                    "expanded": false,
-                    "pages": [
-                      "api-reference/agents/update-an-agent-bridge",
-                      "api-reference/agents/send-an-agent-reply"
-                    ]
-                  },
-                  {
-                    "group": "Integrations",
-                    "expanded": false,
-                    "pages": [
-                      "api-reference/agents/create-an-agent-integration",
-                      "api-reference/agents/list-agent-integrations",
-                      "api-reference/agents/update-an-agent-integration",
-                      "api-reference/agents/delete-an-agent-integration"
-                    ]
-                  }
                 ]
               }
             ]
