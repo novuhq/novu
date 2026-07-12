@@ -124,19 +124,32 @@ export function parseApprovalReactionVerdict(emoji: string | undefined | null): 
   return null;
 }
 
+export interface ImessageTapbackVerdict {
+  approved: boolean;
+  /**
+   * The text quoted by the tapback — Sendblue's echo of the message the user
+   * actually tapped-back on. Tapbacks carry no message id, so this is the
+   * only signal callers have to verify the verdict is being applied to the
+   * approval request the user meant, rather than assuming.
+   */
+  quotedText: string;
+}
+
 /**
  * iMessage tapbacks (press-and-hold reactions) are NOT delivered by Sendblue as
  * a dedicated reaction webhook — they arrive on the normal `receive` webhook as
  * an ordinary inbound message whose text is the tapback rendered in English,
  * e.g. `Liked "Tool approval required…"`. Newer iOS relays arbitrary emoji
  * tapbacks as `Reacted 👍 to "…"`. This parser recognizes those forms and maps
- * the 👍 ("Liked") tapback to approve and the 👎 ("Disliked") tapback to ignore.
+ * the 👍 ("Liked") tapback to approve and the 👎 ("Disliked") tapback to ignore,
+ * returning the quoted text alongside the verdict so callers can confirm it
+ * actually targets the pending approval before acting on it.
  *
  * Only the thumbs tapbacks are treated as verdicts — Loved / Laughed at /
  * Emphasized / Questioned (and any tapback *removal*) return `null` so they fall
  * through as normal messages and never silently green-light a tool.
  */
-export function parseImessageTapbackVerdict(text: string | undefined | null): boolean | null {
+export function parseImessageTapback(text: string | undefined | null): ImessageTapbackVerdict | null {
   if (!text) {
     return null;
   }
@@ -144,11 +157,14 @@ export function parseImessageTapbackVerdict(text: string | undefined | null): bo
   const trimmed = text.trim();
 
   // Tapbacks always quote the message they target (straight or curly quotes).
-  // Requiring a quote avoids misreading a normal sentence like "liked it".
-  if (!/["\u201c\u201d]/u.test(trimmed)) {
+  // Requiring a matched quote pair avoids misreading a normal sentence like
+  // "liked it", and captures the quoted text for verifying the target below.
+  const quoteMatch = /["\u201c]([\s\S]*?)["\u201d]/u.exec(trimmed);
+  if (!quoteMatch) {
     return null;
   }
 
+  const quotedText = quoteMatch[1];
   const lower = trimmed.toLowerCase();
 
   // Removing a tapback ("Removed a like from …") is never a verdict.
@@ -157,17 +173,19 @@ export function parseImessageTapbackVerdict(text: string | undefined | null): bo
   }
 
   if (lower.startsWith('liked ')) {
-    return true;
+    return { approved: true, quotedText };
   }
 
   if (lower.startsWith('disliked ')) {
-    return false;
+    return { approved: false, quotedText };
   }
 
   // Newer iOS: `Reacted <emoji> to "…"` — defer to the emoji verdict parser.
   const reacted = /^reacted\s+(.+?)\s+to\s+["\u201c\u201d]/iu.exec(trimmed);
   if (reacted) {
-    return parseApprovalReactionVerdict(reacted[1]);
+    const verdict = parseApprovalReactionVerdict(reacted[1]);
+
+    return verdict === null ? null : { approved: verdict, quotedText };
   }
 
   return null;

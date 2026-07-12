@@ -316,8 +316,12 @@ export class SendMessageChat extends SendMessageBase {
      */
     if (subscriber.phone) {
       const activePhoneProviders = await this.getActivePhoneBasedProviders(command);
+      const existingProviderIds = new Set(chatChannels.map((chan) => chan.providerId));
 
       for (const providerId of activePhoneProviders) {
+        // Avoid double-sending when a legacy channel for this provider already exists
+        if (existingProviderIds.has(providerId)) continue;
+
         // @ts-expect-error - Adding a phone-based channel without _integrationId
         chatChannels.push({
           providerId,

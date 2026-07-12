@@ -12,7 +12,7 @@ import {
 import {
   parseApprovalReactionVerdict,
   parseApprovalReplyVerdict,
-  parseImessageTapbackVerdict,
+  parseImessageTapback,
 } from '../../shared/tool-approval/reply-based-approval';
 import { findUnresolvedToolApprovalRequests } from '../../shared/tool-approval/unresolved-approvals';
 import { AgentConversationService } from '../conversation/agent-conversation.service';
@@ -63,16 +63,39 @@ export class ReplyApprovalInterceptor {
     }
 
     const text = turn.message?.text;
-    // A whole-message "yes"/"no", or an iMessage tapback (👍/👎) delivered as
-    // text by Sendblue (`Liked "…"` / `Disliked "…"`). `??` preserves an
-    // explicit `false` (deny) and only falls back to the tapback parser on
-    // `null` (unrecognized reply).
-    const verdict = parseApprovalReplyVerdict(text) ?? parseImessageTapbackVerdict(text);
-    if (verdict === null) {
+
+    // A whole-message "yes"/"no" reply has no target of its own — replies are
+    // always answers to whichever approval is oldest, since approvals are
+    // prompted sequentially on these platforms.
+    const replyVerdict = parseApprovalReplyVerdict(text);
+    if (replyVerdict !== null) {
+      const pending = await this.findOldestPendingApproval(turn);
+
+      return this.consumePendingApproval(turn, runtime, pending, replyVerdict);
+    }
+
+    // An iMessage tapback (👍/👎) delivered as text by Sendblue (`Liked "…"` /
+    // `Disliked "…"`) DOES carry its own target — the quoted text it echoes
+    // back — so it must be matched against a specific pending approval rather
+    // than assumed to be the oldest one. An unrecognized or unmatched tapback
+    // falls through as a normal message; it must never green-light a tool
+    // just because *some* approval happens to be outstanding.
+    const tapback = parseImessageTapback(text);
+    if (!tapback) {
       return false;
     }
 
-    const pending = await this.findOldestPendingApproval(turn);
+    const pending = await this.findPendingApprovalForTapback(turn, tapback.quotedText);
+
+    return this.consumePendingApproval(turn, runtime, pending, tapback.approved);
+  }
+
+  private async consumePendingApproval(
+    turn: ConversationTurn,
+    runtime: AgentRuntime,
+    pending: ConversationActivityEntity | null,
+    approved: boolean
+  ): Promise<boolean> {
     if (!pending) {
       return false;
     }
@@ -84,7 +107,7 @@ export class ReplyApprovalInterceptor {
 
     return this.consumeVerdict(turn, runtime, {
       approvalId,
-      approved: verdict,
+      approved,
       toolName: pending.toolData?.toolName,
       source: 'reply',
     });
@@ -185,6 +208,34 @@ export class ReplyApprovalInterceptor {
     // Approvals are prompted sequentially, so a reply always answers the
     // oldest outstanding request.
     return pending[0] ?? null;
+  }
+
+  /**
+   * Resolves the pending approval a tapback's quoted text actually targets.
+   * A tapback carries no message id — only this echoed quote of the tapped
+   * message — so it is matched against each pending request's tool name
+   * (which is always present in the rendered approval prompt) instead of
+   * defaulting to "whichever approval is oldest". An unrelated quote, or one
+   * that matches more than one outstanding approval ambiguously, resolves to
+   * `null` so the tapback falls through instead of guessing.
+   */
+  private async findPendingApprovalForTapback(
+    turn: ConversationTurn,
+    quotedText: string
+  ): Promise<ConversationActivityEntity | null> {
+    const normalizedQuote = quotedText.trim().toLowerCase();
+    if (!normalizedQuote) {
+      return null;
+    }
+
+    const pending = await this.loadUnresolvedApprovals(turn);
+    const matches = pending.filter((request) => {
+      const toolName = request.toolData?.toolName;
+
+      return typeof toolName === 'string' && toolName.length > 0 && normalizedQuote.includes(toolName.toLowerCase());
+    });
+
+    return matches.length === 1 ? matches[0] : null;
   }
 
   /**

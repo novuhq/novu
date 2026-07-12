@@ -138,6 +138,57 @@ describe('ReplyApprovalInterceptor', () => {
     expect(runtime.dispatch.called).to.equal(false);
   });
 
+  it('should apply a tapback verdict to the specific pending approval it quotes, not just the oldest', async () => {
+    // getHistory returns newest-first: approval-2 (sendEmail) is newer than
+    // approval-1 (issueRefund), so a naive "answer the oldest" strategy would
+    // wrongly resolve this tapback to approval-1.
+    const { interceptor, conversationService } = makeDeps([
+      {
+        type: ConversationActivityTypeEnum.TOOL_APPROVAL_REQUEST,
+        platformMessageId: 'msg-approval-2',
+        toolData: { approvalId: 'approval-2', toolCallId: 'tc-2', toolName: 'sendEmail' },
+      },
+      pendingRequest,
+    ]);
+    const runtime = { dispatch: sinon.stub().resolves(undefined) };
+    const turn = makeTurn({
+      message: { id: 'msg-tap', text: 'Liked "Tool approval required: sendEmail"', author: { userId: '+1' } },
+    });
+
+    const consumed = await interceptor.tryHandleAsApprovalReply(turn, runtime as any);
+
+    expect(consumed).to.equal(true);
+    expect(conversationService.persistToolApprovalDecision.firstCall.args[0]).to.include({
+      approvalId: 'approval-2',
+      approved: true,
+    });
+    expect(runtime.dispatch.firstCall.args[0].action).to.deep.equal({ id: 'tool-approval:approve:approval-2' });
+  });
+
+  it('should not apply a tapback verdict to any pending approval when the quoted text does not match one', async () => {
+    // Two approvals are outstanding, but the tapback quotes text unrelated to
+    // either one (e.g. it targets some other message in the thread) — this
+    // must never be resolved to "the oldest approval" by default.
+    const { interceptor, conversationService } = makeDeps([
+      {
+        type: ConversationActivityTypeEnum.TOOL_APPROVAL_REQUEST,
+        platformMessageId: 'msg-approval-2',
+        toolData: { approvalId: 'approval-2', toolCallId: 'tc-2', toolName: 'sendEmail' },
+      },
+      pendingRequest,
+    ]);
+    const runtime = { dispatch: sinon.stub().resolves(undefined) };
+    const turn = makeTurn({
+      message: { id: 'msg-tap', text: 'Liked "Thanks for reaching out!"', author: { userId: '+1' } },
+    });
+
+    const consumed = await interceptor.tryHandleAsApprovalReply(turn, runtime as any);
+
+    expect(consumed).to.equal(false);
+    expect(conversationService.persistToolApprovalDecision.called).to.equal(false);
+    expect(runtime.dispatch.called).to.equal(false);
+  });
+
   it('should fall through when a tapback is removed', async () => {
     const { interceptor } = makeDeps();
     const runtime = { dispatch: sinon.stub().resolves(undefined) };
