@@ -158,7 +158,7 @@ export function WhatsAppWhatsNextGuide({ agent, integrationLink, justConnected =
   ];
 
   async function handleConfirmPermanentToken() {
-    if (completedAt || isConfirmingStamp) {
+    if (!whatsappIntegration || completedAt || isConfirmingStamp) {
       return;
     }
 
