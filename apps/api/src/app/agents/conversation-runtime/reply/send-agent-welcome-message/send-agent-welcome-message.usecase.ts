@@ -7,7 +7,11 @@ import {
   IntegrationRepository,
   SubscriberRepository,
 } from '@novu/dal';
-import { buildConnectSubscriberId } from '@novu/shared';
+import {
+  buildConnectSubscriberId,
+  SLACK_AGENT_WELCOME_SUGGESTED_PROMPTS,
+  SLACK_AGENT_WELCOME_SUGGESTED_PROMPTS_TITLE,
+} from '@novu/shared';
 import type { CardElement } from 'chat';
 import { ConnectClaimTokenService } from '../../../../connect/services/connect-claim-token.service';
 import { isKeylessOrganization } from '../../../../keyless/keyless-organization.helpers';
@@ -136,6 +140,16 @@ export class SendAgentWelcomeMessage {
         environmentId: command.environmentId,
         organizationId: command.organizationId,
       });
+
+      if (platform === AgentPlatformEnum.SLACK) {
+        await this.outboundGateway.setSlackSuggestedPrompts(
+          agent._id,
+          command.integrationIdentifier,
+          platformThreadId,
+          SLACK_AGENT_WELCOME_SUGGESTED_PROMPTS,
+          SLACK_AGENT_WELCOME_SUGGESTED_PROMPTS_TITLE
+        );
+      }
 
       this.analyticsService.track(`Agent Welcome Message Sent - [Agents]`, command.userId, {
         _organization: command.organizationId,

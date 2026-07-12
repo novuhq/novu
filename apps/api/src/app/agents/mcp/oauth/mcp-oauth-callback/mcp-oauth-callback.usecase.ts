@@ -14,6 +14,7 @@ import {
 import {
   AgentMcpServerRepository,
   AgentRepository,
+  AgentToolTrustRepository,
   EnvironmentRepository,
   IntegrationRepository,
   McpConnectionEntity,
@@ -88,6 +89,7 @@ export class McpOAuthCallback {
     private readonly agentMcpServerRepository: AgentMcpServerRepository,
     private readonly integrationRepository: IntegrationRepository,
     private readonly mcpConnectionRepository: McpConnectionRepository,
+    private readonly agentToolTrustRepository: AgentToolTrustRepository,
     private readonly subscriberRepository: SubscriberRepository,
     private readonly discoveryService: McpOAuthDiscoveryService,
     private readonly mcpConnectionVaultService: McpConnectionVaultService,
@@ -330,10 +332,6 @@ export class McpOAuthCallback {
       connectedAt: new Date(),
     };
 
-    if (stateData.trustToolsOnConnect) {
-      $set['toolTrust.serverDefault'] = 'always_allow';
-    }
-
     await this.mcpConnectionRepository.update(
       {
         _id: claimed._id,
@@ -345,6 +343,38 @@ export class McpOAuthCallback {
         $unset: { oauthState: 1, lastError: 1 },
       }
     );
+
+    if (stateData.trustToolsOnConnect) {
+      await this.persistToolTrustOnConnect(stateData);
+    }
+  }
+
+  private async persistToolTrustOnConnect(stateData: McpOAuthState): Promise<void> {
+    const catalog = MCP_SERVERS.find((entry) => entry.id === stateData.mcpId);
+    if (!catalog?.name) {
+      this.logger.warn(
+        { mcpId: stateData.mcpId, agentId: stateData.agentId, subscriberId: stateData.subscriberId },
+        'Connect & auto-approve skipped: MCP catalog name not found'
+      );
+
+      return;
+    }
+
+    try {
+      await this.agentToolTrustRepository.setMcpServerTrust({
+        environmentId: stateData.environmentId,
+        organizationId: stateData.organizationId,
+        agentId: stateData.agentId,
+        subscriberId: stateData.subscriberId,
+        mcpServerName: catalog.name,
+        bucket: { serverDefault: 'always_allow' },
+      });
+    } catch (err) {
+      this.logger.warn(
+        err,
+        'Failed to persist server-wide tool trust after Connect & auto-approve; OAuth connect still succeeded'
+      );
+    }
   }
 
   private async runPostConnectSafe(
