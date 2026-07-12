@@ -11,7 +11,16 @@ describe('ReplyApprovalInterceptor', () => {
     toolData: { approvalId: 'approval-1', toolCallId: 'tc-1', toolName: 'issueRefund' },
   };
 
-  function makeDeps(history: unknown[] = [pendingRequest]) {
+  // Newest-first history: the human message that triggered the approval must
+  // precede it so `resolveApprovalRequesterId` can authorize the verdict.
+  const requesterMessage = {
+    type: ConversationActivityTypeEnum.MESSAGE,
+    senderType: 'subscriber',
+    senderId: 'sub-1',
+    content: 'Please issue the refund',
+  };
+
+  function makeDeps(history: unknown[] = [pendingRequest, requesterMessage]) {
     const channel = { platform: 'sendblue', platformThreadId: 'sendblue:+15551234567' };
     const conversationService = {
       getHistory: sinon.stub().resolves(history),
@@ -148,7 +157,9 @@ describe('ReplyApprovalInterceptor', () => {
         platformMessageId: 'msg-approval-2',
         toolData: { approvalId: 'approval-2', toolCallId: 'tc-2', toolName: 'sendEmail' },
       },
+      requesterMessage,
       pendingRequest,
+      requesterMessage,
     ]);
     const runtime = { dispatch: sinon.stub().resolves(undefined) };
     const turn = makeTurn({
@@ -219,6 +230,7 @@ describe('ReplyApprovalInterceptor', () => {
         platformMessageId: 'msg-approval-read',
         toolData: { approvalId: 'approval-read', toolCallId: 'tc-read', toolName: 'read' },
       },
+      requesterMessage,
     ]);
     const runtime = { dispatch: sinon.stub().resolves(undefined) };
     const turn = makeTurn({
@@ -334,7 +346,9 @@ describe('ReplyApprovalInterceptor', () => {
         type: ConversationActivityTypeEnum.TOOL_APPROVAL_REQUEST,
         toolData: { approvalId: 'approval-2', toolCallId: 'tc-2', toolName: 'sendEmail' },
       },
+      requesterMessage,
       pendingRequest,
+      requesterMessage,
     ]);
     const runtime = { dispatch: sinon.stub().resolves(undefined) };
 
@@ -434,6 +448,38 @@ describe('ReplyApprovalInterceptor', () => {
       const turn = makeTurn({ subscriber: null, message: { id: 'msg-yes', text: 'yes', author: { userId: '' } } });
 
       const consumed = await interceptor.tryHandleAsApprovalReply(turn, runtime as any);
+
+      expect(consumed).to.equal(false);
+      expect(conversationService.persistToolApprovalDecision.called).to.equal(false);
+      expect(runtime.dispatch.called).to.equal(false);
+    });
+
+    it('should not consume a YES/NO reply when no preceding human requester can be resolved from history', async () => {
+      // Regression: unresolved expected approver must fail closed — otherwise
+      // any group-thread participant can approve a programmatically triggered
+      // (or history-truncated) pending tool action.
+      const { interceptor, conversationService } = makeDeps([pendingRequest]);
+      const runtime = { dispatch: sinon.stub().resolves(undefined) };
+      const turn = makeTurn({ subscriber: { subscriberId: 'sub-other' } });
+
+      const consumed = await interceptor.tryHandleAsApprovalReply(turn, runtime as any);
+
+      expect(consumed).to.equal(false);
+      expect(conversationService.persistToolApprovalDecision.called).to.equal(false);
+      expect(runtime.dispatch.called).to.equal(false);
+    });
+
+    it('should not consume a reaction verdict when no preceding human requester can be resolved from history', async () => {
+      const { interceptor, conversationService } = makeDeps([pendingRequest]);
+      const runtime = { dispatch: sinon.stub().resolves(undefined) };
+      const turn = makeTurn({
+        subscriber: { subscriberId: 'sub-other' },
+        message: null,
+        event: AgentEventEnum.ON_REACTION,
+        reaction: { emoji: 'thumbs_up', added: true, messageId: 'msg-approval' },
+      });
+
+      const consumed = await interceptor.tryHandleAsApprovalReaction(turn, runtime as any);
 
       expect(consumed).to.equal(false);
       expect(conversationService.persistToolApprovalDecision.called).to.equal(false);

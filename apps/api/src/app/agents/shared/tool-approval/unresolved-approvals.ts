@@ -63,7 +63,8 @@ export function findUnresolvedToolApprovalRequests(
  * request and returns the `senderId` of the nearest preceding human message.
  *
  * Returns `null` when no human message precedes the request in the supplied
- * history (nothing to compare against — callers should not block on this).
+ * history. Callers must treat `null` as cannot-authorize (fail closed) — never
+ * as permission to accept a verdict from any thread participant.
  */
 export function resolveApprovalRequesterId(
   activities: ConversationActivityEntity[],

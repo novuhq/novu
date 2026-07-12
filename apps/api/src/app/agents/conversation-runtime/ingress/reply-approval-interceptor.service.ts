@@ -195,11 +195,10 @@ export class ReplyApprovalInterceptor {
    * (e.g. group iMessage/SMS on Sendblue): without this, any other
    * participant could approve or deny someone else's pending tool action.
    *
-   * Falls open when the ledger has no record of who prompted the request
-   * (preserves today's behavior for the common single-participant case, and
-   * avoids blocking on incomplete history), but falls closed when the
-   * verdict's own actor identity can't be determined — an unresolved sender
-   * is never assumed to be the expected approver.
+   * Falls closed when the ledger has no record of who prompted the request
+   * (e.g. programmatically triggered approvals, or truncated history) — an
+   * unresolved expected approver must never authorize a verdict. Also falls
+   * closed when the verdict's own actor identity can't be determined.
    */
   private isFromExpectedApprover(
     turn: ConversationTurn,
@@ -207,18 +206,9 @@ export class ReplyApprovalInterceptor {
     request: ConversationActivityEntity
   ): boolean {
     const expectedApproverId = resolveApprovalRequesterId(activities, request);
-    if (!expectedApproverId) {
-      return true;
-    }
-
     const actorId = this.resolveCurrentActorId(turn);
-    if (!actorId) {
-      this.logWrongApprover(turn, request, expectedApproverId, actorId);
 
-      return false;
-    }
-
-    if (actorId !== expectedApproverId) {
+    if (!expectedApproverId || !actorId || actorId !== expectedApproverId) {
       this.logWrongApprover(turn, request, expectedApproverId, actorId);
 
       return false;
@@ -242,7 +232,7 @@ export class ReplyApprovalInterceptor {
   private logWrongApprover(
     turn: ConversationTurn,
     request: ConversationActivityEntity,
-    expectedApproverId: string,
+    expectedApproverId: string | null,
     actorId: string | null
   ): void {
     const { config, conversation } = turn;
