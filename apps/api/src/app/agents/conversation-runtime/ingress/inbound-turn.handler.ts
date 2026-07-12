@@ -291,16 +291,18 @@ export class AgentInboundHandler implements OnModuleInit {
     const isVerifiedEmailSender =
       config.platform !== AgentPlatformEnum.EMAIL || isInboundEmailSenderVerified(emailAuthRaw);
 
-    // Open-access email agents provision the sender themselves, so email joins
-    // the Slack/Teams lookup-or-provision path (soft-failing to `null` inside
-    // the resolver). Keyless demo agents are excluded — they deliberately
+    // Open-access email/WhatsApp agents provision the sender themselves, so they
+    // join the Slack/Teams lookup-or-provision path (soft-failing to `null`
+    // inside the resolver). Keyless demo agents are excluded — they deliberately
     // provision lazily at tool-approval time and bound abuse via the demo cap,
-    // so the ephemeral env stays subscriber-free until needed.
+    // so the ephemeral env stays subscriber-free until needed. Keyless exclusion
+    // is email-only; WhatsApp has no keyless demo path.
     const canAutoProvision =
       isAutoProvisionPlatform(config.platform) ||
       (config.platform === AgentPlatformEnum.EMAIL &&
         config.subscriberAccess === AgentSubscriberAccessEnum.OPEN &&
-        !config.isKeyless);
+        !config.isKeyless) ||
+      (config.platform === AgentPlatformEnum.WHATSAPP && config.subscriberAccess === AgentSubscriberAccessEnum.OPEN);
 
     let resolution: SubscriberResolution;
     try {
@@ -361,13 +363,13 @@ export class AgentInboundHandler implements OnModuleInit {
       }
 
       /**
-       * Only `resolveOrProvision` on Slack / Teams / open-access email can reach
-       * here — the `resolveSubscriber` read path maps its own failures to an
-       * `error` outcome internally and never throws. For auto-provision platforms
-       * an unknown error means we don't know the subscriber state, so we keep
-       * dispatch off and surface the failure rather than silently degrading to
-       * a PLATFORM_USER participant the removed-anonymous-state contract was
-       * meant to eliminate.
+       * Only `resolveOrProvision` on Slack / Teams / open-access email /
+       * open-access WhatsApp can reach here — the `resolveSubscriber` read path
+       * maps its own failures to an `error` outcome internally and never throws.
+       * For auto-provision platforms an unknown error means we don't know the
+       * subscriber state, so we keep dispatch off and surface the failure rather
+       * than silently degrading to a PLATFORM_USER participant the
+       * removed-anonymous-state contract was meant to eliminate.
        */
       captureAgentWarning(err, { component: 'agent-inbound-handler', operation: 'resolve-subscriber', agentId });
 
@@ -837,10 +839,11 @@ export class AgentInboundHandler implements OnModuleInit {
     message: Message
   ): Promise<void> {
     /**
-     * `ConnectOrgSubscriberCapExceededError` is only thrown by
-     * `resolveOrProvision`, which itself only runs for `AUTO_PROVISION_PLATFORMS`.
-     * The cast narrows `config.platform` to the union the card builder accepts
-     * and keeps the exhaustive-record check honest.
+     * `ConnectOrgSubscriberCapExceededError` is only thrown by the Slack/Teams
+     * branch of `resolveOrProvision` (`AUTO_PROVISION_PLATFORMS`). Open-access
+     * email/WhatsApp soft-fail instead. The cast narrows `config.platform` to
+     * the union the card builder accepts and keeps the exhaustive-record check
+     * honest.
      */
     const platform = config.platform as AutoProvisionPlatform;
 

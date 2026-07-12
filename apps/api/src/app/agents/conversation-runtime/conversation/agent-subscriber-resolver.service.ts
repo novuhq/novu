@@ -14,7 +14,7 @@ import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
 import type { SubscriberResolution } from '../../shared/types/subscriber-resolution';
 import { isValidEmailForLookup, normalizeEmailForLookup } from '../../shared/util/email-normalization';
-import { getPhoneLookupCandidates } from '../../shared/util/phone-normalization';
+import { getPhoneLookupCandidates, toCanonicalE164Phone } from '../../shared/util/phone-normalization';
 import { AUTO_PROVISION_PLATFORMS, PLATFORM_ENDPOINT_CONFIG } from '../../shared/util/platform-endpoint-config';
 import { AgentSubscriberAdoptionService } from './agent-subscriber-adoption.service';
 
@@ -152,9 +152,9 @@ export class AgentSubscriberResolver {
 
   /**
    * Lookup-or-provision for inbound text messages on platforms where the agent
-   * may create the subscriber itself: Slack/Teams (always) and email when the
-   * caller has established open access (`subscriberAccess === 'open'`, never
-   * keyless — that policy lives with the caller's config).
+   * may create the subscriber itself: Slack/Teams (always) and email/WhatsApp
+   * when the caller has established open access (`subscriberAccess === 'open'`).
+   * Keyless exclusion is email-only and lives with the caller's config.
    *
    * Branches:
    *   - Author is a bot → throw `BotAuthorSkippedError` (runs before lookup so
@@ -166,18 +166,20 @@ export class AgentSubscriberResolver {
    *     platformUserId)`, so any retry — race-loss, transient error,
    *     redelivery — lands on the same `Subscriber` row instead of
    *     accumulating phantoms. Slack/Teams also create the ChannelEndpoint
-   *     binding; email identity lives on `Subscriber.email` alone.
+   *     binding; email/WhatsApp identity lives on `Subscriber.email` /
+   *     `Subscriber.phone` alone.
    *
    * Slack/Teams throw on provisioning failure (dispatch stays off); the email
-   * branch soft-fails to an `error` outcome so a provisioning hiccup never
-   * crashes the inbound webhook. Throws for non-provisionable platforms;
-   * callers MUST route reactions, actions, and other inbound through
-   * `resolveSubscriber`.
+   * and WhatsApp open-access branches soft-fail to an `error` outcome so a
+   * provisioning hiccup never crashes the inbound webhook. Throws for
+   * non-provisionable platforms; callers MUST route reactions, actions, and
+   * other inbound through `resolveSubscriber`.
    */
   async resolveOrProvision(params: ResolveOrProvisionParams): Promise<SubscriberResolution> {
     const isOpenAccessEmail = params.platform === AgentPlatformEnum.EMAIL;
+    const isOpenAccessWhatsApp = params.platform === AgentPlatformEnum.WHATSAPP;
 
-    if (!AUTO_PROVISION_PLATFORMS.has(params.platform) && !isOpenAccessEmail) {
+    if (!AUTO_PROVISION_PLATFORMS.has(params.platform) && !isOpenAccessEmail && !isOpenAccessWhatsApp) {
       throw new Error(
         `resolveOrProvision called for unsupported platform "${params.platform}". Route through resolveSubscriber instead.`
       );
@@ -195,6 +197,10 @@ export class AgentSubscriberResolver {
 
     if (isOpenAccessEmail) {
       return this.resolveOrProvisionEmail(params);
+    }
+
+    if (isOpenAccessWhatsApp) {
+      return this.resolveOrProvisionWhatsApp(params);
     }
 
     const existing = await this.resolveSubscriber(params);
@@ -239,6 +245,45 @@ export class AgentSubscriberResolver {
       captureAgentWarning(err, {
         component: 'agent-subscriber-resolver',
         operation: 'provision-open-access-email-subscriber',
+        agentIdentifier: params.agentIdentifier,
+        integrationIdentifier: params.integrationIdentifier,
+      });
+
+      return { outcome: 'error', err };
+    }
+  }
+
+  /**
+   * WhatsApp flavor of lookup-or-provision for open-access agents. Mirrors the
+   * email soft-fail path: phone identity lives on `Subscriber.phone` only (no
+   * ChannelEndpoint). Empty/unparseable phones map to `invalid_identity`.
+   */
+  private async resolveOrProvisionWhatsApp(params: ResolveOrProvisionParams): Promise<SubscriberResolution> {
+    try {
+      const existing = await this.resolveSubscriber(params);
+      if (existing.outcome !== 'not_found') {
+        return existing;
+      }
+
+      const provisionedSubscriberId = await this.provisionWhatsAppSubscriber({
+        environmentId: params.environmentId,
+        organizationId: params.organizationId,
+        integrationIdentifier: params.integrationIdentifier,
+        agentIdentifier: params.agentIdentifier,
+        phone: params.platformUserId,
+      });
+
+      return provisionedSubscriberId
+        ? { outcome: 'resolved', subscriberId: provisionedSubscriberId }
+        : { outcome: 'invalid_identity' };
+    } catch (err) {
+      this.logger.warn(
+        err,
+        `Open-access WhatsApp subscriber resolution failed for agent ${params.agentIdentifier}, continuing without it`
+      );
+      captureAgentWarning(err, {
+        component: 'agent-subscriber-resolver',
+        operation: 'provision-open-access-whatsapp-subscriber',
         agentIdentifier: params.agentIdentifier,
         integrationIdentifier: params.integrationIdentifier,
       });
@@ -318,32 +363,130 @@ export class AgentSubscriberResolver {
     return subscriberId;
   }
 
+  /**
+   * Provision a Subscriber for an open-access WhatsApp sender. Phone identity
+   * lives on `Subscriber.phone` (canonical E.164 with `+`) — no ChannelEndpoint.
+   * Idempotent via deterministic subscriberId. Returns `null` when the phone
+   * is empty/unparseable.
+   */
+  private async provisionWhatsAppSubscriber(params: {
+    environmentId: string;
+    organizationId: string;
+    integrationIdentifier: string;
+    agentIdentifier: string;
+    phone: string;
+  }): Promise<string | null> {
+    const phone = toCanonicalE164Phone(params.phone);
+
+    if (!phone) {
+      this.logger.debug(`Skipping WhatsApp subscriber provision for invalid phone "${params.phone}"`);
+
+      return null;
+    }
+
+    const subscriberId = buildPlatformSubscriberId({
+      organizationId: params.organizationId,
+      integrationIdentifier: params.integrationIdentifier,
+      platform: AgentPlatformEnum.WHATSAPP,
+      platformUserId: phone,
+    });
+
+    await this.createOrUpdateSubscriber.execute(
+      CreateOrUpdateSubscriberCommand.create({
+        environmentId: params.environmentId,
+        organizationId: params.organizationId,
+        subscriberId,
+        phone,
+        data: {
+          [AGENT_PROVISION_DATA_KEYS.source]: AGENT_PLATFORM_PROVISION_SOURCE,
+          [AGENT_PROVISION_DATA_KEYS.platform]: AgentPlatformEnum.WHATSAPP,
+          [AGENT_PROVISION_DATA_KEYS.platformUserId]: phone,
+          [AGENT_PROVISION_DATA_KEYS.agentIdentifier]: params.agentIdentifier,
+          [AGENT_PROVISION_DATA_KEYS.firstSeenAt]: new Date().toISOString(),
+        },
+      })
+    );
+
+    this.analyticsService.track('[Agent Platform] - Subscriber auto-provisioned', params.organizationId, {
+      _organization: params.organizationId,
+      environmentId: params.environmentId,
+      platform: AgentPlatformEnum.WHATSAPP,
+      agentIdentifier: params.agentIdentifier,
+      subscriberId,
+    });
+
+    this.logger.debug(
+      `Lazily provisioned WhatsApp subscriber ${subscriberId} for ${phone} in org ${params.organizationId}`
+    );
+
+    return subscriberId;
+  }
+
   private async resolveWhatsAppSubscriber(params: {
     environmentId: string;
     organizationId: string;
     platformUserId: string;
   }): Promise<SubscriberResolution> {
     const { environmentId, organizationId, platformUserId } = params;
+    const phone = toCanonicalE164Phone(platformUserId);
+
+    if (!phone) {
+      this.logger.debug(`Skipping WhatsApp subscriber lookup for invalid phone "${platformUserId}"`);
+
+      return { outcome: 'invalid_identity' };
+    }
+
     const phoneCandidates = getPhoneLookupCandidates(platformUserId);
     const matches = await this.subscriberRepository.findByPhone(environmentId, organizationId, phoneCandidates);
 
-    if (matches.length > 1) {
+    if (matches.length === 0) {
+      this.logger.debug(`No subscriber found for WhatsApp phone ${platformUserId}`);
+
+      return { outcome: 'not_found' };
+    }
+
+    // Partition matches into real (customer-created) vs auto-provisioned
+    // "phantom" subscribers. A real subscriber always wins over a phantom so an
+    // end user who signed up through the customer's app keeps their own identity
+    // and history rather than fragmenting onto the phone-derived phantom.
+    const phantoms = matches.filter(isAgentProvisionedSubscriber);
+    const realSubscribers = matches.filter((m) => !isAgentProvisionedSubscriber(m));
+
+    if (realSubscribers.length > 0) {
+      const real = realSubscribers[0];
+
+      if (realSubscribers.length > 1) {
+        this.logger.warn(
+          `Multiple customer-created subscribers (${realSubscribers.length}) share phone ${platformUserId} in environment ${environmentId} — using first match`
+        );
+      }
+
+      if (phantoms.length > 0) {
+        await this.adoptionService.adoptPhantomsInto({
+          environmentId,
+          organizationId,
+          real: { _id: real._id, subscriberId: real.subscriberId },
+          phantoms: phantoms.map((p) => ({ _id: p._id, subscriberId: p.subscriberId })),
+        });
+      }
+
+      this.logger.debug(`Resolved WhatsApp phone ${platformUserId} → subscriber ${real.subscriberId}`);
+
+      return { outcome: 'resolved', subscriberId: real.subscriberId };
+    }
+
+    if (phantoms.length > 1) {
       this.logger.warn(
-        `Multiple subscribers (${matches.length}) share phone ${platformUserId} in environment ${environmentId} — using first match`
+        `Multiple auto-provisioned subscribers (${phantoms.length}) share phone ${platformUserId} in environment ${environmentId} — using first match`
       );
     }
 
-    const subscriber = matches[0];
+    const phantom = phantoms[0];
+    this.logger.debug(
+      `Resolved WhatsApp phone ${platformUserId} → auto-provisioned subscriber ${phantom.subscriberId}`
+    );
 
-    if (subscriber) {
-      this.logger.debug(`Resolved WhatsApp phone ${platformUserId} → subscriber ${subscriber.subscriberId}`);
-
-      return { outcome: 'resolved', subscriberId: subscriber.subscriberId };
-    }
-
-    this.logger.debug(`No subscriber found for WhatsApp phone ${platformUserId}`);
-
-    return { outcome: 'not_found' };
+    return { outcome: 'resolved', subscriberId: phantom.subscriberId };
   }
 
   private async resolveAgentProvisionedEmailSubscriber(params: {

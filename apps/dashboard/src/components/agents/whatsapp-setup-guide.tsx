@@ -1,4 +1,4 @@
-import { ChatProviderIdEnum } from '@novu/shared';
+import { ChatProviderIdEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { RiArrowRightUpLine, RiCheckLine, RiErrorWarningLine, RiKey2Line, RiSendPlaneFill } from 'react-icons/ri';
@@ -13,6 +13,7 @@ import { InputPure, InputRoot, InputWrapper } from '@/components/primitives/inpu
 import { getAgentApiBaseUrl } from '@/config';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useConfigureWhatsAppWebhook } from '@/hooks/use-configure-whatsapp-webhook';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { useFetchSubscriber } from '@/hooks/use-fetch-subscriber';
 import { useSendWhatsAppTestTemplate } from '@/hooks/use-send-whatsapp-test-template';
@@ -394,6 +395,7 @@ export function WhatsAppSetupGuide({
   embedded = false,
 }: WhatsAppSetupGuideProps) {
   const { subscriberId: connectSubscriberId, isReady: isConnectSubscriberReady } = useConnectSubscriber();
+  const isWhatsNextEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_AGENT_WHATS_NEXT_ENABLED);
   const [isCredentialsSidebarOpen, setIsCredentialsSidebarOpen] = useState(false);
   const [credentialsSavedLocally, setCredentialsSavedLocally] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
@@ -573,8 +575,12 @@ export function WhatsAppSetupGuide({
             <InlineToast
               className="mt-2 w-full"
               variant="tip"
-              title="Heads up:"
-              description="The token from API Setup expires after 24 hours. For production, swap it for a permanent System User Token in Meta Business Settings > System Users."
+              title={isWhatsNextEnabled ? 'Next:' : 'Heads up:'}
+              description={
+                isWhatsNextEnabled
+                  ? "Continue to What's next after connecting — the GO PRODUCTION step walks you through swapping this temporary API Setup token for a never-expiring System User token."
+                  : 'The token from API Setup expires after 24 hours. For production, swap it for a permanent System User Token in Meta Business Settings > System Users.'
+              }
             />
           ) : null
         }

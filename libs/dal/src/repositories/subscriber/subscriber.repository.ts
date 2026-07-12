@@ -37,14 +37,20 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
       return [];
     }
 
+    // Projects `_id` and `data` alongside `subscriberId` so the agent WhatsApp
+    // resolver can (a) map the external id to the Mongo `_id` needed to repoint
+    // MCP / tool-trust rows and (b) read the `__novu_source` provenance marker
+    // to tell an auto-provisioned "phantom" apart from a customer-created
+    // subscriber during the adoption merge. Limit raised from 2 to comfortably
+    // capture a real subscriber plus any phantom(s) sharing the phone.
     return this.find(
       {
         _environmentId: environmentId,
         _organizationId: organizationId,
         phone: { $in: phoneCandidates },
       },
-      'subscriberId',
-      { limit: 2 }
+      '_id subscriberId phone data',
+      { limit: 10 }
     );
   }
 
