@@ -2,10 +2,9 @@ import { NotFoundException, UnprocessableEntityException } from '@nestjs/common'
 import { ChatProviderIdEnum } from '@novu/shared';
 import { expect } from 'chai';
 import { restore, stub } from 'sinon';
-
-import * as sendblueApi from './sendblue-api.utils';
 import { SendSendblueTestMessageCommand } from './send-sendblue-test-message.command';
 import { SendAgentSendblueTestMessage } from './send-sendblue-test-message.usecase';
+import * as sendblueApi from './sendblue-api.utils';
 
 const ENV_ID = 'env-id';
 const ORG_ID = 'org-id';

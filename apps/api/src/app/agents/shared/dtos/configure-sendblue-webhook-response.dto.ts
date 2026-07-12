@@ -37,4 +37,13 @@ export class ConfigureSendblueWebhookResponseDto {
 
   @ApiPropertyOptional({ type: ConfigureSendblueWebhookFailureDto, description: 'Populated when success is false' })
   reason?: ConfigureSendblueWebhookFailureDto;
+
+  @ApiPropertyOptional({
+    type: [String],
+    description:
+      'Other Novu agent webhook URLs already registered on this Sendblue account (e.g. from another agent, ' +
+      'integration, or environment). Sendblue webhooks are account-level, so every inbound message triggers ' +
+      'all of them — the dashboard should warn the user and offer to remove the stale entries.',
+  })
+  existingNovuWebhookUrls?: string[];
 }

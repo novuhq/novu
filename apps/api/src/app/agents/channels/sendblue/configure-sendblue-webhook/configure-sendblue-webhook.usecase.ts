@@ -3,12 +3,17 @@ import { Injectable } from '@nestjs/common';
 import { decryptCredentials, encryptSecret, InstrumentUsecase, PinoLogger } from '@novu/application-generic';
 import { AgentIntegrationRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
 import { ChatProviderIdEnum } from '@novu/shared';
-import Sendblue from 'sendblue';
 
-import { resolveAgentIntegrationForWebhook } from '../../shared/resolve-agent-integration-webhook.util';
+import {
+  isAgentWebhookUrl,
+  resolveAgentIntegrationForWebhook,
+} from '../../shared/resolve-agent-integration-webhook.util';
+import {
+  createSendblueReceiveWebhook,
+  deleteSendblueReceiveWebhooks,
+  listSendblueReceiveWebhooks,
+} from '../shared/sendblue-webhook-client';
 import { ConfigureSendblueWebhookCommand } from './configure-sendblue-webhook.command';
-
-const SENDBLUE_API_TIMEOUT_MS = 10_000;
 
 export type ConfigureSendblueWebhookFailure = {
   code: 'missing_credentials' | 'sendblue_rejected' | 'unknown';
@@ -21,6 +26,13 @@ export interface ConfigureSendblueWebhookResult {
   webhookSecret?: string;
   fallbackToManual?: boolean;
   reason?: ConfigureSendblueWebhookFailure;
+  /**
+   * Other Novu agent webhook URLs found registered on this Sendblue account (e.g. from a
+   * different agent, integration, or environment sharing the same Sendblue credentials).
+   * Sendblue webhooks are account-level, so every inbound message triggers *all* registered
+   * `receive` webhooks — the dashboard surfaces these so the user can remove the stale ones.
+   */
+  existingNovuWebhookUrls?: string[];
 }
 
 @Injectable()
@@ -83,8 +95,28 @@ export class ConfigureSendblueWebhook {
       );
     }
 
+    let existingNovuWebhookUrls: string[] = [];
+
     try {
-      await this.registerReceiveWebhook({ apiKey, secretKey, callbackUrl, webhookSecret });
+      const sendblueCredentials = { apiKey, secretKey };
+      const existingWebhooks = await listSendblueReceiveWebhooks(sendblueCredentials);
+
+      // Sendblue webhooks are account-level: every line on the account shares the same `receive`
+      // webhook list, and every inbound message triggers *all* of them. A previous registration of
+      // this exact integration's URL (e.g. from an earlier "Reconfigure webhook" click, or a retry
+      // after a secret rotation) must be deleted first so create() replaces it instead of appending
+      // a duplicate that would double-dispatch every future inbound message.
+      const ownPreviousUrls = existingWebhooks.filter((entry) => entry.url === callbackUrl).map((entry) => entry.url);
+
+      existingNovuWebhookUrls = existingWebhooks
+        .filter((entry) => entry.url !== callbackUrl && isAgentWebhookUrl(entry.url))
+        .map((entry) => entry.url);
+
+      if (ownPreviousUrls.length > 0) {
+        await deleteSendblueReceiveWebhooks(sendblueCredentials, ownPreviousUrls);
+      }
+
+      await createSendblueReceiveWebhook(sendblueCredentials, { url: callbackUrl, secret: webhookSecret });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       this.logger.warn(
@@ -104,36 +136,11 @@ export class ConfigureSendblueWebhook {
       };
     }
 
-    return { success: true, callbackUrl, webhookSecret };
-  }
-
-  /**
-   * Registers (appends) a `receive` webhook with a per-webhook secret. Sendblue echoes the
-   * secret back in the `sb-signing-secret` header on inbound deliveries.
-   * @see https://docs.sendblue.com/getting-started/webhooks/
-   */
-  private async registerReceiveWebhook(params: {
-    apiKey: string;
-    secretKey: string;
-    callbackUrl: string;
-    webhookSecret: string;
-  }): Promise<void> {
-    const client = new Sendblue({
-      apiKey: params.apiKey,
-      apiSecret: params.secretKey,
-      timeout: SENDBLUE_API_TIMEOUT_MS,
-      maxRetries: 0,
-    });
-
-    // The SDK throws on non-2xx HTTP responses; Sendblue can additionally return
-    // HTTP 200 with an in-body error status for validation failures.
-    const response = await client.webhooks.create({
-      webhooks: [{ url: params.callbackUrl, secret: params.webhookSecret }],
-      type: 'receive',
-    });
-
-    if (response.status === 'ERROR') {
-      throw new Error(response.message || 'Sendblue rejected the webhook registration request');
-    }
+    return {
+      success: true,
+      callbackUrl,
+      webhookSecret,
+      ...(existingNovuWebhookUrls.length > 0 ? { existingNovuWebhookUrls } : {}),
+    };
   }
 }

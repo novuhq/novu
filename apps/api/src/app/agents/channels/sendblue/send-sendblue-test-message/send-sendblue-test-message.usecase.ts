@@ -5,8 +5,8 @@ import { ChatProviderIdEnum } from '@novu/shared';
 
 import { AgentPlatformEnum } from '../../../shared/enums/agent-platform.enum';
 import { getWelcomeText } from '../../../shared/util/agent-welcome-text';
-import { sendSendblueMessage } from './sendblue-api.utils';
 import { SendSendblueTestMessageCommand } from './send-sendblue-test-message.command';
+import { sendSendblueMessage } from './sendblue-api.utils';
 
 export type SendSendblueTestMessageError = {
   code: 'missing_credentials' | 'invalid_recipient' | 'recipient_not_verified' | 'sendblue_rejected' | 'unknown';

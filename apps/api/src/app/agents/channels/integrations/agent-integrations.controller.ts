@@ -50,6 +50,10 @@ import {
 import { ConfigureSendblueWebhookResponseDto } from '../../shared/dtos/configure-sendblue-webhook-response.dto';
 import { ConfigureWhatsAppWebhookResponseDto } from '../../shared/dtos/configure-whatsapp-webhook-response.dto';
 import { IssueSlackSetupLinkResponseDto } from '../../shared/dtos/issue-slack-setup-link-response.dto';
+import {
+  RemoveSendblueWebhooksRequestDto,
+  RemoveSendblueWebhooksResponseDto,
+} from '../../shared/dtos/remove-sendblue-webhooks.dto';
 import { SendAgentTestEmailRequestDto } from '../../shared/dtos/send-agent-test-email-request.dto';
 import { SendAgentWelcomeMessageRequestDto } from '../../shared/dtos/send-agent-welcome-message-request.dto';
 import {
@@ -62,6 +66,8 @@ import {
 } from '../../shared/dtos/send-whatsapp-test-template.dto';
 import { ConfigureSendblueWebhookCommand } from '../sendblue/configure-sendblue-webhook/configure-sendblue-webhook.command';
 import { ConfigureSendblueWebhook } from '../sendblue/configure-sendblue-webhook/configure-sendblue-webhook.usecase';
+import { RemoveSendblueWebhooksCommand } from '../sendblue/remove-sendblue-webhooks/remove-sendblue-webhooks.command';
+import { RemoveSendblueWebhooks } from '../sendblue/remove-sendblue-webhooks/remove-sendblue-webhooks.usecase';
 import { SendSendblueTestMessageCommand } from '../sendblue/send-sendblue-test-message/send-sendblue-test-message.command';
 import { SendAgentSendblueTestMessage } from '../sendblue/send-sendblue-test-message/send-sendblue-test-message.usecase';
 import { IssueSlackSetupLinkCommand } from '../slack-linking/issue-slack-setup-link/issue-slack-setup-link.command';
@@ -96,6 +102,7 @@ export class AgentIntegrationsController {
     private readonly sendAgentWelcomeMessageUsecase: SendAgentWelcomeMessage,
     private readonly configureWhatsAppWebhookUsecase: ConfigureWhatsAppWebhook,
     private readonly configureSendblueWebhookUsecase: ConfigureSendblueWebhook,
+    private readonly removeSendblueWebhooksUsecase: RemoveSendblueWebhooks,
     private readonly sendWhatsAppTestTemplateUsecase: SendWhatsAppTestTemplate,
     private readonly sendAgentSendblueTestMessageUsecase: SendAgentSendblueTestMessage,
     private readonly issueSlackSetupLinkUsecase: IssueSlackSetupLink,
@@ -278,6 +285,37 @@ export class AgentIntegrationsController {
         organizationId: user.organizationId,
         agentIdentifier: identifier,
         integrationIdentifier,
+      })
+    );
+  }
+
+  @Post('/:identifier/integrations/:integrationIdentifier/sendblue/remove-webhooks')
+  @ApiExcludeEndpoint()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Remove stale Novu webhooks from a Sendblue account',
+    description:
+      "Deletes the supplied webhook URLs from the Sendblue account's `receive` webhook list. Only URLs " +
+      'matching the Novu agent webhook shape are removed, regardless of what is supplied — Sendblue webhooks ' +
+      'are account-level, so this lets the dashboard clean up duplicate Novu registrations left behind by ' +
+      'other agents, integrations, or environments sharing the same Sendblue credentials.',
+  })
+  @ApiNotFoundResponse({ description: 'The agent or integration was not found.' })
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  removeAgentSendblueWebhooks(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string,
+    @Param('integrationIdentifier') integrationIdentifier: string,
+    @Body() body: RemoveSendblueWebhooksRequestDto
+  ): Promise<RemoveSendblueWebhooksResponseDto> {
+    return this.removeSendblueWebhooksUsecase.execute(
+      RemoveSendblueWebhooksCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        agentIdentifier: identifier,
+        integrationIdentifier,
+        webhookUrls: body.webhookUrls,
       })
     );
   }

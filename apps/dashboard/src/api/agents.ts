@@ -848,6 +848,12 @@ export type ConfigureSendblueWebhookResponse = {
   webhookSecret?: string;
   fallbackToManual?: boolean;
   reason?: ConfigureSendblueWebhookFailure;
+  /**
+   * Other Novu agent webhook URLs already registered on this Sendblue account. Sendblue
+   * webhooks are account-level, so every inbound message triggers all of them — surface a
+   * warning and offer to remove the stale entries via {@link removeAgentSendblueWebhooks}.
+   */
+  existingNovuWebhookUrls?: string[];
 };
 
 export async function configureAgentSendblueWebhook(
@@ -858,6 +864,26 @@ export async function configureAgentSendblueWebhook(
   const response = await post<{ data: ConfigureSendblueWebhookResponse }>(
     `/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationIdentifier)}/sendblue/configure-webhook`,
     { environment }
+  );
+
+  return response.data;
+}
+
+export type RemoveSendblueWebhooksResponse = {
+  success: boolean;
+  removedWebhookUrls: string[];
+  message?: string;
+};
+
+export async function removeAgentSendblueWebhooks(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  integrationIdentifier: string,
+  webhookUrls: string[]
+): Promise<RemoveSendblueWebhooksResponse> {
+  const response = await post<{ data: RemoveSendblueWebhooksResponse }>(
+    `/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationIdentifier)}/sendblue/remove-webhooks`,
+    { environment, body: { webhookUrls } }
   );
 
   return response.data;

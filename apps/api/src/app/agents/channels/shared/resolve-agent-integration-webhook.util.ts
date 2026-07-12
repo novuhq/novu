@@ -7,7 +7,12 @@ export interface ResolvedAgentIntegrationWebhook {
   callbackUrl: string;
 }
 
-function buildAgentWebhookUrl(agentId: string, integrationIdentifier: string): string {
+// Matches the path shape produced by `buildAgentWebhookUrl` below, independent of host — lets
+// callers recognize "a Novu agent webhook URL" even when it was registered from a different
+// environment/tunnel host than the one running right now.
+const AGENT_WEBHOOK_URL_PATTERN = /\/v1\/agents\/[^/]+\/webhook\/[^/]+\/?$/;
+
+export function buildAgentWebhookUrl(agentId: string, integrationIdentifier: string): string {
   // Prefer `AGENT_API_HOSTNAME` (a publicly reachable HTTPS host chat platforms can call back
   // to — typically a tunnel URL in dev) and fall back to the standard `API_ROOT_URL`.
   const base = (process.env.AGENT_API_HOSTNAME ?? process.env.API_ROOT_URL ?? '').replace(/\/$/, '');
@@ -19,6 +24,16 @@ function buildAgentWebhookUrl(agentId: string, integrationIdentifier: string): s
   }
 
   return `${base}/v1/agents/${agentId}/webhook/${integrationIdentifier}`;
+}
+
+/**
+ * True when `url` matches the `/v1/agents/{agentId}/webhook/{integrationIdentifier}` path shape
+ * produced by `buildAgentWebhookUrl` — i.e. it looks like a Novu agent webhook, regardless of
+ * which host/environment registered it. Used to distinguish "another Novu integration's webhook"
+ * from an unrelated third-party webhook when auditing a provider account's registered webhooks.
+ */
+export function isAgentWebhookUrl(url: string): boolean {
+  return AGENT_WEBHOOK_URL_PATTERN.test(url);
 }
 
 /**

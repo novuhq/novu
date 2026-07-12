@@ -7,11 +7,14 @@ import { patchSubscriber } from '@/api/subscribers';
 import { useConnectSubscriber } from '@/components/connect/connect-subscriber-provider';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import { Button } from '@/components/primitives/button';
+import { InlineToast } from '@/components/primitives/inline-toast';
 import { InputPure, InputRoot, InputWrapper } from '@/components/primitives/input';
+import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useConfigureSendblueWebhook } from '@/hooks/use-configure-sendblue-webhook';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { useFetchSubscriber } from '@/hooks/use-fetch-subscriber';
+import { useRemoveSendblueWebhooks } from '@/hooks/use-remove-sendblue-webhooks';
 import { useSendSendblueTestMessage } from '@/hooks/use-send-sendblue-test-message';
 import { QueryKeys } from '@/utils/query-keys';
 import {
@@ -92,6 +95,50 @@ function ManualWebhookFallback({
   );
 }
 
+function StaleNovuWebhooksWarning({
+  agentIdentifier,
+  integrationIdentifier,
+  staleWebhookUrls,
+  onRemoved,
+}: {
+  agentIdentifier: string;
+  integrationIdentifier: string;
+  staleWebhookUrls: string[];
+  onRemoved: () => void;
+}) {
+  const { mutateAsync: removeWebhooks, isPending } = useRemoveSendblueWebhooks();
+
+  const handleRemove = useCallback(async () => {
+    try {
+      const result = await removeWebhooks({ agentIdentifier, integrationIdentifier, webhookUrls: staleWebhookUrls });
+
+      if (result.success) {
+        showSuccessToast('Removed the old Novu webhook(s) from your Sendblue account.');
+        onRemoved();
+
+        return;
+      }
+
+      showErrorToast(result.message ?? "Sendblue didn't accept the webhook removal.");
+    } catch (err) {
+      showErrorToast(err instanceof Error ? err.message : 'Something went wrong removing the old webhook(s).');
+    }
+  }, [agentIdentifier, integrationIdentifier, onRemoved, removeWebhooks, staleWebhookUrls]);
+
+  const webhookCountLabel = `${staleWebhookUrls.length} old webhook${staleWebhookUrls.length > 1 ? 's' : ''}`;
+
+  return (
+    <InlineToast
+      variant="warning"
+      title="Another Novu webhook is already registered on this Sendblue account."
+      description={`Sendblue webhooks are account-level, so every inbound message currently triggers all of them — expect duplicate agent replies until ${webhookCountLabel} is removed.`}
+      ctaLabel="Remove old webhook(s)"
+      onCtaClick={handleRemove}
+      isCtaLoading={isPending}
+    />
+  );
+}
+
 function ConnectWebhookPanel({
   agent,
   integrationIdentifier,
@@ -109,12 +156,14 @@ function ConnectWebhookPanel({
 }) {
   const [connectStatus, setConnectStatus] = useState<ConnectStatus>({ state: 'idle' });
   const [manualMarkedConfigured, setManualMarkedConfigured] = useState(false);
+  const [staleNovuWebhookUrls, setStaleNovuWebhookUrls] = useState<string[]>([]);
 
   const { mutateAsync: configureWebhook } = useConfigureSendblueWebhook();
 
   useEffect(() => {
     setConnectStatus({ state: 'idle' });
     setManualMarkedConfigured(false);
+    setStaleNovuWebhookUrls([]);
   }, [integrationIdentifier]);
 
   const handleConnect = useCallback(async () => {
@@ -125,6 +174,8 @@ function ConnectWebhookPanel({
         agentIdentifier: agent.identifier,
         integrationIdentifier,
       });
+
+      setStaleNovuWebhookUrls(result.existingNovuWebhookUrls ?? []);
 
       if (result.success) {
         setConnectStatus({ state: 'connected' });
@@ -218,6 +269,15 @@ function ConnectWebhookPanel({
             setManualMarkedConfigured(true);
             onConfigured();
           }}
+        />
+      ) : null}
+
+      {staleNovuWebhookUrls.length > 0 ? (
+        <StaleNovuWebhooksWarning
+          agentIdentifier={agent.identifier}
+          integrationIdentifier={integrationIdentifier}
+          staleWebhookUrls={staleNovuWebhookUrls}
+          onRemoved={() => setStaleNovuWebhookUrls([])}
         />
       ) : null}
     </div>

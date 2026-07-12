@@ -3,6 +3,7 @@ import { ListAgentIntegrations } from '../channels/integrations/list-agent-integ
 import { RemoveAgentIntegration } from '../channels/integrations/remove-agent-integration/remove-agent-integration.usecase';
 import { UpdateAgentIntegration } from '../channels/integrations/update-agent-integration/update-agent-integration.usecase';
 import { ConfigureSendblueWebhook } from '../channels/sendblue/configure-sendblue-webhook/configure-sendblue-webhook.usecase';
+import { RemoveSendblueWebhooks } from '../channels/sendblue/remove-sendblue-webhooks/remove-sendblue-webhooks.usecase';
 import { SendAgentSendblueTestMessage } from '../channels/sendblue/send-sendblue-test-message/send-sendblue-test-message.usecase';
 import { ConsumeSlackSetupLink } from '../channels/slack-linking/consume-slack-setup-link/consume-slack-setup-link.usecase';
 import { GetSlackSetupLinkStatus } from '../channels/slack-linking/get-slack-setup-link-status/get-slack-setup-link-status.usecase';
@@ -67,6 +68,7 @@ export const USE_CASES = [
   GetAgentDemoQuota,
   MigrateAgentRuntime,
   RemoveAgentIntegration,
+  RemoveSendblueWebhooks,
   HandleAgentReply,
   HandlePlanProgress,
   ProvisionManagedAgent,
