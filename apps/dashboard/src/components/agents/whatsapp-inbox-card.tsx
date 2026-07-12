@@ -1,15 +1,14 @@
 import { CredentialsKeyEnum, EmailProviderIdEnum, type IIntegration } from '@novu/shared';
 import { useQuery } from '@tanstack/react-query';
-import { type ReactNode, useMemo } from 'react';
-import { RiArrowRightSLine, RiArrowRightUpLine, RiInformation2Line } from 'react-icons/ri';
+import { useMemo } from 'react';
+import { RiArrowRightSLine, RiArrowRightUpLine } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
 import { type AgentResponse, validateWhatsAppToken } from '@/api/agents';
+import { AgentInboxCardRow, AgentInboxCardRowInfoTitle } from '@/components/agents/agent-inbox-card-row';
 import { CopyableEmailAddress } from '@/components/agents/copyable-email-address';
 import { EmailSubscriberAccessToggle } from '@/components/agents/email-subscriber-access-toggle';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { buildRoute, ROUTES } from '@/utils/routes';
-import { cn } from '@/utils/ui';
 
 const CREATE_SUBSCRIBER_DOCS_URL = 'https://docs.novu.co/api-reference/subscribers/create-a-subscriber';
 
@@ -81,7 +80,7 @@ export function WhatsAppInboxCardBody({ whatsappIntegration, agent }: WhatsAppIn
 
   return (
     <>
-      <CardRow
+      <AgentInboxCardRow
         title="Your WhatsApp number"
         description="Users reach this agent by messaging your business phone number."
         divider
@@ -95,9 +94,9 @@ export function WhatsAppInboxCardBody({ whatsappIntegration, agent }: WhatsAppIn
             </span>
           )}
         </div>
-      </CardRow>
+      </AgentInboxCardRow>
 
-      <CardRow
+      <AgentInboxCardRow
         title="Subscriber phone numbers"
         description={
           <>
@@ -108,8 +107,10 @@ export function WhatsAppInboxCardBody({ whatsappIntegration, agent }: WhatsAppIn
         divider
       />
 
-      <CardRow
-        title={<CardRowInfoTitle label="Who can message this agent" infoTooltip={subscriberAccessInfoTooltip} />}
+      <AgentInboxCardRow
+        title={
+          <AgentInboxCardRowInfoTitle label="Who can message this agent" infoTooltip={subscriberAccessInfoTooltip} />
+        }
         description="Open accepts WhatsApp from anyone. Off replies only to known subscribers."
         divider={false}
         footer={
@@ -141,11 +142,10 @@ export function WhatsAppInboxCardBody({ whatsappIntegration, agent }: WhatsAppIn
           <span className="text-text-soft text-label-xs font-medium leading-4">Accept WhatsApp from anyone</span>
           <EmailSubscriberAccessToggle agent={agent} ariaLabel="Accept WhatsApp from anyone" />
         </div>
-      </CardRow>
+      </AgentInboxCardRow>
     </>
   );
 }
-
 export function WhatsAppInboxCard({ whatsappIntegration, agent }: WhatsAppInboxCardProps) {
   return (
     <div className="bg-bg-weak flex flex-col rounded-[10px] p-1">
@@ -157,49 +157,6 @@ export function WhatsAppInboxCard({ whatsappIntegration, agent }: WhatsAppInboxC
       <div className="bg-bg-white flex flex-col overflow-hidden rounded-md shadow-[0px_0px_0px_1px_rgba(25,28,33,0.04),0px_1px_2px_0px_rgba(25,28,33,0.06),0px_0px_2px_0px_rgba(0,0,0,0.08)]">
         <WhatsAppInboxCardBody whatsappIntegration={whatsappIntegration} agent={agent} />
       </div>
-    </div>
-  );
-}
-
-function CardRowInfoTitle({ label, infoTooltip }: { label: string; infoTooltip: string }) {
-  return (
-    <span className="flex items-center gap-1">
-      {label}
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <button type="button" aria-label="More info">
-            <RiInformation2Line className="text-text-soft size-5" aria-hidden />
-          </button>
-        </TooltipTrigger>
-        <TooltipContent className="max-w-xs">{infoTooltip}</TooltipContent>
-      </Tooltip>
-    </span>
-  );
-}
-
-function CardRow({
-  title,
-  description,
-  children,
-  divider,
-  footer,
-}: {
-  title: ReactNode;
-  description: ReactNode;
-  children?: ReactNode;
-  divider?: boolean;
-  footer?: ReactNode;
-}) {
-  return (
-    <div className={cn('flex flex-col p-3', divider && 'border-stroke-weak border-b')}>
-      <div className="flex items-start justify-between gap-6">
-        <div className="flex min-w-0 max-w-[350px] flex-1 flex-col gap-1">
-          <div className="text-text-sub text-label-sm font-medium leading-5">{title}</div>
-          <p className="text-text-soft text-paragraph-xs leading-4">{description}</p>
-        </div>
-        {children != null ? <div className="flex w-[360px] shrink-0 flex-col gap-1.5">{children}</div> : null}
-      </div>
-      {footer ? <div className="pt-3">{footer}</div> : null}
     </div>
   );
 }
