@@ -2099,6 +2099,96 @@ describe('agent dispatch via NovuRequestHandler', () => {
   });
 });
 
+describe('turn error handling', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  function stubReplyFetch() {
+    const posts: Record<string, unknown>[] = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (_url, init: { body: string }) => {
+        posts.push(JSON.parse(init.body));
+
+        return new Response(JSON.stringify({ messageId: 'm', platformThreadId: 't' }), { status: 200 });
+      })
+    );
+
+    return posts;
+  }
+
+  it('auto-reports turn failures when onError is not defined', async () => {
+    const posts = stubReplyFetch();
+    const testAgent = agent('a', {
+      onMessage: async () => {
+        throw new Error('handler blew up');
+      },
+    });
+
+    await dispatchAgentEvent({
+      agent: testAgent,
+      event: 'onMessage',
+      bridge: approvalBridge(),
+      secretKey: 's',
+    });
+
+    expect(posts.some((body) => body.error === true)).toBe(true);
+    expect(posts.some((body) => body.typing === 'stop')).toBe(true);
+  });
+
+  it('suppresses auto-report when onError returns { suppress: true }', async () => {
+    const posts = stubReplyFetch();
+    const testAgent = agent('a', {
+      onMessage: async () => {
+        throw new Error('handler blew up');
+      },
+      onError: async () => ({ suppress: true }),
+    });
+
+    await dispatchAgentEvent({
+      agent: testAgent,
+      event: 'onMessage',
+      bridge: approvalBridge(),
+      secretKey: 's',
+    });
+
+    expect(posts.some((body) => body.error === true)).toBe(false);
+    expect(posts.some((body) => body.typing === 'stop')).toBe(true);
+  });
+
+  it('delivers a custom reply from onError instead of auto-reporting', async () => {
+    const posts = stubReplyFetch();
+    const testAgent = agent('a', {
+      onMessage: async () => {
+        throw new Error('handler blew up');
+      },
+      onError: async () => 'custom failure copy',
+    });
+
+    await dispatchAgentEvent({
+      agent: testAgent,
+      event: 'onMessage',
+      bridge: approvalBridge(),
+      secretKey: 's',
+    });
+
+    expect(posts.some((body) => body.error === true)).toBe(false);
+    expect(posts.some((body) => (body.reply as { markdown?: string })?.markdown === 'custom failure copy')).toBe(true);
+    expect(posts.some((body) => body.typing === 'stop')).toBe(true);
+  });
+
+  it('passes onError through from agent registration', () => {
+    const onError = async () => ({ suppress: true as const });
+    const testAgent = agent('a', {
+      onMessage: async () => undefined,
+      onError,
+    });
+
+    expect(testAgent.handlers.onError).toBe(onError);
+  });
+});
+
 function approvalBridge(overrides: Record<string, unknown> = {}) {
   return {
     version: 1,

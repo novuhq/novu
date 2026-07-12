@@ -94,13 +94,16 @@ describe('langchain agent adapter', () => {
     });
 
     it('accepts an object of handlers and passes optional handlers through', () => {
+      const onError = async () => ({ suppress: true as const });
       const supportAgent = agent('support', {
         onMessage: async () => undefined,
         onAction: async () => undefined,
+        onError,
       });
 
       expect(typeof supportAgent.handlers.onMessage).toBe('function');
       expect(typeof supportAgent.handlers.onAction).toBe('function');
+      expect(supportAgent.handlers.onError).toBe(onError);
     });
 
     it('throws when onMessage is missing', () => {
