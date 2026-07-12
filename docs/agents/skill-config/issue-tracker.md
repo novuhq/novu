@@ -23,9 +23,9 @@ Used by `/wayfinder`. The **map** is a single Linear issue with **child** issues
 
 - **Map**: a single issue labelled `wayfinder:map`, holding Destination / Notes / Decisions-so-far / Not yet specified / Out of scope. Create with `save_issue` + label `wayfinder:map`.
 - **Child ticket**: a Linear sub-issue of the map (`parentId` = map id). Labels: `wayfinder:<type>` where `<type>` is one of `research` / `prototype` / `grilling` / `task`. Once claimed, the ticket is assigned to the driving dev.
-- **Blocking**: Linear's **native** `blockedBy` / `blocks` relations — the canonical, UI-visible representation. A ticket is unblocked when every blocker is closed.
+- **Blocking**: Linear's **native** `blockedBy` / `blocks` relations - the canonical, UI-visible representation. A ticket is unblocked when every blocker is closed.
 - **Frontier**: the map's open children that have no open blocker and no assignee; first in map / creation order wins when the session does not name a ticket.
-- **Claim**: assign the issue to the session driver (`assignee: "me"` or the driving user) — the session's first write, before any work.
+- **Claim**: assign the issue to the session driver (`assignee: "me"` or the driving user) - the session's first write, before any work.
 - **Resolve**: post a resolution comment with the answer, close the issue, then append a context pointer (gist + link) to the map's **Decisions so far**.
 
 ## Pull requests as a triage surface

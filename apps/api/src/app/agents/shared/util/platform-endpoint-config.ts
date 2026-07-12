@@ -27,7 +27,7 @@ export const PLATFORM_ENDPOINT_CONFIG: Partial<Record<AgentPlatformEnum, Platfor
 /**
  * Platforms whose inbound message path auto-provisions a Subscriber +
  * ChannelEndpoint on first mention. Open-access email/WhatsApp use
- * `shouldAutoProvisionInbound` / `isOpenAccessIdentityPlatform` instead —
+ * `shouldAutoProvisionInbound` / `isOpenAccessIdentityPlatform` instead -
  * phone/email identity only, no ChannelEndpoint.
  */
 export const AUTO_PROVISION_PLATFORM_ENTRIES = [

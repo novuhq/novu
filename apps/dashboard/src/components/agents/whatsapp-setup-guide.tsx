@@ -578,7 +578,7 @@ export function WhatsAppSetupGuide({
               title={isWhatsNextEnabled ? 'Next:' : 'Heads up:'}
               description={
                 isWhatsNextEnabled
-                  ? "Continue to What's next after connecting — the GO PRODUCTION step walks you through swapping this temporary API Setup token for a never-expiring System User token."
+                  ? "Continue to What's next after connecting - the GO PRODUCTION step walks you through swapping this temporary API Setup token for a never-expiring System User token."
                   : 'The token from API Setup expires after 24 hours. For production, swap it for a permanent System User Token in Meta Business Settings > System Users.'
               }
             />

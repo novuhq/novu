@@ -47,7 +47,7 @@ export function WhatsAppInboxCardBody({ whatsappIntegration, agent }: WhatsAppIn
       currentEnvironment?._id,
       whatsappIntegration._id,
       phoneNumberIdentification,
-      // Token length only — avoid putting the secret in the cache key.
+      // Token length only - avoid putting the secret in the cache key.
       apiToken.length,
     ],
     queryFn: () =>
@@ -61,7 +61,7 @@ export function WhatsAppInboxCardBody({ whatsappIntegration, agent }: WhatsAppIn
     retry: false,
   });
 
-  // Prefer Meta's display_phone_number — phoneNumberIdentification is an opaque Phone Number ID.
+  // Prefer Meta's display_phone_number - phoneNumberIdentification is an opaque Phone Number ID.
   const businessPhone = useMemo(
     () => displayPhoneQuery.data?.displayPhoneNumber?.trim() || undefined,
     [displayPhoneQuery.data?.displayPhoneNumber]

@@ -152,7 +152,7 @@ export function WhatsAppWhatsNextGuide({ agent, integrationLink, justConnected =
       return;
     }
 
-    // Stamp-only patch — never re-spread client credentials. List payloads can omit or
+    // Stamp-only patch - never re-spread client credentials. List payloads can omit or
     // mask secrets; UpdateIntegration replaces the credentials document, so echoing them
     // would wipe apiToken. Server-side ensureWhatsAppManagedCredentials merges over existing.
     try {
@@ -186,7 +186,7 @@ export function WhatsAppWhatsNextGuide({ agent, integrationLink, justConnected =
         <ol className="list-inside list-decimal space-y-1.5">
           <li>
             <strong className="text-text-sub">Register a production WhatsApp phone number</strong>
-            {' — replace the Meta test number with a real business number in '}
+            {' - replace the Meta test number with a real business number in '}
             <a
               href={WHATSAPP_MANAGER_URL}
               target="_blank"
@@ -200,12 +200,12 @@ export function WhatsAppWhatsNextGuide({ agent, integrationLink, justConnected =
           <li>
             <strong className="text-text-sub">Add a payment method</strong>
             {
-              ' — required before Meta sends business-initiated (template) messages; 24h service-window replies work without it.'
+              ' - required before Meta sends business-initiated (template) messages; 24h service-window replies work without it.'
             }
           </li>
           <li>
             <strong className="text-text-sub">Switch your app to Live</strong>
-            {' — in the '}
+            {' - in the '}
             <a
               href={META_APP_DASHBOARD_URL}
               target="_blank"
@@ -219,7 +219,7 @@ export function WhatsAppWhatsNextGuide({ agent, integrationLink, justConnected =
           <li>
             <strong className="text-text-sub">Verify your business (recommended)</strong>
             {
-              ' — optional per Meta; shows display name, raises limits, protects the account. Review ~2–10 business days ('
+              ' - optional per Meta; shows display name, raises limits, protects the account. Review ~2–10 business days ('
             }
             <a
               href={BUSINESS_VERIFICATION_HELP_URL}
@@ -265,9 +265,9 @@ export function WhatsAppWhatsNextGuide({ agent, integrationLink, justConnected =
             <strong className="text-text-sub">Admin</strong>
             {' system user'}
           </li>
-          <li>{'Assign Assets — Full Control over the App + WhatsApp Business Account'}</li>
+          <li>{'Assign Assets - Full Control over the App + WhatsApp Business Account'}</li>
           <li>
-            {'Generate New Token — '}
+            {'Generate New Token - '}
             <strong className="text-text-sub">Never expires</strong>
             {'; scopes '}
             <code className="text-text-sub">whatsapp_business_messaging</code>

@@ -285,7 +285,7 @@ export class AgentSubscriberResolver {
       return null;
     }
 
-    // Keyless MCP path may call this without a prior resolveSubscriber miss —
+    // Keyless MCP path may call this without a prior resolveSubscriber miss -
     // reuse an existing agent-provisioned row when present.
     const existing = await this.resolveAgentProvisionedEmailSubscriber({
       environmentId: params.environmentId,
@@ -310,7 +310,7 @@ export class AgentSubscriberResolver {
 
   /**
    * Provision a Subscriber for an open-access WhatsApp sender. Phone identity
-   * lives on `Subscriber.phone` (canonical E.164 with `+`) — no ChannelEndpoint.
+   * lives on `Subscriber.phone` (canonical E.164 with `+`) - no ChannelEndpoint.
    * Idempotent via deterministic subscriberId. Returns `null` when the phone
    * is empty/unparseable.
    */
@@ -422,7 +422,7 @@ export class AgentSubscriberResolver {
 
       if (realSubscribers.length > 1) {
         this.logger.warn(
-          `Multiple customer-created subscribers (${realSubscribers.length}) share phone ${platformUserId} in environment ${environmentId} — using first match`
+          `Multiple customer-created subscribers (${realSubscribers.length}) share phone ${platformUserId} in environment ${environmentId} - using first match`
         );
       }
 
@@ -442,7 +442,7 @@ export class AgentSubscriberResolver {
 
     if (phantoms.length > 1) {
       this.logger.warn(
-        `Multiple auto-provisioned subscribers (${phantoms.length}) share phone ${platformUserId} in environment ${environmentId} — using first match`
+        `Multiple auto-provisioned subscribers (${phantoms.length}) share phone ${platformUserId} in environment ${environmentId} - using first match`
       );
     }
 

@@ -9,7 +9,7 @@ interface WhatsNextStampParams {
 /**
  * True when a WhatsApp Business update should auto-stamp Layer-2 completion.
  * Stamps only on Access Token (`apiToken`) *rotation* after credentials already
- * exist — never on the initial Layer-1 save, webhook Verify Token (`token`)
+ * exist - never on the initial Layer-1 save, webhook Verify Token (`token`)
  * edits, empty partial-form saves, or other credential field edits.
  */
 export function shouldStampWhatsNextCompletedAt({
@@ -32,7 +32,7 @@ export function shouldStampWhatsNextCompletedAt({
 
   const existingApiToken = typeof existingCredentials?.apiToken === 'string' ? existingCredentials.apiToken.trim() : '';
 
-  // First-time Access Token save belongs to Layer-1 setup — do not complete Layer-2.
+  // First-time Access Token save belongs to Layer-1 setup - do not complete Layer-2.
   if (!existingApiToken) {
     return false;
   }

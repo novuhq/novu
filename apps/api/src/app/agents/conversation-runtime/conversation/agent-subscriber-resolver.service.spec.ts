@@ -162,7 +162,7 @@ describe('AgentSubscriberResolver', () => {
     });
   });
 
-  describe('resolveSubscriber — WhatsApp adoption / prefer customer-created', () => {
+  describe('resolveSubscriber - WhatsApp adoption / prefer customer-created', () => {
     const realMatch = {
       _id: 'mongo-real',
       subscriberId: 'sub-real',
@@ -766,7 +766,7 @@ describe('AgentSubscriberResolver', () => {
     });
   });
 
-  describe('resolveOrProvision — open-access WhatsApp', () => {
+  describe('resolveOrProvision - open-access WhatsApp', () => {
     it('returns an existing subscriber without provisioning', async () => {
       const { resolver, createOrUpdateSubscriber } = makeResolver({
         findByPhone: sinon.stub().resolves([{ _id: 'mongo-1', subscriberId: 'sub-known', data: {} }]),
@@ -842,7 +842,7 @@ describe('AgentSubscriberResolver', () => {
     });
   });
 
-  describe('resolveOrProvision — unsupported platforms', () => {
+  describe('resolveOrProvision - unsupported platforms', () => {
     it('throws when called with Telegram', async () => {
       const { resolver } = makeResolver();
 

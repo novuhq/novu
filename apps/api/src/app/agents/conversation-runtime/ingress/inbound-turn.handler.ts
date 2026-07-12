@@ -361,7 +361,7 @@ export class AgentInboundHandler implements OnModuleInit {
 
       /**
        * Only `resolveOrProvision` on Slack / Teams / open-access email /
-       * open-access WhatsApp can reach here — the `resolveSubscriber` read path
+       * open-access WhatsApp can reach here - the `resolveSubscriber` read path
        * maps its own failures to an `error` outcome internally and never throws.
        * For auto-provision platforms an unknown error means we don't know the
        * subscriber state, so we keep dispatch off and surface the failure rather
