@@ -6,7 +6,7 @@ import {
   decryptCredentials,
 } from '@novu/application-generic';
 import { AgentMcpServerRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
-import { AgentRuntimeProviderIdEnum, IntegrationKindEnum } from '@novu/shared';
+import { AGENT_NAME_MAX_LENGTH, AgentRuntimeProviderIdEnum, IntegrationKindEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import sinon from 'sinon';
@@ -879,6 +879,23 @@ describe('Managed Agents API #novu-v2', () => {
       expect(mockProvider.getAgent.firstCall.args[0]).to.equal(FAKE_ADOPT_AGENT_ID);
       expect(mockProvider.getConfig.called, 'getConfig should be called').to.be.true;
       expect(mockProvider.getConfig.firstCall.args[0]).to.equal(FAKE_ADOPT_AGENT_ID);
+    });
+
+    it('should truncate an externally-sourced provider name that exceeds the limit instead of rejecting it', async () => {
+      const integrationId = await createAgentRuntimeIntegration();
+
+      // Provider names are outside our control — a long one must be truncated, not rejected.
+      const longProviderName = 'Extremely Long Provider Agent Name '.repeat(5).trim();
+      expect(longProviderName.length).to.be.greaterThan(AGENT_NAME_MAX_LENGTH);
+      mockProvider.getAgent.resolves({ externalAgentId: FAKE_ADOPT_AGENT_ID, name: longProviderName });
+
+      const res = await session.testAgent.post('/v1/agents').send(adoptBody(integrationId));
+
+      expect(res.status, `adopt failed: ${JSON.stringify(res.body)}`).to.equal(201);
+      expect(res.body.data.name.length).to.equal(AGENT_NAME_MAX_LENGTH);
+      expect(res.body.data.name).to.equal(longProviderName.slice(0, AGENT_NAME_MAX_LENGTH));
+
+      createdAgentIdentifiers.push(res.body.data.identifier);
     });
   });
 

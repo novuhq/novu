@@ -4,6 +4,7 @@ import { JobEntity, JobRepository, MessageEntity, MessageRepository } from '@nov
 import { ChannelTypeEnum, JobStatusEnum, SeverityLevelEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
+import { GetSubscriber } from '../../../subscribers/usecases/get-subscriber';
 import { InboxNotificationDto } from '../../dtos/inbox-notification.dto';
 import { MarkNotificationAsCommand } from '../mark-notification-as/mark-notification-as.command';
 import { MarkNotificationAs } from '../mark-notification-as/mark-notification-as.usecase';
@@ -24,6 +25,7 @@ describe('UnsnoozeNotification', () => {
   let jobRepositoryMock: sinon.SinonStubbedInstance<JobRepository>;
   let createExecutionDetailsMock: sinon.SinonStubbedInstance<CreateExecutionDetails>;
   let markNotificationAsMock: sinon.SinonStubbedInstance<MarkNotificationAs>;
+  let getSubscriberMock: sinon.SinonStubbedInstance<GetSubscriber>;
 
   const snoozedUntil = new Date();
   snoozedUntil.setHours(snoozedUntil.getHours() + 1);
@@ -77,6 +79,7 @@ describe('UnsnoozeNotification', () => {
     jobRepositoryMock = sinon.createStubInstance(JobRepository);
     createExecutionDetailsMock = sinon.createStubInstance(CreateExecutionDetails);
     markNotificationAsMock = sinon.createStubInstance(MarkNotificationAs);
+    getSubscriberMock = sinon.createStubInstance(GetSubscriber);
 
     sinon.stub(MarkNotificationAsCommand, 'create').returns({
       environmentId: validEnvId,
@@ -97,12 +100,14 @@ describe('UnsnoozeNotification', () => {
       messageRepositoryMock as any,
       jobRepositoryMock as any,
       markNotificationAsMock as any,
-      createExecutionDetailsMock as any
+      createExecutionDetailsMock as any,
+      getSubscriberMock as any
     );
 
     jobRepositoryMock.findOneAndDelete.resolves(mockJob);
     markNotificationAsMock.execute.resolves(mockNotification);
     createExecutionDetailsMock.execute.resolves();
+    getSubscriberMock.execute.resolves({ _id: validSubscriberId } as any);
     messageRepositoryMock.findOne.resolves(mockMessage);
   });
 

@@ -3,10 +3,9 @@ import * as Sentry from '@sentry/react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { previewStep } from '@/api/steps';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useDataRef } from '@/hooks/use-data-ref';
-import { usePreviewStep } from '@/hooks/use-preview-step';
+import { usePreviewStep, usePreviewStepFn } from '@/hooks/use-preview-step';
 import { parse, stringify } from '@/utils/json';
 import { QueryKeys } from '@/utils/query-keys';
 
@@ -16,6 +15,8 @@ type UseEditorPreviewProps = {
   controlValues: Record<string, unknown>;
   payloadSchema?: Record<string, any>;
 };
+
+const LOCAL_PREVIEW_REFRESH_INTERVAL_MS = 5 * 1000;
 
 function useDebounced<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
@@ -57,6 +58,8 @@ export const useEditorPreview = ({ workflowSlug, stepSlug, controlValues, payloa
   const { previewStep: manualPreviewStep } = usePreviewStep({
     onError: (error) => Sentry.captureException(error),
   });
+  // Routes to the stateless bridge endpoint for virtual (local mode) workflows.
+  const { previewStepFn, isReady: isPreviewFnReady, bridgeUrl, isLocalPreview } = usePreviewStepFn();
 
   const { data: parsedEditorPayload } = parse(editorValue);
 
@@ -68,6 +71,7 @@ export const useEditorPreview = ({ workflowSlug, stepSlug, controlValues, payloa
     queryKey: [
       QueryKeys.previewStep,
       currentEnvironment?._id,
+      bridgeUrl,
       workflowSlug,
       stepSlug,
       debouncedControlValues,
@@ -79,8 +83,7 @@ export const useEditorPreview = ({ workflowSlug, stepSlug, controlValues, payloa
         throw new Error('Invalid JSON in editor');
       }
 
-      return await previewStep({
-        environment: currentEnvironment!,
+      return await previewStepFn({
         workflowSlug,
         stepSlug,
         previewData: {
@@ -90,10 +93,16 @@ export const useEditorPreview = ({ workflowSlug, stepSlug, controlValues, payloa
         signal,
       });
     },
-    enabled: Boolean(workflowSlug && stepSlug && currentEnvironment && parsedEditorPayload),
+    enabled: Boolean(workflowSlug && stepSlug && currentEnvironment && parsedEditorPayload && isPreviewFnReady),
     staleTime: 0,
     retry: false,
-    refetchOnWindowFocus: false,
+    // In local mode the step template lives in the developer's code and can
+    // change at any moment without anything in the query key changing (the
+    // bridge renders it at preview time). Re-render on tab focus and on a
+    // short interval so the preview tracks code edits; `keepPreviousData`
+    // prevents flicker between renders.
+    refetchOnWindowFocus: isLocalPreview,
+    refetchInterval: isLocalPreview ? LOCAL_PREVIEW_REFRESH_INTERVAL_MS : false,
     placeholderData: keepPreviousData,
   });
 

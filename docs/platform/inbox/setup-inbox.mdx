@@ -1,8 +1,7 @@
 ---
 title: 'Set up the Inbox'
-description: "Learn how to integrate the Novu Inbox component into your application to display real-time notifications for your subscribers."
+description: "Integrate the Novu Inbox component into your application to display real-time in-app notifications for your subscribers with drop-in React or JS components."
 ---
-
 
 The Inbox component displays a notification bell by default, which opens a menu containing the subscriber's notifications and preferences.
 
@@ -23,10 +22,8 @@ To get started, install the Inbox UI:
   </Tab>
 </Tabs>
 
-## Use AI to set up faster
-
 <Note>
-  Replace `YOUR_APPLICATION_IDENTIFIER` and `YOUR_SUBSCRIBER_ID` with values from **API Keys** and **Subscribers** in the Novu dashboard. For other frameworks, see the [Quickstart](/platform/quickstart/nextjs) guides.
+  **`@novu/react` requires React 18 or later.** The package supports React `^18.0.0` and React 19 (`^19.0.0`). React 17 and below are not supported. When rendering the Inbox UI, you also need `react-dom` at the same version.
 </Note>
 
 <Tabs>
@@ -37,8 +34,6 @@ To get started, install the Inbox UI:
 Install `@novu/nextjs`. Add the `<Inbox />` component to your header, navbar, or sidebar.
 
 Latest docs: https://docs.novu.co/platform/quickstart/nextjs
-
-Replace `YOUR_APPLICATION_IDENTIFIER` and `YOUR_SUBSCRIBER_ID` with values from the Novu dashboard (**API Keys** and **Subscribers**).
 
 ## Install
 
@@ -107,8 +102,6 @@ If any fails, revise.
 Install `@novu/react`. Add the `<Inbox />` component to your header, navbar, or sidebar.
 
 Latest docs: https://docs.novu.co/platform/quickstart/react
-
-Replace `YOUR_APPLICATION_IDENTIFIER` and `YOUR_SUBSCRIBER_ID` with values from the Novu dashboard (**API Keys** and **Subscribers**).
 
 ## Install
 
@@ -287,3 +280,7 @@ If your Novu account is in the EU region, then include the `backendUrl` and `soc
 <div className="text-sm text-gray-500 text-center mt-2">
   [Sign in](https://dashboard.novu.co/auth/sign-up) to get your own API keys
 </div>
+
+## Pass subscriber profile fields
+
+Pass a `subscriber` object instead of a subscriber ID string to set profile fields such as `firstName`, `email`, `locale`, and `data` on session init. New subscribers are created automatically; updating an existing profile requires [HMAC encryption](/platform/inbox/prepare-for-production#secure-your-inbox-with-hmac-encryption) and `subscriberHash`.

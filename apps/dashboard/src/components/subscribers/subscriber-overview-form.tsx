@@ -48,6 +48,9 @@ type SubscriberOverviewFormProps = {
   readOnly?: boolean;
   onCloseDrawer?: () => void;
   closeOnSave?: boolean;
+  /** When set, the matching field is focused once the form mounts (e.g. "Edit in overview"). */
+  focusField?: 'email' | 'phone';
+  onFocusHandled?: () => void;
 };
 
 const createDefaultSubscriberValues = (subscriber: SubscriberResponseDto) => ({
@@ -62,7 +65,7 @@ const createDefaultSubscriberValues = (subscriber: SubscriberResponseDto) => ({
 });
 
 export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
-  const { subscriber, readOnly = false, onCloseDrawer, closeOnSave = false } = props;
+  const { subscriber, readOnly = false, onCloseDrawer, closeOnSave = false, focusField, onFocusHandled } = props;
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const track = useTelemetry();
   const queryClient = useQueryClient();
@@ -151,6 +154,21 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
       form.reset(createDefaultSubscriberValues(subscriber));
     }
   }, [subscriber, form]);
+
+  /**
+   * Focuses the requested field once the form is mounted. The form only renders after the
+   * subscriber has loaded, so a single attempt is deterministic (no polling required).
+   */
+  useEffect(() => {
+    if (!focusField) {
+      return;
+    }
+
+    const element = document.getElementById(focusField);
+    element?.focus();
+    element?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    onFocusHandled?.();
+  }, [focusField, onFocusHandled]);
 
   const onSubmit = async (formData: z.infer<typeof SubscriberFormSchema>) => {
     const dirtyFields = form.formState.dirtyFields;

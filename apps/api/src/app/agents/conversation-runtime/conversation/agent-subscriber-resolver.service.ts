@@ -6,36 +6,25 @@ import {
   CreateOrUpdateSubscriberUseCase,
   PinoLogger,
 } from '@novu/application-generic';
-import { ChannelEndpointRepository, isDuplicateKeyError, SubscriberRepository } from '@novu/dal';
-import { ENDPOINT_TYPES } from '@novu/shared';
+import { ChannelEndpointRepository, isDuplicateKeyError, SubscriberEntity, SubscriberRepository } from '@novu/dal';
+import { AGENT_PLATFORM_PROVISION_SOURCE, AGENT_PROVISION_DATA_KEYS, ENDPOINT_TYPES } from '@novu/shared';
 import { CreateChannelEndpointCommand } from '../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.command';
 import { CreateChannelEndpoint } from '../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.usecase';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
+import { captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
+import type { SubscriberResolution } from '../../shared/types/subscriber-resolution';
 import { isValidEmailForLookup, normalizeEmailForLookup } from '../../shared/util/email-normalization';
-import { getPhoneLookupCandidates } from '../../shared/util/phone-normalization';
-import { AUTO_PROVISION_PLATFORMS, PLATFORM_ENDPOINT_CONFIG } from '../../shared/util/platform-endpoint-config';
-
-/**
- * Provenance keys stamped on every auto-provisioned `Subscriber.data` blob.
- * Centralised so the resolver, the sparse index in `subscriber.schema.ts`,
- * and tests stay in lockstep. Flat scalar keys because `SubscriberCustomData`
- * is a `Record<string, scalar>`.
- */
-export const AGENT_PROVISION_DATA_KEYS = {
-  source: '__novu_source',
-  platform: '__novu_platform',
-  platformUserId: '__novu_platformUserId',
-  agentIdentifier: '__novu_agentIdentifier',
-  firstSeenAt: '__novu_firstSeenAt',
-} as const;
-
-/**
- * Sentinel value written to `Subscriber.data[AGENT_PROVISION_DATA_KEYS.source]`
- * for every subscriber the resolver auto-creates from an inbound platform
- * message. The sparse index in `subscriber.schema.ts` keys off this marker —
- * never mutate without coordinating the index.
- */
-export const AGENT_PLATFORM_PROVISION_SOURCE = 'agent-platform-provision' as const;
+import {
+  buildPhoneDigitFlexibleRegexSource,
+  getPhoneLookupCandidates,
+  toCanonicalE164Phone,
+} from '../../shared/util/phone-normalization';
+import {
+  AUTO_PROVISION_PLATFORMS,
+  isOpenAccessIdentityPlatform,
+  PLATFORM_ENDPOINT_CONFIG,
+} from '../../shared/util/platform-endpoint-config';
+import { AgentSubscriberAdoptionService } from './agent-subscriber-adoption.service';
 
 export interface ResolveSubscriberParams {
   environmentId: string;
@@ -101,21 +90,24 @@ export class AgentSubscriberResolver {
     private readonly createOrUpdateSubscriber: CreateOrUpdateSubscriberUseCase,
     private readonly createChannelEndpoint: CreateChannelEndpoint,
     private readonly analyticsService: AnalyticsService,
+    private readonly adoptionService: AgentSubscriberAdoptionService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
   }
 
   /**
-   * Pure platform-identity lookup. Returns the linked subscriberId or `null`
-   * when no link exists. Safe for read-only callers (reactions, actions, and
-   * platforms outside the auto-provision scope).
+   * Pure platform-identity lookup returning a discriminated outcome, so callers
+   * can tell a genuine miss (`not_found`) apart from an unusable identity
+   * (`invalid_identity`). Never returns the `error` outcome — lookup failures
+   * propagate as rejections for the caller to classify. Safe for read-only
+   * callers (reactions, actions, and platforms outside the auto-provision scope).
    */
-  async resolveOnly(params: ResolveSubscriberParams): Promise<string | null> {
+  async resolveSubscriber(params: ResolveSubscriberParams): Promise<SubscriberResolution> {
     const { environmentId, organizationId, platform, platformUserId, integrationIdentifier } = params;
 
     if (!platformUserId.trim()) {
-      return null;
+      return { outcome: 'invalid_identity' };
     }
 
     if (platform === AgentPlatformEnum.WHATSAPP) {
@@ -141,7 +133,7 @@ export class AgentSubscriberResolver {
         `No endpoint config for platform ${platform} — subscriber resolution skipped (integration: ${integrationIdentifier})`
       );
 
-      return null;
+      return { outcome: 'not_found' };
     }
 
     const endpoint = await this.channelEndpointRepository.findByPlatformIdentity({
@@ -156,37 +148,45 @@ export class AgentSubscriberResolver {
     if (endpoint) {
       this.logger.debug(`Resolved platform user ${platform}:${platformUserId} → subscriber ${endpoint.subscriberId}`);
 
-      return endpoint.subscriberId;
+      return { outcome: 'resolved', subscriberId: endpoint.subscriberId };
     }
 
     this.logger.debug(
       `No subscriber linked for platform user ${platform}:${platformUserId} (integration: ${integrationIdentifier})`
     );
 
-    return null;
+    return { outcome: 'not_found' };
   }
 
   /**
-   * Lookup-or-provision for Slack/Teams inbound text messages.
+   * Lookup-or-provision for inbound text messages on platforms where the agent
+   * may create the subscriber itself: Slack/Teams (always) and email/WhatsApp
+   * when the caller has established open access (`subscriberAccess === 'open'`).
+   * Keyless exclusion is email-only and lives with the caller's config.
    *
    * Branches:
    *   - Author is a bot → throw `BotAuthorSkippedError` (runs before lookup so
    *     bot-authored messages cannot reach the bridge even when the bot's
    *     identity is already linked to a subscriber).
    *   - Hit on lookup → return existing subscriberId.
-   *   - Miss → upsert Subscriber + ChannelEndpoint and return the new
-   *     subscriberId. The subscriberId is deterministic from
-   *     `(orgId, integrationIdentifier, platform, platformUserId)`, so any
-   *     retry — race-loss, transient error, redelivery — lands on the same
-   *     `Subscriber` row instead of accumulating phantoms.
+   *   - Miss → provision and return the new subscriberId. The subscriberId is
+   *     deterministic from `(orgId, integrationIdentifier, platform,
+   *     platformUserId)`, so any retry — race-loss, transient error,
+   *     redelivery — lands on the same `Subscriber` row instead of
+   *     accumulating phantoms. Slack/Teams also create the ChannelEndpoint
+   *     binding; email/WhatsApp identity lives on `Subscriber.email` /
+   *     `Subscriber.phone` alone.
    *
-   * Throws for non-provisionable platforms; callers MUST route reactions,
-   * actions, and non-Slack/Teams inbound through `resolveOnly`.
+   * Slack/Teams throw on provisioning failure (dispatch stays off); the email
+   * and WhatsApp open-access branches soft-fail to an `error` outcome so a
+   * provisioning hiccup never crashes the inbound webhook. Throws for
+   * non-provisionable platforms; callers MUST route reactions, actions, and
+   * other inbound through `resolveSubscriber`.
    */
-  async resolveOrProvision(params: ResolveOrProvisionParams): Promise<string> {
-    if (!AUTO_PROVISION_PLATFORMS.has(params.platform)) {
+  async resolveOrProvision(params: ResolveOrProvisionParams): Promise<SubscriberResolution> {
+    if (!AUTO_PROVISION_PLATFORMS.has(params.platform) && !isOpenAccessIdentityPlatform(params.platform)) {
       throw new Error(
-        `resolveOrProvision called for unsupported platform "${params.platform}". Route through resolveOnly instead.`
+        `resolveOrProvision called for unsupported platform "${params.platform}". Route through resolveSubscriber instead.`
       );
     }
 
@@ -200,12 +200,70 @@ export class AgentSubscriberResolver {
       throw new BotAuthorSkippedError(params.platform, params.platformUserId);
     }
 
-    const existing = await this.resolveOnly(params);
-    if (existing) {
+    if (isOpenAccessIdentityPlatform(params.platform)) {
+      return this.resolveOrProvisionOpenAccessIdentity(params);
+    }
+
+    const existing = await this.resolveSubscriber(params);
+    if (existing.outcome === 'resolved') {
       return existing;
     }
 
-    return this.provisionSubscriberAndEndpoint(params);
+    return { outcome: 'resolved', subscriberId: await this.provisionSubscriberAndEndpoint(params) };
+  }
+
+  /**
+   * Soft-fail lookup-or-provision for open-access email/WhatsApp. Identity lives
+   * on Subscriber.email / Subscriber.phone (no ChannelEndpoint). Provisioning
+   * errors become an `error` outcome so the inbound webhook keeps flowing.
+   */
+  private async resolveOrProvisionOpenAccessIdentity(params: ResolveOrProvisionParams): Promise<SubscriberResolution> {
+    const label = params.platform === AgentPlatformEnum.EMAIL ? 'email' : 'WhatsApp';
+    const operation =
+      params.platform === AgentPlatformEnum.EMAIL
+        ? 'provision-open-access-email-subscriber'
+        : 'provision-open-access-whatsapp-subscriber';
+
+    try {
+      const existing = await this.resolveSubscriber(params);
+      if (existing.outcome !== 'not_found') {
+        return existing;
+      }
+
+      const provisionedSubscriberId =
+        params.platform === AgentPlatformEnum.EMAIL
+          ? await this.provisionEmailSubscriber({
+              environmentId: params.environmentId,
+              organizationId: params.organizationId,
+              integrationIdentifier: params.integrationIdentifier,
+              agentIdentifier: params.agentIdentifier,
+              email: params.platformUserId,
+            })
+          : await this.provisionWhatsAppSubscriber({
+              environmentId: params.environmentId,
+              organizationId: params.organizationId,
+              integrationIdentifier: params.integrationIdentifier,
+              agentIdentifier: params.agentIdentifier,
+              phone: params.platformUserId,
+            });
+
+      return provisionedSubscriberId
+        ? { outcome: 'resolved', subscriberId: provisionedSubscriberId }
+        : { outcome: 'invalid_identity' };
+    } catch (err) {
+      this.logger.warn(
+        err,
+        `Open-access ${label} subscriber resolution failed for agent ${params.agentIdentifier}, continuing without it`
+      );
+      captureAgentWarning(err, {
+        component: 'agent-subscriber-resolver',
+        operation,
+        agentIdentifier: params.agentIdentifier,
+        integrationIdentifier: params.integrationIdentifier,
+      });
+
+      return { outcome: 'error', err };
+    }
   }
 
   /**
@@ -231,6 +289,8 @@ export class AgentSubscriberResolver {
       return null;
     }
 
+    // Keyless MCP path may call this without a prior resolveSubscriber miss -
+    // reuse an existing agent-provisioned row when present.
     const existing = await this.resolveAgentProvisionedEmailSubscriber({
       environmentId: params.environmentId,
       organizationId: params.organizationId,
@@ -241,11 +301,63 @@ export class AgentSubscriberResolver {
       return existing;
     }
 
+    return this.upsertOpenAccessIdentitySubscriber({
+      environmentId: params.environmentId,
+      organizationId: params.organizationId,
+      integrationIdentifier: params.integrationIdentifier,
+      agentIdentifier: params.agentIdentifier,
+      platform: AgentPlatformEnum.EMAIL,
+      identity: email,
+      identityFields: { email },
+    });
+  }
+
+  /**
+   * Provision a Subscriber for an open-access WhatsApp sender. Phone identity
+   * lives on `Subscriber.phone` (canonical E.164 with `+`) - no ChannelEndpoint.
+   * Idempotent via deterministic subscriberId. Returns `null` when the phone
+   * is empty/unparseable.
+   */
+  private async provisionWhatsAppSubscriber(params: {
+    environmentId: string;
+    organizationId: string;
+    integrationIdentifier: string;
+    agentIdentifier: string;
+    phone: string;
+  }): Promise<string | null> {
+    const phone = toCanonicalE164Phone(params.phone);
+
+    if (!phone) {
+      this.logger.debug(`Skipping WhatsApp subscriber provision for invalid phone "${params.phone}"`);
+
+      return null;
+    }
+
+    return this.upsertOpenAccessIdentitySubscriber({
+      environmentId: params.environmentId,
+      organizationId: params.organizationId,
+      integrationIdentifier: params.integrationIdentifier,
+      agentIdentifier: params.agentIdentifier,
+      platform: AgentPlatformEnum.WHATSAPP,
+      identity: phone,
+      identityFields: { phone },
+    });
+  }
+
+  private async upsertOpenAccessIdentitySubscriber(params: {
+    environmentId: string;
+    organizationId: string;
+    integrationIdentifier: string;
+    agentIdentifier: string;
+    platform: AgentPlatformEnum.EMAIL | AgentPlatformEnum.WHATSAPP;
+    identity: string;
+    identityFields: { email: string } | { phone: string };
+  }): Promise<string> {
     const subscriberId = buildPlatformSubscriberId({
       organizationId: params.organizationId,
       integrationIdentifier: params.integrationIdentifier,
-      platform: AgentPlatformEnum.EMAIL,
-      platformUserId: email,
+      platform: params.platform,
+      platformUserId: params.identity,
     });
 
     await this.createOrUpdateSubscriber.execute(
@@ -253,11 +365,11 @@ export class AgentSubscriberResolver {
         environmentId: params.environmentId,
         organizationId: params.organizationId,
         subscriberId,
-        email,
+        ...params.identityFields,
         data: {
           [AGENT_PROVISION_DATA_KEYS.source]: AGENT_PLATFORM_PROVISION_SOURCE,
-          [AGENT_PROVISION_DATA_KEYS.platform]: AgentPlatformEnum.EMAIL,
-          [AGENT_PROVISION_DATA_KEYS.platformUserId]: email,
+          [AGENT_PROVISION_DATA_KEYS.platform]: params.platform,
+          [AGENT_PROVISION_DATA_KEYS.platformUserId]: params.identity,
           [AGENT_PROVISION_DATA_KEYS.agentIdentifier]: params.agentIdentifier,
           [AGENT_PROVISION_DATA_KEYS.firstSeenAt]: new Date().toISOString(),
         },
@@ -267,13 +379,13 @@ export class AgentSubscriberResolver {
     this.analyticsService.track('[Agent Platform] - Subscriber auto-provisioned', params.organizationId, {
       _organization: params.organizationId,
       environmentId: params.environmentId,
-      platform: AgentPlatformEnum.EMAIL,
+      platform: params.platform,
       agentIdentifier: params.agentIdentifier,
       subscriberId,
     });
 
     this.logger.debug(
-      `Lazily provisioned email subscriber ${subscriberId} for ${email} in org ${params.organizationId}`
+      `Lazily provisioned ${params.platform} subscriber ${subscriberId} for ${params.identity} in org ${params.organizationId}`
     );
 
     return subscriberId;
@@ -283,28 +395,72 @@ export class AgentSubscriberResolver {
     environmentId: string;
     organizationId: string;
     platformUserId: string;
-  }): Promise<string | null> {
+  }): Promise<SubscriberResolution> {
     const { environmentId, organizationId, platformUserId } = params;
-    const phoneCandidates = getPhoneLookupCandidates(platformUserId);
-    const matches = await this.subscriberRepository.findByPhone(environmentId, organizationId, phoneCandidates);
+    const phone = toCanonicalE164Phone(platformUserId);
 
-    if (matches.length > 1) {
+    if (!phone) {
+      this.logger.debug(`Skipping WhatsApp subscriber lookup for invalid phone "${platformUserId}"`);
+
+      return { outcome: 'invalid_identity' };
+    }
+
+    const phoneCandidates = getPhoneLookupCandidates(platformUserId);
+    const matches = await this.subscriberRepository.findByPhone(
+      environmentId,
+      organizationId,
+      phoneCandidates,
+      buildPhoneDigitFlexibleRegexSource(platformUserId)
+    );
+
+    if (matches.length === 0) {
+      this.logger.debug(`No subscriber found for WhatsApp phone ${platformUserId}`);
+
+      return { outcome: 'not_found' };
+    }
+
+    // Partition matches into real (customer-created) vs auto-provisioned
+    // "phantom" subscribers. A real subscriber always wins over a phantom so an
+    // end user who signed up through the customer's app keeps their own identity
+    // and history rather than fragmenting onto the phone-derived phantom.
+    const phantoms = matches.filter(isAgentProvisionedSubscriber);
+    const realSubscribers = matches.filter((m) => !isAgentProvisionedSubscriber(m));
+
+    if (realSubscribers.length > 0) {
+      const real = realSubscribers[0];
+
+      if (realSubscribers.length > 1) {
+        this.logger.warn(
+          `Multiple customer-created subscribers (${realSubscribers.length}) share phone ${platformUserId} in environment ${environmentId} - using first match`
+        );
+      }
+
+      if (phantoms.length > 0) {
+        await this.adoptionService.adoptPhantomsInto({
+          environmentId,
+          organizationId,
+          real: { _id: real._id, subscriberId: real.subscriberId },
+          phantoms: phantoms.map((p) => ({ _id: p._id, subscriberId: p.subscriberId })),
+        });
+      }
+
+      this.logger.debug(`Resolved WhatsApp phone ${platformUserId} → subscriber ${real.subscriberId}`);
+
+      return { outcome: 'resolved', subscriberId: real.subscriberId };
+    }
+
+    if (phantoms.length > 1) {
       this.logger.warn(
-        `Multiple subscribers (${matches.length}) share phone ${platformUserId} in environment ${environmentId} — using first match`
+        `Multiple auto-provisioned subscribers (${phantoms.length}) share phone ${platformUserId} in environment ${environmentId} - using first match`
       );
     }
 
-    const subscriber = matches[0];
+    const phantom = phantoms[0];
+    this.logger.debug(
+      `Resolved WhatsApp phone ${platformUserId} → auto-provisioned subscriber ${phantom.subscriberId}`
+    );
 
-    if (subscriber) {
-      this.logger.debug(`Resolved WhatsApp phone ${platformUserId} → subscriber ${subscriber.subscriberId}`);
-
-      return subscriber.subscriberId;
-    }
-
-    this.logger.debug(`No subscriber found for WhatsApp phone ${platformUserId}`);
-
-    return null;
+    return { outcome: 'resolved', subscriberId: phantom.subscriberId };
   }
 
   private async resolveAgentProvisionedEmailSubscriber(params: {
@@ -348,35 +504,70 @@ export class AgentSubscriberResolver {
     environmentId: string;
     organizationId: string;
     platformUserId: string;
-  }): Promise<string | null> {
+  }): Promise<SubscriberResolution> {
     const { environmentId, organizationId, platformUserId } = params;
     const email = normalizeEmailForLookup(platformUserId);
 
     if (!isValidEmailForLookup(email)) {
       this.logger.debug(`Skipping email subscriber lookup for invalid address "${platformUserId}"`);
 
-      return null;
+      return { outcome: 'invalid_identity' };
     }
 
     const matches = await this.subscriberRepository.findByEmail(environmentId, organizationId, email);
 
-    if (matches.length > 1) {
+    if (matches.length === 0) {
+      this.logger.debug(`No subscriber found for email ${email}`);
+
+      return { outcome: 'not_found' };
+    }
+
+    // Partition matches into real (customer-created) vs auto-provisioned
+    // "phantom" subscribers. A real subscriber always wins over a phantom so an
+    // end user who signed up through the customer's app keeps their own identity
+    // and history rather than fragmenting onto the address-derived phantom.
+    const phantoms = matches.filter(isAgentProvisionedSubscriber);
+    const realSubscribers = matches.filter((m) => !isAgentProvisionedSubscriber(m));
+
+    if (realSubscribers.length > 0) {
+      const real = realSubscribers[0];
+
+      if (realSubscribers.length > 1) {
+        this.logger.warn(
+          `Multiple customer-created subscribers (${realSubscribers.length}) share email ${email} in environment ${environmentId} — using first match`
+        );
+      }
+
+      // Lazy adoption: fold any phantom(s) that share this address into the real
+      // subscriber so their conversations and tool grants follow the surviving
+      // identity. Best-effort and idempotent — never throws, so a merge hiccup
+      // can't block the inbound turn (it retries on the next email).
+      if (phantoms.length > 0) {
+        await this.adoptionService.adoptPhantomsInto({
+          environmentId,
+          organizationId,
+          real: { _id: real._id, subscriberId: real.subscriberId },
+          phantoms: phantoms.map((p) => ({ _id: p._id, subscriberId: p.subscriberId })),
+        });
+      }
+
+      this.logger.debug(`Resolved email ${email} → subscriber ${real.subscriberId}`);
+
+      return { outcome: 'resolved', subscriberId: real.subscriberId };
+    }
+
+    // Only phantom(s) exist — no customer-created subscriber yet. Resolve to the
+    // phantom so the open-access agent keeps replying under the same identity.
+    if (phantoms.length > 1) {
       this.logger.warn(
-        `Multiple subscribers (${matches.length}) share email ${email} in environment ${environmentId} — using first match`
+        `Multiple auto-provisioned subscribers (${phantoms.length}) share email ${email} in environment ${environmentId} — using first match`
       );
     }
 
-    const subscriber = matches[0];
+    const phantom = phantoms[0];
+    this.logger.debug(`Resolved email ${email} → auto-provisioned subscriber ${phantom.subscriberId}`);
 
-    if (subscriber) {
-      this.logger.debug(`Resolved email ${email} → subscriber ${subscriber.subscriberId}`);
-
-      return subscriber.subscriberId;
-    }
-
-    this.logger.debug(`No subscriber found for email ${email}`);
-
-    return null;
+    return { outcome: 'resolved', subscriberId: phantom.subscriberId };
   }
 
   private async provisionSubscriberAndEndpoint(params: ResolveOrProvisionParams): Promise<string> {
@@ -524,6 +715,16 @@ export class AgentSubscriberResolver {
  */
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * True when a subscriber was auto-created from an inbound platform message
+ * (identified by the `__novu_source` provenance marker on `Subscriber.data`)
+ * rather than by the customer's API/dashboard. Used to prefer real subscribers
+ * over phantoms and to target phantoms for adoption.
+ */
+function isAgentProvisionedSubscriber(subscriber: Pick<SubscriberEntity, 'data'>): boolean {
+  return subscriber.data?.[AGENT_PROVISION_DATA_KEYS.source] === AGENT_PLATFORM_PROVISION_SOURCE;
 }
 
 function buildPlatformSubscriberId(params: {

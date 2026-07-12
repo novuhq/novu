@@ -43,6 +43,10 @@ export class TriggerBroadcast extends TriggerBase {
         {},
         subscriberFetchBatchSize
       )) {
+        if (command.actor?.subscriberId && subscriber.subscriberId === command.actor.subscriberId) {
+          continue;
+        }
+
         subscribers.push(subscriber);
         if (subscribers.length === subscriberFetchBatchSize) {
           await this.sendToProcessSubscriberService(command, subscribers, SubscriberSourceEnum.BROADCAST);

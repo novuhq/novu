@@ -21,7 +21,8 @@ import {
   SigningKeyNotFoundError,
 } from './errors';
 import { isPlatformError } from './errors/guard.errors';
-import type { Agent, AgentBridgeRequest } from './resources/agent';
+import type { Agent } from './resources/agent';
+import type { AgentBridgeRequest } from './resources/agent/agent.types';
 import { dispatchAgentEvent } from './resources/agent/agent-dispatch';
 import type { Awaitable, EventTriggerParams, Workflow } from './types';
 import { createHmacSubtle, initApiClient, timingSafeEqual } from './utils';

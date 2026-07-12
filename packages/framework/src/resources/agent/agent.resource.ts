@@ -15,5 +15,5 @@ export function agent(agentId: string, handlers: AgentHandlers): Agent {
     throw new Error(`agent('${agentId}') requires an onMessage handler`);
   }
 
-  return { id: agentId, handlers };
+  return { id: agentId, handlers, userOnToolApproval: typeof handlers.onToolApproval === 'function' };
 }

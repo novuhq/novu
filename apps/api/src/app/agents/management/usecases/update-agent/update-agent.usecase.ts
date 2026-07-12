@@ -24,7 +24,9 @@ export class UpdateAgent {
 
   async execute(command: UpdateAgentCommand): Promise<AgentResponseDto> {
     const hasBehaviorFields =
-      command.behavior?.acknowledgeOnReceived !== undefined || command.behavior?.reactionOnResolved !== undefined;
+      command.behavior?.acknowledgeOnReceived !== undefined ||
+      command.behavior?.reactionOnResolved !== undefined ||
+      command.behavior?.subscriberAccess !== undefined;
 
     const hasGeneralFields =
       command.name !== undefined ||
@@ -96,6 +98,9 @@ export class UpdateAgent {
       }
       if (command.behavior!.reactionOnResolved !== undefined) {
         $set['behavior.reactionOnResolved'] = command.behavior!.reactionOnResolved;
+      }
+      if (command.behavior!.subscriberAccess !== undefined) {
+        $set['behavior.subscriberAccess'] = command.behavior!.subscriberAccess;
       }
     }
 

@@ -1,16 +1,11 @@
 ---
-title: 'Remix'
-description: "Integrate Novu in-app notifications into your Remix application. Follow step-by-step setup from install to first notification."
+title: 'Remix In-App Notifications Quickstart — Novu Inbox'
+description: "Integrate Novu in-app notifications into your Remix application. Step-by-step setup from install through to sending your first notification to a subscriber."
+sidebarTitle: 'Remix'
 ---
 
 
-This guide walks you through integrating Novu’s Inbox into your Remix application for in-app notifications in real-time, from setup to triggering your first notification. By the end, you'll have a working notification inbox.
-
-## Use AI to set up faster
-
-<Note>
-  Replace `YOUR_APPLICATION_IDENTIFIER` and `YOUR_SUBSCRIBER_ID` with values from **API Keys** and **Subscribers** in the Novu dashboard.
-</Note>
+Add real-time in-app notifications to Remix in under 10 minutes using the Novu Inbox component.
 
 <Prompt description="Add Novu Inbox to my Remix app" icon="sparkles" actions={["copy", "cursor"]}>
 # Add Novu Inbox to Remix App
@@ -18,8 +13,6 @@ This guide walks you through integrating Novu’s Inbox into your Remix applicat
 Install `@novu/react`. Add the `<Inbox />` component to your header, navbar, or sidebar.
 
 Latest docs: https://docs.novu.co/platform/quickstart/remix
-
-Replace `YOUR_APPLICATION_IDENTIFIER` and `YOUR_SUBSCRIBER_ID` with values from the Novu dashboard (**API Keys** and **Subscribers**).
 
 ## Install
 
@@ -123,7 +116,7 @@ If any fails, revise.
   </Step>
 
   <Step>
-  ### Add the Notification Center component to your layout
+  ### Add the Inbox component to your layout
     Now you can import the `NotificationCenter` component and add it to your app layout:
     
     ```tsx title="app/root.tsx"

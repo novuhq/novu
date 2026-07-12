@@ -1,6 +1,7 @@
 export * from './constants';
 export * from './createInfiniteScroll';
 export * from './formatToRelativeTime';
+export * from './normalizeIntlLocale';
 export * from './useNotificationVisibility';
 export * from './useStyle';
 export * from './useTabsDropdown';

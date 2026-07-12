@@ -18,6 +18,16 @@
     "dark": "/logo/dark.svg",
     "href": "https://novu.co"
   },
+  "seo": {
+    "indexing": "all",
+    "metatags": {
+      "og:type": "website",
+      "twitter:card": "summary_large_image"
+    }
+  },
+  "interaction": {
+    "drilldown": true
+  },
   "navigation": {
     "global": {
       "anchors": []
@@ -34,6 +44,10 @@
               "platform/what-is-novu",
               "platform/how-novu-works",
               {
+                "group": "Novu for your team",
+                "pages": ["platform/novu-for/developers", "platform/novu-for/product"]
+              },
+              {
                 "group": "Core Concepts",
                 "pages": [
                   "platform/concepts/notification-event",
@@ -43,6 +57,7 @@
                   "platform/concepts/integrations",
                   "platform/concepts/trigger",
                   "platform/concepts/preferences",
+                  "platform/concepts/contexts",
                   "platform/concepts/tenants"
                 ]
               },
@@ -54,6 +69,7 @@
                   "platform/quickstart/remix",
                   "platform/quickstart/angular",
                   "platform/quickstart/vue",
+                  "platform/quickstart/nuxt",
                   "platform/quickstart/vanilla-js"
                 ]
               }
@@ -66,10 +82,7 @@
               "platform/inbox/setup-inbox",
               {
                 "group": "Features",
-                "pages": [
-                  "platform/inbox/features/snooze",
-                  "platform/inbox/features/schedule"
-                ]
+                "pages": ["platform/inbox/features/snooze", "platform/inbox/features/schedule"]
               },
               {
                 "group": "Customize and Configure",
@@ -111,6 +124,7 @@
             "pages": [
               "platform/subscription",
               "platform/subscription/quickstart",
+              "platform/subscription/manage-topic-subscriptions",
               "platform/subscription/customize-and-configure",
               "platform/subscription/headless-hooks"
             ],
@@ -177,6 +191,7 @@
                   "platform/integrations/chat/mattermost",
                   "platform/integrations/chat/ms-teams",
                   "platform/integrations/chat/slack",
+                  "platform/integrations/chat/telegram",
                   "platform/integrations/chat/whats-app",
                   "platform/integrations/chat/zulip"
                 ]
@@ -205,6 +220,7 @@
                   "platform/integrations/email/sparkpost",
                   "platform/integrations/email/webhook",
                   "platform/integrations/email/custom-smtp",
+                  "platform/integrations/email/writing-email-template",
                   {
                     "group": "Activity Tracking",
                     "pages": [
@@ -259,6 +275,7 @@
                   "platform/integrations/sms/sendchamp",
                   "platform/integrations/sms/simpletexting",
                   "platform/integrations/sms/sms-central",
+                  "platform/integrations/sms/sms-webhook",
                   "platform/integrations/sms/sms77",
                   "platform/integrations/sms/sns",
                   "platform/integrations/sms/telnyx",
@@ -337,8 +354,13 @@
               "platform/developer/environment-variables",
               "platform/developer/limits",
               {
+                "group": "Inbound email",
+                "pages": ["platform/inbound-email/overview"]
+              },
+              {
                 "group": "Webhooks",
                 "pages": [
+                  "platform/developer/webhooks/webhooks",
                   "platform/developer/webhooks/event-types",
                   "platform/developer/webhooks/connectors"
                 ]
@@ -350,6 +372,7 @@
             "group": "Account",
             "pages": [
               "platform/account/authentication",
+              "platform/account/organizations",
               "platform/account/roles-and-permissions",
               "platform/account/manage-members",
               "platform/account/billing",
@@ -382,7 +405,7 @@
         "tab": "Agents",
         "groups": [
           {
-            "group": "Get Started",
+            "group": "Getting Started",
             "boost": 3,
             "pages": [
               "agents",
@@ -427,9 +450,7 @@
           },
           {
             "group": "Observability",
-            "pages": [
-              "agents/conversations"
-            ],
+            "pages": ["agents/conversations"],
             "icon": "eye"
           }
         ]
@@ -438,7 +459,7 @@
         "tab": "API Reference",
         "groups": [
           {
-            "group": "Overview",
+            "group": "Getting Started",
             "pages": [
               "api-reference",
               "api-reference/authentication",
@@ -450,228 +471,359 @@
             ]
           },
           {
-            "group": "Events",
+            "group": "Notification delivery",
+            "icon": "send",
             "pages": [
-              "api-reference/events/trigger-event",
-              "api-reference/events/bulk-trigger-event",
-              "api-reference/events/broadcast-event-to-all",
-              "api-reference/events/cancel-triggered-event"
-            ],
-            "icon": "zap"
+              {
+                "group": "Events",
+                "expanded": false,
+                "pages": [
+                  "api-reference/events/trigger-event",
+                  "api-reference/events/bulk-trigger-event",
+                  "api-reference/events/broadcast-event-to-all",
+                  "api-reference/events/cancel-triggered-event"
+                ]
+              },
+              {
+                "group": "Notifications",
+                "expanded": false,
+                "pages": [
+                  "api-reference/notifications/notification-event-schema",
+                  "api-reference/notifications/list-all-events",
+                  "api-reference/notifications/retrieve-an-event"
+                ]
+              },
+              {
+                "group": "Messages",
+                "expanded": false,
+                "pages": [
+                  "api-reference/messages/message-schema",
+                  "api-reference/messages/list-all-messages",
+                  "api-reference/messages/delete-a-message",
+                  "api-reference/messages/delete-messages-by-transactionid"
+                ]
+              },
+              {
+                "group": "Activity",
+                "expanded": false,
+                "pages": ["api-reference/activity/track-activity-and-engagement-events"]
+              }
+            ]
           },
           {
-            "group": "Subscribers",
+            "group": "Agents",
+            "icon": "bot",
             "pages": [
-              "api-reference/subscribers/subscriber-schema",
-              "api-reference/subscribers/create-a-subscriber",
-              "api-reference/subscribers/retrieve-a-subscriber",
-              "api-reference/subscribers/update-a-subscriber",
-              "api-reference/subscribers/delete-a-subscriber",
-              "api-reference/subscribers/search-subscribers",
-              "api-reference/subscribers/retrieve-subscriber-subscriptions",
-              "api-reference/subscribers/bulk-create-subscribers",
-              "api-reference/subscribers/retrieve-subscriber-preferences",
-              "api-reference/subscribers/update-subscriber-preferences",
-              "api-reference/subscribers/bulk-update-subscriber-preferences",
-              "api-reference/subscribers/update-provider-credentials",
-              "api-reference/subscribers/upsert-provider-credentials",
-              "api-reference/subscribers/delete-provider-credentials",
-              "api-reference/subscribers/retrieve-subscriber-notifications",
-              "api-reference/subscribers/update-notifications-state",
-              "api-reference/subscribers/update-all-notifications-state",
-              "api-reference/subscribers/update-subscriber-online-status",
-              "api-reference/subscribers/retrieve-unseen-notifications-count",
-              "api-reference/subscribers/update-notification-action-status"
-            ],
-            "icon": "users"
+              "api-reference/agents/agent-schema",
+              {
+                "group": "Management",
+                "expanded": false,
+                "pages": [
+                  "api-reference/agents/create-an-agent",
+                  "api-reference/agents/list-all-agents",
+                  "api-reference/agents/retrieve-an-agent",
+                  "api-reference/agents/update-an-agent",
+                  "api-reference/agents/delete-an-agent"
+                ]
+              },
+              {
+                "group": "Runtime",
+                "expanded": false,
+                "pages": [
+                  "api-reference/agents/update-an-agent-bridge",
+                  "api-reference/agents/send-an-agent-reply"
+                ]
+              },
+              {
+                "group": "Integrations",
+                "expanded": false,
+                "pages": [
+                  "api-reference/agents/create-an-agent-integration",
+                  "api-reference/agents/list-agent-integrations",
+                  "api-reference/agents/update-an-agent-integration",
+                  "api-reference/agents/delete-an-agent-integration"
+                ]
+              }
+            ]
           },
           {
-            "group": "Inbox",
+            "group": "Data",
+            "icon": "database",
             "pages": [
-              "api-reference/subscribers/retrieve-subscriber-notifications-count",
-              "api-reference/subscribers/mark-a-notification-as-read",
-              "api-reference/subscribers/mark-a-notification-as-unread",
-              "api-reference/subscribers/mark-all-notifications-as-read",
-              "api-reference/subscribers/mark-notifications-as-seen",
-              "api-reference/subscribers/snooze-a-notification",
-              "api-reference/subscribers/unsnooze-a-notification",
-              "api-reference/subscribers/archive-a-notification",
-              "api-reference/subscribers/unarchive-a-notification",
-              "api-reference/subscribers/archive-all-notifications",
-              "api-reference/subscribers/archive-all-read-notifications",
-              "api-reference/subscribers/delete-a-notification",
-              "api-reference/subscribers/delete-all-notifications",
-              "api-reference/subscribers/complete-a-notification-action",
-              "api-reference/subscribers/revert-a-notification-action"
-            ],
-            "icon": "inbox"
+              {
+                "group": "Subscribers",
+                "expanded": false,
+                "pages": [
+                  "api-reference/subscribers/subscriber-schema",
+                  {
+                    "group": "Management",
+                    "expanded": false,
+                    "pages": [
+                      "api-reference/subscribers/create-a-subscriber",
+                      "api-reference/subscribers/retrieve-a-subscriber",
+                      "api-reference/subscribers/update-a-subscriber",
+                      "api-reference/subscribers/delete-a-subscriber",
+                      "api-reference/subscribers/search-subscribers",
+                      "api-reference/subscribers/bulk-create-subscribers"
+                    ]
+                  },
+                  {
+                    "group": "Subscriptions",
+                    "expanded": false,
+                    "pages": ["api-reference/subscribers/retrieve-subscriber-subscriptions"]
+                  },
+                  {
+                    "group": "Preferences",
+                    "expanded": false,
+                    "pages": [
+                      "api-reference/subscribers/retrieve-subscriber-preferences",
+                      "api-reference/subscribers/update-subscriber-preferences",
+                      "api-reference/subscribers/bulk-update-subscriber-preferences"
+                    ]
+                  },
+                  {
+                    "group": "Credentials",
+                    "expanded": false,
+                    "pages": [
+                      "api-reference/subscribers/update-provider-credentials",
+                      "api-reference/subscribers/upsert-provider-credentials",
+                      "api-reference/subscribers/delete-provider-credentials"
+                    ]
+                  },
+                  {
+                    "group": "Notification state",
+                    "expanded": false,
+                    "pages": [
+                      "api-reference/subscribers/retrieve-subscriber-notifications",
+                      "api-reference/subscribers/update-notifications-state",
+                      "api-reference/subscribers/update-all-notifications-state",
+                      "api-reference/subscribers/update-subscriber-online-status",
+                      "api-reference/subscribers/retrieve-unseen-notifications-count",
+                      "api-reference/subscribers/update-notification-action-status"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "Inbox",
+                "expanded": false,
+                "pages": [
+                  {
+                    "group": "Counts",
+                    "expanded": false,
+                    "pages": ["api-reference/subscribers/retrieve-subscriber-notifications-count"]
+                  },
+                  {
+                    "group": "Read & seen",
+                    "expanded": false,
+                    "pages": [
+                      "api-reference/subscribers/mark-a-notification-as-read",
+                      "api-reference/subscribers/mark-a-notification-as-unread",
+                      "api-reference/subscribers/mark-all-notifications-as-read",
+                      "api-reference/subscribers/mark-notifications-as-seen"
+                    ]
+                  },
+                  {
+                    "group": "Snooze",
+                    "expanded": false,
+                    "pages": [
+                      "api-reference/subscribers/snooze-a-notification",
+                      "api-reference/subscribers/unsnooze-a-notification"
+                    ]
+                  },
+                  {
+                    "group": "Archive",
+                    "expanded": false,
+                    "pages": [
+                      "api-reference/subscribers/archive-a-notification",
+                      "api-reference/subscribers/unarchive-a-notification",
+                      "api-reference/subscribers/archive-all-notifications",
+                      "api-reference/subscribers/archive-all-read-notifications"
+                    ]
+                  },
+                  {
+                    "group": "Delete",
+                    "expanded": false,
+                    "pages": [
+                      "api-reference/subscribers/delete-a-notification",
+                      "api-reference/subscribers/delete-all-notifications"
+                    ]
+                  },
+                  {
+                    "group": "Actions",
+                    "expanded": false,
+                    "pages": [
+                      "api-reference/subscribers/complete-a-notification-action",
+                      "api-reference/subscribers/revert-a-notification-action"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "Topics",
+                "expanded": false,
+                "pages": [
+                  "api-reference/topics/topic-schema",
+                  {
+                    "group": "Management",
+                    "expanded": false,
+                    "pages": [
+                      "api-reference/topics/create-a-topic",
+                      "api-reference/topics/retrieve-a-topic",
+                      "api-reference/topics/update-a-topic",
+                      "api-reference/topics/delete-a-topic",
+                      "api-reference/topics/list-all-topics"
+                    ]
+                  },
+                  {
+                    "group": "Subscriptions",
+                    "expanded": false,
+                    "pages": [
+                      "api-reference/topics/create-topic-subscriptions",
+                      "api-reference/topics/delete-topic-subscriptions",
+                      "api-reference/topics/update-a-topic-subscription",
+                      "api-reference/topics/list-topic-subscriptions",
+                      "api-reference/topics/check-topic-subscriber",
+                      "api-reference/topics/retrieve-a-topic-subscription"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "Contexts",
+                "expanded": false,
+                "pages": [
+                  "api-reference/contexts/context-schema",
+                  "api-reference/contexts/create-a-context",
+                  "api-reference/contexts/retrieve-a-context",
+                  "api-reference/contexts/update-a-context",
+                  "api-reference/contexts/delete-a-context",
+                  "api-reference/contexts/list-all-contexts"
+                ]
+              },
+              {
+                "group": "Channel Connections",
+                "expanded": false,
+                "pages": [
+                  "api-reference/channel-connections/create-a-channel-connection",
+                  "api-reference/channel-connections/retrieve-a-channel-connection",
+                  "api-reference/channel-connections/update-a-channel-connection",
+                  "api-reference/channel-connections/delete-a-channel-connection",
+                  "api-reference/channel-connections/list-all-channel-connections"
+                ]
+              },
+              {
+                "group": "Channel Endpoints",
+                "expanded": false,
+                "pages": [
+                  "api-reference/channel-endpoints/create-a-channel-endpoint",
+                  "api-reference/channel-endpoints/retrieve-a-channel-endpoint",
+                  "api-reference/channel-endpoints/update-a-channel-endpoint",
+                  "api-reference/channel-endpoints/delete-a-channel-endpoint",
+                  "api-reference/channel-endpoints/list-all-channel-endpoints"
+                ]
+              }
+            ]
           },
           {
-            "group": "Topics",
+            "group": "Workflows & content",
+            "icon": "git-branch",
             "pages": [
-              "api-reference/topics/topic-schema",
-              "api-reference/topics/create-a-topic",
-              "api-reference/topics/retrieve-a-topic",
-              "api-reference/topics/update-a-topic",
-              "api-reference/topics/delete-a-topic",
-              "api-reference/topics/list-all-topics",
-              "api-reference/topics/create-topic-subscriptions",
-              "api-reference/topics/delete-topic-subscriptions",
-              "api-reference/topics/update-a-topic-subscription",
-              "api-reference/topics/list-topic-subscriptions",
-              "api-reference/topics/check-topic-subscriber",
-              "api-reference/topics/retrieve-a-topic-subscription"
-            ],
-            "icon": "hash"
+              {
+                "group": "Workflows",
+                "expanded": false,
+                "pages": [
+                  "api-reference/workflows/workflow-schema",
+                  "api-reference/workflows/create-a-workflow",
+                  "api-reference/workflows/retrieve-a-workflow",
+                  "api-reference/workflows/update-a-workflow",
+                  "api-reference/workflows/delete-a-workflow",
+                  "api-reference/workflows/list-all-workflows",
+                  "api-reference/workflows/sync-a-workflow",
+                  "api-reference/workflows/retrieve-workflow-step",
+                  "api-reference/workflows/generate-a-step-preview"
+                ]
+              },
+              {
+                "group": "Translations",
+                "expanded": false,
+                "pages": [
+                  "api-reference/translations/create-a-translation",
+                  "api-reference/translations/retrieve-a-translation",
+                  "api-reference/translations/delete-a-translation",
+                  "api-reference/translations/retrieve-a-translation-group",
+                  "api-reference/translations/delete-a-translation-group",
+                  "api-reference/translations/import-master-translations-json",
+                  "api-reference/translations/retrieve-master-translations-json",
+                  "api-reference/translations/upload-master-translations-json-file",
+                  "api-reference/translations/upload-translation-files"
+                ]
+              },
+              {
+                "group": "Layouts",
+                "expanded": false,
+                "pages": [
+                  "api-reference/layouts/create-a-layout",
+                  "api-reference/layouts/delete-a-layout",
+                  "api-reference/layouts/duplicate-a-layout",
+                  "api-reference/layouts/generate-layout-preview",
+                  "api-reference/layouts/get-layout-usage",
+                  "api-reference/layouts/list-all-layouts",
+                  "api-reference/layouts/retrieve-a-layout",
+                  "api-reference/layouts/update-a-layout"
+                ]
+              }
+            ]
           },
           {
-            "group": "Notifications",
+            "group": "Platform & channels",
+            "icon": "settings",
             "pages": [
-              "api-reference/notifications/notification-event-schema",
-              "api-reference/notifications/list-all-events",
-              "api-reference/notifications/retrieve-an-event"
-            ],
-            "icon": "bell"
-          },
-          {
-            "group": "Workflows",
-            "pages": [
-              "api-reference/workflows/workflow-schema",
-              "api-reference/workflows/create-a-workflow",
-              "api-reference/workflows/retrieve-a-workflow",
-              "api-reference/workflows/update-a-workflow",
-              "api-reference/workflows/delete-a-workflow",
-              "api-reference/workflows/list-all-workflows",
-              "api-reference/workflows/sync-a-workflow",
-              "api-reference/workflows/retrieve-workflow-step",
-              "api-reference/workflows/generate-a-step-preview"
-            ],
-            "icon": "git-branch"
-          },
-          {
-            "group": "Translations",
-            "pages": [
-              "api-reference/translations/create-a-translation",
-              "api-reference/translations/retrieve-a-translation",
-              "api-reference/translations/delete-a-translation",
-              "api-reference/translations/retrieve-a-translation-group",
-              "api-reference/translations/delete-a-translation-group",
-              "api-reference/translations/import-master-translations-json",
-              "api-reference/translations/retrieve-master-translations-json",
-              "api-reference/translations/upload-master-translations-json-file",
-              "api-reference/translations/upload-translation-files"
-            ],
-            "icon": "languages"
-          },
-          {
-            "group": "Contexts",
-            "pages": [
-              "api-reference/contexts/context-schema",
-              "api-reference/contexts/create-a-context",
-              "api-reference/contexts/retrieve-a-context",
-              "api-reference/contexts/update-a-context",
-              "api-reference/contexts/delete-a-context",
-              "api-reference/contexts/list-all-contexts"
-            ],
-            "icon": "layers"
-          },
-          {
-            "group": "Environments",
-            "pages": [
-              "api-reference/environments/environment-schema",
-              "api-reference/environments/create-an-environment",
-              "api-reference/environments/update-an-environment",
-              "api-reference/environments/delete-an-environment",
-              "api-reference/environments/list-all-environments",
-              "api-reference/environments/list-environment-tags",
-              "api-reference/environments/compare-resources-between-environments",
-              "api-reference/environments/publish-resources-to-target-environment"
-            ],
-            "icon": "server"
-          },
-          {
-            "group": "Environment Variables",
-            "pages": [
-              "api-reference/environment-variables/environment-variable-schema",
-              "api-reference/environment-variables/create-a-variable",
-              "api-reference/environment-variables/retrieve-a-variable",
-              "api-reference/environment-variables/update-a-variable",
-              "api-reference/environment-variables/delete-a-variable",
-              "api-reference/environment-variables/list-all-variables",
-              "api-reference/environment-variables/retrieve-a-variable-usage"
-            ],
-            "icon": "variable"
-          },
-          {
-            "group": "Messages",
-            "pages": [
-              "api-reference/messages/message-schema",
-              "api-reference/messages/list-all-messages",
-              "api-reference/messages/delete-a-message",
-              "api-reference/messages/delete-messages-by-transactionid"
-            ],
-            "icon": "message-square"
-          },
-          {
-            "group": "Integrations",
-            "pages": [
-              "api-reference/integrations/integration-schema",
-              "api-reference/integrations/create-an-integration",
-              "api-reference/integrations/update-an-integration",
-              "api-reference/integrations/delete-an-integration",
-              "api-reference/integrations/list-all-integrations",
-              "api-reference/integrations/list-active-integrations",
-              "api-reference/integrations/update-integration-as-primary",
-              "api-reference/integrations/generate-chat-oauth-url",
-              "api-reference/integrations/auto-configure-an-integration-for-inbound-webhooks"
-            ],
-            "icon": "plug"
-          },
-          {
-            "group": "Channel Connections",
-            "pages": [
-              "api-reference/channel-connections/create-a-channel-connection",
-              "api-reference/channel-connections/retrieve-a-channel-connection",
-              "api-reference/channel-connections/update-a-channel-connection",
-              "api-reference/channel-connections/delete-a-channel-connection",
-              "api-reference/channel-connections/list-all-channel-connections"
-            ],
-            "icon": "link"
-          },
-          {
-            "group": "Channel Endpoints",
-            "pages": [
-              "api-reference/channel-endpoints/create-a-channel-endpoint",
-              "api-reference/channel-endpoints/retrieve-a-channel-endpoint",
-              "api-reference/channel-endpoints/update-a-channel-endpoint",
-              "api-reference/channel-endpoints/delete-a-channel-endpoint",
-              "api-reference/channel-endpoints/list-all-channel-endpoints"
-            ],
-            "icon": "radio"
-          },
-          {
-            "group": "Activity",
-            "pages": [
-              "api-reference/activity/track-activity-and-engagement-events"
-            ],
-            "icon": "activity"
-          },
-          {
-            "group": "Layouts",
-            "pages": [
-              "api-reference/layouts/create-a-layout",
-              "api-reference/layouts/delete-a-layout",
-              "api-reference/layouts/duplicate-a-layout",
-              "api-reference/layouts/generate-layout-preview",
-              "api-reference/layouts/get-layout-usage",
-              "api-reference/layouts/list-all-layouts",
-              "api-reference/layouts/retrieve-a-layout",
-              "api-reference/layouts/update-a-layout"
-            ],
-            "icon": "layout-template"
+              {
+                "group": "Environments",
+                "expanded": false,
+                "pages": [
+                  "api-reference/environments/environment-schema",
+                  "api-reference/environments/create-an-environment",
+                  "api-reference/environments/update-an-environment",
+                  "api-reference/environments/delete-an-environment",
+                  "api-reference/environments/list-all-environments",
+                  "api-reference/environments/list-environment-tags",
+                  "api-reference/environments/compare-resources-between-environments",
+                  "api-reference/environments/publish-resources-to-target-environment"
+                ]
+              },
+              {
+                "group": "Environment Variables",
+                "expanded": false,
+                "pages": [
+                  "api-reference/environment-variables/environment-variable-schema",
+                  "api-reference/environment-variables/create-a-variable",
+                  "api-reference/environment-variables/retrieve-a-variable",
+                  "api-reference/environment-variables/update-a-variable",
+                  "api-reference/environment-variables/delete-a-variable",
+                  "api-reference/environment-variables/list-all-variables",
+                  "api-reference/environment-variables/retrieve-a-variable-usage"
+                ]
+              },
+              {
+                "group": "Integrations",
+                "expanded": false,
+                "pages": [
+                  "api-reference/integrations/integration-schema",
+                  "api-reference/integrations/create-an-integration",
+                  "api-reference/integrations/update-an-integration",
+                  "api-reference/integrations/delete-an-integration",
+                  "api-reference/integrations/list-all-integrations",
+                  "api-reference/integrations/list-active-integrations",
+                  "api-reference/integrations/update-integration-as-primary",
+                  "api-reference/integrations/generate-chat-oauth-url",
+                  "api-reference/integrations/auto-configure-an-integration-for-inbound-webhooks"
+                ]
+              }
+            ]
           }
-        ],
-        "openapi": "https://spec.speakeasy.com/novu/novu/json-development-with-code-samples"
+        ]
       },
       {
         "tab": "Resources",
@@ -680,18 +832,26 @@
             "item": "Guides",
             "groups": [
               {
-                "group": "Guides",
+                "group": "Use Cases",
                 "pages": [
-                  "guides",
-                  "guides/inngest",
-                  "guides/triggerdotdev"
+                  "guides/use-cases/transactional-notifications",
+                  "guides/use-cases/password-reset-notifications",
+                  "guides/use-cases/digest-notifications",
+                  "guides/use-cases/multi-channel-fallback",
+                  "guides/use-cases/notification-preferences"
                 ],
+                "icon": "lightbulb"
+              },
+              {
+                "group": "Guides",
+                "pages": ["guides", "guides/inngest", "guides/triggerdotdev"],
                 "icon": "book-open"
               },
               {
                 "group": "Inbound Webhooks",
                 "pages": [
                   "guides/webhooks/clerk",
+                  "guides/webhooks/auth0",
                   "guides/webhooks/stripe",
                   "guides/webhooks/segment"
                 ],
@@ -699,22 +859,21 @@
               },
               {
                 "group": "Recipes",
-                "pages": [
-                  "guides/recipes/managing-workflows"
-                ],
+                "pages": ["guides/recipes/managing-workflows", "guides/recipes/supabase-auth-notifications"],
                 "icon": "chef-hat"
               },
               {
                 "group": "Framework",
-                "pages": [
-                  "guides/framework/using-translations"
-                ],
+                "pages": ["guides/framework/using-translations"],
                 "icon": "blocks"
               },
               {
                 "group": "Migrate to Novu",
                 "pages": [
-                  "guides/migrate-from-courier-to-novu"
+                  "guides/migrate-from-courier-to-novu",
+                  "guides/migrate-from-knock-to-novu",
+                  "guides/migrate-from-magicbell-to-novu",
+                  "guides/migrate-from-in-house-to-novu"
                 ],
                 "icon": "arrow-right-left"
               }
@@ -782,12 +941,7 @@
               {
                 "group": "Advanced Features",
                 "boost": 0.1,
-                "pages": [
-                  "framework/digest",
-                  "framework/delay",
-                  "framework/custom",
-                  "framework/skip"
-                ],
+                "pages": ["framework/digest", "framework/delay", "framework/custom", "framework/skip"],
                 "icon": "sparkles"
               },
               {
@@ -840,6 +994,7 @@
                   "community",
                   {
                     "group": "Self Hosting Novu",
+                    "boost": 1,
                     "pages": [
                       "community/self-hosting-novu/overview",
                       "community/self-hosting-novu/deploy-with-docker",
@@ -877,15 +1032,7 @@
     }
   },
   "contextual": {
-    "options": [
-      "copy",
-      "view",
-      "cursor",
-      "claude",
-      "chatgpt",
-      "mcp",
-      "add-mcp"
-    ]
+    "options": ["copy", "view", "cursor", "claude", "chatgpt", "mcp", "add-mcp"]
   },
   "footer": {
     "socials": {
@@ -947,6 +1094,7 @@
     ]
   },
   "api": {
+    "openapi": "https://spec.speakeasy.com/novu/novu/json-development-with-code-samples",
     "examples": {
       "prefill": true
     }
@@ -1338,6 +1486,16 @@
     {
       "source": "/platform/integrations/sms/bulksms",
       "destination": "/platform/integrations/sms/bulk-sms",
+      "permanent": true
+    },
+    {
+      "source": "/channels/sms/generic-sms",
+      "destination": "/platform/integrations/sms/sms-webhook",
+      "permanent": true
+    },
+    {
+      "source": "/integrations/providers/sms/generic-sms",
+      "destination": "/platform/integrations/sms/sms-webhook",
       "permanent": true
     },
     {

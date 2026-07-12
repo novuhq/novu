@@ -1,4 +1,4 @@
-import { ChatProviderIdEnum } from '@novu/shared';
+import { ChatProviderIdEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { RiArrowRightUpLine, RiCheckLine, RiErrorWarningLine, RiKey2Line, RiSendPlaneFill } from 'react-icons/ri';
@@ -13,6 +13,7 @@ import { InputPure, InputRoot, InputWrapper } from '@/components/primitives/inpu
 import { getAgentApiBaseUrl } from '@/config';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useConfigureWhatsAppWebhook } from '@/hooks/use-configure-whatsapp-webhook';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { useFetchSubscriber } from '@/hooks/use-fetch-subscriber';
 import { useSendWhatsAppTestTemplate } from '@/hooks/use-send-whatsapp-test-template';
@@ -20,6 +21,7 @@ import { QueryKeys } from '@/utils/query-keys';
 import {
   IntegrationCredentialsSidebar,
   ListeningStatus,
+  ProviderSetupStepperRail,
   SetupButton,
   SetupStep,
   SetupStepperRail,
@@ -68,13 +70,13 @@ type ConnectStatus =
 function connectStatusLabel(state: ConnectStatus['state'], manualMarkedConfigured: boolean): string {
   if (state === 'manual_fallback') {
     if (manualMarkedConfigured) {
-      return 'Webhook configured — send a test message';
+      return 'Webhook configured: send a test message';
     }
 
-    return 'Webhook URL ready — finish in Meta';
+    return 'Webhook URL ready: finish in Meta';
   }
 
-  return 'Connected — Novu is listening for messages';
+  return 'Connected: Novu is listening for messages';
 }
 
 type TestStatus =
@@ -319,7 +321,7 @@ function ConnectAndTestPanel({
           </div>
           {testStatus.state === 'sent' ? (
             <p className="text-success-base text-label-xs leading-4">
-              Sent — check your WhatsApp inbox. Reply to that message to confirm inbound delivery.
+              Sent: check your WhatsApp inbox. Reply to that message to confirm inbound delivery.
             </p>
           ) : null}
           {testStatus.state === 'error' ? (
@@ -393,6 +395,7 @@ export function WhatsAppSetupGuide({
   embedded = false,
 }: WhatsAppSetupGuideProps) {
   const { subscriberId: connectSubscriberId, isReady: isConnectSubscriberReady } = useConnectSubscriber();
+  const isWhatsNextEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_AGENT_WHATS_NEXT_ENABLED);
   const [isCredentialsSidebarOpen, setIsCredentialsSidebarOpen] = useState(false);
   const [credentialsSavedLocally, setCredentialsSavedLocally] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
@@ -489,26 +492,26 @@ export function WhatsAppSetupGuide({
             {' on “Connect with customers through WhatsApp”, then pick '}
             <strong className="text-text-sub">API Setup</strong>
             {
-              ' from the inner menu. CMD+A and CMD+C the whole page and paste it in the configure sidebar — we’ll auto-fill:'
+              ' from the inner menu. CMD+A and CMD+C the whole page and paste it in the configure sidebar: we’ll auto-fill:'
             }
           </span>
         }
         extraContent={
           <ol className="text-text-soft text-label-xs mt-1.5 list-inside list-decimal space-y-0.5 font-medium leading-4">
             <li>
-              <strong className="text-text-sub">Access Token</strong> — click &ldquo;Generate access token&rdquo; on the
+              <strong className="text-text-sub">Access Token</strong>: click &ldquo;Generate access token&rdquo; on the
               API Setup page
             </li>
             <li>
-              <strong className="text-text-sub">Phone Number ID</strong> — shown under your selected phone number on the
+              <strong className="text-text-sub">Phone Number ID</strong>: shown under your selected phone number on the
               API Setup page
             </li>
             <li>
-              <strong className="text-text-sub">WhatsApp Business Account ID</strong> — shown directly above the Phone
+              <strong className="text-text-sub">WhatsApp Business Account ID</strong>: shown directly above the Phone
               Number ID on the API Setup page
             </li>
             <li>
-              <strong className="text-text-sub">App Secret</strong> — lives on a different page; open{' '}
+              <strong className="text-text-sub">App Secret</strong>: lives on a different page; open{' '}
               <strong className="text-text-sub">App settings &gt; Basic</strong> from the bottom of the left sidebar,
               then copy the value next to <strong className="text-text-sub">App secret</strong> and paste it manually
             </li>
@@ -538,7 +541,7 @@ export function WhatsAppSetupGuide({
             </a>
             {isCredentialsSaved ? (
               <p className="text-text-soft text-label-xs leading-4">
-                Verify Token is auto-generated by Novu — no need to copy or paste it anywhere yourself.
+                Verify Token is auto-generated by Novu: no need to copy or paste it anywhere yourself.
               </p>
             ) : null}
           </div>
@@ -551,7 +554,7 @@ export function WhatsAppSetupGuide({
         title="Connect & test"
         description={
           isCredentialsSaved
-            ? 'Click Connect WhatsApp — Novu will register the webhook with Meta and subscribe to inbound messages on your behalf.'
+            ? 'Click Connect WhatsApp: Novu will register the webhook with Meta and subscribe to inbound messages on your behalf.'
             : 'Save your credentials above first. Then come back here to register the webhook with Meta in one click.'
         }
         rightContent={
@@ -572,8 +575,12 @@ export function WhatsAppSetupGuide({
             <InlineToast
               className="mt-2 w-full"
               variant="tip"
-              title="Heads up:"
-              description="The token from API Setup expires after 24 hours. For production, swap it for a permanent System User Token in Meta Business Settings > System Users."
+              title={isWhatsNextEnabled ? 'Next:' : 'Heads up:'}
+              description={
+                isWhatsNextEnabled
+                  ? "Continue to What's next after connecting - the GO PRODUCTION step walks you through swapping this temporary API Setup token for a never-expiring System User token."
+                  : 'The token from API Setup expires after 24 hours. For production, swap it for a permanent System User Token in Meta Business Settings > System Users.'
+              }
             />
           ) : null
         }
@@ -586,7 +593,7 @@ export function WhatsAppSetupGuide({
       agentIdentifier={agent.identifier}
       watchedIntegrationId={integrationId}
       onConnected={handleConnected}
-      connectedMessage="WhatsApp is connected — your agent is ready to receive messages."
+      connectedMessage="WhatsApp is connected: your agent is ready to receive messages."
       listeningMessage="Waiting for Meta to confirm the webhook subscription…"
     />
   );
@@ -609,7 +616,7 @@ export function WhatsAppSetupGuide({
 
   return (
     <>
-      <SetupStepperRail>{stepsColumn}</SetupStepperRail>
+      <ProviderSetupStepperRail>{stepsColumn}</ProviderSetupStepperRail>
       <div className="pl-8">{listening}</div>
       <IntegrationCredentialsSidebar
         integrationId={integrationId}

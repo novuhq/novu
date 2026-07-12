@@ -426,7 +426,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
           .populate('actorSubscriber', '_id firstName lastName avatar subscriberId')
           .populate({
             path: 'template',
-            select: '_id name tags data critical triggers severity',
+            select: '_id name tags data critical triggers severity origin type',
             options: {
               withDeleted: true,
             },

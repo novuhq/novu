@@ -1,16 +1,13 @@
 import { BadGatewayException, BadRequestException, Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import { ConversationChannel } from '@novu/dal';
-import type { SentMessageInfo } from '@novu/framework';
+import type { SentMessageInfo } from '@novu/framework/internal';
 import type { AdapterPostableMessage, CardElement, EmojiValue, PlanModel, Thread } from 'chat';
 import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import type { ReplyContentDto } from '../../shared/dtos/agent-reply-payload.dto';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { esmImport } from '../../shared/util/esm-import';
-import {
-  buildBrandedMarkdownReply,
-  contentHasPoweredByWatermark,
-} from '../../shared/util/novu-powered-by-watermark';
+import { buildBrandedMarkdownReply, contentHasPoweredByWatermark } from '../../shared/util/novu-powered-by-watermark';
 import { type AgentActionTokenBinding, AgentActionTokenService } from '../action-token/agent-action-token.service';
 import { AgentConversationService } from '../conversation/agent-conversation.service';
 import { ChatInstanceRegistry } from '../ingress/chat-instance.registry';
@@ -19,8 +16,10 @@ import { FileMaterializer } from './file-materializer.service';
 import { resolvePlanDeliveryMode } from './plan-live-delivery';
 import { renderPlanModelAsMarkdown } from './plan-model-to-markdown';
 import type { PlanPhase } from './plan-phase';
+import type { SlackAgentSuggestedPrompt } from '@novu/shared';
 import {
   editSlackNativeBlocks,
+  decodeSlackPlatformThreadId,
   getSlackApiErrorCode,
   postSlackNativeBlocks,
   type SlackNativeDelivery,
@@ -48,6 +47,18 @@ export interface OutboundPersistContext {
 }
 
 export type OutboundMessage = ReplyContentDto;
+
+function extractReplyRichContent(content: OutboundMessage): Record<string, unknown> | undefined {
+  if (!content.card && !content.files?.length) {
+    return undefined;
+  }
+
+  return {
+    ...(content.markdown !== undefined && { markdown: content.markdown }),
+    ...(content.card !== undefined && { card: content.card }),
+    ...(content.files !== undefined && { files: content.files }),
+  };
+}
 
 export type OutboundDeliveryOptions = {
   slackNative?: SlackNativeDelivery;
@@ -156,7 +167,7 @@ export class OutboundGateway {
       agentIdentifier: persist.agentIdentifier,
       agentName: persist.agentName,
       content: this.extractTextFallback(msg),
-      richContent: msg.card || msg.files?.length ? (msg as Record<string, unknown>) : undefined,
+      richContent: extractReplyRichContent(msg),
       environmentId: persist.environmentId,
       organizationId: persist.organizationId,
     });
@@ -307,6 +318,48 @@ export class OutboundGateway {
     const platformThreadId = sent.threadId.endsWith(':') ? `${sent.threadId}${sent.id}` : sent.threadId;
 
     return { messageId: sent.id, platformThreadId };
+  }
+
+  async setSlackSuggestedPrompts(
+    agentId: string,
+    integrationIdentifier: string,
+    platformThreadId: string,
+    prompts: SlackAgentSuggestedPrompt[],
+    title?: string
+  ): Promise<void> {
+    const { channel, threadTs } = decodeSlackPlatformThreadId(platformThreadId);
+    const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
+    const instanceKey = `${agentId}:${integrationIdentifier}`;
+    const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);
+    const adapter = chat.getAdapter(AgentPlatformEnum.SLACK) as {
+      setSuggestedPrompts?: (
+        channelId: string,
+        threadTs: string,
+        promptList: SlackAgentSuggestedPrompt[],
+        promptTitle?: string
+      ) => Promise<void>;
+    };
+
+    if (typeof adapter.setSuggestedPrompts !== 'function') {
+      return;
+    }
+
+    const resolvedThreadTs = threadTs ?? platformThreadId.split(':').slice(2).join(':');
+    if (!resolvedThreadTs) {
+      this.logger.warn(
+        { platformThreadId, agentId, integrationIdentifier },
+        'Skipping Slack suggested prompts because thread timestamp is missing'
+      );
+
+      return;
+    }
+
+    await adapter.setSuggestedPrompts(channel, resolvedThreadTs, prompts, title).catch((err) => {
+        this.logger.warn(
+          { err, platformThreadId, agentId, integrationIdentifier },
+          'Failed to set Slack suggested prompts'
+        );
+      });
   }
 
   async editInConversation(
@@ -575,7 +628,7 @@ export class OutboundGateway {
       agentIdentifier: persist.agentIdentifier,
       agentName: persist.agentName,
       content: this.extractTextFallback(msg),
-      richContent: msg.card || msg.files?.length ? (msg as Record<string, unknown>) : undefined,
+      richContent: extractReplyRichContent(msg),
       environmentId: persist.environmentId,
       organizationId: persist.organizationId,
     });

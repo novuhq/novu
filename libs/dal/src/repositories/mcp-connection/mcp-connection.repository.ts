@@ -3,7 +3,7 @@ import { FilterQuery } from 'mongoose';
 
 import type { EnforceEnvOrOrgIds } from '../../types';
 import { BaseRepositoryV2 } from '../base-repository-v2';
-import { McpConnectionDBModel, McpConnectionEntity, McpToolTrust } from './mcp-connection.entity';
+import { McpConnectionDBModel, McpConnectionEntity } from './mcp-connection.entity';
 import { McpConnection } from './mcp-connection.schema';
 
 export class McpConnectionRepository extends BaseRepositoryV2<
@@ -204,43 +204,77 @@ export class McpConnectionRepository extends BaseRepositoryV2<
     return result.modified > 0;
   }
 
-  async mergeToolTrust(params: {
-    connectionId: string;
+  /**
+   * Repoint every subscriber-scoped connection from `fromSubscriberId` to
+   * `toSubscriberId` (both Mongo `Subscriber._id`s). Used by the email adoption
+   * merge so a phantom's tool grants follow the surviving real subscriber.
+   *
+   * The partial unique index on `(_agentMcpServerId, _subscriberId, mcpId)`
+   * means a blind move would throw E11000 when the destination already owns a
+   * connection for the same enablement — in that case the real subscriber's
+   * credentials win and the phantom row is dropped instead of moved. Source
+   * rows are deduped by the same key (rows outside the partial index — e.g. a
+   * null `_agentMcpServerId` — are not covered by its uniqueness guarantee), so
+   * both branches reduce to a single bulk write.
+   */
+  async repointSubscriberConnections(params: {
     environmentId: string;
     organizationId: string;
-    patch: Partial<McpToolTrust>;
-  }): Promise<void> {
-    const $set: Record<string, unknown> = {};
+    fromSubscriberId: string;
+    toSubscriberId: string;
+  }): Promise<{ moved: number; dropped: number }> {
+    const { environmentId, organizationId, fromSubscriberId, toSubscriberId } = params;
 
-    if (params.patch.serverDefault !== undefined) {
-      $set['toolTrust.serverDefault'] = params.patch.serverDefault;
+    const sourceRows = await this.find(
+      {
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+        _subscriberId: fromSubscriberId,
+        scope: McpConnectionScopeEnum.Subscriber,
+      },
+      ['_id', '_agentMcpServerId', 'mcpId']
+    );
+
+    if (sourceRows.length === 0) {
+      return { moved: 0, dropped: 0 };
     }
 
-    if (params.patch.tools) {
-      for (const [toolName, policy] of Object.entries(params.patch.tools)) {
-        assertSafeMcpToolTrustKeySegment(toolName);
-        $set[`toolTrust.tools.${toolName}`] = policy;
+    const destinationRows = await this.find(
+      {
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+        _subscriberId: toSubscriberId,
+        scope: McpConnectionScopeEnum.Subscriber,
+      },
+      ['_agentMcpServerId', 'mcpId']
+    );
+
+    const claimedKeys = new Set(destinationRows.map((row) => `${row._agentMcpServerId}:${row.mcpId}`));
+    const droppedIds: string[] = [];
+    const movedIds: string[] = [];
+
+    for (const row of sourceRows) {
+      const key = `${row._agentMcpServerId}:${row.mcpId}`;
+
+      if (claimedKeys.has(key)) {
+        droppedIds.push(row._id);
+      } else {
+        claimedKeys.add(key);
+        movedIds.push(row._id);
       }
     }
 
-    if (Object.keys($set).length === 0) {
-      return;
+    if (droppedIds.length > 0) {
+      await this.delete({ _id: { $in: droppedIds }, _environmentId: environmentId, _organizationId: organizationId });
     }
 
-    await this.update(
-      {
-        _id: params.connectionId,
-        _environmentId: params.environmentId,
-        _organizationId: params.organizationId,
-      },
-      { $set }
-    );
-  }
-}
+    if (movedIds.length > 0) {
+      await this.update(
+        { _id: { $in: movedIds }, _environmentId: environmentId, _organizationId: organizationId },
+        { $set: { _subscriberId: toSubscriberId } }
+      );
+    }
 
-function assertSafeMcpToolTrustKeySegment(name: string): void {
-  // Stored as toolTrust.tools.{name}; `.` and `$` would corrupt the Mongo update path.
-  if (name.includes('.') || name.includes('$') || name.includes('\0')) {
-    throw new Error(`Invalid MCP tool name for trust persistence: ${name}`);
+    return { moved: movedIds.length, dropped: droppedIds.length };
   }
 }

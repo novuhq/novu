@@ -56,6 +56,19 @@ export interface ICredentials {
   tenantId?: string;
   signingSecret?: string;
   outboundIntegrationId?: string;
+  /**
+   * Agent email: ISO timestamp of when the agent's outbound was first switched from the demo
+   * sender to the user's own provider. Marks completion of the email "What's next" layer-2
+   * onboarding and time-boxes that guide. Only meaningful on the NovuAgent email integration.
+   */
+  outboundConnectedAt?: string;
+  /**
+   * Channel-agnostic ISO timestamp marking Layer-2 "What's next" completion (Connected badge +
+   * guide hide window). For WhatsApp Business: stamped when a permanent Access Token is in place
+   * (server auto-stamp on post-connect `apiToken` rotation, or manual confirm). Email continues to
+   * use `outboundConnectedAt` for now.
+   */
+  whatsNextCompletedAt?: string;
   useFromAddressOverride?: boolean;
   fromAddressOverride?: string;
   /**
