@@ -2,9 +2,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { RiCloseCircleLine, RiExpandUpDownLine } from 'react-icons/ri';
 import {
+  type AgentBehavior,
   type AgentEmojiEntry,
   type AgentResponse,
-  type AgentSubscriberAccess,
   getAgentDetailQueryKey,
   getAgentEmojiQueryKey,
   listAgentEmoji,
@@ -22,6 +22,30 @@ const PROD_READ_ONLY_TOOLTIP =
   'This setting is read-only in production. Edit in Development and promote to apply changes.';
 const SUBSCRIBER_ACCESS_TOOLTIP =
   'When on, unknown senders on any channel are auto-created as users so the agent can reply. When off, only known or already-linked users are accepted; everyone else gets a short denial reply. Abuse mitigation is your responsibility when this is on.';
+
+type BehaviorSwitchProps = {
+  checked: boolean;
+  disabled?: boolean;
+  readOnly: boolean;
+  onCheckedChange: (checked: boolean) => void;
+};
+
+function BehaviorSwitch({ checked, disabled, readOnly, onCheckedChange }: BehaviorSwitchProps) {
+  if (readOnly) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="inline-flex">
+            <Switch checked={checked} disabled />
+          </span>
+        </TooltipTrigger>
+        <TooltipContent className="max-w-xs">{PROD_READ_ONLY_TOOLTIP}</TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  return <Switch checked={checked} disabled={disabled} onCheckedChange={onCheckedChange} />;
+}
 
 function useAgentEmoji() {
   const { currentEnvironment } = useEnvironment();
@@ -142,11 +166,7 @@ export function AgentBehaviorSection({ agent }: AgentBehaviorSectionProps) {
   const subscriberAccessOpen = agent.behavior?.subscriberAccess === 'open';
 
   const { mutate, isPending } = useMutation({
-    mutationFn: (body: {
-      acknowledgeOnReceived?: boolean;
-      reactionOnResolved?: string | null;
-      subscriberAccess?: AgentSubscriberAccess;
-    }) =>
+    mutationFn: (body: Partial<AgentBehavior>) =>
       updateAgent(requireEnvironment(currentEnvironment, 'No environment selected'), agent.identifier, {
         behavior: body,
       }),
@@ -169,22 +189,12 @@ export function AgentBehaviorSection({ agent }: AgentBehaviorSectionProps) {
             label="Acknowledge incoming messages"
             tooltip='Show a "Typing…" indicator while the agent works. On platforms that don&#39;t support typing, react with an "eyes" emoji instead.'
           >
-            {readOnly ? (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="inline-flex">
-                    <Switch checked={acknowledgeOnReceived} disabled />
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent className="max-w-xs">{PROD_READ_ONLY_TOOLTIP}</TooltipContent>
-              </Tooltip>
-            ) : (
-              <Switch
-                checked={acknowledgeOnReceived}
-                disabled={isPending}
-                onCheckedChange={(checked) => mutate({ acknowledgeOnReceived: checked })}
-              />
-            )}
+            <BehaviorSwitch
+              checked={acknowledgeOnReceived}
+              disabled={isPending}
+              readOnly={readOnly}
+              onCheckedChange={(checked) => mutate({ acknowledgeOnReceived: checked })}
+            />
           </ToggleRow>
 
           <ToggleRow
@@ -218,22 +228,12 @@ export function AgentBehaviorSection({ agent }: AgentBehaviorSectionProps) {
           </ToggleRow>
 
           <ToggleRow label="Accept messages from anyone" tooltip={SUBSCRIBER_ACCESS_TOOLTIP}>
-            {readOnly ? (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="inline-flex">
-                    <Switch checked={subscriberAccessOpen} disabled />
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent className="max-w-xs">{PROD_READ_ONLY_TOOLTIP}</TooltipContent>
-              </Tooltip>
-            ) : (
-              <Switch
-                checked={subscriberAccessOpen}
-                disabled={isPending}
-                onCheckedChange={(checked) => mutate({ subscriberAccess: checked ? 'open' : 'restricted' })}
-              />
-            )}
+            <BehaviorSwitch
+              checked={subscriberAccessOpen}
+              disabled={isPending}
+              readOnly={readOnly}
+              onCheckedChange={(checked) => mutate({ subscriberAccess: checked ? 'open' : 'restricted' })}
+            />
           </ToggleRow>
         </div>
       </div>

@@ -63,8 +63,8 @@ export type AgentBehavior = {
   /**
    * Channel-agnostic. `open` auto-creates a lightweight subscriber from an
    * unknown sender so the agent can reply on any channel; `restricted` rejects
-   * unknown senders. Newly provisioned agents may default to `open`; unset
-   * behaves as `restricted`.
+   * unknown senders. First email-inbox provision may set `open`; unset behaves
+   * as `restricted`.
    */
   subscriberAccess?: AgentSubscriberAccess;
 };
