@@ -11,7 +11,6 @@ import {
   AGENT_PLATFORM_PROVISION_SOURCE,
   AGENT_PROVISION_DATA_KEYS,
   type ChannelEndpointByType,
-  type ChannelEndpointType,
   ENDPOINT_TYPES,
 } from '@novu/shared';
 import { CreateChannelEndpointCommand } from '../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.command';
@@ -165,11 +164,9 @@ export class AgentSubscriberResolver {
   }
 
   /**
-   * Lookup-or-provision for inbound text messages on platforms where the agent
-   * may create the subscriber itself: Slack/Teams/Telegram ChannelEndpoint
-   * platforms and email/WhatsApp identity platforms, when the caller has
-   * established open access (`subscriberAccess === 'open'`). Keyless exclusion
-   * and Telegram DM-vs-group gating live in `shouldAutoProvisionInbound`.
+   * Lookup-or-provision for inbound text on Slack/Teams/Telegram and open-access
+   * email/WhatsApp (`subscriberAccess === 'open'`). Keyless exclusion and Telegram
+   * DM-vs-group gating live in `shouldAutoProvisionInbound`.
    *
    * Branches:
    *   - Author is a bot → throw `BotAuthorSkippedError` (runs before lookup so
@@ -620,11 +617,11 @@ export class AgentSubscriberResolver {
     /*
      * Only MS Teams endpoints carry a tenantId (the user's Azure AD tenant). Adding it to other
      * platform endpoints (e.g. Slack) would fail their strict endpoint validators, so it is gated
-     * on the Teams endpoint type and the tenant being present. Identity field comes from
-     * PLATFORM_ENDPOINT_CONFIG (userId for Slack/Teams, chatId for Telegram).
+     * on the Teams endpoint type and the tenant being present.
      */
+    const endpointType = endpointConfig.endpointType as AutoProvisionEndpointType;
     const endpoint = buildAutoProvisionEndpoint(
-      endpointConfig.endpointType,
+      endpointType,
       params.platformUserId,
       params.platformTenantId ?? undefined
     );
@@ -636,7 +633,7 @@ export class AgentSubscriberResolver {
           organizationId: params.organizationId,
           integrationIdentifier: params.integrationIdentifier,
           subscriberId,
-          type: endpointConfig.endpointType,
+          type: endpointType,
           endpoint,
         })
       );
@@ -749,35 +746,27 @@ function buildPlatformSubscriberId(params: {
   return `sub_${fingerprint.slice(0, 12)}`;
 }
 
-/**
- * Builds a typed ChannelEndpoint payload for auto-provision platforms.
- * Dynamic `{ [identityField]: value }` widens to `{ [x: string]: string }` and
- * fails CreateChannelEndpointCommand's discriminated endpoint union.
- */
+type AutoProvisionEndpointType =
+  | typeof ENDPOINT_TYPES.SLACK_USER
+  | typeof ENDPOINT_TYPES.MS_TEAMS_USER
+  | typeof ENDPOINT_TYPES.TELEGRAM_CHAT;
+
 function buildAutoProvisionEndpoint(
-  endpointType: ChannelEndpointType,
+  endpointType: AutoProvisionEndpointType,
   platformUserId: string,
   platformTenantId?: string
-): ChannelEndpointByType[ChannelEndpointType] {
+): ChannelEndpointByType[AutoProvisionEndpointType] {
   switch (endpointType) {
-    case ENDPOINT_TYPES.SLACK_USER:
-      return { userId: platformUserId };
-    case ENDPOINT_TYPES.MS_TEAMS_USER:
-      return platformTenantId ? { userId: platformUserId, tenantId: platformTenantId } : { userId: platformUserId };
     case ENDPOINT_TYPES.TELEGRAM_CHAT:
       return { chatId: platformUserId };
-    case ENDPOINT_TYPES.SLACK_CHANNEL:
-    case ENDPOINT_TYPES.WEBHOOK:
-    case ENDPOINT_TYPES.PHONE:
-    case ENDPOINT_TYPES.MS_TEAMS_CHANNEL: {
-      const _exhaustive: never = endpointType as never;
-
-      throw new Error(`Auto-provision does not support endpoint type "${_exhaustive}"`);
-    }
+    case ENDPOINT_TYPES.MS_TEAMS_USER:
+      return platformTenantId ? { userId: platformUserId, tenantId: platformTenantId } : { userId: platformUserId };
+    case ENDPOINT_TYPES.SLACK_USER:
+      return { userId: platformUserId };
     default: {
       const _exhaustive: never = endpointType;
 
-      throw new Error(`Unhandled endpoint type "${_exhaustive}"`);
+      throw new Error(`Unhandled auto-provision endpoint type "${_exhaustive}"`);
     }
   }
 }

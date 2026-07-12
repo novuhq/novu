@@ -292,9 +292,8 @@ export class AgentInboundHandler implements OnModuleInit {
     const isVerifiedEmailSender =
       config.platform !== AgentPlatformEnum.EMAIL || isInboundEmailSenderVerified(emailAuthRaw);
 
-    // Open-access agents may lookup-or-provision; restricted / unset stay
-    // lookup-only on every platform. Keyless email demos stay lookup-only until
-    // tool approval. Telegram DM detection (chat.id === from.id) lives in policy.
+    // Open-access agents may lookup-or-provision; restricted stay lookup-only.
+    // Keyless email demos stay lookup-only until tool approval.
     const canAutoProvision = shouldAutoProvisionInbound({
       platform: config.platform,
       subscriberAccess: config.subscriberAccess,

@@ -25,12 +25,10 @@ export const PLATFORM_ENDPOINT_CONFIG: Partial<Record<AgentPlatformEnum, Platfor
 };
 
 /**
- * Platforms whose inbound message path auto-provisions a Subscriber +
- * ChannelEndpoint on first mention when `subscriberAccess === 'open'`.
- * Open-access email/WhatsApp use `shouldAutoProvisionInbound` /
- * `isOpenAccessIdentityPlatform` instead — phone/email identity only, no
- * ChannelEndpoint. Telegram additionally requires a DM identity match
- * (`telegramChatId === platformUserId`); groups stay lookup-only.
+ * Platforms that auto-provision a Subscriber + ChannelEndpoint on inbound when
+ * `subscriberAccess === 'open'`. Email/WhatsApp use identity-only provision via
+ * `shouldAutoProvisionInbound` / `isOpenAccessIdentityPlatform` instead.
+ * Telegram also requires a DM match (`telegramChatId === platformUserId`).
  */
 export const AUTO_PROVISION_PLATFORM_ENTRIES = [
   AgentPlatformEnum.SLACK,
@@ -53,17 +51,14 @@ export function isOpenAccessIdentityPlatform(platform: AgentPlatformEnum): boole
 
 /**
  * Whether inbound text should call `resolveOrProvision` vs lookup-only
- * `resolveSubscriber`. Gated by `subscriberAccess === 'open'` on every
- * platform; email also excludes the keyless demo path. Telegram open
- * auto-provisions only when `telegramChatId === platformUserId` (DM).
+ * `resolveSubscriber`. Requires `subscriberAccess === 'open'`; email excludes
+ * keyless demos; Telegram requires `telegramChatId === platformUserId` (DM).
  */
 export function shouldAutoProvisionInbound(params: {
   platform: AgentPlatformEnum;
   subscriberAccess: AgentSubscriberAccessEnum;
   isKeyless?: boolean;
-  /** Telegram chat.id (string). Required for Telegram open-access decisions. */
   telegramChatId?: string | null;
-  /** Inbound author platform user id; compared to telegramChatId for DM detection. */
   platformUserId?: string;
 }): boolean {
   if (params.subscriberAccess !== AgentSubscriberAccessEnum.OPEN) {

@@ -8,12 +8,7 @@ type UpdateManyFn = (
   update: Record<string, unknown>
 ) => Promise<{ matchedCount: number; modifiedCount: number }>;
 
-/**
- * One-time backfill for agents created before create-time defaults existed.
- * Sets unset `behavior.subscriberAccess` to `open` (the prior email-provision
- * side-effect default). Explicit values — including `restricted` — are left
- * alone via `$exists: false`. New creates use runtime-aware defaults instead.
- */
+/** Backfill unset subscriberAccess to open so Slack/Teams keep auto-provisioning after the flag gates them. Also expands previously-unset email/WhatsApp agents to open (intentional continuity tradeoff). */
 export async function setOpenSubscriberAccessOnUnsetAgents(
   updateMany: UpdateManyFn
 ): Promise<{ matchedCount: number; modifiedCount: number }> {
@@ -27,12 +22,11 @@ export async function run() {
   console.log('Start migration - set behavior.subscriberAccess=open where unset');
 
   const agentRepository = new AgentRepository();
-  const result = await setOpenSubscriberAccessOnUnsetAgents(
-    (filter, update) =>
-      agentRepository._model.collection.updateMany(filter, update) as Promise<{
-        matchedCount: number;
-        modifiedCount: number;
-      }>
+  const result = await setOpenSubscriberAccessOnUnsetAgents((filter, update) =>
+    agentRepository._model.collection.updateMany(filter, update).then((r) => ({
+      matchedCount: r.matchedCount,
+      modifiedCount: r.modifiedCount,
+    }))
   );
 
   console.log(`Matched: ${result.matchedCount}  Modified: ${result.modifiedCount}`);
