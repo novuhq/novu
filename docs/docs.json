@@ -25,9 +25,6 @@
       "twitter:card": "summary_large_image"
     }
   },
-  "interaction": {
-    "drilldown": false
-  },
   "navigation": {
     "global": {
       "anchors": []
