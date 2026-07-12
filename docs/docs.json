@@ -204,6 +204,7 @@
                   "platform/integrations/email/amazon-ses",
                   "platform/integrations/email/postmark",
                   "platform/integrations/email/resend",
+                  "platform/integrations/email/anypost",
                   "platform/integrations/email/brevo",
                   "platform/integrations/email/mailgun",
                   "platform/integrations/email/mailjet",
@@ -229,7 +230,8 @@
                           "platform/integrations/email/activity-tracking/manual-configuration/ses",
                           "platform/integrations/email/activity-tracking/manual-configuration/mailgun",
                           "platform/integrations/email/activity-tracking/manual-configuration/resend",
-                          "platform/integrations/email/activity-tracking/manual-configuration/sendgrid"
+                          "platform/integrations/email/activity-tracking/manual-configuration/sendgrid",
+                          "platform/integrations/email/activity-tracking/manual-configuration/anypost"
                         ]
                       }
                     ]

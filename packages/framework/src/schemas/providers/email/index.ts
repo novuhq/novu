@@ -8,6 +8,7 @@ import { novuEmailProviderSchemas } from './novu-email.schema';
 import { sendgridProviderSchemas } from './sendgrid.schema';
 
 export const emailProviderSchemas = {
+  anypost: genericProviderSchemas,
   braze: genericProviderSchemas,
   clickatell: genericProviderSchemas,
   nodemailer: nodemailerProviderSchemas,
