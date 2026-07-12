@@ -152,6 +152,33 @@ export const supportAgent = agent('support-bot', {
 
 Add `onToolApproval` when you need a hook after the click. See [Tool approval](/agents/custom-code-agent/building-blocks/tool-approval) for the full API.
 
+## Turn failures and `onError`
+
+When Novu runs `createAgent().invoke()` for a returned `LangChainAgentConfig` and the invoke rejects — for example the provider errors or the model call fails — the failure propagates to the same dispatch boundary as a thrown handler error. The same applies when you `await` your own agent or graph in `onMessage` and the invoke throws before you return. Register `onError` on the agent to log, suppress user notification, send custom copy, or fall back to Novu's generic message.
+
+```typescript
+export const supportAgent = agent('support-bot', {
+  onMessage: async (message, ctx) => ({
+    model: 'openai:gpt-4o',
+    system: 'You are a helpful support agent.',
+    tools: [lookupOrder],
+  }),
+
+  onError: async (error, ctx) => {
+    console.error(error.message, error.cause);
+    // return nothing → generic user copy from Novu
+    // return { suppress: true } → silent
+    // return 'Custom apology' → your copy
+  },
+});
+```
+
+A gated tool waiting for user approval pauses the turn with an approval card — that is not a turn failure and does not trigger `onError`. See [Handlers and context — onError](/agents/custom-code-agent/building-blocks/handle-events#onerror) for the full pipeline.
+
+<Note>
+  The adapter awaits `invoke()` to completion when you return a config — it does not stream token-by-token. If you stream inside `onMessage` yourself, stream failures throw from your handler the same way as any other handler error.
+</Note>
+
 ## Related
 
 <Columns cols={2}>
