@@ -194,7 +194,7 @@ describe('NovuEmailProvisioningService', () => {
       expect(integrationRepo.create.called).to.equal(false);
     });
 
-    it('defaults behavior.subscriberAccess to open on first provision, guarded to unset agents only', async () => {
+    it('does not mutate behavior.subscriberAccess when provisioning a new NovuAgent link', async () => {
       integrationRepo.findOne.onFirstCall().resolves({
         _id: 'sendgrid-id',
         providerId: 'sendgrid',
@@ -215,14 +215,7 @@ describe('NovuEmailProvisioningService', () => {
       const result = await buildUsecase().execute(AGENT_ID, ENV_ID, ORG_ID);
 
       expect(result.provisionedNewLink).to.equal(true);
-      expect(agentRepo.update.calledOnce).to.equal(true);
-      const [filter, update] = agentRepo.update.firstCall.args;
-      expect(filter._id).to.equal(AGENT_ID);
-      expect(filter._environmentId).to.equal(ENV_ID);
-      expect(filter._organizationId).to.equal(ORG_ID);
-      // One-time default: only fires when the agent has no explicit preference.
-      expect(filter['behavior.subscriberAccess']).to.deep.equal({ $exists: false });
-      expect(update.$set['behavior.subscriberAccess']).to.equal('open');
+      expect(agentRepo.update.called).to.equal(false);
     });
 
     it('does not touch behavior.subscriberAccess when an existing NovuAgent link is returned', async () => {
