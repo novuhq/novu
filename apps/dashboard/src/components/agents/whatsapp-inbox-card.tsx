@@ -6,7 +6,6 @@ import { Link } from 'react-router-dom';
 import { type AgentResponse, validateWhatsAppToken } from '@/api/agents';
 import { CopyableEmailAddress } from '@/components/agents/copyable-email-address';
 import { EmailSubscriberAccessToggle } from '@/components/agents/email-subscriber-access-toggle';
-import { resolveWhatsAppBusinessPhoneDisplay } from '@/components/agents/resolve-whatsapp-business-phone';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { buildRoute, ROUTES } from '@/utils/routes';
@@ -63,11 +62,9 @@ export function WhatsAppInboxCardBody({ whatsappIntegration, agent }: WhatsAppIn
     retry: false,
   });
 
+  // Prefer Meta's display_phone_number — phoneNumberIdentification is an opaque Phone Number ID.
   const businessPhone = useMemo(
-    () =>
-      resolveWhatsAppBusinessPhoneDisplay({
-        displayPhoneNumber: displayPhoneQuery.data?.displayPhoneNumber,
-      }),
+    () => displayPhoneQuery.data?.displayPhoneNumber?.trim() || undefined,
     [displayPhoneQuery.data?.displayPhoneNumber]
   );
 

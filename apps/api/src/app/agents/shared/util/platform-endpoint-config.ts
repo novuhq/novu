@@ -1,4 +1,4 @@
-import { ChannelEndpointType, ENDPOINT_TYPES } from '@novu/shared';
+import { AgentSubscriberAccessEnum, ChannelEndpointType, ENDPOINT_TYPES } from '@novu/shared';
 import { AgentPlatformEnum } from '../enums/agent-platform.enum';
 
 interface PlatformEndpointMapping {
@@ -26,13 +26,9 @@ export const PLATFORM_ENDPOINT_CONFIG: Partial<Record<AgentPlatformEnum, Platfor
 
 /**
  * Platforms whose inbound message path auto-provisions a Subscriber +
- * ChannelEndpoint on first mention. Single source of truth shared by the
- * resolver (`resolveOrProvision`) and the inbound handler (branching between
- * `resolveOrProvision` and `resolveSubscriber`). Other platforms keep their
- * existing lookup-only semantics by default: WhatsApp by phone, Email by
- * address, Telegram via `/start` deep-link. Open-access email/WhatsApp
- * additionally route through `resolveOrProvision` via caller-side policy
- * (not this set) — phone/email identity only, no ChannelEndpoint.
+ * ChannelEndpoint on first mention. Open-access email/WhatsApp use
+ * `shouldAutoProvisionInbound` / `isOpenAccessIdentityPlatform` instead —
+ * phone/email identity only, no ChannelEndpoint.
  */
 export const AUTO_PROVISION_PLATFORM_ENTRIES = [
   AgentPlatformEnum.SLACK,
@@ -45,4 +41,34 @@ export const AUTO_PROVISION_PLATFORMS: ReadonlySet<AgentPlatformEnum> = new Set(
 
 export function isAutoProvisionPlatform(platform: AgentPlatformEnum): boolean {
   return AUTO_PROVISION_PLATFORMS.has(platform);
+}
+
+/** Email/WhatsApp open-access provision by identity field (no ChannelEndpoint). */
+export function isOpenAccessIdentityPlatform(platform: AgentPlatformEnum): boolean {
+  return platform === AgentPlatformEnum.EMAIL || platform === AgentPlatformEnum.WHATSAPP;
+}
+
+/**
+ * Whether inbound text should call `resolveOrProvision` vs lookup-only
+ * `resolveSubscriber`. Owns Slack/Teams always-on provision, open-access
+ * email/WhatsApp, and the email keyless exclusion.
+ */
+export function shouldAutoProvisionInbound(params: {
+  platform: AgentPlatformEnum;
+  subscriberAccess: AgentSubscriberAccessEnum;
+  isKeyless?: boolean;
+}): boolean {
+  if (isAutoProvisionPlatform(params.platform)) {
+    return true;
+  }
+
+  if (params.subscriberAccess !== AgentSubscriberAccessEnum.OPEN) {
+    return false;
+  }
+
+  if (params.platform === AgentPlatformEnum.EMAIL) {
+    return !params.isKeyless;
+  }
+
+  return params.platform === AgentPlatformEnum.WHATSAPP;
 }

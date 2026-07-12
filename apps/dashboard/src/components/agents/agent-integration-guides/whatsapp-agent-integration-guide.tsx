@@ -137,7 +137,7 @@ export function WhatsAppAgentIntegrationGuide({
   // Flag on: email-shaped setup → connected handoff (Continue after in-session connect, then What's
   // next + WHATSAPP card). Flag off: same Layer-1 setup card, but connected view stays today's overview.
   if (integrationLink && integrationId) {
-    const transition = (
+    return (
       <AgentIntegrationGuideTransition
         key={integrationLink._id}
         isConnected={isConnected}
@@ -154,50 +154,32 @@ export function WhatsAppAgentIntegrationGuide({
             <WhatsAppSetupGuide agent={agent} integrationId={integrationId} embedded />
           </WhatsAppSetupGuideWithHeader>
         )}
-        renderConnectedView={(justConnected) => {
-          if (isWhatsNextEnabled) {
-            return (
-              <AgentIntegrationGuideLayout
-                providerId={ChatProviderIdEnum.WhatsAppBusiness}
-                providerDisplayName={PROVIDER_DISPLAY_NAME}
-                onBack={onBack}
-                embedded={embedded}
+        renderConnectedView={(justConnected) => (
+          <AgentIntegrationGuideLayout
+            providerId={ChatProviderIdEnum.WhatsAppBusiness}
+            providerDisplayName={PROVIDER_DISPLAY_NAME}
+            onBack={onBack}
+            embedded={embedded}
+            agent={agent}
+            integrationLink={integrationLink}
+            canRemoveIntegration={canRemoveIntegration}
+            onRequestRemoveIntegration={onRequestRemoveIntegration}
+            isRemovingIntegration={isRemovingIntegration}
+          >
+            {isWhatsNextEnabled ? (
+              <WhatsAppConnectedView
                 agent={agent}
                 integrationLink={integrationLink}
-                canRemoveIntegration={canRemoveIntegration}
-                onRequestRemoveIntegration={onRequestRemoveIntegration}
-                isRemovingIntegration={isRemovingIntegration}
-              >
-                <WhatsAppConnectedView
-                  agent={agent}
-                  integrationLink={integrationLink}
-                  whatsappIntegration={whatsappIntegration}
-                  justConnected={justConnected}
-                />
-              </AgentIntegrationGuideLayout>
-            );
-          }
-
-          return (
-            <AgentIntegrationGuideLayout
-              providerId={ChatProviderIdEnum.WhatsAppBusiness}
-              providerDisplayName={PROVIDER_DISPLAY_NAME}
-              onBack={onBack}
-              embedded={embedded}
-              agent={agent}
-              integrationLink={integrationLink}
-              canRemoveIntegration={canRemoveIntegration}
-              onRequestRemoveIntegration={onRequestRemoveIntegration}
-              isRemovingIntegration={isRemovingIntegration}
-            >
+                whatsappIntegration={whatsappIntegration}
+                justConnected={justConnected}
+              />
+            ) : (
               <WhatsAppLegacyConnectedOverview />
-            </AgentIntegrationGuideLayout>
-          );
-        }}
+            )}
+          </AgentIntegrationGuideLayout>
+        )}
       />
     );
-
-    return transition;
   }
 
   return (

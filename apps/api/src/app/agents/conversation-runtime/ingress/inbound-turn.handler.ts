@@ -12,7 +12,7 @@ import {
 } from '@novu/dal';
 import type { AgentAction } from '@novu/framework';
 import { parseApprovalActionId } from '@novu/framework/internal';
-import { AgentSubscriberAccessEnum, ENDPOINT_TYPES } from '@novu/shared';
+import { ENDPOINT_TYPES } from '@novu/shared';
 import type { CardElement, EmojiValue, Message, Thread } from 'chat';
 import { ConnectClaimTokenService } from '../../../connect/services/connect-claim-token.service';
 import { parsePositiveIntEnv } from '../../../keyless/keyless-abuse.constants';
@@ -35,7 +35,7 @@ import { parseToolApprovalActionId } from '../../shared/tool-approval/action-id'
 import { getResolvedSubscriberId, type SubscriberResolution } from '../../shared/types/subscriber-resolution';
 import { agentLinkAwaitingInboundConnectionFilter } from '../../shared/util/agent-inbound-connection';
 import { extractMsTeamsTenantId } from '../../shared/util/msteams-activity';
-import { type AutoProvisionPlatform, isAutoProvisionPlatform } from '../../shared/util/platform-endpoint-config';
+import { type AutoProvisionPlatform, shouldAutoProvisionInbound } from '../../shared/util/platform-endpoint-config';
 import { InboundAckService } from '../ack/inbound-ack.service';
 import { AgentAttachmentStorage, type StoredAttachment } from '../conversation/agent-attachment-storage.service';
 import { AgentConversationService, getInboundActivityPreview } from '../conversation/agent-conversation.service';
@@ -291,18 +291,15 @@ export class AgentInboundHandler implements OnModuleInit {
     const isVerifiedEmailSender =
       config.platform !== AgentPlatformEnum.EMAIL || isInboundEmailSenderVerified(emailAuthRaw);
 
-    // Open-access email/WhatsApp agents provision the sender themselves, so they
-    // join the Slack/Teams lookup-or-provision path (soft-failing to `null`
-    // inside the resolver). Keyless demo agents are excluded — they deliberately
-    // provision lazily at tool-approval time and bound abuse via the demo cap,
-    // so the ephemeral env stays subscriber-free until needed. Keyless exclusion
-    // is email-only; WhatsApp has no keyless demo path.
-    const canAutoProvision =
-      isAutoProvisionPlatform(config.platform) ||
-      (config.platform === AgentPlatformEnum.EMAIL &&
-        config.subscriberAccess === AgentSubscriberAccessEnum.OPEN &&
-        !config.isKeyless) ||
-      (config.platform === AgentPlatformEnum.WHATSAPP && config.subscriberAccess === AgentSubscriberAccessEnum.OPEN);
+    // Open-access email/WhatsApp join Slack/Teams lookup-or-provision (soft-fail
+    // inside the resolver). Keyless email demos stay lookup-only until tool
+    // approval; WhatsApp has no keyless demo path. Policy lives in
+    // `shouldAutoProvisionInbound`.
+    const canAutoProvision = shouldAutoProvisionInbound({
+      platform: config.platform,
+      subscriberAccess: config.subscriberAccess,
+      isKeyless: config.isKeyless,
+    });
 
     let resolution: SubscriberResolution;
     try {
