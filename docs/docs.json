@@ -506,8 +506,8 @@
             ]
           },
           {
-            "group": "Subscribers & topics",
-            "icon": "users",
+            "group": "Data",
+            "icon": "database",
             "pages": [
               {
                 "group": "Subscribers",
@@ -647,6 +647,40 @@
                     ]
                   }
                 ]
+              },
+              {
+                "group": "Contexts",
+                "expanded": false,
+                "pages": [
+                  "api-reference/contexts/context-schema",
+                  "api-reference/contexts/create-a-context",
+                  "api-reference/contexts/retrieve-a-context",
+                  "api-reference/contexts/update-a-context",
+                  "api-reference/contexts/delete-a-context",
+                  "api-reference/contexts/list-all-contexts"
+                ]
+              },
+              {
+                "group": "Channel Connections",
+                "expanded": false,
+                "pages": [
+                  "api-reference/channel-connections/create-a-channel-connection",
+                  "api-reference/channel-connections/retrieve-a-channel-connection",
+                  "api-reference/channel-connections/update-a-channel-connection",
+                  "api-reference/channel-connections/delete-a-channel-connection",
+                  "api-reference/channel-connections/list-all-channel-connections"
+                ]
+              },
+              {
+                "group": "Channel Endpoints",
+                "expanded": false,
+                "pages": [
+                  "api-reference/channel-endpoints/create-a-channel-endpoint",
+                  "api-reference/channel-endpoints/retrieve-a-channel-endpoint",
+                  "api-reference/channel-endpoints/update-a-channel-endpoint",
+                  "api-reference/channel-endpoints/delete-a-channel-endpoint",
+                  "api-reference/channel-endpoints/list-all-channel-endpoints"
+                ]
               }
             ]
           },
@@ -696,18 +730,6 @@
                   "api-reference/layouts/list-all-layouts",
                   "api-reference/layouts/retrieve-a-layout",
                   "api-reference/layouts/update-a-layout"
-                ]
-              },
-              {
-                "group": "Contexts",
-                "expanded": false,
-                "pages": [
-                  "api-reference/contexts/context-schema",
-                  "api-reference/contexts/create-a-context",
-                  "api-reference/contexts/retrieve-a-context",
-                  "api-reference/contexts/update-a-context",
-                  "api-reference/contexts/delete-a-context",
-                  "api-reference/contexts/list-all-contexts"
                 ]
               }
             ]
@@ -792,28 +814,6 @@
                       "api-reference/agents/delete-an-agent-integration"
                     ]
                   }
-                ]
-              },
-              {
-                "group": "Channel Connections",
-                "expanded": false,
-                "pages": [
-                  "api-reference/channel-connections/create-a-channel-connection",
-                  "api-reference/channel-connections/retrieve-a-channel-connection",
-                  "api-reference/channel-connections/update-a-channel-connection",
-                  "api-reference/channel-connections/delete-a-channel-connection",
-                  "api-reference/channel-connections/list-all-channel-connections"
-                ]
-              },
-              {
-                "group": "Channel Endpoints",
-                "expanded": false,
-                "pages": [
-                  "api-reference/channel-endpoints/create-a-channel-endpoint",
-                  "api-reference/channel-endpoints/retrieve-a-channel-endpoint",
-                  "api-reference/channel-endpoints/update-a-channel-endpoint",
-                  "api-reference/channel-endpoints/delete-a-channel-endpoint",
-                  "api-reference/channel-endpoints/list-all-channel-endpoints"
                 ]
               }
             ]
