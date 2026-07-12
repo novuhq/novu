@@ -1,6 +1,7 @@
 import { useUser } from '@clerk/react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'motion/react';
+import { useState } from 'react';
 import { RiCloseLine } from 'react-icons/ri';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { fetchSanity, SANITY_CDN_URL } from '@/utils/sanity';
@@ -22,6 +23,7 @@ type SanityChangelogPost = {
     current: string;
   };
   publishedAt: string;
+  description?: string;
   cover?: {
     _type: 'image';
     asset: SanityAsset;
@@ -34,6 +36,7 @@ type Changelog = {
   title: string;
   version: number;
   imageUrl?: string;
+  description?: string;
   published: boolean;
   slug: string;
 };
@@ -106,15 +109,15 @@ export function ChangelogStack() {
       title: post.title,
       version: index + 1, // Since Sanity doesn't have version numbers, we'll use index
       imageUrl: getImageUrl(post.cover?.asset),
+      description: post.description?.trim() || undefined,
       published: !!post.publishedAt && new Date(post.publishedAt) <= now,
       slug: post.slug?.current || '',
     }));
   };
 
   const fetchChangelogs = async (): Promise<Changelog[]> => {
-    // Get published changelog posts with covers, sorted by publishedAt.
     const query = `
-      *[_type == "changelogPost" && defined(cover.asset)] | order(publishedAt desc, _createdAt desc) [0...10] {
+      *[_type == "changelogPost"] | order(publishedAt desc, _createdAt desc) [0...10] {
         _id,
         _createdAt,
         _updatedAt,
@@ -122,6 +125,11 @@ export function ChangelogStack() {
         title,
         slug,
         publishedAt,
+        "description": coalesce(
+          description,
+          pt::text(content[_type == "block" && style == "normal"][0..0]),
+          pt::text(content[_type == "block"][0..0])
+        ),
         cover {
           _type,
           asset {
@@ -188,7 +196,7 @@ function filterChangelogs(changelogs: Changelog[], dismissedIds: string[]): Chan
   return changelogs
     .filter((item) => {
       const changelogDate = new Date(item.date);
-      return item.published && item.imageUrl && changelogDate >= cutoffDate;
+      return item.published && changelogDate >= cutoffDate;
     })
     .slice(0, CONSTANTS.NUMBER_OF_CARDS)
     .filter((item) => !dismissedIds.includes(item.id));
@@ -207,10 +215,14 @@ function ChangelogCard({
   onDismiss: (e: React.MouseEvent, changelog: Changelog) => void;
   onClick: (changelog: Changelog) => void;
 }) {
+  const [hasImageError, setHasImageError] = useState(false);
+  const showImage = Boolean(changelog.imageUrl) && !hasImageError;
+  const showDescription = !showImage && Boolean(changelog.description);
+
   return (
     <motion.div
       key={changelog.id}
-      className="border-stroke-soft rounded-8 group absolute flex h-[175px] w-full cursor-pointer flex-col justify-between overflow-hidden border bg-white p-3 shadow-xl shadow-black/10 transition-[height] duration-200 dark:border-white/10 dark:bg-black dark:shadow-white/5"
+      className="border-stroke-soft rounded-8 group absolute flex h-[175px] w-full cursor-pointer flex-col overflow-hidden border bg-white p-3 shadow-xl shadow-black/10 transition-[height] duration-200 dark:border-white/10 dark:bg-black dark:shadow-white/5"
       style={{ transformOrigin: 'top center' }}
       animate={{
         top: index * -CONSTANTS.CARD_OFFSET,
@@ -224,31 +236,30 @@ function ChangelogCard({
       }}
       onClick={() => onClick(changelog)}
     >
-      <div>
-        <div className="relative">
-          <div className="text-text-soft text-subheading-2xs">WHAT'S NEW</div>
-          <button
-            onClick={(e) => onDismiss(e, changelog)}
-            className="absolute right-[-8px] top-[-8px] p-1 text-neutral-500 opacity-0 transition-opacity duration-200 hover:text-neutral-900 group-hover:opacity-100 dark:hover:text-white"
-          >
-            <RiCloseLine size={16} />
-          </button>
-          <div className="mb-2 flex items-center justify-between">
-            <h5 className="text-label-sm text-text-strong mt-0 line-clamp-1 dark:text-white">{changelog.title}</h5>
-          </div>
-          {changelog.imageUrl && (
+      <div className="relative flex min-h-0 flex-1 flex-col">
+        <div className="text-text-soft text-subheading-2xs">WHAT'S NEW</div>
+        <button
+          onClick={(e) => onDismiss(e, changelog)}
+          className="absolute right-[-8px] top-[-8px] p-1 text-neutral-500 opacity-0 transition-opacity duration-200 hover:text-neutral-900 group-hover:opacity-100 dark:hover:text-white"
+        >
+          <RiCloseLine size={16} />
+        </button>
+        <h5 className="text-label-sm text-text-strong mt-0 line-clamp-1 dark:text-white">{changelog.title}</h5>
+        <div className="mt-2 min-h-0 flex-1">
+          {showImage ? (
             <div className="relative h-[110px] w-full">
               <img
                 src={changelog.imageUrl}
                 alt={changelog.title}
                 className="h-full w-full rounded-[6px] object-cover object-top"
-                onError={(e) => {
-                  // Hide image if it fails to load
-                  e.currentTarget.style.display = 'none';
-                }}
+                onError={() => setHasImageError(true)}
               />
             </div>
-          )}
+          ) : showDescription ? (
+            <div className="bg-bg-weak rounded-6 border-stroke-soft flex h-[110px] flex-col overflow-hidden border px-2.5 py-2 dark:bg-white/5">
+              <p className="text-paragraph-xs text-text-soft line-clamp-5 leading-relaxed">{changelog.description}</p>
+            </div>
+          ) : null}
         </div>
       </div>
     </motion.div>
