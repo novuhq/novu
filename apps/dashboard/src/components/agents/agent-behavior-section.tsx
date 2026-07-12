@@ -4,6 +4,7 @@ import { RiCloseCircleLine, RiExpandUpDownLine } from 'react-icons/ri';
 import {
   type AgentEmojiEntry,
   type AgentResponse,
+  type AgentSubscriberAccess,
   getAgentDetailQueryKey,
   getAgentEmojiQueryKey,
   listAgentEmoji,
@@ -19,6 +20,8 @@ import { requireEnvironment, useEnvironment } from '@/context/environment/hooks'
 const DEFAULT_REACTION_ON_RESOLVED = 'check';
 const PROD_READ_ONLY_TOOLTIP =
   'This setting is read-only in production. Edit in Development and promote to apply changes.';
+const SUBSCRIBER_ACCESS_TOOLTIP =
+  'When on, unknown senders on any channel are auto-created as users so the agent can reply. When off, only known or already-linked users are accepted; everyone else gets a short denial reply. Abuse mitigation is your responsibility when this is on.';
 
 function useAgentEmoji() {
   const { currentEnvironment } = useEnvironment();
@@ -136,9 +139,14 @@ export function AgentBehaviorSection({ agent }: AgentBehaviorSectionProps) {
   const acknowledgeOnReceived = agent.behavior?.acknowledgeOnReceived !== false;
   const reactionOnResolved =
     agent.behavior?.reactionOnResolved === undefined ? DEFAULT_REACTION_ON_RESOLVED : agent.behavior.reactionOnResolved;
+  const subscriberAccessOpen = agent.behavior?.subscriberAccess === 'open';
 
   const { mutate, isPending } = useMutation({
-    mutationFn: (body: { acknowledgeOnReceived?: boolean; reactionOnResolved?: string | null }) =>
+    mutationFn: (body: {
+      acknowledgeOnReceived?: boolean;
+      reactionOnResolved?: string | null;
+      subscriberAccess?: AgentSubscriberAccess;
+    }) =>
       updateAgent(requireEnvironment(currentEnvironment, 'No environment selected'), agent.identifier, {
         behavior: body,
       }),
@@ -205,6 +213,25 @@ export function AgentBehaviorSection({ agent }: AgentBehaviorSectionProps) {
                 unicodeMap={unicodeMap}
                 disabled={isPending}
                 onSelect={(emojiName) => mutate({ reactionOnResolved: emojiName })}
+              />
+            )}
+          </ToggleRow>
+
+          <ToggleRow label="Accept messages from anyone" tooltip={SUBSCRIBER_ACCESS_TOOLTIP}>
+            {readOnly ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="inline-flex">
+                    <Switch checked={subscriberAccessOpen} disabled />
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">{PROD_READ_ONLY_TOOLTIP}</TooltipContent>
+              </Tooltip>
+            ) : (
+              <Switch
+                checked={subscriberAccessOpen}
+                disabled={isPending}
+                onCheckedChange={(checked) => mutate({ subscriberAccess: checked ? 'open' : 'restricted' })}
               />
             )}
           </ToggleRow>
