@@ -163,8 +163,7 @@ export class AgentSubscriberResolver {
    * may create the subscriber itself: Slack/Teams/Telegram ChannelEndpoint
    * platforms and email/WhatsApp identity platforms, when the caller has
    * established open access (`subscriberAccess === 'open'`). Keyless exclusion
-   * is email-only and lives with the caller's config. Telegram DM-vs-group
-   * gating also lives with the caller.
+   * and Telegram DM-vs-group gating live in `shouldAutoProvisionInbound`.
    *
    * Branches:
    *   - Author is a bot → throw `BotAuthorSkippedError` (runs before lookup so

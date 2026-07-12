@@ -29,8 +29,8 @@ export const PLATFORM_ENDPOINT_CONFIG: Partial<Record<AgentPlatformEnum, Platfor
  * ChannelEndpoint on first mention when `subscriberAccess === 'open'`.
  * Open-access email/WhatsApp use `shouldAutoProvisionInbound` /
  * `isOpenAccessIdentityPlatform` instead — phone/email identity only, no
- * ChannelEndpoint. Telegram DMs are gated in the inbound handler
- * (`chat.id === from.id`); groups stay lookup-only.
+ * ChannelEndpoint. Telegram additionally requires a DM identity match
+ * (`telegramChatId === platformUserId`); groups stay lookup-only.
  */
 export const AUTO_PROVISION_PLATFORM_ENTRIES = [
   AgentPlatformEnum.SLACK,
@@ -54,13 +54,17 @@ export function isOpenAccessIdentityPlatform(platform: AgentPlatformEnum): boole
 /**
  * Whether inbound text should call `resolveOrProvision` vs lookup-only
  * `resolveSubscriber`. Gated by `subscriberAccess === 'open'` on every
- * platform; email also excludes the keyless demo path. Telegram open still
- * returns true here — the inbound handler applies the DM-only gate.
+ * platform; email also excludes the keyless demo path. Telegram open
+ * auto-provisions only when `telegramChatId === platformUserId` (DM).
  */
 export function shouldAutoProvisionInbound(params: {
   platform: AgentPlatformEnum;
   subscriberAccess: AgentSubscriberAccessEnum;
   isKeyless?: boolean;
+  /** Telegram chat.id (string). Required for Telegram open-access decisions. */
+  telegramChatId?: string | null;
+  /** Inbound author platform user id; compared to telegramChatId for DM detection. */
+  platformUserId?: string;
 }): boolean {
   if (params.subscriberAccess !== AgentSubscriberAccessEnum.OPEN) {
     return false;
@@ -68,6 +72,10 @@ export function shouldAutoProvisionInbound(params: {
 
   if (params.platform === AgentPlatformEnum.EMAIL) {
     return !params.isKeyless;
+  }
+
+  if (params.platform === AgentPlatformEnum.TELEGRAM) {
+    return params.telegramChatId != null && params.telegramChatId === params.platformUserId;
   }
 
   return isAutoProvisionPlatform(params.platform) || params.platform === AgentPlatformEnum.WHATSAPP;

@@ -294,14 +294,14 @@ export class AgentInboundHandler implements OnModuleInit {
 
     // Open-access agents may lookup-or-provision; restricted / unset stay
     // lookup-only on every platform. Keyless email demos stay lookup-only until
-    // tool approval. Telegram open is further limited to DMs (chat.id === from.id).
-    const canAutoProvision =
-      shouldAutoProvisionInbound({
-        platform: config.platform,
-        subscriberAccess: config.subscriberAccess,
-        isKeyless: config.isKeyless,
-      }) &&
-      (config.platform !== AgentPlatformEnum.TELEGRAM || extractTelegramChatId(thread) === message.author.userId);
+    // tool approval. Telegram DM detection (chat.id === from.id) lives in policy.
+    const canAutoProvision = shouldAutoProvisionInbound({
+      platform: config.platform,
+      subscriberAccess: config.subscriberAccess,
+      isKeyless: config.isKeyless,
+      telegramChatId: config.platform === AgentPlatformEnum.TELEGRAM ? extractTelegramChatId(thread) : undefined,
+      platformUserId: message.author.userId,
+    });
 
     let resolution: SubscriberResolution;
     try {
