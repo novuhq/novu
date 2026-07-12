@@ -7,7 +7,13 @@ import {
   PinoLogger,
 } from '@novu/application-generic';
 import { ChannelEndpointRepository, isDuplicateKeyError, SubscriberEntity, SubscriberRepository } from '@novu/dal';
-import { AGENT_PLATFORM_PROVISION_SOURCE, AGENT_PROVISION_DATA_KEYS, ENDPOINT_TYPES } from '@novu/shared';
+import {
+  AGENT_PLATFORM_PROVISION_SOURCE,
+  AGENT_PROVISION_DATA_KEYS,
+  type ChannelEndpointByType,
+  type ChannelEndpointType,
+  ENDPOINT_TYPES,
+} from '@novu/shared';
 import { CreateChannelEndpointCommand } from '../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.command';
 import { CreateChannelEndpoint } from '../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.usecase';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
@@ -617,11 +623,11 @@ export class AgentSubscriberResolver {
      * on the Teams endpoint type and the tenant being present. Identity field comes from
      * PLATFORM_ENDPOINT_CONFIG (userId for Slack/Teams, chatId for Telegram).
      */
-    const identityEndpoint = { [endpointConfig.identityField]: params.platformUserId };
-    const endpoint =
-      endpointConfig.endpointType === ENDPOINT_TYPES.MS_TEAMS_USER && params.platformTenantId
-        ? { ...identityEndpoint, tenantId: params.platformTenantId }
-        : identityEndpoint;
+    const endpoint = buildAutoProvisionEndpoint(
+      endpointConfig.endpointType,
+      params.platformUserId,
+      params.platformTenantId ?? undefined
+    );
 
     try {
       await this.createChannelEndpoint.execute(
@@ -741,4 +747,37 @@ function buildPlatformSubscriberId(params: {
     .digest('base64url');
 
   return `sub_${fingerprint.slice(0, 12)}`;
+}
+
+/**
+ * Builds a typed ChannelEndpoint payload for auto-provision platforms.
+ * Dynamic `{ [identityField]: value }` widens to `{ [x: string]: string }` and
+ * fails CreateChannelEndpointCommand's discriminated endpoint union.
+ */
+function buildAutoProvisionEndpoint(
+  endpointType: ChannelEndpointType,
+  platformUserId: string,
+  platformTenantId?: string
+): ChannelEndpointByType[ChannelEndpointType] {
+  switch (endpointType) {
+    case ENDPOINT_TYPES.SLACK_USER:
+      return { userId: platformUserId };
+    case ENDPOINT_TYPES.MS_TEAMS_USER:
+      return platformTenantId ? { userId: platformUserId, tenantId: platformTenantId } : { userId: platformUserId };
+    case ENDPOINT_TYPES.TELEGRAM_CHAT:
+      return { chatId: platformUserId };
+    case ENDPOINT_TYPES.SLACK_CHANNEL:
+    case ENDPOINT_TYPES.WEBHOOK:
+    case ENDPOINT_TYPES.PHONE:
+    case ENDPOINT_TYPES.MS_TEAMS_CHANNEL: {
+      const _exhaustive: never = endpointType as never;
+
+      throw new Error(`Auto-provision does not support endpoint type "${_exhaustive}"`);
+    }
+    default: {
+      const _exhaustive: never = endpointType;
+
+      throw new Error(`Unhandled endpoint type "${_exhaustive}"`);
+    }
+  }
 }
