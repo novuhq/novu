@@ -189,6 +189,51 @@ describe('ReplyApprovalInterceptor', () => {
     expect(runtime.dispatch.called).to.equal(false);
   });
 
+  it('should not approve a pending tool when the tapback quote only contains the tool name as a substring', async () => {
+    // Regression: liking an unrelated message must never green-light a pending
+    // approval just because a word in the quote happens to contain the tool
+    // name as a substring (e.g. "thread" contains "read").
+    const { interceptor, conversationService } = makeDeps([
+      {
+        type: ConversationActivityTypeEnum.TOOL_APPROVAL_REQUEST,
+        platformMessageId: 'msg-approval-read',
+        toolData: { approvalId: 'approval-read', toolCallId: 'tc-read', toolName: 'read' },
+      },
+    ]);
+    const runtime = { dispatch: sinon.stub().resolves(undefined) };
+    const turn = makeTurn({
+      message: { id: 'msg-tap', text: 'Liked "New thread created."', author: { userId: '+1' } },
+    });
+
+    const consumed = await interceptor.tryHandleAsApprovalReply(turn, runtime as any);
+
+    expect(consumed).to.equal(false);
+    expect(conversationService.persistToolApprovalDecision.called).to.equal(false);
+    expect(runtime.dispatch.called).to.equal(false);
+  });
+
+  it('should still match a short tool name when it appears as a whole token in the tapback quote', async () => {
+    const { interceptor, conversationService } = makeDeps([
+      {
+        type: ConversationActivityTypeEnum.TOOL_APPROVAL_REQUEST,
+        platformMessageId: 'msg-approval-read',
+        toolData: { approvalId: 'approval-read', toolCallId: 'tc-read', toolName: 'read' },
+      },
+    ]);
+    const runtime = { dispatch: sinon.stub().resolves(undefined) };
+    const turn = makeTurn({
+      message: { id: 'msg-tap', text: 'Liked "Tool approval required: read"', author: { userId: '+1' } },
+    });
+
+    const consumed = await interceptor.tryHandleAsApprovalReply(turn, runtime as any);
+
+    expect(consumed).to.equal(true);
+    expect(conversationService.persistToolApprovalDecision.firstCall.args[0]).to.include({
+      approvalId: 'approval-read',
+      approved: true,
+    });
+  });
+
   it('should fall through when a tapback is removed', async () => {
     const { interceptor } = makeDeps();
     const runtime = { dispatch: sinon.stub().resolves(undefined) };

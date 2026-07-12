@@ -39,6 +39,16 @@ function buildAckText(approved: boolean, toolName: string | undefined): string {
 }
 
 /**
+ * True when `toolName` appears in `normalizedQuote` as a whole token, not as a
+ * substring of a longer word (e.g. `read` must not match inside `thread`).
+ */
+function quoteContainsToolName(normalizedQuote: string, toolName: string): boolean {
+  const escaped = toolName.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+  return new RegExp(`\\b${escaped}\\b`, 'i').test(normalizedQuote);
+}
+
+/**
  * Reply-based ("text back") tool approvals for platforms without callback
  * buttons (iMessage/SMS via Sendblue).
  *
@@ -314,9 +324,12 @@ export class ReplyApprovalInterceptor {
    * A tapback carries no message id — only this echoed quote of the tapped
    * message — so it is matched against each pending request's tool name
    * (which is always present in the rendered approval prompt) instead of
-   * defaulting to "whichever approval is oldest". An unrelated quote, or one
-   * that matches more than one outstanding approval ambiguously, resolves to
-   * `null` so the tapback falls through instead of guessing.
+   * defaulting to "whichever approval is oldest". The tool name must appear
+   * as a whole token (word-boundary), never as a substring of an unrelated
+   * word — otherwise liking "New thread created." would green-light a pending
+   * `read` approval. An unrelated quote, or one that matches more than one
+   * outstanding approval ambiguously, resolves to `null` so the tapback falls
+   * through instead of guessing.
    */
   private async findPendingApprovalForTapback(
     turn: ConversationTurn,
@@ -331,7 +344,7 @@ export class ReplyApprovalInterceptor {
     const matches = pending.filter((request) => {
       const toolName = request.toolData?.toolName;
 
-      return typeof toolName === 'string' && toolName.length > 0 && normalizedQuote.includes(toolName.toLowerCase());
+      return typeof toolName === 'string' && toolName.length > 0 && quoteContainsToolName(normalizedQuote, toolName);
     });
 
     return matches.length === 1 ? { activities, request: matches[0] } : null;
