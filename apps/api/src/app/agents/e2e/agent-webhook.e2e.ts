@@ -430,7 +430,7 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
       // acknowledgeOnReceived can block inbound processing long enough to flake.
       await agentRepository.update(
         { _id: ctx.agentId, _environmentId: ctx.session.environment._id },
-        { $set: { 'behavior.acknowledgeOnReceived': false } }
+        { $set: { 'behavior.acknowledgeOnReceived': false, 'behavior.subscriberAccess': 'open' } }
       );
     });
 

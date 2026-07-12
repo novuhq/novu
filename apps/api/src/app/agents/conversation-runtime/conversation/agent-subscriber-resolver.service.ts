@@ -160,9 +160,11 @@ export class AgentSubscriberResolver {
 
   /**
    * Lookup-or-provision for inbound text messages on platforms where the agent
-   * may create the subscriber itself: Slack/Teams (always) and email/WhatsApp
-   * when the caller has established open access (`subscriberAccess === 'open'`).
-   * Keyless exclusion is email-only and lives with the caller's config.
+   * may create the subscriber itself: Slack/Teams/Telegram ChannelEndpoint
+   * platforms and email/WhatsApp identity platforms, when the caller has
+   * established open access (`subscriberAccess === 'open'`). Keyless exclusion
+   * is email-only and lives with the caller's config. Telegram DM-vs-group
+   * gating also lives with the caller.
    *
    * Branches:
    *   - Author is a bot → throw `BotAuthorSkippedError` (runs before lookup so
@@ -173,14 +175,14 @@ export class AgentSubscriberResolver {
    *     deterministic from `(orgId, integrationIdentifier, platform,
    *     platformUserId)`, so any retry — race-loss, transient error,
    *     redelivery — lands on the same `Subscriber` row instead of
-   *     accumulating phantoms. Slack/Teams also create the ChannelEndpoint
-   *     binding; email/WhatsApp identity lives on `Subscriber.email` /
-   *     `Subscriber.phone` alone.
+   *     accumulating phantoms. Slack/Teams/Telegram also create the
+   *     ChannelEndpoint binding; email/WhatsApp identity lives on
+   *     `Subscriber.email` / `Subscriber.phone` alone.
    *
-   * Slack/Teams throw on provisioning failure (dispatch stays off); the email
-   * and WhatsApp open-access branches soft-fail to an `error` outcome so a
-   * provisioning hiccup never crashes the inbound webhook. Throws for
-   * non-provisionable platforms; callers MUST route reactions, actions, and
+   * Slack/Teams/Telegram throw on provisioning failure (dispatch stays off);
+   * the email and WhatsApp open-access branches soft-fail to an `error`
+   * outcome so a provisioning hiccup never crashes the inbound webhook. Throws
+   * for non-provisionable platforms; callers MUST route reactions, actions, and
    * other inbound through `resolveSubscriber`.
    */
   async resolveOrProvision(params: ResolveOrProvisionParams): Promise<SubscriberResolution> {
@@ -613,12 +615,14 @@ export class AgentSubscriberResolver {
     /*
      * Only MS Teams endpoints carry a tenantId (the user's Azure AD tenant). Adding it to other
      * platform endpoints (e.g. Slack) would fail their strict endpoint validators, so it is gated
-     * on the Teams endpoint type and the tenant being present.
+     * on the Teams endpoint type and the tenant being present. Identity field comes from
+     * PLATFORM_ENDPOINT_CONFIG (userId for Slack/Teams, chatId for Telegram).
      */
+    const identityEndpoint = { [endpointConfig.identityField]: params.platformUserId };
     const endpoint =
       endpointConfig.endpointType === ENDPOINT_TYPES.MS_TEAMS_USER && params.platformTenantId
-        ? { userId: params.platformUserId, tenantId: params.platformTenantId }
-        : { userId: params.platformUserId };
+        ? { ...identityEndpoint, tenantId: params.platformTenantId }
+        : identityEndpoint;
 
     try {
       await this.createChannelEndpoint.execute(

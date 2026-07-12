@@ -26,13 +26,16 @@ export const PLATFORM_ENDPOINT_CONFIG: Partial<Record<AgentPlatformEnum, Platfor
 
 /**
  * Platforms whose inbound message path auto-provisions a Subscriber +
- * ChannelEndpoint on first mention. Open-access email/WhatsApp use
- * `shouldAutoProvisionInbound` / `isOpenAccessIdentityPlatform` instead -
- * phone/email identity only, no ChannelEndpoint.
+ * ChannelEndpoint on first mention when `subscriberAccess === 'open'`.
+ * Open-access email/WhatsApp use `shouldAutoProvisionInbound` /
+ * `isOpenAccessIdentityPlatform` instead — phone/email identity only, no
+ * ChannelEndpoint. Telegram DMs are gated in the inbound handler
+ * (`chat.id === from.id`); groups stay lookup-only.
  */
 export const AUTO_PROVISION_PLATFORM_ENTRIES = [
   AgentPlatformEnum.SLACK,
   AgentPlatformEnum.TEAMS,
+  AgentPlatformEnum.TELEGRAM,
 ] as const satisfies readonly AgentPlatformEnum[];
 
 export type AutoProvisionPlatform = (typeof AUTO_PROVISION_PLATFORM_ENTRIES)[number];
@@ -50,18 +53,15 @@ export function isOpenAccessIdentityPlatform(platform: AgentPlatformEnum): boole
 
 /**
  * Whether inbound text should call `resolveOrProvision` vs lookup-only
- * `resolveSubscriber`. Owns Slack/Teams always-on provision, open-access
- * email/WhatsApp, and the email keyless exclusion.
+ * `resolveSubscriber`. Gated by `subscriberAccess === 'open'` on every
+ * platform; email also excludes the keyless demo path. Telegram open still
+ * returns true here — the inbound handler applies the DM-only gate.
  */
 export function shouldAutoProvisionInbound(params: {
   platform: AgentPlatformEnum;
   subscriberAccess: AgentSubscriberAccessEnum;
   isKeyless?: boolean;
 }): boolean {
-  if (isAutoProvisionPlatform(params.platform)) {
-    return true;
-  }
-
   if (params.subscriberAccess !== AgentSubscriberAccessEnum.OPEN) {
     return false;
   }
@@ -70,5 +70,5 @@ export function shouldAutoProvisionInbound(params: {
     return !params.isKeyless;
   }
 
-  return params.platform === AgentPlatformEnum.WHATSAPP;
+  return isAutoProvisionPlatform(params.platform) || params.platform === AgentPlatformEnum.WHATSAPP;
 }

@@ -175,7 +175,7 @@ describe('Agent Slack Roundtrip - emulate.dev #novu-v2', () => {
     // The acknowledge behavior is exercised separately by Scenario C.
     await agentRepository.update(
       { _id: ctx.agentId, _environmentId: ctx.session.environment._id },
-      { $set: { bridgeUrl: bridge.url, 'behavior.acknowledgeOnReceived': false } }
+      { $set: { bridgeUrl: bridge.url, 'behavior.acknowledgeOnReceived': false, 'behavior.subscriberAccess': 'open' } }
     );
 
     const bridgeExecutor = testServer.getService(BridgeExecutorService);

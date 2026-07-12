@@ -47,6 +47,13 @@ export async function setupAgentTestContext(): Promise<AgentTestContext> {
   });
   const agentId = createRes.body.data._id as string;
 
+  // Slack e2e historically relied on always-on auto-provision; open access is
+  // now explicit so restricted agents stay lookup-only.
+  await new AgentRepository().update(
+    { _id: agentId, _environmentId: session.environment._id },
+    { $set: { 'behavior.subscriberAccess': 'open' } }
+  );
+
   const integration = await integrationRepository.create({
     _environmentId: session.environment._id,
     _organizationId: session.organization._id,
