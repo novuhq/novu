@@ -1,7 +1,7 @@
 import { useUser } from '@clerk/react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'motion/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { RiCloseLine } from 'react-icons/ri';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { fetchSanity, SANITY_CDN_URL } from '@/utils/sanity';
@@ -197,7 +197,9 @@ function filterChangelogs(changelogs: Changelog[], dismissedIds: string[]): Chan
   return changelogs
     .filter((item) => {
       const changelogDate = new Date(item.date);
-      return item.published && changelogDate >= cutoffDate;
+      const hasRenderableContent = Boolean(item.imageUrl || item.caption);
+
+      return item.published && changelogDate >= cutoffDate && hasRenderableContent;
     })
     .slice(0, CONSTANTS.NUMBER_OF_CARDS)
     .filter((item) => !dismissedIds.includes(item.id));
@@ -217,6 +219,11 @@ function ChangelogCard({
   onClick: (changelog: Changelog) => void;
 }) {
   const [hasImageError, setHasImageError] = useState(false);
+
+  useEffect(() => {
+    setHasImageError(false);
+  }, [changelog.imageUrl]);
+
   const showImage = Boolean(changelog.imageUrl) && !hasImageError;
   const showCaption = !showImage && Boolean(changelog.caption);
 
