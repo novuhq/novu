@@ -488,7 +488,7 @@ describe('AgentInboundHandler', () => {
       expect(managedAgentService.dispatch.called).to.equal(false);
       expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
       expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.include(senderEmail);
-      expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.include('Novu account');
+      expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.include('known user');
     });
 
     it('should reply with transient copy and log a structured warn when subscriber resolution errors (email)', async () => {
