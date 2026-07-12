@@ -81,7 +81,12 @@ function buildBaseOptions() {
     })
     .addTag('Domains', `Used to manage your inbound email domains.`, {
       url: 'https://docs.novu.co/platform/domains',
-    });
+    })
+    .addTag(
+      'Agents',
+      `Agents are conversational assistants that receive inbound messages from connected channels and respond through a custom code bridge or a managed runtime provider.`,
+      { url: 'https://docs.novu.co/agents' }
+    );
 
   return options;
 }
