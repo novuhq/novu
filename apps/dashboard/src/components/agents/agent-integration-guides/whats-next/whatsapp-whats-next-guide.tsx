@@ -1,6 +1,6 @@
 import { ChatProviderIdEnum } from '@novu/shared';
 import { type ReactNode, useMemo, useState } from 'react';
-import { RiArrowRightUpLine, RiExpandUpDownLine, RiKey2Line } from 'react-icons/ri';
+import { RiExpandUpDownLine, RiKey2Line } from 'react-icons/ri';
 import type { AgentIntegrationLink, AgentResponse } from '@/api/agents';
 import { ConnectionConfetti } from '@/components/agents/connection-confetti';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
@@ -20,13 +20,9 @@ import {
 import type { StepStatus } from '../../setup-guide-step-utils';
 import { ConnectedBadge } from './connected-badge';
 
-const WHATSAPP_MANAGER_URL = 'https://business.facebook.com/wa/manage';
 const META_APP_DASHBOARD_URL = 'https://developers.facebook.com/apps/';
 const BUSINESS_VERIFICATION_HELP_URL = 'https://www.facebook.com/business/help/2058515294227817';
 const META_SYSTEM_USERS_URL = 'https://business.facebook.com/settings/system-users';
-
-const quietLinkClassName =
-  'text-text-sub hover:text-text-strong inline-flex items-center gap-0.5 text-label-xs font-medium leading-4 transition-colors';
 
 type WhatsAppWhatsNextGuideProps = {
   agent: AgentResponse;
@@ -89,15 +85,6 @@ function ProductionReadyFooter({ ready }: { ready: boolean }) {
     <div className="py-4 pl-8">
       <p className="text-text-soft text-label-xs font-medium leading-4">{message}</p>
     </div>
-  );
-}
-
-function ExternalMetaLink({ href, children }: { href: string; children: ReactNode }) {
-  return (
-    <a href={href} target="_blank" rel="noopener noreferrer" className={quietLinkClassName}>
-      <span>{children}</span>
-      <RiArrowRightUpLine className="size-3.5" aria-hidden />
-    </a>
   );
 }
 
@@ -182,29 +169,10 @@ export function WhatsAppWhatsNextGuide({ agent, integrationLink, justConnected =
     title: 'Finalize production onboarding in Meta',
     description: (
       <div className="flex flex-col gap-2">
-        <p>Before you go live, finish Meta&apos;s production setup for this WhatsApp Business account.</p>
+        <p>Complete these Meta steps before going live.</p>
         <ol className="list-inside list-decimal space-y-1.5">
           <li>
             <strong className="text-text-sub">Register a production WhatsApp phone number</strong>
-            {' - replace the Meta test number with a real business number in '}
-            <a
-              href={WHATSAPP_MANAGER_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-text-sub underline"
-            >
-              WhatsApp Manager
-            </a>
-            .
-          </li>
-          <li>
-            <strong className="text-text-sub">Add a payment method</strong>
-            {
-              ' - required before Meta sends business-initiated (template) messages; 24h service-window replies work without it.'
-            }
-          </li>
-          <li>
-            <strong className="text-text-sub">Switch your app to Live</strong>
             {' - in the '}
             <a
               href={META_APP_DASHBOARD_URL}
@@ -214,13 +182,30 @@ export function WhatsAppWhatsNextGuide({ agent, integrationLink, justConnected =
             >
               Meta App Dashboard
             </a>
-            {', move out of Development mode.'}
+            {', select your app and open '}
+            <strong className="text-text-sub">Use cases → Customize → Basic setup → Step 2. Production setup</strong>
+            {'.'}
+          </li>
+          <li>
+            <strong className="text-text-sub">Add a payment method</strong>
+            {' - required for business-initiated template messages.'}
+          </li>
+          <li>
+            <strong className="text-text-sub">Switch your app to Live</strong>
+            {' - move it out of Development mode in the '}
+            <a
+              href={META_APP_DASHBOARD_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-text-sub underline"
+            >
+              Meta App Dashboard
+            </a>
+            .
           </li>
           <li>
             <strong className="text-text-sub">Verify your business (recommended)</strong>
-            {
-              ' - optional per Meta; shows display name, raises limits, protects the account. Review ~2–10 business days ('
-            }
+            {' - enables your display name and raises messaging limits. Review takes about 2–10 business days ('}
             <a
               href={BUSINESS_VERIFICATION_HELP_URL}
               target="_blank"
@@ -232,13 +217,6 @@ export function WhatsAppWhatsNextGuide({ agent, integrationLink, justConnected =
             ).
           </li>
         </ol>
-      </div>
-    ),
-    rightContent: (
-      <div className="flex flex-col gap-1.5">
-        <ExternalMetaLink href={WHATSAPP_MANAGER_URL}>WhatsApp Manager</ExternalMetaLink>
-        <ExternalMetaLink href={META_APP_DASHBOARD_URL}>Meta App Dashboard</ExternalMetaLink>
-        <ExternalMetaLink href={BUSINESS_VERIFICATION_HELP_URL}>Business verification help</ExternalMetaLink>
       </div>
     ),
   };
