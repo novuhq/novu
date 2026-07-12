@@ -1,12 +1,14 @@
 /**
  * Controls whether an agent accepts inbound messages from senders that are not
- * yet linked to a Novu subscriber.
+ * yet linked to a Novu subscriber. Applies across all agent channels.
  *
- * - `restricted` (default): unknown senders are rejected with the "couldn't
- *   verify your email" reply and no LLM dispatch fires.
- * - `open`: unknown email senders are auto-provisioned as lightweight
- *   subscribers (marked with agent-platform provenance) so the agent can reply.
- *   Abuse mitigation is the customer's responsibility in this mode.
+ * - `restricted`: unknown senders are rejected with a managed denial reply and
+ *   no LLM dispatch fires. Self-hosted agent create defaults to restricted;
+ *   unset `subscriberAccess` also resolves as restricted.
+ * - `open`: unknown senders are auto-provisioned as lightweight subscribers
+ *   (marked with agent-platform provenance) so the agent can reply. Managed
+ *   agent create defaults to open. Abuse mitigation is the customer's
+ *   responsibility in this mode.
  */
 export enum AgentSubscriberAccessEnum {
   OPEN = 'open',
