@@ -97,21 +97,15 @@ export function WhatsAppInboxCardBody({ whatsappIntegration, agent }: WhatsAppIn
       </AgentInboxCardRow>
 
       <AgentInboxCardRow
-        title="Subscriber phone numbers"
-        description={
-          <>
-            Each user needs an E.164 phone on <code className="text-text-sub">subscriber.phone</code> so the agent can
-            identify and reply to them.
-          </>
-        }
-        divider
-      />
-
-      <AgentInboxCardRow
         title={
           <AgentInboxCardRowInfoTitle label="Who can message this agent" infoTooltip={subscriberAccessInfoTooltip} />
         }
-        description="Open accepts WhatsApp from anyone. Off replies only to known subscribers."
+        description={
+          <>
+            Open accepts WhatsApp from anyone. Off replies only to subscribers with an E.164 phone on{' '}
+            <code className="text-text-sub">subscriber.phone</code>.
+          </>
+        }
         divider={false}
         footer={
           <div className="flex flex-col gap-2">

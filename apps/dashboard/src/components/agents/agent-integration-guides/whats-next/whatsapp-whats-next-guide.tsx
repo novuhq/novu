@@ -194,12 +194,6 @@ export function WhatsAppWhatsNextGuide({ agent, integrationLink, justConnected =
             {' - on the same Production setup screen; required for template messages.'}
           </li>
           <li>
-            <strong className="text-text-sub">Switch your app to Live</strong>
-            {' - toggle '}
-            <strong className="text-text-sub">App Mode</strong>
-            {' from Development to Live in the top bar.'}
-          </li>
-          <li>
             <strong className="text-text-sub">Verify your business (recommended)</strong>
             {' - in '}
             <strong className="text-text-sub">Business Settings → Security Center</strong>
