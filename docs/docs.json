@@ -472,6 +472,7 @@
           {
             "group": "Notification delivery",
             "icon": "send",
+            "openapi": "https://spec.speakeasy.com/novu/novu/json-development-with-code-samples",
             "pages": [
               {
                 "group": "Events",
@@ -512,6 +513,7 @@
           {
             "group": "Subscribers & topics",
             "icon": "users",
+            "openapi": "https://spec.speakeasy.com/novu/novu/json-development-with-code-samples",
             "pages": [
               {
                 "group": "Subscribers",
@@ -657,6 +659,7 @@
           {
             "group": "Workflows & content",
             "icon": "git-branch",
+            "openapi": "https://spec.speakeasy.com/novu/novu/json-development-with-code-samples",
             "pages": [
               {
                 "group": "Workflows",
@@ -719,6 +722,7 @@
           {
             "group": "Platform & channels",
             "icon": "settings",
+            "openapi": "https://spec.speakeasy.com/novu/novu/json-development-with-code-samples",
             "pages": [
               {
                 "group": "Environments",
