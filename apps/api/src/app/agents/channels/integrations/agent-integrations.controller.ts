@@ -12,7 +12,7 @@ import {
   Query,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiExcludeController, ApiExcludeEndpoint, ApiOperation } from '@nestjs/swagger';
+import { ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ProductFeature, RequirePermissions } from '@novu/application-generic';
 import {
   ApiRateLimitCategoryEnum,
@@ -31,6 +31,7 @@ import {
   ApiResponse,
 } from '../../../shared/framework/response.decorator';
 import { KeylessAccessible } from '../../../shared/framework/swagger/keyless.security';
+import { SdkGroupName, SdkMethodName } from '../../../shared/framework/swagger/sdk.decorators';
 import { UserSession } from '../../../shared/framework/user.decorator';
 import { SendAgentWelcomeMessageCommand } from '../../conversation-runtime/reply/send-agent-welcome-message/send-agent-welcome-message.command';
 import { SendAgentWelcomeMessage } from '../../conversation-runtime/reply/send-agent-welcome-message/send-agent-welcome-message.usecase';
@@ -73,7 +74,8 @@ import { UpdateAgentIntegration } from './update-agent-integration/update-agent-
 @ApiCommonResponses()
 @Controller('/agents')
 @UseInterceptors(ClassSerializerInterceptor)
-@ApiExcludeController()
+@ApiTags('Agents')
+@SdkGroupName('Agents.Integrations')
 @RequireAuthentication()
 export class AgentIntegrationsController {
   constructor(
@@ -92,11 +94,12 @@ export class AgentIntegrationsController {
   @Post('/:identifier/integrations')
   @ExternalApiAccessible()
   @KeylessAccessible()
+  @SdkMethodName('create')
   @ApiResponse(AgentIntegrationResponseDto, 201)
   @ApiOperation({
-    summary: 'Link integration to agent',
+    summary: 'Create an agent integration',
     description:
-      'Creates a link between an agent (by identifier) and an integration (by integration **identifier**, not the internal _id).',
+      'Create a link between an agent (by identifier) and an integration (by integration **identifier**, not the internal _id).',
   })
   @ApiNotFoundResponse({
     description: 'The agent or integration was not found.',
@@ -122,11 +125,12 @@ export class AgentIntegrationsController {
   @Get('/:identifier/integrations')
   @ExternalApiAccessible()
   @KeylessAccessible()
+  @SdkMethodName('list')
   @ApiResponse(ListAgentIntegrationsResponseDto)
   @ApiOperation({
     summary: 'List agent integrations',
     description:
-      'Lists integration links for an agent identified by its external identifier. Supports cursor pagination via **after**, **before**, **limit**, **orderBy**, and **orderDirection**.',
+      'Retrieve integration links for an agent identified by its external identifier. Supports cursor pagination via **after**, **before**, **limit**, **orderBy**, and **orderDirection**.',
   })
   @ApiNotFoundResponse({
     description: 'The agent was not found.',
@@ -155,10 +159,12 @@ export class AgentIntegrationsController {
   }
 
   @Patch('/:identifier/integrations/:agentIntegrationId')
+  @ExternalApiAccessible()
+  @SdkMethodName('update')
   @ApiResponse(AgentIntegrationResponseDto)
   @ApiOperation({
-    summary: 'Update agent-integration link',
-    description: 'Updates which integration a link points to (by integration **identifier**, not the internal _id).',
+    summary: 'Update an agent integration',
+    description: 'Update which integration a link points to (by integration **identifier**, not the internal _id).',
   })
   @ApiNotFoundResponse({
     description: 'The agent, integration, or link was not found.',
@@ -183,10 +189,12 @@ export class AgentIntegrationsController {
   }
 
   @Delete('/:identifier/integrations/:agentIntegrationId')
+  @ExternalApiAccessible()
+  @SdkMethodName('delete')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
-    summary: 'Remove agent-integration link',
-    description: 'Deletes a specific agent-integration link by its document id.',
+    summary: 'Delete an agent integration',
+    description: 'Delete a specific agent-integration link by its document id.',
   })
   @ApiNoContentResponse({
     description: 'The link was removed.',
@@ -266,6 +274,7 @@ export class AgentIntegrationsController {
   }
 
   @Post('/:identifier/test-email')
+  @ApiExcludeEndpoint()
   @HttpCode(HttpStatus.OK)
   @ProductFeature(ProductFeatureKeyEnum.AGENT_EMAIL_INTEGRATION)
   @ApiOperation({
@@ -294,6 +303,7 @@ export class AgentIntegrationsController {
   }
 
   @Patch('/:identifier/inbox/shared')
+  @ApiExcludeEndpoint()
   @ApiResponse(AgentIntegrationResponseDto)
   @ApiOperation({
     summary: 'Enable or disable the Novu shared inbox for an agent',
@@ -322,14 +332,14 @@ export class AgentIntegrationsController {
   }
 
   @Post('/:identifier/welcome-message')
-  @ExternalApiAccessible()
+  @ApiExcludeEndpoint()
   @KeylessAccessible()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Send onboarding welcome message',
+    summary: 'Send an agent welcome message',
     description:
-      'Sends a proactive DM to the agent installer after Slack OAuth, a welcome email after email ' +
-      'connection, or posts a bridge-connected follow-up message into an existing conversation thread ' +
+      'Send a proactive DM to the agent installer after Slack OAuth, a welcome email after email ' +
+      'connection, or post a bridge-connected follow-up message into an existing conversation thread ' +
       'when conversationId is supplied.',
   })
   @ApiNotFoundResponse({ description: 'The agent or integration was not found.' })
@@ -352,14 +362,14 @@ export class AgentIntegrationsController {
   }
 
   @Post('/:identifier/integrations/:integrationId/slack/setup-link')
-  @ExternalApiAccessible()
+  @ApiExcludeEndpoint()
   @KeylessAccessible()
   @HttpCode(HttpStatus.OK)
   @ApiResponse(IssueSlackSetupLinkResponseDto, 200)
   @ApiOperation({
-    summary: 'Issue a short-lived Slack setup link',
+    summary: 'Create a Slack setup link',
     description:
-      'Issues a signed, single-use link (TTL = 5 minutes) that can be opened to paste a Slack App ' +
+      'Issue a signed, single-use link (TTL = 5 minutes) that can be opened to paste a Slack App ' +
       'Configuration Token without re-authenticating. Slack-only.',
   })
   @ApiNotFoundResponse({
