@@ -7,6 +7,18 @@ export function buildAgentWebhookUrl(agentId: string, integrationIdentifier: str
   return `${getAgentApiBaseUrl()}/v1/agents/${agentId}/webhook/${integrationIdentifier}`;
 }
 
+/**
+ * Builds an `sms:` deep link that opens the device's Messages app (iMessage on
+ * iOS/macOS, SMS elsewhere) pre-addressed to the agent's Sendblue number with a
+ * greeting pre-filled in the body. Lets a user start the conversation manually
+ * as an alternative to the automatic test-message send.
+ */
+export function buildImessageFallbackHref(fromNumber: string, agentName: string): string {
+  const body = `Hi ${agentName}, how can you help?`;
+
+  return `sms:${encodeURIComponent(fromNumber)}?body=${encodeURIComponent(body)}`;
+}
+
 export function deriveStepStatus(stepIndex: number, firstIncompleteStep: number): StepStatus {
   if (stepIndex < firstIncompleteStep) return 'completed';
   if (stepIndex === firstIncompleteStep) return 'current';

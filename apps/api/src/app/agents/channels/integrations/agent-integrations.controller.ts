@@ -52,11 +52,17 @@ import { IssueSlackSetupLinkResponseDto } from '../../shared/dtos/issue-slack-se
 import { SendAgentTestEmailRequestDto } from '../../shared/dtos/send-agent-test-email-request.dto';
 import { SendAgentWelcomeMessageRequestDto } from '../../shared/dtos/send-agent-welcome-message-request.dto';
 import {
+  SendSendblueTestMessageRequestDto,
+  SendSendblueTestMessageResponseDto,
+} from '../../shared/dtos/send-sendblue-test-message.dto';
+import {
   SendWhatsAppTestTemplateRequestDto,
   SendWhatsAppTestTemplateResponseDto,
 } from '../../shared/dtos/send-whatsapp-test-template.dto';
 import { ConfigureSendblueWebhookCommand } from '../sendblue/configure-sendblue-webhook/configure-sendblue-webhook.command';
 import { ConfigureSendblueWebhook } from '../sendblue/configure-sendblue-webhook/configure-sendblue-webhook.usecase';
+import { SendSendblueTestMessageCommand } from '../sendblue/send-sendblue-test-message/send-sendblue-test-message.command';
+import { SendAgentSendblueTestMessage } from '../sendblue/send-sendblue-test-message/send-sendblue-test-message.usecase';
 import { IssueSlackSetupLinkCommand } from '../slack-linking/issue-slack-setup-link/issue-slack-setup-link.command';
 import { IssueSlackSetupLink } from '../slack-linking/issue-slack-setup-link/issue-slack-setup-link.usecase';
 import { ConfigureWhatsAppWebhookCommand } from '../whatsapp/configure-whatsapp-webhook/configure-whatsapp-webhook.command';
@@ -89,6 +95,7 @@ export class AgentIntegrationsController {
     private readonly configureWhatsAppWebhookUsecase: ConfigureWhatsAppWebhook,
     private readonly configureSendblueWebhookUsecase: ConfigureSendblueWebhook,
     private readonly sendWhatsAppTestTemplateUsecase: SendWhatsAppTestTemplate,
+    private readonly sendAgentSendblueTestMessageUsecase: SendAgentSendblueTestMessage,
     private readonly issueSlackSetupLinkUsecase: IssueSlackSetupLink,
     private readonly updateAgentInboxSharedUsecase: UpdateAgentInboxShared
   ) {}
@@ -285,6 +292,36 @@ export class AgentIntegrationsController {
   ): Promise<SendWhatsAppTestTemplateResponseDto> {
     return this.sendWhatsAppTestTemplateUsecase.execute(
       SendWhatsAppTestTemplateCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        agentIdentifier: identifier,
+        integrationIdentifier,
+        subscriberId: body.subscriberId,
+      })
+    );
+  }
+
+  @Post('/:identifier/integrations/:integrationIdentifier/sendblue/test-message')
+  @ApiExcludeEndpoint()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Send a test message from the agent Sendblue integration',
+    description:
+      'Sends a plain-text welcome message via the configured Sendblue number to a recipient supplied by the ' +
+      'user, used at the end of the onboarding flow to verify outbound delivery without asking the user to ' +
+      'send an inbound message themselves.',
+  })
+  @ApiNotFoundResponse({ description: 'The agent or integration was not found.' })
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  sendAgentSendblueTestMessage(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string,
+    @Param('integrationIdentifier') integrationIdentifier: string,
+    @Body() body: SendSendblueTestMessageRequestDto
+  ): Promise<SendSendblueTestMessageResponseDto> {
+    return this.sendAgentSendblueTestMessageUsecase.execute(
+      SendSendblueTestMessageCommand.create({
         userId: user._id,
         environmentId: user.environmentId,
         organizationId: user.organizationId,

@@ -1,11 +1,19 @@
 import { ChatProviderIdEnum } from '@novu/shared';
+import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { RiCheckLine, RiErrorWarningLine, RiKey2Line } from 'react-icons/ri';
-import type { AgentResponse } from '@/api/agents';
+import { RiChat3Line, RiCheckLine, RiErrorWarningLine, RiKey2Line, RiSendPlaneFill, RiSmartphoneLine } from 'react-icons/ri';
+import type { AgentResponse, SendSendblueTestMessageError } from '@/api/agents';
+import { patchSubscriber } from '@/api/subscribers';
+import { useConnectSubscriber } from '@/components/connect/connect-subscriber-provider';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import { Button } from '@/components/primitives/button';
+import { InputPure, InputRoot, InputWrapper } from '@/components/primitives/input';
+import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useConfigureSendblueWebhook } from '@/hooks/use-configure-sendblue-webhook';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
+import { useFetchSubscriber } from '@/hooks/use-fetch-subscriber';
+import { useSendSendblueTestMessage } from '@/hooks/use-send-sendblue-test-message';
+import { QueryKeys } from '@/utils/query-keys';
 import {
   IntegrationCredentialsSidebar,
   ListeningStatus,
@@ -15,7 +23,14 @@ import {
   SetupStep,
   SetupStepperRail,
 } from './setup-guide-primitives';
-import { buildAgentWebhookUrl, deriveStepStatus, hasSendblueUserCredentials } from './setup-guide-step-utils';
+import {
+  buildAgentWebhookUrl,
+  buildImessageFallbackHref,
+  deriveStepStatus,
+  hasSendblueUserCredentials,
+} from './setup-guide-step-utils';
+
+const PHONE_PATTERN = /^\+[1-9]\d{6,14}$/;
 
 const SENDBLUE_DASHBOARD_URL = 'https://dashboard.sendblue.com/settings/api';
 
@@ -31,19 +46,17 @@ type ConnectStatus =
   | { state: 'idle' }
   | { state: 'connecting' }
   | { state: 'connected' }
-  | { state: 'manual_fallback'; message: string; webhookSecret?: string }
+  | { state: 'manual_fallback'; message: string }
   | { state: 'error'; message: string };
 
 function ManualWebhookFallback({
   message,
-  webhookUrl,
-  webhookSecret,
   onMarkConnected,
+  onOpenCredentials,
 }: {
   message: string;
-  webhookUrl: string;
-  webhookSecret?: string;
   onMarkConnected: () => void;
+  onOpenCredentials: () => void;
 }) {
   return (
     <div className="border-warning-base/40 bg-warning-base/4 flex w-full flex-col gap-2 rounded-md border p-3">
@@ -53,21 +66,28 @@ function ManualWebhookFallback({
       </div>
       <p className="text-text-soft text-label-xs leading-4">
         In the Sendblue dashboard open <strong className="text-text-sub">API &gt; Webhooks</strong>, add a{' '}
-        <strong className="text-text-sub">receive</strong> webhook with the Callback URL below
-        {webhookSecret ? ' and set its secret to the value below' : ''}, then save.
+        <strong className="text-text-sub">receive</strong> webhook using the Callback URL and secret from{' '}
+        <strong className="text-text-sub">Edit credentials</strong> below, then save.
       </p>
-      <ReadOnlyValueRow label="Callback URL" value={webhookUrl} />
-      {webhookSecret ? <ReadOnlyValueRow label="Webhook Secret" value={webhookSecret} /> : null}
-      <Button
-        type="button"
-        variant="secondary"
-        mode="outline"
-        size="xs"
-        className="w-fit gap-1.5"
-        onClick={onMarkConnected}
-      >
-        Mark as configured
-      </Button>
+      <div className="flex items-center gap-3">
+        <Button
+          type="button"
+          variant="secondary"
+          mode="outline"
+          size="xs"
+          className="w-fit gap-1.5"
+          onClick={onOpenCredentials}
+        >
+          Edit credentials
+        </Button>
+        <button
+          type="button"
+          onClick={onMarkConnected}
+          className="text-text-sub hover:text-text-strong text-label-xs font-medium underline"
+        >
+          Mark as configured
+        </button>
+      </div>
     </div>
   );
 }
@@ -75,17 +95,17 @@ function ManualWebhookFallback({
 function ConnectWebhookPanel({
   agent,
   integrationIdentifier,
-  webhookUrl,
   isCredentialsSaved,
   existingWebhookSecret,
   onConfigured,
+  onOpenCredentials,
 }: {
   agent: AgentResponse;
   integrationIdentifier: string;
-  webhookUrl: string;
   isCredentialsSaved: boolean;
   existingWebhookSecret: string;
   onConfigured: () => void;
+  onOpenCredentials: () => void;
 }) {
   const [connectStatus, setConnectStatus] = useState<ConnectStatus>({ state: 'idle' });
   const [manualMarkedConfigured, setManualMarkedConfigured] = useState(false);
@@ -119,7 +139,6 @@ function ConnectWebhookPanel({
           message:
             result.reason?.message ??
             "We couldn't register the webhook automatically. Add it manually in the Sendblue dashboard below.",
-          webhookSecret: result.webhookSecret,
         });
 
         return;
@@ -145,9 +164,18 @@ function ConnectWebhookPanel({
   return (
     <div className="flex w-full max-w-[400px] flex-col gap-3">
       {showExistingSecret ? (
-        <div className="text-success-base flex items-center gap-1.5">
-          <RiCheckLine className="size-4" />
-          <span className="text-label-xs font-medium">Webhook already configured</span>
+        <div className="flex flex-col gap-1">
+          <div className="text-success-base flex items-center gap-1.5">
+            <RiCheckLine className="size-4" />
+            <span className="text-label-xs font-medium">Webhook already configured</span>
+          </div>
+          <button
+            type="button"
+            onClick={onOpenCredentials}
+            className="text-text-sub hover:text-text-strong w-fit text-label-xs font-medium underline"
+          >
+            View Callback URL and secret in Edit credentials
+          </button>
         </div>
       ) : null}
 
@@ -182,24 +210,219 @@ function ConnectWebhookPanel({
         <p className="text-error-base text-label-xs leading-4">{connectStatus.message}</p>
       ) : null}
 
-      {showExistingSecret ? (
-        <div className="border-stroke-soft flex w-full flex-col gap-2 rounded-md border p-3">
-          <ReadOnlyValueRow label="Callback URL" value={webhookUrl} />
-          <ReadOnlyValueRow label="Webhook Secret" value={existingWebhookSecret} />
-        </div>
-      ) : null}
-
       {showManualFallback && connectStatus.state === 'manual_fallback' ? (
         <ManualWebhookFallback
           message={connectStatus.message}
-          webhookUrl={webhookUrl}
-          webhookSecret={connectStatus.webhookSecret}
+          onOpenCredentials={onOpenCredentials}
           onMarkConnected={() => {
             setManualMarkedConfigured(true);
             onConfigured();
           }}
         />
       ) : null}
+    </div>
+  );
+}
+
+type TestStatus =
+  | { state: 'idle' }
+  | { state: 'sending' }
+  | { state: 'sent' }
+  | { state: 'error'; message: string; code?: SendSendblueTestMessageError['code'] };
+
+function RecipientNotVerifiedPanel({
+  fromNumber,
+  imessageHref,
+  onTryAgain,
+}: {
+  fromNumber: string;
+  imessageHref?: string;
+  onTryAgain: () => void;
+}) {
+  return (
+    <div className="border-information-base/40 bg-information-base/4 flex w-full flex-col gap-3 rounded-md border p-3">
+      <div className="flex flex-col gap-2">
+        <div className="text-information-base flex items-center gap-1.5">
+          <RiChat3Line className="size-4" />
+          <span className="text-label-xs font-medium">You need to message this number first</span>
+        </div>
+        <p className="text-text-soft text-label-xs leading-4">
+          Sendblue only allows replies to numbers that have already texted it. Send a quick message to the number
+          below to start the conversation, then your agent will be able to reply here.
+        </p>
+      </div>
+      {fromNumber ? <ReadOnlyValueRow label="Sendblue number" value={fromNumber} /> : null}
+      <div className="flex items-center gap-3">
+        {imessageHref ? (
+          <SetupButton href={imessageHref} leadingIcon={<RiSmartphoneLine className="size-3.5" />}>
+            Message {fromNumber || 'this number'}
+          </SetupButton>
+        ) : null}
+        <button
+          type="button"
+          onClick={onTryAgain}
+          className="text-text-sub hover:text-text-strong text-label-xs font-medium underline"
+        >
+          I've sent a message, try again
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function SendTestMessagePanel({
+  agent,
+  integrationIdentifier,
+  connectSubscriberId,
+  fromNumber,
+}: {
+  agent: AgentResponse;
+  integrationIdentifier: string;
+  connectSubscriberId: string;
+  fromNumber: string;
+}) {
+  const [testStatus, setTestStatus] = useState<TestStatus>({ state: 'idle' });
+  const [phone, setPhone] = useState('');
+
+  const { currentEnvironment } = useEnvironment();
+  const queryClient = useQueryClient();
+  const { mutateAsync: sendTestMessage } = useSendSendblueTestMessage();
+
+  const { data: subscriber } = useFetchSubscriber({
+    subscriberId: connectSubscriberId,
+    options: { enabled: Boolean(connectSubscriberId) },
+  });
+
+  useEffect(() => {
+    setTestStatus({ state: 'idle' });
+  }, [integrationIdentifier]);
+
+  useEffect(() => {
+    const savedPhone = subscriber?.phone?.trim();
+
+    if (savedPhone) {
+      setPhone(savedPhone);
+    }
+  }, [subscriber?.phone]);
+
+  const handleSendTest = useCallback(async () => {
+    if (!PHONE_PATTERN.test(phone.trim())) {
+      setTestStatus({
+        state: 'error',
+        message: 'Enter a phone number in international format, including the country code.',
+      });
+
+      return;
+    }
+
+    setTestStatus({ state: 'sending' });
+
+    try {
+      const environment = requireEnvironment(currentEnvironment, 'No environment selected');
+      const normalizedPhone = phone.trim();
+
+      await patchSubscriber({
+        environment,
+        subscriberId: connectSubscriberId,
+        subscriber: { phone: normalizedPhone },
+      });
+
+      await queryClient.invalidateQueries({
+        queryKey: [QueryKeys.fetchSubscriber, environment._id, connectSubscriberId],
+      });
+
+      const result = await sendTestMessage({
+        agentIdentifier: agent.identifier,
+        integrationIdentifier,
+        subscriberId: connectSubscriberId,
+      });
+
+      if (result.success) {
+        setTestStatus({ state: 'sent' });
+
+        return;
+      }
+
+      setTestStatus({
+        state: 'error',
+        message: result.error?.message ?? "Sendblue didn't accept the test message.",
+        code: result.error?.code,
+      });
+    } catch (err) {
+      setTestStatus({
+        state: 'error',
+        message: err instanceof Error ? err.message : 'Something went wrong sending the test message.',
+      });
+    }
+  }, [agent.identifier, connectSubscriberId, currentEnvironment, integrationIdentifier, phone, queryClient, sendTestMessage]);
+
+  const imessageHref = fromNumber ? buildImessageFallbackHref(fromNumber, agent.name) : undefined;
+  const isRecipientNotVerified = testStatus.state === 'error' && testStatus.code === 'recipient_not_verified';
+
+  return (
+    <div className="flex w-full max-w-[400px] flex-col gap-3">
+      {isRecipientNotVerified ? (
+        <RecipientNotVerifiedPanel
+          fromNumber={fromNumber}
+          imessageHref={imessageHref}
+          onTryAgain={() => setTestStatus({ state: 'idle' })}
+        />
+      ) : (
+        <>
+          <div className="flex items-stretch gap-2">
+            <InputRoot size="xs" hasError={testStatus.state === 'error'} className="flex-1">
+              <InputWrapper>
+                <InputPure
+                  value={phone}
+                  onChange={(event) => {
+                    setPhone(event.target.value);
+
+                    if (testStatus.state === 'error') {
+                      setTestStatus({ state: 'idle' });
+                    }
+                  }}
+                  type="tel"
+                  inputMode="tel"
+                  placeholder="+14155551234"
+                  autoComplete="tel"
+                  disabled={testStatus.state === 'sending'}
+                />
+              </InputWrapper>
+            </InputRoot>
+            <Button
+              type="button"
+              variant="secondary"
+              size="xs"
+              className="gap-1.5 px-2"
+              onClick={handleSendTest}
+              disabled={!phone || testStatus.state === 'sending'}
+              isLoading={testStatus.state === 'sending'}
+              leadingIcon={RiSendPlaneFill}
+            >
+              Send test
+            </Button>
+          </div>
+          {testStatus.state === 'sent' ? (
+            <p className="text-success-base text-label-xs leading-4">
+              Sent: check your Messages app for the reply from your Sendblue number.
+            </p>
+          ) : null}
+          {testStatus.state === 'error' ? (
+            <p className="text-error-base text-label-xs leading-4">{testStatus.message}</p>
+          ) : null}
+          {imessageHref ? (
+            <a
+              href={imessageHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-text-sub hover:text-text-strong inline-flex w-fit items-center gap-1.5 text-label-xs font-medium underline"
+            >
+              <RiSmartphoneLine className="size-3.5" />
+              Text via iMessage instead
+            </a>
+          ) : null}
+        </>
+      )}
     </div>
   );
 }
@@ -211,6 +434,7 @@ export function SendblueSetupGuide({
   onStepsCompleted,
   embedded = false,
 }: SendblueSetupGuideProps) {
+  const { subscriberId: connectSubscriberId, isReady: isConnectSubscriberReady } = useConnectSubscriber();
   const [isCredentialsSidebarOpen, setIsCredentialsSidebarOpen] = useState(false);
   const [credentialsSavedLocally, setCredentialsSavedLocally] = useState(false);
   const [isWebhookConfiguredLocally, setIsWebhookConfiguredLocally] = useState(false);
@@ -247,6 +471,8 @@ export function SendblueSetupGuide({
 
   const fromNumber = (selectedIntegration?.credentials?.from as string | undefined) ?? '';
   const webhookUrl = buildAgentWebhookUrl(agent._id, selectedIntegrationIdentifier || 'YOUR_INTEGRATION_IDENTIFIER');
+  // Only surface the Callback URL in the credentials sidebar once there's a real integration identifier to build it from.
+  const webhookUrlForCredentials = selectedIntegrationIdentifier ? webhookUrl : undefined;
 
   const base = stepOffset;
 
@@ -319,10 +545,10 @@ export function SendblueSetupGuide({
           <ConnectWebhookPanel
             agent={agent}
             integrationIdentifier={selectedIntegrationIdentifier}
-            webhookUrl={webhookUrl}
             isCredentialsSaved={isCredentialsSaved && Boolean(selectedIntegrationIdentifier)}
             existingWebhookSecret={existingWebhookSecret}
             onConfigured={() => setIsWebhookConfiguredLocally(true)}
+            onOpenCredentials={() => setIsCredentialsSidebarOpen(true)}
           />
         }
       />
@@ -333,7 +559,7 @@ export function SendblueSetupGuide({
         title="Send a test message"
         description={
           <span>
-            {'Text your Sendblue number'}
+            {'Send yourself a message from your Sendblue number'}
             {fromNumber ? (
               <>
                 {' ('}
@@ -341,8 +567,20 @@ export function SendblueSetupGuide({
                 {')'}
               </>
             ) : null}
-            {' from your phone. If everything is configured correctly, your agent will reply in the same conversation.'}
+            {
+              ", or text it yourself from your phone. If everything is configured correctly, your agent will reply in the same conversation."
+            }
           </span>
+        }
+        rightContent={
+          isConnectSubscriberReady ? (
+            <SendTestMessagePanel
+              agent={agent}
+              integrationIdentifier={selectedIntegrationIdentifier}
+              connectSubscriberId={connectSubscriberId}
+              fromNumber={fromNumber}
+            />
+          ) : null
         }
       />
     </>
@@ -369,6 +607,8 @@ export function SendblueSetupGuide({
           onClose={() => setIsCredentialsSidebarOpen(false)}
           onSaveSuccess={() => setCredentialsSavedLocally(true)}
           agentOnboarding
+          webhookUrl={webhookUrlForCredentials}
+          webhookSecret={existingWebhookSecret}
         />
       </div>
     );
@@ -384,6 +624,8 @@ export function SendblueSetupGuide({
         onClose={() => setIsCredentialsSidebarOpen(false)}
         onSaveSuccess={() => setCredentialsSavedLocally(true)}
         agentOnboarding
+        webhookUrl={webhookUrlForCredentials}
+        webhookSecret={existingWebhookSecret}
       />
     </>
   );

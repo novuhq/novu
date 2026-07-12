@@ -812,6 +812,31 @@ export async function sendWhatsAppTestTemplate(
   return response.data;
 }
 
+export type SendSendblueTestMessageError = {
+  code: 'missing_credentials' | 'invalid_recipient' | 'recipient_not_verified' | 'sendblue_rejected' | 'unknown';
+  message: string;
+};
+
+export type SendSendblueTestMessageResponse = {
+  success: boolean;
+  messageId?: string;
+  error?: SendSendblueTestMessageError;
+};
+
+export async function sendSendblueTestMessage(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  integrationIdentifier: string,
+  subscriberId: string
+): Promise<SendSendblueTestMessageResponse> {
+  const response = await post<{ data: SendSendblueTestMessageResponse }>(
+    `/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationIdentifier)}/sendblue/test-message`,
+    { environment, body: { subscriberId } }
+  );
+
+  return response.data;
+}
+
 export type ConfigureSendblueWebhookFailure = {
   code: 'missing_credentials' | 'sendblue_rejected' | 'unknown';
   message: string;
