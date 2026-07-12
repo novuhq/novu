@@ -847,20 +847,33 @@ describe('AgentSubscriberResolver', () => {
     });
   });
 
-  describe('resolveOrProvision - unsupported platforms', () => {
-    it('throws when called with Telegram', async () => {
-      const { resolver } = makeResolver();
+  describe('resolveOrProvision — Telegram mirrors Slack/Teams', () => {
+    it('creates a Subscriber + telegram_chat ChannelEndpoint when the chat identity is unrecognised', async () => {
+      const { resolver, createOrUpdateSubscriber, createChannelEndpoint, analyticsService } = makeResolver();
 
-      try {
-        await resolver.resolveOrProvision({
-          ...baseProvisionParams,
-          platform: AgentPlatformEnum.TELEGRAM,
-          platformUserId: '12345',
-        });
-        expect.fail('Expected resolveOrProvision to refuse Telegram');
-      } catch (err) {
-        expect((err as Error).message).to.contain('unsupported platform');
-      }
+      const result = await resolver.resolveOrProvision({
+        ...baseProvisionParams,
+        platform: AgentPlatformEnum.TELEGRAM,
+        platformUserId: '777001',
+      });
+
+      expect(result.outcome).to.equal('resolved');
+      const subscriberId = result.outcome === 'resolved' ? result.subscriberId : '';
+      expect(subscriberId).to.match(/^sub_/);
+      expect(createOrUpdateSubscriber.execute.calledOnce).to.equal(true);
+      expect(createOrUpdateSubscriber.execute.firstCall.args[0].data).to.deep.include({
+        [AGENT_PROVISION_DATA_KEYS.source]: AGENT_PLATFORM_PROVISION_SOURCE,
+        [AGENT_PROVISION_DATA_KEYS.platform]: AgentPlatformEnum.TELEGRAM,
+        [AGENT_PROVISION_DATA_KEYS.platformUserId]: '777001',
+      });
+
+      expect(createChannelEndpoint.execute.calledOnce).to.equal(true);
+      const endpointCommand = createChannelEndpoint.execute.firstCall.args[0];
+      expect(endpointCommand.type).to.equal('telegram_chat');
+      expect(endpointCommand.endpoint).to.deep.equal({ chatId: '777001' });
+
+      const trackedEvents = analyticsService.track.getCalls().map((call) => call.args[0]);
+      expect(trackedEvents).to.deep.equal(['[Agent Platform] - Subscriber auto-provisioned']);
     });
   });
 });
