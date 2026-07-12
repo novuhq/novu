@@ -3,7 +3,7 @@ import { getPhoneLookupCandidates, normalizePhoneForMeta, toCanonicalE164Phone }
 
 describe('phone-normalization', () => {
   describe('toCanonicalE164Phone', () => {
-    it('accepts Meta-style digits-only phones', () => {
+    it('accepts Meta style phones with digits and no plus', () => {
       expect(toCanonicalE164Phone('15551234567')).to.equal('+15551234567');
     });
 
@@ -25,11 +25,11 @@ describe('phone-normalization', () => {
   });
 
   describe('normalizePhoneForMeta / getPhoneLookupCandidates', () => {
-    it('returns digit-only Meta form', () => {
+    it('returns Meta form with digits and no punctuation', () => {
       expect(normalizePhoneForMeta('+1 555-123-4567')).to.equal('15551234567');
     });
 
-    it('builds plus and digits-only lookup candidates from formatted input', () => {
+    it('builds plus and bare-digit lookup candidates from formatted input', () => {
       expect(getPhoneLookupCandidates('+1 555-123-4567')).to.deep.equal(['+15551234567', '15551234567']);
     });
   });
