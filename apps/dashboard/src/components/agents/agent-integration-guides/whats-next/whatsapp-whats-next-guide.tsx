@@ -41,6 +41,14 @@ type GuideStep = {
   extraContent?: ReactNode;
 };
 
+function InlineLink({ href, children }: { href: string; children: ReactNode }) {
+  return (
+    <a href={href} target="_blank" rel="noopener noreferrer" className="text-text-sub underline">
+      {children}
+    </a>
+  );
+}
+
 function RecapToggleRow({ count, isExpanded, onToggle }: { count: number; isExpanded: boolean; onToggle: () => void }) {
   return (
     <div className="relative flex flex-col gap-4 pl-6">
@@ -169,52 +177,35 @@ export function WhatsAppWhatsNextGuide({ agent, integrationLink, justConnected =
     title: 'Finalize production onboarding in Meta',
     description: (
       <div className="flex flex-col gap-2">
-        <p>Complete these Meta steps before going live.</p>
+        <p>
+          {'In the '}
+          <InlineLink href={META_APP_DASHBOARD_URL}>Meta App Dashboard</InlineLink>
+          {', select your app and complete:'}
+        </p>
         <ol className="list-inside list-decimal space-y-1.5">
           <li>
-            <strong className="text-text-sub">Register a production WhatsApp phone number</strong>
-            {' - in the '}
-            <a
-              href={META_APP_DASHBOARD_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-text-sub underline"
-            >
-              Meta App Dashboard
-            </a>
-            {', select your app and open '}
+            <strong className="text-text-sub">Register a production phone number</strong>
+            {' - under '}
             <strong className="text-text-sub">Use cases → Customize → Basic setup → Step 2. Production setup</strong>
-            {'.'}
+            {', add and verify your business number.'}
           </li>
           <li>
             <strong className="text-text-sub">Add a payment method</strong>
-            {' - required for business-initiated template messages.'}
+            {' - on the same Production setup screen; required for template messages.'}
           </li>
           <li>
             <strong className="text-text-sub">Switch your app to Live</strong>
-            {' - move it out of Development mode in the '}
-            <a
-              href={META_APP_DASHBOARD_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-text-sub underline"
-            >
-              Meta App Dashboard
-            </a>
-            .
+            {' - toggle '}
+            <strong className="text-text-sub">App Mode</strong>
+            {' from Development to Live in the top bar.'}
           </li>
           <li>
             <strong className="text-text-sub">Verify your business (recommended)</strong>
-            {' - enables your display name and raises messaging limits. Review takes about 2–10 business days ('}
-            <a
-              href={BUSINESS_VERIFICATION_HELP_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-text-sub underline"
-            >
-              help
-            </a>
-            ).
+            {' - in '}
+            <strong className="text-text-sub">Business Settings → Security Center</strong>
+            {'; enables your display name and higher messaging limits ('}
+            <InlineLink href={BUSINESS_VERIFICATION_HELP_URL}>help</InlineLink>
+            {').'}
           </li>
         </ol>
       </div>
@@ -231,14 +222,7 @@ export function WhatsAppWhatsNextGuide({ agent, integrationLink, justConnected =
         <ol className="list-inside list-decimal space-y-1">
           <li>
             {'In '}
-            <a
-              href={META_SYSTEM_USERS_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-text-sub underline"
-            >
-              Business Settings → System Users
-            </a>
+            <InlineLink href={META_SYSTEM_USERS_URL}>Business Settings → System Users</InlineLink>
             {', create an '}
             <strong className="text-text-sub">Admin</strong>
             {' system user'}
