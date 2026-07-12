@@ -99,7 +99,12 @@ describe('AgentSubscriberResolver', () => {
 
       expect(result).to.deep.equal({ outcome: 'resolved', subscriberId: 'sub-1' });
       expect(
-        subscriberRepository.findByPhone.calledOnceWith('env-1', 'org-1', ['+972541111111', '972541111111'])
+        subscriberRepository.findByPhone.calledOnceWith(
+          'env-1',
+          'org-1',
+          ['+972541111111', '972541111111'],
+          '^\\+?9\\D*7\\D*2\\D*5\\D*4\\D*1\\D*1\\D*1\\D*1\\D*1\\D*1\\D*1$'
+        )
       ).to.equal(true);
       expect(channelEndpointRepository.findByPlatformIdentity.called).to.equal(false);
     });

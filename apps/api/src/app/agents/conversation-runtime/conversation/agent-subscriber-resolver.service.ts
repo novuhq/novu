@@ -14,7 +14,11 @@ import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
 import type { SubscriberResolution } from '../../shared/types/subscriber-resolution';
 import { isValidEmailForLookup, normalizeEmailForLookup } from '../../shared/util/email-normalization';
-import { getPhoneLookupCandidates, toCanonicalE164Phone } from '../../shared/util/phone-normalization';
+import {
+  buildPhoneDigitFlexibleRegexSource,
+  getPhoneLookupCandidates,
+  toCanonicalE164Phone,
+} from '../../shared/util/phone-normalization';
 import {
   AUTO_PROVISION_PLATFORMS,
   isOpenAccessIdentityPlatform,
@@ -402,7 +406,12 @@ export class AgentSubscriberResolver {
     }
 
     const phoneCandidates = getPhoneLookupCandidates(platformUserId);
-    const matches = await this.subscriberRepository.findByPhone(environmentId, organizationId, phoneCandidates);
+    const matches = await this.subscriberRepository.findByPhone(
+      environmentId,
+      organizationId,
+      phoneCandidates,
+      buildPhoneDigitFlexibleRegexSource(platformUserId)
+    );
 
     if (matches.length === 0) {
       this.logger.debug(`No subscriber found for WhatsApp phone ${platformUserId}`);

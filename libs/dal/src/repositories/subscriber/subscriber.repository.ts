@@ -31,11 +31,22 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
   async findByPhone(
     environmentId: string,
     organizationId: string,
-    phoneCandidates: string[]
+    phoneCandidates: string[],
+    digitFlexibleRegexSource?: string | null
   ): Promise<SubscriberEntity[]> {
     if (phoneCandidates.length === 0) {
       return [];
     }
+
+    // Exact `$in` covers canonical E.164 / Meta digit forms. Optional
+    // digit-flexible regex also matches stored phones with spaces, dashes, or
+    // parentheses (e.g. "+1 (555) 123-4567") so open-access WhatsApp does not
+    // miss a known subscriber or provision a duplicate phantom for the same number.
+    const phoneFilter = digitFlexibleRegexSource
+      ? {
+          $or: [{ phone: { $in: phoneCandidates } }, { phone: { $regex: digitFlexibleRegexSource } }],
+        }
+      : { phone: { $in: phoneCandidates } };
 
     // Projects `_id` and `data` alongside `subscriberId` so the agent WhatsApp
     // resolver can (a) map the external id to the Mongo `_id` needed to repoint
@@ -47,7 +58,7 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
       {
         _environmentId: environmentId,
         _organizationId: organizationId,
-        phone: { $in: phoneCandidates },
+        ...phoneFilter,
       },
       '_id subscriberId phone data',
       { limit: 10 }

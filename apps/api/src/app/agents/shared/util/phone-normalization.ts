@@ -8,6 +8,22 @@ export function getPhoneLookupCandidates(platformUserId: string): string[] {
   return [...new Set([`+${digits}`, digits])];
 }
 
+/**
+ * Mongo-safe regex source that matches a phone when its digits equal `digits`,
+ * allowing an optional leading `+` and any non-digit separators (spaces, dashes,
+ * parentheses). Used by `SubscriberRepository.findByPhone` so formatted stored
+ * values still resolve against Meta-style inbound ids.
+ */
+export function buildPhoneDigitFlexibleRegexSource(platformUserId: string): string | null {
+  const digits = normalizePhoneForMeta(platformUserId);
+
+  if (!digits) {
+    return null;
+  }
+
+  return `^\\+?${digits.split('').join('\\D*')}$`;
+}
+
 /** Digits only (no `+`, spaces, or punctuation) for Meta / $in phone lookups. */
 export function normalizePhoneForMeta(value: string): string {
   const trimmed = value.trim();

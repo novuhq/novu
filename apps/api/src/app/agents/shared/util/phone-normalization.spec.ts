@@ -1,5 +1,10 @@
 import { expect } from 'chai';
-import { getPhoneLookupCandidates, normalizePhoneForMeta, toCanonicalE164Phone } from './phone-normalization';
+import {
+  buildPhoneDigitFlexibleRegexSource,
+  getPhoneLookupCandidates,
+  normalizePhoneForMeta,
+  toCanonicalE164Phone,
+} from './phone-normalization';
 
 describe('phone-normalization', () => {
   describe('toCanonicalE164Phone', () => {
@@ -31,6 +36,27 @@ describe('phone-normalization', () => {
 
     it('builds plus and bare-digit lookup candidates from formatted input', () => {
       expect(getPhoneLookupCandidates('+1 555-123-4567')).to.deep.equal(['+15551234567', '15551234567']);
+    });
+  });
+
+  describe('buildPhoneDigitFlexibleRegexSource', () => {
+    it('matches formatted stored phones against Meta-style inbound digits', () => {
+      const source = buildPhoneDigitFlexibleRegexSource('15551234567');
+
+      expect(source).to.be.a('string');
+      const pattern = new RegExp(source as string);
+
+      expect(pattern.test('+15551234567')).to.equal(true);
+      expect(pattern.test('15551234567')).to.equal(true);
+      expect(pattern.test('+1 (555) 123-4567')).to.equal(true);
+      expect(pattern.test('1-555-123-4567')).to.equal(true);
+      expect(pattern.test('+15551234568')).to.equal(false);
+      expect(pattern.test('+1 (555) 123-4568')).to.equal(false);
+    });
+
+    it('returns null when there are no digits', () => {
+      expect(buildPhoneDigitFlexibleRegexSource('')).to.equal(null);
+      expect(buildPhoneDigitFlexibleRegexSource('not-a-phone')).to.equal(null);
     });
   });
 });
