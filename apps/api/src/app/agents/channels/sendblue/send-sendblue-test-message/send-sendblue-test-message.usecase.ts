@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { decryptCredentials, InstrumentUsecase, PinoLogger } from '@novu/application-generic';
 import { AgentIntegrationRepository, AgentRepository, IntegrationRepository, SubscriberRepository } from '@novu/dal';
-import { SendblueChatProvider } from '@novu/providers';
+import { SendblueChatProvider } from '@novu/providers/dist/cjs/lib/chat/sendblue/sendblue.provider';
 import { ChatProviderIdEnum } from '@novu/shared';
 import { ENDPOINT_TYPES, IChatOptions, ISendMessageSuccessResponse } from '@novu/stateless';
 

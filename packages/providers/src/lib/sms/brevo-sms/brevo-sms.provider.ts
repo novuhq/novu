@@ -7,7 +7,7 @@ import { WithPassthrough } from '../../../utils/types';
 
 declare global {
   interface RequestInit {
-    agent?: ProxyAgent;
+    agent: ProxyAgent;
   }
 }
 
