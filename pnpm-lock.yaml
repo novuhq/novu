@@ -431,6 +431,9 @@ importers:
       '@novu/notifications':
         specifier: workspace:*
         version: link:../../libs/notifications
+      '@novu/providers':
+        specifier: workspace:*
+        version: link:../../packages/providers
       '@novu/shared':
         specifier: workspace:*
         version: link:../../packages/shared

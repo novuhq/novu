@@ -74,6 +74,7 @@
     "@novu/framework": "workspace:*",
     "@novu/maily-render": "workspace:*",
     "@novu/notifications": "workspace:*",
+    "@novu/providers": "workspace:*",
     "@novu/shared": "workspace:*",
     "@novu/stateless": "workspace:*",
     "@novu/thalamus": "0.1.0-alpha.15",

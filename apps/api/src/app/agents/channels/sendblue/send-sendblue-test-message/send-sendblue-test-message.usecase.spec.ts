@@ -1,10 +1,10 @@
 import { NotFoundException, UnprocessableEntityException } from '@nestjs/common';
+import { SendblueChatProvider } from '@novu/providers/dist/cjs/lib/chat/sendblue/sendblue.provider';
 import { ChatProviderIdEnum } from '@novu/shared';
 import { expect } from 'chai';
 import { restore, stub } from 'sinon';
 import { SendSendblueTestMessageCommand } from './send-sendblue-test-message.command';
 import { SendAgentSendblueTestMessage } from './send-sendblue-test-message.usecase';
-import * as sendblueApi from './sendblue-api.utils';
 
 const ENV_ID = 'env-id';
 const ORG_ID = 'org-id';
@@ -30,7 +30,7 @@ describe('SendAgentSendblueTestMessage usecase', () => {
   let agentIntegrationRepository: { findOne: sinon.SinonStub };
   let subscriberRepository: { findBySubscriberId: sinon.SinonStub };
   let logger: { setContext: sinon.SinonStub; warn: sinon.SinonStub };
-  let sendSendblueMessageStub: sinon.SinonStub;
+  let sendMessageStub: sinon.SinonStub;
 
   function buildUsecase() {
     return new SendAgentSendblueTestMessage(
@@ -67,9 +67,9 @@ describe('SendAgentSendblueTestMessage usecase', () => {
       setContext: stub(),
       warn: stub(),
     };
-    sendSendblueMessageStub = stub(sendblueApi, 'sendSendblueMessage').resolves({
-      statusCode: 200,
-      body: { message_handle: 'sb-message-handle', status: 'QUEUED' },
+    sendMessageStub = stub(SendblueChatProvider.prototype, 'sendMessage').resolves({
+      id: 'sb-message-handle',
+      date: '2023-10-01T12:00:00Z',
     });
   });
 
@@ -98,7 +98,7 @@ describe('SendAgentSendblueTestMessage usecase', () => {
       expect(error).to.be.instanceOf(UnprocessableEntityException);
     }
 
-    expect(sendSendblueMessageStub.called).to.equal(false);
+    expect(sendMessageStub.called).to.equal(false);
   });
 
   it('returns missing_credentials when Sendblue credentials are incomplete', async () => {
@@ -112,7 +112,7 @@ describe('SendAgentSendblueTestMessage usecase', () => {
 
     expect(result.success).to.equal(false);
     expect(result.error?.code).to.equal('missing_credentials');
-    expect(sendSendblueMessageStub.called).to.equal(false);
+    expect(sendMessageStub.called).to.equal(false);
   });
 
   it('sends using the subscriber phone number', async () => {
@@ -121,16 +121,13 @@ describe('SendAgentSendblueTestMessage usecase', () => {
     expect(result.success).to.equal(true);
     expect(result.messageId).to.equal('sb-message-handle');
     expect(subscriberRepository.findBySubscriberId.calledOnceWithExactly(ENV_ID, SUBSCRIBER_ID)).to.equal(true);
-    expect(sendSendblueMessageStub.calledOnce).to.equal(true);
-    expect(sendSendblueMessageStub.firstCall.args[0].to).to.equal('+14155551234');
-    expect(sendSendblueMessageStub.firstCall.args[0].fromNumber).to.equal('+15559990000');
+    expect(sendMessageStub.calledOnce).to.equal(true);
+    expect(sendMessageStub.firstCall.args[0].channelData.endpoint.phoneNumber).to.equal('+14155551234');
+    expect((sendMessageStub.firstCall.thisValue as any).config.from).to.equal('+15559990000');
   });
 
   it('classifies a Sendblue-rejected send', async () => {
-    sendSendblueMessageStub.resolves({
-      statusCode: 200,
-      body: { status: 'ERROR', error_message: 'Invalid number format' },
-    });
+    sendMessageStub.rejects(new Error('Invalid number format'));
 
     const result = await buildUsecase().execute(buildCommand());
 
@@ -139,14 +136,20 @@ describe('SendAgentSendblueTestMessage usecase', () => {
   });
 
   it('classifies an unverified recipient on a shared-line plan', async () => {
-    sendSendblueMessageStub.resolves({
-      statusCode: 200,
-      body: { status: 'ERROR', error_message: 'Recipient must be verified as a contact before sending' },
-    });
+    sendMessageStub.rejects(new Error('Recipient must be verified as a contact before sending'));
 
     const result = await buildUsecase().execute(buildCommand());
 
     expect(result.success).to.equal(false);
     expect(result.error?.code).to.equal('recipient_not_verified');
+  });
+
+  it('keeps transport failures generic', async () => {
+    sendMessageStub.rejects(Object.assign(new Error('timeout of 10000ms exceeded'), { code: 'ECONNABORTED' }));
+
+    const result = await buildUsecase().execute(buildCommand());
+
+    expect(result.success).to.equal(false);
+    expect(result.error?.code).to.equal('unknown');
   });
 });

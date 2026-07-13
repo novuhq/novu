@@ -1,12 +1,13 @@
 import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { decryptCredentials, InstrumentUsecase, PinoLogger } from '@novu/application-generic';
 import { AgentIntegrationRepository, AgentRepository, IntegrationRepository, SubscriberRepository } from '@novu/dal';
+import { SendblueChatProvider } from '@novu/providers/dist/cjs/lib/chat/sendblue/sendblue.provider';
 import { ChatProviderIdEnum } from '@novu/shared';
+import { ENDPOINT_TYPES, IChatOptions, ISendMessageSuccessResponse } from '@novu/stateless';
 
 import { AgentPlatformEnum } from '../../../shared/enums/agent-platform.enum';
 import { getWelcomeText } from '../../../shared/util/agent-welcome-text';
 import { SendSendblueTestMessageCommand } from './send-sendblue-test-message.command';
-import { sendSendblueMessage } from './sendblue-api.utils';
 
 export type SendSendblueTestMessageError = {
   code: 'missing_credentials' | 'invalid_recipient' | 'recipient_not_verified' | 'sendblue_rejected' | 'unknown';
@@ -109,17 +110,32 @@ export class SendAgentSendblueTestMessage {
       };
     }
 
-    let response: Awaited<ReturnType<typeof sendSendblueMessage>>;
+    const provider = new SendblueChatProvider({
+      apiKey,
+      secretKey,
+      from: fromNumber,
+    });
+
+    const message: IChatOptions = {
+      content: getWelcomeText(AgentPlatformEnum.SENDBLUE),
+      channelData: {
+        identifier: subscriberPhone,
+        type: ENDPOINT_TYPES.PHONE,
+        endpoint: { phoneNumber: subscriberPhone },
+      },
+    };
+
+    let response: ISendMessageSuccessResponse;
     try {
-      response = await sendSendblueMessage({
-        apiKey,
-        secretKey,
-        fromNumber,
-        to: subscriberPhone,
-        content: getWelcomeText(AgentPlatformEnum.SENDBLUE),
-      });
+      response = await provider.sendMessage(message);
     } catch (err) {
       this.logger.warn({ err, integrationId: integration._id }, 'Sendblue test message send failed');
+
+      const failure = this.classifyProviderError(err);
+
+      if (failure) {
+        return { success: false, error: failure };
+      }
 
       return {
         success: false,
@@ -130,25 +146,16 @@ export class SendAgentSendblueTestMessage {
       };
     }
 
-    if (response.body.status === 'ERROR' || response.statusCode >= 400) {
-      const failure = this.classifySendblueError(response.body, response.statusCode);
-
-      this.logger.warn(
-        { integrationId: integration._id, statusCode: response.statusCode, sendblueError: response.body },
-        'Sendblue test message: Sendblue rejected send'
-      );
-
-      return { success: false, error: failure };
-    }
-
-    return { success: true, messageId: response.body.message_handle };
+    return { success: true, messageId: response.id };
   }
 
-  private classifySendblueError(
-    body: { error_code?: number; error_message?: string },
-    statusCode: number
-  ): SendSendblueTestMessageError {
-    const message = body.error_message ?? `Sendblue returned HTTP ${statusCode}`;
+  private classifyProviderError(err: unknown): SendSendblueTestMessageError | undefined {
+    const message = this.extractSendblueErrorMessage(err);
+
+    if (!message) {
+      return undefined;
+    }
+
     const lowerMessage = message.toLowerCase();
 
     // On Sendblue's free shared-line plans, a recipient must text the Sendblue
@@ -177,5 +184,32 @@ export class SendAgentSendblueTestMessage {
     }
 
     return { code: 'sendblue_rejected', message };
+  }
+
+  private extractSendblueErrorMessage(err: unknown): string | undefined {
+    if (!(err instanceof Error)) {
+      return undefined;
+    }
+
+    const axiosLikeError = err as { code?: unknown; response?: { data?: unknown; status?: unknown } };
+    const responseData = axiosLikeError.response?.data;
+
+    if (responseData && typeof responseData === 'object') {
+      const errorMessage = (responseData as { error_message?: unknown }).error_message;
+
+      if (typeof errorMessage === 'string') {
+        return errorMessage;
+      }
+    }
+
+    if (typeof axiosLikeError.code === 'string' && !axiosLikeError.response) {
+      return undefined;
+    }
+
+    if (err.message && !err.message.toLowerCase().includes('network')) {
+      return err.message;
+    }
+
+    return undefined;
   }
 }
