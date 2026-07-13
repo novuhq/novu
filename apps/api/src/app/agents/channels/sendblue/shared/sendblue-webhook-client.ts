@@ -83,7 +83,7 @@ export async function deleteSendblueReceiveWebhooks(
   }
 
   const client = buildClient(credentials);
-  const response = await client.webhooks.delete({ webhooks: urls, type: RECEIVE_WEBHOOK_TYPE });
+  const response = await client.webhooks.delete({ webhooks: urls });
 
   if (response.status === 'ERROR') {
     throw new Error(response.message || 'Sendblue rejected the webhook removal request');
