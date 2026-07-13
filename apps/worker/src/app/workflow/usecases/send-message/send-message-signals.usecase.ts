@@ -98,6 +98,8 @@ export class SendMessageSignals extends SendMessageBase {
     const selectedIntegrations = filterSignalsIntegrationsByProviders(integrations, providers);
 
     if (selectedIntegrations.length === 0) {
+      const noActiveIntegrations = integrations.length === 0;
+
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
@@ -106,6 +108,11 @@ export class SendMessageSignals extends SendMessageBase {
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
+          raw: JSON.stringify({
+            reason: noActiveIntegrations ? 'no_active_signals_integrations' : 'providers_filter_matched_none',
+            requestedProviders: providers ?? [],
+            availableIdentifiers: integrations.map((integration) => integration.identifier),
+          }),
         })
       );
 
@@ -116,14 +123,11 @@ export class SendMessageSignals extends SendMessageBase {
     }
 
     let status: SendMessageStatus = SendMessageStatus.FAILED;
+    const signalsFactory = new SignalsFactory();
 
     for (const integration of selectedIntegrations) {
-      try {
-        const result = await this.sendToIntegration(command, integration, content);
-        status = this.mergeStatus(status, result.status);
-      } catch (error) {
-        Logger.error(error, `Sending signal via ${integration.providerId} failed`, LOG_CONTEXT);
-      }
+      const result = await this.sendToIntegration(command, integration, content, signalsFactory);
+      status = this.mergeStatus(status, result.status);
     }
 
     if (status === SendMessageStatus.FAILED) {
@@ -184,7 +188,8 @@ export class SendMessageSignals extends SendMessageBase {
   private async sendToIntegration(
     command: SendMessageChannelCommand,
     integration: IntegrationEntity,
-    content: string
+    content: string,
+    signalsFactory: SignalsFactory
   ): Promise<SendMessageResult> {
     await this.sendSelectedIntegrationExecution(command.job, integration);
 
@@ -230,13 +235,12 @@ export class SendMessageSignals extends SendMessageBase {
       })
     );
 
-    const signalsFactory = new SignalsFactory();
-    const handler = signalsFactory.getHandler(integration);
-    if (!handler) {
-      throw new PlatformException(`Signals handler for provider ${integration.providerId} is not found`);
-    }
-
     try {
+      const handler = signalsFactory.getHandler(integration);
+      if (!handler) {
+        throw new PlatformException(`Signals handler for provider ${integration.providerId} is not found`);
+      }
+
       const result = await handler.send({
         content: overrides.content || content,
         customData: overrides.customData || {},
@@ -263,6 +267,8 @@ export class SendMessageSignals extends SendMessageBase {
 
       return { status: SendMessageStatus.SUCCESS };
     } catch (error) {
+      Logger.error(error, `Sending signal via ${integration.providerId} failed`, LOG_CONTEXT);
+
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
@@ -272,7 +278,7 @@ export class SendMessageSignals extends SendMessageBase {
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
-          raw: JSON.stringify({ message: error.message }),
+          raw: JSON.stringify({ message: error instanceof Error ? error.message : String(error) }),
         })
       );
 
