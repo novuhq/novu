@@ -81,6 +81,7 @@ export type WebexPersonData = {
   type: typeof ENDPOINT_TYPES.WEBEX_PERSON;
   endpoint: ChannelEndpointByType[typeof ENDPOINT_TYPES.WEBEX_PERSON];
   token: string;
+  identifier: string;
 };
 
 export type LineUserData = {
