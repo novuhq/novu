@@ -282,6 +282,12 @@ export class OutboundGateway {
     platformThreadId: string,
     status = 'Thinking...'
   ): Promise<void> {
+    if (!status.trim()) {
+      await this.stopTypingInConversation(agentId, integrationIdentifier, platformThreadId);
+
+      return;
+    }
+
     const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
     const instanceKey = `${agentId}:${integrationIdentifier}`;
     const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);
@@ -291,7 +297,62 @@ export class OutboundGateway {
       return;
     }
 
-    await thread.startTyping(status).catch(toDeliveryError);
+    await thread.startTyping(status).catch((err) => {
+      this.logger.warn(
+        { err, platformThreadId, agentId, integrationIdentifier },
+        'Failed to start typing in conversation'
+      );
+    });
+  }
+
+  async stopTypingInConversation(
+    agentId: string,
+    integrationIdentifier: string,
+    platformThreadId: string
+  ): Promise<void> {
+    const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
+
+    if (config.platform === AgentPlatformEnum.SLACK) {
+      await this.clearSlackAssistantStatus(agentId, integrationIdentifier, platformThreadId);
+
+      return;
+    }
+
+    // Teams, Telegram, and WhatsApp typing indicators expire or clear on post — no explicit stop API.
+  }
+
+  private async clearSlackAssistantStatus(
+    agentId: string,
+    integrationIdentifier: string,
+    platformThreadId: string
+  ): Promise<void> {
+    const { channel, threadTs } = decodeSlackPlatformThreadId(platformThreadId);
+    if (!threadTs) {
+      this.logger.warn(
+        { platformThreadId, agentId, integrationIdentifier },
+        'Skipping Slack typing stop because thread timestamp is missing'
+      );
+
+      return;
+    }
+
+    const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
+    const instanceKey = `${agentId}:${integrationIdentifier}`;
+    const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);
+    const adapter = chat.getAdapter(AgentPlatformEnum.SLACK) as {
+      setAssistantStatus?: (channelId: string, threadTs: string, status: string) => Promise<void>;
+    };
+
+    if (typeof adapter.setAssistantStatus !== 'function') {
+      return;
+    }
+
+    await adapter.setAssistantStatus(channel, threadTs, '').catch((err) => {
+      this.logger.warn(
+        { err, platformThreadId, agentId, integrationIdentifier },
+        'Failed to clear Slack assistant status'
+      );
+    });
   }
 
   async sendDirectMessage(

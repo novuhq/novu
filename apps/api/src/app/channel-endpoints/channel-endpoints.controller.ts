@@ -30,6 +30,7 @@ import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.dec
 import { UserSession } from '../shared/framework/user.decorator';
 import { CreateChannelEndpointRequest } from './dtos/create-channel-endpoint-request.dto';
 import {
+  CreateLineUserEndpointDto,
   CreateMsTeamsChannelEndpointDto,
   CreateMsTeamsUserEndpointDto,
   CreatePhoneEndpointDto,
@@ -42,6 +43,7 @@ import {
 } from './dtos/create-channel-endpoint-variants.dto';
 import { mapChannelEndpointEntityToDto } from './dtos/dto.mapper';
 import {
+  LineUserEndpointDto,
   MsTeamsChannelEndpointDto,
   MsTeamsUserEndpointDto,
   PhoneEndpointDto,
@@ -80,6 +82,7 @@ import { UpdateChannelEndpoint } from './usecases/update-channel-endpoint/update
   CreateTelegramChatEndpointDto,
   CreateWebexPersonEndpointDto,
   CreateWebexRoomEndpointDto,
+  CreateLineUserEndpointDto,
   SlackChannelEndpointDto,
   SlackUserEndpointDto,
   WebhookEndpointDto,
@@ -88,7 +91,8 @@ import { UpdateChannelEndpoint } from './usecases/update-channel-endpoint/update
   MsTeamsUserEndpointDto,
   TelegramChatEndpointDto,
   WebexPersonEndpointDto,
-  WebexRoomEndpointDto
+  WebexRoomEndpointDto,
+  LineUserEndpointDto
 )
 @ExternalApiAccessible()
 @RequireAuthentication()
@@ -187,6 +191,7 @@ export class ChannelEndpointsController {
         { $ref: getSchemaPath(CreateTelegramChatEndpointDto) },
         { $ref: getSchemaPath(CreateWebexRoomEndpointDto) },
         { $ref: getSchemaPath(CreateWebexPersonEndpointDto) },
+        { $ref: getSchemaPath(CreateLineUserEndpointDto) },
       ],
       discriminator: {
         propertyName: 'type',
@@ -200,6 +205,7 @@ export class ChannelEndpointsController {
           [ENDPOINT_TYPES.TELEGRAM_CHAT]: getSchemaPath(CreateTelegramChatEndpointDto),
           [ENDPOINT_TYPES.WEBEX_ROOM]: getSchemaPath(CreateWebexRoomEndpointDto),
           [ENDPOINT_TYPES.WEBEX_PERSON]: getSchemaPath(CreateWebexPersonEndpointDto),
+          [ENDPOINT_TYPES.LINE_USER]: getSchemaPath(CreateLineUserEndpointDto),
         },
       },
     },

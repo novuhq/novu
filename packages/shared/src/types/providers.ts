@@ -144,9 +144,11 @@ export enum ChatProviderIdEnum {
   GetStream = 'getstream',
   RocketChat = 'rocket-chat',
   WhatsAppBusiness = 'whatsapp-business',
+  Line = 'line',
   ChatWebhook = 'chat-webhook',
   Novu = 'novu-slack',
   Telegram = 'telegram',
+  Sendblue = 'sendblue',
 }
 
 export enum PushProviderIdEnum {

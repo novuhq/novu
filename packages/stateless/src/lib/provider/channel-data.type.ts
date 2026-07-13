@@ -7,7 +7,8 @@ export type ChannelData =
   | MsTeamsUserData
   | TelegramChatData
   | WebexRoomData
-  | WebexPersonData;
+  | WebexPersonData
+  | LineUserData;
 
 export const ENDPOINT_TYPES = {
   SLACK_CHANNEL: 'slack_channel',
@@ -19,6 +20,7 @@ export const ENDPOINT_TYPES = {
   TELEGRAM_CHAT: 'telegram_chat',
   WEBEX_ROOM: 'webex_room',
   WEBEX_PERSON: 'webex_person',
+  LINE_USER: 'line_user',
 } as const;
 
 export type ChannelEndpointType = (typeof ENDPOINT_TYPES)[keyof typeof ENDPOINT_TYPES];
@@ -33,6 +35,7 @@ export type ChannelEndpointByType = {
   [ENDPOINT_TYPES.TELEGRAM_CHAT]: { chatId: string };
   [ENDPOINT_TYPES.WEBEX_ROOM]: { roomId: string; parentId?: string };
   [ENDPOINT_TYPES.WEBEX_PERSON]: { personId: string; personEmail?: never } | { personId?: never; personEmail: string };
+  [ENDPOINT_TYPES.LINE_USER]: { userId: string };
 };
 
 export type SlackChannelData = {
@@ -78,6 +81,12 @@ export type WebexPersonData = {
   type: typeof ENDPOINT_TYPES.WEBEX_PERSON;
   endpoint: ChannelEndpointByType[typeof ENDPOINT_TYPES.WEBEX_PERSON];
   token: string;
+  identifier: string;
+};
+
+export type LineUserData = {
+  type: typeof ENDPOINT_TYPES.LINE_USER;
+  endpoint: ChannelEndpointByType[typeof ENDPOINT_TYPES.LINE_USER];
   identifier: string;
 };
 

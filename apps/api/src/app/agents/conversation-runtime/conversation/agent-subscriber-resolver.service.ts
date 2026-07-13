@@ -110,11 +110,13 @@ export class AgentSubscriberResolver {
       return { outcome: 'invalid_identity' };
     }
 
-    if (platform === AgentPlatformEnum.WHATSAPP) {
-      return this.resolveWhatsAppSubscriber({
+    // Phone-based platforms (WhatsApp, Sendblue) identify users by their phone number.
+    if (platform === AgentPlatformEnum.WHATSAPP || platform === AgentPlatformEnum.SENDBLUE) {
+      return this.resolvePhoneSubscriber({
         environmentId,
         organizationId,
         platformUserId,
+        platform,
       });
     }
 
@@ -391,16 +393,17 @@ export class AgentSubscriberResolver {
     return subscriberId;
   }
 
-  private async resolveWhatsAppSubscriber(params: {
+  private async resolvePhoneSubscriber(params: {
     environmentId: string;
     organizationId: string;
     platformUserId: string;
+    platform: AgentPlatformEnum;
   }): Promise<SubscriberResolution> {
-    const { environmentId, organizationId, platformUserId } = params;
+    const { environmentId, organizationId, platformUserId, platform } = params;
     const phone = toCanonicalE164Phone(platformUserId);
 
     if (!phone) {
-      this.logger.debug(`Skipping WhatsApp subscriber lookup for invalid phone "${platformUserId}"`);
+      this.logger.debug(`Skipping ${platform} subscriber lookup for invalid phone "${platformUserId}"`);
 
       return { outcome: 'invalid_identity' };
     }
@@ -414,7 +417,7 @@ export class AgentSubscriberResolver {
     );
 
     if (matches.length === 0) {
-      this.logger.debug(`No subscriber found for WhatsApp phone ${platformUserId}`);
+      this.logger.debug(`No subscriber found for ${platform} phone ${platformUserId}`);
 
       return { outcome: 'not_found' };
     }
@@ -444,7 +447,7 @@ export class AgentSubscriberResolver {
         });
       }
 
-      this.logger.debug(`Resolved WhatsApp phone ${platformUserId} → subscriber ${real.subscriberId}`);
+      this.logger.debug(`Resolved ${platform} phone ${platformUserId} → subscriber ${real.subscriberId}`);
 
       return { outcome: 'resolved', subscriberId: real.subscriberId };
     }
@@ -457,7 +460,7 @@ export class AgentSubscriberResolver {
 
     const phantom = phantoms[0];
     this.logger.debug(
-      `Resolved WhatsApp phone ${platformUserId} → auto-provisioned subscriber ${phantom.subscriberId}`
+      `Resolved ${platform} phone ${platformUserId} → auto-provisioned subscriber ${phantom.subscriberId}`
     );
 
     return { outcome: 'resolved', subscriberId: phantom.subscriberId };

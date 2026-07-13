@@ -35,7 +35,7 @@ import { Result } from "../types/fp.js";
  *       Using this endpoint you can trigger multiple events at once, to avoid multiple calls to the API.
  *       The bulk API is limited to 100 events per request.
  *
- * This operation requires either {@link Security.bearerAuth} or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.
+ * This operation requires one of {@link Security.bearerAuth}, {@link Security.bearerAuth}, or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.
  */
 export function triggerBulk(
   client: NovuCore,

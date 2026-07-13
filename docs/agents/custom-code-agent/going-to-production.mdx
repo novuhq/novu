@@ -1,6 +1,6 @@
 ---
 title: "Going to Production"
-description: 'Learn how to run a conversational agent on your local machine, test it in a development environment, and deploy it to production.'
+description: "Run a custom code agent locally, test it against a development environment, and deploy the bridge to production with monitoring and secure configuration."
 ---
 
 
@@ -19,11 +19,11 @@ By default, the agent runs on your local machine. To run the agent locally:
 When you complete these steps, run the agent using the Novu CLI command below.
 
 ```bash
-npx novu@latest dev --port <bridge_application_port> --no-studio
+npx novu@latest dev --port <bridge_application_port> --headless
 ```
 
 - **bridge_application_port** - Port where your scaffolded project runs. Defaults to 4000.
-- **no-studio** - Disables Studio.
+- **headless** - Runs the CLI without opening the Dashboard in the browser.
 
 After you run the command, a tunnel starts on your machine. It forwards requests to your scaffolded project on `bridge_application_port`.
 

@@ -11,6 +11,7 @@ import * as components from "../models/components/index.js";
 import * as operations from "../models/operations/index.js";
 import { unwrapAsync } from "../types/fp.js";
 import { Activity } from "./activity.js";
+import { Agents } from "./agents.js";
 import { ChannelConnections } from "./channelconnections.js";
 import { ChannelEndpoints } from "./channelendpoints.js";
 import { Contexts } from "./contexts.js";
@@ -65,6 +66,11 @@ export class Novu extends ClientSDK {
   private _workflows?: Workflows;
   get workflows(): Workflows {
     return (this._workflows ??= new Workflows(this._options));
+  }
+
+  private _agents?: Agents;
+  get agents(): Agents {
+    return (this._agents ??= new Agents(this._options));
   }
 
   private _channelConnections?: ChannelConnections;

@@ -24,6 +24,7 @@ export const SubscriberChannelDtoProviderId = {
   Getstream: "getstream",
   RocketChat: "rocket-chat",
   WhatsappBusiness: "whatsapp-business",
+  Line: "line",
   ChatWebhook: "chat-webhook",
   NovuSlack: "novu-slack",
   Telegram: "telegram",

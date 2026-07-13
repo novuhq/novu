@@ -8,6 +8,10 @@ import { ClosedEnum } from "../../types/enums.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 import {
+  LineUserEndpointDto,
+  LineUserEndpointDto$inboundSchema,
+} from "./lineuserendpointdto.js";
+import {
   MsTeamsChannelEndpointDto,
   MsTeamsChannelEndpointDto$inboundSchema,
 } from "./msteamschannelendpointdto.js";
@@ -65,6 +69,7 @@ export type GetChannelEndpointResponseDtoChannel = ClosedEnum<
  * The provider identifier (e.g., sendgrid, twilio, slack, etc.).
  */
 export const GetChannelEndpointResponseDtoProviderId = {
+  Anypost: "anypost",
   Emailjs: "emailjs",
   Mailgun: "mailgun",
   Mailjet: "mailjet",
@@ -143,6 +148,7 @@ export const GetChannelEndpointResponseDtoProviderId = {
   Getstream: "getstream",
   RocketChat: "rocket-chat",
   WhatsappBusiness: "whatsapp-business",
+  Line: "line",
   ChatWebhook: "chat-webhook",
   NovuSlack: "novu-slack",
   Telegram: "telegram",
@@ -171,6 +177,7 @@ export const GetChannelEndpointResponseDtoType = {
   TelegramChat: "telegram_chat",
   WebexRoom: "webex_room",
   WebexPerson: "webex_person",
+  LineUser: "line_user",
 } as const;
 /**
  * Type of channel endpoint
@@ -191,7 +198,8 @@ export type Endpoint =
   | MsTeamsUserEndpointDto
   | TelegramChatEndpointDto
   | WebexRoomEndpointDto
-  | WebexPersonEndpointDto;
+  | WebexPersonEndpointDto
+  | LineUserEndpointDto;
 
 export type GetChannelEndpointResponseDto = {
   /**
@@ -238,7 +246,8 @@ export type GetChannelEndpointResponseDto = {
     | MsTeamsUserEndpointDto
     | TelegramChatEndpointDto
     | WebexRoomEndpointDto
-    | WebexPersonEndpointDto;
+    | WebexPersonEndpointDto   
+    | LineUserEndpointDto;
   /**
    * The timestamp indicating when the channel endpoint was created, in ISO 8601 format.
    */
@@ -280,6 +289,7 @@ export const Endpoint$inboundSchema: z.ZodType<
   TelegramChatEndpointDto$inboundSchema,
   WebexRoomEndpointDto$inboundSchema,
   WebexPersonEndpointDto$inboundSchema,
+  LineUserEndpointDto$inboundSchema,
 ]);
 
 export function endpointFromJSON(
@@ -316,6 +326,7 @@ export const GetChannelEndpointResponseDto$inboundSchema: z.ZodType<
     TelegramChatEndpointDto$inboundSchema,
     WebexRoomEndpointDto$inboundSchema,
     WebexPersonEndpointDto$inboundSchema,
+    LineUserEndpointDto$inboundSchema,
   ]),
   createdAt: z.string(),
   updatedAt: z.string(),

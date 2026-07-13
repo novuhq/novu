@@ -172,6 +172,8 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
       tenantId: c.tenantId ?? null,
       apiToken: c.apiToken ?? null,
       token: c.token ?? null,
+      apiKey: c.apiKey ?? null,
+      from: c.from ?? null,
       phoneNumberIdentification: c.phoneNumberIdentification ?? null,
       connectionAccessToken: connectionAccessToken ?? null,
       outboundIntegrationId: c.outboundIntegrationId ?? null,
@@ -326,6 +328,34 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
             botToken: credentials.apiToken,
             secretToken: credentials.token,
             mode: 'webhook',
+          }),
+        };
+      }
+      case AgentPlatformEnum.SENDBLUE: {
+        if (!credentials.apiKey || !credentials.secretKey || !credentials.from) {
+          throw new BadRequestException(
+            'Sendblue agent integration requires API Key, Secret Key, and From Number credentials'
+          );
+        }
+
+        if (!credentials.token) {
+          throw new BadRequestException(
+            'Sendblue agent integration requires a webhook secret. ' +
+              'Run the "Configure webhook" step to provision the receive webhook before this integration can receive messages.'
+          );
+        }
+
+        const { createSendblueAdapter } = await esmImport('@novu/chat-adapter-sendblue');
+
+        return {
+          // The underlying official Sendblue SDK reads `SENDBLUE_API_BASE_URL`
+          // itself; e2e tests point it at an in-process stub (see sendblue-api-stub.ts).
+          sendblue: createSendblueAdapter({
+            apiKey: credentials.apiKey,
+            secretKey: credentials.secretKey,
+            fromNumber: credentials.from,
+            webhookSecret: credentials.token,
+            userName: config.agentName,
           }),
         };
       }
