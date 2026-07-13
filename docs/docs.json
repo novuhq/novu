@@ -192,6 +192,7 @@
                   "platform/integrations/chat/ms-teams",
                   "platform/integrations/chat/slack",
                   "platform/integrations/chat/telegram",
+                  "platform/integrations/chat/webex-messaging",
                   "platform/integrations/chat/whats-app",
                   "platform/integrations/chat/zulip"
                 ]
@@ -529,10 +530,7 @@
               {
                 "group": "Runtime",
                 "expanded": false,
-                "pages": [
-                  "api-reference/agents/update-an-agent-bridge",
-                  "api-reference/agents/send-an-agent-reply"
-                ]
+                "pages": ["api-reference/agents/update-an-agent-bridge", "api-reference/agents/send-an-agent-reply"]
               },
               {
                 "group": "Integrations",

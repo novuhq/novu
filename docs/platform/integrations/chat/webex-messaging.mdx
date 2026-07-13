@@ -1,0 +1,1228 @@
+---
+title: "Webex Messaging Chat Integration with Novu"
+sidebarTitle: "Webex"
+description: "Connect Webex Messaging to Novu to send chat notifications through workflows using OAuth. Deliver messages to Webex rooms or direct messages, format content with Webex API fields, and manage per-connection tokens."
+---
+
+<Note>
+  This feature is currently in public beta, please contact us at support@novu.co to enable it for your organization.
+</Note>
+
+The Webex Messaging integration lets your application send notifications to your subscribers' Webex organizations using OAuth-backed channel connections. Each connection stores its own access and refresh tokens, so Novu can deliver messages on behalf of the Webex user who authorized your integration.
+
+Novu handles OAuth authorization, token storage, token refresh during delivery, and routing to the correct Webex room or person. You define where notifications should be delivered with channel endpoints, and Novu sends workflow Chat step content through the [Webex Messages API](https://developer.webex.com/messaging/docs/api/v1/messages/create-a-message).
+
+
+<CardGroup cols={2}>
+  <Card title="Send notifications" icon="send" href="#send-notifications">
+    Trigger a workflow to deliver a message to a subscriber's Webex room or direct message.
+  </Card>
+  <Card title="Webex API fields" icon="layout-template" href="#format-messages-with-webex-api-fields">
+    Send markdown, files, and attachments using trigger overrides or Framework passthrough.
+  </Card>
+</CardGroup>
+
+## Prerequisites
+
+- A [Webex](https://www.webex.com/) account with permission to create integrations
+- Access to the [Webex for Developers](https://developer.webex.com/) portal
+- Access to the [Novu dashboard](https://dashboard.novu.co)
+
+## Create a Webex integration
+
+Before configuring Novu, register an OAuth integration in Webex. This gives you the Client ID and Client Secret Novu needs to run the authorization flow.
+
+<Steps>
+  <Step title="Open My Webex Apps">
+    Sign in at [Webex for Developers](https://developer.webex.com/) and open **My Webex Apps** from the menu under your avatar.
+  </Step>
+
+  <Step title="Create an integration">
+    Click **Create a New App**, then choose **Create an Integration**. Enter a name, description, and logo that your users will see on the Webex consent screen.
+  </Step>
+
+  <Step title="Copy credentials">
+    After registration, copy the **Client ID** and **Client Secret**. Webex shows the client secret only once — store it securely before leaving the page.
+  </Step>
+</Steps>
+
+See the [Webex Integrations guide](https://developer.webex.com/docs/integrations) for full details.
+
+### Register the redirect URI
+
+Webex must know where to send users after they approve access. Add Novu's chat OAuth callback URL to your integration's redirect URIs:
+
+<CodeGroup>
+  ```bash title="US region"
+  https://api.novu.co/v1/integrations/chat/oauth/callback
+  ```
+  ```bash title="EU region"
+  https://api.eu.novu.co/v1/integrations/chat/oauth/callback
+  ```
+</CodeGroup>
+
+This is the URL Webex redirects to after authorization. It is **not** the optional **Redirect URL** field on the Novu integration — that field only controls where the user is sent in **your application** after Novu finishes processing the callback.
+
+### Configure OAuth scopes
+
+Register the scopes your integration needs in the Webex developer portal. Novu requests these scopes by default during the connect flow:
+
+```text
+spark:messages_write spark:rooms_read spark:people_read spark:memberships_read spark:kms
+```
+
+| Scope | Purpose |
+| --- | --- |
+| `spark:messages_write` | Send messages to rooms and people |
+| `spark:rooms_read` | List rooms when discovering delivery destinations |
+| `spark:people_read` | Resolve people for direct messages and link-user flows |
+| `spark:memberships_read` | Read room membership metadata |
+| `spark:kms` | Required by Webex for integrations that interact with encrypted message content |
+
+You can pass a custom `scope` array when generating the OAuth URL if your integration registers different scopes. For the [link-user flow](#link-a-subscriber-for-direct-messages), Novu defaults to `spark:people_read`.
+
+## Configure Webex integration in Novu
+
+<Steps>
+  <Step title="Open the Novu dashboard">
+    Open the [Novu Dashboard](https://dashboard.novu.co).
+  </Step>
+
+  <Step title="Open Integrations Store">
+    In the sidebar, click **Integrations Store**.
+  </Step>
+
+  <Step title="Connect a provider">
+    Click **Connect provider**, select **Chat**, then choose **Webex Messaging**.
+  </Step>
+
+  <Step title="Enter credentials">
+    Fill in the fields from your Webex integration:
+    - **Client ID**: Your Webex integration client ID.
+    - **Client Secret**: Your Webex integration client secret.
+    - **Redirect URL** (optional): Where users are sent in your app after OAuth completes. If omitted, Novu shows a success page.
+    - **Base URL** (optional): Webex API base URL. Leave empty to use `https://webexapis.com/v1`.
+  </Step>
+
+  <Step title="Create the integration">
+    Click **Create Integration**. Novu can now generate OAuth URLs, receive Webex callbacks, and store encrypted connection tokens.
+  </Step>
+</Steps>
+
+## Let users connect their Webex workspace
+
+Subscribers (or tenant contexts) must authorize your Webex integration before Novu can send messages. Novu generates the OAuth URL; your application opens it and handles the post-connect experience.
+
+### Generate the OAuth URL
+
+Call this from **your backend** when a user clicks **Connect Webex** in your product.
+
+<Warning>
+  The generated OAuth URL is valid for only <strong>5 minutes</strong>. Do not cache it — generate a new URL each time someone starts connect.
+</Warning>
+
+<Tabs>
+  <Tab title="Node.js">
+```typescript
+import { Novu } from '@novu/api';
+
+const novu = new Novu({ secretKey: '<NOVU_SECRET_KEY>' });
+
+const response = await novu.integrations.generateConnectOAuthUrl({
+  integrationIdentifier: 'webex-messaging',
+  subscriberId: 'subscriber-123',
+  context: {
+    tenant: 'acme',
+  },
+  connectionIdentifier: 'webex-acme-workspace',
+  autoLinkUser: false,
+});
+```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv('NOVU_SECRET_KEY', '')) as novu:
+    response = novu.integrations.generate_connect_o_auth_url(
+        generate_connect_oauth_url_request_dto={
+            'integration_identifier': 'webex-messaging',
+            'subscriber_id': 'subscriber-123',
+            'context': {'tenant': 'acme'},
+            'connection_identifier': 'webex-acme-workspace',
+            'auto_link_user': False,
+        }
+    )
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Integrations.GenerateConnectOAuthURL(context.Background(), components.GenerateConnectOauthURLRequestDto{
+    IntegrationIdentifier: "webex-messaging",
+    SubscriberID:          novugo.String("subscriber-123"),
+    Context: map[string]components.GenerateConnectOauthURLRequestDtoContext{
+        "tenant": components.CreateGenerateConnectOauthURLRequestDtoContextStr("acme"),
+    },
+    ConnectionIdentifier: novugo.String("webex-acme-workspace"),
+    AutoLinkUser:         novugo.Bool(false),
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()->setSecurity('<NOVU_SECRET_KEY>')->build();
+$response = $sdk->integrations->generateConnectOAuthUrl(
+    generateConnectOauthUrlRequestDto: new Components\GenerateConnectOauthUrlRequestDto(
+        integrationIdentifier: 'webex-messaging',
+        subscriberId: 'subscriber-123',
+        context: ['tenant' => 'acme'],
+        connectionIdentifier: 'webex-acme-workspace',
+        autoLinkUser: false,
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+var response = await sdk.Integrations.GenerateConnectOAuthUrlAsync(
+    generateConnectOauthUrlRequestDto: new GenerateConnectOauthUrlRequestDto() {
+        IntegrationIdentifier = "webex-messaging",
+        SubscriberId = "subscriber-123",
+        Context = { ["tenant"] = "acme" },
+        ConnectionIdentifier = "webex-acme-workspace",
+        AutoLinkUser = false,
+    });
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+
+Novu novu = Novu.builder().secretKey("<NOVU_SECRET_KEY>").build();
+var response = novu.integrations().generateConnectOAuthUrl()
+    .body(GenerateConnectOauthUrlRequestDto.builder()
+        .integrationIdentifier("webex-messaging")
+        .subscriberId("subscriber-123")
+        .context(Map.of("tenant", "acme"))
+        .connectionIdentifier("webex-acme-workspace")
+        .autoLinkUser(false)
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -L -X POST 'https://api.novu.co/v1/integrations/channel-connections/oauth' \
+-H 'Content-Type: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+  "integrationIdentifier": "webex-messaging",
+  "subscriberId": "subscriber-123",
+  "context": {
+    "tenant": "acme"
+  },
+  "connectionIdentifier": "webex-acme-workspace",
+  "autoLinkUser": false
+}'
+```
+  </Tab>
+</Tabs>
+
+Provide at least one of `subscriberId` or `context` to scope the channel connection. Use `connectionIdentifier` when you want a stable ID for later endpoint creation; otherwise Novu generates one.
+
+**Connection modes**
+
+- `connectionMode: "subscriber"` (default) — ties the connection to a specific subscriber.
+- `connectionMode: "shared"` — ties the connection to a context (for example, a tenant) instead of a subscriber. Omit `subscriberId` when using shared mode.
+
+**Auto-link on connect**
+
+Set `autoLinkUser: true` together with `subscriberId` to create a `webex_person` endpoint for the authorizing Webex user immediately after connect, using the identity returned by Webex `people/me`. For tenant-wide connect flows where you link users separately, keep `autoLinkUser: false`.
+
+### Redirect the user
+
+Open the returned URL in a new tab or window:
+
+```tsx
+window.open(response.url, '_blank');
+```
+
+Webex guides the user through sign-in and scope approval, then redirects to Novu's callback URL.
+
+### What happens after authorization
+
+<Steps>
+  <Step title="Novu exchanges the code">
+    Novu exchanges the authorization code for access and refresh tokens.
+  </Step>
+
+  <Step title="Novu stores the connection">
+    Novu creates or updates a channel connection with encrypted tokens and workspace metadata (Webex org ID). Reference this connection with `connectionIdentifier` when creating endpoints.
+  </Step>
+
+  <Step title="Optional auto-link">
+    If `autoLinkUser` was `true`, Novu also creates a `webex_person` endpoint for the subscriber using the authenticated Webex person.
+  </Step>
+</Steps>
+
+If you configured a **Redirect URL** on the Novu integration, the user is sent there after success. Otherwise Novu shows a success page they can close.
+
+<Note>
+  **Alternative: register the connection yourself.** Instead of `generateConnectOAuthUrl()`, run the Webex OAuth flow in your app, then register the workspace with Novu via [`channelConnections.create`](/api-reference/channel-connections/create-a-channel-connection):
+
+```typescript
+await novu.channelConnections.create({
+  integrationIdentifier: 'webex-messaging',
+  subscriberId: 'user-123',
+  context: { tenant: 'acme' },
+  workspace: {
+    id: person.orgId,
+    name: person.displayName,
+  },
+  auth: {
+    accessToken: tokenData.access_token,
+    refreshToken: tokenData.refresh_token,
+    expiresAt: new Date(Date.now() + tokenData.expires_in * 1000).toISOString(),
+    refreshTokenExpiresAt: tokenData.refresh_token_expires_in
+      ? new Date(Date.now() + tokenData.refresh_token_expires_in * 1000).toISOString()
+      : undefined,
+  },
+});
+```
+
+Provide at least one of `subscriberId` or `context`, same as the Novu-managed OAuth flow.
+</Note>
+
+## Choose delivery destinations
+
+After a Webex workspace is connected, register channel endpoints that tell Novu where to send messages. Every Webex endpoint **must** include `connectionIdentifier` pointing at the OAuth connection that holds the access token.
+
+<Tabs>
+  <Tab title="Webex room">
+
+Send notifications to a Webex room (space).
+
+<Steps>
+  <Step title="Get the room ID">
+    List rooms with the connection's access token. You can read the token from the channel connection after OAuth, or use a token from your own Webex OAuth flow:
+
+```bash
+curl https://webexapis.com/v1/rooms \
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
+```
+
+See the [Webex List Rooms API](https://developer.webex.com/docs/api/v1/rooms/list-rooms) for pagination and filters.
+  </Step>
+
+  <Step title="Create the endpoint">
+    <Tabs>
+      <Tab title="Node.js">
+```typescript
+import { Novu } from '@novu/api';
+
+const novu = new Novu({ secretKey: '<NOVU_SECRET_KEY>' });
+
+await novu.channelEndpoints.create({
+  subscriberId: 'user-123',
+  integrationIdentifier: 'webex-messaging',
+  connectionIdentifier: 'webex-acme-workspace',
+  context: { tenant: 'acme' },
+  type: 'webex_room',
+  endpoint: { roomId: 'Y2lzY29zcGFyazovL3VzL1JPT00v...' },
+});
+```
+      </Tab>
+      <Tab title="Python">
+```python
+import os
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv('NOVU_SECRET_KEY', '')) as novu:
+    novu.channel_endpoints.create(request_body={
+        'subscriber_id': 'user-123',
+        'integration_identifier': 'webex-messaging',
+        'connection_identifier': 'webex-acme-workspace',
+        'context': {'tenant': 'acme'},
+        'type': 'webex_room',
+        'endpoint': {'room_id': 'Y2lzY29zcGFyazovL3VzL1JPT00v...'},
+    })
+```
+      </Tab>
+      <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+    "github.com/novuhq/novu-go/models/operations"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+_, err := s.ChannelEndpoints.Create(context.Background(),
+    operations.CreateChannelEndpointsControllerCreateChannelEndpointRequestBodyWebexRoom(
+        components.CreateWebexRoomEndpointDto{
+            SubscriberID:          "user-123",
+            IntegrationIdentifier: "webex-messaging",
+            ConnectionIdentifier:  novugo.String("webex-acme-workspace"),
+            Type:                  components.CreateWebexRoomEndpointDtoTypeWebexRoom,
+            Endpoint: components.WebexRoomEndpointDto{
+                RoomID: "Y2lzY29zcGFyazovL3VzL1JPT00v...",
+            },
+        },
+    ), nil)
+```
+      </Tab>
+      <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()->setSecurity('<NOVU_SECRET_KEY>')->build();
+$sdk->channelEndpoints->create(
+    requestBody: new Components\CreateWebexRoomEndpointDto(
+        subscriberId: 'user-123',
+        integrationIdentifier: 'webex-messaging',
+        connectionIdentifier: 'webex-acme-workspace',
+        type: Components\CreateWebexRoomEndpointDtoType::WebexRoom,
+        endpoint: new Components\WebexRoomEndpointDto(
+            roomId: 'Y2lzY29zcGFyazovL3VzL1JPT00v...',
+        ),
+    ),
+);
+```
+      </Tab>
+      <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+await sdk.ChannelEndpoints.CreateAsync(
+    requestBody: CreateWebexRoomEndpointDto.CreateWebexRoom(
+        new CreateWebexRoomEndpointDto() {
+            SubscriberId = "user-123",
+            IntegrationIdentifier = "webex-messaging",
+            ConnectionIdentifier = "webex-acme-workspace",
+            Type = CreateWebexRoomEndpointDtoType.WebexRoom,
+            Endpoint = new WebexRoomEndpointDto() {
+                RoomId = "Y2lzY29zcGFyazovL3VzL1JPT00v...",
+            },
+        }));
+```
+      </Tab>
+      <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+
+Novu novu = Novu.builder().secretKey("<NOVU_SECRET_KEY>").build();
+novu.channelEndpoints().create()
+    .requestBody(CreateWebexRoomEndpointDto.builder()
+        .subscriberId("user-123")
+        .integrationIdentifier("webex-messaging")
+        .connectionIdentifier("webex-acme-workspace")
+        .type(CreateWebexRoomEndpointDtoType.WEBEX_ROOM)
+        .endpoint(WebexRoomEndpointDto.builder()
+            .roomId("Y2lzY29zcGFyazovL3VzL1JPT00v...")
+            .build())
+        .build())
+    .call();
+```
+      </Tab>
+      <Tab title="cURL">
+```bash
+curl -L -X POST 'https://api.novu.co/v1/channel-endpoints' \
+-H 'Content-Type: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+  "subscriberId": "user-123",
+  "integrationIdentifier": "webex-messaging",
+  "connectionIdentifier": "webex-acme-workspace",
+  "context": {
+    "tenant": "acme"
+  },
+  "type": "webex_room",
+  "endpoint": {
+    "roomId": "Y2lzY29zcGFyazovL3VzL1JPT00v..."
+  }
+}'
+```
+      </Tab>
+    </Tabs>
+  </Step>
+</Steps>
+
+To reply in a thread, add `parentId` with the parent message ID:
+
+```json
+{
+  "type": "webex_room",
+  "endpoint": {
+    "roomId": "Y2lzY29zcGFyazovL3VzL1JPT00v...",
+    "parentId": "parent-message-id"
+  }
+}
+```
+
+</Tab>
+  <Tab title="Webex person">
+
+Send a direct message to a specific Webex person. The endpoint must include **exactly one** of `personId` or `personEmail`.
+
+<Steps>
+  <Step title="Resolve the person">
+    Look up a person by email (requires `spark:people_read`):
+
+```bash
+curl "https://webexapis.com/v1/people?email=user@example.com" \
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
+```
+
+See the [Webex People API](https://developer.webex.com/docs/api/v1/people/list-people).
+  </Step>
+
+  <Step title="Create the endpoint">
+    <Tabs>
+      <Tab title="Node.js">
+```typescript
+import { Novu } from '@novu/api';
+
+const novu = new Novu({ secretKey: '<NOVU_SECRET_KEY>' });
+
+await novu.channelEndpoints.create({
+  subscriberId: 'user-123',
+  integrationIdentifier: 'webex-messaging',
+  connectionIdentifier: 'webex-acme-workspace',
+  type: 'webex_person',
+  endpoint: { personEmail: 'user@example.com' },
+});
+```
+      </Tab>
+      <Tab title="Python">
+```python
+import os
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv('NOVU_SECRET_KEY', '')) as novu:
+    novu.channel_endpoints.create(request_body={
+        'subscriber_id': 'user-123',
+        'integration_identifier': 'webex-messaging',
+        'connection_identifier': 'webex-acme-workspace',
+        'type': 'webex_person',
+        'endpoint': {'person_email': 'user@example.com'},
+    })
+```
+      </Tab>
+      <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+    "github.com/novuhq/novu-go/models/operations"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+_, err := s.ChannelEndpoints.Create(context.Background(),
+    operations.CreateChannelEndpointsControllerCreateChannelEndpointRequestBodyWebexPerson(
+        components.CreateWebexPersonEndpointDto{
+            SubscriberID:          "user-123",
+            IntegrationIdentifier: "webex-messaging",
+            ConnectionIdentifier:  novugo.String("webex-acme-workspace"),
+            Type:                  components.CreateWebexPersonEndpointDtoTypeWebexPerson,
+            Endpoint: components.WebexPersonEndpointDto{
+                PersonEmail: novugo.String("user@example.com"),
+            },
+        },
+    ), nil)
+```
+      </Tab>
+      <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()->setSecurity('<NOVU_SECRET_KEY>')->build();
+$sdk->channelEndpoints->create(
+    requestBody: new Components\CreateWebexPersonEndpointDto(
+        subscriberId: 'user-123',
+        integrationIdentifier: 'webex-messaging',
+        connectionIdentifier: 'webex-acme-workspace',
+        type: Components\CreateWebexPersonEndpointDtoType::WebexPerson,
+        endpoint: new Components\WebexPersonEndpointDto(
+            personEmail: 'user@example.com',
+        ),
+    ),
+);
+```
+      </Tab>
+      <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+await sdk.ChannelEndpoints.CreateAsync(
+    requestBody: CreateWebexPersonEndpointDto.CreateWebexPerson(
+        new CreateWebexPersonEndpointDto() {
+            SubscriberId = "user-123",
+            IntegrationIdentifier = "webex-messaging",
+            ConnectionIdentifier = "webex-acme-workspace",
+            Type = CreateWebexPersonEndpointDtoType.WebexPerson,
+            Endpoint = new WebexPersonEndpointDto() {
+                PersonEmail = "user@example.com",
+            },
+        }));
+```
+      </Tab>
+      <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+
+Novu novu = Novu.builder().secretKey("<NOVU_SECRET_KEY>").build();
+novu.channelEndpoints().create()
+    .requestBody(CreateWebexPersonEndpointDto.builder()
+        .subscriberId("user-123")
+        .integrationIdentifier("webex-messaging")
+        .connectionIdentifier("webex-acme-workspace")
+        .type(CreateWebexPersonEndpointDtoType.WEBEX_PERSON)
+        .endpoint(WebexPersonEndpointDto.builder()
+            .personEmail("user@example.com")
+            .build())
+        .build())
+    .call();
+```
+      </Tab>
+      <Tab title="cURL">
+```bash
+curl -L -X POST 'https://api.novu.co/v1/channel-endpoints' \
+-H 'Content-Type: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+  "subscriberId": "user-123",
+  "integrationIdentifier": "webex-messaging",
+  "connectionIdentifier": "webex-acme-workspace",
+  "type": "webex_person",
+  "endpoint": {
+    "personEmail": "user@example.com"
+  }
+}'
+```
+      </Tab>
+    </Tabs>
+  </Step>
+</Steps>
+
+</Tab>
+</Tabs>
+
+## Link a subscriber for direct messages
+
+When a shared workspace connection already exists, run a separate OAuth flow to link an individual subscriber to their Webex person for direct messages.
+
+Prerequisites:
+
+- A Webex channel connection already exists (see [Let users connect their Webex workspace](#let-users-connect-their-webex-workspace)).
+- The subscriber exists in Novu.
+- You know the `connectionIdentifier` of the workspace connection.
+
+<Warning>
+  The generated OAuth URL is valid for only <strong>5 minutes</strong>. Generate it when the user starts the link flow.
+</Warning>
+
+<Tabs>
+  <Tab title="Node.js">
+```typescript
+import { Novu } from '@novu/api';
+
+const novu = new Novu({ secretKey: '<NOVU_SECRET_KEY>' });
+
+const response = await novu.integrations.generateLinkUserOAuthUrl({
+  integrationIdentifier: 'webex-messaging',
+  subscriberId: 'user-123',
+  connectionIdentifier: 'webex-acme-workspace',
+});
+```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv('NOVU_SECRET_KEY', '')) as novu:
+    response = novu.integrations.generate_link_user_o_auth_url(
+        generate_link_user_oauth_url_request_dto={
+            'integration_identifier': 'webex-messaging',
+            'subscriber_id': 'user-123',
+            'connection_identifier': 'webex-acme-workspace',
+        }
+    )
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Integrations.GenerateLinkUserOAuthURL(context.Background(), components.GenerateLinkUserOauthURLRequestDto{
+    IntegrationIdentifier: "webex-messaging",
+    SubscriberID:          "user-123",
+    ConnectionIdentifier:  novugo.String("webex-acme-workspace"),
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()->setSecurity('<NOVU_SECRET_KEY>')->build();
+$response = $sdk->integrations->generateLinkUserOAuthUrl(
+    generateLinkUserOauthUrlRequestDto: new Components\GenerateLinkUserOauthUrlRequestDto(
+        integrationIdentifier: 'webex-messaging',
+        subscriberId: 'user-123',
+        connectionIdentifier: 'webex-acme-workspace',
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+var response = await sdk.Integrations.GenerateLinkUserOAuthUrlAsync(
+    generateLinkUserOauthUrlRequestDto: new GenerateLinkUserOauthUrlRequestDto() {
+        IntegrationIdentifier = "webex-messaging",
+        SubscriberId = "user-123",
+        ConnectionIdentifier = "webex-acme-workspace",
+    });
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+
+Novu novu = Novu.builder().secretKey("<NOVU_SECRET_KEY>").build();
+var response = novu.integrations().generateLinkUserOAuthUrl()
+    .body(GenerateLinkUserOauthUrlRequestDto.builder()
+        .integrationIdentifier("webex-messaging")
+        .subscriberId("user-123")
+        .connectionIdentifier("webex-acme-workspace")
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -L -X POST 'https://api.novu.co/v1/integrations/channel-endpoints/oauth' \
+-H 'Content-Type: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+  "integrationIdentifier": "webex-messaging",
+  "subscriberId": "user-123",
+  "connectionIdentifier": "webex-acme-workspace"
+}'
+```
+  </Tab>
+</Tabs>
+
+Open `response.url` for the subscriber to sign in with Webex. Novu creates a `webex_person` endpoint from the authenticated `people/me` response. No second redirect is required.
+
+## Send notifications
+
+Once you have at least one Webex connection and one or more endpoints, add a **Chat** step to a workflow and trigger it:
+
+<Tabs>
+  <Tab title="Node.js">
+```typescript
+import { Novu } from '@novu/api';
+
+const novu = new Novu({ secretKey: '<NOVU_SECRET_KEY>' });
+
+await novu.trigger({
+  workflowId: 'incident-alert',
+  to: { subscriberId: 'user-123' },
+  payload: {
+    incidentId: 'INC-42',
+    summary: 'Database latency exceeded threshold',
+  },
+  context: {
+    tenant: 'acme',
+  },
+});
+```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv('NOVU_SECRET_KEY', '')) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id='incident-alert',
+        to={'subscriber_id': 'user-123'},
+        payload={
+            'incidentId': 'INC-42',
+            'summary': 'Database latency exceeded threshold',
+        },
+        context={'tenant': 'acme'},
+    ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+_, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "incident-alert",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: "user-123",
+    }),
+    Payload: map[string]any{
+        "incidentId": "INC-42",
+        "summary":    "Database latency exceeded threshold",
+    },
+    Context: map[string]any{
+        "tenant": "acme",
+    },
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()->setSecurity('<NOVU_SECRET_KEY>')->build();
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'incident-alert',
+        to: new Components\SubscriberPayloadDto(subscriberId: 'user-123'),
+        payload: [
+            'incidentId' => 'INC-42',
+            'summary' => 'Database latency exceeded threshold',
+        ],
+        context: ['tenant' => 'acme'],
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "incident-alert",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() { SubscriberId = "user-123" }),
+    Payload = {
+        ["incidentId"] = "INC-42",
+        ["summary"] = "Database latency exceeded threshold",
+    },
+    Context = { ["tenant"] = "acme" },
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+
+Novu novu = Novu.builder().secretKey("<NOVU_SECRET_KEY>").build();
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("incident-alert")
+        .to(To2.of(SubscriberPayloadDto.builder().subscriberId("user-123").build()))
+        .payload(Map.of(
+            "incidentId", "INC-42",
+            "summary", "Database latency exceeded threshold"
+        ))
+        .context(Map.of("tenant", "acme"))
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl --location 'https://api.novu.co/v1/events/trigger' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+  "name": "incident-alert",
+  "to": ["user-123"],
+  "payload": {
+    "incidentId": "INC-42",
+    "summary": "Database latency exceeded threshold"
+  },
+  "context": {
+    "tenant": "acme"
+  }
+}'
+```
+  </Tab>
+</Tabs>
+
+When the workflow runs, Novu:
+
+<Steps>
+  <Step title="Resolves endpoints">
+    Novu finds `webex_room` and `webex_person` endpoints matching the subscriber ID and context.
+  </Step>
+
+  <Step title="Refreshes tokens if needed">
+    If the connection access token expires within five minutes, Novu refreshes it using the stored refresh token before sending.
+  </Step>
+
+  <Step title="Delivers messages">
+    Novu sends the Chat step body as Webex `text` to each configured destination.
+  </Step>
+</Steps>
+
+<Note>
+  The dashboard Chat step editor supports a plain text `body`. For Webex-specific fields such as `markdown`, `files`, or `attachments`, use [trigger overrides](#format-messages-with-webex-api-fields) or Framework provider overrides in code-first workflows.
+</Note>
+
+## Format messages with Webex API fields
+
+Novu maps the Chat step content to Webex `text`. Use provider overrides to add fields supported by the [Create a Message API](https://developer.webex.com/messaging/docs/api/v1/messages/create-a-message), such as `markdown`, `files`, or `attachments`.
+
+Routing fields are reserved. Overrides and `_passthrough` must not add, remove, or change `roomId`, `parentId`, `toPersonId`, or `toPersonEmail` — those come from the channel endpoint.
+
+<Tabs>
+  <Tab title="Node.js">
+```typescript
+import { Novu } from '@novu/api';
+
+const novu = new Novu({ secretKey: '<NOVU_SECRET_KEY>' });
+
+await novu.trigger({
+  workflowId: 'incident-alert',
+  to: { subscriberId: 'user-123' },
+  payload: {
+    summary: '**CPU usage** exceeded 90% on `prod-db-1`',
+  },
+  overrides: {
+    steps: {
+      'webex-chat-step': {
+        providers: {
+          'webex-messaging': {
+            markdown: '**CPU usage** exceeded 90% on `prod-db-1`',
+          },
+        },
+      },
+    },
+  },
+});
+```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv('NOVU_SECRET_KEY', '')) as novu:
+    novu.trigger(trigger_event_request_dto={
+        'workflow_id': 'incident-alert',
+        'to': {'subscriber_id': 'user-123'},
+        'payload': {'summary': '**CPU usage** exceeded 90% on `prod-db-1`'},
+        'overrides': {
+            'steps': {
+                'webex-chat-step': {
+                    'providers': {
+                        'webex-messaging': {
+                            'markdown': '**CPU usage** exceeded 90% on `prod-db-1`',
+                        },
+                    },
+                },
+            },
+        },
+    })
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+_, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "incident-alert",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: "user-123",
+    }),
+    Payload: map[string]any{
+        "summary": "**CPU usage** exceeded 90% on `prod-db-1`",
+    },
+    Overrides: map[string]any{
+        "steps": map[string]any{
+            "webex-chat-step": map[string]any{
+                "providers": map[string]any{
+                    "webex-messaging": map[string]any{
+                        "markdown": "**CPU usage** exceeded 90% on `prod-db-1`",
+                    },
+                },
+            },
+        },
+    },
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()->setSecurity('<NOVU_SECRET_KEY>')->build();
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'incident-alert',
+        to: new Components\SubscriberPayloadDto(subscriberId: 'user-123'),
+        payload: ['summary' => '**CPU usage** exceeded 90% on `prod-db-1`'],
+        overrides: [
+            'steps' => [
+                'webex-chat-step' => [
+                    'providers' => [
+                        'webex-messaging' => [
+                            'markdown' => '**CPU usage** exceeded 90% on `prod-db-1`',
+                        ],
+                    ],
+                ],
+            ],
+        ],
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "incident-alert",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() { SubscriberId = "user-123" }),
+    Payload = { ["summary"] = "**CPU usage** exceeded 90% on `prod-db-1`" },
+    Overrides = {
+        ["steps"] = new Dictionary<string, object>() {
+            ["webex-chat-step"] = new Dictionary<string, object>() {
+                ["providers"] = new Dictionary<string, object>() {
+                    ["webex-messaging"] = new Dictionary<string, object>() {
+                        ["markdown"] = "**CPU usage** exceeded 90% on `prod-db-1`",
+                    },
+                },
+            },
+        },
+    },
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+
+Novu novu = Novu.builder().secretKey("<NOVU_SECRET_KEY>").build();
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("incident-alert")
+        .to(To2.of(SubscriberPayloadDto.builder().subscriberId("user-123").build()))
+        .payload(Map.of("summary", "**CPU usage** exceeded 90% on `prod-db-1`"))
+        .overrides(Map.of(
+            "steps", Map.of(
+                "webex-chat-step", Map.of(
+                    "providers", Map.of(
+                        "webex-messaging", Map.of(
+                            "markdown", "**CPU usage** exceeded 90% on `prod-db-1`"
+                        )
+                    )
+                )
+            )
+        ))
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl --location 'https://api.novu.co/v1/events/trigger' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+  "name": "incident-alert",
+  "to": ["user-123"],
+  "payload": {
+    "summary": "**CPU usage** exceeded 90% on `prod-db-1`"
+  },
+  "overrides": {
+    "steps": {
+      "webex-chat-step": {
+        "providers": {
+          "webex-messaging": {
+            "markdown": "**CPU usage** exceeded 90% on `prod-db-1`"
+          }
+        }
+      }
+    }
+  }
+}'
+```
+  </Tab>
+</Tabs>
+
+Replace `webex-chat-step` with the Chat step identifier from your workflow in the dashboard.
+
+### Send extra Webex fields with `_passthrough`
+
+Use `_passthrough.body` when you need raw Webex API fields not exposed as top-level override keys. Values merge into the message payload; routing fields still cannot be overridden.
+
+<Tabs>
+  <Tab title="Node.js">
+```typescript
+await novu.trigger({
+  workflowId: 'incident-alert',
+  to: { subscriberId: 'user-123' },
+  payload: { summary: 'See attached log excerpt' },
+  overrides: {
+    steps: {
+      'webex-chat-step': {
+        providers: {
+          'webex-messaging': {
+            _passthrough: {
+              body: {
+                files: ['https://example.com/logs/incident-42.txt'],
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+});
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl --location 'https://api.novu.co/v1/events/trigger' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+  "name": "incident-alert",
+  "to": ["user-123"],
+  "payload": { "summary": "See attached log excerpt" },
+  "overrides": {
+    "steps": {
+      "webex-chat-step": {
+        "providers": {
+          "webex-messaging": {
+            "_passthrough": {
+              "body": {
+                "files": ["https://example.com/logs/incident-42.txt"]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}'
+```
+  </Tab>
+</Tabs>
+
+## Token refresh and reconnection
+
+Novu stores encrypted access and refresh tokens on each Webex channel connection. Before delivery, if the access token expires within **five minutes**, Novu refreshes it automatically and persists the new tokens.
+
+If refresh fails (for example, the refresh token expired or was revoked), delivery fails with an error indicating the connection must be re-authorized. Have the user run the connect OAuth flow again for that `connectionIdentifier`.
+
+<Warning>
+  Webex refresh tokens can expire. Monitor delivery failures with `WEBEX_INVALID_CREDENTIALS` or token refresh errors in activity logs, then prompt users to reconnect.
+</Warning>
+
+## Troubleshooting
+
+| Symptom | Likely cause | What to do |
+| --- | --- | --- |
+| `Channel endpoint type "webex_room" requires a connectionIdentifier` | Endpoint created without a connection | Create a Webex channel connection first, then pass its `connectionIdentifier` when creating the endpoint. |
+| `WEBEX_INVALID_CREDENTIALS` | Access token expired or revoked | Re-run the connect OAuth flow for the connection. |
+| `WEBEX_INSUFFICIENT_PERMISSIONS` | Missing OAuth scopes | Register required scopes on the Webex integration and reconnect. |
+| `WEBEX_DESTINATION_NOT_FOUND` | Invalid `roomId` or person | Verify the room or person exists in the connected Webex org. |
+| `WEBEX_RATE_LIMITED` | Webex API rate limit | Retry after the `retry-after` interval reported by Webex. |
+| OAuth state expired | URL older than 5 minutes | Generate a fresh OAuth URL before redirecting the user. |
+| Message sent to wrong destination | Endpoint misconfiguration | Check `webex_room` vs `webex_person` endpoint type and `connectionIdentifier`. |
+
+## Related
+
+<CardGroup cols={2}>
+  <Card icon="messages-square" href="/platform/integrations/trigger-overrides" title="Trigger overrides">
+    Pass Webex-specific fields when triggering a workflow from your application.
+  </Card>
+  <Card icon="plug" href="/api-reference/channel-endpoints/create-a-channel-endpoint" title="Channel endpoints API">
+    Create and manage Webex room and person endpoints programmatically.
+  </Card>
+  <Card icon="link" href="/api-reference/channel-connections/create-a-channel-connection" title="Channel connections API">
+    Register Webex OAuth tokens manually if you manage authorization outside Novu.
+  </Card>
+  <Card icon="book-open" href="https://developer.webex.com/messaging/docs/basics" title="Webex Messaging docs">
+    Official Webex Messaging REST API reference.
+  </Card>
+</CardGroup>
