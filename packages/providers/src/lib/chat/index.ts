@@ -1,6 +1,7 @@
 export * from './chat-webhook/chat-webhook.provider';
 export * from './discord/discord.provider';
 export * from './getstream/getstream.provider';
+export * from './google-chat/google-chat.provider';
 export * from './grafana-on-call/grafana-on-call.provider';
 export * from './mattermost/mattermost.provider';
 export * from './msTeams/msTeams.provider';
