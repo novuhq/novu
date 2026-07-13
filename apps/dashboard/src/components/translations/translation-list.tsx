@@ -192,8 +192,7 @@ export function TranslationList(props: TranslationListProps) {
     getFeatureForTierAsBoolean(
       FeatureNameEnum.AUTO_TRANSLATIONS,
       subscription?.apiServiceLevel || ApiServiceLevelEnum.FREE
-    ) &&
-    !IS_SELF_HOSTED_CE;
+    ) && !IS_SELF_HOSTED_CE;
 
   // Only make API call if user has proper tier
   const { filterValues, handleFiltersChange, resetFilters, data, isPending, isFetching, areFiltersApplied } =

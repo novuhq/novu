@@ -2,8 +2,8 @@ import { EnvironmentTypeEnum, IEnvironment } from '@novu/shared';
 import { useState } from 'react';
 import { RiExpandUpDownLine, RiTerminalFill } from 'react-icons/ri';
 import TruncatedText from '../../components/truncated-text';
-import { cn } from '../../utils/ui';
 import { ConnectionStatus } from '../../utils/types';
+import { cn } from '../../utils/ui';
 import { EnvironmentBranchIcon } from '../primitives/environment-branch-icon';
 import { Select, SelectContent, SelectIcon, SelectItem, SelectTrigger, SelectValue } from '../primitives/select';
 import { Separator } from '../primitives/separator';
@@ -55,9 +55,7 @@ const LocalEnvironmentIcon = ({ status, size = 'sm' }: { status: ConnectionStatu
 const LocalEntryContent = ({ status, size = 'sm' }: { status: ConnectionStatus; size?: 'sm' | 'md' }) => (
   <div className="flex items-center gap-2">
     <LocalEnvironmentIcon status={status} size={size} />
-    <TruncatedText className={cn('max-w-[190px]', size === 'md' ? 'text-foreground text-sm' : '')}>
-      Local
-    </TruncatedText>
+    <TruncatedText className={cn('max-w-[190px]', size === 'md' ? 'text-foreground text-sm' : '')}>Local</TruncatedText>
   </div>
 );
 

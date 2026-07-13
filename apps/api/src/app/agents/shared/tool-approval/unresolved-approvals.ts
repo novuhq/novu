@@ -1,4 +1,8 @@
-import { ConversationActivityEntity, ConversationActivitySenderTypeEnum, ConversationActivityTypeEnum } from '@novu/dal';
+import {
+  ConversationActivityEntity,
+  ConversationActivitySenderTypeEnum,
+  ConversationActivityTypeEnum,
+} from '@novu/dal';
 
 /**
  * Scans a conversation's activity ledger (newest-first, as returned by

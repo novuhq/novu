@@ -1,5 +1,5 @@
 export {
+  type DetectedBridgeProject as DetectedChatSdkProject,
   defaultChatSdkScaffoldDirName,
   detectBridgeProject as detectChatSdkProject,
-  type DetectedBridgeProject as DetectedChatSdkProject,
 } from '../bridge/detect-project';

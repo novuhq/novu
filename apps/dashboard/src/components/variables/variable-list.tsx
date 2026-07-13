@@ -26,8 +26,7 @@ export const VariableList = () => {
     getFeatureForTierAsBoolean(
       FeatureNameEnum.ENVIRONMENT_VARIABLES,
       subscription?.apiServiceLevel || ApiServiceLevelEnum.FREE
-    ) &&
-    !IS_SELF_HOSTED_CE;
+    ) && !IS_SELF_HOSTED_CE;
 
   useEffect(() => {
     const timeout = setTimeout(() => {

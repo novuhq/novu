@@ -107,7 +107,10 @@ export function parseApprovalReactionVerdict(emoji: string | undefined | null): 
   }
 
   // Emoji short-names are sometimes wrapped in colons (`:thumbsup:`).
-  const normalized = emoji.trim().toLowerCase().replace(/^:+|:+$/gu, '');
+  const normalized = emoji
+    .trim()
+    .toLowerCase()
+    .replace(/^:+|:+$/gu, '');
 
   if (!normalized) {
     return null;

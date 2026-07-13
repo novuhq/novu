@@ -2,6 +2,8 @@ import { Novu } from '@novu/api';
 import {
   CreateSlackChannelEndpointDto,
   CreateTelegramChatEndpointDto,
+  CreateWebexPersonEndpointDto,
+  CreateWebexRoomEndpointDto,
   CreateWebhookEndpointDto,
 } from '@novu/api/models/components';
 import { IntegrationRepository } from '@novu/dal';
@@ -12,6 +14,7 @@ import {
   createConnection,
   createSlackIntegration,
   createSubscribersService,
+  createWebexIntegration,
   setupChannelTests,
 } from '../../channel-connections/e2e/helpers/channel-helpers';
 import { expectSdkExceptionGeneric, expectSdkZodError } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
@@ -192,6 +195,125 @@ describe('Create Channel Endpoint - /channel-endpoints (POST) #novu-v2', () => {
       type: ENDPOINT_TYPES.SLACK_CHANNEL,
       endpoint: {
         channelId: 'C123456789',
+      },
+    };
+
+    const { error } = await expectSdkExceptionGeneric(() => novuClient.channelEndpoints.create(createDto));
+
+    expect(error).to.exist;
+    expect(error?.name).to.equal('ErrorDto');
+  });
+
+  it('should create Webex room endpoint with connection', async () => {
+    const integration = await createWebexIntegration(session);
+    const subscribersService = createSubscribersService(session);
+    const subscriber = await subscribersService.createSubscriber();
+    const connection = await createConnection(novuClient, integration.identifier, subscriber.subscriberId);
+
+    const createDto: CreateWebexRoomEndpointDto = {
+      integrationIdentifier: integration.identifier,
+      connectionIdentifier: connection.identifier,
+      subscriberId: subscriber.subscriberId,
+      type: ENDPOINT_TYPES.WEBEX_ROOM,
+      endpoint: {
+        roomId: 'Y2lzY29zcGFyazovL3VzL1JPT00vMTIz',
+      },
+    };
+
+    const { result } = await novuClient.channelEndpoints.create(createDto);
+
+    expect(result.identifier).to.be.a('string');
+    expect(result.integrationIdentifier).to.equal(integration.identifier);
+    expect(result.connectionIdentifier).to.equal(connection.identifier);
+    expect(result.subscriberId).to.equal(subscriber.subscriberId);
+    expect(result.type).to.equal(ENDPOINT_TYPES.WEBEX_ROOM);
+    expect((result.endpoint as { roomId: string }).roomId).to.equal('Y2lzY29zcGFyazovL3VzL1JPT00vMTIz');
+  });
+
+  it('should create Webex person endpoint with connection', async () => {
+    const integration = await createWebexIntegration(session);
+    const subscribersService = createSubscribersService(session);
+    const subscriber = await subscribersService.createSubscriber();
+    const connection = await createConnection(novuClient, integration.identifier, subscriber.subscriberId);
+
+    const createDto: CreateWebexPersonEndpointDto = {
+      integrationIdentifier: integration.identifier,
+      connectionIdentifier: connection.identifier,
+      subscriberId: subscriber.subscriberId,
+      type: ENDPOINT_TYPES.WEBEX_PERSON,
+      endpoint: {
+        personEmail: 'user@example.com',
+      },
+    };
+
+    const { result } = await novuClient.channelEndpoints.create(createDto);
+
+    expect(result.identifier).to.be.a('string');
+    expect(result.integrationIdentifier).to.equal(integration.identifier);
+    expect(result.connectionIdentifier).to.equal(connection.identifier);
+    expect(result.subscriberId).to.equal(subscriber.subscriberId);
+    expect(result.type).to.equal(ENDPOINT_TYPES.WEBEX_PERSON);
+    expect((result.endpoint as { personEmail: string }).personEmail).to.equal('user@example.com');
+  });
+
+  it('should fail when Webex endpoint omits connectionIdentifier', async () => {
+    const integration = await createWebexIntegration(session);
+    const subscribersService = createSubscribersService(session);
+    const subscriber = await subscribersService.createSubscriber();
+
+    const createDto = {
+      integrationIdentifier: integration.identifier,
+      subscriberId: subscriber.subscriberId,
+      type: ENDPOINT_TYPES.WEBEX_ROOM,
+      endpoint: {
+        roomId: 'Y2lzY29zcGFyazovL3VzL1JPT00vMTIz',
+      },
+    } as any;
+
+    const { error } = await expectSdkZodError(() => novuClient.channelEndpoints.create(createDto));
+
+    expect(error).to.exist;
+    expect(error?.name).to.equal('SDKValidationError');
+  });
+
+  it('should fail when creating a Webex endpoint for a non-Webex integration', async () => {
+    const integration = await createSlackIntegration(session);
+    const subscribersService = createSubscribersService(session);
+    const subscriber = await subscribersService.createSubscriber();
+    const connection = await createConnection(novuClient, integration.identifier, subscriber.subscriberId);
+
+    const createDto: CreateWebexRoomEndpointDto = {
+      integrationIdentifier: integration.identifier,
+      connectionIdentifier: connection.identifier,
+      subscriberId: subscriber.subscriberId,
+      type: ENDPOINT_TYPES.WEBEX_ROOM,
+      endpoint: {
+        roomId: 'Y2lzY29zcGFyazovL3VzL1JPT00vMTIz',
+      },
+    };
+
+    const { error } = await expectSdkExceptionGeneric(() => novuClient.channelEndpoints.create(createDto));
+
+    expect(error).to.exist;
+    expect(error?.name).to.equal('ErrorDto');
+  });
+
+  it('should fail when Webex endpoint context differs from the channel connection context', async () => {
+    const integration = await createWebexIntegration(session);
+    const subscribersService = createSubscribersService(session);
+    const subscriber = await subscribersService.createSubscriber();
+    const connection = await createConnection(novuClient, integration.identifier, subscriber.subscriberId);
+
+    const createDto: CreateWebexRoomEndpointDto = {
+      integrationIdentifier: integration.identifier,
+      connectionIdentifier: connection.identifier,
+      subscriberId: subscriber.subscriberId,
+      context: {
+        tenant: 'acme-corp',
+      },
+      type: ENDPOINT_TYPES.WEBEX_ROOM,
+      endpoint: {
+        roomId: 'Y2lzY29zcGFyazovL3VzL1JPT00vMTIz',
       },
     };
 

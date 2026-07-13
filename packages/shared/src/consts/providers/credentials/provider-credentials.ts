@@ -1,5 +1,5 @@
-import { AWS_CLAUDE_COMMERCIAL_REGIONS } from '../../aws-claude-regions';
 import { CredentialsKeyEnum } from '../../../types';
+import { AWS_CLAUDE_COMMERCIAL_REGIONS } from '../../aws-claude-regions';
 import { IConfigCredential } from '../provider.interface';
 
 const mailConfigBase: IConfigCredential[] = [
@@ -1356,7 +1356,7 @@ export const sendblueConfig: IConfigCredential[] = [
     required: false,
     hidden: true,
   },
-]
+];
 
 export const lineConfig: IConfigCredential[] = [
   {
@@ -1517,6 +1517,39 @@ export const telegramConfig: IConfigCredential[] = [
     type: 'string',
     required: true,
     links: [{ text: 'BotFather', url: 'https://t.me/botfather' }],
+  },
+];
+
+export const webexMessagingConfig: IConfigCredential[] = [
+  {
+    key: CredentialsKeyEnum.ClientId,
+    displayName: 'Client ID',
+    description: 'Webex integration client ID used for OAuth authorization.',
+    type: 'string',
+    required: true,
+    links: [{ text: 'Webex integrations', url: 'https://developer.webex.com/docs/integrations' }],
+  },
+  {
+    key: CredentialsKeyEnum.SecretKey,
+    displayName: 'Client Secret',
+    description: 'Webex integration client secret used to exchange OAuth authorization codes.',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.RedirectUrl,
+    displayName: 'Redirect URL',
+    description: 'Redirect after the Webex OAuth flow finishes. If omitted, Novu shows a success page.',
+    type: 'string',
+    required: false,
+  },
+  {
+    key: CredentialsKeyEnum.BaseUrl,
+    displayName: 'Base URL',
+    description: 'Optional Webex API base URL. Leave empty to use https://webexapis.com/v1.',
+    placeholder: 'https://webexapis.com/v1',
+    type: 'text',
+    required: false,
   },
 ];
 

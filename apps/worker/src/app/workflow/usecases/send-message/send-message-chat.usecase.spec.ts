@@ -1,18 +1,20 @@
-import { ChatProviderIdEnum, ChannelTypeEnum, ENDPOINT_TYPES } from '@novu/shared';
+import { ChannelTypeEnum, ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageChat } from './send-message-chat.usecase';
 
 describe('SendMessageChat - phone-based channel de-duplication', () => {
-  function buildUsecase(overrides: {
-    channelEndpointGroups?: Array<{
-      integrationIdentifier: string;
-      providerId: string;
-      channelData: unknown[];
-    }>;
-    activePhoneProviders?: ChatProviderIdEnum[];
-  } = {}) {
+  function buildUsecase(
+    overrides: {
+      channelEndpointGroups?: Array<{
+        integrationIdentifier: string;
+        providerId: string;
+        channelData: unknown[];
+      }>;
+      activePhoneProviders?: ChatProviderIdEnum[];
+    } = {}
+  ) {
     const {
       channelEndpointGroups = [],
       activePhoneProviders = [ChatProviderIdEnum.WhatsAppBusiness, ChatProviderIdEnum.Sendblue],

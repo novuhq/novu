@@ -1,10 +1,5 @@
 import { useOrganization } from '@clerk/react';
-import {
-  ChannelTypeEnum,
-  DirectionEnum,
-  type IIntegration,
-  ProductUseCasesEnum,
-} from '@novu/shared';
+import { ChannelTypeEnum, DirectionEnum, type IIntegration, ProductUseCasesEnum } from '@novu/shared';
 import { useQuery } from '@tanstack/react-query';
 import { useCallback, useMemo } from 'react';
 import { RiAddLine } from 'react-icons/ri';

@@ -5,10 +5,7 @@ import { buildApprovalActionId } from '@novu/framework/internal';
 import { AgentEventEnum } from '../../shared/enums/agent-event.enum';
 import { usesReplyBasedApprovals } from '../../shared/enums/agent-platform.enum';
 import { captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
-import {
-  buildToolApprovalActionId,
-  DIRECT_TOOL_APPROVAL_ACTION_PREFIX,
-} from '../../shared/tool-approval/action-id';
+import { buildToolApprovalActionId, DIRECT_TOOL_APPROVAL_ACTION_PREFIX } from '../../shared/tool-approval/action-id';
 import {
   parseApprovalReactionVerdict,
   parseApprovalReplyVerdict,

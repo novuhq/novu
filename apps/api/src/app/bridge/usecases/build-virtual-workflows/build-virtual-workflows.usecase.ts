@@ -19,13 +19,7 @@ import {
   WorkflowWithPreferencesForMapper,
 } from '@novu/application-generic';
 import { DiscoverStepOutput, DiscoverWorkflowOutput } from '@novu/framework/internal';
-import {
-  ResourceOriginEnum,
-  ResourceTypeEnum,
-  SeverityLevelEnum,
-  StepTypeEnum,
-  UserSessionData,
-} from '@novu/shared';
+import { ResourceOriginEnum, ResourceTypeEnum, SeverityLevelEnum, StepTypeEnum, UserSessionData } from '@novu/shared';
 import {
   buildDiscoveredWorkflowRawData,
   buildVirtualInternalId,

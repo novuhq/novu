@@ -35,11 +35,7 @@ describe('ReplyApprovalInterceptor', () => {
       warn: sinon.stub(),
       setContext: sinon.stub(),
     };
-    const interceptor = new ReplyApprovalInterceptor(
-      conversationService as any,
-      outboundGateway as any,
-      logger as any
-    );
+    const interceptor = new ReplyApprovalInterceptor(conversationService as any, outboundGateway as any, logger as any);
 
     return { interceptor, conversationService, outboundGateway };
   }
@@ -250,7 +246,11 @@ describe('ReplyApprovalInterceptor', () => {
     const { interceptor } = makeDeps();
     const runtime = { dispatch: sinon.stub().resolves(undefined) };
     const turn = makeTurn({
-      message: { id: 'msg-tap', text: 'Removed a like from "Tool approval required: issueRefund"', author: { userId: '+1' } },
+      message: {
+        id: 'msg-tap',
+        text: 'Removed a like from "Tool approval required: issueRefund"',
+        author: { userId: '+1' },
+      },
     });
 
     const consumed = await interceptor.tryHandleAsApprovalReply(turn, runtime as any);

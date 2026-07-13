@@ -6,7 +6,11 @@ export interface IHandler {
 
   getMessageId: (body: unknown | unknown[]) => string[];
 
-  parseEventBody: (body: unknown | unknown[], identifier: string, eventIndex?: number) => IEmailEventBody | ISMSEventBody | undefined;
+  parseEventBody: (
+    body: unknown | unknown[],
+    identifier: string,
+    eventIndex?: number
+  ) => IEmailEventBody | ISMSEventBody | undefined;
 
   verifySignature: ({
     body,
