@@ -24,6 +24,7 @@ import { useTelemetry } from '@/hooks/use-telemetry';
 import { STEP_RESOLVER_SUPPORTED_STEP_TYPES, TEMPLATE_CONFIGURABLE_STEP_TYPES } from '@/utils/constants';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
+import { getPlanLabel } from '@/utils/upgrade-tier';
 
 export function StepEditorModeToggle() {
   const { step, workflow, isPendingResolverActivation, setIsPendingResolverActivation } = useStepEditor();
@@ -58,10 +59,15 @@ export function StepEditorModeToggle() {
     stepResolversCount !== undefined &&
     stepResolversCount >= codeStepLimit;
 
+  const currentPlanLabel = getPlanLabel(tier);
+  const proLabel = getPlanLabel(ApiServiceLevelEnum.PRO);
+  const teamLabel = getPlanLabel(ApiServiceLevelEnum.BUSINESS);
   const codeStepLimitDescription =
     tier === ApiServiceLevelEnum.FREE
-      ? `You've reached the ${codeStepLimit} code step limit on your Free plan. Upgrade to Pro for 10 code steps, or Business for unlimited.`
-      : `You've reached the ${codeStepLimit} code step limit on your ${tier.charAt(0).toUpperCase() + tier.slice(1)} plan. Upgrade to Business for unlimited code steps.`;
+      ? `You've reached the ${codeStepLimit} code step limit on your ${currentPlanLabel} plan. Upgrade to ${proLabel} for 10 code steps, or ${teamLabel} for unlimited.`
+      : `You've reached the ${codeStepLimit} code step limit on your ${currentPlanLabel} plan. Upgrade to ${teamLabel} for unlimited code steps.`;
+  const codeStepRequiredTier =
+    tier === ApiServiceLevelEnum.FREE ? ApiServiceLevelEnum.PRO : ApiServiceLevelEnum.BUSINESS;
 
   const isActive = Boolean(step.stepResolverHash);
   const isCodeMode = isActive || isPendingResolverActivation;
@@ -128,7 +134,11 @@ export function StepEditorModeToggle() {
         />
 
         {isAtCodeStepLimit && !isCodeMode ? (
-          <UpgradeCTATooltip description={codeStepLimitDescription} utmCampaign="code_steps_limit">
+          <UpgradeCTATooltip
+            description={codeStepLimitDescription}
+            requiredTier={codeStepRequiredTier}
+            utmCampaign="code_steps_limit"
+          >
             <span className="inline-flex cursor-not-allowed">
               <button
                 type="button"

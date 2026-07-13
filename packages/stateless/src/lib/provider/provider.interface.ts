@@ -194,7 +194,7 @@ export interface IEmailProvider extends IProvider {
 
   getMessageId?: (body: any | any[]) => string[];
 
-  parseEventBody?: (body: any | any[], identifier: string) => IEmailEventBody | undefined;
+  parseEventBody?: (body: any | any[], identifier: string, eventIndex?: number) => IEmailEventBody | undefined;
 
   checkIntegration?: (options: IEmailOptions) => Promise<ICheckIntegrationResponse>;
 }
@@ -206,7 +206,7 @@ export interface ISmsProvider extends IProvider {
 
   getMessageId?: (body: any) => string[];
 
-  parseEventBody?: (body: any | any[], identifier: string) => ISMSEventBody | undefined;
+  parseEventBody?: (body: any | any[], identifier: string, eventIndex?: number) => ISMSEventBody | undefined;
 }
 
 export interface IChatProvider extends IProvider {
@@ -215,7 +215,7 @@ export interface IChatProvider extends IProvider {
 
   getMessageId?: (body: any | any[]) => string[];
 
-  parseEventBody?: (body: any | any[], identifier: string) => unknown | undefined;
+  parseEventBody?: (body: any | any[], identifier: string, eventIndex?: number) => unknown | undefined;
 }
 
 export interface IPushProvider extends IProvider {
@@ -227,7 +227,7 @@ export interface IPushProvider extends IProvider {
 
   getMessageId?: (body: any | any[]) => string[];
 
-  parseEventBody?: (body: any | any[], identifier: string) => unknown | undefined;
+  parseEventBody?: (body: any | any[], identifier: string, eventIndex?: number) => unknown | undefined;
 }
 
 export type ChannelProvider = IEmailProvider | ISmsProvider | IChatProvider | IPushProvider;

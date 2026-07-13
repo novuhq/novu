@@ -1,12 +1,14 @@
 import { ChannelTypeEnum, EmailProviderIdEnum } from '../../../types';
 import { UTM_CAMPAIGN_QUERY_PARAM } from '../../../ui';
 import {
+  anypostGroupConfigurations,
   mailgunGroupConfigurations,
   resendGroupConfigurations,
   sendgridGroupConfigurations,
   sesGroupConfigurations,
 } from '../configurations/provider-configuration';
 import {
+  anypostConfig,
   brazeEmailConfig,
   emailWebhookConfig,
   infobipEmailConfig,
@@ -160,6 +162,15 @@ export const emailProviders: IProviderConfig[] = [
     configurations: resendGroupConfigurations,
     docReference: `https://docs.novu.co/platform/integrations/email/resend${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'resend.svg', dark: 'resend.svg' },
+  },
+  {
+    id: EmailProviderIdEnum.Anypost,
+    displayName: 'Anypost',
+    channel: ChannelTypeEnum.EMAIL,
+    credentials: anypostConfig,
+    configurations: anypostGroupConfigurations,
+    docReference: `https://docs.novu.co/platform/integrations/email/anypost${UTM_CAMPAIGN_QUERY_PARAM}`,
+    logoFileName: { light: 'anypost.svg', dark: 'anypost.svg' },
   },
   {
     id: EmailProviderIdEnum.Plunk,

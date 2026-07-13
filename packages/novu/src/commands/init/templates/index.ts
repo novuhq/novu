@@ -263,7 +263,7 @@ export const installTemplate = async ({
   }
 
   if (template === TemplateTypeEnum.APP_AGENT_AI_SDK) {
-    baseDependencies.ai = '^6.0.0';
+    baseDependencies.ai = '^7.0.0';
   }
 
   if (isChatSdkTemplate) {
@@ -344,6 +344,18 @@ export const installTemplate = async ({
       ...packageJson.devDependencies,
       eslint: '^9',
       'eslint-config-next': version,
+    };
+  }
+
+  if (template === TemplateTypeEnum.APP_AGENT_AI_SDK) {
+    // chat (transitive via @novu/framework) peers ai@^6 for its own AI helpers.
+    // Framework only uses chat for card components; ai-sdk scaffold installs ai@7.
+    packageJson.pnpm = {
+      peerDependencyRules: {
+        allowedVersions: {
+          'chat>ai': '7',
+        },
+      },
     };
   }
 

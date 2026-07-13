@@ -414,7 +414,6 @@ jobs:
             --platform=linux/amd64
             --output=type=image,name=$REGISTRY/$REPOSITORY/$SERVICE,push-by-digest=true,name-canonical=true
         run: |
-          cp scripts/dotenvcreate.mjs apps/$SERVICE/src/dotenvcreate.mjs
           cd apps/$SERVICE && pnpm run docker:build
           docker tag novu-$SERVICE $REGISTRY/$REPOSITORY/$SERVICE:latest
           docker tag novu-$SERVICE $REGISTRY/$REPOSITORY/$SERVICE:$IMAGE_TAG
