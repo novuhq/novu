@@ -4,7 +4,7 @@ description: "Use signals in custom code agent handlers to update metadata, trig
 ---
 
 
-Signals let you change conversation state without sending another chat message. [Replies](/agents/custom-code-agent/setup-your-agent/reply) go to the user; signals update metadata, fire workflows, or mark a thread resolved.
+Signals let you change conversation state without sending another chat message. [Replies](/agents/custom-code-agent/building-blocks/reply) go to the user; signals update metadata, fire workflows, or mark a thread resolved.
 
 Use `ctx.reply()` when the user should see something. Use signals when you only need to persist data, trigger a Novu workflow, or close the conversation.
 
@@ -70,7 +70,7 @@ Resolved conversations automatically reopen if the user sends a new message.
 import { agent } from '@novu/framework';
 
 export const myAgent = agent('my-agent', {
-  onMessage: async ({ message, ctx }) => {
+  onMessage: async (message, ctx) => {
     const response = await callLLM(message.text ?? '', ctx.history);
 
     ctx.metadata.set('lastIntent', response.intent);
@@ -94,13 +94,13 @@ export const myAgent = agent('my-agent', {
 ## Related
 
 <Columns cols={2}>
-  <Card icon="layout-grid" href="/agents/custom-code-agent/setup-your-agent/reply" title="Reply">
+  <Card icon="layout-grid" href="/agents/custom-code-agent/building-blocks/reply" title="Reply">
     Send plain text, markdown, attachments, and interactive cards.
   </Card>
-  <Card icon="mouse-pointer-click" href="/agents/custom-code-agent/setup-your-agent/handle-events" title="Handle events">
+  <Card icon="mouse-pointer-click" href="/agents/custom-code-agent/building-blocks/handle-events" title="Handlers and context">
     Event handlers and the context object your agent receives on every turn.
   </Card>
-  <Card icon="brain" href="/agents/custom-code-agent/connect-your-first-agent" title="Connect your first agent">
-    Walk through a full support-bot handler file.
+  <Card icon="sparkles" href="/agents/custom-code-agent/frameworks/ai-sdk" title="AI SDK">
+    Build end to end with `@novu/framework/ai-sdk`.
   </Card>
 </Columns>
