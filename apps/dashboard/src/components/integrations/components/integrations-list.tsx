@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { isChannelVisibleInUi } from '@/utils/channels';
 import { useFetchIntegrations } from '../../../hooks/use-fetch-integrations';
 import { TableIntegration } from '../types';
 import { IntegrationChannelGroup } from './integration-channel-group';
@@ -88,7 +89,7 @@ export function IntegrationsList({ onItemClick, excludeIntegrationIds, variant =
   const groupedIntegrations = useMemo(() => {
     return integrations
       ?.filter((i) => i.providerId !== EmailProviderIdEnum.NovuAgent)
-      .filter((i) => isSignalsChannelEnabled || i.channel !== ChannelTypeEnum.SIGNALS)
+      .filter((i) => isChannelVisibleInUi(i.channel, isSignalsChannelEnabled))
       .reduce(
         (acc, integration) => {
           const { channel } = integration;

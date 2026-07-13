@@ -29,6 +29,7 @@ import { UpdateWorkflowFn } from '@/components/workflow-editor/workflow-provider
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { useTelemetry } from '@/hooks/use-telemetry';
+import { isChannelVisibleInUi } from '@/utils/channels';
 import { STEP_TYPE_TO_COLOR } from '@/utils/color';
 import { ResourceOriginEnum, StepTypeEnum } from '@/utils/enums';
 import { capitalize } from '@/utils/string';
@@ -56,9 +57,12 @@ const CHANNEL_LABELS_LOOKUP: Record<`${ChannelTypeEnum}` | 'all', string> = {
 
 const checkHasEveryChannelSameValue = (
   channels: Record<ChannelTypeEnum, { enabled: boolean }>,
-  checkForEnabled: boolean
+  checkForEnabled: boolean,
+  isChannelVisible: (channel: ChannelTypeEnum) => boolean
 ) => {
-  return Object.values(channels).every((channel) => channel.enabled === checkForEnabled);
+  return Object.entries(channels)
+    .filter(([channel]) => isChannelVisible(channel as ChannelTypeEnum))
+    .every(([, channel]) => channel.enabled === checkForEnabled);
 };
 
 export const ChannelPreferencesForm = (props: ConfigureWorkflowFormProps) => {
@@ -77,8 +81,8 @@ export const ChannelPreferencesForm = (props: ConfigureWorkflowFormProps) => {
     const allChannels = defaultPreferences?.channels;
     if (!allChannels) return null;
 
-    const allChannelsArr = Object.keys(allChannels).filter(
-      (channel) => isSignalsChannelEnabled || channel !== ChannelTypeEnum.SIGNALS
+    const allChannelsArr = Object.keys(allChannels).filter((channel) =>
+      isChannelVisibleInUi(channel, isSignalsChannelEnabled)
     );
     const channelsInUse = allChannelsArr.filter((channel) => steps.has(channel as StepTypeEnum));
     const channelsNotInUse = allChannelsArr.filter((channel) => !steps.has(channel as StepTypeEnum));
@@ -149,7 +153,9 @@ export const ChannelPreferencesForm = (props: ConfigureWorkflowFormProps) => {
 
     // If all channels are same value(all true or all false), update the "all" channel value to true/false
     // Also, update the "all" channel value to true if a single channel is enabled and it's not already enabled
-    const areAllChannelsSameValue = checkHasEveryChannelSameValue(updatedUserPreferences.channels, value);
+    const areAllChannelsSameValue = checkHasEveryChannelSameValue(updatedUserPreferences.channels, value, (channel) =>
+      isChannelVisibleInUi(channel, isSignalsChannelEnabled)
+    );
 
     if (areAllChannelsSameValue || (value && !updatedUserPreferences.all.enabled)) {
       updatedUserPreferences.all.enabled = value;
@@ -162,13 +168,15 @@ export const ChannelPreferencesForm = (props: ConfigureWorkflowFormProps) => {
     if (!formDataToRender) return;
     const currentPreference = form.getValues('user') as WorkflowPreferences;
 
-    const channelPreferences = Object.keys(currentPreference.channels).reduce(
-      (acc, curr) => {
-        acc[curr as ChannelTypeEnum] = { enabled: value };
-        return acc;
-      },
-      {} as Record<ChannelTypeEnum, { enabled: boolean }>
-    );
+    const channelPreferences = Object.keys(currentPreference.channels)
+      .filter((channel) => isChannelVisibleInUi(channel, isSignalsChannelEnabled))
+      .reduce(
+        (acc, curr) => {
+          acc[curr as ChannelTypeEnum] = { enabled: value };
+          return acc;
+        },
+        {} as Record<ChannelTypeEnum, { enabled: boolean }>
+      );
 
     const updatedUserPreferences = {
       all: {

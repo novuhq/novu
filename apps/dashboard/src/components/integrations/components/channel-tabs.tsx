@@ -2,7 +2,7 @@ import { ChannelTypeEnum, FeatureFlagsKeysEnum, IProviderConfig } from '@novu/sh
 import { useMemo } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import { CHANNEL_TYPE_TO_STRING } from '@/utils/channels';
+import { CHANNEL_TYPE_TO_STRING, isChannelVisibleInUi } from '@/utils/channels';
 import { INTEGRATION_CHANNELS, type IntegrationChannel } from '../utils/channels';
 import { IntegrationListItem } from './integration-list-item';
 
@@ -16,8 +16,8 @@ export function ChannelTabs({ integrationsByChannel, searchQuery, onIntegrationS
   const isSignalsChannelEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_SIGNALS_CHANNEL_ENABLED);
   const channels = useMemo(
     () =>
-      INTEGRATION_CHANNELS.filter(
-        (channel) => channel !== ChannelTypeEnum.SIGNALS || isSignalsChannelEnabled
+      INTEGRATION_CHANNELS.filter((channel) =>
+        isChannelVisibleInUi(channel, isSignalsChannelEnabled)
       ) as IntegrationChannel[],
     [isSignalsChannelEnabled]
   );

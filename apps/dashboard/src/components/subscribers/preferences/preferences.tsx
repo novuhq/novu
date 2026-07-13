@@ -13,6 +13,7 @@ import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useOptimisticChannelPreferences } from '@/hooks/use-optimistic-channel-preferences';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { itemVariants, sectionVariants } from '@/utils/animation';
+import { isChannelVisibleInUi } from '@/utils/channels';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { PreferencesBlank } from './preferences-blank';
 import { SubscribersSchedule } from './subscribers-schedule';
@@ -48,7 +49,7 @@ export const Preferences = (props: PreferencesProps) => {
     const global = subscriberPreferences?.global ?? { channels: {} };
     const workflows = subscriberPreferences?.workflows ?? [];
     const globalChannelsKeys = (Object.entries(global?.channels ?? {}) as [ChannelTypeEnum, boolean][]).filter(
-      ([channel]) => isSignalsChannelEnabled || channel !== ChannelTypeEnum.SIGNALS
+      ([channel]) => isChannelVisibleInUi(channel, isSignalsChannelEnabled)
     );
 
     const hasZeroPreferences = workflows.length === 0 && globalChannelsKeys.length === 0;

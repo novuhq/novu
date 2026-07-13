@@ -1,8 +1,9 @@
-import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { ChannelTypeEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { PopoverPortal } from '@radix-ui/react-popover';
 import React, { ReactNode, useState } from 'react';
 import { RiAddLine } from 'react-icons/ri';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { isChannelVisibleInUi } from '@/utils/channels';
 import { STEP_TYPE_TO_COLOR } from '@/utils/color';
 import { StepTypeEnum } from '@/utils/enums';
 import { cn } from '@/utils/ui';
@@ -147,7 +148,7 @@ export const AddStepMenu = ({
                 <MenuItem stepType={StepTypeEnum.SMS} onClick={() => handleMenuItemClick(StepTypeEnum.SMS)}>
                   SMS
                 </MenuItem>
-                {isSignalsChannelEnabled && (
+                {isChannelVisibleInUi(ChannelTypeEnum.SIGNALS, isSignalsChannelEnabled) && (
                   <MenuItem stepType={StepTypeEnum.SIGNALS} onClick={() => handleMenuItemClick(StepTypeEnum.SIGNALS)}>
                     Signals
                   </MenuItem>

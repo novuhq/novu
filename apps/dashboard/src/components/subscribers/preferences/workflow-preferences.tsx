@@ -8,6 +8,7 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/primitiv
 import { Step } from '@/components/primitives/step';
 import { PreferencesItem } from '@/components/subscribers/preferences/preferences-item';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { isChannelVisibleInUi } from '@/utils/channels';
 import { formatDateSimple } from '@/utils/format-date';
 import { cn } from '@/utils/ui';
 import { STEP_TYPE_TO_COLOR } from '../../../utils/color';
@@ -25,8 +26,8 @@ export function WorkflowPreferences(props: WorkflowPreferencesProps) {
   const { workflow, channels, updatedAt } = workflowPreferences;
   const visibleChannels = useMemo(
     () =>
-      (Object.entries(channels) as [ChannelTypeEnum, boolean][]).filter(
-        ([channel]) => isSignalsChannelEnabled || channel !== ChannelTypeEnum.SIGNALS
+      (Object.entries(channels) as [ChannelTypeEnum, boolean][]).filter(([channel]) =>
+        isChannelVisibleInUi(channel, isSignalsChannelEnabled)
       ),
     [channels, isSignalsChannelEnabled]
   );

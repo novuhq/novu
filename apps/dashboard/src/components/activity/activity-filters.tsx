@@ -11,6 +11,7 @@ import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { ActivityFiltersData } from '@/types/activity';
 import { buildActivityDateFilters } from '@/utils/activityFilters';
+import { isChannelVisibleInUi } from '@/utils/channels';
 import { ROUTES } from '@/utils/routes';
 import { capitalize } from '@/utils/string';
 import { cn } from '@/utils/ui';
@@ -81,7 +82,7 @@ export function ActivityFilters({
   );
   const isSignalsChannelEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_SIGNALS_CHANNEL_ENABLED);
   const channelOptions = useMemo(
-    () => CHANNEL_OPTIONS.filter((option) => isSignalsChannelEnabled || option.value !== ChannelTypeEnum.SIGNALS),
+    () => CHANNEL_OPTIONS.filter((option) => isChannelVisibleInUi(option.value, isSignalsChannelEnabled)),
     [isSignalsChannelEnabled]
   );
 
