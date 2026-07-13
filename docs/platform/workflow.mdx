@@ -4,9 +4,7 @@ sidebarTitle: 'Workflows'
 description: 'Create, configure, and trigger multi-channel notification workflows in Novu. Orchestrate email, SMS, push, in-app, and chat delivery.'
 ---
 
-import { GlossaryTerm } from '/snippets/glossary-term.jsx';
-
-Novu <GlossaryTerm term="workflow">Workflows</GlossaryTerm> orchestrate how notifications move from application events to <GlossaryTerm term="message">messages</GlossaryTerm> delivered across one or more <GlossaryTerm term="channel">channels</GlossaryTerm>. A workflow combines delivery logic, message content, and execution rules into a single notification pipeline.
+Novu <Tooltip headline="Workflow" tip="An environment-scoped orchestration definition that determines what to send, when, and on which channels." cta="Learn more" href="/platform/concepts/workflows">Workflows</Tooltip> orchestrate how notifications move from application events to <Tooltip headline="Message" tip="The rendered output delivered on a channel, such as an email body, SMS text, push notification, or in-app item." cta="Learn more" href="/platform/concepts/notification-event#message">messages</Tooltip> delivered across one or more <Tooltip headline="Channel" tip="A communication medium used to deliver notifications: in-app (Inbox), email, SMS, push, or chat." cta="Learn more" href="/platform/integrations">channels</Tooltip>. A workflow combines delivery logic, message content, and execution rules into a single notification pipeline.
 
 Use workflows to control when notifications are sent, who receives them, what content is delivered, and how delivery behaves across channels.
 
@@ -25,8 +23,8 @@ Novu Workflows help you:
 ## Features
 
 - **Multi-channel**: Email, in-app, SMS, push, and chat channels.
-- **Action steps**: Delays, <GlossaryTerm term="digest">digests</GlossaryTerm>, throttle notifications, and HTTP requests.
-- **Step conditions**: Define conditional logic for each workflow <GlossaryTerm term="step">step</GlossaryTerm>.
+- **Action steps**: Delays, <Tooltip headline="Digest" tip="An action step that batches multiple trigger events into one downstream execution per digest window." cta="Read the guide" href="/platform/workflow/add-and-configure-steps/configure-action-steps/digest">digests</Tooltip>, throttle notifications, and HTTP requests.
+- **Step conditions**: Define conditional logic for each workflow <Tooltip headline="Step" tip="A node in a workflow. Channel steps deliver messages; action steps control execution flow." cta="Read the guide" href="/platform/workflow/add-and-configure-steps">step</Tooltip>.
 - **Template editors**: Channel-specific editors with variables and LiquidJS logic.
 - **Reusable layouts and components**: Email layouts and shared templates.
 - **Context and shared data**: Attach metadata and reusable objects across workflows.

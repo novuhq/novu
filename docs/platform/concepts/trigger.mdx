@@ -3,8 +3,6 @@ title: 'Trigger'
 description: "Understand how Novu processes a trigger event from initial API request to fan-out, digest, delay, and channel delivery inside a workflow run."
 ---
 
-import { GlossaryTerm } from '/snippets/glossary-term.jsx';
-
 ## Trigger Request
 
 A trigger request is the initial step in handling a trigger event. It contains crucial details such as the template identifier, a list of subscribers who will receive the notification, the payload of the notification, and any overrides that need to be applied.
@@ -26,8 +24,8 @@ Upon sending the request to the [event/trigger](/api-reference/events/trigger-ev
 When an event is picked up by the **trigger queue worker**, the processing phase begins. Here's what happens:
 
 - **Subscriber Upsert:** The worker validates the subscribers associated with the event and either creates or updates the subscriber with the information passed in the `to` object.
-- **Notification Entity Creation:** For each subscriber listed in the trigger event, a corresponding <GlossaryTerm term="notification">notification</GlossaryTerm> entity is created. This entity contains essential data related to the organization, template, subscriber, and event payload.
-- **<GlossaryTerm term="job">Job</GlossaryTerm> Creation:** Based on the notification template's defined steps, jobs are generated. These jobs are responsible for carrying out specific tasks related to the event notification. Additionally, the notification entity is updated with a "channels" field generated from these steps, indicating the communication channels through which notifications will be sent.
+- **Notification Entity Creation:** For each subscriber listed in the trigger event, a corresponding <Tooltip headline="Notification" tip="The container that tracks one trigger execution for one subscriber, including jobs, messages, and delivery status." cta="Learn more" href="/platform/concepts/notification-event">notification</Tooltip> entity is created. This entity contains essential data related to the organization, template, subscriber, and event payload.
+- **<Tooltip headline="Job" tip="A unit of work created for each workflow step during execution, with statuses like PENDING, RUNNING, and COMPLETED." cta="Learn more" href="/platform/concepts/trigger#jobs">Job</Tooltip> Creation:** Based on the notification template's defined steps, jobs are generated. These jobs are responsible for carrying out specific tasks related to the event notification. Additionally, the notification entity is updated with a "channels" field generated from these steps, indicating the communication channels through which notifications will be sent.
 
 ## Jobs
 

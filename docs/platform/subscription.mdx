@@ -3,9 +3,7 @@ title: 'Introduction'
 description: "Learn what a Subscription is in Novu, how it stores subscriber preferences, and how it fits into the notification delivery and consent system."
 ---
 
-import { GlossaryTerm } from '/snippets/glossary-term.jsx';
-
-<GlossaryTerm term="subscription">Subscriptions</GlossaryTerm> introduce topic-level settings that allow <GlossaryTerm term="subscriber">subscribers</GlossaryTerm> to decide exactly which notifications they want to receive or mute.
+<Tooltip headline="Subscription" tip="A topic-level, condition-based opt-in layer evaluated against the trigger payload before delivery." cta="Learn more" href="/platform/subscription">Subscriptions</Tooltip> introduce topic-level settings that allow <Tooltip headline="Subscriber" tip="An entity designated to receive notifications, uniquely identified by subscriberId within an environment." cta="Learn more" href="/platform/concepts/subscribers">subscribers</Tooltip> to decide exactly which notifications they want to receive or mute.
 
 While standard preferences allow subscribers to toggle specific channels on or off, Subscriptions provide more precise control through conditional rules. With Subscriptions, subscribers can mute topics, subscribe or unsubscribe to them, and also define conditions that determine when Novu should deliver a notification.
 
@@ -13,7 +11,7 @@ While standard preferences allow subscribers to toggle specific channels on or o
 
 The Subscription introduces a filtering layer between the trigger and the subscriber. When you trigger a notification to a topic key, the system doesn't automatically send it to everyone. Instead, it follows this evaluation flow:
 
-1. **Trigger**: You <GlossaryTerm term="trigger">trigger</GlossaryTerm> a workflow to a `topicKey` and include a data <GlossaryTerm term="payload">payload</GlossaryTerm> and optional <GlossaryTerm term="context">Context</GlossaryTerm>.
+1. **Trigger**: You <Tooltip headline="Trigger" tip="An API request that starts a workflow for one or more recipients, including a workflowId, to field, and optional payload." cta="Learn more" href="/platform/concepts/trigger">trigger</Tooltip> a workflow to a `topicKey` and include a data <Tooltip headline="Payload" tip="Dynamic JSON data passed at trigger time to personalize templates, drive step conditions, and configure action steps." cta="Learn more" href="/platform/concepts/trigger">payload</Tooltip> and optional <Tooltip headline="Context" tip="Multi-dimensional metadata passed at trigger time, such as tenant, app, or region, available in templates and Inbox filtering." cta="Learn more" href="/platform/concepts/contexts">Context</Tooltip>.
 2. **Match**: Novu retrieves topic subscriptions whose Context matches the trigger (exact match), then resolves the subscribers.
 3. **Evaluate**: The system checks each matching subscription's conditions against the trigger **payload** (and workflow preferences).
 4. **Deliver**: Only subscribers whose subscriptions pass receive the notification.
@@ -28,8 +26,8 @@ This filtering happens for every event on a topic, which allows you to support m
 
 To implement Subscriptions effectively, you should understand these components:
 
-- **Topic**: A <GlossaryTerm term="topic">topic</GlossaryTerm> groups notifications of a similar type. Refer to the [Topics documentation](/platform/concepts/topics) for details on how to create and manage them.
-- **Subscribers**: A subscriber represents the user or entity that receives notifications. Subscribers can join or leave topics and define <GlossaryTerm term="preference">preferences</GlossaryTerm> that control delivery. Refer to the [Subscribers documentation](/platform/concepts/subscribers) for details on how to create and manage subscribers.
+- **Topic**: A <Tooltip headline="Topic" tip="A named group of subscribers used to fan out a workflow with a single trigger, referenced by topicKey." cta="Learn more" href="/platform/concepts/topics">topic</Tooltip> groups notifications of a similar type. Refer to the [Topics documentation](/platform/concepts/topics) for details on how to create and manage them.
+- **Subscribers**: A subscriber represents the user or entity that receives notifications. Subscribers can join or leave topics and define <Tooltip headline="Preference" tip="Rules that control whether notifications are sent on a channel, at workflow, subscriber, or subscription scope." cta="Learn more" href="/platform/concepts/preferences">preferences</Tooltip> that control delivery. Refer to the [Subscribers documentation](/platform/concepts/subscribers) for details on how to create and manage subscribers.
 
 ### Subscription rules
 

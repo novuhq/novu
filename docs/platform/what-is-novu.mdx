@@ -3,12 +3,10 @@ title: What is Novu?
 description: 'Open-source communication infrastructure for transactional notifications and agent conversations. Workflows, Inbox, ACI, and 60+ provider integrations.'
 ---
 
-import { GlossaryTerm } from '/snippets/glossary-term.jsx';
-
 Novu is open-source communication infrastructure for products that need to reach users reliably and hold conversations with them. It gives you two complementary capabilities on one platform:
 
-- **Transactional notifications**: Orchestrate multi-channel <GlossaryTerm term="workflow">workflows</GlossaryTerm> for in-app, email, chat, push, and SMS with a unified API, drag-and-drop workflow builder, and customizable <GlossaryTerm term="inbox">`<Inbox />`</GlossaryTerm> component.
-- **Agent conversations**: Connect AI agents to Slack, Microsoft Teams, WhatsApp, email, Telegram, and other <GlossaryTerm term="channel">channels</GlossaryTerm> through <GlossaryTerm term="aci">Agent Communication Infrastructure (ACI)</GlossaryTerm>, without rebuilding webhooks, identity, and delivery for every platform.
+- **Transactional notifications**: Orchestrate multi-channel <Tooltip headline="Workflow" tip="An environment-scoped orchestration definition that determines what to send, when, and on which channels." cta="Learn more" href="/platform/concepts/workflows">workflows</Tooltip> for in-app, email, chat, push, and SMS with a unified API, drag-and-drop workflow builder, and customizable <Tooltip headline="Inbox" tip="Novu's in-app notification UI and client SDK component that delivers in_app messages, unread counts, and preferences." cta="Set up Inbox" href="/platform/inbox">`<Inbox />`</Tooltip> component.
+- **Agent conversations**: Connect AI agents to Slack, Microsoft Teams, WhatsApp, email, Telegram, and other <Tooltip headline="Channel" tip="A communication medium used to deliver notifications: in-app (Inbox), email, SMS, push, or chat." cta="Learn more" href="/platform/integrations">channels</Tooltip> through <Tooltip headline="ACI" tip="Novu's two-way agent messaging layer across Slack, Teams, WhatsApp, email, and Telegram, separate from the agent brain." cta="Learn more" href="/agents/get-started/what-is-aci">Agent Communication Infrastructure (ACI)</Tooltip>, without rebuilding webhooks, identity, and delivery for every platform.
 
 Use either capability on its own, or connect them. Agents can trigger existing workflows from a conversation thread, workflows can send messages on behalf of an agent, and a user who replies to a workflow message can start an agent conversation.
 
@@ -44,7 +42,7 @@ Novu is designed to provide a powerful, flexible, and easy-to-use communication 
 
 ### Agent communication infrastructure for conversational products
 
-- **One agent, many channels**. Connect the same <GlossaryTerm term="agent-brain">agent brain</GlossaryTerm> to Slack, Microsoft Teams, WhatsApp, email, Telegram, and other supported platforms through ACI.
+- **One agent, many channels**. Connect the same <Tooltip headline="Agent brain" tip="The system that decides how an agent responds, powered by an LLM, custom code, rules, or human-in-the-loop workflows." cta="See mental model" href="/agents/get-started/mental-model">agent brain</Tooltip> to Slack, Microsoft Teams, WhatsApp, email, Telegram, and other supported platforms through ACI.
 - **Infrastructure separate from intelligence**. ACI handles webhooks, identity, conversation state, and delivery so you can focus on your LLM, tools, and business logic.
 - **Custom code or managed agents**. Run your own agent with the agent SDK, or configure a [managed agent](/agents/managed-agent/overview) without custom server code.
 
@@ -58,12 +56,12 @@ Novu is designed to provide a powerful, flexible, and easy-to-use communication 
 
 - **Unifies all notification channels**. Developers can manage email, in-app, push, SMS, and chat notifications from a single API.
 - **Optimizes delivery strategies**. Novu enables multi-step workflows, ensuring users receive messages in the most effective channel.
-- **Reduces notification overload**. The <GlossaryTerm term="digest">digest</GlossaryTerm> feature consolidates updates (for example, "10 new likes on your post"), improving user experience.
+- **Reduces notification overload**. The <Tooltip headline="Digest" tip="An action step that batches multiple trigger events into one downstream execution per digest window." cta="Read the guide" href="/platform/workflow/add-and-configure-steps/configure-action-steps/digest">digest</Tooltip> feature consolidates updates (for example, "10 new likes on your post"), improving user experience.
 
 ### Flexible workflow automation: no-code or code-first
 
 - **No-code workflow automation**. The drag-and-drop workflow builder makes notification automation accessible to your non-technical teams via the Novu's dashboard.
-- **Provides ultimate control with code-first workflows**. The <GlossaryTerm term="framework">Novu Framework SDK</GlossaryTerm> lets developers define workflows in code, integrate with CI/CD, and add custom automation logic.
+- **Provides ultimate control with code-first workflows**. The <Tooltip headline="Novu Framework" tip="The code-first SDK for defining workflows in TypeScript with typed payload and controls schemas." cta="Learn more" href="/framework/introduction">Novu Framework SDK</Tooltip> lets developers define workflows in code, integrate with CI/CD, and add custom automation logic.
 - **Consistent notification experience across teams**. Standardizes notification patterns, preventing each team from implementing separate, inconsistent solutions.
 
 ### Advanced features for power users

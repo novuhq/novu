@@ -3,9 +3,7 @@ title: 'Introduction'
 description: 'Discover how the Novu Framework empowers you to build, customize, and manage advanced notification workflows with a mix of code and no-code capabilities.'
 ---
 
-import { GlossaryTerm } from '/snippets/glossary-term.jsx';
-
-The <GlossaryTerm term="framework">Novu framework</GlossaryTerm> allows you to build and manage advanced notification <GlossaryTerm term="workflow">workflows</GlossaryTerm> with code, and expose no-code <GlossaryTerm term="controls">controls</GlossaryTerm> for non-technical users to modify.
+The <Tooltip headline="Novu Framework" tip="The code-first SDK for defining workflows in TypeScript with typed payload and controls schemas." cta="Learn more" href="/framework/introduction">Novu framework</Tooltip> allows you to build and manage advanced notification <Tooltip headline="Workflow" tip="An environment-scoped orchestration definition that determines what to send, when, and on which channels." cta="Learn more" href="/platform/concepts/workflows">workflows</Tooltip> with code, and expose no-code <Tooltip headline="Controls" tip="Dashboard-editable fields in Novu Framework workflows that let non-technical users change step content without code changes." cta="Learn more" href="/framework/controls">controls</Tooltip> for non-technical users to modify.
 
 Workflows are the building blocks of your customer notification experience, they will define the what, when, how and where of your notifications.
 
@@ -13,9 +11,9 @@ Workflows are the building blocks of your customer notification experience, they
 
 Each Novu workflow is composed of 3 main components:
 
-- **<GlossaryTerm term="trigger">Trigger</GlossaryTerm>** - The event that will start the workflow.
-- **<GlossaryTerm term="channel">Channel steps</GlossaryTerm>** - The delivery method of the notification with the content.
-- **<GlossaryTerm term="step">Action steps</GlossaryTerm>** - Actions that will happen before and after a given channel step is executed.
+- **<Tooltip headline="Trigger" tip="An API request that starts a workflow for one or more recipients, including a workflowId, to field, and optional payload." cta="Learn more" href="/platform/concepts/trigger">Trigger</Tooltip>** - The event that will start the workflow.
+- **<Tooltip headline="Channel" tip="A communication medium used to deliver notifications: in-app (Inbox), email, SMS, push, or chat." cta="Learn more" href="/platform/integrations">Channel steps</Tooltip>** - The delivery method of the notification with the content.
+- **<Tooltip headline="Step" tip="A node in a workflow. Channel steps deliver messages; action steps control execution flow." cta="Read the guide" href="/platform/workflow/add-and-configure-steps">Action steps</Tooltip>** - Actions that will happen before and after a given channel step is executed.
 
 ```mermaid
 flowchart TB

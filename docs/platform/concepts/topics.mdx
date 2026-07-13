@@ -3,13 +3,11 @@ title: 'Topics'
 description: "Learn how topics work in Novu and how they help you organize and target groups of subscribers efficiently for broadcasts, announcements, and segmented alerts."
 ---
 
-import { GlossaryTerm } from '/snippets/glossary-term.jsx';
-
 In Novu, a _topic_ is a way to group subscribers under a shared label so that you can broadcast a message to many users with a single workflow trigger. This fan-out mechanism removes the need to manage individual subscriber IDs for each notification, streamlining scenarios like product announcements, feature rollouts, or status updates.
 
 ## Topics identifiers
 
-Each topic is uniquely identified by a <GlossaryTerm term="topic-key">topic key</GlossaryTerm>, a permanent, internal reference in your system. You can also assign a name to help describe its purpose, for example, "Task Updates" or "Comment Thread Subscribers".
+Each topic is uniquely identified by a <Tooltip headline="Topic key" tip="The immutable identifier used to reference a topic in the trigger to field." cta="Learn more" href="/platform/concepts/topics">topic key</Tooltip>, a permanent, internal reference in your system. You can also assign a name to help describe its purpose, for example, "Task Updates" or "Comment Thread Subscribers".
 
 The `topicKey` must be unique and cannot be changed after creation; Novu enforces this uniqueness behind the scenes. Example: `task:taskId` or `post:postId`.
 
@@ -24,8 +22,8 @@ Novu’s notification system is built around workflows, which are triggered for 
 
 When you trigger a workflow using a topic:
 - The `to` field accepts the topic’s key.
-- Novu looks up <GlossaryTerm term="subscription">topic subscriptions</GlossaryTerm> on that topic whose <GlossaryTerm term="context">Context</GlossaryTerm> matches the trigger (exact match).
-- For each matching subscription, Novu evaluates optional JSON Logic conditions against the trigger **<GlossaryTerm term="payload">payload</GlossaryTerm>**.
+- Novu looks up <Tooltip headline="Subscription" tip="A topic-level, condition-based opt-in layer evaluated against the trigger payload before delivery." cta="Learn more" href="/platform/subscription">topic subscriptions</Tooltip> on that topic whose <Tooltip headline="Context" tip="Multi-dimensional metadata passed at trigger time, such as tenant, app, or region, available in templates and Inbox filtering." cta="Learn more" href="/platform/concepts/contexts">Context</Tooltip> matches the trigger (exact match).
+- For each matching subscription, Novu evaluates optional JSON Logic conditions against the trigger **<Tooltip headline="Payload" tip="Dynamic JSON data passed at trigger time to personalize templates, drive step conditions, and configure action steps." cta="Learn more" href="/platform/concepts/trigger">payload</Tooltip>**.
 - A separate workflow event is created for each subscriber whose subscription passes.
 
 Topics let you target large groups with a single API call, removing the need to loop through subscribers or send multiple workflow triggers.

@@ -3,9 +3,7 @@ title: 'Integrations'
 description: "Learn how Novu integrations connect your account to third-party email, SMS, push, and chat providers with credentials, environments, and identifiers."
 ---
 
-import { GlossaryTerm } from '/snippets/glossary-term.jsx';
-
-In Novu, <GlossaryTerm term="integration">integrations</GlossaryTerm> are configured connections to third-party services that deliver notifications across supported channels, which are email, SMS, push, and chat.
+In Novu, <Tooltip headline="Integration" tip="An environment-scoped, configured connection to a third-party provider with credentials and channel settings." cta="Learn more" href="/platform/concepts/integrations">integrations</Tooltip> are configured connections to third-party services that deliver notifications across supported channels, which are email, SMS, push, and chat.
 
 The In-App channel is handled internally by Novu and does not require a third-party integration.
 
@@ -25,8 +23,8 @@ If no active integration exists for the required channel, the workflow step fail
 ## Providers vs integrations
 
 It’s helpful to distinguish between providers and integrations:
-- A <GlossaryTerm term="provider">provider</GlossaryTerm> is the third-party service responsible for sending messages (for example, Twilio, SendGrid, Slack).
-- An integration is your instance of that provider, configured with the necessary <GlossaryTerm term="credential">credentials</GlossaryTerm> and settings.
+- A <Tooltip headline="Provider" tip="A third-party service that delivers notifications on a channel, such as SendGrid for email or Twilio for SMS." cta="Learn more" href="/platform/concepts/integrations">provider</Tooltip> is the third-party service responsible for sending messages (for example, Twilio, SendGrid, Slack).
+- An integration is your instance of that provider, configured with the necessary <Tooltip headline="Credential" tip="Encrypted authentication and configuration values stored on an integration, such as API keys and OAuth tokens." cta="Learn more" href="/platform/concepts/integrations">credentials</Tooltip> and settings.
 
 You can have multiple integrations for the same provider, for example, using two different SendGrid accounts for staging and production environments. Novu allows you to manage these as separate, named integrations.
 

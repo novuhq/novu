@@ -4,11 +4,9 @@ sidebarTitle: Schema
 description: "Reference the Novu integration schema used in API requests and responses. Review fields, data types, and object structure for this resource."
 ---
 
-import { GlossaryTerm } from '/snippets/glossary-term.jsx';
-
 ### Integration
 
-<GlossaryTerm term="integration">Integration</GlossaryTerm> is third party service used by Novu to send notification for a specific <GlossaryTerm term="channel">channel</GlossaryTerm>. For example, [sengrid](/platform/integrations/email/sendgrid) is a email integration and [twilio](/platform/integrations/sms/twilio) is a sms integration. Read more about integrations on [integrations concept page](/platform/concepts/integrations). Integration APIs don't return <GlossaryTerm term="credential">credentials</GlossaryTerm> with secret key based authorization method, only integration metadata details are returned in response.
+<Tooltip headline="Integration" tip="An environment-scoped, configured connection to a third-party provider with credentials and channel settings." cta="Learn more" href="/platform/concepts/integrations">Integration</Tooltip> is third party service used by Novu to send notification for a specific <Tooltip headline="Channel" tip="A communication medium used to deliver notifications: in-app (Inbox), email, SMS, push, or chat." cta="Learn more" href="/platform/integrations">channel</Tooltip>. For example, [sengrid](/platform/integrations/email/sendgrid) is a email integration and [twilio](/platform/integrations/sms/twilio) is a sms integration. Read more about integrations on [integrations concept page](/platform/concepts/integrations). Integration APIs don't return <Tooltip headline="Credential" tip="Encrypted authentication and configuration values stored on an integration, such as API keys and OAuth tokens." cta="Learn more" href="/platform/concepts/integrations">credentials</Tooltip> with secret key based authorization method, only integration metadata details are returned in response.
 
 | Field | Type | Description |
 | --- | --- | --- |

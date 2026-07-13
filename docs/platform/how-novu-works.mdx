@@ -4,16 +4,14 @@ sidebarTitle: 'How Novu Works'
 description: 'A high-level overview of Novu’s architecture: workflows, triggers, subscribers, and environments, and how they connect to support in-app and external channels.'
 ---
 
-import { GlossaryTerm } from '/snippets/glossary-term.jsx';
 
-
-Novu <GlossaryTerm term="trigger">triggers</GlossaryTerm> <GlossaryTerm term="workflow">workflows</GlossaryTerm> that deliver notifications to <GlossaryTerm term="subscriber">subscribers</GlossaryTerm> across in-app, email, SMS, push, and chat <GlossaryTerm term="channel">channels</GlossaryTerm>. Your application sends an <GlossaryTerm term="event">event</GlossaryTerm> to the Novu API, Novu resolves the subscriber and executes each workflow step, then delivers messages through configured <GlossaryTerm term="integration">integrations</GlossaryTerm> or the [`<Inbox />`](/platform/inbox) component.
+Novu <Tooltip headline="Trigger" tip="An API request that starts a workflow for one or more recipients, including a workflowId, to field, and optional payload." cta="Learn more" href="/platform/concepts/trigger">triggers</Tooltip> <Tooltip headline="Workflow" tip="An environment-scoped orchestration definition that determines what to send, when, and on which channels." cta="Learn more" href="/platform/concepts/workflows">workflows</Tooltip> that deliver notifications to <Tooltip headline="Subscriber" tip="An entity designated to receive notifications, uniquely identified by subscriberId within an environment." cta="Learn more" href="/platform/concepts/subscribers">subscribers</Tooltip> across in-app, email, SMS, push, and chat <Tooltip headline="Channel" tip="A communication medium used to deliver notifications: in-app (Inbox), email, SMS, push, or chat." cta="Learn more" href="/platform/integrations">channels</Tooltip>. Your application sends an <Tooltip headline="Event" tip="An API request that starts a workflow for one or more recipients. Novu bills one event per subscriber resolved from the trigger." cta="Learn more" href="/platform/concepts/notification-event">event</Tooltip> to the Novu API, Novu resolves the subscriber and executes each workflow step, then delivers messages through configured <Tooltip headline="Integration" tip="An environment-scoped, configured connection to a third-party provider with credentials and channel settings." cta="Learn more" href="/platform/concepts/integrations">integrations</Tooltip> or the [`<Inbox />`](/platform/inbox) component.
 
 ## How does the Inbox component fit in the notification lifecycle?
 
 The [`<Inbox />`](/platform/inbox) component is Novu’s in-app delivery endpoint. This component makes it possible for users to receive and manage notifications directly within your application interface.
 
-Unlike external channels that rely on third-party <GlossaryTerm term="provider">providers</GlossaryTerm>, the <GlossaryTerm term="inbox">Inbox</GlossaryTerm> is internal to your app. It uses the environment’s <GlossaryTerm term="application-identifier">application identifier</GlossaryTerm> to establish a secure connection, scoped to your subscribers.
+Unlike external channels that rely on third-party <Tooltip headline="Provider" tip="A third-party service that delivers notifications on a channel, such as SendGrid for email or Twilio for SMS." cta="Learn more" href="/platform/concepts/integrations">providers</Tooltip>, the <Tooltip headline="Inbox" tip="Novu's in-app notification UI and client SDK component that delivers in_app messages, unread counts, and preferences." cta="Set up Inbox" href="/platform/inbox">Inbox</Tooltip> is internal to your app. It uses the environment’s <Tooltip headline="Application identifier" tip="The public, environment-scoped key used by client SDKs and the Inbox to connect to Novu. Safe to expose in frontend code.">application identifier</Tooltip> to establish a secure connection, scoped to your subscribers.
 
 When a workflow includes an in-app step, messages are routed to the subscriber’s inbox in real time. The Inbox component handles rendering, notification management, users' preferences, and message actions without requiring additional backend logic.
 
@@ -27,7 +25,7 @@ At a high level, Novu’s architecture is built around modular but connected con
 
 ### How do organizations and environments work?
 
-Everything starts with your <GlossaryTerm term="organization">organization</GlossaryTerm>, the top-level entity in Novu. Each organization can have multiple <GlossaryTerm term="environment">environments</GlossaryTerm>, such as:
+Everything starts with your <Tooltip headline="Organization" tip="The top-level Novu account that owns environments, workflows, and team access, managed through the Dashboard." cta="Full definition" href="/platform/additional-resources/glossary#organization">organization</Tooltip>, the top-level entity in Novu. Each organization can have multiple <Tooltip headline="Environment" tip="An isolated scope for workflows, subscribers, integrations, and other Novu data, such as Development or Production." cta="Learn more" href="/platform/developer/environments">environments</Tooltip>, such as:
 - Development for testing
 - Production for live apps
 - Any custom environments you need (for example, Staging)
@@ -43,9 +41,9 @@ This isolation allows teams to test workflows and notifications on one environme
 
 ### How do workflows and triggers work?
 
-A workflow defines the <GlossaryTerm term="step">steps</GlossaryTerm> Novu takes to deliver a notification. Steps are either channel steps (email, in-app, push, chat, and SMS) or action steps (Delay and Digest).
+A workflow defines the <Tooltip headline="Step" tip="A node in a workflow. Channel steps deliver messages; action steps control execution flow." cta="Read the guide" href="/platform/workflow/add-and-configure-steps">steps</Tooltip> Novu takes to deliver a notification. Steps are either channel steps (email, in-app, push, chat, and SMS) or action steps (Delay and Digest).
 
-Workflows are environment-specific and versioned. You trigger them using the REST API by sending an event along with the relevant secret key from the current environment, `subscriberId`, `workflowId`, and <GlossaryTerm term="payload">payload</GlossaryTerm>.
+Workflows are environment-specific and versioned. You trigger them using the REST API by sending an event along with the relevant secret key from the current environment, `subscriberId`, `workflowId`, and <Tooltip headline="Payload" tip="Dynamic JSON data passed at trigger time to personalize templates, drive step conditions, and configure action steps." cta="Learn more" href="/platform/concepts/trigger">payload</Tooltip>.
 
 Each trigger becomes an event that flows through the workflow. Steps in the workflow generate messages, which are delivered via their corresponding channels or routed to the inbox.
 
@@ -53,7 +51,7 @@ To learn more about workflows, refer to the [Workflows documentation](/platform/
 
 ### How do subscribers and topics work?
 
-A <GlossaryTerm term="subscriber">subscriber</GlossaryTerm> represents a user in a given environment. Each subscriber has:
+A <Tooltip headline="Subscriber" tip="An entity designated to receive notifications, uniquely identified by subscriberId within an environment." cta="Learn more" href="/platform/concepts/subscribers">subscriber</Tooltip> represents a user in a given environment. Each subscriber has:
 
 - **Channel identifiers**: Such as email address or phone number.
 - **A unique `subscriberId`**: Used when triggering workflows and resolving the recipient.
@@ -61,7 +59,7 @@ A <GlossaryTerm term="subscriber">subscriber</GlossaryTerm> represents a user in
 - **Custom metadata**: Stored under a `data` field, which is a flexible JSON object where you can store any additional user-specific information (for example, plan level, preferences, timestamps).
 - **Environment-specific preferences**: Like preferred channels and opt-in settings.
 
-To send notifications to multiple users, you can group subscribers into a <GlossaryTerm term="topic">topic</GlossaryTerm>. A workflow can be triggered for an individual subscriber or for all subscribers within a topic.
+To send notifications to multiple users, you can group subscribers into a <Tooltip headline="Topic" tip="A named group of subscribers used to fan out a workflow with a single trigger, referenced by topicKey." cta="Learn more" href="/platform/concepts/topics">topic</Tooltip>. A workflow can be triggered for an individual subscriber or for all subscribers within a topic.
 
 Subscriber resolution is part of workflow execution. Novu uses the subscriber's metadata to determine how messages are personalized, delivered, and stored.
 

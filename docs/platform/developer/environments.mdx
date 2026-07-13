@@ -3,9 +3,7 @@ title: 'Environments'
 description: "Understand and manage development and production environments in Novu, including API keys, workflow syncing, and per-environment integrations."
 ---
 
-import { GlossaryTerm } from '/snippets/glossary-term.jsx';
-
-Novu uses <GlossaryTerm term="environment">environments</GlossaryTerm> to separate your workflows and its data. This lets you safely test changes, like a new workflow, in one environment before moving it to a live production environment.
+Novu uses <Tooltip headline="Environment" tip="An isolated scope for workflows, subscribers, integrations, and other Novu data, such as Development or Production." cta="Learn more" href="/platform/developer/environments">environments</Tooltip> to separate your workflows and its data. This lets you safely test changes, like a new workflow, in one environment before moving it to a live production environment.
 
 ## Types of environments
 
@@ -73,7 +71,7 @@ Each environment has two unique identifiers:
 
 ## Publish changes to other environments
 
-Novu provides a <GlossaryTerm term="publish">publish</GlossaryTerm> mechanism that allows you to promote changes from your development environment to production or other custom environments. This process ensures that all changes are deliberate, reviewed, and deployed in a controlled manner.
+Novu provides a <Tooltip headline="Publish" tip="The process of promoting workflows, layouts, and translations from Development to Production or custom environments." cta="Learn more" href="/platform/developer/environments#publish-changes-to-other-environments">publish</Tooltip> mechanism that allows you to promote changes from your development environment to production or other custom environments. This process ensures that all changes are deliberate, reviewed, and deployed in a controlled manner.
 
 The publishing process bundles all modifications made to workflows, layouts, and translations since the last publish event.
 

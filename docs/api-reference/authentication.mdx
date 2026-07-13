@@ -3,9 +3,7 @@ title: 'Authentication'
 description: "Authenticate REST API requests to Novu with your secret key, manage environment credentials, rotate keys, and follow security best practices."
 ---
 
-import { GlossaryTerm } from '/snippets/glossary-term.jsx';
-
-The Novu REST API uses API key authentication. Every server-side request must include your <GlossaryTerm term="environment">environment's</GlossaryTerm> <GlossaryTerm term="secret-key">secret key</GlossaryTerm> in the `Authorization` header.
+The Novu REST API uses API key authentication. Every server-side request must include your <Tooltip headline="Environment" tip="An isolated scope for workflows, subscribers, integrations, and other Novu data, such as Development or Production." cta="Learn more" href="/platform/developer/environments">environment's</Tooltip> <Tooltip headline="Secret key" tip="The private API key used to authenticate server-side requests. Never expose it in client-side code." cta="Learn more" href="/api-reference/authentication">secret key</Tooltip> in the `Authorization` header.
 
 <Note>
   The REST API and server-side SDKs are intended for server-side applications only. Using them in client-side code causes Cross-Origin Resource Sharing (CORS) errors and exposes your secret key.

@@ -4,14 +4,12 @@ description: 'Manage subscribers, trigger workflows, configure integrations, ope
 sidebarTitle: Overview
 ---
 
-import { GlossaryTerm } from '/snippets/glossary-term.jsx';
-
-The Novu REST API lets you manage <GlossaryTerm term="subscriber">subscribers</GlossaryTerm>, <GlossaryTerm term="trigger">trigger</GlossaryTerm> <GlossaryTerm term="workflow">workflows</GlossaryTerm>, configure <GlossaryTerm term="integration">integrations</GlossaryTerm>, operate agents, and run your notification infrastructure from your backend. Start with these common operations:
+The Novu REST API lets you manage <Tooltip headline="Subscriber" tip="An entity designated to receive notifications, uniquely identified by subscriberId within an environment." cta="Learn more" href="/platform/concepts/subscribers">subscribers</Tooltip>, <Tooltip headline="Trigger" tip="An API request that starts a workflow for one or more recipients, including a workflowId, to field, and optional payload." cta="Learn more" href="/platform/concepts/trigger">trigger</Tooltip> <Tooltip headline="Workflow" tip="An environment-scoped orchestration definition that determines what to send, when, and on which channels." cta="Learn more" href="/platform/concepts/workflows">workflows</Tooltip>, configure <Tooltip headline="Integration" tip="An environment-scoped, configured connection to a third-party provider with credentials and channel settings." cta="Learn more" href="/platform/concepts/integrations">integrations</Tooltip>, operate agents, and run your notification infrastructure from your backend. Start with these common operations:
 
 - [Trigger event](/api-reference/events/trigger-event) — send a workflow to a subscriber
 - [Create a subscriber](/api-reference/subscribers/create-a-subscriber) — register a notification recipient
 - [Create an agent](/api-reference/agents/create-an-agent) — create a custom code or managed agent
-- [Retrieve subscriber notifications](/api-reference/subscribers/retrieve-subscriber-notifications) — read in-app notifications for the <GlossaryTerm term="inbox">Inbox</GlossaryTerm>
+- [Retrieve subscriber notifications](/api-reference/subscribers/retrieve-subscriber-notifications) — read in-app notifications for the <Tooltip headline="Inbox" tip="Novu's in-app notification UI and client SDK component that delivers in_app messages, unread counts, and preferences." cta="Set up Inbox" href="/platform/inbox">Inbox</Tooltip>
 - [Create a workflow](/api-reference/workflows/create-a-workflow) — define a notification workflow programmatically
 - [Authentication](/api-reference/authentication) — authenticate requests with your secret API key
 
@@ -34,7 +32,7 @@ All endpoints in this reference use the US base URL unless noted otherwise. See 
 
 The Novu API is organized around REST. It has predictable, resource-oriented URLs, accepts and returns JSON request and response bodies, and uses standard HTTP verbs and status codes.
 
-- **Resource-oriented** — Each resource (<GlossaryTerm term="subscriber">subscribers</GlossaryTerm>, <GlossaryTerm term="topic">topics</GlossaryTerm>, workflows, agents, and more) has its own set of endpoints. Use `POST` to create, `GET` to read, `PATCH`/`PUT` to update, and `DELETE` to remove.
+- **Resource-oriented** — Each resource (<Tooltip headline="Subscriber" tip="An entity designated to receive notifications, uniquely identified by subscriberId within an environment." cta="Learn more" href="/platform/concepts/subscribers">subscribers</Tooltip>, <Tooltip headline="Topic" tip="A named group of subscribers used to fan out a workflow with a single trigger, referenced by topicKey." cta="Learn more" href="/platform/concepts/topics">topics</Tooltip>, workflows, agents, and more) has its own set of endpoints. Use `POST` to create, `GET` to read, `PATCH`/`PUT` to update, and `DELETE` to remove.
 - **JSON everywhere** — Send `Content-Type: application/json` on requests with a body. Responses are JSON-encoded.
 - **Response envelope** — Successful responses wrap the result in a `data` field, for example `{ "data": { ... } }`. List endpoints return `{ "data": [ ... ] }` alongside [pagination](/api-reference/pagination) metadata.
 - **Consistent errors** — Failures return a standard error body with a `statusCode` and `message`. See [Errors](/api-reference/errors).

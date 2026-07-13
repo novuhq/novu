@@ -1,4 +1,5 @@
-export const glossaryTerms = {
+/** Single source of truth for glossary tooltip definitions. */
+module.exports = {
   workflow: {
     headline: 'Workflow',
     tip: 'An environment-scoped orchestration definition that determines what to send, when, and on which channels.',
@@ -259,29 +260,4 @@ export const glossaryTerms = {
     cta: 'Learn more',
     href: '/api-reference/authentication',
   },
-};
-
-export const GlossaryTerm = ({ term, children, cta, href }) => {
-  const entry = glossaryTerms[term];
-
-  if (!entry) {
-    return children;
-  }
-
-  const tooltipCta = cta ?? entry.cta;
-  const tooltipHref = href ?? entry.href;
-
-  if (tooltipCta && tooltipHref) {
-    return (
-      <Tooltip headline={entry.headline} tip={entry.tip} cta={tooltipCta} href={tooltipHref}>
-        {children}
-      </Tooltip>
-    );
-  }
-
-  return (
-    <Tooltip headline={entry.headline} tip={entry.tip}>
-      {children}
-    </Tooltip>
-  );
 };

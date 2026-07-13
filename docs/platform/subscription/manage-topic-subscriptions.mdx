@@ -3,9 +3,7 @@ title: 'Manage topic subscriptions'
 description: 'Create and update topic subscriptions using the REST API, @novu/js, and @novu/react, including JSON Logic conditions evaluated at trigger time.'
 ---
 
-import { GlossaryTerm } from '/snippets/glossary-term.jsx';
-
-<GlossaryTerm term="subscription">Topic subscriptions</GlossaryTerm> let a <GlossaryTerm term="subscriber">subscriber</GlossaryTerm> opt in to a <GlossaryTerm term="topic">topic</GlossaryTerm> with fine-grained rules. Each subscription can target specific workflows and include a **JSON Logic condition** that is evaluated when a workflow is triggered to the topic.
+<Tooltip headline="Subscription" tip="A topic-level, condition-based opt-in layer evaluated against the trigger payload before delivery." cta="Learn more" href="/platform/subscription">Topic subscriptions</Tooltip> let a <Tooltip headline="Subscriber" tip="An entity designated to receive notifications, uniquely identified by subscriberId within an environment." cta="Learn more" href="/platform/concepts/subscribers">subscriber</Tooltip> opt in to a <Tooltip headline="Topic" tip="A named group of subscribers used to fan out a workflow with a single trigger, referenced by topicKey." cta="Learn more" href="/platform/concepts/topics">topic</Tooltip> with fine-grained rules. Each subscription can target specific workflows and include a **JSON Logic condition** that is evaluated when a workflow is triggered to the topic.
 
 <Note>
   Conditions are evaluated at **trigger time**, not when the subscription is created. A subscription is always stored; Novu decides at delivery whether the condition matches the incoming event data.
@@ -13,7 +11,7 @@ import { GlossaryTerm } from '/snippets/glossary-term.jsx';
 
 ## Context-scoped subscriptions
 
-Topic subscriptions can be scoped to a <GlossaryTerm term="context">Context</GlossaryTerm>, the same metadata you pass when <GlossaryTerm term="trigger">triggering</GlossaryTerm> a workflow. This lets one subscriber maintain separate subscriptions to the same `topicKey` for different tenants, apps, or regions without duplicating topics or workflows.
+Topic subscriptions can be scoped to a <Tooltip headline="Context" tip="Multi-dimensional metadata passed at trigger time, such as tenant, app, or region, available in templates and Inbox filtering." cta="Learn more" href="/platform/concepts/contexts">Context</Tooltip>, the same metadata you pass when <Tooltip headline="Trigger" tip="An API request that starts a workflow for one or more recipients, including a workflowId, to field, and optional payload." cta="Learn more" href="/platform/concepts/trigger">triggering</Tooltip> a workflow. This lets one subscriber maintain separate subscriptions to the same `topicKey` for different tenants, apps, or regions without duplicating topics or workflows.
 
 Novu uses **exact-match** Context filtering for subscriptions, the same rules as the [Inbox](/platform/inbox/configuration/inbox-with-context):
 

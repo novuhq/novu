@@ -3,14 +3,12 @@ title: 'Setup the Subscription'
 description: "Integrate and render the Novu Subscription component in your React app to let users manage notification channel and workflow preferences."
 ---
 
-import { GlossaryTerm } from '/snippets/glossary-term.jsx';
-
 
 <Note>
   Subscription is avialable from v3.12.0 for the `@novu/nextjs`, `@novu/react` and `@novu/js` packages.
 </Note>
 
-This quickstart shows how to render the <GlossaryTerm term="subscription">subscription</GlossaryTerm> UI in your app. The subscription UI lets users subscribe to <GlossaryTerm term="topic">topics</GlossaryTerm>, define conditions, and manage how they receive notifications.
+This quickstart shows how to render the <Tooltip headline="Subscription" tip="A topic-level, condition-based opt-in layer evaluated against the trigger payload before delivery." cta="Learn more" href="/platform/subscription">subscription</Tooltip> UI in your app. The subscription UI lets users subscribe to <Tooltip headline="Topic" tip="A named group of subscribers used to fan out a workflow with a single trigger, referenced by topicKey." cta="Learn more" href="/platform/concepts/topics">topics</Tooltip>, define conditions, and manage how they receive notifications.
 
 <Note>
   To learn how to render custom UI for the Subscription preferences, refer to the [Headless hooks documentation](/platform/subscription/headless-hooks).
@@ -43,7 +41,7 @@ The [`<Subscription />`](/platform/subscription/quickstart) component is designe
   <Step>
     ### Initialize the Novu client
 
-    Wrap your app or the specific section where the subscription component would live with the `<NovuProvider>`. Configure the provider with your <GlossaryTerm term="application-identifier">applicationIdentifier</GlossaryTerm> and the current user's <GlossaryTerm term="subscriber-id">subscriberId</GlossaryTerm>.
+    Wrap your app or the specific section where the subscription component would live with the `<NovuProvider>`. Configure the provider with your <Tooltip headline="Application identifier" tip="The public, environment-scoped key used by client SDKs and the Inbox to connect to Novu. Safe to expose in frontend code.">applicationIdentifier</Tooltip> and the current user's <Tooltip headline="Subscriber ID" tip="The unique identifier for a notification recipient in your application, typically the user ID in your database.">subscriberId</Tooltip>.
 
     ```tsx
 

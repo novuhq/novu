@@ -32,16 +32,16 @@ for (const filePath of walk(docsRoot)) {
   const content = fs.readFileSync(filePath, 'utf8');
   const relativePath = path.relative(docsRoot, filePath);
 
-  if (content.includes('<Tooltip tip=')) {
-    issues.push(`${relativePath}: contains inline <Tooltip tip=...> — use <GlossaryTerm> instead`);
+  if (content.includes('<GlossaryTerm')) {
+    issues.push(`${relativePath}: contains <GlossaryTerm> — expand with node scripts/expand-glossary-tooltips.js`);
   }
 
-  if (content.match(/\/platform\/additional-resources\/glossary#/)) {
-    issues.push(`${relativePath}: contains inline glossary anchor link — use <GlossaryTerm> instead`);
+  if (content.match(/\[.*?\]\(\/platform\/additional-resources\/glossary#/)) {
+    issues.push(`${relativePath}: contains inline glossary markdown link — use <Tooltip> instead`);
   }
 
-  if (content.includes('<GlossaryTerm') && !content.includes("from '/snippets/glossary-term.jsx'")) {
-    issues.push(`${relativePath}: uses <GlossaryTerm> without importing /snippets/glossary-term.jsx`);
+  if (content.includes("from '/snippets/glossary-term.jsx'")) {
+    issues.push(`${relativePath}: imports removed glossary-term.jsx snippet`);
   }
 }
 

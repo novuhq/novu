@@ -4,10 +4,8 @@ sidebarTitle: 'Transactional'
 description: "Send transactional notifications for orders, payments, shipments, and account events using Novu workflows, the REST API, and multi-channel delivery."
 ---
 
-import { GlossaryTerm } from '/snippets/glossary-term.jsx';
 
-
-Send transactional notifications through Novu by <GlossaryTerm term="trigger">triggering</GlossaryTerm> a <GlossaryTerm term="workflow">workflow</GlossaryTerm> when a business event occurs in your application. Novu delivers the message across in-app, email, SMS, push, or chat based on your workflow steps and the <GlossaryTerm term="subscriber">subscriber's</GlossaryTerm> contact details.
+Send transactional notifications through Novu by <Tooltip headline="Trigger" tip="An API request that starts a workflow for one or more recipients, including a workflowId, to field, and optional payload." cta="Learn more" href="/platform/concepts/trigger">triggering</Tooltip> a <Tooltip headline="Workflow" tip="An environment-scoped orchestration definition that determines what to send, when, and on which channels." cta="Learn more" href="/platform/concepts/workflows">workflow</Tooltip> when a business event occurs in your application. Novu delivers the message across in-app, email, SMS, push, or chat based on your workflow steps and the <Tooltip headline="Subscriber" tip="An entity designated to receive notifications, uniquely identified by subscriberId within an environment." cta="Learn more" href="/platform/concepts/subscribers">subscriber's</Tooltip> contact details.
 
 Common transactional events include order confirmations, shipping updates, payment failures, and subscription renewals.
 

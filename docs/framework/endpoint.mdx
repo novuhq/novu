@@ -3,10 +3,8 @@ title: 'Bridge Endpoint'
 description: 'Learn how to configure the Novu Bridge Endpoint, the single HTTP endpoint your application exposes to communicate with the Novu Worker Engine.'
 ---
 
-import { GlossaryTerm } from '/snippets/glossary-term.jsx';
 
-
-Novu Framework requires a **single** `HTTP` endpoint (`/api/novu` or similar) to be exposed by your application. This <GlossaryTerm term="bridge">Bridge Endpoint</GlossaryTerm> is used to receive events from our **Worker Engine**.
+Novu Framework requires a **single** `HTTP` endpoint (`/api/novu` or similar) to be exposed by your application. This <Tooltip headline="Bridge" tip="An HTTP endpoint in your application that Novu Cloud calls for Framework workflow discovery, preview, and execution." cta="Learn more" href="/framework/endpoint">Bridge Endpoint</Tooltip> is used to receive events from our **Worker Engine**.
 
 You can view the Bridge Endpoint as a webhook endpoint that Novu will call when it needs to retrieve contextual information for a given subscriber and notification.
 

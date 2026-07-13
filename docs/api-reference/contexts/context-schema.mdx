@@ -4,11 +4,9 @@ sidebarTitle: Schema
 description: "Reference the Novu context schema used in API requests and responses. Review fields, data types, and object structure for this resource."
 ---
 
-import { GlossaryTerm } from '/snippets/glossary-term.jsx';
-
 ### Context
 
-**<GlossaryTerm term="context">Context</GlossaryTerm>** is a reusable, user-defined data object that stores metadata (like <GlossaryTerm term="tenant">tenant</GlossaryTerm>, region, or app details) to organize and personalize notifications. Unlike <GlossaryTerm term="payload">payloads</GlossaryTerm> that exist only for a single workflow execution, contexts are persistent and can be shared across multiple workflows and API calls. 
+**<Tooltip headline="Context" tip="Multi-dimensional metadata passed at trigger time, such as tenant, app, or region, available in templates and Inbox filtering." cta="Learn more" href="/platform/concepts/contexts">Context</Tooltip>** is a reusable, user-defined data object that stores metadata (like <Tooltip headline="Tenant" tip="A logical organization or customer boundary implemented with a tenant context rather than prefixing subscriber IDs." cta="Learn more" href="/platform/concepts/tenants">tenant</Tooltip>, region, or app details) to organize and personalize notifications. Unlike <Tooltip headline="Payload" tip="Dynamic JSON data passed at trigger time to personalize templates, drive step conditions, and configure action steps." cta="Learn more" href="/platform/concepts/trigger">payloads</Tooltip> that exist only for a single workflow execution, contexts are persistent and can be shared across multiple workflows and API calls. 
 This makes them particularly useful for multi-tenant applications, dynamic branding, and scenarios where notifications need to reference common, reusable data.
 
 Read more about how to use contexts in workflows in the [contexts](/platform/workflow/advanced-features/contexts) section.

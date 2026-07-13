@@ -3,8 +3,6 @@ title: 'Remix In-App Notifications Quickstart — Novu Inbox'
 description: "Integrate Novu in-app notifications into your Remix application. Step-by-step setup from install through to sending your first notification to a subscriber."
 sidebarTitle: 'Remix'
 ---
-import { GlossaryTerm } from '/snippets/glossary-term.jsx';
-
 
 Add real-time in-app notifications to Remix in under 10 minutes using the Novu Inbox component.
 
@@ -100,13 +98,13 @@ If any fails, revise.
 
   <Step>
   ### Create an Inbox component
-  In the `app` directory, create a `components/notification-center.tsx` file and use the [`<Inbox />`](/platform/inbox) component, passing <GlossaryTerm term="application-identifier">applicationIdentifier</GlossaryTerm> and <GlossaryTerm term="subscriber-id">subscriberId</GlossaryTerm>:
+  In the `app` directory, create a `components/notification-center.tsx` file and use the [`<Inbox />`](/platform/inbox) component, passing <Tooltip headline="Application identifier" tip="The public, environment-scoped key used by client SDKs and the Inbox to connect to Novu. Safe to expose in frontend code.">applicationIdentifier</Tooltip> and <Tooltip headline="Subscriber ID" tip="The unique identifier for a notification recipient in your application, typically the user ID in your database.">subscriberId</Tooltip>:
       
   <Note>
   Explore the full `remix-inbox` example in the [Novu examples repository](https://github.com/novuhq/novu).
 </Note>
 
-    If you’re signed in to your Novu account, then the <GlossaryTerm term="application-identifier">applicationIdentifier</GlossaryTerm> and <GlossaryTerm term="subscriber-id">subscriberId</GlossaryTerm> are automatically entered in the code sample above. Otherwise, you can manually retrieve them:
+    If you’re signed in to your Novu account, then the <Tooltip headline="Application identifier" tip="The public, environment-scoped key used by client SDKs and the Inbox to connect to Novu. Safe to expose in frontend code.">applicationIdentifier</Tooltip> and <Tooltip headline="Subscriber ID" tip="The unique identifier for a notification recipient in your application, typically the user ID in your database.">subscriberId</Tooltip> are automatically entered in the code sample above. Otherwise, you can manually retrieve them:
     * `applicationIdentifier` – In the Novu dashboard, click API Keys, and then locate your unique Application Identifier.
     * `subscriberId` – This represents a user in your system (typically the user's ID in your database). For quick start purposes, an auto-generated subscriberId is provided for your Dashboard user.
 
@@ -168,7 +166,7 @@ If any fails, revise.
   <Step>
   ### Trigger your first notification
 
-In this step, you'll create a simple <GlossaryTerm term="workflow">workflow</GlossaryTerm> to send your first notification via the <GlossaryTerm term="inbox">Inbox</GlossaryTerm> component. Follow these steps to set up and <GlossaryTerm term="trigger">trigger</GlossaryTerm> a workflow from your Novu dashboard.
+In this step, you'll create a simple <Tooltip headline="Workflow" tip="An environment-scoped orchestration definition that determines what to send, when, and on which channels." cta="Learn more" href="/platform/concepts/workflows">workflow</Tooltip> to send your first notification via the <Tooltip headline="Inbox" tip="Novu's in-app notification UI and client SDK component that delivers in_app messages, unread counts, and preferences." cta="Set up Inbox" href="/platform/inbox">Inbox</Tooltip> component. Follow these steps to set up and <Tooltip headline="Trigger" tip="An API request that starts a workflow for one or more recipients, including a workflowId, to field, and optional payload." cta="Learn more" href="/platform/concepts/trigger">trigger</Tooltip> a workflow from your Novu dashboard.
 
 1. Go to your [Novu dashboard](https://dashboard.novu.co/auth/sign-in).
 2. In the sidebar, click **Workflows**.

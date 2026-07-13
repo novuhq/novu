@@ -3,17 +3,15 @@ title: "Agents and providers"
 description: "Understand how Novu agents and provider connections work together to route messages, resolve identities, and deliver replies across supported channels."
 ---
 
-import { GlossaryTerm } from '/snippets/glossary-term.jsx';
-
 ## Agents
 
-An <GlossaryTerm term="agent">agent</GlossaryTerm> is the entity you create in Novu when you want to expose agent logic through one or more communication <GlossaryTerm term="provider">providers</GlossaryTerm>.
+An <Tooltip headline="Agent" tip="An AI-powered entity connected to messaging channels through Novu Connect, with custom code or managed configuration." cta="Learn more" href="/agents">agent</Tooltip> is the entity you create in Novu when you want to expose agent logic through one or more communication <Tooltip headline="Provider" tip="A third-party service that delivers notifications on a channel, such as SendGrid for email or Twilio for SMS." cta="Learn more" href="/platform/concepts/integrations">providers</Tooltip>.
 
 Each agent has a name, an identifier, and a set of event handlers that define how your application responds to conversation events. An agent can be connected to one or more providers, such as Slack, Microsoft Teams, WhatsApp, or email.
 
 ## Provider connections
 
-A <GlossaryTerm term="integration">provider connection</GlossaryTerm> connects an agent to a messaging platform. Providers are the surfaces where users interact with your agent. A provider connection gives Novu the credentials and configuration needed to receive events from that provider and deliver responses back to it.
+A <Tooltip headline="Integration" tip="An environment-scoped, configured connection to a third-party provider with credentials and channel settings." cta="Learn more" href="/platform/concepts/integrations">provider connection</Tooltip> connects an agent to a messaging platform. Providers are the surfaces where users interact with your agent. A provider connection gives Novu the credentials and configuration needed to receive events from that provider and deliver responses back to it.
 
 Each provider has its own setup flow and platform capabilities. Some providers support reactions, typing indicators, attachments, rich cards, or message editing. Others may support only a subset of those behaviors. Novu normalizes provider events before passing them to your agent handler, so your code works with a consistent interface instead of provider-specific webhook payloads.
 

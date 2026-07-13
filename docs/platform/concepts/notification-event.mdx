@@ -3,8 +3,6 @@ title: 'Notification event'
 description: "Understand the Novu notification lifecycle and the key entities—workflows, triggers, subscribers, jobs, and messages—that make up a notification."
 ---
 
-import { GlossaryTerm } from '/snippets/glossary-term.jsx';
-
 In Novu, notifications are the core building blocks of your product’s communication experience. When your user receives a message via an in-app alert, an email, or a push notification, what they’re seeing is the final output of a notification.
 
 Notifications represent the complete journey of a message triggered by an event in your application and delivered to a specific user across one or more channels. They encapsulate all the execution logic and delivery metadata in a single traceable unit.
@@ -19,13 +17,13 @@ A notification doesn't exist in isolation, it’s the result of a sequence of in
   className="rounded-lg border w-[800px]"
 />
 
-### <GlossaryTerm term="event">Event</GlossaryTerm>
+### <Tooltip headline="Event" tip="An API request that starts a workflow for one or more recipients. Novu bills one event per subscriber resolved from the trigger." cta="Learn more" href="/platform/concepts/notification-event">Event</Tooltip>
 
 Something meaningful happens in your application, such as a user signing up, a password reset being requested, or a comment being posted. You emit this event to Novu using the [Event Trigger API](/api-reference/events/trigger-event).
 
 Each event contains:
 - A name that maps to a specific workflow (user_signed_up)
-- A <GlossaryTerm term="payload">payload</GlossaryTerm> with dynamic data
+- A <Tooltip headline="Payload" tip="Dynamic JSON data passed at trigger time to personalize templates, drive step conditions, and configure action steps." cta="Learn more" href="/platform/concepts/trigger">payload</Tooltip> with dynamic data
 - One or more subscribers
 - Optional overrides or metadata
 
