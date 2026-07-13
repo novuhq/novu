@@ -176,7 +176,7 @@ describe('WebexOauthCallback', () => {
     expect(endpointArg.connectionIdentifier).to.equal('conn-abc');
     expect(endpointArg.subscriberId).to.equal(MOCK_SUBSCRIBER_ID);
     expect(endpointArg.type).to.equal(ENDPOINT_TYPES.WEBEX_PERSON);
-    expect(endpointArg.endpoint.personId).to.equal(MOCK_PERSON_ID);
+    expect((endpointArg.endpoint as { personId: string }).personId).to.equal(MOCK_PERSON_ID);
   });
 
   it('should create a Webex person endpoint in link_user mode without creating a new connection', async () => {
@@ -203,7 +203,7 @@ describe('WebexOauthCallback', () => {
     const endpointArg = createChannelEndpoint.execute.firstCall.args[0];
     expect(endpointArg.connectionIdentifier).to.equal('existing-webex-connection');
     expect(endpointArg.type).to.equal(ENDPOINT_TYPES.WEBEX_PERSON);
-    expect(endpointArg.endpoint.personId).to.equal(MOCK_PERSON_ID);
+    expect((endpointArg.endpoint as { personId: string }).personId).to.equal(MOCK_PERSON_ID);
   });
 
   it('should update the existing Webex connection token when reconnecting with the same identifier', async () => {
@@ -245,6 +245,9 @@ describe('WebexOauthCallback', () => {
     expect(updateArg.auth.refreshToken).to.equal(MOCK_REFRESH_TOKEN);
     expect(updateArg.auth.expiresAt).to.be.a('string');
     expect(updateArg.workspace.id).to.equal(MOCK_ORG_ID);
+
+    const lookupArg = channelConnectionRepository.findOne.firstCall.args[0];
+    expect(lookupArg.integrationIdentifier).to.equal(MOCK_INTEGRATION_IDENTIFIER);
   });
 
   it('should update the existing Webex connection token when reconnecting with the same integration, subscriber, and context', async () => {
@@ -314,7 +317,7 @@ describe('WebexOauthCallback', () => {
     expect(endpointArg.connectionIdentifier).to.equal(MOCK_CONNECTION_IDENTIFIER);
     expect(endpointArg.subscriberId).to.equal(MOCK_SUBSCRIBER_ID);
     expect(endpointArg.type).to.equal(ENDPOINT_TYPES.WEBEX_PERSON);
-    expect(endpointArg.endpoint.personId).to.equal(MOCK_PERSON_ID);
+    expect((endpointArg.endpoint as { personId: string }).personId).to.equal(MOCK_PERSON_ID);
   });
 
   it('should reject Webex integrations with incomplete OAuth credentials as bad requests', async () => {
@@ -504,6 +507,42 @@ describe('WebexOauthCallback', () => {
 
     expect(error).to.be.instanceOf(BadGatewayException);
     expect((error as Error).message).to.contain('Webex OAuth token exchange failed (HTTP 400)');
+    expect(createChannelConnection.execute.called).to.be.false;
+    expect(createChannelEndpoint.execute.called).to.be.false;
+  });
+
+  it('should wrap Webex people/me failures in a gateway exception before creating connection data', async () => {
+    axiosGet.rejects({
+      isAxiosError: true,
+      message: 'timeout of 10000ms exceeded',
+      response: {
+        status: 503,
+        data: { message: 'service unavailable' },
+      },
+    });
+
+    const state = buildEncodedState({
+      environmentId: MOCK_ENVIRONMENT_ID,
+      organizationId: MOCK_ORGANIZATION_ID,
+      integrationIdentifier: MOCK_INTEGRATION_IDENTIFIER,
+      providerId: ChatProviderIdEnum.WebexMessaging,
+      subscriberId: MOCK_SUBSCRIBER_ID,
+    });
+
+    let error: unknown;
+    try {
+      await usecase.execute(
+        WebexOauthCallbackCommand.create({
+          providerCode: 'webex-code',
+          state,
+        })
+      );
+    } catch (err) {
+      error = err;
+    }
+
+    expect(error).to.be.instanceOf(BadGatewayException);
+    expect((error as Error).message).to.contain('Webex people/me request failed (HTTP 503)');
     expect(createChannelConnection.execute.called).to.be.false;
     expect(createChannelEndpoint.execute.called).to.be.false;
   });

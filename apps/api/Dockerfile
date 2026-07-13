@@ -30,7 +30,6 @@ RUN --mount=type=secret,id=BULL_MQ_PRO_NPM_TOKEN,uid=1000 export BULL_MQ_PRO_NPM
 
 WORKDIR /usr/src/app/apps/api
 
-RUN cp src/dotenvcreate.mjs dist/dotenvcreate.mjs
 RUN cp src/.example.env dist/.env
 RUN cp src/.env.development dist/.env.development
 RUN cp src/.env.production dist/.env.production
@@ -89,4 +88,4 @@ RUN if [ -f dist/metadata.js ]; then \
 
 ENV NEW_RELIC_NO_CONFIG_FILE=true
 
-ENTRYPOINT [ "sh", "-c", "node dist/dotenvcreate.mjs -s=$SECRET_NAME -r=$NOVU_REGION -e=$NOVU_ENTERPRISE -v=$NODE_ENV -h=$IS_SELF_HOSTED && pm2-runtime start dist/main.js -i max" ]
+ENTRYPOINT [ "sh", "-c", "pm2-runtime start dist/main.js -i max" ]

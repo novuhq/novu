@@ -26,10 +26,9 @@ import {
   ApiNotFoundResponse,
   ApiResponse,
 } from '../shared/framework/response.decorator';
-
 import { SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
-
 import { UserSession } from '../shared/framework/user.decorator';
+import { isEnvironmentScopedAuthScheme } from '../shared/utils/auth.utils';
 import {
   CreateEnvironmentVariableRequestDto,
   EnvironmentVariableResponseDto,
@@ -167,14 +166,18 @@ export class EnvironmentVariablesController {
     @UserSession() user: UserSessionData,
     @Body() body: CreateEnvironmentVariableRequestDto
   ): Promise<EnvironmentVariableResponseDto> {
+    const restrictToUserEnvironment = isEnvironmentScopedAuthScheme(user.scheme);
+
     return this.createEnvironmentVariableUsecase.execute(
       CreateEnvironmentVariableCommand.create({
         organizationId: user.organizationId,
+        environmentId: user.environmentId,
         userId: user._id,
         key: body.key,
         type: body.type,
         isSecret: body.isSecret,
         values: body.values,
+        restrictToUserEnvironment,
       })
     );
   }
@@ -204,15 +207,19 @@ export class EnvironmentVariablesController {
     @Param('variableKey') variableKey: string,
     @Body() body: UpdateEnvironmentVariableRequestDto
   ): Promise<EnvironmentVariableResponseDto> {
+    const restrictToUserEnvironment = isEnvironmentScopedAuthScheme(user.scheme);
+
     return this.updateEnvironmentVariableUsecase.execute(
       UpdateEnvironmentVariableCommand.create({
         organizationId: user.organizationId,
+        environmentId: user.environmentId,
         userId: user._id,
         variableKey,
         key: body.key,
         type: body.type,
         isSecret: body.isSecret,
         values: body.values,
+        restrictToUserEnvironment,
       })
     );
   }

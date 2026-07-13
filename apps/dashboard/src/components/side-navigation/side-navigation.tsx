@@ -18,15 +18,19 @@ import {
   RiTranslate2,
   RiUserAddLine,
 } from 'react-icons/ri';
+import { useNavigate } from 'react-router-dom';
 import { SidebarContent } from '@/components/side-navigation/sidebar';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useLocalMode } from '@/context/local-mode';
+import { useAreConversationalAgentsAvailable } from '@/hooks/use-are-conversational-agents-available';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { useHasPermission } from '@/hooks/use-has-permission';
 import { Protect } from '@/utils/protect';
 import { buildRoute, ROUTES } from '@/utils/routes';
-import { IS_ENTERPRISE, IS_EU, IS_SELF_HOSTED } from '../../config';
+import { IS_SELF_HOSTED, IS_SELF_HOSTED_CE } from '../../config';
 import { useFetchSubscription } from '../../hooks/use-fetch-subscription';
 import { ChangelogStack } from './changelog-cards';
-import { EnvironmentDropdown } from './environment-dropdown';
+import { EnvironmentDropdown, LOCAL_ENVIRONMENT_VALUE } from './environment-dropdown';
 import { FreeTrialCard } from './free-trial-card';
 import { HomeMenuItem } from './getting-started-menu-item';
 import { NavigationGroup } from './navigation-group';
@@ -92,14 +96,38 @@ export const LegacySideNavigation = () => {
   const isDomainsPageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_DOMAINS_PAGE_ENABLED);
   const isHttpLogsPageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_HTTP_LOGS_PAGE_ENABLED, false);
   const isAnalyticsPageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ANALYTICS_PAGE_ENABLED, false);
-  const isAgentsEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONVERSATIONAL_AGENTS_ENABLED, false);
-  // Agents are hard-disabled in the EU region regardless of the rollout flag.
-  const showAgents = !IS_EU && isAgentsEnabled;
+  const showAgents = useAreConversationalAgentsAvailable();
 
   const { currentEnvironment, environments, switchEnvironment } = useEnvironment();
+  const localMode = useLocalMode();
+  const has = useHasPermission();
+  const navigate = useNavigate();
+
+  // Local mode makes the API sign requests to the caller's tunnel with the
+  // environment key, so it is gated on BRIDGE_WRITE (see bridge.controller.ts).
+  // Hide the picker entry from members who would only hit a 403.
+  const canUseLocalMode = has({ permission: PermissionsEnum.BRIDGE_WRITE });
+  const showLocalEntry = canUseLocalMode && Boolean(localMode.session);
 
   const onEnvironmentChange = (value: string) => {
+    if (value === LOCAL_ENVIRONMENT_VALUE) {
+      if (localMode.session) {
+        navigate(buildRoute(ROUTES.LOCAL_WORKFLOWS, { environmentSlug: localMode.session.environmentSlug }));
+      }
+
+      return;
+    }
+
     const environment = environments?.find((env) => env.name === value);
+
+    if (localMode.isLocalRoute) {
+      // Leaving local mode: land on the regular workflows list of the target
+      // environment instead of rewriting the /local/* path.
+      navigate(buildRoute(ROUTES.WORKFLOWS, { environmentSlug: environment?.slug ?? '' }));
+
+      return;
+    }
+
     switchEnvironment(environment?.slug);
   };
 
@@ -111,6 +139,8 @@ export const LegacySideNavigation = () => {
           currentEnvironment={currentEnvironment}
           data={environments}
           onChange={onEnvironmentChange}
+          localEntry={showLocalEntry ? { status: localMode.healthStatus } : undefined}
+          isLocalSelected={localMode.isLocalRoute}
         />
         <nav className="flex h-full flex-1 flex-col overflow-auto">
           <div className="flex flex-col gap-4">
@@ -134,7 +164,13 @@ export const LegacySideNavigation = () => {
                 <NavigationLink
                   to={
                     currentEnvironment?.slug
-                      ? buildRoute(ROUTES.WORKFLOWS, { environmentSlug: currentEnvironment?.slug ?? '' })
+                      ? buildRoute(
+                          // Workflows is the one resource the Local pseudo-environment
+                          // overlays — keep the nav inside local mode instead of
+                          // silently dropping the user back to the synced dev list.
+                          localMode.isLocalRoute ? ROUTES.LOCAL_WORKFLOWS : ROUTES.WORKFLOWS,
+                          { environmentSlug: currentEnvironment?.slug ?? '' }
+                        )
                       : undefined
                   }
                 >
@@ -284,7 +320,7 @@ export const LegacySideNavigation = () => {
                     </NavigationLink>
                   </Protect>
                 )}
-                {isDomainsPageEnabled && (!IS_SELF_HOSTED || IS_ENTERPRISE) && (
+                {isDomainsPageEnabled && !IS_SELF_HOSTED_CE && (
                   <NavigationLink
                     to={
                       currentEnvironment?.slug
@@ -318,11 +354,7 @@ export const LegacySideNavigation = () => {
                 </NavigationLink>
               </NavigationGroup>
             </Protect>
-            <Protect
-              condition={(has) =>
-                has({ permission: PermissionsEnum.INTEGRATION_READ }) || !IS_SELF_HOSTED || IS_ENTERPRISE
-              }
-            >
+            <Protect condition={(has) => has({ permission: PermissionsEnum.INTEGRATION_READ }) || !IS_SELF_HOSTED_CE}>
               <NavigationGroup label="Platform">
                 <Protect permission={PermissionsEnum.INTEGRATION_READ}>
                   <NavigationLink
@@ -336,7 +368,7 @@ export const LegacySideNavigation = () => {
                     <span>Integration Store</span>
                   </NavigationLink>
                 </Protect>
-                {(!IS_SELF_HOSTED || IS_ENTERPRISE) && (
+                {!IS_SELF_HOSTED_CE && (
                   <NavigationLink to={ROUTES.SETTINGS}>
                     <RiSettings4Line className="size-4" />
                     <span>Settings</span>

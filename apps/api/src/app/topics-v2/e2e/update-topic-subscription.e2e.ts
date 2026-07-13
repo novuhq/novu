@@ -1,6 +1,11 @@
 import { Novu } from '@novu/api';
 import { SubscriberEntity, TopicSubscribersRepository } from '@novu/dal';
-import { CreateWorkflowDto, StepTypeEnum, WorkflowCreationSourceEnum } from '@novu/shared';
+import {
+  CreateWorkflowDto,
+  StepTypeEnum,
+  TOPIC_SUBSCRIPTION_IDENTIFIER_MAX_LENGTH,
+  WorkflowCreationSourceEnum,
+} from '@novu/shared';
 import { SubscribersService, UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { expectSdkExceptionGeneric, initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
@@ -336,5 +341,39 @@ describe('Update topic subscription - /v2/topics/:topicKey/subscriptions/:identi
     });
 
     expect(subscription?.name).to.equal('Updated Subscription Name');
+  });
+
+  it('should allow updating subscriptions that already have identifiers longer than 512 characters', async () => {
+    const topicKey = `topic-key-long-existing-identifier-${Date.now()}`;
+
+    const topicResponse = await novuClient.topics.create({
+      key: topicKey,
+      name: 'Long Existing Identifier Topic',
+    });
+
+    const longIdentifier = 'legacy-'.concat('a'.repeat(TOPIC_SUBSCRIPTION_IDENTIFIER_MAX_LENGTH));
+
+    await topicSubscribersRepository.createSubscriptions([
+      {
+        _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
+        _subscriberId: subscriber1._id,
+        _topicId: topicResponse.result.id,
+        topicKey,
+        externalSubscriberId: subscriber1.subscriberId,
+        identifier: longIdentifier,
+      },
+    ]);
+
+    const updateResponse = await novuClient.topics.subscriptions.update({
+      topicKey,
+      identifier: longIdentifier,
+      updateTopicSubscriptionRequestDto: {
+        name: 'Updated Legacy Subscription',
+      },
+    });
+
+    expect(updateResponse.result.identifier).to.equal(longIdentifier);
+    expect(updateResponse.result.name).to.equal('Updated Legacy Subscription');
   });
 });

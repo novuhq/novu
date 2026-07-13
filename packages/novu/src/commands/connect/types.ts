@@ -29,26 +29,34 @@ export function isCustomCodeScaffoldMode(mode: AgentConnectMode): mode is Custom
   return (CUSTOM_CODE_CONNECT_MODES as readonly string[]).includes(mode);
 }
 
-export type ChatSdkProjectKind = 'empty' | 'project';
+export function isAiSdkConnectMode(mode: AgentConnectMode): mode is 'ai-sdk' {
+  return mode === 'ai-sdk';
+}
 
-export type ChatSdkRequirementId = 'package' | 'env' | 'dev-script' | 'code-wiring';
+export function isVanillaCustomCodeConnectMode(mode: AgentConnectMode): mode is 'langchain' | 'custom-code' {
+  return mode === 'langchain' || mode === 'custom-code';
+}
 
-export type ChatSdkReqStatus = 'ok' | 'autofixable' | 'manual';
+export type BridgeProjectKind = 'empty' | 'project';
 
-export type ChatSdkRequirement = {
-  id: ChatSdkRequirementId;
-  status: ChatSdkReqStatus;
+export type BridgeRequirementId = 'package' | 'env' | 'dev-script' | 'code-wiring' | 'provider-env';
+
+export type BridgeReqStatus = 'ok' | 'autofixable' | 'manual';
+
+export type BridgeRequirement = {
+  id: BridgeRequirementId;
+  status: BridgeReqStatus;
   detail: string;
 };
 
 export type ChatSdkConnectOutcome = {
-  projectKind: ChatSdkProjectKind;
+  projectKind: BridgeProjectKind;
   projectDir: string;
   scaffolded: boolean;
   envPaths?: string[];
   /** True when npm install was skipped (e.g. scaffolding inside a monorepo). */
   skippedInstall?: boolean;
-  requirements?: ChatSdkRequirement[];
+  requirements?: BridgeRequirement[];
   /** Absolute path to a requirements summary file (CI / logging handoff). */
   requirementsFile?: string;
   /** package + env + dev-script satisfied after reconcile. */
@@ -57,6 +65,20 @@ export type ChatSdkConnectOutcome = {
   tunnelAccepted?: boolean;
   /** Instructions for manual code wiring when adapter is not wired in source. */
   wiringInstructions?: string;
+};
+
+export type AiSdkConnectOutcome = {
+  projectKind: BridgeProjectKind;
+  projectDir: string;
+  scaffolded: boolean;
+  envPaths?: string[];
+  skippedInstall?: boolean;
+  requirements?: BridgeRequirement[];
+  requirementsFile?: string;
+  coreReady?: boolean;
+  tunnelAccepted?: boolean;
+  wiringInstructions?: string;
+  agentFilePath?: string;
 };
 
 export type CustomCodeConnectOutcome = {

@@ -1,6 +1,6 @@
 ---
 title: "Quickstart"
-description: 'Create your first agent and connect it to Slack in under 10 minutes.'
+description: "Build your first Novu custom code agent and connect it to Slack in under 10 minutes. Set up the bridge, define handlers, and reply to messages."
 boost: 3
 ---
 
@@ -14,6 +14,14 @@ By the end, you'll have a working agent that receives messages from Slack and re
 - A [Novu account](https://dashboard.novu.co).
 - A Slack workspace where you can install apps.
 - Node.js on your machine.
+
+<Prompt description="Add a Novu agent to my app" icon="plug" actions={["copy", "cursor"]}>
+Add an agent to my app following instructions from this markdown file: https://novu.co/agents.md
+
+Follow my project's existing framework, routing, styling, and TypeScript conventions.
+
+Reference: https://docs.novu.co/agents/custom-code-agent/quickstart
+</Prompt>
 
 <Steps>
 
@@ -137,5 +145,8 @@ Edit files in `app/novu/agents/` to customize behavior. See [Handle events](/age
   </Card>
   <Card icon="brain" href="/agents/custom-code-agent/connect-your-first-agent" title="Connect your first agent">
     Full support-bot walkthrough with an LLM.
+  </Card>
+  <Card icon="code" href="/api-reference/agents/agent-schema" title="Agents API reference">
+    Create agents, link providers, and send replies programmatically.
   </Card>
 </Columns>

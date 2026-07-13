@@ -75,6 +75,7 @@ const integrationSchema = new Schema<IntegrationDBModel>(
       tenantId: Schema.Types.String,
       signingSecret: Schema.Types.String,
       outboundIntegrationId: Schema.Types.String,
+      outboundConnectedAt: Schema.Types.String,
       useFromAddressOverride: Schema.Types.Boolean,
       fromAddressOverride: Schema.Types.String,
       emailSlugPrefix: Schema.Types.String,

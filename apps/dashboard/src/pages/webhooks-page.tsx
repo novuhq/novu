@@ -13,7 +13,7 @@ import { createWebhookPortalToken, getWebhookPortalToken } from '@/api/webhooks'
 import { Button } from '@/components/primitives/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import { EmptyStateSvg, WebhooksPaywallState } from '@/components/webhooks/webhooks-paywall-state';
-import { IS_SELF_HOSTED } from '@/config';
+import { IS_CLOUD } from '@/config';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
@@ -82,7 +82,7 @@ export function WebhooksPage() {
         throw new Error('Environment is not available for enabling webhooks.') as CustomError;
       }
 
-      if (!isTierEligibleForWebhooks && !IS_SELF_HOSTED) {
+      if (!isTierEligibleForWebhooks && IS_CLOUD) {
         throw new Error('Current tier is not eligible for webhooks.') as CustomError;
       }
 
@@ -131,7 +131,7 @@ export function WebhooksPage() {
     return <Navigate to={buildRoute(activeTabDefinition.routePath, { environmentSlug })} replace />;
   }
 
-  if (!IS_SELF_HOSTED && !isTierEligibleForWebhooks && !isLoadingEligibility) {
+  if (IS_CLOUD && !isTierEligibleForWebhooks && !isLoadingEligibility) {
     return (
       <DashboardLayout headerStartItems={<h1 className="text-foreground-950">Webhooks</h1>}>
         <WebhooksPaywallState />

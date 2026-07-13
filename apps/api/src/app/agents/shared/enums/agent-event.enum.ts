@@ -1,1 +1,1 @@
-export { AgentEventEnum } from '@novu/framework';
+export { AgentEventEnum } from '@novu/framework/internal';

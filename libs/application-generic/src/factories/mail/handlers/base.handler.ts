@@ -59,12 +59,12 @@ export abstract class BaseEmailHandler extends BaseHandler<IEmailProvider> imple
     return this.provider.verifySignature({ body, headers, rawBody });
   }
 
-  public parseEventBody(body: any, identifier: string): IEmailEventBody | undefined {
+  public parseEventBody(body: any, identifier: string, eventIndex?: number): IEmailEventBody | undefined {
     if (!this.provider.parseEventBody) {
       return undefined;
     }
 
-    return this.provider.parseEventBody(body, identifier);
+    return this.provider.parseEventBody(body, identifier, eventIndex);
   }
 
   async check() {

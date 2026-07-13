@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { BaseRepository, EnvironmentRepository } from '@novu/dal';
 import { EnvironmentEnum, UserSessionData } from '@novu/shared';
+import { assertEnvironmentScopedAccess } from '../../shared/utils/auth.utils';
 
 export interface IEnvironmentValidationParams {
   sourceEnvironmentId: string;
@@ -42,6 +43,9 @@ export class EnvironmentValidationService {
       if (!targetEnv) {
         throw new BadRequestException('Target environment not found');
       }
+
+      assertEnvironmentScopedAccess(user.scheme, user.environmentId, sourceEnvironmentId);
+      assertEnvironmentScopedAccess(user.scheme, user.environmentId, targetEnvironmentId);
     } catch (error) {
       if (error.name === 'CastError') {
         throw new BadRequestException('Invalid environment ID format');

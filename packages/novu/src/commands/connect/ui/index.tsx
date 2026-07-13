@@ -7,11 +7,12 @@ import { ConnectChannelBackError } from '../errors';
 import { printBridgeScaffolded } from '../pipeline/bridge/print-bridge-scaffolded';
 import type { AgentSummary, ConnectCommandOptions } from '../types';
 import { App } from './app';
-import { promptChatSdkReconcilePlanInConsole, promptChatSdkTunnelInConsole } from './console-chat-sdk-prompts';
+import { promptBridgeReconcilePlanInConsole, promptBridgeTunnelInConsole } from './console-bridge-reconcile-prompts';
 import { printConnectSuccess, shouldSkipConnectSuccessSummary } from './print-connect-success';
+import { restoreStdinForConsole } from './restore-stdin-for-console';
 import { type ConnectStore, createConnectStore } from './store';
 import type {
-  ChatSdkTunnelOfferResult,
+  BridgeTunnelOfferResult,
   ConnectUI,
   GeneratedAgentPreviewResult,
   PickResult,
@@ -31,10 +32,20 @@ export function mountConnectUI(_params: MountConnectUIParams): MountConnectUIRes
   const store = createConnectStore();
   let exitInk: (() => void) | undefined;
   let terminalReleased = false;
+  let doneResolved = false;
   let resolveDone!: (code: number) => void;
   const done = new Promise<number>((resolve) => {
     resolveDone = resolve;
   });
+
+  const resolveDoneOnce = (code: number) => {
+    if (doneResolved) {
+      return;
+    }
+
+    doneResolved = true;
+    resolveDone(code);
+  };
 
   const instance = render(
     <App
@@ -58,7 +69,11 @@ export function mountConnectUI(_params: MountConnectUIParams): MountConnectUIRes
   );
 
   void instance.waitUntilExit().then(() => {
-    resolveDone(Number(process.exitCode ?? 0));
+    if (terminalReleased) {
+      return;
+    }
+
+    resolveDoneOnce(Number(process.exitCode ?? 0));
   });
 
   const releaseTerminal = async () => {
@@ -66,12 +81,16 @@ export function mountConnectUI(_params: MountConnectUIParams): MountConnectUIRes
     terminalReleased = true;
     exitInk?.();
     await instance.waitUntilExit();
+    restoreStdinForConsole();
     console.log('');
   };
 
   const shutdown = async () => {
     if (terminalReleased) {
-      return Number(process.exitCode ?? 0);
+      const exitCode = Number(process.exitCode ?? 0);
+      resolveDoneOnce(exitCode);
+
+      return exitCode;
     }
 
     // Hold the final frame (error or success) on screen long enough for the
@@ -83,8 +102,10 @@ export function mountConnectUI(_params: MountConnectUIParams): MountConnectUIRes
     await new Promise<void>((resolve) => setTimeout(resolve, holdMs));
     exitInk?.();
     await instance.waitUntilExit();
+    const exitCode = Number(process.exitCode ?? 0);
+    resolveDoneOnce(exitCode);
 
-    return Number(process.exitCode ?? 0);
+    return exitCode;
   };
 
   const ui = createUiController(store, {
@@ -249,51 +270,63 @@ function createUiController(
     bridgeScaffolded(opts) {
       printBridgeScaffolded(opts);
     },
-    confirmInstallChatSdkDeps({ projectDir, installCommand, packages }) {
+    confirmInstallBridgeDeps({ projectDir, installCommand, packages, variant }) {
       return new Promise<boolean>((resolve) => {
         store.phase.set({
-          kind: 'chat-sdk-install-deps-confirm',
+          kind: 'bridge-install-deps-confirm',
           projectDir,
           installCommand,
           packages,
+          variant,
           resolve,
         });
       });
     },
-    installingChatSdkDeps() {
-      store.phase.set({ kind: 'chat-sdk-install-deps' });
+    installingBridgeDeps(variant) {
+      store.phase.set({ kind: 'bridge-install-deps', variant });
     },
-    showChatSdkReconcilePlan({ projectDir, requirements, envPaths, wiringInstructions, requirementsFile }) {
+    showBridgeReconcilePlan({
+      projectDir,
+      requirements,
+      envPaths,
+      wiringInstructions,
+      requirementsFile,
+      agentPrompt,
+      variant,
+    }) {
       if (ctx.isTerminalReleased()) {
-        return promptChatSdkReconcilePlanInConsole({
+        return promptBridgeReconcilePlanInConsole({
           projectDir,
           requirements,
           envPaths,
           wiringInstructions,
           requirementsFile,
+          variant,
         });
       }
 
       return new Promise<void>((resolve) => {
         store.phase.set({
-          kind: 'chat-sdk-reconcile-plan',
+          kind: 'bridge-reconcile-plan',
           projectDir,
           requirements,
           envPaths,
           wiringInstructions,
           requirementsFile,
+          agentPrompt,
+          variant,
           resolve,
         });
       });
     },
-    offerChatSdkTunnel({ projectDir, devCommand }) {
+    offerBridgeTunnel({ projectDir, devCommand }) {
       if (ctx.isTerminalReleased()) {
-        return promptChatSdkTunnelInConsole({ projectDir, devCommand });
+        return promptBridgeTunnelInConsole({ projectDir, devCommand });
       }
 
-      return new Promise<ChatSdkTunnelOfferResult>((resolve) => {
+      return new Promise<BridgeTunnelOfferResult>((resolve) => {
         store.phase.set({
-          kind: 'chat-sdk-tunnel-offer',
+          kind: 'bridge-tunnel-offer',
           projectDir,
           devCommand,
           resolve,
@@ -428,6 +461,7 @@ function createUiController(
         claimUrl: result.claimUrl,
         connectMode: result.connectMode,
         chatSdkOutcome: result.chatSdkOutcome,
+        aiSdkOutcome: result.aiSdkOutcome,
         customCodeOutcome: result.customCodeOutcome,
       });
     },

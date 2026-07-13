@@ -6,6 +6,7 @@ import { PreviewPayloadDto } from '../../dtos/workflow/preview-payload.dto';
 import { StepResponseDto } from '../../dtos/workflow/step.response.dto';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { WorkflowDataContainer } from '../../services';
+import { StepForResponseMapper, WorkflowForResponseMapper } from '../../types/workflow-mapper.types';
 import { buildSlug } from '../../utils';
 import { InvalidStepException } from '../../utils/exceptions';
 import { BuildVariableSchemaUsecase } from '../build-variable-schema';
@@ -51,8 +52,8 @@ export class BuildStepDataUsecase {
   }
 
   static mapToStepResponse(
-    workflow: NotificationTemplateEntity,
-    currentStep: NotificationStepEntity,
+    workflow: WorkflowForResponseMapper,
+    currentStep: StepForResponseMapper,
     controlValues: Record<string, unknown>,
     variables: JSONSchemaDto
   ): StepResponseDto {

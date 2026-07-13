@@ -12,9 +12,9 @@ type ConnectionConfettiProps = {
 };
 
 /**
- * One-shot confetti burst portaled over the whole viewport. Used to carry the connection
- * "success" celebration from the setup guide into the connected / "What's next" view so the
- * moment isn't dropped when the setup card animates away. Fires at most once per mount.
+ * One-shot confetti burst portaled over the whole viewport. Used to celebrate integration
+ * milestones in-session: layer-1 connection (`justConnected`) and layer-2 rollout completion
+ * (`useInSessionMilestone`). Fires at most once per mount.
  */
 export function ConnectionConfetti({ active, numberOfPieces = 600, durationMs = 6000 }: ConnectionConfettiProps) {
   const [isVisible, setIsVisible] = useState(false);

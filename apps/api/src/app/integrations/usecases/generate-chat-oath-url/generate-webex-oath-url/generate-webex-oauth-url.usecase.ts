@@ -30,6 +30,8 @@ export const WEBEX_DEFAULT_OAUTH_SCOPES = [
   'spark:rooms_read',
   'spark:people_read',
   'spark:memberships_read',
+  // Webex requires spark:kms for integrations that interact with encrypted content such as messages.
+  'spark:kms',
 ] as const;
 
 export const WEBEX_LINK_USER_OAUTH_SCOPES = ['spark:people_read'] as const;

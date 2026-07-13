@@ -1,9 +1,13 @@
+import { AgentSubscriberAccessEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { ManagedRuntime } from '../../managed-runtime/managed.runtime';
 import { AgentEventEnum } from '../../shared/enums/agent-event.enum';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
-import { UNRESOLVED_SUBSCRIBER_ACCESS_REPLY } from '../../shared/util/agent-inbound-replies';
+import {
+  UNRESOLVED_SUBSCRIBER_ACCESS_REPLY,
+  UNRESOLVED_SUBSCRIBER_TRANSIENT_REPLY,
+} from '../../shared/util/agent-inbound-replies';
 import { BridgeRuntime } from '../runtime/bridge.runtime';
 import { NoBridgeUrlError } from '../runtime/bridge-executor.service';
 import { AgentInboundHandler } from './inbound-turn.handler';
@@ -45,13 +49,30 @@ describe('AgentInboundHandler', () => {
       agentFindOne?: sinon.SinonStub;
       subscriberFindById?: sinon.SinonStub;
       subscriberResolve?: sinon.SinonStub;
+      subscriberResolveOrProvision?: sinon.SinonStub;
     } = {}
   ) {
     const logger = makeLogger();
+    // Legacy overrides stub the resolver with `subscriberId | null` (or a rejection);
+    // adapt them to the discriminated `SubscriberResolution` contract.
+    const legacySubscriberResolve = overrides.subscriberResolve;
+    const toResolution = async (...args: unknown[]) => {
+      const subscriberId = await legacySubscriberResolve?.(...args);
+
+      return subscriberId ? { outcome: 'resolved', subscriberId } : { outcome: 'not_found' };
+    };
     const subscriberResolver = {
-      resolveOnly: overrides.subscriberResolve ?? sinon.stub().resolves(null),
+      resolveSubscriber: legacySubscriberResolve
+        ? sinon.stub().callsFake(toResolution)
+        : sinon.stub().resolves({ outcome: 'not_found' }),
       resolveOrProvision:
-        overrides.subscriberResolve ?? sinon.stub().resolves(`sub_${Math.random().toString(36).slice(2, 14)}`),
+        overrides.subscriberResolveOrProvision ??
+        (legacySubscriberResolve
+          ? sinon.stub().callsFake(toResolution)
+          : sinon.stub().resolves({
+              outcome: 'resolved',
+              subscriberId: `sub_${Math.random().toString(36).slice(2, 14)}`,
+            })),
     };
     const conversationService = {
       createOrGetConversation: sinon.stub().resolves(conversation),
@@ -104,11 +125,15 @@ describe('AgentInboundHandler', () => {
       showWorkingSignal: sinon.stub().resolves(undefined),
       showQueuedSignal: sinon.stub().resolves(undefined),
     };
+    const expireSupersededApprovals = {
+      expireOnNewMessage: sinon.stub().resolves(undefined),
+    };
     const bridgeRuntime = new BridgeRuntime(
       bridgeExecutor as any,
       outboundGateway as any,
       conversationService as any,
       environmentRepository as any,
+      expireSupersededApprovals as any,
       logger as any
     );
     const managedRuntime = new ManagedRuntime(
@@ -155,9 +180,6 @@ describe('AgentInboundHandler', () => {
       maybeBlock: sinon.stub().resolves(false),
       maybeBlockConversation: sinon.stub().resolves(false),
     };
-    const conversationActivation = {
-      registerEngagement: sinon.stub().resolves(false),
-    };
     const handler = new AgentInboundHandler(
       logger as any,
       subscriberResolver as any,
@@ -176,12 +198,12 @@ describe('AgentInboundHandler', () => {
       connectClaimTokenService as any,
       keylessAbuseGuard as any,
       planLimitGate as any,
-      inboundAck as any,
-      conversationActivation as any
+      inboundAck as any
     );
 
     return {
       handler,
+      logger,
       attachmentStorage,
       bridgeExecutor,
       conversationService,
@@ -248,7 +270,12 @@ describe('AgentInboundHandler', () => {
     };
   }
 
-  function makeEmailDmMessage(senderEmail: string) {
+  function makeEmailDmMessage(senderEmail: string, auth: { dkim?: string; spf?: string } = {}) {
+    // Default to a DKIM/SPF-verified sender so existing cases model a legitimate
+    // (non-spoofed) email; pass `{ dkim: 'failed' }` / `{ spf: 'failed' }` to
+    // simulate a spoofed `From`.
+    const { dkim = 'pass', spf = 'pass' } = auth;
+
     return {
       id: 'email-msg-1',
       threadId: 'email:thread1:',
@@ -259,7 +286,7 @@ describe('AgentInboundHandler', () => {
         userName: senderEmail,
         isBot: false,
       },
-      raw: {},
+      raw: { dkim, spf },
       attachments: [],
     };
   }
@@ -437,6 +464,66 @@ describe('AgentInboundHandler', () => {
       expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.include('Novu account');
     });
 
+    it('should reply with transient copy and log a structured warn when subscriber resolution errors (email)', async () => {
+      const emailConfig = {
+        ...config,
+        platform: AgentPlatformEnum.EMAIL,
+        integrationIdentifier: 'email-main',
+      };
+      const senderEmail = 'known@example.com';
+      const { handler, logger, managedAgentService, outboundGateway } = makeHandler({
+        subscriberResolve: sinon.stub().rejects(new Error('mongo timeout')),
+        subscriberFindById: sinon.stub().resolves(null),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+      });
+      const thread = makeEmailDmThread();
+      const message = makeEmailDmMessage(senderEmail);
+
+      await handler.handle('agent1', emailConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(managedAgentService.dispatch.called).to.equal(false);
+      expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
+      // A broken lookup must not blame the sender's address.
+      expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.equal(UNRESOLVED_SUBSCRIBER_TRANSIENT_REPLY);
+      expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.not.include(senderEmail);
+
+      const gateWarn = logger.warn
+        .getCalls()
+        .find((call) => typeof call.args[0] === 'object' && call.args[0]?.resolutionOutcome);
+      if (!gateWarn) {
+        expect.fail('expected a structured unresolved-subscriber warn');
+      }
+      expect(gateWarn.args[0]).to.include({
+        environmentId: 'env1',
+        organizationId: 'org1',
+        platform: AgentPlatformEnum.EMAIL,
+        senderPlatformUserId: senderEmail,
+        resolutionOutcome: 'error',
+      });
+    });
+
+    it('should reclassify a resolved id whose subscriber record cannot be loaded as a transient error', async () => {
+      const emailConfig = {
+        ...config,
+        platform: AgentPlatformEnum.EMAIL,
+        integrationIdentifier: 'email-main',
+      };
+      const { handler, managedAgentService, outboundGateway } = makeHandler({
+        subscriberResolve: sinon.stub().resolves('ghost-subscriber'),
+        subscriberFindById: sinon.stub().resolves(null),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+      });
+      const thread = makeEmailDmThread();
+      const message = makeEmailDmMessage('known@example.com');
+
+      await handler.handle('agent1', emailConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(managedAgentService.dispatch.called).to.equal(false);
+      // Internal inconsistency, not a sender problem — must not blame the address.
+      expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
+      expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.equal(UNRESOLVED_SUBSCRIBER_TRANSIENT_REPLY);
+    });
+
     it('should dispatch keyless managed agent even when subscriber is unresolved (email)', async () => {
       const emailConfig = {
         ...config,
@@ -488,6 +575,172 @@ describe('AgentInboundHandler', () => {
       expect(outboundGateway.replyOnThread.firstCall.args[1]).to.deep.equal({
         markdown: UNRESOLVED_SUBSCRIBER_ACCESS_REPLY,
       });
+    });
+
+    it('should route an open-access email agent through resolveOrProvision and dispatch', async () => {
+      const emailConfig = {
+        ...config,
+        platform: AgentPlatformEnum.EMAIL,
+        integrationIdentifier: 'email-main',
+        isManaged: true,
+        subscriberAccess: AgentSubscriberAccessEnum.OPEN,
+      };
+      const senderEmail = 'newcomer@example.com';
+      const resolveOrProvision = sinon.stub().resolves({ outcome: 'resolved', subscriberId: 'sub-provisioned' });
+      const { handler, managedAgentService, outboundGateway } = makeHandler({
+        subscriberResolveOrProvision: resolveOrProvision,
+        subscriberFindById: sinon.stub().resolves({ _id: 'sub-mongo', subscriberId: 'sub-provisioned' }),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+      });
+      const thread = makeEmailDmThread();
+      const message = makeEmailDmMessage(senderEmail);
+
+      await handler.handle('agent1', emailConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(resolveOrProvision.calledOnce).to.equal(true);
+      expect(resolveOrProvision.firstCall.args[0]).to.include({
+        platform: AgentPlatformEnum.EMAIL,
+        platformUserId: senderEmail,
+      });
+      expect(outboundGateway.replyOnThread.called).to.equal(false);
+      expect(managedAgentService.dispatch.calledOnce).to.equal(true);
+    });
+
+    it('should not auto-provision for a restricted email agent and keep the no-access gate', async () => {
+      const emailConfig = {
+        ...config,
+        platform: AgentPlatformEnum.EMAIL,
+        integrationIdentifier: 'email-main',
+        isManaged: true,
+        subscriberAccess: AgentSubscriberAccessEnum.RESTRICTED,
+      };
+      const senderEmail = 'stranger@example.com';
+      const resolveOrProvision = sinon.stub().resolves({ outcome: 'resolved', subscriberId: 'sub-provisioned' });
+      const { handler, managedAgentService, outboundGateway } = makeHandler({
+        subscriberResolve: sinon.stub().resolves(null),
+        subscriberResolveOrProvision: resolveOrProvision,
+        subscriberFindById: sinon.stub().resolves(null),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+      });
+      const thread = makeEmailDmThread();
+      const message = makeEmailDmMessage(senderEmail);
+
+      await handler.handle('agent1', emailConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(resolveOrProvision.called).to.equal(false);
+      expect(managedAgentService.dispatch.called).to.equal(false);
+      expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
+      expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.include(senderEmail);
+    });
+
+    it('should not auto-provision for a keyless open-access email agent (demo path owns provisioning)', async () => {
+      const emailConfig = {
+        ...config,
+        platform: AgentPlatformEnum.EMAIL,
+        integrationIdentifier: 'email-main',
+        isKeyless: true,
+        isManaged: true,
+        subscriberAccess: AgentSubscriberAccessEnum.OPEN,
+      };
+      const resolveOrProvision = sinon.stub().resolves({ outcome: 'resolved', subscriberId: 'sub-provisioned' });
+      const { handler, managedAgentService } = makeHandler({
+        subscriberResolve: sinon.stub().resolves(null),
+        subscriberResolveOrProvision: resolveOrProvision,
+        subscriberFindById: sinon.stub().resolves(null),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+      });
+      const thread = makeEmailDmThread();
+      const message = makeEmailDmMessage('demo@example.com');
+
+      await handler.handle('agent1', emailConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(resolveOrProvision.called).to.equal(false);
+      // Keyless demo agents bypass the subscriber gate and still dispatch.
+      expect(managedAgentService.dispatch.calledOnce).to.equal(true);
+    });
+
+    it('should not resolve or provision an identity for a spoofed (unverified) open-access email sender', async () => {
+      const emailConfig = {
+        ...config,
+        platform: AgentPlatformEnum.EMAIL,
+        integrationIdentifier: 'email-main',
+        isManaged: true,
+        subscriberAccess: AgentSubscriberAccessEnum.OPEN,
+      };
+      // On unpatched code the open-access path provisions/looks up the forged
+      // address, handing the attacker a subscriber identity.
+      const resolveOrProvision = sinon.stub().resolves({ outcome: 'resolved', subscriberId: 'sub-provisioned' });
+      const resolveOnly = sinon.stub().resolves('victim-subscriber');
+      const { handler, subscriberResolver, managedAgentService, outboundGateway } = makeHandler({
+        subscriberResolve: resolveOnly,
+        subscriberResolveOrProvision: resolveOrProvision,
+        subscriberFindById: sinon.stub().resolves({ _id: 'victim-mongo', subscriberId: 'victim-subscriber' }),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+      });
+      const thread = makeEmailDmThread();
+      // Attacker spoofs a real subscriber's address; DKIM/SPF failed upstream.
+      const message = makeEmailDmMessage('victim@example.com', { dkim: 'failed', spf: 'failed' });
+
+      await handler.handle('agent1', emailConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(subscriberResolver.resolveOrProvision.called).to.equal(false);
+      expect(subscriberResolver.resolveSubscriber.called).to.equal(false);
+      // No identity resolved → managed subscriber gate blocks dispatch.
+      expect(managedAgentService.dispatch.called).to.equal(false);
+      expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
+    });
+
+    it('should not map a spoofed (unverified) email onto an existing subscriber for a restricted agent', async () => {
+      const emailConfig = {
+        ...config,
+        platform: AgentPlatformEnum.EMAIL,
+        integrationIdentifier: 'email-main',
+        isManaged: true,
+        subscriberAccess: AgentSubscriberAccessEnum.RESTRICTED,
+      };
+      // On unpatched code this lookup returns the victim's subscriberId from the
+      // forged `From`, letting the attacker act as the victim. A single failing
+      // verdict (SPF passes, DKIM fails) must still be treated as unverified.
+      const resolveOnly = sinon.stub().resolves('victim-subscriber');
+      const { handler, subscriberResolver, subscriberRepository, managedAgentService, outboundGateway } = makeHandler({
+        subscriberResolve: resolveOnly,
+        subscriberFindById: sinon.stub().resolves({ _id: 'victim-mongo', subscriberId: 'victim-subscriber' }),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+      });
+      const thread = makeEmailDmThread();
+      const message = makeEmailDmMessage('victim@example.com', { dkim: 'failed', spf: 'pass' });
+
+      await handler.handle('agent1', emailConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(subscriberResolver.resolveSubscriber.called).to.equal(false);
+      expect(subscriberRepository.findBySubscriberId.called).to.equal(false);
+      expect(managedAgentService.dispatch.called).to.equal(false);
+      expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
+    });
+
+    it('should resolve identity for a DKIM/SPF-verified restricted email sender', async () => {
+      const emailConfig = {
+        ...config,
+        platform: AgentPlatformEnum.EMAIL,
+        integrationIdentifier: 'email-main',
+        isManaged: true,
+        subscriberAccess: AgentSubscriberAccessEnum.RESTRICTED,
+      };
+      const resolveOnly = sinon.stub().resolves('known-subscriber');
+      const { handler, subscriberResolver, managedAgentService, outboundGateway } = makeHandler({
+        subscriberResolve: resolveOnly,
+        subscriberFindById: sinon.stub().resolves({ _id: 'known-mongo', subscriberId: 'known-subscriber' }),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+      });
+      const thread = makeEmailDmThread();
+      // Defaults to a verified (dkim/spf pass) sender.
+      const message = makeEmailDmMessage('member@example.com');
+
+      await handler.handle('agent1', emailConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(subscriberResolver.resolveSubscriber.calledOnce).to.equal(true);
+      expect(managedAgentService.dispatch.calledOnce).to.equal(true);
+      expect(outboundGateway.replyOnThread.called).to.equal(false);
     });
   });
 
@@ -615,7 +868,7 @@ describe('AgentInboundHandler', () => {
         _organizationId: 'org1',
         _agentId: 'agent1',
         _integrationId: 'integration1',
-        connectedAt: null,
+        $or: [{ connectedAt: null }, { connectedAt: { $exists: false } }, { connectedAt: { $lte: new Date(0) } }],
       });
       expect(update.$set.connectedAt).to.be.instanceOf(Date);
     });

@@ -120,7 +120,7 @@ function getProviderSlackMessage(agentName: string): string {
 
 function buildTestEmailMailto(agentName: string, inboundAddress: string): string {
   const subject = `Hi ${agentName}!`;
-  const body = `Hey ${agentName},\n\nThis is my first email — say hi back and tell me what you can do?\n\nThanks!`;
+  const body = `Hey ${agentName},\n\nThis is my first email: say hi back and tell me what you can do?\n\nThanks!`;
 
   return `mailto:${inboundAddress}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
@@ -153,7 +153,7 @@ function getProviderSendDescription(providerId: string | undefined, agentName: s
     case ChatProviderIdEnum.WhatsAppBusiness:
       return `Send a message to your WhatsApp number to test the connection.`;
     case EmailProviderIdEnum.NovuAgent:
-      return `Email starts with you sending the first message — your agent reads it and replies to the same inbox. Send from the email address registered in your Novu account.`;
+      return `Email starts with you sending the first message: your agent reads it and replies to the same inbox. Send from the email address registered in your Novu account.`;
     default:
       return `Send a message to your bot from the connected provider to test the connection.`;
   }

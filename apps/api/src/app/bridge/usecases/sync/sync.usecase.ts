@@ -26,8 +26,8 @@ import {
 } from '@novu/dal';
 import { DiscoverOutput, DiscoverStepOutput, DiscoverWorkflowOutput, GetActionEnum } from '@novu/framework/internal';
 import {
-  buildWorkflowPreferences,
   ControlValuesLevelEnum,
+  isOutboundSsrfProtectionEnabled,
   ResourceOriginEnum,
   ResourceTypeEnum,
   SeverityLevelEnum,
@@ -39,6 +39,14 @@ import {
 import { DeleteWorkflowCommand } from '../../../workflows-v1/usecases/delete-workflow/delete-workflow.command';
 import { DeleteWorkflowUseCase } from '../../../workflows-v1/usecases/delete-workflow/delete-workflow.usecase';
 import { CreateBridgeResponseDto } from '../../dtos/create-bridge-response.dto';
+import {
+  buildDiscoveredWorkflowRawData,
+  getDiscoveredWorkflowActive,
+  getDiscoveredWorkflowDescription,
+  getDiscoveredWorkflowName,
+  getDiscoveredWorkflowPreferences,
+  getDiscoveredWorkflowTags,
+} from '../../utils/discover-workflow.mapper';
 import { SyncCommand } from './sync.command';
 
 @Injectable()
@@ -121,7 +129,7 @@ export class Sync {
         // User-supplied bridgeUrl: pin the connection to a validated public
         // IP and re-validate on every redirect, so IP literals like
         // 127.0.0.1 / 169.254.169.254 / fc00::/7 cannot reach internal hosts.
-        enforceSsrfProtection: true,
+        enforceSsrfProtection: isOutboundSsrfProtectionEnabled(),
       })) as DiscoverOutput;
     } catch (error) {
       if (error instanceof HttpException) {
@@ -260,7 +268,7 @@ export class Sync {
       throw new BadRequestException('Notification group not found');
     }
     const steps = await this.mapSteps(command, workflow.steps ?? []);
-    const workflowActive = this.castToAnyNotSupportedParam(workflow)?.active ?? true;
+    const workflowActive = getDiscoveredWorkflowActive(workflow);
 
     return await this.createWorkflowUsecase.execute(
       CreateWorkflowCommandV0.create({
@@ -297,7 +305,7 @@ export class Sync {
     workflow: DiscoverWorkflowOutput
   ): Promise<UpdateWorkflowCommandV0> {
     const steps = await this.mapSteps(command, workflow.steps ?? [], workflowExist);
-    const workflowActive = this.castToAnyNotSupportedParam(workflow)?.active ?? true;
+    const workflowActive = getDiscoveredWorkflowActive(workflow);
 
     return {
       id: workflowExist._id,
@@ -403,35 +411,23 @@ export class Sync {
   }
 
   private getWorkflowPreferences(workflow: DiscoverWorkflowOutput): WorkflowPreferences {
-    return buildWorkflowPreferences(workflow.preferences || {});
+    return getDiscoveredWorkflowPreferences(workflow);
   }
 
   private getWorkflowName(workflow: DiscoverWorkflowOutput): string {
-    return workflow.name || workflow.workflowId;
+    return getDiscoveredWorkflowName(workflow);
   }
 
   private getWorkflowDescription(workflow: DiscoverWorkflowOutput): string {
-    return workflow.description || '';
+    return getDiscoveredWorkflowDescription(workflow);
   }
 
   private getWorkflowTags(workflow: DiscoverWorkflowOutput): string[] {
-    return workflow.tags || [];
+    return getDiscoveredWorkflowTags(workflow);
   }
 
   private buildRawData(workflow: DiscoverWorkflowOutput): Record<string, unknown> {
-    const rawData = { ...workflow } as Record<string, unknown>;
-
-    if (rawData.payload && typeof rawData.payload === 'object') {
-      const { unknownSchema: _payloadUnknownSchema, ...payloadRest } = rawData.payload as Record<string, unknown>;
-      rawData.payload = payloadRest;
-    }
-
-    if (rawData.controls && typeof rawData.controls === 'object') {
-      const { unknownSchema: _controlsUnknownSchema, ...controlsRest } = rawData.controls as Record<string, unknown>;
-      rawData.controls = controlsRest;
-    }
-
-    return rawData;
+    return buildDiscoveredWorkflowRawData(workflow);
   }
 
   private castToAnyNotSupportedParam(param: any): any {

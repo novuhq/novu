@@ -1,7 +1,6 @@
 import { StepIssues, WorkflowStatusEnum } from '@novu/shared';
-import { NotificationStep } from '../value-objects';
 
-export function computeWorkflowStatus(workflowActive: boolean, steps: NotificationStep[]) {
+export function computeWorkflowStatus(workflowActive: boolean, steps: Array<{ issues?: StepIssues }>) {
   if (!workflowActive) {
     return WorkflowStatusEnum.INACTIVE;
   }

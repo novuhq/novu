@@ -36,6 +36,7 @@ import {
 } from '@/components/primitives/table';
 import { TablePaginationFooter } from '@/components/primitives/table-pagination-footer';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
+import TruncatedText from '@/components/truncated-text';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useAgentRoutes } from '@/hooks/use-agent-routes';
 import { useHasPermission } from '@/hooks/use-has-permission';
@@ -118,7 +119,7 @@ function AgentIntegrationsCell({ agent }: { agent: AgentResponse }) {
   const integrations = agent.integrations ?? [];
 
   if (integrations.length === 0) {
-    return <span className="text-label-sm text-text-sub italic">—</span>;
+    return <span className="text-label-sm text-text-sub italic">-</span>;
   }
 
   const visible = integrations.slice(0, MAX_VISIBLE_INTEGRATION_ICONS);
@@ -269,12 +270,12 @@ export function AgentsTable({
                   <div className="flex min-h-[41px] items-center gap-4">
                     <AgentIcon agent={agent} />
                     <div className="flex min-w-0 flex-col gap-0.5">
-                      <span className="text-text-strong text-label-sm font-medium leading-5 tracking-tight">
+                      <TruncatedText className="text-text-strong relative z-10 block max-w-[40ch] text-label-sm leading-5 tracking-tight">
                         {agent.name}
-                      </span>
-                      <span className="text-text-soft font-mono text-label-xs leading-4 tracking-tight">
+                      </TruncatedText>
+                      <TruncatedText className="text-text-soft relative z-10 block max-w-[40ch] font-mono text-label-xs leading-4 tracking-tight">
                         {agent.identifier}
-                      </span>
+                      </TruncatedText>
                     </div>
                   </div>
                 </AgentNavTableCell>

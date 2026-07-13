@@ -8,9 +8,9 @@ import {
   ConversationEntity,
   ConversationRepository,
 } from '@novu/dal';
-import type { PlanProgressPhase, PlanTaskInput, PlanTaskStatus } from '@novu/framework';
-import type { PlanModel } from 'chat';
+import type { PlanModel, PlanTaskStatus } from 'chat';
 import { AgentConversationService } from '../../conversation/agent-conversation.service';
+import type { PlanProgressPhase, PlanTaskInput } from '../../egress/plan-phase';
 import { PLAN_THINKING_TASK_ID, type PlanPhase, planTitleForPhase } from '../../egress/plan-phase';
 import { HandleAgentReplyCommand } from '../handle-agent-reply/handle-agent-reply.command';
 import { HandleAgentReply } from '../handle-agent-reply/handle-agent-reply.usecase';
@@ -106,7 +106,17 @@ export class HandlePlanProgress {
       );
     }
 
-    await this.persistTaskActivity(command, channel, taskInput, toolName, details, planMessageId);
+    await this.persistTaskActivity(
+      command,
+      channel,
+      taskInput,
+      toolName,
+      mcpServerName,
+      details,
+      planMessageId,
+      existingActivities,
+      existing
+    );
   }
 
   private async handlePhase(
@@ -161,14 +171,54 @@ export class HandlePlanProgress {
     }
   }
 
+  /**
+   * Thalamus sends each tool event (start, input, result) as a separate webhook.
+   * We persist these so the next callback can rebuild the full plan card task list.
+   *
+   * This is plan-card scratch state only — tool approval and resume history use
+   * the tool_* activity types instead.
+   */
   private async persistTaskActivity(
     command: HandlePlanProgressCommand,
     channel: ConversationChannel,
     taskInput: PlanTaskInput,
     toolName: string,
+    mcpServerName: string | undefined,
     details: string | undefined,
-    planMessageId: string | undefined
+    planMessageId: string | undefined,
+    existingActivities: ConversationActivityEntity[],
+    existingTask: ToolTask | undefined
   ): Promise<void> {
+    const payload = {
+      planMessageId,
+      toolUseId: taskInput.id,
+      toolName,
+      ...(mcpServerName ? { mcpServerName } : {}),
+      status: taskInput.status,
+      ...(details ? { details } : {}),
+    };
+    const content = `Tool: ${toolName} (${taskInput.status})`;
+
+    const isEnrichingInProgress =
+      taskInput.status === 'in_progress' && existingTask?.status === 'in_progress' && Boolean(taskInput.details);
+
+    if (isEnrichingInProgress) {
+      const activity = this.findLatestInProgressToolActivity(existingActivities, taskInput.id);
+      if (activity) {
+        await this.activityRepository.update(
+          {
+            _environmentId: command.environmentId,
+            _organizationId: command.organizationId,
+            _conversationId: command.conversationId,
+            _id: activity._id,
+          },
+          { $set: { content, 'signalData.payload': payload } }
+        );
+
+        return;
+      }
+    }
+
     await this.activityRepository.createSignalActivity({
       identifier: `act_${shortId(12)}`,
       conversationId: command.conversationId,
@@ -176,21 +226,33 @@ export class HandlePlanProgress {
       integrationId: channel._integrationId,
       platformThreadId: channel.platformThreadId,
       agentId: command.agentIdentifier,
-      content: `Tool: ${toolName} (${taskInput.status})`,
+      content,
       signalData: {
         type: 'tool-use',
-        payload: {
-          planMessageId,
-          toolUseId: taskInput.id,
-          toolName,
-          mcpServerName: taskInput.group,
-          status: taskInput.status,
-          ...(details ? { details } : {}),
-        },
+        payload,
       },
       environmentId: command.environmentId,
       organizationId: command.organizationId,
     });
+  }
+
+  /** Latest `in_progress` ledger row for a tool — used to enrich Start with Done input instead of duplicating. */
+  private findLatestInProgressToolActivity(
+    activities: ConversationActivityEntity[],
+    toolUseId: string
+  ): ConversationActivityEntity | undefined {
+    let latest: ConversationActivityEntity | undefined;
+
+    for (const activity of activities) {
+      const row = activity.signalData?.payload;
+      if (String(row?.toolUseId) !== toolUseId || row?.status !== 'in_progress') {
+        continue;
+      }
+
+      latest = activity;
+    }
+
+    return latest;
   }
 
   private async postOrEditPlan(
