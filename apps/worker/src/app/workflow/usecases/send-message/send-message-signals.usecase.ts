@@ -26,18 +26,18 @@ const LOG_CONTEXT = 'SendMessageSignals';
 
 type SignalsStepOutputs = {
   body?: string;
-  providers?: string[];
+  enabledIntegrations?: string[];
 };
 
-export function filterSignalsIntegrationsByProviders<T extends { identifier: string }>(
+export function filterSignalsIntegrationsByEnabledIdentifiers<T extends { identifier: string }>(
   integrations: T[],
-  providers?: string[]
+  enabledIntegrations?: string[]
 ): T[] {
-  if (!providers || providers.length === 0) {
+  if (!enabledIntegrations || enabledIntegrations.length === 0) {
     return integrations;
   }
 
-  const selectedIdentifiers = new Set(providers);
+  const selectedIdentifiers = new Set(enabledIntegrations);
 
   return integrations.filter((integration) => selectedIdentifiers.has(integration.identifier));
 }
@@ -75,7 +75,7 @@ export class SendMessageSignals extends SendMessageBase {
     });
 
     const bridgeOutputs = command.bridgeData?.outputs as SignalsStepOutputs | undefined;
-    const { content, providers } = await this.resolveContentAndProviders(command, bridgeOutputs);
+    const { content, enabledIntegrations } = await this.resolveContentAndProviders(command, bridgeOutputs);
 
     if (!content) {
       return {
@@ -95,7 +95,7 @@ export class SendMessageSignals extends SendMessageBase {
       })
     );
 
-    const selectedIntegrations = filterSignalsIntegrationsByProviders(integrations, providers);
+    const selectedIntegrations = filterSignalsIntegrationsByEnabledIdentifiers(integrations, enabledIntegrations);
 
     if (selectedIntegrations.length === 0) {
       const noActiveIntegrations = integrations.length === 0;
@@ -109,8 +109,10 @@ export class SendMessageSignals extends SendMessageBase {
           isTest: false,
           isRetry: false,
           raw: JSON.stringify({
-            reason: noActiveIntegrations ? 'no_active_signals_integrations' : 'providers_filter_matched_none',
-            requestedProviders: providers ?? [],
+            reason: noActiveIntegrations
+              ? 'no_active_signals_integrations'
+              : 'enabled_integrations_filter_matched_none',
+            requestedEnabledIntegrations: enabledIntegrations ?? [],
             availableIdentifiers: integrations.map((integration) => integration.identifier),
           }),
         })
@@ -122,7 +124,7 @@ export class SendMessageSignals extends SendMessageBase {
       };
     }
 
-    let status: SendMessageStatus = SendMessageStatus.FAILED;
+    let status: SendMessageStatus = SendMessageStatus.SUCCESS;
     const signalsFactory = new SignalsFactory();
 
     for (const integration of selectedIntegrations) {
@@ -143,12 +145,12 @@ export class SendMessageSignals extends SendMessageBase {
   private async resolveContentAndProviders(
     command: SendMessageChannelCommand,
     bridgeOutputs?: SignalsStepOutputs
-  ): Promise<{ content: string; providers?: string[] }> {
-    const providers = bridgeOutputs?.providers;
+  ): Promise<{ content: string; enabledIntegrations?: string[] }> {
+    const enabledIntegrations = bridgeOutputs?.enabledIntegrations;
     let content = bridgeOutputs?.body || '';
 
     if (command.bridgeData) {
-      return { content, providers };
+      return { content, enabledIntegrations };
     }
 
     const { step } = command;
@@ -179,10 +181,10 @@ export class SendMessageSignals extends SendMessageBase {
     } catch (error) {
       await this.sendErrorHandlebars(command.job, error.message);
 
-      return { content: '', providers };
+      return { content: '', enabledIntegrations };
     }
 
-    return { content, providers };
+    return { content, enabledIntegrations };
   }
 
   private async sendToIntegration(
@@ -290,14 +292,14 @@ export class SendMessageSignals extends SendMessageBase {
   }
 
   private mergeStatus(current: SendMessageStatus, next: SendMessageStatus): SendMessageStatus {
-    if (next === SendMessageStatus.SUCCESS || current === SendMessageStatus.SUCCESS) {
-      return SendMessageStatus.SUCCESS;
+    if (next === SendMessageStatus.FAILED || current === SendMessageStatus.FAILED) {
+      return SendMessageStatus.FAILED;
     }
 
     if (next === SendMessageStatus.SKIPPED || current === SendMessageStatus.SKIPPED) {
       return SendMessageStatus.SKIPPED;
     }
 
-    return SendMessageStatus.FAILED;
+    return SendMessageStatus.SUCCESS;
   }
 }

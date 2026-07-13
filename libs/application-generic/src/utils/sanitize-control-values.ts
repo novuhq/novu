@@ -131,7 +131,7 @@ function sanitizeSignals(controlValues: SignalsControlType) {
   const mappedValues: SignalsControlType = {
     body: sanitizeEmptyInput(controlValues.body),
     skip: controlValues.skip,
-    providers: controlValues.providers,
+    enabledIntegrations: controlValues.enabledIntegrations,
   };
 
   return filterNullishValues(mappedValues);

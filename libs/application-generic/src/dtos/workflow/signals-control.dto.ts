@@ -16,5 +16,5 @@ export class SignalsControlDto extends SkipControlDto {
   @IsArray()
   @IsString({ each: true })
   @IsOptional()
-  providers?: string[];
+  enabledIntegrations?: string[];
 }

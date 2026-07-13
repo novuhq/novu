@@ -89,3 +89,15 @@ test('omits HMAC header when secret is not configured', async () => {
 
   expect(lastRequest!.headers['x-novu-signature']).toBeUndefined();
 });
+
+test('throws when body template is invalid JSON', async () => {
+  const provider = new SignalsWebhookProvider({
+    webhookUrl: serverUrl,
+    method: 'POST',
+    bodyTemplate: '{not-json',
+  });
+
+  await expect(provider.sendMessage({ content: 'x' })).rejects.toThrow(
+    'Signals webhook body template must be valid JSON.'
+  );
+});

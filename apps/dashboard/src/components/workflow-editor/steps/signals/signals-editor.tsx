@@ -19,7 +19,7 @@ export const SignalsEditor = (props: SignalsEditorProps) => {
     <div className="flex h-full flex-col">
       <TabsSection className="p-0 pb-3">
         <div className="rounded-12 flex flex-col gap-2 border border-neutral-100 p-2 bg-bg-weak">
-          {getComponentByType({ component: body.component })}
+          {body && getComponentByType({ component: body.component })}
         </div>
       </TabsSection>
     </div>

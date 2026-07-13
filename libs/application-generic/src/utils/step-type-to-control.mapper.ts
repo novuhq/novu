@@ -1,6 +1,6 @@
 import { ControlSchemas, JSONSchemaEntity } from '@novu/dal';
 import { ActionStepEnum, ChannelStepEnum } from '@novu/framework/internal';
-import { httpRequestControlSchema, httpRequestUiSchema, StepTypeEnum } from '@novu/shared';
+import { httpRequestControlSchema, httpRequestUiSchema } from '@novu/shared';
 import {
   chatControlSchema,
   chatUiSchema,
@@ -29,7 +29,7 @@ export const PERMISSIVE_EMPTY_SCHEMA = {
   additionalProperties: true,
 } as JSONSchemaEntity;
 
-type ControlSchemaStepType = ChannelStepEnum | ActionStepEnum | StepTypeEnum.SIGNALS;
+type ControlSchemaStepType = ChannelStepEnum | ActionStepEnum;
 
 const stepTypeToControlSchemaMap: Record<ControlSchemaStepType, ControlSchemas> = {
   [ChannelStepEnum.IN_APP]: {
@@ -52,7 +52,7 @@ const stepTypeToControlSchemaMap: Record<ControlSchemaStepType, ControlSchemas> 
     schema: chatControlSchema,
     uiSchema: chatUiSchema,
   },
-  [StepTypeEnum.SIGNALS]: {
+  [ChannelStepEnum.SIGNALS]: {
     schema: signalsControlSchema,
     uiSchema: signalsUiSchema,
   },

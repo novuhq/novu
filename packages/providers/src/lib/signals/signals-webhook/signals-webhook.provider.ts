@@ -108,22 +108,25 @@ export class SignalsWebhookProvider extends BaseProvider implements ISignalsProv
   }
 
   private resolveBody(transformedBody: Record<string, unknown>): string {
-    if (this.config.bodyTemplate) {
-      try {
-        const parsed = JSON.parse(this.config.bodyTemplate);
-
-        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-          return JSON.stringify({
-            ...parsed,
-            content: transformedBody.content,
-          });
-        }
-      } catch {
-        // Fall through to default payload when template is not valid JSON.
-      }
+    if (!this.config.bodyTemplate) {
+      return JSON.stringify(transformedBody);
     }
 
-    return JSON.stringify(transformedBody);
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(this.config.bodyTemplate);
+    } catch {
+      throw new Error('Signals webhook body template must be valid JSON.');
+    }
+
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      throw new Error('Signals webhook body template must be a JSON object.');
+    }
+
+    return JSON.stringify({
+      ...(parsed as Record<string, unknown>),
+      content: transformedBody.content,
+    });
   }
 
   private computeHmac(payload: string, hmacSecretKey?: string): string | undefined {

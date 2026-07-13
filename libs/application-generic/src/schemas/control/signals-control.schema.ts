@@ -8,7 +8,7 @@ export const signalsControlZodSchema = z
   .object({
     skip: skipZodSchema,
     body: z.string(),
-    providers: z.array(z.string()).optional(),
+    enabledIntegrations: z.array(z.string()).optional(),
   })
   .strict();
 

@@ -11,7 +11,7 @@ import { ROUTES } from '@/utils/routes';
 import { useWorkflow } from '../../workflow-provider';
 import { useSaveForm } from '../save-form-context';
 
-const FORM_CONTROL_NAME = 'controlValues.providers';
+const FORM_CONTROL_NAME = 'controlValues.enabledIntegrations';
 
 export const SignalsEnabledProviders = () => {
   const { workflow } = useWorkflow();
