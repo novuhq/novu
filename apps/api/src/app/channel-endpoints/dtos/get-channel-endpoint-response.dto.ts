@@ -13,6 +13,7 @@ import {
   SlackChannelEndpointDto,
   SlackUserEndpointDto,
   TelegramChatEndpointDto,
+  LineUserEndpointDto,
   WebhookEndpointDto,
 } from './endpoint-types.dto';
 
@@ -83,6 +84,7 @@ export class GetChannelEndpointResponseDto {
       { $ref: getSchemaPath(MsTeamsChannelEndpointDto) },
       { $ref: getSchemaPath(MsTeamsUserEndpointDto) },
       { $ref: getSchemaPath(TelegramChatEndpointDto) },
+      { $ref: getSchemaPath(LineUserEndpointDto) },
     ],
   })
   endpoint:
@@ -92,7 +94,8 @@ export class GetChannelEndpointResponseDto {
     | PhoneEndpointDto
     | MsTeamsChannelEndpointDto
     | MsTeamsUserEndpointDto
-    | TelegramChatEndpointDto;
+    | TelegramChatEndpointDto
+    | LineUserEndpointDto;
 
   @ApiProperty({
     description: 'The timestamp indicating when the channel endpoint was created, in ISO 8601 format.',

@@ -64,6 +64,13 @@ export const CHANNEL_ENDPOINT_SCHEMAS = {
     validate: (endpoint: Record<string, unknown>) =>
       typeof endpoint.chatId === 'string' && Object.keys(endpoint).length === 1,
   },
+  [ENDPOINT_TYPES.LINE_USER]: {
+    description: 'LINE User Endpoint',
+    properties: { userId: { type: 'string' as const } },
+    required: ['userId'],
+    validate: (endpoint: Record<string, unknown>) =>
+      typeof endpoint.userId === 'string' && Object.keys(endpoint).length === 1,
+  },
 } as const;
 
 // Generate API property examples automatically

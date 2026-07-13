@@ -35,7 +35,7 @@ import { Result } from "../types/fp.js";
  *     **workflowId** is optional field, if provided, this API will update that workflow preference,
  *     otherwise it will update global preferences
  *
- * This operation requires either {@link Security.bearerAuth} or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.
+ * This operation requires one of {@link Security.bearerAuth}, {@link Security.secretKey}, or {@link Security.bearerAuth} to be set on the `security` parameter when initializing the SDK.
  */
 export function subscribersPreferencesUpdate(
   client: NovuCore,

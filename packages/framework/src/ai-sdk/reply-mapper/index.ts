@@ -57,7 +57,11 @@ export async function handleAiSdkResult(
   config: ToolApprovalConfig | undefined
 ): Promise<void> {
   if (isStreamResult(result)) {
-    await result.consumeStream();
+    await result.consumeStream({
+      onError: (err) => {
+        throw err;
+      },
+    });
   }
 
   // save executed tool results to Novu history

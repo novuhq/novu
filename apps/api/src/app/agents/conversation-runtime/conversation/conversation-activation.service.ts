@@ -286,6 +286,7 @@ export class ConversationActivationService {
     switch (platform) {
       case AgentPlatformEnum.WHATSAPP:
       case AgentPlatformEnum.TELEGRAM:
+      case AgentPlatformEnum.SENDBLUE:
         return ACTIVATION_WINDOW_MS.DAY;
       case AgentPlatformEnum.SLACK:
       case AgentPlatformEnum.TEAMS:

@@ -22,6 +22,7 @@ export class AgentReplyController {
   @HttpCode(HttpStatus.OK)
   @RequireAuthentication()
   @ExternalApiAccessible()
+  @SdkGroupName('Agents')
   @SdkMethodName('sendReply')
   @ApiOperation({
     summary: 'Send an agent reply',
@@ -51,6 +52,7 @@ export class AgentReplyController {
         addReactions: body.addReactions,
         deleteMessages: body.deleteMessages,
         typing: body.typing,
+        error: body.error,
       })
     );
   }

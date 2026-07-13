@@ -1,6 +1,7 @@
 ---
-title: 'Nuxt'
-description: 'Get started with Novu Framework in a Nuxt application'
+title: 'Nuxt quickstart for Novu Framework'
+sidebarTitle: 'Nuxt'
+description: 'Install Novu Framework in a Nuxt app, add the bridge endpoint with the serve helper, and sync your first code-based notification workflow.'
 ---
 
 
@@ -34,9 +35,13 @@ This package provides all the necessary tools to build and manage your notificat
    <Step>
          ## Add a Novu API Endpoint
         ```typescript app/server/api/novu.ts
+        import { serve } from '@novu/framework/nuxt';
+        import { testWorkflow } from '../../novu/workflows';
 
-        export default defineEventHandler(serve({ workflows: [myWorkflow] }));
+        export default defineEventHandler(serve({ workflows: [testWorkflow] }));
         ```
+
+        The `serve` helper is exported from the Nuxt-specific entry point `@novu/framework/nuxt`. Importing it from the base `@novu/framework` package will fail with `Cannot find name 'serve'`.
     </Step>
     <Step>
         ## Configure your secret key

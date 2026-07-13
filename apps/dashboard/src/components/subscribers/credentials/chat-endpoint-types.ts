@@ -71,6 +71,14 @@ const TELEGRAM_CHAT: ChatEndpointTypeOption = {
   requiresConnection: false,
 };
 
+const LINE_USER: ChatEndpointTypeOption = {
+  type: ENDPOINT_TYPES.LINE_USER,
+  label: 'LINE user',
+  icon: RiAtLine,
+  skeleton: { userId: '' },
+  requiresConnection: false,
+};
+
 const CONNECT_LINK_PROVIDERS = new Set<string>([
   ChatProviderIdEnum.Slack,
   ChatProviderIdEnum.MsTeams,
@@ -90,6 +98,7 @@ const SUPPORTED_TYPES_BY_PROVIDER: Partial<Record<string, ChatEndpointTypeOption
   [ChatProviderIdEnum.Slack]: [WEBHOOK, SLACK_CHANNEL, SLACK_USER],
   [ChatProviderIdEnum.MsTeams]: [WEBHOOK, MS_TEAMS_CHANNEL, MS_TEAMS_USER],
   [ChatProviderIdEnum.Telegram]: [TELEGRAM_CHAT],
+  [ChatProviderIdEnum.Line]: [LINE_USER],
   [ChatProviderIdEnum.Discord]: [WEBHOOK],
   [ChatProviderIdEnum.Mattermost]: [WEBHOOK_WITH_CHANNEL],
   [ChatProviderIdEnum.Ryver]: [WEBHOOK],

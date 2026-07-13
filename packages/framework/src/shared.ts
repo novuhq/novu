@@ -178,6 +178,7 @@ export enum ChatProviderIdEnum {
   ChatWebhook = 'chat-webhook',
   Telegram = 'telegram',
   WeChat = 'wechat',
+  Sendblue = 'sendblue',
 }
 
 export enum PushProviderIdEnum {
