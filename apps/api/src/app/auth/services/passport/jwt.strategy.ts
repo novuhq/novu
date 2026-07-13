@@ -35,6 +35,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     session.environmentId = environmentId;
 
     if (session.environmentId) {
+      if (!EnvironmentRepository.isInternalId(session.environmentId)) {
+        throw new UnauthorizedException('Invalid environment identifier');
+      }
+
       const environment = await this.environmentRepository.findOne(
         {
           _id: session.environmentId,

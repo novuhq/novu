@@ -43,12 +43,15 @@ describe('ClerkOAuthStrategy', () => {
 
   let originalIssuerUrl: string | undefined;
 
+  const validEnvironmentId = '507f1f77bcf86cd799439011';
+  const alternateEnvironmentId = '507f1f77bcf86cd799439012';
+
   beforeEach(() => {
     originalIssuerUrl = process.env.CLERK_ISSUER_URL;
     delete process.env.CLERK_ISSUER_URL;
 
     mockEnvironmentRepository = {
-      findOne: sinon.stub().resolves({ _id: 'env-123' }),
+      findOne: sinon.stub().resolves({ _id: validEnvironmentId }),
     };
 
     mockLinkEntitiesService = {
@@ -103,7 +106,7 @@ describe('ClerkOAuthStrategy', () => {
         organizationId: 'internal-org-123',
         roles: [MemberRoleEnum.OWNER],
         permissions: ROLE_PERMISSIONS[MemberRoleEnum.OWNER],
-        environmentId: 'env-123',
+        environmentId: validEnvironmentId,
         scheme: ApiAuthSchemeEnum.OAUTH2,
       });
     });
@@ -237,26 +240,43 @@ describe('ClerkOAuthStrategy', () => {
     });
 
     it('should respect the Novu-Environment-Id header when it belongs to the organization', async () => {
-      mockEnvironmentRepository.findOne.resolves({ _id: 'env-prod-456' });
+      mockEnvironmentRepository.findOne.resolves({ _id: alternateEnvironmentId });
 
       const result: UserSessionData = await strategy.validate({
         authScheme: ApiAuthSchemeEnum.OAUTH2,
         headers: {
           authorization: 'Bearer oat_test_token',
-          'novu-environment-id': 'env-prod-456',
+          'novu-environment-id': alternateEnvironmentId,
         },
       });
 
-      expect(result.environmentId).to.equal('env-prod-456');
+      expect(result.environmentId).to.equal(alternateEnvironmentId);
       expect(
         mockEnvironmentRepository.findOne.calledOnceWith(
           {
-            _id: 'env-prod-456',
+            _id: alternateEnvironmentId,
             _organizationId: 'internal-org-123',
           },
           '_id'
         )
       ).to.be.true;
+    });
+
+    it('should throw UnauthorizedException when the Novu-Environment-Id header is not a valid ObjectId', async () => {
+      try {
+        await strategy.validate({
+          authScheme: ApiAuthSchemeEnum.OAUTH2,
+          headers: {
+            authorization: 'Bearer oat_test_token',
+            'novu-environment-id': 'WSf5vSEijeZt',
+          },
+        });
+        expect.fail('Should have thrown an error');
+      } catch (err) {
+        expect(err).to.be.instanceOf(UnauthorizedException);
+        expect(err.message).to.equal('Invalid environment identifier');
+        expect(mockEnvironmentRepository.findOne.called).to.equal(false);
+      }
     });
 
     it('should throw UnauthorizedException when the Novu-Environment-Id header does not belong to the organization', async () => {
@@ -267,7 +287,7 @@ describe('ClerkOAuthStrategy', () => {
           authScheme: ApiAuthSchemeEnum.OAUTH2,
           headers: {
             authorization: 'Bearer oat_test_token',
-            'novu-environment-id': 'env-other-org',
+            'novu-environment-id': alternateEnvironmentId,
           },
         });
         expect.fail('Should have thrown an error');

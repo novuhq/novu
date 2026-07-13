@@ -21,9 +21,11 @@ describe('ClerkStrategy', () => {
   let mockEnvironmentRepository: { findOne: sinon.SinonStub };
   let mockLinkEntitiesService: { linkInternalExternalEntities: sinon.SinonStub };
 
+  const validEnvironmentId = '507f1f77bcf86cd799439011';
+
   const mockRequest = {
     headers: {
-      [HttpRequestHeaderKeysEnum.NOVU_ENVIRONMENT_ID.toLowerCase()]: 'env-123',
+      [HttpRequestHeaderKeysEnum.NOVU_ENVIRONMENT_ID.toLowerCase()]: validEnvironmentId,
     },
   };
 
@@ -42,7 +44,7 @@ describe('ClerkStrategy', () => {
 
   beforeEach(async () => {
     mockEnvironmentRepository = {
-      findOne: sinon.stub().resolves({ _id: 'env-123' }),
+      findOne: sinon.stub().resolves({ _id: validEnvironmentId }),
     };
 
     mockLinkEntitiesService = {
@@ -75,7 +77,7 @@ describe('ClerkStrategy', () => {
         organizationId: 'internal-org-123',
         roles: [MemberRoleEnum.OWNER],
         permissions: ALL_PERMISSIONS,
-        environmentId: 'env-123',
+        environmentId: validEnvironmentId,
         scheme: ApiAuthSchemeEnum.BEARER,
       });
     });
@@ -92,7 +94,7 @@ describe('ClerkStrategy', () => {
       expect(
         mockEnvironmentRepository.findOne.calledOnceWith(
           {
-            _id: 'env-123',
+            _id: validEnvironmentId,
             _organizationId: 'internal-org-123',
           },
           '_id'
@@ -109,6 +111,23 @@ describe('ClerkStrategy', () => {
       } catch (err) {
         expect(err).to.be.instanceOf(UnauthorizedException);
         expect(err.message).to.equal('Cannot find environment');
+      }
+    });
+
+    it('should throw UnauthorizedException when environment id is not a valid ObjectId', async () => {
+      const requestWithInvalidEnvironmentId = {
+        headers: {
+          [HttpRequestHeaderKeysEnum.NOVU_ENVIRONMENT_ID.toLowerCase()]: 'WSf5vSEijeZt',
+        },
+      };
+
+      try {
+        await strategy.validate(requestWithInvalidEnvironmentId, mockPayload);
+        expect.fail('Should have thrown an error');
+      } catch (err) {
+        expect(err).to.be.instanceOf(UnauthorizedException);
+        expect(err.message).to.equal('Invalid environment identifier');
+        expect(mockEnvironmentRepository.findOne.called).to.equal(false);
       }
     });
   });
