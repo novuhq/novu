@@ -357,7 +357,9 @@ describe('AgentSubscriberResolver', () => {
         email: 'User@Example.com',
       });
 
-      expect(result).to.be.a('string').and.to.match(/^sub_/);
+      expect(result)
+        .to.be.a('string')
+        .and.to.match(/^sub_ap_/);
       expect(createOrUpdateSubscriberExecute.calledOnce).to.equal(true);
 
       const command = createOrUpdateSubscriberExecute.firstCall.args[0];
@@ -403,7 +405,9 @@ describe('AgentSubscriberResolver', () => {
         email: 'customer@example.com',
       });
 
-      expect(result).to.be.a('string').and.to.match(/^sub_/);
+      expect(result)
+        .to.be.a('string')
+        .and.to.match(/^sub_ap_/);
       expect(createOrUpdateSubscriberExecute.calledOnce).to.equal(true);
     });
 
@@ -508,7 +512,7 @@ describe('AgentSubscriberResolver', () => {
 
       expect(result.outcome).to.equal('resolved');
       const subscriberId = result.outcome === 'resolved' ? result.subscriberId : '';
-      expect(subscriberId).to.match(/^sub_/);
+      expect(subscriberId).to.match(/^sub_ap_/);
       expect(createOrUpdateSubscriber.execute.calledOnce).to.equal(true);
       const subscriberCommand = createOrUpdateSubscriber.execute.firstCall.args[0];
       expect(subscriberCommand.subscriberId).to.equal(subscriberId);
@@ -676,7 +680,7 @@ describe('AgentSubscriberResolver', () => {
       }
 
       expect(subscriberRepository.delete.calledOnce).to.equal(true);
-      expect(subscriberRepository.delete.firstCall.args[0].subscriberId).to.match(/^sub_/);
+      expect(subscriberRepository.delete.firstCall.args[0].subscriberId).to.match(/^sub_ap_/);
       expect(subscriberRepository.delete.firstCall.args[0][`data.${AGENT_PROVISION_DATA_KEYS.source}`]).to.equal(
         AGENT_PLATFORM_PROVISION_SOURCE
       );
@@ -734,7 +738,7 @@ describe('AgentSubscriberResolver', () => {
       });
 
       expect(result.outcome).to.equal('resolved');
-      expect(result.outcome === 'resolved' ? result.subscriberId : '').to.match(/^sub_/);
+      expect(result.outcome === 'resolved' ? result.subscriberId : '').to.match(/^sub_ap_/);
       expect(createOrUpdateSubscriberExecute.calledOnce).to.equal(true);
     });
 
@@ -803,7 +807,7 @@ describe('AgentSubscriberResolver', () => {
       });
 
       expect(result.outcome).to.equal('resolved');
-      expect(result.outcome === 'resolved' ? result.subscriberId : '').to.match(/^sub_/);
+      expect(result.outcome === 'resolved' ? result.subscriberId : '').to.match(/^sub_ap_/);
       expect(createOrUpdateSubscriberExecute.calledOnce).to.equal(true);
       const command = createOrUpdateSubscriberExecute.firstCall.args[0];
       expect(command.phone).to.equal('+972541111111');
@@ -859,7 +863,7 @@ describe('AgentSubscriberResolver', () => {
 
       expect(result.outcome).to.equal('resolved');
       const subscriberId = result.outcome === 'resolved' ? result.subscriberId : '';
-      expect(subscriberId).to.match(/^sub_/);
+      expect(subscriberId).to.match(/^sub_ap_/);
       expect(createOrUpdateSubscriber.execute.calledOnce).to.equal(true);
       expect(createOrUpdateSubscriber.execute.firstCall.args[0].data).to.deep.include({
         [AGENT_PROVISION_DATA_KEYS.source]: AGENT_PLATFORM_PROVISION_SOURCE,

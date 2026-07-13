@@ -712,13 +712,9 @@ export class AgentSubscriberResolver {
   }
 }
 
-/**
- * 12 base64url characters from a SHA-256 of the platform-identity tuple. ≈ 72
- * bits of entropy — collision-safe within an environment against
- * customer-created subscriberIds, and short enough to remain readable in
- * logs and dashboard URLs. Deterministic so retries against the same tuple
- * resolve to the same `Subscriber` row.
- */
+/** Prefix for auto-provisioned subscriberIds. Informational only — branch on `__novu_source`, not this prefix. */
+const AUTO_PROVISIONED_SUBSCRIBER_ID_PREFIX = 'sub_ap_';
+
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
@@ -733,6 +729,12 @@ function isAgentProvisionedSubscriber(subscriber: Pick<SubscriberEntity, 'data'>
   return subscriber.data?.[AGENT_PROVISION_DATA_KEYS.source] === AGENT_PLATFORM_PROVISION_SOURCE;
 }
 
+/**
+ * Deterministic auto-provisioned subscriberId: `sub_ap_` + 12 base64url chars from
+ * a SHA-256 of the platform-identity tuple. ≈ 72 bits of entropy — collision-safe
+ * within an environment against customer-created subscriberIds. The prefix is for
+ * human readability only; provenance is `data.__novu_source`.
+ */
 function buildPlatformSubscriberId(params: {
   organizationId: string;
   integrationIdentifier: string;
@@ -743,7 +745,7 @@ function buildPlatformSubscriberId(params: {
     .update(`${params.organizationId}:${params.integrationIdentifier}:${params.platform}:${params.platformUserId}`)
     .digest('base64url');
 
-  return `sub_${fingerprint.slice(0, 12)}`;
+  return `${AUTO_PROVISIONED_SUBSCRIBER_ID_PREFIX}${fingerprint.slice(0, 12)}`;
 }
 
 type AutoProvisionEndpointType =

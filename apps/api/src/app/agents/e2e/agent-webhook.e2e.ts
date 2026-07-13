@@ -249,7 +249,7 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
         (p) => p.type === ConversationParticipantTypeEnum.SUBSCRIBER
       );
       expect(subParticipant, 'expected an auto-provisioned subscriber participant').to.exist;
-      expect(subParticipant!.id).to.match(/^sub_/);
+      expect(subParticipant!.id).to.match(/^sub_ap_/);
 
       const platformUserParticipant = conversation!.participants.find(
         (p) => p.type === ConversationParticipantTypeEnum.PLATFORM_USER
@@ -396,7 +396,7 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
 
       expect(bridgeCalls.length).to.equal(1);
       expect(bridgeCalls[0].subscriber, 'subscriber should be auto-provisioned, not null').to.exist;
-      expect(bridgeCalls[0].subscriber!.subscriberId).to.match(/^sub_/);
+      expect(bridgeCalls[0].subscriber!.subscriberId).to.match(/^sub_ap_/);
     });
   });
 
@@ -515,7 +515,7 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
       );
       expect(firstSubParticipant, 'expected auto-provisioned subscriber on first inbound').to.exist;
       const provisionedSubscriberId = firstSubParticipant!.id;
-      expect(provisionedSubscriberId).to.match(/^sub_/);
+      expect(provisionedSubscriberId).to.match(/^sub_ap_/);
 
       await invokeInbound(
         threadId,
