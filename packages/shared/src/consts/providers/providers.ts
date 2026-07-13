@@ -7,10 +7,24 @@ import {
   ProvidersIdEnum,
   SmsProviderIdEnum,
 } from '../../types';
-import { chatProviders, emailProviders, inAppProviders, pushProviders, smsProviders } from './channels';
+import {
+  chatProviders,
+  emailProviders,
+  inAppProviders,
+  pushProviders,
+  signalsProviders,
+  smsProviders,
+} from './channels';
 import { IProviderConfig } from './provider.interface';
 
-export { chatProviders, emailProviders, inAppProviders, pushProviders, smsProviders } from './channels';
+export {
+  chatProviders,
+  emailProviders,
+  inAppProviders,
+  pushProviders,
+  signalsProviders,
+  smsProviders,
+} from './channels';
 
 export const providers: IProviderConfig[] = [
   ...emailProviders,
@@ -18,6 +32,7 @@ export const providers: IProviderConfig[] = [
   ...chatProviders,
   ...pushProviders,
   ...inAppProviders,
+  ...signalsProviders,
 ];
 
 export const NOVU_PROVIDERS: ProvidersIdEnum[] = [

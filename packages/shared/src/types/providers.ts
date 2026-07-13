@@ -59,6 +59,18 @@ export enum CredentialsKeyEnum {
   ExternalEnvironmentId = 'externalEnvironmentId',
   /** Claude Platform on AWS: workspace ID (`wrkspc_…`) required for agent runtime dispatch. */
   ExternalWorkspaceId = 'externalWorkspaceId',
+  /** GitHub repository_dispatch: repository owner (org or user). */
+  Owner = 'owner',
+  /** GitHub repository_dispatch: repository name. */
+  Repo = 'repo',
+  /** GitHub repository_dispatch: custom event_type value. */
+  EventType = 'eventType',
+  /** HTTP method for custom webhook delivery (e.g. POST, PUT). */
+  Method = 'method',
+  /** Custom webhook request headers as JSON. */
+  Headers = 'headers',
+  /** Custom webhook request body template. */
+  Body = 'body',
 }
 
 export type ConfigurationKey = keyof IConfigurations;
@@ -172,6 +184,11 @@ export enum AgentRuntimeProviderIdEnum {
   AnthropicAws = 'anthropic-aws',
 }
 
+export enum SignalsProviderIdEnum {
+  GitHub = 'github',
+  Webhook = 'signals-webhook',
+}
+
 /** Distinguishes integrations used for notification delivery from those used as agent runtimes. */
 export enum IntegrationKindEnum {
   DELIVERY = 'delivery',
@@ -184,7 +201,8 @@ export type ProvidersIdEnum =
   | PushProviderIdEnum
   | InAppProviderIdEnum
   | ChatProviderIdEnum
-  | AgentRuntimeProviderIdEnum;
+  | AgentRuntimeProviderIdEnum
+  | SignalsProviderIdEnum;
 
 export const ProvidersIdEnumConst = {
   EmailProviderIdEnum,
@@ -193,6 +211,7 @@ export const ProvidersIdEnumConst = {
   InAppProviderIdEnum,
   ChatProviderIdEnum,
   AgentRuntimeProviderIdEnum,
+  SignalsProviderIdEnum,
 };
 
 export const providerIdValues = [

@@ -122,4 +122,16 @@ export interface ICredentials {
    * configured per-integration when the customer is not on the default workspace.
    */
   externalWorkspaceId?: string;
+  /** GitHub repository_dispatch: repository owner (org or user). */
+  owner?: string;
+  /** GitHub repository_dispatch: repository name. */
+  repo?: string;
+  /** GitHub repository_dispatch: custom event_type value. */
+  eventType?: string;
+  /** HTTP method for custom webhook delivery (e.g. POST, PUT). */
+  method?: string;
+  /** Custom webhook request headers as JSON. */
+  headers?: string;
+  /** Custom webhook request body template. */
+  body?: string;
 }

@@ -33,6 +33,7 @@ export enum ChannelTypeEnum {
   SMS = 'sms',
   CHAT = 'chat',
   PUSH = 'push',
+  SIGNALS = 'signals',
 }
 
 export interface IAttachmentOptions {
@@ -193,6 +194,11 @@ export enum PushProviderIdEnum {
 
 export enum InAppProviderIdEnum {
   Novu = 'novu',
+}
+
+export enum SignalsProviderIdEnum {
+  GitHub = 'github',
+  Webhook = 'signals-webhook',
 }
 
 /**

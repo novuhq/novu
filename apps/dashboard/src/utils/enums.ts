@@ -4,6 +4,7 @@ export enum StepTypeEnum {
   SMS = 'sms',
   CHAT = 'chat',
   PUSH = 'push',
+  SIGNALS = 'signals',
   DIGEST = 'digest',
   TRIGGER = 'trigger',
   DELAY = 'delay',

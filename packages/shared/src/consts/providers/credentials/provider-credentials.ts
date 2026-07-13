@@ -1604,3 +1604,77 @@ export const anthropicAwsAgentConfig: IConfigCredential[] = [
     required: false,
   },
 ];
+
+export const githubSignalsConfig: IConfigCredential[] = [
+  {
+    key: CredentialsKeyEnum.Token,
+    displayName: 'Personal Access Token',
+    type: 'string',
+    description: 'GitHub token with permission to create repository_dispatch events',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.Owner,
+    displayName: 'Owner',
+    type: 'string',
+    description: 'GitHub repository owner (organization or user)',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.Repo,
+    displayName: 'Repository',
+    type: 'string',
+    description: 'GitHub repository name',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.EventType,
+    displayName: 'Event Type',
+    type: 'string',
+    description: 'Custom event_type sent with repository_dispatch',
+    required: true,
+  },
+];
+
+export const signalsWebhookConfig: IConfigCredential[] = [
+  {
+    key: CredentialsKeyEnum.Method,
+    displayName: 'HTTP Method',
+    type: 'dropdown',
+    required: true,
+    value: 'POST',
+    dropdown: [
+      { name: 'POST', value: 'POST' },
+      { name: 'PUT', value: 'PUT' },
+      { name: 'PATCH', value: 'PATCH' },
+    ],
+  },
+  {
+    key: CredentialsKeyEnum.WebhookUrl,
+    displayName: 'Endpoint URL',
+    type: 'string',
+    description: 'The webhook URL to call when delivering a signal',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.Headers,
+    displayName: 'Headers',
+    type: 'textarea',
+    description: 'Request headers as JSON object',
+    required: false,
+  },
+  {
+    key: CredentialsKeyEnum.Body,
+    displayName: 'Body Template',
+    type: 'textarea',
+    description: 'Request body template for the webhook call',
+    required: false,
+  },
+  {
+    key: CredentialsKeyEnum.SecretKey,
+    displayName: 'Secret Hmac Key',
+    type: 'string',
+    description: 'Optional secret used to sign webhook calls',
+    required: false,
+  },
+];
