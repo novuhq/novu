@@ -20,6 +20,9 @@ export class PatchPreferenceChannelsDto implements IPreferenceChannels {
 
   @ApiProperty({ description: 'Chat channel preference' })
   chat?: boolean;
+
+  @ApiProperty({ description: 'Signals channel preference' })
+  signals?: boolean;
 }
 
 export class PatchSubscriberPreferencesDto {

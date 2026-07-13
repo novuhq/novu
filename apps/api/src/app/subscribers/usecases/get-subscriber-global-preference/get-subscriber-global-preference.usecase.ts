@@ -127,6 +127,7 @@ export class GetSubscriberGlobalPreference {
       in_app: true,
       chat: true,
       push: true,
+      signals: true,
     };
 
     return { ...defaultPreference, ...preference };

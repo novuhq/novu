@@ -71,6 +71,11 @@ const preferencesSchema = new Schema<PreferencesDBModel>(
             type: Schema.Types.Boolean,
           },
         },
+        [ChannelTypeEnum.SIGNALS]: {
+          enabled: {
+            type: Schema.Types.Boolean,
+          },
+        },
       },
     },
     schedule: Schema.Types.Mixed,

@@ -7,6 +7,7 @@ export interface IPreferenceChannelsDto {
   in_app?: boolean;
   chat?: boolean;
   push?: boolean;
+  signals?: boolean;
 }
 
 export interface INotificationGroupDto {
