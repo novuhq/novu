@@ -6,6 +6,7 @@ import {
   RiCodeBlock,
   RiFlashlightFill,
   RiHourglassFill,
+  RiPulseFill,
   RiShadowLine,
   RiSpeedUpFill,
 } from 'react-icons/ri';
@@ -23,6 +24,7 @@ export const STEP_TYPE_ICONS: Record<StepTypeEnum, IconType> = {
   [StepTypeEnum.HTTP_REQUEST]: Api as IconType,
   [StepTypeEnum.IN_APP]: Notification5Fill as IconType,
   [StepTypeEnum.PUSH]: RiCellphoneFill,
+  [StepTypeEnum.SIGNALS]: RiPulseFill,
   [StepTypeEnum.SMS]: Sms as IconType,
   [StepTypeEnum.THROTTLE]: RiSpeedUpFill,
   [StepTypeEnum.TRIGGER]: RiFlashlightFill,

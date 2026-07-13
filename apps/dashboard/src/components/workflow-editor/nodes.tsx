@@ -417,6 +417,35 @@ export const ChatNode = (props: NodeProps<NodeType>) => {
   );
 };
 
+export const SignalsNode = (props: NodeProps<NodeType>) => {
+  const { id, data } = props;
+  const { showStepPreview } = useCanvasContext();
+  const Icon = STEP_TYPE_TO_ICON[StepTypeEnum.SIGNALS];
+
+  return (
+    <NodeWrapper id={id} type={StepTypeEnum.SIGNALS}>
+      <StepNode id={id} data={data} type={StepTypeEnum.SIGNALS}>
+        <NodeHeader type={StepTypeEnum.SIGNALS}>
+          <StepNodeIcon
+            stepResolverHash={data.stepResolverHash}
+            color={STEP_TYPE_TO_COLOR[StepTypeEnum.SIGNALS]}
+            Icon={Icon}
+          />
+          <NodeName>{data.name || 'Signals Step'}</NodeName>
+        </NodeHeader>
+        <NodeBody showPreview={showStepPreview} type={StepTypeEnum.SIGNALS} controlValues={data.controlValues ?? {}}>
+          {data.content}
+        </NodeBody>
+        {data.error && <NodeError>{data.error}</NodeError>}
+        {/* biome-ignore lint/correctness/useUniqueElementIds: used internally by react-flow */}
+        <Handle isConnectable={false} className={handleClassName} type="target" position={Position.Top} id="a" />
+        {/* biome-ignore lint/correctness/useUniqueElementIds: used internally by react-flow */}
+        <Handle isConnectable={false} className={handleClassName} type="source" position={Position.Bottom} id="b" />
+      </StepNode>
+    </NodeWrapper>
+  );
+};
+
 export const DelayNode = (props: NodeProps<NodeType>) => {
   const { id, data } = props;
   const Icon = STEP_TYPE_TO_ICON[StepTypeEnum.DELAY];

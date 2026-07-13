@@ -45,6 +45,8 @@ import { ConfigureInAppStepPreview } from '@/components/workflow-editor/steps/in
 import { ConfigurePushStepPreview } from '@/components/workflow-editor/steps/push/configure-push-step-preview';
 import { SaveFormContext } from '@/components/workflow-editor/steps/save-form-context';
 import { SdkBanner } from '@/components/workflow-editor/steps/sdk-banner';
+import { ConfigureSignalsStepPreview } from '@/components/workflow-editor/steps/signals/configure-signals-step-preview';
+import { SignalsEnabledProviders } from '@/components/workflow-editor/steps/signals/signals-enabled-providers';
 import { SkipConditionsButton } from '@/components/workflow-editor/steps/skip-conditions-button';
 import { ConfigureSmsStepPreview } from '@/components/workflow-editor/steps/sms/configure-sms-step-preview';
 import { ThrottleControlValues } from '@/components/workflow-editor/steps/throttle/throttle-control-values';
@@ -77,6 +79,7 @@ const STEP_TYPE_TO_INLINE_CONTROL_VALUES: Record<StepTypeEnum, () => React.JSX.E
   [StepTypeEnum.SMS]: () => null,
   [StepTypeEnum.CHAT]: () => null,
   [StepTypeEnum.PUSH]: () => null,
+  [StepTypeEnum.SIGNALS]: () => null,
   [StepTypeEnum.CUSTOM]: () => null,
   [StepTypeEnum.HTTP_REQUEST]: () => null,
   [StepTypeEnum.TRIGGER]: () => null,
@@ -88,6 +91,7 @@ const STEP_TYPE_TO_PREVIEW: Record<StepTypeEnum, ((props: HTMLAttributes<HTMLDiv
   [StepTypeEnum.SMS]: ConfigureSmsStepPreview,
   [StepTypeEnum.CHAT]: ConfigureChatStepPreview,
   [StepTypeEnum.PUSH]: ConfigurePushStepPreview,
+  [StepTypeEnum.SIGNALS]: ConfigureSignalsStepPreview,
   [StepTypeEnum.CUSTOM]: null,
   [StepTypeEnum.HTTP_REQUEST]: null,
   [StepTypeEnum.TRIGGER]: null,
@@ -102,6 +106,7 @@ const CHANNEL_PREVIEW_STEP_TYPES = new Set<StepTypeEnum>([
   StepTypeEnum.SMS,
   StepTypeEnum.CHAT,
   StepTypeEnum.PUSH,
+  StepTypeEnum.SIGNALS,
 ]);
 
 const SIDEPANEL_ACTION_ROW_BASE_CLASS = 'flex h-12 w-full justify-start gap-1.5 rounded-none px-3 text-xs font-medium';
@@ -128,6 +133,7 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
     StepTypeEnum.SMS,
     StepTypeEnum.CHAT,
     StepTypeEnum.PUSH,
+    StepTypeEnum.SIGNALS,
     StepTypeEnum.EMAIL,
     StepTypeEnum.DIGEST,
     StepTypeEnum.DELAY,
@@ -171,7 +177,9 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
   const isInlineConfigurableStepWithCustomControls = isInlineConfigurableStep && hasCustomControls;
   const showInlineControlValuesSection = isInlineConfigurableStep && !hasCustomControls && !isInlineResolverActive;
   const showHttpRequestFormMiddleSection = step.type === StepTypeEnum.HTTP_REQUEST;
-  const showConfigureStepFormMiddleSection = showInlineControlValuesSection || showHttpRequestFormMiddleSection;
+  const showSignalsFormMiddleSection = step.type === StepTypeEnum.SIGNALS;
+  const showConfigureStepFormMiddleSection =
+    showInlineControlValuesSection || showHttpRequestFormMiddleSection || showSignalsFormMiddleSection;
 
   const onDeleteStep = () => {
     update(
@@ -200,6 +208,15 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
           controlValues: {
             ...(step.controls.values ?? {}),
             continueOnFailure: (step.controls.values?.continueOnFailure as boolean) ?? false,
+          },
+        };
+      }
+
+      if (step.type === StepTypeEnum.SIGNALS) {
+        return {
+          controlValues: {
+            ...(step.controls.values ?? {}),
+            providers: (step.controls.values?.providers as string[] | undefined) ?? [],
           },
         };
       }
@@ -468,6 +485,12 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
                 {showHttpRequestFormMiddleSection && (
                   <SidebarContent>
                     <ContinueOnFailure />
+                  </SidebarContent>
+                )}
+
+                {showSignalsFormMiddleSection && (
+                  <SidebarContent>
+                    <SignalsEnabledProviders />
                   </SidebarContent>
                 )}
               </SaveFormContext.Provider>

@@ -18,6 +18,7 @@ export const TEMPLATE_CONFIGURABLE_STEP_TYPES: readonly StepTypeEnum[] = [
   StepTypeEnum.SMS,
   StepTypeEnum.CHAT,
   StepTypeEnum.PUSH,
+  StepTypeEnum.SIGNALS,
   StepTypeEnum.HTTP_REQUEST,
 ];
 
@@ -38,6 +39,7 @@ export const STEP_TYPE_LABELS: Record<StepTypeEnum, string> = {
   [StepTypeEnum.IN_APP]: 'In-App',
   [StepTypeEnum.CHAT]: 'Chat',
   [StepTypeEnum.PUSH]: 'Push',
+  [StepTypeEnum.SIGNALS]: 'Signals',
   [StepTypeEnum.DIGEST]: 'Digest',
   [StepTypeEnum.DELAY]: 'Delay',
   [StepTypeEnum.THROTTLE]: 'Throttle',

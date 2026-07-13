@@ -42,16 +42,19 @@ export const Preferences = (props: PreferencesProps) => {
   });
 
   const isContextPreferencesEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONTEXT_PREFERENCES_ENABLED);
+  const isSignalsChannelEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_SIGNALS_CHANNEL_ENABLED);
 
   const { workflows, globalChannelsKeys, hasZeroPreferences } = useMemo(() => {
     const global = subscriberPreferences?.global ?? { channels: {} };
     const workflows = subscriberPreferences?.workflows ?? [];
-    const globalChannelsKeys = Object.entries(global?.channels ?? {}) as [ChannelTypeEnum, boolean][];
+    const globalChannelsKeys = (Object.entries(global?.channels ?? {}) as [ChannelTypeEnum, boolean][]).filter(
+      ([channel]) => isSignalsChannelEnabled || channel !== ChannelTypeEnum.SIGNALS
+    );
 
     const hasZeroPreferences = workflows.length === 0 && globalChannelsKeys.length === 0;
 
     return { global, workflows, globalChannelsKeys, hasZeroPreferences };
-  }, [subscriberPreferences]);
+  }, [isSignalsChannelEnabled, subscriberPreferences]);
 
   if (hasZeroPreferences) {
     return <PreferencesBlank />;

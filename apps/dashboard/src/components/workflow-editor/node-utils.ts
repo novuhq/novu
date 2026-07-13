@@ -19,6 +19,7 @@ import {
   InAppNode,
   NodeData,
   PushNode,
+  SignalsNode,
   SmsNode,
   ThrottleNode,
   TriggerNode,
@@ -35,6 +36,7 @@ export const nodeTypes = {
   in_app: InAppNode,
   push: PushNode,
   chat: ChatNode,
+  signals: SignalsNode,
   delay: DelayNode,
   digest: DigestNode,
   throttle: ThrottleNode,
@@ -50,6 +52,7 @@ export const NODE_TYPE_TO_STEP_TYPE: Omit<Record<keyof typeof nodeTypes, StepTyp
   in_app: StepTypeEnum.IN_APP,
   push: StepTypeEnum.PUSH,
   chat: StepTypeEnum.CHAT,
+  signals: StepTypeEnum.SIGNALS,
   delay: StepTypeEnum.DELAY,
   digest: StepTypeEnum.DIGEST,
   throttle: StepTypeEnum.THROTTLE,
@@ -94,6 +97,8 @@ export const mapStepToNodeContent = (
       return 'Sends Push notification to your subscribers';
     case StepTypeEnum.CHAT:
       return 'Sends Chat message to your subscribers';
+    case StepTypeEnum.SIGNALS:
+      return 'Sends delivery to custom tools configured';
     case StepTypeEnum.DELAY: {
       const delayMessage =
         workflowOrigin === ResourceOriginEnum.EXTERNAL

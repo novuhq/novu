@@ -79,6 +79,11 @@ export function ActivityFilters({
     FeatureFlagsKeysEnum.IS_SUBSCRIPTION_PREFERENCES_ENABLED,
     false
   );
+  const isSignalsChannelEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_SIGNALS_CHANNEL_ENABLED);
+  const channelOptions = useMemo(
+    () => CHANNEL_OPTIONS.filter((option) => isSignalsChannelEnabled || option.value !== ChannelTypeEnum.SIGNALS),
+    [isSignalsChannelEnabled]
+  );
 
   const form = useForm<ActivityFiltersData>({
     values: filters,
@@ -171,7 +176,7 @@ export function ActivityFilters({
                   type="multi"
                   title="Channels"
                   hideSearch
-                  options={CHANNEL_OPTIONS}
+                  options={channelOptions}
                   selected={field.value}
                   onSelect={(values) => setValue('channels', values as ChannelTypeEnum[])}
                 />

@@ -13,6 +13,7 @@ const STEP_TYPES_WITH_EDITOR = [
   StepTypeEnum.IN_APP,
   StepTypeEnum.PUSH,
   StepTypeEnum.CHAT,
+  StepTypeEnum.SIGNALS,
   StepTypeEnum.HTTP_REQUEST,
 ];
 

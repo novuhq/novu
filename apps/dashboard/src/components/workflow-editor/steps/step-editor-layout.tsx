@@ -186,6 +186,7 @@ function StepEditorContent() {
       StepTypeEnum.PUSH,
       StepTypeEnum.IN_APP,
       StepTypeEnum.CHAT,
+      StepTypeEnum.SIGNALS,
     ].includes(step.type);
     const emptyBody = !step.controlValues?.body;
     if (isContentStep && !emptyBody) {

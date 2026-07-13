@@ -1,6 +1,7 @@
 import { standardSchemaResolver } from '@hookform/resolvers/standard-schema';
 import {
   ChannelTypeEnum,
+  FeatureFlagsKeysEnum,
   PermissionsEnum,
   SeverityLevelEnum,
   WorkflowPreferences,
@@ -25,6 +26,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives
 import { SidebarContent, SidebarHeader } from '@/components/side-navigation/sidebar';
 import { UserPreferencesFormSchema } from '@/components/workflow-editor/schema';
 import { UpdateWorkflowFn } from '@/components/workflow-editor/workflow-provider';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { STEP_TYPE_TO_COLOR } from '@/utils/color';
@@ -48,6 +50,7 @@ const CHANNEL_LABELS_LOOKUP: Record<`${ChannelTypeEnum}` | 'all', string> = {
   [ChannelTypeEnum.SMS]: 'SMS',
   [ChannelTypeEnum.CHAT]: 'Chat',
   [ChannelTypeEnum.PUSH]: 'Push',
+  [ChannelTypeEnum.SIGNALS]: 'Signals',
   all: 'All',
 };
 
@@ -62,6 +65,7 @@ export const ChannelPreferencesForm = (props: ConfigureWorkflowFormProps) => {
   const { workflow, update, isReadOnly: readOnlyProp } = props;
   const track = useTelemetry();
   const has = useHasPermission();
+  const isSignalsChannelEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_SIGNALS_CHANNEL_ENABLED);
   const permissionReadOnly = !has({ permission: PermissionsEnum.WORKFLOW_WRITE });
   const isReadOnly = readOnlyProp ?? permissionReadOnly;
 
@@ -73,7 +77,9 @@ export const ChannelPreferencesForm = (props: ConfigureWorkflowFormProps) => {
     const allChannels = defaultPreferences?.channels;
     if (!allChannels) return null;
 
-    const allChannelsArr = Object.keys(allChannels);
+    const allChannelsArr = Object.keys(allChannels).filter(
+      (channel) => isSignalsChannelEnabled || channel !== ChannelTypeEnum.SIGNALS
+    );
     const channelsInUse = allChannelsArr.filter((channel) => steps.has(channel as StepTypeEnum));
     const channelsNotInUse = allChannelsArr.filter((channel) => !steps.has(channel as StepTypeEnum));
 
@@ -81,7 +87,13 @@ export const ChannelPreferencesForm = (props: ConfigureWorkflowFormProps) => {
       channelsInUse,
       channelsNotInUse,
     };
-  }, [isDefaultPreferences, workflow.preferences.default, workflow.preferences.user, workflow.steps]);
+  }, [
+    isDefaultPreferences,
+    isSignalsChannelEnabled,
+    workflow.preferences.default,
+    workflow.preferences.user,
+    workflow.steps,
+  ]);
 
   const defaultValues = useMemo(() => {
     return {

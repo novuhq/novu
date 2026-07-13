@@ -1,6 +1,8 @@
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { PopoverPortal } from '@radix-ui/react-popover';
 import React, { ReactNode, useState } from 'react';
 import { RiAddLine } from 'react-icons/ri';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { STEP_TYPE_TO_COLOR } from '@/utils/color';
 import { StepTypeEnum } from '@/utils/enums';
 import { cn } from '@/utils/ui';
@@ -90,6 +92,7 @@ export const AddStepMenu = ({
   onMenuItemClick: (selection: AddStepMenuSelection) => void;
 }) => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+  const isSignalsChannelEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_SIGNALS_CHANNEL_ENABLED);
 
   const handleMenuItemClick = (stepType: StepTypeEnum) => {
     onMenuItemClick({ type: stepType });
@@ -144,6 +147,11 @@ export const AddStepMenu = ({
                 <MenuItem stepType={StepTypeEnum.SMS} onClick={() => handleMenuItemClick(StepTypeEnum.SMS)}>
                   SMS
                 </MenuItem>
+                {isSignalsChannelEnabled && (
+                  <MenuItem stepType={StepTypeEnum.SIGNALS} onClick={() => handleMenuItemClick(StepTypeEnum.SIGNALS)}>
+                    Signals
+                  </MenuItem>
+                )}
               </MenuItemsGroup>
             </MenuGroup>
             <MenuGroup>

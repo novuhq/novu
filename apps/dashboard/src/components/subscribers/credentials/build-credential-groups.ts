@@ -99,6 +99,7 @@ const CHANNEL_LABELS: Record<ChannelTypeEnum, string> = {
   [ChannelTypeEnum.SMS]: 'SMS',
   [ChannelTypeEnum.CHAT]: 'CHAT',
   [ChannelTypeEnum.PUSH]: 'PUSH',
+  [ChannelTypeEnum.SIGNALS]: 'SIGNALS',
 };
 
 /** Section order, following the Figma layout (email, sms, push, chat). */
@@ -107,6 +108,7 @@ const GROUP_ORDER: ChannelTypeEnum[] = [
   ChannelTypeEnum.SMS,
   ChannelTypeEnum.PUSH,
   ChannelTypeEnum.CHAT,
+  ChannelTypeEnum.SIGNALS,
 ];
 
 function getProviderDisplayName(providerId: string): string {
@@ -354,6 +356,15 @@ export function buildCredentialGroups({
 
     if (channel === ChannelTypeEnum.CHAT) {
       return buildChatGroup(integrations, storedChannels, channelEndpoints, channelConnections, phone);
+    }
+
+    if (channel === ChannelTypeEnum.SIGNALS) {
+      // Signals integrations are tool destinations, not subscriber credentials.
+      return {
+        channel,
+        label: CHANNEL_LABELS[channel],
+        rows: [],
+      };
     }
 
     const value = channel === ChannelTypeEnum.EMAIL ? email : phone;
