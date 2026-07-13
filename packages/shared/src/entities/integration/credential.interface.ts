@@ -62,6 +62,13 @@ export interface ICredentials {
    * onboarding and time-boxes that guide. Only meaningful on the NovuAgent email integration.
    */
   outboundConnectedAt?: string;
+  /**
+   * Channel-agnostic ISO timestamp marking Layer-2 "What's next" completion (Connected badge +
+   * guide hide window). For WhatsApp Business: stamped when a permanent Access Token is in place
+   * (server auto-stamp on post-connect `apiToken` rotation, or manual confirm). Email continues to
+   * use `outboundConnectedAt` for now.
+   */
+  whatsNextCompletedAt?: string;
   useFromAddressOverride?: boolean;
   fromAddressOverride?: string;
   /**

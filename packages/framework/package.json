@@ -39,7 +39,7 @@
     "test:watch": "vitest --typecheck --watch",
     "check": "biome check .",
     "check:fix": "biome check --write .",
-    "build": "NODE_ENV=production tsup",
+    "build": "cross-env NODE_ENV=production tsup",
     "debug": "NODE_ENV=production tsup --config tsup-debug.config.ts",
     "build:watch": "tsup --watch",
     "postbuild": "pnpm run check:exports && pnpm check:circulars",

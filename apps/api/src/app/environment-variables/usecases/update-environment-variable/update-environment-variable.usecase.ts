@@ -110,6 +110,8 @@ export class UpdateEnvironmentVariable {
       throw new NotFoundException(`Environment variable with key "${updatedKey}" not found`);
     }
 
-    return toEnvironmentVariableResponseDto(updated);
+    return toEnvironmentVariableResponseDto(updated, {
+      scopeToEnvironmentId: command.restrictToUserEnvironment ? command.environmentId : undefined,
+    });
   }
 }

@@ -3954,6 +3954,9 @@ importers:
       africastalking:
         specifier: ^0.7.9
         version: 0.7.9
+      anypost:
+        specifier: ^1.1.1
+        version: 1.1.1
       axios:
         specifier: ^1.18.1
         version: 1.18.1
@@ -15700,6 +15703,15 @@ packages:
   anymatch@3.1.3:
     resolution: {integrity: sha512-KMReFUr0B4t+D+OBkjR3KYqvocp2XaSzO55UcB6mgQMd3KbcE+mWTyvVV7D/zsdEbNnV6acZUutkiHQXvTr1Rw==}
     engines: {node: '>= 8'}
+
+  anypost@1.1.1:
+    resolution: {integrity: sha512-mNcF6bAOqLEmgozeO8QdfDkuT5X+wDv8tXmt/EpHnUhtIIpuTi6wZInbEos3y3JBl6NJoc5/tD1RJI4Ghobqxg==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      emailmd: '>=0.3.0'
+    peerDependenciesMeta:
+      emailmd:
+        optional: true
 
   apache-md5@1.1.8:
     resolution: {integrity: sha512-FCAJojipPn0bXjuEpjOOOMN8FZDkxfWWp4JGN9mifU2IhxvKyXZYqpzPHdnTSUpmPDy+tsslB6Z1g+Vg6nVbYA==}
@@ -44341,6 +44353,8 @@ snapshots:
     dependencies:
       normalize-path: 3.0.0
       picomatch: 2.3.2
+
+  anypost@1.1.1: {}
 
   apache-md5@1.1.8: {}
 
