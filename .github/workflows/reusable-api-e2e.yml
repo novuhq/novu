@@ -19,7 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include: ${{ fromJson(inputs.ee && '[{"shard":1,"total":4},{"shard":2,"total":4},{"shard":3,"total":4},{"shard":4,"total":4}]' || '[{"shard":1,"total":1}]') }}
+        include: ${{ fromJson('[{"shard":1,"total":4},{"shard":2,"total":4},{"shard":3,"total":4},{"shard":4,"total":4}]') }}
     runs-on: blacksmith-8vcpu-ubuntu-2404
     timeout-minutes: 15
     permissions:
@@ -67,11 +67,15 @@ jobs:
         shell: bash
         run: wait-on --timeout=180000 http://127.0.0.1:1342/v1/health-check
 
-      - name: Run Novu V1 E2E tests
+      - name: Run Novu V2 CE E2E tests
         if: ${{ !inputs.ee }}
+        env:
+          NOVU_V2_SHARD_INDEX: ${{ matrix.shard }}
+          NOVU_V2_TOTAL_SHARDS: ${{ matrix.total }}
+          NOVU_V2_MOCHA_REPORTER: dot
         run: |
           set -e
-          pnpm --filter @novu/api-service test:e2e:novu-v0
+          pnpm --filter @novu/api-service test:e2e:novu-v2-ce
 
       - name: Run Novu V2 E2E tests
         if: ${{ inputs.ee }}

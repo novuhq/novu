@@ -56,7 +56,7 @@ export type IntegrationsListActiveQueryError =
  * List active integrations
  *
  * @remarks
- * List all the active integrations created in the organization
+ * List all the active integrations created in the organization. Only integration metadata is returned, credentials field is returned as an empty object.
  */
 export function useIntegrationsListActive(
   idempotencyKey?: string | undefined,
@@ -83,7 +83,7 @@ export function useIntegrationsListActive(
  * List active integrations
  *
  * @remarks
- * List all the active integrations created in the organization
+ * List all the active integrations created in the organization. Only integration metadata is returned, credentials field is returned as an empty object.
  */
 export function useIntegrationsListActiveSuspense(
   idempotencyKey?: string | undefined,

@@ -41,6 +41,46 @@ export type UpdateIntegrationData = {
   check: boolean;
 };
 
+export async function generateLinkUserOAuthUrl({
+  environment,
+  integrationIdentifier,
+  subscriberId,
+  connectionIdentifier,
+}: {
+  environment: IEnvironment;
+  integrationIdentifier: string;
+  subscriberId: string;
+  connectionIdentifier?: string;
+}): Promise<string> {
+  const response = await post<{ data: { url: string } }>('/integrations/channel-endpoints/oauth', {
+    environment,
+    body: { integrationIdentifier, subscriberId, connectionIdentifier },
+  });
+
+  return response.data.url;
+}
+
+export async function generateConnectOAuthUrl({
+  environment,
+  integrationIdentifier,
+  subscriberId,
+  connectionIdentifier,
+  autoLinkUser,
+}: {
+  environment: IEnvironment;
+  integrationIdentifier: string;
+  subscriberId: string;
+  connectionIdentifier?: string;
+  autoLinkUser?: boolean;
+}): Promise<string> {
+  const response = await post<{ data: { url: string } }>('/integrations/channel-connections/oauth', {
+    environment,
+    body: { integrationIdentifier, subscriberId, connectionIdentifier, autoLinkUser },
+  });
+
+  return response.data.url;
+}
+
 export async function getIntegrations({ environment }: { environment: IEnvironment }) {
   // TODO: This is a technical debt on the API side.
   // Integrations work across environments, so we should not need to pass the environment ID here.
@@ -158,7 +198,7 @@ export type IntegrationStoreTelegramMobileLink = {
 type IntegrationStoreTelegramMobileLinkEnvelope = { data: IntegrationStoreTelegramMobileLink };
 
 /**
- * Issues a signed, single-use, short-lived JWT that lets an unauthenticated
+ * Issues an opaque, single-use, short-lived setup token that lets an unauthenticated
  * mobile visitor create a Telegram integration from the Integration Store
  * create flow. The integration is created server-side on submit.
  */

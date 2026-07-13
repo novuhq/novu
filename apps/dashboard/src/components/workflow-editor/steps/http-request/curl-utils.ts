@@ -6,7 +6,11 @@ export const NOVU_SIGNATURE_HEADER_KEY = 'novu-signature';
 
 const METHODS_WITH_BODY = new Set(['POST', 'PUT', 'PATCH']);
 
-export function canMethodHaveBody(method: string): boolean {
+export function canMethodHaveBody(method: string | undefined | null): boolean {
+  if (!method) {
+    return false;
+  }
+
   return METHODS_WITH_BODY.has(method.toUpperCase());
 }
 

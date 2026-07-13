@@ -48,6 +48,28 @@ const resendConfigurations: ConfigConfiguration[] = [
   },
 ];
 
+const anypostConfigurations: ConfigConfiguration[] = [
+  {
+    key: 'inboundWebhookEnabled',
+    displayName: 'Email Activity Tracking',
+    tooltip: emailActivityTrackingTooltip,
+    type: 'switch',
+    required: false,
+    links: [
+      {
+        text: 'manual set-up guide',
+        url: 'https://docs.novu.co/platform/integrations/email/activity-tracking/manual-configuration/anypost',
+      },
+    ],
+  },
+  {
+    key: 'inboundWebhookSigningKey',
+    displayName: 'Inbound Webhook Signing Key',
+    type: 'string',
+    required: false,
+  },
+];
+
 const mailgunConfigurations: ConfigConfiguration[] = [
   {
     key: 'inboundWebhookEnabled',
@@ -125,6 +147,16 @@ export const resendGroupConfigurations: ConfigConfigurationGroup[] = [
     enabler: 'inboundWebhookEnabled',
     setupWebhookUrlGuide:
       'https://docs.novu.co/platform/integrations/email/activity-tracking/manual-configuration/resend',
+  },
+];
+
+export const anypostGroupConfigurations: ConfigConfigurationGroup[] = [
+  {
+    groupType: 'inboundWebhook',
+    configurations: anypostConfigurations,
+    enabler: 'inboundWebhookEnabled',
+    setupWebhookUrlGuide:
+      'https://docs.novu.co/platform/integrations/email/activity-tracking/manual-configuration/anypost',
   },
 ];
 

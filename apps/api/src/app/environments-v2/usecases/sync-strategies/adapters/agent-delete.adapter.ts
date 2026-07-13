@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { AgentEntity } from '@novu/dal';
-import { DeleteAgentCommand } from '../../../../agents/usecases/delete-agent/delete-agent.command';
-import { DeleteAgent } from '../../../../agents/usecases/delete-agent/delete-agent.usecase';
+import { DeleteAgentCommand } from '../../../../agents/management/usecases/delete-agent/delete-agent.command';
+import { DeleteAgent } from '../../../../agents/management/usecases/delete-agent/delete-agent.usecase';
 import { ISyncContext } from '../../../types/sync.types';
 import { IBaseDeleteService } from '../base/interfaces/base-delete.interface';
 

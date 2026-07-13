@@ -41,7 +41,7 @@ function buildLlmPrompt(
         JSON.stringify(responseBodySchema, null, 2),
         '```',
         enforceSchemaValidation
-          ? 'Schema validation is enforced — a non-conforming response will fail the workflow step.'
+          ? 'Schema validation is enforced: a non-conforming response will fail the workflow step.'
           : 'Schema validation is not enforced but the response should still match this shape for use in subsequent steps.',
       ].join('\n')
     : '';

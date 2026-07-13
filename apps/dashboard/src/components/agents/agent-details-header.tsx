@@ -1,5 +1,6 @@
-import { PermissionsEnum } from '@novu/shared';
-import { RiMore2Fill, RiRobot2Line } from 'react-icons/ri';
+import { isClaudePlatformConsoleProvider, PermissionsEnum } from '@novu/shared';
+import { RiMore2Fill } from 'react-icons/ri';
+import { Link } from 'react-router-dom';
 import type { AgentResponse } from '@/api/agents';
 import { Badge } from '@/components/primitives/badge';
 import { Button } from '@/components/primitives/button';
@@ -10,10 +11,12 @@ import {
   DropdownMenuTrigger,
 } from '@/components/primitives/dropdown-menu';
 import { Skeleton } from '@/components/primitives/skeleton';
+import TruncatedText from '@/components/truncated-text';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { formatDateSimple } from '@/utils/format-date';
 import { ClaudeIcon } from '../icons/claude';
+import { ExceedsPlanIndicator } from './exceeds-plan-indicator';
 
 type AgentDetailsHeaderProps = {
   agent: AgentResponse | undefined;
@@ -47,13 +50,19 @@ export function AgentDetailsHeader({ agent, isLoading, onRequestDelete }: AgentD
     <header className="px-4 pt-2 pb-2 md:px-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex min-w-0 flex-col gap-1">
-          <div className="flex items-center gap-2">
-            <h1 className="text-text-strong text-[18px] font-medium leading-6 tracking-tight">{agent.name}</h1>
+          <div className="flex min-w-0 items-center gap-2">
+            <TruncatedText
+              asChild
+              className="text-text-strong min-w-0 max-w-[40ch] text-[18px] leading-6 tracking-tight"
+            >
+              <h1>{agent.name}</h1>
+            </TruncatedText>
             {agent.devBridgeActive ? (
               <Badge variant="lighter" color="orange" size="sm">
                 LOCAL
               </Badge>
             ) : null}
+            {agent.exceedsPlanLimit ? <ExceedsPlanIndicator resource="agent" /> : null}
           </div>
           <div className="flex min-w-0 items-center gap-1">
             <span className="text-text-soft font-mono text-label-xs leading-4 tracking-tight">Created</span>
@@ -67,14 +76,14 @@ export function AgentDetailsHeader({ agent, isLoading, onRequestDelete }: AgentD
         <div className="flex shrink-0 items-center gap-3">
           {agent.runtime === 'managed' &&
           agent.managedRuntime?.consoleUrl &&
-          agent.managedRuntime.providerId === 'anthropic' ? (
-            <Button variant="secondary" mode="outline" size="xs" className="gap-1.5" asChild>
-              <a href={agent.managedRuntime.consoleUrl} target="_blank" rel="noreferrer noopener">
+          isClaudePlatformConsoleProvider(agent.managedRuntime.providerId) ? (
+            <Link to={agent.managedRuntime.consoleUrl} target="_blank" rel="noreferrer noopener">
+              <Button variant="secondary" mode="outline" size="xs" className="gap-1.5">
                 <span>Open in</span>
                 <ClaudeIcon className="size-3.5 shrink-0" aria-hidden />
                 <span>Claude</span>
-              </a>
-            </Button>
+              </Button>
+            </Link>
           ) : null}
           {canWrite && onRequestDelete ? (
             <DropdownMenu>

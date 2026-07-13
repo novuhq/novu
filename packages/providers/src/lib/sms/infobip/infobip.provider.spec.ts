@@ -1,9 +1,11 @@
 import { expect, test, vi } from 'vitest';
 import { InfobipSmsProvider } from './infobip.provider';
 
+const validBaseUrl = 'https://abc123.api.infobip.com';
+
 test('should trigger infobip library correctly - SMS', async () => {
   const provider = new InfobipSmsProvider({
-    baseUrl: 'localhost',
+    baseUrl: validBaseUrl,
     apiKey: '<infobip-auth-token>',
   });
 
@@ -39,9 +41,9 @@ test('should trigger infobip library correctly - SMS', async () => {
   });
 });
 
-test('should trigger infobip library correctly - SMS', async () => {
+test('should trigger infobip library correctly - SMS with _passthrough', async () => {
   const provider = new InfobipSmsProvider({
-    baseUrl: 'localhost',
+    baseUrl: validBaseUrl,
     apiKey: '<infobip-auth-token>',
   });
 
@@ -84,4 +86,24 @@ test('should trigger infobip library correctly - SMS', async () => {
       },
     ],
   });
+});
+
+test('rejects unsafe base URLs at construction time', () => {
+  expect(
+    () =>
+      new InfobipSmsProvider({
+        baseUrl: 'http://localhost:8080',
+        apiKey: '<infobip-auth-token>',
+      })
+  ).toThrow(/Infobip base URL blocked/);
+});
+
+test('rejects missing base URLs at construction time', () => {
+  expect(
+    () =>
+      new InfobipSmsProvider({
+        baseUrl: '',
+        apiKey: '<infobip-auth-token>',
+      })
+  ).toThrow('Infobip base URL blocked: Base URL is required.');
 });

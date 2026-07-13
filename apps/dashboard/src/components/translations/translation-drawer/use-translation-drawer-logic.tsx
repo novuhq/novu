@@ -20,13 +20,18 @@ export function useTranslationDrawerLogic(
   );
 
   useEffect(() => {
-    // Prioritize initialLocale, then fall back to first locale
-    const preferredLocale =
-      initialLocale && translationGroup.locales.includes(initialLocale)
-        ? initialLocale
-        : translationGroup.locales[0] || null;
-    setSelectedLocale(preferredLocale);
-  }, [translationGroup.locales, translationGroup.updatedAt, initialLocale]);
+    setSelectedLocale((current) => {
+      if (current && translationGroup.locales.includes(current)) {
+        return current;
+      }
+
+      if (initialLocale && translationGroup.locales.includes(initialLocale)) {
+        return initialLocale;
+      }
+
+      return translationGroup.locales[0] || null;
+    });
+  }, [translationGroup.locales, initialLocale]);
 
   const {
     data: selectedTranslation,

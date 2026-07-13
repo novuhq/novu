@@ -18,11 +18,14 @@ export type AgentMcpServerScope = 'environment' | 'agent' | 'subscriber';
  * MCP. Mirrors the catalog `mode` for the MCP (each MCP supports exactly
  * one mechanism):
  *
- *  - `dcr`      — Dynamic Client Registration (RFC 7591); per-subscriber.
- *  - `novu-app` — Novu's pre-registered OAuth application; env-var creds.
- *  - `user-app` — Customer's pre-registered OAuth application; per-org creds.
+ *  - `dcr`              — Dynamic Client Registration (RFC 7591); per-subscriber.
+ *  - `novu-app`         — Novu's pre-registered OAuth application; env-var creds.
+ *  - `user-app`         — Customer's pre-registered OAuth application; per-org creds.
+ *  - `provider-managed` — OAuth lives entirely inside the managed agent runtime
+ *                         provider (e.g. Claude); Novu only ensures the vault
+ *                         exists and redirects to the provider's vault UI.
  */
-export type AgentMcpServerAuthMode = 'dcr' | 'novu-app' | 'user-app';
+export type AgentMcpServerAuthMode = 'dcr' | 'novu-app' | 'user-app' | 'provider-managed';
 
 export type AgentMcpServerStatus = 'active' | 'syncing' | 'error' | 'disabled';
 

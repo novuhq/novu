@@ -1,10 +1,7 @@
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { ReactNode } from 'react';
-import { DashboardShell } from '@/components/dashboard-shell/dashboard-shell';
 import { HeaderNavigation } from '@/components/header-navigation/header-navigation';
 import { MobileDesktopPrompt } from '@/components/mobile-desktop-prompt';
 import { LegacySideNavigation } from '@/components/side-navigation/side-navigation';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 
 type DashboardLayoutProps = {
   children: ReactNode;
@@ -13,7 +10,7 @@ type DashboardLayoutProps = {
   showBridgeUrl?: boolean;
 };
 
-const LegacyDashboardLayout = ({
+export const DashboardLayout = ({
   children,
   headerStartItems,
   showSideNavigation = true,
@@ -38,14 +35,4 @@ const LegacyDashboardLayout = ({
       <MobileDesktopPrompt />
     </div>
   );
-};
-
-export const DashboardLayout = (props: DashboardLayoutProps) => {
-  const isShellV2 = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONNECT_DASHBOARD_ENABLED, false);
-
-  if (isShellV2) {
-    return <DashboardShell {...props} />;
-  }
-
-  return <LegacyDashboardLayout {...props} />;
 };

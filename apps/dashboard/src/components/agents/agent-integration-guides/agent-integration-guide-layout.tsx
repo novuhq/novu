@@ -12,7 +12,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/primitives/dropdown-menu';
-import { API_HOSTNAME } from '@/config';
+import { getAgentApiBaseUrl } from '@/config';
 
 export type AgentIntegrationGuideHeaderProps = {
   providerId: string;
@@ -43,9 +43,7 @@ function formatCreatedDate(isoDate: string): string {
 }
 
 function buildWebhookUrl(agentId: string, integrationIdentifier: string): string {
-  const baseUrl = (API_HOSTNAME ?? 'https://api.novu.co').replace(/\/$/, '');
-
-  return `${baseUrl}/v1/agents/${agentId}/webhook/${integrationIdentifier}`;
+  return `${getAgentApiBaseUrl()}/v1/agents/${agentId}/webhook/${integrationIdentifier}`;
 }
 
 export function AgentIntegrationGuideHeader({

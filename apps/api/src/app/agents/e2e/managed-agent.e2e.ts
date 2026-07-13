@@ -5,16 +5,13 @@ import {
   AgentRuntimeUnauthorizedError,
   decryptCredentials,
 } from '@novu/application-generic';
-// Stub at the source factory module rather than the barrel: TypeScript's `__exportStar` helper
-// installs a non-configurable getter on the package barrel, which `sinon.stub` cannot replace.
-// The barrel getter reads the property from this source module on every access, so stubbing here
-// transparently propagates to both `create-integration.usecase.ts` and `provision-managed-agent.usecase.ts`.
-import * as AgentRuntimeFactoryModule from '@novu/application-generic/build/main/agent-runtimes/agent-runtime.factory';
-import { AgentRepository, IntegrationRepository } from '@novu/dal';
-import { AgentRuntimeProviderIdEnum, IntegrationKindEnum } from '@novu/shared';
+import { AgentMcpServerRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
+import { AGENT_NAME_MAX_LENGTH, AgentRuntimeProviderIdEnum, IntegrationKindEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import sinon from 'sinon';
+
+import { stubResolveAgentRuntime } from './helpers/stub-resolve-agent-runtime';
 
 const FAKE_API_KEY = 'sk-fake-anthropic-key-for-e2e';
 const FAKE_EXTERNAL_AGENT_ID = 'ext-agent-e2e-123';
@@ -25,6 +22,7 @@ const FAKE_NEW_EXTERNAL_ENV_ID = 'env_01XJ5NewEnvE2E';
 
 const agentRepository = new AgentRepository();
 const integrationRepository = new IntegrationRepository();
+const agentMcpServerRepository = new AgentMcpServerRepository();
 
 function buildMockProvider(overrides: Partial<Record<string, sinon.SinonStub>> = {}) {
   return {
@@ -41,16 +39,21 @@ function buildMockProvider(overrides: Partial<Record<string, sinon.SinonStub>> =
       mcpServers: [],
       tools: [],
     }),
+    refreshPlatformDefinition: sinon.stub().resolves(undefined),
     updateConfig: sinon.stub().resolves({
       model: 'claude-3-5-sonnet-20241022',
       systemPrompt: '',
       mcpServers: [],
       tools: [],
     }),
-    provisionIntegration: sinon
-      .stub()
-      .resolves({ credentialsUpdate: { externalEnvironmentId: FAKE_EXTERNAL_ENV_ID }, metadata: {} }),
+    provisionIntegration: sinon.stub().resolves({
+      credentialsUpdate: { externalEnvironmentId: FAKE_EXTERNAL_ENV_ID },
+      metadata: {},
+    }),
     deprovisionIntegration: sinon.stub().resolves(),
+    createVault: sinon.stub().resolves({ externalVaultId: 'vlt_subscriber_e2e' }),
+    upsertVaultCredential: sinon.stub().resolves({ vaultCredentialId: 'vltc_e2e' }),
+    deleteVaultCredential: sinon.stub().resolves(),
     ...overrides,
   };
 }
@@ -87,7 +90,7 @@ describe('Managed Agents API #novu-v2', () => {
     await session.initialize();
 
     mockProvider = buildMockProvider();
-    sinon.stub(AgentRuntimeFactoryModule, 'getAgentRuntimeProvider').returns(mockProvider as never);
+    stubResolveAgentRuntime(mockProvider);
   });
 
   afterEach(async () => {
@@ -229,7 +232,7 @@ describe('Managed Agents API #novu-v2', () => {
       expect(res.body.data.managedRuntime.externalAgentId).to.equal(FAKE_EXTERNAL_AGENT_ID);
     });
 
-    it('should forward model, systemPrompt, tools, and resolved mcpServers to createAgent', async () => {
+    it('should forward model, systemPrompt, and tools to createAgent without subscriber OAuth MCPs', async () => {
       const integrationId = await createAgentRuntimeIntegration();
       const identifier = `e2e-managed-full-${Date.now()}`;
       createdAgentIdentifiers.push(identifier);
@@ -253,9 +256,10 @@ describe('Managed Agents API #novu-v2', () => {
       expect(createAgentArg.model).to.equal('claude-opus-4-5');
       expect(createAgentArg.systemPrompt).to.equal('You are a helpful assistant');
       expect(createAgentArg.tools).to.deep.equal(['web_search']);
-      expect(createAgentArg.mcpServers).to.be.an('array').with.length(1);
-      expect(createAgentArg.mcpServers[0].name).to.equal('Slack');
-      expect(createAgentArg.mcpServers[0].url).to.equal('https://mcp.slack.com/mcp');
+      expect(
+        createAgentArg.mcpServers ?? [],
+        'subscriber OAuth MCPs are persisted in Mongo but not on the shared agent at create'
+      ).to.deep.equal([]);
     });
 
     it('should return 422 when runtime=managed but managedRuntime is omitted', async () => {
@@ -516,17 +520,13 @@ describe('Managed Agents API #novu-v2', () => {
       expect(res.body.data.tools).to.be.an('array');
     });
 
-    it('returns mcpServers from the Novu-authoritative enablement table (provider mcpServers ignored)', async () => {
+    it('returns shared-agent mcpServers only (subscriber OAuth enabled in Mongo is session-only)', async () => {
       const integrationId = await createAgentRuntimeIntegration();
       const identifier = `e2e-cfg-full-${Date.now()}`;
       createdAgentIdentifiers.push(identifier);
 
       await session.testAgent.post('/v1/agents').send(managedBody(identifier, integrationId));
 
-      // Enable a catalog MCP via the new authoritative endpoint. Mongo
-      // (`agent_mcp_server`) is now the source of truth for the agent's MCP
-      // list; the provider's `getConfig().mcpServers` is intentionally
-      // ignored to avoid trusting upstream drift.
       const enableRes = await session.testAgent
         .post(`/v1/agents/${encodeURIComponent(identifier)}/mcp-servers`)
         .send({ mcpId: 'linear' });
@@ -535,8 +535,6 @@ describe('Managed Agents API #novu-v2', () => {
       mockProvider.getConfig.resolves({
         model: 'claude-opus-4-5',
         systemPrompt: 'You are a helpful assistant',
-        // Provider returns its own (potentially drifted) mcpServers shape; the
-        // runtime-config endpoint MUST ignore it and project from Mongo.
         mcpServers: [
           {
             externalId: 'should-be-ignored',
@@ -568,13 +566,7 @@ describe('Managed Agents API #novu-v2', () => {
       expect(model).to.equal('claude-opus-4-5');
       expect(systemPrompt).to.equal('You are a helpful assistant');
 
-      expect(mcpServers).to.have.length(1);
-      // Projection comes from the shared catalog for `linear`, NOT the
-      // provider's stub. The `externalId` mirrors the catalog id; the name
-      // and url are the canonical Linear catalog values.
-      expect(mcpServers[0].externalId).to.equal('linear');
-      expect(mcpServers[0].name).to.equal('Linear');
-      expect(mcpServers[0].url).to.equal('https://mcp.linear.app/mcp');
+      expect(mcpServers, 'Linear is enabled in Mongo but not on the shared agent definition').to.deep.equal([]);
 
       expect(tools).to.have.length(2);
       expect(tools[0].externalId).to.equal('tool-1');
@@ -770,6 +762,8 @@ describe('Managed Agents API #novu-v2', () => {
 
     it('should adopt an existing provider agent, auto-generating name and identifier', async () => {
       const integrationId = await createAgentRuntimeIntegration();
+      mockProvider.validateCredentials.resetHistory();
+      mockProvider.getAgent.resetHistory();
       const res = await session.testAgent.post('/v1/agents').send(adoptBody(integrationId));
 
       expect(res.status).to.equal(201);
@@ -834,6 +828,185 @@ describe('Managed Agents API #novu-v2', () => {
       });
 
       expect(res.status).to.equal(422);
+    });
+
+    it('should seed agent_mcp_server rows from the provider getConfig during adoption', async () => {
+      const integrationId = await createAgentRuntimeIntegration();
+
+      // Provider reports two MCPs: one whose URL maps to the catalog ('linear')
+      // and one whose URL has no catalog entry (must be dropped silently so
+      // Mongo never points at an MCP Novu cannot render in the picker).
+      mockProvider.getConfig.resolves({
+        model: 'claude-opus-4-5',
+        systemPrompt: '',
+        mcpServers: [
+          {
+            externalId: 'Linear',
+            name: 'Linear',
+            url: 'https://mcp.linear.app/mcp',
+          },
+          {
+            externalId: 'Unknown',
+            name: 'Unknown',
+            url: 'https://mcp.unknown.example/mcp',
+          },
+        ],
+        tools: [],
+      });
+
+      const res = await session.testAgent.post('/v1/agents').send(adoptBody(integrationId));
+
+      expect(res.status, `adopt failed: ${JSON.stringify(res.body)}`).to.equal(201);
+      createdAgentIdentifiers.push(res.body.data.identifier);
+
+      const rows = await agentMcpServerRepository.findByAgent({
+        organizationId: session.organization._id,
+        environmentId: session.environment._id,
+        agentId: res.body.data._id,
+      });
+
+      expect(rows).to.have.length(1);
+      expect(rows[0].mcpId).to.equal('linear');
+      expect(rows[0].enabled).to.equal(true);
+      expect(rows[0].externalProjection, 'adopted subscriber OAuth rows are session-only').to.equal(undefined);
+
+      // Both endpoints must have been called during adoption — the parallel
+      // getAgent + getConfig round-trips are the contract the usecase relies
+      // on. getConfig is also invoked a second time by CreateAgent.loadRuntimeConfig
+      // to populate the response payload, so we only assert it was called and
+      // that the adoption call carried the right externalAgentId.
+      expect(mockProvider.getAgent.calledOnce, 'getAgent should be called once').to.be.true;
+      expect(mockProvider.getAgent.firstCall.args[0]).to.equal(FAKE_ADOPT_AGENT_ID);
+      expect(mockProvider.getConfig.called, 'getConfig should be called').to.be.true;
+      expect(mockProvider.getConfig.firstCall.args[0]).to.equal(FAKE_ADOPT_AGENT_ID);
+    });
+
+    it('should truncate an externally-sourced provider name that exceeds the limit instead of rejecting it', async () => {
+      const integrationId = await createAgentRuntimeIntegration();
+
+      // Provider names are outside our control — a long one must be truncated, not rejected.
+      const longProviderName = 'Extremely Long Provider Agent Name '.repeat(5).trim();
+      expect(longProviderName.length).to.be.greaterThan(AGENT_NAME_MAX_LENGTH);
+      mockProvider.getAgent.resolves({ externalAgentId: FAKE_ADOPT_AGENT_ID, name: longProviderName });
+
+      const res = await session.testAgent.post('/v1/agents').send(adoptBody(integrationId));
+
+      expect(res.status, `adopt failed: ${JSON.stringify(res.body)}`).to.equal(201);
+      expect(res.body.data.name.length).to.equal(AGENT_NAME_MAX_LENGTH);
+      expect(res.body.data.name).to.equal(longProviderName.slice(0, AGENT_NAME_MAX_LENGTH));
+
+      createdAgentIdentifiers.push(res.body.data.identifier);
+    });
+  });
+
+  // ─── managedRuntime.tools / mcpServers projection on agent CRUD ─────────────
+  // Locks in the projection added so that POST /agents, GET /agents/:id and
+  // PATCH /agents/:id surface the same `tools` + `mcpServers` view that
+  // `/runtime/config` returns, without forcing the dashboard to fan out a
+  // second request. View is best-effort: provider failures must NOT break the
+  // agent response.
+  describe('managedRuntime view on agent CRUD', () => {
+    it('should populate managedRuntime.tools / mcpServers on POST /v1/agents from provider getConfig', async () => {
+      const integrationId = await createAgentRuntimeIntegration();
+      const identifier = `e2e-create-view-${Date.now()}`;
+      createdAgentIdentifiers.push(identifier);
+
+      mockProvider.getConfig.resolves({
+        model: 'claude-opus-4-5',
+        systemPrompt: 'sp',
+        mcpServers: [],
+        tools: [{ externalId: 'web_search', name: 'Web Search', type: 'builtin' }],
+      });
+
+      const res = await session.testAgent.post('/v1/agents').send(managedBody(identifier, integrationId));
+
+      expect(res.status).to.equal(201);
+      expect(res.body.data.managedRuntime).to.exist;
+      expect(res.body.data.managedRuntime.tools).to.be.an('array').with.length(1);
+      expect(res.body.data.managedRuntime.tools[0].externalId).to.equal('web_search');
+      expect(res.body.data.managedRuntime.tools[0].type).to.equal('builtin');
+      expect(res.body.data.managedRuntime.mcpServers).to.be.an('array').with.length(0);
+    });
+
+    it('should project shared-agent mcpServers on GET /v1/agents/:id (subscriber OAuth excluded)', async () => {
+      const integrationId = await createAgentRuntimeIntegration();
+      const identifier = `e2e-get-view-${Date.now()}`;
+      createdAgentIdentifiers.push(identifier);
+
+      await session.testAgent.post('/v1/agents').send(managedBody(identifier, integrationId));
+
+      const enableRes = await session.testAgent
+        .post(`/v1/agents/${encodeURIComponent(identifier)}/mcp-servers`)
+        .send({ mcpId: 'linear' });
+      expect(enableRes.status, `enable linear failed: ${JSON.stringify(enableRes.body)}`).to.equal(201);
+
+      mockProvider.getConfig.resolves({
+        model: 'claude-opus-4-5',
+        systemPrompt: 'sp',
+        mcpServers: [{ externalId: 'should-be-ignored', name: 'Drifted', url: 'https://example.invalid' }],
+        tools: [{ externalId: 'bash', name: 'Bash', type: 'builtin' }],
+      });
+
+      const res = await session.testAgent.get(`/v1/agents/${encodeURIComponent(identifier)}`);
+
+      expect(res.status).to.equal(200);
+
+      const view = res.body.data.managedRuntime;
+      expect(view).to.exist;
+
+      expect(view.mcpServers, 'runtime config view is shared-agent projection only').to.deep.equal([]);
+
+      expect(view.tools).to.have.length(1);
+      expect(view.tools[0].externalId).to.equal('bash');
+      expect(view.tools[0].type).to.equal('builtin');
+    });
+
+    it('should surface managedRuntime.tools / mcpServers on PATCH /v1/agents/:id when general fields change', async () => {
+      const integrationId = await createAgentRuntimeIntegration();
+      const identifier = `e2e-patch-view-${Date.now()}`;
+      createdAgentIdentifiers.push(identifier);
+
+      await session.testAgent.post('/v1/agents').send(managedBody(identifier, integrationId));
+
+      mockProvider.getConfig.resolves({
+        model: 'claude-opus-4-5',
+        systemPrompt: 'sp',
+        mcpServers: [],
+        tools: [{ externalId: 'bash', name: 'Bash', type: 'builtin' }],
+      });
+
+      const res = await session.testAgent
+        .patch(`/v1/agents/${encodeURIComponent(identifier)}`)
+        .send({ description: 'updated description' });
+
+      expect(res.status).to.equal(200);
+      expect(res.body.data.description).to.equal('updated description');
+      expect(res.body.data.managedRuntime).to.exist;
+      expect(res.body.data.managedRuntime.tools).to.be.an('array').with.length(1);
+      expect(res.body.data.managedRuntime.tools[0].externalId).to.equal('bash');
+    });
+
+    it('should degrade gracefully on GET /v1/agents/:id when provider getConfig fails', async () => {
+      const integrationId = await createAgentRuntimeIntegration();
+      const identifier = `e2e-get-degrade-${Date.now()}`;
+      createdAgentIdentifiers.push(identifier);
+
+      await session.testAgent.post('/v1/agents').send(managedBody(identifier, integrationId));
+
+      // Provider is unreachable on the read-back. The agent record itself is
+      // healthy; the basic GET must still return 200 (the dedicated
+      // /runtime/config endpoint remains the source of truth for explicit
+      // error handling).
+      mockProvider.getConfig.rejects(
+        new AgentRuntimeNotFoundError('Agent not found on provider', AgentRuntimeProviderIdEnum.Anthropic)
+      );
+
+      const res = await session.testAgent.get(`/v1/agents/${encodeURIComponent(identifier)}`);
+
+      expect(res.status).to.equal(200);
+      expect(res.body.data.managedRuntime).to.exist;
+      expect(res.body.data.managedRuntime.tools).to.equal(undefined);
+      expect(res.body.data.managedRuntime.mcpServers).to.equal(undefined);
     });
   });
 });

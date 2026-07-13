@@ -603,4 +603,44 @@ describe('ScheduleValidator', () => {
       expect(result.getTime()).to.equal(currentTime.getTime());
     });
   });
+
+  describe('day of week in a subscriber timezone on a non-UTC server', () => {
+    // The worker process can run in any timezone. `utcToZonedTime` returns a
+    // date whose wall clock is read with the local getters, so the day of week
+    // has to be read the same way the hour is. Pin a non-UTC process timezone
+    // so this exercises the gap between getDay and getUTCDay around midnight;
+    // it is a no-op when the process already runs in UTC.
+    const originalTz = process.env.TZ;
+
+    before(() => {
+      process.env.TZ = 'America/New_York';
+    });
+
+    after(() => {
+      if (originalTz === undefined) {
+        delete process.env.TZ;
+      } else {
+        process.env.TZ = originalTz;
+      }
+    });
+
+    it('keeps the subscriber-local day when the instant has crossed midnight in UTC', () => {
+      const schedule: Schedule = {
+        isEnabled: true,
+        weeklySchedule: {
+          wednesday: {
+            isEnabled: true,
+            hours: [{ start: '09:00 PM', end: '11:00 PM' }],
+          },
+        },
+      };
+
+      // 2024-01-03T13:00Z is a Wednesday in UTC and Wednesday 10:00 PM in
+      // Asia/Tokyo (+09:00), inside the configured window. The zoned date's
+      // UTC day is already Thursday, so reading getUTCDay skips Wednesday.
+      const currentTime = new Date('2024-01-03T13:00:00.000Z');
+
+      expect(isWithinSchedule(schedule, currentTime, 'Asia/Tokyo')).to.be.true;
+    });
+  });
 });

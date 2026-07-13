@@ -30,7 +30,7 @@ import { Result } from "../types/fp.js";
  * List active integrations
  *
  * @remarks
- * List all the active integrations created in the organization
+ * List all the active integrations created in the organization. Only integration metadata is returned, credentials field is returned as an empty object.
  *
  * This operation requires either {@link Security.bearerAuth} or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.
  */

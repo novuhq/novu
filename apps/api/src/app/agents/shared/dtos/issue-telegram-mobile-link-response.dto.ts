@@ -1,0 +1,18 @@
+import { ApiProperty } from '@nestjs/swagger';
+
+export class IssueTelegramMobileLinkResponseDto {
+  @ApiProperty({
+    type: String,
+    description: 'Opaque, single-use token identifying this Telegram mobile-setup session',
+  })
+  token: string;
+
+  @ApiProperty({
+    type: String,
+    description: 'Absolute URL the user can open on a mobile device to complete Telegram setup',
+  })
+  url: string;
+
+  @ApiProperty({ type: String, description: 'ISO-8601 timestamp at which the token expires' })
+  expiresAt: string;
+}

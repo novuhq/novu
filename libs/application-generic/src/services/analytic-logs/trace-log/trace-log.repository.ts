@@ -562,6 +562,8 @@ export function mapEventTypeToTitle(eventType: EventType): string {
       return 'Request received';
     case 'request_queued':
       return 'Request queued';
+    case 'request_delivered':
+      return 'Request delivered';
     case 'request_failed':
       return 'Request failed';
     case 'request_organization_not_found':

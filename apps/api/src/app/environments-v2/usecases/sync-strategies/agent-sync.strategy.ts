@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { FeatureFlagsService, PinoLogger } from '@novu/application-generic';
-import { FeatureFlagsKeysEnum, UserSessionData } from '@novu/shared';
+import { PinoLogger } from '@novu/application-generic';
+import { UserSessionData } from '@novu/shared';
 
 import { IDiffResult, ISyncContext, ISyncResult, ResourceTypeEnum } from '../../types/sync.types';
 import { BaseSyncStrategy } from './base/base-sync.strategy';
@@ -12,8 +12,7 @@ export class AgentSyncStrategy extends BaseSyncStrategy {
   constructor(
     logger: PinoLogger,
     private agentSyncOperation: AgentSyncOperation,
-    private agentDiffOperation: AgentDiffOperation,
-    private featureFlagsService: FeatureFlagsService
+    private agentDiffOperation: AgentDiffOperation
   ) {
     super(logger);
   }
@@ -23,12 +22,6 @@ export class AgentSyncStrategy extends BaseSyncStrategy {
   }
 
   async execute(context: ISyncContext): Promise<ISyncResult> {
-    const isEnabled = await this.isFeatureEnabled(context.user.organizationId, context.sourceEnvironmentId);
-
-    if (!isEnabled) {
-      return { resourceType: ResourceTypeEnum.AGENT, successful: [], failed: [], skipped: [], totalProcessed: 0 };
-    }
-
     return this.agentSyncOperation.execute(context);
   }
 
@@ -38,31 +31,10 @@ export class AgentSyncStrategy extends BaseSyncStrategy {
     organizationId: string,
     userContext: UserSessionData
   ): Promise<IDiffResult[]> {
-    const isEnabled = await this.isFeatureEnabled(organizationId, sourceEnvId);
-
-    if (!isEnabled) {
-      return [];
-    }
-
     return this.agentDiffOperation.execute(sourceEnvId, targetEnvId, organizationId, userContext);
   }
 
   async getAvailableResourceIds(sourceEnvironmentId: string, organizationId: string): Promise<string[]> {
-    const isEnabled = await this.isFeatureEnabled(organizationId, sourceEnvironmentId);
-
-    if (!isEnabled) {
-      return [];
-    }
-
     return this.agentSyncOperation.getAvailableResourceIds(sourceEnvironmentId, organizationId);
-  }
-
-  private async isFeatureEnabled(organizationId: string, environmentId: string): Promise<boolean> {
-    return this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_CONVERSATIONAL_AGENTS_ENABLED,
-      defaultValue: false,
-      organization: { _id: organizationId },
-      environment: { _id: environmentId },
-    });
   }
 }

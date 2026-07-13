@@ -1,0 +1,303 @@
+---
+title: 'Using Translations'
+description: 'Learn how to use translations with @novu/framework based workflows'
+---
+
+
+Novu Framework workflows are code-first: workflow definitions and content are expressed in code rather than in the dashboard. Internationalization (i18n) is implemented in the application layer—translations are defined there and resolved at runtime—so that workflow step content (e.g. subject and body fields) can be locale-aware.
+
+This guide implements a locale-aware email notification workflow using **i18next** for translation resolution and **React Email** for the message template, with a Twitch welcome email as the reference implementation. 
+
+<Steps>
+  <Step title="Create translation keys in the code">
+
+  Import the `createInstance` and `InitOptions` from the `i18next` library and add translation keys for all supported locales.
+
+```ts title="translations.ts"
+import { createInstance, InitOptions } from "i18next";
+
+const i18nOptions: InitOptions = {
+  resources: {
+    en_US: {
+      translation: {
+        welcomeEmailSubject: "Welcome to Twitch, {{username}}!",
+        welcomeEmailIntroduction:
+          "We’re glad you could join us. Twitch has a huge, passionate community ready to watch and celebrate all the things you’re into, and we’ve saved a seat just for you.",
+        linkText: "WATCH NOW",
+        welcomeEmailConclusion:
+          "If you want to watch it, someone on Twitch streams it: games, anime, fitness, cosplay, esports, cooking, music, meditation. Take a look around, find a few channels to call home, and cozy up in chat.",
+      },
+    },
+    de_DE: {
+      translation: {
+        welcomeEmailSubject: "Willkommen bei Twitch, {{username}}!",
+        welcomeEmailIntroduction:
+          "Wir freuen uns, dass Sie sich uns anschließen konnten. Twitch hat eine riesige, leidenschaftliche Community, die bereit ist, alles zu sehen und zu feiern, was Sie interessiert, und wir haben einen Platz nur für Sie reserviert.",
+        linkText: "JETZT ANSEHEN",
+        welcomeEmailConclusion:
+          "If you want to watch it, someone on Twitch streams it: games, anime, fitness, cosplay, esports, cooking, music, meditation. Take a look around, find a few channels to call home, and cozy up in chat.",
+      },
+    },
+  },
+};
+
+const i18n = createInstance(i18nOptions);
+i18n.init(i18nOptions);
+
+export default i18n;
+```
+</Step>
+
+<Step title="Create email template">
+
+- Create a new file called `react-email-template.tsx` and add the following code using components from the `@react-email/components` library.
+- Add the `renderEmail` function to render the email template.
+
+<Note>
+  Here, we are using [@react-email/components](https://react.email/components) to build the email template. You can use any other library or bare HTML to build the email template.
+</Note>
+
+<AccordionGroup>
+  <Accordion title="Email template">
+```tsx title="react-email-template.tsx"
+import {
+  Body,
+  Container,
+  Head,
+  Html,
+  Preview,
+  Section,
+  Text,
+  Link,
+  Img,
+  Row,
+  Column,
+  render,
+} from '@react-email/components';
+import * as React from 'react';
+
+const baseUrl = process.env.IMAGE_BASE_URL;
+
+export const TwitchWelcomeEmail = ({
+  subject,
+  body,
+  linkText,
+  body2,
+}: {
+  subject: string;
+  body: string;
+  linkText: string;
+  body2: string;
+}) => {
+  return (
+    <Html>
+      <Head />
+      <Preview>{subject}</Preview>
+      <Body style={main}>
+        <Container style={container}>
+          <Section style={logo}>
+            <Img width={114} src={`${baseUrl}/twitch-logo.png`} />
+          </Section>
+          <Section style={sectionsBorders}>
+            <Row>
+              <Column style={sectionBorder} />
+              <Column style={sectionCenter} />
+              <Column style={sectionBorder} />
+            </Row>
+          </Section>
+          <Section style={content}>
+            <Text style={paragraph}>{body}</Text>
+            <Section style={center}>
+              <a href='https://www.twitch.tv' style={link}>
+                {linkText}
+              </a>
+            </Section>
+            <Text style={paragraph}>{body2}</Text>
+          </Section>
+        </Container>
+        <Section style={footer}>
+          <Row>
+            <Column align='right' style={{ width: '50%', paddingRight: '8px' }}>
+              <Img src={`${baseUrl}/twitch-icon-twitter.png`} />
+            </Column>
+            <Column align='left' style={{ width: '50%', paddingLeft: '8px' }}>
+              <Img src={`${baseUrl}/twitch-icon-facebook.png`} />
+            </Column>
+          </Row>
+          <Row>
+            <Text style={{ textAlign: 'center', color: '#706a7b' }}>
+              © {new Date().getFullYear()} Twitch, All Rights Reserved <br />
+              350 Bush Street, 2nd Floor, San Francisco, CA, 94104 - USA
+            </Text>
+          </Row>
+        </Section>
+      </Body>
+    </Html>
+  );
+};
+
+const fontFamily = 'HelveticaNeue,Helvetica,Arial,sans-serif';
+
+const main = {
+  backgroundColor: '#efeef1',
+  fontFamily,
+};
+
+const paragraph = {
+  lineHeight: 1.5,
+  fontSize: 14,
+};
+
+const container = {
+  maxWidth: '580px',
+  margin: '30px auto',
+  backgroundColor: '#ffffff',
+};
+
+const footer = {
+  maxWidth: '580px',
+  margin: '0 auto',
+};
+
+const content = {
+  padding: '5px 20px 10px 20px',
+};
+
+const logo = {
+  display: 'flex',
+  justifyContent: 'center',
+  alingItems: 'center',
+  padding: 30,
+};
+
+const sectionsBorders = {
+  width: '100%',
+  display: 'flex',
+};
+
+const sectionBorder = {
+  borderBottom: '1px solid rgb(238,238,238)',
+  width: '249px',
+};
+
+const sectionCenter = {
+  borderBottom: '1px solid rgb(145,71,255)',
+  width: '102px',
+};
+
+const center = {
+  display: 'flex',
+  justifyContent: 'center',
+  alingItems: 'center',
+};
+
+const link: React.CSSProperties = {
+  margin: 0,
+  border: '0 solid #9147ff',
+  borderRadius: '3px',
+  color: '#fff',
+  background: '#9147ff',
+  display: 'inline-block',
+  fontFamily: 'Helvetica,Arial,sans-serif',
+  fontSize: '18px',
+  fontWeight: 'regular',
+  lineHeight: 1.3,
+  padding: '10px 30px 10px 30px',
+  textAlign: 'left',
+  textDecoration: 'none',
+};
+
+export function renderEmail(
+  subject: string,
+  body: string,
+  linkText: string,
+  body2: string
+) {
+  return render(
+    <TwitchWelcomeEmail
+      subject={subject}
+      body={body}
+      linkText={linkText}
+      body2={body2}
+    />
+  );
+}
+```
+
+</Accordion>
+</AccordionGroup>
+
+</Step> 
+
+<Step title="Create the workflow and use translations">
+
+- Create the workflow definition by importing the `workflow` function from the `@novu/framework` library.
+- Import the `renderEmail` function from the `react-email-template.tsx` file. This is the email template that will be used to send the notification.
+- Import the `i18n` from the `translations.ts` file.
+- Import the `zod` library to validate the workflow payload.
+
+```ts title="workflow-with-translations.ts"
+import { workflow } from "@novu/framework";
+import { renderEmail } from "./react-email-template";
+import i18n from "./translations";
+import { z } from "zod";
+
+export const workflowWithTranslations = workflow(
+  "workflow-with-translations",
+  async ({ step, subscriber }) => {
+    await step.email(
+      "email-step",
+      async (controls) => {
+        const translate = i18n.getFixedT([
+          subscriber?.locale || (controls.defaultLocale as string),
+        ]);
+
+        const subject = translate("welcomeEmailSubject", {
+          username: subscriber?.firstName || "Novu",
+        });
+        const welcomeEmailIntroduction = translate("welcomeEmailIntroduction");
+        const linkText = translate("linkText");
+        const welcomeEmailConclusion = translate("welcomeEmailConclusion");
+        return {
+          subject,
+          body: (await renderEmail(
+            subject,
+            welcomeEmailIntroduction,
+            linkText,
+            welcomeEmailConclusion
+          )) as string,
+        };
+      },
+      {
+        controlSchema: z.object({
+          defaultLocale: z.string().default("en").optional(),
+        }),
+      }
+    );
+  }
+);
+```
+
+</Step>
+
+<Step title="Add workflow to serve function">
+
+```ts title="api/novu/route.ts"
+import { serve } from '@novu/framework/next';
+import { workflowWithTranslations } from '../../workflow-with-translations';
+
+export const { GET, POST, OPTIONS } = serve({
+  workflows: [workflowWithTranslations],
+});
+```
+
+</Step>
+
+<Step title="Sync and test the workflow">
+
+- [Sync the workflow](/framework/deployment/syncing) to the Novu cloud.
+- Test the workflow by triggering it to subscribers with different locales.
+
+</Step>
+
+</Steps>

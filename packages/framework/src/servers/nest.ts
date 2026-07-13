@@ -19,3 +19,4 @@ export * from './nest/nest.handler';
 export * from './nest/nest.interface';
 export * from './nest/nest.module';
 export * from './nest/nest.register-api-path';
+export * from './nest/nest.register-controller-decorators';

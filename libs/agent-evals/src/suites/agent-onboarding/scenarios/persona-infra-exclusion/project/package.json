@@ -1,0 +1,8 @@
+{
+  "name": "cellar-backend",
+  "description": "Wine bar inventory platform",
+  "dependencies": {
+    "pg": "^8.0.0",
+    "resend": "^4.0.0"
+  }
+}

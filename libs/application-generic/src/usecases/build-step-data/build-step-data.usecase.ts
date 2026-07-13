@@ -8,6 +8,7 @@ import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { WorkflowDataContainer } from '../../services';
 import { buildSlug } from '../../utils';
 import { InvalidStepException } from '../../utils/exceptions';
+import { StepForResponseMapper, WorkflowForResponseMapper } from '../../types/workflow-mapper.types';
 import { BuildVariableSchemaUsecase } from '../build-variable-schema';
 import { GetWorkflowByIdsUseCase } from '../workflow';
 import { BuildStepDataCommand } from './build-step-data.command';
@@ -51,8 +52,8 @@ export class BuildStepDataUsecase {
   }
 
   static mapToStepResponse(
-    workflow: NotificationTemplateEntity,
-    currentStep: NotificationStepEntity,
+    workflow: WorkflowForResponseMapper,
+    currentStep: StepForResponseMapper,
     controlValues: Record<string, unknown>,
     variables: JSONSchemaDto
   ): StepResponseDto {

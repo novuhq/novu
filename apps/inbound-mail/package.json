@@ -1,6 +1,6 @@
 {
   "name": "@novu/inbound-mail",
-  "version": "2.1.9",
+  "version": "3.18.0",
   "description": "",
   "author": "",
   "private": true,
@@ -19,19 +19,17 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.996.0",
-    "@aws-sdk/client-secrets-manager": "^3.1037.0",
+    "@aws-sdk/client-secrets-manager": "3.996.0",
     "@aws-sdk/s3-request-presigner": "^3.996.0",
     "@novu/application-generic": "workspace:*",
+    "@novu/dal": "workspace:*",
     "@novu/shared": "workspace:*",
-    "@sentry/browser": "^8.33.1",
-    "@sentry/hub": "^7.114.0",
-    "@sentry/nestjs": "^8.49.0",
-    "@sentry/node": "^8.49.0",
-    "@sentry/profiling-node": "^8.49.0",
-    "@sentry/tracing": "^7.40.0",
+    "@sentry/nestjs": "^10.63.0",
+    "@sentry/node": "^10.63.0",
+    "@sentry/profiling-node": "^10.63.0",
     "bluebird": "^2.9.30",
     "dotenv": "^16.4.5",
-    "envalid": "^8.0.0",
+    "envalid": "^8.2.0",
     "extend": "^2.0.1",
     "html-to-text": "^9.0.5",
     "languagedetect": "^1.1.1",
@@ -43,8 +41,7 @@
     "shelljs": "^0.8.5",
     "smtp-server": "^3.18.0",
     "spamc": "0.0.5",
-    "uuid": "^11.1.1",
-    "yargs": "^17.7.2"
+    "uuid": "^11.1.1"
   },
   "devDependencies": {
     "@novu/testing": "workspace:*",

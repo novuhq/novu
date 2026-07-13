@@ -24,10 +24,14 @@ import {
   GetDecryptedSecretKeyCommand,
   safeOutboundJsonRequest,
 } from '@novu/application-generic';
-import type { AgentBridgeRequest } from '@novu/framework';
+import type { AgentBridgeRequest } from '@novu/framework/internal';
 import { HttpHeaderKeysEnum } from '@novu/framework/internal';
 import sinon from 'sinon';
-import { AgentExecutionParams, BridgeExecutorService, NoBridgeUrlError } from '../../services/bridge-executor.service';
+import {
+  AgentExecutionParams,
+  BridgeExecutorService,
+  NoBridgeUrlError,
+} from '../../conversation-runtime/runtime/bridge-executor.service';
 
 interface BridgeExecutorInternals {
   resolveBridgeUrl: (

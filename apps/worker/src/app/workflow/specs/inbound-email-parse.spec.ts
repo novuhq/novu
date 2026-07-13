@@ -15,6 +15,7 @@ const ssrfUrlValidationModule = require('@novu/application-generic/build/main/ut
 
 import {
   AgentIntegrationRepository,
+  AgentRepository,
   DomainRepository,
   DomainRouteRepository,
   IntegrationRepository,
@@ -26,6 +27,7 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 import { InboundEmailParseCommand } from '../usecases/inbound-email-parse/inbound-email-parse.command';
 import { InboundEmailParse } from '../usecases/inbound-email-parse/inbound-email-parse.usecase';
+import { LogInboundEmailRequest } from '../usecases/inbound-email-parse/log-inbound-email-request.usecase';
 import { DomainRouteStrategy } from '../usecases/inbound-email-parse/strategies/domain-route.strategy';
 import { IUserWebhookPayload, ReplyToStrategy } from '../usecases/inbound-email-parse/strategies/reply-to.strategy';
 
@@ -42,12 +44,14 @@ describe('Should handle the new arrived mail', () => {
 
   let sandbox;
   let attachmentRehydrator: sinon.SinonStubbedInstance<AttachmentRehydrator>;
+  let logInboundEmailRequest: sinon.SinonStubbedInstance<LogInboundEmailRequest>;
 
   beforeEach(async () => {
     sandbox = sinon.createSandbox();
 
     compileTemplate = sandbox.createStubInstance(CompileTemplate);
     attachmentRehydrator = sandbox.createStubInstance(AttachmentRehydrator);
+    logInboundEmailRequest = sandbox.createStubInstance(LogInboundEmailRequest);
     // Default: return empty array (no attachments to rehydrate)
     attachmentRehydrator.rehydrate.resolves([]);
 
@@ -56,10 +60,12 @@ describe('Should handle the new arrived mail', () => {
         InboundEmailParse,
         ReplyToStrategy,
         DomainRouteStrategy,
+        { provide: LogInboundEmailRequest, useValue: logInboundEmailRequest },
         { provide: JobRepository, useValue: sandbox.createStubInstance(JobRepository) },
         { provide: MessageRepository, useValue: sandbox.createStubInstance(MessageRepository) },
         { provide: DomainRepository, useValue: sandbox.createStubInstance(DomainRepository) },
         { provide: DomainRouteRepository, useValue: sandbox.createStubInstance(DomainRouteRepository) },
+        { provide: AgentRepository, useValue: sandbox.createStubInstance(AgentRepository) },
         { provide: InboundDomainRouteDelivery, useValue: sandbox.createStubInstance(InboundDomainRouteDelivery) },
         { provide: SendWebhookMessage, useValue: sandbox.createStubInstance(SendWebhookMessage) },
         { provide: CompileTemplate, useValue: compileTemplate },
@@ -111,6 +117,13 @@ describe('Should handle the new arrived mail', () => {
     expect(payload.hmac).to.ok;
     expect(payload.notification).to.ok;
     expect(payload.templateIdentifier).to.ok;
+
+    // Successful reply-to delivery should emit a request log with a 200 outcome.
+    sinon.assert.calledOnce(logInboundEmailRequest.execute);
+    const logArg = logInboundEmailRequest.execute.getCall(0).args[0];
+    expect(logArg.outcome.strategy).to.equal('reply-to');
+    expect(logArg.outcome.status).to.equal(200);
+    expect(logArg.outcome.organizationId).to.equal('657ec2402c5ac81fb1e0efb6');
   });
 
   it('should include rehydrated attachments in the reply-to webhook payload', async () => {
@@ -172,45 +185,95 @@ describe('Should handle the new arrived mail', () => {
     expect((slimAttachment as any).content).to.be.undefined;
   });
 
+  it('should pass inline-mode attachments through to the reply-to webhook without S3 metadata', async () => {
+    const inlineAttachment = {
+      filename: 'inline.txt',
+      contentType: 'text/plain',
+      size: 5,
+      content: { type: 'Buffer' as const, data: [104, 101, 108, 108, 111] },
+      contentBytes: 5,
+    };
+    // Rehydrator is a no-op in inline mode (see AttachmentRehydrator.rehydrateSingle)
+    attachmentRehydrator.rehydrate.resolves([inlineAttachment]);
+
+    const mail = getMailData();
+    const safeRequestStub = sandbox.stub(ssrfUrlValidationModule, 'safeOutboundJsonRequest').resolves({
+      statusCode: 200,
+      statusMessage: 'OK',
+      headers: {},
+      body: {},
+    } as any);
+    sandbox.stub(replyToStrategy as any, 'getEntities').resolves(getEntitiesStubObject);
+    compileTemplate.execute.resolves(USER_PARSE_WEBHOOK.replace('{{compiledVariable}}', 'test-env'));
+
+    // Inject an inline-shape attachment into the queue payload (no url / no storagePath).
+    const inlineQueueAttachment = {
+      filename: 'inline.txt',
+      contentType: 'text/plain',
+      size: 5,
+      content: { type: 'Buffer', data: [104, 101, 108, 108, 111] },
+    };
+    (mail as any).attachments = [inlineQueueAttachment];
+
+    await inboundEmailParseUsecase.execute(InboundEmailParseCommand.create(mail));
+
+    sinon.assert.calledOnce(safeRequestStub);
+    const callArgs = safeRequestStub.getCall(0).args[0] as { body: IUserWebhookPayload };
+    const mailPayload = callArgs.body.mail;
+
+    sinon.assert.calledOnce(attachmentRehydrator.rehydrate);
+    const rehydrateArg = attachmentRehydrator.rehydrate.firstCall.args[0]!;
+    expect(rehydrateArg).to.have.length(1);
+    expect(rehydrateArg[0]).to.deep.include({ filename: 'inline.txt', size: 5 });
+
+    expect(mailPayload.attachments).to.have.length(1);
+    const att = mailPayload.attachments![0];
+    expect(att.filename).to.equal('inline.txt');
+    expect(att.size).to.equal(5);
+    expect(att.content).to.deep.equal({ type: 'Buffer', data: [104, 101, 108, 108, 111] });
+    expect(att.url).to.be.undefined;
+    expect(att.storagePath).to.be.undefined;
+  });
+
   it('should not send webhook request with missing transactionId', async () => {
-    try {
-      const mail = getMailData({ skipTransactionId: true });
+    const mail = getMailData({ skipTransactionId: true });
 
-      await inboundEmailParseUsecase.execute(InboundEmailParseCommand.create(mail));
+    await inboundEmailParseUsecase.execute(InboundEmailParseCommand.create(mail));
 
-      throw new Error('Should not reach here, en error should be thrown');
-    } catch (e) {
-      expect(e.message).to.contains('Missing transactionId on address');
-    }
+    // Malformed addresses are non-retriable — log a warning trace and stop.
+    sinon.assert.calledOnce(logInboundEmailRequest.logUnresolvedFailure);
+    const logArg = logInboundEmailRequest.logUnresolvedFailure.getCall(0).args[0];
+    expect(logArg.message).to.contain('Missing transactionId on address');
+    expect(logArg.severity).to.equal('warning');
   });
 
   it('should not send webhook request with when domain white list', async () => {
-    try {
-      const mail = getMailData({ userDomain: 'invalid-domain.com' });
-      sandbox.stub(replyToStrategy as any, 'getEntities').resolves(getEntitiesStubObject);
+    const mail = getMailData({ userDomain: 'invalid-domain.com' });
+    sandbox.stub(replyToStrategy as any, 'getEntities').resolves(getEntitiesStubObject);
 
-      await inboundEmailParseUsecase.execute(InboundEmailParseCommand.create(mail));
+    await inboundEmailParseUsecase.execute(InboundEmailParseCommand.create(mail));
 
-      throw new Error('Should not reach here, en error should be thrown');
-    } catch (e) {
-      expect(e.message).to.equal('Domain is not in environment white list');
-    }
+    // Post-resolution 422 failures are non-retriable — trace once and stop.
+    sinon.assert.calledOnce(logInboundEmailRequest.execute);
+    const logArg = logInboundEmailRequest.execute.getCall(0).args[0];
+    expect(logArg.outcome.status).to.equal(422);
+    expect(logArg.outcome.strategy).to.equal('reply-to');
+    expect(logArg.outcome.message).to.equal('Domain is not in environment white list');
   });
 
   it('should not send webhook request when missing replay callback url', async () => {
-    try {
-      const entitiesWithMissingParseWebhook = getEntitiesStubObject;
-      entitiesWithMissingParseWebhook.template.steps[0].replyCallback = {} as any;
+    const entitiesWithMissingParseWebhook = getEntitiesStubObject;
+    entitiesWithMissingParseWebhook.template.steps[0].replyCallback = {} as any;
 
-      const mail = getMailData();
-      sandbox.stub(replyToStrategy as any, 'getEntities').resolves(entitiesWithMissingParseWebhook);
+    const mail = getMailData();
+    sandbox.stub(replyToStrategy as any, 'getEntities').resolves(entitiesWithMissingParseWebhook);
 
-      await inboundEmailParseUsecase.execute(InboundEmailParseCommand.create(mail));
+    await inboundEmailParseUsecase.execute(InboundEmailParseCommand.create(mail));
 
-      throw new Error('Should not reach here, en error should be thrown');
-    } catch (e) {
-      expect(e.message).to.contains('Missing parse webhook on template');
-    }
+    sinon.assert.calledOnce(logInboundEmailRequest.execute);
+    const logArg = logInboundEmailRequest.execute.getCall(0).args[0];
+    expect(logArg.outcome.status).to.equal(422);
+    expect(logArg.outcome.message).to.contain('Missing parse webhook on template');
   });
 
   interface IMailData {

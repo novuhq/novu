@@ -43,11 +43,7 @@ import {
 const SELECTED_AGENT_STORAGE_KEY = 'novu-mcp-playground-selected-agent';
 const SUBSCRIBER_STORAGE_KEY = 'novu-mcp-playground-subscriber-id';
 
-type OAuthResultMessage = {
-  type: 'novu-mcp-oauth-result';
-  status: 'connected' | 'error';
-  reason?: string;
-};
+type OAuthResultBanner = { status: 'connected' | 'error'; reason?: string };
 
 export default function AgentsMcpPlaygroundPage() {
   return (
@@ -775,7 +771,15 @@ function OAuthPanel({
   const [authorizing, setAuthorizing] = useState(false);
   const [authorizeError, setAuthorizeError] = useState<string | null>(null);
   const [authorizePopup, setAuthorizePopup] = useState<Window | null>(null);
-  const [lastResultBanner, setLastResultBanner] = useState<OAuthResultMessage | null>(null);
+  const [lastResultBanner, setLastResultBanner] = useState<OAuthResultBanner | null>(null);
+
+  const fetchStatus = useCallback(async () => {
+    if (!enablement || !subscriberId.trim()) {
+      return null;
+    }
+
+    return getMcpConnectionStatus(credentials, agentIdentifier, enablement.mcpId, subscriberId.trim());
+  }, [credentials, agentIdentifier, enablement, subscriberId]);
 
   const refreshStatus = useCallback(async () => {
     if (!enablement || !subscriberId.trim()) {
@@ -787,14 +791,14 @@ function OAuthPanel({
     setStatusLoading(true);
     setStatusError(null);
     try {
-      const next = await getMcpConnectionStatus(credentials, agentIdentifier, enablement.mcpId, subscriberId.trim());
+      const next = await fetchStatus();
       setConnection(next);
     } catch (err) {
       setStatusError(toErrorMessage(err));
     } finally {
       setStatusLoading(false);
     }
-  }, [credentials, agentIdentifier, enablement, subscriberId]);
+  }, [fetchStatus, enablement, subscriberId]);
 
   useEffect(() => {
     setConnection(null);
@@ -807,33 +811,40 @@ function OAuthPanel({
     refreshStatus();
   }, [refreshStatus]);
 
-  useEffect(() => {
-    function onMessage(event: MessageEvent) {
-      if (event.origin !== window.location.origin) return;
-      const data = event.data as OAuthResultMessage | undefined;
-      if (!data || data.type !== 'novu-mcp-oauth-result') return;
-      setLastResultBanner(data);
-      refreshStatus();
-    }
-
-    window.addEventListener('message', onMessage);
-
-    return () => window.removeEventListener('message', onMessage);
-  }, [refreshStatus]);
-
+  // When the OAuth popup closes, refresh the connection status and derive a
+  // result banner from it. The popup itself can't notify us (the callback
+  // page no longer ships a postMessage shim), so this is the single source
+  // of truth for "did OAuth land?".
   useEffect(() => {
     if (!authorizePopup) return;
 
-    const interval = setInterval(() => {
-      if (authorizePopup.closed) {
-        clearInterval(interval);
-        setAuthorizePopup(null);
-        refreshStatus();
+    const interval = setInterval(async () => {
+      if (!authorizePopup.closed) return;
+      clearInterval(interval);
+      setAuthorizePopup(null);
+
+      try {
+        const next = await fetchStatus();
+        setConnection(next);
+        if (next?.status === 'connected') {
+          setLastResultBanner({ status: 'connected' });
+        } else {
+          setLastResultBanner({
+            status: 'error',
+            reason:
+              next?.status === undefined
+                ? 'Popup closed before a connection was created.'
+                : `Connection status is "${next.status}" after the popup closed; expected "connected".`,
+          });
+        }
+      } catch (err) {
+        setStatusError(toErrorMessage(err));
+        setLastResultBanner({ status: 'error', reason: toErrorMessage(err) });
       }
     }, 600);
 
     return () => clearInterval(interval);
-  }, [authorizePopup, refreshStatus]);
+  }, [authorizePopup, fetchStatus]);
 
   const handleAuthorize = useCallback(async () => {
     if (!enablement || !subscriberId.trim()) return;
@@ -845,9 +856,6 @@ function OAuthPanel({
       const { authorizeUrl } = await generateMcpOAuthUrl(credentials, agentIdentifier, enablement.mcpId, {
         subscriberId: subscriberId.trim(),
       });
-      // Intentionally omit `noopener`: the same-origin OAuth result page calls
-      // `window.opener.postMessage(...)` to deliver the outcome, which requires
-      // opener access.
       const popup = window.open(authorizeUrl, 'novu-mcp-oauth', 'width=520,height=720,scrollbars=yes');
       if (!popup) {
         setAuthorizeError('Browser blocked the popup. Allow popups for this site and retry.');

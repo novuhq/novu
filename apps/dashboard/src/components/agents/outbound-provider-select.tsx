@@ -396,18 +396,18 @@ export function OutboundProviderSelect({
               aria-label={hideLabel ? 'Send emails via, select email provider' : undefined}
               disabled={isBusy}
               className={cn(
-                'border-stroke-soft bg-bg-white flex h-7 w-full items-center justify-between overflow-hidden rounded-md border px-1.5 py-1 shadow-xs disabled:opacity-60',
+                'border-stroke-soft bg-bg-white flex h-8 w-full items-center justify-between overflow-hidden rounded-md border px-1.5 py-1 shadow-xs disabled:opacity-60',
                 !hideLabel && 'max-w-[320px]'
               )}
             >
               {selected ? (
-                <div className="flex min-w-0 items-center gap-1">
+                <div className="flex items-center gap-1">
                   <ProviderIcon
                     providerId={selected.providerId}
                     providerDisplayName={selected.displayName}
                     className="size-4 shrink-0"
                   />
-                  <span className="text-text-strong text-label-xs min-w-0 truncate font-medium leading-4">
+                  <span className="text-text-strong text-label-xs truncate font-medium leading-4">
                     {selected.displayName}
                   </span>
                   {selected.isDemo ? <DemoBadge /> : null}

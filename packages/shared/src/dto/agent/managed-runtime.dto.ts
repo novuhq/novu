@@ -2,6 +2,13 @@ import { AgentRuntimeProviderIdEnum } from '../../types/providers';
 
 export type AgentRuntime = 'self-hosted' | 'managed';
 
+/**
+ * Discovery scope of an agent. Today only `public` is exposed to customers,
+ * but the field is persisted now so the upcoming private-agents feature can
+ * land without a schema migration. Treat a missing value as `public`.
+ */
+export type AgentVisibility = 'public' | 'private';
+
 export type ManagedRuntimeConfigDto = {
   /** The agent-runtime provider (e.g. 'anthropic') */
   providerId: AgentRuntimeProviderIdEnum;
@@ -73,17 +80,69 @@ export enum McpConnectionScopeEnum {
  * OAuth mechanism the connection was established with. Mirrors the catalog
  * `mode` for the MCP — each MCP supports exactly one mechanism.
  *
- * - `dcr`      — Dynamic Client Registration (RFC 7591). A fresh OAuth client
- *                is registered per subscriber against the upstream AS.
- * - `novu-app` — Novu's single pre-registered OAuth application is used.
- *                `client_id` / `client_secret` come from server env vars.
- * - `user-app` — The Novu customer's own pre-registered OAuth application is
- *                used. Credentials come from a per-org credential table.
+ * - `dcr`              — Dynamic Client Registration (RFC 7591). A fresh OAuth
+ *                        client is registered per subscriber against the
+ *                        upstream AS.
+ * - `novu-app`         — Novu's single pre-registered OAuth application is
+ *                        used. `client_id` / `client_secret` come from server
+ *                        env vars.
+ * - `user-app`         — The Novu customer's own pre-registered OAuth
+ *                        application is used. Credentials come from a per-org
+ *                        credential table.
+ * - `provider-managed` — OAuth is fully delegated to the managed agent runtime
+ *                        provider (e.g. Claude). Novu never runs the OAuth
+ *                        dance, never exchanges codes, and never stores
+ *                        access/refresh tokens for these MCPs — it only
+ *                        ensures the provider vault exists and redirects the
+ *                        user into the provider's vault UI so they can
+ *                        complete connector auth there.
  */
 export enum McpConnectionAuthModeEnum {
   Dcr = 'dcr',
   NovuApp = 'novu-app',
   UserApp = 'user-app',
+  ProviderManaged = 'provider-managed',
+}
+
+/**
+ * Set of `token_endpoint_auth_method` values Novu can speak when posting to a
+ * registered MCP OAuth client's token endpoint (RFC 8414 §2 / RFC 7591).
+ * Lives here so the DCR negotiator (api-service), the persisted entity
+ * (`libs/dal`), and the runtime providers (`libs/application-generic`) all
+ * share the same source of truth — adding a new method (e.g.
+ * `private_key_jwt`) becomes a single edit that fans out via the type
+ * system.
+ */
+export type McpTokenEndpointAuthMethod = 'client_secret_basic' | 'client_secret_post' | 'none';
+
+/**
+ * Concrete list backing `McpTokenEndpointAuthMethod`. Kept in lock-step with
+ * the union via `satisfies` so the Mongoose `enum` array, registration code,
+ * and exhaustive switches all derive from one place.
+ */
+export const MCP_TOKEN_ENDPOINT_AUTH_METHODS = [
+  'client_secret_basic',
+  'client_secret_post',
+  'none',
+] as const satisfies readonly McpTokenEndpointAuthMethod[];
+
+/**
+ * Default `token_endpoint_auth_method` used when a persisted MCP OAuth client
+ * row pre-dates negotiation (no value stored) or when an AS metadata document
+ * omits `token_endpoint_auth_methods_supported`. RFC 8414 §2 defines this
+ * default as `client_secret_basic`.
+ */
+export const DEFAULT_MCP_TOKEN_ENDPOINT_AUTH_METHOD: McpTokenEndpointAuthMethod = 'client_secret_basic';
+
+/**
+ * Resolve a persisted `token_endpoint_auth_method` against the RFC 8414 §2
+ * default. Use everywhere a legacy row (no value stored) needs to be coerced
+ * into a usable method — keeps the fallback literal in exactly one place.
+ */
+export function resolvePersistedMcpTokenEndpointAuthMethod(
+  value: McpTokenEndpointAuthMethod | undefined
+): McpTokenEndpointAuthMethod {
+  return value ?? DEFAULT_MCP_TOKEN_ENDPOINT_AUTH_METHOD;
 }
 
 export enum McpConnectionStatusEnum {

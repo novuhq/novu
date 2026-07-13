@@ -6,6 +6,8 @@ export enum TemplateTypeEnum {
   DEFAULT_REACT_EMAIL = 'default-react-email',
   APP_REACT_EMAIL = 'app-react-email',
   APP_AGENT = 'app-agent',
+  APP_AGENT_AI_SDK = 'app-agent-ai-sdk',
+  APP_CHAT_SDK = 'app-chat-sdk',
 }
 
 export type TemplateType = `${TemplateTypeEnum}`;
@@ -32,4 +34,12 @@ export interface InstallTemplateArgs {
   applicationId: string;
   userId: string;
   agentIdentifier?: string;
+  /** Suppress all stdout/stderr from the package-manager install subprocess. */
+  silent?: boolean;
+  /**
+   * When true, skip running the package-manager install entirely.
+   * Use when scaffolding inside a monorepo where workspace: specifiers in
+   * sibling packages would cause npm to fail.
+   */
+  skipInstall?: boolean;
 }

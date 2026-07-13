@@ -32,7 +32,7 @@ import { Result } from "../types/fp.js";
  *
  * @remarks
  * Create an integration for the current environment the user is based on the API key provided.
- *     Each provider supports different credentials, check the provider documentation for more details.
+ *     Each provider supports different credentials, check the provider documentation for more details. Only integration metadata is returned, credentials field is returned as an empty object.
  *
  * This operation requires either {@link Security.bearerAuth} or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.
  */

@@ -101,7 +101,7 @@ export const FLOW_STEPS: FlowStep[] = [
   {
     id: 'runtime-needs-oauth',
     label: 'Runtime surfaces "MCP init failed"',
-    note: 'The provider raises an MCP initialise failure (no credential in the vault). Worker uses IAgentRuntimeProvider.parseMcpInitFailure to lift the server name and route to the lazy-OAuth path.',
+    note: 'Managed agents gate dispatch before the provider runs: pending OAuth MCPs post an in-thread setup card and park the turn on the conversation.',
     source: 'runtime',
     target: 'novu',
     branch: 'miss',

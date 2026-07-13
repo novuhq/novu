@@ -1,0 +1,69 @@
+---
+title: 'Telemetry'
+description: "Learn about Novu's telemetry data collection and how to configure it"
+---
+
+Telemetry in Novu encompasses the collection of data regarding user interactions with the platform. This data enables the Novu team to identify usage patterns, troubleshoot issues, and make informed decisions about new features and improvements.
+
+## Data collected by Novu
+
+Novu does not capture any data from your APIs, databases, or third-party tools. All information collected from self-hosted instances is completely anonymized to protect user privacy.
+
+### Keep Alive Beacon
+
+The Novu server sends a keep-alive ping every hour to confirm its operational status without errors. This data is collected regardless of whether telemetry is enabled or disabled.
+
+```json
+{
+  "freeMemory": 115703808,
+  "hostname": "somemachine",
+  "instanceId": "ba54fb29-6422-4a83-a0e4-951d767efa73",
+  "ipAddress": "192.168.1.4",
+  "platform": "darwin",
+  "release": "23.6.0",
+  "timestamp": "2024-10-04T11:54:14",
+  "totalMemory": 8589934592
+}
+```
+
+### Usage Statistics
+
+When telemetry is enabled, the server collects anonymous information regarding users, organizations, events, notifications, and more. This data provides insights into platform usage and helps us improve the Novu Project for all users.
+
+```json
+{
+  "eventCount": 1,
+  "integrationCount": [
+    {
+      "count": 1,
+      "providerId": "example"
+    },
+    {
+      "count": 1,
+      "providerId": "novu"
+    }
+  ],
+  "orgCount": 1,
+  "subscriberCount": 1,
+  "timestamp": "2024-10-04T11:54:30",
+  "topicCount": 3,
+  "totalSteps": 10,
+  "userCount": 3,
+  "workflowCount": 6
+}
+```
+
+## Disable telemetry
+
+Sharing telemetry data is optional. You can disable telemetry via the Admin Settings or by modifying the relevant environment variable.
+
+### Environment variable
+
+To disable telemetry using the `NOVU_TELEMETRY` environment variable, follow these steps:
+
+1. Go to the directory where the .env file is located.
+2. Open the file in an editor and search for `NOVU_TELEMETRY`.
+3. Change the value of `NOVU_TELEMETRY` to `false`.
+4. Restart the Docker container.
+
+Once the container restarts, Novu will be running with telemetry disabled.

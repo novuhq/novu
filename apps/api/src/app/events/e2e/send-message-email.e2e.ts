@@ -18,9 +18,14 @@ function hasEmailOverrideRecipients(emailOverrides?: Record<string, unknown>): b
   );
 }
 
+function hasExplicitEmptyToOverride(overrides: Record<string, unknown>): boolean {
+  return 'to' in overrides && Array.isArray(overrides.to) && overrides.to.length === 0;
+}
+
 export const createMailData = (options: IEmailOptions, overrides: Record<string, any>): IEmailOptions => {
   const filterDuplicate = (prev: string[], current: string) => (prev.includes(current) ? prev : [...prev, current]);
   const replaceToRecipient = overrides?.replaceToRecipient === true;
+  const explicitEmptyTo = replaceToRecipient && hasExplicitEmptyToOverride(overrides);
   const from = overrides?.from || options.from;
 
   let to: string[];
@@ -33,7 +38,7 @@ export const createMailData = (options: IEmailOptions, overrides: Record<string,
     to = to.reduce(filterDuplicate, []);
   }
 
-  if (replaceToRecipient && to.length === 0 && from) {
+  if (replaceToRecipient && to.length === 0 && from && !explicitEmptyTo) {
     to = [from];
   }
 
@@ -107,7 +112,7 @@ describe('Trigger event - Send message email - /v1/events/trigger (POST) #novu-v
     expect(result.to).to.deep.equal(['override-only@novu.co']);
   });
 
-  it('should use from as to when replaceToRecipient is true with empty to and bcc only', () => {
+  it('should keep to empty when replaceToRecipient is true with explicit empty to and bcc only', () => {
     const defaultMailData = {
       to: ['subscriber@novu.co'],
       subject: 'subject',
@@ -123,8 +128,47 @@ describe('Trigger event - Send message email - /v1/events/trigger (POST) #novu-v
       bcc: ['bcc-only@novu.co'],
     });
 
+    expect(result.to).to.deep.equal([]);
+    expect(result.bcc).to.deep.equal(['bcc-only@novu.co']);
+  });
+
+  it('should use from as to when replaceToRecipient is true without explicit to and bcc only', () => {
+    const defaultMailData = {
+      to: ['subscriber@novu.co'],
+      subject: 'subject',
+      html: '<html></html>',
+      from: 'no-reply@novu.co',
+      attachments: [],
+      id: 'id',
+    };
+
+    const result = createMailData(defaultMailData, {
+      replaceToRecipient: true,
+      bcc: ['bcc-only@novu.co'],
+    });
+
     expect(result.to).to.deep.equal(['no-reply@novu.co']);
     expect(result.bcc).to.deep.equal(['bcc-only@novu.co']);
+  });
+
+  it('should keep to empty when replaceToRecipient is true with explicit empty to and cc only', () => {
+    const defaultMailData = {
+      to: ['subscriber@novu.co'],
+      subject: 'subject',
+      html: '<html></html>',
+      from: 'no-reply@novu.co',
+      attachments: [],
+      id: 'id',
+    };
+
+    const result = createMailData(defaultMailData, {
+      replaceToRecipient: true,
+      to: [],
+      cc: ['cc-only@novu.co'],
+    });
+
+    expect(result.to).to.deep.equal([]);
+    expect(result.cc).to.deep.equal(['cc-only@novu.co']);
   });
 
   it('should append subscriber to when replaceToRecipient is false', () => {

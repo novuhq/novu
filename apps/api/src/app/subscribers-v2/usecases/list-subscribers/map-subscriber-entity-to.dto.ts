@@ -19,7 +19,7 @@ export function mapSubscriberEntityToDto(subscriber: SubscriberEntity): Subscrib
     lastOnlineAt: subscriber.lastOnlineAt ?? null,
     isOnline: subscriber.isOnline ?? null,
     topics: subscriber.topics,
-    channels: subscriber.channels,
+    channels: subscriber.channels ?? [],
     locale: subscriber.locale,
     timezone: subscriber.timezone,
   };

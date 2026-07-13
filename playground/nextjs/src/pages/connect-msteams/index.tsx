@@ -3,9 +3,9 @@ import { useState } from 'react';
 import Title from '@/components/Title';
 import { novuConfig } from '@/utils/config';
 
-const INTEGRATION_IDENTIFIER = process.env.NEXT_PUBLIC_NOVU_MSTEAMS_INTEGRATION_IDENTIFIER ?? 'msteams';
+const INTEGRATION_IDENTIFIER = process.env.NEXT_PUBLIC_CONNECT_MSTEAMS_INTEGRATION_IDENTIFIER ?? 'msteams';
 // const CONNECTION_IDENTIFIER = 'msteams-workspace-connection';
-const MS_TEAMS_TEST_WORKFLOW_ID = process.env.NEXT_PUBLIC_NOVU_MSTEAMS_TEST_WORKFLOW_ID ?? '';
+const MS_TEAMS_TEST_WORKFLOW_ID = process.env.NEXT_PUBLIC_CONNECT_MSTEAMS_TEST_WORKFLOW_ID ?? '';
 // const context = { key: 'value2' };
 const context = undefined;
 
@@ -207,7 +207,7 @@ export default function ConnectMsTeamsPage() {
             type="text"
             value={aadOidOverride}
             onChange={(e) => setAadOidOverride(e.target.value)}
-            placeholder="AAD Object ID (optional — uses NEXT_PUBLIC_MS_TEAMS_AAD_OBJECT_ID if unset)"
+            placeholder="AAD Object ID (optional — uses NEXT_PUBLIC_CONNECT_MSTEAMS_AAD_OBJECT_ID if unset)"
             className="rounded-md border border-input bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
           />
           <button

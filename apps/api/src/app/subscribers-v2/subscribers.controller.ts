@@ -17,6 +17,8 @@ import {
   CreateOrUpdateSubscriberCommand,
   CreateOrUpdateSubscriberUseCase,
   ExternalApiAccessible,
+  FeatureFlagsService,
+  OAuthAccessible,
   RequirePermissions,
   SubscriberResponseDto,
   UserSession,
@@ -56,11 +58,13 @@ import { UpdateNotificationActionCommand } from '../inbox/usecases/update-notifi
 import { UpdateNotificationAction } from '../inbox/usecases/update-notification-action/update-notification-action.usecase';
 import { ThrottlerCategory } from '../rate-limiting/guards/throttler.decorator';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
+import { KeylessAccessible } from '../shared/framework/swagger/keyless.security';
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import {
   GetSubscriberGlobalPreference,
   GetSubscriberGlobalPreferenceCommand,
 } from '../subscribers/usecases/get-subscriber-global-preference';
+import { assertGetPreferencesEnabled } from '../subscribers/utils/assert-get-preferences-enabled';
 import { ListSubscriberSubscriptionsQueryDto } from '../topics-v2/dtos/list-subscriber-subscriptions-query.dto';
 import { ListTopicSubscriptionsResponseDto } from '../topics-v2/dtos/list-topic-subscriptions-response.dto';
 import { ListSubscriberSubscriptionsCommand } from '../topics-v2/usecases/list-subscriber-subscriptions/list-subscriber-subscriptions.command';
@@ -126,10 +130,12 @@ export class SubscribersController {
     private updateNotificationActionUsecase: UpdateNotificationAction,
     private markNotificationsAsSeenUsecase: MarkNotificationsAsSeen,
     private updateAllNotificationsUsecase: UpdateAllNotifications,
-    private deleteAllNotificationsUsecase: DeleteAllNotifications
+    private deleteAllNotificationsUsecase: DeleteAllNotifications,
+    private featureFlagsService: FeatureFlagsService
   ) {}
 
   @Get('')
+  @OAuthAccessible()
   @ExternalApiAccessible()
   @SdkMethodName('search')
   @ApiOperation({
@@ -161,6 +167,7 @@ export class SubscribersController {
   }
 
   @Get('/:subscriberId')
+  @OAuthAccessible()
   @ExternalApiAccessible()
   @ApiOperation({
     summary: 'Retrieve a subscriber',
@@ -185,6 +192,7 @@ export class SubscribersController {
   }
 
   @Post('')
+  @OAuthAccessible()
   @ExternalApiAccessible()
   @ApiOperation({
     summary: 'Create a subscriber',
@@ -202,6 +210,7 @@ export class SubscribersController {
     description: 'Subscriber already exists (when query param failIfExists=true)',
   })
   @SdkMethodName('create')
+  @KeylessAccessible()
   @RequirePermissions(PermissionsEnum.SUBSCRIBER_WRITE)
   async createSubscriber(
     @UserSession() user: UserSessionData,
@@ -234,6 +243,7 @@ export class SubscribersController {
   }
 
   @Patch('/:subscriberId')
+  @OAuthAccessible()
   @ExternalApiAccessible()
   @ApiOperation({
     summary: 'Update a subscriber',
@@ -261,6 +271,7 @@ export class SubscribersController {
   }
 
   @Delete('/:subscriberId')
+  @OAuthAccessible()
   @ExternalApiAccessible()
   @ApiOperation({
     summary: 'Delete a subscriber',
@@ -285,6 +296,7 @@ export class SubscribersController {
   }
 
   @Get('/:subscriberId/preferences')
+  @OAuthAccessible()
   @ExternalApiAccessible()
   @ApiOperation({
     summary: 'Retrieve subscriber preferences',
@@ -328,6 +340,8 @@ export class SubscribersController {
     @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string
   ): Promise<SubscriberGlobalPreferenceDto> {
+    await assertGetPreferencesEnabled(this.featureFlagsService, user.organizationId, user.environmentId);
+
     const globalPreference = await this.getSubscriberGlobalPreference.execute(
       GetSubscriberGlobalPreferenceCommand.create({
         organizationId: user.organizationId,
@@ -378,6 +392,7 @@ export class SubscribersController {
   }
 
   @Patch('/:subscriberId/preferences')
+  @OAuthAccessible()
   @ExternalApiAccessible()
   @ApiOperation({
     summary: 'Update subscriber preferences',

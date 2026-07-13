@@ -98,6 +98,63 @@ describe('Novu Client', () => {
       expect(newClient.strictAuthentication).toBe(true);
       process.env = { ...process.env, NOVU_STRICT_AUTHENTICATION_ENABLED: originalEnv };
     });
+
+    it('should set logger to the global console by default', () => {
+      const newClient = new Client({ secretKey: 'some-secret-key' });
+      expect(newClient.logger).toBe(console);
+    });
+
+    it('should set logger to the provided logger', () => {
+      const customLogger = { info: vi.fn(), warn: vi.fn(), error: vi.fn() };
+      const newClient = new Client({ secretKey: 'some-secret-key', logger: customLogger });
+      expect(newClient.logger).toBe(customLogger);
+    });
+  });
+
+  describe('logger option', () => {
+    it('should route verbose discovery and execution logs through the provided logger', async () => {
+      const customLogger = { info: vi.fn(), warn: vi.fn(), error: vi.fn() };
+      const consoleSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+
+      const loggingWorkflow = workflow('logging-workflow', async ({ step }) => {
+        await step.email('send-email', async () => ({ body: 'Test Body', subject: 'Subject' }));
+      });
+
+      const newClient = new Client({ secretKey: 'some-secret-key', verbose: true, logger: customLogger });
+      await newClient.addWorkflows([loggingWorkflow]);
+
+      const event: Event = {
+        action: PostActionEnum.EXECUTE,
+        workflowId: 'logging-workflow',
+        stepId: 'send-email',
+        subscriber: {},
+        state: [],
+        payload: {},
+        controls: {},
+        context: {},
+        env: testEventEnv,
+      };
+
+      await newClient.executeWorkflow(event);
+
+      expect(customLogger.info).toHaveBeenCalled();
+      expect(consoleSpy).not.toHaveBeenCalled();
+
+      consoleSpy.mockRestore();
+    });
+
+    it('should not emit discovery or execution logs when verbose is false', async () => {
+      const customLogger = { info: vi.fn(), warn: vi.fn(), error: vi.fn() };
+
+      const silentWorkflow = workflow('silent-workflow', async ({ step }) => {
+        await step.email('send-email', async () => ({ body: 'Test Body', subject: 'Subject' }));
+      });
+
+      const newClient = new Client({ secretKey: 'some-secret-key', verbose: false, logger: customLogger });
+      await newClient.addWorkflows([silentWorkflow]);
+
+      expect(customLogger.info).not.toHaveBeenCalled();
+    });
   });
 
   describe('discover method', () => {

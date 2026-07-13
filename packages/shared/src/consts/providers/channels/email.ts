@@ -1,12 +1,14 @@
 import { ChannelTypeEnum, EmailProviderIdEnum } from '../../../types';
 import { UTM_CAMPAIGN_QUERY_PARAM } from '../../../ui';
 import {
+  anypostGroupConfigurations,
   mailgunGroupConfigurations,
   resendGroupConfigurations,
   sendgridGroupConfigurations,
   sesGroupConfigurations,
 } from '../configurations/provider-configuration';
 import {
+  anypostConfig,
   brazeEmailConfig,
   emailWebhookConfig,
   infobipEmailConfig,
@@ -162,6 +164,15 @@ export const emailProviders: IProviderConfig[] = [
     logoFileName: { light: 'resend.svg', dark: 'resend.svg' },
   },
   {
+    id: EmailProviderIdEnum.Anypost,
+    displayName: 'Anypost',
+    channel: ChannelTypeEnum.EMAIL,
+    credentials: anypostConfig,
+    configurations: anypostGroupConfigurations,
+    docReference: `https://docs.novu.co/platform/integrations/email/anypost${UTM_CAMPAIGN_QUERY_PARAM}`,
+    logoFileName: { light: 'anypost.svg', dark: 'anypost.svg' },
+  },
+  {
     id: EmailProviderIdEnum.Plunk,
     displayName: 'Plunk',
     channel: ChannelTypeEnum.EMAIL,
@@ -191,7 +202,7 @@ export const emailProviders: IProviderConfig[] = [
     displayName: 'Novu Email',
     channel: ChannelTypeEnum.EMAIL,
     credentials: [],
-    docReference: `https://docs.novu.co/platform/agents/email${UTM_CAMPAIGN_QUERY_PARAM}`,
+    docReference: `https://docs.novu.co/agents/get-started/agents-and-providers${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'novu.png', dark: 'novu.png' },
   },
 ];

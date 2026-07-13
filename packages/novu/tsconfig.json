@@ -8,14 +8,23 @@
     "emitDecoratorMetadata": true,
     "esModuleInterop": true,
     "module": "commonjs",
+    "moduleResolution": "node",
     "noImplicitAny": true,
     "outDir": "./dist",
     "removeComments": true,
     "resolveJsonModule": true,
     "sourceMap": false,
-    "target": "es2017",
+    "target": "es2020",
+    "lib": ["es2020", "es2018.asynciterable", "dom"],
+    "skipLibCheck": true,
     "types": ["node"]
   },
   "include": ["src/**/*", "src/**/*.d.ts"],
-  "exclude": ["node_modules", "src/commands/init/templates", "src/**/__fixtures__"]
+  "exclude": [
+    "node_modules",
+    "src/commands/init/templates",
+    "src/**/__fixtures__",
+    "src/commands/wizard/ui/**",
+    "src/commands/connect/ui/**"
+  ]
 }

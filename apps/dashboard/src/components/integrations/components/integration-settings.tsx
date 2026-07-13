@@ -148,14 +148,14 @@ export function IntegrationSettings({
   const telegramMobileVariant = useMemo<TelegramCredentialsPasteMobileSetup | undefined>(() => {
     if (!showTelegramPaste) return undefined;
 
-    if (isAgentOnboarding && agentIdentifier && integration?._id) {
-      return { kind: 'agent', agentIdentifier, integrationId: integration._id, testSubscriberId };
+    if (isAgentOnboarding && integration?.identifier) {
+      return { kind: 'agent', integrationIdentifier: integration.identifier, testSubscriberId };
     }
 
     if (mode === 'create') return { kind: 'integration-store' };
 
     return undefined;
-  }, [showTelegramPaste, isAgentOnboarding, agentIdentifier, integration?._id, mode, testSubscriberId]);
+  }, [showTelegramPaste, isAgentOnboarding, integration?.identifier, mode, testSubscriberId]);
   const handleSlackCredentialsPaste = useSlackCredentialsPasteFallback({
     control,
     setValue,

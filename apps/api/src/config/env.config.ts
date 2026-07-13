@@ -22,4 +22,11 @@ if (dotenvPath) {
   dotenv.config({ path: dotenvPath });
 }
 
+// portless injects PORTLESS_NGROK_URL into the API process when PORTLESS_NGROK=1.
+const portlessNgrokUrl = process.env.PORTLESS_NGROK_URL?.trim();
+
+if (portlessNgrokUrl && !process.env.AGENT_API_HOSTNAME?.trim()) {
+  process.env.AGENT_API_HOSTNAME = portlessNgrokUrl;
+}
+
 export const CONTEXT_PATH = getContextPath(NovuComponentEnum.API);

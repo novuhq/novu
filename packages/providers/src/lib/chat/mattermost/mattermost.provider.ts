@@ -7,8 +7,8 @@ import {
   ISendMessageSuccessResponse,
   isChannelDataOfType,
 } from '@novu/stateless';
-import axios from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { safeChatWebhookJsonRequest } from '../../../utils/safe-chat-webhook-request';
 import { WithPassthrough } from '../../../utils/types';
 
 interface IMattermostPayload {
@@ -20,7 +20,6 @@ export class MattermostProvider extends BaseProvider implements IChatProvider {
   channelType = ChannelTypeEnum.CHAT as ChannelTypeEnum.CHAT;
   public id = ChatProviderIdEnum.Mattermost;
   protected casing: CasingEnum = CasingEnum.SNAKE_CASE;
-  private axiosInstance = axios.create();
 
   async sendMessage(
     data: IChatOptions,
@@ -36,11 +35,14 @@ export class MattermostProvider extends BaseProvider implements IChatProvider {
     if (endpoint.channel) {
       payload.channel = endpoint.channel;
     }
-    const response = await this.axiosInstance.post(endpoint.url, this.transform(bridgeProviderData, payload).body);
+    const response = await safeChatWebhookJsonRequest({
+      url: endpoint.url,
+      body: this.transform(bridgeProviderData, payload).body,
+    });
 
     return {
-      id: response.headers['x-request-id'],
-      date: response.headers.date,
+      id: response.headers['x-request-id'] as string,
+      date: response.headers.date as string,
     };
   }
 }

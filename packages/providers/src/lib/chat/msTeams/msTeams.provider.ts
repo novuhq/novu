@@ -11,6 +11,7 @@ import {
 } from '@novu/stateless';
 import axios, { AxiosInstance } from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { safeChatWebhookJsonRequest } from '../../../utils/safe-chat-webhook-request';
 import { WithPassthrough } from '../../../utils/types';
 
 interface CreateConversationResponse {
@@ -71,10 +72,13 @@ export class MsTeamsProvider extends BaseProvider implements IChatProvider {
 
     payload = this.transform(bridgeProviderData, payload).body;
 
-    const response = await this.axiosInstance.post(webhookUrl, payload);
+    const response = await safeChatWebhookJsonRequest({
+      url: webhookUrl,
+      body: payload,
+    });
 
     return {
-      id: response.headers['request-id'] || `webhook-${Date.now()}`,
+      id: (response.headers['request-id'] as string) || `webhook-${Date.now()}`,
       date: new Date().toISOString(),
     };
   }

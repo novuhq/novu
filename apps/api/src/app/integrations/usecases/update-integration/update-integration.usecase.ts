@@ -1,18 +1,14 @@
-import {
-  BadRequestException,
-  ConflictException,
-  ForbiddenException,
-  Inject,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { AnalyticsService, decryptCredentials, encryptCredentials, PinoLogger } from '@novu/application-generic';
 import { EnvironmentRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { CHANNELS_WITH_PRIMARY } from '@novu/shared';
+import { assertIntegrationEnvironmentScope } from '../../utils/assert-integration-environment-scope';
+import { validateOutboundIntegrationCredentials } from '../../utils/validate-outbound-integration-credentials';
 import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
 import { ensureNovuAgentManagedCredentials } from '../novu-agent/novu-agent-credentials.utils';
 import { ensureWhatsAppManagedCredentials } from '../whatsapp/whatsapp-credentials.utils';
+import { maybeStampWhatsNextCompletedAt } from '../whatsapp/whatsapp-whats-next-stamp.utils';
 import { UpdateIntegrationCommand } from './update-integration.command';
 
 @Injectable()
@@ -110,13 +106,12 @@ export class UpdateIntegration {
       throw new NotFoundException(`Entity with id ${command.integrationId} not found`);
     }
 
-    if (command.restrictToUserEnvironment && existingIntegration._environmentId !== command.userEnvironmentId) {
-      throw new ForbiddenException(
-        'API key authentication is scoped to a single environment and cannot update an integration ' +
-          "that belongs to a different environment. Use an API key from the integration's environment, " +
-          'or authenticate with a session token.'
-      );
-    }
+    assertIntegrationEnvironmentScope({
+      restrictToUserEnvironment: command.restrictToUserEnvironment,
+      userEnvironmentId: command.userEnvironmentId,
+      integrationEnvironmentId: existingIntegration._environmentId,
+      action: 'update',
+    });
 
     if (command.environmentId && command.environmentId !== existingIntegration._environmentId) {
       const targetEnvironment = await this.environmentRepository.findByIdAndOrganization(
@@ -148,13 +143,18 @@ export class UpdateIntegration {
     });
 
     const environmentId = command.environmentId ?? existingIntegration._environmentId;
+    const credentialsForValidation = command.credentials ?? existingIntegration.credentials ?? {};
+
+    if (command.check || command.credentials) {
+      await validateOutboundIntegrationCredentials(existingIntegration.providerId, credentialsForValidation);
+    }
 
     if (command.check) {
       await this.checkIntegration.execute(
         CheckIntegrationCommand.create({
           environmentId,
           organizationId: command.organizationId,
-          credentials: command.credentials ?? existingIntegration.credentials ?? {},
+          credentials: credentialsForValidation,
           providerId: existingIntegration.providerId,
           channel: existingIntegration.channel,
         })
@@ -195,7 +195,12 @@ export class UpdateIntegration {
         nextCredentials: whatsAppMerged,
         existingCredentials,
       });
-      updatePayload.credentials = encryptCredentials(managedCredentials);
+      const stampedCredentials = maybeStampWhatsNextCompletedAt({
+        providerId: existingIntegration.providerId,
+        existingCredentials,
+        nextCredentials: managedCredentials,
+      });
+      updatePayload.credentials = encryptCredentials(stampedCredentials);
     }
 
     if (command.configurations) {

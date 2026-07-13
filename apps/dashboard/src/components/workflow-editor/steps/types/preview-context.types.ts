@@ -20,6 +20,7 @@ export type EnvData = Record<string, string>;
 export type ParsedData = {
   payload: PayloadData;
   subscriber: PreviewSubscriberData;
+  actor: PreviewSubscriberData;
   steps: StepsData;
   context: ContextPayload;
   env: EnvData;
@@ -28,6 +29,7 @@ export type ParsedData = {
 export type ValidationErrors = {
   payload: string | null;
   subscriber: string | null;
+  actor: string | null;
   steps: string | null;
   context: string | null;
   env: string | null;
@@ -48,6 +50,15 @@ export type PayloadSectionProps = AccordionSectionProps & {
 
 export type StepResultsSectionProps = AccordionSectionProps & {
   currentStepId?: string;
+};
+
+export type ActorSectionProps = Omit<AccordionSectionProps, 'errors' | 'localParsedData' | 'onUpdate'> & {
+  error: string | null;
+  actor: Partial<SubscriberDto>;
+  schema?: JSONSchema7;
+  onUpdate: (section: 'actor', data: PreviewSubscriberData) => void;
+  onActorSelect: (subscriber: ISubscriberResponseDto) => void;
+  onClearPersisted?: () => void;
 };
 
 export type SubscriberSectionProps = Omit<AccordionSectionProps, 'errors' | 'localParsedData' | 'onUpdate'> & {

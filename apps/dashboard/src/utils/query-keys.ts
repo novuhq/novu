@@ -11,6 +11,7 @@ export const QueryKeys = Object.freeze({
   fetchActivity: 'fetchActivity',
   fetchActivities: 'fetchActivities',
   fetchWorkflowRunsCount: 'fetchWorkflowRunsCount',
+  fetchConversationUsage: 'fetchConversationUsage',
   fetchSubscribers: 'fetchSubscribers',
   fetchSubscriber: 'fetchSubscriber',
   fetchSubscriberPreferences: 'fetchSubscriberPreferences',
@@ -34,6 +35,8 @@ export const QueryKeys = Object.freeze({
   fetchContexts: 'fetchContexts',
   fetchContext: 'fetchContext',
   fetchSubscriberSubscriptions: 'fetchSubscriberSubscriptions',
+  fetchChannelEndpoints: 'fetchChannelEndpoints',
+  fetchChannelConnections: 'fetchChannelConnections',
   fetchChat: 'fetchChat',
   fetchEnvironmentVariables: 'fetchEnvironmentVariables',
   fetchEnvironmentVariable: 'fetchEnvironmentVariable',
@@ -44,4 +47,6 @@ export const QueryKeys = Object.freeze({
   fetchDomain: 'fetchDomain',
   fetchDomainRoutes: 'fetchDomainRoutes',
   fetchDomainConnectStatus: 'fetchDomainConnectStatus',
+  localBridgeHealth: 'localBridgeHealth',
+  localDiscover: 'localDiscover',
 });

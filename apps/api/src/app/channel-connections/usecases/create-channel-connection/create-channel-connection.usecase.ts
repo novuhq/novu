@@ -1,5 +1,10 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { encryptChannelConnectionAuth, InstrumentUsecase, shortId } from '@novu/application-generic';
+import {
+  CreateOrUpdateSubscriberUseCase,
+  encryptChannelConnectionAuth,
+  InstrumentUsecase,
+  shortId,
+} from '@novu/application-generic';
 import {
   ChannelConnectionEntity,
   ChannelConnectionRepository,
@@ -9,6 +14,7 @@ import {
   SubscriberRepository,
 } from '@novu/dal';
 import { validateConnectionMode } from '../channel-connection.utils';
+import { ensureConnectDashboardSubscriber } from '../ensure-connect-dashboard-subscriber';
 import { CreateChannelConnectionCommand } from './create-channel-connection.command';
 
 @Injectable()
@@ -17,7 +23,8 @@ export class CreateChannelConnection {
     private readonly channelConnectionRepository: ChannelConnectionRepository,
     private readonly integrationRepository: IntegrationRepository,
     private readonly subscriberRepository: SubscriberRepository,
-    private readonly contextRepository: ContextRepository
+    private readonly contextRepository: ContextRepository,
+    private readonly createOrUpdateSubscriber: CreateOrUpdateSubscriberUseCase
   ) {}
 
   @InstrumentUsecase()
@@ -134,15 +141,13 @@ export class CreateChannelConnection {
       return;
     }
 
-    const found = await this.subscriberRepository.findOne({
+    await ensureConnectDashboardSubscriber({
       subscriberId: command.subscriberId,
-      _organizationId: command.organizationId,
-      _environmentId: command.environmentId,
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+      subscriberRepository: this.subscriberRepository,
+      createOrUpdateSubscriber: this.createOrUpdateSubscriber,
     });
-
-    if (!found) throw new NotFoundException(`Subscriber not found: ${command.subscriberId}`);
-
-    return;
   }
 
   private async findIntegration(command: CreateChannelConnectionCommand) {

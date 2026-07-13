@@ -16,10 +16,18 @@ export const buildWorkflowPreferences = (
     return defaultPreferences;
   }
 
-  const defaultChannelPreference = {
-    // Only use the workflow-level enabled preference if defined
-    ...(inputPreferences?.all?.enabled !== undefined ? { enabled: inputPreferences.all.enabled } : {}),
-  };
+  const defaultChannelPreference =
+    inputPreferences.all?.enabled !== undefined ? { enabled: inputPreferences.all.enabled } : {};
+
+  const channels = { ...defaultPreferences.channels };
+
+  for (const channel of Object.values(ChannelTypeEnum)) {
+    channels[channel] = {
+      ...defaultPreferences.channels[channel],
+      ...defaultChannelPreference,
+      ...inputPreferences.channels?.[channel],
+    };
+  }
 
   return {
     ...defaultPreferences,
@@ -28,20 +36,7 @@ export const buildWorkflowPreferences = (
       // DeepPartial loosens json-logic types; assert back to the concrete workflow preference before merging.
       ...(inputPreferences.all as WorkflowPreference),
     },
-    channels: {
-      ...defaultPreferences.channels,
-      ...Object.values(ChannelTypeEnum).reduce(
-        (output, channel) => ({
-          ...output,
-          [channel]: {
-            ...defaultPreferences.channels[channel],
-            ...defaultChannelPreference,
-            ...inputPreferences?.channels?.[channel],
-          },
-        }),
-        {} as WorkflowPreferences['channels']
-      ),
-    },
+    channels,
   };
 };
 

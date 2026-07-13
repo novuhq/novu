@@ -6,6 +6,7 @@ export enum AiConversationStatusEnum {
 
 export enum AiResourceTypeEnum {
   WORKFLOW = 'workflow',
+  AGENT = 'agent',
 }
 
 export enum AiAgentTypeEnum {
@@ -22,6 +23,7 @@ export enum SnapshotSourceTypeEnum {
   AI_CHAT = 'ai-chat',
   ONBOARDING_WORKFLOWS = 'onboarding-workflows',
   WORKFLOW_SUGGESTIONS = 'workflow-suggestions',
+  AGENT_SUGGESTIONS = 'agent-suggestions',
 }
 
 export enum AiWorkflowToolsEnum {

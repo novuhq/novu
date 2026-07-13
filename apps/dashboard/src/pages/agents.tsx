@@ -1,9 +1,16 @@
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { CaretSortIcon } from '@radix-ui/react-icons';
 import { useMutation } from '@tanstack/react-query';
 import type { FormEvent, ReactElement } from 'react';
 import { useCallback, useEffect, useId, useMemo, useState } from 'react';
-import { RiArrowRightSLine, RiCheckLine, RiCloseLine, RiMailLine, RiMessage3Line, RiMoreLine } from 'react-icons/ri';
+import {
+  RiArrowRightSLine,
+  RiCheckLine,
+  RiCloseLine,
+  RiMailLine,
+  RiMessage3Line,
+  RiMoreLine,
+  RiSparkling2Line,
+} from 'react-icons/ri';
 import {
   SiGithub,
   SiGooglechat,
@@ -14,11 +21,14 @@ import {
   SiWhatsapp,
   SiZoom,
 } from 'react-icons/si';
+import { Navigate } from 'react-router-dom';
 import { NovuApiError, post } from '@/api/api.client';
 import { AgentsEmptyTeaser } from '@/components/agents/agents-empty-teaser';
 import { AgentsList } from '@/components/agents/agents-list';
+import { UPGRADE_CTA_LABEL, usePlanUpgradeClick } from '@/components/billing/use-plan-upgrade-click';
 import { DashboardLayout } from '@/components/dashboard-layout';
 import { PageMeta } from '@/components/page-meta';
+import { IS_CLOUD, IS_EU, IS_SELF_HOSTED } from '@/config';
 import { Badge } from '@/components/primitives/badge';
 import { Button } from '@/components/primitives/button';
 import { CompactButton } from '@/components/primitives/button-compact';
@@ -29,10 +39,9 @@ import { Separator } from '@/components/primitives/separator';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { DismissButton, Icon as TagIcon, Root as TagRoot } from '@/components/primitives/tag';
 import { Textarea } from '@/components/primitives/textarea';
-import { useCurrentApp } from '@/hooks/use-current-app';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { useAreConversationalAgentsAvailable } from '@/hooks/use-are-conversational-agents-available';
 import { useTelemetry } from '@/hooks/use-telemetry';
-import { APP_IDS } from '@/utils/apps';
+import { ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
 
@@ -405,19 +414,23 @@ function AgentsEarlyAccessDialog({ open, onOpenChange }: AgentsEarlyAccessDialog
 
 export function AgentsPage() {
   const [earlyAccessOpen, setEarlyAccessOpen] = useState(false);
-  const isConversationalAgentsEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONVERSATIONAL_AGENTS_ENABLED, false);
-  const currentApp = useCurrentApp();
-  const isConnectApp = currentApp === APP_IDS.CONNECT;
+  const areAgentsAvailable = useAreConversationalAgentsAvailable();
   const track = useTelemetry();
+  const handleUpgradeClick = usePlanUpgradeClick('agents-page', 'agents');
 
   useEffect(() => {
-    track(isConnectApp ? TelemetryEvent.CONNECT_AGENTS_PAGE_VISITED : TelemetryEvent.AGENTS_PAGE_VISITED);
-  }, [isConnectApp, track]);
+    track(TelemetryEvent.AGENTS_PAGE_VISITED);
+  }, [track]);
+
+  // Agents are hard-disabled in the EU region.
+  if (IS_EU) {
+    return <Navigate to={ROUTES.ROOT} replace />;
+  }
 
   return (
     <>
       <PageMeta title="Agents" />
-      {!isConversationalAgentsEnabled ? (
+      {!areAgentsAvailable && IS_CLOUD ? (
         <AgentsEarlyAccessDialog open={earlyAccessOpen} onOpenChange={setEarlyAccessOpen} />
       ) : null}
       <DashboardLayout
@@ -430,21 +443,34 @@ export function AgentsPage() {
           </h1>
         }
       >
-        {isConversationalAgentsEnabled ? (
+        {areAgentsAvailable ? (
           <AgentsList />
         ) : (
           <AgentsEmptyTeaser
             cta={
-              <Button
-                variant="secondary"
-                mode="gradient"
-                size="xs"
-                trailingIcon={RiArrowRightSLine}
-                type="button"
-                onClick={() => setEarlyAccessOpen(true)}
-              >
-                Request early access
-              </Button>
+              IS_SELF_HOSTED ? (
+                <Button
+                  variant="primary"
+                  mode="gradient"
+                  size="xs"
+                  leadingIcon={RiSparkling2Line}
+                  type="button"
+                  onClick={handleUpgradeClick}
+                >
+                  {UPGRADE_CTA_LABEL}
+                </Button>
+              ) : (
+                <Button
+                  variant="secondary"
+                  mode="gradient"
+                  size="xs"
+                  trailingIcon={RiArrowRightSLine}
+                  type="button"
+                  onClick={() => setEarlyAccessOpen(true)}
+                >
+                  Request early access
+                </Button>
+              )
             }
           />
         )}

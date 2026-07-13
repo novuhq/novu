@@ -21,11 +21,11 @@ import {
   ShortIsPrefixEnum,
   WorkflowCriticalityEnum,
 } from '@novu/shared';
-import { plainToInstance } from 'class-transformer';
 import {
   GetSubscriberGlobalPreference,
   GetSubscriberGlobalPreferenceCommand,
 } from '../../../subscribers/usecases/get-subscriber-global-preference';
+import { assertGetPreferencesEnabled } from '../../../subscribers/utils/assert-get-preferences-enabled';
 import {
   GetSubscriberPreference,
   GetSubscriberPreferenceCommand,
@@ -48,6 +48,8 @@ export class GetSubscriberPreferences {
   ) {}
 
   async execute(command: GetSubscriberPreferencesCommand): Promise<GetSubscriberPreferencesDto> {
+    await assertGetPreferencesEnabled(this.featureFlagsService, command.organizationId, command.environmentId);
+
     const subscriber = await this.subscriberRepository.findBySubscriberId(
       command.environmentId,
       command.subscriberId,
@@ -88,10 +90,16 @@ export class GetSubscriberPreferences {
       this.fetchWorkflowPreferences(command, subscriber, workflowList, subscriberGlobalPreference),
     ]);
 
-    return plainToInstance(GetSubscriberPreferencesDto, {
+    /*
+     * The controller is wrapped in `ClassSerializerInterceptor`, which already serializes the
+     * response. `GetSubscriberPreferencesDto` declares no class-transformer exclusion/transform
+     * decorators, so a plain object produces byte-identical output while avoiding an extra
+     * (CPU-heavy) `plainToInstance` pass on every request.
+     */
+    return {
       global: globalPreference,
       workflows: workflowPreferences,
-    });
+    };
   }
 
   @Instrument()
@@ -116,7 +124,7 @@ export class GetSubscriberPreferences {
       enabled: useContextFiltering,
     });
 
-    return this.preferencesRepository.findOne(
+    return this.preferencesRepository.findOneForComputation(
       {
         _environmentId: environmentId,
         _organizationId: organizationId,
@@ -124,7 +132,6 @@ export class GetSubscriberPreferences {
         type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
         ...contextQuery,
       },
-      undefined,
       { readPreference: 'secondaryPreferred' as const }
     );
   }

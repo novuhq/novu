@@ -121,7 +121,7 @@ function SetupForm({ token, agentName }: SetupFormProps) {
         </h1>
         <p className="text-text-soft text-paragraph-xs leading-5">
           Paste the message BotFather just sent you on Telegram. We&apos;ll detect the bot token and connect the webhook
-          automatically — nothing else to fill in.
+          automatically: nothing else to fill in.
         </p>
       </div>
 
@@ -184,7 +184,7 @@ function ParseStatus({ draft, parsedToken, parsedUsername }: ParseStatusProps) {
     return (
       <div className="text-text-soft text-label-xs flex items-start gap-1.5 leading-4">
         <RiAlertLine className="text-warning-base mt-0.5 size-3.5 shrink-0" />
-        <span>We couldn&apos;t find a bot token yet. Paste the entire message — it starts with &quot;Done!&quot;.</span>
+        <span>We couldn&apos;t find a bot token yet. Paste the entire message: it starts with &quot;Done!&quot;.</span>
       </div>
     );
   }
@@ -229,7 +229,7 @@ function SuccessCard({
           Your Telegram bot is now wired up to <span className="text-text-strong font-medium">{agentName}</span>.
           {hasStartLink
             ? ' Open the link below in Telegram to link this chat and send your first test message.'
-            : ' Open it in Telegram to send your first message — your agent will reply.'}
+            : ' Open it in Telegram to send your first message: your agent will reply.'}
         </p>
       </div>
 
@@ -240,7 +240,7 @@ function SuccessCard({
         className="bg-text-strong text-static-white hover:bg-text-strong/90 mt-5 flex h-10 w-full items-center justify-center gap-2 rounded-10 px-3.5 text-label-sm transition"
       >
         <RiSendPlaneLine className="size-4" />
-        {hasStartLink ? `Connect & test @${botUsername}` : `Open @${botUsername}`}
+        {hasStartLink ? 'Connect & test' : `Open @${botUsername}`}
       </a>
 
       <p className="text-text-soft text-label-xs mt-3 text-center">You can safely close this tab.</p>

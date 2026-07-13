@@ -31,6 +31,12 @@ type InboundAddressFormProps = {
   onSubmit: (address: string, domain: DomainResponse) => boolean | undefined;
   isDisabled?: boolean;
   isExistingAddress?: (address: string, domainId: string) => boolean;
+  /**
+   * When provided, the "Add custom domain" option invokes this (e.g. opens an
+   * inline sheet) instead of navigating to the domains page. Callers that omit
+   * it keep the navigate-away fallback (setup wizard, self-hosted "What's next").
+   */
+  onAddDomain?: () => void;
 };
 
 /**
@@ -38,7 +44,13 @@ type InboundAddressFormProps = {
  * `InboundAddressConfig` so both the setup wizard and the post-setup inbox
  * card use the same input UX.
  */
-export function InboundAddressForm({ domains, onSubmit, isDisabled, isExistingAddress }: InboundAddressFormProps) {
+export function InboundAddressForm({
+  domains,
+  onSubmit,
+  isDisabled,
+  isExistingAddress,
+  onAddDomain,
+}: InboundAddressFormProps) {
   const [localPart, setLocalPart] = useState('');
   const [domainName, setDomainName] = useState('');
   const [domainOpen, setDomainOpen] = useState(false);
@@ -66,7 +78,7 @@ export function InboundAddressForm({ domains, onSubmit, isDisabled, isExistingAd
   }
 
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex flex-wrap items-center gap-1">
       <div
         className={cn(
           'border-stroke-soft bg-bg-white flex h-8 items-center overflow-hidden rounded-lg border shadow-xs',
@@ -141,6 +153,13 @@ export function InboundAddressForm({ domains, onSubmit, isDisabled, isExistingAd
                   value="__add_domain__"
                   onSelect={() => {
                     setDomainOpen(false);
+
+                    if (onAddDomain) {
+                      onAddDomain();
+
+                      return;
+                    }
+
                     void navigate(domainsPath);
                   }}
                   className="flex items-center gap-2 rounded-md p-1"

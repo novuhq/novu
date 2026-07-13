@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import {
+  CreateOrUpdateSubscriberUseCase,
   createHash,
   GetNovuProviderCredentials,
   GetNovuProviderCredentialsCommand,
@@ -20,6 +21,8 @@ import {
   SLACK_AGENT_OAUTH_SCOPES,
 } from '@novu/shared';
 import { validateConnectionMode } from '../../../../channel-connections/usecases/channel-connection.utils';
+import { ensureConnectDashboardSubscriber } from '../../../../channel-connections/usecases/ensure-connect-dashboard-subscriber';
+import { areHexDigestsEqual } from '../../../../shared/helpers/timing-safe-equal';
 import { CHAT_OAUTH_CALLBACK_PATH } from '../chat-oauth.constants';
 import { encodeOAuthState, splitOAuthState } from '../chat-oauth-state.util';
 import { GenerateSlackOauthUrlCommand } from './generate-slack-oauth-url.command';
@@ -60,6 +63,7 @@ export class GenerateSlackOauthUrl {
     private getNovuProviderCredentials: GetNovuProviderCredentials,
     private subscriberRepository: SubscriberRepository,
     private agentIntegrationRepository: AgentIntegrationRepository,
+    private createOrUpdateSubscriber: CreateOrUpdateSubscriberUseCase,
     private logger: PinoLogger
   ) {
     this.logger.setContext(GenerateSlackOauthUrl.name);
@@ -131,15 +135,13 @@ export class GenerateSlackOauthUrl {
       return;
     }
 
-    const found = await this.subscriberRepository.findOne({
+    await ensureConnectDashboardSubscriber({
       subscriberId,
-      _organizationId: organizationId,
-      _environmentId: environmentId,
+      environmentId,
+      organizationId,
+      subscriberRepository: this.subscriberRepository,
+      createOrUpdateSubscriber: this.createOrUpdateSubscriber,
     });
-
-    if (!found) throw new NotFoundException(`Subscriber not found: ${subscriberId}`);
-
-    return;
   }
 
   private async getOAuthUrl(
@@ -210,7 +212,7 @@ export class GenerateSlackOauthUrl {
       const { payload, signature } = splitOAuthState(state);
 
       const expectedSignature = createHash(environmentApiKey, payload);
-      if (signature !== expectedSignature) {
+      if (!areHexDigestsEqual(expectedSignature, signature)) {
         throw new Error('Invalid state signature');
       }
 
@@ -229,11 +231,16 @@ export class GenerateSlackOauthUrl {
   }
 
   static buildRedirectUri(): string {
-    if (!process.env.API_ROOT_URL) {
-      throw new Error('API_ROOT_URL environment variable is required');
+    // Must match exactly the redirect URL baked into the Slack app manifest
+    // (see slack-quick-setup.usecase.ts). When AGENT_API_HOSTNAME is set
+    // (typically a tunnel URL for local dev), both sides resolve to the
+    // tunnel; otherwise both fall back to API_ROOT_URL.
+    const rootUrl = process.env.AGENT_API_HOSTNAME ?? process.env.API_ROOT_URL;
+    if (!rootUrl) {
+      throw new Error('AGENT_API_HOSTNAME or API_ROOT_URL environment variable is required');
     }
 
-    const baseUrl = process.env.API_ROOT_URL.replace(/\/$/, ''); // Remove trailing slash
+    const baseUrl = rootUrl.replace(/\/$/, ''); // Remove trailing slash
 
     return `${baseUrl}${CHAT_OAUTH_CALLBACK_PATH}`;
   }

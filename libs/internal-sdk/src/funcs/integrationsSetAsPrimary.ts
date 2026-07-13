@@ -33,6 +33,7 @@ import { Result } from "../types/fp.js";
  * Update an integration as **primary** by its unique key identifier **integrationId**.
  *     This API will set the integration as primary for that channel in the current environment.
  *     Primary integration is used to deliver notification for sms and email channels in the workflow.
+ *     Only integration metadata is returned, credentials field is returned as an empty object.
  *
  * This operation requires either {@link Security.bearerAuth} or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.
  */

@@ -3,11 +3,14 @@
  */
 
 import { integrationsCreate } from "../funcs/integrationsCreate.js";
+import { integrationsCreateMobileLink } from "../funcs/integrationsCreateMobileLink.js";
 import { integrationsDelete } from "../funcs/integrationsDelete.js";
 import { integrationsGenerateChatOAuthUrl } from "../funcs/integrationsGenerateChatOAuthUrl.js";
 import { integrationsGenerateConnectOAuthUrl } from "../funcs/integrationsGenerateConnectOAuthUrl.js";
 import { integrationsGenerateLinkUserOAuthUrl } from "../funcs/integrationsGenerateLinkUserOAuthUrl.js";
 import { integrationsIntegrationsControllerAutoConfigureIntegration } from "../funcs/integrationsIntegrationsControllerAutoConfigureIntegration.js";
+import { integrationsIntegrationsControllerConfigureIntegrationWebhook } from "../funcs/integrationsIntegrationsControllerConfigureIntegrationWebhook.js";
+import { integrationsLinkChannelEndpoint } from "../funcs/integrationsLinkChannelEndpoint.js";
 import { integrationsList } from "../funcs/integrationsList.js";
 import { integrationsListActive } from "../funcs/integrationsListActive.js";
 import { integrationsSetAsPrimary } from "../funcs/integrationsSetAsPrimary.js";
@@ -22,7 +25,7 @@ export class Integrations extends ClientSDK {
    * List all integrations
    *
    * @remarks
-   * List all the channels integrations created in the organization
+   * List all the channels integrations created in the organization. Only integration metadata is returned, credentials field is returned as an empty object.
    */
   async list(
     idempotencyKey?: string | undefined,
@@ -40,7 +43,7 @@ export class Integrations extends ClientSDK {
    *
    * @remarks
    * Create an integration for the current environment the user is based on the API key provided.
-   *     Each provider supports different credentials, check the provider documentation for more details.
+   *     Each provider supports different credentials, check the provider documentation for more details. Only integration metadata is returned, credentials field is returned as an empty object.
    */
   async create(
     createIntegrationRequestDto: components.CreateIntegrationRequestDto,
@@ -60,7 +63,7 @@ export class Integrations extends ClientSDK {
    *
    * @remarks
    * Update an integration by its unique key identifier **integrationId**.
-   *     Each provider supports different credentials, check the provider documentation for more details.
+   *     Each provider supports different credentials, check the provider documentation for more details. Only integration metadata is returned, credentials field is returned as an empty object.
    */
   async update(
     updateIntegrationRequestDto: components.UpdateIntegrationRequestDto,
@@ -82,7 +85,7 @@ export class Integrations extends ClientSDK {
    *
    * @remarks
    * Delete an integration by its unique key identifier **integrationId**.
-   *     This action is irreversible.
+   *     This action is irreversible. Only integration metadata is returned, credentials field is returned as empty object.
    */
   async delete(
     integrationId: string,
@@ -102,7 +105,7 @@ export class Integrations extends ClientSDK {
    *
    * @remarks
    * Auto-configure an integration by its unique key identifier **integrationId** for inbound webhook support.
-   *     This will automatically generate required webhook signing keys and configure webhook endpoints.
+   *     This will automatically generate required webhook signing keys and configure webhook endpoints. Only integration metadata is returned, credentials field is returned as an empty object.
    */
   async integrationsControllerAutoConfigureIntegration(
     integrationId: string,
@@ -128,6 +131,7 @@ export class Integrations extends ClientSDK {
    * Update an integration as **primary** by its unique key identifier **integrationId**.
    *     This API will set the integration as primary for that channel in the current environment.
    *     Primary integration is used to deliver notification for sms and email channels in the workflow.
+   *     Only integration metadata is returned, credentials field is returned as an empty object.
    */
   async setAsPrimary(
     integrationId: string,
@@ -143,10 +147,57 @@ export class Integrations extends ClientSDK {
   }
 
   /**
+   * Issue a short-lived mobile setup link for an existing integration
+   *
+   * @remarks
+   * Returns an opaque, single-use setup token plus a mobile URL for configuring an existing chat integration. Telegram is the only supported provider initially.
+   */
+  async createMobileLink(
+    issueIntegrationMobileLinkRequestDto:
+      components.IssueIntegrationMobileLinkRequestDto,
+    integrationIdentifier: string,
+    idempotencyKey?: string | undefined,
+    options?: RequestOptions,
+  ): Promise<
+    operations.IntegrationsControllerCreateIntegrationMobileLinkResponse
+  > {
+    return unwrapAsync(integrationsCreateMobileLink(
+      this,
+      issueIntegrationMobileLinkRequestDto,
+      integrationIdentifier,
+      idempotencyKey,
+      options,
+    ));
+  }
+
+  /**
+   * Configure a chat integration webhook
+   *
+   * @remarks
+   * Registers the Novu webhook URL with the chat provider for the specified integration. Telegram is the only supported provider initially.
+   */
+  async integrationsControllerConfigureIntegrationWebhook(
+    integrationIdentifier: string,
+    idempotencyKey?: string | undefined,
+    options?: RequestOptions,
+  ): Promise<
+    operations.IntegrationsControllerConfigureIntegrationWebhookResponse
+  > {
+    return unwrapAsync(
+      integrationsIntegrationsControllerConfigureIntegrationWebhook(
+        this,
+        integrationIdentifier,
+        idempotencyKey,
+        options,
+      ),
+    );
+  }
+
+  /**
    * List active integrations
    *
    * @remarks
-   * List all the active integrations created in the organization
+   * List all the active integrations created in the organization. Only integration metadata is returned, credentials field is returned as an empty object.
    */
   async listActive(
     idempotencyKey?: string | undefined,
@@ -175,6 +226,25 @@ export class Integrations extends ClientSDK {
     return unwrapAsync(integrationsGenerateConnectOAuthUrl(
       this,
       generateConnectOauthUrlRequestDto,
+      idempotencyKey,
+      options,
+    ));
+  }
+
+  /**
+   * Issue a URL to link a subscriber chat identity
+   *
+   * @remarks
+   * Returns a provider-specific URL the subscriber opens to link their chat identity. The integration provider is resolved from integrationIdentifier; Telegram returns a deep link.
+   */
+  async linkChannelEndpoint(
+    linkChannelEndpointRequestDto: components.LinkChannelEndpointRequestDto,
+    idempotencyKey?: string | undefined,
+    options?: RequestOptions,
+  ): Promise<operations.IntegrationsControllerLinkChannelEndpointResponse> {
+    return unwrapAsync(integrationsLinkChannelEndpoint(
+      this,
+      linkChannelEndpointRequestDto,
       idempotencyKey,
       options,
     ));

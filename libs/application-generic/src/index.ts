@@ -17,6 +17,8 @@ export * from './resilience';
 export * from './schemas/channel-endpoint';
 export * from './schemas/control';
 export * from './services';
+export * from './services/agent-entitlements.service';
+export * from './services/plan-limits';
 export * from './services/resource-validator.service';
 export * from './tracing';
 export * from './types';

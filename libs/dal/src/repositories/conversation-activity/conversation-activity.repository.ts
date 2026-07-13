@@ -9,6 +9,7 @@ import {
   ConversationActivityEntity,
   ConversationActivitySenderTypeEnum,
   ConversationActivitySignalData,
+  ConversationActivityToolData,
   ConversationActivityTypeEnum,
 } from './conversation-activity.entity';
 import { ConversationActivity } from './conversation-activity.schema';
@@ -43,6 +44,57 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
       sort: { createdAt: -1 },
       limit,
     });
+  }
+
+  /** Resolves the activity for a specific platform-native message id (e.g. the message a reaction targets). */
+  async findByPlatformMessageId(
+    environmentId: string,
+    conversationId: string,
+    platformMessageId: string
+  ): Promise<ConversationActivityEntity | null> {
+    return this.findOne(
+      {
+        _environmentId: environmentId,
+        _conversationId: conversationId,
+        platformMessageId,
+      },
+      '*'
+    );
+  }
+
+  async countAgentMessages(environmentId: string, conversationId: string): Promise<number> {
+    return this.count({
+      _environmentId: environmentId,
+      _conversationId: conversationId,
+      senderType: ConversationActivitySenderTypeEnum.AGENT,
+      type: ConversationActivityTypeEnum.MESSAGE,
+    });
+  }
+
+  /**
+   * Repoint SUBSCRIBER-authored activities from `fromSubscriberId` to
+   * `toSubscriberId` (both external `subscriberId` strings, stored in
+   * `senderId`). Used by the email adoption merge so past timeline entries stay
+   * attributed to the surviving identity. Returns the number of activities
+   * updated.
+   */
+  async repointSubscriberSender(params: {
+    environmentId: string;
+    organizationId: string;
+    fromSubscriberId: string;
+    toSubscriberId: string;
+  }): Promise<number> {
+    const result = await this.update(
+      {
+        _environmentId: params.environmentId,
+        _organizationId: params.organizationId,
+        senderType: ConversationActivitySenderTypeEnum.SUBSCRIBER,
+        senderId: params.fromSubscriberId,
+      },
+      { $set: { senderId: params.toSubscriberId } }
+    );
+
+    return result.modified;
   }
 
   async createUserActivity(params: {
@@ -87,16 +139,19 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
     agentId: string;
     content: string;
     richContent?: Record<string, unknown>;
+    toolData?: ConversationActivityToolData;
     type?: ConversationActivityTypeEnum;
     senderName?: string;
     platformMessageId?: string;
     environmentId: string;
     organizationId: string;
   }): Promise<ConversationActivityEntity> {
+    const type = params.type ?? ConversationActivityTypeEnum.MESSAGE;
+
     return this.create({
       identifier: params.identifier,
       _conversationId: params.conversationId,
-      type: params.type ?? ConversationActivityTypeEnum.MESSAGE,
+      type,
       platform: params.platform,
       _integrationId: params.integrationId,
       platformThreadId: params.platformThreadId,
@@ -104,6 +159,7 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
       senderId: params.agentId,
       content: params.content,
       richContent: params.richContent,
+      toolData: params.toolData,
       senderName: params.senderName,
       platformMessageId: params.platformMessageId,
       _environmentId: params.environmentId,
@@ -141,10 +197,40 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
     });
   }
 
-  async findToolActivitiesByRunId(
+  async createToolActivity(params: {
+    identifier: string;
+    conversationId: string;
+    platform: string;
+    integrationId: string;
+    platformThreadId: string;
+    senderType: ConversationActivitySenderTypeEnum;
+    senderId: string;
+    content: string;
+    type: ConversationActivityTypeEnum;
+    toolData: ConversationActivityToolData;
+    environmentId: string;
+    organizationId: string;
+  }): Promise<ConversationActivityEntity> {
+    return this.create({
+      identifier: params.identifier,
+      _conversationId: params.conversationId,
+      type: params.type,
+      platform: params.platform,
+      _integrationId: params.integrationId,
+      platformThreadId: params.platformThreadId,
+      senderType: params.senderType,
+      senderId: params.senderId,
+      content: params.content,
+      toolData: params.toolData,
+      _environmentId: params.environmentId,
+      _organizationId: params.organizationId,
+    });
+  }
+
+  async findToolActivitiesByPlanMessageId(
     environmentId: string,
     conversationId: string,
-    runId: string
+    planMessageId: string
   ): Promise<ConversationActivityEntity[]> {
     return this.find(
       {
@@ -152,7 +238,7 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
         _conversationId: conversationId,
         type: ConversationActivityTypeEnum.SIGNAL,
         'signalData.type': 'tool-use',
-        'signalData.payload.runId': runId,
+        'signalData.payload.planMessageId': planMessageId,
       } as FilterQuery<ConversationActivityDBModel> & EnforceEnvOrOrgIds,
       '*',
       { sort: { createdAt: 1 } }

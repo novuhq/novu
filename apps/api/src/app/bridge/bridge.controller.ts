@@ -18,17 +18,21 @@ import {
   AnalyticsService,
   assertSafeOutboundUrl,
   ExternalApiAccessible,
+  GeneratePreviewResponseDto,
   PreviewStep,
   PreviewStepCommand,
   RequirePermissions,
   SkipPermissionsCheck,
   SsrfBlockedError,
   UserSession,
+  WorkflowResponseDto,
 } from '@novu/application-generic';
 import { ControlValuesRepository, EnvironmentRepository, NotificationTemplateRepository } from '@novu/dal';
-import { HttpHeaderKeysEnum } from '@novu/framework/internal';
+import { HealthCheck, HttpHeaderKeysEnum } from '@novu/framework/internal';
 import {
+  ChannelTypeEnum,
   ControlValuesLevelEnum,
+  isOutboundSsrfProtectionEnabled,
   PermissionsEnum,
   ResourceOriginEnum,
   ResourceTypeEnum,
@@ -37,8 +41,10 @@ import {
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { CreateBridgeRequestDto } from './dtos/create-bridge-request.dto';
 import { CreateBridgeResponseDto } from './dtos/create-bridge-response.dto';
+import { StatelessBridgeRequestDto, StatelessPreviewRequestDto } from './dtos/stateless-bridge-request.dto';
 import { ValidateBridgeUrlRequestDto } from './dtos/validate-bridge-url-request.dto';
 import { ValidateBridgeUrlResponseDto } from './dtos/validate-bridge-url-response.dto';
+import { DiscoverVirtualWorkflows, DiscoverVirtualWorkflowsCommand } from './usecases/discover-virtual-workflows';
 import { GetBridgeStatusCommand } from './usecases/get-bridge-status/get-bridge-status.command';
 import { GetBridgeStatus } from './usecases/get-bridge-status/get-bridge-status.usecase';
 import { StoreControlValuesCommand, StoreControlValuesUseCase } from './usecases/store-control-values';
@@ -58,6 +64,7 @@ export class BridgeController {
     private controlValuesRepository: ControlValuesRepository,
     private storeControlValuesUseCase: StoreControlValuesUseCase,
     private previewStep: PreviewStep,
+    private discoverVirtualWorkflows: DiscoverVirtualWorkflows,
     private analyticsService: AnalyticsService
   ) {}
 
@@ -242,13 +249,116 @@ export class BridgeController {
           statelessBridgeUrl: body.bridgeUrl,
           // User-supplied bridgeUrl: enforce DNS-pinned SSRF guard at connect
           // time so IP-literal private addresses cannot reach internal hosts.
-          enforceSsrfProtection: true,
+          enforceSsrfProtection: isOutboundSsrfProtectionEnabled(),
         })
       );
 
       return { isValid: result.status === 'ok' };
     } catch (err: any) {
       return { isValid: false, error: err.message };
+    }
+  }
+
+  /*
+   * Stateless endpoints backing the dashboard's "Local" environment mode:
+   * the bridge is the developer's local app exposed through a dev tunnel, and
+   * the tunnel URL lives only in the caller's browser — nothing is persisted.
+   * All requests to the bridge are signed with the selected environment's
+   * secret key, so a signature rejection (BRIDGE_AUTHENTICATION_FAILED)
+   * proves the local app belongs to a different environment; these errors
+   * propagate untouched for the dashboard to branch on.
+   *
+   * Gated by BRIDGE_WRITE (matching POST /bridge/validate): these endpoints
+   * make Novu sign a request to a caller-supplied bridgeUrl with the
+   * environment's secret key, so a lower permission would hand read-only
+   * members a signing oracle for any URL they control.
+   */
+
+  @Post('/stateless/status')
+  @RequirePermissions(PermissionsEnum.BRIDGE_WRITE)
+  async statelessStatus(
+    @UserSession() user: UserSessionData,
+    @Body() body: StatelessBridgeRequestDto
+  ): Promise<HealthCheck> {
+    this.assertSafeStatelessBridgeUrl(body.bridgeUrl);
+
+    return this.getBridgeStatus.execute(
+      GetBridgeStatusCommand.create({
+        environmentId: user.environmentId,
+        statelessBridgeUrl: body.bridgeUrl,
+        enforceSsrfProtection: isOutboundSsrfProtectionEnabled(),
+      })
+    );
+  }
+
+  @Post('/stateless/discover')
+  @RequirePermissions(PermissionsEnum.BRIDGE_WRITE)
+  async statelessDiscover(
+    @UserSession() user: UserSessionData,
+    @Body() body: StatelessBridgeRequestDto
+  ): Promise<{ workflows: WorkflowResponseDto[] }> {
+    this.assertSafeStatelessBridgeUrl(body.bridgeUrl);
+
+    return this.discoverVirtualWorkflows.execute(
+      DiscoverVirtualWorkflowsCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+        bridgeUrl: body.bridgeUrl,
+      })
+    );
+  }
+
+  @Post('/stateless/preview/:workflowId/:stepId')
+  @RequirePermissions(PermissionsEnum.BRIDGE_WRITE)
+  async statelessPreview(
+    @Param('workflowId') workflowId: string,
+    @Param('stepId') stepId: string,
+    @UserSession() user: UserSessionData,
+    @Body() body: StatelessPreviewRequestDto
+  ): Promise<GeneratePreviewResponseDto> {
+    this.assertSafeStatelessBridgeUrl(body.bridgeUrl);
+
+    const previewPayload = (body.previewPayload ?? {}) as Record<string, any>;
+
+    const output = await this.previewStep.execute(
+      PreviewStepCommand.create({
+        workflowId,
+        stepId,
+        controls: body.controlValues ?? {},
+        payload: previewPayload.payload ?? {},
+        subscriber: previewPayload.subscriber,
+        actor: previewPayload.actor,
+        context: previewPayload.context,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+        workflowOrigin: ResourceOriginEnum.EXTERNAL,
+        statelessBridgeUrl: body.bridgeUrl,
+        enforceSsrfProtection: isOutboundSsrfProtectionEnabled(),
+      })
+    );
+
+    return {
+      result: {
+        preview: (output.outputs ?? {}) as Record<string, unknown>,
+        type: body.stepType as unknown as ChannelTypeEnum,
+      },
+      previewPayloadExample: previewPayload,
+    } as GeneratePreviewResponseDto;
+  }
+
+  // Reject SSRF candidates (loopback, link-local, cloud metadata, non-http
+  // schemes, embedded credentials) before issuing any outbound request; the
+  // connect-time DNS-pinned guard is enforced on the request itself.
+  private assertSafeStatelessBridgeUrl(bridgeUrl: string): void {
+    try {
+      assertSafeOutboundUrl(bridgeUrl);
+    } catch (err) {
+      if (err instanceof SsrfBlockedError) {
+        throw new BadRequestException(`bridgeUrl: ${err.message}`);
+      }
+      throw err;
     }
   }
 }

@@ -10,6 +10,7 @@ import { DomainRouteTypeEnum, DomainStatusEnum, EmailProviderIdEnum } from '@nov
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { InboundEmailParseCommand } from '../inbound-email-parse.command';
+import { InboundParseProcessingError } from '../inbound-parse-outcome';
 import { DomainRouteStrategy } from './domain-route.strategy';
 
 const ENV_ID = 'env-001';
@@ -112,6 +113,36 @@ describe('DomainRouteStrategy', () => {
 
     sinon.assert.notCalled(inboundDomainRouteDelivery.deliverToWebhook as any);
     sinon.assert.calledOnce(inboundDomainRouteDelivery.deliverToAgent);
+    // The DKIM/SPF verdicts must reach the agent delivery so the API can reject
+    // spoofed senders — they are dropped without the commandToMail passthrough.
+    const agentCall = inboundDomainRouteDelivery.deliverToAgent.getCall(0);
+    expect(agentCall.args[0].mail.dkim).to.equal('pass');
+    expect(agentCall.args[0].mail.spf).to.equal('pass');
+  });
+
+  it('should sanitize downstream 5xx delivery failures for customer traces', async () => {
+    const routes = makeRoutes([{ address: 'support', type: DomainRouteTypeEnum.AGENT, destination: 'agent-001' }]);
+    domainRepository.findByName.resolves(makeVerifiedDomain() as any);
+    domainRouteRepository.findByDomainAndAddresses.resolves(routes as any);
+    inboundDomainRouteDelivery.deliverToAgent.rejects(
+      Object.assign(new Error('Response code 500 (Internal Server Error)'), {
+        statusCode: 500,
+        responseBody: { message: 'Internal server error' },
+      })
+    );
+
+    try {
+      await strategy.execute(makeCommand('support'));
+      throw new Error('Expected InboundParseProcessingError');
+    } catch (error) {
+      expect(error).to.be.instanceOf(Error);
+      expect((error as Error).message).to.equal('Response code 500 (Internal Server Error)');
+      const processingError = error as InboundParseProcessingError;
+      expect(processingError.outcome?.status).to.equal(502);
+      expect(processingError.outcome?.message).to.equal('Inbound delivery failed due to a temporary internal error');
+    }
+
+    sinon.assert.calledOnce(logger.error as any);
   });
 
   it('should fire webhook when an exact WEBHOOK route matches', async () => {

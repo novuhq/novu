@@ -16,7 +16,7 @@ export const useDuplicateLayout = (
   const { mutateAsync, ...rest } = useMutation({
     mutationFn: (args: DuplicateLayoutParameters) => duplicateLayout({ environment: currentEnvironment!, ...args }),
     ...options,
-    onSuccess: async (data, variables, ctx) => {
+    onSuccess: async (data, variables, onMutateResult, context) => {
       await queryClient.invalidateQueries({
         queryKey: [QueryKeys.fetchLayouts, currentEnvironment?._id],
       });
@@ -25,7 +25,7 @@ export const useDuplicateLayout = (
         queryKey: [QueryKeys.diffEnvironments],
       });
 
-      options?.onSuccess?.(data, variables, ctx);
+      options?.onSuccess?.(data, variables, onMutateResult, context);
     },
   });
 

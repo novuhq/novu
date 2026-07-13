@@ -31,7 +31,6 @@ import {
   SeverityLevelEnum,
   WorkflowCriticalityEnum,
 } from '@novu/shared';
-import { chunk } from 'es-toolkit';
 import { GetSubscriberPreferenceCommand } from './get-subscriber-preference.command';
 
 @Injectable()
@@ -41,7 +40,8 @@ export class GetSubscriberPreference {
     private notificationTemplateRepository: NotificationTemplateRepository,
     private preferencesRepository: PreferencesRepository,
     private featureFlagsService: FeatureFlagsService,
-    private inMemoryLRUCacheService: InMemoryLRUCacheService
+    private inMemoryLRUCacheService: InMemoryLRUCacheService,
+    private getPreferences: GetPreferences
   ) {}
 
   @InstrumentUsecase()
@@ -115,7 +115,7 @@ export class GetSubscriberPreference {
       return acc;
     }, {});
 
-    const workflowPreferences = await this.calculateWorkflowPreferences(
+    const workflowPreferences = this.calculateWorkflowPreferences(
       workflowList,
       workflowPreferenceSets,
       subscriberGlobalPreference,
@@ -144,72 +144,64 @@ export class GetSubscriberPreference {
   }
 
   @Instrument()
-  private async calculateWorkflowPreferences(
+  private calculateWorkflowPreferences(
     workflowList: NotificationTemplateEntity[],
     workflowPreferenceSets: Record<string, PreferenceSet>,
     subscriberGlobalPreference: PreferencesEntity | null,
     includeInactiveChannels: boolean
-  ): Promise<(ISubscriberPreferenceResponse | undefined)[]> {
-    const chunkSize = 30;
-    const results: (ISubscriberPreferenceResponse | undefined)[] = [];
+  ): ISubscriberPreferenceResponse[] {
+    /*
+     * Process all workflows synchronously. filterActive caps at 200 workflows and the
+     * CPU cost is ~1ms even at that ceiling (see NV-8111 profiling). The previous
+     * setImmediate-per-chunk yielding inflated NR-visible duration under concurrent load:
+     * each await queued behind thousands of other preference requests (~20-40ms per wait
+     * at moderate concurrency), which dominated p99 latency and saturated the event loop
+     * without reducing actual CPU work.
+     */
+    return workflowList
+      .map((workflow) => {
+        const preferences = workflowPreferenceSets[workflow._id];
 
-    const chunks = chunk(workflowList, chunkSize);
+        if (!preferences) {
+          return null;
+        }
 
-    for (const chunk of chunks) {
-      // Use setImmediate to yield to the event loop between chunks
-      await new Promise<void>((resolve) => {
-        setImmediate(() => resolve());
-      });
+        const merged = this.mergePreferences(preferences, subscriberGlobalPreference);
 
-      const chunkResults = chunk
-        .map((workflow) => {
-          const preferences = workflowPreferenceSets[workflow._id];
+        const includedChannels = this.getChannels(workflow, includeInactiveChannels);
 
-          if (!preferences) {
-            return null;
-          }
+        const initialChannels = filteredPreference(
+          {
+            email: true,
+            sms: true,
+            in_app: true,
+            chat: true,
+            push: true,
+          },
+          includedChannels
+        );
 
-          const merged = this.mergePreferences(preferences, subscriberGlobalPreference);
+        const { channels, overrides } = this.calculateChannelsAndOverrides(merged, initialChannels);
 
-          const includedChannels = this.getChannels(workflow, includeInactiveChannels);
-
-          const initialChannels = filteredPreference(
-            {
-              email: true,
-              sms: true,
-              in_app: true,
-              chat: true,
-              push: true,
-            },
-            includedChannels
-          );
-
-          const { channels, overrides } = this.calculateChannelsAndOverrides(merged, initialChannels);
-
-          const preference: ISubscriberPreferenceResponse = {
-            preference: {
-              channels,
-              enabled: true,
-              overrides,
-              ...(preferences.subscriberWorkflowPreference?.updatedAt && {
-                updatedAt: preferences.subscriberWorkflowPreference.updatedAt,
-              }),
-            },
-            template: mapTemplateConfiguration({
-              ...workflow,
-              critical: merged.preferences.all.readOnly,
+        const preference: ISubscriberPreferenceResponse = {
+          preference: {
+            channels,
+            enabled: true,
+            overrides,
+            ...(preferences.subscriberWorkflowPreference?.updatedAt && {
+              updatedAt: preferences.subscriberWorkflowPreference.updatedAt,
             }),
-            type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
-          };
+          },
+          template: {
+            ...mapTemplateConfiguration(workflow),
+            critical: merged.preferences.all.readOnly,
+          },
+          type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
+        };
 
-          return preference;
-        })
-        .filter((item): item is ISubscriberPreferenceResponse => item !== null);
-
-      results.push(...chunkResults);
-    }
-
-    return results;
+        return preference;
+      })
+      .filter((item): item is ISubscriberPreferenceResponse => item !== null);
   }
 
   @Instrument()
@@ -294,42 +286,28 @@ export class GetSubscriberPreference {
     const subscriberGlobalPreferenceQuery: Promise<PreferencesEntity[]> =
       preFetchedSubscriberGlobalPreference !== undefined
         ? Promise.resolve(preFetchedSubscriberGlobalPreference ? [preFetchedSubscriberGlobalPreference] : [])
-        : this.preferencesRepository.find(
+        : this.preferencesRepository.findForComputation(
             {
               ...baseQuery,
               _subscriberId: subscriberId,
               type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
               ...contextQuery,
             },
-            undefined,
             readOptions
           );
 
     const [
-      workflowResourcePreferences,
-      workflowUserPreferences,
+      { workflowResourcePreferences, workflowUserPreferences },
       subscriberWorkflowPreferences,
       subscriberGlobalPreferences,
     ] = await Promise.all([
-      this.preferencesRepository.find(
-        {
-          ...baseQuery,
-          _templateId: { $in: workflowIds },
-          type: PreferencesTypeEnum.WORKFLOW_RESOURCE,
-        },
-        undefined,
-        readOptions
-      ),
-      this.preferencesRepository.find(
-        {
-          ...baseQuery,
-          _templateId: { $in: workflowIds },
-          type: PreferencesTypeEnum.USER_WORKFLOW,
-        },
-        undefined,
-        readOptions
-      ),
-      this.preferencesRepository.find(
+      this.getWorkflowLevelPreferences({
+        environmentId,
+        organizationId,
+        workflowIds,
+        readOptions,
+      }),
+      this.preferencesRepository.findForComputation(
         {
           ...baseQuery,
           _subscriberId: subscriberId,
@@ -337,7 +315,6 @@ export class GetSubscriberPreference {
           type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
           ...contextQuery,
         },
-        undefined,
         readOptions
       ),
       subscriberGlobalPreferenceQuery,
@@ -349,6 +326,52 @@ export class GetSubscriberPreference {
       subscriberWorkflowPreferences,
       subscriberGlobalPreference: subscriberGlobalPreferences[0] ?? null,
     };
+  }
+
+  /**
+   * Resolves the subscriber-independent workflow-level preferences (WORKFLOW_RESOURCE and
+   * USER_WORKFLOW) for a set of workflows by delegating to the canonical, in-flight-coalesced
+   * `GetPreferences.getWorkflowPreferencesByIds` reader (shared with the single-workflow path),
+   * then flattens the per-workflow tuples into the two arrays the merge step consumes.
+   *
+   * The returned entries are shared cache references and must be treated as immutable; the merge
+   * pipeline (`MergePreferences`) only reads them and produces fresh objects.
+   */
+  @Instrument()
+  private async getWorkflowLevelPreferences({
+    environmentId,
+    organizationId,
+    workflowIds,
+    readOptions,
+  }: {
+    environmentId: string;
+    organizationId: string;
+    workflowIds: string[];
+    readOptions: { readPreference: 'secondaryPreferred' | 'primary' };
+  }): Promise<{
+    workflowResourcePreferences: PreferencesEntity[];
+    workflowUserPreferences: PreferencesEntity[];
+  }> {
+    const tuplesByWorkflowId = await this.getPreferences.getWorkflowPreferencesByIds({
+      environmentId,
+      organizationId,
+      workflowIds,
+      readOptions,
+    });
+
+    const workflowResourcePreferences: PreferencesEntity[] = [];
+    const workflowUserPreferences: PreferencesEntity[] = [];
+
+    for (const [workflowResourcePreference, workflowUserPreference] of tuplesByWorkflowId.values()) {
+      if (workflowResourcePreference) {
+        workflowResourcePreferences.push(workflowResourcePreference);
+      }
+      if (workflowUserPreference) {
+        workflowUserPreferences.push(workflowUserPreference);
+      }
+    }
+
+    return { workflowResourcePreferences, workflowUserPreferences };
   }
 
   @Instrument()

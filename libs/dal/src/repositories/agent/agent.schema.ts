@@ -1,3 +1,4 @@
+import { AgentSubscriberAccessEnum } from '@novu/shared';
 import mongoose, { Schema } from 'mongoose';
 
 import { schemaOptions } from '../schema-default.options';
@@ -21,6 +22,10 @@ const agentSchema = new Schema<AgentDBModel>(
     behavior: {
       acknowledgeOnReceived: Schema.Types.Boolean,
       reactionOnResolved: Schema.Types.String,
+      subscriberAccess: {
+        type: Schema.Types.String,
+        enum: Object.values(AgentSubscriberAccessEnum),
+      },
     },
     bridgeUrl: Schema.Types.String,
     devBridgeUrl: Schema.Types.String,
@@ -33,6 +38,11 @@ const agentSchema = new Schema<AgentDBModel>(
       enum: ['self-hosted', 'managed'],
       default: 'self-hosted',
     },
+    visibility: {
+      type: Schema.Types.String,
+      enum: ['public', 'private'],
+      default: 'public',
+    },
     managedRuntime: {
       providerId: Schema.Types.String,
       _integrationId: {
@@ -40,6 +50,7 @@ const agentSchema = new Schema<AgentDBModel>(
         ref: 'Integration',
       },
       externalAgentId: Schema.Types.String,
+      managedDefinitionVersion: Schema.Types.Number,
     },
     _organizationId: {
       type: Schema.Types.ObjectId,
@@ -48,6 +59,10 @@ const agentSchema = new Schema<AgentDBModel>(
     _environmentId: {
       type: Schema.Types.ObjectId,
       ref: 'Environment',
+    },
+    createdBy: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
     },
   },
   schemaOptions

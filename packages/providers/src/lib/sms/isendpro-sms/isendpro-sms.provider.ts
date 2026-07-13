@@ -1,10 +1,5 @@
 import { SmsProviderIdEnum } from '@novu/shared';
-import {
-  ChannelTypeEnum,
-  ISendMessageSuccessResponse,
-  ISmsOptions,
-  ISmsProvider,
-} from '@novu/stateless';
+import { ChannelTypeEnum, ISendMessageSuccessResponse, ISmsOptions, ISmsProvider } from '@novu/stateless';
 import axios from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
@@ -61,15 +56,13 @@ export class ISendProSmsProvider extends BaseProvider implements ISmsProvider {
     params.append('num', payload.body.message.to.replace(/^\+|^00/, ''));
     params.append('emetteur', this.config.from || 'NOVU');
 
-
     // Send the SMS via iSendPro API
     const response = await axios.post(`${this.DEFAULT_BASE_URL}/sms`, params, {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
         ...payload.headers,
-      }
+      },
     });
-
 
     // Return standardized response for Novu
     return {

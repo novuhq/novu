@@ -42,7 +42,8 @@ export async function createApp({
 }): Promise<void> {
   let repoInfo: RepoInfo | undefined;
   const mode: TemplateMode = typescript ? 'ts' : 'js';
-  const template: TemplateType = templateChoice === 'agent' ? 'app-agent' : 'app-react-email';
+  const template: TemplateType =
+    templateChoice === 'agent' ? 'app-agent' : templateChoice === 'chat-sdk' ? 'app-chat-sdk' : 'app-react-email';
 
   const root = path.resolve(appPath);
 
@@ -123,6 +124,7 @@ function printNextSteps({
   skipCd: boolean;
 }): void {
   const isAgent = template === TemplateTypeEnum.APP_AGENT;
+  const isChatSdk = template === TemplateTypeEnum.APP_CHAT_SDK;
 
   if (isAgent) {
     const cmd = skipCd ? 'npm run dev:novu' : `cd ${cdPath} && npm run dev:novu`;
@@ -147,6 +149,26 @@ function printNextSteps({
     console.log(`  ${dim('npm run dev:novu')}   ${dim('Start app + dev tunnel')}`);
     console.log();
     console.log(`  ${dim('Your agent')}  ${cyan(terminalLink(agentRelPath, fileUrl))}`);
+    console.log(`  ${dim('Docs')}        ${cyan('https://docs.novu.co/agents/overview')}`);
+    console.log();
+  } else if (isChatSdk) {
+    const cmd = skipCd ? 'npm run dev:novu' : `cd ${cdPath} && npm run dev:novu`;
+    const cmdLine = `$ ${cmd}`;
+    const innerWidth = Math.max(cmdLine.length + 4, 50);
+
+    console.log();
+    console.log(dim(`  ╭${'─'.repeat(innerWidth)}╮`));
+    console.log(dim(`  │${' '.repeat(innerWidth)}│`));
+    console.log(dim('  │') + `  ${cyan(cmdLine)}${' '.repeat(innerWidth - cmdLine.length - 2)}` + dim('│'));
+    console.log(dim(`  │${' '.repeat(innerWidth)}│`));
+    console.log(dim(`  ╰${'─'.repeat(innerWidth)}╯`));
+    console.log();
+    console.log(`  Send a message from your connected channel — your bot will reply.`);
+    console.log();
+    console.log(`  ${dim('npm run dev')}        ${dim('Start app without tunnel')}`);
+    console.log(`  ${dim('npm run dev:novu')}   ${dim('Start app + dev tunnel')}`);
+    console.log();
+    console.log(`  ${dim('Bridge')}      ${cyan('POST /api/webhooks/novu')}`);
     console.log(`  ${dim('Docs')}        ${cyan('https://docs.novu.co/agents/overview')}`);
     console.log();
   } else {

@@ -1,0 +1,26 @@
+---
+title: 'Chat'
+description: 'Learn how to use the chat step to send messages to chat platforms like Slack, Discord, and Microsoft Teams'
+---
+
+The `chat` step allows you to send messages to various chat platforms like Slack, Discord, and Microsoft Teams.
+
+## Example Usage
+
+```tsx
+await step.chat('chat', async () => {
+  return {
+    body: 'A new post has been created',
+  };
+});
+```
+
+## Chat Step Output
+
+| Property | Type   | Required | Description                                |
+| -------- | ------ | -------- | ------------------------------------------ |
+| body     | string | Yes      | The message to be sent to the chat channel |
+
+## Chat Step Result
+
+The `chat` step does not return any result object.

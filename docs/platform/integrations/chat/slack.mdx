@@ -1,0 +1,1587 @@
+---
+title: "Slack Chat Integration with Novu"
+sidebarTitle: 'Slack'
+description: "Connect Slack to Novu to send chat notifications through workflows using OAuth. Deliver messages to channels or DMs, format messages with Block Kit, and manage subscriber Slack credentials."
+---
+
+<Note>
+  This feature is currently in public beta, please contact us at support@novu.co to enable it for your organization.
+</Note>
+
+The Slack chat integration lets your application send notifications directly to your subscribers' Slack workspaces using their own Slack accounts and workspace permissions. With this integration, Novu can deliver messages to Slack channels, direct messages (DMs) to Slack users, and incoming webhooks. For incoming webhooks, Novu can use Slack's native channel picker during OAuth.
+
+Novu handles the full lifecycle of Slack connections and message delivery. You define where notifications should be delivered, and Novu automatically routes each message to the correct Slack workspace, channel, or user.
+
+This guide walks you through setting up Slack chat, connect workspaces, and deliver notifications to the exact Slack destinations your users expect it.
+
+<CardGroup cols={2}>
+  <Card title="Send notifications" icon="send" href="#send-notifications">
+    Trigger a workflow to deliver a message to a subscriber's Slack channel, DM, or webhook.
+  </Card>
+  <Card title="Format with Block Kit" icon="layout-template" href="#format-messages-with-block-kit">
+    Send rich Slack messages with sections, buttons, and context blocks using trigger overrides or Framework.
+  </Card>
+</CardGroup>
+
+<Note>
+  The Chat step in the dashboard sends plain text by default. To send [Slack Block Kit](https://api.slack.com/block-kit) messages from a dashboard workflow, pass `blocks` in [trigger overrides](/platform/integrations/trigger-overrides) when you call the API. See [Format messages with Block Kit](#format-messages-with-block-kit) for examples, including `_passthrough` for raw Slack API fields.
+</Note>
+
+<Note>
+  Check out the [agents](/agents) documentation for more information on how to build agents using Slack.
+</Note>
+
+## Configure a Slack app
+
+Before integrating Slack chat with Novu, you must create and configure a Slack app. The Slack app manages the OAuth permissions, bot token scopes, and redirect URLs needed for Novu to connect to your users' workspaces securely.
+
+<Warning>
+  **Token rotation is not supported.** Novu does not currently support Slack apps with **token rotation** enabled. If token rotation is turned on in your Slack app settings, bot tokens expire after about 12 hours and message delivery fails with errors such as `token_revoked` or `invalid_auth` until the workspace is manually reconnected.
+  Keep token rotation **disabled** on your Slack app until this is supported. Reach out to support@novu.co if this is a blocker for your usecase.
+</Warning>
+
+### Create a Slack app
+First, you need to create a Slack app. This provides you with the credential you need to create a Slack integration in Novu.
+
+<Steps>
+  <Step title="Open the Slack API dashboard">
+    Sign in at the [Slack API dashboard](https://api.slack.com/apps).
+  </Step>
+
+<Step title="Create an app">
+    In Slack, click **Create an App** to start a new app registration.
+  </Step>
+
+<Step title="Select From scratch">
+    Choose **From scratch** and enter an app name and workspace.
+  </Step>
+
+<Step title="Enter app name and workspace">
+    Enter an app name of your choice in the **App Name** field.
+    Pick a Slack workspace to develop your app in.
+    ![Create app](/images/channels-and-providers/chat/slack/create-app.png)
+  </Step>
+
+<Step title="Create the app">
+    Click **Create App**. You'll be directed to the **Basic Application** for the Slack app which contains the credentials you need for configuring Slack chat inside Novu:
+        - App ID
+        - Client ID
+        - Client Secret
+    ![Basic application](/images/channels-and-providers/chat/slack/basic-information.png)
+  </Step>
+</Steps>
+
+### Configure scopes (Permissions)
+Your app needs permission to perform actions like sending messages or reading channel lists.
+
+<Steps>
+  <Step title="Open OAuth & Permissions">
+    In the sidebar, select **OAuth & Permissions**.
+  </Step>
+
+<Step title="Open Scopes">
+    Scroll down to the **Scopes** section.
+  </Step>
+
+<Step title="Add an OAuth Scope">
+    Under Bot Token Scopes, click **Add an OAuth Scope**.
+    ![Add an OAuth Scope](/images/channels-and-providers/chat/slack/scopes.png)
+  </Step>
+
+<Step title="Add recommended scopes">
+    - `chat:write`
+    - `chat:write.public`
+    - `channels:read`
+    - `groups:read`
+    - `users:read`
+    - `users:read.email`
+    - (optional) `incoming-webhook` if you want Slack's built-in channel picker.
+  </Step>
+</Steps>
+
+These scopes are required for Novu to send messages, read channels and read users (for DMs and pickers). If you remove some of them, then certain features like channel or user selection might not work.
+
+### Set the redirect URL
+
+This tells Slack where to send the user after they successfully authorize your app.
+
+<Steps>
+  <Step title="Open OAuth & Permissions">
+    In the sidebar, select **OAuth & Permissions**.
+  </Step>
+
+<Step title="Open Redirect URLs">
+    Scroll down to the **Redirect URLs** section.
+  </Step>
+
+<Step title="Add a redirect URL">
+    ![Add New Redirect URL](/images/channels-and-providers/chat/slack/redirect-urls.png)
+  </Step>
+
+<Step title="Paste the Novu callback URL">
+    Paste the Novu OAuth callback URL. Add the redirect URL that matches your Novu region:
+
+<CodeGroup>
+    ```bash title="US region"
+    https://api.novu.co/v1/integrations/chat/oauth/callback
+    ```
+    ```bash title="EU region"
+    https://api.eu.novu.co/v1/integrations/chat/oauth/callback
+    ```
+    </CodeGroup>
+  </Step>
+
+<Step title="Save the URLs">
+  </Step>
+</Steps>
+
+## Configure Slack integration in Novu
+
+Once your Slack app is set up, the next step is to configure the Slack Chat integration inside Novu.
+
+<Steps>
+  <Step title="Log in to the Novu dashboard">
+    Open the [Novu Dashboard](https://dashboard.novu.co).
+  </Step>
+
+<Step title="Open Integrations Store">
+    In the sidebar, click **Integrations Store**.
+  </Step>
+
+<Step title="Connect a provider">
+    In the **Integration Store**, click **Connect provider** to begin setup.
+  </Step>
+
+<Step title="Select Slack">
+  </Step>
+
+<Step title="Fill in credentials">
+    Fill in the required fields using the credentials from your Slack app:
+    - **Application Id**: Paste your Slack app App ID.
+    - **Client ID**: Paste your Slack App Client ID.
+    - **Client Secret**: Paste your Slack App Client Secret.
+    - **Redirect URL (Optional)**: Enter the URL where you want users to be redirected to after they successfully connect their workspace. If there is no redirect URL, then Novu closes the tab immediately after the OAuth flow completes.
+    ![Connect slack integration in Novu](/images/channels-and-providers/chat/slack/slack-integration.png)
+  </Step>
+
+<Step title="Create the integration">
+    Click **Create Integration** to create the Slack integration. Once saved, Novu is able to:
+    - Generate OAuth (Connect Slack) URLs for your users
+    - Receive Slack's OAuth callback.
+    - Store workspace tokens as connections.
+  </Step>
+</Steps>
+
+You are now ready to implement the frontend flow to let users connect their workspaces.
+
+## Let users connect their Slack workspace
+To send messages to Slack, your users must first authorize Novu to access one of their Slack workspaces. This authorization happens through Slack's OAuth flow, which Novu generates and manages for you.
+
+### Generate the OAuth URL
+
+When a user clicks **Connect Slack** in your application, your backend should request a unique authorization URL from Novu.
+
+This URL is specific to the Subscriber or the Context (Tenant) it will be generated for.
+
+<Warning>
+  The generated OAuth URL is valid for only <strong>5 minutes</strong>. Do not cache this URL; generate it dynamically when the user initiates the flow.
+</Warning>
+
+<Tabs>
+  <Tab title="Node.js">
+```typescript
+import { Novu } from '@novu/api';
+
+const novu = new Novu({ secretKey: "<NOVU_SECRET_KEY>" });
+
+const response = await novu.integrations.generateChatOAuthUrl({
+  integrationIdentifier: 'slack',
+  subscriberId: 'subscriberId',
+  context: {
+    "tenant": "orgId"
+},
+});
+```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    response = novu.integrations.generate_chat_o_auth_url(generate_chat_oauth_url_request_dto={
+        "integration_identifier": "slack",
+        "subscriber_id": "subscriberId",
+        context={
+        "tenant": "orgId"
+},
+    })
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Integrations.GenerateChatOAuthURL(context.Background(), components.GenerateChatOauthURLRequestDto{
+    IntegrationIdentifier: "slack",
+    SubscriberID: novugo.String("subscriberId"),
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()->setSecurity('<NOVU_SECRET_KEY>')->build();
+$response = $sdk->integrations->generateChatOAuthUrl(
+    generateChatOauthUrlRequestDto: new Components\GenerateChatOauthUrlRequestDto(
+        integrationIdentifier: 'slack',
+        subscriberId: 'subscriberId',
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+var response = await sdk.Integrations.GenerateChatOAuthUrlAsync(
+    generateChatOauthUrlRequestDto: new GenerateChatOauthUrlRequestDto() {
+        IntegrationIdentifier = "slack",
+        SubscriberId = "subscriberId",
+    });
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+
+Novu novu = Novu.builder().secretKey("<NOVU_SECRET_KEY>").build();
+var response = novu.integrations().generateChatOAuthUrl()
+    .body(GenerateChatOauthUrlRequestDto.builder()
+        .integrationIdentifier("slack")
+        .subscriberId("subscriberId")
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -L -X POST 'https://api.novu.co/v1/integrations/chat/oauth' \
+-H 'Content-Type: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+  "integrationIdentifier": "slack",
+  "subscriberId": "subscriberId",
+  "context": {
+    "tenant": "orgId"
+  }
+}'
+```
+  </Tab>
+</Tabs>
+
+Your application can support multiple Slack workspace connections per user or per tenant by triggering separate OAuth flows.
+
+Novu allows one connection per (integration + subscriber + context). To connect multiple workspaces, provide different combinations of subscriber or context.
+
+### Redirect the user
+
+Once your backend returns the `oauthUrl`, open it in a new tab or window.
+
+```tsx
+window.open(oauthUrl, '_blank');
+```
+
+Slack then guides the user through:
+
+<Steps>
+  <Step title="Review permissions">
+    Reviewing your app's requested permissions
+  </Step>
+
+<Step title="Approve authorization">
+    Approving the authorization
+  </Step>
+
+<Step title="Redirect to Novu">
+    Redirecting back to Novu's callback URL
+  </Step>
+</Steps>
+
+After the user approves access, Novu handles the rest of the OAuth flow automatically.
+
+<Steps>
+  <Step title="Novu exchanges the code">
+    Novu stores the Slack access token for the connected workspace.
+  </Step>
+
+<Step title="Novu creates a connection">
+    Novu creates a Slack connection for that workspace, it is referenced by `connectionIdentifier` when creating endpoints.You can also provider a custom `connectionIdentifier` to the `generateChatOAuthUrl()` and then connection with such identifier will be created instead of randomly generated one.
+  </Step>
+</Steps>
+
+<Note>
+  **Alternative: handle OAuth yourself.** Instead of `generateChatOAuthUrl()`, you can run the Slack OAuth flow with your own app, use the access token with Slack's APIs directly, then register the workspace with Novu via [`channelConnections.create`](/api-reference/channel-connections/create-a-channel-connection) (or `POST /v1/channel-connections`):
+
+```tsx
+await novu.channelConnections.create({
+  integrationIdentifier: 'slack',
+  subscriberId: 'user-123',        // provide subscriberId, context, or both — at least one is required
+  context: { tenant: 'acme' },     // scope to a tenant (required when subscriberId is omitted)
+  workspace: {
+    id: authData.team.id,          // Slack workspace ID from OAuth
+    name: authData.team.name,
+  },
+  auth: {
+    accessToken: authData.access_token,
+  },
+});
+```
+
+Provide at least one of `subscriberId` or `context` — same as the Novu-managed OAuth flow.
+</Note>
+
+## Choose delivery destinations
+
+After a workspace is connected, you or users decide where in Slack to send the messages. This can either be a Slack channel, to a user or an incoming webhook URLs. After the delivery location has been selected, a Slack endpoint is then created for that location.
+
+<Tabs>
+  <Tab title="Slack channel">
+
+This is the typical flow for sending notifications to public or private channels.
+
+<Steps>
+  <Step title="Get the channel ID">
+    ```bash
+    curl -X GET "https://slack.com/api/conversations.list" \
+      -H "Authorization: Bearer <YOUR_BOT_TOKEN>"
+    ```
+
+To learn more about using [Slack conversations API](https://docs.slack.dev/apis/web-api/using-the-conversations-api) to either get public or private channels, refer Slack documentation.
+  </Step>
+
+<Step title="Create the endpoint">
+    <Tabs>
+  <Tab title="Node.js">
+```typescript
+import { Novu } from '@novu/api';
+
+const novu = new Novu({ secretKey: "<NOVU_SECRET_KEY>" });
+
+await novu.channelEndpoints.create({
+  subscriberId: 'user-123',
+  integrationIdentifier: 'slack',
+  connectionIdentifier: 'conn_slack_acme',
+  context: { tenant: 'acme' },
+  type: 'slack_channel',
+  endpoint: { channelId: 'C012345' },
+});
+```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.channel_endpoints.create(request_body={
+        "subscriber_id": "user-123",
+        "integration_identifier": "slack",
+        "connection_identifier": "conn_slack_acme",
+        "context": {"tenant": "acme"},
+        "type": "slack_channel",
+        "endpoint": {"channel_id": "C012345"},
+    })
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+    "github.com/novuhq/novu-go/models/operations"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.ChannelEndpoints.Create(context.Background(), operations.CreateChannelEndpointsControllerCreateChannelEndpointRequestBodySlackChannel(
+    components.CreateSlackChannelEndpointDto{
+        SubscriberID: "user-123",
+        IntegrationIdentifier: "slack",
+        ConnectionIdentifier: novugo.String("conn_slack_acme"),
+        Type: components.CreateSlackChannelEndpointDtoTypeSlackChannel,
+        Endpoint: components.SlackChannelEndpointDto{ChannelID: "C012345"},
+    },
+), nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()->setSecurity('<NOVU_SECRET_KEY>')->build();
+$sdk->channelEndpoints->create(
+    requestBody: new Components\CreateSlackChannelEndpointDto(
+        subscriberId: 'user-123',
+        integrationIdentifier: 'slack',
+        connectionIdentifier: 'conn_slack_acme',
+        type: Components\CreateSlackChannelEndpointDtoType::SlackChannel,
+        endpoint: new Components\SlackChannelEndpointDto(channelId: 'C012345'),
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+await sdk.ChannelEndpoints.CreateAsync(
+    requestBody: CreateSlackChannelEndpointDto.CreateSlackChannel(
+        new CreateSlackChannelEndpointDto() {
+            SubscriberId = "user-123",
+            IntegrationIdentifier = "slack",
+            ConnectionIdentifier = "conn_slack_acme",
+            Type = CreateSlackChannelEndpointDtoType.SlackChannel,
+            Endpoint = new SlackChannelEndpointDto() { ChannelId = "C012345" },
+        }));
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+
+Novu novu = Novu.builder().secretKey("<NOVU_SECRET_KEY>").build();
+novu.channelEndpoints().create()
+    .requestBody(CreateSlackChannelEndpointDto.builder()
+        .subscriberId("user-123")
+        .integrationIdentifier("slack")
+        .connectionIdentifier("conn_slack_acme")
+        .type(CreateSlackChannelEndpointDtoType.SLACK_CHANNEL)
+        .endpoint(SlackChannelEndpointDto.builder().channelId("C012345").build())
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -L -X POST 'https://api.novu.co/v1/channel-endpoints' \
+-H 'Content-Type: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+  "subscriberId": "user-123",
+  "integrationIdentifier": "slack",
+  "connectionIdentifier": "conn_slack_acme",
+  "context": {
+    "tenant": "acme"
+  },
+  "type": "slack_channel",
+  "endpoint": {
+    "channelId": "C012345"
+  }
+}'
+```
+  </Tab>
+</Tabs>
+  </Step>
+</Steps>
+
+</Tab>
+  <Tab title="Slack user">
+
+Use this to send personal messages and notifications directly to a specific user.
+
+<Steps>
+  <Step title="Get the Slack user ID">
+    ```bash
+    curl -X GET "https://slack.com/api/users.list" \
+      -H "Authorization: Bearer <YOUR_BOT_TOKEN>"
+    ```
+
+For example, you can look up a Slack user ID by their email address, if you requested the `users:read.email` scope.
+
+To learn more about using [Slack `users.list` method](https://docs.slack.dev/reference/methods/users.list), refer Slack documentation.
+  </Step>
+
+<Step title="Create the endpoint">
+    <Tabs>
+  <Tab title="Node.js">
+```typescript
+import { Novu } from '@novu/api';
+
+const novu = new Novu({ secretKey: "<NOVU_SECRET_KEY>" });
+
+await novu.channelEndpoints.create({
+  type: 'slack_user',
+  subscriberId: 'user-123',
+  integrationIdentifier: 'slack',
+  connectionIdentifier: 'conn_slack_acme',
+  context: { tenant: 'acme' },
+  endpoint: { userId: 'U01234567' },
+});
+```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.channel_endpoints.create(request_body={
+        "type": "slack_user",
+        "subscriber_id": "user-123",
+        "integration_identifier": "slack",
+        "connection_identifier": "conn_slack_acme",
+        "context": {"tenant": "acme"},
+        "endpoint": {"user_id": "U01234567"},
+    })
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+    "github.com/novuhq/novu-go/models/operations"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.ChannelEndpoints.Create(context.Background(), operations.CreateChannelEndpointsControllerCreateChannelEndpointRequestBodySlackUser(
+    components.CreateSlackUserEndpointDto{
+        SubscriberID: "user-123",
+        IntegrationIdentifier: "slack",
+        ConnectionIdentifier: novugo.String("conn_slack_acme"),
+        Type: components.CreateSlackUserEndpointDtoTypeSlackUser,
+        Endpoint: components.SlackUserEndpointDto{UserID: "U01234567"},
+    },
+), nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()->setSecurity('<NOVU_SECRET_KEY>')->build();
+$sdk->channelEndpoints->create(
+    requestBody: new Components\CreateSlackUserEndpointDto(
+        subscriberId: 'user-123',
+        integrationIdentifier: 'slack',
+        connectionIdentifier: 'conn_slack_acme',
+        type: Components\CreateSlackUserEndpointDtoType::SlackUser,
+        endpoint: new Components\SlackUserEndpointDto(userId: 'U01234567'),
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+await sdk.ChannelEndpoints.CreateAsync(
+    requestBody: CreateSlackUserEndpointDto.CreateSlackUser(
+        new CreateSlackUserEndpointDto() {
+            SubscriberId = "user-123",
+            IntegrationIdentifier = "slack",
+            ConnectionIdentifier = "conn_slack_acme",
+            Type = CreateSlackUserEndpointDtoType.SlackUser,
+            Endpoint = new SlackUserEndpointDto() { UserId = "U01234567" },
+        }));
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+
+Novu novu = Novu.builder().secretKey("<NOVU_SECRET_KEY>").build();
+novu.channelEndpoints().create()
+    .requestBody(CreateSlackUserEndpointDto.builder()
+        .subscriberId("user-123")
+        .integrationIdentifier("slack")
+        .connectionIdentifier("conn_slack_acme")
+        .type(CreateSlackUserEndpointDtoType.SLACK_USER)
+        .endpoint(SlackUserEndpointDto.builder().userId("U01234567").build())
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -L -X POST 'https://api.novu.co/v1/channel-endpoints' \
+-H 'Content-Type: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+  "type": "slack_user",
+  "subscriberId": "user-123",
+  "integrationIdentifier": "slack",
+  "connectionIdentifier": "conn_slack_acme",
+  "context": {
+    "tenant": "acme"
+  },
+  "endpoint": {
+    "userId": "U01234567"
+  }
+}'
+```
+  </Tab>
+</Tabs>
+  </Step>
+</Steps>
+
+</Tab>
+  <Tab title="Incoming webhook">
+
+If `incoming-webhook` scope was included when configuring the OAuth and permissions scopes in [Step 1.1](/platform/integrations/chat/slack#configure-scopes-permissions). Slack would show its own channel picker during the OAuth flow:
+
+<Steps>
+  <Step title="User selects a channel">
+    The subscriber picks a Slack channel where notifications should be delivered.
+  </Step>
+
+<Step title="Slack returns webhook URL">
+  </Step>
+
+<Step title="Novu creates webhook endpoint">
+    Novu automatically creates a webhook endpoint for that subscriber using that URL.
+  </Step>
+</Steps>
+
+You don’t need to collect `channelId` yourself in this mode, Slack’s native channel picker handles it.
+
+</Tab>
+</Tabs>
+
+## Send notifications
+
+Once you have at least one Slack connection, and one or more Slack endpoints. You can trigger the workflow:
+
+<Tabs>
+  <Tab title="Node.js">
+```typescript
+import { Novu } from '@novu/api';
+
+const novu = new Novu({ secretKey: "<NOVU_SECRET_KEY>" });
+
+await novu.trigger({
+  workflowId: "order-shipped",
+  to: { subscriberId: "user-123", },
+  payload: {
+    "orderNumber": "ORD-12345",
+    "trackingUrl": "https://acme.com/track/123"
+},
+  context: {
+    "tenant": "acme"
+},
+});
+```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="order-shipped",
+        to={"subscriber_id": "user-123"},
+        payload={
+        "orderNumber": "ORD-12345",
+        "trackingUrl": "https://acme.com/track/123"
+},
+        context={
+        "tenant": "acme"
+},
+    ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+res, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "order-shipped",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: "user-123",
+    }),
+    Payload: map[string]any{
+    "orderNumber": "ORD-12345",
+    "trackingUrl": "https://acme.com/track/123"
+},
+    Context: map[string]any{
+    "tenant": "acme"
+},
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()->setSecurity('<NOVU_SECRET_KEY>')->build();
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'order-shipped',
+        to: new Components\SubscriberPayloadDto(subscriberId: 'user-123'),
+        payload: {
+        "orderNumber": "ORD-12345",
+        "trackingUrl": "https://acme.com/track/123"
+},
+        context: {
+        "tenant": "acme"
+},
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "order-shipped",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() { SubscriberId = "user-123" }),
+    Payload = {
+    "orderNumber": "ORD-12345",
+    "trackingUrl": "https://acme.com/track/123"
+},
+    Context = {
+    "tenant": "acme"
+},
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+
+Novu novu = Novu.builder().secretKey("<NOVU_SECRET_KEY>").build();
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("order-shipped")
+        .to(To2.of(SubscriberPayloadDto.builder().subscriberId("user-123").build()))
+        .payload({
+        "orderNumber": "ORD-12345",
+        "trackingUrl": "https://acme.com/track/123"
+})
+        .context({
+        "tenant": "acme"
+})
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl --location 'https://api.novu.co/v1/events/trigger' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+    "name": "order-shipped",
+    "to": [
+        "user-123"
+    ],
+    "payload": {
+        "orderNumber": "ORD-12345",
+        "trackingUrl": "https://acme.com/track/123"
+    },
+    "context": {
+        "tenant": "acme"
+    }
+}'
+```
+  </Tab>
+</Tabs>
+
+When the workflow is triggered, Novu will:
+
+<Steps>
+  <Step title="Find Slack endpoints">
+    Novu looks up Slack endpoints that match the subscriber ID and context.
+  </Step>
+
+<Step title="Use the workspace connection">
+  </Step>
+
+  <Step title="Deliver messages">
+    Novu sends the notification to each configured Slack destination. By default, the Chat step body is sent as plain text. To send Block Kit formatting, see [Format messages with Block Kit](#format-messages-with-block-kit).
+  </Step>
+</Steps>
+
+<Note>
+  **Message formatting:** The dashboard Chat step editor supports a plain text `body`. For rich Slack messages (sections, buttons, context blocks), use trigger overrides at send time or Framework provider overrides in code-first workflows. Digest summaries in the dashboard work as plain text using [digest variables](/platform/workflow/add-notification-content/personalize-content#digest-variables).
+</Note>
+
+## Format messages with Block Kit
+
+The Chat step in the Novu dashboard sends a plain text message body to Slack. There is no Block Kit editor in the workflow UI today.
+
+You still have a few ways to send richer Slack messages:
+
+| Approach | Best for |
+| --- | --- |
+| **Chat step body (dashboard)** | Plain text summaries, including [digest variables](/platform/workflow/add-notification-content/personalize-content#digest-variables) |
+| **Trigger overrides (API)** | Block Kit sections, buttons, and context blocks built from your trigger payload |
+| **Framework provider overrides** | Full Block Kit control in code-first workflows, including dynamic digest formatting |
+
+### Plain text and digest summaries
+
+For digest workflows built in the dashboard, use digest variables in the Chat step body to build a text summary. For example:
+
+```liquid
+{{ steps.digest-step.countSummary }}
+
+{% for event in steps.digest-step.events %}
+• {{ event.payload.title }}
+{% endfor %}
+```
+
+This renders as plain text in Slack. It does not produce Block Kit formatting such as buttons or styled sections.
+
+### Send Block Kit with trigger overrides
+
+To send [Slack Block Kit](https://api.slack.com/block-kit) messages from a dashboard workflow, pass `blocks` in the `overrides` object when you trigger the workflow. The Chat step `body` from your template is still sent as the fallback `text` field unless you override it.
+
+Copy the **step identifier** from your workflow in the dashboard and use it under `overrides.steps`.
+
+<Tabs>
+  <Tab title="Node.js">
+```typescript
+import { Novu } from '@novu/api';
+
+const novu = new Novu({ secretKey: '<NOVU_SECRET_KEY>' });
+
+await novu.trigger({
+  workflowId: 'comment-alert',
+  to: { subscriberId: 'user-123' },
+  payload: {
+    postTitle: 'Q1 planning thread',
+    postUrl: 'https://app.example.com/posts/456',
+  },
+  overrides: {
+    steps: {
+      'slack-chat-step': {
+        providers: {
+          slack: {
+            text: 'You have new comments',
+            blocks: [
+              {
+                type: 'section',
+                text: {
+                  type: 'mrkdwn',
+                  text: '*New comments on Q1 planning thread*',
+                },
+              },
+              {
+                type: 'actions',
+                elements: [
+                  {
+                    type: 'button',
+                    text: { type: 'plain_text', text: 'View thread' },
+                    url: 'https://app.example.com/posts/456',
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      },
+    },
+  },
+});
+```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv('NOVU_SECRET_KEY', '')) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id='comment-alert',
+        to={'subscriber_id': 'user-123'},
+        payload={
+            'postTitle': 'Q1 planning thread',
+            'postUrl': 'https://app.example.com/posts/456',
+        },
+        overrides={
+            'steps': {
+                'slack-chat-step': {
+                    'providers': {
+                        'slack': {
+                            'text': 'You have new comments',
+                            'blocks': [
+                                {
+                                    'type': 'section',
+                                    'text': {
+                                        'type': 'mrkdwn',
+                                        'text': '*New comments on Q1 planning thread*',
+                                    },
+                                },
+                                {
+                                    'type': 'actions',
+                                    'elements': [
+                                        {
+                                            'type': 'button',
+                                            'text': {'type': 'plain_text', 'text': 'View thread'},
+                                            'url': 'https://app.example.com/posts/456',
+                                        },
+                                    ],
+                                },
+                            ],
+                        },
+                    },
+                },
+            },
+        },
+    ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+_, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "comment-alert",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: "user-123",
+    }),
+    Payload: map[string]any{
+        "postTitle": "Q1 planning thread",
+        "postUrl":   "https://app.example.com/posts/456",
+    },
+    Overrides: map[string]map[string]any{
+        "steps": {
+            "slack-chat-step": map[string]any{
+                "providers": map[string]any{
+                    "slack": map[string]any{
+                        "text": "You have new comments",
+                        "blocks": []map[string]any{
+                            {
+                                "type": "section",
+                                "text": map[string]any{
+                                    "type": "mrkdwn",
+                                    "text": "*New comments on Q1 planning thread*",
+                                },
+                            },
+                            {
+                                "type": "actions",
+                                "elements": []map[string]any{
+                                    {
+                                        "type": "button",
+                                        "text": map[string]any{
+                                            "type": "plain_text",
+                                            "text": "View thread",
+                                        },
+                                        "url": "https://app.example.com/posts/456",
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        },
+    },
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()->setSecurity('<NOVU_SECRET_KEY>')->build();
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'comment-alert',
+        to: new Components\SubscriberPayloadDto(subscriberId: 'user-123'),
+        payload: [
+            'postTitle' => 'Q1 planning thread',
+            'postUrl' => 'https://app.example.com/posts/456',
+        ],
+        overrides: [
+            'steps' => [
+                'slack-chat-step' => [
+                    'providers' => [
+                        'slack' => [
+                            'text' => 'You have new comments',
+                            'blocks' => [
+                                [
+                                    'type' => 'section',
+                                    'text' => [
+                                        'type' => 'mrkdwn',
+                                        'text' => '*New comments on Q1 planning thread*',
+                                    ],
+                                ],
+                                [
+                                    'type' => 'actions',
+                                    'elements' => [
+                                        [
+                                            'type' => 'button',
+                                            'text' => ['type' => 'plain_text', 'text' => 'View thread'],
+                                            'url' => 'https://app.example.com/posts/456',
+                                        ],
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ],
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "comment-alert",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() { SubscriberId = "user-123" }),
+    Payload = new Dictionary<string, object>() {
+        { "postTitle", "Q1 planning thread" },
+        { "postUrl", "https://app.example.com/posts/456" },
+    },
+    Overrides = new Overrides() {
+        Steps = new Dictionary<string, Dictionary<string, Dictionary<string, object>>>() {
+            { "slack-chat-step", new Dictionary<string, Dictionary<string, object>>() {
+                { "providers", new Dictionary<string, object>() {
+                    { "slack", new Dictionary<string, object>() {
+                        { "text", "You have new comments" },
+                        { "blocks", new List<Dictionary<string, object>>() {
+                            new Dictionary<string, object>() {
+                                { "type", "section" },
+                                { "text", new Dictionary<string, object>() {
+                                    { "type", "mrkdwn" },
+                                    { "text", "*New comments on Q1 planning thread*" },
+                                } },
+                            },
+                            new Dictionary<string, object>() {
+                                { "type", "actions" },
+                                { "elements", new List<Dictionary<string, object>>() {
+                                    new Dictionary<string, object>() {
+                                        { "type", "button" },
+                                        { "text", new Dictionary<string, object>() {
+                                            { "type", "plain_text" },
+                                            { "text", "View thread" },
+                                        } },
+                                        { "url", "https://app.example.com/posts/456" },
+                                    },
+                                } },
+                            },
+                        } },
+                    } },
+                } },
+            } },
+        },
+    },
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+import java.util.List;
+import java.util.Map;
+
+Novu novu = Novu.builder().secretKey("<NOVU_SECRET_KEY>").build();
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("comment-alert")
+        .to(To2.of(SubscriberPayloadDto.builder().subscriberId("user-123").build()))
+        .payload(Map.of(
+            "postTitle", "Q1 planning thread",
+            "postUrl", "https://app.example.com/posts/456"))
+        .overrides(TriggerEventRequestDtoOverrides.builder()
+            .additionalProperties(Map.of(
+                "steps", Map.of(
+                    "slack-chat-step", Map.of(
+                        "providers", Map.of(
+                            "slack", Map.of(
+                                "text", "You have new comments",
+                                "blocks", List.of(
+                                    Map.of(
+                                        "type", "section",
+                                        "text", Map.of(
+                                            "type", "mrkdwn",
+                                            "text", "*New comments on Q1 planning thread*")),
+                                    Map.of(
+                                        "type", "actions",
+                                        "elements", List.of(
+                                            Map.of(
+                                                "type", "button",
+                                                "text", Map.of("type", "plain_text", "text", "View thread"),
+                                                "url", "https://app.example.com/posts/456")))))))))
+            .build())
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -X POST 'https://api.novu.co/v1/events/trigger' \
+  -H 'Content-Type: application/json' \
+  -H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+  -d '{
+    "name": "comment-alert",
+    "to": { "subscriberId": "user-123" },
+    "payload": {
+      "postTitle": "Q1 planning thread",
+      "postUrl": "https://app.example.com/posts/456"
+    },
+    "overrides": {
+      "steps": {
+        "slack-chat-step": {
+          "providers": {
+            "slack": {
+              "text": "You have new comments",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*New comments on Q1 planning thread*"
+                  }
+                },
+                {
+                  "type": "actions",
+                  "elements": [
+                    {
+                      "type": "button",
+                      "text": { "type": "plain_text", "text": "View thread" },
+                      "url": "https://app.example.com/posts/456"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  }'
+```
+  </Tab>
+</Tabs>
+
+Replace `slack-chat-step` with the step identifier from your workflow. Step-level overrides take priority over workflow-level overrides.
+
+#### Workflow-level overrides
+
+If your workflow has a single Slack Chat step, you can apply Block Kit to all Slack steps in that workflow without targeting a step ID:
+
+```json
+"overrides": {
+  "providers": {
+    "slack": {
+      "blocks": [
+        {
+          "type": "section",
+          "text": { "type": "mrkdwn", "text": "*Deploy succeeded*" }
+        }
+      ]
+    }
+  }
+}
+```
+
+### Send extra Slack fields with `_passthrough`
+
+Use `_passthrough` when you need raw [Slack `chat.postMessage`](https://api.slack.com/methods/chat.postMessage) fields that are not exposed in the dashboard. Values in `_passthrough.body` are merged last and take priority over other override fields.
+
+<Tabs>
+  <Tab title="Node.js">
+```typescript
+await novu.trigger({
+  workflowId: 'comment-alert',
+  to: { subscriberId: 'user-123' },
+  payload: {
+    postTitle: 'Q1 planning thread',
+    postUrl: 'https://app.example.com/posts/456',
+  },
+  overrides: {
+    steps: {
+      'slack-chat-step': {
+        providers: {
+          slack: {
+            _passthrough: {
+              body: {
+                text: 'You have new comments',
+                unfurl_links: false,
+                blocks: [
+                  {
+                    type: 'section',
+                    text: {
+                      type: 'mrkdwn',
+                      text: '*New comments on Q1 planning thread*',
+                    },
+                  },
+                  {
+                    type: 'context',
+                    elements: [
+                      {
+                        type: 'mrkdwn',
+                        text: 'Sent via Novu',
+                      },
+                    ],
+                  },
+                ],
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+});
+```
+  </Tab>
+  <Tab title="Python">
+```python
+novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+    workflow_id='comment-alert',
+    to={'subscriber_id': 'user-123'},
+    payload={
+        'postTitle': 'Q1 planning thread',
+        'postUrl': 'https://app.example.com/posts/456',
+    },
+    overrides={
+        'steps': {
+            'slack-chat-step': {
+                'providers': {
+                    'slack': {
+                        '_passthrough': {
+                            'body': {
+                                'text': 'You have new comments',
+                                'unfurl_links': False,
+                                'blocks': [
+                                    {
+                                        'type': 'section',
+                                        'text': {
+                                            'type': 'mrkdwn',
+                                            'text': '*New comments on Q1 planning thread*',
+                                        },
+                                    },
+                                    {
+                                        'type': 'context',
+                                        'elements': [
+                                            {
+                                                'type': 'mrkdwn',
+                                                'text': 'Sent via Novu',
+                                            },
+                                        ],
+                                    },
+                                ],
+                            },
+                        },
+                    },
+                },
+            },
+        },
+    },
+))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+_, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "comment-alert",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: "user-123",
+    }),
+    Payload: map[string]any{
+        "postTitle": "Q1 planning thread",
+        "postUrl":   "https://app.example.com/posts/456",
+    },
+    Overrides: map[string]map[string]any{
+        "steps": {
+            "slack-chat-step": map[string]any{
+                "providers": map[string]any{
+                    "slack": map[string]any{
+                        "_passthrough": map[string]any{
+                            "body": map[string]any{
+                                "text":         "You have new comments",
+                                "unfurl_links": false,
+                                "blocks": []map[string]any{
+                                    {
+                                        "type": "section",
+                                        "text": map[string]any{
+                                            "type": "mrkdwn",
+                                            "text": "*New comments on Q1 planning thread*",
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        },
+    },
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'comment-alert',
+        to: new Components\SubscriberPayloadDto(subscriberId: 'user-123'),
+        payload: [
+            'postTitle' => 'Q1 planning thread',
+            'postUrl' => 'https://app.example.com/posts/456',
+        ],
+        overrides: [
+            'steps' => [
+                'slack-chat-step' => [
+                    'providers' => [
+                        'slack' => [
+                            '_passthrough' => [
+                                'body' => [
+                                    'text' => 'You have new comments',
+                                    'unfurl_links' => false,
+                                    'blocks' => [
+                                        [
+                                            'type' => 'section',
+                                            'text' => [
+                                                'type' => 'mrkdwn',
+                                                'text' => '*New comments on Q1 planning thread*',
+                                            ],
+                                        ],
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ],
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "comment-alert",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() { SubscriberId = "user-123" }),
+    Payload = new Dictionary<string, object>() {
+        { "postTitle", "Q1 planning thread" },
+        { "postUrl", "https://app.example.com/posts/456" },
+    },
+    Overrides = new Overrides() {
+        Steps = new Dictionary<string, Dictionary<string, Dictionary<string, object>>>() {
+            { "slack-chat-step", new Dictionary<string, Dictionary<string, object>>() {
+                { "providers", new Dictionary<string, object>() {
+                    { "slack", new Dictionary<string, object>() {
+                        { "_passthrough", new Dictionary<string, object>() {
+                            { "body", new Dictionary<string, object>() {
+                                { "text", "You have new comments" },
+                                { "unfurl_links", false },
+                                { "blocks", new List<Dictionary<string, object>>() {
+                                    new Dictionary<string, object>() {
+                                        { "type", "section" },
+                                        { "text", new Dictionary<string, object>() {
+                                            { "type", "mrkdwn" },
+                                            { "text", "*New comments on Q1 planning thread*" },
+                                        } },
+                                    },
+                                } },
+                            } },
+                        } },
+                    } },
+                } },
+            } },
+        },
+    },
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("comment-alert")
+        .to(To2.of(SubscriberPayloadDto.builder().subscriberId("user-123").build()))
+        .payload(Map.of(
+            "postTitle", "Q1 planning thread",
+            "postUrl", "https://app.example.com/posts/456"))
+        .overrides(TriggerEventRequestDtoOverrides.builder()
+            .additionalProperties(Map.of(
+                "steps", Map.of(
+                    "slack-chat-step", Map.of(
+                        "providers", Map.of(
+                            "slack", Map.of(
+                                "_passthrough", Map.of(
+                                    "body", Map.of(
+                                        "text", "You have new comments",
+                                        "unfurl_links", false,
+                                        "blocks", List.of(
+                                            Map.of(
+                                                "type", "section",
+                                                "text", Map.of(
+                                                    "type", "mrkdwn",
+                                                    "text", "*New comments on Q1 planning thread*"))))))))))
+            .build())
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -X POST 'https://api.novu.co/v1/events/trigger' \
+  -H 'Content-Type: application/json' \
+  -H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+  -d '{
+    "name": "comment-alert",
+    "to": { "subscriberId": "user-123" },
+    "payload": {
+      "postTitle": "Q1 planning thread",
+      "postUrl": "https://app.example.com/posts/456"
+    },
+    "overrides": {
+      "steps": {
+        "slack-chat-step": {
+          "providers": {
+            "slack": {
+              "_passthrough": {
+                "body": {
+                  "text": "You have new comments",
+                  "unfurl_links": false,
+                  "blocks": [
+                    {
+                      "type": "section",
+                      "text": {
+                        "type": "mrkdwn",
+                        "text": "*New comments on Q1 planning thread*"
+                      }
+                    },
+                    {
+                      "type": "context",
+                      "elements": [
+                        {
+                          "type": "mrkdwn",
+                          "text": "Sent via Novu"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }'
+```
+  </Tab>
+</Tabs>
+
+<Note>
+  For a full guide on how overrides work, including workflow-level and step-level scopes, see [Trigger overrides](/platform/integrations/trigger-overrides).
+</Note>
+
+### Block Kit with digest workflows
+
+Trigger overrides are set when you call the trigger API. They work well when each trigger carries the data you need to build the message.
+
+For [digest workflows](/platform/workflow/add-and-configure-steps/configure-action-steps/digest), Novu batches multiple triggers into one notification. The Chat step body can use [digest variables](/platform/workflow/add-notification-content/personalize-content#digest-variables) to summarize batched events, but `overrides` are not re-evaluated with that aggregated data. To build Block Kit dynamically from a digest batch, use [Framework provider overrides](/framework/typescript/steps#provider-overrides) in a code-first workflow.
+
+## Using Slack with agents
+
+Slack is a supported [agent provider](/agents/get-started/agents-and-providers). Connect your Slack app to an agent so users can message in channels or DMs and get replies in the same thread, without building Slack event handling yourself.
+
+<Card title="Build agents on Slack" icon="bot" href="/agents">
+  Learn how Novu agents work, including managed and custom code agents.
+</Card>
+
+### What you get
+
+When Slack is connected to an agent:
+
+- Users message your app in Slack and your agent responds in the same thread
+- Conversations appear in the dashboard under **Agent Conversations**
+- Supported content includes text, markdown, files, interactive cards, reactions, and typing indicators
+
+See [agent conversations](/agents/conversations#supported-platforms) for capabilities across all providers.
+
+### Agent conversations vs. workflow notifications
+
+| Use case | What happens |
+| --- | --- |
+| **Agent conversation** | The user messages your Slack app and your agent replies in the same thread. |
+| **Workflow notification** | You trigger a workflow with a Chat step and Novu sends a one-way message to the subscriber's linked Slack destination. |
+
+Both can use the same Slack integration. Your agent handles back-and-forth conversations while workflows send updates such as deploy alerts to the same workspace.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card icon="messages-square" href="/platform/integrations/trigger-overrides" title="Trigger overrides">
+    Pass Slack `blocks` and `_passthrough` fields when triggering a workflow from your application.
+  </Card>
+  <Card icon="bot" href="/agents/get-started/agents-and-providers" title="Agents and providers">
+    Connect Slack and other providers to an agent.
+  </Card>
+</CardGroup>

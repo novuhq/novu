@@ -21,8 +21,8 @@ import {
  * Public, unauthenticated endpoints for the integration-store Telegram mobile
  * setup landing page.
  *
- * Authorization is carried entirely by a signed, single-use, short-lived JWT
- * embedded in the request body / query — the dashboard issues these tokens
+ * Authorization is carried entirely by an opaque, single-use, short-lived token
+ * stored in Redis and embedded in the request body / query — the dashboard issues these tokens
  * through the authed `POST /v1/integrations/telegram/mobile-link` endpoint.
  *
  * Unlike {@link AgentsPublicController}, this flow has no agent or
@@ -45,7 +45,7 @@ export class IntegrationsPublicController {
   @ApiOperation({
     summary: 'Check the status of a Telegram integration-store mobile setup link',
     description:
-      'Returns whether a signed Telegram mobile-setup token is still usable. Designed to be called from the ' +
+      'Returns whether an opaque Telegram mobile-setup token is still usable. Designed to be called from the ' +
       'mobile landing page before showing the credentials form.',
   })
   async getStatus(@Query('token') token: string): Promise<GetIntegrationStoreTelegramMobileLinkStatusResult> {
@@ -60,7 +60,7 @@ export class IntegrationsPublicController {
   @ApiOperation({
     summary: 'Consume a Telegram integration-store mobile setup link',
     description:
-      'Validates the signed token, calls Telegram getMe to verify the supplied BotFather token, and creates a ' +
+      'Validates the setup token, calls Telegram getMe to verify the supplied BotFather token, and creates a ' +
       'new Telegram integration in the issuing environment with the bot token stored on its credentials. ' +
       'The token becomes invalid after a successful call.',
   })

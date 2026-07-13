@@ -1,4 +1,7 @@
 import { Novu } from '@novu/api';
+import { CreateTelegramChatEndpointDto } from '@novu/api/models/components';
+import { IntegrationRepository } from '@novu/dal';
+import { ChannelTypeEnum, ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import {
@@ -9,6 +12,20 @@ import {
   createWebhookEndpoint,
   setupChannelTests,
 } from '../../channel-connections/e2e/helpers/channel-helpers';
+
+const integrationRepository = new IntegrationRepository();
+
+async function createTelegramIntegration(session: UserSession) {
+  return integrationRepository.create({
+    _organizationId: session.organization._id,
+    _environmentId: session.environment._id,
+    providerId: ChatProviderIdEnum.Telegram,
+    channel: ChannelTypeEnum.CHAT,
+    credentials: {},
+    active: true,
+    identifier: `telegram-${Date.now()}`,
+  });
+}
 
 describe('List Channel Endpoints - /channel-endpoints (GET) #novu-v2', () => {
   let session: UserSession;
@@ -77,6 +94,34 @@ describe('List Channel Endpoints - /channel-endpoints (GET) #novu-v2', () => {
 
     expect(contextResult.data.length).to.be.at.least(1);
     expect(contextResult.data.some((ep) => ep.identifier === endpointWithContext.identifier)).to.be.true;
+  });
+
+  it('should filter by providerId including telegram', async () => {
+    const integration = await createTelegramIntegration(session);
+    const subscribersService = createSubscribersService(session);
+    const subscriber = await subscribersService.createSubscriber();
+
+    const createDto: CreateTelegramChatEndpointDto = {
+      integrationIdentifier: integration.identifier,
+      subscriberId: subscriber.subscriberId,
+      type: ENDPOINT_TYPES.TELEGRAM_CHAT,
+      endpoint: {
+        chatId: '123456789',
+      },
+    };
+
+    const { result: created } = await novuClient.channelEndpoints.create(createDto);
+
+    const { result: telegramResult } = await novuClient.channelEndpoints.list({
+      subscriberId: subscriber.subscriberId,
+      integrationIdentifier: integration.identifier,
+      providerId: ChatProviderIdEnum.Telegram,
+      limit: 1,
+    });
+
+    expect(telegramResult.data.length).to.equal(1);
+    expect(telegramResult.data[0].identifier).to.equal(created.identifier);
+    expect(telegramResult.data[0].providerId).to.equal(ChatProviderIdEnum.Telegram);
   });
 
   it('should support pagination', async () => {

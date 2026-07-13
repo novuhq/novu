@@ -21,16 +21,17 @@ export type APICall =
 
 export class APIPromise<T> implements Promise<T> {
   readonly #promise: Promise<[T, APICall]>;
-  readonly #unwrapped: Promise<T>;
+  #unwrapped: Promise<T> | null;
 
   readonly [Symbol.toStringTag] = "APIPromise";
 
   constructor(p: [T, APICall] | Promise<[T, APICall]>) {
     this.#promise = p instanceof Promise ? p : Promise.resolve(p);
-    this.#unwrapped =
-      p instanceof Promise
-        ? this.#promise.then(([value]) => value)
-        : Promise.resolve(p[0]);
+    this.#unwrapped = p instanceof Promise ? null : Promise.resolve(p[0]);
+  }
+
+  #getUnwrapped(): Promise<T> {
+    return (this.#unwrapped ??= this.#promise.then(([value]) => value));
   }
 
   then<TResult1 = T, TResult2 = never>(
@@ -55,11 +56,11 @@ export class APIPromise<T> implements Promise<T> {
       | null
       | undefined,
   ): Promise<T | TResult> {
-    return this.#unwrapped.catch(onrejected);
+    return this.#getUnwrapped().catch(onrejected);
   }
 
   finally(onfinally?: (() => void) | null | undefined): Promise<T> {
-    return this.#unwrapped.finally(onfinally);
+    return this.#getUnwrapped().finally(onfinally);
   }
 
   $inspect(): Promise<[T, APICall]> {

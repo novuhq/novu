@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import {
   InvalidTelegramMobileTokenError,
   TelegramMobileLinkTokenService,
-} from '../../../agents/services/telegram-mobile-link-token.service';
+} from '../../../telegram-linking/telegram-mobile-link-token.service';
 import { GetIntegrationStoreTelegramMobileLinkStatusCommand } from './get-integration-store-telegram-mobile-link-status.command';
 
 export interface GetIntegrationStoreTelegramMobileLinkStatusResultValid {
@@ -27,19 +27,14 @@ export class GetIntegrationStoreTelegramMobileLinkStatus {
   async execute(
     command: GetIntegrationStoreTelegramMobileLinkStatusCommand
   ): Promise<GetIntegrationStoreTelegramMobileLinkStatusResult> {
-    let payload: ReturnType<TelegramMobileLinkTokenService['verifyIntegrationStore']>;
     try {
-      payload = this.tokenService.verifyIntegrationStore(command.token);
+      await this.tokenService.verifyIntegrationStore(command.token);
     } catch (err) {
       if (err instanceof InvalidTelegramMobileTokenError) {
         return { valid: false, reason: err.reason };
       }
 
-      return { valid: false, reason: 'invalid' };
-    }
-
-    if (await this.tokenService.isJtiUsed(payload.jti)) {
-      return { valid: false, reason: 'used' };
+      throw err;
     }
 
     return { valid: true, providerName: 'telegram' };

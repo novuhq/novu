@@ -2,6 +2,7 @@ import { RiArrowRightSLine, RiBookMarkedLine } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useAgentRoutes } from '@/hooks/use-agent-routes';
+import { AGENTS_DOCS_HOME_URL } from '@/utils/agent-docs';
 import { buildRoute } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { Button } from '../primitives/button';
@@ -57,7 +58,7 @@ export function AgentsProductionEmptyState() {
 
           <div className="flex items-center gap-4">
             <a
-              href="https://docs.novu.co/agents"
+              href={AGENTS_DOCS_HOME_URL}
               target="_blank"
               rel="noreferrer"
               className={cn(

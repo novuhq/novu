@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InstrumentUsecase } from '@novu/application-generic';
-import { SubscriberRepository } from '@novu/dal';
+import { BaseRepository, SubscriberRepository } from '@novu/dal';
 import { DirectionEnum } from '../../../shared/dtos/base-responses';
 import { ListSubscribersResponseDto } from '../../dtos/list-subscribers-response.dto';
 import { ListSubscribersCommand } from './list-subscribers.command';
@@ -14,6 +14,17 @@ export class ListSubscribersUseCase {
   async execute(command: ListSubscribersCommand): Promise<ListSubscribersResponseDto> {
     if (command.before && command.after) {
       throw new BadRequestException('Cannot specify both "before" and "after" cursors at the same time.');
+    }
+
+    const cursor = command.after || command.before;
+    if (cursor && !BaseRepository.isInternalId(cursor)) {
+      return {
+        data: [],
+        next: null,
+        previous: null,
+        totalCount: 0,
+        totalCountCapped: false,
+      };
     }
 
     const pagination = await this.subscriberRepository.listSubscribers({

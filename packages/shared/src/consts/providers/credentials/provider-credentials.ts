@@ -1,3 +1,4 @@
+import { AWS_CLAUDE_COMMERCIAL_REGIONS } from '../../aws-claude-regions';
 import { CredentialsKeyEnum } from '../../../types';
 import { IConfigCredential } from '../provider.interface';
 
@@ -223,6 +224,16 @@ export const sendgridConfig: IConfigCredential[] = [
 ];
 
 export const resendConfig: IConfigCredential[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'string',
+    required: true,
+  },
+  ...mailConfigBase,
+];
+
+export const anypostConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
     displayName: 'API Key',
@@ -1482,6 +1493,38 @@ export const anthropicAgentConfig: IConfigCredential[] = [
     key: CredentialsKeyEnum.ExternalEnvironmentId,
     displayName: 'Anthropic Environment ID',
     description: 'The Anthropic environment ID auto-provisioned for this integration. Read-only.',
+    type: 'string',
+    required: false,
+  },
+];
+
+export const anthropicAwsAgentConfig: IConfigCredential[] = [
+  {
+    key: CredentialsKeyEnum.Region,
+    displayName: 'AWS Region',
+    description: 'The AWS region where your Claude Platform workspace is provisioned.',
+    type: 'dropdown',
+    required: true,
+    dropdown: AWS_CLAUDE_COMMERCIAL_REGIONS.map((region) => ({ name: region, value: region })),
+  },
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'AWS API Key',
+    description: 'API key generated in the AWS Console under Claude Platform on AWS.',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.ExternalWorkspaceId,
+    displayName: 'Workspace ID',
+    description: 'Claude Platform on AWS workspace ID (`wrkspc_…`). Required for agent runtime dispatch.',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.ExternalEnvironmentId,
+    displayName: 'Environment ID',
+    description: 'The environment ID auto-provisioned for this integration. Read-only.',
     type: 'string',
     required: false,
   },

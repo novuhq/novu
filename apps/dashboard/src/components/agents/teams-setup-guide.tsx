@@ -1,5 +1,4 @@
-import { useUser } from '@clerk/react';
-import { MsTeamsConnectButton, MsTeamsLinkUser, NovuProvider, useNovu } from '@novu/react';
+import { MsTeamsConnectButton, MsTeamsLinkUser, useNovu } from '@novu/react';
 import { ChatProviderIdEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { Download } from 'lucide-react';
@@ -14,26 +13,31 @@ import {
   type HealthCheckStatus,
   type MsTeamsHealthCheckResult,
 } from '@/api/integrations';
+import { useConnectSubscriber } from '@/components/connect/connect-subscriber-provider';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import { CodeBlock } from '@/components/primitives/code-block';
 import { CopyButton } from '@/components/primitives/copy-button';
 import { InlineToast } from '@/components/primitives/inline-toast';
-import { API_HOSTNAME } from '@/config';
+import { getAgentApiBaseUrl } from '@/config';
+import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
-import { apiHostnameManager } from '@/utils/api-hostname-manager';
+import { buildAgentConnectionIdentifier } from '@/utils/connect-subscriber-id';
 import { QueryKeys } from '@/utils/query-keys';
 import { cn } from '@/utils/ui';
 import {
   IntegrationCredentialsSidebar,
   ListeningStatus,
+  ProviderSetupStepperRail,
   SetupButton,
   type SetupMode,
   SetupModeToggle,
   SetupStep,
+  SetupStepperRail,
 } from './setup-guide-primitives';
 import { deriveStepStatus } from './setup-guide-step-utils';
+import { buildTeamsManifest } from './teams-app-manifest';
 import { downloadTeamsAppPackage } from './teams-app-package';
 
 export type TeamsSetupGuideProps = {
@@ -56,59 +60,8 @@ type IntegrationProvisioningState = {
 // Helpers
 // ---------------------------------------------------------------------------
 
-function getApiBaseUrl(): string {
-  return (API_HOSTNAME ?? 'https://api.novu.co').replace(/\/$/, '');
-}
-
-function getApiHostname(): string {
-  try {
-    return new URL(getApiBaseUrl()).hostname;
-  } catch {
-    return 'api.novu.co';
-  }
-}
-
 function buildOAuthCallbackUrl(): string {
-  return `${getApiBaseUrl()}/v1/integrations/chat/oauth/callback`;
-}
-
-function buildManifest(appId: string, agentName: string): Record<string, unknown> {
-  const id = appId || 'YOUR_APP_ID';
-  const name = agentName || 'Novu Agent';
-  const hostname = getApiHostname();
-
-  return {
-    $schema: 'https://developer.microsoft.com/json-schemas/teams/v1.16/MicrosoftTeams.schema.json',
-    manifestVersion: '1.16',
-    version: '1.0.0',
-    id,
-    developer: {
-      name: 'Your Company',
-      websiteUrl: 'https://your-domain.com',
-      privacyUrl: 'https://your-domain.com/privacy',
-      termsOfUseUrl: 'https://your-domain.com/terms',
-    },
-    name: { short: name, full: `${name}, powered by Novu` },
-    description: { short: `${name} bot`, full: 'A conversational agent powered by Novu.' },
-    icons: { outline: 'outline.png', color: 'color.png' },
-    accentColor: '#FFFFFF',
-    bots: [
-      {
-        botId: id,
-        scopes: ['personal', 'team', 'groupchat'],
-        supportsFiles: false,
-        isNotificationOnly: false,
-      },
-    ],
-    permissions: ['identity', 'messageTeamMembers'],
-    validDomains: [hostname],
-    webApplicationInfo: { id, resource: `api://${hostname}/${id}` },
-    authorization: {
-      permissions: {
-        resourceSpecific: [{ name: 'ChannelMessage.Read.Group', type: 'Application' }],
-      },
-    },
-  };
+  return `${getAgentApiBaseUrl()}/v1/integrations/chat/oauth/callback`;
 }
 
 // ---------------------------------------------------------------------------
@@ -419,6 +372,7 @@ const ENDPOINT_POLL_GRACE_MS = 30_000;
 
 type ConnectAndLinkSectionProps = {
   integrationIdentifier: string;
+  subscriberId: string;
   connectionIdentifier: string;
   connectLabel: string;
   onFullyConnected: () => void;
@@ -433,6 +387,7 @@ type ConnectAndLinkSectionProps = {
  */
 function ConnectAndLinkSection({
   integrationIdentifier,
+  subscriberId,
   connectionIdentifier,
   connectLabel,
   onFullyConnected,
@@ -532,10 +487,11 @@ function ConnectAndLinkSection({
   }, [onFullyConnected]);
 
   return (
-    <div className="flex min-w-0 flex-col gap-3">
+    <div className="flex min-w-0 flex-col gap-3 w-full">
       {/* container={undefined} satisfies the Pick<NovuUIOptions, 'container' | 'appearance'> requirement */}
       <MsTeamsConnectButton
         integrationIdentifier={integrationIdentifier}
+        subscriberId={subscriberId}
         connectionIdentifier={connectionIdentifier}
         connectLabel={connectLabel}
         connectedLabel="Connected to MS Teams"
@@ -559,7 +515,7 @@ function ConnectAndLinkSection({
             transition={{ duration: 0.2, ease: 'easeInOut' }}
             className="overflow-hidden"
           >
-            <div className="flex min-w-0 flex-col gap-3">
+            <div className="flex min-w-0 flex-col gap-3 w-full">
               <InlineToast
                 className="w-full"
                 variant="warning"
@@ -650,7 +606,8 @@ export function TeamsSetupGuide({
   onStepsCompleted,
   embedded = false,
 }: TeamsSetupGuideProps) {
-  const { user } = useUser();
+  const { currentUser, isUserLoaded } = useAuth();
+  const { subscriberId: connectSubscriberId, isReady: isConnectSubscriberReady } = useConnectSubscriber();
   const { currentEnvironment } = useEnvironment();
   const queryClient = useQueryClient();
   const isQuickSetupEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_MSTEAMS_QUICK_SETUP_ENABLED, false);
@@ -689,6 +646,8 @@ export function TeamsSetupGuide({
   );
 
   const integrationIdentifier = selectedIntegration?.identifier ?? '';
+  const connectionIdentifier =
+    isUserLoaded && currentUser?._id ? buildAgentConnectionIdentifier(currentUser._id, agent._id) : null;
   const provisioning = (selectedIntegration as { provisioning?: IntegrationProvisioningState } | undefined)
     ?.provisioning;
   const credentials = selectedIntegration?.credentials as Record<string, string> | undefined;
@@ -751,7 +710,7 @@ export function TeamsSetupGuide({
     onStepsCompleted?.();
   }, [onStepsCompleted]);
 
-  const manifestJson = JSON.stringify(buildManifest(appId, agent.name), null, 2);
+  const manifestJson = JSON.stringify(buildTeamsManifest(appId, agent.name), null, 2);
 
   const canDownload = Boolean(appId);
 
@@ -817,7 +776,7 @@ export function TeamsSetupGuide({
   const manualHealth = useManualHealthPoll(integrationId, hasCredentials && activeSetupMode === 'manual');
 
   // Build the webhook URL used in the manual Bot deployment instructions.
-  const webhookUrl = `${getApiBaseUrl()}/v1/agents/${agent._id}/webhook/${integrationIdentifier}`;
+  const webhookUrl = `${getAgentApiBaseUrl()}/v1/agents/${agent._id}/webhook/${integrationIdentifier}`;
 
   // Steps: App Reg + Redirect URI (base+0), Graph perms (base+1),
   //        Credentials (base+2), Deploy to Azure (base+3), Download pkg (base+4), Upload (base+5), Connect (base+6)
@@ -915,7 +874,7 @@ export function TeamsSetupGuide({
           )
         }
         rightContent={
-          <div className="flex min-w-0 flex-col gap-3">
+          <div className="flex min-w-0 flex-col gap-3 w-full">
             <SetupButton
               leadingIcon={
                 isConnectingAzure ? null : (
@@ -961,6 +920,7 @@ export function TeamsSetupGuide({
       <SetupStep
         index={base + 1}
         status={deriveStepStatus(base + 1, quickFirstIncomplete)}
+        dimmed={!hasCredentials}
         title={quickReadinessTitle}
         description={quickReadinessDescription}
         rightContent={
@@ -990,6 +950,7 @@ export function TeamsSetupGuide({
       <SetupStep
         index={base + 2}
         status={deriveStepStatus(base + 2, quickFirstIncomplete)}
+        dimmed={!hasCredentials}
         title="Add the bot to Microsoft Teams"
         description={
           <ol className="flex flex-col gap-1.5 pl-4 [list-style:decimal]">
@@ -1025,7 +986,7 @@ export function TeamsSetupGuide({
           </ol>
         }
         rightContent={
-          <div className="flex min-w-0 flex-col gap-3">
+          <div className="flex min-w-0 flex-col gap-3 w-full">
             <div className="self-start">
               <SetupButton
                 leadingIcon={<Download className="size-3.5" />}
@@ -1067,30 +1028,20 @@ export function TeamsSetupGuide({
       <SetupStep
         index={base + 3}
         status={deriveStepStatus(base + 3, quickFirstIncomplete)}
+        dimmed={!hasCredentials}
         title="Connect Novu to MS Teams"
         description="Grant admin consent and verify the connection by signing in with a Microsoft account that has Teams admin permissions."
         rightContent={
-          <div className="flex min-w-0 flex-col gap-3">
+          <div className="flex min-w-0 flex-col gap-3 w-full">
             {/* teamsAppCatalogId is available here for future use (e.g. an "Open in Teams" deep link once catalog propagation is confirmed) */}
-            {hasCredentials && user?.externalId && currentEnvironment?.identifier ? (
-              <NovuProvider
-                subscriber={{
-                  subscriberId: `${user.externalId}:agent-quickstart:${agent._id}`,
-                  firstName: user.firstName ?? '',
-                  lastName: user.lastName ?? '',
-                  avatar: user.imageUrl ?? '',
-                }}
-                applicationIdentifier={currentEnvironment.identifier}
-                apiUrl={apiHostnameManager.getHostname()}
-                socketUrl={apiHostnameManager.getWebSocketHostname()}
-              >
-                <ConnectAndLinkSection
-                  integrationIdentifier={integrationIdentifier}
-                  connectionIdentifier={`${user.externalId}:agent-quickstart:${agent._id}`}
-                  connectLabel={`Connect ${agent.name} ↗`}
-                  onFullyConnected={handleConnected}
-                />
-              </NovuProvider>
+            {hasCredentials && isConnectSubscriberReady && connectionIdentifier ? (
+              <ConnectAndLinkSection
+                integrationIdentifier={integrationIdentifier}
+                subscriberId={connectSubscriberId}
+                connectionIdentifier={connectionIdentifier}
+                connectLabel={`Connect ${agent.name} ↗`}
+                onFullyConnected={handleConnected}
+              />
             ) : (
               <>
                 <SetupButton disabled>{`Connect ${agent.name} ↗`}</SetupButton>
@@ -1156,7 +1107,7 @@ export function TeamsSetupGuide({
           </ol>
         }
         rightContent={
-          <div className="flex min-w-0 flex-col gap-3">
+          <div className="flex min-w-0 flex-col gap-3 w-full">
             <SetupButton
               href="https://portal.azure.com/#view/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/~/RegisteredApps"
               leadingIcon={
@@ -1290,6 +1241,7 @@ export function TeamsSetupGuide({
       <SetupStep
         index={base + 3}
         status={deriveStepStatus(base + 3, firstIncomplete)}
+        dimmed={!hasCredentials}
         title="Deploy the Azure Bot to your subscription"
         description={
           <div className="flex flex-col gap-3">
@@ -1314,7 +1266,7 @@ export function TeamsSetupGuide({
           </div>
         }
         rightContent={
-          <div className="flex min-w-0 flex-col gap-3">
+          <div className="flex min-w-0 flex-col gap-3 w-full">
             <SetupButton
               leadingIcon={
                 isDeploying ? null : (
@@ -1350,6 +1302,7 @@ export function TeamsSetupGuide({
       <SetupStep
         index={base + 4}
         status={deriveStepStatus(base + 4, firstIncomplete)}
+        dimmed={!hasCredentials}
         title="Download the Teams app package"
         description={
           <ol className="flex flex-col gap-1.5 pl-4 [list-style:decimal]">
@@ -1369,7 +1322,7 @@ export function TeamsSetupGuide({
           </ol>
         }
         rightContent={
-          <div className="flex min-w-0 flex-col gap-3 self-stretch">
+          <div className="flex min-w-0 flex-col gap-3 self-stretch w-full">
             <div className="self-start">
               <SetupButton
                 leadingIcon={<Download className="size-3.5" />}
@@ -1396,6 +1349,7 @@ export function TeamsSetupGuide({
       <SetupStep
         index={base + 5}
         status={deriveStepStatus(base + 5, firstIncomplete)}
+        dimmed={!hasCredentials}
         title="Upload to Teams and verify"
         description={
           <div className="flex flex-col gap-4">
@@ -1477,29 +1431,19 @@ export function TeamsSetupGuide({
       <SetupStep
         index={base + 6}
         status={deriveStepStatus(base + 6, firstIncomplete)}
+        dimmed={!hasCredentials}
         title="Connect Novu to MS Teams"
         description="Grant admin consent and verify the connection by signing in with a Microsoft account that has Teams admin permissions."
         rightContent={
-          <div className="flex min-w-0 flex-col gap-3">
-            {hasCredentials && user?.externalId && currentEnvironment?.identifier ? (
-              <NovuProvider
-                subscriber={{
-                  subscriberId: `${user.externalId}:agent-quickstart:${agent._id}`,
-                  firstName: user.firstName ?? '',
-                  lastName: user.lastName ?? '',
-                  avatar: user.imageUrl ?? '',
-                }}
-                applicationIdentifier={currentEnvironment.identifier}
-                apiUrl={apiHostnameManager.getHostname()}
-                socketUrl={apiHostnameManager.getWebSocketHostname()}
-              >
-                <ConnectAndLinkSection
-                  integrationIdentifier={integrationIdentifier}
-                  connectionIdentifier={`${user.externalId}:agent-quickstart:${agent._id}`}
-                  connectLabel={`Connect ${agent.name} ↗`}
-                  onFullyConnected={handleConnected}
-                />
-              </NovuProvider>
+          <div className="flex min-w-0 flex-col gap-3 w-full">
+            {hasCredentials && isConnectSubscriberReady && connectionIdentifier ? (
+              <ConnectAndLinkSection
+                integrationIdentifier={integrationIdentifier}
+                subscriberId={connectSubscriberId}
+                connectionIdentifier={connectionIdentifier}
+                connectLabel={`Connect ${agent.name} ↗`}
+                onFullyConnected={handleConnected}
+              />
             ) : (
               <>
                 <SetupButton disabled>{`Connect ${agent.name} ↗`}</SetupButton>
@@ -1542,21 +1486,18 @@ export function TeamsSetupGuide({
   );
 
   const activeSteps = activeSetupMode === 'quick' ? quickSteps : steps;
+  const stepsContent = (
+    <>
+      {isQuickSetupEnabled && modeToggle}
+      {activeSteps}
+    </>
+  );
 
   if (embedded) {
     return (
       <div className="flex flex-col gap-0">
-        {isQuickSetupEnabled && <div className="pt-4 pb-2">{modeToggle}</div>}
-        <div className={cn('relative flex flex-col gap-10 py-6 pb-3 pl-8 pr-3 md:pr-6')}>
-          <div
-            className="absolute bottom-0 left-[22px] top-0 w-px"
-            style={{
-              background: 'linear-gradient(to bottom, transparent 0%, #E1E4EA 10%, #E1E4EA 90%, transparent 100%)',
-            }}
-          />
-          {activeSteps}
-        </div>
-        {listening}
+        <SetupStepperRail className="py-6 pb-3 pr-3 md:pr-6">{stepsContent}</SetupStepperRail>
+        <div className="pl-8">{listening}</div>
         {credentialsSidebar}
       </div>
     );
@@ -1564,9 +1505,8 @@ export function TeamsSetupGuide({
 
   return (
     <>
-      {isQuickSetupEnabled && modeToggle}
-      {activeSteps}
-      {listening}
+      <ProviderSetupStepperRail>{stepsContent}</ProviderSetupStepperRail>
+      <div className="pl-8">{listening}</div>
       {credentialsSidebar}
     </>
   );

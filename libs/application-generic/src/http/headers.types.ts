@@ -15,6 +15,7 @@ export enum HttpRequestHeaderKeysEnum {
   IDEMPOTENCY_KEY = 'Idempotency-Key',
   NOVU_APPLICATION_IDENTIFIER = 'Novu-Application-Identifier',
 }
+
 testHttpHeaderEnumValidity(HttpRequestHeaderKeysEnum);
 
 export enum HttpResponseHeaderKeysEnum {

@@ -373,7 +373,12 @@ export class SendMessageEmail extends SendMessageBase {
     }
 
     if (integration.providerId === EmailProviderIdEnum.EmailWebhook) {
-      mailData.payloadDetails = payload;
+      mailData.payloadDetails = command.bridgeData
+        ? {
+            ...payload,
+            content: (bridgeOutputs as EmailOutput)?.body || html || '',
+          }
+        : payload;
     }
 
     return await this.sendMessage(integration, mailData, message, command);
@@ -741,9 +746,14 @@ function hasEmailOverrideRecipients(emailOverrides?: Record<string, unknown>): b
   );
 }
 
+function hasExplicitEmptyToOverride(overrides: Record<string, unknown>): boolean {
+  return 'to' in overrides && Array.isArray(overrides.to) && overrides.to.length === 0;
+}
+
 const createMailData = (options: IEmailOptions, overrides: Record<string, any>): IEmailOptions => {
   const filterDuplicate = (prev: string[], current: string) => (prev.includes(current) ? prev : [...prev, current]);
   const replaceToRecipient = overrides?.replaceToRecipient === true;
+  const explicitEmptyTo = replaceToRecipient && hasExplicitEmptyToOverride(overrides);
   const from = overrides?.from || options.from;
 
   let to: string[];
@@ -756,7 +766,7 @@ const createMailData = (options: IEmailOptions, overrides: Record<string, any>):
     to = to.reduce(filterDuplicate, []);
   }
 
-  if (replaceToRecipient && to.length === 0 && from) {
+  if (replaceToRecipient && to.length === 0 && from && !explicitEmptyTo) {
     to = [from];
   }
 

@@ -1,14 +1,18 @@
 import { BadRequestException, Injectable, NotFoundException, Scope } from '@nestjs/common';
-import { DalException, IntegrationEntity, IntegrationRepository } from '@novu/dal';
-import { CHANNELS_WITH_PRIMARY, ChannelTypeEnum, EmailProviderIdEnum, SmsProviderIdEnum } from '@novu/shared';
+import { AgentIntegrationRepository, DalException, IntegrationRepository } from '@novu/dal';
+import { CHANNELS_WITH_PRIMARY } from '@novu/shared';
 
+import { assertIntegrationEnvironmentScope } from '../../utils/assert-integration-environment-scope';
 import { RemoveIntegrationCommand } from './remove-integration.command';
 
 @Injectable({
   scope: Scope.REQUEST,
 })
 export class RemoveIntegration {
-  constructor(private integrationRepository: IntegrationRepository) {}
+  constructor(
+    private integrationRepository: IntegrationRepository,
+    private agentIntegrationRepository: AgentIntegrationRepository
+  ) {}
 
   async execute(command: RemoveIntegrationCommand) {
     try {
@@ -20,9 +24,36 @@ export class RemoveIntegration {
         throw new NotFoundException(`Entity with id ${command.integrationId} not found`);
       }
 
-      await this.integrationRepository.delete({
-        _id: existingIntegration._id,
-        _organizationId: existingIntegration._organizationId,
+      assertIntegrationEnvironmentScope({
+        restrictToUserEnvironment: command.restrictToUserEnvironment,
+        userEnvironmentId: command.environmentId,
+        integrationEnvironmentId: existingIntegration._environmentId,
+        action: 'delete',
+      });
+
+      // Remove agent↔integration links together with the integration so a
+      // deleted integration stops counting against the active-channel plan
+      // limit (and cannot be auto re-linked). On standalone Mongo (no replica
+      // set) withTransaction degrades to plain sequential execution, so links
+      // are deleted first: a partial failure then leaves the integration
+      // intact and the delete retryable, instead of orphaning links.
+      await this.agentIntegrationRepository.withTransaction(async (session) => {
+        await this.agentIntegrationRepository.delete(
+          {
+            _integrationId: existingIntegration._id,
+            _environmentId: existingIntegration._environmentId,
+            _organizationId: existingIntegration._organizationId,
+          },
+          { session }
+        );
+
+        await this.integrationRepository.delete(
+          {
+            _id: existingIntegration._id,
+            _organizationId: existingIntegration._organizationId,
+          },
+          { session }
+        );
       });
 
       const { channel } = existingIntegration;
