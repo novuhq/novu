@@ -22,8 +22,8 @@ Novu’s notification system is built around workflows, which are triggered for 
 
 When you trigger a workflow using a topic:
 - The `to` field accepts the topic’s key.
-- Novu looks up <Tooltip headline="Subscription" tip="A topic-level, condition-based opt-in layer evaluated against the trigger payload before delivery." cta="Learn more" href="/platform/subscription">topic subscriptions</Tooltip> on that topic whose <Tooltip headline="Context" tip="Multi-dimensional metadata passed at trigger time, such as tenant, app, or region, available in templates and Inbox filtering." cta="Learn more" href="/platform/concepts/contexts">Context</Tooltip> matches the trigger (exact match).
-- For each matching subscription, Novu evaluates optional JSON Logic conditions against the trigger **<Tooltip headline="Payload" tip="Dynamic JSON data passed at trigger time to personalize templates, drive step conditions, and configure action steps." cta="Learn more" href="/platform/concepts/trigger">payload</Tooltip>**.
+- Novu looks up [topic subscriptions](/platform/subscription) on that topic whose [Context](/platform/concepts/contexts) matches the trigger (exact match).
+- For each matching subscription, Novu evaluates optional JSON Logic conditions against the trigger **payload**.
 - A separate workflow event is created for each subscriber whose subscription passes.
 
 Topics let you target large groups with a single API call, removing the need to loop through subscribers or send multiple workflow triggers.

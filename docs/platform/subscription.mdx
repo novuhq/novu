@@ -11,7 +11,7 @@ While standard preferences allow subscribers to toggle specific channels on or o
 
 The Subscription introduces a filtering layer between the trigger and the subscriber. When you trigger a notification to a topic key, the system doesn't automatically send it to everyone. Instead, it follows this evaluation flow:
 
-1. **Trigger**: You <Tooltip headline="Trigger" tip="An API request that starts a workflow for one or more recipients, including a workflowId, to field, and optional payload." cta="Learn more" href="/platform/concepts/trigger">trigger</Tooltip> a workflow to a `topicKey` and include a data <Tooltip headline="Payload" tip="Dynamic JSON data passed at trigger time to personalize templates, drive step conditions, and configure action steps." cta="Learn more" href="/platform/concepts/trigger">payload</Tooltip> and optional <Tooltip headline="Context" tip="Multi-dimensional metadata passed at trigger time, such as tenant, app, or region, available in templates and Inbox filtering." cta="Learn more" href="/platform/concepts/contexts">Context</Tooltip>.
+1. **Trigger**: You trigger a workflow to a `topicKey` and include a data payload and optional [Context](/platform/concepts/contexts).
 2. **Match**: Novu retrieves topic subscriptions whose Context matches the trigger (exact match), then resolves the subscribers.
 3. **Evaluate**: The system checks each matching subscription's conditions against the trigger **payload** (and workflow preferences).
 4. **Deliver**: Only subscribers whose subscriptions pass receive the notification.

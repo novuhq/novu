@@ -128,8 +128,11 @@ When documenting REST API operations that developers call from backend code, sho
 
 - Document public platform features, SDKs, and API reference
 - Do not document internal admin features, enterprise-only implementation details, or unreleased features
-- Use native Mintlify `<Tooltip>` on the **first mention** of a Novu term per page. Look up `headline`, `tip`, `cta`, and `href` in [`scripts/glossary-terms-data.js`](/scripts/glossary-terms-data.js) (synced to [`docs/snippets/glossary-terms.mdx`](/docs/snippets/glossary-terms.mdx)).
+- Use native Mintlify `<Tooltip>` on the **first mention** of a Novu term per page when the term is plain text. Look up `headline`, `tip`, `cta`, and `href` in [`scripts/glossary-terms-data.js`](/scripts/glossary-terms-data.js) (synced to [`docs/snippets/glossary-terms.mdx`](/docs/snippets/glossary-terms.mdx)).
+- **Keep existing markdown links** when the reader should navigate to a concept page, tutorial, or API reference. Do not replace `[text](url)` with a tooltip-only term.
+- Use tooltips to replace inline glossary anchor links (`/platform/additional-resources/glossary#...`) or to define plain-text terms on first mention.
 - Do **not** wrap `<Tooltip>` inside custom React snippet components. Mintlify only renders built-in MDX components like `<Tooltip>` when used directly in page MDX, not inside arrow-function snippet components.
 - Add one tooltip per term per page. Do not add tooltips inside code blocks or headings.
 - Override `cta` and `href` only when a page-specific deep link is more helpful than the registry default.
 - Keep the [glossary](/platform/additional-resources/glossary) as the canonical long-form reference; do not link every term to the glossary page inline.
+- Keep Cards, "Learn more", "Refer to…", and "Read more on…" footer links as markdown links.
