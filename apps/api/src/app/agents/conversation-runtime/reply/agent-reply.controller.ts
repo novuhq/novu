@@ -52,6 +52,7 @@ export class AgentReplyController {
         addReactions: body.addReactions,
         deleteMessages: body.deleteMessages,
         typing: body.typing,
+        error: body.error,
       })
     );
   }

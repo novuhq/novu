@@ -4,6 +4,7 @@ import type { TriggerRecipientsPayload } from '@novu/shared';
 import { Type } from 'class-transformer';
 import {
   IsArray,
+  IsBoolean,
   IsIn,
   IsNotEmpty,
   IsObject,
@@ -397,4 +398,11 @@ export class AgentReplyPayloadDto {
   @IsOptional()
   @Validate(IsValidTypingOp)
   typing?: { status?: string } | 'stop';
+
+  @ApiPropertyOptional({
+    description: 'Bridge reports the turn failed on the customer runtime. Delivers generic user copy.',
+  })
+  @IsOptional()
+  @IsBoolean()
+  error?: boolean;
 }

@@ -32,6 +32,7 @@ export type {
 export {
   Actions,
   AgentDeliveryError,
+  AgentError,
   agent,
   Button,
   Card,
@@ -41,6 +42,7 @@ export {
   Select,
   SelectOption,
   TextInput,
+  toAgentError,
   workflow,
 } from './resources';
 export type {

@@ -145,6 +145,26 @@ describe('reply mapper', () => {
   });
 
   describe('handleResult', () => {
+    it('propagates consumeStream onError to the caller', async () => {
+      const streamErr = new Error('stream failed');
+      const consumeStream = vi.fn(async (opts?: { onError?: (err: unknown) => void }) => {
+        opts?.onError?.(streamErr);
+      });
+      const ctx = fakeCtx();
+
+      await expect(
+        handleAiSdkResult(
+          streamTextResult({
+            consumeStream,
+          }),
+          ctx,
+          undefined
+        )
+      ).rejects.toThrow('stream failed');
+
+      expect(consumeStream).toHaveBeenCalledWith(expect.objectContaining({ onError: expect.any(Function) }));
+    });
+
     it('delivers text when the turn has no gated tools', async () => {
       const ctx = fakeCtx();
 
