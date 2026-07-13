@@ -1,6 +1,6 @@
 import { ControlSchemas, JSONSchemaEntity } from '@novu/dal';
 import { ActionStepEnum, ChannelStepEnum } from '@novu/framework/internal';
-import { httpRequestControlSchema, httpRequestUiSchema } from '@novu/shared';
+import { httpRequestControlSchema, httpRequestUiSchema, StepTypeEnum } from '@novu/shared';
 import {
   chatControlSchema,
   chatUiSchema,
@@ -14,6 +14,8 @@ import {
   inAppUiSchema,
   pushControlSchema,
   pushUiSchema,
+  signalsControlSchema,
+  signalsUiSchema,
   smsControlSchema,
   smsUiSchema,
   throttleControlSchema,
@@ -27,7 +29,9 @@ export const PERMISSIVE_EMPTY_SCHEMA = {
   additionalProperties: true,
 } as JSONSchemaEntity;
 
-const stepTypeToControlSchemaMap: Record<ChannelStepEnum | ActionStepEnum, ControlSchemas> = {
+type ControlSchemaStepType = ChannelStepEnum | ActionStepEnum | StepTypeEnum.SIGNALS;
+
+const stepTypeToControlSchemaMap: Record<ControlSchemaStepType, ControlSchemas> = {
   [ChannelStepEnum.IN_APP]: {
     schema: inAppControlSchema,
     uiSchema: inAppUiSchema,
@@ -47,6 +51,10 @@ const stepTypeToControlSchemaMap: Record<ChannelStepEnum | ActionStepEnum, Contr
   [ChannelStepEnum.CHAT]: {
     schema: chatControlSchema,
     uiSchema: chatUiSchema,
+  },
+  [StepTypeEnum.SIGNALS]: {
+    schema: signalsControlSchema,
+    uiSchema: signalsUiSchema,
   },
   [ActionStepEnum.DELAY]: {
     schema: delayControlSchema,
@@ -69,7 +77,4 @@ const stepTypeToControlSchemaMap: Record<ChannelStepEnum | ActionStepEnum, Contr
   },
 };
 
-export const stepTypeToControlSchema = stepTypeToControlSchemaMap as Record<
-  ChannelStepEnum | ActionStepEnum,
-  ControlSchemas
->;
+export const stepTypeToControlSchema = stepTypeToControlSchemaMap as Record<ControlSchemaStepType, ControlSchemas>;

@@ -1158,6 +1158,7 @@ const DEFERRED_JOB_TYPE_MAP: Record<StepTypeEnum, boolean> = {
   [StepTypeEnum.SMS]: false,
   [StepTypeEnum.CHAT]: false,
   [StepTypeEnum.PUSH]: false,
+  [StepTypeEnum.SIGNALS]: false,
 };
 
 function isJobDeferredType(jobType: StepTypeEnum | undefined): boolean {

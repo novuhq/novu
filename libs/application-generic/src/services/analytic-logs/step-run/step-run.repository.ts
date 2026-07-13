@@ -42,6 +42,10 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
   }
 
   private mapStepTypeEnumToStepType(stepType: StepTypeEnum | undefined): StepType | null {
+    if (stepType === undefined) {
+      return null;
+    }
+
     switch (stepType) {
       case StepTypeEnum.EMAIL:
         return 'email';
@@ -53,6 +57,8 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
         return 'push';
       case StepTypeEnum.CHAT:
         return 'chat';
+      case StepTypeEnum.SIGNALS:
+        return 'signals';
       case StepTypeEnum.DIGEST:
         return 'digest';
       case StepTypeEnum.THROTTLE:
@@ -65,8 +71,11 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
         return 'custom';
       case StepTypeEnum.HTTP_REQUEST:
         return 'http_request';
-      default:
-        return null;
+      default: {
+        const _exhaustiveCheck: never = stepType;
+
+        return _exhaustiveCheck;
+      }
     }
   }
 
