@@ -867,6 +867,7 @@ export function AgentSetupSteps({
             sharedInboundAddress={isEmailChannelSelected ? sharedInboundAddress : undefined}
             onBridgeConnected={handleBridgeConnected}
             onAddProvider={hideAddProvider ? undefined : handleAddProvider}
+            connectorId={connectSummary?.connectorId}
           />
         </div>
       )}

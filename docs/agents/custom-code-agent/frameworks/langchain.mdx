@@ -1,0 +1,200 @@
+---
+title: "LangChain"
+description: "Build custom code agents with @novu/framework/langchain and LangChain agents."
+sidebarTitle: LangChain
+---
+
+
+`@novu/framework/langchain` lets you write agent handlers with [LangChain](https://docs.langchain.com/). Return a `LangChainAgentConfig` from `onMessage` and Novu runs `createAgent().invoke()` for you — including tool approval gating and resume from `ctx.history`.
+
+## Before you start
+
+Completed the [Quickstart](/agents/custom-code-agent/quickstart)? Your agent, bridge, and project are already set up — [jump to Minimal agent](#minimal-agent).
+
+Otherwise start with the [Quickstart](/agents/custom-code-agent/quickstart) first. All three onboarding paths (dashboard, CLI, AI assistant) walk you through creating the agent and wiring the bridge.
+
+This page covers only what's specific to the LangChain adapter.
+
+## Prerequisites
+
+Install the framework, LangChain, and a model provider:
+
+<CodeGroup>
+```bash title="OpenAI"
+npm install @novu/framework langchain @langchain/core @langchain/openai
+```
+```bash title="Anthropic"
+npm install @novu/framework langchain @langchain/core @langchain/anthropic
+```
+```bash title="Google"
+npm install @novu/framework langchain @langchain/core @langchain/google-genai
+```
+</CodeGroup>
+
+`@novu/framework`, `langchain`, and `@langchain/core` are required; pick one provider package. Examples on this page use OpenAI model strings — see the [LangChain integrations catalog](https://docs.langchain.com/oss/javascript/integrations/providers) for others.
+
+## Minimal agent
+
+Import `agent` from `@novu/framework/langchain`, then return a `LangChainAgentConfig` from `onMessage`:
+
+```typescript
+import { tool } from '@langchain/core/tools';
+import { agent } from '@novu/framework/langchain';
+import { z } from 'zod';
+
+const lookupOrder = tool(
+  async ({ orderId }) => ({ orderId, status: 'shipped' }),
+  {
+    name: 'lookupOrder',
+    description: 'Look up an order by ID',
+    schema: z.object({ orderId: z.string() }),
+  },
+);
+
+export const supportAgent = agent('support-bot', {
+  onMessage: async (message, ctx) => ({
+    model: 'openai:gpt-4o',
+    system: 'You are a helpful support agent.',
+    tools: [lookupOrder],
+  }),
+});
+```
+
+Make sure the agent id (`'support-bot'`) matches the **Identifier** in your dashboard, and that this handler is registered on your bridge route — see [Connecting your app](/agents/custom-code-agent/connecting-your-app).
+
+For handlers, replies, signals, typing, and tool approval, see [Building blocks](/agents/custom-code-agent/building-blocks/handle-events). The sections below cover what's specific to the LangChain adapter.
+
+## Returning from `onMessage`
+
+On the LangChain path, `onMessage` (and `onToolApproval`) can return a LangChain result in addition to the usual reply types:
+
+| Return | Behavior |
+| --- | --- |
+| `LangChainAgentConfig` | Novu runs `createAgent()` and delivers the final assistant text |
+| `{ messages: BaseMessage[] }` | Novu delivers the final assistant text from your pre-invoked agent or graph |
+| `BaseMessage` | Delivered as a normal reply (assistant text extracted from the message) |
+| `string` / JSX `Card` | Delivered as a normal reply — see [Reply](/agents/custom-code-agent/building-blocks/reply) |
+| nothing | After you call `ctx.reply()` yourself |
+
+Shorthand when you only need `onMessage`: pass the handler directly.
+
+```typescript
+const supportAgent = agent('support-bot', async (message, ctx) => ({
+  model: 'openai:gpt-4o',
+  tools: [lookupOrder],
+}));
+```
+
+## `toLangChainMessages()`
+
+Convert `ctx.history` into LangChain `BaseMessage[]` when you invoke an agent or graph yourself:
+
+```typescript
+import { toLangChainMessages } from '@novu/framework/langchain';
+
+const messages = toLangChainMessages(ctx.history);
+```
+
+- `ctx.history` already includes the current inbound message — do not append the `message` argument on top of it.
+- Pass `system` only when you are **not** setting `system` on `LangChainAgentConfig` — Novu forwards that field to `createAgent({ prompt })` for you.
+- Tool approval cycles in history are mapped automatically, so auto-resume (below) works.
+
+## Invoke your own agent
+
+If you already run a LangChain agent or graph in your handler, return its messages and Novu delivers the final text — tool approval is **not** managed on this path:
+
+```typescript
+import { createAgent } from 'langchain';
+import { agent, toLangChainMessages } from '@novu/framework/langchain';
+
+const billingAgent = createAgent({ model: 'openai:gpt-4o', tools: [lookupOrder] });
+
+export const supportAgent = agent('support-bot', {
+  onMessage: async (message, ctx) => {
+    const result = await billingAgent.invoke({
+      messages: toLangChainMessages(ctx.history),
+    });
+
+    return { messages: result.messages };
+  },
+});
+```
+
+To stream live updates in the thread, post a reply and update it with [`ReplyHandle.edit()`](/agents/custom-code-agent/building-blocks/edit-sent-messages) as your graph produces chunks — the adapter does not stream token-by-token when you return a result.
+
+## Automatic tool approval
+
+Set `needsApproval` on `LangChainAgentConfig`. When the model calls a gated tool, Novu posts the Approve / Deny card and pauses the turn. After the user decides, Novu re-runs `onMessage` — `toLangChainMessages(ctx.history)` replays the approval cycle so the agent continues with no extra code from you.
+
+```typescript
+import { tool } from '@langchain/core/tools';
+import { agent } from '@novu/framework/langchain';
+import { z } from 'zod';
+
+const issueRefund = tool(
+  async ({ orderId }) => refund(orderId),
+  {
+    name: 'issueRefund',
+    description: 'Issue a refund for an order',
+    schema: z.object({ orderId: z.string() }),
+  },
+);
+
+export const supportAgent = agent('support-bot', {
+  onMessage: async (message, ctx) => ({
+    model: 'openai:gpt-4o',
+    system: 'You are a helpful support agent.',
+    tools: [issueRefund],
+    needsApproval: (toolCall) => toolCall.name === 'issueRefund',
+  }),
+});
+```
+
+Add `onToolApproval` when you need a hook after the click. See [Tool approval](/agents/custom-code-agent/building-blocks/tool-approval) for the full API.
+
+## Turn failures and `onError`
+
+When Novu runs `createAgent().invoke()` for a returned `LangChainAgentConfig` and the invoke rejects — for example the provider errors or the model call fails — the failure propagates to the same dispatch boundary as a thrown handler error. The same applies when you `await` your own agent or graph in `onMessage` and the invoke throws before you return. Register `onError` on the agent to log, suppress user notification, send custom copy, or fall back to Novu's generic message.
+
+```typescript
+export const supportAgent = agent('support-bot', {
+  onMessage: async (message, ctx) => ({
+    model: 'openai:gpt-4o',
+    system: 'You are a helpful support agent.',
+    tools: [lookupOrder],
+  }),
+
+  onError: async (error, ctx) => {
+    console.error(error.message, error.cause);
+    // return nothing → generic user copy from Novu
+    // return { suppress: true } → silent
+    // return 'Custom apology' → your copy
+  },
+});
+```
+
+A gated tool waiting for user approval pauses the turn with an approval card — that is not a turn failure and does not trigger `onError`. See [Handlers and context — onError](/agents/custom-code-agent/building-blocks/handle-events#onerror) for the full pipeline.
+
+<Note>
+  The adapter awaits `invoke()` to completion when you return a config — it does not stream token-by-token. If you stream inside `onMessage` yourself, stream failures throw from your handler the same way as any other handler error.
+</Note>
+
+## Related
+
+<Columns cols={2}>
+  <Card icon="sparkles" href="/agents/custom-code-agent/frameworks/ai-sdk" title="AI SDK">
+    Return AI SDK results from handlers with automatic tool approval resume.
+  </Card>
+  <Card icon="loader" href="/agents/custom-code-agent/building-blocks/typing-indicator" title="Typing indicator">
+    Show a Thinking… or custom status while your handler runs.
+  </Card>
+  <Card icon="layout-grid" href="/agents/custom-code-agent/building-blocks/reply" title="Reply">
+    Markdown, attachments, and interactive cards.
+  </Card>
+  <Card icon="shield-check" href="/agents/custom-code-agent/building-blocks/tool-approval" title="Tool approval">
+    The shared Approve / Deny primitive.
+  </Card>
+  <Card icon="code" href="/agents/custom-code-agent/frameworks/other" title="Other frameworks">
+    Wire handlers without a Novu runtime adapter.
+  </Card>
+</Columns>
