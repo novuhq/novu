@@ -51,7 +51,7 @@ References (`authors`, `categories`, `tag`) are documents — resolve their `_id
 
 ### 5. Create
 
-Use `create_documents` with the Portable Text structure from [reference.md](reference.md#portable-text-cheat-sheet). Every block/span needs a unique `_key`. Keep `create_documents` JSON valid — brace/bracket errors are the most common failure.
+Use Sanity MCP `create_documents` (draft-only — see [reference.md](reference.md#create--patch--publish)) with the Portable Text structure from [reference.md](reference.md#portable-text-cheat-sheet). Every block/span needs a unique `_key`. Keep `create_documents` JSON valid — brace/bracket errors are the most common failure.
 
 ### 6. Images (known limitation)
 

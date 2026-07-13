@@ -99,7 +99,8 @@ Append after a feature post's body, typically under an `h2` like "Also new acros
 
 ## create / patch / publish
 
-- **Create draft**: `create_documents` → `{ type: "changelogPost", content: { ...fields } }`. Omit `_id` (Sanity generates). Result id is `drafts.<uuid>`.
+- **Create draft**: use Sanity MCP `create_documents` only — it always writes to `drafts.<uuid>` (do not set `_id` in `content`, and do not pass `releaseId`). Example: `{ type: "changelogPost", content: { ...fields } }`. Verify the returned id starts with `drafts.`.
+- **Never** use raw `@sanity/client` `create()` without `_id: "drafts.<uuid>"` — omitting `_id` there creates a published document. Leaving `publishedAt` unset does not make a document a draft.
 - **Patch**: `patch_documents` → `documents: { "drafts.<id>": { patches: [ { insert: { after|before|replace: "content[_key==\"KEY\"]", items: [ ... ] } } ] } }`. Prefer targeting by `_key` to preserve concurrent edits.
 - **Discard** a never-published draft: `discard_drafts` → `{ ids: ["drafts.<id>"] }` (permanent).
 - **Publish**: `publish_documents` — only when explicitly asked.
