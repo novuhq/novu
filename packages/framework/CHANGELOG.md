@@ -1,3 +1,41 @@
+## v2.12.0 (2026-07-13)
+
+### 🚀 Features
+
+- **framework,api-service:** auto-report self-hosted agent turn errors fixes NV-8265 ([#11889](https://github.com/novuhq/novu/pull/11889))
+- **root:** Add Sendblue (iMessage/SMS) channel and agent integration fixes NV-8241 ([#11882](https://github.com/novuhq/novu/pull/11882))
+- **providers:** add Anypost email provider fixes NV-8270 ([#11712](https://github.com/novuhq/novu/pull/11712))
+- **framework:** support AI SDK v7 in @novu/framework/ai-sdk fixes NV-8222 ([#11860](https://github.com/novuhq/novu/pull/11860))
+- **framework:** add agent langchain adapter fixes NV-8208 ([#11824](https://github.com/novuhq/novu/pull/11824))
+- **framework,api-service:** self-hosted Slack-native tool approval cards fixes NV-8204 ([#11805](https://github.com/novuhq/novu/pull/11805))
+- **framework,api-service:** improve self-hosted tool approval card cleanup fixes NV-8199 ([#11788](https://github.com/novuhq/novu/pull/11788))
+- **framework,api-service:** expose delete message on self-hosted agent reply contract fixes NV-8197 ([#11787](https://github.com/novuhq/novu/pull/11787))
+- **framework,api-service:** self-hosted tool approval consistency and remove plan cards fixes NV-8164 ([#11768](https://github.com/novuhq/novu/pull/11768))
+- **framework:** self-hosted tool approval for the ai-sdk agent flavor fixes NV-8148 ([#11733](https://github.com/novuhq/novu/pull/11733))
+- **dashboard:** support actor variables in step content editor fixes NV-8143 ([#11709](https://github.com/novuhq/novu/pull/11709))
+- **framework,api-service:** unified plan progress via ctx.plan fixes NV-8129 ([#11676](https://github.com/novuhq/novu/pull/11676))
+- **framework:** self-hosted brain-controlled typing indicator fixes NV-8128 ([#11671](https://github.com/novuhq/novu/pull/11671))
+- **framework:** add @novu/framework/ai-sdk agent plugin fixes NV-8117 ([#11656](https://github.com/novuhq/novu/pull/11656))
+- **api-service:** on-demand MCP OAuth, per-session tools, and connect card UX fixes NV-8002 ([#11567](https://github.com/novuhq/novu/pull/11567))
+
+### 🩹 Fixes
+
+- **framework:** use error.issues in ZodValidator for zod v4 compatibility ([#11891](https://github.com/novuhq/novu/pull/11891))
+- **api-service:** resolve windows build syntax and optimize empty subscriber search. ([#11890](https://github.com/novuhq/novu/pull/11890))
+- **root:** bump vitest devDependency range to ^4.1.0 to close advisories fixes NV-8196 ([#11785](https://github.com/novuhq/novu/pull/11785))
+- **framework:** apply controllerDecorators in NovuModule.registerAsync fixes NV-7543 ([#11497](https://github.com/novuhq/novu/pull/11497))
+
+### ❤️ Thank You
+
+- Adam Chmara @ChmaraX
+- Dan Stevens
+- Dima Grossman @scopsy
+- Mahin Anowar @MahinAnowar
+- Nikita Grossman @nikitagrossman
+- Pawan Jain
+- Paweł Tymczuk @LetItRock
+- Siddharth Pandey @Siddharth3011
+
 ## v2.11.1 (2026-06-10)
 
 ### 🚀 Features
