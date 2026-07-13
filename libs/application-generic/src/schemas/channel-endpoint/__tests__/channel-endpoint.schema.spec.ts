@@ -27,6 +27,7 @@ describe('ChannelEndpointSchema', () => {
     expect(validateEndpointForTypeFromSchema(ENDPOINT_TYPES.SLACK_CHANNEL, { channelId: 'C123' })).toBe(true);
     expect(validateEndpointForTypeFromSchema(ENDPOINT_TYPES.SLACK_USER, { userId: 'U123' })).toBe(true);
     expect(validateEndpointForTypeFromSchema(ENDPOINT_TYPES.WEBHOOK, { url: 'https://example.com' })).toBe(true);
+    expect(validateEndpointForTypeFromSchema(ENDPOINT_TYPES.LINE_USER, { userId: 'U1234567890abcdef' })).toBe(true);
 
     // Invalid cases
     expect(validateEndpointForTypeFromSchema(ENDPOINT_TYPES.SLACK_CHANNEL, { userId: 'U123' })).toBe(false);

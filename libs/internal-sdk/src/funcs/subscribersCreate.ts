@@ -34,7 +34,7 @@ import { Result } from "../types/fp.js";
  * Create a subscriber with the subscriber attributes.
  *       **subscriberId** is a required field, rest other fields are optional, if the subscriber already exists, it will be updated
  *
- * This operation requires either {@link Security.bearerAuth} or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.
+ * This operation requires one of {@link Security.bearerAuth}, {@link Security.secretKey}, or {@link Security.bearerAuth} to be set on the `security` parameter when initializing the SDK.
  */
 export function subscribersCreate(
   client: NovuCore,

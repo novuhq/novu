@@ -30,6 +30,18 @@ async function createTelegramIntegration(session: UserSession) {
   });
 }
 
+async function createLineIntegration(session: UserSession) {
+  return integrationRepository.create({
+    _organizationId: session.organization._id,
+    _environmentId: session.environment._id,
+    providerId: ChatProviderIdEnum.Line,
+    channel: ChannelTypeEnum.CHAT,
+    credentials: { apiToken: 'test-line-channel-access-token' },
+    active: true,
+    identifier: `line-${Date.now()}`,
+  });
+}
+
 describe('Create Channel Endpoint - /channel-endpoints (POST) #novu-v2', () => {
   let session: UserSession;
   let novuClient: Novu;
@@ -210,6 +222,30 @@ describe('Create Channel Endpoint - /channel-endpoints (POST) #novu-v2', () => {
     expect(result.subscriberId).to.equal(subscriber.subscriberId);
     expect(result.type).to.equal(ENDPOINT_TYPES.TELEGRAM_CHAT);
     expect((result.endpoint as { chatId: string }).chatId).to.equal('987654321');
+    expect(result.connectionIdentifier).to.be.null;
+  });
+
+  it('should create a line_user endpoint with the supplied userId', async () => {
+    const integration = await createLineIntegration(session);
+    const subscribersService = createSubscribersService(session);
+    const subscriber = await subscribersService.createSubscriber();
+
+    const createDto = {
+      integrationIdentifier: integration.identifier,
+      subscriberId: subscriber.subscriberId,
+      type: ENDPOINT_TYPES.LINE_USER,
+      endpoint: {
+        userId: 'U1234567890abcdef',
+      },
+    };
+
+    const { result } = await novuClient.channelEndpoints.create(createDto);
+
+    expect(result.identifier).to.be.a('string');
+    expect(result.integrationIdentifier).to.equal(integration.identifier);
+    expect(result.subscriberId).to.equal(subscriber.subscriberId);
+    expect(result.type).to.equal(ENDPOINT_TYPES.LINE_USER);
+    expect((result.endpoint as { userId: string }).userId).to.equal('U1234567890abcdef');
     expect(result.connectionIdentifier).to.be.null;
   });
 });

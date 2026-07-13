@@ -4,6 +4,7 @@ import { ContextPayload, ENDPOINT_TYPES } from '@novu/shared';
 import { Type } from 'class-transformer';
 import { IsDefined, IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
 import {
+  LineUserEndpointDto,
   MsTeamsChannelEndpointDto,
   MsTeamsUserEndpointDto,
   PhoneEndpointDto,
@@ -195,4 +196,24 @@ export class CreateTelegramChatEndpointDto extends CreateChannelEndpointBaseDto 
   @ValidateNested()
   @Type(() => TelegramChatEndpointDto)
   endpoint: TelegramChatEndpointDto;
+}
+
+export class CreateLineUserEndpointDto extends CreateChannelEndpointBaseDto {
+  @ApiProperty({
+    description: 'Type of channel endpoint',
+    enum: [ENDPOINT_TYPES.LINE_USER],
+    example: ENDPOINT_TYPES.LINE_USER,
+  })
+  @IsDefined()
+  @IsEnum([ENDPOINT_TYPES.LINE_USER])
+  type: typeof ENDPOINT_TYPES.LINE_USER;
+
+  @ApiProperty({
+    description: 'LINE user endpoint data',
+    type: LineUserEndpointDto,
+  })
+  @IsDefined()
+  @ValidateNested()
+  @Type(() => LineUserEndpointDto)
+  endpoint: LineUserEndpointDto;
 }

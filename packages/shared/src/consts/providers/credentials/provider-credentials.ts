@@ -1,5 +1,5 @@
-import { AWS_CLAUDE_COMMERCIAL_REGIONS } from '../../aws-claude-regions';
 import { CredentialsKeyEnum } from '../../../types';
+import { AWS_CLAUDE_COMMERCIAL_REGIONS } from '../../aws-claude-regions';
 import { IConfigCredential } from '../provider.interface';
 
 const mailConfigBase: IConfigCredential[] = [
@@ -1323,6 +1323,16 @@ export const whatsAppBusinessConfig: IConfigCredential[] = [
     type: 'string',
     required: false,
     hidden: true,
+  },
+];
+
+export const lineConfig: IConfigCredential[] = [
+  {
+    key: CredentialsKeyEnum.ApiToken,
+    displayName: 'Channel Access Token',
+    description: 'Your LINE Channel Access Token from the LINE Developers Console',
+    type: 'string',
+    required: true,
   },
 ];
 
