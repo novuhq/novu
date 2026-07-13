@@ -264,6 +264,53 @@ describe('Create Channel Endpoint - /channel-endpoints (POST) #novu-v2', () => {
     expect(error?.name).to.equal('SDKValidationError');
   });
 
+  it('should fail when creating a Webex endpoint for a non-Webex integration', async () => {
+    const integration = await createSlackIntegration(session);
+    const subscribersService = createSubscribersService(session);
+    const subscriber = await subscribersService.createSubscriber();
+    const connection = await createConnection(novuClient, integration.identifier, subscriber.subscriberId);
+
+    const createDto: CreateWebexRoomEndpointDto = {
+      integrationIdentifier: integration.identifier,
+      connectionIdentifier: connection.identifier,
+      subscriberId: subscriber.subscriberId,
+      type: ENDPOINT_TYPES.WEBEX_ROOM,
+      endpoint: {
+        roomId: 'Y2lzY29zcGFyazovL3VzL1JPT00vMTIz',
+      },
+    };
+
+    const { error } = await expectSdkExceptionGeneric(() => novuClient.channelEndpoints.create(createDto));
+
+    expect(error).to.exist;
+    expect(error?.name).to.equal('ErrorDto');
+  });
+
+  it('should fail when Webex endpoint context differs from the channel connection context', async () => {
+    const integration = await createWebexIntegration(session);
+    const subscribersService = createSubscribersService(session);
+    const subscriber = await subscribersService.createSubscriber();
+    const connection = await createConnection(novuClient, integration.identifier, subscriber.subscriberId);
+
+    const createDto: CreateWebexRoomEndpointDto = {
+      integrationIdentifier: integration.identifier,
+      connectionIdentifier: connection.identifier,
+      subscriberId: subscriber.subscriberId,
+      context: {
+        tenant: 'acme-corp',
+      },
+      type: ENDPOINT_TYPES.WEBEX_ROOM,
+      endpoint: {
+        roomId: 'Y2lzY29zcGFyazovL3VzL1JPT00vMTIz',
+      },
+    };
+
+    const { error } = await expectSdkExceptionGeneric(() => novuClient.channelEndpoints.create(createDto));
+
+    expect(error).to.exist;
+    expect(error?.name).to.equal('ErrorDto');
+  });
+
   it('should create a telegram_chat endpoint with the supplied chatId', async () => {
     const integration = await createTelegramIntegration(session);
     const subscribersService = createSubscribersService(session);
