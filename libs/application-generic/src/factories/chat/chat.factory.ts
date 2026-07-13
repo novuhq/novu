@@ -9,6 +9,7 @@ import { MSTeamsHandler } from './handlers/msteams.handler';
 import { NovuSlackHandler } from './handlers/novu-slack.handler';
 import { RocketChatHandler } from './handlers/rocket-chat.handler';
 import { RyverHandler } from './handlers/ryver.handler';
+import { SendblueHandler } from './handlers/sendblue.handler';
 import { SlackHandler } from './handlers/slack.handler';
 import { TelegramHandler } from './handlers/telegram.handler';
 import { WhatsAppBusinessHandler } from './handlers/whatsapp-business.handler';
@@ -31,6 +32,7 @@ export class ChatFactory implements IChatFactory {
     new WhatsAppBusinessHandler(),
     new LineHandler(),
     new TelegramHandler(),
+    new SendblueHandler(),
   ];
 
   getHandler(integration: Pick<IntegrationEntity, 'credentials' | 'channel' | 'providerId' | 'configurations'>) {

@@ -12,6 +12,7 @@ export const chatProviderSchemas = {
   msteams: genericProviderSchemas,
   'rocket-chat': genericProviderSchemas,
   ryver: genericProviderSchemas,
+  sendblue: genericProviderSchemas,
   slack: slackProviderSchemas,
   'whatsapp-business': genericProviderSchemas,
   zulip: genericProviderSchemas,
