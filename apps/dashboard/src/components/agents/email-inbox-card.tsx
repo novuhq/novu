@@ -5,6 +5,7 @@ import { useSearchParams } from 'react-router-dom';
 import type { AgentIntegrationEmbedded, AgentResponse } from '@/api/agents';
 import { AgentInboxCardRow, AgentInboxCardRowInfoTitle } from '@/components/agents/agent-inbox-card-row';
 import { CopyableEmailAddress } from '@/components/agents/copyable-email-address';
+import { SubscriberAccessGuidanceRow } from '@/components/agents/subscriber-access-guidance-row';
 import { CompactButton } from '@/components/primitives/button-compact';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { Switch } from '@/components/primitives/switch';
@@ -181,7 +182,7 @@ export function EmailInboxCardBody({
       <AgentInboxCardRow
         title={<AgentInboxCardRowInfoTitle label="Inbound addresses" infoTooltip={inboundAddressesInfoTooltip} />}
         description="Mail sent to any of these addresses is delivered to this agent."
-        divider={false}
+        divider
         disabled={inboxSectionDisabled}
       >
         <div className="flex flex-col gap-2">
@@ -250,6 +251,8 @@ export function EmailInboxCardBody({
           ) : null}
         </div>
       </AgentInboxCardRow>
+
+      <SubscriberAccessGuidanceRow channel="email" agent={agent} />
 
       <AgentCustomDomainSheet
         open={isDomainSheetOpen}
