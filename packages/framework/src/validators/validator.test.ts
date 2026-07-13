@@ -581,5 +581,20 @@ describe('validators', () => {
         required: ['name', 'age'],
       });
     });
+
+    it('should transform a Zod v4 schema with a transform to its input-side JSON schema', async () => {
+      const schema = zV4.object({ name: zV4.string().transform((value) => value.length) }) as unknown as ZodSchema;
+
+      const result = await transformSchema(schema);
+
+      expect(result).toEqual({
+        $schema: 'https://json-schema.org/draft-07/schema',
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+        },
+        required: ['name'],
+      });
+    });
   });
 });
