@@ -171,6 +171,57 @@ export interface ConnectUI {
   showTelegramTest(opts: { deepLinkQr: string; deepLinkUrl: string; botUsername: string }): void;
   telegramConnected(): void;
 
+  // Sendblue (iMessage) path
+  addingSendblueIntegration(): void;
+  /**
+   * Intro screen before collecting credentials: links to the Sendblue API
+   * settings page and notes a Sendblue account is required. Resolves when the
+   * user hits Enter.
+   */
+  showSendblueIntro(opts: { dashboardUrl: string }): Promise<void>;
+  /**
+   * Prompt for one Sendblue credential (API Key → Secret Key → phone number).
+   * Each call is its own phase so the input renders empty for every step. The
+   * Sendblue dashboard link is shown alongside every prompt.
+   */
+  promptForSendblueCredential(opts: {
+    field: 'apiKey' | 'secretKey' | 'from';
+    step: number;
+    total: number;
+    title: string;
+    hint: string;
+    placeholder: string;
+    dashboardUrl: string;
+    secret?: boolean;
+    verificationError?: string;
+  }): Promise<string>;
+  configuringSendblueWebhook(): void;
+  /**
+   * Shown when Sendblue rejects auto webhook registration: surfaces the callback
+   * URL + signing secret for manual setup in the Sendblue dashboard. Resolves
+   * when the user hits Enter.
+   */
+  showSendblueWebhookManualFallback(opts: { callbackUrl: string; webhookSecret?: string }): Promise<void>;
+  /**
+   * Prompt for the recipient phone (E.164) for the test message. Pre-fills with
+   * the subscriber's saved phone when available, and offers a "message the bot"
+   * iMessage link.
+   */
+  promptForSendblueTestPhone(opts: {
+    defaultPhone?: string;
+    fromNumber: string;
+    imessageUrl: string;
+    verificationError?: string;
+  }): Promise<string>;
+  sendingSendblueTestMessage(): void;
+  /**
+   * Transitions to the "we're waiting for your first inbound iMessage" view.
+   * Renders the "message the bot" iMessage link. Fired right after the test
+   * message is sent; the pipeline then polls for the inbound connection.
+   */
+  showSendblueTestWaiting(opts: { phone: string; fromNumber: string; imessageUrl: string }): void;
+  sendblueConnected(): void;
+
   // Slack path
   addingSlackIntegration(): void;
   /**

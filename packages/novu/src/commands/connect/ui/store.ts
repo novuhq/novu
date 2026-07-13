@@ -182,6 +182,47 @@ export type Phase =
       deepLinkUrl: string;
       botUsername: string;
     }
+  | { kind: 'adding-sendblue' }
+  | {
+      kind: 'sendblue-intro';
+      dashboardUrl: string;
+      resolve: () => void;
+    }
+  | {
+      kind: 'sendblue-credential';
+      field: 'apiKey' | 'secretKey' | 'from';
+      step: number;
+      total: number;
+      title: string;
+      hint: string;
+      placeholder: string;
+      dashboardUrl: string;
+      secret?: boolean;
+      verificationError?: string;
+      resolve: (value: string) => void;
+    }
+  | { kind: 'configuring-sendblue-webhook' }
+  | {
+      kind: 'sendblue-webhook-manual';
+      callbackUrl: string;
+      webhookSecret?: string;
+      resolve: () => void;
+    }
+  | {
+      kind: 'sendblue-test-phone';
+      defaultPhone?: string;
+      fromNumber: string;
+      imessageUrl: string;
+      verificationError?: string;
+      resolve: (value: string) => void;
+    }
+  | { kind: 'sending-sendblue-test' }
+  | {
+      kind: 'sendblue-test-waiting';
+      phone: string;
+      fromNumber: string;
+      imessageUrl: string;
+    }
   | { kind: 'sending-welcome' }
   | {
       kind: 'success';

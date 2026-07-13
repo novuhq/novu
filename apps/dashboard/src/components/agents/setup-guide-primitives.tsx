@@ -484,8 +484,6 @@ export function IntegrationCredentialsSidebar({
   agentIdentifier,
   testSubscriberId,
   submitLabel,
-  webhookUrl,
-  webhookSecret,
 }: {
   integrationId: string;
   isOpen: boolean;
@@ -501,13 +499,6 @@ export function IntegrationCredentialsSidebar({
   /** Quickstart test subscriber for Telegram mobile `/start` deep links. */
   testSubscriberId?: string | null;
   submitLabel?: string;
-  /**
-   * Read-only webhook details shown below the credentials form. Kept out of
-   * the inline setup steps so sensitive values (the secret in particular)
-   * only surface here, in the provider's own details/edit view.
-   */
-  webhookUrl?: string;
-  webhookSecret?: string;
 }) {
   const { integrations } = useFetchIntegrations();
   const { mutateAsync: updateIntegration, isPending: isUpdating } = useUpdateIntegration();
@@ -579,13 +570,6 @@ export function IntegrationCredentialsSidebar({
           testSubscriberId={testSubscriberId}
           onFormStateChange={setFormState}
         />
-        {webhookUrl ? (
-          <div className="flex flex-col gap-2 border-t p-3">
-            <p className="text-text-sub text-label-xs font-medium">Webhook</p>
-            <ReadOnlyValueRow label="Callback URL" value={webhookUrl} />
-            {webhookSecret ? <ReadOnlyValueRow label="Webhook Secret" value={webhookSecret} /> : null}
-          </div>
-        ) : null}
       </div>
 
       <div className="bg-background flex justify-end gap-2 border-t p-3">

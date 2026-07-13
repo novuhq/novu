@@ -12,6 +12,9 @@ import { installDepsPrompt, installingDepsMessage, reconcilePlanTitle } from './
 import {
   logAuthUrlFileHandoffEvent,
   logEmailHandoffEvents,
+  logSendblueDashboardHandoffEvent,
+  logSendblueImessageHandoffEvents,
+  logSendblueWebhookHandoffEvents,
   logSlackHandoffEvents,
   logSlackSetupLinkHandoffEvent,
   logTelegramBotfatherHandoffEvent,
@@ -325,6 +328,62 @@ export function createLoggingUI(): ConnectUI {
     },
     telegramConnected() {
       succeed('Telegram connected');
+    },
+    addingSendblueIntegration() {
+      start('Linking iMessage (Sendblue) to your agent…');
+    },
+    showSendblueIntro({ dashboardUrl }) {
+      stop();
+      console.log(`${chalk.cyan('→')} Sendblue API settings (account required): ${chalk.underline(dashboardUrl)}`);
+      logSendblueDashboardHandoffEvent({ dashboardUrl });
+
+      return Promise.resolve();
+    },
+    promptForSendblueCredential({ title, verificationError }) {
+      stop();
+      if (verificationError) {
+        console.error(chalk.yellow(verificationError));
+      }
+
+      return Promise.reject(
+        new Error(
+          `Non-interactive mode: Sendblue credential "${title}" required. Pass --sendblue-api-key, --sendblue-secret-key and --sendblue-from.`
+        )
+      );
+    },
+    configuringSendblueWebhook() {
+      start('Registering your Sendblue receive webhook…');
+    },
+    showSendblueWebhookManualFallback({ callbackUrl, webhookSecret }) {
+      stop();
+      console.log(`${chalk.yellow('!')} Could not auto-register the Sendblue webhook. Add it manually:`);
+      console.log(`  ${chalk.bold('Callback URL:')} ${chalk.underline(callbackUrl)}`);
+      if (webhookSecret) {
+        console.log(`  ${chalk.bold('Signing secret:')} ${webhookSecret}`);
+      }
+      logSendblueWebhookHandoffEvents({ callbackUrl, webhookSecret });
+
+      return Promise.resolve();
+    },
+    promptForSendblueTestPhone() {
+      stop();
+
+      return Promise.reject(
+        new Error('Non-interactive mode: pass --sendblue-test-phone <+E.164> for the Sendblue test message.')
+      );
+    },
+    sendingSendblueTestMessage() {
+      start('Sending a test iMessage…');
+    },
+    showSendblueTestWaiting({ phone, fromNumber, imessageUrl }) {
+      stop();
+      console.log(`${chalk.cyan('→')} Test message sent to ${chalk.bold(phone)} from ${chalk.bold(fromNumber)}.`);
+      console.log(`${chalk.cyan('→')} Message the bot on iMessage: ${chalk.underline(imessageUrl)}`);
+      logSendblueImessageHandoffEvents({ imessageUrl, fromNumber });
+      start('Waiting for your first inbound iMessage…');
+    },
+    sendblueConnected() {
+      succeed('iMessage (Sendblue) connected');
     },
     addingSlackIntegration() {
       start('Linking Slack to your agent…');
