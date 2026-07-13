@@ -456,22 +456,26 @@ export class HandleAgentReply {
     channel: ConversationChannel,
     typing: NonNullable<HandleAgentReplyCommand['typing']>
   ): Promise<void> {
-    if (typing === 'stop') {
-      await this.outboundGateway.stopTypingInConversation(
+    try {
+      if (typing === 'stop') {
+        await this.outboundGateway.stopTypingInConversation(
+          conversation._agentId,
+          command.integrationIdentifier,
+          channel.platformThreadId
+        );
+
+        return;
+      }
+
+      await this.outboundGateway.startTypingInConversation(
         conversation._agentId,
         command.integrationIdentifier,
-        channel.platformThreadId
+        channel.platformThreadId,
+        typing.status ?? 'Thinking...'
       );
-
-      return;
+    } catch (err) {
+      this.logger.warn(err, `[agent:${command.agentIdentifier}] Failed to set typing status`);
     }
-
-    await this.outboundGateway.startTypingInConversation(
-      conversation._agentId,
-      command.integrationIdentifier,
-      channel.platformThreadId,
-      typing.status ?? 'Thinking...'
-    );
   }
 
   private async executeSignals(
