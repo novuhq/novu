@@ -6,10 +6,12 @@ import { IMailHandler } from './mail/interfaces';
 import { MailFactory } from './mail/mail.factory';
 import { IPushHandler } from './push/interfaces';
 import { PushFactory } from './push/push.factory';
+import { ISignalsHandler } from './signals/interfaces';
+import { SignalsFactory } from './signals/signals.factory';
 import { ISmsHandler } from './sms/interfaces';
 import { SmsFactory } from './sms/sms.factory';
 
-export type ChannelHandler = IMailHandler | ISmsHandler | IChatHandler | IPushHandler;
+export type ChannelHandler = IMailHandler | ISmsHandler | IChatHandler | IPushHandler | ISignalsHandler;
 
 export interface IChannelHandlerOptions {
   from?: string;
@@ -18,7 +20,7 @@ export interface IChannelHandlerOptions {
 export interface IChannelFactory {
   getHandler(
     integration: Pick<IntegrationEntity, 'credentials' | 'channel' | 'providerId' | 'configurations'>,
-    channelType: 'email' | 'sms' | 'chat' | 'push',
+    channelType: 'email' | 'sms' | 'chat' | 'push' | 'signals',
     options?: IChannelHandlerOptions
   ): ChannelHandler;
 }
@@ -29,18 +31,20 @@ export class ChannelFactory implements IChannelFactory {
   private readonly smsFactory: SmsFactory;
   private readonly chatFactory: ChatFactory;
   private readonly pushFactory: PushFactory;
+  private readonly signalsFactory: SignalsFactory;
 
   constructor() {
     this.mailFactory = new MailFactory();
     this.smsFactory = new SmsFactory();
     this.chatFactory = new ChatFactory();
     this.pushFactory = new PushFactory();
+    this.signalsFactory = new SignalsFactory();
   }
 
   // Each getHandler call creates a new provider instance
   getHandler(
     integration: Pick<IntegrationEntity, 'credentials' | 'channel' | 'providerId' | 'configurations'>,
-    channelType: 'email' | 'sms' | 'chat' | 'push',
+    channelType: 'email' | 'sms' | 'chat' | 'push' | 'signals',
     options: IChannelHandlerOptions = {}
   ): ChannelHandler {
     let handler: ChannelHandler | null = null;
@@ -62,8 +66,13 @@ export class ChannelFactory implements IChannelFactory {
         handler = this.pushFactory.getHandler(integration);
         break;
       }
+      case 'signals': {
+        handler = this.signalsFactory.getHandler(integration);
+        break;
+      }
       default: {
-        throw new BadRequestException(`Channel type '${channelType}' is not supported`);
+        const exhaustiveCheck: never = channelType;
+        throw new BadRequestException(`Channel type '${exhaustiveCheck}' is not supported`);
       }
     }
 

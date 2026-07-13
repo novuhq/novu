@@ -28,6 +28,7 @@ export enum ChannelTypeEnum {
   SMS = 'sms',
   CHAT = 'chat',
   PUSH = 'push',
+  SIGNALS = 'signals',
 }
 
 export interface ITriggerPayload {

@@ -8,6 +8,7 @@ import {
   HttpRequestControlDto,
   InAppControlDto,
   PushControlDto,
+  SignalsControlDto,
   SmsControlDto,
   ThrottleControlDto,
 } from '@novu/application-generic';
@@ -135,6 +136,25 @@ export class ChatStepUpsertDto extends BaseStepConfigDto {
   controlValues?: ChatControlDto | Record<string, unknown> | null;
 }
 
+export class SignalsStepUpsertDto extends BaseStepConfigDto {
+  @ApiProperty({
+    enum: StepTypeEnum,
+    enumName: 'StepTypeEnum',
+    default: StepTypeEnum.SIGNALS,
+    description: 'Type of the step',
+  })
+  @IsEnum(StepTypeEnum)
+  readonly type: StepTypeEnum = 'signals' as StepTypeEnum;
+
+  @ApiPropertyOptional({
+    description: 'Control values for the Signals step.',
+    oneOf: [{ $ref: getSchemaPath(SignalsControlDto) }, { type: 'object', additionalProperties: true }],
+  })
+  @IsOptional()
+  @IsObject()
+  controlValues?: SignalsControlDto | Record<string, unknown> | null;
+}
+
 export class DelayStepUpsertDto extends BaseStepConfigDto {
   @ApiProperty({
     enum: StepTypeEnum,
@@ -240,6 +260,7 @@ export type StepUpsertDto =
   | SmsStepUpsertDto
   | PushStepUpsertDto
   | ChatStepUpsertDto
+  | SignalsStepUpsertDto
   | DelayStepUpsertDto
   | DigestStepUpsertDto
   | ThrottleStepUpsertDto

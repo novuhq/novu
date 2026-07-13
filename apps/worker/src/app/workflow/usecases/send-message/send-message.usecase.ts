@@ -55,6 +55,7 @@ import { SendMessageDelay } from './send-message-delay.usecase';
 import { SendMessageEmail } from './send-message-email.usecase';
 import { SendMessageInApp } from './send-message-in-app.usecase';
 import { SendMessagePush } from './send-message-push.usecase';
+import { SendMessageSignals } from './send-message-signals.usecase';
 import { SendMessageSms } from './send-message-sms.usecase';
 import { SendMessageResult, SendMessageStatus } from './send-message-type.usecase';
 import { Throttle } from './throttle';
@@ -67,6 +68,7 @@ export class SendMessage {
     private sendMessageInApp: SendMessageInApp,
     private sendMessageChat: SendMessageChat,
     private sendMessagePush: SendMessagePush,
+    private sendMessageSignals: SendMessageSignals,
     private digest: Digest,
     private createExecutionDetails: CreateExecutionDetails,
     private getSubscriberTemplatePreferenceUsecase: GetSubscriberTemplatePreference,
@@ -190,6 +192,9 @@ export class SendMessage {
       }
       case StepTypeEnum.PUSH: {
         return await this.sendMessagePush.execute(sendMessageChannelCommand);
+      }
+      case StepTypeEnum.SIGNALS: {
+        return await this.sendMessageSignals.execute(sendMessageChannelCommand);
       }
       case StepTypeEnum.DIGEST: {
         return await this.digest.execute(command);
@@ -550,7 +555,14 @@ export class SendMessage {
   }
 
   private isChannelStep(job: JobEntity) {
-    const channels = [StepTypeEnum.IN_APP, StepTypeEnum.EMAIL, StepTypeEnum.SMS, StepTypeEnum.PUSH, StepTypeEnum.CHAT];
+    const channels = [
+      StepTypeEnum.IN_APP,
+      StepTypeEnum.EMAIL,
+      StepTypeEnum.SMS,
+      StepTypeEnum.PUSH,
+      StepTypeEnum.CHAT,
+      StepTypeEnum.SIGNALS,
+    ];
 
     return !!channels.find((channel) => channel === job.type);
   }
