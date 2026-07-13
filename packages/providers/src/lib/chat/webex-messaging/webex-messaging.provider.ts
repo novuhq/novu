@@ -104,7 +104,17 @@ export class WebexMessagingProvider extends BaseProvider implements IChatProvide
       throw new Error('Webex Messaging baseUrl must be an HTTPS URL on webexapis.com');
     }
 
-    return candidateBaseUrl.replace(/\/+$/, '');
+    return this.buildNormalizedBaseUrl(parsedUrl);
+  }
+
+  private buildNormalizedBaseUrl(parsedUrl: URL): string {
+    let pathname = parsedUrl.pathname;
+
+    while (pathname.length > 1 && pathname.endsWith('/')) {
+      pathname = pathname.slice(0, -1);
+    }
+
+    return `${parsedUrl.origin}${pathname}${parsedUrl.search}${parsedUrl.hash}`;
   }
 
   private isTrustedWebexHost(hostname: string): boolean {
