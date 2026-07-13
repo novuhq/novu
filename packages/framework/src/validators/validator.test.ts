@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
+import { z as zV4 } from 'zod/v4';
 import { JsonSchema, Schema, ZodSchema } from '../types/schema.types';
 import { transformSchema, validateData } from './base.validator';
 
@@ -348,6 +349,19 @@ describe('validators', () => {
         errors: [{ message: 'Invalid input', path: '/name' }],
       });
     });
+
+    it('should validate data against a real Zod v4 schema', async () => {
+      const schema = zV4.object({ name: zV4.string() }) as unknown as ZodSchema;
+
+      const validResult = await validateData(schema, { name: 'John' });
+      expect(validResult).toEqual({ success: true, data: { name: 'John' } });
+
+      const invalidResult = await validateData(schema, { name: 123 });
+      expect(invalidResult).toEqual({
+        success: false,
+        errors: [{ message: 'Invalid input: expected string, received number', path: '/name' }],
+      });
+    });
   });
 
   describe('transformSchema', () => {
@@ -550,6 +564,22 @@ describe('validators', () => {
 
       // @ts-expect-error - we are testing the type guard
       await expect(transformSchema(schema)).rejects.toThrow('Invalid schema');
+    });
+
+    it('should transform a Zod v4 schema, which zod-to-json-schema cannot handle', async () => {
+      const schema = zV4.object({ name: zV4.string(), age: zV4.number() }) as unknown as ZodSchema;
+
+      const result = await transformSchema(schema);
+
+      expect(result).toEqual({
+        $schema: 'https://json-schema.org/draft-07/schema',
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          age: { type: 'number' },
+        },
+        required: ['name', 'age'],
+      });
     });
   });
 });
