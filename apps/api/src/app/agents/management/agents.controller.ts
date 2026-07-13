@@ -107,6 +107,7 @@ export class AgentsController {
   @Post('/')
   @ExternalApiAccessible()
   @KeylessAccessible()
+  @SdkGroupName('Agents')
   @SdkMethodName('create')
   @ApiResponse(AgentResponseDto, 201)
   @ApiOperation({
@@ -136,6 +137,7 @@ export class AgentsController {
   @Get('/')
   @ExternalApiAccessible()
   @KeylessAccessible()
+  @SdkGroupName('Agents')
   @SdkMethodName('list')
   @ApiResponse(ListAgentsResponseDto)
   @ApiOperation({
@@ -162,6 +164,7 @@ export class AgentsController {
   }
 
   @Put('/:identifier/bridge')
+  @SdkGroupName('Agents')
   @SdkMethodName('updateBridge')
   @ApiResponse(AgentResponseDto)
   @ApiOperation({
@@ -194,6 +197,7 @@ export class AgentsController {
 
   @Get('/:identifier')
   @ExternalApiAccessible()
+  @SdkGroupName('Agents')
   @SdkMethodName('retrieve')
   @ApiResponse(AgentResponseDto)
   @ApiOperation({
@@ -217,6 +221,7 @@ export class AgentsController {
 
   @Patch('/:identifier')
   @ExternalApiAccessible()
+  @SdkGroupName('Agents')
   @SdkMethodName('update')
   @ApiResponse(AgentResponseDto)
   @ApiOperation({
@@ -251,6 +256,7 @@ export class AgentsController {
 
   @Delete('/:identifier')
   @ExternalApiAccessible()
+  @SdkGroupName('Agents')
   @SdkMethodName('delete')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
