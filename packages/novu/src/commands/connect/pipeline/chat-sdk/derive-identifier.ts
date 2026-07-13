@@ -1,10 +1,14 @@
 export function deriveAgentIdentifier(name: string): string {
-  const slug = name
+  let slug = name
     .trim()
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
     .slice(0, 50);
+
+  if (slug && /^[0-9]/.test(slug)) {
+    slug = `agent-${slug}`.slice(0, 50);
+  }
 
   return slug || 'my-chat-sdk-agent';
 }

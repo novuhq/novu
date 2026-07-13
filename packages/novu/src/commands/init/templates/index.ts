@@ -89,9 +89,9 @@ export const installTemplate = async ({
 
   const renameAgent =
     (template === TemplateTypeEnum.APP_AGENT || template === TemplateTypeEnum.APP_AGENT_AI_SDK) && agentIdentifier;
-  if (renameAgent && !/^[a-z0-9]+(?:[-_][a-z0-9]+)*$/.test(agentIdentifier)) {
+  if (renameAgent && !/^[a-z][a-z0-9]*(?:[-_][a-z0-9]+)*$/.test(agentIdentifier)) {
     throw new Error(
-      `Invalid agent identifier: "${agentIdentifier}". Must be a lowercase slug (a-z, 0-9, hyphens, underscores).`
+      `Invalid agent identifier: "${agentIdentifier}". Must be a lowercase slug starting with a letter (a-z, 0-9, hyphens, underscores).`
     );
   }
 
