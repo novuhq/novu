@@ -1,4 +1,5 @@
 import { ChangeEntityTypeEnum } from '@novu/shared';
+import { ClientSession } from 'mongoose';
 
 import { EnforceEnvOrOrgIds } from '../../types/enforce';
 import { BaseRepository } from '../base-repository';
@@ -15,7 +16,8 @@ export class ChangeRepository extends BaseRepository<ChangeDBModel, ChangeEntity
   public async getEntityChanges(
     organizationId: string,
     entityType: ChangeEntityTypeEnum,
-    entityId: string
+    entityId: string,
+    session?: ClientSession | null
   ): Promise<ChangeEntity[]> {
     return await this.find(
       {
@@ -26,17 +28,27 @@ export class ChangeRepository extends BaseRepository<ChangeDBModel, ChangeEntity
       '',
       {
         sort: { createdAt: 1 },
+        session,
       }
     );
   }
 
-  public async getChangeId(environmentId: string, entityType: ChangeEntityTypeEnum, entityId: string): Promise<string> {
-    const change = await this.findOne({
-      _environmentId: environmentId,
-      _entityId: entityId,
-      type: entityType,
-      enabled: false,
-    });
+  public async getChangeId(
+    environmentId: string,
+    entityType: ChangeEntityTypeEnum,
+    entityId: string,
+    session?: ClientSession | null
+  ): Promise<string> {
+    const change = await this.findOne(
+      {
+        _environmentId: environmentId,
+        _entityId: entityId,
+        type: entityType,
+        enabled: false,
+      },
+      undefined,
+      { session }
+    );
 
     if (change?._id) {
       return change._id;
@@ -72,7 +84,8 @@ export class ChangeRepository extends BaseRepository<ChangeDBModel, ChangeEntity
   public async getParentId(
     environmentId: string,
     entityType: ChangeEntityTypeEnum,
-    entityId: string
+    entityId: string,
+    session?: ClientSession | null
   ): Promise<string | null> {
     const change = await this.findOne(
       {
@@ -82,7 +95,8 @@ export class ChangeRepository extends BaseRepository<ChangeDBModel, ChangeEntity
         enabled: false,
         _parentId: { $exists: true },
       },
-      '_parentId'
+      '_parentId',
+      { session }
     );
     if (change?._parentId) {
       return change._parentId;

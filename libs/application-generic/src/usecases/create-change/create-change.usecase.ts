@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { ChangeRepository } from '@novu/dal';
+import { ChangeRepository, ClientSession } from '@novu/dal';
 import { applyDiff, getDiff, rdiffResult } from 'recursive-diff';
 
 import { CreateChangeCommand } from './create-change.command';
@@ -14,13 +14,13 @@ function sanitizeDiff(diff: unknown): rdiffResult[] {
 export class CreateChange {
   constructor(private changeRepository: ChangeRepository) {}
 
-  async execute(command: CreateChangeCommand) {
+  async execute(command: CreateChangeCommand, session?: ClientSession | null) {
     const itemId = command.item._id;
     if (!itemId) {
       throw new BadRequestException('Item must have an _id to create a change');
     }
 
-    const changes = await this.changeRepository.getEntityChanges(command.organizationId, command.type, itemId);
+    const changes = await this.changeRepository.getEntityChanges(command.organizationId, command.type, itemId, session);
     const aggregatedItem = changes
       .filter((change) => change.enabled)
       .reduce((prev, change) => {
@@ -32,10 +32,14 @@ export class CreateChange {
 
     const changePayload = getDiff(aggregatedItem, command.item, true);
 
-    const change = await this.changeRepository.findOne({
-      _environmentId: command.environmentId,
-      _id: command.changeId,
-    });
+    const change = await this.changeRepository.findOne(
+      {
+        _environmentId: command.environmentId,
+        _id: command.changeId,
+      },
+      undefined,
+      { session }
+    );
 
     if (change) {
       change.change = changePayload;
@@ -44,23 +48,27 @@ export class CreateChange {
         { _environmentId: command.environmentId, _id: command.changeId },
         {
           $set: change,
-        }
+        },
+        { session }
       );
 
       return change;
     }
 
-    const item = await this.changeRepository.create({
-      _organizationId: command.organizationId,
-      _environmentId: command.environmentId,
-      _creatorId: command.userId,
-      change: changePayload,
-      type: command.type,
-      _entityId: itemId,
-      enabled: false,
-      _parentId: command.parentChangeId,
-      _id: command.changeId,
-    });
+    const item = await this.changeRepository.create(
+      {
+        _organizationId: command.organizationId,
+        _environmentId: command.environmentId,
+        _creatorId: command.userId,
+        change: changePayload,
+        type: command.type,
+        _entityId: itemId,
+        enabled: false,
+        _parentId: command.parentChangeId,
+        _id: command.changeId,
+      },
+      { session }
+    );
 
     return item;
   }

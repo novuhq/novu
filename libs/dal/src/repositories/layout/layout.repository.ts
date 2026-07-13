@@ -93,14 +93,19 @@ export class LayoutRepository extends BaseRepository<LayoutDBModel, LayoutEntity
     });
   }
 
-  async deleteLayout(_id: LayoutId, _environmentId: EnvironmentId, _organizationId: OrganizationId): Promise<void> {
+  async deleteLayout(
+    _id: LayoutId,
+    _environmentId: EnvironmentId,
+    _organizationId: OrganizationId,
+    options: { session?: ClientSession | null } = {}
+  ): Promise<void> {
     const deleteQuery: LayoutQuery = {
       _id,
       _environmentId,
       _organizationId,
     };
 
-    const result = await this.layout.delete(deleteQuery);
+    const result = await this.layout.delete(deleteQuery, options);
 
     if (result.modifiedCount !== 1) {
       throw new DalException(
@@ -172,7 +177,8 @@ export class LayoutRepository extends BaseRepository<LayoutDBModel, LayoutEntity
     _id: LayoutId,
     _environmentId: EnvironmentId,
     _organizationId: OrganizationId,
-    isDefault: boolean
+    isDefault: boolean,
+    options: { session?: ClientSession | null } = {}
   ): Promise<void> {
     const updated = await this.update(
       {
@@ -182,10 +188,11 @@ export class LayoutRepository extends BaseRepository<LayoutDBModel, LayoutEntity
       },
       {
         isDefault,
-      }
+      },
+      options
     );
 
-    if (updated.matched === 0 || updated.modified === 0) {
+    if (updated.matched === 0) {
       throw new DalException(
         `Update of layout ${_id} in environment ${_environmentId} was not performed properly. Not able to set 'isDefault' to ${isDefault}`
       );

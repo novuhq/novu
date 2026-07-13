@@ -1,4 +1,4 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import {
   AnalyticsService,
@@ -7,7 +7,7 @@ import {
   LayoutResponseDto,
   PinoLogger,
 } from '@novu/application-generic';
-import { ControlValuesRepository, LayoutRepository, LocalizationResourceEnum } from '@novu/dal';
+import { ClientSession, ControlValuesRepository, LayoutRepository, LocalizationResourceEnum } from '@novu/dal';
 import { ControlValuesLevelEnum } from '@novu/shared';
 import { DeleteLayoutCommand } from './delete-layout.command';
 
@@ -42,21 +42,29 @@ export class DeleteLayoutUseCase {
       );
     }
 
-    await this.removeLayoutReferencesFromStepControls({
-      layoutId: layout.layoutId!,
-      environmentId,
-      organizationId,
-    });
+    await this.layoutRepository.withTransaction(async (session) => {
+      await this.removeLayoutReferencesFromStepControls(
+        {
+          layoutId: layout.layoutId!,
+          environmentId,
+          organizationId,
+        },
+        session
+      );
 
-    await this.deleteTranslationGroup(layout, command);
+      await this.deleteTranslationGroup(layout, command, session);
 
-    await this.layoutRepository.deleteLayout(layout._id!, environmentId, organizationId);
+      await this.layoutRepository.deleteLayout(layout._id!, environmentId, organizationId, { session });
 
-    await this.controlValuesRepository.delete({
-      _environmentId: environmentId,
-      _organizationId: organizationId,
-      _layoutId: layout._id!,
-      level: ControlValuesLevelEnum.LAYOUT_CONTROLS,
+      await this.controlValuesRepository.delete(
+        {
+          _environmentId: environmentId,
+          _organizationId: organizationId,
+          _layoutId: layout._id!,
+          level: ControlValuesLevelEnum.LAYOUT_CONTROLS,
+        },
+        { session }
+      );
     });
 
     this.analyticsService.track('Delete layout - [Layouts]', userId, {
@@ -66,15 +74,18 @@ export class DeleteLayoutUseCase {
     });
   }
 
-  private async removeLayoutReferencesFromStepControls({
-    layoutId,
-    environmentId,
-    organizationId,
-  }: {
-    layoutId: string;
-    environmentId: string;
-    organizationId: string;
-  }): Promise<void> {
+  private async removeLayoutReferencesFromStepControls(
+    {
+      layoutId,
+      environmentId,
+      organizationId,
+    }: {
+      layoutId: string;
+      environmentId: string;
+      organizationId: string;
+    },
+    session: ClientSession | null
+  ): Promise<void> {
     await this.controlValuesRepository.update(
       {
         level: ControlValuesLevelEnum.STEP_CONTROLS,
@@ -82,11 +93,16 @@ export class DeleteLayoutUseCase {
         _organizationId: organizationId,
         'controls.layoutId': layoutId,
       },
-      { $unset: { 'controls.layoutId': '' } }
+      { $unset: { 'controls.layoutId': '' } },
+      { session }
     );
   }
 
-  private async deleteTranslationGroup(layout: LayoutResponseDto, command: DeleteLayoutCommand) {
+  private async deleteTranslationGroup(
+    layout: LayoutResponseDto,
+    command: DeleteLayoutCommand,
+    session: ClientSession | null
+  ) {
     const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
     const isSelfHosted = process.env.IS_SELF_HOSTED === 'true';
 
@@ -95,12 +111,7 @@ export class DeleteLayoutUseCase {
     }
 
     try {
-      const deleteTranslationGroupUseCase = this.moduleRef.get(
-        require('@novu/ee-translation')?.DeleteTranslationGroup,
-        {
-          strict: false,
-        }
-      );
+      const deleteTranslationGroupUseCase = this.getDeleteTranslationGroupUseCase();
 
       await deleteTranslationGroupUseCase.execute({
         resourceId: layout.layoutId,
@@ -108,15 +119,29 @@ export class DeleteLayoutUseCase {
         organizationId: command.organizationId,
         environmentId: command.environmentId,
         userId: command.userId,
+        session,
       });
     } catch (error) {
-      this.logger.error(`Failed to delete translations for layout`, {
-        layoutId: layout.layoutId,
-        organizationId: command.organizationId,
-        error: error instanceof Error ? error.message : String(error),
-      });
+      if (error instanceof NotFoundException) {
+        return;
+      }
 
-      // translation group might not be present, so we can ignore the error
+      this.logger.error(
+        {
+          layoutId: layout.layoutId,
+          organizationId: command.organizationId,
+          error: error instanceof Error ? error.message : String(error),
+        },
+        `Failed to delete translations for layout`
+      );
+
+      throw error;
     }
+  }
+
+  private getDeleteTranslationGroupUseCase() {
+    return this.moduleRef.get(require('@novu/ee-translation')?.DeleteTranslationGroup, {
+      strict: false,
+    });
   }
 }

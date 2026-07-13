@@ -1,4 +1,4 @@
-import { ConflictException } from '@nestjs/common';
+import { ConflictException, NotFoundException } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { AnalyticsService, GetLayoutUseCase, PinoLogger } from '@novu/application-generic';
 import { ControlValuesRepository, LayoutRepository } from '@novu/dal';
@@ -15,7 +15,9 @@ describe('DeleteLayoutUseCase', () => {
   let analyticsServiceMock: sinon.SinonStubbedInstance<AnalyticsService>;
   let moduleRefMock: sinon.SinonStubbedInstance<ModuleRef>;
   let pinoLoggerMock: sinon.SinonStubbedInstance<PinoLogger>;
+  let deleteTranslationGroupExecuteMock: sinon.SinonStub;
   let deleteLayoutUseCase: DeleteLayoutUseCase;
+  const mockSession = { id: 'session_id' };
 
   const mockUser = {
     _id: 'user_id',
@@ -44,40 +46,16 @@ describe('DeleteLayoutUseCase', () => {
     name: 'Default Layout',
   };
 
-  const mockStepControlValues = [
-    {
-      _id: 'step_control_1',
-      _environmentId: 'env_id',
-      _organizationId: 'org_id',
-      level: ControlValuesLevelEnum.STEP_CONTROLS,
-      controls: {
-        email: {
-          layoutId: 'layout_id',
-          subject: 'Test Subject',
-        },
-      },
-    },
-    {
-      _id: 'step_control_2',
-      _environmentId: 'env_id',
-      _organizationId: 'org_id',
-      level: ControlValuesLevelEnum.STEP_CONTROLS,
-      controls: {
-        email: {
-          layoutId: 'layout_id',
-          body: 'Test Body',
-        },
-      },
-    },
-  ];
-
   beforeEach(() => {
     getLayoutUseCaseMock = sinon.createStubInstance(GetLayoutUseCase);
     layoutRepositoryMock = sinon.createStubInstance(LayoutRepository);
     controlValuesRepositoryMock = sinon.createStubInstance(ControlValuesRepository);
     analyticsServiceMock = sinon.createStubInstance(AnalyticsService);
     pinoLoggerMock = sinon.createStubInstance(PinoLogger);
-    moduleRefMock = sinon.createStubInstance(ModuleRef);
+    deleteTranslationGroupExecuteMock = sinon.stub().resolves();
+    moduleRefMock = {
+      get: sinon.stub().returns({ execute: deleteTranslationGroupExecuteMock }),
+    } as any;
 
     deleteLayoutUseCase = new DeleteLayoutUseCase(
       getLayoutUseCaseMock as any,
@@ -87,9 +65,13 @@ describe('DeleteLayoutUseCase', () => {
       moduleRefMock as any,
       pinoLoggerMock as any
     );
+    sinon.stub(deleteLayoutUseCase as any, 'getDeleteTranslationGroupUseCase').returns({
+      execute: deleteTranslationGroupExecuteMock,
+    });
 
     // Default mocks
     getLayoutUseCaseMock.execute.resolves(mockLayout as any);
+    layoutRepositoryMock.withTransaction.callsFake(async (callback: any) => await callback(mockSession));
     controlValuesRepositoryMock.update.resolves({ matched: 2, modified: 2 } as any);
     controlValuesRepositoryMock.delete.resolves({} as any);
     layoutRepositoryMock.deleteLayout.resolves();
@@ -120,7 +102,12 @@ describe('DeleteLayoutUseCase', () => {
 
       // Verify layout was deleted from repository
       expect(layoutRepositoryMock.deleteLayout.calledOnce).to.be.true;
-      expect(layoutRepositoryMock.deleteLayout.firstCall.args).to.deep.equal(['layout_id', 'env_id', 'org_id']);
+      expect(layoutRepositoryMock.deleteLayout.firstCall.args).to.deep.equal([
+        'layout_id',
+        'env_id',
+        'org_id',
+        { session: mockSession },
+      ]);
 
       // Verify control values were deleted
       expect(controlValuesRepositoryMock.delete.calledOnce).to.be.true;
@@ -130,6 +117,7 @@ describe('DeleteLayoutUseCase', () => {
         _layoutId: 'layout_id',
         level: ControlValuesLevelEnum.LAYOUT_CONTROLS,
       });
+      expect(controlValuesRepositoryMock.delete.firstCall.args[1]).to.deep.equal({ session: mockSession });
     });
 
     it('should throw ConflictException when trying to delete default layout', async () => {
@@ -175,6 +163,7 @@ describe('DeleteLayoutUseCase', () => {
       expect(controlValuesRepositoryMock.update.firstCall.args[1]).to.deep.equal({
         $unset: { 'controls.layoutId': '' },
       });
+      expect(controlValuesRepositoryMock.update.firstCall.args[2]).to.deep.equal({ session: mockSession });
     });
 
     it('should handle case where no step controls reference the layout', async () => {
@@ -289,6 +278,78 @@ describe('DeleteLayoutUseCase', () => {
         expect.fail('Should have thrown an error');
       } catch (thrownError) {
         expect(thrownError.message).to.equal('Delete error');
+      }
+    });
+
+    it('should propagate error from layout control values cleanup', async () => {
+      const error = new Error('Control values cleanup failed');
+      controlValuesRepositoryMock.delete.rejects(error);
+
+      const command = DeleteLayoutCommand.create({
+        layoutIdOrInternalId: 'layout_identifier',
+        userId: mockUser._id,
+        environmentId: mockUser.environmentId,
+        organizationId: mockUser.organizationId,
+      });
+
+      try {
+        await deleteLayoutUseCase.execute(command);
+        expect.fail('Should have thrown an error');
+      } catch (thrownError) {
+        expect(thrownError).to.equal(error);
+        expect(analyticsServiceMock.track.called).to.be.false;
+      }
+    });
+
+    it('should propagate translation deletion errors', async () => {
+      const originalNovuEnterprise = process.env.NOVU_ENTERPRISE;
+      process.env.NOVU_ENTERPRISE = 'true';
+      deleteTranslationGroupExecuteMock.rejects(new Error('Translation service unavailable'));
+
+      const command = DeleteLayoutCommand.create({
+        layoutIdOrInternalId: 'layout_identifier',
+        userId: mockUser._id,
+        environmentId: mockUser.environmentId,
+        organizationId: mockUser.organizationId,
+      });
+
+      try {
+        await deleteLayoutUseCase.execute(command);
+        expect.fail('Should have thrown an error');
+      } catch (error) {
+        expect(error.message).to.equal('Translation service unavailable');
+        expect(layoutRepositoryMock.deleteLayout.called).to.be.false;
+        expect(deleteTranslationGroupExecuteMock.firstCall.args[0].session).to.equal(mockSession);
+      } finally {
+        if (originalNovuEnterprise === undefined) {
+          delete process.env.NOVU_ENTERPRISE;
+        } else {
+          process.env.NOVU_ENTERPRISE = originalNovuEnterprise;
+        }
+      }
+    });
+
+    it('should ignore a missing translation group', async () => {
+      const originalNovuEnterprise = process.env.NOVU_ENTERPRISE;
+      process.env.NOVU_ENTERPRISE = 'true';
+      deleteTranslationGroupExecuteMock.rejects(new NotFoundException('Translation group not found'));
+
+      const command = DeleteLayoutCommand.create({
+        layoutIdOrInternalId: 'layout_identifier',
+        userId: mockUser._id,
+        environmentId: mockUser.environmentId,
+        organizationId: mockUser.organizationId,
+      });
+
+      try {
+        await deleteLayoutUseCase.execute(command);
+        expect(layoutRepositoryMock.deleteLayout.calledOnce).to.be.true;
+      } finally {
+        if (originalNovuEnterprise === undefined) {
+          delete process.env.NOVU_ENTERPRISE;
+        } else {
+          process.env.NOVU_ENTERPRISE = originalNovuEnterprise;
+        }
       }
     });
 

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { AnalyticsService, GetLayoutUseCaseV0, PinoLogger } from '@novu/application-generic';
-import { ChangeRepository, LayoutRepository } from '@novu/dal';
+import { ChangeRepository, ClientSession, LayoutRepository } from '@novu/dal';
 import { ChangeEntityTypeEnum, ResourceOriginEnum } from '@novu/shared';
 
 import { EnvironmentId, LayoutId, OrganizationId } from '../../types';
@@ -33,75 +33,102 @@ export class SetDefaultLayoutUseCase {
       origin: command.origin,
     });
 
-    const existingDefaultLayoutId = await this.findExistingDefaultLayoutId(layout._id as string, command, isV2Layout);
+    let existingDefaultLayoutId: LayoutId | undefined;
+    await this.layoutRepository.withTransaction(async (session) => {
+      existingDefaultLayoutId = await this.findExistingDefaultLayoutId(
+        layout._id as string,
+        command,
+        isV2Layout,
+        session
+      );
 
-    if (!existingDefaultLayoutId) {
-      await this.createDefaultChange(command, isV2Layout);
+      if (existingDefaultLayoutId) {
+        await this.setIsDefaultForLayout(
+          existingDefaultLayoutId,
+          command.environmentId,
+          command.organizationId,
+          false,
+          session
+        );
+      }
 
-      return;
-    }
+      await this.setIsDefaultForLayout(
+        layout._id as string,
+        command.environmentId,
+        command.organizationId,
+        true,
+        session
+      );
 
-    try {
-      await this.setIsDefaultForLayout(existingDefaultLayoutId, command.environmentId, command.organizationId, false);
-
-      if (!isV2Layout) {
-        const existingParentChangeId = await this.getParentChangeId(command.environmentId, existingDefaultLayoutId);
+      if (!isV2Layout && existingDefaultLayoutId) {
+        const existingParentChangeId = await this.getParentChangeId(
+          command.environmentId,
+          existingDefaultLayoutId,
+          session
+        );
         const previousDefaultLayoutChangeId = await this.changeRepository.getChangeId(
           command.environmentId,
           ChangeEntityTypeEnum.DEFAULT_LAYOUT,
-          existingDefaultLayoutId
+          existingDefaultLayoutId,
+          session
         );
 
         await this.createLayoutChangeForPreviousDefault(
           command,
           existingDefaultLayoutId,
           previousDefaultLayoutChangeId,
-          isV2Layout
+          isV2Layout,
+          session
         );
 
-        await this.setIsDefaultForLayout(layout._id as string, command.environmentId, command.organizationId, true);
         await this.createDefaultChange(
           {
             ...command,
             parentChangeId: existingParentChangeId || previousDefaultLayoutChangeId,
           },
-          isV2Layout
+          isV2Layout,
+          session
         );
+      } else {
+        await this.createDefaultChange(command, isV2Layout, session);
       }
+    });
 
-      this.analyticsService.track('[Layout] - Set default layout', command.userId, {
-        _organizationId: command.organizationId,
-        _environmentId: command.environmentId,
-        newDefaultLayoutId: layout._id,
-        previousDefaultLayout: existingDefaultLayoutId,
-      });
-    } catch (error) {
-      this.logger.error({ err: error });
-      // TODO: Rollback through transactions
-    }
+    this.analyticsService.track('[Layout] - Set default layout', command.userId, {
+      _organizationId: command.organizationId,
+      _environmentId: command.environmentId,
+      newDefaultLayoutId: layout._id,
+      previousDefaultLayout: existingDefaultLayoutId,
+    });
   }
 
   private async createLayoutChangeForPreviousDefault(
     command: SetDefaultLayoutCommand,
     layoutId: LayoutId,
     changeId: string,
-    isV2Layout: boolean
+    isV2Layout: boolean,
+    session: ClientSession | null
   ) {
-    await this.createDefaultChange({ ...command, layoutId, changeId }, isV2Layout);
+    await this.createDefaultChange({ ...command, layoutId, changeId }, isV2Layout, session);
   }
 
   private async findExistingDefaultLayoutId(
     layoutId: LayoutId,
     command: SetDefaultLayoutCommand,
-    isV2Layout: boolean
+    isV2Layout: boolean,
+    session: ClientSession | null
   ): Promise<LayoutId | undefined> {
-    const defaultLayout = await this.layoutRepository.findOne({
-      _environmentId: command.environmentId,
-      _organizationId: command.organizationId,
-      isDefault: true,
-      ...(isV2Layout ? { type: command.type, origin: command.origin } : {}),
-      _id: { $ne: layoutId },
-    });
+    const defaultLayout = await this.layoutRepository.findOne(
+      {
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+        isDefault: true,
+        ...(isV2Layout ? { type: command.type, origin: command.origin } : {}),
+        _id: { $ne: layoutId },
+      },
+      undefined,
+      { session }
+    );
 
     if (!defaultLayout) {
       return undefined;
@@ -114,12 +141,17 @@ export class SetDefaultLayoutUseCase {
     layoutId: LayoutId,
     environmentId: EnvironmentId,
     organizationId: OrganizationId,
-    isDefault: boolean
+    isDefault: boolean,
+    session: ClientSession | null
   ): Promise<void> {
-    await this.layoutRepository.updateIsDefault(layoutId, environmentId, organizationId, isDefault);
+    await this.layoutRepository.updateIsDefault(layoutId, environmentId, organizationId, isDefault, { session });
   }
 
-  private async createDefaultChange(command: CreateDefaultLayoutChangeCommand, isV2Layout: boolean) {
+  private async createDefaultChange(
+    command: CreateDefaultLayoutChangeCommand,
+    isV2Layout: boolean,
+    session: ClientSession | null
+  ) {
     if (isV2Layout) {
       return;
     }
@@ -133,14 +165,15 @@ export class SetDefaultLayoutUseCase {
       parentChangeId: command.parentChangeId,
     });
 
-    await this.createDefaultLayoutChange.execute(createLayoutChangeCommand);
+    await this.createDefaultLayoutChange.execute(createLayoutChangeCommand, session);
   }
 
-  private async getParentChangeId(environmentId: string, layoutId: string) {
+  private async getParentChangeId(environmentId: string, layoutId: string, session: ClientSession | null) {
     const parentChangeId = await this.changeRepository.getParentId(
       environmentId,
       ChangeEntityTypeEnum.DEFAULT_LAYOUT,
-      layoutId
+      layoutId,
+      session
     );
 
     return parentChangeId;

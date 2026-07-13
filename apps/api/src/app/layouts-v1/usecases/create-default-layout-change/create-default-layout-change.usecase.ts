@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { CreateChange, CreateChangeCommand, LayoutDtoV0 } from '@novu/application-generic';
-import { ChangeRepository, LayoutEntity, LayoutRepository } from '@novu/dal';
+import { ChangeRepository, ClientSession, LayoutEntity, LayoutRepository } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
 import { FindDeletedLayoutCommand, FindDeletedLayoutUseCase } from '../find-deleted-layout';
 import { CreateDefaultLayoutChangeCommand } from './create-default-layout-change.command';
@@ -19,14 +19,18 @@ export class CreateDefaultLayoutChangeUseCase {
     private changeRepository: ChangeRepository
   ) {}
 
-  async execute(command: CreateDefaultLayoutChangeCommand): Promise<void> {
-    let item: LayoutEntity | LayoutDtoV0 | null = await this.layoutRepository.findOne({
-      _id: command.layoutId,
-      _environmentId: command.environmentId,
-      _organizationId: command.organizationId,
-    });
+  async execute(command: CreateDefaultLayoutChangeCommand, session?: ClientSession | null): Promise<void> {
+    let item: LayoutEntity | LayoutDtoV0 | null = await this.layoutRepository.findOne(
+      {
+        _id: command.layoutId,
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+      },
+      undefined,
+      { session }
+    );
 
-    const changeId = command.changeId || (await this.getChangeId(command));
+    const changeId = command.changeId || (await this.getChangeId(command, session));
 
     if (!item) {
       item = await this.findDeletedLayout.execute(FindDeletedLayoutCommand.create(command));
@@ -42,16 +46,18 @@ export class CreateDefaultLayoutChangeUseCase {
           parentChangeId: command.parentChangeId,
           changeId,
           item,
-        })
+        }),
+        session
       );
     }
   }
 
-  private async getChangeId(command: GetChangeId) {
+  private async getChangeId(command: GetChangeId, session?: ClientSession | null) {
     return await this.changeRepository.getChangeId(
       command.environmentId,
       ChangeEntityTypeEnum.DEFAULT_LAYOUT,
-      command.layoutId
+      command.layoutId,
+      session
     );
   }
 }
