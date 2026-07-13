@@ -136,6 +136,7 @@ export enum ChatProviderIdEnum {
   Slack = 'slack',
   Discord = 'discord',
   MsTeams = 'msteams',
+  WebexMessaging = 'webex-messaging',
   Mattermost = 'mattermost',
   Ryver = 'ryver',
   Zulip = 'zulip',
@@ -147,6 +148,7 @@ export enum ChatProviderIdEnum {
   ChatWebhook = 'chat-webhook',
   Novu = 'novu-slack',
   Telegram = 'telegram',
+  Sendblue = 'sendblue',
 }
 
 export enum PushProviderIdEnum {

@@ -14,6 +14,8 @@ import {
   SlackChannelEndpointDto,
   SlackUserEndpointDto,
   TelegramChatEndpointDto,
+  WebexPersonEndpointDto,
+  WebexRoomEndpointDto,
   WebhookEndpointDto,
 } from './endpoint-types.dto';
 
@@ -84,6 +86,8 @@ export class GetChannelEndpointResponseDto {
       { $ref: getSchemaPath(MsTeamsChannelEndpointDto) },
       { $ref: getSchemaPath(MsTeamsUserEndpointDto) },
       { $ref: getSchemaPath(TelegramChatEndpointDto) },
+      { $ref: getSchemaPath(WebexRoomEndpointDto) },
+      { $ref: getSchemaPath(WebexPersonEndpointDto) },
       { $ref: getSchemaPath(LineUserEndpointDto) },
     ],
   })
@@ -95,6 +99,8 @@ export class GetChannelEndpointResponseDto {
     | MsTeamsChannelEndpointDto
     | MsTeamsUserEndpointDto
     | TelegramChatEndpointDto
+    | WebexRoomEndpointDto
+    | WebexPersonEndpointDto
     | LineUserEndpointDto;
 
   @ApiProperty({

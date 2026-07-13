@@ -13,6 +13,7 @@ import { handleIntegrationError } from '@/components/integrations/components/uti
 import { cleanCredentials } from '@/components/integrations/components/utils/helpers';
 import type { IntegrationFormData } from '@/components/integrations/types';
 import { Button, buttonVariants } from '@/components/primitives/button';
+import { CopyButton } from '@/components/primitives/copy-button';
 import { showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { ExternalLink } from '@/components/shared/external-link';
 import { useEnvironment } from '@/context/environment/hooks';
@@ -275,6 +276,25 @@ export function SetupButton({
   );
 }
 
+/** Read-only, copyable value row used by manual webhook fallback panels (callback URL, secrets, tokens). */
+export function ReadOnlyValueRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex w-full max-w-[320px] flex-col gap-1.5">
+      <p className="text-text-sub text-label-xs font-medium leading-5">{label}</p>
+      <div className="border-stroke-soft bg-bg-white flex h-7 items-center overflow-hidden rounded-md border shadow-xs">
+        <input
+          type="text"
+          readOnly
+          value={value}
+          aria-label={label}
+          className="text-text-soft min-w-0 flex-1 truncate bg-transparent px-2 font-mono text-[12px] leading-4 outline-none"
+        />
+        <CopyButton valueToCopy={value} size="xs" className="border-stroke-soft shrink-0 border-l" />
+      </div>
+    </div>
+  );
+}
+
 export function ListeningStatusView({
   connected,
   connectedTitle = 'Connected',
@@ -464,6 +484,8 @@ export function IntegrationCredentialsSidebar({
   agentIdentifier,
   testSubscriberId,
   submitLabel,
+  webhookUrl,
+  webhookSecret,
 }: {
   integrationId: string;
   isOpen: boolean;
@@ -479,6 +501,13 @@ export function IntegrationCredentialsSidebar({
   /** Quickstart test subscriber for Telegram mobile `/start` deep links. */
   testSubscriberId?: string | null;
   submitLabel?: string;
+  /**
+   * Read-only webhook details shown below the credentials form. Kept out of
+   * the inline setup steps so sensitive values (the secret in particular)
+   * only surface here, in the provider's own details/edit view.
+   */
+  webhookUrl?: string;
+  webhookSecret?: string;
 }) {
   const { integrations } = useFetchIntegrations();
   const { mutateAsync: updateIntegration, isPending: isUpdating } = useUpdateIntegration();
@@ -550,6 +579,13 @@ export function IntegrationCredentialsSidebar({
           testSubscriberId={testSubscriberId}
           onFormStateChange={setFormState}
         />
+        {webhookUrl ? (
+          <div className="flex flex-col gap-2 border-t p-3">
+            <p className="text-text-sub text-label-xs font-medium">Webhook</p>
+            <ReadOnlyValueRow label="Callback URL" value={webhookUrl} />
+            {webhookSecret ? <ReadOnlyValueRow label="Webhook Secret" value={webhookSecret} /> : null}
+          </div>
+        ) : null}
       </div>
 
       <div className="bg-background flex justify-end gap-2 border-t p-3">

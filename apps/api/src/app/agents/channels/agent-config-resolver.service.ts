@@ -225,6 +225,18 @@ export class AgentConfigResolver {
       throw new NotFoundException();
     }
 
+    // Same defense-in-depth as Telegram: ConfigureSendblueWebhook is the only place that
+    // provisions credentials.token (the sb-signing-secret shared secret). Without it the
+    // adapter has no secret to verify inbound webhooks against, so reject early and keep the
+    // public endpoint indistinguishable from "unknown agent / unknown integration".
+    if (platform === AgentPlatformEnum.SENDBLUE && !credentials.token) {
+      this.logger.warn(
+        { agentId, integrationIdentifier },
+        'Sendblue inbound webhook rejected: webhook secret not yet configured for this integration'
+      );
+      throw new NotFoundException();
+    }
+
     let connectionAccessToken: string | undefined;
     if (platform === AgentPlatformEnum.SLACK) {
       connectionAccessToken = await this.resolveSlackBotToken(environmentId, organizationId, integrationIdentifier);

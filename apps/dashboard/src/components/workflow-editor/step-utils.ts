@@ -1,4 +1,11 @@
-import type { RuntimeIssue, StepCreateDto, StepResponseDto, StepUpdateDto, UpdateWorkflowDto, WorkflowResponseDto } from '@novu/shared';
+import type {
+  RuntimeIssue,
+  StepCreateDto,
+  StepResponseDto,
+  StepUpdateDto,
+  UpdateWorkflowDto,
+  WorkflowResponseDto,
+} from '@novu/shared';
 import { SeverityLevelEnum, StepTypeEnum } from '@novu/shared';
 import { flatten } from 'flat';
 import { ERROR_AVATAR, INFO_AVATAR, WARNING_AVATAR } from '@/utils/avatars';

@@ -1,0 +1,100 @@
+---
+title: "Connecting your app"
+description: "Expose a bridge endpoint with serve(), register agents, and configure the project structure and environment variables Novu needs to call your handlers."
+---
+
+The **bridge** is an HTTP endpoint in your app that Novu calls when users message your agent. Your handlers run there; Novu delivers replies to the connected channel.
+
+After you scaffold or wire the bridge, Novu forwards inbound events to that URL and expects your handler code to run in your app — not in Novu's infrastructure.
+
+<Note>
+  If you completed the [Quickstart](/agents/custom-code-agent/quickstart) — via the dashboard, CLI, or AI assistant — your project already has the bridge route, agent handlers, and Novu credentials configured. The sections below explain how that wiring works, or how to add it yourself.
+</Note>
+
+## Project structure
+
+The [Quickstart](/agents/custom-code-agent/quickstart) scaffolds a Next.js project with this layout:
+
+```text
+app/
+  api/novu/route.ts        → Bridge endpoint (Novu calls this URL)
+  novu/agents/
+    index.ts               → Exports registered agents
+    support-agent.tsx      → Agent handlers (edit this)
+```
+
+Your app serves the bridge at `/api/novu`. Agent logic lives under `novu/agents/`.
+
+## `serve()` and registering agents
+
+The route file imports `serve` from a framework adapter and passes your agents:
+
+```typescript
+import { serve } from '@novu/framework/next';
+import { supportAgent } from '../../novu/agents';
+
+export const { GET, POST, OPTIONS } = serve({
+  agents: [supportAgent],
+});
+```
+
+Import `serve` from the adapter that matches your stack:
+
+| Adapter | Import |
+| --- | --- |
+| Next.js | `@novu/framework/next` |
+| Express | `@novu/framework/express` |
+| Remix | `@novu/framework/remix` |
+| SvelteKit | `@novu/framework/sveltekit` |
+| Nuxt | `@novu/framework/nuxt` |
+
+The first argument to `agent('support-bot', …)` must match the agent **Identifier** in the dashboard. To run multiple agents from one endpoint, add each export to the `agents` array.
+
+## Environment variables
+
+The CLI writes Novu credentials to `.env.local` when you scaffold:
+
+| Variable | Purpose |
+| --- | --- |
+| `NOVU_SECRET_KEY` | Authenticates your app with Novu |
+| `NOVU_API_URL` | Novu API base URL (defaults to `https://api.novu.co`) |
+
+Provider keys such as `OPENAI_API_KEY` are separate — add them when you wire your LLM.
+
+## Adding to an existing project
+
+Run `npx novu connect` from your project directory. The CLI detects whether you're starting in an empty folder or an existing app:
+
+- **Empty folder** — scaffolds a new project with the bridge route, agent handlers, and `.env.local` credentials.
+- **Existing project** — installs `@novu/framework` (and runtime packages such as `@novu/framework/ai-sdk` or `@novu/framework/langchain` when needed), writes Novu env vars, and wires what it can automatically. It may still leave handler or route wiring for you to finish, depending on your stack.
+
+For the guided onboarding flow, follow the [Quickstart](/agents/custom-code-agent/quickstart). To wire manually:
+
+1. Install `@novu/framework` (and `@novu/framework/ai-sdk` or `@novu/framework/langchain` if you use those adapters).
+2. Create a bridge route in your app and call `serve({ agents: [...] })`.
+3. Export one or more agents from `agent('your-identifier', { … })`.
+
+For local tunneling and deployment, see [Quickstart — Run your agent locally](/agents/custom-code-agent/quickstart#run-your-agent-locally) and [Going to production](/agents/custom-code-agent/going-to-production).
+
+## Related
+
+<Columns cols={2}>
+  <Card icon="zap" href="/agents/custom-code-agent/quickstart" title="Quickstart">
+    Create an agent, connect Slack, and get a reply in-thread.
+  </Card>
+  <Card icon="book-open" href="/agents/custom-code-agent/concepts" title="Concepts">
+    Understand entities, lifecycle, and handler building blocks.
+  </Card>
+  <Card icon="rocket" href="/agents/custom-code-agent/going-to-production" title="Going to production">
+    Deploy your bridge and activate production routing.
+  </Card>
+  <Card icon="sparkles" href="/agents/custom-code-agent/frameworks/ai-sdk" title="AI SDK">
+    Build end to end with `@novu/framework/ai-sdk`.
+  </Card>
+  <Card icon="link" href="/agents/custom-code-agent/frameworks/langchain" title="LangChain">
+    Build end to end with `@novu/framework/langchain`.
+  </Card>
+  <Card icon="code" href="/agents/custom-code-agent/frameworks/other" title="Other frameworks">
+    Wire handlers without the AI SDK adapter.
+  </Card>
+</Columns>

@@ -23,7 +23,8 @@ type HandshakeState =
 function isBridgeAuthenticationError(error: unknown): boolean {
   return (
     error instanceof NovuApiError &&
-    (error.status === 401 || (error.rawError as { code?: string } | undefined)?.code === BRIDGE_AUTHENTICATION_FAILED_CODE)
+    (error.status === 401 ||
+      (error.rawError as { code?: string } | undefined)?.code === BRIDGE_AUTHENTICATION_FAILED_CODE)
   );
 }
 

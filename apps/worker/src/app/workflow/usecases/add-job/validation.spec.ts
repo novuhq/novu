@@ -1,11 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { JobEntity } from '@novu/dal';
-import {
-  DigestTypeEnum,
-  DigestUnitEnum,
-  MonthlyTypeEnum,
-  StepTypeEnum,
-} from '@novu/shared';
+import { DigestTypeEnum, DigestUnitEnum, MonthlyTypeEnum, StepTypeEnum } from '@novu/shared';
 import { expect } from 'chai';
 import { validateDigest } from './validation';
 

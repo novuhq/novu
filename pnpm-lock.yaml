@@ -416,6 +416,9 @@ importers:
       '@novu/chat-adapter-email':
         specifier: workspace:*
         version: link:../../packages/chat-adapter-email
+      '@novu/chat-adapter-sendblue':
+        specifier: workspace:*
+        version: link:../../packages/chat-adapter-sendblue
       '@novu/dal':
         specifier: workspace:*
         version: link:../../libs/dal
@@ -428,6 +431,9 @@ importers:
       '@novu/notifications':
         specifier: workspace:*
         version: link:../../libs/notifications
+      '@novu/providers':
+        specifier: workspace:*
+        version: link:../../packages/providers
       '@novu/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -614,6 +620,9 @@ importers:
       sanitize-html:
         specifier: ^2.17.5
         version: 2.17.5
+      sendblue:
+        specifier: ^3.6.1
+        version: 3.10.1
       shortid:
         specifier: ^2.2.17
         version: 2.2.17
@@ -3434,6 +3443,25 @@ importers:
       typescript:
         specifier: 5.6.2
         version: 5.6.2
+
+  packages/chat-adapter-sendblue:
+    dependencies:
+      chat:
+        specifier: '>=4.31.0'
+        version: 4.31.0(zod@4.3.6)
+      chat-adapter-sendblue:
+        specifier: ^0.2.0
+        version: 0.2.0(chat@4.31.0(zod@4.3.6))
+    devDependencies:
+      rimraf:
+        specifier: ~3.0.2
+        version: 3.0.2
+      typescript:
+        specifier: 5.6.2
+        version: 5.6.2
+      vitest:
+        specifier: ^4.1.0
+        version: 4.1.9(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.1)(@types/node@22.15.13)(happy-dom@20.8.9)(jsdom@20.0.3)(vite@6.4.3(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3))
 
   packages/framework:
     dependencies:
@@ -16632,6 +16660,11 @@ packages:
   chardet@2.1.1:
     resolution: {integrity: sha512-PsezH1rqdV9VvyNhxxOW32/d75r01NY7TQCmOqomRo15ZSOKbpTFVsfjghxo6JloQUCGnH4k1LGu0R4yCLlWQQ==}
 
+  chat-adapter-sendblue@0.2.0:
+    resolution: {integrity: sha512-JKqRa5KyoBsndRrq2LuGhob1uCdO1goWAbqaSLCld3KE9q288CnEo999GdWuDVWa9yqt1uf5F9/Oe3iFkSrW2w==}
+    peerDependencies:
+      chat: '>=4.0.0'
+
   chat@4.31.0:
     resolution: {integrity: sha512-F6oJq9JUraLFkITS96/NKgwZwBfZX8aOwOj5qMs5NNwnOGHrSXZ5+osK+EA4HjzfyUEDfFTNiOSmyzgtFLpuWg==}
     engines: {node: '>=20'}
@@ -25041,6 +25074,9 @@ packages:
   send@1.2.1:
     resolution: {integrity: sha512-1gnZf7DFcoIcajTjTwjwuDjzuz4PPcY2StKPlsGAQ1+YH20IRVrBaXSWmdjowTJ6u8Rc01PoYOGHXfP1mYcZNQ==}
     engines: {node: '>= 18'}
+
+  sendblue@3.10.1:
+    resolution: {integrity: sha512-2rc9unjEZAvoCBOnMrfCX1bJfdM2fUAmuXbfa0qxzc2jeL2ZBsxA8AJ7BQcF85URSgNEDa7Og162hMKMkgsAAw==}
 
   sentence-case@2.1.1:
     resolution: {integrity: sha512-ENl7cYHaK/Ktwk5OTD+aDbQ3uC8IByu/6Bkg+HDv8Mm+XnBnppVNalcfJTNsp1ibstKh030/JKQQWglDvtKwEQ==}
@@ -41199,6 +41235,12 @@ snapshots:
       jsonpointer: 5.0.1
       leven: 3.1.0
 
+  '@stoplight/better-ajv-errors@1.0.3(ajv@8.20.0)':
+    dependencies:
+      ajv: 8.20.0
+      jsonpointer: 5.0.1
+      leven: 3.1.0
+
   '@stoplight/json-ref-readers@1.2.2(encoding@0.1.13)':
     dependencies:
       node-fetch: 2.7.0(encoding@0.1.13)
@@ -41320,15 +41362,15 @@ snapshots:
 
   '@stoplight/spectral-functions@1.10.1(encoding@0.1.13)':
     dependencies:
-      '@stoplight/better-ajv-errors': 1.0.3(ajv@8.18.0)
+      '@stoplight/better-ajv-errors': 1.0.3(ajv@8.20.0)
       '@stoplight/json': 3.21.0
       '@stoplight/spectral-core': 1.20.0(encoding@0.1.13)
       '@stoplight/spectral-formats': 1.8.2(encoding@0.1.13)
       '@stoplight/spectral-runtime': 1.1.2(encoding@0.1.13)
-      ajv: 8.18.0
-      ajv-draft-04: 1.0.0(ajv@8.18.0)
-      ajv-errors: 3.0.0(ajv@8.18.0)
-      ajv-formats: 2.1.1(ajv@8.18.0)
+      ajv: 8.20.0
+      ajv-draft-04: 1.0.0(ajv@8.20.0)
+      ajv-errors: 3.0.0(ajv@8.20.0)
+      ajv-formats: 2.1.1(ajv@8.20.0)
       lodash: 4.18.1
       tslib: 2.8.1
     transitivePeerDependencies:
@@ -41336,15 +41378,15 @@ snapshots:
 
   '@stoplight/spectral-functions@1.7.2(encoding@0.1.13)':
     dependencies:
-      '@stoplight/better-ajv-errors': 1.0.3(ajv@8.18.0)
+      '@stoplight/better-ajv-errors': 1.0.3(ajv@8.20.0)
       '@stoplight/json': 3.21.0
       '@stoplight/spectral-core': 1.20.0(encoding@0.1.13)
       '@stoplight/spectral-formats': 1.8.2(encoding@0.1.13)
       '@stoplight/spectral-runtime': 1.1.2(encoding@0.1.13)
-      ajv: 8.18.0
-      ajv-draft-04: 1.0.0(ajv@8.18.0)
-      ajv-errors: 3.0.0(ajv@8.18.0)
-      ajv-formats: 2.1.1(ajv@8.18.0)
+      ajv: 8.20.0
+      ajv-draft-04: 1.0.0(ajv@8.20.0)
+      ajv-errors: 3.0.0(ajv@8.20.0)
+      ajv-formats: 2.1.1(ajv@8.20.0)
       lodash: 4.18.1
       tslib: 2.8.1
     transitivePeerDependencies:
@@ -44197,13 +44239,17 @@ snapshots:
       '@ai-sdk/provider-utils': 5.0.5(zod@3.25.20)
       zod: 3.25.20
 
-  ajv-draft-04@1.0.0(ajv@8.18.0):
+  ajv-draft-04@1.0.0(ajv@8.20.0):
     optionalDependencies:
-      ajv: 8.18.0
+      ajv: 8.20.0
 
   ajv-errors@3.0.0(ajv@8.18.0):
     dependencies:
       ajv: 8.18.0
+
+  ajv-errors@3.0.0(ajv@8.20.0):
+    dependencies:
+      ajv: 8.20.0
 
   ajv-formats@2.1.1(ajv@8.18.0):
     optionalDependencies:
@@ -45424,6 +45470,11 @@ snapshots:
   chardet@0.7.0: {}
 
   chardet@2.1.1: {}
+
+  chat-adapter-sendblue@0.2.0(chat@4.31.0(zod@4.3.6)):
+    dependencies:
+      chat: 4.31.0(zod@4.3.6)
+      sendblue: 3.10.1
 
   chat@4.31.0(ai@6.0.50(zod@4.3.5))(zod@4.3.5):
     dependencies:
@@ -56056,6 +56107,8 @@ snapshots:
       statuses: 2.0.2
     transitivePeerDependencies:
       - supports-color
+
+  sendblue@3.10.1: {}
 
   sentence-case@2.1.1:
     dependencies:

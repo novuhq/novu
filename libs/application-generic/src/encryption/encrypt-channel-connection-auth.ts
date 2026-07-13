@@ -3,10 +3,8 @@ import { decryptApiKey, encryptApiKey } from './encrypt-provider';
 /**
  * Fields inside a `ChannelConnection.auth` object that must be encrypted at rest.
  *
- * Today the entity only models `accessToken`, but the helper is forward-compatible:
- * if a future provider adds `refreshToken`, `signingSecret`, or `clientSecret` to
- * the auth blob, those values will be encrypted/decrypted automatically by the same
- * helper without needing to touch every caller. Unknown keys are passed through
+ * Secret fields inside connection auth are encrypted/decrypted automatically by the
+ * same helper. Unknown keys, such as token expiry timestamps, are passed through
  * unchanged.
  */
 const SECURE_AUTH_FIELDS = ['accessToken', 'refreshToken', 'signingSecret', 'clientSecret'] as const;
@@ -14,6 +12,8 @@ const SECURE_AUTH_FIELDS = ['accessToken', 'refreshToken', 'signingSecret', 'cli
 export interface ChannelConnectionAuth {
   accessToken?: string;
   refreshToken?: string;
+  expiresAt?: string;
+  refreshTokenExpiresAt?: string;
   signingSecret?: string;
   clientSecret?: string;
   [key: string]: unknown;

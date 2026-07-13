@@ -140,6 +140,7 @@ export class AgentRuntimeController {
 
   @Post('/generate')
   @ApiExcludeEndpoint()
+  @ExternalApiAccessible()
   @KeylessAccessible()
   @ApiResponse(GenerateManagedAgentResponseDto)
   @ApiOperation({

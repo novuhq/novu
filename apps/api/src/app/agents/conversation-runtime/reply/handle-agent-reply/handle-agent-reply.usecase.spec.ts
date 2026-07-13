@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { HandleAgentReply } from './handle-agent-reply.usecase';
@@ -75,6 +76,28 @@ describe('HandleAgentReply - active-conversation counting', () => {
     expect(outboundGateway.deliver.calledOnce).to.equal(true);
     expect(conversationActivation.assertOutboundWithinLimit.called).to.equal(false);
     expect(conversationActivation.registerEngagement.called).to.equal(false);
+  });
+
+  it('delivers generic copy when bridge reports error: true', async () => {
+    const { usecase, baseCommand, outboundGateway, conversationActivation } = setup();
+
+    await usecase.execute({ ...baseCommand, error: true } as any);
+
+    expect(outboundGateway.deliver.calledOnce).to.equal(true);
+    expect(outboundGateway.deliver.firstCall.args[1].markdown).to.include('Something went wrong');
+    expect(conversationActivation.assertOutboundWithinLimit.called).to.equal(false);
+    expect(conversationActivation.registerEngagement.called).to.equal(false);
+  });
+
+  it('rejects error combined with other reply operations', async () => {
+    const { usecase, baseCommand } = setup();
+
+    try {
+      await usecase.execute({ ...baseCommand, error: true, toolResults: [{ toolCallId: 'x', result: 'y' }] } as any);
+      expect.fail('should have thrown');
+    } catch (err) {
+      expect(err).to.be.instanceOf(BadRequestException);
+    }
   });
 
   it('deletes platform messages for a deleteMessages-only request', async () => {

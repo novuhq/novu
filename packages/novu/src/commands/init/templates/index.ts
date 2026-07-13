@@ -74,7 +74,10 @@ export const installTemplate = async ({
 }: InstallTemplateArgs) => {
   if (!silent) console.log(bold(`Using ${packageManager}.`));
 
-  const isAgentTemplate = template === TemplateTypeEnum.APP_AGENT || template === TemplateTypeEnum.APP_AGENT_AI_SDK;
+  const isAgentTemplate =
+    template === TemplateTypeEnum.APP_AGENT ||
+    template === TemplateTypeEnum.APP_AGENT_AI_SDK ||
+    template === TemplateTypeEnum.APP_AGENT_LANGCHAIN;
 
   /**
    * Copy the template files to the target directory.
@@ -88,7 +91,10 @@ export const installTemplate = async ({
   }
 
   const renameAgent =
-    (template === TemplateTypeEnum.APP_AGENT || template === TemplateTypeEnum.APP_AGENT_AI_SDK) && agentIdentifier;
+    (template === TemplateTypeEnum.APP_AGENT ||
+      template === TemplateTypeEnum.APP_AGENT_AI_SDK ||
+      template === TemplateTypeEnum.APP_AGENT_LANGCHAIN) &&
+    agentIdentifier;
   if (renameAgent && !/^[a-z0-9]+(?:[-_][a-z0-9]+)*$/.test(agentIdentifier)) {
     throw new Error(
       `Invalid agent identifier: "${agentIdentifier}". Must be a lowercase slug (a-z, 0-9, hyphens, underscores).`
@@ -264,6 +270,11 @@ export const installTemplate = async ({
 
   if (template === TemplateTypeEnum.APP_AGENT_AI_SDK) {
     baseDependencies.ai = '^7.0.0';
+  }
+
+  if (template === TemplateTypeEnum.APP_AGENT_LANGCHAIN) {
+    baseDependencies.langchain = '^1.0.0';
+    baseDependencies['@langchain/core'] = '^1.0.0';
   }
 
   if (isChatSdkTemplate) {

@@ -675,6 +675,7 @@ function SuccessView({
     connectMode,
     chatSdkOutcome,
     aiSdkOutcome,
+    langChainOutcome,
   } = phase;
   const agentUrl = environmentSlug
     ? `${connectDashboardUrl}/env/${environmentSlug}/connect/agents/${encodeURIComponent(agent.identifier)}`
@@ -691,6 +692,7 @@ function SuccessView({
   const scaffoldMessage = resolveBridgeSetupFollowUpMessage(connectMode, {
     chatSdk: chatSdkOutcome,
     aiSdk: aiSdkOutcome,
+    langChain: langChainOutcome,
     customCode: phase.customCodeOutcome,
   });
 

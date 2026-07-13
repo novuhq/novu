@@ -63,6 +63,22 @@ const MS_TEAMS_USER: ChatEndpointTypeOption = {
   requiresConnection: true,
 };
 
+const WEBEX_ROOM: ChatEndpointTypeOption = {
+  type: ENDPOINT_TYPES.WEBEX_ROOM,
+  label: 'Webex room',
+  icon: RiHashtag,
+  skeleton: { roomId: '' },
+  requiresConnection: true,
+};
+
+const WEBEX_PERSON: ChatEndpointTypeOption = {
+  type: ENDPOINT_TYPES.WEBEX_PERSON,
+  label: 'Webex person',
+  icon: RiAtLine,
+  skeleton: { personEmail: '' },
+  requiresConnection: true,
+};
+
 const TELEGRAM_CHAT: ChatEndpointTypeOption = {
   type: ENDPOINT_TYPES.TELEGRAM_CHAT,
   label: 'Telegram chat',
@@ -82,6 +98,7 @@ const LINE_USER: ChatEndpointTypeOption = {
 const CONNECT_LINK_PROVIDERS = new Set<string>([
   ChatProviderIdEnum.Slack,
   ChatProviderIdEnum.MsTeams,
+  ChatProviderIdEnum.WebexMessaging,
   ChatProviderIdEnum.Telegram,
 ]);
 
@@ -97,6 +114,7 @@ export function supportsConnectLink(providerId: string): boolean {
 const SUPPORTED_TYPES_BY_PROVIDER: Partial<Record<string, ChatEndpointTypeOption[]>> = {
   [ChatProviderIdEnum.Slack]: [WEBHOOK, SLACK_CHANNEL, SLACK_USER],
   [ChatProviderIdEnum.MsTeams]: [WEBHOOK, MS_TEAMS_CHANNEL, MS_TEAMS_USER],
+  [ChatProviderIdEnum.WebexMessaging]: [WEBEX_ROOM, WEBEX_PERSON],
   [ChatProviderIdEnum.Telegram]: [TELEGRAM_CHAT],
   [ChatProviderIdEnum.Line]: [LINE_USER],
   [ChatProviderIdEnum.Discord]: [WEBHOOK],

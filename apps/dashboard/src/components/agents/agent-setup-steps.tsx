@@ -1,4 +1,10 @@
-import { AgentRuntimeProviderIdEnum, EmailProviderIdEnum, FeatureFlagsKeysEnum, type IIntegration } from '@novu/shared';
+import {
+  AgentRuntimeProviderIdEnum,
+  ChatProviderIdEnum,
+  EmailProviderIdEnum,
+  FeatureFlagsKeysEnum,
+  type IIntegration,
+} from '@novu/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -434,7 +440,17 @@ export function AgentSetupSteps({
     isEmailWhatsNextEnabled &&
     emailSharedInboxReady &&
     !IS_SELF_HOSTED_EE;
-  const useRolloutGate = useOnboardingRolloutGate || useEmailWhatsNextRolloutGate;
+
+  // Providers below have no "what's next" rollout phase yet, but their layer-1 connect can still
+  // land asynchronously (e.g. an inbound webhook arriving while the user is elsewhere). Hold them
+  // behind the same generic Continue step the details page uses for non-whats-next providers
+  // (`ConnectionSuccessFooter` with `hasUserRolloutPhase={false}`) instead of auto-advancing the
+  // moment they connect, so the guide stays visible with every step checked off.
+  const genericContinueGateProviders = useMemo(() => new Set<string>([ChatProviderIdEnum.Sendblue]), []);
+  const useGenericContinueGate =
+    isManagedRuntime && Boolean(guideProviderId && genericContinueGateProviders.has(guideProviderId));
+
+  const useRolloutGate = useOnboardingRolloutGate || useEmailWhatsNextRolloutGate || useGenericContinueGate;
 
   const guideLayer1Complete = guideIntegrationLink
     ? hasAgentInboundConnection(guideIntegrationLink.connectedAt)
@@ -798,7 +814,7 @@ export function AgentSetupSteps({
               <AgentIntegrationGuideTransition
                 isConnected={guideLayer1Complete}
                 providerDisplayName={resolveAgentProviderDisplayName(guideProviderId)}
-                hasUserRolloutPhase
+                hasUserRolloutPhase={useOnboardingRolloutGate || useEmailWhatsNextRolloutGate}
                 onContinued={handleRolloutContinue}
                 renderSetupView={(footer) => (
                   <>
@@ -851,6 +867,7 @@ export function AgentSetupSteps({
             sharedInboundAddress={isEmailChannelSelected ? sharedInboundAddress : undefined}
             onBridgeConnected={handleBridgeConnected}
             onAddProvider={hideAddProvider ? undefined : handleAddProvider}
+            connectorId={connectSummary?.connectorId}
           />
         </div>
       )}

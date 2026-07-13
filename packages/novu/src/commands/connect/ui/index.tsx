@@ -462,6 +462,7 @@ function createUiController(
         connectMode: result.connectMode,
         chatSdkOutcome: result.chatSdkOutcome,
         aiSdkOutcome: result.aiSdkOutcome,
+        langChainOutcome: result.langChainOutcome,
         customCodeOutcome: result.customCodeOutcome,
       });
     },

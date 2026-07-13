@@ -11,6 +11,7 @@ import { JSONSchemaDto } from '../../dtos/json-schema.dto';
 import { PreviewPayloadDto } from '../../dtos/workflow/preview-payload.dto';
 import { resolveEnvironmentVariables } from '../../encryption/encrypt-environment-variable';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
+import { StepForVariableSchema, WorkflowForVariableSchema } from '../../types/workflow-mapper.types';
 import {
   buildActorSchema,
   buildContextSchema,
@@ -24,7 +25,6 @@ import { computeResultSchema } from '../../utils/map-step-type-to-result.mapper'
 import { parsePayloadSchema } from '../../utils/parse-payload-schema';
 import { CreateVariablesObject, CreateVariablesObjectCommand } from '../create-variables-object';
 import { BuildVariableSchemaCommand, IOptimisticStepInfo } from './build-available-variable-schema.command';
-import { StepForVariableSchema, WorkflowForVariableSchema } from '../../types/workflow-mapper.types';
 
 type SelectedControlValuesFields = Pick<ControlValuesEntity, 'controls' | '_stepId'>;
 

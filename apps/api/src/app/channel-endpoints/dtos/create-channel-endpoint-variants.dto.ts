@@ -11,6 +11,8 @@ import {
   SlackChannelEndpointDto,
   SlackUserEndpointDto,
   TelegramChatEndpointDto,
+  WebexPersonEndpointDto,
+  WebexRoomEndpointDto,
   WebhookEndpointDto,
 } from './endpoint-types.dto';
 
@@ -196,6 +198,64 @@ export class CreateTelegramChatEndpointDto extends CreateChannelEndpointBaseDto 
   @ValidateNested()
   @Type(() => TelegramChatEndpointDto)
   endpoint: TelegramChatEndpointDto;
+}
+
+export class CreateWebexRoomEndpointDto extends CreateChannelEndpointBaseDto {
+  @ApiProperty({
+    description: 'The identifier of the channel connection to use for this Webex endpoint.',
+    type: String,
+    example: 'webex-connection-abc123',
+  })
+  @IsDefined()
+  @IsString()
+  connectionIdentifier: string;
+
+  @ApiProperty({
+    description: 'Type of channel endpoint',
+    enum: [ENDPOINT_TYPES.WEBEX_ROOM],
+    example: ENDPOINT_TYPES.WEBEX_ROOM,
+  })
+  @IsDefined()
+  @IsEnum([ENDPOINT_TYPES.WEBEX_ROOM])
+  type: typeof ENDPOINT_TYPES.WEBEX_ROOM;
+
+  @ApiProperty({
+    description: 'Webex room endpoint data',
+    type: WebexRoomEndpointDto,
+  })
+  @IsDefined()
+  @ValidateNested()
+  @Type(() => WebexRoomEndpointDto)
+  endpoint: WebexRoomEndpointDto;
+}
+
+export class CreateWebexPersonEndpointDto extends CreateChannelEndpointBaseDto {
+  @ApiProperty({
+    description: 'The identifier of the channel connection to use for this Webex endpoint.',
+    type: String,
+    example: 'webex-connection-abc123',
+  })
+  @IsDefined()
+  @IsString()
+  connectionIdentifier: string;
+
+  @ApiProperty({
+    description: 'Type of channel endpoint',
+    enum: [ENDPOINT_TYPES.WEBEX_PERSON],
+    example: ENDPOINT_TYPES.WEBEX_PERSON,
+  })
+  @IsDefined()
+  @IsEnum([ENDPOINT_TYPES.WEBEX_PERSON])
+  type: typeof ENDPOINT_TYPES.WEBEX_PERSON;
+
+  @ApiProperty({
+    description: 'Webex person endpoint data. Provide exactly one of personId or personEmail.',
+    type: WebexPersonEndpointDto,
+  })
+  @IsDefined()
+  @ValidateNested()
+  @Type(() => WebexPersonEndpointDto)
+  endpoint: WebexPersonEndpointDto;
 }
 
 export class CreateLineUserEndpointDto extends CreateChannelEndpointBaseDto {

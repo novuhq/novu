@@ -11,6 +11,7 @@ export type ScaffoldBridgeProjectInput = {
   template:
     | typeof TemplateTypeEnum.APP_AGENT
     | typeof TemplateTypeEnum.APP_AGENT_AI_SDK
+    | typeof TemplateTypeEnum.APP_AGENT_LANGCHAIN
     | typeof TemplateTypeEnum.APP_CHAT_SDK;
   defaultAppName: (agentIdentifier: string) => string;
   secretKey: string;
@@ -88,7 +89,9 @@ export async function scaffoldBridgeProject(input: ScaffoldBridgeProjectInput): 
   tryGitInit(root);
 
   const agentFilePath =
-    input.template === TemplateTypeEnum.APP_AGENT || input.template === TemplateTypeEnum.APP_AGENT_AI_SDK
+    input.template === TemplateTypeEnum.APP_AGENT ||
+    input.template === TemplateTypeEnum.APP_AGENT_AI_SDK ||
+    input.template === TemplateTypeEnum.APP_AGENT_LANGCHAIN
       ? path.join(root, 'app', 'novu', 'agents', `${input.agentIdentifier}.tsx`)
       : undefined;
 
