@@ -268,8 +268,7 @@ export class AgentIntegrationsController {
   }
 
   @Post('/:identifier/integrations/:integrationIdentifier/sendblue/configure-webhook')
-  @KeylessAccessible()
-  @ExternalApiAccessible()
+  @ApiExcludeEndpoint()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Configure the Sendblue receive webhook for an agent integration',
