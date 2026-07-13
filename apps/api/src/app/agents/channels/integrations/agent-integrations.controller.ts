@@ -442,6 +442,7 @@ export class AgentIntegrationsController {
 
   @Post('/:identifier/welcome-message')
   @ApiExcludeEndpoint()
+  @ExternalApiAccessible()
   @KeylessAccessible()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -472,6 +473,7 @@ export class AgentIntegrationsController {
 
   @Post('/:identifier/integrations/:integrationId/slack/setup-link')
   @ApiExcludeEndpoint()
+  @ExternalApiAccessible()
   @KeylessAccessible()
   @HttpCode(HttpStatus.OK)
   @ApiResponse(IssueSlackSetupLinkResponseDto, 200)
