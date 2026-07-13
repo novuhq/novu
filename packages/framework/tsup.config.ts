@@ -2,7 +2,17 @@ import { defineConfig, type Options } from 'tsup';
 import { version } from './package.json';
 import { type SupportedFrameworkName } from './src/internal';
 
-const frameworks: SupportedFrameworkName[] = ['h3', 'express', 'next', 'nuxt', 'sveltekit', 'remix', 'lambda', 'nest'];
+const frameworks: SupportedFrameworkName[] = [
+  'h3',
+  'hono',
+  'express',
+  'next',
+  'nuxt',
+  'sveltekit',
+  'remix',
+  'lambda',
+  'nest',
+];
 
 const baseConfig: Options = {
   entry: [

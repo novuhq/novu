@@ -151,6 +151,7 @@ Serve workflows and agents from your framework of choice:
 | `@novu/framework/nest` | NestJS |
 | `@novu/framework/express` | Express |
 | `@novu/framework/h3` | H3 / Nuxt |
+| `@novu/framework/hono` | Hono |
 | `@novu/framework/lambda` | AWS Lambda |
 | `@novu/framework/sveltekit` | SvelteKit |
 | `@novu/framework/remix` | Remix |
