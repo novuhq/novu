@@ -7,10 +7,8 @@ import { patchSubscriber } from '@/api/subscribers';
 import { useConnectSubscriber } from '@/components/connect/connect-subscriber-provider';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import { Button } from '@/components/primitives/button';
-import { CopyButton } from '@/components/primitives/copy-button';
 import { InlineToast } from '@/components/primitives/inline-toast';
 import { InputPure, InputRoot, InputWrapper } from '@/components/primitives/input';
-import { getAgentApiBaseUrl } from '@/config';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useConfigureWhatsAppWebhook } from '@/hooks/use-configure-whatsapp-webhook';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
@@ -22,11 +20,12 @@ import {
   IntegrationCredentialsSidebar,
   ListeningStatus,
   ProviderSetupStepperRail,
+  ReadOnlyValueRow,
   SetupButton,
   SetupStep,
   SetupStepperRail,
 } from './setup-guide-primitives';
-import { deriveStepStatus, hasWhatsAppUserCredentials } from './setup-guide-step-utils';
+import { buildAgentWebhookUrl, deriveStepStatus, hasWhatsAppUserCredentials } from './setup-guide-step-utils';
 
 export type WhatsAppSetupGuideProps = {
   agent: AgentResponse;
@@ -37,28 +36,6 @@ export type WhatsAppSetupGuideProps = {
 };
 
 const PHONE_PATTERN = /^\+[1-9]\d{6,14}$/;
-
-function buildAgentWebhookUrl(agentId: string, integrationIdentifier: string): string {
-  return `${getAgentApiBaseUrl()}/v1/agents/${agentId}/webhook/${integrationIdentifier}`;
-}
-
-function ReadOnlyValueRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex w-full max-w-[320px] flex-col gap-1.5">
-      <p className="text-text-sub text-label-xs font-medium leading-5">{label}</p>
-      <div className="border-stroke-soft bg-bg-white flex h-7 items-center overflow-hidden rounded-md border shadow-xs">
-        <input
-          type="text"
-          readOnly
-          value={value}
-          aria-label={label}
-          className="text-text-soft min-w-0 flex-1 truncate bg-transparent px-2 font-mono text-[12px] leading-4 outline-none"
-        />
-        <CopyButton valueToCopy={value} size="xs" className="border-stroke-soft shrink-0 border-l" />
-      </div>
-    </div>
-  );
-}
 
 type ConnectStatus =
   | { state: 'idle' }

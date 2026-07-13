@@ -20,7 +20,8 @@ import type {
 } from '../../../shared/dtos/agent-reply-payload.dto';
 import { isValidMetadataSignalKey } from '../../../shared/dtos/agent-reply-payload.dto';
 import { AgentEventEnum } from '../../../shared/enums/agent-event.enum';
-import { AgentPlatformEnum } from '../../../shared/enums/agent-platform.enum';
+import { AgentPlatformEnum, usesReplyBasedApprovals } from '../../../shared/enums/agent-platform.enum';
+import { adaptApprovalContentForReplyBasedPlatform } from '../../../shared/tool-approval/reply-based-approval';
 import {
   buildSelfHostedApprovalCard,
   type SelfHostedApprovalDescriptor,
@@ -309,6 +310,13 @@ export class HandleAgentReply {
       );
       deliverContent = built.content;
       slackNative = built.slackNative;
+    }
+
+    // Platforms without callback buttons (iMessage/SMS) cannot click Approve /
+    // Deny — strip the buttons and append explicit "Reply YES / NO" text so
+    // the user can answer the approval by texting back.
+    if (command.toolApprovalRequest && usesReplyBasedApprovals(channel.platform)) {
+      deliverContent = adaptApprovalContentForReplyBasedPlatform(deliverContent);
     }
 
     return this.outboundGateway.deliver(

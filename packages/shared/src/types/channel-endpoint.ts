@@ -13,6 +13,7 @@ export const ENDPOINT_TYPES = {
   TELEGRAM_CHAT: 'telegram_chat',
   WEBEX_ROOM: 'webex_room',
   WEBEX_PERSON: 'webex_person',
+  LINE_USER: 'line_user',
 } as const;
 
 export type ChannelEndpointType = (typeof ENDPOINT_TYPES)[keyof typeof ENDPOINT_TYPES];
@@ -32,6 +33,7 @@ export type ChannelEndpointByType = {
   [ENDPOINT_TYPES.TELEGRAM_CHAT]: { chatId: string };
   [ENDPOINT_TYPES.WEBEX_ROOM]: { roomId: string; parentId?: string };
   [ENDPOINT_TYPES.WEBEX_PERSON]: { personId: string; personEmail?: never } | { personId?: never; personEmail: string };
+  [ENDPOINT_TYPES.LINE_USER]: { userId: string };
 };
 
 export type ChannelEndpoint<T extends ChannelEndpointType = ChannelEndpointType> = {

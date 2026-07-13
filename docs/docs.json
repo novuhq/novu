@@ -188,6 +188,7 @@
                 "root": "platform/integrations/chat",
                 "pages": [
                   "platform/integrations/chat/discord",
+                  "platform/integrations/chat/line",
                   "platform/integrations/chat/mattermost",
                   "platform/integrations/chat/ms-teams",
                   "platform/integrations/chat/slack",
@@ -529,10 +530,7 @@
               {
                 "group": "Runtime",
                 "expanded": false,
-                "pages": [
-                  "api-reference/agents/update-an-agent-bridge",
-                  "api-reference/agents/send-an-agent-reply"
-                ]
+                "pages": ["api-reference/agents/update-an-agent-bridge", "api-reference/agents/send-an-agent-reply"]
               },
               {
                 "group": "Integrations",

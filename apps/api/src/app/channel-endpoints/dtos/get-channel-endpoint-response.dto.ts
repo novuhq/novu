@@ -7,6 +7,7 @@ import {
   ProvidersIdEnumConst,
 } from '@novu/shared';
 import {
+  LineUserEndpointDto,
   MsTeamsChannelEndpointDto,
   MsTeamsUserEndpointDto,
   PhoneEndpointDto,
@@ -87,6 +88,7 @@ export class GetChannelEndpointResponseDto {
       { $ref: getSchemaPath(TelegramChatEndpointDto) },
       { $ref: getSchemaPath(WebexRoomEndpointDto) },
       { $ref: getSchemaPath(WebexPersonEndpointDto) },
+      { $ref: getSchemaPath(LineUserEndpointDto) },
     ],
   })
   endpoint:
@@ -98,7 +100,8 @@ export class GetChannelEndpointResponseDto {
     | MsTeamsUserEndpointDto
     | TelegramChatEndpointDto
     | WebexRoomEndpointDto
-    | WebexPersonEndpointDto;
+    | WebexPersonEndpointDto
+    | LineUserEndpointDto;
 
   @ApiProperty({
     description: 'The timestamp indicating when the channel endpoint was created, in ISO 8601 format.',

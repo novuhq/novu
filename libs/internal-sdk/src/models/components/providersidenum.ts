@@ -9,6 +9,7 @@ import { ClosedEnum } from "../../types/enums.js";
  * Provider ID of the job
  */
 export const ProvidersIdEnum = {
+  Anypost: "anypost",
   Emailjs: "emailjs",
   Mailgun: "mailgun",
   Mailjet: "mailjet",
@@ -87,6 +88,7 @@ export const ProvidersIdEnum = {
   Getstream: "getstream",
   RocketChat: "rocket-chat",
   WhatsappBusiness: "whatsapp-business",
+  Line: "line",
   ChatWebhook: "chat-webhook",
   NovuSlack: "novu-slack",
   Telegram: "telegram",

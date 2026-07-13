@@ -1,4 +1,5 @@
 import {
+  CreateLineUserEndpointDto,
   CreateMsTeamsChannelEndpointDto,
   CreateMsTeamsUserEndpointDto,
   CreatePhoneEndpointDto,
@@ -19,4 +20,5 @@ export type CreateChannelEndpointRequest =
   | CreateMsTeamsUserEndpointDto
   | CreateTelegramChatEndpointDto
   | CreateWebexRoomEndpointDto
-  | CreateWebexPersonEndpointDto;
+  | CreateWebexPersonEndpointDto
+  | CreateLineUserEndpointDto;
