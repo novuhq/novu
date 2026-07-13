@@ -581,19 +581,6 @@ export async function listAgentMcpServers(
   return response.data;
 }
 
-export async function enableAgentMcpServer(
-  environment: IEnvironment,
-  agentIdentifier: string,
-  mcpId: string
-): Promise<AgentMcpServerEnablement> {
-  const response = await post<{ data: AgentMcpServerEnablement }>(
-    `/agents/${encodeURIComponent(agentIdentifier)}/mcp-servers`,
-    { environment, body: { mcpId } }
-  );
-
-  return response.data;
-}
-
 export function disableAgentMcpServer(
   environment: IEnvironment,
   agentIdentifier: string,

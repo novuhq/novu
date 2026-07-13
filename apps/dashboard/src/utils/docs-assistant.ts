@@ -1,6 +1,6 @@
 const DOCS_ASSISTANT_BASE_URL = 'https://docs.novu.co/platform';
 
-export function getDocsAssistantUrl(query?: string): string {
+function getDocsAssistantUrl(query?: string): string {
   const trimmedQuery = query?.trim();
 
   if (!trimmedQuery) {
