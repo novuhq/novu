@@ -33,8 +33,12 @@ export function isAiSdkConnectMode(mode: AgentConnectMode): mode is 'ai-sdk' {
   return mode === 'ai-sdk';
 }
 
-export function isVanillaCustomCodeConnectMode(mode: AgentConnectMode): mode is 'langchain' | 'custom-code' {
-  return mode === 'langchain' || mode === 'custom-code';
+export function isLangChainConnectMode(mode: AgentConnectMode): mode is 'langchain' {
+  return mode === 'langchain';
+}
+
+export function isVanillaCustomCodeConnectMode(mode: AgentConnectMode): mode is 'custom-code' {
+  return mode === 'custom-code';
 }
 
 export type BridgeProjectKind = 'empty' | 'project';
@@ -80,6 +84,9 @@ export type AiSdkConnectOutcome = {
   wiringInstructions?: string;
   agentFilePath?: string;
 };
+
+/** LangChain bridge setup shares the AI SDK outcome shape (same reconcile engine). */
+export type LangChainConnectOutcome = AiSdkConnectOutcome;
 
 export type CustomCodeConnectOutcome = {
   projectDir: string;

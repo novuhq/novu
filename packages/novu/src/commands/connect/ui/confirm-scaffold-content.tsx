@@ -56,6 +56,25 @@ export function ConfirmScaffoldContent({
     );
   }
 
+  if (variant === 'langchain') {
+    return (
+      <Box flexDirection="column" gap={1}>
+        <Text bold>Scaffold a LangChain agent app?</Text>
+        <Text dimColor>No project was found here. We'll create a Novu LangChain agent app at:</Text>
+        <Text>
+          <Text bold>{projectDir}/</Text>
+          <Text color="cyan">{appName}</Text>
+        </Text>
+        <Text dimColor>
+          This installs <Text color="white">@novu/framework</Text>, <Text color="white">langchain</Text>,{' '}
+          <Text color="white">Next.js</Text>, and wires your Novu credentials into <Text color="white">.env.local</Text>
+          . Agent handlers use <Text color="white">@novu/framework/langchain</Text>.
+        </Text>
+        <Text color="cyan">Enter · scaffold · Esc · cancel</Text>
+      </Box>
+    );
+  }
+
   return (
     <Box flexDirection="column" gap={1}>
       <Text bold>Scaffold a Chat SDK app?</Text>

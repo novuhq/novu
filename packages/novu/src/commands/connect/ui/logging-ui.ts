@@ -419,6 +419,10 @@ function bridgeScaffoldLabel(variant: BridgeScaffoldVariant): string {
     return 'AI SDK agent app';
   }
 
+  if (variant === 'langchain') {
+    return 'LangChain agent app';
+  }
+
   return 'agent app';
 }
 
@@ -429,6 +433,10 @@ function bridgeScaffoldSpinnerText(variant: BridgeScaffoldVariant): string {
 
   if (variant === 'ai-sdk') {
     return 'Scaffolding AI SDK agent project…';
+  }
+
+  if (variant === 'langchain') {
+    return 'Scaffolding LangChain agent project…';
   }
 
   return 'Scaffolding agent project…';
