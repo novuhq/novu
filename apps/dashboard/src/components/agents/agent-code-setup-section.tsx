@@ -6,6 +6,7 @@ import { RiArrowRightSLine, RiCheckLine, RiFileCopyLine, RiInformation2Line, RiM
 import type { AgentResponse } from '@/api/agents';
 import { getAgent, getAgentDetailQueryKey } from '@/api/agents';
 import { Button } from '@/components/primitives/button';
+import { CopyableTerminalBlock } from '@/components/primitives/copyable-terminal-block';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { useEnvironment } from '@/context/environment/hooks';
@@ -66,52 +67,6 @@ function buildInitCopyCommand({
   }
 
   return parts.join(' ');
-}
-
-function TerminalBlock({ displayCommand, copyCommand }: { displayCommand: string; copyCommand: string }) {
-  const [copied, setCopied] = useState(false);
-  const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current);
-    };
-  }, []);
-
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(copyCommand);
-      setCopied(true);
-      copyTimeoutRef.current = setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // clipboard write failed silently
-    }
-  };
-
-  return (
-    <div className="relative w-full overflow-hidden rounded-lg shadow-[inset_0px_0px_0px_1px_#18181b,inset_0px_0px_0px_1.5px_rgba(255,255,255,0.1)]">
-      <div className="flex items-center justify-between bg-[rgba(14,18,27,0.9)] px-4 py-1.5">
-        <span className="text-label-xs text-[#99a0ae]">Terminal</span>
-        <button
-          type="button"
-          onClick={handleCopy}
-          className="flex size-6 items-center justify-center rounded p-1.5 transition-colors hover:bg-white/10"
-        >
-          {copied ? (
-            <RiCheckLine className="size-3.5 text-[#99a0ae]" />
-          ) : (
-            <RiFileCopyLine className="size-3.5 text-[#99a0ae]" />
-          )}
-        </button>
-      </div>
-      <div className="bg-[rgba(14,18,27,0.9)] px-[5px] pb-[5px]">
-        <div className="flex gap-4 rounded-md border border-[rgba(14,18,27,0.9)] bg-[rgba(14,18,27,0.9)] p-3">
-          <span className="shrink-0 font-mono text-xs text-[#525866]">❯</span>
-          <span className="whitespace-pre-wrap break-all font-mono text-xs text-white">{displayCommand}</span>
-        </div>
-      </div>
-    </div>
-  );
 }
 
 function getProviderSlackMessage(agentName: string): string {
@@ -423,7 +378,7 @@ export function AgentCodeSetupSection({
           apiKeysQuery.isLoading || !secretKey ? (
             <Skeleton className="h-[80px] w-full rounded-lg" />
           ) : (
-            <TerminalBlock
+            <CopyableTerminalBlock
               displayCommand={buildInitCommand({
                 agentIdentifier: agent.identifier,
                 secretKey,
@@ -445,7 +400,7 @@ export function AgentCodeSetupSection({
         status={deriveStepStatus(stepOffset + 1, firstIncompleteStep)}
         title="Start your agent locally"
         description="Run this from your project directory. It starts the app, opens a dev tunnel, and registers the bridge URL with Novu."
-        rightContent={<TerminalBlock displayCommand="npm run dev:novu" copyCommand="npm run dev:novu" />}
+        rightContent={<CopyableTerminalBlock displayCommand="npm run dev:novu" copyCommand="npm run dev:novu" />}
       />
 
       <SetupStep
