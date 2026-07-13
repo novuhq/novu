@@ -1,4 +1,5 @@
 import type { IEnvironment } from '@novu/shared';
+import { PermissionsEnum } from '@novu/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useState } from 'react';
@@ -10,12 +11,14 @@ import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment, useFetchEnvironments } from '@/context/environment/hooks';
 import { useDiffEnvironments, usePublishEnvironments } from '@/hooks/use-environments';
+import { useHasPermission } from '@/hooks/use-has-permission';
 import { QueryKeys } from '@/utils/query-keys';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { Badge } from '../primitives/badge';
 import { Button } from '../primitives/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../primitives/dropdown-menu';
 import { EnvironmentBranchIcon } from '../primitives/environment-branch-icon';
+import { PermissionButton } from '../primitives/permission-button';
 import { Skeleton } from '../primitives/skeleton';
 import TruncatedText from '../truncated-text';
 import { NoChangesModal } from './no-changes-modal';
@@ -33,6 +36,8 @@ type PublishState = {
 export const PublishButton = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const { state, actions } = usePublishState();
+  const has = useHasPermission();
+  const canPublish = has({ permission: PermissionsEnum.ENVIRONMENT_WRITE });
 
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -60,6 +65,10 @@ export const PublishButton = () => {
 
   const handleEnvironmentSelect = useCallback(
     (environment: IEnvironment, hasChanges: boolean) => {
+      if (!canPublish) {
+        return;
+      }
+
       if (!environment?._id) {
         console.warn('Cannot select environment: missing environment ID');
         return;
@@ -76,12 +85,16 @@ export const PublishButton = () => {
         actions.openNoChangesModal(environment);
       }
     },
-    [queryClient, actions]
+    [queryClient, actions, canPublish]
   );
 
   // Listen for custom event from command palette
   useEffect(() => {
     const handleOpenPublishModal = (event: CustomEvent) => {
+      if (!canPublish) {
+        return;
+      }
+
       const { targetEnvironment: eventTargetEnv } = event.detail;
       if (eventTargetEnv) {
         // Force refetch diff data to get latest changes
@@ -97,9 +110,13 @@ export const PublishButton = () => {
     return () => {
       window.removeEventListener('open-publish-modal', handleOpenPublishModal as EventListener);
     };
-  }, [queryClient, handleEnvironmentSelect]);
+  }, [queryClient, handleEnvironmentSelect, canPublish]);
 
   const handlePublish = async (selectedResources?: ResourceToPublish[]) => {
+    if (!canPublish) {
+      return;
+    }
+
     if (!state.selectedEnvironment?._id || !currentEnvironment?._id) {
       console.warn('Cannot publish: missing required environment IDs');
       return;
@@ -134,7 +151,8 @@ export const PublishButton = () => {
   if (isSingleEnvironment && targetEnvironment) {
     return (
       <>
-        <Button
+        <PermissionButton
+          permission={PermissionsEnum.ENVIRONMENT_WRITE}
           variant="secondary"
           className="h-[26px]"
           mode="outline"
@@ -146,7 +164,7 @@ export const PublishButton = () => {
             Publish changes
             <ChangeIndicator count={changesCount} isLoading={isDiffLoading} />
           </div>
-        </Button>
+        </PermissionButton>
 
         <PublishModal
           isOpen={state.modalState === 'publish'}
@@ -171,6 +189,22 @@ export const PublishButton = () => {
           targetEnvironment={state.selectedEnvironment || undefined}
         />
       </>
+    );
+  }
+
+  if (!canPublish) {
+    return (
+      <PermissionButton
+        permission={PermissionsEnum.ENVIRONMENT_WRITE}
+        variant="secondary"
+        className="h-[26px]"
+        mode="outline"
+        size="2xs"
+        leadingIcon={LuBookUp2}
+        trailingIcon={RiArrowDownSLine}
+      >
+        Publish changes
+      </PermissionButton>
     );
   }
 

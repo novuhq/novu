@@ -137,11 +137,12 @@ Novu provides a single API to manage providers across multiple channels with a s
 Expand a channel below to browse supported providers.
 
 <details>
-<summary><strong>💌 Email</strong> (19 providers)</summary>
+<summary><strong>💌 Email</strong> (20 providers)</summary>
 
 | Provider |
 | --- |
 | [Amazon SES](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/email/ses) |
+| [Anypost](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/email/anypost) |
 | [Braze](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/email/braze) |
 | [Brevo](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/email/brevo) |
 | [Custom SMTP](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/email/nodemailer) |

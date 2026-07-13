@@ -64,6 +64,7 @@ export enum CredentialsKeyEnum {
 export type ConfigurationKey = keyof IConfigurations;
 
 export enum EmailProviderIdEnum {
+  Anypost = 'anypost',
   EmailJS = 'emailjs',
   Mailgun = 'mailgun',
   Mailjet = 'mailjet',
