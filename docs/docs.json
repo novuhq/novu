@@ -188,6 +188,7 @@
                 "root": "platform/integrations/chat",
                 "pages": [
                   "platform/integrations/chat/discord",
+                  "platform/integrations/chat/line",
                   "platform/integrations/chat/mattermost",
                   "platform/integrations/chat/ms-teams",
                   "platform/integrations/chat/slack",
