@@ -57,6 +57,23 @@ export class HandleAgentReply {
 
   async execute(command: HandleAgentReplyCommand): Promise<SentMessageInfo | null> {
     if (command.error) {
+      if (
+        command.reply ||
+        command.edit ||
+        command.resolve ||
+        command.signals?.length ||
+        command.toolResults?.length ||
+        command.toolApprovalRequest ||
+        command.addReactions?.length ||
+        command.deleteMessages?.length ||
+        command.plan ||
+        command.typing
+      ) {
+        throw new BadRequestException(
+          'error cannot be combined with reply, edit, resolve, signals, toolResults, toolApprovalRequest, addReactions, deleteMessages, plan, or typing'
+        );
+      }
+
       return this.deliverSelfHostedTurnError(command);
     }
 
