@@ -12,6 +12,7 @@ import { RyverHandler } from './handlers/ryver.handler';
 import { SendblueHandler } from './handlers/sendblue.handler';
 import { SlackHandler } from './handlers/slack.handler';
 import { TelegramHandler } from './handlers/telegram.handler';
+import { WebexMessagingHandler } from './handlers/webex-messaging.handler';
 import { WhatsAppBusinessHandler } from './handlers/whatsapp-business.handler';
 import { ZulipHandler } from './handlers/zulip.handler';
 import { IChatFactory, IChatHandler } from './interfaces';
@@ -32,6 +33,7 @@ export class ChatFactory implements IChatFactory {
     new WhatsAppBusinessHandler(),
     new LineHandler(),
     new TelegramHandler(),
+    new WebexMessagingHandler(),
     new SendblueHandler(),
   ];
 

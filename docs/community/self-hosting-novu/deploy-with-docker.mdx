@@ -337,7 +337,7 @@ curl -X POST 'http://<your-docker-host>:3000/v1/events/trigger' \
 
 For more information on using the server SDKs, refer to the [Server-Side SDKs documentation](/platform/sdks).
 
-### Setting Up local studio and bridge application
+### Setting up local development and bridge application
 
 #### Setting Up the bridge application
 
@@ -362,9 +362,9 @@ A Next.js bridge application with a sample `@novu/framework` workflow runs on th
   The self-hosted Dashboard also runs on port **4000**. Use a different port (such as **4005**) for your bridge application to avoid a conflict.
 </Warning>
 
-#### Setting Up Novu Studio
+#### Setting up local development
 
-[Novu Local Studio](/framework/studio) is a development environment that allows you to test and manage your workflows. The setup varies based on your deployment:
+[Local development](/framework/studio) with `npx novu dev` opens the Novu Dashboard in Local mode, so you can test and manage the workflows running on your machine. The setup varies based on your deployment:
 
 <Tabs>
   <Tab title="Local">
@@ -377,9 +377,9 @@ npx novu@latest dev -d http://localhost:4000 -p 4005
 
 Following actions will occur:
 
-- Novu local studio will be started on default port 2002,
+- Your self-hosted Dashboard will open in the **Local** environment,
 - Novu will generate a tunnel url that will forward the request to bridge application running on `<bridge_application_port>`
-- Studio will use `http://localhost:4000` as dashboard url
+- The Local environment will use `http://localhost:4000` as dashboard url
 
 **Using bridge application url as bridge url**
 
@@ -408,7 +408,7 @@ extra_hosts:
 # update the bridge .env file with below variables
 NOVU_API_URL=http://<vps-ip-address>:3000
 
-# Start Novu Studio with your VPS dashboard URL and bridge application URL
+# Start local development with your VPS dashboard URL and bridge application URL
 npx novu@latest dev -d http://<vps-ip-address>:4000
 ```
 
@@ -595,7 +595,7 @@ The Dashboard container is served separately on its configured port (default **4
 
 <AccordionGroup>
   <Accordion title="Local Tunnel and Self-Hosted Deployments">
-    Novu uses a local tunnel as bridge url. It can be used as bridge url with local studio and for testing purpose in development environment. It should not be used in production environment. It is recommended to use deployed application url as bridge url
+    Novu uses a local tunnel as bridge url. It can be used as bridge url during local development (`npx novu dev`) and for testing purpose in development environment. It should not be used in production environment. It is recommended to use deployed application url as bridge url
   </Accordion>
 
   <Accordion title="When is Local Tunnel Not Required?">

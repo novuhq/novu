@@ -5,7 +5,7 @@ description: "Sync local workflow changes to the Novu Cloud Dashboard across dev
 
 Novu operates in a multi environment setup, with the currently available environments:
 
-- **Local Studio** - Running against your local machine, this is where you can create, edit, and preview workflows.
+- **Local** - Running against your local machine, this is where you can create, edit, and preview workflows. Open it by running [`npx novu dev`](/framework/studio), which opens the Dashboard in Local mode connected to your running app through a tunnel.
 - **Development** - Acts as a Staging environment, where your non-technical peers can view and modify controls.
 - **Production** - For triggering workflows to your customers.
 
@@ -13,11 +13,13 @@ Novu operates in a multi environment setup, with the currently available environ
 
 Novu Framework operates in a GitOps model. This means that the source of truth for your workflows and configurations are located in your Git as Code.
 
+The Local environment only reflects what runs on your machine — it has no publish action. To make workflows available in Development or Production, deploy your Bridge application and run the [sync command](/framework/deployment/cli) against the deployed server from your CLI or CI pipeline.
+
 The general workflow for pushing changes to Novu Cloud is as follows:
 
 ```mermaid
 flowchart TB
-    localStudio[Local Studio] --> featureBranch[Feature Branch]
+    localStudio[Local development] --> featureBranch[Feature Branch]
     featureBranch --> syncDev[Sync to Development]
     syncDev --> testDev[Test in Development]
     testDev --> mergeDev[Merge to dev branch]

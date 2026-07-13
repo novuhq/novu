@@ -112,6 +112,7 @@ export const GetChannelConnectionResponseDtoProviderId = {
   ChatWebhook: "chat-webhook",
   NovuSlack: "novu-slack",
   Telegram: "telegram",
+  WebexMessaging: "webex-messaging",
   Anthropic: "anthropic",
   NovuAnthropic: "novu-anthropic",
   AnthropicAws: "anthropic-aws",

@@ -6,6 +6,8 @@ export type ChannelData =
   | MsTeamsChannelData
   | MsTeamsUserData
   | TelegramChatData
+  | WebexRoomData
+  | WebexPersonData
   | LineUserData;
 
 export const ENDPOINT_TYPES = {
@@ -16,6 +18,8 @@ export const ENDPOINT_TYPES = {
   MS_TEAMS_CHANNEL: 'ms_teams_channel',
   MS_TEAMS_USER: 'ms_teams_user',
   TELEGRAM_CHAT: 'telegram_chat',
+  WEBEX_ROOM: 'webex_room',
+  WEBEX_PERSON: 'webex_person',
   LINE_USER: 'line_user',
 } as const;
 
@@ -29,6 +33,8 @@ export type ChannelEndpointByType = {
   [ENDPOINT_TYPES.MS_TEAMS_CHANNEL]: { teamId: string; channelId: string };
   [ENDPOINT_TYPES.MS_TEAMS_USER]: { userId: string };
   [ENDPOINT_TYPES.TELEGRAM_CHAT]: { chatId: string };
+  [ENDPOINT_TYPES.WEBEX_ROOM]: { roomId: string; parentId?: string };
+  [ENDPOINT_TYPES.WEBEX_PERSON]: { personId: string; personEmail?: never } | { personId?: never; personEmail: string };
   [ENDPOINT_TYPES.LINE_USER]: { userId: string };
 };
 
@@ -61,6 +67,20 @@ export type PhoneData = {
 export type TelegramChatData = {
   type: typeof ENDPOINT_TYPES.TELEGRAM_CHAT;
   endpoint: ChannelEndpointByType[typeof ENDPOINT_TYPES.TELEGRAM_CHAT];
+  identifier: string;
+};
+
+export type WebexRoomData = {
+  type: typeof ENDPOINT_TYPES.WEBEX_ROOM;
+  endpoint: ChannelEndpointByType[typeof ENDPOINT_TYPES.WEBEX_ROOM];
+  token: string;
+  identifier: string;
+};
+
+export type WebexPersonData = {
+  type: typeof ENDPOINT_TYPES.WEBEX_PERSON;
+  endpoint: ChannelEndpointByType[typeof ENDPOINT_TYPES.WEBEX_PERSON];
+  token: string;
   identifier: string;
 };
 
@@ -99,4 +119,6 @@ export const ENDPOINT_TYPES_REQUIRING_TOKEN = [
   ENDPOINT_TYPES.SLACK_USER,
   ENDPOINT_TYPES.MS_TEAMS_CHANNEL,
   ENDPOINT_TYPES.MS_TEAMS_USER,
+  ENDPOINT_TYPES.WEBEX_ROOM,
+  ENDPOINT_TYPES.WEBEX_PERSON,
 ] as const;

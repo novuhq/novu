@@ -10,13 +10,13 @@ In this guide, we will add a Novu [Bridge Endpoint](/framework/endpoint) to a H3
     <Step>
          ## Set up your local environment
 
-Start the Local Studio by running:
+Start local development by running:
 
 ```bash
 npx novu dev
 ```
 
-The Local Studio will be available at [http://localhost:2022](http://localhost:2022). This is where you can preview and test your workflows.
+This opens the Novu Dashboard in **Local mode** — a local environment connected to your running app through a tunnel — where you can preview and test the workflows running on your machine. See [Local development](/framework/studio) for details.
 
     </Step>
    <Step>
@@ -83,7 +83,7 @@ export const testWorkflow = workflow('test-workflow', async ({ step }) => {
     <Step>
         ## Test your endpoint
 
-Test your workflow by triggering it from the Local Studio or using the Novu API:
+Test your workflow by triggering it from the Local environment or using the Novu API:
 
 ```bash
 curl -X POST https://api.novu.co/v1/events/trigger \
@@ -96,7 +96,7 @@ curl -X POST https://api.novu.co/v1/events/trigger \
   }'
 ```
 
-You should see the notification being processed in your Local Studio.
+You should see the notification being processed in the Local environment.
 
     </Step>
     <Step>

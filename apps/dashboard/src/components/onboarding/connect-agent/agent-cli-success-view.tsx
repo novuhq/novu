@@ -3,10 +3,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import ReactConfetti from 'react-confetti';
 import { createPortal } from 'react-dom';
 import type { AgentIntegrationLink, AgentResponse } from '@/api/agents';
-import { getAgentChannelDisplayName } from '@/utils/agent-email-provider-display';
 import { CompletedStepIndicator } from '@/components/agents/setup-guide-primitives';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import { AgentCard, type AgentCardConnectorKind } from '@/components/onboarding/claude-agent-preview-illustration';
+import { getAgentChannelDisplayName } from '@/utils/agent-email-provider-display';
 
 type AgentCliSuccessViewProps = {
   agent: AgentResponse;

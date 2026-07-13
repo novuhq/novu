@@ -1,7 +1,6 @@
 import type { ChannelEndpointType } from '@novu/shared';
 import { ChannelTypeEnum } from '@novu/shared';
 import { formatDistanceToNow } from 'date-fns';
-import { useEnvironment } from '@/context/environment/hooks';
 import { useMemo, useState } from 'react';
 import { ExternalToast } from 'sonner';
 import type { ChannelEndpointPayload } from '@/api/channel-endpoints';
@@ -11,6 +10,7 @@ import { InlineToast } from '@/components/primitives/inline-toast';
 import { Separator } from '@/components/primitives/separator';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
+import { useEnvironment } from '@/context/environment/hooks';
 import { useCreateChannelEndpoint } from '@/hooks/use-create-channel-endpoint';
 import { useDeleteChannelEndpoint } from '@/hooks/use-delete-channel-endpoint';
 import { useDeleteSubscriberCredentials } from '@/hooks/use-delete-subscriber-credentials';

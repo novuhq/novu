@@ -1,6 +1,6 @@
-import { createHash } from 'crypto';
 import { DiscoverWorkflowOutput } from '@novu/framework/internal';
 import { buildWorkflowPreferences, WorkflowPreferences } from '@novu/shared';
+import { createHash } from 'crypto';
 
 /**
  * Pure mapping helpers shared between the persisted sync path (`Sync`) and the

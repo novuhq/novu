@@ -8,13 +8,13 @@ import {
   WorkflowCreateAndUpdateKeys,
   WorkflowStatusEnum,
 } from '@novu/shared';
-import { WorkflowForResponseMapper, WorkflowWithPreferencesForMapper } from '../types/workflow-mapper.types';
 import { WorkflowPreferencesResponseDto } from '../dtos/workflow/preferences.response.dto';
 import { RuntimeIssueDto } from '../dtos/workflow/runtime-issue.dto';
 import { StepResponseDto } from '../dtos/workflow/step.response.dto';
 import { StepListResponseDto } from '../dtos/workflow/step-list-response.dto';
 import { WorkflowListResponseDto } from '../dtos/workflow/workflow-list-response.dto';
 import { WorkflowResponseDto } from '../dtos/workflow/workflow-response.dto';
+import { WorkflowForResponseMapper, WorkflowWithPreferencesForMapper } from '../types/workflow-mapper.types';
 import { buildSlug } from './build-slug';
 
 export function toResponseWorkflowDto(

@@ -163,9 +163,7 @@ describe('SendAgentWelcomeMessage usecase', () => {
       platformThreadId: 'slack:D123:msg-1',
     });
 
-    const result = await buildUsecase().execute(
-      buildCommand({ integrationIdentifier: 'slack-integration' })
-    );
+    const result = await buildUsecase().execute(buildCommand({ integrationIdentifier: 'slack-integration' }));
 
     expect(result).to.deep.equal({ sent: true, conversationId: 'conversation-id', claimToken: undefined });
     expect(outboundGateway.setSlackSuggestedPrompts.calledOnce).to.equal(true);

@@ -28,7 +28,7 @@ npx novu@latest sync \
 
 - If your application api server is running at URL **https://api.domain.com** and **/api/novu** endpoint is serving Novu workflows created using Novu Framework, then `<YOUR_DEPLOYED_URL>`in above command will be `https://api.domain.com/api/novu`
 
-- If your application is running in local machine with a local studio server, the tunnel URL can be used as `<YOUR_DEPLOYED_URL>`. The tunnel URL follows the format of `https://<UUID>.novu.sh/api/novu`, and example is `https://041e553c-0dbf-47e0-8ffa-c4536f390145.novu.sh/api/novu`. In this example `041e553c-0dbf-47e0-8ffa-c4536f390145` is the unique tunnel identifier which is generated for each Novu user when starting a tunnel via `npx novu@latest dev`. The tunnel identifier is persisted to your local machine to guarantee the same tunnel URL each time you invoke `npx novu@latest dev`.
+- If your application is running on your local machine during local development (`npx novu dev`), the tunnel URL can be used as `<YOUR_DEPLOYED_URL>`. The tunnel URL follows the format of `https://<UUID>.novu.sh/api/novu`, and example is `https://041e553c-0dbf-47e0-8ffa-c4536f390145.novu.sh/api/novu`. In this example `041e553c-0dbf-47e0-8ffa-c4536f390145` is the unique tunnel identifier which is generated for each Novu user when starting a tunnel via `npx novu@latest dev`. The tunnel identifier is persisted to your local machine to guarantee the same tunnel URL each time you invoke `npx novu@latest dev`.
 
 ## Understanding sync output
 

@@ -1,7 +1,14 @@
 import { ChatProviderIdEnum } from '@novu/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { RiChat3Line, RiCheckLine, RiErrorWarningLine, RiKey2Line, RiSendPlaneFill, RiSmartphoneLine } from 'react-icons/ri';
+import {
+  RiChat3Line,
+  RiCheckLine,
+  RiErrorWarningLine,
+  RiKey2Line,
+  RiSendPlaneFill,
+  RiSmartphoneLine,
+} from 'react-icons/ri';
 import type { AgentResponse, SendSendblueTestMessageError } from '@/api/agents';
 import { patchSubscriber } from '@/api/subscribers';
 import { useConnectSubscriber } from '@/components/connect/connect-subscriber-provider';
@@ -307,8 +314,8 @@ function RecipientNotVerifiedPanel({
           <span className="text-label-xs font-medium">You need to message this number first</span>
         </div>
         <p className="text-text-soft text-label-xs leading-4">
-          Sendblue only allows replies to numbers that have already texted it. Send a quick message to the number
-          below to start the conversation, then your agent will be able to reply here.
+          Sendblue only allows replies to numbers that have already texted it. Send a quick message to the number below
+          to start the conversation, then your agent will be able to reply here.
         </p>
       </div>
       {fromNumber ? <ReadOnlyValueRow label="Sendblue number" value={fromNumber} /> : null}
@@ -414,7 +421,15 @@ function SendTestMessagePanel({
         message: err instanceof Error ? err.message : 'Something went wrong sending the test message.',
       });
     }
-  }, [agent.identifier, connectSubscriberId, currentEnvironment, integrationIdentifier, phone, queryClient, sendTestMessage]);
+  }, [
+    agent.identifier,
+    connectSubscriberId,
+    currentEnvironment,
+    integrationIdentifier,
+    phone,
+    queryClient,
+    sendTestMessage,
+  ]);
 
   const imessageHref = fromNumber ? buildImessageFallbackHref(fromNumber, agent.name) : undefined;
   const isRecipientNotVerified = testStatus.state === 'error' && testStatus.code === 'recipient_not_verified';
@@ -629,7 +644,7 @@ export function SendblueSetupGuide({
               </>
             ) : null}
             {
-              ", or text it yourself from your phone. If everything is configured correctly, your agent will reply in the same conversation."
+              ', or text it yourself from your phone. If everything is configured correctly, your agent will reply in the same conversation.'
             }
           </span>
         }

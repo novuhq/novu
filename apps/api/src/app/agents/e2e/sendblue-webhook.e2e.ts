@@ -359,7 +359,9 @@ describe('Sendblue agent webhook - inbound flow #novu-v2', () => {
 
       // Sendblue relays an iMessage tapback as an ordinary receive webhook whose
       // content is the tapback rendered as text — there is no dedicated reaction webhook.
-      const res = await postSendblueWebhook(buildReceivePayload({ content: 'Liked "Tool approval required: issueRefund"' }));
+      const res = await postSendblueWebhook(
+        buildReceivePayload({ content: 'Liked "Tool approval required: issueRefund"' })
+      );
       expect(res.status).to.equal(200);
 
       await pollFor(async () => (bridgeCalls.length >= 2 ? true : null));

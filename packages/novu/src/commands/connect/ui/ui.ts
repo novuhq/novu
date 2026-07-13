@@ -8,6 +8,7 @@ import type {
   ChannelChoice,
   ChatSdkConnectOutcome,
   CustomCodeConnectOutcome,
+  LangChainConnectOutcome,
 } from '../types';
 import type { BridgeReconcileVariant } from './bridge-reconcile-variant';
 
@@ -215,6 +216,7 @@ export interface ConnectUI {
     connectMode?: AgentConnectMode;
     chatSdkOutcome?: ChatSdkConnectOutcome;
     aiSdkOutcome?: AiSdkConnectOutcome;
+    langChainOutcome?: LangChainConnectOutcome;
     customCodeOutcome?: CustomCodeConnectOutcome;
   }): void;
   failure(message: string): void;

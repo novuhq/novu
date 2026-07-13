@@ -13,8 +13,7 @@ export const useIsTranslationEnabled = ({
     getFeatureForTierAsBoolean(
       FeatureNameEnum.AUTO_TRANSLATIONS,
       subscription?.apiServiceLevel || ApiServiceLevelEnum.FREE
-    ) &&
-    !IS_SELF_HOSTED_CE;
+    ) && !IS_SELF_HOSTED_CE;
 
   const isTranslationEnabled = isTranslationEnabledOnResource && canUseTranslationFeature;
 

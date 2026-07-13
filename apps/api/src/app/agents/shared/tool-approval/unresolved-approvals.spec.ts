@@ -1,4 +1,8 @@
-import { ConversationActivityEntity, ConversationActivitySenderTypeEnum, ConversationActivityTypeEnum } from '@novu/dal';
+import {
+  ConversationActivityEntity,
+  ConversationActivitySenderTypeEnum,
+  ConversationActivityTypeEnum,
+} from '@novu/dal';
 import { expect } from 'chai';
 import { findUnresolvedToolApprovalRequests, resolveApprovalRequesterId } from './unresolved-approvals';
 

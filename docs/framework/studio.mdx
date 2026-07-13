@@ -1,16 +1,17 @@
 ---
-title: 'Studio'
-description: "Use the Local Studio companion app for Novu Framework to preview workflows, edit templates, and test notifications during local development."
+title: 'Local development'
+sidebarTitle: 'Local development'
+description: "Run npx novu dev to open the Novu Dashboard in Local mode, preview workflows running on your machine, and learn how to sync them to Development and Production."
 ---
 
 
-The Local Studio is a companion app to the Novu Framework SDK. Its goal is to provide a local environment that lives near your code.
+When building workflows with Novu Framework, you develop them locally in your code and preview them live through the Novu Dashboard. Running `npx novu dev` opens the Dashboard in **Local mode** — a local environment connected to your running application through a tunnel — where you can see and test the workflows running on your machine before you sync them to Novu Cloud.
 
-To launch the Local Studio locally you can run the following command in your terminal:
+<Note>
+  Earlier versions shipped a separate Local Studio companion app served on `http://localhost:2022`. That app has been replaced by the **Local** environment inside the Novu Dashboard. Running `npx novu dev` now opens the Dashboard in Local mode instead.
+</Note>
 
-<Warning>
-  Local Studio currently works only in the **Chrome** browser
-</Warning>
+To start local development, run the following command in your terminal:
 
 ```bash
 npx novu@latest dev
@@ -21,27 +22,47 @@ npx novu@latest dev
   customization
 </Note>
 
-The Dev Studio will be started by default on port 2022, and accessible via: http://localhost:2022
+This command:
 
-After successfully connecting the Studio to your local [Bridge Endpoint](/framework/endpoint), you will be able to preview in real time any workflows and content defined in your code. This is ideal for quick prototyping, debugging, styling, and adjusting your workflows before syncing them to Novu Cloud.
+- Creates a local tunnel that proxies workflow engine requests from Novu Cloud to your local machine.
+- Opens the Novu Dashboard in the **Local** environment (`/env/:environmentSlug/local/workflows`).
+
+After your application is running and connected through the tunnel, the Local environment lists every workflow discovered from your [Bridge Endpoint](/framework/endpoint) in real time. This is ideal for quick prototyping, debugging, styling, and adjusting your workflows before syncing them to Novu Cloud.
+
+<Note>
+  Nothing in the Local environment is stored in Novu Cloud. Workflows stream live from your machine, so the Development and Production environments keep showing their last synced state until you run a sync.
+</Note>
 
 ## Control and Payload forms
 
-You can quickly modify the Step Controls and workflow Payload to preview your workflow's different states. This is helpful to quickly debug how the email will behave in case of a missing control, or iterate more complex content structures.
+You can quickly modify the Step Controls and workflow Payload to preview your workflow's different states. This is helpful to quickly debug how the email will behave in case of a missing control, or iterate more complex content structures. These edits live in your local session — they are not persisted to Novu Cloud.
 
-## Syncing State
+## Syncing to Development and Production
 
-Syncing state to your Production or Development environment in Novu, is recommended to do via your CI pipeline. However, a sync can be made using the Local Studio for quick experimentation.
+The Local environment only reflects what is running on your machine, so it has no **Publish** flow. To make your workflows available in the Development or Production environments, you deploy your Bridge application and run the sync command against the **deployed** server — not against your local tunnel.
 
-Click on the Sync button at the top right corner of the navigation bar. This will open the Sync State modal.
+Novu Framework follows a GitOps model: the source of truth for your workflows lives in your Git repository as code. The recommended flow is to run the [sync command](/framework/deployment/cli) from your CI/CD pipeline after each deployment:
+
+```bash
+npx novu@latest sync \
+  --bridge-url <YOUR_DEPLOYED_URL_WITH_BRIDGE_ENDPOINT> \
+  --secret-key <NOVU_SECRET_KEY> \
+  --api-url https://api.novu.co
+```
+
+See the [Syncing guide](/framework/deployment/syncing) for the full end-to-end flow and the available [CI/CD integrations](/framework/deployment/syncing#ci-cd-integrations).
+
+<Note>
+  For quick experimentation you can also point a sync at your local tunnel URL, but the durable way to push changes to Development and Production is to deploy your code and sync against the deployed Bridge Endpoint from your CLI or CI.
+</Note>
 
 ## Tunnel URL
 
 By default the Novu CLI will automatically create a tunnel URL connected to your local computer. This tunnel will proxy any workflow engine requests on our cloud to your local machine.
 
-## Connect Studio to your local server
+## Connect to your local server
 
-By default, the Studio will connect to the Novu [Bridge Endpoint](/framework/endpoint) running on your local machine at `http://localhost:4000/api/novu` if your server is running on a different port or the workflows are served from a different endpoint path you can use the following optional parameters to connect:
+By default, the CLI will connect to the Novu [Bridge Endpoint](/framework/endpoint) running on your local machine at `http://localhost:4000/api/novu`. If your server is running on a different port or the workflows are served from a different endpoint path you can use the following optional parameters to connect:
 
 ```bash
 npx novu@latest dev --port <YOUR_SERVER_PORT> --route <YOUR_NOVU_ROUTE_PATH>
@@ -60,9 +81,12 @@ The Novu CLI command `npx novu@latest dev` supports a number of flags:
 | -r   | --route `<route>`       | Bridge application route    | /api/novu                    |
 | -o   | --origin `<origin>`     | Bridge application origin   | http://localhost             |
 | -d   | --dashboard-url `<url>` | Novu Cloud dashboard URL    | https://dashboard.novu.co |
-| -sp  | --studio-port `<port>`  | Local Studio server port    | 2022                         |
 | -t   | --tunnel `<url>`        | Self hosted tunnel url      | null                         |
-| -H   | --headless              | Run bridge in headless mode | false                        |
+| -H   | --headless              | Run without opening the browser | false                    |
+
+<Note>
+  The legacy `--studio-port`, `--studio-host`, and `--no-studio` flags are deprecated and ignored — they belonged to the old Local Studio app, which is now the Dashboard's Local environment.
+</Note>
 
 Example: If bridge application is running on port `3002` and Novu account is in `EU` region.
 
@@ -73,15 +97,15 @@ npx novu@latest dev --port 3002 --dashboard-url https://eu.dashboard.novu.co
 ## FAQ
 
 <AccordionGroup>
-  <Accordion title="Running Studio without a tunnel">
-    It is possible to run the Studio without generating the default tunnel by passing the `--tunnel` flag with the URL of your application.
+  <Accordion title="Running without a tunnel">
+    It is possible to run local development without generating the default tunnel by passing the `--tunnel` flag with the URL of your application.
 
     ```bash
     npx novu@latest dev -t http://custom-tunnel-url.ngrok.app
     ```
 
     <Warning>
-      While the preview will work, you won't be able to test your notifications by the triggering them from the Studio UI.
+      While the preview will work, you won't be able to test your notifications by triggering them from the Local environment UI.
     </Warning>
 
   </Accordion>

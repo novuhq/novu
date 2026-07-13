@@ -20,6 +20,8 @@ export type ChannelEndpointsControllerCreateChannelEndpointRequestBody =
   | components.CreateMsTeamsChannelEndpointDto
   | components.CreateMsTeamsUserEndpointDto
   | components.CreateTelegramChatEndpointDto
+  | components.CreateWebexRoomEndpointDto
+  | components.CreateWebexPersonEndpointDto
   | components.CreateLineUserEndpointDto;
 
 export type ChannelEndpointsControllerCreateChannelEndpointRequest = {
@@ -38,6 +40,8 @@ export type ChannelEndpointsControllerCreateChannelEndpointRequest = {
     | components.CreateMsTeamsChannelEndpointDto
     | components.CreateMsTeamsUserEndpointDto
     | components.CreateTelegramChatEndpointDto
+    | components.CreateWebexRoomEndpointDto
+    | components.CreateWebexPersonEndpointDto
     | components.CreateLineUserEndpointDto;
 };
 
@@ -55,6 +59,8 @@ export type ChannelEndpointsControllerCreateChannelEndpointRequestBody$Outbound 
   | components.CreateMsTeamsChannelEndpointDto$Outbound
   | components.CreateMsTeamsUserEndpointDto$Outbound
   | components.CreateTelegramChatEndpointDto$Outbound
+  | components.CreateWebexRoomEndpointDto$Outbound
+  | components.CreateWebexPersonEndpointDto$Outbound
   | components.CreateLineUserEndpointDto$Outbound;
 
 /** @internal */
@@ -71,6 +77,8 @@ export const ChannelEndpointsControllerCreateChannelEndpointRequestBody$outbound
     components.CreateMsTeamsChannelEndpointDto$outboundSchema,
     components.CreateMsTeamsUserEndpointDto$outboundSchema,
     components.CreateTelegramChatEndpointDto$outboundSchema,
+    components.CreateWebexRoomEndpointDto$outboundSchema,
+    components.CreateWebexPersonEndpointDto$outboundSchema,
     components.CreateLineUserEndpointDto$outboundSchema,
   ]);
 
@@ -95,6 +103,8 @@ export type ChannelEndpointsControllerCreateChannelEndpointRequest$Outbound = {
     | components.CreateMsTeamsChannelEndpointDto$Outbound
     | components.CreateMsTeamsUserEndpointDto$Outbound
     | components.CreateTelegramChatEndpointDto$Outbound
+    | components.CreateWebexRoomEndpointDto$Outbound
+    | components.CreateWebexPersonEndpointDto$Outbound
     | components.CreateLineUserEndpointDto$Outbound;
 };
 
@@ -114,6 +124,8 @@ export const ChannelEndpointsControllerCreateChannelEndpointRequest$outboundSche
       components.CreateMsTeamsChannelEndpointDto$outboundSchema,
       components.CreateMsTeamsUserEndpointDto$outboundSchema,
       components.CreateTelegramChatEndpointDto$outboundSchema,
+      components.CreateWebexRoomEndpointDto$outboundSchema,
+      components.CreateWebexPersonEndpointDto$outboundSchema,
       components.CreateLineUserEndpointDto$outboundSchema,
     ]),
   }).transform((v) => {

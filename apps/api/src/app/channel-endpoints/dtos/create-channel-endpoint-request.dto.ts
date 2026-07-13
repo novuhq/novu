@@ -1,11 +1,13 @@
 import {
+  CreateLineUserEndpointDto,
   CreateMsTeamsChannelEndpointDto,
   CreateMsTeamsUserEndpointDto,
   CreatePhoneEndpointDto,
   CreateSlackChannelEndpointDto,
   CreateSlackUserEndpointDto,
   CreateTelegramChatEndpointDto,
-  CreateLineUserEndpointDto,
+  CreateWebexPersonEndpointDto,
+  CreateWebexRoomEndpointDto,
   CreateWebhookEndpointDto,
 } from './create-channel-endpoint-variants.dto';
 
@@ -17,4 +19,6 @@ export type CreateChannelEndpointRequest =
   | CreateMsTeamsChannelEndpointDto
   | CreateMsTeamsUserEndpointDto
   | CreateTelegramChatEndpointDto
+  | CreateWebexRoomEndpointDto
+  | CreateWebexPersonEndpointDto
   | CreateLineUserEndpointDto;

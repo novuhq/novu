@@ -10,6 +10,7 @@ import {
   sendblueConfig,
   slackConfigLegacy,
   telegramConfig,
+  webexMessagingConfig,
   whatsAppBusinessConfig,
 } from '../credentials';
 import { IConfigCredential, IProviderConfig } from '../provider.interface';
@@ -54,6 +55,14 @@ export const chatProviders: IProviderConfig[] = [
     credentials: msTeamsConfig,
     docReference: `https://docs.novu.co/platform/integrations/chat/ms-teams${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'msteams.svg', dark: 'msteams.svg' },
+  },
+  {
+    id: ChatProviderIdEnum.WebexMessaging,
+    displayName: 'Webex Messaging',
+    channel: ChannelTypeEnum.CHAT,
+    credentials: webexMessagingConfig,
+    docReference: `https://docs.novu.co/platform/integrations/chat/webex-messaging${UTM_CAMPAIGN_QUERY_PARAM}`,
+    logoFileName: { light: 'webex-messaging.svg', dark: 'webex-messaging.svg' },
   },
   {
     id: ChatProviderIdEnum.Mattermost,

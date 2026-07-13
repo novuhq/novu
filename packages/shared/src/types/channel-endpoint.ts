@@ -11,6 +11,8 @@ export const ENDPOINT_TYPES = {
   MS_TEAMS_CHANNEL: 'ms_teams_channel',
   MS_TEAMS_USER: 'ms_teams_user',
   TELEGRAM_CHAT: 'telegram_chat',
+  WEBEX_ROOM: 'webex_room',
+  WEBEX_PERSON: 'webex_person',
   LINE_USER: 'line_user',
 } as const;
 
@@ -29,6 +31,8 @@ export type ChannelEndpointByType = {
    */
   [ENDPOINT_TYPES.MS_TEAMS_USER]: { userId: string; tenantId?: string };
   [ENDPOINT_TYPES.TELEGRAM_CHAT]: { chatId: string };
+  [ENDPOINT_TYPES.WEBEX_ROOM]: { roomId: string; parentId?: string };
+  [ENDPOINT_TYPES.WEBEX_PERSON]: { personId: string; personEmail?: never } | { personId?: never; personEmail: string };
   [ENDPOINT_TYPES.LINE_USER]: { userId: string };
 };
 
