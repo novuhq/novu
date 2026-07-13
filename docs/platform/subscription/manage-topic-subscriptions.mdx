@@ -784,7 +784,7 @@ await novu.trigger({
 
 ## Billing and workflow runs
 
-Novu Cloud bills by [workflow runs](/platform/account/billing#what-is-a-workflow-run): one execution of a workflow for one subscriber. Usage is counted when Novu creates a **Notification** and **workflow run** for that subscriber, not when you call the trigger API.
+Novu Cloud bills by [workflow runs](/platform/account/billing#what-is-a-workflow-run): one execution of a workflow for one subscriber. Usage is counted when Novu creates a **workflow run** for that subscriber, not when you call the trigger API.
 
 Topic subscription filtering happens **before** that point, during topic fan-out:
 
@@ -806,15 +806,6 @@ If a subscriber is filtered out because their Context does not match the trigger
 | JSON Logic condition evaluates to `false` | No | No |
 | Subscription passes, workflow executes (even if steps are skipped) | Yes | Yes |
 | Subscription passes, channel preference blocks a channel | Yes | Yes (run still created) |
-
-### How to verify
-
-After triggering a workflow to a topic:
-
-- **Activity / workflow runs**: Subscribers filtered by Context or subscription conditions should **not** appear as new workflow runs for that trigger.
-- **Passing subscribers only**: If a topic has 100 subscriptions but only 20 match Context and conditions, expect **20** workflow runs, not 100.
-
-Using subscription Context and conditions to narrow topic fan-out can reduce billable workflow runs when many subscribers share a topic but only some should receive a given trigger.
 
 ## Limits
 
