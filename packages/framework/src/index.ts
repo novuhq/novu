@@ -51,6 +51,7 @@ export type {
   EmailStepResolver,
   InAppStepResolver,
   PushStepResolver,
+  SignalsStepResolver,
   SmsStepResolver,
   StepResolverContext,
 } from './resources/step-resolver/step';

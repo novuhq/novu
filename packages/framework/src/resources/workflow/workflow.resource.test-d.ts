@@ -18,6 +18,7 @@ describe('workflow function types', () => {
           push: unknown;
           chat: unknown;
           inApp: unknown;
+          signals: unknown;
           digest: unknown;
           delay: unknown;
           custom: unknown;
