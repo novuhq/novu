@@ -34,9 +34,13 @@ This package provides all the necessary tools to build and manage your notificat
    <Step>
          ## Add a Novu API Endpoint
         ```typescript app/server/api/novu.ts
+        import { serve } from '@novu/framework/nuxt';
+        import { myWorkflow } from '../../novu/workflows';
 
         export default defineEventHandler(serve({ workflows: [myWorkflow] }));
         ```
+
+        The `serve` helper is exported from the Nuxt-specific entry point `@novu/framework/nuxt`. Importing it from the base `@novu/framework` package will fail with `Cannot find name 'serve'`.
     </Step>
     <Step>
         ## Configure your secret key
