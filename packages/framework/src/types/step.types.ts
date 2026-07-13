@@ -206,6 +206,10 @@ export type InAppOutput = FromSchema<(typeof channelStepSchemas)['in_app']['outp
 export type InAppOutputUnvalidated = FromSchemaUnvalidated<(typeof channelStepSchemas)['in_app']['output']>;
 export type InAppResult = FromSchema<(typeof channelStepSchemas)['in_app']['result']>;
 
+export type SignalsOutput = FromSchema<(typeof channelStepSchemas)['signals']['output']>;
+export type SignalsOutputUnvalidated = FromSchemaUnvalidated<(typeof channelStepSchemas)['signals']['output']>;
+export type SignalsResult = FromSchema<(typeof channelStepSchemas)['signals']['result']>;
+
 export type DelayRegularOutput = FromSchema<typeof delayRegularOutputSchema>;
 export type DelayRegularOutputUnvalidated = FromSchemaUnvalidated<typeof delayRegularOutputSchema>;
 export type DelayTimedOutput = FromSchema<typeof delayTimedOutputSchema>;
@@ -244,6 +248,8 @@ export type Step = {
   chat: ChannelStep<ChannelStepEnum.CHAT, ChatOutputUnvalidated, ChatResult>;
   /** Send an in-app notification. */
   inApp: ChannelStep<ChannelStepEnum.IN_APP, InAppOutputUnvalidated, InAppResult>;
+  /** Send a signals notification. */
+  signals: ChannelStep<ChannelStepEnum.SIGNALS, SignalsOutputUnvalidated, SignalsResult>;
   /** Aggregate events for a period of time. */
   digest: ActionStep<DigestOutputUnvalidated, DigestResult>;
   /** Delay the workflow for a period of time. */

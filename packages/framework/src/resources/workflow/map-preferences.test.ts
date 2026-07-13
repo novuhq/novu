@@ -37,6 +37,7 @@ describe('mapPreferences', () => {
         push: { enabled: true },
         inApp: { enabled: true },
         chat: { enabled: true },
+        signals: { enabled: true },
       },
     });
 
@@ -48,6 +49,21 @@ describe('mapPreferences', () => {
         push: { enabled: true },
         in_app: { enabled: true },
         chat: { enabled: true },
+        signals: { enabled: true },
+      },
+    });
+  });
+
+  it('should map signals workflow channel to ChannelTypeEnum.SIGNALS', () => {
+    const result = mapPreferences({
+      channels: {
+        signals: { enabled: false },
+      },
+    });
+
+    expect(result).to.deep.equal({
+      channels: {
+        signals: { enabled: false },
       },
     });
   });

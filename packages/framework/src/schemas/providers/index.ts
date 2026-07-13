@@ -4,6 +4,7 @@ import { chatProviderSchemas } from './chat';
 import { emailProviderSchemas } from './email';
 import { inAppProviderSchemas } from './inApp';
 import { pushProviderSchemas } from './push';
+import { signalsProviderSchemas } from './signals';
 import { smsProviderSchemas } from './sms';
 
 export const providerSchemas = {
@@ -12,4 +13,5 @@ export const providerSchemas = {
   email: emailProviderSchemas,
   push: pushProviderSchemas,
   in_app: inAppProviderSchemas,
+  signals: signalsProviderSchemas,
 } as const satisfies Record<ChannelStepEnum, Record<string, { output: JsonSchema }>>;

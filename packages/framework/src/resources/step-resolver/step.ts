@@ -10,6 +10,7 @@ import type {
   EmailOutputUnvalidated,
   InAppOutputUnvalidated,
   PushOutputUnvalidated,
+  SignalsOutputUnvalidated,
   SmsOutputUnvalidated,
   ThrottleOutputUnvalidated,
 } from '../../types/step.types';
@@ -208,6 +209,31 @@ export type InAppStepResolver<
   disableOutputSanitization?: boolean;
 };
 
+export type SignalsStepResolver<
+  TControlSchema extends Schema | undefined = undefined,
+  TPayloadSchema extends Schema | undefined = undefined,
+  TEnvSchema extends Schema | undefined = undefined,
+> = {
+  type: 'signals';
+  stepId: string;
+  resolve: (
+    controls: ResolveControls<TControlSchema>,
+    ctx: StepResolverContext<ResolveControls<TPayloadSchema>, ResolveEnv<TEnvSchema>>
+  ) => Promise<SignalsOutputUnvalidated>;
+  controlSchema?: TControlSchema;
+  payloadSchema?: TPayloadSchema;
+  envSchema?: TEnvSchema;
+  skip?: BaseStepResolverOptions<TControlSchema, TPayloadSchema, TEnvSchema>['skip'];
+  providers?: StepResolverProviders<
+    'signals',
+    ResolveControls<TControlSchema>,
+    SignalsOutputUnvalidated,
+    ResolveControls<TPayloadSchema>,
+    ResolveEnv<TEnvSchema>
+  >;
+  disableOutputSanitization?: boolean;
+};
+
 export type DelayStepResolver<
   TControlSchema extends Schema | undefined = undefined,
   TPayloadSchema extends Schema | undefined = undefined,
@@ -265,6 +291,7 @@ export type AnyStepResolver =
   | ChatStepResolver<Schema | undefined, Schema | undefined, Schema | undefined>
   | PushStepResolver<Schema | undefined, Schema | undefined, Schema | undefined>
   | InAppStepResolver<Schema | undefined, Schema | undefined, Schema | undefined>
+  | SignalsStepResolver<Schema | undefined, Schema | undefined, Schema | undefined>
   | DelayStepResolver<Schema | undefined, Schema | undefined, Schema | undefined>
   | DigestStepResolver<Schema | undefined, Schema | undefined, Schema | undefined>
   | ThrottleStepResolver<Schema | undefined, Schema | undefined, Schema | undefined>;
@@ -394,6 +421,31 @@ function inApp<
   };
 }
 
+function signals<
+  TControlSchema extends Schema | undefined = undefined,
+  TPayloadSchema extends Schema | undefined = undefined,
+  TEnvSchema extends Schema | undefined = undefined,
+>(
+  stepId: string,
+  resolve: (
+    controls: ResolveControls<TControlSchema>,
+    ctx: StepResolverContext<ResolveControls<TPayloadSchema>, ResolveEnv<TEnvSchema>>
+  ) => Promise<SignalsOutputUnvalidated>,
+  options?: ChannelStepResolverOptions<'signals', TControlSchema, TPayloadSchema, SignalsOutputUnvalidated, TEnvSchema>
+): SignalsStepResolver<TControlSchema, TPayloadSchema, TEnvSchema> {
+  return {
+    type: 'signals',
+    stepId,
+    resolve: resolve as SignalsStepResolver<TControlSchema, TPayloadSchema, TEnvSchema>['resolve'],
+    controlSchema: options?.controlSchema,
+    payloadSchema: options?.payloadSchema,
+    envSchema: options?.envSchema,
+    skip: options?.skip,
+    providers: options?.providers as SignalsStepResolver<TControlSchema, TPayloadSchema, TEnvSchema>['providers'],
+    disableOutputSanitization: options?.disableOutputSanitization,
+  };
+}
+
 function delay<
   TControlSchema extends Schema | undefined = undefined,
   TPayloadSchema extends Schema | undefined = undefined,
@@ -463,4 +515,4 @@ function throttle<
   };
 }
 
-export const step = { email, sms, chat, push, inApp, delay, digest, throttle };
+export const step = { email, sms, chat, push, inApp, signals, delay, digest, throttle };

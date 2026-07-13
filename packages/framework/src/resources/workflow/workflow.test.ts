@@ -125,6 +125,29 @@ describe('workflow function', () => {
     });
   });
 
+  it('should discover a signals channel step', async () => {
+    const { discover } = workflow('signals-workflow', async ({ step }) => {
+      await step.signals('send-signal', async () => ({
+        body: 'Signal body',
+      }));
+    });
+
+    const definition = await discover();
+
+    expect(definition.steps).to.have.length(1);
+    expect(definition.steps[0]).to.include({
+      stepId: 'send-signal',
+      type: 'signals',
+    });
+    expect(definition.steps[0].outputs.schema).toMatchObject({
+      type: 'object',
+      properties: {
+        body: { type: 'string' },
+      },
+      required: ['body'],
+    });
+  });
+
   it('should include the defined name', async () => {
     const { discover } = workflow(
       'workflow-with-name',

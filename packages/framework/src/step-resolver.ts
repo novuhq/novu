@@ -6,6 +6,7 @@ export type {
   EmailStepResolver,
   InAppStepResolver,
   PushStepResolver,
+  SignalsStepResolver,
   SmsStepResolver,
   StepResolverContext,
   ThrottleStepResolver,
