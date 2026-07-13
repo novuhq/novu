@@ -27,41 +27,35 @@ type ChannelCopy = {
 const CHANNEL_COPY: Record<GuidanceChannel, ChannelCopy> = {
   email: {
     title: 'Who can email this agent',
-    openTooltipDetail:
-      'Currently open: unknown senders are auto-created as lightweight subscribers from the sender address.',
-    restrictedTooltipDetail: 'Currently restricted: the agent only replies when subscriber.email matches the sender.',
+    openTooltipDetail: `Unknown senders are auto-created as lightweight subscribers from the sender address. Storing subscriber.email merges conversations into the existing subscriber. ${AGENT_WIDE_SETTING_HINT}`,
+    restrictedTooltipDetail: AGENT_WIDE_SETTING_HINT,
     openDescription: (
       <>
-        Anyone can email this agent; unknown senders are auto-created as lightweight subscribers. As a best practice,
-        still store <code className="text-text-sub">subscriber.email</code> so conversations merge into the existing
-        subscriber. {AGENT_WIDE_SETTING_HINT}
+        Anyone can email this agent. Store <code className="text-text-sub">subscriber.email</code> so conversations
+        merge into the existing subscriber.
       </>
     ),
     restrictedDescription: (
       <>
-        This agent only replies to subscribers whose <code className="text-text-sub">subscriber.email</code> matches the
-        sender. Store that address on the subscriber. {AGENT_WIDE_SETTING_HINT}
+        Only replies when <code className="text-text-sub">subscriber.email</code> matches the sender. Store that address
+        on the subscriber.
       </>
     ),
   },
   whatsapp: {
     title: 'Who can message this agent',
-    openTooltipDetail:
-      'Currently open: unknown senders are auto-created as lightweight subscribers from the sender phone.',
-    restrictedTooltipDetail:
-      'Currently restricted: the agent only replies to subscribers with an E.164 phone on subscriber.phone.',
+    openTooltipDetail: `Unknown senders are auto-created as lightweight subscribers from the sender phone. Storing subscriber.phone merges conversations into the existing subscriber. ${AGENT_WIDE_SETTING_HINT}`,
+    restrictedTooltipDetail: AGENT_WIDE_SETTING_HINT,
     openDescription: (
       <>
-        Anyone can message this agent; unknown senders are auto-created as lightweight subscribers. As a best practice,
-        still store <code className="text-text-sub">subscriber.phone</code> so conversations merge into the existing
-        subscriber. {AGENT_WIDE_SETTING_HINT}
+        Anyone can message this agent. Store <code className="text-text-sub">subscriber.phone</code> so conversations
+        merge into the existing subscriber.
       </>
     ),
     restrictedDescription: (
       <>
-        This agent only replies to subscribers who have an E.164 phone on{' '}
-        <code className="text-text-sub">subscriber.phone</code>. Store that number on the subscriber.{' '}
-        {AGENT_WIDE_SETTING_HINT}
+        Only replies to subscribers with an E.164 phone on <code className="text-text-sub">subscriber.phone</code>.
+        Store that number on the subscriber.
       </>
     ),
   },
@@ -85,7 +79,7 @@ export function SubscriberAccessGuidanceRow({ channel, agent }: SubscriberAccess
       title={
         <AgentInboxCardRowInfoTitle
           label={copy.title}
-          infoTooltip={`${AGENT_WIDE_SETTING_HINT} ${isOpen ? copy.openTooltipDetail : copy.restrictedTooltipDetail}`}
+          infoTooltip={isOpen ? copy.openTooltipDetail : copy.restrictedTooltipDetail}
         />
       }
       description={isOpen ? copy.openDescription : copy.restrictedDescription}
