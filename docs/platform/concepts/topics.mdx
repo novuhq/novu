@@ -3,11 +3,13 @@ title: 'Topics'
 description: "Learn how topics work in Novu and how they help you organize and target groups of subscribers efficiently for broadcasts, announcements, and segmented alerts."
 ---
 
+import { GlossaryTerm } from '/snippets/glossary-term.jsx';
+
 In Novu, a _topic_ is a way to group subscribers under a shared label so that you can broadcast a message to many users with a single workflow trigger. This fan-out mechanism removes the need to manage individual subscriber IDs for each notification, streamlining scenarios like product announcements, feature rollouts, or status updates.
 
 ## Topics identifiers
 
-Each topic is uniquely identified by a topic key, a permanent, internal reference in your system. You can also assign a name to help describe its purpose, for example, "Task Updates" or "Comment Thread Subscribers".
+Each topic is uniquely identified by a <GlossaryTerm term="topic-key">topic key</GlossaryTerm>, a permanent, internal reference in your system. You can also assign a name to help describe its purpose, for example, "Task Updates" or "Comment Thread Subscribers".
 
 The `topicKey` must be unique and cannot be changed after creation; Novu enforces this uniqueness behind the scenes. Example: `task:taskId` or `post:postId`.
 
@@ -22,8 +24,8 @@ Novu’s notification system is built around workflows, which are triggered for 
 
 When you trigger a workflow using a topic:
 - The `to` field accepts the topic’s key.
-- Novu looks up [topic subscriptions](/platform/subscription) on that topic whose [Context](/platform/concepts/contexts) matches the trigger (exact match).
-- For each matching subscription, Novu evaluates optional JSON Logic conditions against the trigger **payload**.
+- Novu looks up <GlossaryTerm term="subscription">topic subscriptions</GlossaryTerm> on that topic whose <GlossaryTerm term="context">Context</GlossaryTerm> matches the trigger (exact match).
+- For each matching subscription, Novu evaluates optional JSON Logic conditions against the trigger **<GlossaryTerm term="payload">payload</GlossaryTerm>**.
 - A separate workflow event is created for each subscriber whose subscription passes.
 
 Topics let you target large groups with a single API call, removing the need to loop through subscribers or send multiple workflow triggers.

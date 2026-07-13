@@ -3,8 +3,10 @@ title: "What is ACI?"
 description: "Learn what the Agent Communication Interface (ACI) is, what problems it solves, and how it helps AI agents talk to users across chat, email, and push."
 ---
 
+import { GlossaryTerm } from '/snippets/glossary-term.jsx';
 
-Agent Communication Infrastructure (ACI) is the communication layer that connects agents to the messaging platforms where people already work, collaborate, and talk to businesses. ACI complements Novu's notification workflows: workflows deliver one-way or templated multi-channel notifications, while ACI handles two-way agent conversations across Slack, Teams, WhatsApp, and other messaging platforms.
+
+<GlossaryTerm term="aci">Agent Communication Infrastructure (ACI)</GlossaryTerm> is the communication layer that connects agents to the messaging platforms where people already work, collaborate, and talk to businesses. ACI complements Novu's notification <GlossaryTerm term="workflow">workflows</GlossaryTerm>: workflows deliver one-way or templated multi-channel notifications, while ACI handles two-way agent conversations across Slack, Teams, WhatsApp, and other messaging platforms.
 
 ACI sits between communication channels and your agent logic. Instead of building separate integrations for each platform, ACI gives your agent one communication interface for inbound messages, outbound replies, conversation state, user identity, and delivery across:
 
@@ -15,7 +17,7 @@ ACI sits between communication channels and your agent logic. Instead of buildin
 * Telegram
 * Other supported platforms
 
-The agent brain can be powered by an LLM, custom code, a rules engine, a human-in-the-loop workflow, a managed agent platform, or a combination of systems. ACI does not define the agent’s intelligence. It defines the communication infrastructure around it.
+The <GlossaryTerm term="agent-brain">agent brain</GlossaryTerm> can be powered by an LLM, custom code, a rules engine, a human-in-the-loop workflow, a managed agent platform, or a combination of systems. ACI does not define the agent’s intelligence. It defines the communication infrastructure around it.
 
 That means you can build an agent that your team uses internally, expose an agent to your product users, or create a customer-facing agent that lives in the channels your customers already use.
 

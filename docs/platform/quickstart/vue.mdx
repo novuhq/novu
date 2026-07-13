@@ -3,6 +3,7 @@ title: 'Vue In-App Notifications Quickstart — Novu Inbox'
 description: "Create a Novu account and integrate the Novu Inbox component into your Vue application to display real-time in-app notifications for your subscribers."
 sidebarTitle: 'Vue'
 ---
+import { GlossaryTerm } from '/snippets/glossary-term.jsx';
 
 
 Add real-time in-app notifications to Vue using the Novu Inbox component and the `@novu/js` SDK.
@@ -103,13 +104,13 @@ If any fails, revise.
 
   <Step>
   ### Add the Inbox component
-  Create the `src/components/NovuInbox.vue` file to add the Inbox component passing <Tooltip tip="The application identifier is a unique identifier for your application. You can find it in the Novu Dashboard under the API keys page.">applicationIdentifier</Tooltip> and <Tooltip tip="The subscriber ID is the unique identifier for the user in your application, typically the user's id in your database.">subscriberId</Tooltip>:
+  Create the `src/components/NovuInbox.vue` file to add the Inbox component passing <GlossaryTerm term="application-identifier">applicationIdentifier</GlossaryTerm> and <GlossaryTerm term="subscriber-id">subscriberId</GlossaryTerm>:
 
   <Note>
   Explore the full `vue-inbox` example in the [Novu examples repository](https://github.com/novuhq/novu).
 </Note>
 
-     If you're signed in to your Novu account, then the <Tooltip tip="The application identifier is a unique identifier for your application. You can find it in the Novu Dashboard under the API keys page.">applicationIdentifier</Tooltip> and <Tooltip tip="The subscriber ID is the unique identifier for the user in your application, typically the user's id in your database.">subscriberId</Tooltip> are automatically entered in the code sample above. Otherwise, you can manually retrieve them:
+     If you're signed in to your Novu account, then the <GlossaryTerm term="application-identifier">applicationIdentifier</GlossaryTerm> and <GlossaryTerm term="subscriber-id">subscriberId</GlossaryTerm> are automatically entered in the code sample above. Otherwise, you can manually retrieve them:
     * `applicationIdentifier` - In the Novu dashboard, click API Keys, and then locate your unique Application Identifier.
     * `subscriberId` - This represents a user in your system (typically the user's ID in your database). For quick start purposes, an auto-generated subscriberId is provided for your Dashboard user.
 
@@ -150,7 +151,7 @@ If any fails, revise.
   <Step>
   ### Trigger your first notification
 
-  In this step, you'll create a simple workflow to send your first notification via the Inbox component. Follow these steps to set up and trigger a workflow from your Novu dashboard.
+  In this step, you'll create a simple <GlossaryTerm term="workflow">workflow</GlossaryTerm> to send your first notification via the <GlossaryTerm term="inbox">Inbox</GlossaryTerm> component. Follow these steps to set up and <GlossaryTerm term="trigger">trigger</GlossaryTerm> a workflow from your Novu dashboard.
 
   1. Go to your [Novu dashboard](https://dashboard-v2.novu.co/auth/sign-in).
   2. In the sidebar, click **Workflows**.

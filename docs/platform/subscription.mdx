@@ -3,7 +3,9 @@ title: 'Introduction'
 description: "Learn what a Subscription is in Novu, how it stores subscriber preferences, and how it fits into the notification delivery and consent system."
 ---
 
-Subscriptions introduce topic-level settings that allow subscribers to decide exactly which notifications they want to receive or mute.
+import { GlossaryTerm } from '/snippets/glossary-term.jsx';
+
+<GlossaryTerm term="subscription">Subscriptions</GlossaryTerm> introduce topic-level settings that allow <GlossaryTerm term="subscriber">subscribers</GlossaryTerm> to decide exactly which notifications they want to receive or mute.
 
 While standard preferences allow subscribers to toggle specific channels on or off, Subscriptions provide more precise control through conditional rules. With Subscriptions, subscribers can mute topics, subscribe or unsubscribe to them, and also define conditions that determine when Novu should deliver a notification.
 
@@ -11,7 +13,7 @@ While standard preferences allow subscribers to toggle specific channels on or o
 
 The Subscription introduces a filtering layer between the trigger and the subscriber. When you trigger a notification to a topic key, the system doesn't automatically send it to everyone. Instead, it follows this evaluation flow:
 
-1. **Trigger**: You trigger a workflow to a `topicKey` and include a data payload and optional [Context](/platform/concepts/contexts).
+1. **Trigger**: You <GlossaryTerm term="trigger">trigger</GlossaryTerm> a workflow to a `topicKey` and include a data <GlossaryTerm term="payload">payload</GlossaryTerm> and optional <GlossaryTerm term="context">Context</GlossaryTerm>.
 2. **Match**: Novu retrieves topic subscriptions whose Context matches the trigger (exact match), then resolves the subscribers.
 3. **Evaluate**: The system checks each matching subscription's conditions against the trigger **payload** (and workflow preferences).
 4. **Deliver**: Only subscribers whose subscriptions pass receive the notification.
@@ -26,8 +28,8 @@ This filtering happens for every event on a topic, which allows you to support m
 
 To implement Subscriptions effectively, you should understand these components:
 
-- **Topic**: A topic groups notifications of a similar type. Refer to the [Topics documentation](/platform/concepts/topics) for details on how to create and manage them.
-- **Subscribers**: A subscriber represents the user or entity that receives notifications. Subscribers can join or leave topics and define preferences that control delivery. Refer to the [Subscribers documentation](/platform/concepts/subscribers) for details on how to create and manage subscribers.
+- **Topic**: A <GlossaryTerm term="topic">topic</GlossaryTerm> groups notifications of a similar type. Refer to the [Topics documentation](/platform/concepts/topics) for details on how to create and manage them.
+- **Subscribers**: A subscriber represents the user or entity that receives notifications. Subscribers can join or leave topics and define <GlossaryTerm term="preference">preferences</GlossaryTerm> that control delivery. Refer to the [Subscribers documentation](/platform/concepts/subscribers) for details on how to create and manage subscribers.
 
 ### Subscription rules
 

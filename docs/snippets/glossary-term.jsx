@@ -1,0 +1,287 @@
+export const glossaryTerms = {
+  workflow: {
+    headline: 'Workflow',
+    tip: 'An environment-scoped orchestration definition that determines what to send, when, and on which channels.',
+    cta: 'Learn more',
+    href: '/platform/concepts/workflows',
+  },
+  trigger: {
+    headline: 'Trigger',
+    tip: 'An API request that starts a workflow for one or more recipients, including a workflowId, to field, and optional payload.',
+    cta: 'Learn more',
+    href: '/platform/concepts/trigger',
+  },
+  step: {
+    headline: 'Step',
+    tip: 'A node in a workflow. Channel steps deliver messages; action steps control execution flow.',
+    cta: 'Read the guide',
+    href: '/platform/workflow/add-and-configure-steps',
+  },
+  notification: {
+    headline: 'Notification',
+    tip: 'The container that tracks one trigger execution for one subscriber, including jobs, messages, and delivery status.',
+    cta: 'Learn more',
+    href: '/platform/concepts/notification-event',
+  },
+  message: {
+    headline: 'Message',
+    tip: 'The rendered output delivered on a channel, such as an email body, SMS text, push notification, or in-app item.',
+    cta: 'Learn more',
+    href: '/platform/concepts/notification-event#message',
+  },
+  job: {
+    headline: 'Job',
+    tip: 'A unit of work created for each workflow step during execution, with statuses like PENDING, RUNNING, and COMPLETED.',
+    cta: 'Learn more',
+    href: '/platform/concepts/trigger#jobs',
+  },
+  payload: {
+    headline: 'Payload',
+    tip: 'Dynamic JSON data passed at trigger time to personalize templates, drive step conditions, and configure action steps.',
+    cta: 'Learn more',
+    href: '/platform/concepts/trigger',
+  },
+  event: {
+    headline: 'Event',
+    tip: 'An API request that starts a workflow for one or more recipients. Novu bills one event per subscriber resolved from the trigger.',
+    cta: 'Learn more',
+    href: '/platform/concepts/notification-event',
+  },
+  subscriber: {
+    headline: 'Subscriber',
+    tip: 'An entity designated to receive notifications, uniquely identified by subscriberId within an environment.',
+    cta: 'Learn more',
+    href: '/platform/concepts/subscribers',
+  },
+  topic: {
+    headline: 'Topic',
+    tip: 'A named group of subscribers used to fan out a workflow with a single trigger, referenced by topicKey.',
+    cta: 'Learn more',
+    href: '/platform/concepts/topics',
+  },
+  subscription: {
+    headline: 'Subscription',
+    tip: 'A topic-level, condition-based opt-in layer evaluated against the trigger payload before delivery.',
+    cta: 'Learn more',
+    href: '/platform/subscription',
+  },
+  broadcast: {
+    headline: 'Broadcast',
+    tip: 'A trigger mode that sends a workflow to all subscribers in an environment instead of targeting specific recipients.',
+    cta: 'View API',
+    href: '/api-reference/events/broadcast-event-to-all',
+  },
+  actor: {
+    headline: 'Actor',
+    tip: 'A subscriber referenced at trigger time or in in-app templates, representing who performed an action—not necessarily the recipient.',
+    cta: 'Full definition',
+    href: '/platform/additional-resources/glossary#actor',
+  },
+  channel: {
+    headline: 'Channel',
+    tip: 'A communication medium used to deliver notifications: in-app (Inbox), email, SMS, push, or chat.',
+    cta: 'Learn more',
+    href: '/platform/integrations',
+  },
+  inbox: {
+    headline: 'Inbox',
+    tip: "Novu's in-app notification UI and client SDK component that delivers in_app messages, unread counts, and preferences.",
+    cta: 'Set up Inbox',
+    href: '/platform/inbox',
+  },
+  provider: {
+    headline: 'Provider',
+    tip: 'A third-party service that delivers notifications on a channel, such as SendGrid for email or Twilio for SMS.',
+    cta: 'Learn more',
+    href: '/platform/concepts/integrations',
+  },
+  integration: {
+    headline: 'Integration',
+    tip: 'An environment-scoped, configured connection to a third-party provider with credentials and channel settings.',
+    cta: 'Learn more',
+    href: '/platform/concepts/integrations',
+  },
+  credential: {
+    headline: 'Credential',
+    tip: 'Encrypted authentication and configuration values stored on an integration, such as API keys and OAuth tokens.',
+    cta: 'Learn more',
+    href: '/platform/concepts/integrations',
+  },
+  layout: {
+    headline: 'Layout',
+    tip: 'An HTML wrapper used to structure email notifications, shared across workflows and published between environments.',
+    cta: 'Read the guide',
+    href: '/platform/workflow/add-notification-content/channels-template-editors#email-layouts',
+  },
+  digest: {
+    headline: 'Digest',
+    tip: 'An action step that batches multiple trigger events into one downstream execution per digest window.',
+    cta: 'Read the guide',
+    href: '/platform/workflow/add-and-configure-steps/configure-action-steps/digest',
+  },
+  delay: {
+    headline: 'Delay step',
+    tip: 'An action step that pauses workflow execution for a fixed duration, until a scheduled time, or until a dynamic payload value.',
+    cta: 'Read the guide',
+    href: '/platform/workflow/add-and-configure-steps/configure-action-steps/delay',
+  },
+  throttle: {
+    headline: 'Throttle step',
+    tip: 'An action step that limits how many times a workflow may continue within a time window.',
+    cta: 'Read the guide',
+    href: '/platform/workflow/add-and-configure-steps/configure-action-steps/throttle',
+  },
+  'step-conditions': {
+    headline: 'Step conditions',
+    tip: 'Rule-based logic that determines whether a step runs or is skipped based on subscriber data, payload, or context.',
+    cta: 'Read the guide',
+    href: '/platform/workflow/add-and-configure-steps/step-conditions',
+  },
+  controls: {
+    headline: 'Controls',
+    tip: 'Dashboard-editable fields in Novu Framework workflows that let non-technical users change step content without code changes.',
+    cta: 'Learn more',
+    href: '/framework/controls',
+  },
+  preference: {
+    headline: 'Preference',
+    tip: 'Rules that control whether notifications are sent on a channel, at workflow, subscriber, or subscription scope.',
+    cta: 'Learn more',
+    href: '/platform/concepts/preferences',
+  },
+  'critical-workflow': {
+    headline: 'Critical workflow',
+    tip: 'A workflow marked as critical whose channel preferences are not shown to subscribers and bypass normal opt-out.',
+    cta: 'Full definition',
+    href: '/platform/additional-resources/glossary#critical-workflow',
+  },
+  context: {
+    headline: 'Context',
+    tip: 'Multi-dimensional metadata passed at trigger time, such as tenant, app, or region, available in templates and Inbox filtering.',
+    cta: 'Learn more',
+    href: '/platform/concepts/contexts',
+  },
+  tenant: {
+    headline: 'Tenant',
+    tip: 'A logical organization or customer boundary implemented with a tenant context rather than prefixing subscriber IDs.',
+    cta: 'Learn more',
+    href: '/platform/concepts/tenants',
+  },
+  environment: {
+    headline: 'Environment',
+    tip: 'An isolated scope for workflows, subscribers, integrations, and other Novu data, such as Development or Production.',
+    cta: 'Learn more',
+    href: '/platform/developer/environments',
+  },
+  organization: {
+    headline: 'Organization',
+    tip: 'The top-level Novu account that owns environments, workflows, and team access, managed through the Dashboard.',
+    cta: 'Full definition',
+    href: '/platform/additional-resources/glossary#organization',
+  },
+  publish: {
+    headline: 'Publish',
+    tip: 'The process of promoting workflows, layouts, and translations from Development to Production or custom environments.',
+    cta: 'Learn more',
+    href: '/platform/developer/environments#publish-changes-to-other-environments',
+  },
+  'application-identifier': {
+    headline: 'Application identifier',
+    tip: 'The public, environment-scoped key used by client SDKs and the Inbox to connect to Novu. Safe to expose in frontend code.',
+  },
+  'subscriber-id': {
+    headline: 'Subscriber ID',
+    tip: 'The unique identifier for a notification recipient in your application, typically the user ID in your database.',
+  },
+  'agent-brain': {
+    headline: 'Agent brain',
+    tip: 'The system that decides how an agent responds, powered by an LLM, custom code, rules, or human-in-the-loop workflows.',
+    cta: 'See mental model',
+    href: '/agents/get-started/mental-model',
+  },
+  aci: {
+    headline: 'ACI',
+    tip: "Novu's two-way agent messaging layer across Slack, Teams, WhatsApp, email, and Telegram, separate from the agent brain.",
+    cta: 'Learn more',
+    href: '/agents/get-started/what-is-aci',
+  },
+  bridge: {
+    headline: 'Bridge',
+    tip: 'An HTTP endpoint in your application that Novu Cloud calls for Framework workflow discovery, preview, and execution.',
+    cta: 'Learn more',
+    href: '/framework/endpoint',
+  },
+  'inbound-email': {
+    headline: 'Inbound Email',
+    tip: 'Novu feature for receiving mail on verified domains and routing messages to agents or webhook endpoints.',
+    cta: 'Learn more',
+    href: '/platform/inbound-email/overview',
+  },
+  framework: {
+    headline: 'Novu Framework',
+    tip: 'The code-first SDK for defining workflows in TypeScript with typed payload and controls schemas.',
+    cta: 'Learn more',
+    href: '/framework/introduction',
+  },
+  agent: {
+    headline: 'Agent',
+    tip: 'An AI-powered entity connected to messaging channels through Novu Connect, with custom code or managed configuration.',
+    cta: 'Learn more',
+    href: '/agents',
+  },
+  'transaction-id': {
+    headline: 'Transaction ID',
+    tip: 'A unique identifier for one trigger execution, used for tracing, idempotency, or cancellation.',
+    cta: 'View API',
+    href: '/api-reference/events/trigger-event',
+  },
+  'workflow-run': {
+    headline: 'Workflow run',
+    tip: 'A single execution of a workflow for one subscriber, visible in the Activity Feed with payload, context, and step details.',
+    cta: 'Read the guide',
+    href: '/platform/workflow/monitor-and-debug-workflow',
+  },
+  'activity-feed': {
+    headline: 'Activity Feed',
+    tip: 'The Dashboard observability surface for workflow runs, API request traces, and agent conversations.',
+    cta: 'Read the guide',
+    href: '/platform/workflow/monitor-and-debug-workflow',
+  },
+  'topic-key': {
+    headline: 'Topic key',
+    tip: 'The immutable identifier used to reference a topic in the trigger to field.',
+    cta: 'Learn more',
+    href: '/platform/concepts/topics',
+  },
+  'secret-key': {
+    headline: 'Secret key',
+    tip: 'The private API key used to authenticate server-side requests. Never expose it in client-side code.',
+    cta: 'Learn more',
+    href: '/api-reference/authentication',
+  },
+};
+
+export const GlossaryTerm = ({ term, children, cta, href }) => {
+  const entry = glossaryTerms[term];
+
+  if (!entry) {
+    return children;
+  }
+
+  const tooltipCta = cta ?? entry.cta;
+  const tooltipHref = href ?? entry.href;
+
+  if (tooltipCta && tooltipHref) {
+    return (
+      <Tooltip headline={entry.headline} tip={entry.tip} cta={tooltipCta} href={tooltipHref}>
+        {children}
+      </Tooltip>
+    );
+  }
+
+  return (
+    <Tooltip headline={entry.headline} tip={entry.tip}>
+      {children}
+    </Tooltip>
+  );
+};

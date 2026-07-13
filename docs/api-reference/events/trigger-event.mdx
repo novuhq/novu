@@ -3,7 +3,9 @@ title: "Trigger event"
 openapi: "POST /v1/events/trigger"
 ---
 
-Trigger a workflow by sending a `POST` request with the workflow identifier, target subscriber(s), and optional payload. The response includes a `transactionId` you can use to trace the run in the Activity Feed, cancel the event, or look up related messages.
+import { GlossaryTerm } from '/snippets/glossary-term.jsx';
+
+<GlossaryTerm term="trigger">Trigger</GlossaryTerm> a workflow by sending a `POST` request with the workflow identifier, target subscriber(s), and optional <GlossaryTerm term="payload">payload</GlossaryTerm>. The response includes a <GlossaryTerm term="transaction-id">transactionId</GlossaryTerm> you can use to trace the run in the Activity Feed, cancel the event, or look up related messages.
 
 ## Idempotency and billing
 

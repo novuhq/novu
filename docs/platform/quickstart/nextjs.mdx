@@ -3,6 +3,7 @@ title: 'Next.js In-App Notifications Quickstart — Novu Inbox'
 description: "Set up Novu in-app notifications in your Next.js app. Install the SDK, add the Inbox component, and trigger your first notification."
 sidebarTitle: 'Next.js'
 ---
+import { GlossaryTerm } from '/snippets/glossary-term.jsx';
 
 
 Add real-time in-app notifications to Next.js in under 10 minutes using the Novu Inbox component.
@@ -118,7 +119,7 @@ export function NovuInbox() {
 }
 ```
 
-    If you are signed in to your Novu account, then the <Tooltip tip="The application identifier is a unique identifier for your application.">applicationIdentifier</Tooltip> and <Tooltip tip="The subscriber ID is the unique identifier for the user in your application, typically the user's ID in your database.">subscriberId</Tooltip> will be automatically populated. Otherwise, retrieve them from:
+    If you are signed in to your Novu account, then the <GlossaryTerm term="application-identifier">applicationIdentifier</GlossaryTerm> and <GlossaryTerm term="subscriber-id">subscriberId</GlossaryTerm> will be automatically populated. Otherwise, retrieve them from:
     * `applicationIdentifier`: On the Novu dashboard, click **API Keys**, and copy your unique Application Identifier.
     * `subscriberId`: This represents a user in your system, usually the user ID from your database. For testing, you can use the auto-generated subscriberId from your Novu dashboard. You can locate it under the Subscribers tab on the Novu dashboard.
 
@@ -141,7 +142,7 @@ export function NovuInbox() {
 
   <Step>
   ### Trigger your first notification
-    In this step, you'll create a simple workflow to send your first notification via the Inbox component. Follow these steps to set up and trigger a workflow from your Novu dashboard.
+    In this step, you'll create a simple <GlossaryTerm term="workflow">workflow</GlossaryTerm> to send your first notification via the <GlossaryTerm term="inbox">Inbox</GlossaryTerm> component. Follow these steps to set up and <GlossaryTerm term="trigger">trigger</GlossaryTerm> a workflow from your Novu dashboard.
     1. Go to your [Novu dashboard](https://dashboard.novu.co/auth/sign-in).
     2. Click **Workflows**.
     3. Click **Create Workflow** and then enter a name (e.g., "Welcome Notification").

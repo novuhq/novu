@@ -3,9 +3,11 @@ title: 'Trigger Workflow'
 description: "Learn how Novu workflows are triggered using the Event API, including per-subscriber triggers, attaching context and payload data, and broadcasting to topics."
 ---
 
-Triggering a workflow starts the execution of a notification pipeline in Novu. A workflow is triggered when an event is sent to Novu.
+import { GlossaryTerm } from '/snippets/glossary-term.jsx';
 
-When a workflow is triggered, Novu resolves the target subscribers, evaluates workflow logic, and executes each configured step to deliver notifications across the selected channels. Trigger requests can include payload data, context, or target a topic, allowing you to control both who receives the notification and what data is available during execution.
+<GlossaryTerm term="trigger">Triggering</GlossaryTerm> a workflow starts the execution of a notification pipeline in Novu. A workflow is triggered when an <GlossaryTerm term="event">event</GlossaryTerm> is sent to Novu.
+
+When a workflow is triggered, Novu resolves the target <GlossaryTerm term="subscriber">subscribers</GlossaryTerm>, evaluates workflow logic, and executes each configured step to deliver notifications across the selected <GlossaryTerm term="channel">channels</GlossaryTerm>. Trigger requests can include <GlossaryTerm term="payload">payload</GlossaryTerm> data, <GlossaryTerm term="context">context</GlossaryTerm>, or target a <GlossaryTerm term="topic">topic</GlossaryTerm>, allowing you to control both who receives the notification and what data is available during execution.
 
 <Note>
   You can test a workflow directly from the workflow editor in the Novu dashboard before triggering it from your application. This allows you to validate step configuration and notification content for a specific subscriber.

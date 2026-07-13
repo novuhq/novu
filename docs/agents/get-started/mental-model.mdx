@@ -3,6 +3,8 @@ title: "Mental model"
 description: "Trace how inbound messages flow from Slack, Teams, WhatsApp, or email through Novu's agent communication infrastructure to your agent code and back."
 ---
 
+import { GlossaryTerm } from '/snippets/glossary-term.jsx';
+
 
 <Note>
   Agents are currently in private beta. Please contact us at support@novu.co to get access.
@@ -10,7 +12,7 @@ description: "Trace how inbound messages flow from Slack, Teams, WhatsApp, or em
 
 Novu for Agents sits between chat providers and your code. Users can message your agent, and your agent can message them back on the same thread.
 
-When a user sends a message or interacts with your agent from a connected platform, Novu receives it, resolves identity and conversation state, and forwards the full context to agent brain. Your agent brain processes the message and replies; Novu delivers the response back to the platform.
+When a user sends a message or interacts with your agent from a connected platform, Novu receives it, resolves identity and conversation state, and forwards the full context to <GlossaryTerm term="agent-brain">agent brain</GlossaryTerm>. Your agent brain processes the message and replies; Novu delivers the response back to the platform.
 
 ## Types of agents 
 

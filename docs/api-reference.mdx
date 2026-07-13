@@ -4,12 +4,14 @@ description: 'Manage subscribers, trigger workflows, configure integrations, ope
 sidebarTitle: Overview
 ---
 
-The Novu REST API lets you manage subscribers, trigger workflows, configure integrations, operate agents, and run your notification infrastructure from your backend. Start with these common operations:
+import { GlossaryTerm } from '/snippets/glossary-term.jsx';
+
+The Novu REST API lets you manage <GlossaryTerm term="subscriber">subscribers</GlossaryTerm>, <GlossaryTerm term="trigger">trigger</GlossaryTerm> <GlossaryTerm term="workflow">workflows</GlossaryTerm>, configure <GlossaryTerm term="integration">integrations</GlossaryTerm>, operate agents, and run your notification infrastructure from your backend. Start with these common operations:
 
 - [Trigger event](/api-reference/events/trigger-event) — send a workflow to a subscriber
 - [Create a subscriber](/api-reference/subscribers/create-a-subscriber) — register a notification recipient
 - [Create an agent](/api-reference/agents/create-an-agent) — create a custom code or managed agent
-- [Retrieve subscriber notifications](/api-reference/subscribers/retrieve-subscriber-notifications) — read in-app notifications for the Inbox
+- [Retrieve subscriber notifications](/api-reference/subscribers/retrieve-subscriber-notifications) — read in-app notifications for the <GlossaryTerm term="inbox">Inbox</GlossaryTerm>
 - [Create a workflow](/api-reference/workflows/create-a-workflow) — define a notification workflow programmatically
 - [Authentication](/api-reference/authentication) — authenticate requests with your secret API key
 
@@ -32,7 +34,7 @@ All endpoints in this reference use the US base URL unless noted otherwise. See 
 
 The Novu API is organized around REST. It has predictable, resource-oriented URLs, accepts and returns JSON request and response bodies, and uses standard HTTP verbs and status codes.
 
-- **Resource-oriented** — Each resource (subscribers, topics, workflows, agents, and more) has its own set of endpoints. Use `POST` to create, `GET` to read, `PATCH`/`PUT` to update, and `DELETE` to remove.
+- **Resource-oriented** — Each resource (<GlossaryTerm term="subscriber">subscribers</GlossaryTerm>, <GlossaryTerm term="topic">topics</GlossaryTerm>, workflows, agents, and more) has its own set of endpoints. Use `POST` to create, `GET` to read, `PATCH`/`PUT` to update, and `DELETE` to remove.
 - **JSON everywhere** — Send `Content-Type: application/json` on requests with a body. Responses are JSON-encoded.
 - **Response envelope** — Successful responses wrap the result in a `data` field, for example `{ "data": { ... } }`. List endpoints return `{ "data": [ ... ] }` alongside [pagination](/api-reference/pagination) metadata.
 - **Consistent errors** — Failures return a standard error body with a `statusCode` and `message`. See [Errors](/api-reference/errors).

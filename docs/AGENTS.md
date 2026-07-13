@@ -11,7 +11,7 @@
 
 ## Terminology
 
-Use Novu-specific terms consistently. For full definitions, see the [glossary](/platform/additional-resources/glossary).
+Use Novu-specific terms consistently. For full definitions, see the [glossary](/platform/additional-resources/glossary). On reader-facing pages, use `<GlossaryTerm>` on the **first mention** of a term per page instead of linking each term to the glossary.
 
 - Use **subscriber** (not "user") for notification recipients, identified by `subscriberId`
 - Use **workflow** for the notification flow definition; **step** for individual nodes; **trigger** for invocation
@@ -128,4 +128,7 @@ When documenting REST API operations that developers call from backend code, sho
 
 - Document public platform features, SDKs, and API reference
 - Do not document internal admin features, enterprise-only implementation details, or unreleased features
-- Link to the [glossary](/platform/additional-resources/glossary) for term definitions rather than redefining them inline
+- Use `<GlossaryTerm term="slug">label</GlossaryTerm>` from `/snippets/glossary-term.jsx` on the first mention of a Novu term per page. Import with `import { GlossaryTerm } from '/snippets/glossary-term.jsx';`
+- Add one tooltip per term per page. Do not add tooltips inside code blocks or headings.
+- Override `cta` and `href` only when a page-specific deep link is more helpful than the registry default.
+- Keep the [glossary](/platform/additional-resources/glossary) as the canonical long-form reference; do not link every term to the glossary page inline.

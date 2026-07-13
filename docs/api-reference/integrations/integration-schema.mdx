@@ -4,9 +4,11 @@ sidebarTitle: Schema
 description: "Reference the Novu integration schema used in API requests and responses. Review fields, data types, and object structure for this resource."
 ---
 
+import { GlossaryTerm } from '/snippets/glossary-term.jsx';
+
 ### Integration
 
-Integration is third party service used by Novu to send notification for a specific channel. For example, [sengrid](/platform/integrations/email/sendgrid) is a email integration and [twilio](/platform/integrations/sms/twilio) is a sms integration. Read more about integrations on [integrations concept page](/platform/concepts/integrations). Integration APIs don't return credentials with secret key based authorization method, only integration metadata details are returned in response.
+<GlossaryTerm term="integration">Integration</GlossaryTerm> is third party service used by Novu to send notification for a specific <GlossaryTerm term="channel">channel</GlossaryTerm>. For example, [sengrid](/platform/integrations/email/sendgrid) is a email integration and [twilio](/platform/integrations/sms/twilio) is a sms integration. Read more about integrations on [integrations concept page](/platform/concepts/integrations). Integration APIs don't return <GlossaryTerm term="credential">credentials</GlossaryTerm> with secret key based authorization method, only integration metadata details are returned in response.
 
 | Field | Type | Description |
 | --- | --- | --- |

@@ -3,7 +3,9 @@ title: 'Integrations'
 description: "Learn how Novu integrations connect your account to third-party email, SMS, push, and chat providers with credentials, environments, and identifiers."
 ---
 
-In Novu, integrations are configured connections to third-party services that deliver notifications across supported channels, which are email, SMS, push, and chat.
+import { GlossaryTerm } from '/snippets/glossary-term.jsx';
+
+In Novu, <GlossaryTerm term="integration">integrations</GlossaryTerm> are configured connections to third-party services that deliver notifications across supported channels, which are email, SMS, push, and chat.
 
 The In-App channel is handled internally by Novu and does not require a third-party integration.
 
@@ -23,8 +25,8 @@ If no active integration exists for the required channel, the workflow step fail
 ## Providers vs integrations
 
 It’s helpful to distinguish between providers and integrations:
-- A provider is the third-party service responsible for sending messages (for example, Twilio, SendGrid, Slack).
-- An integration is your instance of that provider, configured with the necessary credentials and settings.
+- A <GlossaryTerm term="provider">provider</GlossaryTerm> is the third-party service responsible for sending messages (for example, Twilio, SendGrid, Slack).
+- An integration is your instance of that provider, configured with the necessary <GlossaryTerm term="credential">credentials</GlossaryTerm> and settings.
 
 You can have multiple integrations for the same provider, for example, using two different SendGrid accounts for staging and production environments. Novu allows you to manage these as separate, named integrations.
 

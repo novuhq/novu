@@ -3,7 +3,9 @@ title: 'Manage topic subscriptions'
 description: 'Create and update topic subscriptions using the REST API, @novu/js, and @novu/react, including JSON Logic conditions evaluated at trigger time.'
 ---
 
-Topic subscriptions let a subscriber opt in to a [topic](/platform/concepts/topics) with fine-grained rules. Each subscription can target specific workflows and include a **JSON Logic condition** that is evaluated when a workflow is triggered to the topic.
+import { GlossaryTerm } from '/snippets/glossary-term.jsx';
+
+<GlossaryTerm term="subscription">Topic subscriptions</GlossaryTerm> let a <GlossaryTerm term="subscriber">subscriber</GlossaryTerm> opt in to a <GlossaryTerm term="topic">topic</GlossaryTerm> with fine-grained rules. Each subscription can target specific workflows and include a **JSON Logic condition** that is evaluated when a workflow is triggered to the topic.
 
 <Note>
   Conditions are evaluated at **trigger time**, not when the subscription is created. A subscription is always stored; Novu decides at delivery whether the condition matches the incoming event data.
@@ -11,7 +13,7 @@ Topic subscriptions let a subscriber opt in to a [topic](/platform/concepts/topi
 
 ## Context-scoped subscriptions
 
-Topic subscriptions can be scoped to a [Context](/platform/concepts/contexts), the same metadata you pass when [triggering](/platform/concepts/trigger) a workflow. This lets one subscriber maintain separate subscriptions to the same `topicKey` for different tenants, apps, or regions without duplicating topics or workflows.
+Topic subscriptions can be scoped to a <GlossaryTerm term="context">Context</GlossaryTerm>, the same metadata you pass when <GlossaryTerm term="trigger">triggering</GlossaryTerm> a workflow. This lets one subscriber maintain separate subscriptions to the same `topicKey` for different tenants, apps, or regions without duplicating topics or workflows.
 
 Novu uses **exact-match** Context filtering for subscriptions, the same rules as the [Inbox](/platform/inbox/configuration/inbox-with-context):
 

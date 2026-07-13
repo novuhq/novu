@@ -3,12 +3,14 @@ title: 'Setup the Subscription'
 description: "Integrate and render the Novu Subscription component in your React app to let users manage notification channel and workflow preferences."
 ---
 
+import { GlossaryTerm } from '/snippets/glossary-term.jsx';
+
 
 <Note>
   Subscription is avialable from v3.12.0 for the `@novu/nextjs`, `@novu/react` and `@novu/js` packages.
 </Note>
 
-This quickstart shows how to render the subscription UI in your app. The subscription UI lets users subscribe to topics, define conditions, and manage how they receive notifications.
+This quickstart shows how to render the <GlossaryTerm term="subscription">subscription</GlossaryTerm> UI in your app. The subscription UI lets users subscribe to <GlossaryTerm term="topic">topics</GlossaryTerm>, define conditions, and manage how they receive notifications.
 
 <Note>
   To learn how to render custom UI for the Subscription preferences, refer to the [Headless hooks documentation](/platform/subscription/headless-hooks).
@@ -41,7 +43,7 @@ The [`<Subscription />`](/platform/subscription/quickstart) component is designe
   <Step>
     ### Initialize the Novu client
 
-    Wrap your app or the specific section where the subscription component would live with the `<NovuProvider>`. Configure the provider with your `applicationIdentifier` and the current user's `subscriberId`.
+    Wrap your app or the specific section where the subscription component would live with the `<NovuProvider>`. Configure the provider with your <GlossaryTerm term="application-identifier">applicationIdentifier</GlossaryTerm> and the current user's <GlossaryTerm term="subscriber-id">subscriberId</GlossaryTerm>.
 
     ```tsx
 

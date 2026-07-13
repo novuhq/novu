@@ -3,7 +3,9 @@ title: 'Preferences'
 description: "Configure and customize subscriber notification preferences directly inside your application using the built-in Preferences view of the Novu Inbox."
 ---
 
-The Preferences interface in the Inbox component lets subscribers customize how they receive notifications. By default, Novu renders a preferences icon inside the Inbox component, giving users access to global and workflow-specific settings directly from the UI.
+import { GlossaryTerm } from '/snippets/glossary-term.jsx';
+
+The <GlossaryTerm term="preference">Preferences</GlossaryTerm> interface in the <GlossaryTerm term="inbox">Inbox</GlossaryTerm> component lets <GlossaryTerm term="subscriber">subscribers</GlossaryTerm> customize how they receive notifications. By default, Novu renders a preferences icon inside the Inbox component, giving users access to global and workflow-specific settings directly from the UI.
 
 <Note>
   A workflow marked as "critical" on the Novu dashboard cannot be disabled by the user and will not appear in their preferences UI. You can override this behavior by setting the `criticality` field in the `preferencesFilter` prop.

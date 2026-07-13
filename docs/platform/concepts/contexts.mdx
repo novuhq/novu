@@ -4,6 +4,8 @@ sidebarTitle: 'Contexts'
 description: "Learn how contexts work in Novu, how they differ from payloads, and how they scope, personalize, and filter notifications across workflows and Inbox."
 ---
 
+import { GlossaryTerm } from '/snippets/glossary-term.jsx';
+
 A _context_ is user-defined metadata you attach when triggering a workflow. Contexts let you scope, personalize, and filter notifications without duplicating subscribers, workflows, or templates.
 
 Common context types include `tenant`, `app`, `region`, or any key that matches your product model. Each context entry is either a simple identifier or a rich object with an `id` and optional `data` fields.
@@ -15,8 +17,8 @@ Common context types include `tenant`, `app`, `region`, or any key that matches 
 When you [trigger](/platform/concepts/trigger) a workflow, you pass:
 
 - A **subscriber** (who receives the notification)
-- A **payload** (event-specific data for this run)
-- An optional **context** (shared metadata that scopes and personalizes the notification)
+- A **<GlossaryTerm term="payload">payload</GlossaryTerm>** (event-specific data for this run)
+- An optional **<GlossaryTerm term="context">context</GlossaryTerm>** (shared metadata that scopes and personalizes the notification)
 
 Contexts are persistent. Unlike a payload, which exists only for a single workflow execution, context data is stored in Novu and reused across triggers, templates, the [Inbox](/platform/inbox), and the Activity Feed.
 
@@ -24,7 +26,7 @@ Contexts are persistent. Unlike a payload, which exists only for a single workfl
   You can pass up to five context keys per trigger. Each context `data` object is limited to 64KB. See [Manage contexts](/platform/workflow/advanced-features/contexts/manage-contexts) for schema details.
 </Note>
 
-## Context vs payload
+## Context vs <GlossaryTerm term="payload">payload</GlossaryTerm>
 
 | | Payload | Context |
 | --- | --- | --- |

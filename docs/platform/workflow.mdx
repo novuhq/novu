@@ -4,7 +4,9 @@ sidebarTitle: 'Workflows'
 description: 'Create, configure, and trigger multi-channel notification workflows in Novu. Orchestrate email, SMS, push, in-app, and chat delivery.'
 ---
 
-Novu Workflows orchestrate how notifications move from application events to messages delivered across one or more channels. A workflow combines delivery logic, message content, and execution rules into a single notification pipeline.
+import { GlossaryTerm } from '/snippets/glossary-term.jsx';
+
+Novu <GlossaryTerm term="workflow">Workflows</GlossaryTerm> orchestrate how notifications move from application events to <GlossaryTerm term="message">messages</GlossaryTerm> delivered across one or more <GlossaryTerm term="channel">channels</GlossaryTerm>. A workflow combines delivery logic, message content, and execution rules into a single notification pipeline.
 
 Use workflows to control when notifications are sent, who receives them, what content is delivered, and how delivery behaves across channels.
 
@@ -23,8 +25,8 @@ Novu Workflows help you:
 ## Features
 
 - **Multi-channel**: Email, in-app, SMS, push, and chat channels.
-- **Action steps**: Delays, digests, throttle notifications, and HTTP requests.
-- **Step conditions**: Define conditional logic for each workflow step.
+- **Action steps**: Delays, <GlossaryTerm term="digest">digests</GlossaryTerm>, throttle notifications, and HTTP requests.
+- **Step conditions**: Define conditional logic for each workflow <GlossaryTerm term="step">step</GlossaryTerm>.
 - **Template editors**: Channel-specific editors with variables and LiquidJS logic.
 - **Reusable layouts and components**: Email layouts and shared templates.
 - **Context and shared data**: Attach metadata and reusable objects across workflows.

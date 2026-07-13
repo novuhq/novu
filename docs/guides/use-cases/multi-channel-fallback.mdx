@@ -4,8 +4,10 @@ sidebarTitle: 'Multi-channel fallback'
 description: "Build multi-channel notification workflows with delays and fallbacks in Novu. Send in-app first, then follow up with email or SMS when notifications go unread."
 ---
 
+import { GlossaryTerm } from '/snippets/glossary-term.jsx';
 
-Build multi-channel fallback workflows in Novu by chaining channel steps with delay and condition logic. A common pattern sends an in-app notification first, waits 24 hours, then sends email or SMS if the message remains unread.
+
+Build multi-channel fallback workflows in Novu by chaining <GlossaryTerm term="channel">channel</GlossaryTerm> steps with delay and condition logic. A common pattern sends an in-app notification first, waits 24 hours, then sends email or SMS if the message remains unread.
 
 ## How do I build an in-app to email fallback workflow?
 
@@ -52,6 +54,6 @@ Pass tier data when creating or updating the subscriber, or inline when triggeri
     Yes. Chain any channel steps with delays and conditions. Ensure the subscriber has the required contact fields and integrations configured for each channel.
   </Accordion>
   <Accordion title="How do I respect subscriber channel preferences?">
-    Novu applies subscriber [preferences](/platform/concepts/preferences) automatically. Subscribers who opt out of a channel will not receive messages on that channel even if the workflow includes the step.
+    Novu applies subscriber <GlossaryTerm term="preference">preferences</GlossaryTerm> automatically. Subscribers who opt out of a channel will not receive messages on that channel even if the workflow includes the step.
   </Accordion>
 </AccordionGroup>
