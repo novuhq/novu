@@ -29,6 +29,7 @@ import {
   CreateSlackChannelEndpointDto,
   CreateSlackUserEndpointDto,
   CreateTelegramChatEndpointDto,
+  CreateLineUserEndpointDto,
   CreateWebhookEndpointDto,
 } from './dtos/create-channel-endpoint-variants.dto';
 import { mapChannelEndpointEntityToDto } from './dtos/dto.mapper';
@@ -39,6 +40,7 @@ import {
   SlackChannelEndpointDto,
   SlackUserEndpointDto,
   TelegramChatEndpointDto,
+  LineUserEndpointDto,
   WebhookEndpointDto,
 } from './dtos/endpoint-types.dto';
 import { GetChannelEndpointResponseDto } from './dtos/get-channel-endpoint-response.dto';
@@ -67,13 +69,15 @@ import { UpdateChannelEndpoint } from './usecases/update-channel-endpoint/update
   CreateMsTeamsChannelEndpointDto,
   CreateMsTeamsUserEndpointDto,
   CreateTelegramChatEndpointDto,
+  CreateLineUserEndpointDto,
   SlackChannelEndpointDto,
   SlackUserEndpointDto,
   WebhookEndpointDto,
   PhoneEndpointDto,
   MsTeamsChannelEndpointDto,
   MsTeamsUserEndpointDto,
-  TelegramChatEndpointDto
+  TelegramChatEndpointDto,
+  LineUserEndpointDto
 )
 @ExternalApiAccessible()
 @RequireAuthentication()
@@ -170,6 +174,7 @@ export class ChannelEndpointsController {
         { $ref: getSchemaPath(CreateMsTeamsChannelEndpointDto) },
         { $ref: getSchemaPath(CreateMsTeamsUserEndpointDto) },
         { $ref: getSchemaPath(CreateTelegramChatEndpointDto) },
+        { $ref: getSchemaPath(CreateLineUserEndpointDto) },
       ],
       discriminator: {
         propertyName: 'type',
@@ -181,6 +186,7 @@ export class ChannelEndpointsController {
           [ENDPOINT_TYPES.MS_TEAMS_CHANNEL]: getSchemaPath(CreateMsTeamsChannelEndpointDto),
           [ENDPOINT_TYPES.MS_TEAMS_USER]: getSchemaPath(CreateMsTeamsUserEndpointDto),
           [ENDPOINT_TYPES.TELEGRAM_CHAT]: getSchemaPath(CreateTelegramChatEndpointDto),
+          [ENDPOINT_TYPES.LINE_USER]: getSchemaPath(CreateLineUserEndpointDto),
         },
       },
     },

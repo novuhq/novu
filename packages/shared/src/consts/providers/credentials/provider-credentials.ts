@@ -1356,6 +1356,16 @@ export const sendblueConfig: IConfigCredential[] = [
     required: false,
     hidden: true,
   },
+]
+
+export const lineConfig: IConfigCredential[] = [
+  {
+    key: CredentialsKeyEnum.ApiToken,
+    displayName: 'Channel Access Token',
+    description: 'Your LINE Channel Access Token from the LINE Developers Console',
+    type: 'string',
+    required: true,
+  },
 ];
 
 export const mobishastraConfig: IConfigCredential[] = [

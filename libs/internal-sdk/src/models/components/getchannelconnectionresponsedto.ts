@@ -28,7 +28,8 @@ export type Channel = ClosedEnum<typeof Channel>;
 /**
  * The provider identifier (e.g., sendgrid, twilio, slack, etc.).
  */
-export const ProviderId = {
+export const GetChannelConnectionResponseDtoProviderId = {
+  Anypost: "anypost",
   Emailjs: "emailjs",
   Mailgun: "mailgun",
   Mailjet: "mailjet",
@@ -107,6 +108,7 @@ export const ProviderId = {
   Getstream: "getstream",
   RocketChat: "rocket-chat",
   WhatsappBusiness: "whatsapp-business",
+  Line: "line",
   ChatWebhook: "chat-webhook",
   NovuSlack: "novu-slack",
   Telegram: "telegram",
@@ -117,7 +119,9 @@ export const ProviderId = {
 /**
  * The provider identifier (e.g., sendgrid, twilio, slack, etc.).
  */
-export type ProviderId = ClosedEnum<typeof ProviderId>;
+export type GetChannelConnectionResponseDtoProviderId = ClosedEnum<
+  typeof GetChannelConnectionResponseDtoProviderId
+>;
 
 export type GetChannelConnectionResponseDto = {
   /**
@@ -131,7 +135,7 @@ export type GetChannelConnectionResponseDto = {
   /**
    * The provider identifier (e.g., sendgrid, twilio, slack, etc.).
    */
-  providerId: ProviderId | null;
+  providerId: GetChannelConnectionResponseDtoProviderId | null;
   /**
    * The identifier of the integration to use for this channel endpoint.
    */
@@ -161,8 +165,9 @@ export const Channel$inboundSchema: z.ZodNativeEnum<typeof Channel> = z
   .nativeEnum(Channel);
 
 /** @internal */
-export const ProviderId$inboundSchema: z.ZodNativeEnum<typeof ProviderId> = z
-  .nativeEnum(ProviderId);
+export const GetChannelConnectionResponseDtoProviderId$inboundSchema:
+  z.ZodNativeEnum<typeof GetChannelConnectionResponseDtoProviderId> = z
+    .nativeEnum(GetChannelConnectionResponseDtoProviderId);
 
 /** @internal */
 export const GetChannelConnectionResponseDto$inboundSchema: z.ZodType<
@@ -172,7 +177,9 @@ export const GetChannelConnectionResponseDto$inboundSchema: z.ZodType<
 > = z.object({
   identifier: z.string(),
   channel: z.nullable(Channel$inboundSchema),
-  providerId: z.nullable(ProviderId$inboundSchema),
+  providerId: z.nullable(
+    GetChannelConnectionResponseDtoProviderId$inboundSchema,
+  ),
   integrationIdentifier: z.nullable(z.string()),
   subscriberId: z.nullable(z.string()),
   contextKeys: z.array(z.string()),

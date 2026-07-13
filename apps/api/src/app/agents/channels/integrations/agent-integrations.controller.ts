@@ -112,6 +112,7 @@ export class AgentIntegrationsController {
   @Post('/:identifier/integrations')
   @ExternalApiAccessible()
   @KeylessAccessible()
+  @SdkGroupName('Agents.Integrations')
   @SdkMethodName('create')
   @ApiResponse(AgentIntegrationResponseDto, 201)
   @ApiOperation({
@@ -143,6 +144,7 @@ export class AgentIntegrationsController {
   @Get('/:identifier/integrations')
   @ExternalApiAccessible()
   @KeylessAccessible()
+  @SdkGroupName('Agents.Integrations')
   @SdkMethodName('list')
   @ApiResponse(ListAgentIntegrationsResponseDto)
   @ApiOperation({
@@ -178,6 +180,7 @@ export class AgentIntegrationsController {
 
   @Patch('/:identifier/integrations/:agentIntegrationId')
   @ExternalApiAccessible()
+  @SdkGroupName('Agents.Integrations')
   @SdkMethodName('update')
   @ApiResponse(AgentIntegrationResponseDto)
   @ApiOperation({
@@ -208,6 +211,7 @@ export class AgentIntegrationsController {
 
   @Delete('/:identifier/integrations/:agentIntegrationId')
   @ExternalApiAccessible()
+  @SdkGroupName('Agents.Integrations')
   @SdkMethodName('delete')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({

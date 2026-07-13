@@ -4,6 +4,7 @@ import {
   chatWebhookConfig,
   getstreamConfig,
   grafanaOnCallConfig,
+  lineConfig,
   msTeamsConfig,
   rocketChatConfig,
   sendblueConfig,
@@ -101,6 +102,14 @@ export const chatProviders: IProviderConfig[] = [
     credentials: whatsAppBusinessConfig,
     docReference: 'https://developers.facebook.com/docs/whatsapp/cloud-api',
     logoFileName: { light: 'whatsapp-business.svg', dark: 'whatsapp-business.svg' },
+  },
+  {
+    id: ChatProviderIdEnum.Line,
+    displayName: 'LINE',
+    channel: ChannelTypeEnum.CHAT,
+    credentials: lineConfig,
+    docReference: 'https://docs.novu.co/platform/integrations/chat/line',
+    logoFileName: { light: 'line.svg', dark: 'line.svg' },
   },
   {
     id: ChatProviderIdEnum.ChatWebhook,
