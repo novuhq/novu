@@ -9,6 +9,7 @@ import { InAppEditor } from '@/components/workflow-editor/steps/in-app/in-app-ed
 import { PushEditor } from '@/components/workflow-editor/steps/push/push-editor';
 import { StepResolverActivePanel } from '@/components/workflow-editor/steps/shared/step-resolver-active-panel';
 import { StepResolverNotPublished } from '@/components/workflow-editor/steps/shared/step-resolver-not-published';
+import { SignalsEditor } from '@/components/workflow-editor/steps/signals/signals-editor';
 import { SmsEditor } from '@/components/workflow-editor/steps/sms/sms-editor';
 import { ThrottleEditor } from '@/components/workflow-editor/steps/throttle/throttle-editor';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
@@ -91,6 +92,9 @@ export function StepEditorFactory() {
 
     case StepTypeEnum.CHAT:
       return <ChatEditor uiSchema={uiSchema} />;
+
+    case StepTypeEnum.SIGNALS:
+      return <SignalsEditor uiSchema={uiSchema} />;
 
     case StepTypeEnum.THROTTLE:
       return <ThrottleEditor />;

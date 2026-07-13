@@ -7,6 +7,7 @@ import {
   ProvidersIdEnum,
   PushProviderIdEnum,
   providers,
+  SignalsProviderIdEnum,
   SmsProviderIdEnum,
 } from '@novu/shared';
 import { useMemo } from 'react';
@@ -54,6 +55,7 @@ export function useIntegrationList(searchQuery: string = '') {
         ChatProviderIdEnum.Mattermost,
         ChatProviderIdEnum.ChatWebhook,
       ],
+      [ChannelTypeEnum.SIGNALS]: [SignalsProviderIdEnum.GitHub, SignalsProviderIdEnum.Webhook],
       [ChannelTypeEnum.IN_APP]: [],
     };
 
