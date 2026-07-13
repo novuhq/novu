@@ -1,0 +1,98 @@
+name: Contributor Checks Comment
+
+on:
+  workflow_run:
+    workflows: ["Contributor Checks"]
+    types: [completed]
+
+permissions:
+  pull-requests: write
+  issues: write
+
+jobs:
+  comment:
+    name: Comment on contributor PR
+    runs-on: ubuntu-latest
+    if: >
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.conclusion != 'cancelled'
+    steps:
+      - name: Resolve PR and build result
+        id: meta
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          run_id="${{ github.event.workflow_run.id }}"
+          build_conclusion=$(gh api "repos/${{ github.repository }}/actions/runs/${run_id}/jobs" \
+            --jq '.jobs[] | select(.name == "Install, Build & Lint (No Submodules)") | .conclusion' | head -n 1)
+
+          if [[ -z "$build_conclusion" || "$build_conclusion" == "skipped" ]]; then
+            echo "should_comment=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          pr_number=$(gh api "repos/${{ github.repository }}/actions/runs/${run_id}" \
+            --jq '.pull_requests[0].number // empty')
+
+          if [[ -z "$pr_number" ]]; then
+            echo "should_comment=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "should_comment=true" >> "$GITHUB_OUTPUT"
+          echo "build_result=$build_conclusion" >> "$GITHUB_OUTPUT"
+          echo "pr_number=$pr_number" >> "$GITHUB_OUTPUT"
+
+      - name: Comment on PR - Success
+        if: steps.meta.outputs.should_comment == 'true' && steps.meta.outputs.build_result == 'success'
+        uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
+        with:
+          number: ${{ steps.meta.outputs.pr_number }}
+          header: contributor-checks
+          message: |
+            ## ✅ Contributor Checks Passed!
+
+            Thank you for your contribution! Your changes have successfully passed our automated checks:
+
+            - ✅ **Build**: All packages compile successfully
+            - ✅ **Lint**: Code style and quality checks passed
+
+            ### Next Steps
+            A Novu team member will review your PR and run the full test suite, which includes:
+            - Unit tests for affected packages
+            - End-to-end tests
+            - Integration tests
+            - Enterprise feature compatibility
+
+            If you need to make additional changes, simply push to your branch and the checks will run again automatically.
+
+      - name: Comment on PR - Failure
+        if: steps.meta.outputs.should_comment == 'true' && steps.meta.outputs.build_result == 'failure'
+        uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
+        with:
+          number: ${{ steps.meta.outputs.pr_number }}
+          header: contributor-checks
+          message: |
+            ## ❌ Contributor Checks Failed
+
+            Thank you for your contribution! However, the automated checks found some issues that need to be addressed:
+
+            ### What Happened?
+            The build or lint checks failed. This usually means:
+            - **Build errors**: Code doesn't compile or has TypeScript errors
+            - **Lint errors**: Code style or quality issues detected
+
+            ### How to Fix
+            1. Review the failed check details above in the workflow run
+            2. Fix the issues locally by running:
+               ```bash
+               pnpm install
+               pnpm run lint
+               pnpm run build
+               ```
+            3. Commit and push your fixes - the checks will run again automatically
+
+            ### Need Help?
+            - Check the workflow logs above for detailed error messages
+            - If you believe this is related to missing enterprise packages, mention it in your PR description
+            - Feel free to ask questions in the PR comments or on our [Discord](https://discord.novu.co)
