@@ -2,7 +2,13 @@ import { EventEmitter } from 'events';
 import merge from 'lodash.merge';
 import { HandlebarsContentEngine, IContentEngine } from './content/content.engine';
 import { INovuConfig } from './novu.interface';
-import { IChatProvider, IEmailProvider, IPushProvider, ISmsProvider } from './provider/provider.interface';
+import {
+  IChatProvider,
+  IEmailProvider,
+  IPushProvider,
+  ISignalsProvider,
+  ISmsProvider,
+} from './provider/provider.interface';
 import { ProviderStore } from './provider/provider.store';
 import { ITemplate, ITriggerPayload } from './template/template.interface';
 import { TemplateStore } from './template/template.store';
@@ -10,6 +16,7 @@ import { ITheme } from './theme/theme.interface';
 import { ThemeStore } from './theme/theme.store';
 import { TriggerEngine } from './trigger/trigger.engine';
 
+type RegisterableProvider = IEmailProvider | ISmsProvider | IChatProvider | IPushProvider | ISignalsProvider;
 export class NovuStateless extends EventEmitter {
   private readonly templateStore: TemplateStore;
   private readonly providerStore: ProviderStore;
@@ -48,16 +55,13 @@ export class NovuStateless extends EventEmitter {
     return await this.templateStore.getTemplateById(template.id);
   }
 
-  async registerProvider(provider: IEmailProvider | ISmsProvider | IChatProvider | IPushProvider): Promise<void>;
+  async registerProvider(provider: RegisterableProvider): Promise<void>;
+
+  async registerProvider(providerId: string, provider: RegisterableProvider): Promise<void>;
 
   async registerProvider(
-    providerId: string,
-    provider: IEmailProvider | ISmsProvider | IChatProvider | IPushProvider
-  ): Promise<void>;
-
-  async registerProvider(
-    providerOrProviderId: string | IEmailProvider | ISmsProvider | IChatProvider | IPushProvider,
-    provider?: IEmailProvider | ISmsProvider | IChatProvider | IPushProvider
+    providerOrProviderId: string | RegisterableProvider,
+    provider?: RegisterableProvider
   ): Promise<void> {
     const providerId = typeof providerOrProviderId === 'string' ? providerOrProviderId : provider?.id || '';
     const finalProvider = typeof providerOrProviderId === 'string' ? provider : providerOrProviderId;

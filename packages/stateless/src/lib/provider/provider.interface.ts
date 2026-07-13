@@ -230,7 +230,26 @@ export interface IPushProvider extends IProvider {
   parseEventBody?: (body: any | any[], identifier: string, eventIndex?: number) => unknown | undefined;
 }
 
-export type ChannelProvider = IEmailProvider | ISmsProvider | IChatProvider | IPushProvider;
+export interface ISignalsOptions {
+  content: string;
+  customData?: Record<string, unknown>;
+  bridgeProviderData?: Record<string, unknown>;
+}
+
+export interface ISignalsProvider extends IProvider {
+  sendMessage(
+    options: ISignalsOptions,
+    bridgeProviderData: Record<string, unknown>
+  ): Promise<ISendMessageSuccessResponse>;
+
+  channelType: ChannelTypeEnum.SIGNALS;
+
+  getMessageId?: (body: any | any[]) => string[];
+
+  parseEventBody?: (body: any | any[], identifier: string, eventIndex?: number) => unknown | undefined;
+}
+
+export type ChannelProvider = IEmailProvider | ISmsProvider | IChatProvider | IPushProvider | ISignalsProvider;
 
 export interface ICheckIntegrationResponse {
   success: boolean;
