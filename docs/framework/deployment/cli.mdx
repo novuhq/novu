@@ -1,6 +1,7 @@
 ---
-title: 'CLI'
-description: "Use the Novu CLI to synchronize local Framework workflows to Novu Cloud, manage environments, and automate deployments from CI pipelines."
+title: 'Deploy workflows with the Novu CLI'
+sidebarTitle: 'CLI'
+description: 'Use the Novu CLI sync command to push Framework workflows to Novu Cloud, connect a bridge endpoint, and understand sync output messages.'
 ---
 
 
@@ -28,6 +29,22 @@ npx novu@latest sync \
 - If your application api server is running at URL **https://api.domain.com** and **/api/novu** endpoint is serving Novu workflows created using Novu Framework, then `<YOUR_DEPLOYED_URL>`in above command will be `https://api.domain.com/api/novu`
 
 - If your application is running in local machine with a local studio server, the tunnel URL can be used as `<YOUR_DEPLOYED_URL>`. The tunnel URL follows the format of `https://<UUID>.novu.sh/api/novu`, and example is `https://041e553c-0dbf-47e0-8ffa-c4536f390145.novu.sh/api/novu`. In this example `041e553c-0dbf-47e0-8ffa-c4536f390145` is the unique tunnel identifier which is generated for each Novu user when starting a tunnel via `npx novu@latest dev`. The tunnel identifier is persisted to your local machine to guarantee the same tunnel URL each time you invoke `npx novu@latest dev`.
+
+## Understanding sync output
+
+A successful sync prints the number of workflows and steps that were discovered from your bridge endpoint, for example:
+
+```json
+{"status":"ok","sdkVersion":"2.10.0","frameworkVersion":"2024-06-26","discovered":{"workflows":14,"steps":30}}
+```
+
+You may also see the following message printed alongside a successful sync:
+
+```
+Could not discover agents for bridge URL sync (bridge may not expose agents yet).
+```
+
+This is an informational notice, not an error. It only indicates that your bridge does not expose any [Agents](/agents/get-started/what-is-aci) at the sync endpoint. If you are only syncing workflows, you can safely ignore this message — your workflows and steps have still been synced.
 
 ## Using vercel preview url
 
