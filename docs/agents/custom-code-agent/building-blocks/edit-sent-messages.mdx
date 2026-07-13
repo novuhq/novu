@@ -6,7 +6,7 @@ description: "Update, edit, or delete a message in place after sending it from a
 
 `ctx.reply()` returns a `ReplyHandle` so that you can edit the message you just sent on the provider. This is useful when you post "Processing..." and replace it with the final text.
 
-That is not a [reply type](/agents/custom-code-agent/setup-your-agent/reply); it updates a message you already sent.
+That is not a [reply type](/agents/custom-code-agent/building-blocks/reply); it updates a message you already sent.
 
 ## Basic edit
 
@@ -33,10 +33,10 @@ Edits update the existing platform message rather than posting a new one. Not ev
 ## Related
 
 <Columns cols={2}>
-  <Card icon="layout-grid" href="/agents/custom-code-agent/setup-your-agent/reply" title="Reply">
+  <Card icon="layout-grid" href="/agents/custom-code-agent/building-blocks/reply" title="Reply">
     Send plain text, markdown, attachments, and interactive cards.
   </Card>
-  <Card icon="mouse-pointer-click" href="/agents/custom-code-agent/setup-your-agent/handle-events" title="Handle events">
+  <Card icon="mouse-pointer-click" href="/agents/custom-code-agent/building-blocks/handle-events" title="Handlers and context">
     Event handlers and the context object your agent receives on every turn.
   </Card>
 </Columns>

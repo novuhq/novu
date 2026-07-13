@@ -13,6 +13,7 @@ import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchApiKeys } from '@/hooks/use-fetch-api-keys';
 import { apiHostnameManager } from '@/utils/api-hostname-manager';
 import { cn } from '@/utils/ui';
+import type { ConnectorId } from './connectors/connector-options';
 import { SetupStep } from './setup-guide-primitives';
 import { deriveStepStatus } from './setup-guide-step-utils';
 import { SharedInboundAddressField } from './shared-inbound-address-field';
@@ -26,45 +27,57 @@ function maskSecretKey(key: string): string {
   return `nv-${'•'.repeat(16)}${key.slice(-4)}`;
 }
 
-function buildInitCommand({
-  agentIdentifier,
+type ConnectRuntimeFlag = 'ai-sdk' | 'langchain' | 'custom-code';
+
+const DEFAULT_CONNECT_RUNTIME: ConnectRuntimeFlag = 'ai-sdk';
+
+function resolveConnectRuntime(connectorId: ConnectorId | undefined): ConnectRuntimeFlag {
+  if (connectorId === 'ai-sdk' || connectorId === 'langchain' || connectorId === 'custom-code') {
+    return connectorId;
+  }
+
+  return DEFAULT_CONNECT_RUNTIME;
+}
+
+function buildConnectScaffoldCommand({
   secretKey,
   apiUrl,
+  runtime,
   masked,
 }: {
-  agentIdentifier: string;
   secretKey: string;
   apiUrl: string | null;
+  runtime: ConnectRuntimeFlag;
   masked: boolean;
 }): string {
   const key = masked ? maskSecretKey(secretKey) : secretKey;
-  const parts = [`npx novu@${CLI_PACKAGE_TAG} init -t agent`, `--agent-identifier ${agentIdentifier}`, `-s ${key}`];
+  const parts = [`npx novu@${CLI_PACKAGE_TAG} connect --runtime ${runtime}`, `--secret-key ${key}`];
 
   if (apiUrl) {
-    parts.push(`-a ${apiUrl}`);
+    parts.push(`--api-url ${apiUrl}`);
   }
+
+  parts.push('--channel skip');
 
   return parts.join(' \\\n  ');
 }
 
-function buildInitCopyCommand({
-  agentIdentifier,
+function buildConnectScaffoldCopyCommand({
   secretKey,
   apiUrl,
+  runtime,
 }: {
-  agentIdentifier: string;
   secretKey: string;
   apiUrl: string | null;
+  runtime: ConnectRuntimeFlag;
 }): string {
-  const parts = [
-    `npx novu@${CLI_PACKAGE_TAG} init -t agent`,
-    `--agent-identifier ${agentIdentifier}`,
-    `-s ${secretKey}`,
-  ];
+  const parts = [`npx novu@${CLI_PACKAGE_TAG} connect --runtime ${runtime}`, `--secret-key ${secretKey}`];
 
   if (apiUrl) {
-    parts.push(`-a ${apiUrl}`);
+    parts.push(`--api-url ${apiUrl}`);
   }
+
+  parts.push('--channel skip');
 
   return parts.join(' ');
 }
@@ -325,6 +338,8 @@ type AgentCodeSetupSectionProps = {
   sharedInboundAddress?: string;
   onBridgeConnected?: () => void;
   onAddProvider?: () => void;
+  /** Self-hosted connector picked at agent creation (defaults to AI SDK). */
+  connectorId?: ConnectorId;
 };
 
 export function AgentCodeSetupSection({
@@ -335,9 +350,11 @@ export function AgentCodeSetupSection({
   sharedInboundAddress,
   onBridgeConnected,
   onAddProvider,
+  connectorId,
 }: AgentCodeSetupSectionProps) {
   const apiKeysQuery = useFetchApiKeys();
   const secretKey = apiKeysQuery.data?.data?.[0]?.key;
+  const connectRuntime = resolveConnectRuntime(connectorId);
 
   const currentApiUrl = apiHostnameManager.getHostname();
   const apiUrl = currentApiUrl !== CLI_DEFAULT_API_URL ? currentApiUrl : null;
@@ -373,22 +390,22 @@ export function AgentCodeSetupSection({
             </Tooltip>
           </span>
         }
-        description="Run this to create a Next.js project with the bridge endpoint pre-configured for your agent. The CLI installs dependencies and writes your secret key to .env.local automatically."
+        description="Run this in an empty directory to scaffold a Next.js bridge app. When prompted, select the agent you created above. `--channel skip` skips channel setup because you already connected a provider in the dashboard."
         rightContent={
           apiKeysQuery.isLoading || !secretKey ? (
             <Skeleton className="h-[80px] w-full rounded-lg" />
           ) : (
             <CopyableTerminalBlock
-              displayCommand={buildInitCommand({
-                agentIdentifier: agent.identifier,
+              displayCommand={buildConnectScaffoldCommand({
                 secretKey,
                 apiUrl,
+                runtime: connectRuntime,
                 masked: true,
               })}
-              copyCommand={buildInitCopyCommand({
-                agentIdentifier: agent.identifier,
+              copyCommand={buildConnectScaffoldCopyCommand({
                 secretKey,
                 apiUrl,
+                runtime: connectRuntime,
               })}
             />
           )

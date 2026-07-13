@@ -1,0 +1,57 @@
+---
+title: "Typing indicator"
+description: "Show a Thinking… or custom status while your agent handler runs with ctx.typing()."
+---
+
+
+Use `ctx.typing()` to show a **Thinking…** or custom status while your handler runs. It posts immediately, like `ctx.reply()`.
+
+```typescript
+await ctx.typing('Searching the docs…'); // set or replace the status text
+await ctx.typing();                       // reset to the default "Thinking…"
+await ctx.typing.stop();                  // clear it for this turn
+```
+
+## Platform behavior
+
+- Custom text shows on Slack-like platforms; a generic typing bubble appears on others; it is a no-op where there is no typing channel (for example email).
+- The typing status clears automatically when the turn delivers a reply — whether you call `ctx.reply()`, return a string or card from the handler, or return an AI SDK result that Novu maps to a reply. You do not need `ctx.typing.stop()` unless you want to clear the indicator without sending a message.
+- When a turn fails, Novu clears the typing indicator even if no reply is sent — including when [`onError`](/agents/custom-code-agent/building-blocks/handle-events#onerror) suppresses the user-visible message.
+
+## Default inbound acknowledgement
+
+Before your handler runs, Novu shows a default liveness signal so users know the agent received their message:
+
+- On typing-capable platforms (Slack, Telegram, and similar), Novu shows a **Thinking…** indicator.
+- On platforms without typing support, Novu reacts to the conversation's first message with an **eyes** emoji instead.
+
+This is controlled by **Acknowledge incoming messages** in the agent's **Agent behavior** settings in the dashboard. It is enabled by default.
+
+If you use `ctx.typing()` with custom status text, consider turning this off to avoid a brief flicker when your status replaces the default indicator.
+
+## Example
+
+```typescript
+import { agent } from '@novu/framework';
+
+export const myAgent = agent('my-agent', {
+  onMessage: async (message, ctx) => {
+    await ctx.typing('Looking that up…');
+
+    const answer = await lookup(message.text ?? '');
+
+    return answer;
+  },
+});
+```
+
+## Related
+
+<Columns cols={2}>
+  <Card icon="mouse-pointer-click" href="/agents/custom-code-agent/building-blocks/handle-events" title="Handlers and context">
+    Event handlers and the context object.
+  </Card>
+  <Card icon="layout-grid" href="/agents/custom-code-agent/building-blocks/reply" title="Reply">
+    Send plain text, markdown, attachments, and interactive cards.
+  </Card>
+</Columns>
