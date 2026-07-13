@@ -8,7 +8,7 @@ In this guide, we will add a Novu [Bridge Endpoint](/framework/endpoint) to a Ne
 
 <Steps>
     <Step title="Create a Next.js application">
-        This link can be copied right from the onboarding guide on the Novu Studio or can always be copied from the [API Keys](https://dashboard.novu.co/api-keys) page on the Novu Dashboard.
+        This link can be copied right from the onboarding guide on the Novu Dashboard or can always be copied from the [API Keys](https://dashboard.novu.co/api-keys) page on the Novu Dashboard.
 
         ```bash
         npx novu init --secret-key=<YOUR_NOVU_SECRET_KEY>
@@ -127,7 +127,7 @@ In this guide, we will add a Novu [Bridge Endpoint](/framework/endpoint) to a Ne
     <Step>
         ## Test your endpoint
 
-Test your workflow by triggering it from the Local Studio or using the Novu API:
+Test your workflow by triggering it from the Local environment or using the Novu API:
 
 ```bash
 curl -X POST https://api.novu.co/v1/events/trigger \
@@ -140,7 +140,7 @@ curl -X POST https://api.novu.co/v1/events/trigger \
   }'
 ```
 
-You should see the notification being processed in your Local Studio.
+You should see the notification being processed in the Local environment.
 
     </Step>
     <Step>

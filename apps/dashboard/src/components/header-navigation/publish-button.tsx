@@ -10,6 +10,7 @@ import type { IEnvironmentDiffResponse, IEnvironmentPublishResponse, ResourceToP
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment, useFetchEnvironments } from '@/context/environment/hooks';
+import { useLocalMode } from '@/context/local-mode';
 import { useDiffEnvironments, usePublishEnvironments } from '@/hooks/use-environments';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { QueryKeys } from '@/utils/query-keys';
@@ -21,6 +22,7 @@ import { EnvironmentBranchIcon } from '../primitives/environment-branch-icon';
 import { PermissionButton } from '../primitives/permission-button';
 import { Skeleton } from '../primitives/skeleton';
 import TruncatedText from '../truncated-text';
+import { LocalPublishButton } from './local-publish-button';
 import { NoChangesModal } from './no-changes-modal';
 import { PublishModal } from './publish-modal';
 import { PublishSuccessModal } from './publish-success-modal';
@@ -38,6 +40,7 @@ export const PublishButton = () => {
   const { state, actions } = usePublishState();
   const has = useHasPermission();
   const canPublish = has({ permission: PermissionsEnum.ENVIRONMENT_WRITE });
+  const { isLocalRoute } = useLocalMode();
 
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -147,6 +150,13 @@ export const PublishButton = () => {
     navigate(buildRoute(ROUTES.WORKFLOWS, { environmentSlug: state.selectedEnvironment.slug }));
     actions.close();
   };
+
+  // In the Local environment workflows stream live from the developer's
+  // machine, so publishing from the dashboard doesn't apply — point users to
+  // the syncing guide instead of the regular publish flow.
+  if (isLocalRoute) {
+    return <LocalPublishButton />;
+  }
 
   if (isSingleEnvironment && targetEnvironment) {
     return (

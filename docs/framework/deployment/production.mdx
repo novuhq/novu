@@ -16,8 +16,8 @@ Novu Framework has a builtin security mechanism that ensures that the requests a
 HMAC Verification is turned on by default for all "production" NODE_ENV environments
 
 <Note>
-  For `NODE_ENV=development` the HMAC validation is turned off, for the Studio to be able to reach
-  your endpoint.
+  For `NODE_ENV=development` the HMAC validation is turned off, so the Dashboard's Local environment
+  (via `npx novu dev`) can reach your endpoint.
 </Note>
 
 The `Novu-Signature` header included in each signed event contains a timestamp and one or more signatures that we verify.
