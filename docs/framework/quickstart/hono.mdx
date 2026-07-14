@@ -22,13 +22,13 @@ This opens the Novu Dashboard in **Local mode** — a local environment connecte
    <Step>
          ## Install packages
 
-Install the Novu Framework package:
+Install the Novu Framework package and Hono:
 
 ```bash
-npm install @novu/framework
+npm install @novu/framework hono
 ```
 
-This package provides all the necessary tools to build and manage your notification workflows.
+`@novu/framework` provides the tools to build and manage your notification workflows. `hono` is required because it is an optional peer dependency of the Hono adapter.
 
     </Step>
    <Step>

@@ -61,9 +61,16 @@ export const serve = (options: ServeHandlerOptions): ((c: Context) => Promise<Re
           }
 
           const host = c.req.header('host') || '';
-          const protocol =
+          let protocol: 'http' | 'https' = 'https';
+
+          try {
             // biome-ignore lint/suspicious/noExplicitAny: Needed for some edge cases
-            process.env.NODE_ENV === 'development' || (process.env.NODE_ENV as any) === 'dev' ? 'http' : 'https';
+            if (process.env.NODE_ENV === 'development' || (process.env.NODE_ENV as any) === 'dev') {
+              protocol = 'http';
+            }
+          } catch {
+            // no-op when process is unavailable (edge runtimes)
+          }
 
           return new URL(c.req.url, `${protocol}://${host}`);
         },
