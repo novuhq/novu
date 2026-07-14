@@ -35,6 +35,8 @@ export interface ConversationActivityToolData {
   toolCallId?: string;
   /** Human-readable tool name (request + result). */
   toolName?: string;
+  /** MCP server the tool belongs to, when the gated call is an MCP tool (request). Absent for direct tools. */
+  mcpServerName?: string;
   /** Correlation id linking an approval request to its decision (request + decision). */
   approvalId?: string;
   /** Tool input arguments (request). */

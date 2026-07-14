@@ -23,6 +23,32 @@ export function buildToolApprovalActionId(
   return `${prefix}:${verdict}:${toolUseId}`;
 }
 
+/**
+ * Builds a persist ("always allow") action id — the ids parsed by
+ * `parseToolApprovalActionId` as `approve-tool` / `approve-server`.
+ *
+ * Format: `{prefix}:{verdict}:{toolUseId}:{enc(toolName)}[:{enc(mcpServerName)}]`.
+ * The trailing `mcpServerName` segment is emitted only for the MCP prefix, so
+ * MCP ids always carry both trailing segments (matching the parser, which reads
+ * the server name from the last segment for both `approve-tool` and
+ * `approve-server`). Keep this in sync with `parseToolApprovalActionId`.
+ */
+export function buildToolTrustApprovalActionId(params: {
+  prefix: ToolApprovalActionPrefix;
+  verdict: 'approve-tool' | 'approve-server';
+  toolUseId: string;
+  toolName: string;
+  mcpServerName?: string;
+}): string {
+  const segments = [params.prefix, params.verdict, params.toolUseId, encodeURIComponent(params.toolName)];
+
+  if (params.prefix === MCP_TOOL_APPROVAL_ACTION_PREFIX) {
+    segments.push(encodeURIComponent(params.mcpServerName ?? ''));
+  }
+
+  return segments.join(':');
+}
+
 const TOOL_APPROVAL_VERDICTS = ['approve', 'deny', 'approve-tool', 'approve-server'] as const;
 type ToolApprovalVerdict = (typeof TOOL_APPROVAL_VERDICTS)[number];
 

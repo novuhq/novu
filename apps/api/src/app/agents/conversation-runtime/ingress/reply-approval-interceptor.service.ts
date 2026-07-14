@@ -5,7 +5,12 @@ import { buildApprovalActionId } from '@novu/framework/internal';
 import { AgentEventEnum } from '../../shared/enums/agent-event.enum';
 import { usesReplyBasedApprovals } from '../../shared/enums/agent-platform.enum';
 import { captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
-import { buildToolApprovalActionId, DIRECT_TOOL_APPROVAL_ACTION_PREFIX } from '../../shared/tool-approval/action-id';
+import {
+  buildToolApprovalActionId,
+  buildToolTrustApprovalActionId,
+  DIRECT_TOOL_APPROVAL_ACTION_PREFIX,
+  MCP_TOOL_APPROVAL_ACTION_PREFIX,
+} from '../../shared/tool-approval/action-id';
 import {
   parseApprovalReactionVerdict,
   parseApprovalReplyVerdict,
@@ -27,7 +32,13 @@ interface PendingApprovalWithHistory {
   request: ConversationActivityEntity;
 }
 
-function buildAckText(approved: boolean, toolName: string | undefined): string {
+function buildAckText(approved: boolean, willAlwaysAllow: boolean, toolName: string | undefined): string {
+  if (approved && willAlwaysAllow) {
+    return toolName
+      ? `Approved — I won't ask again before running ${toolName}.`
+      : "Approved — I won't ask again before running this tool.";
+  }
+
   if (approved) {
     return toolName ? `Approved — running ${toolName} now.` : 'Approved — on it.';
   }
@@ -80,14 +91,17 @@ export class ReplyApprovalInterceptor {
 
     const text = turn.message?.text;
 
-    // A whole-message "yes"/"no" reply has no target of its own — replies are
-    // always answers to whichever approval is oldest, since approvals are
-    // prompted sequentially on these platforms.
+    // A whole-message "yes"/"no"/"always" reply has no target of its own —
+    // replies are always answers to whichever approval is oldest, since
+    // approvals are prompted sequentially on these platforms.
     const replyVerdict = parseApprovalReplyVerdict(text);
     if (replyVerdict !== null) {
       const found = await this.findOldestPendingApproval(turn);
 
-      return this.consumePendingApproval(turn, runtime, found, replyVerdict);
+      return this.consumePendingApproval(turn, runtime, found, {
+        approved: replyVerdict !== 'deny',
+        alwaysAllow: replyVerdict === 'always_allow',
+      });
     }
 
     // An iMessage tapback (👍/👎) delivered as text by Sendblue (`Liked "…"` /
@@ -103,14 +117,15 @@ export class ReplyApprovalInterceptor {
 
     const found = await this.findPendingApprovalForTapback(turn, tapback.quotedText);
 
-    return this.consumePendingApproval(turn, runtime, found, tapback.approved);
+    // Tapbacks are approve/deny only — there is no "always allow" tapback.
+    return this.consumePendingApproval(turn, runtime, found, { approved: tapback.approved, alwaysAllow: false });
   }
 
   private async consumePendingApproval(
     turn: ConversationTurn,
     runtime: AgentRuntime,
     found: PendingApprovalWithHistory | null,
-    approved: boolean
+    decision: { approved: boolean; alwaysAllow: boolean }
   ): Promise<boolean> {
     if (!found) {
       return false;
@@ -129,8 +144,10 @@ export class ReplyApprovalInterceptor {
 
     return this.consumeVerdict(turn, runtime, {
       approvalId,
-      approved,
+      approved: decision.approved,
+      alwaysAllow: decision.alwaysAllow,
       toolName: pending.toolData?.toolName,
+      mcpServerName: pending.toolData?.mcpServerName,
       source: 'reply',
     });
   }
@@ -177,10 +194,13 @@ export class ReplyApprovalInterceptor {
       return false;
     }
 
+    // Reactions are approve/deny only — there is no "always allow" reaction.
     return this.consumeVerdict(turn, runtime, {
       approvalId,
       approved: verdict,
+      alwaysAllow: false,
       toolName: pending.toolData?.toolName,
+      mcpServerName: pending.toolData?.mcpServerName,
       source: 'reaction',
     });
   }
@@ -261,26 +281,47 @@ export class ReplyApprovalInterceptor {
   private async consumeVerdict(
     turn: ConversationTurn,
     runtime: AgentRuntime,
-    verdict: { approvalId: string; approved: boolean; toolName: string | undefined; source: 'reply' | 'reaction' }
+    verdict: {
+      approvalId: string;
+      approved: boolean;
+      alwaysAllow: boolean;
+      toolName: string | undefined;
+      mcpServerName: string | undefined;
+      source: 'reply' | 'reaction';
+    }
   ): Promise<boolean> {
     const { config, conversation } = turn;
-    const { approvalId, approved, toolName, source } = verdict;
+    const { approvalId, approved, alwaysAllow, toolName, mcpServerName, source } = verdict;
 
     this.logger.info(
-      { conversationId: conversation._id, approvalId, approved, platform: config.platform, source },
+      { conversationId: conversation._id, approvalId, approved, alwaysAllow, platform: config.platform, source },
       `[agent:${config.agentIdentifier}] Consuming inbound ${source} as tool-approval verdict`
     );
 
-    await this.persistDecision(turn, approvalId, approved, toolName);
-    await this.acknowledgeVerdict(turn, approved, toolName);
-
-    // Re-dispatch as the equivalent button click. Verdict-only ids parse
-    // identically under both managed prefixes, and self-hosted uses the
-    // framework grammar the bridge's onToolApproval handler expects.
     const isManagedAgent = turn.agent.runtime === 'managed' && Boolean(turn.agent.managedRuntime);
-    const actionId = isManagedAgent
-      ? buildToolApprovalActionId(DIRECT_TOOL_APPROVAL_ACTION_PREFIX, approved ? 'approve' : 'deny', approvalId)
-      : buildApprovalActionId(approved ? 'approve' : 'deny', approvalId);
+    // "Always allow" only actually persists trust for a managed agent with a
+    // known tool name — otherwise it degrades to a one-off approve, so the ack
+    // must not promise "won't ask again".
+    const trustWillPersist = this.resolveTrustPersistence({
+      alwaysAllow,
+      approved,
+      isManagedAgent,
+      toolName,
+      approvalId,
+      turn,
+    });
+
+    await this.persistDecision(turn, approvalId, approved, toolName);
+    await this.acknowledgeVerdict(turn, approved, trustWillPersist, toolName);
+
+    const actionId = this.buildVerdictActionId({
+      approvalId,
+      approved,
+      trustWillPersist,
+      toolName,
+      mcpServerName,
+      isManagedAgent,
+    });
 
     await runtime.dispatch({
       ...turn,
@@ -294,6 +335,93 @@ export class ReplyApprovalInterceptor {
     });
 
     return true;
+  }
+
+  /**
+   * Whether an "always allow" verdict will actually persist trust. Only true
+   * for a managed agent with a known tool name — a self-hosted agent has no
+   * trust grammar, and a missing tool name can't build a valid persist id.
+   * Logs the degrade-to-one-off reason so the (otherwise silent) miss is
+   * diagnosable. Always false for plain approve/deny.
+   */
+  private resolveTrustPersistence(params: {
+    alwaysAllow: boolean;
+    approved: boolean;
+    isManagedAgent: boolean;
+    toolName: string | undefined;
+    approvalId: string;
+    turn: ConversationTurn;
+  }): boolean {
+    const { alwaysAllow, approved, isManagedAgent, toolName, approvalId, turn } = params;
+
+    if (!alwaysAllow || !approved) {
+      return false;
+    }
+
+    const { config, conversation } = turn;
+
+    if (!isManagedAgent) {
+      this.logger.debug(
+        { conversationId: conversation._id, approvalId, platform: config.platform },
+        `[agent:${config.agentIdentifier}] Always-allow is not supported for self-hosted agents; approving once`
+      );
+
+      return false;
+    }
+
+    if (!toolName) {
+      this.logger.debug(
+        { conversationId: conversation._id, approvalId },
+        `[agent:${config.agentIdentifier}] Always-allow requested but the pending approval has no tool name; approving once`
+      );
+
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Builds the ON_ACTION id the verdict is re-dispatched as. A plain approve/
+   * deny re-uses the button-click grammar; an honored "always allow" instead
+   * emits the managed `approve-tool` persist id (MCP-aware) so trust is stored
+   * and the tool stops prompting. When trust can't persist, it falls back to a
+   * one-off approve so the verdict is never silently dropped.
+   */
+  private buildVerdictActionId(params: {
+    approvalId: string;
+    approved: boolean;
+    trustWillPersist: boolean;
+    toolName: string | undefined;
+    mcpServerName: string | undefined;
+    isManagedAgent: boolean;
+  }): string {
+    const { approvalId, approved, trustWillPersist, toolName, mcpServerName, isManagedAgent } = params;
+
+    // `trustWillPersist` already guarantees a managed agent and a tool name.
+    if (trustWillPersist && toolName) {
+      return mcpServerName
+        ? buildToolTrustApprovalActionId({
+            prefix: MCP_TOOL_APPROVAL_ACTION_PREFIX,
+            verdict: 'approve-tool',
+            toolUseId: approvalId,
+            toolName,
+            mcpServerName,
+          })
+        : buildToolTrustApprovalActionId({
+            prefix: DIRECT_TOOL_APPROVAL_ACTION_PREFIX,
+            verdict: 'approve-tool',
+            toolUseId: approvalId,
+            toolName,
+          });
+    }
+
+    // Re-dispatch as the equivalent button click. Verdict-only ids parse
+    // identically under both managed prefixes, and self-hosted uses the
+    // framework grammar the bridge's onToolApproval handler expects.
+    return isManagedAgent
+      ? buildToolApprovalActionId(DIRECT_TOOL_APPROVAL_ACTION_PREFIX, approved ? 'approve' : 'deny', approvalId)
+      : buildApprovalActionId(approved ? 'approve' : 'deny', approvalId);
   }
 
   private async findOldestPendingApproval(turn: ConversationTurn): Promise<PendingApprovalWithHistory | null> {
@@ -420,10 +548,11 @@ export class ReplyApprovalInterceptor {
   private async acknowledgeVerdict(
     turn: ConversationTurn,
     approved: boolean,
+    willAlwaysAllow: boolean,
     toolName: string | undefined
   ): Promise<void> {
     const { config, conversation } = turn;
-    const ack = buildAckText(approved, toolName);
+    const ack = buildAckText(approved, willAlwaysAllow, toolName);
 
     try {
       applyPlatformThreadIdToThread(turn.thread, turn.platformThreadId);

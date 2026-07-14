@@ -5,6 +5,7 @@ import type { ReplyContentDto } from '../../shared/dtos/agent-reply-payload.dto'
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import {
   buildToolApprovalActionId,
+  buildToolTrustApprovalActionId,
   DIRECT_TOOL_APPROVAL_ACTION_PREFIX,
   MCP_TOOL_APPROVAL_ACTION_PREFIX,
 } from '../../shared/tool-approval/action-id';
@@ -64,16 +65,22 @@ function buildMcpToolApprovalPersistActionId(
   verdict: 'approve-tool' | 'approve-server',
   tool: PendingToolApproval
 ): string {
-  const toolName = encodeURIComponent(tool.toolName);
-  const mcpServerName = encodeURIComponent(tool.mcpServerName ?? '');
-
-  return `${MCP_TOOL_APPROVAL_ACTION_PREFIX}:${verdict}:${tool.toolUseId}:${toolName}:${mcpServerName}`;
+  return buildToolTrustApprovalActionId({
+    prefix: MCP_TOOL_APPROVAL_ACTION_PREFIX,
+    verdict,
+    toolUseId: tool.toolUseId,
+    toolName: tool.toolName,
+    mcpServerName: tool.mcpServerName,
+  });
 }
 
 function buildDirectToolApprovalPersistActionId(tool: PendingToolApproval): string {
-  const toolName = encodeURIComponent(tool.toolName);
-
-  return `${DIRECT_TOOL_APPROVAL_ACTION_PREFIX}:approve-tool:${tool.toolUseId}:${toolName}`;
+  return buildToolTrustApprovalActionId({
+    prefix: DIRECT_TOOL_APPROVAL_ACTION_PREFIX,
+    verdict: 'approve-tool',
+    toolUseId: tool.toolUseId,
+    toolName: tool.toolName,
+  });
 }
 
 // ---------------------------------------------------------------------------

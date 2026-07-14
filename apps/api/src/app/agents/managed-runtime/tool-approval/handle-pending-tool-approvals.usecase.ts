@@ -377,6 +377,7 @@ export class HandlePendingToolApprovals {
             approvalId: tool.toolUseId,
             toolCallId: tool.toolUseId,
             name: tool.toolName,
+            mcpServerName: tool.mcpServerName,
             input: tool.input,
           },
         })

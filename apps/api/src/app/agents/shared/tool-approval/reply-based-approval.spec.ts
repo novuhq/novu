@@ -6,21 +6,37 @@ import {
 } from './reply-based-approval';
 
 describe('parseApprovalReplyVerdict', () => {
-  it('should approve on unambiguous positive replies', () => {
+  it('should approve once on unambiguous positive replies', () => {
     for (const text of ['yes', 'YES', ' Yes! ', 'y', 'approve', 'ok', 'Okay.', 'go ahead', 'Do it', '👍']) {
-      expect(parseApprovalReplyVerdict(text), `expected "${text}" to approve`).to.equal(true);
+      expect(parseApprovalReplyVerdict(text), `expected "${text}" to approve`).to.equal('approve');
+    }
+  });
+
+  it('should always-allow on unambiguous "always" replies', () => {
+    for (const text of [
+      'always',
+      'ALWAYS',
+      ' Always. ',
+      'always allow',
+      'allow always',
+      'yes always',
+      'always yes',
+      'allow forever',
+    ]) {
+      expect(parseApprovalReplyVerdict(text), `expected "${text}" to always-allow`).to.equal('always_allow');
     }
   });
 
   it('should deny on unambiguous negative replies', () => {
     for (const text of ['no', 'No.', 'n', 'deny', 'ignore', 'cancel', 'Stop', "don't", '👎']) {
-      expect(parseApprovalReplyVerdict(text), `expected "${text}" to deny`).to.equal(false);
+      expect(parseApprovalReplyVerdict(text), `expected "${text}" to deny`).to.equal('deny');
     }
   });
 
   it('should not consume hedged or unrelated replies', () => {
     for (const text of [
       'yes, but change the amount to $20',
+      'always change the amount',
       'what does this tool do?',
       'maybe',
       'no rush',

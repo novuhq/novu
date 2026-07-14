@@ -102,6 +102,8 @@ export interface PersistToolApprovalRequestParams extends ConversationActivityCo
   approvalId: string;
   toolCallId: string;
   toolName: string;
+  /** MCP server the tool belongs to, when the gated call is an MCP tool. Absent for direct tools. */
+  mcpServerName?: string;
   input?: Record<string, unknown>;
   /** Human-readable preview for the display timeline. */
   preview?: string;
@@ -394,6 +396,7 @@ export class AgentConversationService {
         approvalId: params.approvalId,
         toolCallId: params.toolCallId,
         toolName: params.toolName,
+        mcpServerName: params.mcpServerName,
         input: params.input,
       },
       environmentId: params.environmentId,
