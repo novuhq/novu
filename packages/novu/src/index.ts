@@ -8,6 +8,7 @@ import { DevCommandOptions, devCommand } from './commands';
 import { connectCommand } from './commands/connect';
 import { isDashboardOnlyChannel } from './commands/connect/dashboard-urls';
 import { CONNECT_HELP_TEXT } from './commands/connect/help-text';
+import type { LlmAuthCliChoice } from './commands/connect/pipeline/llm-auth/types';
 import type { ConnectCommandInput } from './commands/connect/resolve-options';
 import { resolveConnectCommandOptions } from './commands/connect/resolve-options';
 import {
@@ -131,7 +132,7 @@ program
   )
   .option('-t, --tunnel <url>', 'Self hosted tunnel. e.g. https://my-tunnel.ngrok.app')
   .option('-H, --headless', 'Run without opening the browser', false)
-  .option('--no-studio', '[deprecated] Ignored — the local studio was replaced by the dashboard Local environment')
+  .option('--no-studio', 'Skip opening the dashboard Local environment (tunnel and agent sync still run)')
   .option('--run <command>', 'Spawn a local app server before opening the tunnel')
   .action(async (options: DevCommandOptions) => {
     analytics.track({
@@ -215,6 +216,11 @@ program
     'Use an existing agent-runtime integration (skips credential setup for BYOK runtimes)'
   )
   .option('--anthropic-api-key <key>', 'Anthropic API key for --runtime claude non-interactive runs')
+  .option(
+    '--llm-auth <choice>',
+    'LLM provider for ai-sdk/langchain scaffold (openai | anthropic | codex-subscription | claude-subscription | skip)'
+  )
+  .option('--openai-api-key <key>', 'OpenAI API key for --llm-auth openai non-interactive scaffold runs')
   .option('--aws-claude-api-key <key>', 'AWS Claude API key for --runtime claude-aws non-interactive runs')
   .option('--aws-claude-region <region>', 'AWS Claude commercial region for --runtime claude-aws')
   .option('--aws-claude-workspace-id <id>', 'AWS Claude workspace ID for --runtime claude-aws')
@@ -289,6 +295,17 @@ program
       console.error(
         `Invalid --runtime value: "${options.runtime}". Expected one of: ${AGENT_CONNECT_MODES.join(', ')}.`
       );
+      process.exit(1);
+    }
+    const LLM_AUTH_CHOICES: readonly LlmAuthCliChoice[] = [
+      'openai',
+      'anthropic',
+      'codex-subscription',
+      'claude-subscription',
+      'skip',
+    ];
+    if (options.llmAuth && !LLM_AUTH_CHOICES.includes(options.llmAuth as LlmAuthCliChoice)) {
+      console.error(`Invalid --llm-auth value: "${options.llmAuth}". Expected one of: ${LLM_AUTH_CHOICES.join(', ')}.`);
       process.exit(1);
     }
     let resolved: ReturnType<typeof resolveConnectCommandOptions>;

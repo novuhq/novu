@@ -29,7 +29,8 @@ const SYSTEM_PROMPT_PREAMBLE = [
 
 export const agentOnboardingSuite: Suite<ConnectFlags> = {
   id: 'agent-onboarding',
-  description: 'Behavioral evals for the Novu agent onboarding playbook (npx novu connect).',
+  description:
+    'Behavioral evals for the Novu agent onboarding playbook (managed and custom-code bridge `npx novu connect` flows).',
   systemPrompt: { path: AGENT_ONBOARDING_DOC_PATH },
   systemPromptPreamble: SYSTEM_PROMPT_PREAMBLE,
   commandParser: connectParser,

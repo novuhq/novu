@@ -1,5 +1,7 @@
 import type { GeneratedAgentSpec } from '../api/agents';
 import type { BridgeScaffoldVariant } from '../pipeline/bridge/types';
+import type { BridgeAdapterVariant } from '../pipeline/bridge-adapter/types';
+import type { LlmAuthKind } from '../pipeline/llm-auth/types';
 import type {
   AgentConnectMode,
   AgentSummary,
@@ -85,6 +87,7 @@ export interface ConnectUI {
   // Chat SDK project wiring
   promptForAgentName(defaultName: string): Promise<string>;
   confirmEnvSecretOverwrite(opts: { envPath: string; existingMasked: string; nextMasked: string }): Promise<boolean>;
+  pickLlmAuthKind(opts: { connectMode: BridgeAdapterVariant }): Promise<LlmAuthKind>;
   confirmScaffold(opts: { projectDir: string; appName: string; variant?: BridgeScaffoldVariant }): Promise<boolean>;
   scaffoldingBridge(opts: { variant: BridgeScaffoldVariant }): void;
   bridgeScaffolded(opts: {

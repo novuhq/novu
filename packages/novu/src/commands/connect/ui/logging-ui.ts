@@ -208,6 +208,12 @@ export function createLoggingUI(): ConnectUI {
     confirmEnvSecretOverwrite() {
       return Promise.resolve(false);
     },
+    pickLlmAuthKind() {
+      stop();
+      console.log(chalk.gray('Non-interactive mode: skipping LLM wiring (demo echo). Pass --llm-auth to configure.'));
+
+      return Promise.resolve('skip');
+    },
     confirmScaffold({ projectDir, appName, variant = 'chat-sdk' }) {
       console.log(chalk.cyan(`→ Scaffolding ${bridgeScaffoldLabel(variant)} "${appName}" in ${projectDir}`));
 
