@@ -31,7 +31,14 @@ import { AgentConversationService } from '../conversation/agent-conversation.ser
 
 const MAX_RETRIES = 2;
 
-/** Loopback HTTPS (`localhost` / `*.localhost` / `127.x` / `::1`) — untrusted private-CA proxies must not be reply origins. */
+/**
+ * True for `https://` URLs whose host is loopback (`localhost`, `*.localhost`,
+ * `127.x/8` IPv4 literals, `::1`). In local dev these are served by a TLS proxy
+ * with a private CA (e.g. portless's `https://api.novu.localhost`) that a
+ * customer's bridge process does not trust, so they must not be handed out as
+ * reply origins. The `127.` prefix is only honored for actual IPv4 literals —
+ * a DNS name like `127.cdn.example.com` is not loopback.
+ */
 function isLoopbackHttpsUrl(rawUrl: string): boolean {
   try {
     const { protocol, hostname } = new URL(rawUrl);
@@ -53,7 +60,14 @@ function isLoopbackHttpsUrl(rawUrl: string): boolean {
   }
 }
 
-/** Bridge replyUrl origin: AGENT_API_HOSTNAME / API_ROOT_URL, else localhost; downgrade ambient loopback HTTPS to plain HTTP. */
+/**
+ * Agent bridge replyUrl origin: prefer AGENT_API_HOSTNAME / API_ROOT_URL, else
+ * localhost on PORT. When the origin comes from the ambient API_ROOT_URL and is
+ * loopback HTTPS, it is downgraded to the API's own plain-HTTP port — a bridge
+ * on the same machine can reach it directly, and TLS (with its untrusted
+ * private dev CA) never enters the picture. An explicit AGENT_API_HOSTNAME is
+ * trusted verbatim so unusual self-host topologies keep full control.
+ */
 function resolveAgentReplyApiOrigin(): string {
   const port = process.env.PORT || '3000';
   const localHttpOrigin = `http://localhost:${port}`;
