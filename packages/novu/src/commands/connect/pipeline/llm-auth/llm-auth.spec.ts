@@ -106,4 +106,15 @@ describe('generateSupportAgentSource', () => {
     expect(source).toContain("import { codexCli } from 'ai-sdk-provider-codex-cli'");
     expect(source).toContain("model: codexCli('gpt-5.4-mini')");
   });
+
+  it('generates a valid export name when the identifier starts with a digit', () => {
+    const source = generateSupportAgentSource({
+      runtime: 'ai-sdk',
+      agentIdentifier: '1-agent',
+      llmAuth: { kind: 'openai-api-key', apiKey: 'sk-test' },
+    });
+
+    expect(source).toContain('export const agent1Agent');
+    expect(source).not.toMatch(/export const \d/);
+  });
 });

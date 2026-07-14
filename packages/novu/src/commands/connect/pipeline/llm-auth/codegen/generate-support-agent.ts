@@ -1,7 +1,13 @@
 import type { GenerateSupportAgentInput } from '../types';
 
 function toCamelAgentName(agentIdentifier: string): string {
-  return agentIdentifier.replace(/[-_]([a-z0-9])/g, (_, char) => char.toUpperCase());
+  const camelName = agentIdentifier.replace(/[-_]([a-z0-9])/g, (_, char) => char.toUpperCase());
+
+  if (/^\d/.test(camelName)) {
+    return `agent${camelName.charAt(0).toUpperCase()}${camelName.slice(1)}`;
+  }
+
+  return camelName;
 }
 
 function buildSharedHandlerBody(): string {
