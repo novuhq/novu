@@ -225,7 +225,12 @@ export class AgentSubscriberResolver {
    * Connect-org subscriber caps do not apply here (same as email/WhatsApp).
    */
   private async resolveOrProvisionOpenAccessIdentity(params: ResolveOrProvisionParams): Promise<SubscriberResolution> {
-    const { label, operation } = openAccessIdentityProvisionMeta(params.platform);
+    if (!isOpenAccessIdentityPlatform(params.platform)) {
+      throw new Error(`resolveOrProvisionOpenAccessIdentity called for unsupported platform "${params.platform}".`);
+    }
+
+    const platform = params.platform;
+    const { label, operation } = openAccessIdentityProvisionMeta(platform);
 
     try {
       const existing = await this.resolveSubscriber(params);
@@ -235,26 +240,32 @@ export class AgentSubscriberResolver {
 
       let provisionedSubscriberId: string | null;
 
-      if (params.platform === AgentPlatformEnum.EMAIL) {
-        provisionedSubscriberId = await this.provisionEmailSubscriber({
-          environmentId: params.environmentId,
-          organizationId: params.organizationId,
-          integrationIdentifier: params.integrationIdentifier,
-          agentIdentifier: params.agentIdentifier,
-          email: params.platformUserId,
-        });
-      } else {
-        const phonePlatform =
-          params.platform === AgentPlatformEnum.SENDBLUE ? AgentPlatformEnum.SENDBLUE : AgentPlatformEnum.WHATSAPP;
+      switch (platform) {
+        case AgentPlatformEnum.EMAIL:
+          provisionedSubscriberId = await this.provisionEmailSubscriber({
+            environmentId: params.environmentId,
+            organizationId: params.organizationId,
+            integrationIdentifier: params.integrationIdentifier,
+            agentIdentifier: params.agentIdentifier,
+            email: params.platformUserId,
+          });
+          break;
+        case AgentPlatformEnum.WHATSAPP:
+        case AgentPlatformEnum.SENDBLUE:
+          provisionedSubscriberId = await this.provisionPhoneIdentitySubscriber({
+            environmentId: params.environmentId,
+            organizationId: params.organizationId,
+            integrationIdentifier: params.integrationIdentifier,
+            agentIdentifier: params.agentIdentifier,
+            phone: params.platformUserId,
+            platform,
+          });
+          break;
+        default: {
+          const _exhaustive: never = platform;
 
-        provisionedSubscriberId = await this.provisionPhoneIdentitySubscriber({
-          environmentId: params.environmentId,
-          organizationId: params.organizationId,
-          integrationIdentifier: params.integrationIdentifier,
-          agentIdentifier: params.agentIdentifier,
-          phone: params.platformUserId,
-          platform: phonePlatform,
-        });
+          throw new Error(`Unhandled open-access identity platform "${_exhaustive}"`);
+        }
       }
 
       return provisionedSubscriberId
@@ -737,7 +748,9 @@ function isAgentProvisionedSubscriber(subscriber: Pick<SubscriberEntity, 'data'>
   return subscriber.data?.[AGENT_PROVISION_DATA_KEYS.source] === AGENT_PLATFORM_PROVISION_SOURCE;
 }
 
-function openAccessIdentityProvisionMeta(platform: AgentPlatformEnum): { label: string; operation: string } {
+function openAccessIdentityProvisionMeta(
+  platform: AgentPlatformEnum.EMAIL | AgentPlatformEnum.WHATSAPP | AgentPlatformEnum.SENDBLUE
+): { label: string; operation: string } {
   switch (platform) {
     case AgentPlatformEnum.EMAIL:
       return { label: 'email', operation: 'provision-open-access-email-subscriber' };
@@ -745,8 +758,11 @@ function openAccessIdentityProvisionMeta(platform: AgentPlatformEnum): { label: 
       return { label: 'Sendblue', operation: 'provision-open-access-sendblue-subscriber' };
     case AgentPlatformEnum.WHATSAPP:
       return { label: 'WhatsApp', operation: 'provision-open-access-whatsapp-subscriber' };
-    default:
-      return { label: platform, operation: 'provision-open-access-identity-subscriber' };
+    default: {
+      const _exhaustive: never = platform;
+
+      throw new Error(`Unhandled open-access identity platform "${_exhaustive}"`);
+    }
   }
 }
 

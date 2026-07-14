@@ -17,8 +17,7 @@ export const UNRESOLVED_SUBSCRIBER_TRANSIENT_REPLY =
  * generic identity-miss copy — that would misattribute a spoofed From as
  * "unknown user" rather than an unverified sender.
  */
-export const UNRESOLVED_SUBSCRIBER_EMAIL_VERIFICATION_FAILED_REPLY =
-  "We couldn't verify that this email really came from the address in the From header (DKIM/SPF checks failed), so this agent can't reply yet. Resend from a properly authenticated mailbox, or contact the team that owns this agent.";
+export const UNRESOLVED_SUBSCRIBER_EMAIL_VERIFICATION_FAILED_REPLY = buildEmailVerificationFailedReply(undefined);
 
 export function buildUnresolvedSubscriberAccessReply(params: {
   platform: AgentPlatformEnum;
@@ -35,16 +34,7 @@ export function buildUnresolvedSubscriberAccessReply(params: {
   }
 
   if (params.emailSenderUnverified && params.platform === AgentPlatformEnum.EMAIL) {
-    const sender = params.senderEmail?.trim();
-
-    if (sender) {
-      return (
-        `We couldn't verify that this email really came from ${sender} (DKIM/SPF checks failed), ` +
-        "so this agent can't reply yet. Resend from a properly authenticated mailbox, or contact the team that owns this agent."
-      );
-    }
-
-    return UNRESOLVED_SUBSCRIBER_EMAIL_VERIFICATION_FAILED_REPLY;
+    return buildEmailVerificationFailedReply(params.senderEmail);
   }
 
   const sender = params.senderEmail?.trim();
@@ -57,4 +47,13 @@ export function buildUnresolvedSubscriberAccessReply(params: {
   }
 
   return UNRESOLVED_SUBSCRIBER_ACCESS_REPLY;
+}
+
+function buildEmailVerificationFailedReply(senderEmail: string | undefined): string {
+  const from = senderEmail?.trim() || 'the address in the From header';
+
+  return (
+    `We couldn't verify that this email really came from ${from} (DKIM/SPF checks failed), ` +
+    "so this agent can't reply yet. Resend from a properly authenticated mailbox, or contact the team that owns this agent."
+  );
 }

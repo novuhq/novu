@@ -45,7 +45,9 @@ export function isAutoProvisionPlatform(platform: AgentPlatformEnum): boolean {
 }
 
 /** Email/WhatsApp/Sendblue open-access provision by identity field (no ChannelEndpoint). */
-export function isOpenAccessIdentityPlatform(platform: AgentPlatformEnum): boolean {
+export function isOpenAccessIdentityPlatform(
+  platform: AgentPlatformEnum
+): platform is AgentPlatformEnum.EMAIL | AgentPlatformEnum.WHATSAPP | AgentPlatformEnum.SENDBLUE {
   return (
     platform === AgentPlatformEnum.EMAIL ||
     platform === AgentPlatformEnum.WHATSAPP ||
@@ -83,9 +85,5 @@ export function shouldAutoProvisionInbound(params: {
     return params.telegramChatId != null && params.telegramChatId === params.platformUserId;
   }
 
-  return (
-    isAutoProvisionPlatform(params.platform) ||
-    params.platform === AgentPlatformEnum.WHATSAPP ||
-    params.platform === AgentPlatformEnum.SENDBLUE
-  );
+  return isAutoProvisionPlatform(params.platform) || isOpenAccessIdentityPlatform(params.platform);
 }

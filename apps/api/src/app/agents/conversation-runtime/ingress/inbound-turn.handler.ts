@@ -34,7 +34,6 @@ import { captureAgentException, captureAgentWarning } from '../../shared/errors/
 import { parseToolApprovalActionId } from '../../shared/tool-approval/action-id';
 import { getResolvedSubscriberId, type SubscriberResolution } from '../../shared/types/subscriber-resolution';
 import { agentLinkAwaitingInboundConnectionFilter } from '../../shared/util/agent-inbound-connection';
-import { buildUnresolvedSubscriberAccessReply } from '../../shared/util/agent-inbound-replies';
 import { extractMsTeamsTenantId } from '../../shared/util/msteams-activity';
 import { type AutoProvisionPlatform, shouldAutoProvisionInbound } from '../../shared/util/platform-endpoint-config';
 import { InboundAckService } from '../ack/inbound-ack.service';
@@ -46,9 +45,9 @@ import {
   ConnectOrgSubscriberCapExceededError,
 } from '../conversation/agent-subscriber-resolver.service';
 import { OutboundGateway } from '../egress/outbound.gateway';
+import { postUnresolvedSubscriberAccessReply } from '../reply/post-unresolved-subscriber-access-reply';
 import type { BridgeReaction } from '../runtime/bridge-executor.service';
 import type { ConversationTurn } from '../runtime/conversation-turn';
-import { applyPlatformThreadIdToThread } from '../runtime/platform-thread.util';
 import { RuntimeResolver } from '../runtime/runtime-resolver.service';
 import { InboundDispatcher } from './inbound.dispatcher';
 import { isLinkButtonActionId, PlanLimitGateService } from './plan-limit-gate.service';
@@ -489,9 +488,8 @@ export class AgentInboundHandler implements OnModuleInit {
 
     // Handler-level subscriber-access gate (messages only). Restricted misses and
     // resolution errors are answered here for both managed and custom-code so the
-    // bridge never sees a denied/errored turn. Open + not_found custom-code
-    // continues with `subscriber: null`; open Telegram groups skip this reply so
-    // managed can fall through to its residual `!subscriber` path.
+    // bridge never sees a denied/errored turn. Open + not_found continues without
+    // a handler reply (custom-code Pass null; managed residual covers leftovers).
     if (await this.maybeReplyUnresolvedSubscriberAccess(turn, { emailSenderUnverified: !isVerifiedEmailSender })) {
       return;
     }
@@ -856,66 +854,24 @@ export class AgentInboundHandler implements OnModuleInit {
       return false;
     }
 
-    const isOpenAccess = turn.config.subscriberAccess === AgentSubscriberAccessEnum.OPEN;
-    let isOpenTelegramGroup = false;
-
-    if (isOpenAccess && turn.config.platform === AgentPlatformEnum.TELEGRAM && turn.message) {
-      const chatId = extractTelegramChatId(turn.thread);
-      isOpenTelegramGroup = chatId != null && chatId !== turn.message.author.userId;
-    }
-
-    // Open Telegram groups: skip handler denial so managed can use its residual
-    // `!subscriber` path and custom-code can Pass null / dispatch.
-    if (isOpenTelegramGroup && resolution.outcome !== 'error' && !options.emailSenderUnverified) {
-      return false;
-    }
-
-    // Open + not_found (non-group): custom-code Pass null; managed residual
-    // covers leftover open misses (e.g. after skipped provision). Do not deny
+    // Open + not_found: custom-code Pass null; managed residual covers leftover
+    // open misses (e.g. Telegram group after skipped provision). Do not deny
     // here — except unverified email, which must never look like a generic miss.
-    if (isOpenAccess && resolution.outcome === 'not_found' && !options.emailSenderUnverified) {
+    if (
+      turn.config.subscriberAccess === AgentSubscriberAccessEnum.OPEN &&
+      resolution.outcome === 'not_found' &&
+      !options.emailSenderUnverified
+    ) {
       return false;
     }
 
-    this.logger.warn(
-      {
-        agentId: turn.agentId,
-        environmentId: turn.config.environmentId,
-        organizationId: turn.config.organizationId,
-        platform: turn.config.platform,
-        integrationIdentifier: turn.config.integrationIdentifier,
-        conversationId: turn.conversation._id,
-        senderPlatformUserId: turn.message?.author?.userId,
-        resolutionOutcome: resolution.outcome,
-        resolvedSubscriberId: undefined,
-        err: resolution.outcome === 'error' ? resolution.err : undefined,
-        emailSenderUnverified: options.emailSenderUnverified,
-      },
-      'Unresolved subscriber — replying with access message instead of dispatching'
-    );
-
-    const reply = buildUnresolvedSubscriberAccessReply({
-      platform: turn.config.platform,
-      senderEmail: turn.message?.author?.userId,
-      resolutionOutcome: resolution.outcome,
+    await postUnresolvedSubscriberAccessReply({
+      turn,
+      logger: this.logger,
+      replyOnThread: (thread, msg, opts) => this.outboundGateway.replyOnThread(thread, msg, opts),
+      getPrimaryChannel: (conversation) => this.conversationService.getPrimaryChannel(conversation),
       emailSenderUnverified: options.emailSenderUnverified,
     });
-
-    applyPlatformThreadIdToThread(turn.thread, turn.platformThreadId);
-    await this.outboundGateway.replyOnThread(
-      turn.thread,
-      { markdown: reply },
-      {
-        persist: {
-          conversationId: turn.conversation._id,
-          channel: this.conversationService.getPrimaryChannel(turn.conversation),
-          agentIdentifier: turn.config.agentIdentifier,
-          content: reply,
-          environmentId: turn.config.environmentId,
-          organizationId: turn.config.organizationId,
-        },
-      }
-    );
 
     return true;
   }
