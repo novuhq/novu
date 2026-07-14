@@ -48,7 +48,7 @@ export class ContextRepository extends BaseRepository<ContextDBModel, ContextEnt
     const existingContext = await this.findOne(query);
 
     if (existingContext) {
-      return existingContext;
+      return this.upsertContextData(query, existingContext, data);
     }
 
     const newContext: FilterQuery<ContextDBModel> & EnforceEnvOrOrgIds = {
@@ -69,12 +69,30 @@ export class ContextRepository extends BaseRepository<ContextDBModel, ContextEnt
       if (isDuplicateKeyError) {
         const context = await this.findOne(query);
         if (context) {
-          return context;
+          return this.upsertContextData(query, context, data);
         }
       }
 
       throw error;
     }
+  }
+
+  private async upsertContextData(
+    query: FilterQuery<ContextDBModel> & EnforceEnvOrOrgIds,
+    existingContext: ContextEntity,
+    data?: ContextData
+  ): Promise<ContextEntity> {
+    if (data === undefined) {
+      return existingContext;
+    }
+
+    const updatedContext = await this.findOneAndUpdate(query, { $set: { data } }, { new: true });
+
+    if (!updatedContext) {
+      return existingContext;
+    }
+
+    return updatedContext;
   }
 
   async findByKeys(environmentId: string, organizationId: string, contextKeys: string[]): Promise<ContextEntity[]> {
