@@ -1,5 +1,4 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import type { FileRef } from '@novu/framework';
+import { ApiExtraModels, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
 import type { TriggerRecipientsPayload } from '@novu/shared';
 import { Type } from 'class-transformer';
 import {
@@ -15,6 +14,7 @@ import {
   ValidatorConstraint,
   ValidatorConstraintInterface,
 } from 'class-validator';
+import { FileRefDto } from './file-ref.dto';
 
 export type { FileRef } from '@novu/framework';
 
@@ -90,7 +90,7 @@ export class IsValidTriggerRecipient implements ValidatorConstraintInterface {
 
 @ValidatorConstraint({ name: 'isValidSignal', async: false })
 export class IsValidSignal implements ValidatorConstraintInterface {
-  validate(signal: SignalDto): boolean {
+  validate(signal: MetadataSignalDto | TriggerSignalDto): boolean {
     if (!signal?.type) return false;
 
     if (signal.type === 'metadata') {
@@ -170,52 +170,145 @@ export class IsValidTypingOp implements ValidatorConstraintInterface {
   }
 }
 
+export class ToolApprovalCardDto {
+  @ApiProperty({
+    enum: ['tool-approval-card'],
+    description: 'Discriminator for Novu tool-approval cards.',
+    example: 'tool-approval-card',
+  })
+  @IsString()
+  @IsIn(['tool-approval-card'])
+  type: 'tool-approval-card';
+
+  @ApiPropertyOptional({
+    description: 'Slack-only catalog icon id, `https://` URL, or omit to auto-match the tool name.',
+    example: 'stripe',
+  })
+  @IsOptional()
+  @IsString()
+  icon?: string;
+
+  @ApiPropertyOptional({
+    description: 'Card title shown on all channels.',
+    example: 'Approve database search?',
+  })
+  @IsOptional()
+  @IsString()
+  title?: string;
+
+  @ApiPropertyOptional({
+    description: 'Card subtitle; auto-generated from the tool name when omitted.',
+    example: 'search_database',
+  })
+  @IsOptional()
+  @IsString()
+  subtitle?: string;
+
+  @ApiPropertyOptional({
+    description: 'Slack-only optional markdown body (for example, argument preview).',
+    example: 'Query: `SELECT * FROM users WHERE id = 42`',
+  })
+  @IsOptional()
+  @IsString()
+  body?: string;
+
+  @ApiPropertyOptional({ description: 'Approve button label.', example: 'Approve' })
+  @IsOptional()
+  @IsString()
+  approveLabel?: string;
+
+  @ApiPropertyOptional({ description: 'Deny button label.', example: 'Deny' })
+  @IsOptional()
+  @IsString()
+  denyLabel?: string;
+}
+
+@ApiExtraModels(FileRefDto, ToolApprovalCardDto)
 export class ReplyContentDto {
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    description: 'Plain text or markdown body for the reply.',
+    example: '**Report generated.** See the attached PDF.',
+  })
   @IsOptional()
   @IsString()
   markdown?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    description:
+      'Interactive card element tree (buttons, text blocks, and other chat-sdk primitives). ' +
+      'Mutually exclusive with `markdown` and `toolApprovalCard`.',
+    example: {
+      type: 'card',
+      title: 'Deploy status',
+      subtitle: 'Production',
+      children: [{ type: 'text', content: 'The latest deploy succeeded.' }],
+    },
+  })
   @IsOptional()
   @IsObject()
   card?: Record<string, unknown>;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    type: ToolApprovalCardDto,
+    description: 'Novu tool-approval card rendered natively on supported channels.',
+  })
   @IsOptional()
-  @IsObject()
-  toolApprovalCard?: Record<string, unknown>;
+  @ValidateNested()
+  @Type(() => ToolApprovalCardDto)
+  toolApprovalCard?: ToolApprovalCardDto;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    type: [FileRefDto],
+    description:
+      'File attachments delivered alongside markdown or card content. Up to 15 files per message. ' +
+      'Each file must provide exactly one of `data` or `url`.',
+  })
   @IsOptional()
   @IsArray()
-  files?: FileRef[];
+  @ValidateNested({ each: true })
+  @Type(() => FileRefDto)
+  files?: FileRefDto[];
 }
 
 export class ToolApprovalRequestPayloadDto {
-  @ApiProperty({ description: 'Unique id for this approval request (matches the AI SDK approvalId).' })
+  @ApiProperty({
+    description: 'Unique id for this approval request (matches the AI SDK approvalId).',
+    example: 'appr_123',
+  })
   @IsString()
   @IsNotEmpty()
   approvalId: string;
 
-  @ApiProperty({ description: 'Id of the tool call awaiting approval.' })
+  @ApiProperty({
+    description: 'Id of the tool call awaiting approval.',
+    example: 'tc_456',
+  })
   @IsString()
   @IsNotEmpty()
   toolCallId: string;
 
-  @ApiProperty({ description: 'Name of the gated tool.' })
+  @ApiProperty({
+    description: 'Name of the gated tool.',
+    example: 'search_database',
+  })
   @IsString()
   @IsNotEmpty()
   name: string;
 
-  @ApiPropertyOptional({ description: 'Tool input the model proposed.' })
+  @ApiPropertyOptional({
+    description: 'Tool input the model proposed.',
+    example: { query: 'SELECT * FROM users WHERE id = 42' },
+  })
   @IsOptional()
   @IsObject()
   input?: Record<string, unknown>;
 }
 
 export class EditPayloadDto {
-  @ApiProperty()
+  @ApiProperty({
+    description: 'Platform message id of the message to edit.',
+    example: 'msg_01HXYZ',
+  })
   @IsString()
   @IsNotEmpty()
   messageId: string;
@@ -229,99 +322,199 @@ export class EditPayloadDto {
 }
 
 export class ResolveDto {
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    description: 'Optional human-readable summary stored on the resolve signal.',
+    example: 'Issue resolved — billing adjustment applied.',
+  })
   @IsOptional()
   @IsString()
   summary?: string;
 }
 
 export class AddReactionPayloadDto {
-  @ApiProperty()
+  @ApiProperty({
+    description: 'Platform message id to react to.',
+    example: 'msg_01HXYZ',
+  })
   @IsString()
   @IsNotEmpty()
   messageId: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    description: 'Cross-platform emoji name (for example, `thumbs_up`, `check`).',
+    example: 'thumbs_up',
+  })
   @IsString()
   @IsNotEmpty()
   emojiName: string;
 }
 
 export class DeleteMessagePayloadDto {
-  @ApiProperty()
+  @ApiProperty({
+    description: 'Platform message id to delete from the provider thread.',
+    example: 'msg_01HXYZ',
+  })
   @IsString()
   @IsNotEmpty()
   messageId: string;
 }
 
-export class SignalDto {
-  @ApiProperty({ enum: SIGNAL_TYPES })
+export class MetadataSignalDto {
+  @ApiProperty({ enum: ['metadata'], example: 'metadata' })
   @IsString()
-  @IsIn(SIGNAL_TYPES)
-  type: (typeof SIGNAL_TYPES)[number];
+  @IsIn(['metadata'])
+  type: 'metadata';
 
-  @ApiPropertyOptional({ enum: METADATA_ACTIONS })
+  @ApiPropertyOptional({
+    enum: METADATA_ACTIONS,
+    description: 'Metadata mutation to apply. Defaults to `set`.',
+    example: 'set',
+  })
   @IsOptional()
   @IsString()
   @IsIn(METADATA_ACTIONS)
   action?: (typeof METADATA_ACTIONS)[number];
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    description: 'Metadata key (1–128 chars; letters, digits, `-`, `_`, `:`). Required for `set` and `delete`.',
+    example: 'sentiment',
+  })
   @IsOptional()
   @IsString()
   key?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    description: 'Value to store when `action` is `set`.',
+    example: 'positive',
+  })
   @IsOptional()
   value?: unknown;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'Not used for metadata signals.', deprecated: true })
   @IsOptional()
   @IsString()
   workflowId?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'Not used for metadata signals.', deprecated: true })
   @IsOptional()
   @Validate(IsValidTriggerRecipient)
   to?: TriggerRecipientsPayload;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'Not used for metadata signals.', deprecated: true })
   @IsOptional()
   @IsObject()
   payload?: Record<string, unknown>;
+}
+
+export class TriggerSignalDto {
+  @ApiProperty({ enum: ['trigger'], example: 'trigger' })
+  @IsString()
+  @IsIn(['trigger'])
+  type: 'trigger';
+
+  @ApiPropertyOptional({ description: 'Not used for trigger signals.', deprecated: true })
+  @IsOptional()
+  @IsString()
+  @IsIn(METADATA_ACTIONS)
+  action?: (typeof METADATA_ACTIONS)[number];
+
+  @ApiPropertyOptional({ description: 'Not used for trigger signals.', deprecated: true })
+  @IsOptional()
+  @IsString()
+  key?: string;
+
+  @ApiPropertyOptional({ description: 'Not used for trigger signals.', deprecated: true })
+  @IsOptional()
+  value?: unknown;
+
+  @ApiProperty({
+    description: 'Workflow identifier or slug to trigger.',
+    example: 'escalation-email',
+  })
+  @IsString()
+  @IsNotEmpty()
+  workflowId: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Workflow recipients — subscriber id string, `{ subscriberId }` object, topic object, or an array of those.',
+    example: 'subscriber-123',
+  })
+  @IsOptional()
+  @Validate(IsValidTriggerRecipient)
+  to?: TriggerRecipientsPayload;
+
+  @ApiPropertyOptional({
+    description: 'Workflow trigger payload.',
+    example: { reason: 'User requested human support' },
+  })
+  @IsOptional()
+  @IsObject()
+  payload?: Record<string, unknown>;
+}
+
+export type SignalDto = MetadataSignalDto | TriggerSignalDto;
+
+export class TypingStatusDto {
+  @ApiPropertyOptional({
+    description: 'Custom status text. Omit for the default "Thinking…".',
+    example: 'Searching the docs…',
+  })
+  @IsOptional()
+  @IsString()
+  status?: string;
 }
 
 /**
  * Reports the outcome of a tool call back to Novu so it's saved in the conversation history.
  */
 export class ToolResultDto {
-  @ApiProperty({ description: 'Id of the tool call this result resolves.' })
+  @ApiProperty({
+    description: 'Id of the tool call this result resolves.',
+    example: 'tc_456',
+  })
   @IsString()
   @IsNotEmpty()
   toolCallId: string;
 
-  @ApiPropertyOptional({ description: 'Name of the tool that produced this result.' })
+  @ApiPropertyOptional({
+    description: 'Name of the tool that produced this result.',
+    example: 'search_database',
+  })
   @IsOptional()
   @IsString()
   toolName?: string;
 
-  @ApiPropertyOptional({ description: 'JSON-serializable tool output (or the execution-denied marker).' })
+  @ApiPropertyOptional({
+    description: 'JSON-serializable tool output (or the execution-denied marker).',
+    example: { rows: 3 },
+  })
   @IsOptional()
   output?: unknown;
 
-  @ApiPropertyOptional({ description: 'Human-readable preview for the display timeline.' })
+  @ApiPropertyOptional({
+    description: 'Human-readable preview for the display timeline.',
+    example: 'Found 3 matching rows',
+  })
   @IsOptional()
   @IsString()
   preview?: string;
 }
 
+@ApiExtraModels(MetadataSignalDto, TriggerSignalDto, TypingStatusDto, ReplyContentDto, FileRefDto, ToolApprovalCardDto)
 export class AgentReplyPayloadDto {
-  @ApiProperty()
+  @ApiProperty({
+    description: 'Conversation id returned by inbound webhooks or the conversations API.',
+    example: 'conv_abc123',
+  })
   @IsString()
   @IsNotEmpty()
   conversationId: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    description: 'Integration identifier for the channel connection that owns the thread.',
+    example: 'slack-prod',
+  })
   @IsString()
   @IsNotEmpty()
   integrationIdentifier: string;
@@ -357,12 +550,34 @@ export class AgentReplyPayloadDto {
   @Type(() => ResolveDto)
   resolve?: ResolveDto;
 
-  @ApiPropertyOptional({ type: [SignalDto] })
+  @ApiPropertyOptional({
+    type: 'array',
+    description: 'Side-effect signals applied during the turn (metadata updates or workflow triggers).',
+    items: {
+      oneOf: [{ $ref: getSchemaPath(MetadataSignalDto) }, { $ref: getSchemaPath(TriggerSignalDto) }],
+      discriminator: {
+        propertyName: 'type',
+        mapping: {
+          metadata: getSchemaPath(MetadataSignalDto),
+          trigger: getSchemaPath(TriggerSignalDto),
+        },
+      },
+    },
+  })
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Validate(IsValidSignal, { each: true })
-  @Type(() => SignalDto)
+  @Type(() => MetadataSignalDto, {
+    discriminator: {
+      property: 'type',
+      subTypes: [
+        { value: MetadataSignalDto, name: 'metadata' },
+        { value: TriggerSignalDto, name: 'trigger' },
+      ],
+    },
+    keepDiscriminatorProperty: true,
+  })
   signals?: SignalDto[];
 
   @ApiPropertyOptional({ type: [ToolResultDto] })
@@ -394,13 +609,18 @@ export class AgentReplyPayloadDto {
     description:
       'Per-turn typing/status control. `{ status?: string }` sets the status text ' +
       '(omit for the default "Thinking…"); `"stop"` clears it. Best-effort per platform.',
+    oneOf: [{ $ref: getSchemaPath(TypingStatusDto) }, { type: 'string', enum: ['stop'] }],
+    examples: [{ status: 'Searching the docs…' }, 'stop'],
   })
   @IsOptional()
   @Validate(IsValidTypingOp)
-  typing?: { status?: string } | 'stop';
+  typing?: TypingStatusDto | 'stop';
 
   @ApiPropertyOptional({
-    description: 'Bridge reports the turn failed on the customer runtime. Delivers generic user copy.',
+    description:
+      'Bridge reports the turn failed on the customer runtime. Delivers generic user copy. ' +
+      'Cannot be combined with any other request fields.',
+    example: true,
   })
   @IsOptional()
   @IsBoolean()

@@ -1,4 +1,9 @@
 ---
 title: "Send an agent reply"
+description: "Post a reply or side-effect into an existing agent conversation from server-side code."
 openapi: "POST /v1/agents/{agentId}/reply"
 ---
+
+Use this endpoint when your agent runs outside `@novu/framework` (for example, in Python, Go, or a custom Node service) and needs to deliver messages or conversation side effects into an active thread.
+
+Each request targets one conversation via `conversationId` and the channel `integrationIdentifier`. Combine `reply` with `signals` or `resolve` in a single call when your turn both messages the user and updates conversation state. The response includes platform message ids when a new message is posted or edited; otherwise `data` is `null`.
