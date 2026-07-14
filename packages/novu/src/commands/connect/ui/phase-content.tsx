@@ -110,7 +110,12 @@ export function PhaseContent({
             <Text color="yellow">Credentials were rejected: {phase.verificationError}</Text>
           ) : null}
           <Box borderStyle="round" paddingX={1}>
-            <TextInput placeholder={phase.placeholder} onSubmit={(value) => phase.resolve(value)} />
+            {/* Secrets mask by default; callers opt out with `secret: false` for non-sensitive values. */}
+            {phase.secret === false ? (
+              <TextInput placeholder={phase.placeholder} onSubmit={(value) => phase.resolve(value)} />
+            ) : (
+              <PasswordInput placeholder={phase.placeholder} onSubmit={(value) => phase.resolve(value)} />
+            )}
           </Box>
           <Text dimColor>Press Enter to submit.</Text>
         </Box>
