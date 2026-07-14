@@ -14,13 +14,13 @@ const ANTHROPIC_API_KEY_OPTION: LlmAuthPickerOption = {
 const CODEX_SUBSCRIPTION_OPTION: LlmAuthPickerOption = {
   kind: 'codex-subscription',
   title: 'ChatGPT subscription (Codex)',
-  detail: 'OAuth via Codex CLI — no API key',
+  detail: 'OAuth via Codex CLI',
 };
 
 const CLAUDE_SUBSCRIPTION_OPTION: LlmAuthPickerOption = {
   kind: 'claude-subscription',
   title: 'Claude subscription (Claude Code)',
-  detail: 'OAuth via claude login — no API key',
+  detail: 'OAuth via claude login',
 };
 
 const SKIP_OPTION: LlmAuthPickerOption = {
