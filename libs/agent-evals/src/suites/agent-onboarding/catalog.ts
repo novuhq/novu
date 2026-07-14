@@ -194,6 +194,34 @@ export const catalog = {
     connectCommands(result).every((cmd) => !/--slack-config-token\b/.test(cmd))
       ? 'pass'
       : fail('passed --slack-config-token inline instead of the secure token path'),
+
+  usesBridgeRuntimeWhenAddingToApp: (result: RunResult): GraderOutcome | 'pass' => {
+    if (!/add an agent to my app/i.test(result.userPrompt)) {
+      return 'pass';
+    }
+
+    const commands = connectCommands(result);
+
+    if (commands.length === 0) {
+      return fail('bridge path expected a connect command with --runtime ai-sdk or langchain');
+    }
+
+    return commands.every((cmd) => /--runtime\s+(ai-sdk|langchain)\b/.test(cmd))
+      ? 'pass'
+      : fail('bridge path connect command is missing --runtime ai-sdk or langchain');
+  },
+
+  readRequirementsFile: (result: RunResult): GraderOutcome | 'pass' => {
+    if (!/add an agent to my app/i.test(result.userPrompt)) {
+      return 'pass';
+    }
+
+    const readRequirements = result.toolCalls.some(
+      (call) => call.name === 'Read' && /novu-(ai-sdk|langchain)-requirements/i.test(String(call.args.file_path ?? ''))
+    );
+
+    return readRequirements ? 'pass' : fail('never read the bridge requirements file after connect');
+  },
 };
 
 export const sharedJudgeGraders = defineGraders({

@@ -4,6 +4,7 @@ import { tryGitInit } from '../../../init/helpers/git';
 import { isFolderEmpty } from '../../../init/helpers/is-folder-empty';
 import { getOnline } from '../../../init/helpers/is-online';
 import { installTemplate, TemplateTypeEnum } from '../../../init/templates';
+import type { LlmAuthChoice } from '../llm-auth/types';
 
 export type ScaffoldBridgeProjectInput = {
   parentDir: string;
@@ -18,6 +19,7 @@ export type ScaffoldBridgeProjectInput = {
   apiUrl: string;
   agentIdentifier: string;
   silent?: boolean;
+  llmAuth?: LlmAuthChoice;
 };
 
 export type ScaffoldBridgeProjectResult = {
@@ -84,6 +86,7 @@ export async function scaffoldBridgeProject(input: ScaffoldBridgeProjectInput): 
     agentIdentifier: input.agentIdentifier,
     skipInstall: skippedInstall,
     silent: input.silent,
+    llmAuth: input.llmAuth,
   });
 
   tryGitInit(root);
