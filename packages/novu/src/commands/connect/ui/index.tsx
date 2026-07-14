@@ -5,9 +5,14 @@ import React from 'react';
 import type { GeneratedAgentSpec } from '../api/agents';
 import { ConnectChannelBackError } from '../errors';
 import { printBridgeScaffolded } from '../pipeline/bridge/print-bridge-scaffolded';
+import type { LlmAuthKind } from '../pipeline/llm-auth/types';
 import type { AgentSummary, ConnectCommandOptions } from '../types';
 import { App } from './app';
 import { promptBridgeReconcilePlanInConsole, promptBridgeTunnelInConsole } from './console-bridge-reconcile-prompts';
+import {
+  promptConfirmInstallBridgeDepsInConsole,
+  promptConfirmScaffoldInConsole,
+} from './console-bridge-scaffold-prompts';
 import { printConnectSuccess, shouldSkipConnectSuccessSummary } from './print-connect-success';
 import { restoreStdinForConsole } from './restore-stdin-for-console';
 import { type ConnectStore, createConnectStore } from './store';
@@ -254,6 +259,10 @@ function createUiController(
       });
     },
     confirmScaffold({ projectDir, appName, variant }) {
+      if (ctx.isTerminalReleased()) {
+        return promptConfirmScaffoldInConsole({ projectDir, appName, variant });
+      }
+
       return new Promise<boolean>((resolve) => {
         store.phase.set({
           kind: 'confirm-scaffold',
@@ -264,6 +273,11 @@ function createUiController(
         });
       });
     },
+    pickLlmAuthKind({ connectMode }) {
+      return new Promise<LlmAuthKind>((resolve) => {
+        store.phase.set({ kind: 'pick-llm-auth', connectMode, resolve });
+      });
+    },
     scaffoldingBridge({ variant }) {
       store.phase.set({ kind: 'scaffolding-bridge', variant });
     },
@@ -271,6 +285,15 @@ function createUiController(
       printBridgeScaffolded(opts);
     },
     confirmInstallBridgeDeps({ projectDir, installCommand, packages, variant }) {
+      if (ctx.isTerminalReleased()) {
+        return promptConfirmInstallBridgeDepsInConsole({
+          projectDir,
+          installCommand,
+          packages,
+          variant,
+        });
+      }
+
       return new Promise<boolean>((resolve) => {
         store.phase.set({
           kind: 'bridge-install-deps-confirm',

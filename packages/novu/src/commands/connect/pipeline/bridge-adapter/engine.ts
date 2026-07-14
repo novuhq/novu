@@ -2,9 +2,11 @@ import type { BridgeRequirement, BridgeRequirementId } from '../../types';
 import { applyDevNovuScript, buildDevNovuScript } from '../ai-sdk/dev-script';
 import { maskSecretKey, mergeProjectEnv, readEnvSecretKey, resolveProjectEnvPaths } from '../ai-sdk/wire-env';
 import { defaultCustomCodeScaffoldDirName, resolveAgentHandlerPathIfExists } from '../bridge/agent-paths';
-import { confirmEmptyDirScaffold } from '../bridge/confirm-empty-dir-scaffold';
+import { resolveEmptyDirScaffoldTarget } from '../bridge/confirm-empty-dir-scaffold';
 import { requireConnectSecretKey } from '../bridge/require-secret-key';
 import { runScaffoldWithConsole } from '../bridge/run-scaffold-with-console';
+import { resolveLlmAuthChoice } from '../llm-auth/resolve-llm-auth';
+import type { LlmAuthChoice } from '../llm-auth/types';
 import type {
   BridgeAdapter,
   BridgeAdapterConnectOutcome,
@@ -23,7 +25,7 @@ export async function runBridgeAdapterProjectSetup(
   adapter: BridgeAdapter
 ): Promise<BridgeAdapterConnectOutcome> {
   const projectDir = input.options.projectDir?.trim() || process.cwd();
-  const decision = await confirmEmptyDirScaffold({
+  const target = resolveEmptyDirScaffoldTarget({
     projectDir,
     options: input.options,
     ui: input.ui,
@@ -32,29 +34,52 @@ export async function runBridgeAdapterProjectSetup(
     agentIdentifier: input.agent.identifier,
   });
 
-  if (decision.action === 'existing-project') {
-    return reconcileProject(input, adapter, decision.projectDir, 'project', {
-      agentFilePath: resolveAgentHandlerPathIfExists(decision.projectDir, input.agent.identifier),
+  if (target.status === 'existing-project') {
+    return reconcileProject(input, adapter, target.projectDir, 'project', {
+      agentFilePath: resolveAgentHandlerPathIfExists(target.projectDir, input.agent.identifier),
     });
   }
 
-  if (decision.action === 'skipped') {
+  if (target.status === 'skipped') {
     return {
       projectKind: 'empty',
-      projectDir: decision.projectDir,
+      projectDir: target.projectDir,
       scaffolded: false,
       coreReady: false,
     };
   }
 
-  return scaffoldThenReconcile(input, adapter, decision.projectDir, decision.appName);
+  // Empty-dir scaffold: pick LLM provider, confirm, then install template (see pipeline/llm-auth/README.md).
+  const llmAuth = await resolveLlmAuthChoice({
+    connectMode: adapter.variant,
+    options: input.options,
+    ui: input.ui,
+  });
+
+  const confirmed = await input.ui.confirmScaffold({
+    projectDir: target.projectDir,
+    appName: target.appName,
+    variant: adapter.variant,
+  });
+
+  if (!confirmed) {
+    return {
+      projectKind: 'empty',
+      projectDir: target.projectDir,
+      scaffolded: false,
+      coreReady: false,
+    };
+  }
+
+  return scaffoldThenReconcile(input, adapter, target.projectDir, target.appName, llmAuth);
 }
 
 async function scaffoldThenReconcile(
   input: BridgeAdapterSetupInput,
   adapter: BridgeAdapter,
   parentDir: string,
-  appName: string
+  appName: string,
+  llmAuth: LlmAuthChoice
 ): Promise<BridgeAdapterConnectOutcome> {
   const scaffolded = await runScaffoldWithConsole({
     ui: input.ui,
@@ -67,6 +92,7 @@ async function scaffoldThenReconcile(
         apiUrl: input.options.apiUrl,
         agentIdentifier: input.agent.identifier,
         silent: false,
+        llmAuth,
       }),
   });
 

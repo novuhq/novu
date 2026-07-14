@@ -17,27 +17,47 @@ export type EmptyDirScaffoldDecision =
   | { action: 'skipped'; projectDir: string }
   | { action: 'confirmed'; projectDir: string; appName: string };
 
-export async function confirmEmptyDirScaffold(input: ConfirmEmptyDirScaffoldInput): Promise<EmptyDirScaffoldDecision> {
+export type EmptyDirScaffoldTarget =
+  | { status: 'existing-project'; projectDir: string }
+  | { status: 'skipped'; projectDir: string }
+  | { status: 'needs-confirm'; projectDir: string; appName: string };
+
+export function resolveEmptyDirScaffoldTarget(input: ConfirmEmptyDirScaffoldInput): EmptyDirScaffoldTarget {
   const detected = detectBridgeProject(input.projectDir);
 
   if (detected.kind === 'project') {
-    return { action: 'existing-project', projectDir: detected.projectDir };
+    return { status: 'existing-project', projectDir: detected.projectDir };
   }
 
   if (input.options.noScaffold) {
-    return { action: 'skipped', projectDir: detected.projectDir };
+    return { status: 'skipped', projectDir: detected.projectDir };
   }
 
   const appName = input.options.scaffoldDir?.trim() || input.defaultAppName(input.agentIdentifier);
+
+  return { status: 'needs-confirm', projectDir: detected.projectDir, appName };
+}
+
+export async function confirmEmptyDirScaffold(input: ConfirmEmptyDirScaffoldInput): Promise<EmptyDirScaffoldDecision> {
+  const target = resolveEmptyDirScaffoldTarget(input);
+
+  if (target.status === 'existing-project') {
+    return { action: 'existing-project', projectDir: target.projectDir };
+  }
+
+  if (target.status === 'skipped') {
+    return { action: 'skipped', projectDir: target.projectDir };
+  }
+
   const confirmed = await input.ui.confirmScaffold({
-    projectDir: detected.projectDir,
-    appName,
+    projectDir: target.projectDir,
+    appName: target.appName,
     variant: input.variant,
   });
 
   if (!confirmed) {
-    return { action: 'skipped', projectDir: detected.projectDir };
+    return { action: 'skipped', projectDir: target.projectDir };
   }
 
-  return { action: 'confirmed', projectDir: detected.projectDir, appName };
+  return { action: 'confirmed', projectDir: target.projectDir, appName: target.appName };
 }
