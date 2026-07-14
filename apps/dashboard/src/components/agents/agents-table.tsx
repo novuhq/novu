@@ -40,7 +40,7 @@ import TruncatedText from '@/components/truncated-text';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useAgentRoutes } from '@/hooks/use-agent-routes';
 import { useHasPermission } from '@/hooks/use-has-permission';
-import { getAgentChannelDisplayName } from '@/utils/agent-email-provider-display';
+import { getAgentChannelDisplayName } from '@/utils/agent-channel-provider-display';
 import { formatDateSimple } from '@/utils/format-date';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';

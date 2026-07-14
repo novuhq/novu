@@ -23,7 +23,7 @@ import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { buildEdgeFadeMask, useHorizontalScrollEdges } from '@/hooks/use-horizontal-scroll-edges';
 import { useIsAgentEmailAvailable } from '@/hooks/use-is-agent-email-available';
 import { useLinkAgentIntegration } from '@/hooks/use-link-agent-integration';
-import { getAgentChannelDisplayName } from '@/utils/agent-email-provider-display';
+import { getAgentChannelDisplayName, getAgentChannelIconFileName } from '@/utils/agent-channel-provider-display';
 import { ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { openInNewTab } from '@/utils/url';
@@ -55,7 +55,12 @@ const CARD_PROVIDER_ICON_CLASS = 'size-6 shrink-0 object-contain';
 
 function CardProviderIcon({ providerId, displayName }: { providerId: string; displayName: string }) {
   return (
-    <ProviderIcon providerId={providerId} providerDisplayName={displayName} className={CARD_PROVIDER_ICON_CLASS} />
+    <ProviderIcon
+      providerId={providerId}
+      providerDisplayName={displayName}
+      iconFileName={getAgentChannelIconFileName(providerId)}
+      className={CARD_PROVIDER_ICON_CLASS}
+    />
   );
 }
 

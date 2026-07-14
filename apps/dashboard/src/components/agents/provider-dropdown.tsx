@@ -34,7 +34,7 @@ import { IS_SELF_HOSTED, IS_SELF_HOSTED_CE, SELF_HOSTED_UPGRADE_REDIRECT_URL } f
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { useIsAgentEmailAvailable } from '@/hooks/use-is-agent-email-available';
 import { useLinkAgentIntegration } from '@/hooks/use-link-agent-integration';
-import { getAgentChannelDisplayName } from '@/utils/agent-email-provider-display';
+import { getAgentChannelDisplayName } from '@/utils/agent-channel-provider-display';
 import { ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { openInNewTab } from '@/utils/url';

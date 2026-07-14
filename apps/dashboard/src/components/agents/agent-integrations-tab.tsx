@@ -21,7 +21,7 @@ import { requireEnvironment, useEnvironment } from '@/context/environment/hooks'
 import { useAgentRoutes } from '@/hooks/use-agent-routes';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { useTelemetry } from '@/hooks/use-telemetry';
-import { getAgentChannelDisplayName } from '@/utils/agent-email-provider-display';
+import { getAgentChannelDisplayName } from '@/utils/agent-channel-provider-display';
 import { buildRoute } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';

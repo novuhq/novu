@@ -16,6 +16,7 @@ import { ProviderIcon } from '@/components/integrations/components/provider-icon
 import { Button } from '@/components/primitives/button';
 import { InlineToast } from '@/components/primitives/inline-toast';
 import { InputPure, InputRoot, InputWrapper } from '@/components/primitives/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useConfigureSendblueWebhook } from '@/hooks/use-configure-sendblue-webhook';
@@ -502,6 +503,37 @@ function SendTestMessagePanel({
   );
 }
 
+// Only Sendblue is available today; the disabled row signals more providers are on the way.
+const IMESSAGE_COMING_SOON_VALUE = '__imessage_coming_soon__';
+
+function ImessageProviderSelect({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+  return (
+    <div className="flex w-full max-w-[400px] flex-col gap-1.5">
+      <span className="text-text-sub text-label-xs font-medium leading-4">iMessage provider</span>
+      <Select value={value} onValueChange={onChange}>
+        <SelectTrigger size="2xs" className="max-w-[280px]">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value={ChatProviderIdEnum.Sendblue}>
+            <span className="flex items-center gap-2">
+              <ProviderIcon
+                providerId={ChatProviderIdEnum.Sendblue}
+                providerDisplayName="Sendblue"
+                className="size-4 shrink-0"
+              />
+              Sendblue
+            </span>
+          </SelectItem>
+          <SelectItem value={IMESSAGE_COMING_SOON_VALUE} disabled>
+            More coming soon
+          </SelectItem>
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
 export function SendblueSetupGuide({
   agent,
   integrationId,
@@ -510,6 +542,8 @@ export function SendblueSetupGuide({
   embedded = false,
 }: SendblueSetupGuideProps) {
   const { subscriberId: connectSubscriberId, isReady: isConnectSubscriberReady } = useConnectSubscriber();
+  // Presentational for now: Sendblue is the only iMessage provider, preselected on mount.
+  const [selectedProvider, setSelectedProvider] = useState<string>(ChatProviderIdEnum.Sendblue);
   const [isCredentialsSidebarOpen, setIsCredentialsSidebarOpen] = useState(false);
   const [credentialsSavedLocally, setCredentialsSavedLocally] = useState(false);
   const [isWebhookConfiguredLocally, setIsWebhookConfiguredLocally] = useState(false);
@@ -551,29 +585,39 @@ export function SendblueSetupGuide({
 
   const base = stepOffset;
 
+  // The provider-select step (base) is completed on mount since Sendblue is preselected, so the
+  // three real setup steps follow at base+1..base+3.
   const firstIncompleteStep = useMemo(() => {
     if (isConnected) {
-      return base + 3;
+      return base + 4;
     }
 
     if (isWebhookConfigured) {
-      return base + 2;
+      return base + 3;
     }
 
     if (isCredentialsSaved) {
-      return base + 1;
+      return base + 2;
     }
 
-    return base;
+    return base + 1;
   }, [base, isCredentialsSaved, isWebhookConfigured, isConnected]);
 
-  const step3Status = deriveStepStatus(base + 2, firstIncompleteStep);
+  const step3Status = deriveStepStatus(base + 3, firstIncompleteStep);
 
   const stepsColumn = (
     <>
       <SetupStep
         index={base}
-        status={deriveStepStatus(base, firstIncompleteStep)}
+        status="completed"
+        title="Setup iMessage via"
+        description="Choose a provider to connect iMessage to your agent."
+        rightContent={<ImessageProviderSelect value={selectedProvider} onChange={setSelectedProvider} />}
+      />
+
+      <SetupStep
+        index={base + 1}
+        status={deriveStepStatus(base + 1, firstIncompleteStep)}
         title="Get your Sendblue API credentials and save them in Novu"
         description={
           <span>
@@ -608,8 +652,8 @@ export function SendblueSetupGuide({
       />
 
       <SetupStep
-        index={base + 1}
-        status={deriveStepStatus(base + 1, firstIncompleteStep)}
+        index={base + 2}
+        status={deriveStepStatus(base + 2, firstIncompleteStep)}
         title="Configure the receive webhook"
         description={
           isCredentialsSaved
@@ -629,7 +673,7 @@ export function SendblueSetupGuide({
       />
 
       <SetupStep
-        index={base + 2}
+        index={base + 3}
         status={step3Status}
         dimmed={!isWebhookConfigured}
         title="Send a test message"

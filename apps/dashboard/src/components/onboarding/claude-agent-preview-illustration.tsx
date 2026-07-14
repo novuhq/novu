@@ -10,7 +10,7 @@ import { useMemo, useState } from 'react';
 import { RiFileCodeLine } from 'react-icons/ri';
 import { AwsIcon } from '@/components/icons/aws';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
-import { getAgentChannelDisplayName } from '@/utils/agent-email-provider-display';
+import { getAgentChannelDisplayName } from '@/utils/agent-channel-provider-display';
 import { LogoCircle } from '../icons/logo-circle';
 import { AnthropicAsteriskIcon } from './agent-flow-illustration-shared';
 import { AgentUsecasePreviewIllustration } from './agent-usecase-preview-illustration';
