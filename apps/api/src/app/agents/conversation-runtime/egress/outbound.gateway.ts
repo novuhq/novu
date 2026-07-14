@@ -3,7 +3,7 @@ import { PinoLogger } from '@novu/application-generic';
 import { ConversationChannel } from '@novu/dal';
 import type { SentMessageInfo } from '@novu/framework/internal';
 import type { SlackAgentSuggestedPrompt } from '@novu/shared';
-import type { AdapterPostableMessage, CardElement, EmojiValue, PlanModel, Thread } from 'chat';
+import type { AdapterPostableMessage, CardElement, Chat, EmojiValue, PlanModel, Thread } from 'chat';
 import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import type { ReplyContentDto } from '../../shared/dtos/agent-reply-payload.dto';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
@@ -364,8 +364,7 @@ export class OutboundGateway {
     const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
     const instanceKey = `${agentId}:${integrationIdentifier}`;
     const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);
-
-    const dmThread = await chat.openDM(platformUserId);
+    const dmThread = await this.openDirectMessageThread(chat, config.platform, platformUserId);
     const deliveryContent = await this.fileMaterializer.prepareContentForDelivery(content, config.platform, agentId);
     const tokenizedContent = await this.applyActionTokensForDelivery(
       deliveryContent,
@@ -602,6 +601,22 @@ export class OutboundGateway {
     const adapter = chat.getAdapter(platform);
     const resolved = await this.resolveEmoji(emojiName);
     await adapter.removeReaction(platformThreadId, platformMessageId, resolved);
+  }
+
+  private async openDirectMessageThread(
+    chat: Chat,
+    platform: string,
+    platformUserId: string
+  ): Promise<Thread> {
+    const adapter = chat.getAdapter(platform);
+
+    if (typeof adapter.openDM === 'function') {
+      const threadId = await adapter.openDM(platformUserId);
+
+      return chat.thread(threadId);
+    }
+
+    return chat.openDM(platformUserId);
   }
 
   private async resolveSlackBotToken(agentId: string, integrationIdentifier: string): Promise<string> {
