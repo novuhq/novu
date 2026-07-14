@@ -6,6 +6,7 @@ import type { GeneratedAgentSpec } from '../api/agents';
 import { ConnectChannelBackError } from '../errors';
 import { printBridgeScaffolded } from '../pipeline/bridge/print-bridge-scaffolded';
 import type { LlmAuthKind } from '../pipeline/llm-auth/types';
+import { restoreStdinForConsole } from '../restore-stdin-for-console';
 import type { AgentSummary, ConnectCommandOptions } from '../types';
 import { App } from './app';
 import { promptBridgeReconcilePlanInConsole, promptBridgeTunnelInConsole } from './console-bridge-reconcile-prompts';
@@ -15,7 +16,6 @@ import {
 } from './console-bridge-scaffold-prompts';
 import { printConnectSuccess, shouldSkipConnectSuccessSummary } from './print-connect-success';
 import { createPendingInteractionRegistry, type PendingInteractionRegistry } from './register-pending-interaction';
-import { restoreStdinForConsole } from './restore-stdin-for-console';
 import { type ConnectStore, createConnectStore } from './store';
 import type {
   BridgeTunnelOfferResult,

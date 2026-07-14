@@ -4,7 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import spawn from 'cross-spawn';
 import { ConnectUserCancelledError } from '../../errors';
-import { restoreStdinForConsole } from '../../ui/restore-stdin-for-console';
+import { restoreStdinForConsole } from '../../restore-stdin-for-console';
 
 export function commandExists(command: string): boolean {
   try {
