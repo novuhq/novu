@@ -3,6 +3,7 @@ import { RiArrowRightSLine, RiArrowRightUpLine } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
 import type { AgentResponse } from '@/api/agents';
 import { AgentInboxCardRow, AgentInboxCardRowInfoTitle } from '@/components/agents/agent-inbox-card-row';
+import { SUBSCRIBER_ACCESS_SETTING_LABEL } from '@/components/agents/subscriber-access-copy';
 import { useEnvironment } from '@/context/environment/hooks';
 import { buildRoute, ROUTES } from '@/utils/routes';
 
@@ -11,8 +12,7 @@ const CREATE_SUBSCRIBER_DOCS_URL = 'https://docs.novu.co/api-reference/subscribe
 const quietLinkClassName =
   'text-text-sub hover:text-text-strong inline-flex items-center gap-0.5 text-label-xs font-medium leading-4 transition-colors';
 
-const AGENT_WIDE_SETTING_HINT =
-  'This setting is agent-wide and managed via "Accept messages from anyone" under Agent behavior on the agent overview.';
+const AGENT_WIDE_SETTING_HINT = `This setting is agent-wide and managed via "${SUBSCRIBER_ACCESS_SETTING_LABEL}" under Agent behavior on the agent overview.`;
 
 type GuidanceChannel = 'email' | 'whatsapp';
 
@@ -27,12 +27,13 @@ type ChannelCopy = {
 const CHANNEL_COPY: Record<GuidanceChannel, ChannelCopy> = {
   email: {
     title: 'Who can email this agent',
-    openTooltipDetail: `Unknown senders are auto-created as lightweight subscribers from the sender address. Storing subscriber.email merges conversations into the existing subscriber. ${AGENT_WIDE_SETTING_HINT}`,
+    openTooltipDetail: `When on for managed agents, anonymous senders are auto-created as lightweight subscribers from the sender address; custom-code agents forward with a null subscriber. Storing subscriber.email merges conversations into the existing subscriber. ${AGENT_WIDE_SETTING_HINT}`,
     restrictedTooltipDetail: AGENT_WIDE_SETTING_HINT,
     openDescription: (
       <>
-        Anyone can email this agent. Store <code className="text-text-sub">subscriber.email</code> so conversations
-        merge into the existing subscriber.
+        Anonymous senders can email this agent (managed: auto-create subscriber; custom code: null subscriber on the
+        bridge). Store <code className="text-text-sub">subscriber.email</code> so conversations merge into the existing
+        subscriber.
       </>
     ),
     restrictedDescription: (
@@ -44,12 +45,13 @@ const CHANNEL_COPY: Record<GuidanceChannel, ChannelCopy> = {
   },
   whatsapp: {
     title: 'Who can message this agent',
-    openTooltipDetail: `Unknown senders are auto-created as lightweight subscribers from the sender phone. Storing subscriber.phone merges conversations into the existing subscriber. ${AGENT_WIDE_SETTING_HINT}`,
+    openTooltipDetail: `When on for managed agents, anonymous senders are auto-created as lightweight subscribers from the sender phone; custom-code agents forward with a null subscriber. Storing subscriber.phone merges conversations into the existing subscriber. ${AGENT_WIDE_SETTING_HINT}`,
     restrictedTooltipDetail: AGENT_WIDE_SETTING_HINT,
     openDescription: (
       <>
-        Anyone can message this agent. Store <code className="text-text-sub">subscriber.phone</code> so conversations
-        merge into the existing subscriber.
+        Anonymous senders can message this agent (managed: auto-create subscriber; custom code: null subscriber on the
+        bridge). Store <code className="text-text-sub">subscriber.phone</code> so conversations merge into the existing
+        subscriber.
       </>
     ),
     restrictedDescription: (

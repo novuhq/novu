@@ -131,10 +131,7 @@ program
   )
   .option('-t, --tunnel <url>', 'Self hosted tunnel. e.g. https://my-tunnel.ngrok.app')
   .option('-H, --headless', 'Run without opening the browser', false)
-  .option(
-    '--no-studio',
-    'Skip opening the dashboard Local environment (tunnel and agent sync still run)'
-  )
+  .option('--no-studio', 'Skip opening the dashboard Local environment (tunnel and agent sync still run)')
   .option('--run <command>', 'Spawn a local app server before opening the tunnel')
   .action(async (options: DevCommandOptions) => {
     analytics.track({

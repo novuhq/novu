@@ -224,7 +224,7 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
   });
 
   describe('Conversation creation', () => {
-    it('auto-provisions a Subscriber + ChannelEndpoint on first inbound message from an unknown Slack user', async () => {
+    it('creates a conversation for an unknown Slack user without auto-provisioning (custom-code open Passes null)', async () => {
       const subscriberRepository = new SubscriberRepository();
       const channelEndpointRepository = new ChannelEndpointRepository();
       const threadId = `T_CREATE_${Date.now()}`;
@@ -248,26 +248,23 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
       const subParticipant = conversation!.participants.find(
         (p) => p.type === ConversationParticipantTypeEnum.SUBSCRIBER
       );
-      expect(subParticipant, 'expected an auto-provisioned subscriber participant').to.exist;
-      expect(subParticipant!.id).to.match(/^sub_ap_/);
+      expect(subParticipant, 'custom-code must not auto-provision a subscriber').to.not.exist;
 
       const platformUserParticipant = conversation!.participants.find(
         (p) => p.type === ConversationParticipantTypeEnum.PLATFORM_USER
       );
-      expect(platformUserParticipant, 'no PLATFORM_USER participant should remain for Slack inbound').to.not.exist;
+      expect(platformUserParticipant, 'expected PLATFORM_USER participant for unresolved Slack sender').to.exist;
+      expect(platformUserParticipant!.id).to.equal('slack:U_CREATOR');
 
       const agentParticipant = conversation!.participants.find((p) => p.type === ConversationParticipantTypeEnum.AGENT);
       expect(agentParticipant).to.exist;
 
-      const subscriber = await subscriberRepository.findBySubscriberId(ctx.session.environment._id, subParticipant!.id);
-      expect(subscriber, 'expected the auto-provisioned subscriber row to exist').to.exist;
-      expect(subscriber!.firstName).to.equal('Alice Smith');
-      expect(subscriber!.data).to.deep.include({
-        __novu_source: 'agent-platform-provision',
-        __novu_platform: 'slack',
-        __novu_platformUserId: 'U_CREATOR',
-        __novu_agentIdentifier: ctx.agentIdentifier,
+      const matchingSubscribers = await subscriberRepository.find({
+        _environmentId: ctx.session.environment._id,
+        _organizationId: ctx.session.organization._id,
+        'data.__novu_platformUserId': 'U_CREATOR',
       });
+      expect(matchingSubscribers.length, 'no auto-provisioned Subscriber row').to.equal(0);
 
       const endpoint = await channelEndpointRepository.findByPlatformIdentity({
         _environmentId: ctx.session.environment._id,
@@ -277,13 +274,12 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
         endpointField: 'userId',
         endpointValue: 'U_CREATOR',
       });
-      expect(endpoint, 'expected a ChannelEndpoint(SLACK_USER) row to be written').to.exist;
-      expect(endpoint!.subscriberId).to.equal(subParticipant!.id);
+      expect(endpoint, 'custom-code must not write a ChannelEndpoint').to.not.exist;
 
       const activities = await activityRepository.findByConversation(ctx.session.environment._id, conversation!._id);
       expect(activities.length).to.be.gte(1);
 
-      const userActivity = activities.find((a) => a.senderType === ConversationActivitySenderTypeEnum.SUBSCRIBER);
+      const userActivity = activities.find((a) => a.senderType === ConversationActivitySenderTypeEnum.PLATFORM_USER);
       expect(userActivity).to.exist;
       expect(userActivity!.content).to.equal('Hello agent');
     });
@@ -390,13 +386,12 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
       expect(call.platformContext.isDM).to.equal(false);
     });
 
-    it('passes the auto-provisioned subscriber in the bridge payload for first-time Slack senders', async () => {
+    it('Passes null subscriber in the bridge payload for first-time Slack senders on open custom-code', async () => {
       const threadId = `T_NOSUB_${Date.now()}`;
       await invokeInbound(threadId, mockMessage({ userId: 'U_UNKNOWN', text: 'No prior subscriber' }));
 
       expect(bridgeCalls.length).to.equal(1);
-      expect(bridgeCalls[0].subscriber, 'subscriber should be auto-provisioned, not null').to.exist;
-      expect(bridgeCalls[0].subscriber!.subscriberId).to.match(/^sub_ap_/);
+      expect(bridgeCalls[0].subscriber, 'custom-code open must Pass null, not auto-provision').to.equal(null);
     });
   });
 
@@ -495,10 +490,8 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
       expect(reopened!._id).to.equal(conversation!._id);
     });
 
-    it('reuses the auto-provisioned subscriber across subsequent inbound messages from the same Slack user', async () => {
-      const subscriberRepository = new SubscriberRepository();
-      const channelEndpointRepository = new ChannelEndpointRepository();
-      const threadId = `T_REUSE_PROVISION_${Date.now()}`;
+    it('reuses the PLATFORM_USER participant across subsequent inbound messages from the same unresolved Slack user', async () => {
+      const threadId = `T_REUSE_PLATFORM_${Date.now()}`;
 
       await invokeInbound(threadId, mockMessage({ userId: 'U_REUSE', text: 'First mention', fullName: 'Bob' }));
 
@@ -510,12 +503,11 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
         threadId
       );
 
-      const firstSubParticipant = conversationAfterFirst!.participants.find(
-        (p) => p.type === ConversationParticipantTypeEnum.SUBSCRIBER
+      const firstPlatformParticipant = conversationAfterFirst!.participants.find(
+        (p) => p.type === ConversationParticipantTypeEnum.PLATFORM_USER
       );
-      expect(firstSubParticipant, 'expected auto-provisioned subscriber on first inbound').to.exist;
-      const provisionedSubscriberId = firstSubParticipant!.id;
-      expect(provisionedSubscriberId).to.match(/^sub_ap_/);
+      expect(firstPlatformParticipant, 'expected PLATFORM_USER on first unresolved inbound').to.exist;
+      expect(firstPlatformParticipant!.id).to.equal('slack:U_REUSE');
 
       await invokeInbound(
         threadId,
@@ -531,29 +523,16 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
         threadId
       );
 
+      const platformParticipants = conversationAfterSecond!.participants.filter(
+        (p) => p.type === ConversationParticipantTypeEnum.PLATFORM_USER
+      );
+      expect(platformParticipants.length, 'no duplicate PLATFORM_USER participant').to.equal(1);
+      expect(platformParticipants[0].id).to.equal('slack:U_REUSE');
+
       const subParticipants = conversationAfterSecond!.participants.filter(
         (p) => p.type === ConversationParticipantTypeEnum.SUBSCRIBER
       );
-      expect(subParticipants.length, 'no duplicate subscriber participant should be added').to.equal(1);
-      expect(subParticipants[0].id).to.equal(provisionedSubscriberId);
-
-      const matchingSubscribers = await subscriberRepository.find({
-        _environmentId: ctx.session.environment._id,
-        _organizationId: ctx.session.organization._id,
-        'data.__novu_platformUserId': 'U_REUSE',
-      });
-      expect(matchingSubscribers.length, 'no duplicate Subscriber row should be created').to.equal(1);
-
-      const endpoint = await channelEndpointRepository.findByPlatformIdentity({
-        _environmentId: ctx.session.environment._id,
-        _organizationId: ctx.session.organization._id,
-        integrationIdentifier: ctx.integrationIdentifier,
-        type: ENDPOINT_TYPES.SLACK_USER,
-        endpointField: 'userId',
-        endpointValue: 'U_REUSE',
-      });
-      expect(endpoint).to.exist;
-      expect(endpoint!.subscriberId).to.equal(provisionedSubscriberId);
+      expect(subParticipants.length, 'custom-code must not auto-provision').to.equal(0);
     });
   });
 
@@ -736,7 +715,7 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
       expect(userActivity!.senderType).to.equal(ConversationActivitySenderTypeEnum.SUBSCRIBER);
     });
 
-    it('should not attach Mixed@Example.com when inbound is lowercased; open access provisions a new row', async () => {
+    it('should not attach Mixed@Example.com when inbound is lowercased; custom-code open Passes null', async () => {
       const mixedCaseSubscriber = await new SubscriberRepository().create({
         subscriberId: `sub-email-case-${Date.now()}`,
         firstName: 'Email',
@@ -759,19 +738,18 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
       expect(conversation).to.exist;
 
       // Lookup is exact on the normalized inbound address, so Mixed@Example.com
-      // must not win. Open-access agents then auto-provision a separate row for
-      // mixed@example.com (setupAgentTestContext sets subscriberAccess=open).
+      // must not win. Custom-code open does not auto-provision — Pass null.
       const subParticipant = conversation!.participants.find(
         (p) => p.type === ConversationParticipantTypeEnum.SUBSCRIBER
       );
-      expect(subParticipant).to.exist;
-      expect(subParticipant!.id).to.not.equal(mixedCaseSubscriber.subscriberId);
+      expect(subParticipant, 'must not attach Mixed@Example.com or auto-provision').to.not.exist;
 
-      const provisioned = await new SubscriberRepository().findBySubscriberId(
-        ctx.session.environment._id,
-        subParticipant!.id
+      const platformParticipant = conversation!.participants.find(
+        (p) => p.type === ConversationParticipantTypeEnum.PLATFORM_USER
       );
-      expect(provisioned?.email).to.equal('mixed@example.com');
+      expect(platformParticipant).to.exist;
+      expect(platformParticipant!.id).to.equal('email:mixed@example.com');
+      expect(platformParticipant!.id).to.not.equal(mixedCaseSubscriber.subscriberId);
     });
 
     it('should not map a spoofed (DKIM/SPF-failed) sender onto a matching subscriber', async () => {

@@ -1,6 +1,7 @@
 import { encryptCredentials } from '@novu/application-generic';
 import {
   AgentIntegrationRepository,
+  AgentRepository,
   ConversationActivityRepository,
   ConversationActivityTypeEnum,
   ConversationEntity,
@@ -9,7 +10,7 @@ import {
   IntegrationRepository,
   SubscriberRepository,
 } from '@novu/dal';
-import { ChannelTypeEnum, ChatProviderIdEnum } from '@novu/shared';
+import { AgentSubscriberAccessEnum, ChannelTypeEnum, ChatProviderIdEnum } from '@novu/shared';
 import { testServer, UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import sinon from 'sinon';
@@ -25,6 +26,7 @@ import { type SendblueApiStub, startSendblueApiStub } from './helpers/sendblue-a
 
 const integrationRepository = new IntegrationRepository();
 const agentIntegrationRepository = new AgentIntegrationRepository();
+const agentRepository = new AgentRepository();
 const subscriberRepository = new SubscriberRepository();
 const conversationRepository = new ConversationRepository();
 const conversationActivityRepository = new ConversationActivityRepository();
@@ -103,6 +105,17 @@ describe('Sendblue agent webhook - inbound flow #novu-v2', () => {
       identifier: agentIdentifier,
     });
     agentId = createRes.body.data._id as string;
+
+    // Custom-code create defaults to restricted; open is required so unknown
+    // phones Pass null through to the stubbed bridge.
+    await agentRepository.update(
+      {
+        _id: agentId,
+        _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
+      },
+      { $set: { 'behavior.subscriberAccess': AgentSubscriberAccessEnum.OPEN } }
+    );
 
     const integration = await integrationRepository.create({
       _environmentId: session.environment._id,

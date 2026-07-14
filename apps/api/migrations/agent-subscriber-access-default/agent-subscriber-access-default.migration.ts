@@ -8,28 +8,56 @@ type UpdateManyFn = (
   update: Record<string, unknown>
 ) => Promise<{ matchedCount: number; modifiedCount: number }>;
 
-/** Backfill unset subscriberAccess to open so Slack/Teams keep auto-provisioning after the flag gates them. Also expands previously-unset email/WhatsApp agents to open (intentional continuity tradeoff). */
-export async function setOpenSubscriberAccessOnUnsetAgents(
-  updateMany: UpdateManyFn
-): Promise<{ matchedCount: number; modifiedCount: number }> {
-  return updateMany(
-    { 'behavior.subscriberAccess': { $exists: false } },
+/** Same predicate as AgentConfigResolver / RuntimeResolver: managed requires both fields. */
+const MANAGED_AGENT_FILTER = {
+  runtime: 'managed',
+  managedRuntime: { $exists: true, $ne: null },
+} as const;
+
+/**
+ * Backfill unset subscriberAccess:
+ * - managed (runtime + managedRuntime) → open (Slack/Teams auto-provision continuity)
+ * - everything else unset → restricted (require explicit opt-in before Pass-null bridge ingress)
+ *
+ * Uses the same managed predicate as runtime resolution so `runtime: 'managed'`
+ * without `managedRuntime` is not opened, and legacy rows with only one of the
+ * two fields stay restricted.
+ */
+export async function setSubscriberAccessDefaultsOnUnsetAgents(updateMany: UpdateManyFn): Promise<{
+  managedOpen: { matchedCount: number; modifiedCount: number };
+  selfHostedRestricted: { matchedCount: number; modifiedCount: number };
+}> {
+  const managedOpen = await updateMany(
+    { 'behavior.subscriberAccess': { $exists: false }, ...MANAGED_AGENT_FILTER },
     { $set: { 'behavior.subscriberAccess': AgentSubscriberAccessEnum.OPEN } }
   );
+
+  const selfHostedRestricted = await updateMany(
+    {
+      'behavior.subscriberAccess': { $exists: false },
+      $nor: [MANAGED_AGENT_FILTER],
+    },
+    { $set: { 'behavior.subscriberAccess': AgentSubscriberAccessEnum.RESTRICTED } }
+  );
+
+  return { managedOpen, selfHostedRestricted };
 }
 
 export async function run() {
-  console.log('Start migration - set behavior.subscriberAccess=open where unset');
+  console.log('Start migration - set behavior.subscriberAccess defaults where unset');
 
   const agentRepository = new AgentRepository();
-  const result = await setOpenSubscriberAccessOnUnsetAgents((filter, update) =>
+  const result = await setSubscriberAccessDefaultsOnUnsetAgents((filter, update) =>
     agentRepository._model.collection.updateMany(filter, update).then((r) => ({
       matchedCount: r.matchedCount,
       modifiedCount: r.modifiedCount,
     }))
   );
 
-  console.log(`Matched: ${result.matchedCount}  Modified: ${result.modifiedCount}`);
+  console.log(`Managed→open: matched ${result.managedOpen.matchedCount} modified ${result.managedOpen.modifiedCount}`);
+  console.log(
+    `Self-hosted→restricted: matched ${result.selfHostedRestricted.matchedCount} modified ${result.selfHostedRestricted.modifiedCount}`
+  );
   console.log('End migration.');
 }
 

@@ -21,6 +21,8 @@ describe('AgentInboundHandler', () => {
     integrationId: 'integration1',
     agentIdentifier: 'support-agent',
     acknowledgeOnReceived: false,
+    // Default happy-path bridge tests use open access so unresolved senders still dispatch.
+    subscriberAccess: AgentSubscriberAccessEnum.OPEN,
   };
 
   const conversation = {
@@ -457,6 +459,11 @@ describe('AgentInboundHandler', () => {
     });
 
     it('should reply with no-access message for managed agents when subscriber is unresolved', async () => {
+      const restrictedConfig = {
+        ...config,
+        isManaged: true,
+        subscriberAccess: AgentSubscriberAccessEnum.RESTRICTED,
+      };
       const { handler, managedAgentService, outboundGateway } = makeHandler({
         subscriberResolve: sinon.stub().resolves(null),
         subscriberFindById: sinon.stub().resolves(null),
@@ -465,7 +472,7 @@ describe('AgentInboundHandler', () => {
       const thread = makeSlackDmThread();
       const message = makeSlackDmMessage();
 
-      await handler.handle('agent1', config as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+      await handler.handle('agent1', restrictedConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
 
       expect(managedAgentService.dispatch.called).to.equal(false);
       expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
@@ -474,11 +481,73 @@ describe('AgentInboundHandler', () => {
       });
     });
 
+    it('should reply with access-denied for custom-code restricted agents and not forward to the bridge', async () => {
+      const restrictedConfig = {
+        ...config,
+        isManaged: false,
+        subscriberAccess: AgentSubscriberAccessEnum.RESTRICTED,
+      };
+      const { handler, bridgeExecutor, outboundGateway, inboundAck } = makeHandler({
+        subscriberResolve: sinon.stub().resolves(null),
+        subscriberFindById: sinon.stub().resolves(null),
+        agentFindOne: sinon.stub().resolves({ _id: 'agent1', runtime: 'bridge' }),
+      });
+      const thread = makeSlackDmThread();
+      const message = makeSlackDmMessage();
+
+      await handler.handle('agent1', restrictedConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(bridgeExecutor.execute.called).to.equal(false);
+      expect(inboundAck.showWorkingSignal.called).to.equal(false);
+      expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
+      expect(outboundGateway.replyOnThread.firstCall.args[1]).to.deep.equal({
+        markdown: UNRESOLVED_SUBSCRIBER_ACCESS_REPLY,
+      });
+      expect(outboundGateway.replyOnThread.firstCall.args[2]).to.deep.include({
+        persist: {
+          conversationId: conversation._id,
+          channel: conversation.channels[0],
+          agentIdentifier: 'support-agent',
+          content: UNRESOLVED_SUBSCRIBER_ACCESS_REPLY,
+          environmentId: 'env1',
+          organizationId: 'org1',
+        },
+      });
+    });
+
+    it('should dispatch custom-code open agents with a null subscriber when the sender is unknown', async () => {
+      const openConfig = {
+        ...config,
+        isManaged: false,
+        subscriberAccess: AgentSubscriberAccessEnum.OPEN,
+      };
+      const resolveOrProvision = sinon.stub().resolves({ outcome: 'resolved', subscriberId: 'should-not-provision' });
+      const { handler, bridgeExecutor, outboundGateway, subscriberResolver, inboundAck } = makeHandler({
+        subscriberResolve: sinon.stub().resolves(null),
+        subscriberResolveOrProvision: resolveOrProvision,
+        subscriberFindById: sinon.stub().resolves(null),
+        agentFindOne: sinon.stub().resolves({ _id: 'agent1', runtime: 'bridge' }),
+      });
+      const thread = makeSlackDmThread();
+      const message = makeSlackDmMessage();
+
+      await handler.handle('agent1', openConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(resolveOrProvision.called).to.equal(false);
+      expect(subscriberResolver.resolveSubscriber.calledOnce).to.equal(true);
+      expect(outboundGateway.replyOnThread.called).to.equal(false);
+      expect(inboundAck.showWorkingSignal.calledOnce).to.equal(true);
+      expect(bridgeExecutor.execute.calledOnce).to.equal(true);
+      expect(bridgeExecutor.execute.firstCall.args[0].subscriber).to.equal(null);
+    });
+
     it('should reply with email-specific no-access message when sender email is unknown', async () => {
       const emailConfig = {
         ...config,
         platform: AgentPlatformEnum.EMAIL,
         integrationIdentifier: 'email-main',
+        isManaged: true,
+        subscriberAccess: AgentSubscriberAccessEnum.RESTRICTED,
       };
       const senderEmail = 'unknown@example.com';
       const { handler, managedAgentService, outboundGateway } = makeHandler({
@@ -586,6 +655,7 @@ describe('AgentInboundHandler', () => {
         platform: AgentPlatformEnum.SLACK,
         isKeyless: true,
         isManaged: true,
+        subscriberAccess: AgentSubscriberAccessEnum.RESTRICTED,
       };
       const { handler, managedAgentService, outboundGateway } = makeHandler({
         subscriberResolve: sinon.stub().resolves(null),
@@ -718,9 +788,12 @@ describe('AgentInboundHandler', () => {
 
       expect(subscriberResolver.resolveOrProvision.called).to.equal(false);
       expect(subscriberResolver.resolveSubscriber.called).to.equal(false);
-      // No identity resolved → managed subscriber gate blocks dispatch.
+      // No identity resolved → handler gate blocks dispatch with verification copy.
       expect(managedAgentService.dispatch.called).to.equal(false);
       expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
+      expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.include('DKIM/SPF');
+      expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.include('victim@example.com');
+      expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.not.include('known user');
     });
 
     it('should not map a spoofed (unverified) email onto an existing subscriber for a restricted agent', async () => {
@@ -749,6 +822,8 @@ describe('AgentInboundHandler', () => {
       expect(subscriberRepository.findBySubscriberId.called).to.equal(false);
       expect(managedAgentService.dispatch.called).to.equal(false);
       expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
+      expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.include('DKIM/SPF');
+      expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.not.include('known user');
     });
 
     it('should resolve identity for a DKIM/SPF-verified restricted email sender', async () => {
@@ -937,7 +1012,97 @@ describe('AgentInboundHandler', () => {
 
       expect(resolveOrProvision.called).to.equal(false);
       expect(managedAgentService.dispatch.called).to.equal(false);
-      expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
+      // Managed open leftovers (Telegram group) skip silently — no denial spam.
+      expect(outboundGateway.replyOnThread.called).to.equal(false);
+    });
+
+    it('should dispatch custom-code open Telegram group turns with null subscriber and no denial reply', async () => {
+      const telegramConfig = {
+        ...config,
+        platform: AgentPlatformEnum.TELEGRAM,
+        integrationIdentifier: 'telegram-main',
+        isManaged: false,
+        subscriberAccess: AgentSubscriberAccessEnum.OPEN,
+      };
+      const { handler, bridgeExecutor, outboundGateway } = makeHandler({
+        subscriberResolve: sinon.stub().resolves(null),
+        subscriberFindById: sinon.stub().resolves(null),
+        agentFindOne: sinon.stub().resolves({ _id: 'agent1', runtime: 'bridge' }),
+      });
+      const thread = {
+        id: 'telegram:-100123',
+        channelId: '-100123',
+        isDM: false,
+        toJSON: () => ({ id: 'telegram:-100123', channelId: '-100123', isDM: false }),
+        startTyping: sinon.stub().resolves(undefined),
+        post: sinon.stub().resolves({ id: 'reply-1', threadId: 'telegram:-100123' }),
+      };
+      const message = {
+        id: 'msg-1',
+        threadId: 'telegram:-100123',
+        text: 'hello group',
+        author: { userId: '42', fullName: 'TG User', userName: 'tguser', isBot: false },
+        raw: {},
+        attachments: [],
+      };
+
+      await handler.handle('agent1', telegramConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(outboundGateway.replyOnThread.called).to.equal(false);
+      expect(bridgeExecutor.execute.calledOnce).to.equal(true);
+      expect(bridgeExecutor.execute.firstCall.args[0].subscriber).to.equal(null);
+    });
+
+    it('should route an open-access Sendblue agent through resolveOrProvision and dispatch', async () => {
+      const sendblueConfig = {
+        ...config,
+        platform: AgentPlatformEnum.SENDBLUE,
+        integrationIdentifier: 'sendblue-main',
+        isManaged: true,
+        subscriberAccess: AgentSubscriberAccessEnum.OPEN,
+      };
+      const senderPhone = '+15551234567';
+      const resolveOrProvision = sinon.stub().resolves({ outcome: 'resolved', subscriberId: 'sub-sendblue' });
+      const { handler, managedAgentService, outboundGateway } = makeHandler({
+        subscriberResolveOrProvision: resolveOrProvision,
+        subscriberFindById: sinon.stub().resolves({ _id: 'sub-mongo', subscriberId: 'sub-sendblue' }),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+      });
+      const thread = {
+        id: 'sendblue:+15557654321:+15551234567',
+        channelId: 'sendblue:+15557654321:+15551234567',
+        isDM: true,
+        toJSON: () => ({
+          id: 'sendblue:+15557654321:+15551234567',
+          channelId: 'sendblue:+15557654321:+15551234567',
+          isDM: true,
+        }),
+        startTyping: sinon.stub().resolves(undefined),
+        post: sinon.stub().resolves({ id: 'sb-reply-1', threadId: 'sendblue:+15557654321:+15551234567' }),
+      };
+      const message = {
+        id: 'sb-msg-1',
+        threadId: 'sendblue:+15557654321:+15551234567',
+        text: 'hello',
+        author: {
+          userId: senderPhone,
+          fullName: 'SMS Sender',
+          userName: senderPhone,
+          isBot: false,
+        },
+        raw: {},
+        attachments: [],
+      };
+
+      await handler.handle('agent1', sendblueConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(resolveOrProvision.calledOnce).to.equal(true);
+      expect(resolveOrProvision.firstCall.args[0]).to.include({
+        platform: AgentPlatformEnum.SENDBLUE,
+        platformUserId: senderPhone,
+      });
+      expect(outboundGateway.replyOnThread.called).to.equal(false);
+      expect(managedAgentService.dispatch.calledOnce).to.equal(true);
     });
   });
 
@@ -950,6 +1115,8 @@ describe('AgentInboundHandler', () => {
       integrationId: 'integration1',
       agentIdentifier: 'support-agent',
       acknowledgeOnReceived: false,
+      // Plain (non-/start) messages need open access to reach the bridge without a linked subscriber.
+      subscriberAccess: AgentSubscriberAccessEnum.OPEN,
     };
 
     const matchingStartPayload = {

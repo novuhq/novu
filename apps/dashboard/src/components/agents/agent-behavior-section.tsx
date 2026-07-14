@@ -10,6 +10,7 @@ import {
   listAgentEmoji,
   updateAgent,
 } from '@/api/agents';
+import { SUBSCRIBER_ACCESS_SETTING_LABEL, SUBSCRIBER_ACCESS_TOOLTIP } from '@/components/agents/subscriber-access-copy';
 import { HelpTooltipIndicator } from '@/components/primitives/help-tooltip-indicator';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
@@ -20,8 +21,6 @@ import { requireEnvironment, useEnvironment } from '@/context/environment/hooks'
 const DEFAULT_REACTION_ON_RESOLVED = 'check';
 const PROD_READ_ONLY_TOOLTIP =
   'This setting is read-only in production. Edit in Development and promote to apply changes.';
-const SUBSCRIBER_ACCESS_TOOLTIP =
-  'When on, unknown senders on any channel are auto-created as users so the agent can reply. When off, only known or already-linked users are accepted; everyone else gets a short denial reply. Abuse mitigation is your responsibility when this is on.';
 
 type BehaviorSwitchProps = {
   checked: boolean;
@@ -227,7 +226,7 @@ export function AgentBehaviorSection({ agent }: AgentBehaviorSectionProps) {
             )}
           </ToggleRow>
 
-          <ToggleRow label="Accept messages from anyone" tooltip={SUBSCRIBER_ACCESS_TOOLTIP}>
+          <ToggleRow label={SUBSCRIBER_ACCESS_SETTING_LABEL} tooltip={SUBSCRIBER_ACCESS_TOOLTIP}>
             <BehaviorSwitch
               checked={subscriberAccessOpen}
               disabled={isPending}
