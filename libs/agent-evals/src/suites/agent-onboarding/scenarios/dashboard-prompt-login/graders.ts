@@ -1,4 +1,4 @@
-import { catalog, defineGraders, judge, judgePrompts, labeled } from '../../kit.js';
+import { catalog, defineGraders, labeled, sharedJudgeGraders } from '../../kit.js';
 
 export const graders = defineGraders({
   usedDashboardOAuthWhenPrompted: labeled(
@@ -20,8 +20,5 @@ export const graders = defineGraders({
     catalog.readRequirementsFile
   ),
   reportedSuccess: labeled('confirms the agent is live in the final report', catalog.reportedSuccess),
-  conclusionFirstReport: labeled(
-    'leads the final report with the CLI result and next action',
-    judge(judgePrompts.conclusionFirstReport, (result) => result.finalText)
-  ),
+  ...sharedJudgeGraders,
 });
