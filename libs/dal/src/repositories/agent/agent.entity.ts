@@ -8,8 +8,9 @@ export interface AgentBehavior {
   reactionOnResolved?: string | null;
   /**
    * Whether the agent accepts inbound messages from senders not yet linked to a
-   * subscriber. `open` auto-provisions email senders; `restricted` (default
-   * when unset) rejects them.
+   * subscriber, across all channels. `open` auto-provisions unknown senders;
+   * `restricted` rejects them. Unset resolves as restricted. Managed create
+   * defaults to open; self-hosted create defaults to restricted.
    */
   subscriberAccess?: AgentSubscriberAccessEnum;
 }
