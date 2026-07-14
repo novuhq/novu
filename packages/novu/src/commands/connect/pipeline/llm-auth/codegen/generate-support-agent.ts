@@ -50,82 +50,112 @@ function buildOnActionHandler(): string {
   },`;
 }
 
+const AGENT_SYSTEM_PROMPT =
+  'You are a helpful support agent. Use webSearch when the user asks about current events or information you may not know.';
+
+function buildAiSdkWebSearchTool(): string {
+  return `const webSearch = tool({
+  description: 'Search the web for current information. Requires user approval before running.',
+  inputSchema: z.object({
+    query: z.string().describe('Search query'),
+  }),
+  needsApproval: true,
+  execute: async ({ query }) => ({
+    results: [
+      {
+        title: \`Result for "\${query}"\`,
+        snippet: 'Demo search result — replace with a real search API (Tavily, SerpAPI, etc.).',
+      },
+    ],
+  }),
+});`;
+}
+
+function buildLangChainWebSearchTool(): string {
+  return `const webSearch = tool(
+  async ({ query }) => ({
+    results: [
+      {
+        title: \`Result for "\${query}"\`,
+        snippet: 'Demo search result — replace with a real search API (Tavily, SerpAPI, etc.).',
+      },
+    ],
+  }),
+  {
+    name: 'webSearch',
+    description: 'Search the web for current information. Requires user approval before running.',
+    schema: z.object({ query: z.string().describe('Search query') }),
+  },
+);`;
+}
+
+function buildAiSdkGenerateTextReturn(modelLine: string): string {
+  return `    return generateText({
+      model: ${modelLine},
+      instructions: '${AGENT_SYSTEM_PROMPT}',
+      messages: toModelMessages(ctx.history),
+      tools: { webSearch },
+    });`;
+}
+
+function buildLangChainConfigReturn(modelLine: string): string {
+  return `    return {
+      model: ${modelLine},
+      system: '${AGENT_SYSTEM_PROMPT}',
+      tools: [webSearch],
+      needsApproval: (toolCall) => toolCall.name === 'webSearch',
+    };`;
+}
+
 function buildAiSdkOpenAiHandler(): string {
   return `${buildSharedHandlerBody()}
 
-    return generateText({
-      model: openai('gpt-4o-mini'),
-      instructions: 'You are a helpful support agent.',
-      messages: toModelMessages(ctx.history),
-    });`;
+${buildAiSdkGenerateTextReturn("openai('gpt-4o-mini')")}`;
 }
 
 function buildAiSdkAnthropicHandler(): string {
   return `${buildSharedHandlerBody()}
 
-    return generateText({
-      model: anthropic('claude-haiku-4-5'),
-      instructions: 'You are a helpful support agent.',
-      messages: toModelMessages(ctx.history),
-    });`;
+${buildAiSdkGenerateTextReturn("anthropic('claude-haiku-4-5')")}`;
 }
 
 function buildAiSdkCodexHandler(): string {
   return `${buildSharedHandlerBody()}
 
-    return generateText({
-      model: codexCli('gpt-5.4-mini'),
-      instructions: 'You are a helpful support agent.',
-      messages: toModelMessages(ctx.history),
-    });`;
+${buildAiSdkGenerateTextReturn("codexCli('gpt-5.4-mini')")}`;
 }
 
 function buildAiSdkClaudeSubscriptionHandler(): string {
   return `${buildSharedHandlerBody()}
 
-    return generateText({
-      model: claudeCode('haiku'),
-      instructions: 'You are a helpful support agent.',
-      messages: toModelMessages(ctx.history),
-    });`;
+${buildAiSdkGenerateTextReturn("claudeCode('haiku')")}`;
 }
 
 function buildLangChainOpenAiHandler(): string {
   return `${buildSharedHandlerBody()}
 
-    return {
-      model: 'openai:gpt-4o-mini',
-      system: 'You are a helpful support agent.',
-      tools: [],
-    };`;
+${buildLangChainConfigReturn("'openai:gpt-4o-mini'")}`;
 }
 
 function buildLangChainAnthropicHandler(): string {
   return `${buildSharedHandlerBody()}
 
-    return {
-      model: 'anthropic:claude-haiku-4-5',
-      system: 'You are a helpful support agent.',
-      tools: [],
-    };`;
+${buildLangChainConfigReturn("'anthropic:claude-haiku-4-5'")}`;
 }
 
 function buildLangChainCodexHandler(): string {
   return `${buildSharedHandlerBody()}
 
-    return {
-      model: new ChatCodexOAuth({ model: 'gpt-5.4-mini' }),
-      system: 'You are a helpful support agent.',
-      tools: [],
-    };`;
+${buildLangChainConfigReturn("new ChatCodexOAuth({ model: 'gpt-5.4-mini' })")}`;
 }
 
 function buildAiSdkImports(kind: GenerateSupportAgentInput['llmAuth']['kind']): string {
   const base = `/** @jsxImportSource @novu/framework */
 import { Actions, Button, Card, CardText } from '@novu/framework';
 import { agent } from '@novu/framework/ai-sdk';
-import { generateText } from 'ai';
-import { toModelMessages } from '@novu/framework/ai-sdk';`;
+import { generateText, tool } from 'ai';
+import { toModelMessages } from '@novu/framework/ai-sdk';
+import { z } from 'zod';`;
 
   if (kind === 'openai-api-key') {
     return `${base}
@@ -153,7 +183,9 @@ import { claudeCode } from 'ai-sdk-provider-claude-code';`;
 function buildLangChainImports(kind: GenerateSupportAgentInput['llmAuth']['kind']): string {
   const base = `/** @jsxImportSource @novu/framework */
 import { Actions, Button, Card, CardText } from '@novu/framework';
-import { agent } from '@novu/framework/langchain';`;
+import { agent } from '@novu/framework/langchain';
+import { tool } from '@langchain/core/tools';
+import { z } from 'zod';`;
 
   if (kind === 'codex-subscription') {
     return `${base}
@@ -187,8 +219,11 @@ export function generateSupportAgentSource(input: GenerateSupportAgentInput): st
   const imports =
     input.runtime === 'ai-sdk' ? buildAiSdkImports(input.llmAuth.kind) : buildLangChainImports(input.llmAuth.kind);
   const onMessageBody = buildOnMessageBody(input);
+  const webSearchTool = input.runtime === 'ai-sdk' ? buildAiSdkWebSearchTool() : buildLangChainWebSearchTool();
 
   return `${imports}
+
+${webSearchTool}
 
 /**
  * Novu calls these handlers whenever a user sends a message or clicks an action

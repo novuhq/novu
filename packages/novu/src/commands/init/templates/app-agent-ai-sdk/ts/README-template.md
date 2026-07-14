@@ -67,10 +67,14 @@ Uncomment the LLM imports at the top of `app/novu/agents/support-agent.tsx`, the
 ```typescript
 return generateText({
   model: openai('gpt-4o-mini'),
-  instructions: 'You are a helpful support agent.',
+  instructions:
+    'You are a helpful support agent. Use webSearch when the user asks about current events or information you may not know.',
   messages: toModelMessages(ctx.history),
+  tools: { webSearch },
 });
 ```
+
+The scaffold includes a `webSearch` tool with `needsApproval: true` — try asking "search for Novu docs" to see the approval card flow.
 
 Use `generateText` for simple non-streaming responses. For streaming, return `streamText(...)` from `onMessage` instead — see the AI SDK DX guide.
 

@@ -7,9 +7,26 @@ import { agent } from '@novu/framework/ai-sdk';
 //   npm install @ai-sdk/anthropic     # Anthropic
 //   npm install @ai-sdk/google        # Google
 //
-// import { generateText } from 'ai';
+// import { generateText, tool } from 'ai';
 // import { openai } from '@ai-sdk/openai';
 // import { toModelMessages } from '@novu/framework/ai-sdk';
+// import { z } from 'zod';
+//
+// const webSearch = tool({
+//   description: 'Search the web for current information. Requires user approval before running.',
+//   inputSchema: z.object({
+//     query: z.string().describe('Search query'),
+//   }),
+//   needsApproval: true,
+//   execute: async ({ query }) => ({
+//     results: [
+//       {
+//         title: `Result for "${query}"`,
+//         snippet: 'Demo search result — replace with a real search API (Tavily, SerpAPI, etc.).',
+//       },
+//     ],
+//   }),
+// });
 
 /**
  * Novu calls these handlers whenever a user sends a message or clicks an action
@@ -49,15 +66,18 @@ export const supportAgent = agent('support-agent', {
 
     return (
       `**Got it.** You said: "${message.text}"\n\n` +
-      `_This is a demo agent. Replace this handler with your LLM call._\n\n` +
+      `_This is a demo agent. Replace this handler with your LLM call._\n` +
+      `_Once wired, try "search for Novu docs" to see tool approval in action._\n\n` +
       `**Conversation so far:** ${ctx.history.length} messages | ` +
       `**Topic:** ${ctx.metadata.get('topic') ?? 'unknown'}`
     );
 
     // return generateText({
     //   model: openai('gpt-4o-mini'),
-    //   instructions: 'You are a helpful support agent.',
+    //   instructions:
+    //     'You are a helpful support agent. Use webSearch when the user asks about current events or information you may not know.',
     //   messages: toModelMessages(ctx.history),
+    //   tools: { webSearch },
     // });
   },
 

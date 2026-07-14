@@ -10,6 +10,25 @@ import { agent } from '@novu/framework/langchain';
 //
 // Returning { model, system, tools } lets Novu run the agent and own the
 // tool-approval loop — no LangGraph checkpointer required.
+//
+// import { tool } from '@langchain/core/tools';
+// import { z } from 'zod';
+//
+// const webSearch = tool(
+//   async ({ query }) => ({
+//     results: [
+//       {
+//         title: `Result for "${query}"`,
+//         snippet: 'Demo search result — replace with a real search API (Tavily, SerpAPI, etc.).',
+//       },
+//     ],
+//   }),
+//   {
+//     name: 'webSearch',
+//     description: 'Search the web for current information. Requires user approval before running.',
+//     schema: z.object({ query: z.string().describe('Search query') }),
+//   },
+// );
 
 /**
  * Novu calls these handlers whenever a user sends a message or clicks an action
@@ -49,15 +68,18 @@ export const supportAgent = agent('support-agent', {
 
     return (
       `**Got it.** You said: "${message.text}"\n\n` +
-      `_This is a demo agent. Replace this handler with your LLM call._\n\n` +
+      `_This is a demo agent. Replace this handler with your LLM call._\n` +
+      `_Once wired, try "search for Novu docs" to see tool approval in action._\n\n` +
       `**Conversation so far:** ${ctx.history.length} messages | ` +
       `**Topic:** ${ctx.metadata.get('topic') ?? 'unknown'}`
     );
 
     // return {
     //   model: 'openai:gpt-4o-mini',
-    //   system: 'You are a helpful support agent.',
-    //   tools: [],
+    //   system:
+    //     'You are a helpful support agent. Use webSearch when the user asks about current events or information you may not know.',
+    //   tools: [webSearch],
+    //   needsApproval: (toolCall) => toolCall.name === 'webSearch',
     // };
   },
 

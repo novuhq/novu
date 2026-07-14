@@ -68,12 +68,14 @@ Replace the echo `return` in `app/novu/agents/support-agent.tsx` with a LangChai
 ```typescript
 return {
   model: 'openai:gpt-4o-mini',
-  system: 'You are a helpful support agent.',
-  tools: [],
+  system:
+    'You are a helpful support agent. Use webSearch when the user asks about current events or information you may not know.',
+  tools: [webSearch],
+  needsApproval: (toolCall) => toolCall.name === 'webSearch',
 };
 ```
 
-Novu builds the LangChain agent, runs it against the conversation `ctx.history`, and delivers the reply. Gate a tool behind an approval card by returning `needsApproval` in the config. If you'd rather drive the graph yourself, invoke your own agent and return its `{ messages }` result instead.
+The scaffold includes a `webSearch` tool gated behind approval — try asking "search for Novu docs" to see the approval card flow.
 
 ## Learn More
 

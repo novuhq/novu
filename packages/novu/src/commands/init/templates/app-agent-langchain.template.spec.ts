@@ -16,6 +16,8 @@ describe('app-agent-langchain template', () => {
     expect(source).toContain("from '@novu/framework/langchain'");
     expect(source).not.toMatch(/import\s*\{[^}]*\bagent\b[^}]*\}\s*from\s*'@novu\/framework'/);
     expect(source).not.toContain("from '@novu/framework/ai-sdk'");
+    expect(source).toContain('webSearch');
+    expect(source).toContain("toolCall.name === 'webSearch'");
     expect(activeImports).not.toMatch(/from 'ai'/);
     expect(activeImports).not.toMatch(/@langchain\//);
   });
