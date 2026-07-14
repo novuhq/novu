@@ -34,7 +34,7 @@ import { IS_SELF_HOSTED, IS_SELF_HOSTED_CE, SELF_HOSTED_UPGRADE_REDIRECT_URL } f
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { useIsAgentEmailAvailable } from '@/hooks/use-is-agent-email-available';
 import { useLinkAgentIntegration } from '@/hooks/use-link-agent-integration';
-import { getAgentChannelDisplayName } from '@/utils/agent-channel-provider-display';
+import { getAgentChannelDisplayName, getAgentChannelIconFileName } from '@/utils/agent-channel-provider-display';
 import { ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { openInNewTab } from '@/utils/url';
@@ -333,6 +333,7 @@ export function ProviderDropdown({
           <ProviderIcon
             providerId={selected.providerId}
             providerDisplayName={selected.displayName}
+            iconFileName={getAgentChannelIconFileName(selected.providerId)}
             className="size-4 shrink-0"
           />
           <span className="text-text-strong text-label-xs font-medium leading-4">{selected.displayName}</span>
@@ -384,6 +385,7 @@ export function ProviderDropdown({
                   <ProviderIcon
                     providerId={providerType.providerId}
                     providerDisplayName={providerType.displayName}
+                    iconFileName={getAgentChannelIconFileName(providerType.providerId)}
                     className="size-4 shrink-0"
                   />
                   <span className="text-text-sub text-label-xs min-w-0 flex-1 truncate font-medium leading-4">
@@ -538,6 +540,7 @@ export function ProviderDropdown({
                   <ProviderIcon
                     providerId={item.providerId}
                     providerDisplayName={item.displayName}
+                    iconFileName={getAgentChannelIconFileName(item.providerId)}
                     className="size-4 shrink-0"
                   />
                   <span className="text-text-sub text-label-xs flex-1 font-medium leading-4">{item.displayName}</span>
@@ -565,6 +568,7 @@ export function ProviderDropdown({
           <ProviderIcon
             providerId={expandedProvider.providerId}
             providerDisplayName={expandedProvider.displayName}
+            iconFileName={getAgentChannelIconFileName(expandedProvider.providerId)}
             className="size-4 shrink-0"
           />
           <span className="text-text-sub text-label-xs font-medium leading-4">{expandedProvider.displayName}</span>
