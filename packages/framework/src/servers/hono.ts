@@ -60,7 +60,7 @@ export const serve = (options: ServeHandlerOptions): ((c: Context) => Promise<Re
             // no-op when url is relative
           }
 
-          const host = c.req.header('host') || '';
+          const host = c.req.header('host') || 'localhost';
           let protocol: 'http' | 'https' = 'https';
 
           try {
