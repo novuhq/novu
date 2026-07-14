@@ -30,7 +30,7 @@ export function getSlackApiErrorCode(err: unknown): string | undefined {
   return typeof error === 'string' ? error : undefined;
 }
 
-function createSlackWebClient(token: string): WebClient {
+export function createSlackWebClient(token: string): WebClient {
   return new WebClient(token, {
     ...(process.env.SLACK_API_URL ? { slackApiUrl: process.env.SLACK_API_URL } : {}),
   });

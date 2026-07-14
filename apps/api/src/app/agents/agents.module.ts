@@ -40,6 +40,7 @@ import { AgentConversationService } from './conversation-runtime/conversation/ag
 import { AgentSubscriberAdoptionService } from './conversation-runtime/conversation/agent-subscriber-adoption.service';
 import { AgentSubscriberResolver } from './conversation-runtime/conversation/agent-subscriber-resolver.service';
 import { ConversationActivationService } from './conversation-runtime/conversation/conversation-activation.service';
+import { SeedSlackThreadParentService } from './conversation-runtime/conversation/seed-slack-thread-parent.service';
 import { FileMaterializer } from './conversation-runtime/egress/file-materializer.service';
 import { OutboundGateway } from './conversation-runtime/egress/outbound.gateway';
 import { AgentInboundController } from './conversation-runtime/ingress/agent-inbound.controller';
@@ -120,6 +121,7 @@ import { USE_CASES } from './usecases';
     AgentSubscriberResolver,
     AgentSubscriberAdoptionService,
     AgentConversationService,
+    SeedSlackThreadParentService,
     ConversationActivationService,
     InboundAckService,
     AgentEmailActionTokenService,

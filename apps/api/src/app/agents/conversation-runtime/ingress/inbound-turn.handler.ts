@@ -44,6 +44,7 @@ import {
   BotAuthorSkippedError,
   ConnectOrgSubscriberCapExceededError,
 } from '../conversation/agent-subscriber-resolver.service';
+import { SeedSlackThreadParentService } from '../conversation/seed-slack-thread-parent.service';
 import { OutboundGateway } from '../egress/outbound.gateway';
 import type { BridgeReaction } from '../runtime/bridge-executor.service';
 import type { ConversationTurn } from '../runtime/conversation-turn';
@@ -261,7 +262,8 @@ export class AgentInboundHandler implements OnModuleInit {
     private readonly keylessAbuseGuard: KeylessAbuseGuardService,
     private readonly planLimitGate: PlanLimitGateService,
     private readonly inboundAck: InboundAckService,
-    private readonly replyApprovalInterceptor: ReplyApprovalInterceptor
+    private readonly replyApprovalInterceptor: ReplyApprovalInterceptor,
+    private readonly seedSlackThreadParent: SeedSlackThreadParentService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -439,6 +441,17 @@ export class AgentInboundHandler implements OnModuleInit {
 
     const storedAttachments = await this.storeInboundAttachments(config, conversation, message);
     const isFirstMessage = !this.conversationService.getPrimaryChannel(conversation).firstPlatformMessageId;
+
+    // Workflow/bot Slack posts never create ConversationActivity rows. Seed the
+    // thread parent here (before the user reply) so bridge history includes the
+    // original notification context on the first human reply.
+    await this.seedSlackThreadParent.maybeSeed({
+      agentId,
+      config,
+      conversation,
+      message,
+      platformThreadId,
+    });
 
     await this.recordInboundMessage(agentId, config, conversation, message, {
       subscriberId,

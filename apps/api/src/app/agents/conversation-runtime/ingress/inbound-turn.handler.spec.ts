@@ -184,6 +184,9 @@ describe('AgentInboundHandler', () => {
       tryHandleAsApprovalReply: sinon.stub().resolves(false),
       tryHandleAsApprovalReaction: sinon.stub().resolves(false),
     };
+    const seedSlackThreadParent = {
+      maybeSeed: sinon.stub().resolves(null),
+    };
     const handler = new AgentInboundHandler(
       logger as any,
       subscriberResolver as any,
@@ -203,7 +206,8 @@ describe('AgentInboundHandler', () => {
       keylessAbuseGuard as any,
       planLimitGate as any,
       inboundAck as any,
-      replyApprovalInterceptor as any
+      replyApprovalInterceptor as any,
+      seedSlackThreadParent as any
     );
 
     return {
@@ -223,6 +227,7 @@ describe('AgentInboundHandler', () => {
       subscriberRepository,
       outboundGateway,
       inboundAck,
+      seedSlackThreadParent,
     };
   }
 
@@ -376,6 +381,53 @@ describe('AgentInboundHandler', () => {
       expect(conversationService.persistInboundMessage.firstCall.args[0].platformThreadId).to.equal(expectedThreadId);
       expect(conversationService.setFirstPlatformMessageId.firstCall.args[3]).to.equal(expectedThreadId);
       expect(bridgeExecutor.execute.firstCall.args[0].platformContext.threadId).to.equal(expectedThreadId);
+    });
+
+    it('should seed the Slack thread parent before persisting the inbound user reply', async () => {
+      const { handler, conversationService, seedSlackThreadParent } = makeHandler();
+      const thread = {
+        id: 'slack:C123:1777837477.000100',
+        channelId: 'slack:C123',
+        isDM: false,
+        toJSON: () => ({ id: 'slack:C123:1777837477.000100', channelId: 'slack:C123', isDM: false }),
+        startTyping: sinon.stub().resolves(undefined),
+        post: sinon.stub().resolves({ id: '1777837479.000300', threadId: 'slack:C123:1777837477.000100' }),
+      };
+      const message = {
+        id: '1777837478.000200',
+        threadId: 'slack:C123:1777837477.000100',
+        text: 'check latest deals',
+        author: { userId: 'user1', fullName: 'User One', userName: 'userone', isBot: false },
+        raw: {
+          event: {
+            type: 'message',
+            ts: '1777837478.000200',
+            thread_ts: '1777837477.000100',
+            text: 'check latest deals',
+          },
+        },
+        attachments: [],
+      };
+      const callOrder: string[] = [];
+      seedSlackThreadParent.maybeSeed.callsFake(async () => {
+        callOrder.push('seed');
+
+        return '1777837477.000100';
+      });
+      conversationService.persistInboundMessage.callsFake(async () => {
+        callOrder.push('inbound');
+
+        return { _id: 'activity1' };
+      });
+
+      await handler.handle('agent1', config as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(seedSlackThreadParent.maybeSeed.calledOnce).to.equal(true);
+      expect(seedSlackThreadParent.maybeSeed.firstCall.args[0]).to.include({
+        agentId: 'agent1',
+        platformThreadId: 'slack:C123:1777837477.000100',
+      });
+      expect(callOrder).to.deep.equal(['seed', 'inbound']);
     });
 
     it('should post no-bridge Slack DM auto-replies with the message-rooted platform thread id', async () => {
