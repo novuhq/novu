@@ -12,7 +12,7 @@ import {
 } from '@novu/dal';
 import type { AgentAction } from '@novu/framework';
 import { parseApprovalActionId } from '@novu/framework/internal';
-import { ENDPOINT_TYPES } from '@novu/shared';
+import { AgentSubscriberAccessEnum, ENDPOINT_TYPES } from '@novu/shared';
 import type { CardElement, EmojiValue, Message, Thread } from 'chat';
 import { ConnectClaimTokenService } from '../../../connect/services/connect-claim-token.service';
 import { parsePositiveIntEnv } from '../../../keyless/keyless-abuse.constants';
@@ -45,6 +45,7 @@ import {
   ConnectOrgSubscriberCapExceededError,
 } from '../conversation/agent-subscriber-resolver.service';
 import { OutboundGateway } from '../egress/outbound.gateway';
+import { postUnresolvedSubscriberAccessReply } from '../reply/post-unresolved-subscriber-access-reply';
 import type { BridgeReaction } from '../runtime/bridge-executor.service';
 import type { ConversationTurn } from '../runtime/conversation-turn';
 import { RuntimeResolver } from '../runtime/runtime-resolver.service';
@@ -299,6 +300,7 @@ export class AgentInboundHandler implements OnModuleInit {
     const canAutoProvision = shouldAutoProvisionInbound({
       platform: config.platform,
       subscriberAccess: config.subscriberAccess,
+      isManaged: config.isManaged,
       isKeyless: config.isKeyless,
       telegramChatId: config.platform === AgentPlatformEnum.TELEGRAM ? extractTelegramChatId(thread) : undefined,
       platformUserId: message.author.userId,
@@ -364,7 +366,7 @@ export class AgentInboundHandler implements OnModuleInit {
 
       /**
        * Only `resolveOrProvision` on open-access Slack / Teams / Telegram /
-       * email / WhatsApp can reach here - the `resolveSubscriber` read path
+       * email / WhatsApp / Sendblue can reach here - the `resolveSubscriber` read path
        * maps its own failures to an `error` outcome internally and never throws.
        * For auto-provision platforms an unknown error means we don't know the
        * subscriber state, so we keep dispatch off and surface the failure rather
@@ -469,16 +471,6 @@ export class AgentInboundHandler implements OnModuleInit {
       };
     }
 
-    if (!config.isManaged) {
-      await this.inboundAck.showWorkingSignal({
-        agentId,
-        config,
-        platformThreadId,
-        platformMessageId: message?.id,
-        isFirstMessage,
-      });
-    }
-
     const runtime = this.runtimeResolver.resolve(agent);
     const turn: ConversationTurn = {
       agentId,
@@ -493,6 +485,25 @@ export class AgentInboundHandler implements OnModuleInit {
       platformThreadId,
       storedAttachments: message.attachments?.length ? storedAttachments : undefined,
     };
+
+    // Handler-level subscriber-access gate (messages only). Restricted misses and
+    // resolution errors are answered here for both managed and custom-code so the
+    // bridge never sees a denied/errored turn. Open + not_found continues without
+    // a handler reply (custom-code Pass null; managed residual covers leftovers).
+    if (await this.maybeReplyUnresolvedSubscriberAccess(turn, { emailSenderUnverified: !isVerifiedEmailSender })) {
+      return;
+    }
+
+    // Working-signal ack only for turns that will dispatch (after the deny gate).
+    if (!config.isManaged) {
+      await this.inboundAck.showWorkingSignal({
+        agentId,
+        config,
+        platformThreadId,
+        platformMessageId: message?.id,
+        isFirstMessage,
+      });
+    }
 
     // On buttonless platforms (iMessage/SMS) a pending tool approval is
     // answered by texting back YES / NO — a matching reply is consumed as the
@@ -820,6 +831,51 @@ export class AgentInboundHandler implements OnModuleInit {
     return true;
   }
 
+  /**
+   * Message-only subscriber-access gate shared by managed and custom-code.
+   * Returns true when the turn was answered here and must not dispatch.
+   */
+  private async maybeReplyUnresolvedSubscriberAccess(
+    turn: ConversationTurn,
+    options: { emailSenderUnverified: boolean }
+  ): Promise<boolean> {
+    if (turn.event !== AgentEventEnum.ON_MESSAGE) {
+      return false;
+    }
+
+    // Keyless email demos stay ungated; keyless non-email still hits this gate.
+    const isKeylessEmailDemo = turn.config.isKeyless && turn.config.platform === AgentPlatformEnum.EMAIL;
+    if (isKeylessEmailDemo) {
+      return false;
+    }
+
+    const resolution = turn.subscriberResolution;
+    if (!resolution || resolution.outcome === 'resolved') {
+      return false;
+    }
+
+    // Open + not_found: custom-code Pass null; managed residual covers leftover
+    // open misses (e.g. Telegram group after skipped provision). Do not deny
+    // here — except unverified email, which must never look like a generic miss.
+    if (
+      turn.config.subscriberAccess === AgentSubscriberAccessEnum.OPEN &&
+      resolution.outcome === 'not_found' &&
+      !options.emailSenderUnverified
+    ) {
+      return false;
+    }
+
+    await postUnresolvedSubscriberAccessReply({
+      turn,
+      logger: this.logger,
+      replyOnThread: (thread, msg, opts) => this.outboundGateway.replyOnThread(thread, msg, opts),
+      getPrimaryChannel: (conversation) => this.conversationService.getPrimaryChannel(conversation),
+      emailSenderUnverified: options.emailSenderUnverified,
+    });
+
+    return true;
+  }
+
   private async safePostInboundReply(thread: Thread, text: string, agentId: string, message: Message): Promise<void> {
     try {
       await this.outboundGateway.replyOnThread(thread, { markdown: text });
@@ -851,7 +907,7 @@ export class AgentInboundHandler implements OnModuleInit {
     /**
      * `ConnectOrgSubscriberCapExceededError` is only thrown by the ChannelEndpoint
      * branch of `resolveOrProvision` (`AUTO_PROVISION_PLATFORMS`). Open-access
-     * email/WhatsApp soft-fail instead. The cast narrows `config.platform` to
+     * email/WhatsApp/Sendblue soft-fail instead. The cast narrows `config.platform` to
      * the union the card builder accepts and keeps the exhaustive-record check
      * honest.
      */
