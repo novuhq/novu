@@ -10,6 +10,7 @@ import {
 } from '@/api/agents';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import { Skeleton } from '@/components/primitives/skeleton';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useAgentRoutes } from '@/hooks/use-agent-routes';
 import { getAgentChannelDisplayName } from '@/utils/agent-email-provider-display';
@@ -54,10 +55,22 @@ function ProviderCard({ link, to }: { link: AgentIntegrationLink; to: string }) 
           <ProviderIcon providerId={link.integration.providerId} providerDisplayName={displayName} className="size-5" />
         </div>
         {showActionNeeded && (
-          <>
-            <RiSpam2Fill aria-hidden="true" className="text-warning-base absolute right-[2.5px] top-[2.5px] size-4" />
-            <span className="sr-only">Action needed</span>
-          </>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span
+                role="img"
+                aria-label="Action needed"
+                // biome-ignore lint/a11y/noNoninteractiveTabindex: tooltip trigger must be focusable so keyboard users can open it; a button is invalid when nested inside a Link
+                tabIndex={0}
+                className="absolute right-[2.5px] top-[2.5px] flex shrink-0 items-center rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <RiSpam2Fill aria-hidden="true" className="text-warning-base size-4" />
+              </span>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-[260px]">
+              Complete setup to connect this channel and start receiving messages.
+            </TooltipContent>
+          </Tooltip>
         )}
       </div>
       <span className="flex items-center gap-1">
