@@ -32,7 +32,7 @@ const REGISTRY: Record<Exclude<LlmAuthKind, 'skip'>, LlmAuthRegistryEntry> = {
         { name: 'ai-sdk-provider-codex-cli', version: '2.1.1' },
         { name: '@openai/codex', version: '^0.144.0' },
       ],
-      langchain: [{ name: 'langchainjs-codex-oauth', version: 'latest' }],
+      langchain: [{ name: 'langchainjs-codex-oauth', version: '0.1.8' }],
     },
   },
   'claude-subscription': {

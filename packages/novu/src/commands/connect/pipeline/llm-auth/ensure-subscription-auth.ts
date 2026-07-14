@@ -9,6 +9,7 @@ import {
   runInteractiveCli,
   warnSubscriptionEnvConflicts,
 } from './subscription-auth';
+import { npxSubscriptionCliArgs, SUBSCRIPTION_CLI_NPX_SPECS } from './subscription-cli-specs';
 
 type EnsureSubscriptionAuthInput = {
   kind: 'codex-subscription' | 'claude-subscription';
@@ -28,7 +29,7 @@ async function ensureCodexCliAuth(ui: ConnectUI, ci?: boolean): Promise<void> {
 
   if (ci) {
     throw new Error(
-      'ChatGPT subscription requires Codex CLI login. Run `codex login` (or `npx @openai/codex login`) on this machine, then re-run with --llm-auth codex-subscription.'
+      `ChatGPT subscription requires Codex CLI login. Run \`codex login\` or \`npx ${SUBSCRIPTION_CLI_NPX_SPECS.codex} login\` on this machine, then re-run with --llm-auth codex-subscription.`
     );
   }
 
@@ -38,7 +39,7 @@ async function ensureCodexCliAuth(ui: ConnectUI, ci?: boolean): Promise<void> {
   if (commandExists('codex')) {
     await runInteractiveCli('codex', ['login'], { onAuthUrl: printBrowserAuthWaitingStatus });
   } else {
-    await runInteractiveCli('npx', ['--yes', '@openai/codex', 'login'], {
+    await runInteractiveCli('npx', npxSubscriptionCliArgs(SUBSCRIPTION_CLI_NPX_SPECS.codex, ['login']), {
       onAuthUrl: printBrowserAuthWaitingStatus,
     });
   }
@@ -55,20 +56,22 @@ async function ensureLangchainCodexOauthAuth(ui: ConnectUI, ci?: boolean): Promi
 
   if (ci) {
     throw new Error(
-      'ChatGPT subscription for LangChain requires OAuth login. Run `npx langchainjs-codex-oauth auth login`, then re-run with --llm-auth codex-subscription.'
+      `ChatGPT subscription for LangChain requires OAuth login. Run \`npx ${SUBSCRIPTION_CLI_NPX_SPECS.langchainCodexOauth} auth login\`, then re-run with --llm-auth codex-subscription.`
     );
   }
 
   await ui.releaseTerminal();
   console.log('Sign in with your ChatGPT account for LangChain Codex OAuth.');
 
-  await runInteractiveCli('npx', ['--yes', 'langchainjs-codex-oauth', 'auth', 'login'], {
-    onAuthUrl: printBrowserAuthWaitingStatus,
-  });
+  await runInteractiveCli(
+    'npx',
+    npxSubscriptionCliArgs(SUBSCRIPTION_CLI_NPX_SPECS.langchainCodexOauth, ['auth', 'login']),
+    { onAuthUrl: printBrowserAuthWaitingStatus }
+  );
 
   if (!hasLangchainCodexOauthAuth()) {
     throw new Error(
-      'LangChain Codex OAuth login did not complete. Run `npx langchainjs-codex-oauth auth login` and try again.'
+      `LangChain Codex OAuth login did not complete. Run \`npx ${SUBSCRIPTION_CLI_NPX_SPECS.langchainCodexOauth} auth login\` and try again.`
     );
   }
 
@@ -82,7 +85,7 @@ async function ensureClaudeCodeAuth(ui: ConnectUI, ci?: boolean): Promise<void> 
 
   if (ci) {
     throw new Error(
-      'Claude subscription requires Claude Code login. Run `claude auth login` (or `npx @anthropic-ai/claude-code auth login`), then re-run with --llm-auth claude-subscription.'
+      `Claude subscription requires Claude Code login. Run \`claude auth login\` or \`npx ${SUBSCRIPTION_CLI_NPX_SPECS.claudeCode} auth login\`, then re-run with --llm-auth claude-subscription.`
     );
   }
 
@@ -92,7 +95,7 @@ async function ensureClaudeCodeAuth(ui: ConnectUI, ci?: boolean): Promise<void> 
   if (commandExists('claude')) {
     await runInteractiveCli('claude', ['auth', 'login'], { onAuthUrl: printBrowserAuthWaitingStatus });
   } else {
-    await runInteractiveCli('npx', ['--yes', '@anthropic-ai/claude-code', 'auth', 'login'], {
+    await runInteractiveCli('npx', npxSubscriptionCliArgs(SUBSCRIPTION_CLI_NPX_SPECS.claudeCode, ['auth', 'login']), {
       onAuthUrl: printBrowserAuthWaitingStatus,
     });
   }

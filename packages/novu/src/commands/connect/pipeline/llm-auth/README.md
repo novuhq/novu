@@ -24,6 +24,7 @@ Entry point: `bridge-adapter/engine.ts` calls `resolveLlmAuthChoice` before scaf
 | `subscription-auth.ts` | Credential detection + `runInteractiveCli` for OAuth subprocesses |
 | `registry.ts` | Per-kind npm packages and `.env.local` keys |
 | `llm-auth-options.ts` | Picker labels; Claude subscription omitted for langchain |
+| `subscription-cli-specs.ts` | Pinned `package@version` strings for `npx` OAuth fallbacks |
 | `codegen/` | Generated `support-agent.tsx` and `next.config.mjs` |
 
 ## CLI flags
@@ -31,3 +32,13 @@ Entry point: `bridge-adapter/engine.ts` calls `resolveLlmAuthChoice` before scaf
 `--llm-auth` skips the Ink picker even without `--ci`. Pair API-key kinds with `--openai-api-key` or `--anthropic-api-key` in non-interactive mode.
 
 Subscription kinds run OAuth on the local machine; tokens are not stored in Novu cloud. Warn when `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` are set in the shell (may override subscription billing).
+
+## Subscription OAuth trust boundary
+
+Subscription auth shells out to vendor CLIs (`codex`, `claude`, or pinned `npx` fallbacks in `subscription-cli-specs.ts`). That requires trusting Anthropic/OpenAI npm packages on the developer machine — the same tradeoff as running those tools directly.
+
+Hardening:
+
+- Prefer a globally installed `codex` / `claude` binary when present (no `npx` fetch).
+- `npx` fallbacks use pinned `package@version` specs, not unpinned `latest`.
+- Auth **detection** reads local credential files only; it does not run `npx` on the status-check path.

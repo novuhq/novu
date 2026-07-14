@@ -125,19 +125,6 @@ export function hasClaudeCodeAuth(): boolean {
     }
   }
 
-  try {
-    const output = execSync('npx --yes @anthropic-ai/claude-code auth status', {
-      encoding: 'utf8',
-      stdio: ['ignore', 'pipe', 'pipe'],
-    });
-
-    if (/loggedIn":\s*true/.test(output) || /"loggedIn": true/.test(output)) {
-      return true;
-    }
-  } catch {
-    // Fall through to credentials file check.
-  }
-
   const credentials = readJsonFile(resolveClaudeCredentialsPath());
   if (!credentials) {
     return false;
@@ -147,20 +134,12 @@ export function hasClaudeCodeAuth(): boolean {
 }
 
 export function hasLangchainCodexOauthAuth(): boolean {
-  if (fs.existsSync(resolveLangchainCodexOauthAuthPath())) {
-    return true;
-  }
-
-  try {
-    execSync('npx --yes langchainjs-codex-oauth auth status', {
-      encoding: 'utf8',
-      stdio: ['ignore', 'pipe', 'pipe'],
-    });
-
-    return true;
-  } catch {
+  const auth = readJsonFile(resolveLangchainCodexOauthAuthPath());
+  if (!auth) {
     return false;
   }
+
+  return Object.keys(auth).length > 0;
 }
 
 export function warnSubscriptionEnvConflicts(kind: 'codex-subscription' | 'claude-subscription'): void {

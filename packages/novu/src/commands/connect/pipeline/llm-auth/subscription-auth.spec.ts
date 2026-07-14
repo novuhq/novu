@@ -5,9 +5,21 @@ import {
   resolveLangchainCodexOauthAuthPath,
   runInteractiveCli,
 } from './subscription-auth';
+import { npxSubscriptionCliArgs, SUBSCRIPTION_CLI_NPX_SPECS } from './subscription-cli-specs';
 
 afterEach(() => {
   vi.restoreAllMocks();
+});
+
+describe('subscription-cli-specs', () => {
+  it('pins npx package versions for OAuth fallbacks', () => {
+    expect(npxSubscriptionCliArgs(SUBSCRIPTION_CLI_NPX_SPECS.claudeCode, ['auth', 'login'])).toEqual([
+      '--yes',
+      '@anthropic-ai/claude-code@2.1.209',
+      'auth',
+      'login',
+    ]);
+  });
 });
 
 describe('subscription-auth paths', () => {

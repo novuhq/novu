@@ -27,6 +27,9 @@ describe('llm-auth registry', () => {
     expect(resolveLlmAuthPackageDependencies('ai-sdk', { kind: 'claude-subscription' })).toEqual({
       'ai-sdk-provider-claude-code': '4.0.1',
     });
+    expect(resolveLlmAuthPackageDependencies('langchain', { kind: 'codex-subscription' })).toEqual({
+      'langchainjs-codex-oauth': '0.1.8',
+    });
   });
 });
 
