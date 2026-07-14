@@ -25,6 +25,10 @@
       "twitter:card": "summary_large_image"
     }
   },
+  "thumbnails": {
+    "appearance": "dark",
+    "background": "/images/og/og-background.png"
+  },
   "interaction": {
     "drilldown": true
   },
@@ -34,7 +38,7 @@
     },
     "tabs": [
       {
-        "tab": "Platform",
+        "tab": "Notify",
         "groups": [
           {
             "group": "Getting Started",
@@ -403,7 +407,7 @@
         ]
       },
       {
-        "tab": "Agents",
+        "tab": "Connect",
         "groups": [
           {
             "group": "Getting Started",
@@ -1114,11 +1118,6 @@
     }
   },
   "redirects": [
-    {
-      "source": "/",
-      "destination": "/platform",
-      "permanent": true
-    },
     {
       "source": "/content-creation-design/handlebars-helpers",
       "destination": "/platform/templates/handlebars-helpers",
