@@ -249,7 +249,7 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
         (p) => p.type === ConversationParticipantTypeEnum.SUBSCRIBER
       );
       expect(subParticipant, 'expected an auto-provisioned subscriber participant').to.exist;
-      expect(subParticipant!.id).to.match(/^sub_/);
+      expect(subParticipant!.id).to.match(/^sub_ap_/);
 
       const platformUserParticipant = conversation!.participants.find(
         (p) => p.type === ConversationParticipantTypeEnum.PLATFORM_USER
@@ -396,7 +396,7 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
 
       expect(bridgeCalls.length).to.equal(1);
       expect(bridgeCalls[0].subscriber, 'subscriber should be auto-provisioned, not null').to.exist;
-      expect(bridgeCalls[0].subscriber!.subscriberId).to.match(/^sub_/);
+      expect(bridgeCalls[0].subscriber!.subscriberId).to.match(/^sub_ap_/);
     });
   });
 
@@ -515,7 +515,7 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
       );
       expect(firstSubParticipant, 'expected auto-provisioned subscriber on first inbound').to.exist;
       const provisionedSubscriberId = firstSubParticipant!.id;
-      expect(provisionedSubscriberId).to.match(/^sub_/);
+      expect(provisionedSubscriberId).to.match(/^sub_ap_/);
 
       await invokeInbound(
         threadId,
@@ -736,8 +736,8 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
       expect(userActivity!.senderType).to.equal(ConversationActivitySenderTypeEnum.SUBSCRIBER);
     });
 
-    it('should not resolve when stored subscriber.email casing differs from lowercased inbound', async () => {
-      await new SubscriberRepository().create({
+    it('should not attach Mixed@Example.com when inbound is lowercased; open access provisions a new row', async () => {
+      const mixedCaseSubscriber = await new SubscriberRepository().create({
         subscriberId: `sub-email-case-${Date.now()}`,
         firstName: 'Email',
         lastName: 'Case',
@@ -758,15 +758,20 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
 
       expect(conversation).to.exist;
 
+      // Lookup is exact on the normalized inbound address, so Mixed@Example.com
+      // must not win. Open-access agents then auto-provision a separate row for
+      // mixed@example.com (setupAgentTestContext sets subscriberAccess=open).
       const subParticipant = conversation!.participants.find(
         (p) => p.type === ConversationParticipantTypeEnum.SUBSCRIBER
       );
-      expect(subParticipant).to.not.exist;
+      expect(subParticipant).to.exist;
+      expect(subParticipant!.id).to.not.equal(mixedCaseSubscriber.subscriberId);
 
-      const platformParticipant = conversation!.participants.find(
-        (p) => p.type === ConversationParticipantTypeEnum.PLATFORM_USER
+      const provisioned = await new SubscriberRepository().findBySubscriberId(
+        ctx.session.environment._id,
+        subParticipant!.id
       );
-      expect(platformParticipant!.id).to.equal('email:mixed@example.com');
+      expect(provisioned?.email).to.equal('mixed@example.com');
     });
 
     it('should not map a spoofed (DKIM/SPF-failed) sender onto a matching subscriber', async () => {

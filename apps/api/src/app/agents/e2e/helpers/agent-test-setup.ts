@@ -35,6 +35,7 @@ export const channelEndpointRepository = new ChannelEndpointRepository();
 const integrationRepository = new IntegrationRepository();
 const agentIntegrationRepository = new AgentIntegrationRepository();
 const channelConnectionRepository = new ChannelConnectionRepository();
+const agentRepository = new AgentRepository();
 
 export async function setupAgentTestContext(): Promise<AgentTestContext> {
   const session = new UserSession();
@@ -46,6 +47,17 @@ export async function setupAgentTestContext(): Promise<AgentTestContext> {
     identifier: agentIdentifier,
   });
   const agentId = createRes.body.data._id as string;
+
+  // Slack e2e historically relied on always-on auto-provision; open access is
+  // now explicit so restricted agents stay lookup-only.
+  await agentRepository.update(
+    {
+      _id: agentId,
+      _environmentId: session.environment._id,
+      _organizationId: session.organization._id,
+    },
+    { $set: { 'behavior.subscriberAccess': 'open' } }
+  );
 
   const integration = await integrationRepository.create({
     _environmentId: session.environment._id,

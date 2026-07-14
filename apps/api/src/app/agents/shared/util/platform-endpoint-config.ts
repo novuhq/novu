@@ -25,14 +25,15 @@ export const PLATFORM_ENDPOINT_CONFIG: Partial<Record<AgentPlatformEnum, Platfor
 };
 
 /**
- * Platforms whose inbound message path auto-provisions a Subscriber +
- * ChannelEndpoint on first mention. Open-access email/WhatsApp use
- * `shouldAutoProvisionInbound` / `isOpenAccessIdentityPlatform` instead -
- * phone/email identity only, no ChannelEndpoint.
+ * Platforms that auto-provision a Subscriber + ChannelEndpoint on inbound when
+ * `subscriberAccess === 'open'`. Email/WhatsApp use identity-only provision via
+ * `shouldAutoProvisionInbound` / `isOpenAccessIdentityPlatform` instead.
+ * Telegram also requires a DM match (`telegramChatId === platformUserId`).
  */
 export const AUTO_PROVISION_PLATFORM_ENTRIES = [
   AgentPlatformEnum.SLACK,
   AgentPlatformEnum.TEAMS,
+  AgentPlatformEnum.TELEGRAM,
 ] as const satisfies readonly AgentPlatformEnum[];
 
 export type AutoProvisionPlatform = (typeof AUTO_PROVISION_PLATFORM_ENTRIES)[number];
@@ -50,18 +51,16 @@ export function isOpenAccessIdentityPlatform(platform: AgentPlatformEnum): boole
 
 /**
  * Whether inbound text should call `resolveOrProvision` vs lookup-only
- * `resolveSubscriber`. Owns Slack/Teams always-on provision, open-access
- * email/WhatsApp, and the email keyless exclusion.
+ * `resolveSubscriber`. Requires `subscriberAccess === 'open'`; email excludes
+ * keyless demos; Telegram requires `telegramChatId === platformUserId` (DM).
  */
 export function shouldAutoProvisionInbound(params: {
   platform: AgentPlatformEnum;
   subscriberAccess: AgentSubscriberAccessEnum;
   isKeyless?: boolean;
+  telegramChatId?: string | null;
+  platformUserId?: string;
 }): boolean {
-  if (isAutoProvisionPlatform(params.platform)) {
-    return true;
-  }
-
   if (params.subscriberAccess !== AgentSubscriberAccessEnum.OPEN) {
     return false;
   }
@@ -70,5 +69,9 @@ export function shouldAutoProvisionInbound(params: {
     return !params.isKeyless;
   }
 
-  return params.platform === AgentPlatformEnum.WHATSAPP;
+  if (params.platform === AgentPlatformEnum.TELEGRAM) {
+    return params.telegramChatId != null && params.telegramChatId === params.platformUserId;
+  }
+
+  return isAutoProvisionPlatform(params.platform) || params.platform === AgentPlatformEnum.WHATSAPP;
 }

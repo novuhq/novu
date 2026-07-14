@@ -30,10 +30,10 @@ export class AgentBehaviorDto {
   @ApiPropertyOptional({
     enum: AgentSubscriberAccessEnum,
     description:
-      'Controls whether the agent accepts inbound messages from senders not yet linked to a subscriber. ' +
-      '"open" auto-creates a lightweight subscriber from the sender email so the agent can reply; ' +
-      '"restricted" rejects unknown senders. Defaults to "restricted" when unset. ' +
-      'Newly provisioned email integrations default to "open".',
+      'Controls whether the agent accepts inbound messages from senders not yet linked to a subscriber, across all channels. ' +
+      '"open" auto-creates a lightweight subscriber so the agent can reply; ' +
+      '"restricted" rejects unknown senders with a managed denial reply. ' +
+      'Unset resolves as "restricted". Managed agent create defaults to "open"; self-hosted create defaults to "restricted".',
   })
   @IsOptional()
   @IsEnum(AgentSubscriberAccessEnum)

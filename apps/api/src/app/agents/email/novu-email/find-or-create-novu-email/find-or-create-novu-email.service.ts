@@ -23,7 +23,6 @@ import {
   IntegrationRepository,
 } from '@novu/dal';
 import {
-  AgentSubscriberAccessEnum,
   ApiServiceLevelEnum,
   ChannelTypeEnum,
   EmailProviderIdEnum,
@@ -110,37 +109,8 @@ export class NovuEmailProvisioningService {
 
       const response = await this.createLink(agent, integration, environmentId, organizationId, session);
 
-      await this.applyDefaultSubscriberAccess(agent._id, environmentId, organizationId, session);
-
       return { response, provisionedNewLink: true };
     });
-  }
-
-  /**
-   * Newly provisioned email integrations default to "open" subscriber access so
-   * the agent can reply to anyone out of the box — an inbound email from an
-   * unknown address auto-provisions a lightweight subscriber instead of being
-   * rejected. The `$exists: false` guard makes this a one-time default: it only
-   * fires when the agent has no explicit preference, so a user who later flips
-   * the toggle (or an agent whose email link predates this feature) is never
-   * clobbered. Existing agents therefore stay "restricted" until opted in.
-   */
-  private async applyDefaultSubscriberAccess(
-    agentId: string,
-    environmentId: string,
-    organizationId: string,
-    session: ClientSession | null
-  ): Promise<void> {
-    await this.agentRepository.update(
-      {
-        _id: agentId,
-        _environmentId: environmentId,
-        _organizationId: organizationId,
-        'behavior.subscriberAccess': { $exists: false },
-      },
-      { $set: { 'behavior.subscriberAccess': AgentSubscriberAccessEnum.OPEN } },
-      session ? { session } : {}
-    );
   }
 
   /**
