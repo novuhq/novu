@@ -167,8 +167,8 @@ export class AgentSubscriberResolver {
 
   /**
    * Lookup-or-provision for inbound text on Slack/Teams/Telegram and open-access
-   * email/WhatsApp (`subscriberAccess === 'open'`). Keyless exclusion and Telegram
-   * DM-vs-group gating live in `shouldAutoProvisionInbound`.
+   * email/WhatsApp/Sendblue (`subscriberAccess === 'open'`). Keyless exclusion and
+   * Telegram DM-vs-group gating live in `shouldAutoProvisionInbound`.
    *
    * Branches:
    *   - Author is a bot → throw `BotAuthorSkippedError` (runs before lookup so
@@ -180,11 +180,11 @@ export class AgentSubscriberResolver {
    *     platformUserId)`, so any retry — race-loss, transient error,
    *     redelivery — lands on the same `Subscriber` row instead of
    *     accumulating phantoms. Slack/Teams/Telegram also create the
-   *     ChannelEndpoint binding; email/WhatsApp identity lives on
+   *     ChannelEndpoint binding; email/WhatsApp/Sendblue identity lives on
    *     `Subscriber.email` / `Subscriber.phone` alone.
    *
    * Slack/Teams/Telegram throw on provisioning failure (dispatch stays off);
-   * the email and WhatsApp open-access branches soft-fail to an `error`
+   * the email/WhatsApp/Sendblue open-access branches soft-fail to an `error`
    * outcome so a provisioning hiccup never crashes the inbound webhook. Throws
    * for non-provisionable platforms; callers MUST route reactions, actions, and
    * other inbound through `resolveSubscriber`.
@@ -219,16 +219,13 @@ export class AgentSubscriberResolver {
   }
 
   /**
-   * Soft-fail lookup-or-provision for open-access email/WhatsApp. Identity lives
-   * on Subscriber.email / Subscriber.phone (no ChannelEndpoint). Provisioning
+   * Soft-fail lookup-or-provision for open-access email/WhatsApp/Sendblue. Identity
+   * lives on Subscriber.email / Subscriber.phone (no ChannelEndpoint). Provisioning
    * errors become an `error` outcome so the inbound webhook keeps flowing.
+   * Connect-org subscriber caps do not apply here (same as email/WhatsApp).
    */
   private async resolveOrProvisionOpenAccessIdentity(params: ResolveOrProvisionParams): Promise<SubscriberResolution> {
-    const label = params.platform === AgentPlatformEnum.EMAIL ? 'email' : 'WhatsApp';
-    const operation =
-      params.platform === AgentPlatformEnum.EMAIL
-        ? 'provision-open-access-email-subscriber'
-        : 'provision-open-access-whatsapp-subscriber';
+    const { label, operation } = openAccessIdentityProvisionMeta(params.platform);
 
     try {
       const existing = await this.resolveSubscriber(params);
@@ -236,22 +233,29 @@ export class AgentSubscriberResolver {
         return existing;
       }
 
-      const provisionedSubscriberId =
-        params.platform === AgentPlatformEnum.EMAIL
-          ? await this.provisionEmailSubscriber({
-              environmentId: params.environmentId,
-              organizationId: params.organizationId,
-              integrationIdentifier: params.integrationIdentifier,
-              agentIdentifier: params.agentIdentifier,
-              email: params.platformUserId,
-            })
-          : await this.provisionWhatsAppSubscriber({
-              environmentId: params.environmentId,
-              organizationId: params.organizationId,
-              integrationIdentifier: params.integrationIdentifier,
-              agentIdentifier: params.agentIdentifier,
-              phone: params.platformUserId,
-            });
+      let provisionedSubscriberId: string | null;
+
+      if (params.platform === AgentPlatformEnum.EMAIL) {
+        provisionedSubscriberId = await this.provisionEmailSubscriber({
+          environmentId: params.environmentId,
+          organizationId: params.organizationId,
+          integrationIdentifier: params.integrationIdentifier,
+          agentIdentifier: params.agentIdentifier,
+          email: params.platformUserId,
+        });
+      } else {
+        const phonePlatform =
+          params.platform === AgentPlatformEnum.SENDBLUE ? AgentPlatformEnum.SENDBLUE : AgentPlatformEnum.WHATSAPP;
+
+        provisionedSubscriberId = await this.provisionPhoneIdentitySubscriber({
+          environmentId: params.environmentId,
+          organizationId: params.organizationId,
+          integrationIdentifier: params.integrationIdentifier,
+          agentIdentifier: params.agentIdentifier,
+          phone: params.platformUserId,
+          platform: phonePlatform,
+        });
+      }
 
       return provisionedSubscriberId
         ? { outcome: 'resolved', subscriberId: provisionedSubscriberId }
@@ -319,22 +323,23 @@ export class AgentSubscriberResolver {
   }
 
   /**
-   * Provision a Subscriber for an open-access WhatsApp sender. Phone identity
-   * lives on `Subscriber.phone` (canonical E.164 with `+`) - no ChannelEndpoint.
-   * Idempotent via deterministic subscriberId. Returns `null` when the phone
-   * is empty/unparseable.
+   * Provision a Subscriber for an open-access WhatsApp or Sendblue sender. Phone
+   * identity lives on `Subscriber.phone` (canonical E.164 with `+`) - no
+   * ChannelEndpoint. Idempotent via deterministic subscriberId. Returns `null`
+   * when the phone is empty/unparseable.
    */
-  private async provisionWhatsAppSubscriber(params: {
+  private async provisionPhoneIdentitySubscriber(params: {
     environmentId: string;
     organizationId: string;
     integrationIdentifier: string;
     agentIdentifier: string;
     phone: string;
+    platform: AgentPlatformEnum.WHATSAPP | AgentPlatformEnum.SENDBLUE;
   }): Promise<string | null> {
     const phone = toCanonicalE164Phone(params.phone);
 
     if (!phone) {
-      this.logger.debug(`Skipping WhatsApp subscriber provision for invalid phone "${params.phone}"`);
+      this.logger.debug(`Skipping ${params.platform} subscriber provision for invalid phone "${params.phone}"`);
 
       return null;
     }
@@ -344,7 +349,7 @@ export class AgentSubscriberResolver {
       organizationId: params.organizationId,
       integrationIdentifier: params.integrationIdentifier,
       agentIdentifier: params.agentIdentifier,
-      platform: AgentPlatformEnum.WHATSAPP,
+      platform: params.platform,
       identity: phone,
       identityFields: { phone },
     });
@@ -355,7 +360,7 @@ export class AgentSubscriberResolver {
     organizationId: string;
     integrationIdentifier: string;
     agentIdentifier: string;
-    platform: AgentPlatformEnum.EMAIL | AgentPlatformEnum.WHATSAPP;
+    platform: AgentPlatformEnum.EMAIL | AgentPlatformEnum.WHATSAPP | AgentPlatformEnum.SENDBLUE;
     identity: string;
     identityFields: { email: string } | { phone: string };
   }): Promise<string> {
@@ -730,6 +735,19 @@ function escapeRegExp(value: string): string {
  */
 function isAgentProvisionedSubscriber(subscriber: Pick<SubscriberEntity, 'data'>): boolean {
   return subscriber.data?.[AGENT_PROVISION_DATA_KEYS.source] === AGENT_PLATFORM_PROVISION_SOURCE;
+}
+
+function openAccessIdentityProvisionMeta(platform: AgentPlatformEnum): { label: string; operation: string } {
+  switch (platform) {
+    case AgentPlatformEnum.EMAIL:
+      return { label: 'email', operation: 'provision-open-access-email-subscriber' };
+    case AgentPlatformEnum.SENDBLUE:
+      return { label: 'Sendblue', operation: 'provision-open-access-sendblue-subscriber' };
+    case AgentPlatformEnum.WHATSAPP:
+      return { label: 'WhatsApp', operation: 'provision-open-access-whatsapp-subscriber' };
+    default:
+      return { label: platform, operation: 'provision-open-access-identity-subscriber' };
+  }
 }
 
 /**

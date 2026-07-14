@@ -851,6 +851,33 @@ describe('AgentSubscriberResolver', () => {
     });
   });
 
+  describe('resolveOrProvision - open-access Sendblue', () => {
+    it('provisions a phantom subscriber when the sender is unknown', async () => {
+      const createOrUpdateSubscriberExecute = sinon.stub().resolves(undefined);
+      const trackAnalytics = sinon.stub();
+      const { resolver, createChannelEndpoint } = makeResolver({
+        findByPhone: sinon.stub().resolves([]),
+        createOrUpdateSubscriberExecute,
+        trackAnalytics,
+      });
+
+      const result = await resolver.resolveOrProvision({
+        ...baseProvisionParams,
+        platform: AgentPlatformEnum.SENDBLUE,
+        platformUserId: '15551234567',
+      });
+
+      expect(result.outcome).to.equal('resolved');
+      expect(result.outcome === 'resolved' ? result.subscriberId : '').to.match(/^sub_ap_/);
+      expect(createOrUpdateSubscriberExecute.calledOnce).to.equal(true);
+      const command = createOrUpdateSubscriberExecute.firstCall.args[0];
+      expect(command.phone).to.equal('+15551234567');
+      expect(command.data[AGENT_PROVISION_DATA_KEYS.platform]).to.equal(AgentPlatformEnum.SENDBLUE);
+      expect(createChannelEndpoint.execute.called).to.equal(false);
+      expect(trackAnalytics.firstCall.args[2].platform).to.equal(AgentPlatformEnum.SENDBLUE);
+    });
+  });
+
   describe('resolveOrProvision — Telegram mirrors Slack/Teams', () => {
     it('creates a Subscriber + telegram_chat ChannelEndpoint when the chat identity is unrecognised', async () => {
       const { resolver, createOrUpdateSubscriber, createChannelEndpoint, analyticsService } = makeResolver();
