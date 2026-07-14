@@ -494,7 +494,7 @@ describe('AgentInboundHandler', () => {
       expect(managedAgentService.dispatch.called).to.equal(false);
       expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
       expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.include(senderEmail);
-      expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.include('Novu account');
+      expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.include('known user');
     });
 
     it('should reply with transient copy and log a structured warn when subscriber resolution errors (email)', async () => {
@@ -832,6 +832,112 @@ describe('AgentInboundHandler', () => {
       expect(outboundGateway.replyOnThread.firstCall.args[1]).to.deep.equal({
         markdown: UNRESOLVED_SUBSCRIBER_ACCESS_REPLY,
       });
+    });
+
+    it('should not call resolveOrProvision for a restricted Slack agent', async () => {
+      const slackConfig = {
+        ...config,
+        platform: AgentPlatformEnum.SLACK,
+        isManaged: true,
+        subscriberAccess: AgentSubscriberAccessEnum.RESTRICTED,
+      };
+      const resolveOrProvision = sinon.stub().resolves({ outcome: 'resolved', subscriberId: 'sub-provisioned' });
+      const { handler, managedAgentService, outboundGateway } = makeHandler({
+        subscriberResolve: sinon.stub().resolves(null),
+        subscriberResolveOrProvision: resolveOrProvision,
+        subscriberFindById: sinon.stub().resolves(null),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+      });
+      const thread = makeSlackDmThread();
+      const message = makeSlackDmMessage();
+
+      await handler.handle('agent1', slackConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(resolveOrProvision.called).to.equal(false);
+      expect(managedAgentService.dispatch.called).to.equal(false);
+      expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
+    });
+
+    it('should call resolveOrProvision for an open Telegram DM (chatId equals author userId)', async () => {
+      const telegramConfig = {
+        ...config,
+        platform: AgentPlatformEnum.TELEGRAM,
+        integrationIdentifier: 'telegram-main',
+        isManaged: true,
+        subscriberAccess: AgentSubscriberAccessEnum.OPEN,
+      };
+      const resolveOrProvision = sinon.stub().resolves({ outcome: 'resolved', subscriberId: 'sub-tg' });
+      const { handler, managedAgentService, outboundGateway } = makeHandler({
+        subscriberResolveOrProvision: resolveOrProvision,
+        subscriberFindById: sinon.stub().resolves({ _id: 'sub-mongo', subscriberId: 'sub-tg' }),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+      });
+      const thread = {
+        id: 'telegram:42',
+        channelId: '42',
+        isDM: true,
+        toJSON: () => ({ id: 'telegram:42', channelId: '42', isDM: true }),
+        startTyping: sinon.stub().resolves(undefined),
+        post: sinon.stub().resolves({ id: 'reply-1', threadId: 'telegram:42' }),
+      };
+      const message = {
+        id: 'msg-1',
+        threadId: 'telegram:42',
+        text: 'hello',
+        author: { userId: '42', fullName: 'TG User', userName: 'tguser', isBot: false },
+        raw: {},
+        attachments: [],
+      };
+
+      await handler.handle('agent1', telegramConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(resolveOrProvision.calledOnce).to.equal(true);
+      expect(resolveOrProvision.firstCall.args[0]).to.include({
+        platform: AgentPlatformEnum.TELEGRAM,
+        platformUserId: '42',
+      });
+      expect(outboundGateway.replyOnThread.called).to.equal(false);
+      expect(managedAgentService.dispatch.calledOnce).to.equal(true);
+    });
+
+    it('should not call resolveOrProvision for an open Telegram group chat', async () => {
+      const telegramConfig = {
+        ...config,
+        platform: AgentPlatformEnum.TELEGRAM,
+        integrationIdentifier: 'telegram-main',
+        isManaged: true,
+        subscriberAccess: AgentSubscriberAccessEnum.OPEN,
+      };
+      const resolveOrProvision = sinon.stub().resolves({ outcome: 'resolved', subscriberId: 'sub-tg' });
+      const { handler, managedAgentService, outboundGateway } = makeHandler({
+        subscriberResolve: sinon.stub().resolves(null),
+        subscriberResolveOrProvision: resolveOrProvision,
+        subscriberFindById: sinon.stub().resolves(null),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+      });
+      // Group: chat.id (-100…) ≠ from.id (user).
+      const thread = {
+        id: 'telegram:-100123',
+        channelId: '-100123',
+        isDM: false,
+        toJSON: () => ({ id: 'telegram:-100123', channelId: '-100123', isDM: false }),
+        startTyping: sinon.stub().resolves(undefined),
+        post: sinon.stub().resolves({ id: 'reply-1', threadId: 'telegram:-100123' }),
+      };
+      const message = {
+        id: 'msg-1',
+        threadId: 'telegram:-100123',
+        text: 'hello group',
+        author: { userId: '42', fullName: 'TG User', userName: 'tguser', isBot: false },
+        raw: {},
+        attachments: [],
+      };
+
+      await handler.handle('agent1', telegramConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(resolveOrProvision.called).to.equal(false);
+      expect(managedAgentService.dispatch.called).to.equal(false);
+      expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
     });
   });
 
