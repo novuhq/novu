@@ -33,12 +33,11 @@ describe('ReplyApprovalInterceptor', () => {
     const logger = {
       info: sinon.stub(),
       warn: sinon.stub(),
-      debug: sinon.stub(),
       setContext: sinon.stub(),
     };
     const interceptor = new ReplyApprovalInterceptor(conversationService as any, outboundGateway as any, logger as any);
 
-    return { interceptor, conversationService, outboundGateway, logger };
+    return { interceptor, conversationService, outboundGateway };
   }
 
   function makeTurn(overrides: Record<string, unknown> = {}) {
@@ -368,72 +367,6 @@ describe('ReplyApprovalInterceptor', () => {
 
     expect(consumed).to.equal(true);
     expect(runtime.dispatch.calledOnce).to.equal(true);
-  });
-
-  describe('always-allow replies', () => {
-    const mcpPendingRequest = {
-      type: ConversationActivityTypeEnum.TOOL_APPROVAL_REQUEST,
-      platformMessageId: 'msg-approval-mcp',
-      toolData: {
-        approvalId: 'approval-mcp',
-        toolCallId: 'tc-mcp',
-        toolName: 'create_issue',
-        mcpServerName: 'linear',
-      },
-    };
-
-    it("should persist trust for a managed direct tool: dispatch an approve-tool action and ack that it won't ask again", async () => {
-      const { interceptor, conversationService, outboundGateway } = makeDeps();
-      const runtime = { dispatch: sinon.stub().resolves(undefined) };
-      const turn = makeTurn({
-        agent: { _id: 'agent-1', runtime: 'managed', managedRuntime: { providerId: 'anthropic' } },
-        message: { id: 'msg-always', text: 'always', author: { userId: '+15557654321' } },
-      });
-
-      const consumed = await interceptor.tryHandleAsApprovalReply(turn, runtime as any);
-
-      expect(consumed).to.equal(true);
-      // The ledger decision is still a plain approval; trust is persisted by
-      // ConfirmToolApproval when it parses the approve-tool action id.
-      expect(conversationService.persistToolApprovalDecision.firstCall.args[0]).to.include({
-        approvalId: 'approval-1',
-        approved: true,
-      });
-      expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.include("won't ask again");
-      expect(runtime.dispatch.firstCall.args[0].action).to.deep.equal({
-        id: 'direct-approval:approve-tool:approval-1:issueRefund',
-      });
-    });
-
-    it('should persist trust for a managed MCP tool with the server name in the action id', async () => {
-      const { interceptor } = makeDeps([mcpPendingRequest, requesterMessage]);
-      const runtime = { dispatch: sinon.stub().resolves(undefined) };
-      const turn = makeTurn({
-        agent: { _id: 'agent-1', runtime: 'managed', managedRuntime: { providerId: 'anthropic' } },
-        message: { id: 'msg-always', text: 'always allow', author: { userId: '+15557654321' } },
-      });
-
-      const consumed = await interceptor.tryHandleAsApprovalReply(turn, runtime as any);
-
-      expect(consumed).to.equal(true);
-      expect(runtime.dispatch.firstCall.args[0].action).to.deep.equal({
-        id: 'mcp-approval:approve-tool:approval-mcp:create_issue:linear',
-      });
-    });
-
-    it('should fall back to a one-off approve (+ debug log) for a self-hosted agent', async () => {
-      const { interceptor, logger } = makeDeps();
-      const runtime = { dispatch: sinon.stub().resolves(undefined) };
-      const turn = makeTurn({
-        message: { id: 'msg-always', text: 'always', author: { userId: '+15557654321' } },
-      });
-
-      const consumed = await interceptor.tryHandleAsApprovalReply(turn, runtime as any);
-
-      expect(consumed).to.equal(true);
-      expect(runtime.dispatch.firstCall.args[0].action).to.deep.equal({ id: 'tool-approval:approve:approval-1' });
-      expect(logger.debug.called).to.equal(true);
-    });
   });
 
   describe('approver identity verification (group threads)', () => {

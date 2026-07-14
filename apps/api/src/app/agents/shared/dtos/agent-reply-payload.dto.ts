@@ -208,13 +208,6 @@ export class ToolApprovalRequestPayloadDto {
   @IsNotEmpty()
   name: string;
 
-  @ApiPropertyOptional({
-    description: 'MCP server the tool belongs to, when the gated call is an MCP tool. Absent for direct tools.',
-  })
-  @IsOptional()
-  @IsString()
-  mcpServerName?: string;
-
   @ApiPropertyOptional({ description: 'Tool input the model proposed.' })
   @IsOptional()
   @IsObject()

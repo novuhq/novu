@@ -5,15 +5,7 @@
  * "yes" / "no" — is consumed as the approve/ignore verdict.
  */
 
-export const REPLY_APPROVAL_INSTRUCTIONS =
-  'Reply YES to approve once, ALWAYS to always allow this tool, or NO to ignore.';
-
-/**
- * A parsed whole-message reply verdict. `always_allow` additionally persists an
- * "always allow this tool" trust preference (managed agents only) so the same
- * tool stops prompting; `approve` is a one-off.
- */
-export type ReplyApprovalVerdict = 'approve' | 'deny' | 'always_allow';
+export const REPLY_APPROVAL_INSTRUCTIONS = 'Reply YES to approve or NO to ignore.';
 
 /**
  * Only unambiguous, whole-message verdicts are consumed. Anything else (e.g.
@@ -63,21 +55,6 @@ const DENY_REPLIES = new Set([
 ]);
 
 /**
- * "Always allow this tool" verdicts — checked before the one-off approve set so
- * an "always ..." phrase is never downgraded to a single approval. There is no
- * tapback/emoji form: no Apple tapback (or common emoji) means "always allow",
- * so this preference can only be expressed in text.
- */
-const ALWAYS_ALLOW_REPLIES = new Set([
-  'always',
-  'always allow',
-  'allow always',
-  'yes always',
-  'always yes',
-  'allow forever',
-]);
-
-/**
  * Reaction (tapback / emoji) verdicts. A 👍 on the approval-request message
  * approves; a 👎 ignores. Both the emoji short-name (e.g. `'thumbs_up'`, as
  * delivered on `reaction.emoji`) and the raw unicode char are accepted so the
@@ -89,11 +66,10 @@ const DENY_REACTIONS = new Set(['thumbs_down', 'thumbsdown', '-1', '👎']);
 
 /**
  * Parses a free-text reply into an approval verdict.
- * Returns `'approve'` (one-off), `'always_allow'` (approve + persist trust),
- * `'deny'` (ignore), or `null` when the text is not a recognizable
- * whole-message verdict.
+ * Returns `true` (approve), `false` (ignore/deny), or `null` when the text is
+ * not a recognizable whole-message verdict.
  */
-export function parseApprovalReplyVerdict(text: string | undefined | null): ReplyApprovalVerdict | null {
+export function parseApprovalReplyVerdict(text: string | undefined | null): boolean | null {
   if (!text) {
     return null;
   }
@@ -108,17 +84,12 @@ export function parseApprovalReplyVerdict(text: string | undefined | null): Repl
     return null;
   }
 
-  // Checked before APPROVE_REPLIES so "always ..." is never read as a one-off.
-  if (ALWAYS_ALLOW_REPLIES.has(normalized)) {
-    return 'always_allow';
-  }
-
   if (APPROVE_REPLIES.has(normalized)) {
-    return 'approve';
+    return true;
   }
 
   if (DENY_REPLIES.has(normalized)) {
-    return 'deny';
+    return false;
   }
 
   return null;

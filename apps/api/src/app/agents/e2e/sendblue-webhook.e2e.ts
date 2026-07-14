@@ -394,31 +394,6 @@ describe('Sendblue agent webhook - inbound flow #novu-v2', () => {
       expect(decision.toolData).to.deep.include({ approvalId: APPROVAL_ID, approved: true });
     });
 
-    it('consumes an "always" reply: this bridge agent has no trust grammar, so it degrades to a one-off approve', async () => {
-      const { conversation } = await openConversationWithPendingApproval();
-
-      const res = await postSendblueWebhook(buildReceivePayload({ content: 'always' }));
-      expect(res.status).to.equal(200);
-
-      await pollFor(async () => (bridgeCalls.length >= 2 ? true : null));
-
-      // A self-hosted (bridge) agent has no "always allow" grammar, so the
-      // verdict is honored as a one-off approve rather than being dropped.
-      const actionCall = bridgeCalls[1];
-      expect(actionCall.event).to.equal(AgentEventEnum.ON_ACTION);
-      expect(actionCall.action).to.deep.include({ id: `tool-approval:approve:${APPROVAL_ID}` });
-
-      const decision = await pollFor(async () => {
-        const activities = await conversationActivityRepository.findByConversation(
-          session.environment._id,
-          conversation._id
-        );
-
-        return activities.find((a) => a.type === ConversationActivityTypeEnum.TOOL_APPROVAL_DECISION) ?? null;
-      });
-      expect(decision.toolData).to.deep.include({ approvalId: APPROVAL_ID, approved: true });
-    });
-
     it('consumes a "No" reply as a denial', async () => {
       const { conversation } = await openConversationWithPendingApproval();
 

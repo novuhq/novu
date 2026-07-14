@@ -549,7 +549,6 @@ export class HandleAgentReply {
         approvalId: request.approvalId,
         toolCallId: request.toolCallId,
         toolName: request.name,
-        mcpServerName: request.mcpServerName,
         input: request.input,
         environmentId: command.environmentId,
         organizationId: command.organizationId,
