@@ -29,6 +29,16 @@ Examples (non-interactive / agent / CI):
       --keyless \\
       --channel telegram
 
+  Keyless iMessage (Sendblue) — all four flags required (no secure setup page):
+    npx novu connect "A concierge for Acme's shoppers that helps with orders." \\
+      --ci \\
+      --keyless \\
+      --channel sendblue \\
+      --sendblue-api-key "$SENDBLUE_API_KEY" \\
+      --sendblue-secret-key "$SENDBLUE_SECRET_KEY" \\
+      --sendblue-from "+14155550100" \\
+      --sendblue-test-phone "+14155550123"
+
   Agent only (no channel):
     npx novu connect "An inventory assistant for Acme's ops staff." \\
       --ci \\
@@ -63,7 +73,7 @@ Non-interactive (agent / CI) contract:
 
   Required for --ci mode:
     - Pass the agent description as the positional <prompt> argument or --prompt.
-    - Pass --channel <slack|email|telegram|skip> (or whatsapp/teams without --keyless).
+    - Pass --channel <slack|email|telegram|sendblue|skip> (or whatsapp/teams without --keyless).
 
   Authentication (pick one):
     - Dashboard OAuth (default): omit --secret-key and --keyless (opens /cli/auth; user approves in the browser; agent is created in their Development environment)
@@ -74,6 +84,7 @@ Non-interactive (agent / CI) contract:
     - --channel slack    → no extra flags (CLI prints a secure setup link for the Slack config token)
     - --channel telegram → no extra flags (CLI prints a secure setup link for the BotFather token)
     - --channel email    → no extra flags
+    - --channel sendblue → requires --sendblue-api-key, --sendblue-secret-key, --sendblue-from (E.164 agent/sender number), and --sendblue-test-phone (E.164 recipient phone); no secure setup page
     - --channel skip     → no extra flags (agent only, no channel)
 
   Optional CI-only escape hatches (secrets injected via env — never paste in chat):
@@ -116,6 +127,12 @@ Machine-readable stdout (plain text, no ANSI — watch these in --ci mode):
     NOVU_CONNECT_TELEGRAM_BOT_USERNAME=<name>
     NOVU_CONNECT_TELEGRAM_DEEPLINK_QR_PNG=<absolute png path>   (only when present)
 
+  iMessage (Sendblue):
+    NOVU_CONNECT_SENDBLUE_IMESSAGE_URL=<sms:…>
+    NOVU_CONNECT_SENDBLUE_FROM_NUMBER=<+E.164>
+    NOVU_CONNECT_SENDBLUE_WEBHOOK_CALLBACK_URL=<url>   (only when webhook auto-registration fails)
+    NOVU_CONNECT_SENDBLUE_WEBHOOK_SECRET=<secret>      (only when present)
+
   Chat SDK (requirements summary):
     NOVU_CONNECT_CHAT_SDK_REQUIREMENTS_FILE=<absolute path to requirements summary file>
 
@@ -124,7 +141,7 @@ Machine-readable stdout (plain text, no ANSI — watch these in --ci mode):
 
 Behavior & exit codes:
 
-  - For slack, email, and telegram: the CLI blocks and polls for the handoff (up to ~5 min).
+  - For slack, email, telegram, and sendblue: the CLI blocks and polls for the handoff (up to ~5 min).
   - Exit 0 on success (prints "✓ Your agent is live." with agent identifier and dashboard URL).
   - Non-zero exit on failure (prints "✗ ..." with an error message).
   - Safe to re-run on Slack OAuth timeout or "Failed to create Slack app" (the Slack app is reused).
