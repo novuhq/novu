@@ -6,6 +6,7 @@ import { requireEnvironment, useEnvironment } from '@/context/environment/hooks'
 import { useAgentDemoQuota } from '@/hooks/use-agent-demo-quota';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { RecentConversationsSection } from '../agents/recent-conversations-section';
+import { AgentBehaviorSection } from './agent-behavior-section';
 import { AgentSetupGuide } from './agent-setup-guide';
 import { AgentWhatsNextSection } from './agent-whats-next-section';
 import { ConnectedProvidersSection } from './connected-providers-section';
@@ -78,6 +79,7 @@ export function AgentManagedOverview({ agent }: AgentManagedOverviewProps) {
       ) : (
         <ConnectedProvidersSection agent={agent} />
       )}
+      <AgentBehaviorSection agent={agent} />
       <McpsSection agent={agent} />
       <SystemPromptSection agent={agent} />
       <ToolsSection agent={agent} />

@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { RiCloseCircleLine, RiExpandUpDownLine } from 'react-icons/ri';
 import {
+  type AgentBehavior,
   type AgentEmojiEntry,
   type AgentResponse,
   getAgentDetailQueryKey,
@@ -9,6 +10,7 @@ import {
   listAgentEmoji,
   updateAgent,
 } from '@/api/agents';
+import { SUBSCRIBER_ACCESS_SETTING_LABEL, SUBSCRIBER_ACCESS_TOOLTIP } from '@/components/agents/subscriber-access-copy';
 import { HelpTooltipIndicator } from '@/components/primitives/help-tooltip-indicator';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
@@ -19,6 +21,30 @@ import { requireEnvironment, useEnvironment } from '@/context/environment/hooks'
 const DEFAULT_REACTION_ON_RESOLVED = 'check';
 const PROD_READ_ONLY_TOOLTIP =
   'This setting is read-only in production. Edit in Development and promote to apply changes.';
+
+type BehaviorSwitchProps = {
+  checked: boolean;
+  disabled?: boolean;
+  readOnly: boolean;
+  onCheckedChange: (checked: boolean) => void;
+};
+
+function BehaviorSwitch({ checked, disabled, readOnly, onCheckedChange }: BehaviorSwitchProps) {
+  if (readOnly) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="inline-flex">
+            <Switch checked={checked} disabled />
+          </span>
+        </TooltipTrigger>
+        <TooltipContent className="max-w-xs">{PROD_READ_ONLY_TOOLTIP}</TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  return <Switch checked={checked} disabled={disabled} onCheckedChange={onCheckedChange} />;
+}
 
 function useAgentEmoji() {
   const { currentEnvironment } = useEnvironment();
@@ -136,9 +162,10 @@ export function AgentBehaviorSection({ agent }: AgentBehaviorSectionProps) {
   const acknowledgeOnReceived = agent.behavior?.acknowledgeOnReceived !== false;
   const reactionOnResolved =
     agent.behavior?.reactionOnResolved === undefined ? DEFAULT_REACTION_ON_RESOLVED : agent.behavior.reactionOnResolved;
+  const subscriberAccessOpen = agent.behavior?.subscriberAccess === 'open';
 
   const { mutate, isPending } = useMutation({
-    mutationFn: (body: { acknowledgeOnReceived?: boolean; reactionOnResolved?: string | null }) =>
+    mutationFn: (body: Partial<AgentBehavior>) =>
       updateAgent(requireEnvironment(currentEnvironment, 'No environment selected'), agent.identifier, {
         behavior: body,
       }),
@@ -161,22 +188,12 @@ export function AgentBehaviorSection({ agent }: AgentBehaviorSectionProps) {
             label="Acknowledge incoming messages"
             tooltip='Show a "Typing…" indicator while the agent works. On platforms that don&#39;t support typing, react with an "eyes" emoji instead.'
           >
-            {readOnly ? (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="inline-flex">
-                    <Switch checked={acknowledgeOnReceived} disabled />
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent className="max-w-xs">{PROD_READ_ONLY_TOOLTIP}</TooltipContent>
-              </Tooltip>
-            ) : (
-              <Switch
-                checked={acknowledgeOnReceived}
-                disabled={isPending}
-                onCheckedChange={(checked) => mutate({ acknowledgeOnReceived: checked })}
-              />
-            )}
+            <BehaviorSwitch
+              checked={acknowledgeOnReceived}
+              disabled={isPending}
+              readOnly={readOnly}
+              onCheckedChange={(checked) => mutate({ acknowledgeOnReceived: checked })}
+            />
           </ToggleRow>
 
           <ToggleRow
@@ -207,6 +224,15 @@ export function AgentBehaviorSection({ agent }: AgentBehaviorSectionProps) {
                 onSelect={(emojiName) => mutate({ reactionOnResolved: emojiName })}
               />
             )}
+          </ToggleRow>
+
+          <ToggleRow label={SUBSCRIBER_ACCESS_SETTING_LABEL} tooltip={SUBSCRIBER_ACCESS_TOOLTIP}>
+            <BehaviorSwitch
+              checked={subscriberAccessOpen}
+              disabled={isPending}
+              readOnly={readOnly}
+              onCheckedChange={(checked) => mutate({ subscriberAccess: checked ? 'open' : 'restricted' })}
+            />
           </ToggleRow>
         </div>
       </div>
