@@ -1,15 +1,10 @@
 import type { PinoLogger } from '@novu/application-generic';
-import type { ConversationEntity } from '@novu/dal';
+import type { ConversationChannel, ConversationEntity } from '@novu/dal';
 import type { Thread } from 'chat';
 import { buildUnresolvedSubscriberAccessReply } from '../../shared/util/agent-inbound-replies';
+import type { ThreadReplyPersistContext } from '../egress/outbound.gateway';
 import type { ConversationTurn } from '../runtime/conversation-turn';
 import { applyPlatformThreadIdToThread } from '../runtime/platform-thread.util';
-
-interface ThreadReplyPersistChannel {
-  platformThreadId?: string;
-  platform?: string;
-  _integrationId?: string;
-}
 
 /**
  * Shared access-denied / transient / verification-failed reply used by the
@@ -21,18 +16,9 @@ export async function postUnresolvedSubscriberAccessReply(params: {
   replyOnThread: (
     thread: Thread,
     msg: { markdown: string },
-    opts: {
-      persist: {
-        conversationId: string;
-        channel: ThreadReplyPersistChannel;
-        agentIdentifier: string;
-        content: string;
-        environmentId: string;
-        organizationId: string;
-      };
-    }
+    opts?: { persist?: ThreadReplyPersistContext }
   ) => Promise<unknown>;
-  getPrimaryChannel: (conversation: ConversationEntity) => ThreadReplyPersistChannel;
+  getPrimaryChannel: (conversation: ConversationEntity) => ConversationChannel;
   emailSenderUnverified?: boolean;
 }): Promise<void> {
   const { turn, logger, replyOnThread, getPrimaryChannel, emailSenderUnverified } = params;
