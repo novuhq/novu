@@ -19,7 +19,11 @@ describe('agent-subscriber-access-default migration', () => {
     expect(updateMany.calledTwice).to.equal(true);
 
     const [managedFilter, managedUpdate] = updateMany.firstCall.args;
-    expect(managedFilter).to.deep.equal({ 'behavior.subscriberAccess': { $exists: false }, runtime: 'managed' });
+    expect(managedFilter).to.deep.equal({
+      'behavior.subscriberAccess': { $exists: false },
+      runtime: 'managed',
+      managedRuntime: { $exists: true, $ne: null },
+    });
     expect(managedUpdate).to.deep.equal({
       $set: { 'behavior.subscriberAccess': AgentSubscriberAccessEnum.OPEN },
     });
@@ -27,7 +31,7 @@ describe('agent-subscriber-access-default migration', () => {
     const [selfHostedFilter, selfHostedUpdate] = updateMany.secondCall.args;
     expect(selfHostedFilter).to.deep.equal({
       'behavior.subscriberAccess': { $exists: false },
-      runtime: { $ne: 'managed' },
+      $nor: [{ runtime: 'managed', managedRuntime: { $exists: true, $ne: null } }],
     });
     expect(selfHostedUpdate).to.deep.equal({
       $set: { 'behavior.subscriberAccess': AgentSubscriberAccessEnum.RESTRICTED },

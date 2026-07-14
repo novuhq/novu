@@ -486,6 +486,16 @@ export class AgentInboundHandler implements OnModuleInit {
       storedAttachments: message.attachments?.length ? storedAttachments : undefined,
     };
 
+    // On buttonless platforms (iMessage/SMS) a pending tool approval is
+    // answered by texting back YES / NO — consume before the subscriber-access
+    // gate so an unresolved/restricted sender can still settle a pending approval.
+    if (
+      event === AgentEventEnum.ON_MESSAGE &&
+      (await this.replyApprovalInterceptor.tryHandleAsApprovalReply(turn, runtime))
+    ) {
+      return;
+    }
+
     if (
       await maybeReplyUnresolvedSubscriberAccess({
         turn,
@@ -506,16 +516,6 @@ export class AgentInboundHandler implements OnModuleInit {
         platformMessageId: message?.id,
         isFirstMessage,
       });
-    }
-
-    // On buttonless platforms (iMessage/SMS) a pending tool approval is
-    // answered by texting back YES / NO — a matching reply is consumed as the
-    // verdict instead of being dispatched as a regular message.
-    if (
-      event === AgentEventEnum.ON_MESSAGE &&
-      (await this.replyApprovalInterceptor.tryHandleAsApprovalReply(turn, runtime))
-    ) {
-      return;
     }
 
     await runtime.dispatch(turn);

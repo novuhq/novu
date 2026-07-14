@@ -8,24 +8,35 @@ type UpdateManyFn = (
   update: Record<string, unknown>
 ) => Promise<{ matchedCount: number; modifiedCount: number }>;
 
+/** Same predicate as AgentConfigResolver / RuntimeResolver: managed requires both fields. */
+const MANAGED_AGENT_FILTER = {
+  runtime: 'managed',
+  managedRuntime: { $exists: true, $ne: null },
+} as const;
+
 /**
  * Backfill unset subscriberAccess:
- * - managed → open (Slack/Teams continuity for auto-provision after the flag gates them)
- * - self-hosted / custom-code → restricted (require explicit opt-in before Pass-null bridge ingress)
+ * - managed (runtime + managedRuntime) → open (Slack/Teams auto-provision continuity)
+ * - everything else unset → restricted (require explicit opt-in before Pass-null bridge ingress)
+ *
+ * Uses the same managed predicate as runtime resolution so `runtime: 'managed'`
+ * without `managedRuntime` is not opened, and legacy rows with only one of the
+ * two fields stay restricted.
  */
-export async function setSubscriberAccessDefaultsOnUnsetAgents(
-  updateMany: UpdateManyFn
-): Promise<{
+export async function setSubscriberAccessDefaultsOnUnsetAgents(updateMany: UpdateManyFn): Promise<{
   managedOpen: { matchedCount: number; modifiedCount: number };
   selfHostedRestricted: { matchedCount: number; modifiedCount: number };
 }> {
   const managedOpen = await updateMany(
-    { 'behavior.subscriberAccess': { $exists: false }, runtime: 'managed' },
+    { 'behavior.subscriberAccess': { $exists: false }, ...MANAGED_AGENT_FILTER },
     { $set: { 'behavior.subscriberAccess': AgentSubscriberAccessEnum.OPEN } }
   );
 
   const selfHostedRestricted = await updateMany(
-    { 'behavior.subscriberAccess': { $exists: false }, runtime: { $ne: 'managed' } },
+    {
+      'behavior.subscriberAccess': { $exists: false },
+      $nor: [MANAGED_AGENT_FILTER],
+    },
     { $set: { 'behavior.subscriberAccess': AgentSubscriberAccessEnum.RESTRICTED } }
   );
 
