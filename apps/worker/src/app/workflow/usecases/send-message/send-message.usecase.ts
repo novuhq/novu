@@ -55,8 +55,8 @@ import { SendMessageDelay } from './send-message-delay.usecase';
 import { SendMessageEmail } from './send-message-email.usecase';
 import { SendMessageInApp } from './send-message-in-app.usecase';
 import { SendMessagePush } from './send-message-push.usecase';
-import { SendMessageSignals } from './send-message-signals.usecase';
 import { SendMessageSms } from './send-message-sms.usecase';
+import { SendMessageTool } from './send-message-tool.usecase';
 import { SendMessageResult, SendMessageStatus } from './send-message-type.usecase';
 import { Throttle } from './throttle';
 
@@ -68,7 +68,7 @@ export class SendMessage {
     private sendMessageInApp: SendMessageInApp,
     private sendMessageChat: SendMessageChat,
     private sendMessagePush: SendMessagePush,
-    private sendMessageSignals: SendMessageSignals,
+    private sendMessageTool: SendMessageTool,
     private digest: Digest,
     private createExecutionDetails: CreateExecutionDetails,
     private getSubscriberTemplatePreferenceUsecase: GetSubscriberTemplatePreference,
@@ -193,8 +193,8 @@ export class SendMessage {
       case StepTypeEnum.PUSH: {
         return await this.sendMessagePush.execute(sendMessageChannelCommand);
       }
-      case StepTypeEnum.SIGNALS: {
-        return await this.sendMessageSignals.execute(sendMessageChannelCommand);
+      case StepTypeEnum.TOOL: {
+        return await this.sendMessageTool.execute(sendMessageChannelCommand);
       }
       case StepTypeEnum.DIGEST: {
         return await this.digest.execute(command);
@@ -561,7 +561,7 @@ export class SendMessage {
       StepTypeEnum.SMS,
       StepTypeEnum.PUSH,
       StepTypeEnum.CHAT,
-      StepTypeEnum.SIGNALS,
+      StepTypeEnum.TOOL,
     ];
 
     return !!channels.find((channel) => channel === job.type);

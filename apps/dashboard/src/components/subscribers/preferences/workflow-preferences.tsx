@@ -22,14 +22,14 @@ type WorkflowPreferencesProps = {
 export function WorkflowPreferences(props: WorkflowPreferencesProps) {
   const { workflowPreferences, onToggle, readOnly = false } = props;
   const [isExpanded, setIsExpanded] = useState(false);
-  const isSignalsChannelEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_SIGNALS_CHANNEL_ENABLED);
+  const isToolChannelEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TOOL_CHANNEL_ENABLED);
   const { workflow, channels, updatedAt } = workflowPreferences;
   const visibleChannels = useMemo(
     () =>
       (Object.entries(channels) as [ChannelTypeEnum, boolean][]).filter(([channel]) =>
-        isChannelVisibleInUi(channel, isSignalsChannelEnabled)
+        isChannelVisibleInUi(channel, isToolChannelEnabled)
       ),
-    [channels, isSignalsChannelEnabled]
+    [channels, isToolChannelEnabled]
   );
   return (
     <Card className="border rounded-lg border-neutral-100 bg-neutral-50 p-1 shadow-none">

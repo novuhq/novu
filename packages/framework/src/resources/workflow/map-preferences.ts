@@ -9,7 +9,7 @@ const CHANNEL_TYPE_FROM_WORKFLOW_CHANNEL: Record<WorkflowChannelEnum, ChannelTyp
   [WorkflowChannelEnum.PUSH]: ChannelTypeEnum.PUSH,
   [WorkflowChannelEnum.IN_APP]: ChannelTypeEnum.IN_APP,
   [WorkflowChannelEnum.CHAT]: ChannelTypeEnum.CHAT,
-  [WorkflowChannelEnum.SIGNALS]: ChannelTypeEnum.SIGNALS,
+  [WorkflowChannelEnum.TOOL]: ChannelTypeEnum.TOOL,
 };
 
 /** Map preferences between user-friendly and system-friendly values / keys */

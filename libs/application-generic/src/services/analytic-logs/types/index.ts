@@ -4,7 +4,7 @@ export type StepType =
   | 'in_app'
   | 'push'
   | 'chat'
-  | 'signals'
+  | 'tool'
   | 'digest'
   | 'trigger'
   | 'delay'

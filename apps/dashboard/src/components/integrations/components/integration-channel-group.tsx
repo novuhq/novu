@@ -44,7 +44,7 @@ export function IntegrationChannelGroup({
             : 'text-md text-foreground-950'
         )}
       >
-        {channel === ChannelTypeEnum.SIGNALS ? 'TOOLS' : CHANNEL_TYPE_TO_STRING[channel]}
+        {CHANNEL_TYPE_TO_STRING[channel]}
       </h2>
       <div
         className={cn(

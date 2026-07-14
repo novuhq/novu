@@ -125,10 +125,10 @@ describe('workflow function', () => {
     });
   });
 
-  it('should discover a signals channel step', async () => {
-    const { discover } = workflow('signals-workflow', async ({ step }) => {
-      await step.signals('send-signal', async () => ({
-        body: 'Signal body',
+  it('should discover a tool channel step', async () => {
+    const { discover } = workflow('tool-workflow', async ({ step }) => {
+      await step.tool('send-tool', async () => ({
+        body: 'Tool body',
       }));
     });
 
@@ -136,8 +136,8 @@ describe('workflow function', () => {
 
     expect(definition.steps).to.have.length(1);
     expect(definition.steps[0]).to.include({
-      stepId: 'send-signal',
-      type: 'signals',
+      stepId: 'send-tool',
+      type: 'tool',
     });
     expect(definition.steps[0].outputs.schema).toMatchObject({
       type: 'object',

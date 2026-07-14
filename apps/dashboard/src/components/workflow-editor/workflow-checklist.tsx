@@ -169,7 +169,7 @@ function isStepContentComplete(step: Step): boolean {
       return !!(values.title && values.body);
     case StepTypeEnum.CHAT:
       return !!values.body;
-    case StepTypeEnum.SIGNALS:
+    case StepTypeEnum.TOOL:
       return !!values.body;
     default:
       return false;

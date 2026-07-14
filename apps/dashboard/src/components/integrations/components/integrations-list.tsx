@@ -83,13 +83,13 @@ function IntegrationChannelGroupSkeleton({ variant }: { variant?: IntegrationsLi
 export function IntegrationsList({ onItemClick, excludeIntegrationIds, variant = 'default' }: IntegrationsListProps) {
   const { currentEnvironment, environments } = useEnvironment();
   const { integrations, isLoading } = useFetchIntegrations();
-  const isSignalsChannelEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_SIGNALS_CHANNEL_ENABLED);
+  const isToolChannelEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TOOL_CHANNEL_ENABLED);
   const availableIntegrations = novuProviders;
 
   const groupedIntegrations = useMemo(() => {
     return integrations
       ?.filter((i) => i.providerId !== EmailProviderIdEnum.NovuAgent)
-      .filter((i) => isChannelVisibleInUi(i.channel, isSignalsChannelEnabled))
+      .filter((i) => isChannelVisibleInUi(i.channel, isToolChannelEnabled))
       .reduce(
         (acc, integration) => {
           const { channel } = integration;
@@ -109,7 +109,7 @@ export function IntegrationsList({ onItemClick, excludeIntegrationIds, variant =
         },
         {} as Record<ChannelTypeEnum, typeof integrations>
       );
-  }, [integrations, isSignalsChannelEnabled]);
+  }, [integrations, isToolChannelEnabled]);
 
   if (isLoading || !currentEnvironment) {
     return (

@@ -148,11 +148,11 @@ export function workflow<
           channelStepSchemas.in_app.output,
           channelStepSchemas.in_app.result
         ),
-        signals: await discoverChannelStepFactory(
+        tool: await discoverChannelStepFactory(
           newWorkflow,
-          ChannelStepEnum.SIGNALS,
-          channelStepSchemas.signals.output,
-          channelStepSchemas.signals.result
+          ChannelStepEnum.TOOL,
+          channelStepSchemas.tool.output,
+          channelStepSchemas.tool.result
         ),
         digest: await discoverActionStepFactory(
           newWorkflow,

@@ -73,11 +73,11 @@ export class Channels {
   [ChannelTypeEnum.PUSH]: ChannelPreference;
 
   /**
-   * @deprecated Signals channel preference is deprecated.
+   * @deprecated Tool channel preference is deprecated.
    */
   @ValidateNested({ each: true })
   @Type(() => ChannelPreference)
-  [ChannelTypeEnum.SIGNALS]: ChannelPreference;
+  [ChannelTypeEnum.TOOL]: ChannelPreference;
 }
 
 /**

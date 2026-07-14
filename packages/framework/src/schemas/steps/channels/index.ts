@@ -4,8 +4,8 @@ import { chatChannelSchemas } from './chat.schema';
 import { emailChannelSchemas } from './email.schema';
 import { inAppChannelSchemas } from './in-app.schema';
 import { pushChannelSchemas } from './push.schema';
-import { signalsChannelSchemas } from './signals.schema';
 import { smsChannelSchemas } from './sms.schema';
+import { toolChannelSchemas } from './tool.schema';
 
 export const channelStepSchemas = {
   chat: chatChannelSchemas,
@@ -13,5 +13,5 @@ export const channelStepSchemas = {
   push: pushChannelSchemas,
   email: emailChannelSchemas,
   in_app: inAppChannelSchemas,
-  signals: signalsChannelSchemas,
+  tool: toolChannelSchemas,
 } as const satisfies Record<ChannelStepEnum, { output: JsonSchema; result: JsonSchema }>;

@@ -57,8 +57,8 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
         return 'push';
       case StepTypeEnum.CHAT:
         return 'chat';
-      case StepTypeEnum.SIGNALS:
-        return 'signals';
+      case StepTypeEnum.TOOL:
+        return 'tool';
       case StepTypeEnum.DIGEST:
         return 'digest';
       case StepTypeEnum.THROTTLE:

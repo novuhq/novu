@@ -10,7 +10,7 @@ export const STEP_TYPE_TO_COLOR: Record<StepTypeEnum, ProviderColorToken> = {
   [StepTypeEnum.CHAT]: 'feature',
   [StepTypeEnum.SMS]: 'destructive',
   [StepTypeEnum.PUSH]: 'verified',
-  [StepTypeEnum.SIGNALS]: 'warning',
+  [StepTypeEnum.TOOL]: 'warning',
   [StepTypeEnum.CUSTOM]: 'alert',
   [StepTypeEnum.DIGEST]: 'highlighted',
   [StepTypeEnum.DELAY]: 'warning',

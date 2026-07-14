@@ -62,7 +62,7 @@ export class UpdatePreferencesCommand extends EnvironmentWithSubscriber {
 
   @IsOptional()
   @IsBoolean()
-  readonly signals?: boolean;
+  readonly tool?: boolean;
 
   @IsDefined()
   @IsEnum(PreferenceLevelEnum)

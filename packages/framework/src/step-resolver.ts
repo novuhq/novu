@@ -6,10 +6,10 @@ export type {
   EmailStepResolver,
   InAppStepResolver,
   PushStepResolver,
-  SignalsStepResolver,
   SmsStepResolver,
   StepResolverContext,
   ThrottleStepResolver,
+  ToolStepResolver,
 } from './resources/step-resolver/step';
 export { step } from './resources/step-resolver/step';
 export { providerSchemas } from './schemas/providers';

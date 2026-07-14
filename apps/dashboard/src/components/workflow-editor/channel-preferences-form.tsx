@@ -51,7 +51,7 @@ const CHANNEL_LABELS_LOOKUP: Record<`${ChannelTypeEnum}` | 'all', string> = {
   [ChannelTypeEnum.SMS]: 'SMS',
   [ChannelTypeEnum.CHAT]: 'Chat',
   [ChannelTypeEnum.PUSH]: 'Push',
-  [ChannelTypeEnum.SIGNALS]: 'Signals',
+  [ChannelTypeEnum.TOOL]: 'Tool',
   all: 'All',
 };
 
@@ -69,7 +69,7 @@ export const ChannelPreferencesForm = (props: ConfigureWorkflowFormProps) => {
   const { workflow, update, isReadOnly: readOnlyProp } = props;
   const track = useTelemetry();
   const has = useHasPermission();
-  const isSignalsChannelEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_SIGNALS_CHANNEL_ENABLED);
+  const isToolChannelEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TOOL_CHANNEL_ENABLED);
   const permissionReadOnly = !has({ permission: PermissionsEnum.WORKFLOW_WRITE });
   const isReadOnly = readOnlyProp ?? permissionReadOnly;
 
@@ -82,7 +82,7 @@ export const ChannelPreferencesForm = (props: ConfigureWorkflowFormProps) => {
     if (!allChannels) return null;
 
     const allChannelsArr = Object.keys(allChannels).filter((channel) =>
-      isChannelVisibleInUi(channel, isSignalsChannelEnabled)
+      isChannelVisibleInUi(channel, isToolChannelEnabled)
     );
     const channelsInUse = allChannelsArr.filter((channel) => steps.has(channel as StepTypeEnum));
     const channelsNotInUse = allChannelsArr.filter((channel) => !steps.has(channel as StepTypeEnum));
@@ -93,7 +93,7 @@ export const ChannelPreferencesForm = (props: ConfigureWorkflowFormProps) => {
     };
   }, [
     isDefaultPreferences,
-    isSignalsChannelEnabled,
+    isToolChannelEnabled,
     workflow.preferences.default,
     workflow.preferences.user,
     workflow.steps,
@@ -154,7 +154,7 @@ export const ChannelPreferencesForm = (props: ConfigureWorkflowFormProps) => {
     // If all channels are same value(all true or all false), update the "all" channel value to true/false
     // Also, update the "all" channel value to true if a single channel is enabled and it's not already enabled
     const areAllChannelsSameValue = checkHasEveryChannelSameValue(updatedUserPreferences.channels, value, (channel) =>
-      isChannelVisibleInUi(channel, isSignalsChannelEnabled)
+      isChannelVisibleInUi(channel, isToolChannelEnabled)
     );
 
     if (areAllChannelsSameValue || (value && !updatedUserPreferences.all.enabled)) {
@@ -169,7 +169,7 @@ export const ChannelPreferencesForm = (props: ConfigureWorkflowFormProps) => {
     const currentPreference = form.getValues('user') as WorkflowPreferences;
 
     const channelPreferences = Object.keys(currentPreference.channels)
-      .filter((channel) => isChannelVisibleInUi(channel, isSignalsChannelEnabled))
+      .filter((channel) => isChannelVisibleInUi(channel, isToolChannelEnabled))
       .reduce(
         (acc, curr) => {
           acc[curr as ChannelTypeEnum] = { enabled: value };

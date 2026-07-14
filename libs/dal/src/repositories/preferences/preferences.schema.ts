@@ -71,7 +71,7 @@ const preferencesSchema = new Schema<PreferencesDBModel>(
             type: Schema.Types.Boolean,
           },
         },
-        [ChannelTypeEnum.SIGNALS]: {
+        [ChannelTypeEnum.TOOL]: {
           enabled: {
             type: Schema.Types.Boolean,
           },

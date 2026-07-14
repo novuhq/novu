@@ -93,7 +93,7 @@ export const AddStepMenu = ({
   onMenuItemClick: (selection: AddStepMenuSelection) => void;
 }) => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
-  const isSignalsChannelEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_SIGNALS_CHANNEL_ENABLED);
+  const isToolChannelEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TOOL_CHANNEL_ENABLED);
 
   const handleMenuItemClick = (stepType: StepTypeEnum) => {
     onMenuItemClick({ type: stepType });
@@ -148,9 +148,9 @@ export const AddStepMenu = ({
                 <MenuItem stepType={StepTypeEnum.SMS} onClick={() => handleMenuItemClick(StepTypeEnum.SMS)}>
                   SMS
                 </MenuItem>
-                {isChannelVisibleInUi(ChannelTypeEnum.SIGNALS, isSignalsChannelEnabled) && (
-                  <MenuItem stepType={StepTypeEnum.SIGNALS} onClick={() => handleMenuItemClick(StepTypeEnum.SIGNALS)}>
-                    Signals
+                {isChannelVisibleInUi(ChannelTypeEnum.TOOL, isToolChannelEnabled) && (
+                  <MenuItem stepType={StepTypeEnum.TOOL} onClick={() => handleMenuItemClick(StepTypeEnum.TOOL)}>
+                    Tool
                   </MenuItem>
                 )}
               </MenuItemsGroup>

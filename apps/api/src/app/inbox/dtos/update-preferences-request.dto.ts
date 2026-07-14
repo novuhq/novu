@@ -27,7 +27,7 @@ export class UpdatePreferencesRequestDto {
 
   @IsOptional()
   @IsBoolean()
-  readonly signals?: boolean;
+  readonly tool?: boolean;
 
   @IsOptional()
   @ValidateNested()

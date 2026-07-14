@@ -184,9 +184,9 @@ export enum AgentRuntimeProviderIdEnum {
   AnthropicAws = 'anthropic-aws',
 }
 
-export enum SignalsProviderIdEnum {
+export enum ToolProviderIdEnum {
   GitHub = 'github',
-  Webhook = 'signals-webhook',
+  Webhook = 'tool-webhook',
 }
 
 /** Distinguishes integrations used for notification delivery from those used as agent runtimes. */
@@ -202,7 +202,7 @@ export type ProvidersIdEnum =
   | InAppProviderIdEnum
   | ChatProviderIdEnum
   | AgentRuntimeProviderIdEnum
-  | SignalsProviderIdEnum;
+  | ToolProviderIdEnum;
 
 export const ProvidersIdEnumConst = {
   EmailProviderIdEnum,
@@ -211,7 +211,7 @@ export const ProvidersIdEnumConst = {
   InAppProviderIdEnum,
   ChatProviderIdEnum,
   AgentRuntimeProviderIdEnum,
-  SignalsProviderIdEnum,
+  ToolProviderIdEnum,
 };
 
 export const providerIdValues = [

@@ -417,23 +417,23 @@ export const ChatNode = (props: NodeProps<NodeType>) => {
   );
 };
 
-export const SignalsNode = (props: NodeProps<NodeType>) => {
+export const ToolNode = (props: NodeProps<NodeType>) => {
   const { id, data } = props;
   const { showStepPreview } = useCanvasContext();
-  const Icon = STEP_TYPE_TO_ICON[StepTypeEnum.SIGNALS];
+  const Icon = STEP_TYPE_TO_ICON[StepTypeEnum.TOOL];
 
   return (
-    <NodeWrapper id={id} type={StepTypeEnum.SIGNALS}>
-      <StepNode id={id} data={data} type={StepTypeEnum.SIGNALS}>
-        <NodeHeader type={StepTypeEnum.SIGNALS}>
+    <NodeWrapper id={id} type={StepTypeEnum.TOOL}>
+      <StepNode id={id} data={data} type={StepTypeEnum.TOOL}>
+        <NodeHeader type={StepTypeEnum.TOOL}>
           <StepNodeIcon
             stepResolverHash={data.stepResolverHash}
-            color={STEP_TYPE_TO_COLOR[StepTypeEnum.SIGNALS]}
+            color={STEP_TYPE_TO_COLOR[StepTypeEnum.TOOL]}
             Icon={Icon}
           />
-          <NodeName>{data.name || 'Signals Step'}</NodeName>
+          <NodeName>{data.name || 'Tool Step'}</NodeName>
         </NodeHeader>
-        <NodeBody showPreview={showStepPreview} type={StepTypeEnum.SIGNALS} controlValues={data.controlValues ?? {}}>
+        <NodeBody showPreview={showStepPreview} type={StepTypeEnum.TOOL} controlValues={data.controlValues ?? {}}>
           {data.content}
         </NodeBody>
         {data.error && <NodeError>{data.error}</NodeError>}

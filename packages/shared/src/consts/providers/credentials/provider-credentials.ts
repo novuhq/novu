@@ -1605,7 +1605,7 @@ export const anthropicAwsAgentConfig: IConfigCredential[] = [
   },
 ];
 
-export const githubSignalsConfig: IConfigCredential[] = [
+export const githubToolConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.Token,
     displayName: 'Personal Access Token',
@@ -1636,7 +1636,7 @@ export const githubSignalsConfig: IConfigCredential[] = [
   },
 ];
 
-export const signalsWebhookConfig: IConfigCredential[] = [
+export const toolWebhookConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.Method,
     displayName: 'HTTP Method',
@@ -1653,7 +1653,7 @@ export const signalsWebhookConfig: IConfigCredential[] = [
     key: CredentialsKeyEnum.WebhookUrl,
     displayName: 'Endpoint URL',
     type: 'string',
-    description: 'The webhook URL to call when delivering a signal',
+    description: 'The webhook URL to call when delivering a tool payload',
     required: true,
   },
   {

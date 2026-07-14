@@ -17,7 +17,7 @@ const stepRenderData: Record<StepTypeEnum, { variant: ComponentProps<typeof Step
   [StepTypeEnum.HTTP_REQUEST]: { variant: 'information', icon: STEP_TYPE_TO_ICON[StepTypeEnum.HTTP_REQUEST] },
   [StepTypeEnum.IN_APP]: { variant: 'stable', icon: STEP_TYPE_TO_ICON[StepTypeEnum.IN_APP] },
   [StepTypeEnum.PUSH]: { variant: 'verified', icon: STEP_TYPE_TO_ICON[StepTypeEnum.PUSH] },
-  [StepTypeEnum.SIGNALS]: { variant: 'warning', icon: STEP_TYPE_TO_ICON[StepTypeEnum.SIGNALS] },
+  [StepTypeEnum.TOOL]: { variant: 'warning', icon: STEP_TYPE_TO_ICON[StepTypeEnum.TOOL] },
   [StepTypeEnum.SMS]: { variant: 'destructive', icon: STEP_TYPE_TO_ICON[StepTypeEnum.SMS] },
   [StepTypeEnum.THROTTLE]: { variant: 'destructive', icon: STEP_TYPE_TO_ICON[StepTypeEnum.THROTTLE] },
   [StepTypeEnum.TRIGGER]: { variant: 'neutral', icon: STEP_TYPE_TO_ICON[StepTypeEnum.TRIGGER] },

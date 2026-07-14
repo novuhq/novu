@@ -49,10 +49,10 @@ export class SubscriberPreferenceChannels {
 
   @ApiPropertyOptional({
     type: Boolean,
-    description: 'Signals channel preference',
+    description: 'Tool channel preference',
     example: true,
   })
   @IsBoolean()
   @IsOptional()
-  signals?: boolean;
+  tool?: boolean;
 }

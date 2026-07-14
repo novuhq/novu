@@ -127,7 +127,7 @@ export const getComponentByType = ({ component }: { component?: UiComponentEnum 
       return <BaseBody />;
     }
 
-    case UiComponentEnum.SIGNALS_BODY: {
+    case UiComponentEnum.TOOL_BODY: {
       return <BaseBody />;
     }
 

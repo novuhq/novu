@@ -138,8 +138,8 @@ export enum FeatureFlagsKeysEnum {
    * organization for the duration of the rotation, then disable.
    */
   IS_MULTIPLE_SECRET_KEYS_ALLOWED = 'IS_MULTIPLE_SECRET_KEYS_ALLOWED',
-  /** Enable the Signals channel (GitHub repository_dispatch and custom webhooks). */
-  IS_SIGNALS_CHANNEL_ENABLED = 'IS_SIGNALS_CHANNEL_ENABLED',
+  /** Enable the Tool channel (GitHub repository_dispatch and custom webhooks). */
+  IS_TOOL_CHANNEL_ENABLED = 'IS_TOOL_CHANNEL_ENABLED',
 
   // String flags
   CF_SCHEDULER_MODE = 'CF_SCHEDULER_MODE', // Values: "off" | "shadow" | "live" | "complete"

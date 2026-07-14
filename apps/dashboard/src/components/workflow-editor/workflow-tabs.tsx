@@ -351,7 +351,7 @@ export const WorkflowTabs = () => {
         StepTypeEnum.PUSH,
         StepTypeEnum.IN_APP,
         StepTypeEnum.CHAT,
-        StepTypeEnum.SIGNALS,
+        StepTypeEnum.TOOL,
       ].includes(step.type)
     );
     if (hasContentSteps) {

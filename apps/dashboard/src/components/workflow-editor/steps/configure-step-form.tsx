@@ -45,11 +45,11 @@ import { ConfigureInAppStepPreview } from '@/components/workflow-editor/steps/in
 import { ConfigurePushStepPreview } from '@/components/workflow-editor/steps/push/configure-push-step-preview';
 import { SaveFormContext } from '@/components/workflow-editor/steps/save-form-context';
 import { SdkBanner } from '@/components/workflow-editor/steps/sdk-banner';
-import { ConfigureSignalsStepPreview } from '@/components/workflow-editor/steps/signals/configure-signals-step-preview';
-import { SignalsEnabledProviders } from '@/components/workflow-editor/steps/signals/signals-enabled-providers';
 import { SkipConditionsButton } from '@/components/workflow-editor/steps/skip-conditions-button';
 import { ConfigureSmsStepPreview } from '@/components/workflow-editor/steps/sms/configure-sms-step-preview';
 import { ThrottleControlValues } from '@/components/workflow-editor/steps/throttle/throttle-control-values';
+import { ConfigureToolStepPreview } from '@/components/workflow-editor/steps/tool/configure-tool-step-preview';
+import { ToolEnabledProviders } from '@/components/workflow-editor/steps/tool/tool-enabled-providers';
 import { useWorkflowEditorRoutes } from '@/components/workflow-editor/use-workflow-editor-routes';
 import { UpdateWorkflowFn } from '@/components/workflow-editor/workflow-provider';
 import { IS_CLOUD } from '@/config';
@@ -79,7 +79,7 @@ const STEP_TYPE_TO_INLINE_CONTROL_VALUES: Record<StepTypeEnum, () => React.JSX.E
   [StepTypeEnum.SMS]: () => null,
   [StepTypeEnum.CHAT]: () => null,
   [StepTypeEnum.PUSH]: () => null,
-  [StepTypeEnum.SIGNALS]: () => null,
+  [StepTypeEnum.TOOL]: () => null,
   [StepTypeEnum.CUSTOM]: () => null,
   [StepTypeEnum.HTTP_REQUEST]: () => null,
   [StepTypeEnum.TRIGGER]: () => null,
@@ -91,7 +91,7 @@ const STEP_TYPE_TO_PREVIEW: Record<StepTypeEnum, ((props: HTMLAttributes<HTMLDiv
   [StepTypeEnum.SMS]: ConfigureSmsStepPreview,
   [StepTypeEnum.CHAT]: ConfigureChatStepPreview,
   [StepTypeEnum.PUSH]: ConfigurePushStepPreview,
-  [StepTypeEnum.SIGNALS]: ConfigureSignalsStepPreview,
+  [StepTypeEnum.TOOL]: ConfigureToolStepPreview,
   [StepTypeEnum.CUSTOM]: null,
   [StepTypeEnum.HTTP_REQUEST]: null,
   [StepTypeEnum.TRIGGER]: null,
@@ -106,7 +106,7 @@ const CHANNEL_PREVIEW_STEP_TYPES = new Set<StepTypeEnum>([
   StepTypeEnum.SMS,
   StepTypeEnum.CHAT,
   StepTypeEnum.PUSH,
-  StepTypeEnum.SIGNALS,
+  StepTypeEnum.TOOL,
 ]);
 
 const SIDEPANEL_ACTION_ROW_BASE_CLASS = 'flex h-12 w-full justify-start gap-1.5 rounded-none px-3 text-xs font-medium';
@@ -133,7 +133,7 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
     StepTypeEnum.SMS,
     StepTypeEnum.CHAT,
     StepTypeEnum.PUSH,
-    StepTypeEnum.SIGNALS,
+    StepTypeEnum.TOOL,
     StepTypeEnum.EMAIL,
     StepTypeEnum.DIGEST,
     StepTypeEnum.DELAY,
@@ -177,9 +177,9 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
   const isInlineConfigurableStepWithCustomControls = isInlineConfigurableStep && hasCustomControls;
   const showInlineControlValuesSection = isInlineConfigurableStep && !hasCustomControls && !isInlineResolverActive;
   const showHttpRequestFormMiddleSection = step.type === StepTypeEnum.HTTP_REQUEST;
-  const showSignalsFormMiddleSection = step.type === StepTypeEnum.SIGNALS;
+  const showToolFormMiddleSection = step.type === StepTypeEnum.TOOL;
   const showConfigureStepFormMiddleSection =
-    showInlineControlValuesSection || showHttpRequestFormMiddleSection || showSignalsFormMiddleSection;
+    showInlineControlValuesSection || showHttpRequestFormMiddleSection || showToolFormMiddleSection;
 
   const onDeleteStep = () => {
     update(
@@ -212,7 +212,7 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
         };
       }
 
-      if (step.type === StepTypeEnum.SIGNALS) {
+      if (step.type === StepTypeEnum.TOOL) {
         return {
           controlValues: {
             ...(step.controls.values ?? {}),
@@ -488,9 +488,9 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
                   </SidebarContent>
                 )}
 
-                {showSignalsFormMiddleSection && (
+                {showToolFormMiddleSection && (
                   <SidebarContent>
-                    <SignalsEnabledProviders />
+                    <ToolEnabledProviders />
                   </SidebarContent>
                 )}
               </SaveFormContext.Provider>

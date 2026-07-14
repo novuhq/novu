@@ -80,10 +80,10 @@ export function ActivityFilters({
     FeatureFlagsKeysEnum.IS_SUBSCRIPTION_PREFERENCES_ENABLED,
     false
   );
-  const isSignalsChannelEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_SIGNALS_CHANNEL_ENABLED);
+  const isToolChannelEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TOOL_CHANNEL_ENABLED);
   const channelOptions = useMemo(
-    () => CHANNEL_OPTIONS.filter((option) => isChannelVisibleInUi(option.value, isSignalsChannelEnabled)),
-    [isSignalsChannelEnabled]
+    () => CHANNEL_OPTIONS.filter((option) => isChannelVisibleInUi(option.value, isToolChannelEnabled)),
+    [isToolChannelEnabled]
   );
 
   const form = useForm<ActivityFiltersData>({

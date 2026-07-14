@@ -37,7 +37,7 @@ describe('mapPreferences', () => {
         push: { enabled: true },
         inApp: { enabled: true },
         chat: { enabled: true },
-        signals: { enabled: true },
+        tool: { enabled: true },
       },
     });
 
@@ -49,21 +49,21 @@ describe('mapPreferences', () => {
         push: { enabled: true },
         in_app: { enabled: true },
         chat: { enabled: true },
-        signals: { enabled: true },
+        tool: { enabled: true },
       },
     });
   });
 
-  it('should map signals workflow channel to ChannelTypeEnum.SIGNALS', () => {
+  it('should map tool workflow channel to ChannelTypeEnum.TOOL', () => {
     const result = mapPreferences({
       channels: {
-        signals: { enabled: false },
+        tool: { enabled: false },
       },
     });
 
     expect(result).to.deep.equal({
       channels: {
-        signals: { enabled: false },
+        tool: { enabled: false },
       },
     });
   });

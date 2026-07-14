@@ -14,12 +14,12 @@ import {
   inAppUiSchema,
   pushControlSchema,
   pushUiSchema,
-  signalsControlSchema,
-  signalsUiSchema,
   smsControlSchema,
   smsUiSchema,
   throttleControlSchema,
   throttleUiSchema,
+  toolControlSchema,
+  toolUiSchema,
 } from '../schemas/control';
 
 export const PERMISSIVE_EMPTY_SCHEMA = {
@@ -52,9 +52,9 @@ const stepTypeToControlSchemaMap: Record<ControlSchemaStepType, ControlSchemas> 
     schema: chatControlSchema,
     uiSchema: chatUiSchema,
   },
-  [ChannelStepEnum.SIGNALS]: {
-    schema: signalsControlSchema,
-    uiSchema: signalsUiSchema,
+  [ChannelStepEnum.TOOL]: {
+    schema: toolControlSchema,
+    uiSchema: toolUiSchema,
   },
   [ActionStepEnum.DELAY]: {
     schema: delayControlSchema,

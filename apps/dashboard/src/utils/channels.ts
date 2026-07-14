@@ -6,17 +6,17 @@ export const CHANNEL_TYPE_TO_STRING: Record<ChannelTypeEnum, string> = {
   [ChannelTypeEnum.SMS]: 'SMS',
   [ChannelTypeEnum.CHAT]: 'Chat',
   [ChannelTypeEnum.PUSH]: 'Push',
-  [ChannelTypeEnum.SIGNALS]: 'Signals',
+  [ChannelTypeEnum.TOOL]: 'Tool',
 };
 
 /** Whether a channel should appear in dashboard UI when gated behind feature flags. */
 export function isChannelVisibleInUi(
   channel: ChannelTypeEnum | string | undefined,
-  isSignalsChannelEnabled: boolean
+  isToolChannelEnabled: boolean
 ): boolean {
   if (!channel) {
     return false;
   }
 
-  return channel !== ChannelTypeEnum.SIGNALS || isSignalsChannelEnabled;
+  return channel !== ChannelTypeEnum.TOOL || isToolChannelEnabled;
 }

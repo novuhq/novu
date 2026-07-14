@@ -6,8 +6,8 @@ import {
   IChatProvider,
   IEmailProvider,
   IPushProvider,
-  ISignalsProvider,
   ISmsProvider,
+  IToolProvider,
 } from './provider/provider.interface';
 import { ProviderStore } from './provider/provider.store';
 import { ITemplate, ITriggerPayload } from './template/template.interface';
@@ -16,7 +16,7 @@ import { ITheme } from './theme/theme.interface';
 import { ThemeStore } from './theme/theme.store';
 import { TriggerEngine } from './trigger/trigger.engine';
 
-type RegisterableProvider = IEmailProvider | ISmsProvider | IChatProvider | IPushProvider | ISignalsProvider;
+type RegisterableProvider = IEmailProvider | ISmsProvider | IChatProvider | IPushProvider | IToolProvider;
 export class NovuStateless extends EventEmitter {
   private readonly templateStore: TemplateStore;
   private readonly providerStore: ProviderStore;

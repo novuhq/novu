@@ -13,13 +13,13 @@ type ChannelTabsProps = {
 };
 
 export function ChannelTabs({ integrationsByChannel, searchQuery, onIntegrationSelect }: ChannelTabsProps) {
-  const isSignalsChannelEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_SIGNALS_CHANNEL_ENABLED);
+  const isToolChannelEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TOOL_CHANNEL_ENABLED);
   const channels = useMemo(
     () =>
       INTEGRATION_CHANNELS.filter((channel) =>
-        isChannelVisibleInUi(channel, isSignalsChannelEnabled)
+        isChannelVisibleInUi(channel, isToolChannelEnabled)
       ) as IntegrationChannel[],
-    [isSignalsChannelEnabled]
+    [isToolChannelEnabled]
   );
 
   return (

@@ -6,12 +6,12 @@ import { IMailHandler } from './mail/interfaces';
 import { MailFactory } from './mail/mail.factory';
 import { IPushHandler } from './push/interfaces';
 import { PushFactory } from './push/push.factory';
-import { ISignalsHandler } from './signals/interfaces';
-import { SignalsFactory } from './signals/signals.factory';
 import { ISmsHandler } from './sms/interfaces';
 import { SmsFactory } from './sms/sms.factory';
+import { IToolHandler } from './tool/interfaces';
+import { ToolFactory } from './tool/tool.factory';
 
-export type ChannelHandler = IMailHandler | ISmsHandler | IChatHandler | IPushHandler | ISignalsHandler;
+export type ChannelHandler = IMailHandler | ISmsHandler | IChatHandler | IPushHandler | IToolHandler;
 
 export interface IChannelHandlerOptions {
   from?: string;
@@ -20,7 +20,7 @@ export interface IChannelHandlerOptions {
 export interface IChannelFactory {
   getHandler(
     integration: Pick<IntegrationEntity, 'credentials' | 'channel' | 'providerId' | 'configurations'>,
-    channelType: 'email' | 'sms' | 'chat' | 'push' | 'signals',
+    channelType: 'email' | 'sms' | 'chat' | 'push' | 'tool',
     options?: IChannelHandlerOptions
   ): ChannelHandler;
 }
@@ -31,20 +31,20 @@ export class ChannelFactory implements IChannelFactory {
   private readonly smsFactory: SmsFactory;
   private readonly chatFactory: ChatFactory;
   private readonly pushFactory: PushFactory;
-  private readonly signalsFactory: SignalsFactory;
+  private readonly toolFactory: ToolFactory;
 
   constructor() {
     this.mailFactory = new MailFactory();
     this.smsFactory = new SmsFactory();
     this.chatFactory = new ChatFactory();
     this.pushFactory = new PushFactory();
-    this.signalsFactory = new SignalsFactory();
+    this.toolFactory = new ToolFactory();
   }
 
   // Each getHandler call creates a new provider instance
   getHandler(
     integration: Pick<IntegrationEntity, 'credentials' | 'channel' | 'providerId' | 'configurations'>,
-    channelType: 'email' | 'sms' | 'chat' | 'push' | 'signals',
+    channelType: 'email' | 'sms' | 'chat' | 'push' | 'tool',
     options: IChannelHandlerOptions = {}
   ): ChannelHandler {
     let handler: ChannelHandler | null = null;
@@ -66,8 +66,8 @@ export class ChannelFactory implements IChannelFactory {
         handler = this.pushFactory.getHandler(integration);
         break;
       }
-      case 'signals': {
-        handler = this.signalsFactory.getHandler(integration);
+      case 'tool': {
+        handler = this.toolFactory.getHandler(integration);
         break;
       }
       default: {

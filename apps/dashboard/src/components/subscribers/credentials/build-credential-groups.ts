@@ -99,7 +99,7 @@ const CHANNEL_LABELS: Record<ChannelTypeEnum, string> = {
   [ChannelTypeEnum.SMS]: 'SMS',
   [ChannelTypeEnum.CHAT]: 'CHAT',
   [ChannelTypeEnum.PUSH]: 'PUSH',
-  [ChannelTypeEnum.SIGNALS]: 'SIGNALS',
+  [ChannelTypeEnum.TOOL]: 'TOOL',
 };
 
 /** Section order, following the Figma layout (email, sms, push, chat). */
