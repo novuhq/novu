@@ -25,14 +25,6 @@ html.dark body:has(#home-content) nav[aria-label='Main'] a[aria-current='locatio
   color: rgb(229 231 235);
 }
 
-/* Homepage container: centered on the page with equal space on both sides */
-#home-content {
-  width: 100%;
-  max-width: 66rem;
-  padding: 2rem 1.5rem 4rem;
-  margin: 0 auto;
-}
-
 /* Space between the intro paragraph and the hero cards */
 #home-content .hero-cards {
   margin-top: 1.5rem;
@@ -48,39 +40,3 @@ html.dark body:has(#home-content) nav[aria-label='Main'] a[aria-current='locatio
   margin: -3.75% -3.75% 0;
 }
 
-/* Custom-mode pages skip Mintlify's prose typography; restore it for the homepage.
-   Direct-child selectors only, so headings inside components (e.g. card titles,
-   which are h2 elements) keep their component styling. */
-#home-content > h1 {
-  font-size: 2.25rem;
-  line-height: 2.75rem;
-  font-weight: 600;
-  letter-spacing: -0.025em;
-  color: rgb(17 24 39);
-  margin-bottom: 0.75rem;
-}
-html.dark #home-content > h1 {
-  color: rgb(255 255 255);
-}
-#home-content > h2 {
-  font-size: 1.25rem;
-  line-height: 1.75rem;
-  font-weight: 600;
-  letter-spacing: -0.0125em;
-  color: rgb(17 24 39);
-  margin-top: 2.5rem;
-  margin-bottom: 0.75rem;
-}
-html.dark #home-content > h2 {
-  color: rgb(255 255 255);
-}
-#home-content > p {
-  font-size: 1rem;
-  line-height: 1.625rem;
-  color: rgb(75 85 99);
-  margin-bottom: 1.5rem;
-  max-width: 44rem;
-}
-html.dark #home-content > p {
-  color: rgb(156 163 175);
-}
