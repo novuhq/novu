@@ -343,14 +343,6 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
         agentIntegrationId,
         integrationIdentifier: removed?.integration.identifier,
       });
-
-      const removedIdentifier = removed?.integration.identifier;
-      const storedIdentifier = loadLastSelectedChannel(currentEnvironment?._id, agent.identifier);
-
-      if (removedIdentifier && storedIdentifier === removedIdentifier) {
-        clearLastSelectedChannel(currentEnvironment?._id, agent.identifier);
-      }
-
       await queryClient.invalidateQueries({
         queryKey: getAgentIntegrationsQueryKey(currentEnvironment?._id, agent.identifier),
       });
