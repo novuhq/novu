@@ -903,6 +903,7 @@
                       "framework/quickstart/svelte",
                       "framework/quickstart/nuxt",
                       "framework/quickstart/h3",
+                      "framework/quickstart/hono",
                       "framework/quickstart/lambda"
                     ]
                   }
