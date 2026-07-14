@@ -14,6 +14,7 @@ import {
   promptConfirmScaffoldInConsole,
 } from './console-bridge-scaffold-prompts';
 import { printConnectSuccess, shouldSkipConnectSuccessSummary } from './print-connect-success';
+import { createPendingInteractionRegistry, type PendingInteractionRegistry } from './register-pending-interaction';
 import { restoreStdinForConsole } from './restore-stdin-for-console';
 import { type ConnectStore, createConnectStore } from './store';
 import type {
@@ -38,6 +39,7 @@ export function mountConnectUI(_params: MountConnectUIParams): MountConnectUIRes
   let exitInk: (() => void) | undefined;
   let terminalReleased = false;
   let doneResolved = false;
+  const pendingInteraction = createPendingInteractionRegistry();
   let resolveDone!: (code: number) => void;
   const done = new Promise<number>((resolve) => {
     resolveDone = resolve;
@@ -78,6 +80,7 @@ export function mountConnectUI(_params: MountConnectUIParams): MountConnectUIRes
       return;
     }
 
+    pendingInteraction.cancel();
     resolveDoneOnce(Number(process.exitCode ?? 0));
   });
 
@@ -117,6 +120,7 @@ export function mountConnectUI(_params: MountConnectUIParams): MountConnectUIRes
     shutdown,
     releaseTerminal,
     isTerminalReleased: () => terminalReleased,
+    pendingInteraction,
   });
 
   return { ui, done };
@@ -128,6 +132,7 @@ function createUiController(
     shutdown: () => Promise<number>;
     releaseTerminal: () => Promise<void>;
     isTerminalReleased: () => boolean;
+    pendingInteraction: PendingInteractionRegistry;
   }
 ): ConnectUI {
   return {
@@ -274,8 +279,8 @@ function createUiController(
       });
     },
     pickLlmAuthKind({ connectMode }) {
-      return new Promise<LlmAuthKind>((resolve) => {
-        store.phase.set({ kind: 'pick-llm-auth', connectMode, resolve });
+      return ctx.pendingInteraction.register<LlmAuthKind>((resolve, reject) => {
+        store.phase.set({ kind: 'pick-llm-auth', connectMode, resolve, reject });
       });
     },
     scaffoldingBridge({ variant }) {
