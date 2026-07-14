@@ -1508,6 +1508,24 @@ export const cmTelecomConfig: IConfigCredential[] = [
   ...smsConfigBase,
 ];
 
+export const ruachSmsConfig: IConfigCredential[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    description: 'Your Ruach SMS API key',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.ClientId,
+    displayName: 'Client ID',
+    description: 'Your Ruach SMS client identifier',
+    type: 'string',
+    required: true,
+  },
+  ...smsConfigBase,
+];
+
 export const telegramConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApiToken,

@@ -130,6 +130,7 @@ export enum SmsProviderIdEnum {
   Sinch = 'sinch',
   ISendProSms = 'isendpro-sms',
   CmTelecom = 'cm-telecom',
+  RuachSms = 'ruach-sms',
 }
 
 export enum ChatProviderIdEnum {

@@ -27,6 +27,7 @@ import {
   nexmoConfig,
   plivoConfig,
   ringCentralConfig,
+  ruachSmsConfig,
   sendchampConfig,
   simpleTextingConfig,
   sinchConfig,
@@ -349,5 +350,13 @@ export const smsProviders: IProviderConfig[] = [
     credentials: cmTelecomConfig,
     docReference: 'https://developers.cm.com/messaging/docs/sms',
     logoFileName: { light: 'cm-telecom.svg', dark: 'cm-telecom.svg' },
+  },
+  {
+    id: SmsProviderIdEnum.RuachSms,
+    displayName: 'Ruach SMS',
+    channel: ChannelTypeEnum.SMS,
+    credentials: ruachSmsConfig,
+    docReference: 'https://docs.ruach.ng/',
+    logoFileName: { light: 'ruach-sms.svg', dark: 'ruach-sms.svg' },
   },
 ];
