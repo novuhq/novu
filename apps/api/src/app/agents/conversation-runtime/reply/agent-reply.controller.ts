@@ -82,7 +82,8 @@ export class AgentReplyController {
       type: 'object',
       properties: {
         data: {
-          oneOf: [{ $ref: getSchemaPath(SentMessageInfoDto) }, { type: 'null' }],
+          allOf: [{ $ref: getSchemaPath(SentMessageInfoDto) }],
+          nullable: true,
         },
       },
     },
