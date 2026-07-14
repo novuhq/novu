@@ -1,6 +1,6 @@
 import { type IIntegration, providers as novuProviders } from '@novu/shared';
 import { useQuery } from '@tanstack/react-query';
-import { RiAddLine, RiArrowRightLine, RiArrowRightSLine } from 'react-icons/ri';
+import { RiAddLine, RiArrowRightLine, RiArrowRightSLine, RiSpam2Fill } from 'react-icons/ri';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   type AgentIntegrationLink,
@@ -36,8 +36,10 @@ function ProviderCard({ link, to }: { link: AgentIntegrationLink; to: string }) 
     link.integration.providerId,
     providerMeta?.displayName ?? link.integration.name
   );
-  // Only flag connected channels — unconnected ones surface as "Action needed" in the channels tab.
-  const exceedsPlan = Boolean(link.exceedsPlanLimit) && isAgentIntegrationConnected(link);
+  const isConnected = isAgentIntegrationConnected(link);
+  // Gate the plan-limit indicator to connected channels; unconnected ones surface the action-needed overlay instead.
+  const exceedsPlan = Boolean(link.exceedsPlanLimit) && isConnected;
+  const showActionNeeded = !isConnected;
 
   return (
     <Link
@@ -45,12 +47,18 @@ function ProviderCard({ link, to }: { link: AgentIntegrationLink; to: string }) 
       className="flex min-w-[150px] max-w-[160px] flex-1 flex-col gap-1.5 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
       <div
-        className={cn(addChannelCardSurfaceClassName, 'transition-colors hover:border-stroke-soft')}
+        className={cn(addChannelCardSurfaceClassName, 'relative transition-colors hover:border-stroke-soft')}
         style={addChannelCardSurfaceStyle}
       >
         <div className="flex size-10 items-center justify-center overflow-hidden rounded-full bg-white p-2 shadow-[0px_0.75px_1px_0.5px_rgba(41,41,41,0.04),0px_1.5px_1.5px_-0.75px_rgba(41,41,41,0.02),0px_3px_3px_-1.5px_rgba(41,41,41,0.04),0px_6px_6px_-3px_rgba(41,41,41,0.04),0px_12px_12px_-6px_rgba(41,41,41,0.04),0px_24px_24px_-12px_rgba(41,41,41,0.04),0px_0px_0px_8px_rgba(41,41,41,0.04)]">
           <ProviderIcon providerId={link.integration.providerId} providerDisplayName={displayName} className="size-5" />
         </div>
+        {showActionNeeded && (
+          <>
+            <RiSpam2Fill aria-hidden="true" className="text-warning-base absolute right-[2.5px] top-[2.5px] size-4" />
+            <span className="sr-only">Action needed</span>
+          </>
+        )}
       </div>
       <span className="flex items-center gap-1">
         <span className="text-text-strong text-label-xs min-w-0 truncate font-medium leading-4">{displayName}</span>
