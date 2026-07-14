@@ -10,7 +10,10 @@ import {
   listAgentEmoji,
   updateAgent,
 } from '@/api/agents';
-import { SUBSCRIBER_ACCESS_SETTING_LABEL, SUBSCRIBER_ACCESS_TOOLTIP } from '@/components/agents/subscriber-access-copy';
+import {
+  getSubscriberAccessToggleTooltip,
+  SUBSCRIBER_ACCESS_SETTING_LABEL,
+} from '@/components/agents/subscriber-access-copy';
 import { HelpTooltipIndicator } from '@/components/primitives/help-tooltip-indicator';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
@@ -226,7 +229,7 @@ export function AgentBehaviorSection({ agent }: AgentBehaviorSectionProps) {
             )}
           </ToggleRow>
 
-          <ToggleRow label={SUBSCRIBER_ACCESS_SETTING_LABEL} tooltip={SUBSCRIBER_ACCESS_TOOLTIP}>
+          <ToggleRow label={SUBSCRIBER_ACCESS_SETTING_LABEL} tooltip={getSubscriberAccessToggleTooltip(agent.runtime)}>
             <BehaviorSwitch
               checked={subscriberAccessOpen}
               disabled={isPending}
