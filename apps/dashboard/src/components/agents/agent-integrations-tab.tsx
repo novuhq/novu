@@ -26,6 +26,12 @@ import { buildRoute } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
 import { AddChannelPicker } from './add-channel-picker';
+import {
+  clearLastSelectedChannel,
+  loadLastSelectedChannel,
+  saveLastSelectedChannel,
+} from './agent-channel-selection-storage';
+import { AgentChannelsEmptyState } from './agent-channels-empty-state';
 import { ResolveAgentIntegrationGuide } from './agent-integration-guides/resolve-agent-integration-guide';
 import { ChannelsPlanLimitBanner } from './agents-plan-limit-banner';
 import { getExceedsPlanTooltipCopy } from './exceeds-plan-indicator';
@@ -113,13 +119,6 @@ function groupLinksByChannel(links: AgentIntegrationLink[]) {
   return groups;
 }
 
-function getFirstLinkedIntegrationIdentifier(links: AgentIntegrationLink[]): string | undefined {
-  const grouped = groupLinksByChannel(links);
-  const first = grouped[0]?.items[0];
-
-  return first?.integration.identifier;
-}
-
 type IntegrationsHubPlaceholderProps = {
   title: string;
   description: ReactNode;
@@ -197,12 +196,7 @@ function IntegrationsMainPanel({
   }
 
   if (links.length > 0) {
-    return (
-      <IntegrationsHubPlaceholder
-        title="Select a channel"
-        description="Choose a connected channel on the left to open its setup guide and finish configuration."
-      />
-    );
+    return <AgentChannelsEmptyState />;
   }
 
   return (
@@ -246,9 +240,11 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
         integrationIdentifier: encodeURIComponent(nextIntegrationIdentifier),
       })}${location.search}`
     );
+    saveLastSelectedChannel(currentEnvironment._id, agent.identifier, nextIntegrationIdentifier);
   };
 
   const handleBackFromGuide = () => {
+    clearLastSelectedChannel(currentEnvironment?._id, agent.identifier);
     navigate(integrationsHubPath, { state: { skipIntegrationsRedirect: true } });
   };
 
@@ -288,9 +284,17 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
       return;
     }
 
-    const firstIntegrationIdentifier = getFirstLinkedIntegrationIdentifier(linkedRows);
+    const storedIdentifier = loadLastSelectedChannel(currentEnvironment._id, agent.identifier);
 
-    if (!firstIntegrationIdentifier) {
+    if (!storedIdentifier) {
+      return;
+    }
+
+    const isStillLinked = linkedRows.some((row) => row.integration.identifier === storedIdentifier);
+
+    if (!isStillLinked) {
+      clearLastSelectedChannel(currentEnvironment._id, agent.identifier);
+
       return;
     }
 
@@ -298,13 +302,14 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
       `${buildRoute(agentRoutes.integrationDetail, {
         environmentSlug: currentEnvironment.slug,
         agentIdentifier: encodeURIComponent(agent.identifier),
-        integrationIdentifier: encodeURIComponent(firstIntegrationIdentifier),
+        integrationIdentifier: encodeURIComponent(storedIdentifier),
       })}${location.search}`,
       { replace: true }
     );
   }, [
     agent.identifier,
     agentRoutes.integrationDetail,
+    currentEnvironment?._id,
     currentEnvironment?.slug,
     linkedRows,
     listQuery.isSuccess,
@@ -338,6 +343,14 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
         agentIntegrationId,
         integrationIdentifier: removed?.integration.identifier,
       });
+
+      const removedIdentifier = removed?.integration.identifier;
+      const storedIdentifier = loadLastSelectedChannel(currentEnvironment?._id, agent.identifier);
+
+      if (removedIdentifier && storedIdentifier === removedIdentifier) {
+        clearLastSelectedChannel(currentEnvironment?._id, agent.identifier);
+      }
+
       await queryClient.invalidateQueries({
         queryKey: getAgentIntegrationsQueryKey(currentEnvironment?._id, agent.identifier),
       });
@@ -364,6 +377,16 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
     integrationIdentifier != null
       ? links.find((link) => link.integration.identifier === integrationIdentifier)
       : undefined;
+
+  const selectedIntegrationIdentifier = selectedIntegration?.integration.identifier;
+
+  useEffect(() => {
+    if (!selectedIntegrationIdentifier) {
+      return;
+    }
+
+    saveLastSelectedChannel(currentEnvironment?._id, agent.identifier, selectedIntegrationIdentifier);
+  }, [currentEnvironment?._id, agent.identifier, selectedIntegrationIdentifier]);
 
   const selectedIntegrationUpdatedAtMs =
     selectedIntegration != null ? Date.parse(selectedIntegration.updatedAt) : undefined;
