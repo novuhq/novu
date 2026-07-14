@@ -1,4 +1,5 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
+import { ConnectUserCancelledError } from '../../errors';
 import {
   resolveClaudeCredentialsPath,
   resolveCodexHome,
@@ -6,10 +7,6 @@ import {
   runInteractiveCli,
 } from './subscription-auth';
 import { npxSubscriptionCliArgs, SUBSCRIPTION_CLI_NPX_SPECS } from './subscription-cli-specs';
-
-afterEach(() => {
-  vi.restoreAllMocks();
-});
 
 describe('subscription-cli-specs', () => {
   it('pins npx package versions for OAuth fallbacks', () => {
@@ -31,28 +28,17 @@ describe('subscription-auth paths', () => {
 });
 
 describe('runInteractiveCli', () => {
-  it('notifies after forwarding an OAuth URL', async () => {
-    const events: string[] = [];
-    vi.spyOn(process.stdout, 'write').mockImplementation((chunk) => {
-      events.push(String(chunk));
+  it('resolves when the child exits cleanly', async () => {
+    await expect(runInteractiveCli(process.execPath, ['-e', 'process.exit(0)'])).resolves.toBeUndefined();
+  });
 
-      return true;
-    });
-    const runWithAuthUrlCallback = runInteractiveCli as unknown as (
-      command: string,
-      args: string[],
-      options: { onAuthUrl: () => void }
-    ) => Promise<void>;
+  it('treats a SIGINT exit as user cancellation', async () => {
+    await expect(
+      runInteractiveCli(process.execPath, ['-e', 'process.kill(process.pid, "SIGINT")'])
+    ).rejects.toBeInstanceOf(ConnectUserCancelledError);
+  });
 
-    await runWithAuthUrlCallback(
-      process.execPath,
-      ['-e', "console.log('https://auth.openai.com/oauth/authorize?test=1')"],
-      { onAuthUrl: () => events.push('WAITING') }
-    );
-
-    const output = events.join('');
-
-    expect(output).toContain('https://auth.openai.com/oauth/authorize?test=1');
-    expect(output.indexOf('WAITING')).toBeGreaterThan(output.indexOf('https://auth.openai.com'));
+  it('rejects with a command failure for a non-zero exit', async () => {
+    await expect(runInteractiveCli(process.execPath, ['-e', 'process.exit(3)'])).rejects.toThrow(/exit 3/);
   });
 });

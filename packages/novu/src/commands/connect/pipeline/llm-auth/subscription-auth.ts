@@ -3,10 +3,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import spawn from 'cross-spawn';
-
-type RunInteractiveCliOptions = {
-  onAuthUrl?: () => void;
-};
+import { ConnectUserCancelledError } from '../../errors';
+import { restoreStdinForConsole } from '../../restore-stdin-for-console';
 
 export function commandExists(command: string): boolean {
   try {
@@ -18,38 +16,67 @@ export function commandExists(command: string): boolean {
   }
 }
 
-export async function runInteractiveCli(
-  command: string,
-  args: string[],
-  options: RunInteractiveCliOptions = {}
-): Promise<void> {
+/**
+ * Run a vendor OAuth CLI (`codex`, `claude`, or an `npx` fallback) with the
+ * terminal fully handed over via `stdio: 'inherit'`. The child owns stdin,
+ * stdout, and Ctrl+C/Ctrl+D directly — piping stdout would break both the
+ * pasted-code prompt and signal handling, leaving the user stuck on the
+ * "waiting for browser authentication" screen with no way out.
+ *
+ * The parent still installs a SIGINT/SIGTERM handler so a first Ctrl+C asks
+ * the child to quit gracefully and a second one force-kills it — vendor CLIs
+ * sometimes trap SIGINT during the browser wait, so this guarantees an escape.
+ */
+export async function runInteractiveCli(command: string, args: string[]): Promise<void> {
+  // The Ink stdin stream must stay paused so it doesn't steal bytes (the
+  // pasted OAuth code) from the inherited child sharing the same TTY fd.
+  restoreStdinForConsole();
+
   await new Promise<void>((resolve, reject) => {
-    const child = spawn(command, args, { stdio: ['inherit', 'pipe', 'pipe'] });
-    let authUrlReported = false;
-    let outputTail = '';
+    const child = spawn(command, args, { stdio: 'inherit' });
+    let settled = false;
+    let interruptCount = 0;
 
-    const forwardOutput = (chunk: Buffer, target: NodeJS.WriteStream) => {
-      target.write(chunk);
-      outputTail = `${outputTail}${chunk.toString('utf8')}`.slice(-4096);
-
-      if (!authUrlReported && /https?:\/\/\S+/.test(outputTail)) {
-        authUrlReported = true;
-        options.onAuthUrl?.();
+    const settle = (fn: () => void) => {
+      if (settled) {
+        return;
       }
+
+      settled = true;
+      process.off('SIGINT', onSigint);
+      process.off('SIGTERM', onSigterm);
+      fn();
     };
 
-    child.stdout?.on('data', (chunk: Buffer) => forwardOutput(chunk, process.stdout));
-    child.stderr?.on('data', (chunk: Buffer) => forwardOutput(chunk, process.stderr));
+    const onSigint = () => {
+      interruptCount += 1;
+      // First Ctrl+C: ask the CLI to quit. Second: force-kill in case it
+      // trapped SIGINT and kept waiting on the OAuth callback.
+      child.kill(interruptCount >= 2 ? 'SIGKILL' : 'SIGINT');
+    };
 
-    child.on('error', reject);
-    child.on('close', (code) => {
+    const onSigterm = () => {
+      child.kill('SIGTERM');
+    };
+
+    process.on('SIGINT', onSigint);
+    process.on('SIGTERM', onSigterm);
+
+    child.on('error', (error) => settle(() => reject(error)));
+    child.on('close', (code, signal) => {
       if (code === 0) {
-        resolve();
+        settle(() => resolve());
 
         return;
       }
 
-      reject(new Error(`Command failed: ${command} ${args.join(' ')} (exit ${code ?? 'unknown'})`));
+      if (code === 130 || signal === 'SIGINT' || signal === 'SIGTERM' || signal === 'SIGKILL') {
+        settle(() => reject(new ConnectUserCancelledError()));
+
+        return;
+      }
+
+      settle(() => reject(new Error(`Command failed: ${command} ${args.join(' ')} (exit ${code ?? 'unknown'})`)));
     });
   });
 }
