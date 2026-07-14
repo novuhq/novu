@@ -12,7 +12,7 @@ import { ProviderIcon } from '@/components/integrations/components/provider-icon
 import { Skeleton } from '@/components/primitives/skeleton';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useAgentRoutes } from '@/hooks/use-agent-routes';
-import { getAgentChannelDisplayName } from '@/utils/agent-channel-provider-display';
+import { getAgentChannelDisplayName } from '@/utils/agent-email-provider-display';
 import { buildRoute } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { AddChannelPicker } from './add-channel-picker';

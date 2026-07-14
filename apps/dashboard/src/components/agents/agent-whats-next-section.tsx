@@ -19,7 +19,7 @@ import { useAgentChannelsRolloutStatus } from '@/hooks/use-agent-channels-rollou
 import { useAgentRoutes } from '@/hooks/use-agent-routes';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useWhatsNextGuideSession } from '@/hooks/use-whats-next-default-expanded';
-import { getAgentChannelDisplayName } from '@/utils/agent-channel-provider-display';
+import { getAgentChannelDisplayName } from '@/utils/agent-email-provider-display';
 import { buildRoute } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { shouldShowAgentWhatsNextSection } from '@/utils/whats-next-guide';

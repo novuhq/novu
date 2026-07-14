@@ -23,7 +23,8 @@ import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { buildEdgeFadeMask, useHorizontalScrollEdges } from '@/hooks/use-horizontal-scroll-edges';
 import { useIsAgentEmailAvailable } from '@/hooks/use-is-agent-email-available';
 import { useLinkAgentIntegration } from '@/hooks/use-link-agent-integration';
-import { getAgentChannelDisplayName, getAgentChannelIconFileName } from '@/utils/agent-channel-provider-display';
+import { getAgentChannelDisplayName } from '@/utils/agent-email-provider-display';
+import { getProviderSquareIconFileName } from '@/utils/provider-square-icon';
 import { ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { openInNewTab } from '@/utils/url';
@@ -47,8 +48,25 @@ const PROVIDER_SETUP_TIME: Record<string, string> = {
   zoom: '~ 2 minutes',
 };
 
+// The carousel is the only surface that brands the Sendblue channel as "iMessage" (label + icon);
+// every other surface keeps the canonical Sendblue name via getAgentChannelDisplayName.
+const CAROUSEL_IMESSAGE_LABEL = 'iMessage';
+const CAROUSEL_IMESSAGE_ICON_FILE = 'imessages';
+
 function getProviderCardDisplayName(providerId: string, displayName: string): string {
+  if (providerId === ChatProviderIdEnum.Sendblue) {
+    return CAROUSEL_IMESSAGE_LABEL;
+  }
+
   return getAgentChannelDisplayName(providerId, displayName);
+}
+
+function getProviderCardIconFileName(providerId: string): string {
+  if (providerId === ChatProviderIdEnum.Sendblue) {
+    return CAROUSEL_IMESSAGE_ICON_FILE;
+  }
+
+  return getProviderSquareIconFileName(providerId);
 }
 
 const CARD_PROVIDER_ICON_CLASS = 'size-6 shrink-0 object-contain';
@@ -58,7 +76,7 @@ function CardProviderIcon({ providerId, displayName }: { providerId: string; dis
     <ProviderIcon
       providerId={providerId}
       providerDisplayName={displayName}
-      iconFileName={getAgentChannelIconFileName(providerId)}
+      iconFileName={getProviderCardIconFileName(providerId)}
       className={CARD_PROVIDER_ICON_CLASS}
     />
   );

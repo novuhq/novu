@@ -13,7 +13,7 @@ import { createIntegration, deleteIntegration } from '@/api/integrations';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useTelemetry } from '@/hooks/use-telemetry';
-import { AGENT_EMAIL_PROVIDER_LABEL, getAgentChannelDisplayName } from '@/utils/agent-channel-provider-display';
+import { AGENT_EMAIL_PROVIDER_LABEL, getAgentChannelDisplayName } from '@/utils/agent-email-provider-display';
 import { QueryKeys } from '@/utils/query-keys';
 import { TelemetryEvent } from '@/utils/telemetry';
 

@@ -10,7 +10,7 @@ import { IS_SELF_HOSTED_EE } from '@/config';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { useWhatsNextGuideSession } from '@/hooks/use-whats-next-default-expanded';
-import { AGENT_EMAIL_PROVIDER_LABEL } from '@/utils/agent-channel-provider-display';
+import { AGENT_EMAIL_PROVIDER_LABEL } from '@/utils/agent-email-provider-display';
 import { shouldShowWhatsNextGuide } from '@/utils/whats-next-guide';
 import { AgentIntegrationGuideLayout } from './agent-integration-guide-layout';
 import { AgentIntegrationGuideTransition } from './agent-integration-guide-transition';
