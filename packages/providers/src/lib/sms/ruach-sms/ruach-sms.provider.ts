@@ -41,7 +41,8 @@ export class RuachSmsProvider extends BaseProvider implements ISmsProvider {
       },
     });
 
-    if (data?.ErrorCode !== 0) {
+    // Ruach may encode ErrorCode as a number (0) or a string ("0"), so normalize before comparing.
+    if (String(data?.ErrorCode) !== '0') {
       throw new Error(`Ruach SMS request failed (${data?.ErrorCode}): ${data?.ErrorDescription}`);
     }
 
