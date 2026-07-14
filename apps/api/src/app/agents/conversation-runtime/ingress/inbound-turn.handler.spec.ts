@@ -546,6 +546,8 @@ describe('AgentInboundHandler', () => {
         ...config,
         platform: AgentPlatformEnum.EMAIL,
         integrationIdentifier: 'email-main',
+        isManaged: true,
+        subscriberAccess: AgentSubscriberAccessEnum.RESTRICTED,
       };
       const senderEmail = 'unknown@example.com';
       const { handler, managedAgentService, outboundGateway } = makeHandler({
@@ -653,6 +655,7 @@ describe('AgentInboundHandler', () => {
         platform: AgentPlatformEnum.SLACK,
         isKeyless: true,
         isManaged: true,
+        subscriberAccess: AgentSubscriberAccessEnum.RESTRICTED,
       };
       const { handler, managedAgentService, outboundGateway } = makeHandler({
         subscriberResolve: sinon.stub().resolves(null),
@@ -1009,8 +1012,8 @@ describe('AgentInboundHandler', () => {
 
       expect(resolveOrProvision.called).to.equal(false);
       expect(managedAgentService.dispatch.called).to.equal(false);
-      // Handler skips denial for open Telegram groups; managed residual still replies.
-      expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
+      // Managed open leftovers (Telegram group) skip silently — no denial spam.
+      expect(outboundGateway.replyOnThread.called).to.equal(false);
     });
 
     it('should dispatch custom-code open Telegram group turns with null subscriber and no denial reply', async () => {

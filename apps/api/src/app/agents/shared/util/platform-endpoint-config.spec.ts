@@ -20,8 +20,7 @@ describe('shouldAutoProvisionInbound', () => {
           platform,
           subscriberAccess: AgentSubscriberAccessEnum.RESTRICTED,
           isManaged: true,
-          telegramChatId: '42',
-          platformUserId: '42',
+          isTelegramDm: true,
         }),
         `${platform} should not auto-provision when restricted`
       ).to.equal(false);
@@ -35,8 +34,7 @@ describe('shouldAutoProvisionInbound', () => {
           platform,
           subscriberAccess: AgentSubscriberAccessEnum.OPEN,
           isManaged: false,
-          telegramChatId: '42',
-          platformUserId: '42',
+          isTelegramDm: true,
         }),
         `${platform} should not auto-provision for custom-code`
       ).to.equal(false);
@@ -81,14 +79,13 @@ describe('shouldAutoProvisionInbound', () => {
     ).to.equal(false);
   });
 
-  it('returns true for open Telegram only when chatId equals platformUserId (DM)', () => {
+  it('returns true for open Telegram only when isTelegramDm is true', () => {
     expect(
       shouldAutoProvisionInbound({
         platform: AgentPlatformEnum.TELEGRAM,
         subscriberAccess: AgentSubscriberAccessEnum.OPEN,
         isManaged: true,
-        telegramChatId: '42',
-        platformUserId: '42',
+        isTelegramDm: true,
       })
     ).to.equal(true);
 
@@ -97,8 +94,7 @@ describe('shouldAutoProvisionInbound', () => {
         platform: AgentPlatformEnum.TELEGRAM,
         subscriberAccess: AgentSubscriberAccessEnum.OPEN,
         isManaged: true,
-        telegramChatId: '-100123',
-        platformUserId: '42',
+        isTelegramDm: false,
       })
     ).to.equal(false);
 

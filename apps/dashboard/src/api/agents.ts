@@ -61,9 +61,10 @@ export type AgentBehavior = {
   acknowledgeOnReceived?: boolean;
   reactionOnResolved?: string | null;
   /**
-   * Channel-agnostic. `open` auto-creates a lightweight subscriber from an
-   * unknown sender so the agent can reply on any channel; `restricted` rejects
-   * unknown senders. Managed creates default to `open`; self-hosted to
+   * Channel-agnostic. `open` on managed agents auto-creates a lightweight
+   * subscriber from an anonymous sender; on custom-code agents the turn is
+   * forwarded to the bridge with a null subscriber. `restricted` rejects
+   * anonymous senders. Managed creates default to `open`; self-hosted to
    * `restricted`. Unset resolves as `restricted`.
    */
   subscriberAccess?: AgentSubscriberAccess;

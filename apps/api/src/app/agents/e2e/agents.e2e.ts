@@ -139,11 +139,11 @@ describe('Agents API - /agents #novu-v2', () => {
     await session.testAgent.delete(`/v1/agents/${encodeURIComponent(identifier)}`);
   });
 
-  it('should default subscriberAccess to restricted for self-hosted agents', async () => {
-    const identifier = `e2e-subscriber-access-default-${Date.now()}`;
+  it('should update and return subscriberAccess behavior', async () => {
+    const identifier = `e2e-subscriber-access-${Date.now()}`;
 
     const createRes = await session.testAgent.post('/v1/agents').send({
-      name: 'Access Default Agent',
+      name: 'Access Agent',
       identifier,
     });
 
@@ -158,22 +158,7 @@ describe('Agents API - /agents #novu-v2', () => {
       },
       '*'
     );
-
     expect(persisted?.behavior?.subscriberAccess).to.equal('restricted');
-
-    await session.testAgent.delete(`/v1/agents/${encodeURIComponent(identifier)}`);
-  });
-
-  it('should update and return subscriberAccess behavior', async () => {
-    const identifier = `e2e-subscriber-access-${Date.now()}`;
-
-    const createRes = await session.testAgent.post('/v1/agents').send({
-      name: 'Access Agent',
-      identifier,
-    });
-
-    expect(createRes.status).to.equal(201);
-    expect(createRes.body.data.behavior?.subscriberAccess).to.equal('restricted');
 
     const openRes = await session.testAgent.patch(`/v1/agents/${encodeURIComponent(identifier)}`).send({
       behavior: { subscriberAccess: 'open' },

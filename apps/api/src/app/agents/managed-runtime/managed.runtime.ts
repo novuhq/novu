@@ -3,7 +3,6 @@ import { DEMO_QUOTA_EXHAUSTED_REPLY, DemoQuotaExhaustedError, PinoLogger } from 
 import { InboundAckService } from '../conversation-runtime/ack/inbound-ack.service';
 import { AgentConversationService } from '../conversation-runtime/conversation/agent-conversation.service';
 import { OutboundGateway } from '../conversation-runtime/egress/outbound.gateway';
-import { postUnresolvedSubscriberAccessReply } from '../conversation-runtime/reply/post-unresolved-subscriber-access-reply';
 import type { AgentRuntime } from '../conversation-runtime/runtime/agent-runtime.port';
 import type { ConversationTurn } from '../conversation-runtime/runtime/conversation-turn';
 import { applyPlatformThreadIdToThread } from '../conversation-runtime/runtime/platform-thread.util';
@@ -39,12 +38,18 @@ export class ManagedRuntime implements AgentRuntime {
       return;
     }
 
-    // Keyless email demo agents bypass the subscriber gate: the ephemeral env has no
-    // subscribers, and abuse is bounded by the per-conversation demo cap + claim CTA.
+    // Subscriber-access denial / open leftovers are owned by the inbound handler gate.
+    // Keyless email demos may reach here without a subscriber (handler bypass).
     const isKeylessEmailDemo = turn.config.isKeyless && turn.config.platform === AgentPlatformEnum.EMAIL;
-
     if (!turn.subscriber && !isKeylessEmailDemo) {
-      await this.replyUnresolvedSubscriberAccess(turn);
+      this.logger.warn(
+        {
+          agentId: turn.agentId,
+          conversationId: turn.conversation._id,
+          platform: turn.config.platform,
+        },
+        'Managed dispatch reached without subscriber after handler gate — skipping'
+      );
 
       return;
     }
@@ -138,17 +143,5 @@ export class ManagedRuntime implements AgentRuntime {
         },
       }
     );
-  }
-
-  private async replyUnresolvedSubscriberAccess(turn: ConversationTurn): Promise<void> {
-    // Residual path for open leftovers (e.g. Telegram group) that skipped the
-    // handler-level gate. Primary denial for restricted/error lives in
-    // AgentInboundHandler via the same shared helper.
-    await postUnresolvedSubscriberAccessReply({
-      turn,
-      logger: this.logger,
-      replyOnThread: (thread, msg, opts) => this.outboundGateway.replyOnThread(thread, msg, opts),
-      getPrimaryChannel: (conversation) => this.conversationService.getPrimaryChannel(conversation),
-    });
   }
 }

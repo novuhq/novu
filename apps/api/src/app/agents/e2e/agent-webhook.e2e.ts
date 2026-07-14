@@ -758,9 +758,6 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
 
       expect(conversation).to.exist;
 
-      // Lookup is exact on the normalized inbound address, so Mixed@Example.com
-      // must not win. Open-access agents then auto-provision a separate row for
-      // mixed@example.com (setupAgentTestContext sets subscriberAccess=open).
       const subParticipant = conversation!.participants.find(
         (p) => p.type === ConversationParticipantTypeEnum.SUBSCRIBER
       );

@@ -26,6 +26,9 @@ import {
 } from '../../shared/util/phone-normalization';
 import {
   AUTO_PROVISION_PLATFORMS,
+  type AutoProvisionEndpointType,
+  getAutoProvisionEndpointConfig,
+  isAutoProvisionPlatform,
   isOpenAccessIdentityPlatform,
   PLATFORM_ENDPOINT_CONFIG,
 } from '../../shared/util/platform-endpoint-config';
@@ -222,7 +225,7 @@ export class AgentSubscriberResolver {
    * Soft-fail lookup-or-provision for open-access email/WhatsApp/Sendblue. Identity
    * lives on Subscriber.email / Subscriber.phone (no ChannelEndpoint). Provisioning
    * errors become an `error` outcome so the inbound webhook keeps flowing.
-   * Connect-org subscriber caps do not apply here (same as email/WhatsApp).
+   * Connect-org subscriber caps do not apply here.
    */
   private async resolveOrProvisionOpenAccessIdentity(params: ResolveOrProvisionParams): Promise<SubscriberResolution> {
     if (!isOpenAccessIdentityPlatform(params.platform)) {
@@ -594,10 +597,11 @@ export class AgentSubscriberResolver {
   }
 
   private async provisionSubscriberAndEndpoint(params: ResolveOrProvisionParams): Promise<string> {
-    const endpointConfig = PLATFORM_ENDPOINT_CONFIG[params.platform];
-    if (!endpointConfig) {
+    if (!isAutoProvisionPlatform(params.platform)) {
       throw new Error(`No endpoint config for auto-provision platform "${params.platform}"`);
     }
+
+    const endpointConfig = getAutoProvisionEndpointConfig(params.platform);
 
     /**
      * Deterministic subscriberId derived from the platform identity tuple
@@ -638,7 +642,7 @@ export class AgentSubscriberResolver {
      * platform endpoints (e.g. Slack) would fail their strict endpoint validators, so it is gated
      * on the Teams endpoint type and the tenant being present.
      */
-    const endpointType = endpointConfig.endpointType as AutoProvisionEndpointType;
+    const endpointType = endpointConfig.endpointType;
     const endpoint = buildAutoProvisionEndpoint(
       endpointType,
       params.platformUserId,
@@ -784,11 +788,6 @@ function buildPlatformSubscriberId(params: {
 
   return `${AUTO_PROVISIONED_SUBSCRIBER_ID_PREFIX}${fingerprint.slice(0, 12)}`;
 }
-
-type AutoProvisionEndpointType =
-  | typeof ENDPOINT_TYPES.SLACK_USER
-  | typeof ENDPOINT_TYPES.MS_TEAMS_USER
-  | typeof ENDPOINT_TYPES.TELEGRAM_CHAT;
 
 function buildAutoProvisionEndpoint(
   endpointType: AutoProvisionEndpointType,

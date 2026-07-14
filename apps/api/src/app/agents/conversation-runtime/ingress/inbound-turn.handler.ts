@@ -12,7 +12,7 @@ import {
 } from '@novu/dal';
 import type { AgentAction } from '@novu/framework';
 import { parseApprovalActionId } from '@novu/framework/internal';
-import { AgentSubscriberAccessEnum, ENDPOINT_TYPES } from '@novu/shared';
+import { ENDPOINT_TYPES } from '@novu/shared';
 import type { CardElement, EmojiValue, Message, Thread } from 'chat';
 import { ConnectClaimTokenService } from '../../../connect/services/connect-claim-token.service';
 import { parsePositiveIntEnv } from '../../../keyless/keyless-abuse.constants';
@@ -45,7 +45,7 @@ import {
   ConnectOrgSubscriberCapExceededError,
 } from '../conversation/agent-subscriber-resolver.service';
 import { OutboundGateway } from '../egress/outbound.gateway';
-import { postUnresolvedSubscriberAccessReply } from '../reply/post-unresolved-subscriber-access-reply';
+import { maybeReplyUnresolvedSubscriberAccess } from '../reply/maybe-reply-unresolved-subscriber-access';
 import type { BridgeReaction } from '../runtime/bridge-executor.service';
 import type { ConversationTurn } from '../runtime/conversation-turn';
 import { RuntimeResolver } from '../runtime/runtime-resolver.service';
@@ -297,13 +297,13 @@ export class AgentInboundHandler implements OnModuleInit {
 
     // Open-access agents may lookup-or-provision; restricted stay lookup-only.
     // Keyless email demos stay lookup-only until tool approval.
+    const telegramChatId = config.platform === AgentPlatformEnum.TELEGRAM ? extractTelegramChatId(thread) : undefined;
     const canAutoProvision = shouldAutoProvisionInbound({
       platform: config.platform,
       subscriberAccess: config.subscriberAccess,
       isManaged: config.isManaged,
       isKeyless: config.isKeyless,
-      telegramChatId: config.platform === AgentPlatformEnum.TELEGRAM ? extractTelegramChatId(thread) : undefined,
-      platformUserId: message.author.userId,
+      isTelegramDm: telegramChatId != null && telegramChatId === message.author.userId,
     });
 
     let resolution: SubscriberResolution;
@@ -486,15 +486,18 @@ export class AgentInboundHandler implements OnModuleInit {
       storedAttachments: message.attachments?.length ? storedAttachments : undefined,
     };
 
-    // Handler-level subscriber-access gate (messages only). Restricted misses and
-    // resolution errors are answered here for both managed and custom-code so the
-    // bridge never sees a denied/errored turn. Open + not_found continues without
-    // a handler reply (custom-code Pass null; managed residual covers leftovers).
-    if (await this.maybeReplyUnresolvedSubscriberAccess(turn, { emailSenderUnverified: !isVerifiedEmailSender })) {
+    if (
+      await maybeReplyUnresolvedSubscriberAccess({
+        turn,
+        logger: this.logger,
+        outboundGateway: this.outboundGateway,
+        conversationService: this.conversationService,
+        emailSenderUnverified: !isVerifiedEmailSender,
+      })
+    ) {
       return;
     }
 
-    // Working-signal ack only for turns that will dispatch (after the deny gate).
     if (!config.isManaged) {
       await this.inboundAck.showWorkingSignal({
         agentId,
@@ -827,51 +830,6 @@ export class AgentInboundHandler implements OnModuleInit {
 
     const reply = existing ? SUBSCRIBER_LINK_DUPLICATE_REPLY : SUBSCRIBER_LINK_EXPIRED_REPLY;
     await this.safePostInboundReply(thread, reply, agentId, message);
-
-    return true;
-  }
-
-  /**
-   * Message-only subscriber-access gate shared by managed and custom-code.
-   * Returns true when the turn was answered here and must not dispatch.
-   */
-  private async maybeReplyUnresolvedSubscriberAccess(
-    turn: ConversationTurn,
-    options: { emailSenderUnverified: boolean }
-  ): Promise<boolean> {
-    if (turn.event !== AgentEventEnum.ON_MESSAGE) {
-      return false;
-    }
-
-    // Keyless email demos stay ungated; keyless non-email still hits this gate.
-    const isKeylessEmailDemo = turn.config.isKeyless && turn.config.platform === AgentPlatformEnum.EMAIL;
-    if (isKeylessEmailDemo) {
-      return false;
-    }
-
-    const resolution = turn.subscriberResolution;
-    if (!resolution || resolution.outcome === 'resolved') {
-      return false;
-    }
-
-    // Open + not_found: custom-code Pass null; managed residual covers leftover
-    // open misses (e.g. Telegram group after skipped provision). Do not deny
-    // here — except unverified email, which must never look like a generic miss.
-    if (
-      turn.config.subscriberAccess === AgentSubscriberAccessEnum.OPEN &&
-      resolution.outcome === 'not_found' &&
-      !options.emailSenderUnverified
-    ) {
-      return false;
-    }
-
-    await postUnresolvedSubscriberAccessReply({
-      turn,
-      logger: this.logger,
-      replyOnThread: (thread, msg, opts) => this.outboundGateway.replyOnThread(thread, msg, opts),
-      getPrimaryChannel: (conversation) => this.conversationService.getPrimaryChannel(conversation),
-      emailSenderUnverified: options.emailSenderUnverified,
-    });
 
     return true;
   }

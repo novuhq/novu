@@ -27,12 +27,13 @@ type ChannelCopy = {
 const CHANNEL_COPY: Record<GuidanceChannel, ChannelCopy> = {
   email: {
     title: 'Who can email this agent',
-    openTooltipDetail: `Anonymous senders are auto-created as lightweight subscribers from the sender address. Storing subscriber.email merges conversations into the existing subscriber. ${AGENT_WIDE_SETTING_HINT}`,
+    openTooltipDetail: `When on for managed agents, anonymous senders are auto-created as lightweight subscribers from the sender address; custom-code agents forward with a null subscriber. Storing subscriber.email merges conversations into the existing subscriber. ${AGENT_WIDE_SETTING_HINT}`,
     restrictedTooltipDetail: AGENT_WIDE_SETTING_HINT,
     openDescription: (
       <>
-        Anonymous senders can email this agent. Store <code className="text-text-sub">subscriber.email</code> so
-        conversations merge into the existing subscriber.
+        Anonymous senders can email this agent (managed: auto-create subscriber; custom code: null subscriber on the
+        bridge). Store <code className="text-text-sub">subscriber.email</code> so conversations merge into the existing
+        subscriber.
       </>
     ),
     restrictedDescription: (
@@ -44,12 +45,13 @@ const CHANNEL_COPY: Record<GuidanceChannel, ChannelCopy> = {
   },
   whatsapp: {
     title: 'Who can message this agent',
-    openTooltipDetail: `Anonymous senders are auto-created as lightweight subscribers from the sender phone. Storing subscriber.phone merges conversations into the existing subscriber. ${AGENT_WIDE_SETTING_HINT}`,
+    openTooltipDetail: `When on for managed agents, anonymous senders are auto-created as lightweight subscribers from the sender phone; custom-code agents forward with a null subscriber. Storing subscriber.phone merges conversations into the existing subscriber. ${AGENT_WIDE_SETTING_HINT}`,
     restrictedTooltipDetail: AGENT_WIDE_SETTING_HINT,
     openDescription: (
       <>
-        Anonymous senders can message this agent. Store <code className="text-text-sub">subscriber.phone</code> so
-        conversations merge into the existing subscriber.
+        Anonymous senders can message this agent (managed: auto-create subscriber; custom code: null subscriber on the
+        bridge). Store <code className="text-text-sub">subscriber.phone</code> so conversations merge into the existing
+        subscriber.
       </>
     ),
     restrictedDescription: (

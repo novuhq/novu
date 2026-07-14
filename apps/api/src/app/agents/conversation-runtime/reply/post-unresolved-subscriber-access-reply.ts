@@ -36,7 +36,7 @@ export async function postUnresolvedSubscriberAccessReply(params: {
       resolutionOutcome: resolution?.outcome,
       resolvedSubscriberId: resolution?.outcome === 'resolved' ? resolution.subscriberId : undefined,
       err: resolution?.outcome === 'error' ? resolution.err : undefined,
-      emailSenderUnverified: emailSenderUnverified === true ? true : undefined,
+      emailSenderUnverified: emailSenderUnverified || undefined,
     },
     'Unresolved subscriber — replying with access message instead of dispatching'
   );
