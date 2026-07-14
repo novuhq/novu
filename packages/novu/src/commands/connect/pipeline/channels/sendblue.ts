@@ -104,6 +104,10 @@ async function collectSendblueCredentials(ui: ConnectUI, options: ConnectCommand
   const flagFrom = options.sendblueFrom?.trim();
 
   if (flagApiKey && flagSecretKey && flagFrom) {
+    if (!E164_PATTERN.test(flagFrom)) {
+      throw new Error(`Invalid --sendblue-from "${flagFrom}". Expected E.164 format, e.g. +14155551234.`);
+    }
+
     return { apiKey: flagApiKey, secretKey: flagSecretKey, from: flagFrom };
   }
 

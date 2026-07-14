@@ -1,4 +1,4 @@
-import { Select, TextInput } from '@inkjs/ui';
+import { PasswordInput, Select, TextInput } from '@inkjs/ui';
 import { AWS_CLAUDE_COMMERCIAL_REGIONS } from '@novu/shared';
 import { Box, Text, useInput } from 'ink';
 // biome-ignore lint/correctness/noUnusedImports: classic-JSX linter falls back here because tsconfig.json excludes ui/.
@@ -715,11 +715,19 @@ function SendblueCredentialContent({
       {phase.verificationError ? <Text color="yellow">{phase.verificationError}</Text> : null}
       <Box borderStyle="round" paddingX={1}>
         {/* Keyed so each credential step remounts an empty input. */}
-        <TextInput
-          key={`${phase.field}-${phase.step}`}
-          placeholder={phase.placeholder}
-          onSubmit={(value) => phase.resolve(value)}
-        />
+        {phase.secret ? (
+          <PasswordInput
+            key={`${phase.field}-${phase.step}`}
+            placeholder={phase.placeholder}
+            onSubmit={(value) => phase.resolve(value)}
+          />
+        ) : (
+          <TextInput
+            key={`${phase.field}-${phase.step}`}
+            placeholder={phase.placeholder}
+            onSubmit={(value) => phase.resolve(value)}
+          />
+        )}
       </Box>
       <Text dimColor>Press Enter to submit.</Text>
     </Box>
