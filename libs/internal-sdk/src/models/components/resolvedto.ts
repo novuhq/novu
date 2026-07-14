@@ -5,6 +5,9 @@
 import * as z from "zod/v3";
 
 export type ResolveDto = {
+  /**
+   * Optional human-readable resolution summary stored on the conversation.
+   */
   summary?: string | undefined;
 };
 

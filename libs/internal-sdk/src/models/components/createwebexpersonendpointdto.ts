@@ -41,9 +41,9 @@ export type CreateWebexPersonEndpointDto = {
    */
   integrationIdentifier: string;
   /**
-   * The identifier of the channel connection to use for this channel endpoint.
+   * The identifier of the channel connection to use for this Webex endpoint.
    */
-  connectionIdentifier: string;
+  connectionIdentifier?: string | undefined;
   /**
    * Type of channel endpoint
    */
@@ -113,7 +113,7 @@ export type CreateWebexPersonEndpointDto$Outbound = {
     [k: string]: CreateWebexPersonEndpointDtoContext2$Outbound | string;
   } | undefined;
   integrationIdentifier: string;
-  connectionIdentifier: string;
+  connectionIdentifier?: string | undefined;
   type: "webex_person";
   endpoint: WebexPersonEndpointDto$Outbound;
 };
@@ -133,7 +133,7 @@ export const CreateWebexPersonEndpointDto$outboundSchema: z.ZodType<
     ]),
   ).optional(),
   integrationIdentifier: z.string(),
-  connectionIdentifier: z.string(),
+  connectionIdentifier: z.string().optional(),
   type: z.literal("webex_person"),
   endpoint: WebexPersonEndpointDto$outboundSchema,
 });
