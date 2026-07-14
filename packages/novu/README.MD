@@ -217,11 +217,11 @@ npx novu@latest dev
 | `-r` | `--route <route>` | Bridge application route | `/api/novu` |
 | `-o` | `--origin <origin>` | Bridge application origin | `http://localhost` |
 | `-d` | `--dashboard-url <url>` | Novu Cloud dashboard URL | `https://dashboard.novu.co` |
-| `-sp` | `--studio-port <port>` | Local Studio server port | `2022` |
-| `-sh` | `--studio-host <host>` | Local Studio server host | `localhost` |
+| `-sp` | `--studio-port <port>` | [deprecated] Ignored | `2022` |
+| `-sh` | `--studio-host <host>` | [deprecated] Ignored | `localhost` |
 | `-t` | `--tunnel <url>` | Self-hosted tunnel URL | — |
-| `-H` | `--headless` | Run bridge in headless mode | `false` |
-| | `--no-studio` | Skip starting local Studio | — |
+| `-H` | `--headless` | Run without opening the browser | `false` |
+| | `--no-studio` | Skip opening the dashboard Local environment (tunnel and agent sync still run) | — |
 | | `--run <command>` | Spawn a local app server before opening the tunnel | — |
 
 Example — bridge on port `3002` with an EU dashboard:
