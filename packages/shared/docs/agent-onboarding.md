@@ -11,27 +11,27 @@ Your job end to end: pick the right path, run **one** non-interactive `npx novu 
 
 ---
 
-## Step 0 — Choose path (mandatory)
+## Step 0 — Choose path
 
-**Pick before anything else.** Do not assume managed when the user wants custom code.
+**Default to managed.** Only use the bridge path when the user clearly wants handler code in their app.
+
+Do **not** ask Step 0 when the user only wants to connect a **channel** in the current workspace — e.g. **"Connect a Novu agent to Slack for this project"** is **managed keyless**, not bridge. Go straight to Step M1.
 
 | Path | Use when |
 |---|---|
-| **Custom code bridge** | The user says **"add an agent to my app"**, **"wire"**, **"in my repo/project/codebase"**, names **AI SDK** or **LangChain**, or you are in an existing app they want replies from **their code**. |
-| **Managed agent** | The user wants a **hosted/demo/managed** agent with **no codebase changes**, is trying Novu **keyless** from scratch, or explicitly asks for a managed agent. |
+| **Custom code bridge** | The user says **"add an agent to my app"**, **"wire"** Novu into their handler code, names **AI SDK** or **LangChain**, or wants channel replies from **their application code**. |
+| **Managed agent** | The user names a **channel only**, wants a **hosted/demo/managed** agent, is trying Novu **keyless** from scratch, says **"Connect … for this project"** without bridge signals, or explicitly asks for a managed agent. |
 
 **Mandatory routing rules:**
 
 - **"Add an agent to my app"** (or equivalent) → **custom code bridge**. Never use the managed path.
-- **"I'm signed in to the Novu dashboard"** + app/repo signal → **custom code bridge** with **dashboard OAuth** (omit `--keyless`).
+- **"Connect a Novu agent to \<channel\> for this project"** (or similar channel-only wording) → **managed**. **Never** bridge. *"For this project"* means the current workspace directory, not "wire my handler."
+- **"in my repo" / "in my codebase"** alone is **not** a bridge signal unless they also want AI SDK / LangChain / handler wiring.
+- **"I'm signed in to the Novu dashboard"** + **add-to-my-app / wire / AI SDK / LangChain** signal → **custom code bridge** with **dashboard OAuth** (omit `--keyless`).
+- **"I'm signed in to the Novu dashboard"** + channel-only connect (no bridge signals) → **managed** with **dashboard OAuth** (omit `--keyless`).
 - **Keyless** is only valid on the **managed** path. Bridge agents **always** require dashboard OAuth (omit `--keyless`) — the CLI will not scaffold a bridge in keyless mode.
 
-If genuinely unclear, call `AskQuestion` / `AskUserQuestion`:
-
-| Option id | Label |
-|---|---|
-| `bridge` | Custom code — run my agent handler in this app (AI SDK / LangChain) |
-| `managed` | Managed — hosted agent, no code changes |
+Ask Step 0 **only** when the user explicitly mixes bridge and managed signals. Otherwise pick the path from the table and continue.
 
 ---
 
@@ -60,7 +60,7 @@ These govern every step. When in doubt, follow these over any specific instructi
 - **Trust user intent; ask only when genuinely unclear.** Managed path: channel (Step M1) and purpose confirmation (Step M2) require the user. Bridge path: channel (Step B1) and runtime (Step B2) when detection is ambiguous. Default everything else unless the user raises it.
 - **Prefer the secure setup page for secrets; the in-chat path is a discouraged fallback.** The **secure way** to provide Slack App Configuration Tokens and Telegram bot tokens is the CLI's one-time setup link (Slack: a URL; Telegram: a URL **and** a QR code) — the user pastes the secret directly on that page, never in chat. Always offer this first and recommend it. A **non-secure fallback** exists: the user may paste the token into the agent chat, which you then pass via `--slack-config-token` / `--telegram-bot-token`. Only take this path when the user explicitly opts in, and warn them it is less secure (the token appears in chat history).
 - **Confirm before you act.** Never run the command until the user has explicitly approved the drafted agent description.
-- **One Connect shell, no log watchers.** Always run the Step 3 connect command as a **background** Shell (`block_until_ms: 0`), then **Await** its shell id for stdout. **Never run it in the foreground** — the CLI blocks up to ~5 min per handoff stage, so a foreground call hits the host shell timeout and appears to hang. Use a single Shell session only. Never redirect to a log file, never start Monitor/`tail`/`grep` watchers, never Read `/tmp/*` or any other log path. **Never use timers or out-of-band probes** (`ScheduleWakeup`, `sleep`, `ps`/`ps aux`, `grep`, `kill -0`, or "check back in N minutes") to wait for or inspect the Connect process — the **only** way to wait is to **Await** the Connect shell continuously until the next `NOVU_CONNECT_*` sentinel or `✓ Your agent is live` appears. The only exception: `--channel skip` in keyless mode may run in the foreground.
+- **One Connect shell, no log watchers.** Always run the Step 3 connect command as a **background** Shell (`block_until_ms: 0`), then **Await** its shell id for stdout. **Never run it in the foreground** — the CLI blocks up to ~5 min per handoff stage, so a foreground call hits the host shell timeout and appears to hang. Use a single Shell session only. Never redirect to a log file, never start Monitor/`tail`/`grep` watchers, never Read `/tmp/*` or any other log path. **Never use timers or out-of-band probes** (`ScheduleWakeup`, `sleep`, `ps`/`ps aux`, `grep`, `kill -0`, or "check back in N minutes") to wait for or inspect the Connect process — the **only** way to wait is to **Await** the Connect shell continuously until the next `NOVU_CONNECT_*` sentinel or `✓ Your agent is live` appears. The only exception: `--channel skip` in keyless mode may run in the foreground. **Never use Bash `grep`/`cat`/`awk` on any file** (including `package.json`) — use the **Read** tool and parse the content in your reasoning.
 - **The CLI validates handoffs.** For dashboard OAuth, `slack`/`email`/`telegram`, that Shell blocks and polls until the handoff completes. Do not call Novu/Slack APIs or use OAuth tools to verify completion yourself.
 - **WhatsApp / MS Teams in keyless mode never reach the CLI.** If the user picks one and you are using **`--keyless`** (the default), do **not** run connect — redirect them to the Novu dashboard instead (Step 1). With **dashboard OAuth** (omit `--keyless`), the CLI creates the agent and hands off a dashboard URL to finish channel setup.
 - **Report conclusion-first.** Lead with the CLI's result (live / failed), then the one action the user must take. Keep it terse.
@@ -75,7 +75,7 @@ When the user must pick from a **fixed set** of options (channel, approve/reject
 - **Cursor:** `AskQuestion` with 2–4 `options` (short `label` per option). 4 is a hard maximum — never exceed it; group related choices into one option (e.g. WhatsApp / MS Teams).
 - **Claude Code:** `AskUserQuestion` with the same shape (`label` + optional `description`).
 
-**Use the picker for:** Step 0 (path when unclear), Step M1 / Step B1 (channel), Step M2 (approve / edit managed description), Step B2 (runtime when ambiguous), and Step 4 (Slack/Telegram token delivery — secure page vs. paste in chat, presented inline only when the token is actually needed).
+**Use the picker for:** Step 0 (path **only when genuinely ambiguous**), Step M1 / Step B1 (channel), Step M2 (approve / edit managed description), Step B2 (runtime when ambiguous), and Step 4 (Slack/Telegram token delivery — secure page vs. paste in chat, presented inline only when the token is actually needed).
 
 **Do not use the picker for:** free-text values (e.g. edited agent description prose) — ask in chat normally. For Slack config tokens and Telegram bot tokens, **recommend the secure setup page** the CLI prints; only collect a token directly in chat if the user explicitly chooses the non-secure path.
 
@@ -313,7 +313,7 @@ Same channel picker and rules as [Step M1](#step-m1--choose-channel-and-collect-
 
 **Goal:** lock `--runtime ai-sdk` or `--runtime langchain` before running connect.
 
-Read `package.json` `dependencies` and `devDependencies`:
+Use the **Read** tool on `package.json` and inspect `dependencies` / `devDependencies` in the file content. **Never** use Bash (`grep`, `cat`, `jq`, or shell pipelines) to read package.json.
 
 | Signal in package.json | Runtime |
 |---|---|
@@ -455,7 +455,7 @@ Read Connect shell stdout (via **Await**, not log files) and act based on the ch
 
   Paste that exact `<url>` into chat, framing it as a fallback link — e.g. "If the Slack install page didn't open automatically, use this link to approve the install (within 5 minutes)." **Await** until the CLI poll finishes. Re-run on timeout (the Slack app is reused).
 
-  **If they pick `in_chat`:** ask for the token in chat as free-text (not the picker), warn once that it will live in chat history, then **kill the first Connect shell** (the Step 3 process still polling the secure setup page) and **re-run the Step 3 connect command once with `--slack-config-token`** (set via an env var). That supersedes the secure setup page — the CLI skips the `NOVU_CONNECT_SLACK_SETUP_URL` handoff and goes straight to OAuth. **Await** the `NOVU_CONNECT_SLACK_AUTHORIZE_URL=<url>` line, paste that exact URL into chat as a fallback link — e.g. "If the Slack install page didn't open automatically, use this link to approve the install (within 5 minutes)."
+  **If they pick `in_chat`:** ask for the token in chat as free-text (not the picker), warn once that it will live in chat history, then **kill the first Connect shell** (the Step 3 process still polling the secure setup page) and **re-run the Step 3 connect command once with `--slack-config-token`** (set via an env var). That supersedes the secure setup page — the CLI skips the `NOVU_CONNECT_SLACK_SETUP_URL` handoff and goes straight to OAuth. **Await** the `NOVU_CONNECT_SLACK_AUTHORIZE_URL=<url>` line, paste that exact URL into chat as a fallback link — e.g. "If the Slack install page didn't open automatically, use this link to approve the install (within 5 minutes)." Once `✓ Your agent is live` appears on the re-run, **stop asking for the token** and deliver the conclusion-first report immediately.
 
 - **email** — watch for these machine-readable lines (plain stdout, no ANSI):
 
