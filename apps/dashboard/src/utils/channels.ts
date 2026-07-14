@@ -10,6 +10,13 @@ export const CHANNEL_TYPE_TO_STRING: Record<ChannelTypeEnum, string> = {
 };
 
 /** Whether a channel should appear in dashboard UI when gated behind feature flags. */
-export function isChannelVisibleInUi(channel: ChannelTypeEnum | string, isSignalsChannelEnabled: boolean): boolean {
+export function isChannelVisibleInUi(
+  channel: ChannelTypeEnum | string | undefined,
+  isSignalsChannelEnabled: boolean
+): boolean {
+  if (!channel) {
+    return false;
+  }
+
   return channel !== ChannelTypeEnum.SIGNALS || isSignalsChannelEnabled;
 }
