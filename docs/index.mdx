@@ -1,0 +1,119 @@
+---
+title: "Documentation"
+description: "Build the communication infrastructure for agents and products"
+---
+
+Novu is the open-source communication infrastructure for AI agents and products. Novu Connect gives your AI agent a two-way messaging layer over Slack, iMessage, MS Teams, and WhatsApp. Novu Notify sends notifications to your customers over Inbox, email, and Slack. Together, they power a continuous communication experience across everything you build.
+
+<div className="dark:hidden">
+  <Frame caption="Connect and Notify together power a continuous communication experience for AI agents and products.">
+    ![Novu communication infrastructure](/images/home-page/How-Novu-fits-together-light.png)
+  </Frame>
+</div>
+<div className="hidden dark:block">
+  <Frame caption="Connect and Notify together power a continuous communication experience for AI agents and products.">
+    ![Novu communication infrastructure](/images/home-page/How-Novu-fits-together-dark.png)
+  </Frame>
+</div>
+
+## Which one do I need?
+
+<div className="dark:hidden">
+  <Columns cols={2}>
+    <Card title="Start with Connect" img="/images/home-page/connect-light.png" href="/connect">
+      **You already have an agent.** Connect it to the channels your customers use — Slack, iMessage, MS Teams, WhatsApp — with the AI SDK.
+    </Card>
+    <Card title="Start with Notify" img="/images/home-page/inbox-light.png" href="/notify">
+      **You're notifying users.** Build workflows that send the right message to the right subscriber — Inbox, email, and Slack.
+    </Card>
+  </Columns>
+</div>
+<div className="hidden dark:block">
+  <Columns cols={2}>
+    <Card title="Start with Connect" img="/images/home-page/connect-dark.png" href="/connect">
+      **You already have an agent.** Connect it to the channels your customers use — Slack, iMessage, MS Teams, WhatsApp — with the AI SDK.
+    </Card>
+    <Card title="Start with Notify" img="/images/home-page/inbox-dark.png" href="/notify">
+      **You're notifying users.** Build workflows that send the right message to the right subscriber — Inbox, email, and Slack.
+    </Card>
+  </Columns>
+</div>
+
+## Choose your path
+
+<Tabs>
+  <Tab title="Connect">
+
+Novu Connect gives your AI agent a communication layer. It receives provider webhooks, normalizes messages, resolves identity, preserves conversation state, and delivers replies back to the original thread — so an agent you've already built can hold real conversations over Slack, iMessage, MS Teams, and WhatsApp.
+
+<Columns cols={2}>
+  <Card title="AI SDK quickstart" icon="sparkles" href="/connect/quickstart/ai-sdk">
+    Connect an agent built with the AI SDK and send your first message.
+  </Card>
+  <Card title="What is Connect?" icon="circle-question-mark" href="/connect/get-started/what-is-connect">
+    Understand the infrastructure layer between messaging providers and agent intelligence.
+  </Card>
+  <Card title="Custom code agent" icon="square-code" href="/connect/custom-code-agent/quickstart">
+    Bring your own LLM, tools, runtime, and business logic.
+  </Card>
+  <Card title="Conversation observability" icon="messages-square" href="/connect/conversations">
+    Inspect agent conversations, message history, participants, and provider context.
+  </Card>
+</Columns>
+
+  </Tab>
+  <Tab title="Notify">
+
+Novu Notify helps you send the right message to the right subscriber on the right channel. Define workflows, trigger events, render content, respect preferences, and inspect delivery.
+
+<Columns cols={2}>
+  <Card title="React quickstart" icon="rocket" href="/notify/quickstart/react">
+    Add the Novu Inbox to a React application and send your first notification.
+  </Card>
+  <Card title="Workflows" icon="git-branch" href="/notify/concepts/workflows">
+    Learn how workflows model notification logic across channels and steps.
+  </Card>
+  <Card title="Inbox" icon="inbox" href="/notify/inbox">
+    Embed a real-time notification feed that subscribers can read, archive, snooze, and configure.
+  </Card>
+  <Card title="Integrations" icon="plug" href="/notify/integrations">
+    Connect providers for email and Slack delivery.
+  </Card>
+</Columns>
+
+  </Tab>
+</Tabs>
+
+## Build with your stack
+
+<Columns cols={2}>
+  <Card title="AI SDK" icon="sparkles" href="/connect/sdks#ai-sdk">
+    Connect an agent built with the AI SDK to Novu Connect.
+  </Card>
+  <Card title="Client SDKs" icon="monitor-smartphone" href="/notify/sdks#web-and-mobile-sdks">
+    Add Inbox and notification UI to React, JavaScript, and React Native apps.
+  </Card>
+  <Card title="Server SDKs" icon="server" href="/notify/sdks#server-side-sdks">
+    Trigger notifications and call the API from TypeScript, Python, Go, PHP, .NET, Java, Kotlin, Laravel, and Ruby.
+  </Card>
+  <Card title="API reference" icon="braces" href="/api-reference">
+    Explore Novu REST APIs for events, subscribers, workflows, integrations, messages, and more.
+  </Card>
+  <Card title="Framework" icon="blocks" href="/framework">
+    Build notification workflows as code with the Novu Framework.
+  </Card>
+</Columns>
+
+## Community
+
+<Columns cols={3}>
+  <Card title="GitHub" icon="github" href="https://github.com/novuhq/novu">
+    Star Novu, inspect the source, and contribute to the project.
+  </Card>
+  <Card title="Discord" icon="messages-square" href="https://discord.gg/novu">
+    Ask questions and build with the Novu community.
+  </Card>
+  <Card title="Changelog" icon="newspaper" href="https://go.novu.co/changelog?utm_source=docs_home">
+    Follow product updates, SDK releases, and improvements across Connect and Notify.
+  </Card>
+</Columns>

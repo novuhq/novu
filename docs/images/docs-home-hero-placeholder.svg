@@ -1,0 +1,38 @@
+<svg width="1600" height="520" viewBox="0 0 1600 520" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1600" height="520" fill="white"/>
+  <defs>
+    <linearGradient id="novu-soft" x1="0" y1="0" x2="1600" y2="520" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FF006A" stop-opacity="0.12"/>
+      <stop offset="0.48" stop-color="#E300BD" stop-opacity="0.08"/>
+      <stop offset="1" stop-color="#FFBA33" stop-opacity="0.11"/>
+    </linearGradient>
+    <radialGradient id="novu-glow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(800 228) rotate(90) scale(260 560)">
+      <stop stop-color="#FF006A" stop-opacity="0.16"/>
+      <stop offset="1" stop-color="#FF006A" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1600" height="520" fill="url(#novu-soft)"/>
+  <rect width="1600" height="520" fill="url(#novu-glow)"/>
+  <g opacity="0.33" stroke="#FF006A" stroke-width="2">
+    <path d="M151 209L322 128L421 298L249 379L151 209Z"/>
+    <path d="M188 226L274 278L383 150"/>
+    <path d="M1167 148H1354C1370.57 148 1384 161.431 1384 178V331C1384 347.569 1370.57 361 1354 361H1167C1150.43 361 1137 347.569 1137 331V178C1137 161.431 1150.43 148 1167 148Z"/>
+    <path d="M1177 179L1260 253L1344 179"/>
+    <path d="M809 48L916 110V233L809 295L702 233V110L809 48Z"/>
+    <path d="M702 110L809 172L916 110"/>
+    <path d="M809 172V295"/>
+    <path d="M514 182C566 124 663 128 711 191C752 245 724 330 654 348L623 412L576 358C520 353 477 323 464 278C454 244 470 211 514 182Z"/>
+    <path d="M1085 95C1046 102 1019 139 1026 178C1033 217 1070 244 1109 237C1148 230 1175 193 1168 154C1161 115 1124 88 1085 95Z"/>
+    <path d="M1083 151L1112 184L1068 194"/>
+  </g>
+  <g opacity="0.22" stroke="#E300BD" stroke-width="2">
+    <path d="M41 42H171C193.091 42 211 59.9086 211 82V156"/>
+    <path d="M1394 34H1535C1557.09 34 1575 51.9086 1575 74V156"/>
+    <path d="M37 443H190C212.091 443 230 425.091 230 403V366"/>
+    <path d="M1416 430H1545C1567.09 430 1585 412.091 1585 390V309"/>
+    <circle cx="342" cy="126" r="9"/>
+    <circle cx="1354" cy="148" r="9"/>
+    <circle cx="655" cy="348" r="9"/>
+    <circle cx="1026" cy="178" r="9"/>
+  </g>
+</svg>

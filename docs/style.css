@@ -5,3 +5,50 @@
     max-width: 16rem;
   }
 }
+
+#navbar nav a[aria-current="location"],
+#navbar nav button[data-state="open"],
+[role="tab"][data-state="active"] {
+  color: rgb(var(--primary));
+}
+
+#navbar nav a[aria-current="location"] {
+  background-color: rgb(var(--primary) / 0.08);
+}
+
+@media (min-width: 1280px) {
+  #navbar nav[aria-label="Main"] {
+    position: absolute;
+    left: max(15rem, calc(50vw - 340px));
+  }
+}
+
+html[data-current-path="/"] #content-area {
+  max-width: 984px;
+  padding-top: 0;
+}
+
+html[data-current-path="/"] #content-side-layout,
+html[data-current-path="/"] #page-context-menu {
+  display: none !important;
+}
+
+html[data-current-path="/"] #header {
+  margin: 0 0 2rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+html[data-current-path="/"] #page-title,
+html[data-current-path="/"] #header h1 {
+  font-size: clamp(1.75rem, 2.75vw, 2.5rem) !important;
+  line-height: 1.08 !important;
+  letter-spacing: -0.02em !important;
+}
+
+html[data-current-path="/"] #header .prose {
+  margin-top: 0.5rem !important;
+  font-size: clamp(1rem, 1.25vw, 1.125rem) !important;
+  line-height: 1.5 !important;
+}

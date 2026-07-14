@@ -1,0 +1,34 @@
+<svg width="480" height="200" viewBox="0 0 480 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <clipPath id="platform-clip">
+      <rect width="480" height="200" rx="0"/>
+    </clipPath>
+    <pattern id="platform-dots" width="22" height="22" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1.4" fill="#FBC9DE"/>
+    </pattern>
+    <radialGradient id="platform-glow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(240 100) rotate(90) scale(95)">
+      <stop stop-color="#FF006A" stop-opacity="0.16"/>
+      <stop offset="1" stop-color="#FF006A" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <g clip-path="url(#platform-clip)">
+    <rect width="480" height="200" fill="#FFF6FA"/>
+    <rect width="480" height="200" fill="url(#platform-dots)"/>
+    <circle cx="240" cy="100" r="95" fill="url(#platform-glow)"/>
+  </g>
+
+  <!-- notification panel -->
+  <rect x="185" y="32" width="110" height="136" rx="16" fill="white" stroke="#FF006A" stroke-width="3"/>
+  <rect x="199" y="48" width="82" height="10" rx="5" fill="#FBD2E3"/>
+
+  <!-- bell -->
+  <circle cx="240" cy="96" r="22" fill="#FF006A"/>
+  <path d="M240 83c-6.4 0-11.2 5.2-11.2 11.6v5.2c0 2.4-1 4.6-2.6 6.3l-1.4 1.3h30.4l-1.4-1.3c-1.6-1.7-2.6-3.9-2.6-6.3v-5.2c0-6.4-4.8-11.6-11.2-11.6Z" fill="white"/>
+  <path d="M235.2 109h9.6c0 2.6-2.2 4.8-4.8 4.8s-4.8-2.2-4.8-4.8Z" fill="white"/>
+  <circle cx="255" cy="78" r="6.5" fill="#FFBA33" stroke="white" stroke-width="2"/>
+
+  <!-- notification rows -->
+  <rect x="199" y="136" width="82" height="8" rx="4" fill="#FBD2E3"/>
+  <rect x="199" y="150" width="64" height="8" rx="4" fill="#FCE3EE"/>
+</svg>
