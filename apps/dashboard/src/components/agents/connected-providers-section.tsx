@@ -36,9 +36,10 @@ function ProviderCard({ link, to }: { link: AgentIntegrationLink; to: string }) 
     link.integration.providerId,
     providerMeta?.displayName ?? link.integration.name
   );
-  // Only flag connected channels — unconnected ones surface as "Action needed" in the channels tab.
-  const exceedsPlan = Boolean(link.exceedsPlanLimit) && isAgentIntegrationConnected(link);
-  const showActionNeeded = !isAgentIntegrationConnected(link);
+  const isConnected = isAgentIntegrationConnected(link);
+  // Gate the plan-limit indicator to connected channels; unconnected ones surface the action-needed overlay instead.
+  const exceedsPlan = Boolean(link.exceedsPlanLimit) && isConnected;
+  const showActionNeeded = !isConnected;
 
   return (
     <Link
@@ -53,10 +54,10 @@ function ProviderCard({ link, to }: { link: AgentIntegrationLink; to: string }) 
           <ProviderIcon providerId={link.integration.providerId} providerDisplayName={displayName} className="size-5" />
         </div>
         {showActionNeeded && (
-          <RiSpam2Fill
-            className="text-warning-base absolute right-[2.5px] top-[2.5px] size-4"
-            aria-label="Action needed"
-          />
+          <>
+            <RiSpam2Fill aria-hidden="true" className="text-warning-base absolute right-[2.5px] top-[2.5px] size-4" />
+            <span className="sr-only">Action needed</span>
+          </>
         )}
       </div>
       <span className="flex items-center gap-1">
