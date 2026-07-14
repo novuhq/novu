@@ -3,9 +3,9 @@ import { filterToolIntegrationsByEnabledIdentifiers } from './send-message-tool.
 
 describe('SendMessageTool - enabledIntegrations filter', () => {
   const integrations = [
-    { identifier: 'github-main', providerId: 'github' },
+    { identifier: 'pagerduty-main', providerId: 'pagerduty' },
     { identifier: 'webhook-alerts', providerId: 'tool-webhook' },
-    { identifier: 'github-secondary', providerId: 'github' },
+    { identifier: 'opsgenie-secondary', providerId: 'opsgenie' },
   ];
 
   it('returns all integrations when enabledIntegrations is empty or undefined', () => {
@@ -14,8 +14,11 @@ describe('SendMessageTool - enabledIntegrations filter', () => {
   });
 
   it('filters integrations by step enabledIntegrations identifiers', () => {
-    const filtered = filterToolIntegrationsByEnabledIdentifiers(integrations, ['webhook-alerts', 'github-secondary']);
+    const filtered = filterToolIntegrationsByEnabledIdentifiers(integrations, ['webhook-alerts', 'opsgenie-secondary']);
 
-    expect(filtered.map((integration) => integration.identifier)).to.deep.equal(['webhook-alerts', 'github-secondary']);
+    expect(filtered.map((integration) => integration.identifier)).to.deep.equal([
+      'webhook-alerts',
+      'opsgenie-secondary',
+    ]);
   });
 });

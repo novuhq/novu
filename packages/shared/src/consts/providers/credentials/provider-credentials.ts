@@ -1605,34 +1605,46 @@ export const anthropicAwsAgentConfig: IConfigCredential[] = [
   },
 ];
 
-export const githubToolConfig: IConfigCredential[] = [
+export const pagerdutyToolConfig: IConfigCredential[] = [
   {
-    key: CredentialsKeyEnum.Token,
-    displayName: 'Personal Access Token',
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'Integration Key',
     type: 'string',
-    description: 'GitHub token with permission to create repository_dispatch events',
+    description:
+      'The 32-character Events API v2 Integration Key (routing key) from a PagerDuty service integration or ruleset.',
     required: true,
   },
   {
-    key: CredentialsKeyEnum.Owner,
-    displayName: 'Owner',
+    key: CredentialsKeyEnum.Region,
+    displayName: 'Region',
+    type: 'dropdown',
+    required: true,
+    value: 'us',
+    dropdown: [
+      { name: 'US (default)', value: 'us' },
+      { name: 'EU', value: 'eu' },
+    ],
+  },
+];
+
+export const opsgenieToolConfig: IConfigCredential[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
     type: 'string',
-    description: 'GitHub repository owner (organization or user)',
+    description: 'API key from an Opsgenie API integration. Sent as `Authorization: GenieKey <apiKey>`.',
     required: true,
   },
   {
-    key: CredentialsKeyEnum.Repo,
-    displayName: 'Repository',
-    type: 'string',
-    description: 'GitHub repository name',
+    key: CredentialsKeyEnum.Region,
+    displayName: 'Region',
+    type: 'dropdown',
     required: true,
-  },
-  {
-    key: CredentialsKeyEnum.EventType,
-    displayName: 'Event Type',
-    type: 'string',
-    description: 'Custom event_type sent with repository_dispatch',
-    required: true,
+    value: 'us',
+    dropdown: [
+      { name: 'US (default)', value: 'us' },
+      { name: 'EU', value: 'eu' },
+    ],
   },
 ];
 

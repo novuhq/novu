@@ -55,7 +55,7 @@ export function useIntegrationList(searchQuery: string = '') {
         ChatProviderIdEnum.Mattermost,
         ChatProviderIdEnum.ChatWebhook,
       ],
-      [ChannelTypeEnum.TOOL]: [ToolProviderIdEnum.GitHub, ToolProviderIdEnum.Webhook],
+      [ChannelTypeEnum.TOOL]: [ToolProviderIdEnum.PagerDuty, ToolProviderIdEnum.Opsgenie, ToolProviderIdEnum.Webhook],
       [ChannelTypeEnum.IN_APP]: [],
     };
 

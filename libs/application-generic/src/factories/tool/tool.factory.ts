@@ -1,10 +1,11 @@
 import { IntegrationEntity } from '@novu/dal';
-import { GithubToolHandler } from './handlers/github-tool.handler';
+import { OpsgenieToolHandler } from './handlers/opsgenie-tool.handler';
+import { PagerDutyToolHandler } from './handlers/pagerduty-tool.handler';
 import { ToolWebhookHandler } from './handlers/tool-webhook.handler';
 import { IToolFactory, IToolHandler } from './interfaces';
 
 export class ToolFactory implements IToolFactory {
-  handlers: IToolHandler[] = [new GithubToolHandler(), new ToolWebhookHandler()];
+  handlers: IToolHandler[] = [new PagerDutyToolHandler(), new OpsgenieToolHandler(), new ToolWebhookHandler()];
 
   getHandler(integration: Pick<IntegrationEntity, 'credentials' | 'channel' | 'providerId' | 'configurations'>) {
     const handler =

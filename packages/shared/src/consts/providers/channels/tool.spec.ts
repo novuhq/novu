@@ -4,11 +4,15 @@ import { PROVIDER_ID_TO_CHANNEL_MAP, providers } from '../providers';
 import { toolProviders } from './tool';
 
 describe('toolProviders', () => {
-  it('includes GitHub and Custom Webhook providers on the tool channel', () => {
+  it('includes PagerDuty, Opsgenie, and Custom Webhook providers on the tool channel', () => {
     expect(toolProviders).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          id: ToolProviderIdEnum.GitHub,
+          id: ToolProviderIdEnum.PagerDuty,
+          channel: ChannelTypeEnum.TOOL,
+        }),
+        expect.objectContaining({
+          id: ToolProviderIdEnum.Opsgenie,
           channel: ChannelTypeEnum.TOOL,
         }),
         expect.objectContaining({
@@ -17,19 +21,21 @@ describe('toolProviders', () => {
         }),
       ])
     );
-    expect(ToolProviderIdEnum.GitHub).toBe('github');
+    expect(ToolProviderIdEnum.PagerDuty).toBe('pagerduty');
+    expect(ToolProviderIdEnum.Opsgenie).toBe('opsgenie');
     expect(ToolProviderIdEnum.Webhook).toBe('tool-webhook');
   });
 
   it('is included in the shared providers array', () => {
     const toolFromProviders = providers.filter((provider) => provider.channel === ChannelTypeEnum.TOOL);
 
-    expect(toolFromProviders).toHaveLength(2);
-    expect(toolFromProviders.map((provider) => provider.id).sort()).toEqual(['github', 'tool-webhook']);
+    expect(toolFromProviders).toHaveLength(3);
+    expect(toolFromProviders.map((provider) => provider.id).sort()).toEqual(['opsgenie', 'pagerduty', 'tool-webhook']);
   });
 
-  it('maps github and tool-webhook provider ids to ChannelTypeEnum.TOOL', () => {
-    expect(PROVIDER_ID_TO_CHANNEL_MAP['github']).toBe(ChannelTypeEnum.TOOL);
+  it('maps pagerduty, opsgenie, and tool-webhook provider ids to ChannelTypeEnum.TOOL', () => {
+    expect(PROVIDER_ID_TO_CHANNEL_MAP['pagerduty']).toBe(ChannelTypeEnum.TOOL);
+    expect(PROVIDER_ID_TO_CHANNEL_MAP['opsgenie']).toBe(ChannelTypeEnum.TOOL);
     expect(PROVIDER_ID_TO_CHANNEL_MAP['tool-webhook']).toBe(ChannelTypeEnum.TOOL);
   });
 });

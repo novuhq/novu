@@ -197,7 +197,8 @@ export enum InAppProviderIdEnum {
 }
 
 export enum ToolProviderIdEnum {
-  GitHub = 'github',
+  PagerDuty = 'pagerduty',
+  Opsgenie = 'opsgenie',
   Webhook = 'tool-webhook',
 }
 

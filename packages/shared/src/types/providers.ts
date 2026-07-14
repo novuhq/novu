@@ -59,12 +59,6 @@ export enum CredentialsKeyEnum {
   ExternalEnvironmentId = 'externalEnvironmentId',
   /** Claude Platform on AWS: workspace ID (`wrkspc_…`) required for agent runtime dispatch. */
   ExternalWorkspaceId = 'externalWorkspaceId',
-  /** GitHub repository_dispatch: repository owner (org or user). */
-  Owner = 'owner',
-  /** GitHub repository_dispatch: repository name. */
-  Repo = 'repo',
-  /** GitHub repository_dispatch: custom event_type value. */
-  EventType = 'eventType',
   /** HTTP method for custom webhook delivery (e.g. POST, PUT). */
   Method = 'method',
   /** Custom webhook request headers as JSON. */
@@ -185,7 +179,8 @@ export enum AgentRuntimeProviderIdEnum {
 }
 
 export enum ToolProviderIdEnum {
-  GitHub = 'github',
+  PagerDuty = 'pagerduty',
+  Opsgenie = 'opsgenie',
   Webhook = 'tool-webhook',
 }
 

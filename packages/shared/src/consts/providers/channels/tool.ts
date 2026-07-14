@@ -1,16 +1,25 @@
 import { ChannelTypeEnum, ToolProviderIdEnum } from '../../../types';
 import { UTM_CAMPAIGN_QUERY_PARAM } from '../../../ui';
-import { githubToolConfig, toolWebhookConfig } from '../credentials';
+import { opsgenieToolConfig, pagerdutyToolConfig, toolWebhookConfig } from '../credentials';
 import { IProviderConfig } from '../provider.interface';
 
 export const toolProviders: IProviderConfig[] = [
   {
-    id: ToolProviderIdEnum.GitHub,
-    displayName: 'GitHub',
+    id: ToolProviderIdEnum.PagerDuty,
+    displayName: 'PagerDuty',
     channel: ChannelTypeEnum.TOOL,
-    credentials: githubToolConfig,
-    docReference: `https://docs.github.com/en/rest/repos/repos#create-a-repository-dispatch-event${UTM_CAMPAIGN_QUERY_PARAM}`,
-    logoFileName: { light: 'github.svg', dark: 'github.svg' },
+    credentials: pagerdutyToolConfig,
+    docReference: `https://support.pagerduty.com/main/docs/services-and-integrations${UTM_CAMPAIGN_QUERY_PARAM}`,
+    logoFileName: { light: 'pagerduty.svg', dark: 'pagerduty.svg' },
+    betaVersion: true,
+  },
+  {
+    id: ToolProviderIdEnum.Opsgenie,
+    displayName: 'Opsgenie',
+    channel: ChannelTypeEnum.TOOL,
+    credentials: opsgenieToolConfig,
+    docReference: `https://docs.opsgenie.com/docs/alert-api${UTM_CAMPAIGN_QUERY_PARAM}`,
+    logoFileName: { light: 'opsgenie.svg', dark: 'opsgenie.svg' },
     betaVersion: true,
   },
   {
