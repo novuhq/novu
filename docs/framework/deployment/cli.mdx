@@ -38,7 +38,14 @@ A successful sync prints how many workflows and agents were synced from your bri
 14 Workflows and 0 Agents
 ```
 
-If your bridge exposes [Agents](/agents/get-started/what-is-aci), the agent count reflects how many were discovered. When you are only syncing workflows, `0 Agents` is expected and does not indicate an error.
+If your bridge exposes [Agents](/agents/get-started/what-is-aci), the agent count reflects how many were successfully updated. When you are only syncing workflows, `0 Agents` is expected and does not indicate an error.
+
+If agent discovery is unavailable, the summary omits the agent count and prints an informational note instead:
+
+```
+14 Workflows
+Agent discovery was unavailable.
+```
 
 ## Using vercel preview url
 
