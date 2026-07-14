@@ -12,7 +12,7 @@ import {
   Query,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiExcludeController, ApiExcludeEndpoint, ApiOperation } from '@nestjs/swagger';
+import { ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ProductFeature, RequirePermissions } from '@novu/application-generic';
 import {
   ApiRateLimitCategoryEnum,
@@ -31,6 +31,7 @@ import {
   ApiResponse,
 } from '../../../shared/framework/response.decorator';
 import { KeylessAccessible } from '../../../shared/framework/swagger/keyless.security';
+import { SdkGroupName, SdkMethodName } from '../../../shared/framework/swagger/sdk.decorators';
 import { UserSession } from '../../../shared/framework/user.decorator';
 import { SendAgentWelcomeMessageCommand } from '../../conversation-runtime/reply/send-agent-welcome-message/send-agent-welcome-message.command';
 import { SendAgentWelcomeMessage } from '../../conversation-runtime/reply/send-agent-welcome-message/send-agent-welcome-message.usecase';
@@ -46,14 +47,29 @@ import {
   UpdateAgentInboxSharedRequestDto,
   UpdateAgentIntegrationRequestDto,
 } from '../../shared/dtos';
+import { ConfigureSendblueWebhookResponseDto } from '../../shared/dtos/configure-sendblue-webhook-response.dto';
 import { ConfigureWhatsAppWebhookResponseDto } from '../../shared/dtos/configure-whatsapp-webhook-response.dto';
 import { IssueSlackSetupLinkResponseDto } from '../../shared/dtos/issue-slack-setup-link-response.dto';
+import {
+  RemoveSendblueWebhooksRequestDto,
+  RemoveSendblueWebhooksResponseDto,
+} from '../../shared/dtos/remove-sendblue-webhooks.dto';
 import { SendAgentTestEmailRequestDto } from '../../shared/dtos/send-agent-test-email-request.dto';
 import { SendAgentWelcomeMessageRequestDto } from '../../shared/dtos/send-agent-welcome-message-request.dto';
+import {
+  SendSendblueTestMessageRequestDto,
+  SendSendblueTestMessageResponseDto,
+} from '../../shared/dtos/send-sendblue-test-message.dto';
 import {
   SendWhatsAppTestTemplateRequestDto,
   SendWhatsAppTestTemplateResponseDto,
 } from '../../shared/dtos/send-whatsapp-test-template.dto';
+import { ConfigureSendblueWebhookCommand } from '../sendblue/configure-sendblue-webhook/configure-sendblue-webhook.command';
+import { ConfigureSendblueWebhook } from '../sendblue/configure-sendblue-webhook/configure-sendblue-webhook.usecase';
+import { RemoveSendblueWebhooksCommand } from '../sendblue/remove-sendblue-webhooks/remove-sendblue-webhooks.command';
+import { RemoveSendblueWebhooks } from '../sendblue/remove-sendblue-webhooks/remove-sendblue-webhooks.usecase';
+import { SendSendblueTestMessageCommand } from '../sendblue/send-sendblue-test-message/send-sendblue-test-message.command';
+import { SendAgentSendblueTestMessage } from '../sendblue/send-sendblue-test-message/send-sendblue-test-message.usecase';
 import { IssueSlackSetupLinkCommand } from '../slack-linking/issue-slack-setup-link/issue-slack-setup-link.command';
 import { IssueSlackSetupLink } from '../slack-linking/issue-slack-setup-link/issue-slack-setup-link.usecase';
 import { ConfigureWhatsAppWebhookCommand } from '../whatsapp/configure-whatsapp-webhook/configure-whatsapp-webhook.command';
@@ -73,7 +89,8 @@ import { UpdateAgentIntegration } from './update-agent-integration/update-agent-
 @ApiCommonResponses()
 @Controller('/agents')
 @UseInterceptors(ClassSerializerInterceptor)
-@ApiExcludeController()
+@ApiTags('Agents')
+@SdkGroupName('Agents.Integrations')
 @RequireAuthentication()
 export class AgentIntegrationsController {
   constructor(
@@ -84,7 +101,10 @@ export class AgentIntegrationsController {
     private readonly sendAgentTestEmailUsecase: SendAgentTestEmail,
     private readonly sendAgentWelcomeMessageUsecase: SendAgentWelcomeMessage,
     private readonly configureWhatsAppWebhookUsecase: ConfigureWhatsAppWebhook,
+    private readonly configureSendblueWebhookUsecase: ConfigureSendblueWebhook,
+    private readonly removeSendblueWebhooksUsecase: RemoveSendblueWebhooks,
     private readonly sendWhatsAppTestTemplateUsecase: SendWhatsAppTestTemplate,
+    private readonly sendAgentSendblueTestMessageUsecase: SendAgentSendblueTestMessage,
     private readonly issueSlackSetupLinkUsecase: IssueSlackSetupLink,
     private readonly updateAgentInboxSharedUsecase: UpdateAgentInboxShared
   ) {}
@@ -92,11 +112,13 @@ export class AgentIntegrationsController {
   @Post('/:identifier/integrations')
   @ExternalApiAccessible()
   @KeylessAccessible()
+  @SdkGroupName('Agents.Integrations')
+  @SdkMethodName('create')
   @ApiResponse(AgentIntegrationResponseDto, 201)
   @ApiOperation({
-    summary: 'Link integration to agent',
+    summary: 'Create an agent integration',
     description:
-      'Creates a link between an agent (by identifier) and an integration (by integration **identifier**, not the internal _id).',
+      'Create a link between an agent (by identifier) and an integration (by integration **identifier**, not the internal _id).',
   })
   @ApiNotFoundResponse({
     description: 'The agent or integration was not found.',
@@ -122,11 +144,13 @@ export class AgentIntegrationsController {
   @Get('/:identifier/integrations')
   @ExternalApiAccessible()
   @KeylessAccessible()
+  @SdkGroupName('Agents.Integrations')
+  @SdkMethodName('list')
   @ApiResponse(ListAgentIntegrationsResponseDto)
   @ApiOperation({
     summary: 'List agent integrations',
     description:
-      'Lists integration links for an agent identified by its external identifier. Supports cursor pagination via **after**, **before**, **limit**, **orderBy**, and **orderDirection**.',
+      'Retrieve integration links for an agent identified by its external identifier. Supports cursor pagination via **after**, **before**, **limit**, **orderBy**, and **orderDirection**.',
   })
   @ApiNotFoundResponse({
     description: 'The agent was not found.',
@@ -155,10 +179,13 @@ export class AgentIntegrationsController {
   }
 
   @Patch('/:identifier/integrations/:agentIntegrationId')
+  @ExternalApiAccessible()
+  @SdkGroupName('Agents.Integrations')
+  @SdkMethodName('update')
   @ApiResponse(AgentIntegrationResponseDto)
   @ApiOperation({
-    summary: 'Update agent-integration link',
-    description: 'Updates which integration a link points to (by integration **identifier**, not the internal _id).',
+    summary: 'Update an agent integration',
+    description: 'Update which integration a link points to (by integration **identifier**, not the internal _id).',
   })
   @ApiNotFoundResponse({
     description: 'The agent, integration, or link was not found.',
@@ -183,10 +210,13 @@ export class AgentIntegrationsController {
   }
 
   @Delete('/:identifier/integrations/:agentIntegrationId')
+  @ExternalApiAccessible()
+  @SdkGroupName('Agents.Integrations')
+  @SdkMethodName('delete')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
-    summary: 'Remove agent-integration link',
-    description: 'Deletes a specific agent-integration link by its document id.',
+    summary: 'Delete an agent integration',
+    description: 'Delete a specific agent-integration link by its document id.',
   })
   @ApiNoContentResponse({
     description: 'The link was removed.',
@@ -237,6 +267,63 @@ export class AgentIntegrationsController {
     );
   }
 
+  @Post('/:identifier/integrations/:integrationIdentifier/sendblue/configure-webhook')
+  @ApiExcludeEndpoint()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Configure the Sendblue receive webhook for an agent integration',
+    description:
+      'Provisions a webhook signing secret and registers the agent inbound URL as a `receive` webhook on the Sendblue account, so inbound iMessage/SMS messages are delivered to the agent. Falls back to manual configuration when the Sendblue API rejects the registration.',
+  })
+  @ApiNotFoundResponse({ description: 'The agent or integration was not found.' })
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  configureAgentSendblueWebhook(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string,
+    @Param('integrationIdentifier') integrationIdentifier: string
+  ): Promise<ConfigureSendblueWebhookResponseDto> {
+    return this.configureSendblueWebhookUsecase.execute(
+      ConfigureSendblueWebhookCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        agentIdentifier: identifier,
+        integrationIdentifier,
+      })
+    );
+  }
+
+  @Post('/:identifier/integrations/:integrationIdentifier/sendblue/remove-webhooks')
+  @ApiExcludeEndpoint()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Remove stale Novu webhooks from a Sendblue account',
+    description:
+      "Deletes the supplied webhook URLs from the Sendblue account's `receive` webhook list. Only URLs " +
+      'matching the Novu agent webhook shape are removed, regardless of what is supplied — Sendblue webhooks ' +
+      'are account-level, so this lets the dashboard clean up duplicate Novu registrations left behind by ' +
+      'other agents, integrations, or environments sharing the same Sendblue credentials.',
+  })
+  @ApiNotFoundResponse({ description: 'The agent or integration was not found.' })
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  removeAgentSendblueWebhooks(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string,
+    @Param('integrationIdentifier') integrationIdentifier: string,
+    @Body() body: RemoveSendblueWebhooksRequestDto
+  ): Promise<RemoveSendblueWebhooksResponseDto> {
+    return this.removeSendblueWebhooksUsecase.execute(
+      RemoveSendblueWebhooksCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        agentIdentifier: identifier,
+        integrationIdentifier,
+        webhookUrls: body.webhookUrls,
+      })
+    );
+  }
+
   @Post('/:identifier/integrations/:integrationIdentifier/whatsapp/test-template')
   @ApiExcludeEndpoint()
   @HttpCode(HttpStatus.OK)
@@ -265,7 +352,38 @@ export class AgentIntegrationsController {
     );
   }
 
+  @Post('/:identifier/integrations/:integrationIdentifier/sendblue/test-message')
+  @ApiExcludeEndpoint()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Send a test message from the agent Sendblue integration',
+    description:
+      'Sends a plain-text welcome message via the configured Sendblue number to a recipient supplied by the ' +
+      'user, used at the end of the onboarding flow to verify outbound delivery without asking the user to ' +
+      'send an inbound message themselves.',
+  })
+  @ApiNotFoundResponse({ description: 'The agent or integration was not found.' })
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  sendAgentSendblueTestMessage(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string,
+    @Param('integrationIdentifier') integrationIdentifier: string,
+    @Body() body: SendSendblueTestMessageRequestDto
+  ): Promise<SendSendblueTestMessageResponseDto> {
+    return this.sendAgentSendblueTestMessageUsecase.execute(
+      SendSendblueTestMessageCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        agentIdentifier: identifier,
+        integrationIdentifier,
+        subscriberId: body.subscriberId,
+      })
+    );
+  }
+
   @Post('/:identifier/test-email')
+  @ApiExcludeEndpoint()
   @HttpCode(HttpStatus.OK)
   @ProductFeature(ProductFeatureKeyEnum.AGENT_EMAIL_INTEGRATION)
   @ApiOperation({
@@ -294,6 +412,7 @@ export class AgentIntegrationsController {
   }
 
   @Patch('/:identifier/inbox/shared')
+  @ApiExcludeEndpoint()
   @ApiResponse(AgentIntegrationResponseDto)
   @ApiOperation({
     summary: 'Enable or disable the Novu shared inbox for an agent',
@@ -322,14 +441,15 @@ export class AgentIntegrationsController {
   }
 
   @Post('/:identifier/welcome-message')
+  @ApiExcludeEndpoint()
   @ExternalApiAccessible()
   @KeylessAccessible()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Send onboarding welcome message',
+    summary: 'Send an agent welcome message',
     description:
-      'Sends a proactive DM to the agent installer after Slack OAuth, a welcome email after email ' +
-      'connection, or posts a bridge-connected follow-up message into an existing conversation thread ' +
+      'Send a proactive DM to the agent installer after Slack OAuth, a welcome email after email ' +
+      'connection, or post a bridge-connected follow-up message into an existing conversation thread ' +
       'when conversationId is supplied.',
   })
   @ApiNotFoundResponse({ description: 'The agent or integration was not found.' })
@@ -352,14 +472,15 @@ export class AgentIntegrationsController {
   }
 
   @Post('/:identifier/integrations/:integrationId/slack/setup-link')
+  @ApiExcludeEndpoint()
   @ExternalApiAccessible()
   @KeylessAccessible()
   @HttpCode(HttpStatus.OK)
   @ApiResponse(IssueSlackSetupLinkResponseDto, 200)
   @ApiOperation({
-    summary: 'Issue a short-lived Slack setup link',
+    summary: 'Create a Slack setup link',
     description:
-      'Issues a signed, single-use link (TTL = 5 minutes) that can be opened to paste a Slack App ' +
+      'Issue a signed, single-use link (TTL = 5 minutes) that can be opened to paste a Slack App ' +
       'Configuration Token without re-authenticating. Slack-only.',
   })
   @ApiNotFoundResponse({

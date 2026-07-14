@@ -4,12 +4,14 @@ import type {
   BridgeRequirement,
   ChatSdkConnectOutcome,
   CustomCodeConnectOutcome,
+  LangChainConnectOutcome,
 } from '../../types';
 import { isVanillaCustomCodeConnectMode } from '../../types';
 
 export type BridgeSetupOutcomes = {
   chatSdk?: ChatSdkConnectOutcome;
   aiSdk?: AiSdkConnectOutcome;
+  langChain?: LangChainConnectOutcome;
   customCode?: CustomCodeConnectOutcome;
 };
 
@@ -47,7 +49,7 @@ function resolveChatSdkFollowUp(outcome: ChatSdkConnectOutcome): string | null {
   return null;
 }
 
-function resolveAiSdkFollowUp(outcome: AiSdkConnectOutcome): string | null {
+function resolveBridgeAdapterFollowUp(outcome: AiSdkConnectOutcome): string | null {
   if (outcome.scaffolded && outcome.tunnelAccepted) {
     return null;
   }
@@ -89,7 +91,11 @@ export function resolveBridgeSetupFollowUpMessage(
   }
 
   if (connectMode === 'ai-sdk' && outcomes.aiSdk) {
-    return resolveAiSdkFollowUp(outcomes.aiSdk);
+    return resolveBridgeAdapterFollowUp(outcomes.aiSdk);
+  }
+
+  if (connectMode === 'langchain' && outcomes.langChain) {
+    return resolveBridgeAdapterFollowUp(outcomes.langChain);
   }
 
   if (connectMode && isVanillaCustomCodeConnectMode(connectMode) && outcomes.customCode) {

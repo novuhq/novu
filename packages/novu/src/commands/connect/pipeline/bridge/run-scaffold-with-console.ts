@@ -11,6 +11,10 @@ function bridgeScaffoldLabel(variant: BridgeScaffoldVariant): string {
     return 'AI SDK agent app';
   }
 
+  if (variant === 'langchain') {
+    return 'LangChain agent app';
+  }
+
   return 'agent app';
 }
 

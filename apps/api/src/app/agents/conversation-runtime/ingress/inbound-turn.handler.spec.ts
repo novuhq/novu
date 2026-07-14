@@ -180,6 +180,10 @@ describe('AgentInboundHandler', () => {
       maybeBlock: sinon.stub().resolves(false),
       maybeBlockConversation: sinon.stub().resolves(false),
     };
+    const replyApprovalInterceptor = {
+      tryHandleAsApprovalReply: sinon.stub().resolves(false),
+      tryHandleAsApprovalReaction: sinon.stub().resolves(false),
+    };
     const handler = new AgentInboundHandler(
       logger as any,
       subscriberResolver as any,
@@ -198,12 +202,14 @@ describe('AgentInboundHandler', () => {
       connectClaimTokenService as any,
       keylessAbuseGuard as any,
       planLimitGate as any,
-      inboundAck as any
+      inboundAck as any,
+      replyApprovalInterceptor as any
     );
 
     return {
       handler,
       logger,
+      replyApprovalInterceptor,
       attachmentStorage,
       bridgeExecutor,
       conversationService,
@@ -287,6 +293,33 @@ describe('AgentInboundHandler', () => {
         isBot: false,
       },
       raw: { dkim, spf },
+      attachments: [],
+    };
+  }
+
+  function makeWhatsAppDmThread() {
+    return {
+      id: 'whatsapp:15551234567',
+      channelId: 'whatsapp:15551234567',
+      isDM: true,
+      toJSON: () => ({ id: 'whatsapp:15551234567', channelId: 'whatsapp:15551234567', isDM: true }),
+      startTyping: sinon.stub().resolves(undefined),
+      post: sinon.stub().resolves({ id: 'whatsapp-reply-1', threadId: 'whatsapp:15551234567' }),
+    };
+  }
+
+  function makeWhatsAppDmMessage(senderPhone: string) {
+    return {
+      id: 'whatsapp-msg-1',
+      threadId: 'whatsapp:15551234567',
+      text: 'hello',
+      author: {
+        userId: senderPhone,
+        fullName: 'WhatsApp Sender',
+        userName: senderPhone,
+        isBot: false,
+      },
+      raw: {},
       attachments: [],
     };
   }
@@ -741,6 +774,64 @@ describe('AgentInboundHandler', () => {
       expect(subscriberResolver.resolveSubscriber.calledOnce).to.equal(true);
       expect(managedAgentService.dispatch.calledOnce).to.equal(true);
       expect(outboundGateway.replyOnThread.called).to.equal(false);
+    });
+
+    it('should route an open-access WhatsApp agent through resolveOrProvision and dispatch', async () => {
+      const whatsappConfig = {
+        ...config,
+        platform: AgentPlatformEnum.WHATSAPP,
+        integrationIdentifier: 'whatsapp-main',
+        isManaged: true,
+        subscriberAccess: AgentSubscriberAccessEnum.OPEN,
+      };
+      const senderPhone = '+15551234567';
+      const resolveOrProvision = sinon.stub().resolves({ outcome: 'resolved', subscriberId: 'sub-provisioned' });
+      const { handler, managedAgentService, outboundGateway } = makeHandler({
+        subscriberResolveOrProvision: resolveOrProvision,
+        subscriberFindById: sinon.stub().resolves({ _id: 'sub-mongo', subscriberId: 'sub-provisioned' }),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+      });
+      const thread = makeWhatsAppDmThread();
+      const message = makeWhatsAppDmMessage(senderPhone);
+
+      await handler.handle('agent1', whatsappConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(resolveOrProvision.calledOnce).to.equal(true);
+      expect(resolveOrProvision.firstCall.args[0]).to.include({
+        platform: AgentPlatformEnum.WHATSAPP,
+        platformUserId: senderPhone,
+      });
+      expect(outboundGateway.replyOnThread.called).to.equal(false);
+      expect(managedAgentService.dispatch.calledOnce).to.equal(true);
+    });
+
+    it('should not auto-provision for a restricted WhatsApp agent and keep the no-access gate', async () => {
+      const whatsappConfig = {
+        ...config,
+        platform: AgentPlatformEnum.WHATSAPP,
+        integrationIdentifier: 'whatsapp-main',
+        isManaged: true,
+        subscriberAccess: AgentSubscriberAccessEnum.RESTRICTED,
+      };
+      const senderPhone = '+15559876543';
+      const resolveOrProvision = sinon.stub().resolves({ outcome: 'resolved', subscriberId: 'sub-provisioned' });
+      const { handler, managedAgentService, outboundGateway } = makeHandler({
+        subscriberResolve: sinon.stub().resolves(null),
+        subscriberResolveOrProvision: resolveOrProvision,
+        subscriberFindById: sinon.stub().resolves(null),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+      });
+      const thread = makeWhatsAppDmThread();
+      const message = makeWhatsAppDmMessage(senderPhone);
+
+      await handler.handle('agent1', whatsappConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(resolveOrProvision.called).to.equal(false);
+      expect(managedAgentService.dispatch.called).to.equal(false);
+      expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
+      expect(outboundGateway.replyOnThread.firstCall.args[1]).to.deep.equal({
+        markdown: UNRESOLVED_SUBSCRIBER_ACCESS_REPLY,
+      });
     });
   });
 

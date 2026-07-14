@@ -20,8 +20,7 @@ export function TranslationSwitch({ id, value, onChange, isReadOnly }: Translati
     getFeatureForTierAsBoolean(
       FeatureNameEnum.AUTO_TRANSLATIONS,
       subscription?.apiServiceLevel || ApiServiceLevelEnum.FREE
-    ) &&
-    !IS_SELF_HOSTED_CE;
+    ) && !IS_SELF_HOSTED_CE;
 
   const isFeatureUnavailable = !canUseTranslationFeature || isLoading;
   const disabled = isFeatureUnavailable || isReadOnly;

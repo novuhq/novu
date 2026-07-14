@@ -206,6 +206,10 @@ function scaffoldingBridgeMessage(variant: BridgeScaffoldVariant): string {
     return 'Scaffolding your AI SDK agent app…';
   }
 
+  if (variant === 'langchain') {
+    return 'Scaffolding your LangChain agent app…';
+  }
+
   return 'Scaffolding your Chat SDK app…';
 }
 

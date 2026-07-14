@@ -1,9 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import {
+  type ChannelConnectionAuth,
   decryptChannelConnectionAuth,
   decryptCredentials,
+  encryptChannelConnectionAuth,
   InstrumentUsecase,
   MsTeamsTokenService,
+  type WebexTokenRefreshResponse,
+  WebexTokenService,
 } from '@novu/application-generic';
 import {
   ChannelConnectionEntity,
@@ -15,6 +19,8 @@ import {
 import { ProvidersIdEnum } from '@novu/shared';
 import { ChannelData, ENDPOINT_TYPES, ENDPOINT_TYPES_REQUIRING_TOKEN } from '@novu/stateless';
 import { ResolveChannelEndpointsCommand } from './resolve-channel-endpoints.command';
+
+const TOKEN_REFRESH_WINDOW_MS = 5 * 60 * 1000;
 
 export type IntegrationEndpoints = {
   integrationIdentifier: string;
@@ -45,11 +51,14 @@ export type IntegrationEndpoints = {
  */
 @Injectable()
 export class ResolveChannelEndpoints {
+  private readonly webexRefreshPromises = new Map<string, Promise<Record<string, unknown>>>();
+
   constructor(
     private readonly channelEndpointRepository: ChannelEndpointRepository,
     private readonly channelConnectionRepository: ChannelConnectionRepository,
     private readonly integrationRepository: IntegrationRepository,
-    private readonly msTeamsTokenService: MsTeamsTokenService
+    private readonly msTeamsTokenService: MsTeamsTokenService,
+    private readonly webexTokenService: WebexTokenService
   ) {}
 
   @InstrumentUsecase()
@@ -180,6 +189,10 @@ export class ResolveChannelEndpoints {
       return await this.extractMsTeamsToken(endpoint, connectionMap);
     }
 
+    if (endpoint.type === ENDPOINT_TYPES.WEBEX_ROOM || endpoint.type === ENDPOINT_TYPES.WEBEX_PERSON) {
+      return await this.extractWebexToken(endpoint, connectionMap);
+    }
+
     // Slack and other connection-based tokens
     const token = this.extractConnectionToken(endpoint, connectionMap);
     return { token: token || '' };
@@ -259,5 +272,130 @@ export class ResolveChannelEndpoints {
     const decryptedAuth = decryptChannelConnectionAuth(connection.auth);
 
     return decryptedAuth?.accessToken;
+  }
+
+  private async extractWebexToken(
+    endpoint: ChannelEndpointEntity,
+    connectionMap: Map<string, ChannelConnectionEntity>
+  ): Promise<Record<string, unknown>> {
+    const connection = endpoint.connectionIdentifier ? connectionMap.get(endpoint.connectionIdentifier) : undefined;
+
+    if (!connection?.auth) {
+      throw new Error(`Webex endpoint ${endpoint.identifier} requires a channel connection`);
+    }
+
+    const decryptedAuth = decryptChannelConnectionAuth(connection.auth);
+    const accessToken = decryptedAuth?.accessToken;
+
+    if (!accessToken) {
+      throw new Error(`Webex channel connection ${connection.identifier} is missing an access token`);
+    }
+
+    if (!this.shouldRefreshToken(decryptedAuth.expiresAt)) {
+      return { token: accessToken };
+    }
+
+    if (!decryptedAuth.refreshToken) {
+      throw new Error(`Webex channel connection ${connection.identifier} is missing a refresh token`);
+    }
+
+    const refreshKey = this.buildWebexRefreshKey(connection);
+    const existingRefresh = this.webexRefreshPromises.get(refreshKey);
+
+    if (existingRefresh) {
+      return await existingRefresh;
+    }
+
+    const refreshPromise = this.refreshWebexConnectionToken(endpoint, connection, decryptedAuth);
+    this.webexRefreshPromises.set(refreshKey, refreshPromise);
+
+    try {
+      return await refreshPromise;
+    } finally {
+      this.webexRefreshPromises.delete(refreshKey);
+    }
+  }
+
+  private async refreshWebexConnectionToken(
+    endpoint: ChannelEndpointEntity,
+    connection: ChannelConnectionEntity,
+    decryptedAuth: ChannelConnectionAuth
+  ): Promise<Record<string, unknown>> {
+    if (!decryptedAuth.refreshToken) {
+      throw new Error(`Webex channel connection ${connection.identifier} is missing a refresh token`);
+    }
+
+    const integration = await this.integrationRepository.findOne({
+      identifier: endpoint.integrationIdentifier,
+      _environmentId: endpoint._environmentId,
+      _organizationId: endpoint._organizationId,
+    });
+
+    if (!integration?.credentials) {
+      throw new Error(`Integration ${endpoint.integrationIdentifier} missing credentials for Webex Messaging`);
+    }
+
+    const credentials = decryptCredentials(integration.credentials);
+    const { clientId, secretKey } = credentials;
+
+    if (!clientId || !secretKey) {
+      throw new Error(`Integration ${endpoint.integrationIdentifier} missing required Webex OAuth credentials`);
+    }
+
+    const refreshed = await this.webexTokenService.refreshAccessToken(decryptedAuth.refreshToken, clientId, secretKey);
+
+    if (!refreshed.access_token) {
+      throw new Error(`Webex token refresh did not return an access token for connection ${connection.identifier}`);
+    }
+
+    const refreshedAuth = {
+      ...decryptedAuth,
+      accessToken: refreshed.access_token,
+      refreshToken: refreshed.refresh_token ?? decryptedAuth.refreshToken,
+      expiresAt: this.buildExpiresAt(refreshed.expires_in) ?? decryptedAuth.expiresAt,
+      refreshTokenExpiresAt:
+        this.buildExpiresAt(refreshed.refresh_token_expires_in) ?? decryptedAuth.refreshTokenExpiresAt,
+    };
+
+    await this.channelConnectionRepository.findOneAndUpdate(
+      {
+        _environmentId: endpoint._environmentId,
+        _organizationId: endpoint._organizationId,
+        identifier: connection.identifier,
+      },
+      {
+        $set: {
+          auth: encryptChannelConnectionAuth(refreshedAuth),
+        },
+      }
+    );
+
+    return { token: refreshedAuth.accessToken };
+  }
+
+  private buildWebexRefreshKey(connection: ChannelConnectionEntity): string {
+    return `${connection._organizationId}:${connection._environmentId}:${connection.identifier}`;
+  }
+
+  private shouldRefreshToken(expiresAt?: string): boolean {
+    if (!expiresAt) {
+      return false;
+    }
+
+    const expiresAtTime = new Date(expiresAt).getTime();
+
+    if (Number.isNaN(expiresAtTime)) {
+      return false;
+    }
+
+    return expiresAtTime - Date.now() <= TOKEN_REFRESH_WINDOW_MS;
+  }
+
+  private buildExpiresAt(expiresInSeconds?: WebexTokenRefreshResponse['expires_in']): string | undefined {
+    if (!expiresInSeconds) {
+      return undefined;
+    }
+
+    return new Date(Date.now() + expiresInSeconds * 1000).toISOString();
   }
 }

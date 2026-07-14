@@ -70,11 +70,7 @@ export function ActivityFeed() {
   }, [isHttpLogsPageEnabled, location.pathname, location.search, currentEnvironment?.slug, navigate]);
 
   useEffect(() => {
-    if (
-      !areAgentsAvailable &&
-      location.pathname.includes('/activity/conversations') &&
-      currentEnvironment?.slug
-    ) {
+    if (!areAgentsAvailable && location.pathname.includes('/activity/conversations') && currentEnvironment?.slug) {
       const fallbackPath = buildRoute(ROUTES.ACTIVITY_WORKFLOW_RUNS, { environmentSlug: currentEnvironment.slug });
       navigate(`${fallbackPath}${location.search}`, { replace: true });
     }

@@ -94,9 +94,7 @@ const TUNNEL_SOCKET_OPTIONS = {
 function installTunnelCrashGuard() {
   process.on('uncaughtException', (error: Error) => {
     const text = `${error?.message ?? ''}\n${error?.stack ?? ''}`;
-    const isSocketError = /WebSocket|partysocket|ws\/lib|ECONNRESET|ECONNREFUSED|EPIPE|ETIMEDOUT|ENOTFOUND/i.test(
-      text
-    );
+    const isSocketError = /WebSocket|partysocket|ws\/lib|ECONNRESET|ECONNREFUSED|EPIPE|ETIMEDOUT|ENOTFOUND/i.test(text);
 
     if (isSocketError && !shuttingDown) {
       console.log(chalk.yellow('\n  ⚠ Tunnel connection hiccup — reconnecting…'));

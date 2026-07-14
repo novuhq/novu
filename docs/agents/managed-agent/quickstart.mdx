@@ -94,6 +94,10 @@ To manage your agent, add more channels, or view conversations from the Connect 
 
 </Steps>
 
+<Note>
+  The CLI uses the same REST APIs under the hood. To create agents programmatically, see [Create an agent](/api-reference/agents/create-an-agent). Managed runtime configuration is done from the dashboard.
+</Note>
+
 <Prompt description="Copy an example agent description" icon="plug" actions={["copy", "cursor"]}>
 Create an engineering assistant agent that checks Linear and GitHub for open issues, pending PR reviews, and review requests. It summarizes what needs attention, flags blockers and stale tickets, and posts a short daily standup digest. It keeps responses concise and links back to the relevant Linear issue or GitHub pull request.
 
@@ -113,5 +117,8 @@ Reference: https://docs.novu.co/agents/managed-agent/quickstart
   </Card>
   <Card icon="messages-square" href="/agents/conversations" title="Conversation observability">
     View and manage agent conversations from the Novu Connect dashboard.
+  </Card>
+  <Card icon="code" href="/api-reference/agents/agent-schema" title="Agents API reference">
+    Create, configure, and manage managed agents programmatically.
   </Card>
 </Columns>

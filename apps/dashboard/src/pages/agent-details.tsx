@@ -35,8 +35,8 @@ import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import TruncatedText from '@/components/truncated-text';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
-import { useAreConversationalAgentsAvailable } from '@/hooks/use-are-conversational-agents-available';
 import { useAgentRoutes } from '@/hooks/use-agent-routes';
+import { useAreConversationalAgentsAvailable } from '@/hooks/use-are-conversational-agents-available';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import {
   AGENT_DETAILS_DEFAULT_TAB,

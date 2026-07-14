@@ -8,6 +8,8 @@ export function getWelcomeText(platform: AgentPlatformEnum): string {
       return 'Your Teams app is connected! Send me a message to try it out.';
     case AgentPlatformEnum.WHATSAPP:
       return 'Connected! Send me a message to try it out.';
+    case AgentPlatformEnum.SENDBLUE:
+      return 'Connected! Send me a message to try it out.';
     case AgentPlatformEnum.EMAIL:
       return 'Connected! Reply to this email to try it out.';
     default:

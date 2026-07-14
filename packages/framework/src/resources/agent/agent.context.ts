@@ -454,6 +454,20 @@ export class AgentContextImpl implements AgentRuntimeContext {
     this._pendingDeletes.push({ messageId });
   }
 
+  /** Best-effort failure report to Novu. Never throws. */
+  async reportTurnError(): Promise<void> {
+    try {
+      await this._post({
+        conversationId: this._conversationId,
+        integrationIdentifier: this._integrationIdentifier,
+        error: true,
+      });
+    } catch (err) {
+      // Local only — cannot recurse into onError
+      console.error(`[agent] Failed to report turn error:`, err);
+    }
+  }
+
   /**
    * Flush any remaining signals that weren't sent with reply().
    * Called internally after onResolve returns.

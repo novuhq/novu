@@ -32,7 +32,7 @@ import { Result } from "../types/fp.js";
  * @remarks
  * List all the active integrations created in the organization. Only integration metadata is returned, credentials field is returned as an empty object.
  *
- * This operation requires either {@link Security.bearerAuth} or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.
+ * This operation requires one of {@link Security.bearerAuth}, {@link Security.secretKey}, or {@link Security.bearerAuth} to be set on the `security` parameter when initializing the SDK.
  */
 export function integrationsListActive(
   client: NovuCore,

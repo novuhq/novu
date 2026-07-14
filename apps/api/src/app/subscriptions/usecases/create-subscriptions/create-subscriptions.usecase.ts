@@ -364,10 +364,7 @@ export class CreateSubscriptionsUsecase {
   } {
     const identifierErrors: SubscriptionErrorDto[] = [];
     const validSubscriptions = subscriptions.filter((subscription) => {
-      if (
-        subscription.identifier &&
-        subscription.identifier.length > TOPIC_SUBSCRIPTION_IDENTIFIER_MAX_LENGTH
-      ) {
+      if (subscription.identifier && subscription.identifier.length > TOPIC_SUBSCRIPTION_IDENTIFIER_MAX_LENGTH) {
         identifierErrors.push({
           subscriberId: subscription.subscriberId,
           code: 'INVALID_SUBSCRIPTION_IDENTIFIER',

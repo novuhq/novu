@@ -33,7 +33,7 @@ import { Result } from "../types/fp.js";
  * Retrieve subscriber channel preferences by its unique key identifier **subscriberId**.
  *     This API returns all five channels preferences for all workflows and global preferences.
  *
- * This operation requires either {@link Security.bearerAuth} or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.
+ * This operation requires one of {@link Security.bearerAuth}, {@link Security.secretKey}, or {@link Security.bearerAuth} to be set on the `security` parameter when initializing the SDK.
  */
 export function subscribersPreferencesList(
   client: NovuCore,

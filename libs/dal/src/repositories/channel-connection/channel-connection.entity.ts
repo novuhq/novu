@@ -20,6 +20,8 @@ export class ChannelConnectionEntity implements ChannelConnection {
   auth: {
     accessToken: string;
     refreshToken?: string;
+    expiresAt?: string;
+    refreshTokenExpiresAt?: string;
     signingSecret?: string;
     clientSecret?: string;
   };

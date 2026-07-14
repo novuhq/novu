@@ -7,12 +7,15 @@ import {
   ProvidersIdEnumConst,
 } from '@novu/shared';
 import {
+  LineUserEndpointDto,
   MsTeamsChannelEndpointDto,
   MsTeamsUserEndpointDto,
   PhoneEndpointDto,
   SlackChannelEndpointDto,
   SlackUserEndpointDto,
   TelegramChatEndpointDto,
+  WebexPersonEndpointDto,
+  WebexRoomEndpointDto,
   WebhookEndpointDto,
 } from './endpoint-types.dto';
 
@@ -83,6 +86,9 @@ export class GetChannelEndpointResponseDto {
       { $ref: getSchemaPath(MsTeamsChannelEndpointDto) },
       { $ref: getSchemaPath(MsTeamsUserEndpointDto) },
       { $ref: getSchemaPath(TelegramChatEndpointDto) },
+      { $ref: getSchemaPath(WebexRoomEndpointDto) },
+      { $ref: getSchemaPath(WebexPersonEndpointDto) },
+      { $ref: getSchemaPath(LineUserEndpointDto) },
     ],
   })
   endpoint:
@@ -92,7 +98,10 @@ export class GetChannelEndpointResponseDto {
     | PhoneEndpointDto
     | MsTeamsChannelEndpointDto
     | MsTeamsUserEndpointDto
-    | TelegramChatEndpointDto;
+    | TelegramChatEndpointDto
+    | WebexRoomEndpointDto
+    | WebexPersonEndpointDto
+    | LineUserEndpointDto;
 
   @ApiProperty({
     description: 'The timestamp indicating when the channel endpoint was created, in ISO 8601 format.',

@@ -51,11 +51,12 @@ export class BasePreferenceDto {
   enabled?: boolean;
 
   @ApiProperty({
-    description: 'Optional condition using JSON Logic rules',
+    description:
+      'Optional JSON Logic condition evaluated against the trigger payload at fan-out time (for example, `{ "var": "payload.tier" }`)',
     required: false,
     type: 'object',
     additionalProperties: true,
-    example: { and: [{ '===': [{ var: 'tier' }, 'premium'] }] },
+    example: { and: [{ '===': [{ var: 'payload.tier' }, 'premium'] }] },
   })
   @ValidateIf((o) => o.condition !== undefined)
   @IsOptional()
@@ -158,7 +159,7 @@ export class CreateSubscriptionsRequestDto {
         { $ref: getSchemaPath(GroupPreferenceFilterDto) },
       ],
     },
-    example: [{ workflowId: 'workflow-123', condition: { '===': [{ var: 'tier' }, 'premium'] } }],
+    example: [{ workflowId: 'workflow-123', condition: { '===': [{ var: 'payload.tier' }, 'premium'] } }],
   })
   @IsArray()
   @IsOptional()

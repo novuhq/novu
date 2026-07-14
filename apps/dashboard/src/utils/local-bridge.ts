@@ -1,6 +1,6 @@
 import type { StepResponseDto, WorkflowResponseDto } from '@novu/shared';
 import { getIdFromSlug, STEP_DIVIDER, WORKFLOW_DIVIDER } from '@/utils/id-utils';
-import { loadFromStorage, saveToStorage, clearFromStorage } from '@/utils/local-storage';
+import { clearFromStorage, loadFromStorage, saveToStorage } from '@/utils/local-storage';
 
 /**
  * A local bridge session connects the dashboard's "Local" pseudo-environment
