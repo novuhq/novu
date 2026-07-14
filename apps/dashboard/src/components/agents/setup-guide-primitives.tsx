@@ -132,7 +132,7 @@ export function CompletedStepIndicator() {
   );
 }
 
-export type SetupStepIndicatorVariant = 'number' | 'dot';
+type SetupStepIndicatorVariant = 'number' | 'dot';
 
 function StepIndicator({
   status,

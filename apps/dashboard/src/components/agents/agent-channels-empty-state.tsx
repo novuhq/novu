@@ -61,26 +61,19 @@ function EmptyChannelsIllustration() {
 export function AgentChannelsEmptyState() {
   return (
     <motion.div
-      className="bg-bg-weak/30 flex min-h-[320px] w-full flex-col items-center justify-center rounded-xl px-6 py-16 text-center"
+      className="bg-bg-weak/30 flex min-h-[320px] w-full flex-col items-center justify-center gap-5 rounded-xl px-6 py-16 text-center"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
     >
-      <motion.div
-        initial={{ opacity: 0, scale: 0.98, y: 4 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ duration: 0.25, delay: 0.05, ease: [0.4, 0, 0.2, 1] }}
-        className="flex flex-col items-center gap-5"
-      >
-        <EmptyChannelsIllustration />
+      <EmptyChannelsIllustration />
 
-        <div className="flex flex-col items-center gap-1">
-          <p className="text-text-strong text-label-md font-medium">No channel selected</p>
-          <p className="text-text-soft text-label-sm max-w-sm leading-5">
-            Select a channel to view details, or add a new one.
-          </p>
-        </div>
-      </motion.div>
+      <div className="flex flex-col items-center gap-1">
+        <p className="text-text-strong text-label-md font-medium">No channel selected</p>
+        <p className="text-text-soft text-label-sm max-w-sm leading-5">
+          Select a channel to view details, or add a new one.
+        </p>
+      </div>
     </motion.div>
   );
 }

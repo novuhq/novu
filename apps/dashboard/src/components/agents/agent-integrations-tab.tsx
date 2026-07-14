@@ -240,12 +240,11 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
         integrationIdentifier: encodeURIComponent(nextIntegrationIdentifier),
       })}${location.search}`
     );
-    saveLastSelectedChannel(currentEnvironment._id, agent.identifier, nextIntegrationIdentifier);
   };
 
   const handleBackFromGuide = () => {
     clearLastSelectedChannel(currentEnvironment?._id, agent.identifier);
-    navigate(integrationsHubPath, { state: { skipIntegrationsRedirect: true } });
+    navigate(integrationsHubPath);
   };
 
   const listQuery = useQuery({
@@ -269,14 +268,6 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
     }
 
     if (!currentEnvironment?.slug) {
-      return;
-    }
-
-    const skipRedirect = Boolean(
-      (location.state as { skipIntegrationsRedirect?: boolean } | null)?.skipIntegrationsRedirect
-    );
-
-    if (skipRedirect) {
       return;
     }
 
@@ -314,7 +305,6 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
     linkedRows,
     listQuery.isSuccess,
     location.search,
-    location.state,
     navigate,
     integrationIdentifier,
   ]);
