@@ -87,16 +87,24 @@ export class AllExceptionsFilter implements ExceptionFilter {
   }
 
   private logError(errorDto: ErrorDto, exception: unknown) {
-    this.logger.error({
-      /**
-       * It's important to use `err` as the key, pino (the logger we use) will
-       * log an empty object if the key is not `err`
-       *
-       * @see https://github.com/pinojs/pino/issues/819#issuecomment-611995074
+    this.logger.error(
+      {
+        /**
+         * It's important to use `err` as the key, pino (the logger we use) will
+         * log an empty object if the key is not `err`
+         *
+         * @see https://github.com/pinojs/pino/issues/819#issuecomment-611995074
+         */
+        err: exception,
+        error: errorDto,
+      },
+      /*
+       * The errorId and path go into the message text so a plain-text search for the
+       * errorId a customer reports finds this log — nested attributes like
+       * `error.errorId` are not reliably indexed for full-text search.
        */
-      err: exception,
-      error: errorDto,
-    });
+      `Unhandled exception: statusCode=${errorDto.statusCode} path=${errorDto.path}${errorDto.errorId ? ` errorId=${errorDto.errorId}` : ''}`
+    );
   }
 
   private buildErrorDto(
