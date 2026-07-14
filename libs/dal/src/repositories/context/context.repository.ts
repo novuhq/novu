@@ -86,7 +86,8 @@ export class ContextRepository extends BaseRepository<ContextDBModel, ContextEnt
       return existingContext;
     }
 
-    const updatedContext = await this.findOneAndUpdate(query, { $set: { data } }, { new: true });
+    const normalizedData = data || {};
+    const updatedContext = await this.findOneAndUpdate(query, { $set: { data: normalizedData } }, { new: true });
 
     if (!updatedContext) {
       return existingContext;
