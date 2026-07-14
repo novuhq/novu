@@ -1,3 +1,45 @@
+## v2.19.0 (2026-07-13)
+
+### 🚀 Features
+
+- **novu:** first-class LangChain support in npx novu connect fixes NV-8243 ([#11888](https://github.com/novuhq/novu/pull/11888))
+- **providers:** add Webex Messaging OAuth support fixes NV-8272 ([#11633](https://github.com/novuhq/novu/pull/11633))
+- **framework:** support AI SDK v7 in @novu/framework/ai-sdk fixes NV-8222 ([#11860](https://github.com/novuhq/novu/pull/11860))
+- **dashboard:** replace legacy local studio with Local environment mode fixes NV-8242 ([#11847](https://github.com/novuhq/novu/pull/11847))
+- **novu:** AI SDK connect template + existing-project reconcile fixes NV-8223 ([#11846](https://github.com/novuhq/novu/pull/11846))
+- **cli:** add --version flag to the CLI ([#11817](https://github.com/novuhq/novu/pull/11817))
+- **dashboard:** email agent whats-next guide and simplified setup fixes NV-8115 ([#11706](https://github.com/novuhq/novu/pull/11706))
+- **novu:** align connect runtime picker with dashboard onboarding fixes NV-8135 ([#11682](https://github.com/novuhq/novu/pull/11682))
+- **dashboard:** improve agent onboarding setup UX and CLI auth fixes NV-8125 ([#11655](https://github.com/novuhq/novu/pull/11655))
+- **api-service,js,react:** Telegram subscriber-link SDK + shared linking module fixes NV-8095 ([#11619](https://github.com/novuhq/novu/pull/11619))
+- **root:** sort selected items to top in agent creation multi-select fixes NV-8076 ([#11601](https://github.com/novuhq/novu/pull/11601))
+- **root:** add Chat SDK brain to novu connect fixes NV-8067 ([#11595](https://github.com/novuhq/novu/pull/11595))
+- **novu:** default connect to dashboard OAuth, add --keyless flag fixes NV-8048 ([#11566](https://github.com/novuhq/novu/pull/11566))
+- **novu:** surface keyless claim link in connect onboarding flow fixes NV-8036 ([#11530](https://github.com/novuhq/novu/pull/11530))
+- **novu,dashboard,shared:** connect --login and dashboard onboarding auth signal fixes NV-8020 ([#11523](https://github.com/novuhq/novu/pull/11523))
+- **novu:** secure setup links for Slack/Telegram secrets fixes NV-8008 ([#11506](https://github.com/novuhq/novu/pull/11506))
+- **novu:** telegram QR PNG handoff and --ci channel guard fixes NV-8007 ([#11505](https://github.com/novuhq/novu/pull/11505))
+- **novu:** agent-optimized connect --help fixes NV-8007 ([#11504](https://github.com/novuhq/novu/pull/11504))
+
+### 🩹 Fixes
+
+- **root:** bump vitest devDependency range to ^4.1.0 to close advisories fixes NV-8196 ([#11785](https://github.com/novuhq/novu/pull/11785))
+- **root:** resolve high esbuild vulnerability fixes NV-8040 ([#11554](https://github.com/novuhq/novu/pull/11554))
+- **novu:** fall back to dashboard auth when keyless AI limit is hit fixes NV-8027 ([#11537](https://github.com/novuhq/novu/pull/11537))
+- **novu:** restore in-terminal token entry for interactive connect fixes NV-8026 ([#11536](https://github.com/novuhq/novu/pull/11536))
+- rc ([d19deca4f5](https://github.com/novuhq/novu/commit/d19deca4f5))
+- **novu:** harden keyless session bootstrap and CI handoff events ([#11489](https://github.com/novuhq/novu/pull/11489))
+- **novu:** fallback to dashboard auth when keyless demo limits are hit fixes NV-7993 ([#11484](https://github.com/novuhq/novu/pull/11484))
+
+### ❤️ Thank You
+
+- Adam Chmara @ChmaraX
+- Andrew @andrewk2929
+- Dima Grossman @scopsy
+- George Djabarov @djabarovgeorge
+- Paweł Tymczuk @LetItRock
+- Rahul Jain
+
 ## 2.8.0 (2026-03-27)
 
 ### 🚀 Features

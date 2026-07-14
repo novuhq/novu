@@ -782,6 +782,31 @@ await novu.trigger({
   Global and workflow channel preferences still apply. If a subscriber has disabled email globally, they will not receive email even when a subscription condition matches.
 </Note>
 
+## Billing and workflow runs
+
+Novu Cloud bills by [workflow runs](/platform/account/billing#what-is-a-workflow-run): one execution of a workflow for one subscriber. Usage is counted when Novu creates a **workflow run** for that subscriber, not when you call the trigger API.
+
+Topic subscription filtering happens **before** that point, during topic fan-out:
+
+1. Novu looks up subscriptions on the topic (including [Context](/platform/concepts/contexts) exact-match filtering).
+2. For each candidate subscription, Novu evaluates JSON Logic conditions against the trigger **payload**.
+3. Only subscriptions that pass proceed to workflow run creation.
+
+If a subscriber is filtered out because their Context does not match the trigger, or because their subscription condition evaluates to `false`, **no workflow run is created** for that subscriber and **it does not count toward usage**.
+
+<Note>
+  This is different from [step conditions](/platform/workflow/add-and-configure-steps/step-conditions) and [channel preferences](/platform/concepts/preferences). Those run after a workflow run already exists. A subscriber who passes topic subscription filters but has steps skipped or channels muted still counts as **one** workflow run. See [Trigger FAQ](/platform/concepts/trigger#frequently-asked-questions) for the full billing picture.
+</Note>
+
+### What counts as billable for topic triggers
+
+| Outcome | Workflow run created? | Counts toward usage? |
+| --- | --- | --- |
+| Subscription Context does not match trigger Context | No | No |
+| JSON Logic condition evaluates to `false` | No | No |
+| Subscription passes, workflow executes (even if steps are skipped) | Yes | Yes |
+| Subscription passes, channel preference blocks a channel | Yes | Yes (run still created) |
+
 ## Limits
 
 - **10 subscriptions** per subscriber per topic (across all Context scopes)
