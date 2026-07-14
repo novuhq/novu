@@ -38,7 +38,7 @@
     },
     "tabs": [
       {
-        "tab": "Platform",
+        "tab": "Notify",
         "groups": [
           {
             "group": "Getting Started",
@@ -407,7 +407,7 @@
         ]
       },
       {
-        "tab": "Agents",
+        "tab": "Connect",
         "groups": [
           {
             "group": "Getting Started",
