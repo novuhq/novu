@@ -27,7 +27,10 @@ export async function sync(bridgeUrl: string, secretKey: string, apiUrl: string)
     process.exit(1);
   }
 
-  await syncAgentBridgeUrls(bridgeUrl, secretKey, apiUrl);
+  const workflowCount = Array.isArray(syncResult.data) ? syncResult.data.length : 0;
+  const agentCount = await syncAgentBridgeUrls(bridgeUrl, secretKey, apiUrl);
+
+  console.log(`${workflowCount} Workflows and ${agentCount} Agents`);
 
   return syncResult.data;
 }
@@ -49,14 +52,14 @@ export async function executeSync(apiUrl: string, bridgeUrl: string, secretKey: 
   );
 }
 
-async function syncAgentBridgeUrls(bridgeUrl: string, secretKey: string, apiUrl: string) {
+async function syncAgentBridgeUrls(bridgeUrl: string, secretKey: string, apiUrl: string): Promise<number> {
   try {
     const discoverUrl = `${bridgeUrl}?action=discover`;
     const discoverRes = await axios.get<DiscoverResponse>(discoverUrl, { timeout: 5000 });
     const agents = discoverRes.data?.agents ?? [];
 
     if (agents.length === 0) {
-      return;
+      return 0;
     }
 
     console.log(`Setting production bridge URL for ${agents.length} agent(s)...`);
@@ -85,8 +88,10 @@ async function syncAgentBridgeUrls(bridgeUrl: string, secretKey: string, apiUrl:
         console.warn(`  ✗ ${agentId}: ${result.reason?.message || 'unknown error'}`);
       }
     }
+
+    return agents.length;
   } catch {
-    console.warn('Could not discover agents for bridge URL sync (bridge may not expose agents yet).');
+    return 0;
   }
 }
 
