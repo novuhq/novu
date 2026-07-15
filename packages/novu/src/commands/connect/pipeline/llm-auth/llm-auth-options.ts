@@ -14,7 +14,7 @@ const ANTHROPIC_API_KEY_OPTION: LlmAuthPickerOption = {
 const CODEX_SUBSCRIPTION_OPTION: LlmAuthPickerOption = {
   kind: 'codex-subscription',
   title: 'ChatGPT subscription (Codex)',
-  detail: 'OAuth via Codex CLI (tools not supported — use an API key to try tool approval)',
+  detail: 'OAuth via Codex CLI',
 };
 
 const CLAUDE_SUBSCRIPTION_OPTION: LlmAuthPickerOption = {

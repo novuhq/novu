@@ -90,7 +90,7 @@ describe('generateSupportAgentSource', () => {
     expect(source).toContain('export const myAgent');
   });
 
-  it('generates wired LangChain Codex subscription handler', () => {
+  it('generates wired LangChain Codex subscription handler with tools', () => {
     const source = generateSupportAgentSource({
       runtime: 'langchain',
       agentIdentifier: 'support-agent',
@@ -99,6 +99,8 @@ describe('generateSupportAgentSource', () => {
 
     expect(source).toContain("import { ChatCodexOAuth } from 'langchainjs-codex-oauth'");
     expect(source).toContain("model: new ChatCodexOAuth({ model: 'gpt-5.4-mini' })");
+    expect(source).toContain('tools: [searchNovuDocs]');
+    expect(source).toContain("toolCall.name === 'searchNovuDocs'");
   });
 
   it('generates wired AI SDK Codex subscription handler without tools', () => {
@@ -110,9 +112,23 @@ describe('generateSupportAgentSource', () => {
 
     expect(source).toContain("import { codexCli } from 'ai-sdk-provider-codex-cli'");
     expect(source).toContain("model: codexCli('gpt-5.4-mini')");
-    expect(source).toContain('Codex CLI does not support AI SDK tools');
     expect(source).not.toContain('tools: { searchNovuDocs }');
     expect(source).not.toContain('needsApproval: true');
+    expect(source).not.toContain('search-novu-docs');
+  });
+
+  it('generates wired AI SDK Claude subscription handler without tools', () => {
+    const source = generateSupportAgentSource({
+      runtime: 'ai-sdk',
+      agentIdentifier: 'support-agent',
+      llmAuth: { kind: 'claude-subscription' },
+    });
+
+    expect(source).toContain("import { claudeCode } from 'ai-sdk-provider-claude-code'");
+    expect(source).toContain("model: claudeCode('haiku')");
+    expect(source).not.toContain('tools: { searchNovuDocs }');
+    expect(source).not.toContain('needsApproval: true');
+    expect(source).not.toContain('search-novu-docs');
   });
 
   it('generates a valid export name when the identifier starts with a digit', () => {

@@ -1,4 +1,5 @@
 import type { GenerateSupportAgentInput } from '../types';
+import { aiSdkCodegenSupportsTools, codegenSupportsTools } from './tool-support';
 
 function toCamelAgentName(agentIdentifier: string): string {
   const camelName = agentIdentifier.replace(/[-_]([a-z0-9])/g, (_, char) => char.toUpperCase());
@@ -50,17 +51,12 @@ function buildOnActionHandler(): string {
   },`;
 }
 
-const AGENT_SYSTEM_PROMPT = 'You are a helpful support agent. Use searchNovuDocs to find Novu documentation.';
-const CODEX_AGENT_SYSTEM_PROMPT = 'You are a helpful support agent.';
-
-function codegenSupportsTools(input: GenerateSupportAgentInput): boolean {
-  // Codex CLI provider does not support AI SDK tools.
-  return !(input.runtime === 'ai-sdk' && input.llmAuth.kind === 'codex-subscription');
-}
+const AGENT_SYSTEM_PROMPT_WITH_TOOLS =
+  'You are a helpful support agent. Use searchNovuDocs to find Novu documentation.';
+const AGENT_SYSTEM_PROMPT = 'You are a helpful support agent.';
 
 function buildAiSdkSearchNovuDocsTool(): string {
-  return `// Example tool — gates external fetches behind user approval (needsApproval: true).
-const searchNovuDocs = tool({
+  return `const searchNovuDocs = tool({
   description: 'Search Novu documentation for relevant guides.',
   inputSchema: searchNovuDocsInputSchema,
   needsApproval: true,
@@ -69,8 +65,7 @@ const searchNovuDocs = tool({
 }
 
 function buildLangChainSearchNovuDocsTool(): string {
-  return `// Example tool — gates external fetches behind user approval (needsApproval callback below).
-const searchNovuDocs = tool(
+  return `const searchNovuDocs = tool(
   async ({ query }) => ({ matches: await searchNovuDocsIndex(query) }),
   {
     name: 'searchNovuDocs',
@@ -80,9 +75,8 @@ const searchNovuDocs = tool(
 );`;
 }
 
-function buildAiSdkGenerateTextReturn(modelLine: string, options: { withTools?: boolean } = {}): string {
-  const withTools = options.withTools ?? true;
-  const instructions = withTools ? AGENT_SYSTEM_PROMPT : CODEX_AGENT_SYSTEM_PROMPT;
+function buildAiSdkGenerateTextReturn(modelLine: string, withTools: boolean): string {
+  const instructions = withTools ? AGENT_SYSTEM_PROMPT_WITH_TOOLS : AGENT_SYSTEM_PROMPT;
   const toolsLine = withTools ? '\n      tools: { searchNovuDocs },' : '';
 
   return `    return generateText({
@@ -95,56 +89,49 @@ function buildAiSdkGenerateTextReturn(modelLine: string, options: { withTools?: 
 function buildLangChainConfigReturn(modelLine: string): string {
   return `    return {
       model: ${modelLine},
-      system: '${AGENT_SYSTEM_PROMPT}',
+      system: '${AGENT_SYSTEM_PROMPT_WITH_TOOLS}',
       tools: [searchNovuDocs],
       needsApproval: (toolCall) => toolCall.name === 'searchNovuDocs',
     };`;
 }
 
-function buildAiSdkOpenAiHandler(): string {
+function buildAiSdkHandler(input: GenerateSupportAgentInput, modelLine: string): string {
+  const withTools = codegenSupportsTools(input);
+
   return `${buildSharedHandlerBody()}
 
-${buildAiSdkGenerateTextReturn("openai('gpt-4o-mini')")}`;
+${buildAiSdkGenerateTextReturn(modelLine, withTools)}`;
 }
 
-function buildAiSdkAnthropicHandler(): string {
+function buildLangChainHandler(modelLine: string): string {
   return `${buildSharedHandlerBody()}
 
-${buildAiSdkGenerateTextReturn("anthropic('claude-haiku-4-5')")}`;
+${buildLangChainConfigReturn(modelLine)}`;
 }
 
-function buildAiSdkCodexHandler(): string {
-  return `${buildSharedHandlerBody()}
+function buildOnMessageBody(input: GenerateSupportAgentInput): string {
+  const { runtime, llmAuth } = input;
 
-${buildAiSdkGenerateTextReturn("codexCli('gpt-5.4-mini')", { withTools: false })}`;
-}
+  if (runtime === 'ai-sdk') {
+    if (llmAuth.kind === 'openai-api-key') return buildAiSdkHandler(input, "openai('gpt-4o-mini')");
+    if (llmAuth.kind === 'anthropic-api-key') return buildAiSdkHandler(input, "anthropic('claude-haiku-4-5')");
+    if (llmAuth.kind === 'codex-subscription') return buildAiSdkHandler(input, "codexCli('gpt-5.4-mini')");
+    if (llmAuth.kind === 'claude-subscription') return buildAiSdkHandler(input, "claudeCode('haiku')");
+  }
 
-function buildAiSdkClaudeSubscriptionHandler(): string {
-  return `${buildSharedHandlerBody()}
+  if (runtime === 'langchain') {
+    if (llmAuth.kind === 'openai-api-key') return buildLangChainHandler("'openai:gpt-4o-mini'");
+    if (llmAuth.kind === 'anthropic-api-key') return buildLangChainHandler("'anthropic:claude-haiku-4-5'");
+    if (llmAuth.kind === 'codex-subscription') {
+      return buildLangChainHandler("new ChatCodexOAuth({ model: 'gpt-5.4-mini' })");
+    }
+  }
 
-${buildAiSdkGenerateTextReturn("claudeCode('haiku')")}`;
-}
-
-function buildLangChainOpenAiHandler(): string {
-  return `${buildSharedHandlerBody()}
-
-${buildLangChainConfigReturn("'openai:gpt-4o-mini'")}`;
-}
-
-function buildLangChainAnthropicHandler(): string {
-  return `${buildSharedHandlerBody()}
-
-${buildLangChainConfigReturn("'anthropic:claude-haiku-4-5'")}`;
-}
-
-function buildLangChainCodexHandler(): string {
-  return `${buildSharedHandlerBody()}
-
-${buildLangChainConfigReturn("new ChatCodexOAuth({ model: 'gpt-5.4-mini' })")}`;
+  throw new Error(`Unsupported LLM auth "${llmAuth.kind}" for runtime "${runtime}".`);
 }
 
 function buildAiSdkImports(kind: GenerateSupportAgentInput['llmAuth']['kind']): string {
-  const withTools = kind !== 'codex-subscription';
+  const withTools = aiSdkCodegenSupportsTools(kind);
   const toolImports = withTools
     ? `import { generateText, tool } from 'ai';
 import { toModelMessages } from '@novu/framework/ai-sdk';
@@ -195,25 +182,6 @@ import { ChatCodexOAuth } from 'langchainjs-codex-oauth';`;
   return base;
 }
 
-function buildOnMessageBody(input: GenerateSupportAgentInput): string {
-  const { runtime, llmAuth } = input;
-
-  if (runtime === 'ai-sdk') {
-    if (llmAuth.kind === 'openai-api-key') return buildAiSdkOpenAiHandler();
-    if (llmAuth.kind === 'anthropic-api-key') return buildAiSdkAnthropicHandler();
-    if (llmAuth.kind === 'codex-subscription') return buildAiSdkCodexHandler();
-    if (llmAuth.kind === 'claude-subscription') return buildAiSdkClaudeSubscriptionHandler();
-  }
-
-  if (runtime === 'langchain') {
-    if (llmAuth.kind === 'openai-api-key') return buildLangChainOpenAiHandler();
-    if (llmAuth.kind === 'anthropic-api-key') return buildLangChainAnthropicHandler();
-    if (llmAuth.kind === 'codex-subscription') return buildLangChainCodexHandler();
-  }
-
-  throw new Error(`Unsupported LLM auth "${llmAuth.kind}" for runtime "${runtime}".`);
-}
-
 export function generateSupportAgentSource(input: GenerateSupportAgentInput): string {
   const camelName = toCamelAgentName(input.agentIdentifier);
   const imports =
@@ -224,11 +192,9 @@ export function generateSupportAgentSource(input: GenerateSupportAgentInput): st
     ? input.runtime === 'ai-sdk'
       ? buildAiSdkSearchNovuDocsTool()
       : buildLangChainSearchNovuDocsTool()
-    : `// Codex CLI does not support AI SDK tools. See ./tools/search-novu-docs.ts when using an API-key provider.`;
+    : '';
 
-  return `${imports}
-
-${toolSection}
+  return `${imports}${toolSection ? `\n\n${toolSection}` : ''}
 
 /**
  * Novu calls these handlers whenever a user sends a message or clicks an action

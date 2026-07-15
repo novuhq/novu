@@ -8,6 +8,7 @@ import { bold, cyan } from 'picocolors';
 import type { BridgeAdapterVariant } from '../../connect/pipeline/bridge-adapter/types';
 import { generateAgentNextConfigSource } from '../../connect/pipeline/llm-auth/codegen/generate-agent-next-config';
 import { generateSupportAgentSource } from '../../connect/pipeline/llm-auth/codegen/generate-support-agent';
+import { codegenSupportsTools } from '../../connect/pipeline/llm-auth/codegen/tool-support';
 import {
   resolveLlmAuthEnvVars,
   resolveLlmAuthPackageDependencies,
@@ -165,6 +166,12 @@ export const installTemplate = async ({
     });
 
     await fs.writeFile(agentFilePath, source);
+
+    if (!codegenSupportsTools({ runtime, agentIdentifier: agentIdentifier!, llmAuth })) {
+      const toolsDir = path.join(root, 'app', 'novu', 'agents', 'tools');
+      await fs.rm(path.join(toolsDir, 'search-novu-docs.ts'), { force: true });
+      await fs.rmdir(toolsDir).catch(() => undefined);
+    }
   }
 
   if (isAgentTemplate) {

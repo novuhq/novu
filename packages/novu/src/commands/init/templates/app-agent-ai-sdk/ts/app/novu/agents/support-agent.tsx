@@ -5,7 +5,6 @@ import { tool } from 'ai';
 
 import { searchNovuDocsIndex, searchNovuDocsInputSchema } from './tools/search-novu-docs';
 
-// Example tool — gates external fetches behind user approval (needsApproval: true).
 const searchNovuDocs = tool({
   description: 'Search Novu documentation for relevant guides.',
   inputSchema: searchNovuDocsInputSchema,

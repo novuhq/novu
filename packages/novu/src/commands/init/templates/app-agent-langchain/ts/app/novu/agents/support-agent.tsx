@@ -6,7 +6,6 @@ import { agent } from '@novu/framework/langchain';
 
 import { searchNovuDocsIndex, searchNovuDocsInputSchema } from './tools/search-novu-docs';
 
-// Example tool — gates external fetches behind user approval (needsApproval callback below).
 const searchNovuDocs = tool(async ({ query }) => ({ matches: await searchNovuDocsIndex(query) }), {
   name: 'searchNovuDocs',
   description: 'Search Novu documentation for relevant guides.',
