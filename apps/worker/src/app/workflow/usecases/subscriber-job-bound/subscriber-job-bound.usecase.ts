@@ -16,19 +16,27 @@ import {
   LogRepository,
   mapEventTypeToTitle,
   PinoLogger,
+  resolveEnvironmentVariables,
   SubscriberTopicPreference,
   TraceLogRepository,
 } from '@novu/application-generic';
 import {
+  ContextRepository,
+  EnvironmentRepository,
+  EnvironmentVariableRepository,
   IntegrationRepository,
   NotificationTemplateEntity,
   NotificationTemplateRepository,
   PreferencesRepository,
+  SubscriberEntity,
   TopicPreferenceEvaluation,
 } from '@novu/dal';
+import type { ContextResolved } from '@novu/framework/internal';
 import {
   buildWorkflowPreferences,
   ChannelTypeEnum,
+  EnvironmentSystemVariables,
+  EnvironmentTypeEnum,
   FeatureFlagsKeysEnum,
   InAppProviderIdEnum,
   ISubscribersDefine,
@@ -46,6 +54,13 @@ import { SubscriberJobBoundCommand } from './subscriber-job-bound.command';
 
 const LOG_CONTEXT = 'SubscriberJobBoundUseCase';
 
+type TopicSubscriptionConditionVariables = {
+  payload: Record<string, unknown>;
+  subscriber: SubscriberEntity;
+  context: ContextResolved;
+  env: EnvironmentSystemVariables & Record<string, string>;
+};
+
 @Injectable()
 export class SubscriberJobBound {
   constructor(
@@ -60,7 +75,10 @@ export class SubscriberJobBound {
     private getPreferences: GetPreferences,
     private preferencesRepository: PreferencesRepository,
     private featureFlagsService: FeatureFlagsService,
-    private inMemoryLRUCacheService: InMemoryLRUCacheService
+    private inMemoryLRUCacheService: InMemoryLRUCacheService,
+    private contextRepository: ContextRepository,
+    private environmentRepository: EnvironmentRepository,
+    private environmentVariableRepository: EnvironmentVariableRepository
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -168,12 +186,7 @@ export class SubscriberJobBound {
     }
 
     if (topics && topics.length > 0) {
-      const evaluatedTopics = await this.evaluateTopicPreferences(
-        command,
-        topics,
-        template._id,
-        subscriberProcessed._id
-      );
+      const evaluatedTopics = await this.evaluateTopicPreferences(command, topics, template._id, subscriberProcessed);
 
       if (evaluatedTopics === null) {
         return;
@@ -379,10 +392,11 @@ export class SubscriberJobBound {
     command: SubscriberJobBoundCommand,
     topics: SubscriberTopicPreference[],
     templateId: string,
-    subscriberId: string
+    subscriber: SubscriberEntity
   ): Promise<SubscriberTopicPreference[] | null> {
     const evaluatedTopics: SubscriberTopicPreference[] = [];
     let filteredCount = 0;
+    const conditionVariables = await this.buildTopicSubscriptionConditionVariables(command, subscriber);
 
     for (const topic of topics) {
       if (!topic._topicSubscriptionId || !topic.subscriptionIdentifier) {
@@ -395,7 +409,8 @@ export class SubscriberJobBound {
         topic._topicSubscriptionId,
         topic.subscriptionIdentifier,
         templateId,
-        subscriberId
+        subscriber._id,
+        conditionVariables
       );
 
       if (!evaluationResult.result) {
@@ -432,7 +447,8 @@ export class SubscriberJobBound {
     internalSubscriptionId: string,
     subscriptionIdentifier: string,
     templateId: string,
-    subscriberId: string
+    subscriberId: string,
+    conditionVariables: TopicSubscriptionConditionVariables
   ): Promise<TopicPreferenceEvaluation> {
     try {
       const useContextFiltering = await this.featureFlagsService.getFlag({
@@ -458,7 +474,7 @@ export class SubscriberJobBound {
       });
 
       if (subscriptionPreference) {
-        const passes = await this.evaluatePreferenceCondition(subscriptionPreference.preferences, command.payload);
+        const passes = await this.evaluatePreferenceCondition(subscriptionPreference.preferences, conditionVariables);
         const condition = subscriptionPreference.preferences.all?.condition;
 
         if (!passes) {
@@ -492,15 +508,96 @@ export class SubscriberJobBound {
     }
   }
 
+  private async buildTopicSubscriptionConditionVariables(
+    command: SubscriberJobBoundCommand,
+    subscriber: SubscriberEntity
+  ): Promise<TopicSubscriptionConditionVariables> {
+    const [context, envCustomVars, environmentEntity] = await Promise.all([
+      this.resolveConditionContext(command),
+      this.getEnvironmentVariables(command),
+      this.environmentRepository.findByIdAndOrganization(command.environmentId, command.organizationId),
+    ]);
+
+    const environmentSystemVars: EnvironmentSystemVariables = {
+      name: environmentEntity?.name ?? '',
+      type: environmentEntity?.type ?? EnvironmentTypeEnum.DEV,
+    };
+
+    const env: EnvironmentSystemVariables & Record<string, string> = {
+      ...envCustomVars,
+      ...environmentSystemVars,
+    };
+
+    return {
+      payload: command.payload,
+      subscriber,
+      context,
+      env,
+    };
+  }
+
+  private async resolveConditionContext(command: SubscriberJobBoundCommand): Promise<ContextResolved> {
+    const { contextKeys, environmentId, organizationId } = command;
+
+    if (contextKeys.length === 0) {
+      return {} as ContextResolved;
+    }
+
+    const contexts = await this.contextRepository.findByKeys(environmentId, organizationId, contextKeys);
+
+    return contexts.reduce((acc, context) => {
+      acc[context.type] = {
+        id: context.id,
+        data: context.data,
+      };
+
+      return acc;
+    }, {} as ContextResolved);
+  }
+
+  private async getEnvironmentVariables(command: SubscriberJobBoundCommand): Promise<Record<string, string>> {
+    const cacheKey = `${command.organizationId}:${command.environmentId}`;
+
+    return this.inMemoryLRUCacheService.get(
+      InMemoryLRUCacheStore.ENVIRONMENT_VARIABLES,
+      cacheKey,
+      async () => {
+        try {
+          const rawEnvVars = await this.environmentVariableRepository.findByEnvironment(
+            command.organizationId,
+            command.environmentId
+          );
+
+          return resolveEnvironmentVariables(rawEnvVars);
+        } catch (error) {
+          this.logger.warn(
+            {
+              err: error,
+              organizationId: command.organizationId,
+              environmentId: command.environmentId,
+            },
+            'Failed to fetch environment variables for topic subscription conditions, falling back to empty object'
+          );
+
+          return {};
+        }
+      },
+      {
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+      }
+    );
+  }
+
   private async evaluatePreferenceCondition(
     preferences: WorkflowPreferencesPartial,
-    payload: Record<string, unknown>
+    conditionVariables: TopicSubscriptionConditionVariables
   ): Promise<boolean> {
     const condition = preferences.all?.condition;
 
     if (condition !== undefined && condition !== null) {
       try {
-        const result = jsonLogic.apply(condition as RulesLogic, { payload });
+        const result = jsonLogic.apply(condition as RulesLogic, conditionVariables);
 
         if (typeof result !== 'boolean') {
           this.logger.warn(

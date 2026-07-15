@@ -528,6 +528,153 @@ describe('Topic Trigger Event #novu-v2', () => {
       expect(booleanFalseMessages.length, 'Enabled false - expected to not deliver the message').to.equal(0);
     });
 
+    it('should evaluate subscriber, context, and env variables in subscription conditions', async () => {
+      const subscriberConditionTopicKey = `topic-key-subscriber-condition-${Date.now()}`;
+      const premiumSubscriber = await subscriberService.createSubscriber({ data: { tier: 'premium' } });
+      const basicSubscriber = await subscriberService.createSubscriber({ data: { tier: 'basic' } });
+
+      await novuClient.topics.subscriptions.create(
+        {
+          subscriberIds: [premiumSubscriber.subscriberId, basicSubscriber.subscriberId],
+          preferences: [
+            {
+              filter: {
+                workflowIds: [template._id],
+              },
+              condition: {
+                '===': [{ var: 'subscriber.data.tier' }, 'premium'],
+              },
+            },
+          ],
+        } as any,
+        subscriberConditionTopicKey
+      );
+
+      await novuClient.trigger({
+        workflowId: template.triggers[0].identifier,
+        to: [{ type: TriggerRecipientsTypeEnum.Topic, topicKey: subscriberConditionTopicKey }],
+        payload: {},
+      });
+
+      await session.waitForJobCompletion(template._id);
+
+      const premiumMessages = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: premiumSubscriber._id,
+        _templateId: template._id,
+        channel: ChannelTypeEnum.IN_APP,
+      });
+      const basicMessages = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: basicSubscriber._id,
+        _templateId: template._id,
+        channel: ChannelTypeEnum.IN_APP,
+      });
+
+      expect(premiumMessages.length, 'Premium subscriber should receive the message').to.equal(1);
+      expect(basicMessages.length, 'Basic subscriber should be filtered by subscriber condition').to.equal(0);
+
+      const contextConditionTopicKey = `topic-key-context-condition-${Date.now()}`;
+      const contextSubscriber = await subscriberService.createSubscriber();
+
+      await novuClient.topics.subscriptions.create(
+        {
+          subscriberIds: [contextSubscriber.subscriberId],
+          preferences: [
+            {
+              filter: {
+                workflowIds: [template._id],
+              },
+              condition: {
+                '===': [{ var: 'context.tenant.id' }, 'acme-corp'],
+              },
+            },
+          ],
+        } as any,
+        contextConditionTopicKey
+      );
+
+      await novuClient.trigger({
+        workflowId: template.triggers[0].identifier,
+        to: [{ type: TriggerRecipientsTypeEnum.Topic, topicKey: contextConditionTopicKey }],
+        payload: {},
+        context: {
+          tenant: { id: 'acme-corp', data: { plan: 'enterprise' } },
+        },
+      });
+
+      await session.waitForJobCompletion(template._id);
+
+      const matchingContextMessages = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: contextSubscriber._id,
+        _templateId: template._id,
+        channel: ChannelTypeEnum.IN_APP,
+      });
+
+      expect(matchingContextMessages.length, 'Matching context condition should deliver the message').to.equal(1);
+
+      await novuClient.trigger({
+        workflowId: template.triggers[0].identifier,
+        to: [{ type: TriggerRecipientsTypeEnum.Topic, topicKey: contextConditionTopicKey }],
+        payload: {},
+        context: {
+          tenant: { id: 'globex', data: { plan: 'starter' } },
+        },
+      });
+
+      await session.waitForJobCompletion(template._id);
+
+      const filteredContextMessages = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: contextSubscriber._id,
+        _templateId: template._id,
+        channel: ChannelTypeEnum.IN_APP,
+      });
+
+      expect(
+        filteredContextMessages.length,
+        'Non-matching context condition should not deliver additional messages'
+      ).to.equal(1);
+
+      const envConditionTopicKey = `topic-key-env-condition-${Date.now()}`;
+      const envSubscriber = await subscriberService.createSubscriber();
+
+      await novuClient.topics.subscriptions.create(
+        {
+          subscriberIds: [envSubscriber.subscriberId],
+          preferences: [
+            {
+              filter: {
+                workflowIds: [template._id],
+              },
+              condition: {
+                '===': [{ var: 'env.type' }, session.environment.type],
+              },
+            },
+          ],
+        } as any,
+        envConditionTopicKey
+      );
+
+      await novuClient.trigger({
+        workflowId: template.triggers[0].identifier,
+        to: [{ type: TriggerRecipientsTypeEnum.Topic, topicKey: envConditionTopicKey }],
+        payload: {},
+      });
+
+      await session.waitForJobCompletion(template._id);
+
+      const envMessages = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: envSubscriber._id,
+        _templateId: template._id,
+        channel: ChannelTypeEnum.IN_APP,
+      });
+
+      expect(envMessages.length, 'Matching env condition should deliver the message').to.equal(1);
+    });
+
     it('should filter subscriptions by tags and combined workflow filters', async () => {
       const taggedTemplate = await session.createTemplate({
         tags: ['important', 'promotional'],
