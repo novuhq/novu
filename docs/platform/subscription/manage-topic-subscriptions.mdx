@@ -1,0 +1,814 @@
+---
+title: 'Manage topic subscriptions'
+description: 'Create and update topic subscriptions using the REST API, @novu/js, and @novu/react, including JSON Logic conditions evaluated at trigger time.'
+---
+
+Topic subscriptions let a subscriber opt in to a [topic](/platform/concepts/topics) with fine-grained rules. Each subscription can target specific workflows and include a **JSON Logic condition** that is evaluated when a workflow is triggered to the topic.
+
+<Note>
+  Conditions are evaluated at **trigger time**, not when the subscription is created. A subscription is always stored; Novu decides at delivery whether the condition matches the incoming event data.
+</Note>
+
+## Context-scoped subscriptions
+
+Topic subscriptions can be scoped to a [Context](/platform/concepts/contexts), the same metadata you pass when [triggering](/platform/concepts/trigger) a workflow. This lets one subscriber maintain separate subscriptions to the same `topicKey` for different tenants, apps, or regions without duplicating topics or workflows.
+
+Novu uses **exact-match** Context filtering for subscriptions, the same rules as the [Inbox](/platform/inbox/configuration/inbox-with-context):
+
+| Context on subscription | Context on trigger | Subscription included? |
+| --- | --- | --- |
+| `{ tenant: "acme-corp" }` | `{ tenant: "acme-corp" }` | Yes |
+| `{ tenant: "acme-corp" }` | `{ tenant: "globex" }` | No |
+| None (default) | None (default) | Yes |
+| None (default) | `{ tenant: "acme-corp" }` | No |
+| `{ tenant: "acme-corp" }` | None (default) | No |
+
+Both sides must match: key for key and value for value. Passing Context on only the subscription or only the trigger is not enough.
+
+<Note>
+  When you omit Context on a subscription or trigger, Novu treats it as the **default** (no Context) scope, not as a wildcard that matches all Contexts.
+</Note>
+
+**At subscription create time**, Context is stored on the subscription record:
+
+- **Server API**: pass a `context` object in the create request body (same shape as [trigger Context](/platform/concepts/contexts#context-structure)).
+- **`@novu/js` / `@novu/react`**: pass `context` when initializing the Novu client or `<NovuProvider>`. The session inherits that Context for all subscription API calls.
+
+**At trigger time**, pass the same Context on the workflow trigger. Novu resolves topic members whose stored Context matches the trigger Context, then evaluates each matching subscription's JSON Logic condition.
+
+If Novu auto-generates a subscription `identifier` and Context is present, the identifier includes a `:ctx_` suffix so subscriptions in different Contexts remain unique.
+
+See [Contexts](/platform/concepts/contexts) for structure, limits (up to five keys per trigger), and how Context differs from payload.
+
+## Choose an integration path
+
+| Path | Auth | Best for |
+| --- | --- | --- |
+| [Topics v2 API](#server-api-topics-v2) | API key (`Authorization: ApiKey …`) | Backend provisioning: subscribe users from your server, set conditions programmatically |
+| [Inbox API](#inbox-api) | Subscriber JWT (via `@novu/js` / `@novu/react`) | Subscriber self-service: follow buttons, preference centers, custom UIs |
+| [`@novu/js`](#novujs) | Subscriber JWT | Headless JavaScript/TypeScript apps |
+| [`@novu/react`](#novureact) | Subscriber JWT | React/Next.js apps with hooks or `<Subscription />` components |
+
+A subscriber can have up to **10 subscriptions per topic**, each with its own `identifier` and conditions. See the [introduction](/platform/subscription) for how subscriptions fit into the notification flow.
+
+## Server API (Topics v2)
+
+Use the server API when your backend creates subscriptions on behalf of subscribers, for example during onboarding or when syncing preferences from your database.
+
+**Endpoint:** `POST /v2/topics/{topicKey}/subscriptions`
+
+The topic is created automatically if it does not exist. You can pass subscriber IDs directly or use custom subscription identifiers when a subscriber needs multiple subscriptions on the same topic.
+
+### Basic subscription
+
+<Tabs>
+  <Tab title="Node.js">
+```ts
+import { Novu } from '@novu/api';
+
+const novu = new Novu({ secretKey: process.env.NOVU_SECRET_KEY! });
+
+await novu.topics.subscriptions.create(
+  {
+    subscriptions: [{ identifier: 'user-123-alerts', subscriberId: 'user-123' }],
+    preferences: ['product-update-workflow'],
+  },
+  'product-updates',
+);
+```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.topics.subscriptions.create(
+        topic_key="product-updates",
+        create_topic_subscriptions_request_dto={
+            "subscriptions": [
+                {"identifier": "user-123-alerts", "subscriberId": "user-123"}
+            ],
+            "preferences": ["product-update-workflow"],
+        },
+    )
+```
+  </Tab>
+  <Tab title="Go">
+```go
+_, err := s.Topics.Subscriptions.Create(ctx, "product-updates",
+    components.CreateTopicSubscriptionsRequestDto{
+        Subscriptions: []components.TopicSubscriberIdentifierDto{
+            {Identifier: "user-123-alerts", SubscriberID: "user-123"},
+        },
+        Preferences: []interface{}{"product-update-workflow"},
+    }, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+$sdk->topics->subscriptions->create(
+    topicKey: 'product-updates',
+    createTopicSubscriptionsRequestDto: new Components\CreateTopicSubscriptionsRequestDto(
+        subscriptions: [
+            new Components\TopicSubscriberIdentifierDto(
+                identifier: 'user-123-alerts',
+                subscriberId: 'user-123',
+            ),
+        ],
+        preferences: ['product-update-workflow'],
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+await sdk.Topics.Subscriptions.CreateAsync("product-updates", new CreateTopicSubscriptionsRequestDto {
+    Subscriptions = new List<TopicSubscriberIdentifierDto> {
+        new TopicSubscriberIdentifierDto {
+            Identifier = "user-123-alerts",
+            SubscriberId = "user-123",
+        },
+    },
+    Preferences = new List<object> { "product-update-workflow" },
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+novu.topics().subscriptions().create("product-updates")
+    .body(CreateTopicSubscriptionsRequestDto.builder()
+        .subscriptions(List.of(
+            TopicSubscriberIdentifierDto.builder()
+                .identifier("user-123-alerts")
+                .subscriberId("user-123")
+                .build()))
+        .preferences(List.of("product-update-workflow"))
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -X POST 'https://api.novu.co/v2/topics/product-updates/subscriptions' \
+  -H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "subscriptions": [
+      { "identifier": "user-123-alerts", "subscriberId": "user-123" }
+    ],
+    "preferences": ["product-update-workflow"]
+  }'
+```
+  </Tab>
+</Tabs>
+
+### Subscription with Context
+
+Scope a subscription to a tenant (or any Context type) by passing `context` in the request body:
+
+<Tabs>
+  <Tab title="Node.js">
+```ts
+await novu.topics.subscriptions.create(
+  {
+    subscriptions: [{ identifier: 'user-123-acme-alerts', subscriberId: 'user-123' }],
+    preferences: ['product-update-workflow'],
+    context: {
+      tenant: { id: 'acme-corp', data: { name: 'Acme Corporation', plan: 'enterprise' } },
+    },
+  },
+  'product-updates',
+);
+```
+  </Tab>
+  <Tab title="Python">
+```python
+novu.topics.subscriptions.create(
+    topic_key="product-updates",
+    create_topic_subscriptions_request_dto={
+        "subscriptions": [
+            {"identifier": "user-123-acme-alerts", "subscriberId": "user-123"}
+        ],
+        "preferences": ["product-update-workflow"],
+        "context": {
+            "tenant": {
+                "id": "acme-corp",
+                "data": {"name": "Acme Corporation", "plan": "enterprise"},
+            }
+        },
+    },
+)
+```
+  </Tab>
+  <Tab title="Go">
+```go
+_, err := s.Topics.Subscriptions.Create(ctx, "product-updates",
+    components.CreateTopicSubscriptionsRequestDto{
+        Subscriptions: []components.TopicSubscriberIdentifierDto{
+            {Identifier: "user-123-acme-alerts", SubscriberID: "user-123"},
+        },
+        Preferences: []interface{}{"product-update-workflow"},
+        Context: map[string]interface{}{
+            "tenant": map[string]interface{}{
+                "id": "acme-corp",
+                "data": map[string]interface{}{
+                    "name": "Acme Corporation",
+                    "plan": "enterprise",
+                },
+            },
+        },
+    }, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+$sdk->topics->subscriptions->create(
+    topicKey: 'product-updates',
+    createTopicSubscriptionsRequestDto: new Components\CreateTopicSubscriptionsRequestDto(
+        subscriptions: [
+            new Components\TopicSubscriberIdentifierDto(
+                identifier: 'user-123-acme-alerts',
+                subscriberId: 'user-123',
+            ),
+        ],
+        preferences: ['product-update-workflow'],
+        context: [
+            'tenant' => [
+                'id' => 'acme-corp',
+                'data' => ['name' => 'Acme Corporation', 'plan' => 'enterprise'],
+            ],
+        ],
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+await sdk.Topics.Subscriptions.CreateAsync("product-updates", new CreateTopicSubscriptionsRequestDto {
+    Subscriptions = new List<TopicSubscriberIdentifierDto> {
+        new TopicSubscriberIdentifierDto {
+            Identifier = "user-123-acme-alerts",
+            SubscriberId = "user-123",
+        },
+    },
+    Preferences = new List<object> { "product-update-workflow" },
+    Context = new Dictionary<string, object> {
+        ["tenant"] = new Dictionary<string, object> {
+            ["id"] = "acme-corp",
+            ["data"] = new Dictionary<string, object> {
+                ["name"] = "Acme Corporation",
+                ["plan"] = "enterprise",
+            },
+        },
+    },
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+novu.topics().subscriptions().create("product-updates")
+    .body(CreateTopicSubscriptionsRequestDto.builder()
+        .subscriptions(List.of(
+            TopicSubscriberIdentifierDto.builder()
+                .identifier("user-123-acme-alerts")
+                .subscriberId("user-123")
+                .build()))
+        .preferences(List.of("product-update-workflow"))
+        .context(Map.of(
+            "tenant", Map.of(
+                "id", "acme-corp",
+                "data", Map.of(
+                    "name", "Acme Corporation",
+                    "plan", "enterprise"))))
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -X POST 'https://api.novu.co/v2/topics/product-updates/subscriptions' \
+  -H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "subscriptions": [
+      { "identifier": "user-123-acme-alerts", "subscriberId": "user-123" }
+    ],
+    "preferences": ["product-update-workflow"],
+    "context": {
+      "tenant": {
+        "id": "acme-corp",
+        "data": { "name": "Acme Corporation", "plan": "enterprise" }
+      }
+    }
+  }'
+```
+  </Tab>
+</Tabs>
+
+When you [trigger](/platform/concepts/trigger) the workflow to the topic, pass the same Context so this subscription is included:
+
+```ts
+await novu.trigger({
+  workflowId: 'product-update-workflow',
+  to: { type: 'Topic', topicKey: 'product-updates' },
+  payload: { status: 'completed' },
+  context: {
+    tenant: { id: 'acme-corp' },
+  },
+});
+```
+
+### Subscription with a JSON Logic condition
+
+Attach a condition to a workflow preference. When you trigger the workflow to the topic, only subscriptions whose condition evaluates to `true` receive the notification.
+
+<Tabs>
+  <Tab title="Node.js">
+```ts
+await novu.topics.subscriptions.create(
+  {
+    subscriptions: [{ identifier: 'user-123-premium', subscriberId: 'user-123' }],
+    preferences: [
+      {
+        filter: { workflowIds: ['product-update-workflow'] },
+        condition: {
+          '===': [{ var: 'payload.tier' }, 'premium'],
+        },
+      },
+    ],
+  },
+  'product-updates',
+);
+```
+  </Tab>
+  <Tab title="Python">
+```python
+novu.topics.subscriptions.create(
+    topic_key="product-updates",
+    create_topic_subscriptions_request_dto={
+        "subscriptions": [
+            {"identifier": "user-123-premium", "subscriberId": "user-123"}
+        ],
+        "preferences": [
+            {
+                "filter": {"workflowIds": ["product-update-workflow"]},
+                "condition": {
+                    "===": [{"var": "payload.tier"}, "premium"]
+                },
+            }
+        ],
+    },
+)
+```
+  </Tab>
+  <Tab title="Go">
+```go
+_, err := s.Topics.Subscriptions.Create(ctx, "product-updates",
+    components.CreateTopicSubscriptionsRequestDto{
+        Subscriptions: []components.TopicSubscriberIdentifierDto{
+            {Identifier: "user-123-premium", SubscriberID: "user-123"},
+        },
+        Preferences: []interface{}{
+            map[string]interface{}{
+                "filter": map[string]interface{}{
+                    "workflowIds": []string{"product-update-workflow"},
+                },
+                "condition": map[string]interface{}{
+                    "===": []interface{}{
+                        map[string]interface{}{"var": "payload.tier"},
+                        "premium",
+                    },
+                },
+            },
+        },
+    }, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+$sdk->topics->subscriptions->create(
+    topicKey: 'product-updates',
+    createTopicSubscriptionsRequestDto: new Components\CreateTopicSubscriptionsRequestDto(
+        subscriptions: [
+            new Components\TopicSubscriberIdentifierDto(
+                identifier: 'user-123-premium',
+                subscriberId: 'user-123',
+            ),
+        ],
+        preferences: [
+            [
+                'filter' => ['workflowIds' => ['product-update-workflow']],
+                'condition' => [
+                    '===' => [
+                        ['var' => 'payload.tier'],
+                        'premium',
+                    ],
+                ],
+            ],
+        ],
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+await sdk.Topics.Subscriptions.CreateAsync("product-updates", new CreateTopicSubscriptionsRequestDto {
+    Subscriptions = new List<TopicSubscriberIdentifierDto> {
+        new TopicSubscriberIdentifierDto {
+            Identifier = "user-123-premium",
+            SubscriberId = "user-123",
+        },
+    },
+    Preferences = new List<object> {
+        new Dictionary<string, object> {
+            ["filter"] = new Dictionary<string, object> {
+                ["workflowIds"] = new[] { "product-update-workflow" },
+            },
+            ["condition"] = new Dictionary<string, object> {
+                ["==="] = new object[] {
+                    new Dictionary<string, object> { ["var"] = "payload.tier" },
+                    "premium",
+                },
+            },
+        },
+    },
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+novu.topics().subscriptions().create("product-updates")
+    .body(CreateTopicSubscriptionsRequestDto.builder()
+        .subscriptions(List.of(
+            TopicSubscriberIdentifierDto.builder()
+                .identifier("user-123-premium")
+                .subscriberId("user-123")
+                .build()))
+        .preferences(List.of(
+            Map.of(
+                "filter", Map.of("workflowIds", List.of("product-update-workflow")),
+                "condition", Map.of(
+                    "===", List.of(
+                        Map.of("var", "payload.tier"),
+                        "premium")))))
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -X POST 'https://api.novu.co/v2/topics/product-updates/subscriptions' \
+  -H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "subscriptions": [
+      { "identifier": "user-123-premium", "subscriberId": "user-123" }
+    ],
+    "preferences": [
+      {
+        "filter": { "workflowIds": ["product-update-workflow"] },
+        "condition": {
+          "===": [{ "var": "payload.tier" }, "premium"]
+        }
+      }
+    ]
+  }'
+```
+  </Tab>
+</Tabs>
+
+### Other server endpoints
+
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| `GET` | `/v2/topics/{topicKey}/subscriptions` | List subscriptions on a topic |
+| `GET` | `/v2/topics/{topicKey}/subscriptions/{identifier}` | Get one subscription |
+| `PATCH` | `/v2/topics/{topicKey}/subscriptions/{identifier}` | Update name or preferences |
+| `DELETE` | `/v2/topics/{topicKey}/subscriptions` | Remove subscriptions |
+| `GET` | `/v2/subscribers/{subscriberId}/subscriptions` | List all topic subscriptions for a subscriber |
+
+<Card title="API reference" icon="code" href="/api-reference/topics/create-topic-subscriptions">
+  Full request and response schemas for topic subscription endpoints.
+</Card>
+
+## Inbox API
+
+The Inbox API is the subscriber-facing surface that powers `@novu/js` and `@novu/react`. It uses a subscriber session token (created from your `applicationIdentifier` and `subscriberId`) instead of an API key.
+
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| `POST` | `/v1/inbox/topics/{topicKey}/subscriptions` | Create a subscription for the authenticated subscriber |
+| `GET` | `/v1/inbox/topics/{topicKey}/subscriptions` | List the subscriber's subscriptions on a topic |
+| `GET` | `/v1/inbox/topics/{topicKey}/subscriptions/{identifier}` | Get one subscription |
+| `PATCH` | `/v1/inbox/topics/{topicKey}/subscriptions/{identifier}` | Update subscription |
+| `DELETE` | `/v1/inbox/topics/{topicKey}/subscriptions/{identifier}` | Delete subscription |
+| `PATCH` | `/v1/inbox/subscriptions/{identifier}/preferences/{workflowId}` | Update a single workflow preference |
+
+You typically do not call these endpoints directly. Use the SDKs below instead.
+
+## `@novu/js`
+
+Initialize the client with the subscriber's credentials. Pass `context` when the subscription belongs to a specific tenant or app scope:
+
+```typescript
+import { Novu } from '@novu/js';
+
+const novu = new Novu({
+  subscriberId: 'user-123',
+  applicationIdentifier: 'YOUR_APPLICATION_IDENTIFIER',
+  context: {
+    tenant: { id: 'acme-corp', data: { name: 'Acme Corporation', plan: 'enterprise' } },
+  },
+});
+```
+
+Then use `novu.subscriptions`:
+
+### Create a conditional subscription
+
+```typescript
+const { data, error } = await novu.subscriptions.create({
+  topicKey: 'product-updates',
+  identifier: 'user-123-premium-alerts',
+  preferences: [
+    {
+      workflowId: 'product-update-workflow',
+      condition: {
+        '===': [{ var: 'payload.tier' }, 'premium'],
+      },
+    },
+  ],
+});
+```
+
+### Update a condition on an existing subscription
+
+```typescript
+const { data: subscription } = await novu.subscriptions.get({
+  topicKey: 'product-updates',
+  identifier: 'user-123-premium-alerts',
+});
+
+await subscription?.updatePreference({
+  workflowId: 'product-update-workflow',
+  value: {
+    '===': [{ var: 'payload.tier' }, 'enterprise'],
+  },
+});
+```
+
+### List, update, and delete
+
+```typescript
+// List all subscriptions on a topic
+const { data: subscriptions } = await novu.subscriptions.list({ topicKey: 'product-updates' });
+
+// Update subscription metadata and preferences
+await novu.subscriptions.update({
+  topicKey: 'product-updates',
+  identifier: 'user-123-premium-alerts',
+  preferences: [{ workflowId: 'product-update-workflow', enabled: false }],
+});
+
+// Delete
+await novu.subscriptions.delete({
+  topicKey: 'product-updates',
+  identifier: 'user-123-premium-alerts',
+});
+```
+
+<Card title="@novu/js reference" icon="book" href="/platform/sdks/javascript#subscriptions">
+  Full Subscriptions module API.
+</Card>
+
+## `@novu/react`
+
+The React SDK exposes the same operations as hooks and pre-built components.
+
+### Headless hooks
+
+```tsx
+import {
+  useSubscription,
+  useCreateSubscription,
+  useUpdateSubscription,
+  useRemoveSubscription,
+} from '@novu/react';
+
+function SubscriptionSettings() {
+  const topicKey = 'product-updates';
+  const identifier = 'user-123-premium-alerts';
+
+  const { subscription, isLoading } = useSubscription({ topicKey, identifier });
+  const { create, isCreating } = useCreateSubscription();
+
+  const handleSubscribe = async () => {
+    await create({
+      topicKey,
+      identifier,
+      preferences: [
+        {
+          workflowId: 'product-update-workflow',
+          condition: {
+            '===': [{ var: 'payload.tier' }, 'premium'],
+          },
+        },
+      ],
+    });
+  };
+
+  if (isLoading) return <div>Loading…</div>;
+
+  return (
+    <button onClick={handleSubscribe} disabled={isCreating || !!subscription}>
+      {subscription ? 'Subscribed' : 'Subscribe to updates'}
+    </button>
+  );
+}
+```
+
+For the full hook reference, see [Headless hooks](/platform/subscription/headless-hooks).
+
+### Pre-built components
+
+If you want a ready-made subscribe/preferences UI, use `<Subscription />`, `<SubscriptionButton />`, and `<SubscriptionPreferences />` inside `<NovuProvider>`:
+
+```tsx
+import { NovuProvider, Subscription, SubscriptionButton, SubscriptionPreferences } from '@novu/react';
+
+export function SubscriptionSettings() {
+  return (
+    <NovuProvider
+      subscriber="user-123"
+      applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+      context={{
+        tenant: { id: 'acme-corp', data: { name: 'Acme Corporation', plan: 'enterprise' } },
+      }}
+    >
+      <Subscription topicKey="product-updates" identifier="user-123-premium-alerts">
+        <SubscriptionButton />
+        <SubscriptionPreferences />
+      </Subscription>
+    </NovuProvider>
+  );
+}
+```
+
+See the [quickstart](/platform/subscription/quickstart) for setup steps. For Context on `<NovuProvider>`, see [Inbox with Context](/platform/inbox/configuration/inbox-with-context).
+
+## JSON Logic conditions
+
+Subscription conditions use [JSON Logic](https://jsonlogic.com/), the same rule format as [step conditions](/platform/workflow/add-and-configure-steps/step-conditions). Reference trigger payload fields with `{ "var": "payload.<path>" }`.
+
+### Condition variables
+
+Topic subscription conditions are evaluated against the workflow trigger **payload** only. Reference fields with `{ "var": "payload.<path>" }`.
+
+| Namespace | Source | Examples |
+| --- | --- | --- |
+| `payload.*` | Trigger [payload](/platform/concepts/trigger) | `payload.tier`, `payload.status`, `payload.category` |
+
+<Note>
+  Topic subscription conditions are evaluated at **trigger time** when fanning out a workflow to a topic. Only `payload.*` is in scope. For rules that depend on subscriber profile, workflow metadata, Context, or prior step results, use [step conditions](/platform/workflow/add-and-configure-steps/step-conditions) instead.
+</Note>
+
+<Warning>
+  Do not confuse **Context** (the Novu feature used to scope subscriptions and Inbox sessions) with condition variables. Context matching happens before JSON Logic runs: Novu selects subscriptions whose stored Context exactly matches the trigger Context. [Payload](/platform/concepts/contexts#context-vs-payload) holds event-specific data for a single run and is what conditions read.
+</Warning>
+
+### Syntax rules
+
+- Use dot paths in `{ "var": "..." }`. For example, `{ "var": "payload.tier" }`.
+- Do **not** use Liquid/template syntax (`{{payload.tier}}`) in conditions. That syntax is for workflow step content, not JSON Logic rules.
+- Do **not** omit the `payload.` prefix (for example `{ "var": "tier" }`). Always use the full path such as `payload.tier`.
+
+### Examples
+
+**Tier is premium:**
+
+```json
+{
+  "===": [{ "var": "payload.tier" }, "premium"]
+}
+```
+
+**Status and price combined:**
+
+```json
+{
+  "and": [
+    { "==": [{ "var": "payload.status" }, "completed"] },
+    { ">": [{ "var": "payload.price" }, 100] }
+  ]
+}
+```
+
+**Multiple matching rules (OR):**
+
+```json
+{
+  "or": [
+    {
+      "===": [{ "var": "payload.tier" }, "premium"]
+    },
+    {
+      "===": [{ "var": "payload.tier" }, "enterprise"]
+    }
+  ]
+}
+```
+
+### `condition` vs `enabled`
+
+| Field | Behavior |
+| --- | --- |
+| `condition` | JSON Logic rule evaluated against the trigger payload. When present, **`enabled` is ignored** during evaluation. |
+| `enabled` | Simple on/off toggle. Used only when no `condition` is set. Defaults to `true` if omitted. |
+
+### Preference filter formats
+
+When creating preferences, use any of these shapes:
+
+```json
+// Workflow ID shorthand: enables the workflow with no condition
+"workflow-identifier"
+
+// Single workflow with condition or enabled flag
+{
+  "workflowId": "product-update-workflow",
+  "condition": { "===": [{ "var": "payload.tier" }, "premium"] }
+}
+
+// Group filter: applies to workflows matching IDs or tags
+{
+  "filter": { "workflowIds": ["workflow-mongo-id"], "tags": ["alerts"] },
+  "condition": { "==": [{ "var": "payload.status" }, "active"] }
+}
+```
+
+`filter.workflowIds` accepts either the workflow MongoDB `_id` or the workflow trigger `identifier`.
+
+## End-to-end flow
+
+<Steps>
+  <Step title="Create a subscription with a condition">
+    Subscribe a user to a topic and attach a JSON Logic rule to a workflow preference (server API, `@novu/js`, or `@novu/react`).
+  </Step>
+  <Step title="Trigger the workflow to the topic">
+    Send the workflow to the topic `topicKey`. Include fields your condition references in `payload`, and pass the same Context as the subscription when the subscription is Context-scoped:
+
+```ts
+await novu.trigger({
+  workflowId: 'product-update-workflow',
+  to: { type: 'Topic', topicKey: 'product-updates' },
+  payload: {
+    tier: 'premium',
+    status: 'completed',
+    category: 'billing',
+  },
+  context: {
+    tenant: { id: 'acme-corp' },
+  },
+});
+```
+  </Step>
+  <Step title="Novu matches Context, then evaluates conditions">
+    Novu first selects topic subscriptions whose stored Context exactly matches the trigger Context (including the default/no-Context case). For each matching subscription, Novu evaluates the JSON Logic condition against the trigger **payload** only. Subscriptions that pass receive the notification; others are skipped.
+  </Step>
+</Steps>
+
+<Note>
+  Global and workflow channel preferences still apply. If a subscriber has disabled email globally, they will not receive email even when a subscription condition matches.
+</Note>
+
+## Billing and workflow runs
+
+Novu Cloud bills by [workflow runs](/platform/account/billing#what-is-a-workflow-run): one execution of a workflow for one subscriber. Usage is counted when Novu creates a **workflow run** for that subscriber, not when you call the trigger API.
+
+Topic subscription filtering happens **before** that point, during topic fan-out:
+
+1. Novu looks up subscriptions on the topic (including [Context](/platform/concepts/contexts) exact-match filtering).
+2. For each candidate subscription, Novu evaluates JSON Logic conditions against the trigger **payload**.
+3. Only subscriptions that pass proceed to workflow run creation.
+
+If a subscriber is filtered out because their Context does not match the trigger, or because their subscription condition evaluates to `false`, **no workflow run is created** for that subscriber and **it does not count toward usage**.
+
+<Note>
+  This is different from [step conditions](/platform/workflow/add-and-configure-steps/step-conditions) and [channel preferences](/platform/concepts/preferences). Those run after a workflow run already exists. A subscriber who passes topic subscription filters but has steps skipped or channels muted still counts as **one** workflow run. See [Trigger FAQ](/platform/concepts/trigger#frequently-asked-questions) for the full billing picture.
+</Note>
+
+### What counts as billable for topic triggers
+
+| Outcome | Workflow run created? | Counts toward usage? |
+| --- | --- | --- |
+| Subscription Context does not match trigger Context | No | No |
+| JSON Logic condition evaluates to `false` | No | No |
+| Subscription passes, workflow executes (even if steps are skipped) | Yes | Yes |
+| Subscription passes, channel preference blocks a channel | Yes | Yes (run still created) |
+
+## Limits
+
+- **10 subscriptions** per subscriber per topic (across all Context scopes)
+- **512 characters** max for a custom subscription `identifier`
+- **100 subscribers** per create request (batch limit)

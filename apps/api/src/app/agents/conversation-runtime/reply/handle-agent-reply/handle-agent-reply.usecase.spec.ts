@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { HandleAgentReply } from './handle-agent-reply.usecase';
@@ -23,6 +24,7 @@ describe('HandleAgentReply - active-conversation counting', () => {
     const analyticsService = { track: sinon.stub() };
     const outboundGateway = {
       deliver: sinon.stub().resolves({ messageId: 'm1', platformThreadId: 'thread1' }),
+      deleteInConversation: sinon.stub().resolves(undefined),
     };
     const inboundAck = { onBridgeReplyDelivered: sinon.stub().resolves(undefined) };
     const conversationActivation = {
@@ -74,5 +76,41 @@ describe('HandleAgentReply - active-conversation counting', () => {
     expect(outboundGateway.deliver.calledOnce).to.equal(true);
     expect(conversationActivation.assertOutboundWithinLimit.called).to.equal(false);
     expect(conversationActivation.registerEngagement.called).to.equal(false);
+  });
+
+  it('delivers generic copy when bridge reports error: true', async () => {
+    const { usecase, baseCommand, outboundGateway, conversationActivation } = setup();
+
+    await usecase.execute({ ...baseCommand, error: true } as any);
+
+    expect(outboundGateway.deliver.calledOnce).to.equal(true);
+    expect(outboundGateway.deliver.firstCall.args[1].markdown).to.include('Something went wrong');
+    expect(conversationActivation.assertOutboundWithinLimit.called).to.equal(false);
+    expect(conversationActivation.registerEngagement.called).to.equal(false);
+  });
+
+  it('rejects error combined with other reply operations', async () => {
+    const { usecase, baseCommand } = setup();
+
+    try {
+      await usecase.execute({ ...baseCommand, error: true, toolResults: [{ toolCallId: 'x', result: 'y' }] } as any);
+      expect.fail('should have thrown');
+    } catch (err) {
+      expect(err).to.be.instanceOf(BadRequestException);
+    }
+  });
+
+  it('deletes platform messages for a deleteMessages-only request', async () => {
+    const { usecase, baseCommand, outboundGateway } = setup();
+
+    await usecase.execute({
+      ...baseCommand,
+      deleteMessages: [{ messageId: 'msg-abc' }, { messageId: 'msg-def' }],
+    } as any);
+
+    expect(outboundGateway.deliver.called).to.equal(false);
+    expect(outboundGateway.deleteInConversation.callCount).to.equal(2);
+    expect(outboundGateway.deleteInConversation.getCall(0).args[4]).to.equal('msg-abc');
+    expect(outboundGateway.deleteInConversation.getCall(1).args[4]).to.equal('msg-def');
   });
 });

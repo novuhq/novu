@@ -6,7 +6,7 @@ import {
   getFeatureForTierAsNumber,
 } from '@novu/shared';
 import { useEffect, useMemo, useState } from 'react';
-import { IS_SELF_HOSTED } from '../../../config';
+import { IS_CLOUD, IS_SELF_HOSTED } from '../../../config';
 import { useNumericFeatureFlag } from '../../../hooks/use-feature-flag';
 
 type OrganizationLike = { createdAt: Date };
@@ -145,7 +145,7 @@ export function useHomepageDateFilter({ organization, subscription, upgradeCtaIc
   }, [defaultDateRange]);
 
   const dateFilterOptions = useMemo(() => {
-    const missingSubscription = !subscription && !IS_SELF_HOSTED;
+    const missingSubscription = !subscription && IS_CLOUD;
 
     if (!organization || missingSubscription) {
       return [];

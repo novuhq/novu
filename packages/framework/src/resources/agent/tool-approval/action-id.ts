@@ -1,7 +1,7 @@
 const PREFIX = 'tool-approval' as const;
 type Verdict = 'approve' | 'deny';
 
-export interface ApprovalPayload {
+export interface ToolApprovalRequestPayload {
   approvalId: string;
   toolCallId: string;
   name: string;

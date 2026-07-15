@@ -1,4 +1,5 @@
 import { ApiExtraModels, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
+import { TOPIC_SUBSCRIPTION_IDENTIFIER_MAX_LENGTH } from '@novu/shared';
 import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
@@ -16,6 +17,7 @@ export class TopicSubscriberIdentifierDto {
   @ApiProperty({
     description: 'Unique identifier for this subscription',
     example: 'subscriber-123-subscription-a',
+    maxLength: TOPIC_SUBSCRIPTION_IDENTIFIER_MAX_LENGTH,
   })
   @IsString()
   @IsDefined()
@@ -49,11 +51,12 @@ export class BasePreferenceDto {
   enabled?: boolean;
 
   @ApiProperty({
-    description: 'Optional condition using JSON Logic rules',
+    description:
+      'Optional JSON Logic condition evaluated against the trigger payload at fan-out time (for example, `{ "var": "payload.tier" }`)',
     required: false,
     type: 'object',
     additionalProperties: true,
-    example: { and: [{ '===': [{ var: 'tier' }, 'premium'] }] },
+    example: { and: [{ '===': [{ var: 'payload.tier' }, 'premium'] }] },
   })
   @ValidateIf((o) => o.condition !== undefined)
   @IsOptional()
@@ -156,7 +159,7 @@ export class CreateSubscriptionsRequestDto {
         { $ref: getSchemaPath(GroupPreferenceFilterDto) },
       ],
     },
-    example: [{ workflowId: 'workflow-123', condition: { '===': [{ var: 'tier' }, 'premium'] } }],
+    example: [{ workflowId: 'workflow-123', condition: { '===': [{ var: 'payload.tier' }, 'premium'] } }],
   })
   @IsArray()
   @IsOptional()

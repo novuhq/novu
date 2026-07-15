@@ -1,5 +1,5 @@
 import { BadGatewayException } from '@nestjs/common';
-import type { SentMessageInfo } from '@novu/framework';
+import type { SentMessageInfo } from '@novu/framework/internal';
 import { WebClient } from '@slack/web-api';
 import type {
   ChannelAndBlocks,
@@ -9,7 +9,7 @@ import type {
 
 export type SlackNativeDelivery = Required<Omit<ChannelAndBlocks, 'channel'>>;
 
-function decodeSlackPlatformThreadId(platformThreadId: string): { channel: string; threadTs?: string } {
+export function decodeSlackPlatformThreadId(platformThreadId: string): { channel: string; threadTs?: string } {
   const parts = platformThreadId.split(':');
   if (parts[0] !== 'slack' || !parts[1]) {
     throw new Error(`Invalid Slack platform thread id: ${platformThreadId}`);

@@ -1,3 +1,4 @@
+import { Notification } from '../notifications/notification';
 import {
   areTagsEqual,
   checkBasicFilters,
@@ -5,7 +6,6 @@ import {
   checkNotificationTagFilter,
   normalizeTagGroups,
 } from './notification-utils';
-import { Notification } from '../notifications/notification';
 
 describe('normalizeTagGroups', () => {
   it('wraps flat tags as one OR-group', () => {

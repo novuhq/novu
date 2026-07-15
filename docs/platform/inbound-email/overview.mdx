@@ -1,6 +1,6 @@
 ---
 title: 'Inbound Email'
-description: 'Receive email on your verified domain in Novu and route messages to agents or webhook endpoints.'
+description: "Receive email on your verified domain in Novu and route inbound messages to agents or webhook endpoints for replies, ticketing, and automated responses."
 sidebarTitle: 'Overview'
 ---
 
@@ -87,11 +87,11 @@ The event payload includes normalized mail fields (from, to, subject, text, html
 
 ## Agent routes
 
-When a message matches an **Agent** route, Novu forwards it to the selected agent's email integration. Your agent handler receives the message on your [bridge URL](/agents/custom-code-agent/setup-your-agent/overview) and can reply with `ctx.reply()`.
+When a message matches an **Agent** route, Novu forwards it to the selected agent's email integration. Your agent handler receives the message on your [bridge URL](/agents/custom-code-agent/connecting-your-app) and can reply with `ctx.reply()`.
 
 For quick setup on Novu Cloud, agents can also use the shared `@agentconnect.sh` inbox provisioned during `npx novu connect`. For production, add a custom domain route so users email `@yourcompany.com`.
 
-See [Agents and providers — Email](/agents/get-started/agents-and-providers) and [Custom code agent setup](/agents/custom-code-agent/setup-your-agent/overview).
+See [Agents and providers — Email](/agents/get-started/agents-and-providers) and [Custom code agent setup](/agents/custom-code-agent/quickstart).
 
 ## Test a route
 

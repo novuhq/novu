@@ -1,16 +1,14 @@
 import { BadGatewayException, BadRequestException, Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
-import { ConversationActivityToolData, ConversationChannel } from '@novu/dal';
-import type { SentMessageInfo } from '@novu/framework';
-import type { AdapterPostableMessage, CardElement, EmojiValue, PlanModel, Thread } from 'chat';
+import { ConversationChannel } from '@novu/dal';
+import type { SentMessageInfo } from '@novu/framework/internal';
+import type { SlackAgentSuggestedPrompt } from '@novu/shared';
+import type { AdapterPostableMessage, CardElement, Chat, EmojiValue, PlanModel, Thread } from 'chat';
 import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import type { ReplyContentDto } from '../../shared/dtos/agent-reply-payload.dto';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { esmImport } from '../../shared/util/esm-import';
-import {
-  buildBrandedMarkdownReply,
-  contentHasPoweredByWatermark,
-} from '../../shared/util/novu-powered-by-watermark';
+import { buildBrandedMarkdownReply, contentHasPoweredByWatermark } from '../../shared/util/novu-powered-by-watermark';
 import { type AgentActionTokenBinding, AgentActionTokenService } from '../action-token/agent-action-token.service';
 import { AgentConversationService } from '../conversation/agent-conversation.service';
 import { ChatInstanceRegistry } from '../ingress/chat-instance.registry';
@@ -20,6 +18,7 @@ import { resolvePlanDeliveryMode } from './plan-live-delivery';
 import { renderPlanModelAsMarkdown } from './plan-model-to-markdown';
 import type { PlanPhase } from './plan-phase';
 import {
+  decodeSlackPlatformThreadId,
   editSlackNativeBlocks,
   getSlackApiErrorCode,
   postSlackNativeBlocks,
@@ -49,39 +48,16 @@ export interface OutboundPersistContext {
 
 export type OutboundMessage = ReplyContentDto;
 
-/**
- * Project an outbound reply onto its two persisted destinations: display content into
- * `richContent` (an explicit allowlist of the renderable fields) and the tool-approval
- * payload into the first-class `toolData` column. A `toolApproval` reply gates a tool, so
- * its metadata belongs in `toolData`, not buried inside `richContent`.
- */
-function splitReplyPersistence(msg: OutboundMessage): {
-  richContent?: Record<string, unknown>;
-  toolData?: ConversationActivityToolData;
-} {
-  const richContent =
-    msg.card || msg.files?.length
-      ? {
-          ...(msg.markdown !== undefined && { markdown: msg.markdown }),
-          ...(msg.card !== undefined && { card: msg.card }),
-          ...(msg.files !== undefined && { files: msg.files }),
-        }
-      : undefined;
+function extractReplyRichContent(content: OutboundMessage): Record<string, unknown> | undefined {
+  if (!content.card && !content.files?.length) {
+    return undefined;
+  }
 
-  const approval = msg.toolApproval as
-    | { approvalId?: string; toolCallId?: string; name?: string; input?: Record<string, unknown> }
-    | undefined;
-
-  const toolData: ConversationActivityToolData | undefined = approval
-    ? {
-        approvalId: approval.approvalId,
-        toolCallId: approval.toolCallId,
-        toolName: approval.name,
-        input: approval.input,
-      }
-    : undefined;
-
-  return { richContent, toolData };
+  return {
+    ...(content.markdown !== undefined && { markdown: content.markdown }),
+    ...(content.card !== undefined && { card: content.card }),
+    ...(content.files !== undefined && { files: content.files }),
+  };
 }
 
 export type OutboundDeliveryOptions = {
@@ -191,7 +167,7 @@ export class OutboundGateway {
       agentIdentifier: persist.agentIdentifier,
       agentName: persist.agentName,
       content: this.extractTextFallback(msg),
-      richContent: splitReplyPersistence(msg).richContent,
+      richContent: extractReplyRichContent(msg),
       environmentId: persist.environmentId,
       organizationId: persist.organizationId,
     });
@@ -306,6 +282,12 @@ export class OutboundGateway {
     platformThreadId: string,
     status = 'Thinking...'
   ): Promise<void> {
+    if (!status.trim()) {
+      await this.stopTypingInConversation(agentId, integrationIdentifier, platformThreadId);
+
+      return;
+    }
+
     const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
     const instanceKey = `${agentId}:${integrationIdentifier}`;
     const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);
@@ -315,7 +297,62 @@ export class OutboundGateway {
       return;
     }
 
-    await thread.startTyping(status).catch(toDeliveryError);
+    await thread.startTyping(status).catch((err) => {
+      this.logger.warn(
+        { err, platformThreadId, agentId, integrationIdentifier },
+        'Failed to start typing in conversation'
+      );
+    });
+  }
+
+  async stopTypingInConversation(
+    agentId: string,
+    integrationIdentifier: string,
+    platformThreadId: string
+  ): Promise<void> {
+    const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
+
+    if (config.platform === AgentPlatformEnum.SLACK) {
+      await this.clearSlackAssistantStatus(agentId, integrationIdentifier, platformThreadId);
+
+      return;
+    }
+
+    // Teams, Telegram, and WhatsApp typing indicators expire or clear on post — no explicit stop API.
+  }
+
+  private async clearSlackAssistantStatus(
+    agentId: string,
+    integrationIdentifier: string,
+    platformThreadId: string
+  ): Promise<void> {
+    const { channel, threadTs } = decodeSlackPlatformThreadId(platformThreadId);
+    if (!threadTs) {
+      this.logger.warn(
+        { platformThreadId, agentId, integrationIdentifier },
+        'Skipping Slack typing stop because thread timestamp is missing'
+      );
+
+      return;
+    }
+
+    const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
+    const instanceKey = `${agentId}:${integrationIdentifier}`;
+    const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);
+    const adapter = chat.getAdapter(AgentPlatformEnum.SLACK) as {
+      setAssistantStatus?: (channelId: string, threadTs: string, status: string) => Promise<void>;
+    };
+
+    if (typeof adapter.setAssistantStatus !== 'function') {
+      return;
+    }
+
+    await adapter.setAssistantStatus(channel, threadTs, '').catch((err) => {
+      this.logger.warn(
+        { err, platformThreadId, agentId, integrationIdentifier },
+        'Failed to clear Slack assistant status'
+      );
+    });
   }
 
   async sendDirectMessage(
@@ -327,8 +364,7 @@ export class OutboundGateway {
     const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
     const instanceKey = `${agentId}:${integrationIdentifier}`;
     const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);
-
-    const dmThread = await chat.openDM(platformUserId);
+    const dmThread = await this.openDirectMessageThread(chat, config.platform, platformUserId);
     const deliveryContent = await this.fileMaterializer.prepareContentForDelivery(content, config.platform, agentId);
     const tokenizedContent = await this.applyActionTokensForDelivery(
       deliveryContent,
@@ -342,6 +378,48 @@ export class OutboundGateway {
     const platformThreadId = sent.threadId.endsWith(':') ? `${sent.threadId}${sent.id}` : sent.threadId;
 
     return { messageId: sent.id, platformThreadId };
+  }
+
+  async setSlackSuggestedPrompts(
+    agentId: string,
+    integrationIdentifier: string,
+    platformThreadId: string,
+    prompts: SlackAgentSuggestedPrompt[],
+    title?: string
+  ): Promise<void> {
+    const { channel, threadTs } = decodeSlackPlatformThreadId(platformThreadId);
+    const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
+    const instanceKey = `${agentId}:${integrationIdentifier}`;
+    const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);
+    const adapter = chat.getAdapter(AgentPlatformEnum.SLACK) as {
+      setSuggestedPrompts?: (
+        channelId: string,
+        threadTs: string,
+        promptList: SlackAgentSuggestedPrompt[],
+        promptTitle?: string
+      ) => Promise<void>;
+    };
+
+    if (typeof adapter.setSuggestedPrompts !== 'function') {
+      return;
+    }
+
+    const resolvedThreadTs = threadTs ?? platformThreadId.split(':').slice(2).join(':');
+    if (!resolvedThreadTs) {
+      this.logger.warn(
+        { platformThreadId, agentId, integrationIdentifier },
+        'Skipping Slack suggested prompts because thread timestamp is missing'
+      );
+
+      return;
+    }
+
+    await adapter.setSuggestedPrompts(channel, resolvedThreadTs, prompts, title).catch((err) => {
+      this.logger.warn(
+        { err, platformThreadId, agentId, integrationIdentifier },
+        'Failed to set Slack suggested prompts'
+      );
+    });
   }
 
   async editInConversation(
@@ -525,6 +603,22 @@ export class OutboundGateway {
     await adapter.removeReaction(platformThreadId, platformMessageId, resolved);
   }
 
+  private async openDirectMessageThread(
+    chat: Chat,
+    platform: string,
+    platformUserId: string
+  ): Promise<Thread> {
+    const adapter = chat.getAdapter(platform);
+
+    if (typeof adapter.openDM === 'function') {
+      const threadId = await adapter.openDM(platformUserId);
+
+      return chat.thread(threadId);
+    }
+
+    return chat.openDM(platformUserId);
+  }
+
   private async resolveSlackBotToken(agentId: string, integrationIdentifier: string): Promise<string> {
     const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
     const token = config.connectionAccessToken;
@@ -602,9 +696,7 @@ export class OutboundGateway {
     sent: SentMessageInfo,
     msg: OutboundMessage
   ): Promise<void> {
-    const { richContent, toolData } = splitReplyPersistence(msg);
-
-    const base = {
+    await this.conversation.persistAgentMessage({
       conversationId: persist.conversationId,
       channel: persist.channel,
       platformThreadId: sent.platformThreadId || undefined,
@@ -612,20 +704,10 @@ export class OutboundGateway {
       agentIdentifier: persist.agentIdentifier,
       agentName: persist.agentName,
       content: this.extractTextFallback(msg),
-      richContent,
+      richContent: extractReplyRichContent(msg),
       environmentId: persist.environmentId,
       organizationId: persist.organizationId,
-    };
-
-    // A delivered card that gates a tool is a `TOOL_APPROVAL_REQUEST`, not a plain message —
-    // route it to its dedicated persister so the tool metadata lands in `toolData`.
-    if (toolData) {
-      await this.conversation.persistToolApprovalRequest({ ...base, toolData });
-
-      return;
-    }
-
-    await this.conversation.persistAgentMessage(base);
+    });
   }
 
   private async buildThreadPostArg(

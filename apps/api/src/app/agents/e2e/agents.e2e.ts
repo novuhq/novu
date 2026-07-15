@@ -36,6 +36,7 @@ describe('Agents API - /agents #novu-v2', () => {
     // tests in managed-agent.e2e.ts for the populated-view contract.
     expect(createRes.body.data.managedRuntime).to.equal(undefined);
     expect(createRes.body.data.createdBy).to.equal(session.user._id);
+    expect(createRes.body.data.behavior?.subscriberAccess).to.equal('restricted');
 
     const listRes = await session.testAgent.get('/v1/agents');
 
@@ -79,14 +80,15 @@ describe('Agents API - /agents #novu-v2', () => {
     });
 
     expect(createRes.status).to.equal(201);
-    expect(createRes.body.data.behavior).to.equal(undefined);
+    expect(createRes.body.data.behavior?.subscriberAccess).to.equal('restricted');
 
     const patchRes = await session.testAgent.patch(`/v1/agents/${encodeURIComponent(identifier)}`).send({
       behavior: { acknowledgeOnReceived: false },
     });
 
     expect(patchRes.status).to.equal(200);
-    expect(patchRes.body.data.behavior).to.deep.equal({ acknowledgeOnReceived: false });
+    expect(patchRes.body.data.behavior.acknowledgeOnReceived).to.equal(false);
+    expect(patchRes.body.data.behavior.subscriberAccess).to.equal('restricted');
 
     const getRes = await session.testAgent.get(`/v1/agents/${encodeURIComponent(identifier)}`);
 
@@ -112,7 +114,7 @@ describe('Agents API - /agents #novu-v2', () => {
     });
 
     expect(createRes.status).to.equal(201);
-    expect(createRes.body.data.behavior).to.equal(undefined);
+    expect(createRes.body.data.behavior?.subscriberAccess).to.equal('restricted');
 
     const setRes = await session.testAgent.patch(`/v1/agents/${encodeURIComponent(identifier)}`).send({
       behavior: { reactionOnResolved: 'thumbs_up' },
@@ -120,6 +122,7 @@ describe('Agents API - /agents #novu-v2', () => {
 
     expect(setRes.status).to.equal(200);
     expect(setRes.body.data.behavior.reactionOnResolved).to.equal('thumbs_up');
+    expect(setRes.body.data.behavior.subscriberAccess).to.equal('restricted');
 
     const getRes = await session.testAgent.get(`/v1/agents/${encodeURIComponent(identifier)}`);
 
@@ -132,6 +135,69 @@ describe('Agents API - /agents #novu-v2', () => {
 
     expect(disableRes.status).to.equal(200);
     expect(disableRes.body.data.behavior.reactionOnResolved).to.equal(null);
+
+    await session.testAgent.delete(`/v1/agents/${encodeURIComponent(identifier)}`);
+  });
+
+  it('should update and return subscriberAccess behavior', async () => {
+    const identifier = `e2e-subscriber-access-${Date.now()}`;
+
+    const createRes = await session.testAgent.post('/v1/agents').send({
+      name: 'Access Agent',
+      identifier,
+    });
+
+    expect(createRes.status).to.equal(201);
+    expect(createRes.body.data.behavior?.subscriberAccess).to.equal('restricted');
+
+    const persisted = await agentRepository.findOne(
+      {
+        identifier,
+        _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
+      },
+      '*'
+    );
+    expect(persisted?.behavior?.subscriberAccess).to.equal('restricted');
+
+    const openRes = await session.testAgent.patch(`/v1/agents/${encodeURIComponent(identifier)}`).send({
+      behavior: { subscriberAccess: 'open' },
+    });
+
+    expect(openRes.status).to.equal(200);
+    expect(openRes.body.data.behavior.subscriberAccess).to.equal('open');
+
+    const getRes = await session.testAgent.get(`/v1/agents/${encodeURIComponent(identifier)}`);
+
+    expect(getRes.status).to.equal(200);
+    expect(getRes.body.data.behavior.subscriberAccess).to.equal('open');
+
+    const restrictRes = await session.testAgent.patch(`/v1/agents/${encodeURIComponent(identifier)}`).send({
+      behavior: { subscriberAccess: 'restricted' },
+    });
+
+    expect(restrictRes.status).to.equal(200);
+    expect(restrictRes.body.data.behavior.subscriberAccess).to.equal('restricted');
+
+    await session.testAgent.delete(`/v1/agents/${encodeURIComponent(identifier)}`);
+  });
+
+  it('should reject an invalid subscriberAccess value', async () => {
+    const identifier = `e2e-subscriber-access-invalid-${Date.now()}`;
+
+    const createRes = await session.testAgent.post('/v1/agents').send({
+      name: 'Access Agent Invalid',
+      identifier,
+    });
+
+    expect(createRes.status).to.equal(201);
+
+    const badRes = await session.testAgent.patch(`/v1/agents/${encodeURIComponent(identifier)}`).send({
+      behavior: { subscriberAccess: 'everyone' },
+    });
+
+    // Class-validator failures are surfaced by AllExceptionsFilter as 422.
+    expect(badRes.status).to.equal(422);
 
     await session.testAgent.delete(`/v1/agents/${encodeURIComponent(identifier)}`);
   });
@@ -301,6 +367,99 @@ describe('Agents API - /agents #novu-v2', () => {
     );
 
     expect(agentAfter).to.equal(null);
+  });
+
+  describe('Name length validation', () => {
+    // Kept in sync with AGENT_NAME_MAX_LENGTH in @novu/shared. Validation failures are
+    // surfaced by AllExceptionsFilter as 422 (not the class-validator default 400).
+    const MAX = 60;
+
+    it('should reject creating an agent with a name longer than the limit', async () => {
+      const identifier = `e2e-name-too-long-${Date.now()}`;
+
+      const res = await session.testAgent.post('/v1/agents').send({
+        name: 'a'.repeat(MAX + 1),
+        identifier,
+      });
+
+      expect(res.status).to.equal(422);
+      const messages = res.body?.errors?.general?.messages;
+      const text = Array.isArray(messages) ? messages.join(' ') : String(messages ?? '');
+      expect(text.toLowerCase()).to.contain(`${MAX} characters`);
+
+      const leftover = await agentRepository.findOne(
+        {
+          identifier,
+          _environmentId: session.environment._id,
+          _organizationId: session.organization._id,
+        },
+        ['_id']
+      );
+      expect(leftover, 'no agent should be created when the name is too long').to.equal(null);
+    });
+
+    it('should allow creating an agent with a name exactly at the limit', async () => {
+      const identifier = `e2e-name-exact-${Date.now()}`;
+      const name = 'a'.repeat(MAX);
+
+      const res = await session.testAgent.post('/v1/agents').send({ name, identifier });
+
+      expect(res.status, JSON.stringify(res.body)).to.equal(201);
+      expect(res.body.data.name).to.equal(name);
+      expect(res.body.data.name.length).to.equal(MAX);
+
+      await session.testAgent.delete(`/v1/agents/${encodeURIComponent(identifier)}`);
+    });
+
+    it('should trim trailing whitespace before measuring the name length', async () => {
+      const identifier = `e2e-name-trim-${Date.now()}`;
+      const trimmedName = 'a'.repeat(MAX);
+
+      // 60 real chars + trailing whitespace => 63 raw chars, but trims back to 60.
+      const res = await session.testAgent.post('/v1/agents').send({
+        name: `${trimmedName}   `,
+        identifier,
+      });
+
+      expect(res.status, JSON.stringify(res.body)).to.equal(201);
+      expect(res.body.data.name).to.equal(trimmedName);
+      expect(res.body.data.name.length).to.equal(MAX);
+
+      await session.testAgent.delete(`/v1/agents/${encodeURIComponent(identifier)}`);
+    });
+
+    it('should reject updating an agent with a name longer than the limit', async () => {
+      const identifier = `e2e-name-update-long-${Date.now()}`;
+      await session.testAgent.post('/v1/agents').send({ name: 'Update Name Agent', identifier });
+
+      const res = await session.testAgent.patch(`/v1/agents/${encodeURIComponent(identifier)}`).send({
+        name: 'a'.repeat(MAX + 1),
+      });
+
+      expect(res.status).to.equal(422);
+      const messages = res.body?.errors?.general?.messages;
+      const text = Array.isArray(messages) ? messages.join(' ') : String(messages ?? '');
+      expect(text.toLowerCase()).to.contain(`${MAX} characters`);
+
+      const getRes = await session.testAgent.get(`/v1/agents/${encodeURIComponent(identifier)}`);
+      expect(getRes.body.data.name, 'name must be unchanged after a rejected update').to.equal('Update Name Agent');
+
+      await session.testAgent.delete(`/v1/agents/${encodeURIComponent(identifier)}`);
+    });
+
+    it('should allow updating an agent with a name exactly at the limit', async () => {
+      const identifier = `e2e-name-update-exact-${Date.now()}`;
+      await session.testAgent.post('/v1/agents').send({ name: 'Update Name Agent', identifier });
+
+      const name = 'b'.repeat(MAX);
+      const res = await session.testAgent.patch(`/v1/agents/${encodeURIComponent(identifier)}`).send({ name });
+
+      expect(res.status, JSON.stringify(res.body)).to.equal(200);
+      expect(res.body.data.name).to.equal(name);
+      expect(res.body.data.name.length).to.equal(MAX);
+
+      await session.testAgent.delete(`/v1/agents/${encodeURIComponent(identifier)}`);
+    });
   });
 
   describe('Bridge URL management', () => {

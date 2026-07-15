@@ -2,6 +2,7 @@ import type {
   AgentMcpServerEnablementDto,
   AgentRuntime,
   AgentRuntimeProviderIdEnum,
+  AgentSubscriberAccessEnum,
   ChannelTypeEnum,
   DirectionEnum,
   IEnvironment,
@@ -54,9 +55,19 @@ export type AgentIntegrationSummary = {
   active: boolean;
 };
 
+export type AgentSubscriberAccess = `${AgentSubscriberAccessEnum}`;
+
 export type AgentBehavior = {
   acknowledgeOnReceived?: boolean;
   reactionOnResolved?: string | null;
+  /**
+   * Channel-agnostic. `open` on managed agents auto-creates a lightweight
+   * subscriber from an anonymous sender; on custom-code agents the turn is
+   * forwarded to the bridge with a null subscriber. `restricted` rejects
+   * anonymous senders. Managed creates default to `open`; self-hosted to
+   * `restricted`. Unset resolves as `restricted`.
+   */
+  subscriberAccess?: AgentSubscriberAccess;
 };
 
 export type ManagedRuntimeResponse = {
@@ -571,19 +582,6 @@ export async function listAgentMcpServers(
   return response.data;
 }
 
-export async function enableAgentMcpServer(
-  environment: IEnvironment,
-  agentIdentifier: string,
-  mcpId: string
-): Promise<AgentMcpServerEnablement> {
-  const response = await post<{ data: AgentMcpServerEnablement }>(
-    `/agents/${encodeURIComponent(agentIdentifier)}/mcp-servers`,
-    { environment, body: { mcpId } }
-  );
-
-  return response.data;
-}
-
 export function disableAgentMcpServer(
   environment: IEnvironment,
   agentIdentifier: string,
@@ -797,6 +795,83 @@ export async function sendWhatsAppTestTemplate(
   const response = await post<{ data: SendWhatsAppTestTemplateResponse }>(
     `/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationIdentifier)}/whatsapp/test-template`,
     { environment, body: { subscriberId } }
+  );
+
+  return response.data;
+}
+
+export type SendSendblueTestMessageError = {
+  code: 'missing_credentials' | 'invalid_recipient' | 'recipient_not_verified' | 'sendblue_rejected' | 'unknown';
+  message: string;
+};
+
+export type SendSendblueTestMessageResponse = {
+  success: boolean;
+  messageId?: string;
+  error?: SendSendblueTestMessageError;
+};
+
+export async function sendSendblueTestMessage(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  integrationIdentifier: string,
+  subscriberId: string
+): Promise<SendSendblueTestMessageResponse> {
+  const response = await post<{ data: SendSendblueTestMessageResponse }>(
+    `/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationIdentifier)}/sendblue/test-message`,
+    { environment, body: { subscriberId } }
+  );
+
+  return response.data;
+}
+
+export type ConfigureSendblueWebhookFailure = {
+  code: 'missing_credentials' | 'sendblue_rejected' | 'unknown';
+  message: string;
+};
+
+export type ConfigureSendblueWebhookResponse = {
+  success: boolean;
+  callbackUrl: string;
+  webhookSecret?: string;
+  fallbackToManual?: boolean;
+  reason?: ConfigureSendblueWebhookFailure;
+  /**
+   * Other Novu agent webhook URLs already registered on this Sendblue account. Sendblue
+   * webhooks are account-level, so every inbound message triggers all of them — surface a
+   * warning and offer to remove the stale entries via {@link removeAgentSendblueWebhooks}.
+   */
+  existingNovuWebhookUrls?: string[];
+};
+
+export async function configureAgentSendblueWebhook(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  integrationIdentifier: string
+): Promise<ConfigureSendblueWebhookResponse> {
+  const response = await post<{ data: ConfigureSendblueWebhookResponse }>(
+    `/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationIdentifier)}/sendblue/configure-webhook`,
+    { environment }
+  );
+
+  return response.data;
+}
+
+export type RemoveSendblueWebhooksResponse = {
+  success: boolean;
+  removedWebhookUrls: string[];
+  message?: string;
+};
+
+export async function removeAgentSendblueWebhooks(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  integrationIdentifier: string,
+  webhookUrls: string[]
+): Promise<RemoveSendblueWebhooksResponse> {
+  const response = await post<{ data: RemoveSendblueWebhooksResponse }>(
+    `/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationIdentifier)}/sendblue/remove-webhooks`,
+    { environment, body: { webhookUrls } }
   );
 
   return response.data;

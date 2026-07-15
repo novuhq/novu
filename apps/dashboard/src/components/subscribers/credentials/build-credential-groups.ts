@@ -113,8 +113,11 @@ function getProviderDisplayName(providerId: string): string {
   return providers.find((provider) => provider.id === providerId)?.displayName ?? providerId;
 }
 
-function isWhatsApp(providerId: string): boolean {
-  return providerId === ChatProviderIdEnum.WhatsAppBusiness;
+/** Chat providers that deliver to the subscriber's phone number rather than a webhook/channel endpoint. */
+const PHONE_BASED_CHAT_PROVIDERS = new Set<string>([ChatProviderIdEnum.WhatsAppBusiness, ChatProviderIdEnum.Sendblue]);
+
+function isPhoneBasedChatProvider(providerId: string): boolean {
+  return PHONE_BASED_CHAT_PROVIDERS.has(providerId);
 }
 
 function getActiveIntegrationsByChannel(integrations: IIntegration[], channel: ChannelTypeEnum): IIntegration[] {
@@ -220,7 +223,9 @@ function buildChatGroup(
   const rows: CredentialRow[] = [];
   const consumedEndpoints = new Set<string>();
 
-  for (const integration of chatIntegrations.filter((integration) => !isWhatsApp(integration.providerId))) {
+  for (const integration of chatIntegrations.filter(
+    (integration) => !isPhoneBasedChatProvider(integration.providerId)
+  )) {
     const items: ChatCredentialItem[] = [];
     const webhookItem = buildWebhookItem(integration, storedChannels);
 
@@ -252,12 +257,12 @@ function buildChatGroup(
     });
   }
 
-  const whatsAppRows = buildReadonlyRows(
-    chatIntegrations.filter((integration) => isWhatsApp(integration.providerId)),
+  const phoneBasedRows = buildReadonlyRows(
+    chatIntegrations.filter((integration) => isPhoneBasedChatProvider(integration.providerId)),
     phone,
     'phone'
   );
-  rows.push(...whatsAppRows);
+  rows.push(...phoneBasedRows);
 
   // Endpoints whose integration is not an active chat integration still get their own card.
   const orphanEndpoints = chatEndpoints.filter((endpoint) => !consumedEndpoints.has(endpoint.identifier));

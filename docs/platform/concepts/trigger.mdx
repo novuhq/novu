@@ -1,6 +1,6 @@
 ---
 title: 'Trigger'
-description: 'Managing Trigger Events from Request to Processing'
+description: "Understand how Novu processes a trigger event from initial API request to fan-out, digest, delay, and channel delivery inside a workflow run."
 ---
 
 ## Trigger Request
@@ -53,11 +53,16 @@ Jobs play a crucial role in the trigger event lifecycle. They are created based 
   </Accordion>
 
   <Accordion title="How events are billed?">
-    If a workflow is triggered to a [subscriber](/platform/concepts/subscribers), then it is billed as 1 event. So if workflow is triggered to group of 15 subscribers, then it is billed as 15 events. Similary, if a workflow is triggered to a [topic](/platform/concepts/topics), Novu creates one event per topic subscriber, this means that a workflow trigger to a topic with 100 subscribers creates 100 events.
+    If a workflow is triggered to a [subscriber](/platform/concepts/subscribers), then it is billed as 1 event (one workflow run). If workflow is triggered to a group of 15 subscribers, then it is billed as 15 events.
+
+    If a workflow is triggered to a [topic](/platform/concepts/topics), Novu fans out to matching [topic subscriptions](/platform/subscription/manage-topic-subscriptions). You are billed for **one workflow run per subscriber whose subscription passes** Context matching and JSON Logic conditions, not for every subscriber on the topic. A topic with 100 subscriptions where only 20 pass creates **20** billable workflow runs. See [Billing and workflow runs](/platform/subscription/manage-topic-subscriptions#billing-and-workflow-runs).
   </Accordion>
 
   <Accordion title="If notifications were filtered out, are they still billed?">
-    Yes, they are still billed. The number of billed events is the number of subscribers or topic subscribers the workflow was triggered to, regardless of whether notifications were filtered out as per subscriber's [workflow channel preferences](/platform/concepts/preferences#workflow-channel-preferences), [global channel preferences](/platform/concepts/preferences#subscriber-global-preferences) or [step conditions](/platform/workflow/add-and-configure-steps/step-conditions).
+    It depends on **where** the filter runs:
+
+    - **Topic subscription filters** ([Context](/platform/concepts/contexts) mismatch or [JSON Logic conditions](/platform/subscription/manage-topic-subscriptions#json-logic-conditions)): **Not billed.** Filtering happens during fan-out, before a workflow run is created.
+    - **[Workflow channel preferences](/platform/concepts/preferences#workflow-channel-preferences)**, **[global channel preferences](/platform/concepts/preferences#subscriber-global-preferences)**, or **[step conditions](/platform/workflow/add-and-configure-steps/step-conditions)**: **Still billed.** The workflow run is already created; only delivery or individual steps are skipped.
   </Accordion>
 
   <Accordion title="How events are billed for digested events?">

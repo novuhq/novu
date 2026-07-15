@@ -177,8 +177,7 @@ export class NotificationsCache {
 
     const bucketFilter = getFilter(key);
     const matchesFilter =
-      checkBasicFilters(notification, bucketFilter) &&
-      checkNotificationTagFilter(notification.tags, bucketFilter.tags);
+      checkBasicFilters(notification, bucketFilter) && checkNotificationTagFilter(notification.tags, bucketFilter.tags);
     const index = notificationsResponse.notifications.findIndex((el) => el.id === notification.id);
     const existsInBucket = index !== -1;
 

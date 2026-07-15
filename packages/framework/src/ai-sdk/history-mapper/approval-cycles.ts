@@ -1,6 +1,6 @@
 import type { AssistantModelMessage, ModelMessage, ToolModelMessage } from 'ai';
 import type { AgentHistoryEntry } from '../../resources/agent/agent.types';
-import type { ApprovalPayload } from '../../resources/agent/tool-approval/action-id';
+import type { ToolApprovalRequestPayload } from '../../resources/agent/tool-approval/action-id';
 
 /**
  * Reconstructs tool-approval cycles from the Novu ledger into AI SDK messages.
@@ -29,7 +29,7 @@ const TYPE_TOOL_RESULT = 'tool_result';
 
 // ─── Payload extractors ───────────────────────────────────────────────────────
 
-function approvalOf(entry: AgentHistoryEntry): ApprovalPayload | undefined {
+function approvalOf(entry: AgentHistoryEntry): ToolApprovalRequestPayload | undefined {
   const tool = entry.toolData;
   if (!tool || typeof tool.approvalId !== 'string' || typeof tool.toolCallId !== 'string') {
     return undefined;
@@ -119,7 +119,7 @@ export function buildApprovalIndex(history: AgentHistoryEntry[]): ApprovalIndex 
 
 type ApprovalCycleState = 'in-flight' | 'denied' | 'resolved';
 
-function cycleState(approval: ApprovalPayload, index: ApprovalIndex): ApprovalCycleState {
+function cycleState(approval: ToolApprovalRequestPayload, index: ApprovalIndex): ApprovalCycleState {
   if (index.deniedApprovalIds.has(approval.approvalId)) {
     return 'denied';
   }
@@ -133,7 +133,7 @@ function cycleState(approval: ApprovalPayload, index: ApprovalIndex): ApprovalCy
 
 // ─── AI SDK message builders ──────────────────────────────────────────────────
 
-function assistantToolCall(approval: ApprovalPayload, withApprovalRequest: boolean): AssistantModelMessage {
+function assistantToolCall(approval: ToolApprovalRequestPayload, withApprovalRequest: boolean): AssistantModelMessage {
   const content: AssistantModelMessage['content'] = [
     { type: 'tool-call', toolCallId: approval.toolCallId, toolName: approval.name, input: approval.input ?? {} },
   ];
@@ -167,7 +167,7 @@ function executedToolResult(result: ToolResultPayload): ToolModelMessage {
 }
 
 /** Emit tool-call and its outcome in adjacent messages (AI SDK adjacency requirement). */
-function pairedToolCall(approval: ApprovalPayload, outcome: ToolModelMessage): ModelMessage[] {
+function pairedToolCall(approval: ToolApprovalRequestPayload, outcome: ToolModelMessage): ModelMessage[] {
   return [assistantToolCall(approval, false), outcome];
 }
 

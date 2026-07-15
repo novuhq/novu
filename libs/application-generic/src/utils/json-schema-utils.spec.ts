@@ -250,10 +250,7 @@ describe('keysToObject', () => {
 
 describe('prototype pollution guard', () => {
   it('should not allow __proto__ pollution via digest payload properties', () => {
-    const paths = [
-      'steps.digest-step.events.payload',
-      'steps.digest-step.events.payload.__proto__.polluted',
-    ];
+    const paths = ['steps.digest-step.events.payload', 'steps.digest-step.events.payload.__proto__.polluted'];
 
     const before = ({} as any).polluted;
     keysToObject(paths);
@@ -278,10 +275,7 @@ describe('prototype pollution guard', () => {
   });
 
   it('should still set safe nested properties within digest payload', () => {
-    const paths = [
-      'steps.digest-step.events.payload',
-      'steps.digest-step.events.payload.user.name',
-    ];
+    const paths = ['steps.digest-step.events.payload', 'steps.digest-step.events.payload.user.name'];
 
     const result = keysToObject(paths);
 
@@ -296,6 +290,26 @@ describe('prototype pollution guard', () => {
         },
       },
     });
+  });
+
+  it('should ignore unsafe array variable paths', () => {
+    const arrayVariables: ArrayVariable[] = [{ path: 'toString.call', iterations: 3 }];
+    const toStringCall = Object.prototype.toString.call;
+
+    keysToObject([], arrayVariables);
+
+    expect(Object.prototype.toString.call).to.equal(toStringCall);
+    expect(typeof Object.prototype.toString.call).to.equal('function');
+  });
+
+  it('should ignore unsafe nested variable paths', () => {
+    const arrayVariables: ArrayVariable[] = [{ path: 'payload.toString.call', iterations: 3 }];
+    const toStringCall = Object.prototype.toString.call;
+
+    keysToObject(['payload.name'], arrayVariables);
+
+    expect(Object.prototype.toString.call).to.equal(toStringCall);
+    expect(typeof Object.prototype.toString.call).to.equal('function');
   });
 });
 

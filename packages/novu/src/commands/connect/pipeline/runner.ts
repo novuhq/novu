@@ -19,18 +19,28 @@ import { shouldUpgradeFromKeylessGenerateLimit } from '../keyless-limit-errors';
 import type {
   AgentConnectMode,
   AgentSummary,
+  AiSdkConnectOutcome,
   ChannelChoice,
   ChatSdkConnectOutcome,
   ConnectCommandOptions,
   CustomCodeConnectOutcome,
+  LangChainConnectOutcome,
 } from '../types';
-import { isBridgeConnectMode, isCustomCodeScaffoldMode } from '../types';
+import {
+  isAiSdkConnectMode,
+  isBridgeConnectMode,
+  isLangChainConnectMode,
+  isVanillaCustomCodeConnectMode,
+} from '../types';
 import type { ConnectUI } from '../ui/ui';
+import { maybeRunAiSdkTunnel, runAiSdkProjectSetup } from './ai-sdk';
+import { createBridgeAgentFlow } from './bridge/create-bridge-agent';
 import { connectEmailForAgent } from './channels/email';
 import { connectSlackForAgent } from './channels/slack';
 import { connectTelegramForAgent } from './channels/telegram';
-import { createBridgeAgentFlow, runChatSdkProjectSetup, shutdownConnectUiAndMaybeRunChatSdkTunnel } from './chat-sdk';
+import { maybeRunChatSdkTunnel, runChatSdkProjectSetup } from './chat-sdk';
 import { runCustomCodeProjectSetup } from './custom-code';
+import { maybeRunLangChainTunnel, runLangChainProjectSetup } from './langchain';
 import { resolveAgentRuntimeIntegration, resolveRuntimeFromOptions } from './resolve-agent-runtime-integration';
 
 export interface ConnectPipelineInput {
@@ -137,6 +147,8 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
     let agent: AgentSummary;
     let flow: 'created' | 'reused';
     let chatSdkOutcome: ChatSdkConnectOutcome | undefined;
+    let aiSdkOutcome: AiSdkConnectOutcome | undefined;
+    let langChainOutcome: LangChainConnectOutcome | undefined;
     let customCodeOutcome: CustomCodeConnectOutcome | undefined;
 
     if (isBridgeConnectMode(connectMode)) {
@@ -338,7 +350,21 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
         auth: session.auth,
         agent,
       });
-    } else if (isCustomCodeScaffoldMode(connectMode)) {
+    } else if (isAiSdkConnectMode(connectMode)) {
+      aiSdkOutcome = await runAiSdkProjectSetup({
+        options,
+        ui,
+        auth: session.auth,
+        agent,
+      });
+    } else if (isLangChainConnectMode(connectMode)) {
+      langChainOutcome = await runLangChainProjectSetup({
+        options,
+        ui,
+        auth: session.auth,
+        agent,
+      });
+    } else if (isVanillaCustomCodeConnectMode(connectMode)) {
       customCodeOutcome = await runCustomCodeProjectSetup({
         options,
         ui,
@@ -358,6 +384,8 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
       claimUrl,
       connectMode,
       chatSdkOutcome,
+      aiSdkOutcome,
+      langChainOutcome,
       customCodeOutcome,
     });
 
@@ -373,13 +401,21 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
 
     // Tear down Ink before starting the bridge server so its stdout/console
     // output does not trigger a second orb render while the TUI is still mounted.
-    return {
-      exitCode: await shutdownConnectUiAndMaybeRunChatSdkTunnel({
-        ui,
-        outcome: chatSdkOutcome,
-        ci: options.ci,
-      }),
-    };
+    const exitCode = await ui.shutdown();
+
+    if (await maybeRunChatSdkTunnel({ outcome: chatSdkOutcome, ci: options.ci })) {
+      return { exitCode: 0 };
+    }
+
+    if (await maybeRunAiSdkTunnel({ outcome: aiSdkOutcome, ci: options.ci })) {
+      return { exitCode: 0 };
+    }
+
+    if (await maybeRunLangChainTunnel({ outcome: langChainOutcome, ci: options.ci })) {
+      return { exitCode: 0 };
+    }
+
+    return { exitCode };
   } catch (err) {
     const message = describeError(err);
     ui.failure(message);

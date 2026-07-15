@@ -1,6 +1,6 @@
 ---
 title: 'Data Migrations'
-description: 'Learn how to update your database data through migrations.'
+description: "Run database data migrations for self-hosted Novu deployments to keep MongoDB and Postgres schemas in sync with the latest platform release."
 ---
 
 On occasion, Novu may introduce features that require changes to the database schema or data. This usually happens when
@@ -89,9 +89,8 @@ closest following release tag.
 
 ### Runtime prerequisites
 
-* `node`
-* `npm`
-* `pnpm`
+* Node.js v22.22.1 (see root `package.json` `engines`)
+* pnpm 11.x
 * `npx`
 * MacOS (or linux)
 * tunnel (optional `ssh`)

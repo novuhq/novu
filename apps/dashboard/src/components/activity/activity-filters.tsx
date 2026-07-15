@@ -14,7 +14,7 @@ import { buildActivityDateFilters } from '@/utils/activityFilters';
 import { ROUTES } from '@/utils/routes';
 import { capitalize } from '@/utils/string';
 import { cn } from '@/utils/ui';
-import { IS_SELF_HOSTED } from '../../config';
+import { IS_CLOUD } from '../../config';
 import { useFetchWorkflows } from '../../hooks/use-fetch-workflows';
 import { ContextFilter } from '../contexts/context-filter';
 import { Button } from '../primitives/button';
@@ -89,7 +89,7 @@ export function ActivityFilters({
   useDebouncedForm(watch, onFiltersChange, 400);
 
   const maxActivityFeedRetentionOptions = useMemo(() => {
-    const missingSubscription = !subscription && !IS_SELF_HOSTED;
+    const missingSubscription = !subscription && IS_CLOUD;
 
     if (!organization || missingSubscription) {
       return [];
@@ -112,7 +112,7 @@ export function ActivityFilters({
 
   return (
     <Form {...form}>
-        <FormRoot className={cn('w-full flex flex-wrap items-center gap-2 pb-2.5', className)}>
+      <FormRoot className={cn('w-full flex flex-wrap items-center gap-2 pb-2.5', className)}>
         {!hide.includes('dateRange') && (
           <FormField
             control={form.control}

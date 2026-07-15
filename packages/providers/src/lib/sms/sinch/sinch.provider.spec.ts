@@ -107,5 +107,15 @@ describe('SinchSmsProvider', () => {
         expect.any(Object)
       );
     });
+
+    it('should reject invalid regions', () => {
+      expect(
+        () =>
+          new SinchSmsProvider({
+            ...mockConfig,
+            region: 'evil.com#@sinch.com',
+          })
+      ).toThrow(/Invalid Sinch region/);
+    });
   });
 });

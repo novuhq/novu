@@ -1,8 +1,9 @@
 import { FileCode2 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useId, useRef, useState } from 'react';
-import { RiCheckLine, RiCloseLine, RiFileCopyLine, RiLoaderLine } from 'react-icons/ri';
+import { RiCheckLine, RiCloseLine, RiLoaderLine } from 'react-icons/ri';
 import { Badge } from '@/components/primitives/badge';
+import { CopyableTerminalBlock } from '@/components/primitives/copyable-terminal-block';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { ExternalLink } from '@/components/shared/external-link';
 import { useFetchApiKeys } from '@/hooks/use-fetch-api-keys';
@@ -50,52 +51,6 @@ function buildPublishCommand({
   ];
 
   return `npx novu step publish ${flags.join(' ')}`;
-}
-
-function CodeBlock({ displayCommand, copyCommand }: { displayCommand: string; copyCommand: string }) {
-  const [copied, setCopied] = useState(false);
-  const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current);
-    };
-  }, []);
-
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(copyCommand);
-      setCopied(true);
-      copyTimeoutRef.current = setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // clipboard write failed silently
-    }
-  };
-
-  return (
-    <div className="relative w-full overflow-hidden rounded-lg shadow-[inset_0px_0px_0px_1px_#18181b,inset_0px_0px_0px_1.5px_rgba(255,255,255,0.1)]">
-      <div className="flex items-center justify-between bg-[rgba(14,18,27,0.9)] px-4 py-1.5">
-        <span className="text-label-xs text-[#99a0ae]">Terminal</span>
-        <button
-          type="button"
-          onClick={handleCopy}
-          className="flex size-6 items-center justify-center rounded p-1.5 transition-colors hover:bg-white/10"
-        >
-          {copied ? (
-            <RiCheckLine className="size-3.5 text-[#99a0ae]" />
-          ) : (
-            <RiFileCopyLine className="size-3.5 text-[#99a0ae]" />
-          )}
-        </button>
-      </div>
-      <div className="bg-[rgba(14,18,27,0.9)] px-[5px] pb-[5px]">
-        <div className="flex gap-4 rounded-md border border-[rgba(14,18,27,0.9)] bg-[rgba(14,18,27,0.9)] p-3">
-          <span className="shrink-0 font-mono text-xs text-[#525866]">❯</span>
-          <span className="whitespace-pre font-mono text-xs text-white">{displayCommand}</span>
-        </div>
-      </div>
-    </div>
-  );
 }
 
 function StepResolverIllustration() {
@@ -258,7 +213,7 @@ function StepResolverIllustration() {
 }
 
 const FEATURE_BULLETS = [
-  'The CLI auto-scaffolds a handler file in your project — no manual setup needed.',
+  'The CLI auto-scaffolds a handler file in your project: no manual setup needed.',
   'Write your step output in TypeScript using any library or template engine.',
   'Subscriber data, trigger payload, and dashboard controls are all available at runtime.',
   'Commit the file to your repo and re-publish to deploy updates at any time.',
@@ -398,7 +353,7 @@ export const StepResolverNotPublished = ({ workflowId, stepId }: StepResolverNot
                   <code className="rounded bg-neutral-100 px-1 py-0.5 font-mono text-[10px] text-[#525866]">
                     novu/{workflowId}/{stepId}.step.tsx
                   </code>{' '}
-                  if it doesn't exist yet — edit it with your logic and re-run to redeploy anytime.
+                  if it doesn't exist yet: edit it with your logic and re-run to redeploy anytime.
                   <br />
                   <br />💡 Your handler is bundled and deployed to Novu's serverless infrastructure on every publish.
                 </p>
@@ -406,7 +361,8 @@ export const StepResolverNotPublished = ({ workflowId, stepId }: StepResolverNot
               {apiKeysQuery.isLoading ? (
                 <Skeleton className="h-[120px] rounded-lg" />
               ) : (
-                <CodeBlock
+                <CopyableTerminalBlock
+                  commandClassName="whitespace-pre"
                   displayCommand={
                     secretKey
                       ? buildPublishCommand({ secretKey, workflowId, stepId, apiUrl, multiline: true })

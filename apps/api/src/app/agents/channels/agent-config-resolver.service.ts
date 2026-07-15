@@ -10,7 +10,7 @@ import {
   IntegrationEntity,
   IntegrationRepository,
 } from '@novu/dal';
-import { EmailProviderIdEnum } from '@novu/shared';
+import { AgentSubscriberAccessEnum, EmailProviderIdEnum } from '@novu/shared';
 import type { WellKnownEmoji } from 'chat';
 import { isKeylessOrganization } from '../../keyless/keyless-organization.helpers';
 import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
@@ -70,6 +70,12 @@ export interface ResolvedAgentConfig {
   removeNovuBranding: boolean;
   acknowledgeOnReceived: boolean;
   reactionOnResolved: WellKnownEmoji | null;
+  /**
+   * Whether unknown senders are auto-provisioned as subscribers (`open`) or
+   * rejected (`restricted`). Defaults to `restricted` when the agent has no
+   * explicit setting. Consumed by the inbound handler for the email platform.
+   */
+  subscriberAccess: AgentSubscriberAccessEnum;
   bridgeUrl?: string;
   devBridgeUrl?: string;
   devBridgeActive?: boolean;
@@ -219,6 +225,18 @@ export class AgentConfigResolver {
       throw new NotFoundException();
     }
 
+    // Same defense-in-depth as Telegram: ConfigureSendblueWebhook is the only place that
+    // provisions credentials.token (the sb-signing-secret shared secret). Without it the
+    // adapter has no secret to verify inbound webhooks against, so reject early and keep the
+    // public endpoint indistinguishable from "unknown agent / unknown integration".
+    if (platform === AgentPlatformEnum.SENDBLUE && !credentials.token) {
+      this.logger.warn(
+        { agentId, integrationIdentifier },
+        'Sendblue inbound webhook rejected: webhook secret not yet configured for this integration'
+      );
+      throw new NotFoundException();
+    }
+
     let connectionAccessToken: string | undefined;
     if (platform === AgentPlatformEnum.SLACK) {
       connectionAccessToken = await this.resolveSlackBotToken(environmentId, organizationId, integrationIdentifier);
@@ -264,7 +282,7 @@ export class AgentConfigResolver {
       environmentId,
       organizationId,
       isKeyless: isKeylessOrganization(organizationId),
-      isManaged: !!agent.managedRuntime,
+      isManaged: agent.runtime === 'managed' && !!agent.managedRuntime,
       agentId: agent._id,
       agentIdentifier: agent.identifier,
       agentName: agent.name,
@@ -278,6 +296,10 @@ export class AgentConfigResolver {
         DEFAULT_REACTION_ON_RESOLVED,
         this.logger
       ),
+      subscriberAccess:
+        agent.behavior?.subscriberAccess === 'open'
+          ? AgentSubscriberAccessEnum.OPEN
+          : AgentSubscriberAccessEnum.RESTRICTED,
       bridgeUrl: agent.bridgeUrl,
       devBridgeUrl: agent.devBridgeUrl,
       devBridgeActive: agent.devBridgeActive,

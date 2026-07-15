@@ -113,9 +113,7 @@ describe('Inbox - link channel endpoint - POST /v1/inbox/channel-endpoints/link 
   it('requires a subscriber JWT', async () => {
     const integrationIdentifier = await createTelegramIntegration();
 
-    const response = await session.testAgent
-      .post('/v1/inbox/channel-endpoints/link')
-      .send({ integrationIdentifier });
+    const response = await session.testAgent.post('/v1/inbox/channel-endpoints/link').send({ integrationIdentifier });
 
     expect(response.status).to.equal(401);
   });

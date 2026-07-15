@@ -688,7 +688,7 @@ function McpRow({
       <TooltipTrigger asChild>
         <div>{row}</div>
       </TooltipTrigger>
-      <TooltipContent side="left">Coming soon — connection not yet available.</TooltipContent>
+      <TooltipContent side="left">Coming soon: connection not yet available.</TooltipContent>
     </Tooltip>
   );
 }

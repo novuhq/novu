@@ -1,8 +1,23 @@
 export * from '../constants';
 export * from '../errors';
 export * from '../filters';
-export type { ApprovalPayload, ParsedApprovalAction } from '../resources/agent/tool-approval/action-id';
-export { parseApprovalActionId } from '../resources/agent/tool-approval/action-id';
+export { AgentContextImpl } from '../resources/agent/agent.context';
+export type { AgentRuntimeContext } from '../resources/agent/agent.runtime';
+export type {
+  AgentBridgeRequest,
+  AgentReplyPayload,
+  DeleteMessagePayload,
+  EditPayload,
+  MetadataSignal,
+  ReplyContent,
+  SentMessageInfo,
+  Signal,
+  ToolResult,
+  TriggerSignal,
+} from '../resources/agent/agent.types';
+export { AgentEventEnum } from '../resources/agent/agent.types';
+export type { ParsedApprovalAction, ToolApprovalRequestPayload } from '../resources/agent/tool-approval/action-id';
+export { buildApprovalActionId, parseApprovalActionId } from '../resources/agent/tool-approval/action-id';
 export { actionStepSchemas, channelStepSchemas } from '../schemas';
 export * from '../types';
 export { createLiquidEngine } from '../utils/liquid.utils';

@@ -1,7 +1,7 @@
 ---
 title: "MS Teams Chat Integration with Novu"
 sidebarTitle: "MS Teams"
-description: "Connect MS Teams to Novu to send chat notifications through notification workflows. Step-by-step credential setup."
+description: "Connect Microsoft Teams to Novu to send chat notifications through workflows. Create an incoming webhook in Teams and store the URL as a Novu credential."
 ---
 
 <Note>
@@ -416,9 +416,10 @@ const novu = new Novu({ secretKey: "<NOVU_SECRET_KEY>" });
 
 const response = await novu.integrations.generateConnectOAuthUrl({
   integrationIdentifier: 'ms-teams-bot',
+  subscriberId: 'user-123',
   context: {
-    "tenant": "acme-corp"
-},
+    tenant: 'acme-corp',
+  },
   autoLinkUser: false,
 });
 ```
@@ -431,9 +432,10 @@ from novu_py import Novu
 with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
     response = novu.integrations.generate_connect_o_auth_url(generate_connect_oauth_url_request_dto={
         "integration_identifier": "ms-teams-bot",
+        "subscriber_id": "user-123",
         "context": {
-        "tenant": "acme-corp"
-},
+            "tenant": "acme-corp",
+        },
         "auto_link_user": False,
     })
 ```
@@ -452,6 +454,7 @@ s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
 
 res, err := s.Integrations.GenerateConnectOAuthURL(context.Background(), components.GenerateConnectOauthURLRequestDto{
     IntegrationIdentifier: "ms-teams-bot",
+    SubscriberID: novugo.String("user-123"),
     Context: map[string]components.GenerateConnectOauthURLRequestDtoContext{
         "tenant": components.CreateGenerateConnectOauthURLRequestDtoContextStr("acme-corp"),
     },
@@ -468,9 +471,10 @@ $sdk = novu\Novu::builder()->setSecurity('<NOVU_SECRET_KEY>')->build();
 $response = $sdk->integrations->generateConnectOAuthUrl(
     generateConnectOauthUrlRequestDto: new Components\GenerateConnectOauthUrlRequestDto(
         integrationIdentifier: 'ms-teams-bot',
-        context: {
-        "tenant": "acme-corp"
-},
+        subscriberId: 'user-123',
+        context: [
+            'tenant' => 'acme-corp',
+        ],
         autoLinkUser: false,
     ),
 );
@@ -485,9 +489,10 @@ var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
 var response = await sdk.Integrations.GenerateConnectOAuthUrlAsync(
     generateConnectOauthUrlRequestDto: new GenerateConnectOauthUrlRequestDto() {
         IntegrationIdentifier = "ms-teams-bot",
-        Context = {
-    "tenant": "acme-corp"
-},
+        SubscriberId = "user-123",
+        Context = new Dictionary<string, object> {
+            { "tenant", "acme-corp" },
+        },
         AutoLinkUser = false,
     });
 ```
@@ -501,9 +506,8 @@ Novu novu = Novu.builder().secretKey("<NOVU_SECRET_KEY>").build();
 var response = novu.integrations().generateConnectOAuthUrl()
     .body(GenerateConnectOauthUrlRequestDto.builder()
         .integrationIdentifier("ms-teams-bot")
-        .context({
-        "tenant": "acme-corp"
-})
+        .subscriberId("user-123")
+        .context(java.util.Map.of("tenant", "acme-corp"))
         .autoLinkUser(false)
         .build())
     .call();
@@ -516,6 +520,7 @@ curl -L -X POST 'https://api.novu.co/v1/integrations/channel-connections/oauth' 
 -H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
 -d '{
   "integrationIdentifier": "ms-teams-bot",
+  "subscriberId": "user-123",
   "context": {
     "tenant": "acme-corp"
   },
@@ -529,9 +534,7 @@ Call `POST /v1/integrations/channel-connections/oauth` with the same body if you
 
 Novu returns a URL pointing to Microsoft's administrator consent endpoint (`login.microsoftonline.com/organizations/v2.0/adminconsent`). It includes your Client ID, redirect URI, and the `https://graph.microsoft.com/.default` scope.
 
-Provide either `subscriberId` or `context` to scope the channel connection in Novu. If you pass `subscriberId`, that subscriber must already exist in your Novu environment.
-
-For tenant-wide admin consent, prefer `context` and set **`autoLinkUser: false`** (or omit `autoLinkUser` — the API treats omitted as `false`). Only when `autoLinkUser` is explicitly `true` **and** `subscriberId` is set does Novu chain a second OAuth flow after admin consent to link that subscriber for DMs.
+For tenant-wide admin consent, set **`autoLinkUser: false`** (or omit `autoLinkUser` — the API treats omitted as `false`). Only when `autoLinkUser` is explicitly `true` does Novu chain a second OAuth flow after admin consent to link that subscriber for DMs.
 
 <Note>
   **`@novu/react` `MsTeamsConnectButton`** defaults `autoLinkUser` to `true` in subscriber mode. That is intended for in-app end-user connect flows. For server-side tenant admin consent (Java, REST, or `@novu/api`), pass `autoLinkUser: false` explicitly.
@@ -659,19 +662,20 @@ Content-Type: application/json
   "integrationIdentifier": "ms-teams-bot-1",
   "providerId": "msteams",
   "channel": "chat",
-
-"subscriberId": "workspace_abc",
+  "subscriberId": "user-123",
+  "context": {
+    "tenant": "acme-corp"
+  },
   "connectionIdentifier": "msteams-tenant-subscriberX",
-
-"type": "ms_teams_channel",
+  "type": "ms_teams_channel",
   "endpoint": {
     "teamId": "TEAM_ID",
     "channelId": "CHANNEL_ID"
-  },
+  }
 }
 ```
 
-Novu stores this as `ChannelEndpoint<'ms_teams_channel'>`. You can later target it from workflows via `subscriberId` + `context`.
+Novu stores this as `ChannelEndpoint<'ms_teams_channel'>`.
 
 ### Send a direct message to a user
 
@@ -696,7 +700,10 @@ const novu = new Novu({ secretKey: "<NOVU_SECRET_KEY>" });
 
 const response = await novu.integrations.generateLinkUserOAuthUrl({
   integrationIdentifier: 'ms-teams-bot',
-  subscriberId: 'user_123',
+  subscriberId: 'user-123',
+  context: {
+    tenant: 'acme-corp',
+  },
   connectionIdentifier: 'msteams-tenant-acme',
 });
 ```
@@ -709,7 +716,10 @@ from novu_py import Novu
 with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
     response = novu.integrations.generate_link_user_o_auth_url(generate_link_user_oauth_url_request_dto={
         "integration_identifier": "ms-teams-bot",
-        "subscriber_id": "user_123",
+        "subscriber_id": "user-123",
+        "context": {
+            "tenant": "acme-corp",
+        },
         "connection_identifier": "msteams-tenant-acme",
     })
 ```
@@ -728,7 +738,10 @@ s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
 
 res, err := s.Integrations.GenerateLinkUserOAuthURL(context.Background(), components.GenerateLinkUserOauthURLRequestDto{
     IntegrationIdentifier: "ms-teams-bot",
-    SubscriberID: "user_123",
+    SubscriberID: "user-123",
+    Context: map[string]components.GenerateLinkUserOauthURLRequestDtoContext{
+        "tenant": components.CreateGenerateLinkUserOauthURLRequestDtoContextStr("acme-corp"),
+    },
     ConnectionIdentifier: novugo.String("msteams-tenant-acme"),
 }, nil)
 ```
@@ -742,7 +755,10 @@ $sdk = novu\Novu::builder()->setSecurity('<NOVU_SECRET_KEY>')->build();
 $response = $sdk->integrations->generateLinkUserOAuthUrl(
     generateLinkUserOauthUrlRequestDto: new Components\GenerateLinkUserOauthUrlRequestDto(
         integrationIdentifier: 'ms-teams-bot',
-        subscriberId: 'user_123',
+        subscriberId: 'user-123',
+        context: [
+            'tenant' => 'acme-corp',
+        ],
         connectionIdentifier: 'msteams-tenant-acme',
     ),
 );
@@ -757,7 +773,10 @@ var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
 var response = await sdk.Integrations.GenerateLinkUserOAuthUrlAsync(
     generateLinkUserOauthUrlRequestDto: new GenerateLinkUserOauthUrlRequestDto() {
         IntegrationIdentifier = "ms-teams-bot",
-        SubscriberId = "user_123",
+        SubscriberId = "user-123",
+        Context = new Dictionary<string, object> {
+            { "tenant", "acme-corp" },
+        },
         ConnectionIdentifier = "msteams-tenant-acme",
     });
 ```
@@ -771,7 +790,8 @@ Novu novu = Novu.builder().secretKey("<NOVU_SECRET_KEY>").build();
 var response = novu.integrations().generateLinkUserOAuthUrl()
     .body(GenerateLinkUserOauthUrlRequestDto.builder()
         .integrationIdentifier("ms-teams-bot")
-        .subscriberId("user_123")
+        .subscriberId("user-123")
+        .context(java.util.Map.of("tenant", "acme-corp"))
         .connectionIdentifier("msteams-tenant-acme")
         .build())
     .call();
@@ -784,7 +804,10 @@ curl -L -X POST 'https://api.novu.co/v1/integrations/channel-endpoints/oauth' \
 -H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
 -d '{
   "integrationIdentifier": "ms-teams-bot",
-  "subscriberId": "user_123",
+  "subscriberId": "user-123",
+  "context": {
+    "tenant": "acme-corp"
+  },
   "connectionIdentifier": "msteams-tenant-acme"
 }'
 ```
@@ -846,16 +869,15 @@ Content-Type: application/json
   "integrationIdentifier": "ms-teams-bot-1",
   "providerId": "msteams",
   "channel": "chat",
-
-"subscriberId": "user_123",
+  "subscriberId": "user-123",
+  "context": {
+    "tenant": "acme-corp"
+  },
   "connectionIdentifier": "msteams-tenant-subscriberX",
-
-"type": "ms_teams_user",
+  "type": "ms_teams_user",
   "endpoint": {
     "userId": "29:1GcS4EyB_oSI8A88XmWB..."
-  },
-
-"contextKeys": []
+  }
 }
 ```
 
@@ -953,6 +975,9 @@ res, err := s.ChannelEndpoints.Create(context.Background(), operations.CreateCha
         Identifier: novugo.String("teams-workflow-alerts"),
         IntegrationIdentifier: "ms-teams-workflow",
         SubscriberID: "customer-account-id",
+        Context: map[string]any{
+            "tenant": "acme",
+        },
         Type: components.CreateWebhookEndpointDtoTypeWebhook,
         Endpoint: components.WebhookEndpointDto{URL: "https://prod-00.westeurope.logic.azure.com:443/workflows/..."},
     },
@@ -970,6 +995,9 @@ $sdk->channelEndpoints->create(
         identifier: 'teams-workflow-alerts',
         integrationIdentifier: 'ms-teams-workflow',
         subscriberId: 'customer-account-id',
+        context: [
+            'tenant' => 'acme',
+        ],
         type: Components\CreateWebhookEndpointDtoType::Webhook,
         endpoint: new Components\WebhookEndpointDto(url: 'https://prod-00.westeurope.logic.azure.com:443/workflows/...'),
     ),
@@ -988,6 +1016,9 @@ await sdk.ChannelEndpoints.CreateAsync(
             Identifier = "teams-workflow-alerts",
             IntegrationIdentifier = "ms-teams-workflow",
             SubscriberId = "customer-account-id",
+            Context = new Dictionary<string, object> {
+                { "tenant", "acme" },
+            },
             Type = CreateWebhookEndpointDtoType.Webhook,
             Endpoint = new WebhookEndpointDto() { Url = "https://prod-00.westeurope.logic.azure.com:443/workflows/..." },
         }));
@@ -1004,6 +1035,7 @@ novu.channelEndpoints().create()
         .identifier("teams-workflow-alerts")
         .integrationIdentifier("ms-teams-workflow")
         .subscriberId("customer-account-id")
+        .context(java.util.Map.of("tenant", "acme"))
         .type(CreateWebhookEndpointDtoType.WEBHOOK)
         .endpoint(WebhookEndpointDto.builder().url("https://prod-00.westeurope.logic.azure.com:443/workflows/...").build())
         .build())

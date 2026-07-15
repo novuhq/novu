@@ -1,4 +1,5 @@
 import type { CloudRegionEnum } from '../dev/enums';
+import type { LlmAuthCliChoice } from './pipeline/llm-auth/types';
 
 export type ChannelChoice = 'slack' | 'email' | 'whatsapp' | 'telegram' | 'teams' | 'skip';
 
@@ -19,10 +20,7 @@ export const BRIDGE_CONNECT_MODES: readonly BridgeConnectMode[] = [...CUSTOM_COD
 /** Unified agent setup mode — managed runtimes plus self-hosted bridge agents. */
 export type AgentConnectMode = AgentRuntimeChoice | BridgeConnectMode;
 
-export const AGENT_CONNECT_MODES: readonly AgentConnectMode[] = [
-  ...AGENT_RUNTIME_CHOICES,
-  ...BRIDGE_CONNECT_MODES,
-];
+export const AGENT_CONNECT_MODES: readonly AgentConnectMode[] = [...AGENT_RUNTIME_CHOICES, ...BRIDGE_CONNECT_MODES];
 
 export function isBridgeConnectMode(mode: AgentConnectMode): mode is BridgeConnectMode {
   return (BRIDGE_CONNECT_MODES as readonly string[]).includes(mode);
@@ -32,26 +30,38 @@ export function isCustomCodeScaffoldMode(mode: AgentConnectMode): mode is Custom
   return (CUSTOM_CODE_CONNECT_MODES as readonly string[]).includes(mode);
 }
 
-export type ChatSdkProjectKind = 'empty' | 'project';
+export function isAiSdkConnectMode(mode: AgentConnectMode): mode is 'ai-sdk' {
+  return mode === 'ai-sdk';
+}
 
-export type ChatSdkRequirementId = 'package' | 'env' | 'dev-script' | 'code-wiring';
+export function isLangChainConnectMode(mode: AgentConnectMode): mode is 'langchain' {
+  return mode === 'langchain';
+}
 
-export type ChatSdkReqStatus = 'ok' | 'autofixable' | 'manual';
+export function isVanillaCustomCodeConnectMode(mode: AgentConnectMode): mode is 'custom-code' {
+  return mode === 'custom-code';
+}
 
-export type ChatSdkRequirement = {
-  id: ChatSdkRequirementId;
-  status: ChatSdkReqStatus;
+export type BridgeProjectKind = 'empty' | 'project';
+
+export type BridgeRequirementId = 'package' | 'env' | 'dev-script' | 'code-wiring' | 'provider-env';
+
+export type BridgeReqStatus = 'ok' | 'autofixable' | 'manual';
+
+export type BridgeRequirement = {
+  id: BridgeRequirementId;
+  status: BridgeReqStatus;
   detail: string;
 };
 
 export type ChatSdkConnectOutcome = {
-  projectKind: ChatSdkProjectKind;
+  projectKind: BridgeProjectKind;
   projectDir: string;
   scaffolded: boolean;
   envPaths?: string[];
   /** True when npm install was skipped (e.g. scaffolding inside a monorepo). */
   skippedInstall?: boolean;
-  requirements?: ChatSdkRequirement[];
+  requirements?: BridgeRequirement[];
   /** Absolute path to a requirements summary file (CI / logging handoff). */
   requirementsFile?: string;
   /** package + env + dev-script satisfied after reconcile. */
@@ -61,6 +71,23 @@ export type ChatSdkConnectOutcome = {
   /** Instructions for manual code wiring when adapter is not wired in source. */
   wiringInstructions?: string;
 };
+
+export type AiSdkConnectOutcome = {
+  projectKind: BridgeProjectKind;
+  projectDir: string;
+  scaffolded: boolean;
+  envPaths?: string[];
+  skippedInstall?: boolean;
+  requirements?: BridgeRequirement[];
+  requirementsFile?: string;
+  coreReady?: boolean;
+  tunnelAccepted?: boolean;
+  wiringInstructions?: string;
+  agentFilePath?: string;
+};
+
+/** LangChain bridge setup shares the AI SDK outcome shape (same reconcile engine). */
+export type LangChainConnectOutcome = AiSdkConnectOutcome;
 
 export type CustomCodeConnectOutcome = {
   projectDir: string;
@@ -126,6 +153,13 @@ export interface ConnectCommandOptions {
   scaffoldDir?: string;
   /** Skip scaffolding even when the target directory is empty. */
   noScaffold?: boolean;
+  /**
+   * LLM provider for ai-sdk / langchain fresh scaffolds only.
+   * openai | anthropic | codex-subscription | claude-subscription | skip
+   */
+  llmAuth?: LlmAuthCliChoice;
+  /** OpenAI API key for --llm-auth openai non-interactive scaffold runs. */
+  openaiApiKey?: string;
 }
 
 export interface AgentSummary {

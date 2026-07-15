@@ -29,6 +29,7 @@ import { cn } from '@/utils/ui';
 import {
   IntegrationCredentialsSidebar,
   ListeningStatus,
+  ProviderSetupStepperRail,
   SetupButton,
   type SetupMode,
   SetupModeToggle,
@@ -1504,7 +1505,7 @@ export function TeamsSetupGuide({
 
   return (
     <>
-      <SetupStepperRail>{stepsContent}</SetupStepperRail>
+      <ProviderSetupStepperRail>{stepsContent}</ProviderSetupStepperRail>
       <div className="pl-8">{listening}</div>
       {credentialsSidebar}
     </>

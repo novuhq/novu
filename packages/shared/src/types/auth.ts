@@ -15,7 +15,7 @@ export type UserSessionData = {
   organizationId: string;
   roles: MemberRoleEnum[];
   permissions: PermissionsEnum[];
-  scheme: ApiAuthSchemeEnum.BEARER | ApiAuthSchemeEnum.API_KEY | ApiAuthSchemeEnum.KEYLESS;
+  scheme: ApiAuthSchemeEnum.BEARER | ApiAuthSchemeEnum.API_KEY | ApiAuthSchemeEnum.KEYLESS | ApiAuthSchemeEnum.OAUTH2;
   environmentId: string;
 };
 
@@ -23,6 +23,7 @@ export enum ApiAuthSchemeEnum {
   BEARER = 'Bearer',
   API_KEY = 'ApiKey',
   KEYLESS = 'Keyless',
+  OAUTH2 = 'OAuth2',
 }
 
 export enum PassportStrategyEnum {
@@ -31,6 +32,7 @@ export enum PassportStrategyEnum {
   JWT_BETTER_AUTH = 'jwt-better-auth',
   HEADER_API_KEY = 'headerapikey',
   KEYLESS = 'keyless',
+  OAUTH2_CLERK = 'oauth2-clerk',
 }
 
 export const NONE_AUTH_SCHEME = 'None';

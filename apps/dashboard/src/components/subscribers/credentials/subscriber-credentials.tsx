@@ -10,6 +10,7 @@ import { InlineToast } from '@/components/primitives/inline-toast';
 import { Separator } from '@/components/primitives/separator';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
+import { useEnvironment } from '@/context/environment/hooks';
 import { useCreateChannelEndpoint } from '@/hooks/use-create-channel-endpoint';
 import { useDeleteChannelEndpoint } from '@/hooks/use-delete-channel-endpoint';
 import { useDeleteSubscriberCredentials } from '@/hooks/use-delete-subscriber-credentials';
@@ -66,6 +67,7 @@ export function SubscriberCredentials({
   readOnly = false,
   onEditInOverview,
 }: SubscriberCredentialsProps) {
+  const { currentEnvironment } = useEnvironment();
   const { data: subscriber, isPending: isSubscriberPending } = useFetchSubscriber({ subscriberId });
   const { integrations, isPending: isIntegrationsPending } = useFetchIntegrations();
   const { channelEndpoints, isPending: isEndpointsPending } = useFetchChannelEndpoints({
@@ -85,6 +87,14 @@ export function SubscriberCredentials({
   const { deleteChannelEndpoint, isPending: isEndpointDeletePending } = useDeleteChannelEndpoint();
   const { updateSubscriberCredentials, isPending: isCredentialsUpdatePending } = useUpdateSubscriberCredentials();
 
+  const environmentIntegrations = useMemo(() => {
+    if (!integrations || !currentEnvironment?._id) {
+      return [];
+    }
+
+    return integrations.filter((integration) => integration._environmentId === currentEnvironment._id);
+  }, [integrations, currentEnvironment?._id]);
+
   const groups = useMemo(() => {
     if (!subscriber) {
       return [];
@@ -92,14 +102,11 @@ export function SubscriberCredentials({
 
     return buildCredentialGroups({
       subscriber,
-      integrations: integrations ?? [],
+      integrations: environmentIntegrations,
       channelEndpoints,
       channelConnections,
     });
-  }, [subscriber, integrations, channelEndpoints, channelConnections]);
-
-  console.dir({ groups }, { depth: null });
-  console.dir({ channelConnections }, { depth: null });
+  }, [subscriber, environmentIntegrations, channelEndpoints, channelConnections]);
 
   if (isSubscriberPending || isIntegrationsPending || isEndpointsPending || isConnectionsPending) {
     return <CredentialsSkeleton />;

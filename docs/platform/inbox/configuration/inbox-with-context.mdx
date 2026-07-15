@@ -1,13 +1,17 @@
 ---
 title: 'Inbox with Context'
-description: 'Learn how to use contexts in the Inbox component to filter and personalize notifications for your subscribers.'
+description: "Use contexts in the Novu Inbox component to filter and personalize notifications for subscribers by tenant, workspace, or other scopes."
 ---
 
 _Contexts_ let you scope each `<Inbox />` instance to a specific environment, tenant, or app within your product. When combined with workflow-level contexts, they ensure that each `<Inbox />` displays only the notifications relevant to that specific context.
 
 <Note>
-  If you’re new to contexts, start from the [Contexts](/platform/workflow/advanced-features/contexts) section to understand how contexts are created, managed in Novu and how they used in workflows.
+  If you’re new to contexts, start from [Contexts](/platform/concepts/contexts) to understand how contexts are created, managed in Novu, and used in workflows.
 </Note>
+
+<Warning>
+  **Context on triggers must match context on `<Inbox />`.** By default, an Inbox initialized without a `context` prop only shows notifications triggered **without** context. If you add `context` to workflow triggers but do not pass the same context to `<Inbox />`, in-app jobs can still report success while notifications never appear in that Inbox session.
+</Warning>
 
 ## How context works in `<Inbox/>`
 
@@ -135,3 +139,22 @@ const context = {
 <Note>
   Learn how to secure your [`<Inbox />`](/platform/inbox/configuration/inbox-with-context) with HMAC encryption, refer to the [Prepare for Production](/platform/inbox/prepare-for-production) documentation.
 </Note>
+
+## Frequently asked questions
+
+Frequently asked questions related to context in the Inbox component.
+<AccordionGroup>
+  <Accordion title="Why are in-app notifications sent successfully but not showing in the Inbox?">
+    The Inbox uses **exact-match** context filtering. The `context` prop on `<Inbox />` must match the context used when the workflow was triggered, key for key and value for value.
+
+    A common cause: you started passing `context` on workflow triggers but did not update `<Inbox />` to use the same context. The in-app channel job can still complete with status "Success" in the activity feed, but the notification is scoped to a different context and will not appear in an Inbox session that does not match.
+
+    Check that:
+
+    1. If you trigger **with** context, initialize `<Inbox />` with the **same** context.
+    2. If you trigger **without** context, do not pass a `context` prop to `<Inbox />`.
+    3. When a user switches tenants or orgs in your app, re-render `<Inbox />` with the updated context.
+
+    See the context matching table above for all combinations.
+  </Accordion>
+</AccordionGroup>

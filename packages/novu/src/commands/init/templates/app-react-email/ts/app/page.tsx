@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
-import NotificationToast, { NovuInbox } from './components/NotificationToast/Notifications';
+import { NovuInbox } from './components/NotificationToast/Notifications';
 import styles from './page.module.css';
 
 export default function Home() {
@@ -72,7 +72,6 @@ export default function Home() {
 
   return (
     <div className={styles.container}>
-      <NotificationToast />
       <main className={styles.main}>
         <div className={styles.card}>
           {/* Header */}

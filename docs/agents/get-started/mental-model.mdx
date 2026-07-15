@@ -1,6 +1,6 @@
 ---
 title: "Mental model"
-description: 'How inbound messages flow from a messaging platform through Novu to your agent code and back.'
+description: "Trace how inbound messages flow from Slack, Teams, WhatsApp, or email through Novu's agent communication infrastructure to your agent code and back."
 ---
 
 
@@ -28,7 +28,7 @@ A custom code agent is one where you build the agent brain with your own code. U
   ![Custom code agent](/images/agents/custom-code-agent/flow.png)
 </Frame>
 
-Read more on how to build a [custom code agent](/agents/custom-code-agent/setup-your-agent/overview).
+Read more on how to build a [custom code agent](/agents/custom-code-agent/quickstart).
 
   </Tab>
   <Tab title="Managed agent">
@@ -66,10 +66,13 @@ Novu calls your agent brain with the complete context: the message, conversation
 ## Next steps
 
 <Columns cols={2}>
-  <Card icon="plus" href="/agents/custom-code-agent/setup-your-agent/overview" title="Custom code agent">
+  <Card icon="plus" href="/agents/custom-code-agent/quickstart" title="Custom code agent">
     Build a custom code agent.
   </Card>
   <Card icon="brain" href="/agents/managed-agent/overview" title="Managed agent">
    Configure a managed agent.
+  </Card>
+  <Card icon="code" href="/api-reference/agents/agent-schema" title="Agents API reference">
+    Create, configure, and manage agents programmatically.
   </Card>
 </Columns>

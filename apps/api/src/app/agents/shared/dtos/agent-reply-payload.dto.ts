@@ -1,9 +1,10 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import type { FileRef, PlanProgressEvent } from '@novu/framework';
+import type { FileRef } from '@novu/framework';
 import type { TriggerRecipientsPayload } from '@novu/shared';
 import { Type } from 'class-transformer';
 import {
   IsArray,
+  IsBoolean,
   IsIn,
   IsNotEmpty,
   IsObject,
@@ -123,10 +124,10 @@ export class IsValidReplyContent implements ValidatorConstraintInterface {
   validate(content: ReplyContentDto): boolean {
     if (!content) return true;
 
-    const fields = [content.markdown, content.card].filter((v) => v !== undefined);
+    const fields = [content.markdown, content.card, content.toolApprovalCard].filter((v) => v !== undefined);
     if (fields.length !== 1) return false;
 
-    if (content.files?.length && !content.markdown && !content.card) return false;
+    if (content.files?.length && !content.markdown && !content.card && !content.toolApprovalCard) return false;
     if ((content.files?.length ?? 0) > MAX_FILES_PER_MESSAGE) return false;
 
     for (const file of content.files ?? []) {
@@ -142,7 +143,7 @@ export class IsValidReplyContent implements ValidatorConstraintInterface {
 
   defaultMessage(): string {
     return (
-      'Content must have exactly one of markdown or card. Files require markdown or card. ' +
+      'Content must have exactly one of markdown, card, or toolApprovalCard. Files require one of them. ' +
       `At most ${MAX_FILES_PER_MESSAGE} files are allowed. Each file needs exactly one of data or url. ` +
       'Inline data must be 5 MB or smaller.'
     );
@@ -169,57 +170,6 @@ export class IsValidTypingOp implements ValidatorConstraintInterface {
   }
 }
 
-const PLAN_TASK_STATUSES = ['pending', 'in_progress', 'complete', 'error'] as const;
-const PLAN_PROGRESS_PHASES = ['awaiting-approval', 'approved', 'denied', 'finished', 'failed'] as const;
-
-@ValidatorConstraint({ name: 'isValidPlanProgressEvent', async: false })
-export class IsValidPlanProgressEvent implements ValidatorConstraintInterface {
-  validate(value: unknown): boolean {
-    if (typeof value !== 'object' || value === null) return false;
-    const event = value as { kind?: unknown; task?: unknown; phase?: unknown };
-
-    if (event.kind === 'task') {
-      const taskEvent = event as { task?: unknown; cardTitle?: unknown };
-      const task = taskEvent.task as {
-        id?: unknown;
-        status?: unknown;
-        title?: unknown;
-        details?: unknown;
-        group?: unknown;
-      };
-      if (typeof task !== 'object' || task === null) return false;
-      if (typeof task.id !== 'string' || task.id.length === 0) return false;
-      if (!PLAN_TASK_STATUSES.includes(task.status as never)) return false;
-      if (taskEvent.cardTitle !== undefined && typeof taskEvent.cardTitle !== 'string') return false;
-
-      return [task.title, task.details, task.group].every((f) => f === undefined || typeof f === 'string');
-    }
-
-    if (event.kind === 'phase') {
-      const phaseEvent = event as { phase?: unknown; title?: unknown };
-      if (!PLAN_PROGRESS_PHASES.includes(phaseEvent.phase as never)) return false;
-
-      return phaseEvent.title === undefined || typeof phaseEvent.title === 'string';
-    }
-
-    if (event.kind === 'title') {
-      const titleEvent = event as { title?: unknown };
-
-      return titleEvent.title === undefined || (typeof titleEvent.title === 'string' && titleEvent.title.length > 0);
-    }
-
-    return false;
-  }
-
-  defaultMessage(): string {
-    return (
-      "planProgress must be { kind: 'task', task: { id, status } } with status in " +
-      `${PLAN_TASK_STATUSES.join('|')}, { kind: 'phase', phase } with optional title, ` +
-      `or { kind: 'title' } with an optional non-empty title string.`
-    );
-  }
-}
-
 export class ReplyContentDto {
   @ApiPropertyOptional()
   @IsOptional()
@@ -233,13 +183,35 @@ export class ReplyContentDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsArray()
-  files?: FileRef[];
+  @IsObject()
+  toolApprovalCard?: Record<string, unknown>;
 
   @ApiPropertyOptional()
   @IsOptional()
+  @IsArray()
+  files?: FileRef[];
+}
+
+export class ToolApprovalRequestPayloadDto {
+  @ApiProperty({ description: 'Unique id for this approval request (matches the AI SDK approvalId).' })
+  @IsString()
+  @IsNotEmpty()
+  approvalId: string;
+
+  @ApiProperty({ description: 'Id of the tool call awaiting approval.' })
+  @IsString()
+  @IsNotEmpty()
+  toolCallId: string;
+
+  @ApiProperty({ description: 'Name of the gated tool.' })
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+
+  @ApiPropertyOptional({ description: 'Tool input the model proposed.' })
+  @IsOptional()
   @IsObject()
-  toolApproval?: Record<string, unknown>;
+  input?: Record<string, unknown>;
 }
 
 export class EditPayloadDto {
@@ -273,6 +245,13 @@ export class AddReactionPayloadDto {
   @IsString()
   @IsNotEmpty()
   emojiName: string;
+}
+
+export class DeleteMessagePayloadDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  messageId: string;
 }
 
 export class SignalDto {
@@ -355,6 +334,15 @@ export class AgentReplyPayloadDto {
   @Type(() => ReplyContentDto)
   reply?: ReplyContentDto;
 
+  @ApiPropertyOptional({
+    type: ToolApprovalRequestPayloadDto,
+    description: 'Tool-lifecycle ledger row for a gated tool call. Optional reply delivers the approval card.',
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => ToolApprovalRequestPayloadDto)
+  toolApprovalRequest?: ToolApprovalRequestPayloadDto;
+
   @ApiPropertyOptional({ type: EditPayloadDto })
   @IsOptional()
   @IsObject()
@@ -392,6 +380,17 @@ export class AgentReplyPayloadDto {
   addReactions?: AddReactionPayloadDto[];
 
   @ApiPropertyOptional({
+    type: [DeleteMessagePayloadDto],
+    description:
+      'Delete previously posted platform messages. Removes the rendered message only — history is preserved.',
+  })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => DeleteMessagePayloadDto)
+  deleteMessages?: DeleteMessagePayloadDto[];
+
+  @ApiPropertyOptional({
     description:
       'Per-turn typing/status control. `{ status?: string }` sets the status text ' +
       '(omit for the default "Thinking…"); `"stop"` clears it. Best-effort per platform.',
@@ -401,10 +400,9 @@ export class AgentReplyPayloadDto {
   typing?: { status?: string } | 'stop';
 
   @ApiPropertyOptional({
-    description:
-      'Per-event plan/task progress. { kind: "task", task }, { kind: "phase", phase, title? }, or { kind: "title", title }.',
+    description: 'Bridge reports the turn failed on the customer runtime. Delivers generic user copy.',
   })
   @IsOptional()
-  @Validate(IsValidPlanProgressEvent)
-  planProgress?: PlanProgressEvent;
+  @IsBoolean()
+  error?: boolean;
 }

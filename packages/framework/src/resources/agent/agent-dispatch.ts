@@ -1,6 +1,6 @@
 import { InvalidActionError } from '../../errors/handler.errors';
 import { AgentContextImpl } from './agent.context';
-import { AgentDeliveryError } from './agent.errors';
+import { toAgentError } from './agent.errors';
 import type {
   Agent,
   AgentActionContext,
@@ -13,11 +13,37 @@ import type {
   MessageContent,
   ToolApprovalDecision,
 } from './agent.types';
-import { AgentEventEnum, PendingApproval } from './agent.types';
-import { type ApprovalPayload, parseApprovalActionId } from './tool-approval/action-id';
-import { resolvedApprovalCard } from './tool-approval/approval-card';
+import { AgentEventEnum, isAgentErrorSuppress, PendingApproval } from './agent.types';
+import { isCardElement } from './guards';
+import { parseApprovalActionId, type ToolApprovalRequestPayload } from './tool-approval/action-id';
 
-function findApprovalInHistory(history: AgentHistoryEntry[], approvalId: string): ApprovalPayload | undefined {
+function isMessageContent(value: unknown): value is MessageContent {
+  if (typeof value === 'string') {
+    return true;
+  }
+
+  if (typeof value === 'object' && value !== null && isCardElement(value)) {
+    return true;
+  }
+
+  if (typeof value === 'object' && value !== null && ('markdown' in value || 'card' in value || 'files' in value)) {
+    return true;
+  }
+
+  return false;
+}
+
+function ctxForEvent(
+  ctx: AgentContextImpl,
+  _event: string
+): AgentMessageContext | AgentActionContext | AgentReactionContext | AgentResolveContext {
+  return ctx as AgentMessageContext | AgentActionContext | AgentReactionContext | AgentResolveContext;
+}
+
+function findApprovalInHistory(
+  history: AgentHistoryEntry[],
+  approvalId: string
+): ToolApprovalRequestPayload | undefined {
   for (const entry of history) {
     const tool = entry.toolData;
     if (entry.type === 'tool_approval_request' && tool?.approvalId === approvalId && tool.toolCallId) {
@@ -43,38 +69,57 @@ export interface DispatchAgentEventOptions {
 
 export async function dispatchAgentEvent(options: DispatchAgentEventOptions): Promise<void> {
   const ctx = new AgentContextImpl(options.bridge, options.secretKey, options.agent.handlers.toolApproval);
+  const { agent, event, logger } = options;
 
   try {
-    await runAgentHandler(options.agent, options.event, ctx);
+    await runAgentHandler(agent, event, ctx);
     await ctx.flush();
-    await ctx.finalizePlan('finished');
   } catch (err) {
-    try {
-      await ctx.finalizePlan('failed');
-    } catch (finalizeErr) {
-      options.logger?.error(`[agent:${options.agent.id}] plan finalize failed:`, finalizeErr);
+    const error = toAgentError(err);
+
+    logger?.error(`[agent:${agent.id}] Turn failed (${event}): ${error.message}`, error.cause ?? error);
+
+    let reported = false;
+
+    if (agent.handlers.onError) {
+      try {
+        const result = await agent.handlers.onError(error, ctxForEvent(ctx, event));
+
+        if (isAgentErrorSuppress(result)) {
+          reported = true;
+        } else if (isMessageContent(result)) {
+          await ctx.reply(result);
+          reported = true;
+        }
+      } catch (onErrorErr) {
+        logger?.error(`[agent:${agent.id}] onError failed:`, onErrorErr);
+      }
     }
-    if (err instanceof AgentDeliveryError) {
-      options.logger?.error(`[agent:${options.agent.id}] ${err.message}`);
-    } else {
-      options.logger?.error(`[agent:${options.agent.id}] Handler error:`, err);
+
+    if (!reported) {
+      await ctx.reportTurnError();
+    }
+  } finally {
+    try {
+      await ctx.typing.stop();
+    } catch {
+      // cosmetic — never mask the original failure
     }
   }
 }
 
 async function runAgentHandler(registeredAgent: Agent, event: string, ctx: AgentContextImpl): Promise<void> {
-  const replyIfPresent = async (result: MessageContent | void) => {
-    if (result != null) {
-      await ctx.reply(result);
+  const replyIfPresent = async (result: MessageContent | PendingApproval | undefined) => {
+    if (result instanceof PendingApproval || result === undefined) {
+      return;
     }
+
+    await ctx.reply(result);
   };
 
   switch (event) {
     case AgentEventEnum.ON_MESSAGE: {
-      const result = await registeredAgent.handlers.onMessage(ctx.message!, ctx as AgentMessageContext);
-      if (!(result instanceof PendingApproval)) {
-        await replyIfPresent(result);
-      }
+      await replyIfPresent(await registeredAgent.handlers.onMessage(ctx.message!, ctx as AgentMessageContext));
       break;
     }
     case AgentEventEnum.ON_ACTION: {
@@ -89,12 +134,17 @@ async function runAgentHandler(registeredAgent: Agent, event: string, ctx: Agent
         const approvalMessage = ctx.createReplyHandle(ctx.action!.sourceMessageId ?? '');
 
         const decision: ToolApprovalDecision = { toolCall, approved, approvalMessage };
+
+        if (registeredAgent.userOnToolApproval === false) {
+          await ctx.typing();
+
+          if (ctx.action!.sourceMessageId) {
+            await approvalMessage.delete();
+          }
+        }
+
         const result = await registeredAgent.handlers.onToolApproval(decision, ctx as AgentActionContext);
         await replyIfPresent(result);
-
-        if (!approvalMessage.editedByHandler && ctx.action!.sourceMessageId) {
-          await approvalMessage.edit(resolvedApprovalCard({ name: toolCall.name, approved }));
-        }
         break;
       }
 

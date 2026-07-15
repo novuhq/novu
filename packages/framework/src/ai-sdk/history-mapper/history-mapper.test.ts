@@ -142,13 +142,6 @@ describe('toModelMessages', () => {
         { role: 'user', content: 'Bob: two' },
       ]);
     });
-
-    it('prepends system prompt when provided', () => {
-      expect(toModelMessages([], 'You are support.')[0]).toEqual({
-        role: 'system',
-        content: 'You are support.',
-      });
-    });
   });
 
   describe('tool approval cycles', () => {

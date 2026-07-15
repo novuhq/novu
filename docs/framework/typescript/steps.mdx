@@ -1,6 +1,6 @@
 ---
 title: 'Steps'
-description: 'Learn about the Novu Framework step interface and its configuration options'
+description: "Reference the Novu Framework step interface, its configuration options, and how each channel and action step is composed inside workflows."
 ---
 
 
@@ -144,6 +144,10 @@ This is an optional configuration object that defines: [Controls Schema](/framew
 This object used to access and override the underlying deliver providers SDKs. This is useful when you want to customize the content of the notification with properties that are unique to the provider.
 
 An example of this is the `slack` provider, which allows you to customize the content of the notification with Slack `blocks` to create a rich notification experience.
+
+<Note>
+  If you build workflows in the dashboard instead of Framework, you can still send Block Kit messages using [trigger overrides](/platform/integrations/chat/slack#format-messages-with-block-kit).
+</Note>
 
 ```typescript
 type ProvidersOverride = {
