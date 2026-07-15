@@ -50,45 +50,26 @@ function buildOnActionHandler(): string {
   },`;
 }
 
-const AGENT_SYSTEM_PROMPT =
-  'You are a helpful support agent. Use searchNovuDocs when the user asks how Novu features work or wants documentation links.';
-
-const SEARCH_NOVU_DOCS_EXECUTE = `async ({ query }) => {
-  const response = await fetch('https://docs.novu.co/llms.txt');
-
-  if (!response.ok) {
-    throw new Error(\`Failed to fetch Novu docs index (\${response.status})\`);
-  }
-
-  const index = await response.text();
-  const needle = query.toLowerCase();
-  const matches = index
-    .split('\\n')
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0 && line.toLowerCase().includes(needle))
-    .slice(0, 5);
-
-  return { query, matches };
-}`;
+const AGENT_SYSTEM_PROMPT = 'You are a helpful support agent. Use searchNovuDocs to find Novu documentation.';
 
 function buildAiSdkSearchNovuDocsTool(): string {
-  return `const searchNovuDocs = tool({
-  description: 'Search Novu documentation for guides and API references. Requires user approval before running.',
-  inputSchema: z.object({
-    query: z.string().describe('Topic to search for in Novu docs'),
-  }),
+  return `// Example tool — gates external fetches behind user approval (needsApproval: true).
+const searchNovuDocs = tool({
+  description: 'Search Novu documentation for relevant guides.',
+  inputSchema: searchNovuDocsInputSchema,
   needsApproval: true,
-  execute: ${SEARCH_NOVU_DOCS_EXECUTE},
+  execute: async ({ query }) => ({ matches: await searchNovuDocsIndex(query) }),
 });`;
 }
 
 function buildLangChainSearchNovuDocsTool(): string {
-  return `const searchNovuDocs = tool(
-  ${SEARCH_NOVU_DOCS_EXECUTE},
+  return `// Example tool — gates external fetches behind user approval (needsApproval callback below).
+const searchNovuDocs = tool(
+  async ({ query }) => ({ matches: await searchNovuDocsIndex(query) }),
   {
     name: 'searchNovuDocs',
-    description: 'Search Novu documentation for guides and API references. Requires user approval before running.',
-    schema: z.object({ query: z.string().describe('Topic to search for in Novu docs') }),
+    description: 'Search Novu documentation for relevant guides.',
+    schema: searchNovuDocsInputSchema,
   },
 );`;
 }
@@ -159,7 +140,7 @@ import { Actions, Button, Card, CardText } from '@novu/framework';
 import { agent } from '@novu/framework/ai-sdk';
 import { generateText, tool } from 'ai';
 import { toModelMessages } from '@novu/framework/ai-sdk';
-import { z } from 'zod';`;
+import { searchNovuDocsIndex, searchNovuDocsInputSchema } from './tools/search-novu-docs';`;
 
   if (kind === 'openai-api-key') {
     return `${base}
@@ -189,7 +170,7 @@ function buildLangChainImports(kind: GenerateSupportAgentInput['llmAuth']['kind'
 import { Actions, Button, Card, CardText } from '@novu/framework';
 import { agent } from '@novu/framework/langchain';
 import { tool } from '@langchain/core/tools';
-import { z } from 'zod';`;
+import { searchNovuDocsIndex, searchNovuDocsInputSchema } from './tools/search-novu-docs';`;
 
   if (kind === 'codex-subscription') {
     return `${base}

@@ -41,6 +41,8 @@ app/
   novu/agents/
     index.ts               → Agent exports
     support-agent.tsx      → Your agent handler (edit this!)
+    tools/
+      search-novu-docs.ts  → Example tool implementation
   page.tsx                 → Landing page
 ```
 
@@ -69,7 +71,7 @@ Replace the echo `return` in `app/novu/agents/support-agent.tsx` with a LangChai
 return {
   model: 'openai:gpt-4o-mini',
   system:
-    'You are a helpful support agent. Use searchNovuDocs when the user asks how Novu features work or wants documentation links.',
+    'You are a helpful support agent. Use searchNovuDocs to find Novu documentation.',
   tools: [searchNovuDocs],
   needsApproval: (toolCall) => toolCall.name === 'searchNovuDocs',
 };

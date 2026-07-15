@@ -70,6 +70,7 @@ describe('generateSupportAgentSource', () => {
 
     expect(source).toContain("import { openai } from '@ai-sdk/openai'");
     expect(source).toContain("model: openai('gpt-4o-mini')");
+    expect(source).toContain("from './tools/search-novu-docs'");
     expect(source).toContain('needsApproval: true');
     expect(source).toContain('tools: { searchNovuDocs }');
     expect(source).not.toContain('demo agent');

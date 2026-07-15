@@ -16,7 +16,9 @@ describe('app-agent-ai-sdk template', () => {
     expect(source).toContain("from '@novu/framework/ai-sdk'");
     expect(source).not.toMatch(/import\s*\{[^}]*\bagent\b[^}]*\}\s*from\s*'@novu\/framework'/);
     expect(source).toContain("import { tool } from 'ai'");
-    expect(source).toContain('const searchNovuDocs = tool({');
+    expect(source).toContain(
+      "import { searchNovuDocsIndex, searchNovuDocsInputSchema } from './tools/search-novu-docs'"
+    );
     expect(source).toContain('needsApproval: true');
     expect(source).toContain('generateText');
     expect(source).toContain('toModelMessages');

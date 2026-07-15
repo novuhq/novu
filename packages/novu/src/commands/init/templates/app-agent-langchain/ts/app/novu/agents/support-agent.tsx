@@ -3,32 +3,15 @@
 import { tool } from '@langchain/core/tools';
 import { Actions, Button, Card, CardText } from '@novu/framework';
 import { agent } from '@novu/framework/langchain';
-import { z } from 'zod';
 
-const searchNovuDocs = tool(
-  async ({ query }) => {
-    const response = await fetch('https://docs.novu.co/llms.txt');
+import { searchNovuDocsIndex, searchNovuDocsInputSchema } from './tools/search-novu-docs';
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch Novu docs index (${response.status})`);
-    }
-
-    const index = await response.text();
-    const needle = query.toLowerCase();
-    const matches = index
-      .split('\n')
-      .map((line) => line.trim())
-      .filter((line) => line.length > 0 && line.toLowerCase().includes(needle))
-      .slice(0, 5);
-
-    return { query, matches };
-  },
-  {
-    name: 'searchNovuDocs',
-    description: 'Search Novu documentation for guides and API references. Requires user approval before running.',
-    schema: z.object({ query: z.string().describe('Topic to search for in Novu docs') }),
-  }
-);
+// Example tool — gates external fetches behind user approval (needsApproval callback below).
+const searchNovuDocs = tool(async ({ query }) => ({ matches: await searchNovuDocsIndex(query) }), {
+  name: 'searchNovuDocs',
+  description: 'Search Novu documentation for relevant guides.',
+  schema: searchNovuDocsInputSchema,
+});
 
 // Wire your LLM — install a provider, then uncomment the return below:
 //   npm install @langchain/openai        # OpenAI
@@ -84,8 +67,7 @@ export const supportAgent = agent('support-agent', {
 
     // return {
     //   model: 'openai:gpt-4o-mini',
-    //   system:
-    //     'You are a helpful support agent. Use searchNovuDocs when the user asks how Novu features work or wants documentation links.',
+    //   system: 'You are a helpful support agent. Use searchNovuDocs to find Novu documentation.',
     //   tools: [searchNovuDocs],
     //   needsApproval: (toolCall) => toolCall.name === 'searchNovuDocs',
     // };

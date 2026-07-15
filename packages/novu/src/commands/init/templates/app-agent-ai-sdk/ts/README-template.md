@@ -40,6 +40,8 @@ app/
   novu/agents/
     index.ts               → Agent exports
     support-agent.tsx      → Your agent handler (edit this!)
+    tools/
+      search-novu-docs.ts  → Example tool implementation
   page.tsx                 → Landing page
 ```
 
@@ -68,7 +70,7 @@ Uncomment the LLM imports at the top of `app/novu/agents/support-agent.tsx`, the
 return generateText({
   model: openai('gpt-4o-mini'),
   instructions:
-    'You are a helpful support agent. Use searchNovuDocs when the user asks how Novu features work or wants documentation links.',
+    'You are a helpful support agent. Use searchNovuDocs to find Novu documentation.',
   messages: toModelMessages(ctx.history),
   tools: { searchNovuDocs },
 });

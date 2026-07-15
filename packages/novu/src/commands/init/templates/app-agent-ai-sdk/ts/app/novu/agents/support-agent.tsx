@@ -2,31 +2,15 @@
 import { Actions, Button, Card, CardText } from '@novu/framework';
 import { agent } from '@novu/framework/ai-sdk';
 import { tool } from 'ai';
-import { z } from 'zod';
 
+import { searchNovuDocsIndex, searchNovuDocsInputSchema } from './tools/search-novu-docs';
+
+// Example tool — gates external fetches behind user approval (needsApproval: true).
 const searchNovuDocs = tool({
-  description: 'Search Novu documentation for guides and API references. Requires user approval before running.',
-  inputSchema: z.object({
-    query: z.string().describe('Topic to search for in Novu docs'),
-  }),
+  description: 'Search Novu documentation for relevant guides.',
+  inputSchema: searchNovuDocsInputSchema,
   needsApproval: true,
-  execute: async ({ query }) => {
-    const response = await fetch('https://docs.novu.co/llms.txt');
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch Novu docs index (${response.status})`);
-    }
-
-    const index = await response.text();
-    const needle = query.toLowerCase();
-    const matches = index
-      .split('\n')
-      .map((line) => line.trim())
-      .filter((line) => line.length > 0 && line.toLowerCase().includes(needle))
-      .slice(0, 5);
-
-    return { query, matches };
-  },
+  execute: async ({ query }) => ({ matches: await searchNovuDocsIndex(query) }),
 });
 
 // Wire your LLM — install a provider, then uncomment the imports and return below:
@@ -84,8 +68,7 @@ export const supportAgent = agent('support-agent', {
 
     // return generateText({
     //   model: openai('gpt-4o-mini'),
-    //   instructions:
-    //     'You are a helpful support agent. Use searchNovuDocs when the user asks how Novu features work or wants documentation links.',
+    //   instructions: 'You are a helpful support agent. Use searchNovuDocs to find Novu documentation.',
     //   messages: toModelMessages(ctx.history),
     //   tools: { searchNovuDocs },
     // });
