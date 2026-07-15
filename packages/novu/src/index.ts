@@ -348,8 +348,7 @@ program
     `The Novu development environment Secret Key. Note that your Novu app won't work outside of local mode without it.`
   )
   .option('-a, --api-url <url>', 'The Novu Cloud API URL', 'https://api.novu.co')
-  .option('-t, --template <name>', 'The template to use (notifications, agent, or chat-sdk)')
-  .option('--agent-identifier <id>', 'Agent identifier to use in the scaffolded template')
+  .option('-t, --template <name>', 'The template to use (notifications or chat-sdk)')
   .action(async (options: IInitCommandOptions) => {
     return await init(options, anonymousId);
   });
