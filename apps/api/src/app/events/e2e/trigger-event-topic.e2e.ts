@@ -529,7 +529,11 @@ describe('Topic Trigger Event #novu-v2', () => {
     });
 
     it('should evaluate subscriber, context, and env variables in subscription conditions', async () => {
-      const subscriberConditionTopicKey = `topic-key-subscriber-condition-${Date.now()}`;
+      const previousContextPrefFlag = (process.env as Record<string, string>).IS_CONTEXT_PREFERENCES_ENABLED;
+      (process.env as Record<string, string>).IS_CONTEXT_PREFERENCES_ENABLED = 'true';
+
+      try {
+        const subscriberConditionTopicKey = `topic-key-subscriber-condition-${Date.now()}`;
       const premiumSubscriber = await subscriberService.createSubscriber({ data: { tier: 'premium' } });
       const basicSubscriber = await subscriberService.createSubscriber({ data: { tier: 'basic' } });
 
@@ -682,6 +686,13 @@ describe('Topic Trigger Event #novu-v2', () => {
       });
 
       expect(envMessages.length, 'Matching env condition should deliver the message').to.equal(1);
+      } finally {
+        if (previousContextPrefFlag === undefined) {
+          delete (process.env as Record<string, string>).IS_CONTEXT_PREFERENCES_ENABLED;
+        } else {
+          (process.env as Record<string, string>).IS_CONTEXT_PREFERENCES_ENABLED = previousContextPrefFlag;
+        }
+      }
     });
 
     it('should filter subscriptions by tags and combined workflow filters', async () => {
