@@ -135,4 +135,3 @@ demos/agent-chat-demo/next-env.d.ts
 *.sqlite-shm
 *.sqlite-wal
 **/.wrangler/tmp/**
-packages/chat-adapter-sendblue/tsconfig.tsbuildinfo
