@@ -6,12 +6,15 @@ import React from 'react';
 import { CONNECT_MODE_PICKER_SUBTITLE, CONNECT_MODE_PICKER_TITLE } from '../connect-mode-options';
 import { SEND_FROM_ACCOUNT_LABEL } from '../copy/email-onboarding';
 import { channelDisplayName, isDashboardOnlyChannel } from '../dashboard-urls';
+import { ConnectUserCancelledError } from '../errors';
 import { resolveBridgeSetupFollowUpMessage } from '../pipeline/bridge/setup-outcome-message';
 import { validateSlackConfigTokenFormat } from '../pipeline/channels/slack-config-token';
+import { LLM_AUTH_PICKER_SUBTITLE, LLM_AUTH_PICKER_TITLE } from '../pipeline/llm-auth/llm-auth-options';
 import type { ChannelChoice } from '../types';
 import { BridgeReconcilePhaseContent, isBridgeReconcilePhase } from './bridge-reconcile-phase-content';
 import { CopyableLink } from './copyable-link';
 import { GroupedConnectModeSelect } from './grouped-connect-mode-select';
+import { LlmAuthPicker } from './llm-auth-picker';
 import { PreviewGeneratedContent } from './preview-generated-content';
 import type { ConnectStore, Phase } from './store';
 import { WelcomeContent } from './welcome-content';
@@ -60,6 +63,22 @@ export function PhaseContent({
 
     case 'loading-integrations':
       return <Text color="cyan">Looking up agent runtime integrations…</Text>;
+
+    case 'pick-llm-auth':
+      return (
+        <Box flexDirection="column" gap={1}>
+          <Box flexDirection="column">
+            <Text bold>{LLM_AUTH_PICKER_TITLE}</Text>
+            <Text dimColor>{LLM_AUTH_PICKER_SUBTITLE}</Text>
+          </Box>
+          <LlmAuthPicker
+            connectMode={phase.connectMode}
+            onChange={(value) => phase.resolve(value)}
+            onCancel={() => phase.reject(new ConnectUserCancelledError())}
+          />
+          <Text color="cyan">Enter · select · Esc · cancel</Text>
+        </Box>
+      );
 
     case 'pick-connect-mode':
       return (

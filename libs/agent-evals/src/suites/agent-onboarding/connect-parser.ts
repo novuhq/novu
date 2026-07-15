@@ -5,6 +5,7 @@ export type ConnectFlags = {
   secretKey: boolean;
   ci: boolean;
   channel?: string;
+  runtime?: string;
   description?: string;
   slackConfigToken?: string;
 };
@@ -14,7 +15,14 @@ export function isConnectCommand(command: string): boolean {
 }
 
 /** Flags that consume the following token as their value (so it is not a positional). */
-const VALUE_FLAGS = new Set(['--channel', '--slack-config-token', '--secret-key', '--api-url', '--dashboard-url']);
+const VALUE_FLAGS = new Set([
+  '--channel',
+  '--runtime',
+  '--slack-config-token',
+  '--secret-key',
+  '--api-url',
+  '--dashboard-url',
+]);
 
 /**
  * Split a command into shell words, honoring single quotes, double quotes, and backslash
@@ -163,6 +171,7 @@ export const connectParser: CommandParser<ConnectFlags> = {
     };
 
     flags.channel = readFlagValue(tokens, '--channel');
+    flags.runtime = readFlagValue(tokens, '--runtime');
     flags.slackConfigToken = readFlagValue(tokens, '--slack-config-token');
     flags.description = resolveDescription(command, tokens, env);
 

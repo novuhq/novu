@@ -1,6 +1,8 @@
 import { atom, type WritableAtom } from 'nanostores';
 import type { GeneratedAgentSpec } from '../api/agents';
 import type { BridgeScaffoldVariant } from '../pipeline/bridge/types';
+import type { BridgeAdapterVariant } from '../pipeline/bridge-adapter/types';
+import type { LlmAuthKind } from '../pipeline/llm-auth/types';
 import type {
   AgentConnectMode,
   AgentSummary,
@@ -74,6 +76,12 @@ export type Phase =
       existingMasked: string;
       nextMasked: string;
       resolve: (overwrite: boolean) => void;
+    }
+  | {
+      kind: 'pick-llm-auth';
+      connectMode: BridgeAdapterVariant;
+      resolve: (kind: LlmAuthKind) => void;
+      reject: (error: Error) => void;
     }
   | {
       kind: 'confirm-scaffold';
