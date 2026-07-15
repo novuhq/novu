@@ -90,31 +90,4 @@ describe('delivery-error.util', () => {
       'Delivery failed: Invalid file "sample.txt": data must be a base64-encoded string.'
     );
   });
-
-  it('maps Slack content validation errors to HTTP 400', () => {
-    const err = {
-      message: 'Slack chat.postMessage failed',
-      data: { error: 'no_text' },
-    };
-
-    expect(resolveDeliveryHttpStatus(err)).to.equal(HttpStatus.BAD_REQUEST);
-  });
-
-  it('maps Slack rate limits to HTTP 429', () => {
-    const err = {
-      message: 'Slack chat.postMessage failed',
-      data: { error: 'rate_limited' },
-    };
-
-    expect(resolveDeliveryHttpStatus(err)).to.equal(HttpStatus.TOO_MANY_REQUESTS);
-  });
-
-  it('maps Slack server errors to HTTP 502', () => {
-    const err = {
-      message: 'Slack chat.postMessage failed',
-      data: { error: 'fatal_error' },
-    };
-
-    expect(resolveDeliveryHttpStatus(err)).to.equal(HttpStatus.BAD_GATEWAY);
-  });
 });

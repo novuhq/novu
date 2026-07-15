@@ -74,4 +74,19 @@ describe('resolveCardContent', () => {
 
     expect(card).toEqual(element);
   });
+
+  it('does not treat an empty custom-component collapse as a valid card without resolving', async () => {
+    function EmptyTrap() {
+      return jsxs(Card, {
+        title: 'Should appear',
+        children: [jsx(CardText, { children: 'Body' })],
+      });
+    }
+
+    // Without resolveUserComponents, toCardElement(<EmptyTrap />) yields { type: 'card', children: [] }.
+    const card = await resolveCardContent(jsx(EmptyTrap, {}));
+
+    expect(card?.title).toBe('Should appear');
+    expect(card?.children?.[0]).toMatchObject({ type: 'text', content: 'Body' });
+  });
 });

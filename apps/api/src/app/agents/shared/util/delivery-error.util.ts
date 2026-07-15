@@ -3,24 +3,6 @@ import { BadGatewayException, BadRequestException, HttpException, HttpStatus } f
 const CLIENT_ADAPTER_ERROR_NAMES = new Set(['ValidationError']);
 const CLIENT_ADAPTER_ERROR_CODES = new Set(['VALIDATION_ERROR']);
 
-const SLACK_SERVER_ERROR_CODES = new Set([
-  'internal_error',
-  'fatal_error',
-  'service_unavailable',
-  'request_timeout',
-  'operation_timeout',
-]);
-
-function getSlackApiErrorCode(err: unknown): string | undefined {
-  if (!err || typeof err !== 'object') {
-    return undefined;
-  }
-
-  const error = (err as { data?: { error?: string } }).data?.error;
-
-  return typeof error === 'string' ? error : undefined;
-}
-
 function getErrorResponseBody(err: unknown): unknown {
   if (!err || typeof err !== 'object') {
     return undefined;
@@ -95,17 +77,6 @@ export function resolveDeliveryHttpStatus(err: unknown): number {
 
   if (isAdapterValidationError(err)) {
     return HttpStatus.BAD_REQUEST;
-  }
-
-  const slackErrorCode = getSlackApiErrorCode(err);
-  if (slackErrorCode) {
-    if (slackErrorCode === 'rate_limited') {
-      return HttpStatus.TOO_MANY_REQUESTS;
-    }
-
-    if (!SLACK_SERVER_ERROR_CODES.has(slackErrorCode)) {
-      return HttpStatus.BAD_REQUEST;
-    }
   }
 
   return HttpStatus.BAD_GATEWAY;

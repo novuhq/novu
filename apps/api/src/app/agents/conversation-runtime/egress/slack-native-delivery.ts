@@ -51,10 +51,7 @@ export async function postSlackNativeBlocks(params: {
   } satisfies ChatPostMessageArguments);
 
   if (!result.ok || !result.ts) {
-    toDeliveryError({
-      message: result.error ?? 'Slack chat.postMessage failed',
-      data: { error: result.error },
-    });
+    toDeliveryError(new Error(result.error ?? 'Slack chat.postMessage failed'));
   }
 
   return { messageId: result.ts, platformThreadId: params.platformThreadId };
@@ -76,10 +73,7 @@ export async function editSlackNativeBlocks(params: {
   } satisfies ChatUpdateArguments);
 
   if (!result.ok || !result.ts) {
-    toDeliveryError({
-      message: result.error ?? 'Slack chat.update failed',
-      data: { error: result.error },
-    });
+    toDeliveryError(new Error(result.error ?? 'Slack chat.update failed'));
   }
 
   return { messageId: result.ts, platformThreadId: params.platformThreadId };
