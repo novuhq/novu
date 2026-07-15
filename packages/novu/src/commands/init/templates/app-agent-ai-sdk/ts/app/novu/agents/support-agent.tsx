@@ -1,32 +1,33 @@
 /** @jsxImportSource @novu/framework */
 import { Actions, Button, Card, CardText } from '@novu/framework';
 import { agent } from '@novu/framework/ai-sdk';
+import { tool } from 'ai';
+import { z } from 'zod';
+
+const webSearch = tool({
+  description: 'Search the web for current information. Requires user approval before running.',
+  inputSchema: z.object({
+    query: z.string().describe('Search query'),
+  }),
+  needsApproval: true,
+  execute: async ({ query }) => ({
+    results: [
+      {
+        title: `Result for "${query}"`,
+        snippet: 'Demo search result — replace with a real search API (Tavily, SerpAPI, etc.).',
+      },
+    ],
+  }),
+});
 
 // Wire your LLM — install a provider, then uncomment the imports and return below:
 //   npm install @ai-sdk/openai        # OpenAI
 //   npm install @ai-sdk/anthropic     # Anthropic
 //   npm install @ai-sdk/google        # Google
 //
-// import { generateText, tool } from 'ai';
+// import { generateText } from 'ai';
 // import { openai } from '@ai-sdk/openai';
 // import { toModelMessages } from '@novu/framework/ai-sdk';
-// import { z } from 'zod';
-//
-// const webSearch = tool({
-//   description: 'Search the web for current information. Requires user approval before running.',
-//   inputSchema: z.object({
-//     query: z.string().describe('Search query'),
-//   }),
-//   needsApproval: true,
-//   execute: async ({ query }) => ({
-//     results: [
-//       {
-//         title: `Result for "${query}"`,
-//         snippet: 'Demo search result — replace with a real search API (Tavily, SerpAPI, etc.).',
-//       },
-//     ],
-//   }),
-// });
 
 /**
  * Novu calls these handlers whenever a user sends a message or clicks an action
@@ -66,7 +67,7 @@ export const supportAgent = agent('support-agent', {
 
     return (
       `**Got it.** You said: "${message.text}"\n\n` +
-      `_This is a demo agent. Replace this handler with your LLM call._\n` +
+      `_This is a demo agent. Uncomment the generateText return below to wire your LLM._\n` +
       `_Once wired, try "search for Novu docs" to see tool approval in action._\n\n` +
       `**Conversation so far:** ${ctx.history.length} messages | ` +
       `**Topic:** ${ctx.metadata.get('topic') ?? 'unknown'}`

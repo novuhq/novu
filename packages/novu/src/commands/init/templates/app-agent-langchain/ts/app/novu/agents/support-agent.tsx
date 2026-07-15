@@ -1,34 +1,33 @@
 /** @jsxImportSource @novu/framework */
+
+import { tool } from '@langchain/core/tools';
 import { Actions, Button, Card, CardText } from '@novu/framework';
 import { agent } from '@novu/framework/langchain';
+import { z } from 'zod';
 
-// Wire your LLM — install LangChain + a provider, then return a config below:
-//   npm install langchain @langchain/core
+const webSearch = tool(
+  async ({ query }) => ({
+    results: [
+      {
+        title: `Result for "${query}"`,
+        snippet: 'Demo search result — replace with a real search API (Tavily, SerpAPI, etc.).',
+      },
+    ],
+  }),
+  {
+    name: 'webSearch',
+    description: 'Search the web for current information. Requires user approval before running.',
+    schema: z.object({ query: z.string().describe('Search query') }),
+  }
+);
+
+// Wire your LLM — install a provider, then uncomment the return below:
 //   npm install @langchain/openai        # OpenAI
 //   npm install @langchain/anthropic     # Anthropic
 //   npm install @langchain/google-genai  # Google
 //
 // Returning { model, system, tools } lets Novu run the agent and own the
 // tool-approval loop — no LangGraph checkpointer required.
-//
-// import { tool } from '@langchain/core/tools';
-// import { z } from 'zod';
-//
-// const webSearch = tool(
-//   async ({ query }) => ({
-//     results: [
-//       {
-//         title: `Result for "${query}"`,
-//         snippet: 'Demo search result — replace with a real search API (Tavily, SerpAPI, etc.).',
-//       },
-//     ],
-//   }),
-//   {
-//     name: 'webSearch',
-//     description: 'Search the web for current information. Requires user approval before running.',
-//     schema: z.object({ query: z.string().describe('Search query') }),
-//   },
-// );
 
 /**
  * Novu calls these handlers whenever a user sends a message or clicks an action
@@ -68,7 +67,7 @@ export const supportAgent = agent('support-agent', {
 
     return (
       `**Got it.** You said: "${message.text}"\n\n` +
-      `_This is a demo agent. Replace this handler with your LLM call._\n` +
+      `_This is a demo agent. Uncomment the LangChain config return below to wire your LLM._\n` +
       `_Once wired, try "search for Novu docs" to see tool approval in action._\n\n` +
       `**Conversation so far:** ${ctx.history.length} messages | ` +
       `**Topic:** ${ctx.metadata.get('topic') ?? 'unknown'}`

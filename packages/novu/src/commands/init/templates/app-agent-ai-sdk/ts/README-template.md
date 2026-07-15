@@ -28,7 +28,7 @@ The scaffold uses `@novu/framework/ai-sdk` and ships with an **echo demo** that 
 
    - Set your provider API key (e.g. `OPENAI_API_KEY` in `.env.local`).
 
-   - Uncomment the `generateText` block at the bottom of `app/novu/agents/support-agent.tsx`.
+   - Uncomment the `generateText` block at the bottom of `app/novu/agents/support-agent.tsx` (the `webSearch` tool is already defined above).
 
 Your agent is served at `/api/novu` and handles incoming messages via the Novu Bridge protocol.
 
@@ -74,7 +74,7 @@ return generateText({
 });
 ```
 
-The scaffold includes a `webSearch` tool with `needsApproval: true` — try asking "search for Novu docs" to see the approval card flow.
+The scaffold includes a `webSearch` tool with `needsApproval: true` — uncomment the `generateText` return to wire your LLM, then try asking "search for Novu docs" to see the approval card flow.
 
 Use `generateText` for simple non-streaming responses. For streaming, return `streamText(...)` from `onMessage` instead — see the AI SDK DX guide.
 

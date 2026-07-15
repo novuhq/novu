@@ -29,7 +29,7 @@ The scaffold uses `@novu/framework/langchain` and ships with an **echo demo** th
 
    - Set your provider API key (e.g. `OPENAI_API_KEY` in `.env.local`).
 
-   - Return a `{ model, system, tools }` config from `app/novu/agents/support-agent.tsx`.
+   - Uncomment the LangChain config return in `app/novu/agents/support-agent.tsx` (the `webSearch` tool is already defined above).
 
 Your agent is served at `/api/novu` and handles incoming messages via the Novu Bridge protocol.
 
@@ -75,7 +75,7 @@ return {
 };
 ```
 
-The scaffold includes a `webSearch` tool gated behind approval — try asking "search for Novu docs" to see the approval card flow.
+The scaffold includes a `webSearch` tool gated behind approval — uncomment the config return to wire your LLM, then try asking "search for Novu docs" to see the approval card flow.
 
 ## Learn More
 
