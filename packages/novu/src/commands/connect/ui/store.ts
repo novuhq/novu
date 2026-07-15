@@ -81,6 +81,7 @@ export type Phase =
       kind: 'pick-llm-auth';
       connectMode: BridgeAdapterVariant;
       resolve: (kind: LlmAuthKind) => void;
+      reject: (error: Error) => void;
     }
   | {
       kind: 'confirm-scaffold';

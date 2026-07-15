@@ -6,6 +6,7 @@ import React from 'react';
 import { CONNECT_MODE_PICKER_SUBTITLE, CONNECT_MODE_PICKER_TITLE } from '../connect-mode-options';
 import { SEND_FROM_ACCOUNT_LABEL } from '../copy/email-onboarding';
 import { channelDisplayName, isDashboardOnlyChannel } from '../dashboard-urls';
+import { ConnectUserCancelledError } from '../errors';
 import { resolveBridgeSetupFollowUpMessage } from '../pipeline/bridge/setup-outcome-message';
 import { validateSlackConfigTokenFormat } from '../pipeline/channels/slack-config-token';
 import { LLM_AUTH_PICKER_SUBTITLE, LLM_AUTH_PICKER_TITLE } from '../pipeline/llm-auth/llm-auth-options';
@@ -70,7 +71,12 @@ export function PhaseContent({
             <Text bold>{LLM_AUTH_PICKER_TITLE}</Text>
             <Text dimColor>{LLM_AUTH_PICKER_SUBTITLE}</Text>
           </Box>
-          <LlmAuthPicker connectMode={phase.connectMode} onChange={(value) => phase.resolve(value)} />
+          <LlmAuthPicker
+            connectMode={phase.connectMode}
+            onChange={(value) => phase.resolve(value)}
+            onCancel={() => phase.reject(new ConnectUserCancelledError())}
+          />
+          <Text color="cyan">Enter · select · Esc · cancel</Text>
         </Box>
       );
 
