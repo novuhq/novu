@@ -61,4 +61,13 @@ export class UpdateIntegrationCommand extends OrganizationCommand {
   @IsOptional()
   @IsBoolean()
   restrictToUserEnvironment?: boolean;
+
+  /**
+   * Server-only escape hatch, never exposed on the HTTP DTO (the controller does
+   * not set it). Allows the trusted WhatsApp embedded-signup flow to set the
+   * server-controlled `isNovuManaged` credential; client updates cannot.
+   */
+  @IsOptional()
+  @IsBoolean()
+  allowNovuManagedWhatsAppCredentials?: boolean;
 }

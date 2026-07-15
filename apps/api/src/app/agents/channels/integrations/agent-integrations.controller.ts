@@ -332,9 +332,9 @@ export class AgentIntegrationsController {
   @ApiExcludeEndpoint()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Send a hello_world WhatsApp template from the agent integration',
+    summary: 'Send a WhatsApp test template from the agent integration',
     description:
-      'Sends the standard `hello_world` template via the configured WhatsApp Business phone number to a recipient supplied by the user, used at the end of the onboarding flow to verify outbound delivery without asking the user to send an inbound message themselves.',
+      'Sends the `hello_world` template via the configured WhatsApp Business phone number to verify outbound delivery.',
   })
   @ApiNotFoundResponse({ description: 'The agent or integration was not found.' })
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)
