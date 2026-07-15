@@ -1,6 +1,6 @@
 import { ChannelTypeEnum, type GeneratePreviewResponseDto } from '@novu/shared';
-import { RiPulseFill } from 'react-icons/ri';
 
+import { ToolFill } from '@/components/icons/tool-fill';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { cn } from '@/utils/ui';
 
@@ -31,7 +31,7 @@ export const ToolPreview = ({
       <div className="flex flex-col gap-3">
         <div className="flex w-full items-start gap-2">
           <div className="flex size-6 items-center justify-center rounded-[5px] bg-warning/10 text-warning">
-            <RiPulseFill className="size-3.5" />
+            <ToolFill className="size-3.5" />
           </div>
           <div className="flex w-full flex-col gap-1">
             <div className="flex items-center gap-1">
