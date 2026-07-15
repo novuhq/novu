@@ -7,14 +7,17 @@
   </a>
 </div>
 
-# Code-First Notifications Workflow SDK
+# Novu Framework
 
 [![Version](https://img.shields.io/npm/v/@novu/framework.svg)](https://www.npmjs.org/package/@novu/framework)
 [![Downloads](https://img.shields.io/npm/dm/@novu/framework.svg)](https://www.npmjs.com/package/@novu/framework)
 
-Novu Framework allows you to write notification workflows in your codebase. Workflows are functions that execute business logic and use your preferred libraries for email, SMS, and chat generation. You can use Novu Framework with [React.Email](https://react.email/), [MJML](https://mjml.io/), or any other template generator.
+`@novu/framework` is Novu's code-first SDK for two things:
 
-Learn more about the Code-First Notifications Workflow SDK in our [docs](https://docs.novu.co/framework/quickstart).
+1. **Conversational agents** — define bridge agents in your codebase and connect them to Slack, Email, Telegram, WhatsApp, and Microsoft Teams with `npx novu connect`.
+2. **Notification workflows** — write durable, multi-channel notification flows as TypeScript functions.
+
+Learn more in the [Framework docs](https://docs.novu.co/framework/quickstart) and [managed agent quickstart](https://docs.novu.co/agents/managed-agent/quickstart).
 
 ## Installation
 
@@ -22,14 +25,83 @@ Learn more about the Code-First Notifications Workflow SDK in our [docs](https:/
 npm install @novu/framework
 ```
 
-## Quickstart
+## Connect an agent to channels
+
+The fastest path is the Novu CLI — it creates the agent in Novu Cloud, provisions channel credentials, and (for bridge runtimes) wires your local app:
+
+```bash
+npx novu@latest connect
+```
+
+For a self-hosted agent in your repo, pick a bridge runtime when prompted, or pass one explicitly:
+
+```bash
+# Vercel AI SDK agent
+npx novu@latest connect --runtime ai-sdk
+
+# Chat SDK multi-channel agent
+npx novu@latest connect --runtime chat-sdk
+```
+
+Re-run `npx novu connect` to add another channel. Each run connects one channel to one agent.
+
+## Bridge agents
+
+Define agents in your codebase and serve them on a Novu bridge endpoint. Use `@novu/framework/ai-sdk` when your agent is built with the [Vercel AI SDK](https://ai-sdk.dev/):
+
+```typescript
+import { serve } from '@novu/framework/next';
+import { agent } from '@novu/framework/ai-sdk';
+import { streamText } from 'ai';
+import { anthropic } from '@ai-sdk/anthropic';
+
+const supportAgent = agent('support-bot', {
+  onMessage: async (message, ctx) => {
+    const result = streamText({
+      model: anthropic('claude-sonnet-4-20250514'),
+      messages: await ctx.toModelMessages(),
+    });
+
+    return result;
+  },
+});
+
+const { GET, POST, OPTIONS } = serve({ agents: [supportAgent] });
+```
+
+For custom handlers without the AI SDK, use the core `agent()` export:
+
+```typescript
+import { agent } from '@novu/framework';
+import { serve } from '@novu/framework/next';
+
+const supportAgent = agent('support-bot', {
+  onMessage: async (message, ctx) => {
+    await ctx.reply(`You said: ${message.text}`);
+  },
+});
+
+const { GET, POST, OPTIONS } = serve({ agents: [supportAgent] });
+```
+
+After your bridge is running, connect channels:
+
+```bash
+npx novu@latest connect --runtime ai-sdk --channel slack
+npx novu@latest sync -b https://your-app.com/api/novu -s "$NOVU_SECRET_KEY"
+```
+
+Bridge runtimes supported by `novu connect`: `ai-sdk`, `langchain`, `custom-code`, `chat-sdk`.
+
+## Notification workflows
+
+Write notification workflows as functions that execute business logic and use your preferred libraries for email, SMS, and chat generation. Use [React.Email](https://react.email/), [MJML](https://mjml.io/), or any other template generator.
 
 ```typescript
 import { workflow, CronExpression } from '@novu/framework';
 import { serve } from '@novu/framework/next';
 import { z } from 'zod';
 
-// Define your notification workflow
 const weeklyComments = workflow(
   'comment-on-post',
   async ({ payload, step }) => {
@@ -48,9 +120,7 @@ const weeklyComments = workflow(
         body: `Weekly digest: ${weeklyDigest.events.map(({ payload }) => payload.comment).join(', ')}`,
       }),
       {
-        // Skip the notification if the weekly digest is empty
         skip: () => weeklyDigest.events.length === 0,
-        // Non-technical stakeholders can modify strongly-validated copy in Novu Cloud
         controlSchema: z.object({ prefix: z.string().describe('The prefix of the subject.').default('Hi!') }),
       }
     );
@@ -58,9 +128,45 @@ const weeklyComments = workflow(
   { payloadSchema: z.object({ comment: z.string().describe('The comment on the post.') }) }
 );
 
-// Use your favorite framework to serve your workflows
 const { GET, POST, OPTIONS } = serve({ workflows: [weeklyComments] });
 
-// Trigger your notification workflow
 weeklyComments.trigger({ to: 'user:123', comment: 'This is a comment on a post' });
 ```
+
+Sync workflows with Novu Cloud:
+
+```bash
+npx novu@latest sync -b https://your-app.com/api/novu -s "$NOVU_SECRET_KEY"
+```
+
+For local workflow development with Novu Studio, see the [Novu CLI `dev` command](../novu/README.MD#local-novu-studio).
+
+## Framework adapters
+
+Serve workflows and agents from your framework of choice:
+
+| Import | Framework |
+| --- | --- |
+| `@novu/framework/next` | Next.js |
+| `@novu/framework/nest` | NestJS |
+| `@novu/framework/express` | Express |
+| `@novu/framework/h3` | H3 / Nuxt |
+| `@novu/framework/hono` | Hono |
+| `@novu/framework/lambda` | AWS Lambda |
+| `@novu/framework/sveltekit` | SvelteKit |
+| `@novu/framework/remix` | Remix |
+
+Additional exports:
+
+| Import | Purpose |
+| --- | --- |
+| `@novu/framework/ai-sdk` | Vercel AI SDK agent helpers |
+| `@novu/framework/step-resolver` | Deploy custom step handlers |
+| `@novu/framework/validators` | Schema validation utilities |
+
+## Links
+
+- [Managed agent quickstart](https://docs.novu.co/agents/managed-agent/quickstart)
+- [Framework quickstart](https://docs.novu.co/framework/quickstart)
+- [Novu CLI](../novu/README.MD)
+- [Chat SDK adapter](https://www.npmjs.com/package/@novu/chat-sdk-adapter)

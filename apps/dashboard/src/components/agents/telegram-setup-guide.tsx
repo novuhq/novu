@@ -13,10 +13,16 @@ import { InlineToast } from '@/components/primitives/inline-toast';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { useAuth } from '@/context/auth/hooks';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
-import { buildConnectSubscriberId } from '@/utils/connect-subscriber-id';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
-import { cn } from '@/utils/ui';
-import { IntegrationCredentialsSidebar, ListeningStatus, SetupButton, SetupStep } from './setup-guide-primitives';
+import { buildConnectSubscriberId } from '@/utils/connect-subscriber-id';
+import {
+  IntegrationCredentialsSidebar,
+  ListeningStatus,
+  ProviderSetupStepperRail,
+  SetupButton,
+  SetupStep,
+  SetupStepperRail,
+} from './setup-guide-primitives';
 import { deriveStepStatus, hasIntegrationCredentials } from './setup-guide-step-utils';
 
 type TelegramQrInlineProps = {
@@ -137,12 +143,16 @@ export function TelegramSetupGuide({
   }, [hasCredentials, isCredentialsSidebarOpen]);
 
   const { mutate: configureTelegram, error: configureError } = useMutation({
-    mutationFn: () =>
-      configureTelegramAgentWebhook(
+    mutationFn: () => {
+      if (!selectedIntegration?.identifier) {
+        throw new Error('Telegram integration could not be resolved.');
+      }
+
+      return configureTelegramAgentWebhook(
         requireEnvironment(currentEnvironment, 'No environment selected'),
-        agent.identifier,
-        integrationId
-      ),
+        selectedIntegration.identifier
+      );
+    },
     onSuccess: (result) => {
       setConfiguredWebhookUrl(result.webhookUrl);
       setBotUsername(result.botUsername);
@@ -171,10 +181,13 @@ export function TelegramSetupGuide({
         throw new Error('Sign-in is required to issue a Telegram connection link.');
       }
 
+      if (!selectedIntegration?.identifier) {
+        throw new Error('Telegram integration could not be resolved.');
+      }
+
       return requestTelegramSubscriberLink(
         requireEnvironment(currentEnvironment, 'No environment selected'),
-        agent.identifier,
-        integrationId,
+        selectedIntegration.identifier,
         testSubscriberId
       );
     },
@@ -199,6 +212,7 @@ export function TelegramSetupGuide({
     if (
       isWebhookConfigured &&
       testSubscriberId &&
+      selectedIntegration?.identifier &&
       !subscriberLink &&
       !isIssuingSubscriberLink &&
       !subscriberLinkError
@@ -208,6 +222,7 @@ export function TelegramSetupGuide({
   }, [
     isWebhookConfigured,
     testSubscriberId,
+    selectedIntegration?.identifier,
     subscriberLink,
     isIssuingSubscriberLink,
     subscriberLinkError,
@@ -270,7 +285,7 @@ export function TelegramSetupGuide({
         index={base + 1}
         status={deriveStepStatus(base + 1, firstIncompleteStep)}
         title="Save the Bot Token in Novu"
-        description="Open the credentials form to paste the full BotFather confirmation message — or scan the QR code inside the form to finish setup from the phone where BotFather sent the token."
+        description="Open the credentials form to paste the full BotFather confirmation message, or scan the QR code inside the form to finish setup from the phone where BotFather sent the token."
         extraContent={
           <>
             {configureErrorMessage && (
@@ -333,24 +348,16 @@ export function TelegramSetupGuide({
       agentIdentifier={agent.identifier}
       watchedIntegrationId={integrationId}
       onConnected={handleConnected}
-      connectedMessage="Telegram is connected — your agent is ready to receive messages."
-      listeningMessage="Waiting for a message to your bot to confirm the webhook is working…"
+      connectedMessage="Telegram is connected: your agent is ready to receive messages."
+      listeningMessage="Open the link in Telegram, then reply to the bot's confirmation message to verify delivery."
     />
   );
 
   if (embedded) {
     return (
       <div className="flex flex-col gap-0">
-        <div className={cn('relative flex flex-col gap-10 py-6 pb-3 pl-8 pr-6')}>
-          <div
-            className="absolute bottom-0 left-[22px] top-0 w-px"
-            style={{
-              background: 'linear-gradient(to bottom, transparent 0%, #E1E4EA 10%, #E1E4EA 90%, transparent 100%)',
-            }}
-          />
-          {stepsColumn}
-        </div>
-        {listening}
+        <SetupStepperRail className="py-6 pb-3 pr-6">{stepsColumn}</SetupStepperRail>
+        <div className="pl-8">{listening}</div>
         <IntegrationCredentialsSidebar
           integrationId={integrationId}
           isOpen={isCredentialsSidebarOpen}
@@ -370,8 +377,8 @@ export function TelegramSetupGuide({
 
   return (
     <>
-      {stepsColumn}
-      {listening}
+      <ProviderSetupStepperRail>{stepsColumn}</ProviderSetupStepperRail>
+      <div className="pl-8">{listening}</div>
       <IntegrationCredentialsSidebar
         integrationId={integrationId}
         isOpen={isCredentialsSidebarOpen}

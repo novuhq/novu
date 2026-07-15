@@ -48,10 +48,14 @@ export const CHANNEL_ENDPOINT_SCHEMAS = {
   },
   [ENDPOINT_TYPES.MS_TEAMS_USER]: {
     description: 'MS Teams User Endpoint',
-    properties: { userId: { type: 'string' as const } },
+    properties: { userId: { type: 'string' as const }, tenantId: { type: 'string' as const } },
     required: ['userId'],
+    // tenantId is optional (the user's Azure AD tenant); allow it as a second key for multi-tenant delivery.
     validate: (endpoint: Record<string, unknown>) =>
-      typeof endpoint.userId === 'string' && Object.keys(endpoint).length === 1,
+      typeof endpoint.userId === 'string' &&
+      Object.keys(endpoint).length >= 1 &&
+      Object.keys(endpoint).length <= 2 &&
+      (endpoint.tenantId === undefined || typeof endpoint.tenantId === 'string'),
   },
   [ENDPOINT_TYPES.TELEGRAM_CHAT]: {
     description: 'Telegram Chat Endpoint',
@@ -59,6 +63,46 @@ export const CHANNEL_ENDPOINT_SCHEMAS = {
     required: ['chatId'],
     validate: (endpoint: Record<string, unknown>) =>
       typeof endpoint.chatId === 'string' && Object.keys(endpoint).length === 1,
+  },
+  [ENDPOINT_TYPES.WEBEX_ROOM]: {
+    description: 'Webex Room Endpoint',
+    properties: {
+      roomId: { type: 'string' as const },
+      parentId: { type: 'string' as const },
+    },
+    required: ['roomId'],
+    validate: (endpoint: Record<string, unknown>) =>
+      typeof endpoint.roomId === 'string' &&
+      endpoint.roomId.length > 0 &&
+      (endpoint.parentId === undefined || (typeof endpoint.parentId === 'string' && endpoint.parentId.length > 0)) &&
+      Object.keys(endpoint).every((key) => ['roomId', 'parentId'].includes(key)),
+  },
+  [ENDPOINT_TYPES.WEBEX_PERSON]: {
+    description: 'Webex Person Endpoint',
+    properties: {
+      personId: { type: 'string' as const },
+      personEmail: { type: 'string' as const },
+    },
+    required: [],
+    validate: (endpoint: Record<string, unknown>) => {
+      const keys = Object.keys(endpoint);
+      const hasPersonId = Object.prototype.hasOwnProperty.call(endpoint, 'personId');
+      const hasPersonEmail = Object.prototype.hasOwnProperty.call(endpoint, 'personEmail');
+
+      return (
+        keys.every((key) => ['personId', 'personEmail'].includes(key)) &&
+        hasPersonId !== hasPersonEmail &&
+        (!hasPersonId || (typeof endpoint.personId === 'string' && endpoint.personId.length > 0)) &&
+        (!hasPersonEmail || (typeof endpoint.personEmail === 'string' && endpoint.personEmail.length > 0))
+      );
+    },
+  },
+  [ENDPOINT_TYPES.LINE_USER]: {
+    description: 'LINE User Endpoint',
+    properties: { userId: { type: 'string' as const } },
+    required: ['userId'],
+    validate: (endpoint: Record<string, unknown>) =>
+      typeof endpoint.userId === 'string' && Object.keys(endpoint).length === 1,
   },
 } as const;
 

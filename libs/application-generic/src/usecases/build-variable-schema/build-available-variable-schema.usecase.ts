@@ -5,15 +5,15 @@ import {
   EnvironmentRepository,
   EnvironmentVariableRepository,
   JsonSchemaTypeEnum,
-  NotificationStepEntity,
-  NotificationTemplateEntity,
 } from '@novu/dal';
 import { ControlValuesLevelEnum, EnvironmentSystemVariables, StepTypeEnum } from '@novu/shared';
 import { JSONSchemaDto } from '../../dtos/json-schema.dto';
 import { PreviewPayloadDto } from '../../dtos/workflow/preview-payload.dto';
 import { resolveEnvironmentVariables } from '../../encryption/encrypt-environment-variable';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
+import { StepForVariableSchema, WorkflowForVariableSchema } from '../../types/workflow-mapper.types';
 import {
+  buildActorSchema,
   buildContextSchema,
   buildEnvSchema,
   buildSubscriberSchema,
@@ -73,7 +73,7 @@ export class BuildVariableSchemaUsecase {
     }
 
     const optimisticControlValues = Object.values(command.optimisticControlValues || {});
-    const { payload, subscriber, context } = await this.createVariablesObject.execute(
+    const { payload, subscriber, actor, context } = await this.createVariablesObject.execute(
       CreateVariablesObjectCommand.create({
         environmentId: command.environmentId,
         organizationId: command.organizationId,
@@ -84,10 +84,16 @@ export class BuildVariableSchemaUsecase {
     const {
       payload: finalPayload,
       subscriber: finalSubscriber,
+      actor: finalActor,
       context: finalContext,
     } = previewData
-      ? this.mergePreviewData({ payload, subscriber, context }, previewData)
-      : { payload: payload || {}, subscriber: subscriber || {}, context: context || {} };
+      ? this.mergePreviewData({ payload, subscriber, actor, context }, previewData)
+      : {
+          payload: payload || {},
+          subscriber: subscriber || {},
+          actor: actor || {},
+          context: context || {},
+        };
 
     const effectiveSteps = this.buildEffectiveSteps(workflow, optimisticSteps);
 
@@ -115,6 +121,7 @@ export class BuildVariableSchemaUsecase {
       properties: {
         workflow: buildWorkflowSchema(),
         subscriber: buildSubscriberSchema(finalSubscriber),
+        actor: buildActorSchema(finalActor),
         steps: buildPreviousStepsSchema({
           previousSteps,
           payloadSchema: effectivePayloadSchema,
@@ -133,9 +140,9 @@ export class BuildVariableSchemaUsecase {
    * with optimistic steps (used during sync scenarios)
    */
   private buildEffectiveSteps(
-    workflow: NotificationTemplateEntity | undefined,
+    workflow: WorkflowForVariableSchema | undefined,
     optimisticSteps: IOptimisticStepInfo[] | undefined
-  ): Array<NotificationStepEntity | IOptimisticStepInfo> | undefined {
+  ): Array<StepForVariableSchema | IOptimisticStepInfo> | undefined {
     if (!optimisticSteps) {
       return workflow?.steps;
     }
@@ -156,7 +163,7 @@ export class BuildVariableSchemaUsecase {
    * Finds the index of a step in the effective steps array
    */
   private findStepIndex(
-    effectiveSteps: Array<NotificationStepEntity | IOptimisticStepInfo> | undefined,
+    effectiveSteps: Array<StepForVariableSchema | IOptimisticStepInfo> | undefined,
     stepInternalId: string | undefined
   ): number {
     if (!effectiveSteps || !stepInternalId) {
@@ -176,7 +183,7 @@ export class BuildVariableSchemaUsecase {
 
   @Instrument()
   private async resolvePayloadSchema(
-    workflow: NotificationTemplateEntity | undefined,
+    workflow: WorkflowForVariableSchema | undefined,
     payload: unknown,
     optimisticPayloadSchema?: JSONSchemaDto
   ): Promise<JSONSchemaDto> {
@@ -203,12 +210,18 @@ export class BuildVariableSchemaUsecase {
    * Merges preview data with extracted variables for preview scenarios
    */
   private mergePreviewData(
-    extracted: { payload?: unknown; subscriber?: unknown; context?: unknown },
+    extracted: { payload?: unknown; subscriber?: unknown; actor?: unknown; context?: unknown },
     previewData?: PreviewPayloadDto
-  ): { payload: Record<string, unknown>; subscriber: Record<string, unknown>; context: Record<string, unknown> } {
+  ): {
+    payload: Record<string, unknown>;
+    subscriber: Record<string, unknown>;
+    actor: Record<string, unknown>;
+    context: Record<string, unknown>;
+  } {
     return {
       payload: { ...((extracted.payload as Record<string, unknown>) || {}), ...(previewData?.payload || {}) },
       subscriber: { ...((extracted.subscriber as Record<string, unknown>) || {}), ...(previewData?.subscriber || {}) },
+      actor: { ...((extracted.actor as Record<string, unknown>) || {}), ...(previewData?.actor || {}) },
       context: { ...((extracted.context as Record<string, unknown>) || {}), ...(previewData?.context || {}) },
     };
   }
@@ -219,7 +232,7 @@ function buildPreviousStepsProperties({
   payloadSchema,
   controlValuesMap,
 }: {
-  previousSteps: Array<NotificationStepEntity | IOptimisticStepInfo> | undefined;
+  previousSteps: Array<StepForVariableSchema | IOptimisticStepInfo> | undefined;
   payloadSchema?: JSONSchemaDto;
   controlValuesMap?: Record<string, Record<string, unknown>>;
 }) {
@@ -263,7 +276,7 @@ function buildPreviousStepsSchema({
   payloadSchema,
   controlValuesMap,
 }: {
-  previousSteps: Array<NotificationStepEntity | IOptimisticStepInfo> | undefined;
+  previousSteps: Array<StepForVariableSchema | IOptimisticStepInfo> | undefined;
   payloadSchema?: JSONSchemaDto;
   controlValuesMap?: Record<string, Record<string, unknown>>;
 }): JSONSchemaDto {

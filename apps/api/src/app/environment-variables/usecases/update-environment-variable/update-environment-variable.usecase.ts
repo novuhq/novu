@@ -1,14 +1,18 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { encryptSecret } from '@novu/application-generic';
-import { EnvironmentVariableRepository } from '@novu/dal';
+import { EnvironmentRepository, EnvironmentVariableRepository } from '@novu/dal';
 import { SECRET_MASK } from '@novu/shared';
 import { EnvironmentVariableResponseDto } from '../../dtos/environment-variable-response.dto';
 import { toEnvironmentVariableResponseDto } from '../get-environment-variables/get-environment-variables.usecase';
+import { validateEnvironmentVariableValues } from '../validate-environment-variable-values';
 import { UpdateEnvironmentVariableCommand } from './update-environment-variable.command';
 
 @Injectable()
 export class UpdateEnvironmentVariable {
-  constructor(private environmentVariableRepository: EnvironmentVariableRepository) {}
+  constructor(
+    private environmentVariableRepository: EnvironmentVariableRepository,
+    private environmentRepository: EnvironmentRepository
+  ) {}
 
   async execute(command: UpdateEnvironmentVariableCommand): Promise<EnvironmentVariableResponseDto> {
     const existing = await this.environmentVariableRepository.findOne(
@@ -18,6 +22,16 @@ export class UpdateEnvironmentVariable {
 
     if (!existing) {
       throw new NotFoundException(`Environment variable with key "${command.variableKey}" not found`);
+    }
+
+    if (
+      command.restrictToUserEnvironment &&
+      (command.key !== undefined || command.type !== undefined || command.isSecret !== undefined)
+    ) {
+      throw new ForbiddenException(
+        'This authentication scheme is scoped to a single environment and cannot update shared environment variable metadata. ' +
+          'Only per-environment values can be updated, or authenticate with a session token.'
+      );
     }
 
     const updateBody: Record<string, unknown> = {};
@@ -33,6 +47,11 @@ export class UpdateEnvironmentVariable {
     }
 
     if (command.values !== undefined) {
+      await validateEnvironmentVariableValues(this.environmentRepository, command.organizationId, command.values, {
+        restrictToUserEnvironment: command.restrictToUserEnvironment,
+        userEnvironmentId: command.environmentId,
+      });
+
       // Defense in depth: never let the public secret mask string be persisted as an
       // actual variable value. The dashboard returns mask strings on reads, so accepting
       // them on writes would silently overwrite real secrets.
@@ -91,6 +110,8 @@ export class UpdateEnvironmentVariable {
       throw new NotFoundException(`Environment variable with key "${updatedKey}" not found`);
     }
 
-    return toEnvironmentVariableResponseDto(updated);
+    return toEnvironmentVariableResponseDto(updated, {
+      scopeToEnvironmentId: command.restrictToUserEnvironment ? command.environmentId : undefined,
+    });
   }
 }

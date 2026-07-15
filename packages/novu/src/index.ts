@@ -1,11 +1,14 @@
 #!/usr/bin/env node
 
+import fs from 'node:fs';
+import path from 'node:path';
 import { Command } from 'commander';
 import { v4 as uuidv4 } from 'uuid';
 import { DevCommandOptions, devCommand } from './commands';
 import { connectCommand } from './commands/connect';
 import { isDashboardOnlyChannel } from './commands/connect/dashboard-urls';
 import { CONNECT_HELP_TEXT } from './commands/connect/help-text';
+import type { LlmAuthCliChoice } from './commands/connect/pipeline/llm-auth/types';
 import type { ConnectCommandInput } from './commands/connect/resolve-options';
 import { resolveConnectCommandOptions } from './commands/connect/resolve-options';
 import {
@@ -13,6 +16,7 @@ import {
   type AgentConnectMode,
   CHANNEL_CHOICES,
   type ChannelChoice,
+  isBridgeConnectMode,
 } from './commands/connect/types';
 import { CloudRegionEnum } from './commands/dev/enums';
 import { IInitCommandOptions, init } from './commands/init';
@@ -36,9 +40,33 @@ const anonymousId = anonymousIdLocalState || uuidv4();
 if (!anonymousIdLocalState) {
   config.setValue('anonymousId', anonymousId);
 }
+/**
+ * Resolve the CLI version from package.json at runtime so `novu --version`
+ * always matches the published package. `__dirname` differs between the
+ * compiled build (`dist/src/index.js`) and local ts-node dev (`src/index.ts`),
+ * so we try both relative locations and fall back gracefully.
+ */
+function getCliVersion(): string {
+  for (const candidate of ['../../package.json', '../package.json']) {
+    try {
+      const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, candidate), 'utf8')) as { version?: string };
+      if (pkg.version) {
+        return pkg.version;
+      }
+    } catch {
+      // Try the next candidate location.
+    }
+  }
+
+  return '0.0.0';
+}
+
 const program = new Command();
 
-program.name('novu').description(`A CLI tool to interact with Novu Cloud`);
+program
+  .name('novu')
+  .description(`A CLI tool to interact with Novu Cloud`)
+  .version(getCliVersion(), '-v, --version', 'Output the Novu CLI version');
 
 program
   .command('sync')
@@ -76,27 +104,35 @@ program
 program
   .command('dev')
   .description(
-    `Start Novu Studio and a local tunnel
+    `Connect your local Bridge application to the Novu Dashboard through a local tunnel
 
-  Running the Bridge application on port 4000: 
+  Running the Bridge application on port 4000:
   (e.g., npx novu@latest dev -p 4000)
 
-  Running the Bridge application on a different route: 
+  Running the Bridge application on a different route:
   (e.g., npx novu@latest dev -r /v1/api/novu)
-  
+
   Running with a custom tunnel:
   (e.g., npx novu@latest dev --tunnel https://my-tunnel.ngrok.app)`
   )
-  .usage('[-p <port>] [-r <route>] [-o <origin>] [-d <dashboard-url>] [-sp <studio-port>] [-t <url>] [-H]')
+  .usage('[-p <port>] [-r <route>] [-o <origin>] [-d <dashboard-url>] [-t <url>] [-H]')
   .option('-p, --port <port>', 'The local Bridge endpoint port', '4000')
   .option('-r, --route <route>', 'The Bridge endpoint route', '/api/novu')
   .option('-o, --origin <origin>', 'The Bridge endpoint origin')
   .option('-d, --dashboard-url <url>', 'The Novu Cloud Dashboard URL', 'https://dashboard.novu.co')
-  .option('-sp, --studio-port <port>', 'The Local Studio server port', '2022')
-  .option('-sh, --studio-host <host>', 'The Local Studio server host', 'localhost')
+  .option(
+    '-sp, --studio-port <port>',
+    '[deprecated] Ignored — the local studio was replaced by the dashboard Local environment',
+    '2022'
+  )
+  .option(
+    '-sh, --studio-host <host>',
+    '[deprecated] Ignored — the local studio was replaced by the dashboard Local environment',
+    'localhost'
+  )
   .option('-t, --tunnel <url>', 'Self hosted tunnel. e.g. https://my-tunnel.ngrok.app')
-  .option('-H, --headless', 'Run the Bridge in headless mode without opening the browser', false)
-  .option('--no-studio', 'Skip starting the local Studio server')
+  .option('-H, --headless', 'Run without opening the browser', false)
+  .option('--no-studio', 'Skip opening the dashboard Local environment (tunnel and agent sync still run)')
   .option('--run <command>', 'Spawn a local app server before opening the tunnel')
   .action(async (options: DevCommandOptions) => {
     analytics.track({
@@ -180,6 +216,11 @@ program
     'Use an existing agent-runtime integration (skips credential setup for BYOK runtimes)'
   )
   .option('--anthropic-api-key <key>', 'Anthropic API key for --runtime claude non-interactive runs')
+  .option(
+    '--llm-auth <choice>',
+    'LLM provider for ai-sdk/langchain scaffold (openai | anthropic | codex-subscription | claude-subscription | skip)'
+  )
+  .option('--openai-api-key <key>', 'OpenAI API key for --llm-auth openai non-interactive scaffold runs')
   .option('--aws-claude-api-key <key>', 'AWS Claude API key for --runtime claude-aws non-interactive runs')
   .option('--aws-claude-region <region>', 'AWS Claude commercial region for --runtime claude-aws')
   .option('--aws-claude-workspace-id <id>', 'AWS Claude workspace ID for --runtime claude-aws')
@@ -218,9 +259,9 @@ program
       const channel = options.skipSlack ? 'skip' : options.channel;
       const connectMode = options.chatSdk ? 'chat-sdk' : options.brain === 'chat-sdk' ? 'chat-sdk' : options.runtime;
 
-      if (!prompt && connectMode !== 'chat-sdk') {
+      if (!prompt && (!connectMode || !isBridgeConnectMode(connectMode))) {
         console.error(
-          'Non-interactive mode requires a prompt (positional <prompt> or --prompt), unless --runtime chat-sdk.\n(run `novu connect --help` for the non-interactive contract and examples)'
+          'Non-interactive mode requires a prompt (positional <prompt> or --prompt), unless --runtime is a bridge mode (ai-sdk, langchain, custom-code, chat-sdk).\n(run `novu connect --help` for the non-interactive contract and examples)'
         );
         process.exit(1);
       }
@@ -254,6 +295,17 @@ program
       console.error(
         `Invalid --runtime value: "${options.runtime}". Expected one of: ${AGENT_CONNECT_MODES.join(', ')}.`
       );
+      process.exit(1);
+    }
+    const LLM_AUTH_CHOICES: readonly LlmAuthCliChoice[] = [
+      'openai',
+      'anthropic',
+      'codex-subscription',
+      'claude-subscription',
+      'skip',
+    ];
+    if (options.llmAuth && !LLM_AUTH_CHOICES.includes(options.llmAuth as LlmAuthCliChoice)) {
+      console.error(`Invalid --llm-auth value: "${options.llmAuth}". Expected one of: ${LLM_AUTH_CHOICES.join(', ')}.`);
       process.exit(1);
     }
     let resolved: ReturnType<typeof resolveConnectCommandOptions>;

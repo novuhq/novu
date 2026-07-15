@@ -1,10 +1,5 @@
 import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
-import {
-  AnalyticsService,
-  decryptChannelConnectionAuth,
-  decryptCredentials,
-  PinoLogger,
-} from '@novu/application-generic';
+import { decryptChannelConnectionAuth, decryptCredentials, PinoLogger } from '@novu/application-generic';
 import {
   AgentIntegrationEntity,
   AgentIntegrationRepository,
@@ -15,10 +10,9 @@ import {
   IntegrationEntity,
   IntegrationRepository,
 } from '@novu/dal';
-import { EmailProviderIdEnum } from '@novu/shared';
+import { AgentSubscriberAccessEnum, EmailProviderIdEnum } from '@novu/shared';
 import type { WellKnownEmoji } from 'chat';
 import { isKeylessOrganization } from '../../keyless/keyless-organization.helpers';
-import { trackAgentIntegrationFirstWebhook } from '../shared/analytics/agent-analytics';
 import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
 import { AgentInactiveException } from '../shared/errors/agent-inactive.exception';
 import { AgentIntegrationDisconnectedException } from '../shared/errors/agent-integration-disconnected.exception';
@@ -63,6 +57,12 @@ export interface ResolvedAgentConfig {
   integrationIdentifier: string;
   integrationId: string;
   /**
+   * Provider id of the resolved integration (e.g. `slack`, `msteams`). Identifies
+   * the channel type for active-channel plan-limit enforcement, where multiple
+   * integrations of the same provider count as a single channel.
+   */
+  providerId: string;
+  /**
    * Whether the organization removed Novu branding (Pro and above). Drives the
    * "Powered by Novu" watermark applied by the outbound gateway on every
    * delivery path.
@@ -70,6 +70,12 @@ export interface ResolvedAgentConfig {
   removeNovuBranding: boolean;
   acknowledgeOnReceived: boolean;
   reactionOnResolved: WellKnownEmoji | null;
+  /**
+   * Whether unknown senders are auto-provisioned as subscribers (`open`) or
+   * rejected (`restricted`). Defaults to `restricted` when the agent has no
+   * explicit setting. Consumed by the inbound handler for the email platform.
+   */
+  subscriberAccess: AgentSubscriberAccessEnum;
   bridgeUrl?: string;
   devBridgeUrl?: string;
   devBridgeActive?: boolean;
@@ -107,8 +113,7 @@ export class AgentConfigResolver {
     private readonly integrationRepository: IntegrationRepository,
     private readonly channelConnectionRepository: ChannelConnectionRepository,
     private readonly organizationRepository: CommunityOrganizationRepository,
-    private readonly logger: PinoLogger,
-    private readonly analyticsService: AnalyticsService
+    private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -220,6 +225,18 @@ export class AgentConfigResolver {
       throw new NotFoundException();
     }
 
+    // Same defense-in-depth as Telegram: ConfigureSendblueWebhook is the only place that
+    // provisions credentials.token (the sb-signing-secret shared secret). Without it the
+    // adapter has no secret to verify inbound webhooks against, so reject early and keep the
+    // public endpoint indistinguishable from "unknown agent / unknown integration".
+    if (platform === AgentPlatformEnum.SENDBLUE && !credentials.token) {
+      this.logger.warn(
+        { agentId, integrationIdentifier },
+        'Sendblue inbound webhook rejected: webhook secret not yet configured for this integration'
+      );
+      throw new NotFoundException();
+    }
+
     let connectionAccessToken: string | undefined;
     if (platform === AgentPlatformEnum.SLACK) {
       connectionAccessToken = await this.resolveSlackBotToken(environmentId, organizationId, integrationIdentifier);
@@ -249,31 +266,14 @@ export class AgentConfigResolver {
       }
     }
 
-    // `connectedAt` is set the first time the platform actually delivers a
-    // real inbound message. Verification handshakes and outbound flows
-    // (replies, reactions, DMs) also call `resolve`, so we gate the write
-    // on the caller's declared source.
-    const isFirstInboundMessage = options.source === 'webhook_message' && !agentIntegration.connectedAt;
-
-    if (isFirstInboundMessage) {
-      await this.agentIntegrationRepository.updateOne(
-        {
-          _id: agentIntegration._id,
-          _environmentId: environmentId,
-          _organizationId: organizationId,
-        },
-        { $set: { connectedAt: new Date() } }
-      );
-
-      trackAgentIntegrationFirstWebhook(this.analyticsService, {
-        organizationId,
-        environmentId,
-        agentId,
-        agentIdentifier: agent.identifier,
-        integrationIdentifier,
-        platform,
-      });
-    }
+    // NOTE: `connectedAt` is intentionally NOT written here. Marking the link
+    // connected on any inbound webhook POST is too eager: every webhook event
+    // hits `resolve` first, including the agent's own outbound messages that the
+    // platform echoes back (e.g. the post-install welcome DM Slack delivers as a
+    // `message.im` event). That echo would mark the integration connected — and
+    // complete onboarding — before the user ever sends a message. Connection is
+    // now recorded only when a genuine, non-bot user message is dispatched, in
+    // `AgentInboundHandler.handle` (after the bot-author filter).
 
     return {
       platform,
@@ -282,12 +282,13 @@ export class AgentConfigResolver {
       environmentId,
       organizationId,
       isKeyless: isKeylessOrganization(organizationId),
-      isManaged: !!agent.managedRuntime,
+      isManaged: agent.runtime === 'managed' && !!agent.managedRuntime,
       agentId: agent._id,
       agentIdentifier: agent.identifier,
       agentName: agent.name,
       integrationIdentifier,
       integrationId: integration._id,
+      providerId: integration.providerId,
       removeNovuBranding: await this.resolveRemoveNovuBranding(organizationId),
       acknowledgeOnReceived: agent.behavior?.acknowledgeOnReceived !== false,
       reactionOnResolved: await resolveReaction(
@@ -295,6 +296,10 @@ export class AgentConfigResolver {
         DEFAULT_REACTION_ON_RESOLVED,
         this.logger
       ),
+      subscriberAccess:
+        agent.behavior?.subscriberAccess === 'open'
+          ? AgentSubscriberAccessEnum.OPEN
+          : AgentSubscriberAccessEnum.RESTRICTED,
       bridgeUrl: agent.bridgeUrl,
       devBridgeUrl: agent.devBridgeUrl,
       devBridgeActive: agent.devBridgeActive,

@@ -21,9 +21,69 @@ import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { useUpdateIntegration } from '@/hooks/use-update-integration';
 import { AGENTS_DOCS_PROVIDERS_URL } from '@/utils/agent-docs';
 import { cn } from '@/utils/ui';
+import { hasAgentInboundConnection } from './is-agent-integration-connected';
 import type { StepStatus } from './setup-guide-step-utils';
 
 export type SetupMode = 'quick' | 'manual';
+
+/** Shared vertical rail gradient — fades at the top and bottom edges of the numbered-steps column. */
+const SETUP_STEPPER_RAIL_GRADIENT =
+  'linear-gradient(to bottom, transparent 0%, #E1E4EA 10%, #E1E4EA 90%, transparent 100%)';
+
+function railGradient(solidTop: boolean, solidBottom: boolean) {
+  if (!solidTop && !solidBottom) {
+    return SETUP_STEPPER_RAIL_GRADIENT;
+  }
+
+  const topStops = solidTop ? '#E1E4EA 0%' : 'transparent 0%, #E1E4EA 10%';
+  const bottomStops = solidBottom ? '#E1E4EA 100%' : '#E1E4EA 90%, transparent 100%';
+
+  return `linear-gradient(to bottom, ${topStops}, ${bottomStops})`;
+}
+
+/**
+ * Vertical stepper rail aligned with `SetupStep` indicators (`left-[22px]` on this
+ * `pl-8` container matches each step's `-left-[20px]` indicator offset).
+ *
+ * When two rails are stacked to form one visual stepper (e.g. the channel step rail followed by a
+ * provider guide's rail), use `continuesBelow` on the upper rail and `continuesAbove` on the lower
+ * one so the line stays solid across the junction instead of fading out and back in.
+ */
+export function SetupStepperRail({
+  children,
+  className,
+  continuesAbove = false,
+  continuesBelow = false,
+}: {
+  children: ReactNode;
+  className?: string;
+  /** Keeps the top of the line solid so it visually continues a rail rendered above. */
+  continuesAbove?: boolean;
+  /** Keeps the bottom of the line solid and extends it through the parent's `gap-10` to meet the next rail. */
+  continuesBelow?: boolean;
+}) {
+  return (
+    <div className={cn('relative flex flex-col gap-10 pl-8', className)}>
+      <div
+        className={cn(
+          'pointer-events-none absolute left-[22px] top-0 w-px',
+          continuesBelow ? '-bottom-10' : 'bottom-0'
+        )}
+        style={{ background: railGradient(continuesAbove, continuesBelow) }}
+      />
+      {children}
+    </div>
+  );
+}
+
+/** Provider guide rail in AgentSetupSteps — continues the channel-step rail rendered above. */
+export function ProviderSetupStepperRail({ children, className }: { children: ReactNode; className?: string }) {
+  return (
+    <SetupStepperRail continuesAbove className={className}>
+      {children}
+    </SetupStepperRail>
+  );
+}
 
 export function SetupModeToggle({ mode, onChange }: { mode: SetupMode; onChange: (m: SetupMode) => void }) {
   return (
@@ -104,6 +164,12 @@ export function SetupStep({
    * lowering opacity and disabling pointer interaction on its content.
    */
   dimmed,
+  /**
+   * Aligns the step indicator with the `sectionLabel` line instead of the title, so the number sits
+   * inline with a short eyebrow (e.g. "FOR YOUR USERS"). Defaults to false to preserve the title
+   * alignment used by numbered eyebrows like "1/5 SETUP AGENT HANDLER".
+   */
+  inlineSectionLabel,
 }: {
   index: number;
   status: StepStatus;
@@ -115,15 +181,24 @@ export function SetupStep({
   fullWidthContent?: ReactNode;
   headerSlot?: ReactNode;
   dimmed?: boolean;
+  inlineSectionLabel?: boolean;
 }) {
+  let indicatorTopClass = 'top-[3px]';
+
+  if (inlineSectionLabel) {
+    indicatorTopClass = 'top-px';
+  } else if (sectionLabel) {
+    indicatorTopClass = 'top-6';
+  }
+
   return (
     <div className="relative flex flex-col gap-4 pl-6">
-      <div className={cn('absolute -left-[20px] flex w-5 justify-center', sectionLabel ? 'top-6' : 'top-[3px]')}>
+      <div className={cn('absolute -left-[20px] flex w-5 justify-center', indicatorTopClass)}>
         <StepIndicator status={status} index={index} />
       </div>
       <div
         className={cn(
-          'flex flex-col gap-4 transition-opacity duration-300 ease-out md:flex-row md:gap-20 pt-[3px]',
+          'flex flex-col gap-4 pt-[3px] transition-opacity duration-300 ease-out md:flex-row md:items-start md:gap-12 lg:gap-16 xl:gap-20',
           dimmed && 'pointer-events-none opacity-30'
         )}
       >
@@ -138,7 +213,9 @@ export function SetupStep({
           </div>
           {extraContent}
         </div>
-        {rightContent && <div className="flex min-h-0 min-w-0 flex-1 flex-col items-start">{rightContent}</div>}
+        {rightContent && (
+          <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col items-start md:max-w-[460px]">{rightContent}</div>
+        )}
       </div>
       {fullWidthContent}
     </div>
@@ -199,6 +276,73 @@ export function SetupButton({
   );
 }
 
+/** Read-only, copyable value row used by manual webhook fallback panels (callback URL, secrets, tokens). */
+export function ReadOnlyValueRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex w-full max-w-[320px] flex-col gap-1.5">
+      <p className="text-text-sub text-label-xs font-medium leading-5">{label}</p>
+      <div className="border-stroke-soft bg-bg-white flex h-7 items-center overflow-hidden rounded-md border shadow-xs">
+        <input
+          type="text"
+          readOnly
+          value={value}
+          aria-label={label}
+          className="text-text-soft min-w-0 flex-1 truncate bg-transparent px-2 font-mono text-[12px] leading-4 outline-none"
+        />
+        <CopyButton valueToCopy={value} size="xs" className="border-stroke-soft shrink-0 border-l" />
+      </div>
+    </div>
+  );
+}
+
+export function ListeningStatusView({
+  connected,
+  connectedTitle = 'Connected',
+  listeningTitle = 'Listening...',
+  connectedMessage,
+  listeningMessage,
+  inline = false,
+  className,
+  showStatusIndicator = true,
+}: {
+  connected: boolean;
+  connectedTitle?: string;
+  listeningTitle?: string;
+  connectedMessage: string;
+  listeningMessage: string;
+  inline?: boolean;
+  className?: string;
+  showStatusIndicator?: boolean;
+}) {
+  return (
+    <div className={cn('flex flex-col gap-2', !inline && (className ?? 'py-4 pl-6'))}>
+      <div className="flex flex-col gap-3">
+        {showStatusIndicator ? (
+          connected ? (
+            <div className="flex items-center gap-1">
+              <CheckCircle2 className="text-success-base size-3.5 shrink-0" />
+              <span className="text-text-strong text-label-sm font-medium">{connectedTitle}</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1">
+              <Loader className="size-3.5 text-[#dd2476] animate-[spin_5s_linear_infinite]" />
+              <span className="animate-gradient bg-linear-to-r from-[#dd2476] via-[#ff512f] to-[#dd2476] bg-size-[400%_400%] bg-clip-text text-label-sm font-medium text-transparent">
+                {listeningTitle}
+              </span>
+            </div>
+          )
+        ) : null}
+        <p className="text-text-soft text-label-xs font-medium leading-4">
+          {connected ? connectedMessage : listeningMessage}
+        </p>
+      </div>
+      <ExternalLink href={AGENTS_DOCS_PROVIDERS_URL} variant="documentation">
+        Learn more in docs
+      </ExternalLink>
+    </div>
+  );
+}
+
 export function ListeningStatus({
   agentIdentifier,
   watchedIntegrationId,
@@ -248,11 +392,15 @@ export function ListeningStatus({
 
         const link = res.data.find((l) => l.integration._id === watchedIntegrationId);
 
-        if (!link?.connectedAt) {
+        if (!link) {
           return;
         }
 
-        setConnectedAt(link.connectedAt);
+        if (!hasAgentInboundConnection(link.connectedAt)) {
+          return;
+        }
+
+        setConnectedAt(link.connectedAt ?? null);
 
         if (!confettiFired) {
           confettiFired = true;
@@ -317,29 +465,12 @@ export function ListeningStatus({
           />,
           document.body
         )}
-      <div className={cn('flex flex-col gap-2', !inline && 'py-4 pl-6')}>
-        <div className="flex flex-col gap-3">
-          {connectedAt ? (
-            <div className="flex items-center gap-1">
-              <CheckCircle2 className="text-success-base size-3.5 shrink-0" />
-              <span className="text-text-strong text-label-sm font-medium">Connected</span>
-            </div>
-          ) : (
-            <div className="flex items-center gap-1">
-              <Loader className="size-3.5 text-[#dd2476] animate-[spin_5s_linear_infinite]" />
-              <span className="animate-gradient bg-linear-to-r from-[#dd2476] via-[#ff512f] to-[#dd2476] bg-size-[400%_400%] bg-clip-text text-label-sm font-medium text-transparent">
-                Listening...
-              </span>
-            </div>
-          )}
-          <p className="text-text-soft text-label-xs font-medium leading-4">
-            {connectedAt ? connectedMessage : listeningMessage}
-          </p>
-        </div>
-        <ExternalLink href={AGENTS_DOCS_PROVIDERS_URL} variant="documentation">
-          Learn more in docs
-        </ExternalLink>
-      </div>
+      <ListeningStatusView
+        connected={Boolean(connectedAt)}
+        connectedMessage={connectedMessage}
+        listeningMessage={listeningMessage}
+        inline={inline}
+      />
     </>
   );
 }
@@ -353,6 +484,8 @@ export function IntegrationCredentialsSidebar({
   agentIdentifier,
   testSubscriberId,
   submitLabel,
+  webhookUrl,
+  webhookSecret,
 }: {
   integrationId: string;
   isOpen: boolean;
@@ -368,6 +501,13 @@ export function IntegrationCredentialsSidebar({
   /** Quickstart test subscriber for Telegram mobile `/start` deep links. */
   testSubscriberId?: string | null;
   submitLabel?: string;
+  /**
+   * Read-only webhook details shown below the credentials form. Kept out of
+   * the inline setup steps so sensitive values (the secret in particular)
+   * only surface here, in the provider's own details/edit view.
+   */
+  webhookUrl?: string;
+  webhookSecret?: string;
 }) {
   const { integrations } = useFetchIntegrations();
   const { mutateAsync: updateIntegration, isPending: isUpdating } = useUpdateIntegration();
@@ -439,6 +579,13 @@ export function IntegrationCredentialsSidebar({
           testSubscriberId={testSubscriberId}
           onFormStateChange={setFormState}
         />
+        {webhookUrl ? (
+          <div className="flex flex-col gap-2 border-t p-3">
+            <p className="text-text-sub text-label-xs font-medium">Webhook</p>
+            <ReadOnlyValueRow label="Callback URL" value={webhookUrl} />
+            {webhookSecret ? <ReadOnlyValueRow label="Webhook Secret" value={webhookSecret} /> : null}
+          </div>
+        ) : null}
       </div>
 
       <div className="bg-background flex justify-end gap-2 border-t p-3">
@@ -452,23 +599,5 @@ export function IntegrationCredentialsSidebar({
         </Button>
       </div>
     </IntegrationSheet>
-  );
-}
-
-export function ReadOnlyValueRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex w-full max-w-[320px] flex-col gap-1.5">
-      <p className="text-text-sub text-label-xs font-medium leading-5">{label}</p>
-      <div className="border-stroke-soft bg-bg-white flex h-7 items-center overflow-hidden rounded-md border shadow-xs">
-        <input
-          type="text"
-          readOnly
-          value={value}
-          aria-label={label}
-          className="text-text-soft min-w-0 flex-1 truncate bg-transparent px-2 font-mono text-[12px] leading-4 outline-none"
-        />
-        <CopyButton valueToCopy={value} size="xs" className="border-stroke-soft shrink-0 border-l" />
-      </div>
-    </div>
   );
 }

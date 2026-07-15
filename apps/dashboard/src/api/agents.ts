@@ -2,6 +2,7 @@ import type {
   AgentMcpServerEnablementDto,
   AgentRuntime,
   AgentRuntimeProviderIdEnum,
+  AgentSubscriberAccessEnum,
   ChannelTypeEnum,
   DirectionEnum,
   IEnvironment,
@@ -54,9 +55,19 @@ export type AgentIntegrationSummary = {
   active: boolean;
 };
 
+export type AgentSubscriberAccess = `${AgentSubscriberAccessEnum}`;
+
 export type AgentBehavior = {
   acknowledgeOnReceived?: boolean;
   reactionOnResolved?: string | null;
+  /**
+   * Channel-agnostic. `open` on managed agents auto-creates a lightweight
+   * subscriber from an anonymous sender; on custom-code agents the turn is
+   * forwarded to the bridge with a null subscriber. `restricted` rejects
+   * anonymous senders. Managed creates default to `open`; self-hosted to
+   * `restricted`. Unset resolves as `restricted`.
+   */
+  subscriberAccess?: AgentSubscriberAccess;
 };
 
 export type ManagedRuntimeResponse = {
@@ -571,19 +582,6 @@ export async function listAgentMcpServers(
   return response.data;
 }
 
-export async function enableAgentMcpServer(
-  environment: IEnvironment,
-  agentIdentifier: string,
-  mcpId: string
-): Promise<AgentMcpServerEnablement> {
-  const response = await post<{ data: AgentMcpServerEnablement }>(
-    `/agents/${encodeURIComponent(agentIdentifier)}/mcp-servers`,
-    { environment, body: { mcpId } }
-  );
-
-  return response.data;
-}
-
 export function disableAgentMcpServer(
   environment: IEnvironment,
   agentIdentifier: string,
@@ -803,6 +801,83 @@ export async function sendWhatsAppTestTemplate(
   return response.data;
 }
 
+export type SendSendblueTestMessageError = {
+  code: 'missing_credentials' | 'invalid_recipient' | 'recipient_not_verified' | 'sendblue_rejected' | 'unknown';
+  message: string;
+};
+
+export type SendSendblueTestMessageResponse = {
+  success: boolean;
+  messageId?: string;
+  error?: SendSendblueTestMessageError;
+};
+
+export async function sendSendblueTestMessage(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  integrationIdentifier: string,
+  subscriberId: string
+): Promise<SendSendblueTestMessageResponse> {
+  const response = await post<{ data: SendSendblueTestMessageResponse }>(
+    `/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationIdentifier)}/sendblue/test-message`,
+    { environment, body: { subscriberId } }
+  );
+
+  return response.data;
+}
+
+export type ConfigureSendblueWebhookFailure = {
+  code: 'missing_credentials' | 'sendblue_rejected' | 'unknown';
+  message: string;
+};
+
+export type ConfigureSendblueWebhookResponse = {
+  success: boolean;
+  callbackUrl: string;
+  webhookSecret?: string;
+  fallbackToManual?: boolean;
+  reason?: ConfigureSendblueWebhookFailure;
+  /**
+   * Other Novu agent webhook URLs already registered on this Sendblue account. Sendblue
+   * webhooks are account-level, so every inbound message triggers all of them — surface a
+   * warning and offer to remove the stale entries via {@link removeAgentSendblueWebhooks}.
+   */
+  existingNovuWebhookUrls?: string[];
+};
+
+export async function configureAgentSendblueWebhook(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  integrationIdentifier: string
+): Promise<ConfigureSendblueWebhookResponse> {
+  const response = await post<{ data: ConfigureSendblueWebhookResponse }>(
+    `/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationIdentifier)}/sendblue/configure-webhook`,
+    { environment }
+  );
+
+  return response.data;
+}
+
+export type RemoveSendblueWebhooksResponse = {
+  success: boolean;
+  removedWebhookUrls: string[];
+  message?: string;
+};
+
+export async function removeAgentSendblueWebhooks(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  integrationIdentifier: string,
+  webhookUrls: string[]
+): Promise<RemoveSendblueWebhooksResponse> {
+  const response = await post<{ data: RemoveSendblueWebhooksResponse }>(
+    `/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationIdentifier)}/sendblue/remove-webhooks`,
+    { environment, body: { webhookUrls } }
+  );
+
+  return response.data;
+}
+
 export type ConfigureTelegramWebhookResult = {
   webhookUrl: string;
   configuredAt: string;
@@ -813,11 +888,10 @@ type ConfigureTelegramWebhookEnvelope = { data: ConfigureTelegramWebhookResult }
 
 export async function configureTelegramAgentWebhook(
   environment: IEnvironment,
-  agentIdentifier: string,
-  integrationId: string
+  integrationIdentifier: string
 ): Promise<ConfigureTelegramWebhookResult> {
   const response = await post<ConfigureTelegramWebhookEnvelope>(
-    `/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationId)}/telegram/configure`,
+    `/integrations/${encodeURIComponent(integrationIdentifier)}/webhook/configure`,
     { environment }
   );
 
@@ -835,12 +909,11 @@ type TelegramMobileLinkEnvelope = { data: TelegramMobileLink };
 
 export async function requestTelegramMobileLink(
   environment: IEnvironment,
-  agentIdentifier: string,
-  integrationId: string,
+  integrationIdentifier: string,
   subscriberId?: string
 ): Promise<TelegramMobileLink> {
   const response = await post<TelegramMobileLinkEnvelope>(
-    `/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationId)}/telegram/mobile-link`,
+    `/integrations/${encodeURIComponent(integrationIdentifier)}/mobile-link`,
     { environment, body: subscriberId ? { subscriberId } : undefined }
   );
 
@@ -854,7 +927,12 @@ export type TelegramSubscriberLink = {
   expiresAt: string;
 };
 
-type TelegramSubscriberLinkEnvelope = { data: TelegramSubscriberLink };
+type LinkChannelEndpointEnvelope = {
+  data: {
+    url: string;
+    providerMetadata?: { botUsername?: string; expiresAt?: string };
+  };
+};
 
 /**
  * Issues a `t.me/<bot>?start=<code>` deep-link that, when opened by a subscriber,
@@ -863,16 +941,21 @@ type TelegramSubscriberLinkEnvelope = { data: TelegramSubscriberLink };
  */
 export async function requestTelegramSubscriberLink(
   environment: IEnvironment,
-  agentIdentifier: string,
-  integrationId: string,
+  integrationIdentifier: string,
   subscriberId: string
 ): Promise<TelegramSubscriberLink> {
-  const response = await post<TelegramSubscriberLinkEnvelope>(
-    `/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationId)}/telegram/subscriber-link`,
-    { environment, body: { subscriberId } }
-  );
+  const response = await post<LinkChannelEndpointEnvelope>('/integrations/channel-endpoints/link', {
+    environment,
+    body: { integrationIdentifier, subscriberId },
+  });
 
-  return response.data;
+  const payload = response.data;
+
+  return {
+    deepLinkUrl: payload.url,
+    botUsername: payload.providerMetadata?.botUsername ?? '',
+    expiresAt: payload.providerMetadata?.expiresAt ?? '',
+  };
 }
 
 export type TelegramMobileLinkStatus =
@@ -887,7 +970,7 @@ export async function getTelegramMobileSetupStatus(
   token: string,
   signal?: AbortSignal
 ): Promise<TelegramMobileLinkStatus> {
-  const url = `${getApiBaseUrl()}/v1/agents/public/telegram/mobile-configure/status?token=${encodeURIComponent(token)}`;
+  const url = `${getApiBaseUrl()}/v1/integrations/mobile-configure/status?token=${encodeURIComponent(token)}`;
   const response = await fetch(url, {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
@@ -930,7 +1013,7 @@ export async function submitTelegramMobileCredentials(
   token: string,
   botToken: string
 ): Promise<SubmitTelegramMobileCredentialsResult> {
-  const url = `${getApiBaseUrl()}/v1/agents/public/telegram/mobile-configure`;
+  const url = `${getApiBaseUrl()}/v1/integrations/mobile-configure`;
   const response = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

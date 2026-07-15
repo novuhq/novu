@@ -100,6 +100,7 @@ export enum TriggerEventStatusEnum {
 }
 
 export enum EmailProviderIdEnum {
+  Anypost = 'anypost',
   EmailJS = 'emailjs',
   Mailgun = 'mailgun',
   Mailjet = 'mailjet',
@@ -176,6 +177,7 @@ export enum ChatProviderIdEnum {
   WhatsAppBusiness = 'whatsapp-business',
   ChatWebhook = 'chat-webhook',
   Telegram = 'telegram',
+  Sendblue = 'sendblue',
 }
 
 export enum PushProviderIdEnum {

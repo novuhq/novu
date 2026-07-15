@@ -1,0 +1,127 @@
+---
+title: 'Hono'
+description: "Get started with Novu Framework in a Hono application by scaffolding a bridge, defining a workflow, and triggering your first notification."
+---
+
+
+In this guide, we will add a Novu [Bridge Endpoint](/framework/endpoint) to a Hono application and send our first test workflow.
+
+<Steps>
+    <Step>
+         ## Set up your local environment
+
+Start local development by running:
+
+```bash
+npx novu dev
+```
+
+This opens the Novu Dashboard in **Local mode** — a local environment connected to your running app through a tunnel — where you can preview and test the workflows running on your machine. See [Local development](/framework/studio) for details.
+
+    </Step>
+   <Step>
+         ## Install packages
+
+Install the Novu Framework package and Hono:
+
+```bash
+npm install @novu/framework hono
+```
+
+`@novu/framework` provides the tools to build and manage your notification workflows. `hono` is required because it is an optional peer dependency of the Hono adapter.
+
+    </Step>
+   <Step>
+         ## Add a Novu API Endpoint
+
+```typescript src/index.ts
+import { Hono } from 'hono';
+import { serve } from '@novu/framework/hono';
+import { testWorkflow } from './novu/workflows';
+
+const app = new Hono();
+
+app.on(
+  ['GET', 'POST', 'OPTIONS'],
+  '/api/novu',
+  serve({ workflows: [testWorkflow] })
+);
+
+export default app;
+```
+
+    </Step>
+    <Step>
+        ## Configure your secret key
+
+Add your Novu secret key to your environment variables:
+
+```bash .env
+NOVU_SECRET_KEY=your_secret_key
+```
+
+    </Step>
+    <Step>
+        ## Create your workflow definition
+        Add a `novu` folder in your app folder as such ```novu/workflows.ts``` that will contain your workflow definitions.
+
+```ts src/novu/workflows.ts
+import { workflow } from '@novu/framework';
+
+export const testWorkflow = workflow('test-workflow', async ({ step }) => {
+  await step.email('test-email', async () => {
+    return {
+      subject: 'Test Email',
+      body: 'This is a test email from Novu Framework!',
+    };
+  });
+});
+```
+
+    </Step>
+    <Step>
+        ## Start your application
+        Start your Hono server with the Novu Endpoint configured.
+
+        If your Hono application is running on a port other than `4000`, restart `npx novu dev` with that port:
+
+        ```tsx
+        npx novu@latest dev --port <YOUR_HONO_APPLICATION_PORT>
+        ```
+    </Step>
+    <Step>
+        ## Test your endpoint
+
+Test your workflow by triggering it from the Local environment or using the Novu API:
+
+```bash
+curl -X POST https://api.novu.co/v1/events/trigger \
+  -H 'Authorization: ApiKey YOUR_API_KEY' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "name": "my-workflow",
+    "to": "subscriber-id",
+    "payload": {}
+  }'
+```
+
+You should see the notification being processed in the Local environment.
+
+    </Step>
+    <Step>
+        ## Deploy your application
+
+Deploy your application to your preferred hosting provider. Make sure the `/api/novu` endpoint is accessible from the internet.
+
+For local development and testing, you can use tools like ngrok to expose your local server to the internet.
+
+    </Step>
+
+</Steps>
+
+Now that you have your first workflow running, you can:
+
+- Learn about [Workflow Controls](/framework/controls) to expose no-code editing capabilities
+- Explore different [Channel Steps](/framework/email-channel) like Email, SMS, Push, and more
+- Set up [Action Steps](/framework/digest) like Delay and Digest
+- Check out our [React Email integration](/framework/content/react-email) for building beautiful email templates

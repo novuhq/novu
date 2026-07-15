@@ -1,0 +1,106 @@
+---
+title: 'Bridge Endpoint'
+description: 'Learn how to configure the Novu Bridge Endpoint, the single HTTP endpoint your application exposes to communicate with the Novu Worker Engine.'
+---
+
+
+Novu Framework requires a **single** `HTTP` endpoint (`/api/novu` or similar) to be exposed by your application. This endpoint is used to receive events from our **Worker Engine**.
+
+You can view the Bridge Endpoint as a webhook endpoint that Novu will call when it needs to retrieve contextual information for a given subscriber and notification.
+
+Using the `npx novu init` command creates a Bridge application for you with a Bridge Endpoint ready to go.
+
+## The `serve` function
+
+We offer framework specific wrappers in form of an exported `serve` function that abstracts away:
+
+- Parsing the incoming request for `GET`, `POST`, `PUT` and `OPTIONS` requests
+- HMAC header authentication
+- Framework specific response and error handling
+
+Currently, we offer `serve` functions for the following frameworks:
+
+- [Next.js](/framework/quickstart/nextjs)
+- [Express.js](/framework/quickstart/express)
+- [NestJS](/framework/quickstart/nestjs)
+- [Nuxt](/framework/quickstart/nuxt)
+- [h3](/framework/quickstart/h3)
+- [Hono](/framework/quickstart/hono)
+- [Remix](/framework/quickstart/remix)
+- [Sveltekit](/framework/quickstart/svelte)
+- [AWS Lambda](/framework/quickstart/lambda)
+
+## Retry behavior
+
+When Novu calls your bridge endpoint to execute a framework step, transient failures are retried automatically before the step is marked as failed.
+
+Novu retries up to **3 times** with exponential backoff (`2^attemptCount × 500ms`):
+
+| Retry | Delay |
+| --- | --- |
+| 1st | 1 second |
+| 2nd | 2 seconds |
+| 3rd | 4 seconds |
+
+Retries are triggered for these **HTTP status codes**: `408`, `429`, `500`, `503`, `504`, `521`, `522`, and `524`.
+
+Retries are also triggered for transient **network error codes** such as `EAI_AGAIN`, `ECONNREFUSED`, `ECONNRESET`, `ETIMEDOUT`, and `ENOTFOUND`.
+
+Other responses — for example most `4xx` errors outside `408` and `429` — are not retried. Each bridge request has a **5 second** timeout.
+
+## Writing a custom `serve` function
+
+If we currently don't support your framework, you can write a custom `serve` function like the following example:
+
+```ts
+import { type Request, type Response } from 'express';
+import { NovuRequestHandler, ServeHandlerOptions } from '@novu/framework';
+
+export const serve = (options: ServeHandlerOptions) => {
+  const requestHandler = new NovuRequestHandler({
+    frameworkName: 'express',
+    ...options,
+    handler: (incomingRequest: Request, response: Response) => ({
+      method: () => incomingRequest.method,
+      headers: (key) => {
+        const header = incomingRequest.headers[key];
+        return Array.isArray(header) ? header[0] : header;
+      },
+      queryString: (key) => {
+        const qs = incomingRequest.query[key];
+        return Array.isArray(qs) ? qs[0] : qs;
+      },
+      body: () => incomingRequest.body,
+      url: () =>
+        new URL(incomingRequest.url, `https://${incomingRequest.headers.get('host') || ''}`),
+      transformResponse: ({ body, headers, status }) => {
+        Object.entries(headers).forEach(([headerName, headerValue]) => {
+          response.setHeader(headerName, headerValue);
+        });
+
+        return response.status(status).send(body);
+      },
+    }),
+  });
+
+  return requestHandler.createHandler();
+};
+```
+
+<AccordionGroup>
+  <Accordion title="What is the difference between tunnel url and bridge url?">
+    The tunnel url is the url that is generated when you run the `npx novu@latest dev` command. It is used to test your notifications by triggering them from the Dashboard's Local environment. For local development and testing, you can use the tunnel url as bridge url. For production, you should use deployed application url with bridge endpoint as the bridge url.
+  </Accordion>
+  
+  <Accordion title="Is it necessary to have bridge url publicly accessible?">
+    Yes, the bridge url must be publicly accessible. We recommend having https enabled for the bridge url.
+  </Accordion>
+
+  <Accordion title="Can endpoint other than /api/novu be used?">
+    Yes, you can use any path you want. However, you need to make sure that the endpoint is used in the bridge url. Bridge url is made of the base url and the endpoint path. If your path is /custom-path/novu and deployed application url is https://my-app.com, then the bridge url will be https://my-app.com/custom-path/novu.
+  </Accordion>
+
+  <Accordion title="What happens when a bridge step request fails?">
+    Novu retries transient errors up to 3 times with exponential backoff before marking the step as failed. See [Retry behavior](/framework/endpoint#retry-behavior) for retried status codes, network errors, and delay timings.
+  </Accordion>
+</AccordionGroup>

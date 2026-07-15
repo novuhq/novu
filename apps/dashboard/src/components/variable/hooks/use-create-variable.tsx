@@ -10,7 +10,7 @@ import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useWorkflowSchema } from '@/components/workflow-editor/workflow-schema-provider';
 import { useEnvironment } from '@/context/environment/hooks';
 
-type VariableType = 'payload' | 'subscriber' | 'context';
+type VariableType = 'payload' | 'subscriber' | 'actor' | 'context';
 
 interface VariableInfo {
   type: VariableType;
@@ -22,6 +22,7 @@ interface VariableInfo {
 const VARIABLE_PREFIXES = {
   PAYLOAD: 'payload.',
   SUBSCRIBER: 'subscriber.data.',
+  ACTOR: 'actor.data.',
   CONTEXT: 'context.',
 } as const;
 
@@ -32,6 +33,7 @@ function parseVariablePath(variablePath: string): VariableInfo | null {
   const prefixMap: Array<{ prefix: string; type: VariableType }> = [
     { prefix: VARIABLE_PREFIXES.PAYLOAD, type: 'payload' },
     { prefix: VARIABLE_PREFIXES.SUBSCRIBER, type: 'subscriber' },
+    { prefix: VARIABLE_PREFIXES.ACTOR, type: 'actor' },
     { prefix: VARIABLE_PREFIXES.CONTEXT, type: 'context' },
   ];
 
@@ -98,7 +100,7 @@ export const useCreateVariable = () => {
   const editorValue = stepEditor?.editorValue;
   const setEditorValue = stepEditor?.setEditorValue;
 
-  const { savePersistedSubscriber, savePersistedContext } = usePersistedPreviewContext({
+  const { savePersistedSubscriber, savePersistedActor, savePersistedContext } = usePersistedPreviewContext({
     workflowId: workflow?.workflowId || '',
     environmentId: currentEnvironment?._id || '',
   });
@@ -138,6 +140,28 @@ export const useCreateVariable = () => {
       savePersistedSubscriber(updatedSubscriber);
     },
     [setEditorValue, editorValue, savePersistedSubscriber]
+  );
+
+  const handleActorVariable = useCallback(
+    (variableInfo: VariableInfo) => {
+      if (!editorValue || !setEditorValue) return;
+
+      const currentPreviewData = parseJsonValue(editorValue);
+      const currentActor = currentPreviewData.actor || {};
+      const currentActorData = currentActor.data || {};
+
+      const newVariable = variableInfo.key
+        .split('.')
+        .reduceRight((value, key) => ({ [key]: value }), 'example_value' as unknown);
+
+      const updatedActorData = merge({}, currentActorData, newVariable);
+      const updatedActor = { ...currentActor, data: updatedActorData };
+      const newPreviewData = { ...currentPreviewData, actor: updatedActor };
+
+      setEditorValue(JSON.stringify(newPreviewData, null, 2));
+      savePersistedActor(updatedActor);
+    },
+    [setEditorValue, editorValue, savePersistedActor]
   );
 
   const handleContextVariable = useCallback(
@@ -185,6 +209,7 @@ export const useCreateVariable = () => {
         const handlers = {
           payload: handlePayloadVariable,
           subscriber: handleSubscriberVariable,
+          actor: handleActorVariable,
           context: handleContextVariable,
         } as const;
 
@@ -198,7 +223,7 @@ export const useCreateVariable = () => {
         showErrorToast(`Failed to create ${variableInfo.type} variable: ${error}`);
       }
     },
-    [workflow, handlePayloadVariable, handleSubscriberVariable, handleContextVariable]
+    [workflow, handlePayloadVariable, handleSubscriberVariable, handleActorVariable, handleContextVariable]
   );
 
   const openSchemaDrawer = useCallback((variableName?: string) => {

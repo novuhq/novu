@@ -53,14 +53,14 @@ overrides:
   xml2js@<0.5.0: ^0.5.0
   '@types/mocha': ^10.0.8
   rollup@>=4.0.0 <4.59.0: ^4.59.0
-  '@nestjs/common@>=10.0.0 <12.0.0': 11.1.24
+  '@nestjs/common@>=10.0.0 <12.0.0': 11.1.27
   '@grpc/grpc-js@>=1.14.0 <1.14.4': ^1.14.4
   joi@<18.2.1: ^18.2.1
   prosemirror-model: 1.22.3
   path-to-regexp@<0.1.13: ^0.1.13
   '@swc/core@>=1.0.0 <2.0.0': 1.7.26
   '@swc/cli@>=0.0.0 <1.0.0': 0.3.12
-  '@babel/core@>7.0.0 <8.0.0': 7.28.0
+  '@babel/core@>7.0.0 <8.0.0': 7.29.7
   prismjs@<=1.29.0: 1.30.0
   mongodb@>=4.0.0 <5.0.0: 5.9.2
   form-data@<2.5.6: ^2.5.6
@@ -76,7 +76,8 @@ overrides:
   fast-xml-parser@>=4.0.0 <5.0.0: 5.7.3
   fast-xml-parser@>=5.0.0 <5.7.3: 5.7.3
   basic-ftp@<5.3.1: ^5.3.1
-  axios@>=1.0.0 <1.17.0: ^1.17.0
+  axios@>=1.0.0 <1.18.0: ^1.18.1
+  '@slack/web-api': 7.17.0
   seroval@<1.4.1: ^1.4.1
   h3@<1.15.9: ^1.15.9
   immutable@>=4.0.0 <4.3.8: ^4.3.8
@@ -96,8 +97,8 @@ overrides:
   undici@>=6.0.0 <6.27.0: ^6.27.0
   jose@>=3.0.0 <4.15.5: ^4.15.5
   qs@<6.15.2: ^6.15.2
-  js-yaml@<3.14.2: ^3.14.2
-  js-yaml@>=4.0.0 <4.1.1: ^4.1.1
+  js-yaml@<3.15.0: ^3.15.0
+  js-yaml@>=4.0.0 <4.2.0: ^4.2.0
   smol-toml@<1.6.1: ^1.6.1
   '@langchain/langgraph-checkpoint-mongodb@<1.3.1': ^1.3.1
   '@babel/runtime@<7.26.10': ^7.26.10
@@ -178,6 +179,10 @@ overrides:
   '@opentelemetry/exporter-prometheus@<0.217.0': ^0.217.0
   '@opentelemetry/sdk-node@<0.217.0': ^0.217.0
   '@opentelemetry/auto-instrumentations-node@<0.75.0': ^0.75.0
+  '@opentelemetry/core@<2.8.0': ^2.8.0
+  '@opentelemetry/sdk-trace-base@<2.8.0': ^2.8.0
+  '@opentelemetry/resources@<2.8.0': ^2.8.0
+  '@opentelemetry/context-async-hooks@<2.8.0': ^2.8.0
   mermaid@>=11.0.0-alpha.1 <11.15.0: ^11.15.0
   tsup@<8.3.5: ^8.3.5
   sanitize-html@<2.17.4: ^2.17.4
@@ -189,6 +194,7 @@ overrides:
   vitest@<4.1.0: ^4.1.0
   js-cookie@<3.0.7: ^3.0.7
   liquidjs@<10.26.0: ^10.27.0
+  linkify-it@<5.0.1: ^5.0.1
   # Force single instances of @codemirror/state and @codemirror/autocomplete.
   # Without this, transitive lang-* packages pin to state@6.4.1 while direct
   # dashboard imports resolve against state@6.6.0, producing two virtual peer
@@ -213,6 +219,7 @@ allowBuilds:
   '@newrelic/native-metrics': true
   '@novu/thalamus': true
   '@sentry/cli': true
+  '@sentry/node-cpu-profiler': true
   '@sentry/profiling-node': true
   '@sveltejs/kit': true
   '@swc/core': true

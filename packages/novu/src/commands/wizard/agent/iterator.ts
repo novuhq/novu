@@ -142,13 +142,13 @@ const WIZARD_DISALLOWED_TOOLS = [
 ];
 
 const DEFAULT_MCP_URL_US = 'https://mcp.novu.co/';
-const DEFAULT_MCP_URL_EU = 'https://mcp.novu.co/?region=eu';
+const DEFAULT_MCP_URL_EU = 'https://eu.mcp.novu.co/';
 
 export function resolveMcpUrl(override: string | undefined, region: ResolvedAuth['region']): string {
   const trimmed = override?.trim();
 
   if (region === CloudRegionEnum.LOCAL) {
-    return `${trimmed ?? 'http://localhost:8787'}/?region=local`;
+    return `${trimmed ?? 'http://localhost:8787'}`;
   }
   if (region === CloudRegionEnum.EU) {
     return DEFAULT_MCP_URL_EU;

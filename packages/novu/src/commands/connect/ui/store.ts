@@ -1,14 +1,21 @@
 import { atom, type WritableAtom } from 'nanostores';
 import type { GeneratedAgentSpec } from '../api/agents';
+import type { BridgeScaffoldVariant } from '../pipeline/bridge/types';
+import type { BridgeAdapterVariant } from '../pipeline/bridge-adapter/types';
+import type { LlmAuthKind } from '../pipeline/llm-auth/types';
 import type {
   AgentConnectMode,
   AgentSummary,
+  AiSdkConnectOutcome,
+  BridgeRequirement,
   ChannelChoice,
   ChatSdkConnectOutcome,
-  ChatSdkRequirement,
+  CustomCodeConnectOutcome,
+  LangChainConnectOutcome,
 } from '../types';
+import type { BridgeReconcileVariant } from './bridge-reconcile-variant';
 import type {
-  ChatSdkTunnelOfferResult,
+  BridgeTunnelOfferResult,
   GeneratedAgentPreviewResult,
   PickAgentIntegrationResult,
   PickResult,
@@ -71,40 +78,44 @@ export type Phase =
       resolve: (overwrite: boolean) => void;
     }
   | {
+      kind: 'pick-llm-auth';
+      connectMode: BridgeAdapterVariant;
+      resolve: (kind: LlmAuthKind) => void;
+      reject: (error: Error) => void;
+    }
+  | {
       kind: 'confirm-scaffold';
       projectDir: string;
       appName: string;
+      variant?: BridgeScaffoldVariant;
       resolve: (confirmed: boolean) => void;
     }
-  | { kind: 'scaffolding-chat-sdk' }
+  | { kind: 'scaffolding-bridge'; variant: BridgeScaffoldVariant }
   | {
-      kind: 'chat-sdk-scaffolded';
+      kind: 'bridge-reconcile-plan';
       projectDir: string;
-      envPaths: string[];
-      skippedInstall?: boolean;
-    }
-  | {
-      kind: 'chat-sdk-reconcile-plan';
-      projectDir: string;
-      requirements: ChatSdkRequirement[];
+      requirements: BridgeRequirement[];
       envPaths: string[];
       wiringInstructions?: string;
       requirementsFile?: string;
+      agentPrompt?: string;
+      variant?: BridgeReconcileVariant;
       resolve: () => void;
     }
-  | { kind: 'chat-sdk-install-deps' }
+  | { kind: 'bridge-install-deps'; variant?: BridgeReconcileVariant }
   | {
-      kind: 'chat-sdk-install-deps-confirm';
+      kind: 'bridge-install-deps-confirm';
       projectDir: string;
       installCommand: string;
       packages: string[];
+      variant?: BridgeReconcileVariant;
       resolve: (confirmed: boolean) => void;
     }
   | {
-      kind: 'chat-sdk-tunnel-offer';
+      kind: 'bridge-tunnel-offer';
       projectDir: string;
       devCommand: string;
-      resolve: (result: ChatSdkTunnelOfferResult) => void;
+      resolve: (result: BridgeTunnelOfferResult) => void;
     }
   | { kind: 'generating' }
   | {
@@ -194,6 +205,9 @@ export type Phase =
       claimUrl: string | null;
       connectMode?: AgentConnectMode;
       chatSdkOutcome?: ChatSdkConnectOutcome;
+      aiSdkOutcome?: AiSdkConnectOutcome;
+      langChainOutcome?: LangChainConnectOutcome;
+      customCodeOutcome?: CustomCodeConnectOutcome;
     }
   | { kind: 'error'; message: string };
 

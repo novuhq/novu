@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { decryptCredentials, InstrumentUsecase, PinoLogger } from '@novu/application-generic';
 import { AgentIntegrationRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
 import { ChatProviderIdEnum } from '@novu/shared';
@@ -15,6 +15,7 @@ import {
   resolveWhatsAppAppId,
   resolveWhatsAppAppSecret,
 } from '../../../../integrations/usecases/whatsapp/whatsapp-credentials.utils';
+import { resolveAgentIntegrationForWebhook } from '../../shared/resolve-agent-integration-webhook.util';
 import { ConfigureWhatsAppWebhookCommand } from './configure-whatsapp-webhook.command';
 
 export type ConfigureWhatsAppWebhookFailure = {
@@ -37,22 +38,6 @@ export interface ConfigureWhatsAppWebhookResult {
   reason?: ConfigureWhatsAppWebhookFailure;
 }
 
-function buildAgentWebhookUrl(agentId: string, integrationIdentifier: string): string {
-  // Prefer `AGENT_API_HOSTNAME` (a publicly reachable HTTPS host the chat
-  // platforms can call back to — typically a tunnel URL in dev) and fall back
-  // to the standard `API_ROOT_URL`. Meta refuses to register webhooks pointed
-  // at `*.localhost`, so this override is the recommended dev workflow.
-  const base = (process.env.AGENT_API_HOSTNAME ?? process.env.API_ROOT_URL ?? '').replace(/\/$/, '');
-
-  if (!base) {
-    throw new Error(
-      `buildAgentWebhookUrl: neither AGENT_API_HOSTNAME nor API_ROOT_URL is configured (agentId="${agentId}", integrationIdentifier="${integrationIdentifier}")`
-    );
-  }
-
-  return `${base}/v1/agents/${agentId}/webhook/${integrationIdentifier}`;
-}
-
 @Injectable()
 export class ConfigureWhatsAppWebhook {
   constructor(
@@ -66,56 +51,20 @@ export class ConfigureWhatsAppWebhook {
 
   @InstrumentUsecase()
   async execute(command: ConfigureWhatsAppWebhookCommand): Promise<ConfigureWhatsAppWebhookResult> {
-    const agent = await this.agentRepository.findOne(
-      {
-        identifier: command.agentIdentifier,
-        _environmentId: command.environmentId,
-        _organizationId: command.organizationId,
-      },
-      ['_id', 'identifier']
-    );
-
-    if (!agent) {
-      throw new NotFoundException(`Agent with identifier "${command.agentIdentifier}" was not found.`);
-    }
-
-    const integration = await this.integrationRepository.findOne({
-      _environmentId: command.environmentId,
-      _organizationId: command.organizationId,
-      identifier: command.integrationIdentifier,
+    // Meta refuses to register webhooks pointed at `*.localhost`, so `AGENT_API_HOSTNAME`
+    // (a tunnel URL in dev) is the recommended override for this flow.
+    const { agent, integration, callbackUrl } = await resolveAgentIntegrationForWebhook({
+      agentRepository: this.agentRepository,
+      integrationRepository: this.integrationRepository,
+      agentIntegrationRepository: this.agentIntegrationRepository,
+      agentIdentifier: command.agentIdentifier,
+      integrationIdentifier: command.integrationIdentifier,
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+      providerId: ChatProviderIdEnum.WhatsAppBusiness,
+      providerLabel: 'WhatsApp Business',
     });
 
-    if (!integration) {
-      throw new NotFoundException(`Integration with identifier "${command.integrationIdentifier}" was not found.`);
-    }
-
-    if (integration.providerId !== ChatProviderIdEnum.WhatsAppBusiness) {
-      throw new NotFoundException(
-        `Integration "${command.integrationIdentifier}" is not a WhatsApp Business integration.`
-      );
-    }
-
-    // Authorization: ensure the integration is actually linked to this agent
-    // before exposing webhook configuration on it. Without this check an
-    // `AGENT_WRITE` caller could rebind webhooks for an unrelated WhatsApp
-    // integration in the same tenant.
-    const agentIntegrationLink = await this.agentIntegrationRepository.findOne(
-      {
-        _environmentId: command.environmentId,
-        _organizationId: command.organizationId,
-        _agentId: agent._id,
-        _integrationId: integration._id,
-      },
-      ['_id']
-    );
-
-    if (!agentIntegrationLink) {
-      throw new NotFoundException(
-        `Integration "${command.integrationIdentifier}" is not linked to agent "${command.agentIdentifier}".`
-      );
-    }
-
-    const callbackUrl = buildAgentWebhookUrl(agent._id, integration.identifier);
     const credentials = decryptCredentials(integration.credentials ?? {});
 
     const accessToken = typeof credentials.apiToken === 'string' ? credentials.apiToken.trim() : '';

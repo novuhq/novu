@@ -1,4 +1,4 @@
-import { slugify } from '@novu/shared';
+import { AGENT_NAME_MAX_LENGTH, slugify } from '@novu/shared';
 import { useId } from 'react';
 import { RiInformation2Line } from 'react-icons/ri';
 import { Input } from '@/components/primitives/input';
@@ -58,6 +58,7 @@ export function ScratchAgentFields({
             id={nameId}
             size="xs"
             value={name}
+            maxLength={AGENT_NAME_MAX_LENGTH}
             onChange={(e) => {
               const nextName = e.target.value;
               onNameChange(nextName);
@@ -65,7 +66,7 @@ export function ScratchAgentFields({
                 onIdentifierChange(slugify(nextName));
               }
             }}
-            placeholder="e.g. Wine Sommelier Agent"
+            placeholder="e.g. Customer Support Agent"
             hasError={Boolean(errors.name)}
             disabled={disabled}
             aria-invalid={errors.name ? true : undefined}
@@ -101,7 +102,7 @@ export function ScratchAgentFields({
               onIdentifierChange(e.target.value);
               onIdentifierTouched();
             }}
-            placeholder="e.g. wine-sommelier-agent"
+            placeholder="e.g. customer-support-agent"
             hasError={Boolean(errors.identifier)}
             disabled={disabled}
             aria-invalid={errors.identifier ? true : undefined}

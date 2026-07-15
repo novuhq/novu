@@ -14,7 +14,7 @@ export function NewVariablePreview({ onCreateClick }: INewVariablePreviewProps) 
             💡 TIP
           </Badge>
           <p>
-            Adds a new string variable — use "Manage schema" to mark it required, change its type, or add validations.
+            Adds a new string variable: use "Manage schema" to mark it required, change its type, or add validations.
           </p>
 
           {onCreateClick && (

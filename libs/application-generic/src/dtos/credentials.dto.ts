@@ -266,6 +266,20 @@ export class CredentialsDto implements ICredentials {
   outboundIntegrationId?: string;
 
   @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  outboundConnectedAt?: string;
+
+  @ApiPropertyOptional({
+    description:
+      "ISO timestamp marking Layer-2 What's next completion (Connected badge + guide hide). " +
+      'WhatsApp Business: stamped on post-connect Access Token rotation or manual confirm.',
+  })
+  @IsOptional()
+  @IsString()
+  whatsNextCompletedAt?: string;
+
+  @ApiPropertyOptional()
   @TransformToBoolean()
   @IsBoolean()
   @IsOptional()

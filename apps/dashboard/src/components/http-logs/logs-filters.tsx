@@ -10,7 +10,7 @@ import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import type { LogsFilters } from '@/hooks/use-logs-url-state';
 import { buildLogsDateFilters } from '@/utils/logs-filters.utils';
 import { ROUTES } from '@/utils/routes';
-import { IS_SELF_HOSTED } from '../../config';
+import { IS_CLOUD } from '../../config';
 
 interface RequestsFiltersProps {
   filters: LogsFilters;
@@ -85,7 +85,7 @@ export function RequestsFilters({
   }, [filters, form]);
 
   const maxLogsRetentionOptions = useMemo(() => {
-    const missingSubscription = !subscription && !IS_SELF_HOSTED;
+    const missingSubscription = !subscription && IS_CLOUD;
 
     if (!organization || missingSubscription) {
       return [];

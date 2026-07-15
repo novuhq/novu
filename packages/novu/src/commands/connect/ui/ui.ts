@@ -1,11 +1,18 @@
 import type { GeneratedAgentSpec } from '../api/agents';
+import type { BridgeScaffoldVariant } from '../pipeline/bridge/types';
+import type { BridgeAdapterVariant } from '../pipeline/bridge-adapter/types';
+import type { LlmAuthKind } from '../pipeline/llm-auth/types';
 import type {
   AgentConnectMode,
   AgentSummary,
+  AiSdkConnectOutcome,
+  BridgeRequirement,
   ChannelChoice,
   ChatSdkConnectOutcome,
-  ChatSdkRequirement,
+  CustomCodeConnectOutcome,
+  LangChainConnectOutcome,
 } from '../types';
+import type { BridgeReconcileVariant } from './bridge-reconcile-variant';
 
 export type PickResult = { action: 'new' } | { action: 'use'; agent: AgentSummary };
 
@@ -15,11 +22,13 @@ export type PickAgentIntegrationResult = { kind: 'existing'; integrationId: stri
 
 export type TelegramTokenDelivery = 'setup-page' | 'terminal';
 
-export type ChatSdkTunnelOfferResult = 'accept' | 'skip';
+export type BridgeTunnelOfferResult = 'accept' | 'skip';
 
 export interface ConnectUI {
   /** True when running the Ink TUI; false for CI / non-TTY logging mode. */
   readonly interactive: boolean;
+  /** Unmount Ink before long subprocesses. No-op in logging mode. */
+  releaseTerminal(): Promise<void>;
   // Welcome screen
   /**
    * First screen the user sees. Renders a welcome message and waits for the
@@ -78,19 +87,33 @@ export interface ConnectUI {
   // Chat SDK project wiring
   promptForAgentName(defaultName: string): Promise<string>;
   confirmEnvSecretOverwrite(opts: { envPath: string; existingMasked: string; nextMasked: string }): Promise<boolean>;
-  confirmScaffold(opts: { projectDir: string; appName: string }): Promise<boolean>;
-  scaffoldingChatSdk(): void;
-  chatSdkScaffolded(opts: { projectDir: string; envPaths: string[]; skippedInstall?: boolean }): void;
-  confirmInstallChatSdkDeps(opts: { projectDir: string; installCommand: string; packages: string[] }): Promise<boolean>;
-  installingChatSdkDeps(): void;
-  showChatSdkReconcilePlan(opts: {
+  pickLlmAuthKind(opts: { connectMode: BridgeAdapterVariant }): Promise<LlmAuthKind>;
+  confirmScaffold(opts: { projectDir: string; appName: string; variant?: BridgeScaffoldVariant }): Promise<boolean>;
+  scaffoldingBridge(opts: { variant: BridgeScaffoldVariant }): void;
+  bridgeScaffolded(opts: {
+    variant: BridgeScaffoldVariant;
     projectDir: string;
-    requirements: ChatSdkRequirement[];
+    skippedInstall?: boolean;
+    envPaths?: string[];
+    agentFilePath?: string;
+  }): void;
+  confirmInstallBridgeDeps(opts: {
+    projectDir: string;
+    installCommand: string;
+    packages: string[];
+    variant?: BridgeReconcileVariant;
+  }): Promise<boolean>;
+  installingBridgeDeps(variant?: BridgeReconcileVariant): void;
+  showBridgeReconcilePlan(opts: {
+    projectDir: string;
+    requirements: BridgeRequirement[];
     envPaths: string[];
     wiringInstructions?: string;
     requirementsFile?: string;
+    agentPrompt?: string;
+    variant?: BridgeReconcileVariant;
   }): Promise<void>;
-  offerChatSdkTunnel(opts: { projectDir: string; devCommand: string }): Promise<ChatSdkTunnelOfferResult>;
+  offerBridgeTunnel(opts: { projectDir: string; devCommand: string }): Promise<BridgeTunnelOfferResult>;
 
   // Channel selection
   pickChannel(): Promise<ChannelChoice>;
@@ -195,6 +218,9 @@ export interface ConnectUI {
     claimUrl: string | null;
     connectMode?: AgentConnectMode;
     chatSdkOutcome?: ChatSdkConnectOutcome;
+    aiSdkOutcome?: AiSdkConnectOutcome;
+    langChainOutcome?: LangChainConnectOutcome;
+    customCodeOutcome?: CustomCodeConnectOutcome;
   }): void;
   failure(message: string): void;
 

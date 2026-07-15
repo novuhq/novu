@@ -11,3 +11,4 @@ export * from './slack-link-user/SlackLinkUser';
 export * from './subscription/Subscription';
 export * from './subscription/SubscriptionButton';
 export * from './subscription/SubscriptionPreferences';
+export * from './telegram-connect-button/TelegramConnectButton';

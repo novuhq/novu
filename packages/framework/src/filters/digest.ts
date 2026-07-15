@@ -37,7 +37,7 @@ export function digest(array: unknown, maxNames = 2, keyPath?: string, separator
   if (values.length === 2) return `${values[0]} and ${values[1]}`;
 
   if (values.length === 3 && maxNames >= 3) {
-    return `${values[0]}, ${separator}${values[1]} and ${values[2]}`;
+    return `${values[0]}${separator}${values[1]} and ${values[2]}`;
   }
 
   // Use "others" format for 4+ items or when maxNames is less than array length

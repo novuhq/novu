@@ -1,4 +1,4 @@
-import { FeatureFlagsKeysEnum, ProductUseCasesEnum } from '@novu/shared';
+import { ProductUseCasesEnum } from '@novu/shared';
 import { useQuery } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -11,17 +11,16 @@ import { CompletedStepIndicator } from '@/components/agents/setup-guide-primitiv
 import { AgentCliSuccessView } from '@/components/onboarding/connect-agent/agent-cli-success-view';
 import { ConnectAgentStep, type ConnectSummary } from '@/components/onboarding/connect-agent/connect-agent-step';
 import { getConnectorById } from '@/components/onboarding/connect-agent/connector-options';
-import { PrebuiltPromptBanner } from '@/components/onboarding/connect-agent/prebuilt-prompt-banner';
+// import { PrebuiltPromptBanner } from '@/components/onboarding/connect-agent/prebuilt-prompt-banner';
 import { OnboardingLoader } from '@/components/onboarding/onboarding-loader';
 import { OnboardingShell } from '@/components/onboarding/onboarding-shell';
 import { PageMeta } from '@/components/page-meta';
 import { Button } from '@/components/primitives/button';
-import { IS_EU } from '@/config';
 import { useAuth } from '@/context/auth/hooks';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useAgentCliConnectionPoll } from '@/hooks/use-agent-cli-connection-poll';
 import { useAgentRoutes } from '@/hooks/use-agent-routes';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { useAreConversationalAgentsAvailable } from '@/hooks/use-are-conversational-agents-available';
 import { useOnboardingProvisioningActive, useOnboardingProvisioningDismiss } from '@/hooks/use-onboarding-provisioning';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { useUpdateProductUseCases } from '@/hooks/use-update-product-use-cases';
@@ -125,8 +124,7 @@ function StepHeader({ current, onBack }: StepHeaderProps) {
 }
 
 export function AgentsSetupPage() {
-  const isAgentsEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONVERSATIONAL_AGENTS_ENABLED, false);
-  const isManagedEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_MANAGED_AGENT_RUNTIME_ENABLED, false);
+  const areAgentsAvailable = useAreConversationalAgentsAvailable();
   const navigate = useNavigate();
   const telemetry = useTelemetry();
   const { currentOrganization } = useAuth();
@@ -140,7 +138,7 @@ export function AgentsSetupPage() {
     () => readActiveAgentTemplateId(searchParams.get(AGENT_TEMPLATE_ID_PARAM)),
     [searchParams]
   );
-  const pageTitle = 'Connect your agent to where your users are';
+  const pageTitle = "Let's connect your agent";
 
   // Org bootstrap (poll Novu envs + reload Clerk after org creation) lives in EnvironmentProvider.
   // Here we only gate on Novu's org id + the resolved environment, like the inbox onboarding page.
@@ -159,9 +157,8 @@ export function AgentsSetupPage() {
 
   // When the user arrives here via `?product_type=agents` (the usecase picker is skipped), persist the
   // agents usecase on the org once it's resolved. Runs once; the usecase picker path persists itself.
-  // Skipped when agents are unavailable (EU/flag off) since the page redirects to the inbox path.
   useEffect(() => {
-    if (productUseCasesPersistedRef.current || IS_EU || !isAgentsEnabled || !currentOrganization?._id) {
+    if (productUseCasesPersistedRef.current || !areAgentsAvailable || !currentOrganization?._id) {
       return;
     }
 
@@ -172,7 +169,7 @@ export function AgentsSetupPage() {
     productUseCasesPersistedRef.current = true;
     updateProductUseCases.mutate({ [ProductUseCasesEnum.AGENTS]: true });
     clearPendingProductType();
-  }, [currentOrganization?._id, isAgentsEnabled, updateProductUseCases]);
+  }, [areAgentsAvailable, currentOrganization?._id, updateProductUseCases]);
 
   const [createdAgent, setCreatedAgent] = useState<AgentResponse | null>(null);
   const [connectSummary, setConnectSummary] = useState<ConnectSummary | null>(null);
@@ -303,8 +300,7 @@ export function AgentsSetupPage() {
     void navigate(ROUTES.USECASE_SELECT);
   }, [navigate]);
 
-  // Agents are not available in the EU region.
-  if (IS_EU || !isAgentsEnabled) {
+  if (!areAgentsAvailable) {
     return <Navigate to={ROUTES.INBOX_USECASE} replace />;
   }
 
@@ -336,8 +332,7 @@ export function AgentsSetupPage() {
 
       <h1 className="text-foreground text-lg font-medium tracking-[-0.27px]">{pageTitle}</h1>
       <p className="text-text-soft mt-1 text-xs font-normal leading-4 w-1/2">
-        Choose a starting point to see how your agent handles your users’ conversations. You can replace it with your
-        own agent and credentials later.
+        Novu connects your customer facing agent to multiple communication channels.
       </p>
 
       {cliConnected ? (
@@ -365,25 +360,6 @@ export function AgentsSetupPage() {
         </div>
       ) : (
         <>
-          {/* Pre-built prompt tip: only relevant while the user is authoring the agent brain. It
-           * collapses away once the agent is created and the page morphs into the agent preview. */}
-          <AnimatePresence initial={false}>
-            {!createdAgent ? (
-              <motion.div
-                key="prebuilt-prompt-banner"
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-                style={{ overflow: 'hidden' }}
-              >
-                <div className="mt-6">
-                  <PrebuiltPromptBanner />
-                </div>
-              </motion.div>
-            ) : null}
-          </AnimatePresence>
-
           {/*
            * The user stays on one screen. Step 1 crossfades the brain form into the created-agent
            * preview card; step 2 (channels) crossfades from the dimmed/disabled preview into the live,
@@ -463,7 +439,6 @@ export function AgentsSetupPage() {
                 <div className="relative pb-12">
                   <ConnectAgentStep
                     onAgentCreated={handleAgentCreated}
-                    isManagedEnabled={isManagedEnabled}
                     agentTemplateId={agentTemplateId}
                     simplifiedDemo
                   />
@@ -517,5 +492,11 @@ export function AgentsSetupPage() {
     </>
   );
 
-  return <OnboardingShell left={leftContent} maxLeftWidth="864px" alignLeft="top" />;
+  return (
+    <OnboardingShell
+      left={leftContent}
+      contentClassName="max-w-[864px] lg:max-w-[960px] xl:max-w-[1024px]"
+      alignLeft="top"
+    />
+  );
 }

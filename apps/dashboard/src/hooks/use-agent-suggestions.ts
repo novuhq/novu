@@ -1,11 +1,10 @@
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useQuery } from '@tanstack/react-query';
 import { useCallback, useRef } from 'react';
 import { AgentSuggestionResponse, fetchAgentSuggestions } from '@/api/ai';
 import { AGENT_TEMPLATES, type AgentTemplate } from '@/components/agents/create-agent-fields';
+import { useManagedAgentRuntimeEnabled } from '@/hooks/use-managed-agent-runtime-enabled';
 import { IS_AI_FEATURES_ENABLED } from '@/config';
 import { useEnvironment } from '@/context/environment/hooks';
-import { useFeatureFlag } from './use-feature-flag';
 
 const QUERY_KEY = 'agent-suggestions';
 
@@ -27,7 +26,7 @@ function mapSuggestionToTemplate(suggestion: AgentSuggestionResponse): AgentTemp
  * the server.
  */
 export function useAgentSuggestions() {
-  const isManagedAgentRuntimeEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_MANAGED_AGENT_RUNTIME_ENABLED);
+  const isManagedAgentRuntimeEnabled = useManagedAgentRuntimeEnabled();
   const { currentEnvironment } = useEnvironment();
   const refreshRef = useRef(false);
 

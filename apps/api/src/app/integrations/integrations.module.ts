@@ -10,14 +10,15 @@ import {
   UpdateSubscriber,
   UpdateSubscriberChannel,
 } from '@novu/application-generic';
-import { CommunityOrganizationRepository, CommunityUserRepository } from '@novu/dal';
-import { TelegramMobileLinkTokenService } from '../agents/channels/telegram-linking/telegram-mobile-link-token.service';
+import { CommunityOrganizationRepository, CommunityUserRepository, IntegrationRepository } from '@novu/dal';
 import { AgentsModule } from '../agents/agents.module';
 import { AuthModule } from '../auth/auth.module';
 import { ChannelConnectionsModule } from '../channel-connections/channel-connections.module';
 import { ChannelEndpointsModule } from '../channel-endpoints/channel-endpoints.module';
 import { SharedModule } from '../shared/shared.module';
+import { TelegramLinkingModule } from '../telegram-linking/telegram-linking.module';
 import { IntegrationsController } from './integrations.controller';
+import { IntegrationsMobileConfigurePublicController } from './integrations-mobile-configure-public.controller';
 import { IntegrationsPublicController } from './integrations-public.controller';
 import { USE_CASES } from './usecases';
 
@@ -30,13 +31,20 @@ const PROVIDERS = [
 ];
 
 @Module({
-  imports: [SharedModule, forwardRef(() => AuthModule), ChannelConnectionsModule, ChannelEndpointsModule, forwardRef(() => AgentsModule)],
-  controllers: [IntegrationsController, IntegrationsPublicController],
+  imports: [
+    SharedModule,
+    forwardRef(() => AuthModule),
+    ChannelConnectionsModule,
+    ChannelEndpointsModule,
+    TelegramLinkingModule,
+    forwardRef(() => AgentsModule),
+  ],
+  controllers: [IntegrationsController, IntegrationsPublicController, IntegrationsMobileConfigurePublicController],
   providers: [
     ...USE_CASES,
     CommunityOrganizationRepository,
     CommunityUserRepository,
-    TelegramMobileLinkTokenService,
+    IntegrationRepository,
     ...PROVIDERS,
     analyticsService,
     CreateOrUpdateSubscriberUseCase,

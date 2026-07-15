@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { differenceInDays, isSameDay } from 'date-fns';
 import { useMemo } from 'react';
 import { getSubscription } from '@/api/billing';
-import { IS_ENTERPRISE, IS_SELF_HOSTED } from '@/config';
+import { IS_SELF_HOSTED_CE } from '@/config';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
 import { QueryKeys } from '@/utils/query-keys';
@@ -19,7 +19,7 @@ export const useFetchSubscription = () => {
   const { data: subscription, isLoading: isLoadingSubscription } = useQuery<GetSubscriptionDto>({
     queryKey: [QueryKeys.billingSubscription, currentOrganization?._id],
     queryFn: () => getSubscription({ environment: currentEnvironment! }),
-    enabled: !!currentOrganization && (IS_ENTERPRISE || !IS_SELF_HOSTED),
+    enabled: !!currentOrganization && !IS_SELF_HOSTED_CE,
     meta: {
       showError: false,
     },

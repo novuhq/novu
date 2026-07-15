@@ -29,15 +29,15 @@ import { EventsModule } from '../events/events.module';
 import { IntegrationModule } from '../integrations/integrations.module';
 import { KeylessModule } from '../keyless/keyless.module';
 import { SharedModule } from '../shared/shared.module';
+import { TelegramLinkingModule } from '../telegram-linking/telegram-linking.module';
 import { AgentConfigResolver } from './channels/agent-config-resolver.service';
 import { AgentIntegrationsController } from './channels/integrations/agent-integrations.controller';
-import { AgentsPublicController } from './channels/telegram-linking/agents-public.controller';
-import { TelegramMobileLinkTokenService } from './channels/telegram-linking/telegram-mobile-link-token.service';
-import { TelegramStartCodeService } from './channels/telegram-linking/telegram-start-code.service';
+import { AgentsPublicController } from './channels/slack-linking/agents-public.controller';
 import { InboundAckService } from './conversation-runtime/ack/inbound-ack.service';
 import { AgentActionTokenService } from './conversation-runtime/action-token/agent-action-token.service';
 import { AgentAttachmentStorage } from './conversation-runtime/conversation/agent-attachment-storage.service';
 import { AgentConversationService } from './conversation-runtime/conversation/agent-conversation.service';
+import { AgentSubscriberAdoptionService } from './conversation-runtime/conversation/agent-subscriber-adoption.service';
 import { AgentSubscriberResolver } from './conversation-runtime/conversation/agent-subscriber-resolver.service';
 import { ConversationActivationService } from './conversation-runtime/conversation/conversation-activation.service';
 import { FileMaterializer } from './conversation-runtime/egress/file-materializer.service';
@@ -47,9 +47,11 @@ import { ChatInstanceRegistry } from './conversation-runtime/ingress/chat-instan
 import { InboundDispatcher } from './conversation-runtime/ingress/inbound.dispatcher';
 import { AgentInboundHandler } from './conversation-runtime/ingress/inbound-turn.handler';
 import { PlanLimitGateService } from './conversation-runtime/ingress/plan-limit-gate.service';
+import { ReplyApprovalInterceptor } from './conversation-runtime/ingress/reply-approval-interceptor.service';
 import { AgentReplyController } from './conversation-runtime/reply/agent-reply.controller';
 import { BridgeRuntime } from './conversation-runtime/runtime/bridge.runtime';
 import { BridgeExecutorService } from './conversation-runtime/runtime/bridge-executor.service';
+import { BridgeExpireSupersededApprovalsService } from './conversation-runtime/runtime/bridge-expire-superseded-approvals.service';
 import { RuntimeResolver } from './conversation-runtime/runtime/runtime-resolver.service';
 import { AgentEmailActionTokenService } from './email/agent-email-action-token.service';
 import { AgentEmailActionsController } from './email/agent-email-actions.controller';
@@ -84,6 +86,7 @@ import { USE_CASES } from './usecases';
     ChannelEndpointsModule,
     ConnectModule,
     KeylessModule,
+    TelegramLinkingModule,
     forwardRef(() => IntegrationModule),
   ],
   controllers: [
@@ -115,13 +118,16 @@ import { USE_CASES } from './usecases';
     AgentAttachmentStorage,
     AgentConfigResolver,
     AgentSubscriberResolver,
+    AgentSubscriberAdoptionService,
     AgentConversationService,
     ConversationActivationService,
     InboundAckService,
     AgentEmailActionTokenService,
     AgentActionTokenService,
     AgentInboundHandler,
+    ReplyApprovalInterceptor,
     BridgeExecutorService,
+    BridgeExpireSupersededApprovalsService,
     BridgeRuntime,
     ManagedRuntime,
     RuntimeResolver,
@@ -144,8 +150,6 @@ import { USE_CASES } from './usecases';
     AgentEmailSender,
     OutboundGateway,
     McpOAuthDiscoveryService,
-    TelegramMobileLinkTokenService,
-    TelegramStartCodeService,
     CalculateLimitNovuIntegration,
     CalculateDemoClaudeQuota,
     CreateOrUpdateSubscriberUseCase,

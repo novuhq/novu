@@ -14,7 +14,7 @@
  * Required ENV vars:
  *   NOVU_SECRET_KEY                    Novu API secret (sk_...)
  *   NOVU_API_BASE_URL                  Optional Novu API base URL
- *   NOVU_SLACK_INTEGRATION_IDENTIFIER  Novu Slack integration identifier
+ *   NOVU_CONNECT_CHAT_INTEGRATION_IDENTIFIER  Novu Slack integration identifier
  *   SLACK_BOT_USER_OAUTH_TOKEN         Slack workspace Bot User OAuth Token (xoxb-...)
  */
 
@@ -50,10 +50,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     const integrationIdentifier =
       (typeof body.integrationIdentifier === 'string' && body.integrationIdentifier.trim()) ||
-      process.env.NOVU_SLACK_INTEGRATION_IDENTIFIER;
+      process.env.NOVU_CONNECT_CHAT_INTEGRATION_IDENTIFIER;
 
     if (!integrationIdentifier) {
-      res.status(400).json({ error: 'integrationIdentifier is required (body or NOVU_SLACK_INTEGRATION_IDENTIFIER)' });
+      res
+        .status(400)
+        .json({ error: 'integrationIdentifier is required (body or NOVU_CONNECT_CHAT_INTEGRATION_IDENTIFIER)' });
 
       return;
     }

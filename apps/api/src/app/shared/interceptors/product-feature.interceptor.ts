@@ -8,7 +8,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { isAgentSharedInboxEnabled, ProductFeature } from '@novu/application-generic';
+import { isAgentEmailEnabled, ProductFeature } from '@novu/application-generic';
 import { CommunityOrganizationRepository } from '@novu/dal';
 import {
   ApiServiceLevelEnum,
@@ -60,7 +60,7 @@ export class ProductFeatureInterceptor implements NestInterceptor {
       throw new HttpException('Payment Required', 402);
     }
 
-    if (requestedFeature === ProductFeatureKeyEnum.AGENT_EMAIL_INTEGRATION && !isAgentSharedInboxEnabled()) {
+    if (requestedFeature === ProductFeatureKeyEnum.AGENT_EMAIL_INTEGRATION && !isAgentEmailEnabled()) {
       throw new ForbiddenException('Agent Novu Email is not available in this deployment.');
     }
 

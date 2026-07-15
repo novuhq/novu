@@ -1,8 +1,9 @@
 import { ApiServiceLevelEnum, FeatureNameEnum, getFeatureForTierAsBoolean, PermissionsEnum } from '@novu/shared';
 import { Switch } from '@/components/primitives/switch';
 import { UpgradeCTATooltip } from '@/components/upgrade-cta-tooltip';
-import { IS_ENTERPRISE, IS_SELF_HOSTED } from '@/config';
+import { IS_SELF_HOSTED_CE } from '@/config';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
+import { getMinimumTierForFeature } from '@/utils/upgrade-tier';
 import { PermissionSwitch } from '../primitives/permission-switch';
 
 type TranslationSwitchProps = {
@@ -19,8 +20,7 @@ export function TranslationSwitch({ id, value, onChange, isReadOnly }: Translati
     getFeatureForTierAsBoolean(
       FeatureNameEnum.AUTO_TRANSLATIONS,
       subscription?.apiServiceLevel || ApiServiceLevelEnum.FREE
-    ) &&
-    (!IS_SELF_HOSTED || IS_ENTERPRISE);
+    ) && !IS_SELF_HOSTED_CE;
 
   const isFeatureUnavailable = !canUseTranslationFeature || isLoading;
   const disabled = isFeatureUnavailable || isReadOnly;
@@ -30,7 +30,8 @@ export function TranslationSwitch({ id, value, onChange, isReadOnly }: Translati
     <div className="flex items-center">
       {!canUseTranslationFeature ? (
         <UpgradeCTATooltip
-          description="Connect better with every user — Upgrade to reach users in their own language."
+          description="Connect better with every user by reaching them in their own language."
+          requiredTier={getMinimumTierForFeature(FeatureNameEnum.AUTO_TRANSLATIONS)}
           utmCampaign="translation_prompt"
           utmSource="translation_prompt"
         >

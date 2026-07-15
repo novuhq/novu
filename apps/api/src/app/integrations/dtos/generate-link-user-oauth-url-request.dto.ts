@@ -30,7 +30,8 @@ export class GenerateLinkUserOauthUrlRequestDto {
     type: String,
     description:
       'Identifier of the existing channel connection to associate this user endpoint with. ' +
-      'Generated automatically if not provided.',
+      'Generated automatically if not provided for providers that support standalone user linking. ' +
+      'Required for Webex.',
     example: 'slack-connection-abc123',
   })
   @IsString()
@@ -47,6 +48,7 @@ export class GenerateLinkUserOauthUrlRequestDto {
     description:
       `**Slack only**: User-level OAuth scopes for "Sign in with Slack". ` +
       `Defaults to: ${SLACK_LINK_USER_OAUTH_SCOPES.join(', ')}. ` +
+      `**Webex**: Optional Webex scopes for people/me; defaults to spark:people_read. ` +
       `**MS Teams**: ignored — uses delegated OpenID scopes (openid, profile, User.Read).`,
     example: ['identity.basic'],
   })

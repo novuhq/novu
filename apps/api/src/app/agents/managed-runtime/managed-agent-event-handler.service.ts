@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import { ConversationRepository } from '@novu/dal';
+import { NOVU_INTERNAL_TOOLS } from '@novu/shared';
 import {
   CredentialExpiredError,
   McpServerError,
@@ -12,6 +13,7 @@ import {
 import { InboundAckService } from '../conversation-runtime/ack/inbound-ack.service';
 import { HandleAgentReplyCommand } from '../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.command';
 import { HandleAgentReply } from '../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.usecase';
+import { formatToolInputSummary } from '../conversation-runtime/reply/handle-plan-progress/format-tool-input';
 import { HandlePlanProgressCommand } from '../conversation-runtime/reply/handle-plan-progress/handle-plan-progress.command';
 import { HandlePlanProgress } from '../conversation-runtime/reply/handle-plan-progress/handle-plan-progress.usecase';
 import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
@@ -60,15 +62,18 @@ export class ManagedAgentEventHandler {
         source?: { type: string; serverName?: string };
       }) => {
         try {
+          if (this.isInternalTool(event.toolName)) return;
           await this.handlePlanProgress.execute(
             HandlePlanProgressCommand.create({
               ...baseFields,
-              toolProgress: {
-                action: 'tool-use',
-                toolUseId: event.toolUseId,
-                toolName: event.toolName,
-                mcpServerName: event.source?.type === 'mcp' ? event.source.serverName : undefined,
-                status: 'running',
+              event: {
+                kind: 'task',
+                task: {
+                  id: event.toolUseId,
+                  title: event.toolName,
+                  group: this.mcpServerNameOf(event.source),
+                  status: 'in_progress',
+                },
               },
             })
           );
@@ -89,19 +94,20 @@ export class ManagedAgentEventHandler {
         source?: { type: string; serverName?: string };
       }) => {
         try {
-          if (!event.input || Object.keys(event.input).length === 0) {
-            return;
-          }
+          if (this.isInternalTool(event.toolName)) return;
+          if (!event.input || Object.keys(event.input).length === 0) return;
           await this.handlePlanProgress.execute(
             HandlePlanProgressCommand.create({
               ...baseFields,
-              toolProgress: {
-                action: 'tool-use',
-                toolUseId: event.toolUseId,
-                toolName: event.toolName,
-                mcpServerName: event.source?.type === 'mcp' ? event.source.serverName : undefined,
-                status: 'running',
-                toolInput: event.input,
+              event: {
+                kind: 'task',
+                task: {
+                  id: event.toolUseId,
+                  title: event.toolName,
+                  group: this.mcpServerNameOf(event.source),
+                  status: 'in_progress',
+                  details: formatToolInputSummary(event.input),
+                },
               },
             })
           );
@@ -115,15 +121,16 @@ export class ManagedAgentEventHandler {
         }
       },
 
+      // TODO(agents): also persist a TOOL_RESULT activity once Thalamus sends the tool output
+      // (today this event only has { toolUseId, isError }), so the ledger holds the full tool trail.
       onToolUseResult: async (event: { toolUseId: string; isError?: boolean }) => {
         try {
           await this.handlePlanProgress.execute(
             HandlePlanProgressCommand.create({
               ...baseFields,
-              toolProgress: {
-                action: 'tool-use',
-                toolUseId: event.toolUseId,
-                status: event.isError === true ? 'error' : 'complete',
+              event: {
+                kind: 'task',
+                task: { id: event.toolUseId, status: event.isError === true ? 'error' : 'complete' },
               },
             })
           );
@@ -184,16 +191,6 @@ export class ManagedAgentEventHandler {
             return;
           }
 
-          // TODO: remove after the observer is fully rolled out.
-          // Old observers still send `response.content`; new ones reply via `onMessage`
-          // and never set `content`, so this only runs against an old observer.
-          const legacyContent = (event.response as { content?: string }).content?.trim();
-          if (legacyContent) {
-            await this.handleAgentReply.execute(
-              HandleAgentReplyCommand.create({ ...baseFields, reply: { markdown: legacyContent } })
-            );
-          }
-
           await this.inboundAck.onManagedTurnComplete(metadata);
 
           await this.demoQuota.recordUsage(
@@ -203,7 +200,7 @@ export class ManagedAgentEventHandler {
             event.response.usage
           );
           await this.handlePlanProgress.execute(
-            HandlePlanProgressCommand.create({ ...baseFields, toolProgress: { action: 'complete' } })
+            HandlePlanProgressCommand.create({ ...baseFields, event: { kind: 'phase', phase: 'finished' } })
           );
         } catch (err) {
           this.logger.error(err, `onFinish failed: session=${sessionId}`);
@@ -229,6 +226,14 @@ export class ManagedAgentEventHandler {
         }
       },
     };
+  }
+
+  private mcpServerNameOf(source?: { type: string; serverName?: string }): string | undefined {
+    return source?.type === 'mcp' ? source.serverName : undefined;
+  }
+
+  private isInternalTool(toolName?: string): boolean {
+    return NOVU_INTERNAL_TOOLS.includes(toolName ?? '');
   }
 
   private buildBaseFields(metadata: Record<string, string>): BaseCommandFields {
@@ -264,11 +269,11 @@ export class ManagedAgentEventHandler {
 
     try {
       await this.handleAgentReply.execute(
-        HandleAgentReplyCommand.create({ ...baseCommand, reply: { markdown: message } })
+        HandleAgentReplyCommand.create({ ...baseCommand, reply: { markdown: message }, isSystemGenerated: true })
       );
       await this.inboundAck.onManagedTurnComplete(metadata);
       await this.handlePlanProgress.execute(
-        HandlePlanProgressCommand.create({ ...baseCommand, toolProgress: { action: 'fail' } })
+        HandlePlanProgressCommand.create({ ...baseCommand, event: { kind: 'phase', phase: 'failed' } })
       );
     } catch (err) {
       this.logger.error(err, `Failed to deliver error message for session ${sessionId}`);

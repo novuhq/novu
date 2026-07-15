@@ -1,0 +1,26 @@
+---
+title: 'Chat'
+description: "Use the chat step in Novu Framework to send messages to Slack, Discord, Microsoft Teams, and other chat providers as part of a workflow."
+---
+
+The `chat` step allows you to send messages to various chat platforms like Slack, Discord, and Microsoft Teams.
+
+## Example Usage
+
+```tsx
+await step.chat('chat', async () => {
+  return {
+    body: 'A new post has been created',
+  };
+});
+```
+
+## Chat Step Output
+
+| Property | Type   | Required | Description                                |
+| -------- | ------ | -------- | ------------------------------------------ |
+| body     | string | Yes      | The message to be sent to the chat channel |
+
+## Chat Step Result
+
+The `chat` step does not return any result object.

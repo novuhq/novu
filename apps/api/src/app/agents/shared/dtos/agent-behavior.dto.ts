@@ -1,5 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsOptional, ValidateIf } from 'class-validator';
+import { AgentSubscriberAccessEnum } from '@novu/shared';
+import { IsBoolean, IsEnum, IsOptional, ValidateIf } from 'class-validator';
 import { IsWellKnownEmoji } from '../validators/is-well-known-emoji.validator';
 
 export class AgentBehaviorDto {
@@ -25,4 +26,17 @@ export class AgentBehaviorDto {
   @ValidateIf((_, value) => value !== null)
   @IsWellKnownEmoji()
   reactionOnResolved?: string | null;
+
+  @ApiPropertyOptional({
+    enum: AgentSubscriberAccessEnum,
+    description:
+      'Controls whether the agent accepts inbound messages from senders not yet linked to a subscriber, across all channels. ' +
+      '"open" on managed agents auto-creates a lightweight subscriber so the agent can reply; ' +
+      'on custom-code / self-hosted agents, the turn is forwarded to the bridge with a null subscriber. ' +
+      '"restricted" rejects unknown senders with a managed denial reply (any runtime). ' +
+      'Unset resolves as "restricted". Managed agent create defaults to "open"; self-hosted create defaults to "restricted".',
+  })
+  @IsOptional()
+  @IsEnum(AgentSubscriberAccessEnum)
+  subscriberAccess?: AgentSubscriberAccessEnum;
 }

@@ -2,15 +2,12 @@ import { AddAgentIntegration } from '../channels/integrations/add-agent-integrat
 import { ListAgentIntegrations } from '../channels/integrations/list-agent-integrations/list-agent-integrations.usecase';
 import { RemoveAgentIntegration } from '../channels/integrations/remove-agent-integration/remove-agent-integration.usecase';
 import { UpdateAgentIntegration } from '../channels/integrations/update-agent-integration/update-agent-integration.usecase';
+import { ConfigureSendblueWebhook } from '../channels/sendblue/configure-sendblue-webhook/configure-sendblue-webhook.usecase';
+import { RemoveSendblueWebhooks } from '../channels/sendblue/remove-sendblue-webhooks/remove-sendblue-webhooks.usecase';
+import { SendAgentSendblueTestMessage } from '../channels/sendblue/send-sendblue-test-message/send-sendblue-test-message.usecase';
 import { ConsumeSlackSetupLink } from '../channels/slack-linking/consume-slack-setup-link/consume-slack-setup-link.usecase';
 import { GetSlackSetupLinkStatus } from '../channels/slack-linking/get-slack-setup-link-status/get-slack-setup-link-status.usecase';
 import { IssueSlackSetupLink } from '../channels/slack-linking/issue-slack-setup-link/issue-slack-setup-link.usecase';
-import { ConfigureTelegramAgentWebhook } from '../channels/telegram/configure-telegram-agent-webhook/configure-telegram-agent-webhook.usecase';
-import { ConsumeTelegramMobileLink } from '../channels/telegram-linking/consume-telegram-mobile-link/consume-telegram-mobile-link.usecase';
-import { GetTelegramMobileLinkStatus } from '../channels/telegram-linking/get-telegram-mobile-link-status/get-telegram-mobile-link-status.usecase';
-import { IssueTelegramMobileLink } from '../channels/telegram-linking/issue-telegram-mobile-link/issue-telegram-mobile-link.usecase';
-import { IssueTelegramSubscriberLink } from '../channels/telegram-linking/issue-telegram-subscriber-link/issue-telegram-subscriber-link.usecase';
-import { LinkTelegramChatToSubscriber } from '../channels/telegram-linking/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.usecase';
 import { ConfigureWhatsAppWebhook } from '../channels/whatsapp/configure-whatsapp-webhook/configure-whatsapp-webhook.usecase';
 import { SendWhatsAppTestTemplate } from '../channels/whatsapp/send-whatsapp-test-template/send-whatsapp-test-template.usecase';
 import { HandleAgentReply } from '../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.usecase';
@@ -46,27 +43,14 @@ import { GenerateMcpOAuthUrl } from '../mcp/oauth/generate-mcp-oauth-url/generat
 import { McpOAuthCallback } from '../mcp/oauth/mcp-oauth-callback/mcp-oauth-callback.usecase';
 import { ListAgentEmoji } from '../shared/emoji/list-agent-emoji/list-agent-emoji.usecase';
 
-export {
-  ConfigureTelegramAgentWebhook,
-  ConsumeSlackSetupLink,
-  ConsumeTelegramMobileLink,
-  GetSlackSetupLinkStatus,
-  GetTelegramMobileLinkStatus,
-  IssueSlackSetupLink,
-  IssueTelegramMobileLink,
-  IssueTelegramSubscriberLink,
-  LinkTelegramChatToSubscriber,
-};
+export { ConsumeSlackSetupLink, GetSlackSetupLinkStatus, IssueSlackSetupLink };
 
 export const USE_CASES = [
   CreateAgent,
-  ConfigureTelegramAgentWebhook,
   ConsumeSlackSetupLink,
-  ConsumeTelegramMobileLink,
   GetAgent,
   GetAgentRuntimeConfig,
   GetSlackSetupLinkStatus,
-  GetTelegramMobileLinkStatus,
   ListAgents,
   UpdateAgent,
   UpdateAgentInboxShared,
@@ -74,21 +58,21 @@ export const USE_CASES = [
   UploadCustomSkill,
   DeleteAgent,
   AddAgentIntegration,
+  ConfigureSendblueWebhook,
   ConfigureWhatsAppWebhook,
   GenerateManagedAgent,
   IssueSlackSetupLink,
-  IssueTelegramMobileLink,
-  IssueTelegramSubscriberLink,
-  LinkTelegramChatToSubscriber,
   ListAgentEmoji,
   ListAgentIntegrations,
   UpdateAgentIntegration,
   GetAgentDemoQuota,
   MigrateAgentRuntime,
   RemoveAgentIntegration,
+  RemoveSendblueWebhooks,
   HandleAgentReply,
   HandlePlanProgress,
   ProvisionManagedAgent,
+  SendAgentSendblueTestMessage,
   SendAgentTestEmail,
   SendAgentWelcomeMessage,
   SendWhatsAppTestTemplate,
