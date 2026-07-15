@@ -650,6 +650,86 @@ describe('Topic Trigger Event #novu-v2', () => {
         'Non-matching context condition should not deliver additional messages'
       ).to.equal(1);
 
+      expect(
+        filteredContextMessages.length,
+        'Non-matching context condition should not deliver additional messages'
+      ).to.equal(1);
+
+      const contextDataConditionTopicKey = `topic-key-context-data-condition-${Date.now()}`;
+      const contextDataSubscriber = await subscriberService.createSubscriber();
+
+      await novuClient.topics.subscriptions.create(
+        {
+          subscriberIds: [contextDataSubscriber.subscriberId],
+          preferences: [
+            {
+              filter: {
+                workflowIds: [template._id],
+              },
+              condition: {
+                '===': [{ var: 'context.tenant.data.plan' }, 'starter'],
+              },
+            },
+          ],
+          context: {
+            tenant: { id: 'acme-corp', data: { plan: 'enterprise' } },
+          },
+        } as any,
+        contextDataConditionTopicKey
+      );
+
+      await session.testAgent
+        .post('/v1/events/trigger')
+        .send({
+          name: template.triggers[0].identifier,
+          to: [{ type: TriggerRecipientsTypeEnum.Topic, topicKey: contextDataConditionTopicKey }],
+          payload: {},
+          context: {
+            tenant: { id: 'acme-corp', data: { plan: 'enterprise' } },
+          },
+        })
+        .expect(201);
+
+      await session.waitForJobCompletion(template._id);
+
+      const enterprisePlanMessages = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: contextDataSubscriber._id,
+        _templateId: template._id,
+        channel: ChannelTypeEnum.IN_APP,
+      });
+
+      expect(
+        enterprisePlanMessages.length,
+        'Stored enterprise plan should not satisfy starter plan condition'
+      ).to.equal(0);
+
+      await session.testAgent
+        .post('/v1/events/trigger')
+        .send({
+          name: template.triggers[0].identifier,
+          to: [{ type: TriggerRecipientsTypeEnum.Topic, topicKey: contextDataConditionTopicKey }],
+          payload: {},
+          context: {
+            tenant: { id: 'acme-corp', data: { plan: 'starter' } },
+          },
+        })
+        .expect(201);
+
+      await session.waitForJobCompletion(template._id);
+
+      const starterPlanMessages = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: contextDataSubscriber._id,
+        _templateId: template._id,
+        channel: ChannelTypeEnum.IN_APP,
+      });
+
+      expect(
+        starterPlanMessages.length,
+        'Trigger context data should override stored context data for condition evaluation'
+      ).to.equal(1);
+
       const envConditionTopicKey = `topic-key-env-condition-${Date.now()}`;
       const envSubscriber = await subscriberService.createSubscriber();
 

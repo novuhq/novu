@@ -539,12 +539,13 @@ export class SubscriberJobBound {
 
   private async resolveConditionContext(command: SubscriberJobBoundCommand): Promise<ContextResolved> {
     const { contextKeys, environmentId, organizationId } = command;
+    let resolved: ContextResolved;
 
     if (contextKeys.length > 0) {
       const contexts = await this.contextRepository.findByKeys(environmentId, organizationId, contextKeys);
 
       if (contexts.length > 0) {
-        return contexts.reduce((acc, context) => {
+        resolved = contexts.reduce((acc, context) => {
           acc[context.type] = {
             id: context.id,
             data: context.data,
@@ -552,19 +553,17 @@ export class SubscriberJobBound {
 
           return acc;
         }, {} as ContextResolved);
+      } else {
+        resolved = this.buildContextResolvedFromKeys(contextKeys);
       }
-
-      return this.buildContextResolvedFromKeys(contextKeys);
-    }
-
-    if (command.context) {
+    } else if (command.context) {
       const contexts = await this.contextRepository.findOrCreateContextsFromPayload(
         environmentId,
         organizationId,
         command.context
       );
 
-      return contexts.reduce((acc, context) => {
+      resolved = contexts.reduce((acc, context) => {
         acc[context.type] = {
           id: context.id,
           data: context.data,
@@ -572,9 +571,50 @@ export class SubscriberJobBound {
 
         return acc;
       }, {} as ContextResolved);
+    } else {
+      return {} as ContextResolved;
     }
 
-    return {} as ContextResolved;
+    if (command.context) {
+      return this.mergeTriggerContextData(resolved, command.context);
+    }
+
+    return resolved;
+  }
+
+  private mergeTriggerContextData(resolved: ContextResolved, triggerContext: ContextPayload): ContextResolved {
+    const merged = { ...resolved };
+
+    for (const [type, value] of Object.entries(triggerContext)) {
+      if (!value) {
+        continue;
+      }
+
+      const { id, data } =
+        typeof value === 'string' ? { id: value, data: undefined } : { id: value.id, data: value.data };
+      const existing = merged[type];
+
+      if (existing && existing.id !== id) {
+        merged[type] = { id, data: data ?? {} };
+
+        continue;
+      }
+
+      if (data !== undefined) {
+        merged[type] = {
+          id: existing?.id ?? id,
+          data,
+        };
+
+        continue;
+      }
+
+      if (!existing) {
+        merged[type] = { id, data: {} };
+      }
+    }
+
+    return merged;
   }
 
   private buildContextResolvedFromKeys(contextKeys: string[]): ContextResolved {
