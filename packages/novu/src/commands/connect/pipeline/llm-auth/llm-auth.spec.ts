@@ -71,7 +71,7 @@ describe('generateSupportAgentSource', () => {
     expect(source).toContain("import { openai } from '@ai-sdk/openai'");
     expect(source).toContain("model: openai('gpt-4o-mini')");
     expect(source).toContain('needsApproval: true');
-    expect(source).toContain('tools: { webSearch }');
+    expect(source).toContain('tools: { searchNovuDocs }');
     expect(source).not.toContain('demo agent');
   });
 
@@ -84,8 +84,8 @@ describe('generateSupportAgentSource', () => {
 
     expect(source).toContain("agent('my-agent'");
     expect(source).toContain("model: 'anthropic:claude-haiku-4-5'");
-    expect(source).toContain('tools: [webSearch]');
-    expect(source).toContain("toolCall.name === 'webSearch'");
+    expect(source).toContain('tools: [searchNovuDocs]');
+    expect(source).toContain("toolCall.name === 'searchNovuDocs'");
     expect(source).toContain('export const myAgent');
   });
 

@@ -5,19 +5,28 @@ import { Actions, Button, Card, CardText } from '@novu/framework';
 import { agent } from '@novu/framework/langchain';
 import { z } from 'zod';
 
-const webSearch = tool(
-  async ({ query }) => ({
-    results: [
-      {
-        title: `Result for "${query}"`,
-        snippet: 'Demo search result — replace with a real search API (Tavily, SerpAPI, etc.).',
-      },
-    ],
-  }),
+const searchNovuDocs = tool(
+  async ({ query }) => {
+    const response = await fetch('https://docs.novu.co/llms.txt');
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch Novu docs index (${response.status})`);
+    }
+
+    const index = await response.text();
+    const needle = query.toLowerCase();
+    const matches = index
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0 && line.toLowerCase().includes(needle))
+      .slice(0, 5);
+
+    return { query, matches };
+  },
   {
-    name: 'webSearch',
-    description: 'Search the web for current information. Requires user approval before running.',
-    schema: z.object({ query: z.string().describe('Search query') }),
+    name: 'searchNovuDocs',
+    description: 'Search Novu documentation for guides and API references. Requires user approval before running.',
+    schema: z.object({ query: z.string().describe('Topic to search for in Novu docs') }),
   }
 );
 
@@ -68,7 +77,7 @@ export const supportAgent = agent('support-agent', {
     return (
       `**Got it.** You said: "${message.text}"\n\n` +
       `_This is a demo agent. Uncomment the LangChain config return below to wire your LLM._\n` +
-      `_Once wired, try "search for Novu docs" to see tool approval in action._\n\n` +
+      `_Once wired, try "how does tool approval work in Novu?" to see the approval flow._\n\n` +
       `**Conversation so far:** ${ctx.history.length} messages | ` +
       `**Topic:** ${ctx.metadata.get('topic') ?? 'unknown'}`
     );
@@ -76,9 +85,9 @@ export const supportAgent = agent('support-agent', {
     // return {
     //   model: 'openai:gpt-4o-mini',
     //   system:
-    //     'You are a helpful support agent. Use webSearch when the user asks about current events or information you may not know.',
-    //   tools: [webSearch],
-    //   needsApproval: (toolCall) => toolCall.name === 'webSearch',
+    //     'You are a helpful support agent. Use searchNovuDocs when the user asks how Novu features work or wants documentation links.',
+    //   tools: [searchNovuDocs],
+    //   needsApproval: (toolCall) => toolCall.name === 'searchNovuDocs',
     // };
   },
 

@@ -29,7 +29,7 @@ The scaffold uses `@novu/framework/langchain` and ships with an **echo demo** th
 
    - Set your provider API key (e.g. `OPENAI_API_KEY` in `.env.local`).
 
-   - Uncomment the LangChain config return in `app/novu/agents/support-agent.tsx` (the `webSearch` tool is already defined above).
+   - Uncomment the LangChain config return in `app/novu/agents/support-agent.tsx` (the `searchNovuDocs` tool is already defined above).
 
 Your agent is served at `/api/novu` and handles incoming messages via the Novu Bridge protocol.
 
@@ -69,13 +69,13 @@ Replace the echo `return` in `app/novu/agents/support-agent.tsx` with a LangChai
 return {
   model: 'openai:gpt-4o-mini',
   system:
-    'You are a helpful support agent. Use webSearch when the user asks about current events or information you may not know.',
-  tools: [webSearch],
-  needsApproval: (toolCall) => toolCall.name === 'webSearch',
+    'You are a helpful support agent. Use searchNovuDocs when the user asks how Novu features work or wants documentation links.',
+  tools: [searchNovuDocs],
+  needsApproval: (toolCall) => toolCall.name === 'searchNovuDocs',
 };
 ```
 
-The scaffold includes a `webSearch` tool gated behind approval — uncomment the config return to wire your LLM, then try asking "search for Novu docs" to see the approval card flow.
+The scaffold includes a `searchNovuDocs` tool gated behind approval — it fetches the live Novu docs index. Uncomment the config return to wire your LLM, then try asking "how does tool approval work in Novu?" to see the approval card flow.
 
 ## Learn More
 

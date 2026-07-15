@@ -51,40 +51,44 @@ function buildOnActionHandler(): string {
 }
 
 const AGENT_SYSTEM_PROMPT =
-  'You are a helpful support agent. Use webSearch when the user asks about current events or information you may not know.';
+  'You are a helpful support agent. Use searchNovuDocs when the user asks how Novu features work or wants documentation links.';
 
-function buildAiSdkWebSearchTool(): string {
-  return `const webSearch = tool({
-  description: 'Search the web for current information. Requires user approval before running.',
+const SEARCH_NOVU_DOCS_EXECUTE = `async ({ query }) => {
+  const response = await fetch('https://docs.novu.co/llms.txt');
+
+  if (!response.ok) {
+    throw new Error(\`Failed to fetch Novu docs index (\${response.status})\`);
+  }
+
+  const index = await response.text();
+  const needle = query.toLowerCase();
+  const matches = index
+    .split('\\n')
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0 && line.toLowerCase().includes(needle))
+    .slice(0, 5);
+
+  return { query, matches };
+}`;
+
+function buildAiSdkSearchNovuDocsTool(): string {
+  return `const searchNovuDocs = tool({
+  description: 'Search Novu documentation for guides and API references. Requires user approval before running.',
   inputSchema: z.object({
-    query: z.string().describe('Search query'),
+    query: z.string().describe('Topic to search for in Novu docs'),
   }),
   needsApproval: true,
-  execute: async ({ query }) => ({
-    results: [
-      {
-        title: \`Result for "\${query}"\`,
-        snippet: 'Demo search result — replace with a real search API (Tavily, SerpAPI, etc.).',
-      },
-    ],
-  }),
+  execute: ${SEARCH_NOVU_DOCS_EXECUTE},
 });`;
 }
 
-function buildLangChainWebSearchTool(): string {
-  return `const webSearch = tool(
-  async ({ query }) => ({
-    results: [
-      {
-        title: \`Result for "\${query}"\`,
-        snippet: 'Demo search result — replace with a real search API (Tavily, SerpAPI, etc.).',
-      },
-    ],
-  }),
+function buildLangChainSearchNovuDocsTool(): string {
+  return `const searchNovuDocs = tool(
+  ${SEARCH_NOVU_DOCS_EXECUTE},
   {
-    name: 'webSearch',
-    description: 'Search the web for current information. Requires user approval before running.',
-    schema: z.object({ query: z.string().describe('Search query') }),
+    name: 'searchNovuDocs',
+    description: 'Search Novu documentation for guides and API references. Requires user approval before running.',
+    schema: z.object({ query: z.string().describe('Topic to search for in Novu docs') }),
   },
 );`;
 }
@@ -94,7 +98,7 @@ function buildAiSdkGenerateTextReturn(modelLine: string): string {
       model: ${modelLine},
       instructions: '${AGENT_SYSTEM_PROMPT}',
       messages: toModelMessages(ctx.history),
-      tools: { webSearch },
+      tools: { searchNovuDocs },
     });`;
 }
 
@@ -102,8 +106,8 @@ function buildLangChainConfigReturn(modelLine: string): string {
   return `    return {
       model: ${modelLine},
       system: '${AGENT_SYSTEM_PROMPT}',
-      tools: [webSearch],
-      needsApproval: (toolCall) => toolCall.name === 'webSearch',
+      tools: [searchNovuDocs],
+      needsApproval: (toolCall) => toolCall.name === 'searchNovuDocs',
     };`;
 }
 
@@ -219,11 +223,12 @@ export function generateSupportAgentSource(input: GenerateSupportAgentInput): st
   const imports =
     input.runtime === 'ai-sdk' ? buildAiSdkImports(input.llmAuth.kind) : buildLangChainImports(input.llmAuth.kind);
   const onMessageBody = buildOnMessageBody(input);
-  const webSearchTool = input.runtime === 'ai-sdk' ? buildAiSdkWebSearchTool() : buildLangChainWebSearchTool();
+  const searchNovuDocsTool =
+    input.runtime === 'ai-sdk' ? buildAiSdkSearchNovuDocsTool() : buildLangChainSearchNovuDocsTool();
 
   return `${imports}
 
-${webSearchTool}
+${searchNovuDocsTool}
 
 /**
  * Novu calls these handlers whenever a user sends a message or clicks an action
