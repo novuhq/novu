@@ -41,9 +41,9 @@ export type CreateWebexRoomEndpointDto = {
    */
   integrationIdentifier: string;
   /**
-   * The identifier of the channel connection to use for this channel endpoint.
+   * The identifier of the channel connection to use for this Webex endpoint.
    */
-  connectionIdentifier: string;
+  connectionIdentifier?: string | undefined;
   /**
    * Type of channel endpoint
    */
@@ -113,7 +113,7 @@ export type CreateWebexRoomEndpointDto$Outbound = {
     [k: string]: CreateWebexRoomEndpointDtoContext2$Outbound | string;
   } | undefined;
   integrationIdentifier: string;
-  connectionIdentifier: string;
+  connectionIdentifier?: string | undefined;
   type: "webex_room";
   endpoint: WebexRoomEndpointDto$Outbound;
 };
@@ -133,7 +133,7 @@ export const CreateWebexRoomEndpointDto$outboundSchema: z.ZodType<
     ]),
   ).optional(),
   integrationIdentifier: z.string(),
-  connectionIdentifier: z.string(),
+  connectionIdentifier: z.string().optional(),
   type: z.literal("webex_room"),
   endpoint: WebexRoomEndpointDto$outboundSchema,
 });
@@ -142,8 +142,6 @@ export function createWebexRoomEndpointDtoToJSON(
   createWebexRoomEndpointDto: CreateWebexRoomEndpointDto,
 ): string {
   return JSON.stringify(
-    CreateWebexRoomEndpointDto$outboundSchema.parse(
-      createWebexRoomEndpointDto,
-    ),
+    CreateWebexRoomEndpointDto$outboundSchema.parse(createWebexRoomEndpointDto),
   );
 }

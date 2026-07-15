@@ -5,7 +5,13 @@
 import * as z from "zod/v3";
 
 export type AddReactionPayloadDto = {
+  /**
+   * Platform message id to react to.
+   */
   messageId: string;
+  /**
+   * Well-known cross-platform emoji name (e.g. `white_check_mark`, `thumbsup`).
+   */
   emojiName: string;
 };
 

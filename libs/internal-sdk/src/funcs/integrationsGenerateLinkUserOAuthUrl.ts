@@ -31,7 +31,7 @@ import { Result } from "../types/fp.js";
  * Generate OAuth URL to link a subscriber user identity
  *
  * @remarks
- * Generate an OAuth URL that links a specific subscriber to their chat identity (Slack user ID or MS Teams user OID).
+ * Generate an OAuth URL that links a specific subscriber to their chat identity (Slack user ID, MS Teams user OID, or Webex person).
  *     The generated URL expires after 5 minutes.
  *
  * This operation requires either {@link Security.bearerAuth} or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.

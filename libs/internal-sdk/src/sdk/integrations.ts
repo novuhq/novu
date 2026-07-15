@@ -214,7 +214,7 @@ export class Integrations extends ClientSDK {
    * Generate OAuth URL for a workspace/tenant connection
    *
    * @remarks
-   * Generate an OAuth URL that creates a workspace or tenant-level channel connection (Slack workspace install or MS Teams admin consent).
+   * Generate an OAuth URL that creates a workspace or tenant-level channel connection (Slack workspace install, MS Teams admin consent, or Webex integration authorization).
    *     The generated URL expires after 5 minutes.
    */
   async generateConnectOAuthUrl(
@@ -254,7 +254,7 @@ export class Integrations extends ClientSDK {
    * Generate OAuth URL to link a subscriber user identity
    *
    * @remarks
-   * Generate an OAuth URL that links a specific subscriber to their chat identity (Slack user ID or MS Teams user OID).
+   * Generate an OAuth URL that links a specific subscriber to their chat identity (Slack user ID, MS Teams user OID, or Webex person).
    *     The generated URL expires after 5 minutes.
    */
   async generateLinkUserOAuthUrl(
@@ -278,7 +278,7 @@ export class Integrations extends ClientSDK {
    *
    * @remarks
    * **Deprecated** — use `POST /integrations/channel-connections/oauth` (connect) or `POST /integrations/channel-endpoints/oauth` (link_user) instead.
-   *     Generate an OAuth URL for chat integrations like Slack and MS Teams.
+   *     Generate an OAuth URL for chat integrations like Slack, MS Teams, and Webex.
    *     This URL allows subscribers to authorize the integration, enabling the system to send messages
    *     through their chat workspace. The generated URL expires after 5 minutes.
    *

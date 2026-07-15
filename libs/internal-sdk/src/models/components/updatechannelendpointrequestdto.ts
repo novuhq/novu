@@ -19,11 +19,6 @@ import {
   SlackUserEndpointDto$outboundSchema,
 } from "./slackuserendpointdto.js";
 import {
-  WebhookEndpointDto,
-  WebhookEndpointDto$Outbound,
-  WebhookEndpointDto$outboundSchema,
-} from "./webhookendpointdto.js";
-import {
   WebexPersonEndpointDto,
   WebexPersonEndpointDto$Outbound,
   WebexPersonEndpointDto$outboundSchema,
@@ -33,6 +28,11 @@ import {
   WebexRoomEndpointDto$Outbound,
   WebexRoomEndpointDto$outboundSchema,
 } from "./webexroomendpointdto.js";
+import {
+  WebhookEndpointDto,
+  WebhookEndpointDto$Outbound,
+  WebhookEndpointDto$outboundSchema,
+} from "./webhookendpointdto.js";
 
 /**
  * Updated endpoint data. The structure must match the existing channel endpoint type.

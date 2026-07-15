@@ -181,8 +181,6 @@ To send messages to Slack, your users must first authorize Novu to access one of
 
 When a user clicks **Connect Slack** in your application, your backend should request a unique authorization URL from Novu.
 
-This URL is specific to the Subscriber or the Context (Tenant) it will be generated for.
-
 <Warning>
   The generated OAuth URL is valid for only <strong>5 minutes</strong>. Do not cache this URL; generate it dynamically when the user initiates the flow.
 </Warning>
@@ -196,10 +194,10 @@ const novu = new Novu({ secretKey: "<NOVU_SECRET_KEY>" });
 
 const response = await novu.integrations.generateChatOAuthUrl({
   integrationIdentifier: 'slack',
-  subscriberId: 'subscriberId',
+  subscriberId: 'user-123',
   context: {
-    "tenant": "orgId"
-},
+    tenant: 'orgId',
+  },
 });
 ```
   </Tab>
@@ -211,10 +209,10 @@ from novu_py import Novu
 with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
     response = novu.integrations.generate_chat_o_auth_url(generate_chat_oauth_url_request_dto={
         "integration_identifier": "slack",
-        "subscriber_id": "subscriberId",
-        context={
-        "tenant": "orgId"
-},
+        "subscriber_id": "user-123",
+        "context": {
+            "tenant": "orgId",
+        },
     })
 ```
   </Tab>
@@ -232,7 +230,10 @@ s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
 
 res, err := s.Integrations.GenerateChatOAuthURL(context.Background(), components.GenerateChatOauthURLRequestDto{
     IntegrationIdentifier: "slack",
-    SubscriberID: novugo.String("subscriberId"),
+    SubscriberID: novugo.String("user-123"),
+    Context: map[string]components.GenerateChatOauthURLRequestDtoContext{
+        "tenant": components.CreateGenerateChatOauthURLRequestDtoContextStr("orgId"),
+    },
 }, nil)
 ```
   </Tab>
@@ -245,7 +246,10 @@ $sdk = novu\Novu::builder()->setSecurity('<NOVU_SECRET_KEY>')->build();
 $response = $sdk->integrations->generateChatOAuthUrl(
     generateChatOauthUrlRequestDto: new Components\GenerateChatOauthUrlRequestDto(
         integrationIdentifier: 'slack',
-        subscriberId: 'subscriberId',
+        subscriberId: 'user-123',
+        context: [
+            'tenant' => 'orgId',
+        ],
     ),
 );
 ```
@@ -259,7 +263,10 @@ var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
 var response = await sdk.Integrations.GenerateChatOAuthUrlAsync(
     generateChatOauthUrlRequestDto: new GenerateChatOauthUrlRequestDto() {
         IntegrationIdentifier = "slack",
-        SubscriberId = "subscriberId",
+        SubscriberId = "user-123",
+        Context = new Dictionary<string, object> {
+            { "tenant", "orgId" },
+        },
     });
 ```
   </Tab>
@@ -272,7 +279,8 @@ Novu novu = Novu.builder().secretKey("<NOVU_SECRET_KEY>").build();
 var response = novu.integrations().generateChatOAuthUrl()
     .body(GenerateChatOauthUrlRequestDto.builder()
         .integrationIdentifier("slack")
-        .subscriberId("subscriberId")
+        .subscriberId("user-123")
+        .context(java.util.Map.of("tenant", "orgId"))
         .build())
     .call();
 ```
@@ -284,7 +292,7 @@ curl -L -X POST 'https://api.novu.co/v1/integrations/chat/oauth' \
 -H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
 -d '{
   "integrationIdentifier": "slack",
-  "subscriberId": "subscriberId",
+  "subscriberId": "user-123",
   "context": {
     "tenant": "orgId"
   }
@@ -295,7 +303,7 @@ curl -L -X POST 'https://api.novu.co/v1/integrations/chat/oauth' \
 
 Your application can support multiple Slack workspace connections per user or per tenant by triggering separate OAuth flows.
 
-Novu allows one connection per (integration + subscriber + context). To connect multiple workspaces, provide different combinations of subscriber or context.
+Novu allows one connection per (integration + subscriber + context). To connect multiple workspaces, trigger separate OAuth flows with different combinations of those values.
 
 ### Redirect the user
 
@@ -339,8 +347,8 @@ After the user approves access, Novu handles the rest of the OAuth flow automati
 ```tsx
 await novu.channelConnections.create({
   integrationIdentifier: 'slack',
-  subscriberId: 'user-123',        // provide subscriberId, context, or both — at least one is required
-  context: { tenant: 'acme' },     // scope to a tenant (required when subscriberId is omitted)
+  subscriberId: 'user-123',
+  context: { tenant: 'acme' },
   workspace: {
     id: authData.team.id,          // Slack workspace ID from OAuth
     name: authData.team.name,
@@ -350,8 +358,6 @@ await novu.channelConnections.create({
   },
 });
 ```
-
-Provide at least one of `subscriberId` or `context` — same as the Novu-managed OAuth flow.
 </Note>
 
 ## Choose delivery destinations
@@ -425,6 +431,9 @@ res, err := s.ChannelEndpoints.Create(context.Background(), operations.CreateCha
         SubscriberID: "user-123",
         IntegrationIdentifier: "slack",
         ConnectionIdentifier: novugo.String("conn_slack_acme"),
+        Context: map[string]any{
+            "tenant": "acme",
+        },
         Type: components.CreateSlackChannelEndpointDtoTypeSlackChannel,
         Endpoint: components.SlackChannelEndpointDto{ChannelID: "C012345"},
     },
@@ -442,6 +451,9 @@ $sdk->channelEndpoints->create(
         subscriberId: 'user-123',
         integrationIdentifier: 'slack',
         connectionIdentifier: 'conn_slack_acme',
+        context: [
+            'tenant' => 'acme',
+        ],
         type: Components\CreateSlackChannelEndpointDtoType::SlackChannel,
         endpoint: new Components\SlackChannelEndpointDto(channelId: 'C012345'),
     ),
@@ -460,6 +472,9 @@ await sdk.ChannelEndpoints.CreateAsync(
             SubscriberId = "user-123",
             IntegrationIdentifier = "slack",
             ConnectionIdentifier = "conn_slack_acme",
+            Context = new Dictionary<string, object> {
+                { "tenant", "acme" },
+            },
             Type = CreateSlackChannelEndpointDtoType.SlackChannel,
             Endpoint = new SlackChannelEndpointDto() { ChannelId = "C012345" },
         }));
@@ -476,6 +491,7 @@ novu.channelEndpoints().create()
         .subscriberId("user-123")
         .integrationIdentifier("slack")
         .connectionIdentifier("conn_slack_acme")
+        .context(java.util.Map.of("tenant", "acme"))
         .type(CreateSlackChannelEndpointDtoType.SLACK_CHANNEL)
         .endpoint(SlackChannelEndpointDto.builder().channelId("C012345").build())
         .build())
@@ -574,6 +590,9 @@ res, err := s.ChannelEndpoints.Create(context.Background(), operations.CreateCha
         SubscriberID: "user-123",
         IntegrationIdentifier: "slack",
         ConnectionIdentifier: novugo.String("conn_slack_acme"),
+        Context: map[string]any{
+            "tenant": "acme",
+        },
         Type: components.CreateSlackUserEndpointDtoTypeSlackUser,
         Endpoint: components.SlackUserEndpointDto{UserID: "U01234567"},
     },
@@ -591,6 +610,9 @@ $sdk->channelEndpoints->create(
         subscriberId: 'user-123',
         integrationIdentifier: 'slack',
         connectionIdentifier: 'conn_slack_acme',
+        context: [
+            'tenant' => 'acme',
+        ],
         type: Components\CreateSlackUserEndpointDtoType::SlackUser,
         endpoint: new Components\SlackUserEndpointDto(userId: 'U01234567'),
     ),
@@ -609,6 +631,9 @@ await sdk.ChannelEndpoints.CreateAsync(
             SubscriberId = "user-123",
             IntegrationIdentifier = "slack",
             ConnectionIdentifier = "conn_slack_acme",
+            Context = new Dictionary<string, object> {
+                { "tenant", "acme" },
+            },
             Type = CreateSlackUserEndpointDtoType.SlackUser,
             Endpoint = new SlackUserEndpointDto() { UserId = "U01234567" },
         }));
@@ -625,6 +650,7 @@ novu.channelEndpoints().create()
         .subscriberId("user-123")
         .integrationIdentifier("slack")
         .connectionIdentifier("conn_slack_acme")
+        .context(java.util.Map.of("tenant", "acme"))
         .type(CreateSlackUserEndpointDtoType.SLACK_USER)
         .endpoint(SlackUserEndpointDto.builder().userId("U01234567").build())
         .build())
