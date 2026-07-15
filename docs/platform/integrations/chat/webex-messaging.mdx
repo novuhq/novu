@@ -1,0 +1,199 @@
+---
+title: "Webex Messaging Integration with Novu"
+sidebarTitle: "Webex Messaging"
+description: "Connect Webex to Novu through OAuth to deliver workflow chat notifications to Webex rooms and people using your users' own Webex accounts."
+---
+
+The Webex Messaging chat integration lets your application send notifications to Webex rooms (spaces) and to people as direct messages. Novu uses the [Webex Messages API](https://developer.webex.com/messaging/docs/api/v1/messages/create-a-message) and connects to your users' Webex organizations through OAuth, so each message is delivered with a per-connection access token that Novu stores, encrypts, and refreshes for you.
+
+Novu handles the full lifecycle of Webex connections and message delivery. You authorize Novu once per subscriber (or context/tenant), store the resulting channel connection, and then point channel endpoints at the Webex rooms or people that should receive notifications.
+
+## Configure a Webex integration
+
+Before connecting Webex in Novu, create a Webex integration (OAuth app) in the Webex Developer Portal. The integration provides the client ID, client secret, and OAuth scopes Novu needs to connect to your users' Webex accounts securely.
+
+<Steps>
+  <Step title="Create a Webex integration">
+    Go to [Webex Integrations](https://developer.webex.com/docs/integrations) and create a new integration. Copy the generated **Client ID** and **Client Secret** — you will paste them into Novu.
+  </Step>
+
+  <Step title="Set the redirect URI">
+    Add the Novu chat OAuth callback URL as a redirect URI. Use the URL that matches your Novu region:
+
+    ```text
+    https://api.novu.co/v1/integrations/chat/oauth/callback
+    ```
+
+    For EU deployments:
+
+    ```text
+    https://api.eu.novu.co/v1/integrations/chat/oauth/callback
+    ```
+  </Step>
+
+  <Step title="Add OAuth scopes">
+    Grant the scopes Novu uses to read rooms and people and to send messages:
+
+    ```text
+    spark:messages_write spark:rooms_read spark:people_read spark:memberships_read spark:kms
+    ```
+  </Step>
+</Steps>
+
+## Configure Webex integration in Novu
+
+<Steps>
+  <Step title="Open the Integration Store">
+    In the Novu Dashboard, click **Integrations Store** in the sidebar.
+  </Step>
+
+  <Step title="Connect Webex Messaging">
+    Click **Connect Provider**, select **Chat**, then choose **Webex Messaging**.
+  </Step>
+
+  <Step title="Add credentials">
+    Enter the following credentials from your Webex integration:
+
+    | Credential | Required | Description |
+    | --- | --- | --- |
+    | **Client ID** | Yes | Webex integration client ID used to generate OAuth authorization URLs. |
+    | **Client Secret** | Yes | Webex integration client secret used to exchange authorization codes. |
+    | **Redirect URL** | No | URL to redirect users to after the OAuth flow finishes. If omitted, Novu shows a success page. |
+    | **Base URL** | No | Webex API base URL. Leave empty to use `https://webexapis.com/v1`. |
+
+    Click **Create Integration** to save.
+  </Step>
+</Steps>
+
+## Let users connect their Webex account
+
+To deliver messages, your users must authorize Novu to access their Webex organization. This authorization happens through Webex's OAuth flow, which Novu generates and manages for you, and results in a stored [channel connection](/api-reference/channel-connections/list-all-channel-connections).
+
+### Generate the OAuth URL
+
+When a user starts the connect flow in your application, request a unique authorization URL from Novu. The URL is specific to the subscriber (or context/tenant) it is generated for.
+
+<Warning>
+  The generated OAuth URL is valid for only <strong>5 minutes</strong>. Do not cache this URL; generate it dynamically when the user initiates the flow.
+</Warning>
+
+<Tabs>
+  <Tab title="Node.js">
+```typescript
+import { Novu } from '@novu/api';
+
+const novu = new Novu({
+  secretKey: '<NOVU_SECRET_KEY>',
+  // Required if using EU region
+  // serverURL: 'https://eu.api.novu.co',
+});
+
+const response = await novu.integrations.generateChatOAuthUrl({
+  integrationIdentifier: 'webex-messaging',
+  subscriberId: 'subscriberId',
+});
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -L -X POST 'https://api.novu.co/v1/integrations/chat/oauth' \
+-H 'Content-Type: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+  "integrationIdentifier": "webex-messaging",
+  "subscriberId": "subscriberId"
+}'
+```
+  </Tab>
+</Tabs>
+
+Open the returned `oauthUrl` in a new tab so the user can authorize Novu. After they approve, Novu receives the callback and stores the workspace tokens as a channel connection. Novu allows one connection per (integration + subscriber + context); to connect multiple Webex accounts, use different subscriber or context combinations.
+
+See the [Generate a chat OAuth URL API reference](/api-reference/integrations/generate-chat-oauth-url) for full request details.
+
+## Connect rooms and people
+
+Once a channel connection exists, create channel endpoints that reference it with `connectionIdentifier`. Webex supports two endpoint types:
+
+- `webex_room` — delivers to a Webex room (space). Provide `roomId`, and optionally `parentId` to reply in a thread.
+- `webex_person` — delivers a direct message to a person. Provide exactly one of `personId` or `personEmail`.
+
+<Tabs>
+  <Tab title="Room (Node.js)">
+```typescript
+import { Novu } from '@novu/api';
+
+const novu = new Novu({ secretKey: '<NOVU_SECRET_KEY>' });
+
+await novu.channelEndpoints.create({
+  subscriberId: 'subscriberId',
+  connectionIdentifier: 'webex-connection-abc123',
+  type: 'webex_room',
+  endpoint: {
+    roomId: '<WEBEX_ROOM_ID>',
+    // parentId: '<PARENT_MESSAGE_ID>', // optional, reply in a thread
+  },
+});
+```
+  </Tab>
+  <Tab title="Person (Node.js)">
+```typescript
+import { Novu } from '@novu/api';
+
+const novu = new Novu({ secretKey: '<NOVU_SECRET_KEY>' });
+
+await novu.channelEndpoints.create({
+  subscriberId: 'subscriberId',
+  connectionIdentifier: 'webex-connection-abc123',
+  type: 'webex_person',
+  endpoint: {
+    personEmail: 'user@example.com',
+    // or personId: '<WEBEX_PERSON_ID>'
+  },
+});
+```
+  </Tab>
+  <Tab title="Room (cURL)">
+```bash
+curl -L -X POST 'https://api.novu.co/v1/channel-endpoints' \
+-H 'Content-Type: application/json' \
+-H 'Authorization: ApiKey <NOVU_SECRET_KEY>' \
+-d '{
+  "subscriberId": "<SUBSCRIBER_ID>",
+  "connectionIdentifier": "webex-connection-abc123",
+  "type": "webex_room",
+  "endpoint": {
+    "roomId": "<WEBEX_ROOM_ID>"
+  }
+}'
+```
+  </Tab>
+</Tabs>
+
+See the [Create a channel endpoint API reference](/api-reference/channel-endpoints/create-a-channel-endpoint) for full request details.
+
+## Send notifications
+
+Create a workflow with a **Chat** step, add your message content, and trigger the workflow for a subscriber that has a Webex channel endpoint configured.
+
+```typescript
+import { Novu } from '@novu/api';
+
+const novu = new Novu({ secretKey: '<NOVU_SECRET_KEY>' });
+
+await novu.trigger({
+  workflowId: 'incident-alert',
+  to: {
+    subscriberId: 'subscriberId',
+  },
+  payload: {
+    incidentId: 'INC-12345',
+  },
+});
+```
+
+The chat step content is delivered as the Webex message `text`.
+
+## Provider passthrough
+
+Use [trigger overrides](/platform/integrations/trigger-overrides) to add Webex-specific fields such as `markdown`, `files`, or `attachments`. Routing fields are reserved: passthrough must not add, remove, or override `roomId`, `parentId`, `toPersonId`, or `toPersonEmail`.
