@@ -1,4 +1,4 @@
-import { BadGatewayException, BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import { ConversationChannel } from '@novu/dal';
 import type { SentMessageInfo } from '@novu/framework/internal';
@@ -8,6 +8,7 @@ import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-c
 import type { ReplyContentDto } from '../../shared/dtos/agent-reply-payload.dto';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { esmImport } from '../../shared/util/esm-import';
+import { toDeliveryError } from '../../shared/util/delivery-error.util';
 import { buildBrandedMarkdownReply, contentHasPoweredByWatermark } from '../../shared/util/novu-powered-by-watermark';
 import { type AgentActionTokenBinding, AgentActionTokenService } from '../action-token/agent-action-token.service';
 import { AgentConversationService } from '../conversation/agent-conversation.service';
@@ -77,38 +78,6 @@ export interface ThreadReplyPersistContext {
   richContent?: Record<string, unknown>;
   environmentId: string;
   organizationId: string;
-}
-
-function getErrorResponseBody(err: unknown): unknown {
-  if (!err || typeof err !== 'object') {
-    return undefined;
-  }
-
-  return (err as { response?: { body?: unknown } }).response?.body;
-}
-
-function getDeliveryErrorDetail(body: unknown): string | undefined {
-  if (!body || typeof body !== 'object') {
-    return undefined;
-  }
-
-  const responseBody = body as { errors?: Array<{ message?: unknown }>; message?: unknown };
-  const firstErrorMessage = responseBody.errors?.[0]?.message;
-  if (typeof firstErrorMessage === 'string') {
-    return firstErrorMessage;
-  }
-
-  return typeof responseBody.message === 'string' ? responseBody.message : undefined;
-}
-
-function toDeliveryError(err: unknown): never {
-  const base = err instanceof Error ? err.message : String(err);
-  const detail = getDeliveryErrorDetail(getErrorResponseBody(err));
-
-  throw new BadGatewayException({
-    error: 'delivery_failed',
-    message: detail ? `${base}: ${detail}` : base,
-  });
 }
 
 @Injectable()

@@ -1,6 +1,6 @@
-import { BadGatewayException } from '@nestjs/common';
 import type { SentMessageInfo } from '@novu/framework/internal';
 import { WebClient } from '@slack/web-api';
+import { toDeliveryError } from '../../shared/util/delivery-error.util';
 import type {
   ChannelAndBlocks,
   ChatPostMessageArguments,
@@ -51,9 +51,9 @@ export async function postSlackNativeBlocks(params: {
   } satisfies ChatPostMessageArguments);
 
   if (!result.ok || !result.ts) {
-    throw new BadGatewayException({
-      error: 'delivery_failed',
+    toDeliveryError({
       message: result.error ?? 'Slack chat.postMessage failed',
+      data: { error: result.error },
     });
   }
 
@@ -76,9 +76,9 @@ export async function editSlackNativeBlocks(params: {
   } satisfies ChatUpdateArguments);
 
   if (!result.ok || !result.ts) {
-    throw new BadGatewayException({
-      error: 'delivery_failed',
+    toDeliveryError({
       message: result.error ?? 'Slack chat.update failed',
+      data: { error: result.error },
     });
   }
 
