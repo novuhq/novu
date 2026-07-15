@@ -6,6 +6,41 @@ Examples (non-interactive / agent / CI):
       --ci \\
       --channel slack
 
+  Custom code bridge — AI SDK (dashboard OAuth, no agent description):
+    npx novu connect \\
+      --ci \\
+      --runtime ai-sdk \\
+      --channel slack
+
+  Custom code bridge — LangChain:
+    npx novu connect \\
+      --ci \\
+      --runtime langchain \\
+      --channel slack
+
+  AI SDK scaffold with OpenAI API key:
+    npx novu connect \\
+      --ci \\
+      --runtime ai-sdk \\
+      --llm-auth openai \\
+      --openai-api-key "$OPENAI_API_KEY" \\
+      --channel slack
+
+  AI SDK scaffold with ChatGPT subscription (Codex CLI must be logged in):
+    npx novu connect \\
+      --ci \\
+      --runtime ai-sdk \\
+      --llm-auth codex-subscription \\
+      --channel slack
+
+  LangChain scaffold with Anthropic API key:
+    npx novu connect \\
+      --ci \\
+      --runtime langchain \\
+      --llm-auth anthropic \\
+      --anthropic-api-key "$ANTHROPIC_API_KEY" \\
+      --channel slack
+
   Dashboard OAuth Email:
     npx novu connect "An onboarding assistant for Acme's new members." \\
       --ci \\
@@ -72,8 +107,9 @@ Examples (non-interactive / agent / CI):
 Non-interactive (agent / CI) contract:
 
   Required for --ci mode:
-    - Pass the agent description as the positional <prompt> argument or --prompt.
+    - Pass the agent description as the positional <prompt> argument or --prompt (managed path only).
     - Pass --channel <slack|email|telegram|sendblue|skip> (or whatsapp/teams without --keyless).
+    - Bridge path: pass --runtime ai-sdk or --runtime langchain (omit the positional description).
 
   Authentication (pick one):
     - Dashboard OAuth (default): omit --secret-key and --keyless (opens /cli/auth; user approves in the browser; agent is created in their Development environment)
@@ -90,6 +126,14 @@ Non-interactive (agent / CI) contract:
   Optional CI-only escape hatches (secrets injected via env — never paste in chat):
     - --slack-config-token "xoxe.xoxp-…"    → skip the setup page; pass token directly
     - --telegram-bot-token "123456:ABC-…"   → skip the setup page; pass token directly
+
+  LLM wiring (fresh empty-dir scaffold for --runtime ai-sdk or --runtime langchain only):
+    - --llm-auth openai --openai-api-key "$OPENAI_API_KEY"  → wire OpenAI; skips the Ink picker (no --ci required)
+    - --llm-auth anthropic --anthropic-api-key "$ANTHROPIC_API_KEY"  → wire Anthropic; skips the Ink picker
+    - --llm-auth codex-subscription  → OAuth via codex login (ai-sdk) or langchainjs-codex-oauth (langchain)
+    - --llm-auth claude-subscription  → ai-sdk only; requires prior claude auth login
+    - --llm-auth skip  → demo echo agent (default when omitted)
+    - Omitted on existing projects (reconcile path only; no LLM rewire)
 
   Defaults (do not pass unless needed):
     - Dashboard OAuth: omit --secret-key and --keyless (creates the agent in the user's Development environment)
@@ -135,6 +179,12 @@ Machine-readable stdout (plain text, no ANSI — watch these in --ci mode):
 
   Chat SDK (requirements summary):
     NOVU_CONNECT_CHAT_SDK_REQUIREMENTS_FILE=<absolute path to requirements summary file>
+
+  AI SDK bridge (requirements summary):
+    NOVU_CONNECT_AI_SDK_REQUIREMENTS_FILE=<absolute path to requirements summary file>
+
+  LangChain bridge (requirements summary):
+    NOVU_CONNECT_LANGCHAIN_REQUIREMENTS_FILE=<absolute path to requirements summary file>
 
   Success:
     ✓ Your agent is live.

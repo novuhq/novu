@@ -68,6 +68,13 @@ describe('connectParser', () => {
     expect(flags.sendblueApiKey).toBe('sk_live_test');
     expect(flags.sendblueSecretKey).toBe('sbsec_test');
   });
+
+  it('parses --runtime for bridge connect commands', () => {
+    const flags = connectParser.parse('npx novu connect --ci --runtime ai-sdk --channel slack', {});
+
+    expect(flags.runtime).toBe('ai-sdk');
+    expect(flags.description).toBeUndefined();
+  });
 });
 
 describe('connectValidate', () => {

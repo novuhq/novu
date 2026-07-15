@@ -1,3 +1,4 @@
+import type { LlmAuthChoice } from '../../connect/pipeline/llm-auth/types';
 import { PackageManager } from '../helpers/get-pkg-manager';
 
 export enum TemplateTypeEnum {
@@ -43,4 +44,6 @@ export interface InstallTemplateArgs {
    * sibling packages would cause npm to fail.
    */
   skipInstall?: boolean;
+  /** LLM provider wiring for ai-sdk / langchain agent scaffolds. */
+  llmAuth?: LlmAuthChoice;
 }

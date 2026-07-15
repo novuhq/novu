@@ -25,6 +25,10 @@
       "twitter:card": "summary_large_image"
     }
   },
+  "thumbnails": {
+    "appearance": "dark",
+    "background": "/images/og/og-background.png"
+  },
   "interaction": {
     "drilldown": true
   },
@@ -34,7 +38,7 @@
     },
     "tabs": [
       {
-        "tab": "Platform",
+        "tab": "Notify",
         "groups": [
           {
             "group": "Getting Started",
@@ -192,6 +196,7 @@
                   "platform/integrations/chat/mattermost",
                   "platform/integrations/chat/ms-teams",
                   "platform/integrations/chat/slack",
+                  "platform/integrations/chat/webex-messaging",
                   "platform/integrations/chat/telegram",
                   "platform/integrations/chat/whats-app",
                   "platform/integrations/chat/zulip"
@@ -403,7 +408,7 @@
         ]
       },
       {
-        "tab": "Agents",
+        "tab": "Agent Connect",
         "groups": [
           {
             "group": "Getting Started",
@@ -903,6 +908,7 @@
                       "framework/quickstart/svelte",
                       "framework/quickstart/nuxt",
                       "framework/quickstart/h3",
+                      "framework/quickstart/hono",
                       "framework/quickstart/lambda"
                     ]
                   }
@@ -1113,11 +1119,6 @@
     }
   },
   "redirects": [
-    {
-      "source": "/",
-      "destination": "/platform",
-      "permanent": true
-    },
     {
       "source": "/content-creation-design/handlebars-helpers",
       "destination": "/platform/templates/handlebars-helpers",

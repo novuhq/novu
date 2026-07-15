@@ -1,4 +1,5 @@
 import type { CloudRegionEnum } from '../dev/enums';
+import type { LlmAuthCliChoice } from './pipeline/llm-auth/types';
 
 export type ChannelChoice = 'slack' | 'email' | 'whatsapp' | 'telegram' | 'teams' | 'sendblue' | 'skip';
 
@@ -168,6 +169,13 @@ export interface ConnectCommandOptions {
   scaffoldDir?: string;
   /** Skip scaffolding even when the target directory is empty. */
   noScaffold?: boolean;
+  /**
+   * LLM provider for ai-sdk / langchain fresh scaffolds only.
+   * openai | anthropic | codex-subscription | claude-subscription | skip
+   */
+  llmAuth?: LlmAuthCliChoice;
+  /** OpenAI API key for --llm-auth openai non-interactive scaffold runs. */
+  openaiApiKey?: string;
 }
 
 export interface AgentSummary {

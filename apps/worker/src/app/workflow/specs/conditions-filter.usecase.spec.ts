@@ -351,7 +351,95 @@ describe('Message filter matcher', () => {
     expect(matchedMessage.passed).to.equal(true);
   });
 
-  it('should handle IN operator when payload field is not an array', async () => {
+  it('should handle IN operator when payload field is a string', async () => {
+    const matchedMessage = await conditionsFilter.filter(
+      mapConditionsFilterCommand({
+        step: makeStep('String Field', FieldLogicalOperatorEnum.AND, [
+          {
+            operator: FieldOperatorEnum.IN,
+            value: 'premium',
+            field: 'tags',
+            on: FilterPartTypeEnum.PAYLOAD,
+          },
+        ]),
+        variables: {
+          payload: {
+            tags: 'premium',
+          },
+        },
+      })
+    );
+
+    expect(matchedMessage.passed).to.equal(true);
+  });
+
+  it('should handle NOT_IN operator when payload field is a string', async () => {
+    const matchedMessage = await conditionsFilter.filter(
+      mapConditionsFilterCommand({
+        step: makeStep('String Field', FieldLogicalOperatorEnum.AND, [
+          {
+            operator: FieldOperatorEnum.NOT_IN,
+            value: 'blocked',
+            field: 'status',
+            on: FilterPartTypeEnum.PAYLOAD,
+          },
+        ]),
+        variables: {
+          payload: {
+            status: 'active',
+          },
+        },
+      })
+    );
+
+    expect(matchedMessage.passed).to.equal(true);
+  });
+
+  it('should handle IN operator with string substring matching for old dashboard variants', async () => {
+    const tutorNameMatch = await conditionsFilter.filter(
+      mapConditionsFilterCommand({
+        step: makeStep('Tutor Name', FieldLogicalOperatorEnum.AND, [
+          {
+            operator: FieldOperatorEnum.IN,
+            value: ' ',
+            field: 'classDetails.tutorName',
+            on: FilterPartTypeEnum.PAYLOAD,
+          },
+        ]),
+        variables: {
+          payload: {
+            classDetails: {
+              tutorName: 'Jane Smith',
+            },
+          },
+        },
+      })
+    );
+
+    expect(tutorNameMatch.passed).to.equal(true);
+
+    const enrollmentStatusMatch = await conditionsFilter.filter(
+      mapConditionsFilterCommand({
+        step: makeStep('Enrollment Status', FieldLogicalOperatorEnum.AND, [
+          {
+            operator: FieldOperatorEnum.IN,
+            value: 'requested',
+            field: 'enrollmentQueriesStatus',
+            on: FilterPartTypeEnum.PAYLOAD,
+          },
+        ]),
+        variables: {
+          payload: {
+            enrollmentQueriesStatus: 'requested',
+          },
+        },
+      })
+    );
+
+    expect(enrollmentStatusMatch.passed).to.equal(true);
+  });
+
+  it('should handle IN operator when payload field is not an array or string', async () => {
     const matchedMessage = await conditionsFilter.filter(
       mapConditionsFilterCommand({
         step: makeStep('Non Array Field', FieldLogicalOperatorEnum.AND, [
@@ -364,7 +452,7 @@ describe('Message filter matcher', () => {
         ]),
         variables: {
           payload: {
-            tags: 'premium',
+            tags: 42,
           },
         },
       })
