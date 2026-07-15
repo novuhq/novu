@@ -36,6 +36,7 @@ import type { ConnectUI } from '../ui/ui';
 import { maybeRunAiSdkTunnel, runAiSdkProjectSetup } from './ai-sdk';
 import { createBridgeAgentFlow } from './bridge/create-bridge-agent';
 import { connectEmailForAgent } from './channels/email';
+import { connectSendblueForAgent } from './channels/sendblue';
 import { connectSlackForAgent } from './channels/slack';
 import { connectTelegramForAgent } from './channels/telegram';
 import { maybeRunChatSdkTunnel, runChatSdkProjectSetup } from './chat-sdk';
@@ -281,6 +282,22 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
             if (channelConnected) connectedChannel = 'email';
             break;
           }
+          case 'sendblue': {
+            const subscriberId = await ensureSubscriberForUser(session.client, session.auth);
+            const result = await connectSendblueForAgent(
+              session.client,
+              agent,
+              ui,
+              options,
+              session.auth.environmentId,
+              subscriberId,
+              track
+            );
+            connectedIntegration = result.integration;
+            channelConnected = result.connected;
+            if (channelConnected) connectedChannel = 'sendblue';
+            break;
+          }
           case 'whatsapp':
           case 'teams': {
             const agentDetailsUrl = buildConnectAgentDetailsUrl({
@@ -317,7 +334,9 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
 
     let claimToken: string | null = null;
 
-    if (channelConnected && connectedIntegration) {
+    // Sendblue's test message doubles as the welcome, so we skip the separate
+    // welcome-message call (which would send a second text).
+    if (channelConnected && connectedIntegration && connectedChannel !== 'sendblue') {
       ui.sendingWelcome();
       try {
         const welcome = await sendAgentWelcomeMessage(

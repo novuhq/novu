@@ -59,6 +59,7 @@ These govern every step. When in doubt, follow these over any specific instructi
 - **One run, one outcome.** A single connect command creates one agent + connects one channel. Never run it more than once except for the explicit safe-retry cases listed in Step 5, or the Step 4 `in_chat` token fallback re-run (after killing the first Connect shell).
 - **Trust user intent; ask only when genuinely unclear.** Managed path: channel (Step M1) and purpose confirmation (Step M2) require the user. Bridge path: channel (Step B1) and runtime (Step B2) when detection is ambiguous. Default everything else unless the user raises it.
 - **Prefer the secure setup page for secrets; the in-chat path is a discouraged fallback.** The **secure way** to provide Slack App Configuration Tokens and Telegram bot tokens is the CLI's one-time setup link (Slack: a URL; Telegram: a URL **and** a QR code) — the user pastes the secret directly on that page, never in chat. Always offer this first and recommend it. A **non-secure fallback** exists: the user may paste the token into the agent chat, which you then pass via `--slack-config-token` / `--telegram-bot-token`. Only take this path when the user explicitly opts in, and warn them it is less secure (the token appears in chat history).
+- **iMessage (Sendblue) has no secure setup page — its secrets go in chat.** In `--ci` (this flow), Sendblue is non-interactive with **no setup link**: the only way to pass the Sendblue API key and secret key is via `--sendblue-api-key` / `--sendblue-secret-key`, so the user provides them in chat. This is an **explicit, accepted exception** to the secure-page preference (Sendblue offers no secure page headlessly). There is **no token-delivery picker** for iMessage — collect the credentials in chat and warn **once** that they live in chat history, exactly as with the `in_chat` fallback.
 - **Confirm before you act.** Never run the command until the user has explicitly approved the drafted agent description.
 - **One Connect shell, no log watchers.** Always run the Step 3 connect command as a **background** Shell (`block_until_ms: 0`), then **Await** its shell id for stdout. **Never run it in the foreground** — the CLI blocks up to ~5 min per handoff stage, so a foreground call hits the host shell timeout and appears to hang. Use a single Shell session only. Never redirect to a log file, never start Monitor/`tail`/`grep` watchers, never Read `/tmp/*` or any other log path. **Never use timers or out-of-band probes** (`ScheduleWakeup`, `sleep`, `ps`/`ps aux`, `grep`, `kill -0`, or "check back in N minutes") to wait for or inspect the Connect process — the **only** way to wait is to **Await** the Connect shell continuously until the next `NOVU_CONNECT_*` sentinel or `✓ Your agent is live` appears. The only exception: `--channel skip` in keyless mode may run in the foreground. **Never use Bash `grep`/`cat`/`awk` on any file** (including `package.json`) — use the **Read** tool and parse the content in your reasoning.
 - **The CLI validates handoffs.** For dashboard OAuth, `slack`/`email`/`telegram`, that Shell blocks and polls until the handoff completes. Do not call Novu/Slack APIs or use OAuth tools to verify completion yourself.
@@ -72,7 +73,7 @@ These govern every step. When in doubt, follow these over any specific instructi
 
 When the user must pick from a **fixed set** of options (channel, approve/reject, retry, etc.), call the structured question tool — do not list choices as plain chat text:
 
-- **Cursor:** `AskQuestion` with 2–4 `options` (short `label` per option). 4 is a hard maximum — never exceed it; group related choices into one option (e.g. WhatsApp / MS Teams).
+- **Cursor:** `AskQuestion` with 2–4 `options` (short `label` per option). 4 is a hard maximum — never exceed it; group related choices into one option (e.g. WhatsApp / MS Teams, and Telegram / iMessage).
 - **Claude Code:** `AskUserQuestion` with the same shape (`label` + optional `description`).
 
 **Use the picker for:** Step 0 (path **only when genuinely ambiguous**), Step M1 / Step B1 (channel), Step M2 (approve / edit managed description), Step B2 (runtime when ambiguous), and Step 4 (Slack/Telegram token delivery — secure page vs. paste in chat, presented inline only when the token is actually needed).
@@ -104,7 +105,7 @@ When the user must pick from a **fixed set** of options (channel, approve/reject
 
 ### Managed agent
 
-1. **Channel** — ask which channel. Keyless + WhatsApp / MS Teams → dashboard redirect only (Steps M2–M5 skipped). Dashboard OAuth supports all channels.
+1. **Channel** — ask which channel. Keyless + WhatsApp / MS Teams → dashboard redirect only (Steps M2–M5 skipped). Slack, Email, Telegram, and iMessage (Sendblue) are CLI-handled in keyless. Dashboard OAuth supports all channels.
 2. **Purpose** — infer a 1–2 sentence agent description **for the product's end users** from the project; confirm with the user.
 3. **Run** — connect command from [Step M3](#step-m3--run-connect-managed) (`--ci`, plus `--keyless` for the default keyless mode), streamed.
 4. **Handoff** — [Shared channel handoffs](#shared--channel-handoffs). Let the CLI poll.
@@ -129,14 +130,16 @@ When the user must pick from a **fixed set** of options (channel, approve/reject
 
 **Goal:** lock the channel and gather only what that channel needs.
 
-**Always ask the user to choose** — never assume. Call `AskQuestion` (Cursor) or `AskUserQuestion` (Claude Code) with these **four** options exactly — the picker has a **hard max of 4 options**, which is why WhatsApp and MS Teams share one option and **`skip` is not an option**. In the question's prompt text, add one short sentence that they can skip channel setup (agent only, connect later) by saying so:
+**Always ask the user to choose** — never assume. Call `AskQuestion` (Cursor) or `AskUserQuestion` (Claude Code) with these **four** options exactly — the picker has a **hard max of 4 options**, which is why Telegram and iMessage share one option, WhatsApp and MS Teams share one option, and **`skip` is not an option**. In the question's prompt text, add one short sentence that they can skip channel setup (agent only, connect later) by saying so:
 
 | Option id | Label | What the user must do |
 |---|---|---|
 | `slack` | Slack | **Recommended (secure):** open the setup link the CLI prints and paste a Slack App Configuration Token there, then click an OAuth link to approve the install. **Non-secure fallback:** paste the token in chat instead and you pass it via `--slack-config-token`. |
 | `email` | Email | Nothing up front. The CLI prints an inbound email address; the user sends one email to it. |
-| `telegram` | Telegram | Create a bot via @BotFather. **Recommended (secure):** open the setup link/QR the CLI prints and paste the token there. **Non-secure fallback:** paste the token in chat instead and you pass it via `--telegram-bot-token`. Then tap **Start** on the bot in Telegram. |
+| `telegram` | Telegram / iMessage (Sendblue) | Two chat channels grouped to fit the 4-option limit. **Telegram:** create a bot via @BotFather; **recommended (secure)** open the setup link/QR the CLI prints and paste the token there (**non-secure fallback:** paste it in chat and you pass `--telegram-bot-token`), then tap **Start** on the bot. **iMessage (Sendblue):** needs a Sendblue account + provisioned phone line; no secure page — collect the API key, secret key, sender number, and the user's own phone in chat (see below). |
 | `dashboard` | WhatsApp / MS Teams | **Keyless (`--keyless`, default):** sign in to the Novu dashboard and continue there (no CLI run). **Dashboard OAuth (omit `--keyless`):** CLI creates the agent, then opens the dashboard to finish channel setup. |
+
+**If they pick `telegram` (Telegram / iMessage):** ask which one they want with a follow-up picker of exactly two options — `telegram` ("Telegram") and `sendblue` ("iMessage (Sendblue)") — before continuing. Use `--channel telegram` or `--channel sendblue` in Step 3 accordingly. Both are CLI-handled and keyless-compatible.
 
 **If they pick `dashboard` and you are using keyless (`--keyless`, the default):** **HARD STOP — never invoke `npx novu connect` in this branch (not in the foreground, not backgrounded, not with any channel flag).** Do **not** run connect and do **not** generate an agent. Give the user the dashboard URL — **<https://dashboard.novu.co>** (or <https://eu.dashboard.novu.co> if they asked for the EU region) — and tell them to **sign in (or sign up) and continue the onboarding from the dashboard**. Steps 2–5 do not apply.
 
@@ -147,6 +150,13 @@ When the user must pick from a **fixed set** of options (channel, approve/reject
 **Collect after they choose:**
 
 - **slack / telegram** → collect **nothing** up front. Default Step 3 to the **secure path** (omit token flags). Token-delivery choice is **inline in Step 4**.
+- **sendblue (iMessage)** → collect **all four** values up front, in one message, because the `--ci` run hard-fails at launch without them and there is **no secure page**. First tell the user they need a **Sendblue account with a provisioned phone line** (API keys: <https://dashboard.sendblue.com/settings/api>; phone line: <https://dashboard.sendblue.com/settings/phone-line-management>). Then collect, labeling each by role so the two numbers are never confused:
+  1. **API key** → `--sendblue-api-key`
+  2. **Secret key** → `--sendblue-secret-key`
+  3. **Sender number** → `--sendblue-from` — "the number **Sendblue assigned your agent** (the sender), in E.164, e.g. `+14155551234`".
+  4. **Your own phone** → `--sendblue-test-phone` — "**your own phone number** — where the agent texts a test iMessage and which you reply from to finish, in E.164".
+
+  Warn **once** that the API key and secret key will live in chat history (no secure page exists for Sendblue headlessly).
 - **email / skip** → no extra input up front.
 - **dashboard (WhatsApp / MS Teams)** → keyless (default): flow ends with dashboard redirect; dashboard OAuth: `--channel whatsapp` or `--channel teams`.
 
@@ -232,7 +242,7 @@ export NOVU_AGENT_DESCRIPTION='<confirmed agent description>'
 npx novu@latest connect "$NOVU_AGENT_DESCRIPTION" \
   --ci \
   --keyless \
-  --channel <slack|email|telegram|skip>
+  --channel <slack|email|telegram|sendblue|skip>
 ```
 
 **Dashboard OAuth (dashboard signal — omit `--keyless`):**
@@ -242,7 +252,7 @@ export NOVU_AGENT_DESCRIPTION='<confirmed agent description>'
 
 npx novu@latest connect "$NOVU_AGENT_DESCRIPTION" \
   --ci \
-  --channel <slack|email|telegram|whatsapp|teams|skip>
+  --channel <slack|email|telegram|sendblue|whatsapp|teams|skip>
 ```
 
 Never pass `--channel whatsapp` or `--channel teams` with `--keyless` — those require dashboard OAuth (omit `--keyless`).
@@ -258,6 +268,23 @@ npx novu@latest connect "$NOVU_AGENT_DESCRIPTION" \
   --channel slack
 ```
 
+**Canonical example (keyless, iMessage / Sendblue):** all four values are required at launch — set the secrets in env vars first (never inline in the command). `--sendblue-from` is the agent's Sendblue number; `--sendblue-test-phone` is the user's own phone.
+
+```bash
+export NOVU_AGENT_DESCRIPTION='<confirmed agent description>'
+export SENDBLUE_API_KEY='<sendblue api key>'
+export SENDBLUE_SECRET_KEY='<sendblue secret key>'
+
+npx novu@latest connect "$NOVU_AGENT_DESCRIPTION" \
+  --ci \
+  --keyless \
+  --channel sendblue \
+  --sendblue-api-key "$SENDBLUE_API_KEY" \
+  --sendblue-secret-key "$SENDBLUE_SECRET_KEY" \
+  --sendblue-from '<+E.164 agent number>' \
+  --sendblue-test-phone '<+E.164 user phone>'
+```
+
 **How to run the Connect shell** — never combine with log redirection or a second watch command:
 
 Always start the Connect command as a **background** Shell (`block_until_ms: 0`), then **Await** its shell id for the markers below. This applies to every auth mode and channel. **Never run it in the foreground** — the CLI blocks up to ~5 min per handoff stage and a foreground call will hit the host shell timeout.
@@ -268,6 +295,7 @@ Then follow the path that matches your flags:
 
 - **If using dashboard OAuth (omitting `--keyless`):** **Await** `NOVU_CONNECT_AUTH_URL_FILE=` on the background shell id, **Read** that file for the auth URL, deliver the URL to the user, then **Await** channel handoff markers and success on the same shell id.
 - **If channel is `slack`, `email`, or `telegram`:** **Await** on that shell id (e.g. `NOVU_CONNECT_SLACK_SETUP_URL=`, `NOVU_CONNECT_INBOUND_ADDRESS=`, etc.). **Await** until `✓ Your agent is live` or `✗`. Do not use Monitor, `tail -f`, `grep`, `sleep`, `ps`, or Read on log files — poll the shell id and nothing else.
+- **If channel is `sendblue` (iMessage):** the credential flags were passed in Step 3, so the CLI goes straight to sending a test iMessage. **Await** `NOVU_CONNECT_SENDBLUE_IMESSAGE_URL=` and `NOVU_CONNECT_SENDBLUE_FROM_NUMBER=` on that shell id (and the optional `NOVU_CONNECT_SENDBLUE_WEBHOOK_CALLBACK_URL=` fallback — see Step 4), then **Await** until `✓ Your agent is live` or `✗`.
 - **If channel is `whatsapp` or `teams` (dashboard OAuth only):** **Await** auth URL, then dashboard agent URL or success on the same shell id.
 - **If channel is `skip` in keyless mode:** foreground Shell is allowed — the only exception to the background rule above.
 
@@ -423,7 +451,7 @@ The Telegram QR PNGs (`NOVU_CONNECT_TELEGRAM_SETUP_QR_PNG`, `NOVU_CONNECT_TELEGR
 
 ### Channel-specific handoffs
 
-**If channel is `slack`, `email`, or `telegram`:** deliver the handoff from Connect shell stdout, then **Await** until the **CLI poll** finishes.
+**If channel is `slack`, `email`, `telegram`, or `sendblue`:** deliver the handoff from Connect shell stdout, then **Await** until the **CLI poll** finishes.
 
 Read Connect shell stdout (via **Await**, not log files) and act based on the chosen channel:
 
@@ -498,6 +526,28 @@ Read Connect shell stdout (via **Await**, not log files) and act based on the ch
 
   When `NOVU_CONNECT_TELEGRAM_DEEPLINK_QR_PNG` is present, show the QR following [Showing the QR code (host-aware)](#showing-the-qr-code-host-aware). Ask them to open the bot and tap **Start** on `@<botUsername>`. **Await** until the CLI poll finishes. Re-run on timeout with the same command.
 
+- **sendblue (iMessage)** — the credentials were passed in Step 3, so there is **no token-delivery picker and no QR**. The CLI creates the integration, registers the receive webhook, and sends a test iMessage from the agent's Sendblue number to the user's phone. First **Await** the test-message handoff lines and copy their values:
+
+  ```text
+  NOVU_CONNECT_SENDBLUE_IMESSAGE_URL=<sms:…>
+  NOVU_CONNECT_SENDBLUE_FROM_NUMBER=<+E.164>
+  ```
+
+  Give the user:
+  1. The **`sms:` deep link** (`NOVU_CONNECT_SENDBLUE_IMESSAGE_URL=…`) — one tap opens Messages pre-addressed to the agent's number; this is the primary handoff.
+  2. Tell them to **reply from the phone they gave you** (their `--sendblue-test-phone`) — the connection completes only when Novu sees that inbound iMessage.
+
+  **Conditional — manual webhook (only if these lines appear):** webhook registration is automatic, so normally there is nothing to do. Only if auto-registration failed does the CLI print:
+
+  ```text
+  NOVU_CONNECT_SENDBLUE_WEBHOOK_CALLBACK_URL=<url>
+  NOVU_CONNECT_SENDBLUE_WEBHOOK_SECRET=<secret>   # only when present
+  ```
+
+  If present, relay the callback URL (and signing secret, if any) and tell the user to add it as a webhook in their Sendblue dashboard. If the lines don't appear, say nothing.
+
+  Then wait for the **CLI poll** — the process completes once the user's inbound iMessage arrives (~5 min); on timeout, re-run after they've texted the number.
+
 - **whatsapp / teams (authenticated)** — CLI prints a dashboard agent URL; paste it and tell the user to finish channel setup there.
 
 - **skip** — nothing to hand off; the agent is created without a channel.
@@ -544,6 +594,9 @@ Adapt the recap to what actually happened (drop the MCP clause when no integrati
 | `Slack OAuth was not completed within … seconds` | Re-run the same command. |
 | `We didn't see your email at … within …s` | Re-run after they send the email. |
 | Telegram token / `/start` timeouts | Re-run the same command. |
+| `We didn't see an inbound iMessage on … within …s` | User hasn't replied yet — tell them to text the agent number, then re-run the same command. |
+| `Non-interactive mode: pass --sendblue-api-key, --sendblue-secret-key and --sendblue-from` | A Sendblue credential is missing — collect all three plus `--sendblue-test-phone` and re-run Step 3. |
+| `Invalid --sendblue-from …` / `Invalid --sendblue-test-phone …` (Expected E.164) | Re-collect the number in E.164 (e.g. `+14155551234`), keeping the sender vs user-phone roles straight, and re-run. |
 | `Keyless environment creation is currently disabled` | Wrong API/region, or omit `--keyless` and use dashboard OAuth / `--secret-key` for an existing account. |
 
 ---
@@ -559,8 +612,11 @@ Run `novu@latest connect --help` for the full contract. Keep help text in sync w
 | `--runtime <ai-sdk\|langchain\|custom-code\|chat-sdk\|demo\|claude\|claude-aws>` | Agent brain. **Bridge path:** pass `ai-sdk` or `langchain`. **Managed path:** omit (demo runtime). |
 | `--keyless` | Temporary demo agent — **managed path only** (default for anonymous managed runs). **Never** on bridge path. |
 | `--region <us\|eu>` | Target Novu Cloud region (default: `us`). |
-| `--channel <slack\|email\|telegram\|whatsapp\|teams\|skip>` | Channel to connect. `whatsapp`/`teams` require dashboard OAuth (omit `--keyless`). |
+| `--channel <slack\|email\|telegram\|sendblue\|whatsapp\|teams\|skip>` | Channel to connect. `sendblue` is iMessage. `whatsapp`/`teams` require dashboard OAuth (omit `--keyless`). |
 | `--slack-config-token` / `--telegram-bot-token` | Non-secure CI escape hatches when user opts in. |
+| `--sendblue-api-key` / `--sendblue-secret-key` | Sendblue API credentials. **Required** for `--channel sendblue` in `--ci` (no secure page). |
+| `--sendblue-from <+E.164>` | The agent's Sendblue-assigned sender number. Required for `--channel sendblue` in `--ci`. |
+| `--sendblue-test-phone <+E.164>` | The user's own phone that receives the test iMessage and replies to finish. Required for `--channel sendblue` in `--ci`. |
 | *(omit `--keyless`)* | Dashboard OAuth — required for bridge; use for managed when a dashboard signal applies. Do not pass `--secret-key` in this guided flow. |
 
 **Bridge path machine-readable stdout (in addition to channel handoffs):**
@@ -575,8 +631,9 @@ NOVU_CONNECT_LANGCHAIN_REQUIREMENTS_FILE=<absolute path>
 ## Limitations to keep in mind
 
 - **One run = one new agent + one channel.** Re-running creates another agent.
-- **Channel support is uneven headlessly:** `slack` and `telegram` need two user actions after auth; `email` one; `whatsapp`/`teams` need dashboard OAuth and finish in the dashboard.
+- **Channel support is uneven headlessly:** `slack` and `telegram` need two user actions after auth; `email` and `sendblue` (iMessage) one (send an email / reply to the test iMessage); `whatsapp`/`teams` need dashboard OAuth and finish in the dashboard.
 - **Prefer secure setup pages for Slack/Telegram tokens.**
+- **iMessage (Sendblue) needs a Sendblue account with a provisioned phone line**, and its API key + secret key are passed via `--sendblue-*` flags in chat (no secure page exists headlessly).
 - **Keyless is managed-only** — bridge agents require dashboard OAuth.
 - **Keyless managed data is temporary** until claimed via the in-channel sign-up link.
 - **Keyless is the default for managed-only flows** — pass `--keyless` unless a dashboard signal applies or the user chose the bridge path (always omit `--keyless`).

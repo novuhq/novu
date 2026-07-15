@@ -8,6 +8,10 @@ export type ConnectFlags = {
   runtime?: string;
   description?: string;
   slackConfigToken?: string;
+  sendblueApiKey?: string;
+  sendblueSecretKey?: string;
+  sendblueFrom?: string;
+  sendblueTestPhone?: string;
 };
 
 export function isConnectCommand(command: string): boolean {
@@ -22,6 +26,10 @@ const VALUE_FLAGS = new Set([
   '--secret-key',
   '--api-url',
   '--dashboard-url',
+  '--sendblue-api-key',
+  '--sendblue-secret-key',
+  '--sendblue-from',
+  '--sendblue-test-phone',
 ]);
 
 /**
@@ -82,6 +90,25 @@ function tokenizeShellWords(input: string): string[] {
   }
 
   return words;
+}
+
+/**
+ * Resolve a flag value that may reference an env var (`$FOO` or `${FOO}`). The playbook's
+ * Sendblue example injects the API/secret keys via env vars, so the parsed flag value would
+ * otherwise be the literal `$SENDBLUE_API_KEY` placeholder rather than its captured value.
+ */
+function resolveMaybeEnvValue(raw: string | undefined, env: Record<string, string>): string | undefined {
+  if (!raw) {
+    return raw;
+  }
+
+  const name = raw.match(/^\$\{([A-Za-z_][A-Za-z0-9_]*)\}$/)?.[1] ?? raw.match(/^\$([A-Za-z_][A-Za-z0-9_]*)$/)?.[1];
+
+  if (name) {
+    return env[name];
+  }
+
+  return raw;
 }
 
 /** Read a flag's value, supporting both `--flag value` and `--flag=value` forms. */
@@ -173,6 +200,10 @@ export const connectParser: CommandParser<ConnectFlags> = {
     flags.channel = readFlagValue(tokens, '--channel');
     flags.runtime = readFlagValue(tokens, '--runtime');
     flags.slackConfigToken = readFlagValue(tokens, '--slack-config-token');
+    flags.sendblueApiKey = resolveMaybeEnvValue(readFlagValue(tokens, '--sendblue-api-key'), env);
+    flags.sendblueSecretKey = resolveMaybeEnvValue(readFlagValue(tokens, '--sendblue-secret-key'), env);
+    flags.sendblueFrom = resolveMaybeEnvValue(readFlagValue(tokens, '--sendblue-from'), env);
+    flags.sendblueTestPhone = resolveMaybeEnvValue(readFlagValue(tokens, '--sendblue-test-phone'), env);
     flags.description = resolveDescription(command, tokens, env);
 
     return flags;
