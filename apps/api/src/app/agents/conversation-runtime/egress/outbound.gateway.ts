@@ -9,6 +9,7 @@ import type { ReplyContentDto } from '../../shared/dtos/agent-reply-payload.dto'
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { esmImport } from '../../shared/util/esm-import';
 import { toDeliveryError } from '../../shared/util/delivery-error.util';
+import { ensureCardDeliverable, deriveCardFallbackText } from '../../shared/util/card-delivery.util';
 import { buildBrandedMarkdownReply, contentHasPoweredByWatermark } from '../../shared/util/novu-powered-by-watermark';
 import { type AgentActionTokenBinding, AgentActionTokenService } from '../action-token/agent-action-token.service';
 import { AgentConversationService } from '../conversation/agent-conversation.service';
@@ -440,18 +441,7 @@ export class OutboundGateway {
     // Edits re-brand so a post-then-edit delivery never strips the watermark.
     const editPayload = this.buildAdapterPostableMessage(tokenizedContent, config);
 
-    let editPromise: Promise<{ id: string; threadId: string }>;
-    if (tokenizedContent.card) {
-      editPromise = adapter.editMessage(
-        platformThreadId,
-        platformMessageId,
-        tokenizedContent.card as unknown as AdapterPostableMessage
-      );
-    } else {
-      editPromise = adapter.editMessage(platformThreadId, platformMessageId, editPayload);
-    }
-
-    const edited = await editPromise.catch(toDeliveryError);
+    const edited = await adapter.editMessage(platformThreadId, platformMessageId, editPayload).catch(toDeliveryError);
 
     return { messageId: edited.id, platformThreadId: edited.threadId };
   }
@@ -643,8 +633,10 @@ export class OutboundGateway {
     const deliveryContent = this.applyOutboundBranding(content, branding);
 
     if (deliveryContent.card) {
-      const payload: { card: unknown; files?: ChatSdkFile[] } = {
-        card: deliveryContent.card,
+      const card = ensureCardDeliverable(deliveryContent.card as unknown as CardElement);
+      const payload: { card: CardElement; fallbackText: string; files?: ChatSdkFile[] } = {
+        card,
+        fallbackText: deriveCardFallbackText(card),
       };
 
       if (deliveryContent.files?.length) {
@@ -689,7 +681,7 @@ export class OutboundGateway {
 
     const tokenized = await this.applyActionTokensForDelivery({ card: msg.card }, actionTokenBinding);
 
-    return tokenized.card ?? this.toThreadPostArg(msg);
+    return ensureCardDeliverable((tokenized.card ?? msg.card) as unknown as CardElement);
   }
 
   private toActionTokenBinding(
@@ -731,9 +723,9 @@ export class OutboundGateway {
       return msg.markdown;
     }
     if (msg.card) {
-      const title = (msg.card as { title?: string }).title;
+      const fallback = deriveCardFallbackText(msg.card as unknown as CardElement);
 
-      return title ?? '[Card]';
+      return fallback || '[Card]';
     }
 
     return '';
