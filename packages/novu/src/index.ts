@@ -238,6 +238,19 @@ program
     'Telegram bot token from @BotFather (123456:ABC-…). CI-only escape hatch — omit to use the secure setup page'
   )
   .option(
+    '--sendblue-api-key <key>',
+    'Sendblue API Key (dashboard.sendblue.com/settings/api). CI-only escape hatch — omit to enter interactively'
+  )
+  .option('--sendblue-secret-key <key>', 'Sendblue Secret Key. CI-only escape hatch — omit to enter interactively')
+  .option(
+    '--sendblue-from <phone>',
+    'Sendblue phone number in E.164 (e.g. +14155551234). CI-only escape hatch — omit to enter interactively'
+  )
+  .option(
+    '--sendblue-test-phone <phone>',
+    'Recipient phone (E.164) for the Sendblue test message. CI-only escape hatch — omit to enter interactively'
+  )
+  .option(
     '--ci',
     'Non-interactive mode (no Ink TUI). Requires a prompt (positional <prompt> or --prompt) and --channel; see examples below',
     false
@@ -268,7 +281,7 @@ program
 
       if (!channel) {
         console.error(
-          'Non-interactive mode requires --channel <slack|email|telegram|skip> (or <whatsapp|teams> without --keyless).\n(run `novu connect --help` for the non-interactive contract and examples)'
+          'Non-interactive mode requires --channel <slack|email|telegram|sendblue|skip> (or <whatsapp|teams> without --keyless).\n(run `novu connect --help` for the non-interactive contract and examples)'
         );
         process.exit(1);
       }

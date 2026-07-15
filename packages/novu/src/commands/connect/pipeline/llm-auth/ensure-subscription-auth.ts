@@ -18,8 +18,8 @@ type EnsureSubscriptionAuthInput = {
   ci?: boolean;
 };
 
-function printBrowserAuthWaitingStatus(): void {
-  console.log(chalk.dim('⏳ Waiting for browser authentication… Return here when it completes.'));
+function printBrowserAuthHint(): void {
+  console.log(chalk.dim('A browser window will open to sign in. Press Ctrl+C to cancel and return here.'));
 }
 
 async function ensureCodexCliAuth(ui: ConnectUI, ci?: boolean): Promise<void> {
@@ -35,13 +35,12 @@ async function ensureCodexCliAuth(ui: ConnectUI, ci?: boolean): Promise<void> {
 
   await ui.releaseTerminal();
   console.log('Sign in with your ChatGPT account to use Codex (Plus/Pro subscription).');
+  printBrowserAuthHint();
 
   if (commandExists('codex')) {
-    await runInteractiveCli('codex', ['login'], { onAuthUrl: printBrowserAuthWaitingStatus });
+    await runInteractiveCli('codex', ['login']);
   } else {
-    await runInteractiveCli('npx', npxSubscriptionCliArgs(SUBSCRIPTION_CLI_NPX_SPECS.codex, ['login']), {
-      onAuthUrl: printBrowserAuthWaitingStatus,
-    });
+    await runInteractiveCli('npx', npxSubscriptionCliArgs(SUBSCRIPTION_CLI_NPX_SPECS.codex, ['login']));
   }
 
   if (!hasCodexCliAuth()) {
@@ -62,11 +61,11 @@ async function ensureLangchainCodexOauthAuth(ui: ConnectUI, ci?: boolean): Promi
 
   await ui.releaseTerminal();
   console.log('Sign in with your ChatGPT account for LangChain Codex OAuth.');
+  printBrowserAuthHint();
 
   await runInteractiveCli(
     'npx',
-    npxSubscriptionCliArgs(SUBSCRIPTION_CLI_NPX_SPECS.langchainCodexOauth, ['auth', 'login']),
-    { onAuthUrl: printBrowserAuthWaitingStatus }
+    npxSubscriptionCliArgs(SUBSCRIPTION_CLI_NPX_SPECS.langchainCodexOauth, ['auth', 'login'])
   );
 
   if (!hasLangchainCodexOauthAuth()) {
@@ -91,13 +90,12 @@ async function ensureClaudeCodeAuth(ui: ConnectUI, ci?: boolean): Promise<void> 
 
   await ui.releaseTerminal();
   console.log('Sign in with your Claude Pro or Max subscription via Claude Code.');
+  printBrowserAuthHint();
 
   if (commandExists('claude')) {
-    await runInteractiveCli('claude', ['auth', 'login'], { onAuthUrl: printBrowserAuthWaitingStatus });
+    await runInteractiveCli('claude', ['auth', 'login']);
   } else {
-    await runInteractiveCli('npx', npxSubscriptionCliArgs(SUBSCRIPTION_CLI_NPX_SPECS.claudeCode, ['auth', 'login']), {
-      onAuthUrl: printBrowserAuthWaitingStatus,
-    });
+    await runInteractiveCli('npx', npxSubscriptionCliArgs(SUBSCRIPTION_CLI_NPX_SPECS.claudeCode, ['auth', 'login']));
   }
 
   if (!hasClaudeCodeAuth()) {

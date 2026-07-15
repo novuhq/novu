@@ -42,6 +42,8 @@ export function channelDisplayName(channel: ChannelChoice): string {
       return 'Telegram';
     case 'email':
       return 'Email';
+    case 'sendblue':
+      return 'iMessage (Sendblue)';
     default:
       return channel;
   }

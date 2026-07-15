@@ -13,8 +13,8 @@ Implemented. See `pipeline/llm-auth/README.md` for architecture and file roles.
 |--------|--------|-----------|------|---------------|
 | OpenAI API key | yes | yes | `OPENAI_API_KEY` | `gpt-4o-mini` |
 | Anthropic API key | yes | yes | `ANTHROPIC_API_KEY` | `claude-haiku-4-5` |
-| ChatGPT subscription | yes | yes | Codex CLI / langchainjs-codex-oauth OAuth | `gpt-5.4-mini` |
-| Claude subscription | yes | no | Claude Code OAuth | `haiku` |
+| ChatGPT subscription | yes | yes | Codex CLI / langchainjs-codex-oauth OAuth | `gpt-5.4-mini` | Tool approval example: API keys + LangChain Codex only |
+| Claude subscription | yes | no | Claude Code OAuth | `haiku` | Tool approval example: API keys only |
 | Skip | yes | yes | demo echo | — |
 
 ## Flags

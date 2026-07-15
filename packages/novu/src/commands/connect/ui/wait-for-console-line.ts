@@ -1,5 +1,5 @@
 import readline from 'node:readline';
-import { restoreStdinForConsole } from './restore-stdin-for-console';
+import { restoreStdinForConsole } from '../restore-stdin-for-console';
 
 const INK_TEARDOWN_DELAY_MS = 75;
 

@@ -3,11 +3,17 @@
  */
 
 import * as z from "zod/v3";
+import { ClosedEnum } from "../../types/enums.js";
 import {
   AddReactionPayloadDto,
   AddReactionPayloadDto$Outbound,
   AddReactionPayloadDto$outboundSchema,
 } from "./addreactionpayloaddto.js";
+import {
+  CardReplyContentDto,
+  CardReplyContentDto$Outbound,
+  CardReplyContentDto$outboundSchema,
+} from "./cardreplycontentdto.js";
 import {
   DeleteMessagePayloadDto,
   DeleteMessagePayloadDto$Outbound,
@@ -19,20 +25,35 @@ import {
   EditPayloadDto$outboundSchema,
 } from "./editpayloaddto.js";
 import {
-  ReplyContentDto,
-  ReplyContentDto$Outbound,
-  ReplyContentDto$outboundSchema,
-} from "./replycontentdto.js";
+  MarkdownReplyContentDto,
+  MarkdownReplyContentDto$Outbound,
+  MarkdownReplyContentDto$outboundSchema,
+} from "./markdownreplycontentdto.js";
+import {
+  MetadataClearSignalDto,
+  MetadataClearSignalDto$Outbound,
+  MetadataClearSignalDto$outboundSchema,
+} from "./metadataclearsignaldto.js";
+import {
+  MetadataDeleteSignalDto,
+  MetadataDeleteSignalDto$Outbound,
+  MetadataDeleteSignalDto$outboundSchema,
+} from "./metadatadeletesignaldto.js";
+import {
+  MetadataSetSignalDto,
+  MetadataSetSignalDto$Outbound,
+  MetadataSetSignalDto$outboundSchema,
+} from "./metadatasetsignaldto.js";
 import {
   ResolveDto,
   ResolveDto$Outbound,
   ResolveDto$outboundSchema,
 } from "./resolvedto.js";
 import {
-  SignalDto,
-  SignalDto$Outbound,
-  SignalDto$outboundSchema,
-} from "./signaldto.js";
+  ToolApprovalCardReplyContentDto,
+  ToolApprovalCardReplyContentDto$Outbound,
+  ToolApprovalCardReplyContentDto$outboundSchema,
+} from "./toolapprovalcardreplycontentdto.js";
 import {
   ToolApprovalRequestPayloadDto,
   ToolApprovalRequestPayloadDto$Outbound,
@@ -43,44 +64,166 @@ import {
   ToolResultDto$Outbound,
   ToolResultDto$outboundSchema,
 } from "./toolresultdto.js";
+import {
+  TriggerSignalDto,
+  TriggerSignalDto$Outbound,
+  TriggerSignalDto$outboundSchema,
+} from "./triggersignaldto.js";
+import {
+  TypingStatusDto,
+  TypingStatusDto$Outbound,
+  TypingStatusDto$outboundSchema,
+} from "./typingstatusdto.js";
 
 /**
- * Per-turn typing/status control. `{ status?: string }` sets the status text (omit for the default "Thinking…"); `"stop"` clears it. Best-effort per platform.
+ * Outbound message content. Exactly one of `markdown`, `card`, or `toolApprovalCard`. Optional `files` attach to the message. Cannot be combined with `edit`.
  */
-export type Typing = {};
+export type Reply =
+  | MarkdownReplyContentDto
+  | CardReplyContentDto
+  | ToolApprovalCardReplyContentDto;
+
+export type Signals =
+  | MetadataSetSignalDto
+  | MetadataDeleteSignalDto
+  | MetadataClearSignalDto
+  | TriggerSignalDto;
+
+/**
+ * Clear the typing indicator.
+ */
+export const Typing1 = {
+  Stop: "stop",
+} as const;
+/**
+ * Clear the typing indicator.
+ */
+export type Typing1 = ClosedEnum<typeof Typing1>;
+
+/**
+ * Per-turn typing/status control. Pass `{ status?: string }` to set/update the status (omit `status` for "Thinking…"), or `"stop"` to clear it. Best-effort per platform.
+ */
+export type Typing = Typing1 | TypingStatusDto;
 
 export type AgentReplyPayloadDto = {
-  conversationId: string;
-  integrationIdentifier: string;
-  reply?: ReplyContentDto | undefined;
   /**
-   * Tool-lifecycle ledger row for a gated tool call. Optional reply delivers the approval card.
+   * Conversation id to reply into. Obtained from the inbound agent event / bridge payload.
+   */
+  conversationId: string;
+  /**
+   * Channel integration identifier linked to the agent for this conversation (e.g. `slack-support`).
+   */
+  integrationIdentifier: string;
+  /**
+   * Outbound message content. Exactly one of `markdown`, `card`, or `toolApprovalCard`. Optional `files` attach to the message. Cannot be combined with `edit`.
+   */
+  reply?:
+    | MarkdownReplyContentDto
+    | CardReplyContentDto
+    | ToolApprovalCardReplyContentDto
+    | undefined;
+  /**
+   * Tool-lifecycle ledger row for a gated tool call. Pair with `reply.toolApprovalCard` (or another reply shape) to deliver the approval UI.
    */
   toolApprovalRequest?: ToolApprovalRequestPayloadDto | undefined;
+  /**
+   * In-place edit of a previously posted agent message. Cannot be combined with reply, resolve, signals, toolResults, toolApprovalRequest, addReactions, or deleteMessages.
+   */
   edit?: EditPayloadDto | undefined;
+  /**
+   * Mark the conversation resolved. May be combined with a final `reply`.
+   */
   resolve?: ResolveDto | undefined;
-  signals?: Array<SignalDto> | undefined;
+  /**
+   * Side-effect signals executed during this turn: conversation metadata mutations or Novu workflow triggers.
+   */
+  signals?:
+    | Array<
+      | MetadataSetSignalDto
+      | MetadataDeleteSignalDto
+      | MetadataClearSignalDto
+      | TriggerSignalDto
+    >
+    | undefined;
+  /**
+   * Tool-call outcomes to persist in conversation history (typically before the assistant reply).
+   */
   toolResults?: Array<ToolResultDto> | undefined;
+  /**
+   * Emoji reactions to add to existing platform messages.
+   */
   addReactions?: Array<AddReactionPayloadDto> | undefined;
   /**
    * Delete previously posted platform messages. Removes the rendered message only — history is preserved.
    */
   deleteMessages?: Array<DeleteMessagePayloadDto> | undefined;
   /**
-   * Per-turn typing/status control. `{ status?: string }` sets the status text (omit for the default "Thinking…"); `"stop"` clears it. Best-effort per platform.
+   * Per-turn typing/status control. Pass `{ status?: string }` to set/update the status (omit `status` for "Thinking…"), or `"stop"` to clear it. Best-effort per platform.
    */
-  typing?: Typing | undefined;
+  typing?: Typing1 | TypingStatusDto | undefined;
+  /**
+   * Bridge reports that the customer runtime failed this turn. Cannot be combined with other actions. Novu delivers generic user-facing error copy.
+   */
+  error?: boolean | undefined;
 };
 
 /** @internal */
-export type Typing$Outbound = {};
+export type Reply$Outbound =
+  | MarkdownReplyContentDto$Outbound
+  | CardReplyContentDto$Outbound
+  | ToolApprovalCardReplyContentDto$Outbound;
+
+/** @internal */
+export const Reply$outboundSchema: z.ZodType<
+  Reply$Outbound,
+  z.ZodTypeDef,
+  Reply
+> = z.union([
+  MarkdownReplyContentDto$outboundSchema,
+  CardReplyContentDto$outboundSchema,
+  ToolApprovalCardReplyContentDto$outboundSchema,
+]);
+
+export function replyToJSON(reply: Reply): string {
+  return JSON.stringify(Reply$outboundSchema.parse(reply));
+}
+
+/** @internal */
+export type Signals$Outbound =
+  | MetadataSetSignalDto$Outbound
+  | MetadataDeleteSignalDto$Outbound
+  | MetadataClearSignalDto$Outbound
+  | TriggerSignalDto$Outbound;
+
+/** @internal */
+export const Signals$outboundSchema: z.ZodType<
+  Signals$Outbound,
+  z.ZodTypeDef,
+  Signals
+> = z.union([
+  MetadataSetSignalDto$outboundSchema,
+  MetadataDeleteSignalDto$outboundSchema,
+  MetadataClearSignalDto$outboundSchema,
+  TriggerSignalDto$outboundSchema,
+]);
+
+export function signalsToJSON(signals: Signals): string {
+  return JSON.stringify(Signals$outboundSchema.parse(signals));
+}
+
+/** @internal */
+export const Typing1$outboundSchema: z.ZodNativeEnum<typeof Typing1> = z
+  .nativeEnum(Typing1);
+
+/** @internal */
+export type Typing$Outbound = string | TypingStatusDto$Outbound;
 
 /** @internal */
 export const Typing$outboundSchema: z.ZodType<
   Typing$Outbound,
   z.ZodTypeDef,
   Typing
-> = z.object({});
+> = z.union([Typing1$outboundSchema, TypingStatusDto$outboundSchema]);
 
 export function typingToJSON(typing: Typing): string {
   return JSON.stringify(Typing$outboundSchema.parse(typing));
@@ -90,15 +233,27 @@ export function typingToJSON(typing: Typing): string {
 export type AgentReplyPayloadDto$Outbound = {
   conversationId: string;
   integrationIdentifier: string;
-  reply?: ReplyContentDto$Outbound | undefined;
+  reply?:
+    | MarkdownReplyContentDto$Outbound
+    | CardReplyContentDto$Outbound
+    | ToolApprovalCardReplyContentDto$Outbound
+    | undefined;
   toolApprovalRequest?: ToolApprovalRequestPayloadDto$Outbound | undefined;
   edit?: EditPayloadDto$Outbound | undefined;
   resolve?: ResolveDto$Outbound | undefined;
-  signals?: Array<SignalDto$Outbound> | undefined;
+  signals?:
+    | Array<
+      | MetadataSetSignalDto$Outbound
+      | MetadataDeleteSignalDto$Outbound
+      | MetadataClearSignalDto$Outbound
+      | TriggerSignalDto$Outbound
+    >
+    | undefined;
   toolResults?: Array<ToolResultDto$Outbound> | undefined;
   addReactions?: Array<AddReactionPayloadDto$Outbound> | undefined;
   deleteMessages?: Array<DeleteMessagePayloadDto$Outbound> | undefined;
-  typing?: Typing$Outbound | undefined;
+  typing?: string | TypingStatusDto$Outbound | undefined;
+  error?: boolean | undefined;
 };
 
 /** @internal */
@@ -109,15 +264,28 @@ export const AgentReplyPayloadDto$outboundSchema: z.ZodType<
 > = z.object({
   conversationId: z.string(),
   integrationIdentifier: z.string(),
-  reply: ReplyContentDto$outboundSchema.optional(),
+  reply: z.union([
+    MarkdownReplyContentDto$outboundSchema,
+    CardReplyContentDto$outboundSchema,
+    ToolApprovalCardReplyContentDto$outboundSchema,
+  ]).optional(),
   toolApprovalRequest: ToolApprovalRequestPayloadDto$outboundSchema.optional(),
   edit: EditPayloadDto$outboundSchema.optional(),
   resolve: ResolveDto$outboundSchema.optional(),
-  signals: z.array(SignalDto$outboundSchema).optional(),
+  signals: z.array(
+    z.union([
+      MetadataSetSignalDto$outboundSchema,
+      MetadataDeleteSignalDto$outboundSchema,
+      MetadataClearSignalDto$outboundSchema,
+      TriggerSignalDto$outboundSchema,
+    ]),
+  ).optional(),
   toolResults: z.array(ToolResultDto$outboundSchema).optional(),
   addReactions: z.array(AddReactionPayloadDto$outboundSchema).optional(),
   deleteMessages: z.array(DeleteMessagePayloadDto$outboundSchema).optional(),
-  typing: z.lazy(() => Typing$outboundSchema).optional(),
+  typing: z.union([Typing1$outboundSchema, TypingStatusDto$outboundSchema])
+    .optional(),
+  error: z.boolean().optional(),
 });
 
 export function agentReplyPayloadDtoToJSON(

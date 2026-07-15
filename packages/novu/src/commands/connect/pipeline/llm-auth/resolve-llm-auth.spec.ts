@@ -99,11 +99,9 @@ describe('ensureSubscriptionAuth', () => {
     expect(releaseTerminal).not.toHaveBeenCalled();
   });
 
-  it('shows a waiting status during LangChain browser OAuth', async () => {
+  it('prints a browser sign-in hint during LangChain browser OAuth', async () => {
     vi.spyOn(subscriptionAuth, 'hasLangchainCodexOauthAuth').mockReturnValueOnce(false).mockReturnValue(true);
-    vi.spyOn(subscriptionAuth, 'runInteractiveCli').mockImplementation(async (_command, _args, options) => {
-      options?.onAuthUrl?.();
-    });
+    vi.spyOn(subscriptionAuth, 'runInteractiveCli').mockResolvedValue(undefined);
     const consoleLog = vi.spyOn(console, 'log').mockImplementation(() => undefined);
 
     await ensureSubscriptionAuth({
@@ -112,6 +110,6 @@ describe('ensureSubscriptionAuth', () => {
       ui: createUi(),
     });
 
-    expect(consoleLog).toHaveBeenCalledWith(expect.stringContaining('Waiting for browser authentication'));
+    expect(consoleLog).toHaveBeenCalledWith(expect.stringContaining('A browser window will open to sign in'));
   });
 });

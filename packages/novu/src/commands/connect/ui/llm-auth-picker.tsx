@@ -8,14 +8,22 @@ import type { LlmAuthKind } from '../pipeline/llm-auth/types';
 export function LlmAuthPicker({
   connectMode,
   onChange,
+  onCancel,
 }: {
   connectMode: BridgeAdapterVariant;
   onChange: (value: LlmAuthKind) => void;
+  onCancel: () => void;
 }): React.ReactElement {
   const options = getLlmAuthPickerOptions(connectMode);
   const [idx, setIdx] = React.useState(0);
 
   useInput((_input, key) => {
+    if (key.escape) {
+      onCancel();
+
+      return;
+    }
+
     if (key.upArrow) {
       setIdx((current) => (current - 1 + options.length) % options.length);
     } else if (key.downArrow) {

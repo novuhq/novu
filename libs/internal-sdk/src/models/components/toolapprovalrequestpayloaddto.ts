@@ -4,11 +4,6 @@
 
 import * as z from "zod/v3";
 
-/**
- * Tool input the model proposed.
- */
-export type Input = {};
-
 export type ToolApprovalRequestPayloadDto = {
   /**
    * Unique id for this approval request (matches the AI SDK approvalId).
@@ -25,29 +20,15 @@ export type ToolApprovalRequestPayloadDto = {
   /**
    * Tool input the model proposed.
    */
-  input?: Input | undefined;
+  input?: { [k: string]: any } | undefined;
 };
-
-/** @internal */
-export type Input$Outbound = {};
-
-/** @internal */
-export const Input$outboundSchema: z.ZodType<
-  Input$Outbound,
-  z.ZodTypeDef,
-  Input
-> = z.object({});
-
-export function inputToJSON(input: Input): string {
-  return JSON.stringify(Input$outboundSchema.parse(input));
-}
 
 /** @internal */
 export type ToolApprovalRequestPayloadDto$Outbound = {
   approvalId: string;
   toolCallId: string;
   name: string;
-  input?: Input$Outbound | undefined;
+  input?: { [k: string]: any } | undefined;
 };
 
 /** @internal */
@@ -59,7 +40,7 @@ export const ToolApprovalRequestPayloadDto$outboundSchema: z.ZodType<
   approvalId: z.string(),
   toolCallId: z.string(),
   name: z.string(),
-  input: z.lazy(() => Input$outboundSchema).optional(),
+  input: z.record(z.any()).optional(),
 });
 
 export function toolApprovalRequestPayloadDtoToJSON(
