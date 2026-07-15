@@ -35,6 +35,7 @@ import type { ContextResolved } from '@novu/framework/internal';
 import {
   buildWorkflowPreferences,
   ChannelTypeEnum,
+  ContextPayload,
   EnvironmentSystemVariables,
   EnvironmentTypeEnum,
   FeatureFlagsKeysEnum,
@@ -539,17 +540,55 @@ export class SubscriberJobBound {
   private async resolveConditionContext(command: SubscriberJobBoundCommand): Promise<ContextResolved> {
     const { contextKeys, environmentId, organizationId } = command;
 
-    if (contextKeys.length === 0) {
-      return {} as ContextResolved;
+    if (contextKeys.length > 0) {
+      const contexts = await this.contextRepository.findByKeys(environmentId, organizationId, contextKeys);
+
+      if (contexts.length > 0) {
+        return contexts.reduce((acc, context) => {
+          acc[context.type] = {
+            id: context.id,
+            data: context.data,
+          };
+
+          return acc;
+        }, {} as ContextResolved);
+      }
+
+      return this.buildContextResolvedFromKeys(contextKeys);
     }
 
-    const contexts = await this.contextRepository.findByKeys(environmentId, organizationId, contextKeys);
+    if (command.context) {
+      const contexts = await this.contextRepository.findOrCreateContextsFromPayload(
+        environmentId,
+        organizationId,
+        command.context
+      );
 
-    return contexts.reduce((acc, context) => {
-      acc[context.type] = {
-        id: context.id,
-        data: context.data,
-      };
+      return contexts.reduce((acc, context) => {
+        acc[context.type] = {
+          id: context.id,
+          data: context.data,
+        };
+
+        return acc;
+      }, {} as ContextResolved);
+    }
+
+    return {} as ContextResolved;
+  }
+
+  private buildContextResolvedFromKeys(contextKeys: string[]): ContextResolved {
+    return contextKeys.reduce((acc, key) => {
+      const separatorIndex = key.indexOf(':');
+
+      if (separatorIndex === -1) {
+        return acc;
+      }
+
+      const type = key.slice(0, separatorIndex);
+      const id = key.slice(separatorIndex + 1);
+
+      acc[type] = { id, data: {} };
 
       return acc;
     }, {} as ContextResolved);

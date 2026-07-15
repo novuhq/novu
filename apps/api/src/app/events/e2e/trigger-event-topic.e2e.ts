@@ -590,18 +590,24 @@ describe('Topic Trigger Event #novu-v2', () => {
               },
             },
           ],
+          context: {
+            tenant: { id: 'acme-corp', data: { plan: 'enterprise' } },
+          },
         } as any,
         contextConditionTopicKey
       );
 
-      await novuClient.trigger({
-        workflowId: template.triggers[0].identifier,
-        to: [{ type: TriggerRecipientsTypeEnum.Topic, topicKey: contextConditionTopicKey }],
-        payload: {},
-        context: {
-          tenant: { id: 'acme-corp', data: { plan: 'enterprise' } },
-        },
-      });
+      await session.testAgent
+        .post('/v1/events/trigger')
+        .send({
+          name: template.triggers[0].identifier,
+          to: [{ type: TriggerRecipientsTypeEnum.Topic, topicKey: contextConditionTopicKey }],
+          payload: {},
+          context: {
+            tenant: { id: 'acme-corp', data: { plan: 'enterprise' } },
+          },
+        })
+        .expect(201);
 
       await session.waitForJobCompletion(template._id);
 
@@ -614,14 +620,17 @@ describe('Topic Trigger Event #novu-v2', () => {
 
       expect(matchingContextMessages.length, 'Matching context condition should deliver the message').to.equal(1);
 
-      await novuClient.trigger({
-        workflowId: template.triggers[0].identifier,
-        to: [{ type: TriggerRecipientsTypeEnum.Topic, topicKey: contextConditionTopicKey }],
-        payload: {},
-        context: {
-          tenant: { id: 'globex', data: { plan: 'starter' } },
-        },
-      });
+      await session.testAgent
+        .post('/v1/events/trigger')
+        .send({
+          name: template.triggers[0].identifier,
+          to: [{ type: TriggerRecipientsTypeEnum.Topic, topicKey: contextConditionTopicKey }],
+          payload: {},
+          context: {
+            tenant: { id: 'globex', data: { plan: 'starter' } },
+          },
+        })
+        .expect(201);
 
       await session.waitForJobCompletion(template._id);
 
@@ -649,7 +658,7 @@ describe('Topic Trigger Event #novu-v2', () => {
                 workflowIds: [template._id],
               },
               condition: {
-                '===': [{ var: 'env.type' }, session.environment.type],
+                '===': [{ var: 'env.name' }, session.environment.name],
               },
             },
           ],
