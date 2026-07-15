@@ -24,7 +24,7 @@ export const toolProviders: IProviderConfig[] = [
   },
   {
     id: ToolProviderIdEnum.Webhook,
-    displayName: 'Custom Webhook',
+    displayName: 'Tool webhook',
     channel: ChannelTypeEnum.TOOL,
     credentials: toolWebhookConfig,
     docReference: `https://docs.novu.co/platform/integrations/tool/webhook${UTM_CAMPAIGN_QUERY_PARAM}`,

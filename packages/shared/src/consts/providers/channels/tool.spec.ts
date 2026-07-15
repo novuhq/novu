@@ -4,7 +4,7 @@ import { PROVIDER_ID_TO_CHANNEL_MAP, providers } from '../providers';
 import { toolProviders } from './tool';
 
 describe('toolProviders', () => {
-  it('includes PagerDuty, Opsgenie, and Custom Webhook providers on the tool channel', () => {
+  it('includes PagerDuty, Opsgenie, and Tool webhook providers on the tool channel', () => {
     expect(toolProviders).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
