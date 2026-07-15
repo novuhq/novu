@@ -16,7 +16,6 @@ import {
   Select,
   SelectOption,
   Table,
-  Text,
   TextInput,
   type CardElement,
 } from 'chat';
@@ -40,7 +39,6 @@ const CHAT_JSX_PRIMITIVES = new Set<Function>([
   Select,
   SelectOption,
   Table,
-  Text,
   TextInput,
 ]);
 
