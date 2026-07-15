@@ -8,6 +8,10 @@ describe('tool channel schemas', () => {
       type: 'object',
       properties: {
         body: { type: 'string' },
+        enabledIntegrations: {
+          type: 'array',
+          items: { type: 'string' },
+        },
       },
       required: ['body'],
     });
