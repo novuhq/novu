@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { decryptCredentials, FeatureFlagsService, InstrumentUsecase, PinoLogger } from '@novu/application-generic';
 import { AgentIntegrationRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
 import { ChatProviderIdEnum, FeatureFlagsKeysEnum, type ICredentials } from '@novu/shared';
@@ -158,6 +158,11 @@ export class WhatsAppEmbeddedSignup {
 
     const phoneNumberId = command.phoneNumberId.trim();
     const wabaId = command.wabaId.trim();
+
+    if (!phoneNumberId || !wabaId) {
+      throw new BadRequestException('phoneNumberId and wabaId must be non-empty values.');
+    }
+
     const existingCredentials = integration.credentials ? decryptCredentials(integration.credentials) : undefined;
 
     let businessDisplayPhone: string | undefined;
@@ -273,6 +278,7 @@ export class WhatsAppEmbeddedSignup {
         integrationId: integration._id,
         credentials: nextCredentials,
         check: false,
+        allowNovuManagedWhatsAppCredentials: true,
       })
     );
 

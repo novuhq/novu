@@ -38,10 +38,18 @@ export function ensureWhatsAppManagedCredentials({
   providerId,
   nextCredentials,
   existingCredentials,
+  allowManagedFlagChange = false,
 }: {
   providerId: string;
   nextCredentials: ICredentials;
   existingCredentials?: ICredentials;
+  /**
+   * `isNovuManaged` switches credential resolution to Novu's shared Meta Tech
+   * Provider app (NOVU_WHATSAPP_APP_ID / _SECRET), so it must only be set by the
+   * trusted server-side embedded-signup flow — never flipped via a client
+   * credentials update, which would let a tenant borrow the platform app context.
+   */
+  allowManagedFlagChange?: boolean;
 }): ICredentials {
   if (providerId !== ChatProviderIdEnum.WhatsAppBusiness) {
     return nextCredentials;
@@ -51,6 +59,14 @@ export function ensureWhatsAppManagedCredentials({
     ...(existingCredentials ?? {}),
     ...nextCredentials,
   };
+
+  if (!allowManagedFlagChange) {
+    if (existingCredentials && 'isNovuManaged' in existingCredentials) {
+      merged.isNovuManaged = existingCredentials.isNovuManaged;
+    } else {
+      delete merged.isNovuManaged;
+    }
+  }
 
   // Empty-string overwrites from partial forms would still clobber secrets after
   // the spread; restore the stored value whenever the incoming secret is blank.

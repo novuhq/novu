@@ -80,4 +80,35 @@ describe('ensureWhatsAppManagedCredentials', () => {
 
     expect(result.token).to.equal(existing.token);
   });
+
+  it('drops a client-supplied isNovuManaged flag when not explicitly allowed', () => {
+    const result = ensureWhatsAppManagedCredentials({
+      providerId: ChatProviderIdEnum.WhatsAppBusiness,
+      nextCredentials: { apiToken: 'client-token', isNovuManaged: true },
+      existingCredentials: existing,
+    });
+
+    expect(result.isNovuManaged).to.be.undefined;
+  });
+
+  it('preserves the stored isNovuManaged flag against client tampering', () => {
+    const result = ensureWhatsAppManagedCredentials({
+      providerId: ChatProviderIdEnum.WhatsAppBusiness,
+      nextCredentials: { apiToken: 'client-token', isNovuManaged: false },
+      existingCredentials: { ...existing, isNovuManaged: true },
+    });
+
+    expect(result.isNovuManaged).to.equal(true);
+  });
+
+  it('allows the trusted embedded-signup flow to set isNovuManaged', () => {
+    const result = ensureWhatsAppManagedCredentials({
+      providerId: ChatProviderIdEnum.WhatsAppBusiness,
+      nextCredentials: { apiToken: 'server-token', isNovuManaged: true },
+      existingCredentials: existing,
+      allowManagedFlagChange: true,
+    });
+
+    expect(result.isNovuManaged).to.equal(true);
+  });
 });
