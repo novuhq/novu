@@ -180,8 +180,8 @@ import (
     "context"
     "os"
 
-    novugo "github.com/novuhq/novu-go/v3"
-    "github.com/novuhq/novu-go/v3/models/components"
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
 )
 
 s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
@@ -356,8 +356,8 @@ import (
     "context"
     "os"
 
-    novugo "github.com/novuhq/novu-go/v3"
-    "github.com/novuhq/novu-go/v3/models/components"
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
 )
 
 s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
@@ -513,9 +513,9 @@ import (
     "context"
     "os"
 
-    novugo "github.com/novuhq/novu-go/v3"
-    "github.com/novuhq/novu-go/v3/models/components"
-    "github.com/novuhq/novu-go/v3/models/operations"
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+    "github.com/novuhq/novu-go/models/operations"
 )
 
 s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
@@ -704,9 +704,9 @@ import (
     "context"
     "os"
 
-    novugo "github.com/novuhq/novu-go/v3"
-    "github.com/novuhq/novu-go/v3/models/components"
-    "github.com/novuhq/novu-go/v3/models/operations"
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+    "github.com/novuhq/novu-go/models/operations"
 )
 
 s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
@@ -884,8 +884,8 @@ import (
     "context"
     "os"
 
-    novugo "github.com/novuhq/novu-go/v3"
-    "github.com/novuhq/novu-go/v3/models/components"
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
 )
 
 s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
@@ -1053,10 +1053,7 @@ For supported Webex payload fields, see [Create a Message](https://developer.web
 
 ## Related
 
-<CardGroup cols={2}>
-  <Card title="Trigger overrides" icon="sliders-horizontal" href="/platform/integrations/trigger-overrides">
-    Add Webex-specific fields when triggering a dashboard workflow.
-  </Card>
+<CardGroup>
   <Card title="Webex Messages API" icon="external-link" href="https://developer.webex.com/messaging/docs/api/v1/messages">
     Review Webex message destinations, content fields, and API behavior.
   </Card>
