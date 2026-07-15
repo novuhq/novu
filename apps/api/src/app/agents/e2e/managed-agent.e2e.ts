@@ -226,6 +226,7 @@ describe('Managed Agents API #novu-v2', () => {
 
       expect(res.status).to.equal(201);
       expect(res.body.data.runtime).to.equal('managed');
+      expect(res.body.data.behavior?.subscriberAccess).to.equal('open');
       expect(res.body.data.managedRuntime).to.exist;
       expect(res.body.data.managedRuntime.providerId).to.equal(AgentRuntimeProviderIdEnum.Anthropic);
       expect(res.body.data.managedRuntime.integrationId).to.equal(integrationId);

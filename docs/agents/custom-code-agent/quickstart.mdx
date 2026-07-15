@@ -19,11 +19,29 @@ Pick the path that matches how you like to work. All three get you to the same o
 
 | Path | Best if you… |
 | --- | --- |
-| **Dashboard** | Want step-by-step guidance in the Novu UI |
 | **CLI** | Prefer doing everything from the terminal |
+| **Dashboard** | Want step-by-step guidance in the Novu UI |
 | **AI assistant** | Want Cursor or another AI tool to set it up in your repo |
 
 <Tabs>
+  <Tab title="CLI">
+
+Run one command and follow the prompts. The CLI signs you in, creates the agent, connects a channel, and can generate a starter project for you.
+
+```bash
+npx novu connect
+```
+
+You'll be asked to:
+
+1. Sign in to Novu (or paste your secret key).
+2. Pick a runtime — **AI SDK**, **LangChain**, **Custom code**, or a managed option like Claude.
+3. Name your agent and connect Slack (or another channel).
+4. Confirm creating a starter project, if prompted.
+
+When you're done, run `npm run dev:novu` in the project folder and message your agent on Slack.
+
+  </Tab>
   <Tab title="Dashboard">
 
 Use the Novu dashboard to create the agent and connect Slack, then run a small local app on your machine that handles replies.
@@ -130,32 +148,14 @@ Message your bot in Slack. Your handler code runs and the reply appears in the t
 </Steps>
 
   </Tab>
-  <Tab title="CLI">
-
-Run one command and follow the prompts. The CLI signs you in, creates the agent, connects a channel, and can generate a starter project for you.
-
-```bash
-npx novu connect
-```
-
-You'll be asked to:
-
-1. Sign in to Novu (or paste your secret key).
-2. Pick a runtime — **AI SDK**, **LangChain**, **Custom code**, or a managed option like Claude.
-3. Name your agent and connect Slack (or another channel).
-4. Confirm creating a starter project, if prompted.
-
-When you're done, run `npm run dev:novu` in the project folder and message your agent on Slack.
-
-  </Tab>
   <Tab title="AI assistant">
 
 Paste this into Cursor or another AI tool. It uses Novu's agent setup guide and adapts it to your repo.
 
-<Prompt description="Add a Novu agent to my app" icon="plug" actions={["copy", "cursor"]}>
-Add an agent to my app following instructions from this markdown file: https://novu.co/agents.md
+<Prompt description="Add a Novu custom code agent to my app" icon="plug" actions={["copy", "cursor"]}>
+I'm signed in to the Novu dashboard, so use dashboard login (not keyless mode). Add an agent to my app following instructions from this markdown file: https://novu.co/agents.md
 
-Follow my project's existing framework, routing, styling, and TypeScript conventions.
+Use AI SDK or LangChain based on what this project already uses. Follow my project's existing framework, routing, styling, and TypeScript conventions.
 
 Reference: https://docs.novu.co/agents/custom-code-agent/quickstart
 </Prompt>

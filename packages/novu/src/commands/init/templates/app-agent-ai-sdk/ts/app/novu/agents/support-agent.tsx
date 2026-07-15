@@ -1,6 +1,16 @@
 /** @jsxImportSource @novu/framework */
 import { Actions, Button, Card, CardText } from '@novu/framework';
 import { agent } from '@novu/framework/ai-sdk';
+import { tool } from 'ai';
+
+import { searchNovuDocsIndex, searchNovuDocsInputSchema } from './tools/search-novu-docs';
+
+const searchNovuDocs = tool({
+  description: 'Search Novu documentation for relevant guides.',
+  inputSchema: searchNovuDocsInputSchema,
+  needsApproval: true,
+  execute: async ({ query }) => ({ matches: await searchNovuDocsIndex(query) }),
+});
 
 // Wire your LLM — install a provider, then uncomment the imports and return below:
 //   npm install @ai-sdk/openai        # OpenAI
@@ -49,15 +59,17 @@ export const supportAgent = agent('support-agent', {
 
     return (
       `**Got it.** You said: "${message.text}"\n\n` +
-      `_This is a demo agent. Replace this handler with your LLM call._\n\n` +
+      `_This is a demo agent. Uncomment the generateText return below to wire your LLM._\n` +
+      `_Once wired, try "how does tool approval work in Novu?" to see the approval flow._\n\n` +
       `**Conversation so far:** ${ctx.history.length} messages | ` +
       `**Topic:** ${ctx.metadata.get('topic') ?? 'unknown'}`
     );
 
     // return generateText({
     //   model: openai('gpt-4o-mini'),
-    //   instructions: 'You are a helpful support agent.',
+    //   instructions: 'You are a helpful support agent. Use searchNovuDocs to find Novu documentation.',
     //   messages: toModelMessages(ctx.history),
+    //   tools: { searchNovuDocs },
     // });
   },
 

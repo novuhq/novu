@@ -132,9 +132,27 @@ export function CompletedStepIndicator() {
   );
 }
 
-function StepIndicator({ status, index }: { status: StepStatus; index: number }) {
+type SetupStepIndicatorVariant = 'number' | 'dot';
+
+function StepIndicator({
+  status,
+  index,
+  indicator,
+}: {
+  status: StepStatus;
+  index: number;
+  indicator: SetupStepIndicatorVariant;
+}) {
   if (status === 'completed') {
     return <CompletedStepIndicator />;
+  }
+
+  if (indicator === 'dot') {
+    return (
+      <div className="bg-bg-weak flex size-5 shrink-0 items-center justify-center rounded-full shadow-[0px_0px_0px_1px_#FFF,0px_0px_0px_2px_#E1E4EA]">
+        <div className="bg-text-soft size-[2px] rounded-full" />
+      </div>
+    );
   }
 
   return (
@@ -170,6 +188,11 @@ export function SetupStep({
    * alignment used by numbered eyebrows like "1/5 SETUP AGENT HANDLER".
    */
   inlineSectionLabel,
+  /**
+   * Visual style for the step indicator. `'number'` (default) shows the step index; `'dot'` shows a
+   * passive suggestion dot used by informational/optional steps (e.g. the "What's next" overview).
+   */
+  indicator = 'number',
 }: {
   index: number;
   status: StepStatus;
@@ -182,6 +205,7 @@ export function SetupStep({
   headerSlot?: ReactNode;
   dimmed?: boolean;
   inlineSectionLabel?: boolean;
+  indicator?: SetupStepIndicatorVariant;
 }) {
   let indicatorTopClass = 'top-[3px]';
 
@@ -194,7 +218,7 @@ export function SetupStep({
   return (
     <div className="relative flex flex-col gap-4 pl-6">
       <div className={cn('absolute -left-[20px] flex w-5 justify-center', indicatorTopClass)}>
-        <StepIndicator status={status} index={index} />
+        <StepIndicator status={status} index={index} indicator={indicator} />
       </div>
       <div
         className={cn(
@@ -484,8 +508,6 @@ export function IntegrationCredentialsSidebar({
   agentIdentifier,
   testSubscriberId,
   submitLabel,
-  webhookUrl,
-  webhookSecret,
 }: {
   integrationId: string;
   isOpen: boolean;
@@ -501,13 +523,6 @@ export function IntegrationCredentialsSidebar({
   /** Quickstart test subscriber for Telegram mobile `/start` deep links. */
   testSubscriberId?: string | null;
   submitLabel?: string;
-  /**
-   * Read-only webhook details shown below the credentials form. Kept out of
-   * the inline setup steps so sensitive values (the secret in particular)
-   * only surface here, in the provider's own details/edit view.
-   */
-  webhookUrl?: string;
-  webhookSecret?: string;
 }) {
   const { integrations } = useFetchIntegrations();
   const { mutateAsync: updateIntegration, isPending: isUpdating } = useUpdateIntegration();
@@ -579,13 +594,6 @@ export function IntegrationCredentialsSidebar({
           testSubscriberId={testSubscriberId}
           onFormStateChange={setFormState}
         />
-        {webhookUrl ? (
-          <div className="flex flex-col gap-2 border-t p-3">
-            <p className="text-text-sub text-label-xs font-medium">Webhook</p>
-            <ReadOnlyValueRow label="Callback URL" value={webhookUrl} />
-            {webhookSecret ? <ReadOnlyValueRow label="Webhook Secret" value={webhookSecret} /> : null}
-          </div>
-        ) : null}
       </div>
 
       <div className="bg-background flex justify-end gap-2 border-t p-3">

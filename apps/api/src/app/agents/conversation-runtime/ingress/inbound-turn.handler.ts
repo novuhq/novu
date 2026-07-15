@@ -45,6 +45,7 @@ import {
   ConnectOrgSubscriberCapExceededError,
 } from '../conversation/agent-subscriber-resolver.service';
 import { OutboundGateway } from '../egress/outbound.gateway';
+import { maybeReplyUnresolvedSubscriberAccess } from '../reply/maybe-reply-unresolved-subscriber-access';
 import type { BridgeReaction } from '../runtime/bridge-executor.service';
 import type { ConversationTurn } from '../runtime/conversation-turn';
 import { RuntimeResolver } from '../runtime/runtime-resolver.service';
@@ -98,6 +99,7 @@ const KEYLESS_DEMO_REPLY_CAP = parsePositiveIntEnv(process.env.KEYLESS_DEMO_REPL
 const CAPACITY_PLATFORM_LABELS: Record<AutoProvisionPlatform, string> = {
   [AgentPlatformEnum.SLACK]: 'Slack workspace',
   [AgentPlatformEnum.TEAMS]: 'Teams workspace',
+  [AgentPlatformEnum.TELEGRAM]: 'Telegram chat',
 };
 
 function buildCapacityReachedCard(platform: AutoProvisionPlatform): CardElement {
@@ -293,14 +295,15 @@ export class AgentInboundHandler implements OnModuleInit {
     const isVerifiedEmailSender =
       config.platform !== AgentPlatformEnum.EMAIL || isInboundEmailSenderVerified(emailAuthRaw);
 
-    // Open-access email/WhatsApp join Slack/Teams lookup-or-provision (soft-fail
-    // inside the resolver). Keyless email demos stay lookup-only until tool
-    // approval; WhatsApp has no keyless demo path. Policy lives in
-    // `shouldAutoProvisionInbound`.
+    // Open-access agents may lookup-or-provision; restricted stay lookup-only.
+    // Keyless email demos stay lookup-only until tool approval.
+    const telegramChatId = config.platform === AgentPlatformEnum.TELEGRAM ? extractTelegramChatId(thread) : undefined;
     const canAutoProvision = shouldAutoProvisionInbound({
       platform: config.platform,
       subscriberAccess: config.subscriberAccess,
+      isManaged: config.isManaged,
       isKeyless: config.isKeyless,
+      isTelegramDm: telegramChatId != null && telegramChatId === message.author.userId,
     });
 
     let resolution: SubscriberResolution;
@@ -362,8 +365,8 @@ export class AgentInboundHandler implements OnModuleInit {
       }
 
       /**
-       * Only `resolveOrProvision` on Slack / Teams / open-access email /
-       * open-access WhatsApp can reach here - the `resolveSubscriber` read path
+       * Only `resolveOrProvision` on open-access Slack / Teams / Telegram /
+       * email / WhatsApp / Sendblue can reach here - the `resolveSubscriber` read path
        * maps its own failures to an `error` outcome internally and never throws.
        * For auto-provision platforms an unknown error means we don't know the
        * subscriber state, so we keep dispatch off and surface the failure rather
@@ -468,16 +471,6 @@ export class AgentInboundHandler implements OnModuleInit {
       };
     }
 
-    if (!config.isManaged) {
-      await this.inboundAck.showWorkingSignal({
-        agentId,
-        config,
-        platformThreadId,
-        platformMessageId: message?.id,
-        isFirstMessage,
-      });
-    }
-
     const runtime = this.runtimeResolver.resolve(agent);
     const turn: ConversationTurn = {
       agentId,
@@ -494,13 +487,35 @@ export class AgentInboundHandler implements OnModuleInit {
     };
 
     // On buttonless platforms (iMessage/SMS) a pending tool approval is
-    // answered by texting back YES / NO — a matching reply is consumed as the
-    // verdict instead of being dispatched as a regular message.
+    // answered by texting back YES / NO — consume before the subscriber-access
+    // gate so an unresolved/restricted sender can still settle a pending approval.
     if (
       event === AgentEventEnum.ON_MESSAGE &&
       (await this.replyApprovalInterceptor.tryHandleAsApprovalReply(turn, runtime))
     ) {
       return;
+    }
+
+    if (
+      await maybeReplyUnresolvedSubscriberAccess({
+        turn,
+        logger: this.logger,
+        outboundGateway: this.outboundGateway,
+        conversationService: this.conversationService,
+        emailSenderUnverified: !isVerifiedEmailSender,
+      })
+    ) {
+      return;
+    }
+
+    if (!config.isManaged) {
+      await this.inboundAck.showWorkingSignal({
+        agentId,
+        config,
+        platformThreadId,
+        platformMessageId: message?.id,
+        isFirstMessage,
+      });
     }
 
     await runtime.dispatch(turn);
@@ -848,9 +863,9 @@ export class AgentInboundHandler implements OnModuleInit {
     message: Message
   ): Promise<void> {
     /**
-     * `ConnectOrgSubscriberCapExceededError` is only thrown by the Slack/Teams
+     * `ConnectOrgSubscriberCapExceededError` is only thrown by the ChannelEndpoint
      * branch of `resolveOrProvision` (`AUTO_PROVISION_PLATFORMS`). Open-access
-     * email/WhatsApp soft-fail instead. The cast narrows `config.platform` to
+     * email/WhatsApp/Sendblue soft-fail instead. The cast narrows `config.platform` to
      * the union the card builder accepts and keeps the exhaustive-record check
      * honest.
      */

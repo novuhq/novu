@@ -53,6 +53,15 @@ const EMAIL_WELCOME_SESSION_KEY = (agentIdentifier: string) => `agent-email-welc
 const BRAIN_STEPS = 1;
 // Provider guides reserve up to three numbered steps; the bridge section continues from there.
 const PROVIDER_GUIDE_RESERVED_STEPS = 3;
+// The iMessage (Sendblue) guide prepends a "Setup iMessage via" provider-select step, so it
+// reserves one extra step to keep the bridge/handler numbering aligned for self-hosted agents.
+const IMESSAGE_PROVIDER_GUIDE_RESERVED_STEPS = 4;
+
+function resolveProviderGuideReservedSteps(providerId: string | undefined): number {
+  return providerId === ChatProviderIdEnum.Sendblue
+    ? IMESSAGE_PROVIDER_GUIDE_RESERVED_STEPS
+    : PROVIDER_GUIDE_RESERVED_STEPS;
+}
 // Self-hosted agents add three handler steps (scaffold + run + send) below the provider guide.
 const HANDLER_STEPS = 3;
 
@@ -373,7 +382,7 @@ export function AgentSetupSteps({
 
   const skipProviderGuide = useCloudMergedListenStep && isEmailChannelSelected && channelReadyForBridge;
 
-  const providerGuideSteps = skipProviderGuide ? 0 : PROVIDER_GUIDE_RESERVED_STEPS;
+  const providerGuideSteps = skipProviderGuide ? 0 : resolveProviderGuideReservedSteps(selectedProviderId);
   const bridgeStepOffset = providerGuideStepOffset + providerGuideSteps;
 
   const totalSteps = brainStepsBefore + 1 + providerGuideSteps + handlerStepsAfter;

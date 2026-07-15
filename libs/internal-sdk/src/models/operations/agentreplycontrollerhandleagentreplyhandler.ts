@@ -10,15 +10,33 @@ import * as components from "../components/index.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 
 export type AgentReplyControllerHandleAgentReplyHandlerRequest = {
+  /**
+   * Agent identifier (slug) for the agent that owns the conversation.
+   */
   agentId: string;
   /**
    * A header for idempotency purposes
    */
   idempotencyKey?: string | undefined;
+  /**
+   * Reply payload. Provide at least one action: `reply`, `edit`, `resolve`, `signals`, `toolResults`, `toolApprovalRequest`, `addReactions`, `deleteMessages`, `typing`, or `error`. See named examples for common shapes used by server-side SDKs.
+   */
   agentReplyPayloadDto: components.AgentReplyPayloadDto;
 };
 
-export type AgentReplyControllerHandleAgentReplyHandlerResponseBody = {};
+/**
+ * OK. When a reply or edit is delivered, `data` contains the platform message identifiers. Side-effect-only requests (typing, reactions, deletes, signals without an outbound message) return `data: null`.
+ */
+export type AgentReplyControllerHandleAgentReplyHandlerResponseBody = {
+  /**
+   * Platform-native message id of the delivered or edited message (e.g. Slack `ts`, Teams activity id).
+   */
+  messageId: string;
+  /**
+   * Platform-native thread / conversation id where the message was delivered.
+   */
+  platformThreadId: string;
+};
 
 export type AgentReplyControllerHandleAgentReplyHandlerResponse = {
   headers: { [k: string]: Array<string> };
@@ -66,7 +84,10 @@ export const AgentReplyControllerHandleAgentReplyHandlerResponseBody$inboundSche
     AgentReplyControllerHandleAgentReplyHandlerResponseBody,
     z.ZodTypeDef,
     unknown
-  > = z.object({});
+  > = z.object({
+    messageId: z.string(),
+    platformThreadId: z.string(),
+  });
 
 export function agentReplyControllerHandleAgentReplyHandlerResponseBodyFromJSON(
   jsonString: string,

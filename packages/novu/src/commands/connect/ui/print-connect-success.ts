@@ -26,6 +26,7 @@ export function printConnectSuccess(result: ConnectSuccessResult): void {
     if (result.connectedChannel === 'slack') return 'Slack';
     if (result.connectedChannel === 'telegram') return 'Telegram';
     if (result.connectedChannel === 'email') return 'Email';
+    if (result.connectedChannel === 'sendblue') return 'iMessage (Sendblue)';
 
     return null;
   })();

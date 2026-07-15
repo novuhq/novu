@@ -3,6 +3,7 @@ import { AgentPlatformEnum } from '../enums/agent-platform.enum';
 import {
   buildUnresolvedSubscriberAccessReply,
   UNRESOLVED_SUBSCRIBER_ACCESS_REPLY,
+  UNRESOLVED_SUBSCRIBER_EMAIL_VERIFICATION_FAILED_REPLY,
   UNRESOLVED_SUBSCRIBER_TRANSIENT_REPLY,
 } from './agent-inbound-replies';
 
@@ -13,8 +14,10 @@ describe('buildUnresolvedSubscriberAccessReply', () => {
       senderEmail: 'unknown@example.com',
     });
 
-    expect(reply).to.include('unknown@example.com');
-    expect(reply).to.include('Novu account');
+    expect(reply).to.equal(
+      "We couldn't match unknown@example.com to a known user. " +
+        'Send from the address registered with your account, or sign up in the app that owns this agent using that same address.'
+    );
     expect(reply).to.not.equal(UNRESOLVED_SUBSCRIBER_ACCESS_REPLY);
   });
 
@@ -27,6 +30,30 @@ describe('buildUnresolvedSubscriberAccessReply', () => {
 
     expect(reply).to.include('unknown@example.com');
     expect(reply).to.not.equal(UNRESOLVED_SUBSCRIBER_TRANSIENT_REPLY);
+  });
+
+  it('returns verification-failed copy for an unverified (DKIM/SPF-failed) email sender', () => {
+    const reply = buildUnresolvedSubscriberAccessReply({
+      platform: AgentPlatformEnum.EMAIL,
+      senderEmail: 'victim@example.com',
+      resolutionOutcome: 'not_found',
+      emailSenderUnverified: true,
+    });
+
+    expect(reply).to.include('victim@example.com');
+    expect(reply).to.include('DKIM/SPF');
+    expect(reply).to.not.include('known user');
+    expect(reply).to.not.equal(UNRESOLVED_SUBSCRIBER_ACCESS_REPLY);
+  });
+
+  it('returns generic verification-failed copy when the unverified sender address is blank', () => {
+    const reply = buildUnresolvedSubscriberAccessReply({
+      platform: AgentPlatformEnum.EMAIL,
+      senderEmail: '   ',
+      emailSenderUnverified: true,
+    });
+
+    expect(reply).to.equal(UNRESOLVED_SUBSCRIBER_EMAIL_VERIFICATION_FAILED_REPLY);
   });
 
   it('returns transient copy when resolution errored — the sender address was never rejected', () => {
@@ -75,5 +102,12 @@ describe('buildUnresolvedSubscriberAccessReply', () => {
     });
 
     expect(reply).to.equal(UNRESOLVED_SUBSCRIBER_ACCESS_REPLY);
+  });
+
+  it('uses agent-wide identity copy for the generic access reply', () => {
+    expect(UNRESOLVED_SUBSCRIBER_ACCESS_REPLY).to.equal(
+      "We couldn't match your identity to a known user, so this agent can't reply yet. " +
+        'Sign in or link your account in the app that owns this agent, then try again.'
+    );
   });
 });
