@@ -31,7 +31,7 @@ const RESERVED_OVERRIDE_KEYS = new Set([
   'routing_key',
 ]);
 
-export class PagerDutyToolProvider extends BaseProvider implements IToolProvider {
+export class PagerDutyProvider extends BaseProvider implements IToolProvider {
   protected casing: CasingEnum = CasingEnum.SNAKE_CASE;
   readonly id = ToolProviderIdEnum.PagerDuty;
   channelType = ChannelTypeEnum.TOOL as ChannelTypeEnum.TOOL;

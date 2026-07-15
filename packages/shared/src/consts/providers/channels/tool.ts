@@ -1,6 +1,6 @@
 import { ChannelTypeEnum, ToolProviderIdEnum } from '../../../types';
 import { UTM_CAMPAIGN_QUERY_PARAM } from '../../../ui';
-import { opsgenieToolConfig, pagerdutyToolConfig, toolWebhookConfig } from '../credentials';
+import { opsgenieConfig, pagerdutyConfig, toolWebhookConfig } from '../credentials';
 import { IProviderConfig } from '../provider.interface';
 
 export const toolProviders: IProviderConfig[] = [
@@ -8,7 +8,7 @@ export const toolProviders: IProviderConfig[] = [
     id: ToolProviderIdEnum.PagerDuty,
     displayName: 'PagerDuty',
     channel: ChannelTypeEnum.TOOL,
-    credentials: pagerdutyToolConfig,
+    credentials: pagerdutyConfig,
     docReference: `https://support.pagerduty.com/main/docs/services-and-integrations${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'pagerduty.svg', dark: 'pagerduty.svg' },
     betaVersion: true,
@@ -17,7 +17,7 @@ export const toolProviders: IProviderConfig[] = [
     id: ToolProviderIdEnum.Opsgenie,
     displayName: 'Opsgenie',
     channel: ChannelTypeEnum.TOOL,
-    credentials: opsgenieToolConfig,
+    credentials: opsgenieConfig,
     docReference: `https://docs.opsgenie.com/docs/alert-api${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'opsgenie.svg', dark: 'opsgenie.svg' },
     betaVersion: true,

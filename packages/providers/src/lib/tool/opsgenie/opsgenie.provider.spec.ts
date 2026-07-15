@@ -1,6 +1,6 @@
 import * as safeOutboundHttp from '@novu/shared/utils/safe-outbound-http';
 import { expect, test, vi } from 'vitest';
-import { OpsgenieToolProvider } from './opsgenie-tool.provider';
+import { OpsgenieProvider } from './opsgenie.provider';
 
 const mockResponse = (requestId = 'req-1') => ({
   statusCode: 202,
@@ -12,7 +12,7 @@ const mockResponse = (requestId = 'req-1') => ({
 test('creates an alert on the US endpoint with GenieKey auth and required message', async () => {
   const safeOutboundSpy = vi.spyOn(safeOutboundHttp, 'safeOutboundJsonRequest').mockResolvedValue(mockResponse());
 
-  const provider = new OpsgenieToolProvider({
+  const provider = new OpsgenieProvider({
     apiKey: 'og-test-key',
     region: 'us',
   });
@@ -36,7 +36,7 @@ test('creates an alert on the US endpoint with GenieKey auth and required messag
 test('uses EU endpoint when region is eu', async () => {
   const safeOutboundSpy = vi.spyOn(safeOutboundHttp, 'safeOutboundJsonRequest').mockResolvedValue(mockResponse());
 
-  const provider = new OpsgenieToolProvider({
+  const provider = new OpsgenieProvider({
     apiKey: 'og-eu',
     region: 'eu',
   });
@@ -54,7 +54,7 @@ test('truncates message to Opsgenie 130-character limit and passes optional fiel
   const safeOutboundSpy = vi.spyOn(safeOutboundHttp, 'safeOutboundJsonRequest').mockResolvedValue(mockResponse());
   const longMessage = 'x'.repeat(200);
 
-  const provider = new OpsgenieToolProvider({
+  const provider = new OpsgenieProvider({
     apiKey: 'og-long',
     region: 'us',
   });
@@ -88,7 +88,7 @@ test('truncates message to Opsgenie 130-character limit and passes optional fiel
 test('folds unknown bridge extras into details', async () => {
   const safeOutboundSpy = vi.spyOn(safeOutboundHttp, 'safeOutboundJsonRequest').mockResolvedValue(mockResponse());
 
-  const provider = new OpsgenieToolProvider({
+  const provider = new OpsgenieProvider({
     apiKey: 'og-extras',
     region: 'us',
   });

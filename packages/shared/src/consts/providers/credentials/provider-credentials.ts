@@ -1605,7 +1605,7 @@ export const anthropicAwsAgentConfig: IConfigCredential[] = [
   },
 ];
 
-export const pagerdutyToolConfig: IConfigCredential[] = [
+export const pagerdutyConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
     displayName: 'Integration Key',
@@ -1627,7 +1627,7 @@ export const pagerdutyToolConfig: IConfigCredential[] = [
   },
 ];
 
-export const opsgenieToolConfig: IConfigCredential[] = [
+export const opsgenieConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
     displayName: 'API Key',

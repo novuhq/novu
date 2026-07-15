@@ -1,6 +1,6 @@
 import * as safeOutboundHttp from '@novu/shared/utils/safe-outbound-http';
 import { expect, test, vi } from 'vitest';
-import { PagerDutyToolProvider } from './pagerduty-tool.provider';
+import { PagerDutyProvider } from './pagerduty.provider';
 
 const mockResponse = (dedupKey = 'dedup-1') => ({
   statusCode: 202,
@@ -12,7 +12,7 @@ const mockResponse = (dedupKey = 'dedup-1') => ({
 test('enqueues a trigger event with defaults on the US endpoint', async () => {
   const safeOutboundSpy = vi.spyOn(safeOutboundHttp, 'safeOutboundJsonRequest').mockResolvedValue(mockResponse());
 
-  const provider = new PagerDutyToolProvider({
+  const provider = new PagerDutyProvider({
     routingKey: 'a'.repeat(32),
     region: 'us',
   });
@@ -45,7 +45,7 @@ test('enqueues a trigger event with defaults on the US endpoint', async () => {
 test('uses EU endpoint when region is eu', async () => {
   const safeOutboundSpy = vi.spyOn(safeOutboundHttp, 'safeOutboundJsonRequest').mockResolvedValue(mockResponse());
 
-  const provider = new PagerDutyToolProvider({
+  const provider = new PagerDutyProvider({
     routingKey: 'k'.repeat(32),
     region: 'eu',
   });
@@ -62,7 +62,7 @@ test('uses EU endpoint when region is eu', async () => {
 test('bridge provider data overrides summary, severity, source, and passes extras as custom_details', async () => {
   const safeOutboundSpy = vi.spyOn(safeOutboundHttp, 'safeOutboundJsonRequest').mockResolvedValue(mockResponse());
 
-  const provider = new PagerDutyToolProvider({
+  const provider = new PagerDutyProvider({
     routingKey: 'r'.repeat(32),
     region: 'us',
   });
@@ -98,7 +98,7 @@ test('bridge provider data overrides summary, severity, source, and passes extra
 test('merges explicit custom_details with unknown bridge extras', async () => {
   const safeOutboundSpy = vi.spyOn(safeOutboundHttp, 'safeOutboundJsonRequest').mockResolvedValue(mockResponse());
 
-  const provider = new PagerDutyToolProvider({
+  const provider = new PagerDutyProvider({
     routingKey: 'm'.repeat(32),
     region: 'us',
   });
@@ -125,7 +125,7 @@ test('truncates summary to PagerDuty 1024-character limit', async () => {
   const safeOutboundSpy = vi.spyOn(safeOutboundHttp, 'safeOutboundJsonRequest').mockResolvedValue(mockResponse());
   const longSummary = 'x'.repeat(1100);
 
-  const provider = new PagerDutyToolProvider({
+  const provider = new PagerDutyProvider({
     routingKey: 't'.repeat(32),
     region: 'us',
   });

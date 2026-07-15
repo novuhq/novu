@@ -33,7 +33,7 @@ const RESERVED_OVERRIDE_KEYS = new Set([
   'details',
 ]);
 
-export class OpsgenieToolProvider extends BaseProvider implements IToolProvider {
+export class OpsgenieProvider extends BaseProvider implements IToolProvider {
   protected casing: CasingEnum = CasingEnum.CAMEL_CASE;
   readonly id = ToolProviderIdEnum.Opsgenie;
   channelType = ChannelTypeEnum.TOOL as ChannelTypeEnum.TOOL;
