@@ -51,6 +51,12 @@ function buildOnActionHandler(): string {
 }
 
 const AGENT_SYSTEM_PROMPT = 'You are a helpful support agent. Use searchNovuDocs to find Novu documentation.';
+const CODEX_AGENT_SYSTEM_PROMPT = 'You are a helpful support agent.';
+
+function codegenSupportsTools(input: GenerateSupportAgentInput): boolean {
+  // Codex CLI provider does not support AI SDK tools.
+  return !(input.runtime === 'ai-sdk' && input.llmAuth.kind === 'codex-subscription');
+}
 
 function buildAiSdkSearchNovuDocsTool(): string {
   return `// Example tool — gates external fetches behind user approval (needsApproval: true).
@@ -74,12 +80,15 @@ const searchNovuDocs = tool(
 );`;
 }
 
-function buildAiSdkGenerateTextReturn(modelLine: string): string {
+function buildAiSdkGenerateTextReturn(modelLine: string, options: { withTools?: boolean } = {}): string {
+  const withTools = options.withTools ?? true;
+  const instructions = withTools ? AGENT_SYSTEM_PROMPT : CODEX_AGENT_SYSTEM_PROMPT;
+  const toolsLine = withTools ? '\n      tools: { searchNovuDocs },' : '';
+
   return `    return generateText({
       model: ${modelLine},
-      instructions: '${AGENT_SYSTEM_PROMPT}',
-      messages: toModelMessages(ctx.history),
-      tools: { searchNovuDocs },
+      instructions: '${instructions}',
+      messages: toModelMessages(ctx.history),${toolsLine}
     });`;
 }
 
@@ -107,7 +116,7 @@ ${buildAiSdkGenerateTextReturn("anthropic('claude-haiku-4-5')")}`;
 function buildAiSdkCodexHandler(): string {
   return `${buildSharedHandlerBody()}
 
-${buildAiSdkGenerateTextReturn("codexCli('gpt-5.4-mini')")}`;
+${buildAiSdkGenerateTextReturn("codexCli('gpt-5.4-mini')", { withTools: false })}`;
 }
 
 function buildAiSdkClaudeSubscriptionHandler(): string {
@@ -135,12 +144,18 @@ ${buildLangChainConfigReturn("new ChatCodexOAuth({ model: 'gpt-5.4-mini' })")}`;
 }
 
 function buildAiSdkImports(kind: GenerateSupportAgentInput['llmAuth']['kind']): string {
+  const withTools = kind !== 'codex-subscription';
+  const toolImports = withTools
+    ? `import { generateText, tool } from 'ai';
+import { toModelMessages } from '@novu/framework/ai-sdk';
+import { searchNovuDocsIndex, searchNovuDocsInputSchema } from './tools/search-novu-docs';`
+    : `import { generateText } from 'ai';
+import { toModelMessages } from '@novu/framework/ai-sdk';`;
+
   const base = `/** @jsxImportSource @novu/framework */
 import { Actions, Button, Card, CardText } from '@novu/framework';
 import { agent } from '@novu/framework/ai-sdk';
-import { generateText, tool } from 'ai';
-import { toModelMessages } from '@novu/framework/ai-sdk';
-import { searchNovuDocsIndex, searchNovuDocsInputSchema } from './tools/search-novu-docs';`;
+${toolImports}`;
 
   if (kind === 'openai-api-key') {
     return `${base}
@@ -204,12 +219,16 @@ export function generateSupportAgentSource(input: GenerateSupportAgentInput): st
   const imports =
     input.runtime === 'ai-sdk' ? buildAiSdkImports(input.llmAuth.kind) : buildLangChainImports(input.llmAuth.kind);
   const onMessageBody = buildOnMessageBody(input);
-  const searchNovuDocsTool =
-    input.runtime === 'ai-sdk' ? buildAiSdkSearchNovuDocsTool() : buildLangChainSearchNovuDocsTool();
+  const withTools = codegenSupportsTools(input);
+  const toolSection = withTools
+    ? input.runtime === 'ai-sdk'
+      ? buildAiSdkSearchNovuDocsTool()
+      : buildLangChainSearchNovuDocsTool()
+    : `// Codex CLI does not support AI SDK tools. See ./tools/search-novu-docs.ts when using an API-key provider.`;
 
   return `${imports}
 
-${searchNovuDocsTool}
+${toolSection}
 
 /**
  * Novu calls these handlers whenever a user sends a message or clicks an action

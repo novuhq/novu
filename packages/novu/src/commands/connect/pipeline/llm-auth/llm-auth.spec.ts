@@ -101,7 +101,7 @@ describe('generateSupportAgentSource', () => {
     expect(source).toContain("model: new ChatCodexOAuth({ model: 'gpt-5.4-mini' })");
   });
 
-  it('generates wired AI SDK Codex subscription handler', () => {
+  it('generates wired AI SDK Codex subscription handler without tools', () => {
     const source = generateSupportAgentSource({
       runtime: 'ai-sdk',
       agentIdentifier: 'support-agent',
@@ -110,6 +110,9 @@ describe('generateSupportAgentSource', () => {
 
     expect(source).toContain("import { codexCli } from 'ai-sdk-provider-codex-cli'");
     expect(source).toContain("model: codexCli('gpt-5.4-mini')");
+    expect(source).toContain('Codex CLI does not support AI SDK tools');
+    expect(source).not.toContain('tools: { searchNovuDocs }');
+    expect(source).not.toContain('needsApproval: true');
   });
 
   it('generates a valid export name when the identifier starts with a digit', () => {
