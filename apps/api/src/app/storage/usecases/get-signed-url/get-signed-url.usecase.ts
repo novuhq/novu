@@ -15,6 +15,8 @@ export class GetSignedUrl {
     switch (command.type) {
       case UploadTypesEnum.USER_PROFILE:
         return `users/${command.userId}/profile-pictures/${randomId}.${command.extension}`;
+      case UploadTypesEnum.EMAIL_ASSET:
+        return `${command.organizationId}/${command.environmentId}/email-assets/${randomId}.${command.extension}`;
       case UploadTypesEnum.BRANDING:
       default:
         return `${command.organizationId}/${command.environmentId}/${randomId}.${command.extension}`;

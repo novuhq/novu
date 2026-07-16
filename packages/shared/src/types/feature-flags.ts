@@ -140,6 +140,8 @@ export enum FeatureFlagsKeysEnum {
    * organization for the duration of the rotation, then disable.
    */
   IS_MULTIPLE_SECRET_KEYS_ALLOWED = 'IS_MULTIPLE_SECRET_KEYS_ALLOWED',
+  /** Enable image asset upload (drag/drop, paste, file picker) in the Maily email editor. Requires object storage to be configured on the API. Create the boolean in LaunchDarkly for cloud, or set `VITE_IS_EMAIL_ASSET_UPLOAD_ENABLED` when self-hosted. */
+  IS_EMAIL_ASSET_UPLOAD_ENABLED = 'IS_EMAIL_ASSET_UPLOAD_ENABLED',
 
   // String flags
   CF_SCHEDULER_MODE = 'CF_SCHEDULER_MODE', // Values: "off" | "shadow" | "live" | "complete"

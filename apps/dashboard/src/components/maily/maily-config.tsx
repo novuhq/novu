@@ -24,6 +24,7 @@ import {
   getVariableSuggestions,
   HTMLCodeBlockExtension,
   ImageExtension,
+  ImageUploadExtension,
   InlineImageExtension,
   LinkExtension,
   ButtonAttributes as MailyButtonAttributes,
@@ -55,6 +56,7 @@ import { createHtmlCodeBlock } from '@/components/maily/blocks/html';
 import { ForView } from '@/components/maily/views/for-view';
 import { HTMLCodeBlockView } from '@/components/maily/views/html-view';
 import { useDataRef } from '@/hooks/use-data-ref';
+import { EMAIL_ASSET_MIME_TYPES, useEmailAssetUpload } from '@/hooks/use-email-asset-upload';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { LocalizationResourceEnum, TranslationKey } from '@/types/translations';
 import { IsAllowedVariable, LiquidVariable, ParsedVariables } from '@/utils/parseStepVariables';
@@ -343,6 +345,9 @@ export const useCreateExtensions = ({
    */
   const propsRef = useDataRef(props);
 
+  const { isEnabled: isEmailAssetUploadEnabled, uploadAsset } = useEmailAssetUpload();
+  const uploadAssetRef = useDataRef(uploadAsset);
+
   const translationExtension = useCreateTranslationExtension({
     isTranslationEnabled: isTranslationEnabled ?? false,
     translationKeys: props.translationKeys,
@@ -456,6 +461,15 @@ export const useCreateExtensions = ({
 
     if (isTranslationEnabled) {
       extensions.push(translationExtension);
+    }
+
+    if (isEmailAssetUploadEnabled) {
+      extensions.push(
+        ImageUploadExtension.configure({
+          onImageUpload: (file: Blob) => uploadAssetRef.current(file),
+          allowedMimeTypes: EMAIL_ASSET_MIME_TYPES,
+        })
+      );
     }
 
     extensions.push(
@@ -595,5 +609,5 @@ export const useCreateExtensions = ({
     );
 
     return extensions;
-  }, [propsRef, translationExtension, isTranslationEnabled]);
+  }, [propsRef, translationExtension, isTranslationEnabled, isEmailAssetUploadEnabled, uploadAssetRef]);
 };

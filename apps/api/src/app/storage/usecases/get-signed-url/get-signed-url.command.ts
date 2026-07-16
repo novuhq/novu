@@ -1,11 +1,11 @@
-import { UploadTypesEnum } from '@novu/shared';
+import { FileExtensionEnum, UploadTypesEnum } from '@novu/shared';
 import { IsDefined, IsEnum, IsIn, IsString } from 'class-validator';
 
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
 export class GetSignedUrlCommand extends EnvironmentWithUserCommand {
   @IsString()
-  @IsIn(['jpg', 'png', 'jpeg'])
+  @IsIn(Object.values(FileExtensionEnum))
   extension: string;
 
   @IsDefined()
