@@ -1,6 +1,6 @@
 # Branding & Styling Reference
 
-The Inbox component is fully themeable through the `appearance` prop. This reference covers every level of customization — from dropping in a base theme to building dynamic, severity-aware, brand-perfect styles.
+The Inbox component is fully themeable through the `appearance` prop. This reference covers every level of customization - from dropping in a base theme to building dynamic, severity-aware, brand-perfect styles.
 
 > Inspiration: [inbox.novu.co](https://inbox.novu.co) showcases pre-built variants like Notion and Reddit.
 
@@ -19,7 +19,7 @@ type Appearance = {
 | --- | --- |
 | `baseTheme` | Start from a predefined theme (e.g. `dark`) |
 | `variables` | Global design tokens (colors, fonts, radius, severity colors) |
-| `elements` | Per-element styles — string, style object, or callback |
+| `elements` | Per-element styles - string, style object, or callback |
 | `icons` | Replace built-in icons with your own React components |
 
 When both `baseTheme` and `variables` are set, **variables win**.
@@ -96,9 +96,9 @@ appearance={{
 
 Each key in `appearance.elements` accepts:
 
-- **String of class names** — CSS, CSS Modules, Tailwind
-- **Style object** — inline CSS
-- **Callback** — `(context) => string` returning class names, evaluated on every render with the relevant context (notification, unreadCount, preference, schedule)
+- **String of class names** - CSS, CSS Modules, Tailwind
+- **Style object** - inline CSS
+- **Callback** - `(context) => string` returning class names, evaluated on every render with the relevant context (notification, unreadCount, preference, schedule)
 
 ### Inline style object
 

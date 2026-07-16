@@ -11,8 +11,8 @@ inputs:
 # Manage Preferences
 
 Novu has a two-level preference system:
-1. **Workflow defaults** — configured in the dashboard for UI based workflows or via code in framework based workflows, apply to all subscribers.
-2. **Subscriber overrides** — set by end users, override workflow defaults
+1. **Workflow defaults** - configured in the dashboard for UI based workflows or via code in framework based workflows, apply to all subscribers.
+2. **Subscriber overrides** - set by end users, override workflow defaults
 
 ## Workflow-Level Preferences
 
@@ -49,7 +49,7 @@ const alertWorkflow = workflow("system-alert", execute, {
 
 ### Read-Only Preferences
 
-Set `readOnly: true` to **hide a workflow's channels from the Preferences UI** — subscribers can't toggle them on or off:
+Set `readOnly: true` to **hide a workflow's channels from the Preferences UI** - subscribers can't toggle them on or off:
 
 ```typescript
 const criticalAlertWorkflow = workflow("critical-alert", execute, {
@@ -59,7 +59,7 @@ const criticalAlertWorkflow = workflow("critical-alert", execute, {
 });
 ```
 
-### `readOnly` vs `critical` — pick the right one
+### `readOnly` vs `critical` - pick the right one
 
 These are different mechanisms with different guarantees. See [`design-workflow/references/severity-and-critical.md`](../design-workflow/references/severity-and-critical.md) for the full matrix.
 
@@ -68,7 +68,7 @@ These are different mechanisms with different guarantees. See [`design-workflow/
 | `preferences.all.readOnly: true`     | **UI only.** Hides the workflow from the Preferences UI so subscribers can't toggle it.     |
 | `critical: true` (workflow-level)    | **Runtime.** Bypasses subscriber preferences, skips digest, runs without delays.            |
 
-If you need the notification to **always be delivered** (account suspended, security alert, password reset), set `critical: true` — `readOnly: true` alone won't override existing subscriber overrides at runtime.
+If you need the notification to **always be delivered** (account suspended, security alert, password reset), set `critical: true` - `readOnly: true` alone won't override existing subscriber overrides at runtime.
 
 ### Optional (Subscriber-Editable) Preferences
 
@@ -136,10 +136,10 @@ await novu.subscribers.preferences.update(
 
 When Novu determines whether to deliver a notification:
 
-1. **Subscriber workflow preference** (most specific) — subscriber's override for this specific workflow
-2. **Subscriber global preference** — subscriber's default across all workflows
-3. **Workflow default** — developer-defined default in code
-4. **System default** — all channels enabled
+1. **Subscriber workflow preference** (most specific) - subscriber's override for this specific workflow
+2. **Subscriber global preference** - subscriber's default across all workflows
+3. **Workflow default** - developer-defined default in code
+4. **System default** - all channels enabled
 
 The most specific preference wins. If a subscriber disables email for a specific workflow, that takes precedence even if their global email preference is enabled.
 
@@ -226,11 +226,11 @@ Only in-app is on. Subscribers can enable other channels if desired.
 
 ## Common Pitfalls
 
-1. **`readOnly: true` is per-workflow, not per-channel** — you set `readOnly` on the `all` level. Individual channels inherit it.
-2. **Subscriber overrides don't apply to `readOnly` workflows** — if the workflow is read-only, subscriber preferences are ignored.
-3. **`enabled: false` in the workflow default means the channel is off** — subscribers can still enable it (unless `readOnly: true`).
-4. **The Preferences UI only shows non-readOnly workflows** — read-only workflows are hidden from the subscriber's preference panel.
-5. **Global preferences apply across all non-readOnly workflows** — they're a convenient "disable all email" setting, but workflow-specific preferences take precedence.
+1. **`readOnly: true` is per-workflow, not per-channel** - you set `readOnly` on the `all` level. Individual channels inherit it.
+2. **Subscriber overrides don't apply to `readOnly` workflows** - if the workflow is read-only, subscriber preferences are ignored.
+3. **`enabled: false` in the workflow default means the channel is off** - subscribers can still enable it (unless `readOnly: true`).
+4. **The Preferences UI only shows non-readOnly workflows** - read-only workflows are hidden from the subscriber's preference panel.
+5. **Global preferences apply across all non-readOnly workflows** - they're a convenient "disable all email" setting, but workflow-specific preferences take precedence.
 
 ## References
 

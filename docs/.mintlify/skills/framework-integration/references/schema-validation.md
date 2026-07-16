@@ -4,11 +4,11 @@
 
 | Schema | Best for | Type inference |
 | --- | --- | --- |
-| **Zod** | TypeScript-first projects | Best — automatic via `z.infer` |
-| **JSON Schema** | OpenAPI-style projects, advanced features (`oneOf`, `if/then/else`, `$ref`) | Good — requires `as const` |
+| **Zod** | TypeScript-first projects | Best - automatic via `z.infer` |
+| **JSON Schema** | OpenAPI-style projects, advanced features (`oneOf`, `if/then/else`, `$ref`) | Good - requires `as const` |
 | **Class Validator** | OOP-style apps, NestJS DTOs | Requires `class-validator-jsonschema` and `reflect-metadata` |
 
-All three are converted to JSON Schema under the hood and pushed to Novu Cloud — so the Dashboard always renders the same UI.
+All three are converted to JSON Schema under the hood and pushed to Novu Cloud - so the Dashboard always renders the same UI.
 
 ## Zod (Recommended)
 
@@ -79,7 +79,7 @@ await step.email("send-email", async (controls) => ({
 | `z.array(...)` | Repeatable section |
 | `.default(value)` | Pre-filled value |
 
-> Zod doesn't support custom `title` on fields — the Dashboard label is derived from the property name.
+> Zod doesn't support custom `title` on fields - the Dashboard label is derived from the property name.
 
 ## JSON Schema
 
@@ -291,9 +291,9 @@ export const welcomeWorkflow = workflow(
 
 ### Caveats
 
-- Class Validator does **not** support default values out of the box — set them in your resolver.
-- Class Validator does **not** support custom titles — Dashboard labels come from the property name.
-- Nested schemas can have inconsistencies — see [`class-validator-jsonschema`](https://www.npmjs.com/package/class-validator-jsonschema) docs.
+- Class Validator does **not** support default values out of the box - set them in your resolver.
+- Class Validator does **not** support custom titles - Dashboard labels come from the property name.
+- Nested schemas can have inconsistencies - see [`class-validator-jsonschema`](https://www.npmjs.com/package/class-validator-jsonschema) docs.
 
 ## Choosing a Schema
 
@@ -302,12 +302,12 @@ export const welcomeWorkflow = workflow(
 | Best DX, type inference, Vercel-style validation | **Zod** |
 | Already use NestJS / DTOs | **Class Validator** |
 | Need `oneOf`, `$ref`, `if/then/else`, share schemas with API consumers | **JSON Schema** |
-| Want only IDE intellisense (no Dashboard schema) | Plain TS interfaces — but you lose Dashboard form generation |
+| Want only IDE intellisense (no Dashboard schema) | Plain TS interfaces - but you lose Dashboard form generation |
 
 ## Other Resources
 
 - [JSON Schema specification](https://json-schema.org/specification)
 - [JSON Schema validator playground](https://www.jsonschemavalidator.net/)
-- [React JSON Schema Form](https://rjsf-team.github.io/react-jsonschema-form/) — same UI engine Novu uses for the Dashboard
+- [React JSON Schema Form](https://rjsf-team.github.io/react-jsonschema-form/) - same UI engine Novu uses for the Dashboard
 - [Zod docs](https://zod.dev/)
 - [class-validator docs](https://github.com/typestack/class-validator)

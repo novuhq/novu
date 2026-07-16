@@ -17,9 +17,9 @@ Decision rules for picking which channels a workflow should send on. Applies to 
                                                   >  Push  >  SMS
 ```
 
-## Rule 1 — User-Specified Channels Are Exact
+## Rule 1 - User-Specified Channels Are Exact
 
-If the user mentions channels (`"send a push notification…"`, `"email and SMS only"`), use exactly those channels. Do **not** add fallbacks. Do **not** drop a channel because it's not configured — the user explicitly asked for it.
+If the user mentions channels (`"send a push notification…"`, `"email and SMS only"`), use exactly those channels. Do **not** add fallbacks. Do **not** drop a channel because it's not configured - the user explicitly asked for it.
 
 > "Create a push notification when order ships"
 >
@@ -39,7 +39,7 @@ If the user mentions channels (`"send a push notification…"`, `"email and SMS 
 > SMS
 > ```
 
-## Rule 2 — Default Selection (No User Preference)
+## Rule 2 - Default Selection (No User Preference)
 
 When the user doesn't specify channels, choose from channels **configured in the organization** in this order:
 
@@ -49,7 +49,7 @@ When the user doesn't specify channels, choose from channels **configured in the
 4. **Push**
 5. **SMS**
 
-Stop at 3 channels. Skipping is fine — pick the most relevant subset, not the first 3.
+Stop at 3 channels. Skipping is fine - pick the most relevant subset, not the first 3.
 
 ## Per-Channel Guidance
 
@@ -95,14 +95,14 @@ Stop at 3 channels. Skipping is fine — pick the most relevant subset, not the 
 
 ## Quick Examples
 
-- **Order confirmation** — In-App, Email, Push (offline only)
-- **Comment on post** — In-App, Push (offline only), Email (only if In-App unread after delay)
-- **Payment failed** — In-App, Chat, Email, Push (offline only)
-- **Account suspended** (`critical: true`) — In-App, Email, SMS, Chat, Push (offline only)
-- **Forgot password** (`critical: true`, no In-App) — Email, SMS
+- **Order confirmation** - In-App, Email, Push (offline only)
+- **Comment on post** - In-App, Push (offline only), Email (only if In-App unread after delay)
+- **Payment failed** - In-App, Chat, Email, Push (offline only)
+- **Account suspended** (`critical: true`) - In-App, Email, SMS, Chat, Push (offline only)
+- **Forgot password** (`critical: true`, no In-App) - Email, SMS
 
 ## See Also
 
-- [`severity-and-critical.md`](./severity-and-critical.md) — how severity & `critical` change the channel mix
-- [`step-conditions.md`](./step-conditions.md) — how to gate Push on `subscriber.isOnline`
-- [`workflow-templates.md`](./workflow-templates.md) — the 9 templates with their channel choices
+- [`severity-and-critical.md`](./severity-and-critical.md) - how severity & `critical` change the channel mix
+- [`step-conditions.md`](./step-conditions.md) - how to gate Push on `subscriber.isOnline`
+- [`workflow-templates.md`](./workflow-templates.md) - the 9 templates with their channel choices

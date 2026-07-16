@@ -87,9 +87,9 @@ const novu = new Novu({
 
 ## Security Checklist
 
-- **Never expose `NOVU_SECRET_KEY` on the client** — the hash must be generated server-side
-- **`applicationIdentifier` is public** — it can safely be in client-side code and environment variables
-- **Generate the hash per subscriber** — each subscriber gets a unique hash based on their ID
-- **The hash is deterministic** — same subscriber ID + same secret key always produces the same hash
-- **Rotate the secret key carefully** — changing the key invalidates all existing hashes
-- **Use HTTPS in production** — prevent the hash from being intercepted in transit
+- **Never expose `NOVU_SECRET_KEY` on the client** - the hash must be generated server-side
+- **`applicationIdentifier` is public** - it can safely be in client-side code and environment variables
+- **Generate the hash per subscriber** - each subscriber gets a unique hash based on their ID
+- **The hash is deterministic** - same subscriber ID + same secret key always produces the same hash
+- **Rotate the secret key carefully** - changing the key invalidates all existing hashes
+- **Use HTTPS in production** - prevent the hash from being intercepted in transit

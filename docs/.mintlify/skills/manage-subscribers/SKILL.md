@@ -10,7 +10,7 @@ inputs:
 
 # Manage Subscribers
 
-Subscribers are the recipients of your notifications. Each subscriber has a unique `subscriberId` — typically your application's user ID.
+Subscribers are the recipients of your notifications. Each subscriber has a unique `subscriberId` - typically your application's user ID.
 
 ## SDK Setup
 
@@ -26,7 +26,7 @@ const novu = new Novu({
 
 ```typescript
 await novu.subscribers.create({
-  subscriberId: "user-123",       // required — your system's user ID
+  subscriberId: "user-123",       // required - your system's user ID
   email: "jane@example.com",      // optional
   firstName: "Jane",              // optional
   lastName: "Doe",                // optional
@@ -34,7 +34,7 @@ await novu.subscribers.create({
   avatar: "https://example.com/jane.jpg",  // optional
   locale: "en-US",                // optional
   timezone: "America/New_York",   // optional
-  data: {                         // optional — custom key-value data
+  data: {                         // optional - custom key-value data
     plan: "pro",
     company: "Acme Inc",
   },
@@ -178,11 +178,11 @@ await novu.subscribers.credentials.update(
 
 ## Common Pitfalls
 
-1. **`subscriberId` is YOUR user ID** — it bridges your system to Novu. Use a stable, unique identifier from your database.
-2. **Subscribers are auto-created on trigger** — if you pass a full subscriber object in `to` when triggering, Novu creates the subscriber if it doesn't exist. But explicit creation gives you more control.
-3. **Subscriber data is per-environment** — dev, staging, and production have separate subscriber records.
-4. **Topics must exist before triggering** — create the topic and add subscribers before sending to it.
-5. **Deleting a subscriber doesn't delete their notifications** — existing notifications remain in the system.
+1. **`subscriberId` is YOUR user ID** - it bridges your system to Novu. Use a stable, unique identifier from your database.
+2. **Subscribers are auto-created on trigger** - if you pass a full subscriber object in `to` when triggering, Novu creates the subscriber if it doesn't exist. But explicit creation gives you more control.
+3. **Subscriber data is per-environment** - dev, staging, and production have separate subscriber records.
+4. **Topics must exist before triggering** - create the topic and add subscribers before sending to it.
+5. **Deleting a subscriber doesn't delete their notifications** - existing notifications remain in the system.
 6. **Adding non existent subscriber to topic** - if non existent subscriber is added to topic, it is not autocreated in that environment and hence not added to the topic. Always create subscribers before adding into the topic
 
 ## References

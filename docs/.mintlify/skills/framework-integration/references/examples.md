@@ -59,7 +59,7 @@ export const onboardingWorkflow = workflow(
 
 ## Skip Email if In-App Was Read
 
-Send an in-app notification, wait 6 hours, then send an email — but skip the email if the in-app was read.
+Send an in-app notification, wait 6 hours, then send an email - but skip the email if the in-app was read.
 
 ```typescript
 import { workflow } from "@novu/framework";
@@ -207,7 +207,7 @@ const summaryWorkflow = workflow(
       const { bugs, features, praise } = await categorizeUsingLLM(allRequests);
 
       return {
-        subject: "LLM Feedback Digest — Last 6 Hours",
+        subject: "LLM Feedback Digest - Last 6 Hours",
         body: `
           Bugs reported: ${bugs}\n
           Feature requests: ${features}\n
@@ -400,7 +400,7 @@ export const securityAlert = workflow(
   },
   {
     preferences: {
-      all: { enabled: true, readOnly: true }, // critical — subscribers cannot opt out
+      all: { enabled: true, readOnly: true }, // critical - subscribers cannot opt out
     },
     tags: ["security"],
   }

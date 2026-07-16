@@ -4,18 +4,18 @@ A step condition decides whether a step **runs** or is **skipped**. Same semanti
 
 | Surface              | Syntax                                            |
 | -------------------- | ------------------------------------------------- |
-| Dashboard (no-code)  | [JSON-Logic](https://jsonlogic.com) on `step.condition` — `{ "==": [...] }` |
+| Dashboard (no-code)  | [JSON-Logic](https://jsonlogic.com) on `step.condition` - `{ "==": [...] }` |
 | Framework (`@novu/framework`) | `skip: () => boolean \| Promise<boolean>` callback    |
 
 > Dashboard semantics: condition evaluates to `true` ⇒ step **runs**.
 > Framework semantics: `skip` returns `true` ⇒ step **is skipped**.
-> They're mirror images — invert the boolean when porting between surfaces.
+> They're mirror images - invert the boolean when porting between surfaces.
 
 ## Available Variables
 
 Use **only** variables that are in scope for the workflow run.
 
-> **Prefer reusing existing variables for consistency.** Only introduce new `payload.*` variables when truly needed — duplication makes templates and conditions harder to maintain.
+> **Prefer reusing existing variables for consistency.** Only introduce new `payload.*` variables when truly needed - duplication makes templates and conditions harder to maintain.
 
 ### Variable Namespaces
 
@@ -47,8 +47,8 @@ Available `subscriber.*` properties:
 
 | Path                        | When available       | Notes                                                            |
 | --------------------------- | -------------------- | ---------------------------------------------------------------- |
-| `steps.<stepId>.seen`       | After an In-App step | Boolean — `true` once the user has seen the notification         |
-| `steps.<stepId>.read`       | After an In-App step | Boolean — `true` once the user has marked it read                |
+| `steps.<stepId>.seen`       | After an In-App step | Boolean - `true` once the user has seen the notification         |
+| `steps.<stepId>.read`       | After an In-App step | Boolean - `true` once the user has marked it read                |
 | `steps.<stepId>.events`     | After a digest step  | Array of digested trigger events                                 |
 | `steps.<stepId>.eventCount` | After a digest step  | Length of `events` (convenience for templates)                   |
 | `steps.<stepId>.<prop>`     | After an HTTP step   | Only properties declared in `responseBodySchema` are addressable |
@@ -89,7 +89,7 @@ Available `subscriber.*` properties:
 
 ## Framework Equivalents
 
-The same conditions in `@novu/framework`. Note that `skip` is the inverse of "run if true" — you return `true` to **skip**.
+The same conditions in `@novu/framework`. Note that `skip` is the inverse of "run if true" - you return `true` to **skip**.
 
 ### Subscriber is offline (run only if offline)
 
@@ -143,14 +143,14 @@ await step.email("notify", async () => ({ /* ... */ }), {
 
 ## Common Pitfalls
 
-1. **Inverting the boolean wrong** — Dashboard runs when condition is `true`; Framework `skip` skips when `true`. They're opposites.
-2. **Referencing undeclared HTTP properties** — only properties in `responseBodySchema` are addressable in `steps.<http>.<prop>`.
-3. **Using `subscriber.isOnline == true` as a string** — `isOnline` is a boolean. Use `"false"` (string) only in JSON-Logic; in Framework use the JS boolean `false`.
-4. **Conditions on a delay step** — delays support skip too, but if a delay is skipped the workflow proceeds immediately. Don't treat skip as "shorten".
+1. **Inverting the boolean wrong** - Dashboard runs when condition is `true`; Framework `skip` skips when `true`. They're opposites.
+2. **Referencing undeclared HTTP properties** - only properties in `responseBodySchema` are addressable in `steps.<http>.<prop>`.
+3. **Using `subscriber.isOnline == true` as a string** - `isOnline` is a boolean. Use `"false"` (string) only in JSON-Logic; in Framework use the JS boolean `false`.
+4. **Conditions on a delay step** - delays support skip too, but if a delay is skipped the workflow proceeds immediately. Don't treat skip as "shorten".
 
 ## See Also
 
-- [`channel-selection.md`](./channel-selection.md) — uses these conditions for offline gating
-- [`workflow-templates.md`](./workflow-templates.md) — every template's `Step condition` lines map to these snippets
-- [`framework-integration/references/workflow-and-steps.md`](../../framework-integration/references/workflow-and-steps.md) — full Framework `skip` reference
-- [`dashboard-workflows/references/step-conditions.md`](../../dashboard-workflows/references/step-conditions.md) — Dashboard / Novu MCP authoring flow, including the merge / replace / remove intent rules
+- [`channel-selection.md`](./channel-selection.md) - uses these conditions for offline gating
+- [`workflow-templates.md`](./workflow-templates.md) - every template's `Step condition` lines map to these snippets
+- [`framework-integration/references/workflow-and-steps.md`](../../framework-integration/references/workflow-and-steps.md) - full Framework `skip` reference
+- [`dashboard-workflows/references/step-conditions.md`](../../dashboard-workflows/references/step-conditions.md) - Dashboard / Novu MCP authoring flow, including the merge / replace / remove intent rules

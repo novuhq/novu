@@ -11,7 +11,7 @@ Each template includes a metadata table:
 | `Actionable`  | `Informational` (no action) or `Requires Action` (CTA)             |
 | `Interaction` | `USER TRANSACTION`, `CONVERSATIONAL`, `SYSTEM TRANSACTION`, `LIFECYCLE` |
 
-Channels noted with `(if channel is configured)` are only included when the organization has that integration set up. Steps with a `Step condition` line run only when the condition holds — see [`step-conditions.md`](./step-conditions.md) for the JSON-Logic and Framework `skip` equivalents.
+Channels noted with `(if channel is configured)` are only included when the organization has that integration set up. Steps with a `Step condition` line run only when the condition holds - see [`step-conditions.md`](./step-conditions.md) for the JSON-Logic and Framework `skip` equivalents.
 
 ---
 
@@ -131,7 +131,7 @@ Push (if channel is configured)
 | Actionable  | Requires Action    |
 | Interaction | SYSTEM TRANSACTION |
 
-No In-App step — the user isn't signed in when this fires.
+No In-App step - the user isn't signed in when this fires.
 
 ```
 Trigger
@@ -242,8 +242,8 @@ Rule: when a subsequent step references HTTP response data, the HTTP step **must
 
 ## See Also
 
-- [`channel-selection.md`](./channel-selection.md) — why each template chose those channels
-- [`severity-and-critical.md`](./severity-and-critical.md) — when to set severity vs critical
-- [`digest-defaults.md`](./digest-defaults.md) — the digest config used in templates 1 & 2
-- [`step-conditions.md`](./step-conditions.md) — JSON-Logic / `skip` snippets for "send only if offline" and "only if In-App not seen"
-- [`framework-integration/references/workflow-and-steps.md`](../../framework-integration/references/workflow-and-steps.md) — Framework primitives to implement these flows in code
+- [`channel-selection.md`](./channel-selection.md) - why each template chose those channels
+- [`severity-and-critical.md`](./severity-and-critical.md) - when to set severity vs critical
+- [`digest-defaults.md`](./digest-defaults.md) - the digest config used in templates 1 & 2
+- [`step-conditions.md`](./step-conditions.md) - JSON-Logic / `skip` snippets for "send only if offline" and "only if In-App not seen"
+- [`framework-integration/references/workflow-and-steps.md`](../../framework-integration/references/workflow-and-steps.md) - Framework primitives to implement these flows in code

@@ -1,12 +1,12 @@
 # Local Studio & Novu CLI
 
-The **Local Studio** is a companion app to `@novu/framework`. It runs locally, talks to your Bridge Endpoint, and gives you a live preview of every workflow you've registered — including step controls, payload, and rendered output.
+The **Local Studio** is a companion app to `@novu/framework`. It runs locally, talks to your Bridge Endpoint, and gives you a live preview of every workflow you've registered - including step controls, payload, and rendered output.
 
 ## Prerequisites
 
 - Your bridge app running (e.g. `npm run dev` for Next.js, exposing `/api/novu`)
 - `NOVU_SECRET_KEY` exported (from `.env`)
-- **Chrome only** — the Studio currently doesn't support other browsers
+- **Chrome only** - the Studio currently doesn't support other browsers
 
 ## Launch
 
@@ -31,7 +31,7 @@ The CLI:
 | `-p` | `--port <port>` | `4000` | Your app's port |
 | `-r` | `--route <path>` | `/api/novu` | Bridge route path |
 | `-o` | `--origin <url>` | `http://localhost` | Bridge origin |
-| `-d` | `--dashboard-url <url>` | `https://dashboard.novu.co` | Dashboard URL — use `https://eu.dashboard.novu.co` for EU |
+| `-d` | `--dashboard-url <url>` | `https://dashboard.novu.co` | Dashboard URL - use `https://eu.dashboard.novu.co` for EU |
 | `-sp` | `--studio-port <port>` | `2022` | Studio UI port |
 | `-t` | `--tunnel <url>` | auto | Self-hosted tunnel (e.g. ngrok) |
 | `-H` | `--headless` | `false` | Skip the Studio UI (just keep the tunnel alive) |
@@ -74,7 +74,7 @@ npx novu@latest dev --headless
 
 ## What you can do in the Studio
 
-- **Browse workflows** registered by your bridge — code-defined and Dashboard-defined alike
+- **Browse workflows** registered by your bridge - code-defined and Dashboard-defined alike
 - **Edit Step Controls** in real time and preview the resolved output
 - **Edit the Payload** to test edge cases without rebuilding your trigger code
 - **Trigger test events** to a subscriber of your choice
@@ -85,7 +85,7 @@ npx novu@latest dev --headless
 
 | | Created by | URL pattern | Use for |
 | --- | --- | --- | --- |
-| **Tunnel URL** | `npx novu@latest dev` | `https://<id>.novu.sh/api/novu` | Local dev — Studio + Cloud testing |
+| **Tunnel URL** | `npx novu@latest dev` | `https://<id>.novu.sh/api/novu` | Local dev - Studio + Cloud testing |
 | **Bridge URL** | Your deployed app | `https://api.acme.com/api/novu` | Production sync |
 
 Tunnel IDs are persisted to your machine, so the same URL is reused across `dev` runs.
@@ -136,7 +136,7 @@ Created files:
 
 ### Can I run the Studio without a tunnel?
 
-Yes — pass `-t/--tunnel` with your own URL. The preview will work, but you can't trigger test events from the Studio UI.
+Yes - pass `-t/--tunnel` with your own URL. The preview will work, but you can't trigger test events from the Studio UI.
 
 ```bash
 npx novu@latest dev -t https://my-tunnel.example.com
@@ -145,9 +145,9 @@ npx novu@latest dev -t https://my-tunnel.example.com
 ### Why does the Studio say it can't reach my bridge?
 
 Common causes:
-- App isn't running on the port the Studio is checking — add `--port <yourport>`
-- Bridge route is mounted at a different path — add `--route /custom/path`
-- Bridge requires auth middleware that blocks Novu — disable JWT for the bridge route
+- App isn't running on the port the Studio is checking - add `--port <yourport>`
+- Bridge route is mounted at a different path - add `--route /custom/path`
+- Bridge requires auth middleware that blocks Novu - disable JWT for the bridge route
 
 ### Why do I see HMAC errors in the Studio?
 
@@ -157,11 +157,11 @@ Common causes:
 
 ### Can I run multiple bridges simultaneously?
 
-Yes — start each bridge on its own port and run a Studio per bridge with `--studio-port`. Each gets its own tunnel.
+Yes - start each bridge on its own port and run a Studio per bridge with `--studio-port`. Each gets its own tunnel.
 
 ### Studio works but Cloud can't reach my bridge in production
 
 - Verify the bridge URL is publicly accessible over HTTPS
-- Check firewall / WAF rules — Novu workers come from autoscaled IPs, no allowlist
+- Check firewall / WAF rules - Novu workers come from autoscaled IPs, no allowlist
 - Make sure `NOVU_SECRET_KEY` is set in your production env vars
 - Ensure no auth middleware is blocking `/api/novu`

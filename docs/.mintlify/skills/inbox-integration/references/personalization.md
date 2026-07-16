@@ -1,6 +1,6 @@
 # Personalization Reference
 
-The Inbox can be personalized at every level — from swapping the bell icon, to per-row layout, to fully custom popovers and routing. This reference covers render props, click handling, conditional display, HTML content, and composing the Inbox primitives inside your own UI.
+The Inbox can be personalized at every level - from swapping the bell icon, to per-row layout, to fully custom popovers and routing. This reference covers render props, click handling, conditional display, HTML content, and composing the Inbox primitives inside your own UI.
 
 ## Render props
 
@@ -113,7 +113,7 @@ Useful for matching brand button styles without re-implementing default actions:
 
 ### `renderNotification` (full takeover)
 
-Use sparingly — you lose all built-in affordances:
+Use sparingly - you lose all built-in affordances:
 
 ```tsx
 <Inbox
@@ -195,8 +195,8 @@ renderNotification={(notification) => {
 
 By default Novu sanitizes the `subject` and `body` to prevent XSS. To allow rich HTML:
 
-1. **In the workflow** — open the In-App step editor and toggle on **Disable content sanitization**.
-2. **In the Inbox** — render the field with `dangerouslySetInnerHTML`.
+1. **In the workflow** - open the In-App step editor and toggle on **Disable content sanitization**.
+2. **In the Inbox** - render the field with `dangerouslySetInnerHTML`.
 
 > Only enable this if you fully control the trigger payload. Raw HTML opens an XSS surface area.
 
@@ -313,7 +313,7 @@ Override click behavior entirely (open a drawer, modal, etc.):
 
 ## Custom popover
 
-The `<Inbox>` component is composable. When passed children, it acts as a context provider — drop the feed into any popover, drawer, or page.
+The `<Inbox>` component is composable. When passed children, it acts as a context provider - drop the feed into any popover, drawer, or page.
 
 | Component | Renders |
 | --- | --- |
@@ -416,7 +416,7 @@ All customization props (`appearance`, `localization`, `tabs`, `routerPush`, ren
 
 ## Localization
 
-Override Inbox UI text per locale. Localization changes UI chrome only — to translate notification *content*, use [Workflow Translations](https://docs.novu.co/platform/workflow/advanced-features/translations).
+Override Inbox UI text per locale. Localization changes UI chrome only - to translate notification *content*, use [Workflow Translations](https://docs.novu.co/platform/workflow/advanced-features/translations).
 
 ```tsx
 <Inbox
@@ -567,7 +567,7 @@ export function BrandedInbox({ subscriberId, subscriberHash }) {
       localization={{
         locale: "en-US",
         "inbox.filters.labels.default": "All",
-        "notifications.emptyNotice": "Nothing new — you're all caught up.",
+        "notifications.emptyNotice": "Nothing new - you're all caught up.",
       }}
     />
   );

@@ -65,7 +65,7 @@ const subscriber = await novu.subscribers.retrieve("user-123");
 console.log(subscriber.result);
 ```
 
-### cURL — Get Subscriber
+### cURL - Get Subscriber
 
 ```bash
 curl https://api.novu.co/v1/subscribers/user-123 \

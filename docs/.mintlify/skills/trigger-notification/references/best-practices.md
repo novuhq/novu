@@ -1,6 +1,6 @@
 # Best Practices
 
-> Designing the workflow itself (channels, severity, `critical`, digest, conditions, templates)? See [`design-workflow/`](../../design-workflow). This file covers **trigger-side** best practices only — idempotency, retries, payload design, and topic vs bulk choice.
+> Designing the workflow itself (channels, severity, `critical`, digest, conditions, templates)? See [`design-workflow/`](../../design-workflow). This file covers **trigger-side** best practices only - idempotency, retries, payload design, and topic vs bulk choice.
 
 ## Idempotency
 
@@ -17,7 +17,7 @@ const result = await novu.trigger({
 });
 ```
 
-**Deterministic IDs** (based on the event context) are preferred over random UUIDs — they naturally prevent duplicate triggers for the same event.
+**Deterministic IDs** (based on the event context) are preferred over random UUIDs - they naturally prevent duplicate triggers for the same event.
 
 ## Error Handling
 
@@ -31,11 +31,11 @@ try {
   console.log("Triggered successfully:", result);
 } catch (error) {
   if (error.statusCode === 422) {
-    console.error("Validation error — check payload schema:", error.message);
+    console.error("Validation error - check payload schema:", error.message);
   } else if (error.statusCode === 401) {
-    console.error("Authentication failed — check NOVU_SECRET_KEY");
+    console.error("Authentication failed - check NOVU_SECRET_KEY");
   } else if (error.statusCode === 404) {
-    console.error("Workflow not found — check workflowId");
+    console.error("Workflow not found - check workflowId");
   } else {
     console.error("Unexpected error:", error);
   }
@@ -67,13 +67,13 @@ async function triggerWithRetry(
 ```
 
 **Non-retryable errors** (do not retry):
-- `401` — Invalid API key
-- `404` — Workflow not found
-- `422` — Payload validation failure
+- `401` - Invalid API key
+- `404` - Workflow not found
+- `422` - Payload validation failure
 
 ## Payload Design
 
-- Keep payloads small — include IDs and references, not full objects
+- Keep payloads small - include IDs and references, not full objects
 - Use the workflow's `payloadSchema` to enforce structure
 - Avoid sensitive data in payloads (they may be logged/stored)
 

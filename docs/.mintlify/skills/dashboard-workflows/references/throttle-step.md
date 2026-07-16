@@ -10,5 +10,5 @@ Throttle step to limit notification frequency and prevent fatigue.
 
 ## See Also
 
-- [`digest-step.md`](./digest-step.md) — use a digest when the goal is to **batch** events into one message; use throttle when the goal is to **drop** excess messages
-- [`step-conditions.md`](./step-conditions.md) — combine throttle with conditions for finer routing
+- [`digest-step.md`](./digest-step.md) - use a digest when the goal is to **batch** events into one message; use throttle when the goal is to **drop** excess messages
+- [`step-conditions.md`](./step-conditions.md) - combine throttle with conditions for finer routing

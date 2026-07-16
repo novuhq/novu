@@ -1,6 +1,6 @@
 # Multi-Tenancy with Contexts
 
-Use **Contexts** to scope notifications by tenant, workspace, organization, environment, or feature area — without duplicating workflows or subscribers. The Inbox displays only notifications whose trigger context exactly matches the Inbox context.
+Use **Contexts** to scope notifications by tenant, workspace, organization, environment, or feature area - without duplicating workflows or subscribers. The Inbox displays only notifications whose trigger context exactly matches the Inbox context.
 
 > Contexts are a Novu primitive. If you're new to them, start with the [Contexts overview](https://docs.novu.co/platform/workflow/advanced-features/contexts).
 
@@ -176,7 +176,7 @@ const contextHashByTenant = Object.fromEntries(
 
 ### Per-feature scoping
 
-Contexts aren't limited to tenants — use them to scope by feature area, environment, or anything else:
+Contexts aren't limited to tenants - use them to scope by feature area, environment, or anything else:
 
 ```ts
 context: {
@@ -221,8 +221,8 @@ You can also branch workflow logic on context. See [Contexts in Workflows](https
 
 ## Common pitfalls
 
-1. **Empty context vs no context** — `context={{}}` is treated as "no context". Notifications triggered with a non-empty context will not appear, and vice versa.
-2. **Mismatched object shape** — `{ tenant: "acme" }` is not equal to `{ tenant: { id: "acme" } }`. Pick one shape and use it consistently in both trigger and Inbox.
-3. **Forgetting to regenerate the hash** — any change to the context object requires a new `contextHash`. A stale hash silently drops notifications.
-4. **Canonicalization mismatch** — if your server canonicalizes but your test fixture doesn't (or vice versa), hashes diverge. Always go through the same `canonicalize` step.
-5. **Storing secrets in `data`** — context data is read from the client. Don't include API keys, tokens, or PII you wouldn't otherwise expose.
+1. **Empty context vs no context** - `context={{}}` is treated as "no context". Notifications triggered with a non-empty context will not appear, and vice versa.
+2. **Mismatched object shape** - `{ tenant: "acme" }` is not equal to `{ tenant: { id: "acme" } }`. Pick one shape and use it consistently in both trigger and Inbox.
+3. **Forgetting to regenerate the hash** - any change to the context object requires a new `contextHash`. A stale hash silently drops notifications.
+4. **Canonicalization mismatch** - if your server canonicalizes but your test fixture doesn't (or vice versa), hashes diverge. Always go through the same `canonicalize` step.
+5. **Storing secrets in `data`** - context data is read from the client. Don't include API keys, tokens, or PII you wouldn't otherwise expose.

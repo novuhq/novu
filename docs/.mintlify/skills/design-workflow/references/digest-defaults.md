@@ -27,7 +27,7 @@ The digest key controls **what counts as the same digest**. Default is `subscrib
 | Pattern                            | Use case                                                                                       |
 | ---------------------------------- | ---------------------------------------------------------------------------------------------- |
 | `subscriberId`                     | One digest per recipient (default)                                                             |
-| `subscriberId + threadId`          | Conversational flows — one digest per thread/post (comments, replies, mentions)                |
+| `subscriberId + threadId`          | Conversational flows - one digest per thread/post (comments, replies, mentions)                |
 | `subscriberId + projectId`         | Per-project activity feeds                                                                     |
 | `subscriberId + organizationId`    | Multi-tenant per-org digests                                                                   |
 
@@ -73,13 +73,13 @@ See [`framework-integration/references/workflow-and-steps.md`](../../framework-i
 
 ## Common Pitfalls
 
-1. **Forgetting `+threadId` for conversational flows** — comments on different posts collapse into one digest.
-2. **Adding a digest to a `critical` workflow** — it's auto-skipped, but it's a code smell that hides intent.
-3. **Two digest steps in one workflow** — not supported. Chain workflows with a custom step (Framework) or a second workflow trigger.
-4. **Very long look-back windows** — digest delivery feels delayed. Keep look-back ≤ digest time.
+1. **Forgetting `+threadId` for conversational flows** - comments on different posts collapse into one digest.
+2. **Adding a digest to a `critical` workflow** - it's auto-skipped, but it's a code smell that hides intent.
+3. **Two digest steps in one workflow** - not supported. Chain workflows with a custom step (Framework) or a second workflow trigger.
+4. **Very long look-back windows** - digest delivery feels delayed. Keep look-back ≤ digest time.
 
 ## See Also
 
-- [`severity-and-critical.md`](./severity-and-critical.md) — when digest is auto-skipped
-- [`workflow-templates.md`](./workflow-templates.md) — templates 1 and 2 illustrate the standard digest pattern
-- [`framework-integration/references/workflow-and-steps.md`](../../framework-integration/references/workflow-and-steps.md) — Framework `step.digest` reference
+- [`severity-and-critical.md`](./severity-and-critical.md) - when digest is auto-skipped
+- [`workflow-templates.md`](./workflow-templates.md) - templates 1 and 2 illustrate the standard digest pattern
+- [`framework-integration/references/workflow-and-steps.md`](../../framework-integration/references/workflow-and-steps.md) - Framework `step.digest` reference

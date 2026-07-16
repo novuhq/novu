@@ -46,7 +46,7 @@ Retries are triggered for these **HTTP status codes**: `408`, `429`, `500`, `503
 
 Retries are also triggered for transient **network error codes** such as `EAI_AGAIN`, `ECONNREFUSED`, `ECONNRESET`, `ETIMEDOUT`, and `ENOTFOUND`.
 
-Other responses — for example most `4xx` errors outside `408` and `429` — are not retried. Each bridge request has a **5 second** timeout.
+Other responses - for example most `4xx` errors outside `408` and `429` - are not retried. Each bridge request has a **5 second** timeout.
 
 ## Writing a custom `serve` function
 

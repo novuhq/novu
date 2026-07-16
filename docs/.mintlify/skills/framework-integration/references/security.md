@@ -12,17 +12,17 @@ Each request from Novu Cloud to your Bridge includes a `Novu-Signature` header c
 Novu-Signature: t=<timestamp>,v1=<signature>
 ```
 
-- `t=<unix_seconds>` — when the request was signed
-- `v1=<sha256_signature>` — current valid signature scheme (more may come; always begin with `v`)
+- `t=<unix_seconds>` - when the request was signed
+- `v1=<sha256_signature>` - current valid signature scheme (more may come; always begin with `v`)
 
 ### When is HMAC enforced?
 
 | `NODE_ENV` | HMAC verification |
 | --- | --- |
-| `development` | **Disabled** — required for the Studio to reach your local bridge |
+| `development` | **Disabled** - required for the Studio to reach your local bridge |
 | anything else (incl. `production`, `staging`, undefined) | **Enabled** |
 
-You don't write any verification code — `serve()` handles it.
+You don't write any verification code - `serve()` handles it.
 
 ### Override behavior
 
@@ -33,7 +33,7 @@ import { serve } from "@novu/framework/next";
 export const { GET, POST, OPTIONS } = serve({
   client: new NovuFrameworkClient({
     secretKey: process.env.NOVU_SECRET_KEY,
-    strictAuthentication: false, // Disables HMAC — DEV ONLY
+    strictAuthentication: false, // Disables HMAC - DEV ONLY
   }),
   workflows: [/* … */],
 });
@@ -43,15 +43,15 @@ export const { GET, POST, OPTIONS } = serve({
 
 ## Network Requirements
 
-- **Public HTTPS** — your bridge must be reachable from the public internet.
-- **No IP allowlist published** — Novu Cloud workers autoscale; we don't expose stable IPs.
-- **No auth middleware on `/api/novu`** — Novu authenticates with HMAC, not with your app's JWT/session.
+- **Public HTTPS** - your bridge must be reachable from the public internet.
+- **No IP allowlist published** - Novu Cloud workers autoscale; we don't expose stable IPs.
+- **No auth middleware on `/api/novu`** - Novu authenticates with HMAC, not with your app's JWT/session.
 
 If you need to harden the perimeter:
 
 - Place a WAF in front, but **allow** traffic to `/api/novu` (or whatever path you mounted).
 - Use rate limiting per HMAC header (each request includes a recent timestamp).
-- Log and alert on signature failures — they may indicate a misconfigured bridge URL or a hostile actor.
+- Log and alert on signature failures - they may indicate a misconfigured bridge URL or a hostile actor.
 
 ## Compliance
 
@@ -69,9 +69,9 @@ The Framework reads these env vars by default (you can override with the `Client
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
-| `NOVU_SECRET_KEY` | — | HMAC signing key; verifies request authenticity |
-| `NOVU_API_URL` | `https://api.novu.co` | Cloud API URL — set to `https://eu.api.novu.co` for EU |
-| `NODE_ENV` | — | If `development`, HMAC is disabled |
+| `NOVU_SECRET_KEY` | - | HMAC signing key; verifies request authenticity |
+| `NOVU_API_URL` | `https://api.novu.co` | Cloud API URL - set to `https://eu.api.novu.co` for EU |
+| `NODE_ENV` | - | If `development`, HMAC is disabled |
 
 ### EU Region Setup
 
@@ -94,13 +94,13 @@ NOVU_SECRET_KEY=<eu_secret_key>
 
 ## Best Practices
 
-1. **Keep `NOVU_SECRET_KEY` server-only** — never commit it, never expose to the client. Use your platform's secrets manager (Vercel Env Vars, AWS Secrets Manager, GitHub Encrypted Secrets).
-2. **Rotate the secret key periodically** — go to `dashboard.novu.co/api-keys`, create a new key, deploy it, then revoke the old one.
-3. **Use separate keys per environment** — Dev and Prod must have different `NOVU_SECRET_KEY` values.
-4. **Audit logs** — log every Bridge request server-side with subscriber id and workflow id so you can trace any anomaly.
-5. **Set request timeout** — keep your `step.custom` operations under 30s. Longer operations should be enqueued (BullMQ, SQS) and resolved in a separate workflow.
-6. **Don't return secrets in step output** — anything in `subject`/`body`/`data` is delivered to the user.
-7. **Use HMAC for the Inbox too** — see [`inbox-integration` HMAC section](../../inbox-integration/SKILL.md#hmac-authentication).
+1. **Keep `NOVU_SECRET_KEY` server-only** - never commit it, never expose to the client. Use your platform's secrets manager (Vercel Env Vars, AWS Secrets Manager, GitHub Encrypted Secrets).
+2. **Rotate the secret key periodically** - go to `dashboard.novu.co/api-keys`, create a new key, deploy it, then revoke the old one.
+3. **Use separate keys per environment** - Dev and Prod must have different `NOVU_SECRET_KEY` values.
+4. **Audit logs** - log every Bridge request server-side with subscriber id and workflow id so you can trace any anomaly.
+5. **Set request timeout** - keep your `step.custom` operations under 30s. Longer operations should be enqueued (BullMQ, SQS) and resolved in a separate workflow.
+6. **Don't return secrets in step output** - anything in `subject`/`body`/`data` is delivered to the user.
+7. **Use HMAC for the Inbox too** - see [`inbox-integration` HMAC section](../../inbox-integration/SKILL.md#hmac-authentication).
 
 ## HMAC for the Inbox vs HMAC for the Bridge
 

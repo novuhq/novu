@@ -13,9 +13,9 @@ When editing an existing condition via the Novu MCP, decide based on the user's 
 
 | Intent                                                              | Behavior                                                                          |
 | ------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| **ADD / EXTEND** — "add", "also", "and", "in addition"              | Combine existing condition with new using AND: `{ "and": [existing, new] }`       |
-| **REPLACE** — "change to", "update to", "set to", "replace with"    | Return the new condition entirely; ignore existing                                |
-| **REMOVE** — "remove", "delete", "clear"                            | Return `null`                                                                     |
+| **ADD / EXTEND** - "add", "also", "and", "in addition"              | Combine existing condition with new using AND: `{ "and": [existing, new] }`       |
+| **REPLACE** - "change to", "update to", "set to", "replace with"    | Return the new condition entirely; ignore existing                                |
+| **REMOVE** - "remove", "delete", "clear"                            | Return `null`                                                                     |
 
 ## Variable Reference Format
 
@@ -88,6 +88,6 @@ Return only the `skip` field: a JSONLogic object **or** `null`.
 
 ## See Also
 
-- [`design-workflow/references/step-conditions.md`](../../design-workflow/references/step-conditions.md) — side-by-side Dashboard JSON-Logic vs Framework `skip` semantics, plus the full list of available `subscriber.*` properties and step-output paths
-- [`http-request-step.md`](./http-request-step.md) — declare `responseBodySchema` so an HTTP response field becomes addressable in `steps.<http-step-id>.<property>`
-- [`design-workflow/references/channel-selection.md`](../../design-workflow/references/channel-selection.md) — when to use the "subscriber offline" gate on Push
+- [`design-workflow/references/step-conditions.md`](../../design-workflow/references/step-conditions.md) - side-by-side Dashboard JSON-Logic vs Framework `skip` semantics, plus the full list of available `subscriber.*` properties and step-output paths
+- [`http-request-step.md`](./http-request-step.md) - declare `responseBodySchema` so an HTTP response field becomes addressable in `steps.<http-step-id>.<property>`
+- [`design-workflow/references/channel-selection.md`](../../design-workflow/references/channel-selection.md) - when to use the "subscriber offline" gate on Push
