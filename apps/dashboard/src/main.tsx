@@ -127,6 +127,13 @@ const router = createBrowserRouter([
         element: <AgentTelegramMobileSetupPage />,
       },
       {
+        // Public, unauthenticated WhatsApp Embedded Signup page opened by
+        // `npx novu connect`. Trust comes from the opaque token in the URL, so
+        // it is mounted outside AuthRoute (keyless CLI users have no session).
+        path: ROUTES.AGENT_WHATSAPP_SIGNUP,
+        element: <AgentWhatsAppSignupPage />,
+      },
+      {
         // Public, unauthenticated mobile setup page for the Telegram integration
         // store create flow. Creates a new integration server-side on submit.
         path: ROUTES.INTEGRATION_TELEGRAM_MOBILE_SETUP,
@@ -421,14 +428,6 @@ const router = createBrowserRouter([
                     element: (
                       <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
                         <AgentDetailsPage />
-                      </ProtectedRoute>
-                    ),
-                  },
-                  {
-                    path: ROUTES.AGENT_WHATSAPP_SIGNUP,
-                    element: (
-                      <ProtectedRoute permission={PermissionsEnum.INTEGRATION_WRITE}>
-                        <AgentWhatsAppSignupPage />
                       </ProtectedRoute>
                     ),
                   },

@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { IntegrationRepository } from '@novu/dal';
 import { ChatProviderIdEnum } from '@novu/shared';
 
+import { resolveDashboardBaseUrl } from '../../shared/helpers';
 import { TelegramAgentLinkResolver } from '../telegram-agent-link.resolver';
 import { TelegramMobileLinkTokenService } from '../telegram-mobile-link-token.service';
 import { IssueTelegramMobileLinkCommand } from './issue-telegram-mobile-link.command';
@@ -64,11 +65,6 @@ export class IssueTelegramMobileLink {
   }
 
   private buildMobileUrl(token: string): string {
-    const base = (process.env.DASHBOARD_URL || process.env.FRONT_BASE_URL || 'https://dashboard.novu.co').replace(
-      /\/$/,
-      ''
-    );
-
-    return `${base}${MOBILE_PATH}/${token}`;
+    return `${resolveDashboardBaseUrl()}${MOBILE_PATH}/${token}`;
   }
 }

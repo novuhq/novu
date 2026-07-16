@@ -1,6 +1,12 @@
-import { AgentRuntimeProviderIdEnum } from '@novu/shared';
+import {
+  AgentRuntimeProviderIdEnum,
+  type WhatsAppEmbeddedSignupUnavailableReason,
+  type WhatsAppSignupLinkStatus,
+} from '@novu/shared';
 import type { ConnectApiClient } from './client';
 import { NovuApiError } from './client';
+
+export type { WhatsAppSignupLinkStatus };
 
 export interface IntegrationRecord {
   _id: string;
@@ -124,10 +130,15 @@ export async function createWhatsAppIntegration(
   return 'data' in body && body.data ? body.data : (body as IntegrationRecord);
 }
 
-export interface WhatsAppEmbeddedSignupAvailability {
-  available: boolean;
-  reason?: string;
-}
+/**
+ * The shared unavailable reasons plus the CLI-only `endpoint_not_found`
+ * sentinel for older self-hosted APIs without the availability endpoint.
+ */
+export type WhatsAppEmbeddedSignupAvailabilityReason = WhatsAppEmbeddedSignupUnavailableReason | 'endpoint_not_found';
+
+export type WhatsAppEmbeddedSignupAvailability =
+  | { available: true }
+  | { available: false; reason: WhatsAppEmbeddedSignupAvailabilityReason };
 
 /**
  * Availability pre-check for the Meta Embedded Signup flow. A 404 (older
@@ -153,23 +164,48 @@ export async function getWhatsAppEmbeddedSignupAvailability(
   return 'data' in body && body.data ? body.data : (body as WhatsAppEmbeddedSignupAvailability);
 }
 
-export interface WhatsAppSignupStatus {
-  credentialsSaved: boolean;
-  displayPhoneNumber?: string;
+export interface WhatsAppSignupLink {
+  token: string;
+  /** Absolute URL of the public tokenized signup page. */
+  url: string;
+  /** ISO timestamp when the link expires (30 minutes after minting). */
+  expiresAt: string;
 }
 
-/** Secret-free signup progress the CLI polls while the user completes Embedded Signup in the browser. */
-export async function getWhatsAppSignupStatus(
+/**
+ * Mints an opaque single-use token bound to the agent + WhatsApp integration
+ * and returns the public signup page URL. Works with keyless sessions as well
+ * as secret-key auth.
+ */
+export async function createWhatsAppSignupLink(
   client: ConnectApiClient,
-  integrationIdentifier: string
-): Promise<WhatsAppSignupStatus> {
-  const res = await client.axios.get<{ data?: WhatsAppSignupStatus } | WhatsAppSignupStatus>(
-    '/v1/integrations/whatsapp/signup-status',
-    { params: { integrationIdentifier } }
+  input: { agentIdentifier: string; integrationIdentifier: string }
+): Promise<WhatsAppSignupLink> {
+  const res = await client.axios.post<{ data?: WhatsAppSignupLink } | WhatsAppSignupLink>(
+    '/v1/integrations/whatsapp/signup-link',
+    input
   );
   const body = res.data;
 
-  return 'data' in body && body.data ? body.data : (body as WhatsAppSignupStatus);
+  return 'data' in body && body.data ? body.data : (body as WhatsAppSignupLink);
+}
+
+/**
+ * Secret-free signup progress the CLI polls while the user completes Embedded
+ * Signup in the browser. Public endpoint — authorization is the opaque token,
+ * so it works for keyless sessions too.
+ */
+export async function getWhatsAppSignupLinkStatus(
+  client: ConnectApiClient,
+  token: string
+): Promise<WhatsAppSignupLinkStatus> {
+  const res = await client.axios.get<{ data?: WhatsAppSignupLinkStatus } | WhatsAppSignupLinkStatus>(
+    '/v1/integrations/whatsapp/signup/status',
+    { params: { token } }
+  );
+  const body = res.data;
+
+  return 'data' in body && body.data ? body.data : (body as WhatsAppSignupLinkStatus);
 }
 
 export interface SendblueCredentials {

@@ -1,10 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ConnectApiClient } from '../../api/client';
-import type { AgentSummary, ConnectCommandOptions } from '../../types';
+import type { AgentSummary } from '../../types';
 import type { ConnectUI } from '../../ui/ui';
 
 const getWhatsAppEmbeddedSignupAvailability = vi.fn();
-const getWhatsAppSignupStatus = vi.fn();
+const createWhatsAppSignupLink = vi.fn();
+const getWhatsAppSignupLinkStatus = vi.fn();
 const createWhatsAppIntegration = vi.fn();
 const resolveIntegrationForAgent = vi.fn();
 const ensureAgentIntegrationLinked = vi.fn();
@@ -21,7 +22,8 @@ vi.mock('open', () => ({
 
 vi.mock('../../api/integrations', () => ({
   getWhatsAppEmbeddedSignupAvailability: (...args: unknown[]) => getWhatsAppEmbeddedSignupAvailability(...args),
-  getWhatsAppSignupStatus: (...args: unknown[]) => getWhatsAppSignupStatus(...args),
+  createWhatsAppSignupLink: (...args: unknown[]) => createWhatsAppSignupLink(...args),
+  getWhatsAppSignupLinkStatus: (...args: unknown[]) => getWhatsAppSignupLinkStatus(...args),
   createWhatsAppIntegration: (...args: unknown[]) => createWhatsAppIntegration(...args),
 }));
 
@@ -47,8 +49,7 @@ import { connectWhatsAppForAgent } from './whatsapp';
 
 const client = {} as ConnectApiClient;
 const agent: AgentSummary = { id: 'agent-id', identifier: 'my-agent', name: 'My Agent' };
-const options = { connectDashboardUrl: 'https://connect.novu.co' } as ConnectCommandOptions;
-const environment = { environmentId: 'env-1', environmentSlug: 'dev-slug' };
+const environment = { environmentId: 'env-1' };
 const integration = {
   _id: 'integration-1',
   identifier: 'whatsapp-main',
@@ -56,6 +57,11 @@ const integration = {
   providerId: 'whatsapp-business',
   channel: 'chat',
   active: true,
+};
+const signupLink = {
+  token: 'A'.repeat(32),
+  url: `https://connect.novu.co/agents/whatsapp/connect/${'A'.repeat(32)}`,
+  expiresAt: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
 };
 
 function createUi() {
@@ -79,46 +85,41 @@ describe('connectWhatsAppForAgent', () => {
     vi.clearAllMocks();
     resolveIntegrationForAgent.mockResolvedValue(integration);
     ensureAgentIntegrationLinked.mockResolvedValue(undefined);
+    createWhatsAppSignupLink.mockResolvedValue(signupLink);
   });
 
   it('returns unavailable without touching integrations when the pre-check says no', async () => {
     getWhatsAppEmbeddedSignupAvailability.mockResolvedValue({ available: false, reason: 'feature_disabled' });
     const ui = createUi();
 
-    const result = await connectWhatsAppForAgent(client, agent, ui, options, environment, vi.fn());
+    const result = await connectWhatsAppForAgent(client, agent, ui, environment, vi.fn());
 
     expect(result).toEqual({ kind: 'unavailable', reason: 'feature_disabled' });
     expect(resolveIntegrationForAgent).not.toHaveBeenCalled();
+    expect(createWhatsAppSignupLink).not.toHaveBeenCalled();
     expect(ui.addingWhatsAppIntegration).not.toHaveBeenCalled();
-  });
-
-  it('returns unavailable when the session has no environment slug', async () => {
-    getWhatsAppEmbeddedSignupAvailability.mockResolvedValue({ available: true });
-    const ui = createUi();
-
-    const result = await connectWhatsAppForAgent(
-      client,
-      agent,
-      ui,
-      options,
-      { environmentId: 'env-1', environmentSlug: null },
-      vi.fn()
-    );
-
-    expect(result).toEqual({ kind: 'unavailable', reason: 'missing_environment_slug' });
-    expect(resolveIntegrationForAgent).not.toHaveBeenCalled();
   });
 
   it('skips the browser handoff on re-runs when credentials are already saved', async () => {
     getWhatsAppEmbeddedSignupAvailability.mockResolvedValue({ available: true });
-    getWhatsAppSignupStatus.mockResolvedValue({ credentialsSaved: true, displayPhoneNumber: '+1 555-123-4567' });
+    getWhatsAppSignupLinkStatus.mockResolvedValue({
+      valid: true,
+      agentName: 'My Agent',
+      credentialsSaved: true,
+      displayPhoneNumber: '+1 555-123-4567',
+    });
     pollForAgentLinkConnected.mockResolvedValue(true);
     const ui = createUi();
     const track = vi.fn();
 
-    const result = await connectWhatsAppForAgent(client, agent, ui, options, environment, track);
+    const result = await connectWhatsAppForAgent(client, agent, ui, environment, track);
 
     expect(result).toEqual({ kind: 'connected', connected: true, integration });
+    expect(createWhatsAppSignupLink).toHaveBeenCalledWith(client, {
+      agentIdentifier: 'my-agent',
+      integrationIdentifier: 'whatsapp-main',
+    });
+    expect(getWhatsAppSignupLinkStatus).toHaveBeenCalledWith(client, signupLink.token);
     expect(ui.awaitWhatsAppSignupOpen).not.toHaveBeenCalled();
     expect(openMock).not.toHaveBeenCalled();
     expect(ui.showWhatsAppTest).toHaveBeenCalledWith({
@@ -129,50 +130,71 @@ describe('connectWhatsAppForAgent', () => {
     expect(track).toHaveBeenCalledWith('Connect Whatsapp Connected', { agent: 'my-agent' });
   });
 
-  it('opens the signup page and polls until credentials are saved', async () => {
+  it('opens the tokenized signup page and polls until credentials are saved', async () => {
     getWhatsAppEmbeddedSignupAvailability.mockResolvedValue({ available: true });
-    getWhatsAppSignupStatus
-      .mockResolvedValueOnce({ credentialsSaved: false })
-      .mockResolvedValueOnce({ credentialsSaved: false })
-      .mockResolvedValue({ credentialsSaved: true, displayPhoneNumber: '+1 555-123-4567' });
+    getWhatsAppSignupLinkStatus
+      .mockResolvedValueOnce({ valid: true, agentName: 'My Agent', credentialsSaved: false })
+      .mockResolvedValueOnce({ valid: true, agentName: 'My Agent', credentialsSaved: false })
+      .mockResolvedValue({
+        valid: true,
+        agentName: 'My Agent',
+        credentialsSaved: true,
+        displayPhoneNumber: '+1 555-123-4567',
+      });
     pollForAgentLinkConnected.mockResolvedValue(true);
     const ui = createUi();
     const track = vi.fn();
 
-    const result = await connectWhatsAppForAgent(client, agent, ui, options, environment, track);
+    const result = await connectWhatsAppForAgent(client, agent, ui, environment, track);
 
     expect(result.kind).toBe('connected');
-    const expectedSignupUrl =
-      'https://connect.novu.co/env/dev-slug/agents/my-agent/whatsapp-signup?integration=whatsapp-main';
-    expect(ui.awaitWhatsAppSignupOpen).toHaveBeenCalledWith({ signupUrl: expectedSignupUrl });
-    expect(openMock).toHaveBeenCalledWith(expectedSignupUrl);
-    expect(ui.showWhatsAppSignupWaiting).toHaveBeenCalledWith({ signupUrl: expectedSignupUrl });
+    expect(ui.awaitWhatsAppSignupOpen).toHaveBeenCalledWith({ signupUrl: signupLink.url });
+    expect(openMock).toHaveBeenCalledWith(signupLink.url);
+    expect(ui.showWhatsAppSignupWaiting).toHaveBeenCalledWith({ signupUrl: signupLink.url });
     expect(track).toHaveBeenCalledWith('Connect Whatsapp Signup Opened', { agent: 'my-agent' });
     expect(track).toHaveBeenCalledWith('Connect Whatsapp Signup Completed', { agent: 'my-agent' });
   });
 
   it('throws a resumable error with the signup URL when signup times out', async () => {
     getWhatsAppEmbeddedSignupAvailability.mockResolvedValue({ available: true });
-    getWhatsAppSignupStatus.mockResolvedValue({ credentialsSaved: false });
+    getWhatsAppSignupLinkStatus.mockResolvedValue({ valid: true, agentName: 'My Agent', credentialsSaved: false });
     const ui = createUi();
     const track = vi.fn();
 
-    await expect(connectWhatsAppForAgent(client, agent, ui, options, environment, track)).rejects.toThrow(
-      /whatsapp-signup\?integration=whatsapp-main/
+    await expect(connectWhatsAppForAgent(client, agent, ui, environment, track)).rejects.toThrow(
+      /agents\/whatsapp\/connect/
     );
     expect(track).toHaveBeenCalledWith('Connect Whatsapp Signup Timed Out', { agent: 'my-agent' });
     expect(pollForAgentLinkConnected).not.toHaveBeenCalled();
   });
 
+  it('fails fast with an expiry-specific error when the signup link expires mid-flow', async () => {
+    getWhatsAppEmbeddedSignupAvailability.mockResolvedValue({ available: true });
+    getWhatsAppSignupLinkStatus
+      .mockResolvedValueOnce({ valid: true, agentName: 'My Agent', credentialsSaved: false })
+      .mockResolvedValue({ valid: false, reason: 'expired' });
+    const ui = createUi();
+    const track = vi.fn();
+
+    await expect(connectWhatsAppForAgent(client, agent, ui, environment, track)).rejects.toThrow(
+      /signup link expired/
+    );
+    expect(track).toHaveBeenCalledWith('Connect Whatsapp Signup Link Expired', { agent: 'my-agent' });
+    expect(track).not.toHaveBeenCalledWith('Connect Whatsapp Signup Timed Out', { agent: 'my-agent' });
+  });
+
   it('throws a resumable error when no inbound message arrives after signup', async () => {
     getWhatsAppEmbeddedSignupAvailability.mockResolvedValue({ available: true });
-    getWhatsAppSignupStatus.mockResolvedValue({ credentialsSaved: true, displayPhoneNumber: '+1 555-123-4567' });
+    getWhatsAppSignupLinkStatus.mockResolvedValue({
+      valid: true,
+      agentName: 'My Agent',
+      credentialsSaved: true,
+      displayPhoneNumber: '+1 555-123-4567',
+    });
     pollForAgentLinkConnected.mockResolvedValue(false);
     const ui = createUi();
 
-    await expect(connectWhatsAppForAgent(client, agent, ui, options, environment, vi.fn())).rejects.toThrow(
-      /\+1 555-123-4567/
-    );
+    await expect(connectWhatsAppForAgent(client, agent, ui, environment, vi.fn())).rejects.toThrow(/\+1 555-123-4567/);
     expect(ui.whatsappConnected).not.toHaveBeenCalled();
   });
 });

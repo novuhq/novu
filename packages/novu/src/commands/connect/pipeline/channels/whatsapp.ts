@@ -3,12 +3,14 @@ import { CONNECT_EVENTS } from '../../analytics/events';
 import type { ConnectApiClient } from '../../api/client';
 import {
   createWhatsAppIntegration,
+  createWhatsAppSignupLink,
   getWhatsAppEmbeddedSignupAvailability,
-  getWhatsAppSignupStatus,
+  getWhatsAppSignupLinkStatus,
   type IntegrationRecord,
+  type WhatsAppEmbeddedSignupAvailabilityReason,
+  type WhatsAppSignupLink,
 } from '../../api/integrations';
-import { buildWaMeUrl, buildWhatsAppSignupUrl } from '../../dashboard-urls';
-import type { AgentSummary, ConnectCommandOptions } from '../../types';
+import type { AgentSummary } from '../../types';
 import type { ConnectUI } from '../../ui/ui';
 import {
   ensureAgentIntegrationLinked,
@@ -25,33 +27,40 @@ import {
 const WHATSAPP_PROVIDER_ID = 'whatsapp-business';
 const WHATSAPP_CHANNEL = 'chat';
 
+/** `https://wa.me/<digits>` deep link from a display phone number like "+1 555-123-4567". */
+export function buildWaMeUrl(displayPhoneNumber: string): string | null {
+  const digits = displayPhoneNumber.replace(/\D/g, '');
+  if (!digits) return null;
+
+  return `https://wa.me/${digits}`;
+}
+
 export type WhatsAppConnectResult =
-  /** Embedded signup is unavailable (flag off, self-hosted without Meta credentials, older API, or no environment slug) — caller falls back to the classic dashboard handoff. */
-  { kind: 'unavailable'; reason: string } | { kind: 'connected'; connected: boolean; integration: IntegrationRecord };
+  /** Embedded signup is unavailable (flag off, self-hosted without Meta credentials, or older API) — caller falls back to the account-based dashboard handoff. */
+  | { kind: 'unavailable'; reason: WhatsAppEmbeddedSignupAvailabilityReason }
+  | { kind: 'connected'; connected: boolean; integration: IntegrationRecord };
+
+type WhatsAppSignupProgress = { credentialsSaved: boolean; displayPhoneNumber?: string };
 
 /**
- * Poll-and-resume WhatsApp flow backed by the dashboard's Meta Embedded
- * Signup page: create + link the integration up front, open the minimal
- * signup page, poll until credentials land, then guide the user through an
+ * Poll-and-resume WhatsApp flow backed by the public tokenized Meta Embedded
+ * Signup page: create + link the integration up front, mint an opaque signup
+ * link (works for keyless and authenticated sessions alike), open the page,
+ * poll the token until credentials land, then guide the user through an
  * inbound wa.me test message and poll for the first inbound connection.
  */
 export async function connectWhatsAppForAgent(
   client: ConnectApiClient,
   agent: AgentSummary,
   ui: ConnectUI,
-  options: ConnectCommandOptions,
-  environment: { environmentId: string; environmentSlug: string | null },
+  environment: { environmentId: string },
   track: (event: string, data?: Record<string, unknown>) => void
 ): Promise<WhatsAppConnectResult> {
   const availability = await getWhatsAppEmbeddedSignupAvailability(client);
-  if (!availability.available) {
-    return { kind: 'unavailable', reason: availability.reason ?? 'unavailable' };
-  }
-
-  // The signup page route needs an environment slug; sessions without one
-  // (should not happen post keyless-upgrade) keep the old handoff.
-  if (!environment.environmentSlug) {
-    return { kind: 'unavailable', reason: 'missing_environment_slug' };
+  // Explicit comparison: with strictNullChecks off, `!availability.available`
+  // does not narrow the discriminated union.
+  if (availability.available === false) {
+    return { kind: 'unavailable', reason: availability.reason };
   }
 
   ui.addingWhatsAppIntegration();
@@ -64,19 +73,17 @@ export async function connectWhatsAppForAgent(
 
   await ensureAgentIntegrationLinked(client, agent.identifier, integration.identifier);
 
-  const signupUrl = buildWhatsAppSignupUrl({
-    connectDashboardUrl: options.connectDashboardUrl,
-    environmentSlug: environment.environmentSlug,
+  const link = await createWhatsAppSignupLink(client, {
     agentIdentifier: agent.identifier,
     integrationIdentifier: integration.identifier,
   });
 
   // Re-runs resume where they left off: signup already done → skip straight
   // to the inbound test step.
-  let status = await getWhatsAppSignupStatus(client, integration.identifier);
+  let status = await checkSignupProgress(client, link.token);
 
-  if (!status.credentialsSaved) {
-    status = await runSignupBrowserHandoff(client, agent, ui, integration, signupUrl, track);
+  if (status === 'expired' || !status.credentialsSaved) {
+    status = await runSignupBrowserHandoff(client, agent, ui, link, track);
   }
 
   const waMeUrl = status.displayPhoneNumber ? buildWaMeUrl(status.displayPhoneNumber) : null;
@@ -104,32 +111,65 @@ export async function connectWhatsAppForAgent(
   return { kind: 'connected', connected: true, integration };
 }
 
-/** Stage 1: open the dashboard signup page and poll until Meta Embedded Signup saves credentials. */
+/** Reads the token status; an invalid or expired link reports `'expired'` (the link can no longer complete). */
+async function checkSignupProgress(
+  client: ConnectApiClient,
+  token: string
+): Promise<WhatsAppSignupProgress | 'expired'> {
+  const status = await getWhatsAppSignupLinkStatus(client, token);
+
+  if (!status.valid) {
+    return 'expired';
+  }
+
+  return { credentialsSaved: status.credentialsSaved, displayPhoneNumber: status.displayPhoneNumber };
+}
+
+/** Stage 1: open the public tokenized signup page and poll until Meta Embedded Signup saves credentials. */
 async function runSignupBrowserHandoff(
   client: ConnectApiClient,
   agent: AgentSummary,
   ui: ConnectUI,
-  integration: IntegrationRecord,
-  signupUrl: string,
+  link: WhatsAppSignupLink,
   track: (event: string, data?: Record<string, unknown>) => void
-): Promise<{ credentialsSaved: boolean; displayPhoneNumber?: string }> {
+): Promise<WhatsAppSignupProgress> {
+  const signupUrl = link.url;
+
   await ui.awaitWhatsAppSignupOpen({ signupUrl });
   track(CONNECT_EVENTS.WHATSAPP_SIGNUP_OPENED, { agent: agent.identifier });
 
   void open(signupUrl).catch(() => undefined);
   ui.showWhatsAppSignupWaiting({ signupUrl });
 
-  let latestStatus: { credentialsSaved: boolean; displayPhoneNumber?: string } = { credentialsSaved: false };
+  let latestStatus: WhatsAppSignupProgress = { credentialsSaved: false };
+  let linkExpired = false;
   const saved = await pollUntil(
     async () => {
-      latestStatus = await getWhatsAppSignupStatus(client, integration.identifier);
+      const progress = await checkSignupProgress(client, link.token);
 
-      return latestStatus.credentialsSaved ? 'done' : 'pending';
+      // The link expiring mid-flow (30-minute TTL, longer than this poll
+      // budget) means the signup can't complete on this run — bail out early.
+      if (progress === 'expired') {
+        linkExpired = true;
+
+        return 'failed';
+      }
+
+      latestStatus = progress;
+
+      return progress.credentialsSaved ? 'done' : 'pending';
     },
     { intervalMs: CHANNEL_POLL_INTERVAL_MS, timeoutMs: WHATSAPP_SIGNUP_POLL_TIMEOUT_MS }
   );
 
   if (!saved) {
+    if (linkExpired) {
+      track(CONNECT_EVENTS.WHATSAPP_SIGNUP_LINK_EXPIRED, { agent: agent.identifier });
+      throw new Error(
+        'Your WhatsApp signup link expired before the signup finished. Re-run `npx novu connect` to get a fresh link.'
+      );
+    }
+
     track(CONNECT_EVENTS.WHATSAPP_SIGNUP_TIMED_OUT, { agent: agent.identifier });
     throw new Error(
       `WhatsApp signup wasn't completed within ${Math.round(WHATSAPP_SIGNUP_POLL_TIMEOUT_MS / 60000)} minutes. ` +

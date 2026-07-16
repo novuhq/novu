@@ -69,6 +69,12 @@ Examples (non-interactive / agent / CI):
       --keyless \\
       --channel telegram
 
+  Keyless WhatsApp (Meta Embedded Signup — completed in the browser, CLI polls until done):
+    npx novu connect "A support assistant for Acme's customers that answers billing questions." \\
+      --ci \\
+      --keyless \\
+      --channel whatsapp
+
   Keyless iMessage (Sendblue) — all four flags required (no secure setup page):
     npx novu connect "A concierge for Acme's shoppers that helps with orders." \\
       --ci \\
@@ -113,7 +119,7 @@ Non-interactive (agent / CI) contract:
 
   Required for --ci mode:
     - Pass the agent description as the positional <prompt> argument or --prompt (managed path only).
-    - Pass --channel <slack|email|telegram|sendblue|whatsapp|skip> (or teams without --keyless).
+    - Pass --channel <slack|email|telegram|sendblue|whatsapp|skip> (teams only without --keyless).
     - Bridge path: pass --runtime ai-sdk or --runtime langchain (omit the positional description).
 
   Authentication (pick one):
@@ -126,7 +132,7 @@ Non-interactive (agent / CI) contract:
     - --channel telegram → no extra flags (CLI prints a secure setup link for the BotFather token)
     - --channel email    → no extra flags
     - --channel sendblue → requires --sendblue-api-key, --sendblue-secret-key, --sendblue-from (E.164 agent/sender number), and --sendblue-test-phone (E.164 recipient phone); no secure setup page
-    - --channel whatsapp → no extra flags; not with --keyless. When Meta Embedded Signup is available the CLI prints the signup URL, polls until signup completes in the browser (~15 min budget), then waits for an inbound WhatsApp message. When unavailable (flag off / self-hosted without Meta Tech Provider credentials) the CLI opens the dashboard integrations tab and exits.
+    - --channel whatsapp → no extra flags; works with --keyless. When Meta Embedded Signup is available the CLI prints a public tokenized signup URL (valid ~30 min, no dashboard login needed), polls until signup completes in the browser (~15 min budget), then waits for an inbound WhatsApp message. When unavailable (flag off / self-hosted without Meta Tech Provider credentials) a keyless run prompts dashboard sign-in and retries; if still unavailable the CLI opens the dashboard integrations tab and exits.
     - --channel skip     → no extra flags (agent only, no channel)
 
   Optional CI-only escape hatches (secrets injected via env — never paste in chat):
@@ -147,10 +153,7 @@ Non-interactive (agent / CI) contract:
     - US region: omit --region (use --region eu for EU Novu Cloud)
 
   Not supported headlessly with --keyless:
-    - whatsapp and teams → omit --keyless to authenticate via the dashboard (whatsapp then completes via Meta Embedded Signup in the browser; teams finishes in the dashboard)
-
-  Not supported headlessly in keyless mode:
-    - whatsapp and teams → do not pass --channel whatsapp or --channel teams with --keyless; omit --keyless instead
+    - teams → do not pass --channel teams with --keyless; omit --keyless to authenticate via the dashboard (teams finishes in the dashboard)
 
   One run = one new agent + one channel. Re-running creates another agent.
 

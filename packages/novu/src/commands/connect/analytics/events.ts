@@ -32,6 +32,7 @@ export const CONNECT_EVENTS = {
   WHATSAPP_SIGNUP_OPENED: 'Connect Whatsapp Signup Opened',
   WHATSAPP_SIGNUP_COMPLETED: 'Connect Whatsapp Signup Completed',
   WHATSAPP_SIGNUP_TIMED_OUT: 'Connect Whatsapp Signup Timed Out',
+  WHATSAPP_SIGNUP_LINK_EXPIRED: 'Connect Whatsapp Signup Link Expired',
   WHATSAPP_CONNECTED: 'Connect Whatsapp Connected',
   TELEGRAM_CONNECTED: 'Connect Telegram Connected',
   EMAIL_CONNECTED: 'Connect Email Connected',

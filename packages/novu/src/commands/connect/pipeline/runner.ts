@@ -58,6 +58,22 @@ export interface ConnectPipelineResult {
   exitCode: number;
 }
 
+/**
+ * Cross-cutting pipeline state threaded through every flow: analytics,
+ * identity callbacks, and the generated agent spec retained for
+ * keyless→dashboard upgrades that must recreate the agent.
+ */
+interface PipelineContext {
+  options: ConnectCommandOptions;
+  ui: ConnectUI;
+  track: (event: string, data?: Record<string, unknown>) => void;
+  sessionProps: Record<string, unknown>;
+  onboardingSessionId?: string;
+  onIdentityResolved?: (user: NonNullable<ResolvedConnectAuth['user']>) => void;
+  /** Set by {@link createAgentFlow} so a mid-flow upgrade can recreate the agent in the upgraded environment. */
+  createdSpec?: GeneratedAgentSpec;
+}
+
 export async function runConnectPipeline(input: ConnectPipelineInput): Promise<ConnectPipelineResult> {
   const { options, ui, onTrack, onboardingSessionId } = input;
   const track = onTrack ?? (() => undefined);
@@ -69,6 +85,14 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
     keyless: !!options.keyless,
     hasPrompt: !!options.prompt,
     channel: options.channel ?? (options.skipSlack ? 'skip' : undefined),
+  };
+  const ctx: PipelineContext = {
+    options,
+    ui,
+    track,
+    sessionProps,
+    onboardingSessionId,
+    onIdentityResolved: input.onIdentityResolved,
   };
 
   try {
@@ -118,51 +142,18 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
       ...sessionProps,
     });
 
-    const connectMode = await resolveAgentConnectMode(options, ui, track, sessionProps);
+    const connectMode = await resolveAgentConnectMode(ctx);
 
-    // WhatsApp is account-required (the Embedded Signup page lives behind
-    // dashboard auth), so a preset `--channel whatsapp` upgrades the keyless
-    // session before the agent is created — everything then happens in the
-    // user's real environment.
-    const needsPreCreationUpgrade =
-      (isBridgeConnectMode(connectMode) || options.channel === 'whatsapp') && session.auth.isKeyless;
+    // Bridge modes need the user's real environment up front, so a keyless
+    // session is upgraded before the agent is created.
+    const needsPreCreationUpgrade = isBridgeConnectMode(connectMode) && session.auth.isKeyless;
 
     if (needsPreCreationUpgrade) {
-      const upgradeSource = isBridgeConnectMode(connectMode) ? 'bridge_agent_upgrade' : 'whatsapp_upgrade';
-      track(CONNECT_EVENTS.KEYLESS_LIMIT_AUTH_UPGRADE_STARTED, sessionProps);
-      await upgradeKeylessSessionToDashboardAuth(session, options, ui, {
-        onboardingSessionId,
-        statusMessage:
-          upgradeSource === 'whatsapp_upgrade'
-            ? 'WhatsApp requires a Novu account. Opening Novu dashboard sign-in to continue…'
-            : undefined,
-        onAuthStarted: () =>
-          track(CONNECT_EVENTS.AUTH_STARTED, {
-            ...sessionProps,
-            source: upgradeSource,
-          }),
-        onAuthFailed: (message) =>
-          track(CONNECT_EVENTS.AUTH_FAILED, {
-            ...sessionProps,
-            source: upgradeSource,
-            message,
-          }),
-      });
-      track(CONNECT_EVENTS.AUTH_COMPLETED, {
-        source: upgradeSource,
-        region: options.region,
-        keyless: false,
-        ...sessionProps,
-      });
-      if (session.auth.user?.id) {
-        input.onIdentityResolved?.(session.auth.user);
-      }
+      await upgradeKeylessWithTracking(session, ctx, { source: 'bridge_agent_upgrade' });
     }
 
     let agent: AgentSummary;
     let flow: 'created' | 'reused';
-    /** Retained so a keyless→dashboard upgrade mid-flow can recreate the agent in the upgraded environment. */
-    let createdSpec: GeneratedAgentSpec | undefined;
     let chatSdkOutcome: ChatSdkConnectOutcome | undefined;
     let aiSdkOutcome: AiSdkConnectOutcome | undefined;
     let langChainOutcome: LangChainConnectOutcome | undefined;
@@ -188,20 +179,7 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
           ...sessionProps,
         });
       } else {
-        const created = await createAgentFlow(
-          session,
-          ui,
-          options,
-          track,
-          sessionProps,
-          onboardingSessionId,
-          {
-            onIdentityResolved: input.onIdentityResolved,
-          },
-          connectMode
-        );
-        agent = created.agent;
-        createdSpec = created.generated;
+        agent = await createAgentFlow(session, ctx, connectMode);
         flow = 'created';
         track(CONNECT_EVENTS.AGENT_CREATED, {
           identifier: agent.identifier,
@@ -209,20 +187,7 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
         });
       }
     } else {
-      const created = await createAgentFlow(
-        session,
-        ui,
-        options,
-        track,
-        sessionProps,
-        onboardingSessionId,
-        {
-          onIdentityResolved: input.onIdentityResolved,
-        },
-        connectMode
-      );
-      agent = created.agent;
-      createdSpec = created.generated;
+      agent = await createAgentFlow(session, ctx, connectMode);
       flow = 'created';
       track(CONNECT_EVENTS.AGENT_CREATED, {
         identifier: agent.identifier,
@@ -338,32 +303,30 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
             break;
           }
           case 'whatsapp': {
-            if (session.auth.isKeyless) {
-              agent = await upgradeKeylessSessionForWhatsApp(
-                session,
-                ui,
-                options,
-                agent,
-                createdSpec,
-                connectMode,
-                track,
-                sessionProps,
-                onboardingSessionId,
-                { onIdentityResolved: input.onIdentityResolved }
-              );
-            }
-
-            const result = await connectWhatsAppForAgent(
+            // The tokenized Embedded Signup flow works for keyless sessions
+            // too, so try it with the current session first.
+            let result = await connectWhatsAppForAgent(
               session.client,
               agent,
               ui,
-              options,
-              {
-                environmentId: session.auth.environmentId,
-                environmentSlug: session.auth.environmentSlug ?? null,
-              },
+              { environmentId: session.auth.environmentId },
               (event, data) => track(event, { ...data, ...sessionProps })
             );
+
+            if (result.kind === 'unavailable' && session.auth.isKeyless) {
+              // Embedded signup isn't available for the keyless workspace
+              // (flag off, self-hosted, older API) — fall back to a real
+              // account and retry in the upgraded environment.
+              agent = await upgradeKeylessSessionForWhatsApp(session, ctx, agent, connectMode);
+
+              result = await connectWhatsAppForAgent(
+                session.client,
+                agent,
+                ui,
+                { environmentId: session.auth.environmentId },
+                (event, data) => track(event, { ...data, ...sessionProps })
+              );
+            }
 
             if (result.kind === 'unavailable') {
               // Embedded signup is off for this deployment — today's behavior
@@ -507,12 +470,9 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
   }
 }
 
-async function resolveAgentConnectMode(
-  options: ConnectCommandOptions,
-  ui: ConnectUI,
-  track: (event: string, data?: Record<string, unknown>) => void,
-  sessionProps: Record<string, unknown>
-): Promise<AgentConnectMode> {
+async function resolveAgentConnectMode(ctx: PipelineContext): Promise<AgentConnectMode> {
+  const { options, ui, track, sessionProps } = ctx;
+
   if (options.runtime) {
     track(CONNECT_EVENTS.RUNTIME_SELECTED, {
       connectMode: options.runtime,
@@ -534,51 +494,90 @@ async function resolveAgentConnectMode(
 }
 
 /**
- * WhatsApp requires dashboard auth (the Embedded Signup page is an
- * authenticated dashboard route), so a keyless user picking WhatsApp in the
- * channel picker is upgraded in place. The keyless agent lives in a temporary
- * workspace the upgraded session can no longer reach, so the agent is
- * recreated in the upgraded environment from the retained generated spec.
+ * Upgrades a keyless session to dashboard auth with the standard analytics
+ * envelope (upgrade-started → auth started/failed → auth completed →
+ * identity callback). `source` distinguishes the upgrade trigger in analytics.
  */
-async function upgradeKeylessSessionForWhatsApp(
+async function upgradeKeylessWithTracking(
   session: ConnectSession,
-  ui: ConnectUI,
-  options: ConnectCommandOptions,
-  agent: AgentSummary,
-  createdSpec: GeneratedAgentSpec | undefined,
-  connectMode: AgentConnectMode | undefined,
-  track: (event: string, data?: Record<string, unknown>) => void,
-  sessionProps: Record<string, unknown>,
-  onboardingSessionId: string | undefined,
-  callbacks?: {
-    onIdentityResolved?: (user: NonNullable<ResolvedConnectAuth['user']>) => void;
-  }
-): Promise<AgentSummary> {
+  ctx: PipelineContext,
+  upgrade: { source: string; statusMessage?: string }
+): Promise<void> {
+  const { options, ui, track, sessionProps, onboardingSessionId } = ctx;
+
   track(CONNECT_EVENTS.KEYLESS_LIMIT_AUTH_UPGRADE_STARTED, sessionProps);
   await upgradeKeylessSessionToDashboardAuth(session, options, ui, {
     onboardingSessionId,
-    statusMessage: 'WhatsApp requires a Novu account. Opening Novu dashboard sign-in to continue…',
+    ...(upgrade.statusMessage ? { statusMessage: upgrade.statusMessage } : {}),
     onAuthStarted: () =>
       track(CONNECT_EVENTS.AUTH_STARTED, {
         ...sessionProps,
-        source: 'whatsapp_upgrade',
+        source: upgrade.source,
       }),
     onAuthFailed: (message) =>
       track(CONNECT_EVENTS.AUTH_FAILED, {
         ...sessionProps,
-        source: 'whatsapp_upgrade',
+        source: upgrade.source,
         message,
       }),
   });
   track(CONNECT_EVENTS.AUTH_COMPLETED, {
-    source: 'whatsapp_upgrade',
+    source: upgrade.source,
     region: options.region,
     keyless: false,
     ...sessionProps,
   });
+
   if (session.auth.user?.id) {
-    callbacks?.onIdentityResolved?.(session.auth.user);
+    ctx.onIdentityResolved?.(session.auth.user);
   }
+}
+
+function resolveAgentRuntime(connectMode: AgentConnectMode | undefined, options: ConnectCommandOptions) {
+  return (
+    (connectMode && !isBridgeConnectMode(connectMode) ? connectMode : undefined) ??
+    resolveRuntimeFromOptions(options) ??
+    'demo'
+  );
+}
+
+function createManagedAgentFromSpec(
+  client: ConnectApiClient,
+  spec: GeneratedAgentSpec,
+  resolved: { integrationId: string; providerId: string }
+): ReturnType<typeof createManagedAgent> {
+  return createManagedAgent(client, {
+    name: spec.name,
+    identifier: spec.identifier,
+    integrationId: resolved.integrationId,
+    providerId: resolved.providerId,
+    systemPrompt: spec.systemPrompt,
+    tools: spec.tools,
+    mcpServers: spec.mcpServers,
+    skills: spec.skills,
+  });
+}
+
+/**
+ * Fallback when the tokenized Embedded Signup flow is unavailable for the
+ * keyless workspace (flag off, self-hosted without Meta credentials, older
+ * API): the keyless user is upgraded to a real account in place. The keyless
+ * agent lives in a temporary workspace the upgraded session can no longer
+ * reach, so the agent is recreated in the upgraded environment from the
+ * retained generated spec.
+ */
+async function upgradeKeylessSessionForWhatsApp(
+  session: ConnectSession,
+  ctx: PipelineContext,
+  agent: AgentSummary,
+  connectMode: AgentConnectMode | undefined
+): Promise<AgentSummary> {
+  const { options, ui, track, sessionProps, createdSpec } = ctx;
+
+  await upgradeKeylessWithTracking(session, ctx, {
+    source: 'whatsapp_upgrade',
+    statusMessage: 'WhatsApp needs a Novu account on this deployment. Opening Novu dashboard sign-in to continue…',
+  });
 
   // The upgraded environment may already hold this agent from a previous run.
   ui.listingAgents();
@@ -595,10 +594,7 @@ async function upgradeKeylessSessionForWhatsApp(
     );
   }
 
-  const runtime =
-    (connectMode && !isBridgeConnectMode(connectMode) ? connectMode : undefined) ??
-    resolveRuntimeFromOptions(options) ??
-    'demo';
+  const runtime = resolveAgentRuntime(connectMode, options);
   ui.loadingIntegrations();
   const resolved = await resolveAgentRuntimeIntegration(
     session.client,
@@ -609,16 +605,7 @@ async function upgradeKeylessSessionForWhatsApp(
   );
 
   ui.creatingAgent(createdSpec.name);
-  const created = await createManagedAgent(session.client, {
-    name: createdSpec.name,
-    identifier: createdSpec.identifier,
-    integrationId: resolved.integrationId,
-    providerId: resolved.providerId,
-    systemPrompt: createdSpec.systemPrompt,
-    tools: createdSpec.tools,
-    mcpServers: createdSpec.mcpServers,
-    skills: createdSpec.skills,
-  });
+  const created = await createManagedAgentFromSpec(session.client, createdSpec, resolved);
   track(CONNECT_EVENTS.AGENT_CREATED, {
     identifier: created.identifier,
     ...sessionProps,
@@ -629,20 +616,11 @@ async function upgradeKeylessSessionForWhatsApp(
 
 async function createAgentFlow(
   session: ConnectSession,
-  ui: ConnectUI,
-  options: ConnectCommandOptions,
-  track: (event: string, data?: Record<string, unknown>) => void,
-  sessionProps: Record<string, unknown>,
-  onboardingSessionId?: string,
-  callbacks?: {
-    onIdentityResolved?: (user: NonNullable<ResolvedConnectAuth['user']>) => void;
-  },
+  ctx: PipelineContext,
   connectMode?: AgentConnectMode
-): Promise<{ agent: AgentSummary; generated: GeneratedAgentSpec }> {
-  const runtime =
-    (connectMode && !isBridgeConnectMode(connectMode) ? connectMode : undefined) ??
-    resolveRuntimeFromOptions(options) ??
-    'demo';
+): Promise<AgentSummary> {
+  const { options, ui, track, sessionProps } = ctx;
+  const runtime = resolveAgentRuntime(connectMode, options);
 
   if (resolveRuntimeFromOptions(options) || connectMode) {
     track(CONNECT_EVENTS.RUNTIME_SELECTED, { runtime, ...sessionProps });
@@ -652,35 +630,17 @@ async function createAgentFlow(
   let resolved = await resolveAgentRuntimeIntegration(session.client, ui, options, runtime, session.auth.environmentId);
 
   const prompt = await ui.promptForDescription(options.prompt);
-  const generated = await generateAndPreviewAgent(
-    session,
-    ui,
-    options,
-    prompt.trim(),
-    track,
-    sessionProps,
-    onboardingSessionId,
-    callbacks,
-    async () => {
-      resolved = await resolveAgentRuntimeIntegration(session.client, ui, options, runtime, session.auth.environmentId);
-    }
-  );
+  const generated = await generateAndPreviewAgent(session, ctx, prompt.trim(), async () => {
+    resolved = await resolveAgentRuntimeIntegration(session.client, ui, options, runtime, session.auth.environmentId);
+  });
+  ctx.createdSpec = generated;
 
   ui.creatingAgent(generated.name);
 
   try {
-    const created = await createManagedAgent(session.client, {
-      name: generated.name,
-      identifier: generated.identifier,
-      integrationId: resolved.integrationId,
-      providerId: resolved.providerId,
-      systemPrompt: generated.systemPrompt,
-      tools: generated.tools,
-      mcpServers: generated.mcpServers,
-      skills: generated.skills,
-    });
+    const created = await createManagedAgentFromSpec(session.client, generated, resolved);
 
-    return { agent: toSummary(created), generated };
+    return toSummary(created);
   } catch (err) {
     if (resolved.createdInThisFlow) {
       try {
@@ -696,53 +656,18 @@ async function createAgentFlow(
 
 async function withKeylessGenerateLimitFallback<T>(
   session: ConnectSession,
-  options: ConnectCommandOptions,
-  ui: ConnectUI,
-  onboardingSessionId: string | undefined,
-  track: (event: string, data?: Record<string, unknown>) => void,
-  sessionProps: Record<string, unknown>,
-  callbacks:
-    | {
-        onIdentityResolved?: (user: NonNullable<ResolvedConnectAuth['user']>) => void;
-      }
-    | undefined,
+  ctx: PipelineContext,
   onUpgraded: () => Promise<void>,
   run: () => Promise<T>
 ): Promise<T> {
   try {
     return await run();
   } catch (err) {
-    if (!shouldUpgradeFromKeylessGenerateLimit(err, session.client, options)) {
+    if (!shouldUpgradeFromKeylessGenerateLimit(err, session.client, ctx.options)) {
       throw err;
     }
 
-    track(CONNECT_EVENTS.KEYLESS_LIMIT_AUTH_UPGRADE_STARTED, sessionProps);
-
-    await upgradeKeylessSessionToDashboardAuth(session, options, ui, {
-      onboardingSessionId,
-      onAuthStarted: () =>
-        track(CONNECT_EVENTS.AUTH_STARTED, {
-          ...sessionProps,
-          source: 'keyless_limit_upgrade',
-        }),
-      onAuthFailed: (message) =>
-        track(CONNECT_EVENTS.AUTH_FAILED, {
-          ...sessionProps,
-          source: 'keyless_limit_upgrade',
-          message,
-        }),
-    });
-
-    track(CONNECT_EVENTS.AUTH_COMPLETED, {
-      source: 'keyless_limit_upgrade',
-      region: options.region,
-      keyless: false,
-      ...sessionProps,
-    });
-
-    if (session.auth.user?.id) {
-      callbacks?.onIdentityResolved?.(session.auth.user);
-    }
+    await upgradeKeylessWithTracking(session, ctx, { source: 'keyless_limit_upgrade' });
 
     await onUpgraded();
 
@@ -752,17 +677,11 @@ async function withKeylessGenerateLimitFallback<T>(
 
 async function generateAndPreviewAgent(
   session: ConnectSession,
-  ui: ConnectUI,
-  options: ConnectCommandOptions,
+  ctx: PipelineContext,
   initialPrompt: string,
-  track: (event: string, data?: Record<string, unknown>) => void,
-  sessionProps: Record<string, unknown>,
-  onboardingSessionId?: string,
-  callbacks?: {
-    onIdentityResolved?: (user: NonNullable<ResolvedConnectAuth['user']>) => void;
-  },
   onSessionUpgraded?: () => Promise<void>
 ): Promise<Awaited<ReturnType<typeof generateAgent>>> {
+  const { ui, track, sessionProps } = ctx;
   let prompt = initialPrompt;
 
   while (true) {
@@ -772,16 +691,8 @@ async function generateAndPreviewAgent(
 
     ui.generatingAgent();
 
-    const generated = await withKeylessGenerateLimitFallback(
-      session,
-      options,
-      ui,
-      onboardingSessionId,
-      track,
-      sessionProps,
-      callbacks,
-      onSessionUpgraded ?? (async () => undefined),
-      () => generateAgent(session.client, prompt.trim())
+    const generated = await withKeylessGenerateLimitFallback(session, ctx, onSessionUpgraded ?? (async () => undefined), () =>
+      generateAgent(session.client, prompt.trim())
     );
     track(CONNECT_EVENTS.AGENT_PROMPT_GENERATED, {
       promptLength: prompt.trim().length,

@@ -6,7 +6,7 @@ import { Command } from 'commander';
 import { v4 as uuidv4 } from 'uuid';
 import { DevCommandOptions, devCommand } from './commands';
 import { connectCommand } from './commands/connect';
-import { isDashboardOnlyChannel } from './commands/connect/dashboard-urls';
+import { DASHBOARD_ONLY_CHANNELS, isDashboardOnlyChannel } from './commands/connect/dashboard-urls';
 import { CONNECT_HELP_TEXT } from './commands/connect/help-text';
 import type { LlmAuthCliChoice } from './commands/connect/pipeline/llm-auth/types';
 import type { ConnectCommandInput } from './commands/connect/resolve-options';
@@ -226,7 +226,7 @@ program
   .option('--aws-claude-workspace-id <id>', 'AWS Claude workspace ID for --runtime claude-aws')
   .option(
     '--channel <name>',
-    `Channel to connect (required in --ci mode). One of: ${CHANNEL_CHOICES.join(', ')}. whatsapp/teams require dashboard OAuth (omit --keyless)`
+    `Channel to connect (required in --ci mode). One of: ${CHANNEL_CHOICES.join(', ')}. ${DASHBOARD_ONLY_CHANNELS.join('/')} require dashboard OAuth (omit --keyless)`
   )
   .option('--skip-slack', 'Create the agent and exit; do not connect any channel (equivalent to --channel skip)', false)
   .option(
@@ -281,14 +281,14 @@ program
 
       if (!channel) {
         console.error(
-          'Non-interactive mode requires --channel <slack|email|telegram|sendblue|skip> (or <whatsapp|teams> without --keyless).\n(run `novu connect --help` for the non-interactive contract and examples)'
+          'Non-interactive mode requires --channel <slack|email|telegram|whatsapp|sendblue|skip> (or teams without --keyless).\n(run `novu connect --help` for the non-interactive contract and examples)'
         );
         process.exit(1);
       }
 
       if (options.channel && isDashboardOnlyChannel(options.channel as ChannelChoice) && options.keyless) {
         console.error(
-          'Non-interactive mode does not support --channel whatsapp or --channel teams with --keyless. Omit --keyless to authenticate via the dashboard, or use the Novu dashboard instead.\n(run `novu connect --help` for the non-interactive contract and examples)'
+          `Non-interactive mode does not support --channel ${options.channel} with --keyless. Omit --keyless to authenticate via the dashboard, or use the Novu dashboard instead.\n(run \`novu connect --help\` for the non-interactive contract and examples)`
         );
         process.exit(1);
       }

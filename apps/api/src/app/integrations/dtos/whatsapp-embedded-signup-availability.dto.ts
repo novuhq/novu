@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { WhatsAppEmbeddedSignupUnavailableReason } from '@novu/shared';
 
-export type WhatsAppEmbeddedSignupUnavailableReason = 'feature_disabled' | 'missing_platform_config';
+export type { WhatsAppEmbeddedSignupUnavailableReason };
 
 export class WhatsAppEmbeddedSignupAvailabilityResponseDto {
   @ApiProperty({

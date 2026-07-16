@@ -4,19 +4,33 @@ import { Box, Text, useInput } from 'ink';
 // biome-ignore lint/correctness/noUnusedImports: classic-JSX linter falls back here because tsconfig.json excludes ui/.
 import React from 'react';
 import { CONNECT_MODE_PICKER_SUBTITLE, CONNECT_MODE_PICKER_TITLE } from '../connect-mode-options';
-import { SEND_FROM_ACCOUNT_LABEL } from '../copy/email-onboarding';
 import { channelDisplayName, isDashboardOnlyChannel } from '../dashboard-urls';
 import { ConnectUserCancelledError } from '../errors';
 import { resolveBridgeSetupFollowUpMessage } from '../pipeline/bridge/setup-outcome-message';
-import { validateSlackConfigTokenFormat } from '../pipeline/channels/slack-config-token';
 import { LLM_AUTH_PICKER_SUBTITLE, LLM_AUTH_PICKER_TITLE } from '../pipeline/llm-auth/llm-auth-options';
 import type { ChannelChoice } from '../types';
 import { BridgeReconcilePhaseContent, isBridgeReconcilePhase } from './bridge-reconcile-phase-content';
 import { CopyableLink } from './copyable-link';
 import { GroupedConnectModeSelect } from './grouped-connect-mode-select';
 import { LlmAuthPicker } from './llm-auth-picker';
+import { EmailReadyContent, EmailWaitingContent } from './phase-content/email';
+import {
+  SendblueCredentialContent,
+  SendblueIntroContent,
+  SendblueTestPhoneContent,
+  SendblueTestWaitingContent,
+  SendblueWebhookManualContent,
+} from './phase-content/sendblue';
+import { PasteSlackConfigTokenContent, SlackOAuthReadyContent, WaitingSlackContent } from './phase-content/slack';
+import {
+  PickTelegramTokenDeliveryContent,
+  TelegramIntroContent,
+  TelegramLinkTokenContent,
+  TelegramTestContent,
+} from './phase-content/telegram';
+import { WhatsAppSignupReadyContent, WhatsAppSignupWaitingContent, WhatsAppTestContent } from './phase-content/whatsapp';
 import { PreviewGeneratedContent } from './preview-generated-content';
-import type { ConnectStore, Phase } from './store';
+import type { ConnectStore } from './store';
 import { WelcomeContent } from './welcome-content';
 
 const NEW_AGENT_VALUE = '__new__';
@@ -240,34 +254,10 @@ export function PhaseContent({
       return <WhatsAppSignupReadyContent signupUrl={phase.signupUrl} onContinue={phase.resolve} />;
 
     case 'whatsapp-signup-waiting':
-      return (
-        <Box flexDirection="column" gap={1}>
-          <Text bold>Finish WhatsApp signup in your browser</Text>
-          <CopyableLink url={phase.signupUrl} hint="Opened in your browser. If nothing happened, visit:" />
-          <Text dimColor>Waiting for Meta Embedded Signup to complete… (this can take a few minutes)</Text>
-        </Box>
-      );
+      return <WhatsAppSignupWaitingContent phase={phase} />;
 
     case 'whatsapp-test':
-      return (
-        <Box flexDirection="column" gap={1}>
-          <Text bold color="cyan">
-            Message your business number on WhatsApp
-          </Text>
-          <Text dimColor>
-            {phase.displayPhoneNumber ? (
-              <>
-                Send any message to <Text color="white">{phase.displayPhoneNumber}</Text> from your phone — Novu
-                confirms the connection as soon as it arrives.
-              </>
-            ) : (
-              'Send any WhatsApp message to your business number from your phone — Novu confirms the connection as soon as it arrives.'
-            )}
-          </Text>
-          {phase.waMeUrl ? <CopyableLink url={phase.waMeUrl} hint="Open WhatsApp directly:" /> : null}
-          <Text dimColor>Waiting for your first inbound message…</Text>
-        </Box>
-      );
+      return <WhatsAppTestContent phase={phase} />;
 
     case 'adding-slack':
       return <Text color="cyan">Linking Slack to your agent…</Text>;
@@ -288,13 +278,7 @@ export function PhaseContent({
       );
 
     case 'waiting-slack':
-      return (
-        <Box flexDirection="column" gap={1}>
-          <Text bold>Authorize Slack to finish setup</Text>
-          <CopyableLink url={phase.authorizeUrl} hint="Opened in your browser. If nothing happened, visit:" />
-          <Text dimColor>Waiting for Slack authorization…</Text>
-        </Box>
-      );
+      return <WaitingSlackContent phase={phase} />;
 
     case 'adding-email':
       return <Text color="cyan">Linking Email to your agent…</Text>;
@@ -311,22 +295,7 @@ export function PhaseContent({
       );
 
     case 'email-waiting':
-      return (
-        <Box flexDirection="column" gap={1}>
-          <Text bold color="cyan">
-            Send any message to your agent
-          </Text>
-          <Box flexDirection="column" paddingY={1}>
-            <Text bold>{phase.inboundAddress}</Text>
-          </Box>
-          {phase.sendFromEmail ? (
-            <Text dimColor>
-              {SEND_FROM_ACCOUNT_LABEL} <Text color="white">{phase.sendFromEmail}</Text>
-            </Text>
-          ) : null}
-          <Text dimColor>Waiting for your email to arrive…</Text>
-        </Box>
-      );
+      return <EmailWaitingContent phase={phase} />;
 
     case 'adding-telegram':
       return <Text color="cyan">Linking Telegram to your agent…</Text>;
@@ -334,51 +303,14 @@ export function PhaseContent({
     case 'telegram-intro':
       return <TelegramIntroContent botfatherQr={phase.botfatherQr} onContinue={phase.resolve} />;
 
-    case 'pick-telegram-token-delivery': {
-      const options = [
-        { label: 'Scan QR / open setup page', value: 'setup-page' as const },
-        { label: 'Paste the bot token here', value: 'terminal' as const },
-      ];
-
-      return (
-        <Box flexDirection="column" gap={1}>
-          <Text bold>How do you want to save your bot token?</Text>
-          <Text dimColor>Scan the QR on your phone, or paste the token directly in this terminal.</Text>
-          <Select options={options} onChange={(value) => phase.resolve(value as 'setup-page' | 'terminal')} />
-        </Box>
-      );
-    }
+    case 'pick-telegram-token-delivery':
+      return <PickTelegramTokenDeliveryContent phase={phase} />;
 
     case 'telegram-link-token':
-      return (
-        <Box flexDirection="column" gap={1}>
-          <Text bold color="cyan">
-            Step 2 of 3 · Save your bot token
-          </Text>
-          <Text dimColor>
-            Scan with your phone to open a page where you can paste the BotFather token. We'll handle registering the
-            webhook for you.
-          </Text>
-          <Text>{phase.mobileQr}</Text>
-          <CopyableLink url={phase.mobileUrl} hint="Or open this on your phone:" />
-          <Text dimColor>Waiting for your bot token…</Text>
-        </Box>
-      );
+      return <TelegramLinkTokenContent phase={phase} />;
 
     case 'telegram-test':
-      return (
-        <Box flexDirection="column" gap={1}>
-          <Text bold color="cyan">
-            Step 3 of 3 · Say hello to your bot
-          </Text>
-          <Text dimColor>
-            Scan to open <Text color="white">@{phase.botUsername}</Text> in Telegram and tap Start.
-          </Text>
-          <Text>{phase.deepLinkQr}</Text>
-          <CopyableLink url={phase.deepLinkUrl} hint="Or open this link:" />
-          <Text dimColor>Waiting for /start in Telegram…</Text>
-        </Box>
-      );
+      return <TelegramTestContent phase={phase} />;
 
     case 'adding-sendblue':
       return <Text color="cyan">Linking iMessage (Sendblue) to your agent…</Text>;
@@ -408,19 +340,7 @@ export function PhaseContent({
       return <Text color="cyan">Sending a test iMessage…</Text>;
 
     case 'sendblue-test-waiting':
-      return (
-        <Box flexDirection="column" gap={1}>
-          <Text bold color="cyan">
-            Message your agent on iMessage
-          </Text>
-          <Text dimColor>
-            Text <Text color="white">{phase.fromNumber}</Text> from your phone to start chatting. On Sendblue's shared
-            lines you must message the number once before it can reply.
-          </Text>
-          <CopyableLink url={phase.imessageUrl} hint="Or open a pre-filled iMessage:" />
-          <Text dimColor>Waiting for your first inbound message…</Text>
-        </Box>
-      );
+      return <SendblueTestWaitingContent phase={phase} />;
 
     case 'sending-welcome':
       return <Text color="cyan">Asking your agent to say hello…</Text>;
@@ -448,9 +368,16 @@ export function PhaseContent({
   }
 }
 
-const DASHBOARD_CHANNEL_HINT = 'Onboarding for this channel is currently only available in the Novu Connect UI.';
-const WHATSAPP_CHANNEL_HINT =
-  'Opens Meta signup in your browser — the CLI resumes automatically. Falls back to the Novu Connect UI when unavailable.';
+/**
+ * Per-channel picker hints. Channels without an entry render no hint;
+ * dashboard-only channels additionally get the `↗` glyph via
+ * {@link isDashboardOnlyChannel}.
+ */
+const CHANNEL_HINTS: Partial<Record<ChannelChoice, string>> = {
+  teams: 'Onboarding for this channel is currently only available in the Novu Connect UI.',
+  whatsapp:
+    'Opens Meta signup in your browser — the CLI resumes automatically. Falls back to the Novu Connect UI when unavailable.',
+};
 /** Keeps the picker + hint from widening the centered layout when the hint appears. */
 const CHANNEL_PICKER_WIDTH = 48;
 
@@ -488,8 +415,7 @@ function ChannelSelect({
   });
 
   const highlighted = options[idx]?.value ?? null;
-  const showDashboardHint = highlighted !== null && isDashboardOnlyChannel(highlighted);
-  const dashboardHint = highlighted === 'whatsapp' ? WHATSAPP_CHANNEL_HINT : DASHBOARD_CHANNEL_HINT;
+  const channelHint = highlighted !== null ? CHANNEL_HINTS[highlighted] : undefined;
 
   return (
     <Box flexDirection="column" gap={1} alignItems="flex-start">
@@ -509,9 +435,9 @@ function ChannelSelect({
         })}
       </Box>
       <Box flexDirection="column" width={CHANNEL_PICKER_WIDTH}>
-        {showDashboardHint ? (
+        {channelHint ? (
           <Text dimColor wrap="wrap">
-            {dashboardHint}
+            {channelHint}
           </Text>
         ) : (
           <>
@@ -555,336 +481,6 @@ function truncateInline(text: string, maxLength: number): string {
   if (text.length <= maxLength) return text;
 
   return `${text.slice(0, maxLength - 1)}…`;
-}
-
-function PasteSlackConfigTokenContent({
-  phase,
-}: {
-  phase: Extract<Phase, { kind: 'paste-slack-token' }>;
-}): React.ReactElement {
-  const [inputError, setInputError] = React.useState<string | undefined>();
-  const displayError = phase.verificationError ?? inputError;
-
-  return (
-    <Box flexDirection="column" gap={1}>
-      <Text bold>Paste a Slack App Configuration Token</Text>
-      <Text dimColor>
-        Your Slack integration has no OAuth credentials yet. Novu can create the Slack app for you from a manifest if
-        you paste a short-lived configuration token — not your bot token (xoxb-).
-      </Text>
-      <Box flexDirection="column">
-        <Text dimColor>1. Open </Text>
-        <Text color="cyan">https://api.slack.com/apps</Text>
-        <Text dimColor>2. Scroll to the bottom of the page</Text>
-        <Text dimColor>3. Generate an App Configuration Token</Text>
-        <Text dimColor>4. Copy the access token (starts with xoxe.xoxp-)</Text>
-      </Box>
-      {displayError ? <Text color="yellow">{displayError}</Text> : null}
-      {phase.retry && !displayError ? (
-        <Text color="yellow">Previous token was rejected by Slack. Generate a fresh one and try again.</Text>
-      ) : null}
-      <Box borderStyle="round" paddingX={1}>
-        <TextInput
-          placeholder="xoxe.xoxp-…"
-          onSubmit={(value) => {
-            const formatError = validateSlackConfigTokenFormat(value);
-            if (formatError) {
-              setInputError(formatError);
-
-              return;
-            }
-
-            setInputError(undefined);
-            phase.resolve(value.trim());
-          }}
-        />
-      </Box>
-      <Text dimColor>The token is sent to your Novu API once, used to create the Slack app, then discarded.</Text>
-    </Box>
-  );
-}
-
-function WhatsAppSignupReadyContent({
-  signupUrl,
-  onContinue,
-}: {
-  signupUrl: string;
-  onContinue: () => void;
-}): React.ReactElement {
-  useInput((_input, key) => {
-    if (key.return || _input === ' ') onContinue();
-  });
-
-  return (
-    <Box flexDirection="column" gap={1}>
-      <Text bold color="cyan">
-        Connect your WhatsApp Business account
-      </Text>
-      <Text dimColor>
-        We'll open a Novu page with a "Log in with Facebook" button. Meta walks you through sharing your WhatsApp
-        Business account — Novu saves the credentials and registers the webhook automatically.
-      </Text>
-      <Text dimColor>{`Signup page: ${signupUrl.slice(0, 80)}${signupUrl.length > 80 ? '…' : ''}`}</Text>
-      <Text color="cyan">Press Enter to open the signup page in your browser →</Text>
-    </Box>
-  );
-}
-
-function SlackOAuthReadyContent({
-  appCreated,
-  authorizeUrl,
-  onContinue,
-}: {
-  appCreated: boolean;
-  authorizeUrl: string;
-  onContinue: () => void;
-}): React.ReactElement {
-  useInput((_input, key) => {
-    if (key.return || _input === ' ') onContinue();
-  });
-
-  return (
-    <Box flexDirection="column" gap={1}>
-      {appCreated ? (
-        <>
-          <Text bold color="green">
-            Slack app created successfully
-          </Text>
-          <Text dimColor>
-            Novu created a Slack app for your agent. Next, add it to your workspace so your team can talk to the agent
-            in Slack.
-          </Text>
-        </>
-      ) : (
-        <>
-          <Text bold color="cyan">
-            Connect Slack to your agent
-          </Text>
-          <Text dimColor>Authorize Novu to install the Slack app in your workspace.</Text>
-        </>
-      )}
-      <Text dimColor>{`OAuth link: ${authorizeUrl.slice(0, 80)}${authorizeUrl.length > 80 ? '…' : ''}`}</Text>
-      <Text color="cyan">Press Enter to open Slack and add the app to your workspace →</Text>
-    </Box>
-  );
-}
-
-function EmailReadyContent({
-  inboundAddress,
-  mailtoUrl,
-  sendFromEmail,
-  onContinue,
-  onBack,
-}: {
-  inboundAddress: string;
-  mailtoUrl: string;
-  sendFromEmail?: string;
-  onContinue: () => void;
-  onBack?: () => void;
-}): React.ReactElement {
-  useInput((_input, key) => {
-    if (key.escape && onBack) {
-      onBack();
-    } else if (key.return || _input === ' ') {
-      onContinue();
-    }
-  });
-
-  return (
-    <Box flexDirection="column" gap={1}>
-      <Text bold color="cyan">
-        Your agent has an inbox
-      </Text>
-      <Text dimColor>
-        Unlike Slack or Telegram, email starts with you sending the first message. Your agent reads it and replies to
-        the same inbox.
-      </Text>
-      <Box flexDirection="column" paddingY={1}>
-        <Text dimColor>Inbound address:</Text>
-        <Text bold>{inboundAddress}</Text>
-      </Box>
-      {sendFromEmail ? (
-        <Text dimColor>
-          Email agents reply to the address you send from. Use your Novu account email:{' '}
-          <Text color="white" bold>
-            {sendFromEmail}
-          </Text>
-        </Text>
-      ) : null}
-      <CopyableLink url={mailtoUrl} hint="Pre-filled draft email:" color="white" />
-      <Text color="cyan">Press Enter to open a pre-filled draft in your default mail client →</Text>
-      {onBack ? <Text dimColor>Esc · back to channel list</Text> : null}
-    </Box>
-  );
-}
-
-function TelegramIntroContent({
-  botfatherQr,
-  onContinue,
-}: {
-  botfatherQr: string;
-  onContinue: () => void;
-}): React.ReactElement {
-  useInput((_input, key) => {
-    if (key.return || _input === ' ') {
-      onContinue();
-    }
-  });
-
-  return (
-    <Box flexDirection="column" gap={1}>
-      <Text bold color="cyan">
-        Step 1 of 3 · Create your Telegram bot
-      </Text>
-      <Box flexDirection="column">
-        <Text>
-          <Text color="white" bold>
-            1.
-          </Text>{' '}
-          Open Telegram and message <Text color="cyan">@BotFather</Text>.
-        </Text>
-        <Text>
-          <Text color="white" bold>
-            2.
-          </Text>{' '}
-          Run <Text color="magenta">/newbot</Text>, choose a name and username.
-        </Text>
-        <Text>
-          <Text color="white" bold>
-            3.
-          </Text>{' '}
-          Keep the BotFather chat open — you'll paste the token from there in the next step.
-        </Text>
-      </Box>
-      <Text dimColor>Or scan to open BotFather on your phone:</Text>
-      <Text>{botfatherQr}</Text>
-      <Text dimColor>Press Enter when you have your bot token →</Text>
-    </Box>
-  );
-}
-
-function SendblueIntroContent({
-  dashboardUrl,
-  onContinue,
-}: {
-  dashboardUrl: string;
-  onContinue: () => void;
-}): React.ReactElement {
-  useInput((_input, key) => {
-    if (key.return || _input === ' ') {
-      onContinue();
-    }
-  });
-
-  return (
-    <Box flexDirection="column" gap={1}>
-      <Text bold color="cyan">
-        Connect iMessage with Sendblue
-      </Text>
-      <Text dimColor>
-        You'll need a Sendblue account. Open your Sendblue dashboard to grab your API Key, Secret Key, and assigned
-        phone number — we'll ask for them one at a time next.
-      </Text>
-      <CopyableLink url={dashboardUrl} hint="Sendblue API settings:" />
-      <Text dimColor>Press Enter to continue →</Text>
-    </Box>
-  );
-}
-
-function SendblueCredentialContent({
-  phase,
-}: {
-  phase: Extract<Phase, { kind: 'sendblue-credential' }>;
-}): React.ReactElement {
-  return (
-    <Box flexDirection="column" gap={1}>
-      <Text bold color="cyan">{`Step ${phase.step} of ${phase.total} · ${phase.title}`}</Text>
-      <Text dimColor>{phase.hint}</Text>
-      <CopyableLink url={phase.dashboardUrl} hint="Find it in your Sendblue dashboard:" />
-      {phase.verificationError ? <Text color="yellow">{phase.verificationError}</Text> : null}
-      <Box borderStyle="round" paddingX={1}>
-        {/* Keyed so each credential step remounts an empty input. */}
-        {phase.secret ? (
-          <PasswordInput
-            key={`${phase.field}-${phase.step}`}
-            placeholder={phase.placeholder}
-            onSubmit={(value) => phase.resolve(value)}
-          />
-        ) : (
-          <TextInput
-            key={`${phase.field}-${phase.step}`}
-            placeholder={phase.placeholder}
-            onSubmit={(value) => phase.resolve(value)}
-          />
-        )}
-      </Box>
-      <Text dimColor>Press Enter to submit.</Text>
-    </Box>
-  );
-}
-
-function SendblueWebhookManualContent({
-  callbackUrl,
-  webhookSecret,
-  onContinue,
-}: {
-  callbackUrl: string;
-  webhookSecret?: string;
-  onContinue: () => void;
-}): React.ReactElement {
-  useInput((_input, key) => {
-    if (key.return || _input === ' ') {
-      onContinue();
-    }
-  });
-
-  return (
-    <Box flexDirection="column" gap={1}>
-      <Text bold color="yellow">
-        Finish the webhook in Sendblue
-      </Text>
-      <Text dimColor>
-        We couldn't auto-register the webhook. In your Sendblue dashboard under API → Webhooks, add a `receive` webhook
-        with this URL and signing secret:
-      </Text>
-      <CopyableLink url={callbackUrl} hint="Callback URL:" />
-      {webhookSecret ? (
-        <Text>
-          <Text bold>Signing secret:</Text> {webhookSecret}
-        </Text>
-      ) : null}
-      <Text dimColor>Press Enter once you've saved it →</Text>
-    </Box>
-  );
-}
-
-function SendblueTestPhoneContent({
-  phase,
-}: {
-  phase: Extract<Phase, { kind: 'sendblue-test-phone' }>;
-}): React.ReactElement {
-  return (
-    <Box flexDirection="column" gap={1}>
-      <Text bold color="cyan">
-        Send a test message
-      </Text>
-      <Text dimColor>
-        Enter the phone number (E.164, e.g. +14155551234) to receive a test iMessage from{' '}
-        <Text color="white">{phase.fromNumber}</Text>.
-      </Text>
-      {phase.verificationError ? <Text color="yellow">{phase.verificationError}</Text> : null}
-      <Box borderStyle="round" paddingX={1}>
-        <TextInput
-          key={phase.defaultPhone ? `phone-${phase.defaultPhone}` : 'phone'}
-          defaultValue={phase.defaultPhone ?? ''}
-          placeholder="+14155551234"
-          onSubmit={(value) => phase.resolve(value)}
-        />
-      </Box>
-      <CopyableLink url={phase.imessageUrl} hint="Or text the bot directly via iMessage:" />
-      <Text dimColor>Press Enter to send the test message.</Text>
-    </Box>
-  );
 }
 
 function DashboardChannelReadyContent({
