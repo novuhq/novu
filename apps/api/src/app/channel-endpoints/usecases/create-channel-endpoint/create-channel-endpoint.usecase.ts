@@ -17,9 +17,9 @@ import {
   SubscriberRepository,
 } from '@novu/dal';
 import { ChannelEndpointType, ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
+import { ConnectionBackedEndpointConfig, getConnectionBackedEndpointConfig } from '../../connection-backed-endpoints';
 import { CreateChannelEndpointCommand } from './create-channel-endpoint.command';
 
-const PAGERDUTY_WORKSPACE_STUB = { id: 'pagerduty', name: 'PagerDuty' } as const;
 const MONGO_DUPLICATE_KEY_CODE = 11000;
 
 @Injectable()
@@ -55,8 +55,15 @@ export class CreateChannelEndpoint {
       );
     }
 
-    if (command.type === ENDPOINT_TYPES.PAGERDUTY_SERVICE) {
-      return await this.createPagerDutyEndpoint(command, identifier, integration, contextKeys);
+    const connectionBackedConfig = getConnectionBackedEndpointConfig(command.type);
+    if (connectionBackedConfig) {
+      return await this.createConnectionBackedEndpoint(
+        command,
+        identifier,
+        integration,
+        contextKeys,
+        connectionBackedConfig
+      );
     }
 
     let connection: ChannelConnectionEntity | null = null;
@@ -121,10 +128,11 @@ export class CreateChannelEndpoint {
   }
 
   /**
-   * PagerDuty routing is per subscriber. The wire payload carries
-   * `{ routingKey, region }`, which we persist encrypted on a fresh
-   * `ChannelConnection.auth`. The stored `ChannelEndpoint.endpoint` document is
-   * empty — the read path re-hydrates the wire shape from the decrypted auth.
+   * PagerDuty / Opsgenie routing is per subscriber. The wire payload (e.g.
+   * `{ routingKey, region }` or `{ apiKey, region }`) is persisted encrypted on
+   * a fresh `ChannelConnection.auth`. The stored `ChannelEndpoint.endpoint`
+   * document is empty — the read path re-hydrates the wire shape from the
+   * decrypted auth.
    *
    * Ordering: connection first, endpoint second. If the endpoint create fails
    * (partial unique index → duplicate subscriber/integration pair), we delete
@@ -132,13 +140,14 @@ export class CreateChannelEndpoint {
    * `withTransaction` gives atomicity on replica sets; on standalone Mongo it
    * degrades to sequential execution — the compensating delete covers that gap.
    */
-  private async createPagerDutyEndpoint(
+  private async createConnectionBackedEndpoint(
     command: CreateChannelEndpointCommand,
     identifier: string,
     integration: IntegrationEntity,
-    contextKeys: string[]
+    contextKeys: string[],
+    config: ConnectionBackedEndpointConfig
   ): Promise<ChannelEndpointEntity> {
-    const { routingKey, region } = command.endpoint as { routingKey: string; region: 'us' | 'eu' };
+    const wireEndpoint = command.endpoint as Record<string, unknown>;
     const connectionIdentifier = this.generateConnectionIdentifier();
 
     let createdConnection: ChannelConnectionEntity | null = null;
@@ -152,8 +161,8 @@ export class CreateChannelEndpoint {
         channel: integration.channel,
         subscriberId: command.subscriberId,
         contextKeys,
-        workspace: { ...PAGERDUTY_WORKSPACE_STUB },
-        auth: encryptChannelConnectionAuth({ routingKey, region }),
+        workspace: { ...config.workspace },
+        auth: encryptChannelConnectionAuth({ ...wireEndpoint }),
       });
 
       const endpoint = await this.channelEndpointRepository.create({
@@ -173,7 +182,7 @@ export class CreateChannelEndpoint {
 
       // Hydrate the returned entity's endpoint so the response DTO carries the
       // wire shape without a second connection lookup.
-      return { ...endpoint, endpoint: { routingKey, region } } as ChannelEndpointEntity;
+      return { ...endpoint, endpoint: { ...wireEndpoint } } as ChannelEndpointEntity;
     } catch (error) {
       if (createdConnection) {
         await this.channelConnectionRepository.delete({
@@ -185,7 +194,7 @@ export class CreateChannelEndpoint {
 
       if (this.isDuplicateKeyError(error)) {
         throw new ConflictException(
-          `PagerDuty endpoint already exists for subscriber "${command.subscriberId}" on integration "${integration.identifier}"`
+          `${config.label} endpoint already exists for subscriber "${command.subscriberId}" on integration "${integration.identifier}"`
         );
       }
 

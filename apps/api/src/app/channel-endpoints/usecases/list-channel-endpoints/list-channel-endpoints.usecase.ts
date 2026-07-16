@@ -8,8 +8,9 @@ import {
   ChannelEndpointEntity,
   ChannelEndpointRepository,
 } from '@novu/dal';
-import { DirectionEnum, ENDPOINT_TYPES } from '@novu/shared';
+import { DirectionEnum } from '@novu/shared';
 import { FilterQuery } from 'mongoose';
+import { extractWireEndpointFromAuth, getConnectionBackedEndpointConfig } from '../../connection-backed-endpoints';
 import { ListChannelEndpointsCommand } from './list-channel-endpoints.command';
 
 @Injectable()
@@ -108,7 +109,7 @@ export class ListChannelEndpoints {
       includeCursor: command.includeCursor,
     });
 
-    const hydratedData = await this.hydratePagerDutyEndpoints(
+    const hydratedData = await this.hydrateConnectionBackedEndpoints(
       pagination.data as ChannelEndpointEntity[],
       command.user.environmentId,
       command.user.organizationId
@@ -124,25 +125,26 @@ export class ListChannelEndpoints {
   }
 
   /**
-   * Batch-hydrate PagerDuty endpoint wire shapes from their linked connections
-   * in a single `$in` query so a page of N pagerduty_service rows costs one
-   * extra roundtrip instead of N. See `GetChannelEndpoint.hydratePagerDutyEndpoint`
-   * for the underlying rationale.
+   * Batch-hydrate connection-backed endpoint wire shapes (pagerduty_service,
+   * opsgenie_integration) from their linked connections in a single `$in`
+   * query so a page of N such rows costs one extra roundtrip instead of N.
+   * See `GetChannelEndpoint.hydrateConnectionBackedEndpoint` for the
+   * underlying rationale.
    */
-  private async hydratePagerDutyEndpoints(
+  private async hydrateConnectionBackedEndpoints(
     endpoints: ChannelEndpointEntity[],
     environmentId: string,
     organizationId: string
   ): Promise<ChannelEndpointEntity[]> {
-    const pagerDutyEndpoints = endpoints.filter(
-      (endpoint) => endpoint.type === ENDPOINT_TYPES.PAGERDUTY_SERVICE && endpoint.connectionIdentifier
+    const connectionBackedEndpoints = endpoints.filter(
+      (endpoint) => getConnectionBackedEndpointConfig(endpoint.type) && endpoint.connectionIdentifier
     );
 
-    if (pagerDutyEndpoints.length === 0) {
+    if (connectionBackedEndpoints.length === 0) {
       return endpoints;
     }
 
-    const connectionIdentifiers = pagerDutyEndpoints
+    const connectionIdentifiers = connectionBackedEndpoints
       .map((endpoint) => endpoint.connectionIdentifier)
       .filter((identifier): identifier is string => Boolean(identifier));
 
@@ -157,7 +159,7 @@ export class ListChannelEndpoints {
     );
 
     return endpoints.map((endpoint) => {
-      if (endpoint.type !== ENDPOINT_TYPES.PAGERDUTY_SERVICE || !endpoint.connectionIdentifier) {
+      if (!getConnectionBackedEndpointConfig(endpoint.type) || !endpoint.connectionIdentifier) {
         return endpoint;
       }
 
@@ -166,18 +168,21 @@ export class ListChannelEndpoints {
         return endpoint;
       }
 
-      const decrypted = decryptChannelConnectionAuth(connection.auth) as {
-        routingKey?: string;
-        region?: 'us' | 'eu';
-      } | null;
+      const decrypted = decryptChannelConnectionAuth(connection.auth) as Record<string, unknown> | null;
 
-      if (!decrypted?.routingKey || !decrypted?.region) {
+      if (!decrypted) {
+        return endpoint;
+      }
+
+      const wireEndpoint = extractWireEndpointFromAuth(endpoint.type, decrypted);
+
+      if (!wireEndpoint) {
         return endpoint;
       }
 
       return {
         ...endpoint,
-        endpoint: { routingKey: decrypted.routingKey, region: decrypted.region },
+        endpoint: wireEndpoint,
       } as ChannelEndpointEntity;
     });
   }

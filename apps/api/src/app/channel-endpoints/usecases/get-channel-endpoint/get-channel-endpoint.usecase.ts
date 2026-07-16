@@ -7,8 +7,8 @@ import {
   ChannelEndpointRepository,
   EnforceEnvOrOrgIds,
 } from '@novu/dal';
-import { ENDPOINT_TYPES } from '@novu/shared';
 import { FilterQuery } from 'mongoose';
+import { extractWireEndpointFromAuth, getConnectionBackedEndpointConfig } from '../../connection-backed-endpoints';
 import { GetChannelEndpointCommand } from './get-channel-endpoint.command';
 
 @Injectable()
@@ -40,22 +40,22 @@ export class GetChannelEndpoint {
       throw new NotFoundException(`Channel endpoint with identifier '${command.identifier}' not found`);
     }
 
-    if (channelEndpoint.type === ENDPOINT_TYPES.PAGERDUTY_SERVICE) {
-      return await this.hydratePagerDutyEndpoint(channelEndpoint);
+    if (getConnectionBackedEndpointConfig(channelEndpoint.type)) {
+      return await this.hydrateConnectionBackedEndpoint(channelEndpoint);
     }
 
     return channelEndpoint;
   }
 
   /**
-   * The wire shape for pagerduty_service is `{ routingKey, region }`, but the
-   * stored `endpoint` document is empty — those values live encrypted on the
-   * linked `ChannelConnection.auth`. Rehydrate them here so the response DTO
-   * reflects the wire contract on read (matching create/update). Existing
-   * platform convention returns decrypted secrets from the API; the dashboard
-   * masks client-side.
+   * The wire shape for connection-backed types (pagerduty_service,
+   * opsgenie_integration) lives encrypted on the linked
+   * `ChannelConnection.auth`; the stored `endpoint` document is empty.
+   * Rehydrate it here so the response DTO reflects the wire contract on read
+   * (matching create/update). Existing platform convention returns decrypted
+   * secrets from the API; the dashboard masks client-side.
    */
-  private async hydratePagerDutyEndpoint(endpoint: ChannelEndpointEntity): Promise<ChannelEndpointEntity> {
+  private async hydrateConnectionBackedEndpoint(endpoint: ChannelEndpointEntity): Promise<ChannelEndpointEntity> {
     if (!endpoint.connectionIdentifier) {
       return endpoint;
     }
@@ -70,18 +70,21 @@ export class GetChannelEndpoint {
       return endpoint;
     }
 
-    const decrypted = decryptChannelConnectionAuth(connection.auth) as {
-      routingKey?: string;
-      region?: 'us' | 'eu';
-    } | null;
+    const decrypted = decryptChannelConnectionAuth(connection.auth) as Record<string, unknown> | null;
 
-    if (!decrypted?.routingKey || !decrypted?.region) {
+    if (!decrypted) {
+      return endpoint;
+    }
+
+    const wireEndpoint = extractWireEndpointFromAuth(endpoint.type, decrypted);
+
+    if (!wireEndpoint) {
       return endpoint;
     }
 
     return {
       ...endpoint,
-      endpoint: { routingKey: decrypted.routingKey, region: decrypted.region },
+      endpoint: wireEndpoint,
     } as ChannelEndpointEntity;
   }
 }
