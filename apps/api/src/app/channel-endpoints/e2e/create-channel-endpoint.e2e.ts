@@ -166,6 +166,62 @@ describe('Create Channel Endpoint - /channel-endpoints (POST) #novu-v2', () => {
     expect(error?.name).to.equal('ErrorDto');
   });
 
+  it('should fail with 404 when the subscriber does not exist and createSubscriberIfMissing is not set', async () => {
+    const integration = await createSlackIntegration(session);
+
+    // Raw HTTP: the regenerated SDK types are not required for this flag test.
+    const res = await session.testAgent.post('/v1/channel-endpoints').send({
+      integrationIdentifier: integration.identifier,
+      subscriberId: 'ghost-subscriber-404',
+      type: ENDPOINT_TYPES.WEBHOOK,
+      endpoint: { url: 'https://example.com/webhook' },
+    });
+
+    expect(res.status).to.equal(404);
+    expect(res.body.message).to.include('Subscriber not found: ghost-subscriber-404');
+    expect(res.body.message).to.include('createSubscriberIfMissing');
+  });
+
+  it('should create the subscriber on the fly when createSubscriberIfMissing is true', async () => {
+    const integration = await createSlackIntegration(session);
+    const subscriberId = `jit-subscriber-${Date.now()}`;
+
+    const res = await session.testAgent.post('/v1/channel-endpoints').send({
+      integrationIdentifier: integration.identifier,
+      subscriberId,
+      createSubscriberIfMissing: true,
+      type: ENDPOINT_TYPES.WEBHOOK,
+      endpoint: { url: 'https://example.com/webhook' },
+    });
+
+    expect(res.status).to.equal(201);
+    expect(res.body.data.subscriberId).to.equal(subscriberId);
+
+    const subscriberRes = await session.testAgent.get(`/v1/subscribers/${subscriberId}`);
+    expect(subscriberRes.status).to.equal(200);
+    expect(subscriberRes.body.data.subscriberId).to.equal(subscriberId);
+  });
+
+  it('should not modify an existing subscriber when createSubscriberIfMissing is true', async () => {
+    const integration = await createSlackIntegration(session);
+    const subscribersService = createSubscribersService(session);
+    const subscriber = await subscribersService.createSubscriber({ firstName: 'Original' });
+
+    const res = await session.testAgent.post('/v1/channel-endpoints').send({
+      integrationIdentifier: integration.identifier,
+      subscriberId: subscriber.subscriberId,
+      createSubscriberIfMissing: true,
+      type: ENDPOINT_TYPES.WEBHOOK,
+      endpoint: { url: 'https://example.com/webhook' },
+    });
+
+    expect(res.status).to.equal(201);
+
+    const subscriberRes = await session.testAgent.get(`/v1/subscribers/${subscriber.subscriberId}`);
+    expect(subscriberRes.status).to.equal(200);
+    expect(subscriberRes.body.data.firstName).to.equal('Original');
+  });
+
   it('should fail when subscriberId is missing', async () => {
     const integration = await createSlackIntegration(session);
 

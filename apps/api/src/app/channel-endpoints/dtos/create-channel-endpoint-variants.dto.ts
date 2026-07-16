@@ -2,7 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ApiContextPayload, IsValidContextPayload } from '@novu/application-generic';
 import { ContextPayload, ENDPOINT_TYPES } from '@novu/shared';
 import { Type } from 'class-transformer';
-import { IsDefined, IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsBoolean, IsDefined, IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
 import {
   LineUserEndpointDto,
   MsTeamsChannelEndpointDto,
@@ -36,6 +36,17 @@ class CreateChannelEndpointBaseDto {
   @IsDefined()
   @IsString()
   subscriberId: string;
+
+  @ApiPropertyOptional({
+    description:
+      'When true, the subscriber is created if it does not exist yet (existing subscribers are never modified). ' +
+      'When false or omitted, an unknown subscriberId returns 404.',
+    type: Boolean,
+    default: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  createSubscriberIfMissing?: boolean;
 
   @ApiContextPayload()
   @IsOptional()

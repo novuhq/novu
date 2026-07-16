@@ -232,6 +232,7 @@ export class ChannelEndpointsController {
         integrationIdentifier: body.integrationIdentifier,
         connectionIdentifier: body.connectionIdentifier,
         subscriberId: body.subscriberId,
+        createSubscriberIfMissing: body.createSubscriberIfMissing,
         context: body.context,
         type: body.type,
         endpoint: body.endpoint as ChannelEndpointByType[typeof body.type],

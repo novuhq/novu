@@ -1,5 +1,11 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { encryptChannelConnectionAuth, InstrumentUsecase, shortId } from '@novu/application-generic';
+import {
+  CreateOrUpdateSubscriberCommand,
+  CreateOrUpdateSubscriberUseCase,
+  encryptChannelConnectionAuth,
+  InstrumentUsecase,
+  shortId,
+} from '@novu/application-generic';
 import {
   ChannelConnectionEntity,
   ChannelConnectionRepository,
@@ -23,7 +29,8 @@ export class CreateChannelEndpoint {
     private readonly channelConnectionRepository: ChannelConnectionRepository,
     private readonly integrationRepository: IntegrationRepository,
     private readonly subscriberRepository: SubscriberRepository,
-    private readonly contextRepository: ContextRepository
+    private readonly contextRepository: ContextRepository,
+    private readonly createOrUpdateSubscriber: CreateOrUpdateSubscriberUseCase
   ) {}
 
   @InstrumentUsecase()
@@ -203,9 +210,27 @@ export class CreateChannelEndpoint {
       _environmentId: command.environmentId,
     });
 
-    if (!found) throw new NotFoundException(`Subscriber not found: ${command.subscriberId}`);
+    if (found) {
+      return;
+    }
 
-    return;
+    if (!command.createSubscriberIfMissing) {
+      throw new NotFoundException(
+        `Subscriber not found: ${command.subscriberId}. ` +
+          `Pass createSubscriberIfMissing: true to create it, or provision it via POST /v1/subscribers.`
+      );
+    }
+
+    // `allowUpdate: false` makes this a create-only path: it never mutates an
+    // existing subscriber, so a concurrent create resolves to a harmless no-op.
+    await this.createOrUpdateSubscriber.execute(
+      CreateOrUpdateSubscriberCommand.create({
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        subscriberId: command.subscriberId,
+        allowUpdate: false,
+      })
+    );
   }
 
   private async findIntegration(command: CreateChannelEndpointCommand) {
