@@ -41,7 +41,10 @@ const LOG_CONTEXT = 'SendMessageTool';
  * resolved for the subscriber, we silently skip the integration (execution
  * detail + `SKIPPED` status) rather than attempting a credential-based send.
  */
-export const ENDPOINT_ROUTED_TOOL_PROVIDERS = new Set<string>([ToolProviderIdEnum.PagerDuty]);
+export const ENDPOINT_ROUTED_TOOL_PROVIDERS = new Set<string>([
+  ToolProviderIdEnum.PagerDuty,
+  ToolProviderIdEnum.Opsgenie,
+]);
 
 export function isEndpointRoutedToolProvider(providerId: string): boolean {
   return ENDPOINT_ROUTED_TOOL_PROVIDERS.has(providerId);
@@ -164,8 +167,9 @@ export class SendMessageTool extends SendMessageBase {
           continue;
         }
 
-        // Non-endpoint-routed providers (Opsgenie, tool webhook) route via
-        // env-level integration credentials — preserve the legacy send path.
+        // The tool webhook is the only remaining credential-routed provider —
+        // it routes via env-level integration credentials, so preserve the
+        // legacy send path.
         const result = await this.sendToIntegration(command, integration, content, toolFactory, undefined);
         status = this.mergeStatus(status, result.status);
         if (result.status === SendMessageStatus.SUCCESS) anySent = true;
