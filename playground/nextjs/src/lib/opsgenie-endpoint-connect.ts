@@ -156,7 +156,7 @@ function isOpsgenieEndpoint(value: unknown): value is OpsgenieEndpoint {
  * Provision (or rotate) the subscriber's Opsgenie API key.
  *
  * The uniqueness invariant lives in Mongo: at most one `opsgenie_integration`
- * endpoint per (env, subscriber, integration). If one exists, POST returns 409
+ * endpoint per (env, subscriber, integration). If one exists, POST returns 409;
  * we detect that and PATCH the existing endpoint's apiKey / region on
  * the linked connection instead. Net effect: this helper is idempotent for
  * writes and doubles as a "rotate" primitive.

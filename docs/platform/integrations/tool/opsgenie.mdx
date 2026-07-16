@@ -431,7 +431,7 @@ curl --location 'https://api.novu.co/v1/events/trigger' \
 | `priority` | Not sent (Opsgenie applies its own default). | `priority` step override (`P1` to `P5`). |
 | `tags` | Not sent. | `tags` step override. |
 | `responders` | Not sent. | `responders` step override. |
-| `source` | `novu` | `source` step override. |
+| `source` | Not sent. | `source` step override. |
 | `details` | Any extra keys you pass on the step (excluding reserved names). | Step overrides. |
 
 The deterministic `alias` is Opsgenie's deduplication key: Novu retries for the same step will deduplicate into the same Opsgenie alert instead of creating duplicates.

@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useId, useState } from 'react';
+import { isValidOpsgenieApiKey } from '@/lib/opsgenie-endpoint-connect';
 
 const INTEGRATION_IDENTIFIER = process.env.NEXT_PUBLIC_CONNECT_OPSGENIE_INTEGRATION_IDENTIFIER ?? '';
 const OPSGENIE_TEST_WORKFLOW_ID = process.env.NEXT_PUBLIC_CONNECT_OPSGENIE_TEST_WORKFLOW_ID ?? '';
 const API_KEY_LENGTH = 36;
-const API_KEY_PATTERN = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
 
 type OpsgenieEndpoint = {
   identifier: string;
@@ -88,7 +88,7 @@ export function OpsgenieEndUserConnect({ subscriberId }: Props) {
     void refresh();
   }, [refresh]);
 
-  const isKeyValid = API_KEY_PATTERN.test(apiKey);
+  const isKeyValid = isValidOpsgenieApiKey(apiKey);
   const alreadyConnected = endpoints.length > 0;
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
