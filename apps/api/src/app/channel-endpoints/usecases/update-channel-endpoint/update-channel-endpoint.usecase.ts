@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { encryptChannelConnectionAuth, InstrumentUsecase, validateEndpointForType } from '@novu/application-generic';
 import { ChannelConnectionRepository, ChannelEndpointEntity, ChannelEndpointRepository } from '@novu/dal';
-import { ENDPOINT_TYPES } from '@novu/shared';
+import { ConnectionBackedEndpointConfig, getConnectionBackedEndpointConfig } from '../../connection-backed-endpoints';
 import { UpdateChannelEndpointCommand } from './update-channel-endpoint.command';
 
 @Injectable()
@@ -29,8 +29,9 @@ export class UpdateChannelEndpoint {
     // Validate that the new endpoint matches the existing type
     validateEndpointForType(existingChannelEndpoint.type, command.endpoint);
 
-    if (existingChannelEndpoint.type === ENDPOINT_TYPES.PAGERDUTY_SERVICE) {
-      return await this.updatePagerDutyEndpoint(command, existingChannelEndpoint);
+    const connectionBackedConfig = getConnectionBackedEndpointConfig(existingChannelEndpoint.type);
+    if (connectionBackedConfig) {
+      return await this.updateConnectionBackedEndpoint(command, existingChannelEndpoint, connectionBackedConfig);
     }
 
     const updatedChannelEndpoint = await this.updateChannelEndpoint(command);
@@ -61,20 +62,22 @@ export class UpdateChannelEndpoint {
   }
 
   /**
-   * Rotate the routing key / region on the linked `ChannelConnection.auth`. The
+   * Rotate the secret / region on the linked `ChannelConnection.auth`. The
    * endpoint document itself stays empty — the wire shape lives on the
-   * connection. On response, hydrate `endpoint: { routingKey, region }` so the
-   * caller sees the updated values without a follow-up GET.
+   * connection. On response, hydrate the wire shape (e.g.
+   * `endpoint: { routingKey, region }`) so the caller sees the updated values
+   * without a follow-up GET.
    */
-  private async updatePagerDutyEndpoint(
+  private async updateConnectionBackedEndpoint(
     command: UpdateChannelEndpointCommand,
-    existing: ChannelEndpointEntity
+    existing: ChannelEndpointEntity,
+    config: ConnectionBackedEndpointConfig
   ): Promise<ChannelEndpointEntity> {
-    const { routingKey, region } = command.endpoint as { routingKey: string; region: 'us' | 'eu' };
+    const wireEndpoint = command.endpoint as Record<string, unknown>;
 
     if (!existing.connectionIdentifier) {
       throw new NotFoundException(
-        `PagerDuty endpoint "${command.identifier}" has no linked connection; delete and recreate it`
+        `${config.label} endpoint "${command.identifier}" has no linked connection; delete and recreate it`
       );
     }
 
@@ -85,14 +88,14 @@ export class UpdateChannelEndpoint {
         _organizationId: command.organizationId,
       },
       {
-        auth: encryptChannelConnectionAuth({ routingKey, region }),
+        auth: encryptChannelConnectionAuth({ ...wireEndpoint }),
       },
       { new: true }
     );
 
     if (!updatedConnection) {
       throw new NotFoundException(
-        `Channel connection "${existing.connectionIdentifier}" not found for PagerDuty endpoint "${command.identifier}"`
+        `Channel connection "${existing.connectionIdentifier}" not found for ${config.label} endpoint "${command.identifier}"`
       );
     }
 
@@ -112,6 +115,6 @@ export class UpdateChannelEndpoint {
       throw new NotFoundException(`Channel endpoint "${command.identifier}" not found after connection update`);
     }
 
-    return { ...refreshed, endpoint: { routingKey, region } } as ChannelEndpointEntity;
+    return { ...refreshed, endpoint: { ...wireEndpoint } } as ChannelEndpointEntity;
   }
 }

@@ -7,6 +7,7 @@ import {
   LineUserEndpointDto,
   MsTeamsChannelEndpointDto,
   MsTeamsUserEndpointDto,
+  OpsgenieIntegrationEndpointDto,
   PagerDutyServiceEndpointDto,
   PhoneEndpointDto,
   SlackChannelEndpointDto,
@@ -309,4 +310,25 @@ export class CreatePagerDutyServiceEndpointDto extends CreateChannelEndpointBase
   @ValidateNested()
   @Type(() => PagerDutyServiceEndpointDto)
   endpoint: PagerDutyServiceEndpointDto;
+}
+
+export class CreateOpsgenieIntegrationEndpointDto extends CreateChannelEndpointBaseDto {
+  @ApiProperty({
+    description: 'Type of channel endpoint',
+    enum: [ENDPOINT_TYPES.OPSGENIE_INTEGRATION],
+    example: ENDPOINT_TYPES.OPSGENIE_INTEGRATION,
+  })
+  @IsDefined()
+  @IsEnum([ENDPOINT_TYPES.OPSGENIE_INTEGRATION])
+  type: typeof ENDPOINT_TYPES.OPSGENIE_INTEGRATION;
+
+  @ApiProperty({
+    description:
+      'Opsgenie integration endpoint data. The API key is persisted encrypted on the linked ChannelConnection; the ChannelEndpoint itself carries a lightweight connection reference.',
+    type: OpsgenieIntegrationEndpointDto,
+  })
+  @IsDefined()
+  @ValidateNested()
+  @Type(() => OpsgenieIntegrationEndpointDto)
+  endpoint: OpsgenieIntegrationEndpointDto;
 }

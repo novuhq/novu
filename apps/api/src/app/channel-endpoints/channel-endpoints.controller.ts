@@ -33,6 +33,7 @@ import {
   CreateLineUserEndpointDto,
   CreateMsTeamsChannelEndpointDto,
   CreateMsTeamsUserEndpointDto,
+  CreateOpsgenieIntegrationEndpointDto,
   CreatePagerDutyServiceEndpointDto,
   CreatePhoneEndpointDto,
   CreateSlackChannelEndpointDto,
@@ -47,6 +48,7 @@ import {
   LineUserEndpointDto,
   MsTeamsChannelEndpointDto,
   MsTeamsUserEndpointDto,
+  OpsgenieIntegrationEndpointDto,
   PagerDutyServiceEndpointDto,
   PhoneEndpointDto,
   SlackChannelEndpointDto,
@@ -86,6 +88,7 @@ import { UpdateChannelEndpoint } from './usecases/update-channel-endpoint/update
   CreateWebexRoomEndpointDto,
   CreateLineUserEndpointDto,
   CreatePagerDutyServiceEndpointDto,
+  CreateOpsgenieIntegrationEndpointDto,
   SlackChannelEndpointDto,
   SlackUserEndpointDto,
   WebhookEndpointDto,
@@ -96,7 +99,8 @@ import { UpdateChannelEndpoint } from './usecases/update-channel-endpoint/update
   WebexPersonEndpointDto,
   WebexRoomEndpointDto,
   LineUserEndpointDto,
-  PagerDutyServiceEndpointDto
+  PagerDutyServiceEndpointDto,
+  OpsgenieIntegrationEndpointDto
 )
 @ExternalApiAccessible()
 @RequireAuthentication()
@@ -197,6 +201,7 @@ export class ChannelEndpointsController {
         { $ref: getSchemaPath(CreateWebexPersonEndpointDto) },
         { $ref: getSchemaPath(CreateLineUserEndpointDto) },
         { $ref: getSchemaPath(CreatePagerDutyServiceEndpointDto) },
+        { $ref: getSchemaPath(CreateOpsgenieIntegrationEndpointDto) },
       ],
       discriminator: {
         propertyName: 'type',
@@ -212,6 +217,7 @@ export class ChannelEndpointsController {
           [ENDPOINT_TYPES.WEBEX_PERSON]: getSchemaPath(CreateWebexPersonEndpointDto),
           [ENDPOINT_TYPES.LINE_USER]: getSchemaPath(CreateLineUserEndpointDto),
           [ENDPOINT_TYPES.PAGERDUTY_SERVICE]: getSchemaPath(CreatePagerDutyServiceEndpointDto),
+          [ENDPOINT_TYPES.OPSGENIE_INTEGRATION]: getSchemaPath(CreateOpsgenieIntegrationEndpointDto),
         },
       },
     },
