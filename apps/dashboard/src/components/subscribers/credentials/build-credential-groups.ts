@@ -3,7 +3,11 @@ import type { ChannelEndpointType, IIntegration } from '@novu/shared';
 import { ChannelTypeEnum, ChatProviderIdEnum, providers } from '@novu/shared';
 import type { ChannelConnectionDto } from '@/api/channel-connections';
 import type { ChannelEndpointDto, ChannelEndpointPayload } from '@/api/channel-endpoints';
-import { type ChatEndpointTypeOption, getAddableEndpointTypes } from './chat-endpoint-types';
+import {
+  type ChatEndpointTypeOption,
+  getAddableEndpointTypes,
+  getAddableToolEndpointTypes,
+} from './chat-endpoint-types';
 
 export type EditableCredentialRow = {
   id: string;
@@ -102,12 +106,13 @@ const CHANNEL_LABELS: Record<ChannelTypeEnum, string> = {
   [ChannelTypeEnum.TOOL]: 'TOOL',
 };
 
-/** Section order, following the Figma layout (email, sms, push, chat). */
+/** Section order, following the Figma layout (email, sms, push, chat, tool). */
 const GROUP_ORDER: ChannelTypeEnum[] = [
   ChannelTypeEnum.EMAIL,
   ChannelTypeEnum.SMS,
   ChannelTypeEnum.PUSH,
   ChannelTypeEnum.CHAT,
+  ChannelTypeEnum.TOOL,
 ];
 
 function getProviderDisplayName(providerId: string): string {
@@ -298,6 +303,71 @@ function buildChatGroup(
 }
 
 /**
+ * Builds the TOOL credentials section. Endpoint-routed tools (PagerDuty) reuse the
+ * chat integration card shape; credential-routed tools (Opsgenie, webhook) have no
+ * per-subscriber endpoints and render as empty cards when active.
+ */
+function buildToolGroup(integrations: IIntegration[], channelEndpoints: ChannelEndpointDto[]): ChannelGroup {
+  const toolIntegrations = getActiveIntegrationsByChannel(integrations, ChannelTypeEnum.TOOL);
+  const toolEndpoints = channelEndpoints.filter((endpoint) => endpoint.channel === ChannelTypeEnum.TOOL);
+
+  const rows: CredentialRow[] = [];
+  const consumedEndpoints = new Set<string>();
+
+  for (const integration of toolIntegrations) {
+    const items: ChatCredentialItem[] = [];
+
+    for (const endpoint of toolEndpoints.filter(
+      (endpoint) => endpoint.integrationIdentifier === integration.identifier
+    )) {
+      items.push(buildEndpointItem(endpoint, integration));
+      consumedEndpoints.add(endpoint.identifier);
+    }
+
+    rows.push({
+      id: `tool:${integration.providerId}:${integration.identifier}`,
+      kind: 'chatIntegration',
+      channel: ChannelTypeEnum.TOOL,
+      providerId: integration.providerId,
+      displayName: integration.name || getProviderDisplayName(integration.providerId),
+      integrationIdentifier: integration.identifier,
+      items,
+      addableTypes: getAddableToolEndpointTypes(integration.providerId),
+    });
+  }
+
+  const orphanEndpoints = toolEndpoints.filter((endpoint) => !consumedEndpoints.has(endpoint.identifier));
+  const orphanGroups = new Map<string, ChannelEndpointDto[]>();
+
+  for (const endpoint of orphanEndpoints) {
+    const key = endpoint.integrationIdentifier ?? endpoint.identifier;
+    orphanGroups.set(key, [...(orphanGroups.get(key) ?? []), endpoint]);
+  }
+
+  for (const [key, endpoints] of orphanGroups) {
+    const [first] = endpoints;
+    const providerId = first.providerId ?? '';
+
+    rows.push({
+      id: `tool-orphan:${key}`,
+      kind: 'chatIntegration',
+      channel: ChannelTypeEnum.TOOL,
+      providerId,
+      displayName: getProviderDisplayName(providerId),
+      integrationIdentifier: first.integrationIdentifier ?? '',
+      items: endpoints.map((endpoint) => buildEndpointItem(endpoint)),
+      addableTypes: [],
+    });
+  }
+
+  return {
+    channel: ChannelTypeEnum.TOOL,
+    label: CHANNEL_LABELS[ChannelTypeEnum.TOOL],
+    rows,
+  };
+}
+
+/**
  * Builds a single generic value row (email/SMS) instead of one row per provider integration.
  * The row is only produced when at least one active integration for the channel exists.
  */
@@ -330,6 +400,8 @@ type BuildCredentialGroupsArgs = {
   integrations: IIntegration[];
   channelEndpoints?: ChannelEndpointDto[];
   channelConnections?: ChannelConnectionDto[];
+  /** When false, the TOOL section is omitted (feature-flag gated). */
+  includeToolChannel?: boolean;
 };
 
 export function buildCredentialGroups({
@@ -337,12 +409,17 @@ export function buildCredentialGroups({
   integrations,
   channelEndpoints = [],
   channelConnections = [],
+  includeToolChannel = false,
 }: BuildCredentialGroupsArgs): ChannelGroup[] {
   const storedChannels = (subscriber.channels ?? []) as unknown as StoredChannel[];
   const email = subscriber.email ?? '';
   const phone = subscriber.phone ?? '';
 
-  const groups: ChannelGroup[] = GROUP_ORDER.map((channel) => {
+  const groupOrder = includeToolChannel
+    ? GROUP_ORDER
+    : GROUP_ORDER.filter((channel) => channel !== ChannelTypeEnum.TOOL);
+
+  const groups: ChannelGroup[] = groupOrder.map((channel) => {
     if (channel === ChannelTypeEnum.PUSH) {
       return {
         channel,
@@ -355,6 +432,10 @@ export function buildCredentialGroups({
 
     if (channel === ChannelTypeEnum.CHAT) {
       return buildChatGroup(integrations, storedChannels, channelEndpoints, channelConnections, phone);
+    }
+
+    if (channel === ChannelTypeEnum.TOOL) {
+      return buildToolGroup(integrations, channelEndpoints);
     }
 
     const value = channel === ChannelTypeEnum.EMAIL ? email : phone;
