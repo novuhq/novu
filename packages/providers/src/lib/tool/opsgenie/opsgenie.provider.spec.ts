@@ -79,8 +79,19 @@ test('throws when endpoint apiKey is empty', async () => {
   const provider = new OpsgenieProvider();
 
   await expect(provider.sendMessage({ content: 'hello', channelData: channelData('') })).rejects.toThrow(
-    /apiKey or region/i
+    /apiKey and a supported region/i
   );
+});
+
+test('throws when endpoint region is not a known Opsgenie region', async () => {
+  const provider = new OpsgenieProvider();
+
+  await expect(
+    provider.sendMessage({
+      content: 'hello',
+      channelData: channelData('og-key', 'apac' as unknown as 'us'),
+    })
+  ).rejects.toThrow(/apiKey and a supported region/i);
 });
 
 test('auto-generates deterministic alias from transactionId+subscriberId+stepId', async () => {

@@ -128,8 +128,8 @@ export class OpsgenieProvider extends BaseProvider implements IToolProvider {
     }
 
     const { apiKey, region } = channelData.endpoint;
-    if (!apiKey || !region) {
-      throw new Error('OpsgenieProvider channelData.endpoint is missing apiKey or region');
+    if (!apiKey || !(region in OPSGENIE_ENDPOINTS)) {
+      throw new Error('OpsgenieProvider channelData.endpoint requires an apiKey and a supported region ("us" or "eu")');
     }
 
     return { apiKey, region };
