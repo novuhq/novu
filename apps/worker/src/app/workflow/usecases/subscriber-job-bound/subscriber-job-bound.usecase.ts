@@ -58,6 +58,7 @@ const LOG_CONTEXT = 'SubscriberJobBoundUseCase';
 type TopicSubscriptionConditionVariables = {
   payload: Record<string, unknown>;
   subscriber: SubscriberEntity;
+  actor?: SubscriberEntity;
   context: ContextResolved;
   env: EnvironmentSystemVariables & Record<string, string>;
 };
@@ -532,6 +533,7 @@ export class SubscriberJobBound {
     return {
       payload: command.payload,
       subscriber,
+      ...(command.actor && { actor: command.actor }),
       context,
       env,
     };

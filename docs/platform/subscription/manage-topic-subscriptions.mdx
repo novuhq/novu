@@ -669,22 +669,23 @@ Topic subscription conditions are evaluated at **trigger time** when fanning out
 | --- | --- | --- |
 | `payload.*` | Trigger [payload](/platform/concepts/trigger) | `payload.tier`, `payload.status`, `payload.category` |
 | `subscriber.*` | Recipient [subscriber](/platform/concepts/subscribers) profile | `subscriber.email`, `subscriber.locale`, `subscriber.data.plan` |
+| `actor.*` | Optional [trigger actor](/platform/concepts/topics#exclude-actor) (who performed the action) | `actor.subscriberId`, `actor.email`, `actor.data.role` |
 | `context.*` | [Context](/platform/concepts/contexts) passed on the trigger | `context.tenant.id`, `context.tenant.data.plan` |
 | `env.*` | Current [environment](/platform/concepts/environments) and custom environment variables | `env.name`, `env.type`, `env.<customKey>` |
 
 <Note>
-  Topic subscription conditions are evaluated at **trigger time** when fanning out a workflow to a topic. Context **matching** (which subscriptions are candidates) still happens before JSON Logic runs via exact-match Context filtering. Condition rules can additionally read resolved Context fields under `context.*`.
+  Topic subscription conditions are evaluated at **trigger time** when fanning out a workflow to a topic. Context **matching** (which subscriptions are candidates) still happens before JSON Logic runs via exact-match Context filtering. Condition rules can additionally read resolved Context fields under `context.*`, and the optional trigger actor under `actor.*`.
 </Note>
 
 <Warning>
-  Do not confuse **Context matching** with condition variables. Exact-match Context filtering selects which subscriptions are evaluated. JSON Logic can then read resolved Context values (for example `context.tenant.id`) along with payload, subscriber, and environment data.
+  Do not confuse **Context matching** with condition variables. Exact-match Context filtering selects which subscriptions are evaluated. JSON Logic can then read resolved Context values (for example `context.tenant.id`) along with payload, subscriber, actor, and environment data.
 </Warning>
 
 ### Syntax rules
 
 - Use dot paths in `{ "var": "..." }`. For example, `{ "var": "payload.tier" }`, `{ "var": "subscriber.data.plan" }`, or `{ "var": "context.tenant.id" }`.
 - Do **not** use Liquid/template syntax (`{{payload.tier}}`) in conditions. That syntax is for workflow step content, not JSON Logic rules.
-- Always use the full namespace prefix (`payload.`, `subscriber.`, `context.`, or `env.`). For example, use `payload.tier` rather than `tier`.
+- Always use the full namespace prefix (`payload.`, `subscriber.`, `actor.`, `context.`, or `env.`). For example, use `payload.tier` rather than `tier`.
 
 ### Examples
 
@@ -703,6 +704,16 @@ Topic subscription conditions are evaluated at **trigger time** when fanning out
   "===": [{ "var": "subscriber.data.plan" }, "enterprise"]
 }
 ```
+
+**Trigger actor:**
+
+```json
+{
+  "===": [{ "var": "actor.data.role" }, "admin"]
+}
+```
+
+Only subscriptions whose condition passes are delivered when the trigger includes a matching actor. If the trigger omits `actor`, conditions that reference `actor.*` evaluate against missing data and typically do not match.
 
 **Context tenant:**
 
