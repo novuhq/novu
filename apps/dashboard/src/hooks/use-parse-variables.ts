@@ -2,8 +2,9 @@ import { type JSONSchemaDefinition } from '@novu/shared';
 import { JSONSchema7 } from 'json-schema';
 import merge from 'lodash.merge';
 import { useMemo } from 'react';
+import { useContextTypeVariables } from '@/hooks/use-context-type-variables';
 import { useDynamicPreviewSchema } from '@/hooks/use-dynamic-preview-schema';
-import { type EnhancedParsedVariables, parseStepVariables } from '@/utils/parseStepVariables';
+import { type EnhancedParsedVariables, LiquidVariable, parseStepVariables } from '@/utils/parseStepVariables';
 
 export function useParseVariables(
   schema?: JSONSchemaDefinition | JSONSchema7,
@@ -12,6 +13,7 @@ export function useParseVariables(
   isLayout?: boolean
 ): EnhancedParsedVariables {
   const previewSchema = useDynamicPreviewSchema(isLayout);
+  const contextTypeVariables = useContextTypeVariables();
 
   const parsedVariables = useMemo(() => {
     /**
@@ -21,17 +23,28 @@ export function useParseVariables(
      */
     const mergedSchema = schema ? merge({}, schema, previewSchema) : schema;
 
-    return mergedSchema
+    const result = mergedSchema
       ? parseStepVariables(mergedSchema, { digestStepId, isPayloadSchemaEnabled })
       : {
-          variables: [],
-          namespaces: [],
-          primitives: [],
-          arrays: [],
+          variables: [] as LiquidVariable[],
+          namespaces: [] as LiquidVariable[],
+          primitives: [] as LiquidVariable[],
+          arrays: [] as LiquidVariable[],
           enhancedVariables: [],
           isAllowedVariable: () => false,
         };
-  }, [schema, digestStepId, isPayloadSchemaEnabled, previewSchema]);
+
+    if (contextTypeVariables.length === 0) return result;
+
+    const existingNames = new Set(result.variables.map((v) => v.name));
+    const newVars = contextTypeVariables.filter((v) => !existingNames.has(v.name));
+    if (newVars.length === 0) return result;
+
+    return {
+      ...result,
+      variables: [...result.variables, ...newVars],
+    };
+  }, [schema, digestStepId, isPayloadSchemaEnabled, previewSchema, contextTypeVariables]);
 
   return parsedVariables;
 }

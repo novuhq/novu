@@ -36,8 +36,24 @@ function addContextVariableSuggestions(
     }
   };
 
+  // "context." (no type yet) → suggest known context types from existing variables
+  if (parts.length === 2 && !parts[1]?.trim()) {
+    const knownTypes = new Set<string>();
+    for (const v of variables) {
+      if (v.name.startsWith('context.')) {
+        const contextParts = v.name.split('.');
+        if (contextParts.length >= 2 && contextParts[1]) {
+          knownTypes.add(contextParts[1]);
+        }
+      }
+    }
+    for (const type of knownTypes) {
+      addIfNotExists(`context.${type}.data`);
+      addIfNotExists(`context.${type}.id`);
+    }
+  }
   // "context.tenant" → suggest "context.tenant.id" and "context.tenant.data"
-  if (parts.length === 2 && parts[1]?.trim()) {
+  else if (parts.length === 2 && parts[1]?.trim()) {
     addIfNotExists(`${queryWithoutSuffix}.id`);
     addIfNotExists(`${queryWithoutSuffix}.data`);
   }
