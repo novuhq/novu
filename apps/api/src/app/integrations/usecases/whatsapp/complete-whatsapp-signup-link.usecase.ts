@@ -22,8 +22,10 @@ const SYNTHETIC_USER_ID = 'whatsapp-signup-link';
  * Completes Meta Embedded Signup from the public tokenized page. The visitor
  * is unauthenticated; trust comes from the opaque Redis-backed signup token
  * minted via `POST /v1/integrations/whatsapp/signup-link`. The token is
- * claimed single-use up front and released again when the completion fails,
- * so the visitor can retry the same link.
+ * claimed single-use up front and released again when the completion fails
+ * before any credentials are saved, so the visitor can retry the same link.
+ * Once credentials are persisted the token stays consumed — releasing it
+ * would let the same public link replay the signup and overwrite them.
  */
 @Injectable()
 export class CompleteWhatsAppSignupLink {
@@ -60,7 +62,10 @@ export class CompleteWhatsAppSignupLink {
       throw err;
     }
 
-    if (!result.success) {
+    // `webhook_configuration_failed` is the only failure reported after
+    // credentials were saved — keep the token consumed so the link cannot be
+    // replayed to overwrite them. Pre-save failures re-open the link for retry.
+    if (!result.success && result.error?.code !== 'webhook_configuration_failed') {
       await this.releaseToken(command.token, claimed);
     }
 

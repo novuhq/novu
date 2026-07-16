@@ -67,9 +67,10 @@ export class WhatsAppSignupLinkCacheUnavailableError extends Error {
  * following the Telegram mobile-link pattern: the connect CLI (keyless or
  * authenticated) mints a token bound to an env/org/agent/integration, and the
  * unauthenticated signup page + status endpoints are trusted on that token
- * alone. The completion endpoint claims the token single-use; a failed
- * completion releases it so the visitor can retry the same link. The
- * used-marker keeps the payload so status polling survives completion.
+ * alone. The completion endpoint claims the token single-use; a completion
+ * that fails before credentials are saved releases it so the visitor can
+ * retry the same link. The used-marker keeps the payload so status polling
+ * survives completion.
  */
 @Injectable()
 export class WhatsAppSignupLinkTokenService {

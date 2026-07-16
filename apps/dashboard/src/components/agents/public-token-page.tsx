@@ -1,4 +1,5 @@
 import { motion } from 'motion/react';
+import { Helmet } from 'react-helmet-async';
 import { cn } from '@/utils/ui';
 
 /**
@@ -9,6 +10,14 @@ import { cn } from '@/utils/ui';
 export function PageShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="bg-bg-weak flex min-h-dvh flex-col items-center justify-between px-4 py-8">
+      {/* These pages carry a bearer token in the URL path. The app-wide
+          Referrer-Policy (no-referrer-when-downgrade) would otherwise send the
+          full tokenized URL to cross-origin destinations — e.g. the Facebook
+          SDK and Embedded Signup dialogs on the WhatsApp page. `origin` keeps
+          the token out of the Referer header while still identifying the site. */}
+      <Helmet>
+        <meta name="referrer" content="origin" />
+      </Helmet>
       <div className="w-full max-w-md flex-1 pt-[max(env(safe-area-inset-top),0px)]">
         <motion.div
           initial={{ opacity: 0, y: 12 }}
