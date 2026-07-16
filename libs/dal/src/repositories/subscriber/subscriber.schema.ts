@@ -31,6 +31,25 @@ const subscriberSchema = new Schema<SubscriberDBModel>(
     lastOnlineAt: Schema.Types.Date,
     data: Schema.Types.Mixed,
     timezone: Schema.Types.String,
+    /**
+     * Optional daily preferred contact window (HH:mm in the subscriber timezone).
+     * Unset/null means no time-of-day restriction — safe default for existing data.
+     * channelOverrides: Partial<Record<ChannelTypeEnum, 'respect' | 'always'>>
+     * (unset channel => respect). Existing { start, end } docs remain valid.
+     */
+    preferredHours: {
+      type: {
+        start: Schema.Types.String,
+        end: Schema.Types.String,
+        channelOverrides: {
+          type: Schema.Types.Mixed,
+          required: false,
+        },
+      },
+      required: false,
+      _id: false,
+      default: undefined,
+    },
   },
   schemaOptions
 );

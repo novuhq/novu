@@ -355,6 +355,7 @@ const UPDATABLE_SUBSCRIBER_FIELDS: readonly (keyof ISubscribersDefine)[] = [
   'data',
   'channels',
   'timezone',
+  'preferredHours',
 ];
 
 function pickUpdatableSubscriberFields(subscriber: ISubscribersDefine): Partial<ISubscribersDefine> {

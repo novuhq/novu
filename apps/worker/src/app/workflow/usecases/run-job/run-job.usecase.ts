@@ -31,6 +31,7 @@ import {
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
   FeatureFlagsKeysEnum,
+  PreferredHours,
   Schedule,
   StepTypeEnum,
 } from '@novu/shared';
@@ -47,6 +48,10 @@ import { SendMessageStatus } from '../send-message/send-message-type.usecase';
 import { SetJobAsFailedCommand } from '../update-job-status/set-job-as.command';
 import { SetJobAsFailed } from '../update-job-status/set-job-as-failed.usecase';
 import { RunJobCommand } from './run-job.command';
+import {
+  calculateNextPreferredHoursTime,
+  isPreferredHoursDeliveryAllowed,
+} from './preferred-hours-validator';
 import { calculateNextAvailableTime, isWithinSchedule } from './schedule-validator';
 
 const nr = require('newrelic');
@@ -129,6 +134,7 @@ export class RunJob {
 
     let shouldQueueNextJob = true;
     let isJobExtendedToSubscriberSchedule = false;
+    let isJobQueuedForPreferredHours = false;
     let error: Error | undefined;
     let notification: PartialNotificationEntity | null = null;
 
@@ -189,10 +195,11 @@ export class RunJob {
           _environmentId: job._environmentId,
           _organizationId: job._organizationId,
         },
-        'timezone',
+        'timezone preferredHours',
         { readPreference: 'secondaryPreferred' }
       );
       const timezone = subscriber?.timezone;
+      const preferredHours = subscriber?.preferredHours;
       const isOutsideSubscriberSchedule = schedule?.isEnabled
         ? !isWithinSchedule(schedule, new Date(), timezone)
         : false;
@@ -254,6 +261,32 @@ export class RunJob {
         await this.conditionallyUpdateDeliveryLifecycle(job, WorkflowRunStatusEnum.PROCESSING, workflow, notification);
 
         return;
+      }
+
+      // preferredHours: when set, never drop — always queue until the window opens.
+      // Pipeline / always-on steps (trigger, in-app, delay, digest, http, critical) skip this gate.
+      // Channels with preferredHours.channelOverrides[channel] === 'always' interrupt immediately.
+      if (
+        !this.shouldSkipScheduleCheck(job, notification.critical) &&
+        !isPreferredHoursDeliveryAllowed(preferredHours, job.type, new Date(), timezone)
+      ) {
+        this.logger.info(
+          {
+            jobId: job._id,
+            subscriberId: job.subscriberId,
+            stepType: job.type,
+            preferredHours,
+            timezone,
+          },
+          'The step was queued until the subscriber preferred hours window'
+        );
+
+        isJobQueuedForPreferredHours = await this.queueJobForPreferredHours(job, preferredHours, timezone);
+        if (isJobQueuedForPreferredHours) {
+          shouldQueueNextJob = false;
+
+          return;
+        }
       }
 
       await this.jobRepository.updateStatus(job._environmentId, job._id, JobStatusEnum.RUNNING);
@@ -403,9 +436,11 @@ export class RunJob {
       }
       throw caughtError;
     } finally {
-      if (shouldQueueNextJob && !isJobExtendedToSubscriberSchedule) {
+      const jobDeferredForLater = isJobExtendedToSubscriberSchedule || isJobQueuedForPreferredHours;
+
+      if (shouldQueueNextJob && !jobDeferredForLater) {
         await this.tryQueueNextJobs(job, notification, !!error);
-      } else if (!isJobExtendedToSubscriberSchedule && !error) {
+      } else if (!jobDeferredForLater && !error) {
         // Update workflow run status based on step runs when halting on step failure.
         // Skip when an unexpected exception was thrown — the Bull worker's setJobAsFailed
         // will handle the final status to avoid duplicate traces.
@@ -1035,6 +1070,88 @@ export class RunJob {
         maxExtensions: MAX_EXTENSIONS,
       },
       'Step was extended to the next available time in the subscriber schedule'
+    );
+
+    return true;
+  }
+
+  /**
+   * When a delivery would land outside the subscriber's preferredHours, re-queue
+   * the same job until the next window start. Never drops the notification.
+   */
+  private async queueJobForPreferredHours(
+    job: JobEntity,
+    preferredHours?: PreferredHours | null,
+    timezone?: string
+  ): Promise<boolean> {
+    const nextAvailableTime = calculateNextPreferredHoursTime(preferredHours, new Date(), timezone);
+    const delayMs = Math.max(0, differenceInMilliseconds(nextAvailableTime, new Date()));
+
+    if (delayMs === 0) {
+      return false;
+    }
+
+    await this.jobRepository.updateOne(
+      {
+        _id: job._id,
+        _environmentId: job._environmentId,
+      },
+      {
+        $set: {
+          status: JobStatusEnum.DELAYED,
+        },
+      }
+    );
+
+    const updatedJob = await this.jobRepository.findOne({
+      _id: job._id,
+      _environmentId: job._environmentId,
+    });
+
+    if (!updatedJob) {
+      throw new PlatformException(`Job with id ${job._id} not found`);
+    }
+
+    await this.stepRunRepository.create(updatedJob, {
+      status: JobStatusEnum.DELAYED,
+    });
+
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(updatedJob),
+        detail: DetailEnum.STEP_QUEUED_FOR_PREFERRED_HOURS,
+        source: ExecutionDetailsSourceEnum.INTERNAL,
+        status: ExecutionDetailsStatusEnum.PENDING,
+        isTest: false,
+        isRetry: false,
+        raw: JSON.stringify({
+          delayMs,
+          nextAvailableTime: timezone
+            ? formatInTimeZone(nextAvailableTime, timezone, 'yyyy-MM-dd HH:mm:ss zzz')
+            : nextAvailableTime.toISOString(),
+          timezone,
+          preferredHours,
+        }),
+      })
+    );
+
+    await this.addJobUsecase.queueJob({
+      job: updatedJob,
+      delay: delayMs,
+      untilDate: nextAvailableTime,
+      timezone,
+    });
+
+    this.logger.info(
+      {
+        jobId: updatedJob._id,
+        subscriberId: updatedJob.subscriberId,
+        stepType: updatedJob.type,
+        delayMs,
+        nextAvailableTime: nextAvailableTime.toISOString(),
+        preferredHours,
+      },
+      'Step was queued until the subscriber preferred hours window'
     );
 
     return true;

@@ -78,6 +78,7 @@ export enum DetailEnum {
   THROTTLE_WINDOW_IN_PAST = 'Throttle window date is in the past',
   STEP_EXTENDED_TO_SCHEDULE = 'Step was extended to the next available time in the subscriber schedule',
   SKIPPED_STEP_MAX_EXTENSIONS_REACHED = 'Step was executed due to maximum number of subscriber schedule extensions reached',
+  STEP_QUEUED_FOR_PREFERRED_HOURS = 'Step was queued until the subscriber preferred hours window',
   PUSH_INVALID_TOKEN_REMOVED = 'Invalid push device token was removed from subscriber',
   MSTEAMS_BOT_NOT_INSTALLED = 'MS Teams bot is not installed in the team/channel or for the user',
   MSTEAMS_CHANNEL_NOT_FOUND = 'MS Teams channel or user not found',

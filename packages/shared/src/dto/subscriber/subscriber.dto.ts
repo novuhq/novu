@@ -29,6 +29,11 @@ export class SubscriberDto {
   lastOnlineAt?: string;
   data?: Record<string, unknown> | null;
   timezone?: string;
+  preferredHours?: {
+    start: string;
+    end: string;
+    channelOverrides?: Partial<Record<string, 'respect' | 'always'>>;
+  } | null;
 }
 
 export interface ISubscriberFeedResponseDto {
@@ -59,6 +64,11 @@ export interface ISubscriberResponseDto {
   updatedAt: string;
   __v?: number;
   timezone?: string;
+  preferredHours?: {
+    start: string;
+    end: string;
+    channelOverrides?: Partial<Record<string, 'respect' | 'always'>>;
+  } | null;
 }
 
 export type SubscribersListResponseDto = {

@@ -1,4 +1,4 @@
-import { IChannelSettings, ISubscriber, SubscriberCustomData } from '@novu/shared';
+import { IChannelSettings, ISubscriber, PreferredHours, SubscriberCustomData } from '@novu/shared';
 import type { ChangePropsValueType } from '../../types/helpers';
 import type { EnvironmentId } from '../environment';
 import type { OrganizationId } from '../organization';
@@ -48,6 +48,11 @@ export class SubscriberEntity implements ISubscriber {
   data?: SubscriberCustomData;
 
   timezone?: string;
+
+  /**
+   * Daily preferred contact hours. Unset/null means no restriction.
+   */
+  preferredHours?: PreferredHours | null;
 }
 
 export type SubscriberDBModel = ChangePropsValueType<SubscriberEntity, '_environmentId' | '_organizationId'>;

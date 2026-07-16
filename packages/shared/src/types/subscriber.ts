@@ -1,5 +1,34 @@
+import { ChannelTypeEnum } from './channel';
 import { ChatProviderIdEnum, PushProviderIdEnum } from './providers';
 import { CustomDataType } from './utils';
+
+/**
+ * Per-channel policy for preferred contact hours.
+ * - `respect` (default): channel is gated by the preferred hours window
+ * - `always`: channel may interrupt / deliver immediately outside the window
+ */
+export type PreferredHoursChannelPolicy = 'respect' | 'always';
+
+/**
+ * Optional per-channel overrides. Unset channels default to `respect`.
+ */
+export type PreferredHoursChannelOverrides = Partial<Record<ChannelTypeEnum, PreferredHoursChannelPolicy>>;
+
+/**
+ * Daily preferred contact hours for a subscriber, evaluated in their timezone.
+ * Times use 24-hour `HH:mm` (e.g. `"09:00"`, `"18:00"`).
+ * When unset/null, notifications are not restricted by time of day.
+ * Overnight windows are supported when `end` is earlier than `start`
+ * (e.g. start `"22:00"`, end `"06:00"`).
+ *
+ * `channelOverrides` lets specific channels (e.g. SMS) always deliver while
+ * quieter channels (e.g. email) continue to respect the window.
+ */
+export type PreferredHours = {
+  start: string;
+  end: string;
+  channelOverrides?: PreferredHoursChannelOverrides;
+};
 
 export interface ISubscriber {
   _id?: string;
@@ -24,6 +53,11 @@ export interface ISubscriber {
   lastOnlineAt?: string;
   data?: SubscriberCustomData;
   timezone?: string;
+  /**
+   * Optional daily window when the subscriber prefers to be contacted.
+   * Absence or null means no time-of-day restriction.
+   */
+  preferredHours?: PreferredHours | null;
   __v?: number;
 }
 
@@ -71,6 +105,7 @@ export interface ISubscriberPayload {
   avatar?: string | null;
   locale?: string | null;
   timezone?: string | null;
+  preferredHours?: PreferredHours | null;
   data?: SubscriberCustomData | null;
   /**
    * @deprecated: use channelEndpoint instead

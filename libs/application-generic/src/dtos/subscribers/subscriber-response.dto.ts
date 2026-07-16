@@ -99,6 +99,28 @@ export class SubscriberResponseDtoOptional {
     nullable: true,
   })
   timezone?: string | null;
+
+  @ApiPropertyOptional({
+    description:
+      'Daily preferred contact hours (HH:mm) in the subscriber timezone. Null/omitted means no time-of-day restriction. channelOverrides may mark channels as always (interrupt) or respect (default).',
+    type: 'object',
+    nullable: true,
+    additionalProperties: false,
+    properties: {
+      start: { type: 'string', example: '09:00' },
+      end: { type: 'string', example: '18:00' },
+      channelOverrides: {
+        type: 'object',
+        additionalProperties: { type: 'string', enum: ['respect', 'always'] },
+        example: { sms: 'always', email: 'respect' },
+      },
+    },
+  })
+  preferredHours?: {
+    start: string;
+    end: string;
+    channelOverrides?: Partial<Record<string, 'respect' | 'always'>>;
+  } | null;
 }
 
 export class SubscriberResponseDto extends SubscriberResponseDtoOptional {

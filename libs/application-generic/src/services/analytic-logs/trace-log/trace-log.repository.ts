@@ -622,6 +622,8 @@ export function mapEventTypeToTitle(eventType: EventType): string {
       return 'Step was extended to the next available time in the subscriber schedule';
     case 'step_skipped_max_extensions_reached':
       return 'Step was executed due to maximum number of subscriber schedule extensions reached';
+    case 'step_queued_for_preferred_hours':
+      return 'Step was queued until the subscriber preferred hours window';
     case 'push_invalid_token_removed':
       return 'Invalid push device token was removed from subscriber';
     case 'topic_subscription_preference_evaluation':
