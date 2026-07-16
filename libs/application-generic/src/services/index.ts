@@ -30,6 +30,7 @@ export {
   MessageInteractionService,
   MessageInteractionTrace,
 } from './message-interaction.service';
+export { NotificationPayloadService } from './notification-payload.service';
 export * from './metrics';
 export { MsTeamsTokenService } from './ms-teams-token.service';
 export * from './query-parser';

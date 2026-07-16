@@ -140,6 +140,17 @@ export enum FeatureFlagsKeysEnum {
    * organization for the duration of the rotation, then disable.
    */
   IS_MULTIPLE_SECRET_KEYS_ALLOWED = 'IS_MULTIPLE_SECRET_KEYS_ALLOWED',
+  /**
+   * Stop duplicating the trigger payload onto every job and every non-in-app
+   * message. When enabled, new jobs and email/SMS/push messages no longer
+   * persist `payload`; readers resolve it from the parent notification via
+   * `_notificationId`. In-app messages keep their payload for legacy feed
+   * filtering. Read paths handle both shapes regardless of this flag, so it can
+   * be toggled off at any time (forward-only, no data migration). Create the
+   * boolean in LaunchDarkly for cloud, or set `IS_PAYLOAD_DEDUP_ENABLED` when
+   * self-hosted.
+   */
+  IS_PAYLOAD_DEDUP_ENABLED = 'IS_PAYLOAD_DEDUP_ENABLED',
 
   // String flags
   CF_SCHEDULER_MODE = 'CF_SCHEDULER_MODE', // Values: "off" | "shadow" | "live" | "complete"

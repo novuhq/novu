@@ -38,7 +38,11 @@ export function getJobDigest(job: JobEntity): {
 } {
   const digestMeta = job.digest as IDigestRegularMetadata | undefined;
   const digestKey = digestMeta?.digestKey;
-  const digestValue = getNestedValue(job.payload, digestKey);
+  // Payload-dedup: the digest value is persisted on the job at creation time
+  // (`create-notification-jobs`), so prefer it and keep digest matching
+  // payload-independent. Fall back to deriving it from the (possibly hydrated)
+  // payload for legacy jobs that predate persisted digest metadata.
+  const digestValue = digestMeta?.digestValue ?? getNestedValue(job.payload, digestKey);
 
   return {
     digestKey,

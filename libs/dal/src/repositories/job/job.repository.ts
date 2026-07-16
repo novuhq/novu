@@ -94,6 +94,68 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
     }
   }
 
+  /**
+   * The single "completed TRIGGER jobs for this digest value" primitive shared
+   * by the regular ({@link findJobsToDigest}) and backoff digest event
+   * collection paths.
+   *
+   * Payload-dedup: trigger jobs may no longer carry a payload, so the digest
+   * value is matched against the value persisted on each transaction's sibling
+   * DIGEST job (`digest.digestValue`) rather than `payload.${digestKey}`. When
+   * no transaction matches, returns `[]` explicitly (no accidental `$in: []`).
+   */
+  public async findDigestEventTriggers(params: {
+    window: { field: 'createdAt' | 'updatedAt'; from: Date };
+    templateId: string;
+    environmentId: string;
+    subscriberId: string;
+    digestKey?: string;
+    digestValue?: string | number;
+    excludeTransactionIds?: string[];
+  }): Promise<JobEntity[]> {
+    const { window, templateId, environmentId, subscriberId, digestKey, digestValue, excludeTransactionIds = [] } =
+      params;
+
+    const windowFilter =
+      window.field === 'updatedAt' ? { updatedAt: { $gte: window.from } } : { createdAt: { $gte: window.from } };
+
+    let matchingTransactionIds: string[] | undefined;
+    if (digestKey) {
+      const matchingDigestJobs = await this.find(
+        {
+          ...windowFilter,
+          _templateId: templateId,
+          type: StepTypeEnum.DIGEST,
+          _environmentId: environmentId,
+          _subscriberId: subscriberId,
+          'digest.digestValue': digestValue,
+        },
+        'transactionId'
+      );
+
+      matchingTransactionIds = [...new Set(matchingDigestJobs.map((job) => job.transactionId))].filter(
+        (transactionId) => !excludeTransactionIds.includes(transactionId)
+      );
+
+      if (matchingTransactionIds.length === 0) {
+        return [];
+      }
+    }
+
+    return this.find({
+      ...windowFilter,
+      _templateId: templateId,
+      status: JobStatusEnum.COMPLETED,
+      type: StepTypeEnum.TRIGGER,
+      _environmentId: environmentId,
+      _subscriberId: subscriberId,
+      transactionId: {
+        $nin: excludeTransactionIds,
+        ...(matchingTransactionIds ? { $in: matchingTransactionIds } : {}),
+      },
+    });
+  }
+
   public async findJobsToDigest(
     from: Date,
     templateId: string,
@@ -117,21 +179,16 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
       _environmentId: environmentId,
       _subscriberId: subscriberId,
     });
-    const transactionIds = digests.map((job) => job.transactionId);
+    const excludeTransactionIds = digests.map((job) => job.transactionId);
 
-    const result = await this.find({
-      updatedAt: {
-        $gte: from,
-      },
-      _templateId: templateId,
-      status: JobStatusEnum.COMPLETED,
-      type: StepTypeEnum.TRIGGER,
-      _environmentId: environmentId,
-      _subscriberId: subscriberId,
-      ...(digestKey && { [`payload.${digestKey}`]: digestValue }),
-      transactionId: {
-        $nin: transactionIds,
-      },
+    const result = await this.findDigestEventTriggers({
+      window: { field: 'updatedAt', from },
+      templateId,
+      environmentId,
+      subscriberId,
+      digestKey,
+      digestValue,
+      excludeTransactionIds,
     });
 
     const transactionIdsTriggers = result.map((job) => job.transactionId);

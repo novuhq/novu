@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { FeatureFlagsService } from '@novu/application-generic';
+import { FeatureFlagsService, NotificationPayloadService } from '@novu/application-generic';
 import { MessageEntity, MessageRepository, OrganizationEntity, SubscriberEntity } from '@novu/dal';
 import { ActorTypeEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { GetSubscriber, GetSubscriberCommand } from '../../../subscribers/usecases/get-subscriber';
@@ -9,6 +9,7 @@ import { GetMessagesCommand } from './get-messages.command';
 export class GetMessages {
   constructor(
     private messageRepository: MessageRepository,
+    private notificationPayloadService: NotificationPayloadService,
     private getSubscriberUseCase: GetSubscriber,
     private featureFlagService: FeatureFlagsService
   ) {}
@@ -64,6 +65,12 @@ export class GetMessages {
         message.actor.data = this.processUserAvatar(message.actorSubscriber);
       }
     }
+
+    // Payload-dedup: email/SMS/push messages no longer persist their own
+    // payload. Backfill the API response from the parent notification so the
+    // response shape stays stable. In-app and legacy messages keep their own
+    // payload and are left untouched.
+    await this.notificationPayloadService.hydrateEntitiesPayload(data);
 
     const isEnabled = await this.featureFlagService.getFlag({
       key: FeatureFlagsKeysEnum.IS_NEW_MESSAGES_API_RESPONSE_ENABLED,

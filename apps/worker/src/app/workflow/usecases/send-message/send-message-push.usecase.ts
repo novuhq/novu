@@ -778,7 +778,7 @@ export class SendMessagePush extends SendMessageBase {
       deviceTokens,
       content: this.storeContent() ? content : null,
       title,
-      payload: command.payload as never,
+      payload: this.payloadToPersist(command, command.payload) as never,
       overrides: overrides as never,
       providerId: integration.providerId,
       _jobId: command.jobId,
