@@ -6,6 +6,7 @@ import { PostActionEnum } from '../constants';
 import { agent } from '../resources/agent/agent.resource';
 import type { AgentMessage, AgentMessageContext } from '../resources/agent/agent.types';
 import { createMockBridgeRequest } from '../resources/agent/bridge-request.fixture';
+import type { Logger } from '../types';
 import { serve } from './hono';
 
 type OnMessageMock = Mock<(message: AgentMessage, ctx: AgentMessageContext) => Promise<void>>;
@@ -53,6 +54,7 @@ describe('hono serve() waitUntil wiring', () => {
 
   afterEach(() => {
     global.fetch = originalFetch;
+    vi.unstubAllEnvs();
     vi.restoreAllMocks();
   });
 
@@ -78,6 +80,21 @@ describe('hono serve() waitUntil wiring', () => {
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ status: 'ack' });
+
+    await vi.waitFor(() => expect(onMessageSpy).toHaveBeenCalledTimes(1));
+  });
+
+  it('surfaces the freeze-prone runtime warning when there is no execution context on AWS Lambda', async () => {
+    vi.stubEnv('AWS_LAMBDA_FUNCTION_NAME', 'my-function');
+    const logger: Logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn() };
+    const warningClient = new Client({ secretKey: 'test-secret-key', strictAuthentication: false, logger });
+    const handler = serve({ agents: [agent('test-bot', { onMessage: onMessageSpy })], client: warningClient });
+
+    const response = await handler(createMockHonoContext({}));
+
+    expect(response.status).toBe(200);
+    expect(logger.warn).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(logger.warn).mock.calls[0][0]).toContain('AWS Lambda');
 
     await vi.waitFor(() => expect(onMessageSpy).toHaveBeenCalledTimes(1));
   });
