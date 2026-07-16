@@ -39,12 +39,16 @@ export class NotificationPayloadService {
       notificationIdsByEnvironment.set(carrier._environmentId, notificationIds);
     }
 
-    for (const [environmentId, notificationIds] of notificationIdsByEnvironment.entries()) {
-      const notifications = await this.notificationRepository.find(
-        { _id: { $in: [...notificationIds] }, _environmentId: environmentId },
-        '_id payload'
-      );
+    const notificationsPerEnvironment = await Promise.all(
+      [...notificationIdsByEnvironment.entries()].map(([environmentId, notificationIds]) =>
+        this.notificationRepository.find(
+          { _id: { $in: [...notificationIds] }, _environmentId: environmentId },
+          '_id payload'
+        )
+      )
+    );
 
+    for (const notifications of notificationsPerEnvironment) {
       for (const notification of notifications) {
         payloadByNotificationId.set(notification._id, notification.payload);
       }

@@ -142,18 +142,23 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
       }
     }
 
-    return this.find({
-      ...windowFilter,
-      _templateId: templateId,
-      status: JobStatusEnum.COMPLETED,
-      type: StepTypeEnum.TRIGGER,
-      _environmentId: environmentId,
-      _subscriberId: subscriberId,
-      transactionId: {
-        $nin: excludeTransactionIds,
-        ...(matchingTransactionIds ? { $in: matchingTransactionIds } : {}),
+    return this.find(
+      {
+        ...windowFilter,
+        _templateId: templateId,
+        status: JobStatusEnum.COMPLETED,
+        type: StepTypeEnum.TRIGGER,
+        _environmentId: environmentId,
+        _subscriberId: subscriberId,
+        transactionId: {
+          $nin: excludeTransactionIds,
+          ...(matchingTransactionIds ? { $in: matchingTransactionIds } : {}),
+        },
       },
-    });
+      // Only what downstream consumers need: buildDigestEvent (event refs) and
+      // findJobsToDigest's completion update (transactionId).
+      '_id payload _notificationId createdAt transactionId'
+    );
   }
 
   public async findJobsToDigest(

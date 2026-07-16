@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { FeatureFlagsService, NotificationPayloadService } from '@novu/application-generic';
 import { MessageEntity, MessageRepository, OrganizationEntity, SubscriberEntity } from '@novu/dal';
-import { ActorTypeEnum, FeatureFlagsKeysEnum } from '@novu/shared';
+import { ActorTypeEnum, ChannelTypeEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { GetSubscriber, GetSubscriberCommand } from '../../../subscribers/usecases/get-subscriber';
 import { GetMessagesCommand } from './get-messages.command';
 
@@ -66,11 +66,10 @@ export class GetMessages {
       }
     }
 
-    // Payload-dedup: email/SMS/push messages no longer persist their own
-    // payload. Backfill the API response from the parent notification so the
-    // response shape stays stable. In-app and legacy messages keep their own
-    // payload and are left untouched.
+    // Payload-dedup: email/SMS/push messages no longer persist their own payload;
+    // backfill from the parent notification so the API response shape stays stable.
     await this.notificationPayloadService.hydrateEntitiesPayload(data);
+    this.stripAttachmentsForParity(data);
 
     const isEnabled = await this.featureFlagService.getFlag({
       key: FeatureFlagsKeysEnum.IS_NEW_MESSAGES_API_RESPONSE_ENABLED,
@@ -98,6 +97,25 @@ export class GetMessages {
       pageSize: LIMIT,
       data,
     };
+  }
+
+  /**
+   * Email/SMS message payloads historically omitted `attachments` (stripped at
+   * send time). Hydrating from the notification re-introduces the uploaded
+   * attachment metadata, so drop it for those channels to preserve the prior
+   * API shape. Clones (via rest) so the shared notification payload reference
+   * is never mutated. Push kept attachments before, so it is left untouched.
+   */
+  private stripAttachmentsForParity(messages: MessageEntity[]): void {
+    for (const message of messages) {
+      const isAttachmentStrippingChannel =
+        message.channel === ChannelTypeEnum.EMAIL || message.channel === ChannelTypeEnum.SMS;
+
+      if (isAttachmentStrippingChannel && message.payload?.attachments) {
+        const { attachments, ...payloadWithoutAttachments } = message.payload;
+        message.payload = payloadWithoutAttachments;
+      }
+    }
   }
 
   private getHasMore(page: number, limit: number, feedLength: number, totalCount: number) {
