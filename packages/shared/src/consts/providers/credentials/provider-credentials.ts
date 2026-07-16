@@ -1614,26 +1614,14 @@ export const anthropicAwsAgentConfig: IConfigCredential[] = [
  */
 export const pagerdutyConfig: IConfigCredential[] = [];
 
-export const opsgenieConfig: IConfigCredential[] = [
-  {
-    key: CredentialsKeyEnum.ApiKey,
-    displayName: 'API Key',
-    type: 'string',
-    description: 'API key from an Opsgenie API integration. Sent as `Authorization: GenieKey <apiKey>`.',
-    required: true,
-  },
-  {
-    key: CredentialsKeyEnum.Region,
-    displayName: 'Region',
-    type: 'dropdown',
-    required: true,
-    value: 'us',
-    dropdown: [
-      { name: 'US (default)', value: 'us' },
-      { name: 'EU', value: 'eu' },
-    ],
-  },
-];
+/**
+ * Opsgenie is routed per subscriber: the API integration key and region live
+ * on the per-subscriber `ChannelConnection.auth`, provisioned via
+ * `POST /v1/channel-endpoints` with `type: opsgenie_integration`. The env-level
+ * integration record is an anchor only (identifier + name); no fields are
+ * configured on the integration itself.
+ */
+export const opsgenieConfig: IConfigCredential[] = [];
 
 export const toolWebhookConfig: IConfigCredential[] = [
   {
