@@ -1,8 +1,6 @@
 import { PermissionsEnum } from '@novu/shared';
-import { useCallback, useRef, useState } from 'react';
-import { RiSearchLine } from 'react-icons/ri';
+import { useCallback } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
-import { Input } from '@/components/primitives/input';
 import { PermissionButton } from '@/components/primitives/permission-button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import { buildRoute, ROUTES } from '@/utils/routes';
@@ -12,16 +10,14 @@ import { TableIntegration } from '../components/integrations/types';
 
 export function IntegrationsListPage() {
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState('');
-  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const onItemClick = (item: TableIntegration) => {
     navigate(buildRoute(ROUTES.INTEGRATIONS_UPDATE, { integrationId: item.integrationId }));
   };
 
-  const onConnectProviderClick = useCallback(() => {
-    searchInputRef.current?.focus();
-  }, []);
+  const onAddIntegrationClickCallback = useCallback(() => {
+    navigate(ROUTES.INTEGRATIONS_CONNECT);
+  }, [navigate]);
 
   return (
     <DashboardLayout
@@ -43,24 +39,14 @@ export function IntegrationsListPage() {
             size="xs"
             variant="primary"
             mode="gradient"
-            onClick={onConnectProviderClick}
+            onClick={onAddIntegrationClickCallback}
             className="mr-2.5"
           >
             Connect Provider
           </PermissionButton>
         </div>
         <TabsContent value="providers" className="mt-0! p-2.5">
-          <div className="mb-4 max-w-sm">
-            <Input
-              ref={searchInputRef}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search providers across channels..."
-              leadingIcon={RiSearchLine}
-              size="xs"
-            />
-          </div>
-          <IntegrationsList onItemClick={onItemClick} searchQuery={searchQuery} />
+          <IntegrationsList onItemClick={onItemClick} />
         </TabsContent>
       </Tabs>
       <Outlet />

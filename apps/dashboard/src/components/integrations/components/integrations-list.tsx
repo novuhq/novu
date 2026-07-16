@@ -12,7 +12,6 @@ type IntegrationsListProps = {
   onItemClick: (item: TableIntegration) => void;
   excludeIntegrationIds?: string[];
   variant?: IntegrationsListVariant;
-  searchQuery?: string;
 };
 
 function IntegrationCardSkeleton() {
@@ -79,36 +78,19 @@ function IntegrationChannelGroupSkeleton({ variant }: { variant?: IntegrationsLi
   );
 }
 
-export function IntegrationsList({
-  onItemClick,
-  excludeIntegrationIds,
-  variant = 'default',
-  searchQuery = '',
-}: IntegrationsListProps) {
+export function IntegrationsList({ onItemClick, excludeIntegrationIds, variant = 'default' }: IntegrationsListProps) {
   const { currentEnvironment, environments } = useEnvironment();
   const { integrations, isLoading } = useFetchIntegrations();
   const availableIntegrations = novuProviders;
 
   const groupedIntegrations = useMemo(() => {
-    const normalizedQuery = searchQuery.toLowerCase().trim();
-
     return integrations
       ?.filter((i) => i.providerId !== EmailProviderIdEnum.NovuAgent)
-      .filter((integration) => {
-        if (!normalizedQuery) {
-          return true;
-        }
-
-        const provider = availableIntegrations.find((p) => p.id === integration.providerId);
-        const providerName = provider?.displayName?.toLowerCase() ?? '';
-        const integrationName = integration.name?.toLowerCase() ?? '';
-
-        return providerName.includes(normalizedQuery) || integrationName.includes(normalizedQuery);
-      })
       .reduce(
         (acc, integration) => {
           const { channel } = integration;
 
+          // Skip integrations without a channel (e.g. agent-runtime integrations).
           if (!channel) {
             return acc;
           }
@@ -123,7 +105,7 @@ export function IntegrationsList({
         },
         {} as Record<ChannelTypeEnum, typeof integrations>
       );
-  }, [integrations, searchQuery, availableIntegrations]);
+  }, [integrations]);
 
   if (isLoading || !currentEnvironment) {
     return (
