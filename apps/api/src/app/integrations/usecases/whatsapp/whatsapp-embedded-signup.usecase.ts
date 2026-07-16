@@ -7,6 +7,7 @@ import { ConfigureWhatsAppWebhook } from '../../../agents/channels/whatsapp/conf
 import type { WhatsAppEmbeddedSignupResponseDto } from '../../dtos/whatsapp-embedded-signup.dto';
 import { UpdateIntegrationCommand } from '../update-integration/update-integration.command';
 import { UpdateIntegration } from '../update-integration/update-integration.usecase';
+import { getNovuWhatsAppPlatformConfig } from './whatsapp-credentials.utils';
 import { WhatsAppEmbeddedSignupCommand } from './whatsapp-embedded-signup.command';
 import {
   exchangeEmbeddedSignupCodeForToken,
@@ -17,17 +18,6 @@ import {
   type PhoneNumberDetailsResponse,
   registerWhatsAppPhoneNumber,
 } from './whatsapp-graph-api.utils';
-
-function getNovuWhatsAppPlatformConfig(): { appId: string; appSecret: string } | undefined {
-  const appId = process.env.NOVU_WHATSAPP_APP_ID?.trim();
-  const appSecret = process.env.NOVU_WHATSAPP_APP_SECRET?.trim();
-
-  if (!appId || !appSecret) {
-    return undefined;
-  }
-
-  return { appId, appSecret };
-}
 
 @Injectable()
 export class WhatsAppEmbeddedSignup {

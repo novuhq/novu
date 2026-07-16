@@ -45,6 +45,7 @@ import { FeatureFlagsProvider } from './context/feature-flags-provider';
 import { AgentDetailsPage } from './pages/agent-details';
 import { AgentSlackSetupPage } from './pages/agent-slack-setup-page';
 import { AgentTelegramMobileSetupPage } from './pages/agent-telegram-mobile-setup-page';
+import { AgentWhatsAppSignupPage } from './pages/agent-whatsapp-signup-page';
 import { AgentsPage } from './pages/agents';
 import { AgentsSetupPage } from './pages/agents-setup-page';
 import { CliAuthPage } from './pages/cli-auth';
@@ -420,6 +421,14 @@ const router = createBrowserRouter([
                     element: (
                       <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
                         <AgentDetailsPage />
+                      </ProtectedRoute>
+                    ),
+                  },
+                  {
+                    path: ROUTES.AGENT_WHATSAPP_SIGNUP,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.INTEGRATION_WRITE}>
+                        <AgentWhatsAppSignupPage />
                       </ProtectedRoute>
                     ),
                   },

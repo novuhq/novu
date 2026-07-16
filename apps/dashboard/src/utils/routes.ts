@@ -87,6 +87,8 @@ export const ROUTES = {
   /** Must be registered before AGENT_DETAILS_TAB so `.../integrations/:integrationIdentifier` is not parsed as a tab name. */
   AGENT_DETAILS_INTEGRATIONS_DETAIL:
     '/env/:environmentSlug/agents/:agentIdentifier/integrations/:integrationIdentifier',
+  /** Minimal Embedded Signup page opened by `npx novu connect` (expects `?integration=<identifier>`). */
+  AGENT_WHATSAPP_SIGNUP: '/env/:environmentSlug/agents/:agentIdentifier/whatsapp-signup',
   AGENT_DETAILS_TAB: '/env/:environmentSlug/agents/:agentIdentifier/:agentTab',
   AGENT_TELEGRAM_MOBILE_SETUP: '/agents/telegram/connect/:token',
   AGENT_SLACK_SETUP: '/agents/slack/connect/:token',

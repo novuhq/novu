@@ -75,11 +75,13 @@ import { LinkChannelEndpointRequestDto } from './dtos/link-channel-endpoint-requ
 import { LinkChannelEndpointResponseDto } from './dtos/link-channel-endpoint-response.dto';
 import { SlackQuickSetupRequestDto, SlackQuickSetupResponseDto } from './dtos/slack-quick-setup.dto';
 import { UpdateIntegrationRequestDto } from './dtos/update-integration.dto';
-import { WhatsAppValidateTokenRequestDto, WhatsAppValidateTokenResponseDto } from './dtos/whatsapp-validate-token.dto';
 import {
   WhatsAppEmbeddedSignupRequestDto,
   WhatsAppEmbeddedSignupResponseDto,
 } from './dtos/whatsapp-embedded-signup.dto';
+import { WhatsAppEmbeddedSignupAvailabilityResponseDto } from './dtos/whatsapp-embedded-signup-availability.dto';
+import { WhatsAppSignupStatusResponseDto } from './dtos/whatsapp-signup-status.dto';
+import { WhatsAppValidateTokenRequestDto, WhatsAppValidateTokenResponseDto } from './dtos/whatsapp-validate-token.dto';
 import { AutoConfigureIntegrationCommand } from './usecases/auto-configure-integration/auto-configure-integration.command';
 import { AutoConfigureIntegration } from './usecases/auto-configure-integration/auto-configure-integration.usecase';
 import { AzureSetupOauthCallbackCommand } from './usecases/azure-setup-oauth-callback/azure-setup-oauth-callback.command';
@@ -121,10 +123,14 @@ import { SlackQuickSetupCommand } from './usecases/slack-quick-setup/slack-quick
 import { SlackQuickSetup } from './usecases/slack-quick-setup/slack-quick-setup.usecase';
 import { UpdateIntegrationCommand } from './usecases/update-integration/update-integration.command';
 import { UpdateIntegration } from './usecases/update-integration/update-integration.usecase';
-import { WhatsAppValidateTokenCommand } from './usecases/whatsapp/whatsapp-validate-token.command';
-import { WhatsAppValidateToken } from './usecases/whatsapp/whatsapp-validate-token.usecase';
 import { WhatsAppEmbeddedSignupCommand } from './usecases/whatsapp/whatsapp-embedded-signup.command';
 import { WhatsAppEmbeddedSignup } from './usecases/whatsapp/whatsapp-embedded-signup.usecase';
+import { WhatsAppEmbeddedSignupAvailabilityCommand } from './usecases/whatsapp/whatsapp-embedded-signup-availability.command';
+import { WhatsAppEmbeddedSignupAvailability } from './usecases/whatsapp/whatsapp-embedded-signup-availability.usecase';
+import { WhatsAppSignupStatusCommand } from './usecases/whatsapp/whatsapp-signup-status.command';
+import { WhatsAppSignupStatus } from './usecases/whatsapp/whatsapp-signup-status.usecase';
+import { WhatsAppValidateTokenCommand } from './usecases/whatsapp/whatsapp-validate-token.command';
+import { WhatsAppValidateToken } from './usecases/whatsapp/whatsapp-validate-token.usecase';
 
 @ApiCommonResponses()
 @Controller('/integrations')
@@ -156,6 +162,8 @@ export class IntegrationsController {
     private msTeamsHealthCheckUsecase: MsTeamsHealthCheck,
     private whatsAppValidateTokenUsecase: WhatsAppValidateToken,
     private whatsAppEmbeddedSignupUsecase: WhatsAppEmbeddedSignup,
+    private whatsAppEmbeddedSignupAvailabilityUsecase: WhatsAppEmbeddedSignupAvailability,
+    private whatsAppSignupStatusUsecase: WhatsAppSignupStatus,
     private issueIntegrationStoreTelegramMobileLinkUsecase: IssueIntegrationStoreTelegramMobileLink,
     private issueTelegramSubscriberLinkUsecase: IssueTelegramSubscriberLink,
     private issueTelegramMobileLinkUsecase: IssueTelegramMobileLink,
@@ -877,6 +885,58 @@ export class IntegrationsController {
         phoneNumberId: body.phoneNumberId,
         integrationIdentifier: body.integrationIdentifier,
         agentIdentifier: body.agentIdentifier,
+      })
+    );
+  }
+
+  @Get('/whatsapp/embedded-signup/availability')
+  @ApiResponse(WhatsAppEmbeddedSignupAvailabilityResponseDto, 200)
+  @ApiOperation({
+    summary: 'Check WhatsApp Embedded Signup availability',
+    description:
+      'Reports whether Meta Embedded Signup can be completed on this deployment for the caller organization (feature flag plus Tech Provider credentials). Used by the connect CLI to route between the embedded-signup flow and the classic dashboard handoff.',
+  })
+  @ApiExcludeEndpoint()
+  @ExternalApiAccessible()
+  @RequireAuthentication()
+  @RequirePermissions(PermissionsEnum.INTEGRATION_READ)
+  async getWhatsAppEmbeddedSignupAvailability(
+    @UserSession() user: UserSessionData
+  ): Promise<WhatsAppEmbeddedSignupAvailabilityResponseDto> {
+    return this.whatsAppEmbeddedSignupAvailabilityUsecase.execute(
+      WhatsAppEmbeddedSignupAvailabilityCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+      })
+    );
+  }
+
+  @Get('/whatsapp/signup-status')
+  @ApiResponse(WhatsAppSignupStatusResponseDto, 200)
+  @ApiOperation({
+    summary: 'Get WhatsApp signup progress for an integration',
+    description:
+      'Secret-free signup progress used by polling clients (the connect CLI): whether send credentials are saved on the integration, plus the public business phone number for wa.me test deep links. Credentials themselves are never returned.',
+  })
+  @ApiExcludeEndpoint()
+  @ExternalApiAccessible()
+  @RequireAuthentication()
+  @RequirePermissions(PermissionsEnum.INTEGRATION_READ)
+  async getWhatsAppSignupStatus(
+    @UserSession() user: UserSessionData,
+    @Query('integrationIdentifier') integrationIdentifier: string
+  ): Promise<WhatsAppSignupStatusResponseDto> {
+    if (!integrationIdentifier?.trim()) {
+      throw new BadRequestException('integrationIdentifier query parameter is required.');
+    }
+
+    return this.whatsAppSignupStatusUsecase.execute(
+      WhatsAppSignupStatusCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        integrationIdentifier: integrationIdentifier.trim(),
       })
     );
   }

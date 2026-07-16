@@ -1,6 +1,18 @@
 import { randomUUID } from 'node:crypto';
 import { ChatProviderIdEnum, type ICredentials } from '@novu/shared';
 
+/** Novu's Meta Tech Provider app credentials, present only on deployments that support Embedded Signup. */
+export function getNovuWhatsAppPlatformConfig(): { appId: string; appSecret: string } | undefined {
+  const appId = process.env.NOVU_WHATSAPP_APP_ID?.trim();
+  const appSecret = process.env.NOVU_WHATSAPP_APP_SECRET?.trim();
+
+  if (!appId || !appSecret) {
+    return undefined;
+  }
+
+  return { appId, appSecret };
+}
+
 export function resolveWhatsAppAppSecret(credentials: ICredentials): string | undefined {
   if (credentials.isNovuManaged === true) {
     const platformSecret = process.env.NOVU_WHATSAPP_APP_SECRET?.trim();

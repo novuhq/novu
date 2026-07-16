@@ -1,5 +1,6 @@
 import { AgentRuntimeProviderIdEnum } from '@novu/shared';
 import type { ConnectApiClient } from './client';
+import { NovuApiError } from './client';
 
 export interface IntegrationRecord {
   _id: string;
@@ -99,6 +100,76 @@ export async function createTelegramIntegration(
   const body = res.data;
 
   return 'data' in body && body.data ? body.data : (body as IntegrationRecord);
+}
+
+/**
+ * Creates an empty WhatsApp Business integration (Slack/Telegram pattern):
+ * credentials are filled in later by the Meta Embedded Signup completion
+ * endpoint. The webhook verify token is auto-generated server-side on create.
+ */
+export async function createWhatsAppIntegration(
+  client: ConnectApiClient,
+  input: { name: string; environmentId: string }
+): Promise<IntegrationRecord> {
+  const res = await client.axios.post<{ data?: IntegrationRecord } | IntegrationRecord>('/v1/integrations', {
+    providerId: 'whatsapp-business',
+    channel: 'chat',
+    name: input.name,
+    active: true,
+    credentials: {},
+    ...integrationEnvironmentId(input.environmentId),
+  });
+  const body = res.data;
+
+  return 'data' in body && body.data ? body.data : (body as IntegrationRecord);
+}
+
+export interface WhatsAppEmbeddedSignupAvailability {
+  available: boolean;
+  reason?: string;
+}
+
+/**
+ * Availability pre-check for the Meta Embedded Signup flow. A 404 (older
+ * self-hosted API without the endpoint) counts as unavailable so the CLI
+ * falls back to the classic dashboard handoff.
+ */
+export async function getWhatsAppEmbeddedSignupAvailability(
+  client: ConnectApiClient
+): Promise<WhatsAppEmbeddedSignupAvailability> {
+  let res: { data: { data?: WhatsAppEmbeddedSignupAvailability } | WhatsAppEmbeddedSignupAvailability };
+  try {
+    res = await client.axios.get('/v1/integrations/whatsapp/embedded-signup/availability');
+  } catch (err) {
+    if (err instanceof NovuApiError && err.status === 404) {
+      return { available: false, reason: 'endpoint_not_found' };
+    }
+
+    throw err;
+  }
+
+  const body = res.data;
+
+  return 'data' in body && body.data ? body.data : (body as WhatsAppEmbeddedSignupAvailability);
+}
+
+export interface WhatsAppSignupStatus {
+  credentialsSaved: boolean;
+  displayPhoneNumber?: string;
+}
+
+/** Secret-free signup progress the CLI polls while the user completes Embedded Signup in the browser. */
+export async function getWhatsAppSignupStatus(
+  client: ConnectApiClient,
+  integrationIdentifier: string
+): Promise<WhatsAppSignupStatus> {
+  const res = await client.axios.get<{ data?: WhatsAppSignupStatus } | WhatsAppSignupStatus>(
+    '/v1/integrations/whatsapp/signup-status',
+    { params: { integrationIdentifier } }
+  );
+  const body = res.data;
+
+  return 'data' in body && body.data ? body.data : (body as WhatsAppSignupStatus);
 }
 
 export interface SendblueCredentials {

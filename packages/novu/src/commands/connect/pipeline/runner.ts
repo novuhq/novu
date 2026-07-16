@@ -4,6 +4,7 @@ import { CONNECT_EVENTS } from '../analytics/events';
 import {
   type AgentRecord,
   createManagedAgent,
+  type GeneratedAgentSpec,
   generateAgent,
   listAgents,
   sendAgentWelcomeMessage,
@@ -39,6 +40,7 @@ import { connectEmailForAgent } from './channels/email';
 import { connectSendblueForAgent } from './channels/sendblue';
 import { connectSlackForAgent } from './channels/slack';
 import { connectTelegramForAgent } from './channels/telegram';
+import { connectWhatsAppForAgent } from './channels/whatsapp';
 import { maybeRunChatSdkTunnel, runChatSdkProjectSetup } from './chat-sdk';
 import { runCustomCodeProjectSetup } from './custom-code';
 import { maybeRunLangChainTunnel, runLangChainProjectSetup } from './langchain';
@@ -118,24 +120,36 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
 
     const connectMode = await resolveAgentConnectMode(options, ui, track, sessionProps);
 
-    if (isBridgeConnectMode(connectMode) && session.auth.isKeyless) {
+    // WhatsApp is account-required (the Embedded Signup page lives behind
+    // dashboard auth), so a preset `--channel whatsapp` upgrades the keyless
+    // session before the agent is created — everything then happens in the
+    // user's real environment.
+    const needsPreCreationUpgrade =
+      (isBridgeConnectMode(connectMode) || options.channel === 'whatsapp') && session.auth.isKeyless;
+
+    if (needsPreCreationUpgrade) {
+      const upgradeSource = isBridgeConnectMode(connectMode) ? 'bridge_agent_upgrade' : 'whatsapp_upgrade';
       track(CONNECT_EVENTS.KEYLESS_LIMIT_AUTH_UPGRADE_STARTED, sessionProps);
       await upgradeKeylessSessionToDashboardAuth(session, options, ui, {
         onboardingSessionId,
+        statusMessage:
+          upgradeSource === 'whatsapp_upgrade'
+            ? 'WhatsApp requires a Novu account. Opening Novu dashboard sign-in to continue…'
+            : undefined,
         onAuthStarted: () =>
           track(CONNECT_EVENTS.AUTH_STARTED, {
             ...sessionProps,
-            source: 'bridge_agent_upgrade',
+            source: upgradeSource,
           }),
         onAuthFailed: (message) =>
           track(CONNECT_EVENTS.AUTH_FAILED, {
             ...sessionProps,
-            source: 'bridge_agent_upgrade',
+            source: upgradeSource,
             message,
           }),
       });
       track(CONNECT_EVENTS.AUTH_COMPLETED, {
-        source: 'bridge_agent_upgrade',
+        source: upgradeSource,
         region: options.region,
         keyless: false,
         ...sessionProps,
@@ -147,6 +161,8 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
 
     let agent: AgentSummary;
     let flow: 'created' | 'reused';
+    /** Retained so a keyless→dashboard upgrade mid-flow can recreate the agent in the upgraded environment. */
+    let createdSpec: GeneratedAgentSpec | undefined;
     let chatSdkOutcome: ChatSdkConnectOutcome | undefined;
     let aiSdkOutcome: AiSdkConnectOutcome | undefined;
     let langChainOutcome: LangChainConnectOutcome | undefined;
@@ -172,7 +188,7 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
           ...sessionProps,
         });
       } else {
-        agent = await createAgentFlow(
+        const created = await createAgentFlow(
           session,
           ui,
           options,
@@ -184,6 +200,8 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
           },
           connectMode
         );
+        agent = created.agent;
+        createdSpec = created.generated;
         flow = 'created';
         track(CONNECT_EVENTS.AGENT_CREATED, {
           identifier: agent.identifier,
@@ -191,7 +209,7 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
         });
       }
     } else {
-      agent = await createAgentFlow(
+      const created = await createAgentFlow(
         session,
         ui,
         options,
@@ -203,6 +221,8 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
         },
         connectMode
       );
+      agent = created.agent;
+      createdSpec = created.generated;
       flow = 'created';
       track(CONNECT_EVENTS.AGENT_CREATED, {
         identifier: agent.identifier,
@@ -221,6 +241,25 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
     const allowChannelPickerBack = !isChannelPreset;
     const presetChannel: ChannelChoice | undefined = options.skipSlack ? 'skip' : options.channel;
     let channel: ChannelChoice = presetChannel ?? 'skip';
+
+    const openDashboardChannelHandoff = async (handoffChannel: ChannelChoice) => {
+      const agentDetailsUrl = buildConnectAgentDetailsUrl({
+        connectDashboardUrl: options.connectDashboardUrl,
+        environmentSlug: session.auth.environmentSlug,
+        agentIdentifier: agent.identifier,
+        tab: 'integrations',
+      });
+
+      track(CONNECT_EVENTS.DASHBOARD_REDIRECT_OPENED, {
+        channel: handoffChannel,
+        agent: agent.identifier,
+        ...sessionProps,
+      });
+
+      await ui.awaitDashboardChannelOpen({ channel: handoffChannel, agentDetailsUrl });
+      void open(agentDetailsUrl).catch(() => undefined);
+      dashboardRedirectChannel = handoffChannel;
+    };
 
     while (true) {
       if (!isChannelPreset) {
@@ -298,24 +337,48 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
             if (channelConnected) connectedChannel = 'sendblue';
             break;
           }
-          case 'whatsapp':
+          case 'whatsapp': {
+            if (session.auth.isKeyless) {
+              agent = await upgradeKeylessSessionForWhatsApp(
+                session,
+                ui,
+                options,
+                agent,
+                createdSpec,
+                connectMode,
+                track,
+                sessionProps,
+                onboardingSessionId,
+                { onIdentityResolved: input.onIdentityResolved }
+              );
+            }
+
+            const result = await connectWhatsAppForAgent(
+              session.client,
+              agent,
+              ui,
+              options,
+              {
+                environmentId: session.auth.environmentId,
+                environmentSlug: session.auth.environmentSlug ?? null,
+              },
+              (event, data) => track(event, { ...data, ...sessionProps })
+            );
+
+            if (result.kind === 'unavailable') {
+              // Embedded signup is off for this deployment — today's behavior
+              // exactly: open the agent integrations tab and hand off.
+              await openDashboardChannelHandoff('whatsapp');
+              break;
+            }
+
+            connectedIntegration = result.integration;
+            channelConnected = result.connected;
+            if (channelConnected) connectedChannel = 'whatsapp';
+            break;
+          }
           case 'teams': {
-            const agentDetailsUrl = buildConnectAgentDetailsUrl({
-              connectDashboardUrl: options.connectDashboardUrl,
-              environmentSlug: session.auth.environmentSlug,
-              agentIdentifier: agent.identifier,
-              tab: 'integrations',
-            });
-
-            track(CONNECT_EVENTS.DASHBOARD_REDIRECT_OPENED, {
-              channel,
-              agent: agent.identifier,
-              ...sessionProps,
-            });
-
-            await ui.awaitDashboardChannelOpen({ channel, agentDetailsUrl });
-            void open(agentDetailsUrl).catch(() => undefined);
-            dashboardRedirectChannel = channel;
+            await openDashboardChannelHandoff('teams');
             break;
           }
           default:
@@ -470,6 +533,100 @@ async function resolveAgentConnectMode(
   return picked;
 }
 
+/**
+ * WhatsApp requires dashboard auth (the Embedded Signup page is an
+ * authenticated dashboard route), so a keyless user picking WhatsApp in the
+ * channel picker is upgraded in place. The keyless agent lives in a temporary
+ * workspace the upgraded session can no longer reach, so the agent is
+ * recreated in the upgraded environment from the retained generated spec.
+ */
+async function upgradeKeylessSessionForWhatsApp(
+  session: ConnectSession,
+  ui: ConnectUI,
+  options: ConnectCommandOptions,
+  agent: AgentSummary,
+  createdSpec: GeneratedAgentSpec | undefined,
+  connectMode: AgentConnectMode | undefined,
+  track: (event: string, data?: Record<string, unknown>) => void,
+  sessionProps: Record<string, unknown>,
+  onboardingSessionId: string | undefined,
+  callbacks?: {
+    onIdentityResolved?: (user: NonNullable<ResolvedConnectAuth['user']>) => void;
+  }
+): Promise<AgentSummary> {
+  track(CONNECT_EVENTS.KEYLESS_LIMIT_AUTH_UPGRADE_STARTED, sessionProps);
+  await upgradeKeylessSessionToDashboardAuth(session, options, ui, {
+    onboardingSessionId,
+    statusMessage: 'WhatsApp requires a Novu account. Opening Novu dashboard sign-in to continue…',
+    onAuthStarted: () =>
+      track(CONNECT_EVENTS.AUTH_STARTED, {
+        ...sessionProps,
+        source: 'whatsapp_upgrade',
+      }),
+    onAuthFailed: (message) =>
+      track(CONNECT_EVENTS.AUTH_FAILED, {
+        ...sessionProps,
+        source: 'whatsapp_upgrade',
+        message,
+      }),
+  });
+  track(CONNECT_EVENTS.AUTH_COMPLETED, {
+    source: 'whatsapp_upgrade',
+    region: options.region,
+    keyless: false,
+    ...sessionProps,
+  });
+  if (session.auth.user?.id) {
+    callbacks?.onIdentityResolved?.(session.auth.user);
+  }
+
+  // The upgraded environment may already hold this agent from a previous run.
+  ui.listingAgents();
+  const agents = await listAgents(session.client);
+  const existing = agents.find((candidate) => candidate.identifier === agent.identifier);
+  if (existing) {
+    return toSummary(existing);
+  }
+
+  if (!createdSpec) {
+    throw new Error(
+      `Signed in, but the agent "${agent.name}" was created in the temporary keyless workspace and can't be moved ` +
+        'automatically. Re-run `npx novu connect` to set it up in your account.'
+    );
+  }
+
+  const runtime =
+    (connectMode && !isBridgeConnectMode(connectMode) ? connectMode : undefined) ??
+    resolveRuntimeFromOptions(options) ??
+    'demo';
+  ui.loadingIntegrations();
+  const resolved = await resolveAgentRuntimeIntegration(
+    session.client,
+    ui,
+    options,
+    runtime,
+    session.auth.environmentId
+  );
+
+  ui.creatingAgent(createdSpec.name);
+  const created = await createManagedAgent(session.client, {
+    name: createdSpec.name,
+    identifier: createdSpec.identifier,
+    integrationId: resolved.integrationId,
+    providerId: resolved.providerId,
+    systemPrompt: createdSpec.systemPrompt,
+    tools: createdSpec.tools,
+    mcpServers: createdSpec.mcpServers,
+    skills: createdSpec.skills,
+  });
+  track(CONNECT_EVENTS.AGENT_CREATED, {
+    identifier: created.identifier,
+    ...sessionProps,
+  });
+
+  return toSummary(created);
+}
+
 async function createAgentFlow(
   session: ConnectSession,
   ui: ConnectUI,
@@ -481,7 +638,7 @@ async function createAgentFlow(
     onIdentityResolved?: (user: NonNullable<ResolvedConnectAuth['user']>) => void;
   },
   connectMode?: AgentConnectMode
-): Promise<AgentSummary> {
+): Promise<{ agent: AgentSummary; generated: GeneratedAgentSpec }> {
   const runtime =
     (connectMode && !isBridgeConnectMode(connectMode) ? connectMode : undefined) ??
     resolveRuntimeFromOptions(options) ??
@@ -523,7 +680,7 @@ async function createAgentFlow(
       skills: generated.skills,
     });
 
-    return toSummary(created);
+    return { agent: toSummary(created), generated };
   } catch (err) {
     if (resolved.createdInThisFlow) {
       try {

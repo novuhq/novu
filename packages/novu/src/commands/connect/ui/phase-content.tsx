@@ -233,6 +233,42 @@ export function PhaseContent({
       );
     }
 
+    case 'adding-whatsapp':
+      return <Text color="cyan">Linking WhatsApp to your agent…</Text>;
+
+    case 'whatsapp-signup-ready':
+      return <WhatsAppSignupReadyContent signupUrl={phase.signupUrl} onContinue={phase.resolve} />;
+
+    case 'whatsapp-signup-waiting':
+      return (
+        <Box flexDirection="column" gap={1}>
+          <Text bold>Finish WhatsApp signup in your browser</Text>
+          <CopyableLink url={phase.signupUrl} hint="Opened in your browser. If nothing happened, visit:" />
+          <Text dimColor>Waiting for Meta Embedded Signup to complete… (this can take a few minutes)</Text>
+        </Box>
+      );
+
+    case 'whatsapp-test':
+      return (
+        <Box flexDirection="column" gap={1}>
+          <Text bold color="cyan">
+            Message your business number on WhatsApp
+          </Text>
+          <Text dimColor>
+            {phase.displayPhoneNumber ? (
+              <>
+                Send any message to <Text color="white">{phase.displayPhoneNumber}</Text> from your phone — Novu
+                confirms the connection as soon as it arrives.
+              </>
+            ) : (
+              'Send any WhatsApp message to your business number from your phone — Novu confirms the connection as soon as it arrives.'
+            )}
+          </Text>
+          {phase.waMeUrl ? <CopyableLink url={phase.waMeUrl} hint="Open WhatsApp directly:" /> : null}
+          <Text dimColor>Waiting for your first inbound message…</Text>
+        </Box>
+      );
+
     case 'adding-slack':
       return <Text color="cyan">Linking Slack to your agent…</Text>;
 
@@ -413,6 +449,8 @@ export function PhaseContent({
 }
 
 const DASHBOARD_CHANNEL_HINT = 'Onboarding for this channel is currently only available in the Novu Connect UI.';
+const WHATSAPP_CHANNEL_HINT =
+  'Opens Meta signup in your browser — the CLI resumes automatically. Falls back to the Novu Connect UI when unavailable.';
 /** Keeps the picker + hint from widening the centered layout when the hint appears. */
 const CHANNEL_PICKER_WIDTH = 48;
 
@@ -451,6 +489,7 @@ function ChannelSelect({
 
   const highlighted = options[idx]?.value ?? null;
   const showDashboardHint = highlighted !== null && isDashboardOnlyChannel(highlighted);
+  const dashboardHint = highlighted === 'whatsapp' ? WHATSAPP_CHANNEL_HINT : DASHBOARD_CHANNEL_HINT;
 
   return (
     <Box flexDirection="column" gap={1} alignItems="flex-start">
@@ -472,7 +511,7 @@ function ChannelSelect({
       <Box flexDirection="column" width={CHANNEL_PICKER_WIDTH}>
         {showDashboardHint ? (
           <Text dimColor wrap="wrap">
-            {DASHBOARD_CHANNEL_HINT}
+            {dashboardHint}
           </Text>
         ) : (
           <>
@@ -561,6 +600,32 @@ function PasteSlackConfigTokenContent({
         />
       </Box>
       <Text dimColor>The token is sent to your Novu API once, used to create the Slack app, then discarded.</Text>
+    </Box>
+  );
+}
+
+function WhatsAppSignupReadyContent({
+  signupUrl,
+  onContinue,
+}: {
+  signupUrl: string;
+  onContinue: () => void;
+}): React.ReactElement {
+  useInput((_input, key) => {
+    if (key.return || _input === ' ') onContinue();
+  });
+
+  return (
+    <Box flexDirection="column" gap={1}>
+      <Text bold color="cyan">
+        Connect your WhatsApp Business account
+      </Text>
+      <Text dimColor>
+        We'll open a Novu page with a "Log in with Facebook" button. Meta walks you through sharing your WhatsApp
+        Business account — Novu saves the credentials and registers the webhook automatically.
+      </Text>
+      <Text dimColor>{`Signup page: ${signupUrl.slice(0, 80)}${signupUrl.length > 80 ? '…' : ''}`}</Text>
+      <Text color="cyan">Press Enter to open the signup page in your browser →</Text>
     </Box>
   );
 }
@@ -877,6 +942,7 @@ function SuccessView({
     if (connectedChannel === 'telegram') return 'Telegram';
     if (connectedChannel === 'email') return 'Email';
     if (connectedChannel === 'sendblue') return 'iMessage (Sendblue)';
+    if (connectedChannel === 'whatsapp') return 'WhatsApp';
 
     return null;
   })();
