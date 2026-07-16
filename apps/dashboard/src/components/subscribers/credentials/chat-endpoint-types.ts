@@ -146,12 +146,21 @@ const PAGERDUTY_SERVICE: ChatEndpointTypeOption = {
   requiresConnection: false,
 };
 
+const OPSGENIE_INTEGRATION: ChatEndpointTypeOption = {
+  type: ENDPOINT_TYPES.OPSGENIE_INTEGRATION,
+  label: 'Opsgenie integration',
+  icon: RiKey2Line,
+  skeleton: { apiKey: '', region: 'us' },
+  requiresConnection: false,
+};
+
 /**
  * Endpoint types each tool provider consumes for per-subscriber routing.
- * Credential-routed tools (Opsgenie, tool webhook) have no subscriber endpoints.
+ * The credential-routed tool webhook has no subscriber endpoints.
  */
 const SUPPORTED_TOOL_TYPES_BY_PROVIDER: Partial<Record<string, ChatEndpointTypeOption[]>> = {
   [ToolProviderIdEnum.PagerDuty]: [PAGERDUTY_SERVICE],
+  [ToolProviderIdEnum.Opsgenie]: [OPSGENIE_INTEGRATION],
 };
 
 /** Resolves endpoint types a user may manually add for a tool integration. */

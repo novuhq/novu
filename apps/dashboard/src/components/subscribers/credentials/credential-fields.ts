@@ -33,6 +33,7 @@ const CREDENTIAL_FIELD_LABELS: Record<string, string> = {
   phone: 'Phone number',
   deviceToken: 'Device token',
   routingKey: 'Routing key',
+  apiKey: 'API key',
   region: 'Region',
 };
 
