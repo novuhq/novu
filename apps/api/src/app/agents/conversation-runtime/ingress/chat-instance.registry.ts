@@ -18,7 +18,8 @@ export interface InboundCallbacks {
     config: ResolvedAgentConfig,
     thread: Thread,
     action: import('@novu/framework').AgentAction,
-    userId: string
+    userId: string,
+    rawEvent: unknown
   ) => Promise<void>;
   onReaction: (agentId: string, config: ResolvedAgentConfig, event: InboundReactionEvent) => Promise<void>;
 }
@@ -210,7 +211,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
         keyPrefix: `novu:agent:${instanceKey}`,
         logger: this.chatStateLogger(),
       }),
-      logger: 'silent',
+      logger: this.chatStateLogger(),
     });
   }
 
@@ -264,10 +265,34 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
 
         const { createSlackAdapter } = await esmImport('@chat-adapter/slack');
 
+        /**
+         * Multi-workspace mode: a single Novu-hosted Slack app can be installed across many
+         * customer workspaces (the NovuCopilot distribution model), so the bot token must be
+         * resolved per workspace at event time rather than baked into the adapter. The adapter
+         * calls `getInstallation(team_id)` while processing each inbound webhook and binds the
+         * resolved token for the duration of that request (so `users.info` and any in-request
+         * reply use the right workspace token). Outbound calls made in a separate request bind
+         * their token explicitly via `OutboundGateway`.
+         *
+         * `connectionAccessToken` (the first installed workspace's token) is still required above
+         * as a fast-fail guard that at least one workspace is installed, and it keys the adapter
+         * fingerprint so a rebuild happens when installations change.
+         */
         return {
           slack: createSlackAdapter({
-            botToken: connectionAccessToken,
             signingSecret: credentials.signingSecret,
+            installationProvider: {
+              getInstallation: async (installationId: string) => {
+                const installation = await this.agentConfigResolver.resolveSlackInstallation(
+                  config.environmentId,
+                  config.organizationId,
+                  config.integrationIdentifier,
+                  installationId
+                );
+
+                return installation ? { botToken: installation.token, botUserId: installation.botUserId } : null;
+              },
+            },
           }),
         };
       }
@@ -431,7 +456,8 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
             value: resolvedAction.value,
             sourceMessageId: event.messageId,
           },
-          event.user.userId
+          event.user.userId,
+          event.raw
         );
       } catch (err) {
         this.logger.error(err, `[agent:${agentId}] Error handling action ${event.actionId}`);
@@ -453,6 +479,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
           message: event.message,
           thread: event.thread as Thread | undefined,
           user: event.user,
+          raw: event.raw,
         });
       } catch (err) {
         this.logger.error(err, `[agent:${agentId}] Error handling reaction`);

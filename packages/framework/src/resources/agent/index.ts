@@ -19,6 +19,8 @@ export type {
   AgentActionContext,
   AgentAttachment,
   AgentContext,
+  AgentContextPayload,
+  AgentContextValue,
   AgentConversation,
   AgentHandlerContext,
   AgentHandlers,
@@ -31,7 +33,9 @@ export type {
   AgentReactionContext,
   AgentResolveContext,
   AgentSubscriber,
+  AgentSubscriberAccess,
   AgentToolCall,
+  AuthConfig,
   FileRef,
   MessageContent,
   ReplyHandle,
@@ -39,3 +43,12 @@ export type {
   ToolApprovalConfig,
   ToolApprovalDecision,
 } from './agent.types';
+export type { AuthCtaOptions, AuthGateContext } from './auth-gate';
+export {
+  AUTH_CARD_MESSAGE_ID_KEY,
+  AUTH_LINKED_CARD_KEY,
+  buildAuthCtaCard,
+  isAuthenticatedAuthor,
+  passesAuthGate,
+  requireAuthenticatedAuthor,
+} from './auth-gate';

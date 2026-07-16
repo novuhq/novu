@@ -13,6 +13,13 @@ export const CLERK_PUBLISHABLE_KEY =
 
 export const APP_ID = import.meta.env.VITE_NOVU_APP_ID || '';
 
+/**
+ * Identifier of the Slack integration on Novu's own (production) Novu account that customer
+ * workspaces connect to when installing the Novu-hosted NovuCopilot agent. Dogfoods the same
+ * `APP_ID` / prod API used by the dashboard's own Inbox. Empty until a deployment opts in.
+ */
+export const NOVU_COPILOT_SLACK_INTEGRATION_IDENTIFIER = getEnvVar('VITE_NOVU_COPILOT_SLACK_INTEGRATION_IDENTIFIER');
+
 export const API_HOSTNAME = window._env_?.VITE_API_HOSTNAME || import.meta.env.VITE_API_HOSTNAME;
 
 /** Publicly reachable API host for agent webhooks/OAuth (e.g. ngrok). Falls back to `API_HOSTNAME`. */

@@ -1,6 +1,6 @@
 import { BaseCommand, IsValidContextPayload } from '@novu/application-generic';
 import { ChannelEndpointByType, ChannelEndpointType, ContextPayload, ENDPOINT_TYPES } from '@novu/shared';
-import { IsDefined, IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsDefined, IsEnum, IsOptional, IsString } from 'class-validator';
 import { EnvironmentCommand } from '../../../shared/commands/project.command';
 import { IsValidChannelEndpoint } from '../../validators/channel-endpoint.validator';
 
@@ -28,6 +28,16 @@ export class CreateChannelEndpointCommand<
   @IsValidContextPayload({ maxCount: 5 })
   context?: ContextPayload;
 
+  /**
+   * Pre-resolved context keys. When provided they are persisted verbatim and the
+   * `context` payload is ignored — used by the OAuth callback to carry a
+   * session-validated context without re-resolving (and re-trusting) a payload.
+   */
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  contextKeys?: string[];
+
   @IsDefined()
   @IsEnum(Object.values(ENDPOINT_TYPES))
   type: T;
@@ -44,6 +54,7 @@ export class CreateChannelEndpointCommand<
     connectionIdentifier?: string;
     subscriberId: string;
     context?: ContextPayload;
+    contextKeys?: string[];
     type: T;
     endpoint: ChannelEndpointByType[T];
   }): CreateChannelEndpointCommand<T> {

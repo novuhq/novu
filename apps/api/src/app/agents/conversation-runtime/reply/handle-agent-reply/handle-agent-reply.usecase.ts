@@ -181,7 +181,8 @@ export class HandleAgentReply {
             channel.platform,
             channel.platformThreadId,
             r.messageId,
-            r.emojiName
+            r.emojiName,
+            channel.workspace?.id
           )
         )
       );
@@ -195,7 +196,8 @@ export class HandleAgentReply {
             command.integrationIdentifier,
             channel.platform,
             channel.platformThreadId,
-            d.messageId
+            d.messageId,
+            channel.workspace?.id
           )
         )
       );
@@ -317,6 +319,7 @@ export class HandleAgentReply {
         integrationIdentifier: command.integrationIdentifier,
         platform: channel.platform,
         platformThreadId: channel.platformThreadId,
+        workspaceId: channel.workspace?.id,
       },
       deliverContent,
       {
@@ -344,6 +347,7 @@ export class HandleAgentReply {
         integrationIdentifier: command.integrationIdentifier,
         platform: channel.platform,
         platformThreadId: channel.platformThreadId,
+        workspaceId: channel.workspace?.id,
       },
       edit.messageId,
       edit.content,
@@ -373,7 +377,8 @@ export class HandleAgentReply {
         channel.platformThreadId,
         plan.messageId,
         plan.model,
-        plan.phase
+        plan.phase,
+        channel.workspace?.id
       );
 
       return { messageId: plan.messageId, platformThreadId: channel.platformThreadId };
@@ -385,7 +390,8 @@ export class HandleAgentReply {
       channel.platform,
       channel.platformThreadId,
       plan.model,
-      plan.phase
+      plan.phase,
+      channel.workspace?.id
     );
   }
 
@@ -402,7 +408,8 @@ export class HandleAgentReply {
         conversation._agentId,
         command.integrationIdentifier,
         channel.platformThreadId,
-        status
+        status,
+        channel.workspace?.id
       );
     } catch (err) {
       this.logger.warn(err, `[agent:${command.agentIdentifier}] Failed to set typing status`);
@@ -661,7 +668,8 @@ export class HandleAgentReply {
       channel.platform,
       channel.platformThreadId,
       firstMessageId,
-      config.reactionOnResolved
+      config.reactionOnResolved,
+      channel.workspace?.id
     );
   }
 

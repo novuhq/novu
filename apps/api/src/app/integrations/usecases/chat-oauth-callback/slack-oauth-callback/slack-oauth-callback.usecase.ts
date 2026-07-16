@@ -80,6 +80,7 @@ export class SlackOauthCallback {
             connectionIdentifier: connection.identifier,
             subscriberId: stateData.subscriberId,
             context: stateData.context,
+            contextKeys: stateData.contextKeys,
             type: ENDPOINT_TYPES.SLACK_USER,
             endpoint: { userId: authData.authed_user.id },
           })
@@ -105,13 +106,15 @@ export class SlackOauthCallback {
   private async upsertWorkspaceConnection(
     stateData: StateData,
     integration: IntegrationEntity,
-    authData: { access_token: string; team: { id: string; name: string } }
+    authData: { access_token: string; team: { id: string; name: string }; bot_user_id?: string }
   ): Promise<ChannelConnectionEntity> {
     const isSharedMode = stateData.connectionMode === 'shared';
     const subscriberId = isSharedMode ? undefined : stateData.subscriberId;
     const existingConnection = await this.findExistingConnection(stateData, integration, subscriberId);
     const auth = { accessToken: authData.access_token };
-    const workspace = { id: authData.team.id, name: authData.team.name };
+    // `bot_user_id` (the bot's Slack `U…` identity in this workspace) is required for channel-mention
+    // detection in multi-workspace mode — persist it so the inbound adapter can bind it per request.
+    const workspace = { id: authData.team.id, name: authData.team.name, botUserId: authData.bot_user_id };
 
     if (existingConnection) {
       return await this.updateChannelConnection.execute(
@@ -133,6 +136,7 @@ export class SlackOauthCallback {
         integrationIdentifier: integration.identifier,
         subscriberId,
         context: stateData.context,
+        contextKeys: stateData.contextKeys,
         connectionMode: stateData.connectionMode,
         auth,
         workspace,
@@ -141,6 +145,11 @@ export class SlackOauthCallback {
   }
 
   private async resolveContextKeys(stateData: StateData): Promise<string[]> {
+    // A session-validated context arrives pre-resolved as trusted keys.
+    if (stateData.contextKeys?.length) {
+      return stateData.contextKeys;
+    }
+
     if (!stateData.context) {
       return [];
     }
@@ -202,6 +211,7 @@ export class SlackOauthCallback {
         connectionIdentifier: stateData.identifier,
         subscriberId: stateData.subscriberId,
         context: stateData.context,
+        contextKeys: stateData.contextKeys,
         type: ENDPOINT_TYPES.SLACK_USER,
         endpoint: { userId },
       })
@@ -222,6 +232,7 @@ export class SlackOauthCallback {
         organizationId: stateData.organizationId,
         environmentId: stateData.environmentId,
         context: stateData.context,
+        contextKeys: stateData.contextKeys,
         integrationIdentifier: integration.identifier,
         subscriberId: stateData.subscriberId,
         type: ENDPOINT_TYPES.WEBHOOK,

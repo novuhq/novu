@@ -12,6 +12,7 @@ import {
 import { ConversationActivityEntity, ConversationEntity, SubscriberEntity } from '@novu/dal';
 import type {
   AgentAction,
+  AgentContextPayload,
   AgentConversation,
   AgentHistoryEntry,
   AgentMessage,
@@ -21,6 +22,7 @@ import type {
 } from '@novu/framework';
 import type { AgentBridgeRequest } from '@novu/framework/internal';
 import { AgentEventEnum, HttpHeaderKeysEnum } from '@novu/framework/internal';
+import { AGENT_PLATFORM_PROVISION_SOURCE, AGENT_PROVISION_DATA_KEYS, AgentSubscriberAccessEnum } from '@novu/shared';
 import type { Message } from 'chat';
 import { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import { captureAgentException, captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
@@ -28,6 +30,16 @@ import { AgentAttachmentStorage, type StoredAttachment } from '../conversation/a
 import { AgentConversationService } from '../conversation/agent-conversation.service';
 
 const MAX_RETRIES = 2;
+
+/**
+ * True when a subscriber was auto-created from an inbound platform message
+ * (identified by the `__novu_source` provenance marker on `Subscriber.data`)
+ * rather than by the customer's API/dashboard or an explicit link flow. Mirrors
+ * the resolver's own phantom check — used to derive the `isLinked` signal.
+ */
+function isAgentProvisionedSubscriber(subscriber: SubscriberEntity): boolean {
+  return subscriber.data?.[AGENT_PROVISION_DATA_KEYS.source] === AGENT_PLATFORM_PROVISION_SOURCE;
+}
 
 /** Agent bridge replyUrl: prefer API_ROOT_URL, else localhost on PORT (default 3000). */
 function resolveAgentReplyApiOrigin(): string {
@@ -87,6 +99,8 @@ export interface AgentExecutionParams {
   subscriber: SubscriberEntity | null;
   message: Message | null;
   platformContext: AgentPlatformContext;
+  /** Trusted connect-time context resolved from the inbound channel connection; forwarded as `ctx.context`. */
+  context?: AgentContextPayload | null;
   action?: AgentAction;
   reaction?: BridgeReaction;
   storedAttachments?: StoredAttachment[];
@@ -298,6 +312,10 @@ export class BridgeExecutorService {
         : null,
       conversation: this.mapConversation(conversation),
       subscriber: this.mapSubscriber(subscriber),
+      // Mirror the effective access policy onto the wire so the framework can
+      // apply its built-in auth gate (restricted → gate unlinked authors).
+      subscriberAccess: config.subscriberAccess === AgentSubscriberAccessEnum.RESTRICTED ? 'restricted' : 'open',
+      context: params.context ?? null,
       history: await this.mapHistory(history),
       platform: config.platform,
       platformContext,
@@ -389,6 +407,11 @@ export class BridgeExecutorService {
       avatar: subscriber.avatar || undefined,
       locale: subscriber.locale || undefined,
       data: subscriber.data || undefined,
+      // A subscriber auto-provisioned from an unlinked inbound sender carries the
+      // `__novu_source` provenance marker; treat it as a phantom (not linked).
+      // Any subscriber without the marker was created via the customer's API /
+      // an explicit link flow, so it is an authenticated linked identity.
+      isLinked: !isAgentProvisionedSubscriber(subscriber),
     };
   }
 

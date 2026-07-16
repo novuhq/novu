@@ -8,28 +8,29 @@ import { requireEnvironment, useEnvironment } from '@/context/environment/hooks'
 const PROD_READ_ONLY_TOOLTIP =
   'This setting is read-only in production. Edit in Development and promote to apply changes.';
 
-/** True when the agent auto-creates subscribers from unknown email senders. */
-function isEmailSubscriberAccessOpen(agent: AgentResponse): boolean {
+/** True when the agent auto-provisions subscribers from unknown senders. */
+function isSubscriberAccessOpen(agent: AgentResponse): boolean {
   return agent.behavior?.subscriberAccess === 'open';
 }
 
-type EmailSubscriberAccessToggleProps = {
+type SubscriberAccessToggleProps = {
   agent: AgentResponse;
   ariaLabel?: string;
 };
 
 /**
- * Switch that flips an email agent between "open" (auto-provision a lightweight
- * subscriber from any sender's email) and "restricted" (reject unknown senders).
- * Shared by the layer-2 "What's next" onboarding guide and the persistent EMAIL
- * card so the setting stays reachable after onboarding. Read-only in production,
+ * Switch that flips an agent between "open" (auto-provision a lightweight
+ * subscriber from any unknown sender) and "restricted" (only act for known
+ * subscribers). This is a per-agent `behavior.subscriberAccess` setting shared
+ * across every channel the agent is connected to, so the same toggle is surfaced
+ * on each channel card (email inbox, Slack, Teams, …). Read-only in production,
  * matching the rest of agent behavior — edit in Development and promote.
  */
-export function EmailSubscriberAccessToggle({ agent, ariaLabel }: EmailSubscriberAccessToggleProps) {
+export function SubscriberAccessToggle({ agent, ariaLabel }: SubscriberAccessToggleProps) {
   const queryClient = useQueryClient();
   const { currentEnvironment, readOnly } = useEnvironment();
 
-  const isOpen = isEmailSubscriberAccessOpen(agent);
+  const isOpen = isSubscriberAccessOpen(agent);
 
   const { mutate, isPending } = useMutation({
     mutationFn: (subscriberAccess: AgentSubscriberAccess) =>

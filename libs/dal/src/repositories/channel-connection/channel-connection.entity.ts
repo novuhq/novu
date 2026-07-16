@@ -16,7 +16,7 @@ export class ChannelConnectionEntity implements ChannelConnection {
   subscriberId?: string;
   contextKeys: string[];
 
-  workspace: { id: string; name?: string };
+  workspace: { id: string; name?: string; botUserId?: string };
   auth: {
     accessToken: string;
     refreshToken?: string;

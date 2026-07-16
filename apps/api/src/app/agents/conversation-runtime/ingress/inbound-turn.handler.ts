@@ -35,6 +35,7 @@ import { parseToolApprovalActionId } from '../../shared/tool-approval/action-id'
 import { agentLinkAwaitingInboundConnectionFilter } from '../../shared/util/agent-inbound-connection';
 import { extractMsTeamsTenantId } from '../../shared/util/msteams-activity';
 import { type AutoProvisionPlatform, isAutoProvisionPlatform } from '../../shared/util/platform-endpoint-config';
+import { extractWorkspaceId } from '../../shared/util/workspace-id';
 import { InboundAckService } from '../ack/inbound-ack.service';
 import { AgentAttachmentStorage, type StoredAttachment } from '../conversation/agent-attachment-storage.service';
 import { AgentConversationService, getInboundActivityPreview } from '../conversation/agent-conversation.service';
@@ -48,6 +49,7 @@ import type { BridgeReaction } from '../runtime/bridge-executor.service';
 import type { ConversationTurn } from '../runtime/conversation-turn';
 import { RuntimeResolver } from '../runtime/runtime-resolver.service';
 import { InboundDispatcher } from './inbound.dispatcher';
+import { InboundConnectionContextResolver } from './inbound-connection-context.resolver';
 import { isLinkButtonActionId, PlanLimitGateService } from './plan-limit-gate.service';
 
 /**
@@ -235,6 +237,8 @@ export interface InboundReactionEvent {
   message?: Message;
   thread?: Thread;
   user?: { userId: string; fullName?: string; userName?: string };
+  /** Raw platform payload, used to resolve the connect-time context (e.g. Slack `team_id`). */
+  raw?: unknown;
 }
 
 @Injectable()
@@ -257,7 +261,8 @@ export class AgentInboundHandler implements OnModuleInit {
     private readonly connectClaimTokenService: ConnectClaimTokenService,
     private readonly keylessAbuseGuard: KeylessAbuseGuardService,
     private readonly planLimitGate: PlanLimitGateService,
-    private readonly inboundAck: InboundAckService
+    private readonly inboundAck: InboundAckService,
+    private readonly connectionContextResolver: InboundConnectionContextResolver
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -266,7 +271,8 @@ export class AgentInboundHandler implements OnModuleInit {
     this.inboundDispatcher.registerInboundCallbacks({
       onMessage: (agentId, config, thread, message) =>
         this.handle(agentId, config, thread, message, AgentEventEnum.ON_MESSAGE),
-      onAction: (agentId, config, thread, action, userId) => this.handleAction(agentId, config, thread, action, userId),
+      onAction: (agentId, config, thread, action, userId, rawEvent) =>
+        this.handleAction(agentId, config, thread, action, userId, rawEvent),
       onReaction: (agentId, config, event) => this.handleReaction(agentId, config, event),
     });
   }
@@ -290,16 +296,17 @@ export class AgentInboundHandler implements OnModuleInit {
     const isVerifiedEmailSender =
       config.platform !== AgentPlatformEnum.EMAIL || isInboundEmailSenderVerified(emailAuthRaw);
 
-    // Open-access email agents provision the sender themselves, so email joins
-    // the Slack/Teams lookup-or-provision path (soft-failing to `null` inside
-    // the resolver). Keyless demo agents are excluded — they deliberately
-    // provision lazily at tool-approval time and bound abuse via the demo cap,
-    // so the ephemeral env stays subscriber-free until needed.
+    // Auto-provisioning is gated by the effective `subscriberAccess` policy
+    // (resolved per platform in AgentConfigResolver: Slack/Teams default `open`,
+    // others default `restricted`). It only fires on provision-capable platforms
+    // — Slack/Teams (endpoint provisioning) and email (address-based). Keyless
+    // demo agents on email are excluded — they deliberately provision lazily at
+    // tool-approval time and bound abuse via the demo cap, so the ephemeral env
+    // stays subscriber-free until needed. WhatsApp/Telegram have no provisioning
+    // path and always fall through to the lookup-only branch.
     const canAutoProvision =
-      isAutoProvisionPlatform(config.platform) ||
-      (config.platform === AgentPlatformEnum.EMAIL &&
-        config.subscriberAccess === AgentSubscriberAccessEnum.OPEN &&
-        !config.isKeyless);
+      config.subscriberAccess === AgentSubscriberAccessEnum.OPEN &&
+      (isAutoProvisionPlatform(config.platform) || (config.platform === AgentPlatformEnum.EMAIL && !config.isKeyless));
 
     let subscriberId: string | null;
     try {
@@ -335,7 +342,13 @@ export class AgentInboundHandler implements OnModuleInit {
               platformTenantId:
                 config.platform === AgentPlatformEnum.TEAMS ? extractMsTeamsTenantId(message.raw) : undefined,
             })
-          : await this.resolveSubscriberId(agentId, config, message.author.userId, 'resolve-subscriber');
+          : await this.resolveSubscriberId({
+              agentId,
+              config,
+              platformUserId: message.author.userId,
+              operation: 'resolve-subscriber',
+              authorIsBot: message.author.isBot === true,
+            });
       }
     } catch (err) {
       if (err instanceof BotAuthorSkippedError) {
@@ -406,7 +419,8 @@ export class AgentInboundHandler implements OnModuleInit {
       message,
       subscriberId,
       platformThreadId,
-      thread.isDM
+      thread.isDM,
+      extractWorkspaceId(config.platform, message.raw) ?? undefined
     );
 
     if (config.isKeyless) {
@@ -461,6 +475,8 @@ export class AgentInboundHandler implements OnModuleInit {
       });
     }
 
+    const context = await this.connectionContextResolver.resolve(config, message.raw, message.author?.userId);
+
     const runtime = this.runtimeResolver.resolve(agent);
     const turn: ConversationTurn = {
       agentId,
@@ -468,6 +484,7 @@ export class AgentInboundHandler implements OnModuleInit {
       config,
       conversation,
       subscriber,
+      context,
       message,
       event,
       thread,
@@ -550,7 +567,8 @@ export class AgentInboundHandler implements OnModuleInit {
     message: Message,
     subscriberId: string | null,
     platformThreadId: string,
-    isDirectMessage: boolean
+    isDirectMessage: boolean,
+    workspaceId?: string
   ): Promise<ConversationEntity> {
     const participantId = subscriberId ?? `${config.platform}:${message.author.userId}`;
     const participantType = subscriberId
@@ -569,6 +587,7 @@ export class AgentInboundHandler implements OnModuleInit {
       platformUserId: message.author.userId,
       firstMessageText: resolveInboundFirstMessageText(config.platform, message),
       isDirectMessage,
+      workspaceId,
     });
   }
 
@@ -676,12 +695,30 @@ export class AgentInboundHandler implements OnModuleInit {
     }
   }
 
-  private async resolveSubscriberId(
-    agentId: string,
-    config: ResolvedAgentConfig,
-    platformUserId: string,
-    operation: string
-  ): Promise<string | null> {
+  private async resolveSubscriberId({
+    agentId,
+    config,
+    platformUserId,
+    operation,
+    authorIsBot,
+  }: {
+    agentId: string;
+    config: ResolvedAgentConfig;
+    platformUserId: string;
+    operation: string;
+    authorIsBot: boolean;
+  }): Promise<string | null> {
+    if (authorIsBot) {
+      this.analyticsService.track('[Agent Platform] - Bot author inbound skipped', config.organizationId, {
+        _organization: config.organizationId,
+        environmentId: config.environmentId,
+        platform: config.platform,
+        agentIdentifier: config.agentIdentifier,
+      });
+
+      throw new BotAuthorSkippedError(config.platform, platformUserId);
+    }
+
     return this.subscriberResolver
       .resolveOnly({
         environmentId: config.environmentId,
@@ -745,6 +782,7 @@ export class AgentInboundHandler implements OnModuleInit {
             integrationId: payload._integrationId,
             subscriberId: payload.subscriberId,
             chatId,
+            context: payload.context,
           })
         );
 
@@ -907,7 +945,13 @@ export class AgentInboundHandler implements OnModuleInit {
     const platformUserId = event.user?.userId;
 
     const subscriberId = platformUserId
-      ? await this.resolveSubscriberId(agentId, config, platformUserId, 'resolve-subscriber-reaction')
+      ? await this.resolveSubscriberId({
+          agentId,
+          config,
+          platformUserId,
+          operation: 'resolve-subscriber-reaction',
+          authorIsBot: false,
+        })
       : null;
 
     const [subscriber, sourceActivity] = await Promise.all([
@@ -939,6 +983,8 @@ export class AgentInboundHandler implements OnModuleInit {
         : undefined,
     };
 
+    const context = await this.connectionContextResolver.resolve(config, event.raw, platformUserId);
+
     const runtime = this.runtimeResolver.resolve(null);
     const turn: ConversationTurn = {
       agentId,
@@ -946,6 +992,7 @@ export class AgentInboundHandler implements OnModuleInit {
       config,
       conversation,
       subscriber,
+      context,
       message: null,
       event: AgentEventEnum.ON_REACTION,
       thread: event.thread ?? ({ id: threadId, channelId: '', isDM: false } as Thread),
@@ -961,7 +1008,8 @@ export class AgentInboundHandler implements OnModuleInit {
     config: ResolvedAgentConfig,
     thread: Thread,
     action: AgentAction,
-    userId: string
+    userId: string,
+    rawEvent?: unknown
   ): Promise<void> {
     // The gate suppresses its reply for link-button actions (e.g. the upgrade
     // card's own CTA) so a blocked click can never spawn another card.
@@ -969,7 +1017,13 @@ export class AgentInboundHandler implements OnModuleInit {
       return;
     }
 
-    const subscriberId = await this.resolveSubscriberId(agentId, config, userId, 'resolve-subscriber-action');
+    const subscriberId = await this.resolveSubscriberId({
+      agentId,
+      config,
+      platformUserId: userId,
+      operation: 'resolve-subscriber-action',
+      authorIsBot: false,
+    });
 
     const participantId = subscriberId ?? `${config.platform}:${userId}`;
     const participantType = subscriberId
@@ -988,6 +1042,7 @@ export class AgentInboundHandler implements OnModuleInit {
       platformUserId: userId,
       firstMessageText: `[action:${action.id}]`,
       isDirectMessage: thread.isDM,
+      workspaceId: extractWorkspaceId(config.platform, rawEvent) ?? undefined,
     });
 
     trackAgentInboundAction(this.analyticsService, {
@@ -1026,6 +1081,8 @@ export class AgentInboundHandler implements OnModuleInit {
       ]),
     ]);
 
+    const context = await this.connectionContextResolver.resolve(config, rawEvent, userId);
+
     const runtime = this.runtimeResolver.resolve(agent);
     const turn: ConversationTurn = {
       agentId,
@@ -1033,6 +1090,7 @@ export class AgentInboundHandler implements OnModuleInit {
       config,
       conversation,
       subscriber,
+      context,
       message: null,
       event: AgentEventEnum.ON_ACTION,
       thread,

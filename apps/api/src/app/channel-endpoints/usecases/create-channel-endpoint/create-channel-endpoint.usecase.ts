@@ -1,5 +1,6 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { InstrumentUsecase, shortId } from '@novu/application-generic';
+import { ModuleRef } from '@nestjs/core';
+import { InstrumentUsecase, PinoLogger, shortId } from '@novu/application-generic';
 import {
   ChannelConnectionEntity,
   ChannelConnectionRepository,
@@ -10,8 +11,41 @@ import {
   IntegrationRepository,
   SubscriberRepository,
 } from '@novu/dal';
-import { ChannelEndpointType } from '@novu/shared';
+import { ChannelEndpointByType, ChannelEndpointType, ENDPOINT_TYPES } from '@novu/shared';
+import { ConfirmLinkedAuthCardsCommand } from '../../../agents/conversation-runtime/link/confirm-linked-auth-cards.command';
+import { ConfirmLinkedAuthCards } from '../../../agents/conversation-runtime/link/confirm-linked-auth-cards.usecase';
+import { AgentPlatformEnum } from '../../../agents/shared/enums/agent-platform.enum';
 import { CreateChannelEndpointCommand } from './create-channel-endpoint.command';
+
+/**
+ * Reverses {@link PLATFORM_ENDPOINT_CONFIG}: maps a freshly created channel endpoint
+ * back to the `(platform, platformUserId)` of the user who just linked, for the
+ * real-time auth-card confirmation. Only the three user-linking endpoint types carry
+ * a linkable identity; channel/webhook/phone endpoints are not user links.
+ */
+function deriveLinkedPlatformUser(
+  type: ChannelEndpointType,
+  endpoint: ChannelEndpointByType[ChannelEndpointType]
+): { platform: AgentPlatformEnum; platformUserId: string } | null {
+  switch (type) {
+    case ENDPOINT_TYPES.SLACK_USER:
+      return { platform: AgentPlatformEnum.SLACK, platformUserId: (endpoint as { userId: string }).userId };
+    case ENDPOINT_TYPES.MS_TEAMS_USER:
+      return { platform: AgentPlatformEnum.TEAMS, platformUserId: (endpoint as { userId: string }).userId };
+    case ENDPOINT_TYPES.TELEGRAM_CHAT:
+      return { platform: AgentPlatformEnum.TELEGRAM, platformUserId: (endpoint as { chatId: string }).chatId };
+    case ENDPOINT_TYPES.SLACK_CHANNEL:
+    case ENDPOINT_TYPES.WEBHOOK:
+    case ENDPOINT_TYPES.PHONE:
+    case ENDPOINT_TYPES.MS_TEAMS_CHANNEL:
+      return null;
+    default: {
+      const exhaustiveCheck: never = type;
+
+      return exhaustiveCheck;
+    }
+  }
+}
 
 @Injectable()
 export class CreateChannelEndpoint {
@@ -20,8 +54,12 @@ export class CreateChannelEndpoint {
     private readonly channelConnectionRepository: ChannelConnectionRepository,
     private readonly integrationRepository: IntegrationRepository,
     private readonly subscriberRepository: SubscriberRepository,
-    private readonly contextRepository: ContextRepository
-  ) {}
+    private readonly contextRepository: ContextRepository,
+    private readonly moduleRef: ModuleRef,
+    private readonly logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   @InstrumentUsecase()
   async execute(command: CreateChannelEndpointCommand): Promise<ChannelEndpointEntity> {
@@ -53,10 +91,57 @@ export class CreateChannelEndpoint {
 
     const channelEndpoint = await this.createChannelEndpoint(command, identifier, integration, connection, contextKeys);
 
+    // Best-effort, non-blocking: linking is the moment a pending auth CTA card can be
+    // confirmed. Never let it fail or slow endpoint creation.
+    void this.confirmLinkedAuthCards(command, integration);
+
     return channelEndpoint;
   }
 
+  /**
+   * Fires the real-time "account linked" confirmation for any conversation still
+   * showing this user an auth CTA card. Lazily resolved via {@link ModuleRef}
+   * (`strict: false`) because the use case lives in `AgentsModule`, which imports
+   * `ChannelEndpointsModule` — a direct dependency would be circular. Fully
+   * swallowed so linking is never affected.
+   */
+  private async confirmLinkedAuthCards(
+    command: CreateChannelEndpointCommand,
+    integration: IntegrationEntity
+  ): Promise<void> {
+    const derived = deriveLinkedPlatformUser(command.type, command.endpoint);
+    if (!derived) {
+      return;
+    }
+
+    try {
+      const confirmLinkedAuthCards = this.moduleRef.get(ConfirmLinkedAuthCards, { strict: false });
+
+      await confirmLinkedAuthCards.execute(
+        ConfirmLinkedAuthCardsCommand.create({
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          integrationIdentifier: integration.identifier,
+          integrationId: integration._id,
+          platform: derived.platform,
+          platformUserId: derived.platformUserId,
+        })
+      );
+    } catch (err) {
+      this.logger.warn(
+        { err: err instanceof Error ? err.message : String(err), integrationId: integration._id },
+        'Failed to confirm linked auth cards after channel endpoint creation'
+      );
+    }
+  }
+
   private async resolveContexts(command: CreateChannelEndpointCommand<ChannelEndpointType>): Promise<string[]> {
+    // A session-validated context arrives pre-resolved as keys — persist verbatim
+    // (never re-resolve/trust the raw payload alongside it).
+    if (command.contextKeys?.length) {
+      return command.contextKeys;
+    }
+
     if (!command.context) {
       return [];
     }

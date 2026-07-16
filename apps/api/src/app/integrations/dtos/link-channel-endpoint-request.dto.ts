@@ -1,5 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { ApiContextPayload, IsValidContextPayload } from '@novu/application-generic';
+import { ContextPayload } from '@novu/shared';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class LinkChannelEndpointRequestDto {
   @ApiProperty({
@@ -19,4 +21,9 @@ export class LinkChannelEndpointRequestDto {
   @IsString()
   @IsNotEmpty()
   subscriberId: string;
+
+  @ApiContextPayload()
+  @IsOptional()
+  @IsValidContextPayload({ maxCount: 5 })
+  context?: ContextPayload;
 }

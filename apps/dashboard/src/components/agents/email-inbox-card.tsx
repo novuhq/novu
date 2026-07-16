@@ -4,7 +4,7 @@ import { RiAddLine, RiArrowRightSLine, RiArrowRightUpLine, RiCloseLine, RiInform
 import { Link, useSearchParams } from 'react-router-dom';
 import type { AgentIntegrationEmbedded, AgentResponse } from '@/api/agents';
 import { CopyableEmailAddress } from '@/components/agents/copyable-email-address';
-import { EmailSubscriberAccessToggle } from '@/components/agents/email-subscriber-access-toggle';
+import { SubscriberAccessToggle } from '@/components/agents/subscriber-access-toggle';
 import { CompactButton } from '@/components/primitives/button-compact';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { Switch } from '@/components/primitives/switch';
@@ -317,7 +317,7 @@ export function EmailInboxCardBody({
       >
         <div className="flex items-center justify-end gap-2">
           <span className="text-text-soft text-label-xs font-medium leading-4">Accept email from anyone</span>
-          <EmailSubscriberAccessToggle agent={agent} ariaLabel="Accept email from anyone" />
+          <SubscriberAccessToggle agent={agent} ariaLabel="Accept email from anyone" />
         </div>
       </CardRow>
 

@@ -1,3 +1,4 @@
+import type { Context } from '../types';
 import type {
   TelegramSubscriberLinkOptions,
   TelegramSubscriberLinkResponse,
@@ -49,7 +50,7 @@ type LinkChannelEndpointApiResponse = {
 export class TelegramSubscriberLink {
   readonly #options: Required<
     Pick<TelegramSubscriberLinkOptions, 'apiUrl' | 'integrationIdentifier' | 'subscriberId' | 'pollIntervalMs'>
-  > & { secretKey?: string; fetchFn: typeof fetch };
+  > & { secretKey?: string; context?: Context; fetchFn: typeof fetch };
 
   #state: TelegramSubscriberLinkState = {
     status: 'loading',
@@ -75,6 +76,7 @@ export class TelegramSubscriberLink {
       integrationIdentifier: options.integrationIdentifier,
       subscriberId: options.subscriberId,
       pollIntervalMs: options.pollIntervalMs ?? DEFAULT_POLL_INTERVAL_MS,
+      context: options.context,
       fetchFn: options.fetchFn ?? fetch,
     };
   }
@@ -165,7 +167,7 @@ export class TelegramSubscriberLink {
   }
 
   async #issueSubscriberLink(): Promise<TelegramSubscriberLinkResponse> {
-    const { apiUrl, integrationIdentifier, subscriberId, secretKey, fetchFn } = this.#options;
+    const { apiUrl, integrationIdentifier, subscriberId, secretKey, context, fetchFn } = this.#options;
 
     const url = `${apiUrl}/v1/integrations/channel-endpoints/link`;
 
@@ -177,7 +179,7 @@ export class TelegramSubscriberLink {
     const res = await fetchFn(url, {
       method: 'POST',
       headers,
-      body: JSON.stringify({ integrationIdentifier, subscriberId }),
+      body: JSON.stringify({ integrationIdentifier, subscriberId, context }),
     });
 
     if (!res.ok) {

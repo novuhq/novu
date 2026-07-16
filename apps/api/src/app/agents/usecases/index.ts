@@ -10,6 +10,7 @@ import { SendWhatsAppTestTemplate } from '../channels/whatsapp/send-whatsapp-tes
 import { HandleAgentReply } from '../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.usecase';
 import { HandlePlanProgress } from '../conversation-runtime/reply/handle-plan-progress/handle-plan-progress.usecase';
 import { SendAgentWelcomeMessage } from '../conversation-runtime/reply/send-agent-welcome-message/send-agent-welcome-message.usecase';
+import { BuildCopilotConnectContext } from '../copilot/usecases/build-copilot-connect-context/build-copilot-connect-context.usecase';
 import { SendAgentTestEmail } from '../email/send-agent-test-email/send-agent-test-email.usecase';
 import { ConfirmToolApproval } from '../managed-runtime/tool-approval/confirm-tool-approval.usecase';
 import { HandlePendingToolApprovals } from '../managed-runtime/tool-approval/handle-pending-tool-approvals.usecase';
@@ -43,6 +44,7 @@ import { ListAgentEmoji } from '../shared/emoji/list-agent-emoji/list-agent-emoj
 export { ConsumeSlackSetupLink, GetSlackSetupLinkStatus, IssueSlackSetupLink };
 
 export const USE_CASES = [
+  BuildCopilotConnectContext,
   CreateAgent,
   ConsumeSlackSetupLink,
   GetAgent,

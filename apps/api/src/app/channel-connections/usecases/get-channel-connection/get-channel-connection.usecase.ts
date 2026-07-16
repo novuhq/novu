@@ -21,12 +21,27 @@ export class GetChannelConnection {
       identifier: command.identifier,
     };
 
+    // Both the subscriber-vs-shared clause and the context match may produce an `$or`,
+    // so compose them under `$and` to keep them from clobbering one another.
+    const and: FilterQuery<ChannelConnectionDBModel>[] = [];
+
     if (command.subscriberId) {
-      query.subscriberId = command.subscriberId;
+      if (command.connectionMode === 'subscriber') {
+        query.subscriberId = command.subscriberId;
+      } else if (command.connectionMode === 'shared') {
+        query.subscriberId = null;
+      } else {
+        // Default: match the subscriber's own connection or any shared one.
+        and.push({ $or: [{ subscriberId: command.subscriberId }, { subscriberId: null }] });
+      }
     }
 
     if (command.contextKeys !== undefined) {
-      Object.assign(query, this.channelConnectionRepository.buildContextExactMatchQuery(command.contextKeys));
+      and.push(this.channelConnectionRepository.buildContextExactMatchQuery(command.contextKeys));
+    }
+
+    if (and.length > 0) {
+      query.$and = and;
     }
 
     const channelConnection = await this.channelConnectionRepository.findOne(query);

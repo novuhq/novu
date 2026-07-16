@@ -887,6 +887,7 @@ export class IntegrationsController {
             organizationId: user.organizationId,
             integrationIdentifier: body.integrationIdentifier,
             subscriberId: body.subscriberId,
+            context: body.context,
           })
         );
 

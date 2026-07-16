@@ -4,6 +4,7 @@ import { RiCloseCircleLine, RiExpandUpDownLine } from 'react-icons/ri';
 import {
   type AgentEmojiEntry,
   type AgentResponse,
+  type AgentSubscriberAccess,
   getAgentDetailQueryKey,
   getAgentEmojiQueryKey,
   listAgentEmoji,
@@ -136,9 +137,14 @@ export function AgentBehaviorSection({ agent }: AgentBehaviorSectionProps) {
   const acknowledgeOnReceived = agent.behavior?.acknowledgeOnReceived !== false;
   const reactionOnResolved =
     agent.behavior?.reactionOnResolved === undefined ? DEFAULT_REACTION_ON_RESOLVED : agent.behavior.reactionOnResolved;
+  const isSubscriberAccessOpen = agent.behavior?.subscriberAccess === 'open';
 
   const { mutate, isPending } = useMutation({
-    mutationFn: (body: { acknowledgeOnReceived?: boolean; reactionOnResolved?: string | null }) =>
+    mutationFn: (body: {
+      acknowledgeOnReceived?: boolean;
+      reactionOnResolved?: string | null;
+      subscriberAccess?: AgentSubscriberAccess;
+    }) =>
       updateAgent(requireEnvironment(currentEnvironment, 'No environment selected'), agent.identifier, {
         behavior: body,
       }),
@@ -175,6 +181,29 @@ export function AgentBehaviorSection({ agent }: AgentBehaviorSectionProps) {
                 checked={acknowledgeOnReceived}
                 disabled={isPending}
                 onCheckedChange={(checked) => mutate({ acknowledgeOnReceived: checked })}
+              />
+            )}
+          </ToggleRow>
+
+          <ToggleRow
+            label="Auto-create subscribers"
+            tooltip="Open lets anyone message your agent — a lightweight subscriber is created so it can reply, merging into their account when they sign up. Off replies only to known subscribers."
+          >
+            {readOnly ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="inline-flex">
+                    <Switch checked={isSubscriberAccessOpen} disabled />
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">{PROD_READ_ONLY_TOOLTIP}</TooltipContent>
+              </Tooltip>
+            ) : (
+              <Switch
+                checked={isSubscriberAccessOpen}
+                disabled={isPending}
+                aria-label="Auto-create subscribers from unknown senders"
+                onCheckedChange={(checked) => mutate({ subscriberAccess: checked ? 'open' : 'restricted' })}
               />
             )}
           </ToggleRow>

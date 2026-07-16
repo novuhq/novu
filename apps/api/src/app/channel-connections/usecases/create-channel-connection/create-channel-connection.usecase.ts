@@ -62,10 +62,17 @@ export class CreateChannelConnection {
       connectionMode: command.connectionMode,
       subscriberId: command.subscriberId,
       context: command.context,
+      contextKeys: command.contextKeys,
     });
   }
 
   private async resolveContexts(command: CreateChannelConnectionCommand): Promise<string[]> {
+    // A session-validated context arrives pre-resolved as keys — persist verbatim
+    // (never re-resolve/trust the raw payload alongside it).
+    if (command.contextKeys?.length) {
+      return command.contextKeys;
+    }
+
     if (!command.context) {
       return [];
     }

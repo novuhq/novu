@@ -60,6 +60,23 @@ export interface AgentConversation {
   lastActivityAt: string;
 }
 
+/**
+ * A single connect-time context value: either a bare string id, or a rich object with an `id`
+ * and arbitrary `data`. Mirrors Novu's `ContextValue`.
+ */
+export type AgentContextValue = string | { id: string; data?: Record<string, unknown> };
+
+/**
+ * Connect-time context bound to the channel connection and resolved server-side for the current
+ * turn.
+ *
+ * Populated by Novu from the context an integrator passes to the Connect button (e.g. the Slack
+ * connect flow persists it on the `ChannelConnection`). It lets a single hosted agent serve many
+ * tenants: the agent reads its own tenant/org out of the context to scope writes. Keys are
+ * integrator-defined context types (e.g. `tenant`), mirroring Novu's `ContextPayload`.
+ */
+export type AgentContextPayload = Record<string, AgentContextValue>;
+
 /** The Novu subscriber who initiated or is participating in the conversation. */
 export interface AgentSubscriber {
   /** Stable Novu subscriber ID. */
@@ -72,6 +89,14 @@ export interface AgentSubscriber {
   locale?: string;
   /** Arbitrary custom data attached to the subscriber in Novu. */
   data?: Record<string, unknown>;
+  /**
+   * Whether the author is an authenticated, linked subscriber (`true`) as opposed
+   * to an auto-provisioned "phantom" created from an unlinked inbound sender
+   * (`false`). This is the primary gating input for `restricted` agents: the
+   * framework short-circuits and renders an auth CTA card when this is `false`.
+   * Computed by Novu at inbound time; the agent never has to derive it.
+   */
+  isLinked?: boolean;
 }
 
 /**
@@ -273,6 +298,43 @@ export interface ToolApprovalConfig {
   }) => MessageContent | ToolApprovalCard;
 }
 
+/**
+ * How Novu treats unknown/unlinked senders of a distributed agent, mirrored onto
+ * the bridge wire so the framework can gate before running a handler:
+ * - `open`: anyone may talk to the agent (unknown senders are auto-provisioned).
+ * - `restricted`: only authenticated, linked subscribers proceed; unlinked authors
+ *   are shown an auth CTA and short-circuited.
+ */
+export type AgentSubscriberAccess = 'open' | 'restricted';
+
+export interface AuthConfigObject {
+  /**
+   * Where the unlinked user links their account. Rendered as a link button; omit
+   * to show a message-only prompt (no button). Distributors build this from their
+   * own app (e.g. the Novu Copilot points it at the dashboard connect page).
+   */
+  linkUrl?: string;
+  /** Card heading. */
+  title?: string;
+  /** Body copy explaining why linking is required. */
+  message?: string;
+  /** Link-button label. */
+  buttonLabel?: string;
+  /** Heading on the post-link confirmation card shown once the author is linked. */
+  linkedTitle?: string;
+  /** Body copy shown on the confirmation card after the author links their account. */
+  linkedMessage?: string;
+}
+
+export type AuthConfigCallback = (ctx: AgentHandlerContext) => Promise<AuthConfigObject | CardElement>;
+
+/**
+ * Optional customization of the auth CTA the framework posts when an unlinked
+ * author messages a `restricted` agent. Set it on the agent like `toolApproval`;
+ * omit it to render a generic, message-only prompt.
+ */
+export type AuthConfig = AuthConfigObject | AuthConfigCallback;
+
 /** Passed to `onToolApproval` when the user clicks Approve or Deny. */
 export interface ToolApprovalDecision {
   /** The tool that was awaiting approval. */
@@ -336,6 +398,12 @@ export interface AgentHandlerContext {
    * resolve a subscriber for this conversation.
    */
   readonly subscriber: AgentSubscriber | null;
+  /**
+   * Connect-time context resolved for this turn from the channel connection, or `null` when none
+   * was bound. Populated server-side (trusted) — safe to use for authorizing and scoping writes
+   * (e.g. reading the customer's tenant/organization out of it).
+   */
+  readonly context: AgentContextPayload | null;
   /**
    * Full conversation history as an ordered array of entries.
    * Map to your LLM's message format before making a model call:
@@ -531,6 +599,13 @@ export interface AgentHandlers {
    * Customize how approval messages look. Omit to use the built-in Approve/Deny card.
    */
   toolApproval?: ToolApprovalConfig;
+  /**
+   * Customize the "link your account" CTA the framework shows to unlinked authors
+   * of a `restricted` agent. The gate itself is applied by the framework (driven
+   * by the bridge's `subscriberAccess`); this only overrides the rendered prompt.
+   * Omit to use the built-in generic prompt.
+   */
+  auth?: AuthConfig;
 }
 
 export interface Agent {
@@ -562,6 +637,19 @@ export interface AgentBridgeRequest {
   reaction: AgentReaction | null;
   conversation: AgentConversation;
   subscriber: AgentSubscriber | null;
+  /**
+   * Effective subscriber-access policy for this agent (`open` | `restricted`),
+   * resolved server-side. Drives the framework's built-in auth gate: on a
+   * `restricted` agent an unlinked author is short-circuited with an auth CTA
+   * before any handler runs. Optional on the wire for backward compatibility;
+   * absent is treated as `open` (no gating).
+   */
+  subscriberAccess?: AgentSubscriberAccess;
+  /**
+   * Connect-time context resolved server-side for this turn (trusted). Optional on the wire so
+   * older API versions that don't send it remain compatible; absent → `ctx.context` is `null`.
+   */
+  context?: AgentContextPayload | null;
   history: AgentHistoryEntry[];
   platform: string;
   platformContext: AgentPlatformContext;

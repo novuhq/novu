@@ -30,10 +30,23 @@ const MAX_FILES_PER_MESSAGE = 15;
  * pollution gadget (`__proto__`, `constructor`, `prototype`) or break key handling
  * for storage/serialization (dots, brackets, control chars). The shape mirrors
  * SLUG_IDENTIFIER_REGEX with an additional `:` for namespacing (e.g. `crm:ticketId`).
+ *
+ * User-facing keys must start with an alphanumeric. The framework's own reserved
+ * `__novu:` namespace (see {@link RESERVED_METADATA_NAMESPACE}) is exempt from the
+ * leading-alphanumeric rule — its suffix is still validated by this same regex, so
+ * prototype-pollution / storage-breaking chars stay rejected.
  */
 const METADATA_SIGNAL_KEY_REGEX = /^[a-zA-Z0-9]+(?:[-_:][a-zA-Z0-9]+)*$/;
 const FORBIDDEN_METADATA_SIGNAL_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
 const MAX_METADATA_SIGNAL_KEY_LENGTH = 128;
+
+/**
+ * Reserved prefix for framework-internal bookkeeping keys (e.g. the auth-card
+ * tracking metadata written by the framework auth gate). These start with `__`,
+ * which the user-facing key regex disallows, so they're validated by namespace
+ * prefix + suffix rather than as a whole key.
+ */
+const RESERVED_METADATA_NAMESPACE = '__novu:';
 
 export function isValidMetadataSignalKey(key: unknown): key is string {
   if (typeof key !== 'string' || key.length === 0 || key.length > MAX_METADATA_SIGNAL_KEY_LENGTH) {
@@ -41,6 +54,10 @@ export function isValidMetadataSignalKey(key: unknown): key is string {
   }
 
   if (FORBIDDEN_METADATA_SIGNAL_KEYS.has(key)) return false;
+
+  if (key.startsWith(RESERVED_METADATA_NAMESPACE)) {
+    return METADATA_SIGNAL_KEY_REGEX.test(key.slice(RESERVED_METADATA_NAMESPACE.length));
+  }
 
   return METADATA_SIGNAL_KEY_REGEX.test(key);
 }
@@ -111,7 +128,8 @@ export class IsValidSignal implements ValidatorConstraintInterface {
   defaultMessage(): string {
     return (
       'metadata signals require action (set|delete|clear): ' +
-      'set requires a key 1-128 chars of letters, digits and "-", "_", ":" separators plus a defined value; ' +
+      'set requires a key 1-128 chars of letters, digits and "-", "_", ":" separators (or a framework-reserved ' +
+      '"__novu:" namespaced key) plus a defined value; ' +
       'delete requires a valid key; clear requires no additional fields; ' +
       'trigger signals require workflowId.'
     );

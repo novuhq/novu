@@ -272,6 +272,29 @@ export async function getConversationUsage(
   return 'data' in response ? response.data : response;
 }
 
+export type CopilotConnectContext = {
+  context: Record<string, { id: string; data?: Record<string, unknown> }>;
+  contextHash: string;
+  subscriberHash: string;
+};
+
+/**
+ * Fetches the server-minted tenant `context` + `contextHash`, plus a `subscriberHash` for the
+ * given `subscriberId`, for the NovuCopilot Slack connect flow. Runs in the customer's
+ * authenticated session so everything is signed server-side — never forged in the browser.
+ */
+export async function getCopilotConnectContext(
+  environment: IEnvironment,
+  signal?: AbortSignal
+): Promise<CopilotConnectContext> {
+  const response = await get<{ data: CopilotConnectContext } | CopilotConnectContext>(
+    `/agents/copilot/connect-context`,
+    { environment, signal }
+  );
+
+  return 'data' in response ? response.data : response;
+}
+
 export async function migrateAgentRuntime(
   environment: IEnvironment,
   agentIdentifier: string,

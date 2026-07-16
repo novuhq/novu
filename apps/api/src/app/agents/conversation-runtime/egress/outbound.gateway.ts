@@ -2,7 +2,7 @@ import { BadGatewayException, BadRequestException, Injectable } from '@nestjs/co
 import { PinoLogger } from '@novu/application-generic';
 import { ConversationChannel } from '@novu/dal';
 import type { SentMessageInfo } from '@novu/framework/internal';
-import type { AdapterPostableMessage, CardElement, EmojiValue, PlanModel, Thread } from 'chat';
+import type { AdapterPostableMessage, CardElement, Chat, EmojiValue, PlanModel, Thread } from 'chat';
 import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import type { ReplyContentDto } from '../../shared/dtos/agent-reply-payload.dto';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
@@ -33,6 +33,12 @@ export interface ConversationTarget {
   integrationIdentifier: string;
   platform: string;
   platformThreadId: string;
+  /**
+   * Slack workspace/team id for this thread, when the caller already has it (e.g. from the
+   * conversation channel). Lets multi-workspace outbound delivery bind the right bot token without
+   * an extra conversation lookup. Falls back to a lookup, then to the first installed workspace.
+   */
+  workspaceId?: string;
 }
 
 export interface OutboundPersistContext {
@@ -134,7 +140,8 @@ export class OutboundGateway {
       target.platform,
       target.platformThreadId,
       msg,
-      options
+      options,
+      target.workspaceId
     );
     await this.persistDelivered(persist, sent, msg);
 
@@ -155,7 +162,8 @@ export class OutboundGateway {
       target.platformThreadId,
       messageId,
       msg,
-      options
+      options,
+      target.workspaceId
     );
     await this.conversation.persistAgentEdit({
       conversationId: persist.conversationId,
@@ -236,11 +244,14 @@ export class OutboundGateway {
     platform: string,
     platformThreadId: string,
     content: ReplyContentDto,
-    options?: OutboundDeliveryOptions
+    options?: OutboundDeliveryOptions,
+    workspaceId?: string
   ): Promise<SentMessageInfo> {
+    const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
+
     if (platform === AgentPlatformEnum.SLACK && options?.slackNative) {
       try {
-        const botToken = await this.resolveSlackBotToken(agentId, integrationIdentifier);
+        const botToken = await this.requireSlackBotToken(config, agentId, platformThreadId, workspaceId);
 
         return await postSlackNativeBlocks({
           botToken,
@@ -256,7 +267,6 @@ export class OutboundGateway {
       }
     }
 
-    const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
     const instanceKey = `${agentId}:${integrationIdentifier}`;
     const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);
 
@@ -269,7 +279,9 @@ export class OutboundGateway {
 
     const postArg = this.buildAdapterPostableMessage(tokenizedContent, config);
 
-    const sent = await thread.post(postArg).catch(toDeliveryError);
+    const sent = await this.runWithPlatformToken(chat, config, agentId, platformThreadId, workspaceId, () =>
+      thread.post(postArg)
+    ).catch(toDeliveryError);
 
     return { messageId: sent.id, platformThreadId: sent.threadId };
   }
@@ -278,7 +290,8 @@ export class OutboundGateway {
     agentId: string,
     integrationIdentifier: string,
     platformThreadId: string,
-    status = 'Thinking...'
+    status = 'Thinking...',
+    workspaceId?: string
   ): Promise<void> {
     const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
     const instanceKey = `${agentId}:${integrationIdentifier}`;
@@ -289,14 +302,17 @@ export class OutboundGateway {
       return;
     }
 
-    await thread.startTyping(status).catch(toDeliveryError);
+    await this.runWithPlatformToken(chat, config, agentId, platformThreadId, workspaceId, () =>
+      thread.startTyping(status)
+    ).catch(toDeliveryError);
   }
 
   async sendDirectMessage(
     agentId: string,
     integrationIdentifier: string,
     platformUserId: string,
-    content: ReplyContentDto
+    content: ReplyContentDto,
+    workspaceId?: string
   ): Promise<SentMessageInfo> {
     const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
     const instanceKey = `${agentId}:${integrationIdentifier}`;
@@ -311,7 +327,9 @@ export class OutboundGateway {
 
     const postArg = this.buildAdapterPostableMessage(tokenizedContent, config);
 
-    const sent = await dmThread.post(postArg).catch(toDeliveryError);
+    const sent = await this.runWithPlatformToken(chat, config, agentId, platformUserId, workspaceId, () =>
+      dmThread.post(postArg)
+    ).catch(toDeliveryError);
 
     const platformThreadId = sent.threadId.endsWith(':') ? `${sent.threadId}${sent.id}` : sent.threadId;
 
@@ -325,11 +343,14 @@ export class OutboundGateway {
     platformThreadId: string,
     platformMessageId: string,
     content: ReplyContentDto,
-    options?: OutboundDeliveryOptions
+    options?: OutboundDeliveryOptions,
+    workspaceId?: string
   ): Promise<SentMessageInfo> {
+    const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
+
     if (platform === AgentPlatformEnum.SLACK && options?.slackNative) {
       try {
-        const botToken = await this.resolveSlackBotToken(agentId, integrationIdentifier);
+        const botToken = await this.requireSlackBotToken(config, agentId, platformThreadId, workspaceId);
 
         return await editSlackNativeBlocks({
           botToken,
@@ -349,7 +370,6 @@ export class OutboundGateway {
       }
     }
 
-    const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
     const instanceKey = `${agentId}:${integrationIdentifier}`;
     const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);
 
@@ -367,18 +387,13 @@ export class OutboundGateway {
     // Edits re-brand so a post-then-edit delivery never strips the watermark.
     const editPayload = this.buildAdapterPostableMessage(tokenizedContent, config);
 
-    let editPromise: Promise<{ id: string; threadId: string }>;
-    if (tokenizedContent.card) {
-      editPromise = adapter.editMessage(
-        platformThreadId,
-        platformMessageId,
-        tokenizedContent.card as unknown as AdapterPostableMessage
-      );
-    } else {
-      editPromise = adapter.editMessage(platformThreadId, platformMessageId, editPayload);
-    }
+    const editCardPayload = tokenizedContent.card
+      ? (tokenizedContent.card as unknown as AdapterPostableMessage)
+      : editPayload;
 
-    const edited = await editPromise.catch(toDeliveryError);
+    const edited = await this.runWithPlatformToken(chat, config, agentId, platformThreadId, workspaceId, () =>
+      adapter.editMessage(platformThreadId, platformMessageId, editCardPayload)
+    ).catch(toDeliveryError);
 
     return { messageId: edited.id, platformThreadId: edited.threadId };
   }
@@ -388,7 +403,8 @@ export class OutboundGateway {
     integrationIdentifier: string,
     platform: string,
     platformThreadId: string,
-    platformMessageId: string
+    platformMessageId: string,
+    workspaceId?: string
   ): Promise<void> {
     const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
     const instanceKey = `${agentId}:${integrationIdentifier}`;
@@ -399,7 +415,9 @@ export class OutboundGateway {
       return;
     }
 
-    await adapter.deleteMessage(platformThreadId, platformMessageId).catch(toDeliveryError);
+    await this.runWithPlatformToken(chat, config, agentId, platformThreadId, workspaceId, () =>
+      adapter.deleteMessage(platformThreadId, platformMessageId)
+    ).catch(toDeliveryError);
   }
 
   async postPlanObject(
@@ -408,9 +426,10 @@ export class OutboundGateway {
     platform: string,
     platformThreadId: string,
     model: PlanModel,
-    phase: PlanPhase
+    phase: PlanPhase,
+    workspaceId?: string
   ): Promise<SentMessageInfo | null> {
-    const adapter = await this.resolvePlanAdapter(agentId, integrationIdentifier, platform);
+    const { chat, config, adapter } = await this.resolvePlanAdapter(agentId, integrationIdentifier, platform);
     const mode = resolvePlanDeliveryMode(platform, adapter);
 
     if (!mode) {
@@ -418,14 +437,24 @@ export class OutboundGateway {
     }
 
     if (mode === 'native') {
-      const sent = await adapter.postObject!(platformThreadId, 'plan', model).catch(toDeliveryError);
+      const sent = await this.runWithPlatformToken(chat, config, agentId, platformThreadId, workspaceId, () =>
+        adapter.postObject!(platformThreadId, 'plan', model)
+      ).catch(toDeliveryError);
 
       return { messageId: sent.id, platformThreadId: sent.threadId };
     }
 
     const markdown = renderPlanModelAsMarkdown(model, phase);
 
-    return this.postToConversation(agentId, integrationIdentifier, platform, platformThreadId, { markdown });
+    return this.postToConversation(
+      agentId,
+      integrationIdentifier,
+      platform,
+      platformThreadId,
+      { markdown },
+      undefined,
+      workspaceId
+    );
   }
 
   async editPlanObject(
@@ -435,9 +464,10 @@ export class OutboundGateway {
     platformThreadId: string,
     platformMessageId: string,
     model: PlanModel,
-    phase: PlanPhase
+    phase: PlanPhase,
+    workspaceId?: string
   ): Promise<void> {
-    const adapter = await this.resolvePlanAdapter(agentId, integrationIdentifier, platform);
+    const { chat, config, adapter } = await this.resolvePlanAdapter(agentId, integrationIdentifier, platform);
     const mode = resolvePlanDeliveryMode(platform, adapter);
 
     if (!mode) {
@@ -445,16 +475,25 @@ export class OutboundGateway {
     }
 
     if (mode === 'native') {
-      await adapter.editObject!(platformThreadId, platformMessageId, 'plan', model).catch(toDeliveryError);
+      await this.runWithPlatformToken(chat, config, agentId, platformThreadId, workspaceId, () =>
+        adapter.editObject!(platformThreadId, platformMessageId, 'plan', model)
+      ).catch(toDeliveryError);
 
       return;
     }
 
     const markdown = renderPlanModelAsMarkdown(model, phase);
 
-    await this.editInConversation(agentId, integrationIdentifier, platform, platformThreadId, platformMessageId, {
-      markdown,
-    });
+    await this.editInConversation(
+      agentId,
+      integrationIdentifier,
+      platform,
+      platformThreadId,
+      platformMessageId,
+      { markdown },
+      undefined,
+      workspaceId
+    );
   }
 
   private async resolvePlanAdapter(agentId: string, integrationIdentifier: string, platform: string) {
@@ -462,7 +501,7 @@ export class OutboundGateway {
     const instanceKey = `${agentId}:${integrationIdentifier}`;
     const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);
 
-    return chat.getAdapter(platform);
+    return { chat, config, adapter: chat.getAdapter(platform) };
   }
 
   async reactToMessage(
@@ -471,7 +510,8 @@ export class OutboundGateway {
     platform: string,
     platformThreadId: string,
     platformMessageId: string,
-    emojiName: string
+    emojiName: string,
+    workspaceId?: string
   ): Promise<void> {
     const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
     const instanceKey = `${agentId}:${integrationIdentifier}`;
@@ -479,7 +519,9 @@ export class OutboundGateway {
 
     const adapter = chat.getAdapter(platform);
     const resolved = await this.resolveEmoji(emojiName);
-    await adapter.addReaction(platformThreadId, platformMessageId, resolved);
+    await this.runWithPlatformToken(chat, config, agentId, platformThreadId, workspaceId, () =>
+      adapter.addReaction(platformThreadId, platformMessageId, resolved)
+    );
   }
 
   async removeReaction(
@@ -488,7 +530,8 @@ export class OutboundGateway {
     platform: string,
     platformThreadId: string,
     platformMessageId: string,
-    emojiName: string
+    emojiName: string,
+    workspaceId?: string
   ): Promise<void> {
     const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
     const instanceKey = `${agentId}:${integrationIdentifier}`;
@@ -496,12 +539,116 @@ export class OutboundGateway {
 
     const adapter = chat.getAdapter(platform);
     const resolved = await this.resolveEmoji(emojiName);
-    await adapter.removeReaction(platformThreadId, platformMessageId, resolved);
+    await this.runWithPlatformToken(chat, config, agentId, platformThreadId, workspaceId, () =>
+      adapter.removeReaction(platformThreadId, platformMessageId, resolved)
+    );
   }
 
-  private async resolveSlackBotToken(agentId: string, integrationIdentifier: string): Promise<string> {
-    const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
-    const token = config.connectionAccessToken;
+  /**
+   * Resolve the Slack workspace/team id a thread belongs to. Prefers a caller-supplied id (the
+   * conversation channel already carries it on the reply path — zero extra reads); otherwise looks
+   * it up from the conversation by thread id. Returns `undefined` for non-Slack platforms or when a
+   * conversation predates multi-workspace capture, in which case token resolution falls back to the
+   * integration's first installed workspace.
+   */
+  private async resolveSlackWorkspaceId(
+    config: ResolvedAgentConfig,
+    agentId: string,
+    platformThreadId: string,
+    workspaceId?: string
+  ): Promise<string | undefined> {
+    if (config.platform !== AgentPlatformEnum.SLACK) {
+      return undefined;
+    }
+
+    if (workspaceId) {
+      return workspaceId;
+    }
+
+    try {
+      const conversation = await this.conversation.findByPlatformThread(
+        config.environmentId,
+        config.organizationId,
+        agentId,
+        config.integrationId,
+        platformThreadId
+      );
+      const channel =
+        conversation?.channels.find((c) => c.platformThreadId === platformThreadId) ?? conversation?.channels[0];
+
+      return channel?.workspace?.id;
+    } catch (err) {
+      this.logger.warn(
+        { err: err instanceof Error ? err.message : String(err), platformThreadId },
+        'Failed to resolve Slack workspace id for outbound delivery; falling back to default workspace token'
+      );
+
+      return undefined;
+    }
+  }
+
+  /**
+   * Run an outbound adapter operation with the correct platform delivery token bound for its
+   * duration. Wrapped around every outbound op (replies, edits, reactions, typing, plan cards) so
+   * the token concern lives in one place regardless of platform.
+   *
+   * Only Slack needs per-call binding today: its adapter runs in multi-workspace mode (no baked-in
+   * default token), so outbound calls made outside an inbound webhook must supply the token
+   * explicitly. For Slack we resolve the token for the thread's workspace (falling back to the
+   * integration's first installed workspace) and run the operation inside `adapter.withBotToken`,
+   * which the SDK reads via request-scoped context. Every other platform — and any Slack call
+   * without a resolvable token — runs the operation unchanged.
+   */
+  private async runWithPlatformToken<T>(
+    chat: Chat,
+    config: ResolvedAgentConfig,
+    agentId: string,
+    platformThreadId: string,
+    workspaceId: string | undefined,
+    fn: () => Promise<T>
+  ): Promise<T> {
+    if (config.platform !== AgentPlatformEnum.SLACK) {
+      return fn();
+    }
+
+    const resolvedWorkspaceId = await this.resolveSlackWorkspaceId(config, agentId, platformThreadId, workspaceId);
+    const token = await this.agentConfigResolver.resolveSlackBotToken(
+      config.environmentId,
+      config.organizationId,
+      config.integrationIdentifier,
+      resolvedWorkspaceId
+    );
+
+    const adapter = chat.getAdapter(AgentPlatformEnum.SLACK) as unknown as {
+      withBotToken?<R>(token: string, fn: () => Promise<R>): Promise<R>;
+    };
+
+    if (!token || typeof adapter?.withBotToken !== 'function') {
+      return fn();
+    }
+
+    return adapter.withBotToken(token, fn);
+  }
+
+  /**
+   * Resolve the Slack bot token for a direct (non-adapter) API call — the native block-kit
+   * delivery paths post via the Slack Web API directly rather than through the adapter, so they
+   * need the token in hand. Team-aware with a first-installed-workspace fallback; throws when no
+   * workspace token exists.
+   */
+  private async requireSlackBotToken(
+    config: ResolvedAgentConfig,
+    agentId: string,
+    platformThreadId: string,
+    workspaceId?: string
+  ): Promise<string> {
+    const resolvedWorkspaceId = await this.resolveSlackWorkspaceId(config, agentId, platformThreadId, workspaceId);
+    const token = await this.agentConfigResolver.resolveSlackBotToken(
+      config.environmentId,
+      config.organizationId,
+      config.integrationIdentifier,
+      resolvedWorkspaceId
+    );
 
     if (!token) {
       throw new BadRequestException('Slack integration missing bot token');

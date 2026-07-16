@@ -14,6 +14,7 @@ import type {
   ToolApprovalDecision,
 } from './agent.types';
 import { AgentEventEnum, PendingApproval } from './agent.types';
+import { passesAuthGate } from './auth-gate';
 import { parseApprovalActionId, type ToolApprovalRequestPayload } from './tool-approval/action-id';
 
 function findApprovalInHistory(
@@ -47,6 +48,23 @@ export async function dispatchAgentEvent(options: DispatchAgentEventOptions): Pr
   const ctx = new AgentContextImpl(options.bridge, options.secretKey, options.agent.handlers.toolApproval);
 
   try {
+    // Framework-level auth gate: on a `restricted` agent, an unlinked author of a
+    // new message is short-circuited with a "link your account" CTA before any
+    // handler (or model call) runs. Only inbound messages are gated — approval
+    // clicks/reactions ride on a prior turn the linked author already passed.
+    if (options.event === AgentEventEnum.ON_MESSAGE) {
+      const canProceed = await passesAuthGate(ctx, {
+        subscriberAccess: options.bridge.subscriberAccess,
+        auth: options.agent.handlers.auth,
+      });
+
+      if (!canProceed) {
+        await ctx.flush();
+
+        return;
+      }
+    }
+
     await runAgentHandler(options.agent, options.event, ctx);
     await ctx.flush();
   } catch (err) {
@@ -54,6 +72,16 @@ export async function dispatchAgentEvent(options: DispatchAgentEventOptions): Pr
       options.logger?.error(`[agent:${options.agent.id}] ${err.message}`);
     } else {
       options.logger?.error(`[agent:${options.agent.id}] Handler error:`, err);
+    }
+
+    // A handler that throws (e.g. a LangGraph GraphRecursionError) never produces a
+    // reply, which would otherwise leave the platform's "thinking" indicator running
+    // forever. Best-effort clear it and flush so the turn visibly ends.
+    try {
+      await ctx.typing.stop();
+      await ctx.flush();
+    } catch {
+      // The turn already failed; swallow secondary delivery errors.
     }
   }
 }

@@ -181,6 +181,37 @@ describe('handleLangChainResult', () => {
       expect(ctx.reply).not.toHaveBeenCalled();
       expect(ctx.typing.stop).toHaveBeenCalledTimes(1);
     });
+
+    it('delivers the formatReply result instead of the raw text', async () => {
+      const ctx = fakeRuntimeCtx();
+      invokeMock.mockResolvedValue({ messages: [new AIMessage('created it')] });
+      const card = { type: 'card', children: [{ type: 'text', content: 'created it' }] } as const;
+
+      await handleLangChainResult(config({ formatReply: () => card }), ctx, undefined);
+
+      expect(ctx.reply).toHaveBeenCalledWith(card);
+    });
+
+    it('falls back to the raw text when formatReply returns void', async () => {
+      const ctx = fakeRuntimeCtx();
+      invokeMock.mockResolvedValue({ messages: [new AIMessage('plain answer')] });
+
+      await handleLangChainResult(config({ formatReply: () => undefined }), ctx, undefined);
+
+      expect(ctx.reply).toHaveBeenCalledWith('plain answer');
+    });
+
+    it('does not call formatReply when the model returns no text', async () => {
+      const ctx = fakeRuntimeCtx();
+      invokeMock.mockResolvedValue({ messages: [new AIMessage('')] });
+      const formatReply = vi.fn();
+
+      await handleLangChainResult(config({ formatReply }), ctx, undefined);
+
+      expect(formatReply).not.toHaveBeenCalled();
+      expect(ctx.reply).not.toHaveBeenCalled();
+      expect(ctx.typing.stop).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('pre-invoked result paths', () => {

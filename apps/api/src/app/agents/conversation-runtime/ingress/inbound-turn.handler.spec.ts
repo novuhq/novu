@@ -163,6 +163,9 @@ describe('AgentInboundHandler', () => {
       maybeBlock: sinon.stub().resolves(false),
       maybeBlockConversation: sinon.stub().resolves(false),
     };
+    const connectionContextResolver = {
+      resolve: sinon.stub().resolves(null),
+    };
     const handler = new AgentInboundHandler(
       logger as any,
       subscriberResolver as any,
@@ -181,7 +184,8 @@ describe('AgentInboundHandler', () => {
       connectClaimTokenService as any,
       keylessAbuseGuard as any,
       planLimitGate as any,
-      inboundAck as any
+      inboundAck as any,
+      connectionContextResolver as any
     );
 
     return {

@@ -9,6 +9,7 @@ import { agent } from './agent.resource';
 import type { AgentBridgeRequest } from './agent.types';
 import { PendingApproval } from './agent.types';
 import { dispatchAgentEvent } from './agent-dispatch';
+import { AUTH_CARD_MESSAGE_ID_KEY, AUTH_LINKED_CARD_KEY } from './auth-gate';
 import { Button, Card, CardText } from './index';
 import { buildApprovalActionId } from './tool-approval/action-id';
 
@@ -412,6 +413,46 @@ describe('agent dispatch via NovuRequestHandler', () => {
     expect(capturedCtx.platform).toBe('slack');
     expect(capturedCtx.platformContext.threadId).toBe('t1');
     expect(capturedCtx.history).toEqual([]);
+    // context defaults to null when the bridge payload omits it (backward-compatible wire)
+    expect(capturedCtx.context).toBeNull();
+  });
+
+  it('should expose ctx.context when the bridge payload includes resolved connect context', async () => {
+    let capturedCtx: any;
+
+    const testBot = agent('test-bot', {
+      onMessage: async (_message, ctx) => {
+        capturedCtx = ctx;
+        await ctx.reply('ok');
+      },
+    });
+
+    const handler = new NovuRequestHandler({
+      frameworkName: 'test',
+      agents: [testBot],
+      client,
+      handler: () => {
+        const body = createMockBridgeRequest({
+          context: { tenant: { id: 'org-123', data: { environmentId: 'env-1', userId: 'user-1' } } },
+        });
+        const url = new URL(`http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onMessage`);
+
+        return {
+          body: () => body,
+          headers: () => null,
+          method: () => 'POST',
+          url: () => url,
+          transformResponse: (res: any) => res,
+        };
+      },
+    });
+
+    await handler.createHandler()();
+    await vi.waitFor(() => expect(capturedCtx).toBeDefined());
+
+    expect(capturedCtx.context).toEqual({
+      tenant: { id: 'org-123', data: { environmentId: 'env-1', userId: 'user-1' } },
+    });
   });
 
   it('should expose platformContext.message and platformContext.email for email agents', async () => {
@@ -2345,5 +2386,148 @@ describe('tool approval', () => {
     expect(posts[0].typing).toEqual({});
     expect(posts[1].deleteMessages).toEqual([{ messageId: 'm_prev' }]);
     expect(posts[2].reply).toEqual({ markdown: 'resumed' });
+  });
+});
+
+describe('auth gate account-linked confirmation', () => {
+  let fetchMock: ReturnType<typeof vi.fn>;
+  const originalFetch = global.fetch;
+
+  beforeEach(() => {
+    let counter = 0;
+    fetchMock = vi.fn().mockImplementation(() => {
+      counter += 1;
+      const body = { data: { messageId: `m-${counter}`, platformThreadId: 'thread-1' } };
+
+      return Promise.resolve({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(body)),
+      });
+    });
+    global.fetch = fetchMock as typeof fetch;
+  });
+
+  afterEach(() => {
+    global.fetch = originalFetch;
+  });
+
+  function postedBodies() {
+    return fetchMock.mock.calls
+      .filter((call: any[]) => call[0] === 'https://api.novu.co/v1/agents/test-bot/reply')
+      .map(([, init]: any[]) => JSON.parse(init.body));
+  }
+
+  function metadataSet(bodies: any[], key: string) {
+    return bodies
+      .flatMap((b) => b.signals ?? [])
+      .find((s: any) => s.type === 'metadata' && s.action === 'set' && s.key === key);
+  }
+
+  it('posts the sign-in card and stores its message id + resolved confirmation for an unlinked author', async () => {
+    const onMessage = vi.fn(async () => {});
+    const bot = agent('test-bot', {
+      onMessage,
+      auth: { linkUrl: 'https://app.example/connect' },
+    });
+
+    await dispatchAgentEvent({
+      agent: bot,
+      event: 'onMessage',
+      bridge: createMockBridgeRequest({
+        subscriberAccess: 'restricted',
+        subscriber: { subscriberId: 'sub-001', isLinked: false },
+      }),
+      secretKey: 'test-secret-key',
+    });
+
+    // Gate short-circuits before the handler runs.
+    expect(onMessage).not.toHaveBeenCalled();
+
+    const bodies = postedBodies();
+    const cardReply = bodies.find((b) => b.reply?.card);
+    expect(cardReply).toBeDefined();
+
+    // The posted card's message id is tracked so the server knows which message to edit.
+    const idSignal = metadataSet(bodies, AUTH_CARD_MESSAGE_ID_KEY);
+    expect(idSignal).toBeDefined();
+    expect(idSignal.value).toBe('m-1');
+
+    // The fully-resolved confirmation card is frozen so the server can swap it in
+    // the instant the author links, without re-running the auth callback.
+    const linkedSignal = metadataSet(bodies, AUTH_LINKED_CARD_KEY);
+    expect(linkedSignal).toBeDefined();
+    expect(linkedSignal.value.type).toBe('card');
+    const texts = linkedSignal.value.children.map((c: any) => c.content);
+    expect(texts).toContain('Account linked');
+  });
+
+  it('freezes linkedTitle/linkedMessage overrides in the stored confirmation card', async () => {
+    const bot = agent('test-bot', {
+      onMessage: vi.fn(async () => {}),
+      auth: { linkedTitle: 'Welcome back', linkedMessage: 'Your workspace is connected.' },
+    });
+
+    await dispatchAgentEvent({
+      agent: bot,
+      event: 'onMessage',
+      bridge: createMockBridgeRequest({
+        subscriberAccess: 'restricted',
+        subscriber: { subscriberId: 'sub-001', isLinked: false },
+      }),
+      secretKey: 'test-secret-key',
+    });
+
+    const linkedSignal = metadataSet(postedBodies(), AUTH_LINKED_CARD_KEY);
+    expect(linkedSignal).toBeDefined();
+    const texts = linkedSignal.value.children.map((c: any) => c.content);
+    expect(texts).toEqual(['Welcome back', 'Your workspace is connected.']);
+  });
+
+  it('does not gate or store auth metadata when the restricted author is already linked', async () => {
+    const onMessage = vi.fn(async (_m: any, ctx: any) => {
+      await ctx.reply('hi');
+    });
+    const bot = agent('test-bot', { onMessage, auth: {} });
+
+    await dispatchAgentEvent({
+      agent: bot,
+      event: 'onMessage',
+      bridge: createMockBridgeRequest({
+        subscriberAccess: 'restricted',
+        subscriber: { subscriberId: 'sub-001', isLinked: true },
+      }),
+      secretKey: 'test-secret-key',
+    });
+
+    expect(onMessage).toHaveBeenCalledTimes(1);
+
+    const bodies = postedBodies();
+    expect(metadataSet(bodies, AUTH_CARD_MESSAGE_ID_KEY)).toBeUndefined();
+    expect(metadataSet(bodies, AUTH_LINKED_CARD_KEY)).toBeUndefined();
+    expect(bodies.some((b) => b.reply?.card)).toBe(false);
+    expect(bodies.some((b) => b.reply?.markdown === 'hi')).toBe(true);
+  });
+
+  it('does not gate or store auth metadata for open agents', async () => {
+    const bot = agent('test-bot', {
+      onMessage: async (_m, ctx) => {
+        await ctx.reply('hi');
+      },
+    });
+
+    await dispatchAgentEvent({
+      agent: bot,
+      event: 'onMessage',
+      bridge: createMockBridgeRequest({
+        subscriberAccess: 'open',
+        subscriber: { subscriberId: 'sub-001', isLinked: false },
+      }),
+      secretKey: 'test-secret-key',
+    });
+
+    const bodies = postedBodies();
+    expect(metadataSet(bodies, AUTH_CARD_MESSAGE_ID_KEY)).toBeUndefined();
+    expect(metadataSet(bodies, AUTH_LINKED_CARD_KEY)).toBeUndefined();
+    expect(bodies.some((b) => b.reply?.markdown === 'hi')).toBe(true);
   });
 });
