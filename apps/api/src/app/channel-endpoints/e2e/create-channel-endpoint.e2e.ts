@@ -7,7 +7,7 @@ import {
   CreateWebhookEndpointDto,
 } from '@novu/api/models/components';
 import { ChannelConnectionRepository, ChannelEndpointRepository, IntegrationRepository } from '@novu/dal';
-import { ChannelTypeEnum, ChatProviderIdEnum, ENDPOINT_TYPES, ToolProviderIdEnum } from '@novu/shared';
+import { ChannelTypeEnum, ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import {
@@ -18,24 +18,11 @@ import {
   setupChannelTests,
 } from '../../channel-connections/e2e/helpers/channel-helpers';
 import { expectSdkExceptionGeneric, expectSdkZodError } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
+import { createOpsgenieIntegration, VALID_OPSGENIE_API_KEY } from './helpers/opsgenie-helpers';
 
 const integrationRepository = new IntegrationRepository();
 const channelEndpointRepository = new ChannelEndpointRepository();
 const channelConnectionRepository = new ChannelConnectionRepository();
-
-const VALID_OPSGENIE_API_KEY = 'a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d';
-
-async function createOpsgenieIntegration(session: UserSession) {
-  return integrationRepository.create({
-    _organizationId: session.organization._id,
-    _environmentId: session.environment._id,
-    providerId: ToolProviderIdEnum.Opsgenie,
-    channel: ChannelTypeEnum.TOOL,
-    credentials: {},
-    active: true,
-    identifier: `opsgenie-${Date.now()}`,
-  });
-}
 
 async function createTelegramIntegration(session: UserSession) {
   return integrationRepository.create({

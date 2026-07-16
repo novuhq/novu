@@ -137,8 +137,6 @@ export class CreateChannelEndpoint {
    * Ordering: connection first, endpoint second. If the endpoint create fails
    * (partial unique index → duplicate subscriber/integration pair), we delete
    * the just-created connection so a retry starts from a clean slate.
-   * `withTransaction` gives atomicity on replica sets; on standalone Mongo it
-   * degrades to sequential execution — the compensating delete covers that gap.
    */
   private async createConnectionBackedEndpoint(
     command: CreateChannelEndpointCommand,

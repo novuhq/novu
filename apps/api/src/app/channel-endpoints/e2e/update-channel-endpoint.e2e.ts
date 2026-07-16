@@ -4,8 +4,8 @@ import {
   CreateWebhookEndpointDto,
   UpdateChannelEndpointRequestDto,
 } from '@novu/api/models/components';
-import { ChannelConnectionRepository, IntegrationRepository } from '@novu/dal';
-import { ChannelTypeEnum, ENDPOINT_TYPES, ToolProviderIdEnum } from '@novu/shared';
+import { ChannelConnectionRepository } from '@novu/dal';
+import { ENDPOINT_TYPES } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import {
@@ -14,21 +14,9 @@ import {
   setupChannelTests,
 } from '../../channel-connections/e2e/helpers/channel-helpers';
 import { expectSdkExceptionGeneric } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
+import { createOpsgenieIntegration, VALID_OPSGENIE_API_KEY } from './helpers/opsgenie-helpers';
 
-const integrationRepository = new IntegrationRepository();
 const channelConnectionRepository = new ChannelConnectionRepository();
-
-async function createOpsgenieIntegration(session: UserSession) {
-  return integrationRepository.create({
-    _organizationId: session.organization._id,
-    _environmentId: session.environment._id,
-    providerId: ToolProviderIdEnum.Opsgenie,
-    channel: ChannelTypeEnum.TOOL,
-    credentials: {},
-    active: true,
-    identifier: `opsgenie-${Date.now()}`,
-  });
-}
 
 describe('Update Channel Endpoint - /channel-endpoints/:identifier (PATCH) #novu-v2', () => {
   let session: UserSession;
@@ -117,7 +105,7 @@ describe('Update Channel Endpoint - /channel-endpoints/:identifier (PATCH) #novu
     const subscribersService = createSubscribersService(session);
     const subscriber = await subscribersService.createSubscriber();
 
-    const initialApiKey = 'a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d';
+    const initialApiKey = VALID_OPSGENIE_API_KEY;
     const rotatedApiKey = 'f9e8d7c6-b5a4-4321-9876-543210fedcba';
 
     const createRes = await session.testAgent.post('/v1/channel-endpoints').send({
@@ -164,7 +152,7 @@ describe('Update Channel Endpoint - /channel-endpoints/:identifier (PATCH) #novu
       integrationIdentifier: integration.identifier,
       subscriberId: subscriber.subscriberId,
       type: ENDPOINT_TYPES.OPSGENIE_INTEGRATION,
-      endpoint: { apiKey: 'a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d', region: 'us' },
+      endpoint: { apiKey: VALID_OPSGENIE_API_KEY, region: 'us' },
     });
     expect(createRes.status).to.equal(201);
 

@@ -1,3 +1,5 @@
+import { decryptChannelConnectionAuth, validateEndpointForTypeFromSchema } from '@novu/application-generic';
+import { ChannelConnectionEntity, ChannelEndpointEntity } from '@novu/dal';
 import { ChannelEndpointType, ENDPOINT_TYPES } from '@novu/shared';
 
 /**
@@ -11,20 +13,16 @@ export interface ConnectionBackedEndpointConfig {
   label: string;
   /** Stub workspace persisted on the owned ChannelConnection. */
   workspace: { id: string; name: string };
-  /** Wire-shape fields re-hydrated from the decrypted connection auth on read. */
-  wireFields: readonly string[];
 }
 
 const CONNECTION_BACKED_ENDPOINTS: Partial<Record<ChannelEndpointType, ConnectionBackedEndpointConfig>> = {
   [ENDPOINT_TYPES.PAGERDUTY_SERVICE]: {
     label: 'PagerDuty',
     workspace: { id: 'pagerduty', name: 'PagerDuty' },
-    wireFields: ['routingKey', 'region'],
   },
   [ENDPOINT_TYPES.OPSGENIE_INTEGRATION]: {
     label: 'Opsgenie',
     workspace: { id: 'opsgenie', name: 'Opsgenie' },
-    wireFields: ['apiKey', 'region'],
   },
 };
 
@@ -34,29 +32,32 @@ export function getConnectionBackedEndpointConfig(
   return CONNECTION_BACKED_ENDPOINTS[type];
 }
 
+export function isConnectionBackedEndpoint(type: ChannelEndpointType): boolean {
+  return type in CONNECTION_BACKED_ENDPOINTS;
+}
+
 /**
- * Rebuild the wire-shape endpoint object from a decrypted connection auth.
- * Returns null when the auth is missing any wire field, so callers can fall
- * back to the stored (empty) endpoint document instead of returning a
- * partially hydrated shape.
+ * Re-hydrate a connection-backed endpoint's wire shape from its linked
+ * connection. The write path persists the wire shape verbatim (encrypted) as
+ * the connection auth, so the decrypted auth IS the wire endpoint; the
+ * canonical endpoint schema validates it before it is returned, falling back
+ * to the stored (empty) endpoint document rather than exposing a malformed
+ * shape. Existing platform convention returns decrypted secrets from the API;
+ * the dashboard masks client-side.
  */
-export function extractWireEndpointFromAuth(
-  type: ChannelEndpointType,
-  auth: Record<string, unknown>
-): Record<string, unknown> | null {
-  const config = CONNECTION_BACKED_ENDPOINTS[type];
-  if (!config) {
-    return null;
+export function hydrateEndpointFromConnection(
+  endpoint: ChannelEndpointEntity,
+  connection: ChannelConnectionEntity | undefined | null
+): ChannelEndpointEntity {
+  if (!connection?.auth) {
+    return endpoint;
   }
 
-  const wireEndpoint: Record<string, unknown> = {};
-  for (const field of config.wireFields) {
-    const value = auth[field];
-    if (value === undefined || value === null || value === '') {
-      return null;
-    }
-    wireEndpoint[field] = value;
+  const decrypted = decryptChannelConnectionAuth(connection.auth) as Record<string, unknown> | null;
+
+  if (!decrypted || !validateEndpointForTypeFromSchema(endpoint.type, decrypted)) {
+    return endpoint;
   }
 
-  return wireEndpoint;
+  return { ...endpoint, endpoint: decrypted } as ChannelEndpointEntity;
 }

@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { decryptChannelConnectionAuth, InstrumentUsecase } from '@novu/application-generic';
+import { InstrumentUsecase } from '@novu/application-generic';
 import type { EnforceEnvOrOrgIds } from '@novu/dal';
 import {
   ChannelConnectionEntity,
@@ -10,7 +10,7 @@ import {
 } from '@novu/dal';
 import { DirectionEnum } from '@novu/shared';
 import { FilterQuery } from 'mongoose';
-import { extractWireEndpointFromAuth, getConnectionBackedEndpointConfig } from '../../connection-backed-endpoints';
+import { hydrateEndpointFromConnection, isConnectionBackedEndpoint } from '../../connection-backed-endpoints';
 import { ListChannelEndpointsCommand } from './list-channel-endpoints.command';
 
 @Injectable()
@@ -128,25 +128,21 @@ export class ListChannelEndpoints {
    * Batch-hydrate connection-backed endpoint wire shapes (pagerduty_service,
    * opsgenie_integration) from their linked connections in a single `$in`
    * query so a page of N such rows costs one extra roundtrip instead of N.
-   * See `GetChannelEndpoint.hydrateConnectionBackedEndpoint` for the
-   * underlying rationale.
+   * See `hydrateEndpointFromConnection` for the underlying rationale.
    */
   private async hydrateConnectionBackedEndpoints(
     endpoints: ChannelEndpointEntity[],
     environmentId: string,
     organizationId: string
   ): Promise<ChannelEndpointEntity[]> {
-    const connectionBackedEndpoints = endpoints.filter(
-      (endpoint) => getConnectionBackedEndpointConfig(endpoint.type) && endpoint.connectionIdentifier
-    );
-
-    if (connectionBackedEndpoints.length === 0) {
-      return endpoints;
-    }
-
-    const connectionIdentifiers = connectionBackedEndpoints
+    const connectionIdentifiers = endpoints
+      .filter((endpoint) => isConnectionBackedEndpoint(endpoint.type))
       .map((endpoint) => endpoint.connectionIdentifier)
       .filter((identifier): identifier is string => Boolean(identifier));
+
+    if (connectionIdentifiers.length === 0) {
+      return endpoints;
+    }
 
     const connections = await this.channelConnectionRepository.find({
       _environmentId: environmentId,
@@ -159,31 +155,11 @@ export class ListChannelEndpoints {
     );
 
     return endpoints.map((endpoint) => {
-      if (!getConnectionBackedEndpointConfig(endpoint.type) || !endpoint.connectionIdentifier) {
+      if (!isConnectionBackedEndpoint(endpoint.type) || !endpoint.connectionIdentifier) {
         return endpoint;
       }
 
-      const connection = connectionsByIdentifier.get(endpoint.connectionIdentifier);
-      if (!connection?.auth) {
-        return endpoint;
-      }
-
-      const decrypted = decryptChannelConnectionAuth(connection.auth) as Record<string, unknown> | null;
-
-      if (!decrypted) {
-        return endpoint;
-      }
-
-      const wireEndpoint = extractWireEndpointFromAuth(endpoint.type, decrypted);
-
-      if (!wireEndpoint) {
-        return endpoint;
-      }
-
-      return {
-        ...endpoint,
-        endpoint: wireEndpoint,
-      } as ChannelEndpointEntity;
+      return hydrateEndpointFromConnection(endpoint, connectionsByIdentifier.get(endpoint.connectionIdentifier));
     });
   }
 }

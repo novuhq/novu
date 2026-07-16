@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { decryptChannelConnectionAuth, InstrumentUsecase } from '@novu/application-generic';
+import { InstrumentUsecase } from '@novu/application-generic';
 import {
   ChannelConnectionRepository,
   ChannelEndpointDBModel,
@@ -8,7 +8,7 @@ import {
   EnforceEnvOrOrgIds,
 } from '@novu/dal';
 import { FilterQuery } from 'mongoose';
-import { extractWireEndpointFromAuth, getConnectionBackedEndpointConfig } from '../../connection-backed-endpoints';
+import { hydrateEndpointFromConnection, isConnectionBackedEndpoint } from '../../connection-backed-endpoints';
 import { GetChannelEndpointCommand } from './get-channel-endpoint.command';
 
 @Injectable()
@@ -40,51 +40,16 @@ export class GetChannelEndpoint {
       throw new NotFoundException(`Channel endpoint with identifier '${command.identifier}' not found`);
     }
 
-    if (getConnectionBackedEndpointConfig(channelEndpoint.type)) {
-      return await this.hydrateConnectionBackedEndpoint(channelEndpoint);
+    if (isConnectionBackedEndpoint(channelEndpoint.type) && channelEndpoint.connectionIdentifier) {
+      const connection = await this.channelConnectionRepository.findOne({
+        identifier: channelEndpoint.connectionIdentifier,
+        _environmentId: channelEndpoint._environmentId,
+        _organizationId: channelEndpoint._organizationId,
+      });
+
+      return hydrateEndpointFromConnection(channelEndpoint, connection);
     }
 
     return channelEndpoint;
-  }
-
-  /**
-   * The wire shape for connection-backed types (pagerduty_service,
-   * opsgenie_integration) lives encrypted on the linked
-   * `ChannelConnection.auth`; the stored `endpoint` document is empty.
-   * Rehydrate it here so the response DTO reflects the wire contract on read
-   * (matching create/update). Existing platform convention returns decrypted
-   * secrets from the API; the dashboard masks client-side.
-   */
-  private async hydrateConnectionBackedEndpoint(endpoint: ChannelEndpointEntity): Promise<ChannelEndpointEntity> {
-    if (!endpoint.connectionIdentifier) {
-      return endpoint;
-    }
-
-    const connection = await this.channelConnectionRepository.findOne({
-      identifier: endpoint.connectionIdentifier,
-      _environmentId: endpoint._environmentId,
-      _organizationId: endpoint._organizationId,
-    });
-
-    if (!connection?.auth) {
-      return endpoint;
-    }
-
-    const decrypted = decryptChannelConnectionAuth(connection.auth) as Record<string, unknown> | null;
-
-    if (!decrypted) {
-      return endpoint;
-    }
-
-    const wireEndpoint = extractWireEndpointFromAuth(endpoint.type, decrypted);
-
-    if (!wireEndpoint) {
-      return endpoint;
-    }
-
-    return {
-      ...endpoint,
-      endpoint: wireEndpoint,
-    } as ChannelEndpointEntity;
   }
 }
