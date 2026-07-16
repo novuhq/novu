@@ -127,9 +127,21 @@ export class IsValidReplyContent implements ValidatorConstraintInterface {
     const fields = [content.markdown, content.card, content.toolApprovalCard].filter((v) => v !== undefined);
     if (fields.length !== 1) return false;
 
-    if (content.markdown !== undefined && content.markdown.trim().length === 0) return false;
+    if (content.markdown !== undefined) {
+      if (typeof content.markdown !== 'string' || content.markdown.trim().length === 0) {
+        return false;
+      }
+    }
 
-    if (content.card !== undefined && content.card.type !== 'card') return false;
+    if (content.card !== undefined) {
+      if (
+        content.card === null ||
+        typeof content.card !== 'object' ||
+        (content.card as { type?: unknown }).type !== 'card'
+      ) {
+        return false;
+      }
+    }
 
     if (content.files?.length && !content.markdown && !content.card && !content.toolApprovalCard) return false;
     if ((content.files?.length ?? 0) > MAX_FILES_PER_MESSAGE) return false;
