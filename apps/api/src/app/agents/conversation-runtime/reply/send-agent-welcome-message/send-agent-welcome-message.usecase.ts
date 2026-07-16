@@ -15,7 +15,7 @@ import {
 import type { CardElement } from 'chat';
 import { ConnectClaimTokenService } from '../../../../connect/services/connect-claim-token.service';
 import { isKeylessOrganization } from '../../../../keyless/keyless-organization.helpers';
-import { buildConnectClaimUrl, buildKeylessWelcomeCard, toReplyCard } from '../../../../keyless/keyless-signup.helpers';
+import { buildConnectClaimUrl, buildKeylessWelcomeCard } from '../../../../keyless/keyless-signup.helpers';
 import { AgentPlatformEnum } from '../../../shared/enums/agent-platform.enum';
 import { getWelcomeText } from '../../../shared/util/agent-welcome-text';
 import { PLATFORM_ENDPOINT_CONFIG } from '../../../shared/util/platform-endpoint-config';
@@ -104,7 +104,7 @@ export class SendAgentWelcomeMessage {
 
     try {
       const keylessWelcome = await this.resolveKeylessWelcomeCard(command, welcomeText);
-      const welcomeReplyCard = keylessWelcome ? toReplyCard(keylessWelcome.card) : undefined;
+      const welcomeReplyCard = keylessWelcome?.card;
       const welcomeContent = welcomeReplyCard ? { card: welcomeReplyCard } : { markdown: welcomeText };
       const sent = await this.outboundGateway.sendDirectMessage(
         agent._id,

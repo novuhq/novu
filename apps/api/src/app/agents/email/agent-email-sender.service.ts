@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { BadGatewayException, BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import {
   areNovuEmailCredentialsSet,
   buildAgentSharedInbox,
@@ -13,6 +13,7 @@ import { IntegrationEntity, IntegrationRepository, MessageRepository } from '@no
 import { ChannelTypeEnum, EmailProviderIdEnum, type IEmailOptions } from '@novu/shared';
 import type { ResolvedAgentConfig } from '../channels/agent-config-resolver.service';
 import { captureAgentWarning } from '../shared/errors/capture-agent-sentry';
+import { toDeliveryError } from '../shared/util/delivery-error.util';
 
 const EMAIL_ALTERNATIVES_SUPPORTED_PROVIDERS = new Set<string>([
   EmailProviderIdEnum.CustomSMTP,
@@ -20,38 +21,6 @@ const EMAIL_ALTERNATIVES_SUPPORTED_PROVIDERS = new Set<string>([
   EmailProviderIdEnum.SendGrid,
   EmailProviderIdEnum.SES,
 ]);
-
-function getErrorResponseBody(err: unknown): unknown {
-  if (!err || typeof err !== 'object') {
-    return undefined;
-  }
-
-  return (err as { response?: { body?: unknown } }).response?.body;
-}
-
-function getDeliveryErrorDetail(body: unknown): string | undefined {
-  if (!body || typeof body !== 'object') {
-    return undefined;
-  }
-
-  const responseBody = body as { errors?: Array<{ message?: unknown }>; message?: unknown };
-  const firstErrorMessage = responseBody.errors?.[0]?.message;
-  if (typeof firstErrorMessage === 'string') {
-    return firstErrorMessage;
-  }
-
-  return typeof responseBody.message === 'string' ? responseBody.message : undefined;
-}
-
-function toDeliveryError(err: unknown): never {
-  const base = err instanceof Error ? err.message : String(err);
-  const detail = getDeliveryErrorDetail(getErrorResponseBody(err));
-
-  throw new BadGatewayException({
-    error: 'delivery_failed',
-    message: detail ? `${base}: ${detail}` : base,
-  });
-}
 
 /** Ensure a Message-ID value is wrapped in RFC 5322 angle brackets. */
 function wrapMsgId(id: string): string {
