@@ -36,11 +36,15 @@ export type ChannelEndpointByType = {
   [ENDPOINT_TYPES.WEBEX_PERSON]: { personId: string; personEmail?: never } | { personId?: never; personEmail: string };
   [ENDPOINT_TYPES.LINE_USER]: { userId: string };
   /**
-   * PagerDuty per-subscriber routing lives entirely on the linked `ChannelConnection.auth`
-   * (encrypted `routingKey` + `region`). The endpoint document itself carries no PagerDuty
-   * data — the empty shape keeps the discriminator consistent with other endpoint types.
+   * PagerDuty per-subscriber routing. `routingKey` is the 32-character PagerDuty
+   * Events API v2 integration key; `region` selects the US/EU data-center endpoint.
+   *
+   * At the API boundary this is the wire shape on both writes and reads. Internally,
+   * the routing key is persisted encrypted on the linked `ChannelConnection.auth`
+   * and the stored `ChannelEndpoint.endpoint` document itself is empty — the read
+   * path re-hydrates this shape from the decrypted connection auth.
    */
-  [ENDPOINT_TYPES.PAGERDUTY_SERVICE]: Record<string, never>;
+  [ENDPOINT_TYPES.PAGERDUTY_SERVICE]: { routingKey: string; region: 'us' | 'eu' };
 };
 
 export type ChannelEndpoint<T extends ChannelEndpointType = ChannelEndpointType> = {

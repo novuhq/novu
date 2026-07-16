@@ -1,5 +1,5 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { InstrumentUsecase, shortId } from '@novu/application-generic';
+import { encryptChannelConnectionAuth, InstrumentUsecase, shortId } from '@novu/application-generic';
 import {
   ChannelConnectionEntity,
   ChannelConnectionRepository,
@@ -12,6 +12,9 @@ import {
 } from '@novu/dal';
 import { ChannelEndpointType, ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
 import { CreateChannelEndpointCommand } from './create-channel-endpoint.command';
+
+const PAGERDUTY_WORKSPACE_STUB = { id: 'pagerduty', name: 'PagerDuty' } as const;
+const MONGO_DUPLICATE_KEY_CODE = 11000;
 
 @Injectable()
 export class CreateChannelEndpoint {
@@ -43,6 +46,10 @@ export class CreateChannelEndpoint {
       throw new ConflictException(
         `Channel endpoint with identifier "${identifier}" already exists in environment "${command.environmentId}"`
       );
+    }
+
+    if (command.type === ENDPOINT_TYPES.PAGERDUTY_SERVICE) {
+      return await this.createPagerDutyEndpoint(command, identifier, integration, contextKeys);
     }
 
     let connection: ChannelConnectionEntity | null = null;
@@ -104,6 +111,85 @@ export class CreateChannelEndpoint {
     });
 
     return channelEndpoint;
+  }
+
+  /**
+   * PagerDuty routing is per subscriber. The wire payload carries
+   * `{ routingKey, region }`, which we persist encrypted on a fresh
+   * `ChannelConnection.auth`. The stored `ChannelEndpoint.endpoint` document is
+   * empty — the read path re-hydrates the wire shape from the decrypted auth.
+   *
+   * Ordering: connection first, endpoint second. If the endpoint create fails
+   * (partial unique index → duplicate subscriber/integration pair), we delete
+   * the just-created connection so a retry starts from a clean slate.
+   * `withTransaction` gives atomicity on replica sets; on standalone Mongo it
+   * degrades to sequential execution — the compensating delete covers that gap.
+   */
+  private async createPagerDutyEndpoint(
+    command: CreateChannelEndpointCommand,
+    identifier: string,
+    integration: IntegrationEntity,
+    contextKeys: string[]
+  ): Promise<ChannelEndpointEntity> {
+    const { routingKey, region } = command.endpoint as { routingKey: string; region: 'us' | 'eu' };
+    const connectionIdentifier = this.generateConnectionIdentifier();
+
+    let createdConnection: ChannelConnectionEntity | null = null;
+    try {
+      createdConnection = await this.channelConnectionRepository.create({
+        identifier: connectionIdentifier,
+        _organizationId: command.organizationId,
+        _environmentId: command.environmentId,
+        integrationIdentifier: integration.identifier,
+        providerId: integration.providerId,
+        channel: integration.channel,
+        subscriberId: command.subscriberId,
+        contextKeys,
+        workspace: { ...PAGERDUTY_WORKSPACE_STUB },
+        auth: encryptChannelConnectionAuth({ routingKey, region }),
+      });
+
+      const endpoint = await this.channelEndpointRepository.create({
+        identifier,
+        _organizationId: command.organizationId,
+        _environmentId: command.environmentId,
+        connectionIdentifier: createdConnection.identifier,
+        integrationIdentifier: integration.identifier,
+        providerId: integration.providerId,
+        channel: integration.channel,
+        subscriberId: command.subscriberId,
+        contextKeys,
+        type: command.type,
+        // Wire shape lives on the connection; the stored document is empty.
+        endpoint: {},
+      });
+
+      // Hydrate the returned entity's endpoint so the response DTO carries the
+      // wire shape without a second connection lookup.
+      return { ...endpoint, endpoint: { routingKey, region } } as ChannelEndpointEntity;
+    } catch (error) {
+      if (createdConnection) {
+        await this.channelConnectionRepository.delete({
+          _id: createdConnection._id,
+          _organizationId: command.organizationId,
+          _environmentId: command.environmentId,
+        });
+      }
+
+      if (this.isDuplicateKeyError(error)) {
+        throw new ConflictException(
+          `PagerDuty endpoint already exists for subscriber "${command.subscriberId}" on integration "${integration.identifier}"`
+        );
+      }
+
+      throw error;
+    }
+  }
+
+  private isDuplicateKeyError(error: unknown): boolean {
+    return (
+      typeof error === 'object' && error !== null && (error as { code?: number }).code === MONGO_DUPLICATE_KEY_CODE
+    );
   }
 
   private async assertSubscriberExists(command: CreateChannelEndpointCommand) {
@@ -180,5 +266,9 @@ export class CreateChannelEndpoint {
 
   private generateIdentifier(): string {
     return `chendp_${shortId(12)}`;
+  }
+
+  private generateConnectionIdentifier(): string {
+    return `chconn_${shortId(12)}`;
   }
 }

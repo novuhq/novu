@@ -1,14 +1,23 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { InstrumentUsecase } from '@novu/application-generic';
+import { decryptChannelConnectionAuth, InstrumentUsecase } from '@novu/application-generic';
 import type { EnforceEnvOrOrgIds } from '@novu/dal';
-import { ChannelEndpointDBModel, ChannelEndpointEntity, ChannelEndpointRepository } from '@novu/dal';
-import { DirectionEnum } from '@novu/shared';
+import {
+  ChannelConnectionEntity,
+  ChannelConnectionRepository,
+  ChannelEndpointDBModel,
+  ChannelEndpointEntity,
+  ChannelEndpointRepository,
+} from '@novu/dal';
+import { DirectionEnum, ENDPOINT_TYPES } from '@novu/shared';
 import { FilterQuery } from 'mongoose';
 import { ListChannelEndpointsCommand } from './list-channel-endpoints.command';
 
 @Injectable()
 export class ListChannelEndpoints {
-  constructor(private readonly channelEndpointRepository: ChannelEndpointRepository) {}
+  constructor(
+    private readonly channelEndpointRepository: ChannelEndpointRepository,
+    private readonly channelConnectionRepository: ChannelConnectionRepository
+  ) {}
 
   @InstrumentUsecase()
   async execute(command: ListChannelEndpointsCommand) {
@@ -99,12 +108,77 @@ export class ListChannelEndpoints {
       includeCursor: command.includeCursor,
     });
 
+    const hydratedData = await this.hydratePagerDutyEndpoints(
+      pagination.data as ChannelEndpointEntity[],
+      command.user.environmentId,
+      command.user.organizationId
+    );
+
     return {
-      data: pagination.data,
+      data: hydratedData,
       next: pagination.next,
       previous: pagination.previous,
       totalCount: pagination.totalCount,
       totalCountCapped: pagination.totalCountCapped,
     };
+  }
+
+  /**
+   * Batch-hydrate PagerDuty endpoint wire shapes from their linked connections
+   * in a single `$in` query so a page of N pagerduty_service rows costs one
+   * extra roundtrip instead of N. See `GetChannelEndpoint.hydratePagerDutyEndpoint`
+   * for the underlying rationale.
+   */
+  private async hydratePagerDutyEndpoints(
+    endpoints: ChannelEndpointEntity[],
+    environmentId: string,
+    organizationId: string
+  ): Promise<ChannelEndpointEntity[]> {
+    const pagerDutyEndpoints = endpoints.filter(
+      (endpoint) => endpoint.type === ENDPOINT_TYPES.PAGERDUTY_SERVICE && endpoint.connectionIdentifier
+    );
+
+    if (pagerDutyEndpoints.length === 0) {
+      return endpoints;
+    }
+
+    const connectionIdentifiers = pagerDutyEndpoints
+      .map((endpoint) => endpoint.connectionIdentifier)
+      .filter((identifier): identifier is string => Boolean(identifier));
+
+    const connections = await this.channelConnectionRepository.find({
+      _environmentId: environmentId,
+      _organizationId: organizationId,
+      identifier: { $in: connectionIdentifiers },
+    });
+
+    const connectionsByIdentifier = new Map<string, ChannelConnectionEntity>(
+      connections.map((connection) => [connection.identifier, connection])
+    );
+
+    return endpoints.map((endpoint) => {
+      if (endpoint.type !== ENDPOINT_TYPES.PAGERDUTY_SERVICE || !endpoint.connectionIdentifier) {
+        return endpoint;
+      }
+
+      const connection = connectionsByIdentifier.get(endpoint.connectionIdentifier);
+      if (!connection?.auth) {
+        return endpoint;
+      }
+
+      const decrypted = decryptChannelConnectionAuth(connection.auth) as {
+        routingKey?: string;
+        region?: 'us' | 'eu';
+      } | null;
+
+      if (!decrypted?.routingKey || !decrypted?.region) {
+        return endpoint;
+      }
+
+      return {
+        ...endpoint,
+        endpoint: { routingKey: decrypted.routingKey, region: decrypted.region },
+      } as ChannelEndpointEntity;
+    });
   }
 }

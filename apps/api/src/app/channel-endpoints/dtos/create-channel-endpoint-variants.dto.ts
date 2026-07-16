@@ -7,6 +7,7 @@ import {
   LineUserEndpointDto,
   MsTeamsChannelEndpointDto,
   MsTeamsUserEndpointDto,
+  PagerDutyServiceEndpointDto,
   PhoneEndpointDto,
   SlackChannelEndpointDto,
   SlackUserEndpointDto,
@@ -276,4 +277,25 @@ export class CreateLineUserEndpointDto extends CreateChannelEndpointBaseDto {
   @ValidateNested()
   @Type(() => LineUserEndpointDto)
   endpoint: LineUserEndpointDto;
+}
+
+export class CreatePagerDutyServiceEndpointDto extends CreateChannelEndpointBaseDto {
+  @ApiProperty({
+    description: 'Type of channel endpoint',
+    enum: [ENDPOINT_TYPES.PAGERDUTY_SERVICE],
+    example: ENDPOINT_TYPES.PAGERDUTY_SERVICE,
+  })
+  @IsDefined()
+  @IsEnum([ENDPOINT_TYPES.PAGERDUTY_SERVICE])
+  type: typeof ENDPOINT_TYPES.PAGERDUTY_SERVICE;
+
+  @ApiProperty({
+    description:
+      'PagerDuty service endpoint data. The routing key is persisted encrypted on the linked ChannelConnection; the ChannelEndpoint itself carries a lightweight connection reference.',
+    type: PagerDutyServiceEndpointDto,
+  })
+  @IsDefined()
+  @ValidateNested()
+  @Type(() => PagerDutyServiceEndpointDto)
+  endpoint: PagerDutyServiceEndpointDto;
 }

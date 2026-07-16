@@ -13,9 +13,7 @@ const mockResponse = (dedupKey = 'dedup-1') => ({
 const channelData = (routingKey: string, region: 'us' | 'eu' = 'us'): PagerDutyServiceData => ({
   type: ENDPOINT_TYPES.PAGERDUTY_SERVICE,
   identifier: 'pd-endpoint-1',
-  endpoint: {},
-  routingKey,
-  region,
+  endpoint: { routingKey, region },
 });
 
 test('enqueues a trigger event with defaults on the US endpoint', async () => {

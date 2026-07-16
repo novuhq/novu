@@ -105,15 +105,24 @@ export const CHANNEL_ENDPOINT_SCHEMAS = {
       typeof endpoint.userId === 'string' && Object.keys(endpoint).length === 1,
   },
   /*
-   * PagerDuty routing lives on the linked `ChannelConnection.auth` (encrypted
-   * `routingKey` + `region`); the endpoint document itself carries no fields.
-   * Accept only an empty object here to keep the discriminator honest.
+   * PagerDuty wire shape: 32-character alphanumeric routing key + region.
+   * Format-validated at write time so a truncated paste or whitespace-in-key
+   * fails fast at the API boundary rather than at the first incident send.
+   * The API layer persists the routingKey encrypted on the linked
+   * `ChannelConnection.auth`; the stored endpoint document is empty.
    */
   [ENDPOINT_TYPES.PAGERDUTY_SERVICE]: {
     description: 'PagerDuty Service Endpoint',
-    properties: {},
-    required: [],
-    validate: (endpoint: Record<string, unknown>) => Object.keys(endpoint).length === 0,
+    properties: {
+      routingKey: { type: 'string' as const },
+      region: { type: 'string' as const },
+    },
+    required: ['routingKey', 'region'],
+    validate: (endpoint: Record<string, unknown>) =>
+      typeof endpoint.routingKey === 'string' &&
+      /^[a-zA-Z0-9]{32}$/.test(endpoint.routingKey) &&
+      (endpoint.region === 'us' || endpoint.region === 'eu') &&
+      Object.keys(endpoint).length === 2,
   },
 } as const;
 

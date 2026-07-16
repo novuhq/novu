@@ -10,6 +10,7 @@ import {
   LineUserEndpointDto,
   MsTeamsChannelEndpointDto,
   MsTeamsUserEndpointDto,
+  PagerDutyServiceEndpointDto,
   PhoneEndpointDto,
   SlackChannelEndpointDto,
   SlackUserEndpointDto,
@@ -89,6 +90,7 @@ export class GetChannelEndpointResponseDto {
       { $ref: getSchemaPath(WebexRoomEndpointDto) },
       { $ref: getSchemaPath(WebexPersonEndpointDto) },
       { $ref: getSchemaPath(LineUserEndpointDto) },
+      { $ref: getSchemaPath(PagerDutyServiceEndpointDto) },
     ],
   })
   endpoint:
@@ -101,7 +103,8 @@ export class GetChannelEndpointResponseDto {
     | TelegramChatEndpointDto
     | WebexRoomEndpointDto
     | WebexPersonEndpointDto
-    | LineUserEndpointDto;
+    | LineUserEndpointDto
+    | PagerDutyServiceEndpointDto;
 
   @ApiProperty({
     description: 'The timestamp indicating when the channel endpoint was created, in ISO 8601 format.',

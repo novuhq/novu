@@ -106,11 +106,12 @@ export class PagerDutyProvider extends BaseProvider implements IToolProvider {
       throw new Error('PagerDutyProvider requires channelData of type "pagerduty_service" with routingKey and region');
     }
 
-    if (!channelData.routingKey || !channelData.region) {
-      throw new Error('PagerDutyProvider channelData is missing routingKey or region');
+    const { routingKey, region } = channelData.endpoint;
+    if (!routingKey || !region) {
+      throw new Error('PagerDutyProvider channelData.endpoint is missing routingKey or region');
     }
 
-    return { routingKey: channelData.routingKey, region: channelData.region };
+    return { routingKey, region };
   }
 
   /**

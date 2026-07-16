@@ -38,7 +38,7 @@ export type ChannelEndpointByType = {
   [ENDPOINT_TYPES.WEBEX_ROOM]: { roomId: string; parentId?: string };
   [ENDPOINT_TYPES.WEBEX_PERSON]: { personId: string; personEmail?: never } | { personId?: never; personEmail: string };
   [ENDPOINT_TYPES.LINE_USER]: { userId: string };
-  [ENDPOINT_TYPES.PAGERDUTY_SERVICE]: Record<string, never>;
+  [ENDPOINT_TYPES.PAGERDUTY_SERVICE]: { routingKey: string; region: 'us' | 'eu' };
 };
 
 export type SlackChannelData = {
@@ -113,16 +113,15 @@ export type MsTeamsUserData = {
 export type PagerDutyRegion = 'us' | 'eu';
 
 /**
- * Per-subscriber PagerDuty routing resolved at send time from an encrypted
- * `ChannelConnection.auth`. Carries the Events API v2 integration key and its
- * region; the endpoint document itself is empty (see `ChannelEndpointByType`).
+ * Per-subscriber PagerDuty routing resolved at send time. The resolver hydrates
+ * `endpoint` from the linked `ChannelConnection.auth` (which stores the routing
+ * key encrypted at rest); at send time the provider destructures directly off
+ * `endpoint`, matching the wire shape on write/read.
  */
 export type PagerDutyServiceData = {
   type: typeof ENDPOINT_TYPES.PAGERDUTY_SERVICE;
   endpoint: ChannelEndpointByType[typeof ENDPOINT_TYPES.PAGERDUTY_SERVICE];
   identifier: string;
-  routingKey: string;
-  region: PagerDutyRegion;
 };
 
 export function isChannelDataOfType<T extends ChannelData['type']>(
