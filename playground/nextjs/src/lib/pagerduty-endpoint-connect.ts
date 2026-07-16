@@ -10,7 +10,7 @@
  * The `pagerduty_service` endpoint type is new. The auto-generated internal SDK
  * has not been regenerated for it yet, so its `CreateChannelEndpointRequestBody`
  * union does not include `CreatePagerDutyServiceEndpointDto`. We call the raw
- * REST endpoint here to sidestep the stale SDK types — once the OpenAPI regen
+ * REST endpoint here to sidestep the stale SDK types. Once the OpenAPI regen
  * runs, this helper can be swapped for `novu.channelEndpoints.create(...)`
  * without any behaviour change.
  *
@@ -79,7 +79,7 @@ function isPagerDutyRegion(value: unknown): value is PagerDutyRegion {
 }
 
 /**
- * Basic format check — mirrors the API-side validator so we can surface a
+ * Basic format check. Mirrors the API-side validator so we can surface a
  * useful error message client-side without a network roundtrip. The API also
  * enforces this, so a client bypassing this check still gets a 400.
  */
@@ -158,7 +158,7 @@ function isPagerDutyEndpoint(value: unknown): value is PagerDutyEndpoint {
  *
  * The uniqueness invariant lives in Mongo: at most one `pagerduty_service`
  * endpoint per (env, subscriber, integration). If one exists, POST returns 409
- * — we detect that and PATCH the existing endpoint's routingKey / region on
+ * we detect that and PATCH the existing endpoint's routingKey / region on
  * the linked connection instead. Net effect: this helper is idempotent for
  * writes and doubles as a "rotate" primitive.
  */
@@ -183,7 +183,7 @@ export async function ensurePagerDutyEndpoint(args: {
     body: {
       type: PAGERDUTY_SERVICE_TYPE,
       subscriberId,
-      // The connect surface is often the user's first touchpoint with Novu —
+      // The connect surface is often the user's first touchpoint with Novu:
       // JIT-create the subscriber instead of requiring a prior identify call.
       createSubscriberIfMissing: true,
       integrationIdentifier,

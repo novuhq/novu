@@ -9,7 +9,7 @@ export const toolProviders: IProviderConfig[] = [
     displayName: 'PagerDuty',
     channel: ChannelTypeEnum.TOOL,
     credentials: pagerdutyConfig,
-    docReference: `https://support.pagerduty.com/main/docs/services-and-integrations${UTM_CAMPAIGN_QUERY_PARAM}`,
+    docReference: `https://docs.novu.co/platform/integrations/tool/pagerduty${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'pagerduty.svg', dark: 'pagerduty.svg' },
     betaVersion: true,
   },

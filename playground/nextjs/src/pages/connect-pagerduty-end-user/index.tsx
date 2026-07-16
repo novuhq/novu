@@ -32,7 +32,7 @@ function ConnectPagerDutyContent() {
     <div className="flex max-w-xl flex-col gap-4 p-4">
       <div className="flex flex-col gap-2">
         <p className="text-sm text-muted-foreground">
-          Each signed-in user brings their own PagerDuty service — a distinct integration key routes to their own
+          Each signed-in user brings their own PagerDuty service: a distinct integration key routes to their own
           escalation policy and responders. Paste the Events API v2 integration key from your PagerDuty service to have
           Novu trigger incidents in <em>your</em> PagerDuty account.
         </p>

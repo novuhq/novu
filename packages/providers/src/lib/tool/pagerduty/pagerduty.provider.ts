@@ -77,7 +77,7 @@ export class PagerDutyProvider extends BaseProvider implements IToolProvider {
       },
     };
 
-    // PagerDuty Events API v2 authenticates via routing_key in the body — passthrough headers are not used.
+    // PagerDuty Events API v2 authenticates via routing_key in the body; passthrough headers are not used.
     const response = await safeOutboundJsonRequest<{ dedup_key?: string; message?: string; status?: string }>({
       url: PAGERDUTY_ENDPOINTS[region],
       method: 'POST',
@@ -94,7 +94,7 @@ export class PagerDutyProvider extends BaseProvider implements IToolProvider {
   }
 
   /**
-   * PagerDuty is routed per subscriber — the routing key + region live on the
+   * PagerDuty is routed per subscriber. The routing key + region live on the
    * resolved `channelData`. The provider is stateless and refuses to send
    * without them so a missing endpoint fails loudly at the send seam rather
    * than sending to a wrong or empty destination.

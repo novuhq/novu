@@ -194,7 +194,7 @@ test('throws when channelData is the wrong type', async () => {
   await expect(
     provider.sendMessage({
       content: 'hello',
-      // Wrong discriminant on purpose — the provider must refuse to route.
+      // Wrong discriminant on purpose: the provider must refuse to route.
       channelData: {
         type: ENDPOINT_TYPES.SLACK_CHANNEL,
         identifier: 's-1',

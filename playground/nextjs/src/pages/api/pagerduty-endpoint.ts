@@ -2,7 +2,7 @@
  * /api/pagerduty-endpoint
  *
  * Server-side companion for the PagerDuty end-user connect playground page.
- * This route models the "acme backend" — the Novu customer's own server
+ * This route models the "acme backend": the Novu customer's own server
  * that owns the Novu secret key and provisions PagerDuty endpoints on behalf
  * of its signed-in users.
  *

@@ -9,7 +9,7 @@ export class PagerDutyHandler extends BaseToolHandler {
   }
 
   /**
-   * PagerDuty is routed per subscriber — no env-level credentials are read here.
+   * PagerDuty is routed per subscriber. No env-level credentials are read here.
    * The routing key + region arrive at send time on `options.channelData` (populated
    * by the resolver from the linked `ChannelConnection.auth`). See the provider's
    * `resolveRouting` for the runtime contract.

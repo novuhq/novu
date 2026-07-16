@@ -133,7 +133,7 @@ export function PagerDutyEndUserConnect({ subscriberId }: Props) {
         type: 'success',
         message: data.rotated
           ? 'PagerDuty routing key rotated'
-          : 'PagerDuty connected — Novu will page this subscriber via the linked service',
+          : 'PagerDuty connected. Novu will page this subscriber via the linked service',
       });
       setRoutingKey('');
       await refresh();
@@ -205,11 +205,11 @@ export function PagerDutyEndUserConnect({ subscriberId }: Props) {
         return;
       }
 
-      const transactionId = data.data?.transactionId ?? '—';
+      const transactionId = data.data?.transactionId ?? 'n/a';
 
       setTriggerStatus({
         type: 'success',
-        message: `Workflow triggered — transactionId: ${transactionId}. Check PagerDuty if this subscriber has a connected endpoint.`,
+        message: `Workflow triggered. transactionId: ${transactionId}. Check PagerDuty if this subscriber has a connected endpoint.`,
       });
     } catch (err) {
       setTriggerStatus({ type: 'error', message: err instanceof Error ? err.message : 'Request failed' });
@@ -340,7 +340,7 @@ export function PagerDutyEndUserConnect({ subscriberId }: Props) {
         <h4 className="text-sm font-semibold">Trigger workflow</h4>
         <p className="text-xs text-muted-foreground">
           Dispatches a Novu workflow to subscriber <code>{subscriberId}</code> via <code>/v1/events/trigger</code>. The
-          workflow must include a PagerDuty tool step targeting the same integration — Novu routes the incident through
+          workflow must include a PagerDuty tool step targeting the same integration. Novu routes the incident through
           the endpoint above.
         </p>
         <div className="flex flex-col gap-1">
@@ -372,7 +372,7 @@ export function PagerDutyEndUserConnect({ subscriberId }: Props) {
         </div>
         {endpoints.length === 0 && (
           <p className="text-xs text-amber-600">
-            No PagerDuty endpoint connected yet — the tool step will be skipped until you connect a routing key.
+            No PagerDuty endpoint connected yet. The tool step will be skipped until you connect a routing key.
           </p>
         )}
         {triggerStatus && (
