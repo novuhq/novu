@@ -2,11 +2,25 @@ import { useMemo } from 'react';
 import { useFetchContexts } from '@/hooks/use-fetch-contexts';
 import { LiquidVariable } from '@/utils/parseStepVariables';
 
+function collectDataPaths(obj: Record<string, unknown>, prefix: string): string[] {
+  const paths: string[] = [];
+  for (const [key, value] of Object.entries(obj)) {
+    const path = `${prefix}.${key}`;
+    paths.push(path);
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      paths.push(...collectDataPaths(value as Record<string, unknown>, path));
+    }
+  }
+
+  return paths;
+}
+
 /**
  * Fetches available context entities from the API and returns synthetic
- * variables for each distinct context type. This enables the autocomplete
- * to show known context types (e.g. context.tenant.id, context.tenant.data)
- * even when no context data has been added to the preview sandbox yet.
+ * variables for each distinct context type, including data sub-properties.
+ * This enables the autocomplete to show known context types and their data
+ * fields (e.g. context.tenant.data.companyName) even before the user has
+ * added context data to the preview sandbox.
  */
 export function useContextTypeVariables(): LiquidVariable[] {
   const { data: contextsData } = useFetchContexts({ limit: 50 }, { staleTime: 30_000 });
@@ -15,18 +29,28 @@ export function useContextTypeVariables(): LiquidVariable[] {
     const contexts = contextsData?.data;
     if (!contexts || contexts.length === 0) return [];
 
-    const types = new Set<string>();
-    for (const ctx of contexts) {
-      if (ctx.type) {
-        types.add(ctx.type);
-      }
-    }
-
+    const seenNames = new Set<string>();
     const variables: LiquidVariable[] = [];
-    for (const type of types) {
-      variables.push({ name: `context.${type}` });
-      variables.push({ name: `context.${type}.id` });
-      variables.push({ name: `context.${type}.data` });
+
+    const add = (name: string) => {
+      if (seenNames.has(name)) return;
+      seenNames.add(name);
+      variables.push({ name });
+    };
+
+    for (const ctx of contexts) {
+      if (!ctx.type) continue;
+
+      add(`context.${ctx.type}`);
+      add(`context.${ctx.type}.id`);
+      add(`context.${ctx.type}.data`);
+
+      if (ctx.data && typeof ctx.data === 'object' && Object.keys(ctx.data).length > 0) {
+        const dataPaths = collectDataPaths(ctx.data as Record<string, unknown>, `context.${ctx.type}.data`);
+        for (const path of dataPaths) {
+          add(path);
+        }
+      }
     }
 
     return variables;

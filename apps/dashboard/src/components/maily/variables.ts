@@ -57,7 +57,16 @@ function addContextVariableSuggestions(
     addIfNotExists(`${queryWithoutSuffix}.id`);
     addIfNotExists(`${queryWithoutSuffix}.data`);
   }
-  // "context.tenant.id" → suggest if valid and doesn't exist
+  // "context.tenant.data." → suggest known data sub-properties from existing variables
+  else if (parts.length >= 4 && parts[2] === 'data' && !parts[parts.length - 1]?.trim()) {
+    const dataPrefix = parts.slice(0, -1).join('.') + '.';
+    for (const v of variables) {
+      if (v.name.startsWith(dataPrefix) && v.name !== dataPrefix.slice(0, -1)) {
+        addIfNotExists(v.name);
+      }
+    }
+  }
+  // "context.tenant.id" or "context.tenant.data.companyName" → suggest if valid
   else if (parts.length >= 3 && isValidContextVariable(queryWithoutSuffix)) {
     addIfNotExists(queryWithoutSuffix);
   }

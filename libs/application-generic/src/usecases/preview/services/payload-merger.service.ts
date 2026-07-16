@@ -125,7 +125,10 @@ export class PayloadMergerService {
 
     mergedPayload.actor = merge({}, fullActorSchema, userActorData);
 
-    mergedPayload.context = this.resolveContext(userPayloadExample?.context);
+    mergedPayload.context = this.resolveContextWithFallback(
+      userPayloadExample?.context,
+      payloadExample.context as Record<string, unknown> | undefined
+    );
 
     if (workflow && stepIdOrInternalId) {
       /*
@@ -184,6 +187,36 @@ export class PayloadMergerService {
     return Object.keys(resolved).length > 0 ? resolved : undefined;
   }
 
+  /**
+   * Resolves context from user-provided payload with fallback to extracted context
+   * from control values. This ensures that context variables referenced in templates
+   * (e.g., {{ context.tenant.id }}) appear in the preview sandbox even before the
+   * user manually adds context data.
+   */
+  private resolveContextWithFallback(
+    userContext?: ContextPayload,
+    extractedContext?: Record<string, unknown>
+  ): ContextResolved | undefined {
+    const userResolved = this.resolveContext(userContext);
+    if (userResolved) return userResolved;
+
+    if (!extractedContext || typeof extractedContext !== 'object' || Object.keys(extractedContext).length === 0) {
+      return undefined;
+    }
+
+    const fallback: ContextResolved = {};
+    for (const [contextType, contextValue] of Object.entries(extractedContext)) {
+      if (!contextValue || typeof contextValue !== 'object') continue;
+      const entity = contextValue as Record<string, unknown>;
+      fallback[contextType] = {
+        id: typeof entity.id === 'string' ? entity.id : `example-${contextType}-id`,
+        data: (typeof entity.data === 'object' && entity.data !== null ? entity.data : {}) as Record<string, unknown>,
+      };
+    }
+
+    return Object.keys(fallback).length > 0 ? fallback : undefined;
+  }
+
   private async mergeWithoutPayloadSchema({
     payloadExample,
     userPayloadExample,
@@ -219,7 +252,10 @@ export class PayloadMergerService {
 
     finalPayload.actor = merge({}, fullActorSchema, userActorData);
 
-    finalPayload.context = this.resolveContext(userPayloadExample?.context);
+    finalPayload.context = this.resolveContextWithFallback(
+      userPayloadExample?.context,
+      payloadExample.context as Record<string, unknown> | undefined
+    );
 
     if (workflow && stepIdOrInternalId) {
       /*
