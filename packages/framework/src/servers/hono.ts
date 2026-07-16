@@ -24,6 +24,10 @@ export const frameworkName: SupportedFrameworkName = 'hono';
  * Using Hono, serve and register any declared workflows with Novu,
  * making them available to be triggered by events.
  *
+ * On Cloudflare Workers, background agent turns are kept alive after the
+ * acknowledgement response via the execution context's `waitUntil`, so agents
+ * work without extra configuration.
+ *
  * @example
  * ```ts
  * import { Hono } from "hono";
@@ -50,6 +54,21 @@ export const serve = (options: ServeHandlerOptions): ((c: Context) => Promise<Re
     handler: (c: Context) => {
       return {
         body: () => c.req.json(),
+        waitUntil: (promise: Promise<unknown>) => {
+          try {
+            /*
+             * On Cloudflare Workers, `waitUntil` extends the invocation
+             * lifetime so background agent turns complete after the
+             * acknowledgement response is sent. Accessing `c.executionCtx`
+             * throws on runtimes without an execution context (e.g. Node.js,
+             * Bun, Deno) — those keep the process alive, so fire-and-forget
+             * is already safe there.
+             */
+            c.executionCtx.waitUntil(promise);
+          } catch {
+            // No execution context available — long-lived runtime.
+          }
+        },
         headers: (key) => c.req.header(key),
         method: () => c.req.method,
         queryString: (key) => c.req.query(key),

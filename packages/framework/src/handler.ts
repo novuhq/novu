@@ -32,6 +32,30 @@ export interface ServeHandlerOptions {
   client?: Client;
   workflows?: Array<Workflow>;
   agents?: Array<Agent>;
+  /**
+   * Extends the lifetime of the request handler until the given promise settles.
+   *
+   * Agent events are acknowledged immediately while the turn (LLM calls, replies,
+   * tool use) continues in the background. On serverless platforms the runtime is
+   * frozen as soon as the response is sent, so the background work is silently
+   * dropped unless a platform `waitUntil` primitive is provided.
+   *
+   * The Next.js adapter (on Next.js >= 15.1) and the Hono adapter (on Cloudflare
+   * Workers) wire this automatically. Provide it explicitly for other serverless
+   * platforms, or to override the automatic detection.
+   *
+   * @example Cloudflare Workers (without Hono)
+   * ```ts
+   * export default {
+   *   async fetch(request, env, ctx) {
+   *     const handler = serve({ agents: [myAgent], waitUntil: (promise) => ctx.waitUntil(promise) });
+   *
+   *     return handler(request);
+   *   },
+   * };
+   * ```
+   */
+  waitUntil?: (promise: Promise<unknown>) => void;
 }
 
 export type INovuRequestHandlerOptions<Input extends any[] = any[], Output = any> = ServeHandlerOptions & {
@@ -70,6 +94,7 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
   private readonly http;
   private readonly workflows: Array<Workflow>;
   private readonly agents: Array<Agent>;
+  private readonly waitUntil?: (promise: Promise<unknown>) => void;
 
   constructor(options: INovuRequestHandlerOptions<Input, Output>) {
     this.handler = options.handler;
@@ -79,6 +104,7 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
     this.http = initApiClient(this.client.secretKey, this.client.apiUrl);
     this.frameworkName = options.frameworkName;
     this.hmacEnabled = this.client.strictAuthentication;
+    this.waitUntil = options.waitUntil;
     this.client.addAgents(this.agents);
   }
 
@@ -164,7 +190,8 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
         action,
         agentId,
         agentEvent,
-        actions.waitUntil
+        // An explicitly provided `waitUntil` overrides the adapter's automatic detection.
+        this.waitUntil ?? actions.waitUntil
       );
       const getActionMap = this.getGetActionMap(workflowId, stepId);
 
@@ -235,11 +262,44 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
 
         if (waitUntil) {
           waitUntil(handlerPromise);
+        } else {
+          this.warnOnUnprotectedServerlessRuntime(agentId);
         }
 
         return this.createResponse(HttpStatusEnum.OK, { status: 'ack' });
       },
     };
+  }
+
+  /**
+   * Agent events are acknowledged immediately and the turn continues in the
+   * background. On serverless platforms the runtime freezes once the response
+   * is sent, so without a `waitUntil` primitive the turn is silently dropped
+   * mid-flight. Detecting the known freeze-prone platforms lets us surface an
+   * actionable warning instead of logs that just stop with no error.
+   */
+  private warnOnUnprotectedServerlessRuntime(agentId: string): void {
+    let detectedPlatform: string | undefined;
+
+    try {
+      if (process.env.AWS_LAMBDA_FUNCTION_NAME) {
+        detectedPlatform = 'AWS Lambda';
+      } else if (process.env.VERCEL) {
+        detectedPlatform = 'Vercel';
+      }
+    } catch {
+      // `process` is unavailable on some edge runtimes.
+    }
+
+    if (!detectedPlatform) {
+      return;
+    }
+
+    this.client.logger.warn(
+      `[agent:${agentId}] Agent event acknowledged without a \`waitUntil\` primitive while running on ${detectedPlatform}. ` +
+        `The runtime may freeze once the response is sent, silently dropping the rest of the agent turn. ` +
+        `Pass \`waitUntil\` to \`serve()\` (e.g. \`serve({ agents, waitUntil })\`) to extend the invocation lifetime.`
+    );
   }
 
   public triggerAction(triggerEvent: EventTriggerParams) {
