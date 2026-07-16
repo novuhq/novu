@@ -25,26 +25,23 @@ export interface LiquidVariable {
 }
 
 /**
- * Preferred root namespace order when typing `{{` in the workflow editor.
+ * Preferred nested-namespace order when typing `{{` in the workflow editor.
  * Higher boost ranks higher in CodeMirror / Maily autocomplete.
  *
- * Order: payload → subscriber → env → payload.* properties → rest
+ * Order: payload.* → subscriber.* → env.* → actor.* → root namespaces / rest
  */
-export const ROOT_NAMESPACE_BOOST: Record<string, number> = {
+export const NESTED_NAMESPACE_BOOST: Record<string, number> = {
   payload: 99,
   subscriber: 98,
   env: 97,
+  actor: 96,
 };
 
-const PAYLOAD_PROPERTY_BOOST = 96;
-
 export function getVariableBoost(name: string): number | undefined {
-  if (name in ROOT_NAMESPACE_BOOST) {
-    return ROOT_NAMESPACE_BOOST[name];
-  }
-
-  if (name.startsWith('payload.')) {
-    return PAYLOAD_PROPERTY_BOOST;
+  for (const [namespace, boost] of Object.entries(NESTED_NAMESPACE_BOOST)) {
+    if (name.startsWith(`${namespace}.`)) {
+      return boost;
+    }
   }
 
   return undefined;
