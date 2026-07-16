@@ -36,7 +36,7 @@ This creates predictable isolation and ensures notifications are scoped to the c
 
 If a new context is passed from the [`<Inbox />`](/platform/inbox/configuration/inbox-with-context) that doesn’t already exist, Novu will automatically find or create it. This means you don’t have to manually set up contexts before using them, they are created just in time.
 
-However, if a context already exists, its data won’t be updated automatically. This prevents unintentional overwrites of stored context data.
+If a context already exists, Inbox session initialization reuses it without updating stored `data`. This prevents unintentional overwrites from the client. To change existing context metadata, update it through the [Contexts API](/api-reference/contexts/context-schema), Novu dashboard, or a server-side workflow trigger with inline `data`.
 
 This is particularly useful for:
 
