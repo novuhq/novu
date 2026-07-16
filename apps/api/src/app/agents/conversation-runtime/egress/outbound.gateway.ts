@@ -144,12 +144,7 @@ export class OutboundGateway {
     return sent;
   }
 
-  /**
-   * Internal reply surface for server-built cards (capacity, plan-limit,
-   * keyless CTA). `OutboundMessage.card` is typed as the request-DTO validation
-   * shape (`Record<string, unknown>`), so the single DTO-boundary cast lives
-   * here instead of at every call site.
-   */
+  /** Internal reply surface for server-built cards (capacity, plan-limit, keyless CTA). */
   async replyOnThreadWithCard(
     thread: Thread,
     card: CardElement,
@@ -159,7 +154,7 @@ export class OutboundGateway {
       actionTokenBinding?: AgentActionTokenBinding;
     }
   ): Promise<SentMessageInfo | null> {
-    return this.replyOnThread(thread, { card: card as unknown as Record<string, unknown> }, opts);
+    return this.replyOnThread(thread, { card }, opts);
   }
 
   async replyOnThread(
@@ -618,7 +613,7 @@ export class OutboundGateway {
 
     const card = buildBrandedMarkdownReply(content.markdown, branding.agentIdentifier, branding.platform);
 
-    return { ...content, card: card as unknown as Record<string, unknown>, markdown: undefined };
+    return { ...content, card, markdown: undefined };
   }
 
   /**
@@ -632,21 +627,16 @@ export class OutboundGateway {
     const deliveryContent = this.applyOutboundBranding(content, branding);
 
     if (deliveryContent.card) {
-      const payload: { card: unknown; files?: ChatSdkFile[] } = {
+      return {
         card: deliveryContent.card,
-      };
-
-      if (deliveryContent.files?.length) {
-        payload.files = deliveryContent.files;
-      }
-
-      return payload as unknown as AdapterPostableMessage;
+        ...(deliveryContent.files?.length ? { files: deliveryContent.files } : {}),
+      } as AdapterPostableMessage;
     }
 
     return {
       markdown: deliveryContent.markdown ?? '',
       files: deliveryContent.files,
-    } as unknown as AdapterPostableMessage;
+    } as AdapterPostableMessage;
   }
 
   private async persistDelivered(
@@ -720,9 +710,7 @@ export class OutboundGateway {
       return msg.markdown;
     }
     if (msg.card) {
-      const title = (msg.card as { title?: string }).title;
-
-      return title ?? '[Card]';
+      return msg.card.title ?? '[Card]';
     }
 
     return '';
