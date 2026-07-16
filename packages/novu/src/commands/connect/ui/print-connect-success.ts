@@ -9,7 +9,8 @@ export function shouldSkipConnectSuccessSummary(result: ConnectSuccessResult): b
   return (
     result.customCodeOutcome?.scaffolded === true ||
     result.chatSdkOutcome?.scaffolded === true ||
-    result.aiSdkOutcome?.scaffolded === true
+    result.aiSdkOutcome?.scaffolded === true ||
+    result.langChainOutcome?.scaffolded === true
   );
 }
 
@@ -25,6 +26,7 @@ export function printConnectSuccess(result: ConnectSuccessResult): void {
     if (result.connectedChannel === 'slack') return 'Slack';
     if (result.connectedChannel === 'telegram') return 'Telegram';
     if (result.connectedChannel === 'email') return 'Email';
+    if (result.connectedChannel === 'sendblue') return 'iMessage (Sendblue)';
 
     return null;
   })();
@@ -51,6 +53,7 @@ export function printConnectSuccess(result: ConnectSuccessResult): void {
   const followUp = resolveBridgeSetupFollowUpMessage(result.connectMode, {
     chatSdk: result.chatSdkOutcome,
     aiSdk: result.aiSdkOutcome,
+    langChain: result.langChainOutcome,
     customCode: result.customCodeOutcome,
   });
 

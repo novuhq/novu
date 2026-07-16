@@ -6,7 +6,7 @@ const SANITY_API_VERSION = '2025-02-19';
 
 export const SANITY_CDN_URL = `https://cdn.sanity.io/images/${SANITY_PROJECT_ID}/${SANITY_DATASET}`;
 
-export const sanityClient = createClient({
+const sanityClient = createClient({
   projectId: SANITY_PROJECT_ID,
   dataset: SANITY_DATASET,
   apiVersion: SANITY_API_VERSION,

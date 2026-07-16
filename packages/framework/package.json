@@ -1,6 +1,6 @@
 {
   "name": "@novu/framework",
-  "version": "2.11.2-alpha.0",
+  "version": "2.12.1",
   "description": "The Code-First Notifications Workflow SDK.",
   "main": "./dist/cjs/index.cjs",
   "types": "./dist/cjs/index.d.cts",
@@ -18,6 +18,7 @@
     "dist",
     "express",
     "h3",
+    "hono",
     "internal",
     "lambda",
     "nest",
@@ -63,6 +64,7 @@
     "next",
     "nuxt",
     "h3",
+    "hono",
     "express"
   ],
   "author": "Novu Team <engineering@novu.co>",
@@ -146,6 +148,16 @@
       "import": {
         "types": "./dist/esm/servers/h3.d.ts",
         "default": "./dist/esm/servers/h3.js"
+      }
+    },
+    "./hono": {
+      "require": {
+        "types": "./dist/cjs/servers/hono.d.cts",
+        "default": "./dist/cjs/servers/hono.cjs"
+      },
+      "import": {
+        "types": "./dist/esm/servers/hono.d.ts",
+        "default": "./dist/esm/servers/hono.js"
       }
     },
     "./lambda": {
@@ -248,6 +260,7 @@
     "aws-lambda": ">=1.0.7",
     "express": ">=4.19.2",
     "h3": ">=1.8.1",
+    "hono": ">=4.0.0",
     "langchain": ">=1.0.0",
     "next": ">=12.0.0",
     "zod": ">=3.0.0",
@@ -276,6 +289,9 @@
       "optional": true
     },
     "h3": {
+      "optional": true
+    },
+    "hono": {
       "optional": true
     },
     "aws-lambda": {
@@ -310,6 +326,7 @@
     "aws-lambda": "^1.0.7",
     "express": "^4.19.2",
     "h3": "^1.11.1",
+    "hono": "^4.12.25",
     "langchain": "^1.2.16",
     "madge": "^8.0.0",
     "next": "^16.2.1",

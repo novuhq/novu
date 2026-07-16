@@ -1,6 +1,28 @@
 import { randomUUID } from 'node:crypto';
 import { ChatProviderIdEnum, type ICredentials } from '@novu/shared';
 
+export function resolveWhatsAppAppSecret(credentials: ICredentials): string | undefined {
+  if (credentials.isNovuManaged === true) {
+    const platformSecret = process.env.NOVU_WHATSAPP_APP_SECRET?.trim();
+
+    return platformSecret || undefined;
+  }
+
+  const storedSecret = typeof credentials.secretKey === 'string' ? credentials.secretKey.trim() : '';
+
+  return storedSecret || undefined;
+}
+
+export function resolveWhatsAppAppId(credentials: ICredentials): string | undefined {
+  if (credentials.isNovuManaged === true) {
+    const platformAppId = process.env.NOVU_WHATSAPP_APP_ID?.trim();
+
+    return platformAppId || undefined;
+  }
+
+  return undefined;
+}
+
 /**
  * For WhatsApp Business agent integrations Novu manages the webhook Verify
  * Token automatically: it's just a shared secret echoed back to Meta during
@@ -16,10 +38,18 @@ export function ensureWhatsAppManagedCredentials({
   providerId,
   nextCredentials,
   existingCredentials,
+  allowManagedFlagChange = false,
 }: {
   providerId: string;
   nextCredentials: ICredentials;
   existingCredentials?: ICredentials;
+  /**
+   * `isNovuManaged` switches credential resolution to Novu's shared Meta Tech
+   * Provider app (NOVU_WHATSAPP_APP_ID / _SECRET), so it must only be set by the
+   * trusted server-side embedded-signup flow — never flipped via a client
+   * credentials update, which would let a tenant borrow the platform app context.
+   */
+  allowManagedFlagChange?: boolean;
 }): ICredentials {
   if (providerId !== ChatProviderIdEnum.WhatsAppBusiness) {
     return nextCredentials;
@@ -29,6 +59,14 @@ export function ensureWhatsAppManagedCredentials({
     ...(existingCredentials ?? {}),
     ...nextCredentials,
   };
+
+  if (!allowManagedFlagChange) {
+    if (existingCredentials && 'isNovuManaged' in existingCredentials) {
+      merged.isNovuManaged = existingCredentials.isNovuManaged;
+    } else {
+      delete merged.isNovuManaged;
+    }
+  }
 
   // Empty-string overwrites from partial forms would still clobber secrets after
   // the spread; restore the stored value whenever the incoming secret is blank.

@@ -4,6 +4,7 @@ import { tryGitInit } from '../../../init/helpers/git';
 import { isFolderEmpty } from '../../../init/helpers/is-folder-empty';
 import { getOnline } from '../../../init/helpers/is-online';
 import { installTemplate, TemplateTypeEnum } from '../../../init/templates';
+import type { LlmAuthChoice } from '../llm-auth/types';
 
 export type ScaffoldBridgeProjectInput = {
   parentDir: string;
@@ -11,12 +12,14 @@ export type ScaffoldBridgeProjectInput = {
   template:
     | typeof TemplateTypeEnum.APP_AGENT
     | typeof TemplateTypeEnum.APP_AGENT_AI_SDK
+    | typeof TemplateTypeEnum.APP_AGENT_LANGCHAIN
     | typeof TemplateTypeEnum.APP_CHAT_SDK;
   defaultAppName: (agentIdentifier: string) => string;
   secretKey: string;
   apiUrl: string;
   agentIdentifier: string;
   silent?: boolean;
+  llmAuth?: LlmAuthChoice;
 };
 
 export type ScaffoldBridgeProjectResult = {
@@ -83,12 +86,15 @@ export async function scaffoldBridgeProject(input: ScaffoldBridgeProjectInput): 
     agentIdentifier: input.agentIdentifier,
     skipInstall: skippedInstall,
     silent: input.silent,
+    llmAuth: input.llmAuth,
   });
 
   tryGitInit(root);
 
   const agentFilePath =
-    input.template === TemplateTypeEnum.APP_AGENT || input.template === TemplateTypeEnum.APP_AGENT_AI_SDK
+    input.template === TemplateTypeEnum.APP_AGENT ||
+    input.template === TemplateTypeEnum.APP_AGENT_AI_SDK ||
+    input.template === TemplateTypeEnum.APP_AGENT_LANGCHAIN
       ? path.join(root, 'app', 'novu', 'agents', `${input.agentIdentifier}.tsx`)
       : undefined;
 

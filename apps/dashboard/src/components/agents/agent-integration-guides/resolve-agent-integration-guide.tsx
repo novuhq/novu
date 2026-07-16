@@ -2,6 +2,7 @@ import { ChatProviderIdEnum, EmailProviderIdEnum, FeatureFlagsKeysEnum } from '@
 import { type ReactNode } from 'react';
 import type { AgentIntegrationLink, AgentResponse } from '@/api/agents';
 import { isAgentIntegrationConnected } from '@/components/agents/is-agent-integration-connected';
+import { SendblueSetupGuide } from '@/components/agents/sendblue-setup-guide';
 import { SetupGuideCard } from '@/components/agents/setup-guide-card';
 import { SlackSetupGuide } from '@/components/agents/slack-setup-guide';
 import { TeamsSetupGuide } from '@/components/agents/teams-setup-guide';
@@ -150,6 +151,10 @@ export function ResolveAgentIntegrationGuide({
       setupGuide = <TelegramSetupGuide agent={agent} integrationId={integrationLink.integration._id} embedded />;
       setupDisplayName = 'Telegram';
       break;
+    case ChatProviderIdEnum.Sendblue:
+      setupGuide = <SendblueSetupGuide agent={agent} integrationId={integrationLink.integration._id} embedded />;
+      setupDisplayName = 'Sendblue';
+      break;
     default:
       setupGuide = null;
   }
@@ -217,6 +222,20 @@ export function ResolveAgentIntegrationGuide({
             onRequestRemoveIntegration={onRequestRemoveIntegration}
             isRemovingIntegration={isRemovingIntegration}
             justConnected={justConnected}
+          />
+        );
+      // No bespoke connected details for Sendblue yet — fall back to the generic guide.
+      case ChatProviderIdEnum.Sendblue:
+        return (
+          <GenericAgentIntegrationGuide
+            embedded={embedded}
+            providerId={providerId}
+            onBack={onBack}
+            agent={agent}
+            integrationLink={integrationLink}
+            canRemoveIntegration={canRemoveIntegration}
+            onRequestRemoveIntegration={onRequestRemoveIntegration}
+            isRemovingIntegration={isRemovingIntegration}
           />
         );
       default:

@@ -581,4 +581,8 @@ Below are some of the most frequently asked questions about topics:
   <Accordion title="Do Context on a trigger and Context on a subscription need to match?">
     Yes. Novu uses exact-match Context filtering. A subscription created with `{ tenant: "acme-corp" }` is included only when the workflow trigger passes the same Context. Triggers without Context do not reach Context-scoped subscriptions, and vice versa. See [Context-scoped subscriptions](/platform/subscription/manage-topic-subscriptions#context-scoped-subscriptions).
   </Accordion>
+
+  <Accordion title="Are filtered topic subscriptions billed as workflow runs?">
+    No. Subscribers filtered out by [Context](/platform/concepts/contexts) mismatch or JSON Logic conditions do not get a workflow run and are not counted toward usage. Only subscribers whose subscriptions pass create a billable workflow run. See [Billing and workflow runs](/platform/subscription/manage-topic-subscriptions#billing-and-workflow-runs).
+  </Accordion>
 </AccordionGroup>

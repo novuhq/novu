@@ -30,7 +30,6 @@ import { SidebarContent, SidebarFooter, SidebarHeader } from '@/components/side-
 import TruncatedText from '@/components/truncated-text';
 import { UpgradeCTATooltip } from '@/components/upgrade-cta-tooltip';
 import { stepSchema } from '@/components/workflow-editor/schema';
-import { useWorkflowEditorRoutes } from '@/components/workflow-editor/use-workflow-editor-routes';
 import { flattenIssues, getFirstErrorMessage, updateStepInWorkflow } from '@/components/workflow-editor/step-utils';
 import { ConfigureChatStepPreview } from '@/components/workflow-editor/steps/chat/configure-chat-step-preview';
 import {
@@ -49,6 +48,7 @@ import { SdkBanner } from '@/components/workflow-editor/steps/sdk-banner';
 import { SkipConditionsButton } from '@/components/workflow-editor/steps/skip-conditions-button';
 import { ConfigureSmsStepPreview } from '@/components/workflow-editor/steps/sms/configure-sms-step-preview';
 import { ThrottleControlValues } from '@/components/workflow-editor/steps/throttle/throttle-control-values';
+import { useWorkflowEditorRoutes } from '@/components/workflow-editor/use-workflow-editor-routes';
 import { UpdateWorkflowFn } from '@/components/workflow-editor/workflow-provider';
 import { IS_CLOUD } from '@/config';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
@@ -181,9 +181,7 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
       },
       {
         onSuccess: () => {
-          navigate(
-            buildRoute(editWorkflowRoute, { environmentSlug: environment.slug!, workflowSlug: workflow.slug })
-          );
+          navigate(buildRoute(editWorkflowRoute, { environmentSlug: environment.slug!, workflowSlug: workflow.slug }));
         },
       }
     );

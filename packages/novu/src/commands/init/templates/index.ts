@@ -5,9 +5,18 @@ import fs from 'fs/promises';
 import os from 'os';
 import path from 'path';
 import { bold, cyan } from 'picocolors';
+import type { BridgeAdapterVariant } from '../../connect/pipeline/bridge-adapter/types';
+import { generateAgentNextConfigSource } from '../../connect/pipeline/llm-auth/codegen/generate-agent-next-config';
+import { generateSupportAgentSource } from '../../connect/pipeline/llm-auth/codegen/generate-support-agent';
+import { codegenSupportsTools } from '../../connect/pipeline/llm-auth/codegen/tool-support';
+import {
+  resolveLlmAuthEnvVars,
+  resolveLlmAuthPackageDependencies,
+  shouldWireLlmAuth,
+} from '../../connect/pipeline/llm-auth/registry';
 import { copy } from '../helpers/copy';
 import { install } from '../helpers/install';
-
+import { resolveAgentZodDependencies } from './agent-scaffold-deps';
 import { GetTemplateFileArgs, InstallTemplateArgs, TemplateTypeEnum } from './types';
 
 function resolveCliPackageJson(): Record<string, any> | null {
@@ -71,10 +80,14 @@ export const installTemplate = async ({
   agentIdentifier,
   silent,
   skipInstall,
+  llmAuth,
 }: InstallTemplateArgs) => {
   if (!silent) console.log(bold(`Using ${packageManager}.`));
 
-  const isAgentTemplate = template === TemplateTypeEnum.APP_AGENT || template === TemplateTypeEnum.APP_AGENT_AI_SDK;
+  const isAgentTemplate =
+    template === TemplateTypeEnum.APP_AGENT ||
+    template === TemplateTypeEnum.APP_AGENT_AI_SDK ||
+    template === TemplateTypeEnum.APP_AGENT_LANGCHAIN;
 
   /**
    * Copy the template files to the target directory.
@@ -88,7 +101,10 @@ export const installTemplate = async ({
   }
 
   const renameAgent =
-    (template === TemplateTypeEnum.APP_AGENT || template === TemplateTypeEnum.APP_AGENT_AI_SDK) && agentIdentifier;
+    (template === TemplateTypeEnum.APP_AGENT ||
+      template === TemplateTypeEnum.APP_AGENT_AI_SDK ||
+      template === TemplateTypeEnum.APP_AGENT_LANGCHAIN) &&
+    agentIdentifier;
   if (renameAgent && !/^[a-z0-9]+(?:[-_][a-z0-9]+)*$/.test(agentIdentifier)) {
     throw new Error(
       `Invalid agent identifier: "${agentIdentifier}". Must be a lowercase slug (a-z, 0-9, hyphens, underscores).`
@@ -135,6 +151,34 @@ export const installTemplate = async ({
         if (after !== before) await fs.writeFile(file, after);
       })
     );
+  }
+
+  const isAiSdkTemplate = template === TemplateTypeEnum.APP_AGENT_AI_SDK;
+  const isLangChainTemplate = template === TemplateTypeEnum.APP_AGENT_LANGCHAIN;
+
+  if (renameAgent && llmAuth && shouldWireLlmAuth(llmAuth) && (isAiSdkTemplate || isLangChainTemplate)) {
+    const runtime: BridgeAdapterVariant = isAiSdkTemplate ? 'ai-sdk' : 'langchain';
+    const agentFilePath = path.join(root, 'app', 'novu', 'agents', `${agentIdentifier}.tsx`);
+    const source = generateSupportAgentSource({
+      runtime,
+      agentIdentifier: agentIdentifier!,
+      llmAuth,
+    });
+
+    await fs.writeFile(agentFilePath, source);
+
+    if (!codegenSupportsTools({ runtime, agentIdentifier: agentIdentifier!, llmAuth })) {
+      const toolsDir = path.join(root, 'app', 'novu', 'agents', 'tools');
+      await fs.rm(path.join(toolsDir, 'search-novu-docs.ts'), { force: true });
+      await fs.rmdir(toolsDir).catch(() => undefined);
+    }
+  }
+
+  if (isAgentTemplate) {
+    const runtime: BridgeAdapterVariant = isAiSdkTemplate ? 'ai-sdk' : 'langchain';
+    const nextConfigSource = generateAgentNextConfigSource(runtime, llmAuth ?? { kind: 'skip' });
+
+    await fs.writeFile(path.join(root, 'next.config.mjs'), nextConfigSource);
   }
 
   const tsconfigFile = path.join(root, 'tsconfig.json');
@@ -215,10 +259,12 @@ export const installTemplate = async ({
   }
 
   /* write .env file */
+  const llmEnvVars = llmAuth ? resolveLlmAuthEnvVars(llmAuth) : {};
   const envVars = isAgentTemplate
     ? {
         NOVU_SECRET_KEY: secretKey,
         NOVU_API_URL: apiUrl ?? 'https://api.novu.co',
+        ...llmEnvVars,
       }
     : template === TemplateTypeEnum.APP_CHAT_SDK
       ? {
@@ -264,6 +310,16 @@ export const installTemplate = async ({
 
   if (template === TemplateTypeEnum.APP_AGENT_AI_SDK) {
     baseDependencies.ai = '^7.0.0';
+  }
+
+  if (template === TemplateTypeEnum.APP_AGENT_LANGCHAIN) {
+    baseDependencies.langchain = '^1.0.0';
+    baseDependencies['@langchain/core'] = '^1.0.0';
+  }
+
+  if (llmAuth && shouldWireLlmAuth(llmAuth) && (isAiSdkTemplate || isLangChainTemplate)) {
+    const runtime: BridgeAdapterVariant = isAiSdkTemplate ? 'ai-sdk' : 'langchain';
+    Object.assign(baseDependencies, resolveLlmAuthPackageDependencies(runtime, llmAuth));
   }
 
   if (isChatSdkTemplate) {
@@ -330,11 +386,18 @@ export const installTemplate = async ({
     };
   }
 
-  if (template === TemplateTypeEnum.APP_REACT_EMAIL || isAgentTemplate) {
+  if (template === TemplateTypeEnum.APP_REACT_EMAIL) {
     packageJson.dependencies = {
       ...packageJson.dependencies,
       zod: '^3.23.8',
       'zod-to-json-schema': '^3.23.1',
+    };
+  }
+
+  if (isAgentTemplate) {
+    packageJson.dependencies = {
+      ...packageJson.dependencies,
+      ...resolveAgentZodDependencies(),
     };
   }
 

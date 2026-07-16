@@ -19,6 +19,16 @@ import {
   SlackUserEndpointDto$outboundSchema,
 } from "./slackuserendpointdto.js";
 import {
+  WebexPersonEndpointDto,
+  WebexPersonEndpointDto$Outbound,
+  WebexPersonEndpointDto$outboundSchema,
+} from "./webexpersonendpointdto.js";
+import {
+  WebexRoomEndpointDto,
+  WebexRoomEndpointDto$Outbound,
+  WebexRoomEndpointDto$outboundSchema,
+} from "./webexroomendpointdto.js";
+import {
   WebhookEndpointDto,
   WebhookEndpointDto$Outbound,
   WebhookEndpointDto$outboundSchema,
@@ -31,7 +41,9 @@ export type UpdateChannelEndpointRequestDtoEndpoint =
   | SlackChannelEndpointDto
   | SlackUserEndpointDto
   | WebhookEndpointDto
-  | PhoneEndpointDto;
+  | PhoneEndpointDto
+  | WebexRoomEndpointDto
+  | WebexPersonEndpointDto;
 
 export type UpdateChannelEndpointRequestDto = {
   /**
@@ -41,7 +53,9 @@ export type UpdateChannelEndpointRequestDto = {
     | SlackChannelEndpointDto
     | SlackUserEndpointDto
     | WebhookEndpointDto
-    | PhoneEndpointDto;
+    | PhoneEndpointDto
+    | WebexRoomEndpointDto
+    | WebexPersonEndpointDto;
 };
 
 /** @internal */
@@ -49,7 +63,9 @@ export type UpdateChannelEndpointRequestDtoEndpoint$Outbound =
   | SlackChannelEndpointDto$Outbound
   | SlackUserEndpointDto$Outbound
   | WebhookEndpointDto$Outbound
-  | PhoneEndpointDto$Outbound;
+  | PhoneEndpointDto$Outbound
+  | WebexRoomEndpointDto$Outbound
+  | WebexPersonEndpointDto$Outbound;
 
 /** @internal */
 export const UpdateChannelEndpointRequestDtoEndpoint$outboundSchema: z.ZodType<
@@ -61,6 +77,8 @@ export const UpdateChannelEndpointRequestDtoEndpoint$outboundSchema: z.ZodType<
   SlackUserEndpointDto$outboundSchema,
   WebhookEndpointDto$outboundSchema,
   PhoneEndpointDto$outboundSchema,
+  WebexRoomEndpointDto$outboundSchema,
+  WebexPersonEndpointDto$outboundSchema,
 ]);
 
 export function updateChannelEndpointRequestDtoEndpointToJSON(
@@ -80,7 +98,9 @@ export type UpdateChannelEndpointRequestDto$Outbound = {
     | SlackChannelEndpointDto$Outbound
     | SlackUserEndpointDto$Outbound
     | WebhookEndpointDto$Outbound
-    | PhoneEndpointDto$Outbound;
+    | PhoneEndpointDto$Outbound
+    | WebexRoomEndpointDto$Outbound
+    | WebexPersonEndpointDto$Outbound;
 };
 
 /** @internal */
@@ -94,6 +114,8 @@ export const UpdateChannelEndpointRequestDto$outboundSchema: z.ZodType<
     SlackUserEndpointDto$outboundSchema,
     WebhookEndpointDto$outboundSchema,
     PhoneEndpointDto$outboundSchema,
+    WebexRoomEndpointDto$outboundSchema,
+    WebexPersonEndpointDto$outboundSchema,
   ]),
 });
 

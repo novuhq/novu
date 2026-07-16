@@ -29,14 +29,14 @@ export type GenerateLinkUserOauthUrlRequestDto = {
    */
   integrationIdentifier: string;
   /**
-   * Identifier of the existing channel connection to associate this user endpoint with. Generated automatically if not provided.
+   * Identifier of the existing channel connection to associate this user endpoint with. Generated automatically if not provided for providers that support standalone user linking. Required for Webex.
    */
   connectionIdentifier?: string | undefined;
   context?:
     | { [k: string]: GenerateLinkUserOauthUrlRequestDtoContext2 | string }
     | undefined;
   /**
-   * **Slack only**: User-level OAuth scopes for "Sign in with Slack". Defaults to: identity.basic. **MS Teams**: ignored — uses delegated OpenID scopes (openid, profile, User.Read).
+   * **Slack only**: User-level OAuth scopes for "Sign in with Slack". Defaults to: identity.basic. **Webex**: Optional Webex scopes for people/me; defaults to spark:people_read. **MS Teams**: ignored — uses delegated OpenID scopes (openid, profile, User.Read).
    */
   userScope?: Array<string> | undefined;
 };

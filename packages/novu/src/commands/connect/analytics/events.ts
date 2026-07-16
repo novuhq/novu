@@ -31,6 +31,7 @@ export const CONNECT_EVENTS = {
   SLACK_CONNECTED: 'Connect Slack Connected',
   TELEGRAM_CONNECTED: 'Connect Telegram Connected',
   EMAIL_CONNECTED: 'Connect Email Connected',
+  SENDBLUE_CONNECTED: 'Connect Sendblue Connected',
   WELCOME_SENT: 'Connect Welcome Sent',
   COMPLETED: 'Connect Completed',
   ERROR: 'Connect Error',

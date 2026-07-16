@@ -1,4 +1,4 @@
-import { Select, TextInput } from '@inkjs/ui';
+import { PasswordInput, Select, TextInput } from '@inkjs/ui';
 import { AWS_CLAUDE_COMMERCIAL_REGIONS } from '@novu/shared';
 import { Box, Text, useInput } from 'ink';
 // biome-ignore lint/correctness/noUnusedImports: classic-JSX linter falls back here because tsconfig.json excludes ui/.
@@ -6,12 +6,15 @@ import React from 'react';
 import { CONNECT_MODE_PICKER_SUBTITLE, CONNECT_MODE_PICKER_TITLE } from '../connect-mode-options';
 import { SEND_FROM_ACCOUNT_LABEL } from '../copy/email-onboarding';
 import { channelDisplayName, isDashboardOnlyChannel } from '../dashboard-urls';
+import { ConnectUserCancelledError } from '../errors';
 import { resolveBridgeSetupFollowUpMessage } from '../pipeline/bridge/setup-outcome-message';
 import { validateSlackConfigTokenFormat } from '../pipeline/channels/slack-config-token';
+import { LLM_AUTH_PICKER_SUBTITLE, LLM_AUTH_PICKER_TITLE } from '../pipeline/llm-auth/llm-auth-options';
 import type { ChannelChoice } from '../types';
 import { BridgeReconcilePhaseContent, isBridgeReconcilePhase } from './bridge-reconcile-phase-content';
 import { CopyableLink } from './copyable-link';
 import { GroupedConnectModeSelect } from './grouped-connect-mode-select';
+import { LlmAuthPicker } from './llm-auth-picker';
 import { PreviewGeneratedContent } from './preview-generated-content';
 import type { ConnectStore, Phase } from './store';
 import { WelcomeContent } from './welcome-content';
@@ -60,6 +63,22 @@ export function PhaseContent({
 
     case 'loading-integrations':
       return <Text color="cyan">Looking up agent runtime integrations…</Text>;
+
+    case 'pick-llm-auth':
+      return (
+        <Box flexDirection="column" gap={1}>
+          <Box flexDirection="column">
+            <Text bold>{LLM_AUTH_PICKER_TITLE}</Text>
+            <Text dimColor>{LLM_AUTH_PICKER_SUBTITLE}</Text>
+          </Box>
+          <LlmAuthPicker
+            connectMode={phase.connectMode}
+            onChange={(value) => phase.resolve(value)}
+            onCancel={() => phase.reject(new ConnectUserCancelledError())}
+          />
+          <Text color="cyan">Enter · select · Esc · cancel</Text>
+        </Box>
+      );
 
     case 'pick-connect-mode':
       return (
@@ -110,7 +129,12 @@ export function PhaseContent({
             <Text color="yellow">Credentials were rejected: {phase.verificationError}</Text>
           ) : null}
           <Box borderStyle="round" paddingX={1}>
-            <TextInput placeholder={phase.placeholder} onSubmit={(value) => phase.resolve(value)} />
+            {/* Secrets mask by default; callers opt out with `secret: false` for non-sensitive values. */}
+            {phase.secret === false ? (
+              <TextInput placeholder={phase.placeholder} onSubmit={(value) => phase.resolve(value)} />
+            ) : (
+              <PasswordInput placeholder={phase.placeholder} onSubmit={(value) => phase.resolve(value)} />
+            )}
           </Box>
           <Text dimColor>Press Enter to submit.</Text>
         </Box>
@@ -193,6 +217,7 @@ export function PhaseContent({
         { label: 'Slack (recommended)', value: 'slack' },
         { label: 'Telegram', value: 'telegram' },
         { label: 'Email', value: 'email' },
+        { label: 'iMessage (Sendblue)', value: 'sendblue' },
         { label: 'WhatsApp', value: 'whatsapp' },
         { label: 'Microsoft Teams', value: 'teams' },
         { label: 'Skip — set up later in dashboard', value: 'skip' },
@@ -316,6 +341,48 @@ export function PhaseContent({
           <Text>{phase.deepLinkQr}</Text>
           <CopyableLink url={phase.deepLinkUrl} hint="Or open this link:" />
           <Text dimColor>Waiting for /start in Telegram…</Text>
+        </Box>
+      );
+
+    case 'adding-sendblue':
+      return <Text color="cyan">Linking iMessage (Sendblue) to your agent…</Text>;
+
+    case 'sendblue-intro':
+      return <SendblueIntroContent dashboardUrl={phase.dashboardUrl} onContinue={phase.resolve} />;
+
+    case 'sendblue-credential':
+      return <SendblueCredentialContent phase={phase} />;
+
+    case 'configuring-sendblue-webhook':
+      return <Text color="cyan">Registering your Sendblue receive webhook…</Text>;
+
+    case 'sendblue-webhook-manual':
+      return (
+        <SendblueWebhookManualContent
+          callbackUrl={phase.callbackUrl}
+          webhookSecret={phase.webhookSecret}
+          onContinue={phase.resolve}
+        />
+      );
+
+    case 'sendblue-test-phone':
+      return <SendblueTestPhoneContent phase={phase} />;
+
+    case 'sending-sendblue-test':
+      return <Text color="cyan">Sending a test iMessage…</Text>;
+
+    case 'sendblue-test-waiting':
+      return (
+        <Box flexDirection="column" gap={1}>
+          <Text bold color="cyan">
+            Message your agent on iMessage
+          </Text>
+          <Text dimColor>
+            Text <Text color="white">{phase.fromNumber}</Text> from your phone to start chatting. On Sendblue's shared
+            lines you must message the number once before it can reply.
+          </Text>
+          <CopyableLink url={phase.imessageUrl} hint="Or open a pre-filled iMessage:" />
+          <Text dimColor>Waiting for your first inbound message…</Text>
         </Box>
       );
 
@@ -631,6 +698,130 @@ function TelegramIntroContent({
   );
 }
 
+function SendblueIntroContent({
+  dashboardUrl,
+  onContinue,
+}: {
+  dashboardUrl: string;
+  onContinue: () => void;
+}): React.ReactElement {
+  useInput((_input, key) => {
+    if (key.return || _input === ' ') {
+      onContinue();
+    }
+  });
+
+  return (
+    <Box flexDirection="column" gap={1}>
+      <Text bold color="cyan">
+        Connect iMessage with Sendblue
+      </Text>
+      <Text dimColor>
+        You'll need a Sendblue account. Open your Sendblue dashboard to grab your API Key, Secret Key, and assigned
+        phone number — we'll ask for them one at a time next.
+      </Text>
+      <CopyableLink url={dashboardUrl} hint="Sendblue API settings:" />
+      <Text dimColor>Press Enter to continue →</Text>
+    </Box>
+  );
+}
+
+function SendblueCredentialContent({
+  phase,
+}: {
+  phase: Extract<Phase, { kind: 'sendblue-credential' }>;
+}): React.ReactElement {
+  return (
+    <Box flexDirection="column" gap={1}>
+      <Text bold color="cyan">{`Step ${phase.step} of ${phase.total} · ${phase.title}`}</Text>
+      <Text dimColor>{phase.hint}</Text>
+      <CopyableLink url={phase.dashboardUrl} hint="Find it in your Sendblue dashboard:" />
+      {phase.verificationError ? <Text color="yellow">{phase.verificationError}</Text> : null}
+      <Box borderStyle="round" paddingX={1}>
+        {/* Keyed so each credential step remounts an empty input. */}
+        {phase.secret ? (
+          <PasswordInput
+            key={`${phase.field}-${phase.step}`}
+            placeholder={phase.placeholder}
+            onSubmit={(value) => phase.resolve(value)}
+          />
+        ) : (
+          <TextInput
+            key={`${phase.field}-${phase.step}`}
+            placeholder={phase.placeholder}
+            onSubmit={(value) => phase.resolve(value)}
+          />
+        )}
+      </Box>
+      <Text dimColor>Press Enter to submit.</Text>
+    </Box>
+  );
+}
+
+function SendblueWebhookManualContent({
+  callbackUrl,
+  webhookSecret,
+  onContinue,
+}: {
+  callbackUrl: string;
+  webhookSecret?: string;
+  onContinue: () => void;
+}): React.ReactElement {
+  useInput((_input, key) => {
+    if (key.return || _input === ' ') {
+      onContinue();
+    }
+  });
+
+  return (
+    <Box flexDirection="column" gap={1}>
+      <Text bold color="yellow">
+        Finish the webhook in Sendblue
+      </Text>
+      <Text dimColor>
+        We couldn't auto-register the webhook. In your Sendblue dashboard under API → Webhooks, add a `receive` webhook
+        with this URL and signing secret:
+      </Text>
+      <CopyableLink url={callbackUrl} hint="Callback URL:" />
+      {webhookSecret ? (
+        <Text>
+          <Text bold>Signing secret:</Text> {webhookSecret}
+        </Text>
+      ) : null}
+      <Text dimColor>Press Enter once you've saved it →</Text>
+    </Box>
+  );
+}
+
+function SendblueTestPhoneContent({
+  phase,
+}: {
+  phase: Extract<Phase, { kind: 'sendblue-test-phone' }>;
+}): React.ReactElement {
+  return (
+    <Box flexDirection="column" gap={1}>
+      <Text bold color="cyan">
+        Send a test message
+      </Text>
+      <Text dimColor>
+        Enter the phone number (E.164, e.g. +14155551234) to receive a test iMessage from{' '}
+        <Text color="white">{phase.fromNumber}</Text>.
+      </Text>
+      {phase.verificationError ? <Text color="yellow">{phase.verificationError}</Text> : null}
+      <Box borderStyle="round" paddingX={1}>
+        <TextInput
+          key={phase.defaultPhone ? `phone-${phase.defaultPhone}` : 'phone'}
+          defaultValue={phase.defaultPhone ?? ''}
+          placeholder="+14155551234"
+          onSubmit={(value) => phase.resolve(value)}
+        />
+      </Box>
+      <CopyableLink url={phase.imessageUrl} hint="Or text the bot directly via iMessage:" />
+      <Text dimColor>Press Enter to send the test message.</Text>
+    </Box>
+  );
+}
+
 function DashboardChannelReadyContent({
   channel,
   agentDetailsUrl,
@@ -675,6 +866,7 @@ function SuccessView({
     connectMode,
     chatSdkOutcome,
     aiSdkOutcome,
+    langChainOutcome,
   } = phase;
   const agentUrl = environmentSlug
     ? `${connectDashboardUrl}/env/${environmentSlug}/connect/agents/${encodeURIComponent(agent.identifier)}`
@@ -684,6 +876,7 @@ function SuccessView({
     if (connectedChannel === 'slack') return 'Slack';
     if (connectedChannel === 'telegram') return 'Telegram';
     if (connectedChannel === 'email') return 'Email';
+    if (connectedChannel === 'sendblue') return 'iMessage (Sendblue)';
 
     return null;
   })();
@@ -691,6 +884,7 @@ function SuccessView({
   const scaffoldMessage = resolveBridgeSetupFollowUpMessage(connectMode, {
     chatSdk: chatSdkOutcome,
     aiSdk: aiSdkOutcome,
+    langChain: langChainOutcome,
     customCode: phase.customCodeOutcome,
   });
 

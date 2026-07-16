@@ -25,6 +25,10 @@
       "twitter:card": "summary_large_image"
     }
   },
+  "thumbnails": {
+    "appearance": "dark",
+    "background": "/images/og/og-background.png"
+  },
   "interaction": {
     "drilldown": true
   },
@@ -34,7 +38,7 @@
     },
     "tabs": [
       {
-        "tab": "Platform",
+        "tab": "Notify",
         "groups": [
           {
             "group": "Getting Started",
@@ -188,9 +192,11 @@
                 "root": "platform/integrations/chat",
                 "pages": [
                   "platform/integrations/chat/discord",
+                  "platform/integrations/chat/line",
                   "platform/integrations/chat/mattermost",
                   "platform/integrations/chat/ms-teams",
                   "platform/integrations/chat/slack",
+                  "platform/integrations/chat/webex-messaging",
                   "platform/integrations/chat/telegram",
                   "platform/integrations/chat/whats-app",
                   "platform/integrations/chat/zulip"
@@ -402,7 +408,7 @@
         ]
       },
       {
-        "tab": "Agents",
+        "tab": "Agent Connect",
         "groups": [
           {
             "group": "Getting Started",
@@ -419,20 +425,27 @@
             "pages": [
               "agents/custom-code-agent/quickstart",
               "agents/custom-code-agent/concepts",
-              "agents/custom-code-agent/connect-your-first-agent",
+              "agents/custom-code-agent/connecting-your-app",
               {
-                "group": "Set up your Agent",
+                "group": "Frameworks",
                 "pages": [
-                  "agents/custom-code-agent/setup-your-agent/overview",
-                  "agents/custom-code-agent/setup-your-agent/create-an-agent",
-                  "agents/custom-code-agent/setup-your-agent/scaffold-your-project",
-                  "agents/custom-code-agent/setup-your-agent/handle-events",
-                  "agents/custom-code-agent/setup-your-agent/reply",
-                  "agents/custom-code-agent/setup-your-agent/edit-sent-messages",
-                  "agents/custom-code-agent/setup-your-agent/signals",
-                  "agents/custom-code-agent/setup-your-agent/connect-components"
+                  "agents/custom-code-agent/frameworks/ai-sdk",
+                  "agents/custom-code-agent/frameworks/langchain",
+                  "agents/custom-code-agent/frameworks/other"
                 ]
               },
+              {
+                "group": "Building blocks",
+                "pages": [
+                  "agents/custom-code-agent/building-blocks/handle-events",
+                  "agents/custom-code-agent/building-blocks/reply",
+                  "agents/custom-code-agent/building-blocks/typing-indicator",
+                  "agents/custom-code-agent/building-blocks/edit-sent-messages",
+                  "agents/custom-code-agent/building-blocks/signals",
+                  "agents/custom-code-agent/building-blocks/tool-approval"
+                ]
+              },
+              "agents/custom-code-agent/connect-components",
               "agents/custom-code-agent/going-to-production"
             ],
             "icon": "code"
@@ -529,10 +542,7 @@
               {
                 "group": "Runtime",
                 "expanded": false,
-                "pages": [
-                  "api-reference/agents/update-an-agent-bridge",
-                  "api-reference/agents/send-an-agent-reply"
-                ]
+                "pages": ["api-reference/agents/update-an-agent-bridge", "api-reference/agents/send-an-agent-reply"]
               },
               {
                 "group": "Integrations",
@@ -898,6 +908,7 @@
                       "framework/quickstart/svelte",
                       "framework/quickstart/nuxt",
                       "framework/quickstart/h3",
+                      "framework/quickstart/hono",
                       "framework/quickstart/lambda"
                     ]
                   }
@@ -1108,11 +1119,6 @@
     }
   },
   "redirects": [
-    {
-      "source": "/",
-      "destination": "/platform",
-      "permanent": true
-    },
     {
       "source": "/content-creation-design/handlebars-helpers",
       "destination": "/platform/templates/handlebars-helpers",
@@ -1550,7 +1556,72 @@
     },
     {
       "source": "/agents/custom-code-agent/build-your-first-agent",
-      "destination": "/agents/custom-code-agent/connect-your-first-agent",
+      "destination": "/agents/custom-code-agent/frameworks/ai-sdk",
+      "permanent": true
+    },
+    {
+      "source": "/agents/custom-code-agent/connect-your-first-agent",
+      "destination": "/agents/custom-code-agent/frameworks/ai-sdk",
+      "permanent": true
+    },
+    {
+      "source": "/agents/custom-code-agent/frameworks/overview",
+      "destination": "/agents/custom-code-agent/frameworks/ai-sdk",
+      "permanent": true
+    },
+    {
+      "source": "/agents/custom-code-agent/connect-your-first-agent/ai-sdk",
+      "destination": "/agents/custom-code-agent/frameworks/ai-sdk",
+      "permanent": true
+    },
+    {
+      "source": "/agents/custom-code-agent/connect-your-first-agent/your-own-code",
+      "destination": "/agents/custom-code-agent/frameworks/other",
+      "permanent": true
+    },
+    {
+      "source": "/agents/custom-code-agent/frameworks/your-own-code",
+      "destination": "/agents/custom-code-agent/frameworks/other",
+      "permanent": true
+    },
+    {
+      "source": "/agents/custom-code-agent/setup-your-agent/overview",
+      "destination": "/agents/custom-code-agent/quickstart",
+      "permanent": true
+    },
+    {
+      "source": "/agents/custom-code-agent/setup-your-agent/create-an-agent",
+      "destination": "/agents/custom-code-agent/quickstart",
+      "permanent": true
+    },
+    {
+      "source": "/agents/custom-code-agent/setup-your-agent/scaffold-your-project",
+      "destination": "/agents/custom-code-agent/quickstart",
+      "permanent": true
+    },
+    {
+      "source": "/agents/custom-code-agent/setup-your-agent/handle-events",
+      "destination": "/agents/custom-code-agent/building-blocks/handle-events",
+      "permanent": true
+    },
+    {
+      "source": "/agents/custom-code-agent/setup-your-agent/reply",
+      "destination": "/agents/custom-code-agent/building-blocks/reply",
+      "permanent": true
+    },
+    {
+      "source": "/agents/custom-code-agent/setup-your-agent/edit-sent-messages",
+      "destination": "/agents/custom-code-agent/building-blocks/edit-sent-messages",
+      "permanent": true
+    },
+    {
+      "source": "/agents/custom-code-agent/setup-your-agent/signals",
+      "destination": "/agents/custom-code-agent/building-blocks/signals",
+      "permanent": true
+    },
+    {
+      "source": "/agents/custom-code-agent/setup-your-agent/connect-components",
+      "destination": "/agents/custom-code-agent/connect-components",
       "permanent": true
     }
   ]

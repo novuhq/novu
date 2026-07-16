@@ -1,5 +1,6 @@
 import { ChatProviderIdEnum, EmailProviderIdEnum } from '@novu/shared';
 import { EmailSetupGuide } from './email-setup-guide';
+import { SendblueSetupGuide } from './sendblue-setup-guide';
 import { SlackSetupGuide } from './slack-setup-guide';
 import { TeamsSetupGuide } from './teams-setup-guide';
 import { TelegramSetupGuide } from './telegram-setup-guide';
@@ -15,6 +16,8 @@ export function resolveProviderSetupGuide(providerId: string) {
       return WhatsAppSetupGuide;
     case ChatProviderIdEnum.Telegram:
       return TelegramSetupGuide;
+    case ChatProviderIdEnum.Sendblue:
+      return SendblueSetupGuide;
     case EmailProviderIdEnum.NovuAgent:
       return EmailSetupGuide;
     default:

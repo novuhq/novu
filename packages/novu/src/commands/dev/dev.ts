@@ -94,9 +94,7 @@ const TUNNEL_SOCKET_OPTIONS = {
 function installTunnelCrashGuard() {
   process.on('uncaughtException', (error: Error) => {
     const text = `${error?.message ?? ''}\n${error?.stack ?? ''}`;
-    const isSocketError = /WebSocket|partysocket|ws\/lib|ECONNRESET|ECONNREFUSED|EPIPE|ETIMEDOUT|ENOTFOUND/i.test(
-      text
-    );
+    const isSocketError = /WebSocket|partysocket|ws\/lib|ECONNRESET|ECONNREFUSED|EPIPE|ETIMEDOUT|ENOTFOUND/i.test(text);
 
     if (isSocketError && !shuttingDown) {
       console.log(chalk.yellow('\n  ⚠ Tunnel connection hiccup — reconnecting…'));
@@ -136,19 +134,21 @@ export async function devCommand(options: DevCommandOptions, anonymousId?: strin
 
   await monitorEndpointHealth(parsedOptions, NOVU_ENDPOINT_PATH);
 
-  // The legacy local studio is gone: local development happens in the cloud
-  // dashboard's "Local" environment mode, connected through the tunnel.
-  const handshakeUrl = buildDashboardHandshakeUrl(
-    parsedOptions.dashboardUrl,
-    tunnelOrigin,
-    NOVU_ENDPOINT_PATH,
-    anonymousId
-  );
-  const dashboardSpinner = ora('Opening dashboard').start();
-  dashboardSpinner.succeed(`🖥️  Dashboard → ${handshakeUrl}`);
+  // Dashboard Local environment replaces the legacy local studio. --no-studio
+  // skips opening it (used by connect/init agent flows that only need tunnel + sync).
+  if (parsedOptions.studio !== false) {
+    const handshakeUrl = buildDashboardHandshakeUrl(
+      parsedOptions.dashboardUrl,
+      tunnelOrigin,
+      NOVU_ENDPOINT_PATH,
+      anonymousId
+    );
+    const dashboardSpinner = ora('Opening dashboard').start();
+    dashboardSpinner.succeed(`🖥️  Dashboard → ${handshakeUrl}`);
 
-  if (process.env.NODE_ENV !== 'dev' && parsedOptions.headless === false) {
-    await open(handshakeUrl);
+    if (process.env.NODE_ENV !== 'dev' && parsedOptions.headless === false) {
+      await open(handshakeUrl);
+    }
   }
 
   if (!parsedOptions.tunnel) {
@@ -184,7 +184,6 @@ function warnAboutDeprecatedStudioOptions(options: DevCommandOptions) {
 
   if (options.studioPort && options.studioPort !== '2022') usedDeprecated.push('--studio-port');
   if (options.studioHost && options.studioHost !== 'localhost') usedDeprecated.push('--studio-host');
-  if (options.studio === false) usedDeprecated.push('--no-studio');
 
   if (usedDeprecated.length > 0) {
     console.log(

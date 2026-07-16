@@ -23,8 +23,8 @@ import { SidebarContent } from '@/components/side-navigation/sidebar';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useLocalMode } from '@/context/local-mode';
 import { useAreConversationalAgentsAvailable } from '@/hooks/use-are-conversational-agents-available';
-import { useHasPermission } from '@/hooks/use-has-permission';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { useHasPermission } from '@/hooks/use-has-permission';
 import { Protect } from '@/utils/protect';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { IS_SELF_HOSTED, IS_SELF_HOSTED_CE } from '../../config';
@@ -354,9 +354,7 @@ export const LegacySideNavigation = () => {
                 </NavigationLink>
               </NavigationGroup>
             </Protect>
-            <Protect
-              condition={(has) => has({ permission: PermissionsEnum.INTEGRATION_READ }) || !IS_SELF_HOSTED_CE}
-            >
+            <Protect condition={(has) => has({ permission: PermissionsEnum.INTEGRATION_READ }) || !IS_SELF_HOSTED_CE}>
               <NavigationGroup label="Platform">
                 <Protect permission={PermissionsEnum.INTEGRATION_READ}>
                   <NavigationLink

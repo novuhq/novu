@@ -24,16 +24,24 @@ import type {
   ChatSdkConnectOutcome,
   ConnectCommandOptions,
   CustomCodeConnectOutcome,
+  LangChainConnectOutcome,
 } from '../types';
-import { isAiSdkConnectMode, isBridgeConnectMode, isVanillaCustomCodeConnectMode } from '../types';
+import {
+  isAiSdkConnectMode,
+  isBridgeConnectMode,
+  isLangChainConnectMode,
+  isVanillaCustomCodeConnectMode,
+} from '../types';
 import type { ConnectUI } from '../ui/ui';
 import { maybeRunAiSdkTunnel, runAiSdkProjectSetup } from './ai-sdk';
 import { createBridgeAgentFlow } from './bridge/create-bridge-agent';
 import { connectEmailForAgent } from './channels/email';
+import { connectSendblueForAgent } from './channels/sendblue';
 import { connectSlackForAgent } from './channels/slack';
 import { connectTelegramForAgent } from './channels/telegram';
 import { maybeRunChatSdkTunnel, runChatSdkProjectSetup } from './chat-sdk';
 import { runCustomCodeProjectSetup } from './custom-code';
+import { maybeRunLangChainTunnel, runLangChainProjectSetup } from './langchain';
 import { resolveAgentRuntimeIntegration, resolveRuntimeFromOptions } from './resolve-agent-runtime-integration';
 
 export interface ConnectPipelineInput {
@@ -141,6 +149,7 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
     let flow: 'created' | 'reused';
     let chatSdkOutcome: ChatSdkConnectOutcome | undefined;
     let aiSdkOutcome: AiSdkConnectOutcome | undefined;
+    let langChainOutcome: LangChainConnectOutcome | undefined;
     let customCodeOutcome: CustomCodeConnectOutcome | undefined;
 
     if (isBridgeConnectMode(connectMode)) {
@@ -273,6 +282,22 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
             if (channelConnected) connectedChannel = 'email';
             break;
           }
+          case 'sendblue': {
+            const subscriberId = await ensureSubscriberForUser(session.client, session.auth);
+            const result = await connectSendblueForAgent(
+              session.client,
+              agent,
+              ui,
+              options,
+              session.auth.environmentId,
+              subscriberId,
+              track
+            );
+            connectedIntegration = result.integration;
+            channelConnected = result.connected;
+            if (channelConnected) connectedChannel = 'sendblue';
+            break;
+          }
           case 'whatsapp':
           case 'teams': {
             const agentDetailsUrl = buildConnectAgentDetailsUrl({
@@ -309,7 +334,9 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
 
     let claimToken: string | null = null;
 
-    if (channelConnected && connectedIntegration) {
+    // Sendblue's test message doubles as the welcome, so we skip the separate
+    // welcome-message call (which would send a second text).
+    if (channelConnected && connectedIntegration && connectedChannel !== 'sendblue') {
       ui.sendingWelcome();
       try {
         const welcome = await sendAgentWelcomeMessage(
@@ -349,6 +376,13 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
         auth: session.auth,
         agent,
       });
+    } else if (isLangChainConnectMode(connectMode)) {
+      langChainOutcome = await runLangChainProjectSetup({
+        options,
+        ui,
+        auth: session.auth,
+        agent,
+      });
     } else if (isVanillaCustomCodeConnectMode(connectMode)) {
       customCodeOutcome = await runCustomCodeProjectSetup({
         options,
@@ -370,6 +404,7 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
       connectMode,
       chatSdkOutcome,
       aiSdkOutcome,
+      langChainOutcome,
       customCodeOutcome,
     });
 
@@ -392,6 +427,10 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
     }
 
     if (await maybeRunAiSdkTunnel({ outcome: aiSdkOutcome, ci: options.ci })) {
+      return { exitCode: 0 };
+    }
+
+    if (await maybeRunLangChainTunnel({ outcome: langChainOutcome, ci: options.ci })) {
       return { exitCode: 0 };
     }
 

@@ -1,6 +1,6 @@
 ---
 title: 'Introduction'
-description: 'Learn what a Subscription is in Novu, how they fit into the notification system.'
+description: "Learn what a Subscription is in Novu, how it stores subscriber preferences, and how it fits into the notification delivery and consent system."
 ---
 
 Subscriptions introduce topic-level settings that allow subscribers to decide exactly which notifications they want to receive or mute.
@@ -20,6 +20,8 @@ This filtering happens for every event on a topic, which allows you to support m
 
 <Note>
   Workflow and global settings control delivery and take precedence. If a subscriber has disabled email notifications globally, then they won't receive email notifications for a subscription, even if the subscription condition is met.
+
+  Subscribers filtered out by subscription [Context](/platform/concepts/contexts) or JSON Logic conditions do not create a workflow run and are not counted toward usage. See [Billing and workflow runs](/platform/subscription/manage-topic-subscriptions#billing-and-workflow-runs).
 </Note>
 
 ## Core concepts

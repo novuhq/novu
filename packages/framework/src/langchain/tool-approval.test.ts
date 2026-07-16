@@ -24,9 +24,11 @@ function wrapLikeLangGraph(inner: Error): Error {
 
 function fakeRuntimeCtx(history: AgentHistoryEntry[] = []) {
   const reply = vi.fn().mockResolvedValue({ messageId: 'm', platformThreadId: 'p' });
+  const replyApprovalCard = vi.fn().mockResolvedValue({ messageId: 'm', platformThreadId: 'p' });
   const ctx = {
     [RUNTIME_CONTEXT_BRAND]: true as const,
     reply,
+    replyApprovalCard,
     history,
     emitToolResult: vi.fn(),
     emitToolApprovalRequest: vi.fn(),
@@ -35,6 +37,7 @@ function fakeRuntimeCtx(history: AgentHistoryEntry[] = []) {
 
   return ctx as unknown as AgentRuntimeContext & {
     reply: ReturnType<typeof vi.fn>;
+    replyApprovalCard: ReturnType<typeof vi.fn>;
     emitToolResult: ReturnType<typeof vi.fn>;
     emitToolApprovalRequest: ReturnType<typeof vi.fn>;
   };
@@ -208,7 +211,8 @@ describe('tool-approval', () => {
         name: 'issueRefund',
         input: { amount: 300 },
       });
-      expect(ctx.reply).toHaveBeenCalledTimes(1);
+      expect(ctx.replyApprovalCard).toHaveBeenCalledTimes(1);
+      expect(ctx.reply).not.toHaveBeenCalled();
     });
   });
 });
