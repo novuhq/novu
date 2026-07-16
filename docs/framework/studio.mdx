@@ -92,6 +92,112 @@ await novu.trigger({
 });
 ```
   </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="workflow_identifier",
+        to={"subscriber_id": "subscriber-id"},
+        payload={},
+        # Full tunnel URL printed by `npx novu@latest dev`
+        bridge_url=os.getenv("NOVU_BRIDGE_URL"),
+    ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+// Full tunnel URL printed by `npx novu@latest dev`
+bridgeURL := os.Getenv("NOVU_BRIDGE_URL")
+
+res, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "workflow_identifier",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: "subscriber-id",
+    }),
+    BridgeURL: &bridgeURL,
+}, nil)
+if err != nil {
+    panic(err)
+}
+_ = res
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()
+    ->setSecurity(getenv('NOVU_SECRET_KEY'))
+    ->build();
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'workflow_identifier',
+        to: new Components\SubscriberPayloadDto(subscriberId: 'subscriber-id'),
+        payload: [],
+        // Full tunnel URL printed by `npx novu@latest dev`
+        bridgeUrl: getenv('NOVU_BRIDGE_URL'),
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+
+var sdk = new NovuSDK(secretKey: Environment.GetEnvironmentVariable("NOVU_SECRET_KEY"));
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "workflow_identifier",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() {
+        SubscriberId = "subscriber-id",
+    }),
+    Payload = new Dictionary<string, object>() {},
+    // Full tunnel URL printed by `npx novu@latest dev`
+    BridgeUrl = Environment.GetEnvironmentVariable("NOVU_BRIDGE_URL"),
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+import java.util.Map;
+
+Novu novu = Novu.builder()
+    .secretKey(System.getenv("NOVU_SECRET_KEY"))
+    .build();
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("workflow_identifier")
+        .to(To2.of(SubscriberPayloadDto.builder()
+            .subscriberId("subscriber-id")
+            .build()))
+        .payload(Map.of())
+        // Full tunnel URL printed by `npx novu@latest dev`
+        .bridgeUrl(System.getenv("NOVU_BRIDGE_URL"))
+        .build())
+    .call();
+```
+  </Tab>
   <Tab title="cURL">
 ```bash
 curl -X POST https://api.novu.co/v1/events/trigger \
