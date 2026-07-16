@@ -82,6 +82,23 @@ channelEndpointSchema.index(
   }
 );
 
+/*
+ * Enforces one PagerDuty endpoint per (env, subscriber, integration). PagerDuty
+ * routing is 1:1 with a subscriber's target service; a duplicate would silently
+ * fan out to two incidents per trigger. Partial index keeps other endpoint types
+ * (Slack, Telegram, phone, …) free to repeat these tuples.
+ */
+channelEndpointSchema.index(
+  { _environmentId: 1, subscriberId: 1, integrationIdentifier: 1, type: 1 },
+  {
+    name: 'unique_pagerduty_service_per_subscriber_integration',
+    unique: true,
+    partialFilterExpression: {
+      type: ENDPOINT_TYPES.PAGERDUTY_SERVICE,
+    },
+  }
+);
+
 export const ChannelEndpoint =
   (mongoose.models.ChannelEndpoint as mongoose.Model<ChannelEndpointDBModel>) ||
   mongoose.model<ChannelEndpointDBModel>('ChannelEndpoint', channelEndpointSchema);

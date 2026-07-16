@@ -8,7 +8,8 @@ export type ChannelData =
   | TelegramChatData
   | WebexRoomData
   | WebexPersonData
-  | LineUserData;
+  | LineUserData
+  | PagerDutyServiceData;
 
 export const ENDPOINT_TYPES = {
   SLACK_CHANNEL: 'slack_channel',
@@ -21,6 +22,7 @@ export const ENDPOINT_TYPES = {
   WEBEX_ROOM: 'webex_room',
   WEBEX_PERSON: 'webex_person',
   LINE_USER: 'line_user',
+  PAGERDUTY_SERVICE: 'pagerduty_service',
 } as const;
 
 export type ChannelEndpointType = (typeof ENDPOINT_TYPES)[keyof typeof ENDPOINT_TYPES];
@@ -36,6 +38,7 @@ export type ChannelEndpointByType = {
   [ENDPOINT_TYPES.WEBEX_ROOM]: { roomId: string; parentId?: string };
   [ENDPOINT_TYPES.WEBEX_PERSON]: { personId: string; personEmail?: never } | { personId?: never; personEmail: string };
   [ENDPOINT_TYPES.LINE_USER]: { userId: string };
+  [ENDPOINT_TYPES.PAGERDUTY_SERVICE]: Record<string, never>;
 };
 
 export type SlackChannelData = {
@@ -107,6 +110,21 @@ export type MsTeamsUserData = {
   clientId: string;
 };
 
+export type PagerDutyRegion = 'us' | 'eu';
+
+/**
+ * Per-subscriber PagerDuty routing resolved at send time from an encrypted
+ * `ChannelConnection.auth`. Carries the Events API v2 integration key and its
+ * region; the endpoint document itself is empty (see `ChannelEndpointByType`).
+ */
+export type PagerDutyServiceData = {
+  type: typeof ENDPOINT_TYPES.PAGERDUTY_SERVICE;
+  endpoint: ChannelEndpointByType[typeof ENDPOINT_TYPES.PAGERDUTY_SERVICE];
+  identifier: string;
+  routingKey: string;
+  region: PagerDutyRegion;
+};
+
 export function isChannelDataOfType<T extends ChannelData['type']>(
   data: ChannelData,
   type: T
@@ -121,4 +139,5 @@ export const ENDPOINT_TYPES_REQUIRING_TOKEN = [
   ENDPOINT_TYPES.MS_TEAMS_USER,
   ENDPOINT_TYPES.WEBEX_ROOM,
   ENDPOINT_TYPES.WEBEX_PERSON,
+  ENDPOINT_TYPES.PAGERDUTY_SERVICE,
 ] as const;

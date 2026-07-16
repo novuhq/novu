@@ -72,4 +72,17 @@ describe('encryptChannelConnectionAuth / decryptChannelConnectionAuth', () => {
     const encrypted = encryptChannelConnectionAuth({ accessToken: '' });
     expect(encrypted!.accessToken).toEqual('');
   });
+
+  it('encrypts PagerDuty routingKey and preserves region as plaintext', () => {
+    const routingKey = 'R0UTINGK3YEXAMPLE0000000000000000';
+    const encrypted = encryptChannelConnectionAuth({ routingKey, region: 'eu' });
+
+    expect((encrypted!.routingKey as string).startsWith(novuSubMask)).toBe(true);
+    expect(encrypted!.routingKey).not.toEqual(routingKey);
+    expect(encrypted!.region).toEqual('eu');
+
+    const decrypted = decryptChannelConnectionAuth(encrypted);
+    expect(decrypted!.routingKey).toEqual(routingKey);
+    expect(decrypted!.region).toEqual('eu');
+  });
 });

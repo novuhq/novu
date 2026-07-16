@@ -7,7 +7,7 @@ import { decryptApiKey, encryptApiKey } from './encrypt-provider';
  * same helper. Unknown keys, such as token expiry timestamps, are passed through
  * unchanged.
  */
-const SECURE_AUTH_FIELDS = ['accessToken', 'refreshToken', 'signingSecret', 'clientSecret'] as const;
+const SECURE_AUTH_FIELDS = ['accessToken', 'refreshToken', 'signingSecret', 'clientSecret', 'routingKey'] as const;
 
 export interface ChannelConnectionAuth {
   accessToken?: string;
@@ -16,6 +16,15 @@ export interface ChannelConnectionAuth {
   refreshTokenExpiresAt?: string;
   signingSecret?: string;
   clientSecret?: string;
+  /**
+   * PagerDuty Events API v2 integration key. 32-character alphanumeric string. Encrypted at rest.
+   */
+  routingKey?: string;
+  /**
+   * PagerDuty account region ('us' | 'eu'). Non-secret; travels with the routing key so
+   * we route to the correct data-center endpoint (`events.pagerduty.com` vs `events.eu.pagerduty.com`).
+   */
+  region?: 'us' | 'eu';
   [key: string]: unknown;
 }
 

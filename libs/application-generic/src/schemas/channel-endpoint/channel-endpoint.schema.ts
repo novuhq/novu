@@ -104,6 +104,17 @@ export const CHANNEL_ENDPOINT_SCHEMAS = {
     validate: (endpoint: Record<string, unknown>) =>
       typeof endpoint.userId === 'string' && Object.keys(endpoint).length === 1,
   },
+  /*
+   * PagerDuty routing lives on the linked `ChannelConnection.auth` (encrypted
+   * `routingKey` + `region`); the endpoint document itself carries no fields.
+   * Accept only an empty object here to keep the discriminator honest.
+   */
+  [ENDPOINT_TYPES.PAGERDUTY_SERVICE]: {
+    description: 'PagerDuty Service Endpoint',
+    properties: {},
+    required: [],
+    validate: (endpoint: Record<string, unknown>) => Object.keys(endpoint).length === 0,
+  },
 } as const;
 
 // Generate API property examples automatically
