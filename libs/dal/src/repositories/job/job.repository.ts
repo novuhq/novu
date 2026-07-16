@@ -128,7 +128,11 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
           type: StepTypeEnum.DIGEST,
           _environmentId: environmentId,
           _subscriberId: subscriberId,
-          'digest.digestValue': digestValue,
+          // Payload-dedup jobs persist `digest.digestValue`; legacy digest jobs
+          // (created before it was persisted) still carry the trigger payload,
+          // so fall back to matching the value inside it. Without this, legacy
+          // events queued before deployment would be dropped from the window.
+          $or: [{ 'digest.digestValue': digestValue }, { [`payload.${digestKey}`]: digestValue }],
         },
         'transactionId'
       );
