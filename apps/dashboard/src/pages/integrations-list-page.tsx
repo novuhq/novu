@@ -1,25 +1,27 @@
 import { PermissionsEnum } from '@novu/shared';
-import { useCallback } from 'react';
+import { useCallback, useRef, useState } from 'react';
+import { RiSearchLine } from 'react-icons/ri';
 import { Outlet, useNavigate } from 'react-router-dom';
+import { Input } from '@/components/primitives/input';
 import { PermissionButton } from '@/components/primitives/permission-button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { DashboardLayout } from '../components/dashboard-layout';
 import { IntegrationsList } from '../components/integrations/components/integrations-list';
 import { TableIntegration } from '../components/integrations/types';
-import { Badge } from '../components/primitives/badge';
 
 export function IntegrationsListPage() {
   const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState('');
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const onItemClick = (item: TableIntegration) => {
     navigate(buildRoute(ROUTES.INTEGRATIONS_UPDATE, { integrationId: item.integrationId }));
   };
 
-  const onAddIntegrationClickCallback = useCallback(() => {
-    navigate(ROUTES.INTEGRATIONS_CONNECT);
-  }, [navigate]);
+  const onConnectProviderClick = useCallback(() => {
+    searchInputRef.current?.focus();
+  }, []);
 
   return (
     <DashboardLayout
@@ -41,14 +43,24 @@ export function IntegrationsListPage() {
             size="xs"
             variant="primary"
             mode="gradient"
-            onClick={onAddIntegrationClickCallback}
+            onClick={onConnectProviderClick}
             className="mr-2.5"
           >
             Connect Provider
           </PermissionButton>
         </div>
         <TabsContent value="providers" className="mt-0! p-2.5">
-          <IntegrationsList onItemClick={onItemClick} />
+          <div className="mb-4 max-w-sm">
+            <Input
+              ref={searchInputRef}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search providers across channels..."
+              leadingIcon={RiSearchLine}
+              size="xs"
+            />
+          </div>
+          <IntegrationsList onItemClick={onItemClick} searchQuery={searchQuery} />
         </TabsContent>
       </Tabs>
       <Outlet />
