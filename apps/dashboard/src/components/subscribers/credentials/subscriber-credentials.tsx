@@ -72,9 +72,10 @@ export function SubscriberCredentials({
   const isToolChannelEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TOOL_CHANNEL_ENABLED);
   const { data: subscriber, isPending: isSubscriberPending } = useFetchSubscriber({ subscriberId });
   const { integrations, isPending: isIntegrationsPending } = useFetchIntegrations();
-  // Fetch all subscriber endpoints (chat + tool); groups filter by channel client-side.
+  // When Tool is enabled, fetch all channels and partition client-side; otherwise keep the chat-only query.
   const { channelEndpoints, isPending: isEndpointsPending } = useFetchChannelEndpoints({
     subscriberId,
+    channel: isToolChannelEnabled ? undefined : ChannelTypeEnum.CHAT,
   });
   const { channelConnections, isPending: isConnectionsPending } = useFetchChannelConnections({
     channel: ChannelTypeEnum.CHAT,
@@ -286,9 +287,7 @@ export function SubscriberCredentials({
           <div className="flex flex-col items-center justify-center gap-1 py-10 text-center">
             <span className="text-label-sm text-text-strong">No credentials</span>
             <span className="text-label-xs text-text-soft">
-              {isToolChannelEnabled
-                ? 'Connect a push, chat, email, SMS or tool integration to manage subscriber credentials.'
-                : 'Connect a push, chat, email or SMS integration to manage subscriber credentials.'}
+              {`Connect a push, chat, email or SMS${isToolChannelEnabled ? ', or tool' : ''} integration to manage subscriber credentials.`}
             </span>
           </div>
         )}
