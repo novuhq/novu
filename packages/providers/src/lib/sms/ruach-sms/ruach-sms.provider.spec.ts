@@ -78,6 +78,21 @@ describe('RuachSmsProvider', () => {
     expect(result.id).toEqual('string-code-id');
   });
 
+  it('should strip the leading "+" from E.164 phone numbers', async () => {
+    vi.mocked(axios.post).mockResolvedValue(mockSuccessResponse);
+
+    await provider.sendMessage({
+      to: '+2341234567890',
+      content: 'Hello',
+    });
+
+    expect(axios.post).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ MobileNumbers: '2341234567890' }),
+      expect.any(Object)
+    );
+  });
+
   it('should use the from field passed in the options over the config', async () => {
     vi.mocked(axios.post).mockResolvedValue(mockSuccessResponse);
 

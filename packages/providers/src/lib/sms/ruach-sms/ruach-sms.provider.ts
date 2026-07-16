@@ -27,7 +27,7 @@ export class RuachSmsProvider extends BaseProvider implements ISmsProvider {
     const payload = this.transform(bridgeProviderData, {
       SenderId: options.from || this.config.from,
       Message: options.content,
-      MobileNumbers: options.to,
+      MobileNumbers: options.to.replace(/^\+/, ''),
       ApiKey: this.config.apiKey,
       ClientId: this.config.clientId,
       Is_Unicode: false,
