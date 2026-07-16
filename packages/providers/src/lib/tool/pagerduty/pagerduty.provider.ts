@@ -1,10 +1,18 @@
 import { ToolProviderIdEnum } from '@novu/shared';
 import { safeOutboundJsonRequest } from '@novu/shared/utils/safe-outbound-http';
-import { ChannelTypeEnum, ISendMessageSuccessResponse, IToolOptions, IToolProvider } from '@novu/stateless';
+import {
+  ChannelTypeEnum,
+  ENDPOINT_TYPES,
+  ISendMessageSuccessResponse,
+  IToolOptions,
+  IToolProvider,
+  isChannelDataOfType,
+  PagerDutyRegion,
+} from '@novu/stateless';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
-export type PagerDutyRegion = 'us' | 'eu';
+export type { PagerDutyRegion };
 type PagerDutyEventAction = 'trigger' | 'acknowledge' | 'resolve';
 type PagerDutySeverity = 'critical' | 'error' | 'warning' | 'info';
 
@@ -36,19 +44,12 @@ export class PagerDutyProvider extends BaseProvider implements IToolProvider {
   readonly id = ToolProviderIdEnum.PagerDuty;
   channelType = ChannelTypeEnum.TOOL as ChannelTypeEnum.TOOL;
 
-  constructor(
-    private config: {
-      routingKey: string;
-      region: PagerDutyRegion;
-    }
-  ) {
-    super();
-  }
-
   async sendMessage(
     options: IToolOptions,
     bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
+    const { routingKey, region } = this.resolveRouting(options);
+
     const data = this.transform(bridgeProviderData, {
       content: options.content,
       ...(options.customData || {}),
@@ -61,11 +62,11 @@ export class PagerDutyProvider extends BaseProvider implements IToolProvider {
     const severity = this.resolveSeverity(overrides.severity);
     const source = (overrides.source as string) || DEFAULT_SOURCE;
     const summary = this.truncateSummary((overrides.summary as string) || content);
-    const dedupKey = overrides.dedup_key as string | undefined;
+    const dedupKey = this.resolveDedupKey(overrides.dedup_key, options);
     const customDetails = this.extractCustomDetails(overrides);
 
     const payload = {
-      routing_key: this.config.routingKey,
+      routing_key: routingKey,
       event_action: eventAction,
       ...(dedupKey ? { dedup_key: dedupKey } : {}),
       payload: {
@@ -78,7 +79,7 @@ export class PagerDutyProvider extends BaseProvider implements IToolProvider {
 
     // PagerDuty Events API v2 authenticates via routing_key in the body — passthrough headers are not used.
     const response = await safeOutboundJsonRequest<{ dedup_key?: string; message?: string; status?: string }>({
-      url: PAGERDUTY_ENDPOINTS[this.config.region],
+      url: PAGERDUTY_ENDPOINTS[region],
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -90,6 +91,46 @@ export class PagerDutyProvider extends BaseProvider implements IToolProvider {
       id: response.body?.dedup_key,
       date: new Date().toDateString(),
     };
+  }
+
+  /**
+   * PagerDuty is routed per subscriber — the routing key + region live on the
+   * resolved `channelData`. The provider is stateless and refuses to send
+   * without them so a missing endpoint fails loudly at the send seam rather
+   * than sending to a wrong or empty destination.
+   */
+  private resolveRouting(options: IToolOptions): { routingKey: string; region: PagerDutyRegion } {
+    const { channelData } = options;
+
+    if (!channelData || !isChannelDataOfType(channelData, ENDPOINT_TYPES.PAGERDUTY_SERVICE)) {
+      throw new Error('PagerDutyProvider requires channelData of type "pagerduty_service" with routingKey and region');
+    }
+
+    if (!channelData.routingKey || !channelData.region) {
+      throw new Error('PagerDutyProvider channelData is missing routingKey or region');
+    }
+
+    return { routingKey: channelData.routingKey, region: channelData.region };
+  }
+
+  /**
+   * Deterministic default: `novu:<transactionId>:<subscriberId>:<stepId>`.
+   * Stable across worker retries of the same job (idempotent trigger), unique
+   * per trigger event so distinct alerts stay distinct. Author-supplied
+   * `customData.dedup_key` always wins. Falls back to omitting the field when
+   * IDs are missing, letting PagerDuty generate one.
+   */
+  private resolveDedupKey(override: unknown, options: IToolOptions): string | undefined {
+    if (typeof override === 'string' && override.length > 0) {
+      return override;
+    }
+
+    const { transactionId, subscriberId, stepId } = options;
+    if (transactionId && subscriberId && stepId) {
+      return `novu:${transactionId}:${subscriberId}:${stepId}`;
+    }
+
+    return undefined;
   }
 
   private resolveEventAction(value: unknown): PagerDutyEventAction {

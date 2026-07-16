@@ -1,4 +1,5 @@
 import * as safeOutboundHttp from '@novu/shared/utils/safe-outbound-http';
+import { ENDPOINT_TYPES, PagerDutyServiceData } from '@novu/stateless';
 import { expect, test, vi } from 'vitest';
 import { PagerDutyProvider } from './pagerduty.provider';
 
@@ -9,16 +10,21 @@ const mockResponse = (dedupKey = 'dedup-1') => ({
   body: { dedup_key: dedupKey, status: 'success', message: 'Event processed' },
 });
 
+const channelData = (routingKey: string, region: 'us' | 'eu' = 'us'): PagerDutyServiceData => ({
+  type: ENDPOINT_TYPES.PAGERDUTY_SERVICE,
+  identifier: 'pd-endpoint-1',
+  endpoint: {},
+  routingKey,
+  region,
+});
+
 test('enqueues a trigger event with defaults on the US endpoint', async () => {
   const safeOutboundSpy = vi.spyOn(safeOutboundHttp, 'safeOutboundJsonRequest').mockResolvedValue(mockResponse());
 
-  const provider = new PagerDutyProvider({
-    routingKey: 'a'.repeat(32),
-    region: 'us',
-  });
-
+  const provider = new PagerDutyProvider();
   const result = await provider.sendMessage({
     content: 'Disk usage above threshold',
+    channelData: channelData('a'.repeat(32)),
   });
 
   expect(safeOutboundSpy).toHaveBeenCalledWith({
@@ -45,12 +51,8 @@ test('enqueues a trigger event with defaults on the US endpoint', async () => {
 test('uses EU endpoint when region is eu', async () => {
   const safeOutboundSpy = vi.spyOn(safeOutboundHttp, 'safeOutboundJsonRequest').mockResolvedValue(mockResponse());
 
-  const provider = new PagerDutyProvider({
-    routingKey: 'k'.repeat(32),
-    region: 'eu',
-  });
-
-  await provider.sendMessage({ content: 'ping' });
+  const provider = new PagerDutyProvider();
+  await provider.sendMessage({ content: 'ping', channelData: channelData('k'.repeat(32), 'eu') });
 
   expect(safeOutboundSpy).toHaveBeenCalledWith(
     expect.objectContaining({ url: 'https://events.eu.pagerduty.com/v2/enqueue' })
@@ -62,13 +64,9 @@ test('uses EU endpoint when region is eu', async () => {
 test('bridge provider data overrides summary, severity, source, and passes extras as custom_details', async () => {
   const safeOutboundSpy = vi.spyOn(safeOutboundHttp, 'safeOutboundJsonRequest').mockResolvedValue(mockResponse());
 
-  const provider = new PagerDutyProvider({
-    routingKey: 'r'.repeat(32),
-    region: 'us',
-  });
-
+  const provider = new PagerDutyProvider();
   await provider.sendMessage(
-    { content: 'ignored content' },
+    { content: 'ignored content', channelData: channelData('r'.repeat(32)) },
     {
       summary: 'API down',
       severity: 'warning',
@@ -98,13 +96,9 @@ test('bridge provider data overrides summary, severity, source, and passes extra
 test('merges explicit custom_details with unknown bridge extras', async () => {
   const safeOutboundSpy = vi.spyOn(safeOutboundHttp, 'safeOutboundJsonRequest').mockResolvedValue(mockResponse());
 
-  const provider = new PagerDutyProvider({
-    routingKey: 'm'.repeat(32),
-    region: 'us',
-  });
-
+  const provider = new PagerDutyProvider();
   await provider.sendMessage(
-    { content: 'alert' },
+    { content: 'alert', channelData: channelData('m'.repeat(32)) },
     {
       custom_details: { region: 'us-east-1' },
       service: 'billing',
@@ -125,12 +119,8 @@ test('truncates summary to PagerDuty 1024-character limit', async () => {
   const safeOutboundSpy = vi.spyOn(safeOutboundHttp, 'safeOutboundJsonRequest').mockResolvedValue(mockResponse());
   const longSummary = 'x'.repeat(1100);
 
-  const provider = new PagerDutyProvider({
-    routingKey: 't'.repeat(32),
-    region: 'us',
-  });
-
-  await provider.sendMessage({ content: longSummary });
+  const provider = new PagerDutyProvider();
+  await provider.sendMessage({ content: longSummary, channelData: channelData('t'.repeat(32)) });
 
   const call = safeOutboundSpy.mock.calls[0][0];
   const body = JSON.parse(call.body as string);
@@ -138,4 +128,81 @@ test('truncates summary to PagerDuty 1024-character limit', async () => {
   expect(body.payload.summary.endsWith('…')).toBe(true);
 
   safeOutboundSpy.mockRestore();
+});
+
+test('auto-generates deterministic dedup_key from transactionId+subscriberId+stepId', async () => {
+  const safeOutboundSpy = vi.spyOn(safeOutboundHttp, 'safeOutboundJsonRequest').mockResolvedValue(mockResponse());
+
+  const provider = new PagerDutyProvider();
+  await provider.sendMessage({
+    content: 'disk full',
+    channelData: channelData('d'.repeat(32)),
+    transactionId: 'txn-abc',
+    subscriberId: 'sub-42',
+    stepId: 'step-page',
+  });
+
+  const call = safeOutboundSpy.mock.calls[0][0];
+  const body = JSON.parse(call.body as string);
+  expect(body.dedup_key).toBe('novu:txn-abc:sub-42:step-page');
+
+  safeOutboundSpy.mockRestore();
+});
+
+test('customData.dedup_key overrides the auto-generated key', async () => {
+  const safeOutboundSpy = vi.spyOn(safeOutboundHttp, 'safeOutboundJsonRequest').mockResolvedValue(mockResponse());
+
+  const provider = new PagerDutyProvider();
+  await provider.sendMessage(
+    {
+      content: 'disk full',
+      channelData: channelData('d'.repeat(32)),
+      transactionId: 'txn-abc',
+      subscriberId: 'sub-42',
+      stepId: 'step-page',
+    },
+    { dedup_key: 'my-custom-key' }
+  );
+
+  const call = safeOutboundSpy.mock.calls[0][0];
+  const body = JSON.parse(call.body as string);
+  expect(body.dedup_key).toBe('my-custom-key');
+
+  safeOutboundSpy.mockRestore();
+});
+
+test('omits dedup_key entirely when neither override nor identity IDs are present', async () => {
+  const safeOutboundSpy = vi.spyOn(safeOutboundHttp, 'safeOutboundJsonRequest').mockResolvedValue(mockResponse());
+
+  const provider = new PagerDutyProvider();
+  await provider.sendMessage({ content: 'ping', channelData: channelData('n'.repeat(32)) });
+
+  const call = safeOutboundSpy.mock.calls[0][0];
+  const body = JSON.parse(call.body as string);
+  expect(body).not.toHaveProperty('dedup_key');
+
+  safeOutboundSpy.mockRestore();
+});
+
+test('throws when channelData is missing', async () => {
+  const provider = new PagerDutyProvider();
+
+  await expect(provider.sendMessage({ content: 'hello' })).rejects.toThrow(/channelData/i);
+});
+
+test('throws when channelData is the wrong type', async () => {
+  const provider = new PagerDutyProvider();
+
+  await expect(
+    provider.sendMessage({
+      content: 'hello',
+      // Wrong discriminant on purpose — the provider must refuse to route.
+      channelData: {
+        type: ENDPOINT_TYPES.SLACK_CHANNEL,
+        identifier: 's-1',
+        endpoint: { channelId: 'C123' },
+        token: 'xoxb-test',
+      },
+    })
+  ).rejects.toThrow(/pagerduty_service/i);
 });

@@ -234,6 +234,20 @@ export interface IToolOptions {
   content: string;
   customData?: Record<string, unknown>;
   bridgeProviderData?: Record<string, unknown>;
+  /**
+   * Per-subscriber routing data resolved from a `ChannelEndpoint` + `ChannelConnection.auth`.
+   * Providers that route per-subscriber (e.g. PagerDuty) read fields off this union;
+   * providers that route from env-level credentials ignore it.
+   */
+  channelData?: ChannelData;
+  /**
+   * IDs threaded through so providers can derive a stable, retry-safe dedup key
+   * (e.g. PagerDuty's Events API v2 dedup_key). All three together are the finest-grained
+   * "logical send" identity: unique per trigger, stable across worker retries of the same job.
+   */
+  transactionId?: string;
+  subscriberId?: string;
+  stepId?: string;
 }
 
 export interface IToolProvider extends IProvider {

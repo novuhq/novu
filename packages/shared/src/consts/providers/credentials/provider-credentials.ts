@@ -1605,27 +1605,14 @@ export const anthropicAwsAgentConfig: IConfigCredential[] = [
   },
 ];
 
-export const pagerdutyConfig: IConfigCredential[] = [
-  {
-    key: CredentialsKeyEnum.ApiKey,
-    displayName: 'Integration Key',
-    type: 'string',
-    description:
-      'The 32-character Events API v2 Integration Key (routing key) from a PagerDuty service integration or ruleset.',
-    required: true,
-  },
-  {
-    key: CredentialsKeyEnum.Region,
-    displayName: 'Region',
-    type: 'dropdown',
-    required: true,
-    value: 'us',
-    dropdown: [
-      { name: 'US (default)', value: 'us' },
-      { name: 'EU', value: 'eu' },
-    ],
-  },
-];
+/**
+ * PagerDuty is routed per subscriber — the routing key and region live on the
+ * per-subscriber `ChannelConnection.auth`, provisioned via
+ * `POST /v1/channel-endpoints` with `type: pagerduty_service`. The env-level
+ * integration record is an anchor only (identifier + name); no fields are
+ * configured on the integration itself.
+ */
+export const pagerdutyConfig: IConfigCredential[] = [];
 
 export const opsgenieConfig: IConfigCredential[] = [
   {
