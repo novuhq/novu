@@ -368,7 +368,10 @@ function getMatchingVariables(
   isContextEnabled?: boolean
 ): LiquidVariable[] {
   const allVariables = [...scopedVariables, ...variables];
-  if (!searchText) return allVariables;
+  if (!searchText) {
+    // Prefer payload → subscriber → env when opening `{{` with an empty query
+    return [...allVariables].sort((a, b) => (b.boost ?? 0) - (a.boost ?? 0) || a.name.localeCompare(b.name));
+  }
 
   const searchTextTrimmed = searchText.trim();
 

@@ -24,6 +24,20 @@ export interface LiquidVariable {
   isNewSuggestion?: boolean;
 }
 
+/**
+ * Preferred root namespace order when typing `{{` in the workflow editor.
+ * Higher boost ranks higher in CodeMirror / Maily autocomplete.
+ */
+export const ROOT_NAMESPACE_BOOST: Record<string, number> = {
+  payload: 99,
+  subscriber: 98,
+  env: 97,
+};
+
+function getRootNamespaceBoost(name: string): number | undefined {
+  return ROOT_NAMESPACE_BOOST[name];
+}
+
 export type FieldDataType = 'string' | 'number' | 'boolean' | 'date' | 'datetime' | 'array' | 'object';
 
 export interface EnhancedLiquidVariable extends LiquidVariable {
@@ -130,10 +144,13 @@ export function parseStepVariables(
               extractProperties(items, `${fullPath}.0`);
             }
           } else if (value.type === 'object') {
-            result.namespaces.push({ name: fullPath });
+            const boost = getRootNamespaceBoost(fullPath);
+
+            result.namespaces.push({ name: fullPath, ...(boost !== undefined && { boost }) });
             enhancedVariables.push({
               name: fullPath,
               dataType: 'object',
+              ...(boost !== undefined && { boost }),
             });
 
             extractProperties(value, fullPath);
