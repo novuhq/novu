@@ -27,6 +27,8 @@ export interface LiquidVariable {
 /**
  * Preferred root namespace order when typing `{{` in the workflow editor.
  * Higher boost ranks higher in CodeMirror / Maily autocomplete.
+ *
+ * Order: payload → subscriber → env → payload.* properties → rest
  */
 export const ROOT_NAMESPACE_BOOST: Record<string, number> = {
   payload: 99,
@@ -34,8 +36,18 @@ export const ROOT_NAMESPACE_BOOST: Record<string, number> = {
   env: 97,
 };
 
-function getRootNamespaceBoost(name: string): number | undefined {
-  return ROOT_NAMESPACE_BOOST[name];
+const PAYLOAD_PROPERTY_BOOST = 96;
+
+export function getVariableBoost(name: string): number | undefined {
+  if (name in ROOT_NAMESPACE_BOOST) {
+    return ROOT_NAMESPACE_BOOST[name];
+  }
+
+  if (name.startsWith('payload.')) {
+    return PAYLOAD_PROPERTY_BOOST;
+  }
+
+  return undefined;
 }
 
 export type FieldDataType = 'string' | 'number' | 'boolean' | 'date' | 'datetime' | 'array' | 'object';
@@ -128,11 +140,15 @@ export function parseStepVariables(
         const fullPath = path ? `${path}.${key}` : key;
 
         if (typeof value === 'object') {
+          const boost = getVariableBoost(fullPath);
+          const boostProps = boost !== undefined ? { boost } : {};
+
           if (value.type === 'array') {
-            result.arrays.push({ name: fullPath });
+            result.arrays.push({ name: fullPath, ...boostProps });
             enhancedVariables.push({
               name: fullPath,
               dataType: 'array',
+              ...boostProps,
             });
 
             if (value.properties) {
@@ -144,13 +160,11 @@ export function parseStepVariables(
               extractProperties(items, `${fullPath}.0`);
             }
           } else if (value.type === 'object') {
-            const boost = getRootNamespaceBoost(fullPath);
-
-            result.namespaces.push({ name: fullPath, ...(boost !== undefined && { boost }) });
+            result.namespaces.push({ name: fullPath, ...boostProps });
             enhancedVariables.push({
               name: fullPath,
               dataType: 'object',
-              ...(boost !== undefined && { boost }),
+              ...boostProps,
             });
 
             extractProperties(value, fullPath);
@@ -158,12 +172,13 @@ export function parseStepVariables(
             const dataType = mapJsonSchemaTypeToFieldType(value);
             const inputType = getInputTypeFromSchema(value);
 
-            result.primitives.push({ name: fullPath });
+            result.primitives.push({ name: fullPath, ...boostProps });
             enhancedVariables.push({
               name: fullPath,
               dataType,
               inputType,
               format: value.format,
+              ...boostProps,
             });
           }
         }

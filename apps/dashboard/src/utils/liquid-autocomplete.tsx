@@ -369,7 +369,7 @@ function getMatchingVariables(
 ): LiquidVariable[] {
   const allVariables = [...scopedVariables, ...variables];
   if (!searchText) {
-    // Prefer payload → subscriber → env when opening `{{` with an empty query
+    // Prefer payload → subscriber → env → payload.* when opening `{{` with an empty query
     return [...allVariables].sort((a, b) => (b.boost ?? 0) - (a.boost ?? 0) || a.name.localeCompare(b.name));
   }
 
