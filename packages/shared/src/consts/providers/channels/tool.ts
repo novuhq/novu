@@ -18,7 +18,7 @@ export const toolProviders: IProviderConfig[] = [
     displayName: 'Opsgenie',
     channel: ChannelTypeEnum.TOOL,
     credentials: opsgenieConfig,
-    docReference: `https://docs.opsgenie.com/docs/alert-api${UTM_CAMPAIGN_QUERY_PARAM}`,
+    docReference: `https://docs.novu.co/platform/integrations/tool/opsgenie${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'opsgenie.svg', dark: 'opsgenie.svg' },
     betaVersion: true,
   },

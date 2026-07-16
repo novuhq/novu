@@ -289,7 +289,7 @@
               },
               {
                 "group": "Tool",
-                "pages": ["platform/integrations/tool/pagerduty"]
+                "pages": ["platform/integrations/tool/pagerduty", "platform/integrations/tool/opsgenie"]
               },
               "platform/integrations/trigger-overrides"
             ],
