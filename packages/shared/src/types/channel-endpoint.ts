@@ -15,6 +15,7 @@ export const ENDPOINT_TYPES = {
   WEBEX_PERSON: 'webex_person',
   LINE_USER: 'line_user',
   PAGERDUTY_SERVICE: 'pagerduty_service',
+  OPSGENIE_INTEGRATION: 'opsgenie_integration',
 } as const;
 
 export type ChannelEndpointType = (typeof ENDPOINT_TYPES)[keyof typeof ENDPOINT_TYPES];
@@ -45,6 +46,16 @@ export type ChannelEndpointByType = {
    * path re-hydrates this shape from the decrypted connection auth.
    */
   [ENDPOINT_TYPES.PAGERDUTY_SERVICE]: { routingKey: string; region: 'us' | 'eu' };
+  /**
+   * Opsgenie per-subscriber routing. `apiKey` is the UUID-format GenieKey issued by an
+   * Opsgenie API integration; `region` selects the US/EU Alert API endpoint.
+   *
+   * At the API boundary this is the wire shape on both writes and reads. Internally,
+   * the API key is persisted encrypted on the linked `ChannelConnection.auth`
+   * and the stored `ChannelEndpoint.endpoint` document itself is empty — the read
+   * path re-hydrates this shape from the decrypted connection auth.
+   */
+  [ENDPOINT_TYPES.OPSGENIE_INTEGRATION]: { apiKey: string; region: 'us' | 'eu' };
 };
 
 export type ChannelEndpoint<T extends ChannelEndpointType = ChannelEndpointType> = {

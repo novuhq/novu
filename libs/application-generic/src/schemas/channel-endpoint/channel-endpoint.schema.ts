@@ -124,6 +124,27 @@ export const CHANNEL_ENDPOINT_SCHEMAS = {
       (endpoint.region === 'us' || endpoint.region === 'eu') &&
       Object.keys(endpoint).length === 2,
   },
+  /*
+   * Opsgenie wire shape: UUID-format API integration key (GenieKey) + region.
+   * Format-validated at write time so a truncated paste or an account-level
+   * API-management key of the wrong shape fails fast at the API boundary
+   * rather than at the first alert send. The API layer persists the apiKey
+   * encrypted on the linked `ChannelConnection.auth`; the stored endpoint
+   * document is empty.
+   */
+  [ENDPOINT_TYPES.OPSGENIE_INTEGRATION]: {
+    description: 'Opsgenie Integration Endpoint',
+    properties: {
+      apiKey: { type: 'string' as const },
+      region: { type: 'string' as const },
+    },
+    required: ['apiKey', 'region'],
+    validate: (endpoint: Record<string, unknown>) =>
+      typeof endpoint.apiKey === 'string' &&
+      /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(endpoint.apiKey) &&
+      (endpoint.region === 'us' || endpoint.region === 'eu') &&
+      Object.keys(endpoint).length === 2,
+  },
 } as const;
 
 // Generate API property examples automatically

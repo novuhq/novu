@@ -9,7 +9,8 @@ export type ChannelData =
   | WebexRoomData
   | WebexPersonData
   | LineUserData
-  | PagerDutyServiceData;
+  | PagerDutyServiceData
+  | OpsgenieIntegrationData;
 
 export const ENDPOINT_TYPES = {
   SLACK_CHANNEL: 'slack_channel',
@@ -23,6 +24,7 @@ export const ENDPOINT_TYPES = {
   WEBEX_PERSON: 'webex_person',
   LINE_USER: 'line_user',
   PAGERDUTY_SERVICE: 'pagerduty_service',
+  OPSGENIE_INTEGRATION: 'opsgenie_integration',
 } as const;
 
 export type ChannelEndpointType = (typeof ENDPOINT_TYPES)[keyof typeof ENDPOINT_TYPES];
@@ -39,6 +41,7 @@ export type ChannelEndpointByType = {
   [ENDPOINT_TYPES.WEBEX_PERSON]: { personId: string; personEmail?: never } | { personId?: never; personEmail: string };
   [ENDPOINT_TYPES.LINE_USER]: { userId: string };
   [ENDPOINT_TYPES.PAGERDUTY_SERVICE]: { routingKey: string; region: 'us' | 'eu' };
+  [ENDPOINT_TYPES.OPSGENIE_INTEGRATION]: { apiKey: string; region: 'us' | 'eu' };
 };
 
 export type SlackChannelData = {
@@ -124,6 +127,20 @@ export type PagerDutyServiceData = {
   identifier: string;
 };
 
+export type OpsgenieRegion = 'us' | 'eu';
+
+/**
+ * Per-subscriber Opsgenie routing resolved at send time. The resolver hydrates
+ * `endpoint` from the linked `ChannelConnection.auth` (which stores the API
+ * key encrypted at rest); at send time the provider destructures directly off
+ * `endpoint`, matching the wire shape on write/read.
+ */
+export type OpsgenieIntegrationData = {
+  type: typeof ENDPOINT_TYPES.OPSGENIE_INTEGRATION;
+  endpoint: ChannelEndpointByType[typeof ENDPOINT_TYPES.OPSGENIE_INTEGRATION];
+  identifier: string;
+};
+
 export function isChannelDataOfType<T extends ChannelData['type']>(
   data: ChannelData,
   type: T
@@ -139,4 +156,5 @@ export const ENDPOINT_TYPES_REQUIRING_TOKEN = [
   ENDPOINT_TYPES.WEBEX_ROOM,
   ENDPOINT_TYPES.WEBEX_PERSON,
   ENDPOINT_TYPES.PAGERDUTY_SERVICE,
+  ENDPOINT_TYPES.OPSGENIE_INTEGRATION,
 ] as const;

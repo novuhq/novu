@@ -85,4 +85,17 @@ describe('encryptChannelConnectionAuth / decryptChannelConnectionAuth', () => {
     expect(decrypted!.routingKey).toEqual(routingKey);
     expect(decrypted!.region).toEqual('eu');
   });
+
+  it('encrypts Opsgenie apiKey and preserves region as plaintext', () => {
+    const apiKey = 'eb243592-faa2-4ba2-a551-1afdf565c889';
+    const encrypted = encryptChannelConnectionAuth({ apiKey, region: 'eu' });
+
+    expect((encrypted!.apiKey as string).startsWith(novuSubMask)).toBe(true);
+    expect(encrypted!.apiKey).not.toEqual(apiKey);
+    expect(encrypted!.region).toEqual('eu');
+
+    const decrypted = decryptChannelConnectionAuth(encrypted);
+    expect(decrypted!.apiKey).toEqual(apiKey);
+    expect(decrypted!.region).toEqual('eu');
+  });
 });
