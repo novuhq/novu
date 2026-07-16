@@ -179,6 +179,7 @@ export class ResolveChannelEndpoints {
    * Extracts token for endpoint based on type
    * - MS Teams: Fetches Bot Framework token from Microsoft
    * - Slack: Extracts OAuth token from connection
+   * - PagerDuty: Decrypts routingKey + region and hydrates endpoint wire shape
    */
   private async extractToken(
     endpoint: ChannelEndpointEntity,
@@ -193,9 +194,46 @@ export class ResolveChannelEndpoints {
       return await this.extractWebexToken(endpoint, connectionMap);
     }
 
+    if (endpoint.type === ENDPOINT_TYPES.PAGERDUTY_SERVICE) {
+      return this.extractPagerDutyAuth(endpoint, connectionMap);
+    }
+
     // Slack and other connection-based tokens
     const token = this.extractConnectionToken(endpoint, connectionMap);
     return { token: token || '' };
+  }
+
+  /**
+   * Rehydrates the PagerDuty wire shape (`endpoint: { routingKey, region }`)
+   * from the linked, encrypted `ChannelConnection.auth`. Returned as an
+   * `endpoint` override so `buildChannelData`'s spread replaces the empty
+   * stored endpoint document with the routing values the provider reads.
+   */
+  private extractPagerDutyAuth(
+    endpoint: ChannelEndpointEntity,
+    connectionMap: Map<string, ChannelConnectionEntity>
+  ): Record<string, unknown> {
+    if (!endpoint.connectionIdentifier) {
+      throw new Error(`PagerDuty endpoint ${endpoint.identifier} requires a linked channel connection`);
+    }
+
+    const connection = connectionMap.get(endpoint.connectionIdentifier);
+    if (!connection?.auth) {
+      throw new Error(
+        `PagerDuty endpoint ${endpoint.identifier} references channel connection ${endpoint.connectionIdentifier} but no auth is available`
+      );
+    }
+
+    const decrypted = decryptChannelConnectionAuth(connection.auth) as {
+      routingKey?: string;
+      region?: 'us' | 'eu';
+    } | null;
+
+    if (!decrypted?.routingKey || !decrypted?.region) {
+      throw new Error(`PagerDuty channel connection ${connection.identifier} is missing routingKey or region in auth`);
+    }
+
+    return { endpoint: { routingKey: decrypted.routingKey, region: decrypted.region } };
   }
 
   /**

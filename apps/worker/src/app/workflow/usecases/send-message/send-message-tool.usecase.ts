@@ -15,14 +15,37 @@ import {
   ToolFactory,
 } from '@novu/application-generic';
 import { IntegrationEntity, MessageEntity, MessageRepository, SubscriberRepository } from '@novu/dal';
-import { ChannelTypeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  ExecutionDetailsSourceEnum,
+  ExecutionDetailsStatusEnum,
+  ToolProviderIdEnum,
+} from '@novu/shared';
+import { ChannelData } from '@novu/stateless';
 import { addBreadcrumb } from '@sentry/node';
 import { PlatformException } from '../../../shared/utils';
+import { ResolveChannelEndpointsCommand } from './channel-endpoint-resolution/resolve-channel-endpoints.command';
+import {
+  IntegrationEndpoints,
+  ResolveChannelEndpoints,
+} from './channel-endpoint-resolution/resolve-channel-endpoints.usecase';
 import { SendMessageBase } from './send-message.base';
 import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageResult, SendMessageStatus } from './send-message-type.usecase';
 
 const LOG_CONTEXT = 'SendMessageTool';
+
+/**
+ * Tool providers whose routing is per-subscriber via `ChannelEndpoint` — they
+ * cannot fall back to env-level integration credentials. If no endpoint is
+ * resolved for the subscriber, we silently skip the integration (execution
+ * detail + `SKIPPED` status) rather than attempting a credential-based send.
+ */
+export const ENDPOINT_ROUTED_TOOL_PROVIDERS = new Set<string>([ToolProviderIdEnum.PagerDuty]);
+
+export function isEndpointRoutedToolProvider(providerId: string): boolean {
+  return ENDPOINT_ROUTED_TOOL_PROVIDERS.has(providerId);
+}
 
 type ToolStepOutputs = {
   body?: string;
@@ -55,7 +78,8 @@ export class SendMessageTool extends SendMessageBase {
     protected getNovuProviderCredentials: GetNovuProviderCredentials,
     protected selectVariant: SelectVariant,
     protected moduleRef: ModuleRef,
-    private getDecryptedIntegrations: GetDecryptedIntegrations
+    private getDecryptedIntegrations: GetDecryptedIntegrations,
+    private resolveChannelEndpoints: ResolveChannelEndpoints
   ) {
     super(
       messageRepository,
@@ -122,12 +146,39 @@ export class SendMessageTool extends SendMessageBase {
       };
     }
 
+    const endpointsByIntegration = await this.resolveEndpointsByIntegration(command);
+
     let status: SendMessageStatus = SendMessageStatus.SUCCESS;
+    let anySent = false;
+    let anySkipped = false;
     const toolFactory = new ToolFactory();
 
     for (const integration of selectedIntegrations) {
-      const result = await this.sendToIntegration(command, integration, content, toolFactory);
-      status = this.mergeStatus(status, result.status);
+      const resolved = endpointsByIntegration.get(integration.identifier);
+      const channelDataList = resolved?.channelData ?? [];
+
+      if (channelDataList.length === 0) {
+        if (isEndpointRoutedToolProvider(integration.providerId)) {
+          await this.emitSkippedNoEndpoint(command, integration);
+          anySkipped = true;
+          continue;
+        }
+
+        // Non-endpoint-routed providers (Opsgenie, tool webhook) route via
+        // env-level integration credentials — preserve the legacy send path.
+        const result = await this.sendToIntegration(command, integration, content, toolFactory, undefined);
+        status = this.mergeStatus(status, result.status);
+        if (result.status === SendMessageStatus.SUCCESS) anySent = true;
+        else if (result.status === SendMessageStatus.SKIPPED) anySkipped = true;
+        continue;
+      }
+
+      for (const channelData of channelDataList) {
+        const result = await this.sendToIntegration(command, integration, content, toolFactory, channelData);
+        status = this.mergeStatus(status, result.status);
+        if (result.status === SendMessageStatus.SUCCESS) anySent = true;
+        else if (result.status === SendMessageStatus.SKIPPED) anySkipped = true;
+      }
     }
 
     if (status === SendMessageStatus.FAILED) {
@@ -135,6 +186,10 @@ export class SendMessageTool extends SendMessageBase {
         status,
         errorMessage: DetailEnum.PROVIDER_ERROR,
       };
+    }
+
+    if (!anySent && anySkipped) {
+      return { status: SendMessageStatus.SKIPPED };
     }
 
     return { status };
@@ -185,11 +240,55 @@ export class SendMessageTool extends SendMessageBase {
     return { content, enabledIntegrations };
   }
 
+  private async resolveEndpointsByIntegration(
+    command: SendMessageChannelCommand
+  ): Promise<Map<string, IntegrationEndpoints>> {
+    const groups = await this.resolveChannelEndpoints.execute(
+      ResolveChannelEndpointsCommand.create({
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        userId: command.userId,
+        subscriberId: command.subscriberId,
+        channelType: ChannelTypeEnum.TOOL,
+        contextKeys: command.contextKeys,
+      })
+    );
+
+    return new Map(groups.map((group) => [group.integrationIdentifier, group]));
+  }
+
+  private async emitSkippedNoEndpoint(
+    command: SendMessageChannelCommand,
+    integration: IntegrationEntity
+  ): Promise<void> {
+    Logger.log(
+      `Skipping ${integration.providerId} for subscriber ${command.subscriberId}: no channel endpoint`,
+      LOG_CONTEXT
+    );
+
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+        detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
+        source: ExecutionDetailsSourceEnum.INTERNAL,
+        status: ExecutionDetailsStatusEnum.WARNING,
+        isTest: false,
+        isRetry: false,
+        raw: JSON.stringify({
+          reason: 'no_channel_endpoint_for_subscriber',
+          integrationIdentifier: integration.identifier,
+          providerId: integration.providerId,
+        }),
+      })
+    );
+  }
+
   private async sendToIntegration(
     command: SendMessageChannelCommand,
     integration: IntegrationEntity,
     content: string,
-    toolFactory: ToolFactory
+    toolFactory: ToolFactory,
+    channelData: ChannelData | undefined
   ): Promise<SendMessageResult> {
     await this.sendSelectedIntegrationExecution(command.job, integration);
 
@@ -241,9 +340,17 @@ export class SendMessageTool extends SendMessageBase {
         throw new PlatformException(`Tool handler for provider ${integration.providerId} is not found`);
       }
 
+      // channelData carries per-subscriber routing (e.g. PagerDuty routingKey +
+      // region). Passed as a separate argument so it never merges into
+      // `overrides` or the persisted message payload — routing secrets must
+      // not leak into execution details or the messages collection.
       const result = await handler.send({
         content: overrides.content || content,
         customData: overrides.customData || {},
+        channelData,
+        transactionId: command.transactionId,
+        subscriberId: command.subscriberId,
+        stepId: command.step.stepId,
         bridgeProviderData: this.combineOverrides(
           command.bridgeData,
           command.overrides,
