@@ -1,4 +1,5 @@
 import * as safeOutboundHttp from '@novu/shared/utils/safe-outbound-http';
+import { ENDPOINT_TYPES, OpsgenieIntegrationData } from '@novu/stateless';
 import { expect, test, vi } from 'vitest';
 import { OpsgenieProvider } from './opsgenie.provider';
 
@@ -9,15 +10,20 @@ const mockResponse = (requestId = 'req-1') => ({
   body: { requestId, result: 'Request will be processed' },
 });
 
-test('creates an alert on the US endpoint with GenieKey auth and required message', async () => {
+const channelData = (apiKey: string, region: 'us' | 'eu' = 'us'): OpsgenieIntegrationData => ({
+  type: ENDPOINT_TYPES.OPSGENIE_INTEGRATION,
+  identifier: 'og-endpoint-1',
+  endpoint: { apiKey, region },
+});
+
+test('creates an alert on the US endpoint with GenieKey auth from channelData', async () => {
   const safeOutboundSpy = vi.spyOn(safeOutboundHttp, 'safeOutboundJsonRequest').mockResolvedValue(mockResponse());
 
-  const provider = new OpsgenieProvider({
-    apiKey: 'og-test-key',
-    region: 'us',
+  const provider = new OpsgenieProvider();
+  const result = await provider.sendMessage({
+    content: 'Payment service is down',
+    channelData: channelData('og-test-key'),
   });
-
-  const result = await provider.sendMessage({ content: 'Payment service is down' });
 
   expect(safeOutboundSpy).toHaveBeenCalledWith({
     url: 'https://api.opsgenie.com/v2/alerts',
@@ -36,12 +42,8 @@ test('creates an alert on the US endpoint with GenieKey auth and required messag
 test('uses EU endpoint when region is eu', async () => {
   const safeOutboundSpy = vi.spyOn(safeOutboundHttp, 'safeOutboundJsonRequest').mockResolvedValue(mockResponse());
 
-  const provider = new OpsgenieProvider({
-    apiKey: 'og-eu',
-    region: 'eu',
-  });
-
-  await provider.sendMessage({ content: 'ping' });
+  const provider = new OpsgenieProvider();
+  await provider.sendMessage({ content: 'ping', channelData: channelData('og-eu', 'eu') });
 
   expect(safeOutboundSpy).toHaveBeenCalledWith(
     expect.objectContaining({ url: 'https://api.eu.opsgenie.com/v2/alerts' })
@@ -50,17 +52,109 @@ test('uses EU endpoint when region is eu', async () => {
   safeOutboundSpy.mockRestore();
 });
 
+test('throws when channelData is missing', async () => {
+  const provider = new OpsgenieProvider();
+
+  await expect(provider.sendMessage({ content: 'hello' })).rejects.toThrow(/channelData/i);
+});
+
+test('throws when channelData is the wrong type', async () => {
+  const provider = new OpsgenieProvider();
+
+  await expect(
+    provider.sendMessage({
+      content: 'hello',
+      // Wrong discriminant on purpose: the provider must refuse to route.
+      channelData: {
+        type: ENDPOINT_TYPES.SLACK_CHANNEL,
+        identifier: 's-1',
+        endpoint: { channelId: 'C123' },
+        token: 'xoxb-test',
+      },
+    })
+  ).rejects.toThrow(/opsgenie_integration/i);
+});
+
+test('throws when endpoint apiKey is empty', async () => {
+  const provider = new OpsgenieProvider();
+
+  await expect(provider.sendMessage({ content: 'hello', channelData: channelData('') })).rejects.toThrow(
+    /apiKey and a supported region/i
+  );
+});
+
+test('throws when endpoint region is not a known Opsgenie region', async () => {
+  const provider = new OpsgenieProvider();
+
+  await expect(
+    provider.sendMessage({
+      content: 'hello',
+      channelData: channelData('og-key', 'apac' as unknown as 'us'),
+    })
+  ).rejects.toThrow(/apiKey and a supported region/i);
+});
+
+test('auto-generates deterministic alias from transactionId+subscriberId+stepId', async () => {
+  const safeOutboundSpy = vi.spyOn(safeOutboundHttp, 'safeOutboundJsonRequest').mockResolvedValue(mockResponse());
+
+  const provider = new OpsgenieProvider();
+  await provider.sendMessage({
+    content: 'disk full',
+    channelData: channelData('og-alias'),
+    transactionId: 'txn-abc',
+    subscriberId: 'sub-42',
+    stepId: 'step-alert',
+  });
+
+  const call = safeOutboundSpy.mock.calls[0][0];
+  const body = JSON.parse(call.body as string);
+  expect(body.alias).toBe('novu:txn-abc:sub-42:step-alert');
+
+  safeOutboundSpy.mockRestore();
+});
+
+test('customData.alias overrides the auto-generated alias', async () => {
+  const safeOutboundSpy = vi.spyOn(safeOutboundHttp, 'safeOutboundJsonRequest').mockResolvedValue(mockResponse());
+
+  const provider = new OpsgenieProvider();
+  await provider.sendMessage(
+    {
+      content: 'disk full',
+      channelData: channelData('og-alias'),
+      transactionId: 'txn-abc',
+      subscriberId: 'sub-42',
+      stepId: 'step-alert',
+    },
+    { alias: 'my-custom-alias' }
+  );
+
+  const call = safeOutboundSpy.mock.calls[0][0];
+  const body = JSON.parse(call.body as string);
+  expect(body.alias).toBe('my-custom-alias');
+
+  safeOutboundSpy.mockRestore();
+});
+
+test('omits alias entirely when neither override nor identity IDs are present', async () => {
+  const safeOutboundSpy = vi.spyOn(safeOutboundHttp, 'safeOutboundJsonRequest').mockResolvedValue(mockResponse());
+
+  const provider = new OpsgenieProvider();
+  await provider.sendMessage({ content: 'ping', channelData: channelData('og-noalias') });
+
+  const call = safeOutboundSpy.mock.calls[0][0];
+  const body = JSON.parse(call.body as string);
+  expect(body).not.toHaveProperty('alias');
+
+  safeOutboundSpy.mockRestore();
+});
+
 test('truncates message to Opsgenie 130-character limit and passes optional fields', async () => {
   const safeOutboundSpy = vi.spyOn(safeOutboundHttp, 'safeOutboundJsonRequest').mockResolvedValue(mockResponse());
   const longMessage = 'x'.repeat(200);
 
-  const provider = new OpsgenieProvider({
-    apiKey: 'og-long',
-    region: 'us',
-  });
-
+  const provider = new OpsgenieProvider();
   await provider.sendMessage(
-    { content: longMessage },
+    { content: longMessage, channelData: channelData('og-long') },
     {
       alias: 'billing-down',
       description: 'Full incident description',
@@ -85,16 +179,25 @@ test('truncates message to Opsgenie 130-character limit and passes optional fiel
   safeOutboundSpy.mockRestore();
 });
 
+test('ignores invalid priority values', async () => {
+  const safeOutboundSpy = vi.spyOn(safeOutboundHttp, 'safeOutboundJsonRequest').mockResolvedValue(mockResponse());
+
+  const provider = new OpsgenieProvider();
+  await provider.sendMessage({ content: 'alert', channelData: channelData('og-prio') }, { priority: 'urgent' });
+
+  const call = safeOutboundSpy.mock.calls[0][0];
+  const body = JSON.parse(call.body as string);
+  expect(body).not.toHaveProperty('priority');
+
+  safeOutboundSpy.mockRestore();
+});
+
 test('folds unknown bridge extras into details', async () => {
   const safeOutboundSpy = vi.spyOn(safeOutboundHttp, 'safeOutboundJsonRequest').mockResolvedValue(mockResponse());
 
-  const provider = new OpsgenieProvider({
-    apiKey: 'og-extras',
-    region: 'us',
-  });
-
+  const provider = new OpsgenieProvider();
   await provider.sendMessage(
-    { content: 'alert' },
+    { content: 'alert', channelData: channelData('og-extras') },
     {
       service: 'billing',
       details: { region: 'us-east-1' },
