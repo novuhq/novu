@@ -98,7 +98,7 @@ const CONTEXTUAL_SUGGESTIONS: Record<RouteContext, SuggestionItem[]> = {
     {
       icon: RiRouteFill,
       title: 'Understand workflow editor',
-      description: 'What the workflow editor does—like Delay, Digest, Email, and when to use them.',
+      description: 'What the workflow editor does, like Delay, Digest, Email, and when to use them.',
       url: docsUrl('/platform/workflow/overview'),
     },
     {
@@ -126,7 +126,7 @@ const CONTEXTUAL_SUGGESTIONS: Record<RouteContext, SuggestionItem[]> = {
     {
       icon: RiStore3Line,
       title: 'Connect providers',
-      description: 'Email, SMS, chat—whatever you need to reach users.',
+      description: 'Email, SMS, chat, whatever you need to reach users.',
       url: docsUrl('/platform/integrations'),
     },
     {
@@ -285,13 +285,13 @@ export const GETTING_STARTED: SuggestionItem[] = [
   {
     icon: Bell,
     title: '<Inbox/> Component',
-    description: 'Triggers, delays, emails—mix them like a wizard.',
+    description: 'Triggers, delays, emails, mix them like a wizard.',
     url: docsUrl('/platform/inbox/overview'),
   },
   {
     icon: RiStore3Line,
     title: 'Connect providers',
-    description: 'Email, SMS, chat—whatever you need to reach users.',
+    description: 'Email, SMS, chat, whatever you need to reach users.',
     url: docsUrl('/platform/integrations'),
   },
 ];

@@ -82,7 +82,7 @@ WhatsApp and Microsoft Teams require dashboard OAuth — they are not supported 
 | Command | Description |
 | --- | --- |
 | `connect` | Create a managed or bridge agent and connect it to a channel |
-| `init` | Scaffold a new Novu app (`notifications`, `agent`, or `chat-sdk` template) |
+| `init` | Scaffold a new Novu app (`notifications` or `chat-sdk` template) |
 | `sync` | Sync bridge workflow state with Novu Cloud |
 | `dev` | Start local Novu Studio and a tunnel to your bridge app |
 | `translations pull` | Pull translation files from Novu Cloud |
@@ -143,15 +143,13 @@ Scaffold a new Novu application.
 ```bash
 npx novu@latest init
 npx novu@latest init --template chat-sdk
-npx novu@latest init --template agent --agent-identifier my-agent
 ```
 
 | Flag | Description |
 | --- | --- |
 | `-s, --secret-key <key>` | Novu development environment secret key |
 | `-a, --api-url <url>` | Novu Cloud API URL (default: `https://api.novu.co`) |
-| `-t, --template <name>` | Template: `notifications`, `agent`, or `chat-sdk` |
-| `--agent-identifier <id>` | Agent identifier for the scaffolded template |
+| `-t, --template <name>` | Template: `notifications` or `chat-sdk` |
 
 ### `sync`
 
@@ -217,11 +215,11 @@ npx novu@latest dev
 | `-r` | `--route <route>` | Bridge application route | `/api/novu` |
 | `-o` | `--origin <origin>` | Bridge application origin | `http://localhost` |
 | `-d` | `--dashboard-url <url>` | Novu Cloud dashboard URL | `https://dashboard.novu.co` |
-| `-sp` | `--studio-port <port>` | Local Studio server port | `2022` |
-| `-sh` | `--studio-host <host>` | Local Studio server host | `localhost` |
+| `-sp` | `--studio-port <port>` | [deprecated] Ignored | `2022` |
+| `-sh` | `--studio-host <host>` | [deprecated] Ignored | `localhost` |
 | `-t` | `--tunnel <url>` | Self-hosted tunnel URL | — |
-| `-H` | `--headless` | Run bridge in headless mode | `false` |
-| | `--no-studio` | Skip starting local Studio | — |
+| `-H` | `--headless` | Run without opening the browser | `false` |
+| | `--no-studio` | Skip opening the dashboard Local environment (tunnel and agent sync still run) | — |
 | | `--run <command>` | Spawn a local app server before opening the tunnel | — |
 
 Example — bridge on port `3002` with an EU dashboard:

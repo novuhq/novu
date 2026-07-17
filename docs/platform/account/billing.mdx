@@ -30,7 +30,7 @@ Workflow runs from **Development**, **Production**, and any custom environments 
 A **workflow run** is one execution of a workflow for one subscriber.
 
 - Triggering a workflow to a **single subscriber** counts as **1 workflow run**.
-- Triggering a workflow to a **topic** with 100 subscribers counts as **100 workflow runs** after fan-out — one run per subscriber.
+- Triggering a workflow to a **topic** counts as **one workflow run per subscriber whose topic subscription passes** Context matching and JSON Logic conditions during fan-out. Subscribers filtered out before a workflow run is created are not billed. A topic with 100 subscriptions where only 20 pass creates **20** workflow runs. See [Billing and workflow runs](/platform/subscription/manage-topic-subscriptions#billing-and-workflow-runs).
 
 Each run represents a single execution instance for that subscriber, regardless of how many steps the workflow contains or how many channels deliver a message. You can inspect individual runs in the [Activity Feed](/platform/workflow/monitor-and-debug-workflow).
 
@@ -105,7 +105,7 @@ From billing settings you can:
   </Accordion>
 
   <Accordion title="What is a workflow run?">
-    A workflow run is one execution of a workflow for one subscriber. Triggering a workflow to a single subscriber counts as 1 run. Triggering to a topic with 100 subscribers counts as 100 runs after fan-out. See [What is a workflow run?](#what-is-a-workflow-run) above and [Monitor and debug workflow](/platform/workflow/monitor-and-debug-workflow) for how to inspect runs in the dashboard.
+    A workflow run is one execution of a workflow for one subscriber. Triggering a workflow to a single subscriber counts as 1 run. Triggering to a topic counts as one run per subscriber whose subscription passes Context and condition filters during fan-out. See [What is a workflow run?](#what-is-a-workflow-run) above, [Billing and workflow runs](/platform/subscription/manage-topic-subscriptions#billing-and-workflow-runs), and [Monitor and debug workflow](/platform/workflow/monitor-and-debug-workflow) for how to inspect runs in the dashboard.
   </Accordion>
 
   <Accordion title="How is pricing calculated?">

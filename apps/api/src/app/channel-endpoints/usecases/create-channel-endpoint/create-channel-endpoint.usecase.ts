@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { InstrumentUsecase, PinoLogger, shortId } from '@novu/application-generic';
 import {
@@ -11,7 +11,7 @@ import {
   IntegrationRepository,
   SubscriberRepository,
 } from '@novu/dal';
-import { ChannelEndpointByType, ChannelEndpointType, ENDPOINT_TYPES } from '@novu/shared';
+import { ChannelEndpointByType, ChannelEndpointType, ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
 import { ConfirmLinkedAuthCardsCommand } from '../../../agents/conversation-runtime/link/confirm-linked-auth-cards.command';
 import { ConfirmLinkedAuthCards } from '../../../agents/conversation-runtime/link/confirm-linked-auth-cards.usecase';
 import { AgentPlatformEnum } from '../../../agents/shared/enums/agent-platform.enum';
@@ -85,8 +85,20 @@ export class CreateChannelEndpoint {
 
     let connection: ChannelConnectionEntity | null = null;
 
+    if (this.isWebexEndpoint(command.type)) {
+      this.assertWebexIntegration(command, integration);
+
+      if (!command.connectionIdentifier) {
+        throw new BadRequestException(`Channel endpoint type "${command.type}" requires a connectionIdentifier`);
+      }
+    }
+
     if (command.connectionIdentifier) {
       connection = await this.findChannelConnection(command);
+    }
+
+    if (this.isWebexEndpoint(command.type) && connection) {
+      this.assertWebexConnectionContext(command, connection, contextKeys);
     }
 
     const channelEndpoint = await this.createChannelEndpoint(command, identifier, integration, connection, contextKeys);
@@ -213,6 +225,7 @@ export class CreateChannelEndpoint {
     const connection = await this.channelConnectionRepository.findOne({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
+      integrationIdentifier: command.integrationIdentifier,
       identifier: command.connectionIdentifier,
     });
 
@@ -221,6 +234,33 @@ export class CreateChannelEndpoint {
     }
 
     return connection;
+  }
+
+  private isWebexEndpoint(type: ChannelEndpointType): boolean {
+    return type === ENDPOINT_TYPES.WEBEX_ROOM || type === ENDPOINT_TYPES.WEBEX_PERSON;
+  }
+
+  private assertWebexIntegration(command: CreateChannelEndpointCommand, integration: IntegrationEntity): void {
+    if (integration.providerId !== ChatProviderIdEnum.WebexMessaging) {
+      throw new BadRequestException(`Channel endpoint type "${command.type}" requires a Webex Messaging integration`);
+    }
+  }
+
+  private assertWebexConnectionContext(
+    command: CreateChannelEndpointCommand,
+    connection: ChannelConnectionEntity,
+    contextKeys: string[]
+  ): void {
+    const connectionContextKeys = connection.contextKeys ?? [];
+    const hasSameContext =
+      contextKeys.length === connectionContextKeys.length &&
+      contextKeys.every((contextKey) => connectionContextKeys.includes(contextKey));
+
+    if (!hasSameContext) {
+      throw new BadRequestException(
+        `Webex endpoint context must match channel connection "${command.connectionIdentifier}" context`
+      );
+    }
   }
 
   private generateIdentifier(): string {

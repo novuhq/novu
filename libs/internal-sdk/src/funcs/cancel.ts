@@ -34,7 +34,7 @@ import { Result } from "../types/fp.js";
  *     Using a previously generated transactionId during the event trigger,
  *      will cancel any active or pending workflows. This is useful to cancel active digests, delays etc...
  *
- * This operation requires either {@link Security.bearerAuth} or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.
+ * This operation requires one of {@link Security.bearerAuth}, {@link Security.bearerAuth}, or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.
  */
 export function cancel(
   client: NovuCore,

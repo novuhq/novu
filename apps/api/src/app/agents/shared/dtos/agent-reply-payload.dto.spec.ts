@@ -1,6 +1,5 @@
 import { expect } from 'chai';
-
-import { isValidMetadataSignalKey } from './agent-reply-payload.dto';
+import { IsValidReplyContent, isValidMetadataSignalKey } from './agent-reply-payload.dto';
 
 describe('isValidMetadataSignalKey', () => {
   it('accepts plain and namespaced user-facing keys', () => {
@@ -37,5 +36,33 @@ describe('isValidMetadataSignalKey', () => {
     expect(isValidMetadataSignalKey(42)).to.equal(false);
     expect(isValidMetadataSignalKey('')).to.equal(false);
     expect(isValidMetadataSignalKey('a'.repeat(129))).to.equal(false);
+  });
+});
+
+describe('IsValidReplyContent', () => {
+  const validator = new IsValidReplyContent();
+
+  it('rejects non-string markdown without throwing', () => {
+    expect(validator.validate({ markdown: 123 } as never)).to.equal(false);
+  });
+
+  it('rejects null card without throwing', () => {
+    expect(validator.validate({ card: null } as never)).to.equal(false);
+  });
+
+  it('rejects empty markdown', () => {
+    expect(validator.validate({ markdown: '   ' })).to.equal(false);
+  });
+
+  it('accepts a card with type card', () => {
+    expect(
+      validator.validate({
+        card: { type: 'card', children: [{ type: 'text', content: 'hi' }] },
+      })
+    ).to.equal(true);
+  });
+
+  it('rejects a card missing type card', () => {
+    expect(validator.validate({ card: { type: 'section', children: [] } as never })).to.equal(false);
   });
 });

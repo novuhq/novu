@@ -127,7 +127,7 @@ export function EmailSetupGuide({
     },
   });
 
-  // Step indices — credentials step is conditionally inserted
+  // Step indices: credentials step is conditionally inserted
   const base = stepOffset;
   const credentialsStepIndex = base + 1;
   const inboundStepIndex = needsCredentialsStep ? base + 2 : base + 1;
@@ -248,7 +248,7 @@ export function EmailSetupGuide({
         description={
           showInboundAddressOnTestStep
             ? 'Your agent receives email on a dedicated inbound address. Custom domains and providers can be configured later.'
-            : 'You can talk to your agent via this mail address. Override the address to send from another email. Reply-To always routes back to the agent so replies stay in the thread.'
+            : 'Email sent to this address is delivered to your agent.'
         }
         extraContent={
           showInboundAddressOnTestStep ? undefined : (
@@ -289,7 +289,7 @@ export function EmailSetupGuide({
               connectedMessage="Your email integration is connected. This agent is ready to receive emails."
               listeningMessage={
                 isManagedAgent
-                  ? 'Waiting for your email — send a message to your configured inbound address.'
+                  ? 'Waiting for your email: send a message to your configured inbound address.'
                   : 'Send a test email to verify the inbound pipeline reaches your agent.'
               }
             />
@@ -355,7 +355,7 @@ export function EmailSetupGuide({
               connectedMessage="Your email integration is connected. This agent is ready to receive emails."
               listeningMessage={
                 isManagedAgent
-                  ? 'Waiting for your email — send a message to your inbound address.'
+                  ? 'Waiting for your email: send a message to your inbound address.'
                   : 'Send a test email to verify the inbound pipeline reaches your agent.'
               }
             />

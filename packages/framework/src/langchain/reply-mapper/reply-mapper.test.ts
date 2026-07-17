@@ -17,9 +17,11 @@ vi.mock('langchain', async (importOriginal) => {
 
 function fakeRuntimeCtx(history: AgentHistoryEntry[] = []) {
   const reply = vi.fn().mockResolvedValue({ messageId: 'm', platformThreadId: 'p' });
+  const replyApprovalCard = vi.fn().mockResolvedValue({ messageId: 'm', platformThreadId: 'p' });
   const ctx = {
     [RUNTIME_CONTEXT_BRAND]: true as const,
     reply,
+    replyApprovalCard,
     history,
     emitToolResult: vi.fn(),
     emitToolApprovalRequest: vi.fn(),
@@ -28,6 +30,7 @@ function fakeRuntimeCtx(history: AgentHistoryEntry[] = []) {
 
   return ctx as unknown as AgentRuntimeContext & {
     reply: ReturnType<typeof vi.fn>;
+    replyApprovalCard: ReturnType<typeof vi.fn>;
     emitToolResult: ReturnType<typeof vi.fn>;
     emitToolApprovalRequest: ReturnType<typeof vi.fn>;
     typing: { stop: ReturnType<typeof vi.fn> };
@@ -131,7 +134,8 @@ describe('handleLangChainResult', () => {
         name: 'issueRefund',
         input: { amount: 300 },
       });
-      expect(ctx.reply).toHaveBeenCalledTimes(1);
+      expect(ctx.replyApprovalCard).toHaveBeenCalledTimes(1);
+      expect(ctx.reply).not.toHaveBeenCalled();
     });
 
     it('posts the card even when LangChain/LangGraph wraps the pause error in a cause chain', async () => {
@@ -156,7 +160,8 @@ describe('handleLangChainResult', () => {
         name: 'linear__save_comment',
         input: { issueId: 'NV-8208', body: 'test from agent' },
       });
-      expect(ctx.reply).toHaveBeenCalledTimes(1);
+      expect(ctx.replyApprovalCard).toHaveBeenCalledTimes(1);
+      expect(ctx.reply).not.toHaveBeenCalled();
     });
 
     it('executes the approved tool on resume, records it, then delivers the reply', async () => {
@@ -211,6 +216,14 @@ describe('handleLangChainResult', () => {
       expect(formatReply).not.toHaveBeenCalled();
       expect(ctx.reply).not.toHaveBeenCalled();
       expect(ctx.typing.stop).toHaveBeenCalledTimes(1);
+    });
+
+    it('propagates invoke failures that are not tool-approval pauses', async () => {
+      const ctx = fakeRuntimeCtx();
+      const invokeErr = new Error('model unavailable');
+      invokeMock.mockRejectedValue(invokeErr);
+
+      await expect(handleLangChainResult(config(), ctx, undefined)).rejects.toThrow('model unavailable');
     });
   });
 

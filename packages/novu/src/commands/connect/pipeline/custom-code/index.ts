@@ -2,10 +2,7 @@ import { TemplateTypeEnum } from '../../../init/templates';
 import type { ResolvedConnectAuth } from '../../auth/resolve-connect-auth';
 import type { AgentSummary, ConnectCommandOptions, CustomCodeConnectOutcome } from '../../types';
 import type { ConnectUI } from '../../ui/ui';
-import {
-  defaultCustomCodeScaffoldDirName,
-  resolveAgentHandlerPathIfExists,
-} from '../bridge/agent-paths';
+import { defaultCustomCodeScaffoldDirName, resolveAgentHandlerPathIfExists } from '../bridge/agent-paths';
 import { confirmEmptyDirScaffold } from '../bridge/confirm-empty-dir-scaffold';
 import { requireConnectSecretKey } from '../bridge/require-secret-key';
 import { runScaffoldWithConsole } from '../bridge/run-scaffold-with-console';

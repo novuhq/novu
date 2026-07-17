@@ -82,4 +82,5 @@ export type LangChainAgentHandlers = Omit<AgentHandlers, 'onMessage' | 'onToolAp
     decision: ToolApprovalDecision,
     ctx: AgentActionContext
   ) => Awaitable<MessageContent | LangChainResult | ReplyHandle | void>;
+  onError?: AgentHandlers['onError'];
 };

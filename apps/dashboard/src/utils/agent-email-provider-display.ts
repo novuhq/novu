@@ -2,7 +2,7 @@ import { EmailProviderIdEnum } from '@novu/shared';
 
 export const AGENT_EMAIL_PROVIDER_LABEL = 'Email';
 
-export function isAgentEmailProvider(providerId: string): boolean {
+function isAgentEmailProvider(providerId: string): boolean {
   return providerId === EmailProviderIdEnum.NovuAgent;
 }
 

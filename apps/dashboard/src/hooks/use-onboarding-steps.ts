@@ -87,7 +87,7 @@ export function useOnboardingSteps(): OnboardingStepsResult {
       {
         id: StepIdEnum.ACCOUNT_CREATION,
         title: 'Account creation',
-        description: "We know it's not always easy — take a moment to celebrate!",
+        description: "We know it's not always easy: take a moment to celebrate!",
         status: 'completed',
       },
       {

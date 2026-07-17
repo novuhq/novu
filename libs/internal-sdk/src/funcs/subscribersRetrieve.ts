@@ -33,7 +33,7 @@ import { Result } from "../types/fp.js";
  * Retrieve a subscriber by its unique key identifier **subscriberId**.
  *     **subscriberId** field is required.
  *
- * This operation requires either {@link Security.bearerAuth} or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.
+ * This operation requires one of {@link Security.bearerAuth}, {@link Security.secretKey}, or {@link Security.bearerAuth} to be set on the `security` parameter when initializing the SDK.
  */
 export function subscribersRetrieve(
   client: NovuCore,

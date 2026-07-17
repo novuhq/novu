@@ -38,6 +38,7 @@ export type {
 export {
   Actions,
   AgentDeliveryError,
+  AgentError,
   agent,
   Button,
   buildAuthCtaCard,
@@ -51,6 +52,7 @@ export {
   Select,
   SelectOption,
   TextInput,
+  toAgentError,
   workflow,
 } from './resources';
 export type {

@@ -1,6 +1,6 @@
 {
   "name": "@novu/application-generic",
-  "version": "2.0.15",
+  "version": "2.0.16",
   "description": "Generic backend code used inside of Novu's different services",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -39,9 +39,10 @@
   "dependencies": {
     "@anthropic-ai/aws-sdk": "0.3.0",
     "@anthropic-ai/sdk": "0.95.1",
-    "@aws-sdk/client-s3": "^3.971.0",
-    "@aws-sdk/client-sqs": "^3.971.0",
-    "@aws-sdk/s3-request-presigner": "^3.971.0",
+    "@aws-sdk/client-s3": "^3.996.0",
+    "@aws-sdk/client-secrets-manager": "3.996.0",
+    "@aws-sdk/client-sqs": "^3.996.0",
+    "@aws-sdk/s3-request-presigner": "^3.996.0",
     "@azure/storage-blob": "^12.11.0",
     "@clickhouse/client": "^1.20.0",
     "@google-cloud/storage": "^6.2.3",

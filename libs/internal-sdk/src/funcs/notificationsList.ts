@@ -35,7 +35,7 @@ import { Result } from "../types/fp.js";
  *     Checkout all available filters in the query section.
  *     This API returns event triggers, to list each channel notifications, check messages APIs.
  *
- * This operation requires either {@link Security.bearerAuth} or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.
+ * This operation requires one of {@link Security.bearerAuth}, {@link Security.secretKey}, or {@link Security.bearerAuth} to be set on the `security` parameter when initializing the SDK.
  */
 export function notificationsList(
   client: NovuCore,

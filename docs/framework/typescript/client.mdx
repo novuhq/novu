@@ -1,6 +1,6 @@
 ---
 title: 'Client'
-description: 'Learn how to configure and use the Novu Framework Client for managing global settings'
+description: "Configure the Novu Framework Client for global settings like API URL, secret key, strict authentication, and payload logging in your bridge app."
 ---
 
 The `Client` is an optional Class you can pass to the `serve` function to override some global settings.
@@ -18,7 +18,7 @@ By default, we will inject a new instance of the `Client` class in your `serve` 
 
 - **Type**: `boolean`
 - **Default**: `process.env.NODE_ENV !== 'development'`
-- **Description**: This bypasses the HMAC signature verification, required for local development and testing against [Local Studio](/framework/studio).
+- **Description**: This bypasses the HMAC signature verification, required for [local development](/framework/studio) and testing against the Dashboard's Local environment.
 
 ### verbose
 

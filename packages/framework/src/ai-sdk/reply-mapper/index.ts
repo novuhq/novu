@@ -17,7 +17,7 @@ export function isGenerateResult(value: unknown): value is AiSdkGenerateResult {
     value !== null &&
     'text' in value &&
     'steps' in value &&
-    'totalUsage' in value &&
+    'usage' in value &&
     !isStreamResult(value)
   );
 }
@@ -57,7 +57,11 @@ export async function handleAiSdkResult(
   config: ToolApprovalConfig | undefined
 ): Promise<void> {
   if (isStreamResult(result)) {
-    await result.consumeStream();
+    await result.consumeStream({
+      onError: (err) => {
+        throw err;
+      },
+    });
   }
 
   // save executed tool results to Novu history

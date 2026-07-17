@@ -1,6 +1,7 @@
 import type { CardElement, ChatElement, Emoji } from 'chat';
 import type { TriggerRecipientsPayload } from '../../shared';
 import type { Awaitable } from '../../types/util.types';
+import type { AgentError } from './agent.errors';
 import type { ToolApprovalRequestPayload } from './tool-approval/action-id';
 export type { TriggerRecipientsPayload };
 
@@ -596,6 +597,15 @@ export interface AgentHandlers {
    */
   onToolApproval?: (decision: ToolApprovalDecision, ctx: AgentActionContext) => Awaitable<MessageContent | void>;
   /**
+   * Optional turn failure handler. Return `{ suppress: true }` to skip user notification,
+   * return message content for a custom user reply, or return nothing to auto-report
+   * `{ error: true }` to Novu (generic end-user copy delivered by the API).
+   */
+  onError?: (
+    error: AgentError,
+    ctx: AgentMessageContext | AgentActionContext | AgentReactionContext | AgentResolveContext
+  ) => Awaitable<AgentErrorResult>;
+  /**
    * Customize how approval messages look. Omit to use the built-in Approve/Deny card.
    */
   toolApproval?: ToolApprovalConfig;
@@ -606,6 +616,13 @@ export interface AgentHandlers {
    * Omit to use the built-in generic prompt.
    */
   auth?: AuthConfig;
+}
+
+export type AgentErrorSuppress = { suppress: true };
+export type AgentErrorResult = MessageContent | void | AgentErrorSuppress;
+
+export function isAgentErrorSuppress(result: AgentErrorResult | undefined): result is AgentErrorSuppress {
+  return typeof result === 'object' && result !== null && 'suppress' in result && result.suppress === true;
 }
 
 export interface Agent {
@@ -733,6 +750,8 @@ export interface AgentReplyPayload {
   addReactions?: AddReactionPayload[];
   deleteMessages?: DeleteMessagePayload[];
   typing?: TypingOp;
+  /** Bridge reports a real turn failure; Novu delivers generic user copy. */
+  error?: true;
 }
 
 /** Shape returned by /agents/:id/reply when a reply or edit was delivered. */

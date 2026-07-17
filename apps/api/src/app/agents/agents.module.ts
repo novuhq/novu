@@ -49,6 +49,7 @@ import { InboundDispatcher } from './conversation-runtime/ingress/inbound.dispat
 import { InboundConnectionContextResolver } from './conversation-runtime/ingress/inbound-connection-context.resolver';
 import { AgentInboundHandler } from './conversation-runtime/ingress/inbound-turn.handler';
 import { PlanLimitGateService } from './conversation-runtime/ingress/plan-limit-gate.service';
+import { ReplyApprovalInterceptor } from './conversation-runtime/ingress/reply-approval-interceptor.service';
 import { ConfirmLinkedAuthCards } from './conversation-runtime/link/confirm-linked-auth-cards.usecase';
 import { AgentReplyController } from './conversation-runtime/reply/agent-reply.controller';
 import { BridgeRuntime } from './conversation-runtime/runtime/bridge.runtime';
@@ -133,6 +134,7 @@ import { USE_CASES } from './usecases';
     AgentEmailActionTokenService,
     AgentActionTokenService,
     AgentInboundHandler,
+    ReplyApprovalInterceptor,
     BridgeExecutorService,
     BridgeExpireSupersededApprovalsService,
     BridgeRuntime,

@@ -20,7 +20,7 @@ The agent is unavailable right now. Please try again later.`;
 const ONBOARDING_NO_BRIDGE_TEXT =
   "I'm live but running on defaults. Connect your agent in the dashboard to customize how I respond.";
 
-function buildNoBridgeReply(dashboardUrl?: string): Record<string, unknown> {
+function buildNoBridgeReply(dashboardUrl?: string): CardElement {
   const children: CardChild[] = [{ type: 'text', content: ONBOARDING_NO_BRIDGE_TEXT }];
 
   if (dashboardUrl) {
@@ -33,9 +33,7 @@ function buildNoBridgeReply(dashboardUrl?: string): Record<string, unknown> {
     );
   }
 
-  const card: CardElement = { type: 'card', children };
-
-  return card as unknown as Record<string, unknown>;
+  return { type: 'card', children };
 }
 
 @Injectable()

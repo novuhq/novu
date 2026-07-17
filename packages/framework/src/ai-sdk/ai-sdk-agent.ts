@@ -86,6 +86,7 @@ export function agent(id: string, handlers: AiSdkMessageHandler | AiSdkAgentHand
     ...(h.onAction && { onAction: h.onAction }),
     ...(h.onReaction && { onReaction: h.onReaction }),
     ...(h.onResolve && { onResolve: h.onResolve }),
+    ...(h.onError && { onError: h.onError }),
   };
 
   return { id, handlers: wrappedHandlers, userOnToolApproval };

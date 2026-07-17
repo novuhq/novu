@@ -1,16 +1,21 @@
 import { atom, type WritableAtom } from 'nanostores';
 import type { GeneratedAgentSpec } from '../api/agents';
+import type { BridgeScaffoldVariant } from '../pipeline/bridge/types';
+import type { BridgeAdapterVariant } from '../pipeline/bridge-adapter/types';
+import type { LlmAuthKind } from '../pipeline/llm-auth/types';
 import type {
   AgentConnectMode,
   AgentSummary,
+  AiSdkConnectOutcome,
+  BridgeRequirement,
   ChannelChoice,
   ChatSdkConnectOutcome,
-  ChatSdkRequirement,
   CustomCodeConnectOutcome,
+  LangChainConnectOutcome,
 } from '../types';
-import type { BridgeScaffoldVariant } from '../pipeline/bridge/types';
+import type { BridgeReconcileVariant } from './bridge-reconcile-variant';
 import type {
-  ChatSdkTunnelOfferResult,
+  BridgeTunnelOfferResult,
   GeneratedAgentPreviewResult,
   PickAgentIntegrationResult,
   PickResult,
@@ -73,6 +78,12 @@ export type Phase =
       resolve: (overwrite: boolean) => void;
     }
   | {
+      kind: 'pick-llm-auth';
+      connectMode: BridgeAdapterVariant;
+      resolve: (kind: LlmAuthKind) => void;
+      reject: (error: Error) => void;
+    }
+  | {
       kind: 'confirm-scaffold';
       projectDir: string;
       appName: string;
@@ -81,27 +92,30 @@ export type Phase =
     }
   | { kind: 'scaffolding-bridge'; variant: BridgeScaffoldVariant }
   | {
-      kind: 'chat-sdk-reconcile-plan';
+      kind: 'bridge-reconcile-plan';
       projectDir: string;
-      requirements: ChatSdkRequirement[];
+      requirements: BridgeRequirement[];
       envPaths: string[];
       wiringInstructions?: string;
       requirementsFile?: string;
+      agentPrompt?: string;
+      variant?: BridgeReconcileVariant;
       resolve: () => void;
     }
-  | { kind: 'chat-sdk-install-deps' }
+  | { kind: 'bridge-install-deps'; variant?: BridgeReconcileVariant }
   | {
-      kind: 'chat-sdk-install-deps-confirm';
+      kind: 'bridge-install-deps-confirm';
       projectDir: string;
       installCommand: string;
       packages: string[];
+      variant?: BridgeReconcileVariant;
       resolve: (confirmed: boolean) => void;
     }
   | {
-      kind: 'chat-sdk-tunnel-offer';
+      kind: 'bridge-tunnel-offer';
       projectDir: string;
       devCommand: string;
-      resolve: (result: ChatSdkTunnelOfferResult) => void;
+      resolve: (result: BridgeTunnelOfferResult) => void;
     }
   | { kind: 'generating' }
   | {
@@ -176,6 +190,47 @@ export type Phase =
       deepLinkUrl: string;
       botUsername: string;
     }
+  | { kind: 'adding-sendblue' }
+  | {
+      kind: 'sendblue-intro';
+      dashboardUrl: string;
+      resolve: () => void;
+    }
+  | {
+      kind: 'sendblue-credential';
+      field: 'apiKey' | 'secretKey' | 'from';
+      step: number;
+      total: number;
+      title: string;
+      hint: string;
+      placeholder: string;
+      dashboardUrl: string;
+      secret?: boolean;
+      verificationError?: string;
+      resolve: (value: string) => void;
+    }
+  | { kind: 'configuring-sendblue-webhook' }
+  | {
+      kind: 'sendblue-webhook-manual';
+      callbackUrl: string;
+      webhookSecret?: string;
+      resolve: () => void;
+    }
+  | {
+      kind: 'sendblue-test-phone';
+      defaultPhone?: string;
+      fromNumber: string;
+      imessageUrl: string;
+      verificationError?: string;
+      resolve: (value: string) => void;
+    }
+  | { kind: 'sending-sendblue-test' }
+  | {
+      kind: 'sendblue-test-waiting';
+      phone: string;
+      fromNumber: string;
+      imessageUrl: string;
+    }
   | { kind: 'sending-welcome' }
   | {
       kind: 'success';
@@ -191,6 +246,8 @@ export type Phase =
       claimUrl: string | null;
       connectMode?: AgentConnectMode;
       chatSdkOutcome?: ChatSdkConnectOutcome;
+      aiSdkOutcome?: AiSdkConnectOutcome;
+      langChainOutcome?: LangChainConnectOutcome;
       customCodeOutcome?: CustomCodeConnectOutcome;
     }
   | { kind: 'error'; message: string };

@@ -53,7 +53,7 @@ function streamTextMock(overrides: Record<string, unknown> = {}): AiSdkStreamRes
   return {
     text: Promise.resolve(''),
     content: Promise.resolve([]),
-    response: Promise.resolve({ messages: [] }),
+    responseMessages: Promise.resolve([]),
     consumeStream: async () => {},
     ...overrides,
   } as unknown as AiSdkStreamResult;
@@ -63,9 +63,9 @@ function generateTextMock(overrides: Record<string, unknown> = {}): AiSdkGenerat
   return {
     text: '',
     steps: [],
-    totalUsage: {},
+    usage: {},
     content: [],
-    response: { messages: [] },
+    responseMessages: [],
     ...overrides,
   } as unknown as AiSdkGenerateResult;
 }
@@ -126,13 +126,16 @@ describe('ai-sdk agent adapter', () => {
     });
 
     it('accepts an object of handlers and passes optional handlers through', () => {
+      const onError = async () => ({ suppress: true as const });
       const supportAgent = agent('support', {
         onMessage: async () => undefined,
         onAction: async () => undefined,
+        onError,
       });
 
       expect(typeof supportAgent.handlers.onMessage).toBe('function');
       expect(typeof supportAgent.handlers.onAction).toBe('function');
+      expect(supportAgent.handlers.onError).toBe(onError);
     });
 
     it('throws when onMessage is missing', () => {

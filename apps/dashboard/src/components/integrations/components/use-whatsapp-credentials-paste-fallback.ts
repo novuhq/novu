@@ -27,7 +27,7 @@ function describeFollowUp(filled: WhatsAppCredentialField[]): string {
   }
 
   if (!filledSecret) {
-    return 'App Secret lives on a different page (App settings > Basic) — paste it manually below.';
+    return 'App Secret lives on a different page (App settings > Basic): paste it manually below.';
   }
 
   return 'You can save your credentials and move on to the next step.';
@@ -98,7 +98,7 @@ export function useWhatsAppCredentialsPasteFallback({
         const isSingular = maskedNames.length === 1;
         const headline =
           filled.length > 0
-            ? `Filled ${filled.length} of ${WHATSAPP_FIELD_COUNT} fields — ${formatList(maskedNames)} still hidden behind dots.`
+            ? `Filled ${filled.length} of ${WHATSAPP_FIELD_COUNT} fields: ${formatList(maskedNames)} still hidden behind dots.`
             : `${formatList(maskedNames)} ${isSingular ? 'is' : 'are'} still hidden behind dots in Meta.`;
 
         showWarningToast(

@@ -19,10 +19,6 @@ export function buildConnectClaimUrl(token: string): string {
   return `${resolveConnectClaimBaseUrl()}/connect/claim?token=${encodeURIComponent(token)}`;
 }
 
-export function toReplyCard(card: CardElement): Record<string, unknown> {
-  return card as unknown as Record<string, unknown>;
-}
-
 export function buildKeylessWelcomeCard(welcomeText: string, claimUrl: string): CardElement {
   return {
     type: 'card',

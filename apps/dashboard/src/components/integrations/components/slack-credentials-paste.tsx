@@ -353,7 +353,7 @@ function MaskedFieldsHeadline({ outcome }: { outcome: ApplyOutcome }) {
 
   let headline: string;
   if (filledCount > 0) {
-    headline = `Filled ${filledCount} of ${SLACK_FIELDS.length} fields — ${formatList(maskedNames)} still hidden.`;
+    headline = `Filled ${filledCount} of ${SLACK_FIELDS.length} fields: ${formatList(maskedNames)} still hidden.`;
   } else {
     headline = `${formatList(maskedNames)} ${isSingular ? 'is' : 'are'} still hidden behind dots.`;
   }

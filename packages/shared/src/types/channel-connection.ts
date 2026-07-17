@@ -39,6 +39,8 @@ export type ChannelConnection = {
   auth: {
     accessToken: string;
     refreshToken?: string;
+    expiresAt?: string;
+    refreshTokenExpiresAt?: string;
     signingSecret?: string;
     clientSecret?: string;
   };

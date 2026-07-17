@@ -114,10 +114,10 @@ export const AGENT_TEMPLATES: AgentTemplate[] = [
 
 4. REPORT: Present findings as:
 ### Situation summary
-- [Service] — [error rate or count] ([+/-]% vs baseline), likely started at [time]
+- [Service]: [error rate or count] ([+/-]% vs baseline), likely started at [time]
 
 ### Top issues
-- [Issue] — [count] events, [users] affected, first seen [time]. Likely cause: [hypothesis]. Next step: [specific action].
+- [Issue]: [count] events, [users] affected, first seen [time]. Likely cause: [hypothesis]. Next step: [specific action].
 
 ### Correlated signals
 - Logs, traces, or metrics that support or contradict each hypothesis.
@@ -127,7 +127,7 @@ export const AGENT_TEMPLATES: AgentTemplate[] = [
 
 Rules:
 - Lead with the highest user-impact issue, not the noisiest stack trace.
-- Tie every hypothesis to evidence from Sentry or Datadog — do not guess root cause.
+- Tie every hypothesis to evidence from Sentry or Datadog: do not guess root cause.
 - Call out if data is stale or a connector returned partial results.`,
     suggestedMcpServers: ['sentry', 'datadog'],
   },
@@ -145,14 +145,14 @@ Rules:
 
 4. REPORT: Present findings as:
 ### Shipping summary
-- Merged this period: [count] PRs — [highlights]
-- In flight: [count] PRs — [blockers if any]
+- Merged this period: [count] PRs: [highlights]
+- In flight: [count] PRs: [blockers if any]
 
 ### Needs attention
-- [PR or issue] — [status], blocked by [reason], suggested owner action.
+- [PR or issue]: [status], blocked by [reason], suggested owner action.
 
 ### Sprint health
-- [Team/project] — [done / in progress / at risk counts], biggest risk: [one line].
+- [Team/project]: [done / in progress / at risk counts], biggest risk: [one line].
 
 ### Suggested next steps
 - Concrete actions to unblock shipping (reviews, scope cuts, follow-up issues).
@@ -177,21 +177,21 @@ Rules:
 
 4. REPORT: Present findings as:
 ### Adoption summary
-- [Feature] — [unique users or events] ([+/-]% vs comparison period)
+- [Feature]: [unique users or events] ([+/-]% vs comparison period)
 - Activation rate: [X]% reached [key milestone]
 
 ### Funnel breakdown
 - Step-by-step conversion with the largest drop-off called out.
 
 ### Segment insights
-- Who adopted early vs who did not — patterns by segment or cohort.
+- Who adopted early vs who did not: patterns by segment or cohort.
 
 ### Product recommendations
 - Ship/no-ship signals, experiments to run, or instrumentation gaps to fix.
 
 Rules:
 - Always state the comparison window and cohort definition.
-- Separate correlation from causation — flag external factors (holidays, outages, pricing changes).
+- Separate correlation from causation: flag external factors (holidays, outages, pricing changes).
 - If event names or flags are ambiguous, ask which property defines "adoption" before concluding.`,
     suggestedMcpServers: ['posthog', 'amplitude'],
   },

@@ -75,6 +75,10 @@ import { LinkChannelEndpointRequestDto } from './dtos/link-channel-endpoint-requ
 import { LinkChannelEndpointResponseDto } from './dtos/link-channel-endpoint-response.dto';
 import { SlackQuickSetupRequestDto, SlackQuickSetupResponseDto } from './dtos/slack-quick-setup.dto';
 import { UpdateIntegrationRequestDto } from './dtos/update-integration.dto';
+import {
+  WhatsAppEmbeddedSignupRequestDto,
+  WhatsAppEmbeddedSignupResponseDto,
+} from './dtos/whatsapp-embedded-signup.dto';
 import { WhatsAppValidateTokenRequestDto, WhatsAppValidateTokenResponseDto } from './dtos/whatsapp-validate-token.dto';
 import { AutoConfigureIntegrationCommand } from './usecases/auto-configure-integration/auto-configure-integration.command';
 import { AutoConfigureIntegration } from './usecases/auto-configure-integration/auto-configure-integration.usecase';
@@ -117,6 +121,8 @@ import { SlackQuickSetupCommand } from './usecases/slack-quick-setup/slack-quick
 import { SlackQuickSetup } from './usecases/slack-quick-setup/slack-quick-setup.usecase';
 import { UpdateIntegrationCommand } from './usecases/update-integration/update-integration.command';
 import { UpdateIntegration } from './usecases/update-integration/update-integration.usecase';
+import { WhatsAppEmbeddedSignupCommand } from './usecases/whatsapp/whatsapp-embedded-signup.command';
+import { WhatsAppEmbeddedSignup } from './usecases/whatsapp/whatsapp-embedded-signup.usecase';
 import { WhatsAppValidateTokenCommand } from './usecases/whatsapp/whatsapp-validate-token.command';
 import { WhatsAppValidateToken } from './usecases/whatsapp/whatsapp-validate-token.usecase';
 
@@ -149,6 +155,7 @@ export class IntegrationsController {
     private azureSetupOauthCallbackUsecase: AzureSetupOauthCallback,
     private msTeamsHealthCheckUsecase: MsTeamsHealthCheck,
     private whatsAppValidateTokenUsecase: WhatsAppValidateToken,
+    private whatsAppEmbeddedSignupUsecase: WhatsAppEmbeddedSignup,
     private issueIntegrationStoreTelegramMobileLinkUsecase: IssueIntegrationStoreTelegramMobileLink,
     private issueTelegramSubscriberLinkUsecase: IssueTelegramSubscriberLink,
     private issueTelegramMobileLinkUsecase: IssueTelegramMobileLink,
@@ -677,7 +684,7 @@ export class IntegrationsController {
   @ApiOperation({
     summary: 'Generate chat OAuth URL',
     description: `**Deprecated** — use \`POST /integrations/channel-connections/oauth\` (connect) or \`POST /integrations/channel-endpoints/oauth\` (link_user) instead.
-    Generate an OAuth URL for chat integrations like Slack and MS Teams. 
+    Generate an OAuth URL for chat integrations like Slack, MS Teams, and Webex.
     This URL allows subscribers to authorize the integration, enabling the system to send messages 
     through their chat workspace. The generated URL expires after 5 minutes.`,
     deprecated: true,
@@ -713,7 +720,7 @@ export class IntegrationsController {
   @ApiResponse(GenerateChatOAuthUrlResponseDto, 201)
   @ApiOperation({
     summary: 'Generate OAuth URL for a workspace/tenant connection',
-    description: `Generate an OAuth URL that creates a workspace or tenant-level channel connection (Slack workspace install or MS Teams admin consent). 
+    description: `Generate an OAuth URL that creates a workspace or tenant-level channel connection (Slack workspace install, MS Teams admin consent, or Webex integration authorization).
     The generated URL expires after 5 minutes.`,
   })
   @SdkMethodName('generateConnectOAuthUrl')
@@ -746,7 +753,7 @@ export class IntegrationsController {
   @ApiResponse(GenerateChatOAuthUrlResponseDto, 201)
   @ApiOperation({
     summary: 'Generate OAuth URL to link a subscriber user identity',
-    description: `Generate an OAuth URL that links a specific subscriber to their chat identity (Slack user ID or MS Teams user OID). 
+    description: `Generate an OAuth URL that links a specific subscriber to their chat identity (Slack user ID, MS Teams user OID, or Webex person).
     The generated URL expires after 5 minutes.`,
   })
   @SdkMethodName('generateLinkUserOAuthUrl')
@@ -775,7 +782,7 @@ export class IntegrationsController {
   @Get('/chat/oauth/callback')
   @ApiOperation({
     summary: 'Handle chat OAuth callback',
-    description: `Generic OAuth callback handler for all chat integrations (Slack, Teams, Discord, etc.). 
+    description: `Generic OAuth callback handler for all chat integrations (Slack, Teams, Webex, etc.).
     This endpoint processes the authorization code and stores the connection for any supported chat provider.`,
   })
   @ApiExcludeEndpoint()
@@ -841,6 +848,35 @@ export class IntegrationsController {
         accessToken: body.accessToken,
         phoneNumberIdentification: body.phoneNumberIdentification,
         businessAccountId: body.businessAccountId,
+      })
+    );
+  }
+
+  @Post('/whatsapp/embedded-signup')
+  @ApiResponse(WhatsAppEmbeddedSignupResponseDto, 200)
+  @ApiOperation({
+    summary: 'Complete WhatsApp Embedded Signup',
+    description:
+      'Exchanges a Meta Embedded Signup authorization code for a business integration token, saves WhatsApp credentials on the integration, registers the phone number when possible, and configures the agent webhook with Meta.',
+  })
+  @ApiExcludeEndpoint()
+  @RequireAuthentication()
+  @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
+  @HttpCode(HttpStatus.OK)
+  async completeWhatsAppEmbeddedSignup(
+    @UserSession() user: UserSessionData,
+    @Body() body: WhatsAppEmbeddedSignupRequestDto
+  ): Promise<WhatsAppEmbeddedSignupResponseDto> {
+    return this.whatsAppEmbeddedSignupUsecase.execute(
+      WhatsAppEmbeddedSignupCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        code: body.code,
+        wabaId: body.wabaId,
+        phoneNumberId: body.phoneNumberId,
+        integrationIdentifier: body.integrationIdentifier,
+        agentIdentifier: body.agentIdentifier,
       })
     );
   }

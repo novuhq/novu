@@ -3,56 +3,14 @@ import { PinoLogger } from '@novu/application-generic';
 import {
   ConversationActivityEntity,
   ConversationActivitySenderTypeEnum,
-  ConversationActivityTypeEnum,
   ConversationChannel,
   ConversationEntity,
 } from '@novu/dal';
 import { captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
+import { findUnresolvedToolApprovalRequests } from '../../shared/tool-approval/unresolved-approvals';
 import { AgentConversationService } from '../conversation/agent-conversation.service';
 import { OutboundGateway } from '../egress/outbound.gateway';
 import type { ConversationTurn } from './conversation-turn';
-
-function findUnresolvedToolApprovalRequests(activities: ConversationActivityEntity[]): ConversationActivityEntity[] {
-  const chronological = [...activities].reverse();
-  const decidedApprovalIds = new Set<string>();
-  const resultToolCallIds = new Set<string>();
-
-  for (const activity of chronological) {
-    if (activity.type === ConversationActivityTypeEnum.TOOL_APPROVAL_DECISION) {
-      const approvalId = activity.toolData?.approvalId;
-      if (typeof approvalId === 'string') {
-        decidedApprovalIds.add(approvalId);
-      }
-    } else if (activity.type === ConversationActivityTypeEnum.TOOL_RESULT) {
-      const toolCallId = activity.toolData?.toolCallId;
-      if (typeof toolCallId === 'string') {
-        resultToolCallIds.add(toolCallId);
-      }
-    }
-  }
-
-  const unresolved: ConversationActivityEntity[] = [];
-
-  for (const activity of chronological) {
-    if (activity.type !== ConversationActivityTypeEnum.TOOL_APPROVAL_REQUEST) {
-      continue;
-    }
-
-    const approvalId = activity.toolData?.approvalId;
-    const toolCallId = activity.toolData?.toolCallId;
-    if (typeof approvalId !== 'string' || typeof toolCallId !== 'string') {
-      continue;
-    }
-
-    if (decidedApprovalIds.has(approvalId) || resultToolCallIds.has(toolCallId)) {
-      continue;
-    }
-
-    unresolved.push(activity);
-  }
-
-  return unresolved;
-}
 
 /**
  * Self-hosted bridge only: when the user sends a new message while tool-approval
