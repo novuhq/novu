@@ -12,6 +12,14 @@ import { esmImport } from '../../shared/util/esm-import';
 import { AgentActionTokenService } from '../action-token/agent-action-token.service';
 import type { InboundReactionEvent } from './inbound-turn.handler';
 
+interface ChatStateLogger {
+  debug: (msg: string, ctx?: Record<string, unknown>) => void;
+  info: (msg: string, ctx?: Record<string, unknown>) => void;
+  warn: (msg: string, ctx?: Record<string, unknown>) => void;
+  error: (msg: string, ctx?: Record<string, unknown>) => void;
+  child: (prefix?: unknown) => ChatStateLogger;
+}
+
 export interface InboundCallbacks {
   onMessage: (agentId: string, config: ResolvedAgentConfig, thread: Thread, message: Message) => Promise<void>;
   onAction: (
@@ -218,12 +226,19 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
     });
   }
 
-  private chatStateLogger() {
+  // The Chat SDK's getLogger(prefix) returns this.logger.child(prefix) when a
+  // prefix is supplied (see chat's getLogger). Platform adapters (e.g. Sendblue)
+  // request a prefixed logger during initialize, so the object we hand to the
+  // SDK must expose a pino-style child() that yields the same shape - otherwise
+  // adapter init throws "this.logger.child is not a function".
+  private chatStateLogger(bindings?: Record<string, unknown>): ChatStateLogger {
+    const mergeCtx = (ctx?: Record<string, unknown>) => (bindings ? { ...bindings, ...(ctx ?? {}) } : (ctx ?? {}));
+
     return {
-      debug: (msg: string, ctx?: Record<string, unknown>) => this.logger.debug(ctx ?? {}, msg),
-      info: (msg: string, ctx?: Record<string, unknown>) => this.logger.info(ctx ?? {}, msg),
+      debug: (msg: string, ctx?: Record<string, unknown>) => this.logger.debug(mergeCtx(ctx), msg),
+      info: (msg: string, ctx?: Record<string, unknown>) => this.logger.info(mergeCtx(ctx), msg),
       warn: (msg: string, ctx?: Record<string, unknown>) => {
-        this.logger.warn(ctx ?? {}, msg);
+        this.logger.warn(mergeCtx(ctx), msg);
         if (ctx?.err) {
           captureAgentWarning(ctx.err, {
             component: 'chat-instance-registry',
@@ -233,7 +248,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
         }
       },
       error: (msg: string, ctx?: Record<string, unknown>) => {
-        this.logger.error(ctx ?? {}, msg);
+        this.logger.error(mergeCtx(ctx), msg);
         if (ctx?.err) {
           captureAgentException(ctx.err, {
             component: 'chat-instance-registry',
@@ -241,6 +256,11 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
             extra: { message: msg },
           });
         }
+      },
+      child: (prefix?: unknown) => {
+        const extra = prefix && typeof prefix === 'object' ? (prefix as Record<string, unknown>) : {};
+
+        return this.chatStateLogger({ ...(bindings ?? {}), ...extra });
       },
     };
   }
