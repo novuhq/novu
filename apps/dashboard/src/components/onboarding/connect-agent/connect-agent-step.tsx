@@ -341,6 +341,7 @@ export function ConnectAgentStep({
             const message = err instanceof NovuApiError ? err.message : 'Could not create agent.';
             showErrorToast(message, 'Create failed');
           },
+          analyticsSource: 'dashboard_onboarding',
         }
       );
     },
@@ -976,6 +977,7 @@ export function ConnectAgentStep({
           });
           showErrorToast(message, 'Create failed');
         },
+        analyticsSource: 'dashboard_onboarding',
       }
     );
   };

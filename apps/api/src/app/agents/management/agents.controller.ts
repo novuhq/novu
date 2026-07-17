@@ -4,6 +4,7 @@ import {
   Controller,
   Delete,
   Get,
+  Headers,
   HttpCode,
   HttpStatus,
   Param,
@@ -16,7 +17,14 @@ import {
 } from '@nestjs/common';
 import { ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { RequirePermissions } from '@novu/application-generic';
-import { ApiRateLimitCategoryEnum, DirectionEnum, PermissionsEnum, UserSessionData } from '@novu/shared';
+import {
+  ApiRateLimitCategoryEnum,
+  DirectionEnum,
+  isAgentAnalyticsSource,
+  NOVU_ANALYTICS_SOURCE_HEADER,
+  PermissionsEnum,
+  UserSessionData,
+} from '@novu/shared';
 import { RequireAuthentication } from '../../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../../auth/framework/external-api.decorator';
 import { ThrottlerCategory } from '../../rate-limiting/guards';
@@ -118,7 +126,11 @@ export class AgentsController {
   })
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)
   @UseFilters(AgentRuntimeExceptionFilter)
-  createAgent(@UserSession() user: UserSessionData, @Body() body: CreateAgentRequestDto): Promise<AgentResponseDto> {
+  createAgent(
+    @UserSession() user: UserSessionData,
+    @Body() body: CreateAgentRequestDto,
+    @Headers(NOVU_ANALYTICS_SOURCE_HEADER) analyticsSourceHeader?: string
+  ): Promise<AgentResponseDto> {
     return this.createAgentUsecase.execute(
       CreateAgentCommand.create({
         userId: user._id,
@@ -130,6 +142,7 @@ export class AgentsController {
         active: body.active,
         runtime: body.runtime,
         managedRuntime: body.managedRuntime,
+        analyticsSource: isAgentAnalyticsSource(analyticsSourceHeader) ? analyticsSourceHeader : undefined,
       })
     );
   }
