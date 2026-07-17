@@ -62,6 +62,19 @@ export async function maybeReplyUnresolvedSubscriberAccess(params: {
     return true;
   }
 
+  // Restricted custom-code (bridge) agents delegate the unlinked-sender gate to the
+  // framework, which posts the auth CTA card (and arms the "account linked" edit)
+  // once the turn reaches the bridge. Managed agents have no such card, and
+  // error/invalid_identity/email-unverified stay on the plain reply below.
+  if (
+    !turn.config.isManaged &&
+    turn.config.subscriberAccess === AgentSubscriberAccessEnum.RESTRICTED &&
+    resolution.outcome === 'not_found' &&
+    !emailSenderUnverified
+  ) {
+    return false;
+  }
+
   await postUnresolvedSubscriberAccessReply({
     turn,
     logger,
