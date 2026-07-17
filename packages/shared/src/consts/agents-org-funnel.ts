@@ -20,7 +20,7 @@ export const AGENTS_USECASE_SOURCES = ['usecase_picker', 'product_type_deeplink'
 export type AgentsUsecaseSource = (typeof AGENTS_USECASE_SOURCES)[number];
 
 /** Request header used by dashboard/CLI to attribute Agent Created funnel source. */
-export const NOVU_ANALYTICS_SOURCE_HEADER = 'novu-analytics-source';
+export const NOVU_ANALYTICS_SOURCE_HEADER = 'Novu-Analytics-Source';
 
 export function isAgentAnalyticsSource(value: unknown): value is AgentAnalyticsSource {
   return typeof value === 'string' && (AGENT_ANALYTICS_SOURCES as readonly string[]).includes(value);
