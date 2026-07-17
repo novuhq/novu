@@ -10,21 +10,21 @@ const AGENT_SEGMENT_CATEGORY = '[Agents]';
 export function trackAgentsUsecaseSelected(
   analytics: AnalyticsService,
   params: {
+    userId: string;
     organizationId: string;
     source: AgentsUsecaseSource;
-    userId?: string;
   }
 ): void {
-  analytics.track(AGENTS_ORG_FUNNEL_EVENTS.USECASE_SELECTED, params.organizationId, {
+  analytics.track(AGENTS_ORG_FUNNEL_EVENTS.USECASE_SELECTED, params.userId, {
     _organization: params.organizationId,
     source: params.source,
-    ...(params.userId ? { userId: params.userId } : {}),
   });
 }
 
 export function trackAgentCreated(
   analytics: AnalyticsService,
   params: {
+    userId: string;
     organizationId: string;
     environmentId: string;
     agentId: string;
@@ -32,7 +32,6 @@ export function trackAgentCreated(
     active: boolean;
     name: string;
     source?: AgentAnalyticsSource;
-    userId?: string;
     runtime?: string;
   }
 ): void {
@@ -41,13 +40,13 @@ export function trackAgentCreated(
   // CLI has no usecase picker — fire intent before Agent Created so Mixpanel order is preserved.
   if (source === 'cli') {
     trackAgentsUsecaseSelected(analytics, {
+      userId: params.userId,
       organizationId: params.organizationId,
       source: 'cli',
-      userId: params.userId,
     });
   }
 
-  analytics.track(AGENTS_ORG_FUNNEL_EVENTS.AGENT_CREATED, params.organizationId, {
+  analytics.track(AGENTS_ORG_FUNNEL_EVENTS.AGENT_CREATED, params.userId, {
     _organization: params.organizationId,
     environmentId: params.environmentId,
     agentId: params.agentId,
@@ -55,7 +54,6 @@ export function trackAgentCreated(
     active: params.active,
     name: params.name,
     source,
-    ...(params.userId ? { userId: params.userId } : {}),
     ...(params.runtime ? { runtime: params.runtime } : {}),
   });
 }
@@ -447,6 +445,7 @@ export function trackAgentActiveConversationLimitReached(
 export function trackAgentIntegrationFirstWebhook(
   analytics: AnalyticsService,
   params: {
+    userId: string;
     organizationId: string;
     environmentId: string;
     agentId: string;
@@ -467,6 +466,6 @@ export function trackAgentIntegrationFirstWebhook(
     ...(params.providerId ? { providerId: params.providerId } : {}),
   };
 
-  analytics.track(AGENTS_ORG_FUNNEL_EVENTS.FIRST_INBOUND, params.organizationId, props);
-  analytics.track(AGENTS_ORG_FUNNEL_EVENTS.FIRST_WEBHOOK_LEGACY, params.organizationId, props);
+  analytics.track(AGENTS_ORG_FUNNEL_EVENTS.FIRST_INBOUND, params.userId, props);
+  analytics.track(AGENTS_ORG_FUNNEL_EVENTS.FIRST_WEBHOOK_LEGACY, params.userId, props);
 }

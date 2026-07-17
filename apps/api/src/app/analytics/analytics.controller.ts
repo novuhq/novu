@@ -2,12 +2,10 @@ import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { SkipThrottle } from '@nestjs/throttler';
 import { AnalyticsService, ExternalApiAccessible, SkipPermissionsCheck, UserSession } from '@novu/application-generic';
-import { AGENTS_ORG_FUNNEL_EVENTS, UserSessionData } from '@novu/shared';
+import { UserSessionData } from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { HubspotIdentifyFormCommand } from './usecases/hubspot-identify-form/hubspot-identify-form.command';
 import { HubspotIdentifyFormUsecase } from './usecases/hubspot-identify-form/hubspot-identify-form.usecase';
-
-const ORG_SCOPED_TELEMETRY_EVENTS = new Set<string>(Object.values(AGENTS_ORG_FUNNEL_EVENTS));
 
 @Controller({
   path: 'telemetry',
@@ -29,16 +27,9 @@ export class AnalyticsController {
     @Body('data') data: Record<string, unknown> = {},
     @UserSession() user: UserSessionData
   ): Promise<any> {
-    const useOrganizationIdentity =
-      Boolean(user?.organizationId) &&
-      (ORG_SCOPED_TELEMETRY_EVENTS.has(event) || data.analyticsIdentity === 'organization');
-
-    const distinctId = useOrganizationIdentity ? user.organizationId : user._id;
-
-    this.analyticsService.track(event, distinctId, {
+    this.analyticsService.track(event, user._id, {
       ...data,
       _organization: user?.organizationId,
-      ...(useOrganizationIdentity ? { userId: user._id } : {}),
     });
 
     return {

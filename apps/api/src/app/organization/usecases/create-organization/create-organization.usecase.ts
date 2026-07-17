@@ -72,11 +72,10 @@ export class CreateOrganization {
 
     this.analyticsService.upsertGroup(createdOrganization._id, createdOrganization, user);
 
-    this.analyticsService.track('[Authentication] - Create Organization', createdOrganization._id, {
+    this.analyticsService.track('[Authentication] - Create Organization', user._id, {
       _organization: createdOrganization._id,
       language: command.language,
       creatorJobTitle: command.jobTitle,
-      userId: user._id,
     });
 
     const organizationAfterChanges = await this.getOrganizationUsecase.execute(

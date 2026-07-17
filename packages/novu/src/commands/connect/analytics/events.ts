@@ -1,7 +1,7 @@
 import { AnalyticService } from '../../../services/analytics.service';
 
 /**
- * Recommended Mixpanel funnel (org-scoped, `distinct_id = organizationId`):
+ * Recommended Mixpanel funnel (user identity + `_organization` for org filters):
  *
  * 1. [Authentication] - Create Organization
  * 2. Agents Usecase Selected - [Agents]  (CLI fires this on Agent Created with source=cli)

@@ -1,5 +1,7 @@
 /**
- * Org-scoped Mixpanel activation funnel (distinct_id = organizationId):
+ * Agents activation Mixpanel funnel. Identity is always the acting userId;
+ * `_organization` is attached for org-level filtering/breakdown.
+ *
  * Create Organization → Agents Usecase Selected → Agent Created → Agent First Inbound Message
  */
 export const AGENTS_ORG_FUNNEL_EVENTS = {
