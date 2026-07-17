@@ -29,6 +29,7 @@ import { isAbsoluteUrl } from '@/utils/apps';
 import { clearPersistedCliOnboardingSessionId } from '@/utils/cli-onboarding-identity';
 import { getPostOnboardingRoute, withOnboardingSource } from '@/utils/onboarding-redirect';
 import { clearPendingProductType, readPendingProductType } from '@/utils/product-type-pending';
+import { trackAgentsUsecaseSelected } from '@/utils/agents-org-funnel';
 import { AGENT_DETAILS_DEFAULT_TAB, buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 
@@ -167,6 +168,7 @@ export function AgentsSetupPage() {
     }
 
     productUseCasesPersistedRef.current = true;
+    void trackAgentsUsecaseSelected('product_type_deeplink');
     updateProductUseCases.mutate({ [ProductUseCasesEnum.AGENTS]: true });
     clearPendingProductType();
   }, [areAgentsAvailable, currentOrganization?._id, updateProductUseCases]);
