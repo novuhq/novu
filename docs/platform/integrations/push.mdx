@@ -981,3 +981,11 @@ Novu supports the following providers:
   Learn how to use the Pushpad provider to send push notifications using Novu.
   </Card>
 </Columns>
+
+## Frequently asked questions
+
+<AccordionGroup>
+  <Accordion title="Can Novu send actionable notifications to Apple Watch?">
+    Yes. Apple Watch notifications use the same iOS push integration as iPhone notifications, so no separate provider is required. Connect an iOS push provider and register the device token. For action buttons, configure notification categories in your iOS app and send the matching category in the push overrides. See the [APNS](/platform/integrations/push/apns) or [OneSignal](/platform/integrations/push/onesignal) guides.
+  </Accordion>
+</AccordionGroup>
