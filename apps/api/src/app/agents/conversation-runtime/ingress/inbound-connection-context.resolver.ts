@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import {
+  type ChannelConnectionEntity,
   ChannelConnectionRepository,
   ChannelEndpointRepository,
   type ContextEntity,
@@ -87,9 +88,17 @@ export class InboundConnectionContextResolver {
     workspaceId: string | null,
     platformUserId: string | null
   ): Promise<AgentContextPayload | null> {
+    // Resolve the workspace connection first so the per-user endpoint lookup can be scoped to it.
+    const connection = await this.findWorkspaceConnection(config, workspaceId);
+
     const [workspaceContext, endpointContext] = await Promise.all([
-      this.resolveByWorkspace(config, workspaceId),
-      platformUserId ? this.resolveByEndpoint(config, platformUserId) : Promise.resolve(null),
+      this.buildWorkspaceContext(config, connection, workspaceId),
+      // Scope the per-user endpoint to the resolved workspace connection. Without it, a platform
+      // user (e.g. a Slack `userId`) linked in another customer org — which shares Novu's hosted
+      // env/integration — could match here and override the current workspace's tenant.
+      platformUserId && connection
+        ? this.resolveByEndpoint(config, platformUserId, connection.identifier)
+        : Promise.resolve(null),
     ]);
 
     if (!workspaceContext && !endpointContext) {
@@ -99,23 +108,39 @@ export class InboundConnectionContextResolver {
     return { ...(workspaceContext ?? {}), ...(endpointContext ?? {}) };
   }
 
-  private async resolveByWorkspace(
+  private async findWorkspaceConnection(
     config: ResolvedAgentConfig,
     workspaceId: string | null
-  ): Promise<AgentContextPayload | null> {
+  ): Promise<ChannelConnectionEntity | null> {
     if (!workspaceId) {
       return null;
     }
 
     try {
-      const connection = await this.channelConnectionRepository.findOne({
+      return await this.channelConnectionRepository.findOne({
         _environmentId: config.environmentId,
         _organizationId: config.organizationId,
         integrationIdentifier: config.integrationIdentifier,
         'workspace.id': workspaceId,
       });
+    } catch (err) {
+      this.logResolveFailure(err, config, { scope: 'workspace', workspaceId });
 
-      return await this.buildContextFromKeys(config, connection?.contextKeys);
+      return null;
+    }
+  }
+
+  private async buildWorkspaceContext(
+    config: ResolvedAgentConfig,
+    connection: ChannelConnectionEntity | null,
+    workspaceId: string | null
+  ): Promise<AgentContextPayload | null> {
+    if (!connection) {
+      return null;
+    }
+
+    try {
+      return await this.buildContextFromKeys(config, connection.contextKeys);
     } catch (err) {
       this.logResolveFailure(err, config, { scope: 'workspace', workspaceId });
 
@@ -130,7 +155,8 @@ export class InboundConnectionContextResolver {
    */
   private async resolveByEndpoint(
     config: ResolvedAgentConfig,
-    platformUserId: string | null
+    platformUserId: string | null,
+    connectionIdentifier?: string
   ): Promise<AgentContextPayload | null> {
     const endpointConfig = PLATFORM_ENDPOINT_CONFIG[config.platform];
 
@@ -146,6 +172,7 @@ export class InboundConnectionContextResolver {
         type: endpointConfig.endpointType,
         endpointField: endpointConfig.identityField,
         endpointValue: platformUserId,
+        connectionIdentifier,
       });
 
       return await this.buildContextFromKeys(config, endpoint?.contextKeys);

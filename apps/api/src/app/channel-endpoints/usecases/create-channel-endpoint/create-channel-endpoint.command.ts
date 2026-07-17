@@ -1,6 +1,6 @@
 import { BaseCommand, IsValidContextPayload } from '@novu/application-generic';
 import { ChannelEndpointByType, ChannelEndpointType, ContextPayload, ENDPOINT_TYPES } from '@novu/shared';
-import { IsArray, IsDefined, IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsBoolean, IsDefined, IsEnum, IsOptional, IsString } from 'class-validator';
 import { EnvironmentCommand } from '../../../shared/commands/project.command';
 import { IsValidChannelEndpoint } from '../../validators/channel-endpoint.validator';
 
@@ -46,6 +46,22 @@ export class CreateChannelEndpointCommand<
   @IsValidChannelEndpoint()
   endpoint: ChannelEndpointByType[T];
 
+  /**
+   * Trust marker: `true` only when the caller has verified that the
+   * `(platform, platformUserId)` in `endpoint` genuinely belongs to the linking
+   * user — e.g. resolved from a signed OAuth token exchange, a verified provider
+   * deep-link, or an authenticated inbound webhook. It gates the real-time
+   * confirmation of a subscriber's pending auth CTA cards, which is a
+   * security-sensitive action that must never fire on a user-supplied identity.
+   *
+   * Left unset by the public channel-endpoint API (`POST /v1/channel-endpoints`)
+   * and any other caller that accepts an arbitrary `endpoint` payload, so a
+   * client cannot force-confirm another user's auth gate by claiming their id.
+   */
+  @IsOptional()
+  @IsBoolean()
+  platformIdentityVerified?: boolean;
+
   static create<T extends ChannelEndpointType>(data: {
     organizationId: string;
     environmentId: string;
@@ -57,6 +73,7 @@ export class CreateChannelEndpointCommand<
     contextKeys?: string[];
     type: T;
     endpoint: ChannelEndpointByType[T];
+    platformIdentityVerified?: boolean;
   }): CreateChannelEndpointCommand<T> {
     // Call BaseCommand.create with the correct constructor to ensure full inheritance chain validation
     // biome-ignore lint/complexity/noThisInStatic: Required to maintain proper this context for validation

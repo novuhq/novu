@@ -194,6 +194,8 @@ export class MsTeamsOauthCallback {
         contextKeys: stateData.contextKeys,
         type: ENDPOINT_TYPES.MS_TEAMS_USER,
         endpoint: { userId: oid, tenantId: userTenantId },
+        // oid comes from the verified MS Teams id_token claims.
+        platformIdentityVerified: true,
       })
     );
   }

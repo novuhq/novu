@@ -107,6 +107,22 @@ function resolveEffectiveSubscriberAccess(
   return explicit;
 }
 
+/**
+ * Extract log-safe fields from an error thrown by an axios request. Raw axios errors carry the full
+ * request `config` — including the `Authorization: Bearer <token>` header — plus `request`/`response`
+ * objects, so they must never be logged directly. Returns only the HTTP status, the Slack error code
+ * (when present) and a short message string.
+ */
+function toLogSafeError(err: unknown): { status?: number; slackError?: string; message: string } {
+  if (axios.isAxiosError(err)) {
+    const data = err.response?.data as { error?: string } | undefined;
+
+    return { status: err.response?.status, slackError: data?.error, message: err.message };
+  }
+
+  return { message: err instanceof Error ? err.message : String(err) };
+}
+
 function isDuplicateKeyError(err: unknown): boolean {
   return Boolean(err && typeof err === 'object' && 'code' in err && (err as { code: unknown }).code === 11000);
 }
@@ -494,7 +510,7 @@ export class AgentConfigResolver {
       return botUserId;
     } catch (err) {
       this.logger.warn(
-        { err, integrationIdentifier: connection.integrationIdentifier },
+        { err: toLogSafeError(err), integrationIdentifier: connection.integrationIdentifier },
         'Failed to backfill Slack botUserId; continuing without it'
       );
 

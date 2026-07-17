@@ -2633,4 +2633,98 @@ describe('auth gate account-linked confirmation', () => {
     expect(metadataSet(bodies, AUTH_LINKED_CARD_KEY)).toBeUndefined();
     expect(bodies.some((b) => b.reply?.markdown === 'hi')).toBe(true);
   });
+
+  it('gates tool-approval actions from an unlinked author on a restricted agent', async () => {
+    const onToolApproval = vi.fn(async () => {});
+    const bot = agent('test-bot', {
+      onMessage: vi.fn(async () => {}),
+      onToolApproval,
+      auth: { linkUrl: 'https://app.example/connect' },
+    });
+
+    await dispatchAgentEvent({
+      agent: bot,
+      event: 'onAction',
+      bridge: createMockBridgeRequest({
+        event: 'onAction',
+        subscriberAccess: 'restricted',
+        subscriber: { subscriberId: 'sub-001', isLinked: false },
+        message: null,
+        action: { id: buildApprovalActionId('approve', 'tc'), sourceMessageId: 'm_prev' },
+        history: [
+          {
+            role: 'agent',
+            type: 'tool_approval_request',
+            content: '',
+            toolData: { approvalId: 'tc', toolCallId: 'tc', toolName: 'doIt', input: { x: 1 } },
+            createdAt: '1',
+          },
+        ],
+      } as never),
+      secretKey: 'test-secret-key',
+    });
+
+    // The sensitive approval handler must not run for an unlinked clicker.
+    expect(onToolApproval).not.toHaveBeenCalled();
+    // The gate posts the sign-in CTA instead.
+    expect(postedBodies().some((b) => b.reply?.card)).toBe(true);
+  });
+
+  it('runs tool-approval actions when the restricted author is linked', async () => {
+    const onToolApproval = vi.fn(async () => {});
+    const bot = agent('test-bot', {
+      onMessage: vi.fn(async () => {}),
+      onToolApproval,
+      auth: { linkUrl: 'https://app.example/connect' },
+    });
+
+    await dispatchAgentEvent({
+      agent: bot,
+      event: 'onAction',
+      bridge: createMockBridgeRequest({
+        event: 'onAction',
+        subscriberAccess: 'restricted',
+        subscriber: { subscriberId: 'sub-001', isLinked: true },
+        message: null,
+        action: { id: buildApprovalActionId('approve', 'tc'), sourceMessageId: 'm_prev' },
+        history: [
+          {
+            role: 'agent',
+            type: 'tool_approval_request',
+            content: '',
+            toolData: { approvalId: 'tc', toolCallId: 'tc', toolName: 'doIt', input: { x: 1 } },
+            createdAt: '1',
+          },
+        ],
+      } as never),
+      secretKey: 'test-secret-key',
+    });
+
+    expect(onToolApproval).toHaveBeenCalledTimes(1);
+  });
+
+  it('gates reactions from an unlinked author on a restricted agent', async () => {
+    const onReaction = vi.fn(async () => {});
+    const bot = agent('test-bot', {
+      onMessage: vi.fn(async () => {}),
+      onReaction,
+      auth: { linkUrl: 'https://app.example/connect' },
+    });
+
+    await dispatchAgentEvent({
+      agent: bot,
+      event: 'onReaction',
+      bridge: createMockBridgeRequest({
+        event: 'onReaction',
+        subscriberAccess: 'restricted',
+        subscriber: { subscriberId: 'sub-001', isLinked: false },
+        message: null,
+        reaction: { emoji: '+1', platformMessageId: 'm_prev', action: 'added' },
+      } as never),
+      secretKey: 'test-secret-key',
+    });
+
+    expect(onReaction).not.toHaveBeenCalled();
+    expect(postedBodies().some((b) => b.reply?.card)).toBe(true);
+  });
 });

@@ -83,6 +83,8 @@ export class SlackOauthCallback {
             contextKeys: stateData.contextKeys,
             type: ENDPOINT_TYPES.SLACK_USER,
             endpoint: { userId: authData.authed_user.id },
+            // userId comes from the verified Slack OAuth token exchange.
+            platformIdentityVerified: true,
           })
         );
       }
@@ -214,6 +216,8 @@ export class SlackOauthCallback {
         contextKeys: stateData.contextKeys,
         type: ENDPOINT_TYPES.SLACK_USER,
         endpoint: { userId },
+        // userId comes from the verified Slack OAuth token exchange.
+        platformIdentityVerified: true,
       })
     );
   }

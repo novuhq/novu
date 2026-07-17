@@ -108,7 +108,16 @@ export class CreateChannelEndpoint {
 
     // Best-effort, non-blocking: linking is the moment a pending auth CTA card can be
     // confirmed. Never let it fail or slow endpoint creation.
-    void this.confirmLinkedAuthCards(command, integration);
+    //
+    // Gated on `platformIdentityVerified`: confirming a subscriber's pending auth CTA
+    // is security-sensitive, so it must only fire when the caller has verified that the
+    // `platformUserId` in the payload actually belongs to the linking user (OAuth token
+    // exchange, verified provider deep-link, or authenticated inbound webhook). Callers
+    // that accept an arbitrary `endpoint` (e.g. the public channel-endpoint API) leave
+    // it unset, so a client cannot force-confirm another user's auth gate.
+    if (command.platformIdentityVerified === true) {
+      void this.confirmLinkedAuthCards(command, integration);
+    }
 
     return channelEndpoint;
   }
