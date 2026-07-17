@@ -1,4 +1,5 @@
 import type {
+  AgentAnalyticsSource,
   AgentMcpServerEnablementDto,
   AgentRuntime,
   AgentRuntimeProviderIdEnum,
@@ -7,6 +8,7 @@ import type {
   DirectionEnum,
   IEnvironment,
 } from '@novu/shared';
+import { NOVU_ANALYTICS_SOURCE_HEADER } from '@novu/shared';
 import type { AgentPlanUsage, PlanUsage } from '@/api/agents-plan-usage';
 import { del, get, getApiBaseUrl, NovuApiError, patch, post, put } from '@/api/api.client';
 
@@ -289,8 +291,18 @@ export async function migrateAgentRuntime(
   return 'data' in response ? response.data : response;
 }
 
-export async function createAgent(environment: IEnvironment, body: CreateAgentBody): Promise<AgentResponse> {
-  const response = await post<AgentApiEnvelope>('/agents', { environment, body });
+export async function createAgent(
+  environment: IEnvironment,
+  body: CreateAgentBody,
+  options?: { analyticsSource?: AgentAnalyticsSource }
+): Promise<AgentResponse> {
+  const response = await post<AgentApiEnvelope>('/agents', {
+    environment,
+    body,
+    headers: options?.analyticsSource
+      ? { [NOVU_ANALYTICS_SOURCE_HEADER]: options.analyticsSource }
+      : undefined,
+  });
 
   return response.data;
 }
