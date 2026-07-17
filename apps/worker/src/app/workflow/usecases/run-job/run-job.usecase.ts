@@ -731,9 +731,14 @@ export class RunJob {
     };
 
     if (digestKey && digestValue) {
-      // Payload-dedup: match on the digest metadata persisted on the job rather
-      // than the (possibly absent) trigger payload.
-      (jobQuery as Record<string, unknown>)['digest.digestValue'] = digestValue;
+      // Payload-dedup jobs persist `digest.digestValue`; legacy digest jobs
+      // (created before it was persisted) still carry the value in the trigger
+      // payload, so fall back to matching it there. Without this, a canceled
+      // legacy delayed digest wouldn't find its follower and the chain stalls.
+      (jobQuery as Record<string, unknown>).$or = [
+        { 'digest.digestValue': digestValue },
+        { [`payload.${digestKey}`]: digestValue },
+      ];
     }
 
     return await this.jobRepository.findOne(jobQuery);
