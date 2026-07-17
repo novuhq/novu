@@ -322,6 +322,7 @@ export function AgentsList() {
           const message = err instanceof NovuApiError ? err.message : 'Could not create agent.';
           showErrorToast(message, 'Create failed');
         },
+        analyticsSource: 'dashboard',
       });
     },
     [submitCreateAgent, track, currentEnvironment, agentRoutes.detailsTab, location.search, navigate]
@@ -377,6 +378,7 @@ export function AgentsList() {
             const message = err instanceof NovuApiError ? err.message : 'Could not create agent.';
             showErrorToast(message, 'Create failed');
           },
+          analyticsSource: 'dashboard',
         }
       );
     },
