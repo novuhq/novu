@@ -14,7 +14,7 @@ export function BubbleMenuButton(item: BubbleMenuItem) {
       data-state={item?.isActive?.()}
       className={cn('!mly-size-7 mly-px-2.5 disabled:mly-cursor-not-allowed', item?.className)}
       type="button"
-      disabled={item.disbabled}
+      disabled={item.disabled}
     >
       {item.icon ? (
         <item.icon className={cn('mly-h-3 mly-w-3 mly-shrink-0 mly-stroke-[2.5]', item?.iconClassName)} />

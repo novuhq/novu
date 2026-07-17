@@ -1,6 +1,6 @@
 import { type NodeViewProps, NodeViewWrapper } from '@tiptap/react';
-import { Ban, BracesIcon, GrabIcon, ImageOffIcon, Loader2 } from 'lucide-react';
-import { type CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
+import { Ban, BracesIcon, ImageOffIcon, ImageUpIcon, Loader2 } from 'lucide-react';
+import { type CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useImageUploadOptions } from '@/editor/extensions/image-upload/image-upload';
 import { getAspectRatio, getNewHeight } from '@/editor/utils/aspect-ratio';
 import { cn } from '@/editor/utils/classname';
@@ -13,7 +13,7 @@ export const IMAGE_MAX_HEIGHT = 400;
 export type ImageStatus = 'idle' | 'loading' | 'loaded' | 'error';
 
 export function ImageView(props: NodeViewProps) {
-  const { node, selected, editor } = props;
+  const { node, selected, editor, updateAttributes } = props;
 
   const [status, setStatus] = useState<ImageStatus>('idle');
   const [isPlaceholderImage, setIsPlaceholderImage] = useState(false);
@@ -133,12 +133,28 @@ export function ImageView(props: NodeViewProps) {
   const hasImageSrc = !!attrs.src;
   const isDroppable = !!onImageUpload && editor.isEditable && !hasImageSrc && !isSrcVariable && status === 'idle';
 
+  const acceptedTypesHint = useMemo(() => {
+    if (allowedMimeTypes.length === 0) {
+      return undefined;
+    }
+
+    const names = allowedMimeTypes.map((mime) => {
+      const subtype = mime.split('/')[1] ?? mime;
+      return subtype.replace('+xml', '').toUpperCase();
+    });
+
+    return names.length > 1 ? `${names.slice(0, -1).join(', ')} or ${names[names.length - 1]}` : names[0];
+  }, [allowedMimeTypes]);
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!isDroppable || !e.target.files || e.target.files.length === 0) {
       return;
     }
 
     const file = e.target.files[0];
+    // Clear the input so picking the same file again re-triggers onChange
+    // (e.g. retrying after a failed upload).
+    e.target.value = '';
     await handleImageUpload(file);
   };
 
@@ -151,15 +167,21 @@ export function ImageView(props: NodeViewProps) {
       try {
         setStatus('loading');
         const imageUrl = await onImageUpload(file);
-        editor.chain().updateImageAttributes({ src: imageUrl }).run();
+        // Use the node view's position-tracked updateAttributes instead of the
+        // selection-based updateImageAttributes command: by the time the upload
+        // resolves, the selection may have left this image node (file dialog focus
+        // loss, clicks), which would silently drop the src update.
+        updateAttributes({ src: imageUrl });
         setIsPlaceholderImage(false);
         setStatus('loaded');
       } catch (error) {
         console.error('Error uploading image:', error);
-        setStatus('error');
+        // Return to the droppable state so the drop zone reappears and the user
+        // can retry — the 'error' status renders nothing when the node has no src.
+        setStatus('idle');
       }
     },
-    [onImageUpload]
+    [onImageUpload, updateAttributes]
   );
 
   // load the image using new Image() to avoid layout shift
@@ -189,14 +211,13 @@ export function ImageView(props: NodeViewProps) {
       const aspectRatio = getAspectRatio(naturalWidth, naturalHeight);
       const calculatedHeight = Math.min(getNewHeight(wrapperWidth, aspectRatio), naturalHeight);
 
-      editor
-        .chain()
-        .updateImageAttributes({
-          width: Math.min(wrapperWidth, naturalWidth),
-          height: Math.min(calculatedHeight, naturalHeight),
-          aspectRatio,
-        })
-        .run();
+      // Position-tracked update — img.onload fires async, so the selection may no
+      // longer be on this node (see handleImageUpload above).
+      updateAttributes({
+        width: Math.min(wrapperWidth, naturalWidth),
+        height: Math.min(calculatedHeight, naturalHeight),
+        aspectRatio,
+      });
     };
     img.onerror = () => {
       setStatus('error');
@@ -295,7 +316,7 @@ export function ImageView(props: NodeViewProps) {
         : {})}
     >
       {!hasImageSrc && status === 'idle' && (
-        <ImageStatusLabel status="idle" minHeight={height} isDropZone={isDroppable} />
+        <ImageStatusLabel status="idle" minHeight={height} isDropZone={isDroppable} hint={acceptedTypesHint} />
       )}
 
       {!hasImageSrc && status === 'loading' && !isSrcVariable && (
@@ -371,16 +392,29 @@ type ImageStatusLabelProps = {
   status: ImageStatus | 'variable';
   minHeight?: number | string;
   isDropZone?: boolean;
+  /**
+   * Secondary line shown under the drop-zone prompt (e.g. accepted file types).
+   * When provided, the drop zone renders as a spacious stacked layout; without
+   * it, a compact single row is used (e.g. the logo slot).
+   */
+  hint?: string;
 } & React.HTMLAttributes<HTMLDivElement>;
 
 export function ImageStatusLabel(props: ImageStatusLabelProps) {
-  const { status, minHeight, className, style, isDropZone, ...rest } = props;
+  const { status, minHeight, className, style, isDropZone, hint, ...rest } = props;
+
+  const isUploadZone = status === 'idle' && isDropZone;
+  const isStackedUploadZone = isUploadZone && !!hint;
 
   return (
     <div
       {...rest}
       className={cn(
-        'mly-flex mly-items-center mly-justify-center mly-gap-2 mly-rounded-lg mly-bg-soft-gray mly-px-4 mly-py-2 mly-text-sm mly-font-medium',
+        'mly-flex mly-items-center mly-justify-center mly-gap-2 mly-rounded-lg mly-text-sm mly-font-medium mly-leading-normal',
+        isUploadZone
+          ? 'mly-border mly-border-dashed mly-border-gray-300 mly-bg-gray-50 mly-text-gray-600 mly-transition-colors hover:mly-border-gray-400 hover:mly-bg-gray-100'
+          : 'mly-bg-soft-gray',
+        isStackedUploadZone ? 'mly-flex-col mly-gap-3 mly-px-6 mly-py-10' : 'mly-px-4 mly-py-2',
         {
           'mly-text-gray-500 hover:mly-bg-soft-gray/60': status === 'loading',
           'mly-text-red-500 hover:mly-bg-soft-gray/60': status === 'error',
@@ -403,12 +437,25 @@ export function ImageStatusLabel(props: ImageStatusLabelProps) {
         </>
       )}
 
-      {status === 'idle' && isDropZone && (
-        <>
-          <GrabIcon className="mly-size-4 mly-stroke-[2.5]" />
-          <span>Click or Drop image here</span>
-        </>
-      )}
+      {isUploadZone &&
+        (isStackedUploadZone ? (
+          <>
+            <div className="mly-flex mly-size-10 mly-items-center mly-justify-center mly-rounded-full mly-border mly-border-gray-200 mly-bg-white mly-shadow-sm">
+              <ImageUpIcon className="mly-size-[18px] mly-stroke-[1.75] mly-text-gray-500" />
+            </div>
+            <div className="mly-flex mly-flex-col mly-items-center mly-gap-0.5 mly-text-center">
+              <span className="mly-text-sm mly-font-medium mly-text-gray-700">
+                Click to upload <span className="mly-font-normal mly-text-gray-500">or drag and drop</span>
+              </span>
+              <span className="mly-text-xs mly-font-normal mly-text-gray-400">{hint}</span>
+            </div>
+          </>
+        ) : (
+          <>
+            <ImageUpIcon className="mly-size-4 mly-stroke-[2]" />
+            <span>Click or drop image here</span>
+          </>
+        ))}
 
       {status === 'loading' && (
         <>

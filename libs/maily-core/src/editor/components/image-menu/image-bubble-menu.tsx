@@ -15,6 +15,7 @@ import { LinkInputPopover } from '../ui/link-input-popover';
 import { Select } from '../ui/select';
 import { TooltipProvider } from '../ui/tooltip';
 import { ImageSize } from './image-size';
+import { UploadImageAction } from './upload-image-action';
 import { useImageState } from './use-image-state';
 
 export function ImageBubbleMenu(props: EditorBubbleMenuProps) {
@@ -110,10 +111,13 @@ export function ImageBubbleMenu(props: EditorBubbleMenuProps) {
                   .run();
               }
             }}
-            tooltip="Source URL"
+            tooltip="Image Source"
             icon={ImageDown}
             editor={editor}
             isVariable={state.isSrcVariable}
+            {...(state.isImageActive
+              ? { renderAction: (close: () => void) => <UploadImageAction editor={editor} close={close} /> }
+              : {})}
           />
 
           {state.isImageActive && (

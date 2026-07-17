@@ -18,6 +18,12 @@ type LinkInputPopoverProps = {
   icon?: LucideIcon;
   tooltip?: string;
 
+  /**
+   * Optional row rendered above the URL input (e.g. an upload action).
+   * Receives a callback that closes the popover.
+   */
+  renderAction?: (close: () => void) => React.ReactNode;
+
   editor: Editor;
 };
 
@@ -27,6 +33,7 @@ export function LinkInputPopover(props: LinkInputPopoverProps) {
     onValueChange,
     tooltip,
     icon: Icon = Link,
+    renderAction,
     editor,
 
     isVariable,
@@ -90,6 +97,8 @@ export function LinkInputPopover(props: LinkInputPopoverProps) {
         sideOffset={8}
         onCloseAutoFocus={(e) => e.preventDefault()}
       >
+        {renderAction?.(() => setIsOpen(false))}
+
         <form
           onSubmit={(e) => {
             e.preventDefault();

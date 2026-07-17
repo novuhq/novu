@@ -40,12 +40,12 @@ export function ImageUploadPlugin(options: ImageUploadPluginOptions) {
     const transaction = tr.insert(resolvedPos.pos, imageNode);
     view.dispatch(transaction);
 
+    // Find the placeholder image node
+    const predicate = (node: Node) => node.type.name === 'image' && node.attrs.src === placeholderSrc;
+
     onImageUpload?.(file)
       .then((uploadedSrc) => {
         const updateTr = view.state.tr;
-
-        // Find the placeholder image node
-        const predicate = (node: Node) => node.type.name === 'image' && node.attrs.src === placeholderSrc;
 
         view.state.doc.descendants((node, pos) => {
           if (predicate(node)) {
@@ -61,6 +61,19 @@ export function ImageUploadPlugin(options: ImageUploadPluginOptions) {
       })
       .catch((error) => {
         console.error('Image upload failed', error);
+
+        // Remove the placeholder node — its blob: URL is revoked below, so leaving
+        // it in place persists a permanently broken image.
+        const removeTr = view.state.tr;
+
+        view.state.doc.descendants((node, pos) => {
+          if (predicate(node)) {
+            removeTr.delete(pos, pos + node.nodeSize);
+            return false;
+          }
+        });
+
+        view.dispatch(removeTr);
       })
       .finally(() => {
         editor.extensionStorage.imageUpload.placeholderImages.delete(placeholderSrc);
