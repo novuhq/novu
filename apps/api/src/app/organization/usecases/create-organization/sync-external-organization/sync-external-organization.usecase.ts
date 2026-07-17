@@ -125,8 +125,9 @@ export class SyncExternalOrganization {
 
     this.analyticsService.upsertGroup(organization._id, organization, { _id: command.userId });
 
-    this.analyticsService.track('[Authentication] - Create Organization', command.userId, {
+    this.analyticsService.track('[Authentication] - Create Organization', organization._id, {
       _organization: organization._id,
+      userId: command.userId,
     });
 
     const organizationAfterChanges = await this.getOrganizationUsecase.execute(

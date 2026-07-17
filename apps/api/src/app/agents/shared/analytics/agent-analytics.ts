@@ -1,26 +1,62 @@
 import type { AnalyticsService } from '@novu/application-generic';
+import {
+  AGENTS_ORG_FUNNEL_EVENTS,
+  type AgentAnalyticsSource,
+  type AgentsUsecaseSource,
+} from '@novu/shared';
 
 const AGENT_SEGMENT_CATEGORY = '[Agents]';
+
+export function trackAgentsUsecaseSelected(
+  analytics: AnalyticsService,
+  params: {
+    organizationId: string;
+    source: AgentsUsecaseSource;
+    userId?: string;
+  }
+): void {
+  analytics.track(AGENTS_ORG_FUNNEL_EVENTS.USECASE_SELECTED, params.organizationId, {
+    _organization: params.organizationId,
+    source: params.source,
+    ...(params.userId ? { userId: params.userId } : {}),
+  });
+}
 
 export function trackAgentCreated(
   analytics: AnalyticsService,
   params: {
-    userId: string;
     organizationId: string;
     environmentId: string;
     agentId: string;
     agentIdentifier: string;
     active: boolean;
     name: string;
+    source?: AgentAnalyticsSource;
+    userId?: string;
+    runtime?: string;
   }
 ): void {
-  analytics.track(`Agent Created - ${AGENT_SEGMENT_CATEGORY}`, params.userId, {
+  const source = params.source ?? 'api';
+
+  // CLI has no usecase picker — fire intent before Agent Created so Mixpanel order is preserved.
+  if (source === 'cli') {
+    trackAgentsUsecaseSelected(analytics, {
+      organizationId: params.organizationId,
+      source: 'cli',
+      userId: params.userId,
+    });
+  }
+
+  analytics.track(AGENTS_ORG_FUNNEL_EVENTS.AGENT_CREATED, params.organizationId, {
     _organization: params.organizationId,
     environmentId: params.environmentId,
     agentId: params.agentId,
     agentIdentifier: params.agentIdentifier,
     active: params.active,
     name: params.name,
+    source,
+    ...(params.userId ? { userId: params.userId } : {}),
+    ...(params.runtime ? { runtime: params.runtime } : {}),
   });
 }
 
@@ -417,14 +453,20 @@ export function trackAgentIntegrationFirstWebhook(
     agentIdentifier: string;
     integrationIdentifier: string;
     platform: string;
+    providerId?: string;
   }
 ): void {
-  analytics.track(`Agent Integration First Webhook - ${AGENT_SEGMENT_CATEGORY}`, params.organizationId, {
+  const props = {
     _organization: params.organizationId,
     environmentId: params.environmentId,
     agentId: params.agentId,
     agentIdentifier: params.agentIdentifier,
     integrationIdentifier: params.integrationIdentifier,
     platform: params.platform,
-  });
+    channel: params.platform,
+    ...(params.providerId ? { providerId: params.providerId } : {}),
+  };
+
+  analytics.track(AGENTS_ORG_FUNNEL_EVENTS.FIRST_INBOUND, params.organizationId, props);
+  analytics.track(AGENTS_ORG_FUNNEL_EVENTS.FIRST_WEBHOOK_LEGACY, params.organizationId, props);
 }

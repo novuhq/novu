@@ -1,13 +1,14 @@
 import { AnalyticService } from '../../../services/analytics.service';
 
 /**
- * Recommended Mixpanel funnel (use `onboardingSessionId` or distinct_id with identity merge):
+ * Recommended Mixpanel funnel (org-scoped, `distinct_id = organizationId`):
  *
- * 1. Connect Pipeline Started — user passed welcome / non-interactive entry (engaged)
- * 2. Connect Auth Completed
- * 3. Connect Agent Created OR Connect Agent Reused
- * 4. Connect Completed
+ * 1. [Authentication] - Create Organization
+ * 2. Agents Usecase Selected - [Agents]  (CLI fires this on Agent Created with source=cli)
+ * 3. Agent Created - [Agents]            (server; source via novu-analytics-source header)
+ * 4. Agent First Inbound Message - [Agents]
  *
+ * Keep Connect* client events below for path diagnostics — not funnel steps.
  * Avoid using Connect Started as step 1: it fires on every CLI invocation, including
  * interactive runs abandoned at the welcome screen and agent sessions killed before auth.
  * Segment engaged runs with `ci: true` and/or `hasPrompt: true` when comparing to Started.
