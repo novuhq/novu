@@ -14,7 +14,6 @@ import { DemoClaudeUpgradePanel } from './demo-claude-upgrade-panel';
 import { DemoQuotaBanner } from './demo-quota-banner';
 import { hasAgentInboundConnection } from './is-agent-integration-connected';
 import { McpsSection } from './mcps-section';
-import { SubscriberAccessSection } from './subscriber-access-section';
 import { SystemPromptSection } from './system-prompt-section';
 import { ToolsSection } from './tools-section';
 

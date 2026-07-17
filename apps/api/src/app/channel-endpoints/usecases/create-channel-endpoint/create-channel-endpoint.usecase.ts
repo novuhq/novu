@@ -40,7 +40,7 @@ function deriveLinkedPlatformUser(
     case ENDPOINT_TYPES.MS_TEAMS_CHANNEL:
       return null;
     default: {
-      const exhaustiveCheck: never = type;
+      const exhaustiveCheck = type as never;
 
       return exhaustiveCheck;
     }

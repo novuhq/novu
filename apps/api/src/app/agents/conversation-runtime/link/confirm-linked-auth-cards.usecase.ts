@@ -85,7 +85,7 @@ export class ConfirmLinkedAuthCards {
         workspaceId: channel.workspace?.id,
       },
       messageId,
-      { card: linkedCard as unknown as Record<string, unknown> },
+      { card: linkedCard },
       {
         conversationId: conversation._id,
         channel,
