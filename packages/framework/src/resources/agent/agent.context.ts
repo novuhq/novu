@@ -31,7 +31,7 @@ import type {
   TypingOp,
 } from './agent.types';
 import { AgentEventEnum, PendingApproval } from './agent.types';
-import { isCardElement } from './guards';
+import { resolveCardContent } from './resolve-card-content';
 import type { ToolApprovalRequestPayload } from './tool-approval/action-id';
 import { postToolApprovalCard } from './tool-approval/post-card';
 
@@ -199,17 +199,9 @@ async function serializeContent(content: MessageContent, files?: FileRef[]): Pro
     return validFiles ? { markdown: content, files: validFiles } : { markdown: content };
   }
 
-  const { isJSX, toCardElement } = await import('chat/jsx-runtime');
-
-  if (isJSX(content)) {
-    const card = toCardElement(content);
-    if (card) {
-      return validFiles ? { card, files: validFiles } : { card };
-    }
-  }
-
-  if (isCardElement(content)) {
-    return validFiles ? { card: content, files: validFiles } : { card: content };
+  const card = await resolveCardContent(content);
+  if (card) {
+    return validFiles ? { card, files: validFiles } : { card };
   }
 
   throw new Error('Invalid message content — expected string or CardElement');

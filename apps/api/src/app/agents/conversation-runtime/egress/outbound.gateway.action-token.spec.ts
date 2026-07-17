@@ -15,7 +15,7 @@ describe('OutboundGateway action token egress', () => {
     const actionTokenService = {
       tokenizeCardForDelivery:
         actionTokenOverrides.tokenizeCardForDelivery ??
-        sinon.stub().callsFake(async (card: Record<string, unknown>) => ({
+        sinon.stub().callsFake(async (card: { type: 'card'; children?: unknown[] }) => ({
           ...card,
           children: [
             {

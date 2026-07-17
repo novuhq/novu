@@ -24,6 +24,7 @@ Upon sending the request to the [event/trigger](/api-reference/events/trigger-ev
 When an event is picked up by the **trigger queue worker**, the processing phase begins. Here's what happens:
 
 - **Subscriber Upsert:** The worker validates the subscribers associated with the event and either creates or updates the subscriber with the information passed in the `to` object.
+- **Context Upsert:** When the trigger includes context entries with inline `data` objects, the worker creates missing contexts or replaces existing context `data`. String-only context references do not modify stored data. Inbox and other subscriber-facing APIs do not perform context data updates.
 - **Notification Entity Creation:** For each subscriber listed in the trigger event, a corresponding notification entity is created. This entity contains essential data related to the organization, template, subscriber, and event payload.
 - **Job Creation:** Based on the notification template's defined steps, jobs are generated. These jobs are responsible for carrying out specific tasks related to the event notification. Additionally, the notification entity is updated with a "channels" field generated from these steps, indicating the communication channels through which notifications will be sent.
 
