@@ -550,7 +550,6 @@ export class AgentInboundHandler implements OnModuleInit {
         return;
       }
 
-      // Webhook path has no session user — fall back to organizationId as distinct_id.
       trackAgentIntegrationFirstWebhook(this.analyticsService, {
         organizationId: config.organizationId,
         environmentId: config.environmentId,
@@ -558,7 +557,6 @@ export class AgentInboundHandler implements OnModuleInit {
         agentIdentifier: config.agentIdentifier,
         integrationIdentifier: config.integrationIdentifier,
         platform: config.platform,
-        providerId: config.providerId,
       });
     } catch (err) {
       this.logger.warn(err, `[agent:${agentId}] Failed to mark integration connected on first user message`);

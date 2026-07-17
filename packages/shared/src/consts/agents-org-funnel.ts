@@ -1,15 +1,12 @@
 /**
- * Agents activation Mixpanel funnel. Identity is always the acting userId;
- * `_organization` is attached for org-level filtering/breakdown.
+ * Agents activation Mixpanel funnel (beginning of path). Identity is the acting
+ * userId; `_organization` is attached for org-level filtering/breakdown.
  *
- * Create Organization → Agents Usecase Selected → Agent Created → Agent First Inbound Message
+ * Create Organization → Agents Usecase Selected → Agent Created
  */
 export const AGENTS_ORG_FUNNEL_EVENTS = {
   USECASE_SELECTED: 'Agents Usecase Selected - [Agents]',
   AGENT_CREATED: 'Agent Created - [Agents]',
-  FIRST_INBOUND: 'Agent First Inbound Message - [Agents]',
-  /** Legacy name; still dual-fired alongside FIRST_INBOUND for Mixpanel continuity. */
-  FIRST_WEBHOOK_LEGACY: 'Agent Integration First Webhook - [Agents]',
 } as const;
 
 export type AgentsOrgFunnelEvent = (typeof AGENTS_ORG_FUNNEL_EVENTS)[keyof typeof AGENTS_ORG_FUNNEL_EVENTS];

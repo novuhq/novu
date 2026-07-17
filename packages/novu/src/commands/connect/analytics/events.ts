@@ -6,7 +6,6 @@ import { AnalyticService } from '../../../services/analytics.service';
  * 1. [Authentication] - Create Organization
  * 2. Agents Usecase Selected - [Agents]  (CLI fires this on Agent Created with source=cli)
  * 3. Agent Created - [Agents]            (server; source via novu-analytics-source header)
- * 4. Agent First Inbound Message - [Agents]
  *
  * Keep Connect* client events below for path diagnostics — not funnel steps.
  * Avoid using Connect Started as step 1: it fires on every CLI invocation, including
