@@ -54,8 +54,6 @@ export interface ResolvedAgentConfig {
   agentIdentifier: string;
   /** Human-readable display name; used in email-action confirmation UI. */
   agentName: string;
-  /** Novu user who created the agent — used as Mixpanel identity for activation events. */
-  createdBy?: string;
   integrationIdentifier: string;
   integrationId: string;
   /**
@@ -288,7 +286,6 @@ export class AgentConfigResolver {
       agentId: agent._id,
       agentIdentifier: agent.identifier,
       agentName: agent.name,
-      createdBy: agent.createdBy,
       integrationIdentifier,
       integrationId: integration._id,
       providerId: integration.providerId,

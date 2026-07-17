@@ -550,16 +550,8 @@ export class AgentInboundHandler implements OnModuleInit {
         return;
       }
 
-      if (!config.createdBy) {
-        this.logger.warn(
-          `[agent:${agentId}] Skipping first-inbound analytics — agent has no createdBy user to attribute`
-        );
-
-        return;
-      }
-
+      // Webhook path has no session user — fall back to organizationId as distinct_id.
       trackAgentIntegrationFirstWebhook(this.analyticsService, {
-        userId: config.createdBy,
         organizationId: config.organizationId,
         environmentId: config.environmentId,
         agentId,

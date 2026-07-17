@@ -445,7 +445,8 @@ export function trackAgentActiveConversationLimitReached(
 export function trackAgentIntegrationFirstWebhook(
   analytics: AnalyticsService,
   params: {
-    userId: string;
+    /** Prefer userId when available; webhook paths may fall back to organizationId. */
+    userId?: string;
     organizationId: string;
     environmentId: string;
     agentId: string;
@@ -455,6 +456,7 @@ export function trackAgentIntegrationFirstWebhook(
     providerId?: string;
   }
 ): void {
+  const distinctId = params.userId || params.organizationId;
   const props = {
     _organization: params.organizationId,
     environmentId: params.environmentId,
@@ -466,6 +468,6 @@ export function trackAgentIntegrationFirstWebhook(
     ...(params.providerId ? { providerId: params.providerId } : {}),
   };
 
-  analytics.track(AGENTS_ORG_FUNNEL_EVENTS.FIRST_INBOUND, params.userId, props);
-  analytics.track(AGENTS_ORG_FUNNEL_EVENTS.FIRST_WEBHOOK_LEGACY, params.userId, props);
+  analytics.track(AGENTS_ORG_FUNNEL_EVENTS.FIRST_INBOUND, distinctId, props);
+  analytics.track(AGENTS_ORG_FUNNEL_EVENTS.FIRST_WEBHOOK_LEGACY, distinctId, props);
 }
