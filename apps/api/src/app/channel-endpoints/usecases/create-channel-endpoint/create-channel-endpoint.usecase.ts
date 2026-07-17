@@ -38,9 +38,12 @@ function deriveLinkedPlatformUser(
     case ENDPOINT_TYPES.WEBHOOK:
     case ENDPOINT_TYPES.PHONE:
     case ENDPOINT_TYPES.MS_TEAMS_CHANNEL:
+    case ENDPOINT_TYPES.WEBEX_ROOM:
+    case ENDPOINT_TYPES.WEBEX_PERSON:
+    case ENDPOINT_TYPES.LINE_USER:
       return null;
     default: {
-      const exhaustiveCheck = type as never;
+      const exhaustiveCheck: never = type;
 
       return exhaustiveCheck;
     }
