@@ -151,6 +151,19 @@ export enum FeatureFlagsKeysEnum {
    * self-hosted.
    */
   IS_PAYLOAD_DEDUP_ENABLED = 'IS_PAYLOAD_DEDUP_ENABLED',
+  /**
+   * Stop embedding the fully populated workflow step (message template
+   * `content`, `controls`, `cta`, `variables`, variants' templates, `output`
+   * schemas, etc.) onto every job's `step`. When enabled, new jobs persist a
+   * lean step (ids, filters, metadata, a `{ _id, type }` template stub) and the
+   * worker rehydrates the full template at execution time (see
+   * StepTemplateHydrationService for the resolution/fallback order). Jobs
+   * written while the flag is off (and all pre-existing jobs) carry the full
+   * snapshot and skip hydration entirely, so the flag is forward-only and safe
+   * to toggle off at any time (no data migration). Create the boolean in
+   * LaunchDarkly for cloud, or set `IS_JOB_STEP_DEDUP_ENABLED` when self-hosted.
+   */
+  IS_JOB_STEP_DEDUP_ENABLED = 'IS_JOB_STEP_DEDUP_ENABLED',
 
   // String flags
   CF_SCHEDULER_MODE = 'CF_SCHEDULER_MODE', // Values: "off" | "shadow" | "live" | "complete"

@@ -30,9 +30,9 @@ export {
   MessageInteractionService,
   MessageInteractionTrace,
 } from './message-interaction.service';
-export { NotificationPayloadService } from './notification-payload.service';
 export * from './metrics';
 export { MsTeamsTokenService } from './ms-teams-token.service';
+export { NotificationPayloadService } from './notification-payload.service';
 export * from './query-parser';
 export * from './queues';
 export { INovuWorker, ReadinessService } from './readiness';
@@ -41,6 +41,12 @@ export * from './sanitize/sanitizer.service';
 export * from './sanitize/sanitizer-v0.service';
 export * from './socket-worker';
 export * from './sqs';
+export {
+  LeanNotificationStep,
+  StepTemplateHydrationService,
+  StepTemplateHydrationStatus,
+  toLeanStep,
+} from './step-template-hydration.service';
 export * from './storage';
 export { SupportService } from './support.service';
 export * from './throttle';
