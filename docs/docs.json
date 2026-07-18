@@ -417,7 +417,11 @@
               "agents",
               "agents/get-started/what-is-aci",
               "agents/get-started/mental-model",
-              "agents/get-started/agents-and-providers"
+              "agents/get-started/agents-and-providers",
+              {
+                "group": "Quickstart",
+                "pages": ["agents/get-started/ai-sdk", "agents/get-started/langchain", "agents/get-started/mastra"]
+              }
             ]
           },
           {
@@ -1105,7 +1109,7 @@
     ]
   },
   "api": {
-    "openapi": "https://spec.speakeasy.com/novu/novu/json-development-with-code-samples",
+    "openapi": "./openapi.json",
     "examples": {
       "prefill": true
     }
@@ -1552,6 +1556,11 @@
     {
       "source": "/docs/platform/workflow/layouts",
       "destination": "/platform/workflow/add-notification-content/channels-template-editors#email-layouts",
+      "permanent": true
+    },
+    {
+      "source": "/agents/get-started/quickstart",
+      "destination": "/agents/get-started/ai-sdk",
       "permanent": true
     },
     {

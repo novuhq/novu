@@ -1,0 +1,239 @@
+---
+title: "How to build a Vercel AI SDK agent with Novu Connect"
+description: "Build a conversational agent with the Vercel AI SDK and Novu Connect. Connect Slack, Microsoft Teams, WhatsApp, Telegram, or email. Return generateText from onMessage and get your first reply."
+sidebarTitle: AI SDK
+boost: 3
+---
+
+
+Build a [Vercel AI SDK](https://ai-sdk.dev/) agent with Novu Connect. You write one `generateText()` handler. Novu delivers replies on Slack, Microsoft Teams, WhatsApp, Telegram, or email.
+
+This walkthrough uses **Slack** for the first connection. The same handler works on other channels once you link them.
+
+## What do I need before I start?
+
+- A [Novu account](https://dashboard.novu.co)
+- Node.js 22+
+- A Slack workspace where you can install apps (or another [supported channel](/agents/get-started/agents-and-providers))
+- An `OPENAI_API_KEY` (or another [AI SDK provider](https://ai-sdk.dev/providers/ai-sdk-providers) key)
+
+## How do I get a working agent?
+
+<Steps>
+
+<Step>
+
+## Run the CLI
+
+In an empty folder:
+
+```bash
+npx novu connect
+```
+
+When prompted:
+
+1. Sign in to Novu (or paste your secret key).
+2. Choose **AI SDK** as the runtime.
+3. Name your agent. Note the **identifier** the CLI prints. Your code must use the same value.
+4. When asked how to authenticate the model, pick **OpenAI** (or Anthropic) and paste your API key. That wires `generateText` in the scaffold. If you skip this step, the project starts as a demo echo agent until you add a key later.
+5. Choose **Slack** (or another channel).
+
+</Step>
+
+<Step>
+
+## Connect Slack
+
+When the CLI asks for a Slack App Configuration Token:
+
+1. Open [Slack API apps](https://api.slack.com/apps).
+2. Under **App Configuration Tokens**, click **Generate Token**.
+3. Select your workspace, generate the token, and copy it (it starts with `xoxe.xoxp-`).
+4. Paste it into the CLI and finish the install / Allow flow in Slack.
+
+The token is used once to create the Slack app. Novu does not store it.
+
+For screenshots of this flow, see [Create a Slack app](/agents/custom-code-agent/quickstart#create-a-slack-app) in the custom code quickstart.
+
+</Step>
+
+<Step>
+
+## Accept the scaffold
+
+Confirm creating a starter project when the CLI asks. It creates a Next.js app with:
+
+- `app/api/novu/route.ts` (bridge endpoint)
+- `app/novu/agents/` (your handler)
+- `.env.local` with `NOVU_SECRET_KEY`
+- `npm run dev:novu`
+
+If you already have an app and skipped the scaffold, jump to [Wire an existing app](#wire-an-existing-app).
+
+</Step>
+
+<Step>
+
+## Run the agent locally
+
+```bash
+npm run dev:novu
+```
+
+This starts your app and tunnels it to Novu so channel messages reach your bridge. Keep the process running.
+
+If the script is missing:
+
+```bash
+npx novu dev --port 4000
+```
+
+</Step>
+
+<Step>
+
+## Send a message
+
+Message your bot in Slack (DM or @mention). You should get a reply from your AI SDK handler in the same thread.
+
+**Success looks like:** the tunnel is connected, and the reply is from your model (not a static demo card), after you authenticated the LLM in the CLI or set `OPENAI_API_KEY` in `.env.local`.
+
+If nothing comes back:
+
+- Confirm `npm run dev:novu` is still running.
+- Confirm the agent identifier in code matches the dashboard.
+- Confirm your model API key is set (for example `OPENAI_API_KEY`).
+- Confirm Slack install completed and you are messaging the correct bot.
+
+</Step>
+
+</Steps>
+
+## Wire an existing app
+
+Use this only if you skipped the CLI scaffold. Otherwise you can skip this section.
+
+<AccordionGroup>
+  <Accordion title="Install packages and env">
+```bash
+npm install @novu/framework ai @ai-sdk/openai
+```
+
+Add to `.env.local`:
+
+```bash
+OPENAI_API_KEY=sk-...
+NOVU_SECRET_KEY=your-novu-secret-key
+```
+
+Copy `NOVU_SECRET_KEY` from **API Keys** in the dashboard if needed.
+  </Accordion>
+  <Accordion title="Create the agent handler">
+Create `app/novu/agents/<your-identifier>.ts` using the identifier from the dashboard:
+
+```typescript
+import { agent, toModelMessages } from '@novu/framework/ai-sdk';
+import { openai } from '@ai-sdk/openai';
+import { generateText } from 'ai';
+
+export const supportBot = agent('support-bot', {
+  onMessage: async (_message, ctx) =>
+    generateText({
+      model: openai('gpt-4o'),
+      instructions: 'You are a helpful support agent. Keep answers short.',
+      messages: toModelMessages(ctx.history),
+    }),
+});
+```
+
+Export it from `app/novu/agents/index.ts`:
+
+```typescript
+export { supportBot } from './support-bot';
+```
+
+- Match `agent('...')` to the dashboard **Identifier**.
+- `toModelMessages(ctx.history)` already includes the current inbound message.
+- Returning `generateText(...)` delivers the reply. You do not call `ctx.reply()` on this path.
+
+  </Accordion>
+  <Accordion title="Add the bridge route">
+Create `app/api/novu/route.ts`:
+
+```typescript
+import { serve } from '@novu/framework/next';
+import { supportBot } from '../../novu/agents';
+
+export const { GET, POST, OPTIONS } = serve({
+  agents: [supportBot],
+});
+```
+
+Then run `npx novu dev` (or `npm run dev:novu`) and message the bot. For Express, Hono, and other servers, see [Connecting your app](/agents/custom-code-agent/connecting-your-app).
+  </Accordion>
+</AccordionGroup>
+
+## Frequently asked questions
+
+<AccordionGroup>
+  <Accordion title="Which channels can I use with an AI SDK agent?">
+    Slack, Microsoft Teams, WhatsApp, Telegram, and email. One handler works for all of them. See [Agents and providers](/agents/get-started/agents-and-providers).
+  </Accordion>
+  <Accordion title="Does Novu run my AI SDK code?">
+    No. Your code runs in your app on the bridge endpoint. Novu forwards the inbound event with conversation context, then delivers whatever your handler returns.
+  </Accordion>
+  <Accordion title="How do I pass conversation history to the model?">
+    Use `toModelMessages(ctx.history)`. Do not append the inbound `message` on top of history. The current message is already included.
+  </Accordion>
+  <Accordion title="Can I use tools and approval cards?">
+    Yes. Set `needsApproval: true` on an AI SDK `tool()`. Novu posts Approve / Deny in the conversation and resumes the turn. See the [AI SDK reference](/agents/custom-code-agent/frameworks/ai-sdk#automatic-tool-approval).
+  </Accordion>
+  <Accordion title="I skipped LLM auth in the CLI. What now?">
+    Add `OPENAI_API_KEY` (or your provider key) to `.env.local`, then uncomment or replace the model call in `app/novu/agents/` so `onMessage` returns `generateText(...)`. Restart `npm run dev:novu`.
+  </Accordion>
+</AccordionGroup>
+
+## Set this up with an AI assistant
+
+<Prompt description="Build a Vercel AI SDK agent with Novu Connect" icon="plug" actions={["copy", "cursor"]}>
+# Build a Vercel AI SDK agent with Novu Connect
+
+Follow https://docs.novu.co/agents/get-started/ai-sdk
+
+## Goal
+
+Create a Novu custom code agent that replies on messaging channels using the Vercel AI SDK. Prefer the CLI happy path: `npx novu connect`, AI SDK runtime, LLM auth, Slack, scaffold, then `npm run dev:novu`.
+
+## Rules
+
+ALWAYS:
+
+- Match `agent('id')` to the Novu dashboard agent Identifier
+- Use `toModelMessages(ctx.history)` for conversation context
+- Keep handlers channel-agnostic
+- Follow the project's package manager and TypeScript conventions
+
+NEVER:
+
+- Hardcode API keys
+- Call `ctx.reply()` when returning `generateText()` (Novu delivers the result)
+
+</Prompt>
+
+## Next steps
+
+<Columns cols={2}>
+  <Card icon="sparkles" href="/agents/custom-code-agent/frameworks/ai-sdk" title="AI SDK reference">
+    Tool approval, streaming edits, MCP tools, and onError.
+  </Card>
+  <Card icon="blocks" href="/agents/get-started/agents-and-providers" title="Agents and providers">
+    Slack, Teams, WhatsApp, Telegram, and email capabilities.
+  </Card>
+  <Card icon="rocket" href="/agents/custom-code-agent/going-to-production" title="Going to production">
+    Deploy the bridge and switch off local tunneling.
+  </Card>
+  <Card icon="link" href="/agents/get-started/langchain" title="LangChain quickstart">
+    Same flow with @novu/framework/langchain.
+  </Card>
+</Columns>

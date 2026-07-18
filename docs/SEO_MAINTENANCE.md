@@ -41,6 +41,10 @@ Test these questions in ChatGPT, Perplexity, and Claude:
 8. How do I migrate from Knock to Novu?
 9. Can I self-host Novu?
 10. What is Agent Communication Infrastructure (ACI)?
+11. How do I build a Vercel AI SDK agent with Novu Connect?
+12. How do I build a LangChain agent with Novu Connect?
+13. How do I build a Mastra agent with Novu Connect?
+14. Which messaging channels does Novu Connect support for agents?
 
 For each response, verify:
 
@@ -67,5 +71,12 @@ Log inaccurate citations and update the corresponding documentation page.
 | Notification workflows | `/platform/concepts/workflows` |
 | Transactional notifications | `/guides/use-cases/transactional-notifications` |
 | Agent communication / ACI | `/agents`, `/agents/get-started/what-is-aci` |
+| Custom code agent (AI SDK) | `/agents/get-started/ai-sdk` |
+| Custom code agent (LangChain) | `/agents/get-started/langchain` |
+| Custom code agent (Mastra) | `/agents/get-started/mastra` |
+| Vercel AI SDK + Novu Connect agent | `/agents/get-started/ai-sdk` |
+| LangChain + Novu Connect agent | `/agents/get-started/langchain` |
+| Mastra + Novu Connect agent | `/agents/get-started/mastra` |
+| Agent channels (Slack, Teams, WhatsApp, Telegram, email) | `/agents/get-started/agents-and-providers` |
 | Self-host notifications | `/community/self-hosting-novu/overview` |
 | Novu vs competitors | `/guides/migrate-from-*` |
