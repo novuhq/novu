@@ -528,6 +528,296 @@ describe('Topic Trigger Event #novu-v2', () => {
       expect(booleanFalseMessages.length, 'Enabled false - expected to not deliver the message').to.equal(0);
     });
 
+    it('should evaluate subscriber and context variables in subscription conditions', async () => {
+      const previousContextPrefFlag = (process.env as Record<string, string>).IS_CONTEXT_PREFERENCES_ENABLED;
+      (process.env as Record<string, string>).IS_CONTEXT_PREFERENCES_ENABLED = 'true';
+
+      try {
+        const subscriberConditionTopicKey = `topic-key-subscriber-condition-${Date.now()}`;
+      const premiumSubscriber = await subscriberService.createSubscriber({ data: { tier: 'premium' } });
+      const basicSubscriber = await subscriberService.createSubscriber({ data: { tier: 'basic' } });
+
+      await novuClient.topics.subscriptions.create(
+        {
+          subscriberIds: [premiumSubscriber.subscriberId, basicSubscriber.subscriberId],
+          preferences: [
+            {
+              filter: {
+                workflowIds: [template._id],
+              },
+              condition: {
+                '===': [{ var: 'subscriber.data.tier' }, 'premium'],
+              },
+            },
+          ],
+        } as any,
+        subscriberConditionTopicKey
+      );
+
+      await novuClient.trigger({
+        workflowId: template.triggers[0].identifier,
+        to: [{ type: TriggerRecipientsTypeEnum.Topic, topicKey: subscriberConditionTopicKey }],
+        payload: {},
+      });
+
+      await session.waitForJobCompletion(template._id);
+
+      const premiumMessages = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: premiumSubscriber._id,
+        _templateId: template._id,
+        channel: ChannelTypeEnum.IN_APP,
+      });
+      const basicMessages = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: basicSubscriber._id,
+        _templateId: template._id,
+        channel: ChannelTypeEnum.IN_APP,
+      });
+
+      expect(premiumMessages.length, 'Premium subscriber should receive the message').to.equal(1);
+      expect(basicMessages.length, 'Basic subscriber should be filtered by subscriber condition').to.equal(0);
+
+      const contextConditionTopicKey = `topic-key-context-condition-${Date.now()}`;
+      const contextSubscriber = await subscriberService.createSubscriber();
+
+      await novuClient.topics.subscriptions.create(
+        {
+          subscriberIds: [contextSubscriber.subscriberId],
+          preferences: [
+            {
+              filter: {
+                workflowIds: [template._id],
+              },
+              condition: {
+                '===': [{ var: 'context.tenant.id' }, 'acme-corp'],
+              },
+            },
+          ],
+          context: {
+            tenant: { id: 'acme-corp', data: { plan: 'enterprise' } },
+          },
+        } as any,
+        contextConditionTopicKey
+      );
+
+      await session.testAgent
+        .post('/v1/events/trigger')
+        .send({
+          name: template.triggers[0].identifier,
+          to: [{ type: TriggerRecipientsTypeEnum.Topic, topicKey: contextConditionTopicKey }],
+          payload: {},
+          context: {
+            tenant: { id: 'acme-corp', data: { plan: 'enterprise' } },
+          },
+        })
+        .expect(201);
+
+      await session.waitForJobCompletion(template._id);
+
+      const matchingContextMessages = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: contextSubscriber._id,
+        _templateId: template._id,
+        channel: ChannelTypeEnum.IN_APP,
+      });
+
+      expect(matchingContextMessages.length, 'Matching context condition should deliver the message').to.equal(1);
+
+      await session.testAgent
+        .post('/v1/events/trigger')
+        .send({
+          name: template.triggers[0].identifier,
+          to: [{ type: TriggerRecipientsTypeEnum.Topic, topicKey: contextConditionTopicKey }],
+          payload: {},
+          context: {
+            tenant: { id: 'globex', data: { plan: 'starter' } },
+          },
+        })
+        .expect(201);
+
+      await session.waitForJobCompletion(template._id);
+
+      const filteredContextMessages = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: contextSubscriber._id,
+        _templateId: template._id,
+        channel: ChannelTypeEnum.IN_APP,
+      });
+
+      expect(
+        filteredContextMessages.length,
+        'Non-matching context condition should not deliver additional messages'
+      ).to.equal(1);
+
+      expect(
+        filteredContextMessages.length,
+        'Non-matching context condition should not deliver additional messages'
+      ).to.equal(1);
+
+      const contextDataConditionTopicKey = `topic-key-context-data-condition-${Date.now()}`;
+      const contextDataSubscriber = await subscriberService.createSubscriber();
+
+      await novuClient.topics.subscriptions.create(
+        {
+          subscriberIds: [contextDataSubscriber.subscriberId],
+          preferences: [
+            {
+              filter: {
+                workflowIds: [template._id],
+              },
+              condition: {
+                '===': [{ var: 'context.tenant.data.plan' }, 'starter'],
+              },
+            },
+          ],
+          context: {
+            tenant: { id: 'acme-corp', data: { plan: 'enterprise' } },
+          },
+        } as any,
+        contextDataConditionTopicKey
+      );
+
+      await session.testAgent
+        .post('/v1/events/trigger')
+        .send({
+          name: template.triggers[0].identifier,
+          to: [{ type: TriggerRecipientsTypeEnum.Topic, topicKey: contextDataConditionTopicKey }],
+          payload: {},
+          context: {
+            tenant: { id: 'acme-corp', data: { plan: 'enterprise' } },
+          },
+        })
+        .expect(201);
+
+      await session.waitForJobCompletion(template._id);
+
+      const enterprisePlanMessages = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: contextDataSubscriber._id,
+        _templateId: template._id,
+        channel: ChannelTypeEnum.IN_APP,
+      });
+
+      expect(
+        enterprisePlanMessages.length,
+        'Stored enterprise plan should not satisfy starter plan condition'
+      ).to.equal(0);
+
+      await session.testAgent
+        .post('/v1/events/trigger')
+        .send({
+          name: template.triggers[0].identifier,
+          to: [{ type: TriggerRecipientsTypeEnum.Topic, topicKey: contextDataConditionTopicKey }],
+          payload: {},
+          context: {
+            tenant: { id: 'acme-corp', data: { plan: 'starter' } },
+          },
+        })
+        .expect(201);
+
+      await session.waitForJobCompletion(template._id);
+
+      const starterPlanMessages = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: contextDataSubscriber._id,
+        _templateId: template._id,
+        channel: ChannelTypeEnum.IN_APP,
+      });
+
+      expect(
+        starterPlanMessages.length,
+        'Trigger context data should override stored context data for condition evaluation'
+      ).to.equal(1);
+      } finally {
+        if (previousContextPrefFlag === undefined) {
+          delete (process.env as Record<string, string>).IS_CONTEXT_PREFERENCES_ENABLED;
+        } else {
+          (process.env as Record<string, string>).IS_CONTEXT_PREFERENCES_ENABLED = previousContextPrefFlag;
+        }
+      }
+    });
+
+    it('should evaluate actor variables in subscription conditions', async () => {
+      const actorConditionTopicKey = `topic-key-actor-condition-${Date.now()}`;
+      const recipientSubscriber = await subscriberService.createSubscriber();
+      const adminActor = await subscriberService.createSubscriber({ data: { role: 'admin' } });
+      const userActor = await subscriberService.createSubscriber({ data: { role: 'user' } });
+
+      await novuClient.topics.subscriptions.create(
+        {
+          subscriberIds: [recipientSubscriber.subscriberId],
+          preferences: [
+            {
+              filter: {
+                workflowIds: [template._id],
+              },
+              condition: {
+                '===': [{ var: 'actor.data.role' }, 'admin'],
+              },
+            },
+          ],
+        } as any,
+        actorConditionTopicKey
+      );
+
+      await novuClient.trigger({
+        workflowId: template.triggers[0].identifier,
+        to: [{ type: TriggerRecipientsTypeEnum.Topic, topicKey: actorConditionTopicKey }],
+        payload: {},
+        actor: { subscriberId: adminActor.subscriberId },
+      });
+
+      await session.waitForJobCompletion(template._id);
+
+      const adminActorMessages = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: recipientSubscriber._id,
+        _templateId: template._id,
+        channel: ChannelTypeEnum.IN_APP,
+      });
+
+      expect(adminActorMessages.length, 'Admin actor should satisfy actor condition').to.equal(1);
+
+      await novuClient.trigger({
+        workflowId: template.triggers[0].identifier,
+        to: [{ type: TriggerRecipientsTypeEnum.Topic, topicKey: actorConditionTopicKey }],
+        payload: {},
+        actor: { subscriberId: userActor.subscriberId },
+      });
+
+      await session.waitForJobCompletion(template._id);
+
+      const filteredActorMessages = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: recipientSubscriber._id,
+        _templateId: template._id,
+        channel: ChannelTypeEnum.IN_APP,
+      });
+
+      expect(
+        filteredActorMessages.length,
+        'Non-matching actor should not deliver additional messages'
+      ).to.equal(1);
+
+      await novuClient.trigger({
+        workflowId: template.triggers[0].identifier,
+        to: [{ type: TriggerRecipientsTypeEnum.Topic, topicKey: actorConditionTopicKey }],
+        payload: {},
+      });
+
+      await session.waitForJobCompletion(template._id);
+
+      const noActorMessages = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: recipientSubscriber._id,
+        _templateId: template._id,
+        channel: ChannelTypeEnum.IN_APP,
+      });
+
+      expect(noActorMessages.length, 'Missing actor should not deliver additional messages').to.equal(1);
+    });
+
     it('should filter subscriptions by tags and combined workflow filters', async () => {
       const taggedTemplate = await session.createTemplate({
         tags: ['important', 'promotional'],

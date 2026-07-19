@@ -775,7 +775,7 @@ export class AgentReplyPayloadDto {
       { type: 'string', enum: ['stop'], description: 'Clear the typing indicator.' },
       { $ref: getSchemaPath(TypingStatusDto) },
     ],
-    examples: [{ status: 'Looking up your order…' }, 'stop'],
+    example: [{ status: 'Looking up your order…' }, 'stop'],
   })
   @IsOptional()
   @Validate(IsValidTypingOp)
