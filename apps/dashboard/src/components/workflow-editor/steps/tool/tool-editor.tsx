@@ -11,9 +11,9 @@ import {
   buildToolOverrideProviderOptions,
   DEFAULT_CONTENT_SOURCE,
   isToolContentOverrideProviderId,
-  type ToolContentSource,
   type ToolProviderOverrides,
 } from './tool-content-source';
+import { useToolContentSource } from './tool-content-source-context';
 import { ToolContentSourceSelector } from './tool-content-source-selector';
 import { ToolProviderOverrideEditor } from './tool-provider-override-editor';
 
@@ -30,7 +30,7 @@ export const ToolEditor = (props: ToolEditorProps) => {
   const { saveForm } = useSaveForm();
 
   const providerOverrides = watch(PROVIDER_OVERRIDES_FIELD) as ToolProviderOverrides | undefined;
-  const [selectedSource, setSelectedSource] = useState<ToolContentSource>(DEFAULT_CONTENT_SOURCE);
+  const { selectedSource, setSelectedSource } = useToolContentSource();
   const [invalidProviderIds, setInvalidProviderIds] = useState<Set<string>>(new Set());
 
   const activeProviderIds = useMemo(() => {
