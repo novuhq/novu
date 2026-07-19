@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { buildAgentConnectionIdentifier, buildConnectSubscriberId } from './connect-subscriber-id';
 
 describe('connect-subscriber-id', () => {
-  it('buildConnectSubscriberId uses the dashboard user id as the subscriber id', () => {
+  it('buildConnectSubscriberId is an identity (deprecated)', () => {
     expect(buildConnectSubscriberId('user_abc')).toBe('user_abc');
   });
 

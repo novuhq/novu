@@ -23,7 +23,6 @@ import {
 import {
   AgentRuntimeProviderIdEnum,
   buildClaudePlatformVaultUrl,
-  buildConnectSubscriberId,
   isClaudePlatformConsoleProvider,
   MCP_SERVERS,
   McpConnectionAuthModeEnum,
@@ -357,7 +356,7 @@ export class EnsureProviderManagedVault {
       return channelSubscriber;
     }
 
-    const subscriberId = buildConnectSubscriberId(command.userId);
+    const subscriberId = command.userId;
     const existingSubscriber = await this.subscriberRepository.findBySubscriberId(
       command.environmentId,
       subscriberId

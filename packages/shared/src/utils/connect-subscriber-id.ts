@@ -6,8 +6,9 @@
 export const CONNECT_SUBSCRIBER_PREFIX = 'connect';
 
 /**
- * Dashboard identity used as the Novu subscriberId (same as workflow test flows).
- * Historically prefixed with `connect:`; that prefix is no longer used.
+ * @deprecated Use the dashboard `userId` / `currentUser._id` directly as the
+ * subscriber id (same as workflow testing). This helper is now an identity
+ * function and will be removed.
  */
 export function buildConnectSubscriberId(userId: string): string {
   return userId;

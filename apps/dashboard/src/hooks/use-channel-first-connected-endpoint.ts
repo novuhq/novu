@@ -1,5 +1,5 @@
-import { ENDPOINT_TYPES } from '@novu/shared';
-import { useQuery } from '@tanstack/react-query';
+import { ENDPOINT_TYPES, type IEnvironment } from '@novu/shared';
+import { type Query, useQuery } from '@tanstack/react-query';
 import {
   type ChannelEndpointDto,
   type ChannelEndpointsListResponse,
@@ -37,6 +37,13 @@ type UseChannelFirstConnectedEndpointParams = {
   enabled?: boolean;
 };
 
+type ChannelFirstConnectedEndpointQueryParams = {
+  environment: IEnvironment | undefined;
+  integrationIdentifier: string;
+  dashboardSubscriberId: string;
+  enabled?: boolean;
+};
+
 /**
  * A genuine end-user connection is a user-type channel endpoint that:
  *  - is a connect-flow endpoint type, and
@@ -46,7 +53,7 @@ type UseChannelFirstConnectedEndpointParams = {
  */
 export function isGenuineConnectedEndpoint(
   endpoint: ChannelEndpointDto,
-  dashboardSubscriberId?: string | null
+  dashboardSubscriberId: string
 ): boolean {
   if (!CONNECT_FLOW_USER_ENDPOINT_TYPES.has(endpoint.type)) {
     return false;
@@ -57,17 +64,13 @@ export function isGenuineConnectedEndpoint(
     return false;
   }
 
-  if (dashboardSubscriberId && endpoint.subscriberId === dashboardSubscriberId) {
-    return false;
-  }
-
-  return true;
+  return endpoint.subscriberId !== dashboardSubscriberId;
 }
 
 /** The earliest (first) genuine end-user connection, or null if none exists yet. */
 export function findFirstGenuineConnectedEndpoint(
   data: ChannelEndpointsListResponse | undefined,
-  dashboardSubscriberId?: string | null
+  dashboardSubscriberId: string
 ): ChannelEndpointDto | null {
   if (!data) {
     return null;
@@ -83,6 +86,34 @@ export function findFirstGenuineConnectedEndpoint(
   );
 }
 
+/** Shared TanStack Query options for first genuine end-user channel endpoint polling. */
+export function channelFirstConnectedEndpointQueryOptions({
+  environment,
+  integrationIdentifier,
+  dashboardSubscriberId,
+  enabled = true,
+}: ChannelFirstConnectedEndpointQueryParams) {
+  return {
+    queryKey: [
+      'agent-channel-first-connected-endpoint',
+      environment?._id,
+      integrationIdentifier,
+      dashboardSubscriberId,
+    ],
+    queryFn: ({ signal }: { signal: AbortSignal }) =>
+      listChannelEndpoints({
+        // biome-ignore lint/style/noNonNullAssertion: guarded by `enabled` below
+        environment: environment!,
+        integrationIdentifier,
+        signal,
+      }),
+    enabled: enabled && Boolean(environment) && Boolean(dashboardSubscriberId),
+    refetchOnWindowFocus: false,
+    refetchInterval: (query: Query<ChannelEndpointsListResponse>) =>
+      findFirstGenuineConnectedEndpoint(query.state.data, dashboardSubscriberId) ? false : POLL_INTERVAL_MS,
+  };
+}
+
 /**
  * Polls the channel-endpoints API for the first genuine end-user connection created through the
  * embedded SDK connect button for a specific integration. Returns `connected: true` and the
@@ -96,29 +127,20 @@ export function useChannelFirstConnectedEndpoint({
 }: UseChannelFirstConnectedEndpointParams) {
   const { currentUser } = useAuth();
   const { currentEnvironment } = useEnvironment();
-  const dashboardSubscriberId = currentUser?._id ?? null;
+  const dashboardSubscriberId = currentUser?._id ?? '';
 
-  const query = useQuery<ChannelEndpointsListResponse>({
-    queryKey: [
-      'agent-channel-first-connected-endpoint',
-      currentEnvironment?._id,
+  const query = useQuery<ChannelEndpointsListResponse>(
+    channelFirstConnectedEndpointQueryOptions({
+      environment: currentEnvironment,
       integrationIdentifier,
       dashboardSubscriberId,
-    ],
-    queryFn: ({ signal }) =>
-      listChannelEndpoints({
-        // biome-ignore lint/style/noNonNullAssertion: guarded by `enabled` below
-        environment: currentEnvironment!,
-        integrationIdentifier,
-        signal,
-      }),
-    enabled: enabled && Boolean(currentEnvironment),
-    refetchOnWindowFocus: false,
-    refetchInterval: (query) =>
-      findFirstGenuineConnectedEndpoint(query.state.data, dashboardSubscriberId) ? false : POLL_INTERVAL_MS,
-  });
+      enabled,
+    })
+  );
 
-  const firstConnected = findFirstGenuineConnectedEndpoint(query.data, dashboardSubscriberId);
+  const firstConnected = dashboardSubscriberId
+    ? findFirstGenuineConnectedEndpoint(query.data, dashboardSubscriberId)
+    : null;
 
   return {
     connected: firstConnected !== null,

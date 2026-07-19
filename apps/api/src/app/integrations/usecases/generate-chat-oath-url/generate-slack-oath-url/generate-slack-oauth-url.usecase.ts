@@ -21,7 +21,7 @@ import {
   SLACK_AGENT_OAUTH_SCOPES,
 } from '@novu/shared';
 import { validateConnectionMode } from '../../../../channel-connections/usecases/channel-connection.utils';
-import { ensureConnectDashboardSubscriber } from '../../../../channel-connections/usecases/ensure-connect-dashboard-subscriber';
+import { ensureSubscriberProvisioned } from '../../../../channel-connections/usecases/ensure-connect-dashboard-subscriber';
 import { areHexDigestsEqual } from '../../../../shared/helpers/timing-safe-equal';
 import { CHAT_OAUTH_CALLBACK_PATH } from '../chat-oauth.constants';
 import { encodeOAuthState, splitOAuthState } from '../chat-oauth-state.util';
@@ -135,13 +135,12 @@ export class GenerateSlackOauthUrl {
       return;
     }
 
-    await ensureConnectDashboardSubscriber({
+    await ensureSubscriberProvisioned({
       subscriberId,
       environmentId,
       organizationId,
       subscriberRepository: this.subscriberRepository,
       createOrUpdateSubscriber: this.createOrUpdateSubscriber,
-      allowProvision: true,
     });
   }
 

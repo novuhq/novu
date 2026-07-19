@@ -7,11 +7,7 @@ import {
   IntegrationRepository,
   SubscriberRepository,
 } from '@novu/dal';
-import {
-  buildConnectSubscriberId,
-  SLACK_AGENT_WELCOME_SUGGESTED_PROMPTS,
-  SLACK_AGENT_WELCOME_SUGGESTED_PROMPTS_TITLE,
-} from '@novu/shared';
+import { SLACK_AGENT_WELCOME_SUGGESTED_PROMPTS, SLACK_AGENT_WELCOME_SUGGESTED_PROMPTS_TITLE } from '@novu/shared';
 import type { CardElement } from 'chat';
 import { ConnectClaimTokenService } from '../../../../connect/services/connect-claim-token.service';
 import { isKeylessOrganization } from '../../../../keyless/keyless-organization.helpers';
@@ -205,7 +201,7 @@ export class SendAgentWelcomeMessage {
    * (the same identity used by Telegram/WhatsApp test flows and workflow testing).
    */
   private async resolveEmailWelcomeRecipient(command: SendAgentWelcomeMessageCommand): Promise<string | undefined> {
-    const subscriberId = buildConnectSubscriberId(command.userId);
+    const subscriberId = command.userId;
     const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, subscriberId);
 
     if (!subscriber) {

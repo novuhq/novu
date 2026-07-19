@@ -18,7 +18,6 @@ import {
 import {
   AgentRuntimeProviderIdEnum,
   buildClaudePlatformVaultUrl,
-  buildConnectSubscriberId,
   McpConnectionAuthModeEnum,
   McpConnectionStatusEnum,
 } from '@novu/shared';
@@ -105,9 +104,9 @@ describe('EnsureProviderManagedVault', () => {
 
     agentRepository.findOne.resolves(makeManagedAgent() as never);
     integrationRepository.findOne.resolves({ credentials: { apiKey: 'sk-test' } } as never);
-    subscriberRepository.findBySubscriberId.withArgs(ENV_ID, buildConnectSubscriberId(USER_ID)).resolves({
+    subscriberRepository.findBySubscriberId.withArgs(ENV_ID, USER_ID).resolves({
       _id: SUBSCRIBER_MONGO_ID,
-      subscriberId: buildConnectSubscriberId(USER_ID),
+      subscriberId: USER_ID,
     } as never);
     agentMcpServerRepository.findByAgent.resolves([{ _id: ENABLEMENT_ID }] as never);
     agentMcpServerRepository.findByAgentAndMcpId.resolves({
@@ -241,10 +240,7 @@ describe('EnsureProviderManagedVault', () => {
   it('resolves the dashboard user subscriber id', async () => {
     await useCase.execute(makeCommand());
 
-    expect(subscriberRepository.findBySubscriberId.firstCall.args).to.deep.equal([
-      ENV_ID,
-      buildConnectSubscriberId(USER_ID),
-    ]);
+    expect(subscriberRepository.findBySubscriberId.firstCall.args).to.deep.equal([ENV_ID, USER_ID]);
     expect(createOrUpdateSubscriber.execute.called).to.equal(false);
   });
 
