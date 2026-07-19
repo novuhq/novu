@@ -10,6 +10,8 @@ packages:
   - 'enterprise/workers/step-resolver'
   # playground apps
   - 'playground/*'
+  # documentation site
+  - 'docs'
 
 # Pnpm configuration
 # Wait 3 days (4320 minutes) before allowing packages to be installed
@@ -234,11 +236,13 @@ allowBuilds:
   esbuild: true
   fsevents: true
   iframe-resizer: true
+  keytar: set this to true or false
   msgpackr-extract: true
   nestjs-pino: true
   nice-napi: true
   nx: true
   protobufjs: true
+  puppeteer: set this to true or false
   react-icons: true
   sharp: true
   unrs-resolver: true

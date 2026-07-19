@@ -18,6 +18,9 @@ procs:
     shell: pnpm --filter @novu/application-generic start
 
   # Optional procs (press `s` in the mprocs sidebar to start)
+  docs:
+    shell: pnpm --filter @novu/docs start:portless
+    autostart: false
   playground:
     shell: pnpm --filter nextjs start:portless
     autostart: false

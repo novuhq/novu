@@ -1,0 +1,16 @@
+{
+  "name": "@novu/docs",
+  "private": true,
+  "portless": {
+    "name": "docs.novu"
+  },
+  "scripts": {
+    "dev": "mint dev --no-open --port ${PORT:-3000}",
+    "start:portless": "pnpm exec portless run pnpm dev",
+    "validate": "mint validate",
+    "broken-links": "mint broken-links"
+  },
+  "devDependencies": {
+    "mint": "4.2.700"
+  }
+}

@@ -18,6 +18,7 @@ const NOVU_SERVICES = [
   { name: 'api.novu', label: 'API' },
   { name: 'dashboard.novu', label: 'Dashboard' },
   { name: 'ws.novu', label: 'WebSocket' },
+  { name: 'docs.novu', label: 'Docs' },
   { name: 'playground.novu', label: 'Playground' },
 ];
 
@@ -69,7 +70,7 @@ function formatBanner(routes, apiPublicUrl) {
   }
 
   if (routes.length === 0) {
-    lines.push('  Waiting for portless routes…', '  Start api / dashboard / ws / playground with start:portless', '');
+    lines.push('  Waiting for portless routes…', '  Start api / dashboard / ws / docs / playground with start:portless', '');
   } else {
     for (const route of routes) {
       lines.push(formatRouteLine(route));
