@@ -71,7 +71,7 @@ describe('SendAgentWelcomeMessage usecase', () => {
     };
     subscriberRepository = {
       findBySubscriberId: stub().resolves({
-        subscriberId: `connect:${USER_ID}`,
+        subscriberId: USER_ID,
         email: 'user@example.com',
       }),
     };
@@ -104,11 +104,11 @@ describe('SendAgentWelcomeMessage usecase', () => {
     restore();
   });
 
-  it('sends a welcome email to the connect subscriber address', async () => {
+  it('sends a welcome email to the dashboard subscriber address', async () => {
     const result = await buildUsecase().execute(buildCommand());
 
     expect(result).to.deep.equal({ sent: true, conversationId: 'conversation-id', claimToken: undefined });
-    expect(subscriberRepository.findBySubscriberId.calledOnceWith(ENV_ID, `connect:${USER_ID}`)).to.equal(true);
+    expect(subscriberRepository.findBySubscriberId.calledOnceWith(ENV_ID, USER_ID)).to.equal(true);
     expect(channelEndpointRepository.findOne.called).to.equal(false);
     expect(
       outboundGateway.sendDirectMessage.calledOnceWith(
@@ -178,8 +178,8 @@ describe('SendAgentWelcomeMessage usecase', () => {
     ).to.equal(true);
   });
 
-  it('returns sent:false when the connect subscriber has no email', async () => {
-    subscriberRepository.findBySubscriberId.resolves({ subscriberId: `connect:${USER_ID}`, email: '' });
+  it('returns sent:false when the dashboard subscriber has no email', async () => {
+    subscriberRepository.findBySubscriberId.resolves({ subscriberId: USER_ID, email: '' });
 
     const result = await buildUsecase().execute(buildCommand());
 
@@ -188,7 +188,7 @@ describe('SendAgentWelcomeMessage usecase', () => {
     expect(logger.warn.calledOnce).to.equal(true);
   });
 
-  it('returns sent:false when the connect subscriber does not exist', async () => {
+  it('returns sent:false when the dashboard subscriber does not exist', async () => {
     subscriberRepository.findBySubscriberId.resolves(null);
 
     const result = await buildUsecase().execute(buildCommand());

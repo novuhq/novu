@@ -1,10 +1,5 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import {
-  CreateOrUpdateSubscriberUseCase,
-  encryptChannelConnectionAuth,
-  InstrumentUsecase,
-  shortId,
-} from '@novu/application-generic';
+import { encryptChannelConnectionAuth, InstrumentUsecase, shortId } from '@novu/application-generic';
 import {
   ChannelConnectionEntity,
   ChannelConnectionRepository,
@@ -14,7 +9,7 @@ import {
   SubscriberRepository,
 } from '@novu/dal';
 import { validateConnectionMode } from '../channel-connection.utils';
-import { ensureConnectDashboardSubscriber } from '../ensure-connect-dashboard-subscriber';
+import { assertSubscriberExists } from '../ensure-connect-dashboard-subscriber';
 import { CreateChannelConnectionCommand } from './create-channel-connection.command';
 
 @Injectable()
@@ -23,8 +18,7 @@ export class CreateChannelConnection {
     private readonly channelConnectionRepository: ChannelConnectionRepository,
     private readonly integrationRepository: IntegrationRepository,
     private readonly subscriberRepository: SubscriberRepository,
-    private readonly contextRepository: ContextRepository,
-    private readonly createOrUpdateSubscriber: CreateOrUpdateSubscriberUseCase
+    private readonly contextRepository: ContextRepository
   ) {}
 
   @InstrumentUsecase()
@@ -34,7 +28,7 @@ export class CreateChannelConnection {
     const integration = await this.findIntegration(command);
     const contextKeys = await this.resolveContexts(command);
 
-    await this.assertSubscriberExists(command);
+    await this.ensureSubscriberExists(command);
     await this.ensureUniqueConnectionForResourceAndContext(command, integration, contextKeys);
 
     const identifier = command.identifier || this.generateIdentifier();
@@ -136,17 +130,15 @@ export class CreateChannelConnection {
     return channelConnection;
   }
 
-  private async assertSubscriberExists(command: CreateChannelConnectionCommand) {
+  private async ensureSubscriberExists(command: CreateChannelConnectionCommand) {
     if (!command.subscriberId) {
       return;
     }
 
-    await ensureConnectDashboardSubscriber({
+    await assertSubscriberExists({
       subscriberId: command.subscriberId,
       environmentId: command.environmentId,
-      organizationId: command.organizationId,
       subscriberRepository: this.subscriberRepository,
-      createOrUpdateSubscriber: this.createOrUpdateSubscriber,
     });
   }
 
