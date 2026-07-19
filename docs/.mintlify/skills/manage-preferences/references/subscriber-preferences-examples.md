@@ -55,7 +55,7 @@ curl -X PATCH https://api.novu.co/v1/subscribers/subscriber-123/preferences \
 
 ## Update Global Preferences
 
-Applies across all workflows - omit `workflowId`:
+Applies across all workflows — omit `workflowId`:
 
 ```typescript
 await novu.subscribers.preferences.update(

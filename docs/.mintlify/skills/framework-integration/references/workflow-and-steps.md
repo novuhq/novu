@@ -22,7 +22,7 @@ The body of the workflow. Receives:
 | --- | --- | --- |
 | `step` | `StepBuilder` | All step methods (`step.email`, `step.delay`, etc.) |
 | `payload` | `InferredFromSchema` | Validated trigger payload |
-| `subscriber` | `Subscriber` | Recipient - `{ subscriberId, firstName?, lastName?, email?, phone?, locale?, timezone?, data?, ... }` |
+| `subscriber` | `Subscriber` | Recipient — `{ subscriberId, firstName?, lastName?, email?, phone?, locale?, timezone?, data?, ... }` |
 
 ### `options: WorkflowOptions`
 
@@ -38,7 +38,7 @@ The body of the workflow. Receives:
 
 ### `severity` vs `critical` vs `readOnly`
 
-Three distinct dials - pick deliberately. See [`design-workflow/references/severity-and-critical.md`](../../design-workflow/references/severity-and-critical.md) for the full matrix.
+Three distinct dials — pick deliberately. See [`design-workflow/references/severity-and-critical.md`](../../design-workflow/references/severity-and-critical.md) for the full matrix.
 
 | Dial                                 | What it does                                                                                |
 | ------------------------------------ | ------------------------------------------------------------------------------------------- |
@@ -143,7 +143,7 @@ await step.chat("notify", async () => ({
 | --- | --- | --- |
 | `body` | `string` | Yes |
 
-For Slack `blocks`, Discord embeds, etc., use `providers` overrides - see below.
+For Slack `blocks`, Discord embeds, etc., use `providers` overrides — see below.
 
 ### `step.inApp`
 
@@ -169,7 +169,7 @@ const { seen, read, lastSeenDate, lastReadDate } = await step.inApp("inbox", asy
 | --- | --- | --- | --- |
 | `body` | `string` | Yes | Main content (HTML allowed if `disableOutputSanitization: true`) |
 | `subject` | `string` | No | Notification title |
-| `avatar` | `string` | No | URL - overrides actor avatar |
+| `avatar` | `string` | No | URL — overrides actor avatar |
 | `redirect` | `{ url, target? }` | No | Click destination (`target` is `_self`/`_blank`/`_parent`/`_top`/`_unfencedTop`, default `_blank`) |
 | `primaryAction` | `{ label, redirect? }` | No | Accent-colored CTA button |
 | `secondaryAction` | `{ label, redirect? }` | No | Muted CTA button |
@@ -204,7 +204,7 @@ await step.delay("wait", async () => ({
 
 Returns: `{ duration: number }` (in milliseconds).
 
-If a delay step **fails**, the workflow stops - it does not proceed to the next step.
+If a delay step **fails**, the workflow stops — it does not proceed to the next step.
 
 ### `step.digest`
 
@@ -214,7 +214,7 @@ Aggregate triggers over a time window or cron schedule.
 const { events } = await step.digest("daily", async () => ({
   unit: "days",
   amount: 1,
-  digestKey: payload.projectId, // optional - group by custom key
+  digestKey: payload.projectId, // optional — group by custom key
 }));
 ```
 
@@ -233,8 +233,8 @@ Each `DigestEvent` is `{ id: string, time: Date, payload: object }`.
 
 Constraints:
 - **One digest step per workflow.** For two-stage digests, trigger a second workflow from `step.custom`.
-- Digest content captured at trigger time - editing the workflow doesn't affect events already in flight.
-- Digest results are not available in step controls - only inside subsequent step `resolver`/`providers`/`skip` callbacks.
+- Digest content captured at trigger time — editing the workflow doesn't affect events already in flight.
+- Digest results are not available in step controls — only inside subsequent step `resolver`/`providers`/`skip` callbacks.
 
 ### `step.custom`
 
@@ -265,7 +265,7 @@ The return value must be JSON-serializable. The result is persisted in durable e
 
 ### `step.http`
 
-Call an external HTTP endpoint as part of the workflow - for fetching just-in-time data, posting to a webhook, or fanning out to a downstream service.
+Call an external HTTP endpoint as part of the workflow — for fetching just-in-time data, posting to a webhook, or fanning out to a downstream service.
 
 ```typescript
 const plan = await step.http("fetch-plan", async () => ({
@@ -315,7 +315,7 @@ await step.http("webhook", async () => ({
 Constraints:
 
 - **`responseBodySchema` is required** when subsequent steps reference response data. Only properties declared in the schema are available as `{{ steps.<http-step-id>.<property> }}` (Dashboard) or as typed fields on the returned object (Framework).
-- The HTTP step participates in retries. Treat it as a side effect - if you need exactly-once external calls, prefer `step.custom` with your own idempotency key.
+- The HTTP step participates in retries. Treat it as a side effect — if you need exactly-once external calls, prefer `step.custom` with your own idempotency key.
 - The Liquid `{{subscriber.*}}` and `{{payload.*}}` variables are usable inside `url`, `headers`, and `body` values.
 
 ## Step Options
@@ -404,7 +404,7 @@ await step.email("alert", resolver, {
 });
 ```
 
-The `_passthrough` block deep-merges into the final provider request - typed provider keys take precedence over `_passthrough`.
+The `_passthrough` block deep-merges into the final provider request — typed provider keys take precedence over `_passthrough`.
 
 ### `disableOutputSanitization`
 
@@ -476,9 +476,9 @@ await step.email("reminder", async () => ({
 
 ## Failure & Retries
 
-- If a **delay** or **digest** step fails, the workflow stops - subsequent steps do not run.
+- If a **delay** or **digest** step fails, the workflow stops — subsequent steps do not run.
 - If a **channel** step fails delivery, retries depend on provider config and Novu's retry policy.
-- Workflow handlers may be re-invoked on retry. Keep them deterministic - push side effects into `step.custom` so the result is persisted in durable context.
+- Workflow handlers may be re-invoked on retry. Keep them deterministic — push side effects into `step.custom` so the result is persisted in durable context.
 
 ## Type Inference
 
@@ -506,7 +506,7 @@ If you don't supply a schema, `payload` and `controls` are `unknown`.
 
 ## Appendix: Step Conditions (Dashboard JSON-Logic ↔ Framework `skip`)
 
-Dashboard authors gate a step with [JSON-Logic](https://jsonlogic.com) on `step.condition`. Framework authors pass a `skip: () => boolean` callback. The semantics are inverse - Dashboard runs when the condition is `true`, Framework `skip` skips when the callback returns `true`.
+Dashboard authors gate a step with [JSON-Logic](https://jsonlogic.com) on `step.condition`. Framework authors pass a `skip: () => boolean` callback. The semantics are inverse — Dashboard runs when the condition is `true`, Framework `skip` skips when the callback returns `true`.
 
 | Intent                                       | Dashboard JSON-Logic                                                                  | Framework `skip`                                |
 | -------------------------------------------- | ------------------------------------------------------------------------------------- | ----------------------------------------------- |
@@ -518,10 +518,10 @@ Dashboard authors gate a step with [JSON-Logic](https://jsonlogic.com) on `step.
 
 Variables you can reference in either surface (full breakdown in [`design-workflow/references/step-conditions.md`](../../design-workflow/references/step-conditions.md)):
 
-- `workflow.*` - `workflowId`, `name`, `description`, `tags`, `severity`
-- `subscriber.*` - `subscriberId`, `firstName`, `lastName`, `email`, `phone`, `avatar`, `locale`, `timezone`, `isOnline`, `lastOnlineAt`, `data.*`
-- `payload.*` - any field declared in `payloadSchema`
-- `steps.<stepId>.*` - In-App `seen` / `read`, digest `events` / `eventCount`, HTTP properties declared in `responseBodySchema`
-- `context.*` - multi-tenant metadata passed at trigger time (tenant, region, app)
+- `workflow.*` — `workflowId`, `name`, `description`, `tags`, `severity`
+- `subscriber.*` — `subscriberId`, `firstName`, `lastName`, `email`, `phone`, `avatar`, `locale`, `timezone`, `isOnline`, `lastOnlineAt`, `data.*`
+- `payload.*` — any field declared in `payloadSchema`
+- `steps.<stepId>.*` — In-App `seen` / `read`, digest `events` / `eventCount`, HTTP properties declared in `responseBodySchema`
+- `context.*` — multi-tenant metadata passed at trigger time (tenant, region, app)
 
 > See [`design-workflow/references/step-conditions.md`](../../design-workflow/references/step-conditions.md) for the full list of canonical conditions and the design reasoning.

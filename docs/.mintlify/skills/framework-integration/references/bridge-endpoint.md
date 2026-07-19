@@ -185,7 +185,7 @@ import { welcomeWorkflow } from "./novu/workflows";
 export const novu = serve({ workflows: [welcomeWorkflow] });
 ```
 
-Wire `novu` to API Gateway / Lambda Function URL. Use a stable URL for the bridge - avoid generated stage URLs that rotate.
+Wire `novu` to API Gateway / Lambda Function URL. Use a stable URL for the bridge — avoid generated stage URLs that rotate.
 
 ## Custom `serve` Function (Any Framework)
 
@@ -250,7 +250,7 @@ The tunnel ID is persisted on your machine, so the same URL is reused across `np
 
 ### Does the bridge endpoint need to be publicly accessible?
 
-Yes. Novu Cloud calls it from autoscaled workers - there's no static IP to allowlist. Use HTTPS in production.
+Yes. Novu Cloud calls it from autoscaled workers — there's no static IP to allowlist. Use HTTPS in production.
 
 ### Can I use a path other than `/api/novu`?
 
@@ -258,4 +258,4 @@ Yes. Set the path you want when mounting `serve` and pass the full URL (`https:/
 
 ### Does the bridge use my application's auth middleware?
 
-You can place the bridge behind any middleware as long as `serve` receives untouched `GET`/`POST`/`OPTIONS` requests. **Don't** attach JWT auth to the bridge - Novu authenticates with HMAC instead.
+You can place the bridge behind any middleware as long as `serve` receives untouched `GET`/`POST`/`OPTIONS` requests. **Don't** attach JWT auth to the bridge — Novu authenticates with HMAC instead.

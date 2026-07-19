@@ -14,7 +14,7 @@ Use Liquid syntax in `subject` and `body`:
 
 - `{{ subscriber.firstName }}`
 - `{{ payload.* }}`
-- `{{ steps.<http-step-id>.<property> }}` - only when the upstream HTTP step declares the property in its `responseBodySchema`
+- `{{ steps.<http-step-id>.<property> }}` — only when the upstream HTTP step declares the property in its `responseBodySchema`
 
 ## Common Pattern
 
@@ -28,5 +28,5 @@ See [`step-conditions.md`](./step-conditions.md).
 
 ## See Also
 
-- [`step-conditions.md`](./step-conditions.md) - the canonical "subscriber offline" condition for Push
-- [`design-workflow/references/channel-selection.md`](../../design-workflow/references/channel-selection.md) - when Push is the right channel
+- [`step-conditions.md`](./step-conditions.md) — the canonical "subscriber offline" condition for Push
+- [`design-workflow/references/channel-selection.md`](../../design-workflow/references/channel-selection.md) — when Push is the right channel

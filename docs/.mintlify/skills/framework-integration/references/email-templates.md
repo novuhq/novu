@@ -1,13 +1,13 @@
 # Email Templates
 
-`@novu/framework` lets you render emails with libraries you already know - React Email, Vue Email, Svelte Email - by returning the rendered HTML string from your `step.email` resolver.
+`@novu/framework` lets you render emails with libraries you already know — React Email, Vue Email, Svelte Email — by returning the rendered HTML string from your `step.email` resolver.
 
 ## Why use a component library?
 
 - **Reuse design tokens** across product UI and emails
 - **Type safety** for template props
 - **Dev-time preview** with React/Vue/Svelte Email's local preview servers
-- **Avoid HTML email tag soup** - components abstract away `<table>`-based layouts
+- **Avoid HTML email tag soup** — components abstract away `<table>`-based layouts
 
 ## React Email
 
@@ -88,7 +88,7 @@ React Email ships its own preview dev server:
 npx react-email dev
 ```
 
-This is **independent** of the Novu Studio - useful for designing your templates before wiring them into a workflow.
+This is **independent** of the Novu Studio — useful for designing your templates before wiring them into a workflow.
 
 ### Pass controls into the template
 
@@ -309,7 +309,7 @@ A complete example app: [novuhq/novu-svelte-email](https://github.com/novuhq/nov
 
 - **Co-locate templates with workflows.** Keep `src/novu/workflows/welcome/template.tsx` next to `src/novu/workflows/welcome/index.ts`.
 - **Render synchronously when possible.** `render(<Component />)` is sync for React Email (returns a string). Avoid awaiting `render` unless your library requires it.
-- **Keep template props small and serializable.** Templates are pure components - pass strings/numbers/arrays, not class instances.
+- **Keep template props small and serializable.** Templates are pure components — pass strings/numbers/arrays, not class instances.
 - **Don't fetch data in the template.** Fetch in `step.custom` or inside the `step.email` resolver, then pass plain props.
-- **Test in the Studio.** Trigger the workflow with a sample payload - the rendered HTML appears in the Studio preview pane.
+- **Test in the Studio.** Trigger the workflow with a sample payload — the rendered HTML appears in the Studio preview pane.
 - **Use the framework-specific dev server** (`npx react-email dev`, etc.) for fast iteration on the design without round-tripping through the Studio.

@@ -140,7 +140,7 @@ export function PreferencesPanel({
 
 ## Important Notes
 
-- Read-only workflows (`readOnly: true`) are **hidden** from the Preferences UI - subscribers cannot change them. It signifies that workflow is critical
+- Read-only workflows (`readOnly: true`) are **hidden** from the Preferences UI — subscribers cannot change them. It signifies that workflow is critical
 - The Preferences component requires a parent `<Inbox>` wrapper for the Novu context
 - Preferences are per-subscriber and per-environment (dev, staging, prod) and scoped per context
 - Changes made via the UI are immediately reflected in notification delivery

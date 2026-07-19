@@ -1,6 +1,6 @@
 # Deployment
 
-`@novu/framework` operates in a **GitOps model** - your workflows live in source control, and a sync step pushes them to Novu Cloud after each merge.
+`@novu/framework` operates in a **GitOps model** — your workflows live in source control, and a sync step pushes them to Novu Cloud after each merge.
 
 ## The flow
 
@@ -20,7 +20,7 @@ Each Novu environment (**Development**, **Production**) has its own secret key. 
 | Environment | Purpose | Secret key |
 | --- | --- | --- |
 | **Local Studio** | Develop against your machine via tunnel | (uses dev secret key) |
-| **Development** | Staging - non-technical peers preview controls | `NOVU_SECRET_KEY` (dev) |
+| **Development** | Staging — non-technical peers preview controls | `NOVU_SECRET_KEY` (dev) |
 | **Production** | Customer-facing triggers | `NOVU_SECRET_KEY` (prod) |
 
 Get keys from `https://dashboard.novu.co/api-keys` for each environment.
@@ -112,8 +112,8 @@ jobs:
 
 | Input | Required | Default | Description |
 | --- | --- | --- | --- |
-| `secret-key` | Yes | - | `NOVU_SECRET_KEY` for the target environment |
-| `bridge-url` | Yes | - | Public URL of the deployed bridge (`https://app.com/api/novu`) |
+| `secret-key` | Yes | — | `NOVU_SECRET_KEY` for the target environment |
+| `bridge-url` | Yes | — | Public URL of the deployed bridge (`https://app.com/api/novu`) |
 | `api-url` | No | `https://api.novu.co` | Use `https://eu.api.novu.co` for EU |
 
 ## Other CI/CD
@@ -234,20 +234,20 @@ deploy:
 ### "Failed to reach bridge URL"
 
 - The bridge URL must be publicly accessible over HTTPS.
-- Auth middleware on `/api/novu` will block Novu - exempt that path.
-- Vercel preview URLs require Protection Bypass - see above.
+- Auth middleware on `/api/novu` will block Novu — exempt that path.
+- Vercel preview URLs require Protection Bypass — see above.
 
 ### "Invalid secret key"
 
-You're syncing with the wrong environment's key. Each Novu environment has its own key - don't mix Dev and Prod.
+You're syncing with the wrong environment's key. Each Novu environment has its own key — don't mix Dev and Prod.
 
 ### Workflows don't appear in Dashboard after sync
 
-- Check the sync command exited 0 - failures may be silent in some CI environments.
-- Make sure your bridge actually returns the workflow on `GET /api/novu` - Novu fetches the registration list from there.
+- Check the sync command exited 0 — failures may be silent in some CI environments.
+- Make sure your bridge actually returns the workflow on `GET /api/novu` — Novu fetches the registration list from there.
 - If you renamed a workflow, the old `workflowId` is **not** auto-deleted. Delete it manually in the Dashboard if needed.
 
 ### Sync succeeded but triggers fail
 
-- The bridge URL stored in Novu Cloud is wrong - re-sync with the correct URL.
-- Production env vars are missing on your deployed app - `NOVU_SECRET_KEY` is required even for the bridge.
+- The bridge URL stored in Novu Cloud is wrong — re-sync with the correct URL.
+- Production env vars are missing on your deployed app — `NOVU_SECRET_KEY` is required even for the bridge.

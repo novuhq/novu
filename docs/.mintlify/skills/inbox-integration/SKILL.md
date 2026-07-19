@@ -10,7 +10,7 @@ inputs:
 
 # Inbox Integration
 
-Add an in-app notification center to your web application. The Inbox component provides a bell icon, notification feed, read/archive management, action buttons, and real-time WebSocket updates - all theme-able and personalizable to match your product.
+Add an in-app notification center to your web application. The Inbox component provides a bell icon, notification feed, read/archive management, action buttons, and real-time WebSocket updates — all theme-able and personalizable to match your product.
 
 ## Packages
 
@@ -67,7 +67,7 @@ export function NotificationInbox() {
 }
 ```
 
-**Important:** The Inbox is a client component - use `"use client"` directive in Next.js App Router.
+**Important:** The Inbox is a client component — use `"use client"` directive in Next.js App Router.
 
 ### Pages Router
 
@@ -225,7 +225,7 @@ Common icon keys: `bell`, `cogs`, `dots`, `arrowDown`, `arrowDropDown`, `arrowLe
 
 Notifications and the bell are styled by severity (`high`, `medium`, `low`). Override colors via `variables`:
 
-> Severity is a **visual** dial only. The workflow-level `critical: true` flag is independent - it changes runtime delivery (bypass preferences, skip digest), not Inbox styling. `critical` workflows that should also stand out visually should set `severity: 'high'` explicitly. See [`design-workflow/references/severity-and-critical.md`](../design-workflow/references/severity-and-critical.md) for the full design rules.
+> Severity is a **visual** dial only. The workflow-level `critical: true` flag is independent — it changes runtime delivery (bypass preferences, skip digest), not Inbox styling. `critical` workflows that should also stand out visually should set `severity: 'high'` explicitly. See [`design-workflow/references/severity-and-critical.md`](../design-workflow/references/severity-and-critical.md) for the full design rules.
 
 ```tsx
 appearance: {
@@ -272,7 +272,7 @@ See [Branding & Styling Reference](./references/branding-and-styling.md) for the
 
 ### Render props
 
-Override individual parts of a notification - keep the surrounding chrome (action buttons, hover state, etc.) intact:
+Override individual parts of a notification — keep the surrounding chrome (action buttons, hover state, etc.) intact:
 
 ```tsx
 <Inbox
@@ -289,7 +289,7 @@ Override individual parts of a notification - keep the surrounding chrome (actio
 />
 ```
 
-Use `renderNotification` only when you need full control of the item - you'll need to re-implement default actions (mark as read, archive, snooze) yourself.
+Use `renderNotification` only when you need full control of the item — you'll need to re-implement default actions (mark as read, archive, snooze) yourself.
 
 ```tsx
 <Inbox
@@ -305,7 +305,7 @@ Use `renderNotification` only when you need full control of the item - you'll ne
 
 ### Conditional display
 
-`renderNotification` receives the full notification - branch on `tags`, `data`, `severity`, or `workflow.identifier`:
+`renderNotification` receives the full notification — branch on `tags`, `data`, `severity`, or `workflow.identifier`:
 
 ```tsx
 renderNotification={(notification) => {
@@ -336,7 +336,7 @@ To render rich HTML in `subject` / `body`:
 />
 ```
 
-> Only enable this if you fully control the trigger payload - raw HTML opens an XSS surface area.
+> Only enable this if you fully control the trigger payload — raw HTML opens an XSS surface area.
 
 ### Notification click behavior
 
@@ -384,7 +384,7 @@ import { Inbox, SeverityLevelEnum } from "@novu/react";
 />
 ```
 
-- **Tags** are workflow-level - assign them in the workflow editor. Multiple tags use `OR` logic.
+- **Tags** are workflow-level — assign them in the workflow editor. Multiple tags use `OR` logic.
 - **Severity** comes from the In-App step's severity setting (`HIGH`, `MEDIUM`, `LOW`).
 - **`data`** comes from the [data object](#data-object) defined per In-App step.
 
@@ -469,7 +469,7 @@ See [Multi-Tenancy Reference](./references/multi-tenancy.md) for full setup, das
 
 ## Data Object
 
-Each In-App step supports a custom **data object** - up to 10 scalar key-value pairs (string, number, boolean, null; strings ≤ 256 chars) defined in the workflow editor. Values can be static (`"status": "merged"`) or dynamic (`"firstName": "{{subscriber.firstName}}"`).
+Each In-App step supports a custom **data object** — up to 10 scalar key-value pairs (string, number, boolean, null; strings ≤ 256 chars) defined in the workflow editor. Values can be static (`"status": "merged"`) or dynamic (`"firstName": "{{subscriber.firstName}}"`).
 
 Access it client-side as `notification.data` and use it for render decisions, conditional styling, and tab filtering.
 
@@ -498,7 +498,7 @@ declare global {
 }
 ```
 
-> Don't store secrets in `data` - it's returned to the client. Never spread the entire trigger payload into `data`.
+> Don't store secrets in `data` — it's returned to the client. Never spread the entire trigger payload into `data`.
 
 ## Custom Popover
 
@@ -527,7 +527,7 @@ The same pattern works with shadcn `<Drawer>`, Headless UI, or a route-level pag
 
 ## Localization
 
-Override Inbox UI text - useful for multi-language apps or matching your product voice:
+Override Inbox UI text — useful for multi-language apps or matching your product voice:
 
 ```tsx
 <Inbox
@@ -593,24 +593,24 @@ If you also pass a `context`, generate a `contextHash` (see [Multi-Tenancy](#mul
 
 ## Common Pitfalls
 
-1. **`applicationIdentifier` is NOT the same as `NOVU_SECRET_KEY`** - the app ID is a public identifier safe for client-side use. The secret key is server-only.
-2. **HMAC hash is mandatory in production** - without it, anyone can impersonate a subscriber by guessing their ID.
-3. **The Inbox only shows notifications from workflows with an `inApp` step** - if your workflow doesn't include `step.inApp()`, nothing appears.
-4. **`"use client"` is required in Next.js App Router** - the Inbox component is client-side only.
-5. **Real-time updates are automatic** - the Inbox uses WebSockets internally. No additional setup needed.
-6. **`@novu/react` vs `@novu/nextjs`** - use `@novu/nextjs` for Next.js apps (handles SSR edge cases), `@novu/react` for all other React apps.
-7. **`variables` override `baseTheme`** - when both are set in `appearance`, variables win. Set variables in dark/light themes intentionally.
-8. **Element callbacks return strings** - `(context) => string` returns class names, not style objects. For style objects use a static value.
-9. **Context filtering is exact-match** - passing `context={{}}` to the Inbox hides any notification triggered with a non-empty context, and vice-versa.
-10. **Don't store secrets in `notification.data`** - it's sent to the client.
-11. **`renderNotification` removes default actions** - use granular render props (`renderSubject`, `renderBody`, `renderAvatar`, `renderDefaultActions`, `renderCustomActions`) when you want to keep mark-as-read / archive / snooze affordances.
-12. **HTML rendering requires both steps** - disabling sanitization in the workflow *and* using `dangerouslySetInnerHTML` in a render prop. Either alone has no effect.
+1. **`applicationIdentifier` is NOT the same as `NOVU_SECRET_KEY`** — the app ID is a public identifier safe for client-side use. The secret key is server-only.
+2. **HMAC hash is mandatory in production** — without it, anyone can impersonate a subscriber by guessing their ID.
+3. **The Inbox only shows notifications from workflows with an `inApp` step** — if your workflow doesn't include `step.inApp()`, nothing appears.
+4. **`"use client"` is required in Next.js App Router** — the Inbox component is client-side only.
+5. **Real-time updates are automatic** — the Inbox uses WebSockets internally. No additional setup needed.
+6. **`@novu/react` vs `@novu/nextjs`** — use `@novu/nextjs` for Next.js apps (handles SSR edge cases), `@novu/react` for all other React apps.
+7. **`variables` override `baseTheme`** — when both are set in `appearance`, variables win. Set variables in dark/light themes intentionally.
+8. **Element callbacks return strings** — `(context) => string` returns class names, not style objects. For style objects use a static value.
+9. **Context filtering is exact-match** — passing `context={{}}` to the Inbox hides any notification triggered with a non-empty context, and vice-versa.
+10. **Don't store secrets in `notification.data`** — it's sent to the client.
+11. **`renderNotification` removes default actions** — use granular render props (`renderSubject`, `renderBody`, `renderAvatar`, `renderDefaultActions`, `renderCustomActions`) when you want to keep mark-as-read / archive / snooze affordances.
+12. **HTML rendering requires both steps** — disabling sanitization in the workflow *and* using `dangerouslySetInnerHTML` in a render prop. Either alone has no effect.
 
 ## References
 
-- [Branding & Styling](./references/branding-and-styling.md) - full appearance API: themes, variables, elements, icons, severity, dynamic callbacks
-- [Personalization](./references/personalization.md) - render props, custom popover (Radix, shadcn Drawer), conditional display, click handlers
-- [Multi-Tenancy with Contexts](./references/multi-tenancy.md) - context-based isolation, securing contextHash, dynamic templates
+- [Branding & Styling](./references/branding-and-styling.md) — full appearance API: themes, variables, elements, icons, severity, dynamic callbacks
+- [Personalization](./references/personalization.md) — render props, custom popover (Radix, shadcn Drawer), conditional display, click handlers
+- [Multi-Tenancy with Contexts](./references/multi-tenancy.md) — context-based isolation, securing contextHash, dynamic templates
 - [React Inbox Examples](./references/react-inbox-examples.md)
 - [Next.js Inbox Examples](./references/nextjs-inbox-examples.md)
 - [Headless Inbox (Vanilla JS)](./references/headless-inbox-examples.md)

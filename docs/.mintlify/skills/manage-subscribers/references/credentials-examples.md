@@ -88,6 +88,6 @@ curl -X PUT https://api.novu.co/v1/subscribers/user-123/credentials \
 
 ## Important Notes
 
-- Device tokens are set as an array - providing a new array **replaces** existing tokens in `PUT` api request and new tokens are appended in case of `PATCH` request.
+- Device tokens are set as an array — providing a new array **replaces** existing tokens in `PUT` api request and new tokens are appended in case of `PATCH` request.
 - Each provider (FCM, APNS etc.) must be configured as an integration in the Novu dashboard before storing the credentials.
-- Push tokens expire - For FCM and EXPO, novu handles the expiration of stale tokens. For rest other providers, user need to handle the expiry of tokens.
+- Push tokens expire — For FCM and EXPO, novu handles the expiration of stale tokens. For rest other providers, user need to handle the expiry of tokens.

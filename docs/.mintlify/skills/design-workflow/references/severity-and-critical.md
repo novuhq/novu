@@ -11,7 +11,7 @@
 | `MEDIUM` | Worth surfacing                      | Mentions, light alerts.                                                  |
 | `HIGH`   | "Deal with this today"               | Payment failed, trial expiring tomorrow, KYC required.                   |
 
-Severity is **purely visual** - it does not change preferences, digest, or delivery. It only affects how the Inbox renders the notification (color, glow, bell color), and informs the digest skip rule below.
+Severity is **purely visual** — it does not change preferences, digest, or delivery. It only affects how the Inbox renders the notification (color, glow, bell color), and informs the digest skip rule below.
 
 > See [`inbox-integration/SKILL.md`](../../inbox-integration/SKILL.md) ("Severity styling") for the visual mapping (`colorSeverityHigh`, `severityHigh__notificationBar`, etc.).
 
@@ -31,9 +31,9 @@ Reserve `critical: true` for must-deliver events:
 - Forgot password / OTP delivery
 - Legal or compliance notices
 
-> A workflow can be `critical: true` with `severity` unset - the two dials don't depend on each other.
+> A workflow can be `critical: true` with `severity` unset — the two dials don't depend on each other.
 
-## `readOnly` vs `critical` - the trap
+## `readOnly` vs `critical` — the trap
 
 These are easy to confuse. They control different things:
 
@@ -70,14 +70,14 @@ Digest is automatically skipped when `severity: HIGH` **or** `critical: true`.
 
 ## Common Pitfalls
 
-1. **Setting `severity: HIGH` doesn't make the workflow critical** - it still respects preferences and runs delays. Add `critical: true` if you need bypass.
-2. **`critical: true` doesn't auto-set severity** - set `severity: HIGH` explicitly if you also want the high-severity Inbox styling.
-3. **Don't mark marketing workflows critical** - bypassing preferences for promotional content damages trust and is a deliverability risk.
-4. **`readOnly: true` won't force delivery** - it only hides the workflow toggle. Use `critical: true` to actually force delivery.
+1. **Setting `severity: HIGH` doesn't make the workflow critical** — it still respects preferences and runs delays. Add `critical: true` if you need bypass.
+2. **`critical: true` doesn't auto-set severity** — set `severity: HIGH` explicitly if you also want the high-severity Inbox styling.
+3. **Don't mark marketing workflows critical** — bypassing preferences for promotional content damages trust and is a deliverability risk.
+4. **`readOnly: true` won't force delivery** — it only hides the workflow toggle. Use `critical: true` to actually force delivery.
 
 ## See Also
 
-- [`channel-selection.md`](./channel-selection.md) - how `critical` expands the channel mix
-- [`digest-defaults.md`](./digest-defaults.md) - when digest is auto-skipped
-- [`workflow-templates.md`](./workflow-templates.md) - templates that show `critical` in context
-- [`manage-preferences/SKILL.md`](../../manage-preferences/SKILL.md) - preference resolution order
+- [`channel-selection.md`](./channel-selection.md) — how `critical` expands the channel mix
+- [`digest-defaults.md`](./digest-defaults.md) — when digest is auto-skipped
+- [`workflow-templates.md`](./workflow-templates.md) — templates that show `critical` in context
+- [`manage-preferences/SKILL.md`](../../manage-preferences/SKILL.md) — preference resolution order

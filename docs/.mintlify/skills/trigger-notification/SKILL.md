@@ -39,7 +39,7 @@ const result = await novu.trigger({
 
 ### Trigger with Inline Subscriber Creation
 
-If the subscriber doesn't exist yet, provide the full object - Novu upserts the subscriber:
+If the subscriber doesn't exist yet, provide the full object — Novu upserts the subscriber:
 
 ```typescript
 const result = await novu.trigger({
@@ -160,11 +160,11 @@ const result = await novu.trigger({
 
 ## Common Pitfalls
 
-1. **`workflowId` is the identifier, not the display name** - use the identifier you set when defining the workflow, not its human-readable name. Novu creates workflowId automatically if not provided
-2. **Subscriber upsert** - triggering to a non-existent `subscriberId` or `subscriber` object string will create the subscriber with that subscriberId.
-3. **Bulk trigger limit is 100 events** - chunk larger batches into groups of 100.
-4. **`transactionId` is required for cancellation** - you cannot cancel a trigger without it. Either provide custom transactionId or store novu generated transactionId if usecase is to cancel the workflow run (trigger event) later.
-5. **Payload is validated against the workflow's `payloadSchema`** - if the workflow defines a schema, the trigger will fail if the payload doesn't match.
+1. **`workflowId` is the identifier, not the display name** — use the identifier you set when defining the workflow, not its human-readable name. Novu creates workflowId automatically if not provided
+2. **Subscriber upsert** — triggering to a non-existent `subscriberId` or `subscriber` object string will create the subscriber with that subscriberId.
+3. **Bulk trigger limit is 100 events** — chunk larger batches into groups of 100.
+4. **`transactionId` is required for cancellation** — you cannot cancel a trigger without it. Either provide custom transactionId or store novu generated transactionId if usecase is to cancel the workflow run (trigger event) later.
+5. **Payload is validated against the workflow's `payloadSchema`** — if the workflow defines a schema, the trigger will fail if the payload doesn't match.
 
 ## References
 

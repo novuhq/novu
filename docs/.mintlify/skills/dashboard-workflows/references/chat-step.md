@@ -1,6 +1,6 @@
 # Chat Step
 
-Chat step for Slack / Discord / Teams - team notifications, developer alerts.
+Chat step for Slack / Discord / Teams — team notifications, developer alerts.
 
 ## Guidelines
 
@@ -13,9 +13,9 @@ Use Liquid syntax in `body`:
 
 - `{{ subscriber.firstName }}`
 - `{{ payload.* }}`
-- `{{ steps.<http-step-id>.<property> }}` - only when the upstream HTTP step declares the property in its `responseBodySchema`
+- `{{ steps.<http-step-id>.<property> }}` — only when the upstream HTTP step declares the property in its `responseBodySchema`
 
 ## See Also
 
-- [`step-conditions.md`](./step-conditions.md) - gate Chat on workflow tags or severity
-- [`design-workflow/references/channel-selection.md`](../../design-workflow/references/channel-selection.md) - Chat is a fit when configured **and** `severity >= MEDIUM`
+- [`step-conditions.md`](./step-conditions.md) — gate Chat on workflow tags or severity
+- [`design-workflow/references/channel-selection.md`](../../design-workflow/references/channel-selection.md) — Chat is a fit when configured **and** `severity >= MEDIUM`

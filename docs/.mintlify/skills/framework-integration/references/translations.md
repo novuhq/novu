@@ -1,6 +1,6 @@
 # Translations (i18n)
 
-`@novu/framework` workflows are code-first - content is rendered inside your bridge during workflow execution. That means **i18n lives in your application layer**: define translation keys in code (e.g. with [i18next](https://www.i18next.com/)) and resolve them inside step resolvers using `subscriber.locale`.
+`@novu/framework` workflows are code-first — content is rendered inside your bridge during workflow execution. That means **i18n lives in your application layer**: define translation keys in code (e.g. with [i18next](https://www.i18next.com/)) and resolve them inside step resolvers using `subscriber.locale`.
 
 > The Novu **Translation** system on the Dashboard is intended for **Dashboard-defined** workflows. Framework workflows use your own i18n stack instead.
 
@@ -232,14 +232,14 @@ The user should receive their email in `de_DE`.
 ## Tips
 
 - Use **ISO 639-1 + ISO 3166-1** with underscore convention (`en_US`, `de_DE`, `pt_BR`).
-- **Hard-fail on missing keys in development** by setting i18next's `saveMissing` and `missingKeyHandler` - this catches gaps in translations before deploy.
+- **Hard-fail on missing keys in development** by setting i18next's `saveMissing` and `missingKeyHandler` — this catches gaps in translations before deploy.
 - For **digest emails**, build a localized React component that takes a translation function as a prop and walks events.
 - Keep translation files **separate from workflow code** so your translation team can edit JSON without touching TypeScript.
 - Use **i18next-http-backend** + your CMS if translations should be edited by non-engineers without a code deploy.
 
 ## Alternatives
 
-i18next is just one option - any i18n library works:
+i18next is just one option — any i18n library works:
 
 - [`react-i18next`](https://react.i18next.com/) (React Email components support hooks via i18next provider patterns)
 - [`next-intl`](https://next-intl-docs.vercel.app/) (server-side resolution works fine inside the bridge)

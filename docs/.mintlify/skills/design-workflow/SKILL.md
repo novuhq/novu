@@ -1,11 +1,11 @@
 ---
 name: novu-design-workflow
-description: Design notification workflows the Novu way - choose channels, set severity, decide when a workflow is critical, configure digests, and route based on subscriber state. Applies to BOTH dashboard-authored and code-first (`@novu/framework`) workflows. Use when planning a new workflow, deciding which channels to include, picking severity, configuring digest behavior, or matching a use case (order confirmation, payment failed, account suspended, comment, trial expiring, password reset, webhook fan-out, fetch-then-notify) to a proven template.
+description: Design notification workflows the Novu way — choose channels, set severity, decide when a workflow is critical, configure digests, and route based on subscriber state. Applies to BOTH dashboard-authored and code-first (`@novu/framework`) workflows. Use when planning a new workflow, deciding which channels to include, picking severity, configuring digest behavior, or matching a use case (order confirmation, payment failed, account suspended, comment, trial expiring, password reset, webhook fan-out, fetch-then-notify) to a proven template.
 ---
 
 # Design Workflow
 
-Design rules for any Novu workflow - independent of whether you author it in the **Dashboard** (no-code) or in **code** with [`@novu/framework`](../framework-integration). The decisions here (channels, severity, critical, digest, conditions) are the same on both surfaces; only the syntax differs.
+Design rules for any Novu workflow — independent of whether you author it in the **Dashboard** (no-code) or in **code** with [`@novu/framework`](../framework-integration). The decisions here (channels, severity, critical, digest, conditions) are the same on both surfaces; only the syntax differs.
 
 > Authoring **in code**? Pair this skill with [`framework-integration/`](../framework-integration) for `workflow(...)`, `step.*`, `controlSchema`, and Bridge Endpoint setup.
 > Authoring **in the Dashboard or via the Novu MCP**? After designing here, fill in step content (subject, body, `editorType`, headers, conditions) using [`dashboard-workflows/`](../dashboard-workflows).
@@ -97,7 +97,7 @@ Default delays:
 - **B2B** apps → next work hour
 - **B2C** apps → ~30 minutes
 
-The condition for "subscriber offline" is the same on both surfaces - see [`references/step-conditions.md`](./references/step-conditions.md).
+The condition for "subscriber offline" is the same on both surfaces — see [`references/step-conditions.md`](./references/step-conditions.md).
 
 ## Workflow Templates
 
@@ -128,27 +128,27 @@ The semantics are identical. See [`references/step-conditions.md`](./references/
 
 ## Common Pitfalls
 
-1. **Don't set severity by default** - leave it unset unless you actually need visual prioritization.
-2. **`critical: true` is not the same as `readOnly: true`** - `readOnly` only hides the workflow from the Preferences UI; `critical` bypasses preferences and digests at runtime. See [`references/severity-and-critical.md`](./references/severity-and-critical.md).
-3. **Don't add fallbacks when the user named the channels** - explicit channel requests are exact.
+1. **Don't set severity by default** — leave it unset unless you actually need visual prioritization.
+2. **`critical: true` is not the same as `readOnly: true`** — `readOnly` only hides the workflow from the Preferences UI; `critical` bypasses preferences and digests at runtime. See [`references/severity-and-critical.md`](./references/severity-and-critical.md).
+3. **Don't add fallbacks when the user named the channels** — explicit channel requests are exact.
 4. **Cap the channel count at 3** when the user didn't specify channels. More channels = more annoyance, not more reach.
-5. **Don't combine digest with `critical: true`** - critical workflows must deliver immediately. The digest step is auto-skipped.
-6. **Digest key matters for conversational flows** - without `+threadId`, a comment on Post A and a comment on Post B end up in the same digest.
-7. **Push only when offline** - sending push to an online user duplicates the In-App alert.
-8. **HTTP step needs `responseBodySchema`** - without it, downstream steps can't read response properties via `{{ steps.<id>.<prop> }}`.
+5. **Don't combine digest with `critical: true`** — critical workflows must deliver immediately. The digest step is auto-skipped.
+6. **Digest key matters for conversational flows** — without `+threadId`, a comment on Post A and a comment on Post B end up in the same digest.
+7. **Push only when offline** — sending push to an online user duplicates the In-App alert.
+8. **HTTP step needs `responseBodySchema`** — without it, downstream steps can't read response properties via `{{ steps.<id>.<prop> }}`.
 
 ## References
 
-- [Channel Selection](./references/channel-selection.md) - full decision tree and per-channel guidance
-- [Severity & Critical](./references/severity-and-critical.md) - behavior matrix, preference & digest interactions, `readOnly` vs `critical`
-- [Digest Defaults](./references/digest-defaults.md) - windows, keys, conversational digest patterns
-- [Step Conditions](./references/step-conditions.md) - JSON-Logic snippets and Framework `skip` equivalents
-- [Workflow Templates](./references/workflow-templates.md) - the 9 reference flows with severity/critical/interaction tables
+- [Channel Selection](./references/channel-selection.md) — full decision tree and per-channel guidance
+- [Severity & Critical](./references/severity-and-critical.md) — behavior matrix, preference & digest interactions, `readOnly` vs `critical`
+- [Digest Defaults](./references/digest-defaults.md) — windows, keys, conversational digest patterns
+- [Step Conditions](./references/step-conditions.md) — JSON-Logic snippets and Framework `skip` equivalents
+- [Workflow Templates](./references/workflow-templates.md) — the 9 reference flows with severity/critical/interaction tables
 
 ## See Also
 
-- [`dashboard-workflows/`](../dashboard-workflows) - author step content (subject, body, `editorType`, headers, conditions) for Dashboard or Novu MCP workflows
-- [`framework-integration/`](../framework-integration) - implement these designs in code (`workflow()`, `step.*`, `controlSchema`, Bridge)
-- [`manage-preferences/`](../manage-preferences) - how `critical` interacts with subscriber-level preferences
-- [`inbox-integration/`](../inbox-integration) - how severity surfaces visually in the Inbox
-- [`trigger-notification/`](../trigger-notification) - invoking a workflow once it's designed
+- [`dashboard-workflows/`](../dashboard-workflows) — author step content (subject, body, `editorType`, headers, conditions) for Dashboard or Novu MCP workflows
+- [`framework-integration/`](../framework-integration) — implement these designs in code (`workflow()`, `step.*`, `controlSchema`, Bridge)
+- [`manage-preferences/`](../manage-preferences) — how `critical` interacts with subscriber-level preferences
+- [`inbox-integration/`](../inbox-integration) — how severity surfaces visually in the Inbox
+- [`trigger-notification/`](../trigger-notification) — invoking a workflow once it's designed

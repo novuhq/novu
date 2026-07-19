@@ -10,9 +10,9 @@ Required properties: `subject`, `editorType`, `body`.
 
 | Field        | Value                                                          |
 | ------------ | -------------------------------------------------------------- |
-| `subject`    | `string` - email subject line                                  |
+| `subject`    | `string` — email subject line                                  |
 | `editorType` | `"block"`                                                      |
-| `body`       | `object` - email body in Maily TipTap JSON format              |
+| `body`       | `object` — email body in Maily TipTap JSON format              |
 
 ### Option 2: HTML Format (recommended for complex email layouts)
 
@@ -20,9 +20,9 @@ Required properties: `subject`, `editorType`, `body`.
 
 | Field        | Value                                                                                                                                       |
 | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| `subject`    | `string` - email subject line                                                                                                               |
+| `subject`    | `string` — email subject line                                                                                                               |
 | `editorType` | `"html"`                                                                                                                                    |
-| `body`       | `string` - email body always in HTML format. Use semantic HTML with inline styles. Structure with headings, paragraphs, and styled buttons. |
+| `body`       | `string` — email body always in HTML format. Use semantic HTML with inline styles. Structure with headings, paragraphs, and styled buttons. |
 
 ## Email Content Requirements
 
@@ -90,7 +90,7 @@ Required properties: `subject`, `editorType`, `body`.
    - Correct: `{ "type": "button", "attrs": { "url": "payload.actionUrl", "isUrlVariable": true } }`
    - Wrong: `{ "type": "button", "attrs": { "url": "{{ payload.actionUrl }}", "isUrlVariable": true } }`
    - Correct: `{ "type": "button", "attrs": { "text": "payload.label", "isTextVariable": true } }`
-6. **`image` nodes:** same rule - bare variable name in `src` or `externalLink` with the matching boolean flag.
+6. **`image` nodes:** same rule — bare variable name in `src` or `externalLink` with the matching boolean flag.
    - Correct: `{ "type": "image", "attrs": { "src": "payload.imageUrl", "isSrcVariable": true } }`
    - Wrong: `{ "type": "image", "attrs": { "src": "{{ payload.imageUrl }}", "isSrcVariable": true } }`
 7. **`inlineImage` nodes:** same rule for `src` with `isSrcVariable` and `externalLink` with `isExternalLinkVariable`.
@@ -135,10 +135,10 @@ Available **only** for steps that come **after** an HTTP Request step that defin
   - Example: `{ "type": "variable", "attrs": { "id": "steps.fetch-user.name" } }`
 - **HTML format:** use Liquid syntax: `{{ steps.fetch-user.name }}`.
 
-> Only properties declared in the HTTP step's `responseBodySchema` are available - do not reference arbitrary response fields.
+> Only properties declared in the HTTP step's `responseBodySchema` are available — do not reference arbitrary response fields.
 
 ## See Also
 
-- [`http-request-step.md`](./http-request-step.md) - declare `responseBodySchema` so an email step can read response data
-- [`digest-step.md`](./digest-step.md) - when an email step is preceded by a digest, use the special variables above
-- [`step-conditions.md`](./step-conditions.md) - gate the email on subscriber state or previous step results
+- [`http-request-step.md`](./http-request-step.md) — declare `responseBodySchema` so an email step can read response data
+- [`digest-step.md`](./digest-step.md) — when an email step is preceded by a digest, use the special variables above
+- [`step-conditions.md`](./step-conditions.md) — gate the email on subscriber state or previous step results

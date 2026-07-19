@@ -2,7 +2,7 @@
 
 HTTP Request step to call an external API, send a webhook, or fetch data from a third-party service.
 
-This is an **action step** - it does **not** send a notification to the subscriber. Use it when the workflow needs to integrate with external systems.
+This is an **action step** — it does **not** send a notification to the subscriber. Use it when the workflow needs to integrate with external systems.
 
 ## Required Fields
 
@@ -48,7 +48,7 @@ A downstream email step can then read `{{ steps.fetch-user.name }}` and `{{ step
 
 ## Guidelines
 
-- **Never hardcode secrets or API keys** - use payload or subscriber variables instead.
+- **Never hardcode secrets or API keys** — use payload or subscriber variables instead.
 - Set `Content-Type: application/json` header when sending a JSON body.
 - Use `continueOnFailure: true` when the HTTP call is non-critical to the workflow.
 - For `headers` and `body`: use an empty array `[]` when not needed. Never include entries with empty keys or values (e.g. `[{"key":"","value":""}]` is invalid).
@@ -56,6 +56,6 @@ A downstream email step can then read `{{ steps.fetch-user.name }}` and `{{ step
 
 ## See Also
 
-- [`step-conditions.md`](./step-conditions.md) - branch on HTTP response values (`{ "==": [{ "var": "steps.<http-step-id>.status" }, "active"] }`)
-- [`email-step.md`](./email-step.md) - read HTTP response fields from a Block Editor `variable` node or HTML Liquid expression
-- [`design-workflow/references/workflow-templates.md`](../../design-workflow/references/workflow-templates.md) - templates 8 and 9 show webhook and fetch-then-notify patterns
+- [`step-conditions.md`](./step-conditions.md) — branch on HTTP response values (`{ "==": [{ "var": "steps.<http-step-id>.status" }, "active"] }`)
+- [`email-step.md`](./email-step.md) — read HTTP response fields from a Block Editor `variable` node or HTML Liquid expression
+- [`design-workflow/references/workflow-templates.md`](../../design-workflow/references/workflow-templates.md) — templates 8 and 9 show webhook and fetch-then-notify patterns

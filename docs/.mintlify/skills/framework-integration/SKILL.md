@@ -12,7 +12,7 @@ inputs:
 
 Use `@novu/framework` to build notification workflows **in code**, alongside your application source. Workflows live in your repo, content is rendered using libraries you already use (React Email, Vue Email, Svelte Email), and a single HTTP endpoint (the Bridge) lets Novu Cloud execute them with just-in-time data from your services.
 
-> Use this skill when building workflows **in code**. For workflows authored in the Novu Dashboard, just trigger them via [`trigger-notification`](../trigger-notification) - no Framework needed.
+> Use this skill when building workflows **in code**. For workflows authored in the Novu Dashboard, just trigger them via [`trigger-notification`](../trigger-notification) — no Framework needed.
 
 ## When to Use the Framework
 
@@ -24,12 +24,12 @@ Use `@novu/framework` to build notification workflows **in code**, alongside you
 | Execute custom code (LLMs, third-party APIs) | Pure send-only flows |
 | Need typed payload + step controls | Quick prototype |
 
-The two approaches **coexist** - a single environment can have both code-defined and dashboard-defined workflows.
+The two approaches **coexist** — a single environment can have both code-defined and dashboard-defined workflows.
 
 ## How It Works
 
 1. You define workflows in code with `workflow(...)` from `@novu/framework`.
-2. You expose a single `/api/novu` HTTP route in your app - the **Bridge Endpoint**.
+2. You expose a single `/api/novu` HTTP route in your app — the **Bridge Endpoint**.
 3. You sync the bridge URL to Novu Cloud (via `npx novu sync` or GitHub Action).
 4. Novu Cloud calls your bridge over an authenticated tunnel during workflow execution to fetch step content with the latest data.
 
@@ -91,7 +91,7 @@ export const welcomeWorkflow = workflow(
 
 ### 4. Mount the Bridge Endpoint
 
-Pick the wrapper that matches your framework - see [Bridge Endpoint Setup](#bridge-endpoint-setup) below.
+Pick the wrapper that matches your framework — see [Bridge Endpoint Setup](#bridge-endpoint-setup) below.
 
 ### 5. Run the Local Studio
 
@@ -112,7 +112,7 @@ workflow(workflowId, handler, options);
 | Param | Type | Description |
 | --- | --- | --- |
 | `workflowId` | `string` | Unique identifier in your environment |
-| `handler` | `({ step, payload, subscriber }) => Promise<void>` | Workflow body - calls steps in order |
+| `handler` | `({ step, payload, subscriber }) => Promise<void>` | Workflow body — calls steps in order |
 | `options` | `WorkflowOptions` | Schema, name, description, tags, preferences |
 
 ### Workflow Options
@@ -131,9 +131,9 @@ workflow(workflowId, handler, options);
 
 The handler receives `{ step, payload, subscriber }`:
 
-- `step` - channel and action step builders (`step.email`, `step.delay`, `step.digest`, …)
-- `payload` - strongly-typed data passed at trigger time, validated against `payloadSchema`
-- `subscriber` - `{ subscriberId, firstName?, lastName?, locale?, data?, ... }` of the recipient
+- `step` — channel and action step builders (`step.email`, `step.delay`, `step.digest`, …)
+- `payload` — strongly-typed data passed at trigger time, validated against `payloadSchema`
+- `subscriber` — `{ subscriberId, firstName?, lastName?, locale?, data?, ... }` of the recipient
 
 ## Channel Steps
 
@@ -146,9 +146,9 @@ await step.<channel>(stepId, resolver, options?);
 | Step | Output Required | Notable Outputs | Returns Result |
 | --- | --- | --- | --- |
 | `step.email` | `subject`, `body` | `attachments`, `from`, `replyTo` | No |
-| `step.sms` | `body` | - | No |
+| `step.sms` | `body` | — | No |
 | `step.push` | `title` (or `subject`), `body` | `data`, `image`, `icon` | No |
-| `step.chat` | `body` | - (override per-provider) | No |
+| `step.chat` | `body` | — (override per-provider) | No |
 | `step.inApp` | `body` | `subject`, `avatar`, `redirect`, `primaryAction`, `secondaryAction`, `data` | `{ seen, read, lastSeenDate, lastReadDate }` |
 
 ### Email Step
@@ -178,7 +178,7 @@ await step.inApp("inbox", async () => ({
 }));
 ```
 
-The In-App step **returns** `{ seen, read, lastSeenDate, lastReadDate }` - use it to drive the `skip` of subsequent steps.
+The In-App step **returns** `{ seen, read, lastSeenDate, lastReadDate }` — use it to drive the `skip` of subsequent steps.
 
 ### SMS / Push / Chat
 
@@ -221,7 +221,7 @@ Aggregate multiple triggers into a single notification over a window.
 const { events } = await step.digest("daily", async () => ({
   unit: "days",
   amount: 1,
-  digestKey: payload.projectId, // optional - group by custom key
+  digestKey: payload.projectId, // optional — group by custom key
 }));
 
 await step.email("summary", async () => ({
@@ -230,11 +230,11 @@ await step.email("summary", async () => ({
 }));
 ```
 
-Use `cron: "0 0 * * *"` instead of `unit`/`amount` for cron-based digests. Each digest event has `{ id, time, payload }`. **Only one digest per workflow** - chain a second workflow via `step.custom` if you need a two-stage digest.
+Use `cron: "0 0 * * *"` instead of `unit`/`amount` for cron-based digests. Each digest event has `{ id, time, payload }`. **Only one digest per workflow** — chain a second workflow via `step.custom` if you need a two-stage digest.
 
 ### `step.http`
 
-Call an external HTTP endpoint as part of the workflow - webhook fan-out or just-in-time data fetch.
+Call an external HTTP endpoint as part of the workflow — webhook fan-out or just-in-time data fetch.
 
 ```typescript
 const plan = await step.http("fetch-plan", async () => ({
@@ -298,7 +298,7 @@ await step.email("reminder", async () => ({
 });
 ```
 
-The custom step result is **only** usable inside subsequent step `resolver`, `providers`, and `skip` functions - not in step controls.
+The custom step result is **only** usable inside subsequent step `resolver`, `providers`, and `skip` functions — not in step controls.
 
 ## Step Options
 
@@ -307,7 +307,7 @@ await step.email(stepId, resolver, {
   controlSchema,         // Zod | JSON Schema | Class-Validator class
   skip,                  // (controls) => boolean | Promise<boolean>
   providers,             // per-provider override callbacks
-  disableOutputSanitization, // boolean - for raw HTML in Inbox
+  disableOutputSanitization, // boolean — for raw HTML in Inbox
 });
 ```
 
@@ -323,7 +323,7 @@ await step.email("follow-up", resolver, {
 
 ### `providers` (Per-Step Provider Overrides)
 
-Customize the request sent to the underlying provider - e.g. Slack `blocks` or SendGrid `cc`.
+Customize the request sent to the underlying provider — e.g. Slack `blocks` or SendGrid `cc`.
 
 ```typescript
 await step.email("alert", resolver, {
@@ -340,7 +340,7 @@ await step.email("alert", resolver, {
 });
 ```
 
-`_passthrough` deep-merges into the final provider request - typed provider keys take precedence over `_passthrough`.
+`_passthrough` deep-merges into the final provider request — typed provider keys take precedence over `_passthrough`.
 
 ### `disableOutputSanitization`
 
@@ -406,7 +406,7 @@ workflow("comment", handler, { payloadSchema: CommentPayload });
 
 Requires `class-validator`, `class-validator-jsonschema`, `reflect-metadata`. See [`references/schema-validation.md`](./references/schema-validation.md).
 
-## Step Controls - No-Code for Your Team
+## Step Controls — No-Code for Your Team
 
 Controls are step-level inputs your non-technical peers can edit in the Novu Dashboard UI without touching code. They're validated by a schema you define (Zod / JSON Schema / Class-Validator).
 
@@ -426,10 +426,10 @@ await step.email("welcome", async (controls) => ({
 
 Control values support [LiquidJS](https://liquidjs.com/filters/overview.html) templating:
 
-- `{{subscriber.firstName}}` - any subscriber attribute
-- `{{payload.userId}}` - any payload field defined in `payloadSchema`
-- `{{payload.invoiceDate | date: '%a, %b %d, %y'}}` - Liquid filters
-- `{{subscriber.firstName | append: ': ' | append: payload.status | capitalize}}` - chained filters
+- `{{subscriber.firstName}}` — any subscriber attribute
+- `{{payload.userId}}` — any payload field defined in `payloadSchema`
+- `{{payload.invoiceDate | date: '%a, %b %d, %y'}}` — Liquid filters
+- `{{subscriber.firstName | append: ': ' | append: payload.status | capitalize}}` — chained filters
 
 Type `{{` in the Dashboard UI to autocomplete available variables.
 
@@ -459,7 +459,7 @@ workflow("system-alert", handler, {
 });
 ```
 
-- `all.readOnly: true` makes the workflow **critical** - subscribers cannot disable it.
+- `all.readOnly: true` makes the workflow **critical** — subscribers cannot disable it.
 - `all.enabled` is the fallback for any channel not in `channels`.
 - Default if omitted: `enabled: true`, `readOnly: false` for all channels.
 
@@ -523,7 +523,7 @@ import { welcomeWorkflow } from "./novu/workflows";
 export class AppModule {}
 ```
 
-For dependency injection, use `NovuModule.registerAsync` - see [`references/bridge-endpoint.md`](./references/bridge-endpoint.md).
+For dependency injection, use `NovuModule.registerAsync` — see [`references/bridge-endpoint.md`](./references/bridge-endpoint.md).
 
 ### Remix
 
@@ -608,7 +608,7 @@ Then open `http://localhost:2022` (Chrome only).
 | `-p`, `--port` | `4000` | Your app's port |
 | `-r`, `--route` | `/api/novu` | Bridge route path |
 | `-o`, `--origin` | `http://localhost` | Bridge origin |
-| `-d`, `--dashboard-url` | `https://dashboard.novu.co` | Dashboard URL - use `https://eu.dashboard.novu.co` for EU |
+| `-d`, `--dashboard-url` | `https://dashboard.novu.co` | Dashboard URL — use `https://eu.dashboard.novu.co` for EU |
 | `-sp`, `--studio-port` | `2022` | Studio UI port |
 | `-t`, `--tunnel` | auto | Self-hosted tunnel URL (e.g. ngrok) |
 | `-H`, `--headless` | `false` | Skip the Studio UI |
@@ -620,12 +620,12 @@ npx novu@latest dev --port 3002 --dashboard-url https://eu.dashboard.novu.co
 The Studio:
 - Auto-creates a stable tunnel URL like `https://<id>.novu.sh/api/novu`
 - Lets you edit Step Controls and Payload to preview different states
-- Runs against `process.env.NODE_ENV=development` - HMAC verification is **off** to allow Studio access
+- Runs against `process.env.NODE_ENV=development` — HMAC verification is **off** to allow Studio access
 - Has a "Sync" button to push state to Cloud (use CI/CD for real deployments)
 
 ## Triggering Workflows
 
-Code-defined workflows are triggered the same way as Dashboard workflows - using `@novu/api` from your trigger surface (server, queue worker, webhook handler):
+Code-defined workflows are triggered the same way as Dashboard workflows — using `@novu/api` from your trigger surface (server, queue worker, webhook handler):
 
 ```typescript
 import { Novu } from "@novu/api";
@@ -759,17 +759,17 @@ jobs:
 ### GitOps Workflow
 
 1. Develop locally with the Studio against your own machine.
-2. Open a PR - CI runs `npx novu sync` against the **Development** environment to test e2e.
-3. Merge to `main` - CI runs `npx novu sync` against **Production**.
+2. Open a PR — CI runs `npx novu sync` against the **Development** environment to test e2e.
+3. Merge to `main` — CI runs `npx novu sync` against **Production**.
 
 GitLab CI, Jenkins, CircleCI, Bitbucket, Azure DevOps, and Travis CI all work via the CLI.
 
 ## Production & Security
 
-- **Bridge URL must be publicly reachable** over HTTPS. Novu Cloud auto-scales - no IP allowlist is published.
-- **HMAC verification is on by default** when `NODE_ENV !== "development"`. The `serve` wrapper handles this - you don't need to write any code. Each request includes a `Novu-Signature` header (`t=timestamp,v1=signature`) that's verified against `NOVU_SECRET_KEY`.
+- **Bridge URL must be publicly reachable** over HTTPS. Novu Cloud auto-scales — no IP allowlist is published.
+- **HMAC verification is on by default** when `NODE_ENV !== "development"`. The `serve` wrapper handles this — you don't need to write any code. Each request includes a `Novu-Signature` header (`t=timestamp,v1=signature`) that's verified against `NOVU_SECRET_KEY`.
 - **Disable HMAC for local dev** automatically via `NODE_ENV=development`. Don't disable it in production.
-- **Vercel Preview URLs** are protected by default - enable [Protection Bypass for Automation](https://vercel.com/docs/security/deployment-protection/methods-to-bypass-deployment-protection) and pass the bypass token as `?x-vercel-protection-bypass=<token>` in your bridge URL.
+- **Vercel Preview URLs** are protected by default — enable [Protection Bypass for Automation](https://vercel.com/docs/security/deployment-protection/methods-to-bypass-deployment-protection) and pass the bypass token as `?x-vercel-protection-bypass=<token>` in your bridge URL.
 
 ### Custom Client
 
@@ -782,49 +782,49 @@ import { serve } from "@novu/framework/next";
 export const { GET, POST, OPTIONS } = serve({
   client: new NovuFrameworkClient({
     secretKey: process.env.NOVU_SECRET_KEY,
-    strictAuthentication: false, // disables HMAC - only for local dev
+    strictAuthentication: false, // disables HMAC — only for local dev
   }),
   workflows: [/* … */],
 });
 ```
 
 Environment variables read by the Client:
-- `NOVU_SECRET_KEY` - your secret key
-- `NOVU_API_URL` - defaults to `https://api.novu.co` (use `https://eu.api.novu.co` for EU)
+- `NOVU_SECRET_KEY` — your secret key
+- `NOVU_API_URL` — defaults to `https://api.novu.co` (use `https://eu.api.novu.co` for EU)
 
 ## Common Pitfalls
 
-1. **Bridge URL must be publicly reachable** - `localhost` won't work for Novu Cloud. Use the Studio tunnel locally; deploy publicly for production.
-2. **`workflowId` is the trigger identifier** - same id you'll pass to `novu.trigger({ workflowId })`. Use kebab-case and keep it stable.
-3. **Step `id`s must be unique within a workflow** - duplicates throw at registration.
-4. **`as const` on JSON Schema** - without it, TS infers `string` instead of literal types and `payload` becomes `unknown`.
-5. **Only one `step.digest` per workflow** - chain a second workflow via `step.custom` for two-stage digest patterns.
-6. **Digest / delay results from one trigger don't influence other triggers** - they're per workflow run.
-7. **Custom step results aren't usable in step controls** - only in subsequent step `resolver`, `providers`, or `skip` callbacks.
-8. **Sync after every workflow change** - Novu Cloud needs to know about new/renamed workflows and updated control schemas. Add `npx novu sync` to your CI/CD.
-9. **HMAC fails locally if `NODE_ENV !== "development"`** - set it to `development` for the Studio to reach your bridge, or disable strict auth in your `Client`.
-10. **Don't store the `secretKey` in the client bundle** - it's server-only. Keep workflows + bridge route inside server code, not in any `"use client"` module.
-11. **Provider override `_passthrough` is unvalidated** - typos won't error at compile time. Use known typed provider keys whenever possible.
-12. **Changing a delay/digest step's content does not affect already-scheduled events** - content is captured at the time of the original trigger.
-13. **Workflow handlers must be deterministic across retries** - Novu re-invokes the bridge to resolve step content. Avoid side-effects outside `step.custom` (custom is the only step whose result is durably persisted).
+1. **Bridge URL must be publicly reachable** — `localhost` won't work for Novu Cloud. Use the Studio tunnel locally; deploy publicly for production.
+2. **`workflowId` is the trigger identifier** — same id you'll pass to `novu.trigger({ workflowId })`. Use kebab-case and keep it stable.
+3. **Step `id`s must be unique within a workflow** — duplicates throw at registration.
+4. **`as const` on JSON Schema** — without it, TS infers `string` instead of literal types and `payload` becomes `unknown`.
+5. **Only one `step.digest` per workflow** — chain a second workflow via `step.custom` for two-stage digest patterns.
+6. **Digest / delay results from one trigger don't influence other triggers** — they're per workflow run.
+7. **Custom step results aren't usable in step controls** — only in subsequent step `resolver`, `providers`, or `skip` callbacks.
+8. **Sync after every workflow change** — Novu Cloud needs to know about new/renamed workflows and updated control schemas. Add `npx novu sync` to your CI/CD.
+9. **HMAC fails locally if `NODE_ENV !== "development"`** — set it to `development` for the Studio to reach your bridge, or disable strict auth in your `Client`.
+10. **Don't store the `secretKey` in the client bundle** — it's server-only. Keep workflows + bridge route inside server code, not in any `"use client"` module.
+11. **Provider override `_passthrough` is unvalidated** — typos won't error at compile time. Use known typed provider keys whenever possible.
+12. **Changing a delay/digest step's content does not affect already-scheduled events** — content is captured at the time of the original trigger.
+13. **Workflow handlers must be deterministic across retries** — Novu re-invokes the bridge to resolve step content. Avoid side-effects outside `step.custom` (custom is the only step whose result is durably persisted).
 14. **`@novu/framework` requires Node.js ≥ 20**.
 
 ## Code Style Tips
 
 - One file per workflow under `src/novu/workflows/<workflow-id>.ts`, re-exported from a barrel `src/novu/workflows/index.ts`.
-- Prefer **Zod** schemas - best autocomplete and inference. Use JSON Schema only when you need features Zod doesn't expose (`oneOf`, `if/then/else`, `$ref`).
+- Prefer **Zod** schemas — best autocomplete and inference. Use JSON Schema only when you need features Zod doesn't expose (`oneOf`, `if/then/else`, `$ref`).
 - Co-locate React Email templates next to the workflow that uses them (`src/novu/workflows/welcome/template.tsx`).
 - Wrap shared `step.custom` logic into helpers (`fetchUser(payload.userId)`) for reuse.
 - For NestJS, use `NovuModule.registerAsync` with a `NotificationService` so workflow definitions can inject services.
 
 ## References
 
-- [Bridge Endpoint Setup](./references/bridge-endpoint.md) - every framework wrapper, custom `serve`, NestJS DI
-- [Workflow & Step API](./references/workflow-and-steps.md) - full options, all step types, conditional logic patterns
-- [Schema Validation](./references/schema-validation.md) - Zod, JSON Schema, Class Validator deep dive
-- [Email Templates](./references/email-templates.md) - React, Vue, Svelte Email integrations
-- [Translations](./references/translations.md) - i18next-based localized workflows
-- [Local Studio & CLI](./references/studio-and-cli.md) - every flag, tunnel modes, headless mode
-- [Deployment](./references/deployment.md) - `npx novu sync`, GitHub Action, GitOps recipe, EU region
-- [Production & Security](./references/security.md) - HMAC, public bridge requirements, Vercel preview bypass
-- [Examples Cookbook](./references/examples.md) - multi-step onboarding, digest, delay-then-skip, LLM-powered digest
+- [Bridge Endpoint Setup](./references/bridge-endpoint.md) — every framework wrapper, custom `serve`, NestJS DI
+- [Workflow & Step API](./references/workflow-and-steps.md) — full options, all step types, conditional logic patterns
+- [Schema Validation](./references/schema-validation.md) — Zod, JSON Schema, Class Validator deep dive
+- [Email Templates](./references/email-templates.md) — React, Vue, Svelte Email integrations
+- [Translations](./references/translations.md) — i18next-based localized workflows
+- [Local Studio & CLI](./references/studio-and-cli.md) — every flag, tunnel modes, headless mode
+- [Deployment](./references/deployment.md) — `npx novu sync`, GitHub Action, GitOps recipe, EU region
+- [Production & Security](./references/security.md) — HMAC, public bridge requirements, Vercel preview bypass
+- [Examples Cookbook](./references/examples.md) — multi-step onboarding, digest, delay-then-skip, LLM-powered digest
