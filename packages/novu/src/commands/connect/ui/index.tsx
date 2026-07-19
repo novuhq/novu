@@ -428,6 +428,87 @@ function createUiController(
     telegramConnected() {
       // Transition handled by sendingWelcome / success.
     },
+    addingSendblueIntegration() {
+      store.phase.set({ kind: 'adding-sendblue' });
+    },
+    showSendblueIntro({ dashboardUrl }) {
+      return new Promise<void>((resolve) => {
+        store.phase.set({ kind: 'sendblue-intro', dashboardUrl, resolve });
+      });
+    },
+    promptForSendblueCredential({
+      field,
+      step,
+      total,
+      title,
+      hint,
+      placeholder,
+      dashboardUrl,
+      secret,
+      verificationError,
+    }) {
+      return new Promise<string>((resolve) => {
+        store.phase.set({
+          kind: 'sendblue-credential',
+          field,
+          step,
+          total,
+          title,
+          hint,
+          placeholder,
+          dashboardUrl,
+          secret,
+          verificationError,
+          resolve,
+        });
+      });
+    },
+    configuringSendblueWebhook() {
+      store.phase.set({ kind: 'configuring-sendblue-webhook' });
+    },
+    showSendblueWebhookManualFallback({ callbackUrl, webhookSecret }) {
+      return new Promise<void>((resolve) => {
+        store.phase.set({ kind: 'sendblue-webhook-manual', callbackUrl, webhookSecret, resolve });
+      });
+    },
+    promptForSendblueTestPhone({ defaultPhone, fromNumber, imessageUrl, verificationError }) {
+      return new Promise<string>((resolve) => {
+        store.phase.set({
+          kind: 'sendblue-test-phone',
+          defaultPhone,
+          fromNumber,
+          imessageUrl,
+          verificationError,
+          resolve,
+        });
+      });
+    },
+    sendingSendblueTestMessage() {
+      store.phase.set({ kind: 'sending-sendblue-test' });
+    },
+    showSendblueTestWaiting({ phone, fromNumber, imessageUrl }) {
+      store.phase.set({ kind: 'sendblue-test-waiting', phone, fromNumber, imessageUrl });
+    },
+    sendblueConnected() {
+      // Transition handled by sendingWelcome / success.
+    },
+    addingWhatsAppIntegration() {
+      store.phase.set({ kind: 'adding-whatsapp' });
+    },
+    awaitWhatsAppSignupOpen({ signupUrl }) {
+      return new Promise<void>((resolve) => {
+        store.phase.set({ kind: 'whatsapp-signup-ready', signupUrl, resolve });
+      });
+    },
+    showWhatsAppSignupWaiting({ signupUrl }) {
+      store.phase.set({ kind: 'whatsapp-signup-waiting', signupUrl });
+    },
+    showWhatsAppTest({ waMeUrl, displayPhoneNumber }) {
+      store.phase.set({ kind: 'whatsapp-test', waMeUrl, displayPhoneNumber });
+    },
+    whatsappConnected() {
+      // Transition handled by sendingWelcome / success.
+    },
     addingSlackIntegration() {
       store.phase.set({ kind: 'adding-slack' });
     },

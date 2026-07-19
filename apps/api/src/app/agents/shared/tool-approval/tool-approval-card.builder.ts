@@ -1,5 +1,6 @@
 import { getMcpIconUrl, MCP_ICON_DEFAULT_ID, resolveMcpCatalogIdByName } from '@novu/shared';
 import type { Block } from '@slack/types';
+import type { ActionsElement, ButtonElement, CardChild, CardElement, DividerElement } from 'chat';
 import type { SlackNativeDelivery } from '../../conversation-runtime/egress/slack-native-delivery';
 
 const SLACK_INPUT_SUMMARY_MAX = 80;
@@ -90,7 +91,7 @@ export function summariseToolInput(input: Record<string, unknown> | undefined): 
   return text.length > SLACK_INPUT_SUMMARY_MAX ? `${text.slice(0, SLACK_INPUT_SUMMARY_MAX - 3)}...` : text;
 }
 
-function portableButton(button: ApprovalCardButton, style: 'default' | 'primary'): Record<string, unknown> {
+function portableButton(button: ApprovalCardButton, style: 'default' | 'primary'): ButtonElement {
   return {
     type: 'button',
     id: button.id,
@@ -110,12 +111,12 @@ function slackButton(button: ApprovalCardButton, style?: 'primary'): NonNullable
   };
 }
 
-export function buildPortableApprovalCard(spec: ApprovalCardSpec): Record<string, unknown> {
-  const portableChildren: Record<string, unknown>[] = [
+export function buildPortableApprovalCard(spec: ApprovalCardSpec): CardElement {
+  const portableChildren: CardChild[] = [
     {
       type: 'actions',
       children: [portableButton(spec.deny, 'default'), portableButton(spec.approve, 'primary')],
-    },
+    } satisfies ActionsElement,
   ];
 
   if (spec.trust) {
@@ -123,7 +124,10 @@ export function buildPortableApprovalCard(spec: ApprovalCardSpec): Record<string
     if (spec.trust.server) {
       trustButtons.push(portableButton(spec.trust.server, 'default'));
     }
-    portableChildren.push({ type: 'divider' }, { type: 'actions', children: trustButtons });
+    portableChildren.push(
+      { type: 'divider' } satisfies DividerElement,
+      { type: 'actions', children: trustButtons } satisfies ActionsElement
+    );
   }
 
   return {
@@ -165,7 +169,7 @@ export function buildSlackNativeApprovalCard(spec: ApprovalCardSpec, ctx: { base
 export function buildToolApprovalCard(
   spec: ApprovalCardSpec,
   ctx: { baseUrl: string }
-): { portable: Record<string, unknown>; slackNative: SlackNativeDelivery } {
+): { portable: CardElement; slackNative: SlackNativeDelivery } {
   return {
     portable: buildPortableApprovalCard(spec),
     slackNative: buildSlackNativeApprovalCard(spec, ctx),

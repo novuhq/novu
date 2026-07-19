@@ -9,16 +9,25 @@ import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 
 export type AuthDto = {
   accessToken: string;
+  refreshToken?: string | undefined;
+  expiresAt?: string | undefined;
+  refreshTokenExpiresAt?: string | undefined;
 };
 
 /** @internal */
 export const AuthDto$inboundSchema: z.ZodType<AuthDto, z.ZodTypeDef, unknown> =
   z.object({
     accessToken: z.string(),
+    refreshToken: z.string().optional(),
+    expiresAt: z.string().optional(),
+    refreshTokenExpiresAt: z.string().optional(),
   });
 /** @internal */
 export type AuthDto$Outbound = {
   accessToken: string;
+  refreshToken?: string | undefined;
+  expiresAt?: string | undefined;
+  refreshTokenExpiresAt?: string | undefined;
 };
 
 /** @internal */
@@ -28,6 +37,9 @@ export const AuthDto$outboundSchema: z.ZodType<
   AuthDto
 > = z.object({
   accessToken: z.string(),
+  refreshToken: z.string().optional(),
+  expiresAt: z.string().optional(),
+  refreshTokenExpiresAt: z.string().optional(),
 });
 
 export function authDtoToJSON(authDto: AuthDto): string {

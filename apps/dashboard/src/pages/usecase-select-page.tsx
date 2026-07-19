@@ -27,6 +27,7 @@ import { useOnboardingProvisioningActive, useOnboardingProvisioningDismiss } fro
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { useUpdateProductUseCases } from '@/hooks/use-update-product-use-cases';
 import { beginOnboardingProvisioning } from '@/utils/connect/onboarding-session';
+import { trackAgentsUsecaseSelected } from '@/utils/agents-org-funnel';
 import { ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 
@@ -326,6 +327,7 @@ function UsecaseSelector({ selected, onSelect }: { selected: UsecaseId; onSelect
     }
 
     if (selected === 'agents') {
+      void trackAgentsUsecaseSelected('usecase_picker');
       updateProductUseCases.mutate({ [ProductUseCasesEnum.AGENTS]: true, [ProductUseCasesEnum.IN_APP]: false });
       beginOnboardingProvisioning('agents');
       void navigate(ROUTES.AGENTS_SETUP);

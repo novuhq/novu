@@ -7,6 +7,7 @@ import {
   SubscriberSourceEnum,
   TriggerOverrides,
   TriggerRequestCategoryEnum,
+  ContextPayload,
 } from '@novu/shared';
 
 import { IBulkJobParams, IJobParams } from '../services/queues/queue-base.service';
@@ -24,6 +25,7 @@ export interface IProcessSubscriberDataDto {
   tenant?: ITenantDefine;
   actor?: SubscriberEntity;
   contextKeys: string[];
+  context?: ContextPayload;
   subscriber: ISubscribersDefine;
   templateId: string;
   _subscriberSource: SubscriberSourceEnum;

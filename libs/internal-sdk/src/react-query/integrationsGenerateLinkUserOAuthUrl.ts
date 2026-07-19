@@ -54,7 +54,7 @@ export type IntegrationsGenerateLinkUserOAuthUrlMutationError =
  * Generate OAuth URL to link a subscriber user identity
  *
  * @remarks
- * Generate an OAuth URL that links a specific subscriber to their chat identity (Slack user ID or MS Teams user OID).
+ * Generate an OAuth URL that links a specific subscriber to their chat identity (Slack user ID, MS Teams user OID, or Webex person).
  *     The generated URL expires after 5 minutes.
  */
 export function useIntegrationsGenerateLinkUserOAuthUrlMutation(

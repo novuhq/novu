@@ -13,12 +13,15 @@ import {
 import { useMemo } from 'react';
 
 export function useIntegrationList(searchQuery: string = '') {
+  const normalizedSearchQuery = searchQuery.trim();
+
   const filteredIntegrations = useMemo(() => {
     if (!providers) return [];
 
     const filtered = providers.filter(
       (provider: IProviderConfig) =>
-        provider.displayName.toLowerCase().includes(searchQuery.toLowerCase()) && !NOVU_PROVIDERS.includes(provider.id)
+        provider.displayName.toLowerCase().includes(normalizedSearchQuery.toLowerCase()) &&
+        !NOVU_PROVIDERS.includes(provider.id)
     );
 
     const popularityOrder: Record<ChannelTypeEnum, ProvidersIdEnum[]> = {
@@ -73,7 +76,7 @@ export function useIntegrationList(searchQuery: string = '') {
 
       return 0;
     });
-  }, [providers, searchQuery]);
+  }, [providers, normalizedSearchQuery]);
 
   const integrationsByChannel = useMemo(() => {
     return Object.values(ChannelTypeEnum).reduce(

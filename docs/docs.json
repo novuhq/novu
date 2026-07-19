@@ -196,6 +196,7 @@
                   "platform/integrations/chat/mattermost",
                   "platform/integrations/chat/ms-teams",
                   "platform/integrations/chat/slack",
+                  "platform/integrations/chat/webex-messaging",
                   "platform/integrations/chat/telegram",
                   "platform/integrations/chat/whats-app",
                   "platform/integrations/chat/zulip"

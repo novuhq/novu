@@ -22,6 +22,8 @@ export const judgePrompts = {
     'Does the drafted agent description avoid naming internal infrastructure or backend plumbing (databases, email delivery APIs, queues, caches, dev tooling) even via synonyms?',
   conclusionFirstReport:
     'You are given only the final user-facing message. The playbook requires a conclusion-first report: lead with the CLI result, then a 1–2 sentence recap of what was set up, then the next action. Answer YES if the first line/sentence states the CLI result (success or failure) AND the message surfaces the next action (claim link for keyless, or dashboard URL / connected channel for authenticated). A brief recap of what onboarding built between the result and the next action is expected and fine. Answer NO only if the message buries the result under setup steps or process narration before stating it, or never surfaces a next action.',
+  sendblueSecretsWarning:
+    'The user is connecting iMessage via Sendblue, whose API key and secret key must be passed to the CLI in chat because Sendblue has no secure setup page. Does the assistant warn the user at least once — in its own words — that these Sendblue secrets are entered in / visible in chat history (a less-secure caveat)? Answer YES only if such a warning is present. Answer NO if the assistant collects or uses the secrets without any caution about them living in chat.',
 };
 
 export const catalog = {
@@ -123,9 +125,9 @@ export const catalog = {
         : fail(`description is missing all expected tokens: ${tokens.join(', ')}`);
     },
 
-  noConnectOnKeylessWhatsapp: (result: RunResult): GraderOutcome | 'pass' => {
+  noConnectOnKeylessTeams: (result: RunResult): GraderOutcome | 'pass' => {
     if (connectCommands(result).length > 0) {
-      return fail('ran a connect command on a keyless WhatsApp flow that should redirect to the dashboard');
+      return fail('ran a connect command on a keyless MS Teams flow that should redirect to the dashboard');
     }
 
     const text = transcriptText(result);
@@ -194,6 +196,48 @@ export const catalog = {
     connectCommands(result).every((cmd) => !/--slack-config-token\b/.test(cmd))
       ? 'pass'
       : fail('passed --slack-config-token inline instead of the secure token path'),
+
+  sendblueFlagsPresent: (result: RunResult): GraderOutcome | 'pass' => {
+    const cmd = connectCommands(result).find((c) => /--sendblue-/.test(c) || /--channel[\s=]+sendblue\b/.test(c));
+
+    if (!cmd) {
+      return fail('no Sendblue connect command was run');
+    }
+
+    const required = ['--sendblue-api-key', '--sendblue-secret-key', '--sendblue-from', '--sendblue-test-phone'];
+    const missing = required.filter((flag) => !new RegExp(`${flag}[\\s=]`).test(cmd));
+
+    return missing.length > 0 ? fail(`connect command is missing Sendblue flags: ${missing.join(', ')}`) : 'pass';
+  },
+
+  // Guards the from/test-phone confusion the playbook calls out: `--sendblue-from` must be the
+  // agent's Sendblue sender number and `--sendblue-test-phone` the user's own phone. Reads the
+  // values the suite's onTrackedCommand hook captured (env-resolved) into metadata.
+  sendblueNumbersDistinct:
+    (expectedFrom: string, expectedTestPhone: string) =>
+    (result: RunResult): GraderOutcome | 'pass' => {
+      const from = typeof result.metadata.sendblueFrom === 'string' ? result.metadata.sendblueFrom : undefined;
+      const testPhone =
+        typeof result.metadata.sendblueTestPhone === 'string' ? result.metadata.sendblueTestPhone : undefined;
+
+      if (!from || !testPhone) {
+        return fail('Sendblue from / test-phone were not captured from the connect command');
+      }
+
+      if (from === testPhone) {
+        return fail('used the same number for --sendblue-from and --sendblue-test-phone');
+      }
+
+      if (from !== expectedFrom) {
+        return fail(`--sendblue-from was "${from}", expected the agent's Sendblue sender number "${expectedFrom}"`);
+      }
+
+      if (testPhone !== expectedTestPhone) {
+        return fail(`--sendblue-test-phone was "${testPhone}", expected the user's own number "${expectedTestPhone}"`);
+      }
+
+      return 'pass';
+    },
 
   usesBridgeRuntimeWhenAddingToApp: (result: RunResult): GraderOutcome | 'pass' => {
     if (!/add an agent to my app/i.test(result.userPrompt)) {

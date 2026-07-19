@@ -5,7 +5,7 @@ description: "Run npx novu dev to open the Novu Dashboard in Local mode, preview
 ---
 
 
-When building workflows with Novu Framework, you develop them locally in your code and preview them live through the Novu Dashboard. Running `npx novu dev` opens the Dashboard in **Local mode** — a local environment connected to your running application through a tunnel — where you can see and test the workflows running on your machine before you sync them to Novu Cloud.
+When building workflows with Novu Framework, you develop them locally in your code and preview them live through the Novu Dashboard. Running `npx novu dev` opens the Dashboard in **Local mode** - a local environment connected to your running application through a tunnel - where you can see and test the workflows running on your machine before you sync them to Novu Cloud.
 
 <Note>
   Earlier versions shipped a separate Local Studio companion app served on `http://localhost:2022`. That app has been replaced by the **Local** environment inside the Novu Dashboard. Running `npx novu dev` now opens the Dashboard in Local mode instead.
@@ -35,11 +35,11 @@ After your application is running and connected through the tunnel, the Local en
 
 ## Control and Payload forms
 
-You can quickly modify the Step Controls and workflow Payload to preview your workflow's different states. This is helpful to quickly debug how the email will behave in case of a missing control, or iterate more complex content structures. These edits live in your local session — they are not persisted to Novu Cloud.
+You can quickly modify the Step Controls and workflow Payload to preview your workflow's different states. This is helpful to quickly debug how the email will behave in case of a missing control, or iterate more complex content structures. These edits live in your local session - they are not persisted to Novu Cloud.
 
 ## Syncing to Development and Production
 
-The Local environment only reflects what is running on your machine, so it has no **Publish** flow. To make your workflows available in the Development or Production environments, you deploy your Bridge application and run the sync command against the **deployed** server — not against your local tunnel.
+The Local environment only reflects what is running on your machine, so it has no **Publish** flow. To make your workflows available in the Development or Production environments, you deploy your Bridge application and run the sync command against the **deployed** server - not against your local tunnel.
 
 Novu Framework follows a GitOps model: the source of truth for your workflows lives in your Git repository as code. The recommended flow is to run the [sync command](/framework/deployment/cli) from your CI/CD pipeline after each deployment:
 
@@ -59,6 +59,171 @@ See the [Syncing guide](/framework/deployment/syncing) for the full end-to-end f
 ## Tunnel URL
 
 By default the Novu CLI will automatically create a tunnel URL connected to your local computer. This tunnel will proxy any workflow engine requests on our cloud to your local machine.
+
+When `npx novu@latest dev` starts, it prints the full Bridge URL, for example:
+
+```bash
+🛣️  Tunnel    → https://your-tunnel.novu.co/api/novu
+```
+
+Use that value as `bridgeUrl` when triggering from your application (see below).
+
+## Trigger from your app to your local tunnel
+
+The Dashboard **Local** environment is virtual and scoped to your browser session - it only shows workflows running on the machine that started `npx novu@latest dev`. It is not a shared environment for the organization.
+
+When you trigger a workflow from your application code, Novu normally executes against the Bridge URL synced to the Development (or Production) environment. If several engineers share the same organization, each can instead route those app-fired triggers to their **own** local tunnel by passing `bridgeUrl` on the [trigger request](/api-reference/events/trigger-event):
+
+<Tabs>
+  <Tab title="Node.js">
+```ts
+import { Novu } from "@novu/api";
+
+const novu = new Novu({ secretKey: process.env.NOVU_SECRET_KEY });
+
+await novu.trigger({
+  workflowId: "workflow_identifier",
+  to: { subscriberId: "subscriber-id" },
+  payload: {
+    // your payload
+  },
+  // Full tunnel URL printed by `npx novu@latest dev`
+  bridgeUrl: process.env.NOVU_BRIDGE_URL,
+});
+```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="workflow_identifier",
+        to={"subscriber_id": "subscriber-id"},
+        payload={},
+        # Full tunnel URL printed by `npx novu@latest dev`
+        bridge_url=os.getenv("NOVU_BRIDGE_URL"),
+    ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+// Full tunnel URL printed by `npx novu@latest dev`
+bridgeURL := os.Getenv("NOVU_BRIDGE_URL")
+
+res, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "workflow_identifier",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: "subscriber-id",
+    }),
+    BridgeURL: &bridgeURL,
+}, nil)
+if err != nil {
+    panic(err)
+}
+_ = res
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()
+    ->setSecurity(getenv('NOVU_SECRET_KEY'))
+    ->build();
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'workflow_identifier',
+        to: new Components\SubscriberPayloadDto(subscriberId: 'subscriber-id'),
+        payload: [],
+        // Full tunnel URL printed by `npx novu@latest dev`
+        bridgeUrl: getenv('NOVU_BRIDGE_URL'),
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+
+var sdk = new NovuSDK(secretKey: Environment.GetEnvironmentVariable("NOVU_SECRET_KEY"));
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "workflow_identifier",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() {
+        SubscriberId = "subscriber-id",
+    }),
+    Payload = new Dictionary<string, object>() {},
+    // Full tunnel URL printed by `npx novu@latest dev`
+    BridgeUrl = Environment.GetEnvironmentVariable("NOVU_BRIDGE_URL"),
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+import java.util.Map;
+
+Novu novu = Novu.builder()
+    .secretKey(System.getenv("NOVU_SECRET_KEY"))
+    .build();
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("workflow_identifier")
+        .to(To2.of(SubscriberPayloadDto.builder()
+            .subscriberId("subscriber-id")
+            .build()))
+        .payload(Map.of())
+        // Full tunnel URL printed by `npx novu@latest dev`
+        .bridgeUrl(System.getenv("NOVU_BRIDGE_URL"))
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+```bash
+curl -X POST https://api.novu.co/v1/events/trigger \
+  -H "Authorization: ApiKey $NOVU_SECRET_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "workflow_identifier",
+    "to": { "subscriberId": "subscriber-id" },
+    "payload": {},
+    "bridgeUrl": "'"$NOVU_BRIDGE_URL"'"
+  }'
+```
+  </Tab>
+</Tabs>
+
+Recommended pattern for a team:
+
+1. Each engineer runs `npx novu@latest dev` and copies their tunnel Bridge URL.
+2. Each sets a local env var (for example `NOVU_BRIDGE_URL`) to that URL - including the Bridge Endpoint path, typically `/api/novu`.
+3. Application trigger code passes `bridgeUrl: process.env.NOVU_BRIDGE_URL` so triggers hit that developer's machine.
+
+If you trigger via `@novu/framework`'s `workflow.trigger()`, set `NOVU_BRIDGE_ORIGIN` to the tunnel **origin** only (without the path). The Framework SDK appends `/api/novu` and injects `bridgeUrl` automatically.
+
+<Note>
+  `bridgeUrl` must be a publicly reachable URL (the CLI tunnel qualifies). Private network and `localhost` addresses are rejected for security.
+</Note>
 
 ## Connect to your local server
 
@@ -86,11 +251,11 @@ The Novu CLI command `npx novu@latest dev` supports a number of flags:
 |      | --no-studio             | Skip opening the Dashboard Local environment (still creates the tunnel and runs agent sync) | false |
 
 <Note>
-  Use `--no-studio` when you only need the tunnel and agent sync without opening the Dashboard Local environment — for example, in `npx novu connect` and `npx novu init` scripts. It still creates the tunnel, health-checks the Bridge Endpoint, and runs agent discovery and registration; it only skips building, printing, and opening the Dashboard Local handshake URL.
+  Use `--no-studio` when you only need the tunnel and agent sync without opening the Dashboard Local environment - for example, in `npx novu connect` and `npx novu init` scripts. It still creates the tunnel, health-checks the Bridge Endpoint, and runs agent discovery and registration; it only skips building, printing, and opening the Dashboard Local handshake URL.
 </Note>
 
 <Note>
-  The legacy `--studio-port` and `--studio-host` flags are deprecated and ignored — they belonged to the old Local Studio app, which is now the Dashboard's Local environment.
+  The legacy `--studio-port` and `--studio-host` flags are deprecated and ignored - they belonged to the old Local Studio app, which is now the Dashboard's Local environment.
 </Note>
 
 Example: If bridge application is running on port `3002` and Novu account is in `EU` region.
@@ -113,5 +278,9 @@ npx novu@latest dev --port 3002 --dashboard-url https://eu.dashboard.novu.co
       While the preview will work, you won't be able to test your notifications by triggering them from the Local environment UI.
     </Warning>
 
+  </Accordion>
+
+  <Accordion title="How do multiple engineers each get triggers on their own machine?">
+    Local mode is per computer, not a shared org environment. Have each engineer pass their personal tunnel URL as `bridgeUrl` on app-fired triggers (for example via a `NOVU_BRIDGE_URL` env var). See [Trigger from your app to your local tunnel](#trigger-from-your-app-to-your-local-tunnel).
   </Accordion>
 </AccordionGroup>

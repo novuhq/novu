@@ -1,6 +1,25 @@
 import type { AnalyticsService } from '@novu/application-generic';
+import {
+  AGENTS_ORG_FUNNEL_EVENTS,
+  type AgentAnalyticsSource,
+  type AgentsUsecaseSource,
+} from '@novu/shared';
 
 const AGENT_SEGMENT_CATEGORY = '[Agents]';
+
+export function trackAgentsUsecaseSelected(
+  analytics: AnalyticsService,
+  params: {
+    userId: string;
+    organizationId: string;
+    source: AgentsUsecaseSource;
+  }
+): void {
+  analytics.track(AGENTS_ORG_FUNNEL_EVENTS.USECASE_SELECTED, params.userId, {
+    _organization: params.organizationId,
+    source: params.source,
+  });
+}
 
 export function trackAgentCreated(
   analytics: AnalyticsService,
@@ -12,15 +31,30 @@ export function trackAgentCreated(
     agentIdentifier: string;
     active: boolean;
     name: string;
+    source?: AgentAnalyticsSource;
+    runtime?: string;
   }
 ): void {
-  analytics.track(`Agent Created - ${AGENT_SEGMENT_CATEGORY}`, params.userId, {
+  const source = params.source ?? 'api';
+
+  // CLI has no usecase picker — fire intent before Agent Created so Mixpanel order is preserved.
+  if (source === 'cli') {
+    trackAgentsUsecaseSelected(analytics, {
+      userId: params.userId,
+      organizationId: params.organizationId,
+      source: 'cli',
+    });
+  }
+
+  analytics.track(AGENTS_ORG_FUNNEL_EVENTS.AGENT_CREATED, params.userId, {
     _organization: params.organizationId,
     environmentId: params.environmentId,
     agentId: params.agentId,
     agentIdentifier: params.agentIdentifier,
     active: params.active,
     name: params.name,
+    source,
+    ...(params.runtime ? { runtime: params.runtime } : {}),
   });
 }
 

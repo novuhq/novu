@@ -31,7 +31,29 @@ import { Result } from "../types/fp.js";
  * Send an agent reply
  *
  * @remarks
- * Send a reply into an existing agent conversation from server-side code. Supports plain text, markdown, cards, edits, reactions, typing indicators, tool results, and conversation resolution signals.
+ * Send a message or side-effect into an existing agent conversation from your backend.
+ *
+ * Use this endpoint when you are not using `@novu/framework` (for example Python, Go, PHP, .NET, or Java SDKs),
+ * or when a server process outside the bridge needs to post into a live conversation.
+ *
+ * **Message actions**
+ * - `reply` — markdown, interactive card, or tool-approval card (optional `files`)
+ * - `edit` — update a previously delivered message in place
+ * - `deleteMessages` — remove rendered platform messages (history is kept)
+ * - `addReactions` — add emoji reactions to existing messages
+ *
+ * **Turn control**
+ * - `typing` — `{ status?: string }` to set status, or `"stop"` to clear
+ * - `resolve` — mark the conversation resolved (optionally with a final reply)
+ * - `error: true` — report a customer-runtime failure (cannot combine with other actions)
+ *
+ * **Signals & tools**
+ * - `signals` — metadata set/delete/clear, or trigger a Novu workflow
+ * - `toolResults` — persist tool outputs into conversation history
+ * - `toolApprovalRequest` — ledger a gated tool call (pair with an approval card reply)
+ *
+ * Returns `{ data: { messageId, platformThreadId } }` when a reply or edit is delivered;
+ * otherwise `{ data: null }`.
  */
 export function agentsSendReply(
   client: NovuCore,
@@ -203,16 +225,16 @@ async function $do(
       200,
       operations
         .AgentReplyControllerHandleAgentReplyHandlerResponse$inboundSchema,
-      { key: "Result" },
+      { hdrs: true, key: "Result" },
     ),
     M.jsonErr(414, errors.ErrorDto$inboundSchema),
     M.jsonErr(
-      [400, 401, 403, 404, 405, 409, 413, 415],
+      [400, 401, 403, 405, 409, 413, 415],
       errors.ErrorDto$inboundSchema,
       { hdrs: true },
     ),
     M.jsonErr(422, errors.ValidationErrorDto$inboundSchema, { hdrs: true }),
-    M.fail(429),
+    M.fail([404, 429]),
     M.jsonErr(500, errors.ErrorDto$inboundSchema, { hdrs: true }),
     M.fail(503),
     M.fail("4XX"),

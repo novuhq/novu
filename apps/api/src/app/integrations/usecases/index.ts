@@ -36,6 +36,11 @@ import { RemoveIntegration } from './remove-integration/remove-integration.useca
 import { SetIntegrationAsPrimary } from './set-integration-as-primary/set-integration-as-primary.usecase';
 import { SlackQuickSetup } from './slack-quick-setup/slack-quick-setup.usecase';
 import { UpdateIntegration } from './update-integration/update-integration.usecase';
+import { CompleteWhatsAppSignupLink } from './whatsapp/complete-whatsapp-signup-link.usecase';
+import { GetWhatsAppSignupLinkStatus } from './whatsapp/get-whatsapp-signup-link-status.usecase';
+import { IssueWhatsAppSignupLink } from './whatsapp/issue-whatsapp-signup-link.usecase';
+import { WhatsAppEmbeddedSignup } from './whatsapp/whatsapp-embedded-signup.usecase';
+import { WhatsAppEmbeddedSignupAvailability } from './whatsapp/whatsapp-embedded-signup-availability.usecase';
 import { WhatsAppValidateToken } from './whatsapp/whatsapp-validate-token.usecase';
 
 export const USE_CASES = [
@@ -73,6 +78,11 @@ export const USE_CASES = [
   MsTeamsHealthCheck,
   SlackQuickSetup,
   WhatsAppValidateToken,
+  WhatsAppEmbeddedSignup,
+  WhatsAppEmbeddedSignupAvailability,
+  IssueWhatsAppSignupLink,
+  GetWhatsAppSignupLinkStatus,
+  CompleteWhatsAppSignupLink,
   IssueIntegrationStoreTelegramMobileLink,
   GetIntegrationStoreTelegramMobileLinkStatus,
   ConsumeIntegrationStoreTelegramMobileLink,
