@@ -1,5 +1,5 @@
 import { ChannelTypeEnum, EnvironmentTypeEnum, TOOL_CONTENT_OVERRIDE_PROVIDER_IDS, type UiSchema } from '@novu/shared';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { getComponentByType } from '@/components/workflow-editor/steps/component-utils';
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
@@ -32,6 +32,15 @@ export const ToolEditor = (props: ToolEditorProps) => {
   const providerOverrides = watch(PROVIDER_OVERRIDES_FIELD) as ToolProviderOverrides | undefined;
   const { selectedSource, setSelectedSource } = useToolContentSource();
   const [invalidProviderIds, setInvalidProviderIds] = useState<Set<string>>(new Set());
+
+  // Reset to default when the selected override no longer exists (e.g. dropped by a
+  // form reset) so the editor and the mirrored preview stay in sync — the preview
+  // reads the same context state, so masking it only at render time would diverge.
+  useEffect(() => {
+    if (selectedSource !== DEFAULT_CONTENT_SOURCE && !(selectedSource in (providerOverrides ?? {}))) {
+      setSelectedSource(DEFAULT_CONTENT_SOURCE);
+    }
+  }, [selectedSource, providerOverrides, setSelectedSource]);
 
   const activeProviderIds = useMemo(() => {
     const ids = new Set<string>();
@@ -90,7 +99,7 @@ export const ToolEditor = (props: ToolEditorProps) => {
       setSelectedSource(providerId);
       saveForm();
     },
-    [getValues, saveForm, setValue]
+    [getValues, saveForm, setValue, setSelectedSource]
   );
 
   const handleRemoveOverride = useCallback(
@@ -118,17 +127,14 @@ export const ToolEditor = (props: ToolEditorProps) => {
 
       saveForm();
     },
-    [getValues, saveForm, selectedSource, setValue]
+    [getValues, saveForm, selectedSource, setValue, setSelectedSource]
   );
 
   if (currentEnvironment?.type !== EnvironmentTypeEnum.DEV) {
     return <StepEditorUnavailable />;
   }
 
-  const showingOverride =
-    selectedSource !== DEFAULT_CONTENT_SOURCE &&
-    isToolContentOverrideProviderId(selectedSource) &&
-    selectedSource in (providerOverrides ?? {});
+  const showingOverride = selectedSource !== DEFAULT_CONTENT_SOURCE && selectedSource in (providerOverrides ?? {});
 
   return (
     <div className="flex h-full flex-col">

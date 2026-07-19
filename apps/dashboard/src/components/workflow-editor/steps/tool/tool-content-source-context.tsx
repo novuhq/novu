@@ -24,7 +24,3 @@ export const useToolContentSource = (): ToolContentSourceContextValue => {
 
   return context;
 };
-
-export const useToolContentSourceOptional = (): ToolContentSourceContextValue | null => {
-  return useContext(ToolContentSourceContext);
-};
