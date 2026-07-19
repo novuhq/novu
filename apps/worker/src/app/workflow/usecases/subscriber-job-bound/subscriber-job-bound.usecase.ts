@@ -16,14 +16,11 @@ import {
   LogRepository,
   mapEventTypeToTitle,
   PinoLogger,
-  resolveNonSecretEnvironmentVariables,
   SubscriberTopicPreference,
   TraceLogRepository,
 } from '@novu/application-generic';
 import {
   ContextRepository,
-  EnvironmentRepository,
-  EnvironmentVariableRepository,
   IntegrationRepository,
   NotificationTemplateEntity,
   NotificationTemplateRepository,
@@ -36,8 +33,6 @@ import {
   buildWorkflowPreferences,
   ChannelTypeEnum,
   ContextPayload,
-  EnvironmentSystemVariables,
-  EnvironmentTypeEnum,
   FeatureFlagsKeysEnum,
   InAppProviderIdEnum,
   ISubscribersDefine,
@@ -60,7 +55,6 @@ type TopicSubscriptionConditionVariables = {
   subscriber: SubscriberEntity;
   actor?: SubscriberEntity;
   context: ContextResolved;
-  env: EnvironmentSystemVariables & Record<string, string>;
 };
 
 @Injectable()
@@ -78,9 +72,7 @@ export class SubscriberJobBound {
     private preferencesRepository: PreferencesRepository,
     private featureFlagsService: FeatureFlagsService,
     private inMemoryLRUCacheService: InMemoryLRUCacheService,
-    private contextRepository: ContextRepository,
-    private environmentRepository: EnvironmentRepository,
-    private environmentVariableRepository: EnvironmentVariableRepository
+    private contextRepository: ContextRepository
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -514,28 +506,13 @@ export class SubscriberJobBound {
     command: SubscriberJobBoundCommand,
     subscriber: SubscriberEntity
   ): Promise<TopicSubscriptionConditionVariables> {
-    const [context, envCustomVars, environmentEntity] = await Promise.all([
-      this.resolveConditionContext(command),
-      this.getEnvironmentVariables(command),
-      this.environmentRepository.findByIdAndOrganization(command.environmentId, command.organizationId),
-    ]);
-
-    const environmentSystemVars: EnvironmentSystemVariables = {
-      name: environmentEntity?.name ?? '',
-      type: environmentEntity?.type ?? EnvironmentTypeEnum.DEV,
-    };
-
-    const env: EnvironmentSystemVariables & Record<string, string> = {
-      ...envCustomVars,
-      ...environmentSystemVars,
-    };
+    const context = await this.resolveConditionContext(command);
 
     return {
       payload: command.payload,
       subscriber,
       ...(command.actor && { actor: command.actor }),
       context,
-      env,
     };
   }
 
@@ -634,40 +611,6 @@ export class SubscriberJobBound {
 
       return acc;
     }, {} as ContextResolved);
-  }
-
-  private async getEnvironmentVariables(command: SubscriberJobBoundCommand): Promise<Record<string, string>> {
-    const cacheKey = `${command.organizationId}:${command.environmentId}`;
-
-    return this.inMemoryLRUCacheService.get(
-      InMemoryLRUCacheStore.ENVIRONMENT_VARIABLES,
-      cacheKey,
-      async () => {
-        try {
-          const rawEnvVars = await this.environmentVariableRepository.findByEnvironment(
-            command.organizationId,
-            command.environmentId
-          );
-
-          return resolveNonSecretEnvironmentVariables(rawEnvVars);
-        } catch (error) {
-          this.logger.warn(
-            {
-              err: error,
-              organizationId: command.organizationId,
-              environmentId: command.environmentId,
-            },
-            'Failed to fetch environment variables for topic subscription conditions, falling back to empty object'
-          );
-
-          return {};
-        }
-      },
-      {
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-      }
-    );
   }
 
   private async evaluatePreferenceCondition(

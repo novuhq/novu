@@ -528,7 +528,7 @@ describe('Topic Trigger Event #novu-v2', () => {
       expect(booleanFalseMessages.length, 'Enabled false - expected to not deliver the message').to.equal(0);
     });
 
-    it('should evaluate subscriber, context, and env variables in subscription conditions', async () => {
+    it('should evaluate subscriber and context variables in subscription conditions', async () => {
       const previousContextPrefFlag = (process.env as Record<string, string>).IS_CONTEXT_PREFERENCES_ENABLED;
       (process.env as Record<string, string>).IS_CONTEXT_PREFERENCES_ENABLED = 'true';
 
@@ -729,43 +729,6 @@ describe('Topic Trigger Event #novu-v2', () => {
         starterPlanMessages.length,
         'Trigger context data should override stored context data for condition evaluation'
       ).to.equal(1);
-
-      const envConditionTopicKey = `topic-key-env-condition-${Date.now()}`;
-      const envSubscriber = await subscriberService.createSubscriber();
-
-      await novuClient.topics.subscriptions.create(
-        {
-          subscriberIds: [envSubscriber.subscriberId],
-          preferences: [
-            {
-              filter: {
-                workflowIds: [template._id],
-              },
-              condition: {
-                '===': [{ var: 'env.name' }, session.environment.name],
-              },
-            },
-          ],
-        } as any,
-        envConditionTopicKey
-      );
-
-      await novuClient.trigger({
-        workflowId: template.triggers[0].identifier,
-        to: [{ type: TriggerRecipientsTypeEnum.Topic, topicKey: envConditionTopicKey }],
-        payload: {},
-      });
-
-      await session.waitForJobCompletion(template._id);
-
-      const envMessages = await messageRepository.find({
-        _environmentId: session.environment._id,
-        _subscriberId: envSubscriber._id,
-        _templateId: template._id,
-        channel: ChannelTypeEnum.IN_APP,
-      });
-
-      expect(envMessages.length, 'Matching env condition should deliver the message').to.equal(1);
       } finally {
         if (previousContextPrefFlag === undefined) {
           delete (process.env as Record<string, string>).IS_CONTEXT_PREFERENCES_ENABLED;
