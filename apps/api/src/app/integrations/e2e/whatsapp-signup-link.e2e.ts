@@ -27,6 +27,7 @@ describe('WhatsApp signup link endpoints - /integrations/whatsapp #novu-v2', () 
   const previousFlag = process.env[FeatureFlagsKeysEnum.IS_WHATSAPP_EMBEDDED_SIGNUP_ENABLED];
   const previousAppId = process.env.NOVU_WHATSAPP_APP_ID;
   const previousAppSecret = process.env.NOVU_WHATSAPP_APP_SECRET;
+  const previousConfigId = process.env.NOVU_WHATSAPP_CONFIG_ID;
 
   beforeEach(async () => {
     session = new UserSession();
@@ -37,6 +38,7 @@ describe('WhatsApp signup link endpoints - /integrations/whatsapp #novu-v2', () 
     restoreEnv(FeatureFlagsKeysEnum.IS_WHATSAPP_EMBEDDED_SIGNUP_ENABLED, previousFlag);
     restoreEnv('NOVU_WHATSAPP_APP_ID', previousAppId);
     restoreEnv('NOVU_WHATSAPP_APP_SECRET', previousAppSecret);
+    restoreEnv('NOVU_WHATSAPP_CONFIG_ID', previousConfigId);
   });
 
   function restoreEnv(key: string, previousValue: string | undefined) {
@@ -51,6 +53,7 @@ describe('WhatsApp signup link endpoints - /integrations/whatsapp #novu-v2', () 
     mutableEnv[FeatureFlagsKeysEnum.IS_WHATSAPP_EMBEDDED_SIGNUP_ENABLED] = 'true';
     mutableEnv.NOVU_WHATSAPP_APP_ID = 'test-app-id';
     mutableEnv.NOVU_WHATSAPP_APP_SECRET = 'test-app-secret';
+    mutableEnv.NOVU_WHATSAPP_CONFIG_ID = 'test-config-id';
   }
 
   async function seedAgentWithWhatsAppIntegration(credentials: Record<string, string> = {}) {
@@ -114,6 +117,22 @@ describe('WhatsApp signup link endpoints - /integrations/whatsapp #novu-v2', () 
       mutableEnv[FeatureFlagsKeysEnum.IS_WHATSAPP_EMBEDDED_SIGNUP_ENABLED] = 'true';
       delete mutableEnv.NOVU_WHATSAPP_APP_ID;
       delete mutableEnv.NOVU_WHATSAPP_APP_SECRET;
+      delete mutableEnv.NOVU_WHATSAPP_CONFIG_ID;
+
+      const { body, status } = await session.testAgent
+        .get('/v1/integrations/whatsapp/embedded-signup/availability')
+        .set('authorization', `ApiKey ${session.apiKey}`);
+
+      expect(status).to.equal(200);
+      expect(body.data.available).to.equal(false);
+      expect(body.data.reason).to.equal('missing_platform_config');
+    });
+
+    it('reports unavailable with missing_platform_config when Meta config id is absent', async () => {
+      mutableEnv[FeatureFlagsKeysEnum.IS_WHATSAPP_EMBEDDED_SIGNUP_ENABLED] = 'true';
+      mutableEnv.NOVU_WHATSAPP_APP_ID = 'test-app-id';
+      mutableEnv.NOVU_WHATSAPP_APP_SECRET = 'test-app-secret';
+      delete mutableEnv.NOVU_WHATSAPP_CONFIG_ID;
 
       const { body, status } = await session.testAgent
         .get('/v1/integrations/whatsapp/embedded-signup/availability')
