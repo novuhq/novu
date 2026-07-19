@@ -14,7 +14,7 @@ export class EnsureProviderManagedVaultCommand extends EnvironmentWithUserComman
   /**
    * External subscriberId for the channel turn (Slack, Teams, etc.). When set,
    * the vault is provisioned for that subscriber directly instead of mapping
-   * the dashboard `userId` to a `connect:<userId>` row. Used by the managed
+   * the dashboard `userId` to the dashboard subscriber row. Used by the managed
    * agent setup-card flow.
    */
   @IsOptional()

@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { OPSGENIE_API_KEY_PATTERN } from '@novu/shared';
 import { IsIn, IsOptional, IsString, Matches } from 'class-validator';
 
 export class SlackChannelEndpointDto {
@@ -163,11 +164,11 @@ export class OpsgenieIntegrationEndpointDto {
   @ApiProperty({
     description:
       'Opsgenie API integration key (GenieKey) in UUID format. Stored encrypted on the linked channel connection.',
-    example: 'a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d',
+    example: 'abcdefg-a25a-4652-883c-73703b12345',
     type: String,
   })
   @IsString()
-  @Matches(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/, {
+  @Matches(OPSGENIE_API_KEY_PATTERN, {
     message: 'apiKey must be a UUID-format Opsgenie API integration key (GenieKey)',
   })
   apiKey: string;

@@ -716,7 +716,7 @@ async function generateAndPreviewAgent(
 
 async function ensureSubscriberForUser(client: ConnectApiClient, auth: ResolvedConnectAuth): Promise<string> {
   if (auth.user?.id) {
-    const subscriberId = `connect:${auth.user.id}`;
+    const subscriberId = auth.user.id;
     await upsertSubscriber(client, {
       subscriberId,
       firstName: auth.user.firstName ?? undefined,

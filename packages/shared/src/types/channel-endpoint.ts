@@ -58,6 +58,13 @@ export type ChannelEndpointByType = {
   [ENDPOINT_TYPES.OPSGENIE_INTEGRATION]: { apiKey: string; region: 'us' | 'eu' };
 };
 
+/** Opsgenie GenieKey wire shape: 8-4-4-4-12 segments; segments may include non-hex letters. */
+export const OPSGENIE_API_KEY_PATTERN = /^[a-zA-Z0-9]{8}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{12}$/;
+
+export function isValidOpsgenieApiKey(value: string): boolean {
+  return OPSGENIE_API_KEY_PATTERN.test(value);
+}
+
 export type ChannelEndpoint<T extends ChannelEndpointType = ChannelEndpointType> = {
   identifier: string;
   _organizationId: OrganizationId;

@@ -28,6 +28,10 @@
  *   NOVU_CONNECT_OPSGENIE_INTEGRATION_IDENTIFIER  Novu integration identifier for the Opsgenie integration
  */
 
+import { isValidOpsgenieApiKey } from '@novu/shared';
+
+export { isValidOpsgenieApiKey };
+
 const OPSGENIE_INTEGRATION_TYPE = 'opsgenie_integration' as const;
 
 export type OpsgenieRegion = 'us' | 'eu';
@@ -75,15 +79,6 @@ function getNovuAuthContext(): NovuAuthContext {
 
 function isOpsgenieRegion(value: unknown): value is OpsgenieRegion {
   return value === 'us' || value === 'eu';
-}
-
-/**
- * Basic format check. Mirrors the API-side validator so we can surface a
- * useful error message client-side without a network roundtrip. The API also
- * enforces this, so a client bypassing this check still gets a 400.
- */
-export function isValidOpsgenieApiKey(value: string): boolean {
-  return /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(value);
 }
 
 async function novuFetch(

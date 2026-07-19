@@ -22,13 +22,8 @@ export class ToolOutputRendererUsecase extends BaseTranslationRendererUsecase {
 
   @InstrumentUsecase()
   async execute(renderCommand: ToolOutputRendererCommand): Promise<ToolRenderOutput> {
-    const { body, enabledIntegrations, providerOverrides } = renderCommand.controlValues ?? {};
+    const { skip, ...outputControls } = renderCommand.controlValues ?? {};
     const { _environmentId, _organizationId, _id: workflowId } = renderCommand.dbWorkflow;
-    const outputControls: Record<string, unknown> = {
-      body,
-      ...(enabledIntegrations !== undefined ? { enabledIntegrations } : {}),
-      ...(providerOverrides !== undefined ? { providerOverrides } : {}),
-    };
 
     const translatedControls = await this.processTranslations({
       controls: outputControls,

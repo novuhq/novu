@@ -11,7 +11,11 @@ import { ProviderIcon } from '@/components/integrations/components/provider-icon
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { cn } from '@/utils/ui';
-import { getToolOverrideProviderDisplayName, mergeToolProviderPreview } from './tool-content-source';
+import {
+  getToolOverrideProviderDisplayName,
+  isToolContentOverrideProviderId,
+  mergeToolProviderPreview,
+} from './tool-content-source';
 
 type ToolPreviewResult = {
   type: string;
