@@ -10,17 +10,15 @@ import { ToolFill } from '@/components/icons/tool-fill';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
 import { Skeleton } from '@/components/primitives/skeleton';
-import { cn } from '@/utils/ui';
-import {
-  getToolOverrideProviderDisplayName,
-  isToolContentOverrideProviderId,
-  mergeToolProviderPreview,
-} from './tool-content-source';
+import { getToolOverrideProviderDisplayName, mergeToolProviderPreview } from './tool-content-source';
 
 type ToolPreviewResult = {
   type: string;
   preview?: ToolRenderOutput;
 };
+
+const JSON_PANEL_CLASS =
+  'bg-neutral-alpha-50 text-foreground-950 min-h-16 overflow-auto rounded-md border border-neutral-100 p-2 font-mono text-[11px] leading-4 [scrollbar-gutter:stable]';
 
 export const ToolPreview = ({
   isPreviewPending,
@@ -35,20 +33,9 @@ export const ToolPreview = ({
   const preview = previewResult?.type === ChannelTypeEnum.TOOL ? previewResult.preview : undefined;
   const body = preview?.body ?? '';
   const providerOverrides = preview?.providerOverrides ?? {};
+  const availableProviders = TOOL_CONTENT_OVERRIDE_PROVIDER_IDS;
 
-  const availableProviders = useMemo(() => {
-    const fromOverrides = Object.keys(providerOverrides).filter(isToolContentOverrideProviderId);
-
-    if (fromOverrides.length > 0) {
-      return fromOverrides;
-    }
-
-    return [...TOOL_CONTENT_OVERRIDE_PROVIDER_IDS];
-  }, [providerOverrides]);
-
-  const [selectedProviderId, setSelectedProviderId] = useState<ToolContentOverrideProviderId>(
-    availableProviders[0] ?? TOOL_CONTENT_OVERRIDE_PROVIDER_IDS[0]
-  );
+  const [selectedProviderId, setSelectedProviderId] = useState<ToolContentOverrideProviderId>(availableProviders[0]);
 
   const activeProviderId = availableProviders.includes(selectedProviderId) ? selectedProviderId : availableProviders[0];
 
@@ -68,7 +55,7 @@ export const ToolPreview = ({
 
   if (variant === 'mini') {
     return (
-      <div className="relative w-full rounded-xl border border-dashed border-[#E1E4EA] p-3">
+      <div className="relative w-full overflow-hidden rounded-xl border border-dashed border-[#E1E4EA] p-3">
         <div className="flex flex-col gap-3">
           <div className="flex w-full items-start gap-2">
             <div className="flex size-6 items-center justify-center rounded-[5px] bg-warning/10 text-warning">
@@ -77,7 +64,7 @@ export const ToolPreview = ({
             <div className="flex w-full flex-col gap-1">
               <div className="flex items-center gap-1">
                 <span className="text-foreground-950 text-xs font-bold">Tool</span>
-                <span className="text-2xs text-foreground-600 bg-neutral-alpha-100 flex h-4 items-center rounded-sm px-1 opacity-70">
+                <span className="text-label-2xs text-foreground-600 bg-neutral-alpha-100 flex h-4 items-center rounded-sm px-1 opacity-70">
                   TOOL
                 </span>
               </div>
@@ -94,14 +81,14 @@ export const ToolPreview = ({
             </div>
           </div>
         </div>
-        <div className="to-background absolute -bottom-1 -left-1 -right-1 z-0 h-16 bg-linear-to-b from-transparent to-80%" />
+        <div className="to-background absolute inset-x-0 bottom-0 z-0 h-16 rounded-b-xl bg-linear-to-b from-transparent to-80%" />
       </div>
     );
   }
 
   return (
-    <div className="relative flex w-full flex-col gap-3 rounded-xl border border-dashed border-[#E1E4EA] p-3">
-      <div className="flex items-center justify-between gap-2">
+    <div className="relative flex h-full w-full min-h-0 flex-col gap-3 rounded-xl border border-dashed border-[#E1E4EA] p-3">
+      <div className="flex h-7 shrink-0 items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <div className="flex size-6 items-center justify-center rounded-[5px] bg-warning/10 text-warning">
             <ToolFill className="size-3.5" />
@@ -134,34 +121,40 @@ export const ToolPreview = ({
         )}
       </div>
 
-      {isPreviewPending ? (
-        <Skeleton className="h-24 w-full" />
-      ) : (
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-1.5">
-            <span className="text-foreground-600 text-2xs font-medium uppercase tracking-wide">
-              {hasOverride ? 'Merged request body' : 'Default content mapping'}
-            </span>
-            {hasOverride && (
-              <span className="bg-neutral-alpha-100 text-foreground-600 rounded px-1 text-[10px] font-medium">
-                OVERRIDDEN
+      <div className="flex min-h-0 flex-1 flex-col gap-1.5">
+        <div className="flex h-4 shrink-0 items-center gap-1.5">
+          {isPreviewPending ? (
+            <Skeleton className="h-3 w-40" />
+          ) : (
+            <>
+              <span className="text-foreground-600 text-label-2xs font-medium uppercase tracking-wide">
+                Request body
               </span>
-            )}
-          </div>
-          <pre
-            className={cn(
-              'bg-neutral-alpha-50 text-foreground-950 max-h-64 overflow-auto rounded-md border border-neutral-100 p-2 font-mono text-[11px] leading-4'
-            )}
-          >
-            {JSON.stringify(mergedPreview, null, 2)}
-          </pre>
-          {!hasOverride && (
-            <p className="text-foreground-400 text-2xs">
-              No override for this provider — default message maps to the provider&apos;s primary content field.
-            </p>
+              {hasOverride && (
+                <span className="text-label-2xs text-foreground-600 bg-neutral-alpha-100 flex h-4 items-center rounded-sm px-1 font-medium">
+                  OVERRIDDEN
+                </span>
+              )}
+            </>
           )}
         </div>
-      )}
+
+        {isPreviewPending ? (
+          <Skeleton className="h-24 w-full shrink-0 rounded-md" />
+        ) : (
+          <pre className={JSON_PANEL_CLASS}>{JSON.stringify(mergedPreview, null, 2)}</pre>
+        )}
+
+        <p className="text-foreground-400 text-label-2xs min-h-4 shrink-0">
+          {isPreviewPending ? (
+            <Skeleton className="h-3 w-full max-w-sm" />
+          ) : hasOverride ? (
+            'Override merged over the default message body.'
+          ) : (
+            "No override for this provider. Default message maps to the provider's primary content field."
+          )}
+        </p>
+      </div>
     </div>
   );
 };
