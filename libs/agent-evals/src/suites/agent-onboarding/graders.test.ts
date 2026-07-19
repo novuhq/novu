@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { GraderOutcome, GraderResult, RunResult } from '../../core/types.js';
 import { graderToJudge } from './adapters.js';
 import { catalog } from './catalog.js';
-import { graders as keylessWhatsappGraders } from './scenarios/keyless-whatsapp-redirect/graders.js';
+import { graders as keylessTeamsGraders } from './scenarios/keyless-teams-redirect/graders.js';
 
 function buildResult(partial: Partial<RunResult>): RunResult {
   return {
@@ -82,28 +82,28 @@ describe('sendblue catalog graders', () => {
   });
 });
 
-describe('keyless-whatsapp-redirect graders', () => {
+describe('keyless-teams-redirect graders', () => {
   it('scores a passing synthetic run at 1.0', async () => {
     const passing = buildResult({
-      scenarioId: 'keyless-whatsapp-redirect',
+      scenarioId: 'keyless-teams-redirect',
       finalText: 'Please continue in https://dashboard.novu.co',
       trackedCommands: [],
       toolCalls: [{ name: 'AskUserQuestion', args: {}, timestamp: Date.now() }],
     });
 
-    const score = await averageScore(keylessWhatsappGraders, passing);
+    const score = await averageScore(keylessTeamsGraders, passing);
 
     expect(score).toBe(1);
   });
 
   it('scores a failing synthetic run below 1.0', async () => {
     const failing = buildResult({
-      scenarioId: 'keyless-whatsapp-redirect',
+      scenarioId: 'keyless-teams-redirect',
       finalText: 'Running connect now',
-      trackedCommands: ['npx novu connect --ci --channel whatsapp'],
+      trackedCommands: ['npx novu connect --ci --channel teams'],
     });
 
-    const score = await averageScore(keylessWhatsappGraders, failing);
+    const score = await averageScore(keylessTeamsGraders, failing);
 
     expect(score).toBeLessThan(1);
   });

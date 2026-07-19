@@ -11,8 +11,10 @@ import { graders as keylessSendblueGraders } from './scenarios/keyless-sendblue/
 import { scenario as keylessSendblueScenario } from './scenarios/keyless-sendblue/scenario.js';
 import { graders as keylessSlackSecureGraders } from './scenarios/keyless-slack-secure/graders.js';
 import { scenario as keylessSlackSecureScenario } from './scenarios/keyless-slack-secure/scenario.js';
-import { graders as keylessWhatsappRedirectGraders } from './scenarios/keyless-whatsapp-redirect/graders.js';
-import { scenario as keylessWhatsappRedirectScenario } from './scenarios/keyless-whatsapp-redirect/scenario.js';
+import { graders as keylessTeamsRedirectGraders } from './scenarios/keyless-teams-redirect/graders.js';
+import { scenario as keylessTeamsRedirectScenario } from './scenarios/keyless-teams-redirect/scenario.js';
+import { graders as keylessWhatsappConnectGraders } from './scenarios/keyless-whatsapp-connect/graders.js';
+import { scenario as keylessWhatsappConnectScenario } from './scenarios/keyless-whatsapp-connect/scenario.js';
 import { graders as personaInfraExclusionGraders } from './scenarios/persona-infra-exclusion/graders.js';
 import { scenario as personaInfraExclusionScenario } from './scenarios/persona-infra-exclusion/scenario.js';
 import { graders as slackInChatRerunGraders } from './scenarios/slack-in-chat-rerun/graders.js';
@@ -53,7 +55,8 @@ export const agentOnboardingSuite: Suite<ConnectFlags> = {
     { scenario: keylessSlackSecureScenario, graders: keylessSlackSecureGraders },
     { scenario: keylessSendblueScenario, graders: keylessSendblueGraders },
     { scenario: dashboardPromptLoginScenario, graders: dashboardPromptLoginGraders },
-    { scenario: keylessWhatsappRedirectScenario, graders: keylessWhatsappRedirectGraders },
+    { scenario: keylessTeamsRedirectScenario, graders: keylessTeamsRedirectGraders },
+    { scenario: keylessWhatsappConnectScenario, graders: keylessWhatsappConnectGraders },
     { scenario: emailHandoffScenario, graders: emailHandoffGraders },
     { scenario: telegramSecureQrScenario, graders: telegramSecureQrGraders },
     { scenario: slackInChatRerunScenario, graders: slackInChatRerunGraders },

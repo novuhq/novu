@@ -125,9 +125,9 @@ export const catalog = {
         : fail(`description is missing all expected tokens: ${tokens.join(', ')}`);
     },
 
-  noConnectOnKeylessWhatsapp: (result: RunResult): GraderOutcome | 'pass' => {
+  noConnectOnKeylessTeams: (result: RunResult): GraderOutcome | 'pass' => {
     if (connectCommands(result).length > 0) {
-      return fail('ran a connect command on a keyless WhatsApp flow that should redirect to the dashboard');
+      return fail('ran a connect command on a keyless MS Teams flow that should redirect to the dashboard');
     }
 
     const text = transcriptText(result);

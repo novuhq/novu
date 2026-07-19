@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { RiLoader4Line } from 'react-icons/ri';
+import type { WhatsAppEmbeddedSignupResult } from '@/api/integrations';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { NOVU_WHATSAPP_APP_ID, NOVU_WHATSAPP_CONFIG_ID } from '@/config';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
@@ -107,9 +108,7 @@ function isTrustedFacebookOrigin(origin: string): boolean {
 
   const hostname = parsedOrigin.hostname.toLowerCase();
 
-  return (
-    parsedOrigin.protocol === 'https:' && (hostname === 'facebook.com' || hostname.endsWith('.facebook.com'))
-  );
+  return parsedOrigin.protocol === 'https:' && (hostname === 'facebook.com' || hostname.endsWith('.facebook.com'));
 }
 
 function parseEmbeddedSignupEvent(event: MessageEvent): EmbeddedSignupEventResult {
@@ -194,27 +193,35 @@ function MetaFacebookLoginButton({ isLoading, disabled, onClick }: MetaFacebookL
   );
 }
 
-export type WhatsAppEmbeddedSignupButtonProps = {
-  agentIdentifier: string;
-  integrationIdentifier: string;
+/** Meta Embedded Signup output the completion endpoint needs. */
+export type EmbeddedSignupCompletion = {
+  code: string;
+  wabaId: string;
+  phoneNumberId: string;
+};
+
+export type WhatsAppEmbeddedSignupCoreButtonProps = {
+  /**
+   * Persists the Embedded Signup result. The in-dashboard setup guide passes
+   * the session-authenticated mutation; the public tokenized page passes the
+   * token-authorized public completion.
+   */
+  completeSignup: (completion: EmbeddedSignupCompletion) => Promise<WhatsAppEmbeddedSignupResult>;
   disabled?: boolean;
-  onSuccess?: () => void;
+  onSuccess?: (result: WhatsAppEmbeddedSignupResult) => void;
   onError?: (message: string) => void;
 };
 
-export function WhatsAppEmbeddedSignupButton({
-  agentIdentifier,
-  integrationIdentifier,
+export function WhatsAppEmbeddedSignupCoreButton({
+  completeSignup,
   disabled = false,
   onSuccess,
   onError,
-}: WhatsAppEmbeddedSignupButtonProps) {
+}: WhatsAppEmbeddedSignupCoreButtonProps) {
   const [isLaunching, setIsLaunching] = useState(false);
   const pendingSessionRef = useRef<EmbeddedSignupSession | null>(null);
   const pendingCodeRef = useRef<string | null>(null);
   const messageListenerRef = useRef<((event: MessageEvent) => void) | null>(null);
-  const { refetch: refetchIntegrations } = useFetchIntegrations();
-  const { mutateAsync: completeEmbeddedSignup } = useWhatsAppEmbeddedSignup();
 
   const cleanupMessageListener = useCallback(() => {
     if (messageListenerRef.current) {
@@ -242,12 +249,10 @@ export function WhatsAppEmbeddedSignupButton({
     cleanupMessageListener();
 
     try {
-      const result = await completeEmbeddedSignup({
+      const result = await completeSignup({
         code,
         wabaId: session.wabaId,
         phoneNumberId: session.phoneNumberId,
-        integrationIdentifier,
-        agentIdentifier,
       });
 
       if (!result.success) {
@@ -258,13 +263,11 @@ export function WhatsAppEmbeddedSignupButton({
         return;
       }
 
-      await refetchIntegrations();
-
       if (result.phoneRegistrationWarning) {
         showErrorToast(result.phoneRegistrationWarning);
       }
 
-      onSuccess?.();
+      onSuccess?.(result);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Something went wrong completing WhatsApp Embedded Signup.';
       showErrorToast(message);
@@ -272,15 +275,7 @@ export function WhatsAppEmbeddedSignupButton({
     } finally {
       setIsLaunching(false);
     }
-  }, [
-    agentIdentifier,
-    cleanupMessageListener,
-    completeEmbeddedSignup,
-    integrationIdentifier,
-    onError,
-    onSuccess,
-    refetchIntegrations,
-  ]);
+  }, [cleanupMessageListener, completeSignup, onError, onSuccess]);
 
   const tryCompleteSignup = useCallback(() => {
     if (pendingSessionRef.current && pendingCodeRef.current) {
@@ -291,14 +286,6 @@ export function WhatsAppEmbeddedSignupButton({
   const handleConnect = useCallback(async () => {
     if (!NOVU_WHATSAPP_APP_ID || !NOVU_WHATSAPP_CONFIG_ID) {
       const message = 'WhatsApp Embedded Signup is not configured for this deployment.';
-      showErrorToast(message);
-      onError?.(message);
-
-      return;
-    }
-
-    if (!integrationIdentifier) {
-      const message = 'Select a WhatsApp integration before connecting.';
       showErrorToast(message);
       onError?.(message);
 
@@ -374,15 +361,65 @@ export function WhatsAppEmbeddedSignupButton({
       showErrorToast(message);
       onError?.(message);
     }
-  }, [cleanupMessageListener, integrationIdentifier, onError, tryCompleteSignup]);
+  }, [cleanupMessageListener, onError, tryCompleteSignup]);
 
   return (
     <MetaFacebookLoginButton
       isLoading={isLaunching}
-      disabled={disabled || !integrationIdentifier}
+      disabled={disabled}
       onClick={() => {
         void handleConnect();
       }}
+    />
+  );
+}
+
+export type WhatsAppEmbeddedSignupButtonProps = {
+  agentIdentifier: string;
+  integrationIdentifier: string;
+  disabled?: boolean;
+  onSuccess?: (result: WhatsAppEmbeddedSignupResult) => void;
+  onError?: (message: string) => void;
+};
+
+/**
+ * Session-authenticated variant used inside the dashboard (setup guide):
+ * completes signup via the authed mutation and refreshes the integrations
+ * cache on success.
+ */
+export function WhatsAppEmbeddedSignupButton({
+  agentIdentifier,
+  integrationIdentifier,
+  disabled = false,
+  onSuccess,
+  onError,
+}: WhatsAppEmbeddedSignupButtonProps) {
+  const { refetch: refetchIntegrations } = useFetchIntegrations();
+  const { mutateAsync: completeEmbeddedSignup } = useWhatsAppEmbeddedSignup();
+
+  const completeSignup = useCallback(
+    async (completion: EmbeddedSignupCompletion) => {
+      const result = await completeEmbeddedSignup({
+        ...completion,
+        integrationIdentifier,
+        agentIdentifier,
+      });
+
+      if (result.success) {
+        await refetchIntegrations();
+      }
+
+      return result;
+    },
+    [agentIdentifier, completeEmbeddedSignup, integrationIdentifier, refetchIntegrations]
+  );
+
+  return (
+    <WhatsAppEmbeddedSignupCoreButton
+      completeSignup={completeSignup}
+      disabled={disabled || !integrationIdentifier}
+      onSuccess={onSuccess}
+      onError={onError}
     />
   );
 }
