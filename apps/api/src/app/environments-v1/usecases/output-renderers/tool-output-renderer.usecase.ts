@@ -37,16 +37,18 @@ export class ToolOutputRendererUsecase extends BaseTranslationRendererUsecase {
       organization: renderCommand.organization,
     });
 
-    return {
+    const output: ToolRenderOutput = {
       body: (translatedControls.body as string) ?? '',
-      ...(translatedControls.enabledIntegrations !== undefined
-        ? { enabledIntegrations: translatedControls.enabledIntegrations as string[] }
-        : {}),
-      ...(translatedControls.providerOverrides !== undefined
-        ? {
-            providerOverrides: translatedControls.providerOverrides as ToolRenderOutput['providerOverrides'],
-          }
-        : {}),
     };
+
+    if (translatedControls.enabledIntegrations !== undefined) {
+      output.enabledIntegrations = translatedControls.enabledIntegrations as string[];
+    }
+
+    if (translatedControls.providerOverrides !== undefined) {
+      output.providerOverrides = translatedControls.providerOverrides as ToolRenderOutput['providerOverrides'];
+    }
+
+    return output;
   }
 }
