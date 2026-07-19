@@ -503,8 +503,8 @@ function createUiController(
     showWhatsAppSignupWaiting({ signupUrl }) {
       store.phase.set({ kind: 'whatsapp-signup-waiting', signupUrl });
     },
-    showWhatsAppTest({ waMeUrl, displayPhoneNumber }) {
-      store.phase.set({ kind: 'whatsapp-test', waMeUrl, displayPhoneNumber });
+    showWhatsAppTest({ waMeUrl, waMeQr, displayPhoneNumber }) {
+      store.phase.set({ kind: 'whatsapp-test', waMeUrl, waMeQr, displayPhoneNumber });
     },
     whatsappConnected() {
       // Transition handled by sendingWelcome / success.

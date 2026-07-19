@@ -64,6 +64,12 @@ export function WhatsAppTestContent({
           'Send any WhatsApp message to your business number from your phone — Novu confirms the connection as soon as it arrives.'
         )}
       </Text>
+      {phase.waMeQr ? (
+        <>
+          <Text dimColor>Scan to open the chat on your phone:</Text>
+          <Text>{phase.waMeQr}</Text>
+        </>
+      ) : null}
       {phase.waMeUrl ? <CopyableLink url={phase.waMeUrl} hint="Open WhatsApp directly:" /> : null}
       <Text dimColor>Waiting for your first inbound message…</Text>
     </Box>
