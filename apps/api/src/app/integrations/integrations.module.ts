@@ -20,7 +20,9 @@ import { TelegramLinkingModule } from '../telegram-linking/telegram-linking.modu
 import { IntegrationsController } from './integrations.controller';
 import { IntegrationsMobileConfigurePublicController } from './integrations-mobile-configure-public.controller';
 import { IntegrationsPublicController } from './integrations-public.controller';
+import { IntegrationsWhatsAppSignupPublicController } from './integrations-whatsapp-signup-public.controller';
 import { USE_CASES } from './usecases';
+import { WhatsAppSignupLinkTokenService } from './whatsapp-signup-link-token.service';
 
 const PROVIDERS = [
   ChannelFactory,
@@ -39,9 +41,15 @@ const PROVIDERS = [
     TelegramLinkingModule,
     forwardRef(() => AgentsModule),
   ],
-  controllers: [IntegrationsController, IntegrationsPublicController, IntegrationsMobileConfigurePublicController],
+  controllers: [
+    IntegrationsController,
+    IntegrationsPublicController,
+    IntegrationsMobileConfigurePublicController,
+    IntegrationsWhatsAppSignupPublicController,
+  ],
   providers: [
     ...USE_CASES,
+    WhatsAppSignupLinkTokenService,
     CommunityOrganizationRepository,
     CommunityUserRepository,
     IntegrationRepository,

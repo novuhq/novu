@@ -225,6 +225,24 @@ export interface ConnectUI {
   showSendblueTestWaiting(opts: { phone: string; fromNumber: string; imessageUrl: string }): void;
   sendblueConnected(): void;
 
+  // WhatsApp path (Meta Embedded Signup via the dashboard signup page)
+  addingWhatsAppIntegration(): void;
+  /**
+   * Consent gate before opening the dashboard Embedded Signup page. Resolves
+   * when the user hits Enter — the pipeline then runs `open(signupUrl)`.
+   * Non-interactive mode logs a machine-readable URL and resolves immediately.
+   */
+  awaitWhatsAppSignupOpen(opts: { signupUrl: string }): Promise<void>;
+  /** Transitions to the stage-1 polling view (waiting for Embedded Signup to save credentials). */
+  showWhatsAppSignupWaiting(opts: { signupUrl: string }): void;
+  /**
+   * Stage 2: prompt the user to message their business number on WhatsApp
+   * (wa.me deep link when the display phone number is known). The pipeline
+   * polls the agent-integration link for `connectedAt`.
+   */
+  showWhatsAppTest(opts: { waMeUrl?: string; displayPhoneNumber?: string }): void;
+  whatsappConnected(): void;
+
   // Slack path
   addingSlackIntegration(): void;
   /**

@@ -97,12 +97,7 @@ export class PagerDutyProvider extends BaseProvider implements IToolProvider {
     };
   }
 
-  /**
-   * PagerDuty is routed per subscriber. The routing key + region live on the
-   * resolved `channelData`. The provider is stateless and refuses to send
-   * without them so a missing endpoint fails loudly at the send seam rather
-   * than sending to a wrong or empty destination.
-   */
+  /** Require per-subscriber channelData routing; fail closed if missing. */
   private resolveRouting(options: IToolOptions): { routingKey: string; region: PagerDutyRegion } {
     const { channelData } = options;
 
@@ -118,13 +113,7 @@ export class PagerDutyProvider extends BaseProvider implements IToolProvider {
     return { routingKey, region };
   }
 
-  /**
-   * Deterministic default: `novu:<transactionId>:<subscriberId>:<stepId>`.
-   * Stable across worker retries of the same job (idempotent trigger), unique
-   * per trigger event so distinct alerts stay distinct. Author-supplied
-   * `customData.dedup_key` always wins. Falls back to omitting the field when
-   * IDs are missing, letting PagerDuty generate one.
-   */
+  /** Prefer author `dedup_key`; else `novu:<transactionId>:<subscriberId>:<stepId>` for retry-stable dedup. */
   private resolveDedupKey(override: unknown, options: IToolOptions): string | undefined {
     if (typeof override === 'string' && override.length > 0) {
       return override;

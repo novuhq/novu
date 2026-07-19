@@ -4,7 +4,7 @@ description: "Run your agent locally with a dev tunnel, then deploy the bridge t
 ---
 
 
-Your agent's handler code runs in your own app. Novu routes each inbound message to your **bridge** — an HTTP endpoint such as `/api/novu` — and delivers your reply back to the connected channel.
+Your agent's handler code runs in your own app. Novu routes each inbound message to your **bridge** - an HTTP endpoint such as `/api/novu` - and delivers your reply back to the connected channel.
 
 Getting to production means running that bridge somewhere Novu can reach it, in three stages:
 
@@ -15,7 +15,7 @@ Getting to production means running that bridge somewhere Novu can reach it, in 
 | **Production** | Your production deployment | Public bridge URL |
 
 <Note>
-  If you followed the [Quickstart](/agents/custom-code-agent/quickstart) with `npx novu connect`, your local setup is already wired — the bridge route, `.env.local` credentials, and a `dev:novu` script are in place. Start with the **Local** tab below.
+  If you followed the [Quickstart](/agents/custom-code-agent/quickstart) with `npx novu connect`, your local setup is already wired - the bridge route, `.env.local` credentials, and a `dev:novu` script are in place. Start with the **Local** tab below.
 </Note>
 
 <Tabs>
@@ -29,7 +29,7 @@ Run the bridge on your machine and expose it to Novu with a dev tunnel.
 npm run dev:novu
 ```
 
-   This runs your app alongside a Novu dev tunnel. The CLI discovers the agents on your bridge route, opens the tunnel, and registers the tunnel URL as the agent's **dev bridge** automatically — you never paste a URL for local work.
+   This runs your app alongside a Novu dev tunnel. The CLI discovers the agents on your bridge route, opens the tunnel, and registers the tunnel URL as the agent's **dev bridge** automatically - you never paste a URL for local work.
 
 2. Message your agent on the connected channel. Your local handler code runs and replies in the thread.
 
@@ -57,7 +57,7 @@ This creates the tunnel and registers the discovered agents, the same way `dev:n
 After local testing, deploy the bridge to a hosted development environment (Vercel, Railway, your own server, and so on).
 
 1. Deploy the app that serves your bridge route (for example `/api/novu`).
-2. In your host's environment settings, add `NOVU_SECRET_KEY` and `NOVU_API_URL` for your **development** Novu environment. Copy them from [API keys](https://dashboard.novu.co/api-keys) — the `.env.local` file from `npx novu connect` is for local use only.
+2. In your host's environment settings, add `NOVU_SECRET_KEY` and `NOVU_API_URL` for your **development** Novu environment. Copy them from [API keys](https://dashboard.novu.co/api-keys) - the `.env.local` file from `npx novu connect` is for local use only.
 3. On the agent's overview page, switch to the **Development** environment.
 4. Set the bridge URL to your deployed endpoint. For `https://dev.my-agent-app.com`, use `https://dev.my-agent-app.com/api/novu`.
 
@@ -67,7 +67,7 @@ Novu now forwards inbound messages to your deployed bridge instead of the local 
   <Tab title="Production">
 
 1. On the dashboard, use **Publish changes** to promote the agent from development to production. Publishing copies the agent to production with the same name, identifier, and description, and it stays **inactive** until you activate it.
-2. Reconnect every provider in the **production** environment — provider connections do not carry over from development.
+2. Reconnect every provider in the **production** environment - provider connections do not carry over from development.
 3. Deploy the bridge to your production host with production `NOVU_SECRET_KEY` and `NOVU_API_URL` environment variables.
 4. Register the production bridge URL (see below).
 5. Activate the agent from its overview page.
@@ -110,20 +110,20 @@ jobs:
 ```
 </CodeGroup>
 
-Use your bridge route as the URL — for a bridge app at `https://prod.my-agent-app.com`, that's `https://prod.my-agent-app.com/api/novu`.
+Use your bridge route as the URL - for a bridge app at `https://prod.my-agent-app.com`, that's `https://prod.my-agent-app.com/api/novu`.
 
 The CLI arguments are:
 
-- `<bridge_url>` — public URL of your deployed bridge.
-- `<NOVU_SECRET_KEY>` — production secret key.
-- `<NOVU_API_URL>` — Novu API URL (defaults to `https://api.novu.co`).
+- `<bridge_url>` - public URL of your deployed bridge.
+- `<NOVU_SECRET_KEY>` - production secret key.
+- `<NOVU_API_URL>` - Novu API URL (defaults to `https://api.novu.co`).
 
 Once the sync succeeds, the agent's overview page shows the updated production bridge URL.
 
 You can also set the bridge URL programmatically with [Update an agent bridge](/api-reference/agents/update-an-agent-bridge).
 
 <Warning>
-  Local tunnel URLs cannot be activated in production — Novu returns `403 Forbidden` to prevent routing production traffic to a local machine.
+  Local tunnel URLs cannot be activated in production - Novu returns `403 Forbidden` to prevent routing production traffic to a local machine.
 </Warning>
 
 </Tab>

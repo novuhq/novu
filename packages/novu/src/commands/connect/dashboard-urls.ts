@@ -1,6 +1,6 @@
 import type { ChannelChoice } from './types';
 
-export const DASHBOARD_ONLY_CHANNELS: ReadonlyArray<ChannelChoice> = ['whatsapp', 'teams'];
+export const DASHBOARD_ONLY_CHANNELS: ReadonlyArray<ChannelChoice> = ['teams'];
 
 export function buildConnectClaimUrl(input: { connectDashboardUrl: string; token: string }): string {
   const base = input.connectDashboardUrl.replace(/\/$/, '');

@@ -1,5 +1,12 @@
-import { AgentRuntimeProviderIdEnum } from '@novu/shared';
+import {
+  AgentRuntimeProviderIdEnum,
+  type WhatsAppEmbeddedSignupUnavailableReason,
+  type WhatsAppSignupLinkStatus,
+} from '@novu/shared';
 import type { ConnectApiClient } from './client';
+import { NovuApiError } from './client';
+
+export type { WhatsAppSignupLinkStatus };
 
 export interface IntegrationRecord {
   _id: string;
@@ -99,6 +106,106 @@ export async function createTelegramIntegration(
   const body = res.data;
 
   return 'data' in body && body.data ? body.data : (body as IntegrationRecord);
+}
+
+/**
+ * Creates an empty WhatsApp Business integration (Slack/Telegram pattern):
+ * credentials are filled in later by the Meta Embedded Signup completion
+ * endpoint. The webhook verify token is auto-generated server-side on create.
+ */
+export async function createWhatsAppIntegration(
+  client: ConnectApiClient,
+  input: { name: string; environmentId: string }
+): Promise<IntegrationRecord> {
+  const res = await client.axios.post<{ data?: IntegrationRecord } | IntegrationRecord>('/v1/integrations', {
+    providerId: 'whatsapp-business',
+    channel: 'chat',
+    name: input.name,
+    active: true,
+    credentials: {},
+    ...integrationEnvironmentId(input.environmentId),
+  });
+  const body = res.data;
+
+  return 'data' in body && body.data ? body.data : (body as IntegrationRecord);
+}
+
+/**
+ * The shared unavailable reasons plus the CLI-only `endpoint_not_found`
+ * sentinel for older self-hosted APIs without the availability endpoint.
+ */
+export type WhatsAppEmbeddedSignupAvailabilityReason = WhatsAppEmbeddedSignupUnavailableReason | 'endpoint_not_found';
+
+export type WhatsAppEmbeddedSignupAvailability =
+  | { available: true }
+  | { available: false; reason: WhatsAppEmbeddedSignupAvailabilityReason };
+
+/**
+ * Availability pre-check for the Meta Embedded Signup flow. A 404 (older
+ * self-hosted API without the endpoint) counts as unavailable so the CLI
+ * falls back to the classic dashboard handoff.
+ */
+export async function getWhatsAppEmbeddedSignupAvailability(
+  client: ConnectApiClient
+): Promise<WhatsAppEmbeddedSignupAvailability> {
+  let res: { data: { data?: WhatsAppEmbeddedSignupAvailability } | WhatsAppEmbeddedSignupAvailability };
+  try {
+    res = await client.axios.get('/v1/integrations/whatsapp/embedded-signup/availability');
+  } catch (err) {
+    if (err instanceof NovuApiError && err.status === 404) {
+      return { available: false, reason: 'endpoint_not_found' };
+    }
+
+    throw err;
+  }
+
+  const body = res.data;
+
+  return 'data' in body && body.data ? body.data : (body as WhatsAppEmbeddedSignupAvailability);
+}
+
+export interface WhatsAppSignupLink {
+  token: string;
+  /** Absolute URL of the public tokenized signup page. */
+  url: string;
+  /** ISO timestamp when the link expires (30 minutes after minting). */
+  expiresAt: string;
+}
+
+/**
+ * Mints an opaque single-use token bound to the agent + WhatsApp integration
+ * and returns the public signup page URL. Works with keyless sessions as well
+ * as secret-key auth.
+ */
+export async function createWhatsAppSignupLink(
+  client: ConnectApiClient,
+  input: { agentIdentifier: string; integrationIdentifier: string }
+): Promise<WhatsAppSignupLink> {
+  const res = await client.axios.post<{ data?: WhatsAppSignupLink } | WhatsAppSignupLink>(
+    '/v1/integrations/whatsapp/signup-link',
+    input
+  );
+  const body = res.data;
+
+  return 'data' in body && body.data ? body.data : (body as WhatsAppSignupLink);
+}
+
+/**
+ * Secret-free signup progress the CLI polls while the user completes Embedded
+ * Signup in the browser. Public endpoint — authorization is the opaque token,
+ * so it works for keyless sessions too.
+ */
+export async function getWhatsAppSignupLinkStatus(
+  client: ConnectApiClient,
+  token: string
+): Promise<WhatsAppSignupLinkStatus> {
+  const res = await client.axios.get<{ data?: WhatsAppSignupLinkStatus } | WhatsAppSignupLinkStatus>(
+    '/v1/integrations/whatsapp/signup/status',
+    { params: { token } }
+  );
+  const body = res.data;
+
+  return 'data' in body && body.data ? body.data : (body as WhatsAppSignupLinkStatus);
 }
 
 export interface SendblueCredentials {

@@ -248,7 +248,7 @@ export type Step = {
   chat: ChannelStep<ChannelStepEnum.CHAT, ChatOutputUnvalidated, ChatResult>;
   /** Send an in-app notification. */
   inApp: ChannelStep<ChannelStepEnum.IN_APP, InAppOutputUnvalidated, InAppResult>;
-  /** Deliver a tool payload to an external system (e.g. GitHub, webhook). */
+  /** Deliver a tool payload to an external system (e.g. PagerDuty, Opsgenie, webhook). */
   tool: ChannelStep<ChannelStepEnum.TOOL, ToolOutputUnvalidated, ToolResult>;
   /** Aggregate events for a period of time. */
   digest: ActionStep<DigestOutputUnvalidated, DigestResult>;

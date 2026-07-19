@@ -1,12 +1,14 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { decryptCredentials, FeatureFlagsService, InstrumentUsecase, PinoLogger } from '@novu/application-generic';
 import { AgentIntegrationRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
-import { ChatProviderIdEnum, FeatureFlagsKeysEnum, type ICredentials } from '@novu/shared';
+import { FeatureFlagsKeysEnum, type ICredentials } from '@novu/shared';
 import { ConfigureWhatsAppWebhookCommand } from '../../../agents/channels/whatsapp/configure-whatsapp-webhook/configure-whatsapp-webhook.command';
 import { ConfigureWhatsAppWebhook } from '../../../agents/channels/whatsapp/configure-whatsapp-webhook/configure-whatsapp-webhook.usecase';
 import type { WhatsAppEmbeddedSignupResponseDto } from '../../dtos/whatsapp-embedded-signup.dto';
 import { UpdateIntegrationCommand } from '../update-integration/update-integration.command';
 import { UpdateIntegration } from '../update-integration/update-integration.usecase';
+import { resolveWhatsAppAgentIntegration } from './resolve-whatsapp-agent-integration.utils';
+import { getNovuWhatsAppPlatformConfig } from './whatsapp-credentials.utils';
 import { WhatsAppEmbeddedSignupCommand } from './whatsapp-embedded-signup.command';
 import {
   exchangeEmbeddedSignupCodeForToken,
@@ -17,17 +19,6 @@ import {
   type PhoneNumberDetailsResponse,
   registerWhatsAppPhoneNumber,
 } from './whatsapp-graph-api.utils';
-
-function getNovuWhatsAppPlatformConfig(): { appId: string; appSecret: string } | undefined {
-  const appId = process.env.NOVU_WHATSAPP_APP_ID?.trim();
-  const appSecret = process.env.NOVU_WHATSAPP_APP_SECRET?.trim();
-
-  if (!appId || !appSecret) {
-    return undefined;
-  }
-
-  return { appId, appSecret };
-}
 
 @Injectable()
 export class WhatsAppEmbeddedSignup {
@@ -71,50 +62,15 @@ export class WhatsAppEmbeddedSignup {
       };
     }
 
-    const integration = await this.integrationRepository.findOne({
-      _environmentId: command.environmentId,
-      _organizationId: command.organizationId,
-      identifier: command.integrationIdentifier,
+    const { integration } = await resolveWhatsAppAgentIntegration({
+      agentRepository: this.agentRepository,
+      integrationRepository: this.integrationRepository,
+      agentIntegrationRepository: this.agentIntegrationRepository,
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+      agentIdentifier: command.agentIdentifier,
+      integrationIdentifier: command.integrationIdentifier,
     });
-
-    if (!integration) {
-      throw new NotFoundException(`Integration with identifier "${command.integrationIdentifier}" was not found.`);
-    }
-
-    if (integration.providerId !== ChatProviderIdEnum.WhatsAppBusiness) {
-      throw new NotFoundException(
-        `Integration "${command.integrationIdentifier}" is not a WhatsApp Business integration.`
-      );
-    }
-
-    const agent = await this.agentRepository.findOne(
-      {
-        identifier: command.agentIdentifier,
-        _environmentId: command.environmentId,
-        _organizationId: command.organizationId,
-      },
-      ['_id', 'identifier']
-    );
-
-    if (!agent) {
-      throw new NotFoundException(`Agent with identifier "${command.agentIdentifier}" was not found.`);
-    }
-
-    const agentIntegrationLink = await this.agentIntegrationRepository.findOne(
-      {
-        _environmentId: command.environmentId,
-        _organizationId: command.organizationId,
-        _agentId: agent._id,
-        _integrationId: integration._id,
-      },
-      ['_id']
-    );
-
-    if (!agentIntegrationLink) {
-      throw new NotFoundException(
-        `Integration "${command.integrationIdentifier}" is not linked to agent "${command.agentIdentifier}".`
-      );
-    }
 
     let accessToken: string;
     try {
