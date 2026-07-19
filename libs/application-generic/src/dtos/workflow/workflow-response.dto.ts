@@ -24,6 +24,7 @@ import { InAppStepResponseDto } from './step-responses/in-app-step.response.dto'
 import { PushStepResponseDto } from './step-responses/push-step.response.dto';
 import { SmsStepResponseDto } from './step-responses/sms-step.response.dto';
 import { ThrottleStepResponseDto } from './step-responses/throttle-step.response.dto';
+import { ToolStepResponseDto } from './step-responses/tool-step.response.dto';
 import { WorkflowCommonsFields } from './workflow-commons.dto';
 
 @ApiExtraModels(
@@ -39,6 +40,7 @@ import { WorkflowCommonsFields } from './workflow-commons.dto';
   CustomStepResponseDto,
   HttpRequestStepResponseDto,
   InAppStepResponseDto,
+  ToolStepResponseDto,
   UserResponseDto
 )
 export class WorkflowResponseDto extends WorkflowCommonsFields {
@@ -106,6 +108,7 @@ export class WorkflowResponseDto extends WorkflowCommonsFields {
         { $ref: getSchemaPath(CustomStepResponseDto) },
         { $ref: getSchemaPath(ThrottleStepResponseDto) },
         { $ref: getSchemaPath(HttpRequestStepResponseDto) },
+        { $ref: getSchemaPath(ToolStepResponseDto) },
       ],
       discriminator: {
         propertyName: 'type',
@@ -120,6 +123,7 @@ export class WorkflowResponseDto extends WorkflowCommonsFields {
           [StepTypeEnum.CUSTOM]: getSchemaPath(CustomStepResponseDto),
           [StepTypeEnum.THROTTLE]: getSchemaPath(ThrottleStepResponseDto),
           [StepTypeEnum.HTTP_REQUEST]: getSchemaPath(HttpRequestStepResponseDto),
+          [StepTypeEnum.TOOL]: getSchemaPath(ToolStepResponseDto),
         },
       },
     },
@@ -139,6 +143,7 @@ export class WorkflowResponseDto extends WorkflowCommonsFields {
         { name: StepTypeEnum.CUSTOM, value: CustomStepResponseDto },
         { name: StepTypeEnum.THROTTLE, value: ThrottleStepResponseDto },
         { name: StepTypeEnum.HTTP_REQUEST, value: HttpRequestStepResponseDto },
+        { name: StepTypeEnum.TOOL, value: ToolStepResponseDto },
       ],
     },
     keepDiscriminatorProperty: true,

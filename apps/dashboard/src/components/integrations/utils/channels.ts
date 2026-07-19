@@ -5,6 +5,7 @@ export const INTEGRATION_CHANNELS = [
   ChannelTypeEnum.SMS,
   ChannelTypeEnum.PUSH,
   ChannelTypeEnum.CHAT,
+  ChannelTypeEnum.TOOL,
 ] as const;
 
 export type IntegrationChannel = (typeof INTEGRATION_CHANNELS)[number];

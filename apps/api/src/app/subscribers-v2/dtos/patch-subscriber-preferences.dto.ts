@@ -20,6 +20,9 @@ export class PatchPreferenceChannelsDto implements IPreferenceChannels {
 
   @ApiProperty({ description: 'Chat channel preference' })
   chat?: boolean;
+
+  @ApiProperty({ description: 'Tool channel preference' })
+  tool?: boolean;
 }
 
 export class PatchSubscriberPreferencesDto {

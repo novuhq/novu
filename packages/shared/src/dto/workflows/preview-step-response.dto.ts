@@ -8,6 +8,11 @@ export class ChatRenderOutput extends RenderOutput {
   body: string;
 }
 
+export class ToolRenderOutput extends RenderOutput {
+  body: string;
+  enabledIntegrations?: string[];
+}
+
 export class SmsRenderOutput extends RenderOutput {
   body: string;
 }

@@ -86,8 +86,7 @@ export class WhatsAppSignupLinkTokenService {
       usedKeyPrefix: 'whatsapp_signup_link_used:',
       ttlSeconds: WHATSAPP_SIGNUP_LINK_TTL_SECONDS,
       isValidTokenFormat: (token) => typeof token === 'string' && TOKEN_FORMAT.test(token),
-      createCacheUnavailableError: (operation, cause) =>
-        new WhatsAppSignupLinkCacheUnavailableError(operation, cause),
+      createCacheUnavailableError: (operation, cause) => new WhatsAppSignupLinkCacheUnavailableError(operation, cause),
     });
   }
 

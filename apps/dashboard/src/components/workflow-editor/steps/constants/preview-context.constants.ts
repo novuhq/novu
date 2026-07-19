@@ -13,6 +13,7 @@ import { Api } from '@/components/icons/api';
 import { Mail3Fill } from '@/components/icons/mail-3-fill';
 import { Notification5Fill } from '@/components/icons/notification-5-fill';
 import { Sms } from '@/components/icons/sms';
+import { ToolFill } from '@/components/icons/tool-fill';
 
 export const STEP_TYPE_ICONS: Record<StepTypeEnum, IconType> = {
   [StepTypeEnum.CHAT]: RiChatThreadFill,
@@ -23,6 +24,7 @@ export const STEP_TYPE_ICONS: Record<StepTypeEnum, IconType> = {
   [StepTypeEnum.HTTP_REQUEST]: Api as IconType,
   [StepTypeEnum.IN_APP]: Notification5Fill as IconType,
   [StepTypeEnum.PUSH]: RiCellphoneFill,
+  [StepTypeEnum.TOOL]: ToolFill as IconType,
   [StepTypeEnum.SMS]: Sms as IconType,
   [StepTypeEnum.THROTTLE]: RiSpeedUpFill,
   [StepTypeEnum.TRIGGER]: RiFlashlightFill,

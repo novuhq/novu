@@ -305,6 +305,13 @@ export class GeneratePreviewResponseDto {
       },
       {
         properties: {
+          type: { enum: [ChannelTypeEnum.TOOL] },
+          preview: { type: 'object', additionalProperties: true },
+          error: { $ref: getSchemaPath(PreviewErrorDto) },
+        },
+      },
+      {
+        properties: {
           type: { enum: [ActionTypeEnum.DELAY] },
           preview: { $ref: getSchemaPath(DigestRegularOutput) },
         },
@@ -344,6 +351,11 @@ export class GeneratePreviewResponseDto {
         error?: PreviewErrorDto;
       }
     | {
+        type: ChannelTypeEnum.TOOL;
+        preview: Record<string, unknown>;
+        error?: PreviewErrorDto;
+      }
+    | {
         type: ActionTypeEnum.DELAY;
         preview: DigestRenderOutput;
       }
@@ -358,6 +370,7 @@ export class GeneratePreviewResponseDto {
           | ChannelTypeEnum.SMS
           | ChannelTypeEnum.PUSH
           | ChannelTypeEnum.CHAT
+          | ChannelTypeEnum.TOOL
           | ActionTypeEnum.DELAY
           | ActionTypeEnum.DIGEST;
         preview: Record<string, unknown>;

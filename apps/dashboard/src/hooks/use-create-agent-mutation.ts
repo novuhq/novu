@@ -1,6 +1,6 @@
 import {
-  AgentRuntimeProviderIdEnum,
   type AgentAnalyticsSource,
+  AgentRuntimeProviderIdEnum,
   CLAUDE_BUILTIN_TOOLS,
   type IIntegration,
   IntegrationKindEnum,
@@ -36,13 +36,7 @@ export function useCreateAgentMutation() {
   const [isPending, setIsPending] = useState(false);
 
   const createAgentMutation = useMutation({
-    mutationFn: ({
-      body,
-      analyticsSource,
-    }: {
-      body: CreateAgentBody;
-      analyticsSource?: AgentAnalyticsSource;
-    }) =>
+    mutationFn: ({ body, analyticsSource }: { body: CreateAgentBody; analyticsSource?: AgentAnalyticsSource }) =>
       createAgent(requireEnvironment(currentEnvironment, 'No environment selected'), body, { analyticsSource }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [AGENTS_LIST_QUERY_KEY] });
