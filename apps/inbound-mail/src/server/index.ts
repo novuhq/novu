@@ -7,7 +7,7 @@ import events from 'events';
 import extend from 'extend';
 import { convert } from 'html-to-text';
 import _ from 'lodash';
-import { type AddressObject, type Attachment, type HeaderValue, type ParsedMail, simpleParser } from 'mailparser';
+import { simpleParser } from 'mailparser';
 import path from 'path';
 import shell from 'shelljs';
 import { SMTPServer } from 'smtp-server';
@@ -18,6 +18,7 @@ import { uploadAttachmentsToS3 } from './attachment-uploader';
 import { collectClientIpSources } from './client-ip-sources';
 import { InboundMailService } from './inbound-mail.service';
 import logger from './logger';
+import { normalizeParsedMail } from './mail-normalizer';
 
 const nr = require('newrelic');
 
@@ -580,22 +581,15 @@ class Mailin extends events.EventEmitter {
 
       /*
        * Preserve threading headers so downstream consumers can correlate
-       * replies back to the original outbound message.
-       * mailparser@0.6.x stores both fields as string[] — normalise them to
-       * the shapes expected by IInboundParseDataDto / InboundEmailParseCommand
-       * so class-validator's @IsString() / @IsOptional() passes correctly.
+       * replies back to the original outbound message. normalizeParsedMail
+       * already guarantees bracketless ids with the shapes below; map absent
+       * values to null so class-validator's @IsString() / @IsOptional() on
+       * IInboundParseDataDto / InboundEmailParseCommand passes correctly.
        * inReplyTo  → string | null  (RFC 5322 allows only one message-id)
        * references → string[] | null
        */
-      parsedEmail.inReplyTo = Array.isArray(parsedEmail.inReplyTo)
-        ? (parsedEmail.inReplyTo[0] ?? null)
-        : (parsedEmail.inReplyTo ?? null);
-
-      parsedEmail.references = Array.isArray(parsedEmail.references)
-        ? parsedEmail.references.length > 0
-          ? parsedEmail.references
-          : null
-        : (parsedEmail.references ?? null);
+      parsedEmail.inReplyTo = parsedEmail.inReplyTo ?? null;
+      parsedEmail.references = parsedEmail.references ?? null;
 
       _this.emit('message', connection, parsedEmail, rawEmail);
 
@@ -969,130 +963,6 @@ function getAddressTo(finalizedMessage) {
   return toAddressObject.address ?? toAddressObject;
 }
 
-/*
- * Legacy mailparser (0.6.x) exposed a callback-style parser and a flat mail
- * object shape. mailparser@3.x switched to a promise-based `simpleParser`
- * that returns `ParsedMail` where address fields are `AddressObject` and
- * headers are a `Map`. Downstream (worker, IInboundParseDataDto,
- * finalizeMessage in this file) still expects the 0.6.x shape:
- *   - from/to/cc/bcc: Array<{ address, name }>
- *   - headers:        plain object keyed by lowercased header name
- *   - attachments:    { filename, contentType, size, content: Buffer }
- * `normalizeParsedMail` returns that legacy-compatible shape so upgrading
- * mailparser (for GHSA-7gmj-h9xc-mcxc) doesn't cascade into the worker.
- */
-interface LegacyAddress {
-  address: string;
-  name: string;
-}
-
-interface LegacyAttachment {
-  filename: string;
-  contentType: string;
-  size: number;
-  content: Buffer;
-  cid?: string;
-  contentDisposition?: string;
-  contentId?: string;
-  checksum?: string;
-  headers?: Record<string, unknown>;
-}
-
-interface NormalizedMail {
-  html: string | false;
-  text: string;
-  textAsHtml?: string;
-  headers: Record<string, unknown>;
-  subject: string;
-  messageId: string;
-  inReplyTo?: string | string[];
-  references?: string | string[];
-  priority: string;
-  from: LegacyAddress[];
-  to: LegacyAddress[];
-  cc: LegacyAddress[];
-  bcc: LegacyAddress[];
-  date?: Date;
-  attachments: LegacyAttachment[];
-  [key: string]: unknown;
-}
-
-function flattenAddresses(field: AddressObject | AddressObject[] | undefined): LegacyAddress[] {
-  if (!field) {
-    return [];
-  }
-
-  const list = Array.isArray(field) ? field : [field];
-
-  const addresses: LegacyAddress[] = [];
-  for (const entry of list) {
-    if (!entry || !Array.isArray(entry.value)) {
-      continue;
-    }
-    for (const value of entry.value) {
-      addresses.push({
-        address: value.address ?? '',
-        name: value.name ?? '',
-      });
-    }
-  }
-
-  return addresses;
-}
-
-function headersToObject(headers: Map<string, HeaderValue> | undefined): Record<string, unknown> {
-  const result: Record<string, unknown> = {};
-
-  if (!headers) {
-    return result;
-  }
-
-  for (const [key, value] of headers.entries()) {
-    result[key] = value;
-  }
-
-  return result;
-}
-
-function normalizeAttachments(attachments: Attachment[] | undefined): LegacyAttachment[] {
-  if (!attachments || attachments.length === 0) {
-    return [];
-  }
-
-  return attachments.map((attachment) => ({
-    filename: attachment.filename ?? '',
-    contentType: attachment.contentType ?? 'application/octet-stream',
-    size: attachment.size ?? (Buffer.isBuffer(attachment.content) ? attachment.content.byteLength : 0),
-    content: attachment.content as Buffer,
-    cid: attachment.cid,
-    contentDisposition: attachment.contentDisposition,
-    contentId: attachment.contentId,
-    checksum: attachment.checksum,
-    headers: attachment.headers
-      ? Object.fromEntries((attachment.headers as unknown as Map<string, unknown>).entries?.() ?? [])
-      : undefined,
-  }));
-}
-
-function normalizeParsedMail(parsed: ParsedMail): NormalizedMail {
-  return {
-    html: parsed.html ?? '',
-    text: parsed.text ?? '',
-    textAsHtml: parsed.textAsHtml,
-    headers: headersToObject(parsed.headers),
-    subject: parsed.subject ?? '',
-    messageId: parsed.messageId ?? '',
-    inReplyTo: parsed.inReplyTo,
-    references: parsed.references,
-    priority: (parsed as unknown as { priority?: string }).priority ?? 'normal',
-    from: flattenAddresses(parsed.from),
-    to: flattenAddresses(parsed.to),
-    cc: flattenAddresses(parsed.cc),
-    bcc: flattenAddresses(parsed.bcc),
-    date: parsed.date,
-    attachments: normalizeAttachments(parsed.attachments),
-  };
-}
 interface ISmtpOptions {
   banner: string;
   logger: boolean;
