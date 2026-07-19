@@ -1,5 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
-import { ChannelEndpointType, ENDPOINT_TYPES } from '@novu/shared';
+import { ChannelEndpointType, ENDPOINT_TYPES, isValidOpsgenieApiKey } from '@novu/shared';
 
 // Centralized schema definition
 export const CHANNEL_ENDPOINT_SCHEMAS = {
@@ -141,7 +141,7 @@ export const CHANNEL_ENDPOINT_SCHEMAS = {
     required: ['apiKey', 'region'],
     validate: (endpoint: Record<string, unknown>) =>
       typeof endpoint.apiKey === 'string' &&
-      /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(endpoint.apiKey) &&
+      isValidOpsgenieApiKey(endpoint.apiKey) &&
       (endpoint.region === 'us' || endpoint.region === 'eu') &&
       Object.keys(endpoint).length === 2,
   },
