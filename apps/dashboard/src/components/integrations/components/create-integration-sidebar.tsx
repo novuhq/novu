@@ -1,9 +1,8 @@
-import { ChatProviderIdEnum, FeatureFlagsKeysEnum, providers as novuProviders, ToolProviderIdEnum } from '@novu/shared';
+import { ChatProviderIdEnum } from '@novu/shared';
 import { useEffect, useRef, useState } from 'react';
 import { RiSearchLine } from 'react-icons/ri';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useCreateIntegration } from '@/hooks/use-create-integration';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { showSuccessToast } from '../../../components/primitives/sonner-helpers';
 import { useSetPrimaryIntegration } from '../../../hooks/use-set-primary-integration';
@@ -29,9 +28,7 @@ export type CreateIntegrationSidebarProps = {
 export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarProps) {
   const navigate = useNavigate();
   const { providerId } = useParams();
-  const isToolWebhookProviderEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TOOL_WEBHOOK_PROVIDER_ENABLED);
 
-  const providers = novuProviders;
   const { mutateAsync: createIntegration, isPending } = useCreateIntegration();
   const { mutateAsync: setPrimaryIntegration, isPending: isSettingPrimary } = useSetPrimaryIntegration();
   const [formState, setFormState] = useState({ isValid: true, errors: {} as Record<string, unknown>, isDirty: false });
@@ -54,18 +51,8 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
       onBack: handleBack,
     });
 
-  const { integrationsByChannel } = useIntegrationList(searchQuery);
-  const provider = providers?.find((providerItem) => {
-    if (providerItem.id !== (selectedIntegration || providerId)) {
-      return false;
-    }
-
-    if (providerItem.id === ToolProviderIdEnum.Webhook && !isToolWebhookProviderEnabled) {
-      return false;
-    }
-
-    return true;
-  });
+  const { catalogProviders, integrationsByChannel } = useIntegrationList(searchQuery);
+  const provider = catalogProviders.find((providerItem) => providerItem.id === (selectedIntegration || providerId));
 
   const searchInputRef = useRef<HTMLInputElement>(null);
 

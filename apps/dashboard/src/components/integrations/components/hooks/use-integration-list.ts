@@ -18,14 +18,19 @@ export function useIntegrationList(searchQuery: string = '') {
   const normalizedSearchQuery = searchQuery.trim();
   const isToolWebhookProviderEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TOOL_WEBHOOK_PROVIDER_ENABLED);
 
-  const filteredIntegrations = useMemo(() => {
+  const catalogProviders = useMemo(() => {
     if (!providers) return [];
 
-    const filtered = providers.filter(
+    return providers.filter(
       (provider: IProviderConfig) =>
-        provider.displayName.toLowerCase().includes(normalizedSearchQuery.toLowerCase()) &&
         !NOVU_PROVIDERS.includes(provider.id) &&
         (isToolWebhookProviderEnabled || provider.id !== ToolProviderIdEnum.Webhook)
+    );
+  }, [isToolWebhookProviderEnabled]);
+
+  const filteredIntegrations = useMemo(() => {
+    const filtered = catalogProviders.filter((provider: IProviderConfig) =>
+      provider.displayName.toLowerCase().includes(normalizedSearchQuery.toLowerCase())
     );
 
     const popularityOrder: Record<ChannelTypeEnum, ProvidersIdEnum[]> = {
@@ -80,7 +85,7 @@ export function useIntegrationList(searchQuery: string = '') {
 
       return 0;
     });
-  }, [normalizedSearchQuery, isToolWebhookProviderEnabled]);
+  }, [catalogProviders, normalizedSearchQuery]);
 
   const integrationsByChannel = useMemo(() => {
     return Object.values(ChannelTypeEnum).reduce(
@@ -94,6 +99,7 @@ export function useIntegrationList(searchQuery: string = '') {
   }, [filteredIntegrations]);
 
   return {
+    catalogProviders,
     filteredIntegrations,
     integrationsByChannel,
   };
