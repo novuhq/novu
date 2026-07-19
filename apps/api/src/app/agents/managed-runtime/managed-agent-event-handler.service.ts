@@ -3,8 +3,6 @@ import { PinoLogger } from '@novu/application-generic';
 import { ConversationRepository } from '@novu/dal';
 import { NOVU_INTERNAL_TOOLS } from '@novu/shared';
 import {
-  CredentialExpiredError,
-  McpServerError,
   type SessionEventContext,
   SessionExpiredError,
   type StreamCallbacks,
@@ -19,6 +17,7 @@ import { HandlePlanProgress } from '../conversation-runtime/reply/handle-plan-pr
 import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
 import { captureAgentException } from '../shared/errors/capture-agent-sentry';
 import { DemoClaudeQuotaPolicy } from './demo-claude-quota-policy.service';
+import { buildErrorMessage, parseMcpInitFailureServerName } from './managed-agent-errors';
 import { HandlePendingToolApprovalsCommand } from './tool-approval/handle-pending-tool-approvals.command';
 import { HandlePendingToolApprovals } from './tool-approval/handle-pending-tool-approvals.usecase';
 
@@ -284,56 +283,4 @@ export class ManagedAgentEventHandler {
       });
     }
   }
-}
-
-function extractErrorMessage(err: unknown): string | undefined {
-  if (err instanceof Error) {
-    return err.message;
-  }
-
-  // Errors that cross the webhook boundary are JSON-serialized and arrive as
-  // plain objects, so `instanceof Error` is false — read `message` directly.
-  if (typeof err === 'object' && err !== null && 'message' in err) {
-    const message = (err as { message?: unknown }).message;
-
-    return typeof message === 'string' ? message : undefined;
-  }
-
-  return undefined;
-}
-
-export function parseMcpInitFailureServerName(err: unknown): string | undefined {
-  const message = extractErrorMessage(err);
-
-  if (!message) {
-    return undefined;
-  }
-
-  const mcpInitMatch = message.match(/MCP server ['"]([^'"]+)['"] initialize failed/i);
-
-  return mcpInitMatch?.[1];
-}
-
-export function buildErrorMessage(err: unknown): string {
-  if (err instanceof CredentialExpiredError) {
-    return `Agent error: Credentials for "${err.serverName}" have expired. Please update them in your integration settings.`;
-  }
-  if (err instanceof McpServerError) {
-    return `Agent error: MCP server "${err.serverName}" is unavailable (${err.statusCode ?? 'unknown status'}).`;
-  }
-
-  const failedMcpServerName = parseMcpInitFailureServerName(err);
-
-  if (failedMcpServerName) {
-    return buildMcpInitFailureMessage(failedMcpServerName);
-  }
-
-  return 'The agent is temporarily unavailable. Please try again later.';
-}
-
-export function buildMcpInitFailureMessage(serverName: string): string {
-  return (
-    `I couldn't connect to the **${serverName}** MCP server yet. ` +
-    `Use Connect to authorize ${serverName}, then send your message again.`
-  );
 }
