@@ -123,12 +123,7 @@ export class ListChannelEndpoints {
     };
   }
 
-  /**
-   * Batch-hydrate PagerDuty endpoint wire shapes from their linked connections
-   * in a single `$in` query so a page of N pagerduty_service rows costs one
-   * extra roundtrip instead of N. See `GetChannelEndpoint.hydratePagerDutyEndpoint`
-   * for the underlying rationale.
-   */
+  /** Batch-hydrate pagerduty_service wire shapes from linked connections in one `$in` query. */
   private async hydratePagerDutyEndpoints(
     endpoints: ChannelEndpointEntity[],
     environmentId: string,

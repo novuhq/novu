@@ -60,12 +60,7 @@ export class UpdateChannelEndpoint {
     return channelEndpoint;
   }
 
-  /**
-   * Rotate the routing key / region on the linked `ChannelConnection.auth`. The
-   * endpoint document itself stays empty — the wire shape lives on the
-   * connection. On response, hydrate `endpoint: { routingKey, region }` so the
-   * caller sees the updated values without a follow-up GET.
-   */
+  /** Rotate encrypted routing key/region on the linked connection; hydrate wire shape on response. */
   private async updatePagerDutyEndpoint(
     command: UpdateChannelEndpointCommand,
     existing: ChannelEndpointEntity

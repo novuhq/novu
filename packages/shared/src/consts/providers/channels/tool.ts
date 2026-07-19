@@ -10,7 +10,7 @@ export const toolProviders: IProviderConfig[] = [
     channel: ChannelTypeEnum.TOOL,
     credentials: pagerdutyConfig,
     docReference: `https://docs.novu.co/platform/integrations/tool/pagerduty${UTM_CAMPAIGN_QUERY_PARAM}`,
-    logoFileName: { light: 'pagerduty.svg', dark: 'pagerduty.svg' },
+    logoFileName: { light: 'pager-duty.svg', dark: 'pager-duty.svg' },
     betaVersion: true,
   },
   {
@@ -27,7 +27,7 @@ export const toolProviders: IProviderConfig[] = [
     displayName: 'Tool webhook',
     channel: ChannelTypeEnum.TOOL,
     credentials: toolWebhookConfig,
-    docReference: `https://docs.novu.co/platform/integrations/tool/webhook${UTM_CAMPAIGN_QUERY_PARAM}`,
+    docReference: `https://docs.novu.co/platform/integrations${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'tool-webhook.svg', dark: 'tool-webhook.svg' },
     betaVersion: true,
   },

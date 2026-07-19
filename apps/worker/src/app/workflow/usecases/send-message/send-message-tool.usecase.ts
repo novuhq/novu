@@ -35,12 +35,7 @@ import { SendMessageResult, SendMessageStatus } from './send-message-type.usecas
 
 const LOG_CONTEXT = 'SendMessageTool';
 
-/**
- * Tool providers whose routing is per-subscriber via `ChannelEndpoint` — they
- * cannot fall back to env-level integration credentials. If no endpoint is
- * resolved for the subscriber, we silently skip the integration (execution
- * detail + `SKIPPED` status) rather than attempting a credential-based send.
- */
+/** Providers routed per-subscriber via ChannelEndpoint; skip (do not credential-send) when none resolve. */
 export const ENDPOINT_ROUTED_TOOL_PROVIDERS = new Set<string>([ToolProviderIdEnum.PagerDuty]);
 
 export function isEndpointRoutedToolProvider(providerId: string): boolean {
@@ -164,8 +159,7 @@ export class SendMessageTool extends SendMessageBase {
           continue;
         }
 
-        // Non-endpoint-routed providers (Opsgenie, tool webhook) route via
-        // env-level integration credentials — preserve the legacy send path.
+        // Credential-routed providers (Opsgenie, tool webhook) use integration credentials.
         const result = await this.sendToIntegration(command, integration, content, toolFactory, undefined);
         status = this.mergeStatus(status, result.status);
         if (result.status === SendMessageStatus.SUCCESS) anySent = true;
@@ -340,10 +334,7 @@ export class SendMessageTool extends SendMessageBase {
         throw new PlatformException(`Tool handler for provider ${integration.providerId} is not found`);
       }
 
-      // channelData carries per-subscriber routing (e.g. PagerDuty routingKey +
-      // region). Passed as a separate argument so it never merges into
-      // `overrides` or the persisted message payload — routing secrets must
-      // not leak into execution details or the messages collection.
+      // Keep channelData out of overrides/message payload so routing secrets are not persisted.
       const result = await handler.send({
         content: overrides.content || content,
         customData: overrides.customData || {},

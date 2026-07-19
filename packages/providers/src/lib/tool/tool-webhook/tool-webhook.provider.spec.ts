@@ -67,13 +67,13 @@ test('POSTs compiled content to the configured URL and sets HMAC header when sec
   });
 
   const result = await provider.sendMessage({
-    content: 'signal payload',
+    content: 'tool payload',
   });
 
   expect(result.id).toBe('sig-123');
   expect(lastRequest).not.toBeNull();
   expect(lastRequest!.method).toBe('POST');
-  expect(JSON.parse(lastRequest!.body)).toEqual({ content: 'signal payload' });
+  expect(JSON.parse(lastRequest!.body)).toEqual({ content: 'tool payload' });
 
   const expectedSignature = crypto.createHmac('sha256', hmacSecretKey).update(lastRequest!.body, 'utf-8').digest('hex');
   expect(lastRequest!.headers['x-novu-signature']).toBe(expectedSignature);

@@ -48,12 +48,8 @@ export class GetChannelEndpoint {
   }
 
   /**
-   * The wire shape for pagerduty_service is `{ routingKey, region }`, but the
-   * stored `endpoint` document is empty — those values live encrypted on the
-   * linked `ChannelConnection.auth`. Rehydrate them here so the response DTO
-   * reflects the wire contract on read (matching create/update). Existing
-   * platform convention returns decrypted secrets from the API; the dashboard
-   * masks client-side.
+   * Rehydrate `{ routingKey, region }` from encrypted ChannelConnection.auth.
+   * Matches platform convention of returning decrypted secrets; dashboard masks client-side.
    */
   private async hydratePagerDutyEndpoint(endpoint: ChannelEndpointEntity): Promise<ChannelEndpointEntity> {
     if (!endpoint.connectionIdentifier) {

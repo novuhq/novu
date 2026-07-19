@@ -203,12 +203,7 @@ export class ResolveChannelEndpoints {
     return { token: token || '' };
   }
 
-  /**
-   * Rehydrates the PagerDuty wire shape (`endpoint: { routingKey, region }`)
-   * from the linked, encrypted `ChannelConnection.auth`. Returned as an
-   * `endpoint` override so `buildChannelData`'s spread replaces the empty
-   * stored endpoint document with the routing values the provider reads.
-   */
+  /** Decrypt ChannelConnection.auth into `{ routingKey, region }` for the provider. */
   private extractPagerDutyAuth(
     endpoint: ChannelEndpointEntity,
     connectionMap: Map<string, ChannelConnectionEntity>

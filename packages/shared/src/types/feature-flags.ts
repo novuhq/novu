@@ -138,7 +138,7 @@ export enum FeatureFlagsKeysEnum {
    * organization for the duration of the rotation, then disable.
    */
   IS_MULTIPLE_SECRET_KEYS_ALLOWED = 'IS_MULTIPLE_SECRET_KEYS_ALLOWED',
-  /** Enable the Tool channel (GitHub repository_dispatch and custom webhooks). */
+  /** Enable the Tool channel (PagerDuty, Opsgenie, and custom webhooks). */
   IS_TOOL_CHANNEL_ENABLED = 'IS_TOOL_CHANNEL_ENABLED',
 
   // String flags
