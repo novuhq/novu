@@ -11,6 +11,7 @@ import {
   type WhatsAppSignupLink,
 } from '../../api/integrations';
 import type { AgentSummary } from '../../types';
+import { renderQR } from '../../ui/qr';
 import type { ConnectUI } from '../../ui/ui';
 import {
   ensureAgentIntegrationLinked,
@@ -27,12 +28,15 @@ import {
 const WHATSAPP_PROVIDER_ID = 'whatsapp-business';
 const WHATSAPP_CHANNEL = 'chat';
 
-/** `https://wa.me/<digits>` deep link from a display phone number like "+1 555-123-4567". */
-export function buildWaMeUrl(displayPhoneNumber: string): string | null {
+/**
+ * `https://wa.me/<digits>?text=...` deep link from a display phone number like
+ * "+1 555-123-4567", pre-filling the first message with a greeting to the agent.
+ */
+export function buildWaMeUrl(displayPhoneNumber: string, agentName: string): string | null {
   const digits = displayPhoneNumber.replace(/\D/g, '');
   if (!digits) return null;
 
-  return `https://wa.me/${digits}`;
+  return `https://wa.me/${digits}?text=${encodeURIComponent(`Hi ${agentName}, how can you help?`)}`;
 }
 
 export type WhatsAppConnectResult =
@@ -86,9 +90,11 @@ export async function connectWhatsAppForAgent(
     status = await runSignupBrowserHandoff(client, agent, ui, link, track);
   }
 
-  const waMeUrl = status.displayPhoneNumber ? buildWaMeUrl(status.displayPhoneNumber) : null;
+  const waMeUrl = status.displayPhoneNumber ? buildWaMeUrl(status.displayPhoneNumber, agent.name) : null;
+  const waMeQr = waMeUrl ? await renderQR(waMeUrl) : undefined;
   ui.showWhatsAppTest({
     waMeUrl: waMeUrl ?? undefined,
+    waMeQr,
     displayPhoneNumber: status.displayPhoneNumber,
   });
 

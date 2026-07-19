@@ -189,6 +189,7 @@ Machine-readable stdout (plain text, no ANSI — watch these in --ci mode):
   WhatsApp (only when Meta Embedded Signup is available; otherwise the CLI opens the dashboard and exits):
     NOVU_CONNECT_WHATSAPP_SIGNUP_URL=<url>            (deliver to the user; signup completes in the browser)
     NOVU_CONNECT_WHATSAPP_WA_ME_URL=<url>             (only when present)
+    NOVU_CONNECT_WHATSAPP_WA_ME_QR_PNG=<absolute png path>   (only when present)
     NOVU_CONNECT_WHATSAPP_PHONE_NUMBER=<number>       (only when present)
 
   Chat SDK (requirements summary):

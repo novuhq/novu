@@ -9,6 +9,7 @@ import {
   logTelegramDeepLinkQrPngHandoffEvent,
   logTelegramSetupLinkHandoffEvent,
   logTelegramSetupLinkQrPngHandoffEvent,
+  logWhatsAppWaMeQrPngHandoffEvent,
   writeAuthUrlHandoffFile,
 } from './handoff-events';
 
@@ -133,5 +134,13 @@ describe('handoff-events', () => {
     logTelegramDeepLinkQrPngHandoffEvent({ deepLinkQrPngPath: '/tmp/novu-connect-qr-abc123.png' });
 
     expect(log).toHaveBeenCalledWith('NOVU_CONNECT_TELEGRAM_DEEPLINK_QR_PNG=/tmp/novu-connect-qr-abc123.png');
+  });
+
+  it('logs the WhatsApp wa.me QR PNG path sentinel line', () => {
+    const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
+    logWhatsAppWaMeQrPngHandoffEvent({ waMeQrPngPath: '/tmp/novu-connect-qr-def456.png' });
+
+    expect(log).toHaveBeenCalledWith('NOVU_CONNECT_WHATSAPP_WA_ME_QR_PNG=/tmp/novu-connect-qr-def456.png');
   });
 });

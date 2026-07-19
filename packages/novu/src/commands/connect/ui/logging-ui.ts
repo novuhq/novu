@@ -24,6 +24,7 @@ import {
   logTelegramSetupLinkQrPngHandoffEvent,
   logWhatsAppSignupHandoffEvent,
   logWhatsAppTestHandoffEvents,
+  logWhatsAppWaMeQrPngHandoffEvent,
   writeAuthUrlHandoffFile,
 } from './handoff-events';
 import { printBridgeReconcilePlan } from './print-bridge-reconcile-plan';
@@ -417,6 +418,11 @@ export function createLoggingUI(): ConnectUI {
         console.log(`${chalk.cyan('→')} Open WhatsApp directly: ${chalk.underline(waMeUrl)}`);
       }
       logWhatsAppTestHandoffEvents({ waMeUrl, displayPhoneNumber });
+      if (waMeUrl) {
+        void renderQRPngFile(waMeUrl)
+          .then((waMeQrPngPath) => logWhatsAppWaMeQrPngHandoffEvent({ waMeQrPngPath }))
+          .catch(() => undefined);
+      }
       start('Waiting for your first inbound WhatsApp message…');
     },
     whatsappConnected() {

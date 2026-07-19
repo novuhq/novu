@@ -123,7 +123,8 @@ describe('connectWhatsAppForAgent', () => {
     expect(ui.awaitWhatsAppSignupOpen).not.toHaveBeenCalled();
     expect(openMock).not.toHaveBeenCalled();
     expect(ui.showWhatsAppTest).toHaveBeenCalledWith({
-      waMeUrl: 'https://wa.me/15551234567',
+      waMeUrl: `https://wa.me/15551234567?text=${encodeURIComponent('Hi My Agent, how can you help?')}`,
+      waMeQr: expect.any(String),
       displayPhoneNumber: '+1 555-123-4567',
     });
     expect(ui.whatsappConnected).toHaveBeenCalled();
