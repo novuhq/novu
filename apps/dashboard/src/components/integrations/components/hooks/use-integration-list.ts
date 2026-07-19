@@ -2,6 +2,7 @@ import {
   ChannelTypeEnum,
   ChatProviderIdEnum,
   EmailProviderIdEnum,
+  FeatureFlagsKeysEnum,
   IProviderConfig,
   NOVU_PROVIDERS,
   ProvidersIdEnum,
@@ -11,9 +12,11 @@ import {
   ToolProviderIdEnum,
 } from '@novu/shared';
 import { useMemo } from 'react';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 
 export function useIntegrationList(searchQuery: string = '') {
   const normalizedSearchQuery = searchQuery.trim();
+  const isToolWebhookProviderEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TOOL_WEBHOOK_PROVIDER_ENABLED);
 
   const filteredIntegrations = useMemo(() => {
     if (!providers) return [];
@@ -21,7 +24,8 @@ export function useIntegrationList(searchQuery: string = '') {
     const filtered = providers.filter(
       (provider: IProviderConfig) =>
         provider.displayName.toLowerCase().includes(normalizedSearchQuery.toLowerCase()) &&
-        !NOVU_PROVIDERS.includes(provider.id)
+        !NOVU_PROVIDERS.includes(provider.id) &&
+        (isToolWebhookProviderEnabled || provider.id !== ToolProviderIdEnum.Webhook)
     );
 
     const popularityOrder: Record<ChannelTypeEnum, ProvidersIdEnum[]> = {
@@ -76,7 +80,7 @@ export function useIntegrationList(searchQuery: string = '') {
 
       return 0;
     });
-  }, [providers, normalizedSearchQuery]);
+  }, [normalizedSearchQuery, isToolWebhookProviderEnabled]);
 
   const integrationsByChannel = useMemo(() => {
     return Object.values(ChannelTypeEnum).reduce(
