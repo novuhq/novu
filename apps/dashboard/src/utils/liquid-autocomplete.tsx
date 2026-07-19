@@ -435,20 +435,13 @@ function getMatchingVariables(
   if (searchText.endsWith('.')) {
     const prefix = searchText.slice(0, -1);
 
-    // For context paths, find sub-properties first.
-    // If none exist, fall through to JIT suggestion creation instead of showing the
-    // namespace itself or all variables.
     if (isContextEnabled && prefix.startsWith(CONTEXT_NAMESPACE)) {
       const subProperties = allVariables.filter((v) => v.name.startsWith(prefix + '.'));
-      if (subProperties.length > 0) {
-        return subProperties;
-      }
+      if (subProperties.length > 0) return subProperties;
 
-      if (prefix === CONTEXT_NAMESPACE) {
-        // Fall through to JIT — will suggest known context types
-      } else {
-        return [];
-      }
+      // No sub-properties: fall through to JIT for `context.` so we suggest known
+      // types; return empty for deeper paths to avoid leaking unrelated variables.
+      if (prefix !== CONTEXT_NAMESPACE) return [];
     } else {
       return allVariables.filter((v) => v.name.startsWith(prefix));
     }

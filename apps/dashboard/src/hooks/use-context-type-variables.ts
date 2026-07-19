@@ -41,7 +41,7 @@ export function useContextTypeVariables(): LiquidVariable[] {
     for (const ctx of contexts) {
       if (!ctx.type) continue;
 
-      add(`context.${ctx.type}`);
+      // `context.<type>` alone is not a valid variable — only `.id` and `.data.*` are.
       add(`context.${ctx.type}.id`);
       add(`context.${ctx.type}.data`);
 
