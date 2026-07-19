@@ -10,6 +10,7 @@ import {
   PushControlDto,
   SmsControlDto,
   ThrottleControlDto,
+  ToolControlDto,
 } from '@novu/application-generic';
 import { SLUG_IDENTIFIER_REGEX, StepTypeEnum, slugIdentifierFormatMessage } from '@novu/shared';
 import { IsEnum, IsObject, IsOptional, IsString, Matches } from 'class-validator';
@@ -135,6 +136,25 @@ export class ChatStepUpsertDto extends BaseStepConfigDto {
   controlValues?: ChatControlDto | Record<string, unknown> | null;
 }
 
+export class ToolStepUpsertDto extends BaseStepConfigDto {
+  @ApiProperty({
+    enum: StepTypeEnum,
+    enumName: 'StepTypeEnum',
+    default: StepTypeEnum.TOOL,
+    description: 'Type of the step',
+  })
+  @IsEnum(StepTypeEnum)
+  readonly type: StepTypeEnum = 'tool' as StepTypeEnum;
+
+  @ApiPropertyOptional({
+    description: 'Control values for the Tool step.',
+    oneOf: [{ $ref: getSchemaPath(ToolControlDto) }, { type: 'object', additionalProperties: true }],
+  })
+  @IsOptional()
+  @IsObject()
+  controlValues?: ToolControlDto | Record<string, unknown> | null;
+}
+
 export class DelayStepUpsertDto extends BaseStepConfigDto {
   @ApiProperty({
     enum: StepTypeEnum,
@@ -240,6 +260,7 @@ export type StepUpsertDto =
   | SmsStepUpsertDto
   | PushStepUpsertDto
   | ChatStepUpsertDto
+  | ToolStepUpsertDto
   | DelayStepUpsertDto
   | DigestStepUpsertDto
   | ThrottleStepUpsertDto

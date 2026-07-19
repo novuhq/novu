@@ -1,13 +1,15 @@
 import { ChannelTypeEnum } from '../template/template.interface';
 
-import { IChatProvider, IEmailProvider, IPushProvider, ISmsProvider } from './provider.interface';
+import { IChatProvider, IEmailProvider, IPushProvider, ISmsProvider, IToolProvider } from './provider.interface';
+
+type RegisterableProvider = IEmailProvider | ISmsProvider | IChatProvider | IPushProvider | IToolProvider;
 
 export class ProviderStore {
   private providers: {
-    [key: string]: ISmsProvider | IEmailProvider | IChatProvider | IPushProvider;
+    [key: string]: RegisterableProvider;
   } = {};
 
-  async addProvider(providerId: string, provider: IEmailProvider | ISmsProvider | IChatProvider | IPushProvider) {
+  async addProvider(providerId: string, provider: RegisterableProvider) {
     this.providers[providerId] = provider;
   }
 

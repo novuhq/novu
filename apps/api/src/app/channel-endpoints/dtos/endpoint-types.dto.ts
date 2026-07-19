@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString } from 'class-validator';
+import { OPSGENIE_API_KEY_PATTERN } from '@novu/shared';
+import { IsIn, IsOptional, IsString, Matches } from 'class-validator';
 
 export class SlackChannelEndpointDto {
   @ApiProperty({
@@ -133,4 +134,50 @@ export class LineUserEndpointDto {
   })
   @IsString()
   userId: string;
+}
+
+export class PagerDutyServiceEndpointDto {
+  @ApiProperty({
+    description:
+      'PagerDuty Events API v2 integration key (32-character alphanumeric string). Stored encrypted on the linked channel connection.',
+    example: 'R0UTINGK3YEXAMPLE000000000000000',
+    type: String,
+    minLength: 32,
+    maxLength: 32,
+  })
+  @IsString()
+  @Matches(/^[a-zA-Z0-9]{32}$/, {
+    message: 'routingKey must be a 32-character alphanumeric PagerDuty Events API v2 integration key',
+  })
+  routingKey: string;
+
+  @ApiProperty({
+    description: 'PagerDuty account region — determines the events API data-center endpoint.',
+    enum: ['us', 'eu'],
+    example: 'us',
+  })
+  @IsIn(['us', 'eu'])
+  region: 'us' | 'eu';
+}
+
+export class OpsgenieIntegrationEndpointDto {
+  @ApiProperty({
+    description:
+      'Opsgenie API integration key (GenieKey) in UUID format. Stored encrypted on the linked channel connection.',
+    example: 'abcdefg-a25a-4652-883c-73703b12345',
+    type: String,
+  })
+  @IsString()
+  @Matches(OPSGENIE_API_KEY_PATTERN, {
+    message: 'apiKey must be a UUID-format Opsgenie API integration key (GenieKey)',
+  })
+  apiKey: string;
+
+  @ApiProperty({
+    description: 'Opsgenie account region that determines the alert API data-center endpoint.',
+    enum: ['us', 'eu'],
+    example: 'us',
+  })
+  @IsIn(['us', 'eu'])
+  region: 'us' | 'eu';
 }

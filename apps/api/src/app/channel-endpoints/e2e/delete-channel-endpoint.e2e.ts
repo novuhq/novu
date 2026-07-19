@@ -1,5 +1,6 @@
 import { Novu } from '@novu/api';
 import { CreateWebhookEndpointDto } from '@novu/api/models/components';
+import { ChannelConnectionRepository } from '@novu/dal';
 import { ENDPOINT_TYPES } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
@@ -9,6 +10,9 @@ import {
   setupChannelTests,
 } from '../../channel-connections/e2e/helpers/channel-helpers';
 import { expectSdkExceptionGeneric } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
+import { createOpsgenieIntegration, VALID_OPSGENIE_API_KEY } from './helpers/opsgenie-helpers';
+
+const channelConnectionRepository = new ChannelConnectionRepository();
 
 describe('Delete Channel Endpoint - /channel-endpoints/:identifier (DELETE) #novu-v2', () => {
   let session: UserSession;
@@ -52,5 +56,30 @@ describe('Delete Channel Endpoint - /channel-endpoints/:identifier (DELETE) #nov
 
     expect(error).to.exist;
     expect(error?.name).to.equal('ErrorDto');
+  });
+
+  it('should cascade-delete the linked connection when deleting an opsgenie endpoint', async () => {
+    const integration = await createOpsgenieIntegration(session);
+    const subscribersService = createSubscribersService(session);
+    const subscriber = await subscribersService.createSubscriber();
+
+    const createRes = await session.testAgent.post('/v1/channel-endpoints').send({
+      integrationIdentifier: integration.identifier,
+      subscriberId: subscriber.subscriberId,
+      type: ENDPOINT_TYPES.OPSGENIE_INTEGRATION,
+      endpoint: { apiKey: VALID_OPSGENIE_API_KEY, region: 'us' },
+    });
+    expect(createRes.status).to.equal(201);
+    const { identifier, connectionIdentifier } = createRes.body.data;
+
+    const deleteRes = await session.testAgent.delete(`/v1/channel-endpoints/${identifier}`);
+    expect(deleteRes.status).to.equal(204);
+
+    const connection = await channelConnectionRepository.findOne({
+      identifier: connectionIdentifier,
+      _organizationId: session.organization._id,
+      _environmentId: session.environment._id,
+    });
+    expect(connection).to.not.exist;
   });
 });

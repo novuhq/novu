@@ -691,8 +691,11 @@ async function generateAndPreviewAgent(
 
     ui.generatingAgent();
 
-    const generated = await withKeylessGenerateLimitFallback(session, ctx, onSessionUpgraded ?? (async () => undefined), () =>
-      generateAgent(session.client, prompt.trim())
+    const generated = await withKeylessGenerateLimitFallback(
+      session,
+      ctx,
+      onSessionUpgraded ?? (async () => undefined),
+      () => generateAgent(session.client, prompt.trim())
     );
     track(CONNECT_EVENTS.AGENT_PROMPT_GENERATED, {
       promptLength: prompt.trim().length,

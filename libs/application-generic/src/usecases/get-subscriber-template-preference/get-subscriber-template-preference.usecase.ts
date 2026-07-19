@@ -161,6 +161,7 @@ export class GetSubscriberTemplatePreference {
         in_app: true,
         chat: true,
         push: true,
+        tool: true,
       },
       includedChannels
     );

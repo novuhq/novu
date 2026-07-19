@@ -22,6 +22,21 @@ import { ResolveChannelEndpointsCommand } from './resolve-channel-endpoints.comm
 
 const TOKEN_REFRESH_WINDOW_MS = 5 * 60 * 1000;
 
+type ConnectionRoutedAuthConfig = {
+  providerLabel: string;
+  secretField: 'routingKey' | 'apiKey';
+};
+
+/**
+ * Tool endpoint types whose per-subscriber routing secret lives on the linked
+ * `ChannelConnection.auth`: the resolver decrypts `{ <secretField>, region }`
+ * and rehydrates the endpoint wire shape at send time.
+ */
+const CONNECTION_ROUTED_AUTH_CONFIGS: Partial<Record<string, ConnectionRoutedAuthConfig>> = {
+  [ENDPOINT_TYPES.PAGERDUTY_SERVICE]: { providerLabel: 'PagerDuty', secretField: 'routingKey' },
+  [ENDPOINT_TYPES.OPSGENIE_INTEGRATION]: { providerLabel: 'Opsgenie', secretField: 'apiKey' },
+};
+
 export type IntegrationEndpoints = {
   integrationIdentifier: string;
   providerId: ProvidersIdEnum;
@@ -179,6 +194,7 @@ export class ResolveChannelEndpoints {
    * Extracts token for endpoint based on type
    * - MS Teams: Fetches Bot Framework token from Microsoft
    * - Slack: Extracts OAuth token from connection
+   * - PagerDuty / Opsgenie: Decrypts the routing secret + region and hydrates endpoint wire shape
    */
   private async extractToken(
     endpoint: ChannelEndpointEntity,
@@ -193,9 +209,51 @@ export class ResolveChannelEndpoints {
       return await this.extractWebexToken(endpoint, connectionMap);
     }
 
+    const connectionRoutedAuthConfig = CONNECTION_ROUTED_AUTH_CONFIGS[endpoint.type];
+    if (connectionRoutedAuthConfig) {
+      return this.extractConnectionRoutedAuth(endpoint, connectionMap, connectionRoutedAuthConfig);
+    }
+
     // Slack and other connection-based tokens
     const token = this.extractConnectionToken(endpoint, connectionMap);
     return { token: token || '' };
+  }
+
+  /**
+   * Rehydrates a connection-routed tool wire shape (`endpoint: { <secretField>, region }`,
+   * e.g. PagerDuty `routingKey` or Opsgenie `apiKey`) from the linked, encrypted
+   * `ChannelConnection.auth`. Returned as an `endpoint` override so
+   * `buildChannelData`'s spread replaces the empty stored endpoint document
+   * with the routing values the provider reads.
+   */
+  private extractConnectionRoutedAuth(
+    endpoint: ChannelEndpointEntity,
+    connectionMap: Map<string, ChannelConnectionEntity>,
+    config: ConnectionRoutedAuthConfig
+  ): Record<string, unknown> {
+    const { providerLabel, secretField } = config;
+
+    if (!endpoint.connectionIdentifier) {
+      throw new Error(`${providerLabel} endpoint ${endpoint.identifier} requires a linked channel connection`);
+    }
+
+    const connection = connectionMap.get(endpoint.connectionIdentifier);
+    if (!connection?.auth) {
+      throw new Error(
+        `${providerLabel} endpoint ${endpoint.identifier} references channel connection ${endpoint.connectionIdentifier} but no auth is available`
+      );
+    }
+
+    const decrypted = decryptChannelConnectionAuth(connection.auth) as ChannelConnectionAuth | null;
+    const secret = decrypted?.[secretField];
+
+    if (!secret || !decrypted?.region) {
+      throw new Error(
+        `${providerLabel} channel connection ${connection.identifier} is missing ${secretField} or region in auth`
+      );
+    }
+
+    return { endpoint: { [secretField]: secret, region: decrypted.region } };
   }
 
   /**

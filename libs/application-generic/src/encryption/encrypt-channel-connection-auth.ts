@@ -7,7 +7,14 @@ import { decryptApiKey, encryptApiKey } from './encrypt-provider';
  * same helper. Unknown keys, such as token expiry timestamps, are passed through
  * unchanged.
  */
-const SECURE_AUTH_FIELDS = ['accessToken', 'refreshToken', 'signingSecret', 'clientSecret'] as const;
+const SECURE_AUTH_FIELDS = [
+  'accessToken',
+  'refreshToken',
+  'signingSecret',
+  'clientSecret',
+  'routingKey',
+  'apiKey',
+] as const;
 
 export interface ChannelConnectionAuth {
   accessToken?: string;
@@ -16,6 +23,20 @@ export interface ChannelConnectionAuth {
   refreshTokenExpiresAt?: string;
   signingSecret?: string;
   clientSecret?: string;
+  /**
+   * PagerDuty Events API v2 integration key. 32-character alphanumeric string. Encrypted at rest.
+   */
+  routingKey?: string;
+  /**
+   * Opsgenie API integration key (GenieKey). UUID-format string. Encrypted at rest.
+   */
+  apiKey?: string;
+  /**
+   * Account region ('us' | 'eu'). Non-secret; travels with the secret so we route
+   * to the correct data-center endpoint (e.g. `api.opsgenie.com` vs `api.eu.opsgenie.com`,
+   * `events.pagerduty.com` vs `events.eu.pagerduty.com`).
+   */
+  region?: 'us' | 'eu';
   [key: string]: unknown;
 }
 

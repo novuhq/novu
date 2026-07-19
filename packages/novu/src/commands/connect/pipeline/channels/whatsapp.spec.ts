@@ -177,9 +177,7 @@ describe('connectWhatsAppForAgent', () => {
     const ui = createUi();
     const track = vi.fn();
 
-    await expect(connectWhatsAppForAgent(client, agent, ui, environment, track)).rejects.toThrow(
-      /signup link expired/
-    );
+    await expect(connectWhatsAppForAgent(client, agent, ui, environment, track)).rejects.toThrow(/signup link expired/);
     expect(track).toHaveBeenCalledWith('Connect Whatsapp Signup Link Expired', { agent: 'my-agent' });
     expect(track).not.toHaveBeenCalledWith('Connect Whatsapp Signup Timed Out', { agent: 'my-agent' });
   });

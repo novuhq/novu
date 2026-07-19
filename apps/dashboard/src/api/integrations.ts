@@ -7,6 +7,7 @@ import {
 } from '@novu/shared';
 
 export type { WhatsAppSignupLinkStatus };
+
 import { del, get, getApiBaseUrl, NovuApiError, post, put } from './api.client';
 
 export type HealthCheckStatus = 'ready' | 'pending' | 'failed';

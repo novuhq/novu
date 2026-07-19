@@ -32,6 +32,9 @@ const CREDENTIAL_FIELD_LABELS: Record<string, string> = {
   phoneNumber: 'Phone number',
   phone: 'Phone number',
   deviceToken: 'Device token',
+  routingKey: 'Routing key',
+  apiKey: 'API key',
+  region: 'Region',
 };
 
 /** Payload keys that are not required when saving. */
