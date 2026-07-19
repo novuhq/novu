@@ -52,7 +52,7 @@ export class BasePreferenceDto {
 
   @ApiProperty({
     description:
-      'Optional JSON Logic condition evaluated at fan-out time against trigger payload, subscriber profile, actor, context, and environment variables (for example, `{ "var": "payload.tier" }`, `{ "var": "subscriber.data.plan" }`, or `{ "var": "actor.data.role" }`)',
+      'Optional JSON Logic condition evaluated at fan-out time against trigger payload, subscriber profile, actor, context, and non-secret environment variables (for example, `{ "var": "payload.tier" }`, `{ "var": "subscriber.data.plan" }`, or `{ "var": "env.type" }`)',
     required: false,
     type: 'object',
     additionalProperties: true,

@@ -29,3 +29,19 @@ export function resolveEnvironmentVariables(variables: EnvironmentVariableForTem
 
   return resolved;
 }
+
+export function resolveNonSecretEnvironmentVariables(
+  variables: EnvironmentVariableForTemplate[]
+): Record<string, string> {
+  const resolved: Record<string, string> = {};
+
+  for (const variable of variables) {
+    if (variable.isSecret) {
+      continue;
+    }
+
+    resolved[variable.key] = decryptEnvironmentVariableValue(variable.value);
+  }
+
+  return resolved;
+}

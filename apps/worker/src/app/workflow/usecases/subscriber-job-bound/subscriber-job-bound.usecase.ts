@@ -16,7 +16,7 @@ import {
   LogRepository,
   mapEventTypeToTitle,
   PinoLogger,
-  resolveEnvironmentVariables,
+  resolveNonSecretEnvironmentVariables,
   SubscriberTopicPreference,
   TraceLogRepository,
 } from '@novu/application-generic';
@@ -649,7 +649,7 @@ export class SubscriberJobBound {
             command.environmentId
           );
 
-          return resolveEnvironmentVariables(rawEnvVars);
+          return resolveNonSecretEnvironmentVariables(rawEnvVars);
         } catch (error) {
           this.logger.warn(
             {

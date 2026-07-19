@@ -671,7 +671,7 @@ Topic subscription conditions are evaluated at **trigger time** when fanning out
 | `subscriber.*` | Recipient [subscriber](/platform/concepts/subscribers) profile | `subscriber.email`, `subscriber.locale`, `subscriber.data.plan` |
 | `actor.*` | Optional [trigger actor](/platform/concepts/topics#exclude-actor) (who performed the action) | `actor.subscriberId`, `actor.email`, `actor.data.role` |
 | `context.*` | [Context](/platform/concepts/contexts) passed on the trigger | `context.tenant.id`, `context.tenant.data.plan` |
-| `env.*` | Current [environment](/platform/concepts/environments) and custom environment variables | `env.name`, `env.type`, `env.<customKey>` |
+| `env.*` | Current [environment](/platform/concepts/environments) system fields (`name`, `type`) and **non-secret** custom environment variables | `env.name`, `env.type`, `env.<customKey>` |
 
 <Note>
   Topic subscription conditions are evaluated at **trigger time** when fanning out a workflow to a topic. Context **matching** (which subscriptions are candidates) still happens before JSON Logic runs via exact-match Context filtering. Condition rules can additionally read resolved Context fields under `context.*`, and the optional trigger actor under `actor.*`.
@@ -679,6 +679,10 @@ Topic subscription conditions are evaluated at **trigger time** when fanning out
 
 <Warning>
   Do not confuse **Context matching** with condition variables. Exact-match Context filtering selects which subscriptions are evaluated. JSON Logic can then read resolved Context values (for example `context.tenant.id`) along with payload, subscriber, actor, and environment data.
+</Warning>
+
+<Warning>
+  Secret environment variables are **not** exposed to topic subscription conditions. Only `env.name`, `env.type`, and custom variables marked as non-secret are available under `env.*`.
 </Warning>
 
 ### Syntax rules
