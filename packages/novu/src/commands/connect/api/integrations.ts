@@ -101,6 +101,41 @@ export async function createTelegramIntegration(
   return 'data' in body && body.data ? body.data : (body as IntegrationRecord);
 }
 
+export interface SendblueCredentials {
+  apiKey: string;
+  secretKey: string;
+  from: string;
+}
+
+/**
+ * Creates a Sendblue chat integration with credentials in one shot. Unlike
+ * Telegram/Slack (which create an empty integration and save credentials via a
+ * public token endpoint), Sendblue credentials are user-supplied up front, so
+ * we pass them straight to `POST /v1/integrations` — which is both
+ * external-API- and keyless-accessible — avoiding the keyless-incompatible
+ * `PUT /v1/integrations/:id` credential-update path the dashboard uses.
+ */
+export async function createSendblueIntegration(
+  client: ConnectApiClient,
+  input: { name: string; environmentId: string; credentials: SendblueCredentials }
+): Promise<IntegrationRecord> {
+  const res = await client.axios.post<{ data?: IntegrationRecord } | IntegrationRecord>('/v1/integrations', {
+    providerId: 'sendblue',
+    channel: 'chat',
+    name: input.name,
+    active: true,
+    credentials: {
+      apiKey: input.credentials.apiKey,
+      secretKey: input.credentials.secretKey,
+      from: input.credentials.from,
+    },
+    ...integrationEnvironmentId(input.environmentId),
+  });
+  const body = res.data;
+
+  return 'data' in body && body.data ? body.data : (body as IntegrationRecord);
+}
+
 export async function slackQuickSetup(
   client: ConnectApiClient,
   integrationId: string,

@@ -4,20 +4,71 @@
 
 import * as z from "zod/v3";
 import {
-  ReplyContentDto,
-  ReplyContentDto$Outbound,
-  ReplyContentDto$outboundSchema,
-} from "./replycontentdto.js";
+  CardReplyContentDto,
+  CardReplyContentDto$Outbound,
+  CardReplyContentDto$outboundSchema,
+} from "./cardreplycontentdto.js";
+import {
+  MarkdownReplyContentDto,
+  MarkdownReplyContentDto$Outbound,
+  MarkdownReplyContentDto$outboundSchema,
+} from "./markdownreplycontentdto.js";
+import {
+  ToolApprovalCardReplyContentDto,
+  ToolApprovalCardReplyContentDto$Outbound,
+  ToolApprovalCardReplyContentDto$outboundSchema,
+} from "./toolapprovalcardreplycontentdto.js";
+
+/**
+ * Replacement content. Exactly one of markdown, card, or toolApprovalCard.
+ */
+export type Content =
+  | MarkdownReplyContentDto
+  | CardReplyContentDto
+  | ToolApprovalCardReplyContentDto;
 
 export type EditPayloadDto = {
+  /**
+   * Platform message id of the message to edit.
+   */
   messageId: string;
-  content: ReplyContentDto;
+  /**
+   * Replacement content. Exactly one of markdown, card, or toolApprovalCard.
+   */
+  content:
+    | MarkdownReplyContentDto
+    | CardReplyContentDto
+    | ToolApprovalCardReplyContentDto;
 };
+
+/** @internal */
+export type Content$Outbound =
+  | MarkdownReplyContentDto$Outbound
+  | CardReplyContentDto$Outbound
+  | ToolApprovalCardReplyContentDto$Outbound;
+
+/** @internal */
+export const Content$outboundSchema: z.ZodType<
+  Content$Outbound,
+  z.ZodTypeDef,
+  Content
+> = z.union([
+  MarkdownReplyContentDto$outboundSchema,
+  CardReplyContentDto$outboundSchema,
+  ToolApprovalCardReplyContentDto$outboundSchema,
+]);
+
+export function contentToJSON(content: Content): string {
+  return JSON.stringify(Content$outboundSchema.parse(content));
+}
 
 /** @internal */
 export type EditPayloadDto$Outbound = {
   messageId: string;
-  content: ReplyContentDto$Outbound;
+  content:
+    | MarkdownReplyContentDto$Outbound
+    | CardReplyContentDto$Outbound
+    | ToolApprovalCardReplyContentDto$Outbound;
 };
 
 /** @internal */
@@ -27,7 +78,11 @@ export const EditPayloadDto$outboundSchema: z.ZodType<
   EditPayloadDto
 > = z.object({
   messageId: z.string(),
-  content: ReplyContentDto$outboundSchema,
+  content: z.union([
+    MarkdownReplyContentDto$outboundSchema,
+    CardReplyContentDto$outboundSchema,
+    ToolApprovalCardReplyContentDto$outboundSchema,
+  ]),
 });
 
 export function editPayloadDtoToJSON(editPayloadDto: EditPayloadDto): string {

@@ -34,12 +34,7 @@ import {
   SetupStep,
   SetupStepperRail,
 } from './setup-guide-primitives';
-import {
-  buildAgentWebhookUrl,
-  buildImessageFallbackHref,
-  deriveStepStatus,
-  hasSendblueUserCredentials,
-} from './setup-guide-step-utils';
+import { buildImessageFallbackHref, deriveStepStatus, hasSendblueUserCredentials } from './setup-guide-step-utils';
 
 const PHONE_PATTERN = /^\+[1-9]\d{6,14}$/;
 
@@ -579,9 +574,6 @@ export function SendblueSetupGuide({
   const isWebhookConfigured = isWebhookConfiguredLocally || hasWebhookSecret;
 
   const fromNumber = (selectedIntegration?.credentials?.from as string | undefined) ?? '';
-  const webhookUrl = buildAgentWebhookUrl(agent._id, selectedIntegrationIdentifier || 'YOUR_INTEGRATION_IDENTIFIER');
-  // Only surface the Callback URL in the credentials sidebar once there's a real integration identifier to build it from.
-  const webhookUrlForCredentials = selectedIntegrationIdentifier ? webhookUrl : undefined;
 
   const base = stepOffset;
 
@@ -727,8 +719,6 @@ export function SendblueSetupGuide({
           onClose={() => setIsCredentialsSidebarOpen(false)}
           onSaveSuccess={() => setCredentialsSavedLocally(true)}
           agentOnboarding
-          webhookUrl={webhookUrlForCredentials}
-          webhookSecret={existingWebhookSecret}
         />
       </div>
     );
@@ -744,8 +734,6 @@ export function SendblueSetupGuide({
         onClose={() => setIsCredentialsSidebarOpen(false)}
         onSaveSuccess={() => setCredentialsSavedLocally(true)}
         agentOnboarding
-        webhookUrl={webhookUrlForCredentials}
-        webhookSecret={existingWebhookSecret}
       />
     </>
   );

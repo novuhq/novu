@@ -328,7 +328,9 @@ const getRepeatBlockEachVariables = (editor: TiptapEditor): Array<LiquidVariable
   return [{ name: iterableName }];
 };
 
-const dedupAndSortVariables = (variables: Array<Variable>, query: string): Array<Variable> => {
+type SortableVariable = Variable & { boost?: number };
+
+const dedupAndSortVariables = (variables: Array<SortableVariable>, query: string): Array<SortableVariable> => {
   const lowerQuery = query.toLowerCase();
 
   const filteredVariables = variables.filter((variable) => variable.name.toLowerCase().includes(lowerQuery));
@@ -337,8 +339,8 @@ const dedupAndSortVariables = (variables: Array<Variable>, query: string): Array
 
   // Separate digest variables that match the query
   const digestLabels = new Set(DIGEST_VARIABLES.map((v) => v.name));
-  const matchedDigestVariables: Variable[] = [];
-  const others: Variable[] = [];
+  const matchedDigestVariables: SortableVariable[] = [];
+  const others: SortableVariable[] = [];
 
   for (const variable of uniqueVariables) {
     if (digestLabels.has(variable.name)) {
@@ -348,8 +350,13 @@ const dedupAndSortVariables = (variables: Array<Variable>, query: string): Array
     }
   }
 
-  // Sort the non-digest variables
+  // Sort the non-digest variables: preferred namespaces (boost) first, then match quality, then alpha
   const sortedOthers = others.sort((a, b) => {
+    const aBoost = a.boost ?? 0;
+    const bBoost = b.boost ?? 0;
+
+    if (aBoost !== bBoost) return bBoost - aBoost;
+
     const aExact = a.name.toLowerCase() === lowerQuery;
     const bExact = b.name.toLowerCase() === lowerQuery;
     const aStarts = a.name.toLowerCase().startsWith(lowerQuery);

@@ -128,4 +128,6 @@ export interface ICredentials {
   headers?: string;
   /** Custom webhook request body template. */
   body?: string;
+  /** When true, WhatsApp credentials were provisioned via Novu Tech Provider Embedded Signup; app secret is resolved from platform env. */
+  isNovuManaged?: boolean;
 }

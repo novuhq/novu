@@ -11,6 +11,7 @@ import {
   UpdateSubscriberChannel,
 } from '@novu/application-generic';
 import { CommunityOrganizationRepository, CommunityUserRepository, IntegrationRepository } from '@novu/dal';
+import { AgentsModule } from '../agents/agents.module';
 import { AuthModule } from '../auth/auth.module';
 import { ChannelConnectionsModule } from '../channel-connections/channel-connections.module';
 import { ChannelEndpointsModule } from '../channel-endpoints/channel-endpoints.module';
@@ -36,6 +37,7 @@ const PROVIDERS = [
     ChannelConnectionsModule,
     ChannelEndpointsModule,
     TelegramLinkingModule,
+    forwardRef(() => AgentsModule),
   ],
   controllers: [IntegrationsController, IntegrationsPublicController, IntegrationsMobileConfigurePublicController],
   providers: [

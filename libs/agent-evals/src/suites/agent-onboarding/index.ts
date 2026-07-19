@@ -7,6 +7,8 @@ import { graders as disciplineNoTimersGraders } from './scenarios/discipline-no-
 import { scenario as disciplineNoTimersScenario } from './scenarios/discipline-no-timers/scenario.js';
 import { graders as emailHandoffGraders } from './scenarios/email-handoff/graders.js';
 import { scenario as emailHandoffScenario } from './scenarios/email-handoff/scenario.js';
+import { graders as keylessSendblueGraders } from './scenarios/keyless-sendblue/graders.js';
+import { scenario as keylessSendblueScenario } from './scenarios/keyless-sendblue/scenario.js';
 import { graders as keylessSlackSecureGraders } from './scenarios/keyless-slack-secure/graders.js';
 import { scenario as keylessSlackSecureScenario } from './scenarios/keyless-slack-secure/scenario.js';
 import { graders as keylessWhatsappRedirectGraders } from './scenarios/keyless-whatsapp-redirect/graders.js';
@@ -40,9 +42,16 @@ export const agentOnboardingSuite: Suite<ConnectFlags> = {
     if (parsed.description) {
       recorder.setMetadata('description', parsed.description);
     }
+    if (parsed.sendblueFrom) {
+      recorder.setMetadata('sendblueFrom', parsed.sendblueFrom);
+    }
+    if (parsed.sendblueTestPhone) {
+      recorder.setMetadata('sendblueTestPhone', parsed.sendblueTestPhone);
+    }
   },
   scenarios: [
     { scenario: keylessSlackSecureScenario, graders: keylessSlackSecureGraders },
+    { scenario: keylessSendblueScenario, graders: keylessSendblueGraders },
     { scenario: dashboardPromptLoginScenario, graders: dashboardPromptLoginGraders },
     { scenario: keylessWhatsappRedirectScenario, graders: keylessWhatsappRedirectGraders },
     { scenario: emailHandoffScenario, graders: emailHandoffGraders },

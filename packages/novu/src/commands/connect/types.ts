@@ -1,9 +1,17 @@
 import type { CloudRegionEnum } from '../dev/enums';
 import type { LlmAuthCliChoice } from './pipeline/llm-auth/types';
 
-export type ChannelChoice = 'slack' | 'email' | 'whatsapp' | 'telegram' | 'teams' | 'skip';
+export type ChannelChoice = 'slack' | 'email' | 'whatsapp' | 'telegram' | 'teams' | 'sendblue' | 'skip';
 
-export const CHANNEL_CHOICES: readonly ChannelChoice[] = ['slack', 'email', 'whatsapp', 'telegram', 'teams', 'skip'];
+export const CHANNEL_CHOICES: readonly ChannelChoice[] = [
+  'slack',
+  'email',
+  'whatsapp',
+  'telegram',
+  'teams',
+  'sendblue',
+  'skip',
+];
 
 export type AgentRuntimeChoice = 'demo' | 'claude' | 'claude-aws';
 
@@ -135,6 +143,14 @@ export interface ConnectCommandOptions {
    * handoff (which keyless users cannot access).
    */
   telegramBotToken?: string;
+  /** Sendblue API Key (from dashboard.sendblue.com/settings/api). CI-only escape hatch — omit to enter interactively. */
+  sendblueApiKey?: string;
+  /** Sendblue Secret Key. CI-only escape hatch — omit to enter interactively. */
+  sendblueSecretKey?: string;
+  /** Sendblue phone number in E.164 (e.g. +14155551234). CI-only escape hatch — omit to enter interactively. */
+  sendblueFrom?: string;
+  /** Recipient phone (E.164) for the Sendblue test message. CI-only escape hatch — omit to enter interactively. */
+  sendblueTestPhone?: string;
   /** Force the non-interactive logging UI (no Ink TUI). Used in CI / piped-stdin shells. */
   ci?: boolean;
   /** Use a temporary keyless workspace instead of dashboard OAuth (the default). */

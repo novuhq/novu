@@ -66,6 +66,20 @@ export function hasSendblueUserCredentials(credentials: ICredentials | undefined
 export function hasWhatsAppUserCredentials(credentials: ICredentials | undefined): boolean {
   if (!credentials) return false;
 
+  if (credentials.isNovuManaged === true) {
+    const requiredKeys = [
+      CredentialsKeyEnum.ApiToken,
+      CredentialsKeyEnum.phoneNumberIdentification,
+      CredentialsKeyEnum.businessAccountId,
+    ] as const;
+
+    return requiredKeys.every((key) => {
+      const value = credentials[key];
+
+      return typeof value === 'string' && value.trim().length > 0;
+    });
+  }
+
   const requiredKeys = [
     CredentialsKeyEnum.ApiToken,
     CredentialsKeyEnum.phoneNumberIdentification,

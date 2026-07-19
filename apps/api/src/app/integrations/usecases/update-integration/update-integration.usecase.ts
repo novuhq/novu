@@ -189,6 +189,7 @@ export class UpdateIntegration {
         providerId: existingIntegration.providerId,
         nextCredentials: command.credentials,
         existingCredentials,
+        allowManagedFlagChange: command.allowNovuManagedWhatsAppCredentials === true,
       });
       const managedCredentials = ensureNovuAgentManagedCredentials({
         providerId: existingIntegration.providerId,

@@ -224,6 +224,7 @@ export interface SendTemplateArgs {
   to: string;
   templateName: string;
   languageCode: string;
+  bodyParameters?: string[];
 }
 
 export type SendTemplateResponse = {
@@ -236,6 +237,27 @@ export async function sendWhatsAppTemplate(args: SendTemplateArgs): Promise<{
   body: SendTemplateResponse;
   statusCode: number;
 }> {
+  const template: {
+    name: string;
+    language: { code: string };
+    components?: Array<{
+      type: 'body';
+      parameters: Array<{ type: 'text'; text: string }>;
+    }>;
+  } = {
+    name: args.templateName,
+    language: { code: args.languageCode },
+  };
+
+  if (args.bodyParameters?.length) {
+    template.components = [
+      {
+        type: 'body',
+        parameters: args.bodyParameters.map((text) => ({ type: 'text', text })),
+      },
+    ];
+  }
+
   return metaGraphPostJson<SendTemplateResponse>(
     `/${encodeURIComponent(args.phoneNumberId)}/messages`,
     args.accessToken,
@@ -243,12 +265,56 @@ export async function sendWhatsAppTemplate(args: SendTemplateArgs): Promise<{
       messaging_product: 'whatsapp',
       to: args.to,
       type: 'template',
-      template: {
-        name: args.templateName,
-        language: { code: args.languageCode },
-      },
+      template,
     }
   );
+}
+
+export type ExchangeCodeForTokenResponse = {
+  access_token?: string;
+  token_type?: string;
+} & MetaErrorBody;
+
+export async function exchangeEmbeddedSignupCodeForToken(args: {
+  appId: string;
+  appSecret: string;
+  code: string;
+}): Promise<{ body: ExchangeCodeForTokenResponse; statusCode: number }> {
+  const url = new URL(`${META_GRAPH_API_BASE}/oauth/access_token`);
+  url.searchParams.set('client_id', args.appId);
+  url.searchParams.set('client_secret', args.appSecret);
+  url.searchParams.set('code', args.code);
+
+  const response = await safeOutboundJsonRequest<ExchangeCodeForTokenResponse>({
+    url,
+    method: 'GET',
+    timeoutMs: 10_000,
+  });
+
+  return { body: response.body, statusCode: response.statusCode };
+}
+
+export type RegisterPhoneNumberResponse = {
+  success?: boolean;
+} & MetaErrorBody;
+
+export async function registerWhatsAppPhoneNumber(args: {
+  accessToken: string;
+  phoneNumberId: string;
+  pin: string;
+}): Promise<{ body: RegisterPhoneNumberResponse; statusCode: number }> {
+  return metaGraphPostJson<RegisterPhoneNumberResponse>(
+    `/${encodeURIComponent(args.phoneNumberId)}/register`,
+    args.accessToken,
+    {
+      messaging_product: 'whatsapp',
+      pin: args.pin,
+    }
+  );
+}
+
+export function generateWhatsAppRegistrationPin(): string {
+  return String(Math.floor(100_000 + Math.random() * 900_000));
 }
 
 export function flattenScopes(debug: DebugTokenResponse): string[] {

@@ -1,3 +1,32 @@
+## v2.13.0 (2026-07-16)
+
+### 🚀 Features
+
+- **framework:** keep serverless agent turns alive via waitUntil fixes NV-8313 ([#11963](https://github.com/novuhq/novu/pull/11963))
+
+### 🩹 Fixes
+
+- **api-service,framework:** card-only agent replies fail on Telegram fixes NV-8308 ([#11958](https://github.com/novuhq/novu/pull/11958))
+
+### ❤️ Thank You
+
+- Dima Grossman @scopsy
+
+## v2.12.1 (2026-07-15)
+
+### 🚀 Features
+
+- **framework:** add Hono serve adapter fixes NV-8283 ([#11921](https://github.com/novuhq/novu/pull/11921))
+
+### 🩹 Fixes
+
+- **framework:** remove doubled separator in digest filter 3-item branch ([#11925](https://github.com/novuhq/novu/pull/11925))
+
+### ❤️ Thank You
+
+- Dima Grossman @scopsy
+- Rup Sarmah @sarmah-rup
+
 ## v2.12.0 (2026-07-13)
 
 ### 🚀 Features

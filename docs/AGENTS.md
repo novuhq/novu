@@ -36,18 +36,16 @@ Use Novu-specific terms consistently. For full definitions, see the [glossary](/
 - Capitalize **Novu** and product names: Inbox, Framework, Dashboard
 - Include frontmatter `title` and `description` on MDX pages
 - Use `sidebarTitle` for short navigation labels when the page `title` is long (for example, SEO question-format titles)
-- API endpoint pages must include a `description` in frontmatter (one concise sentence) plus the `openapi` path key, for example:
+- OpenAPI-backed API reference pages (`openapi: "METHOD /path"` in frontmatter) must **not** include a frontmatter `description` — Mintlify pulls the page description from the OpenAPI operation summary/description. Use `title` + `openapi` only, for example:
 
 ```mdx
 ---
 title: "Create an agent"
-description: "Create an agent in the current environment."
 openapi: "POST /v1/agents"
 ---
 ```
 
-- Do not omit `description` on OpenAPI-backed pages — Mintlify uses it for SEO and page metadata.
-- API endpoint pages must include a `description` and a 1–2 sentence intro before the OpenAPI block
+- Optional 1–2 sentence intro prose before the OpenAPI block is fine on endpoint pages; do not duplicate that text as frontmatter `description`
 - API schema reference pages use markdown tables (`Field | Type | Description`), not `<ResponseField>`. Escape union separators in the **Type** column as `\|` (for example, `` `string \| null` ``). Prefer `Record<string, unknown>` over `{ [k: string]: any; }` in table cells.
 - Provider integration pages use the title pattern `{Provider} {Channel} Integration with Novu` with `sidebarTitle` for the short provider name
 - Use descriptive alt text on all diagrams and screenshots

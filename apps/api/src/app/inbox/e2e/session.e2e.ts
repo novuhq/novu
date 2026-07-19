@@ -1275,6 +1275,54 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
     expect(contextsAfter.length).to.equal(contextsBefore.length);
   });
 
+  it('should not mutate existing context data during inbox session', async () => {
+    await setIntegrationConfig({
+      _environmentId: session.environment._id,
+      _organizationId: session.environment._organizationId,
+      hmac: false,
+    });
+
+    const initialData = { name: 'Acme Corp', plan: 'basic' };
+    const initialContext: ContextPayload = {
+      tenant: {
+        id: 'org-acme',
+        data: initialData,
+      },
+    };
+
+    const firstSession = await initializeSession({
+      applicationIdentifier: session.environment.identifier,
+      subscriberId: mockSubscriberId,
+      context: initialContext,
+    });
+
+    expect(firstSession.status).to.equal(201);
+
+    const attemptedUpdate: ContextPayload = {
+      tenant: {
+        id: 'org-acme',
+        data: { name: 'Malicious Corp', plan: 'enterprise' },
+      },
+    };
+
+    const secondSession = await initializeSession({
+      applicationIdentifier: session.environment.identifier,
+      subscriberId: mockSubscriberId,
+      context: attemptedUpdate,
+    });
+
+    expect(secondSession.status).to.equal(201);
+
+    const storedContext = await contextRepository.findOne({
+      _environmentId: session.environment._id,
+      _organizationId: session.organization._id,
+      type: 'tenant',
+      id: 'org-acme',
+    });
+
+    expect(storedContext?.data).to.deep.equal(initialData);
+  });
+
   it('should return empty contextKeys array when no context provided', async () => {
     await setIntegrationConfig({
       _environmentId: session.environment._id,

@@ -5,7 +5,7 @@ openapi: "POST /v2/topics/{topicKey}/subscriptions"
 
 Subscribe one or more subscribers to a topic. Pass `subscriptions` as subscriber IDs, or as objects with `identifier` and `subscriberId` when you need a custom subscription key.
 
-Preferences can include [JSON Logic conditions](/platform/subscription/manage-topic-subscriptions#json-logic-conditions) evaluated at trigger time against the trigger **payload**. Use paths such as `{ "var": "payload.fieldName" }`.
+Preferences can include [JSON Logic conditions](/platform/subscription/manage-topic-subscriptions#json-logic-conditions) evaluated at trigger time against the trigger **payload**, **subscriber** profile, **actor**, and **context**. Use paths such as `{ "var": "payload.fieldName" }`, `{ "var": "subscriber.data.tier" }`, `{ "var": "actor.data.role" }`, or `{ "var": "context.tenant.id" }`.
 
 Pass an optional `context` object to scope subscriptions to a [Context](/platform/concepts/contexts). The Context on the subscription must exactly match the Context on the workflow trigger. See [Context-scoped subscriptions](/platform/subscription/manage-topic-subscriptions#context-scoped-subscriptions).
 

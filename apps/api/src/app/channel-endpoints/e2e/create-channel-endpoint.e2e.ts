@@ -329,10 +329,11 @@ describe('Create Channel Endpoint - /channel-endpoints (POST) #novu-v2', () => {
       },
     } as any;
 
-    const { error } = await expectSdkZodError(() => novuClient.channelEndpoints.create(createDto));
+    const { error } = await expectSdkExceptionGeneric(() => novuClient.channelEndpoints.create(createDto));
 
     expect(error).to.exist;
-    expect(error?.name).to.equal('SDKValidationError');
+    expect(error?.name).to.equal('ErrorDto');
+    expect(error?.message).to.equal('Channel endpoint type "webex_room" requires a connectionIdentifier');
   });
 
   it('should fail when creating a Webex endpoint for a non-Webex integration', async () => {

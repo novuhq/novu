@@ -82,7 +82,7 @@ WhatsApp and Microsoft Teams require dashboard OAuth — they are not supported 
 | Command | Description |
 | --- | --- |
 | `connect` | Create a managed or bridge agent and connect it to a channel |
-| `init` | Scaffold a new Novu app (`notifications`, `agent`, or `chat-sdk` template) |
+| `init` | Scaffold a new Novu app (`notifications` or `chat-sdk` template) |
 | `sync` | Sync bridge workflow state with Novu Cloud |
 | `dev` | Start local Novu Studio and a tunnel to your bridge app |
 | `translations pull` | Pull translation files from Novu Cloud |
@@ -143,15 +143,13 @@ Scaffold a new Novu application.
 ```bash
 npx novu@latest init
 npx novu@latest init --template chat-sdk
-npx novu@latest init --template agent --agent-identifier my-agent
 ```
 
 | Flag | Description |
 | --- | --- |
 | `-s, --secret-key <key>` | Novu development environment secret key |
 | `-a, --api-url <url>` | Novu Cloud API URL (default: `https://api.novu.co`) |
-| `-t, --template <name>` | Template: `notifications`, `agent`, or `chat-sdk` |
-| `--agent-identifier <id>` | Agent identifier for the scaffolded template |
+| `-t, --template <name>` | Template: `notifications` or `chat-sdk` |
 
 ### `sync`
 

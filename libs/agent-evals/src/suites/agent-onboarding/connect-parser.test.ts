@@ -47,6 +47,28 @@ describe('connectParser', () => {
     expect(flags.slackConfigToken).toBe('xoxe.test');
   });
 
+  it('parses inline Sendblue phone numbers', () => {
+    const flags = connectParser.parse(
+      "npx novu connect --ci --keyless --channel sendblue --sendblue-from '+14155550100' --sendblue-test-phone '+14155550123'",
+      {}
+    );
+
+    expect(flags.channel).toBe('sendblue');
+    expect(flags.sendblueFrom).toBe('+14155550100');
+    expect(flags.sendblueTestPhone).toBe('+14155550123');
+  });
+
+  it('resolves env-var Sendblue credentials from the captured env', () => {
+    // Assemble the braced `${SENDBLUE_SECRET_KEY}` shell token via concatenation so no literal
+    // `${` appears in a plain string (which the linter flags).
+    const bracedRef = `$${'{SENDBLUE_SECRET_KEY}'}`;
+    const command = `npx novu connect --ci --keyless --channel sendblue --sendblue-api-key "$SENDBLUE_API_KEY" --sendblue-secret-key "${bracedRef}"`;
+    const flags = connectParser.parse(command, { SENDBLUE_API_KEY: 'sk_live_test', SENDBLUE_SECRET_KEY: 'sbsec_test' });
+
+    expect(flags.sendblueApiKey).toBe('sk_live_test');
+    expect(flags.sendblueSecretKey).toBe('sbsec_test');
+  });
+
   it('parses --runtime for bridge connect commands', () => {
     const flags = connectParser.parse('npx novu connect --ci --runtime ai-sdk --channel slack', {});
 
