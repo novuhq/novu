@@ -262,6 +262,13 @@ describe('Trigger event - Throttle triggered events - /v1/events/trigger (POST) 
       expect(job.stepOutput?.threshold).to.equal(1);
     }
 
+    // The completed (non-throttled) job should also persist a throttle result so that the
+    // framework `throttle` result schema (which requires `throttled`) is satisfied on hydration.
+    const [completedThrottleJob] = completedThrottleJobs;
+    expect(completedThrottleJob.stepOutput).to.be.ok;
+    expect(completedThrottleJob.stepOutput?.throttled).to.equal(false);
+    expect(completedThrottleJob.stepOutput?.threshold).to.equal(1);
+
     // Only 1 in-app message should be created
     const messages = await messageRepository.find({
       _environmentId: session.environment._id,

@@ -288,7 +288,13 @@ export class AddJob {
           await this.handleThrottleSkip(
             command,
             job,
-            throttleResult as { shouldSkip: boolean; executionCount: number; threshold: number; throttledUntil: string }
+            throttleResult as {
+              shouldSkip: boolean;
+              executionCount: number;
+              threshold: number;
+              windowStart: string;
+              throttledUntil: string;
+            }
           );
 
           return {
@@ -296,6 +302,11 @@ export class AddJob {
             deliveryLifecycleStatus: DeliveryLifecycleStatusEnum.SKIPPED,
           };
         }
+
+        // The throttle slot was granted, so the step is not throttled. Persist the throttle result
+        // so the step output stays consistent with the throttled path and satisfies the framework
+        // `throttle` result schema (which requires `throttled`) when the state is hydrated.
+        await this.handleThrottlePass(command, job, throttleResult);
       } catch (error) {
         return await this.handleStepValidationError(
           command,
@@ -816,7 +827,13 @@ export class AddJob {
     command: AddJobCommand,
     job: JobEntity,
     bridgeResponse: ExecuteOutput | null
-  ): Promise<{ shouldSkip: boolean; executionCount?: number; threshold?: number; throttledUntil?: string }> {
+  ): Promise<{
+    shouldSkip: boolean;
+    executionCount?: number;
+    threshold?: number;
+    windowStart?: string;
+    throttledUntil?: string;
+  }> {
     // Get throttle configuration from bridge response or job step
     const throttleConfig = bridgeResponse?.outputs || {};
     const { type = 'fixed', threshold = 1, throttleKey } = throttleConfig;
@@ -893,12 +910,16 @@ export class AddJob {
       'Redis throttle reservation result'
     );
 
+    const windowStart = new Date(reservationResult.windowStartMs).toISOString();
+    const throttledUntil = new Date(reservationResult.windowStartMs + windowMs).toISOString();
+
     if (!reservationResult.granted) {
       return {
         shouldSkip: true,
         executionCount: reservationResult.count,
         threshold: threshold as number,
-        throttledUntil: new Date(reservationResult.windowStartMs + windowMs).toISOString(),
+        windowStart,
+        throttledUntil,
       };
     }
 
@@ -907,7 +928,8 @@ export class AddJob {
       shouldSkip: false,
       executionCount: reservationResult.count,
       threshold: threshold as number,
-      throttledUntil: new Date(reservationResult.windowStartMs + windowMs).toISOString(),
+      windowStart,
+      throttledUntil,
     };
   }
 
@@ -1004,7 +1026,13 @@ export class AddJob {
   private async handleThrottleSkip(
     command: AddJobCommand,
     job: JobEntity,
-    throttleResult: { shouldSkip: boolean; executionCount: number; threshold: number; throttledUntil: string }
+    throttleResult: {
+      shouldSkip: boolean;
+      executionCount: number;
+      threshold: number;
+      windowStart: string;
+      throttledUntil: string;
+    }
   ) {
     this.logger.info(
       `Job ${job._id} throttled: ${throttleResult.executionCount} executions exceed threshold ${throttleResult.threshold as number}`
@@ -1019,7 +1047,7 @@ export class AddJob {
             throttled: true,
             executionCount: throttleResult.executionCount,
             threshold: throttleResult.threshold as number,
-            throttledUntil: throttleResult.throttledUntil,
+            windowStart: throttleResult.windowStart,
           },
         },
       }
@@ -1048,6 +1076,26 @@ export class AddJob {
         })
       );
     }
+  }
+
+  private async handleThrottlePass(
+    command: AddJobCommand,
+    job: JobEntity,
+    throttleResult: { executionCount?: number; threshold?: number; windowStart?: string }
+  ) {
+    await this.jobRepository.updateOne(
+      { _id: job._id, _environmentId: command.environmentId },
+      {
+        $set: {
+          stepOutput: {
+            throttled: false,
+            executionCount: throttleResult.executionCount,
+            threshold: throttleResult.threshold,
+            windowStart: throttleResult.windowStart,
+          },
+        },
+      }
+    );
   }
 
   private getExecutionDelayAmount(
