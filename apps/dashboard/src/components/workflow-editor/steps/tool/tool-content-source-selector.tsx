@@ -1,10 +1,10 @@
 import {
   RiAddFill,
   RiArrowDownSLine,
+  RiCheckboxCircleFill,
   RiCheckLine,
   RiCloseLine,
   RiErrorWarningFill,
-  RiSelectBoxCircleFill,
 } from 'react-icons/ri';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import {
@@ -64,7 +64,7 @@ export function ToolContentSourceSelector({
         >
           <div className="flex items-center gap-1">
             <span className="text-foreground-600 text-xs font-medium">Default content</span>
-            <RiSelectBoxCircleFill className="size-3 text-success" />
+            <RiCheckboxCircleFill className="size-3 text-success" />
           </div>
           {selectedSource === DEFAULT_CONTENT_SOURCE && <RiCheckLine className="text-foreground-600 size-3.5" />}
         </DropdownMenuItem>
@@ -123,21 +123,18 @@ export function ToolContentSourceSelector({
                   </button>
 
                   {provider.hasOverride ? (
-                    <div className="flex items-center gap-1">
-                      {isSelected && <RiCheckLine className="text-foreground-600 size-3.5" />}
-                      <button
-                        type="button"
-                        data-override-action="remove"
-                        aria-label={`Remove ${provider.displayName} override`}
-                        className="text-foreground-400 hover:text-foreground-950 rounded p-0.5"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          onRemoveOverride(provider.providerId);
-                        }}
-                      >
-                        <RiCloseLine className="size-3.5" />
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      data-override-action="remove"
+                      aria-label={`Remove ${provider.displayName} override`}
+                      className="text-foreground-400 hover:text-foreground-950 rounded p-0.5"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        onRemoveOverride(provider.providerId);
+                      }}
+                    >
+                      <RiCloseLine className="size-3.5" />
+                    </button>
                   ) : (
                     <button
                       type="button"
