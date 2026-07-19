@@ -4,6 +4,7 @@ import {
   Controller,
   Delete,
   Get,
+  Headers,
   HttpCode,
   HttpStatus,
   Param,
@@ -16,7 +17,14 @@ import {
 } from '@nestjs/common';
 import { ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { RequirePermissions } from '@novu/application-generic';
-import { ApiRateLimitCategoryEnum, DirectionEnum, PermissionsEnum, UserSessionData } from '@novu/shared';
+import {
+  ApiRateLimitCategoryEnum,
+  DirectionEnum,
+  isAgentAnalyticsSource,
+  NOVU_ANALYTICS_SOURCE_HEADER,
+  PermissionsEnum,
+  UserSessionData,
+} from '@novu/shared';
 import { RequireAuthentication } from '../../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../../auth/framework/external-api.decorator';
 import { ThrottlerCategory } from '../../rate-limiting/guards';
@@ -107,6 +115,7 @@ export class AgentsController {
   @Post('/')
   @ExternalApiAccessible()
   @KeylessAccessible()
+  @SdkGroupName('Agents')
   @SdkMethodName('create')
   @ApiResponse(AgentResponseDto, 201)
   @ApiOperation({
@@ -117,7 +126,11 @@ export class AgentsController {
   })
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)
   @UseFilters(AgentRuntimeExceptionFilter)
-  createAgent(@UserSession() user: UserSessionData, @Body() body: CreateAgentRequestDto): Promise<AgentResponseDto> {
+  createAgent(
+    @UserSession() user: UserSessionData,
+    @Body() body: CreateAgentRequestDto,
+    @Headers(NOVU_ANALYTICS_SOURCE_HEADER) analyticsSourceHeader?: string
+  ): Promise<AgentResponseDto> {
     return this.createAgentUsecase.execute(
       CreateAgentCommand.create({
         userId: user._id,
@@ -129,6 +142,7 @@ export class AgentsController {
         active: body.active,
         runtime: body.runtime,
         managedRuntime: body.managedRuntime,
+        analyticsSource: isAgentAnalyticsSource(analyticsSourceHeader) ? analyticsSourceHeader : undefined,
       })
     );
   }
@@ -136,6 +150,7 @@ export class AgentsController {
   @Get('/')
   @ExternalApiAccessible()
   @KeylessAccessible()
+  @SdkGroupName('Agents')
   @SdkMethodName('list')
   @ApiResponse(ListAgentsResponseDto)
   @ApiOperation({
@@ -162,6 +177,7 @@ export class AgentsController {
   }
 
   @Put('/:identifier/bridge')
+  @SdkGroupName('Agents')
   @SdkMethodName('updateBridge')
   @ApiResponse(AgentResponseDto)
   @ApiOperation({
@@ -194,6 +210,7 @@ export class AgentsController {
 
   @Get('/:identifier')
   @ExternalApiAccessible()
+  @SdkGroupName('Agents')
   @SdkMethodName('retrieve')
   @ApiResponse(AgentResponseDto)
   @ApiOperation({
@@ -217,6 +234,7 @@ export class AgentsController {
 
   @Patch('/:identifier')
   @ExternalApiAccessible()
+  @SdkGroupName('Agents')
   @SdkMethodName('update')
   @ApiResponse(AgentResponseDto)
   @ApiOperation({
@@ -251,6 +269,7 @@ export class AgentsController {
 
   @Delete('/:identifier')
   @ExternalApiAccessible()
+  @SdkGroupName('Agents')
   @SdkMethodName('delete')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({

@@ -12,7 +12,7 @@ import {
 } from '@novu/dal';
 import type { AgentAction } from '@novu/framework';
 import { parseApprovalActionId } from '@novu/framework/internal';
-import { AgentSubscriberAccessEnum, ENDPOINT_TYPES } from '@novu/shared';
+import { ENDPOINT_TYPES } from '@novu/shared';
 import type { CardElement, EmojiValue, Message, Thread } from 'chat';
 import { ConnectClaimTokenService } from '../../../connect/services/connect-claim-token.service';
 import { parsePositiveIntEnv } from '../../../keyless/keyless-abuse.constants';
@@ -35,7 +35,7 @@ import { parseToolApprovalActionId } from '../../shared/tool-approval/action-id'
 import { getResolvedSubscriberId, type SubscriberResolution } from '../../shared/types/subscriber-resolution';
 import { agentLinkAwaitingInboundConnectionFilter } from '../../shared/util/agent-inbound-connection';
 import { extractMsTeamsTenantId } from '../../shared/util/msteams-activity';
-import { type AutoProvisionPlatform, isAutoProvisionPlatform } from '../../shared/util/platform-endpoint-config';
+import { type AutoProvisionPlatform, shouldAutoProvisionInbound } from '../../shared/util/platform-endpoint-config';
 import { InboundAckService } from '../ack/inbound-ack.service';
 import { AgentAttachmentStorage, type StoredAttachment } from '../conversation/agent-attachment-storage.service';
 import { AgentConversationService, getInboundActivityPreview } from '../conversation/agent-conversation.service';
@@ -45,11 +45,13 @@ import {
   ConnectOrgSubscriberCapExceededError,
 } from '../conversation/agent-subscriber-resolver.service';
 import { OutboundGateway } from '../egress/outbound.gateway';
+import { maybeReplyUnresolvedSubscriberAccess } from '../reply/maybe-reply-unresolved-subscriber-access';
 import type { BridgeReaction } from '../runtime/bridge-executor.service';
 import type { ConversationTurn } from '../runtime/conversation-turn';
 import { RuntimeResolver } from '../runtime/runtime-resolver.service';
 import { InboundDispatcher } from './inbound.dispatcher';
 import { isLinkButtonActionId, PlanLimitGateService } from './plan-limit-gate.service';
+import { ReplyApprovalInterceptor } from './reply-approval-interceptor.service';
 
 /**
  * `/start <payload>` is Telegram's deep-link mechanism. Telegram delivers it as
@@ -97,6 +99,7 @@ const KEYLESS_DEMO_REPLY_CAP = parsePositiveIntEnv(process.env.KEYLESS_DEMO_REPL
 const CAPACITY_PLATFORM_LABELS: Record<AutoProvisionPlatform, string> = {
   [AgentPlatformEnum.SLACK]: 'Slack workspace',
   [AgentPlatformEnum.TEAMS]: 'Teams workspace',
+  [AgentPlatformEnum.TELEGRAM]: 'Telegram chat',
 };
 
 function buildCapacityReachedCard(platform: AutoProvisionPlatform): CardElement {
@@ -258,7 +261,8 @@ export class AgentInboundHandler implements OnModuleInit {
     private readonly connectClaimTokenService: ConnectClaimTokenService,
     private readonly keylessAbuseGuard: KeylessAbuseGuardService,
     private readonly planLimitGate: PlanLimitGateService,
-    private readonly inboundAck: InboundAckService
+    private readonly inboundAck: InboundAckService,
+    private readonly replyApprovalInterceptor: ReplyApprovalInterceptor
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -291,16 +295,16 @@ export class AgentInboundHandler implements OnModuleInit {
     const isVerifiedEmailSender =
       config.platform !== AgentPlatformEnum.EMAIL || isInboundEmailSenderVerified(emailAuthRaw);
 
-    // Open-access email agents provision the sender themselves, so email joins
-    // the Slack/Teams lookup-or-provision path (soft-failing to `null` inside
-    // the resolver). Keyless demo agents are excluded — they deliberately
-    // provision lazily at tool-approval time and bound abuse via the demo cap,
-    // so the ephemeral env stays subscriber-free until needed.
-    const canAutoProvision =
-      isAutoProvisionPlatform(config.platform) ||
-      (config.platform === AgentPlatformEnum.EMAIL &&
-        config.subscriberAccess === AgentSubscriberAccessEnum.OPEN &&
-        !config.isKeyless);
+    // Open-access agents may lookup-or-provision; restricted stay lookup-only.
+    // Keyless email demos stay lookup-only until tool approval.
+    const telegramChatId = config.platform === AgentPlatformEnum.TELEGRAM ? extractTelegramChatId(thread) : undefined;
+    const canAutoProvision = shouldAutoProvisionInbound({
+      platform: config.platform,
+      subscriberAccess: config.subscriberAccess,
+      isManaged: config.isManaged,
+      isKeyless: config.isKeyless,
+      isTelegramDm: telegramChatId != null && telegramChatId === message.author.userId,
+    });
 
     let resolution: SubscriberResolution;
     try {
@@ -361,13 +365,13 @@ export class AgentInboundHandler implements OnModuleInit {
       }
 
       /**
-       * Only `resolveOrProvision` on Slack / Teams / open-access email can reach
-       * here — the `resolveSubscriber` read path maps its own failures to an
-       * `error` outcome internally and never throws. For auto-provision platforms
-       * an unknown error means we don't know the subscriber state, so we keep
-       * dispatch off and surface the failure rather than silently degrading to
-       * a PLATFORM_USER participant the removed-anonymous-state contract was
-       * meant to eliminate.
+       * Only `resolveOrProvision` on open-access Slack / Teams / Telegram /
+       * email / WhatsApp / Sendblue can reach here - the `resolveSubscriber` read path
+       * maps its own failures to an `error` outcome internally and never throws.
+       * For auto-provision platforms an unknown error means we don't know the
+       * subscriber state, so we keep dispatch off and surface the failure rather
+       * than silently degrading to a PLATFORM_USER participant the
+       * removed-anonymous-state contract was meant to eliminate.
        */
       captureAgentWarning(err, { component: 'agent-inbound-handler', operation: 'resolve-subscriber', agentId });
 
@@ -467,16 +471,6 @@ export class AgentInboundHandler implements OnModuleInit {
       };
     }
 
-    if (!config.isManaged) {
-      await this.inboundAck.showWorkingSignal({
-        agentId,
-        config,
-        platformThreadId,
-        platformMessageId: message?.id,
-        isFirstMessage,
-      });
-    }
-
     const runtime = this.runtimeResolver.resolve(agent);
     const turn: ConversationTurn = {
       agentId,
@@ -491,6 +485,38 @@ export class AgentInboundHandler implements OnModuleInit {
       platformThreadId,
       storedAttachments: message.attachments?.length ? storedAttachments : undefined,
     };
+
+    // On buttonless platforms (iMessage/SMS) a pending tool approval is
+    // answered by texting back YES / NO — consume before the subscriber-access
+    // gate so an unresolved/restricted sender can still settle a pending approval.
+    if (
+      event === AgentEventEnum.ON_MESSAGE &&
+      (await this.replyApprovalInterceptor.tryHandleAsApprovalReply(turn, runtime))
+    ) {
+      return;
+    }
+
+    if (
+      await maybeReplyUnresolvedSubscriberAccess({
+        turn,
+        logger: this.logger,
+        outboundGateway: this.outboundGateway,
+        conversationService: this.conversationService,
+        emailSenderUnverified: !isVerifiedEmailSender,
+      })
+    ) {
+      return;
+    }
+
+    if (!config.isManaged) {
+      await this.inboundAck.showWorkingSignal({
+        agentId,
+        config,
+        platformThreadId,
+        platformMessageId: message?.id,
+        isFirstMessage,
+      });
+    }
 
     await runtime.dispatch(turn);
   }
@@ -837,10 +863,11 @@ export class AgentInboundHandler implements OnModuleInit {
     message: Message
   ): Promise<void> {
     /**
-     * `ConnectOrgSubscriberCapExceededError` is only thrown by
-     * `resolveOrProvision`, which itself only runs for `AUTO_PROVISION_PLATFORMS`.
-     * The cast narrows `config.platform` to the union the card builder accepts
-     * and keeps the exhaustive-record check honest.
+     * `ConnectOrgSubscriberCapExceededError` is only thrown by the ChannelEndpoint
+     * branch of `resolveOrProvision` (`AUTO_PROVISION_PLATFORMS`). Open-access
+     * email/WhatsApp/Sendblue soft-fail instead. The cast narrows `config.platform` to
+     * the union the card builder accepts and keeps the exhaustive-record check
+     * honest.
      */
     const platform = config.platform as AutoProvisionPlatform;
 
@@ -933,11 +960,16 @@ export class AgentInboundHandler implements OnModuleInit {
       : undefined;
     const subscriberId = getResolvedSubscriberId(reactionResolution);
 
-    const [subscriber, sourceActivity] = await Promise.all([
+    const [subscriber, sourceActivity, agent] = await Promise.all([
       subscriberId
         ? this.subscriberRepository.findBySubscriberId(config.environmentId, subscriberId)
         : Promise.resolve(null),
       this.conversationService.findSourceActivity(config.environmentId, conversation._id, event.messageId),
+      this.agentRepository.findOne({ _id: agentId, _environmentId: config.environmentId }, [
+        '_id',
+        'runtime',
+        'managedRuntime',
+      ]),
     ]);
 
     let sourceMessageStoredAttachments = extractStoredAttachments(sourceActivity);
@@ -962,10 +994,10 @@ export class AgentInboundHandler implements OnModuleInit {
         : undefined,
     };
 
-    const runtime = this.runtimeResolver.resolve(null);
+    const runtime = this.runtimeResolver.resolve(agent);
     const turn: ConversationTurn = {
       agentId,
-      agent: { _id: agentId },
+      agent: agent ?? { _id: agentId },
       config,
       conversation,
       subscriber,
@@ -976,6 +1008,13 @@ export class AgentInboundHandler implements OnModuleInit {
       platformThreadId: threadId,
       reaction: reactionPayload,
     };
+
+    // On buttonless platforms (iMessage/SMS) a pending tool approval can be
+    // answered with a 👍 / 👎 reaction on the approval-request card — a matching
+    // reaction is consumed as the verdict instead of forwarding as ON_REACTION.
+    if (await this.replyApprovalInterceptor.tryHandleAsApprovalReaction(turn, runtime)) {
+      return;
+    }
 
     await runtime.dispatch(turn);
   }

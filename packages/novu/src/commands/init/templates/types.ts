@@ -1,3 +1,4 @@
+import type { LlmAuthChoice } from '../../connect/pipeline/llm-auth/types';
 import { PackageManager } from '../helpers/get-pkg-manager';
 
 export enum TemplateTypeEnum {
@@ -7,6 +8,7 @@ export enum TemplateTypeEnum {
   APP_REACT_EMAIL = 'app-react-email',
   APP_AGENT = 'app-agent',
   APP_AGENT_AI_SDK = 'app-agent-ai-sdk',
+  APP_AGENT_LANGCHAIN = 'app-agent-langchain',
   APP_CHAT_SDK = 'app-chat-sdk',
 }
 
@@ -42,4 +44,6 @@ export interface InstallTemplateArgs {
    * sibling packages would cause npm to fail.
    */
   skipInstall?: boolean;
+  /** LLM provider wiring for ai-sdk / langchain agent scaffolds. */
+  llmAuth?: LlmAuthChoice;
 }

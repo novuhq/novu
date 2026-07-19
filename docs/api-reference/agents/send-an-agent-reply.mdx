@@ -1,5 +1,12 @@
 ---
 title: "Send an agent reply"
-description: "Send a reply into an existing agent conversation from server-side code."
 openapi: "POST /v1/agents/{agentId}/reply"
 ---
+
+Send a reply into an existing agent conversation from server-side code. Use this when you are not running `@novu/framework` on the bridge (for example with the Python, Go, PHP, .NET, or Java SDKs), or when another backend service needs to post into a live conversation.
+
+The request body is a bag of optional actions. Provide at least one of `reply`, `edit`, `resolve`, `signals`, `toolResults`, `toolApprovalRequest`, `addReactions`, `deleteMessages`, `typing`, or `error`. Named examples in the OpenAPI spec cover the common shapes.
+
+When a reply or edit is delivered, the response `data` contains `messageId` and `platformThreadId`. Side-effect-only requests return `data: null`.
+
+For the TypeScript bridge API (`ctx.reply`, cards, signals), see [Reply](/agents/custom-code-agent/building-blocks/reply).

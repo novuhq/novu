@@ -1,8 +1,17 @@
 import type { CloudRegionEnum } from '../dev/enums';
+import type { LlmAuthCliChoice } from './pipeline/llm-auth/types';
 
-export type ChannelChoice = 'slack' | 'email' | 'whatsapp' | 'telegram' | 'teams' | 'skip';
+export type ChannelChoice = 'slack' | 'email' | 'whatsapp' | 'telegram' | 'teams' | 'sendblue' | 'skip';
 
-export const CHANNEL_CHOICES: readonly ChannelChoice[] = ['slack', 'email', 'whatsapp', 'telegram', 'teams', 'skip'];
+export const CHANNEL_CHOICES: readonly ChannelChoice[] = [
+  'slack',
+  'email',
+  'whatsapp',
+  'telegram',
+  'teams',
+  'sendblue',
+  'skip',
+];
 
 export type AgentRuntimeChoice = 'demo' | 'claude' | 'claude-aws';
 
@@ -33,8 +42,12 @@ export function isAiSdkConnectMode(mode: AgentConnectMode): mode is 'ai-sdk' {
   return mode === 'ai-sdk';
 }
 
-export function isVanillaCustomCodeConnectMode(mode: AgentConnectMode): mode is 'langchain' | 'custom-code' {
-  return mode === 'langchain' || mode === 'custom-code';
+export function isLangChainConnectMode(mode: AgentConnectMode): mode is 'langchain' {
+  return mode === 'langchain';
+}
+
+export function isVanillaCustomCodeConnectMode(mode: AgentConnectMode): mode is 'custom-code' {
+  return mode === 'custom-code';
 }
 
 export type BridgeProjectKind = 'empty' | 'project';
@@ -80,6 +93,9 @@ export type AiSdkConnectOutcome = {
   wiringInstructions?: string;
   agentFilePath?: string;
 };
+
+/** LangChain bridge setup shares the AI SDK outcome shape (same reconcile engine). */
+export type LangChainConnectOutcome = AiSdkConnectOutcome;
 
 export type CustomCodeConnectOutcome = {
   projectDir: string;
@@ -127,6 +143,14 @@ export interface ConnectCommandOptions {
    * handoff (which keyless users cannot access).
    */
   telegramBotToken?: string;
+  /** Sendblue API Key (from dashboard.sendblue.com/settings/api). CI-only escape hatch — omit to enter interactively. */
+  sendblueApiKey?: string;
+  /** Sendblue Secret Key. CI-only escape hatch — omit to enter interactively. */
+  sendblueSecretKey?: string;
+  /** Sendblue phone number in E.164 (e.g. +14155551234). CI-only escape hatch — omit to enter interactively. */
+  sendblueFrom?: string;
+  /** Recipient phone (E.164) for the Sendblue test message. CI-only escape hatch — omit to enter interactively. */
+  sendblueTestPhone?: string;
   /** Force the non-interactive logging UI (no Ink TUI). Used in CI / piped-stdin shells. */
   ci?: boolean;
   /** Use a temporary keyless workspace instead of dashboard OAuth (the default). */
@@ -145,6 +169,13 @@ export interface ConnectCommandOptions {
   scaffoldDir?: string;
   /** Skip scaffolding even when the target directory is empty. */
   noScaffold?: boolean;
+  /**
+   * LLM provider for ai-sdk / langchain fresh scaffolds only.
+   * openai | anthropic | codex-subscription | claude-subscription | skip
+   */
+  llmAuth?: LlmAuthCliChoice;
+  /** OpenAI API key for --llm-auth openai non-interactive scaffold runs. */
+  openaiApiKey?: string;
 }
 
 export interface AgentSummary {

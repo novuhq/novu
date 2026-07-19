@@ -44,6 +44,7 @@ export * from './storage';
 export { SupportService } from './support.service';
 export * from './throttle';
 export { VerifyPayloadService } from './verify-payload.service';
+export { type WebexTokenRefreshResponse, WebexTokenService } from './webex-token.service';
 export * from './workers';
 export * from './workflow-data.container';
 export * from './workflow-run.service';

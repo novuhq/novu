@@ -278,6 +278,29 @@ function buildUserToolsetPayload(
 }
 
 /**
+ * Anthropic Managed Agents require the `read` builtin to be enabled (and not
+ * `always_deny`) whenever skills are attached — skills are loaded by reading
+ * their bundle files. Omitting it yields a 400:
+ *   "Missing required tool: skills require the read tool…"
+ */
+export const SKILL_REQUIRED_BUILTIN_TOOL = 'read';
+
+/**
+ * Ensures `read` is present in the tool-type list when the agent has skills.
+ * Idempotent — returns `toolTypes` unchanged when skills are absent or `read`
+ * is already selected.
+ */
+export function ensureSkillRequiredTools(toolTypes: string[] | undefined, hasSkills: boolean): string[] {
+  const tools = [...(toolTypes ?? [])];
+
+  if (hasSkills && !tools.includes(SKILL_REQUIRED_BUILTIN_TOOL)) {
+    tools.push(SKILL_REQUIRED_BUILTIN_TOOL);
+  }
+
+  return tools;
+}
+
+/**
  * Build the Anthropic `tools` payload array from builtin tool type strings
  * and optional MCP server entries.
  *
@@ -288,12 +311,19 @@ function buildUserToolsetPayload(
  *
  * Platform tools (e.g. `novu_tools`) are always included, even when the user
  * has no builtin tools or MCP servers enabled.
+ *
+ * When `hasSkills` is true, `read` is force-enabled — Anthropic rejects skill
+ * attachments without a usable read tool on the agent toolset.
  */
 export function buildToolsPayload(
   toolTypes?: string[],
-  mcpServers?: Array<{ name: string; url: string }>
+  mcpServers?: Array<{ name: string; url: string }>,
+  hasSkills = false
 ): Record<string, unknown>[] {
-  return [...buildUserToolsetPayload(toolTypes, mcpServers), ...buildPlatformToolsPayload()];
+  return [
+    ...buildUserToolsetPayload(ensureSkillRequiredTools(toolTypes, hasSkills), mcpServers),
+    ...buildPlatformToolsPayload(),
+  ];
 }
 
 /**

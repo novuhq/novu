@@ -16,9 +16,7 @@ export const ContextsPage = () => {
   return (
     <>
       <PageMeta title="Contexts" />
-      <DashboardLayout
-        headerStartItems={<h1 className="text-foreground-950 flex items-center gap-1">Contexts</h1>}
-      >
+      <DashboardLayout headerStartItems={<h1 className="text-foreground-950 flex items-center gap-1">Contexts</h1>}>
         <ContextList />
         <AnimatedOutlet />
       </DashboardLayout>

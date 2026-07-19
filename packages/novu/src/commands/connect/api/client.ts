@@ -1,3 +1,4 @@
+import { NOVU_ANALYTICS_SOURCE_HEADER } from '@novu/shared';
 import { AxiosError, AxiosInstance } from 'axios';
 import { createNovuAxios, extractNovuApiMessage } from '../../shared/novu-http';
 
@@ -37,9 +38,11 @@ export function createConnectApiClient(input: {
     ? {
         Authorization: `Keyless ${keylessIdentifier}`,
         'Novu-Application-Identifier': keylessIdentifier as string,
+        [NOVU_ANALYTICS_SOURCE_HEADER]: 'cli',
       }
     : {
         Authorization: `ApiKey ${input.secretKey}`,
+        [NOVU_ANALYTICS_SOURCE_HEADER]: 'cli',
       };
 
   const instance = createNovuAxios({

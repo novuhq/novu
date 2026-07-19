@@ -36,4 +36,5 @@ export type AiSdkAgentHandlers = Omit<AgentHandlers, 'onMessage' | 'onToolApprov
     decision: ToolApprovalDecision,
     ctx: AgentActionContext
   ) => Awaitable<MessageContent | AiSdkResult | ReplyHandle | void>;
+  onError?: AgentHandlers['onError'];
 };

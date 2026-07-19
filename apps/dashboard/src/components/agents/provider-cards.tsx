@@ -24,6 +24,7 @@ import { buildEdgeFadeMask, useHorizontalScrollEdges } from '@/hooks/use-horizon
 import { useIsAgentEmailAvailable } from '@/hooks/use-is-agent-email-available';
 import { useLinkAgentIntegration } from '@/hooks/use-link-agent-integration';
 import { getAgentChannelDisplayName } from '@/utils/agent-email-provider-display';
+import { getProviderSquareIconFileName } from '@/utils/provider-square-icon';
 import { ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { openInNewTab } from '@/utils/url';
@@ -38,24 +39,46 @@ const PROVIDER_SETUP_TIME: Record<string, string> = {
   [EmailProviderIdEnum.NovuAgent]: '~ 30 seconds',
   [ChatProviderIdEnum.Slack]: '~ 1 minute',
   [ChatProviderIdEnum.MsTeams]: '~ 1 hour',
-  [ChatProviderIdEnum.WhatsAppBusiness]: '~ 1 hour',
-  [ChatProviderIdEnum.Telegram]: '~ 2 min',
+  [ChatProviderIdEnum.WhatsAppBusiness]: '~ 5 minutes',
+  [ChatProviderIdEnum.Telegram]: '~ 2 minutes',
+  [ChatProviderIdEnum.Sendblue]: '~ 2 minutes',
   [ChatProviderIdEnum.Discord]: '~ 2 minutes',
   'google-chat': '~ 2 minutes',
   linear: '~ 2 minutes',
   zoom: '~ 2 minutes',
-  imessages: '~ 2 minutes',
 };
 
+// The carousel is the only surface that brands the Sendblue channel as "iMessage" (label + icon);
+// every other surface keeps the canonical Sendblue name via getAgentChannelDisplayName.
+const CAROUSEL_IMESSAGE_LABEL = 'iMessage';
+const CAROUSEL_IMESSAGE_ICON_FILE = 'imessages';
+
 function getProviderCardDisplayName(providerId: string, displayName: string): string {
+  if (providerId === ChatProviderIdEnum.Sendblue) {
+    return CAROUSEL_IMESSAGE_LABEL;
+  }
+
   return getAgentChannelDisplayName(providerId, displayName);
+}
+
+function getProviderCardIconFileName(providerId: string): string {
+  if (providerId === ChatProviderIdEnum.Sendblue) {
+    return CAROUSEL_IMESSAGE_ICON_FILE;
+  }
+
+  return getProviderSquareIconFileName(providerId);
 }
 
 const CARD_PROVIDER_ICON_CLASS = 'size-6 shrink-0 object-contain';
 
 function CardProviderIcon({ providerId, displayName }: { providerId: string; displayName: string }) {
   return (
-    <ProviderIcon providerId={providerId} providerDisplayName={displayName} className={CARD_PROVIDER_ICON_CLASS} />
+    <ProviderIcon
+      providerId={providerId}
+      providerDisplayName={displayName}
+      iconFileName={getProviderCardIconFileName(providerId)}
+      className={CARD_PROVIDER_ICON_CLASS}
+    />
   );
 }
 

@@ -15,7 +15,7 @@ export type GroupPreferenceFilterDto = {
    */
   enabled?: boolean | undefined;
   /**
-   * Optional condition using JSON Logic rules
+   * Optional JSON Logic condition evaluated against the trigger payload at fan-out time (for example, `{ "var": "payload.tier" }`)
    */
   condition?: { [k: string]: any } | undefined;
   /**

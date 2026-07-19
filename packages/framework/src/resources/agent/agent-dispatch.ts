@@ -1,6 +1,6 @@
 import { InvalidActionError } from '../../errors/handler.errors';
 import { AgentContextImpl } from './agent.context';
-import { AgentDeliveryError } from './agent.errors';
+import { toAgentError } from './agent.errors';
 import type {
   Agent,
   AgentActionContext,
@@ -13,8 +13,32 @@ import type {
   MessageContent,
   ToolApprovalDecision,
 } from './agent.types';
-import { AgentEventEnum, PendingApproval } from './agent.types';
+import { AgentEventEnum, isAgentErrorSuppress, PendingApproval } from './agent.types';
+import { isCardElement } from './guards';
 import { parseApprovalActionId, type ToolApprovalRequestPayload } from './tool-approval/action-id';
+
+function isMessageContent(value: unknown): value is MessageContent {
+  if (typeof value === 'string') {
+    return true;
+  }
+
+  if (typeof value === 'object' && value !== null && isCardElement(value)) {
+    return true;
+  }
+
+  if (typeof value === 'object' && value !== null && ('markdown' in value || 'card' in value || 'files' in value)) {
+    return true;
+  }
+
+  return false;
+}
+
+function ctxForEvent(
+  ctx: AgentContextImpl,
+  _event: string
+): AgentMessageContext | AgentActionContext | AgentReactionContext | AgentResolveContext {
+  return ctx as AgentMessageContext | AgentActionContext | AgentReactionContext | AgentResolveContext;
+}
 
 function findApprovalInHistory(
   history: AgentHistoryEntry[],
@@ -45,15 +69,41 @@ export interface DispatchAgentEventOptions {
 
 export async function dispatchAgentEvent(options: DispatchAgentEventOptions): Promise<void> {
   const ctx = new AgentContextImpl(options.bridge, options.secretKey, options.agent.handlers.toolApproval);
+  const { agent, event, logger } = options;
 
   try {
-    await runAgentHandler(options.agent, options.event, ctx);
+    await runAgentHandler(agent, event, ctx);
     await ctx.flush();
   } catch (err) {
-    if (err instanceof AgentDeliveryError) {
-      options.logger?.error(`[agent:${options.agent.id}] ${err.message}`);
-    } else {
-      options.logger?.error(`[agent:${options.agent.id}] Handler error:`, err);
+    const error = toAgentError(err);
+
+    logger?.error(`[agent:${agent.id}] Turn failed (${event}): ${error.message}`, error.cause ?? error);
+
+    let reported = false;
+
+    if (agent.handlers.onError) {
+      try {
+        const result = await agent.handlers.onError(error, ctxForEvent(ctx, event));
+
+        if (isAgentErrorSuppress(result)) {
+          reported = true;
+        } else if (isMessageContent(result)) {
+          await ctx.reply(result);
+          reported = true;
+        }
+      } catch (onErrorErr) {
+        logger?.error(`[agent:${agent.id}] onError failed:`, onErrorErr);
+      }
+    }
+
+    if (!reported) {
+      await ctx.reportTurnError();
+    }
+  } finally {
+    try {
+      await ctx.typing.stop();
+    } catch {
+      // cosmetic — never mask the original failure
     }
   }
 }

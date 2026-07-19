@@ -1,5 +1,11 @@
 export const CHANNEL_POLL_INTERVAL_MS = 2_000;
 export const CHANNEL_POLL_TIMEOUT_MS = 5 * 60 * 1000;
+/**
+ * Meta Embedded Signup walks the user through a multi-step Facebook dialog
+ * (business selection, phone verification), so stage-1 polling gets a much
+ * longer window than the standard 5-minute channel timeout.
+ */
+export const WHATSAPP_SIGNUP_POLL_TIMEOUT_MS = 15 * 60 * 1000;
 
 export function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));

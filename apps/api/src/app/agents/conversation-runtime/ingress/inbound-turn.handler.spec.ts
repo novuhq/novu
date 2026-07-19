@@ -21,6 +21,8 @@ describe('AgentInboundHandler', () => {
     integrationId: 'integration1',
     agentIdentifier: 'support-agent',
     acknowledgeOnReceived: false,
+    // Default happy-path bridge tests use open access so unresolved senders still dispatch.
+    subscriberAccess: AgentSubscriberAccessEnum.OPEN,
   };
 
   const conversation = {
@@ -180,6 +182,10 @@ describe('AgentInboundHandler', () => {
       maybeBlock: sinon.stub().resolves(false),
       maybeBlockConversation: sinon.stub().resolves(false),
     };
+    const replyApprovalInterceptor = {
+      tryHandleAsApprovalReply: sinon.stub().resolves(false),
+      tryHandleAsApprovalReaction: sinon.stub().resolves(false),
+    };
     const handler = new AgentInboundHandler(
       logger as any,
       subscriberResolver as any,
@@ -198,12 +204,14 @@ describe('AgentInboundHandler', () => {
       connectClaimTokenService as any,
       keylessAbuseGuard as any,
       planLimitGate as any,
-      inboundAck as any
+      inboundAck as any,
+      replyApprovalInterceptor as any
     );
 
     return {
       handler,
       logger,
+      replyApprovalInterceptor,
       attachmentStorage,
       bridgeExecutor,
       conversationService,
@@ -287,6 +295,33 @@ describe('AgentInboundHandler', () => {
         isBot: false,
       },
       raw: { dkim, spf },
+      attachments: [],
+    };
+  }
+
+  function makeWhatsAppDmThread() {
+    return {
+      id: 'whatsapp:15551234567',
+      channelId: 'whatsapp:15551234567',
+      isDM: true,
+      toJSON: () => ({ id: 'whatsapp:15551234567', channelId: 'whatsapp:15551234567', isDM: true }),
+      startTyping: sinon.stub().resolves(undefined),
+      post: sinon.stub().resolves({ id: 'whatsapp-reply-1', threadId: 'whatsapp:15551234567' }),
+    };
+  }
+
+  function makeWhatsAppDmMessage(senderPhone: string) {
+    return {
+      id: 'whatsapp-msg-1',
+      threadId: 'whatsapp:15551234567',
+      text: 'hello',
+      author: {
+        userId: senderPhone,
+        fullName: 'WhatsApp Sender',
+        userName: senderPhone,
+        isBot: false,
+      },
+      raw: {},
       attachments: [],
     };
   }
@@ -424,6 +459,11 @@ describe('AgentInboundHandler', () => {
     });
 
     it('should reply with no-access message for managed agents when subscriber is unresolved', async () => {
+      const restrictedConfig = {
+        ...config,
+        isManaged: true,
+        subscriberAccess: AgentSubscriberAccessEnum.RESTRICTED,
+      };
       const { handler, managedAgentService, outboundGateway } = makeHandler({
         subscriberResolve: sinon.stub().resolves(null),
         subscriberFindById: sinon.stub().resolves(null),
@@ -432,7 +472,7 @@ describe('AgentInboundHandler', () => {
       const thread = makeSlackDmThread();
       const message = makeSlackDmMessage();
 
-      await handler.handle('agent1', config as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+      await handler.handle('agent1', restrictedConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
 
       expect(managedAgentService.dispatch.called).to.equal(false);
       expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
@@ -441,11 +481,73 @@ describe('AgentInboundHandler', () => {
       });
     });
 
+    it('should reply with access-denied for custom-code restricted agents and not forward to the bridge', async () => {
+      const restrictedConfig = {
+        ...config,
+        isManaged: false,
+        subscriberAccess: AgentSubscriberAccessEnum.RESTRICTED,
+      };
+      const { handler, bridgeExecutor, outboundGateway, inboundAck } = makeHandler({
+        subscriberResolve: sinon.stub().resolves(null),
+        subscriberFindById: sinon.stub().resolves(null),
+        agentFindOne: sinon.stub().resolves({ _id: 'agent1', runtime: 'bridge' }),
+      });
+      const thread = makeSlackDmThread();
+      const message = makeSlackDmMessage();
+
+      await handler.handle('agent1', restrictedConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(bridgeExecutor.execute.called).to.equal(false);
+      expect(inboundAck.showWorkingSignal.called).to.equal(false);
+      expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
+      expect(outboundGateway.replyOnThread.firstCall.args[1]).to.deep.equal({
+        markdown: UNRESOLVED_SUBSCRIBER_ACCESS_REPLY,
+      });
+      expect(outboundGateway.replyOnThread.firstCall.args[2]).to.deep.include({
+        persist: {
+          conversationId: conversation._id,
+          channel: conversation.channels[0],
+          agentIdentifier: 'support-agent',
+          content: UNRESOLVED_SUBSCRIBER_ACCESS_REPLY,
+          environmentId: 'env1',
+          organizationId: 'org1',
+        },
+      });
+    });
+
+    it('should dispatch custom-code open agents with a null subscriber when the sender is unknown', async () => {
+      const openConfig = {
+        ...config,
+        isManaged: false,
+        subscriberAccess: AgentSubscriberAccessEnum.OPEN,
+      };
+      const resolveOrProvision = sinon.stub().resolves({ outcome: 'resolved', subscriberId: 'should-not-provision' });
+      const { handler, bridgeExecutor, outboundGateway, subscriberResolver, inboundAck } = makeHandler({
+        subscriberResolve: sinon.stub().resolves(null),
+        subscriberResolveOrProvision: resolveOrProvision,
+        subscriberFindById: sinon.stub().resolves(null),
+        agentFindOne: sinon.stub().resolves({ _id: 'agent1', runtime: 'bridge' }),
+      });
+      const thread = makeSlackDmThread();
+      const message = makeSlackDmMessage();
+
+      await handler.handle('agent1', openConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(resolveOrProvision.called).to.equal(false);
+      expect(subscriberResolver.resolveSubscriber.calledOnce).to.equal(true);
+      expect(outboundGateway.replyOnThread.called).to.equal(false);
+      expect(inboundAck.showWorkingSignal.calledOnce).to.equal(true);
+      expect(bridgeExecutor.execute.calledOnce).to.equal(true);
+      expect(bridgeExecutor.execute.firstCall.args[0].subscriber).to.equal(null);
+    });
+
     it('should reply with email-specific no-access message when sender email is unknown', async () => {
       const emailConfig = {
         ...config,
         platform: AgentPlatformEnum.EMAIL,
         integrationIdentifier: 'email-main',
+        isManaged: true,
+        subscriberAccess: AgentSubscriberAccessEnum.RESTRICTED,
       };
       const senderEmail = 'unknown@example.com';
       const { handler, managedAgentService, outboundGateway } = makeHandler({
@@ -461,7 +563,7 @@ describe('AgentInboundHandler', () => {
       expect(managedAgentService.dispatch.called).to.equal(false);
       expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
       expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.include(senderEmail);
-      expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.include('Novu account');
+      expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.include('known user');
     });
 
     it('should reply with transient copy and log a structured warn when subscriber resolution errors (email)', async () => {
@@ -553,6 +655,7 @@ describe('AgentInboundHandler', () => {
         platform: AgentPlatformEnum.SLACK,
         isKeyless: true,
         isManaged: true,
+        subscriberAccess: AgentSubscriberAccessEnum.RESTRICTED,
       };
       const { handler, managedAgentService, outboundGateway } = makeHandler({
         subscriberResolve: sinon.stub().resolves(null),
@@ -685,9 +788,12 @@ describe('AgentInboundHandler', () => {
 
       expect(subscriberResolver.resolveOrProvision.called).to.equal(false);
       expect(subscriberResolver.resolveSubscriber.called).to.equal(false);
-      // No identity resolved → managed subscriber gate blocks dispatch.
+      // No identity resolved → handler gate blocks dispatch with verification copy.
       expect(managedAgentService.dispatch.called).to.equal(false);
       expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
+      expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.include('DKIM/SPF');
+      expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.include('victim@example.com');
+      expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.not.include('known user');
     });
 
     it('should not map a spoofed (unverified) email onto an existing subscriber for a restricted agent', async () => {
@@ -716,6 +822,8 @@ describe('AgentInboundHandler', () => {
       expect(subscriberRepository.findBySubscriberId.called).to.equal(false);
       expect(managedAgentService.dispatch.called).to.equal(false);
       expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
+      expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.include('DKIM/SPF');
+      expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.not.include('known user');
     });
 
     it('should resolve identity for a DKIM/SPF-verified restricted email sender', async () => {
@@ -742,6 +850,260 @@ describe('AgentInboundHandler', () => {
       expect(managedAgentService.dispatch.calledOnce).to.equal(true);
       expect(outboundGateway.replyOnThread.called).to.equal(false);
     });
+
+    it('should route an open-access WhatsApp agent through resolveOrProvision and dispatch', async () => {
+      const whatsappConfig = {
+        ...config,
+        platform: AgentPlatformEnum.WHATSAPP,
+        integrationIdentifier: 'whatsapp-main',
+        isManaged: true,
+        subscriberAccess: AgentSubscriberAccessEnum.OPEN,
+      };
+      const senderPhone = '+15551234567';
+      const resolveOrProvision = sinon.stub().resolves({ outcome: 'resolved', subscriberId: 'sub-provisioned' });
+      const { handler, managedAgentService, outboundGateway } = makeHandler({
+        subscriberResolveOrProvision: resolveOrProvision,
+        subscriberFindById: sinon.stub().resolves({ _id: 'sub-mongo', subscriberId: 'sub-provisioned' }),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+      });
+      const thread = makeWhatsAppDmThread();
+      const message = makeWhatsAppDmMessage(senderPhone);
+
+      await handler.handle('agent1', whatsappConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(resolveOrProvision.calledOnce).to.equal(true);
+      expect(resolveOrProvision.firstCall.args[0]).to.include({
+        platform: AgentPlatformEnum.WHATSAPP,
+        platformUserId: senderPhone,
+      });
+      expect(outboundGateway.replyOnThread.called).to.equal(false);
+      expect(managedAgentService.dispatch.calledOnce).to.equal(true);
+    });
+
+    it('should not auto-provision for a restricted WhatsApp agent and keep the no-access gate', async () => {
+      const whatsappConfig = {
+        ...config,
+        platform: AgentPlatformEnum.WHATSAPP,
+        integrationIdentifier: 'whatsapp-main',
+        isManaged: true,
+        subscriberAccess: AgentSubscriberAccessEnum.RESTRICTED,
+      };
+      const senderPhone = '+15559876543';
+      const resolveOrProvision = sinon.stub().resolves({ outcome: 'resolved', subscriberId: 'sub-provisioned' });
+      const { handler, managedAgentService, outboundGateway } = makeHandler({
+        subscriberResolve: sinon.stub().resolves(null),
+        subscriberResolveOrProvision: resolveOrProvision,
+        subscriberFindById: sinon.stub().resolves(null),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+      });
+      const thread = makeWhatsAppDmThread();
+      const message = makeWhatsAppDmMessage(senderPhone);
+
+      await handler.handle('agent1', whatsappConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(resolveOrProvision.called).to.equal(false);
+      expect(managedAgentService.dispatch.called).to.equal(false);
+      expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
+      expect(outboundGateway.replyOnThread.firstCall.args[1]).to.deep.equal({
+        markdown: UNRESOLVED_SUBSCRIBER_ACCESS_REPLY,
+      });
+    });
+
+    it('should not call resolveOrProvision for a restricted Slack agent', async () => {
+      const slackConfig = {
+        ...config,
+        platform: AgentPlatformEnum.SLACK,
+        isManaged: true,
+        subscriberAccess: AgentSubscriberAccessEnum.RESTRICTED,
+      };
+      const resolveOrProvision = sinon.stub().resolves({ outcome: 'resolved', subscriberId: 'sub-provisioned' });
+      const { handler, managedAgentService, outboundGateway } = makeHandler({
+        subscriberResolve: sinon.stub().resolves(null),
+        subscriberResolveOrProvision: resolveOrProvision,
+        subscriberFindById: sinon.stub().resolves(null),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+      });
+      const thread = makeSlackDmThread();
+      const message = makeSlackDmMessage();
+
+      await handler.handle('agent1', slackConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(resolveOrProvision.called).to.equal(false);
+      expect(managedAgentService.dispatch.called).to.equal(false);
+      expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
+    });
+
+    it('should call resolveOrProvision for an open Telegram DM (chatId equals author userId)', async () => {
+      const telegramConfig = {
+        ...config,
+        platform: AgentPlatformEnum.TELEGRAM,
+        integrationIdentifier: 'telegram-main',
+        isManaged: true,
+        subscriberAccess: AgentSubscriberAccessEnum.OPEN,
+      };
+      const resolveOrProvision = sinon.stub().resolves({ outcome: 'resolved', subscriberId: 'sub-tg' });
+      const { handler, managedAgentService, outboundGateway } = makeHandler({
+        subscriberResolveOrProvision: resolveOrProvision,
+        subscriberFindById: sinon.stub().resolves({ _id: 'sub-mongo', subscriberId: 'sub-tg' }),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+      });
+      const thread = {
+        id: 'telegram:42',
+        channelId: '42',
+        isDM: true,
+        toJSON: () => ({ id: 'telegram:42', channelId: '42', isDM: true }),
+        startTyping: sinon.stub().resolves(undefined),
+        post: sinon.stub().resolves({ id: 'reply-1', threadId: 'telegram:42' }),
+      };
+      const message = {
+        id: 'msg-1',
+        threadId: 'telegram:42',
+        text: 'hello',
+        author: { userId: '42', fullName: 'TG User', userName: 'tguser', isBot: false },
+        raw: {},
+        attachments: [],
+      };
+
+      await handler.handle('agent1', telegramConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(resolveOrProvision.calledOnce).to.equal(true);
+      expect(resolveOrProvision.firstCall.args[0]).to.include({
+        platform: AgentPlatformEnum.TELEGRAM,
+        platformUserId: '42',
+      });
+      expect(outboundGateway.replyOnThread.called).to.equal(false);
+      expect(managedAgentService.dispatch.calledOnce).to.equal(true);
+    });
+
+    it('should not call resolveOrProvision for an open Telegram group chat', async () => {
+      const telegramConfig = {
+        ...config,
+        platform: AgentPlatformEnum.TELEGRAM,
+        integrationIdentifier: 'telegram-main',
+        isManaged: true,
+        subscriberAccess: AgentSubscriberAccessEnum.OPEN,
+      };
+      const resolveOrProvision = sinon.stub().resolves({ outcome: 'resolved', subscriberId: 'sub-tg' });
+      const { handler, managedAgentService, outboundGateway } = makeHandler({
+        subscriberResolve: sinon.stub().resolves(null),
+        subscriberResolveOrProvision: resolveOrProvision,
+        subscriberFindById: sinon.stub().resolves(null),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+      });
+      // Group: chat.id (-100…) ≠ from.id (user).
+      const thread = {
+        id: 'telegram:-100123',
+        channelId: '-100123',
+        isDM: false,
+        toJSON: () => ({ id: 'telegram:-100123', channelId: '-100123', isDM: false }),
+        startTyping: sinon.stub().resolves(undefined),
+        post: sinon.stub().resolves({ id: 'reply-1', threadId: 'telegram:-100123' }),
+      };
+      const message = {
+        id: 'msg-1',
+        threadId: 'telegram:-100123',
+        text: 'hello group',
+        author: { userId: '42', fullName: 'TG User', userName: 'tguser', isBot: false },
+        raw: {},
+        attachments: [],
+      };
+
+      await handler.handle('agent1', telegramConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(resolveOrProvision.called).to.equal(false);
+      expect(managedAgentService.dispatch.called).to.equal(false);
+      // Managed open leftovers (Telegram group) skip silently — no denial spam.
+      expect(outboundGateway.replyOnThread.called).to.equal(false);
+    });
+
+    it('should dispatch custom-code open Telegram group turns with null subscriber and no denial reply', async () => {
+      const telegramConfig = {
+        ...config,
+        platform: AgentPlatformEnum.TELEGRAM,
+        integrationIdentifier: 'telegram-main',
+        isManaged: false,
+        subscriberAccess: AgentSubscriberAccessEnum.OPEN,
+      };
+      const { handler, bridgeExecutor, outboundGateway } = makeHandler({
+        subscriberResolve: sinon.stub().resolves(null),
+        subscriberFindById: sinon.stub().resolves(null),
+        agentFindOne: sinon.stub().resolves({ _id: 'agent1', runtime: 'bridge' }),
+      });
+      const thread = {
+        id: 'telegram:-100123',
+        channelId: '-100123',
+        isDM: false,
+        toJSON: () => ({ id: 'telegram:-100123', channelId: '-100123', isDM: false }),
+        startTyping: sinon.stub().resolves(undefined),
+        post: sinon.stub().resolves({ id: 'reply-1', threadId: 'telegram:-100123' }),
+      };
+      const message = {
+        id: 'msg-1',
+        threadId: 'telegram:-100123',
+        text: 'hello group',
+        author: { userId: '42', fullName: 'TG User', userName: 'tguser', isBot: false },
+        raw: {},
+        attachments: [],
+      };
+
+      await handler.handle('agent1', telegramConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(outboundGateway.replyOnThread.called).to.equal(false);
+      expect(bridgeExecutor.execute.calledOnce).to.equal(true);
+      expect(bridgeExecutor.execute.firstCall.args[0].subscriber).to.equal(null);
+    });
+
+    it('should route an open-access Sendblue agent through resolveOrProvision and dispatch', async () => {
+      const sendblueConfig = {
+        ...config,
+        platform: AgentPlatformEnum.SENDBLUE,
+        integrationIdentifier: 'sendblue-main',
+        isManaged: true,
+        subscriberAccess: AgentSubscriberAccessEnum.OPEN,
+      };
+      const senderPhone = '+15551234567';
+      const resolveOrProvision = sinon.stub().resolves({ outcome: 'resolved', subscriberId: 'sub-sendblue' });
+      const { handler, managedAgentService, outboundGateway } = makeHandler({
+        subscriberResolveOrProvision: resolveOrProvision,
+        subscriberFindById: sinon.stub().resolves({ _id: 'sub-mongo', subscriberId: 'sub-sendblue' }),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+      });
+      const thread = {
+        id: 'sendblue:+15557654321:+15551234567',
+        channelId: 'sendblue:+15557654321:+15551234567',
+        isDM: true,
+        toJSON: () => ({
+          id: 'sendblue:+15557654321:+15551234567',
+          channelId: 'sendblue:+15557654321:+15551234567',
+          isDM: true,
+        }),
+        startTyping: sinon.stub().resolves(undefined),
+        post: sinon.stub().resolves({ id: 'sb-reply-1', threadId: 'sendblue:+15557654321:+15551234567' }),
+      };
+      const message = {
+        id: 'sb-msg-1',
+        threadId: 'sendblue:+15557654321:+15551234567',
+        text: 'hello',
+        author: {
+          userId: senderPhone,
+          fullName: 'SMS Sender',
+          userName: senderPhone,
+          isBot: false,
+        },
+        raw: {},
+        attachments: [],
+      };
+
+      await handler.handle('agent1', sendblueConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(resolveOrProvision.calledOnce).to.equal(true);
+      expect(resolveOrProvision.firstCall.args[0]).to.include({
+        platform: AgentPlatformEnum.SENDBLUE,
+        platformUserId: senderPhone,
+      });
+      expect(outboundGateway.replyOnThread.called).to.equal(false);
+      expect(managedAgentService.dispatch.calledOnce).to.equal(true);
+    });
   });
 
   describe('Telegram /start subscriber-link handling', () => {
@@ -753,6 +1115,8 @@ describe('AgentInboundHandler', () => {
       integrationId: 'integration1',
       agentIdentifier: 'support-agent',
       acknowledgeOnReceived: false,
+      // Plain (non-/start) messages need open access to reach the bridge without a linked subscriber.
+      subscriberAccess: AgentSubscriberAccessEnum.OPEN,
     };
 
     const matchingStartPayload = {
@@ -838,12 +1202,12 @@ describe('AgentInboundHandler', () => {
       expect(bridgeExecutor.execute.called).to.equal(false);
     });
 
-    it('does not mark the integration connected on /start alone for the dashboard test identity (connect:)', async () => {
-      const connectPayload = { ...matchingStartPayload, subscriberId: 'connect:user-123' };
+    it('does not mark the integration connected on /start alone for the dashboard test identity', async () => {
+      const connectPayload = { ...matchingStartPayload, subscriberId: 'user-123' };
       const { handler, agentIntegrationRepository } = makeHandler({
         linkTelegramExecute: sinon
           .stub()
-          .resolves({ created: true, subscriberId: 'connect:user-123', agentIdentifier: 'support-agent' }),
+          .resolves({ created: true, subscriberId: 'user-123', agentIdentifier: 'support-agent' }),
         startCodeConsume: sinon.stub().resolves({ status: 'consumed', payload: connectPayload }),
       });
       const thread = makeTelegramThread();
@@ -932,10 +1296,10 @@ describe('AgentInboundHandler', () => {
       expect(bridgeExecutor.execute.called).to.equal(false);
     });
 
-    it('does not mark connectedAt when a stale code re-tap finds an existing dashboard (connect:) endpoint', async () => {
+    it('does not mark connectedAt when a stale code re-tap finds an existing dashboard endpoint', async () => {
       const { handler, agentIntegrationRepository } = makeHandler({
         startCodeConsume: sinon.stub().resolves({ status: 'missing' }),
-        findTelegramEndpointByIdentity: sinon.stub().resolves({ subscriberId: 'connect:user-123' }),
+        findTelegramEndpointByIdentity: sinon.stub().resolves({ subscriberId: 'user-123' }),
       });
       const thread = makeTelegramThread();
       const message = makeStartMessage('/start reused');

@@ -33,6 +33,7 @@ export enum ChannelTypeEnum {
   SMS = 'sms',
   CHAT = 'chat',
   PUSH = 'push',
+  TOOL = 'tool',
 }
 
 export interface IAttachmentOptions {
@@ -100,6 +101,7 @@ export enum TriggerEventStatusEnum {
 }
 
 export enum EmailProviderIdEnum {
+  Anypost = 'anypost',
   EmailJS = 'emailjs',
   Mailgun = 'mailgun',
   Mailjet = 'mailjet',
@@ -176,6 +178,7 @@ export enum ChatProviderIdEnum {
   WhatsAppBusiness = 'whatsapp-business',
   ChatWebhook = 'chat-webhook',
   Telegram = 'telegram',
+  Sendblue = 'sendblue',
 }
 
 export enum PushProviderIdEnum {
@@ -191,6 +194,12 @@ export enum PushProviderIdEnum {
 
 export enum InAppProviderIdEnum {
   Novu = 'novu',
+}
+
+export enum ToolProviderIdEnum {
+  PagerDuty = 'pagerduty',
+  Opsgenie = 'opsgenie',
+  Webhook = 'tool-webhook',
 }
 
 /**

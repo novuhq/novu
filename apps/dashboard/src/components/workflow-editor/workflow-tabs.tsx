@@ -19,8 +19,8 @@ import {
   RiQuillPenLine,
 } from 'react-icons/ri';
 import { Link, useMatch, useNavigate, useParams } from 'react-router-dom';
-import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useWorkflowEditorRoutes } from '@/components/workflow-editor/use-workflow-editor-routes';
+import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { IS_AI_FEATURES_ENABLED } from '@/config';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
@@ -345,9 +345,14 @@ export const WorkflowTabs = () => {
     }
 
     const hasContentSteps = workflow?.steps.some((step) =>
-      [StepTypeEnum.EMAIL, StepTypeEnum.SMS, StepTypeEnum.PUSH, StepTypeEnum.IN_APP, StepTypeEnum.CHAT].includes(
-        step.type
-      )
+      [
+        StepTypeEnum.EMAIL,
+        StepTypeEnum.SMS,
+        StepTypeEnum.PUSH,
+        StepTypeEnum.IN_APP,
+        StepTypeEnum.CHAT,
+        StepTypeEnum.TOOL,
+      ].includes(step.type)
     );
     if (hasContentSteps) {
       suggestions.push({ label: AiWorkflowSuggestion.IMPROVE_MESSAGING, icon: RiQuillPenLine });

@@ -82,9 +82,7 @@ function EnterpriseConversationsContent({
     [navigate, redirectConversationSelectionTo]
   );
 
-  const onConversationSelect = redirectsOnSelect
-    ? handleConversationSelectWithRedirect
-    : handleConversationSelect;
+  const onConversationSelect = redirectsOnSelect ? handleConversationSelectWithRedirect : handleConversationSelect;
   const selectedConversationId = redirectsOnSelect ? null : conversationItemId;
 
   const queryClient = useQueryClient();

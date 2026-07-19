@@ -271,9 +271,9 @@ export function ConnectAgentStep({
   // agent is created with exactly what the marketing-site template advertised.
   const provisionAgentFromTemplate = useCallback(
     async (template: AgentTemplate) => {
-  if (!connectorId || !runtime) {
-    return;
-  }
+      if (!connectorId || !runtime) {
+        return;
+      }
 
       setIsAutoProvisioningFromTemplate(true);
 
@@ -341,6 +341,7 @@ export function ConnectAgentStep({
             const message = err instanceof NovuApiError ? err.message : 'Could not create agent.';
             showErrorToast(message, 'Create failed');
           },
+          analyticsSource: 'dashboard_onboarding',
         }
       );
     },
@@ -976,6 +977,7 @@ export function ConnectAgentStep({
           });
           showErrorToast(message, 'Create failed');
         },
+        analyticsSource: 'dashboard_onboarding',
       }
     );
   };

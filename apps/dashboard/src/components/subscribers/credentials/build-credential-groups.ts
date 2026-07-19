@@ -3,7 +3,11 @@ import type { ChannelEndpointType, IIntegration } from '@novu/shared';
 import { ChannelTypeEnum, ChatProviderIdEnum, providers } from '@novu/shared';
 import type { ChannelConnectionDto } from '@/api/channel-connections';
 import type { ChannelEndpointDto, ChannelEndpointPayload } from '@/api/channel-endpoints';
-import { type ChatEndpointTypeOption, getAddableEndpointTypes } from './chat-endpoint-types';
+import {
+  type ChatEndpointTypeOption,
+  getAddableEndpointTypes,
+  getAddableToolEndpointTypes,
+} from './chat-endpoint-types';
 
 export type EditableCredentialRow = {
   id: string;
@@ -99,9 +103,10 @@ const CHANNEL_LABELS: Record<ChannelTypeEnum, string> = {
   [ChannelTypeEnum.SMS]: 'SMS',
   [ChannelTypeEnum.CHAT]: 'CHAT',
   [ChannelTypeEnum.PUSH]: 'PUSH',
+  [ChannelTypeEnum.TOOL]: 'TOOL',
 };
 
-/** Section order, following the Figma layout (email, sms, push, chat). */
+/** Section order, following the Figma layout (email, sms, push, chat). Tool is appended when enabled. */
 const GROUP_ORDER: ChannelTypeEnum[] = [
   ChannelTypeEnum.EMAIL,
   ChannelTypeEnum.SMS,
@@ -113,8 +118,11 @@ function getProviderDisplayName(providerId: string): string {
   return providers.find((provider) => provider.id === providerId)?.displayName ?? providerId;
 }
 
-function isWhatsApp(providerId: string): boolean {
-  return providerId === ChatProviderIdEnum.WhatsAppBusiness;
+/** Chat providers that deliver to the subscriber's phone number rather than a webhook/channel endpoint. */
+const PHONE_BASED_CHAT_PROVIDERS = new Set<string>([ChatProviderIdEnum.WhatsAppBusiness, ChatProviderIdEnum.Sendblue]);
+
+function isPhoneBasedChatProvider(providerId: string): boolean {
+  return PHONE_BASED_CHAT_PROVIDERS.has(providerId);
 }
 
 function getActiveIntegrationsByChannel(integrations: IIntegration[], channel: ChannelTypeEnum): IIntegration[] {
@@ -205,62 +213,71 @@ function buildReadonlyRows(
   }));
 }
 
-function buildChatGroup(
-  integrations: IIntegration[],
-  storedChannels: StoredChannel[],
-  channelEndpoints: ChannelEndpointDto[],
-  channelConnections: ChannelConnectionDto[],
-  phone: string
-): ChannelGroup {
-  const chatIntegrations = getActiveIntegrationsByChannel(integrations, ChannelTypeEnum.CHAT);
-  const chatEndpoints = channelEndpoints.filter(
-    (endpoint) => !endpoint.channel || endpoint.channel === ChannelTypeEnum.CHAT
-  );
+type EndpointIntegrationAddable = {
+  addableTypes: ChatEndpointTypeOption[];
+  connectionIdentifier?: string;
+};
 
-  const rows: CredentialRow[] = [];
+type CollectEndpointIntegrationRowsArgs = {
+  channel: ChannelTypeEnum;
+  idPrefix: string;
+  integrations: IIntegration[];
+  channelEndpoints: ChannelEndpointDto[];
+  getAddable: (integration: IIntegration) => EndpointIntegrationAddable;
+  prependItemsForIntegration?: (integration: IIntegration) => ChatCredentialItem[];
+  /** Skip integrations that have neither stored credentials nor addable types. */
+  skipEmptyNonAddable?: boolean;
+};
+
+/**
+ * Shared builder for endpoint-backed integration cards (chat + tool): one card per
+ * active integration, plus orphan endpoints whose integration is inactive/missing.
+ */
+function collectEndpointIntegrationRows({
+  channel,
+  idPrefix,
+  integrations,
+  channelEndpoints,
+  getAddable,
+  prependItemsForIntegration,
+  skipEmptyNonAddable = false,
+}: CollectEndpointIntegrationRowsArgs): {
+  integrationRows: ChatIntegrationRow[];
+  orphanRows: ChatIntegrationRow[];
+} {
+  const integrationRows: ChatIntegrationRow[] = [];
   const consumedEndpoints = new Set<string>();
 
-  for (const integration of chatIntegrations.filter((integration) => !isWhatsApp(integration.providerId))) {
-    const items: ChatCredentialItem[] = [];
-    const webhookItem = buildWebhookItem(integration, storedChannels);
+  for (const integration of integrations) {
+    const items: ChatCredentialItem[] = [...(prependItemsForIntegration?.(integration) ?? [])];
 
-    if (webhookItem) {
-      items.push(webhookItem);
-    }
-
-    for (const endpoint of chatEndpoints.filter(
+    for (const endpoint of channelEndpoints.filter(
       (endpoint) => endpoint.integrationIdentifier === integration.identifier
     )) {
       items.push(buildEndpointItem(endpoint, integration));
       consumedEndpoints.add(endpoint.identifier);
     }
 
-    const connection = channelConnections.find(
-      (candidate) => candidate.integrationIdentifier === integration.identifier
-    );
+    const { addableTypes, connectionIdentifier } = getAddable(integration);
 
-    rows.push({
-      id: `chat:${integration.providerId}:${integration.identifier}`,
+    if (skipEmptyNonAddable && items.length === 0 && addableTypes.length === 0) {
+      continue;
+    }
+
+    integrationRows.push({
+      id: `${idPrefix}:${integration.providerId}:${integration.identifier}`,
       kind: 'chatIntegration',
-      channel: ChannelTypeEnum.CHAT,
+      channel,
       providerId: integration.providerId,
       displayName: integration.name || getProviderDisplayName(integration.providerId),
       integrationIdentifier: integration.identifier,
       items,
-      addableTypes: getAddableEndpointTypes(integration.providerId, !!connection),
-      connectionIdentifier: connection?.identifier,
+      addableTypes,
+      connectionIdentifier,
     });
   }
 
-  const whatsAppRows = buildReadonlyRows(
-    chatIntegrations.filter((integration) => isWhatsApp(integration.providerId)),
-    phone,
-    'phone'
-  );
-  rows.push(...whatsAppRows);
-
-  // Endpoints whose integration is not an active chat integration still get their own card.
-  const orphanEndpoints = chatEndpoints.filter((endpoint) => !consumedEndpoints.has(endpoint.identifier));
+  const orphanEndpoints = channelEndpoints.filter((endpoint) => !consumedEndpoints.has(endpoint.identifier));
   const orphanGroups = new Map<string, ChannelEndpointDto[]>();
 
   for (const endpoint of orphanEndpoints) {
@@ -268,14 +285,16 @@ function buildChatGroup(
     orphanGroups.set(key, [...(orphanGroups.get(key) ?? []), endpoint]);
   }
 
+  const orphanRows: ChatIntegrationRow[] = [];
+
   for (const [key, endpoints] of orphanGroups) {
     const [first] = endpoints;
     const providerId = first.providerId ?? '';
 
-    rows.push({
-      id: `chat-orphan:${key}`,
+    orphanRows.push({
+      id: `${idPrefix}-orphan:${key}`,
       kind: 'chatIntegration',
-      channel: ChannelTypeEnum.CHAT,
+      channel,
       providerId,
       displayName: getProviderDisplayName(providerId),
       integrationIdentifier: first.integrationIdentifier ?? '',
@@ -284,10 +303,77 @@ function buildChatGroup(
     });
   }
 
+  return { integrationRows, orphanRows };
+}
+
+function buildChatGroup(
+  integrations: IIntegration[],
+  storedChannels: StoredChannel[],
+  channelEndpoints: ChannelEndpointDto[],
+  channelConnections: ChannelConnectionDto[],
+  phone: string
+): ChannelGroup {
+  const chatIntegrations = getActiveIntegrationsByChannel(integrations, ChannelTypeEnum.CHAT);
+  // Null channel is legacy chat; exclude other channels when the list is unfiltered.
+  const chatEndpoints = channelEndpoints.filter(
+    (endpoint) => !endpoint.channel || endpoint.channel === ChannelTypeEnum.CHAT
+  );
+
+  const { integrationRows, orphanRows } = collectEndpointIntegrationRows({
+    channel: ChannelTypeEnum.CHAT,
+    idPrefix: 'chat',
+    integrations: chatIntegrations.filter((integration) => !isPhoneBasedChatProvider(integration.providerId)),
+    channelEndpoints: chatEndpoints,
+    prependItemsForIntegration: (integration) => {
+      const webhookItem = buildWebhookItem(integration, storedChannels);
+
+      return webhookItem ? [webhookItem] : [];
+    },
+    getAddable: (integration) => {
+      const connection = channelConnections.find(
+        (candidate) => candidate.integrationIdentifier === integration.identifier
+      );
+
+      return {
+        addableTypes: getAddableEndpointTypes(integration.providerId, !!connection),
+        connectionIdentifier: connection?.identifier,
+      };
+    },
+  });
+
+  const phoneBasedRows = buildReadonlyRows(
+    chatIntegrations.filter((integration) => isPhoneBasedChatProvider(integration.providerId)),
+    phone,
+    'phone'
+  );
+
   return {
     channel: ChannelTypeEnum.CHAT,
     label: CHANNEL_LABELS[ChannelTypeEnum.CHAT],
-    rows,
+    rows: [...integrationRows, ...phoneBasedRows, ...orphanRows],
+  };
+}
+
+/** TOOL section for endpoint-routed tools (PagerDuty, Opsgenie). Credential-routed tools are omitted when empty. */
+function buildToolGroup(integrations: IIntegration[], channelEndpoints: ChannelEndpointDto[]): ChannelGroup {
+  const toolIntegrations = getActiveIntegrationsByChannel(integrations, ChannelTypeEnum.TOOL);
+  const toolEndpoints = channelEndpoints.filter((endpoint) => endpoint.channel === ChannelTypeEnum.TOOL);
+
+  const { integrationRows, orphanRows } = collectEndpointIntegrationRows({
+    channel: ChannelTypeEnum.TOOL,
+    idPrefix: 'tool',
+    integrations: toolIntegrations,
+    channelEndpoints: toolEndpoints,
+    getAddable: (integration) => ({
+      addableTypes: getAddableToolEndpointTypes(integration.providerId),
+    }),
+    skipEmptyNonAddable: true,
+  });
+
+  return {
+    channel: ChannelTypeEnum.TOOL,
+    label: CHANNEL_LABELS[ChannelTypeEnum.TOOL],
+    rows: [...integrationRows, ...orphanRows],
   };
 }
 
@@ -324,6 +410,8 @@ type BuildCredentialGroupsArgs = {
   integrations: IIntegration[];
   channelEndpoints?: ChannelEndpointDto[];
   channelConnections?: ChannelConnectionDto[];
+  /** When true, appends the TOOL credentials section after chat. */
+  includeToolChannel?: boolean;
 };
 
 export function buildCredentialGroups({
@@ -331,6 +419,7 @@ export function buildCredentialGroups({
   integrations,
   channelEndpoints = [],
   channelConnections = [],
+  includeToolChannel = false,
 }: BuildCredentialGroupsArgs): ChannelGroup[] {
   const storedChannels = (subscriber.channels ?? []) as unknown as StoredChannel[];
   const email = subscriber.email ?? '';
@@ -360,6 +449,10 @@ export function buildCredentialGroups({
       rows: buildSingleValueRows(integrations, channel, value, overviewField),
     };
   });
+
+  if (includeToolChannel) {
+    groups.push(buildToolGroup(integrations, channelEndpoints));
+  }
 
   return groups.filter((group) => group.rows.length > 0);
 }

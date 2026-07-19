@@ -8,8 +8,11 @@ export function phaseHasCopyableUrl(phase: Phase): boolean {
     case 'waiting-slack':
     case 'telegram-link-token':
     case 'telegram-test':
+    case 'whatsapp-signup-waiting':
     case 'dashboard-channel-ready':
       return true;
+    case 'whatsapp-test':
+      return Boolean(phase.waMeUrl);
     default:
       return false;
   }

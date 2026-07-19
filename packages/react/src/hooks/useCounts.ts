@@ -1,4 +1,11 @@
-import { NOTIFICATION_COUNT_SYNC_EVENTS, checkNotificationMatchesFilter, isSameFilter, Notification, NotificationFilter, NovuError } from '@novu/js';
+import {
+  checkNotificationMatchesFilter,
+  isSameFilter,
+  NOTIFICATION_COUNT_SYNC_EVENTS,
+  Notification,
+  NotificationFilter,
+  NovuError,
+} from '@novu/js';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useDataRef } from './internal/useDataRef';
 import { useWebSocketEvent } from './internal/useWebsocketEvent';
@@ -84,9 +91,7 @@ export const useCounts = (props: UseCountsProps): UseCountsResult => {
       let countFiltersToFetch: NotificationFilter[] = [];
 
       if (notification) {
-        countFiltersToFetch = currentFilters.filter((filter) =>
-          checkNotificationMatchesFilter(notification, filter)
-        );
+        countFiltersToFetch = currentFilters.filter((filter) => checkNotificationMatchesFilter(notification, filter));
       } else {
         countFiltersToFetch = currentFilters;
       }

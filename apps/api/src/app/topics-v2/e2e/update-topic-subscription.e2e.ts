@@ -1,6 +1,11 @@
 import { Novu } from '@novu/api';
 import { SubscriberEntity, TopicSubscribersRepository } from '@novu/dal';
-import { CreateWorkflowDto, StepTypeEnum, TOPIC_SUBSCRIPTION_IDENTIFIER_MAX_LENGTH, WorkflowCreationSourceEnum } from '@novu/shared';
+import {
+  CreateWorkflowDto,
+  StepTypeEnum,
+  TOPIC_SUBSCRIPTION_IDENTIFIER_MAX_LENGTH,
+  WorkflowCreationSourceEnum,
+} from '@novu/shared';
 import { SubscribersService, UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { expectSdkExceptionGeneric, initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';

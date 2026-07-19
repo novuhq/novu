@@ -99,7 +99,12 @@ describe('AgentSubscriberResolver', () => {
 
       expect(result).to.deep.equal({ outcome: 'resolved', subscriberId: 'sub-1' });
       expect(
-        subscriberRepository.findByPhone.calledOnceWith('env-1', 'org-1', ['+972541111111', '972541111111'])
+        subscriberRepository.findByPhone.calledOnceWith(
+          'env-1',
+          'org-1',
+          ['+972541111111', '972541111111'],
+          '^\\+?9\\D*7\\D*2\\D*5\\D*4\\D*1\\D*1\\D*1\\D*1\\D*1\\D*1\\D*1$'
+        )
       ).to.equal(true);
       expect(channelEndpointRepository.findByPlatformIdentity.called).to.equal(false);
     });
@@ -116,9 +121,12 @@ describe('AgentSubscriberResolver', () => {
       expect(result).to.deep.equal({ outcome: 'not_found' });
     });
 
-    it('warns and returns first match when multiple subscribers share the phone', async () => {
+    it('warns and returns first match when multiple customer-created subscribers share the phone', async () => {
       const { resolver, logger } = makeResolver({
-        findByPhone: sinon.stub().resolves([{ subscriberId: 'sub-1' }, { subscriberId: 'sub-2' }]),
+        findByPhone: sinon.stub().resolves([
+          { _id: 'mongo-1', subscriberId: 'sub-1', data: {} },
+          { _id: 'mongo-2', subscriberId: 'sub-2', data: {} },
+        ]),
       });
 
       const result = await resolver.resolveSubscriber({
@@ -143,6 +151,71 @@ describe('AgentSubscriberResolver', () => {
       expect(result).to.deep.equal({ outcome: 'invalid_identity' });
       expect(subscriberRepository.findByPhone.called).to.equal(false);
       expect(channelEndpointRepository.findByPlatformIdentity.called).to.equal(false);
+    });
+
+    it('returns invalid_identity for an unparseable phone without DB call', async () => {
+      const { resolver, subscriberRepository } = makeResolver();
+
+      const result = await resolver.resolveSubscriber({
+        ...baseLookupParams,
+        platform: AgentPlatformEnum.WHATSAPP,
+        platformUserId: 'not-a-phone',
+      });
+
+      expect(result).to.deep.equal({ outcome: 'invalid_identity' });
+      expect(subscriberRepository.findByPhone.called).to.equal(false);
+    });
+  });
+
+  describe('resolveSubscriber - WhatsApp adoption / prefer customer-created', () => {
+    const realMatch = {
+      _id: 'mongo-real',
+      subscriberId: 'sub-real',
+      phone: '+972541111111',
+      data: {},
+    };
+    const phantomMatch = {
+      _id: 'mongo-phantom',
+      subscriberId: 'sub-phantom',
+      phone: '+972541111111',
+      data: { [AGENT_PROVISION_DATA_KEYS.source]: AGENT_PLATFORM_PROVISION_SOURCE },
+    };
+
+    it('prefers the customer-created subscriber and adopts the phantom on a dual match', async () => {
+      const adoptPhantomsInto = sinon.stub().resolves(undefined);
+      const { resolver } = makeResolver({
+        findByPhone: sinon.stub().resolves([phantomMatch, realMatch]),
+        adoptPhantomsInto,
+      });
+
+      const result = await resolver.resolveSubscriber({
+        ...baseLookupParams,
+        platform: AgentPlatformEnum.WHATSAPP,
+        platformUserId: '+972541111111',
+      });
+
+      expect(result).to.deep.equal({ outcome: 'resolved', subscriberId: 'sub-real' });
+      expect(adoptPhantomsInto.calledOnce).to.equal(true);
+      const arg = adoptPhantomsInto.firstCall.args[0];
+      expect(arg.real).to.deep.equal({ _id: 'mongo-real', subscriberId: 'sub-real' });
+      expect(arg.phantoms).to.deep.equal([{ _id: 'mongo-phantom', subscriberId: 'sub-phantom' }]);
+    });
+
+    it('resolves to the phantom and does not adopt when no customer-created subscriber exists', async () => {
+      const adoptPhantomsInto = sinon.stub().resolves(undefined);
+      const { resolver } = makeResolver({
+        findByPhone: sinon.stub().resolves([phantomMatch]),
+        adoptPhantomsInto,
+      });
+
+      const result = await resolver.resolveSubscriber({
+        ...baseLookupParams,
+        platform: AgentPlatformEnum.WHATSAPP,
+        platformUserId: '+972541111111',
+      });
+
+      expect(result).to.deep.equal({ outcome: 'resolved', subscriberId: 'sub-phantom' });
+      expect(adoptPhantomsInto.called).to.equal(false);
     });
   });
 
@@ -284,7 +357,9 @@ describe('AgentSubscriberResolver', () => {
         email: 'User@Example.com',
       });
 
-      expect(result).to.be.a('string').and.to.match(/^sub_/);
+      expect(result)
+        .to.be.a('string')
+        .and.to.match(/^sub_ap_/);
       expect(createOrUpdateSubscriberExecute.calledOnce).to.equal(true);
 
       const command = createOrUpdateSubscriberExecute.firstCall.args[0];
@@ -330,7 +405,9 @@ describe('AgentSubscriberResolver', () => {
         email: 'customer@example.com',
       });
 
-      expect(result).to.be.a('string').and.to.match(/^sub_/);
+      expect(result)
+        .to.be.a('string')
+        .and.to.match(/^sub_ap_/);
       expect(createOrUpdateSubscriberExecute.calledOnce).to.equal(true);
     });
 
@@ -435,7 +512,7 @@ describe('AgentSubscriberResolver', () => {
 
       expect(result.outcome).to.equal('resolved');
       const subscriberId = result.outcome === 'resolved' ? result.subscriberId : '';
-      expect(subscriberId).to.match(/^sub_/);
+      expect(subscriberId).to.match(/^sub_ap_/);
       expect(createOrUpdateSubscriber.execute.calledOnce).to.equal(true);
       const subscriberCommand = createOrUpdateSubscriber.execute.firstCall.args[0];
       expect(subscriberCommand.subscriberId).to.equal(subscriberId);
@@ -603,7 +680,7 @@ describe('AgentSubscriberResolver', () => {
       }
 
       expect(subscriberRepository.delete.calledOnce).to.equal(true);
-      expect(subscriberRepository.delete.firstCall.args[0].subscriberId).to.match(/^sub_/);
+      expect(subscriberRepository.delete.firstCall.args[0].subscriberId).to.match(/^sub_ap_/);
       expect(subscriberRepository.delete.firstCall.args[0][`data.${AGENT_PROVISION_DATA_KEYS.source}`]).to.equal(
         AGENT_PLATFORM_PROVISION_SOURCE
       );
@@ -661,7 +738,7 @@ describe('AgentSubscriberResolver', () => {
       });
 
       expect(result.outcome).to.equal('resolved');
-      expect(result.outcome === 'resolved' ? result.subscriberId : '').to.match(/^sub_/);
+      expect(result.outcome === 'resolved' ? result.subscriberId : '').to.match(/^sub_ap_/);
       expect(createOrUpdateSubscriberExecute.calledOnce).to.equal(true);
     });
 
@@ -698,35 +775,136 @@ describe('AgentSubscriberResolver', () => {
     });
   });
 
-  describe('resolveOrProvision — unsupported platforms', () => {
-    it('throws when called with WhatsApp', async () => {
-      const { resolver } = makeResolver();
+  describe('resolveOrProvision - open-access WhatsApp', () => {
+    it('returns an existing subscriber without provisioning', async () => {
+      const { resolver, createOrUpdateSubscriber } = makeResolver({
+        findByPhone: sinon.stub().resolves([{ _id: 'mongo-1', subscriberId: 'sub-known', data: {} }]),
+      });
 
-      try {
-        await resolver.resolveOrProvision({
-          ...baseProvisionParams,
-          platform: AgentPlatformEnum.WHATSAPP,
-          platformUserId: '+972541111111',
-        });
-        expect.fail('Expected resolveOrProvision to refuse non-Slack/Teams platforms');
-      } catch (err) {
-        expect((err as Error).message).to.contain('unsupported platform');
-      }
+      const result = await resolver.resolveOrProvision({
+        ...baseProvisionParams,
+        platform: AgentPlatformEnum.WHATSAPP,
+        platformUserId: '+972541111111',
+      });
+
+      expect(result).to.deep.equal({ outcome: 'resolved', subscriberId: 'sub-known' });
+      expect(createOrUpdateSubscriber.execute.called).to.equal(false);
     });
 
-    it('throws when called with Telegram', async () => {
-      const { resolver } = makeResolver();
+    it('provisions a phantom subscriber when the sender is unknown', async () => {
+      const createOrUpdateSubscriberExecute = sinon.stub().resolves(undefined);
+      const trackAnalytics = sinon.stub();
+      const { resolver, createChannelEndpoint } = makeResolver({
+        findByPhone: sinon.stub().resolves([]),
+        createOrUpdateSubscriberExecute,
+        trackAnalytics,
+      });
 
-      try {
-        await resolver.resolveOrProvision({
-          ...baseProvisionParams,
-          platform: AgentPlatformEnum.TELEGRAM,
-          platformUserId: '12345',
-        });
-        expect.fail('Expected resolveOrProvision to refuse Telegram');
-      } catch (err) {
-        expect((err as Error).message).to.contain('unsupported platform');
-      }
+      const result = await resolver.resolveOrProvision({
+        ...baseProvisionParams,
+        platform: AgentPlatformEnum.WHATSAPP,
+        platformUserId: '972541111111',
+      });
+
+      expect(result.outcome).to.equal('resolved');
+      expect(result.outcome === 'resolved' ? result.subscriberId : '').to.match(/^sub_ap_/);
+      expect(createOrUpdateSubscriberExecute.calledOnce).to.equal(true);
+      const command = createOrUpdateSubscriberExecute.firstCall.args[0];
+      expect(command.phone).to.equal('+972541111111');
+      expect(command.data[AGENT_PROVISION_DATA_KEYS.platform]).to.equal(AgentPlatformEnum.WHATSAPP);
+      expect(command.data[AGENT_PROVISION_DATA_KEYS.platformUserId]).to.equal('+972541111111');
+      expect(createChannelEndpoint.execute.called).to.equal(false);
+      expect(trackAnalytics.calledOnce).to.equal(true);
+      expect(trackAnalytics.firstCall.args[0]).to.equal('[Agent Platform] - Subscriber auto-provisioned');
+      expect(trackAnalytics.firstCall.args[2].platform).to.equal(AgentPlatformEnum.WHATSAPP);
+    });
+
+    it('soft-fails to an error outcome when provisioning throws', async () => {
+      const provisionError = new Error('mongo down');
+      const { resolver, logger } = makeResolver({
+        findByPhone: sinon.stub().resolves([]),
+        createOrUpdateSubscriberExecute: sinon.stub().rejects(provisionError),
+      });
+
+      const result = await resolver.resolveOrProvision({
+        ...baseProvisionParams,
+        platform: AgentPlatformEnum.WHATSAPP,
+        platformUserId: '+972541111111',
+      });
+
+      expect(result).to.deep.equal({ outcome: 'error', err: provisionError });
+      expect(logger.warn.called).to.equal(true);
+    });
+
+    it('returns invalid_identity for an unusable phone without provisioning', async () => {
+      const createOrUpdateSubscriberExecute = sinon.stub().resolves(undefined);
+      const { resolver } = makeResolver({ createOrUpdateSubscriberExecute });
+
+      const result = await resolver.resolveOrProvision({
+        ...baseProvisionParams,
+        platform: AgentPlatformEnum.WHATSAPP,
+        platformUserId: 'not-a-phone',
+      });
+
+      expect(result).to.deep.equal({ outcome: 'invalid_identity' });
+      expect(createOrUpdateSubscriberExecute.called).to.equal(false);
+    });
+  });
+
+  describe('resolveOrProvision - open-access Sendblue', () => {
+    it('provisions a phantom subscriber when the sender is unknown', async () => {
+      const createOrUpdateSubscriberExecute = sinon.stub().resolves(undefined);
+      const trackAnalytics = sinon.stub();
+      const { resolver, createChannelEndpoint } = makeResolver({
+        findByPhone: sinon.stub().resolves([]),
+        createOrUpdateSubscriberExecute,
+        trackAnalytics,
+      });
+
+      const result = await resolver.resolveOrProvision({
+        ...baseProvisionParams,
+        platform: AgentPlatformEnum.SENDBLUE,
+        platformUserId: '15551234567',
+      });
+
+      expect(result.outcome).to.equal('resolved');
+      expect(result.outcome === 'resolved' ? result.subscriberId : '').to.match(/^sub_ap_/);
+      expect(createOrUpdateSubscriberExecute.calledOnce).to.equal(true);
+      const command = createOrUpdateSubscriberExecute.firstCall.args[0];
+      expect(command.phone).to.equal('+15551234567');
+      expect(command.data[AGENT_PROVISION_DATA_KEYS.platform]).to.equal(AgentPlatformEnum.SENDBLUE);
+      expect(createChannelEndpoint.execute.called).to.equal(false);
+      expect(trackAnalytics.firstCall.args[2].platform).to.equal(AgentPlatformEnum.SENDBLUE);
+    });
+  });
+
+  describe('resolveOrProvision — Telegram mirrors Slack/Teams', () => {
+    it('creates a Subscriber + telegram_chat ChannelEndpoint when the chat identity is unrecognised', async () => {
+      const { resolver, createOrUpdateSubscriber, createChannelEndpoint, analyticsService } = makeResolver();
+
+      const result = await resolver.resolveOrProvision({
+        ...baseProvisionParams,
+        platform: AgentPlatformEnum.TELEGRAM,
+        platformUserId: '777001',
+      });
+
+      expect(result.outcome).to.equal('resolved');
+      const subscriberId = result.outcome === 'resolved' ? result.subscriberId : '';
+      expect(subscriberId).to.match(/^sub_ap_/);
+      expect(createOrUpdateSubscriber.execute.calledOnce).to.equal(true);
+      expect(createOrUpdateSubscriber.execute.firstCall.args[0].data).to.deep.include({
+        [AGENT_PROVISION_DATA_KEYS.source]: AGENT_PLATFORM_PROVISION_SOURCE,
+        [AGENT_PROVISION_DATA_KEYS.platform]: AgentPlatformEnum.TELEGRAM,
+        [AGENT_PROVISION_DATA_KEYS.platformUserId]: '777001',
+      });
+
+      expect(createChannelEndpoint.execute.calledOnce).to.equal(true);
+      const endpointCommand = createChannelEndpoint.execute.firstCall.args[0];
+      expect(endpointCommand.type).to.equal('telegram_chat');
+      expect(endpointCommand.endpoint).to.deep.equal({ chatId: '777001' });
+
+      const trackedEvents = analyticsService.track.getCalls().map((call) => call.args[0]);
+      expect(trackedEvents).to.deep.equal(['[Agent Platform] - Subscriber auto-provisioned']);
     });
   });
 });

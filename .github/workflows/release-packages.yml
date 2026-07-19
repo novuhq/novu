@@ -70,7 +70,7 @@ jobs:
 
       - name: Upgrade npm for Trusted Publishing
         run: |
-          npm install -g npm@latest
+          npm install -g npm@11.5.2
           echo "npm version: $(npm --version) (>= 11.5.1 required for trusted publishing)"
 
       - name: Install Dependencies
@@ -229,7 +229,7 @@ jobs:
 
       - name: Upgrade npm for Trusted Publishing
         run: |
-          npm install -g npm@latest
+          npm install -g npm@11.5.2
           echo "npm version: $(npm --version) (>= 11.5.1 required for trusted publishing)"
 
       - name: Install Dependencies

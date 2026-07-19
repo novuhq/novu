@@ -80,7 +80,7 @@ Additional warehouse connectors (such as BigQuery) may appear in the dashboard. 
 
 Every connector endpoint runs a JavaScript **transformation** before delivery. The transformation converts the raw Novu webhook into the format your destination expects.
 
-In the Novu dashboard, configure the transformation when creating or editing a connector endpoint. Each connector type ships with a default template—use it as your starting point.
+In the Novu dashboard, configure the transformation when creating or editing a connector endpoint. Each connector type ships with a default template - use it as your starting point.
 
 ### How to write a transformation
 
@@ -89,7 +89,7 @@ Svix expects a function named `handler`. For connector endpoints, the handler re
 | Property | Description |
 | --- | --- |
 | `webhook.eventType` | The Novu event type (for example, `message.sent`). |
-| `webhook.payload` | The webhook JSON body. Shape depends on the event type—see [event types](/platform/developer/webhooks/event-types). |
+| `webhook.payload` | The webhook JSON body. Shape depends on the event type - see [event types](/platform/developer/webhooks/event-types). |
 | `webhook.method` | HTTP method. Usually `"POST"`. |
 | `webhook.url` | Destination URL. Generally leave unchanged for connectors. |
 | `webhook.cancel` | Set to `true` to skip delivery for a given event. Defaults to `false`. |
@@ -102,10 +102,10 @@ The handler must return the `webhook` object after modifying `webhook.payload` (
 
 ## Data warehouse connectors
 
-Data warehouse connectors (ClickHouse, Snowflake, Redshift, and similar) insert one row per delivered webhook. Credentials and table location alone are not enough—you must also configure:
+Data warehouse connectors (ClickHouse, Snowflake, Redshift, and similar) insert one row per delivered webhook. Credentials and table location alone are not enough - you must also configure:
 
-1. **Table schema** — Column names and types that match your destination table.
-2. **Transformation** — JavaScript that maps each webhook `eventType` and `payload` into a row compatible with that schema.
+1. **Table schema** - Column names and types that match your destination table.
+2. **Transformation** - JavaScript that maps each webhook `eventType` and `payload` into a row compatible with that schema.
 
 ### Recommended setup flow
 
@@ -405,7 +405,7 @@ If deliveries fail consistently, check the following:
 | --- | --- |
 | Authentication errors | Connector credentials, IAM permissions, or database user grants. |
 | Schema or type errors | Table schema matches your destination table; transformation output uses the correct column names and types. |
-| Missing rows or messages | Delivery shows success in **Logs** but destination is empty—transformation may not match the expected insert or message format. |
+| Missing rows or messages | Delivery shows success in **Logs** but destination is empty - transformation may not match the expected insert or message format. |
 | Unhandled event types | Transformation includes a branch for every subscribed [event type](/platform/developer/webhooks/event-types). |
 
 If the destination service is unreachable from Novu's webhook infrastructure, deliveries will continue to retry according to the [retry schedule](/platform/developer/webhooks#recovery-and-resending-failed-messages) before the endpoint is disabled.

@@ -76,6 +76,7 @@ const integrationSchema = new Schema<IntegrationDBModel>(
       signingSecret: Schema.Types.String,
       outboundIntegrationId: Schema.Types.String,
       outboundConnectedAt: Schema.Types.String,
+      whatsNextCompletedAt: Schema.Types.String,
       useFromAddressOverride: Schema.Types.Boolean,
       fromAddressOverride: Schema.Types.String,
       emailSlugPrefix: Schema.Types.String,
@@ -88,6 +89,7 @@ const integrationSchema = new Schema<IntegrationDBModel>(
       externalEnvironmentId: Schema.Types.String,
       externalVaultId: Schema.Types.String,
       externalWorkspaceId: Schema.Types.String,
+      isNovuManaged: Schema.Types.Boolean,
     },
     configurations: {
       inboundWebhookEnabled: Schema.Types.Boolean,

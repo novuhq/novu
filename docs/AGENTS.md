@@ -29,25 +29,23 @@ Use Novu-specific terms consistently. For full definitions, see the [glossary](/
 ## Style preferences
 
 - Use active voice and second person ("you")
-- Keep sentences concise — one idea per sentence
+- Keep sentences concise - one idea per sentence
 - Use sentence case for headings
 - Bold for UI elements: Click **Settings**
 - Code formatting for file names, commands, paths, and code references
 - Capitalize **Novu** and product names: Inbox, Framework, Dashboard
 - Include frontmatter `title` and `description` on MDX pages
 - Use `sidebarTitle` for short navigation labels when the page `title` is long (for example, SEO question-format titles)
-- API endpoint pages must include a `description` in frontmatter (one concise sentence) plus the `openapi` path key, for example:
+- OpenAPI-backed API reference pages (`openapi: "METHOD /path"` in frontmatter) must **not** include a frontmatter `description` - Mintlify pulls the page description from the OpenAPI operation summary/description. Use `title` + `openapi` only, for example:
 
 ```mdx
 ---
 title: "Create an agent"
-description: "Create an agent in the current environment."
 openapi: "POST /v1/agents"
 ---
 ```
 
-- Do not omit `description` on OpenAPI-backed pages — Mintlify uses it for SEO and page metadata.
-- API endpoint pages must include a `description` and a 1–2 sentence intro before the OpenAPI block
+- Optional 1–2 sentence intro prose before the OpenAPI block is fine on endpoint pages; do not duplicate that text as frontmatter `description`
 - API schema reference pages use markdown tables (`Field | Type | Description`), not `<ResponseField>`. Escape union separators in the **Type** column as `\|` (for example, `` `string \| null` ``). Prefer `Record<string, unknown>` over `{ [k: string]: any; }` in table cells.
 - Provider integration pages use the title pattern `{Provider} {Channel} Integration with Novu` with `sidebarTitle` for the short provider name
 - Use descriptive alt text on all diagrams and screenshots
@@ -61,13 +59,13 @@ openapi: "POST /v1/agents"
 Pages under `docs/api-reference/**/**-schema.mdx` document resource field shapes for the API reference sidebar.
 
 - Use a **markdown table** with columns `Field`, `Type`, and `Description`.
-- Do **not** use `<ResponseField>` — it is a legacy Mintlify component that is not supported in this docs setup and does not render reliably.
+- Do **not** use `<ResponseField>` - it is a legacy Mintlify component that is not supported in this docs setup and does not render reliably.
 - Follow the pattern in `docs/api-reference/agents/agent-schema.mdx` and `docs/api-reference/contexts/context-schema.mdx` (intro prose + table when listing fields).
 - OpenAPI-backed endpoint pages (`openapi: "METHOD /path"` in frontmatter) inherit request/response schemas from the spec; separate schema pages are only needed when you want a human-readable field glossary in the sidebar.
 
 ## AI prompt blocks
 
-Use the Mintlify `<Prompt>` component for pre-built AI prompts users can copy or open in Cursor. Write prompt text directly inside `<Prompt>` children — do not use `<Snippet />`, which copies as JSX instead of the prompt text.
+Use the Mintlify `<Prompt>` component for pre-built AI prompts users can copy or open in Cursor. Write prompt text directly inside `<Prompt>` children - do not use `<Snippet />`, which copies as JSX instead of the prompt text.
 
 ```mdx
 <Prompt description="Add Novu Inbox to my Next.js app" icon="sparkles" actions={["copy", "cursor"]}>
@@ -106,7 +104,7 @@ When documenting REST API operations that developers call from backend code, sho
 | .NET | `Novu` | `/platform/sdks/server/dotnet` |
 | Java | `co.novu:novu-java` | `/platform/sdks/server/java` |
 
-**Tab order** — use `<Tabs>` with this consistent order:
+**Tab order** - use `<Tabs>` with this consistent order:
 
 1. `Node.js`
 2. `Python`
@@ -119,10 +117,10 @@ When documenting REST API operations that developers call from backend code, sho
 **Conventions**
 
 - Derive SDK examples from the corresponding SDK reference page and the [OpenAPI specification](https://api.novu.co/openapi.json). The REST field `name` maps to `workflowId` in SDKs.
-- Keep examples minimal and aligned across tabs — same workflow ID, subscriber ID, and payload shape.
+- Keep examples minimal and aligned across tabs - same workflow ID, subscriber ID, and payload shape.
 - Use `<YOUR_SECRET_KEY_HERE>` or `NOVU_SECRET_KEY` placeholders; never hardcode real keys.
 - Community SDKs (Kotlin, Laravel, Ruby) do not need tabs on platform pages unless the page is SDK-specific.
-- Do not edit files under `docs/.mintlify/skills/` in this repo — they are synced from [novuhq/skills](https://github.com/novuhq/skills). Update trigger, subscriber, or preference skill examples there instead.
+- Do not edit files under `docs/.mintlify/skills/` in this repo - they are synced from [novuhq/skills](https://github.com/novuhq/skills). Update trigger, subscriber, or preference skill examples there instead.
 
 ## Content boundaries
 

@@ -8,8 +8,8 @@ import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import {
   buildLocalBridgeUrl,
   clearLocalBridgeSession,
-  loadLocalBridgeSession,
   LocalBridgeSession,
+  loadLocalBridgeSession,
   saveLocalBridgeSession,
 } from '@/utils/local-bridge';
 import { QueryKeys } from '@/utils/query-keys';
@@ -122,15 +122,12 @@ export const LocalModeProvider = ({ children }: { children: ReactNode }) => {
 
   const [controlOverrides, setControlOverrides] = useState<LocalControlOverrides>({});
 
-  const setStepControlOverrides = useCallback(
-    (workflowId: string, stepId: string, values: Record<string, unknown>) => {
-      setControlOverrides((previous) => ({
-        ...previous,
-        [workflowId]: { ...previous[workflowId], [stepId]: values },
-      }));
-    },
-    []
-  );
+  const setStepControlOverrides = useCallback((workflowId: string, stepId: string, values: Record<string, unknown>) => {
+    setControlOverrides((previous) => ({
+      ...previous,
+      [workflowId]: { ...previous[workflowId], [stepId]: values },
+    }));
+  }, []);
 
   const saveSession = useCallback(
     (newSession: LocalBridgeSession) => {

@@ -1,33 +1,27 @@
 import { ApiServiceLevelEnum, FeatureNameEnum, getFeatureForTierAsBoolean, type IIntegration } from '@novu/shared';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
-import { RiAddLine, RiArrowRightSLine, RiArrowRightUpLine, RiCloseLine, RiInformation2Line } from 'react-icons/ri';
-import { Link, useSearchParams } from 'react-router-dom';
+import { RiAddLine, RiCloseLine } from 'react-icons/ri';
+import { useSearchParams } from 'react-router-dom';
 import type { AgentIntegrationEmbedded, AgentResponse } from '@/api/agents';
+import { AgentInboxCardRow, AgentInboxCardRowInfoTitle } from '@/components/agents/agent-inbox-card-row';
 import { CopyableEmailAddress } from '@/components/agents/copyable-email-address';
-import { EmailSubscriberAccessToggle } from '@/components/agents/email-subscriber-access-toggle';
+import { SubscriberAccessGuidanceRow } from '@/components/agents/subscriber-access-guidance-row';
 import { CompactButton } from '@/components/primitives/button-compact';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { Switch } from '@/components/primitives/switch';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { UpgradeCTATooltip } from '@/components/upgrade-cta-tooltip';
-import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { useUpdateIntegration } from '@/hooks/use-update-integration';
-import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { getMinimumTierForFeature } from '@/utils/upgrade-tier';
 import { AgentCustomDomainSheet } from './agent-custom-domain-sheet';
 import { useEmailSetupCredentials } from './use-email-setup-credentials';
 
-const CREATE_SUBSCRIBER_DOCS_URL = 'https://docs.novu.co/api-reference/subscribers/create-a-subscriber';
-
-const quietLinkClassName =
-  'text-text-sub hover:text-text-strong inline-flex items-center gap-0.5 text-label-xs font-medium leading-4 transition-colors';
-
 const connectDomainButtonClassName = cn(
-  quietLinkClassName,
-  'self-start py-1 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:text-text-sub'
+  'text-text-sub hover:text-text-strong inline-flex items-center gap-0.5 self-start py-1 text-label-xs font-medium leading-4 transition-colors',
+  'disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:text-text-sub'
 );
 
 export type EmailInboxCardProps = {
@@ -64,7 +58,6 @@ export function EmailInboxCardBody({
   agent,
   hideCustomAddressForm = false,
 }: EmailInboxCardProps) {
-  const { currentEnvironment } = useEnvironment();
   const { mutateAsync: updateIntegration } = useUpdateIntegration();
   const { integrations } = useFetchIntegrations();
   const { subscription } = useFetchSubscription();
@@ -148,9 +141,6 @@ export function EmailInboxCardBody({
   const inboundAddressesInfoTooltip =
     'Share an address anywhere users reach you: contact forms, reply flows, support footers, or docs. All listed addresses route inbound. There is no primary.';
 
-  const subscriberAccessInfoTooltip =
-    "With Open, a lightweight subscriber is created from the sender's address so the agent can reply. It merges into their account if they later sign up with the same email.";
-
   function handleSharedToggle(nextEnabled: boolean) {
     // Disabling is only safe when at least one custom-domain address remains
     // so the agent isn't left with zero inbound paths.
@@ -181,20 +171,16 @@ export function EmailInboxCardBody({
     }
   }
 
-  const subscribersPath = currentEnvironment?.slug
-    ? buildRoute(ROUTES.SUBSCRIBERS, { environmentSlug: currentEnvironment.slug })
-    : ROUTES.SUBSCRIBERS;
-
   return (
     <>
-      <CardRow title="Enable email inbox" description="Let users reach this agent via email." divider>
+      <AgentInboxCardRow title="Enable email inbox" description="Let users reach this agent via email." divider>
         <div className="flex justify-end">
           <Switch checked={enabled} disabled={isToggling} onCheckedChange={handleToggle} />
         </div>
-      </CardRow>
+      </AgentInboxCardRow>
 
-      <CardRow
-        title={<CardRowInfoTitle label="Inbound addresses" infoTooltip={inboundAddressesInfoTooltip} />}
+      <AgentInboxCardRow
+        title={<AgentInboxCardRowInfoTitle label="Inbound addresses" infoTooltip={inboundAddressesInfoTooltip} />}
         description="Mail sent to any of these addresses is delivered to this agent."
         divider
         disabled={inboxSectionDisabled}
@@ -264,35 +250,9 @@ export function EmailInboxCardBody({
             )
           ) : null}
         </div>
-      </CardRow>
+      </AgentInboxCardRow>
 
-      <CardRow
-        title={<CardRowInfoTitle label="Who can email this agent" infoTooltip={subscriberAccessInfoTooltip} />}
-        description="Open accepts email from anyone. Off replies only to known subscribers."
-        divider
-        footer={
-          <div className="flex items-center gap-3">
-            <Link to={subscribersPath} className={quietLinkClassName}>
-              <span>Add subscribers manually</span>
-              <RiArrowRightSLine className="size-3.5" aria-hidden />
-            </Link>
-            <a
-              href={CREATE_SUBSCRIBER_DOCS_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={quietLinkClassName}
-            >
-              <span>Create via SDK</span>
-              <RiArrowRightUpLine className="size-3.5" aria-hidden />
-            </a>
-          </div>
-        }
-      >
-        <div className="flex items-center justify-end gap-2">
-          <span className="text-text-soft text-label-xs font-medium leading-4">Accept email from anyone</span>
-          <EmailSubscriberAccessToggle agent={agent} ariaLabel="Accept email from anyone" />
-        </div>
-      </CardRow>
+      <SubscriberAccessGuidanceRow channel="email" agent={agent} />
 
       <AgentCustomDomainSheet
         open={isDomainSheetOpen}
@@ -305,7 +265,6 @@ export function EmailInboxCardBody({
     </>
   );
 }
-
 type InboxRowProps = {
   address: string;
   badge?: string;
@@ -380,51 +339,5 @@ function SharedInboxRow({ address, disabled, toggleDisabled, toggleTooltip, onTo
         Shared inbox is off: mail to this address is dropped. Flip the switch to re-enable it.
       </TooltipContent>
     </Tooltip>
-  );
-}
-
-function CardRowInfoTitle({ label, infoTooltip }: { label: string; infoTooltip: string }) {
-  return (
-    <span className="flex items-center gap-1">
-      {label}
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <button type="button" aria-label="More info">
-            <RiInformation2Line className="text-text-soft size-5" aria-hidden />
-          </button>
-        </TooltipTrigger>
-        <TooltipContent className="max-w-xs">{infoTooltip}</TooltipContent>
-      </Tooltip>
-    </span>
-  );
-}
-
-function CardRow({
-  title,
-  description,
-  children,
-  divider,
-  disabled,
-  footer,
-}: {
-  title: ReactNode;
-  description: ReactNode;
-  children: ReactNode;
-  divider?: boolean;
-  disabled?: boolean;
-  /** Full-width content rendered below the two-column row, e.g. section-level links. */
-  footer?: ReactNode;
-}) {
-  return (
-    <div className={cn('flex flex-col p-3', divider && 'border-stroke-weak border-b', disabled && 'opacity-60')}>
-      <div className="flex items-start justify-between gap-6">
-        <div className="flex min-w-0 max-w-[350px] flex-1 flex-col gap-1">
-          <div className="text-text-sub text-label-sm font-medium leading-5">{title}</div>
-          <p className="text-text-soft text-paragraph-xs leading-4">{description}</p>
-        </div>
-        <div className="flex w-[360px] shrink-0 flex-col gap-1.5">{children}</div>
-      </div>
-      {footer ? <div className="pt-3">{footer}</div> : null}
-    </div>
   );
 }

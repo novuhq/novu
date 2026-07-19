@@ -4,6 +4,7 @@ export enum ChannelStepEnum {
   PUSH = 'push',
   CHAT = 'chat',
   IN_APP = 'in_app',
+  TOOL = 'tool',
 }
 
 export enum ActionStepEnum {

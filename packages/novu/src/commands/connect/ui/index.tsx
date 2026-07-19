@@ -5,11 +5,17 @@ import React from 'react';
 import type { GeneratedAgentSpec } from '../api/agents';
 import { ConnectChannelBackError } from '../errors';
 import { printBridgeScaffolded } from '../pipeline/bridge/print-bridge-scaffolded';
+import type { LlmAuthKind } from '../pipeline/llm-auth/types';
+import { restoreStdinForConsole } from '../restore-stdin-for-console';
 import type { AgentSummary, ConnectCommandOptions } from '../types';
 import { App } from './app';
 import { promptBridgeReconcilePlanInConsole, promptBridgeTunnelInConsole } from './console-bridge-reconcile-prompts';
+import {
+  promptConfirmInstallBridgeDepsInConsole,
+  promptConfirmScaffoldInConsole,
+} from './console-bridge-scaffold-prompts';
 import { printConnectSuccess, shouldSkipConnectSuccessSummary } from './print-connect-success';
-import { restoreStdinForConsole } from './restore-stdin-for-console';
+import { createPendingInteractionRegistry, type PendingInteractionRegistry } from './register-pending-interaction';
 import { type ConnectStore, createConnectStore } from './store';
 import type {
   BridgeTunnelOfferResult,
@@ -33,6 +39,7 @@ export function mountConnectUI(_params: MountConnectUIParams): MountConnectUIRes
   let exitInk: (() => void) | undefined;
   let terminalReleased = false;
   let doneResolved = false;
+  const pendingInteraction = createPendingInteractionRegistry();
   let resolveDone!: (code: number) => void;
   const done = new Promise<number>((resolve) => {
     resolveDone = resolve;
@@ -73,6 +80,7 @@ export function mountConnectUI(_params: MountConnectUIParams): MountConnectUIRes
       return;
     }
 
+    pendingInteraction.cancel();
     resolveDoneOnce(Number(process.exitCode ?? 0));
   });
 
@@ -112,6 +120,7 @@ export function mountConnectUI(_params: MountConnectUIParams): MountConnectUIRes
     shutdown,
     releaseTerminal,
     isTerminalReleased: () => terminalReleased,
+    pendingInteraction,
   });
 
   return { ui, done };
@@ -123,6 +132,7 @@ function createUiController(
     shutdown: () => Promise<number>;
     releaseTerminal: () => Promise<void>;
     isTerminalReleased: () => boolean;
+    pendingInteraction: PendingInteractionRegistry;
   }
 ): ConnectUI {
   return {
@@ -254,6 +264,10 @@ function createUiController(
       });
     },
     confirmScaffold({ projectDir, appName, variant }) {
+      if (ctx.isTerminalReleased()) {
+        return promptConfirmScaffoldInConsole({ projectDir, appName, variant });
+      }
+
       return new Promise<boolean>((resolve) => {
         store.phase.set({
           kind: 'confirm-scaffold',
@@ -264,6 +278,11 @@ function createUiController(
         });
       });
     },
+    pickLlmAuthKind({ connectMode }) {
+      return ctx.pendingInteraction.register<LlmAuthKind>((resolve, reject) => {
+        store.phase.set({ kind: 'pick-llm-auth', connectMode, resolve, reject });
+      });
+    },
     scaffoldingBridge({ variant }) {
       store.phase.set({ kind: 'scaffolding-bridge', variant });
     },
@@ -271,6 +290,15 @@ function createUiController(
       printBridgeScaffolded(opts);
     },
     confirmInstallBridgeDeps({ projectDir, installCommand, packages, variant }) {
+      if (ctx.isTerminalReleased()) {
+        return promptConfirmInstallBridgeDepsInConsole({
+          projectDir,
+          installCommand,
+          packages,
+          variant,
+        });
+      }
+
       return new Promise<boolean>((resolve) => {
         store.phase.set({
           kind: 'bridge-install-deps-confirm',
@@ -400,6 +428,87 @@ function createUiController(
     telegramConnected() {
       // Transition handled by sendingWelcome / success.
     },
+    addingSendblueIntegration() {
+      store.phase.set({ kind: 'adding-sendblue' });
+    },
+    showSendblueIntro({ dashboardUrl }) {
+      return new Promise<void>((resolve) => {
+        store.phase.set({ kind: 'sendblue-intro', dashboardUrl, resolve });
+      });
+    },
+    promptForSendblueCredential({
+      field,
+      step,
+      total,
+      title,
+      hint,
+      placeholder,
+      dashboardUrl,
+      secret,
+      verificationError,
+    }) {
+      return new Promise<string>((resolve) => {
+        store.phase.set({
+          kind: 'sendblue-credential',
+          field,
+          step,
+          total,
+          title,
+          hint,
+          placeholder,
+          dashboardUrl,
+          secret,
+          verificationError,
+          resolve,
+        });
+      });
+    },
+    configuringSendblueWebhook() {
+      store.phase.set({ kind: 'configuring-sendblue-webhook' });
+    },
+    showSendblueWebhookManualFallback({ callbackUrl, webhookSecret }) {
+      return new Promise<void>((resolve) => {
+        store.phase.set({ kind: 'sendblue-webhook-manual', callbackUrl, webhookSecret, resolve });
+      });
+    },
+    promptForSendblueTestPhone({ defaultPhone, fromNumber, imessageUrl, verificationError }) {
+      return new Promise<string>((resolve) => {
+        store.phase.set({
+          kind: 'sendblue-test-phone',
+          defaultPhone,
+          fromNumber,
+          imessageUrl,
+          verificationError,
+          resolve,
+        });
+      });
+    },
+    sendingSendblueTestMessage() {
+      store.phase.set({ kind: 'sending-sendblue-test' });
+    },
+    showSendblueTestWaiting({ phone, fromNumber, imessageUrl }) {
+      store.phase.set({ kind: 'sendblue-test-waiting', phone, fromNumber, imessageUrl });
+    },
+    sendblueConnected() {
+      // Transition handled by sendingWelcome / success.
+    },
+    addingWhatsAppIntegration() {
+      store.phase.set({ kind: 'adding-whatsapp' });
+    },
+    awaitWhatsAppSignupOpen({ signupUrl }) {
+      return new Promise<void>((resolve) => {
+        store.phase.set({ kind: 'whatsapp-signup-ready', signupUrl, resolve });
+      });
+    },
+    showWhatsAppSignupWaiting({ signupUrl }) {
+      store.phase.set({ kind: 'whatsapp-signup-waiting', signupUrl });
+    },
+    showWhatsAppTest({ waMeUrl, waMeQr, displayPhoneNumber }) {
+      store.phase.set({ kind: 'whatsapp-test', waMeUrl, waMeQr, displayPhoneNumber });
+    },
+    whatsappConnected() {
+      // Transition handled by sendingWelcome / success.
+    },
     addingSlackIntegration() {
       store.phase.set({ kind: 'adding-slack' });
     },
@@ -462,6 +571,7 @@ function createUiController(
         connectMode: result.connectMode,
         chatSdkOutcome: result.chatSdkOutcome,
         aiSdkOutcome: result.aiSdkOutcome,
+        langChainOutcome: result.langChainOutcome,
         customCodeOutcome: result.customCodeOutcome,
       });
     },

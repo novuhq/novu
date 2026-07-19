@@ -92,7 +92,9 @@ export function AuthSideBanner({ variant }: AuthSideBannerProps) {
           <AuthFeatureRow
             icon={<ShieldZap className="h-6 w-6" />}
             title={
-              IS_SELF_HOSTED_EE ? 'Enterprise-Grade Performance & Reliability' : 'Scalable, Secure, and Enterprise-Ready'
+              IS_SELF_HOSTED_EE
+                ? 'Enterprise-Grade Performance & Reliability'
+                : 'Scalable, Secure, and Enterprise-Ready'
             }
             description={
               IS_SELF_HOSTED_EE
