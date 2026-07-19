@@ -19,6 +19,7 @@ import {
 } from '../../channel-connections/e2e/helpers/channel-helpers';
 import { expectSdkExceptionGeneric, expectSdkZodError } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 import { createOpsgenieIntegration, VALID_OPSGENIE_API_KEY } from './helpers/opsgenie-helpers';
+import { createPagerDutyIntegration, VALID_PAGERDUTY_ROUTING_KEY } from './helpers/pagerduty-helpers';
 
 const integrationRepository = new IntegrationRepository();
 const channelEndpointRepository = new ChannelEndpointRepository();
@@ -565,5 +566,47 @@ describe('Create Channel Endpoint - /channel-endpoints (POST) #novu-v2', () => {
     const subscriberRes = await session.testAgent.get(`/v1/subscribers/${subscriber.subscriberId}`);
     expect(subscriberRes.status).to.equal(200);
     expect(subscriberRes.body.data.firstName).to.equal('Original');
+  });
+
+  it('should create a pagerduty_service endpoint for a PagerDuty integration', async () => {
+    const integration = await createPagerDutyIntegration(session);
+    const subscribersService = createSubscribersService(session);
+    const subscriber = await subscribersService.createSubscriber();
+
+    const res = await session.testAgent.post('/v1/channel-endpoints').send({
+      integrationIdentifier: integration.identifier,
+      subscriberId: subscriber.subscriberId,
+      type: ENDPOINT_TYPES.PAGERDUTY_SERVICE,
+      endpoint: {
+        routingKey: VALID_PAGERDUTY_ROUTING_KEY,
+        region: 'us',
+      },
+    });
+
+    expect(res.status).to.equal(201);
+    expect(res.body.data.type).to.equal(ENDPOINT_TYPES.PAGERDUTY_SERVICE);
+    expect(res.body.data.subscriberId).to.equal(subscriber.subscriberId);
+    expect(res.body.data.endpoint.routingKey).to.equal(VALID_PAGERDUTY_ROUTING_KEY);
+    expect(res.body.data.endpoint.region).to.equal('us');
+    expect(res.body.data.connectionIdentifier).to.be.a('string');
+  });
+
+  it('should fail when creating a pagerduty_service endpoint for a non-PagerDuty integration', async () => {
+    const integration = await createSlackIntegration(session);
+    const subscribersService = createSubscribersService(session);
+    const subscriber = await subscribersService.createSubscriber();
+
+    const res = await session.testAgent.post('/v1/channel-endpoints').send({
+      integrationIdentifier: integration.identifier,
+      subscriberId: subscriber.subscriberId,
+      type: ENDPOINT_TYPES.PAGERDUTY_SERVICE,
+      endpoint: {
+        routingKey: VALID_PAGERDUTY_ROUTING_KEY,
+        region: 'us',
+      },
+    });
+
+    expect(res.status).to.equal(400);
+    expect(res.body.message).to.include('requires a PagerDuty integration');
   });
 });

@@ -192,7 +192,11 @@ export class SendMessageTool extends SendMessageBase {
       };
     }
 
-    if (!anySent && anySkipped) {
+    if (anySent) {
+      return { status: SendMessageStatus.SUCCESS };
+    }
+
+    if (anySkipped) {
       return { status: SendMessageStatus.SKIPPED };
     }
 

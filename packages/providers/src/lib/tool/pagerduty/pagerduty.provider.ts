@@ -87,6 +87,10 @@ export class PagerDutyProvider extends BaseProvider implements IToolProvider {
       body: JSON.stringify(payload),
     });
 
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw new Error(`PagerDuty event request failed with status ${response.statusCode}`);
+    }
+
     return {
       id: response.body?.dedup_key,
       date: new Date().toDateString(),

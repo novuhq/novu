@@ -15,11 +15,18 @@ export class ToolWebhookHandler extends BaseToolHandler {
 
     let headers: Record<string, string> | undefined;
     if (credentials.headers) {
+      let parsed: unknown;
       try {
-        headers = JSON.parse(credentials.headers) as Record<string, string>;
+        parsed = JSON.parse(credentials.headers);
       } catch {
         throw new Error('Tool webhook headers must be a valid JSON object');
       }
+
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+        throw new Error('Tool webhook headers must be a valid JSON object');
+      }
+
+      headers = parsed as Record<string, string>;
     }
 
     this.provider = new ToolWebhookProvider({

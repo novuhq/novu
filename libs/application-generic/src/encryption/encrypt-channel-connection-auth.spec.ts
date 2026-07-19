@@ -74,7 +74,7 @@ describe('encryptChannelConnectionAuth / decryptChannelConnectionAuth', () => {
   });
 
   it('encrypts PagerDuty routingKey and preserves region as plaintext', () => {
-    const routingKey = 'R0UTINGK3YEXAMPLE0000000000000000';
+    const routingKey = 'R0UTINGK3YEXAMPLE000000000000000';
     const encrypted = encryptChannelConnectionAuth({ routingKey, region: 'eu' });
 
     expect((encrypted!.routingKey as string).startsWith(novuSubMask)).toBe(true);

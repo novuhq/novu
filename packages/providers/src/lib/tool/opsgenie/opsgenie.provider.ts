@@ -108,6 +108,10 @@ export class OpsgenieProvider extends BaseProvider implements IToolProvider {
       body: JSON.stringify(payload),
     });
 
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw new Error(`Opsgenie alert request failed with status ${response.statusCode}`);
+    }
+
     return {
       id: response.body?.requestId,
       date: new Date().toDateString(),

@@ -38,17 +38,9 @@ export class ToolWebhookProvider extends BaseProvider implements IToolProvider {
       ...(options.customData || {}),
     });
 
-    const webhookUrlRaw = (data.body.webhookUrl as string) || this.config.webhookUrl;
-    const hmacSecretKey = (data.body.hmacSecretKey as string) || this.config.hmacSecretKey;
+    const hmacSecretKey = this.config.hmacSecretKey;
 
-    if (data.body.webhookUrl) {
-      delete data.body.webhookUrl;
-    }
-    if (data.body.hmacSecretKey) {
-      delete data.body.hmacSecretKey;
-    }
-
-    const webhookUrl = normalizeOutboundHttpUrl(webhookUrlRaw);
+    const webhookUrl = normalizeOutboundHttpUrl(this.config.webhookUrl);
     if (!webhookUrl) {
       throw new Error('Tool webhook URL blocked: Invalid URL format.');
     }
@@ -90,6 +82,10 @@ export class ToolWebhookProvider extends BaseProvider implements IToolProvider {
       }
       throw err;
     });
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw new Error(`Tool webhook request failed with status ${response.statusCode}`);
+    }
 
     return {
       id: response.body?.id,

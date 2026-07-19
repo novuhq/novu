@@ -216,7 +216,7 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
         return {
           controlValues: {
             ...(step.controls.values ?? {}),
-            providers: (step.controls.values?.providers as string[] | undefined) ?? [],
+            enabledIntegrations: (step.controls.values?.enabledIntegrations as string[] | undefined) ?? [],
           },
         };
       }

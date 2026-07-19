@@ -139,7 +139,7 @@ export class PagerDutyServiceEndpointDto {
   @ApiProperty({
     description:
       'PagerDuty Events API v2 integration key (32-character alphanumeric string). Stored encrypted on the linked channel connection.',
-    example: 'R0UTINGK3YEXAMPLE0000000000000000',
+    example: 'R0UTINGK3YEXAMPLE000000000000000',
     type: String,
     minLength: 32,
     maxLength: 32,

@@ -16,7 +16,7 @@ import {
   IntegrationRepository,
   SubscriberRepository,
 } from '@novu/dal';
-import { ChannelEndpointType, ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
+import { ChannelEndpointType, ChatProviderIdEnum, ENDPOINT_TYPES, ToolProviderIdEnum } from '@novu/shared';
 import { ConnectionBackedEndpointConfig, getConnectionBackedEndpointConfig } from '../../connection-backed-endpoints';
 import { CreateChannelEndpointCommand } from './create-channel-endpoint.command';
 
@@ -57,6 +57,8 @@ export class CreateChannelEndpoint {
 
     const connectionBackedConfig = getConnectionBackedEndpointConfig(command.type);
     if (connectionBackedConfig) {
+      this.assertConnectionBackedIntegration(command.type, integration);
+
       return await this.createConnectionBackedEndpoint(
         command,
         identifier,
@@ -276,6 +278,16 @@ export class CreateChannelEndpoint {
   private assertWebexIntegration(command: CreateChannelEndpointCommand, integration: IntegrationEntity): void {
     if (integration.providerId !== ChatProviderIdEnum.WebexMessaging) {
       throw new BadRequestException(`Channel endpoint type "${command.type}" requires a Webex Messaging integration`);
+    }
+  }
+
+  private assertConnectionBackedIntegration(type: ChannelEndpointType, integration: IntegrationEntity): void {
+    if (type === ENDPOINT_TYPES.PAGERDUTY_SERVICE && integration.providerId !== ToolProviderIdEnum.PagerDuty) {
+      throw new BadRequestException(`Channel endpoint type "${type}" requires a PagerDuty integration`);
+    }
+
+    if (type === ENDPOINT_TYPES.OPSGENIE_INTEGRATION && integration.providerId !== ToolProviderIdEnum.Opsgenie) {
+      throw new BadRequestException(`Channel endpoint type "${type}" requires an Opsgenie integration`);
     }
   }
 
