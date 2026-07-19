@@ -4,14 +4,14 @@ description: "Pause an agent turn and ask the user to approve or deny a tool cal
 ---
 
 
-Some tool calls should not run without a human in the loop — issuing a refund, deleting data, sending money. Tool approval posts an **Approve / Deny** card in the conversation and pauses the turn until the user decides.
+Some tool calls should not run without a human in the loop - issuing a refund, deleting data, sending money. Tool approval posts an **Approve / Deny** card in the conversation and pauses the turn until the user decides.
 
 This page covers `ctx.toolApproval.request()`, the `onToolApproval` handler, and card customization. How you gate a tool depends on your runtime:
 
 <Tabs>
   <Tab title="AI SDK">
 
-Set `needsApproval: true` on an AI SDK tool. When the model calls it, Novu posts the approval card and pauses the turn. After the user clicks **Approve** or **Deny**, Novu re-runs `onMessage` so `generateText` continues the tool loop — no `ctx.toolApproval.request()` needed.
+Set `needsApproval: true` on an AI SDK tool. When the model calls it, Novu posts the approval card and pauses the turn. After the user clicks **Approve** or **Deny**, Novu re-runs `onMessage` so `generateText` continues the tool loop - no `ctx.toolApproval.request()` needed.
 
 ```typescript
 import { agent, toModelMessages } from '@novu/framework/ai-sdk';
@@ -41,7 +41,7 @@ See [AI SDK](/agents/custom-code-agent/frameworks/ai-sdk#automatic-tool-approval
   </Tab>
   <Tab title="LangChain">
 
-Set `needsApproval` on a `LangChainAgentConfig`. When the model calls a gated tool, Novu posts the approval card and pauses the turn. After the user clicks **Approve** or **Deny**, Novu re-runs `onMessage` and resumes from `ctx.history` — no `ctx.toolApproval.request()` needed.
+Set `needsApproval` on a `LangChainAgentConfig`. When the model calls a gated tool, Novu posts the approval card and pauses the turn. After the user clicks **Approve** or **Deny**, Novu re-runs `onMessage` and resumes from `ctx.history` - no `ctx.toolApproval.request()` needed.
 
 ```typescript
 import { tool } from '@langchain/core/tools';
@@ -108,17 +108,17 @@ When you **do not** register an `onToolApproval` handler, Novu handles the click
 - Novu deletes the approval card and restarts the typing indicator. See [Typing indicator](/agents/custom-code-agent/building-blocks/typing-indicator).
 - The decision is recorded in `ctx.history`.
 
-If several tools need approval in the same turn, they surface one at a time — the next card appears after the current one is resolved.
+If several tools need approval in the same turn, they surface one at a time - the next card appears after the current one is resolved.
 
 <Note>
   If the user sends a new message while a card is pending, Novu auto-denies the pending tool(s), deletes the card, and processes the new message.
 </Note>
 
-This is the simplest path — post the card and let Novu clean it up. On the **Custom code** path, handle the decision in `onToolApproval` when you need to run the tool or post a reply after the click.
+This is the simplest path - post the card and let Novu clean it up. On the **Custom code** path, handle the decision in `onToolApproval` when you need to run the tool or post a reply after the click.
 
 ## Handle the decision with `onToolApproval`
 
-Register `onToolApproval` when you need to act on the click — run the tool, post a result, edit the card, or audit the decision. It receives a `decision`:
+Register `onToolApproval` when you need to act on the click - run the tool, post a result, edit the card, or audit the decision. It receives a `decision`:
 
 <Tabs>
   <Tab title="AI SDK">
@@ -147,7 +147,7 @@ export const myAgent = agent('my-agent', {
   onToolApproval: async (decision, ctx) => {
     if (!decision.approved) {
       await decision.approvalMessage.delete();
-      return 'No problem — I did not issue the refund.';
+      return 'No problem - I did not issue the refund.';
     }
 
     await decision.approvalMessage.delete();
@@ -183,7 +183,7 @@ export const myAgent = agent('my-agent', {
   onToolApproval: async (decision, ctx) => {
     if (!decision.approved) {
       await decision.approvalMessage.delete();
-      return 'No problem — I did not issue the refund.';
+      return 'No problem - I did not issue the refund.';
     }
 
     await decision.approvalMessage.delete();
@@ -204,13 +204,13 @@ export const myAgent = agent('my-agent', {
   },
 
   onToolApproval: async (decision, ctx) => {
-    // decision.toolCall — { id, name, input? }
-    // decision.approved — true | false
-    // decision.approvalMessage — ReplyHandle to the card (edit/delete)
+    // decision.toolCall - { id, name, input? }
+    // decision.approved - true | false
+    // decision.approvalMessage - ReplyHandle to the card (edit/delete)
 
     if (!decision.approved) {
       await decision.approvalMessage.delete();
-      return 'No problem — I did not issue the refund.';
+      return 'No problem - I did not issue the refund.';
     }
 
     const result = await issueRefund(decision.toolCall.input);
@@ -221,13 +221,13 @@ export const myAgent = agent('my-agent', {
 });
 ```
 
-On the **Custom code** path, you run the tool yourself in `onToolApproval` — there is no automatic model resume.
+On the **Custom code** path, you run the tool yourself in `onToolApproval` - there is no automatic model resume.
 
   </Tab>
 </Tabs>
 
 <Warning>
-  When you register `onToolApproval`, **you own card cleanup.** Novu no longer auto-deletes the card — call `decision.approvalMessage.edit()` or `decision.approvalMessage.delete()` yourself.
+  When you register `onToolApproval`, **you own card cleanup.** Novu no longer auto-deletes the card - call `decision.approvalMessage.edit()` or `decision.approvalMessage.delete()` yourself.
 </Warning>
 
 The `decision` object:
@@ -236,7 +236,7 @@ The `decision` object:
 | --- | --- | --- |
 | `toolCall` | `AgentToolCall` | The gated tool (`id`, `name`, `input?`) |
 | `approved` | `boolean` | `true` if approved, `false` if denied |
-| `approvalMessage` | `ReplyHandle` | Handle to the card — `edit()` or `delete()` it. See [Edit sent messages](/agents/custom-code-agent/building-blocks/edit-sent-messages) |
+| `approvalMessage` | `ReplyHandle` | Handle to the card - `edit()` or `delete()` it. See [Edit sent messages](/agents/custom-code-agent/building-blocks/edit-sent-messages) |
 
 ### Edit the card in place
 
@@ -249,7 +249,7 @@ onToolApproval: async (decision, ctx) => {
     return;
   }
 
-  await decision.approvalMessage.edit('Refund approved — processing…');
+  await decision.approvalMessage.edit('Refund approved - processing…');
   const result = await issueRefund(decision.toolCall.input);
   await decision.approvalMessage.edit(`Refund issued for order ${result.orderId}.`);
 },
@@ -267,7 +267,7 @@ export const myAgent = agent('my-agent', {
         // icon: omit → matched from the tool name against the Novu MCP catalog
         // icon: 'stripe' → catalog id or server-name lookup
         // icon: 'https://…' → your own image URL (Slack only, 32×32 recommended)
-        subtitle: `${toolCall.name} — order ${toolCall.input?.orderId}`,
+        subtitle: `${toolCall.name} - order ${toolCall.input?.orderId}`,
         approveLabel: 'Yes, refund',
         denyLabel: 'Cancel',
       }),
@@ -284,7 +284,7 @@ export const myAgent = agent('my-agent', {
 | Arg | Description |
 | --- | --- |
 | `toolCall` | The gated tool (`id`, `name`, `input`) |
-| `actionIds` | `{ approve, deny }` — wire these to your own buttons for a fully custom card |
+| `actionIds` | `{ approve, deny }` - wire these to your own buttons for a fully custom card |
 | `approvalCard(overrides?)` | Helper returning Novu's native card descriptor |
 
 `approvalCard()` fields (channel support noted):

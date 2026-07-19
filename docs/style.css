@@ -6,7 +6,7 @@
   }
 }
 
-/* Homepage (/) only — scoped via the #home-content wrapper in index.mdx */
+/* Homepage (/) only - scoped via the #home-content wrapper in index.mdx */
 
 /* Don't highlight any navbar tab as selected on the homepage */
 body:has(#home-content) nav[aria-label='Main'] a[aria-current='location'] {

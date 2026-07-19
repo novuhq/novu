@@ -70,6 +70,19 @@ export function logTelegramDeepLinkQrPngHandoffEvent(opts: { deepLinkQrPngPath: 
   console.log(`${HANDOFF_PREFIX}TELEGRAM_DEEPLINK_QR_PNG=${opts.deepLinkQrPngPath}`);
 }
 
+export function logWhatsAppSignupHandoffEvent(opts: { signupUrl: string }): void {
+  console.log(`${HANDOFF_PREFIX}WHATSAPP_SIGNUP_URL=${opts.signupUrl}`);
+}
+
+export function logWhatsAppTestHandoffEvents(opts: { waMeUrl?: string; displayPhoneNumber?: string }): void {
+  if (opts.waMeUrl) {
+    console.log(`${HANDOFF_PREFIX}WHATSAPP_WA_ME_URL=${opts.waMeUrl}`);
+  }
+  if (opts.displayPhoneNumber) {
+    console.log(`${HANDOFF_PREFIX}WHATSAPP_PHONE_NUMBER=${opts.displayPhoneNumber}`);
+  }
+}
+
 export function logSendblueDashboardHandoffEvent(opts: { dashboardUrl: string }): void {
   console.log(`${HANDOFF_PREFIX}SENDBLUE_DASHBOARD_URL=${opts.dashboardUrl}`);
 }

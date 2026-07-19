@@ -57,7 +57,7 @@ describe('ConnectClaimTokenService', () => {
           return 'I';
         }
 
-        cacheStore.set(usedKey, '1');
+        cacheStore.set(usedKey, raw);
 
         return `M${raw}`;
       }),

@@ -1,5 +1,6 @@
 import { ChatProviderIdEnum, providers as novuProviders } from '@novu/shared';
 import { useEffect, useRef, useState } from 'react';
+import { RiSearchLine } from 'react-icons/ri';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useCreateIntegration } from '@/hooks/use-create-integration';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
@@ -7,6 +8,7 @@ import { showSuccessToast } from '../../../components/primitives/sonner-helpers'
 import { useSetPrimaryIntegration } from '../../../hooks/use-set-primary-integration';
 import { buildRoute, ROUTES } from '../../../utils/routes';
 import { Button } from '../../primitives/button';
+import { Input } from '../../primitives/input';
 import { UnsavedChangesAlertDialog } from '../../unsaved-changes-alert-dialog';
 import { IntegrationFormData } from '../types';
 import { ChannelTabs } from './channel-tabs';
@@ -42,15 +44,28 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
     navigate(ROUTES.INTEGRATIONS_CONNECT, { replace: true });
   };
 
-  const { selectedIntegration, step, searchQuery, onIntegrationSelect, onBack } = useSidebarNavigationManager({
-    isOpened,
-    initialProviderId: providerId,
-    onIntegrationSelect: handleIntegrationSelect,
-    onBack: handleBack,
-  });
+  const { selectedIntegration, step, searchQuery, setSearchQuery, onIntegrationSelect, onBack } =
+    useSidebarNavigationManager({
+      isOpened,
+      initialProviderId: providerId,
+      onIntegrationSelect: handleIntegrationSelect,
+      onBack: handleBack,
+    });
 
   const { integrationsByChannel } = useIntegrationList(searchQuery);
   const provider = providers?.find((providerItem) => providerItem.id === (selectedIntegration || providerId));
+
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isOpened && step === 'select') {
+      const timeoutId = setTimeout(() => {
+        searchInputRef.current?.focus();
+      }, 50);
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [isOpened, step]);
 
   // While the user is on the Telegram configure step, the sidebar shows a QR
   // mobile-setup card. If the visitor completes setup on their phone, the
@@ -187,12 +202,24 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
         onBack={onBack}
       >
         {step === 'select' ? (
-          <div className="scrollbar-custom flex-1 overflow-y-auto">
-            <ChannelTabs
-              integrationsByChannel={integrationsByChannel}
-              searchQuery={searchQuery}
-              onIntegrationSelect={onIntegrationSelect}
-            />
+          <div className="flex flex-1 flex-col overflow-hidden">
+            <div className="border-b p-3">
+              <Input
+                ref={searchInputRef}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search providers across channels..."
+                leadingIcon={RiSearchLine}
+                size="xs"
+              />
+            </div>
+            <div className="scrollbar-custom flex-1 overflow-y-auto">
+              <ChannelTabs
+                integrationsByChannel={integrationsByChannel}
+                searchQuery={searchQuery}
+                onIntegrationSelect={onIntegrationSelect}
+              />
+            </div>
           </div>
         ) : provider ? (
           <>

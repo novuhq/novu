@@ -97,7 +97,7 @@ First, create a multi-tenant identity for your bot.
 
 ### Add Novu’s redirect URI
 
-When a tenant administrator accepts admin consent, Microsoft redirects the browser to Novu at this URL. Register it in **Azure** on your app registration during setup — before any organization connects Teams.
+When a tenant administrator accepts admin consent, Microsoft redirects the browser to Novu at this URL. Register it in **Azure** on your app registration during setup - before any organization connects Teams.
 
 This is not the optional **Redirect URL** on the Novu integration. That Novu field only controls where the administrator is sent in **your application** after Novu finishes processing the callback.
 
@@ -155,11 +155,11 @@ These permissions let your app list teams and channels and decide where to send 
 
   <Step title="Add required permissions">
     Search for and select the following **Application** permissions:
-    - `Team.ReadBasic.All` — list teams in a connected tenant
-    - `Channel.ReadBasic.All` — list channels in a team
-    - `AppCatalog.Read.All` — resolve your Teams app in the org catalog
-    - `TeamsAppInstallation.ReadWriteSelfForTeam.All` (optional) — programmatically install the app into a team
-    - `TeamsAppInstallation.ReadWriteSelfForUser.All` (required only for [OAuth DM linking](#link-a-subscriber-for-direct-messages)) — install the app for a user during the link-user flow
+    - `Team.ReadBasic.All` - list teams in a connected tenant
+    - `Channel.ReadBasic.All` - list channels in a team
+    - `AppCatalog.Read.All` - resolve your Teams app in the org catalog
+    - `TeamsAppInstallation.ReadWriteSelfForTeam.All` (optional) - programmatically install the app into a team
+    - `TeamsAppInstallation.ReadWriteSelfForUser.All` (required only for [OAuth DM linking](#link-a-subscriber-for-direct-messages)) - install the app for a user during the link-user flow
   </Step>
 
 <Step title="Confirm permissions">
@@ -374,7 +374,7 @@ Now that you’ve configured your Azure Bot, provide Novu with the credentials t
     - **Client ID**: Enter your `BOT_APP_ID`.
     - **Client Secret**: Enter your `BOT_APP_SECRET`.
     - **App Tenant ID**: Enter your `APP_TENANT_ID`. This value identifies the tenant where you registered the app.
-    - **Redirect URL** (Optional): Where the **tenant administrator** is sent in **your application** after Novu processes the OAuth callback. This is not the Azure redirect URI — see [Add Novu's redirect URI](#add-novus-redirect-uri).
+    - **Redirect URL** (Optional): Where the **tenant administrator** is sent in **your application** after Novu processes the OAuth callback. This is not the Azure redirect URI - see [Add Novu's redirect URI](#add-novus-redirect-uri).
     ![Novu integration](/images/channels-and-providers/chat/msteams/novu-msteams-integration.png)
   </Step>
 
@@ -396,7 +396,7 @@ If you’ve completed the previous steps, you can test your bot configuration en
 Each organization you notify has its own Microsoft 365 tenant. Before you can send Teams messages on their behalf, a **tenant administrator** from that organization must grant your app a one-time **admin consent**. This authorizes your bot in their tenant using **application permissions** (app-only / client credentials).
 
 <Note>
-  **Tenant connect and user linking are separate steps.** Admin consent connects the organization's Microsoft 365 tenant. Linking a Novu **subscriber** for direct messages is a separate OAuth flow — see [Link a subscriber for direct messages](#link-a-subscriber-for-direct-messages).
+  **Tenant connect and user linking are separate steps.** Admin consent connects the organization's Microsoft 365 tenant. Linking a Novu **subscriber** for direct messages is a separate OAuth flow - see [Link a subscriber for direct messages](#link-a-subscriber-for-direct-messages).
 </Note>
 
 ### Generate a Connect Teams URL
@@ -404,7 +404,7 @@ Each organization you notify has its own Microsoft 365 tenant. Before you can se
 Call this from **your backend** when someone starts the connect flow in your product (for example, when a tenant administrator clicks **Connect Microsoft Teams**).
 
 <Warning>
-  The generated OAuth URL is valid for only <strong>5 minutes</strong>. Do not cache it — generate a new URL each time someone starts connect.
+  The generated OAuth URL is valid for only <strong>5 minutes</strong>. Do not cache it - generate a new URL each time someone starts connect.
 </Warning>
 
 <Tabs>
@@ -534,7 +534,7 @@ Call `POST /v1/integrations/channel-connections/oauth` with the same body if you
 
 Novu returns a URL pointing to Microsoft's administrator consent endpoint (`login.microsoftonline.com/organizations/v2.0/adminconsent`). It includes your Client ID, redirect URI, and the `https://graph.microsoft.com/.default` scope.
 
-For tenant-wide admin consent, set **`autoLinkUser: false`** (or omit `autoLinkUser` — the API treats omitted as `false`). Only when `autoLinkUser` is explicitly `true` does Novu chain a second OAuth flow after admin consent to link that subscriber for DMs.
+For tenant-wide admin consent, set **`autoLinkUser: false`** (or omit `autoLinkUser` - the API treats omitted as `false`). Only when `autoLinkUser` is explicitly `true` does Novu chain a second OAuth flow after admin consent to link that subscriber for DMs.
 
 <Note>
   **`@novu/react` `MsTeamsConnectButton`** defaults `autoLinkUser` to `true` in subscriber mode. That is intended for in-app end-user connect flows. For server-side tenant admin consent (Java, REST, or `@novu/api`), pass `autoLinkUser: false` explicitly.
@@ -550,7 +550,7 @@ window.open(response.url, '_blank');
 
 ### What the tenant administrator does
 
-The tenant administrator is someone at the **connecting organization** (not a Novu dashboard user). They grant consent in Microsoft — they do not need a Novu account.
+The tenant administrator is someone at the **connecting organization** (not a Novu dashboard user). They grant consent in Microsoft - they do not need a Novu account.
 
 <Steps>
   <Step title="Sign in to your product">
@@ -689,7 +689,7 @@ Prerequisites:
 - The subscriber exists in Novu.
 - Application permission `TeamsAppInstallation.ReadWriteSelfForUser.All` and delegated `User.Read` are configured in Azure (see [Add Microsoft Graph app permissions](#add-microsoft-graph-app-permissions)).
 
-Run a **separate** OAuth flow — do not set `autoLinkUser: true` on `generateConnectOAuthUrl`. Use `generateLinkUserOAuthUrl` instead:
+Run a **separate** OAuth flow - do not set `autoLinkUser: true` on `generateConnectOAuthUrl`. Use `generateLinkUserOAuthUrl` instead:
 
 <Tabs>
   <Tab title="Node.js">
@@ -1082,7 +1082,7 @@ When you trigger a workflow that targets this subscriber:
 
 ## Using Microsoft Teams with agents
 
-Microsoft Teams is a supported [agent provider](/agents/get-started/agents-and-providers). Connect your Teams bot to an agent so users can message the bot and get replies in the same chat — without building Bot Framework webhook handling yourself.
+Microsoft Teams is a supported [agent provider](/agents/get-started/agents-and-providers). Connect your Teams bot to an agent so users can message the bot and get replies in the same chat - without building Bot Framework webhook handling yourself.
 
 <Card title="Build agents on Teams" icon="bot" href="/agents">
   Learn how Novu agents work, including managed and custom code agents.

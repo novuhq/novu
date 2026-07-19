@@ -62,7 +62,7 @@ context: {
 
 Contexts are **auto-created** the first time Novu sees them (via a workflow trigger or the Inbox).
 
-During **workflow triggers**, existing context `data` is **upserted** when you include a `data` object inline—similar to subscriber fields. Passing only a string identifier (for example, `tenant: "acme-corp"`) references the context without changing stored `data`.
+During **workflow triggers**, existing context `data` is **upserted** when you include a `data` object inline - similar to subscriber fields. Passing only a string identifier (for example, `tenant: "acme-corp"`) references the context without changing stored `data`.
 
 **Inbox** and other subscriber-facing APIs only find or create contexts and do **not** update existing `data`. You can also manage context data through the [Contexts API](/api-reference/contexts/context-schema) or the Novu dashboard.
 

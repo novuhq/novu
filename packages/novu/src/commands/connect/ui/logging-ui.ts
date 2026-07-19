@@ -22,6 +22,8 @@ import {
   logTelegramDeepLinkQrPngHandoffEvent,
   logTelegramSetupLinkHandoffEvent,
   logTelegramSetupLinkQrPngHandoffEvent,
+  logWhatsAppSignupHandoffEvent,
+  logWhatsAppTestHandoffEvents,
   writeAuthUrlHandoffFile,
 } from './handoff-events';
 import { printBridgeReconcilePlan } from './print-bridge-reconcile-plan';
@@ -390,6 +392,35 @@ export function createLoggingUI(): ConnectUI {
     },
     sendblueConnected() {
       succeed('iMessage (Sendblue) connected');
+    },
+    addingWhatsAppIntegration() {
+      start('Linking WhatsApp to your agent…');
+    },
+    awaitWhatsAppSignupOpen({ signupUrl }) {
+      stop();
+      console.log(`${chalk.cyan('→')} Finish WhatsApp signup here: ${chalk.underline(signupUrl)}`);
+      logWhatsAppSignupHandoffEvent({ signupUrl });
+
+      return Promise.resolve();
+    },
+    showWhatsAppSignupWaiting(_opts) {
+      start('Waiting for Meta Embedded Signup to complete…');
+    },
+    showWhatsAppTest({ waMeUrl, displayPhoneNumber }) {
+      stop();
+      if (displayPhoneNumber) {
+        console.log(`${chalk.cyan('→')} Send any WhatsApp message to ${chalk.bold(displayPhoneNumber)}.`);
+      } else {
+        console.log(`${chalk.cyan('→')} Send any WhatsApp message to your business number.`);
+      }
+      if (waMeUrl) {
+        console.log(`${chalk.cyan('→')} Open WhatsApp directly: ${chalk.underline(waMeUrl)}`);
+      }
+      logWhatsAppTestHandoffEvents({ waMeUrl, displayPhoneNumber });
+      start('Waiting for your first inbound WhatsApp message…');
+    },
+    whatsappConnected() {
+      succeed('WhatsApp connected');
     },
     addingSlackIntegration() {
       start('Linking Slack to your agent…');
