@@ -6,6 +6,8 @@ interface DiscoverResponse {
   agents?: Array<{ agentId: string }>;
 }
 
+type AgentSyncOutcome = { status: 'none' } | { status: 'synced'; count: number } | { status: 'unavailable' };
+
 export async function sync(bridgeUrl: string, secretKey: string, apiUrl: string) {
   if (!bridgeUrl) {
     throw new Error('A bridge URL is required for the sync command, please supply it when running the command');
@@ -27,9 +29,26 @@ export async function sync(bridgeUrl: string, secretKey: string, apiUrl: string)
     process.exit(1);
   }
 
-  await syncAgentBridgeUrls(bridgeUrl, secretKey, apiUrl);
+  const workflowCount = Array.isArray(syncResult.data) ? syncResult.data.length : 0;
+  const agentOutcome = await syncAgentBridgeUrls(bridgeUrl, secretKey, apiUrl);
+
+  console.log(formatSyncSummary(workflowCount, agentOutcome));
+
+  if (agentOutcome.status === 'unavailable') {
+    console.log('Agent discovery was unavailable.');
+  }
 
   return syncResult.data;
+}
+
+function formatSyncSummary(workflowCount: number, agentOutcome: AgentSyncOutcome): string {
+  if (agentOutcome.status === 'unavailable') {
+    return `${workflowCount} Workflows`;
+  }
+
+  const agentCount = agentOutcome.status === 'synced' ? agentOutcome.count : 0;
+
+  return `${workflowCount} Workflows and ${agentCount} Agents`;
 }
 
 export async function executeSync(apiUrl: string, bridgeUrl: string, secretKey: string) {
@@ -49,14 +68,18 @@ export async function executeSync(apiUrl: string, bridgeUrl: string, secretKey: 
   );
 }
 
-async function syncAgentBridgeUrls(bridgeUrl: string, secretKey: string, apiUrl: string) {
+async function syncAgentBridgeUrls(
+  bridgeUrl: string,
+  secretKey: string,
+  apiUrl: string
+): Promise<AgentSyncOutcome> {
   try {
     const discoverUrl = `${bridgeUrl}?action=discover`;
     const discoverRes = await axios.get<DiscoverResponse>(discoverUrl, { timeout: 5000 });
     const agents = discoverRes.data?.agents ?? [];
 
     if (agents.length === 0) {
-      return;
+      return { status: 'none' };
     }
 
     console.log(`Setting production bridge URL for ${agents.length} agent(s)...`);
@@ -76,17 +99,22 @@ async function syncAgentBridgeUrls(bridgeUrl: string, secretKey: string, apiUrl:
       )
     );
 
+    let syncedCount = 0;
+
     for (let i = 0; i < results.length; i++) {
       const result = results[i];
       const agentId = agents[i].agentId;
       if (result.status === 'fulfilled') {
+        syncedCount += 1;
         console.log(`  ✓ ${agentId}`);
       } else {
         console.warn(`  ✗ ${agentId}: ${result.reason?.message || 'unknown error'}`);
       }
     }
+
+    return { status: 'synced', count: syncedCount };
   } catch {
-    console.warn('Could not discover agents for bridge URL sync (bridge may not expose agents yet).');
+    return { status: 'unavailable' };
   }
 }
 

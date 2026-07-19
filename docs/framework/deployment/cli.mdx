@@ -32,19 +32,20 @@ npx novu@latest sync \
 
 ## Understanding sync output
 
-A successful sync prints the number of workflows and steps that were discovered from your bridge endpoint, for example:
-
-```json
-{"status":"ok","sdkVersion":"2.10.0","frameworkVersion":"2024-06-26","discovered":{"workflows":14,"steps":30}}
-```
-
-You may also see the following message printed alongside a successful sync:
+A successful sync prints how many workflows and agents were synced from your bridge endpoint, for example:
 
 ```
-Could not discover agents for bridge URL sync (bridge may not expose agents yet).
+14 Workflows and 0 Agents
 ```
 
-This is an informational notice, not an error. It only indicates that your bridge does not expose any [Agents](/agents/get-started/what-is-aci) at the sync endpoint. If you are only syncing workflows, you can safely ignore this message — your workflows and steps have still been synced.
+If your bridge exposes [Agents](/agents/get-started/what-is-aci), the agent count reflects how many were successfully updated. When you are only syncing workflows, `0 Agents` is expected and does not indicate an error.
+
+If agent discovery is unavailable, the summary omits the agent count and prints an informational note instead:
+
+```
+14 Workflows
+Agent discovery was unavailable.
+```
 
 ## Using vercel preview url
 
