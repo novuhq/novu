@@ -803,7 +803,7 @@ await novu.trigger({
 ```
   </Step>
   <Step title="Novu matches Context, then evaluates conditions">
-    Novu first selects topic subscriptions whose stored Context exactly matches the trigger Context (including the default/no-Context case). For each matching subscription, Novu evaluates the JSON Logic condition against the trigger **payload**, **subscriber** profile, resolved **context**, and **environment** variables. Subscriptions that pass receive the notification; others are skipped.
+    Novu first selects topic subscriptions whose stored Context exactly matches the trigger Context (including the default/no-Context case). For each matching subscription, Novu evaluates the JSON Logic condition against the trigger **payload**, **subscriber** profile, optional **actor**, and resolved **context**. Subscriptions that pass receive the notification; others are skipped.
   </Step>
 </Steps>
 
@@ -818,7 +818,7 @@ Novu Cloud bills by [workflow runs](/platform/account/billing#what-is-a-workflow
 Topic subscription filtering happens **before** that point, during topic fan-out:
 
 1. Novu looks up subscriptions on the topic (including [Context](/platform/concepts/contexts) exact-match filtering).
-2. For each candidate subscription, Novu evaluates JSON Logic conditions against the trigger **payload**, **subscriber** profile, resolved **context**, and **environment** variables.
+2. For each candidate subscription, Novu evaluates JSON Logic conditions against the trigger **payload**, **subscriber** profile, optional **actor**, and resolved **context**.
 3. Only subscriptions that pass proceed to workflow run creation.
 
 If a subscriber is filtered out because their Context does not match the trigger, or because their subscription condition evaluates to `false`, **no workflow run is created** for that subscriber and **it does not count toward usage**.
