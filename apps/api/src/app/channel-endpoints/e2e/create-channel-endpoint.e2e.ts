@@ -7,7 +7,7 @@ import {
   CreateWebhookEndpointDto,
 } from '@novu/api/models/components';
 import { IntegrationRepository } from '@novu/dal';
-import { ChannelTypeEnum, ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
+import { ChannelTypeEnum, ChatProviderIdEnum, ENDPOINT_TYPES, ToolProviderIdEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import {
@@ -20,6 +20,7 @@ import {
 import { expectSdkExceptionGeneric, expectSdkZodError } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 const integrationRepository = new IntegrationRepository();
+const PAGERDUTY_ROUTING_KEY = 'R0UTINGK3YEXAMPLE0000000000000000';
 
 async function createTelegramIntegration(session: UserSession) {
   return integrationRepository.create({
@@ -42,6 +43,18 @@ async function createLineIntegration(session: UserSession) {
     credentials: { apiToken: 'test-line-channel-access-token' },
     active: true,
     identifier: `line-${Date.now()}`,
+  });
+}
+
+async function createPagerDutyIntegration(session: UserSession) {
+  return integrationRepository.create({
+    _organizationId: session.organization._id,
+    _environmentId: session.environment._id,
+    providerId: ToolProviderIdEnum.PagerDuty,
+    channel: ChannelTypeEnum.TOOL,
+    credentials: {},
+    active: true,
+    identifier: `pagerduty-${Date.now()}`,
   });
 }
 
@@ -425,5 +438,48 @@ describe('Create Channel Endpoint - /channel-endpoints (POST) #novu-v2', () => {
     expect(result.type).to.equal(ENDPOINT_TYPES.LINE_USER);
     expect((result.endpoint as { userId: string }).userId).to.equal('U1234567890abcdef');
     expect(result.connectionIdentifier).to.be.null;
+  });
+
+  it('should create a pagerduty_service endpoint for a PagerDuty integration', async () => {
+    const integration = await createPagerDutyIntegration(session);
+    const subscribersService = createSubscribersService(session);
+    const subscriber = await subscribersService.createSubscriber();
+
+    // Raw HTTP: SDK may not yet include CreatePagerDutyServiceEndpointDto.
+    const res = await session.testAgent.post('/v1/channel-endpoints').send({
+      integrationIdentifier: integration.identifier,
+      subscriberId: subscriber.subscriberId,
+      type: ENDPOINT_TYPES.PAGERDUTY_SERVICE,
+      endpoint: {
+        routingKey: PAGERDUTY_ROUTING_KEY,
+        region: 'us',
+      },
+    });
+
+    expect(res.status).to.equal(201);
+    expect(res.body.data.type).to.equal(ENDPOINT_TYPES.PAGERDUTY_SERVICE);
+    expect(res.body.data.subscriberId).to.equal(subscriber.subscriberId);
+    expect(res.body.data.endpoint.routingKey).to.equal(PAGERDUTY_ROUTING_KEY);
+    expect(res.body.data.endpoint.region).to.equal('us');
+    expect(res.body.data.connectionIdentifier).to.be.a('string');
+  });
+
+  it('should fail when creating a pagerduty_service endpoint for a non-PagerDuty integration', async () => {
+    const integration = await createSlackIntegration(session);
+    const subscribersService = createSubscribersService(session);
+    const subscriber = await subscribersService.createSubscriber();
+
+    const res = await session.testAgent.post('/v1/channel-endpoints').send({
+      integrationIdentifier: integration.identifier,
+      subscriberId: subscriber.subscriberId,
+      type: ENDPOINT_TYPES.PAGERDUTY_SERVICE,
+      endpoint: {
+        routingKey: PAGERDUTY_ROUTING_KEY,
+        region: 'us',
+      },
+    });
+
+    expect(res.status).to.equal(400);
+    expect(res.body.message).to.include('requires a PagerDuty integration');
   });
 });

@@ -16,7 +16,7 @@ import {
   IntegrationRepository,
   SubscriberRepository,
 } from '@novu/dal';
-import { ChannelEndpointType, ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
+import { ChannelEndpointType, ChatProviderIdEnum, ENDPOINT_TYPES, ToolProviderIdEnum } from '@novu/shared';
 import { CreateChannelEndpointCommand } from './create-channel-endpoint.command';
 
 const PAGERDUTY_WORKSPACE_STUB = { id: 'pagerduty', name: 'PagerDuty' } as const;
@@ -56,6 +56,8 @@ export class CreateChannelEndpoint {
     }
 
     if (command.type === ENDPOINT_TYPES.PAGERDUTY_SERVICE) {
+      this.assertPagerDutyIntegration(command, integration);
+
       return await this.createPagerDutyEndpoint(command, identifier, integration, contextKeys);
     }
 
@@ -121,16 +123,10 @@ export class CreateChannelEndpoint {
   }
 
   /**
-   * PagerDuty routing is per subscriber. The wire payload carries
-   * `{ routingKey, region }`, which we persist encrypted on a fresh
-   * `ChannelConnection.auth`. The stored `ChannelEndpoint.endpoint` document is
-   * empty — the read path re-hydrates the wire shape from the decrypted auth.
-   *
-   * Ordering: connection first, endpoint second. If the endpoint create fails
-   * (partial unique index → duplicate subscriber/integration pair), we delete
-   * the just-created connection so a retry starts from a clean slate.
-   * `withTransaction` gives atomicity on replica sets; on standalone Mongo it
-   * degrades to sequential execution — the compensating delete covers that gap.
+   * Persist `{ routingKey, region }` encrypted on a fresh ChannelConnection;
+   * store an empty endpoint document and hydrate the wire shape on read.
+   * Connection-first ordering with a compensating delete covers endpoint
+   * create failures (e.g. duplicate subscriber/integration pair).
    */
   private async createPagerDutyEndpoint(
     command: CreateChannelEndpointCommand,
@@ -167,12 +163,9 @@ export class CreateChannelEndpoint {
         subscriberId: command.subscriberId,
         contextKeys,
         type: command.type,
-        // Wire shape lives on the connection; the stored document is empty.
         endpoint: {},
       });
 
-      // Hydrate the returned entity's endpoint so the response DTO carries the
-      // wire shape without a second connection lookup.
       return { ...endpoint, endpoint: { routingKey, region } } as ChannelEndpointEntity;
     } catch (error) {
       if (createdConnection) {
@@ -221,8 +214,7 @@ export class CreateChannelEndpoint {
       );
     }
 
-    // `allowUpdate: false` makes this a create-only path: it never mutates an
-    // existing subscriber, so a concurrent create resolves to a harmless no-op.
+    // create-only: never mutates an existing subscriber
     await this.createOrUpdateSubscriber.execute(
       CreateOrUpdateSubscriberCommand.create({
         environmentId: command.environmentId,
@@ -269,6 +261,12 @@ export class CreateChannelEndpoint {
   private assertWebexIntegration(command: CreateChannelEndpointCommand, integration: IntegrationEntity): void {
     if (integration.providerId !== ChatProviderIdEnum.WebexMessaging) {
       throw new BadRequestException(`Channel endpoint type "${command.type}" requires a Webex Messaging integration`);
+    }
+  }
+
+  private assertPagerDutyIntegration(command: CreateChannelEndpointCommand, integration: IntegrationEntity): void {
+    if (integration.providerId !== ToolProviderIdEnum.PagerDuty) {
+      throw new BadRequestException(`Channel endpoint type "${command.type}" requires a PagerDuty integration`);
     }
   }
 
