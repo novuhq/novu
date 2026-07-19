@@ -57,8 +57,6 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
 
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // Focus the provider search input whenever the drawer opens on the select
-  // step so users can start typing immediately after clicking Connect Provider.
   useEffect(() => {
     if (isOpened && step === 'select') {
       const timeoutId = setTimeout(() => {
