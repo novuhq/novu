@@ -1,7 +1,6 @@
 import { NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { CreateOrUpdateSubscriberCommand, CreateOrUpdateSubscriberUseCase } from '@novu/application-generic';
 import { SubscriberRepository } from '@novu/dal';
-import { CONNECT_SUBSCRIBER_PREFIX } from '@novu/shared';
 
 interface EnsureConnectDashboardSubscriberParams {
   subscriberId: string;
@@ -9,13 +8,18 @@ interface EnsureConnectDashboardSubscriberParams {
   organizationId: string;
   subscriberRepository: SubscriberRepository;
   createOrUpdateSubscriber: CreateOrUpdateSubscriberUseCase;
+  /**
+   * When true, provision a missing subscriber (dashboard OAuth URL generation).
+   * When false, missing subscribers raise NotFoundException (channel-connection API).
+   */
+  allowProvision?: boolean;
 }
 
 /**
  * Ensures the subscriber exists before creating a channel connection or
- * starting OAuth. Dashboard Connect flows pass `connect:<userId>` ids that
- * may not be provisioned yet — auto-create those on demand. All other
- * subscriber ids must already exist.
+ * starting OAuth. Dashboard Connect flows pass the logged-in user's id as
+ * `subscriberId` (same as workflow testing); OAuth URL generation may
+ * auto-create that row when `allowProvision` is set.
  */
 export async function ensureConnectDashboardSubscriber({
   subscriberId,
@@ -23,6 +27,7 @@ export async function ensureConnectDashboardSubscriber({
   organizationId,
   subscriberRepository,
   createOrUpdateSubscriber,
+  allowProvision = false,
 }: EnsureConnectDashboardSubscriberParams): Promise<void> {
   const existingSubscriber = await subscriberRepository.findBySubscriberId(environmentId, subscriberId);
 
@@ -30,9 +35,7 @@ export async function ensureConnectDashboardSubscriber({
     return;
   }
 
-  const isConnectDashboardSubscriber = subscriberId.startsWith(`${CONNECT_SUBSCRIBER_PREFIX}:`);
-
-  if (!isConnectDashboardSubscriber) {
+  if (!allowProvision) {
     throw new NotFoundException(`Subscriber not found: ${subscriberId}`);
   }
 

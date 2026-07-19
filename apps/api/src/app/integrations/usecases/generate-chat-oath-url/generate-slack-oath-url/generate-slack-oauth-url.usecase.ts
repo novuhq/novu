@@ -141,6 +141,7 @@ export class GenerateSlackOauthUrl {
       organizationId,
       subscriberRepository: this.subscriberRepository,
       createOrUpdateSubscriber: this.createOrUpdateSubscriber,
+      allowProvision: true,
     });
   }
 

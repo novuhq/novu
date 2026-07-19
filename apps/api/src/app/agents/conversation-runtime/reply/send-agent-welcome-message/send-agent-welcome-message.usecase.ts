@@ -201,8 +201,8 @@ export class SendAgentWelcomeMessage {
   }
 
   /**
-   * Email welcome messages are sent to the dashboard user's `connect:<userId>`
-   * subscriber — the same identity used by Telegram/WhatsApp test flows.
+   * Email welcome messages are sent to the dashboard user's subscriber
+   * (the same identity used by Telegram/WhatsApp test flows and workflow testing).
    */
   private async resolveEmailWelcomeRecipient(command: SendAgentWelcomeMessageCommand): Promise<string | undefined> {
     const subscriberId = buildConnectSubscriberId(command.userId);
@@ -216,7 +216,7 @@ export class SendAgentWelcomeMessage {
 
     if (!email) {
       this.logger.warn(
-        `No email on connect subscriber "${subscriberId}" — welcome email skipped for agent "${command.agentIdentifier}"`
+        `No email on dashboard subscriber "${subscriberId}" — welcome email skipped for agent "${command.agentIdentifier}"`
       );
 
       return undefined;

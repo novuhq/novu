@@ -1,10 +1,11 @@
-import { CONNECT_SUBSCRIBER_PREFIX, ENDPOINT_TYPES } from '@novu/shared';
+import { ENDPOINT_TYPES } from '@novu/shared';
 import { useQuery } from '@tanstack/react-query';
 import {
   type ChannelEndpointDto,
   type ChannelEndpointsListResponse,
   listChannelEndpoints,
 } from '@/api/channel-endpoints';
+import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
 
 const POLL_INTERVAL_MS = 3000;
@@ -25,12 +26,10 @@ const CONNECT_FLOW_USER_ENDPOINT_TYPES = new Set<string>([
 /**
  * Deep-link providers (Telegram) never carry a `connectionIdentifier`, and a bare bot DM does not
  * auto-provision an endpoint — only the `/start <code>` deep-link connect flow does. So for these
- * types we rely solely on the `connect:` subscriber-prefix exclusion to filter out the dashboard's
- * own setup test, rather than requiring a `connectionIdentifier`.
+ * types we rely solely on excluding the dashboard user's own subscriber id to filter out setup
+ * tests, rather than requiring a `connectionIdentifier`.
  */
 const ENDPOINT_TYPES_WITHOUT_CONNECTION_IDENTIFIER = new Set<string>([ENDPOINT_TYPES.TELEGRAM_CHAT]);
-
-const CONNECT_SUBSCRIBER_ID_PREFIX = `${CONNECT_SUBSCRIBER_PREFIX}:`;
 
 type UseChannelFirstConnectedEndpointParams = {
   /** Public identifier of the integration whose first connected end user we wait for. */
@@ -43,9 +42,12 @@ type UseChannelFirstConnectedEndpointParams = {
  *  - is a connect-flow endpoint type, and
  *  - for OAuth providers, came from the connect flow (`connectionIdentifier` is set, not a bot-DM
  *    auto-provision) — deep-link providers like Telegram are exempt from this check, and
- *  - is not the Novu dashboard's own onboarding subscriber (`connect:` prefixed id).
+ *  - is not the currently logged-in dashboard user's own subscriber (onboarding self-test).
  */
-function isGenuineConnectedEndpoint(endpoint: ChannelEndpointDto): boolean {
+export function isGenuineConnectedEndpoint(
+  endpoint: ChannelEndpointDto,
+  dashboardSubscriberId?: string | null
+): boolean {
   if (!CONNECT_FLOW_USER_ENDPOINT_TYPES.has(endpoint.type)) {
     return false;
   }
@@ -55,18 +57,23 @@ function isGenuineConnectedEndpoint(endpoint: ChannelEndpointDto): boolean {
     return false;
   }
 
-  return !endpoint.subscriberId?.startsWith(CONNECT_SUBSCRIBER_ID_PREFIX);
+  if (dashboardSubscriberId && endpoint.subscriberId === dashboardSubscriberId) {
+    return false;
+  }
+
+  return true;
 }
 
 /** The earliest (first) genuine end-user connection, or null if none exists yet. */
 export function findFirstGenuineConnectedEndpoint(
-  data: ChannelEndpointsListResponse | undefined
+  data: ChannelEndpointsListResponse | undefined,
+  dashboardSubscriberId?: string | null
 ): ChannelEndpointDto | null {
   if (!data) {
     return null;
   }
 
-  const genuine = data.data.filter(isGenuineConnectedEndpoint);
+  const genuine = data.data.filter((endpoint) => isGenuineConnectedEndpoint(endpoint, dashboardSubscriberId));
   if (genuine.length === 0) {
     return null;
   }
@@ -80,17 +87,24 @@ export function findFirstGenuineConnectedEndpoint(
  * Polls the channel-endpoints API for the first genuine end-user connection created through the
  * embedded SDK connect button for a specific integration. Returns `connected: true` and the
  * connection's `connectedAt` (the endpoint's server `createdAt`) once one appears. Excludes bot-DM
- * auto-provisioned links and the dashboard's own onboarding connect. Callers should disable this
+ * auto-provisioned links and the dashboard user's own onboarding connect. Callers should disable this
  * where conversations are unavailable (e.g. self-hosted community).
  */
 export function useChannelFirstConnectedEndpoint({
   integrationIdentifier,
   enabled = true,
 }: UseChannelFirstConnectedEndpointParams) {
+  const { currentUser } = useAuth();
   const { currentEnvironment } = useEnvironment();
+  const dashboardSubscriberId = currentUser?._id ?? null;
 
   const query = useQuery<ChannelEndpointsListResponse>({
-    queryKey: ['agent-channel-first-connected-endpoint', currentEnvironment?._id, integrationIdentifier],
+    queryKey: [
+      'agent-channel-first-connected-endpoint',
+      currentEnvironment?._id,
+      integrationIdentifier,
+      dashboardSubscriberId,
+    ],
     queryFn: ({ signal }) =>
       listChannelEndpoints({
         // biome-ignore lint/style/noNonNullAssertion: guarded by `enabled` below
@@ -100,10 +114,11 @@ export function useChannelFirstConnectedEndpoint({
       }),
     enabled: enabled && Boolean(currentEnvironment),
     refetchOnWindowFocus: false,
-    refetchInterval: (query) => (findFirstGenuineConnectedEndpoint(query.state.data) ? false : POLL_INTERVAL_MS),
+    refetchInterval: (query) =>
+      findFirstGenuineConnectedEndpoint(query.state.data, dashboardSubscriberId) ? false : POLL_INTERVAL_MS,
   });
 
-  const firstConnected = findFirstGenuineConnectedEndpoint(query.data);
+  const firstConnected = findFirstGenuineConnectedEndpoint(query.data, dashboardSubscriberId);
 
   return {
     connected: firstConnected !== null,

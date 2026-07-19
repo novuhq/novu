@@ -238,7 +238,7 @@ describe('EnsureProviderManagedVault', () => {
     expect(agentMcpServerRepository.findByAgentAndMcpId.calledOnce).to.equal(true);
   });
 
-  it('prefers the connect: subscriber row over the legacy dashboard user id', async () => {
+  it('resolves the dashboard user subscriber id', async () => {
     await useCase.execute(makeCommand());
 
     expect(subscriberRepository.findBySubscriberId.firstCall.args).to.deep.equal([
@@ -293,7 +293,7 @@ describe('EnsureProviderManagedVault', () => {
       }
     });
 
-    it('resolves the channel subscriber directly without falling back to connect:<userId>', async () => {
+    it('resolves the channel subscriber directly without falling back to the dashboard user id', async () => {
       const result = await useCase.executeForSetupCard(makeCommand({ subscriberId: CHANNEL_SUBSCRIBER_ID }));
 
       // The setup-card flow returns a signed Novu intermediate URL that

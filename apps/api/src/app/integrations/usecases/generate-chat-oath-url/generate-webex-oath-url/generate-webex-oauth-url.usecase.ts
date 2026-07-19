@@ -102,6 +102,7 @@ export class GenerateWebexOauthUrl {
       organizationId,
       subscriberRepository: this.subscriberRepository,
       createOrUpdateSubscriber: this.createOrUpdateSubscriber,
+      allowProvision: true,
     });
   }
 

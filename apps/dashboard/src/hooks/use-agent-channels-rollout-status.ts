@@ -5,6 +5,7 @@ import type { AgentIntegrationLink } from '@/api/agents';
 import { type ChannelEndpointsListResponse, listChannelEndpoints } from '@/api/channel-endpoints';
 import { providerHasWhatsNextPhase } from '@/components/agents/agent-integration-guides/whats-next/whats-next-config';
 import { IS_SELF_HOSTED_CE } from '@/config';
+import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
 import { findFirstGenuineConnectedEndpoint } from '@/hooks/use-channel-first-connected-endpoint';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
@@ -57,7 +58,9 @@ function isEmailRolloutComplete(
  * lightweight "Add another channel" nudge once nothing remains to configure for users.
  */
 export function useAgentChannelsRolloutStatus(links: AgentIntegrationLink[]): RolloutStatus {
+  const { currentUser } = useAuth();
   const { currentEnvironment } = useEnvironment();
+  const dashboardSubscriberId = currentUser?._id ?? null;
   const isMsTeamsWhatsNextEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_AGENT_MSTEAMS_WHATS_NEXT_ENABLED);
   const isEmailWhatsNextEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_AGENT_EMAIL_WHATS_NEXT_ENABLED);
   const { integrations, isLoading: isIntegrationsLoading } = useFetchIntegrations();
@@ -78,7 +81,12 @@ export function useAgentChannelsRolloutStatus(links: AgentIntegrationLink[]): Ro
 
   const endpointQueries = useQueries({
     queries: chatRolloutLinks.map((link) => ({
-      queryKey: ['agent-channel-first-connected-endpoint', currentEnvironment?._id, link.integration.identifier],
+      queryKey: [
+        'agent-channel-first-connected-endpoint',
+        currentEnvironment?._id,
+        link.integration.identifier,
+        dashboardSubscriberId,
+      ],
       queryFn: ({ signal }: { signal: AbortSignal }) =>
         listChannelEndpoints({
           // biome-ignore lint/style/noNonNullAssertion: guarded by `enabled` below
@@ -89,7 +97,7 @@ export function useAgentChannelsRolloutStatus(links: AgentIntegrationLink[]): Ro
       enabled: CONVERSATIONS_AVAILABLE && Boolean(currentEnvironment),
       refetchOnWindowFocus: false,
       refetchInterval: (query: Query<ChannelEndpointsListResponse>) =>
-        findFirstGenuineConnectedEndpoint(query.state.data) ? false : POLL_INTERVAL_MS,
+        findFirstGenuineConnectedEndpoint(query.state.data, dashboardSubscriberId) ? false : POLL_INTERVAL_MS,
     })),
   });
 
@@ -121,9 +129,9 @@ export function useAgentChannelsRolloutStatus(links: AgentIntegrationLink[]): Ro
         return false;
       }
 
-      return findFirstGenuineConnectedEndpoint(endpointQueries[queryIndex]?.data) !== null;
+      return findFirstGenuineConnectedEndpoint(endpointQueries[queryIndex]?.data, dashboardSubscriberId) !== null;
     });
-  }, [rolloutLinks, chatRolloutLinks, integrations, endpointQueries]);
+  }, [rolloutLinks, chatRolloutLinks, integrations, endpointQueries, dashboardSubscriberId]);
 
   return { allRolledOut, isSettled };
 }
