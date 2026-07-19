@@ -151,6 +151,7 @@ export function WhatsAppSetupGuide({
             <EmbeddedSignupInboundTestPanel
               connectSubscriberId={connectSubscriberId}
               credentials={selectedIntegration.credentials}
+              agentName={agent.name}
             />
           ) : null
         }

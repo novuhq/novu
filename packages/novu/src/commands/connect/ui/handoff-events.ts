@@ -83,6 +83,10 @@ export function logWhatsAppTestHandoffEvents(opts: { waMeUrl?: string; displayPh
   }
 }
 
+export function logWhatsAppWaMeQrPngHandoffEvent(opts: { waMeQrPngPath: string }): void {
+  console.log(`${HANDOFF_PREFIX}WHATSAPP_WA_ME_QR_PNG=${opts.waMeQrPngPath}`);
+}
+
 export function logSendblueDashboardHandoffEvent(opts: { dashboardUrl: string }): void {
   console.log(`${HANDOFF_PREFIX}SENDBLUE_DASHBOARD_URL=${opts.dashboardUrl}`);
 }

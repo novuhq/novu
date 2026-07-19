@@ -240,7 +240,7 @@ export interface ConnectUI {
    * (wa.me deep link when the display phone number is known). The pipeline
    * polls the agent-integration link for `connectedAt`.
    */
-  showWhatsAppTest(opts: { waMeUrl?: string; displayPhoneNumber?: string }): void;
+  showWhatsAppTest(opts: { waMeUrl?: string; waMeQr?: string; displayPhoneNumber?: string }): void;
   whatsappConnected(): void;
 
   // Slack path
