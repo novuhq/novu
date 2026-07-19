@@ -1,5 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsArray, IsOptional, IsString } from 'class-validator';
+import { ToolProviderIdEnum } from '@novu/shared';
+import { IsArray, IsObject, IsOptional, IsString } from 'class-validator';
 import { SkipControlDto } from './skip.dto';
 
 export class ToolControlDto extends SkipControlDto {
@@ -17,4 +18,21 @@ export class ToolControlDto extends SkipControlDto {
   @IsString({ each: true })
   @IsOptional()
   enabledIntegrations?: string[];
+
+  @ApiPropertyOptional({
+    description:
+      'Optional per-provider content overrides keyed by providerId. Merged over the default body at send time.',
+    type: 'object',
+    additionalProperties: {
+      type: 'object',
+      additionalProperties: true,
+    },
+    example: {
+      [ToolProviderIdEnum.PagerDuty]: { severity: 'warning', source: 'novu' },
+      [ToolProviderIdEnum.Opsgenie]: { priority: 'P2' },
+    },
+  })
+  @IsObject()
+  @IsOptional()
+  providerOverrides?: Partial<Record<ToolProviderIdEnum, Record<string, unknown>>>;
 }

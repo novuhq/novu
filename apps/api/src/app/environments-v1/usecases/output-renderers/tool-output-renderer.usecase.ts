@@ -22,8 +22,13 @@ export class ToolOutputRendererUsecase extends BaseTranslationRendererUsecase {
 
   @InstrumentUsecase()
   async execute(renderCommand: ToolOutputRendererCommand): Promise<ToolRenderOutput> {
-    const { skip, ...outputControls } = renderCommand.controlValues ?? {};
+    const { body, enabledIntegrations, providerOverrides } = renderCommand.controlValues ?? {};
     const { _environmentId, _organizationId, _id: workflowId } = renderCommand.dbWorkflow;
+    const outputControls: Record<string, unknown> = {
+      body,
+      ...(enabledIntegrations !== undefined ? { enabledIntegrations } : {}),
+      ...(providerOverrides !== undefined ? { providerOverrides } : {}),
+    };
 
     const translatedControls = await this.processTranslations({
       controls: outputControls,
@@ -37,6 +42,16 @@ export class ToolOutputRendererUsecase extends BaseTranslationRendererUsecase {
       organization: renderCommand.organization,
     });
 
-    return translatedControls as any;
+    return {
+      body: (translatedControls.body as string) ?? '',
+      ...(translatedControls.enabledIntegrations !== undefined
+        ? { enabledIntegrations: translatedControls.enabledIntegrations as string[] }
+        : {}),
+      ...(translatedControls.providerOverrides !== undefined
+        ? {
+            providerOverrides: translatedControls.providerOverrides as ToolRenderOutput['providerOverrides'],
+          }
+        : {}),
+    };
   }
 }

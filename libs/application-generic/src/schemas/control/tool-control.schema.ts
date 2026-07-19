@@ -1,14 +1,23 @@
 import { JSONSchemaEntity } from '@novu/dal';
-import { UiComponentEnum, UiSchema, UiSchemaGroupEnum } from '@novu/shared';
+import { ToolProviderIdEnum, UiComponentEnum, UiSchema, UiSchemaGroupEnum } from '@novu/shared';
 import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 import { defaultOptions, skipStepUiSchema, skipZodSchema } from './shared';
+
+const toolProviderOverrideValueSchema = z.record(z.unknown());
 
 export const toolControlZodSchema = z
   .object({
     skip: skipZodSchema,
     body: z.string(),
     enabledIntegrations: z.array(z.string()).optional(),
+    providerOverrides: z
+      .object({
+        [ToolProviderIdEnum.PagerDuty]: toolProviderOverrideValueSchema.optional(),
+        [ToolProviderIdEnum.Opsgenie]: toolProviderOverrideValueSchema.optional(),
+      })
+      .strict()
+      .optional(),
   })
   .strict();
 

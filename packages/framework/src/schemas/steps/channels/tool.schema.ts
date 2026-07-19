@@ -8,6 +8,13 @@ const toolOutputSchema = {
       type: 'array',
       items: { type: 'string' },
     },
+    providerOverrides: {
+      type: 'object',
+      additionalProperties: {
+        type: 'object',
+        additionalProperties: true,
+      },
+    },
   },
   required: ['body'],
   additionalProperties: false,

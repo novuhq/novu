@@ -18,8 +18,24 @@ import {
   OrganizationEntity,
 } from '@novu/dal';
 import { workflow } from '@novu/framework/express';
-import { ActionStep, ChannelStep, PostActionEnum, Schema, Step, StepOutput, Workflow } from '@novu/framework/internal';
-import { EnvironmentTypeEnum, LAYOUT_PREVIEW_EMAIL_STEP, LAYOUT_PREVIEW_WORKFLOW_ID, StepTypeEnum } from '@novu/shared';
+import {
+  ActionStep,
+  ChannelStep,
+  PostActionEnum,
+  Schema,
+  Step,
+  StepOutput,
+  ToolOutputUnvalidated,
+  Workflow,
+} from '@novu/framework/internal';
+import {
+  EnvironmentTypeEnum,
+  LAYOUT_PREVIEW_EMAIL_STEP,
+  LAYOUT_PREVIEW_WORKFLOW_ID,
+  StepTypeEnum,
+  TOOL_CONTENT_OVERRIDE_PROVIDER_IDS,
+  type ToolContentOverrideProviderId,
+} from '@novu/shared';
 import { AdditionalOperation, RulesLogic } from 'json-logic-js';
 import _ from 'lodash';
 import {
@@ -315,9 +331,9 @@ export class ConstructFrameworkWorkflow {
               dbWorkflow,
               organization,
               locale,
-            });
+            }) as Promise<ToolOutputUnvalidated>;
           },
-          this.constructChannelStepOptions(staticStep, fullPayloadForRender)
+          this.constructToolStepOptions(staticStep, fullPayloadForRender)
         );
       case StepTypeEnum.DIGEST:
         return step.digest(
@@ -384,6 +400,29 @@ export class ConstructFrameworkWorkflow {
       disableOutputSanitization: true,
       providers: {},
     };
+  }
+
+  /**
+   * Provider resolvers read liquid-compiled overrides from outputs (not controls),
+   * because framework provider resolvers receive uncompiled controls.
+   */
+  @Instrument()
+  private constructToolStepOptions(staticStep: NotificationStepEntity, fullPayloadForRender: FullPayloadForRender) {
+    const channelOptions = this.constructChannelStepOptions(staticStep, fullPayloadForRender);
+
+    const resolveProviderOverride =
+      (providerId: ToolContentOverrideProviderId) =>
+      async ({ outputs }: { outputs: ToolOutputUnvalidated }) =>
+        outputs.providerOverrides?.[providerId] ?? {};
+
+    const providers = Object.fromEntries(
+      TOOL_CONTENT_OVERRIDE_PROVIDER_IDS.map((providerId) => [providerId, resolveProviderOverride(providerId)])
+    );
+
+    return {
+      ...channelOptions,
+      providers,
+    } as Required<Parameters<ChannelStep>[2]>;
   }
 
   @Instrument()
