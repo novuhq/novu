@@ -1,0 +1,3 @@
+Contact: mailto:security@novu.co
+Policy: https://github.com/novuhq/novu/blob/next/SECURITY.md
+Expires: 2027-01-01T00:00:00.000Z
