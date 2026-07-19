@@ -1,3 +1,4 @@
+export * from './agents-org-funnel';
 export * from './aws-claude-regions';
 export * from './connect-claim';
 export * from './data-retention';

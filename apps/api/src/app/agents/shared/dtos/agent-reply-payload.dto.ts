@@ -1,5 +1,6 @@
 import { ApiExtraModels, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
 import type { TriggerRecipientsPayload } from '@novu/shared';
+import type { CardElement } from 'chat';
 import { Type } from 'class-transformer';
 import {
   IsArray,
@@ -126,6 +127,22 @@ export class IsValidReplyContent implements ValidatorConstraintInterface {
     const fields = [content.markdown, content.card, content.toolApprovalCard].filter((v) => v !== undefined);
     if (fields.length !== 1) return false;
 
+    if (content.markdown !== undefined) {
+      if (typeof content.markdown !== 'string' || content.markdown.trim().length === 0) {
+        return false;
+      }
+    }
+
+    if (content.card !== undefined) {
+      if (
+        content.card === null ||
+        typeof content.card !== 'object' ||
+        (content.card as { type?: unknown }).type !== 'card'
+      ) {
+        return false;
+      }
+    }
+
     if (content.files?.length && !content.markdown && !content.card && !content.toolApprovalCard) return false;
     if ((content.files?.length ?? 0) > MAX_FILES_PER_MESSAGE) return false;
 
@@ -142,7 +159,8 @@ export class IsValidReplyContent implements ValidatorConstraintInterface {
 
   defaultMessage(): string {
     return (
-      'Content must have exactly one of markdown, card, or toolApprovalCard. Files require one of them. ' +
+      'Content must have exactly one of markdown, card, or toolApprovalCard. Markdown cannot be empty. ' +
+      'Card must be a Chat SDK card element (`type: "card"`). Files require one of them. ' +
       `At most ${MAX_FILES_PER_MESSAGE} files are allowed. Each file needs exactly one of data or url. ` +
       'Inline data must be 5 MB or smaller.'
     );
@@ -243,7 +261,7 @@ export class CardReplyContentDto {
       ],
     },
   })
-  card: Record<string, unknown>;
+  card: CardElement;
 
   @ApiPropertyOptional({
     type: [FileRefDto],
@@ -292,7 +310,7 @@ export class ReplyContentDto {
   })
   @IsOptional()
   @IsObject()
-  card?: Record<string, unknown>;
+  card?: CardElement;
 
   @ApiPropertyOptional({
     description: 'Built-in tool-approval card. Mutually exclusive with `markdown` and `card`.',
@@ -757,7 +775,7 @@ export class AgentReplyPayloadDto {
       { type: 'string', enum: ['stop'], description: 'Clear the typing indicator.' },
       { $ref: getSchemaPath(TypingStatusDto) },
     ],
-    examples: [{ status: 'Looking up your order…' }, 'stop'],
+    example: [{ status: 'Looking up your order…' }, 'stop'],
   })
   @IsOptional()
   @Validate(IsValidTypingOp)

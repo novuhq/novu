@@ -45,6 +45,7 @@ export * from './normalize-variables';
 export * from './preview';
 export * from './preview-step';
 export * from './process-tenant';
+export * from './resolve-trigger-contexts';
 export * from './promote-type-change.command';
 export * from './select-integration';
 export * from './select-variant';

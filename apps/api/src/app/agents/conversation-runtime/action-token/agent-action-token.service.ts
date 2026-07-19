@@ -118,11 +118,8 @@ export class AgentActionTokenService {
     return resolved;
   }
 
-  async tokenizeCardForDelivery(
-    card: Record<string, unknown>,
-    binding: AgentActionTokenBinding
-  ): Promise<Record<string, unknown>> {
-    const clone = structuredClone(card) as unknown as CardElement;
+  async tokenizeCardForDelivery(card: CardElement, binding: AgentActionTokenBinding): Promise<CardElement> {
+    const clone = structuredClone(card);
     const replacements: Array<{ button: ButtonElement; token: string }> = [];
 
     await forEachCallbackButton(clone, async (button) => {
@@ -146,7 +143,7 @@ export class AgentActionTokenService {
       delete button.value;
     }
 
-    return clone as unknown as Record<string, unknown>;
+    return clone;
   }
 
   private claimsMatchBinding(claims: AgentActionTokenClaims, binding: AgentActionTokenBinding): boolean {

@@ -24,6 +24,10 @@ export const frameworkName: SupportedFrameworkName = 'hono';
  * Using Hono, serve and register any declared workflows with Novu,
  * making them available to be triggered by events.
  *
+ * On Cloudflare Workers, background agent turns are kept alive after the
+ * acknowledgement response via the execution context's `waitUntil`, so agents
+ * work without extra configuration.
+ *
  * @example
  * ```ts
  * import { Hono } from "hono";
@@ -43,6 +47,30 @@ export const frameworkName: SupportedFrameworkName = 'hono';
  *
  * @public
  */
+/**
+ * On Cloudflare Workers, the execution context's `waitUntil` extends the
+ * invocation lifetime so background agent turns complete after the
+ * acknowledgement response is sent.
+ *
+ * Accessing `c.executionCtx` throws on runtimes without an execution context
+ * (e.g. Node.js, Bun, Deno). Returning `undefined` there — instead of a no-op
+ * callback — lets the core handler surface its freeze-prone runtime warning
+ * (e.g. Hono on AWS Lambda) rather than masking the missing primitive.
+ */
+const getExecutionCtxWaitUntil = (c: Context): ((promise: Promise<unknown>) => void) | undefined => {
+  try {
+    const executionCtx = c.executionCtx;
+
+    if (typeof executionCtx.waitUntil === 'function') {
+      return (promise) => executionCtx.waitUntil(promise);
+    }
+  } catch {
+    // No execution context available.
+  }
+
+  return undefined;
+};
+
 export const serve = (options: ServeHandlerOptions): ((c: Context) => Promise<Response>) => {
   const handler = new NovuRequestHandler({
     frameworkName,
@@ -50,6 +78,7 @@ export const serve = (options: ServeHandlerOptions): ((c: Context) => Promise<Re
     handler: (c: Context) => {
       return {
         body: () => c.req.json(),
+        waitUntil: getExecutionCtxWaitUntil(c),
         headers: (key) => c.req.header(key),
         method: () => c.req.method,
         queryString: (key) => c.req.query(key),
