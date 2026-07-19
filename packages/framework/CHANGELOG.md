@@ -1,3 +1,17 @@
+## v2.13.0 (2026-07-16)
+
+### 🚀 Features
+
+- **framework:** keep serverless agent turns alive via waitUntil fixes NV-8313 ([#11963](https://github.com/novuhq/novu/pull/11963))
+
+### 🩹 Fixes
+
+- **api-service,framework:** card-only agent replies fail on Telegram fixes NV-8308 ([#11958](https://github.com/novuhq/novu/pull/11958))
+
+### ❤️ Thank You
+
+- Dima Grossman @scopsy
+
 ## v2.12.1 (2026-07-15)
 
 ### 🚀 Features

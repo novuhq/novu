@@ -36,11 +36,16 @@ export function digest(array: unknown, maxNames = 2, keyPath?: string, separator
   if (values.length === 1) return values[0];
   if (values.length === 2) return `${values[0]} and ${values[1]}`;
 
-  if (values.length === 3 && maxNames >= 3) {
-    return `${values[0]}${separator}${values[1]} and ${values[2]}`;
+  // When we're allowed to show at least as many names as we have, list them all
+  // instead of appending a redundant "and 0 others" (or a negative count).
+  if (maxNames >= values.length) {
+    const allButLast = values.slice(0, -1);
+    const last = values[values.length - 1];
+
+    return `${allButLast.join(separator)} and ${last}`;
   }
 
-  // Use "others" format for 4+ items or when maxNames is less than array length
+  // Use "others" format when maxNames is less than the array length
   const shownItems = values.slice(0, maxNames);
   const othersCount = values.length - maxNames;
 
