@@ -45,25 +45,6 @@ export function extractErrorMessage(err: unknown): string | undefined {
   return undefined;
 }
 
-export function parseMcpInitFailureServerName(err: unknown): string | undefined {
-  const message = extractErrorMessage(err);
-
-  if (!message) {
-    return undefined;
-  }
-
-  const mcpInitMatch = message.match(/MCP server ['"]([^'"]+)['"] initialize failed/i);
-
-  return mcpInitMatch?.[1];
-}
-
-export function buildMcpInitFailureMessage(serverName: string): string {
-  return (
-    `I couldn't connect to the **${serverName}** MCP server yet. ` +
-    `Use Connect to authorize ${serverName}, then send your message again.`
-  );
-}
-
 export function buildErrorMessage(err: unknown): string {
   if (err instanceof CredentialExpiredError) {
     return `Agent error: Credentials for "${err.serverName}" have expired. Please update them in your integration settings.`;
@@ -74,12 +55,6 @@ export function buildErrorMessage(err: unknown): string {
 
   if (isMissingReadToolForSkillsError(err)) {
     return MISSING_READ_TOOL_FOR_SKILLS_REPLY;
-  }
-
-  const failedMcpServerName = parseMcpInitFailureServerName(err);
-
-  if (failedMcpServerName) {
-    return buildMcpInitFailureMessage(failedMcpServerName);
   }
 
   return 'The agent is temporarily unavailable. Please try again later.';
