@@ -46,7 +46,7 @@ By default, Novu sanitizes both the subject and body fields to prevent unsafe HT
   | `"`       | `&quot;`   |
   | `'`       | `&#39;`    |
 
-  If your payload contains any of these characters in a value that must render literally (for example a filename like `Report & Summary.pdf`), the sanitized output will show the entity form in email and SMS content. To avoid this without disabling sanitization, normalize the value in your application code before triggering the workflow (for example, replace `&` with `and`, or URL-encode the value).
+  If your payload contains any of these characters in a value that must render literally (for example a filename like `Report & Summary.pdf`), the sanitized output will show the entity form in email and SMS content. To avoid this without disabling sanitization, pass a display-safe value from your application code before triggering the workflow (for example, replace `&` with `and`, or use a separate display field such as `Report and Summary.pdf`).
 
 You should only disable content sanitization when:
 
