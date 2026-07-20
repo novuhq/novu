@@ -47,8 +47,7 @@ export const ToolEditor = (props: ToolEditorProps) => {
   >(null);
 
   // Reset to default when the selected override no longer exists (e.g. dropped by a
-  // form reset) so the editor and the mirrored preview stay in sync — the preview
-  // reads the same context state, so masking it only at render time would diverge.
+  // form reset). setSelectedSource also syncs the preview source so both panels agree.
   useEffect(() => {
     if (selectedSource !== DEFAULT_CONTENT_SOURCE && !(selectedSource in (providerOverrides ?? {}))) {
       setSelectedSource(DEFAULT_CONTENT_SOURCE);

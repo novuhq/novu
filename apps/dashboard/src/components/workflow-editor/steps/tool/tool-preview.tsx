@@ -1,15 +1,22 @@
 import { ChannelTypeEnum, type GeneratePreviewResponseDto, type ToolRenderOutput } from '@novu/shared';
 import { useMemo } from 'react';
+import { useFormContext } from 'react-hook-form';
 import { ToolFill } from '@/components/icons/tool-fill';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
+import { useEnvironment } from '@/context/environment/hooks';
+import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import {
   buildAnnotatedPreviewLines,
+  buildToolOverrideProviderOptions,
   DEFAULT_CONTENT_SOURCE,
   getProviderPrimaryContentKey,
+  isToolContentOverrideProviderId,
   mergeToolProviderPreview,
+  type ToolProviderOverrides,
 } from './tool-content-source';
 import { useToolContentSource } from './tool-content-source-context';
+import { ToolContentSourceSelector } from './tool-content-source-selector';
 
 type ToolPreviewResult = {
   type: string;
@@ -28,6 +35,8 @@ const EMPTY_BODY_PLACEHOLDER = 'Default content will be delivered to enabled too
 
 const DEFAULT_CONTENT_CHIP_CLASS =
   'text-label-2xs text-foreground-600 bg-neutral-alpha-100 inline-flex h-4 select-none items-center rounded-sm px-1 font-medium';
+
+const PROVIDER_OVERRIDES_FIELD = 'providerOverrides';
 
 function extractToolPreview(previewData?: GeneratePreviewResponseDto): ToolRenderOutput | undefined {
   const previewResult = previewData?.result as ToolPreviewResult | undefined;
@@ -71,14 +80,46 @@ export const ToolPreviewMini = ({ isPreviewPending, previewData }: ToolPreviewPr
   );
 };
 
-/** Full preview panel inside the step editor; mirrors the editor's selected content source. */
+/** Full preview panel inside the step editor; follows the editor source unless the user picks a different preview provider. */
 export const ToolPreview = ({ isPreviewPending, previewData }: ToolPreviewProps) => {
   const preview = extractToolPreview(previewData);
   const body = preview?.body ?? '';
-  const providerOverrides = preview?.providerOverrides ?? {};
+  const previewProviderOverrides = preview?.providerOverrides ?? {};
 
-  const { selectedSource } = useToolContentSource();
-  const activeProviderId = selectedSource === DEFAULT_CONTENT_SOURCE ? undefined : selectedSource;
+  const { currentEnvironment } = useEnvironment();
+  const { integrations } = useFetchIntegrations();
+  const { watch } = useFormContext();
+  const formProviderOverrides = watch(PROVIDER_OVERRIDES_FIELD) as ToolProviderOverrides | undefined;
+
+  const { previewSource, setPreviewSource } = useToolContentSource();
+  const activeProviderId = previewSource === DEFAULT_CONTENT_SOURCE ? undefined : previewSource;
+
+  const activeProviderIds = useMemo(() => {
+    const ids = new Set<string>();
+
+    for (const integration of integrations ?? []) {
+      if (
+        integration.active &&
+        !integration.deleted &&
+        integration.channel === ChannelTypeEnum.TOOL &&
+        integration._environmentId === currentEnvironment?._id &&
+        isToolContentOverrideProviderId(integration.providerId)
+      ) {
+        ids.add(integration.providerId);
+      }
+    }
+
+    return ids;
+  }, [integrations, currentEnvironment?._id]);
+
+  const providerOptions = useMemo(
+    () =>
+      buildToolOverrideProviderOptions({
+        activeProviderIds,
+        providerOverrides: formProviderOverrides,
+      }),
+    [activeProviderIds, formProviderOverrides]
+  );
 
   const { annotatedLines, defaultContentKey } = useMemo(() => {
     if (!activeProviderId) {
@@ -88,16 +129,16 @@ export const ToolPreview = ({ isPreviewPending, previewData }: ToolPreviewProps)
     const result = mergeToolProviderPreview({
       body,
       providerId: activeProviderId,
-      override: providerOverrides[activeProviderId],
+      override: previewProviderOverrides[activeProviderId],
     });
 
     return {
       annotatedLines: buildAnnotatedPreviewLines(result.merged, result.defaultContentKey),
       defaultContentKey: result.defaultContentKey,
     };
-  }, [activeProviderId, body, providerOverrides]);
+  }, [activeProviderId, body, previewProviderOverrides]);
 
-  const hasOverride = !!activeProviderId && activeProviderId in providerOverrides;
+  const hasOverride = !!activeProviderId && activeProviderId in previewProviderOverrides;
 
   const getHintText = () => {
     if (!activeProviderId) {
@@ -151,36 +192,50 @@ export const ToolPreview = ({ isPreviewPending, previewData }: ToolPreviewProps)
   };
 
   return (
-    <div className="relative flex h-full min-h-0 w-full flex-col gap-3 rounded-xl border border-dashed border-[#E1E4EA] p-3">
-      <div className="flex h-7 shrink-0 items-center gap-2">
-        <div className="flex size-6 items-center justify-center rounded-[5px] bg-warning/10 text-warning">
-          <ToolFill className="size-3.5" />
-        </div>
-        <span className="text-foreground-950 text-xs font-bold">Tool preview</span>
+    <div className="-mx-3 -mt-3 flex h-full min-h-0 w-full flex-col">
+      <div className="border-stroke-soft bg-bg-weak flex h-7 shrink-0 items-center border-b">
+        <ToolContentSourceSelector
+          mode="preview"
+          selectedSource={previewSource}
+          providers={providerOptions}
+          onSelectSource={setPreviewSource}
+        />
+        <div className="h-full flex-1" />
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-1.5">
-        <div className="flex h-4 shrink-0 items-center gap-1.5">
-          {isPreviewPending ? (
-            <Skeleton className="h-3 w-40" />
-          ) : (
-            <>
-              <span className="text-foreground-600 text-label-2xs font-medium uppercase tracking-wide">
-                {activeProviderId ? 'Request body' : 'Message'}
-              </span>
-              {hasOverride && (
-                <span className="text-label-2xs text-foreground-600 bg-neutral-alpha-100 flex h-4 items-center rounded-sm px-1 font-medium">
-                  OVERRIDDEN
-                </span>
+      <div className="relative flex min-h-0 flex-1 flex-col gap-3 p-3">
+        <div className="flex h-full min-h-0 w-full flex-col gap-3 rounded-xl border border-dashed border-[#E1E4EA] p-3">
+          <div className="flex h-7 shrink-0 items-center gap-2">
+            <div className="flex size-6 items-center justify-center rounded-[5px] bg-warning/10 text-warning">
+              <ToolFill className="size-3.5" />
+            </div>
+            <span className="text-foreground-950 text-xs font-bold">Tool preview</span>
+          </div>
+
+          <div className="flex min-h-0 flex-1 flex-col gap-1.5">
+            <div className="flex h-4 shrink-0 items-center gap-1.5">
+              {isPreviewPending ? (
+                <Skeleton className="h-3 w-40" />
+              ) : (
+                <>
+                  <span className="text-foreground-600 text-label-2xs font-medium uppercase tracking-wide">
+                    {activeProviderId ? 'Request body' : 'Message'}
+                  </span>
+                  {hasOverride && (
+                    <span className="text-label-2xs text-foreground-600 bg-neutral-alpha-100 flex h-4 items-center rounded-sm px-1 font-medium">
+                      OVERRIDDEN
+                    </span>
+                  )}
+                </>
               )}
-            </>
-          )}
-        </div>
+            </div>
 
-        {isPreviewPending ? <Skeleton className="h-24 w-full shrink-0 rounded-md" /> : renderPanel()}
+            {isPreviewPending ? <Skeleton className="h-24 w-full shrink-0 rounded-md" /> : renderPanel()}
 
-        <div className="text-foreground-400 text-label-2xs min-h-4 shrink-0">
-          {isPreviewPending ? <Skeleton className="h-3 w-full max-w-sm" /> : getHintText()}
+            <div className="text-foreground-400 text-label-2xs min-h-4 shrink-0">
+              {isPreviewPending ? <Skeleton className="h-3 w-full max-w-sm" /> : getHintText()}
+            </div>
+          </div>
         </div>
       </div>
     </div>

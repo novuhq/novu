@@ -1,16 +1,31 @@
-import { createContext, type ReactNode, useContext, useMemo, useState } from 'react';
+import { createContext, type ReactNode, useCallback, useContext, useMemo, useState } from 'react';
 import { DEFAULT_CONTENT_SOURCE, type ToolContentSource } from './tool-content-source';
 
 type ToolContentSourceContextValue = {
+  /** Content source currently open in the editor. */
   selectedSource: ToolContentSource;
   setSelectedSource: (source: ToolContentSource) => void;
+  /** Content source shown in the preview panel. Independent of the editor unless the editor changes. */
+  previewSource: ToolContentSource;
+  setPreviewSource: (source: ToolContentSource) => void;
 };
 
 const ToolContentSourceContext = createContext<ToolContentSourceContextValue | null>(null);
 
 export const ToolContentSourceProvider = ({ children }: { children: ReactNode }) => {
-  const [selectedSource, setSelectedSource] = useState<ToolContentSource>(DEFAULT_CONTENT_SOURCE);
-  const value = useMemo(() => ({ selectedSource, setSelectedSource }), [selectedSource]);
+  const [selectedSource, setSelectedSourceState] = useState<ToolContentSource>(DEFAULT_CONTENT_SOURCE);
+  const [previewSource, setPreviewSource] = useState<ToolContentSource>(DEFAULT_CONTENT_SOURCE);
+
+  // Editor → preview sync only. Preview changes must not write back to the editor.
+  const setSelectedSource = useCallback((source: ToolContentSource) => {
+    setSelectedSourceState(source);
+    setPreviewSource(source);
+  }, []);
+
+  const value = useMemo(
+    () => ({ selectedSource, setSelectedSource, previewSource, setPreviewSource }),
+    [selectedSource, setSelectedSource, previewSource]
+  );
 
   return <ToolContentSourceContext.Provider value={value}>{children}</ToolContentSourceContext.Provider>;
 };
