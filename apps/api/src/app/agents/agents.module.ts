@@ -41,6 +41,7 @@ import { InboundAckService } from './conversation-runtime/ack/inbound-ack.servic
 import { AgentActionTokenService } from './conversation-runtime/action-token/agent-action-token.service';
 import { AgentAttachmentStorage } from './conversation-runtime/conversation/agent-attachment-storage.service';
 import { AgentConversationService } from './conversation-runtime/conversation/agent-conversation.service';
+import { AgentSubscriberAdoptionService } from './conversation-runtime/conversation/agent-subscriber-adoption.service';
 import { AgentSubscriberResolver } from './conversation-runtime/conversation/agent-subscriber-resolver.service';
 import { ConversationActivationService } from './conversation-runtime/conversation/conversation-activation.service';
 import { FileMaterializer } from './conversation-runtime/egress/file-materializer.service';
@@ -50,6 +51,7 @@ import { ChatInstanceRegistry } from './conversation-runtime/ingress/chat-instan
 import { InboundDispatcher } from './conversation-runtime/ingress/inbound.dispatcher';
 import { AgentInboundHandler } from './conversation-runtime/ingress/inbound-turn.handler';
 import { PlanLimitGateService } from './conversation-runtime/ingress/plan-limit-gate.service';
+import { ReplyApprovalInterceptor } from './conversation-runtime/ingress/reply-approval-interceptor.service';
 import { AgentReplyController } from './conversation-runtime/reply/agent-reply.controller';
 import { BridgeRuntime } from './conversation-runtime/runtime/bridge.runtime';
 import { BridgeExecutorService } from './conversation-runtime/runtime/bridge-executor.service';
@@ -124,6 +126,7 @@ import { USE_CASES } from './usecases';
     AgentAttachmentStorage,
     AgentConfigResolver,
     AgentSubscriberResolver,
+    AgentSubscriberAdoptionService,
     ResolveWebAgentContext,
     WebConversationReader,
     WebStreamRelay,
@@ -133,6 +136,7 @@ import { USE_CASES } from './usecases';
     AgentEmailActionTokenService,
     AgentActionTokenService,
     AgentInboundHandler,
+    ReplyApprovalInterceptor,
     BridgeExecutorService,
     BridgeExpireSupersededApprovalsService,
     BridgeRuntime,

@@ -42,13 +42,13 @@ function getActivityContent(activity: ConversationActivityDto): string {
 
 function formatActivityTimestamp(dateStr: string | undefined): string {
   if (!dateStr?.trim()) {
-    return '—';
+    return '-';
   }
 
   const d = new Date(dateStr);
 
   if (Number.isNaN(d.getTime())) {
-    return '—';
+    return '-';
   }
 
   const day = String(d.getDate()).padStart(2, '0');

@@ -1,4 +1,3 @@
-import { EmailProviderIdEnum } from '@novu/shared';
 import type { AgentIntegrationLink } from '@/api/agents';
 import { hasAgentInboundConnection } from '@/components/agents/is-agent-integration-connected';
 
@@ -9,17 +8,9 @@ export const WHATS_NEXT_GRACE_PERIOD_MS = 24 * 60 * 60 * 1000;
  * Best-effort timestamp for when the user "connected" this integration — used to decide whether
  * the post-connect "What's next" guide is still relevant.
  */
-export function resolveWhatsNextConnectionAt(
-  link: Pick<AgentIntegrationLink, 'connectedAt' | 'createdAt' | 'integration'>
-): string | null {
+export function resolveWhatsNextConnectionAt(link: Pick<AgentIntegrationLink, 'connectedAt'>): string | null {
   if (hasAgentInboundConnection(link.connectedAt)) {
     return link.connectedAt ?? null;
-  }
-
-  // Auto-provisioned Novu email is treated as connected from link creation even before the first
-  // inbound message stamps `connectedAt`.
-  if (link.integration.providerId === EmailProviderIdEnum.NovuAgent) {
-    return link.createdAt;
   }
 
   return null;
@@ -54,7 +45,7 @@ export function shouldShowWhatsNextGuide(
 }
 
 export function shouldShowAgentWhatsNextSection(
-  links: ReadonlyArray<Pick<AgentIntegrationLink, 'connectedAt' | 'createdAt' | 'integration'>>,
+  links: ReadonlyArray<Pick<AgentIntegrationLink, 'connectedAt'>>,
   options: { isFreshSession?: boolean } = {}
 ): boolean {
   if (options.isFreshSession) {

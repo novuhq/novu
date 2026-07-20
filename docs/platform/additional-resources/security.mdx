@@ -1,6 +1,6 @@
 ---
 title: 'Security and Compliance'
-description: "Learn about Novu security certifications, SOC 2 and GDPR compliance, data residency options, DPA availability, HMAC signing, and privacy policies."
+description: 'Novu security, compliance, and data residency: SOC 2, ISO 27001, HIPAA, GDPR, regional API endpoints, and account-to-region binding rules.'
 ---
 
 ## How to Request SOC and ISO Reports
@@ -56,6 +56,21 @@ Novu Cloud is available in the following regions:
 | **South Korea** | South Korea |
 
 As part of our GDPR compliance, you can choose which region your data resides in when creating your account. Enterprise regions (UK, Singapore, Australia, Japan, South Korea) are available on enterprise plans.
+
+### Region-specific endpoints
+
+Each region has its own API and WebSocket hostnames. Use the pair that matches the region you selected at signup:
+
+| Region | API base URL | WebSocket URL |
+|--------|--------------|---------------|
+| **US** (default) | `https://api.novu.co/v1` | `wss://ws.novu.co` |
+| **EU** | `https://eu.api.novu.co/v1` | `wss://eu.socket.novu.co` |
+
+<Warning>
+  API keys are bound to the region where the account was created. Pointing an SDK, Inbox component, or API client at a different region's endpoint with the same key results in `401 Unauthorized`. To move an existing account to another region, contact [sales@novu.co](mailto:sales@novu.co) - you cannot self-migrate by changing the base URL.
+</Warning>
+
+For Inbox setup, see [EU region configuration](/platform/inbox/setup-inbox#eu-region).
 
 ### Switching Regions
 

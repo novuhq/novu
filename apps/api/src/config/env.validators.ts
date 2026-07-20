@@ -99,6 +99,9 @@ export const envValidators = {
    * per-tenant Domain/DomainRoute lookup.
    */
   NOVU_AGENT_SHARED_INBOUND_DOMAIN: str({ default: undefined }),
+  NOVU_WHATSAPP_APP_ID: str({ default: undefined }),
+  NOVU_WHATSAPP_APP_SECRET: str({ default: undefined }),
+  NOVU_WHATSAPP_CONFIG_ID: str({ default: undefined }),
   NOVU_MANAGED_CLAUDE_API_KEY: str({ default: undefined }),
   MAX_NOVU_MANAGED_CLAUDE_CONVERSATIONS: num({ default: 10 }),
   MAX_NOVU_MANAGED_CLAUDE_TOKENS_PER_CONVERSATION: num({ default: 100_000 }),

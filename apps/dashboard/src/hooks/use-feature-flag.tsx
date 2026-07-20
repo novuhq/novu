@@ -1,13 +1,13 @@
 import { FeatureFlagsKeysEnum, prepareBooleanStringFeatureFlag } from '@novu/shared';
 import { useFlags } from 'launchdarkly-react-client-sdk';
-import { IS_ENTERPRISE, IS_SELF_HOSTED, LAUNCH_DARKLY_CLIENT_SIDE_ID } from '../config';
+import { IS_SELF_HOSTED_EE, LAUNCH_DARKLY_CLIENT_SIDE_ID } from '../config';
 
 function isLaunchDarklyEnabled() {
-  if (!!LAUNCH_DARKLY_CLIENT_SIDE_ID && IS_ENTERPRISE) {
+  if (!!LAUNCH_DARKLY_CLIENT_SIDE_ID && IS_SELF_HOSTED_EE) {
     return true;
   }
 
-  return !!LAUNCH_DARKLY_CLIENT_SIDE_ID && !(IS_SELF_HOSTED && IS_ENTERPRISE);
+  return !!LAUNCH_DARKLY_CLIENT_SIDE_ID && !IS_SELF_HOSTED_EE;
 }
 
 export const useFeatureFlag = (key: FeatureFlagsKeysEnum, defaultValue = false): boolean => {

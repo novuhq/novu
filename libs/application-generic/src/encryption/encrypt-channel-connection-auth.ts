@@ -3,19 +3,40 @@ import { decryptApiKey, encryptApiKey } from './encrypt-provider';
 /**
  * Fields inside a `ChannelConnection.auth` object that must be encrypted at rest.
  *
- * Today the entity only models `accessToken`, but the helper is forward-compatible:
- * if a future provider adds `refreshToken`, `signingSecret`, or `clientSecret` to
- * the auth blob, those values will be encrypted/decrypted automatically by the same
- * helper without needing to touch every caller. Unknown keys are passed through
+ * Secret fields inside connection auth are encrypted/decrypted automatically by the
+ * same helper. Unknown keys, such as token expiry timestamps, are passed through
  * unchanged.
  */
-const SECURE_AUTH_FIELDS = ['accessToken', 'refreshToken', 'signingSecret', 'clientSecret'] as const;
+const SECURE_AUTH_FIELDS = [
+  'accessToken',
+  'refreshToken',
+  'signingSecret',
+  'clientSecret',
+  'routingKey',
+  'apiKey',
+] as const;
 
 export interface ChannelConnectionAuth {
   accessToken?: string;
   refreshToken?: string;
+  expiresAt?: string;
+  refreshTokenExpiresAt?: string;
   signingSecret?: string;
   clientSecret?: string;
+  /**
+   * PagerDuty Events API v2 integration key. 32-character alphanumeric string. Encrypted at rest.
+   */
+  routingKey?: string;
+  /**
+   * Opsgenie API integration key (GenieKey). UUID-format string. Encrypted at rest.
+   */
+  apiKey?: string;
+  /**
+   * Account region ('us' | 'eu'). Non-secret; travels with the secret so we route
+   * to the correct data-center endpoint (e.g. `api.opsgenie.com` vs `api.eu.opsgenie.com`,
+   * `events.pagerduty.com` vs `events.eu.pagerduty.com`).
+   */
+  region?: 'us' | 'eu';
   [key: string]: unknown;
 }
 

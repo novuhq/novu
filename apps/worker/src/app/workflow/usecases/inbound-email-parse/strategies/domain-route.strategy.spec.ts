@@ -113,6 +113,11 @@ describe('DomainRouteStrategy', () => {
 
     sinon.assert.notCalled(inboundDomainRouteDelivery.deliverToWebhook as any);
     sinon.assert.calledOnce(inboundDomainRouteDelivery.deliverToAgent);
+    // The DKIM/SPF verdicts must reach the agent delivery so the API can reject
+    // spoofed senders — they are dropped without the commandToMail passthrough.
+    const agentCall = inboundDomainRouteDelivery.deliverToAgent.getCall(0);
+    expect(agentCall.args[0].mail.dkim).to.equal('pass');
+    expect(agentCall.args[0].mail.spf).to.equal('pass');
   });
 
   it('should sanitize downstream 5xx delivery failures for customer traces', async () => {

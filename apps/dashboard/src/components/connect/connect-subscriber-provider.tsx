@@ -4,7 +4,6 @@ import { Outlet } from 'react-router-dom';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
 import { apiHostnameManager } from '@/utils/api-hostname-manager';
-import { buildConnectSubscriberId } from '@/utils/connect-subscriber-id';
 import { createContextHook } from '@/utils/context';
 
 type ConnectSubscriberContextValue = {
@@ -30,7 +29,7 @@ export function ConnectSubscriberProvider({ children }: ConnectSubscriberProvide
   const { currentEnvironment } = useEnvironment();
 
   const isReady = isUserLoaded && !!currentUser?._id && !!currentEnvironment?.identifier;
-  const subscriberId = currentUser?._id ? buildConnectSubscriberId(currentUser._id) : '';
+  const subscriberId = currentUser?._id ?? '';
   const routedContent = (children === undefined ? <Outlet /> : children) as NovuProviderChildren;
 
   if (!isReady) {

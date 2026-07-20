@@ -12,7 +12,7 @@ import { useHasPermission } from '@/hooks/use-has-permission';
 import { ConversationFiltersData } from '@/types/conversation';
 import { buildActivityDateFilters } from '@/utils/activityFilters';
 import { cn } from '@/utils/ui';
-import { IS_SELF_HOSTED } from '../../config';
+import { IS_CLOUD } from '../../config';
 import { Button } from '../primitives/button';
 import { FacetedFormFilter } from '../primitives/form/faceted-filter/facated-form-filter';
 import { Form, FormField, FormItem, FormRoot } from '../primitives/form/form';
@@ -51,7 +51,7 @@ export function ConversationFilters({
   useDebouncedForm(watch, onFiltersChange, 400);
 
   const dateFilterOptions = useMemo(() => {
-    const missingSubscription = !subscription && !IS_SELF_HOSTED;
+    const missingSubscription = !subscription && IS_CLOUD;
 
     if (!organization || missingSubscription) {
       return [];

@@ -4,6 +4,7 @@ import chalk from 'chalk';
 import { AnalyticService } from '../../services/analytics.service';
 import { aliasConnectSession, CONNECT_EVENTS, trackConnect } from './analytics/events';
 import { resolveConnectAuthMethod } from './auth/resolve-connect-auth';
+import { ConnectUserCancelledError } from './errors';
 import { runConnectPipeline } from './pipeline/runner';
 import type { ConnectCommandOptions } from './types';
 import { createLoggingUI } from './ui/logging-ui';
@@ -90,6 +91,12 @@ export async function connectCommand(options: ConnectCommandOptions, anonymousId
       if (exitCode !== 0) process.exitCode = exitCode;
     }
   } catch (error) {
+    if (error instanceof ConnectUserCancelledError) {
+      process.exitCode = error.exitCode;
+
+      return;
+    }
+
     const message = error instanceof Error ? error.message : String(error);
     trackEvent(CONNECT_EVENTS.ERROR, { message });
     console.error(chalk.red(`Connect failed: ${message}`));

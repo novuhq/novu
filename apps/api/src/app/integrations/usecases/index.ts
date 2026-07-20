@@ -11,6 +11,7 @@ import { AzureSetupOauthCallback } from './azure-setup-oauth-callback/azure-setu
 import { ChatOauthCallback } from './chat-oauth-callback/chat-oauth-callback.usecase';
 import { MsTeamsOauthCallback } from './chat-oauth-callback/msteams-oauth-callback/msteams-oauth-callback.usecase';
 import { SlackOauthCallback } from './chat-oauth-callback/slack-oauth-callback/slack-oauth-callback.usecase';
+import { WebexOauthCallback } from './chat-oauth-callback/webex-oauth-callback/webex-oauth-callback.usecase';
 import { CheckIntegration } from './check-integration/check-integration.usecase';
 import { CheckIntegrationEMail } from './check-integration/check-integration-email.usecase';
 import { ConsumeIntegrationStoreTelegramMobileLink } from './consume-integration-store-telegram-mobile-link/consume-integration-store-telegram-mobile-link.usecase';
@@ -22,6 +23,7 @@ import { GenerateConnectOauthUrl } from './generate-chat-oath-url/generate-conne
 import { GenerateLinkUserOauthUrl } from './generate-chat-oath-url/generate-link-user-oauth-url.usecase';
 import { GenerateMsTeamsOauthUrl } from './generate-chat-oath-url/generate-msteams-oath-url/generate-msteams-oauth-url.usecase';
 import { GenerateSlackOauthUrl } from './generate-chat-oath-url/generate-slack-oath-url/generate-slack-oauth-url.usecase';
+import { GenerateWebexOauthUrl } from './generate-chat-oath-url/generate-webex-oath-url/generate-webex-oauth-url.usecase';
 import { GenerateMsTeamsArmTemplate } from './generate-msteams-arm-template/generate-msteams-arm-template.usecase';
 import { GetMsTeamsArmTemplate } from './generate-msteams-arm-template/get-msteams-arm-template.usecase';
 import { GetInAppActivated } from './get-in-app-activated/get-in-app-activated.usecase';
@@ -34,6 +36,11 @@ import { RemoveIntegration } from './remove-integration/remove-integration.useca
 import { SetIntegrationAsPrimary } from './set-integration-as-primary/set-integration-as-primary.usecase';
 import { SlackQuickSetup } from './slack-quick-setup/slack-quick-setup.usecase';
 import { UpdateIntegration } from './update-integration/update-integration.usecase';
+import { CompleteWhatsAppSignupLink } from './whatsapp/complete-whatsapp-signup-link.usecase';
+import { GetWhatsAppSignupLinkStatus } from './whatsapp/get-whatsapp-signup-link-status.usecase';
+import { IssueWhatsAppSignupLink } from './whatsapp/issue-whatsapp-signup-link.usecase';
+import { WhatsAppEmbeddedSignup } from './whatsapp/whatsapp-embedded-signup.usecase';
+import { WhatsAppEmbeddedSignupAvailability } from './whatsapp/whatsapp-embedded-signup-availability.usecase';
 import { WhatsAppValidateToken } from './whatsapp/whatsapp-validate-token.usecase';
 
 export const USE_CASES = [
@@ -59,16 +66,23 @@ export const USE_CASES = [
   GenerateLinkUserOauthUrl,
   GenerateSlackOauthUrl,
   GenerateMsTeamsOauthUrl,
+  GenerateWebexOauthUrl,
   GenerateMsTeamsArmTemplate,
   GetMsTeamsArmTemplate,
   AzureSetupOauthCallback,
   GenerateAzureSetupOauthUrl,
   SlackOauthCallback,
   MsTeamsOauthCallback,
+  WebexOauthCallback,
   ChatOauthCallback,
   MsTeamsHealthCheck,
   SlackQuickSetup,
   WhatsAppValidateToken,
+  WhatsAppEmbeddedSignup,
+  WhatsAppEmbeddedSignupAvailability,
+  IssueWhatsAppSignupLink,
+  GetWhatsAppSignupLinkStatus,
+  CompleteWhatsAppSignupLink,
   IssueIntegrationStoreTelegramMobileLink,
   GetIntegrationStoreTelegramMobileLinkStatus,
   ConsumeIntegrationStoreTelegramMobileLink,

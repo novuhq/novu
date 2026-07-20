@@ -1,6 +1,5 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import {
-  ContextRepository,
   JobEntity,
   JobRepository,
   NotificationTemplateEntity,
@@ -25,6 +24,7 @@ import { FeatureFlagsService } from '../../services/feature-flags';
 import { InMemoryLRUCacheService, InMemoryLRUCacheStore } from '../../services/in-memory-lru-cache';
 import { CreateOrUpdateSubscriberCommand, CreateOrUpdateSubscriberUseCase } from '../create-or-update-subscriber';
 import { ProcessTenant, ProcessTenantCommand } from '../process-tenant';
+import { ResolveTriggerContexts, ResolveTriggerContextsCommand } from '../resolve-trigger-contexts';
 import { TriggerBroadcastCommand } from '../trigger-broadcast/trigger-broadcast.command';
 import { TriggerBroadcast } from '../trigger-broadcast/trigger-broadcast.usecase';
 import { TriggerMulticast, TriggerMulticastCommand } from '../trigger-multicast';
@@ -47,7 +47,7 @@ export class TriggerEvent {
     private triggerMulticast: TriggerMulticast,
     private analyticsService: AnalyticsService,
     private traceLogRepository: TraceLogRepository,
-    private contextRepository: ContextRepository,
+    private resolveTriggerContexts: ResolveTriggerContexts,
     private verifyPayload: VerifyPayload,
     private featureFlagsService: FeatureFlagsService,
     private inMemoryLRUCacheService: InMemoryLRUCacheService
@@ -429,10 +429,13 @@ export class TriggerEvent {
     }
 
     try {
-      const contexts = await this.contextRepository.findOrCreateContextsFromPayload(
-        command.environmentId,
-        command.organizationId,
-        command.context
+      const contexts = await this.resolveTriggerContexts.execute(
+        ResolveTriggerContextsCommand.create({
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          userId: command.userId,
+          context: command.context,
+        })
       );
 
       this.createWorkflowTrace({

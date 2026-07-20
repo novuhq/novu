@@ -2,7 +2,7 @@ import { ClerkProvider as _ClerkProvider } from '@clerk/react';
 import { PropsWithChildren } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { buttonVariants } from '@/components/primitives/button';
-import { CLERK_PUBLISHABLE_KEY, EE_AUTH_PROVIDER, IS_ENTERPRISE, IS_SELF_HOSTED } from '@/config';
+import { CLERK_PUBLISHABLE_KEY, EE_AUTH_PROVIDER, IS_SELF_HOSTED_CE } from '@/config';
 import { isAbsoluteUrl } from '@/utils/apps';
 import { buildClerkAllowedRedirectOrigins } from '@/utils/product-auth-urls';
 import { ROUTES } from '@/utils/routes';
@@ -13,7 +13,7 @@ export const EEAuthProvider = (props: EEAuthProviderProps) => {
   const navigate = useNavigate();
   const { children } = props;
 
-  if (IS_SELF_HOSTED && !IS_ENTERPRISE) {
+  if (IS_SELF_HOSTED_CE) {
     // @ts-expect-error - Self-hosted ClerkProvider has simpler props
     return <_ClerkProvider>{children}</_ClerkProvider>;
   }

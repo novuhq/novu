@@ -12,6 +12,7 @@ import { AuthModule } from '../auth/auth.module';
 import { ChannelConnectionsModule } from '../channel-connections/channel-connections.module';
 import { ChannelEndpointsModule } from '../channel-endpoints/channel-endpoints.module';
 import { IntegrationModule } from '../integrations/integrations.module';
+import { KeylessModule } from '../keyless/keyless.module';
 import { OrganizationModule } from '../organization/organization.module';
 import { OutboundWebhooksModule } from '../outbound-webhooks/outbound-webhooks.module';
 import { PreferencesModule } from '../preferences';
@@ -23,7 +24,6 @@ import { UpdateSubscriptionUsecase } from '../subscriptions/usecases/update-subs
 import { TelegramLinkingModule } from '../telegram-linking/telegram-linking.module';
 import { TopicsV2Module } from '../topics-v2/topics-v2.module';
 import { UpsertTopicUseCase } from '../topics-v2/usecases/upsert-topic/upsert-topic.usecase';
-import { KeylessModule } from '../keyless/keyless.module';
 import { InboxController } from './inbox.controller';
 import { InboxTopicController } from './inbox.topic.controller';
 import { USE_CASES } from './usecases';

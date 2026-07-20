@@ -1,6 +1,6 @@
 ---
 title: '@novu/js'
-description: 'Complete API reference for the Novu JavaScript package'
+description: "Complete API reference for the @novu/js browser SDK, covering the Novu client, notification streams, preferences, counts, and session management."
 ---
 
 
@@ -583,7 +583,7 @@ novu.on('subscriptions.list.resolved', ({ data: subscriptions }) => {
 
 The Subscriptions module lets you manage a subscriber’s subscriptions to topics. A subscription represents a subscriber’s opt-in to a topic and defines which workflows within that topic they receive notifications from.
 
-It supports creating conditional subscriptions where users only receive notifications if specific criteria (payload filters) are met.
+It supports creating conditional subscriptions where users only receive notifications when the trigger payload matches a JSON Logic rule (for example, `payload.tier` is `premium`). Subscriber profile, Context data, and step results are not available in subscription conditions. Use [step conditions](/platform/workflow/add-and-configure-steps/step-conditions) for those cases.
 
 Manage subscriptions at two levels:
 - Module-level methods on `novu.subscriptions`
@@ -648,13 +648,11 @@ const { data: subscription } = await novu.subscriptions.create({
       enabled: true
     },
     {
-      // Conditional filter
+      // Conditional filter: JSON Logic evaluated against trigger payload
       workflowId: 'price-alert',
       condition: {
-        field: 'price',
-        operation: 'below',
-        value: 100
-      }
+        '===': [{ var: 'payload.tier' }, 'premium'],
+      },
     }
   ]
 });
@@ -672,7 +670,7 @@ Updates an existing subscription.
 ```tsx
 const { data: subscription } = await novu.subscriptions.update({
   topicKey: 'product-updates',
-  subscriptionId: 'subscription-id-123',
+  identifier: 'user-product-alert',
   preferences: [...]
 });
 ```
@@ -684,7 +682,7 @@ Delete a subscription by topic and subscription ID.
 ```tsx
 await novu.subscriptions.delete({
   topicKey: 'product-updates',
-  subscriptionId: 'product-updates-subscription',
+  identifier: 'product-updates-subscription',
 });
 ```
 

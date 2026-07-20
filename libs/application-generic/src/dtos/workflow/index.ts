@@ -18,6 +18,8 @@ export * from './step-responses/in-app-step.response.dto';
 export * from './step-responses/push-step.response.dto';
 export * from './step-responses/sms-step.response.dto';
 export * from './step-responses/throttle-step.response.dto';
+export * from './step-responses/tool-step.response.dto';
+export * from './tool-control.dto';
 export * from './workflow-commons.dto';
 export * from './workflow-list-response.dto';
 export * from './workflow-preference.dto';

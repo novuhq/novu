@@ -13,6 +13,7 @@ import { handleIntegrationError } from '@/components/integrations/components/uti
 import { cleanCredentials } from '@/components/integrations/components/utils/helpers';
 import type { IntegrationFormData } from '@/components/integrations/types';
 import { Button, buttonVariants } from '@/components/primitives/button';
+import { CopyButton } from '@/components/primitives/copy-button';
 import { showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { ExternalLink } from '@/components/shared/external-link';
 import { useEnvironment } from '@/context/environment/hooks';
@@ -25,23 +26,62 @@ import type { StepStatus } from './setup-guide-step-utils';
 
 export type SetupMode = 'quick' | 'manual';
 
-/** Shared vertical rail gradient — fades at the bottom of the numbered-steps column only. */
-export const SETUP_STEPPER_RAIL_GRADIENT =
+/** Shared vertical rail gradient — fades at the top and bottom edges of the numbered-steps column. */
+const SETUP_STEPPER_RAIL_GRADIENT =
   'linear-gradient(to bottom, transparent 0%, #E1E4EA 10%, #E1E4EA 90%, transparent 100%)';
+
+function railGradient(solidTop: boolean, solidBottom: boolean) {
+  if (!solidTop && !solidBottom) {
+    return SETUP_STEPPER_RAIL_GRADIENT;
+  }
+
+  const topStops = solidTop ? '#E1E4EA 0%' : 'transparent 0%, #E1E4EA 10%';
+  const bottomStops = solidBottom ? '#E1E4EA 100%' : '#E1E4EA 90%, transparent 100%';
+
+  return `linear-gradient(to bottom, ${topStops}, ${bottomStops})`;
+}
 
 /**
  * Vertical stepper rail aligned with `SetupStep` indicators (`left-[22px]` on this
  * `pl-8` container matches each step's `-left-[20px]` indicator offset).
+ *
+ * When two rails are stacked to form one visual stepper (e.g. the channel step rail followed by a
+ * provider guide's rail), use `continuesBelow` on the upper rail and `continuesAbove` on the lower
+ * one so the line stays solid across the junction instead of fading out and back in.
  */
-export function SetupStepperRail({ children, className }: { children: ReactNode; className?: string }) {
+export function SetupStepperRail({
+  children,
+  className,
+  continuesAbove = false,
+  continuesBelow = false,
+}: {
+  children: ReactNode;
+  className?: string;
+  /** Keeps the top of the line solid so it visually continues a rail rendered above. */
+  continuesAbove?: boolean;
+  /** Keeps the bottom of the line solid and extends it through the parent's `gap-10` to meet the next rail. */
+  continuesBelow?: boolean;
+}) {
   return (
     <div className={cn('relative flex flex-col gap-10 pl-8', className)}>
       <div
-        className="pointer-events-none absolute bottom-0 left-[22px] top-0 w-px"
-        style={{ background: SETUP_STEPPER_RAIL_GRADIENT }}
+        className={cn(
+          'pointer-events-none absolute left-[22px] top-0 w-px',
+          continuesBelow ? '-bottom-10' : 'bottom-0'
+        )}
+        style={{ background: railGradient(continuesAbove, continuesBelow) }}
       />
       {children}
     </div>
+  );
+}
+
+/** Provider guide rail in AgentSetupSteps — continues the channel-step rail rendered above. */
+export function ProviderSetupStepperRail({ children, className }: { children: ReactNode; className?: string }) {
+  return (
+    <SetupStepperRail continuesAbove className={className}>
+      {children}
+    </SetupStepperRail>
   );
 }
 
@@ -92,9 +132,27 @@ export function CompletedStepIndicator() {
   );
 }
 
-function StepIndicator({ status, index }: { status: StepStatus; index: number }) {
+type SetupStepIndicatorVariant = 'number' | 'dot';
+
+function StepIndicator({
+  status,
+  index,
+  indicator,
+}: {
+  status: StepStatus;
+  index: number;
+  indicator: SetupStepIndicatorVariant;
+}) {
   if (status === 'completed') {
     return <CompletedStepIndicator />;
+  }
+
+  if (indicator === 'dot') {
+    return (
+      <div className="bg-bg-weak flex size-5 shrink-0 items-center justify-center rounded-full shadow-[0px_0px_0px_1px_#FFF,0px_0px_0px_2px_#E1E4EA]">
+        <div className="bg-text-soft size-[2px] rounded-full" />
+      </div>
+    );
   }
 
   return (
@@ -130,6 +188,11 @@ export function SetupStep({
    * alignment used by numbered eyebrows like "1/5 SETUP AGENT HANDLER".
    */
   inlineSectionLabel,
+  /**
+   * Visual style for the step indicator. `'number'` (default) shows the step index; `'dot'` shows a
+   * passive suggestion dot used by informational/optional steps (e.g. the "What's next" overview).
+   */
+  indicator = 'number',
 }: {
   index: number;
   status: StepStatus;
@@ -142,6 +205,7 @@ export function SetupStep({
   headerSlot?: ReactNode;
   dimmed?: boolean;
   inlineSectionLabel?: boolean;
+  indicator?: SetupStepIndicatorVariant;
 }) {
   let indicatorTopClass = 'top-[3px]';
 
@@ -154,7 +218,7 @@ export function SetupStep({
   return (
     <div className="relative flex flex-col gap-4 pl-6">
       <div className={cn('absolute -left-[20px] flex w-5 justify-center', indicatorTopClass)}>
-        <StepIndicator status={status} index={index} />
+        <StepIndicator status={status} index={index} indicator={indicator} />
       </div>
       <div
         className={cn(
@@ -233,6 +297,25 @@ export function SetupButton({
       {leadingIcon}
       <span className="text-label-xs inline-flex min-w-0 items-center font-medium">{children}</span>
     </Button>
+  );
+}
+
+/** Read-only, copyable value row used by manual webhook fallback panels (callback URL, secrets, tokens). */
+export function ReadOnlyValueRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex w-full max-w-[320px] flex-col gap-1.5">
+      <p className="text-text-sub text-label-xs font-medium leading-5">{label}</p>
+      <div className="border-stroke-soft bg-bg-white flex h-7 items-center overflow-hidden rounded-md border shadow-xs">
+        <input
+          type="text"
+          readOnly
+          value={value}
+          aria-label={label}
+          className="text-text-soft min-w-0 flex-1 truncate bg-transparent px-2 font-mono text-[12px] leading-4 outline-none"
+        />
+        <CopyButton valueToCopy={value} size="xs" className="border-stroke-soft shrink-0 border-l" />
+      </div>
+    </div>
   );
 }
 

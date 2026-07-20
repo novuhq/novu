@@ -202,7 +202,6 @@ jobs:
             --platform=${{ env.DOCKER_PLATFORMS }} --provenance=false
             --output=type=image,name=ghcr.io/${{ env.REGISTRY_OWNER }}/${{ env.SERVICE_NAME }},push-by-digest=true,name-canonical=true
         run: |
-          cp scripts/dotenvcreate.mjs apps/$SERVICE_COMMON_NAME/src/dotenvcreate.mjs
           cd apps/$SERVICE_COMMON_NAME
 
           if [ "${{ env.SERVICE_NAME }}" == "worker" ]; then

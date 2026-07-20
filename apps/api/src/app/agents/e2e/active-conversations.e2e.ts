@@ -78,9 +78,12 @@ describe('Active Conversations metering - inbound flow #novu-v2', () => {
     // bridge simulate the agent replying back for every dispatched message —
     // this mirrors production, where the bridge posts a reply via the reply
     // API, and is what drives activation counting.
-    sinon
-      .stub(testServer.getService(OutboundGateway), 'deliver')
-      .resolves({ messageId: 'sent-e2e', platformThreadId: 'thread-e2e' } as any);
+    const outboundGateway = testServer.getService(OutboundGateway);
+    sinon.stub(outboundGateway, 'deliver').resolves({ messageId: 'sent-e2e', platformThreadId: 'thread-e2e' } as any);
+    // Inbound ack calls startTypingInConversation with the fake Slack token from
+    // setupAgentTestContext — that hits the real Slack API, retries on
+    // invalid_auth, and can keep HTTP handles open through suite teardown.
+    sinon.stub(outboundGateway, 'startTypingInConversation').resolves();
 
     bridgeCalls = [];
     const bridgeExecutor = testServer.getService(BridgeExecutorService);

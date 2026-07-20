@@ -1,5 +1,5 @@
 import type { ChannelEndpointType } from '@novu/shared';
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { formatDistanceToNow } from 'date-fns';
 import { useMemo, useState } from 'react';
 import { ExternalToast } from 'sonner';
@@ -10,9 +10,11 @@ import { InlineToast } from '@/components/primitives/inline-toast';
 import { Separator } from '@/components/primitives/separator';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
+import { useEnvironment } from '@/context/environment/hooks';
 import { useCreateChannelEndpoint } from '@/hooks/use-create-channel-endpoint';
 import { useDeleteChannelEndpoint } from '@/hooks/use-delete-channel-endpoint';
 import { useDeleteSubscriberCredentials } from '@/hooks/use-delete-subscriber-credentials';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchChannelConnections } from '@/hooks/use-fetch-channel-connections';
 import { useFetchChannelEndpoints } from '@/hooks/use-fetch-channel-endpoints';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
@@ -66,11 +68,14 @@ export function SubscriberCredentials({
   readOnly = false,
   onEditInOverview,
 }: SubscriberCredentialsProps) {
+  const { currentEnvironment } = useEnvironment();
+  const isToolChannelEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TOOL_CHANNEL_ENABLED);
   const { data: subscriber, isPending: isSubscriberPending } = useFetchSubscriber({ subscriberId });
   const { integrations, isPending: isIntegrationsPending } = useFetchIntegrations();
+  // When Tool is enabled, fetch all channels and partition client-side; otherwise keep the chat-only query.
   const { channelEndpoints, isPending: isEndpointsPending } = useFetchChannelEndpoints({
     subscriberId,
-    channel: ChannelTypeEnum.CHAT,
+    channel: isToolChannelEnabled ? undefined : ChannelTypeEnum.CHAT,
   });
   const { channelConnections, isPending: isConnectionsPending } = useFetchChannelConnections({
     channel: ChannelTypeEnum.CHAT,
@@ -85,6 +90,14 @@ export function SubscriberCredentials({
   const { deleteChannelEndpoint, isPending: isEndpointDeletePending } = useDeleteChannelEndpoint();
   const { updateSubscriberCredentials, isPending: isCredentialsUpdatePending } = useUpdateSubscriberCredentials();
 
+  const environmentIntegrations = useMemo(() => {
+    if (!integrations || !currentEnvironment?._id) {
+      return [];
+    }
+
+    return integrations.filter((integration) => integration._environmentId === currentEnvironment._id);
+  }, [integrations, currentEnvironment?._id]);
+
   const groups = useMemo(() => {
     if (!subscriber) {
       return [];
@@ -92,11 +105,12 @@ export function SubscriberCredentials({
 
     return buildCredentialGroups({
       subscriber,
-      integrations: integrations ?? [],
+      integrations: environmentIntegrations,
       channelEndpoints,
       channelConnections,
+      includeToolChannel: isToolChannelEnabled,
     });
-  }, [subscriber, integrations, channelEndpoints, channelConnections]);
+  }, [subscriber, environmentIntegrations, channelEndpoints, channelConnections, isToolChannelEnabled]);
 
   if (isSubscriberPending || isIntegrationsPending || isEndpointsPending || isConnectionsPending) {
     return <CredentialsSkeleton />;
@@ -273,7 +287,7 @@ export function SubscriberCredentials({
           <div className="flex flex-col items-center justify-center gap-1 py-10 text-center">
             <span className="text-label-sm text-text-strong">No credentials</span>
             <span className="text-label-xs text-text-soft">
-              Connect a push, chat, email or SMS integration to manage subscriber credentials.
+              {`Connect a push, chat, email or SMS${isToolChannelEnabled ? ', or tool' : ''} integration to manage subscriber credentials.`}
             </span>
           </div>
         )}

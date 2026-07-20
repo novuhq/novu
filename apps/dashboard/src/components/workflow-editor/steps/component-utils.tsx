@@ -127,6 +127,10 @@ export const getComponentByType = ({ component }: { component?: UiComponentEnum 
       return <BaseBody />;
     }
 
+    case UiComponentEnum.TOOL_BODY: {
+      return <BaseBody />;
+    }
+
     case UiComponentEnum.LAYOUT_SELECT: {
       return <LayoutSelect />;
     }

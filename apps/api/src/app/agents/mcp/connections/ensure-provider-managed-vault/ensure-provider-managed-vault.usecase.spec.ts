@@ -18,7 +18,6 @@ import {
 import {
   AgentRuntimeProviderIdEnum,
   buildClaudePlatformVaultUrl,
-  buildConnectSubscriberId,
   McpConnectionAuthModeEnum,
   McpConnectionStatusEnum,
 } from '@novu/shared';
@@ -105,9 +104,9 @@ describe('EnsureProviderManagedVault', () => {
 
     agentRepository.findOne.resolves(makeManagedAgent() as never);
     integrationRepository.findOne.resolves({ credentials: { apiKey: 'sk-test' } } as never);
-    subscriberRepository.findBySubscriberId.withArgs(ENV_ID, buildConnectSubscriberId(USER_ID)).resolves({
+    subscriberRepository.findBySubscriberId.withArgs(ENV_ID, USER_ID).resolves({
       _id: SUBSCRIBER_MONGO_ID,
-      subscriberId: buildConnectSubscriberId(USER_ID),
+      subscriberId: USER_ID,
     } as never);
     agentMcpServerRepository.findByAgent.resolves([{ _id: ENABLEMENT_ID }] as never);
     agentMcpServerRepository.findByAgentAndMcpId.resolves({
@@ -238,13 +237,10 @@ describe('EnsureProviderManagedVault', () => {
     expect(agentMcpServerRepository.findByAgentAndMcpId.calledOnce).to.equal(true);
   });
 
-  it('prefers the connect: subscriber row over the legacy dashboard user id', async () => {
+  it('resolves the dashboard user subscriber id', async () => {
     await useCase.execute(makeCommand());
 
-    expect(subscriberRepository.findBySubscriberId.firstCall.args).to.deep.equal([
-      ENV_ID,
-      buildConnectSubscriberId(USER_ID),
-    ]);
+    expect(subscriberRepository.findBySubscriberId.firstCall.args).to.deep.equal([ENV_ID, USER_ID]);
     expect(createOrUpdateSubscriber.execute.called).to.equal(false);
   });
 
@@ -293,7 +289,7 @@ describe('EnsureProviderManagedVault', () => {
       }
     });
 
-    it('resolves the channel subscriber directly without falling back to connect:<userId>', async () => {
+    it('resolves the channel subscriber directly without falling back to the dashboard user id', async () => {
       const result = await useCase.executeForSetupCard(makeCommand({ subscriberId: CHANNEL_SUBSCRIBER_ID }));
 
       // The setup-card flow returns a signed Novu intermediate URL that

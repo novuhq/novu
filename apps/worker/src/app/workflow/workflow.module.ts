@@ -24,6 +24,7 @@ import {
   NormalizeVariables,
   ProcessTenant,
   RedisThrottleService,
+  ResolveTriggerContexts,
   SelectIntegration,
   SelectVariant,
   SendWebhookMessage,
@@ -32,6 +33,7 @@ import {
   TriggerEvent,
   TriggerMulticast,
   VerifyPayload,
+  WebexTokenService,
   WorkflowInMemoryProviderService,
 } from '@novu/application-generic';
 import {
@@ -69,6 +71,7 @@ import {
   SendMessageInApp,
   SendMessagePush,
   SendMessageSms,
+  SendMessageTool,
   SetJobAsCompleted,
   SetJobAsFailed,
   Throttle,
@@ -186,6 +189,7 @@ const USE_CASES = [
   GetSubscriberTemplatePreference,
   HandleLastFailedJob,
   ProcessTenant,
+  ResolveTriggerContexts,
   QueueNextJob,
   RunJob,
   SendMessage,
@@ -194,6 +198,7 @@ const USE_CASES = [
   SendMessageEmail,
   SendMessageInApp,
   SendMessagePush,
+  SendMessageTool,
   SendMessageSms,
   Throttle,
   ExecuteCodeFirstCustomStep,
@@ -224,7 +229,7 @@ const USE_CASES = [
   ResolveChannelEndpoints,
 ];
 
-const PROVIDERS: Provider[] = [RedisThrottleService, MsTeamsTokenService];
+const PROVIDERS: Provider[] = [RedisThrottleService, MsTeamsTokenService, WebexTokenService];
 const activeWorkersToken: any = {
   provide: 'ACTIVE_WORKERS',
   useFactory: (...args: any[]) => {

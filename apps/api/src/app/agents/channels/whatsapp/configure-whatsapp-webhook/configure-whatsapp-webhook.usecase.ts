@@ -1,8 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { decryptCredentials, InstrumentUsecase, PinoLogger } from '@novu/application-generic';
 import { AgentIntegrationRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
 import { ChatProviderIdEnum } from '@novu/shared';
-
+import {
+  resolveWhatsAppAppId,
+  resolveWhatsAppAppSecret,
+} from '../../../../integrations/usecases/whatsapp/whatsapp-credentials.utils';
 import {
   debugAccessToken,
   extractMetaError,
@@ -11,6 +14,7 @@ import {
   subscribeWabaMessagesField,
   WHATSAPP_BUSINESS_MANAGEMENT_SCOPE,
 } from '../../../../integrations/usecases/whatsapp/whatsapp-graph-api.utils';
+import { resolveAgentIntegrationForWebhook } from '../../shared/resolve-agent-integration-webhook.util';
 import { ConfigureWhatsAppWebhookCommand } from './configure-whatsapp-webhook.command';
 
 export type ConfigureWhatsAppWebhookFailure = {
@@ -33,22 +37,6 @@ export interface ConfigureWhatsAppWebhookResult {
   reason?: ConfigureWhatsAppWebhookFailure;
 }
 
-function buildAgentWebhookUrl(agentId: string, integrationIdentifier: string): string {
-  // Prefer `AGENT_API_HOSTNAME` (a publicly reachable HTTPS host the chat
-  // platforms can call back to — typically a tunnel URL in dev) and fall back
-  // to the standard `API_ROOT_URL`. Meta refuses to register webhooks pointed
-  // at `*.localhost`, so this override is the recommended dev workflow.
-  const base = (process.env.AGENT_API_HOSTNAME ?? process.env.API_ROOT_URL ?? '').replace(/\/$/, '');
-
-  if (!base) {
-    throw new Error(
-      `buildAgentWebhookUrl: neither AGENT_API_HOSTNAME nor API_ROOT_URL is configured (agentId="${agentId}", integrationIdentifier="${integrationIdentifier}")`
-    );
-  }
-
-  return `${base}/v1/agents/${agentId}/webhook/${integrationIdentifier}`;
-}
-
 @Injectable()
 export class ConfigureWhatsAppWebhook {
   constructor(
@@ -62,62 +50,26 @@ export class ConfigureWhatsAppWebhook {
 
   @InstrumentUsecase()
   async execute(command: ConfigureWhatsAppWebhookCommand): Promise<ConfigureWhatsAppWebhookResult> {
-    const agent = await this.agentRepository.findOne(
-      {
-        identifier: command.agentIdentifier,
-        _environmentId: command.environmentId,
-        _organizationId: command.organizationId,
-      },
-      ['_id', 'identifier']
-    );
-
-    if (!agent) {
-      throw new NotFoundException(`Agent with identifier "${command.agentIdentifier}" was not found.`);
-    }
-
-    const integration = await this.integrationRepository.findOne({
-      _environmentId: command.environmentId,
-      _organizationId: command.organizationId,
-      identifier: command.integrationIdentifier,
+    // Meta refuses to register webhooks pointed at `*.localhost`, so `AGENT_API_HOSTNAME`
+    // (a tunnel URL in dev) is the recommended override for this flow.
+    const { agent, integration, callbackUrl } = await resolveAgentIntegrationForWebhook({
+      agentRepository: this.agentRepository,
+      integrationRepository: this.integrationRepository,
+      agentIntegrationRepository: this.agentIntegrationRepository,
+      agentIdentifier: command.agentIdentifier,
+      integrationIdentifier: command.integrationIdentifier,
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+      providerId: ChatProviderIdEnum.WhatsAppBusiness,
+      providerLabel: 'WhatsApp Business',
     });
 
-    if (!integration) {
-      throw new NotFoundException(`Integration with identifier "${command.integrationIdentifier}" was not found.`);
-    }
-
-    if (integration.providerId !== ChatProviderIdEnum.WhatsAppBusiness) {
-      throw new NotFoundException(
-        `Integration "${command.integrationIdentifier}" is not a WhatsApp Business integration.`
-      );
-    }
-
-    // Authorization: ensure the integration is actually linked to this agent
-    // before exposing webhook configuration on it. Without this check an
-    // `AGENT_WRITE` caller could rebind webhooks for an unrelated WhatsApp
-    // integration in the same tenant.
-    const agentIntegrationLink = await this.agentIntegrationRepository.findOne(
-      {
-        _environmentId: command.environmentId,
-        _organizationId: command.organizationId,
-        _agentId: agent._id,
-        _integrationId: integration._id,
-      },
-      ['_id']
-    );
-
-    if (!agentIntegrationLink) {
-      throw new NotFoundException(
-        `Integration "${command.integrationIdentifier}" is not linked to agent "${command.agentIdentifier}".`
-      );
-    }
-
-    const callbackUrl = buildAgentWebhookUrl(agent._id, integration.identifier);
     const credentials = decryptCredentials(integration.credentials ?? {});
 
     const accessToken = typeof credentials.apiToken === 'string' ? credentials.apiToken.trim() : '';
     const verifyToken = typeof credentials.token === 'string' ? credentials.token.trim() : '';
     const wabaId = typeof credentials.businessAccountId === 'string' ? credentials.businessAccountId.trim() : '';
-    const appSecret = typeof credentials.secretKey === 'string' ? credentials.secretKey.trim() : '';
+    const appSecret = resolveWhatsAppAppSecret(credentials) ?? '';
 
     if (!accessToken || !wabaId) {
       return {
@@ -160,24 +112,24 @@ export class ConfigureWhatsAppWebhook {
         fallbackToManual: true,
         reason: {
           code: 'missing_app_secret',
-          message:
-            'Save the App Secret in the credentials form — Novu needs it to subscribe your Meta app to WhatsApp webhooks.',
+          message: credentials.isNovuManaged
+            ? 'Novu WhatsApp Tech Provider app secret is not configured on this deployment. Contact support.'
+            : 'Save the App Secret in the credentials form — Novu needs it to subscribe your Meta app to WhatsApp webhooks.',
         },
       };
     }
 
-    // Look up the Meta App ID from the access token. Required for the
-    // app-level subscription Meta demands before per-WABA `subscribed_apps`
-    // accepts an `override_callback_uri`.
-    let appId: string | undefined;
-    try {
-      const debug = await debugAccessToken(accessToken);
-      appId = debug.body.data?.app_id;
-    } catch (err) {
-      this.logger.warn(
-        { err, agentId: agent._id, integrationId: integration._id },
-        'WhatsApp auto-configure: debug_token call failed'
-      );
+    let appId = resolveWhatsAppAppId(credentials);
+    if (!appId) {
+      try {
+        const debug = await debugAccessToken(accessToken);
+        appId = debug.body.data?.app_id;
+      } catch (err) {
+        this.logger.warn(
+          { err, agentId: agent._id, integrationId: integration._id },
+          'WhatsApp auto-configure: debug_token call failed'
+        );
+      }
     }
 
     if (!appId) {

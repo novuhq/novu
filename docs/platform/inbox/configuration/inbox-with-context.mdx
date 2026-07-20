@@ -1,38 +1,44 @@
 ---
 title: 'Inbox with Context'
-description: 'Learn how to use contexts in the Inbox component to filter and personalize notifications for your subscribers.'
+description: "Use contexts in the Novu Inbox component to filter and personalize notifications for subscribers by tenant, workspace, or other scopes."
 ---
 
 _Contexts_ let you scope each `<Inbox />` instance to a specific environment, tenant, or app within your product. When combined with workflow-level contexts, they ensure that each `<Inbox />` displays only the notifications relevant to that specific context.
 
 <Note>
-  If you’re new to contexts, start from the [Contexts](/platform/workflow/advanced-features/contexts) section to understand how contexts are created, managed in Novu and how they used in workflows.
+  If you’re new to contexts, start from [Contexts](/platform/concepts/contexts) to understand how contexts are created, managed in Novu, and used in workflows.
 </Note>
+
+<Warning>
+  **Context on triggers must match context on `<Inbox />`.** By default, an Inbox initialized without a `context` prop only shows notifications triggered **without** context. If you add `context` to workflow triggers but do not pass the same context to `<Inbox />`, in-app jobs can still report success while notifications never appear in that Inbox session.
+</Warning>
 
 ## How context works in `<Inbox/>`
 
-The [`<Inbox />`](/platform/inbox/configuration/inbox-with-context) uses exact-match context filtering to determine which notifications to display. This means the context provided to the [`<Inbox />`](/platform/inbox/configuration/inbox-with-context) must match all the key-value pairs of the context used when the workflow was triggered.
+The [`<Inbox />`](/platform/inbox/configuration/inbox-with-context) filters notifications by context **type and id**. Each entry in the context object resolves to a key like `tenant:acme`. The Inbox only shows notifications whose trigger used the same set of keys.
 
-This creates predictable isolation and ensures notifications are scoped to the context provided. If the contexts do not match exactly, the notification will not be delivered to that Inbox session. 
+Nested `data` is optional metadata for personalization. It is stored on the context entity but **does not** affect which notifications appear in the Inbox.
 
 - If workflow is triggered with a context but Inbox is initialized without a context, the notification will not be delivered to that Inbox session.
 - If workflow is triggered without a context but Inbox is initialized with a context, the notification will not be delivered to that Inbox session.
 - If workflow is triggered with a context but Inbox is initialized with a different context, the notification will not be delivered to that Inbox session.
 
-| Workflow Context                           | Inbox Context            | Displayed? |
-| ------------------------------------------ | ------------------------ | ---------- |
-| `{ "tenant": "acme" }`                     | `{ "tenant": "acme" }`   |  Yes       |
-| `{}`                                       | `{}`                     |  Yes       |
-| `{}`                                       | `{ "tenant": "acme" }`   |  No        |
-| `{ "tenant": "acme" }`                     | `{ "tenant": "globex" }` |  No        |
-| `{ "tenant": "acme" }`                     | `{}`                     |  No        |
-| `{ "tenant": "acme" }, { "app": "first" }` | `{ "tenant": "acme" }`   |  No        |
+| Workflow Context | Inbox Context | Displayed? |
+| --- | --- | --- |
+| `{ "tenant": "acme" }` | `{ "tenant": "acme" }` | Yes |
+| `{ "tenant": { "id": "acme", "data": { "name": "Acme" } } }` | `{ "tenant": { "id": "acme" } }` | Yes |
+| `{ "tenant": "acme" }` | `{ "tenant": { "id": "acme" } }` | Yes |
+| `{}` | `{}` | Yes |
+| `{}` | `{ "tenant": "acme" }` | No |
+| `{ "tenant": "acme" }` | `{ "tenant": "globex" }` | No |
+| `{ "tenant": "acme" }` | `{}` | No |
+| `{ "tenant": "acme", "app": "first" }` | `{ "tenant": "acme" }` | No |
 
 ### Creating context via `<Inbox/>`
 
 If a new context is passed from the [`<Inbox />`](/platform/inbox/configuration/inbox-with-context) that doesn’t already exist, Novu will automatically find or create it. This means you don’t have to manually set up contexts before using them, they are created just in time.
 
-However, if a context already exists, its data won’t be updated automatically. This prevents unintentional overwrites of stored context data.
+If a context already exists, Inbox session initialization reuses it without updating stored `data`. This prevents unintentional overwrites from the client. To change existing context metadata, update it through the [Contexts API](/api-reference/contexts/context-schema), Novu dashboard, or a server-side workflow trigger with inline `data`.
 
 This is particularly useful for:
 
@@ -65,7 +71,7 @@ import { Inbox } from '@novu/react';
 />
 ```
 
-When a workflow with these exact context is triggered, as seen below
+When a workflow is triggered with the same context type and id, as seen below
 
 ![Context in trigger](/images/inbox/context-trigger.png)
 
@@ -83,8 +89,12 @@ Because the context prop is set on the client-side, a malicious user could poten
 
 To prevent this, you must fetch the context details and contextHash from your server and pass them to the Inbox component.
 
+When HMAC is enabled on your in-app integration, `subscriberHash` is always required. `contextHash` is also required if you pass a `context` prop to `<Inbox />`. If you do not pass `context`, you only need `subscriberHash`.
+
+`contextHash` is separate from notification matching. It verifies the exact `context` object you pass to `<Inbox />`, including any `data` fields. Hash the same object you send to the component.
+
 <Note>
-  We need to use `canonicalize` here, cause context is a dynamic object. `canonicalize` is used to serialize the JSON in a way that the order of keys or whitespaces etc doesn’t matter. The library should be based on [RFC-8259](https://datatracker.ietf.org/doc/html/rfc8259).
+  Use `canonicalize` when computing `contextHash`. Context is a dynamic object, and `canonicalize` serializes JSON so key order and whitespace do not change the hash. The library should be based on [RFC-8259](https://datatracker.ietf.org/doc/html/rfc8259).
 </Note>
 
 ```ts title="utils/context-hash.ts"
@@ -135,3 +145,29 @@ const context = {
 <Note>
   Learn how to secure your [`<Inbox />`](/platform/inbox/configuration/inbox-with-context) with HMAC encryption, refer to the [Prepare for Production](/platform/inbox/prepare-for-production) documentation.
 </Note>
+
+## Frequently asked questions
+
+Frequently asked questions related to context in the Inbox component.
+<AccordionGroup>
+  <Accordion title="Why are in-app notifications sent successfully but not showing in the Inbox?">
+    The Inbox filters by context **type and id**. The `context` prop on `<Inbox />` must include the same type/id pairs used when the workflow was triggered. Nested `data` does not need to match.
+
+    A common cause: you started passing `context` on workflow triggers but did not update `<Inbox />` to use the same context ids. The in-app channel job can still complete with status "Success" in the activity feed, but the notification is scoped to a different context and will not appear in an Inbox session that does not match.
+
+    Check that:
+
+    1. If you trigger **with** context, initialize `<Inbox />` with the **same** context type/id pairs.
+    2. If you trigger **without** context, do not pass a `context` prop to `<Inbox />`.
+    3. When a user switches tenants or orgs in your app, re-render `<Inbox />` with the updated context.
+
+    See the context matching table above for all combinations.
+  </Accordion>
+  <Accordion title="Does nested context data need to match between trigger and Inbox?">
+    No. Matching is on **type and id** only. For example, `{ tenant: { id: "123" } }` on the Inbox matches a trigger with `{ tenant: { id: "123", data: { name: "foo" } } }`.
+
+    `data` is optional metadata stored on the context. Use it for personalization, not for filtering.
+
+    If you use `contextHash`, hash the exact `context` object you pass to `<Inbox />`. That is separate from notification matching.
+  </Accordion>
+</AccordionGroup>

@@ -1,6 +1,6 @@
 ---
 title: 'Data Migrations'
-description: 'Learn how to update your database data through migrations.'
+description: "Run database data migrations for self-hosted Novu deployments to keep MongoDB and Postgres schemas in sync with the latest platform release."
 ---
 
 On occasion, Novu may introduce features that require changes to the database schema or data. This usually happens when
@@ -67,7 +67,7 @@ closest following release tag.
 | [`v0.23.0`](https://github.com/novuhq/novu/releases/tag/v0.23.0) | 2024-02-02       | `encrypt-api-keys` *(API keys encryption)*                                                                                                                                                                                                                                                                                                                                       |
 | [`v0.24.0`](https://github.com/novuhq/novu/releases/tag/v0.24.0) | 2024-03-06       | `normalize-message-template-cta-action` *(Normalize CTA action)* <br/> `topic-subscriber-normalize` *(Normalize topic-subscriber links)*                                                                                                                                                                                                                                          |
 | [`v2.0.0`](https://github.com/novuhq/novu/releases/tag/v2.0.0)   | 2024-10-07       | `subscribers` *(Subscriber record adjustments)*                                                                                                                                                                                                                                                                                                                                  |
-| [`v2.0.1`](https://github.com/novuhq/novu/releases/tag/v2.0.1)   | 2024-11-11       | `preference-centralization` *(Preference model centralization)* — **ensure this is done before v2.1 as repository access has been removed**                                                                                                                                                                                                                                            |
+| [`v2.0.1`](https://github.com/novuhq/novu/releases/tag/v2.0.1)   | 2024-11-11       | `preference-centralization` *(Preference model centralization)* - **ensure this is done before v2.1 as repository access has been removed**                                                                                                                                                                                                                                            |
 | *(future release)*                                               | *sometime 2025*  | `deleteLogs` *(Cleanup deleted logs)*                                                                                                                                                                                                                                                                                                                                            |
 
 ### Historical releases
@@ -89,9 +89,8 @@ closest following release tag.
 
 ### Runtime prerequisites
 
-* `node`
-* `npm`
-* `pnpm`
+* Node.js v22.22.1 (see root `package.json` `engines`)
+* pnpm 11.x
 * `npx`
 * MacOS (or linux)
 * tunnel (optional `ssh`)
@@ -207,7 +206,7 @@ errors (but by policy the underlying code does its best)
 
 - Always **back up your database** before running migrations.
 - Consider scripting or CI/CD automation for repeatability.
-- **Dockerized deployments do not auto-run migrations**—there is no explicit configuration to turn this on either.
+- **Dockerized deployments do not auto-run migrations** - there is no explicit configuration to turn this on either.
 - You could implement your own migrations versioning on top
 
 #### Run Migrations Script

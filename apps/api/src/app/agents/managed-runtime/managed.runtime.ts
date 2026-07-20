@@ -9,8 +9,8 @@ import { applyPlatformThreadIdToThread } from '../conversation-runtime/runtime/p
 import { AgentEventEnum } from '../shared/enums/agent-event.enum';
 import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
 import { parseToolApprovalActionId } from '../shared/tool-approval/action-id';
-import { buildUnresolvedSubscriberAccessReply } from '../shared/util/agent-inbound-replies';
 import { ManagedAgentService } from './managed-agent.service';
+import { isMissingReadToolForSkillsError, MISSING_READ_TOOL_FOR_SKILLS_REPLY } from './managed-agent-errors';
 import { ConfirmToolApprovalCommand } from './tool-approval/confirm-tool-approval.command';
 import { ConfirmToolApproval } from './tool-approval/confirm-tool-approval.usecase';
 
@@ -39,12 +39,18 @@ export class ManagedRuntime implements AgentRuntime {
       return;
     }
 
-    // Keyless email demo agents bypass the subscriber gate: the ephemeral env has no
-    // subscribers, and abuse is bounded by the per-conversation demo cap + claim CTA.
+    // Subscriber-access denial / open leftovers are owned by the inbound handler gate.
+    // Keyless email demos may reach here without a subscriber (handler bypass).
     const isKeylessEmailDemo = turn.config.isKeyless && turn.config.platform === AgentPlatformEnum.EMAIL;
-
     if (!turn.subscriber && !isKeylessEmailDemo) {
-      await this.replyUnresolvedSubscriberAccess(turn);
+      this.logger.warn(
+        {
+          agentId: turn.agentId,
+          conversationId: turn.conversation._id,
+          platform: turn.config.platform,
+        },
+        'Managed dispatch reached without subscriber after handler gate — skipping'
+      );
 
       return;
     }
@@ -82,7 +88,24 @@ export class ManagedRuntime implements AgentRuntime {
       }
     } catch (err) {
       if (err instanceof DemoQuotaExhaustedError) {
-        await this.replyDemoQuotaExhausted(turn);
+        await this.replyOnThread(turn, DEMO_QUOTA_EXHAUSTED_REPLY);
+
+        return;
+      }
+
+      // Sync createSession / events.send failures never reach the async
+      // session.error webhook path — without this catch the ChatInstanceRegistry
+      // logs+swallows the error and Slack gets no agent reply.
+      if (isMissingReadToolForSkillsError(err)) {
+        this.logger.warn(
+          {
+            agentId: turn.agentId,
+            conversationId: turn.conversation._id,
+            err: err instanceof Error ? err.message : err,
+          },
+          'Managed dispatch rejected: skills require the read tool'
+        );
+        await this.replyOnThread(turn, MISSING_READ_TOOL_FOR_SKILLS_REPLY);
 
         return;
       }
@@ -122,40 +145,17 @@ export class ManagedRuntime implements AgentRuntime {
     );
   }
 
-  private async replyDemoQuotaExhausted(turn: ConversationTurn): Promise<void> {
+  private async replyOnThread(turn: ConversationTurn, markdown: string): Promise<void> {
     applyPlatformThreadIdToThread(turn.thread, turn.platformThreadId);
     await this.outboundGateway.replyOnThread(
       turn.thread,
-      { markdown: DEMO_QUOTA_EXHAUSTED_REPLY },
+      { markdown },
       {
         persist: {
           conversationId: turn.conversation._id,
           channel: this.conversationService.getPrimaryChannel(turn.conversation),
           agentIdentifier: turn.config.agentIdentifier,
-          content: DEMO_QUOTA_EXHAUSTED_REPLY,
-          environmentId: turn.config.environmentId,
-          organizationId: turn.config.organizationId,
-        },
-      }
-    );
-  }
-
-  private async replyUnresolvedSubscriberAccess(turn: ConversationTurn): Promise<void> {
-    const reply = buildUnresolvedSubscriberAccessReply({
-      platform: turn.config.platform,
-      senderEmail: turn.message?.author?.userId,
-    });
-
-    applyPlatformThreadIdToThread(turn.thread, turn.platformThreadId);
-    await this.outboundGateway.replyOnThread(
-      turn.thread,
-      { markdown: reply },
-      {
-        persist: {
-          conversationId: turn.conversation._id,
-          channel: this.conversationService.getPrimaryChannel(turn.conversation),
-          agentIdentifier: turn.config.agentIdentifier,
-          content: reply,
+          content: markdown,
           environmentId: turn.config.environmentId,
           organizationId: turn.config.organizationId,
         },

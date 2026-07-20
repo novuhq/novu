@@ -1,10 +1,28 @@
-import type { AgentConnectMode, ChatSdkConnectOutcome, CustomCodeConnectOutcome } from '../../types';
-import { isCustomCodeScaffoldMode } from '../../types';
+import type {
+  AgentConnectMode,
+  AiSdkConnectOutcome,
+  BridgeRequirement,
+  ChatSdkConnectOutcome,
+  CustomCodeConnectOutcome,
+  LangChainConnectOutcome,
+} from '../../types';
+import { isVanillaCustomCodeConnectMode } from '../../types';
 
 export type BridgeSetupOutcomes = {
   chatSdk?: ChatSdkConnectOutcome;
+  aiSdk?: AiSdkConnectOutcome;
+  langChain?: LangChainConnectOutcome;
   customCode?: CustomCodeConnectOutcome;
 };
+
+function formatManualRequirementsFollowUp(requirements: BridgeRequirement[] | undefined): string | null {
+  const manual = requirements?.filter((req) => req.status !== 'ok') ?? [];
+  if (manual.length > 0) {
+    return `Finish setup: ${manual.map((req) => req.detail).join('; ')}`;
+  }
+
+  return null;
+}
 
 function resolveChatSdkFollowUp(outcome: ChatSdkConnectOutcome): string | null {
   if (outcome.scaffolded) {
@@ -15,6 +33,11 @@ function resolveChatSdkFollowUp(outcome: ChatSdkConnectOutcome): string | null {
     return null;
   }
 
+  const manualFollowUp = formatManualRequirementsFollowUp(outcome.requirements);
+  if (manualFollowUp) {
+    return manualFollowUp;
+  }
+
   if (outcome.coreReady && outcome.tunnelAccepted) {
     return 'Project configured — starting dev server and tunnel…';
   }
@@ -23,9 +46,29 @@ function resolveChatSdkFollowUp(outcome: ChatSdkConnectOutcome): string | null {
     return 'Project configured. Run npm run dev:novu to start the tunnel.';
   }
 
-  const manual = outcome.requirements?.filter((req) => req.status !== 'ok') ?? [];
-  if (manual.length > 0) {
-    return `Finish setup: ${manual.map((req) => req.detail).join('; ')}`;
+  return null;
+}
+
+function resolveBridgeAdapterFollowUp(outcome: AiSdkConnectOutcome): string | null {
+  if (outcome.scaffolded && outcome.tunnelAccepted) {
+    return null;
+  }
+
+  const manualFollowUp = formatManualRequirementsFollowUp(outcome.requirements);
+  if (manualFollowUp) {
+    return manualFollowUp;
+  }
+
+  if (outcome.coreReady && outcome.tunnelAccepted) {
+    return 'Project configured — starting dev server and tunnel…';
+  }
+
+  if (outcome.coreReady) {
+    return 'Project configured. Run npm run dev:novu to start the tunnel.';
+  }
+
+  if (!outcome.scaffolded) {
+    return `Wire your agent code in ${outcome.projectDir} and point it at Novu.`;
   }
 
   return null;
@@ -47,7 +90,15 @@ export function resolveBridgeSetupFollowUpMessage(
     return resolveChatSdkFollowUp(outcomes.chatSdk);
   }
 
-  if (connectMode && isCustomCodeScaffoldMode(connectMode) && outcomes.customCode) {
+  if (connectMode === 'ai-sdk' && outcomes.aiSdk) {
+    return resolveBridgeAdapterFollowUp(outcomes.aiSdk);
+  }
+
+  if (connectMode === 'langchain' && outcomes.langChain) {
+    return resolveBridgeAdapterFollowUp(outcomes.langChain);
+  }
+
+  if (connectMode && isVanillaCustomCodeConnectMode(connectMode) && outcomes.customCode) {
     return resolveCustomCodeFollowUp(outcomes.customCode);
   }
 

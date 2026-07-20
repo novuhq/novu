@@ -1,9 +1,11 @@
+import { ApiServiceLevelEnum } from '@novu/shared';
 import { RiArrowRightSLine, RiBookMarkedLine, RiSparkling2Line } from 'react-icons/ri';
 import { Link, useNavigate } from 'react-router-dom';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchLayouts } from '@/hooks/use-fetch-layouts';
 import { formatDateSimple } from '@/utils/format-date';
 import { buildRoute, ROUTES } from '@/utils/routes';
+import { getUpgradeButtonLabel } from '@/utils/upgrade-tier';
 import { openInNewTab } from '@/utils/url';
 import { IS_SELF_HOSTED, SELF_HOSTED_UPGRADE_REDIRECT_URL } from '../../config';
 import { useTelemetry } from '../../hooks/use-telemetry';
@@ -41,8 +43,8 @@ export const LayoutsListUpgradeCta = () => {
           <div className="flex flex-col items-center gap-2">
             <h2 className="text-foreground-900 text-label-md">Need more layouts?</h2>
             <p className="text-text-soft text-label-xs max-w-[300px]">
-              You’ve got a default layout to start fast. Create custom ones to scale across use cases — and plug
-              anywhere — your emails (and teammates) will love you for it.
+              You&apos;ve got a default layout to start fast. Create custom ones to scale across use cases and plug them
+              anywhere. Your emails (and teammates) will love you for it.
             </p>
           </div>
           <div className="flex w-full flex-col items-center justify-center px-5">
@@ -132,7 +134,7 @@ export const LayoutsListUpgradeCta = () => {
               }}
               leadingIcon={RiSparkling2Line}
             >
-              {IS_SELF_HOSTED ? 'Contact Sales' : 'Upgrade plan'}
+              {getUpgradeButtonLabel(ApiServiceLevelEnum.PRO)}
             </Button>
             <Link
               to={'https://docs.novu.co/platform/workflow/layouts'}

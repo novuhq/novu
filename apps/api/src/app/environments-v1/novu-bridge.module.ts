@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import {
   AnalyticsService,
-  ClickHouseService,
   CreateExecutionDetails,
   CreateVariablesObject,
   FeatureFlagsService,
@@ -10,7 +9,6 @@ import {
   GetLayoutUseCaseV0,
   InMemoryLRUCacheService,
   LayoutVariablesSchemaUseCase,
-  TraceLogRepository,
 } from '@novu/application-generic';
 import {
   CommunityOrganizationRepository,
@@ -35,6 +33,7 @@ import {
   InAppOutputRendererUsecase,
   PushOutputRendererUsecase,
   SmsOutputRendererUsecase,
+  ToolOutputRendererUsecase,
 } from './usecases/output-renderers';
 import { DelayOutputRendererUsecase } from './usecases/output-renderers/delay-output-renderer.usecase';
 import { DigestOutputRendererUsecase } from './usecases/output-renderers/digest-output-renderer.usecase';
@@ -74,6 +73,7 @@ export const featureFlagsService = {
     SmsOutputRendererUsecase,
     ChatOutputRendererUsecase,
     PushOutputRendererUsecase,
+    ToolOutputRendererUsecase,
     DelayOutputRendererUsecase,
     DigestOutputRendererUsecase,
     ThrottleOutputRendererUsecase,
@@ -84,8 +84,6 @@ export const featureFlagsService = {
     GetLayoutUseCase,
     JobRepository,
     ExecutionDetailsRepository,
-    TraceLogRepository,
-    ClickHouseService,
     CreateExecutionDetails,
     featureFlagsService,
     InMemoryLRUCacheService,

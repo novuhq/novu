@@ -43,6 +43,8 @@ export enum FeatureFlagsKeysEnum {
   IS_WORKFLOW_NODE_PREVIEW_ENABLED = 'IS_WORKFLOW_NODE_PREVIEW_ENABLED',
   IS_WEBHOOKS_MANAGEMENT_ENABLED = 'IS_WEBHOOKS_MANAGEMENT_ENABLED',
   IS_KEYLESS_ENVIRONMENT_CREATION_ENABLED = 'IS_KEYLESS_ENVIRONMENT_CREATION_ENABLED',
+  /** Dashboard "Local" pseudo-environment for previewing workflows from a local bridge (replaces the legacy local studio). */
+  IS_LOCAL_ENVIRONMENT_ENABLED = 'IS_LOCAL_ENVIRONMENT_ENABLED',
   IS_KEYLESS_AGENT_AI_ENABLED = 'IS_KEYLESS_AGENT_AI_ENABLED',
   /** When enabled, API-key auth on GET /v1/environments returns decrypted apiKeys for every environment in the org (pre-NV-7641 opt-in behavior). */
   IS_LIST_ENVIRONMENTS_API_KEYS_ENABLED = 'IS_LIST_ENVIRONMENTS_API_KEYS_ENABLED',
@@ -92,6 +94,8 @@ export enum FeatureFlagsKeysEnum {
   IS_ACTION_STEP_RESOLVER_ENABLED = 'IS_ACTION_STEP_RESOLVER_ENABLED',
   /** Enable conversational Agents UI in the dashboard; create the boolean in LaunchDarkly for cloud, or set `VITE_IS_CONVERSATIONAL_AGENTS_ENABLED` when self-hosted. */
   IS_CONVERSATIONAL_AGENTS_ENABLED = 'IS_CONVERSATIONAL_AGENTS_ENABLED',
+  /** Enable WhatsApp Embedded Signup (Meta Tech Provider) in the agent onboarding guide; create the boolean in LaunchDarkly for cloud, or set `VITE_IS_WHATSAPP_EMBEDDED_SIGNUP_ENABLED` when self-hosted. */
+  IS_WHATSAPP_EMBEDDED_SIGNUP_ENABLED = 'IS_WHATSAPP_EMBEDDED_SIGNUP_ENABLED',
   /** Enable managed-runtime mode for Agents (e.g. Claude Platform). Create the boolean in LaunchDarkly for cloud, or set `VITE_IS_MANAGED_AGENT_RUNTIME_ENABLED` when self-hosted. */
   IS_MANAGED_AGENT_RUNTIME_ENABLED = 'IS_MANAGED_AGENT_RUNTIME_ENABLED',
   /** Enable Novu-managed demo Claude provider auto-provisioned on dev environments. Create the boolean in LaunchDarkly for cloud, or set `VITE_IS_DEMO_MANAGED_CLAUDE_ENABLED` when self-hosted. */
@@ -136,6 +140,14 @@ export enum FeatureFlagsKeysEnum {
    * organization for the duration of the rotation, then disable.
    */
   IS_MULTIPLE_SECRET_KEYS_ALLOWED = 'IS_MULTIPLE_SECRET_KEYS_ALLOWED',
+  /** Enable the Tool channel (PagerDuty, Opsgenie, and custom webhooks). */
+  IS_TOOL_CHANNEL_ENABLED = 'IS_TOOL_CHANNEL_ENABLED',
+  /**
+   * Enable the Tool webhook provider in the integrations catalog. Keep off until
+   * the provider UX/send path is polished. Create the boolean in LaunchDarkly for
+   * cloud, or set `VITE_IS_TOOL_WEBHOOK_PROVIDER_ENABLED` when self-hosted.
+   */
+  IS_TOOL_WEBHOOK_PROVIDER_ENABLED = 'IS_TOOL_WEBHOOK_PROVIDER_ENABLED',
 
   // String flags
   CF_SCHEDULER_MODE = 'CF_SCHEDULER_MODE', // Values: "off" | "shadow" | "live" | "complete"

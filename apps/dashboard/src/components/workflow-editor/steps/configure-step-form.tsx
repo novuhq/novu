@@ -48,8 +48,11 @@ import { SdkBanner } from '@/components/workflow-editor/steps/sdk-banner';
 import { SkipConditionsButton } from '@/components/workflow-editor/steps/skip-conditions-button';
 import { ConfigureSmsStepPreview } from '@/components/workflow-editor/steps/sms/configure-sms-step-preview';
 import { ThrottleControlValues } from '@/components/workflow-editor/steps/throttle/throttle-control-values';
+import { ConfigureToolStepPreview } from '@/components/workflow-editor/steps/tool/configure-tool-step-preview';
+import { ToolEnabledProviders } from '@/components/workflow-editor/steps/tool/tool-enabled-providers';
+import { useWorkflowEditorRoutes } from '@/components/workflow-editor/use-workflow-editor-routes';
 import { UpdateWorkflowFn } from '@/components/workflow-editor/workflow-provider';
-import { IS_SELF_HOSTED } from '@/config';
+import { IS_CLOUD } from '@/config';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { useFormAutosave } from '@/hooks/use-form-autosave';
@@ -64,6 +67,7 @@ import { getControlsDefaultValues } from '@/utils/default-values';
 import { StepTypeEnum } from '@/utils/enums';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
+import { getPlanLabel } from '@/utils/upgrade-tier';
 import { DEFAULT_STEP_ICON, STEP_TYPE_ICONS } from './constants/preview-context.constants';
 
 const STEP_TYPE_TO_INLINE_CONTROL_VALUES: Record<StepTypeEnum, () => React.JSX.Element | null> = {
@@ -75,6 +79,7 @@ const STEP_TYPE_TO_INLINE_CONTROL_VALUES: Record<StepTypeEnum, () => React.JSX.E
   [StepTypeEnum.SMS]: () => null,
   [StepTypeEnum.CHAT]: () => null,
   [StepTypeEnum.PUSH]: () => null,
+  [StepTypeEnum.TOOL]: () => null,
   [StepTypeEnum.CUSTOM]: () => null,
   [StepTypeEnum.HTTP_REQUEST]: () => null,
   [StepTypeEnum.TRIGGER]: () => null,
@@ -86,6 +91,7 @@ const STEP_TYPE_TO_PREVIEW: Record<StepTypeEnum, ((props: HTMLAttributes<HTMLDiv
   [StepTypeEnum.SMS]: ConfigureSmsStepPreview,
   [StepTypeEnum.CHAT]: ConfigureChatStepPreview,
   [StepTypeEnum.PUSH]: ConfigurePushStepPreview,
+  [StepTypeEnum.TOOL]: ConfigureToolStepPreview,
   [StepTypeEnum.CUSTOM]: null,
   [StepTypeEnum.HTTP_REQUEST]: null,
   [StepTypeEnum.TRIGGER]: null,
@@ -100,6 +106,7 @@ const CHANNEL_PREVIEW_STEP_TYPES = new Set<StepTypeEnum>([
   StepTypeEnum.SMS,
   StepTypeEnum.CHAT,
   StepTypeEnum.PUSH,
+  StepTypeEnum.TOOL,
 ]);
 
 const SIDEPANEL_ACTION_ROW_BASE_CLASS = 'flex h-12 w-full justify-start gap-1.5 rounded-none px-3 text-xs font-medium';
@@ -114,6 +121,7 @@ type ConfigureStepFormProps = {
 export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
   const { step, workflow, update, environment } = props;
   const navigate = useNavigate();
+  const { editWorkflowRoute } = useWorkflowEditorRoutes();
   const isActionStepResolverEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ACTION_STEP_RESOLVER_ENABLED);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
@@ -125,6 +133,7 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
     StepTypeEnum.SMS,
     StepTypeEnum.CHAT,
     StepTypeEnum.PUSH,
+    StepTypeEnum.TOOL,
     StepTypeEnum.EMAIL,
     StepTypeEnum.DIGEST,
     StepTypeEnum.DELAY,
@@ -147,23 +156,30 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
   const isUnlimited = codeStepLimit >= UNLIMITED_VALUE;
   const stepResolversCount = stepResolversCountData?.count;
   const isAtCodeStepLimit =
-    !IS_SELF_HOSTED &&
+    IS_CLOUD &&
     !isSubscriptionLoading &&
     !isCountLoading &&
     !isUnlimited &&
     !step.stepResolverHash &&
     stepResolversCount !== undefined &&
     stepResolversCount >= codeStepLimit;
+  const currentPlanLabel = getPlanLabel(tier);
+  const proLabel = getPlanLabel(ApiServiceLevelEnum.PRO);
+  const teamLabel = getPlanLabel(ApiServiceLevelEnum.BUSINESS);
   const codeStepLimitDescription =
     tier === ApiServiceLevelEnum.FREE
-      ? `You've reached the ${codeStepLimit} code step limit on your Free plan. Upgrade to Pro for 10 code steps, or Business for unlimited.`
-      : `You've reached the ${codeStepLimit} code step limit on your ${tier.charAt(0).toUpperCase() + tier.slice(1)} plan. Upgrade to Business for unlimited code steps.`;
+      ? `You've reached the ${codeStepLimit} code step limit on your ${currentPlanLabel} plan. Upgrade to ${proLabel} for 10 code steps, or ${teamLabel} for unlimited.`
+      : `You've reached the ${codeStepLimit} code step limit on your ${currentPlanLabel} plan. Upgrade to ${teamLabel} for unlimited code steps.`;
+  const codeStepRequiredTier =
+    tier === ApiServiceLevelEnum.FREE ? ApiServiceLevelEnum.PRO : ApiServiceLevelEnum.BUSINESS;
 
   const hasCustomControls = Object.keys(step.controls.dataSchema ?? {}).length > 0 && !step.controls.uiSchema;
   const isInlineConfigurableStepWithCustomControls = isInlineConfigurableStep && hasCustomControls;
   const showInlineControlValuesSection = isInlineConfigurableStep && !hasCustomControls && !isInlineResolverActive;
   const showHttpRequestFormMiddleSection = step.type === StepTypeEnum.HTTP_REQUEST;
-  const showConfigureStepFormMiddleSection = showInlineControlValuesSection || showHttpRequestFormMiddleSection;
+  const showToolFormMiddleSection = step.type === StepTypeEnum.TOOL;
+  const showConfigureStepFormMiddleSection =
+    showInlineControlValuesSection || showHttpRequestFormMiddleSection || showToolFormMiddleSection;
 
   const onDeleteStep = () => {
     update(
@@ -173,9 +189,7 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
       },
       {
         onSuccess: () => {
-          navigate(
-            buildRoute(ROUTES.EDIT_WORKFLOW, { environmentSlug: environment.slug!, workflowSlug: workflow.slug })
-          );
+          navigate(buildRoute(editWorkflowRoute, { environmentSlug: environment.slug!, workflowSlug: workflow.slug }));
         },
       }
     );
@@ -194,6 +208,15 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
           controlValues: {
             ...(step.controls.values ?? {}),
             continueOnFailure: (step.controls.values?.continueOnFailure as boolean) ?? false,
+          },
+        };
+      }
+
+      if (step.type === StepTypeEnum.TOOL) {
+        return {
+          controlValues: {
+            ...(step.controls.values ?? {}),
+            enabledIntegrations: (step.controls.values?.enabledIntegrations as string[] | undefined) ?? [],
           },
         };
       }
@@ -288,7 +311,7 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
         >
           <SidebarHeader className="flex items-center gap-2.5 border-b py-3 text-sm font-medium">
             <Link
-              to={buildRoute(ROUTES.EDIT_WORKFLOW, {
+              to={buildRoute(editWorkflowRoute, {
                 environmentSlug: environment.slug!,
                 workflowSlug: workflow.slug,
               })}
@@ -300,7 +323,7 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
             </Link>
             <span>Configure Step</span>
             <Link
-              to={buildRoute(ROUTES.EDIT_WORKFLOW, {
+              to={buildRoute(editWorkflowRoute, {
                 environmentSlug: environment.slug!,
                 workflowSlug: workflow.slug,
               })}
@@ -464,6 +487,12 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
                     <ContinueOnFailure />
                   </SidebarContent>
                 )}
+
+                {showToolFormMiddleSection && (
+                  <SidebarContent>
+                    <ToolEnabledProviders />
+                  </SidebarContent>
+                )}
               </SaveFormContext.Provider>
               {showConfigureStepFormMiddleSection && <Separator />}
             </FormRoot>
@@ -552,7 +581,11 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
           {isInlineResolverSupportedStep && !isInlineResolverActive && !isReadOnly && (
             <SidebarContent size="lg" className="gap-0 px-0 py-0">
               {isAtCodeStepLimit ? (
-                <UpgradeCTATooltip description={codeStepLimitDescription} utmCampaign="code_steps_limit">
+                <UpgradeCTATooltip
+                  description={codeStepLimitDescription}
+                  requiredTier={codeStepRequiredTier}
+                  utmCampaign="code_steps_limit"
+                >
                   <span className="inline-flex w-full cursor-not-allowed">
                     <Button
                       variant="secondary"

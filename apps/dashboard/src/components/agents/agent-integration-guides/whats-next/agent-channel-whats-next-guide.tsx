@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import { RiExpandUpDownLine } from 'react-icons/ri';
 import type { AgentIntegrationLink, AgentResponse } from '@/api/agents';
 import { ConnectionConfetti } from '@/components/agents/connection-confetti';
-import { IS_ENTERPRISE, IS_SELF_HOSTED } from '@/config';
+import { IS_SELF_HOSTED_CE } from '@/config';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useChannelFirstConnectedEndpoint } from '@/hooks/use-channel-first-connected-endpoint';
 import { useInSessionMilestone } from '@/hooks/use-in-session-milestone';
@@ -12,6 +12,7 @@ import { shouldShowWhatsNextGuide } from '@/utils/whats-next-guide';
 import { isAgentIntegrationConnected } from '../../is-agent-integration-connected';
 import { SetupGuideCard } from '../../setup-guide-card';
 import { CompletedStepIndicator, ListeningStatusView, SetupStep } from '../../setup-guide-primitives';
+import { ConnectedBadge } from './connected-badge';
 import { resolveChannelWhatsNextConfig } from './whats-next-config';
 import type { WhatsNextStep } from './whats-next-types';
 
@@ -26,18 +27,7 @@ type AgentChannelWhatsNextGuideProps = {
   justConnected?: boolean;
 };
 
-const CONVERSATIONS_AVAILABLE = !IS_SELF_HOSTED || IS_ENTERPRISE;
-
-function ConnectedBadge() {
-  return (
-    <span className="bg-success-lighter flex items-center gap-1 rounded-md px-1 py-0.5">
-      <span className="flex size-4 items-center justify-center rounded-full bg-success-lighter">
-        <span className="bg-success-base size-1.5 rounded-full" />
-      </span>
-      <span className="text-success-base text-label-xs font-medium leading-4">Connected</span>
-    </span>
-  );
-}
+const CONVERSATIONS_AVAILABLE = !IS_SELF_HOSTED_CE;
 
 function StepRow({
   step,

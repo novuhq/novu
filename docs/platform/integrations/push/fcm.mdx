@@ -1,7 +1,7 @@
 ---
 title: "FCM Push Integration with Novu"
 sidebarTitle: 'FCM'
-description: "Connect Firebase Cloud Messaging (FCM) to Novu to send push notifications to Android, iOS, and web through workflows using a Firebase service account key."
+description: "Configure the FCM push provider in Novu: connect your Firebase service account, register subscriber device tokens, and send push notifications."
 ---
 
 This guide explains the process of configuring and using FCM with Novu, from getting your credentials to sending your first notification.
@@ -193,9 +193,9 @@ curl -L -X PUT 'https://api.novu.co/v1/subscribers/<SUBSCRIBER_ID>/credentials' 
   </Tab>
 </Tabs>
 
-<Note>
-  Novu automatically removes invalid device tokens from a subscribers' profile and then sends the failure details to the `MESSAGE_FAILED` webhook.
-</Note>
+### Remove device tokens
+
+When a subscriber logs out or uninstalls your app, remove their FCM device token so notifications are not delivered to the wrong user. See [Remove device tokens](/platform/integrations/push#remove-device-tokens) on the Push channel guide for removing a specific token, clearing all tokens for a provider, and automatic stale-token cleanup for FCM.
 
 ## Step 4: Send a notification
 

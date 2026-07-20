@@ -3,10 +3,10 @@ title: 'Multi-tenancy'
 description: 'Learn how to use context to implement multi-tenant notifications to support different organizations or workspaces within your application.'
 ---
 
-Multi-tenancy in Novu lets you isolate notifications for different organizations, environments, or workspaces within the same Novu project. Instead of creating separate subscribers or workflows for each tenant, you can use [Contexts](/platform/workflow/advanced-features/contexts) to define and manage tenant boundaries.
+Multi-tenancy in Novu lets you isolate notifications for different organizations, environments, or workspaces within the same Novu project. Instead of creating separate subscribers or workflows for each tenant, you can use [contexts](/platform/concepts/contexts) to define and manage tenant boundaries.
 
 <Note>
-  This guide assumes you already understand what Contexts are. If not, start with the [Contexts](/platform/workflow/advanced-features/contexts) documentation.
+  This guide assumes you already understand what contexts are. If not, start with [Contexts](/platform/concepts/contexts).
 </Note>
 
 ## How multi-tenancy works in Novu
@@ -50,14 +50,16 @@ context: {
 You can also manage all tenant contexts centrally from the Novu dashboard or API.
 
 <Note>
-  To learn more about creating, updating, and deleting contexts, see the [Manage Contexts](/platform/workflow/advanced-features/contexts) guide.
+  To learn more about creating, updating, and deleting contexts, see [Manage contexts](/platform/workflow/advanced-features/contexts/manage-contexts).
 </Note>
 
 ### Applying tenant context in workflows
 
-Once you’ve defined your tenant context, you can use it when triggering workflows. During workflow trigger, Novu first checks if that context already exists. 
+Once you’ve defined your tenant context, you can use it when triggering workflows. During a workflow trigger, Novu first checks if that context already exists.
 
-If not, Novu automatically creates it — but if it does exist, Novu reuses the existing record instead of updating it, to prevent accidental overwrites.
+If not, Novu automatically creates it. If it exists and you pass a `data` object inline, Novu updates the stored tenant metadata - similar to subscriber upsert. If you pass only the tenant identifier as a string, Novu reuses the existing record without modifying `data`.
+
+Inbox initialization always finds or creates contexts but never updates existing `data`.
 
 <Tabs>
   <Tab title="Node.js">

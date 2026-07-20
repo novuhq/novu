@@ -33,7 +33,7 @@ import { Result } from "../types/fp.js";
  * Search subscribers by their **email**, **phone**, **subscriberId** and **name**.
  *     The search is case sensitive and supports pagination.Checkout all available filters in the query section.
  *
- * This operation requires either {@link Security.bearerAuth} or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.
+ * This operation requires one of {@link Security.bearerAuth}, {@link Security.secretKey}, or {@link Security.bearerAuth} to be set on the `security` parameter when initializing the SDK.
  */
 export function subscribersSearch(
   client: NovuCore,

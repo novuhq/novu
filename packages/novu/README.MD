@@ -7,170 +7,232 @@
   </a>
 </div>
 
-# Code-First Notifications Workflow Platform
+# Novu CLI
 
-  <p align="center">
-    <br />
-    <a href="https://docs.novu.co" rel="dofollow"><strong>Explore the docs »</strong></a>
-    <br />
+[![Version](https://img.shields.io/npm/v/novu.svg)](https://www.npmjs.org/package/novu)
+[![Downloads](https://img.shields.io/npm/dm/novu.svg)](https://www.npmjs.com/package/novu)
 
-  <br/>
-    <a href="https://github.com/novuhq/novu/issues/new?assignees=&labels=type%3A+bug&template=bug_report.yml&title=%F0%9F%90%9B+Bug+Report%3A+">Report Bug</a>
-    ·
-    <a href="https://github.com/novuhq/novu/issues/new?assignees=&labels=feature&template=feature_request.yml&title=%F0%9F%9A%80+Feature%3A+">Request Feature</a>
-    ·
-  <a href="https://discord.novu.co">Join Our Discord</a>
-    ·
-    <a href="https://roadmap.novu.co/">Roadmap</a>
-    ·
-    <a href="https://twitter.com/novuhq">X</a>
-  </p>
+The Novu CLI connects AI agents to real communication channels — Slack, Email, Telegram, WhatsApp, and Microsoft Teams — without wiring each provider yourself.
 
-## 🚀 Quickstart
+Describe what your agent should do, pick a channel, and Novu provisions credentials, identity, and delivery so your agent can message users where they already are.
+
+Learn more in the [managed agent quickstart](https://docs.novu.co/agents/managed-agent/quickstart).
+
+## Quickstart
+
+```bash
+npx novu@latest connect
+```
+
+The interactive flow:
+
+1. **Choose a runtime** — demo credentials (fastest), Claude managed agents, AWS Claude, or a self-hosted bridge (`ai-sdk`, `langchain`, `custom-code`, `chat-sdk`).
+2. **Describe your agent** — Novu generates the system prompt, tools, MCP servers, and skills from your description.
+3. **Pick a channel** — Slack, Email, Telegram, WhatsApp, Microsoft Teams, or skip for now.
+4. **Finish the handoff** — the CLI guides you through the last step (Slack OAuth, send a test email, BotFather token, etc.).
+
+When the run succeeds, your agent is live on the connected channel. Re-run `npx novu connect` to add another channel or create another agent.
+
+### Keyless try-before-sign-up
+
+Try Novu without an account:
+
+```bash
+npx novu@latest connect "A support assistant for Acme's customers that answers billing questions." \
+  --keyless \
+  --channel slack
+```
+
+Keyless creates a temporary demo agent (~5 free replies). Claim it via the in-channel sign-up link to move the agent into your workspace.
+
+### Connect a self-hosted Chat SDK agent
+
+If your agent runs in your codebase with the [Chat SDK adapter](https://www.npmjs.com/package/@novu/chat-sdk-adapter):
+
+```bash
+npx novu@latest connect --runtime chat-sdk
+```
+
+The CLI authenticates your Novu account, creates a bridge agent, writes `NOVU_SECRET_KEY` and `NOVU_AGENT_IDENTIFIER` to your env, and opens the channel picker.
+
+## Channels
+
+| Channel | What the CLI sets up |
+| --- | --- |
+| **Slack** | Creates the Slack app, stores OAuth credentials, opens the install flow |
+| **Email** | Provisions a unique inbound address (e.g. `my-agent@agentconnect.sh`) |
+| **Telegram** | Links your @BotFather bot token |
+| **WhatsApp** | Prints a Meta Embedded Signup link you complete in the browser (falls back to the dashboard when Embedded Signup is unavailable) |
+| **Microsoft Teams** | Hands off to the Novu dashboard to finish provider setup |
+
+One `connect` run creates one agent and connects one channel. Run it again to add more channels (each run creates a new agent unless you pick an existing one).
+
+## Authentication
+
+| Mode | When to use | How |
+| --- | --- | --- |
+| **Dashboard OAuth** (default) | You have or want a Novu account | Omit `--keyless` and `--secret-key`; approve in the browser |
+| **Keyless** | Try Novu without signing up | Pass `--keyless` |
+| **Secret key** | CI or existing automation | Pass `--secret-key` or set `NOVU_SECRET_KEY` |
+
+Microsoft Teams requires dashboard OAuth — it is not supported with `--keyless` in non-interactive mode. WhatsApp works in both modes, keyless included.
+
+## CLI commands
+
+| Command | Description |
+| --- | --- |
+| `connect` | Create a managed or bridge agent and connect it to a channel |
+| `init` | Scaffold a new Novu app (`notifications` or `chat-sdk` template) |
+| `sync` | Sync bridge workflow state with Novu Cloud |
+| `dev` | Start local Novu Studio and a tunnel to your bridge app |
+| `translations pull` | Pull translation files from Novu Cloud |
+| `translations push` | Push translation files to Novu Cloud |
+| `step publish` | Bundle and deploy step handlers to Novu |
+
+Run `npx novu@latest <command> --help` for full flags and examples.
+
+### `connect`
+
+Create a managed agent and connect it to a channel.
+
+```bash
+# Interactive (recommended)
+npx novu@latest connect
+
+# Non-interactive / CI
+npx novu@latest connect "An onboarding assistant for Acme's new members." \
+  --ci \
+  --channel email
+
+# Keyless Slack
+npx novu@latest connect "A support assistant for Acme's customers." \
+  --ci \
+  --keyless \
+  --channel slack
+
+# Chat SDK bridge (no prompt required)
+npx novu@latest connect \
+  --runtime chat-sdk \
+  --secret-key "$NOVU_SECRET_KEY" \
+  --channel telegram
+```
+
+**Runtimes:** `demo` (default), `claude`, `claude-aws`, `ai-sdk`, `langchain`, `custom-code`, `chat-sdk`
+
+**Channels:** `slack`, `email`, `telegram`, `whatsapp`, `teams`, `skip`
+
+**Common flags:**
+
+| Flag | Description |
+| --- | --- |
+| `--ci` | Non-interactive mode (requires prompt and `--channel`) |
+| `--keyless` | Temporary demo agent; claim via in-channel sign-up |
+| `--secret-key <key>` | Use an existing Novu account |
+| `--region <us\|eu>` | Target Novu Cloud region (default: `us`) |
+| `--runtime <mode>` | Agent runtime or bridge mode |
+| `--channel <name>` | Channel to connect |
+| `--slack-config-token <token>` | CI escape hatch for Slack (prefer the secure setup page) |
+| `--telegram-bot-token <token>` | CI escape hatch for Telegram (prefer the secure setup page) |
+
+For the full non-interactive contract, machine-readable stdout markers, and AI-agent onboarding guide, see [`packages/shared/docs/agent-onboarding.md`](../shared/docs/agent-onboarding.md) or run `npx novu@latest connect --help`.
+
+### `init`
+
+Scaffold a new Novu application.
+
+```bash
+npx novu@latest init
+npx novu@latest init --template chat-sdk
+```
+
+| Flag | Description |
+| --- | --- |
+| `-s, --secret-key <key>` | Novu development environment secret key |
+| `-a, --api-url <url>` | Novu Cloud API URL (default: `https://api.novu.co`) |
+| `-t, --template <name>` | Template: `notifications` or `chat-sdk` |
+
+### `sync`
+
+Sync your bridge endpoint state with Novu Cloud.
+
+```bash
+npx novu@latest sync -b https://acme.org/api/novu -s "$NOVU_SECRET_KEY"
+npx novu@latest sync -b https://acme.org/api/novu -s "$NOVU_SECRET_KEY" -a https://eu.api.novu.co
+```
+
+| Flag | Description |
+| --- | --- |
+| `-b, --bridge-url <url>` | Bridge endpoint URL (required) |
+| `-s, --secret-key <key>` | Novu secret key (required) |
+| `-a, --api-url <url>` | Novu Cloud API URL (default: `https://api.novu.co`) |
+
+### `translations`
+
+Manage Novu translation files.
+
+```bash
+npx novu@latest translations pull -s "$NOVU_SECRET_KEY" -d ./translations
+npx novu@latest translations push -s "$NOVU_SECRET_KEY" -d ./translations
+```
+
+| Flag | Description |
+| --- | --- |
+| `-s, --secret-key <key>` | Novu secret key |
+| `-a, --api-url <url>` | Novu Cloud API URL |
+| `-d, --directory <path>` | Local translations directory (default: `./translations`) |
+
+### `step publish`
+
+Bundle and deploy step handlers to Novu.
+
+```bash
+npx novu@latest step publish -s "$NOVU_SECRET_KEY"
+npx novu@latest step publish -s "$NOVU_SECRET_KEY" --workflow my-workflow --dry-run
+```
+
+| Flag | Description |
+| --- | --- |
+| `-s, --secret-key <key>` | Novu API secret key |
+| `-a, --api-url <url>` | Novu API URL |
+| `-c, --config <path>` | Path to config file |
+| `--out <path>` | Directory containing step handlers |
+| `--workflow <id...>` | Deploy only specific workflows |
+| `--step <id...>` | Deploy only specific steps (requires `--workflow`) |
+| `--template <path>` | React Email template path |
+| `--dry-run` | Bundle without deploying |
+
+## Local Novu Studio
+
+Use `dev` when you are building code-first notification workflows with [`@novu/framework`](../framework) and want a local Studio + tunnel to your bridge app.
 
 ```bash
 npx novu@latest dev
 ```
 
-## 🔥 Flags
+| Flag | Long form | Description | Default |
+| --- | --- | --- | --- |
+| `-p` | `--port <port>` | Bridge application port | `4000` |
+| `-r` | `--route <route>` | Bridge application route | `/api/novu` |
+| `-o` | `--origin <origin>` | Bridge application origin | `http://localhost` |
+| `-d` | `--dashboard-url <url>` | Novu Cloud dashboard URL | `https://dashboard.novu.co` |
+| `-sp` | `--studio-port <port>` | [deprecated] Ignored | `2022` |
+| `-sh` | `--studio-host <host>` | [deprecated] Ignored | `localhost` |
+| `-t` | `--tunnel <url>` | Self-hosted tunnel URL | — |
+| `-H` | `--headless` | Run without opening the browser | `false` |
+| | `--no-studio` | Skip opening the dashboard Local environment (tunnel and agent sync still run) | — |
+| | `--run <command>` | Spawn a local app server before opening the tunnel | — |
 
-| flag | long form usage example | description                 | default value             |
-| ---- | ----------------------- | --------------------------- | ------------------------- |
-| -p   | --port <port>           | Bridge application port     | 4000                      |
-| -r   | --route <route>         | Bridge application route    | /api/novu                 |
-| -o   | --origin <origin>       | Bridge application origin   | http://localhost          |
-| -d   | --dashboard-url <url>   | Novu Cloud dashboard URL    | https://dashboard.novu.co |
-| -sp  | --studio-port <port>    | Local Studio server port    | 2022                      |
-| -sh  | --studio-host <host>    | Local Studio server host    | localhost                 |
-| -t   | --tunnel <url>          | Self hosted tunnel url      | null                      |
-| -H   | --headless              | Run bridge in headless mode | false                     |
-
-Example: If bridge application is running on port `3002` and Novu account is in `EU` region.
+Example — bridge on port `3002` with an EU dashboard:
 
 ```bash
 npx novu@latest dev --port 3002 --dashboard-url https://eu.dashboard.novu.co
 ```
 
-## ⭐️ Why
+## Links
 
-Building a notification system is hard, at first it seems like just sending an email but in reality it's just the beginning. In today's world users expect multichannel communication experience over email, sms, push, chat and more... An ever-growing list of providers are popping up each day, and notifications are spread around the code. Novu's goal is to simplify notifications and provide developers the tools to create meaningful communication between the system and its users.
-
-## ✨ Features
-
-- 🌈 Single API for all messaging provide`rs (Email, SMS, Push, Chat)
-- 💅 Easily manage notification over multiple channels
-- 🚀 Equipped with a CMS for advanced layouts and design management
-- 🛡 Built-in protection for missing variables (Coming Soon)
-- 📦 Easy to set up and integrate
-- 🛡 Debug and analyze multichannel messages in a single dashboard
-- 📦 Embeddable notification center with real-time updates
-- 👨‍💻 Community driven
-
-## 🚀 Getting Started
-
-To start using Novu, run the following command. You'll be guided through the setup process.
-
-```bash
-npx novu init
-```
-
-After setting up your account using the cloud or docker version you can trigger the API using the `@novu/api` package.
-
-```bash
-npm install @novu/api
-```
-
-```ts
-import { Novu } from '@novu/api';
-
-const novu = new Novu({ secretKey: process.env.NOVU_API_KEY });
-
-await novu.trigger('<WORKFLOW_ID>', {
-  to: {
-    subscriberId: '<SUBSCRIBER_ID>',
-    email: 'john@doemail.com',
-    firstName: 'John',
-    lastName: 'Doe',
-  },
-  payload: {
-    name: 'Hello World',
-    organization: {
-      logo: 'https://happycorp.com/logo.png',
-    },
-  },
-});
-```
-
-## Inbox
-
-Using the Novu API and admin panel you can easily add real-time notification center to your Next.js or React application without the hassle of building it yourself.
-
-<div align="center">
-<img width="762" alt="notification-center-912bb96e009fb3a69bafec23bcde00b0" src="https://github.com/iampearceman/Design-assets/blob/main/Untitled%20design%20(8).gif?raw=true">
-  
-  Read more about how to add a notification center to your app with the Novu API [here](https://docs.novu.co/platform/inbox/overview?utm_campaign=inapp-cli-readme)
-
-</div>
-
-## Providers
-
-Novu provides a single API to manage providers across multiple channels with a simple-to-use interface.
-
-#### 💌 Email
-
-- [x] [Sendgrid](https://github.com/novuhq/novu/tree/main/providers/sendgrid)
-- [x] [Netcore](https://github.com/novuhq/novu/tree/main/providers/netcore)
-- [x] [Mailgun](https://github.com/novuhq/novu/tree/main/providers/mailgun)
-- [x] [SES](https://github.com/novuhq/novu/tree/main/providers/ses)
-- [x] [Postmark](https://github.com/novuhq/novu/tree/main/providers/postmark)
-- [x] [NodeMailer](https://github.com/novuhq/novu/tree/main/providers/nodemailer)
-- [x] [Mailjet](https://github.com/novuhq/novu/tree/main/providers/mailjet)
-- [x] [Mandrill](https://github.com/novuhq/novu/tree/main/providers/mandrill)
-- [x] [SendinBlue](https://github.com/novuhq/novu/tree/main/providers/sendinblue)
-- [x] [EmailJS](https://github.com/novuhq/novu/tree/main/providers/emailjs)
-- [ ] SparkPost
-
-#### 📞 SMS
-
-- [x] [Twilio](https://github.com/novuhq/novu/tree/main/providers/twilio)
-- [x] [Plivo](https://github.com/novuhq/novu/tree/main/providers/plivo)
-- [x] [SNS](https://github.com/novuhq/novu/tree/main/providers/sns)
-- [x] [Nexmo - Vonage](https://github.com/novuhq/novu/tree/main/providers/nexmo)
-- [x] [Sms77](https://github.com/novuhq/novu/tree/main/providers/sms77)
-- [x] [Telnyx](https://github.com/novuhq/novu/tree/main/providers/telnyx)
-- [x] [Termii](https://github.com/novuhq/novu/tree/main/providers/termii)
-- [x] [Gupshup](https://github.com/novuhq/novu/tree/main/providers/gupshup)
-- [ ] Bandwidth
-- [ ] RingCentral
-
-#### 📱 Push
-
-- [x] [FCM](https://github.com/novuhq/novu/tree/main/providers/fcm)
-- [x] [Expo](https://github.com/novuhq/novu/tree/main/providers/expo)
-- [ ] [SNS](https://github.com/novuhq/novu/tree/main/providers/sns)
-- [ ] Pushwoosh
-
-#### 👇 Chat
-
-- [x] [Slack](https://github.com/novuhq/novu/tree/main/providers/slack)
-- [x] [Discord](https://github.com/novuhq/novu/tree/main/providers/discord)
-- [ ] MS Teams
-- [ ] Mattermost
-
-#### 📱 In-App
-
-- [x] [Novu](https://docs.novu.co/notification-center/introduction?utm_campaign=inapp-cli-readme)
-
-#### Other (Coming Soon...)
-
-- [ ] PagerDuty
-
-## 💻 Need Help?
-
-We are more than happy to help you. Don't worry if you are getting some errors or problems while working with the project. Or just want to discuss something related to the project.
-
-Just <a href="https://discord.novu.co">Join Our Discord</a> server and ask for help.
-
-## 🔗 Links
-
-- [Home page](https://novu.co/)
+- [Managed agent docs](https://docs.novu.co/agents/managed-agent/quickstart)
+- [Agent onboarding guide for AI assistants](../shared/docs/agent-onboarding.md)
+- [Novu documentation](https://docs.novu.co)
+- [Discord community](https://discord.novu.co)
+- [Report a bug](https://github.com/novuhq/novu/issues/new?assignees=&labels=type%3A+bug&template=bug_report.yml&title=%F0%9F%90%9B+Bug+Report%3A+)
+- [Request a feature](https://github.com/novuhq/novu/issues/new?assignees=&labels=feature&template=feature_request.yml&title=%F0%9F%9A%80+Feature%3A+)

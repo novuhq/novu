@@ -129,6 +129,13 @@ describe('InboundDomainRouteDelivery.previewAgentMailPayload', () => {
     expect(payload.attachments).to.be.undefined;
   });
 
+  it('forwards the DKIM/SPF verdicts so the agent can reject spoofed senders', () => {
+    const payload = usecase.previewAgentMailPayload({ ...baseMail, dkim: 'pass', spf: 'failed' });
+
+    expect(payload.dkim).to.equal('pass');
+    expect(payload.spf).to.equal('failed');
+  });
+
   it('includes core mail metadata regardless of attachment shape', () => {
     const payload = usecase.previewAgentMailPayload({
       ...baseMail,

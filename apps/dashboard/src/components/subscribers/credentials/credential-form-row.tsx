@@ -93,7 +93,7 @@ export function CredentialFormRow({
                   onChange={(event) => setField(field.key, event.target.value)}
                 />
               ) : (
-                <span className={`min-w-0 flex-1 truncate ${paddingClass}`}>{displayValue || '—'}</span>
+                <span className={`min-w-0 flex-1 truncate ${paddingClass}`}>{displayValue || '-'}</span>
               )}
               {showFieldActions && (
                 <>

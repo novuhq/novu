@@ -7,10 +7,14 @@ import { graders as disciplineNoTimersGraders } from './scenarios/discipline-no-
 import { scenario as disciplineNoTimersScenario } from './scenarios/discipline-no-timers/scenario.js';
 import { graders as emailHandoffGraders } from './scenarios/email-handoff/graders.js';
 import { scenario as emailHandoffScenario } from './scenarios/email-handoff/scenario.js';
+import { graders as keylessSendblueGraders } from './scenarios/keyless-sendblue/graders.js';
+import { scenario as keylessSendblueScenario } from './scenarios/keyless-sendblue/scenario.js';
 import { graders as keylessSlackSecureGraders } from './scenarios/keyless-slack-secure/graders.js';
 import { scenario as keylessSlackSecureScenario } from './scenarios/keyless-slack-secure/scenario.js';
-import { graders as keylessWhatsappRedirectGraders } from './scenarios/keyless-whatsapp-redirect/graders.js';
-import { scenario as keylessWhatsappRedirectScenario } from './scenarios/keyless-whatsapp-redirect/scenario.js';
+import { graders as keylessTeamsRedirectGraders } from './scenarios/keyless-teams-redirect/graders.js';
+import { scenario as keylessTeamsRedirectScenario } from './scenarios/keyless-teams-redirect/scenario.js';
+import { graders as keylessWhatsappConnectGraders } from './scenarios/keyless-whatsapp-connect/graders.js';
+import { scenario as keylessWhatsappConnectScenario } from './scenarios/keyless-whatsapp-connect/scenario.js';
 import { graders as personaInfraExclusionGraders } from './scenarios/persona-infra-exclusion/graders.js';
 import { scenario as personaInfraExclusionScenario } from './scenarios/persona-infra-exclusion/scenario.js';
 import { graders as slackInChatRerunGraders } from './scenarios/slack-in-chat-rerun/graders.js';
@@ -29,7 +33,8 @@ const SYSTEM_PROMPT_PREAMBLE = [
 
 export const agentOnboardingSuite: Suite<ConnectFlags> = {
   id: 'agent-onboarding',
-  description: 'Behavioral evals for the Novu agent onboarding playbook (npx novu connect).',
+  description:
+    'Behavioral evals for the Novu agent onboarding playbook (managed and custom-code bridge `npx novu connect` flows).',
   systemPrompt: { path: AGENT_ONBOARDING_DOC_PATH },
   systemPromptPreamble: SYSTEM_PROMPT_PREAMBLE,
   commandParser: connectParser,
@@ -39,11 +44,19 @@ export const agentOnboardingSuite: Suite<ConnectFlags> = {
     if (parsed.description) {
       recorder.setMetadata('description', parsed.description);
     }
+    if (parsed.sendblueFrom) {
+      recorder.setMetadata('sendblueFrom', parsed.sendblueFrom);
+    }
+    if (parsed.sendblueTestPhone) {
+      recorder.setMetadata('sendblueTestPhone', parsed.sendblueTestPhone);
+    }
   },
   scenarios: [
     { scenario: keylessSlackSecureScenario, graders: keylessSlackSecureGraders },
+    { scenario: keylessSendblueScenario, graders: keylessSendblueGraders },
     { scenario: dashboardPromptLoginScenario, graders: dashboardPromptLoginGraders },
-    { scenario: keylessWhatsappRedirectScenario, graders: keylessWhatsappRedirectGraders },
+    { scenario: keylessTeamsRedirectScenario, graders: keylessTeamsRedirectGraders },
+    { scenario: keylessWhatsappConnectScenario, graders: keylessWhatsappConnectGraders },
     { scenario: emailHandoffScenario, graders: emailHandoffGraders },
     { scenario: telegramSecureQrScenario, graders: telegramSecureQrGraders },
     { scenario: slackInChatRerunScenario, graders: slackInChatRerunGraders },

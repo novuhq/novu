@@ -56,8 +56,9 @@ jobs:
           done
 
           # Use GitHub API to check user permissions
+          encoded_author=$(printf '%s' "$author" | jq -sRr @uri)
           response=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            "https://api.github.com/repos/${{ github.repository }}/collaborators/$author/permission")
+            "https://api.github.com/repos/${{ github.repository }}/collaborators/${encoded_author}/permission")
 
           permission=$(echo "$response" | jq -r '.permission // "none"')
           echo "Permission level: $permission"
@@ -149,7 +150,7 @@ jobs:
           scopes: |
             ${{ env.SCOPES }}
 
-      - uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # v2
+      - uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
         # Show success message when PR title was auto-fixed
         if: steps.auto_fix_linear_ticket.outputs.needs_update == 'true'
         with:
@@ -161,7 +162,7 @@ jobs:
 
             **Updated title:** `${{ steps.auto_fix_linear_ticket.outputs.updated_title }}`
 
-      - uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # v2
+      - uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
         # Show error if either conventional commit validation fails OR Linear ticket validation fails (for team members)
         if: always() && (steps.lint_pr_title.outputs.error_message != null || (steps.check_team_member.outputs.is_team_member == 'true' && steps.auto_fix_linear_ticket.outputs.linear_ticket_valid != 'true' && steps.validate_linear_ticket.outputs.linear_ticket_valid != 'true'))
         with:
@@ -185,14 +186,14 @@ jobs:
 
       # Delete previous comments when all issues have been resolved
       - if: ${{ steps.lint_pr_title.outputs.error_message == null && (steps.check_team_member.outputs.is_team_member != 'true' || steps.auto_fix_linear_ticket.outputs.linear_ticket_valid == 'true' || steps.validate_linear_ticket.outputs.linear_ticket_valid == 'true') }}
-        uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # v2
+        uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
         with:
           header: pr-title-lint-error
           delete: true
 
       # Delete auto-fix comment after a while (on subsequent updates)
       - if: ${{ steps.auto_fix_linear_ticket.outputs.needs_update != 'true' }}
-        uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # v2
+        uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
         with:
           header: pr-title-auto-fixed
           delete: true

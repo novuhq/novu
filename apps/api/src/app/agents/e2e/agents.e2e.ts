@@ -36,6 +36,7 @@ describe('Agents API - /agents #novu-v2', () => {
     // tests in managed-agent.e2e.ts for the populated-view contract.
     expect(createRes.body.data.managedRuntime).to.equal(undefined);
     expect(createRes.body.data.createdBy).to.equal(session.user._id);
+    expect(createRes.body.data.behavior?.subscriberAccess).to.equal('restricted');
 
     const listRes = await session.testAgent.get('/v1/agents');
 
@@ -79,14 +80,15 @@ describe('Agents API - /agents #novu-v2', () => {
     });
 
     expect(createRes.status).to.equal(201);
-    expect(createRes.body.data.behavior).to.equal(undefined);
+    expect(createRes.body.data.behavior?.subscriberAccess).to.equal('restricted');
 
     const patchRes = await session.testAgent.patch(`/v1/agents/${encodeURIComponent(identifier)}`).send({
       behavior: { acknowledgeOnReceived: false },
     });
 
     expect(patchRes.status).to.equal(200);
-    expect(patchRes.body.data.behavior).to.deep.equal({ acknowledgeOnReceived: false });
+    expect(patchRes.body.data.behavior.acknowledgeOnReceived).to.equal(false);
+    expect(patchRes.body.data.behavior.subscriberAccess).to.equal('restricted');
 
     const getRes = await session.testAgent.get(`/v1/agents/${encodeURIComponent(identifier)}`);
 
@@ -112,7 +114,7 @@ describe('Agents API - /agents #novu-v2', () => {
     });
 
     expect(createRes.status).to.equal(201);
-    expect(createRes.body.data.behavior).to.equal(undefined);
+    expect(createRes.body.data.behavior?.subscriberAccess).to.equal('restricted');
 
     const setRes = await session.testAgent.patch(`/v1/agents/${encodeURIComponent(identifier)}`).send({
       behavior: { reactionOnResolved: 'thumbs_up' },
@@ -120,6 +122,7 @@ describe('Agents API - /agents #novu-v2', () => {
 
     expect(setRes.status).to.equal(200);
     expect(setRes.body.data.behavior.reactionOnResolved).to.equal('thumbs_up');
+    expect(setRes.body.data.behavior.subscriberAccess).to.equal('restricted');
 
     const getRes = await session.testAgent.get(`/v1/agents/${encodeURIComponent(identifier)}`);
 
@@ -132,6 +135,69 @@ describe('Agents API - /agents #novu-v2', () => {
 
     expect(disableRes.status).to.equal(200);
     expect(disableRes.body.data.behavior.reactionOnResolved).to.equal(null);
+
+    await session.testAgent.delete(`/v1/agents/${encodeURIComponent(identifier)}`);
+  });
+
+  it('should update and return subscriberAccess behavior', async () => {
+    const identifier = `e2e-subscriber-access-${Date.now()}`;
+
+    const createRes = await session.testAgent.post('/v1/agents').send({
+      name: 'Access Agent',
+      identifier,
+    });
+
+    expect(createRes.status).to.equal(201);
+    expect(createRes.body.data.behavior?.subscriberAccess).to.equal('restricted');
+
+    const persisted = await agentRepository.findOne(
+      {
+        identifier,
+        _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
+      },
+      '*'
+    );
+    expect(persisted?.behavior?.subscriberAccess).to.equal('restricted');
+
+    const openRes = await session.testAgent.patch(`/v1/agents/${encodeURIComponent(identifier)}`).send({
+      behavior: { subscriberAccess: 'open' },
+    });
+
+    expect(openRes.status).to.equal(200);
+    expect(openRes.body.data.behavior.subscriberAccess).to.equal('open');
+
+    const getRes = await session.testAgent.get(`/v1/agents/${encodeURIComponent(identifier)}`);
+
+    expect(getRes.status).to.equal(200);
+    expect(getRes.body.data.behavior.subscriberAccess).to.equal('open');
+
+    const restrictRes = await session.testAgent.patch(`/v1/agents/${encodeURIComponent(identifier)}`).send({
+      behavior: { subscriberAccess: 'restricted' },
+    });
+
+    expect(restrictRes.status).to.equal(200);
+    expect(restrictRes.body.data.behavior.subscriberAccess).to.equal('restricted');
+
+    await session.testAgent.delete(`/v1/agents/${encodeURIComponent(identifier)}`);
+  });
+
+  it('should reject an invalid subscriberAccess value', async () => {
+    const identifier = `e2e-subscriber-access-invalid-${Date.now()}`;
+
+    const createRes = await session.testAgent.post('/v1/agents').send({
+      name: 'Access Agent Invalid',
+      identifier,
+    });
+
+    expect(createRes.status).to.equal(201);
+
+    const badRes = await session.testAgent.patch(`/v1/agents/${encodeURIComponent(identifier)}`).send({
+      behavior: { subscriberAccess: 'everyone' },
+    });
+
+    // Class-validator failures are surfaced by AllExceptionsFilter as 422.
+    expect(badRes.status).to.equal(422);
 
     await session.testAgent.delete(`/v1/agents/${encodeURIComponent(identifier)}`);
   });

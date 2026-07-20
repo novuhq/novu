@@ -16,13 +16,14 @@ import { Card } from '@/components/primitives/card';
 import { InlineToast } from '@/components/primitives/inline-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import { OrganizationSettings } from '@/components/settings/organization-settings';
-import { EE_AUTH_PROVIDER, IS_SELF_HOSTED } from '@/config';
+import { EE_AUTH_PROVIDER, IS_CLOUD } from '@/config';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { TeamMembers } from '@/utils/better-auth/components/team-members';
 import { UserProfile as BetterAuthUserProfile } from '@/utils/better-auth/index';
 import { ROUTES } from '@/utils/routes';
+import { getRequiredTierLabelForFeature } from '@/utils/upgrade-tier';
 
 // Pin Clerk's post-leave/delete redirect to the local `/auth/organization-list` so `AuthProvider`
 // can clear any org Clerk auto-activates and let the picker render the empty state.
@@ -53,7 +54,7 @@ type SettingsTabsProps = {
 const getClerkComponentAppearance = (isRbacEnabled: boolean): ClerkAppearanceTheme => ({
   variables: {
     colorPrimary: 'hsl(var(--bg-surface))',
-    colorText: 'rgba(82, 88, 102, 0.95)',
+    colorForeground: 'rgba(82, 88, 102, 0.95)',
     fontSize: '14px',
   },
   elements: {
@@ -129,7 +130,8 @@ export function SettingsTabs({ routes, rootRoute }: SettingsTabsProps) {
   const clerkAppearance = useMemo(() => getClerkComponentAppearance(isRbacEnabled), [isRbacEnabled]);
   const UserProfile = EE_AUTH_PROVIDER === 'clerk' ? ClerkUserProfile : BetterAuthUserProfile;
 
-  const canShowBilling = !IS_SELF_HOSTED && hasBillingPermission;
+  const canShowBilling = IS_CLOUD && hasBillingPermission;
+  const brandingTierLabel = getRequiredTierLabelForFeature(FeatureNameEnum.PLATFORM_REMOVE_NOVU_BRANDING_BOOLEAN);
 
   const currentTab = resolveCurrentTab(location.pathname, routes, rootRoute);
 
@@ -208,8 +210,12 @@ export function SettingsTabs({ routes, rootRoute }: SettingsTabsProps) {
                 {subscription?.apiServiceLevel === ApiServiceLevelEnum.FREE && canShowBilling && (
                   <InlineToast
                     title="Tip:"
-                    description="Hide Novu branding from your notification channels by upgrading to a paid plan."
-                    ctaLabel="Upgrade Plan"
+                    description={
+                      brandingTierLabel
+                        ? `Hide Novu branding from your notification channels by upgrading to the ${brandingTierLabel} plan.`
+                        : 'Hide Novu branding from your notification channels by upgrading to a paid plan.'
+                    }
+                    ctaLabel={brandingTierLabel ? `Upgrade to ${brandingTierLabel}` : 'Upgrade Plan'}
                     onCtaClick={() => navigate(`${routes.billing}?utm_source=organization_settings_upgrade_prompt`)}
                     className="mb-4"
                     variant="tip"

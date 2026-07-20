@@ -3,11 +3,14 @@
  */
 
 import { integrationsCreate } from "../funcs/integrationsCreate.js";
+import { integrationsCreateMobileLink } from "../funcs/integrationsCreateMobileLink.js";
 import { integrationsDelete } from "../funcs/integrationsDelete.js";
 import { integrationsGenerateChatOAuthUrl } from "../funcs/integrationsGenerateChatOAuthUrl.js";
 import { integrationsGenerateConnectOAuthUrl } from "../funcs/integrationsGenerateConnectOAuthUrl.js";
 import { integrationsGenerateLinkUserOAuthUrl } from "../funcs/integrationsGenerateLinkUserOAuthUrl.js";
 import { integrationsIntegrationsControllerAutoConfigureIntegration } from "../funcs/integrationsIntegrationsControllerAutoConfigureIntegration.js";
+import { integrationsIntegrationsControllerConfigureIntegrationWebhook } from "../funcs/integrationsIntegrationsControllerConfigureIntegrationWebhook.js";
+import { integrationsLinkChannelEndpoint } from "../funcs/integrationsLinkChannelEndpoint.js";
 import { integrationsList } from "../funcs/integrationsList.js";
 import { integrationsListActive } from "../funcs/integrationsListActive.js";
 import { integrationsSetAsPrimary } from "../funcs/integrationsSetAsPrimary.js";
@@ -144,6 +147,53 @@ export class Integrations extends ClientSDK {
   }
 
   /**
+   * Issue a short-lived mobile setup link for an existing integration
+   *
+   * @remarks
+   * Returns an opaque, single-use setup token plus a mobile URL for configuring an existing chat integration. Telegram is the only supported provider initially.
+   */
+  async createMobileLink(
+    issueIntegrationMobileLinkRequestDto:
+      components.IssueIntegrationMobileLinkRequestDto,
+    integrationIdentifier: string,
+    idempotencyKey?: string | undefined,
+    options?: RequestOptions,
+  ): Promise<
+    operations.IntegrationsControllerCreateIntegrationMobileLinkResponse
+  > {
+    return unwrapAsync(integrationsCreateMobileLink(
+      this,
+      issueIntegrationMobileLinkRequestDto,
+      integrationIdentifier,
+      idempotencyKey,
+      options,
+    ));
+  }
+
+  /**
+   * Configure a chat integration webhook
+   *
+   * @remarks
+   * Registers the Novu webhook URL with the chat provider for the specified integration. Telegram is the only supported provider initially.
+   */
+  async integrationsControllerConfigureIntegrationWebhook(
+    integrationIdentifier: string,
+    idempotencyKey?: string | undefined,
+    options?: RequestOptions,
+  ): Promise<
+    operations.IntegrationsControllerConfigureIntegrationWebhookResponse
+  > {
+    return unwrapAsync(
+      integrationsIntegrationsControllerConfigureIntegrationWebhook(
+        this,
+        integrationIdentifier,
+        idempotencyKey,
+        options,
+      ),
+    );
+  }
+
+  /**
    * List active integrations
    *
    * @remarks
@@ -164,7 +214,7 @@ export class Integrations extends ClientSDK {
    * Generate OAuth URL for a workspace/tenant connection
    *
    * @remarks
-   * Generate an OAuth URL that creates a workspace or tenant-level channel connection (Slack workspace install or MS Teams admin consent).
+   * Generate an OAuth URL that creates a workspace or tenant-level channel connection (Slack workspace install, MS Teams admin consent, or Webex integration authorization).
    *     The generated URL expires after 5 minutes.
    */
   async generateConnectOAuthUrl(
@@ -182,10 +232,29 @@ export class Integrations extends ClientSDK {
   }
 
   /**
+   * Issue a URL to link a subscriber chat identity
+   *
+   * @remarks
+   * Returns a provider-specific URL the subscriber opens to link their chat identity. The integration provider is resolved from integrationIdentifier; Telegram returns a deep link.
+   */
+  async linkChannelEndpoint(
+    linkChannelEndpointRequestDto: components.LinkChannelEndpointRequestDto,
+    idempotencyKey?: string | undefined,
+    options?: RequestOptions,
+  ): Promise<operations.IntegrationsControllerLinkChannelEndpointResponse> {
+    return unwrapAsync(integrationsLinkChannelEndpoint(
+      this,
+      linkChannelEndpointRequestDto,
+      idempotencyKey,
+      options,
+    ));
+  }
+
+  /**
    * Generate OAuth URL to link a subscriber user identity
    *
    * @remarks
-   * Generate an OAuth URL that links a specific subscriber to their chat identity (Slack user ID or MS Teams user OID).
+   * Generate an OAuth URL that links a specific subscriber to their chat identity (Slack user ID, MS Teams user OID, or Webex person).
    *     The generated URL expires after 5 minutes.
    */
   async generateLinkUserOAuthUrl(
@@ -209,7 +278,7 @@ export class Integrations extends ClientSDK {
    *
    * @remarks
    * **Deprecated** — use `POST /integrations/channel-connections/oauth` (connect) or `POST /integrations/channel-endpoints/oauth` (link_user) instead.
-   *     Generate an OAuth URL for chat integrations like Slack and MS Teams.
+   *     Generate an OAuth URL for chat integrations like Slack, MS Teams, and Webex.
    *     This URL allows subscribers to authorize the integration, enabling the system to send messages
    *     through their chat workspace. The generated URL expires after 5 minutes.
    *

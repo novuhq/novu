@@ -7,10 +7,10 @@ const slackIcon = '/images/providers/light/square/slack.svg';
 const msTeamsIcon = '/images/providers/light/square/msteams.svg';
 
 const AGENTS_TEASER_BULLETS = [
-  'Unified conversation model — one model across every channel',
-  'Bidirectional messaging — send and receive through the same layer',
-  'Bring your own agent — Claude, AI SDK, LangGraph, or your custom stack',
-  'Best practices built in — threading, reactions, formatting, and actions',
+  'Unified conversation model: one model across every channel',
+  'Bidirectional messaging: send and receive through the same layer',
+  'Bring your own agent: Claude, AI SDK, LangGraph, or your custom stack',
+  'Best practices built in: threading, reactions, formatting, and actions',
 ] as const;
 
 type AgentsPillProps = {
