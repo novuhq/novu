@@ -1,5 +1,10 @@
 import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
-import { decryptChannelConnectionAuth, decryptCredentials, PinoLogger } from '@novu/application-generic';
+import {
+  decryptChannelConnectionAuth,
+  decryptCredentials,
+  PinoLogger,
+  RotatingConnectionTokenService,
+} from '@novu/application-generic';
 import {
   AgentIntegrationEntity,
   AgentIntegrationRepository,
@@ -113,6 +118,7 @@ export class AgentConfigResolver {
     private readonly integrationRepository: IntegrationRepository,
     private readonly channelConnectionRepository: ChannelConnectionRepository,
     private readonly organizationRepository: CommunityOrganizationRepository,
+    private readonly rotatingConnectionTokenService: RotatingConnectionTokenService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -327,26 +333,24 @@ export class AgentConfigResolver {
 
   /**
    * Workspace bot tokens live on channel connections (created by Slack OAuth). Pick the
-   * first connection for this integration that has an access token.
+   * first connection for this integration that has an access token. Rotation-enabled
+   * apps get their token refreshed by `RotatingConnectionTokenService` before it expires.
    */
   private async resolveSlackBotToken(
     environmentId: string,
     organizationId: string,
     integrationIdentifier: string
   ): Promise<string | undefined> {
-    const connections = await this.channelConnectionRepository.find(
-      {
-        _environmentId: environmentId,
-        _organizationId: organizationId,
-        integrationIdentifier,
-      },
-      'auth'
-    );
+    const connections = await this.channelConnectionRepository.find({
+      _environmentId: environmentId,
+      _organizationId: organizationId,
+      integrationIdentifier,
+    });
 
     for (const connection of connections) {
-      const decryptedAuth = decryptChannelConnectionAuth(connection.auth);
-      if (decryptedAuth?.accessToken) {
-        return decryptedAuth.accessToken;
+      const token = await this.rotatingConnectionTokenService.getConnectionToken(connection);
+      if (token) {
+        return token;
       }
     }
 

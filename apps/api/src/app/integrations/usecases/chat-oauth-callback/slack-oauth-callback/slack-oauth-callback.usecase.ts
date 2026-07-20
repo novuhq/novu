@@ -1,8 +1,10 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import {
+  buildConnectionAuthFromOAuth,
   decryptCredentials,
   GetNovuProviderCredentials,
   GetNovuProviderCredentialsCommand,
+  SLACK_OAUTH_ACCESS_URL,
 } from '@novu/application-generic';
 import {
   ChannelConnectionEntity,
@@ -33,8 +35,6 @@ import { SlackOauthCallbackCommand } from './slack-oauth-callback.command';
 
 @Injectable()
 export class SlackOauthCallback {
-  private readonly SLACK_ACCESS_URL = 'https://slack.com/api/oauth.v2.access';
-
   constructor(
     private integrationRepository: IntegrationRepository,
     private environmentRepository: EnvironmentRepository,
@@ -105,12 +105,17 @@ export class SlackOauthCallback {
   private async upsertWorkspaceConnection(
     stateData: StateData,
     integration: IntegrationEntity,
-    authData: { access_token: string; team: { id: string; name: string } }
+    authData: {
+      access_token: string;
+      refresh_token?: string;
+      expires_in?: number;
+      team: { id: string; name: string };
+    }
   ): Promise<ChannelConnectionEntity> {
     const isSharedMode = stateData.connectionMode === 'shared';
     const subscriberId = isSharedMode ? undefined : stateData.subscriberId;
     const existingConnection = await this.findExistingConnection(stateData, integration, subscriberId);
-    const auth = { accessToken: authData.access_token };
+    const auth = buildConnectionAuthFromOAuth(authData);
     const workspace = { id: authData.team.id, name: authData.team.name };
 
     if (existingConnection) {
@@ -294,7 +299,7 @@ export class SlackOauthCallback {
       },
     };
 
-    const res = await axios.post(this.SLACK_ACCESS_URL, body, config);
+    const res = await axios.post(SLACK_OAUTH_ACCESS_URL, body, config);
 
     if (res?.data?.ok === false) {
       const metaData = res?.data?.response_metadata?.messages?.join(', ');

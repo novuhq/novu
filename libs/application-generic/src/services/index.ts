@@ -35,6 +35,12 @@ export { MsTeamsTokenService } from './ms-teams-token.service';
 export * from './query-parser';
 export * from './queues';
 export { INovuWorker, ReadinessService } from './readiness';
+export {
+  buildConnectionAuthFromOAuth,
+  RotatingConnectionTokenService,
+  type RotatingTokenRefreshResult,
+  SLACK_OAUTH_ACCESS_URL,
+} from './rotating-connection-token.service';
 export * from './safe-outbound-http';
 export * from './sanitize/sanitizer.service';
 export * from './sanitize/sanitizer-v0.service';
@@ -44,7 +50,6 @@ export * from './storage';
 export { SupportService } from './support.service';
 export * from './throttle';
 export { VerifyPayloadService } from './verify-payload.service';
-export { type WebexTokenRefreshResponse, WebexTokenService } from './webex-token.service';
 export * from './workers';
 export * from './workflow-data.container';
 export * from './workflow-run.service';

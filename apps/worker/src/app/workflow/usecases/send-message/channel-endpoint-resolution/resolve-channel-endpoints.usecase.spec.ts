@@ -1,8 +1,4 @@
-import {
-  decryptChannelConnectionAuth,
-  encryptChannelConnectionAuth,
-  type WebexTokenRefreshResponse,
-} from '@novu/application-generic';
+import { encryptChannelConnectionAuth } from '@novu/application-generic';
 import { ChannelTypeEnum, ChatProviderIdEnum, ToolProviderIdEnum } from '@novu/shared';
 import { ENDPOINT_TYPES } from '@novu/stateless';
 import { expect } from 'chai';
@@ -14,19 +10,16 @@ const ENVIRONMENT_ID = 'env_123';
 const SUBSCRIBER_ID = 'subscriber_123';
 const INTEGRATION_IDENTIFIER = 'webex-integration';
 const CONNECTION_IDENTIFIER = 'webex-connection';
-const NOW = new Date('2026-06-01T00:00:00.000Z').getTime();
 
 describe('ResolveChannelEndpoints - Webex Messaging', () => {
   let sandbox: sinon.SinonSandbox;
   let channelEndpointRepository: Record<string, sinon.SinonStub>;
   let channelConnectionRepository: Record<string, sinon.SinonStub>;
-  let integrationRepository: Record<string, sinon.SinonStub>;
-  let webexTokenService: Record<string, sinon.SinonStub>;
+  let rotatingConnectionTokenService: Record<string, sinon.SinonStub>;
   let usecase: ResolveChannelEndpoints;
 
   beforeEach(() => {
     sandbox = sinon.createSandbox();
-    sandbox.useFakeTimers(NOW);
 
     channelEndpointRepository = {
       find: sandbox.stub(),
@@ -34,22 +27,18 @@ describe('ResolveChannelEndpoints - Webex Messaging', () => {
     };
     channelConnectionRepository = {
       find: sandbox.stub(),
-      findOneAndUpdate: sandbox.stub().resolves(undefined),
       buildContextExactMatchQuery: sandbox.stub().returns({}),
     };
-    integrationRepository = {
-      findOne: sandbox.stub(),
-    };
-    webexTokenService = {
-      refreshAccessToken: sandbox.stub(),
+    rotatingConnectionTokenService = {
+      getConnectionToken: sandbox.stub(),
     };
 
     usecase = new ResolveChannelEndpoints(
       channelEndpointRepository as any,
       channelConnectionRepository as any,
-      integrationRepository as any,
+      { findOne: sandbox.stub() } as any,
       { getBotFrameworkToken: sandbox.stub() } as any,
-      webexTokenService as any
+      rotatingConnectionTokenService as any
     );
   });
 
@@ -57,7 +46,8 @@ describe('ResolveChannelEndpoints - Webex Messaging', () => {
     sandbox.restore();
   });
 
-  it('resolves Webex endpoint data with the current channel connection access token', async () => {
+  it('resolves Webex endpoints through the rotating token service so rotation-enabled tokens get refreshed', async () => {
+    const connection = buildWebexConnection({ accessToken: 'stored-token', refreshToken: 'refresh-token' });
     channelEndpointRepository.find.resolves([
       buildWebexEndpoint({
         identifier: 'webex-room-endpoint',
@@ -65,13 +55,8 @@ describe('ResolveChannelEndpoints - Webex Messaging', () => {
         type: ENDPOINT_TYPES.WEBEX_ROOM,
       }),
     ]);
-    channelConnectionRepository.find.resolves([
-      buildWebexConnection({
-        accessToken: 'current-token',
-        refreshToken: 'refresh-token',
-        expiresAt: new Date(NOW + 60 * 60 * 1000).toISOString(),
-      }),
-    ]);
+    channelConnectionRepository.find.resolves([connection]);
+    rotatingConnectionTokenService.getConnectionToken.resolves('fresh-token');
 
     const result = await usecase.execute(buildCommand());
 
@@ -84,18 +69,19 @@ describe('ResolveChannelEndpoints - Webex Messaging', () => {
             type: ENDPOINT_TYPES.WEBEX_ROOM,
             identifier: 'webex-room-endpoint',
             endpoint: { roomId: 'room_123' },
-            token: 'current-token',
+            token: 'fresh-token',
           },
         ],
       },
     ]);
-    sinon.assert.notCalled(webexTokenService.refreshAccessToken);
+    sinon.assert.calledOnceWithExactly(rotatingConnectionTokenService.getConnectionToken, connection);
     expect(channelConnectionRepository.find.firstCall.args[0].identifier).to.deep.equal({
       $in: [CONNECTION_IDENTIFIER],
     });
   });
 
-  it('refreshes an expiring Webex connection once for all endpoints and persists encrypted auth', async () => {
+  it('maps the resolved token to every endpoint of the connection', async () => {
+    const connection = buildWebexConnection({ accessToken: 'stored-token', refreshToken: 'refresh-token' });
     channelEndpointRepository.find.resolves([
       buildWebexEndpoint({
         identifier: 'webex-room-endpoint',
@@ -108,26 +94,8 @@ describe('ResolveChannelEndpoints - Webex Messaging', () => {
         type: ENDPOINT_TYPES.WEBEX_PERSON,
       }),
     ]);
-    channelConnectionRepository.find.resolves([
-      buildWebexConnection({
-        accessToken: 'stale-token',
-        refreshToken: 'refresh-token',
-        expiresAt: new Date(NOW + 60 * 1000).toISOString(),
-        refreshTokenExpiresAt: new Date(NOW + 90 * 24 * 60 * 60 * 1000).toISOString(),
-      }),
-    ]);
-    integrationRepository.findOne.resolves({
-      credentials: {
-        clientId: 'webex-client-id',
-        secretKey: 'webex-client-secret',
-      },
-    });
-    webexTokenService.refreshAccessToken.resolves({
-      access_token: 'fresh-token',
-      refresh_token: 'fresh-refresh-token',
-      expires_in: 3600,
-      refresh_token_expires_in: 7200,
-    } satisfies WebexTokenRefreshResponse);
+    channelConnectionRepository.find.resolves([connection]);
+    rotatingConnectionTokenService.getConnectionToken.resolves('fresh-token');
 
     const result = await usecase.execute(buildCommand());
 
@@ -145,29 +113,77 @@ describe('ResolveChannelEndpoints - Webex Messaging', () => {
         token: 'fresh-token',
       },
     ]);
-    sinon.assert.calledOnceWithExactly(
-      webexTokenService.refreshAccessToken,
-      'refresh-token',
-      'webex-client-id',
-      'webex-client-secret'
+  });
+});
+
+describe('ResolveChannelEndpoints - Slack', () => {
+  let sandbox: sinon.SinonSandbox;
+  let channelEndpointRepository: Record<string, sinon.SinonStub>;
+  let channelConnectionRepository: Record<string, sinon.SinonStub>;
+  let rotatingConnectionTokenService: Record<string, sinon.SinonStub>;
+  let usecase: ResolveChannelEndpoints;
+
+  beforeEach(() => {
+    sandbox = sinon.createSandbox();
+
+    channelEndpointRepository = {
+      find: sandbox.stub(),
+      buildContextExactMatchQuery: sandbox.stub().returns({}),
+    };
+    channelConnectionRepository = {
+      find: sandbox.stub(),
+      buildContextExactMatchQuery: sandbox.stub().returns({}),
+    };
+    rotatingConnectionTokenService = {
+      getConnectionToken: sandbox.stub(),
+    };
+
+    usecase = new ResolveChannelEndpoints(
+      channelEndpointRepository as any,
+      channelConnectionRepository as any,
+      { findOne: sandbox.stub() } as any,
+      { getBotFrameworkToken: sandbox.stub() } as any,
+      rotatingConnectionTokenService as any
     );
-    sinon.assert.calledOnce(channelConnectionRepository.findOneAndUpdate);
+  });
 
-    const [updateFilter, updatePayload] = channelConnectionRepository.findOneAndUpdate.firstCall.args;
-    expect(updateFilter).to.deep.equal({
-      _environmentId: ENVIRONMENT_ID,
-      _organizationId: ORGANIZATION_ID,
-      identifier: CONNECTION_IDENTIFIER,
-    });
+  afterEach(() => {
+    sandbox.restore();
+  });
 
-    const encryptedAuth = updatePayload.$set.auth;
-    expect(encryptedAuth.accessToken).to.not.equal('fresh-token');
+  it('resolves Slack endpoints through the rotating token service so rotation-enabled tokens get refreshed', async () => {
+    const connection = buildSlackConnection({ accessToken: 'xoxb-fresh-token' });
+    channelEndpointRepository.find.resolves([buildSlackEndpoint()]);
+    channelConnectionRepository.find.resolves([connection]);
+    rotatingConnectionTokenService.getConnectionToken.resolves('xoxb-fresh-token');
 
-    const refreshedAuth = decryptChannelConnectionAuth(encryptedAuth);
-    expect(refreshedAuth.accessToken).to.equal('fresh-token');
-    expect(refreshedAuth.refreshToken).to.equal('fresh-refresh-token');
-    expect(refreshedAuth.expiresAt).to.equal(new Date(NOW + 3600 * 1000).toISOString());
-    expect(refreshedAuth.refreshTokenExpiresAt).to.equal(new Date(NOW + 7200 * 1000).toISOString());
+    const result = await usecase.execute(buildCommand());
+
+    expect(result).to.deep.equal([
+      {
+        integrationIdentifier: SLACK_INTEGRATION_IDENTIFIER,
+        providerId: ChatProviderIdEnum.Slack,
+        channelData: [
+          {
+            type: ENDPOINT_TYPES.SLACK_CHANNEL,
+            identifier: 'slack-endpoint',
+            endpoint: { channelId: 'C123' },
+            token: 'xoxb-fresh-token',
+          },
+        ],
+      },
+    ]);
+    sinon.assert.calledOnceWithExactly(rotatingConnectionTokenService.getConnectionToken, connection);
+  });
+
+  it('returns an empty token when the Slack endpoint has no linked connection', async () => {
+    channelEndpointRepository.find.resolves([buildSlackEndpoint({ connectionIdentifier: undefined })]);
+    channelConnectionRepository.find.resolves([]);
+
+    const result = await usecase.execute(buildCommand());
+
+    expect(result[0].channelData[0]).to.deep.include({ token: '' });
+    sinon.assert.notCalled(rotatingConnectionTokenService.getConnectionToken);
   });
 });
 
@@ -194,7 +210,7 @@ describe('ResolveChannelEndpoints - Opsgenie', () => {
       channelConnectionRepository as any,
       { findOne: sandbox.stub() } as any,
       { getBotFrameworkToken: sandbox.stub() } as any,
-      { refreshAccessToken: sandbox.stub() } as any
+      { getConnectionToken: sandbox.stub() } as any
     );
   });
 
@@ -289,6 +305,39 @@ function buildWebexConnection(auth: {
     identifier: CONNECTION_IDENTIFIER,
     integrationIdentifier: INTEGRATION_IDENTIFIER,
     providerId: ChatProviderIdEnum.WebexMessaging,
+    channel: ChannelTypeEnum.CHAT,
+    contextKeys: [],
+    auth: encryptChannelConnectionAuth(auth),
+  };
+}
+
+const SLACK_INTEGRATION_IDENTIFIER = 'slack-integration';
+const SLACK_CONNECTION_IDENTIFIER = 'slack-connection';
+
+function buildSlackEndpoint(overrides: Record<string, unknown> = {}) {
+  return {
+    _environmentId: ENVIRONMENT_ID,
+    _organizationId: ORGANIZATION_ID,
+    identifier: 'slack-endpoint',
+    integrationIdentifier: SLACK_INTEGRATION_IDENTIFIER,
+    providerId: ChatProviderIdEnum.Slack,
+    channel: ChannelTypeEnum.CHAT,
+    subscriberId: SUBSCRIBER_ID,
+    contextKeys: [],
+    connectionIdentifier: SLACK_CONNECTION_IDENTIFIER,
+    type: ENDPOINT_TYPES.SLACK_CHANNEL,
+    endpoint: { channelId: 'C123' },
+    ...overrides,
+  };
+}
+
+function buildSlackConnection(auth: { accessToken: string; refreshToken?: string; expiresAt?: string }) {
+  return {
+    _environmentId: ENVIRONMENT_ID,
+    _organizationId: ORGANIZATION_ID,
+    identifier: SLACK_CONNECTION_IDENTIFIER,
+    integrationIdentifier: SLACK_INTEGRATION_IDENTIFIER,
+    providerId: ChatProviderIdEnum.Slack,
     channel: ChannelTypeEnum.CHAT,
     contextKeys: [],
     auth: encryptChannelConnectionAuth(auth),

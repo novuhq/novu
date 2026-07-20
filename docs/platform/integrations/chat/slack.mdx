@@ -35,10 +35,11 @@ This guide walks you through setting up Slack chat, connect workspaces, and deli
 
 Before integrating Slack chat with Novu, you must create and configure a Slack app. The Slack app manages the OAuth permissions, bot token scopes, and redirect URLs needed for Novu to connect to your users' workspaces securely.
 
-<Warning>
-  **Token rotation is not supported.** Novu does not currently support Slack apps with **token rotation** enabled. If token rotation is turned on in your Slack app settings, bot tokens expire after about 12 hours and message delivery fails with errors such as `token_revoked` or `invalid_auth` until the workspace is manually reconnected.
-  Keep token rotation **disabled** on your Slack app until this is supported. Reach out to support@novu.co if this is a blocker for your usecase.
-</Warning>
+<Info>
+  **Token rotation is supported.** Slack apps with **token rotation** enabled work with Novu: the refresh token and expiry returned during OAuth are stored, and Novu automatically refreshes the bot token before it expires. Apps without token rotation continue to work with their long-lived bot tokens — no changes needed.
+
+  If you enable token rotation on an app whose workspace was connected **before** rotation was turned on (or before Novu supported it), reconnect the workspace once via OAuth so Novu can capture the refresh token. Until then, deliveries may fail with `token_revoked` or `invalid_auth`.
+</Info>
 
 ### Create a Slack app
 First, you need to create a Slack app. This provides you with the credential you need to create a Slack integration in Novu.
