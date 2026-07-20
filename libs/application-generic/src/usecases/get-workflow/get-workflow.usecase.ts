@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import {
   BaseRepository,
+  ControlSchemas,
   EnvironmentRepository,
   IntegrationEntity,
   IntegrationRepository,
@@ -16,7 +17,6 @@ import {
 import {
   ChannelTypeEnum,
   IntegrationIssueEnum,
-  ResourceOriginEnum,
   STEP_TYPE_TO_CHANNEL_TYPE,
   StepTypeEnum,
   UserSessionData,
@@ -33,8 +33,7 @@ import { generatePayloadExample } from '../../utils/generate-payload-example';
 import { processControlValuesBySchema } from '../../utils/issues';
 import { toResponseWorkflowDto } from '../../utils/notification-template-mapper';
 import { dashboardSanitizeControlValues } from '../../utils/sanitize-control-values';
-import { isStepResolverActive } from '../../utils/step-resolver-control-state';
-import { stepTypeToControlSchema } from '../../utils/step-type-to-control.mapper';
+import { resolveStepControlSchemas, stepTypeToControlSchema } from '../../utils/step-type-to-control.mapper';
 import { BuildStepDataCommand, BuildStepDataUsecase } from '../build-step-data';
 import { GetWorkflowWithPreferencesCommand, GetWorkflowWithPreferencesUseCase } from '../get-workflow-with-preferences';
 import { GetWorkflowCommand } from './get-workflow.command';
@@ -185,9 +184,13 @@ export class GetWorkflowUseCase {
         step.template?.type as StepTypeEnum,
         availableIntegrations
       );
-      const freshControlSchemaIssues = this.getFreshControlSchemaIssues(stepResponse, workflow);
+      const canonicalControlSchemaIssues = this.getCanonicalControlSchemaIssues(
+        stepResponse,
+        workflow,
+        step.template?.controls
+      );
 
-      const combinedIssues = merge(stepResponse.issues || {}, freshControlSchemaIssues, runtimeIntegrationIssues);
+      const combinedIssues = merge(stepResponse.issues || {}, canonicalControlSchemaIssues, runtimeIntegrationIssues);
 
       return {
         ...stepResponse,
@@ -208,29 +211,31 @@ export class GetWorkflowUseCase {
   }
 
   /**
-   * Dashboard tool steps may still carry a stale permissive control schema from before
-   * keys-only providerOverrides validation. Re-validate against the canonical schema on
-   * read so canvas / issues UI shows errors without requiring a re-save.
+   * When write-path policy selects the canonical control schema (dashboard cloud,
+   * no step resolver), re-validate on read so canvas / issues UI reflects the
+   * current schema without requiring a re-save. Persisted liquid/skip issues are
+   * kept via merge — this path only adds schema issues.
    */
   @Instrument()
-  private getFreshControlSchemaIssues(
+  private getCanonicalControlSchemaIssues(
     stepResponse: StepResponseDto,
-    workflow: NotificationTemplateEntity
+    workflow: NotificationTemplateEntity,
+    existingControls?: ControlSchemas | null
   ): StepIssuesDto {
-    if (stepResponse.type !== StepTypeEnum.TOOL) {
+    if (!workflow.origin) {
       return {};
     }
 
-    const workflowOrigin = workflow.origin;
-    const isDashboardCloudOrigin =
-      workflowOrigin === ResourceOriginEnum.NOVU_CLOUD || workflowOrigin === ResourceOriginEnum.NOVU_CLOUD_V1;
+    const resolved = resolveStepControlSchemas({
+      stepType: stepResponse.type,
+      workflowOrigin: workflow.origin,
+      existingControls,
+      stepResolverHash: stepResponse.stepResolverHash,
+    });
+    const canonical = stepTypeToControlSchema[stepResponse.type];
 
-    if (!isDashboardCloudOrigin || isStepResolverActive(stepResponse.stepResolverHash)) {
-      return {};
-    }
-
-    const controlSchema = stepTypeToControlSchema[StepTypeEnum.TOOL]?.schema;
-    if (!controlSchema) {
+    // Same reference means resolveStepControlSchemas chose the canonical map entry.
+    if (!canonical || resolved !== canonical) {
       return {};
     }
 
@@ -238,15 +243,13 @@ export class GetWorkflowUseCase {
       string,
       unknown
     >;
-    // Match BuildStepIssuesUsecase: drop removed controls (e.g. enabledIntegrations)
-    // before validating against the current canonical schema.
     const sanitizedControlValues =
-      dashboardSanitizeControlValues(this.logger, rawControlValues, StepTypeEnum.TOOL) || {};
+      dashboardSanitizeControlValues(this.logger, rawControlValues, stepResponse.type) || {};
 
     return processControlValuesBySchema({
-      controlSchema: controlSchema as unknown as JSONSchemaDto,
+      controlSchema: resolved.schema as unknown as JSONSchemaDto,
       controlValues: sanitizedControlValues,
-      stepType: StepTypeEnum.TOOL,
+      stepType: stepResponse.type,
     });
   }
 
