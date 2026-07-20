@@ -1,6 +1,7 @@
 import { Novu } from '@novu/api';
-import { QueryBuilder, Trace, TraceLogRepository } from '@novu/application-generic';
+import { DetailEnum, QueryBuilder, Trace, TraceLogRepository } from '@novu/application-generic';
 import {
+  ExecutionDetailsRepository,
   IntegrationEntity,
   IntegrationRepository,
   MessageEntity,
@@ -8,7 +9,7 @@ import {
   NotificationTemplateEntity,
   SubscriberRepository,
 } from '@novu/dal';
-import { ChannelTypeEnum, PushProviderIdEnum, StepTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, ExecutionDetailsSourceEnum, PushProviderIdEnum, StepTypeEnum } from '@novu/shared';
 import { PushEventStatusEnum } from '@novu/stateless';
 import { NotificationTemplateService, UserSession } from '@novu/testing';
 import { expect } from 'chai';
@@ -20,6 +21,7 @@ describe('Process Inbound Webhook E2E #novu-v2', () => {
   let messageRepository: MessageRepository;
   let subscriberRepository: SubscriberRepository;
   let traceLogRepository: TraceLogRepository;
+  let executionDetailsRepository: ExecutionDetailsRepository;
   let integration: IntegrationEntity;
   let message: MessageEntity;
   let template: NotificationTemplateEntity;
@@ -61,6 +63,7 @@ describe('Process Inbound Webhook E2E #novu-v2', () => {
     messageRepository = session.testServer?.getService(MessageRepository);
     traceLogRepository = session.testServer?.getService(TraceLogRepository);
     subscriberRepository = session.testServer?.getService(SubscriberRepository);
+    executionDetailsRepository = session.testServer?.getService(ExecutionDetailsRepository);
 
     const notificationTemplateService = new NotificationTemplateService(
       session.user._id,
@@ -192,6 +195,125 @@ describe('Process Inbound Webhook E2E #novu-v2', () => {
         traceResult.data.some((trace) => trace.event_type === 'message_clicked'),
         'message_clicked trace should be present'
       ).to.be.true;
+
+      const executionDetails = await executionDetailsRepository.find({
+        _environmentId: session.environment._id,
+        _jobId: message._jobId,
+        source: ExecutionDetailsSourceEnum.WEBHOOK,
+      });
+
+      const clickedDetail = executionDetails.find((detail) => detail.detail === DetailEnum.MESSAGE_CLICKED);
+      expect(clickedDetail, 'webhook execution detail should be persisted in MongoDB').to.exist;
+      expect(clickedDetail?.source).to.equal(ExecutionDetailsSourceEnum.WEBHOOK);
+      expect(clickedDetail?.webhookStatus).to.equal(PushEventStatusEnum.CLICKED);
+      // `raw` must be single-encoded so the Activity Feed renders it as an object, not an escaped string
+      expect(JSON.parse(clickedDetail?.raw as string)).to.deep.equal(eventPayload);
     });
+
+    it('should not write MongoDB execution details when IS_EXECUTION_DETAILS_CLICKHOUSE_ONLY_ENABLED is enabled', async () => {
+      (process.env as any).IS_EXECUTION_DETAILS_CLICKHOUSE_ONLY_ENABLED = 'true';
+
+      try {
+        const eventPayload = { ...mockWebhookBody, eventId: message?.identifier };
+        await novuClient.activity.track({
+          environmentId: session.environment._id,
+          integrationId: integration._id,
+          requestBody: eventPayload,
+        });
+
+        const webhookExecutionDetails = await executionDetailsRepository.find({
+          _environmentId: session.environment._id,
+          _jobId: message._jobId,
+          source: ExecutionDetailsSourceEnum.WEBHOOK,
+        });
+
+        expect(
+          webhookExecutionDetails,
+          'no webhook execution detail should be written when clickhouse-only is enabled'
+        ).to.have.length(0);
+
+        // We only skip the Mongo leg: the ClickHouse trace must still be written.
+        const traceQueryBuilder = new QueryBuilder<Trace>({
+          environmentId: session.environment._id,
+        });
+        traceQueryBuilder.whereEquals('organization_id', session.organization._id);
+        traceQueryBuilder.whereEquals('entity_type', 'step_run');
+        traceQueryBuilder.whereEquals('entity_id', message._jobId || '');
+        traceQueryBuilder.whereEquals('event_type', 'message_clicked');
+
+        const traceResult = await traceLogRepository.find({
+          where: traceQueryBuilder.build(),
+          select: '*',
+          limit: 10,
+        });
+
+        expect(
+          traceResult.data.some((trace) => trace.event_type === 'message_clicked'),
+          'message_clicked trace should still be written when clickhouse-only is enabled'
+        ).to.be.true;
+      } finally {
+        delete (process.env as any).IS_EXECUTION_DETAILS_CLICKHOUSE_ONLY_ENABLED;
+      }
+    });
+  });
+});
+
+describe('Process Inbound Webhook auth E2E #novu-v2', () => {
+  const mockWebhookBody = {
+    eventId: 'A0E2DB50-21D8-4F99-93C9-2BC0A4D32228',
+    eventType: 'clicked',
+    app_version: '1.0.0',
+    appState: 'active',
+    content: {
+      body: 'Test notification body',
+      title: 'Test title',
+    },
+    device_id: '531E306C-A900-4164-AACF-91948F9B4CCE',
+    expoPushToken: 'ExponentPushToken[Dy4R0HK8GkSD8NDlqMzM9w]',
+    notificationId: 'A0E2DB50-21D8-4F99-93C9-2BC0A4D32228',
+    platform: 'ios',
+    timestamp: '2025-09-21T20:02:35.103Z',
+  };
+
+  it('should reject push webhook when API key belongs to a different environment', async () => {
+    const targetSession = new UserSession();
+    await targetSession.initialize();
+
+    const otherSession = new UserSession();
+    await otherSession.initialize();
+
+    const targetIntegrationRepository = targetSession.testServer?.getService(IntegrationRepository);
+
+    await targetIntegrationRepository.update(
+      {
+        _environmentId: targetSession.environment._id,
+        providerId: PushProviderIdEnum.FCM,
+      },
+      { active: false }
+    );
+
+    const targetIntegration = await targetIntegrationRepository.create({
+      name: 'Test Expo Integration',
+      identifier: 'expo-test-auth',
+      providerId: PushProviderIdEnum.EXPO,
+      channel: ChannelTypeEnum.PUSH,
+      credentials: {
+        apiKey: 'test-access-token',
+      },
+      configurations: {
+        inboundWebhookEnabled: true,
+      },
+      active: true,
+      primary: true,
+      _environmentId: targetSession.environment._id,
+      _organizationId: targetSession.organization._id,
+    });
+
+    await targetSession.testAgent
+      .post(`/v2/inbound-webhooks/delivery-providers/${targetSession.environment._id}/${targetIntegration._id}`)
+      .set('Authorization', `Bearer ${otherSession.apiKey}`)
+      .set('content-type', 'application/json')
+      .send(mockWebhookBody)
+      .expect(401);
   });
 });

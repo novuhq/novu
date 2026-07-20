@@ -9,6 +9,8 @@ run-name: >
     github.event.inputs.build_dashboard == 'true' && 'dashboard, ' || ''
   }}${{
     github.event.inputs.build_ws == 'true' && 'ws ' || ''
+  }}${{
+    github.event.inputs.build_multi_arch == 'true' && '[multi-arch]' || ''
   }}
 
 env:
@@ -41,6 +43,11 @@ on:
         required: true
         type: boolean
         default: true
+      build_multi_arch:
+        description: "Build multi-architecture images (linux/amd64, linux/arm64)"
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -111,6 +118,13 @@ jobs:
           SERVICE_NAME="${{ matrix.name }}"
           LATEST_VERSION="${{ github.event.inputs.version }}"
 
+          # Determine target platforms based on multi-arch flag
+          if [ "${{ github.event.inputs.build_multi_arch }}" == "true" ]; then
+            PLATFORMS="linux/amd64,linux/arm64"
+          else
+            PLATFORMS="linux/amd64"
+          fi
+
           # Extract auth provider if present
           if [[ "$SERVICE_NAME" == *"-clerk" ]]; then
             AUTH_PROVIDER="clerk"
@@ -135,7 +149,9 @@ jobs:
           echo "REPO_NAME=$REPO_NAME" >> $GITHUB_ENV
           echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
           echo "AUTH_PROVIDER=$AUTH_PROVIDER" >> $GITHUB_ENV
+          echo "PLATFORMS=$PLATFORMS" >> $GITHUB_ENV
           echo "This is the service name: $SERVICE_NAME with repo: $REPO_NAME and tag: $IMAGE_TAG"
+          echo "Target platforms: $PLATFORMS"
           if [ -n "$AUTH_PROVIDER" ]; then
             echo "Auth provider: $AUTH_PROVIDER"
           fi
@@ -160,10 +176,30 @@ jobs:
         shell: bash
         run: pnpm symlink:submodules
 
+      - name: Setup Docker with containerd snapshotter
+        if: ${{ github.event.inputs.build_multi_arch == 'true' }}
+        uses: crazy-max/ghaction-setup-docker@v2
+        with:
+          version: v27.0.3
+          daemon-config: |
+            {
+              "features": {
+                "containerd-snapshotter": true
+              }
+            }
+
+      - name: Setup QEMU
+        if: ${{ github.event.inputs.build_multi_arch == 'true' }}
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: linux/amd64,linux/arm64
+          image: tonistiigi/binfmt:qemu-v8.0.4
+
       - name: Set Up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
           driver-opts: "image=moby/buildkit:v0.13.1"
+          platforms: ${{ env.PLATFORMS }}
 
       - name: Prepare Variables
         run: echo "BULL_MQ_PRO_NPM_TOKEN=${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}" >> $GITHUB_ENV
@@ -185,7 +221,7 @@ jobs:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           REPOSITORY: novu
           DOCKER_BUILD_ARGUMENTS: >
-            --platform=linux/amd64
+            --platform=${{ env.PLATFORMS }}
             --output=type=image,name=$REGISTRY/$REPOSITORY/$REPO_NAME,push-by-digest=true,name-canonical=true
         run: |
           cp scripts/dotenvcreate.mjs apps/$SERVICE_COMMON_NAME/src/dotenvcreate.mjs
@@ -206,6 +242,7 @@ jobs:
             if [[ "$AUTH_PROVIDER" == "clerk" ]]; then
               echo "Building dashboard for Clerk authentication"
               docker build \
+                --platform=$PLATFORMS \
                 --build-arg VITE_EE_AUTH_PROVIDER=clerk \
                 --build-arg VITE_SELF_HOSTED=true \
                 --build-arg VITE_NOVU_ENTERPRISE=true \
@@ -215,6 +252,7 @@ jobs:
             elif [[ "$AUTH_PROVIDER" == "betterauth" ]]; then
               echo "Building dashboard for Better Auth authentication"
               docker build \
+                --platform=$PLATFORMS \
                 --build-arg VITE_EE_AUTH_PROVIDER=better-auth \
                 --build-arg VITE_SELF_HOSTED=true \
                 --build-arg VITE_NOVU_ENTERPRISE=true \
@@ -235,5 +273,5 @@ jobs:
         run: |
           echo "Successfully built and pushed:"
           echo "  - $REGISTRY/novu/$REPO_NAME:$IMAGE_TAG"
-          echo "Platform: linux/amd64 (x86)"
+          echo "Platform(s): $PLATFORMS"
           echo "Type: Enterprise Self-hosted"
