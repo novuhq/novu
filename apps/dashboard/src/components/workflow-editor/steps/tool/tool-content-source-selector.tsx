@@ -1,4 +1,4 @@
-import { RiAddFill, RiArrowDownSLine, RiCheckLine, RiCloseLine, RiErrorWarningFill } from 'react-icons/ri';
+import { RiAddFill, RiArrowDownSLine, RiCheckLine, RiErrorWarningFill } from 'react-icons/ri';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import {
   DropdownMenu,
@@ -21,7 +21,6 @@ type ToolContentSourceSelectorProps = {
   invalidProviderIds?: Set<string>;
   onSelectSource: (source: ToolContentSource) => void;
   onAddOverride: (providerId: ToolOverrideProviderOption['providerId']) => void;
-  onRemoveOverride: (providerId: ToolOverrideProviderOption['providerId']) => void;
 };
 
 export function ToolContentSourceSelector({
@@ -30,7 +29,6 @@ export function ToolContentSourceSelector({
   invalidProviderIds,
   onSelectSource,
   onAddOverride,
-  onRemoveOverride,
 }: ToolContentSourceSelectorProps) {
   // Only the currently selected source owns the trigger error icon. Override-only
   // problems are surfaced via the issue-count badge and per-provider row icons.
@@ -101,7 +99,7 @@ export function ToolContentSourceSelector({
                     <ProviderIcon
                       providerId={provider.providerId}
                       providerDisplayName={provider.displayName}
-                      className={cn('size-4', !provider.hasOverride && 'opacity-50')}
+                      className={cn('size-4', !provider.hasOverride && 'grayscale opacity-50')}
                     />
                     <span
                       className={cn(
@@ -118,18 +116,7 @@ export function ToolContentSourceSelector({
                   </button>
 
                   {provider.hasOverride ? (
-                    <button
-                      type="button"
-                      data-override-action="remove"
-                      aria-label={`Remove ${provider.displayName} override`}
-                      className="text-foreground-400 hover:text-foreground-950 rounded p-0.5"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        onRemoveOverride(provider.providerId);
-                      }}
-                    >
-                      <RiCloseLine className="size-3.5" />
-                    </button>
+                    isSelected && <RiCheckLine className="text-foreground-600 size-3.5 shrink-0" />
                   ) : (
                     <button
                       type="button"

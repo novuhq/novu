@@ -1,7 +1,8 @@
 import { ChannelTypeEnum, EnvironmentTypeEnum, TOOL_CONTENT_OVERRIDE_PROVIDER_IDS, type UiSchema } from '@novu/shared';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { RiErrorWarningFill } from 'react-icons/ri';
+import { RiArrowGoBackLine, RiErrorWarningFill } from 'react-icons/ri';
+import { ConfirmationModal } from '@/components/confirmation-modal';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { getComponentByType } from '@/components/workflow-editor/steps/component-utils';
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
@@ -13,6 +14,7 @@ import { StepEditorUnavailable } from '../step-editor-unavailable';
 import {
   buildToolOverrideProviderOptions,
   DEFAULT_CONTENT_SOURCE,
+  getContentSourceLabel,
   getUnsupportedToolOverrideKeys,
   isToolContentOverrideProviderId,
   type ToolProviderOverrides,
@@ -38,6 +40,7 @@ export const ToolEditor = (props: ToolEditorProps) => {
   const { selectedSource, setSelectedSource } = useToolContentSource();
   // Ephemeral only: unsaved JSON parse errors while an override editor is mounted.
   const [providersWithDraftParseErrors, setProvidersWithDraftParseErrors] = useState<Set<string>>(new Set());
+  const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
 
   // Reset to default when the selected override no longer exists (e.g. dropped by a
   // form reset) so the editor and the mirrored preview stay in sync — the preview
@@ -222,6 +225,17 @@ export const ToolEditor = (props: ToolEditorProps) => {
     }
   }, [providerOptions, providersWithErrors, setSelectedSource]);
 
+  const handleConfirmReset = useCallback(() => {
+    if (selectedSource === DEFAULT_CONTENT_SOURCE) {
+      setIsResetConfirmOpen(false);
+
+      return;
+    }
+
+    handleRemoveOverride(selectedSource);
+    setIsResetConfirmOpen(false);
+  }, [handleRemoveOverride, selectedSource]);
+
   if (currentEnvironment?.type !== EnvironmentTypeEnum.DEV) {
     return <StepEditorUnavailable />;
   }
@@ -239,7 +253,6 @@ export const ToolEditor = (props: ToolEditorProps) => {
               invalidProviderIds={providersWithErrors}
               onSelectSource={setSelectedSource}
               onAddOverride={handleAddOverride}
-              onRemoveOverride={handleRemoveOverride}
             />
             {totalErrorCount > 0 && (
               <Tooltip>
@@ -259,6 +272,19 @@ export const ToolEditor = (props: ToolEditorProps) => {
                 </TooltipContent>
               </Tooltip>
             )}
+            {showingOverride && (
+              <>
+                <div className="bg-neutral-100 mx-0.5 h-4 w-px shrink-0" />
+                <button
+                  type="button"
+                  className="text-foreground-600 hover:bg-neutral-alpha-50 hover:text-foreground-950 ml-auto flex h-7 items-center gap-1 rounded-md px-1.5 text-xs font-medium"
+                  onClick={() => setIsResetConfirmOpen(true)}
+                >
+                  <RiArrowGoBackLine className="size-3.5" />
+                  <span>Reset to default</span>
+                </button>
+              </>
+            )}
           </div>
 
           {showingOverride ? (
@@ -271,6 +297,21 @@ export const ToolEditor = (props: ToolEditorProps) => {
           )}
         </div>
       </TabsSection>
+
+      <ConfirmationModal
+        open={isResetConfirmOpen}
+        onOpenChange={setIsResetConfirmOpen}
+        onConfirm={handleConfirmReset}
+        title="Reset to default content?"
+        description={
+          <>
+            This will remove the {getContentSourceLabel(selectedSource)} override and restore the default content for
+            this step. This action cannot be undone.
+          </>
+        }
+        confirmButtonText="Reset to default"
+        confirmButtonVariant="error"
+      />
     </div>
   );
 };
