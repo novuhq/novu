@@ -48,10 +48,11 @@ export type AuthCtaOptions = AuthConfig;
 /**
  * True when the message author is an authenticated, linked Novu subscriber (as
  * opposed to an auto-provisioned phantom or an unresolved sender). This is the
- * canonical gating input for `restricted` distributed agents.
+ * canonical gating input for `restricted` distributed agents. A `null`
+ * subscriber means the author is not linked.
  */
 export function isAuthenticatedAuthor(ctx: Pick<AuthGateContext, 'subscriber'>): boolean {
-  return ctx.subscriber?.isLinked === true;
+  return !!ctx.subscriber;
 }
 
 function authCard(options: AuthConfigObject): CardElement {

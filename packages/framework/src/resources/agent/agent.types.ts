@@ -90,14 +90,6 @@ export interface AgentSubscriber {
   locale?: string;
   /** Arbitrary custom data attached to the subscriber in Novu. */
   data?: Record<string, unknown>;
-  /**
-   * Whether the author is an authenticated, linked subscriber (`true`) as opposed
-   * to an auto-provisioned "phantom" created from an unlinked inbound sender
-   * (`false`). This is the primary gating input for `restricted` agents: the
-   * framework short-circuits and renders an auth CTA card when this is `false`.
-   * Computed by Novu at inbound time; the agent never has to derive it.
-   */
-  isLinked?: boolean;
 }
 
 /**

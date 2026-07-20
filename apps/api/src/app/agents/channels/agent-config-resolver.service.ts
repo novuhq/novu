@@ -19,7 +19,6 @@ import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
 import { AgentInactiveException } from '../shared/errors/agent-inactive.exception';
 import { AgentIntegrationDisconnectedException } from '../shared/errors/agent-integration-disconnected.exception';
 import { esmImport } from '../shared/util/esm-import';
-import { isAutoProvisionPlatform } from '../shared/util/platform-endpoint-config';
 import { resolveAgentPlatform } from '../shared/util/provider-to-platform';
 
 let cachedEmojiNames: Set<string> | null = null;
@@ -89,23 +88,6 @@ export interface ResolvedAgentConfig {
 }
 
 const DEFAULT_REACTION_ON_RESOLVED: WellKnownEmoji = 'check';
-
-/**
- * Resolves the effective subscriber-access policy for a platform. An explicit
- * agent setting always wins. When unset, auto-provision platforms (Slack/Teams)
- * default to `open` so they keep their historical always-provision behavior,
- * while every other platform defaults to `restricted`.
- */
-function resolveEffectiveSubscriberAccess(
-  explicit: AgentSubscriberAccessEnum | undefined,
-  platform: AgentPlatformEnum
-): AgentSubscriberAccessEnum {
-  if (typeof explicit === 'undefined') {
-    return isAutoProvisionPlatform(platform) ? AgentSubscriberAccessEnum.OPEN : AgentSubscriberAccessEnum.RESTRICTED;
-  }
-
-  return explicit;
-}
 
 /**
  * Extract log-safe fields from an error thrown by an axios request. Raw axios errors carry the full
@@ -336,7 +318,10 @@ export class AgentConfigResolver {
         DEFAULT_REACTION_ON_RESOLVED,
         this.logger
       ),
-      subscriberAccess: resolveEffectiveSubscriberAccess(agent.behavior?.subscriberAccess, platform),
+      subscriberAccess:
+        agent.behavior?.subscriberAccess === 'open'
+          ? AgentSubscriberAccessEnum.OPEN
+          : AgentSubscriberAccessEnum.RESTRICTED,
       bridgeUrl: agent.bridgeUrl,
       devBridgeUrl: agent.devBridgeUrl,
       devBridgeActive: agent.devBridgeActive,

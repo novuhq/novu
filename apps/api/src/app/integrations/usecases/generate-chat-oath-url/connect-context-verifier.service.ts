@@ -1,29 +1,26 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { AgentIntegrationRepository, AgentRepository, EnvironmentRepository, IntegrationEntity } from '@novu/dal';
-import { AgentSubscriberAccessEnum, ContextPayload, ContextValue } from '@novu/shared';
+import { EnvironmentRepository, IntegrationEntity } from '@novu/dal';
+import { ContextPayload } from '@novu/shared';
 import { validateContextHmacEncryption } from '../../../inbox/utils/encryption';
 
 /**
  * Establishes connect-time trust for the context/tenant binding that a
- * distributed chat agent is about to persist. When the integration is linked to
- * a `restricted` agent, the browser-supplied `context` must be provably minted
- * by an authenticated backend rather than forged — otherwise any end-user could
+ * distributed chat agent is about to persist. When the integration has HMAC
+ * validation enabled, the browser-supplied `context` must be provably minted by
+ * an authenticated backend rather than forged — otherwise any end-user could
  * claim a sibling tenant. We reuse Novu's existing "Inbox with context" HMAC
  * (`contextHash = HMAC-SHA256(envSecretKey, canonicalize(context))`): the same
  * primitive enforced at the Inbox session mint, now extended to the connect/link
  * OAuth flow.
  *
- * Trust is skipped in two cases: the agent is not `restricted` (legacy /
- * auto-provision behavior), or the session already HMAC-verified an equivalent
- * context (`isContextValidated`), so re-verification would be redundant.
+ * Trust is skipped in two cases: the integration does not have HMAC enabled
+ * (regular integrations keep working without a signature), or the session
+ * already HMAC-verified an equivalent context (`isContextValidated`), so
+ * re-verification would be redundant.
  */
 @Injectable()
 export class ConnectContextVerifier {
-  constructor(
-    private agentIntegrationRepository: AgentIntegrationRepository,
-    private agentRepository: AgentRepository,
-    private environmentRepository: EnvironmentRepository
-  ) {}
+  constructor(private environmentRepository: EnvironmentRepository) {}
 
   async verify(params: {
     integration: IntegrationEntity;
@@ -33,8 +30,7 @@ export class ConnectContextVerifier {
   }): Promise<void> {
     const { integration, context, contextHash, isContextValidated } = params;
 
-    const isRestricted = await this.isLinkedAgentRestricted(integration);
-    if (!isRestricted) {
+    if (!integration.credentials?.hmac) {
       return;
     }
 
@@ -46,43 +42,17 @@ export class ConnectContextVerifier {
     }
 
     if (!context) {
-      throw new BadRequestException('A context is required to connect a restricted agent.');
+      throw new BadRequestException('A context is required when HMAC validation is enabled.');
     }
 
     if (!contextHash) {
-      throw new BadRequestException('A valid contextHash is required to connect a restricted agent.');
+      throw new BadRequestException('A valid contextHash is required when HMAC validation is enabled.');
     }
 
     const apiKeys = await this.getEnvironmentApiKeys(integration._environmentId);
 
     // Throws BadRequestException on mismatch; rotation-safe + timing-safe.
     validateContextHmacEncryption({ apiKeys, context, contextHash });
-  }
-
-  private async isLinkedAgentRestricted(integration: IntegrationEntity): Promise<boolean> {
-    const link = await this.agentIntegrationRepository.findOne(
-      {
-        _integrationId: integration._id,
-        _environmentId: integration._environmentId,
-        _organizationId: integration._organizationId,
-      },
-      ['_agentId']
-    );
-
-    if (!link) {
-      return false;
-    }
-
-    const agent = await this.agentRepository.findOne(
-      {
-        _id: link._agentId,
-        _environmentId: integration._environmentId,
-        _organizationId: integration._organizationId,
-      },
-      ['behavior']
-    );
-
-    return agent?.behavior?.subscriberAccess === AgentSubscriberAccessEnum.RESTRICTED;
   }
 
   private async getEnvironmentApiKeys(environmentId: string): Promise<string[]> {

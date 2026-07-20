@@ -34,16 +34,6 @@ import { AgentConversationService } from '../conversation/agent-conversation.ser
 const MAX_RETRIES = 2;
 
 /**
- * True when a subscriber was auto-created from an inbound platform message
- * (identified by the `__novu_source` provenance marker on `Subscriber.data`)
- * rather than by the customer's API/dashboard or an explicit link flow. Mirrors
- * the resolver's own phantom check — used to derive the `isLinked` signal.
- */
-function isAgentProvisionedSubscriber(subscriber: SubscriberEntity): boolean {
-  return subscriber.data?.[AGENT_PROVISION_DATA_KEYS.source] === AGENT_PLATFORM_PROVISION_SOURCE;
-}
-
-/**
  * True for `https://` URLs whose host is loopback (`localhost`, `*.localhost`,
  * `127.x/8` IPv4 literals, `::1`). In local dev these are served by a TLS proxy
  * with a private CA (e.g. portless's `https://api.novu.localhost`) that a
@@ -360,9 +350,7 @@ export class BridgeExecutorService {
         : null,
       conversation: this.mapConversation(conversation),
       subscriber: this.mapSubscriber(subscriber),
-      // Mirror the effective access policy onto the wire so the framework can
-      // apply its built-in auth gate (restricted → gate unlinked authors).
-      subscriberAccess: config.subscriberAccess === AgentSubscriberAccessEnum.RESTRICTED ? 'restricted' : 'open',
+      subscriberAccess: config.subscriberAccess,
       context: params.context ?? null,
       history: await this.mapHistory(history),
       platform: config.platform,
@@ -455,11 +443,6 @@ export class BridgeExecutorService {
       avatar: subscriber.avatar || undefined,
       locale: subscriber.locale || undefined,
       data: subscriber.data || undefined,
-      // A subscriber auto-provisioned from an unlinked inbound sender carries the
-      // `__novu_source` provenance marker; treat it as a phantom (not linked).
-      // Any subscriber without the marker was created via the customer's API /
-      // an explicit link flow, so it is an authenticated linked identity.
-      isLinked: !isAgentProvisionedSubscriber(subscriber),
     };
   }
 

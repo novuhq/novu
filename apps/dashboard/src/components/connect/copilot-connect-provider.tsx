@@ -2,7 +2,7 @@ import { useUser } from '@clerk/react';
 import { NovuProvider } from '@novu/react';
 import { useQuery } from '@tanstack/react-query';
 import { type ComponentProps, type ReactNode, useMemo } from 'react';
-import { getCopilotConnectContext } from '@/api/agents';
+import { getNovuInboxContext } from '@/api/novu-context';
 import { APP_ID, IS_SELF_HOSTED } from '@/config';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
@@ -48,31 +48,27 @@ export function CopilotConnectProvider({ children, fallback = null }: CopilotCon
   const { currentEnvironment } = useEnvironment();
   const { currentOrganization } = useAuth();
 
-  const subscriberId = useMemo(
-    () => `org_${currentOrganization?._id}:user_${user?.externalId}`,
-    [currentOrganization?._id, user?.externalId]
-  );
   const subscriber = useMemo(
     () => ({
-      subscriberId,
-      email: user?.primaryEmailAddress?.emailAddress ?? '',
+      subscriberId: user?.externalId ?? '',
+      email: user?.primaryEmailAddress?.emailAddress ?? user?.emailAddresses?.[0]?.emailAddress ?? '',
       firstName: user?.firstName ?? '',
       lastName: user?.lastName ?? '',
     }),
-    [subscriberId, user?.primaryEmailAddress?.emailAddress, user?.firstName, user?.lastName]
+    [user?.externalId, user?.primaryEmailAddress?.emailAddress, user?.emailAddresses, user?.firstName, user?.lastName]
   );
 
   // Mint the tenant context + contextHash + subscriberHash from the customer-authenticated
   // backend (signed with the hosted agent environment's secret). The subscriberHash is minted
   // for exactly this userId so the hosted Inbox session HMAC-verifies it.
   const { data: connectContext, isLoading: isConnectContextLoading } = useQuery({
-    queryKey: ['copilot-slack-connect-context', currentEnvironment?._id, subscriberId],
+    queryKey: ['novu-context', currentEnvironment?._id, user?.externalId],
     queryFn: ({ signal }) => {
       if (!currentEnvironment) {
         throw new Error('No environment selected');
       }
 
-      return getCopilotConnectContext(currentEnvironment, signal);
+      return getNovuInboxContext(currentEnvironment, signal);
     },
     enabled: !IS_SELF_HOSTED && !!currentEnvironment?._id && !!currentOrganization?._id && !!user?.externalId,
     staleTime: 5 * 60 * 1000,

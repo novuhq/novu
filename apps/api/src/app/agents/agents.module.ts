@@ -56,7 +56,6 @@ import { BridgeRuntime } from './conversation-runtime/runtime/bridge.runtime';
 import { BridgeExecutorService } from './conversation-runtime/runtime/bridge-executor.service';
 import { BridgeExpireSupersededApprovalsService } from './conversation-runtime/runtime/bridge-expire-superseded-approvals.service';
 import { RuntimeResolver } from './conversation-runtime/runtime/runtime-resolver.service';
-import { NovuCopilotController } from './copilot/novu-copilot.controller';
 import { NovuCopilotBridgeModule } from './copilot-bridge/novu-copilot-bridge.module';
 import { AgentEmailActionTokenService } from './email/agent-email-action-token.service';
 import { AgentEmailActionsController } from './email/agent-email-actions.controller';
@@ -97,7 +96,6 @@ import { USE_CASES } from './usecases';
   ],
   controllers: [
     AgentsController,
-    NovuCopilotController,
     AgentIntegrationsController,
     AgentRuntimeController,
     AgentsPublicController,

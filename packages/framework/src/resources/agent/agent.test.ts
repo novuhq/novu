@@ -2538,7 +2538,7 @@ describe('auth gate account-linked confirmation', () => {
       event: 'onMessage',
       bridge: createMockBridgeRequest({
         subscriberAccess: 'restricted',
-        subscriber: { subscriberId: 'sub-001', isLinked: false },
+        subscriber: null,
       }),
       secretKey: 'test-secret-key',
     });
@@ -2575,7 +2575,7 @@ describe('auth gate account-linked confirmation', () => {
       event: 'onMessage',
       bridge: createMockBridgeRequest({
         subscriberAccess: 'restricted',
-        subscriber: { subscriberId: 'sub-001', isLinked: false },
+        subscriber: null,
       }),
       secretKey: 'test-secret-key',
     });
@@ -2597,7 +2597,7 @@ describe('auth gate account-linked confirmation', () => {
       event: 'onMessage',
       bridge: createMockBridgeRequest({
         subscriberAccess: 'restricted',
-        subscriber: { subscriberId: 'sub-001', isLinked: true },
+        subscriber: { subscriberId: 'sub-001' },
       }),
       secretKey: 'test-secret-key',
     });
@@ -2623,7 +2623,7 @@ describe('auth gate account-linked confirmation', () => {
       event: 'onMessage',
       bridge: createMockBridgeRequest({
         subscriberAccess: 'open',
-        subscriber: { subscriberId: 'sub-001', isLinked: false },
+        subscriber: null,
       }),
       secretKey: 'test-secret-key',
     });
@@ -2648,7 +2648,7 @@ describe('auth gate account-linked confirmation', () => {
       bridge: createMockBridgeRequest({
         event: 'onAction',
         subscriberAccess: 'restricted',
-        subscriber: { subscriberId: 'sub-001', isLinked: false },
+        subscriber: null,
         message: null,
         action: { id: buildApprovalActionId('approve', 'tc'), sourceMessageId: 'm_prev' },
         history: [
@@ -2684,7 +2684,7 @@ describe('auth gate account-linked confirmation', () => {
       bridge: createMockBridgeRequest({
         event: 'onAction',
         subscriberAccess: 'restricted',
-        subscriber: { subscriberId: 'sub-001', isLinked: true },
+        subscriber: { subscriberId: 'sub-001' },
         message: null,
         action: { id: buildApprovalActionId('approve', 'tc'), sourceMessageId: 'm_prev' },
         history: [
@@ -2717,7 +2717,7 @@ describe('auth gate account-linked confirmation', () => {
       bridge: createMockBridgeRequest({
         event: 'onReaction',
         subscriberAccess: 'restricted',
-        subscriber: { subscriberId: 'sub-001', isLinked: false },
+        subscriber: null,
         message: null,
         reaction: { emoji: '+1', platformMessageId: 'm_prev', action: 'added' },
       } as never),
