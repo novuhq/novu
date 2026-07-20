@@ -31,3 +31,10 @@ export function getToolProviderOverrideSchema(providerId: string) {
 export function getToolProviderPrimaryContentKey(providerId: ToolContentOverrideProviderId) {
   return TOOL_PROVIDER_PRIMARY_CONTENT_KEY[providerId];
 }
+
+export {
+  type AnnotatedPreviewLine,
+  buildAnnotatedPreviewLines,
+  type MergedToolPreview,
+  mergeToolProviderPreview,
+} from './merge-tool-provider-preview';

@@ -2,10 +2,14 @@ import {
   ChannelTypeEnum,
   getToolProviderPrimaryContentKey,
   type IProviderConfig,
+  mergeToolProviderPreview as mergeToolProviderPreviewShared,
   providers,
   TOOL_CONTENT_OVERRIDE_PROVIDER_IDS,
   type ToolContentOverrideProviderId,
 } from '@novu/shared';
+
+export type { AnnotatedPreviewLine, MergedToolPreview } from '@novu/shared';
+export { buildAnnotatedPreviewLines } from '@novu/shared';
 
 export const DEFAULT_CONTENT_SOURCE = 'default' as const;
 
@@ -73,13 +77,6 @@ export function mergeToolProviderPreview({
   body: string;
   providerId: ToolContentOverrideProviderId;
   override: Record<string, unknown> | undefined;
-}): Record<string, unknown> {
-  const primaryKey = getProviderPrimaryContentKey(providerId);
-  const merged: Record<string, unknown> = { ...(override ?? {}) };
-
-  if (merged[primaryKey] === undefined || merged[primaryKey] === '') {
-    merged[primaryKey] = body;
-  }
-
-  return merged;
+}) {
+  return mergeToolProviderPreviewShared({ body, providerId, override });
 }
