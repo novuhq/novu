@@ -10,7 +10,10 @@ import { useSaveForm } from '@/components/workflow-editor/steps/save-form-contex
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useParseVariables } from '@/hooks/use-parse-variables';
 import { getUnsupportedToolOverrideKeys, type ToolProviderOverrides } from './tool-content-source';
-import { getToolOverrideFieldDefaultValue, ToolOverrideSupportedFields } from './tool-override-supported-fields';
+import { createToolOverrideCompletionSource } from './tool-override-autocomplete';
+import { getToolOverrideFieldDefaultValue } from './tool-override-field-schema';
+import { findDuplicateRootKey } from './tool-override-json';
+import { ToolOverrideSupportedFields } from './tool-override-supported-fields';
 
 const PROVIDER_OVERRIDES_FIELD = 'providerOverrides';
 
@@ -27,6 +30,11 @@ function parseOverrideJson(value: string): { parsed?: Record<string, unknown>; e
     const parsed = JSON.parse(value);
     if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
       return { error: 'Override must be a JSON object' };
+    }
+
+    const duplicateKey = findDuplicateRootKey(value);
+    if (duplicateKey) {
+      return { error: `Duplicate key "${duplicateKey}"` };
     }
 
     return { parsed };
@@ -117,6 +125,8 @@ export function ToolProviderOverrideEditor({
 
   const usedDraftKeys = useMemo(() => new Set(Object.keys(parsedDraft ?? {})), [parsedDraft]);
 
+  const completionSources = useMemo(() => [createToolOverrideCompletionSource(providerId)], [providerId]);
+
   useEffect(() => {
     onDraftParseValidityChange?.(providerId, !parseError);
 
@@ -181,6 +191,7 @@ export function ToolProviderOverrideEditor({
                   value={draft}
                   isAllowedVariable={isAllowedVariable}
                   variables={variables}
+                  completionSources={completionSources}
                   onChange={(val) => {
                     const newVal = typeof val === 'string' ? val : '';
                     setDraft(newVal);
