@@ -69,7 +69,7 @@ function buildTeamsDeepLink(catalogId: string): string {
 }
 
 function escapeShellDoubleQuotedValue(value: string): string {
-  return value.replaceAll('\\', '\\\\').replaceAll('"', '\\"');
+  return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 }
 
 // ---------------------------------------------------------------------------
