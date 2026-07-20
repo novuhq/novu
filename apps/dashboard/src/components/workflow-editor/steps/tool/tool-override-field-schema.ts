@@ -36,9 +36,7 @@ export function getConstraints(fieldSchema: OverrideFieldSchema): string[] {
   return constraints;
 }
 
-export function getToolOverrideFieldDefaultValue(providerId: ToolContentOverrideProviderId, key: string): unknown {
-  const fieldSchema = getFieldSchemas(providerId)[key];
-
+export function defaultValueForFieldSchema(fieldSchema: OverrideFieldSchema | undefined): unknown {
   if (fieldSchema?.enum && fieldSchema.enum.length > 0) {
     return fieldSchema.enum[0];
   }
@@ -56,4 +54,8 @@ export function getToolOverrideFieldDefaultValue(providerId: ToolContentOverride
     default:
       return '';
   }
+}
+
+export function getToolOverrideFieldDefaultValue(providerId: ToolContentOverrideProviderId, key: string): unknown {
+  return defaultValueForFieldSchema(getFieldSchemas(providerId)[key]);
 }

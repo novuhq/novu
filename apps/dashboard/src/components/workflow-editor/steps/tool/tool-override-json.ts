@@ -1,9 +1,9 @@
 /**
- * Returns the first duplicated key at the root of a JSON object literal.
- * Nested object keys are ignored. Assumes `text` is already valid JSON.
+ * Collects root-level object keys from a JSON object literal, including incomplete
+ * documents (returns keys parsed so far). Nested object keys are ignored.
  */
-export function findDuplicateRootKey(text: string): string | undefined {
-  const seen = new Set<string>();
+export function collectRootKeys(text: string): string[] {
+  const keys: string[] = [];
   let depth = 0;
   let i = 0;
 
@@ -28,7 +28,7 @@ export function findDuplicateRootKey(text: string): string | undefined {
       }
 
       if (i >= text.length) {
-        return undefined;
+        return keys;
       }
 
       const end = i;
@@ -51,14 +51,10 @@ export function findDuplicateRootKey(text: string): string | undefined {
       try {
         key = JSON.parse(text.slice(start, end + 1)) as string;
       } catch {
-        return undefined;
+        return keys;
       }
 
-      if (seen.has(key)) {
-        return key;
-      }
-
-      seen.add(key);
+      keys.push(key);
       continue;
     }
 
@@ -75,6 +71,21 @@ export function findDuplicateRootKey(text: string): string | undefined {
     }
 
     i += 1;
+  }
+
+  return keys;
+}
+
+/** Returns the first duplicated key at the root of a JSON object literal. */
+export function findDuplicateRootKey(text: string): string | undefined {
+  const seen = new Set<string>();
+
+  for (const key of collectRootKeys(text)) {
+    if (seen.has(key)) {
+      return key;
+    }
+
+    seen.add(key);
   }
 
   return undefined;

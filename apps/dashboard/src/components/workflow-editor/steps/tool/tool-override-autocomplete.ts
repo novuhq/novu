@@ -6,25 +6,13 @@ import {
 } from '@codemirror/autocomplete';
 import { type ToolContentOverrideProviderId } from '@novu/shared';
 import {
+  defaultValueForFieldSchema,
   getConstraints,
   getFieldSchemas,
-  getToolOverrideFieldDefaultValue,
   getTypeLabel,
   type OverrideFieldSchema,
 } from './tool-override-field-schema';
-
-function getUsedKeys(doc: string): Set<string> | null {
-  try {
-    const parsed = JSON.parse(doc);
-    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
-      return null;
-    }
-
-    return new Set(Object.keys(parsed));
-  } catch {
-    return null;
-  }
-}
+import { collectRootKeys } from './tool-override-json';
 
 function getPrecedingNonWhitespace(doc: string, from: number): string | null {
   for (let i = from - 1; i >= 0; i -= 1) {
@@ -43,10 +31,6 @@ function isKeyPosition(doc: string, from: number): boolean {
   const preceding = getPrecedingNonWhitespace(doc, from);
 
   return preceding === null || preceding === '{' || preceding === ',';
-}
-
-function formatDefaultValue(value: unknown): string {
-  return JSON.stringify(value);
 }
 
 function buildFieldInfo(fieldSchema: OverrideFieldSchema): string | undefined {
@@ -82,12 +66,9 @@ function getKeyReplacementTo(doc: string, matchTo: number): number {
   return matchTo;
 }
 
-function buildKeyCompletion(
-  providerId: ToolContentOverrideProviderId,
-  key: string,
-  fieldSchema: OverrideFieldSchema
-): Completion {
-  const defaultValue = getToolOverrideFieldDefaultValue(providerId, key);
+function buildKeyCompletion(key: string, fieldSchema: OverrideFieldSchema): Completion {
+  const defaultValue = defaultValueForFieldSchema(fieldSchema);
+  const keyPrefix = `"${key}": `;
 
   return {
     label: key,
@@ -98,26 +79,46 @@ function buildKeyCompletion(
       // Resolve end from the live doc — CodeMirror's `to` may stop before an auto-closed `"`.
       const doc = view.state.doc.toString();
       const replaceTo = getKeyReplacementTo(doc, to);
-      const valueLiteral = formatDefaultValue(defaultValue);
+      const valueLiteral = JSON.stringify(defaultValue);
       const needsComma = hasPropertyAfter(doc, replaceTo);
-      const insertText = `"${key}": ${valueLiteral}${needsComma ? ',' : ''}`;
+      const insertText = `${keyPrefix}${valueLiteral}${needsComma ? ',' : ''}`;
 
       view.dispatch({
         changes: { from, to: replaceTo, insert: insertText },
         selection: {
-          anchor: from + `"${key}": `.length + (typeof defaultValue === 'string' ? 1 : 0),
+          anchor: from + keyPrefix.length + (typeof defaultValue === 'string' ? 1 : 0),
         },
       });
     },
   };
 }
 
+function availableKeyOptions(
+  fieldSchemas: Record<string, OverrideFieldSchema>,
+  usedKeys: Set<string>,
+  prefix?: string
+): Completion[] {
+  return Object.entries(fieldSchemas)
+    .filter(([key]) => {
+      if (usedKeys.has(key)) {
+        return false;
+      }
+
+      if (prefix !== undefined && !key.startsWith(prefix)) {
+        return false;
+      }
+
+      return true;
+    })
+    .map(([key, fieldSchema]) => buildKeyCompletion(key, fieldSchema));
+}
+
 function createKeyCompletions(
   context: CompletionContext,
-  providerId: ToolContentOverrideProviderId,
   fieldSchemas: Record<string, OverrideFieldSchema>
 ): CompletionResult | null {
   const doc = context.state.doc.toString();
+  const usedKeys = new Set(collectRootKeys(doc));
   const quoteMatch = context.matchBefore(/"[\w-]*$/);
 
   if (quoteMatch) {
@@ -125,46 +126,25 @@ function createKeyCompletions(
       return null;
     }
 
-    const usedKeys = getUsedKeys(doc);
-    const typedPrefix = quoteMatch.text.slice(1);
-    const replaceTo = getKeyReplacementTo(doc, quoteMatch.to);
-    const options: Completion[] = Object.entries(fieldSchemas)
-      .filter(([key]) => {
-        if (usedKeys?.has(key)) {
-          return false;
-        }
-
-        return key.startsWith(typedPrefix);
-      })
-      .map(([key, fieldSchema]) => buildKeyCompletion(providerId, key, fieldSchema));
-
+    const options = availableKeyOptions(fieldSchemas, usedKeys, quoteMatch.text.slice(1));
     if (options.length === 0) {
       return null;
     }
 
     return {
       from: quoteMatch.from,
-      to: replaceTo,
+      to: getKeyReplacementTo(doc, quoteMatch.to),
       options,
       filter: false,
       validFor: /"[\w-]*/,
     };
   }
 
-  if (!context.explicit) {
+  if (!context.explicit || !isKeyPosition(doc, context.pos)) {
     return null;
   }
 
-  const preceding = getPrecedingNonWhitespace(doc, context.pos);
-  if (preceding !== null && preceding !== '{' && preceding !== ',') {
-    return null;
-  }
-
-  const usedKeys = getUsedKeys(doc);
-  const options: Completion[] = Object.entries(fieldSchemas)
-    .filter(([key]) => !usedKeys?.has(key))
-    .map(([key, fieldSchema]) => buildKeyCompletion(providerId, key, fieldSchema));
-
+  const options = availableKeyOptions(fieldSchemas, usedKeys);
   if (options.length === 0) {
     return null;
   }
@@ -235,6 +215,6 @@ export function createToolOverrideCompletionSource(providerId: ToolContentOverri
       return enumResult;
     }
 
-    return createKeyCompletions(context, providerId, fieldSchemas);
+    return createKeyCompletions(context, fieldSchemas);
   };
 }
