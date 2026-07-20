@@ -21,6 +21,7 @@ import { AgentMcpSessionService } from '../mcp/runtime/agent-mcp-session.service
 import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
 import { AgentRuntimeDefinitionService } from './agent-runtime-definition.service';
 import { DemoClaudeQuotaPolicy } from './demo-claude-quota-policy.service';
+import { extractNotFoundVaultId } from './managed-agent-errors';
 import { ManagedAgentEventHandler } from './managed-agent-event-handler.service';
 import { ManagedAgentProviderFactory } from './managed-agent-provider-factory.service';
 
@@ -95,7 +96,7 @@ export class ManagedAgentService implements OnModuleInit {
     });
 
     const { provider, runtimeProvider } = await this.providerFactory.getOrCreate(agent, context.config.environmentId);
-    const vaultIds = await this.resolveVaultIdsForTurn(
+    let vaultIds = await this.resolveVaultIdsForTurn(
       agent,
       context.config.environmentId,
       context.config.organizationId,
@@ -103,7 +104,7 @@ export class ManagedAgentService implements OnModuleInit {
       runtimeProvider
     );
     const existingSessionId = context.conversation.externalSessionId ?? undefined;
-    const sessionId = await this.reconcileSessionIdForVaultBinding(context, vaultIds, existingSessionId);
+    let sessionId = await this.reconcileSessionIdForVaultBinding(context, vaultIds, existingSessionId);
 
     const connectedMcpServers = await this.agentMcpSessionService.resolveConnectedMcps({
       agentId: agent._id,
@@ -112,11 +113,11 @@ export class ManagedAgentService implements OnModuleInit {
       subscriberMongoId: context.subscriber?._id,
     });
 
-    const messages = sessionId
+    let messages = sessionId
       ? [{ role: MessageRole.USER, content: context.userMessageText }]
       : await this.buildMessagesWithHistory(context);
 
-    const sendResult = await provider.send({
+    const buildSendInput = () => ({
       messages,
       sessionId,
       vaultIds,
@@ -136,6 +137,41 @@ export class ManagedAgentService implements OnModuleInit {
         acknowledgeOnReceived: context.config.acknowledgeOnReceived,
       }),
     });
+
+    let sendResult: Awaited<ReturnType<typeof provider.send>>;
+    try {
+      sendResult = await provider.send(buildSendInput());
+    } catch (err) {
+      const staleVaultId = extractNotFoundVaultId(err);
+      const subscriberMongoId = context.subscriber?._id;
+
+      if (!staleVaultId || !subscriberMongoId || !vaultIds.includes(staleVaultId)) {
+        throw err;
+      }
+
+      this.logger.warn(
+        { agentId: agent._id, conversationId: context.conversation._id, staleVaultId },
+        'createSession rejected a stale Anthropic vault; rebinding the subscriber to a fresh vault and retrying once'
+      );
+
+      vaultIds = await this.agentMcpSessionService.rebindSubscriberVault({
+        agentId: agent._id,
+        environmentId: context.config.environmentId,
+        organizationId: context.config.organizationId,
+        subscriberMongoId,
+        staleVaultId,
+        runtimeProvider,
+      });
+
+      await this.conversationRepository.clearExternalSessionId(
+        context.config.environmentId,
+        String(context.conversation._id)
+      );
+      sessionId = undefined;
+      messages = await this.buildMessagesWithHistory(context);
+
+      sendResult = await provider.send(buildSendInput());
+    }
 
     await this.conversationRepository.setExternalSessionIdIfMissing(
       context.config.environmentId,
