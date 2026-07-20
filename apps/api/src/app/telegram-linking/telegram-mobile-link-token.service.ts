@@ -1,10 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { CacheService, PinoLogger } from '@novu/application-generic';
 
-import {
-  SingleUseTokenCache,
-  StoredTokenEntry,
-} from '../shared/services/single-use-link-token.service';
+import { SingleUseTokenCache, StoredTokenEntry } from '../shared/services/single-use-link-token.service';
 
 /** Lifetime of an issued mobile setup token (seconds). */
 export const TELEGRAM_MOBILE_LINK_TTL_SECONDS = 5 * 60;
@@ -100,8 +97,7 @@ export class TelegramMobileLinkTokenService {
       usedKeyPrefix: 'telegram_mobile_link_used:',
       ttlSeconds: TELEGRAM_MOBILE_LINK_TTL_SECONDS,
       isValidTokenFormat: (token) => typeof token === 'string' && TOKEN_FORMAT.test(token),
-      createCacheUnavailableError: (operation, cause) =>
-        new TelegramMobileLinkCacheUnavailableError(operation, cause),
+      createCacheUnavailableError: (operation, cause) => new TelegramMobileLinkCacheUnavailableError(operation, cause),
     });
   }
 

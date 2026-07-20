@@ -3,7 +3,7 @@ import {
   encryptChannelConnectionAuth,
   type WebexTokenRefreshResponse,
 } from '@novu/application-generic';
-import { ChannelTypeEnum, ChatProviderIdEnum } from '@novu/shared';
+import { ChannelTypeEnum, ChatProviderIdEnum, ToolProviderIdEnum } from '@novu/shared';
 import { ENDPOINT_TYPES } from '@novu/stateless';
 import { expect } from 'chai';
 import sinon from 'sinon';
@@ -171,6 +171,83 @@ describe('ResolveChannelEndpoints - Webex Messaging', () => {
   });
 });
 
+describe('ResolveChannelEndpoints - Opsgenie', () => {
+  let sandbox: sinon.SinonSandbox;
+  let channelEndpointRepository: Record<string, sinon.SinonStub>;
+  let channelConnectionRepository: Record<string, sinon.SinonStub>;
+  let usecase: ResolveChannelEndpoints;
+
+  beforeEach(() => {
+    sandbox = sinon.createSandbox();
+
+    channelEndpointRepository = {
+      find: sandbox.stub(),
+      buildContextExactMatchQuery: sandbox.stub().returns({}),
+    };
+    channelConnectionRepository = {
+      find: sandbox.stub(),
+      buildContextExactMatchQuery: sandbox.stub().returns({}),
+    };
+
+    usecase = new ResolveChannelEndpoints(
+      channelEndpointRepository as any,
+      channelConnectionRepository as any,
+      { findOne: sandbox.stub() } as any,
+      { getBotFrameworkToken: sandbox.stub() } as any,
+      { refreshAccessToken: sandbox.stub() } as any
+    );
+  });
+
+  afterEach(() => {
+    sandbox.restore();
+  });
+
+  it('hydrates the Opsgenie endpoint wire shape from decrypted connection auth', async () => {
+    channelEndpointRepository.find.resolves([buildOpsgenieEndpoint()]);
+    channelConnectionRepository.find.resolves([buildOpsgenieConnection({ apiKey: 'genie-key-123', region: 'eu' })]);
+
+    const result = await usecase.execute(buildCommand({ channelType: ChannelTypeEnum.TOOL }));
+
+    expect(result).to.deep.equal([
+      {
+        integrationIdentifier: OPSGENIE_INTEGRATION_IDENTIFIER,
+        providerId: ToolProviderIdEnum.Opsgenie,
+        channelData: [
+          {
+            type: ENDPOINT_TYPES.OPSGENIE_INTEGRATION,
+            identifier: 'opsgenie-endpoint',
+            endpoint: { apiKey: 'genie-key-123', region: 'eu' },
+          },
+        ],
+      },
+    ]);
+    expect(channelConnectionRepository.find.firstCall.args[0].identifier).to.deep.equal({
+      $in: [OPSGENIE_CONNECTION_IDENTIFIER],
+    });
+  });
+
+  it('throws when the linked channel connection is missing', async () => {
+    channelEndpointRepository.find.resolves([buildOpsgenieEndpoint()]);
+    channelConnectionRepository.find.resolves([]);
+
+    const error = await usecase.execute(buildCommand({ channelType: ChannelTypeEnum.TOOL })).catch((e) => e);
+
+    expect(error).to.be.instanceOf(Error);
+    expect(error.message).to.contain('opsgenie-endpoint');
+    expect(error.message).to.contain('no auth is available');
+  });
+
+  it('throws when the connection auth is missing apiKey or region', async () => {
+    channelEndpointRepository.find.resolves([buildOpsgenieEndpoint()]);
+    channelConnectionRepository.find.resolves([buildOpsgenieConnection({ apiKey: 'genie-key-123' })]);
+
+    const error = await usecase.execute(buildCommand({ channelType: ChannelTypeEnum.TOOL })).catch((e) => e);
+
+    expect(error).to.be.instanceOf(Error);
+    expect(error.message).to.contain('missing apiKey or region');
+  });
+});
+
 function buildCommand(overrides: Record<string, unknown> = {}) {
   return {
     organizationId: ORGANIZATION_ID,
@@ -213,6 +290,39 @@ function buildWebexConnection(auth: {
     integrationIdentifier: INTEGRATION_IDENTIFIER,
     providerId: ChatProviderIdEnum.WebexMessaging,
     channel: ChannelTypeEnum.CHAT,
+    contextKeys: [],
+    auth: encryptChannelConnectionAuth(auth),
+  };
+}
+
+const OPSGENIE_INTEGRATION_IDENTIFIER = 'opsgenie-integration';
+const OPSGENIE_CONNECTION_IDENTIFIER = 'opsgenie-connection';
+
+function buildOpsgenieEndpoint(overrides: Record<string, unknown> = {}) {
+  return {
+    _environmentId: ENVIRONMENT_ID,
+    _organizationId: ORGANIZATION_ID,
+    identifier: 'opsgenie-endpoint',
+    integrationIdentifier: OPSGENIE_INTEGRATION_IDENTIFIER,
+    providerId: ToolProviderIdEnum.Opsgenie,
+    channel: ChannelTypeEnum.TOOL,
+    subscriberId: SUBSCRIBER_ID,
+    contextKeys: [],
+    connectionIdentifier: OPSGENIE_CONNECTION_IDENTIFIER,
+    type: ENDPOINT_TYPES.OPSGENIE_INTEGRATION,
+    endpoint: {},
+    ...overrides,
+  };
+}
+
+function buildOpsgenieConnection(auth: { apiKey: string; region?: 'us' | 'eu' }) {
+  return {
+    _environmentId: ENVIRONMENT_ID,
+    _organizationId: ORGANIZATION_ID,
+    identifier: OPSGENIE_CONNECTION_IDENTIFIER,
+    integrationIdentifier: OPSGENIE_INTEGRATION_IDENTIFIER,
+    providerId: ToolProviderIdEnum.Opsgenie,
+    channel: ChannelTypeEnum.TOOL,
     contextKeys: [],
     auth: encryptChannelConnectionAuth(auth),
   };

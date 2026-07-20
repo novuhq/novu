@@ -197,6 +197,10 @@ const notificationTemplateSchema = new Schema<NotificationTemplateDBModel>(
         type: Schema.Types.Boolean,
         default: true,
       },
+      tool: {
+        type: Schema.Types.Boolean,
+        default: true,
+      },
     },
     origin: {
       type: Schema.Types.String,

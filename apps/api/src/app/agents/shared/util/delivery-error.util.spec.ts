@@ -1,10 +1,6 @@
 import { BadGatewayException, BadRequestException, HttpException, HttpStatus } from '@nestjs/common';
 import { expect } from 'chai';
-import {
-  formatDeliveryErrorMessage,
-  resolveDeliveryHttpStatus,
-  toDeliveryError,
-} from './delivery-error.util';
+import { formatDeliveryErrorMessage, resolveDeliveryHttpStatus, toDeliveryError } from './delivery-error.util';
 
 describe('delivery-error.util', () => {
   it('maps adapter ValidationError to HTTP 400', () => {

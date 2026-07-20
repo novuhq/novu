@@ -48,6 +48,7 @@ export enum ChannelType {
   SMS = 'sms',
   CHAT = 'chat',
   PUSH = 'push',
+  TOOL = 'tool',
 }
 
 export enum WebSocketEvent {
@@ -214,6 +215,7 @@ export type ChannelPreference = {
   in_app?: boolean;
   chat?: boolean;
   push?: boolean;
+  tool?: boolean;
 };
 
 export type PaginatedResponse<T = unknown> = {

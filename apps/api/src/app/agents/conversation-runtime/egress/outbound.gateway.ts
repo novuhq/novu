@@ -7,8 +7,8 @@ import type { AdapterPostableMessage, CardElement, Chat, EmojiValue, PlanModel, 
 import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import type { ReplyContentDto } from '../../shared/dtos/agent-reply-payload.dto';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
-import { esmImport } from '../../shared/util/esm-import';
 import { toDeliveryError } from '../../shared/util/delivery-error.util';
+import { esmImport } from '../../shared/util/esm-import';
 import { buildBrandedMarkdownReply, contentHasPoweredByWatermark } from '../../shared/util/novu-powered-by-watermark';
 import { type AgentActionTokenBinding, AgentActionTokenService } from '../action-token/agent-action-token.service';
 import { AgentConversationService } from '../conversation/agent-conversation.service';
@@ -556,11 +556,7 @@ export class OutboundGateway {
     await adapter.removeReaction(platformThreadId, platformMessageId, resolved);
   }
 
-  private async openDirectMessageThread(
-    chat: Chat,
-    platform: string,
-    platformUserId: string
-  ): Promise<Thread> {
+  private async openDirectMessageThread(chat: Chat, platform: string, platformUserId: string): Promise<Thread> {
     const adapter = chat.getAdapter(platform);
 
     if (typeof adapter.openDM === 'function') {

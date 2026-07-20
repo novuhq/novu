@@ -28,7 +28,11 @@ import {
   TelegramLinkTokenContent,
   TelegramTestContent,
 } from './phase-content/telegram';
-import { WhatsAppSignupReadyContent, WhatsAppSignupWaitingContent, WhatsAppTestContent } from './phase-content/whatsapp';
+import {
+  WhatsAppSignupReadyContent,
+  WhatsAppSignupWaitingContent,
+  WhatsAppTestContent,
+} from './phase-content/whatsapp';
 import { PreviewGeneratedContent } from './preview-generated-content';
 import type { ConnectStore } from './store';
 import { WelcomeContent } from './welcome-content';

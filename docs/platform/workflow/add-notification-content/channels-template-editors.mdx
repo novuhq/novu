@@ -36,7 +36,17 @@ The template editor lets you control what users see, how they act on it, and how
 By default, Novu sanitizes both the subject and body fields to prevent unsafe HTML from being rendered. This includes sanitizing:
 
 - Suspicious HTML tags.
-- HTML entities such as `<`, `>`, and `&`.
+- HTML entities. The five HTML-reserved characters are escaped to their entity form when rendered:
+
+  | Character | Escaped as |
+  | --------- | ---------- |
+  | `&`       | `&amp;`    |
+  | `<`       | `&lt;`     |
+  | `>`       | `&gt;`     |
+  | `"`       | `&quot;`   |
+  | `'`       | `&#39;`    |
+
+  If your payload contains any of these characters in a value that must render literally (for example a filename like `Report & Summary.pdf`), the sanitized output will show the entity form in email and SMS content. To avoid this without disabling sanitization, pass a display-safe value from your application code before triggering the workflow (for example, replace `&` with `and`, or use a separate display field such as `Report and Summary.pdf`).
 
 You should only disable content sanitization when:
 
@@ -46,6 +56,8 @@ You should only disable content sanitization when:
 <Warning>
   Disabling sanitization can expose your application to security risks such as XSS attacks. Only disable this option when using trusted data sources.
 </Warning>
+
+Sanitization is configured per step. Open the step in the workflow editor and toggle **Disable content sanitization** to opt a specific step out of sanitization.
 
 ### Avatar customization
 

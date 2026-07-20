@@ -142,6 +142,8 @@ export type Phase =
   | {
       kind: 'whatsapp-test';
       waMeUrl?: string;
+      /** Pre-rendered ASCII QR for the wa.me deep link. */
+      waMeQr?: string;
       displayPhoneNumber?: string;
     }
   | { kind: 'adding-slack' }

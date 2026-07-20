@@ -255,8 +255,8 @@ export class WorkflowController {
   ): Promise<ListWorkflowResponse> {
     return this.listWorkflowsUseCase.execute(
       ListWorkflowsCommand.create({
-        offset: Number(query.offset || '0'),
-        limit: Number(query.limit || '50'),
+        offset: query.offset ?? 0,
+        limit: query.limit ?? 50,
         orderDirection: query.orderDirection ?? DirectionEnum.DESC,
         orderBy: query.orderBy ?? 'createdAt',
         searchQuery: query.query,

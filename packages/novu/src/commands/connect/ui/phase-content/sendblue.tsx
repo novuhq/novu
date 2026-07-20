@@ -140,8 +140,8 @@ export function SendblueTestWaitingContent({
         Message your agent on iMessage
       </Text>
       <Text dimColor>
-        Text <Text color="white">{phase.fromNumber}</Text> from your phone to start chatting. On Sendblue's shared
-        lines you must message the number once before it can reply.
+        Text <Text color="white">{phase.fromNumber}</Text> from your phone to start chatting. On Sendblue's shared lines
+        you must message the number once before it can reply.
       </Text>
       <CopyableLink url={phase.imessageUrl} hint="Or open a pre-filled iMessage:" />
       <Text dimColor>Waiting for your first inbound message…</Text>

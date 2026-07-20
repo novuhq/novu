@@ -1,4 +1,4 @@
-import { ChatProviderIdEnum, providers as novuProviders } from '@novu/shared';
+import { ChatProviderIdEnum } from '@novu/shared';
 import { useEffect, useRef, useState } from 'react';
 import { RiSearchLine } from 'react-icons/ri';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -29,7 +29,6 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
   const navigate = useNavigate();
   const { providerId } = useParams();
 
-  const providers = novuProviders;
   const { mutateAsync: createIntegration, isPending } = useCreateIntegration();
   const { mutateAsync: setPrimaryIntegration, isPending: isSettingPrimary } = useSetPrimaryIntegration();
   const [formState, setFormState] = useState({ isValid: true, errors: {} as Record<string, unknown>, isDirty: false });
@@ -52,8 +51,8 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
       onBack: handleBack,
     });
 
-  const { integrationsByChannel } = useIntegrationList(searchQuery);
-  const provider = providers?.find((providerItem) => providerItem.id === (selectedIntegration || providerId));
+  const { catalogProviders, integrationsByChannel } = useIntegrationList(searchQuery);
+  const provider = catalogProviders.find((providerItem) => providerItem.id === (selectedIntegration || providerId));
 
   const searchInputRef = useRef<HTMLInputElement>(null);
 

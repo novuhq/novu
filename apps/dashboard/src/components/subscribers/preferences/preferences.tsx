@@ -13,6 +13,7 @@ import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useOptimisticChannelPreferences } from '@/hooks/use-optimistic-channel-preferences';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { itemVariants, sectionVariants } from '@/utils/animation';
+import { isChannelVisibleInUi } from '@/utils/channels';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { PreferencesBlank } from './preferences-blank';
 import { SubscribersSchedule } from './subscribers-schedule';
@@ -42,16 +43,19 @@ export const Preferences = (props: PreferencesProps) => {
   });
 
   const isContextPreferencesEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONTEXT_PREFERENCES_ENABLED);
+  const isToolChannelEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TOOL_CHANNEL_ENABLED);
 
   const { workflows, globalChannelsKeys, hasZeroPreferences } = useMemo(() => {
     const global = subscriberPreferences?.global ?? { channels: {} };
     const workflows = subscriberPreferences?.workflows ?? [];
-    const globalChannelsKeys = Object.entries(global?.channels ?? {}) as [ChannelTypeEnum, boolean][];
+    const globalChannelsKeys = (Object.entries(global?.channels ?? {}) as [ChannelTypeEnum, boolean][]).filter(
+      ([channel]) => isChannelVisibleInUi(channel, isToolChannelEnabled)
+    );
 
     const hasZeroPreferences = workflows.length === 0 && globalChannelsKeys.length === 0;
 
     return { global, workflows, globalChannelsKeys, hasZeroPreferences };
-  }, [subscriberPreferences]);
+  }, [isToolChannelEnabled, subscriberPreferences]);
 
   if (hasZeroPreferences) {
     return <PreferencesBlank />;

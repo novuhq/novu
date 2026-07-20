@@ -1,5 +1,6 @@
 import { CredentialsKeyEnum, type ICredentials } from '@novu/shared';
 import { RiSendPlaneFill } from 'react-icons/ri';
+import QRCode from 'react-qr-code';
 import { Button } from '@/components/primitives/button';
 import { InputPure, InputRoot, InputWrapper } from '@/components/primitives/input';
 import { useConnectSubscriberPhone } from '@/hooks/use-connect-subscriber-phone';
@@ -9,16 +10,18 @@ import { buildWhatsAppDeepLink } from './whatsapp-setup-guide-utils';
 export function EmbeddedSignupInboundTestPanel({
   connectSubscriberId,
   credentials,
+  agentName,
 }: {
   connectSubscriberId: string;
   credentials: ICredentials | undefined;
+  agentName: string;
 }) {
   const { phone, setPhone, savedPhone, isPhoneSaved, isSaving, saveError, clearSaveError, handleSavePhone } =
     useConnectSubscriberPhone(connectSubscriberId);
 
   const businessDisplayPhone =
     typeof credentials?.[CredentialsKeyEnum.From] === 'string' ? credentials[CredentialsKeyEnum.From].trim() : '';
-  const whatsAppUrl = businessDisplayPhone ? buildWhatsAppDeepLink(businessDisplayPhone) : '';
+  const whatsAppUrl = businessDisplayPhone ? buildWhatsAppDeepLink(businessDisplayPhone, agentName) : '';
 
   if (!isPhoneSaved) {
     return (
@@ -74,6 +77,12 @@ export function EmbeddedSignupInboundTestPanel({
           <SetupButton href={whatsAppUrl} leadingIcon={<RiSendPlaneFill className="size-3.5" />}>
             Open in WhatsApp
           </SetupButton>
+          <div className="flex flex-col items-center gap-2">
+            <div className="bg-bg-white rounded-md p-2">
+              <QRCode value={whatsAppUrl} size={120} />
+            </div>
+            <p className="text-text-soft text-label-xs leading-4">Scan with your phone to open the chat.</p>
+          </div>
         </>
       ) : (
         <p className="text-text-soft text-label-xs leading-4">
