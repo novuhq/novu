@@ -46,6 +46,35 @@ export class AgentMcpSessionService {
   }
 
   /**
+   * Recover from an upstream vault Anthropic no longer recognises (deleted or
+   * archived out-of-band, or the integration's API key moved workspaces).
+   * `createSession` rejects a stale `vlt_…` with a 404 on every turn until the
+   * binding is cleared, so this drops `staleVaultId` from the subscriber's MCP
+   * connections and resolves a fresh replacement via the normal `resolveVaultIds`
+   * path (provision + race-safe propagation), so the caller can retry once.
+   */
+  async rebindSubscriberVault(params: {
+    agentId: string;
+    environmentId: string;
+    organizationId: string;
+    subscriberMongoId: string;
+    staleVaultId: string;
+    runtimeProvider: IAgentRuntimeProvider;
+  }): Promise<string[]> {
+    const agentMcpServerIds = await this.listAgentMcpServerIds(params, true);
+
+    await this.mcpConnectionRepository.clearSubscriberExternalVaultId({
+      organizationId: params.organizationId,
+      environmentId: params.environmentId,
+      subscriberId: params.subscriberMongoId,
+      agentMcpServerIds,
+      externalVaultId: params.staleVaultId,
+    });
+
+    return this.resolveVaultIds(params);
+  }
+
+  /**
    * Resolve the MCP server list for a session turn.
    *
    * Subscriber OAuth MCPs (e.g. Linear) are not on the shared agent definition;

@@ -32,6 +32,7 @@ function makeMcpConnectionRepo(overrides: Partial<Record<string, sinon.SinonStub
     findSubscriberConnectionsForAgent: sinon.stub().resolves([]),
     setSubscriberExternalVaultIdIfMissing: sinon.stub().resolves(0),
     setConnectionExternalVaultIdIfMissing: sinon.stub().resolves(true),
+    clearSubscriberExternalVaultId: sinon.stub().resolves(0),
     create: sinon.stub().resolves({}),
     findOne: sinon.stub().resolves(null),
     ...overrides,
@@ -100,7 +101,7 @@ describe('AgentMcpSessionService', () => {
     it('returns [] when no OAuth-capable MCPs are enabled and no vault exists', async () => {
       const repo = makeMcpConnectionRepo();
       // No OAuth enablement at all → `findOAuthEnablementsForAgent` returns [] → null.
-      const service = makeService(repo, makeAgentMcpServerRepo([]));
+      const service = makeSessionService(repo, makeAgentMcpServerRepo([]));
       const runtimeProvider = makeRuntimeProvider();
 
       const result = await service.resolveVaultIds({
@@ -117,7 +118,7 @@ describe('AgentMcpSessionService', () => {
 
     it('returns [] when the runtime provider lacks tokenVault capability', async () => {
       const repo = makeMcpConnectionRepo();
-      const service = makeService(repo, makeAgentMcpServerRepo([{ _id: 'ams_1', mcpId: 'linear' }]));
+      const service = makeSessionService(repo, makeAgentMcpServerRepo([{ _id: 'ams_1', mcpId: 'linear' }]));
       const runtimeProvider = makeRuntimeProvider({});
       runtimeProvider.capabilities = { tokenVault: false } as any;
 
@@ -287,6 +288,46 @@ describe('AgentMcpSessionService', () => {
       }
 
       expect(caught?.message).to.equal('boom');
+    });
+  });
+
+  describe('rebindSubscriberVault', () => {
+    it('clears the stale vault id then provisions and adopts a fresh one', async () => {
+      const findStub = sinon.stub();
+      // Post-clear pre-check (null) then anchor recheck (null) — the stale
+      // id is gone, so a brand new vault gets created and propagated.
+      findStub.onFirstCall().resolves(null);
+      findStub.onSecondCall().resolves(null);
+      const existingConnections = [
+        { _id: 'mc_1', _agentMcpServerId: 'ams_1', _subscriberId: SUBSCRIBER_MONGO_ID, auth: {} },
+      ];
+      const repo = makeMcpConnectionRepo({
+        findSubscriberExternalVaultId: findStub,
+        findSubscriberConnectionsForAgent: sinon.stub().resolves(existingConnections),
+        setSubscriberExternalVaultIdIfMissing: sinon.stub().resolves(1),
+      });
+      const enablementRepo = makeAgentMcpServerRepo([{ _id: 'ams_1', mcpId: 'linear' }]);
+      const runtimeProvider = makeRuntimeProvider({
+        createVault: sinon.stub().resolves({ externalVaultId: 'vlt_fresh' }),
+      });
+      const service = makeSessionService(repo, enablementRepo);
+
+      const result = await service.rebindSubscriberVault({
+        agentId: AGENT_ID,
+        environmentId: ENV_ID,
+        organizationId: ORG_ID,
+        subscriberMongoId: SUBSCRIBER_MONGO_ID,
+        staleVaultId: 'vlt_stale',
+        runtimeProvider: runtimeProvider as any,
+      });
+
+      expect(repo.clearSubscriberExternalVaultId.calledOnce).to.equal(true);
+      expect(repo.clearSubscriberExternalVaultId.firstCall.args[0]).to.include({
+        subscriberId: SUBSCRIBER_MONGO_ID,
+        externalVaultId: 'vlt_stale',
+      });
+      expect(runtimeProvider.createVault.calledOnce).to.equal(true);
+      expect(result).to.deep.equal(['vlt_fresh']);
     });
   });
 });
