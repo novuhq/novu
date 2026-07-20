@@ -49,6 +49,15 @@ export function ToolProviderOverrideEditor({ providerId, onValidityChange }: Too
   const schema = getToolProviderOverrideSchema(providerId);
   const primaryKey = getProviderPrimaryContentKey(providerId);
 
+  const serverIssues = useMemo(() => {
+    const controlIssues = step?.issues?.controls ?? {};
+    const prefix = `${PROVIDER_OVERRIDES_FIELD}.${providerId}`;
+
+    return Object.entries(controlIssues)
+      .filter(([key]) => key === prefix || key.startsWith(`${prefix}.`))
+      .flatMap(([, issueList]) => issueList);
+  }, [step?.issues?.controls, providerId]);
+
   const [draft, setDraft] = useState(() =>
     formatOverrideJson((getValues(PROVIDER_OVERRIDES_FIELD) as ToolProviderOverrides | undefined)?.[providerId])
   );
@@ -161,6 +170,12 @@ export function ToolProviderOverrideEditor({ providerId, onValidityChange }: Too
               </div>
             ) : (
               <>
+                {serverIssues.map((issue) => (
+                  <div key={`${issue.issueType}-${issue.message}`} className="flex items-start gap-1 px-1">
+                    <RiErrorWarningLine className="text-destructive mt-0.5 h-3 w-3 shrink-0" />
+                    <span className="text-destructive text-xs">{issue.message}</span>
+                  </div>
+                ))}
                 {schemaWarnings.length > 0 && (
                   <div className="flex items-start gap-1 px-1">
                     <RiErrorWarningLine className="text-warning mt-0.5 h-3 w-3 shrink-0" />

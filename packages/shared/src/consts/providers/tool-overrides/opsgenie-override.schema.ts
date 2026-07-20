@@ -2,7 +2,7 @@ import type { JSONSchemaDto } from '../../../dto/workflows/json-schema-dto';
 
 export const opsgenieOverrideJsonSchema = {
   type: 'object',
-  additionalProperties: true,
+  additionalProperties: false,
   properties: {
     message: {
       type: 'string',
@@ -57,7 +57,7 @@ export const opsgenieOverrideJsonSchema = {
       type: 'array',
       items: {
         type: 'object',
-        additionalProperties: true,
+        additionalProperties: false,
         properties: {
           type: { type: 'string', enum: ['team', 'user', 'escalation', 'schedule'] },
           id: { type: 'string' },
@@ -71,7 +71,7 @@ export const opsgenieOverrideJsonSchema = {
       type: 'array',
       items: {
         type: 'object',
-        additionalProperties: true,
+        additionalProperties: false,
         properties: {
           type: { type: 'string', enum: ['team', 'user'] },
           id: { type: 'string' },

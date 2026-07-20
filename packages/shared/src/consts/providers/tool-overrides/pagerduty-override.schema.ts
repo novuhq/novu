@@ -2,7 +2,7 @@ import type { JSONSchemaDto } from '../../../dto/workflows/json-schema-dto';
 
 export const pagerdutyOverrideJsonSchema = {
   type: 'object',
-  additionalProperties: true,
+  additionalProperties: false,
   properties: {
     summary: {
       type: 'string',
@@ -61,7 +61,7 @@ export const pagerdutyOverrideJsonSchema = {
       type: 'array',
       items: {
         type: 'object',
-        additionalProperties: true,
+        additionalProperties: false,
         properties: {
           href: { type: 'string' },
           text: { type: 'string' },
@@ -73,7 +73,7 @@ export const pagerdutyOverrideJsonSchema = {
       type: 'array',
       items: {
         type: 'object',
-        additionalProperties: true,
+        additionalProperties: false,
         properties: {
           src: { type: 'string' },
           href: { type: 'string' },

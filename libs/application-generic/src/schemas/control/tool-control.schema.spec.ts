@@ -1,6 +1,6 @@
-import { ToolProviderIdEnum } from '@novu/shared';
+import { opsgenieOverrideJsonSchema, pagerdutyOverrideJsonSchema, ToolProviderIdEnum } from '@novu/shared';
 import { describe, expect, it } from 'vitest';
-import { toolControlZodSchema } from './tool-control.schema';
+import { toolControlSchema, toolControlZodSchema } from './tool-control.schema';
 
 describe('toolControlZodSchema', () => {
   it('accepts default tool controls without provider overrides', () => {
@@ -58,5 +58,31 @@ describe('toolControlZodSchema', () => {
     });
 
     expect(result.success).toBe(false);
+  });
+});
+
+describe('toolControlSchema (generated JSON schema)', () => {
+  const getProviderSubschema = (providerId: ToolProviderIdEnum) => {
+    const providerOverrides = toolControlSchema.properties?.providerOverrides as {
+      properties?: Record<string, { properties?: Record<string, unknown>; additionalProperties?: boolean }>;
+    };
+
+    return providerOverrides.properties?.[providerId];
+  };
+
+  it('splices keys-only override subschemas per provider', () => {
+    const pagerduty = getProviderSubschema(ToolProviderIdEnum.PagerDuty);
+    const opsgenie = getProviderSubschema(ToolProviderIdEnum.Opsgenie);
+
+    expect(pagerduty?.additionalProperties).toBe(false);
+    expect(opsgenie?.additionalProperties).toBe(false);
+    expect(Object.keys(pagerduty?.properties ?? {})).toEqual(Object.keys(pagerdutyOverrideJsonSchema.properties));
+    expect(Object.keys(opsgenie?.properties ?? {})).toEqual(Object.keys(opsgenieOverrideJsonSchema.properties));
+  });
+
+  it('keeps override values permissive so Liquid templates pass', () => {
+    const opsgenie = getProviderSubschema(ToolProviderIdEnum.Opsgenie);
+
+    expect(opsgenie?.properties?.priority).toEqual({});
   });
 });

@@ -1,3 +1,4 @@
+import type { JSONSchemaDto } from '../../../dto/workflows/json-schema-dto';
 import { ToolProviderIdEnum } from '../../../types';
 import { opsgenieOverrideJsonSchema } from './opsgenie-override.schema';
 import { pagerdutyOverrideJsonSchema } from './pagerduty-override.schema';
@@ -29,4 +30,21 @@ export function getToolProviderOverrideSchema(providerId: string) {
   }
 
   return undefined;
+}
+
+/**
+ * Derives a schema that is strict on property names but permissive on values,
+ * so Liquid templates (e.g. `"{{payload.priority}}"`) never fail type/enum checks.
+ */
+export function getToolProviderOverrideKeysOnlySchema(providerId: string): JSONSchemaDto | undefined {
+  const schema = getToolProviderOverrideSchema(providerId);
+  if (!schema) {
+    return undefined;
+  }
+
+  return {
+    type: 'object',
+    properties: Object.fromEntries(Object.keys(schema.properties).map((key) => [key, {}])),
+    additionalProperties: false,
+  };
 }
