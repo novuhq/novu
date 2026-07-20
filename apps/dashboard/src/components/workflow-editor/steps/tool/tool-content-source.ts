@@ -7,6 +7,9 @@ import {
   type ToolContentOverrideProviderId,
 } from '@novu/shared';
 
+export type { AnnotatedPreviewLine, MergedToolPreview } from '@novu/shared';
+export { buildAnnotatedPreviewLines, mergeToolProviderPreview } from '@novu/shared';
+
 export const DEFAULT_CONTENT_SOURCE = 'default' as const;
 
 export type ToolContentSource = typeof DEFAULT_CONTENT_SOURCE | ToolContentOverrideProviderId;
@@ -63,23 +66,4 @@ export function getContentSourceLabel(source: ToolContentSource): string {
 
 export function getProviderPrimaryContentKey(providerId: ToolContentOverrideProviderId) {
   return getToolProviderPrimaryContentKey(providerId);
-}
-
-export function mergeToolProviderPreview({
-  body,
-  providerId,
-  override,
-}: {
-  body: string;
-  providerId: ToolContentOverrideProviderId;
-  override: Record<string, unknown> | undefined;
-}): Record<string, unknown> {
-  const primaryKey = getProviderPrimaryContentKey(providerId);
-  const merged: Record<string, unknown> = { ...(override ?? {}) };
-
-  if (merged[primaryKey] === undefined || merged[primaryKey] === '') {
-    merged[primaryKey] = body;
-  }
-
-  return merged;
 }
