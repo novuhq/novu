@@ -1,4 +1,6 @@
 import { opsgenieOverrideJsonSchema, pagerdutyOverrideJsonSchema, ToolProviderIdEnum } from '@novu/shared';
+import Ajv from 'ajv';
+import addFormats from 'ajv-formats';
 import { describe, expect, it } from 'vitest';
 import { toolControlSchema, toolControlZodSchema } from './tool-control.schema';
 
@@ -82,6 +84,48 @@ describe('toolControlSchema (generated JSON schema)', () => {
   it('keeps override values permissive so Liquid templates pass', () => {
     const opsgenie = getProviderSubschema(ToolProviderIdEnum.Opsgenie);
 
-    expect(opsgenie?.properties?.priority).toEqual({});
+    expect(opsgenie?.properties?.priority).toBe(true);
+  });
+
+  it('avoids empty-object property schemas that Mongoose minimize would strip', () => {
+    for (const providerId of [ToolProviderIdEnum.PagerDuty, ToolProviderIdEnum.Opsgenie]) {
+      const subschema = getProviderSubschema(providerId);
+      for (const [key, value] of Object.entries(subschema?.properties ?? {})) {
+        expect(value, `${providerId}.${key}`).not.toEqual({});
+        expect(value, `${providerId}.${key}`).toBe(true);
+      }
+    }
+  });
+
+  it('keeps provider override fields under Ajv removeAdditional: failing', () => {
+    const ajv = new Ajv({ useDefaults: true, removeAdditional: 'failing', strict: false });
+    addFormats(ajv);
+    const validate = ajv.compile(toolControlSchema);
+
+    const controls = {
+      body: 'default text as',
+      providerOverrides: {
+        [ToolProviderIdEnum.Opsgenie]: {
+          alias: 'asd',
+          priority: '{{payload.priority}}',
+        },
+        [ToolProviderIdEnum.PagerDuty]: {
+          summary: '{{subscriber.avatar}}',
+          links: [{ ads: 'asda' }],
+        },
+      },
+    };
+
+    const valid = validate(controls);
+
+    expect(valid).toBe(true);
+    expect(controls.providerOverrides[ToolProviderIdEnum.Opsgenie]).toEqual({
+      alias: 'asd',
+      priority: '{{payload.priority}}',
+    });
+    expect(controls.providerOverrides[ToolProviderIdEnum.PagerDuty]).toEqual({
+      summary: '{{subscriber.avatar}}',
+      links: [{ ads: 'asda' }],
+    });
   });
 });

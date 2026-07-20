@@ -37,6 +37,9 @@ export function getToolProviderOverrideSchema(providerId: string) {
  * Distinct from the full override schemas (used for docs / client value-shape hints),
  * which may also set nested `additionalProperties: false` — those nested rules are not
  * enforced via this helper so Liquid templates never fail type/enum checks.
+ *
+ * Property schemas use boolean `true` (always-valid) rather than `{}` so Mongoose
+ * minimize cannot strip them when controls.schema is persisted as Mixed.
  */
 export function getToolProviderOverrideKeysOnlySchema(providerId: string): JSONSchemaDto | undefined {
   const schema = getToolProviderOverrideSchema(providerId);
@@ -46,7 +49,7 @@ export function getToolProviderOverrideKeysOnlySchema(providerId: string): JSONS
 
   return {
     type: 'object',
-    properties: Object.fromEntries(Object.keys(schema.properties).map((key) => [key, {}])),
+    properties: Object.fromEntries(Object.keys(schema.properties).map((key) => [key, true as const])),
     additionalProperties: false,
   };
 }

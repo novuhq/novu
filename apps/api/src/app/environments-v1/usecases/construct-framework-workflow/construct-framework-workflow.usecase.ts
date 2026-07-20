@@ -8,6 +8,7 @@ import {
   InstrumentUsecase,
   isMatchingJsonSchema,
   PinoLogger,
+  resolveStepControlSchemas,
 } from '@novu/application-generic';
 import {
   CommunityOrganizationRepository,
@@ -333,7 +334,7 @@ export class ConstructFrameworkWorkflow {
               locale,
             }) as Promise<ToolOutputUnvalidated>;
           },
-          this.constructToolStepOptions(staticStep, fullPayloadForRender)
+          this.constructToolStepOptions(staticStep, fullPayloadForRender, dbWorkflow)
         );
       case StepTypeEnum.DIGEST:
         return step.digest(
@@ -405,10 +406,24 @@ export class ConstructFrameworkWorkflow {
   /**
    * Provider resolvers read liquid-compiled overrides from outputs (not controls),
    * because framework provider resolvers receive uncompiled controls.
+   *
+   * Control schema is resolved via the canonical policy helper so dashboard-cloud
+   * tool steps are not validated against a persisted keys-only schema that Mongoose
+   * minimize may have stripped of property entries.
    */
   @Instrument()
-  private constructToolStepOptions(staticStep: NotificationStepEntity, fullPayloadForRender: FullPayloadForRender) {
+  private constructToolStepOptions(
+    staticStep: NotificationStepEntity,
+    fullPayloadForRender: FullPayloadForRender,
+    dbWorkflow: NotificationTemplateEntity
+  ) {
     const channelOptions = this.constructChannelStepOptions(staticStep, fullPayloadForRender);
+    const { schema: controlSchema } = resolveStepControlSchemas({
+      stepType: StepTypeEnum.TOOL,
+      workflowOrigin: dbWorkflow.origin!,
+      existingControls: staticStep.template?.controls,
+      stepResolverHash: staticStep.template?.stepResolverHash,
+    });
 
     const resolveProviderOverride =
       (providerId: ToolContentOverrideProviderId) =>
@@ -421,6 +436,7 @@ export class ConstructFrameworkWorkflow {
 
     return {
       ...channelOptions,
+      controlSchema: controlSchema as unknown as Schema,
       providers,
     } as Required<Parameters<ChannelStep>[2]>;
   }

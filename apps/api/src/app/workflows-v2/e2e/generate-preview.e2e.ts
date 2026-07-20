@@ -20,7 +20,7 @@ import {
   EmailControlType,
 } from '@novu/application-generic';
 import { EnvironmentRepository, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
-import { CronExpressionEnum, RedirectTargetEnum, StepTypeEnum, slugify } from '@novu/shared';
+import { CronExpressionEnum, RedirectTargetEnum, StepTypeEnum, slugify, ToolProviderIdEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { beforeEach } from 'mocha';
@@ -1479,6 +1479,38 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
         .exist;
 
       expect(previewResponseDto.result!.preview).to.deep.equal({ body: 'Hello, World! John' });
+    });
+
+    it('tool: should echo providerOverrides fields in the preview response', async () => {
+      const { stepDatabaseId, workflowId } = await createWorkflowAndReturnId(novuClient, StepTypeEnum.TOOL);
+      const requestDto = {
+        controlValues: {
+          body: 'default text as',
+          providerOverrides: {
+            [ToolProviderIdEnum.Opsgenie]: {
+              alias: 'asd',
+            },
+            [ToolProviderIdEnum.PagerDuty]: {
+              severity: 'warning',
+              links: [{ href: 'https://example.com', text: 'Runbook' }],
+            },
+          },
+        },
+      };
+
+      const previewResponseDto = await generatePreview(novuClient, workflowId, stepDatabaseId, requestDto);
+      const preview = previewResponseDto.result!.preview as {
+        body?: string;
+        providerOverrides?: Record<string, Record<string, unknown>>;
+      };
+
+      expect(previewResponseDto.result!.type).to.equal(StepTypeEnum.TOOL);
+      expect(preview.body).to.equal('default text as');
+      expect(preview.providerOverrides?.[ToolProviderIdEnum.Opsgenie]).to.deep.equal({ alias: 'asd' });
+      expect(preview.providerOverrides?.[ToolProviderIdEnum.PagerDuty]).to.deep.equal({
+        severity: 'warning',
+        links: [{ href: 'https://example.com', text: 'Runbook' }],
+      });
     });
 
     it('email: should match the body in the preview response', async () => {

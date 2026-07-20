@@ -33,7 +33,7 @@ describe('tool provider override schemas', () => {
 
     expect(keysOnlySchema?.additionalProperties).toBe(false);
     expect(Object.keys(keysOnlySchema?.properties ?? {})).toEqual(Object.keys(opsgenieOverrideJsonSchema.properties));
-    expect(keysOnlySchema?.properties?.priority).toEqual({});
+    expect(keysOnlySchema?.properties?.priority).toBe(true);
     expect(getToolProviderOverrideKeysOnlySchema('unknown')).toBeUndefined();
   });
 
