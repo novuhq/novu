@@ -1,11 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { PreferencesEntity, PreferencesRepository } from '@novu/dal';
+import { PreferencesTypeEnum } from '@novu/shared';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
+import { InMemoryLRUCacheService, InMemoryLRUCacheStore } from '../../services/in-memory-lru-cache';
 import { DeletePreferencesCommand } from './delete-preferences.command';
 
 @Injectable()
 export class DeletePreferencesUseCase {
-  constructor(private preferencesRepository: PreferencesRepository) {}
+  constructor(
+    private preferencesRepository: PreferencesRepository,
+    private inMemoryLRUCacheService: InMemoryLRUCacheService
+  ) {}
 
   @InstrumentUsecase()
   public async execute(command: DeletePreferencesCommand): Promise<void> {
@@ -24,6 +29,19 @@ export class DeletePreferencesUseCase {
     }
 
     await this.deletePreferences(command, existingPreference._id);
+
+    // Invalidate the workflow-scoped preference LRU cache so reads right after the
+    // delete don't return the stale tuple for up to the cache TTL.
+    const isWorkflowScoped = [PreferencesTypeEnum.WORKFLOW_RESOURCE, PreferencesTypeEnum.USER_WORKFLOW].includes(
+      command.type
+    );
+
+    if (isWorkflowScoped) {
+      this.inMemoryLRUCacheService.invalidate(
+        InMemoryLRUCacheStore.WORKFLOW_PREFERENCES,
+        `${command.environmentId}:${command.templateId}`
+      );
+    }
   }
 
   @Instrument()

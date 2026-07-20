@@ -15,6 +15,7 @@ import {
 import { FilterQuery } from 'mongoose';
 import { Instrument } from '../../instrumentation';
 import { FeatureFlagsService } from '../../services/feature-flags/feature-flags.service';
+import { InMemoryLRUCacheService, InMemoryLRUCacheStore } from '../../services/in-memory-lru-cache';
 import { deepMerge } from '../../utils';
 import { UpsertSubscriberGlobalPreferencesCommand } from './upsert-subscriber-global-preferences.command';
 import { UpsertSubscriberWorkflowPreferencesCommand } from './upsert-subscriber-workflow-preferences.command';
@@ -45,7 +46,8 @@ type UpsertPreferencesCommand = Omit<
 export class UpsertPreferences {
   constructor(
     private preferencesRepository: PreferencesRepository,
-    private featureFlagsService: FeatureFlagsService
+    private featureFlagsService: FeatureFlagsService,
+    private inMemoryLRUCacheService: InMemoryLRUCacheService
   ) {}
 
   @Instrument()
@@ -156,11 +158,28 @@ export class UpsertPreferences {
   private async upsert(command: UpsertPreferencesCommand): Promise<PreferencesEntity | undefined> {
     const foundPreference = await this.getPreference(command);
 
-    if (foundPreference) {
-      return this.updatePreferences(foundPreference, command);
-    }
+    const result = foundPreference
+      ? await this.updatePreferences(foundPreference, command)
+      : await this.createPreferences(command);
 
-    return this.createPreferences(command);
+    this.invalidateWorkflowPreferencesCache(command);
+
+    return result;
+  }
+
+  // Invalidate the workflow-scoped preference LRU cache so reads right after the
+  // write don't return the stale tuple for up to the cache TTL.
+  private invalidateWorkflowPreferencesCache(command: UpsertPreferencesCommand): void {
+    const isWorkflowScoped = [PreferencesTypeEnum.WORKFLOW_RESOURCE, PreferencesTypeEnum.USER_WORKFLOW].includes(
+      command.type
+    );
+
+    if (isWorkflowScoped && command.templateId) {
+      this.inMemoryLRUCacheService.invalidate(
+        InMemoryLRUCacheStore.WORKFLOW_PREFERENCES,
+        `${command.environmentId}:${command.templateId}`
+      );
+    }
   }
 
   private async createPreferences(command: UpsertPreferencesCommand): Promise<PreferencesEntity> {
