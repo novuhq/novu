@@ -52,6 +52,33 @@ describe('processControlValuesBySchema', () => {
 
       expect(issues.controls).toBeUndefined();
     });
+
+    it('flags unsupported override keys that previously slipped past a permissive stored schema', () => {
+      const issues = processControlValuesBySchema({
+        controlSchema: toolControlSchema as unknown as JSONSchemaDto,
+        controlValues: {
+          body: 'default text',
+          providerOverrides: {
+            [ToolProviderIdEnum.Opsgenie]: {
+              adaa: 'asd',
+            },
+            [ToolProviderIdEnum.PagerDuty]: {
+              summary: '{{subscriber.avatar}}',
+            },
+          },
+        },
+        stepType: StepTypeEnum.TOOL,
+      });
+
+      const path = `providerOverrides.${ToolProviderIdEnum.Opsgenie}.adaa`;
+      expect(issues.controls?.[path]).toEqual([
+        {
+          message: '"adaa" is not a supported property',
+          issueType: ContentIssueEnum.UNSUPPORTED_PROPERTY,
+          variableName: path,
+        },
+      ]);
+    });
   });
 
   it('maps additionalProperties failures to UNSUPPORTED_PROPERTY for any strict schema', () => {

@@ -1,6 +1,6 @@
 import { ControlSchemas, JSONSchemaEntity } from '@novu/dal';
 import { ActionStepEnum, ChannelStepEnum } from '@novu/framework/internal';
-import { httpRequestControlSchema, httpRequestUiSchema } from '@novu/shared';
+import { httpRequestControlSchema, httpRequestUiSchema, ResourceOriginEnum, StepTypeEnum } from '@novu/shared';
 import {
   chatControlSchema,
   chatUiSchema,
@@ -21,6 +21,7 @@ import {
   toolControlSchema,
   toolUiSchema,
 } from '../schemas/control';
+import { isStepResolverActive } from './step-resolver-control-state';
 
 export const PERMISSIVE_EMPTY_SCHEMA = {
   type: 'object',
@@ -78,3 +79,32 @@ const stepTypeToControlSchemaMap: Record<ControlSchemaStepType, ControlSchemas> 
 };
 
 export const stepTypeToControlSchema = stepTypeToControlSchemaMap as Record<ControlSchemaStepType, ControlSchemas>;
+
+function isDashboardCloudOrigin(workflowOrigin: ResourceOriginEnum): boolean {
+  return workflowOrigin === ResourceOriginEnum.NOVU_CLOUD || workflowOrigin === ResourceOriginEnum.NOVU_CLOUD_V1;
+}
+
+/**
+ * Dashboard cloud steps must validate/persist against the current canonical control
+ * schema so product schema changes (e.g. tool providerOverrides keys-only) take effect.
+ * Code-first / step-resolver steps keep their discovered or stored schema.
+ */
+export function resolveStepControlSchemas({
+  stepType,
+  workflowOrigin,
+  existingControls,
+  stepResolverHash,
+}: {
+  stepType: StepTypeEnum | ControlSchemaStepType;
+  workflowOrigin: ResourceOriginEnum;
+  existingControls?: ControlSchemas | null;
+  stepResolverHash?: string;
+}): ControlSchemas {
+  const canonical = stepTypeToControlSchema[stepType as ControlSchemaStepType];
+
+  if (isDashboardCloudOrigin(workflowOrigin) && !isStepResolverActive(stepResolverHash)) {
+    return canonical ?? existingControls ?? { schema: PERMISSIVE_EMPTY_SCHEMA };
+  }
+
+  return existingControls || canonical || { schema: PERMISSIVE_EMPTY_SCHEMA };
+}

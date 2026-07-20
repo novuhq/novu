@@ -16,19 +16,25 @@ import {
 import {
   ChannelTypeEnum,
   IntegrationIssueEnum,
+  ResourceOriginEnum,
   STEP_TYPE_TO_CHANNEL_TYPE,
   StepTypeEnum,
   UserSessionData,
 } from '@novu/shared';
 import { merge } from 'es-toolkit/compat';
 import { PinoLogger } from 'nestjs-pino';
+import { JSONSchemaDto } from '../../dtos/json-schema.dto';
 import { StepIssuesDto } from '../../dtos/step-issues.dto';
 import { StepResponseDto } from '../../dtos/workflow/step.response.dto';
 import { WorkflowResponseDto } from '../../dtos/workflow/workflow-response.dto';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { WorkflowDataContainer } from '../../services/workflow-data.container';
 import { generatePayloadExample } from '../../utils/generate-payload-example';
+import { processControlValuesBySchema } from '../../utils/issues';
 import { toResponseWorkflowDto } from '../../utils/notification-template-mapper';
+import { dashboardSanitizeControlValues } from '../../utils/sanitize-control-values';
+import { isStepResolverActive } from '../../utils/step-resolver-control-state';
+import { stepTypeToControlSchema } from '../../utils/step-type-to-control.mapper';
 import { BuildStepDataCommand, BuildStepDataUsecase } from '../build-step-data';
 import { GetWorkflowWithPreferencesCommand, GetWorkflowWithPreferencesUseCase } from '../get-workflow-with-preferences';
 import { GetWorkflowCommand } from './get-workflow.command';
@@ -179,8 +185,9 @@ export class GetWorkflowUseCase {
         step.template?.type as StepTypeEnum,
         availableIntegrations
       );
+      const freshControlSchemaIssues = this.getFreshControlSchemaIssues(stepResponse, workflow);
 
-      const combinedIssues = merge(stepResponse.issues || {}, runtimeIntegrationIssues);
+      const combinedIssues = merge(stepResponse.issues || {}, freshControlSchemaIssues, runtimeIntegrationIssues);
 
       return {
         ...stepResponse,
@@ -198,6 +205,49 @@ export class GetWorkflowUseCase {
         error: error instanceof Error ? error.message : 'Unknown error',
       });
     }
+  }
+
+  /**
+   * Dashboard tool steps may still carry a stale permissive control schema from before
+   * keys-only providerOverrides validation. Re-validate against the canonical schema on
+   * read so canvas / issues UI shows errors without requiring a re-save.
+   */
+  @Instrument()
+  private getFreshControlSchemaIssues(
+    stepResponse: StepResponseDto,
+    workflow: NotificationTemplateEntity
+  ): StepIssuesDto {
+    if (stepResponse.type !== StepTypeEnum.TOOL) {
+      return {};
+    }
+
+    const workflowOrigin = workflow.origin;
+    const isDashboardCloudOrigin =
+      workflowOrigin === ResourceOriginEnum.NOVU_CLOUD || workflowOrigin === ResourceOriginEnum.NOVU_CLOUD_V1;
+
+    if (!isDashboardCloudOrigin || isStepResolverActive(stepResponse.stepResolverHash)) {
+      return {};
+    }
+
+    const controlSchema = stepTypeToControlSchema[StepTypeEnum.TOOL]?.schema;
+    if (!controlSchema) {
+      return {};
+    }
+
+    const rawControlValues = (stepResponse.controlValues ?? stepResponse.controls?.values ?? {}) as Record<
+      string,
+      unknown
+    >;
+    // Match BuildStepIssuesUsecase: drop removed controls (e.g. enabledIntegrations)
+    // before validating against the current canonical schema.
+    const sanitizedControlValues =
+      dashboardSanitizeControlValues(this.logger, rawControlValues, StepTypeEnum.TOOL) || {};
+
+    return processControlValuesBySchema({
+      controlSchema: controlSchema as unknown as JSONSchemaDto,
+      controlValues: sanitizedControlValues,
+      stepType: StepTypeEnum.TOOL,
+    });
   }
 
   @Instrument()

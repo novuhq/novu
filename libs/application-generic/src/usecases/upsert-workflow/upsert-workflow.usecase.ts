@@ -30,9 +30,9 @@ import { AnalyticsService } from '../../services';
 import {
   computeWorkflowStatus,
   removeBrandingFromHtml,
+  resolveStepControlSchemas,
   shortId,
   slugifyOrRandom,
-  stepTypeToControlSchema,
 } from '../../utils';
 import { isStringifiedMailyJSONContent } from '../../utils/maily-utils';
 import { isStepResolverActive } from '../../utils/step-resolver-control-state';
@@ -258,9 +258,12 @@ export class UpsertWorkflowUseCase {
         const existingStep: NotificationStepEntity | null | undefined =
           '_id' in step ? existingWorkflow?.steps.find((s) => !!step._id && s._templateId === step._id) : null;
 
-        const controlSchemaKey = step.type;
-        const controlSchemas: ControlSchemas =
-          existingStep?.template?.controls || stepTypeToControlSchema[controlSchemaKey];
+        const controlSchemas: ControlSchemas = resolveStepControlSchemas({
+          stepType: step.type,
+          workflowOrigin,
+          existingControls: existingStep?.template?.controls,
+          stepResolverHash: existingStep?.template?.stepResolverHash,
+        });
         const issues: StepIssuesDto = await this.buildStepIssuesUsecase.execute({
           workflowOrigin,
           user,
