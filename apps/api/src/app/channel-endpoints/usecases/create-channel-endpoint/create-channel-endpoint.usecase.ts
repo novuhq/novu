@@ -57,6 +57,8 @@ function deriveLinkedPlatformUser(
     case ENDPOINT_TYPES.WEBEX_ROOM:
     case ENDPOINT_TYPES.WEBEX_PERSON:
     case ENDPOINT_TYPES.LINE_USER:
+    case ENDPOINT_TYPES.OPSGENIE_INTEGRATION:
+    case ENDPOINT_TYPES.PAGERDUTY_SERVICE:
       return null;
     default: {
       const exhaustiveCheck: never = type;
