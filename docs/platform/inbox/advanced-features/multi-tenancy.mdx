@@ -57,7 +57,7 @@ You can also manage all tenant contexts centrally from the Novu dashboard or API
 
 Once you’ve defined your tenant context, you can use it when triggering workflows. During a workflow trigger, Novu first checks if that context already exists.
 
-If not, Novu automatically creates it. If it exists and you pass a `data` object inline, Novu updates the stored tenant metadata—similar to subscriber upsert. If you pass only the tenant identifier as a string, Novu reuses the existing record without modifying `data`.
+If not, Novu automatically creates it. If it exists and you pass a `data` object inline, Novu updates the stored tenant metadata - similar to subscriber upsert. If you pass only the tenant identifier as a string, Novu reuses the existing record without modifying `data`.
 
 Inbox initialization always finds or creates contexts but never updates existing `data`.
 

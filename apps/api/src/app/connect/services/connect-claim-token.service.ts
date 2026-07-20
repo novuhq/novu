@@ -1,54 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { CacheService, PinoLogger } from '@novu/application-generic';
 import { isConnectClaimTokenFormat } from '@novu/shared';
-import { mintAutolinkSafeOpaqueToken } from '../../shared/helpers';
+
+import { SingleUseTokenCache } from '../../shared/services/single-use-link-token.service';
 
 export const CONNECT_CLAIM_TOKEN_TTL_SECONDS = 7 * 24 * 60 * 60;
 
-const CACHE_KEY_PREFIX = 'connect_claim_link:';
-const USED_KEY_PREFIX = 'connect_claim_link_used:';
 const ENV_TOKEN_KEY_PREFIX = 'connect_claim_link_env:';
 const CTA_POSTED_KEY_PREFIX = 'connect_claim_cta_posted:';
 const CLAIM_LOCK_KEY_PREFIX = 'connect_claim_link_lock:';
 
 const CLAIM_LOCK_TTL_SECONDS = 60;
 
-/** Wrap token in `{…}` so storage + used-marker keys share a Redis Cluster hash slot. */
-function clusterSlotTag(token: string): string {
-  return `{${token}}`;
-}
-
-/**
- * Atomically GETDEL the payload and set the used-marker with matching TTL.
- * Returns '' (missing), 'U' (already used), 'I' (corrupt payload), or 'M' + JSON body.
- */
-const CLAIM_ATOMIC_SCRIPT = `
-local raw = redis.call('GETDEL', KEYS[1])
-if not raw then
-  if redis.call('GET', KEYS[2]) then
-    return 'U'
-  end
-  return ''
-end
-local ok, parsed = pcall(cjson.decode, raw)
-if not ok or not parsed.expiresAt or not parsed.payload then
-  return 'I'
-end
-local now = tonumber(ARGV[1])
-local ttl = parsed.expiresAt - now
-if ttl < 1 then ttl = 1 end
-redis.call('SET', KEYS[2], '1', 'EX', ttl)
-return 'M' .. raw
-`;
-
 export interface ConnectClaimTokenPayload {
   env: string;
   org: string;
-}
-
-interface StoredEntry {
-  payload: ConnectClaimTokenPayload;
-  expiresAt: number;
 }
 
 export interface IssuedConnectClaimToken {
@@ -75,26 +41,27 @@ export class ConnectClaimTokenCacheUnavailableError extends Error {
 
 @Injectable()
 export class ConnectClaimTokenService {
+  private readonly tokens: SingleUseTokenCache<ConnectClaimTokenPayload>;
+
   constructor(
     private readonly cacheService: CacheService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
+    this.tokens = new SingleUseTokenCache<ConnectClaimTokenPayload>({
+      cacheService,
+      logger,
+      scope: 'connect claim token',
+      keyPrefix: 'connect_claim_link:',
+      usedKeyPrefix: 'connect_claim_link_used:',
+      ttlSeconds: CONNECT_CLAIM_TOKEN_TTL_SECONDS,
+      isValidTokenFormat: (token) => typeof token === 'string' && isConnectClaimTokenFormat(token),
+      createCacheUnavailableError: (operation, cause) => new ConnectClaimTokenCacheUnavailableError(operation, cause),
+    });
   }
 
   async issue(payload: ConnectClaimTokenPayload): Promise<IssuedConnectClaimToken> {
-    this.assertCacheAvailable('issue');
-
-    const token = mintAutolinkSafeOpaqueToken();
-    const mintedAt = Math.floor(Date.now() / 1000);
-    const expiresAtEpoch = mintedAt + CONNECT_CLAIM_TOKEN_TTL_SECONDS;
-    const entry: StoredEntry = { payload, expiresAt: expiresAtEpoch };
-
-    await this.cacheService.set(this.storageKey(token), JSON.stringify(entry), {
-      ttl: CONNECT_CLAIM_TOKEN_TTL_SECONDS,
-    });
-
-    return { token, expiresAt: new Date(expiresAtEpoch * 1000).toISOString() };
+    return this.tokens.issue(payload);
   }
 
   async issueOrGetForEnvironment(payload: ConnectClaimTokenPayload): Promise<IssuedConnectClaimToken> {
@@ -103,7 +70,7 @@ export class ConnectClaimTokenService {
     const envKey = `${ENV_TOKEN_KEY_PREFIX}{${payload.env}}`;
     const existingToken = await this.cacheService.get(envKey);
 
-    if (existingToken && this.isTokenFormatValid(existingToken)) {
+    if (existingToken && isConnectClaimTokenFormat(existingToken)) {
       const reused = await this.readIssuedToken(existingToken, payload);
 
       if (reused) {
@@ -140,137 +107,90 @@ export class ConnectClaimTokenService {
   async tryAcquireClaimLock(token: string): Promise<boolean> {
     this.assertCacheAvailable('tryAcquireClaimLock');
 
-    if (!this.isTokenFormatValid(token)) {
+    if (!isConnectClaimTokenFormat(token)) {
       return false;
     }
 
-    const key = `${CLAIM_LOCK_KEY_PREFIX}${clusterSlotTag(token)}`;
+    const key = `${CLAIM_LOCK_KEY_PREFIX}{${token}}`;
     const acquired = await this.cacheService.setIfNotExist(key, '1', { ttl: CLAIM_LOCK_TTL_SECONDS });
 
     return acquired === 'OK';
   }
 
   async releaseClaimLock(token: string): Promise<void> {
-    if (!this.cacheService.cacheEnabled() || !this.isTokenFormatValid(token)) {
+    if (!this.cacheService.cacheEnabled() || !isConnectClaimTokenFormat(token)) {
       return;
     }
 
-    await this.cacheService.del(`${CLAIM_LOCK_KEY_PREFIX}${clusterSlotTag(token)}`);
+    await this.cacheService.del(`${CLAIM_LOCK_KEY_PREFIX}{${token}}`);
   }
 
   async verify(token: string): Promise<ConnectClaimTokenPayload> {
     this.assertCacheAvailable('verify');
 
-    if (!this.isTokenFormatValid(token)) {
-      throw new InvalidConnectClaimTokenError('invalid');
-    }
+    const outcome = await this.tokens.peek(token);
 
-    let used: string | null | undefined;
-    try {
-      used = await this.cacheService.get(this.usedKey(token));
-    } catch (err) {
-      throw new ConnectClaimTokenCacheUnavailableError('verify', err);
+    switch (outcome.status) {
+      case 'active':
+        return this.validatePayload(outcome.entry.payload);
+      case 'used':
+        throw new InvalidConnectClaimTokenError('used');
+      case 'missing':
+        throw new InvalidConnectClaimTokenError('expired');
+      case 'corrupt':
+      case 'malformed-token':
+        throw new InvalidConnectClaimTokenError('invalid');
+      default: {
+        const exhaustive: never = outcome;
+        throw new Error(`Unhandled peek outcome: ${exhaustive}`);
+      }
     }
-    if (used != null) {
-      throw new InvalidConnectClaimTokenError('used');
-    }
-
-    let raw: string | null | undefined;
-    try {
-      raw = await this.cacheService.get(this.storageKey(token));
-    } catch (err) {
-      throw new ConnectClaimTokenCacheUnavailableError('verify', err);
-    }
-    if (!raw) {
-      throw new InvalidConnectClaimTokenError('expired');
-    }
-
-    const entry = this.parseEntry(raw);
-    if (!entry || !entry.payload.env || !entry.payload.org) {
-      throw new InvalidConnectClaimTokenError('invalid');
-    }
-
-    return entry.payload;
   }
 
   async claim(token: string): Promise<ConnectClaimTokenPayload> {
-    this.assertCacheAvailable('claim');
+    const outcome = await this.tokens.claim(token);
 
-    if (!this.isTokenFormatValid(token)) {
-      throw new InvalidConnectClaimTokenError('invalid');
+    switch (outcome.status) {
+      case 'claimed':
+        return this.validatePayload(outcome.entry.payload);
+      case 'used':
+        throw new InvalidConnectClaimTokenError('used');
+      case 'missing':
+        throw new InvalidConnectClaimTokenError('expired');
+      case 'corrupt':
+      case 'kind-mismatch':
+      case 'malformed-token':
+        throw new InvalidConnectClaimTokenError('invalid');
+      default: {
+        const exhaustive: never = outcome;
+        throw new Error(`Unhandled claim outcome: ${exhaustive}`);
+      }
     }
-
-    let raw: string;
-    try {
-      raw = await this.cacheService.eval<string>(
-        CLAIM_ATOMIC_SCRIPT,
-        [this.storageKey(token), this.usedKey(token)],
-        [Math.floor(Date.now() / 1000)]
-      );
-    } catch (err) {
-      throw new ConnectClaimTokenCacheUnavailableError('claim', err);
-    }
-
-    if (raw === 'U') {
-      throw new InvalidConnectClaimTokenError('used');
-    }
-
-    if (raw === 'I') {
-      throw new InvalidConnectClaimTokenError('invalid');
-    }
-
-    if (!raw) {
-      throw new InvalidConnectClaimTokenError('expired');
-    }
-
-    if (raw.charAt(0) !== 'M') {
-      throw new InvalidConnectClaimTokenError('invalid');
-    }
-
-    const entry = this.parseEntry(raw.slice(1));
-    if (!entry || !entry.payload.env || !entry.payload.org) {
-      throw new InvalidConnectClaimTokenError('invalid');
-    }
-
-    return entry.payload;
   }
 
-  private parseEntry(raw: string): StoredEntry | null {
-    try {
-      const parsed = JSON.parse(raw) as Partial<StoredEntry>;
-      if (!parsed?.payload || typeof parsed.expiresAt !== 'number') {
-        return null;
-      }
-
-      return { payload: parsed.payload as ConnectClaimTokenPayload, expiresAt: parsed.expiresAt };
-    } catch {
-      return null;
+  private validatePayload(payload: ConnectClaimTokenPayload): ConnectClaimTokenPayload {
+    if (!payload.env || !payload.org) {
+      throw new InvalidConnectClaimTokenError('invalid');
     }
+
+    return payload;
   }
 
   private async readIssuedToken(
     token: string,
     expectedPayload: ConnectClaimTokenPayload
   ): Promise<IssuedConnectClaimToken | null> {
-    const raw = await this.cacheService.get(this.storageKey(token));
-    if (!raw) {
+    const outcome = await this.tokens.peek(token);
+    if (outcome.status !== 'active') {
       return null;
     }
 
-    const entry = this.parseEntry(raw);
-    if (
-      !entry ||
-      entry.payload.env !== expectedPayload.env ||
-      entry.payload.org !== expectedPayload.org
-    ) {
+    const { payload, expiresAt } = outcome.entry;
+    if (payload.env !== expectedPayload.env || payload.org !== expectedPayload.org) {
       return null;
     }
 
-    return { token, expiresAt: new Date(entry.expiresAt * 1000).toISOString() };
-  }
-
-  private isTokenFormatValid(token: string): boolean {
-    return typeof token === 'string' && isConnectClaimTokenFormat(token);
+    return { token, expiresAt: new Date(expiresAt * 1000).toISOString() };
   }
 
   private assertCacheAvailable(operation: string): void {
@@ -279,13 +199,5 @@ export class ConnectClaimTokenService {
 
       throw new ConnectClaimTokenCacheUnavailableError(operation);
     }
-  }
-
-  private storageKey(token: string): string {
-    return `${CACHE_KEY_PREFIX}${clusterSlotTag(token)}`;
-  }
-
-  private usedKey(token: string): string {
-    return `${USED_KEY_PREFIX}${clusterSlotTag(token)}`;
   }
 }

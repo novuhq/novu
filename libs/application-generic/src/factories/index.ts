@@ -6,3 +6,5 @@ export * from './push/interfaces/push.handler.interface';
 export * from './push/push.factory';
 export * from './sms/interfaces';
 export * from './sms/sms.factory';
+export * from './tool/interfaces';
+export * from './tool/tool.factory';

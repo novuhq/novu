@@ -12,6 +12,7 @@ import {
   createWebhookEndpoint,
   setupChannelTests,
 } from '../../channel-connections/e2e/helpers/channel-helpers';
+import { createOpsgenieIntegration, VALID_OPSGENIE_API_KEY } from './helpers/opsgenie-helpers';
 
 const integrationRepository = new IntegrationRepository();
 
@@ -155,5 +156,31 @@ describe('List Channel Endpoints - /channel-endpoints (GET) #novu-v2', () => {
 
     expect(result.data).to.be.an('array');
     expect(result.totalCount).to.equal(0);
+  });
+
+  it('should hydrate opsgenie endpoints with the wire shape from their connections', async () => {
+    const integration = await createOpsgenieIntegration(session);
+    const subscribersService = createSubscribersService(session);
+    const subscriber = await subscribersService.createSubscriber();
+
+    const createRes = await session.testAgent.post('/v1/channel-endpoints').send({
+      integrationIdentifier: integration.identifier,
+      subscriberId: subscriber.subscriberId,
+      type: ENDPOINT_TYPES.OPSGENIE_INTEGRATION,
+      endpoint: { apiKey: VALID_OPSGENIE_API_KEY, region: 'eu' },
+    });
+    expect(createRes.status).to.equal(201);
+
+    const listRes = await session.testAgent.get('/v1/channel-endpoints').query({
+      subscriberId: subscriber.subscriberId,
+    });
+
+    expect(listRes.status).to.equal(200);
+    const opsgenieEndpoint = listRes.body.data.find(
+      (endpoint: { type: string }) => endpoint.type === ENDPOINT_TYPES.OPSGENIE_INTEGRATION
+    );
+    expect(opsgenieEndpoint).to.exist;
+    expect(opsgenieEndpoint.endpoint.apiKey).to.equal(VALID_OPSGENIE_API_KEY);
+    expect(opsgenieEndpoint.endpoint.region).to.equal('eu');
   });
 });

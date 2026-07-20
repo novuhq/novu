@@ -1,6 +1,39 @@
 import { randomUUID } from 'node:crypto';
 import { ChatProviderIdEnum, type ICredentials } from '@novu/shared';
 
+/**
+ * Novu's Meta Tech Provider credentials for Embedded Signup.
+ * Requires app id/secret (server token exchange) and config id (browser FB.login).
+ */
+export function getNovuWhatsAppPlatformConfig(): { appId: string; appSecret: string } | undefined {
+  const appId = process.env.NOVU_WHATSAPP_APP_ID?.trim();
+  const appSecret = process.env.NOVU_WHATSAPP_APP_SECRET?.trim();
+  const configId = process.env.NOVU_WHATSAPP_CONFIG_ID?.trim();
+
+  if (!appId || !appSecret || !configId) {
+    return undefined;
+  }
+
+  return { appId, appSecret };
+}
+
+/**
+ * Credentials required for sending: access token, phone number ID, and WABA ID.
+ * The verify `token` is auto-generated at integration creation, and the app
+ * secret is resolved from platform env for Novu-managed integrations, so
+ * neither counts toward "signup complete". Mirrors the dashboard's
+ * `hasWhatsAppUserCredentials` for the managed case.
+ */
+export function hasWhatsAppSendCredentials(credentials: ICredentials): boolean {
+  const requiredKeys = ['apiToken', 'phoneNumberIdentification', 'businessAccountId'] as const;
+
+  return requiredKeys.every((key) => {
+    const value = credentials[key];
+
+    return typeof value === 'string' && value.trim().length > 0;
+  });
+}
+
 export function resolveWhatsAppAppSecret(credentials: ICredentials): string | undefined {
   if (credentials.isNovuManaged === true) {
     const platformSecret = process.env.NOVU_WHATSAPP_APP_SECRET?.trim();

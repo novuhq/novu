@@ -131,6 +131,21 @@ export type Phase =
       agentDetailsUrl: string;
       resolve: () => void;
     }
+  | { kind: 'adding-whatsapp' }
+  | {
+      kind: 'whatsapp-signup-ready';
+      signupUrl: string;
+      /** Resolves when the user hits Enter — the pipeline then runs `open()`. */
+      resolve: () => void;
+    }
+  | { kind: 'whatsapp-signup-waiting'; signupUrl: string }
+  | {
+      kind: 'whatsapp-test';
+      waMeUrl?: string;
+      /** Pre-rendered ASCII QR for the wa.me deep link. */
+      waMeQr?: string;
+      displayPhoneNumber?: string;
+    }
   | { kind: 'adding-slack' }
   | {
       kind: 'paste-slack-token';

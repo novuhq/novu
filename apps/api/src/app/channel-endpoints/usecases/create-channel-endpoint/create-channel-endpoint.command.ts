@@ -25,6 +25,10 @@ export class CreateChannelEndpointCommand<
   subscriberId: string;
 
   @IsOptional()
+  @IsBoolean()
+  createSubscriberIfMissing?: boolean;
+
+  @IsOptional()
   @IsValidContextPayload({ maxCount: 5 })
   context?: ContextPayload;
 
@@ -69,6 +73,7 @@ export class CreateChannelEndpointCommand<
     integrationIdentifier: string;
     connectionIdentifier?: string;
     subscriberId: string;
+    createSubscriberIfMissing?: boolean;
     context?: ContextPayload;
     contextKeys?: string[];
     type: T;
