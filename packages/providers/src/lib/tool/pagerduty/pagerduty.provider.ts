@@ -28,8 +28,12 @@ const DEFAULT_SOURCE = 'novu';
 // PagerDuty enforces a 1024-character limit on payload.summary.
 const SUMMARY_MAX_LENGTH = 1024;
 
-/** Keys mapped to documented Events API v2 positions — never folded into custom_details. */
-const RESERVED_OVERRIDE_KEYS = new Set([
+const PAYLOAD_OPTIONAL_STRING_FIELDS = ['timestamp', 'component', 'group', 'class'] as const;
+const ROOT_OPTIONAL_STRING_FIELDS = ['client', 'client_url'] as const;
+const ROOT_OPTIONAL_ARRAY_FIELDS = ['links', 'images'] as const;
+
+/** Derived from mapped field lists so reserved keys cannot drift from routing. */
+const RESERVED_OVERRIDE_KEYS = new Set<string>([
   'content',
   'summary',
   'source',
@@ -38,18 +42,36 @@ const RESERVED_OVERRIDE_KEYS = new Set([
   'dedup_key',
   'custom_details',
   'routing_key',
-  'timestamp',
-  'component',
-  'group',
-  'class',
-  'client',
-  'client_url',
-  'links',
-  'images',
+  ...PAYLOAD_OPTIONAL_STRING_FIELDS,
+  ...ROOT_OPTIONAL_STRING_FIELDS,
+  ...ROOT_OPTIONAL_ARRAY_FIELDS,
 ]);
 
-const PAYLOAD_OPTIONAL_STRING_FIELDS = ['timestamp', 'component', 'group', 'class'] as const;
-const ROOT_OPTIONAL_STRING_FIELDS = ['client', 'client_url'] as const;
+function assignNonEmptyStringFields(
+  target: Record<string, unknown>,
+  source: Record<string, unknown>,
+  fields: readonly string[]
+) {
+  for (const field of fields) {
+    const value = source[field];
+    if (typeof value === 'string' && value.length > 0) {
+      target[field] = value;
+    }
+  }
+}
+
+function assignArrayFields(
+  target: Record<string, unknown>,
+  source: Record<string, unknown>,
+  fields: readonly string[]
+) {
+  for (const field of fields) {
+    const value = source[field];
+    if (Array.isArray(value)) {
+      target[field] = value;
+    }
+  }
+}
 
 export class PagerDutyProvider extends BaseProvider implements IToolProvider {
   protected casing: CasingEnum = CasingEnum.SNAKE_CASE;
@@ -82,13 +104,7 @@ export class PagerDutyProvider extends BaseProvider implements IToolProvider {
       source,
       severity,
     };
-
-    for (const field of PAYLOAD_OPTIONAL_STRING_FIELDS) {
-      const value = overrides[field];
-      if (typeof value === 'string' && value.length > 0) {
-        eventPayload[field] = value;
-      }
-    }
+    assignNonEmptyStringFields(eventPayload, overrides, PAYLOAD_OPTIONAL_STRING_FIELDS);
 
     if (Object.keys(customDetails).length > 0) {
       eventPayload.custom_details = customDetails;
@@ -100,21 +116,8 @@ export class PagerDutyProvider extends BaseProvider implements IToolProvider {
       ...(dedupKey ? { dedup_key: dedupKey } : {}),
       payload: eventPayload,
     };
-
-    for (const field of ROOT_OPTIONAL_STRING_FIELDS) {
-      const value = overrides[field];
-      if (typeof value === 'string' && value.length > 0) {
-        body[field] = value;
-      }
-    }
-
-    if (Array.isArray(overrides.links)) {
-      body.links = overrides.links;
-    }
-
-    if (Array.isArray(overrides.images)) {
-      body.images = overrides.images;
-    }
+    assignNonEmptyStringFields(body, overrides, ROOT_OPTIONAL_STRING_FIELDS);
+    assignArrayFields(body, overrides, ROOT_OPTIONAL_ARRAY_FIELDS);
 
     // PagerDuty Events API v2 authenticates via routing_key in the body; passthrough headers are not used.
     const response = await safeOutboundJsonRequest<{ dedup_key?: string; message?: string; status?: string }>({
