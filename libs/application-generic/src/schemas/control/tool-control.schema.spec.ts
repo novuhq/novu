@@ -14,7 +14,6 @@ describe('toolControlZodSchema', () => {
   it('accepts optional providerOverrides keyed by providerId', () => {
     const result = toolControlZodSchema.safeParse({
       body: 'MemoryDB alert',
-      enabledIntegrations: ['pd-prod'],
       providerOverrides: {
         [ToolProviderIdEnum.PagerDuty]: {
           severity: 'warning',

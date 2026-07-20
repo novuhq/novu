@@ -4,34 +4,8 @@ import { ENDPOINT_TYPES } from '@novu/stateless';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { SendMessageChannelCommand } from './send-message-channel.command';
-import {
-  filterToolIntegrationsByEnabledIdentifiers,
-  isEndpointRoutedToolProvider,
-  SendMessageTool,
-} from './send-message-tool.usecase';
+import { isEndpointRoutedToolProvider, SendMessageTool } from './send-message-tool.usecase';
 import { SendMessageStatus } from './send-message-type.usecase';
-
-describe('SendMessageTool - enabledIntegrations filter', () => {
-  const integrations = [
-    { identifier: 'pagerduty-main', providerId: 'pagerduty' },
-    { identifier: 'webhook-alerts', providerId: 'tool-webhook' },
-    { identifier: 'opsgenie-secondary', providerId: 'opsgenie' },
-  ];
-
-  it('returns all integrations when enabledIntegrations is empty or undefined', () => {
-    expect(filterToolIntegrationsByEnabledIdentifiers(integrations, undefined)).to.deep.equal(integrations);
-    expect(filterToolIntegrationsByEnabledIdentifiers(integrations, [])).to.deep.equal(integrations);
-  });
-
-  it('filters integrations by step enabledIntegrations identifiers', () => {
-    const filtered = filterToolIntegrationsByEnabledIdentifiers(integrations, ['webhook-alerts', 'opsgenie-secondary']);
-
-    expect(filtered.map((integration) => integration.identifier)).to.deep.equal([
-      'webhook-alerts',
-      'opsgenie-secondary',
-    ]);
-  });
-});
 
 describe('SendMessageTool - endpoint-routed providers', () => {
   /*

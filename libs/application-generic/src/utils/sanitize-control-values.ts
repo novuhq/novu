@@ -131,7 +131,6 @@ function sanitizeTool(controlValues: ToolControlType) {
   const mappedValues: ToolControlType = {
     body: sanitizeEmptyInput(controlValues.body),
     skip: controlValues.skip,
-    enabledIntegrations: controlValues.enabledIntegrations,
     providerOverrides: controlValues.providerOverrides,
   };
 

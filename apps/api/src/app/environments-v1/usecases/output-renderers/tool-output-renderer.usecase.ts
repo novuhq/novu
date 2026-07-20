@@ -41,10 +41,6 @@ export class ToolOutputRendererUsecase extends BaseTranslationRendererUsecase {
       body: (translatedControls.body as string) ?? '',
     };
 
-    if (translatedControls.enabledIntegrations !== undefined) {
-      output.enabledIntegrations = translatedControls.enabledIntegrations as string[];
-    }
-
     if (translatedControls.providerOverrides !== undefined) {
       output.providerOverrides = translatedControls.providerOverrides as ToolRenderOutput['providerOverrides'];
     }
