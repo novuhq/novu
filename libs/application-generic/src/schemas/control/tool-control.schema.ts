@@ -31,9 +31,9 @@ export const toolControlZodSchema = z
 export type ToolControlType = z.infer<typeof toolControlZodSchema>;
 
 /**
- * Replaces the permissive per-provider override subschemas generated from Zod with
- * keys-only variants (strict on property names, permissive on values), so unknown
- * override keys surface as step issues without false-positives on Liquid values.
+ * Splices the step-issues keys-only schemas into providerOverrides.* so unknown
+ * top-level override keys surface as issues. Full override schemas remain the
+ * documentation / client-hint source; this path intentionally does not type-check values.
  */
 function withStrictProviderOverrideKeys(schema: JSONSchemaEntity): JSONSchemaEntity {
   const providerOverrides = schema.properties?.providerOverrides;
@@ -44,6 +44,7 @@ function withStrictProviderOverrideKeys(schema: JSONSchemaEntity): JSONSchemaEnt
   for (const providerId of TOOL_CONTENT_OVERRIDE_PROVIDER_IDS) {
     const keysOnlySchema = getToolProviderOverrideKeysOnlySchema(providerId);
     if (keysOnlySchema && providerOverrides.properties[providerId]) {
+      // JSONSchemaDto ↔ JSONSchemaEntity disagree on exclusiveMinimum; shape is Ajv-compatible.
       providerOverrides.properties[providerId] = keysOnlySchema as unknown as JSONSchemaEntity;
     }
   }

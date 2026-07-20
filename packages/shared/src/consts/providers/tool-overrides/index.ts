@@ -33,8 +33,10 @@ export function getToolProviderOverrideSchema(providerId: string) {
 }
 
 /**
- * Derives a schema that is strict on property names but permissive on values,
- * so Liquid templates (e.g. `"{{payload.priority}}"`) never fail type/enum checks.
+ * Step-issues contract for providerOverrides: top-level keys only, values unchecked.
+ * Distinct from the full override schemas (used for docs / client value-shape hints),
+ * which may also set nested `additionalProperties: false` — those nested rules are not
+ * enforced via this helper so Liquid templates never fail type/enum checks.
  */
 export function getToolProviderOverrideKeysOnlySchema(providerId: string): JSONSchemaDto | undefined {
   const schema = getToolProviderOverrideSchema(providerId);

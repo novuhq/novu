@@ -53,4 +53,29 @@ describe('processControlValuesBySchema', () => {
       expect(issues.controls).toBeUndefined();
     });
   });
+
+  it('maps additionalProperties failures to UNSUPPORTED_PROPERTY for any strict schema', () => {
+    const issues = processControlValuesBySchema({
+      controlSchema: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          body: { type: 'string' },
+        },
+      },
+      controlValues: {
+        body: 'ok',
+        unexpected: true,
+      },
+      stepType: StepTypeEnum.HTTP_REQUEST,
+    });
+
+    expect(issues.controls?.unexpected).toEqual([
+      {
+        message: '"unexpected" is not a supported property',
+        issueType: ContentIssueEnum.UNSUPPORTED_PROPERTY,
+        variableName: 'unexpected',
+      },
+    ]);
+  });
 });
