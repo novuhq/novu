@@ -1,23 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { ToolProviderIdEnum } from '../../../types';
-import { TOOL_CONTENT_OVERRIDE_PROVIDER_IDS, TOOL_PROVIDER_PRIMARY_CONTENT_KEY } from './index';
 import { buildAnnotatedPreviewLines, mergeToolProviderPreview } from './merge-tool-provider-preview';
 
 describe('mergeToolProviderPreview', () => {
-  it('uses the same primary content keys as TOOL_PROVIDER_PRIMARY_CONTENT_KEY', () => {
-    for (const providerId of TOOL_CONTENT_OVERRIDE_PROVIDER_IDS) {
-      const { merged, defaultContentKey } = mergeToolProviderPreview({
-        body: 'from-default',
-        providerId,
-        override: {},
-      });
-      const primaryKey = TOOL_PROVIDER_PRIMARY_CONTENT_KEY[providerId];
-
-      expect(defaultContentKey).toBe(primaryKey);
-      expect(merged[primaryKey]).toBe('from-default');
-    }
-  });
-
   it('fills omitted primary key from body and sets defaultContentKey', () => {
     const result = mergeToolProviderPreview({
       body: 'Default incident message',

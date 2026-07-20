@@ -2,14 +2,13 @@ import {
   ChannelTypeEnum,
   getToolProviderPrimaryContentKey,
   type IProviderConfig,
-  mergeToolProviderPreview as mergeToolProviderPreviewShared,
   providers,
   TOOL_CONTENT_OVERRIDE_PROVIDER_IDS,
   type ToolContentOverrideProviderId,
 } from '@novu/shared';
 
 export type { AnnotatedPreviewLine, MergedToolPreview } from '@novu/shared';
-export { buildAnnotatedPreviewLines } from '@novu/shared';
+export { buildAnnotatedPreviewLines, mergeToolProviderPreview } from '@novu/shared';
 
 export const DEFAULT_CONTENT_SOURCE = 'default' as const;
 
@@ -67,16 +66,4 @@ export function getContentSourceLabel(source: ToolContentSource): string {
 
 export function getProviderPrimaryContentKey(providerId: ToolContentOverrideProviderId) {
   return getToolProviderPrimaryContentKey(providerId);
-}
-
-export function mergeToolProviderPreview({
-  body,
-  providerId,
-  override,
-}: {
-  body: string;
-  providerId: ToolContentOverrideProviderId;
-  override: Record<string, unknown> | undefined;
-}) {
-  return mergeToolProviderPreviewShared({ body, providerId, override });
 }

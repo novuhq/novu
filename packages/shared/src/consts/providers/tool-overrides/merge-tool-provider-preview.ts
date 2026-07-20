@@ -1,6 +1,4 @@
-import { ToolProviderIdEnum } from '../../../types';
-
-type ToolContentOverrideProviderId = ToolProviderIdEnum.PagerDuty | ToolProviderIdEnum.Opsgenie;
+import { getToolProviderPrimaryContentKey, type ToolContentOverrideProviderId } from './tool-provider-primary-content';
 
 export type MergedToolPreview = {
   merged: Record<string, unknown>;
@@ -22,7 +20,7 @@ export function mergeToolProviderPreview({
   providerId: ToolContentOverrideProviderId;
   override: Record<string, unknown> | undefined;
 }): MergedToolPreview {
-  const primaryKey = primaryContentKeyFor(providerId);
+  const primaryKey = getToolProviderPrimaryContentKey(providerId);
   const merged: Record<string, unknown> = { ...(override ?? {}) };
 
   if (!merged[primaryKey]) {
@@ -57,19 +55,4 @@ export function buildAnnotatedPreviewLines(
 
     return { json };
   });
-}
-
-/** Mirrors `TOOL_PROVIDER_PRIMARY_CONTENT_KEY` / `getToolProviderPrimaryContentKey` without a barrel import cycle. */
-function primaryContentKeyFor(providerId: ToolContentOverrideProviderId): string {
-  switch (providerId) {
-    case ToolProviderIdEnum.PagerDuty:
-      return 'summary';
-    case ToolProviderIdEnum.Opsgenie:
-      return 'message';
-    default: {
-      const exhaustiveCheck: never = providerId;
-
-      return exhaustiveCheck;
-    }
-  }
 }
