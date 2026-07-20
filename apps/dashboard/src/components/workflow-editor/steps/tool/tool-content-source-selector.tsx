@@ -30,10 +30,6 @@ export function ToolContentSourceSelector({
   onSelectSource,
   onAddOverride,
 }: ToolContentSourceSelectorProps) {
-  // Only the currently selected source owns the trigger error icon. Override-only
-  // problems are surfaced via the issue-count badge and per-provider row icons.
-  const selectedSourceHasError = selectedSource !== DEFAULT_CONTENT_SOURCE && invalidProviderIds?.has(selectedSource);
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -49,7 +45,6 @@ export function ToolContentSourceSelector({
             />
           )}
           <span>{getContentSourceLabel(selectedSource)}</span>
-          {selectedSourceHasError && <RiErrorWarningFill className="text-destructive size-3.5 shrink-0" />}
           <RiArrowDownSLine className="text-foreground-600 size-3.5" />
         </button>
       </DropdownMenuTrigger>
