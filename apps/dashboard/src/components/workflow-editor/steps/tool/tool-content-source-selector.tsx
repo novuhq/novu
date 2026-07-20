@@ -20,9 +20,8 @@ type ToolContentSourceSelectorProps = {
   providers: ToolOverrideProviderOption[];
   invalidProviderIds?: Set<string>;
   onSelectSource: (source: ToolContentSource) => void;
-  /** When omitted (preview mode), every provider is selectable and the add-override affordance is hidden. */
+  /** When provided, providers without overrides show an add affordance; when omitted, every provider is selectable. */
   onAddOverride?: (providerId: ToolOverrideProviderOption['providerId']) => void;
-  mode?: 'editor' | 'preview';
 };
 
 export function ToolContentSourceSelector({
@@ -31,9 +30,8 @@ export function ToolContentSourceSelector({
   invalidProviderIds,
   onSelectSource,
   onAddOverride,
-  mode = 'editor',
 }: ToolContentSourceSelectorProps) {
-  const isPreviewMode = mode === 'preview';
+  const canAddOverrides = !!onAddOverride;
 
   return (
     <DropdownMenu>
@@ -66,12 +64,12 @@ export function ToolContentSourceSelector({
           <>
             <DropdownMenuSeparator className="my-1" />
             <div className="text-foreground-400 px-1.5 py-1 text-[11px] font-medium uppercase tracking-[0.22px]">
-              {isPreviewMode ? 'providers' : 'overrides'}
+              {canAddOverrides ? 'overrides' : 'providers'}
             </div>
             {providers.map((provider) => {
               const isSelected = selectedSource === provider.providerId;
               const isInvalid = invalidProviderIds?.has(provider.providerId);
-              const canSelectDirectly = isPreviewMode || provider.hasOverride;
+              const canSelectDirectly = !canAddOverrides || provider.hasOverride;
 
               return (
                 <DropdownMenuItem
@@ -100,12 +98,12 @@ export function ToolContentSourceSelector({
                     <ProviderIcon
                       providerId={provider.providerId}
                       providerDisplayName={provider.displayName}
-                      className={cn('size-4', !provider.hasOverride && !isPreviewMode && 'grayscale opacity-50')}
+                      className={cn('size-4', !provider.hasOverride && canAddOverrides && 'grayscale opacity-50')}
                     />
                     <span
                       className={cn(
                         'truncate text-xs font-medium',
-                        provider.hasOverride || isPreviewMode ? 'text-foreground-950' : 'text-foreground-400'
+                        provider.hasOverride || !canAddOverrides ? 'text-foreground-950' : 'text-foreground-400'
                       )}
                     >
                       {provider.displayName}
@@ -116,7 +114,7 @@ export function ToolContentSourceSelector({
                     )}
                   </button>
 
-                  {!isPreviewMode && !provider.hasOverride && onAddOverride && (
+                  {canAddOverrides && !provider.hasOverride && (
                     <button
                       type="button"
                       data-override-action="add"
@@ -124,15 +122,13 @@ export function ToolContentSourceSelector({
                       className="text-foreground-400 hover:text-foreground-950 rounded p-0.5"
                       onClick={(event) => {
                         event.stopPropagation();
-                        onAddOverride(provider.providerId);
+                        onAddOverride?.(provider.providerId);
                       }}
                     >
                       <RiAddFill className="size-3.5" />
                     </button>
                   )}
-                  {isSelected && (isPreviewMode || provider.hasOverride) && (
-                    <RiCheckLine className="text-foreground-600 size-3.5 shrink-0" />
-                  )}
+                  {isSelected && canSelectDirectly && <RiCheckLine className="text-foreground-600 size-3.5 shrink-0" />}
                 </DropdownMenuItem>
               );
             })}

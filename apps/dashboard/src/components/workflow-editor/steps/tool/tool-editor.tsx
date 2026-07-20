@@ -1,4 +1,4 @@
-import { ChannelTypeEnum, EnvironmentTypeEnum, TOOL_CONTENT_OVERRIDE_PROVIDER_IDS, type UiSchema } from '@novu/shared';
+import { EnvironmentTypeEnum, TOOL_CONTENT_OVERRIDE_PROVIDER_IDS, type UiSchema } from '@novu/shared';
 import { Undo2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
@@ -10,10 +10,8 @@ import { useSaveForm } from '@/components/workflow-editor/steps/save-form-contex
 import { TabsSection } from '@/components/workflow-editor/steps/tabs-section';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useEnvironment } from '@/context/environment/hooks';
-import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { StepEditorUnavailable } from '../step-editor-unavailable';
 import {
-  buildToolOverrideProviderOptions,
   DEFAULT_CONTENT_SOURCE,
   getContentSourceLabel,
   getUnsupportedToolOverrideKeys,
@@ -23,6 +21,7 @@ import {
 import { useToolContentSource } from './tool-content-source-context';
 import { ToolContentSourceSelector } from './tool-content-source-selector';
 import { ToolProviderOverrideEditor } from './tool-provider-override-editor';
+import { useToolOverrideProviderOptions } from './use-tool-override-provider-options';
 
 type ToolEditorProps = { uiSchema: UiSchema };
 
@@ -32,12 +31,11 @@ export const ToolEditor = (props: ToolEditorProps) => {
   const { currentEnvironment } = useEnvironment();
   const { uiSchema } = props;
   const { body } = uiSchema?.properties ?? {};
-  const { integrations } = useFetchIntegrations();
-  const { watch, setValue, getValues } = useFormContext();
+  const { setValue, getValues } = useFormContext();
   const { saveForm } = useSaveForm();
   const { step } = useWorkflow();
+  const { providerOptions, providerOverrides } = useToolOverrideProviderOptions();
 
-  const providerOverrides = watch(PROVIDER_OVERRIDES_FIELD) as ToolProviderOverrides | undefined;
   const { selectedSource, setSelectedSource } = useToolContentSource();
   // Ephemeral only: unsaved JSON parse errors while an override editor is mounted.
   const [providersWithDraftParseErrors, setProvidersWithDraftParseErrors] = useState<Set<string>>(new Set());
@@ -53,33 +51,6 @@ export const ToolEditor = (props: ToolEditorProps) => {
       setSelectedSource(DEFAULT_CONTENT_SOURCE);
     }
   }, [selectedSource, providerOverrides, setSelectedSource]);
-
-  const activeProviderIds = useMemo(() => {
-    const ids = new Set<string>();
-
-    for (const integration of integrations ?? []) {
-      if (
-        integration.active &&
-        !integration.deleted &&
-        integration.channel === ChannelTypeEnum.TOOL &&
-        integration._environmentId === currentEnvironment?._id &&
-        isToolContentOverrideProviderId(integration.providerId)
-      ) {
-        ids.add(integration.providerId);
-      }
-    }
-
-    return ids;
-  }, [integrations, currentEnvironment?._id]);
-
-  const providerOptions = useMemo(
-    () =>
-      buildToolOverrideProviderOptions({
-        activeProviderIds,
-        providerOverrides,
-      }),
-    [activeProviderIds, providerOverrides]
-  );
 
   // Server issues are keyed as `providerOverrides.{providerId}` or `providerOverrides.{providerId}.{key}`.
   const serverIssueCountByProvider = useMemo(() => {

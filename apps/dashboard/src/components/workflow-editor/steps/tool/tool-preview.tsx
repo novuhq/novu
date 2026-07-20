@@ -1,22 +1,17 @@
 import { ChannelTypeEnum, type GeneratePreviewResponseDto, type ToolRenderOutput } from '@novu/shared';
 import { useMemo } from 'react';
-import { useFormContext } from 'react-hook-form';
 import { ToolFill } from '@/components/icons/tool-fill';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
-import { useEnvironment } from '@/context/environment/hooks';
-import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import {
   buildAnnotatedPreviewLines,
-  buildToolOverrideProviderOptions,
   DEFAULT_CONTENT_SOURCE,
   getProviderPrimaryContentKey,
-  isToolContentOverrideProviderId,
   mergeToolProviderPreview,
-  type ToolProviderOverrides,
 } from './tool-content-source';
 import { useToolContentSource } from './tool-content-source-context';
 import { ToolContentSourceSelector } from './tool-content-source-selector';
+import { useToolOverrideProviderOptions } from './use-tool-override-provider-options';
 
 type ToolPreviewResult = {
   type: string;
@@ -35,8 +30,6 @@ const EMPTY_BODY_PLACEHOLDER = 'Default content will be delivered to enabled too
 
 const DEFAULT_CONTENT_CHIP_CLASS =
   'text-label-2xs text-foreground-600 bg-neutral-alpha-100 inline-flex h-4 select-none items-center rounded-sm px-1 font-medium';
-
-const PROVIDER_OVERRIDES_FIELD = 'providerOverrides';
 
 function extractToolPreview(previewData?: GeneratePreviewResponseDto): ToolRenderOutput | undefined {
   const previewResult = previewData?.result as ToolPreviewResult | undefined;
@@ -86,40 +79,9 @@ export const ToolPreview = ({ isPreviewPending, previewData }: ToolPreviewProps)
   const body = preview?.body ?? '';
   const previewProviderOverrides = preview?.providerOverrides ?? {};
 
-  const { currentEnvironment } = useEnvironment();
-  const { integrations } = useFetchIntegrations();
-  const { watch } = useFormContext();
-  const formProviderOverrides = watch(PROVIDER_OVERRIDES_FIELD) as ToolProviderOverrides | undefined;
-
+  const { providerOptions } = useToolOverrideProviderOptions();
   const { previewSource, setPreviewSource } = useToolContentSource();
   const activeProviderId = previewSource === DEFAULT_CONTENT_SOURCE ? undefined : previewSource;
-
-  const activeProviderIds = useMemo(() => {
-    const ids = new Set<string>();
-
-    for (const integration of integrations ?? []) {
-      if (
-        integration.active &&
-        !integration.deleted &&
-        integration.channel === ChannelTypeEnum.TOOL &&
-        integration._environmentId === currentEnvironment?._id &&
-        isToolContentOverrideProviderId(integration.providerId)
-      ) {
-        ids.add(integration.providerId);
-      }
-    }
-
-    return ids;
-  }, [integrations, currentEnvironment?._id]);
-
-  const providerOptions = useMemo(
-    () =>
-      buildToolOverrideProviderOptions({
-        activeProviderIds,
-        providerOverrides: formProviderOverrides,
-      }),
-    [activeProviderIds, formProviderOverrides]
-  );
 
   const { annotatedLines, defaultContentKey } = useMemo(() => {
     if (!activeProviderId) {
@@ -195,7 +157,6 @@ export const ToolPreview = ({ isPreviewPending, previewData }: ToolPreviewProps)
     <div className="-mx-3 -mt-3 flex h-full min-h-0 w-full flex-col">
       <div className="border-stroke-soft bg-bg-weak flex h-7 shrink-0 items-center border-b">
         <ToolContentSourceSelector
-          mode="preview"
           selectedSource={previewSource}
           providers={providerOptions}
           onSelectSource={setPreviewSource}
