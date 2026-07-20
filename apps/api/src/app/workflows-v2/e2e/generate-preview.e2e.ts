@@ -1482,7 +1482,31 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
     });
 
     it('tool: should echo providerOverrides fields in the preview response', async () => {
-      const { stepDatabaseId, workflowId } = await createWorkflowAndReturnId(novuClient, StepTypeEnum.TOOL);
+      // Use raw HTTP — @novu/api SDK Zod schemas do not include `tool` yet (internal-sdk lag).
+      // testAgent returns API DTO field names (`_id`), not SDK remapped `id`.
+      const createResponse = await session.testAgent.post('/v2/workflows').send({
+        __source: WorkflowCreationSourceEnum.Editor,
+        name: 'Tool Override Preview Workflow',
+        workflowId: `tool-override-preview-${randomUUID()}`,
+        description: 'Tool providerOverrides preview coverage',
+        active: true,
+        steps: [
+          {
+            name: 'Tool Test Step',
+            type: StepTypeEnum.TOOL,
+            controlValues: {
+              body: 'default text as',
+            },
+          },
+        ],
+      });
+      expect(createResponse.status).to.equal(201);
+
+      const workflowId = createResponse.body.data._id as string;
+      const stepDatabaseId = createResponse.body.data.steps[0]._id as string;
+      expect(workflowId).to.be.a('string');
+      expect(stepDatabaseId).to.be.a('string');
+
       const requestDto = {
         controlValues: {
           body: 'default text as',
@@ -1498,7 +1522,12 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
         },
       };
 
-      const previewResponseDto = await generatePreview(novuClient, workflowId, stepDatabaseId, requestDto);
+      const previewResponse = await session.testAgent
+        .post(`/v2/workflows/${workflowId}/step/${stepDatabaseId}/preview`)
+        .send(requestDto);
+      expect(previewResponse.status).to.be.oneOf([200, 201]);
+
+      const previewResponseDto = previewResponse.body.data as GeneratePreviewResponseDto;
       const preview = previewResponseDto.result!.preview as {
         body?: string;
         providerOverrides?: Record<string, Record<string, unknown>>;
