@@ -88,7 +88,7 @@ export class SendMessageTool extends SendMessageBase {
     });
 
     const bridgeOutputs = command.bridgeData?.outputs as ToolStepOutputs | undefined;
-    const { content } = await this.resolveContentAndProviders(command, bridgeOutputs);
+    const content = await this.resolveContent(command, bridgeOutputs);
 
     if (!content) {
       return {
@@ -184,14 +184,11 @@ export class SendMessageTool extends SendMessageBase {
     return { status };
   }
 
-  private async resolveContentAndProviders(
-    command: SendMessageChannelCommand,
-    bridgeOutputs?: ToolStepOutputs
-  ): Promise<{ content: string }> {
+  private async resolveContent(command: SendMessageChannelCommand, bridgeOutputs?: ToolStepOutputs): Promise<string> {
     let content = bridgeOutputs?.body || '';
 
     if (command.bridgeData) {
-      return { content };
+      return content;
     }
 
     const { step } = command;
@@ -222,10 +219,10 @@ export class SendMessageTool extends SendMessageBase {
     } catch (error) {
       await this.sendErrorHandlebars(command.job, error.message);
 
-      return { content: '' };
+      return '';
     }
 
-    return { content };
+    return content;
   }
 
   private async resolveEndpointsByIntegration(
