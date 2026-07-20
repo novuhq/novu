@@ -18,6 +18,9 @@ export type MsTeamsHealthCheckResult = {
   teamsAppCatalog: HealthCheckStatus | null;
   permissions: HealthCheckStatus | null;
   allReady: boolean;
+  missingRequiredPermissions: string[];
+  missingRecommendedPermissions: string[];
+  teamsAppCatalogId: string | null;
 };
 
 export type CreateIntegrationData = {

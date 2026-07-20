@@ -64,6 +64,14 @@ function buildOAuthCallbackUrl(): string {
   return `${getAgentApiBaseUrl()}/v1/integrations/chat/oauth/callback`;
 }
 
+function buildTeamsDeepLink(catalogId: string): string {
+  return `https://teams.microsoft.com/l/app/${catalogId}`;
+}
+
+function escapeShellDoubleQuotedValue(value: string): string {
+  return value.replaceAll('\\', '\\\\').replaceAll('"', '\\"');
+}
+
 // ---------------------------------------------------------------------------
 // Small presentational pieces
 // ---------------------------------------------------------------------------
@@ -241,6 +249,149 @@ function ManualBotDeployFallback({ webhookUrl }: { webhookUrl: string }) {
   );
 }
 
+function OpenInTeamsButton({ catalogId }: { catalogId: string }) {
+  return <SetupButton href={buildTeamsDeepLink(catalogId)}>Open in Teams</SetupButton>;
+}
+
+function TeamsCliShortcut({ agentName, webhookUrl }: { agentName: string; webhookUrl: string }) {
+  const [open, setOpen] = useState(false);
+  const cliCommands = `npm install -g @microsoft/teams.cli
+teams app create --name "${escapeShellDoubleQuotedValue(agentName)}" --endpoint ${webhookUrl} --azure --subscription <your-sub> --resource-group <your-rg> --env .env`;
+
+  return (
+    <div className="flex min-w-0 flex-col gap-2">
+      <button
+        type="button"
+        aria-expanded={open}
+        className="text-text-sub hover:text-text-strong flex items-center gap-1 self-start transition-colors"
+        onClick={() => setOpen((v) => !v)}
+      >
+        <RiArrowDownSLine className={cn('size-3.5 transition-transform duration-200', open && 'rotate-180')} />
+        <span className="text-label-xs font-medium">Prefer the terminal? Use the Teams CLI</span>
+      </button>
+
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2, ease: 'easeInOut' }}
+            className="min-w-0 overflow-hidden"
+          >
+            <div className="border-stroke-soft bg-bg-weak flex flex-col gap-3 rounded-lg border p-4">
+              <p className="text-text-sub text-label-xs font-medium">Teams CLI shortcut</p>
+              <ol className="text-text-sub flex flex-col gap-1.5 pl-4 text-[12px] leading-5 [list-style:decimal]">
+                <li>Run these commands locally to create the Teams app registration and Azure Bot resources.</li>
+                <li>
+                  Copy the generated <strong>CLIENT_ID</strong>, <strong>CLIENT_SECRET</strong>, and{' '}
+                  <strong>TENANT_ID</strong> into step 3.
+                </li>
+                <li>
+                  The CLI replaces the portal work for steps 1 and 4. Step 2 still requires the Azure Portal so you can
+                  add Graph permissions and grant admin consent.
+                </li>
+                <li>Still download Novu's app package in step 5 and upload it to Teams in step 6.</li>
+              </ol>
+              <CodeBlock code={cliCommands} language="shell" title="Teams CLI commands" />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function TeamsAppUploadInstructions() {
+  return (
+    <ol className="flex flex-col gap-1.5 pl-4 [list-style:decimal]">
+      <li className="text-paragraph-xs text-text-sub">
+        Click <strong>Download app package</strong> on the right to save the{' '}
+        <code className="font-code text-[11px]">.zip</code> file.
+      </li>
+      <li className="text-paragraph-xs text-text-sub">
+        Open{' '}
+        <a
+          href="https://teams.microsoft.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline underline-offset-2"
+        >
+          Microsoft Teams
+        </a>
+        .
+      </li>
+      <li className="text-paragraph-xs text-text-sub">
+        Click <strong>Apps</strong> in the left sidebar.
+      </li>
+      <li className="text-paragraph-xs text-text-sub">
+        Click <strong>Manage your apps</strong> at the bottom of the panel.
+      </li>
+      <li className="text-paragraph-xs text-text-sub">
+        Click <strong>Upload an app</strong>, then select <strong>Upload a custom app</strong>.
+      </li>
+      <li className="text-paragraph-xs text-text-sub">
+        Choose the downloaded <code className="font-code text-[11px]">.zip</code> file, then click <strong>Add</strong>{' '}
+        in the app modal.
+      </li>
+    </ol>
+  );
+}
+
+function TeamsAppUploadFallback({
+  canDownload,
+  handleDownload,
+  manifestJson,
+}: {
+  canDownload: boolean;
+  handleDownload: () => void;
+  manifestJson: string;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="flex min-w-0 flex-col gap-2">
+      <button
+        type="button"
+        aria-expanded={open}
+        className="text-text-sub hover:text-text-strong flex items-center gap-1 self-start transition-colors"
+        onClick={() => setOpen((v) => !v)}
+      >
+        <RiArrowDownSLine className={cn('size-3.5 transition-transform duration-200', open && 'rotate-180')} />
+        <span className="text-label-xs font-medium">
+          {open ? 'Hide manual upload instructions' : 'Need to upload manually?'}
+        </span>
+      </button>
+
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2, ease: 'easeInOut' }}
+            className="min-w-0 overflow-hidden"
+          >
+            <div className="border-stroke-soft bg-bg-weak flex flex-col gap-3 rounded-lg border p-4">
+              <TeamsAppUploadInstructions />
+              <div className="self-start">
+                <SetupButton
+                  leadingIcon={<Download className="size-3.5" />}
+                  onClick={handleDownload}
+                  disabled={!canDownload}
+                >
+                  Download app package
+                </SetupButton>
+              </div>
+              <ManifestPreview manifestJson={manifestJson} />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Setup mode toggle
 // ---------------------------------------------------------------------------
@@ -251,12 +402,67 @@ function ManualBotDeployFallback({ webhookUrl }: { webhookUrl: string }) {
 
 const HEALTH_POLL_INTERVAL_MS = 10_000;
 
-const CHECKPOINT_LABELS: Record<keyof Omit<MsTeamsHealthCheckResult, 'allReady'>, string> = {
-  appRegistration: 'App Registration',
-  azureBotCreated: 'Azure Bot Created',
-  teamsAppCatalog: 'Teams App Catalog',
-  permissions: 'Permission Propagation',
+type HealthCheckKey = 'appRegistration' | 'azureBotCreated' | 'teamsAppCatalog' | 'permissions';
+type HealthCheckRemedyMode = 'quick' | 'manual';
+
+const CHECKPOINT_KEYS: HealthCheckKey[] = ['appRegistration', 'azureBotCreated', 'teamsAppCatalog', 'permissions'];
+
+const CHECKPOINT_CONFIG: Record<HealthCheckKey, { label: string; remedy: Record<HealthCheckRemedyMode, string> }> = {
+  appRegistration: {
+    label: 'App Registration',
+    remedy: {
+      quick: 'Redo Quick Setup step 1: Set Up Azure, then wait for Novu to verify the App Registration.',
+      manual: 'Redo manual step 1: create the App Registration, then save the credentials again in step 3.',
+    },
+  },
+  azureBotCreated: {
+    label: 'Azure Bot Created',
+    remedy: {
+      quick: 'Redo Quick Setup step 1: Set Up Azure so Novu can create the Azure Bot again.',
+      manual: 'Redo manual step 4: deploy the Azure Bot and make sure the Teams channel is enabled.',
+    },
+  },
+  teamsAppCatalog: {
+    label: 'Teams App Catalog',
+    remedy: {
+      quick:
+        'Redo Quick Setup step 3: upload the Teams app package, or open the fallback instructions and upload it manually.',
+      manual: 'Redo manual step 6: upload the Teams app package and make sure it is unblocked in the Teams catalog.',
+    },
+  },
+  permissions: {
+    label: 'Permission Propagation',
+    remedy: {
+      quick: 'Redo Quick Setup step 1: Set Up Azure, then grant admin consent if your tenant asks for it.',
+      manual: 'Redo manual step 2: add the Graph permissions and grant admin consent for your organization.',
+    },
+  },
 };
+
+function normalizeHealthCheckResult(result: MsTeamsHealthCheckResult): MsTeamsHealthCheckResult {
+  return {
+    appRegistration: result.appRegistration ?? null,
+    azureBotCreated: result.azureBotCreated ?? null,
+    teamsAppCatalog: result.teamsAppCatalog ?? null,
+    permissions: result.permissions ?? null,
+    allReady: result.allReady,
+    missingRequiredPermissions: Array.isArray(result.missingRequiredPermissions)
+      ? result.missingRequiredPermissions
+      : [],
+    missingRecommendedPermissions: Array.isArray(result.missingRecommendedPermissions)
+      ? result.missingRecommendedPermissions
+      : [],
+    teamsAppCatalogId: result.teamsAppCatalogId ?? null,
+  };
+}
+
+function getCheckpointLabel(key: HealthCheckKey): string {
+  return CHECKPOINT_CONFIG[key].label;
+}
+
+function getCheckpointRemedy(key: HealthCheckKey, mode: HealthCheckRemedyMode): string {
+  return CHECKPOINT_CONFIG[key].remedy[mode];
+}
 
 function CheckpointRow({ label, status }: { label: string; status: HealthCheckStatus }) {
   return (
@@ -284,16 +490,27 @@ type HealthCheckViewProps = {
   integrationId: string;
   /** True while the Azure setup popup is still open, polling is suspended until credentials are saved */
   waitingForSetup: boolean;
-  onReady: () => void;
+  onReady: (result: MsTeamsHealthCheckResult) => void;
+  onStatusChange?: (result: MsTeamsHealthCheckResult) => void;
+  remedyMode: HealthCheckRemedyMode;
   compact?: boolean;
 };
 
-function HealthCheckView({ integrationId, waitingForSetup, onReady, compact = false }: HealthCheckViewProps) {
+function HealthCheckView({
+  integrationId,
+  waitingForSetup,
+  onReady,
+  onStatusChange,
+  remedyMode,
+  compact = false,
+}: HealthCheckViewProps) {
   const { currentEnvironment } = useEnvironment();
   const [status, setStatus] = useState<MsTeamsHealthCheckResult | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const onReadyRef = useRef(onReady);
+  const onStatusChangeRef = useRef(onStatusChange);
   onReadyRef.current = onReady;
+  onStatusChangeRef.current = onStatusChange;
 
   const stopPolling = useCallback(() => {
     if (pollRef.current !== null) {
@@ -307,11 +524,13 @@ function HealthCheckView({ integrationId, waitingForSetup, onReady, compact = fa
 
     try {
       const result = await getMsTeamsHealthCheck(integrationId, currentEnvironment);
-      setStatus(result);
+      const next = normalizeHealthCheckResult(result);
+      setStatus(next);
+      onStatusChangeRef.current?.(next);
 
-      if (result.allReady) {
+      if (next.allReady) {
         stopPolling();
-        onReadyRef.current();
+        onReadyRef.current(next);
 
         return;
       }
@@ -328,13 +547,13 @@ function HealthCheckView({ integrationId, waitingForSetup, onReady, compact = fa
   }, [poll, stopPolling]);
 
   const allPending: HealthCheckStatus = 'pending';
-  const checkpoints = (Object.keys(CHECKPOINT_LABELS) as Array<keyof typeof CHECKPOINT_LABELS>).map((key) => ({
+  const checkpoints = CHECKPOINT_KEYS.map((key) => ({
     key,
-    label: CHECKPOINT_LABELS[key],
+    label: getCheckpointLabel(key),
     status: (status ? (status[key] ?? allPending) : allPending) as HealthCheckStatus,
   }));
 
-  const hasFailed = status?.appRegistration === 'failed' || status?.azureBotCreated === 'failed';
+  const failedCheckpoints = checkpoints.filter(({ status: checkpointStatus }) => checkpointStatus === 'failed');
 
   return (
     <div className={cn('flex flex-col', compact ? 'w-[260px] gap-2.5' : 'gap-4')}>
@@ -352,13 +571,15 @@ function HealthCheckView({ integrationId, waitingForSetup, onReady, compact = fa
         ))}
       </div>
 
-      {!waitingForSetup && hasFailed && (
-        <InlineToast
-          variant="error"
-          title="Setup error"
-          description="App Registration or Azure Bot could not be verified. Please retry the Azure setup step."
-        />
-      )}
+      {!waitingForSetup &&
+        failedCheckpoints.map(({ key, label }) => (
+          <InlineToast
+            key={key}
+            variant="error"
+            title={`${label} needs attention`}
+            description={getCheckpointRemedy(key, remedyMode)}
+          />
+        ))}
     </div>
   );
 }
@@ -420,7 +641,7 @@ function ConnectAndLinkSection({
 
     let cancelled = false;
 
-    (async () => {
+    void (async () => {
       try {
         const connResponse = await novu.channelConnections.get({ identifier: connectionIdentifier });
         if (cancelled || !connResponse.data) return;
@@ -543,7 +764,15 @@ function ConnectAndLinkSection({
 
 const MANUAL_HEALTH_CHECKS = ['teamsAppCatalog', 'permissions'] as const;
 
-type ManualHealthState = Pick<MsTeamsHealthCheckResult, 'azureBotCreated' | 'teamsAppCatalog' | 'permissions'>;
+type ManualHealthState = Pick<
+  MsTeamsHealthCheckResult,
+  | 'azureBotCreated'
+  | 'teamsAppCatalog'
+  | 'permissions'
+  | 'missingRequiredPermissions'
+  | 'missingRecommendedPermissions'
+  | 'teamsAppCatalogId'
+>;
 
 function useManualHealthPoll(integrationId: string, enabled: boolean): ManualHealthState | null {
   const { currentEnvironment } = useEnvironment();
@@ -562,10 +791,14 @@ function useManualHealthPoll(integrationId: string, enabled: boolean): ManualHea
 
     try {
       const result = await getMsTeamsHealthCheck(integrationId, currentEnvironment, [...MANUAL_HEALTH_CHECKS]);
+      const normalized = normalizeHealthCheckResult(result);
       const next: ManualHealthState = {
         azureBotCreated: null,
-        teamsAppCatalog: result.teamsAppCatalog,
-        permissions: result.permissions,
+        teamsAppCatalog: normalized.teamsAppCatalog,
+        permissions: normalized.permissions,
+        missingRequiredPermissions: normalized.missingRequiredPermissions,
+        missingRecommendedPermissions: normalized.missingRecommendedPermissions,
+        teamsAppCatalogId: normalized.teamsAppCatalogId,
       };
 
       setState(next);
@@ -595,6 +828,46 @@ function useManualHealthPoll(integrationId: string, enabled: boolean): ManualHea
   return state;
 }
 
+function ManualPermissionsCheckpoint({ manualHealth }: { manualHealth: ManualHealthState | null }) {
+  if (!manualHealth?.permissions) {
+    return null;
+  }
+
+  const missingRequiredPermissions = manualHealth.missingRequiredPermissions;
+  const missingRecommendedPermissions = manualHealth.missingRecommendedPermissions;
+  let label = 'Waiting for admin consent to propagate';
+
+  if (manualHealth.permissions === 'ready') {
+    label = 'Required permissions verified';
+  }
+
+  if (manualHealth.permissions === 'failed') {
+    label = 'Permission verification failed';
+  }
+
+  if (manualHealth.permissions === 'pending' && missingRequiredPermissions.length > 0) {
+    label = `Waiting for admin consent: ${missingRequiredPermissions.join(', ')}`;
+  }
+
+  return (
+    <div className="flex min-w-0 flex-col gap-2">
+      <CheckpointRow label={label} status={manualHealth.permissions} />
+      {missingRecommendedPermissions.length > 0 && (
+        <p className="text-text-soft text-label-xs">
+          Recommended permissions missing: {missingRecommendedPermissions.join(', ')}.
+        </p>
+      )}
+      {manualHealth.permissions === 'failed' && (
+        <InlineToast
+          variant="error"
+          title="Permissions need attention"
+          description={getCheckpointRemedy('permissions', 'manual')}
+        />
+      )}
+    </div>
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Main component
 // ---------------------------------------------------------------------------
@@ -620,6 +893,7 @@ export function TeamsSetupGuide({
   const [isConnectingAzure, setIsConnectingAzure] = useState(false);
   const [setupMode, setSetupMode] = useState<SetupMode>('quick');
   const [teamsAppUploaded, setTeamsAppUploaded] = useState<boolean | null>(null);
+  const [healthCheckCatalogId, setHealthCheckCatalogId] = useState<string | null>(null);
   /**
    * Whether the health-check gate has been cleared.
    * Set to `true` once the health-check poll confirms Teams readiness.
@@ -652,8 +926,7 @@ export function TeamsSetupGuide({
     ?.provisioning;
   const credentials = selectedIntegration?.credentials as Record<string, string> | undefined;
   const appId = credentials?.clientId ?? '';
-  // teamsAppCatalogId is retained for future use (e.g. restoring an "Open in Teams" deep link once catalog propagation is confirmed)
-  const teamsAppCatalogId = provisioning?.teamsAppCatalogId ?? null;
+  const provisioningTeamsAppCatalogId = provisioning?.teamsAppCatalogId ?? null;
   const hasCredentials = Boolean(appId && credentials?.secretKey && credentials?.tenantId);
   const hasQuickSetupProvisioning = Boolean(provisioning);
   const isExistingManualSetup = hasCredentials && !hasQuickSetupProvisioning;
@@ -661,12 +934,13 @@ export function TeamsSetupGuide({
   useEffect(() => {
     setIsConnected(false);
     setHealthCheckCleared(false);
+    setHealthCheckCatalogId(null);
     // Seed from provisioning: if a catalog ID already exists, the upload previously succeeded.
-    setTeamsAppUploaded(teamsAppCatalogId !== null ? true : null);
+    setTeamsAppUploaded(provisioningTeamsAppCatalogId !== null ? true : null);
     setShowHealthCheck(false);
     hasCheckedOnMountRef.current = false;
     setHasDeployedBot(sessionStorage.getItem(`novu:bot-deployed:${integrationId}`) === 'true');
-  }, [integrationId, teamsAppCatalogId]);
+  }, [integrationId, provisioningTeamsAppCatalogId]);
 
   // On page load (or when credentials first appear), run a one-time health check.
   // If the Teams health check passes immediately we silently mark the gate cleared.
@@ -687,11 +961,13 @@ export function TeamsSetupGuide({
     hasCheckedOnMountRef.current = true;
     setInitialCheckLoading(true);
 
-    (async () => {
+    void (async () => {
       try {
         const result = await getMsTeamsHealthCheck(integrationId, currentEnvironment);
+        const normalized = normalizeHealthCheckResult(result);
+        setHealthCheckCatalogId(normalized.teamsAppCatalogId);
 
-        if (result.allReady) {
+        if (normalized.allReady) {
           setHealthCheckCleared(true);
         } else {
           setShowHealthCheck(true);
@@ -777,6 +1053,9 @@ export function TeamsSetupGuide({
 
   // Build the webhook URL used in the manual Bot deployment instructions.
   const webhookUrl = `${getAgentApiBaseUrl()}/v1/agents/${agent._id}/webhook/${integrationIdentifier}`;
+  const teamsAppCatalogId = manualHealth?.teamsAppCatalogId ?? healthCheckCatalogId ?? provisioningTeamsAppCatalogId;
+  const quickAddBotAlreadyUploaded = teamsAppUploaded === true || Boolean(teamsAppCatalogId);
+  const manualTeamsAppCatalogReady = manualHealth?.teamsAppCatalog === 'ready';
 
   // Steps: App Reg + Redirect URI (base+0), Graph perms (base+1),
   //        Credentials (base+2), Deploy to Azure (base+3), Download pkg (base+4), Upload (base+5), Connect (base+6)
@@ -784,7 +1063,7 @@ export function TeamsSetupGuide({
   // Steps 1-3 are gated by hasCredentials (saving valid credentials = steps 1-3 done).
   // Steps 4-7 advance automatically as the health-check reports resources ready.
   const firstIncomplete = useMemo(() => {
-    if (isConnected && manualHealth?.teamsAppCatalog === 'ready') {
+    if (isConnected && manualTeamsAppCatalogReady) {
       return base + 7;
     }
 
@@ -792,18 +1071,18 @@ export function TeamsSetupGuide({
       return base;
     }
 
+    if (manualTeamsAppCatalogReady) {
+      return base + 6;
+    }
+
     // Step 4 (Deploy Azure Bot) is current until the user has clicked "Deploy to Azure".
     if (!hasDeployedBot) {
       return base + 3;
     }
 
-    if (manualHealth?.teamsAppCatalog === 'ready') {
-      return base + 6;
-    }
-
     // Step 6 (upload) becomes active once bot is deployed.
     return base + 5;
-  }, [base, hasCredentials, hasDeployedBot, isConnected, manualHealth]);
+  }, [base, hasCredentials, hasDeployedBot, isConnected, manualTeamsAppCatalogReady]);
 
   // Quick Setup: step 0 = Set Up Azure, step 1 = health-check gate, step 2 = Add bot to Teams, step 3 = Connect MS Teams
   //
@@ -935,11 +1214,16 @@ export function TeamsSetupGuide({
             <HealthCheckView
               integrationId={integrationId}
               waitingForSetup={!hasCredentials || !hasQuickSetupProvisioning}
-              onReady={() => {
+              onStatusChange={(result) => {
+                setHealthCheckCatalogId(result.teamsAppCatalogId);
+              }}
+              onReady={(result) => {
+                setHealthCheckCatalogId(result.teamsAppCatalogId);
                 setHealthCheckCleared(true);
                 setShowHealthCheck(false);
                 queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchIntegrations] });
               }}
+              remedyMode="quick"
               compact
             />
           ) : undefined
@@ -953,54 +1237,42 @@ export function TeamsSetupGuide({
         dimmed={!hasCredentials}
         title="Add the bot to Microsoft Teams"
         description={
-          <ol className="flex flex-col gap-1.5 pl-4 [list-style:decimal]">
-            <li className="text-paragraph-xs text-text-sub">
-              Click <strong>Download app package</strong> on the right to save the{' '}
-              <code className="font-code text-[11px]">.zip</code> file.
-            </li>
-            <li className="text-paragraph-xs text-text-sub">
-              Open{' '}
-              <a
-                href="https://teams.microsoft.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline underline-offset-2"
-              >
-                Microsoft Teams
-              </a>
-              .
-            </li>
-            <li className="text-paragraph-xs text-text-sub">
-              Click <strong>Apps</strong> in the left sidebar.
-            </li>
-            <li className="text-paragraph-xs text-text-sub">
-              Click <strong>Manage your apps</strong> at the bottom of the panel.
-            </li>
-            <li className="text-paragraph-xs text-text-sub">
-              Click <strong>Upload an app</strong>, then select <strong>Upload a custom app</strong>.
-            </li>
-            <li className="text-paragraph-xs text-text-sub">
-              Choose the downloaded <code className="font-code text-[11px]">.zip</code> file, then click{' '}
-              <strong>Add</strong> in the app modal.
-            </li>
-          </ol>
+          quickAddBotAlreadyUploaded ? (
+            <p>Already uploaded to your org catalog. Open the app in Teams to add it for testing.</p>
+          ) : (
+            <TeamsAppUploadInstructions />
+          )
         }
         rightContent={
           <div className="flex min-w-0 flex-col gap-3 w-full">
-            <div className="self-start">
-              <SetupButton
-                leadingIcon={<Download className="size-3.5" />}
-                onClick={handleDownload}
-                disabled={!canDownload}
-              >
-                Download app package
-              </SetupButton>
-            </div>
-            <ManifestPreview manifestJson={manifestJson} />
+            {quickAddBotAlreadyUploaded ? (
+              <>
+                <CheckpointRow label="Already uploaded to your org catalog" status="ready" />
+                {teamsAppCatalogId && <OpenInTeamsButton catalogId={teamsAppCatalogId} />}
+                <TeamsAppUploadFallback
+                  canDownload={canDownload}
+                  handleDownload={handleDownload}
+                  manifestJson={manifestJson}
+                />
+              </>
+            ) : (
+              <>
+                <div className="self-start">
+                  <SetupButton
+                    leadingIcon={<Download className="size-3.5" />}
+                    onClick={handleDownload}
+                    disabled={!canDownload}
+                  >
+                    Download app package
+                  </SetupButton>
+                </div>
+                <ManifestPreview manifestJson={manifestJson} />
+              </>
+            )}
           </div>
         }
         extraContent={
-          teamsAppUploaded !== true ? (
+          quickAddBotAlreadyUploaded ? null : (
             <InlineToast
               className="mt-2 w-full"
               variant="tip"
@@ -1020,7 +1292,7 @@ export function TeamsSetupGuide({
                 </span>
               }
             />
-          ) : null
+          )
         }
       />
 
@@ -1033,7 +1305,7 @@ export function TeamsSetupGuide({
         description="Grant admin consent and verify the connection by signing in with a Microsoft account that has Teams admin permissions."
         rightContent={
           <div className="flex min-w-0 flex-col gap-3 w-full">
-            {/* teamsAppCatalogId is available here for future use (e.g. an "Open in Teams" deep link once catalog propagation is confirmed) */}
+            {teamsAppCatalogId && <OpenInTeamsButton catalogId={teamsAppCatalogId} />}
             {hasCredentials && isConnectSubscriberReady && connectionIdentifier ? (
               <ConnectAndLinkSection
                 integrationIdentifier={integrationIdentifier}
@@ -1123,6 +1395,7 @@ export function TeamsSetupGuide({
             <RedirectUriSection redirectUri={buildOAuthCallbackUrl()} />
           </div>
         }
+        extraContent={<TeamsCliShortcut agentName={agent.name} webhookUrl={webhookUrl} />}
       />
 
       {/* Step 2: Add Microsoft Graph API permissions */}
@@ -1157,6 +1430,13 @@ export function TeamsSetupGuide({
                 <li>
                   <code className="font-code text-[11px]">AppCatalog.Read.All</code>
                 </li>
+                <li>
+                  <code className="font-code text-[11px]">Directory.Read.All</code>
+                  <span className="text-text-soft">
+                    {' '}
+                    Lets Novu verify that the app registration and tenant setup are complete.
+                  </span>
+                </li>
               </ul>
             </li>
             <li>
@@ -1175,8 +1455,8 @@ export function TeamsSetupGuide({
                   <code className="font-code text-[11px]">TeamsAppInstallation.ReadWriteSelfForUser.All</code>
                   <span className="text-text-soft">
                     {' '}
-                    Lets the bot install itself for individual users automatically. Without it, users must manually
-                    install the bot before they can receive direct messages.
+                    Strongly recommended because Connect auto-installs the bot for the user. Without it, users must
+                    manually install the bot before they can receive direct messages.
                   </span>
                 </li>
               </ul>
@@ -1195,9 +1475,12 @@ export function TeamsSetupGuide({
           </ol>
         }
         rightContent={
-          <SetupButton href="https://portal.azure.com/#view/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/~/RegisteredApps">
-            Open App Registrations
-          </SetupButton>
+          <div className="flex min-w-0 flex-col gap-3 w-full">
+            <SetupButton href="https://portal.azure.com/#view/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/~/RegisteredApps">
+              Open App Registrations
+            </SetupButton>
+            <ManualPermissionsCheckpoint manualHealth={manualHealth} />
+          </div>
         }
       />
 
@@ -1414,14 +1697,28 @@ export function TeamsSetupGuide({
               </ol>
             </div>
             {manualHealth?.teamsAppCatalog != null && (
-              <CheckpointRow
-                label={
-                  manualHealth.teamsAppCatalog === 'ready'
-                    ? 'App found in Teams catalog'
-                    : 'Waiting for app in Teams catalog…'
-                }
-                status={manualHealth.teamsAppCatalog}
-              />
+              <div className="flex flex-col gap-2">
+                <div className="flex flex-wrap items-center gap-3">
+                  <CheckpointRow
+                    label={
+                      manualHealth.teamsAppCatalog === 'ready'
+                        ? 'App found in Teams catalog'
+                        : 'Waiting for app in Teams catalog…'
+                    }
+                    status={manualHealth.teamsAppCatalog}
+                  />
+                  {manualHealth.teamsAppCatalog === 'ready' && teamsAppCatalogId && (
+                    <OpenInTeamsButton catalogId={teamsAppCatalogId} />
+                  )}
+                </div>
+                {manualHealth.teamsAppCatalog === 'failed' && (
+                  <InlineToast
+                    variant="error"
+                    title="Teams catalog needs attention"
+                    description={getCheckpointRemedy('teamsAppCatalog', 'manual')}
+                  />
+                )}
+              </div>
             )}
           </div>
         }
@@ -1436,7 +1733,8 @@ export function TeamsSetupGuide({
         description="Grant admin consent and verify the connection by signing in with a Microsoft account that has Teams admin permissions."
         rightContent={
           <div className="flex min-w-0 flex-col gap-3 w-full">
-            {hasCredentials && isConnectSubscriberReady && connectionIdentifier ? (
+            {teamsAppCatalogId && <OpenInTeamsButton catalogId={teamsAppCatalogId} />}
+            {hasCredentials && manualTeamsAppCatalogReady && isConnectSubscriberReady && connectionIdentifier ? (
               <ConnectAndLinkSection
                 integrationIdentifier={integrationIdentifier}
                 subscriberId={connectSubscriberId}
@@ -1448,7 +1746,7 @@ export function TeamsSetupGuide({
               <>
                 <SetupButton disabled>{`Connect ${agent.name} ↗`}</SetupButton>
                 {!hasCredentials && <p className="text-text-soft text-label-xs">Complete step {base + 2} first.</p>}
-                {manualHealth?.teamsAppCatalog !== 'ready' && (
+                {hasCredentials && !manualTeamsAppCatalogReady && (
                   <p className="text-text-soft text-label-xs">Complete step {base + 5} first.</p>
                 )}
               </>
