@@ -108,7 +108,7 @@ export function buildConnectionAuthFromOAuth(payload: {
   refresh_token?: string;
   expires_in?: number;
   refresh_token_expires_in?: number;
-}): ChannelConnectionAuth {
+}): ChannelConnectionAuth & { accessToken: string } {
   if (!payload.refresh_token) {
     return { accessToken: payload.access_token };
   }
