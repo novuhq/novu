@@ -417,13 +417,17 @@ export class ConstructFrameworkWorkflow {
     fullPayloadForRender: FullPayloadForRender,
     dbWorkflow: NotificationTemplateEntity
   ) {
-    const channelOptions = this.constructChannelStepOptions(staticStep, fullPayloadForRender);
-    const { schema: controlSchema } = resolveStepControlSchemas({
-      stepType: StepTypeEnum.TOOL,
-      workflowOrigin: dbWorkflow.origin!,
-      existingControls: staticStep.template?.controls,
-      stepResolverHash: staticStep.template?.stepResolverHash,
-    });
+    const skip = (controlValues: Record<string, unknown>) =>
+      this.processSkipOption(controlValues, fullPayloadForRender);
+
+    const controlSchema = dbWorkflow.origin
+      ? resolveStepControlSchemas({
+          stepType: StepTypeEnum.TOOL,
+          workflowOrigin: dbWorkflow.origin,
+          existingControls: staticStep.template?.controls,
+          stepResolverHash: staticStep.template?.stepResolverHash,
+        }).schema
+      : staticStep.template!.controls!.schema;
 
     const resolveProviderOverride =
       (providerId: ToolContentOverrideProviderId) =>
@@ -435,8 +439,9 @@ export class ConstructFrameworkWorkflow {
     );
 
     return {
-      ...channelOptions,
+      skip,
       controlSchema: controlSchema as unknown as Schema,
+      disableOutputSanitization: true,
       providers,
     } as Required<Parameters<ChannelStep>[2]>;
   }

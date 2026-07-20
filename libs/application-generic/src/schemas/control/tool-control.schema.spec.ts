@@ -1,7 +1,13 @@
-import { opsgenieOverrideJsonSchema, pagerdutyOverrideJsonSchema, ToolProviderIdEnum } from '@novu/shared';
+import {
+  opsgenieOverrideJsonSchema,
+  pagerdutyOverrideJsonSchema,
+  ResourceOriginEnum,
+  StepTypeEnum,
+  ToolProviderIdEnum,
+} from '@novu/shared';
 import Ajv from 'ajv';
-import addFormats from 'ajv-formats';
 import { describe, expect, it } from 'vitest';
+import { resolveStepControlSchemas } from '../../utils/step-type-to-control.mapper';
 import { toolControlSchema, toolControlZodSchema } from './tool-control.schema';
 
 describe('toolControlZodSchema', () => {
@@ -81,13 +87,7 @@ describe('toolControlSchema (generated JSON schema)', () => {
     expect(Object.keys(opsgenie?.properties ?? {})).toEqual(Object.keys(opsgenieOverrideJsonSchema.properties));
   });
 
-  it('keeps override values permissive so Liquid templates pass', () => {
-    const opsgenie = getProviderSubschema(ToolProviderIdEnum.Opsgenie);
-
-    expect(opsgenie?.properties?.priority).toBe(true);
-  });
-
-  it('avoids empty-object property schemas that Mongoose minimize would strip', () => {
+  it('uses boolean true property schemas so Liquid stays permissive and Mongoose cannot strip keys', () => {
     for (const providerId of [ToolProviderIdEnum.PagerDuty, ToolProviderIdEnum.Opsgenie]) {
       const subschema = getProviderSubschema(providerId);
       for (const [key, value] of Object.entries(subschema?.properties ?? {})) {
@@ -99,7 +99,6 @@ describe('toolControlSchema (generated JSON schema)', () => {
 
   it('keeps provider override fields under Ajv removeAdditional: failing', () => {
     const ajv = new Ajv({ useDefaults: true, removeAdditional: 'failing', strict: false });
-    addFormats(ajv);
     const validate = ajv.compile(toolControlSchema);
 
     const controls = {
@@ -127,5 +126,53 @@ describe('toolControlSchema (generated JSON schema)', () => {
       summary: '{{subscriber.avatar}}',
       links: [{ ads: 'asda' }],
     });
+  });
+
+  it('resolves mongoose-stripped persisted schemas so Ajv does not drop override keys', () => {
+    const strippedControls = {
+      schema: {
+        type: 'object',
+        properties: {
+          body: { type: 'string' },
+          providerOverrides: {
+            type: 'object',
+            properties: {
+              [ToolProviderIdEnum.Opsgenie]: {
+                type: 'object',
+                // Mongoose minimize removed `true`/`{}` entries → empty properties map
+                properties: {},
+                additionalProperties: false,
+              },
+            },
+            additionalProperties: false,
+          },
+        },
+        required: ['body'],
+        additionalProperties: false,
+      },
+    };
+
+    const controls = {
+      body: 'alert',
+      providerOverrides: {
+        [ToolProviderIdEnum.Opsgenie]: { alias: 'asd' },
+      },
+    };
+
+    const ajv = new Ajv({ useDefaults: true, removeAdditional: 'failing', strict: false });
+
+    const strippedCopy = structuredClone(controls);
+    expect(ajv.compile(strippedControls.schema)(strippedCopy)).toBe(true);
+    expect(strippedCopy.providerOverrides[ToolProviderIdEnum.Opsgenie]).toEqual({});
+
+    const resolved = resolveStepControlSchemas({
+      stepType: StepTypeEnum.TOOL,
+      workflowOrigin: ResourceOriginEnum.NOVU_CLOUD,
+      existingControls: strippedControls as never,
+    });
+
+    const resolvedCopy = structuredClone(controls);
+    expect(ajv.compile(resolved.schema)(resolvedCopy)).toBe(true);
+    expect(resolvedCopy.providerOverrides[ToolProviderIdEnum.Opsgenie]).toEqual({ alias: 'asd' });
   });
 });
