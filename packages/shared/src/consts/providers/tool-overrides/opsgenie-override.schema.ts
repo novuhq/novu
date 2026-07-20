@@ -26,7 +26,8 @@ export const opsgenieOverrideJsonSchema = {
     },
     tags: {
       type: 'array',
-      items: { type: 'string' },
+      maxItems: 20,
+      items: { type: 'string', maxLength: 50 },
       description: 'Tags of the alert.',
     },
     details: {
@@ -36,6 +37,7 @@ export const opsgenieOverrideJsonSchema = {
     },
     entity: {
       type: 'string',
+      maxLength: 512,
       description: 'Domain entity the alert is related to.',
     },
     source: {
@@ -55,9 +57,11 @@ export const opsgenieOverrideJsonSchema = {
     },
     responders: {
       type: 'array',
+      maxItems: 50,
       items: {
         type: 'object',
         additionalProperties: false,
+        required: ['type'],
         properties: {
           type: { type: 'string', enum: ['team', 'user', 'escalation', 'schedule'] },
           id: { type: 'string' },
@@ -69,9 +73,11 @@ export const opsgenieOverrideJsonSchema = {
     },
     visibleTo: {
       type: 'array',
+      maxItems: 50,
       items: {
         type: 'object',
         additionalProperties: false,
+        required: ['type'],
         properties: {
           type: { type: 'string', enum: ['team', 'user'] },
           id: { type: 'string' },
@@ -83,7 +89,8 @@ export const opsgenieOverrideJsonSchema = {
     },
     actions: {
       type: 'array',
-      items: { type: 'string' },
+      maxItems: 10,
+      items: { type: 'string', maxLength: 50 },
       description: 'Custom actions available for the alert.',
     },
   },

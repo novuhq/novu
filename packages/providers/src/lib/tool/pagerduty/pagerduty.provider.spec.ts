@@ -91,6 +91,50 @@ test('bridge provider data overrides summary, severity, source, and passes extra
   safeOutboundSpy.mockRestore();
 });
 
+test('maps documented payload and root fields to their Events API positions', async () => {
+  const safeOutboundSpy = vi.spyOn(safeOutboundHttp, 'safeOutboundJsonRequest').mockResolvedValue(mockResponse());
+
+  const provider = new PagerDutyProvider();
+  await provider.sendMessage(
+    { content: 'ignored content', channelData: channelData('r'.repeat(32)) },
+    {
+      summary: 'API down',
+      timestamp: '2024-01-15T10:30:00Z',
+      component: 'checkout-api',
+      group: 'payments',
+      class: 'latency',
+      client: 'novu-monitor',
+      client_url: 'https://app.novu.co/alerts/1',
+      links: [{ href: 'https://status.example.com', text: 'Status' }],
+      images: [{ src: 'https://cdn.example.com/graph.png', alt: 'Latency graph' }],
+      service: 'billing',
+    }
+  );
+
+  const call = safeOutboundSpy.mock.calls[0][0];
+  const body = JSON.parse(call.body as string);
+  expect(body).toEqual({
+    routing_key: 'r'.repeat(32),
+    event_action: 'trigger',
+    client: 'novu-monitor',
+    client_url: 'https://app.novu.co/alerts/1',
+    links: [{ href: 'https://status.example.com', text: 'Status' }],
+    images: [{ src: 'https://cdn.example.com/graph.png', alt: 'Latency graph' }],
+    payload: {
+      summary: 'API down',
+      source: 'novu',
+      severity: 'critical',
+      timestamp: '2024-01-15T10:30:00Z',
+      component: 'checkout-api',
+      group: 'payments',
+      class: 'latency',
+      custom_details: { service: 'billing' },
+    },
+  });
+
+  safeOutboundSpy.mockRestore();
+});
+
 test('merges explicit custom_details with unknown bridge extras', async () => {
   const safeOutboundSpy = vi.spyOn(safeOutboundHttp, 'safeOutboundJsonRequest').mockResolvedValue(mockResponse());
 

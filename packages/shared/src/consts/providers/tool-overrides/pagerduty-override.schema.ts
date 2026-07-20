@@ -62,6 +62,7 @@ export const pagerdutyOverrideJsonSchema = {
       items: {
         type: 'object',
         additionalProperties: false,
+        required: ['href'],
         properties: {
           href: { type: 'string' },
           text: { type: 'string' },
@@ -74,6 +75,7 @@ export const pagerdutyOverrideJsonSchema = {
       items: {
         type: 'object',
         additionalProperties: false,
+        required: ['src'],
         properties: {
           src: { type: 'string' },
           href: { type: 'string' },

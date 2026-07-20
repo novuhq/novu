@@ -38,6 +38,7 @@ const RESERVED_OVERRIDE_KEYS = new Set([
   'tags',
   'responders',
   'visibleTo',
+  'actions',
   'details',
 ]);
 
@@ -91,6 +92,10 @@ export class OpsgenieProvider extends BaseProvider implements IToolProvider {
 
     if (Array.isArray(overrides.visibleTo)) {
       payload.visibleTo = overrides.visibleTo;
+    }
+
+    if (Array.isArray(overrides.actions)) {
+      payload.actions = overrides.actions;
     }
 
     const details = this.buildDetails(overrides);

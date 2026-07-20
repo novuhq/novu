@@ -28,6 +28,7 @@ const DEFAULT_SOURCE = 'novu';
 // PagerDuty enforces a 1024-character limit on payload.summary.
 const SUMMARY_MAX_LENGTH = 1024;
 
+/** Keys mapped to documented Events API v2 positions — never folded into custom_details. */
 const RESERVED_OVERRIDE_KEYS = new Set([
   'content',
   'summary',
@@ -37,7 +38,18 @@ const RESERVED_OVERRIDE_KEYS = new Set([
   'dedup_key',
   'custom_details',
   'routing_key',
+  'timestamp',
+  'component',
+  'group',
+  'class',
+  'client',
+  'client_url',
+  'links',
+  'images',
 ]);
+
+const PAYLOAD_OPTIONAL_STRING_FIELDS = ['timestamp', 'component', 'group', 'class'] as const;
+const ROOT_OPTIONAL_STRING_FIELDS = ['client', 'client_url'] as const;
 
 export class PagerDutyProvider extends BaseProvider implements IToolProvider {
   protected casing: CasingEnum = CasingEnum.SNAKE_CASE;
@@ -65,17 +77,44 @@ export class PagerDutyProvider extends BaseProvider implements IToolProvider {
     const dedupKey = this.resolveDedupKey(overrides.dedup_key, options);
     const customDetails = this.extractCustomDetails(overrides);
 
-    const payload = {
+    const eventPayload: Record<string, unknown> = {
+      summary,
+      source,
+      severity,
+    };
+
+    for (const field of PAYLOAD_OPTIONAL_STRING_FIELDS) {
+      const value = overrides[field];
+      if (typeof value === 'string' && value.length > 0) {
+        eventPayload[field] = value;
+      }
+    }
+
+    if (Object.keys(customDetails).length > 0) {
+      eventPayload.custom_details = customDetails;
+    }
+
+    const body: Record<string, unknown> = {
       routing_key: routingKey,
       event_action: eventAction,
       ...(dedupKey ? { dedup_key: dedupKey } : {}),
-      payload: {
-        summary,
-        source,
-        severity,
-        ...(Object.keys(customDetails).length > 0 ? { custom_details: customDetails } : {}),
-      },
+      payload: eventPayload,
     };
+
+    for (const field of ROOT_OPTIONAL_STRING_FIELDS) {
+      const value = overrides[field];
+      if (typeof value === 'string' && value.length > 0) {
+        body[field] = value;
+      }
+    }
+
+    if (Array.isArray(overrides.links)) {
+      body.links = overrides.links;
+    }
+
+    if (Array.isArray(overrides.images)) {
+      body.images = overrides.images;
+    }
 
     // PagerDuty Events API v2 authenticates via routing_key in the body; passthrough headers are not used.
     const response = await safeOutboundJsonRequest<{ dedup_key?: string; message?: string; status?: string }>({
@@ -84,7 +123,7 @@ export class PagerDutyProvider extends BaseProvider implements IToolProvider {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(body),
     });
 
     if (response.statusCode < 200 || response.statusCode >= 300) {

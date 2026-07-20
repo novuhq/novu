@@ -54,4 +54,21 @@ describe('tool provider override schemas', () => {
     expect(TOOL_PROVIDER_PRIMARY_CONTENT_KEY[ToolProviderIdEnum.Opsgenie]).toBe('message');
     expect(getToolProviderPrimaryContentKey(ToolProviderIdEnum.PagerDuty)).toBe('summary');
   });
+
+  it('requires documented PagerDuty link and image identifiers', () => {
+    expect(pagerdutyOverrideJsonSchema.properties.links.items.required).toEqual(['href']);
+    expect(pagerdutyOverrideJsonSchema.properties.images.items.required).toEqual(['src']);
+  });
+
+  it('documents Opsgenie Create Alert size and count limits', () => {
+    expect(opsgenieOverrideJsonSchema.properties.entity.maxLength).toBe(512);
+    expect(opsgenieOverrideJsonSchema.properties.tags.maxItems).toBe(20);
+    expect(opsgenieOverrideJsonSchema.properties.tags.items.maxLength).toBe(50);
+    expect(opsgenieOverrideJsonSchema.properties.actions.maxItems).toBe(10);
+    expect(opsgenieOverrideJsonSchema.properties.actions.items.maxLength).toBe(50);
+    expect(opsgenieOverrideJsonSchema.properties.responders.maxItems).toBe(50);
+    expect(opsgenieOverrideJsonSchema.properties.responders.items.required).toEqual(['type']);
+    expect(opsgenieOverrideJsonSchema.properties.visibleTo.maxItems).toBe(50);
+    expect(opsgenieOverrideJsonSchema.properties.visibleTo.items.required).toEqual(['type']);
+  });
 });
