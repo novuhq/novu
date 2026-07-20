@@ -256,6 +256,56 @@ This connects your bot resource to Teams and lets your Teams app install cleanly
   </Step>
 </Steps>
 
+### Using the Teams Developer CLI
+
+<Note>
+  This section is optional. The Azure Portal steps above remain the primary path. Use the [Teams Developer CLI](https://www.npmjs.com/package/@microsoft/teams.cli) only if you prefer provisioning app registration, Azure Bot Service, and the Teams channel from the terminal.
+</Note>
+
+If you use the CLI, you can skip the portal walkthroughs from [Create the app identity (Azure AD)](#create-the-app-identity-azure-ad) through [Enable the Microsoft Teams channel](#enable-the-microsoft-teams-channel). You still need to complete [Add Novu's redirect URI](#add-novus-redirect-uri), [Add Microsoft Graph app permissions](#add-microsoft-graph-app-permissions), and the Teams app package steps below.
+
+<Steps>
+  <Step title="Install the CLI">
+    ```bash
+    npm install -g @microsoft/teams.cli
+    ```
+  </Step>
+
+  <Step title="Create the bot with Azure-managed topology">
+    Run `teams app create` with `--azure` so provisioning matches Novu's supported topology (Azure Bot Service plus the Microsoft Teams channel). The default Teams-managed bot path may not match.
+
+    Replace the placeholders with your values. Use your Novu bot messaging endpoint for `--endpoint` (for example, an agent webhook URL if you use [agents on Teams](#using-microsoft-teams-with-agents)).
+
+    ```bash
+    teams app create \
+      --name "<your-bot-name>" \
+      --endpoint <novu-webhook-url> \
+      --azure \
+      --subscription <your-sub> \
+      --resource-group <your-rg> \
+      --env .env
+    ```
+  </Step>
+
+  <Step title="Map credentials into Novu">
+    The command writes a `.env` file in your working directory. Map these values when you [configure the integration in Novu](#configure-the-teams-bot-integration-in-novu):
+
+    | `.env` variable | Novu credential field |
+    | --- | --- |
+    | `CLIENT_ID` | **Client ID** (Microsoft App ID) |
+    | `CLIENT_SECRET` | **Client Secret** |
+    | `TENANT_ID` | **App Tenant ID** (Directory (tenant) ID) |
+  </Step>
+</Steps>
+
+<Warning>
+  **CLI provisioning does not replace every manual step.**
+
+  - **Graph application permissions**: You must still add Novu's required Microsoft Graph **application** permissions and grant admin consent in the [Azure Portal](#add-microsoft-graph-app-permissions). The CLI's resource-specific consent (RSC) helpers are not a substitute.
+  - **Teams app package**: You must still [create](#create-a-teams-app), download, and upload Novu's Teams app package. The manifest must include `validDomains`, `webApplicationInfo`, and the `ChannelMessage.Read.Group` RSC permission.
+  - **Prefer `--azure`**: Use the `--azure` flag so you get Azure Bot Service with the Teams channel enabled. Teams-managed bots created without `--azure` may not match Novu's supported topology.
+</Warning>
+
 ### Create a Teams app
 
 Now you create the Teams “wrapper” around your app registration and bot.
