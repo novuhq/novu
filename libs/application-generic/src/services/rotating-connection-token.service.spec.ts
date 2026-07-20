@@ -163,6 +163,37 @@ describe('RotatingConnectionTokenService', () => {
     expect(cacheService.del.calledOnce).toBe(true);
   });
 
+  it('refreshes an expiring Novu-managed Slack token using the env-var OAuth client', async () => {
+    process.env.NOVU_SLACK_INTEGRATION_CLIENT_ID = 'novu-slack-client-id';
+    process.env.NOVU_SLACK_INTEGRATION_CLIENT_SECRET = 'novu-slack-client-secret';
+
+    const { service, integrationRepository, channelConnectionRepository } = buildHarness();
+    // The Novu demo Slack integration stores no credentials on the integration document.
+    integrationRepository.findOne.resolves({ providerId: ChatProviderIdEnum.Novu });
+    const connection = buildConnection(
+      {
+        accessToken: MOCK_ACCESS_TOKEN,
+        refreshToken: MOCK_REFRESH_TOKEN,
+        expiresAt: futureIso(60 * 1000),
+      },
+      ChatProviderIdEnum.Novu
+    );
+    channelConnectionRepository.findOne.resolves(connection);
+
+    axiosPost.resolves({
+      data: { ok: true, access_token: MOCK_NEW_ACCESS_TOKEN, expires_in: 3600 },
+    });
+
+    const token = await service.getConnectionToken(connection);
+
+    expect(token).toEqual(MOCK_NEW_ACCESS_TOKEN);
+    const [url, body] = axiosPost.firstCall.args;
+    expect(url).toEqual('https://slack.com/api/oauth.v2.access');
+    const params = new URLSearchParams(body as string);
+    expect(params.get('client_id')).toEqual('novu-slack-client-id');
+    expect(params.get('client_secret')).toEqual('novu-slack-client-secret');
+  });
+
   it('keeps the previous refresh token when the provider does not return a new one', async () => {
     const { service, channelConnectionRepository } = buildHarness();
     const connection = buildConnection({

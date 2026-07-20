@@ -1,5 +1,10 @@
 import { BadGatewayException, Injectable } from '@nestjs/common';
-import { ChannelConnectionEntity, ChannelConnectionRepository, IntegrationRepository } from '@novu/dal';
+import {
+  ChannelConnectionEntity,
+  ChannelConnectionRepository,
+  IntegrationEntity,
+  IntegrationRepository,
+} from '@novu/dal';
 import { ChatProviderIdEnum, ProvidersIdEnum } from '@novu/shared';
 import axios from 'axios';
 import {
@@ -81,12 +86,20 @@ function parseWebexResponse(data: unknown): RotatingTokenRefreshResult {
   };
 }
 
+const SLACK_ROTATING_TOKEN_PROVIDER: RotatingTokenProvider = {
+  label: 'Slack',
+  tokenUrl: SLACK_OAUTH_ACCESS_URL,
+  parseResponse: parseSlackResponse,
+};
+
 const ROTATING_TOKEN_PROVIDERS: Partial<Record<ProvidersIdEnum, RotatingTokenProvider>> = {
-  [ChatProviderIdEnum.Slack]: {
-    label: 'Slack',
-    tokenUrl: SLACK_OAUTH_ACCESS_URL,
-    parseResponse: parseSlackResponse,
-  },
+  [ChatProviderIdEnum.Slack]: SLACK_ROTATING_TOKEN_PROVIDER,
+  /*
+   * The Novu-managed demo Slack integration completes the same Slack OAuth flow
+   * (SlackOauthCallback accepts both provider ids), so its connections can also
+   * carry a rotating refresh token.
+   */
+  [ChatProviderIdEnum.Novu]: SLACK_ROTATING_TOKEN_PROVIDER,
   [ChatProviderIdEnum.WebexMessaging]: {
     label: 'Webex',
     tokenUrl: WEBEX_ACCESS_TOKEN_URL,
@@ -237,13 +250,11 @@ export class RotatingConnectionTokenService {
       _organizationId: connection._organizationId,
     });
 
-    if (!integration?.credentials) {
-      throw new Error(
-        `Integration ${connection.integrationIdentifier} missing credentials for ${provider.label} token refresh`
-      );
+    if (!integration) {
+      throw new Error(`Integration ${connection.integrationIdentifier} not found for ${provider.label} token refresh`);
     }
 
-    const { clientId, secretKey } = decryptCredentials(integration.credentials);
+    const { clientId, secretKey } = this.resolveOAuthClientCredentials(integration, provider);
 
     if (!clientId || !secretKey) {
       throw new Error(
@@ -281,6 +292,31 @@ export class RotatingConnectionTokenService {
     );
 
     return refreshed.accessToken;
+  }
+
+  /**
+   * The Novu-managed demo Slack integration stores no credentials on the integration
+   * document — its OAuth client lives in env vars (same source `GetNovuProviderCredentials`
+   * uses for the OAuth callback that issued the refresh token).
+   */
+  private resolveOAuthClientCredentials(
+    integration: IntegrationEntity,
+    provider: RotatingTokenProvider
+  ): { clientId?: string; secretKey?: string } {
+    if (integration.providerId === ChatProviderIdEnum.Novu) {
+      return {
+        clientId: process.env.NOVU_SLACK_INTEGRATION_CLIENT_ID,
+        secretKey: process.env.NOVU_SLACK_INTEGRATION_CLIENT_SECRET,
+      };
+    }
+
+    if (!integration.credentials) {
+      throw new Error(`Integration ${integration.identifier} missing credentials for ${provider.label} token refresh`);
+    }
+
+    const { clientId, secretKey } = decryptCredentials(integration.credentials);
+
+    return { clientId, secretKey };
   }
 
   private async requestTokenRefresh(
