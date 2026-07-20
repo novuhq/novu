@@ -2,7 +2,13 @@ import { ChannelTypeEnum, type GeneratePreviewResponseDto, type ToolRenderOutput
 import { useMemo } from 'react';
 import { ToolFill } from '@/components/icons/tool-fill';
 import { Skeleton } from '@/components/primitives/skeleton';
-import { DEFAULT_CONTENT_SOURCE, mergeToolProviderPreview } from './tool-content-source';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
+import {
+  buildAnnotatedPreviewLines,
+  DEFAULT_CONTENT_SOURCE,
+  getProviderPrimaryContentKey,
+  mergeToolProviderPreview,
+} from './tool-content-source';
 import { useToolContentSource } from './tool-content-source-context';
 
 type ToolPreviewResult = {
@@ -19,6 +25,9 @@ const PANEL_CLASS =
   'bg-neutral-alpha-50 text-foreground-950 min-h-16 overflow-auto rounded-md border border-neutral-100 p-2 font-mono text-[11px] leading-4 [scrollbar-gutter:stable]';
 
 const EMPTY_BODY_PLACEHOLDER = 'Default content will be delivered to enabled tools';
+
+const DEFAULT_CONTENT_CHIP_CLASS =
+  'text-label-2xs text-foreground-600 bg-neutral-alpha-100 inline-flex h-4 select-none items-center rounded-sm px-1 font-medium';
 
 function extractToolPreview(previewData?: GeneratePreviewResponseDto): ToolRenderOutput | undefined {
   const previewResult = previewData?.result as ToolPreviewResult | undefined;
@@ -71,16 +80,21 @@ export const ToolPreview = ({ isPreviewPending, previewData }: ToolPreviewProps)
   const { selectedSource } = useToolContentSource();
   const activeProviderId = selectedSource === DEFAULT_CONTENT_SOURCE ? undefined : selectedSource;
 
-  const mergedPreview = useMemo(() => {
+  const { annotatedLines, defaultContentKey } = useMemo(() => {
     if (!activeProviderId) {
-      return undefined;
+      return { annotatedLines: undefined, defaultContentKey: undefined };
     }
 
-    return mergeToolProviderPreview({
+    const result = mergeToolProviderPreview({
       body,
       providerId: activeProviderId,
       override: providerOverrides[activeProviderId],
     });
+
+    return {
+      annotatedLines: buildAnnotatedPreviewLines(result.merged, result.defaultContentKey),
+      defaultContentKey: result.defaultContentKey,
+    };
   }, [activeProviderId, body, providerOverrides]);
 
   const hasOverride = !!activeProviderId && activeProviderId in providerOverrides;
@@ -91,15 +105,46 @@ export const ToolPreview = ({ isPreviewPending, previewData }: ToolPreviewProps)
     }
 
     if (hasOverride) {
-      return 'Override merged over the default message body.';
+      if (!defaultContentKey) {
+        return 'Override merged over the default content.';
+      }
+
+      if (!body) {
+        return `Override merged over the default content. "${defaultContentKey}" is taken from your default message (currently empty).`;
+      }
+
+      return `Override merged over the default content. "${defaultContentKey}" is taken from your default message.`;
     }
 
-    return "No override for this provider. Default message maps to the provider's primary content field.";
+    const primaryKey = getProviderPrimaryContentKey(activeProviderId);
+
+    return `No override for this provider. Default message maps to "${primaryKey}".`;
   };
 
   const renderPanel = () => {
-    if (mergedPreview) {
-      return <pre className={PANEL_CLASS}>{JSON.stringify(mergedPreview, null, 2)}</pre>;
+    if (annotatedLines) {
+      return (
+        <pre className={PANEL_CLASS}>
+          {annotatedLines.map((line, index) => (
+            <div key={`${index}-${line.json}`}>
+              {line.json}
+              {line.isDefaultContentKey ? (
+                <>
+                  {' '}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className={DEFAULT_CONTENT_CHIP_CLASS}>DEFAULT CONTENT</span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {`Filled from your Default content because the override doesn't set "${defaultContentKey}".`}
+                    </TooltipContent>
+                  </Tooltip>
+                </>
+              ) : null}
+            </div>
+          ))}
+        </pre>
+      );
     }
 
     return <div className={`${PANEL_CLASS} whitespace-pre-wrap`}>{body || EMPTY_BODY_PLACEHOLDER}</div>;
