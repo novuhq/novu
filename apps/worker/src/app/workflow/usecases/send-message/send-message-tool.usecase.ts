@@ -52,21 +52,7 @@ export function isEndpointRoutedToolProvider(providerId: string): boolean {
 
 type ToolStepOutputs = {
   body?: string;
-  enabledIntegrations?: string[];
 };
-
-export function filterToolIntegrationsByEnabledIdentifiers<T extends { identifier: string }>(
-  integrations: T[],
-  enabledIntegrations?: string[]
-): T[] {
-  if (!enabledIntegrations || enabledIntegrations.length === 0) {
-    return integrations;
-  }
-
-  const selectedIdentifiers = new Set(enabledIntegrations);
-
-  return integrations.filter((integration) => selectedIdentifiers.has(integration.identifier));
-}
 
 @Injectable()
 export class SendMessageTool extends SendMessageBase {
@@ -102,7 +88,7 @@ export class SendMessageTool extends SendMessageBase {
     });
 
     const bridgeOutputs = command.bridgeData?.outputs as ToolStepOutputs | undefined;
-    const { content, enabledIntegrations } = await this.resolveContentAndProviders(command, bridgeOutputs);
+    const { content } = await this.resolveContentAndProviders(command, bridgeOutputs);
 
     if (!content) {
       return {
@@ -122,11 +108,7 @@ export class SendMessageTool extends SendMessageBase {
       })
     );
 
-    const selectedIntegrations = filterToolIntegrationsByEnabledIdentifiers(integrations, enabledIntegrations);
-
-    if (selectedIntegrations.length === 0) {
-      const noActiveIntegrations = integrations.length === 0;
-
+    if (integrations.length === 0) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
@@ -136,9 +118,8 @@ export class SendMessageTool extends SendMessageBase {
           isTest: false,
           isRetry: false,
           raw: JSON.stringify({
-            reason: noActiveIntegrations ? 'no_active_tool_integrations' : 'enabled_integrations_filter_matched_none',
-            requestedEnabledIntegrations: enabledIntegrations ?? [],
-            availableIdentifiers: integrations.map((integration) => integration.identifier),
+            reason: 'no_active_tool_integrations',
+            availableIdentifiers: [],
           }),
         })
       );
@@ -156,7 +137,7 @@ export class SendMessageTool extends SendMessageBase {
     let anySkipped = false;
     const toolFactory = new ToolFactory();
 
-    for (const integration of selectedIntegrations) {
+    for (const integration of integrations) {
       const resolved = endpointsByIntegration.get(integration.identifier);
       const channelDataList = resolved?.channelData ?? [];
 
@@ -206,12 +187,11 @@ export class SendMessageTool extends SendMessageBase {
   private async resolveContentAndProviders(
     command: SendMessageChannelCommand,
     bridgeOutputs?: ToolStepOutputs
-  ): Promise<{ content: string; enabledIntegrations?: string[] }> {
-    const enabledIntegrations = bridgeOutputs?.enabledIntegrations;
+  ): Promise<{ content: string }> {
     let content = bridgeOutputs?.body || '';
 
     if (command.bridgeData) {
-      return { content, enabledIntegrations };
+      return { content };
     }
 
     const { step } = command;
@@ -242,10 +222,10 @@ export class SendMessageTool extends SendMessageBase {
     } catch (error) {
       await this.sendErrorHandlebars(command.job, error.message);
 
-      return { content: '', enabledIntegrations };
+      return { content: '' };
     }
 
-    return { content, enabledIntegrations };
+    return { content };
   }
 
   private async resolveEndpointsByIntegration(

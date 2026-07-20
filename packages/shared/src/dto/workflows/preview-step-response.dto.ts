@@ -10,7 +10,6 @@ export class ChatRenderOutput extends RenderOutput {
 
 export class ToolRenderOutput extends RenderOutput {
   body: string;
-  enabledIntegrations?: string[];
   providerOverrides?: Partial<Record<string, Record<string, unknown>>>;
 }
 

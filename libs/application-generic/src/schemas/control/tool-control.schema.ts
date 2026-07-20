@@ -17,7 +17,6 @@ export const toolControlZodSchema = z
   .object({
     skip: skipZodSchema,
     body: z.string(),
-    enabledIntegrations: z.array(z.string()).optional(),
     providerOverrides: z
       .object({
         [ToolProviderIdEnum.PagerDuty]: toolProviderOverrideValueSchema.optional(),
