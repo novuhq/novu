@@ -91,7 +91,7 @@ import { Novu } from "@novu/api";
 
 const novu = new Novu({
   secretKey: "<YOUR_SECRET_KEY_HERE>",
-  serverUrl: "https://eu.api.novu.co",
+  serverURL: "https://eu.api.novu.co",
 });
 
 async function run() {
@@ -123,6 +123,22 @@ async function run() {
 
 run();
 ```
+
+</Tab>
+<Tab title="Self-hosted">
+
+Point the SDK at your self-hosted API by passing `serverURL`. Do not append `/v1` - the SDK adds the API version automatically.
+
+```javascript
+import { Novu } from "@novu/api";
+
+const novu = new Novu({
+  secretKey: "<YOUR_SECRET_KEY_HERE>",
+  serverURL: "https://your-novu-api-host", // e.g. http://localhost:3000
+});
+```
+
+If you use Novu Cloud (US default), omit `serverURL` entirely - the SDK points to `https://api.novu.co`.
 
 </Tab>
 </Tabs>
