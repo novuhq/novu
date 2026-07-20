@@ -18,10 +18,17 @@
  * agent in the Novu dashboard.
  */
 
-import type { ConversationMessage, ConversationMessagePart } from '@novu/react';
+import type {
+  ConversationCardNodeProps,
+  ConversationCardProps,
+  ConversationMessage,
+  ConversationMessagePart,
+} from '@novu/react';
 import { ConversationCard, NovuProvider, useConversation, useConversations } from '@novu/react';
-import { MessageSquareIcon, PlusIcon } from 'lucide-react';
+import { ArrowUpRightIcon, MessageSquareIcon, PlusIcon } from 'lucide-react';
 import { useCallback, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 import { Attachment, AttachmentInfo, AttachmentPreview, Attachments } from '@/components/ai-elements/attachments';
 import {
   Confirmation,
@@ -56,22 +63,86 @@ function newConversationId(): string {
     : `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 12)}`;
 }
 
-/** Tailwind styling for the unstyled @novu/react <ConversationCard> via its data-novu-element hooks. */
-const CARD_STYLES = [
-  'rounded-lg border bg-card p-4 text-sm',
-  "[&_[data-novu-element='card-title']]:text-base [&_[data-novu-element='card-title']]:font-semibold",
-  "[&_[data-novu-element='card-subtitle']]:text-muted-foreground [&_[data-novu-element='card-subtitle']]:text-xs",
-  "[&_[data-novu-element='text']]:my-1.5",
-  "[&_[data-novu-element='divider']]:my-3 [&_[data-novu-element='divider']]:border-border",
-  "[&_[data-novu-element='actions']]:mt-3 [&_[data-novu-element='actions']]:flex [&_[data-novu-element='actions']]:flex-wrap [&_[data-novu-element='actions']]:gap-2",
-  "[&_[data-novu-element='button']]:cursor-pointer [&_[data-novu-element='button']]:rounded-md [&_[data-novu-element='button']]:border [&_[data-novu-element='button']]:px-3 [&_[data-novu-element='button']]:py-1.5 [&_[data-novu-element='button']]:text-sm [&_[data-novu-element='button']]:font-medium [&_[data-novu-element='button']]:transition-colors hover:[&_[data-novu-element='button']]:bg-accent",
-  "[&_[data-novu-element='button'][data-novu-style='primary']]:border-transparent [&_[data-novu-element='button'][data-novu-style='primary']]:bg-primary [&_[data-novu-element='button'][data-novu-style='primary']]:text-primary-foreground",
-  "[&_[data-novu-element='button'][data-novu-style='danger']]:border-transparent [&_[data-novu-element='button'][data-novu-style='danger']]:bg-destructive [&_[data-novu-element='button'][data-novu-style='danger']]:text-white",
-  "[&_[data-novu-element='link-button']]:text-primary [&_[data-novu-element='link-button']]:underline",
-  "[&_[data-novu-element='image']]:my-2 [&_[data-novu-element='image']]:max-w-full [&_[data-novu-element='image']]:rounded-md",
-  "[&_[data-novu-element='fields']]:my-2 [&_[data-novu-element='fields']]:grid [&_[data-novu-element='fields']]:grid-cols-2 [&_[data-novu-element='fields']]:gap-1",
-  "[&_[data-novu-element='field-title']]:text-xs [&_[data-novu-element='field-title']]:font-medium [&_[data-novu-element='field-title']]:text-muted-foreground",
-].join(' ');
+function safeHttpUrl(value: string | undefined): string | undefined {
+  if (!value) return undefined;
+  try {
+    return ['http:', 'https:'].includes(new URL(value).protocol) ? value : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function CardLinkButton({ node }: ConversationCardNodeProps) {
+  const href = safeHttpUrl(node.url);
+  if (!href) return null;
+
+  return (
+    <Button asChild size="sm" variant="ghost" className="text-primary">
+      <a href={href} target="_blank" rel="noreferrer noopener">
+        {node.label ?? node.content ?? href}
+        <ArrowUpRightIcon className="size-3.5" />
+      </a>
+    </Button>
+  );
+}
+
+/**
+ * shadcn-styled renderers for the portable card vocabulary, plugged into the
+ * headless <ConversationCard> via its `components` prop. Card `text` nodes
+ * carry markdown (each platform adapter renders it natively — Slack mrkdwn,
+ * Adaptive Cards, …), so they route through the same Streamdown renderer as
+ * regular messages.
+ */
+const cardComponents: ConversationCardProps['components'] = {
+  card: ({ node, renderChildren }) => (
+    <div className="overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm">
+      {(node.title || node.subtitle) && (
+        <div className="space-y-0.5 border-b bg-muted/30 px-4 py-3">
+          {node.title && <h4 className="text-sm font-semibold leading-tight">{node.title}</h4>}
+          {node.subtitle && <p className="text-xs text-muted-foreground">{node.subtitle}</p>}
+        </div>
+      )}
+      <div className="space-y-3 px-4 py-4">{renderChildren(node.children)}</div>
+    </div>
+  ),
+  text: ({ node }) => (
+    <div className={node.style === 'muted' ? 'text-xs text-muted-foreground' : 'text-sm'}>
+      <MessageResponse>{node.content ?? ''}</MessageResponse>
+    </div>
+  ),
+  divider: () => <Separator />,
+  section: ({ node, renderChildren }) => <div className="space-y-2">{renderChildren(node.children)}</div>,
+  fields: ({ node, renderChildren }) => <dl className="grid grid-cols-2 gap-x-6 gap-y-3">{renderChildren(node.children)}</dl>,
+  field: ({ node }) => (
+    <div className="space-y-0.5">
+      <dt className="text-xs text-muted-foreground">{node.label ?? node.title}</dt>
+      <dd className="text-sm font-medium">{node.value ?? node.content}</dd>
+    </div>
+  ),
+  actions: ({ node, renderChildren }) => (
+    <div className="flex flex-wrap items-center gap-2 pt-1">{renderChildren(node.children)}</div>
+  ),
+  button: ({ node, onAction }) => (
+    <Button
+      size="sm"
+      variant={node.style === 'danger' ? 'destructive' : node.style === 'primary' ? 'default' : 'secondary'}
+      onClick={
+        node.id && onAction
+          ? () => onAction(node.id as string, typeof node.value === 'string' ? node.value : undefined)
+          : undefined
+      }
+    >
+      {node.label ?? node.content}
+    </Button>
+  ),
+  'link-button': CardLinkButton,
+  link: CardLinkButton,
+  image: ({ node }) => {
+    const src = safeHttpUrl(node.url ?? node.imageUrl);
+
+    return src ? <img src={src} alt={node.title ?? ''} className="max-h-56 w-auto rounded-lg border" /> : null;
+  },
+};
 
 type SendAction = (actionId: string, value?: string, sourceMessageId?: string) => Promise<unknown>;
 
@@ -96,8 +167,12 @@ function MessagePart({
 
     case 'card':
       return (
-        <div className={CARD_STYLES}>
-          <ConversationCard card={part.card} onAction={(actionId, value) => sendAction(actionId, value, message.id)} />
+        <div className="w-full max-w-md">
+          <ConversationCard
+            card={part.card}
+            components={cardComponents}
+            onAction={(actionId, value) => sendAction(actionId, value, message.id)}
+          />
         </div>
       );
 
@@ -238,22 +313,20 @@ function AgentChat() {
       />
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <div className="shrink-0 border-b px-6 py-4">
-          <div className="flex items-center gap-3">
+        <div className="shrink-0 border-b px-6 py-3">
+          <div className="mx-auto flex w-full max-w-3xl items-center gap-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
               <MessageSquareIcon className="size-4" />
             </div>
             <div>
               <h1 className="text-sm font-semibold">Agent Web Chat</h1>
-              <p className="text-xs text-muted-foreground">
-                @novu/react headless hooks (<code>useConversation</code>) rendered with AI Elements
-              </p>
+              <p className="text-xs text-muted-foreground">Powered by the Novu web channel</p>
             </div>
           </div>
         </div>
 
         <Conversation className="flex-1">
-          <ConversationContent>
+          <ConversationContent className="mx-auto w-full max-w-3xl px-4 py-6 md:px-6">
             {!isLoading && messages.length === 0 && (
               <ConversationEmptyState
                 icon={<MessageSquareIcon className="size-8" />}
@@ -294,24 +367,26 @@ function AgentChat() {
         </Conversation>
 
         {error && (
-          <div className="mx-4 mb-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+          <div className="mx-auto mb-2 w-full max-w-3xl rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
             {error.message}
           </div>
         )}
 
-        <div className="shrink-0 border-t px-4 py-3">
-          <PromptInput onSubmit={handleSubmit} className="max-w-full">
-            <PromptInputTextarea
-              value={input}
-              onChange={(event) => setInput(event.target.value)}
-              placeholder="Ask the agent anything…"
-              disabled={isStreaming}
-            />
-            <PromptInputFooter>
-              <div />
-              <PromptInputSubmit status={isStreaming ? 'streaming' : 'ready'} onStop={() => {}} />
-            </PromptInputFooter>
-          </PromptInput>
+        <div className="shrink-0 border-t bg-background px-4 py-3 md:px-6">
+          <div className="mx-auto w-full max-w-3xl">
+            <PromptInput onSubmit={handleSubmit} className="max-w-full">
+              <PromptInputTextarea
+                value={input}
+                onChange={(event) => setInput(event.target.value)}
+                placeholder="Ask the agent anything…"
+                disabled={isStreaming}
+              />
+              <PromptInputFooter>
+                <div />
+                <PromptInputSubmit status={isStreaming ? 'streaming' : 'ready'} onStop={() => {}} />
+              </PromptInputFooter>
+            </PromptInput>
+          </div>
         </div>
       </div>
     </div>

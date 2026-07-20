@@ -253,9 +253,16 @@ export class Conversations extends BaseModule {
     this.#activeStreams.add(key);
     this._emitter.emit('conversation.turn.updated', { agent, conversationId, status: 'streaming' });
 
+    // Per-stream delivery dedupe. Several streams can be open at once for the
+    // same conversation (e.g. a card action fired while the previous turn's
+    // stream is still in its settle window) and each receives every relay
+    // event — so a message id is only populated by the stream that first
+    // claims it; other streams drop that id's content frames entirely.
+    const claims = { owned: new Set<string>(), skipped: new Set<string>() };
+
     try {
       for await (const frame of parseDataStream(response.body)) {
-        this.#applyFrame(agent, conversationId, frame);
+        this.#applyFrame(agent, conversationId, frame, claims);
       }
     } finally {
       this.#activeStreams.delete(key);
@@ -264,39 +271,88 @@ export class Conversations extends BaseModule {
     }
   }
 
-  #applyFrame(agent: string, conversationId: string, frame: DataStreamFrame): void {
+  /**
+   * Returns true when this stream owns content delivery for the message id.
+   * The first stream to see an id that doesn't already have content claims it;
+   * an id that already exists with parts was delivered elsewhere (another open
+   * stream or a history refetch) and is skipped for the rest of this stream.
+   */
+  #claimMessage(
+    agent: string,
+    conversationId: string,
+    messageId: string,
+    claims: { owned: Set<string>; skipped: Set<string> },
+    createdAt?: string
+  ): boolean {
+    if (claims.owned.has(messageId)) return true;
+    if (claims.skipped.has(messageId)) return false;
+
+    const existing = this.#messages
+      .get(this.#storeKey(agent, conversationId))
+      ?.find((message) => message.id === messageId);
+
+    if (existing && existing.parts.length > 0) {
+      claims.skipped.add(messageId);
+
+      return false;
+    }
+
+    claims.owned.add(messageId);
+    this.#ensureAgentMessage(agent, conversationId, messageId, createdAt);
+
+    // A delivered message implicitly ends the typing indicator (mirrors the
+    // server-side rule); a later typing frame re-enables it for multi-step turns.
+    if (this.getTypingSnapshot({ agent, conversationId }).isTyping) {
+      this.#setTyping(agent, conversationId, { isTyping: false });
+    }
+
+    return true;
+  }
+
+  #applyFrame(
+    agent: string,
+    conversationId: string,
+    frame: DataStreamFrame,
+    claims: { owned: Set<string>; skipped: Set<string> }
+  ): void {
     switch (frame.type) {
       case 'data-message-start': {
         const data = frame.data as { messageId?: string; createdAt?: string } | undefined;
         if (data?.messageId) {
-          this.#ensureAgentMessage(agent, conversationId, data.messageId, data.createdAt);
+          this.#claimMessage(agent, conversationId, data.messageId, claims, data.createdAt);
         }
         break;
       }
       case 'text-start': {
         if (typeof frame.id === 'string') {
-          this.#ensureAgentMessage(agent, conversationId, frame.id);
+          this.#claimMessage(agent, conversationId, frame.id, claims);
         }
         break;
       }
       case 'text-delta': {
         if (typeof frame.id === 'string' && typeof frame.delta === 'string') {
-          this.#appendTextDelta(agent, conversationId, frame.id, frame.delta);
+          if (this.#claimMessage(agent, conversationId, frame.id, claims)) {
+            this.#appendTextDelta(agent, conversationId, frame.id, frame.delta);
+          }
         }
         break;
       }
       case 'data-card': {
         const data = frame.data as { card?: CardElement } | undefined;
         if (typeof frame.id === 'string' && data?.card) {
-          this.#appendPart(agent, conversationId, frame.id, { type: 'card', card: data.card });
+          if (this.#claimMessage(agent, conversationId, frame.id, claims)) {
+            this.#appendPart(agent, conversationId, frame.id, { type: 'card', card: data.card });
+          }
         }
         break;
       }
       case 'data-files': {
         const data = frame.data as { files?: MessageContentPayload['files'] } | undefined;
         if (typeof frame.id === 'string' && Array.isArray(data?.files)) {
-          for (const part of partsFromContent({ files: data.files })) {
-            this.#appendPart(agent, conversationId, frame.id, part);
+          if (this.#claimMessage(agent, conversationId, frame.id, claims)) {
+            for (const part of partsFromContent({ files: data.files })) {
+              this.#appendPart(agent, conversationId, frame.id, part);
+            }
           }
         }
         break;

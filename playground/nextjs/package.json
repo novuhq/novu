@@ -13,6 +13,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.13",
     "@ai-sdk/openai": "^3.0.0",
     "@ai-sdk/react": "^3.0.0",
     "@chat-adapter/state-memory": "4.31.0",

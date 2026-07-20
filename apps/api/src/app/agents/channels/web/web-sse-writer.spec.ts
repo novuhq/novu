@@ -149,6 +149,31 @@ describe('WebSseWriter', () => {
     expect(fake.ended()).to.equal(true);
   });
 
+  it('emits an explicit typing-stop frame when a message ends an active typing indicator', () => {
+    const fake = createFakeResponse();
+    const writer = new WebSseWriter(fake.res, OPTIONS);
+    writer.begin();
+
+    writer.onRelayEvent({ kind: 'typing', status: 'Thinking...', ts: 1 });
+    writer.onRelayEvent(messageEvent('reply'));
+
+    const typingFrames = fake
+      .frames()
+      .filter((frame): frame is Record<string, unknown> => frame !== '[DONE]' && frame.type === 'data-typing');
+
+    expect(typingFrames).to.have.length(2);
+    expect((typingFrames[1].data as { status: string }).status, 'typing cleared before the reply renders').to.equal('');
+
+    // Without an active indicator, messages emit no typing frames at all.
+    const before = fake.frames().length;
+    writer.onRelayEvent(messageEvent('another', 'web-2'));
+    const newTypingFrames = fake
+      .frames()
+      .slice(before)
+      .filter((frame) => frame !== '[DONE]' && (frame as Record<string, unknown>).type === 'data-typing');
+    expect(newTypingFrames).to.have.length(0);
+  });
+
   it('closes on idle timeout when typing never resolves', async () => {
     const fake = createFakeResponse();
     const writer = new WebSseWriter(fake.res, OPTIONS);

@@ -105,8 +105,13 @@ export class WebSseWriter {
     switch (event.kind) {
       case 'message': {
         this.messageCount += 1;
-        // A posted message implicitly ends the typing indicator.
-        this.typingActive = false;
+        // A posted message implicitly ends the typing indicator — tell the
+        // client explicitly, or it would keep showing "typing" until the
+        // stream settles seconds later.
+        if (this.typingActive) {
+          this.typingActive = false;
+          this.writeFrame({ type: 'data-typing', data: { status: '' }, transient: true });
+        }
         this.writeMessageFrames(event.messageId, event.content, event.ts);
         this.armSettleTimer();
         break;

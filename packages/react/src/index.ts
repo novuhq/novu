@@ -67,6 +67,12 @@ export {
   TelegramConnectButton,
 } from './components';
 export type {
+  ConversationCardActionHandler,
+  ConversationCardNodeProps,
+  ConversationCardProps,
+  ConversationMessageContentProps,
+} from './components';
+export type {
   UseChannelConnectionProps,
   UseChannelConnectionResult,
   UseChannelConnectionsProps,

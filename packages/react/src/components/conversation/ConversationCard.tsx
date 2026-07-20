@@ -158,13 +158,17 @@ function renderNode(node: CardElement, context: RenderContext): ReactNode {
           {children}
         </dl>
       );
-    case 'field':
+    case 'field': {
+      // The chat-sdk Field builder emits `label`; older shapes use `title`.
+      const fieldLabel = node.label ?? node.title;
+
       return (
         <div key={key} data-novu-element="field">
-          {node.title ? <dt data-novu-element="field-title">{node.title}</dt> : null}
-          <dd data-novu-element="field-value">{node.content ?? node.value}</dd>
+          {fieldLabel ? <dt data-novu-element="field-title">{fieldLabel}</dt> : null}
+          <dd data-novu-element="field-value">{node.value ?? node.content}</dd>
         </div>
       );
+    }
     default:
       // Unknown vocabulary: render children so nested known nodes still show.
       return <React.Fragment key={key}>{children}</React.Fragment>;

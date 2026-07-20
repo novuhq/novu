@@ -607,6 +607,12 @@ export class OutboundGateway {
       return content;
     }
 
+    // Web chat is embedded inside the customer's own product UI — no watermark
+    // there, on any plan.
+    if (branding.platform === AgentPlatformEnum.WEB) {
+      return content;
+    }
+
     const card = buildBrandedMarkdownReply(content.markdown, branding.agentIdentifier, branding.platform);
 
     return { ...content, card, markdown: undefined };
