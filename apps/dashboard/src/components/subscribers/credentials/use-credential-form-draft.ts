@@ -13,9 +13,11 @@ type UseCredentialFormDraftArgs = {
   fields: CredentialField[];
   onSave: (values: Record<string, string>) => Promise<boolean>;
   onCancel: () => void;
+  /** Called after a successful save to exit edit/add mode. Defaults to `onCancel`. */
+  onSaved?: () => void;
 };
 
-export function useCredentialFormDraft({ fields, onSave, onCancel }: UseCredentialFormDraftArgs) {
+export function useCredentialFormDraft({ fields, onSave, onCancel, onSaved }: UseCredentialFormDraftArgs) {
   const initialValues = useMemo(() => toValues(fields), [fields]);
   const [draft, setDraft] = useState<Record<string, string>>(initialValues);
   const [showErrors, setShowErrors] = useState(false);
@@ -32,9 +34,13 @@ export function useCredentialFormDraft({ fields, onSave, onCancel }: UseCredenti
 
   const setField = (key: string, value: string) => setDraft((prev) => ({ ...prev, [key]: value }));
 
-  const cancel = () => {
+  const resetDraft = () => {
     setDraft(initialValues);
     setShowErrors(false);
+  };
+
+  const cancel = () => {
+    resetDraft();
     onCancel();
   };
 
@@ -55,7 +61,8 @@ export function useCredentialFormDraft({ fields, onSave, onCancel }: UseCredenti
     setIsSaving(false);
 
     if (succeeded) {
-      cancel();
+      resetDraft();
+      (onSaved ?? onCancel)();
     }
   };
 
