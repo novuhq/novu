@@ -1,4 +1,4 @@
-import { EnvironmentTypeEnum, TOOL_CONTENT_OVERRIDE_PROVIDER_IDS, type UiSchema } from '@novu/shared';
+import { ContentIssueEnum, EnvironmentTypeEnum, TOOL_CONTENT_OVERRIDE_PROVIDER_IDS, type UiSchema } from '@novu/shared';
 import { Undo2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
@@ -37,40 +37,17 @@ export const ToolEditor = (props: ToolEditorProps) => {
   const { providerOptions, providerOverrides } = useToolOverrideProviderOptions();
 
   const { selectedSource, setSelectedSource } = useToolContentSource();
-  // Ephemeral only: unsaved JSON parse errors while an override editor is mounted.
   const [providersWithDraftParseErrors, setProvidersWithDraftParseErrors] = useState<Set<string>>(new Set());
-  // Captures the provider at open time so confirm/copy stay correct if selection clears while the modal is open.
   const [pendingResetProviderId, setPendingResetProviderId] = useState<
     (typeof TOOL_CONTENT_OVERRIDE_PROVIDER_IDS)[number] | null
   >(null);
 
-  // Reset to default when the selected override no longer exists (e.g. dropped by a
-  // form reset). setSelectedSource also syncs the preview source so both panels agree.
   useEffect(() => {
     if (selectedSource !== DEFAULT_CONTENT_SOURCE && !(selectedSource in (providerOverrides ?? {}))) {
       setSelectedSource(DEFAULT_CONTENT_SOURCE);
     }
   }, [selectedSource, providerOverrides, setSelectedSource]);
 
-  // Server issues are keyed as `providerOverrides.{providerId}` or `providerOverrides.{providerId}.{key}`.
-  const serverIssueCountByProvider = useMemo(() => {
-    const counts = new Map<string, number>();
-    const controlIssues = step?.issues?.controls ?? {};
-    const prefix = `${PROVIDER_OVERRIDES_FIELD}.`;
-
-    for (const [key, issueList] of Object.entries(controlIssues)) {
-      if (!key.startsWith(prefix)) {
-        continue;
-      }
-
-      const providerId = key.slice(prefix.length).split('.')[0];
-      counts.set(providerId, (counts.get(providerId) ?? 0) + issueList.length);
-    }
-
-    return counts;
-  }, [step?.issues?.controls]);
-
-  // Persisted unsupported keys — derived from form values so they survive editor unmount.
   const unsupportedKeyCountByProvider = useMemo(() => {
     const counts = new Map<string, number>();
 
@@ -88,6 +65,26 @@ export const ToolEditor = (props: ToolEditorProps) => {
     return counts;
   }, [providerOverrides]);
 
+  const otherServerIssueCountByProvider = useMemo(() => {
+    const counts = new Map<string, number>();
+    const controlIssues = step?.issues?.controls ?? {};
+    const prefix = `${PROVIDER_OVERRIDES_FIELD}.`;
+
+    for (const [key, issueList] of Object.entries(controlIssues)) {
+      if (!key.startsWith(prefix)) {
+        continue;
+      }
+
+      const providerId = key.slice(prefix.length).split('.')[0];
+      const otherCount = issueList.filter((issue) => issue.issueType !== ContentIssueEnum.UNSUPPORTED_PROPERTY).length;
+      if (otherCount > 0) {
+        counts.set(providerId, (counts.get(providerId) ?? 0) + otherCount);
+      }
+    }
+
+    return counts;
+  }, [step?.issues?.controls]);
+
   const providersWithErrors = useMemo(() => {
     const merged = new Set(providersWithDraftParseErrors);
 
@@ -95,38 +92,26 @@ export const ToolEditor = (props: ToolEditorProps) => {
       merged.add(providerId);
     }
 
-    for (const [providerId, count] of serverIssueCountByProvider) {
-      if (count > 0) {
-        merged.add(providerId);
-      }
+    for (const providerId of otherServerIssueCountByProvider.keys()) {
+      merged.add(providerId);
     }
 
     return merged;
-  }, [providersWithDraftParseErrors, unsupportedKeyCountByProvider, serverIssueCountByProvider]);
+  }, [providersWithDraftParseErrors, unsupportedKeyCountByProvider, otherServerIssueCountByProvider]);
 
-  // Honest cardinality: server issue lengths, else form unsupported-key counts, plus
-  // one per mounted draft parse error (draft is not on the form).
   const totalErrorCount = useMemo(() => {
-    let total = 0;
-    const providersCountedFromServer = new Set<string>();
+    let total = providersWithDraftParseErrors.size;
 
-    for (const [providerId, count] of serverIssueCountByProvider) {
-      if (count > 0) {
-        total += count;
-        providersCountedFromServer.add(providerId);
-      }
+    for (const unsupportedCount of unsupportedKeyCountByProvider.values()) {
+      total += unsupportedCount;
     }
 
-    for (const [providerId, unsupportedCount] of unsupportedKeyCountByProvider) {
-      if (!providersCountedFromServer.has(providerId)) {
-        total += unsupportedCount;
-      }
+    for (const otherCount of otherServerIssueCountByProvider.values()) {
+      total += otherCount;
     }
-
-    total += providersWithDraftParseErrors.size;
 
     return total;
-  }, [serverIssueCountByProvider, unsupportedKeyCountByProvider, providersWithDraftParseErrors]);
+  }, [otherServerIssueCountByProvider, unsupportedKeyCountByProvider, providersWithDraftParseErrors]);
 
   const handleDraftParseValidityChange = useCallback((providerId: string, isParseValid: boolean) => {
     setProvidersWithDraftParseErrors((prev) => {
@@ -245,13 +230,7 @@ export const ToolEditor = (props: ToolEditorProps) => {
           <button
             type="button"
             className="border-stroke-soft bg-bg-white text-label-xs text-text-strong hover:bg-bg-weak flex h-7 items-center gap-1 border-r pl-1.5 pr-2 transition-colors"
-            onClick={() => {
-              if (selectedSource === DEFAULT_CONTENT_SOURCE) {
-                return;
-              }
-
-              setPendingResetProviderId(selectedSource);
-            }}
+            onClick={() => setPendingResetProviderId(selectedSource)}
           >
             <Undo2 className="size-3.5" />
             <span>Reset to default</span>

@@ -5,7 +5,6 @@ import { LinkButton } from '@/components/primitives/button-link';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
 import { getToolOverrideProviderDisplayName } from './tool-content-source';
 
-/** Loose view over a single override schema property — the const schemas are unions, so we read them structurally. */
 type OverrideFieldSchema = {
   type?: string;
   description?: string;
@@ -58,7 +57,6 @@ function buildToolOverrideSupportedFields(providerId: ToolContentOverrideProvide
   }));
 }
 
-/** Sensible starting value for a field inserted from the reference list. */
 export function getToolOverrideFieldDefaultValue(providerId: ToolContentOverrideProviderId, key: string): unknown {
   const fieldSchema = getFieldSchemas(providerId)[key];
 
@@ -83,9 +81,7 @@ export function getToolOverrideFieldDefaultValue(providerId: ToolContentOverride
 
 type ToolOverrideSupportedFieldsProps = {
   providerId: ToolContentOverrideProviderId;
-  /** Top-level keys already present in the draft — rendered as added and not insertable again. */
   usedKeys: Set<string>;
-  /** False while the draft is not parseable JSON; fields stay browsable but cannot be inserted. */
   canInsert: boolean;
   onInsertField: (key: string) => void;
 };

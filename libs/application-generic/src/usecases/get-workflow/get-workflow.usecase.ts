@@ -211,10 +211,9 @@ export class GetWorkflowUseCase {
   }
 
   /**
-   * When write-path policy selects the canonical control schema (dashboard cloud,
-   * no step resolver), re-validate on read so canvas / issues UI reflects the
-   * current schema without requiring a re-save. Persisted liquid/skip issues are
-   * kept via merge — this path only adds schema issues.
+   * Tool steps re-validate against the canonical control schema on read so
+   * providerOverrides key rules surface as canvas issues without a re-save.
+   * Persisted liquid/skip issues are kept via merge — this path only adds schema issues.
    */
   @Instrument()
   private getCanonicalControlSchemaIssues(
@@ -222,7 +221,7 @@ export class GetWorkflowUseCase {
     workflow: NotificationTemplateEntity,
     existingControls?: ControlSchemas | null
   ): StepIssuesDto {
-    if (!workflow.origin) {
+    if (!workflow.origin || stepResponse.type !== StepTypeEnum.TOOL) {
       return {};
     }
 
@@ -234,7 +233,6 @@ export class GetWorkflowUseCase {
     });
     const canonical = stepTypeToControlSchema[stepResponse.type];
 
-    // Same reference means resolveStepControlSchemas chose the canonical map entry.
     if (!canonical || resolved !== canonical) {
       return {};
     }

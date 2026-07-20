@@ -43,7 +43,6 @@ function withStrictProviderOverrideKeys(schema: JSONSchemaEntity): JSONSchemaEnt
   for (const providerId of TOOL_CONTENT_OVERRIDE_PROVIDER_IDS) {
     const keysOnlySchema = getToolProviderOverrideKeysOnlySchema(providerId);
     if (keysOnlySchema && providerOverrides.properties[providerId]) {
-      // JSONSchemaDto ↔ JSONSchemaEntity disagree on exclusiveMinimum; shape is Ajv-compatible.
       providerOverrides.properties[providerId] = keysOnlySchema as unknown as JSONSchemaEntity;
     }
   }

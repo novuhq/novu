@@ -1,3 +1,4 @@
+import { JsonSchemaTypeEnum } from '@novu/dal';
 import { ContentIssueEnum, StepTypeEnum, ToolProviderIdEnum } from '@novu/shared';
 import { describe, expect, it } from 'vitest';
 import { JSONSchemaDto } from '../dtos/json-schema.dto';
@@ -84,10 +85,10 @@ describe('processControlValuesBySchema', () => {
   it('maps additionalProperties failures to UNSUPPORTED_PROPERTY for any strict schema', () => {
     const issues = processControlValuesBySchema({
       controlSchema: {
-        type: 'object',
+        type: JsonSchemaTypeEnum.OBJECT,
         additionalProperties: false,
         properties: {
-          body: { type: 'string' },
+          body: { type: JsonSchemaTypeEnum.STRING },
         },
       },
       controlValues: {

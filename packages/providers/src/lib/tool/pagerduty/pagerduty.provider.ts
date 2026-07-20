@@ -32,7 +32,6 @@ const PAYLOAD_OPTIONAL_STRING_FIELDS = ['timestamp', 'component', 'group', 'clas
 const ROOT_OPTIONAL_STRING_FIELDS = ['client', 'client_url'] as const;
 const ROOT_OPTIONAL_ARRAY_FIELDS = ['links', 'images'] as const;
 
-/** Derived from mapped field lists so reserved keys cannot drift from routing. */
 const RESERVED_OVERRIDE_KEYS = new Set<string>([
   'content',
   'summary',

@@ -376,14 +376,16 @@ function StepEditorContent() {
 }
 
 export function StepEditorLayout({ workflow, step, className }: StepEditorLayoutProps) {
+  const content = (
+    <HttpRequestTestProvider>
+      <StepEditorContent />
+    </HttpRequestTestProvider>
+  );
+
   return (
     <div className={cn('h-full w-full', className)}>
       <StepEditorProvider workflow={workflow} step={step}>
-        <HttpRequestTestProvider>
-          <ToolContentSourceProvider>
-            <StepEditorContent />
-          </ToolContentSourceProvider>
-        </HttpRequestTestProvider>
+        {step.type === StepTypeEnum.TOOL ? <ToolContentSourceProvider>{content}</ToolContentSourceProvider> : content}
       </StepEditorProvider>
     </div>
   );

@@ -20,7 +20,6 @@ type ToolContentSourceSelectorProps = {
   providers: ToolOverrideProviderOption[];
   invalidProviderIds?: Set<string>;
   onSelectSource: (source: ToolContentSource) => void;
-  /** When provided, providers without overrides show an add affordance; when omitted, every provider is selectable. */
   onAddOverride?: (providerId: ToolOverrideProviderOption['providerId']) => void;
 };
 

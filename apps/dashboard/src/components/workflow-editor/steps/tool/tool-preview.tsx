@@ -1,14 +1,14 @@
-import { ChannelTypeEnum, type GeneratePreviewResponseDto, type ToolRenderOutput } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  type GeneratePreviewResponseDto,
+  getToolProviderPrimaryContentKey,
+  type ToolRenderOutput,
+} from '@novu/shared';
 import { useMemo } from 'react';
 import { ToolFill } from '@/components/icons/tool-fill';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
-import {
-  buildAnnotatedPreviewLines,
-  DEFAULT_CONTENT_SOURCE,
-  getProviderPrimaryContentKey,
-  mergeToolProviderPreview,
-} from './tool-content-source';
+import { buildAnnotatedPreviewLines, DEFAULT_CONTENT_SOURCE, mergeToolProviderPreview } from './tool-content-source';
 import { useToolContentSource } from './tool-content-source-context';
 import { ToolContentSourceSelector } from './tool-content-source-selector';
 import { useToolOverrideProviderOptions } from './use-tool-override-provider-options';
@@ -37,7 +37,6 @@ function extractToolPreview(previewData?: GeneratePreviewResponseDto): ToolRende
   return previewResult?.type === ChannelTypeEnum.TOOL ? previewResult.preview : undefined;
 }
 
-/** Compact card for the configure-step sidebar; rendered outside the step editor. */
 export const ToolPreviewMini = ({ isPreviewPending, previewData }: ToolPreviewProps) => {
   const body = extractToolPreview(previewData)?.body ?? '';
 
@@ -73,7 +72,6 @@ export const ToolPreviewMini = ({ isPreviewPending, previewData }: ToolPreviewPr
   );
 };
 
-/** Full preview panel inside the step editor; follows the editor source unless the user picks a different preview provider. */
 export const ToolPreview = ({ isPreviewPending, previewData }: ToolPreviewProps) => {
   const preview = extractToolPreview(previewData);
   const body = preview?.body ?? '';
@@ -119,7 +117,7 @@ export const ToolPreview = ({ isPreviewPending, previewData }: ToolPreviewProps)
       return `Override merged over the default content. "${defaultContentKey}" is taken from your default message.`;
     }
 
-    const primaryKey = getProviderPrimaryContentKey(activeProviderId);
+    const primaryKey = getToolProviderPrimaryContentKey(activeProviderId);
 
     return `No override for this provider. Default message maps to "${primaryKey}".`;
   };
@@ -180,7 +178,7 @@ export const ToolPreview = ({ isPreviewPending, previewData }: ToolPreviewProps)
               ) : (
                 <>
                   <span className="text-foreground-600 text-label-2xs font-medium uppercase tracking-wide">
-                    {activeProviderId ? 'Request body' : 'Message'}
+                    {activeProviderId ? 'Merged override fields' : 'Message'}
                   </span>
                   {hasOverride && (
                     <span className="text-label-2xs text-foreground-600 bg-neutral-alpha-100 flex h-4 items-center rounded-sm px-1 font-medium">

@@ -2,13 +2,12 @@ import { getToolProviderPrimaryContentKey, type ToolContentOverrideProviderId } 
 
 export type MergedToolPreview = {
   merged: Record<string, unknown>;
-  /** set when the primary content key was filled from the default message body */
   defaultContentKey?: string;
 };
 
 export type AnnotatedPreviewLine = {
-  json: string; // one display line of the pretty JSON (no chip text)
-  isDefaultContentKey?: boolean; // true on the FIRST line of the property filled from default content
+  json: string;
+  isDefaultContentKey?: boolean;
 };
 
 export function mergeToolProviderPreview({

@@ -1,6 +1,4 @@
-import { ContentIssueEnum, getToolProviderOverrideSchema, type ToolContentOverrideProviderId } from '@novu/shared';
-import Ajv from 'ajv';
-import addFormats from 'ajv-formats';
+import { ContentIssueEnum, getToolProviderPrimaryContentKey, type ToolContentOverrideProviderId } from '@novu/shared';
 import { useEffect, useMemo, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 import { RiErrorWarningLine, RiLightbulbLine } from 'react-icons/ri';
@@ -11,11 +9,7 @@ import { SectionHeader } from '@/components/workflow-editor/steps/http-request/s
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useParseVariables } from '@/hooks/use-parse-variables';
-import {
-  getProviderPrimaryContentKey,
-  getUnsupportedToolOverrideKeys,
-  type ToolProviderOverrides,
-} from './tool-content-source';
+import { getUnsupportedToolOverrideKeys, type ToolProviderOverrides } from './tool-content-source';
 import { getToolOverrideFieldDefaultValue, ToolOverrideSupportedFields } from './tool-override-supported-fields';
 
 const PROVIDER_OVERRIDES_FIELD = 'providerOverrides';
@@ -43,7 +37,6 @@ function parseOverrideJson(value: string): { parsed?: Record<string, unknown>; e
 
 type ToolProviderOverrideEditorProps = {
   providerId: ToolContentOverrideProviderId;
-  /** Reports only draft JSON parse validity; unsupported keys are derived from form values in the parent. */
   onDraftParseValidityChange?: (providerId: ToolContentOverrideProviderId, isParseValid: boolean) => void;
 };
 
@@ -55,8 +48,7 @@ export function ToolProviderOverrideEditor({
   const { saveForm } = useSaveForm();
   const { step, digestStepBeforeCurrent } = useWorkflow();
   const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
-  const schema = getToolProviderOverrideSchema(providerId);
-  const primaryKey = getProviderPrimaryContentKey(providerId);
+  const primaryKey = getToolProviderPrimaryContentKey(providerId);
 
   const [draft, setDraft] = useState(() =>
     formatOverrideJson((getValues(PROVIDER_OVERRIDES_FIELD) as ToolProviderOverrides | undefined)?.[providerId])
@@ -68,48 +60,14 @@ export function ToolProviderOverrideEditor({
     );
   }, [getValues, providerId]);
 
-  const ajvValidate = useMemo(() => {
-    if (!schema) {
-      return null;
-    }
-
-    const ajv = new Ajv({ allErrors: true, verbose: true, strict: false, strictSchema: false });
-    addFormats(ajv);
-
-    try {
-      return ajv.compile(schema);
-    } catch {
-      return null;
-    }
-  }, [schema]);
-
-  const { parseError, parsedDraft, schemaWarnings } = useMemo(() => {
+  const { parseError, parsedDraft } = useMemo(() => {
     const { parsed, error } = parseOverrideJson(draft);
     if (error || !parsed) {
-      return { parseError: error, parsedDraft: undefined, schemaWarnings: [] as string[] };
+      return { parseError: error, parsedDraft: undefined };
     }
 
-    if (!ajvValidate) {
-      return { parseError: undefined, parsedDraft: parsed, schemaWarnings: [] as string[] };
-    }
-
-    const isValid = ajvValidate(parsed);
-    if (isValid) {
-      return { parseError: undefined, parsedDraft: parsed, schemaWarnings: [] as string[] };
-    }
-
-    // Unknown keys are owned by the unsupported-property path below; keep only value-shape warnings here.
-    const warnings =
-      ajvValidate.errors
-        ?.filter((ajvError) => ajvError.keyword !== 'additionalProperties')
-        .map((ajvError) => {
-          const path = ajvError.instancePath ? `${ajvError.instancePath}: ` : '';
-
-          return `${path}${ajvError.message}`;
-        }) ?? [];
-
-    return { parseError: undefined, parsedDraft: parsed, schemaWarnings: warnings };
-  }, [ajvValidate, draft]);
+    return { parseError: undefined, parsedDraft: parsed };
+  }, [draft]);
 
   const activeServerIssues = useMemo(() => {
     const controlIssues = step?.issues?.controls ?? {};
@@ -129,11 +87,9 @@ export function ToolProviderOverrideEditor({
         return true;
       }
 
-      const relativePath = issuePath.slice(prefix.length + 1);
-      const topKey = relativePath.split('.')[0];
+      const topKey = issuePath.slice(prefix.length + 1).split('.')[0];
 
-      // ES2020 lib — Object.hasOwn is unavailable under tsconfig.app.json
-      return Object.prototype.hasOwnProperty.call(parsedDraft, topKey);
+      return topKey in parsedDraft;
     });
   }, [step?.issues?.controls, providerId, parsedDraft]);
 
@@ -161,8 +117,6 @@ export function ToolProviderOverrideEditor({
 
   const usedDraftKeys = useMemo(() => new Set(Object.keys(parsedDraft ?? {})), [parsedDraft]);
 
-  // Only draft parse validity is reported upward — unsupported keys live on the form and
-  // are derived in ToolEditor so they remain visible after this editor unmounts.
   useEffect(() => {
     onDraftParseValidityChange?.(providerId, !parseError);
 
@@ -199,7 +153,7 @@ export function ToolProviderOverrideEditor({
           return (
             <>
               <SectionHeader
-                label="Request body"
+                label="Override fields"
                 tooltip={`These fields merge over your default content. "${primaryKey}" falls back to the default message unless set here. Supports Liquid variables inside string values.`}
                 rightSlot={
                   <div className="flex items-center gap-1.5">
@@ -262,12 +216,6 @@ export function ToolProviderOverrideEditor({
                       <span className="text-destructive text-xs">{message}</span>
                     </div>
                   ))}
-                  {schemaWarnings.length > 0 && (
-                    <div className="flex items-start gap-1 px-1">
-                      <RiErrorWarningLine className="text-warning mt-0.5 h-3 w-3 shrink-0" />
-                      <span className="text-warning text-xs">{schemaWarnings[0]}</span>
-                    </div>
-                  )}
                   <div className="text-text-soft flex items-start gap-1 px-1 py-0.5">
                     <RiLightbulbLine className="mt-0.5 size-3 shrink-0" />
                     <span className="text-xs">

@@ -1,7 +1,6 @@
 import {
   ChannelTypeEnum,
   getToolProviderOverrideSchema,
-  getToolProviderPrimaryContentKey,
   type IProviderConfig,
   providers,
   TOOL_CONTENT_OVERRIDE_PROVIDER_IDS,
@@ -65,11 +64,6 @@ export function getContentSourceLabel(source: ToolContentSource): string {
   return getToolOverrideProviderDisplayName(source);
 }
 
-export function getProviderPrimaryContentKey(providerId: ToolContentOverrideProviderId) {
-  return getToolProviderPrimaryContentKey(providerId);
-}
-
-/** Top-level override keys not declared on the provider's override schema. */
 export function getUnsupportedToolOverrideKeys(
   providerId: ToolContentOverrideProviderId,
   override: Record<string, unknown> | undefined
