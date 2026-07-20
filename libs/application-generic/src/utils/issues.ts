@@ -1,7 +1,7 @@
 import { ContentIssueEnum, RuntimeIssue, StepTypeEnum } from '@novu/shared';
-import Ajv, { ErrorObject } from 'ajv';
-import addFormats from 'ajv-formats';
+import { ErrorObject } from 'ajv';
 import { JSONSchemaDto } from '../dtos/json-schema.dto';
+import { createAjvInstance } from './create-ajv-instance';
 import { capitalize } from '../services/helper-service';
 import { buildVariables } from './build-variables';
 import { buildLiquidParser } from './template-parser/liquid-engine';
@@ -99,8 +99,7 @@ export const processControlValuesBySchema = ({
     return issues;
   }
 
-  const ajv = new Ajv({ allErrors: true, strict: false });
-  addFormats(ajv);
+  const ajv = createAjvInstance(controlSchema);
   const validate = ajv.compile(controlSchema);
   const isValid = validate(controlValues);
   const errors = validate.errors as null | ErrorObject[];

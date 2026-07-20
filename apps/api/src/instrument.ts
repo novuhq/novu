@@ -22,7 +22,7 @@ if (process.env.SENTRY_DSN) {
     dsn: process.env.SENTRY_DSN,
     environment: process.env.NODE_ENV,
     release: `v${version}`,
-    ignoreErrors: ['Non-Error exception captured'],
+    ignoreErrors: ['Non-Error exception captured', 'request aborted'],
     // When startOtel() already registered the OTEL SDK (ENABLE_OTEL=true),
     // Sentry must not register its own providers — doing so triggers
     // "Attempted duplicate registration of API: trace/context/propagation"
