@@ -79,7 +79,7 @@ When a message matches a **Webhook** route, Novu emits an [`email.received`](/pl
 
 Enable webhooks in the dashboard under **Webhooks**, create an endpoint, and subscribe to **email.received**.
 
-The event payload includes normalized mail fields (from, to, subject, text, html, headers, attachments, threading headers) plus your domain and route metadata. See [Event types — Email events](/platform/developer/webhooks/event-types#email-events) for the full schema.
+The event payload includes normalized mail fields (from, to, subject, text, html, headers, attachments, threading headers) plus your domain and route metadata. See [Event types - Email events](/platform/developer/webhooks/event-types#email-events) for the full schema.
 
 <Warning>
   Do not confuse **Inbound Email** with [Email Activity Tracking](/platform/integrations/email/activity-tracking). Activity tracking receives **delivery and engagement events** (delivered, opened, clicked) from your outbound email provider. Inbound Email receives **messages users send to you**.
@@ -91,7 +91,7 @@ When a message matches an **Agent** route, Novu forwards it to the selected agen
 
 For quick setup on Novu Cloud, agents can also use the shared `@agentconnect.sh` inbox provisioned during `npx novu connect`. For production, add a custom domain route so users email `@yourcompany.com`.
 
-See [Agents and providers — Email](/agents/get-started/agents-and-providers) and [Custom code agent setup](/agents/custom-code-agent/quickstart).
+See [Agents and providers - Email](/agents/get-started/agents-and-providers) and [Custom code agent setup](/agents/custom-code-agent/quickstart).
 
 ## Test a route
 

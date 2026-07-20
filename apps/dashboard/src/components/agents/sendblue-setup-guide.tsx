@@ -34,11 +34,7 @@ import {
   SetupStep,
   SetupStepperRail,
 } from './setup-guide-primitives';
-import {
-  buildImessageFallbackHref,
-  deriveStepStatus,
-  hasSendblueUserCredentials,
-} from './setup-guide-step-utils';
+import { buildImessageFallbackHref, deriveStepStatus, hasSendblueUserCredentials } from './setup-guide-step-utils';
 
 const PHONE_PATTERN = /^\+[1-9]\d{6,14}$/;
 

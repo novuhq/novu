@@ -299,9 +299,7 @@ export async function createAgent(
   const response = await post<AgentApiEnvelope>('/agents', {
     environment,
     body,
-    headers: options?.analyticsSource
-      ? { [NOVU_ANALYTICS_SOURCE_HEADER]: options.analyticsSource }
-      : undefined,
+    headers: options?.analyticsSource ? { [NOVU_ANALYTICS_SOURCE_HEADER]: options.analyticsSource } : undefined,
   });
 
   return response.data;

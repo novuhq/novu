@@ -22,6 +22,7 @@ const testDefaultPreferences: WorkflowPreferences = {
     email: DEFAULT_CHANNEL_PREFERENCE,
     push: DEFAULT_CHANNEL_PREFERENCE,
     chat: DEFAULT_CHANNEL_PREFERENCE,
+    tool: DEFAULT_CHANNEL_PREFERENCE,
   },
 };
 
@@ -50,6 +51,7 @@ describe('buildWorkflowPreferences', () => {
         email: testChannelPreference,
         push: testChannelPreference,
         chat: testChannelPreference,
+        tool: testChannelPreference,
       },
     };
 
@@ -101,6 +103,9 @@ describe('buildWorkflowPreferences', () => {
           push: {
             enabled: testPreferences.all?.enabled,
           },
+          tool: {
+            enabled: testPreferences.all?.enabled,
+          },
         },
       });
     });
@@ -133,6 +138,9 @@ describe('buildWorkflowPreferences', () => {
           enabled: expectedDefaultValue,
         },
         chat: {
+          enabled: expectedDefaultValue,
+        },
+        tool: {
           enabled: expectedDefaultValue,
         },
       },

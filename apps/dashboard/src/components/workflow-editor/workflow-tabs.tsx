@@ -345,9 +345,14 @@ export const WorkflowTabs = () => {
     }
 
     const hasContentSteps = workflow?.steps.some((step) =>
-      [StepTypeEnum.EMAIL, StepTypeEnum.SMS, StepTypeEnum.PUSH, StepTypeEnum.IN_APP, StepTypeEnum.CHAT].includes(
-        step.type
-      )
+      [
+        StepTypeEnum.EMAIL,
+        StepTypeEnum.SMS,
+        StepTypeEnum.PUSH,
+        StepTypeEnum.IN_APP,
+        StepTypeEnum.CHAT,
+        StepTypeEnum.TOOL,
+      ].includes(step.type)
     );
     if (hasContentSteps) {
       suggestions.push({ label: AiWorkflowSuggestion.IMPROVE_MESSAGING, icon: RiQuillPenLine });

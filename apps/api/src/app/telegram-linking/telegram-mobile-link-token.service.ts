@@ -1,18 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { CacheService, PinoLogger } from '@novu/application-generic';
 
-import { mintAutolinkSafeOpaqueToken } from '../shared/helpers';
+import { SingleUseTokenCache, StoredTokenEntry } from '../shared/services/single-use-link-token.service';
 
 /** Lifetime of an issued mobile setup token (seconds). */
 export const TELEGRAM_MOBILE_LINK_TTL_SECONDS = 5 * 60;
-
-const CACHE_KEY_PREFIX = 'telegram_mobile_link:';
-const USED_KEY_PREFIX = 'telegram_mobile_link_used:';
-
-/** Wrap token in `{…}` so storage + used-marker keys share a Redis Cluster hash slot. */
-function clusterSlotTag(token: string): string {
-  return `{${token}}`;
-}
 
 /**
  * Accepts both the new alphanumeric-only mint format and legacy base64url
@@ -21,43 +13,6 @@ function clusterSlotTag(token: string): string {
  * bare-URL autolinking.
  */
 const TOKEN_FORMAT = /^[A-Za-z0-9_-]{32}$/;
-
-/**
- * Atomically GETDEL the session payload and set the used-marker with matching TTL.
- * Returns '' (missing), 'U' (already used), 'I' (corrupt payload), 'K' (kind mismatch;
- * entry restored), or 'M' + JSON body.
- */
-const CLAIM_ATOMIC_SCRIPT = `
-local raw = redis.call('GETDEL', KEYS[1])
-if not raw then
-  if redis.call('GET', KEYS[2]) then
-    return 'U'
-  end
-  return ''
-end
-local ok, parsed = pcall(cjson.decode, raw)
-if not ok or not parsed.expiresAt or not parsed.payload or not parsed.payload.kind then
-  return 'I'
-end
-if parsed.payload.kind ~= ARGV[2] then
-  local now = tonumber(ARGV[1])
-  local ttl = parsed.expiresAt - now
-  if ttl < 1 then ttl = 1 end
-  redis.call('SET', KEYS[1], raw, 'EX', ttl)
-  return 'K'
-end
-local now = tonumber(ARGV[1])
-local ttl = parsed.expiresAt - now
-if ttl < 1 then ttl = 1 end
-redis.call('SET', KEYS[2], '1', 'EX', ttl)
-return 'M' .. raw
-`;
-
-/** Atomically restore the session payload and clear the used-marker. */
-const RELEASE_ATOMIC_SCRIPT = `
-redis.call('SET', KEYS[1], ARGV[1], 'EX', tonumber(ARGV[2]))
-redis.call('DEL', KEYS[2])
-`;
 
 export type TelegramMobileLinkKind = 'agent' | 'integration-store' | 'slack-agent-setup';
 
@@ -101,12 +56,6 @@ type StoredPayload =
   | IntegrationStoreTelegramMobileLinkPayload
   | SlackAgentSetupLinkPayload;
 
-interface StoredEntry {
-  payload: StoredPayload;
-  /** Epoch seconds when this entry naturally expires. */
-  expiresAt: number;
-}
-
 export interface IssuedTelegramMobileLink {
   token: string;
   /** ISO timestamp when this token expires. */
@@ -136,11 +85,20 @@ export class TelegramMobileLinkCacheUnavailableError extends Error {
 
 @Injectable()
 export class TelegramMobileLinkTokenService {
-  constructor(
-    private readonly cacheService: CacheService,
-    private readonly logger: PinoLogger
-  ) {
-    this.logger.setContext(this.constructor.name);
+  private readonly tokens: SingleUseTokenCache<StoredPayload>;
+
+  constructor(cacheService: CacheService, logger: PinoLogger) {
+    logger.setContext(this.constructor.name);
+    this.tokens = new SingleUseTokenCache<StoredPayload>({
+      cacheService,
+      logger,
+      scope: 'telegram mobile link',
+      keyPrefix: 'telegram_mobile_link:',
+      usedKeyPrefix: 'telegram_mobile_link_used:',
+      ttlSeconds: TELEGRAM_MOBILE_LINK_TTL_SECONDS,
+      isValidTokenFormat: (token) => typeof token === 'string' && TOKEN_FORMAT.test(token),
+      createCacheUnavailableError: (operation, cause) => new TelegramMobileLinkCacheUnavailableError(operation, cause),
+    });
   }
 
   async issue(params: {
@@ -159,7 +117,7 @@ export class TelegramMobileLinkTokenService {
       ...(params.subscriberId ? { sid: params.subscriberId } : {}),
     };
 
-    return this.mint(payload);
+    return this.tokens.issue(payload);
   }
 
   async issueForIntegrationStore(params: {
@@ -172,7 +130,7 @@ export class TelegramMobileLinkTokenService {
       org: params.organizationId,
     };
 
-    return this.mint(payload);
+    return this.tokens.issue(payload);
   }
 
   async issueForSlackAgentSetup(params: {
@@ -189,7 +147,7 @@ export class TelegramMobileLinkTokenService {
       iid: params.integrationId,
     };
 
-    return this.mint(payload);
+    return this.tokens.issue(payload);
   }
 
   /**
@@ -209,18 +167,7 @@ export class TelegramMobileLinkTokenService {
 
   /** Returns whether a token was already consumed (used marker present). */
   async isTokenUsed(token: string): Promise<boolean> {
-    if (!this.isTokenFormatValid(token) || !this.cacheService.cacheEnabled()) {
-      return false;
-    }
-
-    let value: string | null | undefined;
-    try {
-      value = await this.cacheService.get(this.usedKey(token));
-    } catch (err) {
-      throw new TelegramMobileLinkCacheUnavailableError('isTokenUsed', err);
-    }
-
-    return value != null;
+    return this.tokens.isTokenUsed(token);
   }
 
   /**
@@ -228,182 +175,82 @@ export class TelegramMobileLinkTokenService {
    * Returns the stored entry, or throws {@link InvalidTelegramMobileTokenError}.
    */
   async claim(token: string, expectedKind: TelegramMobileLinkKind): Promise<ClaimedTelegramMobileLink> {
-    this.assertCacheAvailable('claim');
+    const outcome = await this.tokens.claim(token, expectedKind);
 
-    if (!this.isTokenFormatValid(token)) {
-      throw new InvalidTelegramMobileTokenError('invalid');
+    switch (outcome.status) {
+      case 'claimed': {
+        const entry = this.validateEntry(outcome.entry, expectedKind);
+        if (!entry) {
+          throw new InvalidTelegramMobileTokenError('invalid');
+        }
+
+        return entry;
+      }
+      case 'used':
+        throw new InvalidTelegramMobileTokenError('used');
+      case 'missing':
+        throw new InvalidTelegramMobileTokenError('expired');
+      case 'corrupt':
+      case 'kind-mismatch':
+      case 'malformed-token':
+        throw new InvalidTelegramMobileTokenError('invalid');
+      default: {
+        const exhaustive: never = outcome;
+        throw new Error(`Unhandled claim outcome: ${exhaustive}`);
+      }
     }
-
-    if (await this.isTokenUsed(token)) {
-      throw new InvalidTelegramMobileTokenError('used');
-    }
-
-    let raw: string;
-    try {
-      raw = await this.cacheService.eval<string>(
-        CLAIM_ATOMIC_SCRIPT,
-        [this.storageKey(token), this.usedKey(token)],
-        [Math.floor(Date.now() / 1000), expectedKind]
-      );
-    } catch (err) {
-      throw new TelegramMobileLinkCacheUnavailableError('claim', err);
-    }
-
-    if (raw === 'U') {
-      throw new InvalidTelegramMobileTokenError('used');
-    }
-
-    if (raw === 'K' || raw === 'I') {
-      throw new InvalidTelegramMobileTokenError('invalid');
-    }
-
-    if (!raw) {
-      throw new InvalidTelegramMobileTokenError('expired');
-    }
-
-    if (raw.charAt(0) !== 'M') {
-      throw new InvalidTelegramMobileTokenError('invalid');
-    }
-
-    const entry = this.parseEntry(raw.slice(1));
-    if (!entry || entry.payload.kind !== expectedKind) {
-      throw new InvalidTelegramMobileTokenError('invalid');
-    }
-
-    return entry;
   }
 
   /**
    * Re-stores a token after a failed consume so the visitor can retry the same link.
    */
   async release(token: string, claimed: ClaimedTelegramMobileLink): Promise<void> {
-    if (!this.isTokenFormatValid(token) || !this.cacheService.cacheEnabled()) {
-      return;
-    }
-
-    const remaining = claimed.expiresAt - Math.floor(Date.now() / 1000);
-    if (remaining <= 0) {
-      return;
-    }
-
-    const entry: StoredEntry = {
-      payload: claimed.payload,
-      expiresAt: claimed.expiresAt,
-    };
-
-    try {
-      await this.cacheService.eval(
-        RELEASE_ATOMIC_SCRIPT,
-        [this.storageKey(token), this.usedKey(token)],
-        [JSON.stringify(entry), remaining]
-      );
-    } catch (err) {
-      this.logger.warn(
-        { err, token, storageKey: this.storageKey(token), usedKey: this.usedKey(token) },
-        'Failed to release telegram mobile link token'
-      );
-      throw new TelegramMobileLinkCacheUnavailableError('release', err);
-    }
-  }
-
-  private async mint(payload: StoredPayload): Promise<IssuedTelegramMobileLink> {
-    this.assertCacheAvailable('issue');
-
-    const token = mintAutolinkSafeOpaqueToken();
-    const mintedAt = Math.floor(Date.now() / 1000);
-    const expiresAtEpoch = mintedAt + TELEGRAM_MOBILE_LINK_TTL_SECONDS;
-    const entry: StoredEntry = { payload, expiresAt: expiresAtEpoch };
-
-    await this.cacheService.set(this.storageKey(token), JSON.stringify(entry), {
-      ttl: TELEGRAM_MOBILE_LINK_TTL_SECONDS,
-    });
-
-    const expiresAt = new Date(expiresAtEpoch * 1000).toISOString();
-
-    return { token, expiresAt };
+    await this.tokens.release(token, claimed);
   }
 
   private async peek(token: string, expectedKind: TelegramMobileLinkKind): Promise<StoredPayload> {
-    if (!this.isTokenFormatValid(token)) {
-      throw new InvalidTelegramMobileTokenError('invalid');
-    }
+    const outcome = await this.tokens.peek(token);
 
-    if (!this.cacheService.cacheEnabled()) {
-      throw new TelegramMobileLinkCacheUnavailableError('peek');
-    }
+    switch (outcome.status) {
+      case 'active': {
+        const entry = this.validateEntry(outcome.entry, expectedKind);
+        if (!entry) {
+          throw new InvalidTelegramMobileTokenError('invalid');
+        }
 
-    if (await this.isTokenUsed(token)) {
-      throw new InvalidTelegramMobileTokenError('used');
-    }
-
-    let raw: string | null | undefined;
-    try {
-      raw = await this.cacheService.get(this.storageKey(token));
-    } catch (err) {
-      throw new TelegramMobileLinkCacheUnavailableError('peek', err);
-    }
-
-    if (!raw) {
-      throw new InvalidTelegramMobileTokenError('expired');
-    }
-
-    const entry = this.parseEntry(raw);
-    if (!entry || entry.payload.kind !== expectedKind) {
-      throw new InvalidTelegramMobileTokenError('invalid');
-    }
-
-    if (entry.payload.kind === 'agent') {
-      const agentPayload = entry.payload;
-      if (!agentPayload.env || !agentPayload.org || !agentPayload.aid || !agentPayload.iid) {
-        throw new InvalidTelegramMobileTokenError('invalid');
+        return entry.payload;
       }
-    } else if (entry.payload.kind === 'slack-agent-setup') {
-      const slackPayload = entry.payload;
-      if (!slackPayload.env || !slackPayload.org || !slackPayload.aid || !slackPayload.iid) {
+      case 'used':
+        throw new InvalidTelegramMobileTokenError('used');
+      case 'missing':
+        throw new InvalidTelegramMobileTokenError('expired');
+      case 'corrupt':
+      case 'malformed-token':
         throw new InvalidTelegramMobileTokenError('invalid');
+      default: {
+        const exhaustive: never = outcome;
+        throw new Error(`Unhandled peek outcome: ${exhaustive}`);
       }
-    } else if (!entry.payload.env || !entry.payload.org) {
-      throw new InvalidTelegramMobileTokenError('invalid');
     }
-
-    return entry.payload;
   }
 
-  private parseEntry(raw: string): ClaimedTelegramMobileLink | null {
-    try {
-      const parsed = JSON.parse(raw) as Partial<StoredEntry>;
-      if (!parsed?.payload || typeof parsed.expiresAt !== 'number') {
-        return null;
-      }
-
-      const payload = parsed.payload;
-      if (payload.kind !== 'agent' && payload.kind !== 'integration-store' && payload.kind !== 'slack-agent-setup') {
-        return null;
-      }
-
-      return { payload, expiresAt: parsed.expiresAt };
-    } catch {
+  private validateEntry(
+    entry: StoredTokenEntry<StoredPayload>,
+    expectedKind: TelegramMobileLinkKind
+  ): ClaimedTelegramMobileLink | null {
+    const { payload } = entry;
+    if (payload.kind !== expectedKind) {
       return null;
     }
-  }
 
-  private isTokenFormatValid(token: string): boolean {
-    return typeof token === 'string' && TOKEN_FORMAT.test(token);
-  }
-
-  private assertCacheAvailable(operation: string): void {
-    if (!this.cacheService.cacheEnabled()) {
-      this.logger.warn(`Cache unavailable for telegram mobile link ${operation}`);
-
-      throw new TelegramMobileLinkCacheUnavailableError(operation);
+    if (payload.kind === 'agent' || payload.kind === 'slack-agent-setup') {
+      if (!payload.env || !payload.org || !payload.aid || !payload.iid) {
+        return null;
+      }
+    } else if (!payload.env || !payload.org) {
+      return null;
     }
-  }
 
-  private storageKey(token: string): string {
-    return `${CACHE_KEY_PREFIX}${clusterSlotTag(token)}`;
-  }
-
-  private usedKey(token: string): string {
-    return `${USED_KEY_PREFIX}${clusterSlotTag(token)}`;
+    return { payload, expiresAt: entry.expiresAt };
   }
 }

@@ -5,3 +5,4 @@ export * from './in-app-output-renderer.usecase';
 export * from './push-output-renderer.usecase';
 export * from './render-command';
 export * from './sms-output-renderer.usecase';
+export * from './tool-output-renderer.usecase';

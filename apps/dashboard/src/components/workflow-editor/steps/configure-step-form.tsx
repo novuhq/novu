@@ -48,6 +48,8 @@ import { SdkBanner } from '@/components/workflow-editor/steps/sdk-banner';
 import { SkipConditionsButton } from '@/components/workflow-editor/steps/skip-conditions-button';
 import { ConfigureSmsStepPreview } from '@/components/workflow-editor/steps/sms/configure-sms-step-preview';
 import { ThrottleControlValues } from '@/components/workflow-editor/steps/throttle/throttle-control-values';
+import { ConfigureToolStepPreview } from '@/components/workflow-editor/steps/tool/configure-tool-step-preview';
+import { ToolEnabledProviders } from '@/components/workflow-editor/steps/tool/tool-enabled-providers';
 import { useWorkflowEditorRoutes } from '@/components/workflow-editor/use-workflow-editor-routes';
 import { UpdateWorkflowFn } from '@/components/workflow-editor/workflow-provider';
 import { IS_CLOUD } from '@/config';
@@ -77,6 +79,7 @@ const STEP_TYPE_TO_INLINE_CONTROL_VALUES: Record<StepTypeEnum, () => React.JSX.E
   [StepTypeEnum.SMS]: () => null,
   [StepTypeEnum.CHAT]: () => null,
   [StepTypeEnum.PUSH]: () => null,
+  [StepTypeEnum.TOOL]: () => null,
   [StepTypeEnum.CUSTOM]: () => null,
   [StepTypeEnum.HTTP_REQUEST]: () => null,
   [StepTypeEnum.TRIGGER]: () => null,
@@ -88,6 +91,7 @@ const STEP_TYPE_TO_PREVIEW: Record<StepTypeEnum, ((props: HTMLAttributes<HTMLDiv
   [StepTypeEnum.SMS]: ConfigureSmsStepPreview,
   [StepTypeEnum.CHAT]: ConfigureChatStepPreview,
   [StepTypeEnum.PUSH]: ConfigurePushStepPreview,
+  [StepTypeEnum.TOOL]: ConfigureToolStepPreview,
   [StepTypeEnum.CUSTOM]: null,
   [StepTypeEnum.HTTP_REQUEST]: null,
   [StepTypeEnum.TRIGGER]: null,
@@ -102,6 +106,7 @@ const CHANNEL_PREVIEW_STEP_TYPES = new Set<StepTypeEnum>([
   StepTypeEnum.SMS,
   StepTypeEnum.CHAT,
   StepTypeEnum.PUSH,
+  StepTypeEnum.TOOL,
 ]);
 
 const SIDEPANEL_ACTION_ROW_BASE_CLASS = 'flex h-12 w-full justify-start gap-1.5 rounded-none px-3 text-xs font-medium';
@@ -128,6 +133,7 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
     StepTypeEnum.SMS,
     StepTypeEnum.CHAT,
     StepTypeEnum.PUSH,
+    StepTypeEnum.TOOL,
     StepTypeEnum.EMAIL,
     StepTypeEnum.DIGEST,
     StepTypeEnum.DELAY,
@@ -171,7 +177,9 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
   const isInlineConfigurableStepWithCustomControls = isInlineConfigurableStep && hasCustomControls;
   const showInlineControlValuesSection = isInlineConfigurableStep && !hasCustomControls && !isInlineResolverActive;
   const showHttpRequestFormMiddleSection = step.type === StepTypeEnum.HTTP_REQUEST;
-  const showConfigureStepFormMiddleSection = showInlineControlValuesSection || showHttpRequestFormMiddleSection;
+  const showToolFormMiddleSection = step.type === StepTypeEnum.TOOL;
+  const showConfigureStepFormMiddleSection =
+    showInlineControlValuesSection || showHttpRequestFormMiddleSection || showToolFormMiddleSection;
 
   const onDeleteStep = () => {
     update(
@@ -200,6 +208,15 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
           controlValues: {
             ...(step.controls.values ?? {}),
             continueOnFailure: (step.controls.values?.continueOnFailure as boolean) ?? false,
+          },
+        };
+      }
+
+      if (step.type === StepTypeEnum.TOOL) {
+        return {
+          controlValues: {
+            ...(step.controls.values ?? {}),
+            enabledIntegrations: (step.controls.values?.enabledIntegrations as string[] | undefined) ?? [],
           },
         };
       }
@@ -468,6 +485,12 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
                 {showHttpRequestFormMiddleSection && (
                   <SidebarContent>
                     <ContinueOnFailure />
+                  </SidebarContent>
+                )}
+
+                {showToolFormMiddleSection && (
+                  <SidebarContent>
+                    <ToolEnabledProviders />
                   </SidebarContent>
                 )}
               </SaveFormContext.Provider>

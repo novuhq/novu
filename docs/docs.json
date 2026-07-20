@@ -288,6 +288,10 @@
                   "platform/integrations/sms/termii"
                 ]
               },
+              {
+                "group": "Tool",
+                "pages": ["platform/integrations/tool/pagerduty", "platform/integrations/tool/opsgenie"]
+              },
               "platform/integrations/trigger-overrides"
             ],
             "icon": "plug-zap"
