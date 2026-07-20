@@ -1,4 +1,4 @@
-import { RiAddFill, RiArrowDownSLine, RiCheckLine, RiErrorWarningFill } from 'react-icons/ri';
+import { RiAddFill, RiCheckLine, RiErrorWarningFill, RiExpandUpDownLine } from 'react-icons/ri';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import {
   DropdownMenu,
@@ -35,7 +35,7 @@ export function ToolContentSourceSelector({
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className="text-foreground-950 hover:bg-neutral-alpha-50 flex h-7 items-center gap-1 rounded-md px-1.5 text-xs font-medium"
+          className="border-stroke-soft bg-bg-white hover:bg-bg-weak flex h-7 items-center gap-0.5 border-r pl-2 pr-1 transition-colors"
         >
           {selectedSource !== DEFAULT_CONTENT_SOURCE && (
             <ProviderIcon
@@ -44,8 +44,8 @@ export function ToolContentSourceSelector({
               className="size-3.5"
             />
           )}
-          <span>{getContentSourceLabel(selectedSource)}</span>
-          <RiArrowDownSLine className="text-foreground-600 size-3.5" />
+          <span className="text-label-xs text-text-sub">{getContentSourceLabel(selectedSource)}</span>
+          <RiExpandUpDownLine className="text-text-sub ml-0.5 size-3" />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-[220px] p-1">

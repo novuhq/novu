@@ -1,7 +1,8 @@
 import { ChannelTypeEnum, EnvironmentTypeEnum, TOOL_CONTENT_OVERRIDE_PROVIDER_IDS, type UiSchema } from '@novu/shared';
+import { Undo2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { RiArrowGoBackLine, RiErrorWarningFill } from 'react-icons/ri';
+import { RiErrorWarningFill } from 'react-icons/ri';
 import { ConfirmationModal } from '@/components/confirmation-modal';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { getComponentByType } from '@/components/workflow-editor/steps/component-utils';
@@ -243,65 +244,65 @@ export const ToolEditor = (props: ToolEditorProps) => {
   const showingOverride = selectedSource !== DEFAULT_CONTENT_SOURCE && selectedSource in (providerOverrides ?? {});
 
   return (
-    <div className="flex h-full flex-col">
-      <TabsSection className="p-0 pb-3">
-        <div className="rounded-12 flex flex-col gap-2 border border-neutral-100 bg-bg-weak p-2">
-          <div className="flex items-center gap-1 px-0.5">
-            <ToolContentSourceSelector
-              selectedSource={showingOverride ? selectedSource : DEFAULT_CONTENT_SOURCE}
-              providers={providerOptions}
-              invalidProviderIds={providersWithErrors}
-              onSelectSource={setSelectedSource}
-              onAddOverride={handleAddOverride}
-            />
-            {totalErrorCount > 0 && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    type="button"
-                    aria-label={`${totalErrorCount} ${totalErrorCount === 1 ? 'issue' : 'issues'} in provider overrides`}
-                    className="hover:bg-neutral-alpha-50 flex h-7 items-center gap-1 rounded-md px-1.5"
-                    onClick={handleJumpToFirstError}
-                  >
-                    <span className="text-destructive text-xs font-medium tabular-nums">{totalErrorCount}</span>
-                    <RiErrorWarningFill className="text-destructive size-3.5" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {totalErrorCount === 1 ? '1 issue' : `${totalErrorCount} issues`} in provider overrides
-                </TooltipContent>
-              </Tooltip>
-            )}
-            {showingOverride && (
-              <>
-                <div className="bg-neutral-100 mx-0.5 h-4 w-px shrink-0" />
-                <button
-                  type="button"
-                  className="text-foreground-600 hover:bg-neutral-alpha-50 hover:text-foreground-950 ml-auto flex h-7 items-center gap-1 rounded-md px-1.5 text-xs font-medium"
-                  onClick={() => {
-                    if (selectedSource === DEFAULT_CONTENT_SOURCE) {
-                      return;
-                    }
+    <div className="-mx-3 -mt-3 flex h-full flex-col">
+      <div className="border-stroke-soft bg-bg-weak flex h-7 shrink-0 items-center border-b">
+        <ToolContentSourceSelector
+          selectedSource={showingOverride ? selectedSource : DEFAULT_CONTENT_SOURCE}
+          providers={providerOptions}
+          invalidProviderIds={providersWithErrors}
+          onSelectSource={setSelectedSource}
+          onAddOverride={handleAddOverride}
+        />
+        {totalErrorCount > 0 && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                aria-label={`${totalErrorCount} ${totalErrorCount === 1 ? 'issue' : 'issues'} in provider overrides`}
+                className="border-stroke-soft bg-bg-white hover:bg-bg-weak flex h-7 items-center gap-px border-r pl-1.5 pr-[5px] transition-colors"
+                onClick={handleJumpToFirstError}
+              >
+                <span className="text-code-xs text-error-base tabular-nums">{totalErrorCount}</span>
+                <RiErrorWarningFill className="text-error-base size-3.5" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>
+              {totalErrorCount === 1 ? '1 issue' : `${totalErrorCount} issues`} in provider overrides
+            </TooltipContent>
+          </Tooltip>
+        )}
+        {showingOverride && (
+          <button
+            type="button"
+            className="border-stroke-soft bg-bg-white text-label-xs text-text-strong hover:bg-bg-weak flex h-7 items-center gap-1 border-r pl-1.5 pr-2 transition-colors"
+            onClick={() => {
+              if (selectedSource === DEFAULT_CONTENT_SOURCE) {
+                return;
+              }
 
-                    setPendingResetProviderId(selectedSource);
-                  }}
-                >
-                  <RiArrowGoBackLine className="size-3.5" />
-                  <span>Reset to default</span>
-                </button>
-              </>
-            )}
-          </div>
+              setPendingResetProviderId(selectedSource);
+            }}
+          >
+            <Undo2 className="size-3.5" />
+            <span>Reset to default</span>
+          </button>
+        )}
+        <div className="h-full flex-1" />
+      </div>
 
-          {showingOverride ? (
-            <ToolProviderOverrideEditor
-              providerId={selectedSource}
-              onDraftParseValidityChange={handleDraftParseValidityChange}
-            />
-          ) : (
-            body && getComponentByType({ component: body.component })
-          )}
-        </div>
+      <TabsSection className="p-3">
+        {showingOverride ? (
+          <ToolProviderOverrideEditor
+            providerId={selectedSource}
+            onDraftParseValidityChange={handleDraftParseValidityChange}
+          />
+        ) : (
+          body && (
+            <div className="rounded-12 bg-bg-weak flex flex-col gap-2 border border-neutral-100 p-2">
+              {getComponentByType({ component: body.component })}
+            </div>
+          )
+        )}
       </TabsSection>
 
       <ConfirmationModal
