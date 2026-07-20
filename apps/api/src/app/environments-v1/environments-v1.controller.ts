@@ -295,7 +295,7 @@ export class EnvironmentsControllerV1 {
         userId: user._id,
         organizationId: user.organizationId,
         environmentId,
-        userEnvironmentId: user.environmentId,
+        userEnvironmentId: user.environmentId || undefined,
         restrictToUserEnvironment: isEnvironmentScopedAuthScheme(user.scheme),
       })
     );
