@@ -11,7 +11,11 @@ import { SectionHeader } from '@/components/workflow-editor/steps/http-request/s
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useParseVariables } from '@/hooks/use-parse-variables';
-import { getProviderPrimaryContentKey, type ToolProviderOverrides } from './tool-content-source';
+import {
+  getProviderPrimaryContentKey,
+  getUnsupportedToolOverrideKeys,
+  type ToolProviderOverrides,
+} from './tool-content-source';
 
 const PROVIDER_OVERRIDES_FIELD = 'providerOverrides';
 
@@ -38,17 +42,20 @@ function parseOverrideJson(value: string): { parsed?: Record<string, unknown>; e
 
 type ToolProviderOverrideEditorProps = {
   providerId: ToolContentOverrideProviderId;
-  onValidityChange?: (providerId: ToolContentOverrideProviderId, isValid: boolean) => void;
+  /** Reports only draft JSON parse validity; unsupported keys are derived from form values in the parent. */
+  onDraftParseValidityChange?: (providerId: ToolContentOverrideProviderId, isParseValid: boolean) => void;
 };
 
-export function ToolProviderOverrideEditor({ providerId, onValidityChange }: ToolProviderOverrideEditorProps) {
+export function ToolProviderOverrideEditor({
+  providerId,
+  onDraftParseValidityChange,
+}: ToolProviderOverrideEditorProps) {
   const { control, getValues } = useFormContext();
   const { saveForm } = useSaveForm();
   const { step, digestStepBeforeCurrent } = useWorkflow();
   const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
   const schema = getToolProviderOverrideSchema(providerId);
   const primaryKey = getProviderPrimaryContentKey(providerId);
-  const allowedKeys = useMemo(() => new Set(Object.keys(schema?.properties ?? {})), [schema]);
 
   const [draft, setDraft] = useState(() =>
     formatOverrideJson((getValues(PROVIDER_OVERRIDES_FIELD) as ToolProviderOverrides | undefined)?.[providerId])
@@ -145,24 +152,20 @@ export function ToolProviderOverrideEditor({ providerId, onValidityChange }: Too
         .filter((key): key is string => !!key)
     );
 
-    return Object.keys(parsedDraft)
-      .filter((key) => !allowedKeys.has(key) && !serverCoveredKeys.has(key))
+    return getUnsupportedToolOverrideKeys(providerId, parsedDraft)
+      .filter((key) => !serverCoveredKeys.has(key))
       .map((key) => `"${key}" is not a supported property`);
-  }, [parsedDraft, allowedKeys, activeServerIssues, providerId]);
+  }, [parsedDraft, activeServerIssues, providerId]);
 
-  const isLocallyValid = !parseError && localUnsupportedPropertyMessages.length === 0;
-
+  // Only draft parse validity is reported upward — unsupported keys live on the form and
+  // are derived in ToolEditor so they remain visible after this editor unmounts.
   useEffect(() => {
-    onValidityChange?.(providerId, isLocallyValid);
-  }, [onValidityChange, isLocallyValid, providerId]);
+    onDraftParseValidityChange?.(providerId, !parseError);
 
-  // The unsaved draft is discarded when this editor unmounts (e.g. switching sources),
-  // so clear the local invalid flag — saved problems resurface via server issues.
-  useEffect(() => {
     return () => {
-      onValidityChange?.(providerId, true);
+      onDraftParseValidityChange?.(providerId, true);
     };
-  }, [onValidityChange, providerId]);
+  }, [onDraftParseValidityChange, parseError, providerId]);
 
   return (
     <div className="bg-bg-weak flex flex-col gap-1 rounded-lg border border-neutral-100 p-1">

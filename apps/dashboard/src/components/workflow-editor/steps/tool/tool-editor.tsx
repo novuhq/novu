@@ -1,10 +1,4 @@
-import {
-  ChannelTypeEnum,
-  EnvironmentTypeEnum,
-  getToolProviderOverrideSchema,
-  TOOL_CONTENT_OVERRIDE_PROVIDER_IDS,
-  type UiSchema,
-} from '@novu/shared';
+import { ChannelTypeEnum, EnvironmentTypeEnum, TOOL_CONTENT_OVERRIDE_PROVIDER_IDS, type UiSchema } from '@novu/shared';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { RiErrorWarningFill } from 'react-icons/ri';
@@ -19,6 +13,7 @@ import { StepEditorUnavailable } from '../step-editor-unavailable';
 import {
   buildToolOverrideProviderOptions,
   DEFAULT_CONTENT_SOURCE,
+  getUnsupportedToolOverrideKeys,
   isToolContentOverrideProviderId,
   type ToolProviderOverrides,
 } from './tool-content-source';
@@ -29,29 +24,6 @@ import { ToolProviderOverrideEditor } from './tool-provider-override-editor';
 type ToolEditorProps = { uiSchema: UiSchema };
 
 const PROVIDER_OVERRIDES_FIELD = 'providerOverrides';
-
-function getProvidersWithUnsupportedKeys(providerOverrides: ToolProviderOverrides | undefined): Set<string> {
-  const invalid = new Set<string>();
-
-  for (const [providerId, override] of Object.entries(providerOverrides ?? {})) {
-    if (!isToolContentOverrideProviderId(providerId)) {
-      continue;
-    }
-
-    const schema = getToolProviderOverrideSchema(providerId);
-    if (!schema) {
-      continue;
-    }
-
-    const allowedKeys = new Set(Object.keys(schema.properties ?? {}));
-    const hasUnsupportedKey = Object.keys(override ?? {}).some((key) => !allowedKeys.has(key));
-    if (hasUnsupportedKey) {
-      invalid.add(providerId);
-    }
-  }
-
-  return invalid;
-}
 
 export const ToolEditor = (props: ToolEditorProps) => {
   const { currentEnvironment } = useEnvironment();
@@ -64,7 +36,8 @@ export const ToolEditor = (props: ToolEditorProps) => {
 
   const providerOverrides = watch(PROVIDER_OVERRIDES_FIELD) as ToolProviderOverrides | undefined;
   const { selectedSource, setSelectedSource } = useToolContentSource();
-  const [invalidProviderIds, setInvalidProviderIds] = useState<Set<string>>(new Set());
+  // Ephemeral only: unsaved JSON parse errors while an override editor is mounted.
+  const [providersWithDraftParseErrors, setProvidersWithDraftParseErrors] = useState<Set<string>>(new Set());
 
   // Reset to default when the selected override no longer exists (e.g. dropped by a
   // form reset) so the editor and the mirrored preview stay in sync — the preview
@@ -102,8 +75,7 @@ export const ToolEditor = (props: ToolEditorProps) => {
     [activeProviderIds, providerOverrides]
   );
 
-  // Server issues are keyed as `providerOverrides.{providerId}` or `providerOverrides.{providerId}.{key}`,
-  // so they cover every provider regardless of which override editor is currently mounted.
+  // Server issues are keyed as `providerOverrides.{providerId}` or `providerOverrides.{providerId}.{key}`.
   const serverIssueCountByProvider = useMemo(() => {
     const counts = new Map<string, number>();
     const controlIssues = step?.issues?.controls ?? {};
@@ -121,15 +93,30 @@ export const ToolEditor = (props: ToolEditorProps) => {
     return counts;
   }, [step?.issues?.controls]);
 
-  // Persist unsupported-key errors from form values so they remain visible when the
-  // override editor unmounts (switching back to Default content clears local draft flags).
-  const persistedInvalidProviderIds = useMemo(
-    () => getProvidersWithUnsupportedKeys(providerOverrides),
-    [providerOverrides]
-  );
+  // Persisted unsupported keys — derived from form values so they survive editor unmount.
+  const unsupportedKeyCountByProvider = useMemo(() => {
+    const counts = new Map<string, number>();
+
+    for (const [providerId, override] of Object.entries(providerOverrides ?? {})) {
+      if (!isToolContentOverrideProviderId(providerId)) {
+        continue;
+      }
+
+      const unsupportedCount = getUnsupportedToolOverrideKeys(providerId, override).length;
+      if (unsupportedCount > 0) {
+        counts.set(providerId, unsupportedCount);
+      }
+    }
+
+    return counts;
+  }, [providerOverrides]);
 
   const providersWithErrors = useMemo(() => {
-    const merged = new Set([...invalidProviderIds, ...persistedInvalidProviderIds]);
+    const merged = new Set(providersWithDraftParseErrors);
+
+    for (const providerId of unsupportedKeyCountByProvider.keys()) {
+      merged.add(providerId);
+    }
 
     for (const [providerId, count] of serverIssueCountByProvider) {
       if (count > 0) {
@@ -138,31 +125,36 @@ export const ToolEditor = (props: ToolEditorProps) => {
     }
 
     return merged;
-  }, [invalidProviderIds, persistedInvalidProviderIds, serverIssueCountByProvider]);
+  }, [providersWithDraftParseErrors, unsupportedKeyCountByProvider, serverIssueCountByProvider]);
 
+  // Honest cardinality: server issue lengths, else form unsupported-key counts, plus
+  // one per mounted draft parse error (draft is not on the form).
   const totalErrorCount = useMemo(() => {
     let total = 0;
+    const providersCountedFromServer = new Set<string>();
 
-    for (const count of serverIssueCountByProvider.values()) {
-      total += count;
-    }
-
-    // Client-only problems (unsaved draft parse errors, unsupported keys before server
-    // issues catch up) aren't always reflected in step.issues yet — count each such
-    // provider as one issue.
-    for (const providerId of providersWithErrors) {
-      if (!serverIssueCountByProvider.get(providerId)) {
-        total += 1;
+    for (const [providerId, count] of serverIssueCountByProvider) {
+      if (count > 0) {
+        total += count;
+        providersCountedFromServer.add(providerId);
       }
     }
 
-    return total;
-  }, [serverIssueCountByProvider, providersWithErrors]);
+    for (const [providerId, unsupportedCount] of unsupportedKeyCountByProvider) {
+      if (!providersCountedFromServer.has(providerId)) {
+        total += unsupportedCount;
+      }
+    }
 
-  const handleValidityChange = useCallback((providerId: string, isValid: boolean) => {
-    setInvalidProviderIds((prev) => {
+    total += providersWithDraftParseErrors.size;
+
+    return total;
+  }, [serverIssueCountByProvider, unsupportedKeyCountByProvider, providersWithDraftParseErrors]);
+
+  const handleDraftParseValidityChange = useCallback((providerId: string, isParseValid: boolean) => {
+    setProvidersWithDraftParseErrors((prev) => {
       const next = new Set(prev);
-      if (isValid) {
+      if (isParseValid) {
         next.delete(providerId);
       } else {
         next.add(providerId);
@@ -204,7 +196,7 @@ export const ToolEditor = (props: ToolEditorProps) => {
 
       const cleaned = Object.keys(next).length > 0 ? next : undefined;
       setValue(PROVIDER_OVERRIDES_FIELD, cleaned, { shouldDirty: true });
-      setInvalidProviderIds((prev) => {
+      setProvidersWithDraftParseErrors((prev) => {
         const updated = new Set(prev);
         updated.delete(providerId);
 
@@ -270,7 +262,10 @@ export const ToolEditor = (props: ToolEditorProps) => {
           </div>
 
           {showingOverride ? (
-            <ToolProviderOverrideEditor providerId={selectedSource} onValidityChange={handleValidityChange} />
+            <ToolProviderOverrideEditor
+              providerId={selectedSource}
+              onDraftParseValidityChange={handleDraftParseValidityChange}
+            />
           ) : (
             body && getComponentByType({ component: body.component })
           )}
