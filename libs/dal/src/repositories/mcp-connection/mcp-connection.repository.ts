@@ -175,6 +175,48 @@ export class McpConnectionRepository extends BaseRepositoryV2<
   }
 
   /**
+   * Clear a specific stale `auth.externalVaultId` (and its paired
+   * `vaultCredentialId`) from every subscriber row that still carries it.
+   * Scoped to the exact id so a caller racing a concurrent rebind can't
+   * clobber a vault a sibling turn already replaced.
+   *
+   * Used to recover from an upstream vault Anthropic no longer recognises
+   * (deleted/archived out-of-band, or the integration key moved workspaces) —
+   * the next `resolveVaultIds` call then provisions and adopts a fresh one.
+   */
+  async clearSubscriberExternalVaultId({
+    organizationId,
+    environmentId,
+    subscriberId,
+    agentMcpServerIds,
+    externalVaultId,
+  }: {
+    organizationId: string;
+    environmentId: string;
+    subscriberId: string;
+    agentMcpServerIds: string[];
+    externalVaultId: string;
+  }): Promise<number> {
+    if (agentMcpServerIds.length === 0) {
+      return 0;
+    }
+
+    const result = await this.update(
+      {
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+        _subscriberId: subscriberId,
+        scope: McpConnectionScopeEnum.Subscriber,
+        _agentMcpServerId: { $in: agentMcpServerIds },
+        'auth.externalVaultId': externalVaultId,
+      },
+      { $unset: { 'auth.externalVaultId': '', 'auth.vaultCredentialId': '' } }
+    );
+
+    return result.modified;
+  }
+
+  /**
    * Race-safe `setIfMissing` for `auth.externalVaultId` on a single connection
    * row. Returns `true` when this caller's id won the claim, `false` when
    * another writer set a different id first (the caller's upstream vault is
