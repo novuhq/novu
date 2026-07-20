@@ -115,9 +115,7 @@ export function ToolContentSourceSelector({
                     )}
                   </button>
 
-                  {provider.hasOverride ? (
-                    isSelected && <RiCheckLine className="text-foreground-600 size-3.5 shrink-0" />
-                  ) : (
+                  {!provider.hasOverride && (
                     <button
                       type="button"
                       data-override-action="add"
@@ -130,6 +128,9 @@ export function ToolContentSourceSelector({
                     >
                       <RiAddFill className="size-3.5" />
                     </button>
+                  )}
+                  {provider.hasOverride && isSelected && (
+                    <RiCheckLine className="text-foreground-600 size-3.5 shrink-0" />
                   )}
                 </DropdownMenuItem>
               );

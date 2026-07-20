@@ -40,7 +40,10 @@ export const ToolEditor = (props: ToolEditorProps) => {
   const { selectedSource, setSelectedSource } = useToolContentSource();
   // Ephemeral only: unsaved JSON parse errors while an override editor is mounted.
   const [providersWithDraftParseErrors, setProvidersWithDraftParseErrors] = useState<Set<string>>(new Set());
-  const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
+  // Captures the provider at open time so confirm/copy stay correct if selection clears while the modal is open.
+  const [pendingResetProviderId, setPendingResetProviderId] = useState<
+    (typeof TOOL_CONTENT_OVERRIDE_PROVIDER_IDS)[number] | null
+  >(null);
 
   // Reset to default when the selected override no longer exists (e.g. dropped by a
   // form reset) so the editor and the mirrored preview stay in sync — the preview
@@ -226,15 +229,12 @@ export const ToolEditor = (props: ToolEditorProps) => {
   }, [providerOptions, providersWithErrors, setSelectedSource]);
 
   const handleConfirmReset = useCallback(() => {
-    if (selectedSource === DEFAULT_CONTENT_SOURCE) {
-      setIsResetConfirmOpen(false);
-
-      return;
+    if (pendingResetProviderId) {
+      handleRemoveOverride(pendingResetProviderId);
     }
 
-    handleRemoveOverride(selectedSource);
-    setIsResetConfirmOpen(false);
-  }, [handleRemoveOverride, selectedSource]);
+    setPendingResetProviderId(null);
+  }, [handleRemoveOverride, pendingResetProviderId]);
 
   if (currentEnvironment?.type !== EnvironmentTypeEnum.DEV) {
     return <StepEditorUnavailable />;
@@ -278,7 +278,13 @@ export const ToolEditor = (props: ToolEditorProps) => {
                 <button
                   type="button"
                   className="text-foreground-600 hover:bg-neutral-alpha-50 hover:text-foreground-950 ml-auto flex h-7 items-center gap-1 rounded-md px-1.5 text-xs font-medium"
-                  onClick={() => setIsResetConfirmOpen(true)}
+                  onClick={() => {
+                    if (selectedSource === DEFAULT_CONTENT_SOURCE) {
+                      return;
+                    }
+
+                    setPendingResetProviderId(selectedSource);
+                  }}
                 >
                   <RiArrowGoBackLine className="size-3.5" />
                   <span>Reset to default</span>
@@ -299,14 +305,18 @@ export const ToolEditor = (props: ToolEditorProps) => {
       </TabsSection>
 
       <ConfirmationModal
-        open={isResetConfirmOpen}
-        onOpenChange={setIsResetConfirmOpen}
+        open={pendingResetProviderId !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPendingResetProviderId(null);
+          }
+        }}
         onConfirm={handleConfirmReset}
         title="Reset to default content?"
         description={
           <>
-            This will remove the {getContentSourceLabel(selectedSource)} override and restore the default content for
-            this step. This action cannot be undone.
+            This will remove the {pendingResetProviderId ? getContentSourceLabel(pendingResetProviderId) : 'provider'}{' '}
+            override and restore the default content for this step. This action cannot be undone.
           </>
         }
         confirmButtonText="Reset to default"
