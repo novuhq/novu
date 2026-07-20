@@ -1,5 +1,5 @@
 /** Increment when Novu-owned managed-agent config changes (e.g. novu_tools). Agents below this version are re-synced to the provider on the next message. */
-export const AGENT_MANAGED_DEFINITION_VERSION = 1;
+export const AGENT_MANAGED_DEFINITION_VERSION = 3;
 
 /**
  * Provider-agnostic schema for the novu_tools custom tool.
