@@ -2,6 +2,7 @@ import { expect } from 'chai';
 import {
   buildErrorMessage,
   extractErrorMessage,
+  extractNotFoundVaultId,
   isMissingReadToolForSkillsError,
   MISSING_READ_TOOL_FOR_SKILLS_REPLY,
 } from './managed-agent-errors';
@@ -28,6 +29,30 @@ describe('managed-agent-errors', () => {
       expect(isMissingReadToolForSkillsError(new Error('rate limited'))).to.equal(false);
       expect(isMissingReadToolForSkillsError({ message: 123 })).to.equal(false);
       expect(isMissingReadToolForSkillsError(null)).to.equal(false);
+    });
+  });
+
+  describe('extractNotFoundVaultId', () => {
+    const anthropicVaultNotFoundError =
+      '404 {"type":"error","error":{"type":"not_found_error","message":"vault vlt_011CdBB7PqywiEejNVEFwXu1 not found"},"request_id":"req_011CdBxzGXMefDxyqhYQ3mYK"}';
+
+    it('extracts the vault id from Error instances', () => {
+      expect(extractNotFoundVaultId(new Error(anthropicVaultNotFoundError))).to.equal('vlt_011CdBB7PqywiEejNVEFwXu1');
+    });
+
+    it('extracts the vault id from JSON-serialized webhook error objects', () => {
+      expect(
+        extractNotFoundVaultId({
+          name: 'ThalamusError',
+          message: 'vault vlt_abc123 not found',
+        })
+      ).to.equal('vlt_abc123');
+    });
+
+    it('returns undefined for unrelated errors', () => {
+      expect(extractNotFoundVaultId(new Error('rate limited'))).to.equal(undefined);
+      expect(extractNotFoundVaultId(new Error('agent agent_01ABC not found'))).to.equal(undefined);
+      expect(extractNotFoundVaultId(null)).to.equal(undefined);
     });
   });
 

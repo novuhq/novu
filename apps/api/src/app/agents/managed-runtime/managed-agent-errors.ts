@@ -29,6 +29,26 @@ export function isMissingReadToolForSkillsError(err: unknown): boolean {
   return /skills require the read tool/i.test(message);
 }
 
+/**
+ * Anthropic vaults can go missing independently of Novu — deleted/archived
+ * in the Claude console, or the integration's API key rotated to a different
+ * workspace. `createSession` then rejects the cached `vlt_…` we sent with a
+ * 404 `not_found_error`. Extract the id so the caller can clear the stale
+ * binding and retry once against a freshly provisioned vault, instead of the
+ * agent staying stuck on every subsequent turn.
+ */
+export function extractNotFoundVaultId(err: unknown): string | undefined {
+  const message = extractErrorMessage(err);
+
+  if (!message) {
+    return undefined;
+  }
+
+  const vaultNotFoundMatch = message.match(/vault (vlt_[\w-]+) not found/i);
+
+  return vaultNotFoundMatch?.[1];
+}
+
 export function extractErrorMessage(err: unknown): string | undefined {
   if (err instanceof Error) {
     return err.message;
