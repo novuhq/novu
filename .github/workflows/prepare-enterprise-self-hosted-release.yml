@@ -99,7 +99,7 @@ jobs:
     needs: setup_matrix
     runs-on: ubuntu-latest
     timeout-minutes: 90
-    environment: Production
+    environment: novu-ee
     strategy:
       fail-fast: false
       matrix:
