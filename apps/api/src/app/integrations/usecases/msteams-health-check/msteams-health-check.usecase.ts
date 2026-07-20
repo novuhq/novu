@@ -12,8 +12,45 @@ export interface MsTeamsHealthCheckResult {
   azureBotCreated: HealthCheckStatus | null;
   teamsAppCatalog: HealthCheckStatus | null;
   permissions: HealthCheckStatus | null;
+  missingRequiredPermissions: string[];
+  missingRecommendedPermissions: string[];
+  teamsAppCatalogId: string | null;
   allReady: boolean;
 }
+
+export interface MsTeamsGraphPermission {
+  id: string;
+  name: string;
+}
+
+interface MsTeamsAppCatalogCheckResult {
+  status: HealthCheckStatus | null;
+  teamsAppCatalogId: string | null;
+}
+
+interface MsTeamsPermissionsCheckResult {
+  status: HealthCheckStatus | null;
+  missingRequiredPermissions: string[];
+  missingRecommendedPermissions: string[];
+}
+
+export const MS_TEAMS_REQUIRED_GRAPH_PERMISSIONS: MsTeamsGraphPermission[] = [
+  { id: '7ab1d382-f21e-4acd-a863-ba3e13f7da61', name: 'Directory.Read.All' },
+  { id: '2280dda6-0bfd-44ee-a2f4-cb867cfc4c1e', name: 'Team.ReadBasic.All' },
+  { id: '59a6b24b-4225-4393-8165-ebaec5f55d7a', name: 'Channel.ReadBasic.All' },
+  { id: 'e12dae10-5a57-4817-b79d-dfbec5348930', name: 'AppCatalog.Read.All' },
+];
+
+export const MS_TEAMS_RECOMMENDED_GRAPH_PERMISSIONS: MsTeamsGraphPermission[] = [
+  {
+    id: '9f67436c-5415-4e7f-8ac1-3014a7132630',
+    name: 'TeamsAppInstallation.ReadWriteSelfForTeam.All',
+  },
+  {
+    id: '908de74d-f8b2-4d6b-a9ed-2a17b3b78179',
+    name: 'TeamsAppInstallation.ReadWriteSelfForUser.All',
+  },
+];
 
 /**
  * Verifies the MS Teams integration using credentials and provisioning state stored on the integration.
@@ -33,19 +70,6 @@ export interface MsTeamsHealthCheckResult {
 @Injectable()
 export class MsTeamsHealthCheck {
   private readonly MS_GRAPH_BASE_URL = 'https://graph.microsoft.com/v1.0';
-
-  /**
-   * The Graph app roles we expect to find granted on the bot's service principal.
-   * These match REQUIRED_GRAPH_PERMISSIONS in azure-setup-oauth-callback.usecase.ts.
-   */
-  private readonly EXPECTED_ROLE_IDS = new Set([
-    '7ab1d382-f21e-4acd-a863-ba3e13f7da61', // Directory.Read.All
-    '2280dda6-0bfd-44ee-a2f4-cb867cfc4c1e', // Team.ReadBasic.All
-    '59a6b24b-4225-4393-8165-ebaec5f55d7a', // Channel.ReadBasic.All
-    'e12dae10-5a57-4817-b79d-dfbec5348930', // AppCatalog.Read.All
-    '9f67436c-5415-4e7f-8ac1-3014a7132630', // TeamsAppInstallation.ReadWriteSelfForTeam.All
-    '908de74d-f8b2-4d6b-a9ed-2a17b3b78179', // TeamsAppInstallation.ReadWriteSelfForUser.All
-  ]);
 
   constructor(
     private integrationRepository: IntegrationRepository,
@@ -71,7 +95,7 @@ export class MsTeamsHealthCheck {
     }
 
     const decrypted = GetDecryptedIntegrations.getDecryptedCredentials(integration);
-    const credentials = decrypted.credentials as Record<string, string>;
+    const credentials = (decrypted.credentials ?? {}) as Record<string, string>;
     const clientId = credentials.clientId ?? '';
     const secretKey = credentials.secretKey ?? '';
     const tenantId = credentials.tenantId ?? '';
@@ -85,6 +109,9 @@ export class MsTeamsHealthCheck {
         azureBotCreated: failedStatus('azureBotCreated'),
         teamsAppCatalog: failedStatus('teamsAppCatalog'),
         permissions: failedStatus('permissions'),
+        missingRequiredPermissions: [],
+        missingRecommendedPermissions: [],
+        teamsAppCatalogId: null,
         allReady: false,
       };
     }
@@ -92,12 +119,24 @@ export class MsTeamsHealthCheck {
     const shouldRun = (name: string): boolean => !command.checks || command.checks.includes(name);
 
     // Run only the requested checks in parallel — skipped checks resolve to null immediately
-    const [appRegistration, azureBotCreated, teamsAppCatalog, permissions] = await Promise.all([
+    const [appRegistration, azureBotCreated, teamsAppCatalogResult, permissionsResult] = await Promise.all([
       shouldRun('appRegistration') ? this.checkAppRegistration(clientId, secretKey, tenantId) : Promise.resolve(null),
       shouldRun('azureBotCreated') ? Promise.resolve(this.checkAzureBotCreated(integration)) : Promise.resolve(null),
-      shouldRun('teamsAppCatalog') ? this.checkTeamsAppCatalog(clientId, secretKey, tenantId) : Promise.resolve(null),
-      shouldRun('permissions') ? this.checkPermissions(clientId, secretKey, tenantId) : Promise.resolve(null),
+      shouldRun('teamsAppCatalog')
+        ? this.checkTeamsAppCatalog(clientId, secretKey, tenantId)
+        : Promise.resolve({ status: null, teamsAppCatalogId: null }),
+      shouldRun('permissions')
+        ? this.checkPermissions(clientId, secretKey, tenantId)
+        : Promise.resolve({
+            status: null,
+            missingRequiredPermissions: [],
+            missingRecommendedPermissions: [],
+          }),
     ]);
+    const teamsAppCatalog = teamsAppCatalogResult.status;
+    const teamsAppCatalogId = teamsAppCatalogResult.teamsAppCatalogId;
+    const permissions = permissionsResult.status;
+    const { missingRequiredPermissions, missingRecommendedPermissions } = permissionsResult;
 
     // allReady only considers non-null (requested) fields
     const allReady = [appRegistration, azureBotCreated, teamsAppCatalog, permissions]
@@ -105,10 +144,19 @@ export class MsTeamsHealthCheck {
       .every((s) => s === 'ready');
 
     this.logger.debug(
-      `Health check result integrationId=${command.integrationId} appRegistration=${appRegistration} azureBotCreated=${azureBotCreated} teamsAppCatalog=${teamsAppCatalog} permissions=${permissions} allReady=${allReady}`
+      `Health check result integrationId=${command.integrationId} appRegistration=${appRegistration} azureBotCreated=${azureBotCreated} teamsAppCatalog=${teamsAppCatalog} teamsAppCatalogId=${teamsAppCatalogId} permissions=${permissions} allReady=${allReady}`
     );
 
-    return { appRegistration, azureBotCreated, teamsAppCatalog, permissions, allReady };
+    return {
+      appRegistration,
+      azureBotCreated,
+      teamsAppCatalog,
+      permissions,
+      missingRequiredPermissions,
+      missingRecommendedPermissions,
+      teamsAppCatalogId,
+      allReady,
+    };
   }
 
   /**
@@ -137,6 +185,7 @@ export class MsTeamsHealthCheck {
    * Missing provisioning means Quick Setup has not produced a tracked Azure Bot deployment.
    */
   private checkAzureBotCreated(integration: IntegrationEntity): HealthCheckStatus {
+
     return integration.provisioning?.status ?? 'pending';
   }
 
@@ -148,25 +197,26 @@ export class MsTeamsHealthCheck {
     clientId: string,
     secretKey: string,
     tenantId: string
-  ): Promise<HealthCheckStatus> {
+  ): Promise<MsTeamsAppCatalogCheckResult> {
     try {
       const graphToken = await this.msTeamsTokenService.getGraphToken(clientId, secretKey, tenantId);
 
       if (!graphToken) {
-        return 'pending';
+        return { status: 'pending', teamsAppCatalogId: null };
       }
 
       const filter = encodeURIComponent(`externalId eq '${clientId}' and distributionMethod eq 'organization'`);
-      const response = await axios.get<{ value: unknown[] }>(
+      const response = await axios.get<{ value: Array<{ id?: string }> }>(
         `${this.MS_GRAPH_BASE_URL}/appCatalogs/teamsApps?$filter=${filter}`,
         { headers: { Authorization: `Bearer ${graphToken}` }, timeout: 10_000 }
       );
+      const teamsApp = response.data.value[0];
 
-      return response.data.value.length > 0 ? 'ready' : 'pending';
+      return { status: teamsApp ? 'ready' : 'pending', teamsAppCatalogId: teamsApp?.id ?? null };
     } catch (error) {
       this.logger.warn(`Health check: teamsAppCatalog failed clientId=${clientId} error="${(error as Error).message}"`);
 
-      return 'pending';
+      return { status: 'pending', teamsAppCatalogId: null };
     }
   }
 
@@ -174,12 +224,20 @@ export class MsTeamsHealthCheck {
    * Check 4: Are the required Graph appRoleAssignments propagated on the service principal?
    * Looks up the SP by appId then checks its appRoleAssignments.
    */
-  private async checkPermissions(clientId: string, secretKey: string, tenantId: string): Promise<HealthCheckStatus> {
+  private async checkPermissions(
+    clientId: string,
+    secretKey: string,
+    tenantId: string
+  ): Promise<MsTeamsPermissionsCheckResult> {
     try {
       const graphToken = await this.msTeamsTokenService.getGraphToken(clientId, secretKey, tenantId);
 
       if (!graphToken) {
-        return 'pending';
+        return {
+          status: 'pending',
+          missingRequiredPermissions: MS_TEAMS_REQUIRED_GRAPH_PERMISSIONS.map((permission) => permission.name),
+          missingRecommendedPermissions: MS_TEAMS_RECOMMENDED_GRAPH_PERMISSIONS.map((permission) => permission.name),
+        };
       }
 
       // Resolve service principal for the bot's app
@@ -192,7 +250,11 @@ export class MsTeamsHealthCheck {
       const spId = spResponse.data.value[0]?.id;
 
       if (!spId) {
-        return 'pending';
+        return {
+          status: 'pending',
+          missingRequiredPermissions: MS_TEAMS_REQUIRED_GRAPH_PERMISSIONS.map((permission) => permission.name),
+          missingRecommendedPermissions: MS_TEAMS_RECOMMENDED_GRAPH_PERMISSIONS.map((permission) => permission.name),
+        };
       }
 
       // Check appRoleAssignments on the service principal
@@ -202,13 +264,26 @@ export class MsTeamsHealthCheck {
       );
 
       const grantedRoleIds = new Set(assignmentsResponse.data.value.map((a) => a.appRoleId));
-      const allGranted = [...this.EXPECTED_ROLE_IDS].every((id) => grantedRoleIds.has(id));
+      const missingRequiredPermissions = MS_TEAMS_REQUIRED_GRAPH_PERMISSIONS.filter(
+        (permission) => !grantedRoleIds.has(permission.id)
+      ).map((permission) => permission.name);
+      const missingRecommendedPermissions = MS_TEAMS_RECOMMENDED_GRAPH_PERMISSIONS.filter(
+        (permission) => !grantedRoleIds.has(permission.id)
+      ).map((permission) => permission.name);
 
-      return allGranted ? 'ready' : 'pending';
+      return {
+        status: missingRequiredPermissions.length === 0 ? 'ready' : 'pending',
+        missingRequiredPermissions,
+        missingRecommendedPermissions,
+      };
     } catch (error) {
       this.logger.warn(`Health check: permissions failed clientId=${clientId} error="${(error as Error).message}"`);
 
-      return 'pending';
+      return {
+        status: 'pending',
+        missingRequiredPermissions: MS_TEAMS_REQUIRED_GRAPH_PERMISSIONS.map((permission) => permission.name),
+        missingRecommendedPermissions: MS_TEAMS_RECOMMENDED_GRAPH_PERMISSIONS.map((permission) => permission.name),
+      };
     }
   }
 }
