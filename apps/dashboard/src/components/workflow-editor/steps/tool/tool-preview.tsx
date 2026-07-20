@@ -80,28 +80,24 @@ export const ToolPreview = ({ isPreviewPending, previewData }: ToolPreviewProps)
   const { selectedSource } = useToolContentSource();
   const activeProviderId = selectedSource === DEFAULT_CONTENT_SOURCE ? undefined : selectedSource;
 
-  const mergeResult = useMemo(() => {
+  const { annotatedLines, defaultContentKey } = useMemo(() => {
     if (!activeProviderId) {
-      return undefined;
+      return { annotatedLines: undefined, defaultContentKey: undefined };
     }
 
-    return mergeToolProviderPreview({
+    const result = mergeToolProviderPreview({
       body,
       providerId: activeProviderId,
       override: providerOverrides[activeProviderId],
     });
+
+    return {
+      annotatedLines: buildAnnotatedPreviewLines(result.merged, result.defaultContentKey),
+      defaultContentKey: result.defaultContentKey,
+    };
   }, [activeProviderId, body, providerOverrides]);
 
   const hasOverride = !!activeProviderId && activeProviderId in providerOverrides;
-  const defaultContentKey = mergeResult?.defaultContentKey;
-
-  const annotatedLines = useMemo(() => {
-    if (!mergeResult) {
-      return undefined;
-    }
-
-    return buildAnnotatedPreviewLines(mergeResult.merged, mergeResult.defaultContentKey);
-  }, [mergeResult]);
 
   const getHintText = () => {
     if (!activeProviderId) {
