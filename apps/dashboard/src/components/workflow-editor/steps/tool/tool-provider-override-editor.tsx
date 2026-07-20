@@ -150,9 +150,19 @@ export function ToolProviderOverrideEditor({ providerId, onValidityChange }: Too
       .map((key) => `"${key}" is not a supported property`);
   }, [parsedDraft, allowedKeys, activeServerIssues, providerId]);
 
+  const isLocallyValid = !parseError && localUnsupportedPropertyMessages.length === 0;
+
   useEffect(() => {
-    onValidityChange?.(providerId, !parseError);
-  }, [onValidityChange, parseError, providerId]);
+    onValidityChange?.(providerId, isLocallyValid);
+  }, [onValidityChange, isLocallyValid, providerId]);
+
+  // The unsaved draft is discarded when this editor unmounts (e.g. switching sources),
+  // so clear the local invalid flag — saved problems resurface via server issues.
+  useEffect(() => {
+    return () => {
+      onValidityChange?.(providerId, true);
+    };
+  }, [onValidityChange, providerId]);
 
   return (
     <div className="bg-bg-weak flex flex-col gap-1 rounded-lg border border-neutral-100 p-1">

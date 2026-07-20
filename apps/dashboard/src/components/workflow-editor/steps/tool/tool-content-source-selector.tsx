@@ -1,11 +1,4 @@
-import {
-  RiAddFill,
-  RiArrowDownSLine,
-  RiCheckboxCircleFill,
-  RiCheckLine,
-  RiCloseLine,
-  RiErrorWarningFill,
-} from 'react-icons/ri';
+import { RiAddFill, RiArrowDownSLine, RiCheckLine, RiCloseLine, RiErrorWarningFill } from 'react-icons/ri';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import {
   DropdownMenu,
@@ -39,6 +32,10 @@ export function ToolContentSourceSelector({
   onAddOverride,
   onRemoveOverride,
 }: ToolContentSourceSelectorProps) {
+  // Only the currently selected source owns the trigger error icon. Override-only
+  // problems are surfaced via the issue-count badge and per-provider row icons.
+  const selectedSourceHasError = selectedSource !== DEFAULT_CONTENT_SOURCE && invalidProviderIds?.has(selectedSource);
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -54,6 +51,7 @@ export function ToolContentSourceSelector({
             />
           )}
           <span>{getContentSourceLabel(selectedSource)}</span>
+          {selectedSourceHasError && <RiErrorWarningFill className="text-destructive size-3.5 shrink-0" />}
           <RiArrowDownSLine className="text-foreground-600 size-3.5" />
         </button>
       </DropdownMenuTrigger>
@@ -62,10 +60,7 @@ export function ToolContentSourceSelector({
           className="flex cursor-pointer items-center justify-between gap-2 rounded-md px-1.5 py-1"
           onSelect={() => onSelectSource(DEFAULT_CONTENT_SOURCE)}
         >
-          <div className="flex items-center gap-1">
-            <span className="text-foreground-600 text-xs font-medium">Default content</span>
-            <RiCheckboxCircleFill className="size-3 text-success" />
-          </div>
+          <span className="text-foreground-600 text-xs font-medium">Default content</span>
           {selectedSource === DEFAULT_CONTENT_SOURCE && <RiCheckLine className="text-foreground-600 size-3.5" />}
         </DropdownMenuItem>
 
