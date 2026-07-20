@@ -1,7 +1,7 @@
 import { ContentIssueEnum, getToolProviderOverrideSchema, type ToolContentOverrideProviderId } from '@novu/shared';
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 import { RiErrorWarningLine, RiLightbulbLine } from 'react-icons/ri';
 import { Badge } from '@/components/primitives/badge';
@@ -51,7 +51,7 @@ export function ToolProviderOverrideEditor({
   providerId,
   onDraftParseValidityChange,
 }: ToolProviderOverrideEditorProps) {
-  const { control, getValues, setValue } = useFormContext();
+  const { control, getValues } = useFormContext();
   const { saveForm } = useSaveForm();
   const { step, digestStepBeforeCurrent } = useWorkflow();
   const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
@@ -132,6 +132,7 @@ export function ToolProviderOverrideEditor({
       const relativePath = issuePath.slice(prefix.length + 1);
       const topKey = relativePath.split('.')[0];
 
+      // ES2020 lib — Object.hasOwn is unavailable under tsconfig.app.json
       return Object.prototype.hasOwnProperty.call(parsedDraft, topKey);
     });
   }, [step?.issues?.controls, providerId, parsedDraft]);
@@ -160,23 +161,6 @@ export function ToolProviderOverrideEditor({
 
   const usedDraftKeys = useMemo(() => new Set(Object.keys(parsedDraft ?? {})), [parsedDraft]);
 
-  const handleInsertField = useCallback(
-    (key: string) => {
-      const { parsed } = parseOverrideJson(draft);
-      if (!parsed || Object.prototype.hasOwnProperty.call(parsed, key)) {
-        return;
-      }
-
-      const next = { ...parsed, [key]: getToolOverrideFieldDefaultValue(providerId, key) };
-      setDraft(formatOverrideJson(next));
-
-      const current = (getValues(PROVIDER_OVERRIDES_FIELD) as ToolProviderOverrides | undefined) ?? {};
-      setValue(PROVIDER_OVERRIDES_FIELD, { ...current, [providerId]: next }, { shouldDirty: true });
-      saveForm();
-    },
-    [draft, getValues, providerId, saveForm, setValue]
-  );
-
   // Only draft parse validity is reported upward — unsupported keys live on the form and
   // are derived in ToolEditor so they remain visible after this editor unmounts.
   useEffect(() => {
@@ -189,97 +173,113 @@ export function ToolProviderOverrideEditor({
 
   return (
     <div className="bg-bg-weak flex flex-col gap-1 rounded-lg border border-neutral-100 p-1">
-      <SectionHeader
-        label="Request body"
-        tooltip={`These fields merge over your default content. "${primaryKey}" falls back to the default message unless set here. Supports Liquid variables inside string values.`}
-        rightSlot={
-          <div className="flex items-center gap-1.5">
-            <ToolOverrideSupportedFields
-              providerId={providerId}
-              usedKeys={usedDraftKeys}
-              canInsert={!parseError}
-              onInsertField={handleInsertField}
-            />
-            <Badge variant="lighter" color="gray" size="sm">
-              OVERRIDDEN
-            </Badge>
-            <Badge variant="lighter" color="gray" size="sm">
-              {'{ }'} JSON
-            </Badge>
-          </div>
-        }
-      />
       <Controller
         control={control}
         name={PROVIDER_OVERRIDES_FIELD}
-        render={({ field }) => (
-          <>
-            <InputRoot className="min-h-[180px]" hasError={!!parseError}>
-              <ControlInput
-                size="2xs"
-                multiline={true}
-                indentWithTab={true}
-                placeholder={`{\n  "${primaryKey}": "{{payload.title}}"\n}`}
-                value={draft}
-                isAllowedVariable={isAllowedVariable}
-                variables={variables}
-                onChange={(val) => {
-                  const newVal = typeof val === 'string' ? val : '';
-                  setDraft(newVal);
+        render={({ field }) => {
+          const writeProviderOverride = (next: Record<string, unknown>) => {
+            const current = (field.value as ToolProviderOverrides | undefined) ?? {};
+            field.onChange({
+              ...current,
+              [providerId]: next,
+            });
+            saveForm();
+          };
 
-                  const { parsed, error } = parseOverrideJson(newVal);
-                  if (error || !parsed) {
-                    return;
-                  }
+          const handleInsertField = (key: string) => {
+            if (!parsedDraft || usedDraftKeys.has(key)) {
+              return;
+            }
 
-                  const current = (field.value as ToolProviderOverrides | undefined) ?? {};
-                  field.onChange({
-                    ...current,
-                    [providerId]: parsed,
-                  });
-                  saveForm();
-                }}
-                onBlur={() => {
-                  field.onBlur();
-                }}
+            const next = { ...parsedDraft, [key]: getToolOverrideFieldDefaultValue(providerId, key) };
+            setDraft(formatOverrideJson(next));
+            writeProviderOverride(next);
+          };
+
+          return (
+            <>
+              <SectionHeader
+                label="Request body"
+                tooltip={`These fields merge over your default content. "${primaryKey}" falls back to the default message unless set here. Supports Liquid variables inside string values.`}
+                rightSlot={
+                  <div className="flex items-center gap-1.5">
+                    <ToolOverrideSupportedFields
+                      providerId={providerId}
+                      usedKeys={usedDraftKeys}
+                      canInsert={!parseError}
+                      onInsertField={handleInsertField}
+                    />
+                    <Badge variant="lighter" color="gray" size="sm">
+                      OVERRIDDEN
+                    </Badge>
+                    <Badge variant="lighter" color="gray" size="sm">
+                      {'{ }'} JSON
+                    </Badge>
+                  </div>
+                }
               />
-            </InputRoot>
-            {parseError ? (
-              <div className="flex items-center gap-1 px-1">
-                <RiErrorWarningLine className="text-destructive h-3 w-3 shrink-0" />
-                <span className="text-destructive text-xs">{parseError}</span>
-              </div>
-            ) : (
-              <>
-                {activeServerIssues.map((issue) => (
-                  <div key={issue.variableName ?? issue.path} className="flex items-start gap-1 px-1">
-                    <RiErrorWarningLine className="text-destructive mt-0.5 h-3 w-3 shrink-0" />
-                    <span className="text-destructive text-xs">{issue.message}</span>
-                  </div>
-                ))}
-                {localUnsupportedPropertyMessages.map((message) => (
-                  <div key={message} className="flex items-start gap-1 px-1">
-                    <RiErrorWarningLine className="text-destructive mt-0.5 h-3 w-3 shrink-0" />
-                    <span className="text-destructive text-xs">{message}</span>
-                  </div>
-                ))}
-                {schemaWarnings.length > 0 && (
-                  <div className="flex items-start gap-1 px-1">
-                    <RiErrorWarningLine className="text-warning mt-0.5 h-3 w-3 shrink-0" />
-                    <span className="text-warning text-xs">{schemaWarnings[0]}</span>
-                  </div>
-                )}
-                <div className="text-text-soft flex items-start gap-1 px-1 py-0.5">
-                  <RiLightbulbLine className="mt-0.5 size-3 shrink-0" />
-                  <span className="text-xs">
-                    Fields merge over default content. <code className="text-[11px]">{primaryKey}</code> falls back to
-                    your default message unless set here.
-                  </span>
+              <InputRoot className="min-h-[180px]" hasError={!!parseError}>
+                <ControlInput
+                  size="2xs"
+                  multiline={true}
+                  indentWithTab={true}
+                  placeholder={`{\n  "${primaryKey}": "{{payload.title}}"\n}`}
+                  value={draft}
+                  isAllowedVariable={isAllowedVariable}
+                  variables={variables}
+                  onChange={(val) => {
+                    const newVal = typeof val === 'string' ? val : '';
+                    setDraft(newVal);
+
+                    const { parsed, error } = parseOverrideJson(newVal);
+                    if (error || !parsed) {
+                      return;
+                    }
+
+                    writeProviderOverride(parsed);
+                  }}
+                  onBlur={() => {
+                    field.onBlur();
+                  }}
+                />
+              </InputRoot>
+              {parseError ? (
+                <div className="flex items-center gap-1 px-1">
+                  <RiErrorWarningLine className="text-destructive h-3 w-3 shrink-0" />
+                  <span className="text-destructive text-xs">{parseError}</span>
                 </div>
-              </>
-            )}
-          </>
-        )}
+              ) : (
+                <>
+                  {activeServerIssues.map((issue) => (
+                    <div key={issue.variableName ?? issue.path} className="flex items-start gap-1 px-1">
+                      <RiErrorWarningLine className="text-destructive mt-0.5 h-3 w-3 shrink-0" />
+                      <span className="text-destructive text-xs">{issue.message}</span>
+                    </div>
+                  ))}
+                  {localUnsupportedPropertyMessages.map((message) => (
+                    <div key={message} className="flex items-start gap-1 px-1">
+                      <RiErrorWarningLine className="text-destructive mt-0.5 h-3 w-3 shrink-0" />
+                      <span className="text-destructive text-xs">{message}</span>
+                    </div>
+                  ))}
+                  {schemaWarnings.length > 0 && (
+                    <div className="flex items-start gap-1 px-1">
+                      <RiErrorWarningLine className="text-warning mt-0.5 h-3 w-3 shrink-0" />
+                      <span className="text-warning text-xs">{schemaWarnings[0]}</span>
+                    </div>
+                  )}
+                  <div className="text-text-soft flex items-start gap-1 px-1 py-0.5">
+                    <RiLightbulbLine className="mt-0.5 size-3 shrink-0" />
+                    <span className="text-xs">
+                      Fields merge over default content. <code className="text-[11px]">{primaryKey}</code> falls back to
+                      your default message unless set here.
+                    </span>
+                  </div>
+                </>
+              )}
+            </>
+          );
+        }}
       />
     </div>
   );

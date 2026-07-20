@@ -1,5 +1,5 @@
 import { getToolProviderOverrideSchema, type ToolContentOverrideProviderId } from '@novu/shared';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { RiAddLine, RiCheckLine, RiListUnordered } from 'react-icons/ri';
 import { LinkButton } from '@/components/primitives/button-link';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
@@ -96,7 +96,6 @@ export function ToolOverrideSupportedFields({
   canInsert,
   onInsertField,
 }: ToolOverrideSupportedFieldsProps) {
-  const [isOpen, setIsOpen] = useState(false);
   const fields = useMemo(() => buildToolOverrideSupportedFields(providerId), [providerId]);
 
   if (fields.length === 0) {
@@ -106,7 +105,7 @@ export function ToolOverrideSupportedFields({
   const displayName = getToolOverrideProviderDisplayName(providerId);
 
   return (
-    <Popover open={isOpen} onOpenChange={setIsOpen}>
+    <Popover>
       <PopoverTrigger asChild>
         <LinkButton size="sm" variant="gray" leadingIcon={RiListUnordered} className="[&_svg]:size-3">
           Supported fields
