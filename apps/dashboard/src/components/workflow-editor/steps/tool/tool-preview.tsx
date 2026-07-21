@@ -178,16 +178,9 @@ export const ToolPreview = ({ isPreviewPending, previewData }: ToolPreviewProps)
               {isPreviewPending ? (
                 <Skeleton className="h-3 w-40" />
               ) : (
-                <>
-                  <span className="text-foreground-600 text-label-2xs font-medium uppercase tracking-wide">
-                    {activeProviderId ? 'Merged override fields' : 'Message'}
-                  </span>
-                  {hasOverride && (
-                    <span className="text-label-2xs text-foreground-600 bg-neutral-alpha-100 flex h-4 items-center rounded-sm px-1 font-medium">
-                      OVERRIDDEN
-                    </span>
-                  )}
-                </>
+                <span className="text-foreground-600 text-label-2xs font-medium uppercase tracking-wide">
+                  {activeProviderId ? 'Merged override fields' : 'Message'}
+                </span>
               )}
             </div>
 

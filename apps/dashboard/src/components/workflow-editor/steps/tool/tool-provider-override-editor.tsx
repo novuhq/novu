@@ -2,7 +2,6 @@ import { ContentIssueEnum, getToolProviderPrimaryContentKey, type ToolContentOve
 import { useEffect, useMemo, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 import { RiErrorWarningLine, RiLightbulbLine } from 'react-icons/ri';
-import { Badge } from '@/components/primitives/badge';
 import { InputRoot } from '@/components/primitives/input';
 import { ControlInput } from '@/components/workflow-editor/control-input';
 import { SectionHeader } from '@/components/workflow-editor/steps/http-request/section-header';
@@ -158,20 +157,12 @@ export function ToolProviderOverrideEditor({
                 label="Override fields"
                 tooltip={`These fields merge over your default content. "${primaryKey}" falls back to the default message unless set here. Supports Liquid variables inside string values.`}
                 rightSlot={
-                  <div className="flex items-center gap-1.5">
-                    <ToolOverrideSupportedFields
-                      providerId={providerId}
-                      usedKeys={usedDraftKeys}
-                      canInsert={!parseError}
-                      onInsertField={handleInsertField}
-                    />
-                    <Badge variant="lighter" color="gray" size="sm">
-                      OVERRIDDEN
-                    </Badge>
-                    <Badge variant="lighter" color="gray" size="sm">
-                      {'{ }'} JSON
-                    </Badge>
-                  </div>
+                  <ToolOverrideSupportedFields
+                    providerId={providerId}
+                    usedKeys={usedDraftKeys}
+                    canInsert={!parseError}
+                    onInsertField={handleInsertField}
+                  />
                 }
               />
               <InputRoot className="min-h-[180px]" hasError={!!parseError}>
