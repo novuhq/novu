@@ -144,7 +144,8 @@ export const ToolEditor = (props: ToolEditorProps) => {
       const next = { ...current };
       delete next[providerId];
 
-      const cleaned = Object.keys(next).length > 0 ? next : undefined;
+      // null = delete-all contract; undefined would be omitted and leave STEP_PROVIDER_CONTROLS docs intact.
+      const cleaned = Object.keys(next).length > 0 ? next : null;
       setValue(PROVIDER_OVERRIDES_FIELD, cleaned, { shouldDirty: true });
       setDraftParseErrorProviderId(null);
 

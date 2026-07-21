@@ -1,6 +1,6 @@
-import { ControlValuesEntity } from '@novu/dal';
+import { ControlValuesEntity, JsonSchemaTypeEnum } from '@novu/dal';
 import {
-  getToolProviderOverrideKeysOnlySchema,
+  getToolProviderOverrideKeys,
   type StepProviderOverrides,
   TOOL_CONTENT_OVERRIDE_PROVIDER_IDS,
   ToolProviderIdEnum,
@@ -11,6 +11,9 @@ import { type ControlIssues, processControlValuesBySchema } from './issues';
 export type { StepProviderOverrides };
 
 const SUPPORTED_PROVIDER_IDS = new Set<string>(TOOL_CONTENT_OVERRIDE_PROVIDER_IDS);
+
+/** Always-valid property schema — matches shared keys-only contract (boolean `true`). */
+const ALWAYS_VALID_PROPERTY = true as unknown as JSONSchemaDto;
 
 export function isSupportedToolProviderOverrideId(providerId: string): providerId is ToolProviderIdEnum {
   return SUPPORTED_PROVIDER_IDS.has(providerId);
@@ -60,17 +63,23 @@ function buildProviderOverridesIssueSchema(): JSONSchemaDto {
   const properties: Record<string, JSONSchemaDto> = {};
 
   for (const providerId of TOOL_CONTENT_OVERRIDE_PROVIDER_IDS) {
-    const keysOnlySchema = getToolProviderOverrideKeysOnlySchema(providerId);
-    if (keysOnlySchema) {
-      properties[providerId] = keysOnlySchema;
+    const keys = getToolProviderOverrideKeys(providerId);
+    if (!keys) {
+      continue;
     }
+
+    properties[providerId] = {
+      type: JsonSchemaTypeEnum.OBJECT,
+      properties: Object.fromEntries(keys.map((key) => [key, ALWAYS_VALID_PROPERTY])),
+      additionalProperties: false,
+    };
   }
 
   return {
-    type: 'object',
+    type: JsonSchemaTypeEnum.OBJECT,
     properties: {
       providerOverrides: {
-        type: 'object',
+        type: JsonSchemaTypeEnum.OBJECT,
         properties,
         additionalProperties: false,
       },
