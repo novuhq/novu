@@ -1,4 +1,5 @@
 import { expect } from 'chai';
+import type { ActionsElement, ButtonElement, CardElement, LinkButtonElement, SectionElement } from 'chat';
 import sinon from 'sinon';
 import { AGENT_ACTION_TOKEN_PREFIX, AgentActionTokenService } from './agent-action-token.service';
 import { encodedTelegramCallbackDataByteLength } from './card-callback-button.walker';
@@ -176,16 +177,21 @@ describe('AgentActionTokenService', () => {
           ],
         },
       ],
-    };
+    } as CardElement;
 
     const tokenized = await service.tokenizeCardForDelivery(original, binding);
+    const originalActions = original.children[0] as ActionsElement;
+    const originalDeny = originalActions.children[0] as ButtonElement;
 
-    expect(original.children[0].children[0].id).to.include('mcp-approval:deny');
-    expect(original.children[0].children[0].value).to.equal('GitHub -> get_me');
+    expect(originalDeny.id).to.include('mcp-approval:deny');
+    expect(originalDeny.value).to.equal('GitHub -> get_me');
 
-    const denyButton = tokenized.children[0].children[0] as { id: string; value?: string };
-    const linkButton = tokenized.children[0].children[1] as { type: string; url: string };
-    const nestedApprove = tokenized.children[1].children[0].children[0] as { id: string; value?: string };
+    const tokenizedActions = tokenized.children[0] as ActionsElement;
+    const denyButton = tokenizedActions.children[0] as ButtonElement;
+    const linkButton = tokenizedActions.children[1] as LinkButtonElement;
+    const nestedSection = tokenized.children[1] as SectionElement;
+    const nestedActions = nestedSection.children[0] as ActionsElement;
+    const nestedApprove = nestedActions.children[0] as ButtonElement;
 
     expect(denyButton.id.startsWith(AGENT_ACTION_TOKEN_PREFIX)).to.equal(true);
     expect(encodedTelegramCallbackDataByteLength(denyButton.id)).to.be.at.most(64);
@@ -227,7 +233,7 @@ describe('AgentActionTokenService', () => {
           ],
         },
       ],
-    };
+    } as CardElement;
 
     try {
       await service.tokenizeCardForDelivery(card, binding);
@@ -253,11 +259,11 @@ describe('AgentActionTokenService', () => {
             children: [{ type: 'button', id: actionId, label: 'Approve once', value }],
           },
         ],
-      },
+      } as CardElement,
       binding
     );
 
-    const button = tokenized.children[0].children[0] as { id: string; value?: string };
+    const button = (tokenized.children[0] as ActionsElement).children[0] as ButtonElement;
 
     expect(button.id.startsWith(AGENT_ACTION_TOKEN_PREFIX)).to.equal(true);
     expect(encodedTelegramCallbackDataByteLength(button.id)).to.be.at.most(64);

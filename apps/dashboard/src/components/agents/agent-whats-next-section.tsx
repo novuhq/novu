@@ -26,7 +26,7 @@ import { shouldShowAgentWhatsNextSection } from '@/utils/whats-next-guide';
 import { AddChannelPicker } from './add-channel-picker';
 import { hasAgentInboundConnection } from './is-agent-integration-connected';
 import { SetupGuideCard } from './setup-guide-card';
-import { SetupStep } from './setup-guide-primitives';
+import { SetupStep, SetupStepperRail } from './setup-guide-primitives';
 
 const FADE_HEIGHT_PX = 43;
 const COLLAPSED_VISIBLE_CHANNEL_COUNT = 4;
@@ -74,7 +74,7 @@ function ConfigureChannelButton({
       type="button"
       onClick={() => onConfigure(link)}
       className={cn(
-        'flex w-full max-w-[210px] shrink-0 items-center gap-0.5 overflow-hidden rounded-md p-1.5',
+        'flex w-full max-w-[275px] shrink-0 items-center gap-0.5 overflow-hidden rounded-md p-1.5',
         'bg-bg-white bg-[linear-gradient(180deg,rgba(0,0,0,0)_30%,rgba(0,0,0,0.02)_100%)]',
         'shadow-[0px_1px_3px_0px_rgba(14,18,27,0.12),0px_0px_0px_1px_#e1e4ea]',
         'transition-shadow hover:shadow-[0px_1px_3px_0px_rgba(14,18,27,0.16),0px_0px_0px_1px_#cdd0d8]'
@@ -82,7 +82,7 @@ function ConfigureChannelButton({
     >
       <CircleDashed className="text-text-sub size-4 shrink-0" />
       <span className="text-text-sub text-label-xs flex min-w-0 flex-1 items-center gap-1 px-1 font-medium">
-        <span className="shrink-0">Configure</span>
+        <span className="shrink-0">Setup</span>
         <span className="bg-bg-weak border-stroke-soft/50 flex min-w-0 shrink items-center gap-1 rounded border px-1 py-0.5">
           <ProviderIcon
             providerId={link.integration.providerId}
@@ -91,6 +91,7 @@ function ConfigureChannelButton({
           />
           <TruncatedText className="text-text-strong min-w-0">{displayName}</TruncatedText>
         </span>
+        <span className="shrink-0">for your users</span>
       </span>
       <RiArrowRightSLine className="text-text-sub size-4 shrink-0" />
     </button>
@@ -158,7 +159,7 @@ function ChannelList({
   };
 
   return (
-    <div className="flex w-full max-w-[210px] flex-col gap-2.5">
+    <div className="flex w-full max-w-[275px] flex-col gap-2.5">
       <div
         ref={listRef}
         className={cn(
@@ -197,12 +198,68 @@ function AddChannelButton({ onAddChannel }: { onAddChannel: () => void }) {
       mode="outline"
       size="xs"
       type="button"
-      className="text-text-sub max-w-[210px] gap-1 px-1.5 py-1.5"
+      className="text-text-sub max-w-[275px] gap-1 px-1.5 py-1.5"
       onClick={onAddChannel}
       trailingIcon={RiArrowRightSLine}
     >
       Add channel
     </Button>
+  );
+}
+
+type AddAnotherChannelStepProps = {
+  agent: AgentResponse;
+  links: AgentIntegrationLink[];
+  planUsage: PlanUsage | undefined;
+  readOnly: boolean;
+  index: number;
+  onAddChannel: () => void;
+  onChannelAdded: (providerId: string, integration?: IIntegration) => void;
+};
+
+function AddAnotherChannelStep({
+  agent,
+  links,
+  planUsage,
+  readOnly,
+  index,
+  onAddChannel,
+  onChannelAdded,
+}: AddAnotherChannelStepProps) {
+  return (
+    <SetupStep
+      index={index}
+      status="current"
+      indicator="dot"
+      title="Add another channel"
+      description="Add another channel provider for your users to message and interact with your agent."
+      rightContent={
+        readOnly ? (
+          <AddChannelButton onAddChannel={onAddChannel} />
+        ) : (
+          <AddChannelPicker
+            agentIdentifier={agent.identifier}
+            agentName={agent.name}
+            links={links}
+            planUsage={planUsage}
+            onSelected={onChannelAdded}
+            renderTrigger={({ isBusy }) => (
+              <Button
+                variant="secondary"
+                mode="outline"
+                size="xs"
+                type="button"
+                disabled={isBusy}
+                className="text-text-sub max-w-[275px] gap-1 px-1.5 py-1.5"
+                trailingIcon={RiArrowRightSLine}
+              >
+                Add channel
+              </Button>
+            )}
+          />
+        )
+      }
+    />
   );
 }
 
@@ -227,46 +284,17 @@ function AddAnotherChannelCard({
 }: AddAnotherChannelCardProps) {
   return (
     <SetupGuideCard label="What's next" persistKey={persistKey} className="min-w-0 flex-1">
-      <div className="relative flex flex-col gap-10 py-6 pb-3 pl-8 pr-3 md:pr-6">
-        <div
-          className="absolute bottom-0 left-[22px] top-0 w-px"
-          style={{
-            background: 'linear-gradient(to bottom, transparent 0%, #E1E4EA 10%, #E1E4EA 90%, transparent 100%)',
-          }}
-        />
-        <SetupStep
+      <SetupStepperRail className="gap-8 py-6 pb-3 pr-3 md:pr-6">
+        <AddAnotherChannelStep
+          agent={agent}
+          links={links}
+          planUsage={planUsage}
+          readOnly={readOnly}
           index={1}
-          status="current"
-          title="Add another channel"
-          description="Add another channel for your users to message and interact with your agent."
-          rightContent={
-            readOnly ? (
-              <AddChannelButton onAddChannel={onAddChannel} />
-            ) : (
-              <AddChannelPicker
-                agentIdentifier={agent.identifier}
-                agentName={agent.name}
-                links={links}
-                planUsage={planUsage}
-                onSelected={onChannelAdded}
-                renderTrigger={({ isBusy }) => (
-                  <Button
-                    variant="secondary"
-                    mode="outline"
-                    size="xs"
-                    type="button"
-                    disabled={isBusy}
-                    className="text-text-sub max-w-[210px] gap-1 px-1.5 py-1.5"
-                    trailingIcon={RiArrowRightSLine}
-                  >
-                    Add channel
-                  </Button>
-                )}
-              />
-            )
-          }
+          onAddChannel={onAddChannel}
+          onChannelAdded={onChannelAdded}
         />
-      </div>
+      </SetupStepperRail>
     </SetupGuideCard>
   );
 }
@@ -370,55 +398,27 @@ export function AgentWhatsNextSection({ agent }: AgentWhatsNextSectionProps) {
 
   return (
     <SetupGuideCard label="What's next" persistKey={persistKey} className="min-w-0 flex-1">
-      <div className="relative flex flex-col gap-10 py-6 pb-3 pl-8 pr-3 md:pr-6">
-        <div
-          className="absolute bottom-0 left-[22px] top-0 w-px"
-          style={{
-            background: 'linear-gradient(to bottom, transparent 0%, #E1E4EA 10%, #E1E4EA 90%, transparent 100%)',
-          }}
-        />
+      <SetupStepperRail className="gap-8 py-6 pb-3 pr-3 md:pr-6">
         <SetupStep
           index={1}
           status="current"
+          indicator="dot"
           sectionLabel="FOR YOUR USERS"
           inlineSectionLabel
           title="Setup channels for your users"
           description="Setup the channels to let your users easily connect to this agent on wherever they are."
           rightContent={<ChannelList links={connectedLinks} onConfigure={handleConfigureChannel} />}
         />
-        <SetupStep
+        <AddAnotherChannelStep
+          agent={agent}
+          links={links}
+          planUsage={planUsage}
+          readOnly={readOnly}
           index={2}
-          status="current"
-          title="Add another channel"
-          description="Add another channel for your users to message and interact with your agent."
-          rightContent={
-            readOnly ? (
-              <AddChannelButton onAddChannel={handleAddChannel} />
-            ) : (
-              <AddChannelPicker
-                agentIdentifier={agent.identifier}
-                agentName={agent.name}
-                links={links}
-                planUsage={planUsage}
-                onSelected={handleChannelAdded}
-                renderTrigger={({ isBusy }) => (
-                  <Button
-                    variant="secondary"
-                    mode="outline"
-                    size="xs"
-                    type="button"
-                    disabled={isBusy}
-                    className="text-text-sub max-w-[210px] gap-1 px-1.5 py-1.5"
-                    trailingIcon={RiArrowRightSLine}
-                  >
-                    Add channel
-                  </Button>
-                )}
-              />
-            )
-          }
+          onAddChannel={handleAddChannel}
+          onChannelAdded={handleChannelAdded}
         />
-      </div>
+      </SetupStepperRail>
     </SetupGuideCard>
   );
 }

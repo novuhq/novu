@@ -104,7 +104,8 @@ You MUST select Claude built-in tools, MCP servers, and Anthropic Skills ONLY fr
 
 ## Tool selection
 - ALWAYS include \`web_search\` and \`web_fetch\` — every Novu agent should be able to pull live context from the web. Only omit them if the user explicitly forbids web access.
-- Add \`bash\`/\`read\`/\`write\`/\`edit\`/\`glob\`/\`grep\` only when the agent must work with files (code review, data files, repo automation, etc.).
+- Add \`bash\`/\`write\`/\`edit\`/\`glob\`/\`grep\` only when the agent must work with files (code review, data files, repo automation, etc.).
+- ALWAYS include \`read\` whenever you attach ANY skill (see Skill selection). Anthropic Managed Agents load skill bundles via the read tool and reject the agent otherwise.
 
 ## MCP selection
 - Decide per domain whether the agent actually needs an MCP. Many agents are pure reasoning / writing / summarisation tasks and need NO MCP at all — return an empty array in that case.
@@ -123,6 +124,7 @@ You MUST select Claude built-in tools, MCP servers, and Anthropic Skills ONLY fr
 
 ## Skill selection
 - Anthropic skills are for file generation (pdf, xlsx, docx, pptx, …). Only attach when the agent must produce one of those file types. Otherwise return an empty array.
+- If you attach one or more skills, you MUST also include \`read\` in \`tools\`. Never return skills without \`read\`.
 
 ## System prompt
 The \`systemPrompt\` is sent verbatim to Claude. Address the agent in second person ("You are a…"), describe its role, scope, tone, and the workflow it should follow when invoked. Do not enumerate the tool/MCP/skill IDs in the systemPrompt — Anthropic wires them in automatically.
@@ -161,14 +163,21 @@ Generate the complete agent configuration JSON. Pick a clear human name, derive 
  * still ships with the baseline web tools. Without this, prompts that omit a clear "use X"
  * cue (e.g. "Build a Customer Feedback Agent That Groups Requests by Theme") would surface
  * an agent with no tools or MCPs attached, which is a poor first-run experience.
+ *
+ * Also force-enables `read` whenever skills are present — Anthropic Managed Agents require
+ * a usable read tool on the agent toolset to load skill bundles.
  */
-function ensureDefaultTools(tools: string[]): string[] {
+function ensureDefaultTools(tools: string[], skills: Array<{ skillId: string }>): string[] {
   const seen = new Set(tools);
   for (const defaultTool of CLAUDE_DEFAULT_TOOL_TYPES) {
     if (!seen.has(defaultTool)) {
       tools.push(defaultTool);
       seen.add(defaultTool);
     }
+  }
+
+  if (skills.length > 0 && !seen.has('read')) {
+    tools.push('read');
   }
 
   return tools;
@@ -256,14 +265,16 @@ export class GenerateManagedAgent {
       };
     }
 
+    const skills = generated.skills.map((skill) => ({ skillId: skill.skillId }));
+
     return {
       name: generated.name,
       identifier: generated.identifier,
       systemPrompt: generated.systemPrompt,
       description: generated.description,
-      tools: ensureDefaultTools([...generated.tools]),
+      tools: ensureDefaultTools([...generated.tools], skills),
       mcpServers: generated.mcpServers,
-      skills: generated.skills.map((skill) => ({ skillId: skill.skillId })),
+      skills,
     };
   }
 

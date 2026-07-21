@@ -25,6 +25,7 @@ import { useOnboardingProvisioningActive, useOnboardingProvisioningDismiss } fro
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { useUpdateProductUseCases } from '@/hooks/use-update-product-use-cases';
 import { AGENT_TEMPLATE_ID_PARAM, readActiveAgentTemplateId } from '@/utils/agent-template-identity';
+import { trackAgentsUsecaseSelected } from '@/utils/agents-org-funnel';
 import { isAbsoluteUrl } from '@/utils/apps';
 import { clearPersistedCliOnboardingSessionId } from '@/utils/cli-onboarding-identity';
 import { getPostOnboardingRoute, withOnboardingSource } from '@/utils/onboarding-redirect';
@@ -167,6 +168,7 @@ export function AgentsSetupPage() {
     }
 
     productUseCasesPersistedRef.current = true;
+    void trackAgentsUsecaseSelected('product_type_deeplink');
     updateProductUseCases.mutate({ [ProductUseCasesEnum.AGENTS]: true });
     clearPendingProductType();
   }, [areAgentsAvailable, currentOrganization?._id, updateProductUseCases]);

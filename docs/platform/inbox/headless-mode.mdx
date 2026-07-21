@@ -110,7 +110,7 @@ function NotificationItem({ notification }: { notification: INotification }) {
 
   const markAsRead = async () => {
     try {
-      await novu.notifications.readAll({ notificationId: notification.id });
+      await novu.notifications.read({ notificationId: notification.id });
     } catch (error) {
       console.error("Failed to mark as read:", error);
     }
@@ -118,7 +118,7 @@ function NotificationItem({ notification }: { notification: INotification }) {
 
   const archive = async () => {
     try {
-      await novu.notifications.archiveAll({ notificationId: notification.id });
+      await novu.notifications.archive({ notificationId: notification.id });
     } catch (error) {
       console.error("Failed to archive:", error);
     }

@@ -1,6 +1,6 @@
 {
   "name": "@novu/api-service",
-  "version": "3.18.0",
+  "version": "3.18.1",
   "description": "description",
   "author": "",
   "private": "true",
@@ -77,7 +77,7 @@
     "@novu/providers": "workspace:*",
     "@novu/shared": "workspace:*",
     "@novu/stateless": "workspace:*",
-    "@novu/thalamus": "0.1.0-alpha.15",
+    "@novu/thalamus": "0.1.0-alpha.16",
     "@novu/testing": "workspace:*",
     "@sendgrid/mail": "^8.1.6",
     "@slack/types": "2.20.1",

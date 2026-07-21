@@ -29,7 +29,7 @@ The scaffold uses `@novu/framework/langchain` and ships with an **echo demo** th
 
    - Set your provider API key (e.g. `OPENAI_API_KEY` in `.env.local`).
 
-   - Return a `{ model, system, tools }` config from `app/novu/agents/support-agent.tsx`.
+   - Uncomment the LangChain config return in `app/novu/agents/support-agent.tsx` (the `searchNovuDocs` tool is already defined above).
 
 Your agent is served at `/api/novu` and handles incoming messages via the Novu Bridge protocol.
 
@@ -41,6 +41,8 @@ app/
   novu/agents/
     index.ts               → Agent exports
     support-agent.tsx      → Your agent handler (edit this!)
+    tools/
+      search-novu-docs.ts  → Example tool implementation
   page.tsx                 → Landing page
 ```
 
@@ -68,12 +70,14 @@ Replace the echo `return` in `app/novu/agents/support-agent.tsx` with a LangChai
 ```typescript
 return {
   model: 'openai:gpt-4o-mini',
-  system: 'You are a helpful support agent.',
-  tools: [],
+  system:
+    'You are a helpful support agent. Use searchNovuDocs to find Novu documentation.',
+  tools: [searchNovuDocs],
+  needsApproval: (toolCall) => toolCall.name === 'searchNovuDocs',
 };
 ```
 
-Novu builds the LangChain agent, runs it against the conversation `ctx.history`, and delivers the reply. Gate a tool behind an approval card by returning `needsApproval` in the config. If you'd rather drive the graph yourself, invoke your own agent and return its `{ messages }` result instead.
+The scaffold includes a `searchNovuDocs` tool gated behind approval — it fetches the live Novu docs index. Uncomment the config return to wire your LLM, then try asking "how does tool approval work in Novu?" to see the approval card flow.
 
 ## Learn More
 

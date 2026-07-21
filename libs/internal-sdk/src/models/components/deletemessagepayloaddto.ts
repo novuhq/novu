@@ -5,6 +5,9 @@
 import * as z from "zod/v3";
 
 export type DeleteMessagePayloadDto = {
+  /**
+   * Platform message id to delete. Removes the rendered message only — history is preserved.
+   */
   messageId: string;
 };
 

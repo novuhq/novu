@@ -1,6 +1,8 @@
 import { atom, type WritableAtom } from 'nanostores';
 import type { GeneratedAgentSpec } from '../api/agents';
 import type { BridgeScaffoldVariant } from '../pipeline/bridge/types';
+import type { BridgeAdapterVariant } from '../pipeline/bridge-adapter/types';
+import type { LlmAuthKind } from '../pipeline/llm-auth/types';
 import type {
   AgentConnectMode,
   AgentSummary,
@@ -76,6 +78,12 @@ export type Phase =
       resolve: (overwrite: boolean) => void;
     }
   | {
+      kind: 'pick-llm-auth';
+      connectMode: BridgeAdapterVariant;
+      resolve: (kind: LlmAuthKind) => void;
+      reject: (error: Error) => void;
+    }
+  | {
       kind: 'confirm-scaffold';
       projectDir: string;
       appName: string;
@@ -122,6 +130,21 @@ export type Phase =
       channel: ChannelChoice;
       agentDetailsUrl: string;
       resolve: () => void;
+    }
+  | { kind: 'adding-whatsapp' }
+  | {
+      kind: 'whatsapp-signup-ready';
+      signupUrl: string;
+      /** Resolves when the user hits Enter — the pipeline then runs `open()`. */
+      resolve: () => void;
+    }
+  | { kind: 'whatsapp-signup-waiting'; signupUrl: string }
+  | {
+      kind: 'whatsapp-test';
+      waMeUrl?: string;
+      /** Pre-rendered ASCII QR for the wa.me deep link. */
+      waMeQr?: string;
+      displayPhoneNumber?: string;
     }
   | { kind: 'adding-slack' }
   | {
@@ -181,6 +204,47 @@ export type Phase =
       deepLinkQr: string;
       deepLinkUrl: string;
       botUsername: string;
+    }
+  | { kind: 'adding-sendblue' }
+  | {
+      kind: 'sendblue-intro';
+      dashboardUrl: string;
+      resolve: () => void;
+    }
+  | {
+      kind: 'sendblue-credential';
+      field: 'apiKey' | 'secretKey' | 'from';
+      step: number;
+      total: number;
+      title: string;
+      hint: string;
+      placeholder: string;
+      dashboardUrl: string;
+      secret?: boolean;
+      verificationError?: string;
+      resolve: (value: string) => void;
+    }
+  | { kind: 'configuring-sendblue-webhook' }
+  | {
+      kind: 'sendblue-webhook-manual';
+      callbackUrl: string;
+      webhookSecret?: string;
+      resolve: () => void;
+    }
+  | {
+      kind: 'sendblue-test-phone';
+      defaultPhone?: string;
+      fromNumber: string;
+      imessageUrl: string;
+      verificationError?: string;
+      resolve: (value: string) => void;
+    }
+  | { kind: 'sending-sendblue-test' }
+  | {
+      kind: 'sendblue-test-waiting';
+      phone: string;
+      fromNumber: string;
+      imessageUrl: string;
     }
   | { kind: 'sending-welcome' }
   | {

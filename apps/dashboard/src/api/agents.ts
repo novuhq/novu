@@ -1,4 +1,5 @@
 import type {
+  AgentAnalyticsSource,
   AgentMcpServerEnablementDto,
   AgentRuntime,
   AgentRuntimeProviderIdEnum,
@@ -7,6 +8,7 @@ import type {
   DirectionEnum,
   IEnvironment,
 } from '@novu/shared';
+import { NOVU_ANALYTICS_SOURCE_HEADER } from '@novu/shared';
 import type { AgentPlanUsage, PlanUsage } from '@/api/agents-plan-usage';
 import { del, get, getApiBaseUrl, NovuApiError, patch, post, put } from '@/api/api.client';
 
@@ -61,10 +63,11 @@ export type AgentBehavior = {
   acknowledgeOnReceived?: boolean;
   reactionOnResolved?: string | null;
   /**
-   * Email agents only. `open` auto-creates a lightweight subscriber from an
-   * unknown sender's email so the agent can reply; `restricted` rejects unknown
-   * senders. Newly provisioned email inboxes default to `open`; unset behaves as
-   * `restricted`.
+   * Channel-agnostic. `open` on managed agents auto-creates a lightweight
+   * subscriber from an anonymous sender; on custom-code agents the turn is
+   * forwarded to the bridge with a null subscriber. `restricted` rejects
+   * anonymous senders. Managed creates default to `open`; self-hosted to
+   * `restricted`. Unset resolves as `restricted`.
    */
   subscriberAccess?: AgentSubscriberAccess;
 };
@@ -288,8 +291,16 @@ export async function migrateAgentRuntime(
   return 'data' in response ? response.data : response;
 }
 
-export async function createAgent(environment: IEnvironment, body: CreateAgentBody): Promise<AgentResponse> {
-  const response = await post<AgentApiEnvelope>('/agents', { environment, body });
+export async function createAgent(
+  environment: IEnvironment,
+  body: CreateAgentBody,
+  options?: { analyticsSource?: AgentAnalyticsSource }
+): Promise<AgentResponse> {
+  const response = await post<AgentApiEnvelope>('/agents', {
+    environment,
+    body,
+    headers: options?.analyticsSource ? { [NOVU_ANALYTICS_SOURCE_HEADER]: options.analyticsSource } : undefined,
+  });
 
   return response.data;
 }
@@ -771,6 +782,7 @@ export type SendWhatsAppTestTemplateError = {
     | 'recipient_not_allowed'
     | 'token_expired'
     | 'template_unavailable'
+    | 'template_pending_approval'
     | 'invalid_recipient'
     | 'rate_limited'
     | 'meta_rejected'

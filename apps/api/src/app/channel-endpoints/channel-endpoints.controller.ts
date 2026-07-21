@@ -33,6 +33,8 @@ import {
   CreateLineUserEndpointDto,
   CreateMsTeamsChannelEndpointDto,
   CreateMsTeamsUserEndpointDto,
+  CreateOpsgenieIntegrationEndpointDto,
+  CreatePagerDutyServiceEndpointDto,
   CreatePhoneEndpointDto,
   CreateSlackChannelEndpointDto,
   CreateSlackUserEndpointDto,
@@ -46,6 +48,8 @@ import {
   LineUserEndpointDto,
   MsTeamsChannelEndpointDto,
   MsTeamsUserEndpointDto,
+  OpsgenieIntegrationEndpointDto,
+  PagerDutyServiceEndpointDto,
   PhoneEndpointDto,
   SlackChannelEndpointDto,
   SlackUserEndpointDto,
@@ -83,6 +87,8 @@ import { UpdateChannelEndpoint } from './usecases/update-channel-endpoint/update
   CreateWebexPersonEndpointDto,
   CreateWebexRoomEndpointDto,
   CreateLineUserEndpointDto,
+  CreatePagerDutyServiceEndpointDto,
+  CreateOpsgenieIntegrationEndpointDto,
   SlackChannelEndpointDto,
   SlackUserEndpointDto,
   WebhookEndpointDto,
@@ -92,7 +98,9 @@ import { UpdateChannelEndpoint } from './usecases/update-channel-endpoint/update
   TelegramChatEndpointDto,
   WebexPersonEndpointDto,
   WebexRoomEndpointDto,
-  LineUserEndpointDto
+  LineUserEndpointDto,
+  PagerDutyServiceEndpointDto,
+  OpsgenieIntegrationEndpointDto
 )
 @ExternalApiAccessible()
 @RequireAuthentication()
@@ -192,6 +200,8 @@ export class ChannelEndpointsController {
         { $ref: getSchemaPath(CreateWebexRoomEndpointDto) },
         { $ref: getSchemaPath(CreateWebexPersonEndpointDto) },
         { $ref: getSchemaPath(CreateLineUserEndpointDto) },
+        { $ref: getSchemaPath(CreatePagerDutyServiceEndpointDto) },
+        { $ref: getSchemaPath(CreateOpsgenieIntegrationEndpointDto) },
       ],
       discriminator: {
         propertyName: 'type',
@@ -206,6 +216,8 @@ export class ChannelEndpointsController {
           [ENDPOINT_TYPES.WEBEX_ROOM]: getSchemaPath(CreateWebexRoomEndpointDto),
           [ENDPOINT_TYPES.WEBEX_PERSON]: getSchemaPath(CreateWebexPersonEndpointDto),
           [ENDPOINT_TYPES.LINE_USER]: getSchemaPath(CreateLineUserEndpointDto),
+          [ENDPOINT_TYPES.PAGERDUTY_SERVICE]: getSchemaPath(CreatePagerDutyServiceEndpointDto),
+          [ENDPOINT_TYPES.OPSGENIE_INTEGRATION]: getSchemaPath(CreateOpsgenieIntegrationEndpointDto),
         },
       },
     },
@@ -226,6 +238,7 @@ export class ChannelEndpointsController {
         integrationIdentifier: body.integrationIdentifier,
         connectionIdentifier: body.connectionIdentifier,
         subscriberId: body.subscriberId,
+        createSubscriberIfMissing: body.createSubscriberIfMissing,
         context: body.context,
         type: body.type,
         endpoint: body.endpoint as ChannelEndpointByType[typeof body.type],

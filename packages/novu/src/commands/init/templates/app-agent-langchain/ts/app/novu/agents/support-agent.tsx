@@ -1,9 +1,18 @@
 /** @jsxImportSource @novu/framework */
+
+import { tool } from '@langchain/core/tools';
 import { Actions, Button, Card, CardText } from '@novu/framework';
 import { agent } from '@novu/framework/langchain';
 
-// Wire your LLM — install LangChain + a provider, then return a config below:
-//   npm install langchain @langchain/core
+import { searchNovuDocsIndex, searchNovuDocsInputSchema } from './tools/search-novu-docs';
+
+const searchNovuDocs = tool(async ({ query }) => ({ matches: await searchNovuDocsIndex(query) }), {
+  name: 'searchNovuDocs',
+  description: 'Search Novu documentation for relevant guides.',
+  schema: searchNovuDocsInputSchema,
+});
+
+// Wire your LLM — install a provider, then uncomment the return below:
 //   npm install @langchain/openai        # OpenAI
 //   npm install @langchain/anthropic     # Anthropic
 //   npm install @langchain/google-genai  # Google
@@ -49,15 +58,17 @@ export const supportAgent = agent('support-agent', {
 
     return (
       `**Got it.** You said: "${message.text}"\n\n` +
-      `_This is a demo agent. Replace this handler with your LLM call._\n\n` +
+      `_This is a demo agent. Uncomment the LangChain config return below to wire your LLM._\n` +
+      `_Once wired, try "how does tool approval work in Novu?" to see the approval flow._\n\n` +
       `**Conversation so far:** ${ctx.history.length} messages | ` +
       `**Topic:** ${ctx.metadata.get('topic') ?? 'unknown'}`
     );
 
     // return {
     //   model: 'openai:gpt-4o-mini',
-    //   system: 'You are a helpful support agent.',
-    //   tools: [],
+    //   system: 'You are a helpful support agent. Use searchNovuDocs to find Novu documentation.',
+    //   tools: [searchNovuDocs],
+    //   needsApproval: (toolCall) => toolCall.name === 'searchNovuDocs',
     // };
   },
 

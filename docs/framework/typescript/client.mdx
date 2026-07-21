@@ -30,7 +30,7 @@ By default, we will inject a new instance of the `Client` class in your `serve` 
 
 - **Type**: `Logger`
 - **Default**: The global `console`
-- **Description**: A custom logger for all framework internal logging — workflow discovery, execution, and bridge error reporting. The interface uses `info`, `warn`, and `error` methods, so the global `console` and common structured loggers (pino, winston, and similar) work without an adapter. The `verbose` option controls whether discovery and execution logs are emitted; `logger` controls where all logs are written. Bridge errors (HTTP status >= 500) are always logged via this logger, regardless of `verbose`.
+- **Description**: A custom logger for all framework internal logging - workflow discovery, execution, and bridge error reporting. The interface uses `info`, `warn`, and `error` methods, so the global `console` and common structured loggers (pino, winston, and similar) work without an adapter. The `verbose` option controls whether discovery and execution logs are emitted; `logger` controls where all logs are written. Bridge errors (HTTP status >= 500) are always logged via this logger, regardless of `verbose`.
 
 ## Environment Variables
 

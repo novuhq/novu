@@ -46,6 +46,14 @@ describe('List Workflows - /workflows (GET) #novu-v2', () => {
       expect(uniqueIds.size).to.equal(15);
     });
 
+    it('should reject limit values above 100', async () => {
+      const { body } = await session.testAgent.get('/v2/workflows').query({ limit: 101 });
+
+      expect(body.statusCode).to.equal(422);
+      expect(body.message).to.equal('Validation Error');
+      expect(body.errors.general.messages).to.include('limit must not be greater than 100');
+    });
+
     it('should correctly search workflows by name', async () => {
       const searchTerm = 'SEARCHABLE-WORKFLOW';
 

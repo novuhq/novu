@@ -1,19 +1,11 @@
-import { CredentialsKeyEnum, EmailProviderIdEnum, type IIntegration } from '@novu/shared';
+import { CredentialsKeyEnum, type IIntegration } from '@novu/shared';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
-import { RiArrowRightSLine, RiArrowRightUpLine } from 'react-icons/ri';
-import { Link } from 'react-router-dom';
 import { type AgentResponse, validateWhatsAppToken } from '@/api/agents';
-import { AgentInboxCardRow, AgentInboxCardRowInfoTitle } from '@/components/agents/agent-inbox-card-row';
+import { AgentInboxCardRow } from '@/components/agents/agent-inbox-card-row';
 import { CopyableEmailAddress } from '@/components/agents/copyable-email-address';
-import { EmailSubscriberAccessToggle } from '@/components/agents/email-subscriber-access-toggle';
+import { SubscriberAccessGuidanceRow } from '@/components/agents/subscriber-access-guidance-row';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
-import { buildRoute, ROUTES } from '@/utils/routes';
-
-const CREATE_SUBSCRIBER_DOCS_URL = 'https://docs.novu.co/api-reference/subscribers/create-a-subscriber';
-
-const quietLinkClassName =
-  'text-text-sub hover:text-text-strong inline-flex items-center gap-0.5 text-label-xs font-medium leading-4 transition-colors';
 
 function readCredentialString(credentials: IIntegration['credentials'] | undefined, key: CredentialsKeyEnum): string {
   const value = credentials?.[key as keyof NonNullable<IIntegration['credentials']>];
@@ -31,10 +23,10 @@ export type WhatsAppInboxCardProps = {
 };
 
 /**
- * Persistent post-connect WHATSAPP card: business phone, subscriber.phone guidance, and the
- * agent-wide open-access toggle. Mirrors EmailInboxCardBody row chrome without email inbox toggles.
+ * Persistent post-connect WHATSAPP card: business phone display plus state-aware
+ * subscriber-access education. The agent-wide open-access toggle lives on Agent behavior.
  */
-export function WhatsAppInboxCardBody({ whatsappIntegration, agent }: WhatsAppInboxCardProps) {
+function WhatsAppInboxCardBody({ whatsappIntegration, agent }: WhatsAppInboxCardProps) {
   const { currentEnvironment } = useEnvironment();
   const credentials = whatsappIntegration.credentials ?? {};
   const apiToken = readCredentialString(credentials, CredentialsKeyEnum.ApiToken);
@@ -67,17 +59,6 @@ export function WhatsAppInboxCardBody({ whatsappIntegration, agent }: WhatsAppIn
     [displayPhoneQuery.data?.displayPhoneNumber]
   );
 
-  const hasEmailChannel = (agent.integrations ?? []).some(
-    (integration) => integration.providerId === EmailProviderIdEnum.NovuAgent
-  );
-
-  const subscribersPath = currentEnvironment?.slug
-    ? buildRoute(ROUTES.SUBSCRIBERS, { environmentSlug: currentEnvironment.slug })
-    : ROUTES.SUBSCRIBERS;
-
-  const subscriberAccessInfoTooltip =
-    "With Open, a lightweight subscriber is created from the sender's phone so the agent can reply. It merges into their account if they later sign up with the same phone.";
-
   return (
     <>
       <AgentInboxCardRow
@@ -96,50 +77,11 @@ export function WhatsAppInboxCardBody({ whatsappIntegration, agent }: WhatsAppIn
         </div>
       </AgentInboxCardRow>
 
-      <AgentInboxCardRow
-        title={
-          <AgentInboxCardRowInfoTitle label="Who can message this agent" infoTooltip={subscriberAccessInfoTooltip} />
-        }
-        description={
-          <>
-            Open accepts WhatsApp from anyone. Off replies only to subscribers with an E.164 phone on{' '}
-            <code className="text-text-sub">subscriber.phone</code>.
-          </>
-        }
-        divider={false}
-        footer={
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-3">
-              <Link to={subscribersPath} className={quietLinkClassName}>
-                <span>Add subscribers manually</span>
-                <RiArrowRightSLine className="size-3.5" aria-hidden />
-              </Link>
-              <a
-                href={CREATE_SUBSCRIBER_DOCS_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={quietLinkClassName}
-              >
-                <span>Create via SDK</span>
-                <RiArrowRightUpLine className="size-3.5" aria-hidden />
-              </a>
-            </div>
-            {hasEmailChannel ? (
-              <p className="text-text-soft text-label-xs leading-4">
-                <strong className="font-medium">This setting applies to all channels on this agent.</strong>
-              </p>
-            ) : null}
-          </div>
-        }
-      >
-        <div className="flex items-center justify-end gap-2">
-          <span className="text-text-soft text-label-xs font-medium leading-4">Accept WhatsApp from anyone</span>
-          <EmailSubscriberAccessToggle agent={agent} ariaLabel="Accept WhatsApp from anyone" />
-        </div>
-      </AgentInboxCardRow>
+      <SubscriberAccessGuidanceRow channel="whatsapp" agent={agent} />
     </>
   );
 }
+
 export function WhatsAppInboxCard({ whatsappIntegration, agent }: WhatsAppInboxCardProps) {
   return (
     <div className="bg-bg-weak flex flex-col rounded-[10px] p-1">
