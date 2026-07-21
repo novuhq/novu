@@ -14,7 +14,6 @@ import type {
   ToolApprovalDecision,
 } from './agent.types';
 import { AgentEventEnum, isAgentErrorSuppress, PendingApproval } from './agent.types';
-import { passesAuthGate } from './auth-gate';
 import { isCardElement } from './guards';
 import { parseApprovalActionId, type ToolApprovalRequestPayload } from './tool-approval/action-id';
 
@@ -60,22 +59,6 @@ function findApprovalInHistory(
   return undefined;
 }
 
-/**
- * Events that run a user-facing agent handler on behalf of the acting author and
- * must therefore be subject to the `restricted` auth gate. Anyone in a shared
- * channel can fire actions (button clicks, tool approvals) and reactions, so
- * these cannot ride on a prior authenticated turn.
- */
-const AUTH_GATED_EVENTS: ReadonlySet<string> = new Set([
-  AgentEventEnum.ON_MESSAGE,
-  AgentEventEnum.ON_ACTION,
-  AgentEventEnum.ON_REACTION,
-]);
-
-function isAuthGatedEvent(event: string): boolean {
-  return AUTH_GATED_EVENTS.has(event);
-}
-
 export interface DispatchAgentEventOptions {
   agent: Agent;
   event: string;
@@ -89,26 +72,6 @@ export async function dispatchAgentEvent(options: DispatchAgentEventOptions): Pr
   const { agent, event, logger } = options;
 
   try {
-    // Framework-level auth gate: on a `restricted` agent, an unlinked author is
-    // short-circuited with a "link your account" CTA before any handler (or model
-    // call) runs. This must cover every user-triggered event — not just inbound
-    // messages. In shared channels (Slack/MS Teams) any participant, including
-    // unlinked/unauthenticated users, can click interactive card buttons
-    // (`ON_ACTION`, incl. tool approvals) or add reactions (`ON_REACTION`), so
-    // those paths must be gated too or the `restricted` policy is bypassed.
-    if (isAuthGatedEvent(options.event)) {
-      const canProceed = await passesAuthGate(ctx, {
-        subscriberAccess: options.bridge.subscriberAccess,
-        auth: options.agent.handlers.auth,
-      });
-
-      if (!canProceed) {
-        await ctx.flush();
-
-        return;
-      }
-    }
-
     await runAgentHandler(agent, event, ctx);
     await ctx.flush();
   } catch (err) {

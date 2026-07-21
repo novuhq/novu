@@ -82,7 +82,6 @@ export function agent(id: string, handlers: AiSdkMessageHandler | AiSdkAgentHand
       await resume(ctx);
     },
     ...(config && { toolApproval: config }),
-    ...(h.auth && { auth: h.auth }),
     ...(h.onAction && { onAction: h.onAction }),
     ...(h.onReaction && { onReaction: h.onReaction }),
     ...(h.onResolve && { onResolve: h.onResolve }),

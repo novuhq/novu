@@ -300,34 +300,6 @@ export interface ToolApprovalConfig {
  */
 export type AgentSubscriberAccess = 'open' | 'restricted';
 
-export interface AuthConfigObject {
-  /**
-   * Where the unlinked user links their account. Rendered as a link button; omit
-   * to show a message-only prompt (no button). Distributors build this from their
-   * own app (e.g. the Novu Copilot points it at the dashboard connect page).
-   */
-  linkUrl?: string;
-  /** Card heading. */
-  title?: string;
-  /** Body copy explaining why linking is required. */
-  message?: string;
-  /** Link-button label. */
-  buttonLabel?: string;
-  /** Heading on the post-link confirmation card shown once the author is linked. */
-  linkedTitle?: string;
-  /** Body copy shown on the confirmation card after the author links their account. */
-  linkedMessage?: string;
-}
-
-export type AuthConfigCallback = (ctx: AgentHandlerContext) => Promise<AuthConfigObject | CardElement>;
-
-/**
- * Optional customization of the auth CTA the framework posts when an unlinked
- * author messages a `restricted` agent. Set it on the agent like `toolApproval`;
- * omit it to render a generic, message-only prompt.
- */
-export type AuthConfig = AuthConfigObject | AuthConfigCallback;
-
 /** Passed to `onToolApproval` when the user clicks Approve or Deny. */
 export interface ToolApprovalDecision {
   /** The tool that was awaiting approval. */
@@ -601,13 +573,6 @@ export interface AgentHandlers {
    * Customize how approval messages look. Omit to use the built-in Approve/Deny card.
    */
   toolApproval?: ToolApprovalConfig;
-  /**
-   * Customize the "link your account" CTA the framework shows to unlinked authors
-   * of a `restricted` agent. The gate itself is applied by the framework (driven
-   * by the bridge's `subscriberAccess`); this only overrides the rendered prompt.
-   * Omit to use the built-in generic prompt.
-   */
-  auth?: AuthConfig;
 }
 
 export type AgentErrorSuppress = { suppress: true };
