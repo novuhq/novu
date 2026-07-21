@@ -1,0 +1,32 @@
+name: Deploy Cloudflare Workers (Production)
+
+on:
+  workflow_dispatch:
+    inputs:
+      worker:
+        description: Allowlisted worker directory name under enterprise/workers
+        required: true
+        type: choice
+        options:
+          - thalamus-observer
+      wrangler_env:
+        description: Wrangler environment name for this worker
+        required: true
+        type: choice
+        options:
+          - production
+        default: production
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  deploy:
+    name: Deploy production
+    uses: ./.github/workflows/reusable-cf-worker-deploy.yml
+    with:
+      worker_directory: enterprise/workers/${{ inputs.worker }}
+      wrangler_env: ${{ inputs.wrangler_env }}
+      github_environment: cf-workers-production
+    secrets: inherit

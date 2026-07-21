@@ -1,0 +1,108 @@
+name: Deploy Cloudflare Workers (Staging)
+
+on:
+  push:
+    branches:
+      - next
+    paths:
+      - 'enterprise/workers/**'
+  workflow_dispatch:
+    inputs:
+      worker:
+        description: Allowlisted worker directory name under enterprise/workers
+        required: false
+        type: choice
+        options:
+          - thalamus-observer
+        default: thalamus-observer
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  detect:
+    name: Detect workers to deploy
+    runs-on: ubuntu-latest
+    outputs:
+      workers: ${{ steps.resolve.outputs.workers }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          fetch-depth: 0
+
+      - name: Resolve allowlisted workers
+        id: resolve
+        env:
+          DISPATCH_WORKER: ${{ github.event_name == 'workflow_dispatch' && inputs.worker || '' }}
+        run: |
+          set -euo pipefail
+
+          # v1 allowlist — extend this list when onboarding more workers
+          ALLOWLIST=("thalamus-observer")
+
+          selected=()
+
+          if [ -n "${DISPATCH_WORKER}" ]; then
+            for w in "${ALLOWLIST[@]}"; do
+              if [ "$w" = "${DISPATCH_WORKER}" ]; then
+                selected+=("$w")
+              fi
+            done
+            if [ ${#selected[@]} -eq 0 ]; then
+              echo "::error::Worker '${DISPATCH_WORKER}' is not on the staging allowlist"
+              exit 1
+            fi
+          else
+            BEFORE="${{ github.event.before }}"
+            AFTER="${{ github.sha }}"
+            if [ -z "${BEFORE}" ] || [ "${BEFORE}" = "0000000000000000000000000000000000000000" ]; then
+              CHANGED="$(git diff --name-only "${AFTER}^!" -- enterprise/workers/ || true)"
+            else
+              CHANGED="$(git diff --name-only "${BEFORE}" "${AFTER}" -- enterprise/workers/ || true)"
+            fi
+
+            echo "Changed files under enterprise/workers:"
+            echo "${CHANGED}"
+
+            for w in "${ALLOWLIST[@]}"; do
+              if echo "${CHANGED}" | grep -q "^enterprise/workers/${w}/"; then
+                selected+=("$w")
+              fi
+            done
+          fi
+
+          if [ ${#selected[@]} -eq 0 ]; then
+            echo "workers=[]" >> "$GITHUB_OUTPUT"
+            echo "No allowlisted workers to deploy"
+          else
+            json="["
+            first=1
+            for w in "${selected[@]}"; do
+              if [ "$first" -eq 1 ]; then
+                first=0
+              else
+                json+=","
+              fi
+              json+="\"${w}\""
+            done
+            json+="]"
+            echo "workers=${json}" >> "$GITHUB_OUTPUT"
+            echo "Will deploy: ${json}"
+          fi
+
+  deploy:
+    name: Deploy staging
+    needs: detect
+    if: needs.detect.outputs.workers != '[]' && needs.detect.outputs.workers != ''
+    strategy:
+      fail-fast: false
+      matrix:
+        worker: ${{ fromJson(needs.detect.outputs.workers) }}
+    uses: ./.github/workflows/reusable-cf-worker-deploy.yml
+    with:
+      worker_directory: enterprise/workers/${{ matrix.worker }}
+      wrangler_env: staging
+      github_environment: cf-workers-staging
+    secrets: inherit
