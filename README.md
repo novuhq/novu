@@ -205,6 +205,7 @@ Expand a channel below to browse supported providers.
 | [Termii](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/sms/termii) |
 | [Twilio](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/sms/twilio) |
 | [Unifonic](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/sms/unifonic) |
+| [ValueFirst](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/sms/valuefirst) |
 | [Vonage](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/sms/nexmo) |
 
 </details>

@@ -1497,6 +1497,24 @@ export const ISendProProviderConfig: IConfigCredential[] = [
   },
 ];
 
+export const valueFirstConfig: IConfigCredential[] = [
+  {
+    key: CredentialsKeyEnum.User,
+    displayName: 'Username',
+    description: 'Your ValueFirst account username',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.Password,
+    displayName: 'Password',
+    description: 'Your ValueFirst account password',
+    type: 'string',
+    required: true,
+  },
+  ...smsConfigBase,
+];
+
 export const cmTelecomConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApiToken,

@@ -37,6 +37,7 @@ import {
   TermiiSmsHandler,
   TwilioHandler,
   UnifonicHandler,
+  ValueFirstSmsHandler,
 } from './handlers';
 import { SmsmodeHandler } from './handlers/smsmode.handler';
 import { ISmsFactory, ISmsHandler } from './interfaces';
@@ -81,6 +82,7 @@ export class SmsFactory implements ISmsFactory {
     new BulkSmsHandler(),
     new ISendProSmsHandler(),
     new CmTelecomHandler(),
+    new ValueFirstSmsHandler(),
   ];
 
   getHandler(integration: Pick<IntegrationEntity, 'credentials' | 'channel' | 'providerId' | 'configurations'>) {

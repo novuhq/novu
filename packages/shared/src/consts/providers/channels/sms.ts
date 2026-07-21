@@ -38,6 +38,7 @@ import {
   termiiConfig,
   twilioConfig,
   unifonicConfig,
+  valueFirstConfig,
 } from '../credentials';
 import { IProviderConfig } from '../provider.interface';
 
@@ -349,5 +350,13 @@ export const smsProviders: IProviderConfig[] = [
     credentials: cmTelecomConfig,
     docReference: 'https://developers.cm.com/messaging/docs/sms',
     logoFileName: { light: 'cm-telecom.svg', dark: 'cm-telecom.svg' },
+  },
+  {
+    id: SmsProviderIdEnum.ValueFirst,
+    displayName: 'ValueFirst',
+    channel: ChannelTypeEnum.SMS,
+    credentials: valueFirstConfig,
+    docReference: 'https://product-user-guide.vfirst.com/xml/',
+    logoFileName: { light: 'valuefirst.svg', dark: 'valuefirst.svg' },
   },
 ];
