@@ -8,13 +8,15 @@ import {
   GetSubscriberScheduleCommand,
   getEffectiveJobPayload,
   getJobDigest,
-  NotificationPayloadService,
   InMemoryLRUCacheService,
   InMemoryLRUCacheStore,
   Instrument,
   InstrumentUsecase,
+  NotificationPayloadService,
   PinoLogger,
   StepRunRepository,
+  StepTemplateHydrationService,
+  StepTemplateHydrationStatus,
   StorageHelperService,
   type WorkflowForTrace,
   WorkflowRunService,
@@ -69,6 +71,7 @@ export class RunJob {
     private storageHelperService: StorageHelperService,
     private notificationRepository: NotificationRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
+    private stepTemplateHydrationService: StepTemplateHydrationService,
     private processUnsnoozeJob: ProcessUnsnoozeJob,
     private stepRunRepository: StepRunRepository,
     private workflowRunService: WorkflowRunService,
@@ -182,6 +185,13 @@ export class RunJob {
         workflow: workflow?.name ?? job.identifier,
       });
 
+      // Restore a lean step's full template up front (in memory only — never
+      // written back) so every downstream consumer sees it (the
+      // extend-to-schedule bridge call below and SendMessage). No-op for
+      // full-snapshot / stateless jobs; the UNRESOLVED outcome is enforced
+      // later, only for render-bound jobs.
+      const stepTemplateHydration = await this.stepTemplateHydrationService.hydrateJobStep(job, workflow);
+
       const schedule = await this.getSubscriberSchedule.execute(
         GetSubscriberScheduleCommand.create({
           environmentId: job._environmentId,
@@ -278,6 +288,12 @@ export class RunJob {
         );
 
         return;
+      }
+
+      // A render-bound job whose lean template could not be resolved anywhere
+      // cannot produce a message — fail it before dispatch.
+      if (stepTemplateHydration === StepTemplateHydrationStatus.UNRESOLVED) {
+        await this.failUnresolvedStepTemplate(job);
       }
 
       const sendMessageResult = await this.sendMessage.execute(
@@ -461,6 +477,34 @@ export class RunJob {
     }
 
     return workflow;
+  }
+
+  /**
+   * A lean channel step whose message template is gone everywhere (live
+   * workflow, direct lookup, and soft-deleted) cannot render — record the
+   * failure and abort, consistent with the job's other lifecycle details.
+   */
+  private async failUnresolvedStepTemplate(job: JobEntity): Promise<never> {
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+        detail: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
+        source: ExecutionDetailsSourceEnum.INTERNAL,
+        status: ExecutionDetailsStatusEnum.FAILED,
+        isTest: false,
+        isRetry: false,
+        raw: JSON.stringify({
+          error: 'Message template for the step could not be resolved for rendering',
+          messageTemplateId: job.step._templateId,
+          stepId: job.step.stepId,
+          type: job.step.template?.type,
+        }),
+      })
+    );
+
+    throw new PlatformException(
+      `Message template ${job.step._templateId} for job ${job._id} could not be resolved while hydrating the step`
+    );
   }
 
   private isUnsnoozeJob(job: JobEntity) {
