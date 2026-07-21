@@ -3,7 +3,7 @@ import { TRANSLATION_NAMESPACE_SEPARATOR } from '@novu/shared';
 import type { Editor, Range, Editor as TiptapEditor } from '@tiptap/core';
 import { VariableFrom } from '@/components/maily/types';
 import { DIGEST_VARIABLES } from '@/components/variable/utils/digest-variables';
-import { isValidContextVariable } from '@/utils/context-variable-utils';
+import { extractContextTypesFromVariables, isValidContextVariable } from '@/utils/context-variable-utils';
 import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 import {
   isInsideRepeatBlock,
@@ -36,38 +36,15 @@ function addContextVariableSuggestions(
     }
   };
 
-  // "context." (no type yet) → suggest known context types from existing variables
   if (parts.length === 2 && !parts[1]?.trim()) {
-    const knownTypes = new Set<string>();
-    for (const v of variables) {
-      if (v.name.startsWith('context.')) {
-        const contextParts = v.name.split('.');
-        if (contextParts.length >= 2 && contextParts[1]) {
-          knownTypes.add(contextParts[1]);
-        }
-      }
-    }
-    for (const type of knownTypes) {
+    for (const type of extractContextTypesFromVariables(variables)) {
       addIfNotExists(`context.${type}.data`);
       addIfNotExists(`context.${type}.id`);
     }
-  }
-  // "context.tenant" → suggest "context.tenant.id" and "context.tenant.data"
-  else if (parts.length === 2 && parts[1]?.trim()) {
+  } else if (parts.length === 2 && parts[1]?.trim()) {
     addIfNotExists(`${queryWithoutSuffix}.id`);
     addIfNotExists(`${queryWithoutSuffix}.data`);
-  }
-  // "context.tenant.data." → suggest known data sub-properties from existing variables
-  else if (parts.length >= 4 && parts[2] === 'data' && !parts[parts.length - 1]?.trim()) {
-    const dataPrefix = parts.slice(0, -1).join('.') + '.';
-    for (const v of variables) {
-      if (v.name.startsWith(dataPrefix) && v.name !== dataPrefix.slice(0, -1)) {
-        addIfNotExists(v.name);
-      }
-    }
-  }
-  // "context.tenant.id" or "context.tenant.data.companyName" → suggest if valid
-  else if (parts.length >= 3 && isValidContextVariable(queryWithoutSuffix)) {
+  } else if (parts.length >= 3 && isValidContextVariable(queryWithoutSuffix)) {
     addIfNotExists(queryWithoutSuffix);
   }
 }

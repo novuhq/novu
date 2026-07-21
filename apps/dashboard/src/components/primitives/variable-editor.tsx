@@ -130,7 +130,7 @@ export function VariableEditor({
   const onVariableSelect = useCallback(
     (completion: CompletionOption) => {
       if (completion.isNewVariable || isPreviewSandboxVariable(completion.label)) {
-        void onCreateNewVariable(completion.label);
+        onCreateNewVariable(completion.label);
       }
 
       if (completion.type === 'digest') {
@@ -402,7 +402,7 @@ export function VariableEditor({
 
             const variablePath = extractVariablePath(newValue);
             if (isPreviewSandboxVariable(variablePath)) {
-              void onCreateNewVariable(variablePath);
+              onCreateNewVariable(variablePath);
             }
 
             setTimeout(() => safeFocusEditorView(viewRef.current), 0);

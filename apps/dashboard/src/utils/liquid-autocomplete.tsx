@@ -12,7 +12,7 @@ import { createRoot } from 'react-dom/client';
 import { NewVariablePreview } from '@/components/variable/components/new-variable-preview';
 import { getFilters } from '@/components/variable/constants';
 import { LiquidVariable } from '@/utils/parseStepVariables';
-import { isValidContextVariable } from './context-variable-utils';
+import { extractContextTypesFromVariables, isValidContextVariable } from './context-variable-utils';
 import { getVariablesAtPositionWithLoopProperties } from './liquid-scope-analyzer';
 
 export interface CompletionOption {
@@ -118,7 +118,7 @@ function handleContextNamespacedInput(
 
     // When typing just "context." (no type yet), suggest known context types
     if (existingVariables) {
-      const knownTypes = extractContextTypes(existingVariables);
+      const knownTypes = extractContextTypesFromVariables(existingVariables);
       const suggestions: LiquidVariable[] = [];
       for (const type of knownTypes) {
         suggestions.push(
@@ -138,23 +138,6 @@ function handleContextNamespacedInput(
   }
 
   return [createJitVariable(searchText, isPayloadSchemaEnabled, onCreateNewVariable, namespace)];
-}
-
-/**
- * Extracts known context type names from existing variables
- */
-function extractContextTypes(variables: LiquidVariable[]): string[] {
-  const types = new Set<string>();
-  for (const v of variables) {
-    if (v.name.startsWith('context.')) {
-      const contextParts = v.name.split('.');
-      if (contextParts.length >= 2 && contextParts[1]) {
-        types.add(contextParts[1]);
-      }
-    }
-  }
-
-  return Array.from(types);
 }
 
 /**
@@ -439,8 +422,6 @@ function getMatchingVariables(
       const subProperties = allVariables.filter((v) => v.name.startsWith(prefix + '.'));
       if (subProperties.length > 0) return subProperties;
 
-      // No sub-properties: fall through to JIT for `context.` so we suggest known
-      // types; return empty for deeper paths to avoid leaking unrelated variables.
       if (prefix !== CONTEXT_NAMESPACE) return [];
     } else {
       return allVariables.filter((v) => v.name.startsWith(prefix));

@@ -174,8 +174,7 @@ export const useCreateVariable = () => {
       const contextFragment = buildContextFragmentFromKey(variableInfo.key);
       if (Object.keys(contextFragment).length === 0) return;
 
-      // Merge so each newly selected context type is added alongside existing ones.
-      const updatedContext = merge({}, currentContext, contextFragment);
+      const updatedContext = merge({}, contextFragment, currentContext);
       const newPreviewData = { ...currentPreviewData, context: updatedContext };
 
       setEditorValue(JSON.stringify(newPreviewData, null, 2));

@@ -187,10 +187,6 @@ export class PayloadMergerService {
     return Object.keys(resolved).length > 0 ? resolved : undefined;
   }
 
-  /**
-   * Merges user sandbox context with context extracted from control values.
-   * User-provided values take precedence; extracted example fields/types still surface.
-   */
   private resolveContextWithFallback(
     userContext?: ContextPayload,
     extractedContext?: Record<string, unknown>
@@ -204,9 +200,8 @@ export class PayloadMergerService {
     return merge({}, extractedResolved, userResolved);
   }
 
-  /** Normalize CreateVariablesObject context into ContextResolved, filling example ids when missing. */
   private resolveExtractedContext(extractedContext?: Record<string, unknown>): ContextResolved | undefined {
-    if (!extractedContext || typeof extractedContext !== 'object' || Object.keys(extractedContext).length === 0) {
+    if (!extractedContext || Object.keys(extractedContext).length === 0) {
       return undefined;
     }
 

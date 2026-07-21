@@ -41,7 +41,6 @@ export function isValidContextVariable(variableName: string): boolean {
   return false;
 }
 
-/** Context / subscriber.data / actor.data paths that should update the preview sandbox. */
 export function isPreviewSandboxVariable(variableName: string): boolean {
   if (variableName.startsWith('subscriber.data.') || variableName.startsWith('actor.data.')) {
     return true;
@@ -50,7 +49,6 @@ export function isPreviewSandboxVariable(variableName: string): boolean {
   return isValidContextVariable(variableName);
 }
 
-/** Strip `{{ }}` wrappers and Liquid filters to a bare variable path. */
 export function extractVariablePath(liquidOrPath: string): string {
   return liquidOrPath
     .replace(/^\{\{|\}\}$/g, '')
@@ -58,10 +56,6 @@ export function extractVariablePath(liquidOrPath: string): string {
     .trim();
 }
 
-/**
- * Builds a single context-type fragment from a key like `tenant.data.companyName` or `tenant.id`.
- * Always includes `id` + object `data` so multiple types can merge cleanly.
- */
 export function buildContextFragmentFromKey(key: string): Record<string, unknown> {
   const [contextType, property, ...dataPath] = key.split('.');
   if (!contextType || !property) {
@@ -92,6 +86,20 @@ export function buildContextFragmentFromKey(key: string): Record<string, unknown
       data,
     },
   };
+}
+
+export function extractContextTypesFromVariables(variables: { name: string }[]): string[] {
+  const types = new Set<string>();
+  for (const v of variables) {
+    if (v.name.startsWith('context.')) {
+      const contextParts = v.name.split('.');
+      if (contextParts.length >= 2 && contextParts[1]) {
+        types.add(contextParts[1]);
+      }
+    }
+  }
+
+  return Array.from(types);
 }
 
 /**

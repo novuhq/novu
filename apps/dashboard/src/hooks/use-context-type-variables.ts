@@ -17,13 +17,6 @@ function collectDataPaths(obj: Record<string, unknown>, prefix: string, depth = 
   return paths;
 }
 
-/**
- * Fetches available context entities from the API and returns synthetic
- * variables for each distinct context type, including data sub-properties.
- * This enables the autocomplete to show known context types and their data
- * fields (e.g. context.tenant.data.companyName) even before the user has
- * added context data to the preview sandbox.
- */
 export function useContextTypeVariables(): LiquidVariable[] {
   const { data: contextsData } = useFetchContexts({ limit: 50 }, { staleTime: 30_000 });
 
@@ -43,7 +36,6 @@ export function useContextTypeVariables(): LiquidVariable[] {
     for (const ctx of contexts) {
       if (!ctx.type) continue;
 
-      // `context.<type>` alone is not a valid variable — only `.id` and `.data.*` are.
       add(`context.${ctx.type}.id`);
       add(`context.${ctx.type}.data`);
 

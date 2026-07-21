@@ -46,13 +46,6 @@ const collectDeepKeys = (value: unknown, prefix: string, keys: string[]): void =
   }
 };
 
-/**
- * Builds the key signature used to decide whether the server-generated example
- * should be re-applied to the sandbox editor. Payload is compared by its
- * top-level keys; context is compared by deep paths because context entities
- * are nested (e.g. context.tenant.data.companyName) and referencing a new
- * data field must surface in the sandbox too.
- */
 const extractSyncKeys = (data: PreviewPayload | null): string[] => {
   const keys: string[] = [];
 

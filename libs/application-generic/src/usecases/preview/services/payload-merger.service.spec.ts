@@ -11,11 +11,7 @@ describe('PayloadMergerService', () => {
       createFullActorObject: () => ({}),
     };
 
-    service = new PayloadMergerService(
-      mockDataGenerator as never,
-      undefined as never, // BuildStepDataUsecase — unused without stepIdOrInternalId
-      undefined as never // ControlValuesRepository — unused without stepIdOrInternalId
-    );
+    service = new PayloadMergerService(mockDataGenerator as never, undefined as never, undefined as never);
   });
 
   const mergeContext = async ({
