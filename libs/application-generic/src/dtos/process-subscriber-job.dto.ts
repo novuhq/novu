@@ -1,13 +1,13 @@
 import { SubscriberEntity } from '@novu/dal';
 import { DiscoverWorkflowOutput } from '@novu/framework/internal';
 import {
+  ContextPayload,
   ISubscribersDefine,
   ITenantDefine,
   StatelessControls,
   SubscriberSourceEnum,
   TriggerOverrides,
   TriggerRequestCategoryEnum,
-  ContextPayload,
 } from '@novu/shared';
 
 import { IBulkJobParams, IJobParams } from '../services/queues/queue-base.service';

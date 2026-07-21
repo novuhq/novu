@@ -492,6 +492,23 @@ function createUiController(
     sendblueConnected() {
       // Transition handled by sendingWelcome / success.
     },
+    addingWhatsAppIntegration() {
+      store.phase.set({ kind: 'adding-whatsapp' });
+    },
+    awaitWhatsAppSignupOpen({ signupUrl }) {
+      return new Promise<void>((resolve) => {
+        store.phase.set({ kind: 'whatsapp-signup-ready', signupUrl, resolve });
+      });
+    },
+    showWhatsAppSignupWaiting({ signupUrl }) {
+      store.phase.set({ kind: 'whatsapp-signup-waiting', signupUrl });
+    },
+    showWhatsAppTest({ waMeUrl, waMeQr, displayPhoneNumber }) {
+      store.phase.set({ kind: 'whatsapp-test', waMeUrl, waMeQr, displayPhoneNumber });
+    },
+    whatsappConnected() {
+      // Transition handled by sendingWelcome / success.
+    },
     addingSlackIntegration() {
       store.phase.set({ kind: 'adding-slack' });
     },

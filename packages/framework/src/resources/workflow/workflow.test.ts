@@ -125,6 +125,29 @@ describe('workflow function', () => {
     });
   });
 
+  it('should discover a tool channel step', async () => {
+    const { discover } = workflow('tool-workflow', async ({ step }) => {
+      await step.tool('send-tool', async () => ({
+        body: 'Tool body',
+      }));
+    });
+
+    const definition = await discover();
+
+    expect(definition.steps).to.have.length(1);
+    expect(definition.steps[0]).to.include({
+      stepId: 'send-tool',
+      type: 'tool',
+    });
+    expect(definition.steps[0].outputs.schema).toMatchObject({
+      type: 'object',
+      properties: {
+        body: { type: 'string' },
+      },
+      required: ['body'],
+    });
+  });
+
   it('should include the defined name', async () => {
     const { discover } = workflow(
       'workflow-with-name',

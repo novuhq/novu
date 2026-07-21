@@ -18,7 +18,7 @@ import { cn } from '@/utils/ui';
 import { AgentIntegrationGuideHeader } from './agent-integration-guide-layout';
 import { AgentChannelWhatsNextGuide } from './whats-next/agent-channel-whats-next-guide';
 
-export function FieldLabel({
+function FieldLabel({
   htmlFor,
   label,
   required,

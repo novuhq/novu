@@ -126,7 +126,7 @@ export const myAgent = agent('my-agent', {
 });
 ```
 
-Return `generateText()` or `streamText()` from the handler — Novu delivers the model output to the thread. See [AI SDK](/agents/custom-code-agent/frameworks/ai-sdk).
+Return `generateText()` or `streamText()` from the handler - Novu delivers the model output to the thread. See [AI SDK](/agents/custom-code-agent/frameworks/ai-sdk).
 
   </Tab>
   <Tab title="LangChain">
@@ -160,7 +160,7 @@ export const myAgent = agent('my-agent', {
 });
 ```
 
-Return a `LangChainAgentConfig` from the handler — Novu runs the agent and delivers the final text. See [LangChain](/agents/custom-code-agent/frameworks/langchain).
+Return a `LangChainAgentConfig` from the handler - Novu runs the agent and delivers the final text. See [LangChain](/agents/custom-code-agent/frameworks/langchain).
 
   </Tab>
   <Tab title="Custom code">
@@ -273,7 +273,7 @@ export const myAgent = agent('my-agent', {
 <Tabs>
   <Tab title="AI SDK">
 
-On the AI SDK path, tools gated with `needsApproval: true` in `onMessage` trigger this handler when the user clicks **Approve** or **Deny**. Register it when you need a hook after the click — for example to audit the decision or change how the card is handled.
+On the AI SDK path, tools gated with `needsApproval: true` in `onMessage` trigger this handler when the user clicks **Approve** or **Deny**. Register it when you need a hook after the click - for example to audit the decision or change how the card is handled.
 
 ```typescript
 import { agent, toModelMessages } from '@novu/framework/ai-sdk';
@@ -368,7 +368,7 @@ See [Tool approval](/agents/custom-code-agent/building-blocks/tool-approval) for
 
 ### onError
 
-When a turn fails — your handler throws, a returned promise rejects, or message delivery fails inside the handler — Novu runs an error pipeline on the bridge before the turn ends:
+When a turn fails - your handler throws, a returned promise rejects, or message delivery fails inside the handler - Novu runs an error pipeline on the bridge before the turn ends:
 
 1. Log the failure locally on your bridge
 2. Call `onError` if you registered one
@@ -382,7 +382,7 @@ By default, users see:
 
 | Return from `onError` | Behavior |
 | --- | --- |
-| nothing / `undefined` | Auto-report — Novu sends the generic message |
+| nothing / `undefined` | Auto-report - Novu sends the generic message |
 | `{ suppress: true }` | No user-visible reply (failure is logged only) |
 | `string` / JSX `Card` | Custom reply delivered through `ctx.reply()` |
 
@@ -401,7 +401,7 @@ export const myAgent = agent('my-agent', {
   onError: async (error, ctx) => {
     console.error('[my-agent]', error.message, error.cause);
 
-    return 'Sorry — something went wrong. Please try again.';
+    return 'Sorry - something went wrong. Please try again.';
   },
 });
 ```
@@ -429,7 +429,7 @@ export const myAgent = agent('my-agent', {
       return { suppress: true };
     }
 
-    return 'Sorry — something went wrong. Please try again.';
+    return 'Sorry - something went wrong. Please try again.';
   },
 });
 ```

@@ -2,7 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { decryptCredentials, InstrumentUsecase, PinoLogger } from '@novu/application-generic';
 import { AgentIntegrationRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
 import { ChatProviderIdEnum } from '@novu/shared';
-
+import {
+  resolveWhatsAppAppId,
+  resolveWhatsAppAppSecret,
+} from '../../../../integrations/usecases/whatsapp/whatsapp-credentials.utils';
 import {
   debugAccessToken,
   extractMetaError,
@@ -11,10 +14,6 @@ import {
   subscribeWabaMessagesField,
   WHATSAPP_BUSINESS_MANAGEMENT_SCOPE,
 } from '../../../../integrations/usecases/whatsapp/whatsapp-graph-api.utils';
-import {
-  resolveWhatsAppAppId,
-  resolveWhatsAppAppSecret,
-} from '../../../../integrations/usecases/whatsapp/whatsapp-credentials.utils';
 import { resolveAgentIntegrationForWebhook } from '../../shared/resolve-agent-integration-webhook.util';
 import { ConfigureWhatsAppWebhookCommand } from './configure-whatsapp-webhook.command';
 

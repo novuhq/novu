@@ -44,20 +44,6 @@ export type CreateDomainRouteBody = Pick<DomainRouteResponse, 'address' | 'type'
 };
 export type UpdateDomainRouteBody = Partial<CreateDomainRouteBody>;
 
-export type DomainDiagnosticIssue = {
-  code: string;
-  severity: 'warn' | 'error';
-  message: string;
-  fix: string;
-};
-
-export type DiagnoseDomainResponse = {
-  ok: boolean;
-  runAt: string;
-  checks: Array<{ code: string; status: string; latencyMs: number }>;
-  issues: DomainDiagnosticIssue[];
-};
-
 export type TestDomainRouteBody = {
   from: { address: string; name?: string };
   subject: string;
@@ -174,15 +160,6 @@ export const updateDomain = async (
 ): Promise<DomainResponse> => {
   const { data } = await patch<{ data: DomainResponse }>(`/domains/${encodeURIComponent(domain)}`, {
     body,
-    environment,
-  });
-
-  return data;
-};
-
-export const diagnoseDomain = async (domain: string, environment: IEnvironment): Promise<DiagnoseDomainResponse> => {
-  const { data } = await post<{ data: DiagnoseDomainResponse }>(`/domains/${encodeURIComponent(domain)}/diagnose`, {
-    body: {},
     environment,
   });
 

@@ -2,13 +2,13 @@ import { EnvironmentWithUserCommand, SubscriberTopicPreference } from '@novu/app
 import { SubscriberEntity } from '@novu/dal';
 import { DiscoverWorkflowOutput } from '@novu/framework/internal';
 import {
+  ContextPayload,
   ISubscribersDefine,
   ITenantDefine,
   StatelessControls,
   SubscriberSourceEnum,
   TriggerOverrides,
   TriggerRequestCategoryEnum,
-  ContextPayload,
 } from '@novu/shared';
 import { IsArray, IsDefined, IsEnum, IsMongoId, IsOptional, IsString, ValidateNested } from 'class-validator';
 

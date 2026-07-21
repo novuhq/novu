@@ -18,6 +18,8 @@ import {
   smsUiSchema,
   throttleControlSchema,
   throttleUiSchema,
+  toolControlSchema,
+  toolUiSchema,
 } from '../schemas/control';
 
 export const PERMISSIVE_EMPTY_SCHEMA = {
@@ -27,7 +29,9 @@ export const PERMISSIVE_EMPTY_SCHEMA = {
   additionalProperties: true,
 } as JSONSchemaEntity;
 
-const stepTypeToControlSchemaMap: Record<ChannelStepEnum | ActionStepEnum, ControlSchemas> = {
+type ControlSchemaStepType = ChannelStepEnum | ActionStepEnum;
+
+const stepTypeToControlSchemaMap: Record<ControlSchemaStepType, ControlSchemas> = {
   [ChannelStepEnum.IN_APP]: {
     schema: inAppControlSchema,
     uiSchema: inAppUiSchema,
@@ -47,6 +51,10 @@ const stepTypeToControlSchemaMap: Record<ChannelStepEnum | ActionStepEnum, Contr
   [ChannelStepEnum.CHAT]: {
     schema: chatControlSchema,
     uiSchema: chatUiSchema,
+  },
+  [ChannelStepEnum.TOOL]: {
+    schema: toolControlSchema,
+    uiSchema: toolUiSchema,
   },
   [ActionStepEnum.DELAY]: {
     schema: delayControlSchema,
@@ -69,7 +77,4 @@ const stepTypeToControlSchemaMap: Record<ChannelStepEnum | ActionStepEnum, Contr
   },
 };
 
-export const stepTypeToControlSchema = stepTypeToControlSchemaMap as Record<
-  ChannelStepEnum | ActionStepEnum,
-  ControlSchemas
->;
+export const stepTypeToControlSchema = stepTypeToControlSchemaMap as Record<ControlSchemaStepType, ControlSchemas>;

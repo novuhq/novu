@@ -4,6 +4,7 @@ export enum ChannelTypeEnum {
   SMS = 'sms',
   CHAT = 'chat',
   PUSH = 'push',
+  TOOL = 'tool',
 }
 
 export enum ActionTypeEnum {
@@ -23,6 +24,7 @@ export enum StepTypeEnum {
   SMS = 'sms',
   CHAT = 'chat',
   PUSH = 'push',
+  TOOL = 'tool',
   DIGEST = 'digest',
   TRIGGER = 'trigger',
   DELAY = 'delay',
@@ -37,6 +39,7 @@ export const STEP_TYPE_TO_CHANNEL_TYPE = new Map<StepTypeEnum | string, ChannelT
   [StepTypeEnum.SMS, ChannelTypeEnum.SMS],
   [StepTypeEnum.CHAT, ChannelTypeEnum.CHAT],
   [StepTypeEnum.PUSH, ChannelTypeEnum.PUSH],
+  [StepTypeEnum.TOOL, ChannelTypeEnum.TOOL],
 ]);
 
 export enum ChannelCTATypeEnum {

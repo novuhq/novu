@@ -16,6 +16,7 @@ import {
   LookBackWindowType,
   PushControlType,
   SmsControlType,
+  ToolControlType,
 } from '../schemas/control';
 import { InAppActionType, InAppControlType } from '../schemas/control/in-app-control.schema';
 
@@ -121,6 +122,16 @@ function sanitizeChat(controlValues: ChatControlType) {
   const mappedValues: ChatControlType = {
     body: sanitizeEmptyInput(controlValues.body),
     skip: controlValues.skip,
+  };
+
+  return filterNullishValues(mappedValues);
+}
+
+function sanitizeTool(controlValues: ToolControlType) {
+  const mappedValues: ToolControlType = {
+    body: sanitizeEmptyInput(controlValues.body),
+    skip: controlValues.skip,
+    enabledIntegrations: controlValues.enabledIntegrations,
   };
 
   return filterNullishValues(mappedValues);
@@ -318,6 +329,9 @@ export function dashboardSanitizeControlValues(
         break;
       case StepTypeEnum.CHAT:
         normalizedValues = sanitizeChat(controlValues as ChatControlType);
+        break;
+      case StepTypeEnum.TOOL:
+        normalizedValues = sanitizeTool(controlValues as ToolControlType);
         break;
       case StepTypeEnum.DIGEST:
         normalizedValues = sanitizeDigest(controlValues as DigestControlSchemaType);

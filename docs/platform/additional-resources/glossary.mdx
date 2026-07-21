@@ -23,7 +23,7 @@ A unit of work created for each [workflow](#workflow) [step](#step) during execu
 
 ### Message
 
-The rendered output delivered on a [channel](#channel)—for example, an email body, SMS text, push notification, or in-app item. A single [notification](#notification) can produce multiple messages across different channel steps. See [Notification event](/platform/concepts/notification-event#message).
+The rendered output delivered on a [channel](#channel) - for example, an email body, SMS text, push notification, or in-app item. A single [notification](#notification) can produce multiple messages across different channel steps. See [Notification event](/platform/concepts/notification-event#message).
 
 ### Notification
 
@@ -45,7 +45,7 @@ An environment-scoped orchestration definition that determines what to send, whe
 
 ### Actor
 
-A [subscriber](#subscriber) referenced at trigger time or in in-app message templates—not necessarily the notification recipient.
+A [subscriber](#subscriber) referenced at trigger time or in in-app message templates - not necessarily the notification recipient.
 
 - **Trigger actor**: Optional field on a trigger representing who performed an action (for example, who commented on a post). Powers template variables like `{{actor.firstName}}`. When triggering to a [topic](#topic), the actor can be excluded from the fan-out.
 - **Display actor**: In-app message configuration that controls the avatar or icon shown on a notification.
@@ -58,11 +58,11 @@ A trigger mode that sends a [workflow](#workflow) to all [subscribers](#subscrib
 
 ### Subscriber
 
-An entity designated to receive notifications, uniquely identified by `subscriberId` within an environment. Subscribers can be created ahead of time or just-in-time when a workflow is triggered. They store profile data, channel endpoints, timezone, and [preferences](#preference). Subscribers are notification recipients—they are not the same as [team members](#team-member), who access the Dashboard. See [Subscribers](/platform/concepts/subscribers).
+An entity designated to receive notifications, uniquely identified by `subscriberId` within an environment. Subscribers can be created ahead of time or just-in-time when a workflow is triggered. They store profile data, channel endpoints, timezone, and [preferences](#preference). Subscribers are notification recipients - they are not the same as [team members](#team-member), who access the Dashboard. See [Subscribers](/platform/concepts/subscribers).
 
 ### Subscription
 
-A topic-level, condition-based opt-in layer. Subscribers on a [topic](#topic) can define rules evaluated against the trigger [payload](#payload) before delivery—for example, only notify when a price threshold is met. See [Subscription](/platform/subscription).
+A topic-level, condition-based opt-in layer. Subscribers on a [topic](#topic) can define rules evaluated against the trigger [payload](#payload) before delivery - for example, only notify when a price threshold is met. See [Subscription](/platform/subscription).
 
 ### Topic
 
@@ -76,7 +76,7 @@ A communication medium used to deliver notifications: in-app ([Inbox](#inbox)), 
 
 ### Credential
 
-Encrypted authentication and configuration values stored on an [integration](#integration)—for example, API keys, OAuth tokens, and sender addresses.
+Encrypted authentication and configuration values stored on an [integration](#integration) - for example, API keys, OAuth tokens, and sender addresses.
 
 ### Inbox
 
@@ -92,7 +92,7 @@ An HTML wrapper used to structure [email](#channel) notifications. Layouts can b
 
 ### Provider
 
-A third-party service responsible for delivering notifications on a [channel](#channel)—for example, SendGrid for email, Twilio for SMS, or Firebase Cloud Messaging for push. An [integration](#integration) is your configured instance of a provider. See the full list in [Integrations](/platform/integrations).
+A third-party service responsible for delivering notifications on a [channel](#channel) - for example, SendGrid for email, Twilio for SMS, or Firebase Cloud Messaging for push. An [integration](#integration) is your configured instance of a provider. See the full list in [Integrations](/platform/integrations).
 
 ## Workflow logic
 
@@ -138,7 +138,7 @@ Per-trigger customizations that override default template content or [integratio
 
 ### Context
 
-Multi-dimensional metadata passed at trigger time as `{ type: id | { id, data } }`—for example, `tenant`, `app`, or `region`. Context data is available in templates (`{{context.tenant.data.name}}`), [step conditions](#step-conditions), [Inbox](#inbox) filtering, and Activity Feed search. You can pass up to five contexts per trigger. See [Contexts](/platform/concepts/contexts).
+Multi-dimensional metadata passed at trigger time as `{ type: id | { id, data } }` - for example, `tenant`, `app`, or `region`. Context data is available in templates (`{{context.tenant.data.name}}`), [step conditions](#step-conditions), [Inbox](#inbox) filtering, and Activity Feed search. You can pass up to five contexts per trigger. See [Contexts](/platform/concepts/contexts).
 
 ### Tenant
 
@@ -201,7 +201,7 @@ A single execution of a [workflow](#workflow) for one [subscriber](#subscriber),
 
 ### ACI (Agent Communication Infrastructure)
 
-Novu's two-way agent messaging layer across channels such as Slack, Teams, WhatsApp, email, and Telegram. ACI handles inbound channel events, conversation history, and delivery—separate from the [agent brain](#agent-brain) that decides how an agent responds. See [What is ACI](/agents/get-started/what-is-aci) and [Inbound Email](/platform/inbound-email/overview).
+Novu's two-way agent messaging layer across channels such as Slack, Teams, WhatsApp, email, and Telegram. ACI handles inbound channel events, conversation history, and delivery - separate from the [agent brain](#agent-brain) that decides how an agent responds. See [What is ACI](/agents/get-started/what-is-aci) and [Inbound Email](/platform/inbound-email/overview).
 
 ### Inbound Email
 

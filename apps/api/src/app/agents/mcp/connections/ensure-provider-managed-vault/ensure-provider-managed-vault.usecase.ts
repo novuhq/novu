@@ -23,7 +23,6 @@ import {
 import {
   AgentRuntimeProviderIdEnum,
   buildClaudePlatformVaultUrl,
-  buildConnectSubscriberId,
   isClaudePlatformConsoleProvider,
   MCP_SERVERS,
   McpConnectionAuthModeEnum,
@@ -96,7 +95,7 @@ export class EnsureProviderManagedVault {
    * triggering a managed-agent setup card and return the deep link the in-thread
    * "Connect from provider" button opens. Mirrors `execute` but resolves the
    * subscriber from the inbound `subscriberId` instead of mapping a dashboard
-   * `userId` to `connect:<userId>`.
+   * `userId` to the dashboard subscriber row.
    */
   async executeForSetupCard(command: EnsureProviderManagedVaultCommand): Promise<EnsureProviderManagedVaultResult> {
     if (!command.subscriberId) {
@@ -338,9 +337,8 @@ export class EnsureProviderManagedVault {
    * - When `command.subscriberId` is set (managed-agent setup-card flow), use
    *   the channel subscriber directly. The vault must belong to the person
    *   triggering the agent in Slack/Teams, not the dashboard admin.
-   * - Otherwise (dashboard "Add from Claude") map `userId` to a
-   *   `connect:<userId>` subscriber, falling back to the legacy raw `userId`
-   *   row before provisioning a fresh one.
+   * - Otherwise (dashboard "Add from Claude") map `userId` to the same
+   *   subscriber id used by workflow testing / agent onboarding.
    */
   private async resolveSubscriber(
     command: EnsureProviderManagedVaultCommand
@@ -358,27 +356,21 @@ export class EnsureProviderManagedVault {
       return channelSubscriber;
     }
 
-    const connectSubscriberId = buildConnectSubscriberId(command.userId);
-    const connectSubscriber = await this.subscriberRepository.findBySubscriberId(
+    const subscriberId = command.userId;
+    const existingSubscriber = await this.subscriberRepository.findBySubscriberId(
       command.environmentId,
-      connectSubscriberId
+      subscriberId
     );
 
-    if (connectSubscriber) {
-      return connectSubscriber;
-    }
-
-    const legacySubscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.userId);
-
-    if (legacySubscriber) {
-      return legacySubscriber;
+    if (existingSubscriber) {
+      return existingSubscriber;
     }
 
     const created = await this.createOrUpdateSubscriber.execute(
       CreateOrUpdateSubscriberCommand.create({
         environmentId: command.environmentId,
         organizationId: command.organizationId,
-        subscriberId: connectSubscriberId,
+        subscriberId,
         allowUpdate: false,
       })
     );

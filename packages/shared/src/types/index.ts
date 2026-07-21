@@ -37,6 +37,7 @@ export * from './timezones';
 export * from './topic';
 export * from './user';
 export * from './utils';
+export * from './whatsapp-signup-link';
 export * from './workflow-channel-preferences';
 export * from './workflow-override';
 export * from './ws';

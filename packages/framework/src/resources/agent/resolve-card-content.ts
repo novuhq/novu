@@ -2,6 +2,7 @@ import {
   Actions,
   Button,
   Card,
+  type CardElement,
   CardLink,
   CardText,
   Divider,
@@ -17,7 +18,6 @@ import {
   SelectOption,
   Table,
   TextInput,
-  type CardElement,
 } from 'chat';
 import { isCardElement } from './guards';
 
@@ -57,11 +57,7 @@ type ChatJsxElement = {
 };
 
 function isChatJsxElement(value: unknown): value is ChatJsxElement {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    (value as { $$typeof?: unknown }).$$typeof === CHAT_JSX_ELEMENT
-  );
+  return typeof value === 'object' && value !== null && (value as { $$typeof?: unknown }).$$typeof === CHAT_JSX_ELEMENT;
 }
 
 /**
