@@ -15,6 +15,7 @@ import {
 } from '@/components/variable/utils/digest-variables';
 import { getVariableErrorMessage } from '@/components/variable/utils/get-variable-error-message';
 import { useTelemetry } from '@/hooks/use-telemetry';
+import { extractVariablePath, isPreviewSandboxVariable } from '@/utils/context-variable-utils';
 import { CompletionOption, createAutocompleteSource } from '@/utils/liquid-autocomplete';
 import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 import { TelemetryEvent } from '@/utils/telemetry';
@@ -128,8 +129,8 @@ export function VariableEditor({
 
   const onVariableSelect = useCallback(
     (completion: CompletionOption) => {
-      if (completion.isNewVariable) {
-        onCreateNewVariable(completion.label);
+      if (completion.isNewVariable || isPreviewSandboxVariable(completion.label)) {
+        void onCreateNewVariable(completion.label);
       }
 
       if (completion.type === 'digest') {
@@ -398,6 +399,12 @@ export function VariableEditor({
           isAllowedVariable={isAllowedVariable}
           onUpdate={(newValue) => {
             handleVariableUpdate(newValue);
+
+            const variablePath = extractVariablePath(newValue);
+            if (isPreviewSandboxVariable(variablePath)) {
+              void onCreateNewVariable(variablePath);
+            }
+
             setTimeout(() => safeFocusEditorView(viewRef.current), 0);
           }}
           onDeleteClick={() => {

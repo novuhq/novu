@@ -188,33 +188,40 @@ export class PayloadMergerService {
   }
 
   /**
-   * Resolves context from user-provided payload with fallback to extracted context
-   * from control values. This ensures that context variables referenced in templates
-   * (e.g., {{ context.tenant.id }}) appear in the preview sandbox even before the
-   * user manually adds context data.
+   * Merges user sandbox context with context extracted from control values.
+   * User-provided values take precedence; extracted example fields/types still surface.
    */
   private resolveContextWithFallback(
     userContext?: ContextPayload,
     extractedContext?: Record<string, unknown>
   ): ContextResolved | undefined {
     const userResolved = this.resolveContext(userContext);
-    if (userResolved) return userResolved;
+    const extractedResolved = this.resolveExtractedContext(extractedContext);
 
+    if (!userResolved) return extractedResolved;
+    if (!extractedResolved) return userResolved;
+
+    return merge({}, extractedResolved, userResolved);
+  }
+
+  /** Normalize CreateVariablesObject context into ContextResolved, filling example ids when missing. */
+  private resolveExtractedContext(extractedContext?: Record<string, unknown>): ContextResolved | undefined {
     if (!extractedContext || typeof extractedContext !== 'object' || Object.keys(extractedContext).length === 0) {
       return undefined;
     }
 
-    const fallback: ContextResolved = {};
+    const asPayload: ContextPayload = {};
     for (const [contextType, contextValue] of Object.entries(extractedContext)) {
       if (!contextValue || typeof contextValue !== 'object') continue;
+
       const entity = contextValue as Record<string, unknown>;
-      fallback[contextType] = {
+      asPayload[contextType] = {
         id: typeof entity.id === 'string' ? entity.id : `example-${contextType}-id`,
         data: (typeof entity.data === 'object' && entity.data !== null ? entity.data : {}) as Record<string, unknown>,
       };
     }
 
-    return Object.keys(fallback).length > 0 ? fallback : undefined;
+    return this.resolveContext(asPayload);
   }
 
   private async mergeWithoutPayloadSchema({

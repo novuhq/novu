@@ -41,6 +41,59 @@ export function isValidContextVariable(variableName: string): boolean {
   return false;
 }
 
+/** Context / subscriber.data / actor.data paths that should update the preview sandbox. */
+export function isPreviewSandboxVariable(variableName: string): boolean {
+  if (variableName.startsWith('subscriber.data.') || variableName.startsWith('actor.data.')) {
+    return true;
+  }
+
+  return isValidContextVariable(variableName);
+}
+
+/** Strip `{{ }}` wrappers and Liquid filters to a bare variable path. */
+export function extractVariablePath(liquidOrPath: string): string {
+  return liquidOrPath
+    .replace(/^\{\{|\}\}$/g, '')
+    .split('|')[0]
+    .trim();
+}
+
+/**
+ * Builds a single context-type fragment from a key like `tenant.data.companyName` or `tenant.id`.
+ * Always includes `id` + object `data` so multiple types can merge cleanly.
+ */
+export function buildContextFragmentFromKey(key: string): Record<string, unknown> {
+  const [contextType, property, ...dataPath] = key.split('.');
+  if (!contextType || !property) {
+    return {};
+  }
+
+  if (property === 'id') {
+    return {
+      [contextType]: {
+        id: `example-${contextType}-id`,
+        data: {},
+      },
+    };
+  }
+
+  if (property !== 'data') {
+    return {};
+  }
+
+  const data =
+    dataPath.length === 0
+      ? {}
+      : dataPath.reduceRight((value, segment) => ({ [segment]: value }), 'example_value' as unknown);
+
+  return {
+    [contextType]: {
+      id: `example-${contextType}-id`,
+      data,
+    },
+  };
+}
+
 /**
  * Converts an array of context keys to a context payload object
  * for use in subscriber preferences API calls.

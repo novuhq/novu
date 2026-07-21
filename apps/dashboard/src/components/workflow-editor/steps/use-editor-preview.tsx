@@ -36,12 +36,35 @@ function useDebounced<T>(value: T, delay: number): T {
   return debouncedValue;
 }
 
-const extractPayloadKeys = (data: PreviewPayload | null): string[] => {
-  if (!data?.payload || typeof data.payload !== 'object') {
-    return [];
+const collectDeepKeys = (value: unknown, prefix: string, keys: string[]): void => {
+  keys.push(prefix);
+
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    for (const [key, child] of Object.entries(value)) {
+      collectDeepKeys(child, `${prefix}.${key}`, keys);
+    }
+  }
+};
+
+/**
+ * Builds the key signature used to decide whether the server-generated example
+ * should be re-applied to the sandbox editor. Payload is compared by its
+ * top-level keys; context is compared by deep paths because context entities
+ * are nested (e.g. context.tenant.data.companyName) and referencing a new
+ * data field must surface in the sandbox too.
+ */
+const extractSyncKeys = (data: PreviewPayload | null): string[] => {
+  const keys: string[] = [];
+
+  if (data?.payload && typeof data.payload === 'object') {
+    keys.push(...Object.keys(data.payload).map((key) => `payload.${key}`));
   }
 
-  return Object.keys(data.payload).sort();
+  if (data?.context && typeof data.context === 'object') {
+    collectDeepKeys(data.context, 'context', keys);
+  }
+
+  return keys.sort();
 };
 
 function areKeysEqual(keys1: string[], keys2: string[]): boolean {
@@ -140,7 +163,7 @@ export const useEditorPreview = ({ workflowSlug, stepSlug, controlValues, payloa
     const serverPayloadExample = previewData?.previewPayloadExample;
     if (!serverPayloadExample) return;
 
-    const serverKeys = extractPayloadKeys(serverPayloadExample);
+    const serverKeys = extractSyncKeys(serverPayloadExample);
 
     const shouldUpdateEditor = !hasInitializedRef.current || !areKeysEqual(serverKeys, lastServerKeysRef.current);
 
