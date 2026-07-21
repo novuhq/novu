@@ -1,6 +1,6 @@
 import { BaseCommand, IsValidContextPayload } from '@novu/application-generic';
 import { ChannelEndpointByType, ChannelEndpointType, ContextPayload, ENDPOINT_TYPES } from '@novu/shared';
-import { IsDefined, IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsDefined, IsEnum, IsOptional, IsString } from 'class-validator';
 import { EnvironmentCommand } from '../../../shared/commands/project.command';
 import { IsValidChannelEndpoint } from '../../validators/channel-endpoint.validator';
 
@@ -25,6 +25,10 @@ export class CreateChannelEndpointCommand<
   subscriberId: string;
 
   @IsOptional()
+  @IsBoolean()
+  createSubscriberIfMissing?: boolean;
+
+  @IsOptional()
   @IsValidContextPayload({ maxCount: 5 })
   context?: ContextPayload;
 
@@ -43,6 +47,7 @@ export class CreateChannelEndpointCommand<
     integrationIdentifier: string;
     connectionIdentifier?: string;
     subscriberId: string;
+    createSubscriberIfMissing?: boolean;
     context?: ContextPayload;
     type: T;
     endpoint: ChannelEndpointByType[T];

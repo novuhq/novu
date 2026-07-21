@@ -294,12 +294,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
       case AgentPlatformEnum.WHATSAPP: {
         const appSecret = resolveWhatsAppAppSecret(credentials);
 
-        if (
-          !credentials.apiToken ||
-          !appSecret ||
-          !credentials.token ||
-          !credentials.phoneNumberIdentification
-        ) {
+        if (!credentials.apiToken || !appSecret || !credentials.token || !credentials.phoneNumberIdentification) {
           throw new BadRequestException(
             'WhatsApp agent integration requires accessToken, appSecret, verifyToken, and phoneNumberId credentials'
           );

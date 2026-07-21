@@ -6,7 +6,7 @@ export class SendWhatsAppTestTemplateRequestDto {
     type: String,
     description:
       'Novu subscriber ID whose phone field receives the WhatsApp test template (sample_order_confirmation for Embedded Signup, hello_world for manual credentials). The dashboard patches subscriber.phone before calling this endpoint.',
-    example: 'connect:user-123',
+    example: 'user-123',
   })
   @IsString()
   @IsNotEmpty()

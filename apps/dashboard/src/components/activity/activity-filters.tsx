@@ -11,6 +11,7 @@ import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { ActivityFiltersData } from '@/types/activity';
 import { buildActivityDateFilters } from '@/utils/activityFilters';
+import { isChannelVisibleInUi } from '@/utils/channels';
 import { ROUTES } from '@/utils/routes';
 import { capitalize } from '@/utils/string';
 import { cn } from '@/utils/ui';
@@ -78,6 +79,11 @@ export function ActivityFilters({
   const isSubscriptionPreferencesEnabled = useFeatureFlag(
     FeatureFlagsKeysEnum.IS_SUBSCRIPTION_PREFERENCES_ENABLED,
     false
+  );
+  const isToolChannelEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TOOL_CHANNEL_ENABLED);
+  const channelOptions = useMemo(
+    () => CHANNEL_OPTIONS.filter((option) => isChannelVisibleInUi(option.value, isToolChannelEnabled)),
+    [isToolChannelEnabled]
   );
 
   const form = useForm<ActivityFiltersData>({
@@ -171,7 +177,7 @@ export function ActivityFilters({
                   type="multi"
                   title="Channels"
                   hideSearch
-                  options={CHANNEL_OPTIONS}
+                  options={channelOptions}
                   selected={field.value}
                   onSelect={(values) => setValue('channels', values as ChannelTypeEnum[])}
                 />

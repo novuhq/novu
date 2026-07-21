@@ -1,12 +1,14 @@
 import { PatchPreferenceChannelsDto, SubscriberWorkflowPreferenceDto } from '@novu/api/models/components';
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { motion } from 'motion/react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { RiContractUpDownLine, RiExpandUpDownLine } from 'react-icons/ri';
 import { STEP_TYPE_TO_ICON } from '@/components/icons/utils';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/primitives/card';
 import { Step } from '@/components/primitives/step';
 import { PreferencesItem } from '@/components/subscribers/preferences/preferences-item';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { isChannelVisibleInUi } from '@/utils/channels';
 import { formatDateSimple } from '@/utils/format-date';
 import { cn } from '@/utils/ui';
 import { STEP_TYPE_TO_COLOR } from '../../../utils/color';
@@ -20,7 +22,15 @@ type WorkflowPreferencesProps = {
 export function WorkflowPreferences(props: WorkflowPreferencesProps) {
   const { workflowPreferences, onToggle, readOnly = false } = props;
   const [isExpanded, setIsExpanded] = useState(false);
+  const isToolChannelEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TOOL_CHANNEL_ENABLED);
   const { workflow, channels, updatedAt } = workflowPreferences;
+  const visibleChannels = useMemo(
+    () =>
+      (Object.entries(channels) as [ChannelTypeEnum, boolean][]).filter(([channel]) =>
+        isChannelVisibleInUi(channel, isToolChannelEnabled)
+      ),
+    [channels, isToolChannelEnabled]
+  );
   return (
     <Card className="border rounded-lg border-neutral-100 bg-neutral-50 p-1 shadow-none">
       <CardHeader
@@ -31,7 +41,7 @@ export function WorkflowPreferences(props: WorkflowPreferencesProps) {
       >
         <span className="text-foreground-600 text-xs">{workflow.name}</span>
         <div className="mt-0! flex items-center gap-1.5">
-          <StepIcons steps={Object.keys(channels) as ChannelTypeEnum[]} />
+          <StepIcons steps={visibleChannels.map(([channel]) => channel)} />
 
           {isExpanded ? (
             <RiContractUpDownLine className="text-foreground-400 h-3 w-3" />
@@ -56,10 +66,10 @@ export function WorkflowPreferences(props: WorkflowPreferencesProps) {
         className="overflow-hidden"
       >
         <CardContent className="space-y-2 rounded-lg bg-white p-2">
-          {Object.entries(channels).map(([channel, enabled]) => (
+          {visibleChannels.map(([channel, enabled]) => (
             <PreferencesItem
               key={channel}
-              channel={channel as ChannelTypeEnum}
+              channel={channel}
               enabled={enabled}
               onChange={(checked: boolean) => onToggle({ [channel]: checked }, workflow.slug)}
               readOnly={readOnly}

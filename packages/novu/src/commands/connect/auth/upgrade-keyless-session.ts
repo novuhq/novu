@@ -17,9 +17,13 @@ export async function upgradeKeylessSessionToDashboardAuth(
     onboardingSessionId?: string;
     onAuthStarted?: () => void;
     onAuthFailed?: (message: string) => void;
+    /** Shown while the sign-in browser handoff starts. Defaults to the daily-limit copy. */
+    statusMessage?: string;
   }
 ): Promise<void> {
-  ui.authStatus('Daily keyless demo limit reached. Opening Novu dashboard sign-in to continue…');
+  ui.authStatus(
+    resolveOptions.statusMessage ?? 'Daily keyless demo limit reached. Opening Novu dashboard sign-in to continue…'
+  );
   ui.authStarted();
 
   const auth = await resolveConnectAuth(

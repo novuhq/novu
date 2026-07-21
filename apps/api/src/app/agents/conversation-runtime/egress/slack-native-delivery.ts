@@ -1,11 +1,11 @@
 import type { SentMessageInfo } from '@novu/framework/internal';
 import { WebClient } from '@slack/web-api';
-import { toDeliveryError } from '../../shared/util/delivery-error.util';
 import type {
   ChannelAndBlocks,
   ChatPostMessageArguments,
   ChatUpdateArguments,
 } from '@slack/web-api/dist/types/request/chat';
+import { toDeliveryError } from '../../shared/util/delivery-error.util';
 
 export type SlackNativeDelivery = Required<Omit<ChannelAndBlocks, 'channel'>>;
 

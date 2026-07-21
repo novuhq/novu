@@ -6,12 +6,12 @@ export function buildAgentWebhookUrl(agentId: string, integrationIdentifier: str
   return `${getAgentApiBaseUrl()}/v1/agents/${agentId}/webhook/${integrationIdentifier}`;
 }
 
-export function buildWhatsAppDeepLink(displayPhoneNumber: string): string {
+export function buildWhatsAppDeepLink(displayPhoneNumber: string, agentName: string): string {
   const digits = displayPhoneNumber.replace(/\D/g, '');
 
   if (!digits) {
     return '';
   }
 
-  return `https://wa.me/${digits}?text=${encodeURIComponent('Hi')}`;
+  return `https://wa.me/${digits}?text=${encodeURIComponent(`Hi ${agentName}, how can you help?`)}`;
 }

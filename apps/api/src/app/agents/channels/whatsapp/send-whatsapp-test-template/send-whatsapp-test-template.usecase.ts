@@ -30,9 +30,7 @@ function resolveTestTemplateSend(
 ): TestTemplateSend {
   if (credentials.isNovuManaged === true) {
     const recipientName =
-      typeof subscriber.firstName === 'string' && subscriber.firstName.trim()
-        ? subscriber.firstName.trim()
-        : 'Novu';
+      typeof subscriber.firstName === 'string' && subscriber.firstName.trim() ? subscriber.firstName.trim() : 'Novu';
 
     return {
       templateName: EMBEDDED_TEST_TEMPLATE,
