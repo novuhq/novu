@@ -1,12 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { ToolProviderIdEnum } from '../../../types';
 import {
+  getToolProviderOverrideKeys,
   getToolProviderOverrideKeysOnlySchema,
   getToolProviderOverrideSchema,
   getToolProviderPrimaryContentKey,
   opsgenieOverrideJsonSchema,
   pagerdutyOverrideJsonSchema,
   TOOL_CONTENT_OVERRIDE_PROVIDER_IDS,
+  TOOL_PROVIDER_OVERRIDE_KEYS,
   TOOL_PROVIDER_OVERRIDE_SCHEMAS,
   TOOL_PROVIDER_PRIMARY_CONTENT_KEY,
 } from './index';
@@ -26,6 +28,19 @@ describe('tool provider override schemas', () => {
   it('keeps documented free-form maps permissive', () => {
     expect(pagerdutyOverrideJsonSchema.properties.custom_details.additionalProperties).toBe(true);
     expect(opsgenieOverrideJsonSchema.properties.details.additionalProperties).toBe(true);
+  });
+
+  it('exposes a key inventory that matches each schema property set', () => {
+    expect(TOOL_PROVIDER_OVERRIDE_KEYS[ToolProviderIdEnum.PagerDuty]).toEqual(
+      Object.keys(pagerdutyOverrideJsonSchema.properties)
+    );
+    expect(TOOL_PROVIDER_OVERRIDE_KEYS[ToolProviderIdEnum.Opsgenie]).toEqual(
+      Object.keys(opsgenieOverrideJsonSchema.properties)
+    );
+    expect(getToolProviderOverrideKeys(ToolProviderIdEnum.PagerDuty)).toEqual(
+      TOOL_PROVIDER_OVERRIDE_KEYS[ToolProviderIdEnum.PagerDuty]
+    );
+    expect(getToolProviderOverrideKeys('unknown')).toBeUndefined();
   });
 
   it('derives keys-only schemas that are strict on names and permissive on values', () => {

@@ -1,6 +1,6 @@
 import {
   ChannelTypeEnum,
-  getToolProviderOverrideSchema,
+  getToolProviderOverrideKeys,
   type IProviderConfig,
   providers,
   TOOL_CONTENT_OVERRIDE_PROVIDER_IDS,
@@ -65,12 +65,7 @@ export function getUnsupportedToolOverrideKeys(
   providerId: ToolContentOverrideProviderId,
   override: Record<string, unknown> | undefined
 ): string[] {
-  const schema = getToolProviderOverrideSchema(providerId);
-  if (!schema) {
-    return [];
-  }
-
-  const allowedKeys = new Set(Object.keys(schema.properties ?? {}));
+  const allowedKeys = new Set(getToolProviderOverrideKeys(providerId) ?? []);
 
   return Object.keys(override ?? {}).filter((key) => !allowedKeys.has(key));
 }

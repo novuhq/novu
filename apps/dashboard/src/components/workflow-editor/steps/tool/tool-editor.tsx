@@ -111,13 +111,7 @@ export const ToolEditor = (props: ToolEditorProps) => {
   }, [otherServerIssueCountByProvider, unsupportedKeyCountByProvider, draftParseErrorProviderId]);
 
   const handleDraftParseValidityChange = useCallback((providerId: string, isParseValid: boolean) => {
-    setDraftParseErrorProviderId((prev) => {
-      if (!isParseValid) {
-        return providerId;
-      }
-
-      return prev === providerId ? null : prev;
-    });
+    setDraftParseErrorProviderId(isParseValid ? null : providerId);
   }, []);
 
   const handleAddOverride = useCallback(
@@ -152,7 +146,7 @@ export const ToolEditor = (props: ToolEditorProps) => {
 
       const cleaned = Object.keys(next).length > 0 ? next : undefined;
       setValue(PROVIDER_OVERRIDES_FIELD, cleaned, { shouldDirty: true });
-      setDraftParseErrorProviderId((prev) => (prev === providerId ? null : prev));
+      setDraftParseErrorProviderId(null);
 
       if (selectedSource === providerId) {
         setSelectedSource(DEFAULT_CONTENT_SOURCE);

@@ -1,4 +1,4 @@
-import { pagerdutyOverrideJsonSchema, ToolProviderIdEnum } from '@novu/shared';
+import { TOOL_PROVIDER_OVERRIDE_KEYS, ToolProviderIdEnum } from '@novu/shared';
 import { safeOutboundJsonRequest } from '@novu/shared/utils/safe-outbound-http';
 import {
   ChannelTypeEnum,
@@ -34,13 +34,14 @@ const ROOT_OPTIONAL_ARRAY_FIELDS = ['links', 'images'] as const;
 
 /**
  * Keys consumed by explicit Events API mapping and therefore excluded from
- * custom_details. Derived from the shared override schema (single source of
- * the documented override keys) plus provider-internal fields.
+ * custom_details. Uses the shared override-key inventory plus provider-internal fields.
+ * Mapped field lists above must stay a subset of TOOL_PROVIDER_OVERRIDE_KEYS[PagerDuty]
+ * (enforced in pagerduty.provider.spec.ts).
  */
 const RESERVED_OVERRIDE_KEYS = new Set<string>([
   'content',
   'routing_key',
-  ...Object.keys(pagerdutyOverrideJsonSchema.properties),
+  ...TOOL_PROVIDER_OVERRIDE_KEYS[ToolProviderIdEnum.PagerDuty],
 ]);
 
 function assignNonEmptyStringFields(
