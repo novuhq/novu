@@ -1,4 +1,4 @@
-import { ToolProviderIdEnum } from '@novu/shared';
+import { opsgenieOverrideJsonSchema, ToolProviderIdEnum } from '@novu/shared';
 import { safeOutboundJsonRequest } from '@novu/shared/utils/safe-outbound-http';
 import {
   ChannelTypeEnum,
@@ -25,22 +25,12 @@ const OPSGENIE_ENDPOINTS: Record<OpsgenieRegion, string> = {
 // Opsgenie enforces a 130-character limit on the `message` field.
 const MESSAGE_MAX_LENGTH = 130;
 
-const RESERVED_OVERRIDE_KEYS = new Set([
-  'content',
-  'message',
-  'alias',
-  'description',
-  'source',
-  'entity',
-  'user',
-  'note',
-  'priority',
-  'tags',
-  'responders',
-  'visibleTo',
-  'actions',
-  'details',
-]);
+/**
+ * Keys consumed by explicit Alert API mapping and therefore excluded from
+ * details. Derived from the shared override schema (single source of the
+ * documented override keys) plus provider-internal fields.
+ */
+const RESERVED_OVERRIDE_KEYS = new Set<string>(['content', ...Object.keys(opsgenieOverrideJsonSchema.properties)]);
 
 export class OpsgenieProvider extends BaseProvider implements IToolProvider {
   protected casing: CasingEnum = CasingEnum.CAMEL_CASE;

@@ -7,9 +7,6 @@ import {
   type ToolContentOverrideProviderId,
 } from '@novu/shared';
 
-export type { AnnotatedPreviewLine, MergedToolPreview } from '@novu/shared';
-export { buildAnnotatedPreviewLines, mergeToolProviderPreview } from '@novu/shared';
-
 export const DEFAULT_CONTENT_SOURCE = 'default' as const;
 
 export type ToolContentSource = typeof DEFAULT_CONTENT_SOURCE | ToolContentOverrideProviderId;

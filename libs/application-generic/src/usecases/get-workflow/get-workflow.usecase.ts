@@ -7,7 +7,6 @@ import {
 } from '@nestjs/common';
 import {
   BaseRepository,
-  ControlSchemas,
   EnvironmentRepository,
   IntegrationEntity,
   IntegrationRepository,
@@ -23,17 +22,13 @@ import {
 } from '@novu/shared';
 import { merge } from 'es-toolkit/compat';
 import { PinoLogger } from 'nestjs-pino';
-import { JSONSchemaDto } from '../../dtos/json-schema.dto';
 import { StepIssuesDto } from '../../dtos/step-issues.dto';
 import { StepResponseDto } from '../../dtos/workflow/step.response.dto';
 import { WorkflowResponseDto } from '../../dtos/workflow/workflow-response.dto';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { WorkflowDataContainer } from '../../services/workflow-data.container';
 import { generatePayloadExample } from '../../utils/generate-payload-example';
-import { processControlValuesBySchema } from '../../utils/issues';
 import { toResponseWorkflowDto } from '../../utils/notification-template-mapper';
-import { dashboardSanitizeControlValues } from '../../utils/sanitize-control-values';
-import { resolveStepControlSchemas, stepTypeToControlSchema } from '../../utils/step-type-to-control.mapper';
 import { BuildStepDataCommand, BuildStepDataUsecase } from '../build-step-data';
 import { GetWorkflowWithPreferencesCommand, GetWorkflowWithPreferencesUseCase } from '../get-workflow-with-preferences';
 import { GetWorkflowCommand } from './get-workflow.command';
@@ -184,13 +179,8 @@ export class GetWorkflowUseCase {
         step.template?.type as StepTypeEnum,
         availableIntegrations
       );
-      const canonicalControlSchemaIssues = this.getCanonicalControlSchemaIssues(
-        stepResponse,
-        workflow,
-        step.template?.controls
-      );
 
-      const combinedIssues = merge(stepResponse.issues || {}, canonicalControlSchemaIssues, runtimeIntegrationIssues);
+      const combinedIssues = merge(stepResponse.issues || {}, runtimeIntegrationIssues);
 
       return {
         ...stepResponse,
@@ -208,47 +198,6 @@ export class GetWorkflowUseCase {
         error: error instanceof Error ? error.message : 'Unknown error',
       });
     }
-  }
-
-  /**
-   * Tool steps re-validate against the canonical control schema on read so
-   * providerOverrides key rules surface as canvas issues without a re-save.
-   * Persisted liquid/skip issues are kept via merge — this path only adds schema issues.
-   */
-  @Instrument()
-  private getCanonicalControlSchemaIssues(
-    stepResponse: StepResponseDto,
-    workflow: NotificationTemplateEntity,
-    existingControls?: ControlSchemas | null
-  ): StepIssuesDto {
-    if (!workflow.origin || stepResponse.type !== StepTypeEnum.TOOL) {
-      return {};
-    }
-
-    const resolved = resolveStepControlSchemas({
-      stepType: stepResponse.type,
-      workflowOrigin: workflow.origin,
-      existingControls,
-      stepResolverHash: stepResponse.stepResolverHash,
-    });
-    const canonical = stepTypeToControlSchema[stepResponse.type];
-
-    if (!canonical || resolved !== canonical) {
-      return {};
-    }
-
-    const rawControlValues = (stepResponse.controlValues ?? stepResponse.controls?.values ?? {}) as Record<
-      string,
-      unknown
-    >;
-    const sanitizedControlValues =
-      dashboardSanitizeControlValues(this.logger, rawControlValues, stepResponse.type) || {};
-
-    return processControlValuesBySchema({
-      controlSchema: resolved.schema as unknown as JSONSchemaDto,
-      controlValues: sanitizedControlValues,
-      stepType: stepResponse.type,
-    });
   }
 
   @Instrument()

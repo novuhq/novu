@@ -77,28 +77,34 @@ export function ToolProviderOverrideEditor({
     return { parseError: undefined, parsedDraft: parsed };
   }, [draft]);
 
+  // Unsupported keys are detected client-side from the shared override schema (it
+  // tracks the draft keystroke-by-keystroke); server UNSUPPORTED_PROPERTY issues are
+  // skipped here so the same key is never reported twice.
   const activeServerIssues = useMemo(() => {
     const controlIssues = step?.issues?.controls ?? {};
     const prefix = `${PROVIDER_OVERRIDES_FIELD}.${providerId}`;
 
-    const issues = Object.entries(controlIssues)
+    return Object.entries(controlIssues)
       .filter(([key]) => key === prefix || key.startsWith(`${prefix}.`))
-      .flatMap(([path, issueList]) => issueList.map((issue) => ({ ...issue, path })));
+      .flatMap(([path, issueList]) =>
+        issueList
+          .filter((issue) => issue.issueType !== ContentIssueEnum.UNSUPPORTED_PROPERTY)
+          .map((issue) => ({ ...issue, path }))
+      )
+      .filter((issue) => {
+        if (!parsedDraft) {
+          return true;
+        }
 
-    if (!parsedDraft) {
-      return issues;
-    }
+        const issuePath = issue.variableName ?? issue.path;
+        if (!issuePath.startsWith(`${prefix}.`)) {
+          return true;
+        }
 
-    return issues.filter((issue) => {
-      const issuePath = issue.variableName ?? issue.path;
-      if (!issuePath.startsWith(`${prefix}.`)) {
-        return true;
-      }
+        const topKey = issuePath.slice(prefix.length + 1).split('.')[0];
 
-      const topKey = issuePath.slice(prefix.length + 1).split('.')[0];
-
-      return topKey in parsedDraft;
-    });
+        return topKey in parsedDraft;
+      });
   }, [step?.issues?.controls, providerId, parsedDraft]);
 
   const localUnsupportedPropertyMessages = useMemo(() => {
@@ -106,22 +112,8 @@ export function ToolProviderOverrideEditor({
       return [] as string[];
     }
 
-    const serverCoveredKeys = new Set(
-      activeServerIssues
-        .filter((issue) => issue.issueType === ContentIssueEnum.UNSUPPORTED_PROPERTY)
-        .map((issue) => {
-          const issuePath = issue.variableName ?? issue.path;
-          const prefix = `${PROVIDER_OVERRIDES_FIELD}.${providerId}.`;
-
-          return issuePath.startsWith(prefix) ? issuePath.slice(prefix.length).split('.')[0] : undefined;
-        })
-        .filter((key): key is string => !!key)
-    );
-
-    return getUnsupportedToolOverrideKeys(providerId, parsedDraft)
-      .filter((key) => !serverCoveredKeys.has(key))
-      .map((key) => `"${key}" is not a supported property`);
-  }, [parsedDraft, activeServerIssues, providerId]);
+    return getUnsupportedToolOverrideKeys(providerId, parsedDraft).map((key) => `"${key}" is not a supported property`);
+  }, [parsedDraft, providerId]);
 
   const usedDraftKeys = useMemo(() => new Set(Object.keys(parsedDraft ?? {})), [parsedDraft]);
 

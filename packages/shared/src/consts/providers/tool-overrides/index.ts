@@ -4,12 +4,7 @@ import { opsgenieOverrideJsonSchema } from './opsgenie-override.schema';
 import { pagerdutyOverrideJsonSchema } from './pagerduty-override.schema';
 import type { ToolContentOverrideProviderId } from './tool-provider-primary-content';
 
-export {
-  type AnnotatedPreviewLine,
-  buildAnnotatedPreviewLines,
-  type MergedToolPreview,
-  mergeToolProviderPreview,
-} from './merge-tool-provider-preview';
+export { type MergedToolPreview, mergeToolProviderPreview } from './merge-tool-provider-preview';
 export { opsgenieOverrideJsonSchema } from './opsgenie-override.schema';
 export { pagerdutyOverrideJsonSchema } from './pagerduty-override.schema';
 export {

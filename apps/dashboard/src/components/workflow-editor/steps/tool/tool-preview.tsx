@@ -2,13 +2,14 @@ import {
   ChannelTypeEnum,
   type GeneratePreviewResponseDto,
   getToolProviderPrimaryContentKey,
+  mergeToolProviderPreview,
   type ToolRenderOutput,
 } from '@novu/shared';
 import { useMemo } from 'react';
 import { ToolFill } from '@/components/icons/tool-fill';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
-import { buildAnnotatedPreviewLines, DEFAULT_CONTENT_SOURCE, mergeToolProviderPreview } from './tool-content-source';
+import { DEFAULT_CONTENT_SOURCE } from './tool-content-source';
 import { useToolContentSource } from './tool-content-source-context';
 import { ToolContentSourceSelector } from './tool-content-source-selector';
 import { useToolOverrideProviderOptions } from './use-tool-override-provider-options';
@@ -17,6 +18,37 @@ type ToolPreviewResult = {
   type: string;
   preview?: ToolRenderOutput;
 };
+
+type AnnotatedPreviewLine = {
+  json: string;
+  isDefaultContentKey?: boolean;
+};
+
+/** Pretty-prints the merged override and marks the line whose value came from the default content. */
+function buildAnnotatedPreviewLines(
+  merged: Record<string, unknown>,
+  defaultContentKey?: string
+): AnnotatedPreviewLine[] {
+  const prettyJson = Object.keys(merged).length === 0 ? '{\n}' : JSON.stringify(merged, null, 2);
+  const jsonLines = prettyJson.split('\n');
+
+  if (!defaultContentKey) {
+    return jsonLines.map((json) => ({ json }));
+  }
+
+  const topLevelKeyPrefix = `  ${JSON.stringify(defaultContentKey)}:`;
+  let hasMarkedDefaultContentKey = false;
+
+  return jsonLines.map((json) => {
+    if (!hasMarkedDefaultContentKey && json.startsWith(topLevelKeyPrefix)) {
+      hasMarkedDefaultContentKey = true;
+
+      return { json, isDefaultContentKey: true };
+    }
+
+    return { json };
+  });
+}
 
 type ToolPreviewProps = {
   isPreviewPending: boolean;

@@ -37,7 +37,8 @@ export const ToolEditor = (props: ToolEditorProps) => {
   const { providerOptions, providerOverrides } = useToolOverrideProviderOptions();
 
   const { selectedSource, setSelectedSource } = useToolContentSource();
-  const [providersWithDraftParseErrors, setProvidersWithDraftParseErrors] = useState<Set<string>>(new Set());
+  // Only one override editor is mounted at a time, so at most one provider can have an uncommitted parse error.
+  const [draftParseErrorProviderId, setDraftParseErrorProviderId] = useState<string | null>(null);
   const [pendingResetProviderId, setPendingResetProviderId] = useState<
     (typeof TOOL_CONTENT_OVERRIDE_PROVIDER_IDS)[number] | null
   >(null);
@@ -86,21 +87,17 @@ export const ToolEditor = (props: ToolEditorProps) => {
   }, [step?.issues?.controls]);
 
   const providersWithErrors = useMemo(() => {
-    const merged = new Set(providersWithDraftParseErrors);
+    const merged = new Set([...unsupportedKeyCountByProvider.keys(), ...otherServerIssueCountByProvider.keys()]);
 
-    for (const providerId of unsupportedKeyCountByProvider.keys()) {
-      merged.add(providerId);
-    }
-
-    for (const providerId of otherServerIssueCountByProvider.keys()) {
-      merged.add(providerId);
+    if (draftParseErrorProviderId) {
+      merged.add(draftParseErrorProviderId);
     }
 
     return merged;
-  }, [providersWithDraftParseErrors, unsupportedKeyCountByProvider, otherServerIssueCountByProvider]);
+  }, [draftParseErrorProviderId, unsupportedKeyCountByProvider, otherServerIssueCountByProvider]);
 
   const totalErrorCount = useMemo(() => {
-    let total = providersWithDraftParseErrors.size;
+    let total = draftParseErrorProviderId ? 1 : 0;
 
     for (const unsupportedCount of unsupportedKeyCountByProvider.values()) {
       total += unsupportedCount;
@@ -111,18 +108,15 @@ export const ToolEditor = (props: ToolEditorProps) => {
     }
 
     return total;
-  }, [otherServerIssueCountByProvider, unsupportedKeyCountByProvider, providersWithDraftParseErrors]);
+  }, [otherServerIssueCountByProvider, unsupportedKeyCountByProvider, draftParseErrorProviderId]);
 
   const handleDraftParseValidityChange = useCallback((providerId: string, isParseValid: boolean) => {
-    setProvidersWithDraftParseErrors((prev) => {
-      const next = new Set(prev);
-      if (isParseValid) {
-        next.delete(providerId);
-      } else {
-        next.add(providerId);
+    setDraftParseErrorProviderId((prev) => {
+      if (!isParseValid) {
+        return providerId;
       }
 
-      return next;
+      return prev === providerId ? null : prev;
     });
   }, []);
 
@@ -158,12 +152,7 @@ export const ToolEditor = (props: ToolEditorProps) => {
 
       const cleaned = Object.keys(next).length > 0 ? next : undefined;
       setValue(PROVIDER_OVERRIDES_FIELD, cleaned, { shouldDirty: true });
-      setProvidersWithDraftParseErrors((prev) => {
-        const updated = new Set(prev);
-        updated.delete(providerId);
-
-        return updated;
-      });
+      setDraftParseErrorProviderId((prev) => (prev === providerId ? null : prev));
 
       if (selectedSource === providerId) {
         setSelectedSource(DEFAULT_CONTENT_SOURCE);
