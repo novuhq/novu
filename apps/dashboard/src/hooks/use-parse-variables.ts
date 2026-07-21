@@ -40,9 +40,11 @@ export function useParseVariables(
     const newVars = contextTypeVariables.filter((v) => !existingNames.has(v.name));
     if (newVars.length === 0) return result;
 
+    // Also land in primitives — Maily autocomplete only reads primitives/arrays/namespaces.
     return {
       ...result,
       variables: [...result.variables, ...newVars],
+      primitives: [...result.primitives, ...newVars],
     };
   }, [schema, digestStepId, isPayloadSchemaEnabled, previewSchema, contextTypeVariables]);
 

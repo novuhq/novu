@@ -2,13 +2,15 @@ import { useMemo } from 'react';
 import { useFetchContexts } from '@/hooks/use-fetch-contexts';
 import { LiquidVariable } from '@/utils/parseStepVariables';
 
-function collectDataPaths(obj: Record<string, unknown>, prefix: string): string[] {
+const MAX_CONTEXT_DATA_DEPTH = 5;
+
+function collectDataPaths(obj: Record<string, unknown>, prefix: string, depth = 0): string[] {
   const paths: string[] = [];
   for (const [key, value] of Object.entries(obj)) {
     const path = `${prefix}.${key}`;
     paths.push(path);
-    if (value && typeof value === 'object' && !Array.isArray(value)) {
-      paths.push(...collectDataPaths(value as Record<string, unknown>, path));
+    if (depth < MAX_CONTEXT_DATA_DEPTH && value && typeof value === 'object' && !Array.isArray(value)) {
+      paths.push(...collectDataPaths(value as Record<string, unknown>, path, depth + 1));
     }
   }
 
