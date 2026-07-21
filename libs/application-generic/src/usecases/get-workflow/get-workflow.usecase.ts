@@ -14,7 +14,6 @@ import {
   NotificationTemplateEntity,
 } from '@novu/dal';
 import {
-  ApiAuthSchemeEnum,
   ChannelTypeEnum,
   IntegrationIssueEnum,
   STEP_TYPE_TO_CHANNEL_TYPE,
@@ -68,12 +67,7 @@ export class GetWorkflowUseCase {
       }
     }
 
-    /**
-     * Interactive dashboard reads (JWT / Bearer) must reflect the latest write
-     * immediately, so they bypass the per-instance WORKFLOW_PREFERENCES LRU cache.
-     * SDK (API key) and other callers keep using the cache.
-     */
-    const skipPreferencesCache = command.user.scheme === ApiAuthSchemeEnum.BEARER;
+    const skipPreferencesCache = command.requireFreshPreferences ?? false;
 
     const workflowWithPreferences = await this.getWorkflowWithPreferencesUseCase.execute(
       GetWorkflowWithPreferencesCommand.create({

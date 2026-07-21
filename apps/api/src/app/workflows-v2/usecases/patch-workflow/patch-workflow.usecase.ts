@@ -52,6 +52,8 @@ export class PatchWorkflowUsecase {
     const updatedWorkflow = await this.getWorkflowUseCase.execute({
       workflowIdOrInternalId: command.workflowIdOrInternalId,
       user: command.user,
+      // Read-after-write: must reflect the preferences we just persisted.
+      requireFreshPreferences: true,
     });
 
     await this.sendWebhookMessage.execute({
