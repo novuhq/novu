@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useFetchContexts } from '@/hooks/use-fetch-contexts';
+import { isDangerousObjectKey } from '@/utils/context-variable-utils';
 import { LiquidVariable } from '@/utils/parseStepVariables';
 
 const MAX_CONTEXT_DATA_DEPTH = 5;
@@ -7,6 +8,8 @@ const MAX_CONTEXT_DATA_DEPTH = 5;
 function collectDataPaths(obj: Record<string, unknown>, prefix: string, depth = 0): string[] {
   const paths: string[] = [];
   for (const [key, value] of Object.entries(obj)) {
+    if (isDangerousObjectKey(key)) continue;
+
     const path = `${prefix}.${key}`;
     paths.push(path);
     if (depth < MAX_CONTEXT_DATA_DEPTH && value && typeof value === 'object' && !Array.isArray(value)) {

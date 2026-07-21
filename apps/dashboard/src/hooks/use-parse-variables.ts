@@ -40,10 +40,21 @@ export function useParseVariables(
     const newVars = contextTypeVariables.filter((v) => !existingNames.has(v.name));
     if (newVars.length === 0) return result;
 
+    const newVarNames = new Set(newVars.map((v) => v.name));
+
     return {
       ...result,
       variables: [...result.variables, ...newVars],
       primitives: [...result.primitives, ...newVars],
+      isAllowedVariable: (variable) => {
+        const [path] = (variable.aliasFor || variable.name).split('|');
+
+        if (newVarNames.has(path.trim())) {
+          return true;
+        }
+
+        return result.isAllowedVariable(variable);
+      },
     };
   }, [schema, digestStepId, isPayloadSchemaEnabled, previewSchema, contextTypeVariables]);
 

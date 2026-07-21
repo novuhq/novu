@@ -14,6 +14,16 @@
 export const DEFAULT_CONTEXT_VALUE = '';
 export const DEFAULT_CONTEXT_LABEL = 'Default context';
 
+const DANGEROUS_OBJECT_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+
+export function isDangerousObjectKey(key: string): boolean {
+  return DANGEROUS_OBJECT_KEYS.has(key);
+}
+
+function hasDangerousObjectKey(segments: string[]): boolean {
+  return segments.some((segment) => isDangerousObjectKey(segment));
+}
+
 /**
  * Simple context variable validation
  * Valid patterns:
@@ -26,7 +36,10 @@ export function isValidContextVariable(variableName: string): boolean {
   const parts = variableName.split('.');
   if (parts.length < 3) return false;
 
-  const [, , property] = parts;
+  const [, contextType, property, ...dataPath] = parts;
+  if (!contextType || hasDangerousObjectKey([contextType, property, ...dataPath])) {
+    return false;
+  }
 
   // context.<type>.id - no nesting allowed
   if (property === 'id') {
@@ -58,7 +71,7 @@ export function extractVariablePath(liquidOrPath: string): string {
 
 export function buildContextFragmentFromKey(key: string): Record<string, unknown> {
   const [contextType, property, ...dataPath] = key.split('.');
-  if (!contextType || !property) {
+  if (!contextType || !property || hasDangerousObjectKey([contextType, property, ...dataPath])) {
     return {};
   }
 
