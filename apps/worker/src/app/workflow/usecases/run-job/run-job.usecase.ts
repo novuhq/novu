@@ -6,7 +6,9 @@ import {
   FeatureFlagsService,
   GetSubscriberSchedule,
   GetSubscriberScheduleCommand,
+  getEffectiveJobPayload,
   getJobDigest,
+  NotificationPayloadService,
   InMemoryLRUCacheService,
   InMemoryLRUCacheStore,
   Instrument,
@@ -76,7 +78,8 @@ export class RunJob {
     private subscriberRepository: SubscriberRepository,
     private featureFlagsService: FeatureFlagsService,
     private executeBridgeJob: ExecuteBridgeJob,
-    private inMemoryLRUCacheService: InMemoryLRUCacheService
+    private inMemoryLRUCacheService: InMemoryLRUCacheService,
+    private notificationPayloadService: NotificationPayloadService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -162,6 +165,11 @@ export class RunJob {
       if (!notification) {
         throw new PlatformException(`Notification with id ${job._notificationId} not found`);
       }
+
+      const { isPayloadDedupEnabled, digestEvents } = await this.notificationPayloadService.prepareJobExecutionPayload(
+        job,
+        notification
+      );
 
       // Stateless (bridge-URL) jobs carry no persisted workflow — the bridge
       // is the source of truth (`job.step.bridgeUrl`). Every downstream
@@ -288,7 +296,8 @@ export class RunJob {
           // backward compatibility - ternary needed to be removed once the queue renewed
           _subscriberId: job._subscriberId ? job._subscriberId : job.subscriberId,
           jobId: job._id,
-          events: job.digest?.events,
+          events: digestEvents,
+          isPayloadDedupEnabled,
           job,
           tags: notification.tags || [],
           severity: notification.severity,
@@ -633,6 +642,10 @@ export class RunJob {
         currentJob = nextJob;
       } finally {
         if (nextJob) {
+          // Payload-dedup: attachments live on the parent notification's payload
+          // when the job doesn't carry its own. nextJob shares the same
+          // notification as the current workflow execution.
+          nextJob.payload = getEffectiveJobPayload(nextJob, notification);
           await this.storageHelperService.deleteAttachments(nextJob.payload?.attachments);
         }
       }
@@ -718,7 +731,14 @@ export class RunJob {
     };
 
     if (digestKey && digestValue) {
-      jobQuery[`payload.${digestKey}`] = digestValue;
+      // Payload-dedup jobs persist `digest.digestValue`; legacy digest jobs
+      // (created before it was persisted) still carry the value in the trigger
+      // payload, so fall back to matching it there. Without this, a canceled
+      // legacy delayed digest wouldn't find its follower and the chain stalls.
+      (jobQuery as Record<string, unknown>).$or = [
+        { 'digest.digestValue': digestValue },
+        { [`payload.${digestKey}`]: digestValue },
+      ];
     }
 
     return await this.jobRepository.findOne(jobQuery);

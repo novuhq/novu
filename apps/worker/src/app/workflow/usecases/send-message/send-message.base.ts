@@ -107,6 +107,16 @@ export abstract class SendMessageBase extends SendMessageType {
     return this.channelType === ChannelTypeEnum.IN_APP || process.env.STORE_NOTIFICATION_CONTENT === 'true';
   }
 
+  /**
+   * Payload-dedup write policy for a stored message: when enabled, the payload
+   * is not persisted on the message and is resolved from the parent
+   * notification at read time. When off, the channel's payload is persisted as
+   * before. In-app messages keep their own payload and don't use this.
+   */
+  protected payloadToPersist<T>(command: SendMessageChannelCommand, payload: T): T | undefined {
+    return command.isPayloadDedupEnabled ? undefined : payload;
+  }
+
   protected getCompilePayload(compileContext) {
     const { payload, ...rest } = compileContext;
 

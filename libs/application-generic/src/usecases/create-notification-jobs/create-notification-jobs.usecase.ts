@@ -71,7 +71,17 @@ export class CreateNotificationJobs {
 
     const steps = await this.createSteps(command, activeSteps, notification);
 
-    const adhocTriggerJob = this.createATriggerJobIfMissing(steps, command, notification);
+    // Payload-dedup: when enabled, jobs no longer persist the trigger payload.
+    // The notification remains the single source of truth and readers resolve
+    // the payload via `_notificationId`. Toggled off => jobs keep a full copy.
+    const isPayloadDedupEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_PAYLOAD_DEDUP_ENABLED,
+      organization: { _id: command.organizationId },
+      user: { _id: command.userId },
+      defaultValue: false,
+    });
+
+    const adhocTriggerJob = this.createATriggerJobIfMissing(steps, command, notification, isPayloadDedupEnabled);
     if (adhocTriggerJob) {
       jobs.push(adhocTriggerJob);
     }
@@ -81,7 +91,7 @@ export class CreateNotificationJobs {
         throw new PlatformException('Step template was not found');
       }
 
-      jobs.push(this.buildJobFromStep(step, command, notification));
+      jobs.push(this.buildJobFromStep(step, command, notification, isPayloadDedupEnabled));
     }
 
     return jobs;
@@ -183,13 +193,18 @@ export class CreateNotificationJobs {
     }
   }
 
-  private buildJobFromStep(step, command: CreateNotificationJobsCommand, notification): NotificationJob {
+  private buildJobFromStep(
+    step,
+    command: CreateNotificationJobsCommand,
+    notification,
+    isPayloadDedupEnabled = false
+  ): NotificationJob {
     const channel = STEP_TYPE_TO_CHANNEL_TYPE.get(step.template.type);
     const providerId = command.templateProviderIds[channel];
 
     return {
       identifier: command.identifier,
-      payload: command.payload,
+      payload: isPayloadDedupEnabled ? undefined : command.payload,
       overrides: command.overrides,
       tenant: command.tenant,
       step: this.buildStepForJob(step, command),
@@ -267,7 +282,8 @@ export class CreateNotificationJobs {
   private createATriggerJobIfMissing(
     steps: NotificationStepEntity[],
     command: CreateNotificationJobsCommand,
-    notification: NotificationEntity
+    notification: NotificationEntity,
+    isPayloadDedupEnabled = false
   ): NotificationJob | undefined {
     const triggerStepExist = steps.some((step) => step.template.type === StepTypeEnum.TRIGGER);
 
@@ -277,7 +293,7 @@ export class CreateNotificationJobs {
 
     return {
       identifier: command.identifier,
-      payload: command.payload,
+      payload: isPayloadDedupEnabled ? undefined : command.payload,
       overrides: command.overrides,
       tenant: command.tenant,
       step: {

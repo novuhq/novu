@@ -1,7 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { getJobDigest, InstrumentUsecase } from '@novu/application-generic';
-import { JobStatusEnum } from '@novu/dal';
-import { StepTypeEnum } from '@novu/shared';
 
 import { DigestEventsCommand } from './digest-events.command';
 import { GetDigestEvents } from './get-digest-events.usecase';
@@ -12,22 +10,19 @@ export class GetDigestEventsBackoff extends GetDigestEvents {
   public async execute(command: DigestEventsCommand) {
     const { currentJob } = command;
 
-    const { digestKey, digestMeta, digestValue } = getJobDigest(currentJob);
+    const { digestKey, digestValue } = getJobDigest(currentJob);
 
-    const jobs = await this.jobRepository.find(
-      {
-        createdAt: {
-          $gte: currentJob.createdAt,
-        },
-        _templateId: currentJob._templateId,
-        status: JobStatusEnum.COMPLETED,
-        type: StepTypeEnum.TRIGGER,
-        _environmentId: currentJob._environmentId,
-        ...(digestKey && { [`payload.${digestKey}`]: digestValue }),
-        _subscriberId: command._subscriberId,
-      },
-      'payload _id'
-    );
+    // Shared "triggers for this digest value" primitive (matches on the
+    // persisted `digest.digestValue`, payload-independent) — same shape the
+    // regular path uses.
+    const jobs = await this.jobRepository.findDigestEventTriggers({
+      window: { field: 'createdAt', from: new Date(currentJob.createdAt) },
+      templateId: currentJob._templateId,
+      environmentId: currentJob._environmentId,
+      subscriberId: command._subscriberId,
+      digestKey,
+      digestValue,
+    });
 
     return this.filterJobs(currentJob, currentJob.transactionId, jobs);
   }
