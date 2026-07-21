@@ -1,4 +1,4 @@
-import { type ToolContentOverrideProviderId } from '@novu/shared';
+import { getToolProviderPrimaryContentKey, type ToolContentOverrideProviderId } from '@novu/shared';
 import { useMemo } from 'react';
 import { RiAddLine, RiCheckLine, RiListUnordered } from 'react-icons/ri';
 import { LinkButton } from '@/components/primitives/button-link';
@@ -6,19 +6,26 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives
 import { getToolOverrideProviderDisplayName } from './tool-content-source';
 import { getConstraints, getFieldSchemas, getTypeLabel } from './tool-override-field-schema';
 
+const DEFAULT_CONTENT_CHIP_CLASS =
+  'text-label-2xs text-foreground-600 bg-neutral-alpha-100 inline-flex h-4 select-none items-center rounded-sm px-1 font-medium';
+
 type SupportedField = {
   key: string;
   typeLabel: string;
   description?: string;
   constraints: string[];
+  isDefaultContent: boolean;
 };
 
 function buildToolOverrideSupportedFields(providerId: ToolContentOverrideProviderId): SupportedField[] {
+  const primaryKey = getToolProviderPrimaryContentKey(providerId);
+
   return Object.entries(getFieldSchemas(providerId)).map(([key, fieldSchema]) => ({
     key,
     typeLabel: getTypeLabel(fieldSchema),
     description: fieldSchema.description,
     constraints: getConstraints(fieldSchema),
+    isDefaultContent: key === primaryKey,
   }));
 }
 
@@ -76,6 +83,14 @@ export function ToolOverrideSupportedFields({
                 <div className="flex w-full items-center gap-1.5">
                   <code className="text-code-xs text-text-strong">{field.key}</code>
                   <span className="text-text-soft text-[11px]">{field.typeLabel}</span>
+                  {field.isDefaultContent && (
+                    <span
+                      className={DEFAULT_CONTENT_CHIP_CLASS}
+                      title="Falls back to your default message when omitted from the override."
+                    >
+                      DEFAULT CONTENT
+                    </span>
+                  )}
                   {isUsed ? (
                     <span className="text-text-soft ml-auto flex items-center gap-0.5 text-[11px]">
                       <RiCheckLine className="size-3" />
