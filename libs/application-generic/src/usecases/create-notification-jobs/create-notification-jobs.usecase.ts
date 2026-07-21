@@ -25,6 +25,7 @@ import {
 } from '../../services/analytic-logs';
 import { LogRepository } from '../../services/analytic-logs/log.repository';
 import { FeatureFlagsService } from '../../services/feature-flags';
+import { type LeanNotificationStep, toLeanStep } from '../../services/step-template-hydration.service';
 import { getNestedValue } from '../../utils';
 import { PlatformException } from '../../utils/exceptions';
 import { DigestFilterSteps, DigestFilterStepsCommand } from '../digest-filter-steps';
@@ -71,7 +72,28 @@ export class CreateNotificationJobs {
 
     const steps = await this.createSteps(command, activeSteps, notification);
 
-    const adhocTriggerJob = this.createATriggerJobIfMissing(steps, command, notification);
+    // Both dedup flags shrink what a job persists and are read once here (the
+    // worker's read paths handle either shape, so both are forward-only and safe
+    // to toggle off): payload-dedup drops the per-job trigger payload (resolved
+    // from the notification via `_notificationId`); job-step-dedup persists a
+    // lean step (ids/filters/metadata + a `{ _id, type }` template stub) that
+    // the worker rehydrates from the live workflow at execution time.
+    const [isPayloadDedupEnabled, isJobStepDedupEnabled] = await Promise.all([
+      this.featureFlagsService.getFlag({
+        key: FeatureFlagsKeysEnum.IS_PAYLOAD_DEDUP_ENABLED,
+        organization: { _id: command.organizationId },
+        user: { _id: command.userId },
+        defaultValue: false,
+      }),
+      this.featureFlagsService.getFlag({
+        key: FeatureFlagsKeysEnum.IS_JOB_STEP_DEDUP_ENABLED,
+        organization: { _id: command.organizationId },
+        user: { _id: command.userId },
+        defaultValue: false,
+      }),
+    ]);
+
+    const adhocTriggerJob = this.createATriggerJobIfMissing(steps, command, notification, isPayloadDedupEnabled);
     if (adhocTriggerJob) {
       jobs.push(adhocTriggerJob);
     }
@@ -81,7 +103,7 @@ export class CreateNotificationJobs {
         throw new PlatformException('Step template was not found');
       }
 
-      jobs.push(this.buildJobFromStep(step, command, notification));
+      jobs.push(this.buildJobFromStep(step, command, notification, isPayloadDedupEnabled, isJobStepDedupEnabled));
     }
 
     return jobs;
@@ -183,16 +205,22 @@ export class CreateNotificationJobs {
     }
   }
 
-  private buildJobFromStep(step, command: CreateNotificationJobsCommand, notification): NotificationJob {
+  private buildJobFromStep(
+    step: NotificationStepEntity,
+    command: CreateNotificationJobsCommand,
+    notification: NotificationEntity,
+    isPayloadDedupEnabled: boolean,
+    isJobStepDedupEnabled: boolean
+  ): NotificationJob {
     const channel = STEP_TYPE_TO_CHANNEL_TYPE.get(step.template.type);
     const providerId = command.templateProviderIds[channel];
 
     return {
       identifier: command.identifier,
-      payload: command.payload,
+      payload: isPayloadDedupEnabled ? undefined : command.payload,
       overrides: command.overrides,
       tenant: command.tenant,
-      step: this.buildStepForJob(step, command),
+      step: this.buildStepForJob(step, command, isJobStepDedupEnabled),
       transactionId: command.transactionId,
       _notificationId: notification._id,
       _environmentId: command.environmentId,
@@ -257,17 +285,35 @@ export class CreateNotificationJobs {
     return {};
   }
 
-  private buildStepForJob(step, command: CreateNotificationJobsCommand) {
-    return {
-      ...step,
+  private buildStepForJob(
+    step: NotificationStepEntity,
+    command: CreateNotificationJobsCommand,
+    isJobStepDedupEnabled: boolean
+  ): NotificationStepEntity {
+    if (!isJobStepDedupEnabled) {
+      return {
+        ...step,
+        ...(command.bridgeUrl ? { bridgeUrl: command.bridgeUrl } : {}),
+      };
+    }
+
+    const leanStep: LeanNotificationStep = {
+      ...toLeanStep(step),
+      ...(step.variants ? { variants: step.variants.map(toLeanStep) } : {}),
       ...(command.bridgeUrl ? { bridgeUrl: command.bridgeUrl } : {}),
     };
+
+    // `job.step` is a Mongo Mixed field; under job-step-dedup we intentionally
+    // persist this lean projection and rehydrate the full template at execution
+    // time (StepTemplateHydrationService).
+    return leanStep as unknown as NotificationStepEntity;
   }
 
   private createATriggerJobIfMissing(
     steps: NotificationStepEntity[],
     command: CreateNotificationJobsCommand,
-    notification: NotificationEntity
+    notification: NotificationEntity,
+    isPayloadDedupEnabled = false
   ): NotificationJob | undefined {
     const triggerStepExist = steps.some((step) => step.template.type === StepTypeEnum.TRIGGER);
 
@@ -277,7 +323,7 @@ export class CreateNotificationJobs {
 
     return {
       identifier: command.identifier,
-      payload: command.payload,
+      payload: isPayloadDedupEnabled ? undefined : command.payload,
       overrides: command.overrides,
       tenant: command.tenant,
       step: {

@@ -140,6 +140,30 @@ export enum FeatureFlagsKeysEnum {
    * organization for the duration of the rotation, then disable.
    */
   IS_MULTIPLE_SECRET_KEYS_ALLOWED = 'IS_MULTIPLE_SECRET_KEYS_ALLOWED',
+  /**
+   * Stop duplicating the trigger payload onto every job and every non-in-app
+   * message. When enabled, new jobs and email/SMS/push messages no longer
+   * persist `payload`; readers resolve it from the parent notification via
+   * `_notificationId`. In-app messages keep their payload for legacy feed
+   * filtering. Read paths handle both shapes regardless of this flag, so it can
+   * be toggled off at any time (forward-only, no data migration). Create the
+   * boolean in LaunchDarkly for cloud, or set `IS_PAYLOAD_DEDUP_ENABLED` when
+   * self-hosted.
+   */
+  IS_PAYLOAD_DEDUP_ENABLED = 'IS_PAYLOAD_DEDUP_ENABLED',
+  /**
+   * Stop embedding the fully populated workflow step (message template
+   * `content`, `controls`, `cta`, `variables`, variants' templates, `output`
+   * schemas, etc.) onto every job's `step`. When enabled, new jobs persist a
+   * lean step (ids, filters, metadata, a `{ _id, type }` template stub) and the
+   * worker rehydrates the full template at execution time (see
+   * StepTemplateHydrationService for the resolution/fallback order). Jobs
+   * written while the flag is off (and all pre-existing jobs) carry the full
+   * snapshot and skip hydration entirely, so the flag is forward-only and safe
+   * to toggle off at any time (no data migration). Create the boolean in
+   * LaunchDarkly for cloud, or set `IS_JOB_STEP_DEDUP_ENABLED` when self-hosted.
+   */
+  IS_JOB_STEP_DEDUP_ENABLED = 'IS_JOB_STEP_DEDUP_ENABLED',
   /** Enable the Tool channel (PagerDuty, Opsgenie, and custom webhooks). */
   IS_TOOL_CHANNEL_ENABLED = 'IS_TOOL_CHANNEL_ENABLED',
   /**
