@@ -9,6 +9,7 @@ import {
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
+  FeatureFlagsKeysEnum,
   IOverridePreferencesSources,
   IPreferenceChannels,
   IPreferenceOverride,
@@ -20,9 +21,21 @@ import {
   StepTypeEnum,
 } from '@novu/shared';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
-import { buildSubscriberKey, CachedResponse } from '../../services';
+import { buildSubscriberKey, CachedResponse, FeatureFlagsService } from '../../services';
 import { GetPreferences } from '../get-preferences';
 import { GetSubscriberTemplatePreferenceCommand } from './get-subscriber-template-preference.command';
+import {
+  buildDefaultPreferenceChannels,
+  filteredPreference,
+  filterPreferenceChannelsByFeatureFlags,
+} from './preference-channels.utils';
+
+export {
+  buildDefaultPreferenceChannels,
+  filteredPreference,
+  filterPreferenceChannelsByFeatureFlags,
+  filterWorkflowPreferencesByFeatureFlags,
+} from './preference-channels.utils';
 
 const PRIORITY_ORDER = [
   PreferenceOverrideSourceEnum.TEMPLATE,
@@ -37,14 +50,21 @@ export class GetSubscriberTemplatePreference {
     private subscriberRepository: SubscriberRepository,
     private workflowOverrideRepository: WorkflowOverrideRepository,
     private tenantRepository: TenantRepository,
-    private getPreferences: GetPreferences
+    private getPreferences: GetPreferences,
+    private featureFlagsService: FeatureFlagsService
   ) {}
 
   @InstrumentUsecase()
   async execute(command: GetSubscriberTemplatePreferenceCommand): Promise<ISubscriberPreferenceResponse> {
     const subscriber: Pick<SubscriberEntity, '_id'> | null = command.subscriber ?? (await this.getSubscriber(command));
 
-    const initialChannels = await this.getChannels(command);
+    const isToolChannelEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_TOOL_CHANNEL_ENABLED,
+      defaultValue: false,
+      organization: { _id: command.organizationId },
+    });
+
+    const initialChannels = await this.getChannels(command, isToolChannelEnabled);
 
     const workflowOverride = await this.getWorkflowOverride(command);
 
@@ -71,7 +91,7 @@ export class GetSubscriberTemplatePreference {
       template,
       preference: {
         enabled: subscriberWorkflowPreference.enabled,
-        channels,
+        channels: filterPreferenceChannelsByFeatureFlags(channels, { isToolChannelEnabled }),
         overrides,
       },
       type: subscriberWorkflowPreference.type,
@@ -146,7 +166,10 @@ export class GetSubscriberTemplatePreference {
   }
 
   @Instrument()
-  private async getChannels(command: GetSubscriberTemplatePreferenceCommand): Promise<IPreferenceChannels> {
+  private async getChannels(
+    command: GetSubscriberTemplatePreferenceCommand,
+    isToolChannelEnabled: boolean
+  ): Promise<IPreferenceChannels> {
     let includedChannels: ChannelTypeEnum[];
     if (command.includeInactiveChannels === true) {
       includedChannels = Object.values(ChannelTypeEnum);
@@ -155,14 +178,7 @@ export class GetSubscriberTemplatePreference {
     }
 
     const initialChannels = filteredPreference(
-      {
-        email: true,
-        sms: true,
-        in_app: true,
-        chat: true,
-        push: true,
-        tool: true,
-      },
+      buildDefaultPreferenceChannels({ isToolChannelEnabled }),
       includedChannels
     );
 
@@ -309,12 +325,6 @@ export function overridePreferences(
 
   return result;
 }
-
-export const filteredPreference = (preferences: IPreferenceChannels, filterKeys: string[]): IPreferenceChannels =>
-  Object.entries(preferences).reduce(
-    (obj, [key, value]) => (filterKeys.includes(key) ? { ...obj, [key]: value } : obj),
-    {}
-  );
 
 export function mapTemplateConfiguration(template: NotificationTemplateEntity): ITemplateConfiguration {
   return {

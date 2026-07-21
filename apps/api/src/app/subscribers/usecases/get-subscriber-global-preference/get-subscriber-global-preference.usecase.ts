@@ -1,8 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import {
-  buildSubscriberKey,
-  CachedResponse,
+  buildDefaultPreferenceChannels,
+  FeatureFlagsService,
   filteredPreference,
+  filterPreferenceChannelsByFeatureFlags,
   GetPreferences,
   Instrument,
   InstrumentUsecase,
@@ -13,7 +14,7 @@ import {
   SubscriberEntity,
   SubscriberRepository,
 } from '@novu/dal';
-import { ChannelTypeEnum, IPreferenceChannels, Schedule } from '@novu/shared';
+import { ChannelTypeEnum, FeatureFlagsKeysEnum, IPreferenceChannels, Schedule } from '@novu/shared';
 import { GetSubscriberGlobalPreferenceCommand } from './get-subscriber-global-preference.command';
 
 @Injectable()
@@ -21,7 +22,8 @@ export class GetSubscriberGlobalPreference {
   constructor(
     private subscriberRepository: SubscriberRepository,
     private getPreferences: GetPreferences,
-    private notificationTemplateRepository: NotificationTemplateRepository
+    private notificationTemplateRepository: NotificationTemplateRepository,
+    private featureFlagsService: FeatureFlagsService
   ) {}
 
   @InstrumentUsecase()
@@ -29,6 +31,12 @@ export class GetSubscriberGlobalPreference {
     command: GetSubscriberGlobalPreferenceCommand
   ): Promise<{ preference: { enabled: boolean; channels: IPreferenceChannels; schedule?: Schedule } }> {
     const subscriber = command.subscriber ?? (await this.getSubscriber(command));
+
+    const isToolChannelEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_TOOL_CHANNEL_ENABLED,
+      defaultValue: false,
+      organization: { _id: command.organizationId },
+    });
 
     const activeChannels = await this.getActiveChannels(command);
 
@@ -40,7 +48,10 @@ export class GetSubscriberGlobalPreference {
       subscriberGlobalPreference: command.subscriberGlobalPreference,
     });
 
-    const channelsWithDefaults = this.buildDefaultPreferences(subscriberGlobalPreference.channels);
+    const channelsWithDefaults = this.buildDefaultPreferences(
+      subscriberGlobalPreference.channels,
+      isToolChannelEnabled
+    );
 
     let channels: IPreferenceChannels;
     if (command.includeInactiveChannels === true) {
@@ -52,7 +63,7 @@ export class GetSubscriberGlobalPreference {
     return {
       preference: {
         enabled: subscriberGlobalPreference.enabled,
-        channels,
+        channels: filterPreferenceChannelsByFeatureFlags(channels, { isToolChannelEnabled }),
         schedule: subscriberGlobalPreference.schedule,
       },
     };
@@ -120,15 +131,8 @@ export class GetSubscriberGlobalPreference {
   }
 
   // adds default state for missing channels
-  private buildDefaultPreferences(preference: IPreferenceChannels) {
-    const defaultPreference: IPreferenceChannels = {
-      email: true,
-      sms: true,
-      in_app: true,
-      chat: true,
-      push: true,
-      tool: true,
-    };
+  private buildDefaultPreferences(preference: IPreferenceChannels, isToolChannelEnabled: boolean) {
+    const defaultPreference = buildDefaultPreferenceChannels({ isToolChannelEnabled });
 
     return { ...defaultPreference, ...preference };
   }

@@ -49,7 +49,8 @@ export class SubscriberPreferenceChannels {
 
   @ApiPropertyOptional({
     type: Boolean,
-    description: 'Tool channel preference',
+    description:
+      'Tool channel preference. Only included in API responses when the IS_TOOL_CHANNEL_ENABLED feature flag is on.',
     example: true,
   })
   @IsBoolean()

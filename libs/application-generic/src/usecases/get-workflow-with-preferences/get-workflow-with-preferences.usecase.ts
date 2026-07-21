@@ -1,9 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { NotificationTemplateEntity } from '@novu/dal';
-import { buildWorkflowPreferencesFromPreferenceChannels, DEFAULT_WORKFLOW_PREFERENCES } from '@novu/shared';
+import {
+  buildWorkflowPreferencesFromPreferenceChannels,
+  DEFAULT_WORKFLOW_PREFERENCES,
+  FeatureFlagsKeysEnum,
+} from '@novu/shared';
 import { WorkflowWithPreferencesResponseDto } from '../../dtos/get-workflow-with-preferences.dto';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
+import { FeatureFlagsService } from '../../services';
 import { GetPreferences, GetPreferencesCommand } from '../get-preferences';
+import {
+  filterPreferenceChannelsByFeatureFlags,
+  filterWorkflowPreferencesByFeatureFlags,
+} from '../get-subscriber-template-preference/preference-channels.utils';
 import { GetWorkflowByIdsUseCase } from '../workflow';
 import { GetWorkflowWithPreferencesCommand } from './get-workflow-with-preferences.command';
 
@@ -11,7 +20,8 @@ import { GetWorkflowWithPreferencesCommand } from './get-workflow-with-preferenc
 export class GetWorkflowWithPreferencesUseCase {
   constructor(
     private getWorkflowByIdsUseCase: GetWorkflowByIdsUseCase,
-    private getPreferences: GetPreferences
+    private getPreferences: GetPreferences,
+    private featureFlagsService: FeatureFlagsService
   ) {}
 
   @InstrumentUsecase()
@@ -25,20 +35,33 @@ export class GetWorkflowWithPreferencesUseCase {
       includeUpdatedBy: true,
     });
 
+    const isToolChannelEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_TOOL_CHANNEL_ENABLED,
+      defaultValue: false,
+      organization: { _id: command.organizationId },
+    });
+
     const workflowPreferences = await this.getWorkflowPreferences(command, workflowEntity);
 
     /**
      * @deprecated - use `userPreferences` and `defaultPreferences` instead
      */
-    const preferenceSettings = workflowPreferences
-      ? GetPreferences.mapWorkflowPreferencesToChannelPreferences(workflowPreferences.preferences)
-      : workflowEntity.preferenceSettings;
-    const userPreferences = workflowPreferences
-      ? workflowPreferences.source.USER_WORKFLOW
-      : buildWorkflowPreferencesFromPreferenceChannels(workflowEntity.critical, workflowEntity.preferenceSettings);
-    const defaultPreferences = workflowPreferences
-      ? workflowPreferences.source.WORKFLOW_RESOURCE
-      : DEFAULT_WORKFLOW_PREFERENCES;
+    const preferenceSettings = filterPreferenceChannelsByFeatureFlags(
+      workflowPreferences
+        ? GetPreferences.mapWorkflowPreferencesToChannelPreferences(workflowPreferences.preferences)
+        : workflowEntity.preferenceSettings,
+      { isToolChannelEnabled }
+    );
+    const userPreferences = filterWorkflowPreferencesByFeatureFlags(
+      workflowPreferences
+        ? workflowPreferences.source.USER_WORKFLOW
+        : buildWorkflowPreferencesFromPreferenceChannels(workflowEntity.critical, workflowEntity.preferenceSettings),
+      { isToolChannelEnabled }
+    );
+    const defaultPreferences = filterWorkflowPreferencesByFeatureFlags(
+      workflowPreferences?.source.WORKFLOW_RESOURCE ?? DEFAULT_WORKFLOW_PREFERENCES,
+      { isToolChannelEnabled }
+    );
 
     return {
       ...workflowEntity,

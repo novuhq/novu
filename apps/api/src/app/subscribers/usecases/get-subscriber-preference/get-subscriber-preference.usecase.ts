@@ -1,7 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import {
+  buildDefaultPreferenceChannels,
   FeatureFlagsService,
   filteredPreference,
+  filterPreferenceChannelsByFeatureFlags,
   GetPreferences,
   GetPreferencesResponseDto,
   InMemoryLRUCacheService,
@@ -115,11 +117,18 @@ export class GetSubscriberPreference {
       return acc;
     }, {});
 
+    const isToolChannelEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_TOOL_CHANNEL_ENABLED,
+      defaultValue: false,
+      organization: { _id: command.organizationId },
+    });
+
     const workflowPreferences = this.calculateWorkflowPreferences(
       workflowList,
       workflowPreferenceSets,
       subscriberGlobalPreference,
-      command.includeInactiveChannels
+      command.includeInactiveChannels,
+      isToolChannelEnabled
     );
 
     const nonCriticalWorkflowPreferences = workflowPreferences.filter(
@@ -148,7 +157,8 @@ export class GetSubscriberPreference {
     workflowList: NotificationTemplateEntity[],
     workflowPreferenceSets: Record<string, PreferenceSet>,
     subscriberGlobalPreference: PreferencesEntity | null,
-    includeInactiveChannels: boolean
+    includeInactiveChannels: boolean,
+    isToolChannelEnabled: boolean
   ): ISubscriberPreferenceResponse[] {
     /*
      * Process all workflows synchronously. filterActive caps at 200 workflows and the
@@ -171,13 +181,7 @@ export class GetSubscriberPreference {
         const includedChannels = this.getChannels(workflow, includeInactiveChannels);
 
         const initialChannels = filteredPreference(
-          {
-            email: true,
-            sms: true,
-            in_app: true,
-            chat: true,
-            push: true,
-          },
+          buildDefaultPreferenceChannels({ isToolChannelEnabled }),
           includedChannels
         );
 
@@ -185,7 +189,7 @@ export class GetSubscriberPreference {
 
         const preference: ISubscriberPreferenceResponse = {
           preference: {
-            channels,
+            channels: filterPreferenceChannelsByFeatureFlags(channels, { isToolChannelEnabled }),
             enabled: true,
             overrides,
             ...(preferences.subscriberWorkflowPreference?.updatedAt && {

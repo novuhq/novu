@@ -1,5 +1,11 @@
 import { ChannelTypeEnum } from '@novu/shared';
-import { filteredPreference, overridePreferences } from './get-subscriber-template-preference.usecase';
+import { overridePreferences } from './get-subscriber-template-preference.usecase';
+import {
+  buildDefaultPreferenceChannels,
+  filteredPreference,
+  filterPreferenceChannelsByFeatureFlags,
+  filterWorkflowPreferencesByFeatureFlags,
+} from './preference-channels.utils';
 
 describe('overridePreferences', () => {
   beforeEach(() => {});
@@ -153,5 +159,102 @@ describe('filteredPreference', () => {
 
     expect(Object.keys(channelPreferences).length).toEqual(5);
     expect(channelPreferences).toEqual(expectedPreferenceResult);
+  });
+});
+
+describe('buildDefaultPreferenceChannels', () => {
+  it('includes tool when the tool channel flag is enabled', () => {
+    expect(buildDefaultPreferenceChannels({ isToolChannelEnabled: true })).toEqual({
+      email: true,
+      sms: true,
+      in_app: true,
+      chat: true,
+      push: true,
+      tool: true,
+    });
+  });
+
+  it('omits tool when the tool channel flag is disabled', () => {
+    expect(buildDefaultPreferenceChannels({ isToolChannelEnabled: false })).toEqual({
+      email: true,
+      sms: true,
+      in_app: true,
+      chat: true,
+      push: true,
+    });
+  });
+});
+
+describe('filterPreferenceChannelsByFeatureFlags', () => {
+  const channels = {
+    email: true,
+    sms: false,
+    in_app: true,
+    chat: true,
+    push: true,
+    tool: true,
+  };
+
+  it('keeps tool when the tool channel flag is enabled', () => {
+    expect(filterPreferenceChannelsByFeatureFlags(channels, { isToolChannelEnabled: true })).toEqual(channels);
+  });
+
+  it('omits tool when the tool channel flag is disabled', () => {
+    expect(filterPreferenceChannelsByFeatureFlags(channels, { isToolChannelEnabled: false })).toEqual({
+      email: true,
+      sms: false,
+      in_app: true,
+      chat: true,
+      push: true,
+    });
+  });
+
+  it('returns channels unchanged when tool is already absent and the flag is disabled', () => {
+    const withoutTool = {
+      email: true,
+      sms: true,
+      in_app: true,
+      chat: true,
+      push: true,
+    };
+
+    expect(filterPreferenceChannelsByFeatureFlags(withoutTool, { isToolChannelEnabled: false })).toEqual(withoutTool);
+  });
+});
+
+describe('filterWorkflowPreferencesByFeatureFlags', () => {
+  const workflowPreferences = {
+    all: { enabled: true, readOnly: false },
+    channels: {
+      email: { enabled: true },
+      sms: { enabled: true },
+      in_app: { enabled: true },
+      chat: { enabled: true },
+      push: { enabled: true },
+      tool: { enabled: true },
+    },
+  };
+
+  it('keeps tool when the tool channel flag is enabled', () => {
+    expect(filterWorkflowPreferencesByFeatureFlags(workflowPreferences, { isToolChannelEnabled: true })).toEqual(
+      workflowPreferences
+    );
+  });
+
+  it('omits tool from channels when the tool channel flag is disabled', () => {
+    expect(filterWorkflowPreferencesByFeatureFlags(workflowPreferences, { isToolChannelEnabled: false })).toEqual({
+      all: { enabled: true, readOnly: false },
+      channels: {
+        email: { enabled: true },
+        sms: { enabled: true },
+        in_app: { enabled: true },
+        chat: { enabled: true },
+        push: { enabled: true },
+      },
+    });
+  });
+
+  it('returns null when preferences are null', () => {
+    expect(filterWorkflowPreferencesByFeatureFlags(null, { isToolChannelEnabled: false })).toBeNull();
   });
 });

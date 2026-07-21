@@ -140,7 +140,13 @@ export enum FeatureFlagsKeysEnum {
    * organization for the duration of the rotation, then disable.
    */
   IS_MULTIPLE_SECRET_KEYS_ALLOWED = 'IS_MULTIPLE_SECRET_KEYS_ALLOWED',
-  /** Enable the Tool channel (PagerDuty, Opsgenie, and custom webhooks). */
+  /**
+   * Enable the Tool channel (PagerDuty, Opsgenie, and custom webhooks).
+   * When off, preference API responses omit the `tool` channel property
+   * (`SubscriberPreferenceChannels.tool` / `IPreferenceChannels.tool`).
+   * Create the boolean in LaunchDarkly for cloud, or set `IS_TOOL_CHANNEL_ENABLED`
+   * / `VITE_IS_TOOL_CHANNEL_ENABLED` when self-hosted.
+   */
   IS_TOOL_CHANNEL_ENABLED = 'IS_TOOL_CHANNEL_ENABLED',
   /**
    * Enable the Tool webhook provider in the integrations catalog. Keep off until
