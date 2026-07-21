@@ -1,9 +1,8 @@
 import { NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { CreateOrUpdateSubscriberCommand, CreateOrUpdateSubscriberUseCase } from '@novu/application-generic';
 import { SubscriberRepository } from '@novu/dal';
-import { CONNECT_SUBSCRIBER_PREFIX } from '@novu/shared';
 
-interface EnsureConnectDashboardSubscriberParams {
+interface SubscriberLookupParams {
   subscriberId: string;
   environmentId: string;
   organizationId: string;
@@ -12,28 +11,37 @@ interface EnsureConnectDashboardSubscriberParams {
 }
 
 /**
- * Ensures the subscriber exists before creating a channel connection or
- * starting OAuth. Dashboard Connect flows pass `connect:<userId>` ids that
- * may not be provisioned yet — auto-create those on demand. All other
- * subscriber ids must already exist.
+ * Throws when the subscriber does not exist. Used by channel-connection create
+ * so API callers cannot bind credentials to a missing subscriber id.
  */
-export async function ensureConnectDashboardSubscriber({
+export async function assertSubscriberExists({
+  subscriberId,
+  environmentId,
+  subscriberRepository,
+}: Pick<SubscriberLookupParams, 'subscriberId' | 'environmentId' | 'subscriberRepository'>): Promise<void> {
+  const existingSubscriber = await subscriberRepository.findBySubscriberId(environmentId, subscriberId);
+
+  if (!existingSubscriber) {
+    throw new NotFoundException(`Subscriber not found: ${subscriberId}`);
+  }
+}
+
+/**
+ * Provisions a missing subscriber for dashboard OAuth URL generation, where the
+ * logged-in user's id is used as subscriberId (same as workflow testing) and
+ * may not exist yet.
+ */
+export async function ensureSubscriberProvisioned({
   subscriberId,
   environmentId,
   organizationId,
   subscriberRepository,
   createOrUpdateSubscriber,
-}: EnsureConnectDashboardSubscriberParams): Promise<void> {
+}: SubscriberLookupParams): Promise<void> {
   const existingSubscriber = await subscriberRepository.findBySubscriberId(environmentId, subscriberId);
 
   if (existingSubscriber) {
     return;
-  }
-
-  const isConnectDashboardSubscriber = subscriberId.startsWith(`${CONNECT_SUBSCRIBER_PREFIX}:`);
-
-  if (!isConnectDashboardSubscriber) {
-    throw new NotFoundException(`Subscriber not found: ${subscriberId}`);
   }
 
   const created = await createOrUpdateSubscriber.execute(

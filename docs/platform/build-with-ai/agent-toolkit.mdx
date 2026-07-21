@@ -92,8 +92,8 @@ const toolkit = await createNovuAgentToolkit({
   subscriberId: 'user-123',
 });
 
-// toolkit.tools          — OpenAI function tool definitions
-// toolkit.handleToolCall — execute a tool call and return a tool message
+// toolkit.tools - OpenAI function tool definitions
+// toolkit.handleToolCall - execute a tool call and return a tool message
 ```
 ```typescript title="Full example"
 import { createNovuAgentToolkit } from '@novu/agent-toolkit/openai';
@@ -127,8 +127,8 @@ for (const toolCall of response.choices[0].message.tool_calls ?? []) {
 
 The returned `toolkit` provides:
 
-- **`tools`** — Array of OpenAI-compatible function tool definitions.
-- **`handleToolCall(toolCall)`** — Executes a tool call and returns a `\{ role: 'tool', tool_call_id, content \}` message ready to append to the conversation.
+- **`tools`** - Array of OpenAI-compatible function tool definitions.
+- **`handleToolCall(toolCall)`** - Executes a tool call and returns a `\{ role: 'tool', tool_call_id, content \}` message ready to append to the conversation.
 
 </Tab>
   <Tab title="LangChain">
@@ -142,7 +142,7 @@ const toolkit = await createNovuAgentToolkit({
   subscriberId: 'user-123',
 });
 
-// toolkit.tools — DynamicStructuredTool[] ready for LangChain agents
+// toolkit.tools - DynamicStructuredTool[] ready for LangChain agents
 ```
 ```typescript title="Full example"
 import { createNovuAgentToolkit } from '@novu/agent-toolkit/langchain';
@@ -170,7 +170,7 @@ const result = await executor.invoke({ input: 'Notify user-123 about their order
 
 The returned `toolkit` provides:
 
-- **`tools`** — Array of `DynamicStructuredTool` instances that can be passed directly to LangChain agents or executors.
+- **`tools`** - Array of `DynamicStructuredTool` instances that can be passed directly to LangChain agents or executors.
 
 </Tab>
   <Tab title="Vercel AI SDK">
@@ -184,7 +184,7 @@ const toolkit = await createNovuAgentToolkit({
   subscriberId: 'user-123',
 });
 
-// toolkit.tools — ToolSet compatible with generateText / streamText
+// toolkit.tools - ToolSet compatible with generateText / streamText
 ```
 ```typescript title="Full example"
 import { createNovuAgentToolkit } from '@novu/agent-toolkit/ai-sdk';
@@ -206,7 +206,7 @@ const { text } = await generateText({
 
 The returned `toolkit` provides:
 
-- **`tools`** — A `ToolSet` object that can be passed to `generateText`, `streamText`, or other Vercel AI SDK functions.
+- **`tools`** - A `ToolSet` object that can be passed to `generateText`, `streamText`, or other Vercel AI SDK functions.
 
 </Tab>
 </Tabs>
@@ -258,10 +258,10 @@ For example, if you have a workflow with ID `welcome-email`, the toolkit generat
 
 ## Use Cases
 
-- **Customer support agents** — Let an AI agent send order confirmations, shipping updates, or support ticket notifications through Novu workflows.
-- **Internal tooling** — Build Slack bots or internal agents that trigger team notifications, incident alerts, or onboarding workflows.
-- **Preference management** — Allow users to manage their notification preferences through a conversational AI interface.
-- **Multi-channel broadcasting** — Enable agents to send coordinated notifications across email, SMS, push, in-app, and chat from a single tool call.
+- **Customer support agents** - Let an AI agent send order confirmations, shipping updates, or support ticket notifications through Novu workflows.
+- **Internal tooling** - Build Slack bots or internal agents that trigger team notifications, incident alerts, or onboarding workflows.
+- **Preference management** - Allow users to manage their notification preferences through a conversational AI interface.
+- **Multi-channel broadcasting** - Enable agents to send coordinated notifications across email, SMS, push, in-app, and chat from a single tool call.
 
 ## Source Code
 

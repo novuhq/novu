@@ -26,6 +26,10 @@ export class UpdatePreferencesRequestDto {
   readonly push?: boolean;
 
   @IsOptional()
+  @IsBoolean()
+  readonly tool?: boolean;
+
+  @IsOptional()
   @ValidateNested()
   @Type(() => ScheduleDto)
   readonly schedule?: ScheduleDto;

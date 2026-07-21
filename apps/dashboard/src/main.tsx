@@ -45,6 +45,7 @@ import { FeatureFlagsProvider } from './context/feature-flags-provider';
 import { AgentDetailsPage } from './pages/agent-details';
 import { AgentSlackSetupPage } from './pages/agent-slack-setup-page';
 import { AgentTelegramMobileSetupPage } from './pages/agent-telegram-mobile-setup-page';
+import { AgentWhatsAppSignupPage } from './pages/agent-whatsapp-signup-page';
 import { AgentsPage } from './pages/agents';
 import { AgentsSetupPage } from './pages/agents-setup-page';
 import { CliAuthPage } from './pages/cli-auth';
@@ -124,6 +125,13 @@ const router = createBrowserRouter([
         // AuthRoute so unauthenticated visitors are not redirected to sign-in.
         path: ROUTES.AGENT_TELEGRAM_MOBILE_SETUP,
         element: <AgentTelegramMobileSetupPage />,
+      },
+      {
+        // Public, unauthenticated WhatsApp Embedded Signup page opened by
+        // `npx novu connect`. Trust comes from the opaque token in the URL, so
+        // it is mounted outside AuthRoute (keyless CLI users have no session).
+        path: ROUTES.AGENT_WHATSAPP_SIGNUP,
+        element: <AgentWhatsAppSignupPage />,
       },
       {
         // Public, unauthenticated mobile setup page for the Telegram integration

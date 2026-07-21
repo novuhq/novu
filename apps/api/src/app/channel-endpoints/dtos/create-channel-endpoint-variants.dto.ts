@@ -2,11 +2,13 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ApiContextPayload, IsValidContextPayload } from '@novu/application-generic';
 import { ContextPayload, ENDPOINT_TYPES } from '@novu/shared';
 import { Type } from 'class-transformer';
-import { IsDefined, IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsBoolean, IsDefined, IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
 import {
   LineUserEndpointDto,
   MsTeamsChannelEndpointDto,
   MsTeamsUserEndpointDto,
+  OpsgenieIntegrationEndpointDto,
+  PagerDutyServiceEndpointDto,
   PhoneEndpointDto,
   SlackChannelEndpointDto,
   SlackUserEndpointDto,
@@ -35,6 +37,17 @@ class CreateChannelEndpointBaseDto {
   @IsDefined()
   @IsString()
   subscriberId: string;
+
+  @ApiPropertyOptional({
+    description:
+      'When true, the subscriber is created if it does not exist yet (existing subscribers are never modified). ' +
+      'When false or omitted, an unknown subscriberId returns 404.',
+    type: Boolean,
+    default: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  createSubscriberIfMissing?: boolean;
 
   @ApiContextPayload()
   @IsOptional()
@@ -276,4 +289,46 @@ export class CreateLineUserEndpointDto extends CreateChannelEndpointBaseDto {
   @ValidateNested()
   @Type(() => LineUserEndpointDto)
   endpoint: LineUserEndpointDto;
+}
+
+export class CreatePagerDutyServiceEndpointDto extends CreateChannelEndpointBaseDto {
+  @ApiProperty({
+    description: 'Type of channel endpoint',
+    enum: [ENDPOINT_TYPES.PAGERDUTY_SERVICE],
+    example: ENDPOINT_TYPES.PAGERDUTY_SERVICE,
+  })
+  @IsDefined()
+  @IsEnum([ENDPOINT_TYPES.PAGERDUTY_SERVICE])
+  type: typeof ENDPOINT_TYPES.PAGERDUTY_SERVICE;
+
+  @ApiProperty({
+    description:
+      'PagerDuty service endpoint data. The routing key is persisted encrypted on the linked ChannelConnection; the ChannelEndpoint itself carries a lightweight connection reference.',
+    type: PagerDutyServiceEndpointDto,
+  })
+  @IsDefined()
+  @ValidateNested()
+  @Type(() => PagerDutyServiceEndpointDto)
+  endpoint: PagerDutyServiceEndpointDto;
+}
+
+export class CreateOpsgenieIntegrationEndpointDto extends CreateChannelEndpointBaseDto {
+  @ApiProperty({
+    description: 'Type of channel endpoint',
+    enum: [ENDPOINT_TYPES.OPSGENIE_INTEGRATION],
+    example: ENDPOINT_TYPES.OPSGENIE_INTEGRATION,
+  })
+  @IsDefined()
+  @IsEnum([ENDPOINT_TYPES.OPSGENIE_INTEGRATION])
+  type: typeof ENDPOINT_TYPES.OPSGENIE_INTEGRATION;
+
+  @ApiProperty({
+    description:
+      'Opsgenie integration endpoint data. The API key is persisted encrypted on the linked ChannelConnection; the ChannelEndpoint itself carries a lightweight connection reference.',
+    type: OpsgenieIntegrationEndpointDto,
+  })
+  @IsDefined()
+  @ValidateNested()
+  @Type(() => OpsgenieIntegrationEndpointDto)
+  endpoint: OpsgenieIntegrationEndpointDto;
 }

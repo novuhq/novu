@@ -68,4 +68,19 @@ describe('ChannelEndpointSchema', () => {
       })
     ).toBe(false);
   });
+
+  it('should validate Opsgenie endpoints with non-hex GenieKey segments', () => {
+    expect(
+      validateEndpointForTypeFromSchema(ENDPOINT_TYPES.OPSGENIE_INTEGRATION, {
+        apiKey: 'abcdefg-a25a-4652-883c-73703b12345',
+        region: 'us',
+      })
+    ).toBe(true);
+    expect(
+      validateEndpointForTypeFromSchema(ENDPOINT_TYPES.OPSGENIE_INTEGRATION, {
+        apiKey: 'not-a-uuid',
+        region: 'us',
+      })
+    ).toBe(false);
+  });
 });

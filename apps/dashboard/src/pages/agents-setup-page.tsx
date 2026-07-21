@@ -25,11 +25,11 @@ import { useOnboardingProvisioningActive, useOnboardingProvisioningDismiss } fro
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { useUpdateProductUseCases } from '@/hooks/use-update-product-use-cases';
 import { AGENT_TEMPLATE_ID_PARAM, readActiveAgentTemplateId } from '@/utils/agent-template-identity';
+import { trackAgentsUsecaseSelected } from '@/utils/agents-org-funnel';
 import { isAbsoluteUrl } from '@/utils/apps';
 import { clearPersistedCliOnboardingSessionId } from '@/utils/cli-onboarding-identity';
 import { getPostOnboardingRoute, withOnboardingSource } from '@/utils/onboarding-redirect';
 import { clearPendingProductType, readPendingProductType } from '@/utils/product-type-pending';
-import { trackAgentsUsecaseSelected } from '@/utils/agents-org-funnel';
 import { AGENT_DETAILS_DEFAULT_TAB, buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 

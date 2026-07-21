@@ -52,8 +52,8 @@ You can create both UI-managed steps and code-managed steps within the same work
     | `--out <path>` | string | from config or `./novu` | Directory containing handlers |
     | `--workflow <id>` | string (repeatable) | all | Deploy only steps for specific workflow(s) |
     | `--step <id>` | string (repeatable) | all | Deploy only a specific step within a workflow |
-    | `--template <path>` | string | — | Path to a React Email template; scaffolds a React Email email handler if the step file doesn't exist. Requires `--workflow` and `--step` (single values each). |
-    | `--bundle-out-dir [path]` | string or boolean | — | Write bundle artifacts to disk (debug mode, skips minification) |
+    | `--template <path>` | string | - | Path to a React Email template; scaffolds a React Email email handler if the step file doesn't exist. Requires `--workflow` and `--step` (single values each). |
+    | `--bundle-out-dir [path]` | string or boolean | - | Write bundle artifacts to disk (debug mode, skips minification) |
     | `--dry-run` | boolean | `false` | Bundle without deploying |
 
     The CLI will perform the following:

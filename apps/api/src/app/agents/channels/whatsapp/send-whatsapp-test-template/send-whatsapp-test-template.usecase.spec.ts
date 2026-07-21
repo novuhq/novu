@@ -11,7 +11,7 @@ const ENV_ID = 'env-id';
 const ORG_ID = 'org-id';
 const AGENT_ID = 'agent-mongo-id';
 const INTEGRATION_ID = 'integration-mongo-id';
-const SUBSCRIBER_ID = 'connect:user-123';
+const SUBSCRIBER_ID = 'user-123';
 
 function buildCommand(overrides: Partial<SendWhatsAppTestTemplateCommand> = {}) {
   return SendWhatsAppTestTemplateCommand.create({
