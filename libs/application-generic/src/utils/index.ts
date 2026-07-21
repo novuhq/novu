@@ -32,6 +32,7 @@ export * from './object';
 export * from './parse-payload-schema';
 export * from './parse-step-variables';
 export * from './payload';
+export * from './provider-overrides';
 export * from './safe-set-path';
 export * from './sanitize-control-values';
 export * from './shorten-environment-name';

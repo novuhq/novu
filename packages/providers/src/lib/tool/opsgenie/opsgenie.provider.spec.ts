@@ -1,7 +1,25 @@
+import { TOOL_PROVIDER_OVERRIDE_KEYS, ToolProviderIdEnum } from '@novu/shared';
 import * as safeOutboundHttp from '@novu/shared/utils/safe-outbound-http';
 import { ENDPOINT_TYPES, OpsgenieIntegrationData } from '@novu/stateless';
 import { expect, test, vi } from 'vitest';
 import { OpsgenieProvider } from './opsgenie.provider';
+
+/** Keys the provider maps onto the Alert API — must stay ⊆ the shared override inventory. */
+const OPSGENIE_MAPPED_OVERRIDE_KEYS = [
+  'message',
+  'alias',
+  'description',
+  'source',
+  'entity',
+  'user',
+  'note',
+  'priority',
+  'tags',
+  'responders',
+  'visibleTo',
+  'actions',
+  'details',
+] as const;
 
 const mockResponse = (requestId = 'req-1') => ({
   statusCode: 202,
@@ -212,4 +230,33 @@ test('folds unknown bridge extras into details', async () => {
   });
 
   safeOutboundSpy.mockRestore();
+});
+
+test('sends actions as a top-level Create Alert field', async () => {
+  const safeOutboundSpy = vi.spyOn(safeOutboundHttp, 'safeOutboundJsonRequest').mockResolvedValue(mockResponse());
+
+  const provider = new OpsgenieProvider();
+  await provider.sendMessage(
+    { content: 'alert', channelData: channelData('og-actions') },
+    {
+      actions: ['Restart', 'Acknowledge'],
+      service: 'billing',
+    }
+  );
+
+  const call = safeOutboundSpy.mock.calls[0][0];
+  const body = JSON.parse(call.body as string);
+  expect(body.actions).toEqual(['Restart', 'Acknowledge']);
+  expect(body.details).toEqual({ service: 'billing' });
+  expect(body.details).not.toHaveProperty('actions');
+
+  safeOutboundSpy.mockRestore();
+});
+
+test('mapped Alert API override keys stay inside the shared override inventory', () => {
+  const inventory = new Set(TOOL_PROVIDER_OVERRIDE_KEYS[ToolProviderIdEnum.Opsgenie]);
+
+  for (const key of OPSGENIE_MAPPED_OVERRIDE_KEYS) {
+    expect(inventory.has(key), `mapped key "${key}" missing from TOOL_PROVIDER_OVERRIDE_KEYS`).toBe(true);
+  }
 });

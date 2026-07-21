@@ -14,6 +14,8 @@ import {
   InstrumentUsecase,
   NotificationPayloadService,
   PinoLogger,
+  stitchProviderOverridesFromDocs,
+  withStitchedProviderOverrides,
 } from '@novu/application-generic';
 import {
   ControlValuesRepository,
@@ -166,12 +168,21 @@ export class ExecuteBridgeJob {
     controls: Record<string, unknown>;
     stepResolverHash?: string;
   }> {
-    const controlsEntity = await this.controlValuesRepository.findOne({
-      _organizationId: command.organizationId,
-      _workflowId: workflow._id,
-      _stepId: command.job.step._id,
-      level: ControlValuesLevelEnum.STEP_CONTROLS,
-    });
+    const [controlsEntity, providerDocs] = await Promise.all([
+      this.controlValuesRepository.findOne({
+        _organizationId: command.organizationId,
+        _workflowId: workflow._id,
+        _stepId: command.job.step._id,
+        level: ControlValuesLevelEnum.STEP_CONTROLS,
+      }),
+      this.controlValuesRepository.find({
+        _organizationId: command.organizationId,
+        _environmentId: command.environmentId,
+        _workflowId: workflow._id,
+        _stepId: command.job.step._id,
+        level: ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS,
+      }),
+    ]);
 
     const rawControls = controlsEntity?.controls;
     const stepResolverHash = command.job.step.template?.stepResolverHash ?? undefined;
@@ -184,8 +195,10 @@ export class ExecuteBridgeJob {
       sanitizedControls = rawControls ?? {};
     }
 
+    const providerOverrides = stitchProviderOverridesFromDocs(providerDocs);
+
     return {
-      controls: sanitizedControls,
+      controls: withStitchedProviderOverrides(sanitizedControls, providerOverrides),
       stepResolverHash,
     };
   }

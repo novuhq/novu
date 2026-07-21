@@ -51,10 +51,7 @@ type ChannelFirstConnectedEndpointQueryParams = {
  *    auto-provision) — deep-link providers like Telegram are exempt from this check, and
  *  - is not the currently logged-in dashboard user's own subscriber (onboarding self-test).
  */
-export function isGenuineConnectedEndpoint(
-  endpoint: ChannelEndpointDto,
-  dashboardSubscriberId: string
-): boolean {
+export function isGenuineConnectedEndpoint(endpoint: ChannelEndpointDto, dashboardSubscriberId: string): boolean {
   if (!CONNECT_FLOW_USER_ENDPOINT_TYPES.has(endpoint.type)) {
     return false;
   }

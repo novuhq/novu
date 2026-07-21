@@ -113,8 +113,15 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
     digestValue?: string | number;
     excludeTransactionIds?: string[];
   }): Promise<JobEntity[]> {
-    const { window, templateId, environmentId, subscriberId, digestKey, digestValue, excludeTransactionIds = [] } =
-      params;
+    const {
+      window,
+      templateId,
+      environmentId,
+      subscriberId,
+      digestKey,
+      digestValue,
+      excludeTransactionIds = [],
+    } = params;
 
     const windowFilter =
       window.field === 'updatedAt' ? { updatedAt: { $gte: window.from } } : { createdAt: { $gte: window.from } };
