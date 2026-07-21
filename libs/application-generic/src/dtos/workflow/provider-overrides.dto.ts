@@ -1,5 +1,4 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { TOOL_PROVIDER_OVERRIDE_SCHEMAS } from '@novu/shared';
 import { IsObject, IsOptional } from 'class-validator';
 
 /**
@@ -30,6 +29,3 @@ export class ProviderOverridesDto {
   @IsOptional()
   opsgenie?: Record<string, unknown>;
 }
-
-/** OpenAPI-friendly documentation of valid override keys per provider (documentation only). */
-export const PROVIDER_OVERRIDE_SCHEMA_DOCS = TOOL_PROVIDER_OVERRIDE_SCHEMAS;

@@ -156,6 +156,9 @@ export const updateStepInWorkflow = (
   return {
     ...workflow,
     steps: workflow.steps.map((step) => {
+      // Never coerce missing providerOverrides to null — omit means leave unchanged on the server.
+      const { providerOverrides: _existingProviderOverrides, ...stepWithoutProviderOverrides } = step;
+
       if (step.stepId === stepId) {
         const existingControlValues = step.controls?.values || {};
         const incomingControlValues =
@@ -164,36 +167,32 @@ export const updateStepInWorkflow = (
         // Deleting control values also clears per-provider override docs (server cascade).
         if (incomingControlValues === null) {
           return {
-            ...step,
+            ...stepWithoutProviderOverrides,
             ...updateStep,
             controlValues: null,
             providerOverrides: null,
           };
         }
 
-        // Form state still nests providerOverrides; lift to the step DTO sibling for persistence.
+        // Form state nests providerOverrides beside control fields; lift to the step DTO sibling.
         const splitFromForm =
           updateStep.providerOverrides === undefined
             ? splitProviderOverridesFromControlValues(incomingControlValues as Record<string, unknown>)
             : { controlValues: incomingControlValues, providerOverrides: updateStep.providerOverrides };
 
-        const nextProviderOverrides =
-          splitFromForm.providerOverrides !== undefined
-            ? splitFromForm.providerOverrides
-            : (step.providerOverrides ?? null);
-
         return {
-          ...step,
+          ...stepWithoutProviderOverrides,
           ...updateStep,
           controlValues: splitFromForm.controlValues,
-          providerOverrides: nextProviderOverrides,
+          ...(splitFromForm.providerOverrides !== undefined
+            ? { providerOverrides: splitFromForm.providerOverrides }
+            : {}),
         };
       }
 
       return {
-        ...step,
+        ...stepWithoutProviderOverrides,
         controlValues: step.controls?.values || {},
-        providerOverrides: step.providerOverrides ?? null,
       };
     }),
   };

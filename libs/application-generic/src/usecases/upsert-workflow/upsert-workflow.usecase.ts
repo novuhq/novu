@@ -13,8 +13,8 @@ import {
   ControlValuesLevelEnum,
   ResourceOriginEnum,
   ResourceTypeEnum,
+  type StepProviderOverrides,
   StepTypeEnum,
-  ToolProviderIdEnum,
   WebhookEventEnum,
   WebhookObjectTypeEnum,
   WorkflowCreationSourceEnum,
@@ -49,8 +49,6 @@ import { UpdateWorkflowCommandV0, UpdateWorkflowV0 } from '../update-workflow-v0
 import { UpsertControlValuesCommand, UpsertControlValuesUseCase } from '../upsert-control-values';
 import { GetWorkflowByIdsCommand, GetWorkflowByIdsUseCase } from '../workflow';
 import { UpsertStepDataCommand, UpsertWorkflowCommand } from './upsert-workflow.command';
-
-type StepProviderOverrides = Partial<Record<ToolProviderIdEnum, Record<string, unknown>>>;
 
 @Injectable()
 export class UpsertWorkflowUseCase {
@@ -512,6 +510,7 @@ export class UpsertWorkflowUseCase {
         workflowId,
         level: ControlValuesLevelEnum.STEP_CONTROLS,
         newControlValues,
+        session: command.session,
       })
     );
   }
@@ -544,10 +543,14 @@ export class UpsertWorkflowUseCase {
 
     const desiredProviderIds = Object.keys(providerOverrides).filter(isSupportedToolProviderOverrideId);
 
-    const existingDocs = await this.controlValuesRepository.find(baseQuery, {
-      providerId: 1,
-      _id: 1,
-    });
+    const existingDocs = await this.controlValuesRepository.find(
+      baseQuery,
+      {
+        providerId: 1,
+        _id: 1,
+      },
+      { session: command.session }
+    );
     const existingProviderIds = existingDocs
       .map((doc) => doc.providerId)
       .filter((id): id is string => typeof id === 'string');
@@ -575,6 +578,7 @@ export class UpsertWorkflowUseCase {
             level: ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS,
             providerId,
             newControlValues: providerOverrides[providerId] ?? {},
+            session: command.session,
           })
         )
       )
@@ -619,7 +623,8 @@ export class UpsertWorkflowUseCase {
   ): StepProviderOverrides | undefined | null {
     const commandStep = this.findMatchingCommandStep(updatedStep, commandSteps);
 
-    if (!commandStep) return null;
+    // Omit (undefined) when the step is absent from the request — do not treat as delete-all.
+    if (!commandStep) return undefined;
 
     return commandStep.providerOverrides;
   }

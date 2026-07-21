@@ -1,14 +1,14 @@
 import { ControlValuesEntity } from '@novu/dal';
 import {
-  ContentIssueEnum,
   getToolProviderOverrideKeysOnlySchema,
-  RuntimeIssue,
+  type StepProviderOverrides,
   TOOL_CONTENT_OVERRIDE_PROVIDER_IDS,
   ToolProviderIdEnum,
 } from '@novu/shared';
-import Ajv, { ErrorObject } from 'ajv';
+import { JSONSchemaDto } from '../dtos/json-schema.dto';
+import { type ControlIssues, processControlValuesBySchema } from './issues';
 
-export type StepProviderOverrides = Partial<Record<ToolProviderIdEnum, Record<string, unknown>>>;
+export type { StepProviderOverrides };
 
 const SUPPORTED_PROVIDER_IDS = new Set<string>(TOOL_CONTENT_OVERRIDE_PROVIDER_IDS);
 
@@ -56,96 +56,43 @@ export function withStitchedProviderOverrides(
   };
 }
 
-function getErrorPath(error: ErrorObject): string | undefined {
-  const path = error.instancePath.substring(1);
-  const { missingProperty, additionalProperty } = error.params;
-  const appendedProperty = (missingProperty ?? additionalProperty) as string | undefined;
+function buildProviderOverridesIssueSchema(): JSONSchemaDto {
+  const properties: Record<string, JSONSchemaDto> = {};
 
-  if (!path || path.trim().length === 0) {
-    return appendedProperty;
+  for (const providerId of TOOL_CONTENT_OVERRIDE_PROVIDER_IDS) {
+    const keysOnlySchema = getToolProviderOverrideKeysOnlySchema(providerId);
+    if (keysOnlySchema) {
+      properties[providerId] = keysOnlySchema;
+    }
   }
 
-  const fullPath = appendedProperty ? `${path}/${appendedProperty}` : path;
-
-  return fullPath?.replace(/\//g, '.');
+  return {
+    type: 'object',
+    properties: {
+      providerOverrides: {
+        type: 'object',
+        properties,
+        additionalProperties: false,
+      },
+    },
+  };
 }
+
+const PROVIDER_OVERRIDES_ISSUE_SCHEMA = buildProviderOverridesIssueSchema();
 
 /**
  * Validates each provider override blob against its keys-only schema and returns
  * step issues namespaced as `providerOverrides.<providerId>.<key>`.
  */
-export function processProviderOverridesIssues(providerOverrides: StepProviderOverrides | null | undefined): {
-  controls?: Record<string, RuntimeIssue[]>;
-} {
+export function processProviderOverridesIssues(
+  providerOverrides: StepProviderOverrides | null | undefined
+): ControlIssues {
   if (!providerOverrides) {
     return {};
   }
 
-  const controls: Record<string, RuntimeIssue[]> = {};
-  const ajv = new Ajv({ allErrors: true, strict: false });
-
-  for (const [providerId, overrideValues] of Object.entries(providerOverrides)) {
-    if (!isSupportedToolProviderOverrideId(providerId)) {
-      controls[`providerOverrides.${providerId}`] = [
-        {
-          message: `"${providerId}" is not a supported provider for content overrides`,
-          issueType: ContentIssueEnum.UNSUPPORTED_PROPERTY,
-          variableName: `providerOverrides.${providerId}`,
-        },
-      ];
-      continue;
-    }
-
-    if (overrideValues == null || typeof overrideValues !== 'object' || Array.isArray(overrideValues)) {
-      controls[`providerOverrides.${providerId}`] = [
-        {
-          message: 'Provider override must be an object',
-          issueType: ContentIssueEnum.MISSING_VALUE,
-          variableName: `providerOverrides.${providerId}`,
-        },
-      ];
-      continue;
-    }
-
-    const keysOnlySchema = getToolProviderOverrideKeysOnlySchema(providerId);
-    if (!keysOnlySchema) {
-      continue;
-    }
-
-    const validate = ajv.compile(keysOnlySchema);
-    const isValid = validate(overrideValues);
-    const errors = validate.errors as null | ErrorObject[];
-
-    if (isValid || !errors?.length) {
-      continue;
-    }
-
-    for (const error of errors) {
-      const relativePath = getErrorPath(error);
-      if (!relativePath) {
-        continue;
-      }
-
-      const namespacedPath = `providerOverrides.${providerId}.${relativePath}`;
-      if (!controls[namespacedPath]) {
-        controls[namespacedPath] = [];
-      }
-
-      const message =
-        error.keyword === 'additionalProperties'
-          ? `"${error.params.additionalProperty}" is not a supported property`
-          : error.message || 'Invalid value';
-
-      controls[namespacedPath].push({
-        message,
-        issueType:
-          error.keyword === 'additionalProperties'
-            ? ContentIssueEnum.UNSUPPORTED_PROPERTY
-            : ContentIssueEnum.MISSING_VALUE,
-        variableName: namespacedPath,
-      });
-    }
-  }
-
-  return Object.keys(controls).length > 0 ? { controls } : {};
+  return processControlValuesBySchema({
+    controlSchema: PROVIDER_OVERRIDES_ISSUE_SCHEMA,
+    controlValues: { providerOverrides },
+  });
 }

@@ -85,7 +85,7 @@ describe('processProviderOverridesIssues', () => {
 
     expect(issues.controls?.['providerOverrides.tool-webhook']).toEqual([
       {
-        message: '"tool-webhook" is not a supported provider for content overrides',
+        message: '"tool-webhook" is not a supported property',
         issueType: ContentIssueEnum.UNSUPPORTED_PROPERTY,
         variableName: 'providerOverrides.tool-webhook',
       },

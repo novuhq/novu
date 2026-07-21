@@ -100,11 +100,11 @@ function StepTemplateForm({ workflow, step, update }: StepTemplateFormProps) {
       // that would otherwise overwrite in-progress edits.
       inFlightFingerprintsRef.current.add(fp);
 
-      const updateStepData: Partial<StepUpdateDto> = {
-        controlValues,
-        // Full replace of the provider-override doc set; omit when never touched.
-        providerOverrides: providerOverrides === undefined ? null : providerOverrides,
-      };
+      const updateStepData: Partial<StepUpdateDto> = { controlValues };
+      // Omit when untouched (leave server docs unchanged); send null only to delete all.
+      if (providerOverrides !== undefined) {
+        updateStepData.providerOverrides = providerOverrides;
+      }
       update(updateStepInWorkflow(workflow, step.stepId, updateStepData), {
         onSuccess: () => {
           // Clean up the in-flight fingerprint on success.
