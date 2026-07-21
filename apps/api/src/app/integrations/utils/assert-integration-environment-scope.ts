@@ -4,7 +4,7 @@ type IntegrationMutationAction = 'update' | 'delete' | 'set as primary' | 'auto-
 
 export function assertIntegrationEnvironmentScope(params: {
   restrictToUserEnvironment?: boolean;
-  userEnvironmentId: string;
+  userEnvironmentId?: string;
   integrationEnvironmentId: string;
   action: IntegrationMutationAction;
 }): void {
