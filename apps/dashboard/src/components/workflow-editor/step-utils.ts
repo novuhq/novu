@@ -130,6 +130,24 @@ export const flattenIssues = (controlIssues?: Record<string, RuntimeIssue[]>): R
   }, {});
 };
 
+function splitProviderOverridesFromControlValues(controlValues: Record<string, unknown> | null | undefined): {
+  controlValues: Record<string, unknown> | null | undefined;
+  providerOverrides: StepUpdateDto['providerOverrides'] | undefined;
+} {
+  if (!controlValues || typeof controlValues !== 'object') {
+    return { controlValues, providerOverrides: undefined };
+  }
+
+  const { providerOverrides, ...rest } = controlValues as Record<string, unknown> & {
+    providerOverrides?: StepUpdateDto['providerOverrides'];
+  };
+
+  return {
+    controlValues: rest,
+    providerOverrides: providerOverrides === undefined ? undefined : (providerOverrides ?? null),
+  };
+}
+
 export const updateStepInWorkflow = (
   workflow: WorkflowResponseDto,
   stepId: string,
@@ -140,19 +158,42 @@ export const updateStepInWorkflow = (
     steps: workflow.steps.map((step) => {
       if (step.stepId === stepId) {
         const existingControlValues = step.controls?.values || {};
-        const updatedControlValues =
+        const incomingControlValues =
           updateStep.controlValues !== undefined ? updateStep.controlValues : existingControlValues;
+
+        // Deleting control values also clears per-provider override docs (server cascade).
+        if (incomingControlValues === null) {
+          return {
+            ...step,
+            ...updateStep,
+            controlValues: null,
+            providerOverrides: null,
+          };
+        }
+
+        // Form state still nests providerOverrides; lift to the step DTO sibling for persistence.
+        const splitFromForm =
+          updateStep.providerOverrides === undefined
+            ? splitProviderOverridesFromControlValues(incomingControlValues as Record<string, unknown>)
+            : { controlValues: incomingControlValues, providerOverrides: updateStep.providerOverrides };
+
+        const nextProviderOverrides =
+          splitFromForm.providerOverrides !== undefined
+            ? splitFromForm.providerOverrides
+            : (step.providerOverrides ?? null);
 
         return {
           ...step,
           ...updateStep,
-          controlValues: updatedControlValues,
+          controlValues: splitFromForm.controlValues,
+          providerOverrides: nextProviderOverrides,
         };
       }
 
       return {
         ...step,
         controlValues: step.controls?.values || {},
+        providerOverrides: step.providerOverrides ?? null,
       };
     }),
   };

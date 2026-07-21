@@ -181,6 +181,10 @@ export class WorkflowController {
     return steps.map((step: StepUpsertDto) => ({
       ...step,
       controlValues: (step.controlValues as Record<string, unknown> | null | undefined) ?? null,
+      providerOverrides:
+        'providerOverrides' in step
+          ? ((step as { providerOverrides?: Record<string, Record<string, unknown>> | null }).providerOverrides ?? null)
+          : undefined,
     }));
   }
 

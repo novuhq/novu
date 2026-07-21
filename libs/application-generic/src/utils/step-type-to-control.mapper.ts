@@ -86,7 +86,7 @@ function isDashboardCloudOrigin(workflowOrigin: ResourceOriginEnum): boolean {
 
 /**
  * Dashboard cloud steps must validate/persist against the current canonical control
- * schema so product schema changes (e.g. tool providerOverrides keys-only) take effect.
+ * schema so product schema changes take effect.
  * Code-first / step-resolver steps keep their discovered or stored schema.
  */
 export function resolveStepControlSchemas({

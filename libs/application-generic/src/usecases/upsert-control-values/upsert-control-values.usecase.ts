@@ -15,6 +15,7 @@ export class UpsertControlValuesUseCase {
       _stepId: command.stepId,
       _layoutId: command.layoutId,
       level: command.level,
+      ...(command.providerId ? { providerId: command.providerId } : {}),
     });
 
     if (existingControlValues) {
@@ -28,6 +29,7 @@ export class UpsertControlValuesUseCase {
       _stepId: command.stepId,
       _layoutId: command.layoutId,
       level: command.level,
+      ...(command.providerId ? { providerId: command.providerId } : {}),
       priority: 0,
       controls: command.newControlValues,
     });
@@ -46,6 +48,7 @@ export class UpsertControlValuesUseCase {
       {
         priority: 0,
         controls: controlValues,
+        ...(command.providerId ? { providerId: command.providerId } : {}),
       }
     );
 

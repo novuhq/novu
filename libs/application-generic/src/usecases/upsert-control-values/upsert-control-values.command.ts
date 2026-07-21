@@ -19,6 +19,10 @@ export class UpsertControlValuesCommand extends EnvironmentCommand {
   @IsNotEmpty()
   level: ControlValuesLevelEnum;
 
+  @IsString()
+  @IsOptional()
+  providerId?: string;
+
   @IsObject()
   @IsOptional()
   newControlValues?: Record<string, unknown>;

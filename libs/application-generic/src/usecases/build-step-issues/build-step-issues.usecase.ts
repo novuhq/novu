@@ -18,6 +18,11 @@ import { QueryIssueTypeEnum, QueryValidatorService } from '../../services/query-
 import { dashboardSanitizeControlValues } from '../../utils';
 import { ControlIssues, processControlValuesByLiquid, processControlValuesBySchema } from '../../utils/issues';
 import { parseStepVariables } from '../../utils/parse-step-variables';
+import {
+  processProviderOverridesIssues,
+  type StepProviderOverrides,
+  stitchProviderOverridesFromDocs,
+} from '../../utils/provider-overrides';
 import { isStepResolverActive } from '../../utils/step-resolver-control-state';
 import { BuildVariableSchemaCommand, BuildVariableSchemaUsecase } from '../build-variable-schema';
 import { TierRestrictionsValidateCommand, TierRestrictionsValidateUsecase } from '../tier-restrictions-validate';
@@ -46,6 +51,7 @@ export class BuildStepIssuesUsecase {
       workflow: persistedWorkflow,
       controlSchema,
       controlsDto: controlValuesDto,
+      providerOverridesDto,
       stepType,
       preloadedControlValues,
       optimisticPayloadSchema,
@@ -69,7 +75,9 @@ export class BuildStepIssuesUsecase {
 
     if (!newControlValues) {
       if (preloadedControlValues && stepInternalId) {
-        newControlValues = preloadedControlValues.find((cv) => cv._stepId === stepInternalId)?.controls;
+        newControlValues = preloadedControlValues.find(
+          (cv) => cv._stepId === stepInternalId && cv.level === ControlValuesLevelEnum.STEP_CONTROLS
+        )?.controls;
       } else {
         newControlValues = (
           await this.controlValuesRepository.findOne({
@@ -82,6 +90,14 @@ export class BuildStepIssuesUsecase {
         )?.controls;
       }
     }
+
+    const providerOverrides = await this.resolveProviderOverrides({
+      providerOverridesDto,
+      user,
+      stepInternalId,
+      workflowId: persistedWorkflow?._id,
+      preloadedControlValues,
+    });
 
     const isStepResolverStep = this.isStepResolverStep(persistedWorkflow, stepInternalId);
     const sanitizedControlValues = this.sanitizeControlValues(
@@ -102,12 +118,66 @@ export class BuildStepIssuesUsecase {
       currentPath: [],
       issues: liquidIssues,
     });
+    // Validate Liquid in provider override values under the namespaced path.
+    if (providerOverrides) {
+      processControlValuesByLiquid({
+        variableSchema,
+        currentValue: { providerOverrides },
+        currentPath: [],
+        issues: liquidIssues,
+      });
+    }
+    const providerOverrideIssues = processProviderOverridesIssues(providerOverrides);
     const customIssues = await this.processControlValuesByCustomeRules(user, stepType, sanitizedControlValues || {});
     const skipLogicIssues = sanitizedControlValues?.skip
       ? this.validateSkipField(variableSchema, sanitizedControlValues.skip as RulesLogic<AdditionalOperation>)
       : {};
 
-    return merge(schemaIssues, liquidIssues, customIssues, skipLogicIssues);
+    return merge(schemaIssues, liquidIssues, providerOverrideIssues, customIssues, skipLogicIssues);
+  }
+
+  private async resolveProviderOverrides({
+    providerOverridesDto,
+    user,
+    stepInternalId,
+    workflowId,
+    preloadedControlValues,
+  }: {
+    providerOverridesDto?: StepProviderOverrides | null;
+    user: UserSessionData;
+    stepInternalId?: string;
+    workflowId?: string;
+    preloadedControlValues?: BuildStepIssuesCommand['preloadedControlValues'];
+  }): Promise<StepProviderOverrides | undefined> {
+    if (providerOverridesDto === null) {
+      return undefined;
+    }
+
+    if (providerOverridesDto !== undefined) {
+      return providerOverridesDto;
+    }
+
+    if (!stepInternalId || !workflowId) {
+      return undefined;
+    }
+
+    const preloadedProviderDocs = preloadedControlValues?.filter(
+      (cv) => cv._stepId === stepInternalId && cv.level === ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS
+    );
+
+    if (preloadedProviderDocs && preloadedProviderDocs.length > 0) {
+      return stitchProviderOverridesFromDocs(preloadedProviderDocs);
+    }
+
+    const providerDocs = await this.controlValuesRepository.find({
+      _environmentId: user.environmentId,
+      _organizationId: user.organizationId,
+      _workflowId: workflowId,
+      _stepId: stepInternalId,
+      level: ControlValuesLevelEnum.STEP_PROVIDER_CONTROLS,
+    });
+
+    return stitchProviderOverridesFromDocs(providerDocs);
   }
 
   @Instrument()

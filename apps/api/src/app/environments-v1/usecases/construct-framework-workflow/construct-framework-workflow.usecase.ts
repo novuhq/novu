@@ -429,6 +429,26 @@ export class ConstructFrameworkWorkflow {
         }).schema
       : staticStep.template!.controls!.schema;
 
+    /*
+     * providerOverrides are persisted as STEP_PROVIDER_CONTROLS docs and stitched back
+     * into controls at read time. The persisted main control schema intentionally omits
+     * them, but the framework validates controls with removeAdditional:'failing' — so
+     * the runtime control schema must still accept the stitched field.
+     */
+    const runtimeControlSchema = {
+      ...controlSchema,
+      properties: {
+        ...(controlSchema as { properties?: Record<string, unknown> }).properties,
+        providerOverrides: {
+          type: 'object',
+          additionalProperties: {
+            type: 'object',
+            additionalProperties: true,
+          },
+        },
+      },
+    };
+
     const resolveProviderOverride =
       (providerId: ToolContentOverrideProviderId) =>
       async ({ outputs }: { outputs: ToolOutputUnvalidated }) =>
@@ -440,7 +460,7 @@ export class ConstructFrameworkWorkflow {
 
     return {
       skip,
-      controlSchema: controlSchema as unknown as Schema,
+      controlSchema: runtimeControlSchema as unknown as Schema,
       disableOutputSanitization: true,
       providers,
     } as Required<Parameters<ChannelStep>[2]>;

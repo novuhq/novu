@@ -27,6 +27,7 @@ export function EditStepTemplateV2Page() {
 function fingerprintControls(step: StepResponseDto): string {
   return JSON.stringify({
     v: step.controls?.values,
+    po: step.providerOverrides,
     ui: step.controls?.uiSchema,
     ds: step.controls?.dataSchema,
   });
@@ -84,8 +85,12 @@ function StepTemplateForm({ workflow, step, update }: StepTemplateFormProps) {
     previousData: {},
     form,
     save: (data, { onSuccess }) => {
+      const { providerOverrides, ...controlValues } = data as Record<string, unknown> & {
+        providerOverrides?: StepUpdateDto['providerOverrides'];
+      };
       const fp = JSON.stringify({
-        v: data,
+        v: controlValues,
+        po: providerOverrides,
         ui: step.controls?.uiSchema,
         ds: step.controls?.dataSchema,
       });
@@ -96,7 +101,9 @@ function StepTemplateForm({ workflow, step, update }: StepTemplateFormProps) {
       inFlightFingerprintsRef.current.add(fp);
 
       const updateStepData: Partial<StepUpdateDto> = {
-        controlValues: data,
+        controlValues,
+        // Full replace of the provider-override doc set; omit when never touched.
+        providerOverrides: providerOverrides === undefined ? null : providerOverrides,
       };
       update(updateStepInWorkflow(workflow, step.stepId, updateStepData), {
         onSuccess: () => {

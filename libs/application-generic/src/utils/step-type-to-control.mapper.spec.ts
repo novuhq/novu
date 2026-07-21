@@ -10,6 +10,7 @@ describe('resolveStepControlSchemas', () => {
         type: 'object',
         properties: {
           body: { type: 'string' },
+          // Legacy nested providerOverrides must be replaced by the current canonical schema
           providerOverrides: {
             type: 'object',
             properties: {
@@ -28,6 +29,7 @@ describe('resolveStepControlSchemas', () => {
     });
 
     expect(resolved.schema).toBe(toolControlSchema);
+    expect(resolved.schema.properties?.providerOverrides).toBeUndefined();
     expect(resolved).toBe(stepTypeToControlSchema[StepTypeEnum.TOOL]);
   });
 
