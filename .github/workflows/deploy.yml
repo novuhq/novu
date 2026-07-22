@@ -549,7 +549,7 @@ jobs:
         run: |
           npx wrangler deploy \
             --env "${{ needs.prepare-matrix.outputs.thalamus_wrangler_env }}" \
-            --message "GitHub Actions · ${{ github.workflow }} · ${{ github.sha }} · by ${{ github.actor }} · ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            --message "GitHub Actions"
 
   sentry_release:
     needs: [deploy, prepare-matrix]
