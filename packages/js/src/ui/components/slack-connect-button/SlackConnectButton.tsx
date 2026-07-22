@@ -18,6 +18,14 @@ export type SlackConnectButtonProps = {
   connectionIdentifier?: string;
   subscriberId?: string;
   context?: Context;
+  /**
+   * HMAC-SHA256 of the canonicalized `context`, signed with the tenant environment
+   * secret key (the same "Inbox with context" signing). Required when connecting to
+   * a `restricted` agent and the current session did not already verify the context
+   * (e.g. cross-org distribution like the Novu-hosted copilot). Must be minted by an
+   * authenticated backend — never computed in the browser.
+   */
+  contextHash?: string;
   scope?: string[];
   connectionMode?: ConnectionMode;
   /**
@@ -46,6 +54,7 @@ export const SlackConnectButton = (props: SlackConnectButtonProps) => {
   const integrationIdentifier = () => props.integrationIdentifier;
   const connectionMode = () => props.connectionMode ?? 'subscriber';
   const resolvedContext = () => props.context ?? novuAccessor().context;
+  const resolvedContextHash = () => props.contextHash ?? novuAccessor().contextHash;
   const resolvedSubscriberId = () =>
     connectionMode() === 'subscriber' ? (props.subscriberId ?? novuAccessor().subscriberId) : undefined;
   const connectionIdentifier = () =>
@@ -150,6 +159,7 @@ export const SlackConnectButton = (props: SlackConnectButtonProps) => {
         connectionIdentifier: connectionIdentifier(),
         subscriberId: resolvedSubscriberId,
         context: ctx,
+        contextHash: resolvedContextHash(),
         scope: props.scope,
         connectionMode: mode,
         autoLinkUser: mode === 'subscriber' ? (props.autoLinkUser ?? true) : false,

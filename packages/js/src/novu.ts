@@ -44,6 +44,10 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
     return this.#session.context;
   }
 
+  public get contextHash() {
+    return this.#session.contextHash;
+  }
+
   public get options() {
     return this.#options;
   }

@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { ChannelTypeEnum, ChatProviderIdEnum } from '@novu/shared';
+import { ConnectContextVerifier } from './connect-context-verifier.service';
 import { GenerateLinkUserOauthUrlCommand } from './generate-link-user-oauth-url.command';
 import { GenerateMsTeamsOauthUrlCommand } from './generate-msteams-oath-url/generate-msteams-oauth-url.command';
 import { GenerateMsTeamsOauthUrl } from './generate-msteams-oath-url/generate-msteams-oauth-url.usecase';
@@ -14,12 +15,20 @@ export class GenerateLinkUserOauthUrl {
   constructor(
     private generateSlackOAuthUrl: GenerateSlackOauthUrl,
     private generateMsTeamsOAuthUrl: GenerateMsTeamsOauthUrl,
+    private connectContextVerifier: ConnectContextVerifier,
     private generateWebexOAuthUrl: GenerateWebexOauthUrl,
     private integrationRepository: IntegrationRepository
   ) {}
 
   async execute(command: GenerateLinkUserOauthUrlCommand): Promise<string> {
     const integration = await this.getIntegration(command);
+
+    await this.connectContextVerifier.verify({
+      integration,
+      context: command.context,
+      contextHash: command.contextHash,
+      isContextValidated: command.isContextValidated,
+    });
 
     switch (integration.providerId) {
       case ChatProviderIdEnum.Slack:
@@ -32,6 +41,7 @@ export class GenerateLinkUserOauthUrl {
             subscriberId: command.subscriberId,
             integration,
             context: command.context,
+            contextKeys: command.contextKeys,
             userScope: command.userScope,
             mode: 'link_user',
           })
@@ -46,6 +56,7 @@ export class GenerateLinkUserOauthUrl {
             subscriberId: command.subscriberId,
             integration,
             context: command.context,
+            contextKeys: command.contextKeys,
             mode: 'link_user',
           })
         );
