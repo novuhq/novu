@@ -155,12 +155,22 @@ const OPSGENIE_INTEGRATION: ChatEndpointTypeOption = {
 };
 
 /**
- * Endpoint types each tool provider consumes for per-subscriber routing.
- * The credential-routed tool webhook has no subscriber endpoints.
+ * Tool-webhook per-subscriber endpoint, used only in dynamic routing mode (static mode
+ * delivers to the integration-level URL and has no subscriber endpoints).
  */
+const TOOL_WEBHOOK: ChatEndpointTypeOption = {
+  type: ENDPOINT_TYPES.TOOL_WEBHOOK,
+  label: 'Webhook',
+  icon: RiLinksLine,
+  skeleton: { url: '' },
+  requiresConnection: false,
+};
+
+/** Endpoint types each tool provider consumes for per-subscriber routing. */
 const SUPPORTED_TOOL_TYPES_BY_PROVIDER: Partial<Record<string, ChatEndpointTypeOption[]>> = {
   [ToolProviderIdEnum.PagerDuty]: [PAGERDUTY_SERVICE],
   [ToolProviderIdEnum.Opsgenie]: [OPSGENIE_INTEGRATION],
+  [ToolProviderIdEnum.Webhook]: [TOOL_WEBHOOK],
 };
 
 /** Resolves endpoint types a user may manually add for a tool integration. */
