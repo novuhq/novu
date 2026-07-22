@@ -36,7 +36,7 @@ function urlFor(path: string): string {
   return `http://test-tool-webhook.invalid:${serverPort}${path}`;
 }
 
-function toolWebhookChannelData(endpoint: Partial<ToolWebhookData['endpoint']> & { url?: string }): ToolWebhookData {
+function toolWebhookChannelData(endpoint: Partial<ToolWebhookData['endpoint']>): ToolWebhookData {
   return {
     type: ENDPOINT_TYPES.TOOL_WEBHOOK,
     identifier: 'tool-webhook-endpoint-1',
@@ -101,6 +101,25 @@ test('static: shallow-merges the body template with the step payload, step keys 
   expect(JSON.parse(lastRequest!.body)).toEqual({
     source: 'integration',
     extra: 'kept',
+    content: 'step-content',
+  });
+});
+
+test('static: shallow-merges customData into the body template, customData winning', async () => {
+  const provider = new ToolWebhookProvider({
+    webhookUrl: urlFor('/static'),
+    bodyTemplate: JSON.stringify({ source: 'integration', priority: 'low' }),
+  });
+
+  await provider.sendMessage({
+    content: 'step-content',
+    customData: { priority: 'high', ticketId: 'T-1' },
+  });
+
+  expect(JSON.parse(lastRequest!.body)).toEqual({
+    source: 'integration',
+    priority: 'high',
+    ticketId: 'T-1',
     content: 'step-content',
   });
 });

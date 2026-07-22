@@ -54,11 +54,6 @@ export class ToolWebhookProvider extends BaseProvider implements IToolProvider {
       ...(options.customData || {}),
     });
 
-    const runtimeMethodOverride = data.body.method as string | undefined;
-    if (data.body.method) {
-      delete data.body.method;
-    }
-
     const webhookUrl = normalizeOutboundHttpUrl(routing.url);
     if (!webhookUrl) {
       throw new Error('Tool webhook URL blocked: Invalid URL format.');
@@ -71,6 +66,11 @@ export class ToolWebhookProvider extends BaseProvider implements IToolProvider {
         throw new Error(`Tool webhook URL blocked: ${err.message}`);
       }
       throw err;
+    }
+
+    const runtimeMethodOverride = data.body.method as string | undefined;
+    if (data.body.method) {
+      delete data.body.method;
     }
 
     const method = this.resolveMethod(runtimeMethodOverride || routing.method);
