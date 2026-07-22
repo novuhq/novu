@@ -148,6 +148,20 @@ function buildToolWebhookCommand(
 }
 
 describe('CreateChannelEndpoint — tool_webhook connection-backed create', () => {
+  const previousEncryptionKey = process.env.STORE_ENCRYPTION_KEY;
+
+  before(() => {
+    process.env.STORE_ENCRYPTION_KEY = previousEncryptionKey || 'XgVGHwIk^42&8v&xFowz1mp6^P3r*9l0';
+  });
+
+  after(() => {
+    if (previousEncryptionKey === undefined) {
+      delete process.env.STORE_ENCRYPTION_KEY;
+    } else {
+      process.env.STORE_ENCRYPTION_KEY = previousEncryptionKey;
+    }
+  });
+
   afterEach(() => {
     sinon.restore();
   });
