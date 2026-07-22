@@ -45,6 +45,21 @@ function pickScriptedAnswer<T>(
 }
 
 async function readFixtureFile(projectRoot: string, filePath: string): Promise<string> {
+  const absolutePath = resolveFixturePath(projectRoot, filePath);
+
+  return fs.readFile(absolutePath, 'utf8');
+}
+
+async function writeFixtureFile(projectRoot: string, filePath: string, content: string): Promise<string> {
+  const absolutePath = resolveFixturePath(projectRoot, filePath);
+  await fs.mkdir(path.dirname(absolutePath), { recursive: true });
+  await fs.writeFile(absolutePath, content, 'utf8');
+
+  return absolutePath;
+}
+
+/** Resolve a path under the fixture root; throw if it escapes. */
+function resolveFixturePath(projectRoot: string, filePath: string): string {
   const normalized = normalizePath(filePath);
   const resolvedRoot = path.resolve(projectRoot);
   const absolutePath = path.isAbsolute(normalized)
@@ -57,10 +72,10 @@ async function readFixtureFile(projectRoot: string, filePath: string): Promise<s
   const relative = path.relative(resolvedRoot, absolutePath);
 
   if (relative === '' || relative.startsWith('..') || path.isAbsolute(relative)) {
-    throw new Error(`Refusing to read path outside fixture project: ${filePath}`);
+    throw new Error(`Refusing to access path outside fixture project: ${filePath}`);
   }
 
-  return fs.readFile(absolutePath, 'utf8');
+  return absolutePath;
 }
 
 /**
@@ -352,7 +367,28 @@ export function createHarnessTools<TParsed = ParsedCommand>(context: HarnessCont
     },
   });
 
-  return { Bash, BashOutput, AskUserQuestion, Read };
+  const Write = tool({
+    description: 'Write a file in the project workspace (create or overwrite).',
+    inputSchema: z.object({
+      file_path: z.string(),
+      content: z.string(),
+    }),
+    execute: async ({ file_path: filePath, content }) => {
+      try {
+        await writeFixtureFile(context.scenario.projectRoot, filePath, content);
+        context.recorder.recordWrittenFile(filePath);
+        context.recorder.recordToolCall('Write', { file_path: filePath, content }, { bytes: content.length });
+
+        return { ok: true, bytes: content.length };
+      } catch (error) {
+        context.recorder.recordToolCall('Write', { file_path: filePath });
+
+        return { error: error instanceof Error ? error.message : 'Failed to write file.' };
+      }
+    },
+  });
+
+  return { Bash, BashOutput, AskUserQuestion, Read, Write };
 }
 
 export function createHarnessContext<TParsed = ParsedCommand>(

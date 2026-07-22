@@ -9,7 +9,7 @@ import type { EvalScenario, ParsedCommand, RunResult, Suite } from '../../core/t
 const DEFAULT_PREAMBLE = [
   'You are an AI coding agent executing the following playbook exactly.',
   'Follow the playbook precisely. Use the provided tools.',
-  'You are running in a Claude Code-like environment with Bash, BashOutput, AskUserQuestion, and Read tools.',
+  'You are running in a Claude Code-like environment with Bash, BashOutput, AskUserQuestion, Read, and Write tools.',
   'Read any relevant fixture files in the workspace before acting.',
 ].join('\n');
 

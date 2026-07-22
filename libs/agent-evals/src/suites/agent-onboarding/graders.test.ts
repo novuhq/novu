@@ -13,6 +13,7 @@ function buildResult(partial: Partial<RunResult>): RunResult {
     finalText: partial.finalText ?? '',
     capturedUrls: partial.capturedUrls ?? [],
     openedFiles: partial.openedFiles ?? [],
+    writtenFiles: partial.writtenFiles ?? [],
     killedShellIds: partial.killedShellIds ?? [],
     trackedShellIds: partial.trackedShellIds ?? [],
     polledShellIds: partial.polledShellIds ?? [],
@@ -79,6 +80,85 @@ describe('sendblue catalog graders', () => {
     });
 
     expect(status(catalog.sendblueNumbersDistinct('+14155550100', '+14155550123')(result))).toBe('fail');
+  });
+});
+
+describe('bridge catalog graders', () => {
+  it('passes usedRuntime when --runtime matches', () => {
+    const result = buildResult({
+      trackedCommands: ['npx novu connect --ci --runtime langchain --channel slack'],
+    });
+
+    expect(status(catalog.usedRuntime('langchain')(result))).toBe('pass');
+    expect(status(catalog.usedRuntime('ai-sdk')(result))).toBe('fail');
+  });
+
+  it('passes usedLlmAuth when --llm-auth matches', () => {
+    const result = buildResult({
+      trackedCommands: ['npx novu connect --ci --runtime ai-sdk --llm-auth openai --channel slack'],
+    });
+
+    expect(status(catalog.usedLlmAuth('openai')(result))).toBe('pass');
+  });
+
+  it('passes usedDemoEchoLlmAuth when --llm-auth is omitted or skip', () => {
+    expect(
+      status(
+        catalog.usedDemoEchoLlmAuth(
+          buildResult({ trackedCommands: ['npx novu connect --ci --runtime langchain --channel slack'] })
+        )
+      )
+    ).toBe('pass');
+    expect(
+      status(
+        catalog.usedDemoEchoLlmAuth(
+          buildResult({
+            trackedCommands: ['npx novu connect --ci --runtime langchain --llm-auth skip --channel slack'],
+          })
+        )
+      )
+    ).toBe('pass');
+    expect(
+      status(
+        catalog.usedDemoEchoLlmAuth(
+          buildResult({
+            trackedCommands: ['npx novu connect --ci --runtime langchain --llm-auth openai --channel slack'],
+          })
+        )
+      )
+    ).toBe('fail');
+  });
+
+  it('passes wroteBridgeWiring when Write covers route + agent', () => {
+    const result = buildResult({
+      toolCalls: [
+        {
+          name: 'Write',
+          args: {
+            file_path: 'app/api/novu/route.ts',
+            content:
+              "import { serve } from '@novu/framework/next';\nexport const { GET, POST } = serve({ agents: [] });",
+          },
+          timestamp: Date.now(),
+        },
+        {
+          name: 'Write',
+          args: {
+            file_path: 'app/novu/agents/acme-agent-1.tsx',
+            content: "import { agent } from '@novu/framework/ai-sdk';\nexport const a = agent('acme-agent-1', {});",
+          },
+          timestamp: Date.now(),
+        },
+      ],
+    });
+
+    expect(status(catalog.wroteBridgeWiring({ runtime: 'ai-sdk', agentId: 'acme-agent-1' })(result))).toBe('pass');
+  });
+
+  it('fails wroteBridgeWiring when Write is missing', () => {
+    const result = buildResult({ toolCalls: [] });
+
+    expect(status(catalog.wroteBridgeWiring({ runtime: 'ai-sdk', agentId: 'acme-agent-1' })(result))).toBe('fail');
   });
 });
 

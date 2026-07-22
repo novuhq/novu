@@ -77,6 +77,7 @@ export type RunResult = {
   finalText: string;
   capturedUrls: string[];
   openedFiles: string[];
+  writtenFiles: string[];
   killedShellIds: string[];
   /** Shell ids of commands the suite parser marked as tracked (e.g. the connect command). */
   trackedShellIds: string[];

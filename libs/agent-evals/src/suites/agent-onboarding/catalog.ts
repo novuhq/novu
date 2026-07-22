@@ -255,8 +255,103 @@ export const catalog = {
       : fail('bridge path connect command is missing --runtime ai-sdk or langchain');
   },
 
+  usedRuntime:
+    (expected: 'ai-sdk' | 'langchain') =>
+    (result: RunResult): GraderOutcome | 'pass' => {
+      const commands = connectCommands(result);
+
+      if (commands.length === 0) {
+        return fail(`expected connect with --runtime ${expected}`);
+      }
+
+      return commands.every((cmd) => new RegExp(`--runtime\\s+${expected}\\b`).test(cmd))
+        ? 'pass'
+        : fail(`connect command did not use --runtime ${expected}`);
+    },
+
+  usedLlmAuth:
+    (expected: string) =>
+    (result: RunResult): GraderOutcome | 'pass' => {
+      const commands = connectCommands(result);
+
+      if (commands.length === 0) {
+        return fail(`expected connect with --llm-auth ${expected}`);
+      }
+
+      return commands.every((cmd) => new RegExp(`--llm-auth\\s+${expected}\\b`).test(cmd))
+        ? 'pass'
+        : fail(`connect command did not use --llm-auth ${expected}`);
+    },
+
+  noLlmAuthFlag: (result: RunResult): GraderOutcome | 'pass' =>
+    connectCommands(result).every((cmd) => !/--llm-auth\b/.test(cmd))
+      ? 'pass'
+      : fail('passed --llm-auth on an existing-project reconcile (scaffold-only flag)'),
+
+  /** Empty-dir demo echo: omit --llm-auth or pass --llm-auth skip. Fail on real providers. */
+  usedDemoEchoLlmAuth: (result: RunResult): GraderOutcome | 'pass' => {
+    const commands = connectCommands(result);
+
+    if (commands.length === 0) {
+      return fail('expected a connect command');
+    }
+
+    for (const cmd of commands) {
+      const match = cmd.match(/--llm-auth\s+(\S+)/);
+
+      if (!match) {
+        continue;
+      }
+
+      if (match[1] === 'skip') {
+        continue;
+      }
+
+      return fail(`expected demo echo (omit --llm-auth or --llm-auth skip), got --llm-auth ${match[1]}`);
+    }
+
+    return 'pass';
+  },
+
+  wroteBridgeWiring:
+    (opts: { runtime: 'ai-sdk' | 'langchain'; agentId: string }) =>
+    (result: RunResult): GraderOutcome | 'pass' => {
+      const writeCalls = result.toolCalls.filter((call) => call.name === 'Write');
+
+      if (writeCalls.length === 0) {
+        return fail('never used Write to create bridge route or agent handler');
+      }
+
+      const importNeedle = opts.runtime === 'ai-sdk' ? '@novu/framework/ai-sdk' : '@novu/framework/langchain';
+      const wroteRoute = writeCalls.some((call) => {
+        const filePath = String(call.args.file_path ?? '');
+        const content = String(call.args.content ?? '');
+
+        return /api\/novu\/route\.(ts|js|tsx)$/.test(filePath) || /serve\s*\(/.test(content);
+      });
+      const wroteAgent = writeCalls.some((call) => {
+        const content = String(call.args.content ?? '');
+        const agentCall = new RegExp(`agent\\(['\\\`]${opts.agentId}['\\\`]`);
+
+        return content.includes(importNeedle) && agentCall.test(content);
+      });
+
+      if (!wroteRoute) {
+        return fail('did not Write a bridge route (app/api/novu/route.ts with serve())');
+      }
+
+      if (!wroteAgent) {
+        return fail(`did not Write an agent handler using ${importNeedle} for agent('${opts.agentId}')`);
+      }
+
+      return 'pass';
+    },
+
   readRequirementsFile: (result: RunResult): GraderOutcome | 'pass' => {
-    if (!/add an agent to my app/i.test(result.userPrompt)) {
+    if (
+      !/add an agent to my app/i.test(result.userPrompt) &&
+      !/wire.*(ai-?sdk|langchain)|langchain|ai sdk/i.test(result.userPrompt)
+    ) {
       return 'pass';
     }
 

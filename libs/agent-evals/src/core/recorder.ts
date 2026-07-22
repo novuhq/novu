@@ -6,6 +6,7 @@ export class RunRecorder {
   private finalText = '';
   private capturedUrls: string[] = [];
   private openedFiles: string[] = [];
+  private writtenFiles: string[] = [];
   private killedShellIds: string[] = [];
   private trackedShellIds: string[] = [];
   private polledShellIds: string[] = [];
@@ -46,6 +47,10 @@ export class RunRecorder {
     this.openedFiles.push(filePath);
   }
 
+  recordWrittenFile(filePath: string): void {
+    this.writtenFiles.push(filePath);
+  }
+
   recordTrackedShell(shellId: string): void {
     this.trackedShellIds.push(shellId);
   }
@@ -69,6 +74,7 @@ export class RunRecorder {
       finalText: this.finalText,
       capturedUrls: [...this.capturedUrls],
       openedFiles: [...this.openedFiles],
+      writtenFiles: [...this.writtenFiles],
       killedShellIds: [...this.killedShellIds],
       trackedShellIds: [...this.trackedShellIds],
       polledShellIds: [...this.polledShellIds],

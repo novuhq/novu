@@ -1,0 +1,11 @@
+{
+  "name": "acme-langchain-app",
+  "description": "Acme ops assistant built with LangChain",
+  "dependencies": {
+    "langchain": "^1.0.0",
+    "@langchain/core": "^1.0.0",
+    "@langchain/openai": "^0.3.0",
+    "next": "^15.0.0",
+    "react": "^19.0.0"
+  }
+}
