@@ -1,11 +1,5 @@
 import { useOrganization } from '@clerk/react';
-import {
-  ChannelTypeEnum,
-  DirectionEnum,
-  FeatureFlagsKeysEnum,
-  type IIntegration,
-  ProductUseCasesEnum,
-} from '@novu/shared';
+import { ChannelTypeEnum, DirectionEnum, type IIntegration, ProductUseCasesEnum } from '@novu/shared';
 import { useQuery } from '@tanstack/react-query';
 import { useCallback, useMemo } from 'react';
 import { RiAddLine } from 'react-icons/ri';
@@ -18,10 +12,10 @@ import {
   listAgents,
 } from '@/api/agents';
 import { docsUrl } from '@/components/header-navigation/support-drawer-constants';
-import { IS_EU, IS_SELF_HOSTED, ONBOARDING_DEMO_WORKFLOW_ID } from '@/config';
+import { IS_SELF_HOSTED, ONBOARDING_DEMO_WORKFLOW_ID } from '@/config';
 import { useAuth } from '@/context/auth/hooks';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { useAreConversationalAgentsAvailable } from '@/hooks/use-are-conversational-agents-available';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { useFetchWorkflows } from '@/hooks/use-fetch-workflows';
 import { useTelemetry } from '@/hooks/use-telemetry';
@@ -65,8 +59,7 @@ export function useWelcomeSetup(): UseWelcomeSetupResult {
   const { currentOrganization } = useAuth();
   const { organization } = useOrganization();
 
-  const isAgentsEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONVERSATIONAL_AGENTS_ENABLED, false);
-  const agentsAvailable = isAgentsEnabled && !IS_EU;
+  const agentsAvailable = useAreConversationalAgentsAvailable();
   const pickedAgents = Boolean(currentOrganization?.productUseCases?.[ProductUseCasesEnum.AGENTS]);
   const variant: WelcomeVariant = pickedAgents && agentsAvailable ? 'agents' : 'standard';
 

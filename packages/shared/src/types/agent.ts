@@ -1,11 +1,14 @@
 /**
  * Controls whether an agent accepts inbound messages from senders that are not
- * yet linked to a Novu subscriber.
+ * yet linked to a Novu subscriber. Applies across all agent channels.
  *
- * - `restricted` (default): unknown senders are rejected with the "couldn't
- *   verify your email" reply and no LLM dispatch fires.
- * - `open`: unknown email senders are auto-provisioned as lightweight
- *   subscribers (marked with agent-platform provenance) so the agent can reply.
+ * - `restricted`: unknown/anonymous senders are rejected with a managed denial
+ *   reply (any runtime) and no LLM dispatch fires. Self-hosted agent create
+ *   defaults to restricted; unset `subscriberAccess` also resolves as restricted.
+ * - `open`: on managed agents, unknown senders are auto-provisioned as
+ *   lightweight subscribers (marked with agent-platform provenance) so the
+ *   agent can reply; on custom-code / self-hosted agents, the turn is forwarded
+ *   to the bridge with a null subscriber. Managed agent create defaults to open.
  *   Abuse mitigation is the customer's responsibility in this mode.
  */
 export enum AgentSubscriberAccessEnum {
@@ -35,6 +38,22 @@ export const AGENT_PROVISION_DATA_KEYS = {
  * without coordinating the index.
  */
 export const AGENT_PLATFORM_PROVISION_SOURCE = 'agent-platform-provision' as const;
+
+/**
+ * Reserved `conversation.metadata` keys written by the framework auth gate when it
+ * shows an unlinked author the sign-in CTA card, and read server-side to update
+ * that card the moment the author links their account:
+ * - `authCardMessageId`: platform message id of the posted CTA card (which message to edit).
+ * - `authLinkedCard`: the fully-resolved "account linked" confirmation card to swap in.
+ *
+ * IMPORTANT: `@novu/framework` does not depend on `@novu/shared`, so it declares the
+ * same literals in `packages/framework/src/resources/agent/auth-gate.ts`. These two
+ * definitions MUST stay in sync.
+ */
+export const AGENT_AUTH_METADATA_KEYS = {
+  authCardMessageId: '__novu:authCardMessageId',
+  authLinkedCard: '__novu:authLinkedCard',
+} as const;
 
 export interface NovuEmailAttachment {
   filename: string;

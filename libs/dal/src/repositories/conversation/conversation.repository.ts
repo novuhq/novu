@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { DirectionEnum } from '@novu/shared';
+import { AGENT_AUTH_METADATA_KEYS, DirectionEnum } from '@novu/shared';
 import { type ClientSession, FilterQuery, Types } from 'mongoose';
 import { EnforceEnvOrOrgIds } from '../../types';
 import { SortOrder } from '../../types/sort-order';
@@ -334,6 +334,37 @@ export class ConversationRepository extends BaseRepositoryV2<
         participants: { $elemMatch: { id: participantId, type: participantType } },
         pendingManagedAgentSetup: { $exists: true },
       },
+      '*'
+    );
+  }
+
+  /**
+   * Finds conversations where a platform user was shown the auth CTA card and has
+   * not yet been confirmed as linked — i.e. `metadata` still carries the auth-card
+   * tracking key written by the framework auth gate. Scoped to the integration and
+   * the platform participant so a link event only touches that user's own threads.
+   * Powers the real-time "account linked" card update on `CreateChannelEndpoint`.
+   */
+  async findPendingAuthCards(params: {
+    environmentId: string;
+    organizationId: string;
+    integrationId: string;
+    participantId: string;
+  }): Promise<ConversationEntity[]> {
+    return this.find(
+      {
+        _environmentId: params.environmentId,
+        _organizationId: params.organizationId,
+        channels: {
+          $elemMatch: {
+            _integrationId: new Types.ObjectId(params.integrationId),
+          },
+        },
+        participants: {
+          $elemMatch: { id: params.participantId, type: ConversationParticipantTypeEnum.PLATFORM_USER },
+        },
+        [`metadata.${AGENT_AUTH_METADATA_KEYS.authCardMessageId}`]: { $exists: true },
+      } as FilterQuery<ConversationDBModel> & EnforceEnvOrOrgIds,
       '*'
     );
   }

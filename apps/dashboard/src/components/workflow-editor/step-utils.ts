@@ -1,4 +1,11 @@
-import type { RuntimeIssue, StepCreateDto, StepUpdateDto, UpdateWorkflowDto, WorkflowResponseDto } from '@novu/shared';
+import type {
+  RuntimeIssue,
+  StepCreateDto,
+  StepResponseDto,
+  StepUpdateDto,
+  UpdateWorkflowDto,
+  WorkflowResponseDto,
+} from '@novu/shared';
 import { SeverityLevelEnum, StepTypeEnum } from '@novu/shared';
 import { flatten } from 'flat';
 import { ERROR_AVATAR, INFO_AVATAR, WARNING_AVATAR } from '@/utils/avatars';
@@ -25,6 +32,27 @@ import {
   DEFAULT_CONTROL_THROTTLE_WINDOW,
   STEP_TYPE_LABELS,
 } from '@/utils/constants';
+import { getIdFromSlug, STEP_DIVIDER } from '@/utils/id-utils';
+
+export function findDigestStepBeforeCurrent(
+  steps: StepResponseDto[] | undefined,
+  currentStep: StepResponseDto | undefined
+): StepResponseDto | undefined {
+  if (!steps || !currentStep) return undefined;
+
+  const index = steps.findIndex(
+    (candidate) =>
+      getIdFromSlug({ slug: candidate.slug, divider: STEP_DIVIDER }) ===
+      getIdFromSlug({ slug: currentStep.slug, divider: STEP_DIVIDER })
+  );
+
+  if (index < 1) return undefined;
+
+  return steps
+    .slice(0, index)
+    .reverse()
+    .find((candidate) => candidate.type === 'digest');
+}
 
 export const getFirstErrorMessage = (
   issues?: {
@@ -102,6 +130,24 @@ export const flattenIssues = (controlIssues?: Record<string, RuntimeIssue[]>): R
   }, {});
 };
 
+function splitProviderOverridesFromControlValues(controlValues: Record<string, unknown> | null | undefined): {
+  controlValues: Record<string, unknown> | null | undefined;
+  providerOverrides: StepUpdateDto['providerOverrides'] | undefined;
+} {
+  if (!controlValues || typeof controlValues !== 'object') {
+    return { controlValues, providerOverrides: undefined };
+  }
+
+  const { providerOverrides, ...rest } = controlValues as Record<string, unknown> & {
+    providerOverrides?: StepUpdateDto['providerOverrides'];
+  };
+
+  return {
+    controlValues: rest,
+    providerOverrides: providerOverrides === undefined ? undefined : (providerOverrides ?? null),
+  };
+}
+
 export const updateStepInWorkflow = (
   workflow: WorkflowResponseDto,
   stepId: string,
@@ -110,20 +156,42 @@ export const updateStepInWorkflow = (
   return {
     ...workflow,
     steps: workflow.steps.map((step) => {
+      // Never coerce missing providerOverrides to null — omit means leave unchanged on the server.
+      const { providerOverrides: _existingProviderOverrides, ...stepWithoutProviderOverrides } = step;
+
       if (step.stepId === stepId) {
         const existingControlValues = step.controls?.values || {};
-        const updatedControlValues =
+        const incomingControlValues =
           updateStep.controlValues !== undefined ? updateStep.controlValues : existingControlValues;
 
+        // Deleting control values also clears per-provider override docs (server cascade).
+        if (incomingControlValues === null) {
+          return {
+            ...stepWithoutProviderOverrides,
+            ...updateStep,
+            controlValues: null,
+            providerOverrides: null,
+          };
+        }
+
+        // Form state nests providerOverrides beside control fields; lift to the step DTO sibling.
+        const splitFromForm =
+          updateStep.providerOverrides === undefined
+            ? splitProviderOverridesFromControlValues(incomingControlValues as Record<string, unknown>)
+            : { controlValues: incomingControlValues, providerOverrides: updateStep.providerOverrides };
+
         return {
-          ...step,
+          ...stepWithoutProviderOverrides,
           ...updateStep,
-          controlValues: updatedControlValues,
+          controlValues: splitFromForm.controlValues,
+          ...(splitFromForm.providerOverrides !== undefined
+            ? { providerOverrides: splitFromForm.providerOverrides }
+            : {}),
         };
       }
 
       return {
-        ...step,
+        ...stepWithoutProviderOverrides,
         controlValues: step.controls?.values || {},
       };
     }),

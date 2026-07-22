@@ -35,7 +35,7 @@ Every Telegram integration uses one bot. Create it with BotFather before adding 
     1234567890:AAFdT8_…
     ```
 
-    Copy the full message — Novu can extract the token automatically when you paste it into the dashboard.
+    Copy the full message - Novu can extract the token automatically when you paste it into the dashboard.
   </Step>
 </Steps>
 
@@ -180,7 +180,7 @@ curl -L -X POST 'https://api.novu.co/v1/integrations/channel-endpoints/link' \
   </Tab>
 </Tabs>
 
-Open the returned `url` in a new tab or show it as a button in your UI. Generate a fresh link each time the subscriber starts the flow — links expire after a short time.
+Open the returned `url` in a new tab or show it as a button in your UI. Generate a fresh link each time the subscriber starts the flow - links expire after a short time.
 
 #### From your app with `@novu/react`
 
@@ -205,7 +205,7 @@ function ConnectTelegram() {
 }
 ```
 
-See the [connect components](/agents/custom-code-agent/setup-your-agent/connect-components#telegram-connect-button) guide for the full props reference.
+See the [connect components](/agents/custom-code-agent/connect-components#telegram-connect-button) guide for the full props reference.
 
 ## Send chat workflow notifications
 
@@ -361,7 +361,7 @@ Novu finds the subscriber's linked Telegram chat, renders the message, and sends
 
 ## Using Telegram with agents
 
-Telegram is a supported [agent provider](/agents/get-started/agents-and-providers). Connect your bot to an agent so users can message the bot and get replies in the same chat — without building Telegram integrations yourself.
+Telegram is a supported [agent provider](/agents/get-started/agents-and-providers). Connect your bot to an agent so users can message the bot and get replies in the same chat - without building Telegram integrations yourself.
 
 <Card title="Build agents on Telegram" icon="bot" href="/agents">
   Learn how Novu agents work, including managed and custom code agents.
@@ -430,7 +430,7 @@ Both can use the same bot and the same connected chat. Your agent can handle bac
   <Card icon="plus" href="/platform/integrations/chat/adding-chat" title="Adding a chat channel">
     General steps for enabling the Chat channel and wiring it into workflows.
   </Card>
-  <Card icon="code" href="/agents/custom-code-agent/setup-your-agent/connect-components" title="Connect components">
+  <Card icon="code" href="/agents/custom-code-agent/connect-components" title="Connect components">
     Prebuilt React buttons for Slack, Teams, Telegram, and more.
   </Card>
 </Columns>

@@ -44,14 +44,16 @@ function unwrapToolOutput(output: unknown): unknown {
 }
 
 /**
- * Collect executed tool results from `response.messages` (the SDK's `responseMessages`).
+ * Collect executed tool results from `result.responseMessages`.
  *
- * Per AI SDK docs, `responseMessages` is the accumulated assistant/tool history for the
- * call — including tool results from approved tools executed before the first model step.
+ * `responseMessages` is the accumulated assistant/tool history for the call — including
+ * tool results from approved tools executed before the first model step. In AI SDK 7 the
+ * top-level `result.response` is final-step-only, so `responseMessages` is the correct
+ * source for the full history.
  * @see https://ai-sdk.dev/docs/ai-sdk-core/tools-and-tool-calling#response-messages
  */
 async function collectExecutedToolResults(result: AiSdkResult): Promise<ExecutedToolResult[]> {
-  const { messages = [] } = await Promise.resolve(result.response);
+  const messages = (await Promise.resolve(result.responseMessages)) ?? [];
 
   return messages
     .filter(isToolMessage)

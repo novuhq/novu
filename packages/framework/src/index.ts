@@ -7,6 +7,8 @@ export type {
   AgentActionContext,
   AgentAttachment,
   AgentContext,
+  AgentContextPayload,
+  AgentContextValue,
   AgentConversation,
   AgentHandlerContext,
   AgentHandlers,
@@ -19,6 +21,7 @@ export type {
   AgentReactionContext,
   AgentResolveContext,
   AgentSubscriber,
+  AgentSubscriberAccess,
   AgentToolCall,
   CardChild,
   CardElement,
@@ -32,6 +35,7 @@ export type {
 export {
   Actions,
   AgentDeliveryError,
+  AgentError,
   agent,
   Button,
   Card,
@@ -41,6 +45,7 @@ export {
   Select,
   SelectOption,
   TextInput,
+  toAgentError,
   workflow,
 } from './resources';
 export type {
@@ -51,6 +56,7 @@ export type {
   PushStepResolver,
   SmsStepResolver,
   StepResolverContext,
+  ToolStepResolver,
 } from './resources/step-resolver/step';
 export { step } from './resources/step-resolver/step';
 export { providerSchemas } from './schemas';

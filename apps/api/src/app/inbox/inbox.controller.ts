@@ -20,7 +20,13 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { IntegrationRepository } from '@novu/dal';
-import { ChatProviderIdEnum, MessageActionStatusEnum, PreferenceLevelEnum, UserSessionData } from '@novu/shared';
+import {
+  ChatProviderIdEnum,
+  ConnectionMode,
+  MessageActionStatusEnum,
+  PreferenceLevelEnum,
+  UserSessionData,
+} from '@novu/shared';
 import type { Request } from 'express';
 import { getClientIp } from 'request-ip';
 import { ListChannelConnectionsQueryDto } from '../channel-connections/dtos/list-channel-connections-query.dto';
@@ -41,13 +47,11 @@ import { TriggerEventResponseDto } from '../events/dtos/trigger-event-response.d
 import { GenerateChatOAuthUrlResponseDto } from '../integrations/dtos/generate-chat-oauth-url-response.dto';
 import { GenerateConnectOauthUrlRequestDto } from '../integrations/dtos/generate-connect-oauth-url-request.dto';
 import { GenerateLinkUserOauthUrlRequestDto } from '../integrations/dtos/generate-link-user-oauth-url-request.dto';
+import { LinkChannelEndpointResponseDto } from '../integrations/dtos/link-channel-endpoint-response.dto';
 import { GenerateConnectOauthUrlCommand } from '../integrations/usecases/generate-chat-oath-url/generate-connect-oauth-url.command';
 import { GenerateConnectOauthUrl } from '../integrations/usecases/generate-chat-oath-url/generate-connect-oauth-url.usecase';
 import { GenerateLinkUserOauthUrlCommand } from '../integrations/usecases/generate-chat-oath-url/generate-link-user-oauth-url.command';
 import { GenerateLinkUserOauthUrl } from '../integrations/usecases/generate-chat-oath-url/generate-link-user-oauth-url.usecase';
-import { LinkChannelEndpointResponseDto } from '../integrations/dtos/link-channel-endpoint-response.dto';
-import { IssueTelegramSubscriberLinkCommand } from '../telegram-linking/issue-telegram-subscriber-link/issue-telegram-subscriber-link.command';
-import { IssueTelegramSubscriberLink } from '../telegram-linking/issue-telegram-subscriber-link/issue-telegram-subscriber-link.usecase';
 import { ExcludeFromIdempotency } from '../shared/framework/exclude-from-idempotency';
 import { ApiCommonResponses } from '../shared/framework/response.decorator';
 import { KeylessAccessible } from '../shared/framework/swagger/keyless.security';
@@ -57,8 +61,11 @@ import {
   GetSubscriberGlobalPreference,
   GetSubscriberGlobalPreferenceCommand,
 } from '../subscribers/usecases/get-subscriber-global-preference';
+import { IssueTelegramSubscriberLinkCommand } from '../telegram-linking/issue-telegram-subscriber-link/issue-telegram-subscriber-link.command';
+import { IssueTelegramSubscriberLink } from '../telegram-linking/issue-telegram-subscriber-link/issue-telegram-subscriber-link.usecase';
 import { ActionTypeRequestDto } from './dtos/action-type-request.dto';
 import { BulkUpdatePreferencesRequestDto } from './dtos/bulk-update-preferences-request.dto';
+import { GetChannelConnectionQueryDto } from './dtos/get-channel-connection-query.dto';
 import { GetNotificationsCountRequestDto } from './dtos/get-notifications-count-request.dto';
 import { GetNotificationsCountResponseDto } from './dtos/get-notifications-count-response.dto';
 import { GetNotificationsRequestDto } from './dtos/get-notifications-request.dto';
@@ -71,9 +78,9 @@ import {
 } from './dtos/inbox-channel-connection-response.dto';
 import { InboxListChannelEndpointsResponseDto } from './dtos/inbox-channel-endpoint-response.dto';
 import { mapChannelConnectionToInboxDto, mapChannelEndpointToInboxDto } from './dtos/inbox-dto.mapper';
-import { InboxLinkChannelEndpointRequestDto } from './dtos/link-channel-endpoint-request.dto';
 import { InboxNotificationDto } from './dtos/inbox-notification.dto';
 import { InboxTriggerEventRequestDto } from './dtos/inbox-trigger-event-request.dto';
+import { InboxLinkChannelEndpointRequestDto } from './dtos/link-channel-endpoint-request.dto';
 import { MarkNotificationsAsSeenRequestDto } from './dtos/mark-notifications-as-seen-request.dto';
 import { SnoozeNotificationRequestDto } from './dtos/snooze-notification-request.dto';
 import { SubscriberSessionRequestDto } from './dtos/subscriber-session-request.dto';
@@ -689,6 +696,7 @@ export class InboxController {
           organizationId: subscriberSession._organizationId,
         } as UserSessionData,
         subscriberId: subscriberSession.subscriberId,
+        connectionMode: query.connectionMode,
         limit: query.limit || 10,
         after: query.after,
         before: query.before,
@@ -713,9 +721,14 @@ export class InboxController {
   @Get('/channel-connections/:identifier')
   async getChannelConnection(
     @SubscriberSession() subscriberSession: SubscriberSession,
-    @Param('identifier') identifier: string
+    @Param('identifier') identifier: string,
+    @Query() query: GetChannelConnectionQueryDto
   ): Promise<InboxChannelConnectionResponseDto> {
-    const channelConnection = await this.loadChannelConnectionForSubscriber(subscriberSession, identifier);
+    const channelConnection = await this.loadChannelConnectionForSubscriber(
+      subscriberSession,
+      identifier,
+      query.connectionMode
+    );
 
     return mapChannelConnectionToInboxDto(channelConnection);
   }
@@ -738,7 +751,11 @@ export class InboxController {
     );
   }
 
-  private async loadChannelConnectionForSubscriber(subscriberSession: SubscriberSession, identifier: string) {
+  private async loadChannelConnectionForSubscriber(
+    subscriberSession: SubscriberSession,
+    identifier: string,
+    connectionMode?: ConnectionMode
+  ) {
     try {
       return await this.getChannelConnectionUsecase.execute(
         GetChannelConnectionCommand.create({
@@ -747,6 +764,7 @@ export class InboxController {
           identifier,
           subscriberId: subscriberSession.subscriberId,
           contextKeys: subscriberSession.contextKeys,
+          connectionMode,
         })
       );
     } catch (error) {
@@ -837,7 +855,13 @@ export class InboxController {
         subscriberId: subscriberSession.subscriberId,
         integrationIdentifier: body.integrationIdentifier,
         connectionIdentifier: body.connectionIdentifier,
+        // A session that already carries resolved `contextKeys` is the trusted
+        // context source; the raw `body.context` is only used (and re-verified via
+        // `contextHash`) when the session has none.
         context: body.context,
+        contextKeys: subscriberSession.contextKeys,
+        contextHash: body.contextHash,
+        isContextValidated: !!subscriberSession.contextKeys?.length,
         scope: body.scope,
         connectionMode: body.connectionMode,
         autoLinkUser: body.autoLinkUser,
@@ -860,7 +884,13 @@ export class InboxController {
         subscriberId: subscriberSession.subscriberId,
         integrationIdentifier: body.integrationIdentifier,
         connectionIdentifier: body.connectionIdentifier,
+        // A session that already carries resolved `contextKeys` is the trusted
+        // context source; the raw `body.context` is only used (and re-verified via
+        // `contextHash`) when the session has none.
         context: body.context,
+        contextKeys: subscriberSession.contextKeys,
+        contextHash: body.contextHash,
+        isContextValidated: !!subscriberSession.contextKeys?.length,
         userScope: body.userScope,
       })
     );

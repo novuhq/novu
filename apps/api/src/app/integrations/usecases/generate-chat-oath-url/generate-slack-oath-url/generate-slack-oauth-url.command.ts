@@ -20,6 +20,12 @@ export class GenerateSlackOauthUrlCommand extends EnvironmentCommand {
   @IsValidContextPayload({ maxCount: 5 })
   context?: ContextPayload;
 
+  /** Trusted pre-resolved context keys (from the subscriber session); persisted directly when present. */
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  readonly contextKeys?: string[];
+
   @IsOptional()
   @IsArray()
   @IsString({ each: true })

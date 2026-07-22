@@ -5,6 +5,7 @@ import type {
   AddReactionPayload,
   AgentAction,
   AgentBridgeRequest,
+  AgentContextPayload,
   AgentConversation,
   AgentHistoryEntry,
   AgentMessage,
@@ -31,7 +32,7 @@ import type {
   TypingOp,
 } from './agent.types';
 import { AgentEventEnum, PendingApproval } from './agent.types';
-import { isCardElement } from './guards';
+import { resolveCardContent } from './resolve-card-content';
 import type { ToolApprovalRequestPayload } from './tool-approval/action-id';
 import { postToolApprovalCard } from './tool-approval/post-card';
 
@@ -199,17 +200,9 @@ async function serializeContent(content: MessageContent, files?: FileRef[]): Pro
     return validFiles ? { markdown: content, files: validFiles } : { markdown: content };
   }
 
-  const { isJSX, toCardElement } = await import('chat/jsx-runtime');
-
-  if (isJSX(content)) {
-    const card = toCardElement(content);
-    if (card) {
-      return validFiles ? { card, files: validFiles } : { card };
-    }
-  }
-
-  if (isCardElement(content)) {
-    return validFiles ? { card: content, files: validFiles } : { card: content };
+  const card = await resolveCardContent(content);
+  if (card) {
+    return validFiles ? { card, files: validFiles } : { card };
   }
 
   throw new Error('Invalid message content — expected string or CardElement');
@@ -277,6 +270,7 @@ export class AgentContextImpl implements AgentRuntimeContext {
   readonly reaction: AgentReaction | null;
   readonly conversation: AgentConversation;
   readonly subscriber: AgentSubscriber | null;
+  readonly context: AgentContextPayload | null;
   readonly history: AgentHistoryEntry[];
   readonly platform: string;
   readonly platformContext: AgentPlatformContext;
@@ -312,6 +306,7 @@ export class AgentContextImpl implements AgentRuntimeContext {
     this.reaction = request.reaction;
     this.conversation = request.conversation;
     this.subscriber = request.subscriber;
+    this.context = request.context ?? null;
     this.history = request.history;
     this.platform = request.platform;
     this.platformContext = request.platformContext;
@@ -452,6 +447,20 @@ export class AgentContextImpl implements AgentRuntimeContext {
 
   deleteMessage(messageId: string): void {
     this._pendingDeletes.push({ messageId });
+  }
+
+  /** Best-effort failure report to Novu. Never throws. */
+  async reportTurnError(): Promise<void> {
+    try {
+      await this._post({
+        conversationId: this._conversationId,
+        integrationIdentifier: this._integrationIdentifier,
+        error: true,
+      });
+    } catch (err) {
+      // Local only — cannot recurse into onError
+      console.error(`[agent] Failed to report turn error:`, err);
+    }
   }
 
   /**

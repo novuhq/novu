@@ -38,20 +38,26 @@ describe('TelegramMobileLinkTokenService', () => {
       return 'I';
     }
 
-    if (!parsed.expiresAt || !parsed.payload?.kind) {
+    if (!parsed.expiresAt || !parsed.payload) {
       return 'I';
     }
 
-    if (expectedKind && parsed.payload.kind !== expectedKind) {
-      const ttl = Math.max(1, parsed.expiresAt - now);
-      cacheStore.set(storageKey, raw);
-      keyTtls.set(storageKey, ttl);
+    if (expectedKind) {
+      if (!parsed.payload.kind) {
+        return 'I';
+      }
 
-      return 'K';
+      if (parsed.payload.kind !== expectedKind) {
+        const ttl = Math.max(1, parsed.expiresAt - now);
+        cacheStore.set(storageKey, raw);
+        keyTtls.set(storageKey, ttl);
+
+        return 'K';
+      }
     }
 
     const ttl = Math.max(1, parsed.expiresAt - now);
-    cacheStore.set(usedKey, '1');
+    cacheStore.set(usedKey, raw);
     keyTtls.set(usedKey, ttl);
 
     return `M${raw}`;
@@ -176,8 +182,10 @@ describe('TelegramMobileLinkTokenService', () => {
     const claimed = await service.claim(token, 'agent');
     expect(claimed.payload.kind).to.equal('agent');
 
+    // The used marker keeps the whole entry so payloads survive consumption.
     const usedKey = `telegram_mobile_link_used:{${token}}`;
-    expect(cacheStore.get(usedKey)).to.equal('1');
+    const usedEntry = JSON.parse(cacheStore.get(usedKey) as string);
+    expect(usedEntry.payload.kind).to.equal('agent');
     const usedTtl = keyTtls.get(usedKey);
     expect(usedTtl).to.be.a('number');
     const remaining = claimed.expiresAt - Math.floor(Date.now() / 1000);

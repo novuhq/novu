@@ -56,6 +56,12 @@ export class ChannelPreferencesPartial implements Partial<Record<ChannelTypeEnum
   @ValidateNested()
   @Type(() => ChannelPreferencePartial)
   readonly chat?: ChannelPreferencePartial;
+
+  @IsOptional()
+  @IsObject()
+  @ValidateNested()
+  @Type(() => ChannelPreferencePartial)
+  readonly tool?: ChannelPreferencePartial;
 }
 
 export class PreferencesPartial implements WorkflowPreferencesPartial {
@@ -117,6 +123,11 @@ export class ChannelPreferencesRequired implements Record<ChannelTypeEnum, Chann
   @ValidateNested()
   @Type(() => ChannelPreferenceRequired)
   readonly chat: ChannelPreferenceRequired;
+
+  @IsObject()
+  @ValidateNested()
+  @Type(() => ChannelPreferenceRequired)
+  readonly tool: ChannelPreferenceRequired;
 }
 
 export class PreferencesRequired implements WorkflowPreferences {

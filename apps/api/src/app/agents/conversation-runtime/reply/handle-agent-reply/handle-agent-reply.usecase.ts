@@ -20,7 +20,8 @@ import type {
 } from '../../../shared/dtos/agent-reply-payload.dto';
 import { isValidMetadataSignalKey } from '../../../shared/dtos/agent-reply-payload.dto';
 import { AgentEventEnum } from '../../../shared/enums/agent-event.enum';
-import { AgentPlatformEnum } from '../../../shared/enums/agent-platform.enum';
+import { AgentPlatformEnum, usesReplyBasedApprovals } from '../../../shared/enums/agent-platform.enum';
+import { adaptApprovalContentForReplyBasedPlatform } from '../../../shared/tool-approval/reply-based-approval';
 import {
   buildSelfHostedApprovalCard,
   type SelfHostedApprovalDescriptor,
@@ -33,6 +34,9 @@ import { OutboundGateway } from '../../egress/outbound.gateway';
 import { BridgeExecutorService } from '../../runtime/bridge-executor.service';
 import { buildAgentPlatformContext, buildEmailPlatformContext } from '../../runtime/build-platform-context.util';
 import { HandleAgentReplyCommand } from './handle-agent-reply.command';
+
+const SELF_HOSTED_TURN_ERROR_MARKDOWN =
+  '*Something went wrong while processing your message. Please try again in a moment.*';
 
 @Injectable()
 export class HandleAgentReply {
@@ -53,6 +57,27 @@ export class HandleAgentReply {
   }
 
   async execute(command: HandleAgentReplyCommand): Promise<SentMessageInfo | null> {
+    if (command.error) {
+      if (
+        command.reply ||
+        command.edit ||
+        command.resolve ||
+        command.signals?.length ||
+        command.toolResults?.length ||
+        command.toolApprovalRequest ||
+        command.addReactions?.length ||
+        command.deleteMessages?.length ||
+        command.plan ||
+        command.typing
+      ) {
+        throw new BadRequestException(
+          'error cannot be combined with reply, edit, resolve, signals, toolResults, toolApprovalRequest, addReactions, deleteMessages, plan, or typing'
+        );
+      }
+
+      return this.deliverSelfHostedTurnError(command);
+    }
+
     if (command.reply && command.edit) {
       throw new BadRequestException('Only one of reply or edit can be provided');
     }
@@ -79,10 +104,11 @@ export class HandleAgentReply {
       !command.addReactions?.length &&
       !command.deleteMessages?.length &&
       !command.plan &&
-      !command.typing
+      !command.typing &&
+      !command.error
     ) {
       throw new BadRequestException(
-        'At least one of reply, edit, resolve, signals, toolResults, toolApprovalRequest, addReactions, deleteMessages, plan, or typing must be provided'
+        'At least one of reply, edit, resolve, signals, toolResults, toolApprovalRequest, addReactions, deleteMessages, plan, typing, or error must be provided'
       );
     }
 
@@ -181,7 +207,8 @@ export class HandleAgentReply {
             channel.platform,
             channel.platformThreadId,
             r.messageId,
-            r.emojiName
+            r.emojiName,
+            channel.workspace?.id
           )
         )
       );
@@ -195,7 +222,8 @@ export class HandleAgentReply {
             command.integrationIdentifier,
             channel.platform,
             channel.platformThreadId,
-            d.messageId
+            d.messageId,
+            channel.workspace?.id
           )
         )
       );
@@ -232,6 +260,59 @@ export class HandleAgentReply {
       triggerSignalCount,
       metadataSignalCount,
       reactionCount,
+    });
+
+    return replyInfo ?? null;
+  }
+
+  private async deliverSelfHostedTurnError(command: HandleAgentReplyCommand): Promise<SentMessageInfo | null> {
+    const conversation = await this.conversationService.getConversation(
+      command.conversationId,
+      command.environmentId,
+      command.organizationId
+    );
+    if (!conversation) {
+      throw new NotFoundException('Conversation not found');
+    }
+
+    const channel = this.conversationService.getPrimaryChannel(conversation);
+    const agentName = await this.resolveValidatedAgentNameForDelivery(command, conversation);
+
+    this.logger.warn(
+      { conversationId: command.conversationId, agentIdentifier: command.agentIdentifier },
+      'Self-hosted bridge reported turn error'
+    );
+
+    const config = await this.agentConfigResolver.resolve(conversation._agentId, command.integrationIdentifier);
+
+    const replyInfo = await this.deliverMessage(
+      command,
+      conversation,
+      channel,
+      { markdown: SELF_HOSTED_TURN_ERROR_MARKDOWN },
+      agentName
+    );
+
+    if (config && !config.isManaged) {
+      void this.inboundAck.onBridgeReplyDelivered({
+        agentId: conversation._agentId,
+        config,
+        platformThreadId: channel.platformThreadId,
+        firstPlatformMessageId: channel.firstPlatformMessageId,
+      });
+    }
+
+    trackAgentReplyProcessed(this.analyticsService, {
+      userId: command.userId,
+      organizationId: command.organizationId,
+      environmentId: command.environmentId,
+      agentIdentifier: command.agentIdentifier,
+      conversationId: command.conversationId,
+      integrationIdentifier: command.integrationIdentifier,
+      actions: ['turn_error'],
+      triggerSignalCount: 0,
+      metadataSignalCount: 0,
+      reactionCount: 0,
     });
 
     return replyInfo ?? null;
@@ -311,12 +392,20 @@ export class HandleAgentReply {
       slackNative = built.slackNative;
     }
 
+    // Platforms without callback buttons (iMessage/SMS) cannot click Approve /
+    // Deny — strip the buttons and append explicit "Reply YES / NO" text so
+    // the user can answer the approval by texting back.
+    if (command.toolApprovalRequest && usesReplyBasedApprovals(channel.platform)) {
+      deliverContent = adaptApprovalContentForReplyBasedPlatform(deliverContent);
+    }
+
     return this.outboundGateway.deliver(
       {
         agentId: conversation._agentId,
         integrationIdentifier: command.integrationIdentifier,
         platform: channel.platform,
         platformThreadId: channel.platformThreadId,
+        workspaceId: channel.workspace?.id,
       },
       deliverContent,
       {
@@ -344,6 +433,7 @@ export class HandleAgentReply {
         integrationIdentifier: command.integrationIdentifier,
         platform: channel.platform,
         platformThreadId: channel.platformThreadId,
+        workspaceId: channel.workspace?.id,
       },
       edit.messageId,
       edit.content,
@@ -373,7 +463,8 @@ export class HandleAgentReply {
         channel.platformThreadId,
         plan.messageId,
         plan.model,
-        plan.phase
+        plan.phase,
+        channel.workspace?.id
       );
 
       return { messageId: plan.messageId, platformThreadId: channel.platformThreadId };
@@ -385,7 +476,8 @@ export class HandleAgentReply {
       channel.platform,
       channel.platformThreadId,
       plan.model,
-      plan.phase
+      plan.phase,
+      channel.workspace?.id
     );
   }
 
@@ -395,14 +487,23 @@ export class HandleAgentReply {
     channel: ConversationChannel,
     typing: NonNullable<HandleAgentReplyCommand['typing']>
   ): Promise<void> {
-    const status = typing === 'stop' ? '' : (typing.status ?? 'Thinking...');
-
     try {
+      if (typing === 'stop') {
+        await this.outboundGateway.stopTypingInConversation(
+          conversation._agentId,
+          command.integrationIdentifier,
+          channel.platformThreadId
+        );
+
+        return;
+      }
+
       await this.outboundGateway.startTypingInConversation(
         conversation._agentId,
         command.integrationIdentifier,
         channel.platformThreadId,
-        status
+        typing.status ?? 'Thinking...',
+        channel.workspace?.id
       );
     } catch (err) {
       this.logger.warn(err, `[agent:${command.agentIdentifier}] Failed to set typing status`);
@@ -661,7 +762,8 @@ export class HandleAgentReply {
       channel.platform,
       channel.platformThreadId,
       firstMessageId,
-      config.reactionOnResolved
+      config.reactionOnResolved,
+      channel.workspace?.id
     );
   }
 

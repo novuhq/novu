@@ -1,4 +1,4 @@
-import { FeatureFlagsKeysEnum, ProductUseCasesEnum } from '@novu/shared';
+import { ProductUseCasesEnum } from '@novu/shared';
 import { useQuery } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -16,16 +16,16 @@ import { OnboardingLoader } from '@/components/onboarding/onboarding-loader';
 import { OnboardingShell } from '@/components/onboarding/onboarding-shell';
 import { PageMeta } from '@/components/page-meta';
 import { Button } from '@/components/primitives/button';
-import { IS_EU } from '@/config';
 import { useAuth } from '@/context/auth/hooks';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useAgentCliConnectionPoll } from '@/hooks/use-agent-cli-connection-poll';
 import { useAgentRoutes } from '@/hooks/use-agent-routes';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { useAreConversationalAgentsAvailable } from '@/hooks/use-are-conversational-agents-available';
 import { useOnboardingProvisioningActive, useOnboardingProvisioningDismiss } from '@/hooks/use-onboarding-provisioning';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { useUpdateProductUseCases } from '@/hooks/use-update-product-use-cases';
 import { AGENT_TEMPLATE_ID_PARAM, readActiveAgentTemplateId } from '@/utils/agent-template-identity';
+import { trackAgentsUsecaseSelected } from '@/utils/agents-org-funnel';
 import { isAbsoluteUrl } from '@/utils/apps';
 import { clearPersistedCliOnboardingSessionId } from '@/utils/cli-onboarding-identity';
 import { getPostOnboardingRoute, withOnboardingSource } from '@/utils/onboarding-redirect';
@@ -125,7 +125,7 @@ function StepHeader({ current, onBack }: StepHeaderProps) {
 }
 
 export function AgentsSetupPage() {
-  const isAgentsEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONVERSATIONAL_AGENTS_ENABLED, false);
+  const areAgentsAvailable = useAreConversationalAgentsAvailable();
   const navigate = useNavigate();
   const telemetry = useTelemetry();
   const { currentOrganization } = useAuth();
@@ -158,9 +158,8 @@ export function AgentsSetupPage() {
 
   // When the user arrives here via `?product_type=agents` (the usecase picker is skipped), persist the
   // agents usecase on the org once it's resolved. Runs once; the usecase picker path persists itself.
-  // Skipped when agents are unavailable (EU/flag off) since the page redirects to the inbox path.
   useEffect(() => {
-    if (productUseCasesPersistedRef.current || IS_EU || !isAgentsEnabled || !currentOrganization?._id) {
+    if (productUseCasesPersistedRef.current || !areAgentsAvailable || !currentOrganization?._id) {
       return;
     }
 
@@ -169,9 +168,10 @@ export function AgentsSetupPage() {
     }
 
     productUseCasesPersistedRef.current = true;
+    void trackAgentsUsecaseSelected('product_type_deeplink');
     updateProductUseCases.mutate({ [ProductUseCasesEnum.AGENTS]: true });
     clearPendingProductType();
-  }, [currentOrganization?._id, isAgentsEnabled, updateProductUseCases]);
+  }, [areAgentsAvailable, currentOrganization?._id, updateProductUseCases]);
 
   const [createdAgent, setCreatedAgent] = useState<AgentResponse | null>(null);
   const [connectSummary, setConnectSummary] = useState<ConnectSummary | null>(null);
@@ -302,8 +302,7 @@ export function AgentsSetupPage() {
     void navigate(ROUTES.USECASE_SELECT);
   }, [navigate]);
 
-  // Agents are not available in the EU region.
-  if (IS_EU || !isAgentsEnabled) {
+  if (!areAgentsAvailable) {
     return <Navigate to={ROUTES.INBOX_USECASE} replace />;
   }
 

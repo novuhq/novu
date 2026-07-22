@@ -6,13 +6,7 @@ import { AwsIcon } from '@/components/icons/aws';
 import { LangChainIcon } from '@/components/icons/langchain';
 import { ClaudeIcon } from '../../icons/claude';
 
-export type ConnectorId =
-  | 'claude'
-  | 'claude-aws'
-  | 'bedrock'
-  | 'ai-sdk'
-  | 'langchain'
-  | 'custom-code';
+export type ConnectorId = 'claude' | 'claude-aws' | 'bedrock' | 'ai-sdk' | 'langchain' | 'custom-code';
 
 export type ConnectorGroup = 'external' | 'custom';
 

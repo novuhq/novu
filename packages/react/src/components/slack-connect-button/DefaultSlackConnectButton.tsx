@@ -9,6 +9,7 @@ export type DefaultSlackConnectButtonProps = Pick<
   | 'connectionIdentifier'
   | 'subscriberId'
   | 'context'
+  | 'contextHash'
   | 'scope'
   | 'connectionMode'
   | 'autoLinkUser'
@@ -26,6 +27,7 @@ export const DefaultSlackConnectButton = (props: DefaultSlackConnectButtonProps)
     connectionIdentifier,
     subscriberId,
     context,
+    contextHash,
     scope,
     connectionMode,
     autoLinkUser,
@@ -47,6 +49,7 @@ export const DefaultSlackConnectButton = (props: DefaultSlackConnectButtonProps)
           connectionIdentifier,
           subscriberId,
           context,
+          contextHash,
           scope,
           connectionMode,
           autoLinkUser,
@@ -66,6 +69,7 @@ export const DefaultSlackConnectButton = (props: DefaultSlackConnectButtonProps)
       connectionIdentifier,
       subscriberId,
       context,
+      contextHash,
       scope,
       connectionMode,
       autoLinkUser,

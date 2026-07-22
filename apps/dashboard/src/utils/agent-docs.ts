@@ -13,4 +13,4 @@ export const AGENTS_DOCS_PROVIDERS_URL = `${DOCS_BASE_URL}/agents/get-started/ag
 export const AGENTS_DOCS_CONVERSATIONS_URL = `${DOCS_BASE_URL}/agents/conversations`;
 
 /** Production setup checklist (bridge URL, integrations, inbound email). */
-export const AGENTS_DOCS_SETUP_URL = `${DOCS_BASE_URL}/agents/custom-code-agent/setup-your-agent/overview`;
+export const AGENTS_DOCS_SETUP_URL = `${DOCS_BASE_URL}/agents/custom-code-agent/going-to-production`;

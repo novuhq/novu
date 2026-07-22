@@ -1,7 +1,7 @@
 import type { ChannelEndpointType } from '@novu/shared';
-import { ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
+import { ChatProviderIdEnum, ENDPOINT_TYPES, ToolProviderIdEnum } from '@novu/shared';
 import type { IconType } from 'react-icons';
-import { RiAtLine, RiHashtag, RiLinksLine, RiTelegramLine } from 'react-icons/ri';
+import { RiAtLine, RiHashtag, RiKey2Line, RiLinksLine, RiTelegramLine } from 'react-icons/ri';
 
 /** A chat endpoint type a user can manually add for an integration. */
 export type ChatEndpointTypeOption = {
@@ -63,6 +63,22 @@ const MS_TEAMS_USER: ChatEndpointTypeOption = {
   requiresConnection: true,
 };
 
+const WEBEX_ROOM: ChatEndpointTypeOption = {
+  type: ENDPOINT_TYPES.WEBEX_ROOM,
+  label: 'Webex room',
+  icon: RiHashtag,
+  skeleton: { roomId: '' },
+  requiresConnection: true,
+};
+
+const WEBEX_PERSON: ChatEndpointTypeOption = {
+  type: ENDPOINT_TYPES.WEBEX_PERSON,
+  label: 'Webex person',
+  icon: RiAtLine,
+  skeleton: { personEmail: '' },
+  requiresConnection: true,
+};
+
 const TELEGRAM_CHAT: ChatEndpointTypeOption = {
   type: ENDPOINT_TYPES.TELEGRAM_CHAT,
   label: 'Telegram chat',
@@ -71,9 +87,18 @@ const TELEGRAM_CHAT: ChatEndpointTypeOption = {
   requiresConnection: false,
 };
 
+const LINE_USER: ChatEndpointTypeOption = {
+  type: ENDPOINT_TYPES.LINE_USER,
+  label: 'LINE user',
+  icon: RiAtLine,
+  skeleton: { userId: '' },
+  requiresConnection: false,
+};
+
 const CONNECT_LINK_PROVIDERS = new Set<string>([
   ChatProviderIdEnum.Slack,
   ChatProviderIdEnum.MsTeams,
+  ChatProviderIdEnum.WebexMessaging,
   ChatProviderIdEnum.Telegram,
 ]);
 
@@ -89,7 +114,9 @@ export function supportsConnectLink(providerId: string): boolean {
 const SUPPORTED_TYPES_BY_PROVIDER: Partial<Record<string, ChatEndpointTypeOption[]>> = {
   [ChatProviderIdEnum.Slack]: [WEBHOOK, SLACK_CHANNEL, SLACK_USER],
   [ChatProviderIdEnum.MsTeams]: [WEBHOOK, MS_TEAMS_CHANNEL, MS_TEAMS_USER],
+  [ChatProviderIdEnum.WebexMessaging]: [WEBEX_ROOM, WEBEX_PERSON],
   [ChatProviderIdEnum.Telegram]: [TELEGRAM_CHAT],
+  [ChatProviderIdEnum.Line]: [LINE_USER],
   [ChatProviderIdEnum.Discord]: [WEBHOOK],
   [ChatProviderIdEnum.Mattermost]: [WEBHOOK_WITH_CHANNEL],
   [ChatProviderIdEnum.Ryver]: [WEBHOOK],
@@ -109,4 +136,34 @@ export function getAddableEndpointTypes(providerId: string, hasConnection: boole
   const supported = SUPPORTED_TYPES_BY_PROVIDER[providerId] ?? [WEBHOOK];
 
   return supported.filter((option) => !option.requiresConnection || hasConnection);
+}
+
+const PAGERDUTY_SERVICE: ChatEndpointTypeOption = {
+  type: ENDPOINT_TYPES.PAGERDUTY_SERVICE,
+  label: 'PagerDuty service',
+  icon: RiKey2Line,
+  skeleton: { routingKey: '', region: 'us' },
+  requiresConnection: false,
+};
+
+const OPSGENIE_INTEGRATION: ChatEndpointTypeOption = {
+  type: ENDPOINT_TYPES.OPSGENIE_INTEGRATION,
+  label: 'Opsgenie integration',
+  icon: RiKey2Line,
+  skeleton: { apiKey: '', region: 'us' },
+  requiresConnection: false,
+};
+
+/**
+ * Endpoint types each tool provider consumes for per-subscriber routing.
+ * The credential-routed tool webhook has no subscriber endpoints.
+ */
+const SUPPORTED_TOOL_TYPES_BY_PROVIDER: Partial<Record<string, ChatEndpointTypeOption[]>> = {
+  [ToolProviderIdEnum.PagerDuty]: [PAGERDUTY_SERVICE],
+  [ToolProviderIdEnum.Opsgenie]: [OPSGENIE_INTEGRATION],
+};
+
+/** Resolves endpoint types a user may manually add for a tool integration. */
+export function getAddableToolEndpointTypes(providerId: string): ChatEndpointTypeOption[] {
+  return SUPPORTED_TOOL_TYPES_BY_PROVIDER[providerId] ?? [];
 }

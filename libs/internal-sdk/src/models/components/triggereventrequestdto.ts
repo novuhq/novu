@@ -101,7 +101,7 @@ export type To1 = TopicPayloadDto | SubscriberPayloadDto | string;
 /**
  * The recipients list of people who will receive the notification. Maximum number of recipients can be 100.
  */
-export type To =
+export type TriggerEventRequestDtoTo =
   | TopicPayloadDto
   | SubscriberPayloadDto
   | Array<TopicPayloadDto | SubscriberPayloadDto | string>
@@ -260,29 +260,36 @@ export function to1ToJSON(to1: To1): string {
 }
 
 /** @internal */
-export type To$Outbound =
+export type TriggerEventRequestDtoTo$Outbound =
   | TopicPayloadDto$Outbound
   | SubscriberPayloadDto$Outbound
   | Array<TopicPayloadDto$Outbound | SubscriberPayloadDto$Outbound | string>
   | string;
 
 /** @internal */
-export const To$outboundSchema: z.ZodType<To$Outbound, z.ZodTypeDef, To> = z
-  .union([
-    TopicPayloadDto$outboundSchema,
-    SubscriberPayloadDto$outboundSchema,
-    z.array(
-      z.union([
-        TopicPayloadDto$outboundSchema,
-        SubscriberPayloadDto$outboundSchema,
-        z.string(),
-      ]),
-    ),
-    z.string(),
-  ]);
+export const TriggerEventRequestDtoTo$outboundSchema: z.ZodType<
+  TriggerEventRequestDtoTo$Outbound,
+  z.ZodTypeDef,
+  TriggerEventRequestDtoTo
+> = z.union([
+  TopicPayloadDto$outboundSchema,
+  SubscriberPayloadDto$outboundSchema,
+  z.array(
+    z.union([
+      TopicPayloadDto$outboundSchema,
+      SubscriberPayloadDto$outboundSchema,
+      z.string(),
+    ]),
+  ),
+  z.string(),
+]);
 
-export function toToJSON(to: To): string {
-  return JSON.stringify(To$outboundSchema.parse(to));
+export function triggerEventRequestDtoToToJSON(
+  triggerEventRequestDtoTo: TriggerEventRequestDtoTo,
+): string {
+  return JSON.stringify(
+    TriggerEventRequestDtoTo$outboundSchema.parse(triggerEventRequestDtoTo),
+  );
 }
 
 /** @internal */

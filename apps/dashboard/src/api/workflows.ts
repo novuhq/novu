@@ -101,6 +101,8 @@ export async function triggerWorkflow({
   to,
   context,
   overrides,
+  bridgeUrl,
+  controls,
 }: {
   environment: IEnvironment;
   name: string;
@@ -108,6 +110,10 @@ export async function triggerWorkflow({
   to: unknown;
   context?: unknown;
   overrides?: Record<string, unknown>;
+  /** Stateless bridge URL for triggering non-persisted (local mode) workflows. */
+  bridgeUrl?: string;
+  /** Per-step control values for stateless triggers (job-scoped, not persisted). */
+  controls?: { steps: Record<string, Record<string, unknown>> };
 }) {
   return post<{ data: { transactionId?: string } }>(`/events/trigger`, {
     environment,
@@ -117,6 +123,8 @@ export async function triggerWorkflow({
       payload: { ...(payload ?? {}), __source: (payload as any)?.__source ?? 'dashboard' },
       context: context ?? undefined,
       ...(overrides && Object.keys(overrides).length > 0 ? { overrides } : {}),
+      ...(bridgeUrl ? { bridgeUrl } : {}),
+      ...(controls ? { controls } : {}),
     },
   });
 }

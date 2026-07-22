@@ -310,10 +310,19 @@ export class SendgridEmailProvider extends BaseProvider implements IEmailProvide
     return key ? headers[key] : undefined;
   }
 
-  parseEventBody(body: unknown | unknown[], identifier: string): IEmailEventBody | undefined {
-    let eventBody: Record<string, unknown>;
+  parseEventBody(body: unknown | unknown[], identifier: string, eventIndex?: number): IEmailEventBody | undefined {
+    let eventBody: Record<string, unknown> | undefined;
     if (Array.isArray(body)) {
-      eventBody = body.find((item: Record<string, unknown>) => item.id === identifier);
+      if (eventIndex !== undefined) {
+        const item = body[eventIndex] as Record<string, unknown> | undefined;
+        if (item?.id === identifier) {
+          eventBody = item;
+        } else {
+          eventBody = body.find((entry: Record<string, unknown>) => entry.id === identifier);
+        }
+      } else {
+        eventBody = body.find((item: Record<string, unknown>) => item.id === identifier);
+      }
     } else {
       eventBody = body as Record<string, unknown>;
     }

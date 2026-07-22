@@ -24,6 +24,7 @@ import { useUpdateWorkflow } from '@/hooks/use-update-workflow';
 import { createContextHook } from '@/utils/context';
 import { getIdFromSlug, STEP_DIVIDER } from '@/utils/id-utils';
 import { buildRoute, ROUTES } from '@/utils/routes';
+import { findDigestStepBeforeCurrent } from './step-utils';
 import { showErrorToast } from './toasts';
 import { WorkflowSchemaProvider } from './workflow-schema-provider';
 
@@ -51,7 +52,7 @@ export type WorkflowContextType = {
   lastSaveError: unknown | null;
 };
 
-const WorkflowContext = createContext<WorkflowContextType>({} as WorkflowContextType);
+export const WorkflowContext = createContext<WorkflowContextType>({} as WorkflowContextType);
 
 export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
   const { currentEnvironment } = useEnvironment();
@@ -72,42 +73,10 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
     );
   }, [workflow, stepSlug]);
 
-  const isStepAfterDigest = useMemo(() => {
-    const step = getStep();
-    if (!step) return false;
-
-    const index = workflow?.steps.findIndex(
-      (current) =>
-        getIdFromSlug({ slug: current.slug, divider: STEP_DIVIDER }) ===
-        getIdFromSlug({ slug: step.slug, divider: STEP_DIVIDER })
-    );
-    /**
-     * < 1 means that the step is the first step in the workflow
-     */
-    if (index === undefined || index < 1) return false;
-
-    const hasDigestStepInBetween = workflow?.steps.slice(0, index).some((s) => s.type === 'digest');
-
-    return Boolean(hasDigestStepInBetween);
-  }, [getStep, workflow?.steps]);
-
-  const digestStepBeforeCurrent = useMemo(() => {
-    if (!workflow || !isStepAfterDigest) return undefined;
-
-    const index = workflow.steps.findIndex(
-      (step) =>
-        getIdFromSlug({ slug: stepSlug, divider: STEP_DIVIDER }) ===
-        getIdFromSlug({ slug: step.slug, divider: STEP_DIVIDER })
-    );
-
-    if (index === -1) return undefined;
-
-    const stepsBeforeCurrent = workflow.steps.slice(0, index);
-
-    const digestStep = stepsBeforeCurrent.reverse().find((step) => step.type === 'digest');
-
-    return digestStep;
-  }, [workflow, isStepAfterDigest, stepSlug]);
+  const digestStepBeforeCurrent = useMemo(
+    () => findDigestStepBeforeCurrent(workflow?.steps, getStep()),
+    [workflow?.steps, getStep]
+  );
 
   const { enqueue, hasPendingItems } = useInvocationQueue();
 

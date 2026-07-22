@@ -6,8 +6,9 @@ import { Command } from 'commander';
 import { v4 as uuidv4 } from 'uuid';
 import { DevCommandOptions, devCommand } from './commands';
 import { connectCommand } from './commands/connect';
-import { isDashboardOnlyChannel } from './commands/connect/dashboard-urls';
+import { DASHBOARD_ONLY_CHANNELS, isDashboardOnlyChannel } from './commands/connect/dashboard-urls';
 import { CONNECT_HELP_TEXT } from './commands/connect/help-text';
+import type { LlmAuthCliChoice } from './commands/connect/pipeline/llm-auth/types';
 import type { ConnectCommandInput } from './commands/connect/resolve-options';
 import { resolveConnectCommandOptions } from './commands/connect/resolve-options';
 import {
@@ -103,27 +104,35 @@ program
 program
   .command('dev')
   .description(
-    `Start Novu Studio and a local tunnel
+    `Connect your local Bridge application to the Novu Dashboard through a local tunnel
 
-  Running the Bridge application on port 4000: 
+  Running the Bridge application on port 4000:
   (e.g., npx novu@latest dev -p 4000)
 
-  Running the Bridge application on a different route: 
+  Running the Bridge application on a different route:
   (e.g., npx novu@latest dev -r /v1/api/novu)
-  
+
   Running with a custom tunnel:
   (e.g., npx novu@latest dev --tunnel https://my-tunnel.ngrok.app)`
   )
-  .usage('[-p <port>] [-r <route>] [-o <origin>] [-d <dashboard-url>] [-sp <studio-port>] [-t <url>] [-H]')
+  .usage('[-p <port>] [-r <route>] [-o <origin>] [-d <dashboard-url>] [-t <url>] [-H]')
   .option('-p, --port <port>', 'The local Bridge endpoint port', '4000')
   .option('-r, --route <route>', 'The Bridge endpoint route', '/api/novu')
   .option('-o, --origin <origin>', 'The Bridge endpoint origin')
   .option('-d, --dashboard-url <url>', 'The Novu Cloud Dashboard URL', 'https://dashboard.novu.co')
-  .option('-sp, --studio-port <port>', 'The Local Studio server port', '2022')
-  .option('-sh, --studio-host <host>', 'The Local Studio server host', 'localhost')
+  .option(
+    '-sp, --studio-port <port>',
+    '[deprecated] Ignored — the local studio was replaced by the dashboard Local environment',
+    '2022'
+  )
+  .option(
+    '-sh, --studio-host <host>',
+    '[deprecated] Ignored — the local studio was replaced by the dashboard Local environment',
+    'localhost'
+  )
   .option('-t, --tunnel <url>', 'Self hosted tunnel. e.g. https://my-tunnel.ngrok.app')
-  .option('-H, --headless', 'Run the Bridge in headless mode without opening the browser', false)
-  .option('--no-studio', 'Skip starting the local Studio server')
+  .option('-H, --headless', 'Run without opening the browser', false)
+  .option('--no-studio', 'Skip opening the dashboard Local environment (tunnel and agent sync still run)')
   .option('--run <command>', 'Spawn a local app server before opening the tunnel')
   .action(async (options: DevCommandOptions) => {
     analytics.track({
@@ -207,12 +216,17 @@ program
     'Use an existing agent-runtime integration (skips credential setup for BYOK runtimes)'
   )
   .option('--anthropic-api-key <key>', 'Anthropic API key for --runtime claude non-interactive runs')
+  .option(
+    '--llm-auth <choice>',
+    'LLM provider for ai-sdk/langchain scaffold (openai | anthropic | codex-subscription | claude-subscription | skip)'
+  )
+  .option('--openai-api-key <key>', 'OpenAI API key for --llm-auth openai non-interactive scaffold runs')
   .option('--aws-claude-api-key <key>', 'AWS Claude API key for --runtime claude-aws non-interactive runs')
   .option('--aws-claude-region <region>', 'AWS Claude commercial region for --runtime claude-aws')
   .option('--aws-claude-workspace-id <id>', 'AWS Claude workspace ID for --runtime claude-aws')
   .option(
     '--channel <name>',
-    `Channel to connect (required in --ci mode). One of: ${CHANNEL_CHOICES.join(', ')}. whatsapp/teams require dashboard OAuth (omit --keyless)`
+    `Channel to connect (required in --ci mode). One of: ${CHANNEL_CHOICES.join(', ')}. ${DASHBOARD_ONLY_CHANNELS.join('/')} require dashboard OAuth (omit --keyless)`
   )
   .option('--skip-slack', 'Create the agent and exit; do not connect any channel (equivalent to --channel skip)', false)
   .option(
@@ -222,6 +236,19 @@ program
   .option(
     '--telegram-bot-token <token>',
     'Telegram bot token from @BotFather (123456:ABC-…). CI-only escape hatch — omit to use the secure setup page'
+  )
+  .option(
+    '--sendblue-api-key <key>',
+    'Sendblue API Key (dashboard.sendblue.com/settings/api). CI-only escape hatch — omit to enter interactively'
+  )
+  .option('--sendblue-secret-key <key>', 'Sendblue Secret Key. CI-only escape hatch — omit to enter interactively')
+  .option(
+    '--sendblue-from <phone>',
+    'Sendblue phone number in E.164 (e.g. +14155551234). CI-only escape hatch — omit to enter interactively'
+  )
+  .option(
+    '--sendblue-test-phone <phone>',
+    'Recipient phone (E.164) for the Sendblue test message. CI-only escape hatch — omit to enter interactively'
   )
   .option(
     '--ci',
@@ -254,14 +281,14 @@ program
 
       if (!channel) {
         console.error(
-          'Non-interactive mode requires --channel <slack|email|telegram|skip> (or <whatsapp|teams> without --keyless).\n(run `novu connect --help` for the non-interactive contract and examples)'
+          'Non-interactive mode requires --channel <slack|email|telegram|whatsapp|sendblue|skip> (or teams without --keyless).\n(run `novu connect --help` for the non-interactive contract and examples)'
         );
         process.exit(1);
       }
 
       if (options.channel && isDashboardOnlyChannel(options.channel as ChannelChoice) && options.keyless) {
         console.error(
-          'Non-interactive mode does not support --channel whatsapp or --channel teams with --keyless. Omit --keyless to authenticate via the dashboard, or use the Novu dashboard instead.\n(run `novu connect --help` for the non-interactive contract and examples)'
+          `Non-interactive mode does not support --channel ${options.channel} with --keyless. Omit --keyless to authenticate via the dashboard, or use the Novu dashboard instead.\n(run \`novu connect --help\` for the non-interactive contract and examples)`
         );
         process.exit(1);
       }
@@ -281,6 +308,17 @@ program
       console.error(
         `Invalid --runtime value: "${options.runtime}". Expected one of: ${AGENT_CONNECT_MODES.join(', ')}.`
       );
+      process.exit(1);
+    }
+    const LLM_AUTH_CHOICES: readonly LlmAuthCliChoice[] = [
+      'openai',
+      'anthropic',
+      'codex-subscription',
+      'claude-subscription',
+      'skip',
+    ];
+    if (options.llmAuth && !LLM_AUTH_CHOICES.includes(options.llmAuth as LlmAuthCliChoice)) {
+      console.error(`Invalid --llm-auth value: "${options.llmAuth}". Expected one of: ${LLM_AUTH_CHOICES.join(', ')}.`);
       process.exit(1);
     }
     let resolved: ReturnType<typeof resolveConnectCommandOptions>;
@@ -310,8 +348,7 @@ program
     `The Novu development environment Secret Key. Note that your Novu app won't work outside of local mode without it.`
   )
   .option('-a, --api-url <url>', 'The Novu Cloud API URL', 'https://api.novu.co')
-  .option('-t, --template <name>', 'The template to use (notifications, agent, or chat-sdk)')
-  .option('--agent-identifier <id>', 'Agent identifier to use in the scaffolded template')
+  .option('-t, --template <name>', 'The template to use (notifications or chat-sdk)')
   .action(async (options: IInitCommandOptions) => {
     return await init(options, anonymousId);
   });

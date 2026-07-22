@@ -1,5 +1,6 @@
 import type { LanguageModelLike } from '@langchain/core/language_models/base';
 import type { BaseMessage } from '@langchain/core/messages';
+import type { RunnableConfig } from '@langchain/core/runnables';
 import type { StructuredToolInterface } from '@langchain/core/tools';
 import type { AgentMiddleware } from 'langchain';
 import type {
@@ -38,6 +39,19 @@ export interface LangChainAgentConfig {
   needsApproval?: (toolCall: LangChainToolCall) => boolean;
   /** Extra LangChain middleware, appended after Novu's approval middleware. */
   middleware?: AgentMiddleware[];
+  /**
+   * Run config forwarded as the second argument to `agent.invoke(...)` (e.g.
+   * `signal`, `configurable`, `context`, `recursionLimit`, `callbacks`). Use this
+   * to control the LangGraph run for a turn.
+   */
+  invokeConfig?: RunnableConfig;
+  /**
+   * Optional post-run reply formatter. Receives the model's final text and returns
+   * the content to deliver — a string or a {@link MessageContent} card. Return
+   * `void`/`undefined` to deliver the final text unchanged. Runs only when the
+   * model produced a non-empty final text.
+   */
+  formatReply?: (finalText: string) => Awaitable<MessageContent | void>;
 }
 
 /**
@@ -68,4 +82,5 @@ export type LangChainAgentHandlers = Omit<AgentHandlers, 'onMessage' | 'onToolAp
     decision: ToolApprovalDecision,
     ctx: AgentActionContext
   ) => Awaitable<MessageContent | LangChainResult | ReplyHandle | void>;
+  onError?: AgentHandlers['onError'];
 };

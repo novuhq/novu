@@ -99,61 +99,7 @@ jobs:
     needs: [check-contributor, contributor-install-build-lint]
     if: always() && needs.check-contributor.outputs.is_community == 'true'
     runs-on: ubuntu-latest
-    permissions:
-      pull-requests: write
     steps:
-      - name: Comment on PR - Success
-        if: needs.contributor-install-build-lint.result == 'success'
-        uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
-        with:
-          header: contributor-checks
-          message: |
-            ## ✅ Contributor Checks Passed!
-
-            Thank you for your contribution! Your changes have successfully passed our automated checks:
-
-            - ✅ **Build**: All packages compile successfully
-            - ✅ **Lint**: Code style and quality checks passed
-
-            ### Next Steps
-            A Novu team member will review your PR and run the full test suite, which includes:
-            - Unit tests for affected packages
-            - End-to-end tests
-            - Integration tests
-            - Enterprise feature compatibility
-
-            If you need to make additional changes, simply push to your branch and the checks will run again automatically.
-
-      - name: Comment on PR - Failure
-        if: needs.contributor-install-build-lint.result == 'failure'
-        uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
-        with:
-          header: contributor-checks
-          message: |
-            ## ❌ Contributor Checks Failed
-
-            Thank you for your contribution! However, the automated checks found some issues that need to be addressed:
-
-            ### What Happened?
-            The build or lint checks failed. This usually means:
-            - **Build errors**: Code doesn't compile or has TypeScript errors
-            - **Lint errors**: Code style or quality issues detected
-
-            ### How to Fix
-            1. Review the failed check details above in the workflow run
-            2. Fix the issues locally by running:
-               ```bash
-               pnpm install
-               pnpm run lint
-               pnpm run build
-               ```
-            3. Commit and push your fixes - the checks will run again automatically
-
-            ### Need Help?
-            - Check the workflow logs above for detailed error messages
-            - If you believe this is related to missing enterprise packages, mention it in your PR description
-            - Feel free to ask questions in the PR comments or on our [Discord](https://discord.novu.co)
-
       - name: Check build status
         run: |
           if [[ "${{ needs.contributor-install-build-lint.result }}" == "success" ]]; then

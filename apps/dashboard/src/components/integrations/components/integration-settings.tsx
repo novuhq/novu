@@ -269,6 +269,34 @@ export function IntegrationSettings({
           </div>
         )}
 
+        {!isDemo &&
+          !isAgentOnboarding &&
+          ((integration && integration.channel === ChannelTypeEnum.IN_APP && !integration.connected) ||
+            provider?.docReference) && (
+            <div className="p-3">
+              {integration && integration.channel === ChannelTypeEnum.IN_APP && !integration.connected ? (
+                <InlineToast
+                  variant={'tip'}
+                  title="Integrate in less than 4 minutes"
+                  ctaLabel="Get started"
+                  onCtaClick={() => navigate(`${ROUTES.INBOX_EMBED}?environmentId=${integration._environmentId}`)}
+                />
+              ) : (
+                provider?.docReference && (
+                  <InlineToast
+                    variant={'tip'}
+                    title="Configure Integration"
+                    description="To learn more about how to configure your integration, please refer to the documentation."
+                    ctaLabel="View Guide"
+                    onCtaClick={() => {
+                      window.open(provider.docReference ?? '', '_blank');
+                    }}
+                  />
+                )
+              )}
+            </div>
+          )}
+
         {!isDemo && providerCredentials.length > 0 && (
           <div className="p-3">
             <Protect permission={PermissionsEnum.INTEGRATION_WRITE}>
@@ -329,35 +357,6 @@ export function IntegrationSettings({
                 </AccordionItem>
               </Accordion>
             </Protect>
-
-            {/* TODO: This is a temporary solution to show the guide only for in-app channel, 
-              we need to replace it with dedicated view per integration channel */}
-            {!isAgentOnboarding &&
-            integration &&
-            integration.channel === ChannelTypeEnum.IN_APP &&
-            !integration.connected ? (
-              <InlineToast
-                variant={'tip'}
-                className="mt-3"
-                title="Integrate in less than 4 minutes"
-                ctaLabel="Get started"
-                onCtaClick={() => navigate(`${ROUTES.INBOX_EMBED}?environmentId=${integration._environmentId}`)}
-              />
-            ) : (
-              !isAgentOnboarding &&
-              provider?.docReference && (
-                <InlineToast
-                  variant={'tip'}
-                  className="mt-3"
-                  title="Configure Integration"
-                  description="To learn more about how to configure your integration, please refer to the documentation."
-                  ctaLabel="View Guide"
-                  onCtaClick={() => {
-                    window.open(provider?.docReference ?? '', '_blank');
-                  }}
-                />
-              )
-            )}
           </div>
         )}
       </FormRoot>

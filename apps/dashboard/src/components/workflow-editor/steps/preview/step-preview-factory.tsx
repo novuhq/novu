@@ -8,6 +8,7 @@ import { InboxPreview } from '@/components/workflow-editor/steps/in-app/inbox-pr
 import { PushPreview } from '@/components/workflow-editor/steps/push/push-preview';
 import { StepResolverEmptyPreview } from '@/components/workflow-editor/steps/shared/step-resolver-empty-preview';
 import { SmsPreview } from '@/components/workflow-editor/steps/sms/sms-preview';
+import { ToolPreview } from '@/components/workflow-editor/steps/tool/tool-preview';
 import { STEP_TYPE_LABELS } from '@/utils/constants';
 import { EmailCorePreview } from './previews/email-preview-wrapper';
 import { StepResolverPreviewError } from './step-resolver-preview-error';
@@ -85,6 +86,9 @@ export function StepPreviewFactory() {
 
     case StepTypeEnum.CHAT:
       return <ChatPreview {...commonProps} />;
+
+    case StepTypeEnum.TOOL:
+      return <ToolPreview {...commonProps} />;
 
     case StepTypeEnum.HTTP_REQUEST:
       return <HttpRequestConsolePreview />;

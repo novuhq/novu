@@ -1,4 +1,13 @@
-import { Accessor, createContext, createEffect, createMemo, createSignal, onCleanup, ParentProps, useContext } from 'solid-js';
+import {
+  Accessor,
+  createContext,
+  createEffect,
+  createMemo,
+  createSignal,
+  onCleanup,
+  ParentProps,
+  useContext,
+} from 'solid-js';
 import { NOTIFICATION_COUNT_SYNC_EVENTS } from '../../notifications/count-sync-events';
 import { Notification, NotificationFilter, SeverityLevelEnum } from '../../types';
 import { checkNotificationMatchesFilter } from '../../utils/notification-utils';

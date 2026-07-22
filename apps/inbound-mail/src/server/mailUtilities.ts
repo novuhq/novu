@@ -6,6 +6,22 @@ import logger from './logger';
 
 const LOG_CONTEXT = 'MailUtilities';
 
+/*
+ * Verdict exit codes defined in verifyspf.py — keep in sync. Everything except
+ * exit 0 resolves to spf=failed; this map only picks log levels and messages.
+ * Codes outside the map — including string codes like ENOENT when the python
+ * binary cannot be spawned — mean the check itself is broken, not the sender.
+ */
+const SPF_VERDICT_LOGS: Record<number, { level: 'warn' | 'info'; message: string }> = {
+  11: { level: 'warn', message: 'SPF verification failed: sender IP is not authorized for the domain.' },
+  12: {
+    level: 'info',
+    message: 'SPF verification returned no verdict: sender domain publishes no applicable SPF record.',
+  },
+  13: { level: 'warn', message: 'SPF verification hit a transient DNS error — treating spf as failed.' },
+  14: { level: 'warn', message: 'SPF verification found an invalid SPF record — treating spf as failed.' },
+};
+
 const spamc = new Spamc();
 
 /*
@@ -91,7 +107,12 @@ module.exports = {
     }
 
     const verifySpfPath = path.join(__dirname, '../python/verifyspf.py');
-    const args = [verifySpfPath, ip, address, host];
+    /*
+     * execFile stringifies non-string args, so an undefined sender would reach
+     * the script as the literal "undefined". Empty strings are fine: pyspf
+     * falls back to the HELO identity for an empty MAIL FROM (RFC 7208 §2.4).
+     */
+    const args = [verifySpfPath, ip ?? '', address ?? '', host ?? ''];
 
     child_process.execFile(pythonBin, args, (err, stdout, stderr) => {
       logger.verbose({ context: LOG_CONTEXT }, stdout);
@@ -101,26 +122,30 @@ module.exports = {
       }
 
       if (code) {
-        /*
-         * Exit 11 is the script's "spf did not pass" code; any other code —
-         * including string codes like ENOENT when the python binary cannot be
-         * spawned — means the check itself is broken, not the sender.
-         */
-        logger.warn(
-          {
-            context: LOG_CONTEXT,
-            err,
-            exitCode: code,
-            ip,
-            address,
-            host,
-            stdout: typeof stdout === 'string' ? stdout.trim() : stdout,
-            stderr: typeof stderr === 'string' ? stderr.trim() : stderr,
-          },
-          code === 11
-            ? 'SPF verification failed: sender IP is not authorized for the domain.'
-            : 'SPF verification errored: verifier did not run cleanly — treating spf as failed.'
-        );
+        const logPayload = {
+          context: LOG_CONTEXT,
+          exitCode: code,
+          ip,
+          address,
+          host,
+          stdout: typeof stdout === 'string' ? stdout.trim() : stdout,
+          stderr: typeof stderr === 'string' ? stderr.trim() : stderr,
+        };
+
+        const verdict = SPF_VERDICT_LOGS[code];
+        if (verdict) {
+          logger[verdict.level](logPayload, verdict.message);
+        } else {
+          /*
+           * Spawn/runtime breakage rather than an SPF verdict — this is the
+           * only branch where the err object adds signal; for verdict codes it
+           * is just "Command failed" + exit code and reads like a crash.
+           */
+          logger.warn(
+            { ...logPayload, err },
+            'SPF verification errored: verifier did not run cleanly — treating spf as failed.'
+          );
+        }
       } else {
         logger.verbose({ context: LOG_CONTEXT }, `closed with return code ${code}`);
       }

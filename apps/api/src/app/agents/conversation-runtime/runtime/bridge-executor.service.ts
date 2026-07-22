@@ -1,3 +1,4 @@
+import { isIP } from 'node:net';
 import { Injectable } from '@nestjs/common';
 import {
   assertSafeOutboundUrl,
@@ -12,6 +13,7 @@ import {
 import { ConversationActivityEntity, ConversationEntity, SubscriberEntity } from '@novu/dal';
 import type {
   AgentAction,
+  AgentContextPayload,
   AgentConversation,
   AgentHistoryEntry,
   AgentMessage,
@@ -21,25 +23,73 @@ import type {
 } from '@novu/framework';
 import type { AgentBridgeRequest } from '@novu/framework/internal';
 import { AgentEventEnum, HttpHeaderKeysEnum } from '@novu/framework/internal';
+import { AGENT_PLATFORM_PROVISION_SOURCE, AGENT_PROVISION_DATA_KEYS, AgentSubscriberAccessEnum } from '@novu/shared';
 import type { Message } from 'chat';
 import { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import { captureAgentException, captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
+import { buildAgentApiRootUrl } from '../../shared/util/agent-api-root-url';
 import { AgentAttachmentStorage, type StoredAttachment } from '../conversation/agent-attachment-storage.service';
 import { AgentConversationService } from '../conversation/agent-conversation.service';
 
 const MAX_RETRIES = 2;
 
-/** Agent bridge replyUrl: prefer API_ROOT_URL, else localhost on PORT (default 3000). */
-function resolveAgentReplyApiOrigin(): string {
-  const apiRootUrl = process.env.API_ROOT_URL?.replace(/\/$/, '');
+/**
+ * True for `https://` URLs whose host is loopback (`localhost`, `*.localhost`,
+ * `127.x/8` IPv4 literals, `::1`). In local dev these are served by a TLS proxy
+ * with a private CA (e.g. portless's `https://api.novu.localhost`) that a
+ * customer's bridge process does not trust, so they must not be handed out as
+ * reply origins. The `127.` prefix is only honored for actual IPv4 literals —
+ * a DNS name like `127.cdn.example.com` is not loopback.
+ */
+function isLoopbackHttpsUrl(rawUrl: string): boolean {
+  try {
+    const { protocol, hostname } = new URL(rawUrl);
+    if (protocol !== 'https:') {
+      return false;
+    }
 
-  if (apiRootUrl) {
-    return apiRootUrl;
+    if (hostname === 'localhost' || hostname.endsWith('.localhost')) {
+      return true;
+    }
+
+    if (hostname === '::1' || hostname === '[::1]') {
+      return true;
+    }
+
+    return isIP(hostname) === 4 && hostname.startsWith('127.');
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Agent bridge replyUrl origin: prefer AGENT_API_HOSTNAME / API_ROOT_URL, else
+ * localhost on PORT. When the origin comes from the ambient API_ROOT_URL and is
+ * loopback HTTPS, it is downgraded to the API's own plain-HTTP port — a bridge
+ * on the same machine can reach it directly, and TLS (with its untrusted
+ * private dev CA) never enters the picture. An explicit AGENT_API_HOSTNAME is
+ * trusted verbatim so unusual self-host topologies keep full control.
+ */
+function resolveAgentReplyApiOrigin(): string {
+  const port = process.env.PORT || '3000';
+  const localHttpOrigin = `http://localhost:${port}`;
+
+  let rootUrl: string;
+  try {
+    rootUrl = buildAgentApiRootUrl();
+  } catch {
+    return localHttpOrigin;
   }
 
-  const port = process.env.PORT || '3000';
+  if (process.env.AGENT_API_HOSTNAME?.trim()) {
+    return rootUrl;
+  }
 
-  return `http://localhost:${port}`;
+  if (isLoopbackHttpsUrl(rootUrl)) {
+    return localHttpOrigin;
+  }
+
+  return rootUrl;
 }
 const RETRY_BASE_DELAY_MS = 500;
 const AGENTS_STORAGE_FOLDER = 'agents';
@@ -87,6 +137,8 @@ export interface AgentExecutionParams {
   subscriber: SubscriberEntity | null;
   message: Message | null;
   platformContext: AgentPlatformContext;
+  /** Trusted connect-time context resolved from the inbound channel connection; forwarded as `ctx.context`. */
+  context?: AgentContextPayload | null;
   action?: AgentAction;
   reaction?: BridgeReaction;
   storedAttachments?: StoredAttachment[];
@@ -298,6 +350,8 @@ export class BridgeExecutorService {
         : null,
       conversation: this.mapConversation(conversation),
       subscriber: this.mapSubscriber(subscriber),
+      subscriberAccess: config.subscriberAccess,
+      context: params.context ?? null,
       history: await this.mapHistory(history),
       platform: config.platform,
       platformContext,

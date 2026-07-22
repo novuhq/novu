@@ -6,12 +6,14 @@ import { RiArrowRightSLine, RiCheckLine, RiFileCopyLine, RiInformation2Line, RiM
 import type { AgentResponse } from '@/api/agents';
 import { getAgent, getAgentDetailQueryKey } from '@/api/agents';
 import { Button } from '@/components/primitives/button';
+import { CopyableTerminalBlock } from '@/components/primitives/copyable-terminal-block';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchApiKeys } from '@/hooks/use-fetch-api-keys';
 import { apiHostnameManager } from '@/utils/api-hostname-manager';
 import { cn } from '@/utils/ui';
+import type { ConnectorId } from './connectors/connector-options';
 import { SetupStep } from './setup-guide-primitives';
 import { deriveStepStatus } from './setup-guide-step-utils';
 import { SharedInboundAddressField } from './shared-inbound-address-field';
@@ -25,93 +27,59 @@ function maskSecretKey(key: string): string {
   return `nv-${'•'.repeat(16)}${key.slice(-4)}`;
 }
 
-function buildInitCommand({
-  agentIdentifier,
+type ConnectRuntimeFlag = 'ai-sdk' | 'langchain' | 'custom-code';
+
+const DEFAULT_CONNECT_RUNTIME: ConnectRuntimeFlag = 'ai-sdk';
+
+function resolveConnectRuntime(connectorId: ConnectorId | undefined): ConnectRuntimeFlag {
+  if (connectorId === 'ai-sdk' || connectorId === 'langchain' || connectorId === 'custom-code') {
+    return connectorId;
+  }
+
+  return DEFAULT_CONNECT_RUNTIME;
+}
+
+function buildConnectScaffoldCommand({
   secretKey,
   apiUrl,
+  runtime,
   masked,
 }: {
-  agentIdentifier: string;
   secretKey: string;
   apiUrl: string | null;
+  runtime: ConnectRuntimeFlag;
   masked: boolean;
 }): string {
   const key = masked ? maskSecretKey(secretKey) : secretKey;
-  const parts = [`npx novu@${CLI_PACKAGE_TAG} init -t agent`, `--agent-identifier ${agentIdentifier}`, `-s ${key}`];
+  const parts = [`npx novu@${CLI_PACKAGE_TAG} connect --runtime ${runtime}`, `--secret-key ${key}`];
 
   if (apiUrl) {
-    parts.push(`-a ${apiUrl}`);
+    parts.push(`--api-url ${apiUrl}`);
   }
+
+  parts.push('--channel skip');
 
   return parts.join(' \\\n  ');
 }
 
-function buildInitCopyCommand({
-  agentIdentifier,
+function buildConnectScaffoldCopyCommand({
   secretKey,
   apiUrl,
+  runtime,
 }: {
-  agentIdentifier: string;
   secretKey: string;
   apiUrl: string | null;
+  runtime: ConnectRuntimeFlag;
 }): string {
-  const parts = [
-    `npx novu@${CLI_PACKAGE_TAG} init -t agent`,
-    `--agent-identifier ${agentIdentifier}`,
-    `-s ${secretKey}`,
-  ];
+  const parts = [`npx novu@${CLI_PACKAGE_TAG} connect --runtime ${runtime}`, `--secret-key ${secretKey}`];
 
   if (apiUrl) {
-    parts.push(`-a ${apiUrl}`);
+    parts.push(`--api-url ${apiUrl}`);
   }
 
+  parts.push('--channel skip');
+
   return parts.join(' ');
-}
-
-function TerminalBlock({ displayCommand, copyCommand }: { displayCommand: string; copyCommand: string }) {
-  const [copied, setCopied] = useState(false);
-  const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current);
-    };
-  }, []);
-
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(copyCommand);
-      setCopied(true);
-      copyTimeoutRef.current = setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // clipboard write failed silently
-    }
-  };
-
-  return (
-    <div className="relative w-full overflow-hidden rounded-lg shadow-[inset_0px_0px_0px_1px_#18181b,inset_0px_0px_0px_1.5px_rgba(255,255,255,0.1)]">
-      <div className="flex items-center justify-between bg-[rgba(14,18,27,0.9)] px-4 py-1.5">
-        <span className="text-label-xs text-[#99a0ae]">Terminal</span>
-        <button
-          type="button"
-          onClick={handleCopy}
-          className="flex size-6 items-center justify-center rounded p-1.5 transition-colors hover:bg-white/10"
-        >
-          {copied ? (
-            <RiCheckLine className="size-3.5 text-[#99a0ae]" />
-          ) : (
-            <RiFileCopyLine className="size-3.5 text-[#99a0ae]" />
-          )}
-        </button>
-      </div>
-      <div className="bg-[rgba(14,18,27,0.9)] px-[5px] pb-[5px]">
-        <div className="flex gap-4 rounded-md border border-[rgba(14,18,27,0.9)] bg-[rgba(14,18,27,0.9)] p-3">
-          <span className="shrink-0 font-mono text-xs text-[#525866]">❯</span>
-          <span className="whitespace-pre-wrap break-all font-mono text-xs text-white">{displayCommand}</span>
-        </div>
-      </div>
-    </div>
-  );
 }
 
 function getProviderSlackMessage(agentName: string): string {
@@ -370,6 +338,8 @@ type AgentCodeSetupSectionProps = {
   sharedInboundAddress?: string;
   onBridgeConnected?: () => void;
   onAddProvider?: () => void;
+  /** Self-hosted connector picked at agent creation (defaults to AI SDK). */
+  connectorId?: ConnectorId;
 };
 
 export function AgentCodeSetupSection({
@@ -380,9 +350,11 @@ export function AgentCodeSetupSection({
   sharedInboundAddress,
   onBridgeConnected,
   onAddProvider,
+  connectorId,
 }: AgentCodeSetupSectionProps) {
   const apiKeysQuery = useFetchApiKeys();
   const secretKey = apiKeysQuery.data?.data?.[0]?.key;
+  const connectRuntime = resolveConnectRuntime(connectorId);
 
   const currentApiUrl = apiHostnameManager.getHostname();
   const apiUrl = currentApiUrl !== CLI_DEFAULT_API_URL ? currentApiUrl : null;
@@ -418,22 +390,22 @@ export function AgentCodeSetupSection({
             </Tooltip>
           </span>
         }
-        description="Run this to create a Next.js project with the bridge endpoint pre-configured for your agent. The CLI installs dependencies and writes your secret key to .env.local automatically."
+        description="Run this in an empty directory to scaffold a Next.js bridge app. When prompted, select the agent you created above. `--channel skip` skips channel setup because you already connected a provider in the dashboard."
         rightContent={
           apiKeysQuery.isLoading || !secretKey ? (
             <Skeleton className="h-[80px] w-full rounded-lg" />
           ) : (
-            <TerminalBlock
-              displayCommand={buildInitCommand({
-                agentIdentifier: agent.identifier,
+            <CopyableTerminalBlock
+              displayCommand={buildConnectScaffoldCommand({
                 secretKey,
                 apiUrl,
+                runtime: connectRuntime,
                 masked: true,
               })}
-              copyCommand={buildInitCopyCommand({
-                agentIdentifier: agent.identifier,
+              copyCommand={buildConnectScaffoldCopyCommand({
                 secretKey,
                 apiUrl,
+                runtime: connectRuntime,
               })}
             />
           )
@@ -445,7 +417,7 @@ export function AgentCodeSetupSection({
         status={deriveStepStatus(stepOffset + 1, firstIncompleteStep)}
         title="Start your agent locally"
         description="Run this from your project directory. It starts the app, opens a dev tunnel, and registers the bridge URL with Novu."
-        rightContent={<TerminalBlock displayCommand="npm run dev:novu" copyCommand="npm run dev:novu" />}
+        rightContent={<CopyableTerminalBlock displayCommand="npm run dev:novu" copyCommand="npm run dev:novu" />}
       />
 
       <SetupStep

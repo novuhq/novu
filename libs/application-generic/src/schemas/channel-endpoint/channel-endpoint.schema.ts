@@ -1,5 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
-import { ChannelEndpointType, ENDPOINT_TYPES } from '@novu/shared';
+import { ChannelEndpointType, ENDPOINT_TYPES, isValidOpsgenieApiKey } from '@novu/shared';
 
 // Centralized schema definition
 export const CHANNEL_ENDPOINT_SCHEMAS = {
@@ -63,6 +63,87 @@ export const CHANNEL_ENDPOINT_SCHEMAS = {
     required: ['chatId'],
     validate: (endpoint: Record<string, unknown>) =>
       typeof endpoint.chatId === 'string' && Object.keys(endpoint).length === 1,
+  },
+  [ENDPOINT_TYPES.WEBEX_ROOM]: {
+    description: 'Webex Room Endpoint',
+    properties: {
+      roomId: { type: 'string' as const },
+      parentId: { type: 'string' as const },
+    },
+    required: ['roomId'],
+    validate: (endpoint: Record<string, unknown>) =>
+      typeof endpoint.roomId === 'string' &&
+      endpoint.roomId.length > 0 &&
+      (endpoint.parentId === undefined || (typeof endpoint.parentId === 'string' && endpoint.parentId.length > 0)) &&
+      Object.keys(endpoint).every((key) => ['roomId', 'parentId'].includes(key)),
+  },
+  [ENDPOINT_TYPES.WEBEX_PERSON]: {
+    description: 'Webex Person Endpoint',
+    properties: {
+      personId: { type: 'string' as const },
+      personEmail: { type: 'string' as const },
+    },
+    required: [],
+    validate: (endpoint: Record<string, unknown>) => {
+      const keys = Object.keys(endpoint);
+      const hasPersonId = Object.prototype.hasOwnProperty.call(endpoint, 'personId');
+      const hasPersonEmail = Object.prototype.hasOwnProperty.call(endpoint, 'personEmail');
+
+      return (
+        keys.every((key) => ['personId', 'personEmail'].includes(key)) &&
+        hasPersonId !== hasPersonEmail &&
+        (!hasPersonId || (typeof endpoint.personId === 'string' && endpoint.personId.length > 0)) &&
+        (!hasPersonEmail || (typeof endpoint.personEmail === 'string' && endpoint.personEmail.length > 0))
+      );
+    },
+  },
+  [ENDPOINT_TYPES.LINE_USER]: {
+    description: 'LINE User Endpoint',
+    properties: { userId: { type: 'string' as const } },
+    required: ['userId'],
+    validate: (endpoint: Record<string, unknown>) =>
+      typeof endpoint.userId === 'string' && Object.keys(endpoint).length === 1,
+  },
+  /*
+   * PagerDuty wire shape: 32-character alphanumeric routing key + region.
+   * Format-validated at write time so a truncated paste or whitespace-in-key
+   * fails fast at the API boundary rather than at the first incident send.
+   * The API layer persists the routingKey encrypted on the linked
+   * `ChannelConnection.auth`; the stored endpoint document is empty.
+   */
+  [ENDPOINT_TYPES.PAGERDUTY_SERVICE]: {
+    description: 'PagerDuty Service Endpoint',
+    properties: {
+      routingKey: { type: 'string' as const },
+      region: { type: 'string' as const },
+    },
+    required: ['routingKey', 'region'],
+    validate: (endpoint: Record<string, unknown>) =>
+      typeof endpoint.routingKey === 'string' &&
+      /^[a-zA-Z0-9]{32}$/.test(endpoint.routingKey) &&
+      (endpoint.region === 'us' || endpoint.region === 'eu') &&
+      Object.keys(endpoint).length === 2,
+  },
+  /*
+   * Opsgenie wire shape: UUID-format API integration key (GenieKey) + region.
+   * Format-validated at write time so a truncated paste or an account-level
+   * API-management key of the wrong shape fails fast at the API boundary
+   * rather than at the first alert send. The API layer persists the apiKey
+   * encrypted on the linked `ChannelConnection.auth`; the stored endpoint
+   * document is empty.
+   */
+  [ENDPOINT_TYPES.OPSGENIE_INTEGRATION]: {
+    description: 'Opsgenie Integration Endpoint',
+    properties: {
+      apiKey: { type: 'string' as const },
+      region: { type: 'string' as const },
+    },
+    required: ['apiKey', 'region'],
+    validate: (endpoint: Record<string, unknown>) =>
+      typeof endpoint.apiKey === 'string' &&
+      isValidOpsgenieApiKey(endpoint.apiKey) &&
+      (endpoint.region === 'us' || endpoint.region === 'eu') &&
+      Object.keys(endpoint).length === 2,
   },
 } as const;
 
