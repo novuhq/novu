@@ -178,8 +178,12 @@ export class UpdateWorkflowV0 {
         updatePayload.validatePayload = command.validatePayload;
       }
 
-      if (command.active !== undefined) {
-        updatePayload.status = computeWorkflowStatus(command.active, updatePayload.steps || existingTemplate.steps);
+      if (command.steps || command.active !== undefined) {
+        const isWorkflowActive = command.active ?? existingTemplate.active ?? true;
+        updatePayload.status = computeWorkflowStatus(
+          isWorkflowActive,
+          updatePayload.steps || existingTemplate.steps
+        );
       }
 
       if (command.issues) {

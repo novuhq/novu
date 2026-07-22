@@ -18,7 +18,7 @@ import {
 import { ErrorDto } from '@novu/api/models/errors';
 import { WorkflowResponseDto } from '@novu/api/src/models/components';
 import { buildSlug, JSONSchemaDto } from '@novu/application-generic';
-import { PreferencesRepository } from '@novu/dal';
+import { PreferencesRepository, NotificationTemplateRepository } from '@novu/dal';
 import {
   ApiServiceLevelEnum,
   DEFAULT_WORKFLOW_PREFERENCES,
@@ -1048,6 +1048,55 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       updatedWorkflow = await patchWorkflow(workflowDto.id, true);
       expect(updatedWorkflow.status).to.equal(WorkflowStatusEnum.Active);
     });
+
+    it('should recompute workflow status after payload schema changes clear step issues', async () => {
+      const createWorkflowDto: CreateWorkflowDto = buildWorkflow({
+        steps: [
+          {
+            name: 'In-App Test Step',
+            type: StepTypeEnum.IN_APP,
+            controlValues: {
+              redirect: { url: 'https://example.com', target: '_blank' },
+            },
+          },
+        ],
+      });
+
+      const workflowWithIssues = await createWorkflow(apiClient, createWorkflowDto);
+      expect(workflowWithIssues.status).to.equal(WorkflowStatusEnum.Error);
+
+      const fixedWorkflow = await updateWorkflow(workflowWithIssues.id, {
+        ...mapResponseToUpdateDto(workflowWithIssues),
+        steps: [
+          {
+            id: workflowWithIssues.steps[0].id,
+            type: StepTypeEnum.IN_APP,
+            name: 'In-App Test Step',
+            controlValues: {
+              body: 'Fixed body',
+              redirect: { url: 'https://example.com', target: '_blank' },
+            },
+          },
+        ],
+      });
+      expect(fixedWorkflow.status).to.equal(WorkflowStatusEnum.Active);
+
+      const templateRepository = new NotificationTemplateRepository();
+      await templateRepository.update(
+        { _id: workflowWithIssues.id, _environmentId: session.environment._id },
+        { $set: { status: WorkflowStatusEnum.Error } }
+      );
+
+      const patchedWorkflow = await patchWorkflowWithPayloadSchema(workflowWithIssues.id, {
+        type: 'object',
+        properties: {
+          userName: { type: 'string' },
+        },
+      });
+
+      expect(patchedWorkflow.status).to.equal(WorkflowStatusEnum.Active);
+      expect(patchedWorkflow.steps[0].issues?.controls).to.not.exist;
+    });
   });
 
   describe('Delete workflow', () => {
@@ -1253,6 +1302,41 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
           expect(stepData.issues?.controls?.body?.[0]?.variableName).to.equal('{{}}');
           expect(stepData.issues?.controls?.body?.[0]?.issueType).to.equal('ILLEGAL_VARIABLE_IN_CONTROL_VALUE');
         });
+
+        it('should clear workflow ERROR status after step control issues are fixed', async () => {
+          const createWorkflowDto: CreateWorkflowDto = buildWorkflow({
+            steps: [
+              {
+                name: 'In-App Test Step',
+                type: StepTypeEnum.IN_APP,
+                controlValues: {
+                  redirect: { url: 'https://example.com', target: '_blank' },
+                },
+              },
+            ],
+          });
+
+          const workflowWithIssues = await createWorkflow(apiClient, createWorkflowDto);
+          expect(workflowWithIssues.status).to.equal(WorkflowStatusEnum.Error);
+
+          const fixedWorkflow = await updateWorkflow(workflowWithIssues.id, {
+            ...mapResponseToUpdateDto(workflowWithIssues),
+            steps: [
+              {
+                id: workflowWithIssues.steps[0].id,
+                type: StepTypeEnum.IN_APP,
+                name: 'In-App Test Step',
+                controlValues: {
+                  body: 'Fixed body',
+                  redirect: { url: 'https://example.com', target: '_blank' },
+                },
+              },
+            ],
+          });
+
+          expect(fixedWorkflow.status).to.equal(WorkflowStatusEnum.Active);
+          expect(fixedWorkflow.steps[0].issues?.controls).to.not.exist;
+        });
       });
     });
   });
@@ -1267,6 +1351,17 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
     const res = await apiClient.workflows.patch(
       {
         active,
+      },
+      workflowId
+    );
+
+    return res.result;
+  }
+
+  async function patchWorkflowWithPayloadSchema(workflowId: string, payloadSchema: object) {
+    const res = await apiClient.workflows.patch(
+      {
+        payloadSchema,
       },
       workflowId
     );
