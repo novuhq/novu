@@ -24,17 +24,25 @@ const TOKEN_REFRESH_WINDOW_MS = 5 * 60 * 1000;
 
 type ConnectionRoutedAuthConfig = {
   providerLabel: string;
-  secretField: 'routingKey' | 'apiKey';
+  /** Fields that must all be present (non-empty) on decrypted auth; missing any triggers one combined error. */
+  requiredFields: string[];
+  /** Fields copied onto the endpoint when present, but not required (e.g. tool-webhook headers/method). */
+  optionalFields?: string[];
 };
 
 /**
  * Tool endpoint types whose per-subscriber routing secret lives on the linked
- * `ChannelConnection.auth`: the resolver decrypts `{ <secretField>, region }`
- * and rehydrates the endpoint wire shape at send time.
+ * `ChannelConnection.auth`: the resolver decrypts the configured fields and
+ * rehydrates the endpoint wire shape at send time.
  */
 const CONNECTION_ROUTED_AUTH_CONFIGS: Partial<Record<string, ConnectionRoutedAuthConfig>> = {
-  [ENDPOINT_TYPES.PAGERDUTY_SERVICE]: { providerLabel: 'PagerDuty', secretField: 'routingKey' },
-  [ENDPOINT_TYPES.OPSGENIE_INTEGRATION]: { providerLabel: 'Opsgenie', secretField: 'apiKey' },
+  [ENDPOINT_TYPES.PAGERDUTY_SERVICE]: { providerLabel: 'PagerDuty', requiredFields: ['routingKey', 'region'] },
+  [ENDPOINT_TYPES.OPSGENIE_INTEGRATION]: { providerLabel: 'Opsgenie', requiredFields: ['apiKey', 'region'] },
+  [ENDPOINT_TYPES.TOOL_WEBHOOK]: {
+    providerLabel: 'Tool Webhook',
+    requiredFields: ['url'],
+    optionalFields: ['headers', 'method'],
+  },
 };
 
 export type IntegrationEndpoints = {
@@ -210,10 +218,6 @@ export class ResolveChannelEndpoints {
       return await this.extractWebexToken(endpoint, connectionMap);
     }
 
-    if (endpoint.type === ENDPOINT_TYPES.TOOL_WEBHOOK) {
-      return this.extractToolWebhookAuth(endpoint, connectionMap);
-    }
-
     const connectionRoutedAuthConfig = CONNECTION_ROUTED_AUTH_CONFIGS[endpoint.type];
     if (connectionRoutedAuthConfig) {
       return this.extractConnectionRoutedAuth(endpoint, connectionMap, connectionRoutedAuthConfig);
@@ -225,18 +229,22 @@ export class ResolveChannelEndpoints {
   }
 
   /**
-   * Rehydrates a connection-routed tool wire shape (`endpoint: { <secretField>, region }`,
-   * e.g. PagerDuty `routingKey` or Opsgenie `apiKey`) from the linked, encrypted
+   * Rehydrates a connection-routed tool wire shape (e.g. PagerDuty
+   * `{ routingKey, region }`, Opsgenie `{ apiKey, region }`, or tool-webhook
+   * `{ url, headers?, method? }`) from the linked, encrypted
    * `ChannelConnection.auth`. Returned as an `endpoint` override so
    * `buildChannelData`'s spread replaces the empty stored endpoint document
-   * with the routing values the provider reads.
+   * with the routing values the provider reads. `requiredFields` must all be
+   * present or the whole endpoint is rejected with one combined error;
+   * `optionalFields` are copied over only when present (e.g. tool-webhook
+   * headers/method).
    */
   private extractConnectionRoutedAuth(
     endpoint: ChannelEndpointEntity,
     connectionMap: Map<string, ChannelConnectionEntity>,
     config: ConnectionRoutedAuthConfig
   ): Record<string, unknown> {
-    const { providerLabel, secretField } = config;
+    const { providerLabel, requiredFields, optionalFields = [] } = config;
 
     if (!endpoint.connectionIdentifier) {
       throw new Error(`${providerLabel} endpoint ${endpoint.identifier} requires a linked channel connection`);
@@ -250,59 +258,21 @@ export class ResolveChannelEndpoints {
     }
 
     const decrypted = decryptChannelConnectionAuth(connection.auth) as ChannelConnectionAuth | null;
-    const secret = decrypted?.[secretField];
 
-    if (!secret || !decrypted?.region) {
+    if (requiredFields.some((field) => !decrypted?.[field])) {
       throw new Error(
-        `${providerLabel} channel connection ${connection.identifier} is missing ${secretField} or region in auth`
+        `${providerLabel} channel connection ${connection.identifier} is missing ${requiredFields.join(' or ')} in auth`
       );
     }
 
-    return { endpoint: { [secretField]: secret, region: decrypted.region } };
-  }
-
-  /**
-   * Rehydrates the tool-webhook wire shape (`endpoint: { url, headers?, method? }`)
-   * from the linked, encrypted `ChannelConnection.auth`. Returned as an
-   * `endpoint` override so `buildChannelData`'s spread replaces the empty
-   * stored endpoint document with the routing values the provider reads.
-   * `headers`/`method` are optional per-subscriber overrides; only `url` is
-   * required.
-   */
-  private extractToolWebhookAuth(
-    endpoint: ChannelEndpointEntity,
-    connectionMap: Map<string, ChannelConnectionEntity>
-  ): Record<string, unknown> {
-    const providerLabel = 'Tool Webhook';
-
-    if (!endpoint.connectionIdentifier) {
-      throw new Error(`${providerLabel} endpoint ${endpoint.identifier} requires a linked channel connection`);
+    const hydratedEndpoint: Record<string, unknown> = {};
+    for (const field of requiredFields) {
+      hydratedEndpoint[field] = decrypted![field];
     }
-
-    const connection = connectionMap.get(endpoint.connectionIdentifier);
-    if (!connection?.auth) {
-      throw new Error(
-        `${providerLabel} endpoint ${endpoint.identifier} references channel connection ${endpoint.connectionIdentifier} but no auth is available`
-      );
-    }
-
-    const decrypted = decryptChannelConnectionAuth(connection.auth) as ChannelConnectionAuth | null;
-    const url = decrypted?.url;
-
-    if (!url) {
-      throw new Error(`${providerLabel} channel connection ${connection.identifier} is missing url in auth`);
-    }
-
-    const hydratedEndpoint: { url: string; headers?: Record<string, string>; method?: 'POST' | 'PUT' | 'PATCH' } = {
-      url,
-    };
-
-    if (decrypted?.headers) {
-      hydratedEndpoint.headers = decrypted.headers;
-    }
-
-    if (decrypted?.method) {
-      hydratedEndpoint.method = decrypted.method;
+    for (const field of optionalFields) {
+      if (decrypted?.[field]) {
+        hydratedEndpoint[field] = decrypted[field];
+      }
     }
 
     return { endpoint: hydratedEndpoint };
