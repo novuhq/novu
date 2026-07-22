@@ -23,6 +23,7 @@ import {
   ChannelEndpointType,
   ChatProviderIdEnum,
   ENDPOINT_TYPES,
+  isToolWebhookDynamicRouting,
   ToolProviderIdEnum,
 } from '@novu/shared';
 import { ConfirmLinkedAuthCardsCommand } from '../../../agents/conversation-runtime/link/confirm-linked-auth-cards.command';
@@ -400,8 +401,16 @@ export class CreateChannelEndpoint {
       throw new BadRequestException(`Channel endpoint type "${type}" requires an Opsgenie integration`);
     }
 
-    if (type === ENDPOINT_TYPES.TOOL_WEBHOOK && integration.providerId !== ToolProviderIdEnum.Webhook) {
-      throw new BadRequestException(`Channel endpoint type "${type}" requires a Tool webhook integration`);
+    if (type === ENDPOINT_TYPES.TOOL_WEBHOOK) {
+      if (integration.providerId !== ToolProviderIdEnum.Webhook) {
+        throw new BadRequestException(`Channel endpoint type "${type}" requires a Tool webhook integration`);
+      }
+
+      if (!isToolWebhookDynamicRouting(integration.credentials)) {
+        throw new BadRequestException(
+          'tool_webhook endpoints require the Tool webhook integration to use dynamic routingMode'
+        );
+      }
     }
   }
 

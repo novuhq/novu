@@ -17,10 +17,10 @@ import {
 import { IntegrationEntity, MessageEntity, MessageRepository, SubscriberRepository } from '@novu/dal';
 import {
   ChannelTypeEnum,
+  ENDPOINT_ROUTED_TOOL_PROVIDERS,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
-  type ICredentials,
-  ToolProviderIdEnum,
+  isEndpointRoutedToolProvider,
 } from '@novu/shared';
 import { ChannelData } from '@novu/stateless';
 import { addBreadcrumb } from '@sentry/node';
@@ -36,37 +36,8 @@ import { SendMessageResult, SendMessageStatus } from './send-message-type.usecas
 
 const LOG_CONTEXT = 'SendMessageTool';
 
-/**
- * Tool providers whose routing is per-subscriber via `ChannelEndpoint` — they
- * cannot fall back to env-level integration credentials. If no endpoint is
- * resolved for the subscriber, we silently skip the integration (execution
- * detail + `SKIPPED` status) rather than attempting a credential-based send.
- *
- * PagerDuty and Opsgenie are unconditionally endpoint-routed. The tool
- * webhook is endpoint-routed only when its integration credentials opt into
- * dynamic routing (`routingMode === 'dynamic'`); otherwise (missing or
- * `'static'`) it stays credential-routed via the env-level `webhookUrl`, and
- * any channel endpoints that exist for the subscriber are ignored.
- */
-export const ENDPOINT_ROUTED_TOOL_PROVIDERS = new Set<string>([
-  ToolProviderIdEnum.PagerDuty,
-  ToolProviderIdEnum.Opsgenie,
-]);
-
-export function isEndpointRoutedToolProvider(
-  providerId: string,
-  credentials?: Pick<ICredentials, 'routingMode'>
-): boolean {
-  if (ENDPOINT_ROUTED_TOOL_PROVIDERS.has(providerId)) {
-    return true;
-  }
-
-  if (providerId === ToolProviderIdEnum.Webhook) {
-    return credentials?.routingMode === 'dynamic';
-  }
-
-  return false;
-}
+/** Re-export shared tool routing policy for worker call sites and specs. */
+export { ENDPOINT_ROUTED_TOOL_PROVIDERS, isEndpointRoutedToolProvider };
 
 type ToolStepOutputs = {
   body?: string;

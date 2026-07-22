@@ -270,7 +270,7 @@ export class ResolveChannelEndpoints {
       hydratedEndpoint[field] = decrypted![field];
     }
     for (const field of optionalFields) {
-      if (decrypted?.[field]) {
+      if (decrypted?.[field] !== undefined && decrypted?.[field] !== null) {
         hydratedEndpoint[field] = decrypted[field];
       }
     }

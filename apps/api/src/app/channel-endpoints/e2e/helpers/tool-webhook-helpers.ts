@@ -12,7 +12,7 @@ export async function createToolWebhookIntegration(session: UserSession) {
     _environmentId: session.environment._id,
     providerId: ToolProviderIdEnum.Webhook,
     channel: ChannelTypeEnum.TOOL,
-    credentials: {},
+    credentials: { routingMode: 'dynamic' },
     active: true,
     identifier: `tool-webhook-${Date.now()}`,
   });

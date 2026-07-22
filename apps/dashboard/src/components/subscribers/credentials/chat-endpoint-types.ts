@@ -1,5 +1,5 @@
 import type { ChannelEndpointType } from '@novu/shared';
-import { ChatProviderIdEnum, ENDPOINT_TYPES, ToolProviderIdEnum } from '@novu/shared';
+import { ChatProviderIdEnum, ENDPOINT_TYPES, isToolWebhookDynamicRouting, ToolProviderIdEnum } from '@novu/shared';
 import type { IconType } from 'react-icons';
 import { RiAtLine, RiHashtag, RiKey2Line, RiLinksLine, RiTelegramLine } from 'react-icons/ri';
 
@@ -174,6 +174,15 @@ const SUPPORTED_TOOL_TYPES_BY_PROVIDER: Partial<Record<string, ChatEndpointTypeO
 };
 
 /** Resolves endpoint types a user may manually add for a tool integration. */
-export function getAddableToolEndpointTypes(providerId: string): ChatEndpointTypeOption[] {
-  return SUPPORTED_TOOL_TYPES_BY_PROVIDER[providerId] ?? [];
+export function getAddableToolEndpointTypes(
+  providerId: string,
+  credentials?: { routingMode?: string }
+): ChatEndpointTypeOption[] {
+  const types = SUPPORTED_TOOL_TYPES_BY_PROVIDER[providerId] ?? [];
+
+  if (providerId === ToolProviderIdEnum.Webhook && !isToolWebhookDynamicRouting(credentials)) {
+    return [];
+  }
+
+  return types;
 }

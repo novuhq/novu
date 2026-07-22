@@ -368,7 +368,7 @@ function buildToolGroup(integrations: IIntegration[], channelEndpoints: ChannelE
     integrations: toolIntegrations,
     channelEndpoints: toolEndpoints,
     getAddable: (integration) => ({
-      addableTypes: getAddableToolEndpointTypes(integration.providerId),
+      addableTypes: getAddableToolEndpointTypes(integration.providerId, integration.credentials),
     }),
     skipEmptyNonAddable: true,
   });

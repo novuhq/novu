@@ -30,7 +30,7 @@ function buildMockIntegration() {
   } as any;
 }
 
-function buildMockToolWebhookIntegration() {
+function buildMockToolWebhookIntegration(routingMode: 'static' | 'dynamic' = 'dynamic') {
   return {
     _id: 'tool-webhook-integration-id',
     _environmentId: MOCK_ENVIRONMENT_ID,
@@ -38,6 +38,7 @@ function buildMockToolWebhookIntegration() {
     identifier: MOCK_TOOL_WEBHOOK_INTEGRATION_IDENTIFIER,
     providerId: ToolProviderIdEnum.Webhook,
     channel: 'tool',
+    credentials: { routingMode },
   } as any;
 }
 
@@ -199,6 +200,20 @@ describe('CreateChannelEndpoint — tool_webhook connection-backed create', () =
     }
 
     expect(caughtError?.message).to.include('requires a Tool webhook integration');
+  });
+
+  it('should reject creation when the Tool webhook integration is not in dynamic routing mode', async () => {
+    const { usecase, integrationRepository } = createHarness();
+    integrationRepository.findOne.resolves(buildMockToolWebhookIntegration('static'));
+
+    let caughtError: Error | undefined;
+    try {
+      await usecase.execute(buildToolWebhookCommand(MOCK_SUBSCRIBER_ID, { url: 'https://example.com/tools/incoming' }));
+    } catch (err) {
+      caughtError = err as Error;
+    }
+
+    expect(caughtError?.message).to.include('dynamic routingMode');
   });
 
   it('should allow creating multiple tool_webhook endpoints for the same subscriber and integration', async () => {
