@@ -14,8 +14,12 @@ import {
 } from './index';
 
 describe('tool provider override schemas', () => {
-  it('exposes override-capable provider ids excluding tool-webhook', () => {
-    expect(TOOL_CONTENT_OVERRIDE_PROVIDER_IDS).toEqual([ToolProviderIdEnum.PagerDuty, ToolProviderIdEnum.Opsgenie]);
+  it('exposes tool-webhook as an override-capable provider', () => {
+    expect(TOOL_CONTENT_OVERRIDE_PROVIDER_IDS).toEqual([
+      ToolProviderIdEnum.PagerDuty,
+      ToolProviderIdEnum.Opsgenie,
+      ToolProviderIdEnum.Webhook,
+    ]);
   });
 
   it('maps each override provider to a strict object schema', () => {
@@ -52,8 +56,14 @@ describe('tool provider override schemas', () => {
     expect(getToolProviderOverrideKeysOnlySchema('unknown')).toBeUndefined();
   });
 
-  it('returns undefined for unsupported providers', () => {
+  it('returns no static metadata for tool-webhook overrides', () => {
     expect(getToolProviderOverrideSchema(ToolProviderIdEnum.Webhook)).toBeUndefined();
+    expect(getToolProviderOverrideKeys(ToolProviderIdEnum.Webhook)).toBeUndefined();
+    expect(getToolProviderOverrideKeysOnlySchema(ToolProviderIdEnum.Webhook)).toBeUndefined();
+    expect(getToolProviderPrimaryContentKey(ToolProviderIdEnum.Webhook)).toBeUndefined();
+  });
+
+  it('returns undefined for unsupported providers', () => {
     expect(getToolProviderOverrideSchema('unknown')).toBeUndefined();
   });
 

@@ -65,6 +65,11 @@ function buildProviderOverridesIssueSchema(): JSONSchemaDto {
   for (const providerId of TOOL_CONTENT_OVERRIDE_PROVIDER_IDS) {
     const keys = getToolProviderOverrideKeys(providerId);
     if (!keys) {
+      properties[providerId] = {
+        type: JsonSchemaTypeEnum.OBJECT,
+        additionalProperties: true,
+      };
+
       continue;
     }
 

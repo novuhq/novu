@@ -100,6 +100,7 @@ const integrationSchema = new Schema<IntegrationDBModel>(
       inboundWebhookSigningKey: Schema.Types.String,
       configurationSetName: Schema.Types.String,
       inboxCount: Schema.Types.String,
+      payloadSchema: Schema.Types.String,
     },
     provisioning: {
       status: {

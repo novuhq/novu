@@ -1,6 +1,10 @@
 import { ToolProviderIdEnum } from '../../../types';
 
-export const TOOL_CONTENT_OVERRIDE_PROVIDER_IDS = [ToolProviderIdEnum.PagerDuty, ToolProviderIdEnum.Opsgenie] as const;
+export const TOOL_CONTENT_OVERRIDE_PROVIDER_IDS = [
+  ToolProviderIdEnum.PagerDuty,
+  ToolProviderIdEnum.Opsgenie,
+  ToolProviderIdEnum.Webhook,
+] as const;
 
 export type ToolContentOverrideProviderId = (typeof TOOL_CONTENT_OVERRIDE_PROVIDER_IDS)[number];
 
@@ -8,8 +12,8 @@ export type ToolContentOverrideProviderId = (typeof TOOL_CONTENT_OVERRIDE_PROVID
 export const TOOL_PROVIDER_PRIMARY_CONTENT_KEY = {
   [ToolProviderIdEnum.PagerDuty]: 'summary',
   [ToolProviderIdEnum.Opsgenie]: 'message',
-} as const satisfies Record<ToolContentOverrideProviderId, string>;
+} as const satisfies Partial<Record<ToolContentOverrideProviderId, string>>;
 
-export function getToolProviderPrimaryContentKey(providerId: ToolContentOverrideProviderId) {
-  return TOOL_PROVIDER_PRIMARY_CONTENT_KEY[providerId];
+export function getToolProviderPrimaryContentKey(providerId: ToolContentOverrideProviderId): string | undefined {
+  return TOOL_PROVIDER_PRIMARY_CONTENT_KEY[providerId as keyof typeof TOOL_PROVIDER_PRIMARY_CONTENT_KEY];
 }
