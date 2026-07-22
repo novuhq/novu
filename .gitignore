@@ -135,3 +135,6 @@ demos/agent-chat-demo/next-env.d.ts
 *.sqlite-shm
 *.sqlite-wal
 **/.wrangler/tmp/**
+
+# Local agent design/plan artifacts (not part of published docs)
+superpowers/

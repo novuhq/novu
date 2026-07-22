@@ -79,6 +79,7 @@ import { AgentsMcpOAuthController } from './mcp/oauth/agents-mcp-oauth.controlle
 import { McpOAuthDiscoveryService } from './mcp/oauth/mcp-oauth-discovery.service';
 import { AgentMcpDefinitionService } from './mcp/runtime/agent-mcp-definition.service';
 import { AgentMcpSessionService } from './mcp/runtime/agent-mcp-session.service';
+import { AgentEventSink } from './shared/agent-event-sink.service';
 import { AgentRuntimeExceptionFilter } from './shared/agent-runtime-exception.filter';
 import { USE_CASES } from './usecases';
 
@@ -140,6 +141,7 @@ import { USE_CASES } from './usecases';
     RuntimeResolver,
     ManagedAgentProviderFactory,
     ManagedAgentEventHandler,
+    AgentEventSink,
     ManagedAgentService,
     ToolTrustService,
     McpConnectionVaultService,
