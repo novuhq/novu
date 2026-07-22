@@ -748,6 +748,7 @@ export class IntegrationsController {
         integrationIdentifier: body.integrationIdentifier,
         connectionIdentifier: body.connectionIdentifier,
         context: body.context,
+        contextHash: body.contextHash,
         scope: body.scope,
         connectionMode: body.connectionMode,
         autoLinkUser: body.autoLinkUser,
@@ -780,6 +781,7 @@ export class IntegrationsController {
         integrationIdentifier: body.integrationIdentifier,
         connectionIdentifier: body.connectionIdentifier,
         context: body.context,
+        contextHash: body.contextHash,
         userScope: body.userScope,
       })
     );
