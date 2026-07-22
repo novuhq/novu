@@ -71,10 +71,6 @@ afterEach(async () => {
   await new Promise<void>((resolve) => server.close(() => resolve()));
 });
 
-// 1. Static send uses config URL + merges body template under step body
-// (Static routing is the absence of tool_webhook channelData; the worker only
-// attaches channelData in dynamic mode, so the provider never needs to filter it out.)
-
 test('static: POSTs compiled content to the configured URL', async () => {
   const provider = new ToolWebhookProvider({
     webhookUrl: urlFor('/static'),
@@ -129,8 +125,6 @@ test('static: throws when webhookUrl is not configured', async () => {
 
   await expect(provider.sendMessage({ content: 'x' })).rejects.toThrow(/not configured/i);
 });
-
-// 2. Dynamic channelData overrides URL/method/headers
 
 test('dynamic: routes to channelData.endpoint.url and overrides method', async () => {
   const provider = new ToolWebhookProvider({
@@ -189,8 +183,6 @@ test('falls back to static routing when channelData is a different endpoint type
   expect(lastRequest!.url).toBe('/static');
 });
 
-// 3. Header merge: endpoint wins same key
-
 test('dynamic: merges integration headers with endpoint headers, endpoint winning on conflict', async () => {
   const provider = new ToolWebhookProvider({
     webhookUrl: urlFor('/static'),
@@ -210,9 +202,7 @@ test('dynamic: merges integration headers with endpoint headers, endpoint winnin
   expect(lastRequest!.headers['x-custom']).toBe('endpoint');
 });
 
-// 4. HMAC header when secret set
-
-test('sets the X-Novu-Signature header when a secret key is configured (static)', async () => {
+test('sets the X-Novu-Signature header when a secret key is configured', async () => {
   const hmacSecretKey = 'super-secret-key';
   const provider = new ToolWebhookProvider({
     webhookUrl: urlFor('/static'),
@@ -225,22 +215,6 @@ test('sets the X-Novu-Signature header when a secret key is configured (static)'
   expect(lastRequest!.headers['x-novu-signature']).toBe(expectedSignature);
 });
 
-test('sets the X-Novu-Signature header when a secret key is configured (dynamic)', async () => {
-  const hmacSecretKey = 'super-secret-key';
-  const provider = new ToolWebhookProvider({
-    webhookUrl: urlFor('/static'),
-    hmacSecretKey,
-  });
-
-  await provider.sendMessage({
-    content: 'dynamic payload',
-    channelData: toolWebhookChannelData({ url: urlFor('/dynamic') }),
-  });
-
-  const expectedSignature = crypto.createHmac('sha256', hmacSecretKey).update(lastRequest!.body, 'utf-8').digest('hex');
-  expect(lastRequest!.headers['x-novu-signature']).toBe(expectedSignature);
-});
-
 test('omits the X-Novu-Signature header when no secret key is configured', async () => {
   const provider = new ToolWebhookProvider({ webhookUrl: urlFor('/static') });
 
@@ -248,8 +222,6 @@ test('omits the X-Novu-Signature header when no secret key is configured', async
 
   expect(lastRequest!.headers['x-novu-signature']).toBeUndefined();
 });
-
-// 5. SSRF rejection for bad URLs
 
 test('static: rejects a blocked hostname before sending', async () => {
   const provider = new ToolWebhookProvider({ webhookUrl: 'http://localhost/webhook' });

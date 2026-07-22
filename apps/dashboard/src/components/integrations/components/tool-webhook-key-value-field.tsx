@@ -8,7 +8,6 @@ import type { IntegrationFormData } from '../types';
 
 type KeyValueRow = { key: string; value: string };
 
-/** Parses a `headers`/`body` credential value (a JSON object string) into editable rows. */
 function jsonToRows(json: unknown): KeyValueRow[] {
   if (typeof json !== 'string' || json.trim().length === 0) {
     return [];
@@ -21,13 +20,12 @@ function jsonToRows(json: unknown): KeyValueRow[] {
       return Object.entries(parsed).map(([key, value]) => ({ key, value: String(value) }));
     }
   } catch {
-    // Malformed JSON (e.g. edited outside the UI) falls back to an empty editor.
+    // Malformed JSON falls back to an empty editor.
   }
 
   return [];
 }
 
-/** Serializes editable rows back into the JSON object string persisted on the credential. */
 function rowsToJson(rows: KeyValueRow[]): string {
   const entries = rows.filter((row) => row.key.trim().length > 0);
 
@@ -52,7 +50,6 @@ type ToolWebhookKeyValueFieldProps = {
   isReadOnly?: boolean;
 };
 
-/** Structured key/value editor for a JSON-object-string credential (request headers or body). */
 export function ToolWebhookKeyValueField({
   control,
   name,

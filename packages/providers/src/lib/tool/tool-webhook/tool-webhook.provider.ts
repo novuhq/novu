@@ -108,12 +108,7 @@ export class ToolWebhookProvider extends BaseProvider implements IToolProvider {
     };
   }
 
-  /**
-   * Routes dynamically whenever `channelData` is present and of type `tool_webhook`,
-   * requiring `endpoint.url`. Otherwise falls back to static routing off `config.webhookUrl`.
-   * The caller (handler/worker) is responsible for only attaching `channelData` when the
-   * integration's routing mode is dynamic, so the provider itself needs no mode flag.
-   */
+  /** Prefer tool_webhook channelData when present; otherwise use config.webhookUrl. */
   private resolveRouting(options: IToolOptions): ResolvedRouting {
     const { channelData } = options;
 

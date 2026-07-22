@@ -159,11 +159,6 @@ export class SendMessageTool extends SendMessageBase {
       const endpointRouted = isEndpointRoutedToolProvider(integration.providerId, integration.credentials);
 
       if (!endpointRouted) {
-        // Credential-routed (PagerDuty/Opsgenie never reach this branch; the
-        // tool webhook does whenever routingMode is missing or 'static').
-        // Routes via env-level integration credentials, so send exactly once
-        // and ignore any channel endpoints that happen to exist for the
-        // subscriber.
         const result = await this.sendToIntegration(command, integration, content, toolFactory, undefined);
         status = this.mergeStatus(status, result.status);
         if (result.status === SendMessageStatus.SUCCESS) anySent = true;

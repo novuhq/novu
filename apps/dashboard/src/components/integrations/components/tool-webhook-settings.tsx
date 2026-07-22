@@ -16,7 +16,6 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives
 import type { IntegrationFormData } from '../types';
 import { ToolWebhookKeyValueField } from './tool-webhook-key-value-field';
 
-/** Placeholder doc link for configuring the tool-webhook endpoint/credentials via API. */
 const TOOL_WEBHOOK_DYNAMIC_DOCS_URL = 'https://docs.novu.co/platform/integrations/tool/webhook';
 
 const HTTP_METHODS = ['POST', 'PUT', 'PATCH'] as const;
@@ -35,12 +34,6 @@ type ToolWebhookSettingsProps = {
   isReadOnly?: boolean;
 };
 
-/**
- * Static/Dynamic delivery settings for the tool-webhook provider (Figma: NV-8358).
- * Static routes to a single integration URL; dynamic routes per-subscriber via the API.
- * Request headers/body and the signing secret are shared across both modes — in dynamic
- * mode they act as fallback defaults, which is an intentional deviation from Figma.
- */
 export function ToolWebhookSettings({ control, setValue, isReadOnly }: ToolWebhookSettingsProps) {
   const routingModeValue = useWatch({ control, name: `credentials.${CredentialsKeyEnum.RoutingMode}` });
   const routingMode = toRoutingMode(routingModeValue);
@@ -213,7 +206,6 @@ function SigningSecretField({ control, isReadOnly }: DynamicRoutingFieldsProps) 
   );
 }
 
-/** Test connection is out of scope for this pass — shown disabled to match the Figma layout. */
 function TestConnectionPlaceholder() {
   return (
     <Tooltip>

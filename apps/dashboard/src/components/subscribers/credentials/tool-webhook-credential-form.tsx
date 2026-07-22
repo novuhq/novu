@@ -9,7 +9,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { CREDENTIAL_CARD_CLASS, CREDENTIAL_FIELD_LABEL_CLASS } from './credential-fields';
 import { maskCredentialValue } from './mask-credential-value';
 
-/** Wire shape for the tool-webhook per-subscriber endpoint (`ENDPOINT_TYPES.TOOL_WEBHOOK`). */
 type ToolWebhookPayload = {
   url: string;
   headers?: Record<string, string>;
@@ -20,7 +19,7 @@ type HeaderRow = { key: string; value: string };
 
 type ToolWebhookDraft = {
   url: string;
-  /** Empty string means "inherit the integration's default method". */
+  /** Empty string inherits the integration default method. */
   method: string;
   headerRows: HeaderRow[];
 };
@@ -58,7 +57,6 @@ type ToolWebhookFieldsetProps = {
   disabled?: boolean;
 };
 
-/** Shared url + optional method + headers(KV) fields used by both the add and edit forms. */
 function ToolWebhookFieldset({ draft, onChange, showError, disabled }: ToolWebhookFieldsetProps) {
   const handleAddHeader = () => onChange({ ...draft, headerRows: [...draft.headerRows, { key: '', value: '' }] });
 
@@ -167,7 +165,6 @@ type ToolWebhookFormActionsProps = {
   onCancel: () => void;
 };
 
-/** Shared check/close confirm-cancel pair for both the add editor and the row's edit mode. */
 function ToolWebhookFormActions({ isSaving, onSave, onCancel }: ToolWebhookFormActionsProps) {
   return (
     <div className="flex items-center justify-end gap-1">
@@ -198,7 +195,6 @@ type ToolWebhookCredentialFormEditorProps = {
   onCancel: () => void;
 };
 
-/** Inline "add" form for a per-subscriber tool-webhook endpoint (url, method, headers). */
 export function ToolWebhookCredentialFormEditor({ onSave, onCancel }: ToolWebhookCredentialFormEditorProps) {
   const [draft, setDraft] = useState<ToolWebhookDraft>({ url: '', method: '', headerRows: [] });
   const [showError, setShowError] = useState(false);
@@ -237,7 +233,6 @@ type ToolWebhookCredentialFormRowProps = {
   onDelete: () => void;
 };
 
-/** Displays a saved tool-webhook endpoint, flipping to the editable fieldset in place. */
 export function ToolWebhookCredentialFormRow({
   payload,
   ariaEntity,
@@ -247,8 +242,6 @@ export function ToolWebhookCredentialFormRow({
   onDelete,
 }: ToolWebhookCredentialFormRowProps) {
   const [isEditing, setIsEditing] = useState(false);
-  // Populated by handleEdit right before the fieldset is shown — the initial value here is
-  // never rendered, so it starts empty rather than eagerly recomputing payloadToDraft.
   const [draft, setDraft] = useState<ToolWebhookDraft>({ url: '', method: '', headerRows: [] });
   const [showError, setShowError] = useState(false);
   const [isSaving, setIsSaving] = useState(false);

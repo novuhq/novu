@@ -47,10 +47,7 @@ export interface ChannelConnectionAuth {
    * Tool-webhook per-subscriber request headers. Each string value is encrypted at rest.
    */
   headers?: Record<string, string>;
-  /**
-   * Tool-webhook per-subscriber HTTP method override. Encrypted at rest with the other
-   * wire-shape fields on connection auth (locked product decision for this provider).
-   */
+  /** Tool-webhook per-subscriber HTTP method override. Encrypted at rest. */
   method?: 'POST' | 'PUT' | 'PATCH';
   [key: string]: unknown;
 }

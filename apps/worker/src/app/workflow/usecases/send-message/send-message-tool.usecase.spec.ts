@@ -8,35 +8,18 @@ import { isEndpointRoutedToolProvider, SendMessageTool } from './send-message-to
 import { SendMessageStatus } from './send-message-type.usecase';
 
 describe('SendMessageTool - endpoint-routed providers', () => {
-  /*
-   * PagerDuty and Opsgenie are per-subscriber only — with no env-level
-   * apiKey, the send loop must skip them (SKIPPED status + execution detail)
-   * when no channel endpoint is resolved for the subscriber, rather than
-   * attempting a legacy credential-based send that would throw. This holds
-   * regardless of any credentials passed in — they never opt out.
-   */
   it('classifies PagerDuty and Opsgenie as endpoint-routed regardless of credentials', () => {
     expect(isEndpointRoutedToolProvider(ToolProviderIdEnum.PagerDuty)).to.equal(true);
     expect(isEndpointRoutedToolProvider(ToolProviderIdEnum.Opsgenie)).to.equal(true);
     expect(isEndpointRoutedToolProvider(ToolProviderIdEnum.PagerDuty, { routingMode: 'static' })).to.equal(true);
   });
 
-  /*
-   * The tool webhook is credential-routed by default (routingMode missing or
-   * 'static') — it routes via the env-level webhookUrl and MUST NOT be
-   * short-circuited when a subscriber has no channel endpoint.
-   */
   it('treats the tool webhook as credential-routed when routingMode is missing or static', () => {
     expect(isEndpointRoutedToolProvider(ToolProviderIdEnum.Webhook)).to.equal(false);
     expect(isEndpointRoutedToolProvider(ToolProviderIdEnum.Webhook, {})).to.equal(false);
     expect(isEndpointRoutedToolProvider(ToolProviderIdEnum.Webhook, { routingMode: 'static' })).to.equal(false);
   });
 
-  /*
-   * When an integration opts into dynamic routing, the tool webhook becomes
-   * endpoint-routed like PagerDuty/Opsgenie — fanning out per-subscriber
-   * channel endpoints instead of the env-level webhookUrl.
-   */
   it('treats the tool webhook as endpoint-routed when routingMode is dynamic', () => {
     expect(isEndpointRoutedToolProvider(ToolProviderIdEnum.Webhook, { routingMode: 'dynamic' })).to.equal(true);
   });

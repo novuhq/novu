@@ -145,12 +145,6 @@ export const CHANNEL_ENDPOINT_SCHEMAS = {
       (endpoint.region === 'us' || endpoint.region === 'eu') &&
       Object.keys(endpoint).length === 2,
   },
-  /*
-   * Tool-webhook wire shape: required URL + optional headers object + optional HTTP method.
-   * Validated at write time so malformed URLs / unknown keys fail at the API boundary.
-   * The API layer persists url/headers/method encrypted on the linked
-   * `ChannelConnection.auth`; the stored endpoint document is empty.
-   */
   [ENDPOINT_TYPES.TOOL_WEBHOOK]: {
     description: 'Tool Webhook Endpoint',
     properties: {
