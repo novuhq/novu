@@ -70,7 +70,7 @@ export function ToolWebhookSettings({ control, setValue, isReadOnly }: ToolWebho
       {routingMode === 'static' ? (
         <StaticRoutingFields control={control} setValue={setValue} isReadOnly={isReadOnly} />
       ) : (
-        <DynamicRoutingFields control={control} isReadOnly={isReadOnly} />
+        <DynamicRoutingFields control={control} setValue={setValue} isReadOnly={isReadOnly} />
       )}
     </div>
   );
@@ -148,9 +148,17 @@ function StaticRoutingFields({ control, setValue, isReadOnly }: ToolWebhookSetti
   );
 }
 
-type DynamicRoutingFieldsProps = Pick<ToolWebhookSettingsProps, 'control' | 'isReadOnly'>;
+function DynamicRoutingFields({ control, setValue, isReadOnly }: ToolWebhookSettingsProps) {
+  const methodValue = useWatch({ control, name: `credentials.${CredentialsKeyEnum.Method}` });
 
-function DynamicRoutingFields({ control, isReadOnly }: DynamicRoutingFieldsProps) {
+  // Same rationale as static: the select displays "POST" for a fresh integration,
+  // so persist it rather than leaving the field unset until touched.
+  useEffect(() => {
+    if (!methodValue) {
+      setValue(`credentials.${CredentialsKeyEnum.Method}`, DEFAULT_METHOD);
+    }
+  }, [methodValue, setValue]);
+
   return (
     <div className="flex flex-col gap-3">
       <InlineToast
@@ -160,6 +168,26 @@ function DynamicRoutingFields({ control, isReadOnly }: DynamicRoutingFieldsProps
         ctaLabel="View docs"
         onCtaClick={() => window.open(TOOL_WEBHOOK_DYNAMIC_DOCS_URL, '_blank', 'noopener,noreferrer')}
       />
+
+      <div className="flex flex-col gap-1">
+        <Label>Default HTTP method</Label>
+        <Select
+          value={methodValue || DEFAULT_METHOD}
+          onValueChange={(value) => setValue(`credentials.${CredentialsKeyEnum.Method}`, value)}
+          disabled={isReadOnly}
+        >
+          <SelectTrigger className="w-[120px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {HTTP_METHODS.map((method) => (
+              <SelectItem key={method} value={method}>
+                {method}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
       <ToolWebhookKeyValueField
         control={control}
@@ -182,7 +210,7 @@ function DynamicRoutingFields({ control, isReadOnly }: DynamicRoutingFieldsProps
   );
 }
 
-function SigningSecretField({ control, isReadOnly }: DynamicRoutingFieldsProps) {
+function SigningSecretField({ control, isReadOnly }: Pick<ToolWebhookSettingsProps, 'control' | 'isReadOnly'>) {
   return (
     <Controller
       control={control}
