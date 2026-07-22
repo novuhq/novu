@@ -33,7 +33,7 @@ import type {
 } from './agent.types';
 import { AgentEventEnum, PendingApproval } from './agent.types';
 import { AgentEventOutbox } from './agent-event-outbox';
-import type { AgentEvent, AgentFileRef, AgentMessageContent } from './agent-event-protocol';
+import type { AgentEvent, AgentFileRef, AgentMessageContent, AgentRunOutcome } from './agent-event-protocol';
 import { resolveCardContent } from './resolve-card-content';
 import type { ToolApprovalRequestPayload } from './tool-approval/action-id';
 import { postToolApprovalCard } from './tool-approval/post-card';
@@ -563,11 +563,29 @@ export class AgentContextImpl implements AgentRuntimeContext {
     this._pendingDeletes.push({ messageId });
   }
 
-  /** Best-effort failure report to Novu. Never throws. */
-  async reportTurnError(): Promise<void> {
+  /** @internal Enqueue run-start before handler execution; flushed with the first emit. */
+  queueRunStart(): void {
+    if (this._outbox) {
+      this._outbox.enqueue({ type: 'run-start' });
+    }
+  }
+
+  /** @internal Enqueue and flush run-finish as the terminal success event. */
+  async emitRunFinish(options: { outcome: AgentRunOutcome }): Promise<void> {
     try {
       if (this._outbox) {
-        await this._outbox.emit({ type: 'run-error', message: 'agent handler failed' });
+        await this._outbox.emit({ type: 'run-finish', outcome: options.outcome });
+      }
+    } catch (err) {
+      console.error(`[agent] Failed to emit run finish:`, err);
+    }
+  }
+
+  /** Best-effort failure report to Novu. Never throws. */
+  async reportTurnError(message?: string): Promise<void> {
+    try {
+      if (this._outbox) {
+        await this._outbox.emit({ type: 'run-error', message: message ?? 'agent handler failed' });
 
         return;
       }

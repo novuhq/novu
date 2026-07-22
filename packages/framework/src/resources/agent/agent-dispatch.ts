@@ -72,8 +72,10 @@ export async function dispatchAgentEvent(options: DispatchAgentEventOptions): Pr
   const { agent, event, logger } = options;
 
   try {
+    ctx.queueRunStart();
     await runAgentHandler(agent, event, ctx);
     await ctx.flush();
+    await ctx.emitRunFinish({ outcome: 'completed' });
   } catch (err) {
     const error = toAgentError(err);
 
@@ -97,7 +99,9 @@ export async function dispatchAgentEvent(options: DispatchAgentEventOptions): Pr
     }
 
     if (!reported) {
-      await ctx.reportTurnError();
+      await ctx.reportTurnError(error.message);
+    } else {
+      await ctx.emitRunFinish({ outcome: 'completed' });
     }
   } finally {
     try {

@@ -2568,14 +2568,16 @@ describe('event mode (AgentEvent protocol)', () => {
       secretKey: 'test-secret-key',
     });
 
-    expect(eventBatches).toHaveLength(2);
-    expect(eventBatches[0]).toHaveLength(1);
-    expect(eventBatches[0][0].event).toEqual({
+    expect(eventBatches).toHaveLength(3);
+    expect(eventBatches[0]).toHaveLength(2);
+    expect(eventBatches[0][0].event).toEqual({ type: 'run-start' });
+    expect(eventBatches[0][1].event).toEqual({
       type: 'message',
       messageId: 'msg_00000000-0000-4000-8000-000000000001',
       content: { markdown: 'Hello from event mode' },
     });
-    expect(eventBatches[1][0].event).toEqual({ type: 'channel.typing', state: 'off' });
+    expect(eventBatches[1][0].event).toEqual({ type: 'run-finish', outcome: 'completed' });
+    expect(eventBatches[2][0].event).toEqual({ type: 'channel.typing', state: 'off' });
     expect(handleMessageId).toBe('msg_00000000-0000-4000-8000-000000000001');
   });
 
@@ -2594,14 +2596,16 @@ describe('event mode (AgentEvent protocol)', () => {
       secretKey: 'test-secret-key',
     });
 
-    expect(eventBatches).toHaveLength(3);
-    expect(eventBatches[0][0].event.type).toBe('message');
+    expect(eventBatches).toHaveLength(4);
+    expect(eventBatches[0][0].event).toEqual({ type: 'run-start' });
+    expect(eventBatches[0][1].event.type).toBe('message');
     expect(eventBatches[1][0].event).toEqual({
       type: 'channel.edit',
       messageId: 'msg_00000000-0000-4000-8000-000000000001',
       content: { markdown: 'Final' },
     });
-    expect(eventBatches[2][0].event).toEqual({ type: 'channel.typing', state: 'off' });
+    expect(eventBatches[2][0].event).toEqual({ type: 'run-finish', outcome: 'completed' });
+    expect(eventBatches[3][0].event).toEqual({ type: 'channel.typing', state: 'off' });
   });
 
   it('typing emits channel.typing events', async () => {
@@ -2620,13 +2624,16 @@ describe('event mode (AgentEvent protocol)', () => {
       secretKey: 'test-secret-key',
     });
 
-    expect(eventBatches[0][0].event).toEqual({
+    expect(eventBatches[0][0].event).toEqual({ type: 'run-start' });
+    expect(eventBatches[0][1].event).toEqual({
       type: 'channel.typing',
       state: 'on',
       status: 'Searching…',
     });
     expect(eventBatches[1][0].event).toEqual({ type: 'channel.typing', state: 'off' });
     expect(eventBatches[2][0].event.type).toBe('message');
+    expect(eventBatches[3][0].event).toEqual({ type: 'run-finish', outcome: 'completed' });
+    expect(eventBatches[4][0].event).toEqual({ type: 'channel.typing', state: 'off' });
   });
 
   it('batches queued signal then message in one flush on reply', async () => {
@@ -2644,17 +2651,19 @@ describe('event mode (AgentEvent protocol)', () => {
       secretKey: 'test-secret-key',
     });
 
-    expect(eventBatches).toHaveLength(2);
-    expect(eventBatches[0]).toHaveLength(2);
-    expect(eventBatches[0][0].event).toEqual({
+    expect(eventBatches).toHaveLength(3);
+    expect(eventBatches[0]).toHaveLength(3);
+    expect(eventBatches[0][0].event).toEqual({ type: 'run-start' });
+    expect(eventBatches[0][1].event).toEqual({
       type: 'signal',
       signal: { type: 'metadata', action: 'set', key: 'language', value: 'en' },
     });
-    expect(eventBatches[0][1].event).toMatchObject({
+    expect(eventBatches[0][2].event).toMatchObject({
       type: 'message',
       content: { markdown: 'Got it' },
     });
-    expect(eventBatches[1][0].event).toEqual({ type: 'channel.typing', state: 'off' });
+    expect(eventBatches[1][0].event).toEqual({ type: 'run-finish', outcome: 'completed' });
+    expect(eventBatches[2][0].event).toEqual({ type: 'channel.typing', state: 'off' });
   });
 
   it('legacy mode without eventsUrl still POSTs to replyUrl', async () => {
@@ -2691,9 +2700,10 @@ describe('event mode (AgentEvent protocol)', () => {
       secretKey: 'test-secret-key',
     });
 
-    expect(eventBatches).toHaveLength(2);
-    expect(eventBatches[0]).toHaveLength(1);
-    expect(eventBatches[0][0].event).toEqual({
+    expect(eventBatches).toHaveLength(3);
+    expect(eventBatches[0]).toHaveLength(2);
+    expect(eventBatches[0][0].event).toEqual({ type: 'run-start' });
+    expect(eventBatches[0][1].event).toEqual({
       type: 'tool-approval-request',
       approvalId: 'tc-1',
       toolUseId: 'tc-1',
@@ -2701,6 +2711,101 @@ describe('event mode (AgentEvent protocol)', () => {
       input: { x: 1 },
     });
     expect(eventBatches[0].some((envelope) => envelope.event.type === 'message')).toBe(false);
-    expect(eventBatches[1][0].event).toEqual({ type: 'channel.typing', state: 'off' });
+    expect(eventBatches[1][0].event).toEqual({ type: 'run-finish', outcome: 'completed' });
+    expect(eventBatches[2][0].event).toEqual({ type: 'channel.typing', state: 'off' });
+  });
+
+  function flattenEventTypes(
+    eventBatches: Array<{ sequence: number; event: { type: string; [key: string]: unknown } }[]>
+  ) {
+    return eventBatches.flat().map((envelope) => envelope.event);
+  }
+
+  it('brackets successful dispatch with run-start first and run-finish last', async () => {
+    const { eventBatches } = stubEventModeFetch();
+
+    await dispatchAgentEvent({
+      agent: agent('test-bot', {
+        onMessage: async (_message, ctx) => {
+          await ctx.reply('Hello');
+        },
+      }),
+      event: 'onMessage',
+      bridge: eventModeBridge(),
+      secretKey: 'test-secret-key',
+    });
+
+    const events = flattenEventTypes(eventBatches);
+    expect(events[0]).toEqual({ type: 'run-start' });
+    expect(events.some((event) => event.type === 'run-error')).toBe(false);
+
+    const runFinishIndex = events.findIndex((event) => event.type === 'run-finish');
+    expect(runFinishIndex).toBeGreaterThan(-1);
+    expect(events[runFinishIndex]).toEqual({ type: 'run-finish', outcome: 'completed' });
+    expect(events.slice(runFinishIndex + 1).every((event) => event.type === 'channel.typing')).toBe(true);
+  });
+
+  it('emits run-error without run-finish when handler throws and onError is absent', async () => {
+    const { eventBatches } = stubEventModeFetch();
+
+    await dispatchAgentEvent({
+      agent: agent('test-bot', {
+        onMessage: async () => {
+          throw new Error('boom');
+        },
+      }),
+      event: 'onMessage',
+      bridge: eventModeBridge(),
+      secretKey: 'test-secret-key',
+    });
+
+    const events = flattenEventTypes(eventBatches);
+    expect(events[0]).toEqual({ type: 'run-start' });
+    expect(events.some((event) => event.type === 'run-error' && event.message === 'boom')).toBe(true);
+    expect(events.some((event) => event.type === 'run-finish')).toBe(false);
+  });
+
+  it('emits message and run-finish when onError replies after handler throw', async () => {
+    const { eventBatches } = stubEventModeFetch();
+
+    await dispatchAgentEvent({
+      agent: agent('test-bot', {
+        onMessage: async () => {
+          throw new Error('handler blew up');
+        },
+        onError: async () => 'recovered',
+      }),
+      event: 'onMessage',
+      bridge: eventModeBridge(),
+      secretKey: 'test-secret-key',
+    });
+
+    const events = flattenEventTypes(eventBatches);
+    expect(
+      events.some(
+        (event) =>
+          event.type === 'message' && (event as { content?: { markdown?: string } }).content?.markdown === 'recovered'
+      )
+    ).toBe(true);
+    expect(events.some((event) => event.type === 'run-finish' && event.outcome === 'completed')).toBe(true);
+    expect(events.some((event) => event.type === 'run-error')).toBe(false);
+  });
+
+  it('legacy error path does not call events endpoint', async () => {
+    const { eventBatches, replyPosts } = stubEventModeFetch();
+
+    await dispatchAgentEvent({
+      agent: agent('test-bot', {
+        onMessage: async () => {
+          throw new Error('fail');
+        },
+      }),
+      event: 'onMessage',
+      bridge: createMockBridgeRequest(),
+      secretKey: 'test-secret-key',
+    });
+
+    expect(eventBatches).toHaveLength(0);
+    expect(replyPosts.some((body) => body.error === true)).toBe(true);
   });
 });
