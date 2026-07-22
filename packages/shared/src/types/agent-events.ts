@@ -21,6 +21,8 @@ export interface AgentFileRef {
   fileId: string;
   name?: string;
   mediaType?: string;
+  /** Transitional: inline base64 payload until the pre-upload path ships. Same 5 MB limit as the reply API. */
+  data?: string;
 }
 
 export type AgentRunOutcome = 'completed' | 'paused' | 'aborted';
@@ -33,6 +35,12 @@ export interface AgentApprovalRequest {
   input?: Record<string, unknown>;
   source?: AgentToolSource;
 }
+
+export type AgentSignal =
+  | { type: 'metadata'; action: 'set'; key: string; value: unknown }
+  | { type: 'metadata'; action: 'delete'; key: string }
+  | { type: 'metadata'; action: 'clear' }
+  | { type: 'trigger'; workflowId: string; to?: unknown; payload?: Record<string, unknown> };
 
 export type AgentEvent =
   // Lifecycle
@@ -83,6 +91,12 @@ export type AgentEvent =
     }
   // Conversation ops
   | { type: 'resolve'; summary?: string }
+  | { type: 'signal'; signal: AgentSignal }
+  // Channel ops (imperative — emitted only by the framework SDK)
+  | { type: 'channel.typing'; state: 'on' | 'off'; status?: string }
+  | { type: 'channel.edit'; messageId: string; content: AgentMessageContent; files?: AgentFileRef[] }
+  | { type: 'channel.delete'; messageId: string }
+  | { type: 'channel.reaction'; messageId: string; emoji: string; op: 'add' | 'remove' }
   // Runtime / connection ops
   | {
       type: 'connection.error';
