@@ -215,11 +215,15 @@ function mint(prefix: string): string {
 }
 
 function toAgentMessageContent(reply: ReplyContent): AgentMessageContent {
-  if ('markdown' in reply) {
+  if (reply.markdown !== undefined) {
     return { markdown: reply.markdown };
   }
 
-  return { card: reply.card };
+  if (reply.card !== undefined) {
+    return { card: reply.card as unknown as Record<string, unknown> };
+  }
+
+  throw new Error('Invalid reply content — expected markdown or card');
 }
 
 function toAgentFileRefs(files?: FileRef[]): AgentFileRef[] | undefined {
