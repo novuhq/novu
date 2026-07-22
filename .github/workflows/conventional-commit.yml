@@ -1,7 +1,7 @@
 name: "Lint PR title"
 
 on:
-  pull_request:
+  pull_request_target:
     types:
       - opened
       - edited
@@ -17,6 +17,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
 
       - name: Install pnpm
         uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
@@ -71,9 +73,37 @@ jobs:
             echo "$author is not a team member"
           fi
 
+      - name: Auto-fix invalid channel scopes in PR title
+        id: auto_fix_scope
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          pr_title="$PR_TITLE"
+          channel_scopes='sms|email|chat|push|in_app|in-app'
+
+          echo "Current PR title: $pr_title"
+
+          if [[ "$pr_title" =~ ^([a-z]+)\((${channel_scopes})\)(:.*)$ ]]; then
+            commit_type="${BASH_REMATCH[1]}"
+            rest="${BASH_REMATCH[3]}"
+            new_title="${commit_type}(providers)${rest}"
+            echo "Auto-fixing invalid channel scope in PR title to: $new_title"
+
+            curl -fsS -X PATCH \
+              -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+              -H "Accept: application/vnd.github.v3+json" \
+              "https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}" \
+              -d "$(jq -n --arg title "$new_title" '{title: $title}')"
+
+            echo "needs_update=true" >> $GITHUB_OUTPUT
+            echo "updated_title=$new_title" >> $GITHUB_OUTPUT
+          else
+            echo "needs_update=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Extract Linear ticket from branch and auto-fix PR title
         id: auto_fix_linear_ticket
-        if: steps.check_team_member.outputs.is_team_member == 'true'
+        if: steps.check_team_member.outputs.is_team_member == 'true' && steps.auto_fix_scope.outputs.needs_update != 'true'
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
           BRANCH_NAME: ${{ github.event.pull_request.head.ref }}
@@ -143,6 +173,7 @@ jobs:
 
       - uses: amannn/action-semantic-pull-request@e32d7e603df1aa1ba07e981f2a23455dee596825 # v5
         id: lint_pr_title
+        if: steps.auto_fix_scope.outputs.needs_update != 'true' && steps.auto_fix_linear_ticket.outputs.needs_update != 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -151,20 +182,30 @@ jobs:
             ${{ env.SCOPES }}
 
       - uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
-        # Show success message when PR title was auto-fixed
+        if: steps.auto_fix_scope.outputs.needs_update == 'true'
+        with:
+          header: pr-title-auto-fixed
+          message: |
+            ✅ **PR title automatically updated!**
+
+            I replaced the invalid channel scope with `providers` in your PR title.
+
+            **Updated title:** `${{ steps.auto_fix_scope.outputs.updated_title }}`
+
+      - uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
         if: steps.auto_fix_linear_ticket.outputs.needs_update == 'true'
         with:
           header: pr-title-auto-fixed
           message: |
             ✅ **PR title automatically updated!**
 
-            I found the Linear ticket ID `${{ steps.auto_fix_linear_ticket.outputs.updated_title }}` in your branch name and automatically added it to your PR title.
+            I found the Linear ticket ID in your branch name and automatically added it to your PR title.
 
             **Updated title:** `${{ steps.auto_fix_linear_ticket.outputs.updated_title }}`
 
       - uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
         # Show error if either conventional commit validation fails OR Linear ticket validation fails (for team members)
-        if: always() && (steps.lint_pr_title.outputs.error_message != null || (steps.check_team_member.outputs.is_team_member == 'true' && steps.auto_fix_linear_ticket.outputs.linear_ticket_valid != 'true' && steps.validate_linear_ticket.outputs.linear_ticket_valid != 'true'))
+        if: always() && steps.auto_fix_scope.outputs.needs_update != 'true' && steps.auto_fix_linear_ticket.outputs.needs_update != 'true' && (steps.lint_pr_title.outputs.error_message != null || (steps.check_team_member.outputs.is_team_member == 'true' && steps.auto_fix_linear_ticket.outputs.linear_ticket_valid != 'true' && steps.validate_linear_ticket.outputs.linear_ticket_valid != 'true'))
         with:
           header: pr-title-lint-error
           message: |
@@ -185,14 +226,14 @@ jobs:
             ${{ steps.validate_linear_ticket.outputs.linear_error_message != null && steps.validate_linear_ticket.outputs.linear_error_message || '' }}
 
       # Delete previous comments when all issues have been resolved
-      - if: ${{ steps.lint_pr_title.outputs.error_message == null && (steps.check_team_member.outputs.is_team_member != 'true' || steps.auto_fix_linear_ticket.outputs.linear_ticket_valid == 'true' || steps.validate_linear_ticket.outputs.linear_ticket_valid == 'true') }}
+      - if: ${{ (steps.auto_fix_scope.outputs.needs_update == 'true' || steps.auto_fix_linear_ticket.outputs.needs_update == 'true' || steps.lint_pr_title.outputs.error_message == null) && (steps.check_team_member.outputs.is_team_member != 'true' || steps.auto_fix_linear_ticket.outputs.linear_ticket_valid == 'true' || steps.validate_linear_ticket.outputs.linear_ticket_valid == 'true') }}
         uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
         with:
           header: pr-title-lint-error
           delete: true
 
       # Delete auto-fix comment after a while (on subsequent updates)
-      - if: ${{ steps.auto_fix_linear_ticket.outputs.needs_update != 'true' }}
+      - if: ${{ steps.auto_fix_scope.outputs.needs_update != 'true' && steps.auto_fix_linear_ticket.outputs.needs_update != 'true' }}
         uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
         with:
           header: pr-title-auto-fixed
