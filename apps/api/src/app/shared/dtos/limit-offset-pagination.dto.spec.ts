@@ -1,6 +1,6 @@
+import { expect } from 'chai';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
-import { expect } from 'chai';
 import { LimitOffsetPaginationQueryDto } from './limit-offset-pagination.dto';
 
 class SortableEntity {

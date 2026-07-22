@@ -157,9 +157,7 @@ describe('Environment Variables API key environment scope - /environment-variabl
 
       const {
         body: { data },
-      } = await session.testAgent
-        .get('/v1/environment-variables')
-        .set('authorization', `ApiKey ${session.apiKey}`);
+      } = await session.testAgent.get('/v1/environment-variables').set('authorization', `ApiKey ${session.apiKey}`);
 
       const variable = data.find((item: { key: string }) => item.key === 'CROSS_ENV_READ_LIST');
 

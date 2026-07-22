@@ -1,5 +1,5 @@
-import { LuBookUp2 } from 'react-icons/lu';
 import { PermissionsEnum } from '@novu/shared';
+import { LuBookUp2 } from 'react-icons/lu';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment, useFetchEnvironments } from '@/context/environment/hooks';
 import { useHasPermission } from '@/hooks/use-has-permission';

@@ -24,7 +24,7 @@ function createHandlebarsInstance(i18next: any) {
       };
 
       const replace = (options.replace = {
-        // @ts-ignore
+        // @ts-expect-error
         ...this,
         ...options.replace,
         ...hash,
@@ -35,7 +35,6 @@ function createHandlebarsInstance(i18next: any) {
         options.defaultValue = fn(replace);
       }
 
-      // @ts-ignore
       return new handlebars.SafeString(i18next.t(key, options));
     });
   }

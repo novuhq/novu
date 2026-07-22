@@ -160,6 +160,95 @@ describe('Context-aware inbox channel resources - /inbox/channel-* #novu-v2', ()
     });
   });
 
+  describe('Shared channel connections', () => {
+    it('should return shared connections alongside the subscriber own connections when listing', async () => {
+      const ownA = await createConnection(session, slackIntegrationIdentifier, [
+        'project:project-a',
+        'tenant:tenant-a',
+      ]);
+      const sharedA = await createSharedConnection(session, slackIntegrationIdentifier, [
+        'project:project-a',
+        'tenant:tenant-a',
+      ]);
+
+      const listA = await listChannelConnections(session, contextAToken);
+      expect(listA.status).to.equal(200);
+      const identifiers = (listA.body.data as Array<{ identifier: string }>).map((d) => d.identifier);
+      expect(identifiers).to.include(ownA.identifier);
+      expect(identifiers).to.include(sharedA.identifier);
+    });
+
+    it('should not leak shared connections from another context', async () => {
+      const sharedB = await createSharedConnection(session, slackIntegrationIdentifier, [
+        'project:project-b',
+        'tenant:tenant-b',
+      ]);
+
+      const listA = await listChannelConnections(session, contextAToken);
+      expect(listA.status).to.equal(200);
+      const identifiers = (listA.body.data as Array<{ identifier: string }>).map((d) => d.identifier);
+      expect(identifiers).to.not.include(sharedB.identifier);
+    });
+
+    it('should allow retrieving a shared connection that matches the caller context', async () => {
+      const sharedA = await createSharedConnection(session, slackIntegrationIdentifier, [
+        'project:project-a',
+        'tenant:tenant-a',
+      ]);
+
+      const getA = await getChannelConnection(session, sharedA.identifier, contextAToken);
+      expect(getA.status).to.equal(200);
+      expect(getA.body.data.identifier).to.equal(sharedA.identifier);
+
+      const getB = await getChannelConnection(session, sharedA.identifier, contextBToken);
+      expect(getB.status).to.equal(404);
+    });
+
+    it('should allow deleting a shared connection that matches the caller context', async () => {
+      const sharedA = await createSharedConnection(session, slackIntegrationIdentifier, [
+        'project:project-a',
+        'tenant:tenant-a',
+      ]);
+
+      const del = await deleteChannelConnection(session, sharedA.identifier, contextAToken);
+      expect(del.status).to.equal(204);
+
+      const removed = await channelConnectionRepository.findOne({
+        _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
+        identifier: sharedA.identifier,
+      });
+      expect(removed).to.be.null;
+    });
+
+    it('should narrow results by the connectionMode query param', async () => {
+      const ownA = await createConnection(session, slackIntegrationIdentifier, [
+        'project:project-a',
+        'tenant:tenant-a',
+      ]);
+      const sharedA = await createSharedConnection(session, slackIntegrationIdentifier, [
+        'project:project-a',
+        'tenant:tenant-a',
+      ]);
+
+      const sharedOnly = await session.testAgent
+        .get('/v1/inbox/channel-connections?connectionMode=shared')
+        .set('Authorization', `Bearer ${contextAToken}`);
+      expect(sharedOnly.status).to.equal(200);
+      const sharedIds = (sharedOnly.body.data as Array<{ identifier: string }>).map((d) => d.identifier);
+      expect(sharedIds).to.include(sharedA.identifier);
+      expect(sharedIds).to.not.include(ownA.identifier);
+
+      const subscriberOnly = await session.testAgent
+        .get('/v1/inbox/channel-connections?connectionMode=subscriber')
+        .set('Authorization', `Bearer ${contextAToken}`);
+      expect(subscriberOnly.status).to.equal(200);
+      const ownIds = (subscriberOnly.body.data as Array<{ identifier: string }>).map((d) => d.identifier);
+      expect(ownIds).to.include(ownA.identifier);
+      expect(ownIds).to.not.include(sharedA.identifier);
+    });
+  });
+
   describe('Channel endpoints', () => {
     it('should not leak channel endpoints from another context when listing', async () => {
       const endpointA = await createEndpoint(session, slackIntegrationIdentifier, [
@@ -243,6 +332,25 @@ describe('Context-aware inbox channel resources - /inbox/channel-* #novu-v2', ()
       subscriberId: userSession.subscriberId,
       contextKeys,
       workspace: { id: `T${Date.now()}`, name: 'Test' },
+      auth: { accessToken: `xoxb-${Date.now()}` },
+    });
+  }
+
+  async function createSharedConnection(
+    userSession: UserSession,
+    integrationIdentifier: string,
+    contextKeys: string[]
+  ) {
+    return channelConnectionRepository.create({
+      _environmentId: userSession.environment._id,
+      _organizationId: userSession.organization._id,
+      identifier: `shared-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      integrationIdentifier,
+      providerId: ChatProviderIdEnum.Slack,
+      channel: ChannelTypeEnum.CHAT,
+      // No subscriberId => shared (workspace-level) connection.
+      contextKeys,
+      workspace: { id: `T${Date.now()}`, name: 'Shared Test' },
       auth: { accessToken: `xoxb-${Date.now()}` },
     });
   }

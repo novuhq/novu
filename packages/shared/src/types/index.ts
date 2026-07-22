@@ -1,4 +1,5 @@
 export * from './agent';
+export * from './agent-events';
 export * from './ai';
 export * from './anthropic-aws';
 export * from './auth';
